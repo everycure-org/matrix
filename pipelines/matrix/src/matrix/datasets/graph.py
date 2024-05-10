@@ -91,7 +91,7 @@ class RandomDrugDiseasePairGenerator(DrugDiseasePairGenerator):
             
         return pd.DataFrame(columns=['source', 'target', 'y'], data=unknown_data)
         
-
+# TODO: Alexei add negative class and try to run pipeline with it
 
 class KnowledgeGraphDataset(ParquetDataset):
     """
