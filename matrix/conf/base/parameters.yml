@@ -1,0 +1,21 @@
+drug_types:
+  - biolink:Drug
+  - biolink:SmallMolecule
+
+disease_types:
+  - biolink:Disease
+  - biolink:PhenotypicFeature
+  - biolink:BehavioralFeature
+  - biolink:DiseaseOrPhenotypicFeature
+
+random_state: &_random_state 111
+
+splitter:
+  object: sklearn.model_selection.StratifiedShuffleSplit
+  n_splits: 1 
+  test_size: 0.1
+  random_state: *_random_state
+
+generator:
+  object: matrix.datasets.graph.RandomDrugDiseasePairGenerator
+  random_state: *_random_state

@@ -1,0 +1,54 @@
+_pandas_csv: &_pandas_csv
+  type:  pandas.CSVDataset
+
+_pandas_parquet: &_pandas_parquet
+  type: pandas.ParquetDataset
+
+_kg_dataset: &_kg_dataset
+  type: matrix.datasets.graph.KnowledgeGraphDataset
+  load_args:
+    engine: pyarrow
+    use_nullable_dtypes: True
+
+raw.rtx_kg2.nodes:
+  <<: *_pandas_csv
+  filepath: gs://silc-storage/KG/RTX_KG_v2-7-3/rtx_kg2_nodes.tsv
+  load_args:
+    sep: "\t"
+
+raw.experiments.tp:
+  <<: *_pandas_csv
+  filepath: gs://silc-storage/ground_truth_data/tp_pairs.txt
+  load_args:
+    sep: "\t"
+
+raw.experiments.tn:
+  <<: *_pandas_csv
+  filepath: gs://silc-storage/ground_truth_data/tn_pairs.txt
+  load_args:
+    sep: "\t"
+
+raw.fda_drugs:
+  type: "pickle.PickleDataset"
+  filepath: gs://silc-storage/KG/RTX_KG_v2-7-3/fda_approved_drugs_v1.0_KG2.7.3c.pickle
+
+prm.known_pairs:
+  <<: *_pandas_csv
+  filepath: ${globals:paths.int}/ground_truth_data/tn_pairs.txt
+
+feat.rtx_kg2:
+  <<: *_kg_dataset
+  filepath: ${globals:paths.feat}/rtx_kg2_nodes
+
+model_input.embeddings:
+  type: "pickle.PickleDataset"
+  filepath: gs://silc-storage/embeddings/original_graphsage_emb_dict_reduced.pickle
+
+model_input.splits:
+  <<: *_pandas_csv
+  filepath: ${globals:paths.model_input}/splits.csv
+
+model_input.unkown_pairs:
+  <<: *_pandas_parquet
+  filepath: ${globals:paths.model_input}/unknown_pairs
+
