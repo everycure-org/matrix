@@ -15,6 +15,11 @@ from kedro.io.core import (
 )
 
 class KnowledgeGraph:
+    """
+    Class to represent a knowledge graph.
+
+    NOTE: Provide handover point to Neo4J in the future.
+    """
 
     def __init__(self, nodes: pd.DataFrame) -> None:
         self._nodes = nodes
@@ -26,6 +31,9 @@ class KnowledgeGraph:
     
 
 class DrugDiseasePairGenerator(abc.ABC):
+    """
+    Generator strategy class to represent drug-disease pairs generators.
+    """
 
     def __init__(self, random_state: int) -> None:
         self._random_state = random_state
@@ -38,6 +46,16 @@ class DrugDiseasePairGenerator(abc.ABC):
         known_pairs: pd.DataFrame,
         n_unknown: int
     ) -> pd.DataFrame:
+        """
+        Function to generate drug-disease pairs from the knowledge graph.
+
+        Args:
+            graph: KnowledgeGraph instance.
+            known_pairs: DataFrame with known drug-disease pairs.
+            n_unknown: Number of unknown drug-disease pairs to generate.
+        Returns:
+            DataFrame with unknown drug-disease pairs.
+        """
         pass
 
 
@@ -49,6 +67,9 @@ class RandomDrugDiseasePairGenerator(DrugDiseasePairGenerator):
         known_pairs: pd.DataFrame, 
         n_unknown: int
     ) -> pd.DataFrame:
+        """
+        Function to generate drug-disease pairs using a randomized strategy.
+        """
 
         known_data_set = {(drug, disease) for drug, disease in zip(known_pairs['source'], known_pairs['target'])}
 
@@ -66,6 +87,9 @@ class RandomDrugDiseasePairGenerator(DrugDiseasePairGenerator):
 
 
 class KnowledgeGraphDataset(ParquetDataset):
+    """
+    Dataset adaptor to read KnowledgeGraph using Kedro's dataset functionality.
+    """
 
     def __init__(  # noqa: PLR0913
         self,
