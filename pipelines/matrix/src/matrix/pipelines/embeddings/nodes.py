@@ -57,7 +57,6 @@ def create_model_input_nodes(
     known_pairs: pd.DataFrame,
     generator: DrugDiseasePairGenerator
 ) -> pd.DataFrame:
-    
     return generator.generate(graph, known_pairs, n_unknown=50)
 
 
