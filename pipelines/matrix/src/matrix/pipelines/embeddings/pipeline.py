@@ -44,7 +44,8 @@ def create_pipeline(**kwargs) -> Pipeline:
                     "params:generator"
                 ],
                 outputs="model_input.unkown_pairs",
-                name="create_model_input_nodes"
+                name="create_model_input_nodes",
+                tags=["create-pairs"]
             ),
         ]
     )
