@@ -7,9 +7,12 @@ repos:
       # Run the linter.
       - id: ruff
         args: [ --fix ]
+        exclude: pipelines/matrix/packages
       # Run the formatter.
       - id: ruff-format
+        exclude: pipelines/matrix/packages
   - repo: https://github.com/kynan/nbstripout
     rev: 0.7.1
     hooks:
       - id: nbstripout
+        exclude: pipelines/matrix/packages
