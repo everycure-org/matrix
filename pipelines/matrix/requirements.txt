@@ -7,5 +7,6 @@ kedro-viz>=6.7.0
 notebook
 scikit-learn==1.4.0
 gcsfs==2024.3.1
+pyarrow>=14.0.2 
 
 ./packages/brix.refit-0.5.22-py3-none-any.whl
