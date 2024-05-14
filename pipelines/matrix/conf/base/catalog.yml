@@ -12,25 +12,19 @@ _kg_dataset: &_kg_dataset
 
 raw.rtx_kg2.nodes:
   <<: *_pandas_csv
-  filepath: gs://silc-storage/KG/RTX_KG_v2-7-3/rtx_kg2_nodes.tsv
-  load_args:
-    sep: "\t"
+  filepath: ${globals:paths.raw}/rtx_kg2_nodes.csv
 
 raw.experiments.tp:
   <<: *_pandas_csv
-  filepath: gs://silc-storage/ground_truth_data/tp_pairs.txt
-  load_args:
-    sep: "\t"
+  filepath: ${globals:paths.raw}/tp_pairs.txt
 
 raw.experiments.tn:
   <<: *_pandas_csv
-  filepath: gs://silc-storage/ground_truth_data/tn_pairs.txt
-  load_args:
-    sep: "\t"
+  filepath: ${globals:paths.raw}/tn_pairs.txt
 
 raw.fda_drugs:
   type: "pickle.PickleDataset"
-  filepath: gs://silc-storage/KG/RTX_KG_v2-7-3/fda_approved_drugs_v1.0_KG2.7.3c.pickle
+  filepath: ${globals:paths.raw}/fda_approved_drugs_v1.0_KG2.7.3c.pickle
 
 prm.known_pairs:
   <<: *_pandas_csv

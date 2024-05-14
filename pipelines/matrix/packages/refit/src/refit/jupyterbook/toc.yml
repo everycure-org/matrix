@@ -1,0 +1,6 @@
+chapters:
+  - file: packages/refit/01_individual_decorators.md
+
+
+format: jb-book
+root: packages/refit/README.md
