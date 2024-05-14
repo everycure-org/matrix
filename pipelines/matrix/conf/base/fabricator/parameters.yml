@@ -1,0 +1,13 @@
+fabricator.rtx_kg2:
+  nodes:
+    num_rows: 500
+    columns:
+      id: 
+        type: generate_unique_id
+        prefix: node_
+      category:
+        type: generate_values
+        sample_values:
+          - biolink:Drug
+          - biolink:Disease
+      
