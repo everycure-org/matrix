@@ -41,3 +41,7 @@ jobs:
           git fetch origin main
           # run pre-commit on everything that's different from main
           pre-commit run -s origin/main -o HEAD
+
+      - name: Run pipeline
+        run: |
+          kedro run
