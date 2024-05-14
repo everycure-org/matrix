@@ -33,12 +33,12 @@ def create_pipeline(**kwargs) -> Pipeline:
                 outputs="model_input.splits",
                 name="create_splits",
             ),
-            node(
-                func=nodes.create_model_input_nodes,
-                inputs=["feat.rtx_kg2", "prm.known_pairs", "params:generator"],
-                outputs="model_input.unkown_pairs",
-                name="create_model_input_nodes",
-                tags=["create-pairs"],
-            ),
+            # node(
+            #     func=nodes.create_model_input_nodes,
+            #     inputs=["feat.rtx_kg2", "prm.known_pairs", "params:generator"],
+            #     outputs="model_input.unkown_pairs",
+            #     name="create_model_input_nodes",
+            #     tags=["create-pairs"],
+            # ),
         ]
     )
