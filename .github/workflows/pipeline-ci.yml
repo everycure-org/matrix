@@ -44,4 +44,5 @@ jobs:
 
       - name: Run pipeline
         run: |
+          kedro run -p fabricator
           kedro run
