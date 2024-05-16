@@ -31,13 +31,17 @@ def create_pipeline(**kwargs) -> Pipeline:
             ),
             node(
                 func=nodes.make_splits,
-                inputs=["prm.known_pairs", "params:splitter"],
+                inputs=["prm.known_pairs", "params:modeling.splitter"],
                 outputs="model_input.splits",
                 name="create_splits",
             ),
             node(
                 func=nodes.create_model_input_nodes,
-                inputs=["feat.rtx_kg2", "model_input.splits", "params:generator"],
+                inputs=[
+                    "feat.rtx_kg2",
+                    "model_input.splits",
+                    "params:modeling.generator",
+                ],
                 outputs="model_input.enriched_splits",
                 name="enrich_splits",
             ),
@@ -45,7 +49,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 func=nodes.apply_transformers,
                 inputs=[
                     "model_input.enriched_splits",
-                    "params:transformers",
+                    "params:modeling.transformers",
                 ],
                 outputs="model_input.transformed_splits",
                 name="transform_data",
@@ -54,7 +58,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 func=nodes.train_model,
                 inputs={
                     "data": "model_input.transformed_splits",
-                    "unpack": "params:train_args",
+                    "unpack": "params:modeling.train_args",
                 },
                 outputs="models.model",
                 name="train_model",
