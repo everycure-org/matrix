@@ -32,13 +32,13 @@ def create_pipeline(**kwargs) -> Pipeline:
             node(
                 func=create_pairs,
                 inputs=["raw.rtx_kg2.nodes"],
-                outputs="raw.experiments.tp",
+                outputs="raw.ground_truth.tp",
                 name="create_tp_pairs",
             ),
             node(
                 func=create_pairs,
                 inputs=["raw.rtx_kg2.nodes"],
-                outputs="raw.experiments.tn",
+                outputs="raw.ground_truth.tn",
                 name="create_tn_pairs",
             ),
             # FUTURE: Move this transformation to pipeline
