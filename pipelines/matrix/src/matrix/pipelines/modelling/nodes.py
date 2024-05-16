@@ -151,7 +151,7 @@ def create_model_input_nodes(
     """
 
     # FUTURE: Update the n-unknown
-    generated = generator.generate(graph, splits, n_unknown=50)
+    generated = generator.generate(graph, splits, n_unknown=30)
     generated["split"] = "TRAIN"
 
     return pd.concat([splits, generated], axis=0, ignore_index=True)
