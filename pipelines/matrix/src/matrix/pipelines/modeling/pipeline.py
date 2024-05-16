@@ -23,8 +23,8 @@ def create_pipeline(**kwargs) -> Pipeline:
                 func=nodes.create_prm_pairs,
                 inputs=[
                     "feat.rtx_kg2",
-                    "raw.experiments.tp",
-                    "raw.experiments.tn",
+                    "raw.ground_truth.tp",
+                    "raw.ground_truth.tn",
                 ],
                 outputs="prm.known_pairs",
                 name="create_prm_known_pairs",
