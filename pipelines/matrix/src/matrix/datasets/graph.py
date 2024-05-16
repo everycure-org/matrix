@@ -22,6 +22,7 @@ class KnowledgeGraph:
         # Add type specific indexes
         self._drug_nodes = list(nodes[nodes["is_drug"]]["id"])
         self._disease_nodes = list(nodes[nodes["is_disease"]]["id"])
+        self._embeddings = dict(zip(nodes["id"], nodes["embedding"]))
 
 
 class DrugDiseasePairGenerator(abc.ABC):
@@ -76,9 +77,20 @@ class RandomDrugDiseasePairGenerator(DrugDiseasePairGenerator):
             disease = random.choice(graph._disease_nodes)
 
             if (drug, disease) not in known_data_set:
-                unknown_data.append([drug, disease, 2])
+                unknown_data.append(
+                    [
+                        drug,
+                        graph._embeddings[drug],
+                        disease,
+                        graph._embeddings[disease],
+                        2,
+                    ]
+                )
 
-        return pd.DataFrame(columns=["source", "target", "y"], data=unknown_data)
+        return pd.DataFrame(
+            columns=["source", "source_embedding", "target", "target_embedding", "y"],
+            data=unknown_data,
+        )
 
 
 # TODO: Alexei add negative class and try to run pipeline with it
