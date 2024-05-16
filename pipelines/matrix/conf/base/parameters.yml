@@ -12,7 +12,7 @@ random_state: &_random_state 111
 
 # Defines strategy for splitting the data, should be a sklearn 
 # compatible splitting class.
-splitter:
+modeling.splitter:
   object: sklearn.model_selection.StratifiedShuffleSplit
   n_splits: 1 
   test_size: 0.1
@@ -20,13 +20,13 @@ splitter:
 
 # Defines strategy for generating drug-disease pairs. Should be a
 # class that implements the DrugDiseasePair generator interface.
-generator:
+modeling.generator:
   object: matrix.datasets.graph.RandomDrugDiseasePairGenerator
   random_state: *_random_state
 
 # Defines set of transformers applied to the data prior to model
 # training, each of the should be a sklearn transformer.
-transformers:
+modeling.transformers:
   flat_source_embedding:
     transformer: 
       object: matrix.pipelines.modeling.transformers.FlatArrayTransformer
@@ -42,7 +42,7 @@ transformers:
 
 # Defines estimator used during model training, features can be
 # defined using a regex strategy.
-train_args:
+modeling.train_args:
   estimator:
     object: xgboost.XGBClassifier
     tree_method: hist
