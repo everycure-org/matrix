@@ -26,9 +26,7 @@ def create_pipeline(**kwargs) -> Pipeline:
             node(
                 func=fabricate_datasets,
                 inputs={"fabrication_params": "params:fabricator.rtx_kg2"},
-                outputs={
-                    "nodes": "raw.rtx_kg2.nodes",
-                },
+                outputs={"nodes": "raw.rtx_kg2.nodes", "embeddings": "int.embeddings"},
                 name="fabricate_datasets",
             ),
             node(
