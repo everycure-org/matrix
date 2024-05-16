@@ -220,6 +220,8 @@ def train_model(
     """
     Function to train model on the given data.
 
+    FUTURE: Time + optimize
+
     Args:
         data: Data to train on.
         estimator: sklearn estimator.

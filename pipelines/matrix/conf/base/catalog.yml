@@ -14,11 +14,11 @@ raw.rtx_kg2.nodes:
   <<: *_pandas_csv
   filepath: ${globals:paths.raw}/rtx_kg2_nodes.csv
 
-raw.experiments.tp:
+raw.ground_truth.tp:
   <<: *_pandas_csv
   filepath: ${globals:paths.raw}/tp_pairs.txt
 
-raw.experiments.tn:
+raw.ground_truth.tn:
   <<: *_pandas_csv
   filepath: ${globals:paths.raw}/tn_pairs.txt
 
