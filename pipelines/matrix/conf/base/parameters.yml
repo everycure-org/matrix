@@ -29,13 +29,13 @@ modeling.generator:
 modeling.transformers:
   flat_source_embedding:
     transformer: 
-      object: matrix.pipelines.modeling.transformers.FlatArrayTransformer
+      object: matrix.pipelines.modelling.transformers.FlatArrayTransformer
       prefix: source_
     features:
       - source_embedding
   flat_target_embedding:
     transformer: 
-      object: matrix.pipelines.modeling.transformers.FlatArrayTransformer
+      object: matrix.pipelines.modelling.transformers.FlatArrayTransformer
       prefix: target_
     features:
       - target_embedding
