@@ -1,0 +1,3 @@
+raw.embeddings:
+  type: "pickle.PickleDataset"
+  filepath: gs://silc-storage/embeddings/original_graphsage_emb_dict_reduced.pickle

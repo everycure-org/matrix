@@ -1,0 +1,31 @@
+[build-system]
+requires = [ "setuptools",]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "matrix"
+readme = "README.md"
+dynamic = [ "dependencies", "version",]
+
+[project.scripts]
+matrix = "matrix.__main__:main"
+
+[tool.kedro]
+package_name = "matrix"
+project_name = "matrix"
+kedro_init_version = "0.19.5"
+tools = [ "Data Structure", "Kedro Viz",]
+example_pipeline = "False"
+source_dir = "src"
+
+[project.entry-points."kedro.hooks"]
+
+[tool.setuptools.dynamic.dependencies]
+file = "requirements.txt"
+
+[tool.setuptools.dynamic.version]
+attr = "matrix.__version__"
+
+[tool.setuptools.packages.find]
+where = [ "src",]
+namespaces = false

@@ -1,0 +1,30 @@
+fabricator.rtx_kg2:
+  nodes:
+    num_rows: 500
+    columns:
+      id: 
+        type: generate_unique_id
+        prefix: node_
+      category:
+        type: generate_values
+        sample_values:
+          - biolink:Drug
+          - biolink:Disease
+      # TODO: Update
+      value:
+        type: generate_random_numbers
+        start_range: 100
+        end_range: 1000
+
+  embeddings:
+    columns:
+      id: 
+        type: row_apply
+        list_of_values: [nodes.id]
+        row_func: "lambda *args: args[0]"
+        # resize: True
+        seed: 1
+      embedding:
+        type: generate_random_arrays
+        sample_values: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+        length: 10
