@@ -1,0 +1,32 @@
+title: Refit Docs
+author: QuantumBlack Visual Analytics Limited
+
+#logo: docs/source/pmpx_pkg_banner.png
+
+exclude_patterns:
+  - .pytest_cache
+  - .github
+  - .circleci
+  - README.md
+  - packages/refit/.pytest_cache
+
+version: 2
+
+execute:
+  execute_notebooks: off # or auto or force or cache
+  timeout: 100000
+
+only_build_toc_files: true
+
+sphinx:
+  config:
+    execution_show_tb: True
+
+repository:
+  url: https://github.com/McK-Internal/vertical-w
+  branch: develop
+
+html:
+  use_repository_button: true
+  use_issues_button: true
+  use_edit_page_button: true

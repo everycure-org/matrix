@@ -1,0 +1,15 @@
+tables:
+  - _target_: data_fabricator.v1.core.mock_generator.create_table
+    name: students
+    num_rows: 10
+    columns:
+      enrollment_date:
+        end_dt: "2022-12-31"
+        freq: M
+        _target_: data_fabricator.v1.core.mock_generator.Date
+        start_dt: "2021-01-01"
+      name:
+        _target_: data_fabricator.v1.core.mock_generator.Faker
+        provider: name
+      student_id:
+        _target_: data_fabricator.v1.core.mock_generator.PrimaryKey

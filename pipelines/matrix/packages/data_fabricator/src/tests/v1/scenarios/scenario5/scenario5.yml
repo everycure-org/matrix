@@ -1,0 +1,37 @@
+tables:
+  - _target_: data_fabricator.v1.core.mock_generator.create_table
+    name: stage3_sales
+    num_rows: 100
+    columns:
+      product_cd:
+        _target_: data_fabricator.v1.core.mock_generator.ValuesFromSamples
+        sample_values: ["R03AC02", "R03AC03"]
+      channel_cd:
+        _target_: data_fabricator.v1.core.mock_generator.RowApply
+        list_of_values: stage3_sales.product_cd
+        row_func:
+          _target_: data_fabricator.v1.core.functions.conditional_generate_from_weights
+          _partial_: True
+        row_func_kwargs:
+          dependent_weights:
+            R03AC02:
+              a: 1
+              b: 1
+            R03AC03:
+              c: 4
+              d: 1
+  - _target_: data_fabricator.v1.core.mock_generator.create_table
+    name: channel_concepts
+    columns:
+      channel_description:
+        _target_: data_fabricator.v1.core.mock_generator.RowApply
+        list_of_values: stage3_sales.channel_cd
+        row_func:
+          _target_: data_fabricator.v1.core.functions.conditional_string
+          _partial_: True
+        row_func_kwargs:
+          mapping:
+            a: alpha
+            b: bravo
+            c: charlie
+            d: delta
