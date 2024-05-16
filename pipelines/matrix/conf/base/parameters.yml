@@ -48,6 +48,7 @@ modeling.train_args:
     tree_method: hist
     random_state: *_random_state
   target_col_name: y
+  # NOTE: Alternatively we can use a feature pre-selection step
   features:
     - source_+
     - target_+
