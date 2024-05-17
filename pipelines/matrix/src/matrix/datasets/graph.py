@@ -96,7 +96,7 @@ class JointDrugDiseasePairGenerator(DrugDiseasePairGenerator):
 
 class NegativeDrugDiseasePairGenerator(DrugDiseasePairGenerator):
     def generate(
-        self, graph: KnowledgeGraph, known_pairs: pd.DataFrame, n_unknown: int
+        self, graph: KnowledgeGraph, known_pairs: pd.DataFrame, n_replacements: int
     ) -> pd.DataFrame:
         """
         Function to generate drug-disease pairs using a randomized strategy.
@@ -104,8 +104,7 @@ class NegativeDrugDiseasePairGenerator(DrugDiseasePairGenerator):
         Args:
             graph: KnowledgeGraph instance.
             known_pairs: DataFrame with known drug-disease pairs.
-            n_unknown: Number of unknown drug-disease pairs to generate. If n_unknown is odd,
-                    number of generated pairs will be rounded to nearest even number 
+            n_replacements: Number of drug and disease replacements to make per known positive training pair.  
         Returns:
             DataFrame with unknown drug-disease pairs.
         """
@@ -116,37 +115,31 @@ class NegativeDrugDiseasePairGenerator(DrugDiseasePairGenerator):
         }
 
         # Extract known positive training set
-        train_pairs = known_pairs[known_pairs['split']=='TRAIN']
-        kp_train_pairs = train_pairs[train_pairs['y']==1]
-        kp_train_lst = [
+        kp_train_pairs = known_pairs[(known_pairs['y']==1) & (known_pairs['split']=='TRAIN')]
+        kp_train_set = {
             (drug, disease)
             for drug, disease in zip(kp_train_pairs["source"], kp_train_pairs["target"])
-        ]
+        }
 
         # Generate unknown data
         unknown_data = []
-        idx = 0
-        while len(unknown_data) < n_unknown:
-            if idx < len(kp_train_lst):
-                kp_drug, kp_disease = kp_train_lst[idx]
-            else:
-                raise IndexError("Not enough KP training data")
-            
-            rand_drug = random.choice(graph._drug_nodes)
-            rand_disease = random.choice(graph._disease_nodes)
-
-            if (kp_drug, rand_disease) not in known_data_set and (rand_drug , kp_disease) not in known_data_set:
-                for drug, disease in [(kp_drug, rand_disease), (rand_drug, kp_disease)]:
-                    unknown_data.append(
-                        [
-                            drug,
-                            graph._embeddings[drug],
-                            disease,
-                            graph._embeddings[disease],
-                            2,
-                        ]
-                    )
-                    idx += 1
+        for kp_drug, kp_disease in kp_train_set:
+            unknown_data_tmp = []
+            while len(unknown_data_tmp) < 2*n_replacements:
+                rand_drug = random.choice(graph._drug_nodes)
+                rand_disease = random.choice(graph._disease_nodes)
+                if (kp_drug, rand_disease) not in known_data_set and (rand_drug , kp_disease) not in known_data_set:
+                    for drug, disease in [(kp_drug, rand_disease), (rand_drug, kp_disease)]:
+                        unknown_data_tmp.append(
+                            [
+                                drug,
+                                graph._embeddings[drug],
+                                disease,
+                                graph._embeddings[disease],
+                                2,
+                            ]
+                        )
+            unknown_data += unknown_data_tmp
 
         return pd.DataFrame(
             columns=["source", "source_embedding", "target", "target_embedding", "y"],
