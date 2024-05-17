@@ -150,8 +150,8 @@ def create_model_input_nodes(
         Data with enriched splits.
     """
 
-    # FUTURE: Update the n-unknown
-    generated = generator.generate(graph, splits, n_unknown=30)
+    # TO DO: Add n_replacements (when negative sampling) and n_unknown (when joint sampling) to parameters config file 
+    generated = generator.generate(graph, splits, n_replacements=2)
     generated["split"] = "TRAIN"
 
     return pd.concat([splits, generated], axis=0, ignore_index=True)
