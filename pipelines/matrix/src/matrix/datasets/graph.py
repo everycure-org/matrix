@@ -52,6 +52,11 @@ class DrugDiseasePairGenerator(abc.ABC):
 
 
 class RandomDrugDiseasePairGenerator(DrugDiseasePairGenerator):
+    """
+    A class representing a random drug-disease pair generator using the simple joint
+    distribution strategy, that is, randomly sampling drugs and diseases.
+    """
+
     def __init__(self, random_state: int, n_unknown: int) -> None:
         self._n_unknown = n_unknown
         super().__init__(random_state)
@@ -99,6 +104,11 @@ class RandomDrugDiseasePairGenerator(DrugDiseasePairGenerator):
 
 
 class ReplacementDrugDiseasePairGenerator(DrugDiseasePairGenerator):
+    """
+    A class representing a random drug-disease pair generator using the negative
+    sampling strategy, that is, drug and disease replacements.
+    """
+
     def __init__(self, random_state: int, n_replacements: int) -> None:
         self._n_replacements = n_replacements
         super().__init__(random_state)
