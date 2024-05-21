@@ -1,16 +1,19 @@
 from typing import Any, Dict, List, Union
 import pandas as pd
-from numpy import nan
 
 from sklearn.model_selection._split import _BaseKFold
 from sklearn.impute._base import _BaseImputer
 from sklearn.ensemble._gb import BaseGradientBoosting
-from sklearn.model_selection._search import BaseSearchCV
+from sklearn.base import BaseEstimator, MetaEstimatorMixin
+from sklearn.metrics import f1_score
 
 from refit.v1.core.inject import inject_object
 from refit.v1.core.inline_has_schema import has_schema
 from refit.v1.core.unpack import unpack_params
 from refit.v1.core.make_list_regexable import make_list_regexable
+
+from skopt import gp_minimize
+from skopt.utils import use_named_args
 
 from matrix.datasets.graph import KnowledgeGraph, DrugDiseasePairGenerator
 
@@ -209,45 +212,51 @@ def apply_transformers(
     return data
 
 
-class GaussianSearchCV(BaseSearchCV):
+class GaussianSearch(BaseEstimator, MetaEstimatorMixin):
     def __init__(
-        self,
-        estimator,
-        param_distributions,
-        n_iter=50,
-        scoring=None,
-        n_jobs=None,
-        cv=None,
-        verbose=0,
-        pre_dispatch="2*n_jobs",
-        random_state=None,
-        error_score=nan,
-        return_train_score=False,
-    ):
-        super().__init__(
-            estimator=estimator,
-            param_distributions=param_distributions,
-            n_iter=n_iter,
-            scoring=scoring,
-            n_jobs=n_jobs,
-            cv=cv,
-            verbose=verbose,
-            pre_dispatch=pre_dispatch,
-            random_state=random_state,
-            error_score=error_score,
-            return_train_score=return_train_score,
-        )
+        self, estimator, dimensions, *, splitter: _BaseKFold = None, n_calls: int = 100
+    ) -> None:
+        self._estimator = estimator
+        self._dimensions = dimensions
+        self._splitter = splitter
+        self._n_calls = n_calls
+        super().__init__()
+
+    def fit(self, X, y=None, **params):
+        @use_named_args(self._dimensions)
+        def evaluate_model(**params):
+            train, test = self._splitter.split(X, y)
+            self._estimator.fit(X[train], y[train])
+            return 1.0 - self._estimator.score(X[test], y[test])
+
+        return gp_minimize(evaluate_model, self._dimensions, n_calls=self._n_calls)
+
+    # TODO: Inject
+    @staticmethod
+    def f1_score_df(model, X, y):
+        y_pred = model.predict(X)
+        return f1_score(y_pred, y, average="macro")
 
 
 @unpack_params()
 @inject_object()
+@make_list_regexable(source_df="data", make_regexable="features")
 def tune_parameters(
     data: pd.DataFrame,
     tuner: Any,
     features: List[str],
     target_col_name: str,
+    enable_regex: str = True,
 ) -> Dict:
-    pass
+    mask = data["split"].eq("TRAIN")
+
+    X_train = data.loc[mask, features]
+    y_train = data.loc[mask, target_col_name]
+
+    # Fit tuner
+    tuner.fit(X_train.values, y_train.values)
+
+    return {"a": "b"}
 
 
 @unpack_params()
