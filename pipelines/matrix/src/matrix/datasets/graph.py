@@ -36,7 +36,7 @@ class DrugDiseasePairGenerator(abc.ABC):
 
     @abc.abstractmethod
     def generate(
-        self, graph: KnowledgeGraph, known_pairs: pd.DataFrame, n_unknown: int
+        self, graph: KnowledgeGraph, known_pairs: pd.DataFrame
     ) -> pd.DataFrame:
         """
         Function to generate drug-disease pairs from the knowledge graph.
@@ -52,8 +52,12 @@ class DrugDiseasePairGenerator(abc.ABC):
 
 
 class JointDrugDiseasePairGenerator(DrugDiseasePairGenerator):
+    def __init__(self, random_state: int, n_unknown: int) -> None:
+        self._n_unknown = n_unknown
+        super().__init__(random_state)
+
     def generate(
-        self, graph: KnowledgeGraph, known_pairs: pd.DataFrame, n_unknown: int
+        self, graph: KnowledgeGraph, known_pairs: pd.DataFrame
     ) -> pd.DataFrame:
         """
         Function to generate drug-disease pairs using a joint distribution strategy.
@@ -73,7 +77,7 @@ class JointDrugDiseasePairGenerator(DrugDiseasePairGenerator):
         }
 
         unknown_data = []
-        while len(unknown_data) < n_unknown:
+        while len(unknown_data) < self._n_unknown:
             drug = random.choice(graph._drug_nodes)
             disease = random.choice(graph._disease_nodes)
 
