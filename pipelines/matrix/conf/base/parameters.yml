@@ -12,7 +12,7 @@ random_state: &_random_state 111
 
 # Defines strategy for splitting the data, should be a sklearn 
 # compatible splitting class.
-modeling.splitter:
+modeling.splitter: &_splitter
   object: sklearn.model_selection.StratifiedShuffleSplit
   n_splits: 1 
   test_size: 0.1
@@ -39,6 +39,39 @@ modeling.transformers:
       prefix: target_
     features:
       - target_embedding
+
+modeling.model_tuning_args:
+  tuner:
+    object: matrix.pipelines.modelling.nodes.GaussianSearch
+    estimator:
+      object: xgboost.XGBClassifier
+      tree_method: hist
+      random_state: *_random_state
+    n_calls: 10
+    dimensions:
+      - object: skopt.space.Real
+        name: learning_rate
+        low: 0.01
+        high: 0.5
+      - object: skopt.space.Integer
+        name: max_depth
+        low: 3
+        high: 10
+      - object: skopt.space.Real
+        name: lambda
+        low: 0
+        high: 1
+      - object: skopt.space.Integer
+        name: n_estimators
+        low: 50
+        high: 2500
+    splitter:
+      <<: *_splitter
+  features:
+    - source_+
+    - target_+
+  target_col_name: y
+      
 
 # Defines estimator used during model training, features can be
 # defined using a regex strategy.
