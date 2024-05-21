@@ -107,7 +107,7 @@ class NegativeDrugDiseasePairGenerator(DrugDiseasePairGenerator):
         self, graph: KnowledgeGraph, known_pairs: pd.DataFrame
     ) -> pd.DataFrame:
         """
-        Function to generate drug-disease pairs using a randomized strategy.
+        Function to generate drug-disease pairs using a negative sampling sampling strategy.
 
         Args:
             graph: KnowledgeGraph instance.
