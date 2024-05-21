@@ -113,48 +113,6 @@ class ReplacementDrugDiseasePairGenerator(DrugDiseasePairGenerator):
         self._n_replacements = n_replacements
         super().__init__(random_state)
 
-    @staticmethod
-    def _make_replacements(
-        graph: KnowledgeGraph,
-        kp_drug: str,
-        kp_disease: str,
-        n_replacements: int,
-        known_data_set: set[tuple],
-    ) -> list[str]:
-        """
-        Given a reference drug-disease pair, generates a list of drug-disease pairs
-        by making drug and disease replacements.
-
-        Args:
-            graph: Knowledge graph containing drug and disease nodes from which to sample
-            kp_drug: Reference drug
-            kp_disease: Reference disease
-            n_replacements: Number of replacements for the drug and for the disease
-            known_data_set: Set of drug disease pairs which must not appear in output
-        """
-        unknown_data = []
-        while len(unknown_data) < 2 * n_replacements:
-            rand_drug = random.choice(graph._drug_nodes)
-            rand_disease = random.choice(graph._disease_nodes)
-            if (kp_drug, rand_disease) not in known_data_set and (
-                rand_drug,
-                kp_disease,
-            ) not in known_data_set:
-                for drug, disease in [
-                    (kp_drug, rand_disease),
-                    (rand_drug, kp_disease),
-                ]:
-                    unknown_data.append(
-                        [
-                            drug,
-                            graph._embeddings[drug],
-                            disease,
-                            graph._embeddings[disease],
-                            2,
-                        ]
-                    )
-        return unknown_data
-
     def generate(
         self, graph: KnowledgeGraph, known_pairs: pd.DataFrame
     ) -> pd.DataFrame:
@@ -196,6 +154,48 @@ class ReplacementDrugDiseasePairGenerator(DrugDiseasePairGenerator):
             columns=["source", "source_embedding", "target", "target_embedding", "y"],
             data=unknown_data,
         )
+
+    @staticmethod
+    def _make_replacements(
+        graph: KnowledgeGraph,
+        kp_drug: str,
+        kp_disease: str,
+        n_replacements: int,
+        known_data_set: set[tuple],
+    ) -> list[str]:
+        """
+        Given a reference drug-disease pair, generates a list of drug-disease pairs
+        by making drug and disease replacements.
+
+        Args:
+            graph: Knowledge graph containing drug and disease nodes from which to sample
+            kp_drug: Reference drug
+            kp_disease: Reference disease
+            n_replacements: Number of replacements for the drug and for the disease
+            known_data_set: Set of drug disease pairs which must not appear in output
+        """
+        unknown_data = []
+        while len(unknown_data) < 2 * n_replacements:
+            rand_drug = random.choice(graph._drug_nodes)
+            rand_disease = random.choice(graph._disease_nodes)
+            if (kp_drug, rand_disease) not in known_data_set and (
+                rand_drug,
+                kp_disease,
+            ) not in known_data_set:
+                for drug, disease in [
+                    (kp_drug, rand_disease),
+                    (rand_drug, kp_disease),
+                ]:
+                    unknown_data.append(
+                        [
+                            drug,
+                            graph._embeddings[drug],
+                            disease,
+                            graph._embeddings[disease],
+                            2,
+                        ]
+                    )
+        return unknown_data
 
 
 class KnowledgeGraphDataset(ParquetDataset):
