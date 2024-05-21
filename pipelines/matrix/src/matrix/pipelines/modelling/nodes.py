@@ -1,9 +1,11 @@
 from typing import Any, Dict, List, Union
 import pandas as pd
+from numpy import nan
 
 from sklearn.model_selection._split import _BaseKFold
 from sklearn.impute._base import _BaseImputer
 from sklearn.ensemble._gb import BaseGradientBoosting
+from sklearn.model_selection._search import BaseSearchCV
 
 from refit.v1.core.inject import inject_object
 from refit.v1.core.inline_has_schema import has_schema
@@ -205,6 +207,36 @@ def apply_transformers(
         )
 
     return data
+
+
+class GaussianSearchCV(BaseSearchCV):
+    def __init__(
+        self,
+        estimator,
+        param_distributions,
+        n_iter=50,
+        scoring=None,
+        n_jobs=None,
+        cv=None,
+        verbose=0,
+        pre_dispatch="2*n_jobs",
+        random_state=None,
+        error_score=nan,
+        return_train_score=False,
+    ):
+        super().__init__(
+            estimator=estimator,
+            param_distributions=param_distributions,
+            n_iter=n_iter,
+            scoring=scoring,
+            n_jobs=n_jobs,
+            cv=cv,
+            verbose=verbose,
+            pre_dispatch=pre_dispatch,
+            random_state=random_state,
+            error_score=error_score,
+            return_train_score=return_train_score,
+        )
 
 
 @unpack_params()
