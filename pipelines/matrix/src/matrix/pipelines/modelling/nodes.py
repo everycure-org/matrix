@@ -1,4 +1,4 @@
-from typing import Dict, List, Union
+from typing import Any, Dict, List, Union
 import pandas as pd
 
 from sklearn.model_selection._split import _BaseKFold
@@ -205,6 +205,17 @@ def apply_transformers(
         )
 
     return data
+
+
+@unpack_params()
+@inject_object()
+def tune_parameters(
+    data: pd.DataFrame,
+    tuner: Any,
+    features: List[str],
+    target_col_name: str,
+) -> Dict:
+    pass
 
 
 @unpack_params()
