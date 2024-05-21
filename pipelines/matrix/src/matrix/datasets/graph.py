@@ -65,7 +65,7 @@ class RandomDrugDiseasePairGenerator(DrugDiseasePairGenerator):
         self, graph: KnowledgeGraph, known_pairs: pd.DataFrame
     ) -> pd.DataFrame:
         """
-        Function to generate drug-disease pairs by randomly sampling drugs and diseases.
+        Function to generate drug-disease pairs according to the strategy.
 
         Args:
             graph: KnowledgeGraph instance.
@@ -105,7 +105,7 @@ class RandomDrugDiseasePairGenerator(DrugDiseasePairGenerator):
 
 class ReplacementDrugDiseasePairGenerator(DrugDiseasePairGenerator):
     """
-    A class representing a random drug-disease pair generator using the negative
+    Strategy implementing a random drug-disease pair generator using the negative
     sampling strategy, that is, drug and disease replacements.
     """
 
@@ -117,18 +117,16 @@ class ReplacementDrugDiseasePairGenerator(DrugDiseasePairGenerator):
         self, graph: KnowledgeGraph, known_pairs: pd.DataFrame
     ) -> pd.DataFrame:
         """
-        Function to generate drug-disease pairs using random drug and disease replacements
-        applied to the known positive training set.
+        Function to generate drug-disease pairs according to the strategy.
 
         Args:
             graph: KnowledgeGraph instance.
             known_pairs: DataFrame with known drug-disease pairs.
-            n_replacements: Number of drug and disease replacements to make per known
-            positive training pair.
+            n_unknown: Number of unknown drug-disease pairs to generate.
+
         Returns:
             DataFrame with unknown drug-disease pairs.
         """
-
         known_data_set = {
             (drug, disease)
             for drug, disease in zip(known_pairs["source"], known_pairs["target"])
@@ -166,13 +164,6 @@ class ReplacementDrugDiseasePairGenerator(DrugDiseasePairGenerator):
         """
         Given a reference drug-disease pair, generates a list of drug-disease pairs
         by making drug and disease replacements.
-
-        Args:
-            graph: Knowledge graph containing drug and disease nodes from which to sample
-            kp_drug: Reference drug
-            kp_disease: Reference disease
-            n_replacements: Number of replacements for the drug and for the disease
-            known_data_set: Set of drug disease pairs which must not appear in output
         """
         unknown_data = []
         while len(unknown_data) < 2 * n_replacements:
