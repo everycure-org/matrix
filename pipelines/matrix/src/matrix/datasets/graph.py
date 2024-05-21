@@ -104,7 +104,7 @@ class ReplacementDrugDiseasePairGenerator(DrugDiseasePairGenerator):
         super().__init__(random_state)
 
     @staticmethod
-    def make_replacements(
+    def _make_replacements(
         graph: KnowledgeGraph,
         kp_drug: str,
         kp_disease: str,
@@ -178,7 +178,7 @@ class ReplacementDrugDiseasePairGenerator(DrugDiseasePairGenerator):
         # Generate unknown data
         unknown_data = []
         for kp_drug, kp_disease in kp_train_set:
-            unknown_data += ReplacementDrugDiseasePairGenerator.make_replacements(
+            unknown_data += ReplacementDrugDiseasePairGenerator._make_replacements(
                 graph, kp_drug, kp_disease, self._n_replacements, known_data_set
             )
 
