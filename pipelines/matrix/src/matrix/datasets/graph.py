@@ -51,7 +51,7 @@ class DrugDiseasePairGenerator(abc.ABC):
         ...
 
 
-class JointDrugDiseasePairGenerator(DrugDiseasePairGenerator):
+class RandomDrugDiseasePairGenerator(DrugDiseasePairGenerator):
     def __init__(self, random_state: int, n_unknown: int) -> None:
         self._n_unknown = n_unknown
         super().__init__(random_state)
@@ -60,7 +60,7 @@ class JointDrugDiseasePairGenerator(DrugDiseasePairGenerator):
         self, graph: KnowledgeGraph, known_pairs: pd.DataFrame
     ) -> pd.DataFrame:
         """
-        Function to generate drug-disease pairs using a joint distribution strategy.
+        Function to generate drug-disease pairs by randomly sampling drugs and diseases.
 
         Args:
             graph: KnowledgeGraph instance.
@@ -98,7 +98,7 @@ class JointDrugDiseasePairGenerator(DrugDiseasePairGenerator):
         )
 
 
-class NegativeDrugDiseasePairGenerator(DrugDiseasePairGenerator):
+class ReplacementDrugDiseasePairGenerator(DrugDiseasePairGenerator):
     def __init__(self, random_state: int, n_replacements: int) -> None:
         self._n_replacements = n_replacements
         super().__init__(random_state)
@@ -112,8 +112,8 @@ class NegativeDrugDiseasePairGenerator(DrugDiseasePairGenerator):
         known_data_set: set[tuple],
     ) -> list[str]:
         """
-        Given a reference drug disease pair, generates a list of random drug-disease pairs
-        using the negative sampling strategy.
+        Given a reference drug-disease pair, generates a list of drug-disease pairs
+        by making drug and disease replacements.
 
         Args:
             graph: Knowledge graph containing drug and disease nodes from which to sample
@@ -149,7 +149,8 @@ class NegativeDrugDiseasePairGenerator(DrugDiseasePairGenerator):
         self, graph: KnowledgeGraph, known_pairs: pd.DataFrame
     ) -> pd.DataFrame:
         """
-        Function to generate drug-disease pairs using a negative sampling sampling strategy.
+        Function to generate drug-disease pairs using random drug and disease replacements
+        applied to the known positive training set.
 
         Args:
             graph: KnowledgeGraph instance.
@@ -177,7 +178,7 @@ class NegativeDrugDiseasePairGenerator(DrugDiseasePairGenerator):
         # Generate unknown data
         unknown_data = []
         for kp_drug, kp_disease in kp_train_set:
-            unknown_data += NegativeDrugDiseasePairGenerator.make_replacements(
+            unknown_data += ReplacementDrugDiseasePairGenerator.make_replacements(
                 graph, kp_drug, kp_disease, self._n_replacements, known_data_set
             )
 
