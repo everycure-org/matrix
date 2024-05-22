@@ -1,5 +1,6 @@
 from typing import Any, Dict, List, Union
 import pandas as pd
+import numpy as np
 
 from sklearn.model_selection._split import _BaseKFold
 from sklearn.impute._base import _BaseImputer
@@ -14,6 +15,7 @@ from refit.v1.core.make_list_regexable import make_list_regexable
 
 from skopt import gp_minimize
 from skopt.utils import use_named_args
+from skopt.space.space import Dimension
 
 from matrix.datasets.graph import KnowledgeGraph, DrugDiseasePairGenerator
 
@@ -213,8 +215,18 @@ def apply_transformers(
 
 
 class GaussianSearch(BaseEstimator, MetaEstimatorMixin):
+    """
+    Adaptor class to wrap skopt's gp_minimize
+    into sklearn's BaseEstimator compatible type.
+    """
+
     def __init__(
-        self, estimator, dimensions, *, splitter: _BaseKFold = None, n_calls: int = 100
+        self,
+        estimator: BaseEstimator,
+        dimensions: List[Dimension],
+        *,
+        splitter: _BaseKFold = None,
+        n_calls: int = 100,
     ) -> None:
         self._estimator = estimator
         self._dimensions = dimensions
@@ -225,11 +237,28 @@ class GaussianSearch(BaseEstimator, MetaEstimatorMixin):
     def fit(self, X, y=None, **params):
         @use_named_args(self._dimensions)
         def evaluate_model(**params):
-            train, test = self._splitter.split(X, y)
-            self._estimator.fit(X[train], y[train])
+            # TODO: How do we handle this index? Only uses a iteration now
+            # TODO: Average out in case of k folds
+            for iteration, (train, test) in enumerate(self._splitter.split(X, y)):
+                pass
+                self._estimator.fit(X[train], y[train])
             return 1.0 - self._estimator.score(X[test], y[test])
 
-        return gp_minimize(evaluate_model, self._dimensions, n_calls=self._n_calls)
+        # Minimize objective function
+        result = gp_minimize(evaluate_model, self._dimensions, n_calls=self._n_calls)
+
+        # Extract parameters
+        self.best_params_ = {
+            p.name: self._extract(val) for p, val in zip(self._dimensions, result.x)
+        }
+        return self._estimator
+
+    @staticmethod
+    def _extract(val: Any):
+        if isinstance(val, np.generic):
+            return val.item()
+
+        return val
 
     # TODO: Inject
     @staticmethod
@@ -256,7 +285,10 @@ def tune_parameters(
     # Fit tuner
     tuner.fit(X_train.values, y_train.values)
 
-    return {"a": "b"}
+    return {
+        "object": f"{type(tuner._estimator).__module__}.{type(tuner._estimator).__name__}",
+        **tuner.best_params_,
+    }
 
 
 @unpack_params()
@@ -271,8 +303,6 @@ def train_model(
 ) -> Dict:
     """
     Function to train model on the given data.
-
-    FUTURE: Time + optimize
 
     Args:
         data: Data to train on.

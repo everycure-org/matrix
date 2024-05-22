@@ -63,14 +63,16 @@ def create_pipeline(**kwargs) -> Pipeline:
                 outputs="models.model_params",
                 name="tune_model_parameters",
             ),
-            # node(
-            #     func=nodes.train_model,
-            #     inputs={
-            #         "data": "model_input.transformed_splits",
-            #         "unpack": "params:modeling.train_args",
-            #     },
-            #     outputs="models.model",
-            #     name="train_model",
-            # ),
+            node(
+                func=nodes.train_model,
+                inputs={
+                    "data": "model_input.transformed_splits",
+                    "estimator": "models.model_params",
+                    "features": "params:modeling.model_tuning_args.features",
+                    "target_col_name": "params:modeling.model_tuning_args.target_col_name",
+                },
+                outputs="models.model",
+                name="train_model",
+            ),
         ]
     )
