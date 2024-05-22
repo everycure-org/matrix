@@ -40,6 +40,9 @@ modeling.transformers:
     features:
       - target_embedding
 
+# Defines tuning strategy and estimator to be tuned, tuner should be 
+# a sklearn BaseSearchCV compatible type, estimator should be a 
+# BaseEstimator compatible type.
 modeling.model_tuning_args:
   tuner:
     object: matrix.pipelines.modelling.tuning.GaussianSearch
