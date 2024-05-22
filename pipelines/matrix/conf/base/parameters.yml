@@ -42,7 +42,7 @@ modeling.transformers:
 
 modeling.model_tuning_args:
   tuner:
-    object: matrix.pipelines.modelling.nodes.GaussianSearch
+    object: matrix.pipelines.modelling.tuning.GaussianSearch
     estimator:
       object: xgboost.XGBClassifier
       tree_method: hist
@@ -67,7 +67,7 @@ modeling.model_tuning_args:
         low: 50
         high: 2500
     scoring: 
-      object: matrix.pipelines.modelling.nodes.f1_score_df
+      object: matrix.pipelines.modelling.tuning.f1_score_df
     splitter:
       <<: *_splitter
   features:
