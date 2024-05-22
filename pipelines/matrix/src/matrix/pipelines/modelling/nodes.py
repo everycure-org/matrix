@@ -292,6 +292,18 @@ def tune_parameters(
     target_col_name: str,
     enable_regex: str = True,
 ) -> Dict:
+    """
+    Function to apply hyperparameter tuning of the given tuner on the
+    given dataset.
+
+    Args:
+        data: Data to tune on.
+        tuner: Tuner object.
+        features: List of features, may be regex specified.
+        target_col_name: Target column name.
+    Returns:
+        Refit compatible dictionary of best parameters.
+    """
     mask = data["split"].eq("TRAIN")
 
     X_train = data.loc[mask, features]
