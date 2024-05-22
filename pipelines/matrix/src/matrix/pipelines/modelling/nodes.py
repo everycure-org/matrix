@@ -261,6 +261,8 @@ def train_model(
         estimator: sklearn estimator.
         features: List of features, may be regex specified.
         target_col_name: Target column name.
+    Returns:
+        Fitted model.
     """
 
     mask = data["split"].eq("TRAIN")
