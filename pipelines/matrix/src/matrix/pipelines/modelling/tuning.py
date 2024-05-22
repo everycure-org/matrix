@@ -69,8 +69,11 @@ class GaussianSearch(BaseEstimator, MetaEstimatorMixin):
             and scoring functions. When the splitter applies kfold splitting,
             the scores are averaged over the folds.
             """
+
+            self._estimator.set_params(**params)
+
             scores = []
-            for _, (train, test) in enumerate(self._splitter.split(X, y)):
+            for train, test in self._splitter.split(X, y):
                 self._estimator.fit(X[train], y[train])
                 scores.append(self._scoring(self._estimator, X[test], y[test]))
 
