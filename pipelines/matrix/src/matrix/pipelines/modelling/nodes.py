@@ -214,58 +214,72 @@ def apply_transformers(
     return data
 
 
+def f1_score_df(model: BaseEstimator, X, y):
+    y_pred = model.predict(X)
+    return f1_score(y_pred, y, average="macro")
+
+
 class GaussianSearch(BaseEstimator, MetaEstimatorMixin):
     """
-    Adaptor class to wrap skopt's gp_minimize
-    into sklearn's BaseEstimator compatible type.
+    Adaptor class to wrap skopt's gp_minimize into sklearn's BaseEstimator compatible type.
     """
 
     def __init__(
         self,
         estimator: BaseEstimator,
         dimensions: List[Dimension],
+        scoring: callable,
         *,
         splitter: _BaseKFold = None,
         n_calls: int = 100,
     ) -> None:
         self._estimator = estimator
         self._dimensions = dimensions
+        self._scoring = scoring
         self._splitter = splitter
         self._n_calls = n_calls
         super().__init__()
 
     def fit(self, X, y=None, **params):
+        """
+        Function to tune the hyperparameters of the estimator.
+
+        Args:
+            X: Feature values
+            y: Target values
+        Returns:
+            Fitted estimator.
+        """
+
         @use_named_args(self._dimensions)
         def evaluate_model(**params):
-            # TODO: How do we handle this index? Only uses a iteration now
-            # TODO: Average out in case of k folds
-            for iteration, (train, test) in enumerate(self._splitter.split(X, y)):
-                pass
+            """
+            Function to evaluate model using the given splitter
+            and scoring functions. When the splitter applies kfold splitting,
+            the scores are averaged over the folds.
+            """
+            scores = []
+            for _, (train, test) in enumerate(self._splitter.split(X, y)):
                 self._estimator.fit(X[train], y[train])
-            return 1.0 - self._estimator.score(X[test], y[test])
+                scores.append(self._scoring(self._estimator, X[test], y[test]))
 
-        # Minimize objective function
+            return 1.0 - np.average(scores)
+
         result = gp_minimize(evaluate_model, self._dimensions, n_calls=self._n_calls)
-
-        # Extract parameters
         self.best_params_ = {
             param.name: self._extract(val)
             for param, val in zip(self._dimensions, result.x)
         }
+
         return self._estimator
 
     @staticmethod
     def _extract(val: Any):
+        """Helper function to extract items from numpy objects"""
         if isinstance(val, np.generic):
             return val.item()
 
         return val
-
-    # TODO: Inject
-    @staticmethod
-    def f1_score_df(model, X, y):
-        y_pred = model.predict(X)
-        return f1_score(y_pred, y, average="macro")
 
 
 @unpack_params()
