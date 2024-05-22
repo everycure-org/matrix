@@ -10,6 +10,7 @@ gcsfs==2024.3.1
 pyarrow>=14.0.2 
 xgboost
 scikit-optimize
+matplotlib
 
 ./packages/data_fabricator
 ./packages/refit
