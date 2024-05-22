@@ -66,6 +66,8 @@ modeling.model_tuning_args:
         name: n_estimators
         low: 50
         high: 2500
+    scoring: 
+      object: matrix.pipelines.modelling.nodes.f1_score_df
     splitter:
       <<: *_splitter
   features:
