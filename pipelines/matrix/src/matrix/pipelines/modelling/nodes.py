@@ -249,7 +249,8 @@ class GaussianSearch(BaseEstimator, MetaEstimatorMixin):
 
         # Extract parameters
         self.best_params_ = {
-            p.name: self._extract(val) for p, val in zip(self._dimensions, result.x)
+            param.name: self._extract(val)
+            for param, val in zip(self._dimensions, result.x)
         }
         return self._estimator
 
