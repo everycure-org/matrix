@@ -47,6 +47,7 @@ modeling.model_tuning_args:
       object: xgboost.XGBClassifier
       tree_method: hist
       random_state: *_random_state
+      # Question: Can we, e.g., define learning rate here as starting point?
     n_calls: 10
     dimensions:
       - object: skopt.space.Real
@@ -71,17 +72,3 @@ modeling.model_tuning_args:
     - source_+
     - target_+
   target_col_name: y
-      
-
-# Defines estimator used during model training, features can be
-# defined using a regex strategy.
-modeling.train_args:
-  estimator:
-    object: xgboost.XGBClassifier
-    tree_method: hist
-    random_state: *_random_state
-  target_col_name: y
-  # NOTE: Alternatively we can use a feature pre-selection step
-  features:
-    - source_+
-    - target_+
