@@ -52,6 +52,9 @@ class GaussianSearch(BaseEstimator, MetaEstimatorMixin):
         """
         Function to tune the hyperparameters of the estimator.
 
+        WARNING: Currently returns the SciPy's OptimizeResult object,
+        which is not fully compatible with sklearns' BaseEstimator fit method.
+
         Args:
             X: Feature values
             y: Target values
@@ -73,13 +76,15 @@ class GaussianSearch(BaseEstimator, MetaEstimatorMixin):
 
             return 1.0 - np.average(scores)
 
-        result = gp_minimize(evaluate_model, self._dimensions, n_calls=self._n_calls)
+        self.result = gp_minimize(
+            evaluate_model, self._dimensions, n_calls=self._n_calls
+        )
         self.best_params_ = {
             param.name: self._extract(val)
-            for param, val in zip(self._dimensions, result.x)
+            for param, val in zip(self._dimensions, self.result.x)
         }
 
-        return self._estimator
+        return self.result
 
     @staticmethod
     def _extract(val: Any):

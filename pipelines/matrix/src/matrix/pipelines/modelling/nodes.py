@@ -1,9 +1,11 @@
-from typing import Any, Dict, List, Union
+from typing import Any, Dict, List, Union, Tuple
 import pandas as pd
 
 from sklearn.model_selection._split import _BaseKFold
 from sklearn.impute._base import _BaseImputer
 from sklearn.ensemble._gb import BaseGradientBoosting
+
+from skopt.plots import plot_convergence
 
 from refit.v1.core.inject import inject_object
 from refit.v1.core.inline_has_schema import has_schema
@@ -216,7 +218,7 @@ def tune_parameters(
     features: List[str],
     target_col_name: str,
     enable_regex: str = True,
-) -> Dict:
+) -> Tuple[Dict,]:
     """
     Function to apply hyperparameter tuning of the given tuner on the
     given dataset.
@@ -235,12 +237,12 @@ def tune_parameters(
     y_train = data.loc[mask, target_col_name]
 
     # Fit tuner
-    tuner.fit(X_train.values, y_train.values)
+    result = tuner.fit(X_train.values, y_train.values)
 
     return {
         "object": f"{type(tuner._estimator).__module__}.{type(tuner._estimator).__name__}",
         **tuner.best_params_,
-    }
+    }, plot_convergence(result).figure
 
 
 @unpack_params()
