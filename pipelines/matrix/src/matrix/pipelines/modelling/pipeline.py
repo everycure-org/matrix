@@ -60,7 +60,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                     "data": "model_input.transformed_splits",
                     "unpack": "params:modeling.model_tuning_args",
                 },
-                outputs="models.model_params",
+                outputs=["models.model_params", "reporing.tuning_convergence_plot"],
                 name="tune_model_parameters",
             ),
             node(
