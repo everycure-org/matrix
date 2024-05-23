@@ -1,4 +1,4 @@
-from typing import Any, List
+from typing import List
 
 import numpy as np
 
@@ -88,16 +88,7 @@ class GaussianSearch(BaseEstimator, MetaEstimatorMixin):
             evaluate_model, self._dimensions, n_calls=self._n_calls
         )
         self.best_params_ = {
-            param.name: self._extract(val)
-            for param, val in zip(self._dimensions, self.result.x)
+            param.name: val for param, val in zip(self._dimensions, self.result.x)
         }
 
         return self.result
-
-    @staticmethod
-    def _extract(val: Any):
-        """Helper function to extract items from numpy objects"""
-        if isinstance(val, np.generic):
-            return val.item()
-
-        return val
