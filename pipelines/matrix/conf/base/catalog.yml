@@ -54,6 +54,11 @@ models.model:
   type: pickle.PickleDataset
   filepath: ${globals:paths.models}/model.pickle
 
+
+model_output.predictions:
+  <<: *_pandas_parquet
+  filepath: ${globals:paths.model_output}/predictions
+
 reporting.tuning_convergence_plot:
   type: matplotlib.MatplotlibWriter
   filepath: ${globals:paths.reporting}/convergence_plot.png

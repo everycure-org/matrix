@@ -275,8 +275,29 @@ def train_model(
     return estimator.fit(X_train.values, y_train.values)
 
 
+@inject_object()
+@make_list_regexable(source_df="data", make_regexable="features")
 def get_model_predictions(
     data: pd.DataFrame,
     estimator: BaseEstimator,
+    features: List[str],
+    target_col_name: str,
+    prediction_suffix: str = "_pred",
+    enable_regex: str = True,
 ) -> pd.DataFrame:
-    pass
+    """
+    Function to run model predictions on input data.
+
+    Args:
+        data: Data to predict on.
+        estimator: sklearn estimator.
+        features: List of features, may be regex specified.
+        target_col_name: Target column name.
+        prediction_suffix: Suffix to add to the prediction column, defaults to '_pred'.
+    Returns:
+        Data with predictions.
+    """
+
+    data[target_col_name + prediction_suffix] = estimator.predict(data[features].values)
+
+    return data
