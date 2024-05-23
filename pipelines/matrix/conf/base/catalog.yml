@@ -54,7 +54,6 @@ models.model:
   type: pickle.PickleDataset
   filepath: ${globals:paths.models}/model.pickle
 
-
 model_output.predictions:
   <<: *_pandas_parquet
   filepath: ${globals:paths.model_output}/predictions
