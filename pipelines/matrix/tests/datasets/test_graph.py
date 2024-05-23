@@ -35,11 +35,13 @@ def known_pairs_fixture() -> pd.DataFrame:
 
 def test_random_drug_disease_pair_generator(graph, known_pairs):
     # Given a random drug disease pair generator
-    generator = RandomDrugDiseasePairGenerator(random_state=42, n_unknown=1)
+    generator = RandomDrugDiseasePairGenerator(random_state=42, n_unknown=2)
 
     # When generating unknown pairs
     unknown = generator.generate(graph, known_pairs)
 
-    # Then set of unknown pairs generated, distinct from known pairs
-    print(unknown)
-    assert False
+    # Then set of unknown pairs generated, where generated pairs
+    # are distinct from known pairs and are always (drug, disease) pairs.
+    assert pd.merge(known_pairs, unknown, how="inner", on=["source", "target"]).empty
+    assert set(unknown["source"].to_list()).issubset(graph._drug_nodes)
+    assert set(unknown["target"].to_list()).issubset(graph._disease_nodes)
