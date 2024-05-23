@@ -32,13 +32,13 @@ modelling.transformers:
       object: matrix.pipelines.modelling.transformers.FlatArrayTransformer
       prefix: source_
     features:
-      - source_embedding
+      - source_embedding # becomes n columns, named source_0, source_1, etc
   flat_target_embedding:
     transformer: 
       object: matrix.pipelines.modelling.transformers.FlatArrayTransformer
       prefix: target_
     features:
-      - target_embedding
+      - target_embedding # becomes n columns, named target_0, target_1, etc
 
 # Defines tuning strategy and estimator to be tuned, tuner should be 
 # a sklearn BaseSearchCV compatible type, estimator should be a 
@@ -70,10 +70,10 @@ modelling.model_tuning_args:
         low: 50
         high: 2500
     scoring: 
-      object: matrix.pipelines.modelling.tuning.f1_score_df
+      object: matrix.pipelines.modelling.tuning.f1_score_
     splitter:
       <<: *_splitter
-  features:
+  features: # Features use regex, source_0, source_1, .., target_0, target_1
     - source_+
     - target_+
   target_col_name: y
