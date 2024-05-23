@@ -36,7 +36,7 @@ class DrugDiseasePairGenerator(abc.ABC):
 
     @abc.abstractmethod
     def generate(
-        self, graph: KnowledgeGraph, known_pairs: pd.DataFrame, n_unknown: int
+        self, graph: KnowledgeGraph, known_pairs: pd.DataFrame
     ) -> pd.DataFrame:
         """
         Function to generate drug-disease pairs from the knowledge graph.
@@ -44,7 +44,6 @@ class DrugDiseasePairGenerator(abc.ABC):
         Args:
             graph: KnowledgeGraph instance.
             known_pairs: DataFrame with known drug-disease pairs.
-            n_unknown: Number of unknown drug-disease pairs to generate.
         Returns:
             DataFrame with unknown drug-disease pairs.
         """
@@ -52,16 +51,27 @@ class DrugDiseasePairGenerator(abc.ABC):
 
 
 class RandomDrugDiseasePairGenerator(DrugDiseasePairGenerator):
+    """
+    Strategy implementing a drug-disease pair generator using randomly sampled drugs and diseases.
+
+    Args:
+        random_state: Random seed.
+        n_unknown: Number of unknown drug-disease pairs to generate.
+    """
+
+    def __init__(self, random_state: int, n_unknown: int) -> None:
+        self._n_unknown = n_unknown
+        super().__init__(random_state)
+
     def generate(
-        self, graph: KnowledgeGraph, known_pairs: pd.DataFrame, n_unknown: int
+        self, graph: KnowledgeGraph, known_pairs: pd.DataFrame
     ) -> pd.DataFrame:
         """
-        Function to generate drug-disease pairs using a randomized strategy.
+        Function to generate drug-disease pairs according to the strategy.
 
         Args:
             graph: KnowledgeGraph instance.
             known_pairs: DataFrame with known drug-disease pairs.
-            n_unknown: Number of unknown drug-disease pairs to generate.
         Returns:
             DataFrame with unknown drug-disease pairs.
         """
@@ -72,7 +82,7 @@ class RandomDrugDiseasePairGenerator(DrugDiseasePairGenerator):
         }
 
         unknown_data = []
-        while len(unknown_data) < n_unknown:
+        while len(unknown_data) < self._n_unknown:
             drug = random.choice(graph._drug_nodes)
             disease = random.choice(graph._disease_nodes)
 
@@ -93,7 +103,91 @@ class RandomDrugDiseasePairGenerator(DrugDiseasePairGenerator):
         )
 
 
-# TODO: Alexei add negative class and try to run pipeline with it
+class ReplacementDrugDiseasePairGenerator(DrugDiseasePairGenerator):
+    """
+    Strategy implementing a drug-disease pair generator using random drug and disease replacements.
+
+    Args:
+        random_state: Random seed.
+        n_replacements: Number of drug and disease replacements per known positive pair.
+    """
+
+    def __init__(self, random_state: int, n_replacements: int) -> None:
+        self._n_replacements = n_replacements
+        super().__init__(random_state)
+
+    def generate(
+        self, graph: KnowledgeGraph, known_pairs: pd.DataFrame
+    ) -> pd.DataFrame:
+        """
+        Function to generate drug-disease pairs according to the strategy.
+
+        Args:
+            graph: KnowledgeGraph instance.
+            known_pairs: DataFrame with known drug-disease pairs.
+        Returns:
+            DataFrame with unknown drug-disease pairs.
+        """
+        known_data_set = {
+            (drug, disease)
+            for drug, disease in zip(known_pairs["source"], known_pairs["target"])
+        }
+
+        # Extract known positive training set
+        kp_train_pairs = known_pairs[
+            (known_pairs["y"] == 1) & (known_pairs["split"] == "TRAIN")
+        ]
+        kp_train_set = {
+            (drug, disease)
+            for drug, disease in zip(kp_train_pairs["source"], kp_train_pairs["target"])
+        }
+
+        # Generate unknown data
+        unknown_data = []
+        for kp_drug, kp_disease in kp_train_set:
+            unknown_data += ReplacementDrugDiseasePairGenerator._make_replacements(
+                graph, kp_drug, kp_disease, self._n_replacements, known_data_set
+            )
+
+        return pd.DataFrame(
+            columns=["source", "source_embedding", "target", "target_embedding", "y"],
+            data=unknown_data,
+        )
+
+    @staticmethod
+    def _make_replacements(
+        graph: KnowledgeGraph,
+        kp_drug: str,
+        kp_disease: str,
+        n_replacements: int,
+        known_data_set: set[tuple],
+    ) -> list[str]:
+        """
+        Given a reference drug-disease pair, generates a list of drug-disease pairs
+        by making drug and disease replacements.
+        """
+        unknown_data = []
+        while len(unknown_data) < 2 * n_replacements:
+            rand_drug = random.choice(graph._drug_nodes)
+            rand_disease = random.choice(graph._disease_nodes)
+            if (kp_drug, rand_disease) not in known_data_set and (
+                rand_drug,
+                kp_disease,
+            ) not in known_data_set:
+                for drug, disease in [
+                    (kp_drug, rand_disease),
+                    (rand_drug, kp_disease),
+                ]:
+                    unknown_data.append(
+                        [
+                            drug,
+                            graph._embeddings[drug],
+                            disease,
+                            graph._embeddings[disease],
+                            2,
+                        ]
+                    )
+        return unknown_data
 
 
 class KnowledgeGraphDataset(ParquetDataset):

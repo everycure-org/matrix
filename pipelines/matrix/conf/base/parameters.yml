@@ -21,8 +21,15 @@ modeling.splitter:
 # Defines strategy for generating drug-disease pairs. Should be a
 # class that implements the DrugDiseasePair generator interface.
 modeling.generator:
-  object: matrix.datasets.graph.RandomDrugDiseasePairGenerator
+  object: matrix.datasets.graph.ReplacementDrugDiseasePairGenerator
   random_state: *_random_state
+  n_replacements: 2
+
+# Alternatively
+#modeling.generator:
+#  object: matrix.datasets.graph.RandomDrugDiseasePairGenerator
+#  random_state: *_random_state
+#  n_unknown: 100
 
 # Defines set of transformers applied to the data prior to model
 # training, each of the should be a sklearn transformer.
