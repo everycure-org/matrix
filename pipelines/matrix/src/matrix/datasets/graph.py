@@ -44,7 +44,6 @@ class DrugDiseasePairGenerator(abc.ABC):
         Args:
             graph: KnowledgeGraph instance.
             known_pairs: DataFrame with known drug-disease pairs.
-            n_unknown: Number of unknown drug-disease pairs to generate.
         Returns:
             DataFrame with unknown drug-disease pairs.
         """
@@ -54,6 +53,10 @@ class DrugDiseasePairGenerator(abc.ABC):
 class RandomDrugDiseasePairGenerator(DrugDiseasePairGenerator):
     """
     Strategy implementing a drug-disease pair generator using randomly sampled drugs and diseases.
+
+    Args:
+        random_state: Random seed.
+        n_unknown: Number of unknown drug-disease pairs to generate.
     """
 
     def __init__(self, random_state: int, n_unknown: int) -> None:
@@ -69,8 +72,6 @@ class RandomDrugDiseasePairGenerator(DrugDiseasePairGenerator):
         Args:
             graph: KnowledgeGraph instance.
             known_pairs: DataFrame with known drug-disease pairs.
-            n_unknown: Number of unknown drug-disease pairs to generate.
-
         Returns:
             DataFrame with unknown drug-disease pairs.
         """
@@ -105,6 +106,10 @@ class RandomDrugDiseasePairGenerator(DrugDiseasePairGenerator):
 class ReplacementDrugDiseasePairGenerator(DrugDiseasePairGenerator):
     """
     Strategy implementing a drug-disease pair generator using random drug and disease replacements.
+
+    Args:
+        random_state: Random seed.
+        n_replacements: Number of drug and disease replacements per known positive pair.
     """
 
     def __init__(self, random_state: int, n_replacements: int) -> None:
@@ -120,7 +125,6 @@ class ReplacementDrugDiseasePairGenerator(DrugDiseasePairGenerator):
         Args:
             graph: KnowledgeGraph instance.
             known_pairs: DataFrame with known drug-disease pairs.
-            n_unknown: Number of unknown drug-disease pairs to generate.
 
         Returns:
             DataFrame with unknown drug-disease pairs.
