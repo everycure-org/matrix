@@ -33,7 +33,9 @@ def known_pairs_fixture() -> pd.DataFrame:
     )
 
 
-def test_random_drug_disease_pair_generator(graph, known_pairs):
+def test_random_drug_disease_pair_generator(
+    graph: KnowledgeGraph, known_pairs: pd.DataFrame
+):
     # Given a random drug disease pair generator
     generator = RandomDrugDiseasePairGenerator(random_state=42, n_unknown=2)
 
