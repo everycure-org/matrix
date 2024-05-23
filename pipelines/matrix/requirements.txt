@@ -9,6 +9,7 @@ scikit-learn==1.4.0
 gcsfs==2024.3.1
 pyarrow>=14.0.2 
 xgboost
+pytest
 
 ./packages/data_fabricator
 ./packages/refit
