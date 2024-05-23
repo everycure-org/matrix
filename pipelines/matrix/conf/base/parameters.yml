@@ -70,7 +70,10 @@ modelling.model_tuning_args:
         low: 50
         high: 2500
     scoring: 
-      object: matrix.pipelines.modelling.tuning.f1_score_
+        object: matrix.pipelines.modelling.utils.partial_
+        func:
+          object: sklearn.metrics.f1_score
+        average: macro
     splitter:
       <<: *_splitter
   features: # Features use regex, source_0, source_1, .., target_0, target_1

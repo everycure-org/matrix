@@ -3,28 +3,12 @@ from typing import List
 import numpy as np
 
 from sklearn.base import BaseEstimator, MetaEstimatorMixin
-from sklearn.metrics import f1_score
 
 from skopt import gp_minimize
 from skopt.utils import use_named_args
 from skopt.space.space import Dimension
 
 from sklearn.model_selection._split import _BaseKFold
-
-
-def f1_score_(model: BaseEstimator, X, y, **kwargs):
-    """
-    Function to calculate the f1 score of the model on the given data.
-
-    Args:
-        model: Model to evaluate.
-        X: Feature values
-        y: Target values
-    Returns:
-        F1 score of the model.
-    """
-    y_pred = model.predict(X)
-    return f1_score(y_pred, y, average="macro")
 
 
 class GaussianSearch(BaseEstimator, MetaEstimatorMixin):
@@ -80,7 +64,8 @@ class GaussianSearch(BaseEstimator, MetaEstimatorMixin):
             scores = []
             for train, test in self._splitter.split(X, y):
                 self._estimator.fit(X[train], y[train])
-                scores.append(self._scoring(self._estimator, X[test], y[test]))
+                y_pred = self._estimator.predict(X[test])
+                scores.append(self._scoring(y_pred, y[test]))
 
             return 1.0 - np.average(scores)
 
