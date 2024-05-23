@@ -74,5 +74,15 @@ def create_pipeline(**kwargs) -> Pipeline:
                 outputs="models.model",
                 name="train_model",
             ),
+            node(
+                func=nodes.get_model_predictions,
+                inputs={
+                    "data": "model_input.transformed_splits",
+                    "estimator": "models.model",
+                    "features": "params:modelling.model_tuning_args.features",
+                    "target_col_name": "params:modelling.model_tuning_args.target_col_name",
+                },
+                outputs="model_output.predictions",
+            ),
         ]
     )
