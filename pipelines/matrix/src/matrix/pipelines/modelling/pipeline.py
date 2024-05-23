@@ -83,6 +83,17 @@ def create_pipeline(**kwargs) -> Pipeline:
                     "target_col_name": "params:modelling.model_tuning_args.target_col_name",
                 },
                 outputs="model_output.predictions",
+                name="get_model_predictions",
+            ),
+            node(
+                func=nodes.get_model_performance,
+                inputs={
+                    "data": "model_output.predictions",
+                    "metrics": "params:modelling.metrics",
+                    "target_col_name": "params:modelling.model_tuning_args.target_col_name",
+                },
+                outputs="reporting.metrics",
+                name="get_model_performance",
             ),
         ]
     )

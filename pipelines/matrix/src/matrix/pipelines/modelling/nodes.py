@@ -1,5 +1,6 @@
 from typing import Any, Dict, List, Union, Tuple
 import pandas as pd
+import json
 
 from sklearn.model_selection._split import _BaseKFold
 from sklearn.impute._base import _BaseImputer
@@ -239,10 +240,15 @@ def tune_parameters(
     # Fit tuner
     result = tuner.fit(X_train.values, y_train.values)
 
-    return {
-        "object": f"{type(tuner._estimator).__module__}.{type(tuner._estimator).__name__}",
-        **tuner.best_params_,
-    }, plot_convergence(result).figure
+    return json.loads(
+        json.dumps(
+            {
+                "object": f"{type(tuner._estimator).__module__}.{type(tuner._estimator).__name__}",
+                **tuner.best_params_,
+            },
+            default=int,
+        )
+    ), plot_convergence(result).figure
 
 
 @unpack_params()
@@ -301,3 +307,39 @@ def get_model_predictions(
     data[target_col_name + prediction_suffix] = estimator.predict(data[features].values)
 
     return data
+
+
+@inject_object()
+def get_model_performance(
+    data: pd.DataFrame,
+    metrics: List[callable],
+    target_col_name: str,
+    prediction_suffix: str = "_pred",
+) -> Dict:
+    """
+    Function to evaluate model performance.
+
+    Args:
+        data: Data to evaluate.
+        metrics: List of callable metrics.
+        target_col_name: Target column name.
+        prediction_suffix: Suffix to add to the prediction column, defaults to '_pred'.
+    Returns:
+        Dictionary containing report
+    """
+
+    report = {}
+
+    for metric in metrics:
+        for split in ["TEST", "TRAIN"]:
+            split_index = data["split"].eq(split)
+            y_true = data.loc[split_index, target_col_name]
+            y_prediction = data.loc[split_index, target_col_name + prediction_suffix]
+
+            # Execute metric
+            # FUTURE: This currently mergers the unknown and known classes
+            report[f"{split.lower()}_{metric.__name__}"] = metric(
+                y_true == 1, y_prediction == 1
+            ).item()
+
+    return json.loads(json.dumps(report))
