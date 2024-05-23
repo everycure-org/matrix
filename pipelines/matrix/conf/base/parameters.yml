@@ -12,7 +12,7 @@ random_state: &_random_state 111
 
 # Defines strategy for splitting the data, should be a sklearn 
 # compatible splitting class.
-modeling.splitter: &_splitter
+modelling.splitter: &_splitter
   object: sklearn.model_selection.StratifiedShuffleSplit
   n_splits: 1 
   test_size: 0.1
@@ -20,13 +20,13 @@ modeling.splitter: &_splitter
 
 # Defines strategy for generating drug-disease pairs. Should be a
 # class that implements the DrugDiseasePair generator interface.
-modeling.generator:
+modelling.generator:
   object: matrix.datasets.graph.RandomDrugDiseasePairGenerator
   random_state: *_random_state
 
 # Defines set of transformers applied to the data prior to model
 # training, each of the should be a sklearn transformer.
-modeling.transformers:
+modelling.transformers:
   flat_source_embedding:
     transformer: 
       object: matrix.pipelines.modelling.transformers.FlatArrayTransformer
@@ -43,7 +43,7 @@ modeling.transformers:
 # Defines tuning strategy and estimator to be tuned, tuner should be 
 # a sklearn BaseSearchCV compatible type, estimator should be a 
 # BaseEstimator compatible type.
-modeling.model_tuning_args:
+modelling.model_tuning_args:
   tuner:
     object: matrix.pipelines.modelling.tuning.GaussianSearch
     estimator:

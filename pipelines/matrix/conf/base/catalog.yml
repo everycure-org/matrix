@@ -54,6 +54,6 @@ models.model:
   type: pickle.PickleDataset
   filepath: ${globals:paths.models}/model.pickle
 
-reporing.tuning_convergence_plot:
+reporting.tuning_convergence_plot:
   type: matplotlib.MatplotlibWriter
   filepath: ${globals:paths.reporting}/convergence_plot.png
