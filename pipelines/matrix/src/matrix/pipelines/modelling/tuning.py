@@ -12,7 +12,7 @@ from skopt.space.space import Dimension
 from sklearn.model_selection._split import _BaseKFold
 
 
-def f1_score_df(model: BaseEstimator, X, y):
+def f1_score_(model: BaseEstimator, X, y, **kwargs):
     """
     Function to calculate the f1 score of the model on the given data.
 
@@ -68,6 +68,11 @@ class GaussianSearch(BaseEstimator, MetaEstimatorMixin):
             Function to evaluate model using the given splitter
             and scoring functions. When the splitter applies kfold splitting,
             the scores are averaged over the folds.
+
+            FUTURE: Expand invocation of scoring function to inject additional
+                columns of the input dataframe, e.g., id's of the drug/disease to
+                compute more elaborate metrics, e.g., MRR with synthesized negatives,
+                without including these columns as features in the trained model.
             """
 
             self._estimator.set_params(**params)

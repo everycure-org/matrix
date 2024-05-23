@@ -220,8 +220,8 @@ def tune_parameters(
     enable_regex: str = True,
 ) -> Tuple[Dict,]:
     """
-    Function to apply hyperparameter tuning of the given tuner on the
-    given dataset.
+    Function to apply hyperparameter tuning of the given tuner strategy
+    on the given dataset.
 
     Args:
         data: Data to tune on.
