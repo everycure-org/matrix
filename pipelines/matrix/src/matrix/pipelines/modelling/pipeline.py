@@ -31,7 +31,7 @@ def create_pipeline(**kwargs) -> Pipeline:
             ),
             node(
                 func=nodes.make_splits,
-                inputs=["prm.known_pairs", "params:modeling.splitter"],
+                inputs=["prm.known_pairs", "params:modelling.splitter"],
                 outputs="model_input.splits",
                 name="create_splits",
             ),
@@ -40,7 +40,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 inputs=[
                     "feat.rtx_kg2",
                     "model_input.splits",
-                    "params:modeling.generator",
+                    "params:modelling.generator",
                 ],
                 outputs="model_input.enriched_splits",
                 name="enrich_splits",
@@ -49,7 +49,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 func=nodes.apply_transformers,
                 inputs=[
                     "model_input.enriched_splits",
-                    "params:modeling.transformers",
+                    "params:modelling.transformers",
                 ],
                 outputs="model_input.transformed_splits",
                 name="transform_data",
@@ -58,9 +58,9 @@ def create_pipeline(**kwargs) -> Pipeline:
                 func=nodes.tune_parameters,
                 inputs={
                     "data": "model_input.transformed_splits",
-                    "unpack": "params:modeling.model_tuning_args",
+                    "unpack": "params:modelling.model_tuning_args",
                 },
-                outputs=["models.model_params", "reporing.tuning_convergence_plot"],
+                outputs=["models.model_params", "reporting.tuning_convergence_plot"],
                 name="tune_model_parameters",
             ),
             node(
@@ -68,8 +68,8 @@ def create_pipeline(**kwargs) -> Pipeline:
                 inputs={
                     "data": "model_input.transformed_splits",
                     "estimator": "models.model_params",
-                    "features": "params:modeling.model_tuning_args.features",
-                    "target_col_name": "params:modeling.model_tuning_args.target_col_name",
+                    "features": "params:modelling.model_tuning_args.features",
+                    "target_col_name": "params:modelling.model_tuning_args.target_col_name",
                 },
                 outputs="models.model",
                 name="train_model",
