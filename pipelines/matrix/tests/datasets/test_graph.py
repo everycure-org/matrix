@@ -56,15 +56,16 @@ def test_random_drug_disease_pair_generator(
     assert set(unknown["target"].to_list()).issubset(graph._disease_nodes)
 
 
+@pytest.mark.parametrize(
+    "n_rep,splitter", [(2, ShuffleSplit(n_splits=1, test_size=0.5, random_state=111))]
+)
 def test_replacement_drug_disease_pair_generator(
-    graph: KnowledgeGraph, known_pairs: pd.DataFrame
+    graph: KnowledgeGraph, known_pairs: pd.DataFrame, n_rep, splitter
 ):
     # Given a replacement drug disease pair generator and a test-train split for the known data
-    n_replacements = 2
     generator = ReplacementDrugDiseasePairGenerator(
-        random_state=42, n_replacements=n_replacements
+        random_state=42, n_replacements=n_rep
     )
-    splitter = ShuffleSplit(n_splits=1, test_size=0.5, random_state=111)
     known_pairs_split = make_splits(known_pairs, splitter)
 
     # When generating unknown pairs
@@ -75,7 +76,7 @@ def test_replacement_drug_disease_pair_generator(
     known_positives_test = known_pairs_split[
         (known_pairs_split["y"] == 1) & (known_pairs_split["split"] == "TRAIN")
     ]
-    assert unknown.shape[0] == 2 * n_replacements * len(known_positives_test)
+    assert unknown.shape[0] == 2 * n_rep * len(known_positives_test)
     assert pd.merge(known_pairs, unknown, how="inner", on=["source", "target"]).empty
     assert set(unknown["source"].to_list()).issubset(graph._drug_nodes)
     assert set(unknown["target"].to_list()).issubset(graph._disease_nodes)
