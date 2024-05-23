@@ -125,7 +125,6 @@ class ReplacementDrugDiseasePairGenerator(DrugDiseasePairGenerator):
         Args:
             graph: KnowledgeGraph instance.
             known_pairs: DataFrame with known drug-disease pairs.
-
         Returns:
             DataFrame with unknown drug-disease pairs.
         """
