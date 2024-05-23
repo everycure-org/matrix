@@ -42,6 +42,7 @@ def test_random_drug_disease_pair_generator(graph, known_pairs):
 
     # Then set of unknown pairs generated, where generated pairs
     # are distinct from known pairs and are always (drug, disease) pairs.
+    assert unknown.shape[0] == 2
     assert pd.merge(known_pairs, unknown, how="inner", on=["source", "target"]).empty
     assert set(unknown["source"].to_list()).issubset(graph._drug_nodes)
     assert set(unknown["target"].to_list()).issubset(graph._disease_nodes)
