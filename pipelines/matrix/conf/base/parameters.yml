@@ -77,3 +77,6 @@ modelling.model_tuning_args:
     - source_+
     - target_+
   target_col_name: y
+
+modelling.metrics:
+  - object: sklearn.metrics.f1_score
