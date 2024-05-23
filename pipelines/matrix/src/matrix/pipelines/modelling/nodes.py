@@ -3,7 +3,7 @@ import pandas as pd
 
 from sklearn.model_selection._split import _BaseKFold
 from sklearn.impute._base import _BaseImputer
-from sklearn.ensemble._gb import BaseGradientBoosting
+from sklearn.base import BaseEstimator
 
 from skopt.plots import plot_convergence
 
@@ -250,7 +250,7 @@ def tune_parameters(
 @make_list_regexable(source_df="data", make_regexable="features")
 def train_model(
     data: pd.DataFrame,
-    estimator: BaseGradientBoosting,
+    estimator: BaseEstimator,
     features: List[str],
     target_col_name: str,
     enable_regex: str = True,
@@ -273,3 +273,10 @@ def train_model(
     y_train = data.loc[mask, target_col_name]
 
     return estimator.fit(X_train.values, y_train.values)
+
+
+def get_model_predictions(
+    data: pd.DataFrame,
+    estimator: BaseEstimator,
+) -> pd.DataFrame:
+    pass
