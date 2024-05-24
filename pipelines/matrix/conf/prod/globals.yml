@@ -1,3 +1,5 @@
+gcs_bucket: gcs://silc-storage
+
 paths:
   raw: gcs://silc-storage/kedro/staging/data/01_raw
   int: gcs://silc-storage/kedro/staging/data/02_intermediate
