@@ -1,4 +1,9 @@
 from functools import partial
+from typing import Any, Dict
+
+
+def inject(dict: Dict[str, Any]):
+    pass
 
 
 def partial_(func: callable, **kwargs):
