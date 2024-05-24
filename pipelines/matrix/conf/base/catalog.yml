@@ -65,5 +65,3 @@ reporting.tuning_convergence_plot:
 reporting.metrics:
   type: yaml.YAMLDataset
   filepath: ${globals:paths.reporting}/metrics.yml
-  save_args:
-    default_flow_style: False
