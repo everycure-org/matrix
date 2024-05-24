@@ -49,7 +49,6 @@ modelling.model_tuning_args:
     estimator:
       object: xgboost.XGBClassifier
       tree_method: hist
-      device: cuda
       random_state: *_random_state
       # Question: Can we, e.g., define learning rate here as starting point?
     n_calls: 10
