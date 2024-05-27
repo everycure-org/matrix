@@ -1,6 +1,9 @@
 from typing import Any
 from inspect import isfunction
 from functools import partial
+from functools import wraps
+
+import pandas as pd
 
 import importlib
 
@@ -35,30 +38,46 @@ def inject(config) -> Any:
 
 def inject_object(foo: str = "bar"):
     def decorate(func):
+        @wraps(func)
         def wrapper(*args, **kwargs):
-            print(foo)
-            injected = inject(*args)
-            return func(**injected)
+            return func(
+                *[inject(arg) for arg in args],
+                **{k: inject(v) for k, v in kwargs.items()},
+            )
 
         return wrapper
 
     return decorate
 
 
-def train_model(estimator, scorer):
+def train_model(df: pd.DataFrame, estimator, scorer):
+    print(df)
     print(estimator)
     print(scorer)
 
 
 @inject_object(foo="baz")
-def train_decorated(estimator, scorer):
+def train_decorated(estimator, scorer, test):
     print(estimator)
     print(scorer)
+    print(test)
 
+
+train_model(
+    pd.DataFrame([["a", "b"]], columns=["foo", "bar"]),
+    **inject(
+        {
+            "estimator": {"_object": "xgboost.XGBClassifier"},
+            "scorer": {"_object": "sklearn.metrics.f1_score", "average": "macro"},
+        }
+    ),
+)
 
 train_decorated(
+    pd.DataFrame([["a", "b"]], columns=["foo", "bar"]),
     {
         "estimator": {"_object": "xgboost.XGBClassifier"},
         "scorer": {"_object": "sklearn.metrics.f1_score", "average": "macro"},
-    }
+    },
+    test={"_object": "sklearn.metrics.accuracy_score"},
 )
