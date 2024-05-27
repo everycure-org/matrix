@@ -11,8 +11,15 @@ _kg_dataset: &_kg_dataset
     use_nullable_dtypes: True
 
 raw.rtx_kg2.nodes:
-  <<: *_pandas_csv
-  filepath: ${globals:paths.raw}/rtx_kg2_nodes.csv
+  type: matrix.datasets.ibis.TableDataset
+  connection: 
+    backend: bigquery
+    project_id: matrix
+    dataset_id: kg
+  table_name: nodes
+  save_args:
+    materialized: table
+  # filepath: ${globals:paths.raw}/rtx_kg2_nodes.csv
 
 raw.ground_truth.tp:
   <<: *_pandas_csv

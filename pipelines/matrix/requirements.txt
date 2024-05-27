@@ -10,6 +10,8 @@ gcsfs==2024.3.1
 pyarrow>=14.0.2 
 xgboost
 pytest
+ibis-framework[bigquery]
+
 
 ./packages/data_fabricator
 ./packages/refit
