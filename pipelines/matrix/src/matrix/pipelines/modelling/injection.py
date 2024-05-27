@@ -76,7 +76,7 @@ def train_decorated(data, estimator, scorer, test):
 # )
 
 train_decorated(
-    pd.DataFrame([["a", "b"]], columns=["foo", "bar"]),
+    data=pd.DataFrame([["a", "b"]], columns=["foo", "bar"]),
     estimator={"_object": "xgboost.XGBClassifier"},
     scorer={"_object": "sklearn.metrics.f1_score", "average": "macro"},
     test={"_object": "sklearn.metrics.accuracy_score"},
