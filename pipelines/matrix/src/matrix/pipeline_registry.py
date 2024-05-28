@@ -13,7 +13,7 @@ from matrix.pipelines.embeddings.pipeline import (
 )
 
 
-def register_pipelines(b: str) -> Dict[str, Pipeline]:
+def register_pipelines() -> Dict[str, Pipeline]:
     """Register the project's pipelines.
 
     Returns:
