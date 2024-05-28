@@ -8,15 +8,13 @@ disease_types:
   - biolink:BehavioralFeature
   - biolink:DiseaseOrPhenotypicFeature
 
-random_state: &_random_state 111
-
 # Defines strategy for splitting the data, should be a sklearn 
 # compatible splitting class.
 modeling.splitter:
   object: sklearn.model_selection.StratifiedShuffleSplit
   n_splits: 1 
   test_size: 0.1
-  random_state: *_random_state
+  random_state: &_random_state 111
 
 # Defines strategy for generating drug-disease pairs. Should be a
 # class that implements the DrugDiseasePair generator interface.
