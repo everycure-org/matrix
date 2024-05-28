@@ -46,3 +46,11 @@ model_input.enriched_splits:
   <<: *_pandas_parquet
   filepath: ${globals:paths.model_input}/enriched_splits
 
+model_input.transformed_splits:
+  <<: *_pandas_parquet
+  filepath: ${globals:paths.model_input}/transformed_splits
+
+models.model:
+  type: pickle.PickleDataset
+  filepath: ${globals:paths.models}/model.pickle
+
