@@ -28,26 +28,29 @@ def create_pipeline(**kwargs) -> Pipeline:
             node(
                 func=fabricate_datasets,
                 inputs={"fabrication_params": "params:fabricator.rtx_kg2"},
-                outputs={"nodes": "raw.rtx_kg2.nodes", "embeddings": "int.embeddings"},
+                outputs={
+                    "nodes": "modelling.raw.rtx_kg2.nodes",
+                    "embeddings": "embeddings.int.graphsage",
+                },
                 name="fabricate_datasets",
             ),
             node(
                 func=_create_pairs,
-                inputs=["raw.rtx_kg2.nodes"],
-                outputs="raw.ground_truth.tp",
+                inputs=["modelling.raw.rtx_kg2.nodes"],
+                outputs="modelling.raw.ground_truth.tp",
                 name="create_tp_pairs",
             ),
             node(
                 func=_create_pairs,
-                inputs=["raw.rtx_kg2.nodes"],
-                outputs="raw.ground_truth.tn",
+                inputs=["modelling.raw.rtx_kg2.nodes"],
+                outputs="modelling.raw.ground_truth.tn",
                 name="create_tn_pairs",
             ),
             # FUTURE: Move this transformation to pipeline
             node(
                 func=_create_fda_drugs,
-                inputs=["raw.rtx_kg2.nodes"],
-                outputs="raw.fda_drugs",
+                inputs=["modelling.raw.rtx_kg2.nodes"],
+                outputs="modelling.raw.fda_drugs",
                 name="create_fda_drugs",
             ),
         ]

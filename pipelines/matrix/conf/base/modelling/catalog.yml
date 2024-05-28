@@ -10,47 +10,43 @@ _kg_dataset: &_kg_dataset
     engine: pyarrow
     use_nullable_dtypes: True
 
-raw.rtx_kg2.nodes:
+modelling.raw.rtx_kg2.nodes:
   <<: *_pandas_csv
   filepath: ${globals:paths.raw}/rtx_kg2_nodes.csv
 
-raw.ground_truth.tp:
+modelling.raw.ground_truth.tp:
   <<: *_pandas_csv
   filepath: ${globals:paths.raw}/tp_pairs.txt
 
-raw.ground_truth.tn:
+modelling.raw.ground_truth.tn:
   <<: *_pandas_csv
   filepath: ${globals:paths.raw}/tn_pairs.txt
 
-raw.fda_drugs:
+modelling.raw.fda_drugs:
   type: "pickle.PickleDataset"
   filepath: ${globals:paths.raw}/fda_approved_drugs_v1.0_KG2.7.3c.pickle
 
-int.embeddings:
-  <<: *_pandas_parquet
-  filepath: ${globals:paths.int}/embeddings
-
-prm.known_pairs:
+modelling.prm.known_pairs:
   <<: *_pandas_parquet
   filepath: ${globals:paths.int}/ground_truth_data/known_pairs
 
-feat.rtx_kg2:
+modelling.feat.rtx_kg2:
   <<: *_kg_dataset
   filepath: ${globals:paths.feat}/rtx_kg2_nodes
 
-model_input.splits:
+modelling.model_input.splits:
   <<: *_pandas_parquet
   filepath: ${globals:paths.model_input}/splits
 
-model_input.enriched_splits:
+modelling.model_input.enriched_splits:
   <<: *_pandas_parquet
   filepath: ${globals:paths.model_input}/enriched_splits
 
-model_input.transformed_splits:
+modelling.model_input.transformed_splits:
   <<: *_pandas_parquet
   filepath: ${globals:paths.model_input}/transformed_splits
 
-models.model:
+modelling.models.model:
   type: pickle.PickleDataset
   filepath: ${globals:paths.models}/model.pickle
 
