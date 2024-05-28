@@ -87,10 +87,14 @@ def test_catalog_filepath_follows_conventions(conf_source):
     # Check catalog entries
     failed_results = []
     for file in glob.glob(f"{conf_source}/**/*catalog**.y*ml", recursive=True):
+        # Load catalog entries
         with open(file) as f:
             entries = yaml.safe_load(f)
 
+        # Extract pipeline name from filepath
         _, pipeline, _ = os.path.relpath(file, conf_source).split(os.sep, 2)
+
+        # Validate each entry
         for entry, _ in entries.items():
             # Ignore tmp. entries
             if entry.startswith("_"):
