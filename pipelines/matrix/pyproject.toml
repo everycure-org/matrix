@@ -37,7 +37,8 @@ where = [ "src",]
 namespaces = false
 
 [tool.ruff]
+lint.select = ["D"]
 lint.pydocstyle.convention = "google"
 
 [tool.ruff.lint.per-file-ignores]
-"tests/**" = ["D"]
+"tests/*/**" = ["D"]

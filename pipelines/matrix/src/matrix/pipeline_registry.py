@@ -13,13 +13,11 @@ from matrix.pipelines.embeddings.pipeline import (
 )
 
 
-def register_pipelines() -> Dict[str, Pipeline]:
+def register_pipelines(b: str) -> Dict[str, Pipeline]:
     """Register the project's pipelines.
 
     Returns:
-    -------
-    int
-        Description of anonymous integer return value.
+        Mapping from a pipeline name to a ``Pipeline`` object.
     """
     pipelines = {}
     pipelines["__default__"] = create_modelling_pipeline()
