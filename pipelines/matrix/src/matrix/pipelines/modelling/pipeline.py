@@ -1,3 +1,4 @@
+"""Modelling pipeline."""
 from kedro.pipeline import Pipeline, node, pipeline
 
 
@@ -5,6 +6,7 @@ from . import nodes
 
 
 def create_pipeline(**kwargs) -> Pipeline:
+    """Create modelling pipeline."""
     return pipeline(
         [
             node(

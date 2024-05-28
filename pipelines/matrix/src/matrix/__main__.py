@@ -1,4 +1,6 @@
-"""matrix file for ensuring the package is executable
+"""Main matrix file.
+
+matrix file for ensuring the package is executable
 as `matrix` and `python -m matrix`
 """
 import importlib
@@ -37,6 +39,7 @@ def _find_run_command_in_plugins(plugins):
 
 
 def main(*args, **kwargs):
+    """Main pipeline entrypoint."""
     package_name = Path(__file__).parent.name
     configure_project(package_name)
     run = _find_run_command(package_name)

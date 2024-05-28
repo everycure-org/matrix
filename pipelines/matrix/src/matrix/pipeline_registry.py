@@ -17,7 +17,9 @@ def register_pipelines() -> Dict[str, Pipeline]:
     """Register the project's pipelines.
 
     Returns:
-        A mapping from pipeline names to ``Pipeline`` objects.
+    -------
+    int
+        Description of anonymous integer return value.
     """
     pipelines = {}
     pipelines["__default__"] = create_modelling_pipeline()
