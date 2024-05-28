@@ -22,9 +22,9 @@ def create_pipeline(**kwargs) -> Pipeline:
         [
             node(
                 func=create_int_embeddings,
-                inputs=["raw.embeddings"],
-                outputs="int.embeddings",
-                name="create_int_embeddings",
+                inputs=["embeddings.raw.graphsage"],
+                outputs="embeddings.int.graphsage",
+                name="create_int_graphsage_embeddings",
             ),
         ]
     )
