@@ -20,7 +20,6 @@ Please describe the tests that you ran to verify your changes. Provide instructi
 
 # Checklist:
 
-- [ ] I have applied the `pre-commit` hooks to my code
 - [ ] I have performed a self-review of my code
 - [ ] I have commented my code, using [Google style docstrings](https://google.github.io/styleguide/pyguide.html)
 - [ ] I have made corresponding changes to the documentation
