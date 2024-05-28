@@ -1,7 +1,21 @@
 import pytest
+import glob
+import os
+import yaml
 import re
 
 from kedro.framework.project import pipelines
+
+_ALLOWED_LAYERS = [
+    "raw",
+    "int",
+    "prm",
+    "feat",
+    "model_input",
+    "models",
+    "model_output",
+    "reporting",
+]
 
 
 def _pipeline_datasets(pipeline) -> set[str]:
@@ -60,33 +74,37 @@ def test_memory_data_sets_absent(kedro_context, configure_matrix_project):
     assert len(memory_data_sets) == 0, f"{memory_data_sets}"
 
 
-# @pytest.mark.integration
-# def test_catalog_filepath_follows_conventions(config_loader):
-#     """Checks if catalog entry filepaths conform to entry.
+@pytest.mark.integration
+def test_catalog_filepath_follows_conventions(conf_source):
+    """Checks if catalog entry filepaths conform to entry.
 
-#     The filepath of the catalog entry must match the naming of the catalog entry, i.e.:
-#     <connector>.<multi>.<sub-multi>.catalog.<name> must match
-#     `filepath: .../<connector>/.../<multi>/<sub-multi>/`.
+    The filepath of the catalog entry should be of the format below. More
+    elaborate error checking can be added later.
 
-#     Note that catalog and `<name>` is omitted from the search. This means all previous
-#     words separated by `.` must be found in the catalog filepath in that specific order.
+        {pipeline}.{layer}.*
+    """
 
-#     Other examples:
-#       - catalog: predictive_modeling.growth.catalog.df
-#         expected filepath: bucket/.../predictive_modeling/growth/...
-#       - catalog: comm_core.germany.primary_care.catalog.df
-#         expected filepath: bucket/.../comm_core/germany/primary_care/...
-#     """
-#     inferred_flat_conf = config_loader.get("catalog")
+    # Check catalog entries
+    failed_results = []
+    for file in glob.glob(f"{conf_source}/**/*catalog**.y*ml", recursive=True):
+        with open(file) as f:
+            entries = yaml.safe_load(f)
 
-#     keys = [
-#         {"catalog_entry": key, "filepath": value["filepath"]}
-#         for key, value in inferred_flat_conf.items()
-#         if "filepath" in value
-#     ]
+        _, pipeline, _ = os.path.relpath(file, conf_source).split(os.sep, 2)
+        for entry, _ in entries.items():
+            # Ignore tmp. entries
+            if entry.startswith("_"):
+                continue
 
-#     parsed_keys = [x["catalog_entry"].split(".")[:-1] for x in keys]
+            expected_pattern = f"{pipeline}.[{' | '.join(_ALLOWED_LAYERS)}].*"
+            if not re.search(expected_pattern, entry):
+                failed_results.append(
+                    {
+                        "entry": entry,
+                        "expected_pattern": expected_pattern,
+                        "filepath": file,
+                        "description": f"Expected {expected_pattern} to match filepath.",
+                    }
+                )
 
-#     failed_results = []
-#     for key, pattern in zip(keys, parsed_keys):
-#         print(key, pattern)
+    assert failed_results == [], f"Entries that failed conventions: {failed_results}"

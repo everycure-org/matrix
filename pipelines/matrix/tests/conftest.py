@@ -10,12 +10,16 @@ from kedro.framework.hooks import _create_hook_manager
 from kedro.config import OmegaConfigLoader
 
 
+@pytest.fixture(name="conf_source", scope="session")
+def conf_source_fixture() -> str:
+    """Return the project path."""
+    return str(Path.cwd() / settings.CONF_SOURCE)
+
+
 @pytest.fixture(name="config_loader", scope="session")
-def config_loader_fixture() -> OmegaConfigLoader:
+def config_loader_fixture(conf_source) -> OmegaConfigLoader:
     """Instantiate a config loader."""
-    return OmegaConfigLoader(
-        env="base", base_env="base", conf_source=str(Path.cwd() / settings.CONF_SOURCE)
-    )
+    return OmegaConfigLoader(env="base", base_env="base", conf_source=conf_source)
 
 
 @pytest.fixture(name="kedro_context", scope="session")
