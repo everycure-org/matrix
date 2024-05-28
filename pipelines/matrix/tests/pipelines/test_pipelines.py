@@ -1,4 +1,5 @@
 import pytest
+import re
 
 from kedro.framework.project import pipelines
 
@@ -57,3 +58,35 @@ def test_memory_data_sets_absent(kedro_context, configure_matrix_project):
     )
 
     assert len(memory_data_sets) == 0, f"{memory_data_sets}"
+
+
+# @pytest.mark.integration
+# def test_catalog_filepath_follows_conventions(config_loader):
+#     """Checks if catalog entry filepaths conform to entry.
+
+#     The filepath of the catalog entry must match the naming of the catalog entry, i.e.:
+#     <connector>.<multi>.<sub-multi>.catalog.<name> must match
+#     `filepath: .../<connector>/.../<multi>/<sub-multi>/`.
+
+#     Note that catalog and `<name>` is omitted from the search. This means all previous
+#     words separated by `.` must be found in the catalog filepath in that specific order.
+
+#     Other examples:
+#       - catalog: predictive_modeling.growth.catalog.df
+#         expected filepath: bucket/.../predictive_modeling/growth/...
+#       - catalog: comm_core.germany.primary_care.catalog.df
+#         expected filepath: bucket/.../comm_core/germany/primary_care/...
+#     """
+#     inferred_flat_conf = config_loader.get("catalog")
+
+#     keys = [
+#         {"catalog_entry": key, "filepath": value["filepath"]}
+#         for key, value in inferred_flat_conf.items()
+#         if "filepath" in value
+#     ]
+
+#     parsed_keys = [x["catalog_entry"].split(".")[:-1] for x in keys]
+
+#     failed_results = []
+#     for key, pattern in zip(keys, parsed_keys):
+#         print(key, pattern)
