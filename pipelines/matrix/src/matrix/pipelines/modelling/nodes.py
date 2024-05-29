@@ -1,10 +1,13 @@
 """Module with nodes for modelling."""
-from typing import Dict, List, Union
+from typing import Any, Dict, List, Union, Tuple
 import pandas as pd
+import json
 
 from sklearn.model_selection._split import _BaseKFold
 from sklearn.impute._base import _BaseImputer
-from sklearn.ensemble._gb import BaseGradientBoosting
+from sklearn.base import BaseEstimator
+
+from skopt.plots import plot_convergence
 
 from refit.v1.core.inject import inject_object
 from refit.v1.core.inline_has_schema import has_schema
@@ -206,23 +209,62 @@ def apply_transformers(
 @unpack_params()
 @inject_object()
 @make_list_regexable(source_df="data", make_regexable="features")
+def tune_parameters(
+    data: pd.DataFrame,
+    tuner: Any,
+    features: List[str],
+    target_col_name: str,
+    enable_regex: str = True,
+) -> Tuple[Dict,]:
+    """Function to apply hyperparameter tuning.
+
+    Args:
+        data: Data to tune on.
+        tuner: Tuner object.
+        features: List of features, may be regex specified.
+        target_col_name: Target column name.
+        enable_regex: Enable regex for features.
+
+    Returns:
+        Refit compatible dictionary of best parameters.
+    """
+    mask = data["split"].eq("TRAIN")
+
+    X_train = data.loc[mask, features]
+    y_train = data.loc[mask, target_col_name]
+
+    # Fit tuner
+    result = tuner.fit(X_train.values, y_train.values)
+
+    return json.loads(
+        json.dumps(
+            {
+                "object": f"{type(tuner._estimator).__module__}.{type(tuner._estimator).__name__}",
+                **tuner.best_params_,
+            },
+            default=int,
+        )
+    ), plot_convergence(result).figure
+
+
+@unpack_params()
+@inject_object()
+@make_list_regexable(source_df="data", make_regexable="features")
 def train_model(
     data: pd.DataFrame,
-    estimator: BaseGradientBoosting,
+    estimator: BaseEstimator,
     features: List[str],
     target_col_name: str,
     enable_regex: bool = True,
 ) -> Dict:
     """Function to train model on the given data.
 
-    FUTURE: Time + optimize
-
     Args:
         data: Data to train on.
         estimator: sklearn estimator.
         features: List of features, may be regex specified.
         target_col_name: Target column name.
-        enable_regex: Boolean representing use of regexes in `features`.
+        enable_regex: Enable regex for features.
 
     Returns:
         Trained model.
@@ -233,3 +275,66 @@ def train_model(
     y_train = data.loc[mask, target_col_name]
 
     return estimator.fit(X_train.values, y_train.values)
+
+
+@inject_object()
+@make_list_regexable(source_df="data", make_regexable="features")
+def get_model_predictions(
+    data: pd.DataFrame,
+    estimator: BaseEstimator,
+    features: List[str],
+    target_col_name: str,
+    prediction_suffix: str = "_pred",
+    enable_regex: str = True,
+) -> pd.DataFrame:
+    """Function to run model predictions on input data.
+
+    Args:
+        data: Data to predict on.
+        estimator: sklearn estimator.
+        features: List of features, may be regex specified.
+        target_col_name: Target column name.
+        prediction_suffix: Suffix to add to the prediction column, defaults to '_pred'.
+        enable_regex: Enable regex for features.
+
+    Returns:
+        Data with predictions.
+    """
+    data[target_col_name + prediction_suffix] = estimator.predict(data[features].values)
+
+    return data
+
+
+@inject_object()
+def get_model_performance(
+    data: pd.DataFrame,
+    metrics: List[callable],
+    target_col_name: str,
+    prediction_suffix: str = "_pred",
+) -> Dict:
+    """Function to evaluate model performance.
+
+    Args:
+        data: Data to evaluate.
+        metrics: List of callable metrics.
+        target_col_name: Target column name.
+        prediction_suffix: Suffix to add to the prediction column, defaults to '_pred'.
+
+    Returns:
+        Dictionary containing report
+    """
+    report = {}
+
+    for metric in metrics:
+        for split in ["TEST", "TRAIN"]:
+            split_index = data["split"].eq(split)
+            y_true = data.loc[split_index, target_col_name]
+            y_prediction = data.loc[split_index, target_col_name + prediction_suffix]
+
+            # Execute metric
+            # FUTURE: This currently mergers the unknown and known classes
+            report[f"{split.lower()}_{metric.__name__}"] = metric(
+                y_true == 1, y_prediction == 1
+            ).item()
+
+    return json.loads(json.dumps(report))

@@ -57,13 +57,48 @@ def create_pipeline(**kwargs) -> Pipeline:
                 name="transform_data",
             ),
             node(
+                func=nodes.tune_parameters,
+                inputs={
+                    "data": "modelling.model_input.transformed_splits",
+                    "unpack": "params:modelling.model_tuning_args",
+                },
+                outputs=[
+                    "modelling.models.model_params",
+                    "modelling.reporting.tuning_convergence_plot",
+                ],
+                name="tune_model_parameters",
+            ),
+            node(
                 func=nodes.train_model,
                 inputs={
                     "data": "modelling.model_input.transformed_splits",
-                    "unpack": "params:modelling.train_args",
+                    "estimator": "modelling.models.model_params",
+                    "features": "params:modelling.model_tuning_args.features",
+                    "target_col_name": "params:modelling.model_tuning_args.target_col_name",
                 },
                 outputs="modelling.models.model",
                 name="train_model",
+            ),
+            node(
+                func=nodes.get_model_predictions,
+                inputs={
+                    "data": "modelling.model_input.transformed_splits",
+                    "estimator": "modelling.models.model",
+                    "features": "params:modelling.model_tuning_args.features",
+                    "target_col_name": "params:modelling.model_tuning_args.target_col_name",
+                },
+                outputs="modelling.model_output.predictions",
+                name="get_model_predictions",
+            ),
+            node(
+                func=nodes.get_model_performance,
+                inputs={
+                    "data": "modelling.model_output.predictions",
+                    "metrics": "params:modelling.metrics",
+                    "target_col_name": "params:modelling.model_tuning_args.target_col_name",
+                },
+                outputs="modelling.reporting.metrics",
+                name="get_model_performance",
             ),
         ]
     )
