@@ -11,6 +11,7 @@ pyarrow>=14.0.2
 xgboost
 scikit-optimize
 matplotlib
+pytest
 
 ./packages/data_fabricator
 ./packages/refit
