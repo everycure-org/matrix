@@ -1,0 +1,10 @@
+_spark_csv_ds: &_spark_csv
+  type: spark.SparkDataset
+  file_format: csv
+  load_args:
+    header: true
+    sep: ","
+
+integration.raw.rtx_kg2.nodes:
+  <<: *_spark_csv
+  filepath: ${globals:paths.raw}/rtx_kg2_nodes.csv
