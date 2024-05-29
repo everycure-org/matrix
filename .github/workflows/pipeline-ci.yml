@@ -42,6 +42,10 @@ jobs:
           # run pre-commit on everything that's different from main
           pre-commit run -s origin/main -o HEAD
 
+      - name: Run unit tests 
+        run: |
+          pytest -v tests/
+
       - name: Run pipeline
         run: |
           kedro run -p fabricator

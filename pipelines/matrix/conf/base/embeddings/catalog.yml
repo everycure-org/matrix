@@ -1,3 +1,7 @@
-raw.embeddings:
+embeddings.raw.graphsage:
   type: "pickle.PickleDataset"
   filepath: gs://silc-storage/embeddings/original_graphsage_emb_dict_reduced.pickle
+
+embeddings.int.graphsage:
+  type: pandas.ParquetDataset
+  filepath: ${globals:paths.int}/embeddings

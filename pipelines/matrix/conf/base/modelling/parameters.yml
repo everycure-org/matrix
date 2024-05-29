@@ -1,14 +1,12 @@
-drug_types:
+modelling.drug_types:
   - biolink:Drug
   - biolink:SmallMolecule
 
-disease_types:
+modelling.disease_types:
   - biolink:Disease
   - biolink:PhenotypicFeature
   - biolink:BehavioralFeature
   - biolink:DiseaseOrPhenotypicFeature
-
-random_state: &_random_state 111
 
 # Defines strategy for splitting the data, should be a sklearn 
 # compatible splitting class.
@@ -16,13 +14,20 @@ modelling.splitter: &_splitter
   object: sklearn.model_selection.StratifiedShuffleSplit
   n_splits: 1 
   test_size: 0.1
-  random_state: *_random_state
+  random_state: &_random_state 111
 
 # Defines strategy for generating drug-disease pairs. Should be a
 # class that implements the DrugDiseasePair generator interface.
 modelling.generator:
-  object: matrix.datasets.graph.RandomDrugDiseasePairGenerator
+  object: matrix.datasets.graph.ReplacementDrugDiseasePairGenerator
   random_state: *_random_state
+  n_replacements: 2
+
+# Alternatively
+#modeling.generator:
+#  object: matrix.datasets.graph.RandomDrugDiseasePairGenerator
+#  random_state: *_random_state
+#  n_unknown: 100
 
 # Defines set of transformers applied to the data prior to model
 # training, each of the should be a sklearn transformer.
@@ -40,9 +45,8 @@ modelling.transformers:
     features:
       - target_embedding # becomes n columns, named target_0, target_1, etc
 
-# Defines tuning strategy and estimator to be tuned, tuner should be 
-# a sklearn BaseSearchCV compatible type, estimator should be a 
-# BaseEstimator compatible type.
+# Defines estimator used during model training, features can be
+# defined using a regex strategy.
 modelling.model_tuning_args:
   tuner:
     object: matrix.pipelines.modelling.tuning.GaussianSearch
