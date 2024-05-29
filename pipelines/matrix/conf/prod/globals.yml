@@ -1,0 +1,11 @@
+gcs_bucket: gcs://silc-storage
+
+paths:
+  raw: gcs://silc-storage/kedro/staging/data/01_raw
+  int: gcs://silc-storage/kedro/staging/data/02_intermediate
+  prm: gcs://silc-storage/kedro/staging/data/03_primary
+  feat: gcs://silc-storage/kedro/staging/data/04_features
+  model_input: gcs://silc-storage/kedro/staging/data/05_model_input
+  models: gcs://silc-storage/kedro/staging/data/06_models
+  model_output: gcs://silc-storage/kedro/staging/data/07_model_output
+  reporting: gcs://silc-storage/kedro/staging/data/08_reporting

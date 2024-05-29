@@ -50,3 +50,18 @@ modelling.models.model:
   type: pickle.PickleDataset
   filepath: ${globals:paths.models}/model.pickle
 
+modelling.models.model_params:
+  type: yaml.YAMLDataset
+  filepath: ${globals:paths.models}/model_params.yml
+
+modelling.model_output.predictions:
+  <<: *_pandas_parquet
+  filepath: ${globals:paths.model_output}/predictions
+
+modelling.reporting.tuning_convergence_plot:
+  type: matplotlib.MatplotlibWriter
+  filepath: ${globals:paths.reporting}/convergence_plot.png
+
+modelling.reporting.metrics:
+  type: yaml.YAMLDataset
+  filepath: ${globals:paths.reporting}/metrics.yml
