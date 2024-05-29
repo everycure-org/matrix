@@ -149,3 +149,4 @@ venv.bak/
 
 # Stats
 stats.json
+session_store.db
