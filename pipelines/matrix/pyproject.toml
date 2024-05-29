@@ -2,6 +2,12 @@
 requires = [ "setuptools",]
 build-backend = "setuptools.build_meta"
 
+[tool.pytest.ini_options]
+pythonpath = "src"
+addopts = [
+    "--import-mode=importlib",
+]
+
 [project]
 name = "matrix"
 readme = "README.md"
@@ -29,3 +35,10 @@ attr = "matrix.__version__"
 [tool.setuptools.packages.find]
 where = [ "src",]
 namespaces = false
+
+[tool.ruff]
+lint.select = ["D"]
+lint.pydocstyle.convention = "google"
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*/**" = ["D"]
