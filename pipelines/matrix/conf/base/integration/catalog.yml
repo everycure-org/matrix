@@ -8,3 +8,11 @@ _spark_csv_ds: &_spark_csv
 integration.raw.rtx_kg2.nodes:
   <<: *_spark_csv
   filepath: ${globals:paths.raw}/rtx_kg2_nodes.csv
+
+integration.prm.drugs:
+  type: matrix.datasets.neo4j.Neo4JDataset
+  labels: ":Drug"
+
+# integration.prm.filtered_drugs:
+#   type: matrix.datasets.neo4j.Neo4JDataset
+#   labels: ":Drug"
