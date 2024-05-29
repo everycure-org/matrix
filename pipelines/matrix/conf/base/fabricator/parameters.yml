@@ -16,6 +16,12 @@ fabricator.rtx_kg2:
         start_range: 100
         end_range: 1000
 
+      date_discovered:
+        type: generate_dates
+        start_dt: 2010-01-01
+        end_dt: 2020-01-01
+        freq: M
+
   embeddings:
     columns:
       id: 
