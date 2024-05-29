@@ -1,3 +1,4 @@
+"""Module with nodes for modelling."""
 from typing import Dict, List, Union
 import pandas as pd
 
@@ -29,18 +30,18 @@ def create_feat_nodes(
     disease_types: List[str],
     fda_list: List[str],
 ) -> pd.DataFrame:
-    """
-    Add features for nodes.
+    """Add features for nodes.
 
     Args:
         raw_nodes: Raw nodes data.
+        embeddings: Embeddings data.
         drug_types: List of drug types.
         disease_types: List of disease types.
         fda_list: List of FDA approved drugs.
+
     Returns:
         Nodes enriched with features.
     """
-
     # Merge embeddings
     raw_nodes = raw_nodes.merge(embeddings, on="id", how="left")
 
@@ -65,17 +66,16 @@ def create_feat_nodes(
 def create_prm_pairs(
     graph: KnowledgeGraph, raw_tp: pd.DataFrame, raw_tn: pd.DataFrame
 ) -> pd.DataFrame:
-    """
-    Create primary pairs dataset.
+    """Create primary pairs dataset.
 
     Args:
         graph: Knowledge graph.
         raw_tp: Raw true positive data.
         raw_tn: Raw true negative data.
+
     Returns:
         Primary pairs dataset.
     """
-
     # Add label
     raw_tp["y"] = 1
     raw_tn["y"] = 0
@@ -100,16 +100,15 @@ def make_splits(
     data: pd.DataFrame,
     splitter: _BaseKFold,
 ) -> pd.DataFrame:
-    """
-    Function to split data.
+    """Function to split data.
 
     Args:
         data: Data to split.
         splitter: sklearn splitter object.
+
     Returns:
         Data with split information.
     """
-
     all_data_frames = []
     for iteration, (train_index, test_index) in enumerate(
         splitter.split(data, data["y"])
@@ -139,13 +138,13 @@ def create_model_input_nodes(
     splits: pd.DataFrame,
     generator: DrugDiseasePairGenerator,
 ) -> pd.DataFrame:
-    """
-    Function to enrich the splits with drug-disease pairs.
+    """Function to enrich the splits with drug-disease pairs.
 
     Args:
         graph: Knowledge graph.
         splits: Data splits.
         generator: DrugDiseasePairGenerator instance.
+
     Returns:
         Data with enriched splits.
     """
@@ -161,17 +160,16 @@ def apply_transformers(
     transformers: Dict[str, Dict[str, Union[_BaseImputer, List[str]]]],
     target_col_name: str = None,
 ) -> pd.DataFrame:
-    """
-    Function to apply a set of sklearn compatible transformers to the data.
+    """Function to apply a set of sklearn compatible transformers to the data.
 
     Args:
         data: Data to transform.
         transformers: Dictionary of transformers.
         target_col_name: Target column name.
+
     Returns:
         Transformed data.
     """
-
     # Ensure transformer only applied to train data
     mask = data["split"].eq("TRAIN")
 
@@ -213,10 +211,9 @@ def train_model(
     estimator: BaseGradientBoosting,
     features: List[str],
     target_col_name: str,
-    enable_regex: str = True,
+    enable_regex: bool = True,
 ) -> Dict:
-    """
-    Function to train model on the given data.
+    """Function to train model on the given data.
 
     FUTURE: Time + optimize
 
@@ -225,8 +222,11 @@ def train_model(
         estimator: sklearn estimator.
         features: List of features, may be regex specified.
         target_col_name: Target column name.
-    """
+        enable_regex: Boolean representing use of regexes in `features`.
 
+    Returns:
+        Trained model.
+    """
     mask = data["split"].eq("TRAIN")
 
     X_train = data.loc[mask, features]

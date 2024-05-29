@@ -1,26 +1,24 @@
-drug_types:
+modelling.drug_types:
   - biolink:Drug
   - biolink:SmallMolecule
 
-disease_types:
+modelling.disease_types:
   - biolink:Disease
   - biolink:PhenotypicFeature
   - biolink:BehavioralFeature
   - biolink:DiseaseOrPhenotypicFeature
 
-random_state: &_random_state 111
-
 # Defines strategy for splitting the data, should be a sklearn 
 # compatible splitting class.
-modeling.splitter:
+modelling.splitter:
   object: sklearn.model_selection.StratifiedShuffleSplit
   n_splits: 1 
   test_size: 0.1
-  random_state: *_random_state
+  random_state: &_random_state 111
 
 # Defines strategy for generating drug-disease pairs. Should be a
 # class that implements the DrugDiseasePair generator interface.
-modeling.generator:
+modelling.generator:
   object: matrix.datasets.graph.ReplacementDrugDiseasePairGenerator
   random_state: *_random_state
   n_replacements: 2
@@ -33,7 +31,7 @@ modeling.generator:
 
 # Defines set of transformers applied to the data prior to model
 # training, each of the should be a sklearn transformer.
-modeling.transformers:
+modelling.transformers:
   flat_source_embedding:
     transformer: 
       object: matrix.pipelines.modelling.transformers.FlatArrayTransformer
@@ -49,7 +47,7 @@ modeling.transformers:
 
 # Defines estimator used during model training, features can be
 # defined using a regex strategy.
-modeling.train_args:
+modelling.train_args:
   estimator:
     object: xgboost.XGBClassifier
     tree_method: hist
