@@ -1,24 +1,24 @@
 _pandas_csv: &_pandas_csv
   type:  pandas.CSVDataset
 
-raw.rtx_kg2.nodes:
+modelling.raw.rtx_kg2.nodes:
   <<: *_pandas_csv
   filepath: gs://silc-storage/KG/RTX_KG_v2-7-3/rtx_kg2_nodes.tsv
   load_args:
     sep: "\t"
 
-raw.experiments.tp:
+modelling.raw.experiments.tp:
   <<: *_pandas_csv
   filepath: gs://silc-storage/ground_truth_data/tp_pairs.txt
   load_args:
     sep: "\t"
 
-raw.experiments.tn:
+modelling.raw.experiments.tn:
   <<: *_pandas_csv
   filepath: gs://silc-storage/ground_truth_data/tn_pairs.txt
   load_args:
     sep: "\t"
 
-raw.fda_drugs:
+modelling.raw.fda_drugs:
   type: "pickle.PickleDataset"
   filepath: gs://silc-storage/KG/RTX_KG_v2-7-3/fda_approved_drugs_v1.0_KG2.7.3c.pickle
