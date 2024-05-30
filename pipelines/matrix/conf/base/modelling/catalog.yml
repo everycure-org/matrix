@@ -14,6 +14,10 @@ modelling.raw.rtx_kg2.nodes:
   <<: *_pandas_csv
   filepath: ${globals:paths.raw}/rtx_kg2_nodes.csv
 
+modelling.raw.rtx_kg2.edges:
+  <<: *_pandas_csv
+  filepath: ${globals:paths.raw}/rtx_kg2_edges.csv
+
 modelling.raw.ground_truth.tp:
   <<: *_pandas_csv
   filepath: ${globals:paths.raw}/tp_pairs.txt
