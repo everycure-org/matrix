@@ -23,8 +23,29 @@ integration.raw.rtx_kg2.edges:
 
 integration.prm.drugs:
   <<: *_neo4j_ds
+  metadata:
+    labels: ":Drug"
+    node.keys: id
+
+integration.prm.diseases:
+  <<: *_neo4j_ds
+  metadata:
+    labels: ":Disease"
+    node.keys: id
+
+integration.prm.treats:
+  <<: *_neo4j_ds
   type: matrix.datasets.neo4j.Neo4JDataset
-  labels: ":Drug"
+  metadata:
+    relationship: TREATS
+    relationship.save.strategy: keys
+    relationship.source.save.mode: overwrite
+    relationship.source.labels: ":Drug"
+    relationship.source.node.keys: source_id:id
+    relationship.target.save.mode: overwrite
+    relationship.target.labels: ":Disease"
+    relationship.target.node.keys: target_id:id
+
 
 # integration.prm.filtered_drugs:
 #   <<: *_neo4j_ds
