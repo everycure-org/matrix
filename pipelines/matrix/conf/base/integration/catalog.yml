@@ -5,14 +5,24 @@ _spark_csv_ds: &_spark_csv
     header: true
     sep: ","
 
+_neo4j_ds: &_neo4j_ds
+  type: matrix.datasets.neo4j.Neo4JDataset
+  database: everycure
+  url: bolt://127.0.0.1:7687
+  credentials: neo4j_credentials
+  save_args:
+    mode: "overwrite"
+
 integration.raw.rtx_kg2.nodes:
   <<: *_spark_csv
   filepath: ${globals:paths.raw}/rtx_kg2_nodes.csv
 
 integration.prm.drugs:
+  <<: *_neo4j_ds
   type: matrix.datasets.neo4j.Neo4JDataset
   labels: ":Drug"
 
 # integration.prm.filtered_drugs:
+#   <<: *_neo4j_ds
 #   type: matrix.datasets.neo4j.Neo4JDataset
 #   labels: ":Drug"
