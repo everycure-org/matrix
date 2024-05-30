@@ -45,6 +45,7 @@ integration.prm.treats:
     relationship.target.save.mode: overwrite
     relationship.target.labels: ":Disease"
     relationship.target.node.keys: target_id:id
+    # relationship.nodes.map: true
 
 
 # integration.prm.filtered_drugs:
