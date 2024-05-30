@@ -49,36 +49,47 @@ def apply_date_filter(drugs: DataFrame, cutoff_date: datetime) -> None:
     return drugs.filter(F.col("date_discovered") <= cutoff_date)
 
 
+def print(data: DataFrame) -> None:
+    """Function to print input DataFrame."""
+    return data
+
+
 def create_pipeline(**kwargs) -> Pipeline:
     """Create integration pipeline."""
     return pipeline(
         [
-            node(
-                func=extract_nodes,
-                inputs=["integration.raw.rtx_kg2.nodes", "params:modelling.drug_types"],
-                outputs="integration.prm.drugs",
-                name="create_neo4j_drug_nodes",
-            ),
-            node(
-                func=extract_nodes,
-                inputs=[
-                    "integration.raw.rtx_kg2.nodes",
-                    "params:modelling.disease_types",
-                ],
-                outputs="integration.prm.diseases",
-                name="create_neo4j_disease_nodes",
-            ),
-            node(
-                func=extract_edges,
-                inputs=["integration.raw.rtx_kg2.edges"],
-                outputs="integration.prm.treats",
-                name="create_neo4j_edges",
-            ),
-            node(
-                func=apply_date_filter,
-                inputs=["integration.prm.drugs", "params:integration.cutoff_date"],
-                outputs="integration.prm.filtered_drugs",
-                name="filter_neo4j_drug_nodes",
-            ),
+            # node(
+            #     func=extract_nodes,
+            #     inputs=["integration.raw.rtx_kg2.nodes", "params:modelling.drug_types"],
+            #     outputs="integration.prm.drugs",
+            #     name="create_neo4j_drug_nodes",
+            # ),
+            # node(
+            #     func=extract_nodes,
+            #     inputs=[
+            #         "integration.raw.rtx_kg2.nodes",
+            #         "params:modelling.disease_types",
+            #     ],
+            #     outputs="integration.prm.diseases",
+            #     name="create_neo4j_disease_nodes",
+            # ),
+            # node(
+            #     func=extract_edges,
+            #     inputs=["integration.raw.rtx_kg2.edges"],
+            #     outputs="integration.prm.treats",
+            #     name="create_neo4j_edges",
+            # ),
+            # node(
+            #     func=print,
+            #     inputs=["integration.prm.treats"],
+            #     outputs="test",
+            #     name="print",
+            # ),
+            # node(
+            #     func=apply_date_filter,
+            #     inputs=["integration.prm.drugs", "params:integration.cutoff_date"],
+            #     outputs="integration.prm.filtered_drugs",
+            #     name="filter_neo4j_drug_nodes",
+            # ),
         ]
     )
