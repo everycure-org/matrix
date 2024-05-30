@@ -17,6 +17,10 @@ integration.raw.rtx_kg2.nodes:
   <<: *_spark_csv
   filepath: ${globals:paths.raw}/rtx_kg2_nodes.csv
 
+integration.raw.rtx_kg2.edges:
+  <<: *_spark_csv
+  filepath: ${globals:paths.raw}/rtx_kg2_edges.csv
+
 integration.prm.drugs:
   <<: *_neo4j_ds
   type: matrix.datasets.neo4j.Neo4JDataset

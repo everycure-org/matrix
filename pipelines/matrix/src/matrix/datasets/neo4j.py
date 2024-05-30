@@ -56,7 +56,7 @@ class Neo4JDataset(SparkDataset):
 
     def _save(self, data: DataFrame) -> None:
         (
-            data.write.format("org.neo4j.spark.DataSource")  # .mode("overwrite")
+            data.write.format("org.neo4j.spark.DataSource")
             .option("database", self._database)
             .option("url", self._url)
             .option("labels", self._labels)
