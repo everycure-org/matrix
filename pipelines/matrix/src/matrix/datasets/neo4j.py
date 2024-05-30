@@ -20,16 +20,46 @@ class Neo4JDataset(SparkDataset):
         *,
         url: str,
         database: str,
-        labels: str = None,
         load_args: dict[str, Any] = None,
         save_args: dict[str, Any] = None,
         version: Version = None,
         credentials: dict[str, Any] = None,
         metadata: dict[str, Any] = None,
     ) -> None:
-        """Creates a new instance of ``Neo4JDataset``."""
+        """Creates a new instance of ``Neo4JDataset``.
+
+        Example:
+        ::
+            metadata:
+                relationship: TREATS
+                relationship.save.strategy: keys
+                relationship.source.save.mode: overwrite
+                relationship.source.labels: ":Drug"
+                relationship.source.node.keys: source_id:id
+                relationship.target.save.mode: overwrite
+                relationship.target.labels: ":Disease"
+                relationship.target.node.keys: target_id:id
+                relationship.nodes.map: true
+        ::
+
+        Example:
+        ::
+            metadata:
+                partitions: 4
+                query: "MATCH (n:Drug) RETURN n"
+        ::
+
+        Args:
+            url: URL of the Neo4J instance.
+            database: Name of the Neo4J database.
+            labels: Labels to filter the nodes.
+            load_args: Arguments to pass to the load method.
+            save_args: Arguments to pass to the save
+            version: Version of the dataset.
+            credentials: Credentials to connect to the Neo4J instance.
+            metadata: Metadata to pass to neo4j connector.
+        """
         self._database = database
-        self._labels = labels
         self._url = url
         self._credentials = deepcopy(credentials) or {}
 
@@ -59,8 +89,6 @@ class Neo4JDataset(SparkDataset):
             data.write.format("org.neo4j.spark.DataSource")
             .option("database", self._database)
             .option("url", self._url)
-            # .option("labels", self._labels)
-            # .option("node.keys", "id:id") # defines the merge keys
             .options(**self._credentials)
             .options(**self.metadata)
             .save(**self._save_args)
