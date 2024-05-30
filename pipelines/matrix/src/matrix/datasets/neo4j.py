@@ -9,6 +9,22 @@ from kedro.io.core import Version
 from kedro_datasets.spark.spark_dataset import _get_spark
 
 
+class Neo4JDatabase(SparkDataset):
+    """Class to represent Neo4j database."""
+
+    def __init__(self, url: str, database: str) -> None:
+        """Creates a new instance of ``Neo4JDatabase``."""
+        pass
+
+    def query(self, query: str) -> DataFrame:
+        """Execute cypher query on the database."""
+        pass
+
+    def to_dataframe(self) -> DataFrame:
+        """Convert to dataframe."""
+        pass
+
+
 class Neo4JDataset(SparkDataset):
     """Dataset to load and save data from Neo4J."""
 
