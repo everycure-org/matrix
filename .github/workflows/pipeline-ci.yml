@@ -39,6 +39,8 @@ jobs:
       # ======= TESTS =======
       - name: Run unit tests 
         run: |
+          poetry env info --path
+          ls -alh /home/runner/.cache/pypoetry/virtualenvs
           source $(poetry env info --path)/bin/activate
           pytest -v tests/
           kedro run -p fabricator
