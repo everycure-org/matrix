@@ -41,9 +41,7 @@ jobs:
         run: pytest -v tests
       - name: Run unit tests 
         run: |
-          poetry run pytest -v tests/
-
-      - name: Run pipeline
-        run: |
-          poetry run kedro run -p fabricator
-          poetry run kedro run
+          poetry shell # activate the virtual environment
+          pytest -v tests/
+          kedro run -p fabricator
+          kedro run
