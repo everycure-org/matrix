@@ -14,34 +14,40 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
-      
       - name: Set up Python 3.11
         uses: actions/setup-python@v3
         with:
           python-version: "3.11"
-          cache: 'pip'
-
+      # ======= PRE-COMMIT =======
       - uses: actions/cache@v3
         with:
           path: |
             ~/.cache/pre-commit
           key: pre-commit-3|${{ env.pythonLocation }}|${{ hashFiles('.pre-commit-config.yaml') }}
-
-      - run: pip install pre-commit
-        name: Check pre-commit
-
-      - name: Install dependencies
+      - name: Run pre-commit hook (fail-fast)
         run: |
-          pip install -r requirements.txt
           pip install pre-commit
           pre-commit install --install-hooks
-
-      - name: Run pre-commit hooks
-        run: |
           git fetch origin main
           # run pre-commit on everything that's different from main
           pre-commit run -s origin/main -o HEAD
-
+      # ======= DEPENDENCIES =======
+      - name: Install poetry
+        uses: abatilo/actions-poetry@v2
+      - name: Setup a local virtual environment (if no poetry.toml file)
+        run: |
+          poetry config virtualenvs.create true --local
+          poetry config virtualenvs.in-project true --local
+      - uses: actions/cache@v3
+        name: Define a cache for the virtual environment based on the dependencies lock file
+        with:
+          path: ./.venv
+          key: venv-${{ hashFiles('poetry.lock') }}
+      - name: Install the project dependencies
+        run: poetry install
+      # ======= TESTS =======
+      - name: Run the automated tests (for example)
+        run: pytest -v tests
       - name: Run unit tests 
         run: |
           pytest -v tests/
