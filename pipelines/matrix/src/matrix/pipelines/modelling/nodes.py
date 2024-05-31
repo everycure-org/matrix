@@ -1,9 +1,13 @@
-from typing import Dict, List, Union
+"""Module with nodes for modelling."""
+from typing import Any, Dict, List, Union, Tuple
 import pandas as pd
+import json
 
 from sklearn.model_selection._split import _BaseKFold
 from sklearn.impute._base import _BaseImputer
-from sklearn.ensemble._gb import BaseGradientBoosting
+from sklearn.base import BaseEstimator
+
+from skopt.plots import plot_convergence
 
 from refit.v1.core.inject import inject_object
 from refit.v1.core.inline_has_schema import has_schema
@@ -29,18 +33,18 @@ def create_feat_nodes(
     disease_types: List[str],
     fda_list: List[str],
 ) -> pd.DataFrame:
-    """
-    Add features for nodes.
+    """Add features for nodes.
 
     Args:
         raw_nodes: Raw nodes data.
+        embeddings: Embeddings data.
         drug_types: List of drug types.
         disease_types: List of disease types.
         fda_list: List of FDA approved drugs.
+
     Returns:
         Nodes enriched with features.
     """
-
     # Merge embeddings
     raw_nodes = raw_nodes.merge(embeddings, on="id", how="left")
 
@@ -65,17 +69,16 @@ def create_feat_nodes(
 def create_prm_pairs(
     graph: KnowledgeGraph, raw_tp: pd.DataFrame, raw_tn: pd.DataFrame
 ) -> pd.DataFrame:
-    """
-    Create primary pairs dataset.
+    """Create primary pairs dataset.
 
     Args:
         graph: Knowledge graph.
         raw_tp: Raw true positive data.
         raw_tn: Raw true negative data.
+
     Returns:
         Primary pairs dataset.
     """
-
     # Add label
     raw_tp["y"] = 1
     raw_tn["y"] = 0
@@ -100,16 +103,15 @@ def make_splits(
     data: pd.DataFrame,
     splitter: _BaseKFold,
 ) -> pd.DataFrame:
-    """
-    Function to split data.
+    """Function to split data.
 
     Args:
         data: Data to split.
         splitter: sklearn splitter object.
+
     Returns:
         Data with split information.
     """
-
     all_data_frames = []
     for iteration, (train_index, test_index) in enumerate(
         splitter.split(data, data["y"])
@@ -139,13 +141,13 @@ def create_model_input_nodes(
     splits: pd.DataFrame,
     generator: DrugDiseasePairGenerator,
 ) -> pd.DataFrame:
-    """
-    Function to enrich the splits with drug-disease pairs.
+    """Function to enrich the splits with drug-disease pairs.
 
     Args:
         graph: Knowledge graph.
         splits: Data splits.
         generator: DrugDiseasePairGenerator instance.
+
     Returns:
         Data with enriched splits.
     """
@@ -161,17 +163,16 @@ def apply_transformers(
     transformers: Dict[str, Dict[str, Union[_BaseImputer, List[str]]]],
     target_col_name: str = None,
 ) -> pd.DataFrame:
-    """
-    Function to apply a set of sklearn compatible transformers to the data.
+    """Function to apply a set of sklearn compatible transformers to the data.
 
     Args:
         data: Data to transform.
         transformers: Dictionary of transformers.
         target_col_name: Target column name.
+
     Returns:
         Transformed data.
     """
-
     # Ensure transformer only applied to train data
     mask = data["split"].eq("TRAIN")
 
@@ -208,28 +209,132 @@ def apply_transformers(
 @unpack_params()
 @inject_object()
 @make_list_regexable(source_df="data", make_regexable="features")
-def train_model(
+def tune_parameters(
     data: pd.DataFrame,
-    estimator: BaseGradientBoosting,
+    tuner: Any,
     features: List[str],
     target_col_name: str,
     enable_regex: str = True,
-) -> Dict:
-    """
-    Function to train model on the given data.
+) -> Tuple[Dict,]:
+    """Function to apply hyperparameter tuning.
 
-    FUTURE: Time + optimize
+    Args:
+        data: Data to tune on.
+        tuner: Tuner object.
+        features: List of features, may be regex specified.
+        target_col_name: Target column name.
+        enable_regex: Enable regex for features.
+
+    Returns:
+        Refit compatible dictionary of best parameters.
+    """
+    mask = data["split"].eq("TRAIN")
+
+    X_train = data.loc[mask, features]
+    y_train = data.loc[mask, target_col_name]
+
+    # Fit tuner
+    result = tuner.fit(X_train.values, y_train.values)
+
+    return json.loads(
+        json.dumps(
+            {
+                "object": f"{type(tuner._estimator).__module__}.{type(tuner._estimator).__name__}",
+                **tuner.best_params_,
+            },
+            default=int,
+        )
+    ), plot_convergence(result).figure
+
+
+@unpack_params()
+@inject_object()
+@make_list_regexable(source_df="data", make_regexable="features")
+def train_model(
+    data: pd.DataFrame,
+    estimator: BaseEstimator,
+    features: List[str],
+    target_col_name: str,
+    enable_regex: bool = True,
+) -> Dict:
+    """Function to train model on the given data.
 
     Args:
         data: Data to train on.
         estimator: sklearn estimator.
         features: List of features, may be regex specified.
         target_col_name: Target column name.
-    """
+        enable_regex: Enable regex for features.
 
+    Returns:
+        Trained model.
+    """
     mask = data["split"].eq("TRAIN")
 
     X_train = data.loc[mask, features]
     y_train = data.loc[mask, target_col_name]
 
     return estimator.fit(X_train.values, y_train.values)
+
+
+@inject_object()
+@make_list_regexable(source_df="data", make_regexable="features")
+def get_model_predictions(
+    data: pd.DataFrame,
+    estimator: BaseEstimator,
+    features: List[str],
+    target_col_name: str,
+    prediction_suffix: str = "_pred",
+    enable_regex: str = True,
+) -> pd.DataFrame:
+    """Function to run model predictions on input data.
+
+    Args:
+        data: Data to predict on.
+        estimator: sklearn estimator.
+        features: List of features, may be regex specified.
+        target_col_name: Target column name.
+        prediction_suffix: Suffix to add to the prediction column, defaults to '_pred'.
+        enable_regex: Enable regex for features.
+
+    Returns:
+        Data with predictions.
+    """
+    data[target_col_name + prediction_suffix] = estimator.predict(data[features].values)
+
+    return data
+
+
+@inject_object()
+def get_model_performance(
+    data: pd.DataFrame,
+    metrics: List[callable],
+    target_col_name: str,
+    prediction_suffix: str = "_pred",
+) -> Dict:
+    """Function to evaluate model performance.
+
+    Args:
+        data: Data to evaluate.
+        metrics: List of callable metrics.
+        target_col_name: Target column name.
+        prediction_suffix: Suffix to add to the prediction column, defaults to '_pred'.
+
+    Returns:
+        Dictionary containing report
+    """
+    report = {}
+
+    for metric in metrics:
+        for split in ["TEST", "TRAIN"]:
+            split_index = data["split"].eq(split)
+            y_true = data.loc[split_index, target_col_name]
+            y_prediction = data.loc[split_index, target_col_name + prediction_suffix]
+
+            # Execute metric
+            # FUTURE: This currently mergers the unknown and known classes
+            report[f"{split.lower()}_{metric.__name__}"] = metric(
+                y_true == 1, y_prediction == 1
+            ).item()
+
+    return json.loads(json.dumps(report))
