@@ -41,9 +41,9 @@ jobs:
         run: pytest -v tests
       - name: Run unit tests 
         run: |
-          pytest -v tests/
+          poetry run pytest -v tests/
 
       - name: Run pipeline
         run: |
-          kedro run -p fabricator
-          kedro run
+          poetry run kedro run -p fabricator
+          poetry run kedro run
