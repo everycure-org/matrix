@@ -17,6 +17,7 @@ jobs:
       - name: Set up Python 3.11
         uses: actions/setup-python@v3
         with:
+          cache: 'poetry'
           python-version: "3.11"
       # ======= PRE-COMMIT =======
       - uses: actions/cache@v3
@@ -34,15 +35,6 @@ jobs:
       # ======= DEPENDENCIES =======
       - name: Install poetry
         uses: abatilo/actions-poetry@v2
-      - name: Setup a local virtual environment (if no poetry.toml file)
-        run: |
-          poetry config virtualenvs.create true --local
-          poetry config virtualenvs.in-project true --local
-      - uses: actions/cache@v3
-        name: Define a cache for the virtual environment based on the dependencies lock file
-        with:
-          path: ./.venv
-          key: venv-${{ hashFiles('poetry.lock') }}
       - name: Install the project dependencies
         run: poetry install --with=dev
       # ======= TESTS =======
