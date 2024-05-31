@@ -5,3 +5,5 @@ paths:
   feat: data/04_features
   model_input: data/05_model_input
   models: data/06_models
+  model_output: data/07_model_output
+  reporting: data/08_reporting

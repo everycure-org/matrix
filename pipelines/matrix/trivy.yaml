@@ -2,7 +2,11 @@
 # trivy can do a lot more than just scanning licenses. Will expand on this in the future.
 license:
     confidencelevel: "0.9"
+    # ========================
+    # THESE ARE THE LICENSES THAT ARE CRITICAL! "forbidden", the rest are fine
+    # ========================
     forbidden:
+        # forbidden because of the extra clause about network usage (SaaS clause). For more info: https://www.gnu.org/licenses/gpl-faq.html#SaaS
         - AGPL-1.0
         - AGPL-3.0
         - CC-BY-NC-1.0
@@ -39,6 +43,7 @@ license:
         - MIT License, Apache Software License
         - MIT License, MIT License
         - Python Software Foundation License
+        - Historical Permission Notice and Disclaimer (HPND)
     # Custom libraries end
         - AFL-1.1
         - AFL-1.2
