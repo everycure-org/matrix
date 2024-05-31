@@ -37,8 +37,6 @@ jobs:
       - name: Install the project dependencies
         run: poetry install --with=dev
       # ======= TESTS =======
-      - name: Run the automated tests (for example)
-        run: pytest -v tests
       - name: Run unit tests 
         run: |
           poetry shell # activate the virtual environment
