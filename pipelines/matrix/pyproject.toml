@@ -48,3 +48,18 @@ scikit-learn = "^1.5.0"
 gcsfs = "^2024.5.0"
 pyarrow = "^16.1.0"
 xgboost = "^2.0.3"
+brix-refit = {path = "packages/refit"}
+scikit-optimize = "^0.10.1"
+matplotlib = "^3.9.0"
+
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.2.1"
+brix-data-fabricator = {path = "packages/data_fabricator"}
+
+[tool.ruff]
+lint.select = ["D"]
+lint.pydocstyle.convention = "google"
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*/**" = ["D"]

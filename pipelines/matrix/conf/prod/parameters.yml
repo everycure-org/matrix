@@ -1,0 +1,4 @@
+modelling.model_tuning_args:
+  tuner:
+    estimator:
+      device: cuda

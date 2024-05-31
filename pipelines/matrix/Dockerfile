@@ -1,13 +1,15 @@
-ARG BASE_IMAGE=python:3.9-slim
+ARG BASE_IMAGE=python:3.11-slim
 FROM $BASE_IMAGE as runtime-environment
 
 # install project requirements
-COPY requirements.txt /tmp/requirements.txt
-COPY packages packages
-RUN python -m pip install -U "pip>=21.2,<23.2"
 # add basic gcc / g++ for building packages
-RUN apt-get update && apt-get install -y --no-install-recommends gcc g++ && rm -rf /var/lib/apt/lists/*
-RUN pip install --no-cache-dir -r /tmp/requirements.txt && rm -f /tmp/requirements.txt
+RUN apt-get update && apt-get install -y --no-install-recommends gcc curl g++ && rm -rf /var/lib/apt/lists/*
+RUN curl -sSL https://install.python-poetry.org | python3 -
+
+WORKDIR /tmp
+COPY poetry.lock pyproject.toml ./
+COPY packages packages
+RUN /root/.local/bin/poetry install
 
 # add kedro user
 ARG KEDRO_UID=999

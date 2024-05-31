@@ -1,0 +1,67 @@
+_pandas_csv: &_pandas_csv
+  type:  pandas.CSVDataset
+
+_pandas_parquet: &_pandas_parquet
+  type: pandas.ParquetDataset
+
+_kg_dataset: &_kg_dataset
+  type: matrix.datasets.graph.KnowledgeGraphDataset
+  load_args:
+    engine: pyarrow
+    use_nullable_dtypes: True
+
+modelling.raw.rtx_kg2.nodes:
+  <<: *_pandas_csv
+  filepath: ${globals:paths.raw}/rtx_kg2_nodes.csv
+
+modelling.raw.ground_truth.tp:
+  <<: *_pandas_csv
+  filepath: ${globals:paths.raw}/tp_pairs.txt
+
+modelling.raw.ground_truth.tn:
+  <<: *_pandas_csv
+  filepath: ${globals:paths.raw}/tn_pairs.txt
+
+modelling.raw.fda_drugs:
+  type: "pickle.PickleDataset"
+  filepath: ${globals:paths.raw}/fda_approved_drugs_v1.0_KG2.7.3c.pickle
+
+modelling.prm.known_pairs:
+  <<: *_pandas_parquet
+  filepath: ${globals:paths.int}/ground_truth_data/known_pairs
+
+modelling.feat.rtx_kg2:
+  <<: *_kg_dataset
+  filepath: ${globals:paths.feat}/rtx_kg2_nodes
+
+modelling.model_input.splits:
+  <<: *_pandas_parquet
+  filepath: ${globals:paths.model_input}/splits
+
+modelling.model_input.enriched_splits:
+  <<: *_pandas_parquet
+  filepath: ${globals:paths.model_input}/enriched_splits
+
+modelling.model_input.transformed_splits:
+  <<: *_pandas_parquet
+  filepath: ${globals:paths.model_input}/transformed_splits
+
+modelling.models.model:
+  type: pickle.PickleDataset
+  filepath: ${globals:paths.models}/model.pickle
+
+modelling.models.model_params:
+  type: yaml.YAMLDataset
+  filepath: ${globals:paths.models}/model_params.yml
+
+modelling.model_output.predictions:
+  <<: *_pandas_parquet
+  filepath: ${globals:paths.model_output}/predictions
+
+modelling.reporting.tuning_convergence_plot:
+  type: matplotlib.MatplotlibWriter
+  filepath: ${globals:paths.reporting}/convergence_plot.png
+
+modelling.reporting.metrics:
+  type: yaml.YAMLDataset
+  filepath: ${globals:paths.reporting}/metrics.yml
