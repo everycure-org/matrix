@@ -10,3 +10,5 @@ lock:
 licenses:  build
 	trivy image --scanners license --severity UNKNOWN,CRITICAL matrix
 
+licenses_container: build
+	docker run -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy image matrix
