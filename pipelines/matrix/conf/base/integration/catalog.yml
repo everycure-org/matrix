@@ -9,10 +9,11 @@ _neo4j_ds: &_neo4j_ds
   type: matrix.datasets.neo4j.Neo4JDataset
   database: everycure
   url: bolt://127.0.0.1:7687
+  # TODO: Use Omegaconf resolver instead
   credentials: neo4j_credentials
   save_args:
     mode: "overwrite"
-
+  
 integration.raw.rtx_kg2.nodes:
   <<: *_spark_csv
   filepath: ${globals:paths.raw}/rtx_kg2_nodes.csv
@@ -45,10 +46,8 @@ integration.prm.treats:
     relationship.target.save.mode: overwrite
     relationship.target.labels: ":Disease"
     relationship.target.node.keys: target_id:id
-    # relationship.nodes.map: true
 
-
-# integration.prm.filtered_drugs:
-#   <<: *_neo4j_ds
-#   type: matrix.datasets.neo4j.Neo4JDataset
-#   labels: ":Drug"
+integration.raw.pypher:
+  <<: *_neo4j_ds
+  query:
+    object: matrix.pipelines.integration.pipeline.neo4j_drug_disease_query
