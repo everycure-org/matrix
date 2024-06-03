@@ -13,7 +13,7 @@ from pypher import Pypher
 from refit.v1.core.inject import inject_object
 
 
-class Neo4JDataset(SparkDataset):
+class Neo4JSparkDataset(SparkDataset):
     """Dataset to load and save data from Neo4J.
 
     Kedro dataset to load and write data from Neo4J. This is essentially a wrapper
