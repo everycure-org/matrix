@@ -117,7 +117,7 @@ def create_pipeline(**kwargs) -> Pipeline:
             # Example reading
             node(
                 func=print,
-                inputs=["integration.raw.pypher"],
+                inputs=["integration.prm.pypher"],
                 outputs=None,
                 name="print",
             ),
