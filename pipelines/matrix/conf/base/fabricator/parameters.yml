@@ -5,6 +5,7 @@ fabricator.rtx_kg2:
       id: 
         type: generate_unique_id
         prefix: node_
+      
       category:
         type: generate_values
         sample_values:
@@ -14,6 +15,7 @@ fabricator.rtx_kg2:
         type: generate_random_numbers
         start_range: 100
         end_range: 1000
+
       date_discovered:
         type: generate_dates
         start_dt: 2010-01-01

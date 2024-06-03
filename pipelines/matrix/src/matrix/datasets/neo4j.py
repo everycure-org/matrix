@@ -1,5 +1,5 @@
 """Module containing Neo4JDataset."""
-from typing import Any
+from typing import Any, Dict, Callable
 from copy import deepcopy
 
 from pyspark.sql import DataFrame
@@ -8,25 +8,21 @@ from kedro_datasets.spark import SparkDataset
 from kedro.io.core import Version
 from kedro_datasets.spark.spark_dataset import _get_spark
 
+from pypher import Pypher
 
-class Neo4JDatabase(SparkDataset):
-    """Class to represent Neo4j database."""
-
-    def __init__(self, url: str, database: str) -> None:
-        """Creates a new instance of ``Neo4JDatabase``."""
-        pass
-
-    def query(self, query: str) -> DataFrame:
-        """Execute cypher query on the database."""
-        pass
-
-    def to_dataframe(self) -> DataFrame:
-        """Convert to dataframe."""
-        pass
+from refit.v1.core.inject import inject_object
 
 
 class Neo4JDataset(SparkDataset):
-    """Dataset to load and save data from Neo4J."""
+    """Dataset to load and save data from Neo4J.
+
+    Kedro dataset to load and write data from Neo4J. This is essentially a wrapper
+    for the Neo4J spark connector.
+
+    FUTURE:
+        - Allow defining a [schema](https://neo4j.com/docs/spark/current/read/define-schema/)
+        - Test [predicate pushdown](https://neo4j.com/docs/spark/current/performance/spark/)
+    """
 
     DEFAULT_LOAD_ARGS: dict[str, Any] = {}
     DEFAULT_SAVE_ARGS: dict[str, Any] = {}
@@ -36,6 +32,7 @@ class Neo4JDataset(SparkDataset):
         *,
         url: str,
         database: str,
+        query: Dict[str, str] = None,
         load_args: dict[str, Any] = None,
         save_args: dict[str, Any] = None,
         version: Version = None,
@@ -44,7 +41,20 @@ class Neo4JDataset(SparkDataset):
     ) -> None:
         """Creates a new instance of ``Neo4JDataset``.
 
-        Example:
+        Example reading from a query:
+        ::
+            query:
+                object: path.to.pypher.function
+        ::
+
+        Example writing nodes:
+        ::
+            metadata:
+                labels: ":Disease"
+                node.keys: id
+
+
+        Example writing a relationship:
         ::
             metadata:
                 relationship: TREATS
@@ -58,16 +68,10 @@ class Neo4JDataset(SparkDataset):
                 relationship.nodes.map: true
         ::
 
-        Example:
-        ::
-            metadata:
-                partitions: 4
-                query: "MATCH (n:Drug) RETURN n"
-        ::
-
         Args:
             url: URL of the Neo4J instance.
             database: Name of the Neo4J database.
+            query: path to function that yields a Pypher query for execution
             labels: Labels to filter the nodes.
             load_args: Arguments to pass to the load method.
             save_args: Arguments to pass to the save
@@ -77,6 +81,7 @@ class Neo4JDataset(SparkDataset):
         """
         self._database = database
         self._url = url
+        self._query = query
         self._credentials = deepcopy(credentials) or {}
 
         super().__init__(
@@ -91,14 +96,19 @@ class Neo4JDataset(SparkDataset):
     def _load(self) -> Any:
         spark_session = _get_spark()
 
-        return (
+        read_object = (
             spark_session.read.format("org.neo4j.spark.DataSource")
             .option("database", self._database)
             .option("url", self._url)
-            .options(**self.metadata)
             .options(**self._credentials)
-            .load(**self._load_args)
         )
+
+        if self._query:
+            read_object.option("query", str(self._load_query(self._query)))
+        else:
+            read_object.option(**self.metadata)
+
+        return read_object.load(**self._load_args)
 
     def _save(self, data: DataFrame) -> None:
         (
@@ -109,3 +119,8 @@ class Neo4JDataset(SparkDataset):
             .options(**self.metadata)
             .save(**self._save_args)
         )
+
+    @staticmethod
+    @inject_object()
+    def _load_query(func: Callable) -> Pypher:
+        return func(Pypher())
