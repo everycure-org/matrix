@@ -47,7 +47,7 @@ integration.prm.treats:
     relationship.target.labels: ":Disease"
     relationship.target.node.keys: target_id:id
 
-integration.raw.pypher:
+integration.prm.pypher:
   <<: *_neo4j_ds
   query:
     object: matrix.pipelines.integration.pipeline.neo4j_drug_disease_query
