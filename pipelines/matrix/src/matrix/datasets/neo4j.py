@@ -17,7 +17,7 @@ class Neo4JSparkDataset(SparkDataset):
     """Dataset to load and save data from Neo4J.
 
     Kedro dataset to load and write data from Neo4J. This is essentially a wrapper
-    for the Neo4J spark connector.
+    for the [Neo4J spark connector](https://neo4j.com/docs/spark/current/).
 
     FUTURE:
         - Allow defining a [schema](https://neo4j.com/docs/spark/current/read/define-schema/)
