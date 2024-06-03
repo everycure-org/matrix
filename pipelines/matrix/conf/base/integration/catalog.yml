@@ -6,7 +6,7 @@ _spark_csv_ds: &_spark_csv
     sep: ","
 
 _neo4j_ds: &_neo4j_ds
-  type: matrix.datasets.neo4j.Neo4JDataset
+  type: matrix.datasets.neo4j.Neo4JSparkDataset
   database: everycure
   url: bolt://127.0.0.1:7687
   # TODO: Use Omegaconf resolver instead
@@ -36,7 +36,6 @@ integration.prm.diseases:
 
 integration.prm.treats:
   <<: *_neo4j_ds
-  type: matrix.datasets.neo4j.Neo4JDataset
   metadata:
     relationship: TREATS
     relationship.save.strategy: keys
