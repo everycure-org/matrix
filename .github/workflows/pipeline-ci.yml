@@ -48,11 +48,19 @@ jobs:
         run: |
           pip install uv
           uv venv
-          uv pip install -r requirements.txt
+          uv pip install -r requirements.txt -r requirements.dev.in
 
+      # cache python dependencies
+      - uses: actions/cache@v4
+        name: pytest-testmon cache
+        with:
+          path: ${{ github.workspace }}/.testmondata
+          key: testmon=${{ github.ref_name }}-${{ matrix.python-version }}
+          restore-keys: testmon=${{ matrix.python-version }}-main
+          save-always: true
       - name: Run unit tests 
         run: |
-          .venv/bin/pytest -v tests/
+          .venv/bin/pytest --testmon -v tests/
 
       - name: Run integration tests 
         run: |
