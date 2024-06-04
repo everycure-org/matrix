@@ -26,7 +26,7 @@ jobs:
       - uses: actions/cache@v4
         name: python dependencies caching
         with:
-          path: ${{ github.workspace }}/.venv/
+          path: ${{ github.workspace }}/pipelines/matrix/.venv/
           key: venv #always cache 
           save-always: true
       # cache pre-commit dependencies
