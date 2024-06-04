@@ -4,6 +4,11 @@ on:
   workflow_dispatch: {}
   push:
 
+env:
+  # PATH: "$PWD/.venv/bin:$PATH"
+  PATH: ${{ github.workspace }}/.venv/bin:${{ env.PATH }}
+
+
 jobs:
   run-tests:
 
@@ -17,10 +22,16 @@ jobs:
       - run: pipx install poetry
       - name: Set up Python 3.11
         uses: actions/setup-python@v3
+        # with:
+        #   cache: 'poetry'
+        #   python-version: "3.11"
+
+      # cache python dependencies
+      - uses: actions/cache@v3
         with:
-          cache: 'poetry'
-          python-version: "3.11"
-      # ======= PRE-COMMIT =======
+          path: .venv/
+          key: ${{hashFiles('requirements.txt')}}
+      # cache pre-commit dependencies
       - uses: actions/cache@v3
         with:
           path: |
@@ -33,14 +44,17 @@ jobs:
           git fetch origin main
           # run pre-commit on everything that's different from main
           pre-commit run -s origin/main -o HEAD
-      # ======= DEPENDENCIES =======
+
       - name: Install the project dependencies
-        run: poetry install --with=dev
-      # ======= TESTS =======
+        run: |
+          pip install uv
+          uv pip install -r requirements.txt
+
       - name: Run unit tests 
         run: |
-          # fails so need to prefix all commands with poetry run
-          # source $(poetry env info --path)/bin/activate
           poetry run pytest -v tests/
-          poetry run kedro run -p fabricator
-          poetry run kedro run
+
+      - name: Run integration tests 
+        run: |
+           run kedro run -p fabricator
+           run kedro run
