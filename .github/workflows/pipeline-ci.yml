@@ -22,16 +22,18 @@ jobs:
           python-version: "3.11"
 
       # cache python dependencies
-      - uses: actions/cache@v3
+      - uses: actions/cache@v4
         with:
           path: .venv/
-          key: ${{hashFiles('requirements.txt')}}
+          key: venv #always cache 
+          save-always: true
       # cache pre-commit dependencies
-      - uses: actions/cache@v3
+      - uses: actions/cache@v4
         with:
           path: |
             ~/.cache/pre-commit
-          key: pre-commit-3|${{ env.pythonLocation }}|${{ hashFiles('.pre-commit-config.yaml') }}
+          key: pre-commit # always cache
+          save-always: true
       - name: Run pre-commit hook (fail-fast)
         run: |
           pip install pre-commit
