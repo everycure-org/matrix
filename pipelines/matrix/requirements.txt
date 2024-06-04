@@ -49,8 +49,6 @@ bleach==6.1.0
     # via nbconvert
 boltons==24.0.0
     # via brix-refit
-./packages/data_fabricator
-    # via -r requirements.in
 ./packages/refit
     # via -r requirements.in
 build==1.2.1
@@ -103,8 +101,6 @@ email-validator==2.1.1
     # via fastapi
 executing==2.0.1
     # via stack-data
-faker==4.18.0
-    # via brix-data-fabricator
 fastapi==0.111.0
     # via kedro-viz
 fastapi-cli==0.0.4
@@ -355,7 +351,6 @@ packaging==23.2
     #   scikit-optimize
 pandas==1.5.3
     # via
-    #   brix-data-fabricator
     #   brix-refit
     #   kedro-viz
     #   pandera
@@ -439,7 +434,6 @@ pytest==8.2.2
 python-dateutil==2.9.0.post0
     # via
     #   arrow
-    #   faker
     #   jupyter-client
     #   matplotlib
     #   pandas
@@ -514,7 +508,7 @@ scikit-learn==1.4.0
     # via
     #   -r requirements.in
     #   scikit-optimize
-scikit-optimize==0.10.1
+scikit-optimize==0.10.2
     # via -r requirements.in
 scipy==1.13.1
     # via
@@ -556,9 +550,7 @@ terminado==0.18.1
     #   jupyter-server
     #   jupyter-server-terminals
 text-unidecode==1.3
-    # via
-    #   faker
-    #   python-slugify
+    # via python-slugify
 threadpoolctl==3.5.0
     # via scikit-learn
 tinycss2==1.3.0

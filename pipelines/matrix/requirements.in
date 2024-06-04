@@ -13,5 +13,4 @@ scikit-optimize
 matplotlib
 pytest
 
-./packages/data_fabricator
 ./packages/refit 
