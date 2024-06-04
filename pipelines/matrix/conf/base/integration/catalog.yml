@@ -9,7 +9,6 @@ _neo4j_ds: &_neo4j_ds
   type: matrix.datasets.neo4j.Neo4JSparkDataset
   database: everycure
   url: bolt://127.0.0.1:7687
-  # TODO: Use Omegaconf resolver instead
   credentials: neo4j_credentials
   save_args:
     mode: "overwrite"
