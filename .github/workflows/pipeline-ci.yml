@@ -22,6 +22,7 @@ jobs:
           python-version: "3.11"
 
       # cache python dependencies
+      - run: mkdir -p .venv # ensures caching of this folder works
       - uses: actions/cache@v4
         name: python dependencies caching
         with:
