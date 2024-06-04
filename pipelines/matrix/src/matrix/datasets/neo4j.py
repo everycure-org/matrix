@@ -104,7 +104,8 @@ def cypher_query(query: Union[str, Callable], schema: Optional[StructType] = Non
 
     The Cypher query annotator is required to use for nodes that read datasets of
     the Neo4JSparkDataset type. The `query` argument can either be a string representing
-    a Cypher query, or a callable that yields the Cypher query.
+    a Cypher query, or a callable that yields the Cypher query. The callable will be passed
+    all of the arguments passed into the node, such that they can be used to interpolate the query.
 
     Args:
         query: Cypher query to use.
