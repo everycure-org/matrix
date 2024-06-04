@@ -43,6 +43,7 @@ jobs:
       - name: Install the project dependencies
         run: |
           pip install uv
+          uv venv
           uv pip install -r requirements.txt
 
       - name: Run unit tests 
