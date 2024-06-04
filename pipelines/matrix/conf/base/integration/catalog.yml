@@ -34,6 +34,7 @@ integration.prm.diseases:
     labels: ":Disease"
     node.keys: id
 
+# TODO: Verify if we can align with Biolink
 integration.prm.treats:
   <<: *_neo4j_ds
   metadata:
@@ -48,5 +49,3 @@ integration.prm.treats:
 
 integration.prm.pypher:
   <<: *_neo4j_ds
-  query:
-    object: matrix.pipelines.integration.pipeline.neo4j_drug_disease_query
