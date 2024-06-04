@@ -3,12 +3,11 @@ from typing import Any, Callable, Union, Optional
 from copy import deepcopy
 from functools import wraps
 
-from pyspark.sql import DataFrame
+from pyspark.sql import DataFrame, SparkSession
 from pyspark.sql.types import StructType
 
 from kedro.io.core import Version
 from kedro_datasets.spark import SparkDataset
-from kedro_datasets.spark.spark_dataset import _get_spark
 
 
 class Neo4JSparkDataset(SparkDataset):
@@ -101,7 +100,7 @@ class Neo4JSparkDataset(SparkDataset):
         )
 
     def _load(self) -> Any:
-        spark_session = _get_spark()
+        spark_session = SparkSession.builder.getOrCreate()
 
         return (
             spark_session.read.format("org.neo4j.spark.DataSource")
