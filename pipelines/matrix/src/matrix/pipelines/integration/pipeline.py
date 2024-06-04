@@ -34,7 +34,7 @@ def create_pipeline(**kwargs) -> Pipeline:
             # Example reading
             node(
                 func=nodes.neo4j_decorated,
-                inputs=["integration.prm.pypher", "params:modelling.drug_types"],
+                inputs=["integration.prm.pypher", "params:integration.drug_label"],
                 outputs=None,
                 name="print",
             ),

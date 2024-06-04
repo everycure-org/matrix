@@ -34,6 +34,28 @@ class Neo4JSparkDataset(SparkDataset):
     ) -> None:
         """Creates a new instance of ``Neo4JDataset``.
 
+        Example reading data:
+        ::
+
+            # The node function
+            @cypher_query(query="MATCH p=()-[r:TREATS]->() RETURN p")
+            def node(data: Dataframe):
+                ... # Node logic here
+        ::
+
+        Example reading data with parameters:
+        ::
+
+            def query(node_label: str, **kwargs):
+                return f"MATCH p=(n)-[r:TREATS]->() WHERE n.category in ['{node_label}'] RETURN p"
+
+            # The node function
+            @cypher_query(query=query)
+            def node(data: Dataframe, node_label: str):
+                ... # Node logic here
+        ::
+
+
         Example writing nodes:
         ::
             metadata:
