@@ -109,7 +109,7 @@ def cypher_query(query: Union[str, Callable], schema: Optional[StructType] = Non
 
     Args:
         query: Cypher query to use.
-        schema: Optional PySpark schema to convert to.
+        schema: Optional PySpark [schema](https://neo4j.com/docs/spark/current/read/define-schema/) to convert to.
     """
 
     def decorate(func):
