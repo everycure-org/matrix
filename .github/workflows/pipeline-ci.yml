@@ -4,10 +4,6 @@ on:
   workflow_dispatch: {}
   push:
 
-env:
-  # PATH: "$PWD/.venv/bin:$PATH"
-  PATH: ${{ github.workspace }}/.venv/bin:${{ env.PATH }}
-
 
 jobs:
   run-tests:
@@ -19,7 +15,6 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
-      - run: pipx install poetry
       - name: Set up Python 3.11
         uses: actions/setup-python@v3
         # with:
@@ -52,9 +47,9 @@ jobs:
 
       - name: Run unit tests 
         run: |
-          poetry run pytest -v tests/
+          .venv/bin/pytest -v tests/
 
       - name: Run integration tests 
         run: |
-           run kedro run -p fabricator
-           run kedro run
+           .venv/bin/kedro run -p fabricator
+           .venv/bin/kedro run
