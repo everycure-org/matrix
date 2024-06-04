@@ -1,5 +1,7 @@
 ##########################
 # Kedro PROJECT
+.venv/
+
 
 # ignore Dockerfile and .dockerignore
 Dockerfile

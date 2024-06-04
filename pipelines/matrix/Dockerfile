@@ -1,32 +1,31 @@
 ARG BASE_IMAGE=python:3.11-slim
-FROM $BASE_IMAGE as runtime-environment
+FROM $BASE_IMAGE as build
+RUN apt-get update && apt-get install -y --no-install-recommends gcc curl g++
 
-# install project requirements
-# add basic gcc / g++ for building packages
-RUN apt-get update && apt-get install -y --no-install-recommends gcc curl g++ && rm -rf /var/lib/apt/lists/*
-RUN curl -sSL https://install.python-poetry.org | python3 -
+# package all python dependencies
+ENV PIP_NO_CACHE_DIR=1
+ADD requirements.txt .
+RUN --mount=type=cache,target=/root/.cache pip install -U uv && \
+    uv venv
+ENV PATH="/.venv/bin:$PATH"
+ADD packages/ ./packages/
+RUN uv pip install -r requirements.txt
 
-WORKDIR /tmp
-COPY poetry.lock pyproject.toml ./
-COPY packages packages
-RUN /root/.local/bin/poetry install
+
+# Stage 2
+FROM $BASE_IMAGE
 
 # add kedro user
 ARG KEDRO_UID=999
 ARG KEDRO_GID=0
 RUN groupadd -f -g ${KEDRO_GID} kedro_group && \
-useradd -m -d /home/kedro_docker -s /bin/bash -g ${KEDRO_GID} -u ${KEDRO_UID} kedro_docker
+useradd -m -d /home/kedro -s /bin/bash -g ${KEDRO_GID} -u ${KEDRO_UID} kedro
 
-WORKDIR /home/kedro_docker
-USER kedro_docker
+USER kedro
+WORKDIR /home/kedro
+COPY --from=build .venv .
+ENV PATH="/home/kedro/.venv/bin:$PATH"
+ADD . .
 
-FROM runtime-environment
-
-# copy the whole project except what is in .dockerignore
-ARG KEDRO_UID=999
-ARG KEDRO_GID=0
-COPY --chown=${KEDRO_UID}:${KEDRO_GID} . .
-
-EXPOSE 8888
-
+# EXPOSE 8888
 CMD ["kedro", "run"]

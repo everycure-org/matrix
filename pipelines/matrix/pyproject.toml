@@ -1,6 +1,9 @@
 [build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+requires = [ "setuptools",]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.dynamic.dependencies]
+ file = "requirements.txt"
 
 [tool.pytest.ini_options]
 pythonpath = "src"
@@ -27,37 +30,6 @@ example_pipeline = "False"
 source_dir = "src"
 
 [project.entry-points."kedro.hooks"]
-
-[tool.poetry]
-name = "matrix"
-version = "0.1.0"
-description = ""
-authors = ["Pascal <pascal@everycure.org>"]
-packages = [{include = "matrix", from="src"}]
-license = "MIT"
-readme = "README.md"
-
-[tool.poetry.dependencies]
-python = "^3.11"
-ipython = "^8.24.0"
-jupyterlab = "^4.2.1"
-kedro = "^0.19.6"
-kedro-datasets = "^3.0.1"
-kedro-telemetry = "^0.4.0"
-kedro-viz = "^9.1.0"
-notebook = "^7.2.0"
-scikit-learn = "~1.4.0"
-gcsfs = "^2024.5.0"
-pyarrow = "^16.1.0"
-xgboost = "^2.0.3"
-brix-refit = {path = "packages/refit"}
-scikit-optimize = "^0.10.1"
-matplotlib = "^3.9.0"
-
-
-[tool.poetry.group.dev.dependencies]
-pytest = "^8.2.1"
-brix-data-fabricator = {path = "packages/data_fabricator"}
 
 [tool.ruff]
 lint.select = ["D"]

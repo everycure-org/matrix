@@ -1,16 +1,14 @@
-build:
-	docker build -t matrix .
-
 install:
-	pip install -r requirements.txt
+	uv pip install -r requirements.in
 
 lock:
-	pip-compile --output-file=requirements.txt requirements.in
+	uv pip compile requirements.in > requirements.txt
+
+build: lock
+	docker build -t matrix .
 
 licenses:  build
-	# trivy image --scanners license --severity UNKNOWN,CRITICAL matrix
-	trivy image --scanners license --severity CRITICAL matrix
-	trivy image --scanners license --severity HIGH,CRITICAL matrix
+	trivy image --scanners license --severity UNKNOWN,CRITICAL matrix
 
 licenses_container: build
 	docker run \
