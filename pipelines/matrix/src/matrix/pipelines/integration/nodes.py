@@ -54,28 +54,35 @@ def apply_date_filter(data: DataFrame, cutoff_date: datetime) -> None:
     return data.filter(F.col("date_discovered") <= cutoff_date)
 
 
+# @cypher_query(
+#     query="""
+#         MATCH (drug:`Drug`)-[:`TREATS`]->(disease:`Disease`)
+#         RETURN
+#             drug.`id` AS drug_label,
+#             disease.`id` AS disease_label,
+#             disease.`date_discovered` AS datetime_str
+#     """,
+#     schema=StructType(
+#         [
+#             StructField("drug_label", StringType(), True),
+#             StructField("disease_label", StringType(), True),
+#             StructField("datetime_str", StringType(), True),
+#         ]
+#     ),
+# )
 @cypher_query(
-    query="""
-        MATCH (drug:`Drug`)-[:`TREATS`]->(disease:`Disease`) 
-        RETURN 
-            drug.`id` AS drug_label, 
-            disease.`id` AS disease_label, 
-            disease.`date_discovered` AS datetime_str
-    """,
-    schema=StructType(
-        [
-            StructField("drug_label", StringType(), True),
-            StructField("disease_label", StringType(), True),
-            StructField("datetime_str", StringType(), True),
-        ]
-    ),
+    query=lambda drug_label: f""" 
+        MATCH p=(n)-[r:TREATS]->() 
+        WHERE n.category in ['{drug_label}'] 
+        RETURN p
+    """
 )
-def neo4j_decorated(data: DataFrame, drug_types: List[str]):
+def neo4j_decorated(data: DataFrame, drug_label: List[str]):
     """Function to retrieve Neo4J data.
 
     Args:
         data: Dataframe representing query result
-        drug_types: additional arg
+        drug_label: additional arg
     """
-    print(drug_types)
+    print(drug_label)
     data.show()
