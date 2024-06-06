@@ -49,37 +49,43 @@ modelling.transformers:
 # defined using a regex strategy.
 modelling.model_tuning_args:
   tuner:
-    object: matrix.pipelines.modelling.tuning.GaussianSearch
+    object: matrix.pipelines.modelling.tuning.NopTuner
     estimator:
       object: xgboost.XGBClassifier
       tree_method: hist
-      random_state: *_random_state
-      # Question: Can we, e.g., define learning rate here as starting point?
-    n_calls: 10
-    dimensions:
-      - object: skopt.space.Real
-        name: learning_rate
-        low: 0.01
-        high: 0.5
-      - object: skopt.space.Integer
-        name: max_depth
-        low: 3
-        high: 10
-      - object: skopt.space.Real
-        name: lambda
-        low: 0
-        high: 1
-      - object: skopt.space.Integer
-        name: n_estimators
-        low: 50
-        high: 2500
-    scoring: 
-        object: matrix.pipelines.modelling.utils.partial_
-        func:
-          object: sklearn.metrics.f1_score
-        average: macro
-    splitter:
-      <<: *_splitter
+      max_depth: 10
+  # tuner:
+  #   object: matrix.pipelines.modelling.tuning.GaussianSearch
+  #   estimator:
+  #     object: xgboost.XGBClassifier
+  #     tree_method: hist
+  #     random_state: *_random_state
+  #     # Question: Can we, e.g., define learning rate here as starting point?
+  #   n_calls: 10
+  #   dimensions:
+  #     - object: skopt.space.Real
+  #       name: learning_rate
+  #       low: 0.01
+  #       high: 0.5
+  #     - object: skopt.space.Integer
+  #       name: max_depth
+  #       low: 3
+  #       high: 10
+  #     - object: skopt.space.Real
+  #       name: lambda
+  #       low: 0
+  #       high: 1
+  #     - object: skopt.space.Integer
+  #       name: n_estimators
+  #       low: 50
+  #       high: 2500
+  #   scoring: 
+  #       object: matrix.pipelines.modelling.utils.partial_
+  #       func:
+  #         object: sklearn.metrics.f1_score
+  #       average: macro
+  #   splitter:
+  #     <<: *_splitter
   features: # Features use regex, source_0, source_1, .., target_0, target_1
     - source_+
     - target_+
