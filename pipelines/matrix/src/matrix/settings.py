@@ -36,7 +36,7 @@ CONFIG_LOADER_CLASS = OmegaConfigLoader
 CONFIG_LOADER_ARGS = {
     "base_env": "base",
     "default_run_env": "local",
-    "merge_strategy": {"parameters": "soft"},=
+    "merge_strategy": {"parameters": "soft"},
     "config_patterns": {
         "spark": ["spark*", "spark*/**"],
         "globals": ["globals*", "globals*/**", "**/globals*"],
