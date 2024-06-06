@@ -11,6 +11,9 @@ from matrix.pipelines.fabricator.pipeline import (
 from matrix.pipelines.embeddings.pipeline import (
     create_pipeline as create_embeddings_pipeline,
 )
+from matrix.pipelines.integration.pipeline import (
+    create_pipeline as create_integration_pipeline,
+)
 
 
 def register_pipelines() -> Dict[str, Pipeline]:
@@ -23,4 +26,5 @@ def register_pipelines() -> Dict[str, Pipeline]:
     pipelines["__default__"] = create_modelling_pipeline()
     pipelines["embeddings"] = create_embeddings_pipeline()
     pipelines["fabricator"] = create_fabricator_pipeline()
+    pipelines["integration"] = create_integration_pipeline()
     return pipelines
