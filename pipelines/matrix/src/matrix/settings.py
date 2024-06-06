@@ -8,9 +8,10 @@ https://docs.kedro.org/en/stable/kedro_project_setup/settings.html.
 # Instantiated project hooks.
 # For example, after creating a hooks.py and defining a ProjectHooks class there, do
 # from pandas_viz.hooks import ProjectHooks
+from matrix.hooks import SparkHooks
 
 # Hooks are executed in a Last-In-First-Out (LIFO) order.
-# HOOKS = (ProjectHooks(),)
+HOOKS = (SparkHooks(),)
 
 # Installed plugins for which to disable hook auto-registration.
 # DISABLE_HOOKS_FOR_PLUGINS = ("kedro-viz",)
@@ -36,10 +37,10 @@ CONFIG_LOADER_ARGS = {
     "base_env": "base",
     "default_run_env": "local",
     "merge_strategy": {"parameters": "soft"},
-    #       "config_patterns": {
-    #           "spark" : ["spark*/"],
-    #           "parameters": ["parameters*", "parameters*/**", "**/parameters*"],
-    #       }
+    "config_patterns": {
+        "spark": ["spark*", "spark*/**"],
+        "globals": ["globals*", "globals*/**", "**/globals*"],
+    },
 }
 
 # Class that manages Kedro's library components.

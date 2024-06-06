@@ -1,0 +1,22 @@
+services:
+  neo4j:
+    container_name: neo4j
+    image: neo4j:latest
+    platform: linux/amd64
+    ports:
+      - 7474:7474
+      - 7687:7687
+    # https://neo4j.com/docs/operations-manual/current/docker/ref-settings/
+    environment:
+      - NEO4J_AUTH=neo4j/admin
+      - NEO4J_apoc_export_file_enabled=true
+      - NEO4J_apoc_import_file_enabled=true
+      - NEO4J_apoc_import_file_use__neo4j__config=true
+      - NEO4J_PLUGINS=["apoc", "graph-data-science"]
+      - NEO4J_dbms_security_auth__minimum__password__length=4
+      - NEO4J_initial_dbms_default__database=everycure
+    volumes:
+      - ./neo4j_db/data:/data
+      - ./neo4j_db/logs:/logs
+      - ./neo4j_db/import:/var/lib/neo4j/import
+      - ./neo4j_db/plugins:/plugins

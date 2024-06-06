@@ -30,6 +30,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 inputs={"fabrication_params": "params:fabricator.rtx_kg2"},
                 outputs={
                     "nodes": "modelling.raw.rtx_kg2.nodes",
+                    "edges": "modelling.raw.rtx_kg2.edges",
                     "embeddings": "embeddings.int.graphsage",
                 },
                 name="fabricate_datasets",
