@@ -180,21 +180,24 @@ def apply_transformers(
     target_data = (
         data.loc[mask, target_col_name] if target_col_name is not None else None
     )
-
+    
     # Iterate transformers
-    for _, transform in transformers.items():
+    for name, transform in transformers.items():
         # Fit transformer
         features = transform["features"]
-        transformer = transform["transformer"].fit(
+        fitted_transformer = transform["transformer"].fit(
             data.loc[mask, features], target_data
         )
+
+        # Updating dictionary of transformers
+        transformers[name]["transformer"] = fitted_transformer
 
         # Apply transformer
         features_selected = data[features]
         transformed = pd.DataFrame(
-            transformer.transform(features_selected),
+            fitted_transformer.transform(features_selected),
             index=features_selected.index,
-            columns=transformer.get_feature_names_out(features_selected),
+            columns=fitted_transformer.get_feature_names_out(features_selected),
         )
 
         # Overwrite columns
@@ -202,8 +205,8 @@ def apply_transformers(
             [data.drop(columns=features), transformed],
             axis="columns",
         )
-
-    return data
+        
+    return data, transformers
 
 
 @unpack_params()

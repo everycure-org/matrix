@@ -53,7 +53,10 @@ def create_pipeline(**kwargs) -> Pipeline:
                     "modelling.model_input.enriched_splits",
                     "params:modelling.transformers",
                 ],
-                outputs="modelling.model_input.transformed_splits",
+                outputs=[
+                    "modelling.model_input.transformed_splits",
+                    "modelling.model_input.transformers" 
+                ],
                 name="transform_data",
             ),
             node(

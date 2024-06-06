@@ -50,6 +50,10 @@ modelling.model_input.transformed_splits:
   <<: *_pandas_parquet
   filepath: ${globals:paths.model_input}/transformed_splits
 
+modelling.model_input.transformers:
+  type: pickle.PickleDataset
+  filepath: ${globals:paths.model_input}/transformers.pickle
+
 modelling.models.model:
   type: pickle.PickleDataset
   filepath: ${globals:paths.models}/model.pickle
