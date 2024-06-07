@@ -70,7 +70,9 @@ def test_unused_catalog_entries(kedro_context, configure_matrix_project):
 
 
 @pytest.mark.integration
-@pytest.mark.skip(reason="Ongoing issue with the Kedro catalog")
+@pytest.mark.skipif(
+    os.environ.get("ENV_NAME") == "CI", reason="Ongoing issue with the Kedro catalog"
+)
 def test_memory_data_sets_absent(kedro_context, configure_matrix_project):
     """Tests no MemoryDataSets are created."""
     used_data_sets = set.union(*[_pipeline_datasets(p) for p in pipelines.values()])
