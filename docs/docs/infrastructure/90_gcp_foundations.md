@@ -1,5 +1,8 @@
+---
+title: GCP Foundations
+---
+
 - infra was set up using the [terraform-example-foundation](https://github.com/terraform-google-modules/terraform-example-foundation) repository.
-- 
 
 ## OOTB Features
 
@@ -9,6 +12,10 @@
 ## CI for Foundations
 Can be found here:
 https://console.cloud.google.com/cloud-build/builds;region=us-central1?project=prj-b-cicd-lvhz
+
+TODO we will move this to Github Actions
+
+Repo here: [everycure-org/core](https://github.com/everycure-org/core)
 
 ## Networking setup
 
