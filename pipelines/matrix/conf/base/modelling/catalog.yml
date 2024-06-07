@@ -66,14 +66,14 @@ modelling.models.drp_model:
   type: pickle.PickleDataset
   filepath: ${globals:paths.models}/drp_model.pickle
 
-modelling.model_output.predictions:
-  <<: *_pandas_parquet
-  filepath: ${globals:paths.model_output}/predictions
-
 modelling.reporting.tuning_convergence_plot:
   type: matplotlib.MatplotlibWriter
   filepath: ${globals:paths.reporting}/convergence_plot.png
 
-modelling.reporting.metrics:
+modelling.reporting.classification_metrics:
   type: yaml.YAMLDataset
-  filepath: ${globals:paths.reporting}/metrics.yml
+  filepath: ${globals:paths.reporting}/classification_metrics.yml
+
+modelling.reporting.ranking_metrics:
+  type: yaml.YAMLDataset
+  filepath: ${globals:paths.reporting}/ranking_metrics.yml

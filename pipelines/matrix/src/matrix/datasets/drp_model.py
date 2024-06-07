@@ -167,6 +167,7 @@ class DRPmodel3classScikit(DRPmodel3class):
         scores_arr = self._give_all_scores_arr(self.features, pairs_vect) 
 
         # Append columns
+        pairs = pairs.copy()
         pairs['not treat score'] = scores_arr[:,0]
         pairs['treat score'] = scores_arr[:,1]
         pairs['unknown score'] = scores_arr[:,2]

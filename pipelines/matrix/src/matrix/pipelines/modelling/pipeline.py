@@ -87,21 +87,30 @@ def create_pipeline(**kwargs) -> Pipeline:
                 inputs={
                     "estimator": "modelling.models.model",
                     "graph": "modelling.feat.rtx_kg2",
-                    "transformers": "params:modelling.transformers",
+                    "transformers": "modelling.model_input.transformers",
                     "features": "params:modelling.model_tuning_args.features",
                 },
                 outputs="modelling.models.drp_model",
                 name="get_model_predictions",
             ),
             node(
-                func=nodes.get_model_performance,
+                func=nodes.get_classification_metrics,
                 inputs={
                     "drp_model": "modelling.models.drp_model", 
-                    "data": "modelling.model_output.predictions",
+                    "data": "modelling.model_input.transformed_splits",
                     "metrics": "params:modelling.metrics",
                     "target_col_name": "params:modelling.model_tuning_args.target_col_name",
                 },
-                outputs="modelling.reporting.metrics",
+                outputs="modelling.reporting.classification_metrics",
+                name="get_classification_metrics",
+            ),
+            node(
+                func=nodes.perform_disease_centric_evaluation,
+                inputs={
+                    "drp_model": "modelling.models.drp_model", 
+                    "known_data": "modelling.model_input.transformed_splits",
+                },
+                outputs="modelling.reporting.ranking_metrics",
                 name="get_model_performance",
             ),
         ]
