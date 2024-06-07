@@ -1,12 +1,13 @@
 
 # MKDocs
-We use MKDocs for documenting our technology. 
+
+We use MKDocs for documenting our technology.
 
 For full documentation visit [mkdocs.org](https://www.mkdocs.org). More specifically, we're using `mkdocs material` which is [documented here](https://squidfunk.github.io/mkdocs-material/).
 
 ## Getting started
 
-As with the rest of our projects, we use `uv` for python dependency management. Assuming you have `uv` and `make` installed, you can simply run `make serve` in the docs folder for serving the docs page and developing it. 
+As with the rest of our projects, we use `uv` for python dependency management. Assuming you have `uv` and `make` installed, you can simply run `make serve` in the docs folder for serving the docs page and developing it.
 
 ## Commands
 
