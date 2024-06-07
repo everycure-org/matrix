@@ -1,0 +1,20 @@
+site_name: EC Tech Docs
+site_url: https://docs.app.everycure.org
+theme:
+  name: material
+
+  features:
+    - content.action.edit
+    - content.code.copy
+    - content.tabs.link
+    - navigation.expand
+    - navigation.indexes
+    - navigation.instant
+    - navigation.sections
+    - navigation.tabs
+    - navigation.tracking
+    - toc.follow
+    - toc.integrate
+
+plugins:
+  - drawio_file
