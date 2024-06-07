@@ -11,7 +11,7 @@ modelling.disease_types:
 
 # -------------------------------
 # Base options
-model_options:
+_model_options:
   # Defines strategy for splitting the data, should be a sklearn 
   # compatible splitting class.
   splitter:
@@ -108,7 +108,7 @@ modelling:
           - target_+
         target_col_name: y
           
-    model_options: ${merge:${...model_options},${._overrides}}
+    model_options: ${merge:${..._model_options},${._overrides}}
 
   xgc:
     _overrides:
@@ -118,4 +118,4 @@ modelling:
         random_state: *_random_state
         n_unknown: 100
     
-    model_options: ${merge:${...model_options},${._overrides}}
+    model_options: ${merge:${..._model_options},${._overrides}}

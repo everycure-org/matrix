@@ -28,29 +28,9 @@ SESSION_STORE_ARGS = {"path": str(Path(__file__).parents[2])}
 # Directory that holds configuration.
 # CONF_SOURCE = "conf"
 
-from copy import deepcopy
-
-
-def merge_dicts(dict1: Dict, dict2: Dict) -> Dict:
-    """Recursively merge two dictionaries.
-
-    Args:
-        dict1 (dict): The first dictionary to merge.
-        dict2 (dict): The second dictionary to merge.
-
-    Returns:
-        dict: The merged dictionary.
-    """
-    result = deepcopy(dict1)
-    for key, value in dict2.items():
-        if key in result and isinstance(result[key], dict) and isinstance(value, dict):
-            result[key] = merge_dicts(result[key], value)
-        else:
-            result[key] = value
-    return result
-
 
 # Class that manages how configuration is loaded.
+from .resolvers import merge_dicts
 from kedro.config import OmegaConfigLoader  # noqa: E402
 
 CONFIG_LOADER_CLASS = OmegaConfigLoader
@@ -76,7 +56,7 @@ CONFIG_LOADER_ARGS = {
 
 # https://getindata.com/blog/kedro-dynamic-pipelines/
 DYNAMIC_PIPELINES_MAPPING = {
-    "modelling": ["xgb", "xgc"],  # ,
+    "modelling": ["xgb", "xgc"],
 }
 
 # Class that manages Kedro's library components.
