@@ -128,19 +128,22 @@ def create_pipeline(**kwargs) -> Pipeline:
                 )
             )
 
-    # # TODO: Set up node that gets all results as input
-    # for pipeline_, namespaces in settings.DYNAMIC_PIPELINES_MAPPING.items():
-    #     for namespace in namespaces:
-    #         pipes.append(
-    #             pipeline(
-    #                 create_modeling_pipeline(),
-    #                 inputs={
-    #                     "prm.known_pairs": "modelling.prm.known_pairs",
-    #                     "feat.rtx_kg2": "modelling.feat.rtx_kg2",
-    #                 },
-    #                 namespace=f"{pipeline_}.{namespace}",
-    #                 tags=namespace,
-    #             )
-    #         )
+    consolidate = pipeline(
+        [
+            node(
+                func=nodes.consolidate_reports,
+                inputs=[
+                    f"modelling.{namespace}.reporting.metrics"
+                    for namespace in settings.DYNAMIC_PIPELINES_MAPPING.get("modelling")
+                ],
+                outputs="modelling.reporting.metrics",
+                name="create_global_report",
+                tags=[
+                    namespace
+                    for namespace in settings.DYNAMIC_PIPELINES_MAPPING.get("modelling")
+                ],
+            ),
+        ]
+    )
 
-    return sum([create_model_input, *pipes])
+    return sum([create_model_input, *pipes, consolidate])

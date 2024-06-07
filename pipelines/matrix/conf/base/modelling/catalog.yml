@@ -69,3 +69,7 @@ modelling.model_input.splits:
 "modelling.{namespace}.reporting.metrics":
   type: yaml.YAMLDataset
   filepath: ${globals:paths.reporting}/{namespace}/metrics.yml
+
+modelling.reporting.metrics:
+  type: yaml.YAMLDataset
+  filepath: ${globals:paths.reporting}/metrics.yml

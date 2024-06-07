@@ -338,3 +338,15 @@ def get_model_performance(
             ).item()
 
     return json.loads(json.dumps(report))
+
+
+def consolidate_reports(*reports) -> dict:
+    """Function to consolidate reports into master report.
+
+    Args:
+        reports: tuples of (name, report) pairs.
+
+    Returns:
+        Dictionary representing consolidated report.
+    """
+    print(reports)
