@@ -49,7 +49,7 @@ jobs:
 
       - name: Run unit tests 
         run: |
-          pytest -v tests/
+          ENV_NAME='CI' pytest -v tests/
 
       - name: Run pipeline
         run: |
