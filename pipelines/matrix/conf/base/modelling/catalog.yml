@@ -38,9 +38,9 @@ modelling.feat.rtx_kg2:
   <<: *_kg_dataset
   filepath: ${globals:paths.feat}/rtx_kg2_nodes
 
-"modelling.{namespace}.model_input.splits":
+modelling.model_input.splits:
   <<: *_pandas_parquet
-  filepath: ${globals:paths.model_input}/{namespace}/splits
+  filepath: ${globals:paths.model_input}/splits
 
 "modelling.{namespace}.model_input.enriched_splits":
   <<: *_pandas_parquet

@@ -12,12 +12,6 @@ def create_modeling_pipeline(**kwargs) -> Pipeline:
     return pipeline(
         [
             node(
-                func=nodes.make_splits,
-                inputs=["prm.known_pairs", "params:model_options.splitter"],
-                outputs="model_input.splits",
-                name="create_splits",
-            ),
-            node(
                 func=nodes.create_model_input_nodes,
                 inputs=[
                     "feat.rtx_kg2",
@@ -110,6 +104,12 @@ def create_pipeline(**kwargs) -> Pipeline:
                 outputs="modelling.prm.known_pairs",
                 name="create_prm_known_pairs",
             ),
+            node(
+                func=nodes.make_splits,
+                inputs=["modelling.prm.known_pairs", "params:modelling.splitter"],
+                outputs="modelling.model_input.splits",
+                name="create_splits",
+            ),
         ]
     )
 
@@ -120,12 +120,27 @@ def create_pipeline(**kwargs) -> Pipeline:
                 pipeline(
                     create_modeling_pipeline(),
                     inputs={
-                        "prm.known_pairs": "modelling.prm.known_pairs",
                         "feat.rtx_kg2": "modelling.feat.rtx_kg2",
+                        "model_input.splits": "modelling.model_input.splits",
                     },
                     namespace=f"{pipeline_}.{namespace}",
                     tags=namespace,
                 )
             )
+
+    # # TODO: Set up node that gets all results as input
+    # for pipeline_, namespaces in settings.DYNAMIC_PIPELINES_MAPPING.items():
+    #     for namespace in namespaces:
+    #         pipes.append(
+    #             pipeline(
+    #                 create_modeling_pipeline(),
+    #                 inputs={
+    #                     "prm.known_pairs": "modelling.prm.known_pairs",
+    #                     "feat.rtx_kg2": "modelling.feat.rtx_kg2",
+    #                 },
+    #                 namespace=f"{pipeline_}.{namespace}",
+    #                 tags=namespace,
+    #             )
+    #         )
 
     return sum([create_model_input, *pipes])
