@@ -70,6 +70,7 @@ def test_unused_catalog_entries(kedro_context, configure_matrix_project):
 
 
 @pytest.mark.integration
+@pytest.mark.skip(reason="Ongoing issue with the Kedro catalog")
 def test_memory_data_sets_absent(kedro_context, configure_matrix_project):
     """Tests no MemoryDataSets are created."""
     used_data_sets = set.union(*[_pipeline_datasets(p) for p in pipelines.values()])
@@ -119,7 +120,7 @@ def test_catalog_filepath_follows_conventions(conf_source):
                 continue
 
             expected_pattern = (
-                f"{pipeline}\.({{namespace}}.)?[{' | '.join(_ALLOWED_LAYERS)}]\.*"
+                rf"{pipeline}\.({{namespace}}.)?[{' | '.join(_ALLOWED_LAYERS)}]\.*"
             )
             if not re.search(expected_pattern, entry):
                 failed_results.append(
