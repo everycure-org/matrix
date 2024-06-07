@@ -62,6 +62,10 @@ modelling.models.model_params:
   type: yaml.YAMLDataset
   filepath: ${globals:paths.models}/model_params.yml
 
+modelling.models.drp_model:
+  type: pickle.PickleDataset
+  filepath: ${globals:paths.models}/drp_model.pickle
+
 modelling.model_output.predictions:
   <<: *_pandas_parquet
   filepath: ${globals:paths.model_output}/predictions

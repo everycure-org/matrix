@@ -83,19 +83,20 @@ def create_pipeline(**kwargs) -> Pipeline:
                 name="train_model",
             ),
             node(
-                func=nodes.get_model_predictions,
+                func=nodes.generate_drp_model,
                 inputs={
-                    "data": "modelling.model_input.transformed_splits",
                     "estimator": "modelling.models.model",
+                    "graph": "modelling.feat.rtx_kg2",
+                    "transformers": "params:modelling.transformers",
                     "features": "params:modelling.model_tuning_args.features",
-                    "target_col_name": "params:modelling.model_tuning_args.target_col_name",
                 },
-                outputs="modelling.model_output.predictions",
+                outputs="modelling.models.drp_model",
                 name="get_model_predictions",
             ),
             node(
                 func=nodes.get_model_performance,
                 inputs={
+                    "drp_model": "modelling.models.drp_model", 
                     "data": "modelling.model_output.predictions",
                     "metrics": "params:modelling.metrics",
                     "target_col_name": "params:modelling.model_tuning_args.target_col_name",

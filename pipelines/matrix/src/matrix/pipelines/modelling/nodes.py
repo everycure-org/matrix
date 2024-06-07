@@ -15,6 +15,8 @@ from refit.v1.core.unpack import unpack_params
 from refit.v1.core.make_list_regexable import make_list_regexable
 
 from matrix.datasets.graph import KnowledgeGraph, DrugDiseasePairGenerator
+from matrix.datasets.drp_model import DRPmodel, DRPmodel3classScikit
+
 
 
 @has_schema(
@@ -280,48 +282,38 @@ def train_model(
     return estimator.fit(X_train.values, y_train.values)
 
 
-@inject_object()
-@make_list_regexable(source_df="data", make_regexable="features")
-def get_model_predictions(
-    data: pd.DataFrame,
-    estimator: BaseEstimator,
-    features: List[str],
-    target_col_name: str,
-    prediction_suffix: str = "_pred",
-    enable_regex: str = True,
-) -> pd.DataFrame:
-    """Function to run model predictions on input data.
+def generate_drp_model(
+        estimator : BaseEstimator,
+        graph: KnowledgeGraph, 
+        transformers : Dict[str, Dict[str, Union[_BaseImputer, List[str]]]],
+        features : List[str]
+) -> DRPmodel3classScikit:
+    """Returns instance of the class DRPmodel3classScikit.
 
     Args:
-        data: Data to predict on.
-        estimator: sklearn estimator.
-        features: List of features, may be regex specified.
-        target_col_name: Target column name.
-        prediction_suffix: Suffix to add to the prediction column, defaults to '_pred'.
-        enable_regex: Enable regex for features.
-
-    Returns:
-        Data with predictions.
+        estimator (BaseEstimator): sklearn estimator.
+        graph (KnowledgeGraph): List of features, may be regex specified.
+        transformers (Dict[str, Dict[str, Union[_BaseImputer, List[str]]]]):
+            Dictionary of fitted transformers.
+        features (List[str]): List of features, may be regex specified.
     """
-    data[target_col_name + prediction_suffix] = estimator.predict(data[features].values)
-
-    return data
+    return DRPmodel3classScikit(estimator, graph, transformers, features)
 
 
 @inject_object()
-def get_model_performance(
+def get_classification_metrics(
+    drp_model: DRPmodel,
     data: pd.DataFrame,
     metrics: List[callable],
     target_col_name: str,
-    prediction_suffix: str = "_pred",
 ) -> Dict:
     """Function to evaluate model performance.
 
     Args:
-        data: Data to evaluate.
-        metrics: List of callable metrics.
-        target_col_name: Target column name.
-        prediction_suffix: Suffix to add to the prediction column, defaults to '_pred'.
+        drp_model (DRPmodel): 
+        data (pd.DataFrame): Data to evaluate.
+        metrics (List[callable]): List of callable metrics.
+        target_col_name (str): Target column name.
 
     Returns:
         Dictionary containing report
@@ -332,12 +324,13 @@ def get_model_performance(
         for split in ["TEST", "TRAIN"]:
             split_index = data["split"].eq(split)
             y_true = data.loc[split_index, target_col_name]
-            y_prediction = data.loc[split_index, target_col_name + prediction_suffix]
-
+            y_prediction = drp_model.give_treat_scores(data[split_index], skip_vectorise = True)['treat score']
+            #breakpoint()
             # Execute metric
             # FUTURE: This currently mergers the unknown and known classes
             report[f"{split.lower()}_{metric.__name__}"] = metric(
-                y_true == 1, y_prediction == 1
+                y_true == 1, y_prediction > 0.5
             ).item()
 
     return json.loads(json.dumps(report))
+

@@ -19,7 +19,7 @@ class DRPmodel(abc.ABC):
     FUTURE: Adding training_set attribute could make sense
     """
     @abc.abstractmethod
-    def give_treat_scores(self, pairs : pd.DataFrame) -> pd.DataFrame: 
+    def give_treat_scores(self, pairs : pd.DataFrame, **kwargs) -> pd.DataFrame: 
         """
         Appends a "treat score" column to a drug-disease DataFrame. 
 
@@ -35,7 +35,7 @@ class DRPmodel3class(DRPmodel):
     An abstract class representing a 3-class drug-purposing model. 
     """
     @abc.abstractmethod
-    def give_all_scores(self, pairs : pd.DataFrame) -> pd.DataFrame: 
+    def give_all_scores(self, pairs : pd.DataFrame, **kwargs) -> pd.DataFrame: 
         """
         Appends three columns to a drug-disease DataFrame: 
             - "not treat score"
@@ -48,11 +48,11 @@ class DRPmodel3class(DRPmodel):
         """
         ...
 
-    def give_treat_scores(self, pairs : pd.DataFrame) -> pd.DataFrame: 
+    def give_treat_scores(self, pairs : pd.DataFrame, **kwargs) -> pd.DataFrame: 
         """
         See DRPmodel.give_treat_scores docstring. 
         """
-        return self.give_all_scores(pairs).drop(labels = ['not treat score', 'unknown score'], axis = 1)
+        return self.give_all_scores(pairs, **kwargs).drop(labels = ['not treat score', 'unknown score'], axis = 1)
     
 
 class DRPmodel3classScikit(DRPmodel3class):
@@ -60,12 +60,13 @@ class DRPmodel3classScikit(DRPmodel3class):
     A class representing 3-class drug repurposing models given by estimators from the scikit-learn
     interface (e.g. instances of xgboost.XGBClassifier or sklearn.ensemble.RandomForestClassifier).  
     """
-    def __init__(self, 
-                 estimator : BaseEstimator,
-                 graph: KnowledgeGraph, 
-                 transformers : Dict[str, Dict[str, Union[_BaseImputer, List[str]]]],
-                 features : List[str]
-                 ) -> None: 
+    def __init__(
+        self, 
+        estimator : BaseEstimator,
+        graph: KnowledgeGraph, 
+        transformers : Dict[str, Dict[str, Union[_BaseImputer, List[str]]]],
+        features : List[str]
+    ) -> None: 
         """Initialises a DRPmodel3classScikit instance 
 
         Args:
@@ -120,11 +121,12 @@ class DRPmodel3classScikit(DRPmodel3class):
         return pairs
     
     @make_list_regexable(source_df="pairs_vect", make_regexable="features")
-    def _give_all_scores_arr(self,
-                               features : List[str], 
-                               pairs_vect : pd.DataFrame,
-                               enable_regex: bool = True,
-                               ) -> np.array:
+    def _give_all_scores_arr(
+        self,
+        features : List[str], 
+        pairs_vect : pd.DataFrame,
+        enable_regex: bool = True,
+    ) -> np.array:
         """
         Helper method which computes 2d array with three columns representing the: 
             - "not treat score"
@@ -140,10 +142,11 @@ class DRPmodel3classScikit(DRPmodel3class):
         all_scores = self.estimator.predict_proba(pairs_vect[features].values)
         return all_scores
     
-    def give_all_scores(self,
-                        pairs : pd.DataFrame, 
-                        skip_vectorise = False,
-                        ) -> pd.DataFrame:
+    def give_all_scores(
+        self,
+        pairs : pd.DataFrame, 
+        skip_vectorise = False,
+    ) -> pd.DataFrame:
         """
         Appends three columns to a drug-disease DataFrame: 
             - "not treat score"
