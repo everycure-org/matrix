@@ -350,3 +350,4 @@ def consolidate_reports(*reports) -> dict:
         Dictionary representing consolidated report.
     """
     print(reports)
+    return [*reports]
