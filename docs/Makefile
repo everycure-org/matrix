@@ -4,8 +4,9 @@
 build: install
 	mkdocs build
 
-serve:
-	mkdocs serve
+serve: install
+	.venv/bin/mkdocs serve
 
 install:
-	pip install -r requirements.txt
+	uv venv
+	uv pip install -r requirements.txt
