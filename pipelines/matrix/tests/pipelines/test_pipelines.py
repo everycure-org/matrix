@@ -25,7 +25,11 @@ def _pipeline_datasets(pipeline) -> set[str]:
 
 @pytest.mark.integration
 def test_unused_catalog_entries(kedro_context, configure_matrix_project):
-    """Tests whether all catalog entries are used in the pipeline."""
+    """Tests whether all catalog entries are used in the pipeline.
+
+    FUTURE: Fix validating unused dataset entries, this is currently not feasible
+    due to the Kedro dataset mechanism.
+    """
 
     used_conf_entries = set.union(*[_pipeline_datasets(p) for p in pipelines.values()])
     used_params = [entry for entry in list(used_conf_entries) if "params:" in entry]
