@@ -21,6 +21,4 @@ This configuration enables secure and controlled access to our infrastructure, w
 
 ## Terraform
 
-All networking is configured in terraform and changes can be proposed through Pull Requests. 
-
-
+All networking is configured in terraform and changes can be proposed through Pull Requests.
