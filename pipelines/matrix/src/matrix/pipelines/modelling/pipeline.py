@@ -50,17 +50,17 @@ def create_modeling_pipeline(**kwargs) -> Pipeline:
                 outputs="models.model",
                 name="train_model",
             ),
-            # node(
-            #     func=nodes.get_model_predictions,
-            #     inputs={
-            #         "data": "model_input.transformed_splits",
-            #         "estimator": "models.model",
-            #         "features": "params:model_options.model_tuning_args.features",
-            #         "target_col_name": "params:model_options.model_tuning_args.target_col_name",
-            #     },
-            #     outputs="model_output.predictions",
-            #     name="get_model_predictions",
-            # ),
+            node(
+                func=nodes.get_model_predictions,
+                inputs={
+                    "data": "model_input.transformed_splits",
+                    "model": "models.model",
+                    "features": "params:model_options.model_tuning_args.features",
+                    "target_col_name": "params:model_options.model_tuning_args.target_col_name",
+                },
+                outputs="model_output.predictions",
+                name="get_model_predictions",
+            ),
             # node(
             #     func=nodes.get_model_performance,
             #     inputs={

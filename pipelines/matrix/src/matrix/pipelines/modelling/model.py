@@ -2,25 +2,30 @@
 from typing import List, Callable, Optional
 from sklearn.base import BaseEstimator
 
+import numpy as np
 
-class Model(BaseEstimator):
+
+class ModelWapper:
     """Class to represent models."""
 
     def __init__(
         self,
         estimators: List[BaseEstimator],
-        agg: Optional[Callable],
     ) -> None:
-        """Create instance of the model container.
+        """Create instance of the model wrapper.
 
         Args:
             estimators: list of estimators.
             agg: function to aggregate ensemble results.
         """
         self._estimators = estimators
-        self._agg = agg
         super().__init__()
 
     def predict_proba(self, X):
-        """Predict proba."""
-        return self._agg([estimator.predict_proba(X) for estimator in self._estimators])
+        """Predict proba.
+
+        FUTURE: Ensure passing in agg. func into wrapper class.
+        """
+        return np.concatenate(
+            [estimator.predict_proba(X) for estimator in self._estimators]
+        ).mean(axis=0)
