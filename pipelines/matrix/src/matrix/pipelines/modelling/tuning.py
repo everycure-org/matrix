@@ -8,8 +8,41 @@ from sklearn.base import BaseEstimator, MetaEstimatorMixin
 from skopt import gp_minimize
 from skopt.utils import use_named_args
 from skopt.space.space import Dimension
+from skopt.plots import plot_convergence
 
 from sklearn.model_selection._split import _BaseKFold
+
+
+class NopTuner(BaseEstimator, MetaEstimatorMixin):
+    """No-operation hyperparam tuner.
+
+    Tuner that yields configuration of the input estimator. To use
+    in cases when no hyperparameter tuning is required. The NopTuner directly
+    yields the sklearn compatible estimator as provided during initialization.
+    """
+
+    def __init__(self, estimator: BaseEstimator):
+        """Initialize the tuner.
+
+        Args:
+            estimator: sklearn compatible Estimator to tune.
+        """
+        self._estimator = estimator
+        super().__init__()
+
+    def fit(self, X, y=None, **params):
+        """Function to tune the hyperparameters of the estimator.
+
+        Args:
+            X: Feature values
+            y: Target values
+            **params: Additional parameters to pass to the tuner.
+
+        Returns:
+            Fitted estimator.
+        """
+        self.best_params_ = self._estimator.__dict__
+        return self._estimator
 
 
 class GaussianSearch(BaseEstimator, MetaEstimatorMixin):
@@ -46,9 +79,6 @@ class GaussianSearch(BaseEstimator, MetaEstimatorMixin):
     def fit(self, X, y=None, **params):
         """Function to tune the hyperparameters of the estimator.
 
-        WARNING: Currently returns the SciPy's OptimizeResult object,
-        which is not fully compatible with sklearns' BaseEstimator fit method.
-
         Args:
             X: Feature values
             y: Target values
@@ -84,11 +114,12 @@ class GaussianSearch(BaseEstimator, MetaEstimatorMixin):
 
             return 1.0 - np.average(scores)
 
-        self.result = gp_minimize(
-            evaluate_model, self._dimensions, n_calls=self._n_calls
-        )
+        result = gp_minimize(evaluate_model, self._dimensions, n_calls=self._n_calls)
+
+        self.convergence_plot = plot_convergence(result).figure
+
         self.best_params_ = {
-            param.name: val for param, val in zip(self._dimensions, self.result.x)
+            param.name: val for param, val in zip(self._dimensions, result.x)
         }
 
-        return self.result
+        return self._estimator.set_params(**params)
