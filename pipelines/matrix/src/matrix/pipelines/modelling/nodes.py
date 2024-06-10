@@ -316,18 +316,18 @@ def get_model_performance(
     classification_metrics: List[callable],
     disease_specific_k_lst: List[int],
 ):
-    """_summary_ TO DO.
+    """Function to evaluate model performance.
 
     Args:
-        drp_model: _description_
-        data: _description_
-        target_col_name: _description_
-        training_metrics: _description_
-        classification_metrics: _description_
-        disease_specific_k_lst: _description_
+        drp_model: DRP model.
+        data: Data to evaluate.
+        target_col_name: Target column name.
+        training_metrics: List of metrics for evaluation on training data.
+        classification_metrics: List of metrics for evaluation on known test data .
+        disease_specific_k_lst: List of k values for diseases-specific ranking metrics
 
     Returns:
-        _description_
+        Dictionary containing report.
     """
     report = dict()
 
