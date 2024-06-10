@@ -16,7 +16,7 @@ from refit.v1.core.unpack import unpack_params
 from refit.v1.core.make_list_regexable import make_list_regexable
 
 from matrix.datasets.graph import KnowledgeGraph, DrugDiseasePairGenerator
-from .model import ModelWapper
+from .model import ModelWrapper
 
 
 @has_schema(
@@ -322,14 +322,14 @@ def train_model(
 
         estimator.fit(X_train, y_train)
 
-    return ModelWapper(estimators=estimators)
+    return ModelWrapper(estimators=estimators)
 
 
 @inject_object()
 @make_list_regexable(source_df="data", make_regexable="features")
 def get_model_predictions(
     data: pd.DataFrame,
-    model: ModelWapper,
+    model: ModelWrapper,
     features: List[str],
     target_col_name: str,
     prediction_suffix: str = "_pred",
@@ -348,7 +348,6 @@ def get_model_predictions(
     Returns:
         Data with predictions.
     """
-    breakpoint()  # np.concatenate([estimator.predict_proba(data[features].values) for estimator in model._estimators]).mean(axis=0) [estimator for estimator in model._estimators]
     data[target_col_name + prediction_suffix] = model.predict_proba(
         data[features].values
     )
