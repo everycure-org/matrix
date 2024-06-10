@@ -93,7 +93,7 @@ def test_memory_data_sets_absent(kedro_context, configure_matrix_project):
 
 
 @pytest.mark.integration
-def test_catalog_filepath_follows_conventions(conf_source):
+def test_catalog_filepath_follows_conventions(conf_source, config_loader):
     """Checks if catalog entry filepaths conform to entry.
 
     The filepath of the catalog entry should be of the format below. More
@@ -108,38 +108,40 @@ def test_catalog_filepath_follows_conventions(conf_source):
 
     # Check catalog entries
     failed_results = []
-    for file in glob.glob(f"{conf_source}/**/*catalog**.y*ml", recursive=True):
-        # Load catalog entries
-        with open(file) as f:
-            entries = yaml.safe_load(f)
 
-        # Extract pipeline name from filepath
-        _, pipeline, _ = os.path.relpath(file, conf_source).split(os.sep, 2)
+    for pattern in config_loader.config_patterns["catalog"]:
+        for file in glob.glob(f"{conf_source}/{pattern}", recursive=True):
+            # Load catalog entries
+            with open(file) as f:
+                entries = yaml.safe_load(f)
 
-        # Validate each entry
-        for entry, _ in entries.items():
-            # Ignore tmp. entries
-            if entry.startswith("_"):
-                continue
+            # Extract pipeline name from filepath
+            _, pipeline, _ = os.path.relpath(file, conf_source).split(os.sep, 2)
 
-            expected_pattern = (
-                rf"{pipeline}\.({{namespace}}.)?[{' | '.join(_ALLOWED_LAYERS)}]\.*"
-            )
-            if not re.search(expected_pattern, entry):
-                failed_results.append(
-                    {
-                        "entry": entry,
-                        "expected_pattern": expected_pattern,
-                        "filepath": file,
-                        "description": f"Expected {expected_pattern} to match filepath.",
-                    }
+            # Validate each entry
+            for entry, _ in entries.items():
+                # Ignore tmp. entries
+                if entry.startswith("_"):
+                    continue
+
+                expected_pattern = (
+                    rf"{pipeline}\.({{namespace}}.)?[{' | '.join(_ALLOWED_LAYERS)}]\.*"
                 )
+                if not re.search(expected_pattern, entry):
+                    failed_results.append(
+                        {
+                            "entry": entry,
+                            "expected_pattern": expected_pattern,
+                            "filepath": file,
+                            "description": f"Expected {expected_pattern} to match filepath.",
+                        }
+                    )
 
     assert failed_results == [], f"Entries that failed conventions: {failed_results}"
 
 
 @pytest.mark.integration
-def test_parameters_filepath_follows_conventions(conf_source):
+def test_parameters_filepath_follows_conventions(conf_source, config_loader):
     """Checks if catalog entry filepaths conform to entry.
 
     The filepath of the catalog entry should be of the format below. More
@@ -154,29 +156,33 @@ def test_parameters_filepath_follows_conventions(conf_source):
 
     # Check catalog entries
     failed_results = []
-    for file in glob.glob(f"{conf_source}/**/*parameters**.y*ml", recursive=True):
-        # Load catalog entries
-        with open(file) as f:
-            entries = yaml.safe_load(f)
-
-        # Extract pipeline name from filepath
-        _, pipeline, _ = os.path.relpath(file, conf_source).split(os.sep, 2)
-
-        # Validate each entry
-        for entry, _ in entries.items():
-            # Ignore tmp. entries
-            if entry.startswith("_"):
+    for pattern in config_loader.config_patterns["parameters"]:
+        for file in glob.glob(f"{conf_source}/{pattern}", recursive=True):
+            if os.path.isdir(file):
                 continue
 
-            expected_pattern = rf"{pipeline}\.*"
-            if not re.search(expected_pattern, entry):
-                failed_results.append(
-                    {
-                        "entry": entry,
-                        "expected_pattern": expected_pattern,
-                        "filepath": file,
-                        "description": f"Expected {expected_pattern} to match filepath.",
-                    }
-                )
+            # Load catalog entries
+            with open(file) as f:
+                entries = yaml.safe_load(f)
+
+            # Extract pipeline name from filepath
+            _, pipeline, _ = os.path.relpath(file, conf_source).split(os.sep, 2)
+
+            # Validate each entry
+            for entry, _ in entries.items():
+                # Ignore tmp. entries
+                if entry.startswith("_"):
+                    continue
+
+                expected_pattern = rf"{pipeline}\.*"
+                if not re.search(expected_pattern, entry):
+                    failed_results.append(
+                        {
+                            "entry": entry,
+                            "expected_pattern": expected_pattern,
+                            "filepath": file,
+                            "description": f"Expected {expected_pattern} to match filepath.",
+                        }
+                    )
 
     assert failed_results == [], f"Entries that failed conventions: {failed_results}"
