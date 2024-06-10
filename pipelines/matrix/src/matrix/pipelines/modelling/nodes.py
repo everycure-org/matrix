@@ -11,7 +11,7 @@ from sklearn.base import BaseEstimator
 from sklearn.metrics import roc_auc_score
 from sklearn.metrics import average_precision_score
 
-from skopt.plots import plot_convergence
+import matplotlib.pyplot as plt
 
 from refit.v1.core.inject import inject_object
 from refit.v1.core.inline_has_schema import has_schema
@@ -20,7 +20,6 @@ from refit.v1.core.make_list_regexable import make_list_regexable
 
 from matrix.datasets.graph import KnowledgeGraph, DrugDiseasePairGenerator
 from matrix.datasets.drp_model import DRPmodel, DRPmodel3classScikit
-
 
 
 @has_schema(
@@ -186,7 +185,7 @@ def apply_transformers(
     target_data = (
         data.loc[mask, target_col_name] if target_col_name is not None else None
     )
-    
+
     # Iterate transformers
     for name, transform in transformers.items():
         # Fit transformer
@@ -211,7 +210,7 @@ def apply_transformers(
             [data.drop(columns=features), transformed],
             axis="columns",
         )
-        
+
     return data, transformers
 
 
@@ -243,7 +242,7 @@ def tune_parameters(
     y_train = data.loc[mask, target_col_name]
 
     # Fit tuner
-    result = tuner.fit(X_train.values, y_train.values)
+    tuner.fit(X_train.values, y_train.values)
 
     return json.loads(
         json.dumps(
@@ -253,7 +252,7 @@ def tune_parameters(
             },
             default=int,
         )
-    ), plot_convergence(result).figure
+    ), tuner.convergence_plot if hasattr(tuner, "convergence_plot") else plt.figure()
 
 
 @unpack_params()
@@ -287,10 +286,10 @@ def train_model(
 
 
 def generate_drp_model(
-        estimator : BaseEstimator,
-        graph: KnowledgeGraph, 
-        transformers : Dict[str, Dict[str, Union[_BaseImputer, List[str]]]],
-        features : List[str]
+    estimator: BaseEstimator,
+    graph: KnowledgeGraph,
+    transformers: Dict[str, Dict[str, Union[_BaseImputer, List[str]]]],
+    features: List[str],
 ) -> DRPmodel3classScikit:
     """Returns instance of the class DRPmodel3classScikit.
 
@@ -312,6 +311,7 @@ def get_classification_metrics(
     target_col_name: str,
 ) -> Dict:
     """Function to evaluate model performance.
+
     TO DO: modify to include AUROC classification score
 
     Args:
@@ -329,7 +329,9 @@ def get_classification_metrics(
         for split in ["TEST", "TRAIN"]:
             split_index = data["split"].eq(split)
             y_true = data.loc[split_index, target_col_name]
-            treat_scores = drp_model.give_treat_scores(data[split_index], skip_vectorise = True)['treat score']
+            treat_scores = drp_model.give_treat_scores(
+                data[split_index], skip_vectorise=True
+            )["treat score"]
 
             # Execute metric
             report[f"{split.lower()}_{metric.__name__}"] = metric(
@@ -339,14 +341,14 @@ def get_classification_metrics(
     return json.loads(json.dumps(report))
 
 
-
 def perform_disease_centric_evaluation(
     drp_model: DRPmodel,
-    known_data : pd.DataFrame, 
-    k_lst : List[int] = [2,10], # TO DO: put into params file 
+    known_data: pd.DataFrame,
+    k_lst: List[int] = [2, 10],  # TO DO: put into params file
 ) -> Dict:
-    """
-    !!! This version will use drugs with known positives
+    """Node to perform disease centric evaluation.
+
+    This version will use drugs with known positives
     TO DO: docstring using the time-split analysis notebook
     """
     # Extracting known positive test data and training data
@@ -354,7 +356,7 @@ def perform_disease_centric_evaluation(
     is_pos = known_data["y"].eq(1)
     kp_data_test = known_data[is_test & is_pos]
     train_data = known_data[~is_test]
-    
+
     # List of drugs over which to rank
     all_drugs = pd.Series(kp_data_test["source"].unique())
     # Diseases appearing the known positive test set
@@ -362,49 +364,72 @@ def perform_disease_centric_evaluation(
 
     # Loop over test diseases
     mrr_total = 0
-    hitk_total_lst = np.zeros(len(k_lst))    
+    hitk_total_lst = np.zeros(len(k_lst))
     df_all_exists = False
     for disease in list(test_diseases):
         # Extract relevant train and test datapoints
-        all_pos_test = kp_data_test[kp_data_test["target"]==disease]
-        all_train = train_data[train_data["target"]==disease]
+        all_pos_test = kp_data_test[kp_data_test["target"] == disease]
+        all_train = train_data[train_data["target"] == disease]
 
         # Construct negatives
-        check_cond_pos_test =  lambda drug: drug not in list(all_pos_test["source"])
-        check_cond_train =  lambda drug: drug not in list(all_train["source"])
+        check_cond_pos_test = lambda drug: drug not in list(all_pos_test["source"])
+        check_cond_train = lambda drug: drug not in list(all_train["source"])
         check_conds = lambda drug: check_cond_pos_test(drug) and check_cond_train(drug)
         negative_drugs = all_drugs[all_drugs.map(check_conds)]
-        negative_pairs = pd.DataFrame({"source":negative_drugs, "target":disease})
-        negative_pairs['y'] = 0
+        negative_pairs = pd.DataFrame({"source": negative_drugs, "target": disease})
+        negative_pairs["y"] = 0
 
-        # Compute probability scores 
+        # Compute probability scores
         all_pos_test = drp_model.give_treat_scores(all_pos_test, skip_vectorise=True)
         negative_pairs = drp_model.give_treat_scores(negative_pairs)
 
         # Concatenate to DataFrame with all probability scores
         if df_all_exists:
-            df_all = pd.concat((df_all, all_pos_test, negative_pairs), ignore_index=True)
-        else: 
+            df_all = pd.concat(
+                (df_all, all_pos_test, negative_pairs), ignore_index=True
+            )
+        else:
             df_all = pd.concat((all_pos_test, negative_pairs), ignore_index=True)
             df_all_exists = True
 
         # Compute rank for all positives
-        negative_pairs = negative_pairs.sort_values("treat score", ascending = True)
+        negative_pairs = negative_pairs.sort_values("treat score", ascending=True)
         for _, prob in all_pos_test["treat score"].items():
-            rank = len(negative_pairs) - bisect.bisect_left(list(negative_pairs["treat score"]), prob) + 1
+            rank = (
+                len(negative_pairs)
+                - bisect.bisect_left(list(negative_pairs["treat score"]), prob)
+                + 1
+            )
             # Add to total
-            mrr_total += 1/rank
+            mrr_total += 1 / rank
             for idx, k in enumerate(k_lst):
                 if rank <= k:
                     hitk_total_lst[idx] += 1
 
-    mrr = mrr_total/len(kp_data_test)
-    hitk_lst = list(hitk_total_lst/len(kp_data_test))
+    mrr = mrr_total / len(kp_data_test)
+    hitk_lst = list(hitk_total_lst / len(kp_data_test))
 
     # Computing AUROC and AP
     y_true = df_all["y"]
     y_score = df_all["treat score"]
     auroc = roc_auc_score(y_true, y_score)
     ap = average_precision_score(y_true, y_score)
-    report = {"AUROC": auroc, "AP": ap, "MRR": mrr, "Hit@k": hitk_lst} # TO DO: fix format
+    report = {
+        "AUROC": auroc,
+        "AP": ap,
+        "MRR": mrr,
+        "Hit@k": hitk_lst,
+    }  # TO DO: fix format
     return json.loads(json.dumps(report))
+
+
+def consolidate_reports(*reports) -> dict:
+    """Function to consolidate reports into master report.
+
+    Args:
+        reports: tuples of (name, report) pairs.
+
+    Returns:
+        Dictionary representing consolidated report.
+    """
+    return [*reports]

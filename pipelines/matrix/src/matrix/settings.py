@@ -4,6 +4,7 @@ There is no need to edit this file unless you want to change values
 from the Kedro defaults. For further information, including these default values, see
 https://docs.kedro.org/en/stable/kedro_project_setup/settings.html.
 """
+from typing import Dict
 
 # Instantiated project hooks.
 # For example, after creating a hooks.py and defining a ProjectHooks class there, do
@@ -18,7 +19,6 @@ HOOKS = (SparkHooks(),)
 
 # Class that manages storing KedroSession data.
 from pathlib import Path  # noqa: E402
-
 from kedro_viz.integrations.kedro.sqlite_store import SQLiteStore  # noqa: E402
 
 SESSION_STORE_CLASS = SQLiteStore
@@ -28,7 +28,9 @@ SESSION_STORE_ARGS = {"path": str(Path(__file__).parents[2])}
 # Directory that holds configuration.
 # CONF_SOURCE = "conf"
 
+
 # Class that manages how configuration is loaded.
+from .resolvers import merge_dicts
 from kedro.config import OmegaConfigLoader  # noqa: E402
 
 CONFIG_LOADER_CLASS = OmegaConfigLoader
@@ -40,7 +42,21 @@ CONFIG_LOADER_ARGS = {
     "config_patterns": {
         "spark": ["spark*", "spark*/**"],
         "globals": ["globals*", "globals*/**", "**/globals*"],
+        "parameters": [
+            "parameters*",
+            "parameters*/**",
+            "**/parameters*",
+            "**/parameters*/**",
+        ],
     },
+    "custom_resolvers": {
+        "merge": merge_dicts,
+    },
+}
+
+# https://getindata.com/blog/kedro-dynamic-pipelines/
+DYNAMIC_PIPELINES_MAPPING = {
+    "modelling": ["xgb", "xgc"],
 }
 
 # Class that manages Kedro's library components.

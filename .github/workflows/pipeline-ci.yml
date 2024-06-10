@@ -36,6 +36,11 @@ jobs:
           pip install pre-commit
           pre-commit install --install-hooks
 
+      - name: Print all requirements
+        run: |
+          pip freeze
+
+      # FUTURE: Check if we can do ruff instead
       - name: Run pre-commit hooks
         run: |
           git fetch origin main
@@ -44,7 +49,7 @@ jobs:
 
       - name: Run unit tests 
         run: |
-          pytest -v tests/
+          ENV_NAME='CI' pytest -v tests/
 
       - name: Run pipeline
         run: |
