@@ -159,8 +159,6 @@ def test_parameters_filepath_follows_conventions(conf_source):
         with open(file) as f:
             entries = yaml.safe_load(f)
 
-        # breakpoint()
-
         # Extract pipeline name from filepath
         _, pipeline, _ = os.path.relpath(file, conf_source).split(os.sep, 2)
 
