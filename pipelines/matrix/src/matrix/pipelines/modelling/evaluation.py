@@ -9,8 +9,6 @@ from sklearn.metrics import roc_auc_score, average_precision_score
 
 from matrix.datasets.drp_model import DRPmodel
 
-## TO DO: acc, F1
-
 
 def get_training_metrics(
     drp_model: DRPmodel,
@@ -20,7 +18,7 @@ def get_training_metrics(
 ) -> Dict:
     """Function to evaluate model performance on training data.
 
-    TO DO: modify to include 3-class metrics
+    TO DO: modify to include 3-class metrics (add predict_class method to DRPmodel)
 
     Args:
         drp_model: Model giving a probability score.
@@ -59,7 +57,7 @@ def get_classification_metrics(
 ) -> Dict:
     """Function to evaluate model performance on known test data.
 
-    TO DO: modify to include AUROC classification score
+    TO DO: modify to include AUROC classification score (add functions for F1 score and acc from treat score).
 
     Args:
         drp_model: Model giving a probability score.
@@ -92,14 +90,38 @@ def get_classification_metrics(
 
 def perform_disease_centric_evaluation(
     drp_model: DRPmodel,
-    known_data: pd.DataFrame,
+    data: pd.DataFrame,
     k_lst: List[int],
     target_col_name: str,
 ) -> Dict:
     """Function to perform disease centric evaluation.
 
-    This version will use drugs with known positives
-    TO DO: docstring using the time-split analysis notebook
+    This version use the set of drugs appearing in the known positive data set as the set of "approved drugs".
+
+    The metrics computed are as follows:
+        - (auroc) AUROC, approved drugs x test disease. Measures the probability that a known positive drug-disease pair
+        ranks higher than a synthetic negative. The score is computed by labelling known positives DD-pairs as positives (y=1)
+        and all other DD-pairs in the approved drugs x test diseases matrix as negatives (y=0). Note that test diseases refers to
+        the set of diseases appearing in the positively labelled DD-pairs and that we take care to remove all training data out
+        of the matrix.
+        - (ap) AP, approved drugs x test disease. AP score for drug-diseases labelled as in the above AUROC score.
+        - (mrr) Disease-specific MRR score. Measures the mean reciprocal rank of a known positive DD-pairs when we fix the disease
+        and rank over all approved drugs. Note that we take out any other known positives and all training data when ranking.
+        - (hitk_list) Disease-specific Hit@k scores. Similar to the MRR score above expect measuring the probability
+        that a DD-pairs with a positive clinical trials outcome will rank in the top k.
+
+    FUTURE:
+        - Custom set of approved drugs.
+        - Ignore unknown training data for evaluating large ensembles.
+
+    Args:
+        drp_model: Model giving a probability score.
+        data: Drug-disease pairs dataset containing training data and known positive test data.
+        k_lst: List of k values for disease-specific Hit@k.
+        target_col_name: Target column name.
+
+    Returns:
+        Dictionary containing report.
     """
     # Extracting known positive test data and training data
     is_test = known_data["split"].eq("TEST")
