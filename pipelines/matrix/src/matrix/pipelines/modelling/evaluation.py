@@ -124,10 +124,10 @@ def perform_disease_centric_evaluation(
         Dictionary containing report.
     """
     # Extracting known positive test data and training data
-    is_test = known_data["split"].eq("TEST")
-    is_pos = known_data[target_col_name].eq(1)
-    kp_data_test = known_data[is_test & is_pos]
-    train_data = known_data[~is_test]
+    is_test = data["split"].eq("TEST")
+    is_pos = data[target_col_name].eq(1)
+    kp_data_test = data[is_test & is_pos]
+    train_data = data[~is_test]
 
     # List of drugs over which to rank
     all_drugs = pd.Series(kp_data_test["source"].unique())
@@ -186,10 +186,14 @@ def perform_disease_centric_evaluation(
     y_score = df_all["treat score"]
     auroc = roc_auc_score(y_true, y_score)
     ap = average_precision_score(y_true, y_score)
+
+    # Writing report
     report = {
         "AUROC": auroc,
         "AP": ap,
         "MRR": mrr,
-        "Hit@k": hitk_lst,
-    }  # TO DO: fix format
+    }
+    for k, hitk in zip(k_lst, hitk_lst):
+        report["Hit@" + str(k)] = hitk
+
     return report
