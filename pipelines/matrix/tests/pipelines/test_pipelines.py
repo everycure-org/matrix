@@ -139,7 +139,7 @@ def test_catalog_filepath_follows_conventions(conf_source):
 
 
 @pytest.mark.integration
-def test_parameters_filepath_follows_conventions(config_loader_fixture, conf_source):
+def test_parameters_filepath_follows_conventions(conf_source):
     """Checks if catalog entry filepaths conform to entry.
 
     The filepath of the catalog entry should be of the format below. More
@@ -153,9 +153,6 @@ def test_parameters_filepath_follows_conventions(config_loader_fixture, conf_sou
     """
 
     # Check catalog entries
-
-    breakpoint()
-
     failed_results = []
     for file in glob.glob(f"{conf_source}/**/*parameters**.y*ml", recursive=True):
         # Load catalog entries
