@@ -58,6 +58,17 @@ _model_options:
       - target_+
     target_col_name: y
 
-  # Defines metrics to be used to evaluate the model.
-  metrics:
+
+# -------------------------------
+modelling.evaluation_options:
+
+  # Defines metrics for performance on training data.
+  training_metrics:
     - object: sklearn.metrics.f1_score
+
+  # Defines metrics for known-data classification.
+  classification_metrics:
+    - object: sklearn.metrics.f1_score
+
+  # Defines values of k to use for disease-specific Hit@k metric
+  disease_specific_k_lst: [2, 10] 

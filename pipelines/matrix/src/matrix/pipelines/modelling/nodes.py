@@ -1,15 +1,11 @@
 """Module with nodes for modelling."""
 from typing import Any, Dict, List, Union, Tuple
 import pandas as pd
-import numpy as np
 import json
-import bisect
 
 from sklearn.model_selection._split import _BaseKFold
 from sklearn.impute._base import _BaseImputer
 from sklearn.base import BaseEstimator
-from sklearn.metrics import roc_auc_score
-from sklearn.metrics import average_precision_score
 
 import matplotlib.pyplot as plt
 
@@ -20,6 +16,11 @@ from refit.v1.core.make_list_regexable import make_list_regexable
 
 from matrix.datasets.graph import KnowledgeGraph, DrugDiseasePairGenerator
 from matrix.datasets.drp_model import DRPmodel, DRPmodel3classScikit
+from matrix.pipelines.modelling.evaluation import (
+    get_training_metrics,
+    get_classification_metrics,
+    perform_disease_centric_evaluation,
+)
 
 
 @has_schema(
@@ -291,135 +292,69 @@ def generate_drp_model(
     transformers: Dict[str, Dict[str, Union[_BaseImputer, List[str]]]],
     features: List[str],
 ) -> DRPmodel3classScikit:
-    """Returns instance of the class DRPmodel3classScikit.
+    """Combines embeddings and estimator into an instance of a single class.
 
     Args:
-        estimator (BaseEstimator): sklearn estimator.
-        graph (KnowledgeGraph): List of features, may be regex specified.
-        transformers (Dict[str, Dict[str, Union[_BaseImputer, List[str]]]]):
+        estimator: sklearn estimator.
+        graph: Knowledge graph with embeddings.
+        transformers:
             Dictionary of fitted transformers.
-        features (List[str]): List of features, may be regex specified.
+        features: List of features, may be regex specified.
+
+    Returns:
+        Instance of the class DRPmodel3classScikit.
     """
     return DRPmodel3classScikit(estimator, graph, transformers, features)
 
 
 @inject_object()
-def get_classification_metrics(
+def get_model_performance(
     drp_model: DRPmodel,
     data: pd.DataFrame,
-    metrics: List[callable],
     target_col_name: str,
-) -> Dict:
-    """Function to evaluate model performance.
-
-    TO DO: modify to include AUROC classification score
+    training_metrics: List[callable],
+    classification_metrics: List[callable],
+    disease_specific_k_lst: List[int],
+):
+    """_summary_ TO DO.
 
     Args:
-        drp_model (DRPmodel): Model giving a probability score.
-        data (pd.DataFrame): Data to evaluate.
-        metrics (List[callable]): List of callable metrics.
-        target_col_name (str): Target column name.
+        drp_model: _description_
+        data: _description_
+        target_col_name: _description_
+        training_metrics: _description_
+        classification_metrics: _description_
+        disease_specific_k_lst: _description_
 
     Returns:
-        Dictionary containing report
+        _description_
     """
-    report = {}
+    report = dict()
 
-    for metric in metrics:
-        for split in ["TEST", "TRAIN"]:
-            split_index = data["split"].eq(split)
-            y_true = data.loc[split_index, target_col_name]
-            treat_scores = drp_model.give_treat_scores(
-                data[split_index], skip_vectorise=True
-            )["treat score"]
+    # Metrics for training data
+    report["Training metrics"] = get_training_metrics(
+        drp_model,
+        data,
+        training_metrics,
+        target_col_name,
+    )
 
-            # Execute metric
-            report[f"{split.lower()}_{metric.__name__}"] = metric(
-                y_true == 1, treat_scores > 0.5
-            ).item()
+    # Classification metrics with known data only
+    report["Classification metrics (known data only)"] = get_classification_metrics(
+        drp_model,
+        data,
+        classification_metrics,
+        target_col_name,
+    )
 
-    return json.loads(json.dumps(report))
+    # Disease ranking metrics
+    report["Disease-centric ranking metrics"] = perform_disease_centric_evaluation(
+        drp_model,
+        data,
+        disease_specific_k_lst,
+        target_col_name,
+    )
 
-
-def perform_disease_centric_evaluation(
-    drp_model: DRPmodel,
-    known_data: pd.DataFrame,
-    k_lst: List[int] = [2, 10],  # TO DO: put into params file
-) -> Dict:
-    """Node to perform disease centric evaluation.
-
-    This version will use drugs with known positives
-    TO DO: docstring using the time-split analysis notebook
-    """
-    # Extracting known positive test data and training data
-    is_test = known_data["split"].eq("TEST")
-    is_pos = known_data["y"].eq(1)
-    kp_data_test = known_data[is_test & is_pos]
-    train_data = known_data[~is_test]
-
-    # List of drugs over which to rank
-    all_drugs = pd.Series(kp_data_test["source"].unique())
-    # Diseases appearing the known positive test set
-    test_diseases = pd.Series(kp_data_test["target"].unique())
-
-    # Loop over test diseases
-    mrr_total = 0
-    hitk_total_lst = np.zeros(len(k_lst))
-    df_all_exists = False
-    for disease in list(test_diseases):
-        # Extract relevant train and test datapoints
-        all_pos_test = kp_data_test[kp_data_test["target"] == disease]
-        all_train = train_data[train_data["target"] == disease]
-
-        # Construct negatives
-        check_cond_pos_test = lambda drug: drug not in list(all_pos_test["source"])
-        check_cond_train = lambda drug: drug not in list(all_train["source"])
-        check_conds = lambda drug: check_cond_pos_test(drug) and check_cond_train(drug)
-        negative_drugs = all_drugs[all_drugs.map(check_conds)]
-        negative_pairs = pd.DataFrame({"source": negative_drugs, "target": disease})
-        negative_pairs["y"] = 0
-
-        # Compute probability scores
-        all_pos_test = drp_model.give_treat_scores(all_pos_test, skip_vectorise=True)
-        negative_pairs = drp_model.give_treat_scores(negative_pairs)
-
-        # Concatenate to DataFrame with all probability scores
-        if df_all_exists:
-            df_all = pd.concat(
-                (df_all, all_pos_test, negative_pairs), ignore_index=True
-            )
-        else:
-            df_all = pd.concat((all_pos_test, negative_pairs), ignore_index=True)
-            df_all_exists = True
-
-        # Compute rank for all positives
-        negative_pairs = negative_pairs.sort_values("treat score", ascending=True)
-        for _, prob in all_pos_test["treat score"].items():
-            rank = (
-                len(negative_pairs)
-                - bisect.bisect_left(list(negative_pairs["treat score"]), prob)
-                + 1
-            )
-            # Add to total
-            mrr_total += 1 / rank
-            for idx, k in enumerate(k_lst):
-                if rank <= k:
-                    hitk_total_lst[idx] += 1
-
-    mrr = mrr_total / len(kp_data_test)
-    hitk_lst = list(hitk_total_lst / len(kp_data_test))
-
-    # Computing AUROC and AP
-    y_true = df_all["y"]
-    y_score = df_all["treat score"]
-    auroc = roc_auc_score(y_true, y_score)
-    ap = average_precision_score(y_true, y_score)
-    report = {
-        "AUROC": auroc,
-        "AP": ap,
-        "MRR": mrr,
-        "Hit@k": hitk_lst,
-    }  # TO DO: fix format
     return json.loads(json.dumps(report))
 
 

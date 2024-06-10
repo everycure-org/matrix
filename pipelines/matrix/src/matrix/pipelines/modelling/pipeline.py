@@ -56,17 +56,6 @@ def create_modeling_pipeline(**kwargs) -> Pipeline:
                 outputs="models.model",
                 name="train_model",
             ),
-            # node(
-            #     func=nodes.get_model_predictions,
-            #     inputs={
-            #         "data": "model_input.transformed_splits",
-            #         "estimator": "models.model",
-            #         "features": "params:model_options.model_tuning_args.features",
-            #         "target_col_name": "params:model_options.model_tuning_args.target_col_name",
-            #     },
-            #     outputs="model_output.predictions",
-            #     name="get_model_predictions",
-            # ),
             node(
                 func=nodes.generate_drp_model,
                 inputs={
@@ -79,23 +68,16 @@ def create_modeling_pipeline(**kwargs) -> Pipeline:
                 name="get_model_predictions",
             ),
             node(
-                func=nodes.get_classification_metrics,
+                func=nodes.get_model_performance,
                 inputs={
                     "drp_model": "models.drp_model",
                     "data": "model_input.transformed_splits",
-                    "metrics": "params:model_options.metrics",
                     "target_col_name": "params:model_options.model_tuning_args.target_col_name",
+                    "training_metrics": "params:modelling.evaluation_options.training_metrics",
+                    "classification_metrics": "params:modelling.evaluation_options.classification_metrics",
+                    "disease_specific_k_lst": "params:modelling.evaluation_options.disease_specific_k_lst",
                 },
-                outputs="reporting.classification_metrics",
-                name="get_classification_metrics",
-            ),
-            node(
-                func=nodes.perform_disease_centric_evaluation,
-                inputs={
-                    "drp_model": "models.drp_model",
-                    "known_data": "model_input.transformed_splits",
-                },
-                outputs="reporting.ranking_metrics",
+                outputs="reporting.evaluation_metrics",
                 name="get_model_performance",
             ),
         ]
@@ -149,6 +131,11 @@ def create_pipeline(**kwargs) -> Pipeline:
                     },
                     namespace=f"{pipeline_}.{namespace}",
                     tags=namespace,
+                    parameters=[
+                        "modelling.evaluation_options.training_metrics",
+                        "modelling.evaluation_options.classification_metrics",
+                        "modelling.evaluation_options.disease_specific_k_lst",
+                    ],
                 )
             )
 

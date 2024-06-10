@@ -78,15 +78,7 @@ modelling.model_input.splits:
   type: matplotlib.MatplotlibWriter
   filepath: ${globals:paths.reporting}/{namespace}/convergence_plot.png
 
-# "modelling.{namespace}.reporting.metrics":
-#   type: yaml.YAMLDataset
-#   filepath: ${globals:paths.reporting}/{namespace}/metrics.yml
-
-# This should be 1 big data, with subset of columns of classsification metrics and subset of ranking metrics
-"modelling.{namespace}.reporting.classification_metrics":
+"modelling.{namespace}.reporting.evaluation_metrics":
   type: yaml.YAMLDataset
-  filepath: ${globals:paths.reporting}/{namespace}/classification_metrics.yml
+  filepath: ${globals:paths.reporting}/{namespace}/evaluation_metrics.yml
 
-"modelling.{namespace}.reporting.ranking_metrics":
-  type: yaml.YAMLDataset
-  filepath: ${globals:paths.reporting}/{namespace}/ranking_metrics.yml
