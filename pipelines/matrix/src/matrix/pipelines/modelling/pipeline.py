@@ -36,44 +36,41 @@ def create_modeling_pipeline(**kwargs) -> Pipeline:
                     "data": "model_input.transformed_splits",
                     "unpack": "params:model_options.model_tuning_args",
                 },
-                outputs=[
-                    "models.model_params",
-                    "reporting.tuning_convergence_plot",
-                ],
+                outputs="models.model_params",  # "reporting.tuning_convergence_plot",
                 name="tune_model_parameters",
             ),
             node(
                 func=nodes.train_model,
                 inputs={
                     "data": "model_input.transformed_splits",
-                    "estimator": "models.model_params",
+                    "estimators": "models.model_params",
                     "features": "params:model_options.model_tuning_args.features",
                     "target_col_name": "params:model_options.model_tuning_args.target_col_name",
                 },
                 outputs="models.model",
                 name="train_model",
             ),
-            node(
-                func=nodes.get_model_predictions,
-                inputs={
-                    "data": "model_input.transformed_splits",
-                    "estimator": "models.model",
-                    "features": "params:model_options.model_tuning_args.features",
-                    "target_col_name": "params:model_options.model_tuning_args.target_col_name",
-                },
-                outputs="model_output.predictions",
-                name="get_model_predictions",
-            ),
-            node(
-                func=nodes.get_model_performance,
-                inputs={
-                    "data": "model_output.predictions",
-                    "metrics": "params:model_options.metrics",
-                    "target_col_name": "params:model_options.model_tuning_args.target_col_name",
-                },
-                outputs="reporting.metrics",
-                name="get_model_performance",
-            ),
+            # node(
+            #     func=nodes.get_model_predictions,
+            #     inputs={
+            #         "data": "model_input.transformed_splits",
+            #         "estimator": "models.model",
+            #         "features": "params:model_options.model_tuning_args.features",
+            #         "target_col_name": "params:model_options.model_tuning_args.target_col_name",
+            #     },
+            #     outputs="model_output.predictions",
+            #     name="get_model_predictions",
+            # ),
+            # node(
+            #     func=nodes.get_model_performance,
+            #     inputs={
+            #         "data": "model_output.predictions",
+            #         "metrics": "params:model_options.metrics",
+            #         "target_col_name": "params:model_options.model_tuning_args.target_col_name",
+            #     },
+            #     outputs="reporting.metrics",
+            #     name="get_model_performance",
+            # ),
         ]
     )
 
@@ -128,22 +125,22 @@ def create_pipeline(**kwargs) -> Pipeline:
                 )
             )
 
-    consolidate = pipeline(
-        [
-            node(
-                func=nodes.consolidate_reports,
-                inputs=[
-                    f"modelling.{namespace}.reporting.metrics"
-                    for namespace in settings.DYNAMIC_PIPELINES_MAPPING.get("modelling")
-                ],
-                outputs="modelling.reporting.metrics",
-                name="create_global_report",
-                tags=[
-                    namespace
-                    for namespace in settings.DYNAMIC_PIPELINES_MAPPING.get("modelling")
-                ],
-            ),
-        ]
-    )
+    # consolidate = pipeline(
+    #     [
+    #         node(
+    #             func=nodes.consolidate_reports,
+    #             inputs=[
+    #                 f"modelling.{namespace}.reporting.metrics"
+    #                 for namespace in settings.DYNAMIC_PIPELINES_MAPPING.get("modelling")
+    #             ],
+    #             outputs="modelling.reporting.metrics",
+    #             name="create_global_report",
+    #             tags=[
+    #                 namespace
+    #                 for namespace in settings.DYNAMIC_PIPELINES_MAPPING.get("modelling")
+    #             ],
+    #         ),
+    #     ]
+    # )
 
-    return sum([create_model_input, *pipes, consolidate])
+    return sum([create_model_input, *pipes])  # consolidate

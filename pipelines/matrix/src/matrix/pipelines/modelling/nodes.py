@@ -1,6 +1,7 @@
 """Module with nodes for modelling."""
 from typing import Any, Dict, List, Union, Tuple
 import pandas as pd
+import numpy as np
 import json
 
 from sklearn.model_selection._split import _BaseKFold
@@ -15,6 +16,7 @@ from refit.v1.core.unpack import unpack_params
 from refit.v1.core.make_list_regexable import make_list_regexable
 
 from matrix.datasets.graph import KnowledgeGraph, DrugDiseasePairGenerator
+from .model import Model
 
 
 @has_schema(
@@ -132,6 +134,8 @@ def make_splits(
         "source_embedding": "object",
         "target": "object",
         "target_embedding": "object",
+        "iteration": "numeric",
+        "split": "object",
     },
     allow_subset=True,
 )
@@ -151,10 +155,14 @@ def create_model_input_nodes(
     Returns:
         Data with enriched splits.
     """
-    generated = generator.generate(graph, splits)
-    generated["split"] = "TRAIN"
+    all_data_frames = []
+    for iteration, dataframe in enumerate(generator.generate(graph, splits)):
+        dataframe["split"] = "TRAIN"
+        res = pd.concat([dataframe, splits])
+        res["iteration"] = iteration
+        all_data_frames.append(res)
 
-    return pd.concat([splits, generated], axis=0, ignore_index=True)
+    return pd.concat(all_data_frames, axis=0, ignore_index=True)
 
 
 @inject_object()
@@ -173,6 +181,23 @@ def apply_transformers(
     Returns:
         Transformed data.
     """
+    all_data_frames = []
+    for iteration in data["iteration"].unique():
+        all_data_frames.append(
+            _apply_transformers(
+                data[data["iteration"] == iteration], transformers, target_col_name
+            )
+        )
+
+    return pd.concat(all_data_frames, axis=0, ignore_index=True)
+
+
+def _apply_transformers(
+    data: pd.DataFrame,
+    transformers: Dict[str, Dict[str, Union[_BaseImputer, List[str]]]],
+    target_col_name: str = None,
+) -> pd.DataFrame:
+    """Apply the transformers per iteration."""
     # Ensure transformer only applied to train data
     mask = data["split"].eq("TRAIN")
 
@@ -218,6 +243,8 @@ def tune_parameters(
 ) -> Tuple[Dict,]:
     """Function to apply hyperparameter tuning.
 
+    TODO: Fix convergence plot
+
     Args:
         data: Data to tune on.
         tuner: Tuner object.
@@ -228,6 +255,25 @@ def tune_parameters(
     Returns:
         Refit compatible dictionary of best parameters.
     """
+    return json.loads(
+        json.dumps(
+            [
+                _tune_parameters(
+                    data[data["iteration"] == iteration],
+                    tuner,
+                    features,
+                    target_col_name,
+                )
+                for iteration in data["iteration"].unique()
+            ],
+            default=int,
+        )
+    )
+
+
+def _tune_parameters(
+    data: pd.DataFrame, tuner: Any, features: List[str], target_col_name: str
+) -> Dict:
     mask = data["split"].eq("TRAIN")
 
     X_train = data.loc[mask, features]
@@ -236,15 +282,10 @@ def tune_parameters(
     # Fit tuner
     tuner.fit(X_train.values, y_train.values)
 
-    return json.loads(
-        json.dumps(
-            {
-                "object": f"{type(tuner._estimator).__module__}.{type(tuner._estimator).__name__}",
-                **tuner.best_params_,
-            },
-            default=int,
-        )
-    ), tuner.convergence_plot if hasattr(tuner, "convergence_plot") else plt.figure()
+    return {
+        "object": f"{type(tuner._estimator).__module__}.{type(tuner._estimator).__name__}",
+        **tuner.best_params_,
+    }  # tuner.convergence_plot if hasattr(tuner, "convergence_plot") else plt.figure()
 
 
 @unpack_params()
@@ -252,7 +293,7 @@ def tune_parameters(
 @make_list_regexable(source_df="data", make_regexable="features")
 def train_model(
     data: pd.DataFrame,
-    estimator: BaseEstimator,
+    estimators: BaseEstimator,
     features: List[str],
     target_col_name: str,
     enable_regex: bool = True,
@@ -261,7 +302,7 @@ def train_model(
 
     Args:
         data: Data to train on.
-        estimator: sklearn estimator.
+        estimators: sklearn estimator.
         features: List of features, may be regex specified.
         target_col_name: Target column name.
         enable_regex: Enable regex for features.
@@ -269,12 +310,15 @@ def train_model(
     Returns:
         Trained model.
     """
-    mask = data["split"].eq("TRAIN")
+    for iteration, estimator in enumerate(estimators):
+        data = data[(data["iteration"] == iteration) & (data["split"] == "TRAIN")]
 
-    X_train = data.loc[mask, features]
-    y_train = data.loc[mask, target_col_name]
+        X_train = data[features]
+        y_train = data[target_col_name]
 
-    return estimator.fit(X_train.values, y_train.values)
+        estimator.fit(X_train, y_train)
+
+    return Model(estimators, agg=np.mean)
 
 
 @inject_object()
@@ -300,8 +344,9 @@ def get_model_predictions(
     Returns:
         Data with predictions.
     """
-    data[target_col_name + prediction_suffix] = estimator.predict(data[features].values)
-
+    data[target_col_name + prediction_suffix] = estimator.predict_proba(
+        data[features].values
+    )
     return data
 
 
