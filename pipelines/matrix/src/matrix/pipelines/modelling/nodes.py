@@ -16,7 +16,7 @@ from refit.v1.core.unpack import unpack_params
 from refit.v1.core.make_list_regexable import make_list_regexable
 
 from matrix.datasets.graph import KnowledgeGraph, DrugDiseasePairGenerator
-from .model import Model
+from .model import ModelWapper
 
 
 @has_schema(
@@ -146,6 +146,10 @@ def create_model_input_nodes(
     generator: DrugDiseasePairGenerator,
 ) -> pd.DataFrame:
     """Function to enrich the splits with drug-disease pairs.
+
+    The gerator is used to enrich the dataset with unknown drug-disease
+    pairs. If a `IterativeDrugDiseasePair` generator is provided, the splits
+    dataset is replicated.
 
     Args:
         graph: Knowledge graph.
@@ -293,7 +297,7 @@ def _tune_parameters(
 @make_list_regexable(source_df="data", make_regexable="features")
 def train_model(
     data: pd.DataFrame,
-    estimators: BaseEstimator,
+    estimators: List[BaseEstimator],
     features: List[str],
     target_col_name: str,
     enable_regex: bool = True,
@@ -318,14 +322,14 @@ def train_model(
 
         estimator.fit(X_train, y_train)
 
-    return Model(estimators, agg=np.mean)
+    return ModelWapper(estimators=estimators)
 
 
 @inject_object()
 @make_list_regexable(source_df="data", make_regexable="features")
 def get_model_predictions(
     data: pd.DataFrame,
-    estimator: BaseEstimator,
+    model: ModelWapper,
     features: List[str],
     target_col_name: str,
     prediction_suffix: str = "_pred",
@@ -335,7 +339,7 @@ def get_model_predictions(
 
     Args:
         data: Data to predict on.
-        estimator: sklearn estimator.
+        model: model.
         features: List of features, may be regex specified.
         target_col_name: Target column name.
         prediction_suffix: Suffix to add to the prediction column, defaults to '_pred'.
@@ -344,7 +348,8 @@ def get_model_predictions(
     Returns:
         Data with predictions.
     """
-    data[target_col_name + prediction_suffix] = estimator.predict_proba(
+    breakpoint()  # np.concatenate([estimator.predict_proba(data[features].values) for estimator in model._estimators]).mean(axis=0) [estimator for estimator in model._estimators]
+    data[target_col_name + prediction_suffix] = model.predict_proba(
         data[features].values
     )
     return data
