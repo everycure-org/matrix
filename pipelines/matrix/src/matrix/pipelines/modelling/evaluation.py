@@ -10,7 +10,6 @@ from sklearn.metrics import roc_auc_score, average_precision_score
 from matrix.datasets.drp_model import DRPmodel
 
 ## TO DO: acc, F1
-## remove types from docstring
 
 
 def get_training_metrics(
@@ -21,13 +20,13 @@ def get_training_metrics(
 ) -> Dict:
     """Function to evaluate model performance on training data.
 
-    TO DO: modify to include AUROC classification score
+    TO DO: modify to include 3-class metrics
 
     Args:
-        drp_model (DRPmodel): Model giving a probability score.
-        data (pd.DataFrame): Data to evaluate.
-        metrics (List[callable]): List of callable metrics.
-        target_col_name (str): Target column name.
+        drp_model: Model giving a probability score.
+        data: Data to evaluate.
+        metrics: List of callable metrics.
+        target_col_name: Target column name.
 
     Returns:
         Dictionary containing report
@@ -37,7 +36,7 @@ def get_training_metrics(
     train_data = data[is_train]
 
     # Compute probability score
-    treat_scores = drp_model.give_treat_scores(train_data, skip_vectorise=True)[
+    treat_scores = drp_model.give_prob_score(train_data, skip_vectorise=True)[
         "treat score"
     ]
     # True label
@@ -63,10 +62,10 @@ def get_classification_metrics(
     TO DO: modify to include AUROC classification score
 
     Args:
-        drp_model (DRPmodel): Model giving a probability score.
-        data (pd.DataFrame): Data to evaluate.
-        metrics (List[callable]): List of callable metrics.
-        target_col_name (str): Target column name.
+        drp_model: Model giving a probability score.
+        data: Data to evaluate.
+        metrics: List of callable metrics.
+        target_col_name: Target column name.
 
     Returns:
         Dictionary containing report
@@ -76,7 +75,7 @@ def get_classification_metrics(
     test_data = data[is_test]
 
     # Compute probability score
-    treat_scores = drp_model.give_treat_scores(test_data, skip_vectorise=True)[
+    treat_scores = drp_model.give_prob_score(test_data, skip_vectorise=True)[
         "treat score"
     ]
     # True label
@@ -131,8 +130,8 @@ def perform_disease_centric_evaluation(
         negative_pairs[target_col_name] = 0
 
         # Compute probability scores
-        all_pos_test = drp_model.give_treat_scores(all_pos_test, skip_vectorise=True)
-        negative_pairs = drp_model.give_treat_scores(negative_pairs)
+        all_pos_test = drp_model.give_prob_score(all_pos_test, skip_vectorise=True)
+        negative_pairs = drp_model.give_prob_score(negative_pairs)
 
         # Concatenate to DataFrame with all probability scores
         if df_all_exists:

@@ -14,80 +14,82 @@ from matrix.datasets.graph import KnowledgeGraph
 
 
 class DRPmodel(abc.ABC):
+    """An abstract class representing a model which gives a "treat" score to drug-disease pairs.
+
+    FUTURE: predict_class method
     """
-    An abstract class representing a model which gives a "treat" score to drug-disease pairs. 
-    FUTURE: Adding training_set attribute could make sense
-    """
+
     @abc.abstractmethod
-    def give_treat_scores(self, pairs : pd.DataFrame, **kwargs) -> pd.DataFrame: 
-        """
-        Appends a "treat score" column to a drug-disease DataFrame. 
+    def give_prob_score(self, pairs: pd.DataFrame, **kwargs) -> pd.DataFrame:
+        """Appends a "treat score" column to a drug-disease DataFrame.
 
         Args:
-            pairs (pd.DataFrame): Drug-disease pairs for which to generate scores. 
+            pairs: Drug-disease pairs for which to generate scores.
                 Column names are 'source' for drugs and 'target' for diseases.
+            kwargs: Extra arguments .
         """
         ...
 
 
 class DRPmodel3class(DRPmodel):
+    """An abstract class representing a 3-class drug-purposing model.
+
+    FUTURE: custom label names
     """
-    An abstract class representing a 3-class drug-purposing model. 
-    """
+
     @abc.abstractmethod
-    def give_all_scores(self, pairs : pd.DataFrame, **kwargs) -> pd.DataFrame: 
-        """
-        Appends three columns to a drug-disease DataFrame: 
-            - "not treat score"
-            - "treat score"
-            - "unknown score"
+    def give_all_scores(self, pairs: pd.DataFrame, **kwargs) -> pd.DataFrame:
+        """Appends columns corresponding to the three probability scores.
 
         Args:
-            pairs (pd.DataFrame): Drug-disease pairs for which to generate scores. 
+            pairs: Drug-disease pairs for which to generate scores.
                 Column names are 'source' for drugs and 'target' for diseases.
+            kwargs: Extra arguments .
         """
         ...
 
-    def give_treat_scores(self, pairs : pd.DataFrame, **kwargs) -> pd.DataFrame: 
-        """
-        See DRPmodel.give_treat_scores docstring. 
-        """
-        return self.give_all_scores(pairs, **kwargs).drop(labels = ['not treat score', 'unknown score'], axis = 1)
-    
+    def give_prob_score(self, pairs: pd.DataFrame, **kwargs) -> pd.DataFrame:
+        """See DRPmodel.give_treat_scores docstring."""
+        return self.give_all_scores(pairs, **kwargs).drop(
+            labels=["not treat score", "unknown score"], axis=1
+        )
+
 
 class DRPmodel3classScikit(DRPmodel3class):
+    """A concrete class representing a 3-class DRP model using an sklearn estimator.
+
+    FUTURE: custom label names
     """
-    A class representing 3-class drug repurposing models given by estimators from the scikit-learn
-    interface (e.g. instances of xgboost.XGBClassifier or sklearn.ensemble.RandomForestClassifier).  
-    """
+
     def __init__(
-        self, 
-        estimator : BaseEstimator,
-        graph: KnowledgeGraph, 
-        transformers : Dict[str, Dict[str, Union[_BaseImputer, List[str]]]],
-        features : List[str]
-    ) -> None: 
-        """Initialises a DRPmodel3classScikit instance 
+        self,
+        estimator: BaseEstimator,
+        graph: KnowledgeGraph,
+        transformers: Dict[str, Dict[str, Union[_BaseImputer, List[str]]]],
+        features: List[str],
+    ) -> None:
+        """Initialises a DRPmodel3classScikit instance.
 
         Args:
-            estimator (BaseEstimator): sklearn estimator.
-            graph (KnowledgeGraph): List of features, may be regex specified.
-            transformers (Dict[str, Dict[str, Union[_BaseImputer, List[str]]]]):
-                Dictionary of fitted transformers.
-            features (List[str]): List of features, may be regex specified.
+            estimator: sklearn estimator.
+            graph: List of features, may be regex specified.
+            transformers: Dictionary of fitted transformers.
+            features: List of features, may be regex specified.
         """
         self.estimator = estimator
         self.graph = graph
         self.transformers = transformers
         self.features = features
 
-    def _vectorise_transform(self, pairs : pd.DataFrame) -> pd.DataFrame: 
-        """Collects embeddings for drug and diseases in the pairs DataFrame, 
-        applies transformations and appends columns. 
+    def _vectorise_transform(self, pairs: pd.DataFrame) -> pd.DataFrame:
+        """Collects and transforms embeddings for drug-disease pairs.
 
         Args:
-            pairs (pd.DataFrame): Drug-disease pairs for which to generate scores. 
+            pairs: Drug-disease pairs for which to generate scores.
                 Column names are 'source' for drugs and 'target' for diseases.
+
+        Returns:
+            The drug-disease pairs DataFrame with extra columns representing the transformed embeddings.
         """
         pairs = pairs.copy()
 
@@ -119,62 +121,47 @@ class DRPmodel3classScikit(DRPmodel3class):
             )
 
         return pairs
-    
+
     @make_list_regexable(source_df="pairs_vect", make_regexable="features")
     def _give_all_scores_arr(
         self,
-        features : List[str], 
-        pairs_vect : pd.DataFrame,
+        features: List[str],
+        pairs_vect: pd.DataFrame,
         enable_regex: bool = True,
     ) -> np.array:
-        """
-        Helper method which computes 2d array with three columns representing the: 
-            - "not treat score"
-            - "treat score"
-            - "unknown score"
-        for all drug-disease pairs. 
-            
+        """Computes a 2d array representing the probability scores for all drug-disease pairs.
+
         Args:
-            features (List[str]): List of features, may be regex specified.
-            pairs (pd.DataFrame): Drug-disease pairs DataFrame containing transformed features. 
-            enable_regex (bool): Enable regex for features.
+            features: List of features, may be regex specified.
+            pairs_vect: Drug-disease pairs DataFrame containing transformed features.
+            enable_regex: Enable regex for features.
         """
         all_scores = self.estimator.predict_proba(pairs_vect[features].values)
         return all_scores
-    
+
     def give_all_scores(
         self,
-        pairs : pd.DataFrame, 
-        skip_vectorise = False,
+        pairs: pd.DataFrame,
+        skip_vectorise=False,
     ) -> pd.DataFrame:
-        """
-        Appends three columns to a drug-disease DataFrame: 
-            - "not treat score"
-            - "treat score"
-            - "unknown score"
-            
+        """Appends columns corresponding to the three probability scores.
+
         Args:
-            pairs (pd.DataFrame): Drug-disease pairs for which to generate scores. 
+            pairs: Drug-disease pairs for which to generate scores.
                 Column names are 'source' for drugs and 'target' for diseases.
-            skip_vectorise (bool, optional): Skip vectorisation step if pairs already contains transformed 
+            skip_vectorise (optional): Skip vectorisation step if pairs already contains transformed
                 embedding columns. Defaults to False.
         """
         # Vectorise and compute scores
         if not skip_vectorise:
-            pairs_vect =  self._vectorise_transform(pairs)
+            pairs_vect = self._vectorise_transform(pairs)
         else:
             pairs_vect = pairs
-        scores_arr = self._give_all_scores_arr(self.features, pairs_vect) 
+        scores_arr = self._give_all_scores_arr(self.features, pairs_vect)
 
         # Append columns
         pairs = pairs.copy()
-        pairs['not treat score'] = scores_arr[:,0]
-        pairs['treat score'] = scores_arr[:,1]
-        pairs['unknown score'] = scores_arr[:,2]
+        pairs["not treat score"] = scores_arr[:, 0]
+        pairs["treat score"] = scores_arr[:, 1]
+        pairs["unknown score"] = scores_arr[:, 2]
         return pairs
-    
-
-
-            
-
-
