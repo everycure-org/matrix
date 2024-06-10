@@ -5,7 +5,7 @@ from sklearn.base import BaseEstimator
 import numpy as np
 
 
-class ModelWapper:
+class ModelWrapper:
     """Class to represent models."""
 
     def __init__(
