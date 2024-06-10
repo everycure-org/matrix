@@ -17,7 +17,8 @@ class NopTuner(BaseEstimator, MetaEstimatorMixin):
     """No-operation hyperparam tuner.
 
     Tuner that yields configuration of the input estimator. To use
-    in cases when no hyperparameter tuning is required.
+    in cases when no hyperparameter tuning is required. The NopTuner directly
+    yields the sklearn compatible estimator as provided during initialization.
     """
 
     def __init__(self, estimator: BaseEstimator):
