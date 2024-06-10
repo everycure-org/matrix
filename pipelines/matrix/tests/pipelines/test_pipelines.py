@@ -136,3 +136,52 @@ def test_catalog_filepath_follows_conventions(conf_source):
                 )
 
     assert failed_results == [], f"Entries that failed conventions: {failed_results}"
+
+
+@pytest.mark.integration
+def test_parameters_filepath_follows_conventions(config_loader_fixture, conf_source):
+    """Checks if catalog entry filepaths conform to entry.
+
+    The filepath of the catalog entry should be of the format below. More
+    elaborate error checking can be added later.
+
+    Allowed conventions:
+
+        {pipeline}.{layer}.*
+
+        {pipeline}.{namespace}.{layer}.*
+    """
+
+    # Check catalog entries
+
+    breakpoint()
+
+    failed_results = []
+    for file in glob.glob(f"{conf_source}/**/*parameters**.y*ml", recursive=True):
+        # Load catalog entries
+        with open(file) as f:
+            entries = yaml.safe_load(f)
+
+        # breakpoint()
+
+        # Extract pipeline name from filepath
+        _, pipeline, _ = os.path.relpath(file, conf_source).split(os.sep, 2)
+
+        # Validate each entry
+        for entry, _ in entries.items():
+            # Ignore tmp. entries
+            if entry.startswith("_"):
+                continue
+
+            expected_pattern = rf"{pipeline}\.*"
+            if not re.search(expected_pattern, entry):
+                failed_results.append(
+                    {
+                        "entry": entry,
+                        "expected_pattern": expected_pattern,
+                        "filepath": file,
+                        "description": f"Expected {expected_pattern} to match filepath.",
+                    }
+                )
+
+    assert failed_results == [], f"Entries that failed conventions: {failed_results}"
