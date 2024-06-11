@@ -8,14 +8,6 @@ from . import nodes
 
 
 def _create_model_shard_pipeline(model: str, shard: int) -> Pipeline:
-    """Function to produce tuning pipeline for given model and shard.
-
-    Args:
-        model: model name
-        shard: model shard
-    Return:
-        Pipeline
-    """
     return pipeline(
         [
             node(
@@ -65,15 +57,7 @@ def _create_model_shard_pipeline(model: str, shard: int) -> Pipeline:
     )
 
 
-def create_model_pipeline(model: str, shards: int) -> Pipeline:
-    """Function to produce tuning pipeline.
-
-    Args:
-        model: model name
-        shards: number of shards
-    Return:
-        Pipeline
-    """
+def _create_model_pipeline(model: str, shards: int) -> Pipeline:
     return sum(
         [
             pipeline(
@@ -92,7 +76,7 @@ def create_model_pipeline(model: str, shards: int) -> Pipeline:
             ),
             *[
                 pipeline(
-                    create_model_shard_pipeline(model, shard),
+                    _create_model_shard_pipeline(model, shard),
                     tags=model,
                 )
                 for shard in range(shards)
@@ -185,7 +169,7 @@ def create_pipeline(**kwargs) -> Pipeline:
     for model, shards in settings.DYNAMIC_PIPELINES_MAPPING.get("modelling"):
         pipes.append(
             pipeline(
-                create_model_pipeline(model, shards),
+                _create_model_pipeline(model, shards),
                 tags=model,
             )
         )
