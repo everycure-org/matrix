@@ -159,21 +159,43 @@ def create_model_input_nodes(
     Returns:
         Data with enriched splits.
     """
-    all_data_frames = []
-    for iteration, dataframe in enumerate(generator.generate(graph, splits)):
-        dataframe["split"] = "TRAIN"
-        res = pd.concat([dataframe, splits])
-        res["iteration"] = iteration
-        all_data_frames.append(res)
+    generated = generator.generate(graph, splits)
+    generated["split"] = "TRAIN"
 
-    return pd.concat(all_data_frames, axis=0, ignore_index=True)
+    return pd.concat([splits, generated], axis=0, ignore_index=True)
+
+
+@inject_object()
+def fit_transformers(
+    data: pd.DataFrame,
+    transformers: Dict[str, Dict[str, Union[_BaseImputer, List[str]]]],
+    target_col_name: str = None,
+) -> pd.DataFrame:
+    # Ensure transformer only fit on training data
+    mask = data["split"].eq("TRAIN")
+
+    # Grab target data
+    target_data = (
+        data.loc[mask, target_col_name] if target_col_name is not None else None
+    )
+
+    # Iterate transformers
+    fitted_transformers = {}
+    for name, transform in transformers.items():
+        # Fit transformer
+        features = transform["features"]
+        fitted_transformers[name] = transform["transformer"].fit(
+            data.loc[mask, features], target_data
+        )
+
+    return fitted_transformers
 
 
 @inject_object()
 def apply_transformers(
     data: pd.DataFrame,
     transformers: Dict[str, Dict[str, Union[_BaseImputer, List[str]]]],
-    target_col_name: str = None,
+    fitted_transformers: Dict[str, Dict[str, Union[_BaseImputer, List[str]]]],
 ) -> pd.DataFrame:
     """Function to apply a set of sklearn compatible transformers to the data.
 
@@ -185,41 +207,15 @@ def apply_transformers(
     Returns:
         Transformed data.
     """
-    all_data_frames = []
-    for iteration in data["iteration"].unique():
-        all_data_frames.append(
-            _apply_transformers(
-                data[data["iteration"] == iteration], transformers, target_col_name
-            )
-        )
-
-    return pd.concat(all_data_frames, axis=0, ignore_index=True)
-
-
-def _apply_transformers(
-    data: pd.DataFrame,
-    transformers: Dict[str, Dict[str, Union[_BaseImputer, List[str]]]],
-    target_col_name: str = None,
-) -> pd.DataFrame:
-    """Apply the transformers per iteration."""
-    # Ensure transformer only applied to train data
-    mask = data["split"].eq("TRAIN")
-
-    # Grab target data
-    target_data = (
-        data.loc[mask, target_col_name] if target_col_name is not None else None
-    )
-
     # Iterate transformers
-    for _, transform in transformers.items():
-        # Fit transformer
-        features = transform["features"]
-        transformer = transform["transformer"].fit(
-            data.loc[mask, features], target_data
-        )
-
+    for name, transform in transformers.items():
         # Apply transformer
+        features = transform["features"]
         features_selected = data[features]
+
+        # Extract fitted transformer
+        transformer = fitted_transformers[name]
+
         transformed = pd.DataFrame(
             transformer.transform(features_selected),
             index=features_selected.index,
@@ -247,8 +243,6 @@ def tune_parameters(
 ) -> Tuple[Dict,]:
     """Function to apply hyperparameter tuning.
 
-    TODO: Fix convergence plot
-
     Args:
         data: Data to tune on.
         tuner: Tuner object.
@@ -259,25 +253,6 @@ def tune_parameters(
     Returns:
         Refit compatible dictionary of best parameters.
     """
-    return json.loads(
-        json.dumps(
-            [
-                _tune_parameters(
-                    data[data["iteration"] == iteration],
-                    tuner,
-                    features,
-                    target_col_name,
-                )
-                for iteration in data["iteration"].unique()
-            ],
-            default=int,
-        )
-    )
-
-
-def _tune_parameters(
-    data: pd.DataFrame, tuner: Any, features: List[str], target_col_name: str
-) -> Dict:
     mask = data["split"].eq("TRAIN")
 
     X_train = data.loc[mask, features]
@@ -286,10 +261,19 @@ def _tune_parameters(
     # Fit tuner
     tuner.fit(X_train.values, y_train.values)
 
-    return {
-        "object": f"{type(tuner._estimator).__module__}.{type(tuner._estimator).__name__}",
-        **tuner.best_params_,
-    }  # tuner.convergence_plot if hasattr(tuner, "convergence_plot") else plt.figure()
+    return json.loads(
+        json.dumps(
+            {
+                "object": f"{type(tuner._estimator).__module__}.{type(tuner._estimator).__name__}",
+                **tuner.best_params_,
+            },
+            default=int,
+        )
+    ), tuner.convergence_plot if hasattr(tuner, "convergence_plot") else plt.figure()
+
+
+def create_model(*estimators) -> ModelWrapper:
+    return ModelWrapper(estimators=estimators)
 
 
 @unpack_params()
@@ -297,7 +281,7 @@ def _tune_parameters(
 @make_list_regexable(source_df="data", make_regexable="features")
 def train_model(
     data: pd.DataFrame,
-    estimators: List[BaseEstimator],
+    estimator: BaseEstimator,
     features: List[str],
     target_col_name: str,
     enable_regex: bool = True,
@@ -314,15 +298,12 @@ def train_model(
     Returns:
         Trained model.
     """
-    for iteration, estimator in enumerate(estimators):
-        data = data[(data["iteration"] == iteration) & (data["split"] == "TRAIN")]
+    mask = data["split"].eq("TRAIN")
 
-        X_train = data[features]
-        y_train = data[target_col_name]
+    X_train = data.loc[mask, features]
+    y_train = data.loc[mask, target_col_name]
 
-        estimator.fit(X_train, y_train)
-
-    return ModelWrapper(estimators=estimators)
+    return estimator.fit(X_train.values, y_train.values)
 
 
 @inject_object()
@@ -348,9 +329,7 @@ def get_model_predictions(
     Returns:
         Data with predictions.
     """
-    data[target_col_name + prediction_suffix] = model.predict_proba(
-        data[features].values
-    )
+    data[target_col_name + prediction_suffix] = model.predict(data[features].values)
     return data
 
 

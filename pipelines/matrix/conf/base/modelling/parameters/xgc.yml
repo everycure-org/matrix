@@ -2,13 +2,10 @@ modelling.xgc:
     _overrides:
       
       generator:
-        object: matrix.datasets.graph.IterativeDrugDiseasePairGenerator
-        num_iterations: 2
-        generator:
-          object: matrix.datasets.graph.RandomDrugDiseasePairGenerator
-          y_label: 2
-          random_state: ${globals:random_state}
-          n_unknown: 100
+        object: matrix.datasets.graph.RandomDrugDiseasePairGenerator
+        y_label: 2
+        random_state: ${globals:random_state}
+        n_unknown: 100
 
       model_tuning_args:
         tuner:
