@@ -213,38 +213,6 @@ class ReplacementDrugDiseasePairGenerator(DrugDiseasePairGenerator):
         return unknown_data
 
 
-# class IterativeDrugDiseasePairGenerator(DrugDiseasePairGenerator):
-#     """Stacked Drug Disease Pair generator.
-
-#     Generator that yields a stack of drug-disease pairs.
-#     """
-
-#     def __init__(self, generator: DrugDiseasePairGenerator, num_iterations: int):
-#         """Initializes the IterativeDrugDiseasePairGenerator instance.
-
-#         Args:
-#             generator: DrugDiseasePairGenerator used for each iteration.
-#             num_iterations: Number of iterations.
-#         """
-#         self._generator = generator
-#         self._num_iterations = num_iterations
-
-#     def generate(
-#         self, graph: KnowledgeGraph, known_pairs: pd.DataFrame
-#     ) -> Iterator[pd.DataFrame]:
-#         """Function to generate drug-disease pairs according to the strategy.
-
-#         Args:
-#             graph: KnowledgeGraph instance.
-#             known_pairs: DataFrame with known drug-disease pairs.
-
-#         Returns:
-#             DataFrame with unknown drug-disease pairs.
-#         """
-#         for _ in range(self._num_iterations):
-#             yield next(self._generator.generate(graph, known_pairs))
-
-
 class KnowledgeGraphDataset(ParquetDataset):
     """Dataset adaptor to read KnowledgeGraph using Kedro's dataset functionality."""
 
