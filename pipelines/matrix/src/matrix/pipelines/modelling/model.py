@@ -14,27 +14,39 @@ class ModelWrapper:
     def __init__(
         self,
         estimators: List[BaseEstimator],
+        agg_func: Callable,
     ) -> None:
         """Create instance of the model wrapper.
 
         Args:
             estimators: list of estimators.
-            agg: function to aggregate ensemble results.
+            agg_func: function to aggregate ensemble results.
         """
         self._estimators = estimators
+        self._agg_func = agg_func
         super().__init__()
 
     def fit(self, X, y):
-        return self
+        """Model fit method.
+
+        Args:
+            X: input features
+            y: label
+        """
+        raise NotImplementedError("ModelWrapper is used to house fitted estimators")
 
     def predict(self, X):
-        ...
+        """Model predict method.
+
+        Args:
+            X: input features
+        """
+        return self._estimators[0].predict(X)  # TODO: Update to aggregate results
 
     def predict_proba(self, X):
-        """Predict proba.
+        """Model predict_proba method.
 
-        FUTURE: Ensure passing in agg. func into wrapper class.
+        Args:
+            X: input features
         """
-        return np.concatenate(
-            [estimator.predict_proba(X) for estimator in self._estimators]
-        ).mean(axis=0)
+        raise NotImplementedError("Predict method not implemented yet")
