@@ -14,6 +14,10 @@ modelling.raw.rtx_kg2.nodes:
   <<: *_pandas_csv
   filepath: ${globals:paths.raw}/rtx_kg2_nodes.csv
 
+modelling.raw.rtx_kg2.edges:
+  <<: *_pandas_csv
+  filepath: ${globals:paths.raw}/rtx_kg2_edges.csv
+
 modelling.raw.ground_truth.tp:
   <<: *_pandas_csv
   filepath: ${globals:paths.raw}/tp_pairs.txt
@@ -38,29 +42,33 @@ modelling.model_input.splits:
   <<: *_pandas_parquet
   filepath: ${globals:paths.model_input}/splits
 
-modelling.model_input.enriched_splits:
+"modelling.{namespace}.model_input.enriched_splits":
   <<: *_pandas_parquet
-  filepath: ${globals:paths.model_input}/enriched_splits
+  filepath: ${globals:paths.model_input}/{namespace}/enriched_splits
 
-modelling.model_input.transformed_splits:
+"modelling.{namespace}.model_input.transformed_splits":
   <<: *_pandas_parquet
-  filepath: ${globals:paths.model_input}/transformed_splits
+  filepath: ${globals:paths.model_input}/{namespace}/transformed_splits
 
-modelling.models.model:
-  type: pickle.PickleDataset
-  filepath: ${globals:paths.models}/model.pickle
-
-modelling.models.model_params:
+"modelling.{namespace}.models.model_params":
   type: yaml.YAMLDataset
-  filepath: ${globals:paths.models}/model_params.yml
+  filepath: ${globals:paths.models}/{namespace}/model_params.yml
 
-modelling.model_output.predictions:
+"modelling.{namespace}.models.model":
+  type: pickle.PickleDataset
+  filepath: ${globals:paths.models}/{namespace}/model.pickle
+
+"modelling.{namespace}.model_output.predictions":
   <<: *_pandas_parquet
-  filepath: ${globals:paths.model_output}/predictions
+  filepath: ${globals:paths.model_output}/{namespace}/predictions
 
-modelling.reporting.tuning_convergence_plot:
+"modelling.{namespace}.reporting.tuning_convergence_plot":
   type: matplotlib.MatplotlibWriter
-  filepath: ${globals:paths.reporting}/convergence_plot.png
+  filepath: ${globals:paths.reporting}/{namespace}/convergence_plot.png
+
+"modelling.{namespace}.reporting.metrics":
+  type: yaml.YAMLDataset
+  filepath: ${globals:paths.reporting}/{namespace}/metrics.yml
 
 modelling.reporting.metrics:
   type: yaml.YAMLDataset
