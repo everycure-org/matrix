@@ -8,6 +8,7 @@ from kedro.framework.project import configure_project, settings
 from kedro.framework.hooks import _create_hook_manager
 
 from kedro.config import OmegaConfigLoader
+from matrix.resolvers import merge_dicts
 
 
 @pytest.fixture(name="conf_source", scope="session")
@@ -19,7 +20,22 @@ def conf_source_fixture() -> str:
 @pytest.fixture(name="config_loader", scope="session")
 def config_loader_fixture(conf_source) -> OmegaConfigLoader:
     """Instantiate a config loader."""
-    return OmegaConfigLoader(env="base", base_env="base", conf_source=conf_source)
+    return OmegaConfigLoader(
+        env="base",
+        base_env="base",
+        conf_source=conf_source,
+        config_patterns={
+            "spark": ["spark*", "spark*/**"],
+            "globals": ["globals*", "globals*/**", "**/globals*"],
+            "parameters": [
+                "parameters*",
+                "parameters*/**",
+                "**/parameters*",
+                "**/parameters*/**",
+            ],
+        },
+        custom_resolvers={"merge": merge_dicts},
+    )
 
 
 @pytest.fixture(name="kedro_context", scope="session")
