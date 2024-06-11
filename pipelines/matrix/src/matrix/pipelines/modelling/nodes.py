@@ -171,6 +171,16 @@ def fit_transformers(
     transformers: Dict[str, Dict[str, Union[_BaseImputer, List[str]]]],
     target_col_name: str = None,
 ) -> pd.DataFrame:
+    """Function fit transformers to the data.
+
+    Args:
+        data: Data to transform.
+        transformers: Dictionary of transformers.
+        target_col_name: Column name to predict.
+
+    Returns:
+        Fitted transformers.
+    """
     # Ensure transformer only fit on training data
     mask = data["split"].eq("TRAIN")
 
@@ -197,12 +207,12 @@ def apply_transformers(
     transformers: Dict[str, Dict[str, Union[_BaseImputer, List[str]]]],
     fitted_transformers: Dict[str, Dict[str, Union[_BaseImputer, List[str]]]],
 ) -> pd.DataFrame:
-    """Function to apply a set of sklearn compatible transformers to the data.
+    """Function apply fitted transformers to the data.
 
     Args:
         data: Data to transform.
         transformers: Dictionary of transformers.
-        target_col_name: Target column name.
+        fitted_transformers: Fitted transformer objects.
 
     Returns:
         Transformed data.
@@ -272,10 +282,6 @@ def tune_parameters(
     ), tuner.convergence_plot if hasattr(tuner, "convergence_plot") else plt.figure()
 
 
-def create_model(*estimators) -> ModelWrapper:
-    return ModelWrapper(estimators=estimators)
-
-
 @unpack_params()
 @inject_object()
 @make_list_regexable(source_df="data", make_regexable="features")
@@ -290,7 +296,7 @@ def train_model(
 
     Args:
         data: Data to train on.
-        estimators: sklearn estimator.
+        estimator: sklearn compatible estimator.
         features: List of features, may be regex specified.
         target_col_name: Target column name.
         enable_regex: Enable regex for features.
@@ -306,11 +312,20 @@ def train_model(
     return estimator.fit(X_train.values, y_train.values)
 
 
+def create_model(*estimators) -> ModelWrapper:
+    """Function to create final model.
+
+    Args:
+        estimators: list of fitted estimators
+    """
+    return ModelWrapper(estimators=estimators, agg_func=np.mean)
+
+
 @inject_object()
 @make_list_regexable(source_df="data", make_regexable="features")
 def get_model_predictions(
     data: pd.DataFrame,
-    model: ModelWrapper,
+    model: ModelWrapper,  # *estimators estimators: [f"model.shard}"]
     features: List[str],
     target_col_name: str,
     prediction_suffix: str = "_pred",
