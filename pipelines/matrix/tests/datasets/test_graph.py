@@ -43,7 +43,7 @@ def test_random_drug_disease_pair_generator(
     graph: KnowledgeGraph, known_pairs: pd.DataFrame
 ):
     # Given a random drug disease pair generator
-    generator = RandomDrugDiseasePairGenerator(random_state=42, n_unknown=2)
+    generator = RandomDrugDiseasePairGenerator(random_state=42, n_unknown=2, y_label=2)
 
     # When generating unknown pairs
     unknown = generator.generate(graph, known_pairs)
@@ -64,7 +64,9 @@ def test_replacement_drug_disease_pair_generator(
     graph: KnowledgeGraph, known_pairs: pd.DataFrame, n_replacements, splitter
 ):
     # Given a replacement drug disease pair generator and a test-train split for the known data
-    generator = ReplacementDrugDiseasePairGenerator(42, n_replacements=n_replacements)
+    generator = ReplacementDrugDiseasePairGenerator(
+        random_state=42, n_replacements=n_replacements, y_label=2
+    )
     known_pairs_split = make_splits(known_pairs, splitter)
 
     # When generating unknown pairs

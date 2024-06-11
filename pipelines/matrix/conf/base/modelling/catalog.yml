@@ -46,6 +46,10 @@ modelling.model_input.splits:
   type: pickle.PickleDataset
   filepath: ${globals:paths.model_input}/{model}/transformers.pickle
 
+"modelling.{model}.model_input.transformed_splits":
+  <<: *_pandas_parquet
+  filepath: ${globals:paths.model_input}/{model}/transformed_splits
+
 "modelling.{model}.{shard}.model_input.enriched_splits":
   <<: *_pandas_parquet
   filepath: ${globals:paths.model_input}/{model}/{shard}/enriched_splits
@@ -62,9 +66,9 @@ modelling.model_input.splits:
   type: pickle.PickleDataset
   filepath: ${globals:paths.models}/{model}/{shard}/model.pickle
 
-# "modelling.{namespace}.model_output.predictions":
-#   <<: *_pandas_parquet
-#   filepath: ${globals:paths.model_output}/{namespace}/predictions
+"modelling.{model}.model_output.predictions":
+  <<: *_pandas_parquet
+  filepath: ${globals:paths.model_output}/{model}/predictions
 
 "modelling.{model}.{shard}.reporting.tuning_convergence_plot":
   type: matplotlib.MatplotlibWriter
@@ -74,6 +78,6 @@ modelling.model_input.splits:
   type: pickle.PickleDataset
   filepath: ${globals:paths.models}/{model}/model.pickle
 
-"modelling.{namespace}.reporting.metrics":
+"modelling.{model}.reporting.metrics":
   type: yaml.YAMLDataset
-  filepath: ${globals:paths.reporting}/{namespace}/metrics.yml
+  filepath: ${globals:paths.reporting}/{model}/metrics.yml
