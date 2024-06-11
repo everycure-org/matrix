@@ -1,0 +1,9 @@
+modelling.xgc:
+    _overrides:
+
+      generator:
+        object: matrix.datasets.graph.RandomDrugDiseasePairGenerator
+        random_state: ${globals:random_state}
+        n_unknown: 100
+    
+    model_options: ${merge:${.._model_options},${._overrides}}

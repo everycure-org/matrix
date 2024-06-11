@@ -8,10 +8,13 @@ notebook
 scikit-learn==1.4.0
 gcsfs==2024.3.1
 pyarrow>=14.0.2 
-xgboost
-scikit-optimize
-matplotlib
-pytest
+xgboost==2.0.3
+scikit-optimize==0.10.1
+matplotlib==3.9.0
+pytest==8.2.1
+hdfs==2.7.3
+pyspark==3.5.1
+s3fs
 
 ./packages/data_fabricator
 ./packages/refit

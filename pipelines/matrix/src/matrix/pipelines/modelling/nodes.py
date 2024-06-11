@@ -7,7 +7,7 @@ from sklearn.model_selection._split import _BaseKFold
 from sklearn.impute._base import _BaseImputer
 from sklearn.base import BaseEstimator
 
-from skopt.plots import plot_convergence
+import matplotlib.pyplot as plt
 
 from refit.v1.core.inject import inject_object
 from refit.v1.core.inline_has_schema import has_schema
@@ -234,7 +234,7 @@ def tune_parameters(
     y_train = data.loc[mask, target_col_name]
 
     # Fit tuner
-    result = tuner.fit(X_train.values, y_train.values)
+    tuner.fit(X_train.values, y_train.values)
 
     return json.loads(
         json.dumps(
@@ -244,7 +244,7 @@ def tune_parameters(
             },
             default=int,
         )
-    ), plot_convergence(result).figure
+    ), tuner.convergence_plot if hasattr(tuner, "convergence_plot") else plt.figure()
 
 
 @unpack_params()
@@ -338,3 +338,15 @@ def get_model_performance(
             ).item()
 
     return json.loads(json.dumps(report))
+
+
+def consolidate_reports(*reports) -> dict:
+    """Function to consolidate reports into master report.
+
+    Args:
+        reports: tuples of (name, report) pairs.
+
+    Returns:
+        Dictionary representing consolidated report.
+    """
+    return [*reports]
