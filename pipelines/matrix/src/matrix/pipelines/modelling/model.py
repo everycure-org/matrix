@@ -6,7 +6,10 @@ import numpy as np
 
 
 class ModelWrapper:
-    """Class to represent models."""
+    """Class to represent models.
+
+    TODO: Conventions for different model parts
+    """
 
     def __init__(
         self,
@@ -20,6 +23,12 @@ class ModelWrapper:
         """
         self._estimators = estimators
         super().__init__()
+
+    def fit(self, X, y):
+        return self
+
+    def predict(self, X):
+        ...
 
     def predict_proba(self, X):
         """Predict proba.

@@ -50,7 +50,7 @@ class DrugDiseasePairGenerator(abc.ABC):
     @abc.abstractmethod
     def generate(
         self, graph: KnowledgeGraph, known_pairs: pd.DataFrame
-    ) -> Iterator[pd.DataFrame]:
+    ) -> pd.DataFrame:
         """Function to generate drug-disease pairs from the knowledge graph.
 
         Args:
@@ -82,7 +82,7 @@ class RandomDrugDiseasePairGenerator(DrugDiseasePairGenerator):
 
     def generate(
         self, graph: KnowledgeGraph, known_pairs: pd.DataFrame
-    ) -> Iterator[pd.DataFrame]:
+    ) -> pd.DataFrame:
         """Function to generate drug-disease pairs according to the strategy.
 
         Args:
@@ -113,7 +113,7 @@ class RandomDrugDiseasePairGenerator(DrugDiseasePairGenerator):
                     ]
                 )
 
-        yield pd.DataFrame(
+        return pd.DataFrame(
             columns=["source", "source_embedding", "target", "target_embedding", "y"],
             data=unknown_data,
         )
@@ -138,7 +138,7 @@ class ReplacementDrugDiseasePairGenerator(DrugDiseasePairGenerator):
 
     def generate(
         self, graph: KnowledgeGraph, known_pairs: pd.DataFrame
-    ) -> Iterator[pd.DataFrame]:
+    ) -> pd.DataFrame:
         """Function to generate drug-disease pairs according to the strategy.
 
         Args:
@@ -174,7 +174,7 @@ class ReplacementDrugDiseasePairGenerator(DrugDiseasePairGenerator):
                 self._y_label,
             )
 
-        yield pd.DataFrame(
+        return pd.DataFrame(
             columns=["source", "source_embedding", "target", "target_embedding", "y"],
             data=unknown_data,
         )
@@ -213,36 +213,36 @@ class ReplacementDrugDiseasePairGenerator(DrugDiseasePairGenerator):
         return unknown_data
 
 
-class IterativeDrugDiseasePairGenerator(DrugDiseasePairGenerator):
-    """Stacked Drug Disease Pair generator.
+# class IterativeDrugDiseasePairGenerator(DrugDiseasePairGenerator):
+#     """Stacked Drug Disease Pair generator.
 
-    Generator that yields a stack of drug-disease pairs.
-    """
+#     Generator that yields a stack of drug-disease pairs.
+#     """
 
-    def __init__(self, generator: DrugDiseasePairGenerator, num_iterations: int):
-        """Initializes the IterativeDrugDiseasePairGenerator instance.
+#     def __init__(self, generator: DrugDiseasePairGenerator, num_iterations: int):
+#         """Initializes the IterativeDrugDiseasePairGenerator instance.
 
-        Args:
-            generator: DrugDiseasePairGenerator used for each iteration.
-            num_iterations: Number of iterations.
-        """
-        self._generator = generator
-        self._num_iterations = num_iterations
+#         Args:
+#             generator: DrugDiseasePairGenerator used for each iteration.
+#             num_iterations: Number of iterations.
+#         """
+#         self._generator = generator
+#         self._num_iterations = num_iterations
 
-    def generate(
-        self, graph: KnowledgeGraph, known_pairs: pd.DataFrame
-    ) -> Iterator[pd.DataFrame]:
-        """Function to generate drug-disease pairs according to the strategy.
+#     def generate(
+#         self, graph: KnowledgeGraph, known_pairs: pd.DataFrame
+#     ) -> Iterator[pd.DataFrame]:
+#         """Function to generate drug-disease pairs according to the strategy.
 
-        Args:
-            graph: KnowledgeGraph instance.
-            known_pairs: DataFrame with known drug-disease pairs.
+#         Args:
+#             graph: KnowledgeGraph instance.
+#             known_pairs: DataFrame with known drug-disease pairs.
 
-        Returns:
-            DataFrame with unknown drug-disease pairs.
-        """
-        for _ in range(self._num_iterations):
-            yield next(self._generator.generate(graph, known_pairs))
+#         Returns:
+#             DataFrame with unknown drug-disease pairs.
+#         """
+#         for _ in range(self._num_iterations):
+#             yield next(self._generator.generate(graph, known_pairs))
 
 
 class KnowledgeGraphDataset(ParquetDataset):
