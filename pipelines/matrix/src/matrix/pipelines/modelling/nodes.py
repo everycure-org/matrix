@@ -323,7 +323,7 @@ def create_model(*estimators) -> ModelWrapper:
 @make_list_regexable(source_df="data", make_regexable="features")
 def get_model_predictions(
     data: pd.DataFrame,
-    model: ModelWrapper,  # *estimators estimators: [f"model.shard}"]
+    model: ModelWrapper,
     features: List[str],
     target_col_name: str,
     prediction_suffix: str = "_pred",

@@ -14,6 +14,9 @@ from matrix.pipelines.embeddings.pipeline import (
 from matrix.pipelines.integration.pipeline import (
     create_pipeline as create_integration_pipeline,
 )
+from matrix.pipelines.evaluation.pipeline import (
+    create_pipeline as create_evaluation_pipeline,
+)
 
 
 def register_pipelines() -> Dict[str, Pipeline]:
@@ -23,7 +26,9 @@ def register_pipelines() -> Dict[str, Pipeline]:
         Mapping from a pipeline name to a ``Pipeline`` object.
     """
     pipelines = {}
-    pipelines["__default__"] = create_modelling_pipeline()
+    pipelines["__default__"] = (
+        create_modelling_pipeline() + create_evaluation_pipeline()
+    )
     pipelines["embeddings"] = create_embeddings_pipeline()
     pipelines["fabricator"] = create_fabricator_pipeline()
     pipelines["integration"] = create_integration_pipeline()

@@ -1,0 +1,18 @@
+_pandas_parquet: &_pandas_parquet
+  type: pandas.ParquetDataset
+
+"evaluation.{model}.{evaluation}.raw.pairs":
+  <<: *_pandas_parquet
+  filepath: ${globals:paths.raw}/{model}/{evaluation}/pairs
+
+"evaluation.{model}.{evaluation}.prm.pairs":
+  <<: *_pandas_parquet
+  filepath: ${globals:paths.prm}/{model}/{evaluation}/pairs
+
+"evaluation.{model}.{evaluation}.model_output.predictions":
+  <<: *_pandas_parquet
+  filepath: ${globals:paths.prm}/{model}/{evaluation}/pairs
+
+"evaluation.{model}.{evaluation}.reporting.evaluation":
+  type: yaml.YAMLDataset
+  filepath: ${globals:paths.reporting}/{model}/{evaluation}/report.yml
