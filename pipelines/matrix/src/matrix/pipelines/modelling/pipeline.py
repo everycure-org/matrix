@@ -57,7 +57,7 @@ def _create_model_shard_pipeline(model: str, shard: int) -> Pipeline:
     )
 
 
-def _create_model_pipeline(model: str, shards: int) -> Pipeline:
+def _create_model_pipeline(model: str, num_shards: int) -> Pipeline:
     return sum(
         [
             pipeline(
@@ -76,10 +76,10 @@ def _create_model_pipeline(model: str, shards: int) -> Pipeline:
             ),
             *[
                 pipeline(
-                    _create_model_shard_pipeline(model, shard),
+                    _create_model_shard_pipeline(model=model, shard=shard),
                     tags=model,
                 )
-                for shard in range(shards)
+                for shard in range(num_shards)
             ],
             pipeline(
                 [
@@ -87,7 +87,7 @@ def _create_model_pipeline(model: str, shards: int) -> Pipeline:
                         func=nodes.create_model,
                         inputs=[
                             f"modelling.{model}.{shard}.models.model"
-                            for shard in range(shards)
+                            for shard in range(num_shards)
                         ],
                         outputs=f"modelling.{model}.models.model",
                         name=f"create_{model}_model",
@@ -166,11 +166,13 @@ def create_pipeline(**kwargs) -> Pipeline:
     )
 
     pipes = []
-    for model, shards in settings.DYNAMIC_PIPELINES_MAPPING.get("modelling"):
+    for model in settings.DYNAMIC_PIPELINES_MAPPING.get("modelling"):
         pipes.append(
             pipeline(
-                _create_model_pipeline(model, shards),
-                tags=model,
+                _create_model_pipeline(
+                    model=model["model_name"], num_shards=model["num_shards"]
+                ),
+                tags=model["model_name"],
             )
         )
 
