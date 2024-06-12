@@ -24,7 +24,6 @@ def _create_model_shard_pipeline(model: str, shard: int) -> Pipeline:
                 func=nodes.apply_transformers,
                 inputs=[
                     f"modelling.{model}.{shard}.model_input.enriched_splits",
-                    f"params:modelling.{model}.model_options.transformers",
                     f"modelling.{model}.model_input.transformers",
                 ],
                 outputs=f"modelling.{model}.{shard}.model_input.transformed_splits",
@@ -97,7 +96,6 @@ def _create_model_pipeline(model: str, num_shards: int) -> Pipeline:
                         func=nodes.apply_transformers,
                         inputs=[
                             f"modelling.model_input.splits",
-                            f"params:modelling.{model}.model_options.transformers",
                             f"modelling.{model}.model_input.transformers",
                         ],
                         outputs=f"modelling.{model}.model_input.transformed_splits",

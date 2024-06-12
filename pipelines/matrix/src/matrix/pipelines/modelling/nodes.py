@@ -194,9 +194,12 @@ def fit_transformers(
     for name, transform in transformers.items():
         # Fit transformer
         features = transform["features"]
-        fitted_transformers[name] = transform["transformer"].fit(
+
+        transformer = transform["transformer"].fit(
             data.loc[mask, features], target_data
         )
+
+        fitted_transformers[name] = {"transformer": transformer, "features": features}
 
     return fitted_transformers
 
@@ -205,31 +208,26 @@ def fit_transformers(
 def apply_transformers(
     data: pd.DataFrame,
     transformers: Dict[str, Dict[str, Union[_BaseImputer, List[str]]]],
-    fitted_transformers: Dict[str, Dict[str, Union[_BaseImputer, List[str]]]],
 ) -> pd.DataFrame:
     """Function apply fitted transformers to the data.
 
     Args:
         data: Data to transform.
         transformers: Dictionary of transformers.
-        fitted_transformers: Fitted transformer objects.
 
     Returns:
         Transformed data.
     """
     # Iterate transformers
-    for name, transform in transformers.items():
+    for _, transformer in transformers.items():
         # Apply transformer
-        features = transform["features"]
+        features = transformer["features"]
         features_selected = data[features]
 
-        # Extract fitted transformer
-        transformer = fitted_transformers[name]
-
         transformed = pd.DataFrame(
-            transformer.transform(features_selected),
+            transformer["transformer"].transform(features_selected),
             index=features_selected.index,
-            columns=transformer.get_feature_names_out(features_selected),
+            columns=transformer["transformer"].get_feature_names_out(features_selected),
         )
 
         # Overwrite columns
