@@ -56,7 +56,10 @@ CONFIG_LOADER_ARGS = {
 
 # https://getindata.com/blog/kedro-dynamic-pipelines/
 DYNAMIC_PIPELINES_MAPPING = {
-    "modelling": [("xgb", 1), ("xgc", 3)],
+    "modelling": [
+        {"model_name": "xgb", "num_shards": 1},
+        {"model_name": "xgc", "num_shards": 3},
+    ],
 }
 
 # Class that manages Kedro's library components.
