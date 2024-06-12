@@ -65,6 +65,7 @@ DYNAMIC_PIPELINES_MAPPING = {
         {"model_name": "kgml_xdtd", "num_shards": 1},
         {"model_name": "xg_balanced", "num_shards": 1},
     ],
+    "evaluation": [{"evaluation_name": "mrr"}, {"evaluation_name": "hitk"}],
 }
 
 # Class that manages Kedro's library components.
