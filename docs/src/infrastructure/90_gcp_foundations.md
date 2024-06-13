@@ -70,9 +70,16 @@ For details check the [networking page](./11_networking.md).
 
 We have the following top level structure
 
+<!-- TODO update image with latest folder structure -->
 ![](../assets/img/gcp_folders.png){ width=500" }
 
 where the `fldr-` folders contain foundations blueprint artifacts (e.g. shared logging, encryption keys, bootstrap project) and the `pre-foundation-projects` contain a range of projects we had already created before setting up the blueprint.
+
+## Project creation and seeding with terraform information
+
+We create projects at the "core" level and provide these projects to ... well project teams. What exactly we provide is documented on the [project setup](./91_gcp_project_template.md) page. 
+
+----
 
 ## Creation log
 

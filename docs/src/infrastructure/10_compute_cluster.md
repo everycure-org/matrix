@@ -8,17 +8,36 @@ This document provides an overview and guide for the shared Kubernetes (k8s) clu
 
 ### Cluster Setup
 The shared Kubernetes cluster is hosted in the hub project. Key configuration details include:
-- **Cluster Name**: `shared-k8s-cluster`
-- **Region**: `europe-west1`
+
+- **Region**: `us-central1` (by default)
 - **Node Pools**: Configured with autoscaling enabled
 - **Network**: Shared VPC
+- **GPU nodes**: Currently not enabled but planning to add these as scale to 0 autoscaling group
 
 ### Networking
 Networking between the hub and spoke projects leverages a shared VPC:
-- **VPC Name**: `shared-vpc`
-- **Subnets**: Segmented for different environments (e.g., dev, staging, production)
-- **Firewall Rules**: Configured to allow necessary communication between the hub and spoke projects
+- **VPC Name**: `matrix-hub-dev-nw`
+- **Subnets**: one per region, e.g. EU and US
+- **Firewall Rules**: Configured to allow necessary communication between the hub and spoke projects as well as outgoing HTTPs and incoming SSH via GCP IdP
 
+## Using the cluster for Spark processing
+
+!!! warning
+
+    not yet implemented, volunteers welcome
+
+## Using the cluster for ray processing
+
+
+!!! warning
+
+    not yet implemented, volunteers welcome
+
+## Access and Permissions
+
+We will provide `roles/container.developer` and `roles/iap.tunnelResourceAccessor` to everyone in the MATRIX project to enable cluster access. 
+
+<!--
 ## Access and Permissions
 
 ### Development Team Access
@@ -62,6 +81,4 @@ This documentation provides the foundational setup for a shared k8s cluster on G
 
 For further information or specific questions, please refer to the additional resources linked below or contact the cloud operations team.
 
----
-
-_Remember to replace placeholder text and links with actual details and diagrams specific to your implementation._
+-->
