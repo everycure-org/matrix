@@ -8,6 +8,7 @@ import bisect
 from sklearn.metrics import roc_auc_score, average_precision_score
 
 from matrix.datasets.drp_model import DRPmodel
+from matrix.pipelines.modelling.utils import _add_embeddings
 
 
 def get_training_metrics(

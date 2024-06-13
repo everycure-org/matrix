@@ -16,36 +16,12 @@ from refit.v1.core.make_list_regexable import make_list_regexable
 
 from matrix.datasets.graph import KnowledgeGraph, DrugDiseasePairGenerator
 from matrix.datasets.drp_model import DRPmodel, DRPmodel3classScikit
+from matrix.pipelines.modelling.utils import _add_embeddings
 from matrix.pipelines.modelling.evaluation import (
     get_training_metrics,
     get_classification_metrics,
     perform_disease_centric_evaluation,
 )
-
-
-@has_schema(
-    schema={
-        "source": "object",
-        "target": "object",
-    }
-)
-def _add_embeddings(data: pd.DataFrame, graph: KnowledgeGraph):
-    """Adds columns containing knowledge graph embeddings.
-
-    Args:
-        data: Data to enrich with embeddings.
-        graph: Knowledge graph.
-    """
-    data = data.copy()
-
-    data["source_embedding"] = data.apply(
-        lambda row: graph._embeddings[row.source], axis=1
-    )
-    data["target_embedding"] = data.apply(
-        lambda row: graph._embeddings[row.target], axis=1
-    )
-
-    return data
 
 
 @has_schema(
