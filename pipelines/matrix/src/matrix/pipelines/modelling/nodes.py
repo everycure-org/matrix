@@ -86,7 +86,7 @@ def create_prm_pairs(
     raw_tn["y"] = 0
 
     # Concat
-    result = pd.concat([raw_tp, raw_tn], axis=0).reset_index(drop=True)
+    result = pd.concat([raw_tp, raw_tn], axis="index").reset_index(drop=True)
 
     # Add embeddings
     result["source_embedding"] = result.apply(
@@ -125,7 +125,7 @@ def make_splits(
         fold_data.loc[test_index, "split"] = "TEST"
         all_data_frames.append(fold_data)
 
-    return pd.concat(all_data_frames, axis=0, ignore_index=True)
+    return pd.concat(all_data_frames, axis="index", ignore_index=True)
 
 
 @has_schema(
@@ -162,7 +162,7 @@ def create_model_input_nodes(
     generated = generator.generate(graph, splits)
     generated["split"] = "TRAIN"
 
-    return pd.concat([splits, generated], axis=0, ignore_index=True)
+    return pd.concat([splits, generated], axis="index", ignore_index=True)
 
 
 @inject_object()
