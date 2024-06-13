@@ -25,6 +25,31 @@ from matrix.pipelines.modelling.evaluation import (
 
 @has_schema(
     schema={
+        "source": "object",
+        "target": "object",
+    }
+)
+def _add_embeddings(data: pd.DataFrame, graph: KnowledgeGraph):
+    """Adds columns containing knowledge graph embeddings.
+
+    Args:
+        data: Data to enrich with embeddings.
+        graph: Knowledge graph.
+    """
+    data = data.copy()
+
+    data["source_embedding"] = data.apply(
+        lambda row: graph._embeddings[row.source], axis=1
+    )
+    data["target_embedding"] = data.apply(
+        lambda row: graph._embeddings[row.target], axis=1
+    )
+
+    return data
+
+
+@has_schema(
+    schema={
         "is_drug": "bool",
         "is_disease": "bool",
         "is_fda_approved": "bool",
@@ -92,13 +117,14 @@ def create_prm_pairs(
     # Concat
     result = pd.concat([raw_tp, raw_tn], axis=0).reset_index(drop=True)
 
-    # Add embeddings
-    result["source_embedding"] = result.apply(
-        lambda row: graph._embeddings[row.source], axis=1
-    )
-    result["target_embedding"] = result.apply(
-        lambda row: graph._embeddings[row.target], axis=1
-    )
+    # # Add embeddings
+    result = _add_embeddings(result, graph)
+    # result["source_embedding"] = result.apply(
+    #     lambda row: graph._embeddings[row.source], axis=1
+    # )
+    # result["target_embedding"] = result.apply(
+    #     lambda row: graph._embeddings[row.target], axis=1
+    # )
 
     # Return concatenated data
     return result

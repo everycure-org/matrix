@@ -11,6 +11,7 @@ from typing import Any, Dict, List, Union, Tuple
 from refit.v1.core.make_list_regexable import make_list_regexable
 
 from matrix.datasets.graph import KnowledgeGraph
+from matrix.pipelines.modelling.nodes import _add_embeddings
 
 
 class DRPmodel(abc.ABC):
@@ -94,12 +95,7 @@ class DRPmodel3classScikit(DRPmodel3class):
         pairs = pairs.copy()
 
         # Add embeddings
-        pairs["source_embedding"] = pairs.apply(
-            lambda row: self.graph._embeddings[row.source], axis=1
-        )
-        pairs["target_embedding"] = pairs.apply(
-            lambda row: self.graph._embeddings[row.target], axis=1
-        )
+        pairs = _add_embeddings(pairs, graph)
 
         # Iterate over transformers
         for _, transform in self.transformers.items():
