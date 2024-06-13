@@ -1,7 +1,6 @@
 ---
 title: Networking
 ---
-TODO add network diagram showing hub/spoke setup of the various projects
 
 The networking layer of our software engineering project is designed to strike a balance between minimal maintenance requirements and optimal control and security. To achieve this, we employ a hub-and-spoke architecture, where the central hub network provides a Virtual Private Cloud (VPC) to our spoke projects, which represent our working group projects.
 
