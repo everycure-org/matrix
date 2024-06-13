@@ -2,6 +2,16 @@
 title: GCP Foundations
 ---
 
+<!-- EXP with Matej
+- logs of experiments through some form of exp log
+- data science metrics should be logged as well (more structured) 
+
+- how do we manage Admin rights
+- org policies? 
+- how to get compute / request more 
+- how to monitor cost
+-  -->
+
 !!! tip "Suggested background knowledge"
   
     This section requires moderate understanding of infrastructure as code, terraform, enterprise requirements for cloud environments and concepts such as "landing zones" and networking.
@@ -54,6 +64,16 @@ Google recommends the below diagram for separating a foundation pipeline, infras
 
 We opted for a [shared VPC](https://cloud.google.com/vpc/docs/shared-vpc) setup from GCP for all our MATRIX projects. In this setup, we have a hub project that contains any shared resources (e.g. compute cluster, shared datasets) and a number of spoke projects (working groups) that connect to the hub project's VPC. Thus, the networking layer is provided from the foundations layer upwards to the initiative (e.g. MATRIX), following the principles recommended by the foundations blueprint.
 
+For details check the [networking page](./11_networking.md).
+
+## GCP Organization structure
+
+We have the following top level structure
+
+![](../assets/img/gcp_folders.png){ width=500" }
+
+where the `fldr-` folders contain foundations blueprint artifacts (e.g. shared logging, encryption keys, bootstrap project) and the `pre-foundation-projects` contain a range of projects we had already created before setting up the blueprint.
+
 ## Creation log
 
 !!! bug "debug notes"
@@ -70,7 +90,6 @@ The blueprint comes with a helper tool that rolls out all layers in one process.
 - created a `Makefile` in `infra/` repo to codify all steps used to set it up
 - had some issues with getting the backend.tf to work with the helper, so had to re-run a few times to get 0-bootstrap to work
 - then ran into issues with the SA not having the right permissions to edit groups
-
   ```
   # Request a Super Admin to Grant 'Group Admin' role in the
   # Admin Console of the Google Workspace to the Bootstrap service account:
@@ -84,13 +103,15 @@ The blueprint comes with a helper tool that rolls out all layers in one process.
 
   - found the `roleID` for the Group Administrator via [this page](https://developers.google.com/admin-sdk/directory/reference/rest/v1/roles/list?apix=true&apix_params={"customer":"C02dmw33l","maxResults":50}) to be `49856820306509826`
 
-  ```json
-  {
-    "assignedTo": "111866437155274016643",
-    "roleId": "49856820306509826",
-    "scopeType": "CUSTOMER",
-    "kind": "admin#directory#roleAssignment"
-  }
+    ```json
+    {
+      "assignedTo": "111866437155274016643",
+      "roleId": "49856820306509826",
+      "scopeType": "CUSTOMER",
+      "kind": "admin#directory#roleAssignment"
+    }
+    ```
+
 - this added the SA to be able to do roleAssignments from within Cloud Build which makes the SA also a super admin in a way
 - stages org & environments were created without issues through cloud build
 - net failed. got [stuck on this](https://github.com/terraform-google-modules/terraform-example-foundation/issues/923)
@@ -98,14 +119,14 @@ The blueprint comes with a helper tool that rolls out all layers in one process.
 - ran out of projects so wanted to remove BU2. But need to terraform destroy everything first, not just delete folder. Else it just disappears but resources remain.  
 - So I commented out the resources created in BU2 first, then ran terraform apply again. Why not terraform destroy? Well because the `tf-wrapper.sh` doesn't have a destroy command.
 - running the destroy commands from my machine kept giving me errors as well
-  ```
-  Error: Error when reading or editing BillingBudget
-  "billingAccounts/01980D-0D4096-C8CEA4/budgets/c74f3114-fed7-4946-a691-92e2ab7d94c2":
-  googleapi: Error 403: Your application is authenticating by using local Application
-  Default Credentials. The billingbudgets.googleapis.com API requires a quota project,
-  which is not set by default. To learn how to set your quota project, see
-  https://cloud.google.com/docs/authentication/adc-troubleshooting/user-creds .
-  ```
+    ```
+    Error: Error when reading or editing BillingBudget
+    "billingAccounts/01980D-0D4096-C8CEA4/budgets/c74f3114-fed7-4946-a691-92e2ab7d94c2":
+    googleapi: Error 403: Your application is authenticating by using local Application
+    Default Credentials. The billingbudgets.googleapis.com API requires a quota project,
+    which is not set by default. To learn how to set your quota project, see
+    https://cloud.google.com/docs/authentication/adc-troubleshooting/user-creds .
+    ```
 
   - setting the quota project in the gcloud config did not fix the issue though.
   - resolution?
@@ -136,12 +157,6 @@ multiline_string=$(cat <<EOF
 include "root" {
  path = find_in_parent_folders()
 }
-##
-## Include the envcommon configuration for the component. The envcommon configuration contains settings that are common
-## for the component across all environments.
-## include "envcommon" {
-##  path = "${dirname(find_in_parent_folders())}/_envcommon/dns.hcl"
-## }
 EOF
 )
 
