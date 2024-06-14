@@ -1,0 +1,49 @@
+site_name: EC Tech Docs
+site_url: https://docs.app.everycure.org
+
+# configuration for edit button in web interface
+repo_url: https://github.com/everycure-org/matrix/
+edit_uri: edit/main/src/docs/src
+docs_dir: src/
+theme:
+  name: material
+
+  features:
+    - content.action.edit
+    - content.code.copy
+    - content.tabs.link
+    - navigation.expand
+    - navigation.indexes
+    - navigation.instant
+    - navigation.sections
+    - navigation.tabs
+    - navigation.tracking
+    - toc.follow
+    - toc.integrate
+
+plugins:
+  - drawio_file
+  - mkdocs-jupyter
+  - awesome-pages
+  - search
+  # - table-reader
+ 
+
+markdown_extensions:
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - attr_list
+  - md_in_html
+  - admonition
+  - footnotes
+  - pymdownx.details
+  - pymdownx.critic
+  - pymdownx.caret
+  - pymdownx.keys
+  - pymdownx.mark
+  - pymdownx.tilde
+  - pymdownx.tasklist:
+      custom_checkbox: true

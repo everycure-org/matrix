@@ -1,3 +1,5 @@
 venv
 *.DS_Store
+.vscode/
 neo4j_db/
+
