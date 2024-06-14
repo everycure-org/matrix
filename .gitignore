@@ -1,3 +1,10 @@
 venv
 *.DS_Store
 neo4j_db/
+
+
+data/
+.venv/
+
+**/.terraform/
+**/.terragrunt-cache/
