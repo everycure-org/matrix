@@ -1,0 +1,21 @@
+modelling.xgb:
+    _overrides:
+      generator:
+        object: matrix.datasets.graph.RandomDrugDiseasePairGenerator
+        y_label: 2
+        random_state: ${globals:random_state}
+        n_unknown: 40000
+
+      model_tuning_args:
+        tuner:
+          object: matrix.pipelines.modelling.tuning.NopTuner
+          estimator:
+            object: xgboost.XGBClassifier
+            tree_method: hist
+            device: cuda
+        features: # Features use regex, source_0, source_1, .., target_0, target_1
+          - source_+
+          - target_+
+        target_col_name: y
+          
+    model_options: ${merge:${.._model_options},${._overrides}}

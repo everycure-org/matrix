@@ -1,0 +1,51 @@
+modelling.xgc:
+    _overrides:
+      
+      generator:
+        object: matrix.datasets.graph.ReplacementDrugDiseasePairGenerator
+        random_state: ${globals:random_state}
+        y_label: 2
+        n_replacements: 2
+
+      model_tuning_args:
+        tuner:
+          object: matrix.pipelines.modelling.tuning.GaussianSearch
+          estimator:
+            object: xgboost.XGBClassifier
+            tree_method: hist
+            random_state: ${globals:random_state}
+            device: cuda
+          n_calls: 20
+          dimensions:
+            - object: skopt.space.Real
+              name: learning_rate
+              low: 0.01
+              high: 0.5
+            - object: skopt.space.Integer
+              name: max_depth
+              low: 3
+              high: 10
+            - object: skopt.space.Real
+              name: lambda
+              low: 0
+              high: 1
+            - object: skopt.space.Integer
+              name: n_estimators
+              low: 50
+              high: 2500
+          scoring: 
+              object: matrix.pipelines.modelling.utils.partial_
+              func:
+                object: sklearn.metrics.f1_score
+              average: macro
+          splitter:
+            object: sklearn.model_selection.StratifiedShuffleSplit
+            n_splits: 1 
+            test_size: 0.1
+            random_state: ${globals:random_state}
+        features: # Features use regex, source_0, source_1, .., target_0, target_1
+          - source_+
+          - target_+
+        target_col_name: y
+    
+    model_options: ${merge:${.._model_options},${._overrides}}
