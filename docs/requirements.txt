@@ -1,0 +1,14 @@
+mkdocs-material~=9.0
+mkdocs-material-extensions
+pymdown-extensions
+mkdocs-glightbox
+mkdocs-git-revision-date-localized-plugin
+mkdocs-awesome-pages-plugin
+mkdocs-table-reader-plugin
+mkdocs-blogging-plugin
+mkdocs-simple-hooks
+mkdocs-jupyter
+openpyxl
+jupyter
+pyyaml
+mkdocs-drawio-file

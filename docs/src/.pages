@@ -1,0 +1,7 @@
+nav:
+    - index.md
+    - getting_started
+    - infrastructure
+    - matrix
+    - contribute
+    - FAQ.md
