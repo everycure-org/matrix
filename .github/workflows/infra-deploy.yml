@@ -10,50 +10,63 @@ on:
       - infra/**
       - .github/workflows/infra-deploy.yml
 
-
+env:
+  tf_version: '1.5.7'
+  tg_version: '0.58.11'
+  working_dir: 'infra/'
+  # log into gcp
+  project_id: 'mtrx-hub-dev-3of'
+  workload_identity_provider: 'projects/938607797672/locations/global/workloadIdentityPools/matrix-pool/providers/matrix-gh-provider'
+  service_account: 'sa-github-actions-rw@mtrx-hub-dev-3of.iam.gserviceaccount.com'
 
 jobs:
-  tf_plan:
+  checks:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ./infra
-    permissions:
-      contents: 'read'
-      # Add "id-token" with the intended permissions.
-      id-token: 'write'
-
     steps:
-    - uses: 'actions/checkout@v4'
+      - name: 'Checkout'
+        uses: actions/checkout@main
 
-    # TODO remove this when its' working
-    # - name: Checkout actions-oidc-debugger
-    #   uses: actions/checkout@v3
-    #   with:
-    #     repository: github/actions-oidc-debugger
-    #     ref: main
-    #     token: ${{ github.token }}
-    #     path: ./.github/actions/actions-oidc-debugger
-    # - name: Debug OIDC Claims
-    #   uses: ./.github/actions/actions-oidc-debugger
-    #   with:
-    #     audience: '${{ github.server_url }}/${{ github.repository_owner }}'
+      - name: Check terragrunt HCL
+        uses: gruntwork-io/terragrunt-action@v2
+        with:
+          tf_version: ${{ env.tf_version }}
+          tg_version: ${{ env.tg_version }}
+          tg_dir: ${{ env.working_dir }}
+          tg_command: 'hclfmt --terragrunt-check --terragrunt-diff'
 
-    # see info here: https://github.com/google-github-actions/auth/blob/main/docs/EXAMPLES.md
-    - uses: 'google-github-actions/auth@v2'
-      with:
-        project_id: 'mtrx-hub-dev-3of'
-        # workload_identity_provider: 'projects/mtrx-hub-dev-3of/locations/global/workloadIdentityPools/matrix-pool/providers/matrix-gh-provider'
-        workload_identity_provider: 'projects/938607797672/locations/global/workloadIdentityPools/matrix-pool/providers/matrix-gh-provider'
-        service_account: 'sa-github-actions-rw@mtrx-hub-dev-3of.iam.gserviceaccount.com'
+  plan:
+    runs-on: ubuntu-latest
+    needs: [ checks ]
+    steps:
+      - name: 'Checkout'
+        uses: actions/checkout@main
 
-    - name: 'Set up Cloud SDK'
-      uses: 'google-github-actions/setup-gcloud@v2'
-    
-    - name: test some stuff
-      run: |
-        gcloud info
-        gcloud compute instances list
-        gsutil cp gs://mtrx-us-central1-hub-dev-storage/tf_bootstrap.json ./
-        cat tf_bootstrap.json
+      - uses: 'google-github-actions/auth@v2'
+        with:
+          project_id: ${{env.project_id}}
+          workload_identity_provider: ${{env.workload_identity_provider}}
+          service_account: ${{env.service_account}}
+      - name: Plan
+        uses: gruntwork-io/terragrunt-action@v2
+        with:
+          tf_version: ${{ env.tf_version }}
+          tg_version: ${{ env.tg_version }}
+          tg_dir: ${{ env.working_dir }}
+          tg_command: 'plan'
 
+  deploy:
+    runs-on: ubuntu-latest
+    needs: [ plan ]
+    environment: 'prod'
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - name: 'Checkout'
+        uses: actions/checkout@main
+
+      - name: Deploy
+        uses: gruntwork-io/terragrunt-action@v2
+        with:
+          tf_version: ${{ env.tf_version }}
+          tg_version: ${{ env.tg_version }}
+          tg_dir: ${{ env.working_dir }}
+          tg_command: 'apply'
