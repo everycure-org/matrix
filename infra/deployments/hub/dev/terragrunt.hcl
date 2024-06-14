@@ -4,6 +4,7 @@ include "root" {
 }
 
 inputs = {
+  # TODO still need to add git-crypt here
   gitops_repo_url   = yamldecode(file("${dirname(find_in_parent_folders())}//secrets/github.yaml")).repo
   gitops_repo_creds = yamldecode(file("${dirname(find_in_parent_folders())}//secrets/github.yaml")).creds
 }
