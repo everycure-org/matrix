@@ -13,6 +13,7 @@ modelling.xgb:
             object: xgboost.XGBClassifier
             tree_method: hist
             device: cuda
+            random_state: ${globals:random_state}
         features: # Features use regex, source_0, source_1, .., target_0, target_1
           - source_+
           - target_+
