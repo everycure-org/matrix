@@ -42,34 +42,42 @@ modelling.model_input.splits:
   <<: *_pandas_parquet
   filepath: ${globals:paths.model_input}/splits
 
-"modelling.{namespace}.model_input.enriched_splits":
-  <<: *_pandas_parquet
-  filepath: ${globals:paths.model_input}/{namespace}/enriched_splits
-
-"modelling.{namespace}.model_input.transformed_splits":
-  <<: *_pandas_parquet
-  filepath: ${globals:paths.model_input}/{namespace}/transformed_splits
-
-"modelling.{namespace}.models.model_params":
-  type: yaml.YAMLDataset
-  filepath: ${globals:paths.models}/{namespace}/model_params.yml
-
-"modelling.{namespace}.models.model":
+"modelling.{model}.model_input.transformers":
   type: pickle.PickleDataset
-  filepath: ${globals:paths.models}/{namespace}/model.pickle
+  filepath: ${globals:paths.model_input}/{model}/transformers.pickle
 
-"modelling.{namespace}.model_output.predictions":
+"modelling.{model}.model_input.transformed_splits":
   <<: *_pandas_parquet
-  filepath: ${globals:paths.model_output}/{namespace}/predictions
+  filepath: ${globals:paths.model_input}/{model}/transformed_splits
 
-"modelling.{namespace}.reporting.tuning_convergence_plot":
+"modelling.{model}.{shard}.model_input.enriched_splits":
+  <<: *_pandas_parquet
+  filepath: ${globals:paths.model_input}/{model}/{shard}/enriched_splits
+
+"modelling.{model}.{shard}.model_input.transformed_splits":
+  <<: *_pandas_parquet
+  filepath: ${globals:paths.model_input}/{model}/{shard}/transformed_splits
+
+"modelling.{model}.{shard}.models.model_params":
+  type: yaml.YAMLDataset
+  filepath: ${globals:paths.models}/{model}/{shard}/model_params.yml
+
+"modelling.{model}.{shard}.models.model":
+  type: pickle.PickleDataset
+  filepath: ${globals:paths.models}/{model}/{shard}/model.pickle
+
+"modelling.{model}.model_output.predictions":
+  <<: *_pandas_parquet
+  filepath: ${globals:paths.model_output}/{model}/predictions
+
+"modelling.{model}.{shard}.reporting.tuning_convergence_plot":
   type: matplotlib.MatplotlibWriter
-  filepath: ${globals:paths.reporting}/{namespace}/convergence_plot.png
+  filepath: ${globals:paths.reporting}/{model}/{shard}/convergence_plot.png
 
-"modelling.{namespace}.reporting.metrics":
-  type: yaml.YAMLDataset
-  filepath: ${globals:paths.reporting}/{namespace}/metrics.yml
+"modelling.{model}.models.model":
+  type: pickle.PickleDataset
+  filepath: ${globals:paths.models}/{model}/model.pickle
 
-modelling.reporting.metrics:
+"modelling.{model}.reporting.metrics":
   type: yaml.YAMLDataset
-  filepath: ${globals:paths.reporting}/metrics.yml
+  filepath: ${globals:paths.reporting}/{model}/metrics.yml
