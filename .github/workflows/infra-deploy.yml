@@ -45,7 +45,7 @@ jobs:
         project_id: 'mtrx-hub-dev-3of'
         # workload_identity_provider: 'projects/mtrx-hub-dev-3of/locations/global/workloadIdentityPools/matrix-pool/providers/matrix-gh-provider'
         workload_identity_provider: 'projects/938607797672/locations/global/workloadIdentityPools/matrix-pool/providers/matrix-gh-provider'
-        service_account: 'sa-github-actions-ro@mtrx-hub-dev-3of.iam.gserviceaccount.com'
+        service_account: 'sa-github-actions-rw@mtrx-hub-dev-3of.iam.gserviceaccount.com'
 
     - name: 'Set up Cloud SDK'
       uses: 'google-github-actions/setup-gcloud@v2'
