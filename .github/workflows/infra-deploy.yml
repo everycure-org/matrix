@@ -32,7 +32,7 @@ jobs:
       with:
         repository: github/actions-oidc-debugger
         ref: main
-        token: ${{ secrets.your-checkout-token }}
+        token: ${{ github.token }}
         path: ./.github/actions/actions-oidc-debugger
     - name: Debug OIDC Claims
       uses: ./.github/actions/actions-oidc-debugger
