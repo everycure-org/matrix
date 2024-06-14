@@ -51,6 +51,7 @@ Google recommends the below diagram for separating a foundation pipeline, infras
 - [X] **Cloud Monitoring**: Monitoring scoping projects are configured to view application performance metrics across multiple projects in one place.
 - [ ] **Organization Policy Service**: Organization policy constraints are configured to prevent various high-risk configurations.
 - [X] **Secret Manager**: {--Centralized projects are created for a team responsible for managing and auditing the use of sensitive application secrets to help meet compliance requirements--} {++"Root secrets" are stored via [git-crypt](https://github.com/AGWA/git-crypt) in the repository as encrypted binaries and decryption keys are shared only between administrators. These are used to bootstrap infrastructure through IaC and secrets are then stored in GCPs secret manager automatically. ++}.
+    - {++We make secrets accessible inside of kubernetes through [external secrets](https://external-secrets.io/latest/)++}
 - {--**Cloud Key Management Service (Cloud KMS)**: Centralized projects are created for a team responsible for managing and auditing encryption keys to help meet compliance requirements.--}
 - [X] **Security Command Center**: Threat detection and monitoring capabilities are provided using a combination of built-in security controls from Security Command Center and custom solutions that let you detect and respond to security events.
 
