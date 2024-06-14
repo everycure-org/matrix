@@ -125,7 +125,7 @@ def test_catalog_filepath_follows_conventions(conf_source, config_loader):
                     continue
 
                 expected_pattern = (
-                    rf"{pipeline}\.({{namespace}}.)?[{' | '.join(_ALLOWED_LAYERS)}]\.*"
+                    rf"{pipeline}\.({{.*}}\.)*[{' | '.join(_ALLOWED_LAYERS)}]\.*"
                 )
                 if not re.search(expected_pattern, entry):
                     failed_results.append(

@@ -1,10 +1,18 @@
-venv
+# OS
 *.DS_Store
+
+
+# IDE
+.vscode/
+
+# Data
+data/
 neo4j_db/
 
+# python
+**/.venv/
+**/venv/
 
-data/
-.venv/
-
+# terraform
 **/.terraform/
 **/.terragrunt-cache/
