@@ -1,6 +1,7 @@
 """Module with nodes for modelling."""
 from typing import Any, Dict, List, Union, Tuple
 import pandas as pd
+import numpy as np
 import json
 
 from sklearn.model_selection._split import _BaseKFold
@@ -15,6 +16,7 @@ from refit.v1.core.unpack import unpack_params
 from refit.v1.core.make_list_regexable import make_list_regexable
 
 from matrix.datasets.graph import KnowledgeGraph, DrugDiseasePairGenerator
+from .model import ModelWrapper
 
 
 @has_schema(
@@ -84,7 +86,7 @@ def create_prm_pairs(
     raw_tn["y"] = 0
 
     # Concat
-    result = pd.concat([raw_tp, raw_tn], axis=0).reset_index(drop=True)
+    result = pd.concat([raw_tp, raw_tn], axis="index").reset_index(drop=True)
 
     # Add embeddings
     result["source_embedding"] = result.apply(
@@ -123,7 +125,7 @@ def make_splits(
         fold_data.loc[test_index, "split"] = "TEST"
         all_data_frames.append(fold_data)
 
-    return pd.concat(all_data_frames, axis=0, ignore_index=True)
+    return pd.concat(all_data_frames, axis="index", ignore_index=True)
 
 
 @has_schema(
@@ -132,6 +134,8 @@ def make_splits(
         "source_embedding": "object",
         "target": "object",
         "target_embedding": "object",
+        "iteration": "numeric",
+        "split": "object",
     },
     allow_subset=True,
 )
@@ -142,6 +146,10 @@ def create_model_input_nodes(
     generator: DrugDiseasePairGenerator,
 ) -> pd.DataFrame:
     """Function to enrich the splits with drug-disease pairs.
+
+    The gerator is used to enrich the dataset with unknown drug-disease
+    pairs. If a `IterativeDrugDiseasePair` generator is provided, the splits
+    dataset is replicated.
 
     Args:
         graph: Knowledge graph.
@@ -154,26 +162,26 @@ def create_model_input_nodes(
     generated = generator.generate(graph, splits)
     generated["split"] = "TRAIN"
 
-    return pd.concat([splits, generated], axis=0, ignore_index=True)
+    return pd.concat([splits, generated], axis="index", ignore_index=True)
 
 
 @inject_object()
-def apply_transformers(
+def fit_transformers(
     data: pd.DataFrame,
     transformers: Dict[str, Dict[str, Union[_BaseImputer, List[str]]]],
     target_col_name: str = None,
 ) -> pd.DataFrame:
-    """Function to apply a set of sklearn compatible transformers to the data.
+    """Function fit transformers to the data.
 
     Args:
         data: Data to transform.
         transformers: Dictionary of transformers.
-        target_col_name: Target column name.
+        target_col_name: Column name to predict.
 
     Returns:
-        Transformed data.
+        Fitted transformers.
     """
-    # Ensure transformer only applied to train data
+    # Ensure transformer only fit on training data
     mask = data["split"].eq("TRAIN")
 
     # Grab target data
@@ -182,19 +190,44 @@ def apply_transformers(
     )
 
     # Iterate transformers
-    for _, transform in transformers.items():
+    fitted_transformers = {}
+    for name, transform in transformers.items():
         # Fit transformer
         features = transform["features"]
+
         transformer = transform["transformer"].fit(
             data.loc[mask, features], target_data
         )
 
+        fitted_transformers[name] = {"transformer": transformer, "features": features}
+
+    return fitted_transformers
+
+
+@inject_object()
+def apply_transformers(
+    data: pd.DataFrame,
+    transformers: Dict[str, Dict[str, Union[_BaseImputer, List[str]]]],
+) -> pd.DataFrame:
+    """Function apply fitted transformers to the data.
+
+    Args:
+        data: Data to transform.
+        transformers: Dictionary of transformers.
+
+    Returns:
+        Transformed data.
+    """
+    # Iterate transformers
+    for _, transformer in transformers.items():
         # Apply transformer
+        features = transformer["features"]
         features_selected = data[features]
+
         transformed = pd.DataFrame(
-            transformer.transform(features_selected),
+            transformer["transformer"].transform(features_selected),
             index=features_selected.index,
-            columns=transformer.get_feature_names_out(features_selected),
+            columns=transformer["transformer"].get_feature_names_out(features_selected),
         )
 
         # Overwrite columns
@@ -261,7 +294,7 @@ def train_model(
 
     Args:
         data: Data to train on.
-        estimator: sklearn estimator.
+        estimator: sklearn compatible estimator.
         features: List of features, may be regex specified.
         target_col_name: Target column name.
         enable_regex: Enable regex for features.
@@ -277,11 +310,20 @@ def train_model(
     return estimator.fit(X_train.values, y_train.values)
 
 
+def create_model(*estimators) -> ModelWrapper:
+    """Function to create final model.
+
+    Args:
+        estimators: list of fitted estimators
+    """
+    return ModelWrapper(estimators=estimators, agg_func=np.mean)
+
+
 @inject_object()
 @make_list_regexable(source_df="data", make_regexable="features")
 def get_model_predictions(
     data: pd.DataFrame,
-    estimator: BaseEstimator,
+    model: ModelWrapper,  # *estimators estimators: [f"model.shard}"]
     features: List[str],
     target_col_name: str,
     prediction_suffix: str = "_pred",
@@ -291,7 +333,7 @@ def get_model_predictions(
 
     Args:
         data: Data to predict on.
-        estimator: sklearn estimator.
+        model: model.
         features: List of features, may be regex specified.
         target_col_name: Target column name.
         prediction_suffix: Suffix to add to the prediction column, defaults to '_pred'.
@@ -300,8 +342,7 @@ def get_model_predictions(
     Returns:
         Data with predictions.
     """
-    data[target_col_name + prediction_suffix] = estimator.predict(data[features].values)
-
+    data[target_col_name + prediction_suffix] = model.predict(data[features].values)
     return data
 
 
