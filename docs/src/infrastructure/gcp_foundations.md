@@ -36,7 +36,7 @@ Google recommends the below diagram for separating a foundation pipeline, infras
 - **MATRIX working groups**: This layer allows any member in the MATRIX org to create resources in their GCP project as well as deploy pipelines to the shared compute cluster. This maps to the top layer in the below graphic. 
 
 
-![](../assets/img/responsibility_layers.drawio)
+![](../assets/img/responsibility_layers.drawio.svg)
 
 ## Key architectural principles
 *Our architectural principles are heavily inspired by the [enterprise foundations blueprint](https://cloud.google.com/architecture/security-foundations) and adapted to our needs. All changes from Googles recommended defaults are highlighted below:*

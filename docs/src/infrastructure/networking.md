@@ -7,7 +7,7 @@ The networking layer of our software engineering project is designed to strike a
 To ensure segregation of development and production environments, we maintain two separate networks for each. This allows for effective isolation and management of our infrastructure.
 
 The below graphic visualizes this hub/spoke setup
-![](../assets/img/mtrx_network.drawio)
+![](../assets/img/mtrx_network.drawio.svg)
 
 ## Firewall Configuration
 
