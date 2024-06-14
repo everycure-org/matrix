@@ -8,7 +8,7 @@ import random
 
 from kedro_datasets.pandas import ParquetDataset
 
-from typing import Any, Dict
+from typing import Any, Dict, Iterator
 from kedro.io.core import Version
 
 
@@ -36,12 +36,14 @@ class KnowledgeGraph:
 class DrugDiseasePairGenerator(abc.ABC):
     """Generator strategy class to represent drug-disease pairs generators."""
 
-    def __init__(self, random_state: int) -> None:
+    def __init__(self, y_label: int, random_state: int) -> None:
         """Initializes the DrugDiseasePairGenerator instance.
 
         Args:
+            y_label: label to assign to generated pairs.
             random_state: Random seed.
         """
+        self._y_label = y_label
         self._random_state = random_state
         random.seed(random_state)
 
@@ -67,15 +69,16 @@ class RandomDrugDiseasePairGenerator(DrugDiseasePairGenerator):
     Strategy implementing a drug-disease pair generator using randomly sampled drugs and diseases.
     """
 
-    def __init__(self, random_state: int, n_unknown: int) -> None:
+    def __init__(self, y_label: int, random_state: int, n_unknown: int) -> None:
         """Initializes the RandomDrugDiseasePairGenerator instance.
 
         Args:
+            y_label: label to assign to generated pairs.
             random_state: Random seed.
             n_unknown: Number of unknown drug-disease pairs to generate.
         """
         self._n_unknown = n_unknown
-        super().__init__(random_state)
+        super().__init__(y_label, random_state)
 
     def generate(
         self, graph: KnowledgeGraph, known_pairs: pd.DataFrame
@@ -106,7 +109,7 @@ class RandomDrugDiseasePairGenerator(DrugDiseasePairGenerator):
                         graph._embeddings[drug],
                         disease,
                         graph._embeddings[disease],
-                        2,
+                        self._y_label,
                     ]
                 )
 
@@ -122,15 +125,16 @@ class ReplacementDrugDiseasePairGenerator(DrugDiseasePairGenerator):
     Strategy implementing a drug-disease pair generator using random drug and disease replacements.
     """
 
-    def __init__(self, random_state: int, n_replacements: int) -> None:
+    def __init__(self, y_label: int, random_state: int, n_replacements: int) -> None:
         """Initializes the ReplacementDrugDiseasePairGenerator instance.
 
         Args:
+            y_label: label to assign to generated pairs.
             random_state: Random seed.
             n_replacements: Number of replacements to make.
         """
         self._n_replacements = n_replacements
-        super().__init__(random_state)
+        super().__init__(y_label, random_state)
 
     def generate(
         self, graph: KnowledgeGraph, known_pairs: pd.DataFrame
@@ -162,7 +166,12 @@ class ReplacementDrugDiseasePairGenerator(DrugDiseasePairGenerator):
         unknown_data = []
         for kp_drug, kp_disease in kp_train_set:
             unknown_data += ReplacementDrugDiseasePairGenerator._make_replacements(
-                graph, kp_drug, kp_disease, self._n_replacements, known_data_set
+                graph,
+                kp_drug,
+                kp_disease,
+                self._n_replacements,
+                known_data_set,
+                self._y_label,
             )
 
         return pd.DataFrame(
@@ -177,6 +186,7 @@ class ReplacementDrugDiseasePairGenerator(DrugDiseasePairGenerator):
         kp_disease: str,
         n_replacements: int,
         known_data_set: set[tuple],
+        y_label: int,
     ) -> list[str]:
         """Helper function to generate list of drug-disease pairs through replacements."""
         unknown_data = []
@@ -197,7 +207,7 @@ class ReplacementDrugDiseasePairGenerator(DrugDiseasePairGenerator):
                             graph._embeddings[drug],
                             disease,
                             graph._embeddings[disease],
-                            2,
+                            y_label,
                         ]
                     )
         return unknown_data
