@@ -1,0 +1,36 @@
+name: Infrastructure Plan
+
+on:
+  workflow_dispatch: {}
+  push:
+    paths: 
+      - infra/
+
+
+jobs:
+  tf_plan:
+    permissions:
+      contents: 'read'
+      # Add "id-token" with the intended permissions.
+      id-token: 'write'
+
+    steps:
+    - uses: 'actions/checkout@v4'
+
+    # see info here: https://github.com/google-github-actions/auth/blob/main/docs/EXAMPLES.md
+    - uses: 'google-github-actions/auth@v2'
+      with:
+        project_id: 'mtrx-hub-dev-3of'
+        workload_identity_provider: 'projects/mtrx-hub-dev-3of/locations/global/workloadIdentityPools/matrix-pool/providers/matrix-gh-provider'
+        service_account: 'sa-github-actions-ro@mtrx-hub-dev-3of.iam.gserviceaccount.com'
+
+    - name: 'Set up Cloud SDK'
+      uses: 'google-github-actions/setup-gcloud@v2'
+    
+    - name: test some stuff
+      run: |
+        gcloud info
+        gcloud compute instances list
+        gsutil cp gs://mtrx-us-central1-hub-dev-storage/tf_bootstrap.json ./
+        cat tf_bootstrap.json
+
