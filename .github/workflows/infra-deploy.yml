@@ -3,6 +3,9 @@ name: Infrastructure Plan
 on:
   workflow_dispatch: {}
   push:
+    branches:
+      # TODO remove
+      - "feat/matrix_infra"
     paths: 
       - infra/**
 
