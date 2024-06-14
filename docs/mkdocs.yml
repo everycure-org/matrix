@@ -22,7 +22,7 @@ theme:
     - toc.integrate
 
 plugins:
-  - drawio_file
+  - drawio
   - mkdocs-jupyter
   - awesome-pages
   - search

@@ -11,4 +11,4 @@ mkdocs-jupyter
 openpyxl
 jupyter
 pyyaml
-mkdocs-drawio-file
+mkdocs-drawio
