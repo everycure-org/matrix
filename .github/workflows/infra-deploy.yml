@@ -8,6 +8,8 @@ on:
       - "feat/matrix_infra"
     paths: 
       - infra/**
+      - .github/workflows/infra-deploy.yml
+
 
 
 jobs:
