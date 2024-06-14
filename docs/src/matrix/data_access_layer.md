@@ -47,7 +47,7 @@ graph LR
 - Data will be made available between working groups through the `hub` project in GCP. This way, internal experimentation is contained within the projects of the respective working groups.
 - We have 2 environments for data access: 
   - Our `dev` environment acts as a collaborative space where we all collaborate and exchange data
-  - 
+  - Our `prod` environment is our "reproducability" space, where we ensure the system can be reproduced end to end. Here we will also host the publicly accessible websites in the future. 
 
 ### Kedro based access
 

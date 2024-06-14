@@ -36,7 +36,4 @@ After activating your venv:
 
 ### Ordering pages
 
-If you want to control page orders in a subfolder you can follow two strategies:
-
-1. Place a `.pages` file in the directory and define the order (see root for example)
-2. prefix the file names with `00_page1.md` and `01_page2.md` numbers combined with a `title: Some Page title` yaml frontmatter to customize the title for the pages
+If you want to control page orders in a subfolder you can place a `.pages` file in the directory and define the order (see root of documentation for example).
