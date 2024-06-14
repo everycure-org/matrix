@@ -1,5 +1,13 @@
 # Data API
 
+<!-- 
+
+TODO Add BigQuery interface / dataset & table structure
+TODO Add interface logic for Neo4J multi-DB as versions of graph
+TODO Add Kedro dataset naming convention 
+
+ -->
+
 !!! warning "Draft status"
     this page is very much in draft status and not to be considered an _is state_
 
