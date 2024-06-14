@@ -26,6 +26,19 @@ jobs:
     steps:
     - uses: 'actions/checkout@v4'
 
+    # TODO remove this when its' working
+    - name: Checkout actions-oidc-debugger
+      uses: actions/checkout@v3
+      with:
+        repository: github/actions-oidc-debugger
+        ref: main
+        token: ${{ secrets.your-checkout-token }}
+        path: ./.github/actions/actions-oidc-debugger
+    - name: Debug OIDC Claims
+      uses: ./.github/actions/actions-oidc-debugger
+      with:
+        audience: '${{ github.server_url }}/${{ github.repository_owner }}'
+
     # see info here: https://github.com/google-github-actions/auth/blob/main/docs/EXAMPLES.md
     - uses: 'google-github-actions/auth@v2'
       with:
