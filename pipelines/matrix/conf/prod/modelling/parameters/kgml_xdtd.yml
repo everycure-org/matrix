@@ -5,3 +5,4 @@ modelling.xgb:
           estimator:
             tree_method: hist
             device: cuda
+
