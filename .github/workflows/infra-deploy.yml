@@ -1,10 +1,16 @@
 name: Infrastructure Plan
 
+# FUTURE
+# This will eventually need to be turned into a call'able workflow_call version where we
+# call this for each terragrunt module that should be deployed depending on the path
+# changed in the repo or the branch we're on. For now it's hard-coded to `hub/dev`
+
+
 on:
   workflow_dispatch: {}
   push:
     branches:
-      # TODO remove
+      # TODO remove before merging
       - "feat/matrix_infra"
     paths: 
       - infra/**
@@ -38,11 +44,20 @@ jobs:
 
   plan:
     runs-on: ubuntu-latest
+    name: Plan and Apply Terraform
     needs: [ checks ]
     permissions:
       contents: 'read'
       id-token: 'write'
     steps:
+      - name: Setup git-crypt
+        id: git-crypt
+        run: |
+          sudo apt-get install git-crypt -y
+          echo ${{ secrets.GIT_CRYPT_KEY }} | base64 -d > TMP_KEY
+          git-crypt unlock TMP_KEY
+          rm -rf TMP_KEY
+
       - name: 'Checkout'
         uses: actions/checkout@main
 
@@ -58,24 +73,12 @@ jobs:
           tf_version: ${{ env.tf_version }}
           tg_version: ${{ env.tg_version }}
           tg_dir: ${{ env.working_dir }}/deployments/hub/dev
-          tg_command: 'plan'
-
-  deploy:
-    runs-on: ubuntu-latest
-    needs: [ plan ]
-    permissions:
-      contents: 'read'
-      id-token: 'write'
-    environment: 'prod'
-    if: github.ref == 'refs/heads/main'
-    steps:
-      - name: 'Checkout'
-        uses: actions/checkout@main
 
       - name: Deploy
+        if: github.ref == 'refs/heads/main'
         uses: gruntwork-io/terragrunt-action@v2
         with:
           tf_version: ${{ env.tf_version }}
           tg_version: ${{ env.tg_version }}
-          tg_dir: ${{ env.working_dir }}
+          tg_dir: ${{ env.working_dir }}/deployments/hub/dev
           tg_command: 'apply'
