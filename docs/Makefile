@@ -16,5 +16,5 @@ image:
 	docker build -t docs ./
 
 # FUTURE move away from gh pages based deployment as it creates public content. But acceptable for now
-deploy: install
-	firebase deploy --only hosting
+# deploy: install
+# 	firebase deploy --only hosting
