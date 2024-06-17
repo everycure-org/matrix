@@ -10,8 +10,7 @@ on:
   workflow_dispatch: {}
   push:
     branches:
-      # TODO remove before merging
-      - "feat/matrix_infra"
+      - main
     paths: 
       - infra/**
       - .github/workflows/infra-deploy.yml
@@ -73,8 +72,33 @@ jobs:
           tg_dir: ${{ env.working_dir }}/deployments/hub/dev
           tg_command: 'plan'
 
+  deploy:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    environment: dev
+    name: Apply Terraform
+    needs: [ checks ]
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+    steps:
+      # FUTURE avoid duplicate boilerplate somehow on checkout/auth/crypt
+      - name: 'Checkout'
+        uses: actions/checkout@main
+      - name: Setup git-crypt
+        id: git-crypt
+        run: |
+          sudo apt-get install git-crypt -y
+          echo ${{ secrets.GIT_CRYPT_KEY }} | base64 -d > TMP_KEY
+          git-crypt unlock TMP_KEY
+          rm -rf TMP_KEY
+      - uses: 'google-github-actions/auth@v2'
+        with:
+          project_id: ${{env.project_id}}
+          workload_identity_provider: ${{env.workload_identity_provider}}
+          service_account: ${{env.service_account}}
+
       - name: Deploy
-        # if: github.ref == 'refs/heads/main'
         uses: gruntwork-io/terragrunt-action@v2
         with:
           tf_version: ${{ env.tf_version }}
