@@ -71,6 +71,7 @@ jobs:
           tf_version: ${{ env.tf_version }}
           tg_version: ${{ env.tg_version }}
           tg_dir: ${{ env.working_dir }}/deployments/hub/dev
+          tg_command: 'plan'
 
       - name: Deploy
         if: github.ref == 'refs/heads/main'
