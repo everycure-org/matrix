@@ -1,3 +1,3 @@
 output "cluster" {
-    value = module.compute_cluster
+  value = module.compute_cluster
 }
