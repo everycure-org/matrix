@@ -31,7 +31,7 @@ jobs:
         with:
           tf_version: ${{ env.tf_version }}
           tg_version: ${{ env.tg_version }}
-          tg_dir: ${{ env.working_dir }}
+          tg_dir: ${{ env.working_dir }}/deployments
           tg_command: 'hclfmt --terragrunt-check --terragrunt-diff'
       - name: check terraform files
         run: terraform fmt -check -recursive ${{ env.working_dir }}
@@ -57,7 +57,7 @@ jobs:
         with:
           tf_version: ${{ env.tf_version }}
           tg_version: ${{ env.tg_version }}
-          tg_dir: ${{ env.working_dir }}
+          tg_dir: ${{ env.working_dir }}/deployments/hub/dev
           tg_command: 'plan'
 
   deploy:
