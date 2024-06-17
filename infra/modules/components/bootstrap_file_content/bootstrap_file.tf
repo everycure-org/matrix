@@ -1,21 +1,21 @@
-variable "bucket_name" { }
+variable "bucket_name" {}
 
 data "google_client_config" "current" {}
 
 data "google_storage_bucket_object" "object" {
- name   = "tf_bootstrap.json"
- bucket = var.bucket_name
+  name   = "tf_bootstrap.json"
+  bucket = var.bucket_name
 }
 
 data "http" "object" {
- url = "${format("%s?alt=media", data.google_storage_bucket_object.object.self_link)}"
+  url = format("%s?alt=media", data.google_storage_bucket_object.object.self_link)
 
- # Optional request headers
- request_headers = {
-   "Authorization" = "Bearer ${data.google_client_config.current.access_token}"
- }
+  # Optional request headers
+  request_headers = {
+    "Authorization" = "Bearer ${data.google_client_config.current.access_token}"
+  }
 }
 
 output "content" {
- value = jsondecode("${data.http.object.response_body}")
+  value = jsondecode("${data.http.object.response_body}")
 }

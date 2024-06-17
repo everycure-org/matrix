@@ -1,7 +1,7 @@
 # NOTE: Don't call this ArgoCD, this will clash with the Helm naming
 # and give errors.
 module "argo" {
-  depends_on = [ module.gke ]
+  depends_on    = [module.gke]
   source        = "./argo"
   repo_url      = var.gitops_repo_url
   repo_creds    = var.gitops_repo_creds
@@ -10,6 +10,6 @@ module "argo" {
 }
 
 module "external_secrets" {
-  depends_on = [ module.gke ]
-  source = "./external_secrets"
+  depends_on = [module.gke]
+  source     = "./external_secrets"
 }

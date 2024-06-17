@@ -1,5 +1,5 @@
 variable "name" {
-  type = string
+  type    = string
   default = "compute-cluster"
 }
 
