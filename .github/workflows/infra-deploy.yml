@@ -50,6 +50,8 @@ jobs:
       contents: 'read'
       id-token: 'write'
     steps:
+      - name: 'Checkout'
+        uses: actions/checkout@main
       - name: Setup git-crypt
         id: git-crypt
         run: |
@@ -57,10 +59,6 @@ jobs:
           echo ${{ secrets.GIT_CRYPT_KEY }} | base64 -d > TMP_KEY
           git-crypt unlock TMP_KEY
           rm -rf TMP_KEY
-
-      - name: 'Checkout'
-        uses: actions/checkout@main
-
       - uses: 'google-github-actions/auth@v2'
         with:
           project_id: ${{env.project_id}}
