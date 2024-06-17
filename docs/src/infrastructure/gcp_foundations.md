@@ -18,7 +18,7 @@ title: GCP Foundations
 
 
 
-To set up our Google Cloud Organization we used a combination of [terraform-example-foundation](https://github.com/terraform-google-modules/terraform-example-foundation) and our own terraform code structured through [terragrunt](terragrunt.gruntwork.io). 
+To set up our Google Cloud Organization we used a combination of [terraform-example-foundation](https://github.com/terraform-google-modules/terraform-example-foundation) and our own terraform code structured through [terragrunt](https://terragrunt.gruntwork.io). 
 
 At the core, three requirements stand out:
 
@@ -65,7 +65,7 @@ Google recommends the below diagram for separating a foundation pipeline, infras
 
 We opted for a [shared VPC](https://cloud.google.com/vpc/docs/shared-vpc) setup from GCP for all our MATRIX projects. In this setup, we have a hub project that contains any shared resources (e.g. compute cluster, shared datasets) and a number of spoke projects (working groups) that connect to the hub project's VPC. Thus, the networking layer is provided from the foundations layer upwards to the initiative (e.g. MATRIX), following the principles recommended by the foundations blueprint.
 
-For details check the [networking page](./11_networking.md).
+For details check the [networking page](./networking.md).
 
 ## GCP Organization structure
 
@@ -78,7 +78,7 @@ where the `fldr-` folders contain foundations blueprint artifacts (e.g. shared l
 
 ## Project creation and seeding with terraform information
 
-We create projects at the "core" level and provide these projects to ... well project teams. What exactly we provide is documented on the [project setup](./91_gcp_project_template.md) page. 
+We create projects at the "core" level and provide these projects to ... well project teams. What exactly we provide is documented on the [project setup](./gcp_project_template.md) page. 
 
 ----
 
