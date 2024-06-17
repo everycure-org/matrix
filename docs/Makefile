@@ -2,7 +2,7 @@
 .PHONY: build serve
 
 build: install
-	mkdocs build
+	.venv/bin/mkdocs build -s #build in strict mode, all links must function
 
 serve: install
 	.venv/bin/mkdocs serve
@@ -11,6 +11,10 @@ install:
 	uv venv
 	uv pip install -r requirements.txt
 
+
+image: 
+	docker build -t docs ./
+
 # FUTURE move away from gh pages based deployment as it creates public content. But acceptable for now
 deploy: install
-	.venv/bin/mkdocs gh-deploy	
+	firebase deploy --only hosting
