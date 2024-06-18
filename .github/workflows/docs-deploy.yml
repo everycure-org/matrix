@@ -43,7 +43,9 @@ jobs:
           workload_identity_provider: ${{env.workload_identity_provider}}
           service_account: ${{env.service_account}}
       
-      - run: make build #builds the static files in site/
+      - run: |
+          pip install uv
+          make build #builds the static files in site/
 
       - id: 'deploy'
         uses: 'google-github-actions/deploy-appengine@v2'
