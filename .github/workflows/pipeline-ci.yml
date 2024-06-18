@@ -54,4 +54,4 @@ jobs:
       - name: Run pipeline
         run: |
           kedro run -p fabricator
-          kedro run
+          kedro run --runner ThreadRunner

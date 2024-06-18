@@ -19,6 +19,9 @@ from matrix.datasets.graph import KnowledgeGraph, DrugDiseasePairGenerator
 from .model import ModelWrapper
 
 
+plt.switch_backend("Agg")
+
+
 @has_schema(
     schema={
         "is_drug": "bool",
