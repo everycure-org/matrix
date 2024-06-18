@@ -42,10 +42,11 @@ jobs:
           project_id: ${{env.project_id}}
           workload_identity_provider: ${{env.workload_identity_provider}}
           service_account: ${{env.service_account}}
+      
+      - run: make build #builds the static files in site/
+
       - id: 'deploy'
-        uses: 'google-github-actions/deploy-cloudrun@v2'
-        with:
-          service: 'matrix-docs'
-          source: './'
-      - name: 'Use output'
-        run: 'curl "${{ steps.deploy.outputs.url }}"'
+        uses: 'google-github-actions/deploy-appengine@v2'
+      # Example of using the output
+      - id: 'test'
+        run: 'curl "${{ steps.deploy.outputs.version_url }}"'

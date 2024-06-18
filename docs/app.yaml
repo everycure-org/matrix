@@ -1,0 +1,11 @@
+runtime: nodejs22
+
+handlers:
+- url: /
+  static_files: site/index.html
+  upload: site/
+
+- url: /(.*)
+  static_files: site/\1
+  upload: site/(.*)
+
