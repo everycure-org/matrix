@@ -47,8 +47,11 @@ jobs:
           pip install uv
           make build #builds the static files in site/
 
+      # https://github.com/google-github-actions/deploy-appengine
       - id: 'deploy'
         uses: 'google-github-actions/deploy-appengine@v2'
+        with:
+          working_directory: docs/ #ignores above setting
 
       # Example of using the output
       - id: 'test'
