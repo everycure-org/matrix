@@ -15,6 +15,9 @@ install:
 image: 
 	docker build -t docs ./
 
+serve_docker: image
+	docker run --rm docs
+
 # FUTURE move away from gh pages based deployment as it creates public content. But acceptable for now
 # deploy: install
 # 	firebase deploy --only hosting
