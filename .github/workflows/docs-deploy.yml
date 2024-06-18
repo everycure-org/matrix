@@ -12,7 +12,7 @@ on:
     branches:
       - main
       # TODO remove
-      - feat/matrix_infra
+      - feat/docs_deployment
     paths: 
       - docs/**
       - .github/workflows/docs-deploy.yml
