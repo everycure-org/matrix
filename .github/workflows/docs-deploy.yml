@@ -12,7 +12,7 @@ on:
     branches:
       - main
       # TODO remove
-      - feat/docs_deployment
+      - feat/docs-deployment
     paths: 
       - docs/**
       - .github/workflows/docs-deploy.yml
