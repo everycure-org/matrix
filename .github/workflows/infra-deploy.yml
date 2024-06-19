@@ -10,7 +10,7 @@ on:
   workflow_dispatch: {}
   push:
     branches:
-      - main
+      - "^main$"
     paths: 
       - infra/**
       - .github/workflows/infra-deploy.yml
