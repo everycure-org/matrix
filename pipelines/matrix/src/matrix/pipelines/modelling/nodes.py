@@ -347,13 +347,16 @@ def get_model_predictions(
 
 
 @inject_object()
-def get_model_performance(
+def check_model_performance(
     data: pd.DataFrame,
     metrics: List[callable],
     target_col_name: str,
     prediction_suffix: str = "_pred",
 ) -> Dict:
-    """Function to evaluate model performance.
+    """Function to evaluate model performance on the training data and ground truth test data.
+
+    NOTE: This function only provides a partial indication of model performance,
+    primarily for checking that a model has been successfully trained.
 
     Args:
         data: Data to evaluate.
