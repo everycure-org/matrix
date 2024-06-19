@@ -1,11 +1,51 @@
-runtime: nodejs22
+runtime: go122
 
+
+# FUTURE feels really complicated for what we're trying to do here but seems to have done the job
+# taken from https://stackoverflow.com/questions/5609000/serve-static-file-using-app-engine
 handlers:
+- url: /(.*\.css)
+  mime_type: text/css
+  static_files: site/\1
+  upload: site/(.*\.css)
+
+- url: /(.*\.html)
+  mime_type: text/html
+  static_files: site/\1
+  upload: site/(.*\.html)
+
+- url: /(.*\.js)
+  mime_type: text/javascript
+  static_files: site/\1
+  upload: site/(.*\.js)
+
+- url: /(.*\.txt)
+  mime_type: text/plain
+  static_files: site/\1
+  upload: site/(.*\.txt)
+
+- url: /(.*\.xml)
+  mime_type: application/xml
+  static_files: site/\1
+  upload: site/(.*\.xml)
+
+# image files
+- url: /(.*\.(bmp|gif|ico|jpeg|jpg|png))
+  static_files: site/\1
+  upload: site/(.*\.(bmp|gif|ico|jpeg|jpg|png))
+
+# index files
+- url: /(.+)/
+  static_files: site/\1/index.html
+  upload: site/(.+)/index.html
+
+# redirect to 'url + /index.html' url.
+- url: /(.+)
+  static_files: site/redirector.html
+  upload: site/redirector.html
+
+# site root
 - url: /
   static_files: site/index.html
-  upload: site/
-
-- url: /(.*)
-  static_files: site/\1
-  upload: site/(.*)
-
+  upload: site/index.html# 
+# 
