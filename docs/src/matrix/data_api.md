@@ -84,7 +84,7 @@ Kedro does not provide an out-of-the-box BigQuery integration. We've therefore c
 
 Use the code snippet below to register the `BigQueryTableDataset` in the catalog. Upon being fed into a [Kedro node](https://docs.kedro.org/en/stable/nodes_and_pipelines/nodes.html), this dataset will yield the corresponding table in the form of a [PySpark](https://spark.apache.org/docs/latest/api/python/index.html) dataframe.
 
-> NOTE: Our implementation of the `BigQueryTableDataset` is essentially a wrapper of the [spark-bigquery-connector](https://github.com/GoogleCloudDataproc/spark-bigquery-connector). Optization techniques such as predicate pushdown are automatically performed upon usage.
+> NOTE: Our implementation of the `BigQueryTableDataset` is essentially a wrapper of the [spark-bigquery-connector](https://github.com/GoogleCloudDataproc/spark-bigquery-connector). Optimization techniques such as predicate pushdown are automatically performed upon usage.
 
 ```yaml
 # catalog.yml
