@@ -26,10 +26,6 @@ modelling.raw.ground_truth.tn:
   <<: *_pandas_csv
   filepath: ${globals:paths.raw}/tn_pairs.txt
 
-modelling.raw.fda_drugs:
-  type: "pickle.PickleDataset"
-  filepath: ${globals:paths.raw}/fda_approved_drugs_v1.0_KG2.7.3c.pickle
-
 modelling.prm.known_pairs:
   <<: *_pandas_parquet
   filepath: ${globals:paths.int}/ground_truth_data/known_pairs
