@@ -42,13 +42,10 @@ gitGraph
 
 ## Artifacts
 
-### Neo4J Graph
+Artifacts are uniquely identified according to a `release`. The release is a date string in the form of `YYYYMMDD` and refers to the data of the release. Artifacts can additionally contain tags, such as the knowledge-graph family or a human readable release name, i.e.,
 
-Idea is to use different database instances, kg_<version>
-
-### BigQuery tables
-
-table_<version>
+- __Neo4J data__: Different Neo4J [databases](https://neo4j.com/docs/operations-manual/current/database-administration/standard-databases/create-databases/) are leveraged to represent the releases.
+- __BigQuery tables__: Data for different releases are materializedin distinct tables using [sharding](https://cloud.google.com/bigquery/docs/partitioned-tables#dt_partition_shard). The names are of the `<table_name>_YYYMMDD` format.
 
 ## Accessing data
 
@@ -153,20 +150,3 @@ For more exploratory data analysis, the Neo4J instance can be accessed directly 
 ### Bigquery based access
 
 The tabular representation of our knowledge-graph can also be accessed directly through [BigQuery Studio](https://cloud.google.com/blog/products/data-analytics/announcing-bigquery-studio).
-<!-- 
-## Data Versioning
-
-- as we continuously explore new strategies for our modeling and data processing,
-versioning our data is essentiatherefore both the tables in BigQuery as well as the
-knowledge graph are available through a `tag/version` combination. In Big Query this will materialize as tables in the format of
-
-```
-primary.unified_graph_nodes__v0.2.1 #layer.table_name__semver_version
-raw.rtx_kg2__v2.2.1                 #layer.table_name__semver_version
-```
-
-In Neo4J we will use several databases to separate the graphs. See [their documentation](https://neo4j.com/docs/operations-manual/current/database-administration/) for details.
-
-## Data Lineage
-
-- we want to be able to track back for each model that we release what date it was trained on. therefore we need to be able to track back the origin of each data source. This is where data lineage comes in. We will use a combination of kedro for the initial lineage and later on [gcp lineage](https://cloud.google.com/data-catalog/docs/concepts/about-data-lineage) for more authorative lineage. --> -->
