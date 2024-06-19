@@ -90,7 +90,7 @@ example.bigquery.dataset:
 
 #### Accessing Neo4J data
 
-Graph data in Neo4J is accessed using a combination of a custom dataset and decorator. The dataset configures the connection to the database instance, while the decorator allows for specifying the [Cypher query](https://neo4j.com/docs/getting-started/cypher-intro/) to use.
+Graph data in Neo4J is accessed using a combination of a custom dataset and [decorator](https://realpython.com/primer-on-python-decorators/). The dataset configures the connection to the database instance, while the decorator allows for specifying the [Cypher query](https://neo4j.com/docs/getting-started/cypher-intro/) to use.
 
 The code snippets below can be used to consume Neo4J data. The node function responsible for processing the Neo4J data should be annodated with the `cypher_query` annotation. The `query` keyword-argument of the decorator accepts:
 
