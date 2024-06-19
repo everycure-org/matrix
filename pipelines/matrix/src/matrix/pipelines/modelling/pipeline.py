@@ -113,14 +113,14 @@ def _create_model_pipeline(model: str, num_shards: int) -> Pipeline:
                         name=f"get_{model}_model_predictions",
                     ),
                     node(
-                        func=nodes.get_model_performance,
+                        func=nodes.check_model_performance,
                         inputs={
                             "data": f"modelling.{model}.model_output.predictions",
                             "metrics": f"params:modelling.{model}.model_options.metrics",
                             "target_col_name": f"params:modelling.{model}.model_options.model_tuning_args.target_col_name",
                         },
                         outputs=f"modelling.{model}.reporting.metrics",
-                        name=f"get_{model}_model_performance",
+                        name=f"check_{model}_model_performance",
                     ),
                 ]
             ),
