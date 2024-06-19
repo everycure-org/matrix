@@ -1,0 +1,62 @@
+modelling.drug_types:
+  - biolink:Drug
+  - biolink:SmallMolecule
+
+modelling.disease_types:
+  - biolink:Disease
+  - biolink:PhenotypicFeature
+  - biolink:BehavioralFeature
+  - biolink:DiseaseOrPhenotypicFeature
+
+
+modelling.splitter:
+    object: sklearn.model_selection.StratifiedShuffleSplit
+    n_splits: 1 
+    test_size: 0.1
+    random_state: ${globals:random_state}
+
+# -------------------------------
+# Base options
+_model_options:
+
+  # Defines strategy for generating drug-disease pairs. Should be a
+  # class that implements the DrugDiseasePair generator interface.
+  generator:
+    object: matrix.datasets.graph.ReplacementDrugDiseasePairGenerator
+    random_state: ${globals:random_state}
+    y_label: 2
+    n_replacements: 2
+
+  # Defines set of transformers applied to the data prior to model
+  # training, each of the should be a sklearn transformer.
+  transformers:
+    flat_source_embedding:
+      transformer: 
+        object: matrix.pipelines.modelling.transformers.FlatArrayTransformer
+        prefix: source_
+      features:
+        - source_embedding # becomes n columns, named source_0, source_1, etc
+    flat_target_embedding:
+      transformer: 
+        object: matrix.pipelines.modelling.transformers.FlatArrayTransformer
+        prefix: target_
+      features:
+        - target_embedding # becomes n columns, named target_0, target_1, etc
+
+  # Defines estimator used during model training, features can be
+  # defined using a regex strategy.
+  model_tuning_args:
+    tuner:
+      object: matrix.pipelines.modelling.tuning.NopTuner
+      estimator:
+        object: xgboost.XGBClassifier
+        tree_method: hist
+        max_depth: 10
+    features: # Features use regex, source_0, source_1, .., target_0, target_1
+      - source_+
+      - target_+
+    target_col_name: y
+
+  # Defines metrics to be used to evaluate the model.
+  metrics:
+    - object: sklearn.metrics.f1_score

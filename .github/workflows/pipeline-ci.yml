@@ -41,6 +41,12 @@ jobs:
         run: |
           pip install pre-commit
           pre-commit install --install-hooks
+      - name: Print all requirements
+        run: |
+          pip freeze
+
+      - name: Run pre-commit hooks
+        run: |
           git fetch origin main
           # run pre-commit on everything that's different from main
           pre-commit run -s origin/main -o HEAD
@@ -62,7 +68,6 @@ jobs:
       - name: Run unit tests 
         run: |
           .venv/bin/pytest --testmon -v tests/
-
       - name: Run integration tests 
         run: |
            .venv/bin/kedro run -p fabricator
