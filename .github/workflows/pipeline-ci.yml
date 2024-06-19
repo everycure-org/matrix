@@ -3,6 +3,9 @@ name: CI pipline
 on:
   workflow_dispatch: {}
   push:
+    paths: 
+      - pipelines/matrix/**
+
 
 jobs:
   run-tests:
