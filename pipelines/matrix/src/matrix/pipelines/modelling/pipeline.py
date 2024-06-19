@@ -139,6 +139,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                     "embeddings.int.graphsage",
                     "params:modelling.drug_types",
                     "params:modelling.disease_types",
+                    "modelling.raw.ground_truth.tp",
                 ],
                 outputs="modelling.feat.rtx_kg2",
                 name="create_feat_nodes",
