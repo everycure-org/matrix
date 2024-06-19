@@ -67,7 +67,7 @@ class RandomDrugDiseasePairGenerator(DrugDiseasePairGenerator):
     """Random drug-disease pair implementation.
 
     Strategy implementing a drug-disease pair generator using randomly sampled drugs and diseases.
-    
+
     FUTURE: Implement an option to sample from a reduced set of drugs and disease node
     """
 
@@ -125,7 +125,7 @@ class ReplacementDrugDiseasePairGenerator(DrugDiseasePairGenerator):
     """Replacement drug-disease pair implementation.
 
     Strategy implementing a drug-disease pair generator using random drug and disease replacements.
-    
+
     FUTURE: Implement an option to sample from a reduced set of drugs and disease node
     """
 
