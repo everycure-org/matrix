@@ -15,7 +15,7 @@ modelling.kgml_xdtd:
             ccp_alpha: 0.0
             class_weight: balanced_subsample
             criterion: gini
-            max_depth: 35
+            max_depth: 35c
             max_features: sqrt
             max_leaf_nodes: null
             max_samples: null
