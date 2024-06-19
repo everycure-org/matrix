@@ -40,6 +40,16 @@ gitGraph
    merge feature/y tag: "v1.0.1"
 ```
 
+## Artifacts
+
+### Neo4J Graph
+
+Idea is to use different database instances, kg_<version>
+
+### BigQuery tables
+
+table_<version>
+
 ## Accessing data
 
 Released artifacts will be made accessible to working-group (WG) projects through our centralized hub project. The diagram below visualises the hub and working-group specific cloud projects, these environments have been configured with permissions to allow cross-project data access. The goal of this seperation is to enable internal experimentation within the projects of the respective working groups, and to isolate costs.
@@ -90,7 +100,10 @@ example.bigquery.dataset:
 
 #### Accessing Neo4J data
 
-Graph data in Neo4J is accessed using a combination of a custom dataset and [decorator](https://realpython.com/primer-on-python-decorators/). The dataset configures the connection to the database instance, while the decorator allows for specifying the [Cypher query](https://neo4j.com/docs/getting-started/cypher-intro/) to use.
+!!! info "Examples pending"
+    We aim to add some examples on querying the biolink graph as soon as the instance is running.
+
+Graph data in Neo4J is accessed using a combination of a custom dataset and [decorator](https://realpython.com/primer-on-python-decorators/). Our KG is represented according to the [Biolink model](https://biolink.github.io/biolink-model/). The dataset configures the connection to the database instance, while the decorator allows for specifying the [Cypher query](https://neo4j.com/docs/getting-started/cypher-intro/) to use.
 
 The code snippets below can be used to consume Neo4J data. The node function responsible for processing the Neo4J data should be annodated with the `cypher_query` annotation. The `query` keyword-argument of the decorator accepts:
 

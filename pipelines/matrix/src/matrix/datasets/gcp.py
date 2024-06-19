@@ -1,5 +1,5 @@
 """Module with GCP datasets for Kedro."""
-from typing import Any
+from typing import Any, Dict
 
 from kedro.io.core import Version
 from kedro_datasets.spark import SparkDataset
@@ -20,6 +20,7 @@ class BigQueryTableDataset(SparkDataset):
         project_id: str,
         dataset: str,
         table: str,
+        labels: Dict[str, str] = None,
         load_args: dict[str, Any] = None,
         save_args: dict[str, Any] = None,
         version: Version = None,
@@ -32,6 +33,7 @@ class BigQueryTableDataset(SparkDataset):
             project_id: project identifier.
             dataset: Name of the BigQuery dataset.
             table: name of the table.
+            labels: kv-pairs added as labels to table.
             load_args: Arguments to pass to the load method.
             save_args: Arguments to pass to the save
             version: Version of the dataset.
@@ -41,6 +43,7 @@ class BigQueryTableDataset(SparkDataset):
         self._project_id = project_id
         self._dataset = dataset
         self._table = table
+        self._labels = labels
 
         super().__init__(
             filepath="filepath",
@@ -59,11 +62,17 @@ class BigQueryTableDataset(SparkDataset):
         )
 
     def _save(self, data: DataFrame) -> None:
-        (
+        write_obj = (
             data.write.format("bigquery")
             .option(
-                "writeMethod", "direct"
+                "writeMethod",
+                "direct",
             )  # NOTE: Alternatively, we can define tmp. gcp location
             .mode("overwrite")
-            .save(f"{self._project_id}.{self._dataset}.{self._table}")
         )
+
+        if self._labels:
+            for label, value in self._labels.items():
+                write_obj = write_obj.option(f"bigQueryTableLabel.{label}", value)
+
+        write_obj.save(f"{self._project_id}.{self._dataset}.{self._table}")

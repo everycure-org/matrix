@@ -7,7 +7,7 @@ _spark_csv_ds: &_spark_csv
 
 _neo4j_ds: &_neo4j_ds
   type: matrix.datasets.neo4j.Neo4JSparkDataset
-  database: everycure # TODO: Can also add version number here, but local does not support
+  database: "everycure_${globals:versions.release}" # TODO: Can also add version number here, but local does not support
   url: bolt://127.0.0.1:7687
   credentials: neo4j_credentials
   save_args:
@@ -49,22 +49,13 @@ integration.prm.treats:
 integration.prm.pypher:
   <<: *_neo4j_ds
 
-
-# TODO: BigQuery does not work locally, what is our approach here?
-# do we use local SparkDatasets for local iteration, and only have the BigQuery
-# datasets in prod? This will impact test coverage. Alternatively there is the 
-# bigquery emulator, but it seems like connecting to it from the Spark connector  
-# is not supported :(
 _bigquery_ds: &_bigquery_ds
   type: matrix.datasets.gcp.BigQueryTableDataset
   project_id: mtrx-hub-dev-3of
   dataset: kg
 
-# We can use partitioning to isolate different versions. Though it seems BigQuery
-# only detects them when they use a date-ish formatting, as opposed to
-# a number as mentioned by the docs.
-# https://cloud.google.com/bigquery/docs/partitioned-tables#dt_partition_shard
-# https://stackoverflow.com/questions/70194094/how-to-create-sharded-table-in-gcp-bigquery
 integration.raw.bigquery.edges:
   <<: *_bigquery_ds
-  table: "edges_${globals:versions.kg}"
+  table: "edges_${globals:versions.release}"
+  labels: 
+    kg_name: ${globals:versions.kg_name}
