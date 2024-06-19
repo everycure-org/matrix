@@ -59,4 +59,4 @@ _model_options:
 
   # Defines metrics to be used to evaluate the model.
   metrics:
-    - object: sklearn.metrics.f1_score
+    - object: matrix.pipelines.modelling.utils.macro_f1
