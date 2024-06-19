@@ -373,9 +373,8 @@ def get_model_performance(
             y_prediction = data.loc[split_index, target_col_name + prediction_suffix]
 
             # Execute metric
-            # FUTURE: This currently mergers the unknown and known classes
             report[f"{split.lower()}_{metric.__name__}"] = metric(
-                y_true == 1, y_prediction == 1
+                y_true, y_prediction
             ).item()
 
     return json.loads(json.dumps(report))
