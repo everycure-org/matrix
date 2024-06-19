@@ -1,8 +1,0 @@
-modelling.kgml_xdtd:
-    _overrides:
-      model_tuning_args:
-        tuner:
-          estimator:
-            tree_method: hist
-            device: cuda
-

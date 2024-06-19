@@ -59,7 +59,7 @@ CONFIG_LOADER_ARGS = {
 DYNAMIC_PIPELINES_MAPPING = {
     "modelling": [
         {"model_name": "xgb", "num_shards": 1},
-        {"model_name": "xgc", "num_shards": 10},
+        {"model_name": "xgc", "num_shards": 3},
         {"model_name": "kgml_xdtd", "num_shards": 1},
         {"model_name": "xg_balanced", "num_shards": 1},
     ],
