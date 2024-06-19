@@ -10,8 +10,7 @@ on:
   workflow_dispatch: {}
   push:
     branches:
-      # TODO remove before merging
-      - "feat/matrix_infra"
+      - "^main$"
     paths: 
       - infra/**
       - .github/workflows/infra-deploy.yml
