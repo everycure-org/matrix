@@ -32,14 +32,18 @@ def create_feat_nodes(
     embeddings: pd.DataFrame,
     drug_types: List[str],
     disease_types: List[str],
+    raw_tp: pd.DataFrame,
 ) -> pd.DataFrame:
     """Add features for nodes.
+
+    FUTURE: Add flags for official set of drugs and diseases when we have them.
 
     Args:
         raw_nodes: Raw nodes data.
         embeddings: Embeddings data.
         drug_types: List of drug types.
         disease_types: List of disease types.
+        raw_tp: Raw true positive data.
 
     Returns:
         Nodes enriched with features.
@@ -47,9 +51,17 @@ def create_feat_nodes(
     # Merge embeddings
     raw_nodes = raw_nodes.merge(embeddings, on="id", how="left")
 
-    # Add flags
+    # Add drugs and diseases types flags
     raw_nodes["is_drug"] = raw_nodes["category"].apply(lambda x: x in drug_types)
     raw_nodes["is_disease"] = raw_nodes["category"].apply(lambda x: x in disease_types)
+
+    # Add MONDO diseases flag
+    is_mondo = raw_nodes["id"].str.contains("MONDO:")
+    raw_nodes["is_mondo_disease"] = raw_nodes["is_disease"] & is_mondo
+
+    # Add flag for set of drugs appearing in ground truth positive set
+    ground_pos_drug_ids = raw_tp["source"].unique()
+    raw_nodes["is_ground_pos_drug"] = raw_nodes["id"].isin(ground_pos_drug_ids)
 
     return raw_nodes
 
