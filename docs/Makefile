@@ -2,7 +2,7 @@
 .PHONY: build serve
 
 build: install
-	.venv/bin/mkdocs build -s #build in strict mode, all links must function
+	.venv/bin/mkdocs build -s # build in strict mode, all links must function
 
 serve: install
 	.venv/bin/mkdocs serve
