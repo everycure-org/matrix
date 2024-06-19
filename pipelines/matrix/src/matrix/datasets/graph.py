@@ -8,7 +8,7 @@ import random
 
 from kedro_datasets.pandas import ParquetDataset
 
-from typing import Any, Dict, Iterator
+from typing import Any, Dict, Iterator, List
 from kedro.io.core import Version
 
 
@@ -68,18 +68,28 @@ class RandomDrugDiseasePairGenerator(DrugDiseasePairGenerator):
 
     Strategy implementing a drug-disease pair generator using randomly sampled drugs and diseases.
 
-    FUTURE: Implement an option to sample from a reduced set of drugs and disease node
     """
 
-    def __init__(self, y_label: int, random_state: int, n_unknown: int) -> None:
+    def __init__(
+        self,
+        y_label: int,
+        random_state: int,
+        n_unknown: int,
+        drug_flags: List[str] = ["is_drug"],
+        disease_flags: List[str] = ["is_disease"],
+    ) -> None:
         """Initializes the RandomDrugDiseasePairGenerator instance.
 
         Args:
             y_label: label to assign to generated pairs.
             random_state: Random seed.
             n_unknown: Number of unknown drug-disease pairs to generate.
+            drug_flags (optional): List of knowledge graph flags defining drugs sample set.
+            disease_flags (optional): List of knowledge graph flags defining diseases sample set.
         """
         self._n_unknown = n_unknown
+        self._drug_flags = drug_flags
+        self._disease_flags = disease_flags
         super().__init__(y_label, random_state)
 
     def generate(
@@ -94,15 +104,28 @@ class RandomDrugDiseasePairGenerator(DrugDiseasePairGenerator):
         Returns:
             DataFrame with unknown drug-disease pairs.
         """
+        # Define ground truth dataset
         known_data_set = {
             (drug, disease)
             for drug, disease in zip(known_pairs["source"], known_pairs["target"])
         }
 
+        ## TO DO: define helper function to remove duplicate code
+        # Defining list of drug node id's to sample from
+        is_all_drug_flags = graph._nodes[self._drug_flags].all(axis=1)
+        drug_samp_nodes = graph._nodes[is_all_drug_flags]
+        drug_samp_ids = list(drug_samp_nodes["id"])
+
+        # Defining list of disease node id's to sample from
+        is_all_disease_flags = graph._nodes[self._disease_flags].all(axis=1)
+        disease_samp_nodes = graph._nodes[is_all_disease_flags]
+        disease_samp_ids = list(disease_samp_nodes["id"])
+
+        # Sample pairs
         unknown_data = []
         while len(unknown_data) < self._n_unknown:
-            drug = random.choice(graph._drug_nodes)
-            disease = random.choice(graph._disease_nodes)
+            drug = random.choice(drug_samp_ids)
+            disease = random.choice(disease_samp_ids)
 
             if (drug, disease) not in known_data_set:
                 unknown_data.append(
