@@ -23,7 +23,6 @@ from .model import ModelWrapper
     schema={
         "is_drug": "bool",
         "is_disease": "bool",
-        "is_fda_approved": "bool",
         "embedding": "object",
     },
     allow_subset=True,
@@ -33,7 +32,6 @@ def create_feat_nodes(
     embeddings: pd.DataFrame,
     drug_types: List[str],
     disease_types: List[str],
-    fda_list: List[str],
 ) -> pd.DataFrame:
     """Add features for nodes.
 
@@ -42,7 +40,6 @@ def create_feat_nodes(
         embeddings: Embeddings data.
         drug_types: List of drug types.
         disease_types: List of disease types.
-        fda_list: List of FDA approved drugs.
 
     Returns:
         Nodes enriched with features.
@@ -53,7 +50,6 @@ def create_feat_nodes(
     # Add flags
     raw_nodes["is_drug"] = raw_nodes["category"].apply(lambda x: x in drug_types)
     raw_nodes["is_disease"] = raw_nodes["category"].apply(lambda x: x in disease_types)
-    raw_nodes["is_fda_approved"] = raw_nodes["id"].apply(lambda x: x in fda_list)
 
     return raw_nodes
 
