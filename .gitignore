@@ -2,3 +2,5 @@ venv
 *.DS_Store
 .ruff_cache/
 **/.testmondata*
+.vscode/
+neo4j_db/
