@@ -14,6 +14,10 @@ modelling.raw.rtx_kg2.nodes:
   <<: *_pandas_csv
   filepath: ${globals:paths.raw}/rtx_kg2_nodes.csv
 
+modelling.raw.rtx_kg2.edges:
+  <<: *_pandas_csv
+  filepath: ${globals:paths.raw}/rtx_kg2_edges.csv
+
 modelling.raw.ground_truth.tp:
   <<: *_pandas_csv
   filepath: ${globals:paths.raw}/tp_pairs.txt
@@ -38,30 +42,42 @@ modelling.model_input.splits:
   <<: *_pandas_parquet
   filepath: ${globals:paths.model_input}/splits
 
-modelling.model_input.enriched_splits:
-  <<: *_pandas_parquet
-  filepath: ${globals:paths.model_input}/enriched_splits
-
-modelling.model_input.transformed_splits:
-  <<: *_pandas_parquet
-  filepath: ${globals:paths.model_input}/transformed_splits
-
-modelling.models.model:
+"modelling.{model}.model_input.transformers":
   type: pickle.PickleDataset
-  filepath: ${globals:paths.models}/model.pickle
+  filepath: ${globals:paths.model_input}/{model}/transformers.pickle
 
-modelling.models.model_params:
-  type: yaml.YAMLDataset
-  filepath: ${globals:paths.models}/model_params.yml
-
-modelling.model_output.predictions:
+"modelling.{model}.model_input.transformed_splits":
   <<: *_pandas_parquet
-  filepath: ${globals:paths.model_output}/predictions
+  filepath: ${globals:paths.model_input}/{model}/transformed_splits
 
-modelling.reporting.tuning_convergence_plot:
-  type: matplotlib.MatplotlibWriter
-  filepath: ${globals:paths.reporting}/convergence_plot.png
+"modelling.{model}.{shard}.model_input.enriched_splits":
+  <<: *_pandas_parquet
+  filepath: ${globals:paths.model_input}/{model}/{shard}/enriched_splits
 
-modelling.reporting.metrics:
+"modelling.{model}.{shard}.model_input.transformed_splits":
+  <<: *_pandas_parquet
+  filepath: ${globals:paths.model_input}/{model}/{shard}/transformed_splits
+
+"modelling.{model}.{shard}.models.model_params":
   type: yaml.YAMLDataset
-  filepath: ${globals:paths.reporting}/metrics.yml
+  filepath: ${globals:paths.models}/{model}/{shard}/model_params.yml
+
+"modelling.{model}.{shard}.models.model":
+  type: pickle.PickleDataset
+  filepath: ${globals:paths.models}/{model}/{shard}/model.pickle
+
+"modelling.{model}.model_output.predictions":
+  <<: *_pandas_parquet
+  filepath: ${globals:paths.model_output}/{model}/predictions
+
+"modelling.{model}.{shard}.reporting.tuning_convergence_plot":
+  type: matplotlib.MatplotlibWriter
+  filepath: ${globals:paths.reporting}/{model}/{shard}/convergence_plot.png
+
+"modelling.{model}.models.model":
+  type: pickle.PickleDataset
+  filepath: ${globals:paths.models}/{model}/model.pickle
+
+"modelling.{model}.reporting.metrics":
+  type: yaml.YAMLDataset
+  filepath: ${globals:paths.reporting}/{model}/metrics.yml

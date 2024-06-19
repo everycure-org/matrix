@@ -1,0 +1,50 @@
+_spark_csv_ds: &_spark_csv
+  type: spark.SparkDataset
+  file_format: csv
+  load_args:
+    header: true
+    sep: ","
+
+_neo4j_ds: &_neo4j_ds
+  type: matrix.datasets.neo4j.Neo4JSparkDataset
+  database: everycure
+  url: bolt://127.0.0.1:7687
+  credentials: neo4j_credentials
+  save_args:
+    mode: "overwrite"
+  
+integration.raw.rtx_kg2.nodes:
+  <<: *_spark_csv
+  filepath: ${globals:paths.raw}/rtx_kg2_nodes.csv
+
+integration.raw.rtx_kg2.edges:
+  <<: *_spark_csv
+  filepath: ${globals:paths.raw}/rtx_kg2_edges.csv
+
+integration.prm.drugs:
+  <<: *_neo4j_ds
+  metadata:
+    labels: ":Drug"
+    node.keys: id
+
+integration.prm.diseases:
+  <<: *_neo4j_ds
+  metadata:
+    labels: ":Disease"
+    node.keys: id
+
+# TODO: Verify if we can align with Biolink
+integration.prm.treats:
+  <<: *_neo4j_ds
+  metadata:
+    relationship: TREATS
+    relationship.save.strategy: keys
+    relationship.source.save.mode: overwrite
+    relationship.source.labels: ":Drug"
+    relationship.source.node.keys: source_id:id
+    relationship.target.save.mode: overwrite
+    relationship.target.labels: ":Disease"
+    relationship.target.node.keys: target_id:id
+
+integration.prm.pypher:
+  <<: *_neo4j_ds

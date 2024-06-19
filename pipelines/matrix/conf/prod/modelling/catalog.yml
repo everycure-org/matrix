@@ -7,13 +7,13 @@ modelling.raw.rtx_kg2.nodes:
   load_args:
     sep: "\t"
 
-modelling.raw.experiments.tp:
+modelling.raw.ground_truth.tp:
   <<: *_pandas_csv
   filepath: ${globals:gcs_bucket}/ground_truth_data/tp_pairs.txt
   load_args:
     sep: "\t"
 
-modelling.raw.experiments.tn:
+modelling.raw.ground_truth.tn:
   <<: *_pandas_csv
   filepath: ${globals:gcs_bucket}/ground_truth_data/tn_pairs.txt
   load_args:

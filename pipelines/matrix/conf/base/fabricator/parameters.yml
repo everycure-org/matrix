@@ -5,16 +5,38 @@ fabricator.rtx_kg2:
       id: 
         type: generate_unique_id
         prefix: node_
+      
       category:
         type: generate_values
         sample_values:
           - biolink:Drug
           - biolink:Disease
-      # TODO: Update
       value:
         type: generate_random_numbers
         start_range: 100
         end_range: 1000
+      
+      date_discovered:
+        type: generate_dates
+        start_dt: 2010-01-01
+        end_dt: 2020-01-01
+        freq: M
+
+  edges:
+    num_rows: 100
+    columns:
+      source_id:
+        type: row_apply
+        list_of_values: [nodes.id]
+        row_func: "lambda *args: args[0]"
+        resize: True
+        seed: 590590
+      target_id:
+        type: row_apply
+        list_of_values: [nodes.id]
+        row_func: "lambda *args: args[0]"
+        resize: True
+        seed: 49494
 
   embeddings:
     columns:
