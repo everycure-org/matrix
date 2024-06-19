@@ -10,13 +10,13 @@ modelling.kgml_xdtd:
         tuner:
           object: matrix.pipelines.modelling.tuning.NopTuner
           estimator:
-            object: xgboost.XGBRFClassifier # TO DO: sklearn.ensemble.RandomForestClassifier gives error (related output of modelling node tune_parameters) TypeError: int() argument must be a string, a bytes-like object or a real number, not 'DecisionTreeClassifier'
+            object:  sklearn.ensemble.RandomForestClassifier
             bootstrap: true
             ccp_alpha: 0.0
             class_weight: balanced_subsample
             criterion: gini
             max_depth: 35
-            max_features: auto
+            max_features: sqrt
             max_leaf_nodes: null
             max_samples: null
             min_impurity_decrease: 0.0
