@@ -59,10 +59,10 @@ _model_options:
 
   # Defines metrics to be used to evaluate the model.
   metrics:
-    - object: matrix.pipelines.modelling.utils.macro_f1
-    - object: sklearn.metrics.accuracy_score
-    # - TO DO: This is more elegant approach but gives TypeError: missing a required argument: 'y_true'
-    #   object: matrix.pipelines.modelling.utils.partial_
-    #   func:
-    #     object: sklearn.metrics.f1_score
-    #     average: macro
+    accuracy:
+      object: sklearn.metrics.accuracy_score
+    macro_f1:
+      object: matrix.pipelines.modelling.utils.partial_
+      func:
+        object: sklearn.metrics.f1_score
+      average: macro
