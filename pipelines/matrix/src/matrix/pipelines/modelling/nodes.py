@@ -55,10 +55,6 @@ def create_feat_nodes(
     raw_nodes["is_drug"] = raw_nodes["category"].apply(lambda x: x in drug_types)
     raw_nodes["is_disease"] = raw_nodes["category"].apply(lambda x: x in disease_types)
 
-    # Add MONDO diseases flag
-    is_mondo = raw_nodes["id"].str.contains("MONDO:")
-    raw_nodes["is_mondo_disease"] = raw_nodes["is_disease"] & is_mondo
-
     # Add flag for set of drugs appearing in ground truth positive set
     ground_pos_drug_ids = raw_tp["source"].unique()
     raw_nodes["is_ground_pos_drug"] = raw_nodes["id"].isin(ground_pos_drug_ids)
