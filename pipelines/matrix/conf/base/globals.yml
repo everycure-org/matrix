@@ -2,7 +2,6 @@ random_state: 111
 
 versions:
   release: 20240620
-  kg_name: test
 
 paths:
   raw: data/01_raw

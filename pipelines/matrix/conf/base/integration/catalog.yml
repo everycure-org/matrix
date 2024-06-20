@@ -48,14 +48,3 @@ integration.prm.treats:
 
 integration.prm.pypher:
   <<: *_neo4j_ds
-
-_bigquery_ds: &_bigquery_ds
-  type: matrix.datasets.gcp.BigQueryTableDataset
-  project_id: mtrx-hub-dev-3of
-  dataset: kg
-
-integration.raw.bigquery.edges:
-  <<: *_bigquery_ds
-  table: "edges_${globals:versions.release}"
-  labels: 
-    kg_name: ${globals:versions.kg_name}

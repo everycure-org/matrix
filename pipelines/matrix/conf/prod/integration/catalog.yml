@@ -1,0 +1,20 @@
+_pandas_csv: &_pandas_csv
+  type:  pandas.CSVDataset
+
+_bigquery_ds: &_bigquery_ds
+  type: matrix.datasets.gcp.BigQueryTableDataset
+  project_id: ${oc.env:GCP_PROJECT_ID,mtrx-hub-dev-3of}
+
+integration.raw.rtx_kg2.nodes:
+  <<: *_pandas_csv
+  filepath: ${globals:gcs_bucket}/KG/RTX_KG_v2-7-3/rtx_kg2_nodes.tsv
+  load_args:
+    sep: "\t"
+
+integration.prm.rtx_kg2.nodes:
+  <<: *_bigquery_ds
+  dataset: rtx_kg2
+  table: "edges_${globals:versions.release}"
+  labels: 
+    kg: rtx_kg2
+    release: ${globals:versions.release}
