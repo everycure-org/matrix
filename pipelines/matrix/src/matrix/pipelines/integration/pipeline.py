@@ -14,7 +14,6 @@ def create_pipeline(**kwargs) -> Pipeline:
                 inputs=["integration.raw.rtx_kg2.nodes", "params:modelling.drug_types"],
                 outputs="integration.prm.drugs",
                 name="create_neo4j_drug_nodes",
-                tags=["neo4j"],
             ),
             node(
                 func=nodes.extract_nodes,
@@ -24,7 +23,6 @@ def create_pipeline(**kwargs) -> Pipeline:
                 ],
                 outputs="integration.prm.diseases",
                 name="create_neo4j_disease_nodes",
-                tags=["neo4j"],
             ),
             # Write relationship
             node(
@@ -32,7 +30,6 @@ def create_pipeline(**kwargs) -> Pipeline:
                 inputs=["integration.raw.rtx_kg2.edges"],
                 outputs="integration.prm.treats",
                 name="create_neo4j_edges",
-                tags=["neo4j"],
             ),
             # Example reading
             node(
@@ -40,7 +37,6 @@ def create_pipeline(**kwargs) -> Pipeline:
                 inputs=["integration.prm.pypher", "params:integration.drug_label"],
                 outputs=None,
                 name="print",
-                tags=["neo4j"],
             ),
         ]
     )
