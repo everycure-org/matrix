@@ -11,10 +11,10 @@ fabricator.rtx_kg2:
         sample_values:
           - biolink:Drug
           - biolink:Disease
-      value:
-        type: generate_random_numbers
-        start_range: 100
-        end_range: 1000
+      
+      name:
+        type: faker
+        provider: name
       
       date_discovered:
         type: generate_dates

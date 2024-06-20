@@ -4,6 +4,16 @@ from kedro.pipeline import Pipeline, node, pipeline
 from . import nodes
 
 
+from pyspark.sql import DataFrame
+from pyspark.sql import functions as F
+
+
+def _create_nodes(df: DataFrame) -> DataFrame:
+    return df.withColumn(
+        "label", F.split(F.col("category"), ":", limit=2).getItem(1)
+    ).select("id", "label", "name")
+
+
 def create_pipeline(**kwargs) -> Pipeline:
     """Create integration pipeline."""
     return pipeline(
@@ -24,14 +34,14 @@ def create_pipeline(**kwargs) -> Pipeline:
             #     name="write_rtx_kg2_edges",
             #     tags=["rtx_kg2"],
             # ),
-            # # Write nodes
-            # node(
-            #     func=nodes.extract_nodes,
-            #     inputs=["integration.raw.rtx_kg2.nodes", "params:modelling.drug_types"],
-            #     outputs="integration.prm.drugs",
-            #     name="create_neo4j_drug_nodes",
-            #     tags=["neo4j"],
-            # ),
+            # Write Neo4J nodes
+            node(
+                func=_create_nodes,
+                inputs=["integration.prm.rtx_kg2.nodes"],
+                outputs="integration.model_input.nodes",
+                name="create_neo4j_nodes",
+                tags=["rtx_kg2"],
+            ),
             # node(
             #     func=nodes.extract_nodes,
             #     inputs=[
