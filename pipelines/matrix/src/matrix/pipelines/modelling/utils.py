@@ -1,8 +1,5 @@
 """Modules with utilities for modelling."""
-import numpy as np
-
 from functools import partial
-from sklearn.metrics import f1_score
 
 
 def partial_(func: callable, **kwargs):
