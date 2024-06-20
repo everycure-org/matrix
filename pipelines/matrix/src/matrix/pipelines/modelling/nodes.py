@@ -373,14 +373,14 @@ def check_model_performance(
     """
     report = {}
 
-    for metric in metrics:
+    for name, func in metrics.items():
         for split in ["TEST", "TRAIN"]:
             split_index = data["split"].eq(split)
             y_true = data.loc[split_index, target_col_name]
             y_pred = data.loc[split_index, target_col_name + prediction_suffix]
 
             # Execute metric
-            report[f"{split.lower()}_{metric.__name__}"] = metric(y_true, y_pred)
+            report[f"{split.lower()}_{name}"] = func(y_true, y_pred)
 
     return json.loads(json.dumps(report, default=float))
 
