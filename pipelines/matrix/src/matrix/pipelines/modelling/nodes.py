@@ -51,6 +51,7 @@ def create_int_pairs(raw_tp: pd.DataFrame, raw_tn: pd.DataFrame) -> pd.DataFrame
     schema={
         "is_drug": "bool",
         "is_disease": "bool",
+        "is_ground_pos": "bool",
         "embedding": "object",
     },
     allow_subset=True,
@@ -60,7 +61,7 @@ def create_feat_nodes(
     embeddings: pd.DataFrame,
     drug_types: List[str],
     disease_types: List[str],
-    raw_tp: pd.DataFrame,
+    known_pairs: pd.DataFrame,
 ) -> pd.DataFrame:
     """Add features for nodes.
 
@@ -71,7 +72,7 @@ def create_feat_nodes(
         embeddings: Embeddings data.
         drug_types: List of drug types.
         disease_types: List of disease types.
-        raw_tp: Ground truth data.
+        known_pairs: Ground truth data.
 
     Returns:
         Nodes enriched with features.
@@ -84,8 +85,12 @@ def create_feat_nodes(
     raw_nodes["is_disease"] = raw_nodes["category"].apply(lambda x: x in disease_types)
 
     # Add flag for set of drugs appearing in ground truth positive set
-    ground_pos_drug_ids = raw_tp["source"].unique()
-    raw_nodes["is_ground_pos_drug"] = raw_nodes["id"].isin(ground_pos_drug_ids)
+    ground_pos = known_pairs[known_pairs["y"].eq(1)]
+    ground_pos_drug_ids = list(ground_pos["source"].unique())
+    ground_pos_disease_ids = list(ground_pos["target"].unique())
+    raw_nodes["is_ground_pos"] = raw_nodes["id"].isin(
+        ground_pos_drug_ids + ground_pos_disease_ids
+    )
 
     return raw_nodes
 

@@ -90,8 +90,8 @@ class RandomDrugDiseasePairGenerator(DrugDiseasePairGenerator):
         y_label: int,
         random_state: int,
         n_unknown: int,
-        drug_flags: List[str] = ["is_drug"],
-        disease_flags: List[str] = ["is_disease"],
+        drug_flags: List[str],
+        disease_flags: List[str],
     ) -> None:
         """Initializes the RandomDrugDiseasePairGenerator instance.
 
@@ -99,8 +99,8 @@ class RandomDrugDiseasePairGenerator(DrugDiseasePairGenerator):
             y_label: label to assign to generated pairs.
             random_state: Random seed.
             n_unknown: Number of unknown drug-disease pairs to generate.
-            drug_flags (optional): List of knowledge graph flags defining drugs sample set.
-            disease_flags (optional): List of knowledge graph flags defining diseases sample set.
+            drug_flags: List of knowledge graph flags defining drugs sample set.
+            disease_flags: List of knowledge graph flags defining diseases sample set.
         """
         self._n_unknown = n_unknown
         self._drug_flags = drug_flags
@@ -164,8 +164,8 @@ class ReplacementDrugDiseasePairGenerator(DrugDiseasePairGenerator):
         y_label: int,
         random_state: int,
         n_replacements: int,
-        drug_flags: List[str] = ["is_drug"],
-        disease_flags: List[str] = ["is_disease"],
+        drug_flags: List[str],
+        disease_flags: List[str],
     ) -> None:
         """Initializes the ReplacementDrugDiseasePairGenerator instance.
 
@@ -173,8 +173,8 @@ class ReplacementDrugDiseasePairGenerator(DrugDiseasePairGenerator):
             y_label: label to assign to generated pairs.
             random_state: Random seed.
             n_replacements: Number of replacements to make.
-            drug_flags (optional): List of knowledge graph flags defining drugs sample set.
-            disease_flags (optional): List of knowledge graph flags defining diseases sample set.
+            drug_flags: List of knowledge graph flags defining drugs sample set.
+            disease_flags: List of knowledge graph flags defining diseases sample set.
         """
         self._n_replacements = n_replacements
         self._drug_flags = drug_flags

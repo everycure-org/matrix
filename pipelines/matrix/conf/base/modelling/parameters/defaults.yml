@@ -26,6 +26,10 @@ _model_options:
     random_state: ${globals:random_state}
     y_label: 2
     n_replacements: 2
+    drug_flags:
+      - is_drug
+    disease_flags:
+      - is_disease
 
   # Defines set of transformers applied to the data prior to model
   # training, each of the should be a sklearn transformer.
