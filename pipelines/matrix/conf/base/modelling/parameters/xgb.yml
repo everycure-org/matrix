@@ -5,8 +5,11 @@ modelling.xgb:
         y_label: 2
         random_state: ${globals:random_state}
         n_unknown: 100
-        drug_flags: 
-          - is_ground_pos_drug
+        drug_flags:
+          - is_drug
+          - is_ground_pos
+        disease_flags:
+          - is_disease
 
       model_tuning_args:
         tuner:
