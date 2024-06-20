@@ -2,7 +2,7 @@
 .PHONY: build serve
 
 build: install
-	mkdocs build
+	.venv/bin/mkdocs build -s # build in strict mode, all links must function
 
 serve: install
 	.venv/bin/mkdocs serve
@@ -11,6 +11,12 @@ install:
 	uv venv
 	uv pip install -r requirements.txt
 
-# FUTURE move away from gh pages based deployment as it creates public content. But acceptable for now
-deploy: install
-	.venv/bin/mkdocs gh-deploy	
+
+image: 
+	docker build -t docs ./
+
+serve_docker: image
+	docker run --rm docs
+
+deploy: build
+	gcloud app deploy
