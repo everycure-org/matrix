@@ -1,0 +1,82 @@
+name: Infrastructure Plan
+
+# FUTURE
+# This will eventually need to be turned into a call'able workflow_call version where we
+# call this for each terragrunt module that should be deployed depending on the path
+# changed in the repo or the branch we're on. For now it's hard-coded to `hub/dev`
+
+
+on:
+  workflow_dispatch: {}
+  push:
+    branches:
+      - "^main$"
+    paths: 
+      - infra/**
+      - .github/workflows/infra-deploy.yml
+
+env:
+  tf_version: '1.5.7'
+  tg_version: '0.58.11'
+  working_dir: 'infra/'
+  # log into gcp
+  project_id: 'mtrx-hub-dev-3of'
+  workload_identity_provider: 'projects/938607797672/locations/global/workloadIdentityPools/matrix-pool/providers/matrix-gh-provider'
+  service_account: 'sa-github-actions-rw@mtrx-hub-dev-3of.iam.gserviceaccount.com'
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 'Checkout'
+        uses: actions/checkout@main
+
+      - name: Check terragrunt HCL
+        uses: gruntwork-io/terragrunt-action@v2
+        with:
+          tf_version: ${{ env.tf_version }}
+          tg_version: ${{ env.tg_version }}
+          tg_dir: ${{ env.working_dir }}/deployments
+          tg_command: 'hclfmt --terragrunt-check --terragrunt-diff'
+      - name: check terraform files
+        run: terraform fmt -check -recursive ${{ env.working_dir }}
+
+  plan:
+    runs-on: ubuntu-latest
+    name: Plan and Apply Terraform
+    needs: [ checks ]
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+    steps:
+      - name: 'Checkout'
+        uses: actions/checkout@main
+      - name: Setup git-crypt
+        id: git-crypt
+        run: |
+          sudo apt-get install git-crypt -y
+          echo ${{ secrets.GIT_CRYPT_KEY }} | base64 -d > TMP_KEY
+          git-crypt unlock TMP_KEY
+          rm -rf TMP_KEY
+      - uses: 'google-github-actions/auth@v2'
+        with:
+          project_id: ${{env.project_id}}
+          workload_identity_provider: ${{env.workload_identity_provider}}
+          service_account: ${{env.service_account}}
+
+      - name: Plan
+        uses: gruntwork-io/terragrunt-action@v2
+        with:
+          tf_version: ${{ env.tf_version }}
+          tg_version: ${{ env.tg_version }}
+          tg_dir: ${{ env.working_dir }}/deployments/hub/dev
+          tg_command: 'plan'
+
+      - name: Deploy
+        # if: github.ref == 'refs/heads/main'
+        uses: gruntwork-io/terragrunt-action@v2
+        with:
+          tf_version: ${{ env.tf_version }}
+          tg_version: ${{ env.tg_version }}
+          tg_dir: ${{ env.working_dir }}/deployments/hub/dev
+          tg_command: 'apply'
