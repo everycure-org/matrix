@@ -42,20 +42,5 @@ def create_pipeline(**kwargs) -> Pipeline:
                 name="print",
                 tags=["neo4j"],
             ),
-            # Write table
-            node(
-                func=lambda x: x,
-                inputs=["integration.raw.rtx_kg2.nodes"],
-                outputs="integration.raw.bigquery.edges",
-                name="write_bigquery_data",
-                tags=["bigquery"],
-            ),
-            node(
-                func=lambda x: x.show(),
-                inputs=["integration.raw.bigquery.edges"],
-                outputs=None,
-                name="read_bigquery_data",
-                tags=["bigquery"],
-            ),
         ]
     )
