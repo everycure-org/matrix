@@ -17,10 +17,6 @@ def _create_pairs(nodes: pd.DataFrame, num: int = 50) -> pd.DataFrame:
     )
 
 
-def _create_fda_drugs(nodes: pd.DataFrame, num: int = 10) -> pd.DataFrame:
-    return nodes["id"].sample(num, replace=True, ignore_index=True)
-
-
 def create_pipeline(**kwargs) -> Pipeline:
     """Create fabricator pipeline."""
     return pipeline(
@@ -46,13 +42,6 @@ def create_pipeline(**kwargs) -> Pipeline:
                 inputs=["modelling.raw.rtx_kg2.nodes"],
                 outputs="modelling.raw.ground_truth.tn",
                 name="create_tn_pairs",
-            ),
-            # FUTURE: Move this transformation to pipeline
-            node(
-                func=_create_fda_drugs,
-                inputs=["modelling.raw.rtx_kg2.nodes"],
-                outputs="modelling.raw.fda_drugs",
-                name="create_fda_drugs",
             ),
         ]
     )
