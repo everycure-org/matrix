@@ -377,14 +377,12 @@ def check_model_performance(
         for split in ["TEST", "TRAIN"]:
             split_index = data["split"].eq(split)
             y_true = data.loc[split_index, target_col_name]
-            y_prediction = data.loc[split_index, target_col_name + prediction_suffix]
+            y_pred = data.loc[split_index, target_col_name + prediction_suffix]
 
             # Execute metric
-            report[f"{split.lower()}_{metric.__name__}"] = metric(
-                y_true, y_prediction
-            ).item()
+            report[f"{split.lower()}_{metric.__name__}"] = metric(y_true, y_pred)
 
-    return json.loads(json.dumps(report))
+    return json.loads(json.dumps(report, default=float))
 
 
 def consolidate_reports(*reports) -> dict:
