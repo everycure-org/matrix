@@ -35,7 +35,7 @@ def create_int_pairs(raw_tp: pd.DataFrame, raw_tn: pd.DataFrame) -> pd.DataFrame
         raw_tn: Raw ground truth negative data.
 
     Returns:
-        Intermediate pairs dataset combining ground truth positives and negatives.
+        Combined ground truth positive and negative data.
     """
     # Add label
     raw_tp["y"] = 1
@@ -71,7 +71,7 @@ def create_feat_nodes(
         embeddings: Embeddings data.
         drug_types: List of drug types.
         disease_types: List of disease types.
-        raw_tp: Raw ground truth positive data.
+        raw_tp: Ground truth data.
 
     Returns:
         Nodes enriched with features.
@@ -111,7 +111,7 @@ def create_prm_pairs(
         data: Pairs dataset to enrich with embeddings.
 
     Returns:
-        Primary pairs dataset enriched with embeddings.
+        Ground truth data enriched with embeddings.
     """
     # Add embeddings
     data["source_embedding"] = data.apply(
