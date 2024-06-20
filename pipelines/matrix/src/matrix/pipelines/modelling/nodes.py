@@ -315,6 +315,8 @@ def create_model(*estimators) -> ModelWrapper:
 
     Args:
         estimators: list of fitted estimators
+    Returns:
+        ModelWrapper encapsulating estimators
     """
     return ModelWrapper(estimators=estimators, agg_func=np.mean)
 
