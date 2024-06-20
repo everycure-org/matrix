@@ -1,3 +1,6 @@
+_pandas_csv: &_pandas_csv
+  type:  pandas.CSVDataset
+
 _spark_csv_ds: &_spark_csv
   type: spark.SparkDataset
   file_format: csv
@@ -17,9 +20,25 @@ integration.raw.rtx_kg2.nodes:
   <<: *_spark_csv
   filepath: ${globals:paths.raw}/rtx_kg2_nodes.csv
 
+integration.raw.ground_truth.tp:
+  <<: *_pandas_csv
+  filepath: ${globals:paths.raw}/tp_pairs.txt
+
+integration.raw.ground_truth.tn:
+  <<: *_pandas_csv
+  filepath: ${globals:paths.raw}/tn_pairs.txt
+
 integration.raw.rtx_kg2.edges:
   <<: *_spark_csv
   filepath: ${globals:paths.raw}/rtx_kg2_edges.csv
+
+integration.int.known_pairs@pandas:
+  <<: *_pandas_csv
+  filepath: ${globals:paths.int}/ground_truth.csv
+
+integration.int.known_pairs@spark:
+  <<: *_spark_csv
+  filepath: ${globals:paths.int}/ground_truth.csv
 
 integration.model_input.nodes:
   <<: *_neo4j_ds
@@ -30,6 +49,21 @@ integration.model_input.nodes:
       CALL apoc.create.addLabels(n, [event.label])
       YIELD node
       RETURN node
+
+integration.model_input.threats:
+  <<: *_neo4j_ds
+  metadata:
+    query: > 
+      MATCH (source:Drug {id: event.source}), (target:Disease {id: event.target})
+      WITH source, target, event
+      CALL apoc.create.relationship(source, event.label, {}, target) YIELD rel 
+      RETURN count(*)
+# MERGE (s:Drug)-[t]->(t:Disease) 
+# WITH event, t
+# CALL apoc.create.addLabels(t, [event.label])
+# YIELD node
+# RETURN node
+
 
 # integration.prm.drugs:
 #   <<: *_neo4j_ds
