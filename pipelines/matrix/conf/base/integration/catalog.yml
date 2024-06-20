@@ -58,11 +58,6 @@ integration.model_input.threats:
       WITH source, target, event
       CALL apoc.create.relationship(source, event.label, {}, target) YIELD rel 
       RETURN count(*)
-# MERGE (s:Drug)-[t]->(t:Disease) 
-# WITH event, t
-# CALL apoc.create.addLabels(t, [event.label])
-# YIELD node
-# RETURN node
 
 
 # integration.prm.drugs:
