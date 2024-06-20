@@ -21,6 +21,34 @@ from .model import ModelWrapper
 
 @has_schema(
     schema={
+        "source": "object",
+        "target": "object",
+        "y": "numeric",
+    },
+    allow_subset=True,
+)
+def create_int_pairs(raw_tp: pd.DataFrame, raw_tn: pd.DataFrame) -> pd.DataFrame:
+    """Create intermediate pairs dataset.
+
+    Args:
+        raw_tp: Raw ground truth positive data.
+        raw_tn: Raw ground truth negative data.
+
+    Returns:
+        Intermediate pairs dataset combining ground truth positives and negatives.
+    """
+    # Add label
+    raw_tp["y"] = 1
+    raw_tn["y"] = 0
+
+    # Concat
+    result = pd.concat([raw_tp, raw_tn], axis="index").reset_index(drop=True)
+
+    return result
+
+
+@has_schema(
+    schema={
         "is_drug": "bool",
         "is_disease": "bool",
         "embedding": "object",
@@ -43,7 +71,7 @@ def create_feat_nodes(
         embeddings: Embeddings data.
         drug_types: List of drug types.
         disease_types: List of disease types.
-        raw_tp: Raw true positive data.
+        raw_tp: Raw ground truth positive data.
 
     Returns:
         Nodes enriched with features.
@@ -73,35 +101,28 @@ def create_feat_nodes(
     allow_subset=True,
 )
 def create_prm_pairs(
-    graph: KnowledgeGraph, raw_tp: pd.DataFrame, raw_tn: pd.DataFrame
+    graph: KnowledgeGraph,
+    data: pd.DataFrame,
 ) -> pd.DataFrame:
     """Create primary pairs dataset.
 
     Args:
         graph: Knowledge graph.
-        raw_tp: Raw true positive data.
-        raw_tn: Raw true negative data.
+        data: Pairs dataset to enrich with embeddings.
 
     Returns:
-        Primary pairs dataset.
+        Primary pairs dataset enriched with embeddings.
     """
-    # Add label
-    raw_tp["y"] = 1
-    raw_tn["y"] = 0
-
-    # Concat
-    result = pd.concat([raw_tp, raw_tn], axis="index").reset_index(drop=True)
-
     # Add embeddings
-    result["source_embedding"] = result.apply(
+    data["source_embedding"] = data.apply(
         lambda row: graph._embeddings[row.source], axis=1
     )
-    result["target_embedding"] = result.apply(
+    data["target_embedding"] = data.apply(
         lambda row: graph._embeddings[row.target], axis=1
     )
 
-    # Return concatenated data
-    return result
+    # Return enriched data
+    return data
 
 
 @inject_object()
