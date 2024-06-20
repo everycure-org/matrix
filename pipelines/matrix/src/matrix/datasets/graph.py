@@ -63,6 +63,21 @@ class DrugDiseasePairGenerator(abc.ABC):
         ...
 
 
+def flags_to_ids(graph: KnowledgeGraph, flags: List[str]) -> List[str]:
+    """Helper function for extracting nodes from flag columns.
+
+    Args:
+        graph: KnowledgeGraph instance.
+        flags: List of names of boolean columns in the graph nodes.
+
+    Returns:
+        List of graph nodes id's satisfying all flags.
+    """
+    is_all_flags = graph._nodes[flags].all(axis=1)
+    select_nodes = graph._nodes[is_all_flags]
+    return list(select_nodes["id"])
+
+
 class RandomDrugDiseasePairGenerator(DrugDiseasePairGenerator):
     """Random drug-disease pair implementation.
 
@@ -110,16 +125,9 @@ class RandomDrugDiseasePairGenerator(DrugDiseasePairGenerator):
             for drug, disease in zip(known_pairs["source"], known_pairs["target"])
         }
 
-        ## TO DO: define helper function to remove duplicate code
-        # Defining list of drug node id's to sample from
-        is_all_drug_flags = graph._nodes[self._drug_flags].all(axis=1)
-        drug_samp_nodes = graph._nodes[is_all_drug_flags]
-        drug_samp_ids = list(drug_samp_nodes["id"])
-
-        # Defining list of disease node id's to sample from
-        is_all_disease_flags = graph._nodes[self._disease_flags].all(axis=1)
-        disease_samp_nodes = graph._nodes[is_all_disease_flags]
-        disease_samp_ids = list(disease_samp_nodes["id"])
+        # Defining list of node id's to sample from
+        drug_samp_ids = flags_to_ids(graph, self._drug_flags)
+        disease_samp_ids = flags_to_ids(graph, self._disease_flags)
 
         # Sample pairs
         unknown_data = []
