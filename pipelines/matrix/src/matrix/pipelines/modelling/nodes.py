@@ -151,7 +151,7 @@ def create_model_input_nodes(
 ) -> pd.DataFrame:
     """Function to enrich the splits with drug-disease pairs.
 
-    The gerator is used to enrich the dataset with unknown drug-disease
+    The generator is used to enrich the dataset with unknown drug-disease
     pairs. If a `IterativeDrugDiseasePair` generator is provided, the splits
     dataset is replicated.
 
