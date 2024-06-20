@@ -32,6 +32,19 @@ class KnowledgeGraph:
         self._disease_nodes = list(nodes[nodes["is_disease"]]["id"])
         self._embeddings = dict(zip(nodes["id"], nodes["embedding"]))
 
+    def flags_to_ids(self, flags: List[str]) -> List[str]:
+        """Helper function for extracting nodes from flag columns.
+
+        Args:
+            flags: List of names of boolean columns in the graph nodes.
+
+        Returns:
+            List of graph nodes id's satisfying all flags.
+        """
+        is_all_flags = self._nodes[flags].all(axis=1)
+        select_nodes = self._nodes[is_all_flags]
+        return list(select_nodes["id"])
+
 
 class DrugDiseasePairGenerator(abc.ABC):
     """Generator strategy class to represent drug-disease pairs generators."""
@@ -61,21 +74,6 @@ class DrugDiseasePairGenerator(abc.ABC):
             DataFrame with unknown drug-disease pairs.
         """
         ...
-
-
-def flags_to_ids(graph: KnowledgeGraph, flags: List[str]) -> List[str]:
-    """Helper function for extracting nodes from flag columns.
-
-    Args:
-        graph: KnowledgeGraph instance.
-        flags: List of names of boolean columns in the graph nodes.
-
-    Returns:
-        List of graph nodes id's satisfying all flags.
-    """
-    is_all_flags = graph._nodes[flags].all(axis=1)
-    select_nodes = graph._nodes[is_all_flags]
-    return list(select_nodes["id"])
 
 
 class RandomDrugDiseasePairGenerator(DrugDiseasePairGenerator):
@@ -126,8 +124,8 @@ class RandomDrugDiseasePairGenerator(DrugDiseasePairGenerator):
         }
 
         # Defining list of node id's to sample from
-        drug_samp_ids = flags_to_ids(graph, self._drug_flags)
-        disease_samp_ids = flags_to_ids(graph, self._disease_flags)
+        drug_samp_ids = graph.flags_to_ids(self._drug_flags)
+        disease_samp_ids = graph.flags_to_ids(self._disease_flags)
 
         # Sample pairs
         unknown_data = []
@@ -239,8 +237,8 @@ class ReplacementDrugDiseasePairGenerator(DrugDiseasePairGenerator):
     ) -> List[str]:
         """Helper function to generate list of drug-disease pairs through replacements."""
         # Defining list of node id's to sample from
-        drug_samp_ids = flags_to_ids(graph, drug_flags)
-        disease_samp_ids = flags_to_ids(graph, disease_flags)
+        drug_samp_ids = graph.flags_to_ids(drug_flags)
+        disease_samp_ids = graph.flags_to_ids(disease_flags)
 
         # Sample pairs
         unknown_data = []
