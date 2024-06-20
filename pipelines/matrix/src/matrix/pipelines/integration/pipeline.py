@@ -12,10 +12,18 @@ def create_pipeline(**kwargs) -> Pipeline:
             node(
                 func=lambda x: x,
                 inputs=["integration.raw.rtx_kg2.nodes"],
-                outputs="integration.raw.bigquery.edges",
-                name="write_bigquery_data",
-                tags=["bigquery"],
+                outputs="integration.prm.rtx_kg2.nodes",
+                name="write_rtx_kg2_nodes",
+                tags=["rtx_kg2"],
             ),
+            # NOTE: Dataset is corrupt
+            # node(
+            #     func=lambda x: x,
+            #     inputs=["integration.raw.rtx_kg2.edges"],
+            #     outputs="integration.prm.rtx_kg2.edges",
+            #     name="write_rtx_kg2_edges",
+            #     tags=["rtx_kg2"],
+            # ),
             # # Write nodes
             # node(
             #     func=nodes.extract_nodes,

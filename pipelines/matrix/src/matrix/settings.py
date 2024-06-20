@@ -32,6 +32,7 @@ SESSION_STORE_ARGS = {"path": str(Path(__file__).parents[2])}
 # Class that manages how configuration is loaded.
 from .resolvers import merge_dicts
 from kedro.config import OmegaConfigLoader  # noqa: E402
+from omegaconf.resolvers import oc
 
 CONFIG_LOADER_CLASS = OmegaConfigLoader
 # Keyword arguments to pass to the `CONFIG_LOADER_CLASS` constructor.
@@ -51,6 +52,7 @@ CONFIG_LOADER_ARGS = {
     },
     "custom_resolvers": {
         "merge": merge_dicts,
+        "oc.env": oc.env,
     },
 }
 

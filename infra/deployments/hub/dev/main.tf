@@ -19,7 +19,7 @@ module "compute_cluster" {
 resource "google_bigquery_dataset" "dataset" {
   for_each       = toset(["rtx-kg2", "robokop"])
   project        = module.bootstrap_data.content.project_id
-  dataset_id     = "kg-${replace(each.key, "-", "_")}"
+  dataset_id     = "kg_${replace(each.key, "-", "_")}"
   description    = "Dataset with nodes and edges for ${each.key}"
   location       = "EU"
 
