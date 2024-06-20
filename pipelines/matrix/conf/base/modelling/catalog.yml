@@ -26,9 +26,13 @@ modelling.raw.ground_truth.tn:
   <<: *_pandas_csv
   filepath: ${globals:paths.raw}/tn_pairs.txt
 
+modelling.int.known_pairs:
+  <<: *_pandas_parquet
+  filepath: ${globals:paths.int}/ground_truth_data/int_known_pairs
+
 modelling.prm.known_pairs:
   <<: *_pandas_parquet
-  filepath: ${globals:paths.int}/ground_truth_data/known_pairs
+  filepath: ${globals:paths.prm}/ground_truth_data/prm_known_pairs
 
 modelling.feat.rtx_kg2:
   <<: *_kg_dataset
