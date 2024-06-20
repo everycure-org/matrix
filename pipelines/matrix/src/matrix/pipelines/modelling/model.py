@@ -36,17 +36,23 @@ class ModelWrapper:
         raise NotImplementedError("ModelWrapper is used to house fitted estimators")
 
     def predict(self, X):
-        """Model predict method.
+        """Returns the predicted class.
 
         Args:
             X: input features
         """
-        return self._estimators[0].predict(X)  # TODO: Update to aggregate results
+        return self.predict_proba(X).argmax(axis=1)
 
     def predict_proba(self, X):
-        """Model predict_proba method.
+        """Method for probability scores of the ModelWrapper.
 
         Args:
             X: input features
+
+        Returns:
+            Aggregated probabilities scores of the individual models.
         """
-        raise NotImplementedError("Predict method not implemented yet")
+        all_preds = np.array(
+            [estimator.predict_proba(X) for estimator in self._estimators]
+        )
+        return np.apply_along_axis(self._agg_func, 0, all_preds)
