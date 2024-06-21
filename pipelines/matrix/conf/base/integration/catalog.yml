@@ -60,11 +60,13 @@ integration.model_input.treats:
         apoc.do.when(
           not exists((source)-[]->(target)), 
           'CALL apoc.create.relationship($source, $event.label, {}, $target) YIELD rel RETURN rel',
-          '',
+          'MATCH (source)-[rel]->(target) return rel',
           {event:event, source:source, target:target}
         ) YIELD value
+      CALL apoc.create.setRelProperties(value.rel, event.property_keys, event.property_values) YIELD rel as r
       RETURN count(*)
 
+#  CALL apoc.create.setRelProperties(rel, event.property_keys, event.property_values) YIELD rel as r
 #       CALL apoc.create.setRelProperties(rel, event.property_keys, event.property_values) YIELD rel as r
 
 # integration.prm.drugs:
