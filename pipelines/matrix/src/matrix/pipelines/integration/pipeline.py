@@ -8,11 +8,7 @@ import pandas as pd
 from pyspark.sql import DataFrame
 from pyspark.sql import functions as F
 
-
-def _create_nodes(df: DataFrame) -> DataFrame:
-    return df.withColumn(
-        "label", F.split(F.col("category"), ":", limit=2).getItem(1)
-    ).select("id", "label", "name")
+from refit.v1.core.inline_has_schema import has_schema
 
 
 def _create_int_pairs(raw_tp: pd.DataFrame, raw_tn: pd.DataFrame):
@@ -23,9 +19,51 @@ def _create_int_pairs(raw_tp: pd.DataFrame, raw_tn: pd.DataFrame):
     return pd.concat([raw_tp, raw_tn], axis="index").reset_index(drop=True)
 
 
+@has_schema(
+    schema={
+        "label": "string",
+        "id": "string",
+        "name": "string",
+        "property_keys": "array<string>",
+        "property_values": "array<string>",
+    },
+    allow_subset=True,
+)
+def _create_nodes(df: DataFrame) -> DataFrame:
+    return (
+        df.withColumn("label", F.split(F.col("category"), ":", limit=2).getItem(1))
+        .withColumn(
+            "properties",
+            F.create_map(F.lit("foo"), F.lit("bar"), F.lit("bar"), F.lit("foo")),
+        )
+        .withColumn("property_keys", F.map_keys(F.col("properties")))
+        .withColumn("property_values", F.map_values(F.col("properties")))
+    )
+
+
+@has_schema(
+    schema={
+        "label": "string",
+        "source_id": "string",
+        "target_id": "string",
+        "property_keys": "array<string>",
+        "property_values": "array<string>",
+    },
+    allow_subset=True,
+)
 def _create_pairs_neo(df: DataFrame):
-    return df.withColumn(
-        "label", F.when(F.col("y") == 1, "THREATS").otherwise("NOT_THREATS")
+    return (
+        df.withColumn(
+            "label", F.when(F.col("y") == 1, "THREATS").otherwise("NOT_THREATS")
+        )
+        .withColumn(
+            "properties",
+            F.create_map(F.lit("foo"), F.lit("bar"), F.lit("bar"), F.lit("foo")),
+        )
+        .withColumn("source_id", F.col("source"))
+        .withColumn("target_id", F.col("target"))
+        .withColumn("property_keys", F.map_keys(F.col("properties")))
+        .withColumn("property_values", F.map_values(F.col("properties")))
     )
 
 
@@ -64,7 +102,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 inputs=[
                     "integration.int.known_pairs@spark",
                 ],
-                outputs="integration.model_input.threats",
+                outputs="integration.model_input.treats",
                 name="create_neo4j_known_pairs",
             ),
             # NOTE: Dataset is corrupt
