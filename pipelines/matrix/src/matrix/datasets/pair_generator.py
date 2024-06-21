@@ -8,9 +8,7 @@ class DrugDiseasePairGenerator(abc.ABC):
     """Generator strategy class to represent drug-disease pairs generators."""
 
     @abc.abstractmethod
-    def generate(
-        self, graph: KnowledgeGraph, known_pairs: pd.DataFrame
-    ) -> pd.DataFrame:
+    def generate(self, known_pairs: pd.DataFrame) -> pd.DataFrame:
         """Function to generate drug-disease pairs from the knowledge graph.
 
         Args:
@@ -186,3 +184,19 @@ class ReplacementDrugDiseasePairGenerator(SingleLabelPairGenerator):
                         ]
                     )
         return unknown_data
+
+
+class GroundTruthPairs(DrugDiseasePairGenerator):
+    """Class representing ground truth drug-disease pairs."""
+
+    def generate(self, known_pairs: pd.DataFrame) -> pd.DataFrame:
+        """Function generating ground truth pairs.
+
+        Args:
+            graph: KnowledgeGraph instance.
+            known_pairs: Labelled ground truth drug-disease pairs dataset.
+
+        Returns:
+            Labelled ground truth drug-disease pairs dataset.
+        """
+        return known_pairs[["source", "target", "y"]]
