@@ -70,7 +70,6 @@ def make_test_predictions(
         transformers: Dictionary of trained transformers.
         model: Model making the predictions.
         features: List of features, may be regex specified.
-        target_col_name: Target column name.
         score_col_name: Probability score column name.
 
     Returns:
@@ -109,3 +108,15 @@ def evaluate_test_predictions(data: pd.DataFrame, evaluation: Evaluation) -> Any
         Evaluation report
     """
     return evaluation.evaluate(data)
+
+
+def consolidate_reports(*reports) -> dict:
+    """Function to consolidate reports into master report.
+
+    Args:
+        reports: tuples of (name, report) pairs.
+
+    Returns:
+        Dictionary representing consolidated report.
+    """
+    return [*reports]

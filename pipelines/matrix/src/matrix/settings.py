@@ -61,7 +61,8 @@ DYNAMIC_PIPELINES_MAPPING = {
         {"model_name": "xgc", "num_shards": 3},
     ],
     "evaluation": [
-        {"evaluation_name": "simple_classification"}
+        {"evaluation_name": "simple_ground_truth_classification"},
+        {"evaluation_name": "simple_ground_truth_classification"},
     ],  # [{"evaluation_name": "mrr"}, {"evaluation_name": "hitk"}],
 }
 
