@@ -1,3 +1,10 @@
 spark.sql.execution.arrow.pyspark.enabled: true
 spark.scheduler.mode: FAIR
-spark.jars.packages: org.neo4j:neo4j-connector-apache-spark_2.12:5.3.0_for_spark_3
+# OLD
+# spark.jars.packages: org.neo4j:neo4j-connector-apache-spark_2.12:5.3.0_for_spark_3,com.google.cloud.spark:spark-3.5-bigquery:0.39.0
+# NEW 
+spark.jars.packages: com.google.cloud.spark:spark-3.5-bigquery:0.39.0,com.google.cloud.bigdataoss:gcs-connector:hadoop3-2.2.23-shaded
+spark.hadoop.fs.gs.impl: com.google.cloud.hadoop.fs.gcs.GoogleHadoopFileSystem
+# spark.jars: https://storage.googleapis.com/hadoop-lib/gcs/gcs-connector-hadoop3-latest.jar
+# spark.hadoop.google.cloud.auth.service.account.enable: true
+# spark.hadoop.google.cloud.auth.service.account.json.keyfile:
