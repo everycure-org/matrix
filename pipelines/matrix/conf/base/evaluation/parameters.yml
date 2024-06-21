@@ -1,4 +1,4 @@
-# Base options
+# Base options (ground truth classification)
 _evaluation_options:
   generator:
     object: matrix.datasets.graph.RandomDrugDiseasePairGenerator

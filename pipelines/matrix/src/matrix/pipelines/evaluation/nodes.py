@@ -41,8 +41,6 @@ def generate_test_dataset(
     # TODO: Generator might be more advanced, e.g., it traverses known
     # edges to curate a realistic test dataset.
 
-    # TODO: From where do we get labels of the test dataset?
-
     return generator.generate(
         graph, pd.DataFrame([], columns=["source", "target", "y", "split"])
     )
@@ -56,6 +54,19 @@ def make_test_predictions(
     target_col_name: str,
     prediction_suffix: str = "_pred",
 ) -> pd.DataFrame:
+    """TO DO.
+
+    Args:
+        data: _description_
+        transformers: _description_
+        model: _description_
+        features: _description_
+        target_col_name: _description_
+        prediction_suffix: _description_. Defaults to "_pred".
+
+    Returns:
+        _description_
+    """
     # Apply transformers to data
     transformed = apply_transformers(data, transformers)
 
@@ -66,25 +77,25 @@ def make_test_predictions(
     return get_model_predictions(transformed, model, features, target_col_name)
 
 
-# TODO: Will have to move to other file
-class Evaluation(abc.ABC):
-    # Does this function need anything else to operate?
-    def evaluate(self, data: pd.DataFrame):
-        ...
+# # TODO: Will have to move to other file
+# class Evaluation(abc.ABC):
+#     # Does this function need anything else to operate?
+#     def evaluate(self, data: pd.DataFrame):
+#         ...
 
 
-class MRREvaluation(Evaluation):
-    # Does this function need anything else to operate?
-    def evaluate(self, data: pd.DataFrame):
-        # TODO: Implement here
-        return {"evaluation": "hitk"}
+# class MRREvaluation(Evaluation):
+#     # Does this function need anything else to operate?
+#     def evaluate(self, data: pd.DataFrame):
+#         # TODO: Implement here
+#         return {"evaluation": "hitk"}
 
 
-class HitKEvaluation(Evaluation):
-    # Does this function need anything else to operate?
-    def evaluate(self, data: pd.DataFrame):
-        # TODO: Implement here
-        return {"evaluation": "hitk"}
+# class HitKEvaluation(Evaluation):
+#     # Does this function need anything else to operate?
+#     def evaluate(self, data: pd.DataFrame):
+#         # TODO: Implement here
+#         return {"evaluation": "hitk"}
 
 
 # @has_schema(

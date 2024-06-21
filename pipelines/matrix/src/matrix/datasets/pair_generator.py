@@ -186,17 +186,22 @@ class ReplacementDrugDiseasePairGenerator(SingleLabelPairGenerator):
         return unknown_data
 
 
-class GroundTruthPairs(DrugDiseasePairGenerator):
-    """Class representing ground truth drug-disease pairs."""
+class GroundTruthTestPairs(DrugDiseasePairGenerator):
+    """Class representing ground truth test data."""
 
     def generate(self, known_pairs: pd.DataFrame) -> pd.DataFrame:
         """Function generating ground truth pairs.
 
         Args:
-            graph: KnowledgeGraph instance.
+            graph: KnowledgeGraph instance. !!!! Do we keep this in here?
             known_pairs: Labelled ground truth drug-disease pairs dataset.
 
         Returns:
             Labelled ground truth drug-disease pairs dataset.
         """
-        return known_pairs[["source", "target", "y"]]
+        # Restrict to test portion
+        is_test = known_pairs["split"].eq("TEST")
+        test_pairs = known_pairs[is_test]
+
+        # Return selected pairs
+        return known_pairs[["source", "target", "y", "split"]]
