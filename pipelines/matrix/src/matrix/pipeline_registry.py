@@ -32,4 +32,5 @@ def register_pipelines() -> Dict[str, Pipeline]:
     pipelines["embeddings"] = create_embeddings_pipeline()
     pipelines["fabricator"] = create_fabricator_pipeline()
     pipelines["integration"] = create_integration_pipeline()
+    pipelines["evaluation"] = create_evaluation_pipeline()
     return pipelines
