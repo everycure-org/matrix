@@ -1,0 +1,54 @@
+modelling.xg_balanced:
+    _overrides:
+      generator:
+        object: matrix.datasets.graph.ReplacementDrugDiseasePairGenerator
+        random_state: ${globals:random_state}
+        y_label: 2
+        n_replacements: 5
+        drug_flags:
+          - is_drug
+        disease_flags:
+          - is_disease
+
+      model_tuning_args:
+        tuner:
+          object: matrix.pipelines.modelling.tuning.NopTuner
+          estimator:
+            object: xgboost.XGBClassifier
+            random_state: ${globals:random_state}
+            base_score: null
+            booster: null
+            colsample_bylevel: null
+            colsample_bynode: null
+            colsample_bytree: null
+            eval_metric: null
+            gamma: null
+            grow_policy: null
+            interaction_constraints: null
+            lambda: 0.22771514878253768
+            learning_rate: 0.19671940250694903
+            max_bin: null
+            max_cat_threshold: null
+            max_cat_to_onehot: null
+            max_delta_step: null
+            max_depth: 7
+            max_leaves: null
+            min_child_weight: null
+            monotone_constraints: null
+            multi_strategy: null
+            n_jobs: null
+            num_parallel_tree: null
+            objective: multi:softprob
+            reg_alpha: null
+            reg_lambda: null
+            sampling_method: null
+            scale_pos_weight: null
+            subsample: null
+            validate_parameters: null
+            verbosity: null
+        features: # Features use regex, source_0, source_1, .., target_0, target_1
+          - source_+
+          - target_+
+        target_col_name: y
+          
+    model_options: ${merge:${.._model_options},${._overrides}}
