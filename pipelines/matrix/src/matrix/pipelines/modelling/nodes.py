@@ -332,11 +332,11 @@ def get_model_predictions(
     prediction_suffix: str = "_pred",
     enable_regex: str = True,
 ) -> pd.DataFrame:
-    """Function to run model predictions on input data.
+    """Function to run model class predictions on input data.
 
     Args:
         data: Data to predict on.
-        model: model.
+        model: Model making the predictions.
         features: List of features, may be regex specified.
         target_col_name: Target column name.
         prediction_suffix: Suffix to add to the prediction column, defaults to '_pred'.
