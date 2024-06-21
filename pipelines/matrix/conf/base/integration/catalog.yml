@@ -66,9 +66,6 @@ integration.model_input.treats:
       CALL apoc.create.setRelProperties(value.rel, event.property_keys, event.property_values) YIELD rel as r
       RETURN count(*)
 
-#  CALL apoc.create.setRelProperties(rel, event.property_keys, event.property_values) YIELD rel as r
-#       CALL apoc.create.setRelProperties(rel, event.property_keys, event.property_values) YIELD rel as r
-
 # integration.prm.drugs:
 #   <<: *_neo4j_ds
 #   metadata:
