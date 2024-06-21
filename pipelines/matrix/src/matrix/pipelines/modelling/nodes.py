@@ -15,7 +15,7 @@ from refit.v1.core.inline_has_schema import has_schema
 from refit.v1.core.unpack import unpack_params
 from refit.v1.core.make_list_regexable import make_list_regexable
 
-from matrix.datasets.graph import KnowledgeGraph, DrugDiseasePairGenerator
+from matrix.datasets.graph import KnowledgeGraph, SingleLabelPairGenerator
 from .model import ModelWrapper
 
 
@@ -143,7 +143,7 @@ def make_splits(
 def create_model_input_nodes(
     graph: KnowledgeGraph,
     splits: pd.DataFrame,
-    generator: DrugDiseasePairGenerator,
+    generator: SingleLabelPairGenerator,
 ) -> pd.DataFrame:
     """Function to enrich the splits with drug-disease pairs.
 
@@ -154,7 +154,7 @@ def create_model_input_nodes(
     Args:
         graph: Knowledge graph.
         splits: Data splits.
-        generator: DrugDiseasePairGenerator instance.
+        generator: SingleLabelPairGenerator instance.
 
     Returns:
         Data with enriched splits.
