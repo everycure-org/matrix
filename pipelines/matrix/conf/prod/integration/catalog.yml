@@ -2,31 +2,34 @@ _spark_csv_ds: &_spark_csv
   type: spark.SparkDataset
   file_format: csv
 
+_pandas_csv: &_pandas_csv
+  type:  pandas.CSVDataset
+
 _bigquery_ds: &_bigquery_ds
   type: matrix.datasets.gcp.BigQueryTableDataset
   project_id: ${oc.env:GCP_PROJECT_ID,mtrx-hub-dev-3of}
 
 integration.raw.rtx_kg2.nodes:
   <<: *_spark_csv
-  filepath: gs://silc-storage/KG/RTX_KG_v2-7-3/rtx_kg2_nodes.tsv
+  filepath: ${globals:gcs_bucket}/KG/RTX_KG_v2-7-3/rtx_kg2_nodes.tsv
   load_args:
     header: true
     sep: "\t"
 
 integration.raw.rtx_kg2.edges:
   <<: *_spark_csv
-  filepath: gs://silc-storage/KG/RTX_KG_v2-7-3/rtx_kg2_edges.tsv
+  filepath: ${globals:gcs_bucket}/KG/RTX_KG_v2-7-3/rtx_kg2_edges.tsv
   load_args:
     header: true
     sep: "\t"
 
-modelling.raw.ground_truth.tp:
+integration.raw.ground_truth.tp:
   <<: *_pandas_csv
   filepath: ${globals:gcs_bucket}/ground_truth_data/tp_pairs.txt
   load_args:
     sep: "\t"
 
-modelling.raw.ground_truth.tn:
+integration.raw.ground_truth.tn:
   <<: *_pandas_csv
   filepath: ${globals:gcs_bucket}/ground_truth_data/tn_pairs.txt
   load_args:

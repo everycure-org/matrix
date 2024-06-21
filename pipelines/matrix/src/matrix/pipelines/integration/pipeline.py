@@ -31,7 +31,11 @@ def _create_int_pairs(raw_tp: pd.DataFrame, raw_tn: pd.DataFrame):
 )
 def _create_nodes(df: DataFrame) -> DataFrame:
     return (
-        df.withColumn("label", F.split(F.col("category"), ":", limit=2).getItem(1))
+        df.filter(
+            (F.col("category") == "biolink:Disease")
+            | (F.col("category") == "biolink:Drug")
+        )
+        .withColumn("label", F.split(F.col("category"), ":", limit=2).getItem(1))
         .withColumn(
             "properties",
             F.create_map(F.lit("foo"), F.lit("bar"), F.lit("bar"), F.lit("foo")),
