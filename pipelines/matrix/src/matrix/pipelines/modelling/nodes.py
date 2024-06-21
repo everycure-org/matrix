@@ -15,7 +15,8 @@ from refit.v1.core.inline_has_schema import has_schema
 from refit.v1.core.unpack import unpack_params
 from refit.v1.core.make_list_regexable import make_list_regexable
 
-from matrix.datasets.graph import KnowledgeGraph, SingleLabelPairGenerator
+from matrix.datasets.graph import KnowledgeGraph
+from matrix.datasets.pair_generator import SingleLabelPairGenerator
 from .model import ModelWrapper
 
 

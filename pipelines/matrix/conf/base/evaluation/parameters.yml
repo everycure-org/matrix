@@ -1,10 +1,7 @@
 # Base options (ground truth classification)
 _evaluation_options:
   generator:
-    object: matrix.datasets.graph.RandomDrugDiseasePairGenerator
-    random_state: ${globals:random_state}
-    y_label: 2
-    n_unknown: 20
+    object: matrix.datasets.pair_generator.GroundTruthTestPairs
 
 
 # MRR

@@ -15,7 +15,8 @@ def _create_evaluation_pipeline(model: str, evaluation: str) -> Pipeline:
             node(
                 func=nodes.generate_test_dataset,
                 inputs=[
-                    "modelling.feat.rtx_kg2",  # this is actually the EC KG
+                    "modelling.feat.rtx_kg2",
+                    "modelling.model_input.splits",
                     f"params:evaluation.{evaluation}.evaluation_options.generator",
                 ],
                 outputs=f"evaluation.{model}.{evaluation}.prm.pairs",
@@ -24,7 +25,7 @@ def _create_evaluation_pipeline(model: str, evaluation: str) -> Pipeline:
             node(
                 func=nodes.make_test_predictions,
                 inputs=[
-                    f"evaluation.{model}.{evaluation}.prm.pairs",  # this is actually the EC KG
+                    f"evaluation.{model}.{evaluation}.prm.pairs",
                     f"modelling.{model}.model_input.transformers",
                     f"modelling.{model}.models.model",
                     f"params:modelling.{model}.model_options.model_tuning_args.features",

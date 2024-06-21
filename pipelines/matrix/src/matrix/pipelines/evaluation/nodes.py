@@ -12,15 +12,24 @@ from refit.v1.core.unpack import unpack_params
 from refit.v1.core.make_list_regexable import _extract_elements_in_list
 
 
-from matrix.datasets.graph import KnowledgeGraph, DrugDiseasePairGenerator
+from matrix.datasets.graph import KnowledgeGraph
+from matrix.datasets.pair_generator import DrugDiseasePairGenerator
 
 from matrix.pipelines.modelling.nodes import apply_transformers, get_model_predictions
 from matrix.pipelines.modelling.model import ModelWrapper
 
 
+@has_schema(
+    schema={
+        "source": "object",
+        "target": "object",
+        "y": "int",
+    },
+)
 @inject_object()
 def generate_test_dataset(
     graph: KnowledgeGraph,
+    known_pairs: pd.DataFrame,
     generator: DrugDiseasePairGenerator,
 ) -> pd.DataFrame:
     """Function to generate test dataset.
@@ -30,6 +39,7 @@ def generate_test_dataset(
 
     Args:
         graph: KnowledgeGraph instance
+        known_pairs: Labelled ground truth drug-disease pairs dataset.
         generator: Generator strategy
     Returns:
         Pairs dataframe
@@ -41,9 +51,7 @@ def generate_test_dataset(
     # TODO: Generator might be more advanced, e.g., it traverses known
     # edges to curate a realistic test dataset.
 
-    return generator.generate(
-        graph, pd.DataFrame([], columns=["source", "target", "y", "split"])
-    )
+    return generator.generate(graph, known_pairs)
 
 
 def make_test_predictions(
@@ -67,21 +75,33 @@ def make_test_predictions(
     Returns:
         _description_
     """
+    # breakpoint()
     # Apply transformers to data
     transformed = apply_transformers(data, transformers)
 
     # TODO: Or shall we split in 2 nodes?
     features = _extract_elements_in_list(transformed.columns, features, raise_exc=True)
-
+    breakpoint()
     # Make model predictions
     return get_model_predictions(transformed, model, features, target_col_name)
 
 
-# # TODO: Will have to move to other file
-# class Evaluation(abc.ABC):
-#     # Does this function need anything else to operate?
-#     def evaluate(self, data: pd.DataFrame):
-#         ...
+# TODO: Will have to move to other file
+class Evaluation(abc.ABC):
+    """_summary_.
+
+    Args:
+        abc: _description_
+    """
+
+    # Does this function need anything else to operate?
+    def evaluate(self, data: pd.DataFrame):
+        """_summary_.
+
+        Args:
+            data: _description_
+        """
+        ...
 
 
 # class MRREvaluation(Evaluation):

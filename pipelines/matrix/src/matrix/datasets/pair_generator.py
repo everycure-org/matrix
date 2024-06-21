@@ -2,6 +2,11 @@
 
 Module containing drug-disease pair generator
 """
+import abc
+import pandas as pd
+import random
+
+from matrix.datasets.graph import KnowledgeGraph
 
 
 class DrugDiseasePairGenerator(abc.ABC):
@@ -65,11 +70,13 @@ class RandomDrugDiseasePairGenerator(SingleLabelPairGenerator):
         Returns:
             DataFrame with unknown drug-disease pairs.
         """
+        # Extract ground truth positive training set
         known_data_set = {
             (drug, disease)
             for drug, disease in zip(known_pairs["source"], known_pairs["target"])
         }
 
+        # Generate unknown data
         unknown_data = []
         while len(unknown_data) < self._n_unknown:
             drug = random.choice(graph._drug_nodes)
@@ -126,7 +133,7 @@ class ReplacementDrugDiseasePairGenerator(SingleLabelPairGenerator):
             for drug, disease in zip(known_pairs["source"], known_pairs["target"])
         }
 
-        # Extract known positive training set
+        # Extract ground truth positive training set
         kp_train_pairs = known_pairs[
             (known_pairs["y"] == 1) & (known_pairs["split"] == "TRAIN")
         ]
@@ -189,11 +196,13 @@ class ReplacementDrugDiseasePairGenerator(SingleLabelPairGenerator):
 class GroundTruthTestPairs(DrugDiseasePairGenerator):
     """Class representing ground truth test data."""
 
-    def generate(self, known_pairs: pd.DataFrame) -> pd.DataFrame:
+    def generate(
+        self, graph: KnowledgeGraph, known_pairs: pd.DataFrame
+    ) -> pd.DataFrame:
         """Function generating ground truth pairs.
 
         Args:
-            graph: KnowledgeGraph instance. !!!! Do we keep this in here?
+            graph: KnowledgeGraph instance.
             known_pairs: Labelled ground truth drug-disease pairs dataset.
 
         Returns:
@@ -204,4 +213,4 @@ class GroundTruthTestPairs(DrugDiseasePairGenerator):
         test_pairs = known_pairs[is_test]
 
         # Return selected pairs
-        return known_pairs[["source", "target", "y", "split"]]
+        return test_pairs[["source", "target", "y", "split"]]
