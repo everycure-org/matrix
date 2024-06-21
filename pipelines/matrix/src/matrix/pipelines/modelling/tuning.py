@@ -41,7 +41,8 @@ class NopTuner(BaseEstimator, MetaEstimatorMixin):
         Returns:
             Fitted estimator.
         """
-        self.best_params_ = self._estimator.__dict__
+        self.best_params_ = self._estimator.get_params()
+
         return self._estimator
 
 

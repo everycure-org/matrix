@@ -2,19 +2,23 @@ modelling.xgc:
     _overrides:
       
       generator:
-        object: matrix.datasets.graph.RandomDrugDiseasePairGenerator
-        y_label: 2
+        object: matrix.datasets.graph.ReplacementDrugDiseasePairGenerator
         random_state: ${globals:random_state}
-        n_unknown: 100
+        y_label: 2
+        n_replacements: 2
+        drug_flags:
+          - is_drug
+          - is_ground_pos
+        disease_flags:
+          - is_disease
+
 
       model_tuning_args:
         tuner:
           object: matrix.pipelines.modelling.tuning.GaussianSearch
           estimator:
             object: xgboost.XGBClassifier
-            tree_method: hist
             random_state: ${globals:random_state}
-            # Question: Can we, e.g., define learning rate here as starting point?
           n_calls: 10
           dimensions:
             - object: skopt.space.Real

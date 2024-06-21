@@ -113,14 +113,14 @@ def _create_model_pipeline(model: str, num_shards: int) -> Pipeline:
                         name=f"get_{model}_model_predictions",
                     ),
                     node(
-                        func=nodes.get_model_performance,
+                        func=nodes.check_model_performance,
                         inputs={
                             "data": f"modelling.{model}.model_output.predictions",
                             "metrics": f"params:modelling.{model}.model_options.metrics",
                             "target_col_name": f"params:modelling.{model}.model_options.model_tuning_args.target_col_name",
                         },
                         outputs=f"modelling.{model}.reporting.metrics",
-                        name=f"get_{model}_model_performance",
+                        name=f"check_{model}_model_performance",
                     ),
                 ]
             ),
@@ -133,13 +133,22 @@ def create_pipeline(**kwargs) -> Pipeline:
     create_model_input = pipeline(
         [
             node(
+                func=nodes.create_int_pairs,
+                inputs=[
+                    "modelling.raw.ground_truth.tp",
+                    "modelling.raw.ground_truth.tn",
+                ],
+                outputs="modelling.int.known_pairs",
+                name="create_int_known_pairs",
+            ),
+            node(
                 func=nodes.create_feat_nodes,
                 inputs=[
                     "modelling.raw.rtx_kg2.nodes",
                     "embeddings.int.graphsage",
                     "params:modelling.drug_types",
                     "params:modelling.disease_types",
-                    "modelling.raw.fda_drugs",
+                    "modelling.int.known_pairs",
                 ],
                 outputs="modelling.feat.rtx_kg2",
                 name="create_feat_nodes",
@@ -148,8 +157,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 func=nodes.create_prm_pairs,
                 inputs=[
                     "modelling.feat.rtx_kg2",
-                    "modelling.raw.ground_truth.tp",
-                    "modelling.raw.ground_truth.tn",
+                    "modelling.int.known_pairs",
                 ],
                 outputs="modelling.prm.known_pairs",
                 name="create_prm_known_pairs",
