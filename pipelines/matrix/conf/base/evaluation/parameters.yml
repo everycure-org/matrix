@@ -1,14 +1,24 @@
 # Base options (ground truth classification)
-evaluation.simple_classification:
+evaluation.simple_ground_truth_classification:
   evaluation_options:
     generator:
       object: matrix.datasets.pair_generator.GroundTruthTestPairs
     evaluation:
-      object: matrix.pipelines.evaluation.evaluation.SimpleClassification 
+      object: matrix.pipelines.evaluation.evaluation.DiscreteMetrics 
       metrics:
         - object: sklearn.metrics.accuracy_score
         - object: sklearn.metrics.f1_score
       threshold: 0.5
+
+evaluation.continuous_ground_truth_classification:
+  evaluation_options:
+    generator:
+      object: matrix.datasets.pair_generator.GroundTruthTestPairs
+    evaluation:
+      object: matrix.pipelines.evaluation.evaluation.DiscreteMetrics 
+      metrics:
+        - object: sklearn.metrics.roc_auc_score
+        - object: sklearn.metrics.average_precision_score
 
 
 # # MRR
