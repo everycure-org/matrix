@@ -3,8 +3,6 @@
 Module containing knowledge graph representation and utilities.
 """
 import pandas as pd
-import abc
-import random
 
 from kedro_datasets.pandas import ParquetDataset
 

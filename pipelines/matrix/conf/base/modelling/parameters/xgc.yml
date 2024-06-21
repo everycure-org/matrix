@@ -2,7 +2,7 @@ modelling.xgc:
     _overrides:
       
       generator:
-        object: matrix.datasets.graph.ReplacementDrugDiseasePairGenerator
+        object: matrix.datasets.pair_generator.ReplacementDrugDiseasePairGenerator
         random_state: ${globals:random_state}
         y_label: 2
         n_replacements: 2
