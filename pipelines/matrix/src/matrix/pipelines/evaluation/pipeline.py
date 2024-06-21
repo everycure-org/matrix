@@ -29,7 +29,6 @@ def _create_evaluation_pipeline(model: str, evaluation: str) -> Pipeline:
                     f"modelling.{model}.model_input.transformers",
                     f"modelling.{model}.models.model",
                     f"params:modelling.{model}.model_options.model_tuning_args.features",
-                    f"params:modelling.{model}.model_options.model_tuning_args.target_col_name",
                 ],
                 outputs=f"evaluation.{model}.{evaluation}.model_output.predictions",
                 name=f"create_{model}_{evaluation}_model_predictions",

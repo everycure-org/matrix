@@ -213,4 +213,4 @@ class GroundTruthTestPairs(DrugDiseasePairGenerator):
         test_pairs = known_pairs[is_test]
 
         # Return selected pairs
-        return test_pairs[["source", "target", "y", "split"]]
+        return test_pairs
