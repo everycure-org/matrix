@@ -49,6 +49,9 @@ integration.model_input.nodes:
       CALL apoc.create.addLabels(n, [event.label]) YIELD node
       CALL apoc.create.setProperties(n, event.property_keys, event.property_values) YIELD node AS n2
       RETURN node
+  load_args:
+    query: > 
+      MATCH (n) RETURN n.id AS id, n.label AS category
 
 integration.model_input.treats:
   <<: *_neo4j_ds
@@ -66,33 +69,24 @@ integration.model_input.treats:
       CALL apoc.create.setRelProperties(value.rel, event.property_keys, event.property_values) YIELD rel as r
       RETURN count(*)
   load_args:
+    schema:
+      object: pyspark.sql.types.StructType
+      fields:
+        - object: pyspark.sql.types.StructField
+          name: source
+          dataType: 
+            object: pyspark.sql.types.StringType
+          nullable: False
+        - object: pyspark.sql.types.StructField
+          name: y
+          dataType: 
+            object: pyspark.sql.types.BooleanType
+          nullable: False
+        - object: pyspark.sql.types.StructField
+          name: target
+          dataType: 
+            object: pyspark.sql.types.StringType
+          nullable: False
     query: >
-      MATCH (source:Drug {id})-[]->(target:Disease {id})
-
-# integration.prm.drugs:
-#   <<: *_neo4j_ds
-#   metadata:
-#     labels: ":Drug"
-#     node.keys: id
-
-# integration.prm.diseases:
-#   <<: *_neo4j_ds
-#   metadata:
-#     labels: ":Disease"
-#     node.keys: id
-
-# # TODO: Verify if we can align with Biolink
-# integration.prm.treats:
-#   <<: *_neo4j_ds
-#   metadata:
-#     relationship: TREATS
-#     relationship.save.strategy: keys
-#     relationship.source.save.mode: overwrite
-#     relationship.source.labels: ":Drug"
-#     relationship.source.node.keys: source_id:id
-#     relationship.target.save.mode: overwrite
-#     relationship.target.labels: ":Disease"
-#     relationship.target.node.keys: target_id:id
-
-# integration.prm.pypher:
-#   <<: *_neo4j_ds
+      MATCH (drug:Drug)-[r]->(disease:Disease) 
+      RETURN drug.id as source, toBoolean(r.treats) as y, disease.id as target

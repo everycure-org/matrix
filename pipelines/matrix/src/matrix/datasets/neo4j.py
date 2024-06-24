@@ -10,6 +10,9 @@ from kedro.io.core import Version
 from kedro_datasets.spark import SparkDataset
 
 
+from refit.v1.core.inject import _parse_for_objects
+
+
 class Neo4JSparkDataset(SparkDataset):
     """Dataset to load and save data from Neo4J.
 
@@ -90,10 +93,13 @@ class Neo4JSparkDataset(SparkDataset):
         self._url = url
         self._credentials = deepcopy(credentials) or {}
 
+        self._load_args = deepcopy(load_args) or {}
+        self._df_schema = self._load_args.pop("schema", None)
+
         super().__init__(
             filepath="filepath",
             save_args=save_args,
-            load_args=load_args,
+            load_args=self._load_args,
             credentials=credentials,
             version=version,
             metadata=metadata,
@@ -102,14 +108,18 @@ class Neo4JSparkDataset(SparkDataset):
     def _load(self) -> Any:
         spark_session = SparkSession.builder.getOrCreate()
 
-        return (
+        load_obj = (
             spark_session.read.format("org.neo4j.spark.DataSource")
             .option("database", self._database)
             .option("url", self._url)
             .options(**self._credentials)
             .options(**self._load_args)
-            .load()
         )
+
+        if self._df_schema:
+            load_obj = load_obj.schema(_parse_for_objects(self._df_schema))
+
+        return load_obj.load()
 
     def _save(self, data: DataFrame) -> None:
         (

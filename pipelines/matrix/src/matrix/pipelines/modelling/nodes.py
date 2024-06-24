@@ -4,6 +4,8 @@ import pandas as pd
 import numpy as np
 import json
 
+from pyspark.sql import DataFrame
+
 from sklearn.model_selection._split import _BaseKFold
 from sklearn.impute._base import _BaseImputer
 from sklearn.base import BaseEstimator
@@ -29,11 +31,11 @@ from .model import ModelWrapper
     allow_subset=True,
 )
 def create_feat_nodes(
-    raw_nodes: pd.DataFrame,
+    raw_nodes: DataFrame,
     embeddings: pd.DataFrame,
+    known_pairs: DataFrame,
     drug_types: List[str],
     disease_types: List[str],
-    known_pairs: pd.DataFrame,
 ) -> pd.DataFrame:
     """Add features for nodes.
 
@@ -42,21 +44,22 @@ def create_feat_nodes(
     Args:
         raw_nodes: Raw nodes data.
         embeddings: Embeddings data.
+        known_pairs: Ground truth data.
         drug_types: List of drug types.
         disease_types: List of disease types.
-        known_pairs: Ground truth data.
 
     Returns:
         Nodes enriched with features.
     """
     # Merge embeddings
-    raw_nodes = raw_nodes.merge(embeddings, on="id", how="left")
+    raw_nodes = raw_nodes.toPandas().merge(embeddings, on="id", how="left")
 
     # Add drugs and diseases types flags
     raw_nodes["is_drug"] = raw_nodes["category"].apply(lambda x: x in drug_types)
     raw_nodes["is_disease"] = raw_nodes["category"].apply(lambda x: x in disease_types)
 
     # Add flag for set of drugs appearing in ground truth positive set
+    known_pairs = known_pairs.toPandas()
     ground_pos = known_pairs[known_pairs["y"].eq(1)]
     ground_pos_drug_ids = list(ground_pos["source"].unique())
     ground_pos_disease_ids = list(ground_pos["target"].unique())
