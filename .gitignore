@@ -1,5 +1,20 @@
-venv
+# OS
 *.DS_Store
+.ruff_cache/
+**/.testmondata*
+
+
+# IDE
 .vscode/
+
+# Data
+data/
 neo4j_db/
 
+# python
+**/.venv/
+**/venv/
+
+# terraform
+**/.terraform/
+**/.terragrunt-cache/

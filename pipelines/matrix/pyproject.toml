@@ -2,10 +2,15 @@
 requires = [ "setuptools",]
 build-backend = "setuptools.build_meta"
 
+[tool.setuptools.dynamic.dependencies]
+ file = "requirements.txt"
+
 [tool.pytest.ini_options]
 pythonpath = "src"
 addopts = [
     "--import-mode=importlib",
+    "--ignore=packages",
+
 ]
 
 [project]
@@ -25,16 +30,6 @@ example_pipeline = "False"
 source_dir = "src"
 
 [project.entry-points."kedro.hooks"]
-
-[tool.setuptools.dynamic.dependencies]
-file = "requirements.txt"
-
-[tool.setuptools.dynamic.version]
-attr = "matrix.__version__"
-
-[tool.setuptools.packages.find]
-where = [ "src",]
-namespaces = false
 
 [tool.ruff]
 lint.select = ["D"]

@@ -1,0 +1,17 @@
+runtime: python39
+
+handlers:
+- url: /
+  static_files: site/index.html
+  upload: site/index.html
+
+# needs to be before the below which is a catch-all
+# this one maps e.g. `/FAQ/` to `/FAQ/index.html`. Because AppEngine is an application
+# engine (ha!) it doesn't automatically do index.html mappings
+- url: /(.*)\/$
+  static_files: site/\1/index.html
+  upload: site/(.*)/index.html
+
+- url: /(.*)
+  static_files: site/\1
+  upload: site/(.*)

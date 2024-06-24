@@ -1,0 +1,56 @@
+name: Documentation Page Deployment
+
+# FUTURE
+# This will eventually need to be turned into a call'able workflow_call version where we
+# call this for each terragrunt module that should be deployed depending on the path
+# changed in the repo or the branch we're on. For now it's hard-coded to `hub/dev`
+
+
+on:
+  workflow_dispatch: {}
+  push:
+    branches:
+      - main
+    paths: 
+      - docs/**
+      - .github/workflows/docs-deploy.yml
+
+defaults:
+  run: 
+    working-directory: docs/
+env:
+  # log into gcp
+  project_id: 'mtrx-hub-dev-3of'
+  workload_identity_provider: 'projects/938607797672/locations/global/workloadIdentityPools/matrix-pool/providers/matrix-gh-provider'
+  service_account: 'sa-github-actions-rw@mtrx-hub-dev-3of.iam.gserviceaccount.com'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    name: Deploy Docs
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+
+    steps:
+      - name: 'Checkout'
+        uses: actions/checkout@main
+      - uses: 'google-github-actions/auth@v2'
+        with:
+          project_id: ${{env.project_id}}
+          workload_identity_provider: ${{env.workload_identity_provider}}
+          service_account: ${{env.service_account}}
+      
+      - run: |
+          pip install uv
+          make build #builds the static files in site/
+
+      # https://github.com/google-github-actions/deploy-appengine
+      - id: 'deploy'
+        uses: 'google-github-actions/deploy-appengine@v2'
+        with:
+          working_directory: docs/ #ignores above setting
+
+      # Example of using the output
+      - id: 'test'
+        run: 'curl "${{ steps.deploy.outputs.version_url }}"'

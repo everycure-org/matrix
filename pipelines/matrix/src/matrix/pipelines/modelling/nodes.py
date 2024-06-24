@@ -24,9 +24,37 @@ plt.switch_backend("Agg")
 
 @has_schema(
     schema={
+        "source": "object",
+        "target": "object",
+        "y": "numeric",
+    },
+    allow_subset=True,
+)
+def create_int_pairs(raw_tp: pd.DataFrame, raw_tn: pd.DataFrame) -> pd.DataFrame:
+    """Create intermediate pairs dataset.
+
+    Args:
+        raw_tp: Raw ground truth positive data.
+        raw_tn: Raw ground truth negative data.
+
+    Returns:
+        Combined ground truth positive and negative data.
+    """
+    # Add label
+    raw_tp["y"] = 1
+    raw_tn["y"] = 0
+
+    # Concat
+    result = pd.concat([raw_tp, raw_tn], axis="index").reset_index(drop=True)
+
+    return result
+
+
+@has_schema(
+    schema={
         "is_drug": "bool",
         "is_disease": "bool",
-        "is_fda_approved": "bool",
+        "is_ground_pos": "bool",
         "embedding": "object",
     },
     allow_subset=True,
@@ -36,16 +64,18 @@ def create_feat_nodes(
     embeddings: pd.DataFrame,
     drug_types: List[str],
     disease_types: List[str],
-    fda_list: List[str],
+    known_pairs: pd.DataFrame,
 ) -> pd.DataFrame:
     """Add features for nodes.
+
+    FUTURE: Add flags for official set of drugs and diseases when we have them.
 
     Args:
         raw_nodes: Raw nodes data.
         embeddings: Embeddings data.
         drug_types: List of drug types.
         disease_types: List of disease types.
-        fda_list: List of FDA approved drugs.
+        known_pairs: Ground truth data.
 
     Returns:
         Nodes enriched with features.
@@ -53,10 +83,17 @@ def create_feat_nodes(
     # Merge embeddings
     raw_nodes = raw_nodes.merge(embeddings, on="id", how="left")
 
-    # Add flags
+    # Add drugs and diseases types flags
     raw_nodes["is_drug"] = raw_nodes["category"].apply(lambda x: x in drug_types)
     raw_nodes["is_disease"] = raw_nodes["category"].apply(lambda x: x in disease_types)
-    raw_nodes["is_fda_approved"] = raw_nodes["id"].apply(lambda x: x in fda_list)
+
+    # Add flag for set of drugs appearing in ground truth positive set
+    ground_pos = known_pairs[known_pairs["y"].eq(1)]
+    ground_pos_drug_ids = list(ground_pos["source"].unique())
+    ground_pos_disease_ids = list(ground_pos["target"].unique())
+    raw_nodes["is_ground_pos"] = raw_nodes["id"].isin(
+        ground_pos_drug_ids + ground_pos_disease_ids
+    )
 
     return raw_nodes
 
@@ -72,35 +109,28 @@ def create_feat_nodes(
     allow_subset=True,
 )
 def create_prm_pairs(
-    graph: KnowledgeGraph, raw_tp: pd.DataFrame, raw_tn: pd.DataFrame
+    graph: KnowledgeGraph,
+    data: pd.DataFrame,
 ) -> pd.DataFrame:
     """Create primary pairs dataset.
 
     Args:
         graph: Knowledge graph.
-        raw_tp: Raw true positive data.
-        raw_tn: Raw true negative data.
+        data: Pairs dataset to enrich with embeddings.
 
     Returns:
-        Primary pairs dataset.
+        Ground truth data enriched with embeddings.
     """
-    # Add label
-    raw_tp["y"] = 1
-    raw_tn["y"] = 0
-
-    # Concat
-    result = pd.concat([raw_tp, raw_tn], axis="index").reset_index(drop=True)
-
     # Add embeddings
-    result["source_embedding"] = result.apply(
+    data["source_embedding"] = data.apply(
         lambda row: graph._embeddings[row.source], axis=1
     )
-    result["target_embedding"] = result.apply(
+    data["target_embedding"] = data.apply(
         lambda row: graph._embeddings[row.target], axis=1
     )
 
-    # Return concatenated data
-    return result
+    # Return enriched data
+    return data
 
 
 @inject_object()
@@ -150,7 +180,7 @@ def create_model_input_nodes(
 ) -> pd.DataFrame:
     """Function to enrich the splits with drug-disease pairs.
 
-    The gerator is used to enrich the dataset with unknown drug-disease
+    The generator is used to enrich the dataset with unknown drug-disease
     pairs. If a `IterativeDrugDiseasePair` generator is provided, the splits
     dataset is replicated.
 
@@ -350,13 +380,16 @@ def get_model_predictions(
 
 
 @inject_object()
-def get_model_performance(
+def check_model_performance(
     data: pd.DataFrame,
     metrics: List[callable],
     target_col_name: str,
     prediction_suffix: str = "_pred",
 ) -> Dict:
-    """Function to evaluate model performance.
+    """Function to evaluate model performance on the training data and ground truth test data.
+
+    NOTE: This function only provides a partial indication of model performance,
+    primarily for checking that a model has been successfully trained.
 
     Args:
         data: Data to evaluate.
@@ -369,19 +402,16 @@ def get_model_performance(
     """
     report = {}
 
-    for metric in metrics:
+    for name, func in metrics.items():
         for split in ["TEST", "TRAIN"]:
             split_index = data["split"].eq(split)
             y_true = data.loc[split_index, target_col_name]
-            y_prediction = data.loc[split_index, target_col_name + prediction_suffix]
+            y_pred = data.loc[split_index, target_col_name + prediction_suffix]
 
             # Execute metric
-            # FUTURE: This currently mergers the unknown and known classes
-            report[f"{split.lower()}_{metric.__name__}"] = metric(
-                y_true == 1, y_prediction == 1
-            ).item()
+            report[f"{split.lower()}_{name}"] = func(y_true, y_pred)
 
-    return json.loads(json.dumps(report))
+    return json.loads(json.dumps(report, default=float))
 
 
 def consolidate_reports(*reports) -> dict:
