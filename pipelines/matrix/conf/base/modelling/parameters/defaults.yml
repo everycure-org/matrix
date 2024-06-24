@@ -26,6 +26,10 @@ _model_options:
     random_state: ${globals:random_state}
     y_label: 2
     n_replacements: 2
+    drug_flags:
+      - is_drug
+    disease_flags:
+      - is_disease
 
   # Defines set of transformers applied to the data prior to model
   # training, each of the should be a sklearn transformer.
@@ -59,4 +63,10 @@ _model_options:
 
   # Defines metrics to be used to evaluate the model.
   metrics:
-    - object: sklearn.metrics.f1_score
+    accuracy:
+      object: sklearn.metrics.accuracy_score
+    macro_f1:
+      object: matrix.pipelines.modelling.utils.partial_
+      func:
+        object: sklearn.metrics.f1_score
+      average: macro
