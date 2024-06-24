@@ -1,12 +1,21 @@
 _pandas_csv: &_pandas_csv
   type:  pandas.CSVDataset
 
+_pandas_parquet: &_pandas_parquet
+  type: pandas.ParquetDataset
+
 _spark_csv_ds: &_spark_csv
   type: spark.SparkDataset
   file_format: csv
   load_args:
     header: true
     sep: ","
+
+_spark_parquet_ds: &_spark_parquet
+  type: spark.SparkDataset
+  file_format: parquet
+  save_args:
+    mode: overwrite
 
 _neo4j_ds: &_neo4j_ds
   type: matrix.datasets.neo4j.Neo4JSparkDataset
@@ -16,9 +25,21 @@ _neo4j_ds: &_neo4j_ds
   save_args:
     mode: "overwrite"
   
-integration.raw.rtx_kg2.nodes:
+integration.raw.rtx_kg2.nodes@pandas:
+  <<: *_pandas_csv
+  filepath: ${globals:paths.raw}/rtx_kg2_nodes.csv
+  
+integration.raw.rtx_kg2.nodes@spark:
   <<: *_spark_csv
   filepath: ${globals:paths.raw}/rtx_kg2_nodes.csv
+
+integration.raw.rtx_kg2.edges@pandas:
+  <<: *_pandas_csv
+  filepath: ${globals:paths.raw}/rtx_kg2_edges.csv
+
+integration.raw.rtx_kg2.edges@spark:
+  <<: *_spark_csv
+  filepath: ${globals:paths.raw}/rtx_kg2_edges.csv
 
 integration.raw.ground_truth.tp:
   <<: *_pandas_csv
@@ -28,17 +49,21 @@ integration.raw.ground_truth.tn:
   <<: *_pandas_csv
   filepath: ${globals:paths.raw}/tn_pairs.txt
 
-integration.raw.rtx_kg2.edges:
-  <<: *_spark_csv
-  filepath: ${globals:paths.raw}/rtx_kg2_edges.csv
-
 integration.int.known_pairs@pandas:
-  <<: *_pandas_csv
-  filepath: ${globals:paths.int}/ground_truth.csv
+  <<: *_pandas_parquet
+  filepath: ${globals:paths.int}/ground_truth
 
 integration.int.known_pairs@spark:
-  <<: *_spark_csv
-  filepath: ${globals:paths.int}/ground_truth.csv
+  <<: *_spark_parquet
+  filepath: ${globals:paths.int}/ground_truth
+
+integration.prm.rtx_kg2.nodes:
+  <<: *_spark_parquet
+  filepath: ${globals:paths.prm}/rtx_kg2/nodes
+
+integration.prm.rtx_kg2.edges:
+  <<: *_spark_parquet
+  filepath: ${globals:paths.prm}/rtx_kg2/nodes
 
 integration.model_input.nodes:
   <<: *_neo4j_ds
@@ -51,7 +76,7 @@ integration.model_input.nodes:
       RETURN node
   load_args:
     query: > 
-      MATCH (n) RETURN n.id AS id, n.label AS category
+      MATCH (n) RETURN n.id AS id, 'biolink:' + labels(n)[0] AS category
 
 integration.model_input.treats:
   <<: *_neo4j_ds
@@ -80,7 +105,7 @@ integration.model_input.treats:
         - object: pyspark.sql.types.StructField
           name: y
           dataType: 
-            object: pyspark.sql.types.BooleanType
+            object: pyspark.sql.types.LongType
           nullable: False
         - object: pyspark.sql.types.StructField
           name: target
@@ -88,5 +113,5 @@ integration.model_input.treats:
             object: pyspark.sql.types.StringType
           nullable: False
     query: >
-      MATCH (drug:Drug)-[r]->(disease:Disease) 
-      RETURN drug.id as source, toBoolean(r.treats) as y, disease.id as target
+      MATCH (drug:Drug)-[r:TREATS|NOT_TREATS]->(disease:Disease) 
+      RETURN drug.id as source, toInteger(r.treats) as y, disease.id as target

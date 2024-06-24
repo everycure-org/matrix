@@ -68,9 +68,14 @@ jobs:
           key: testmon=${{ github.ref_name }}-${{ matrix.python-version }}
           restore-keys: testmon=${{ matrix.python-version }}-main
           save-always: true
+      
       - name: Run unit tests 
         run: |
           .venv/bin/pytest --testmon -v tests/
+
+      # TODO: Run docker-compose
+      # TODO: Add run of integration
+      
       - name: Run integration tests 
         run: |
            .venv/bin/kedro run -p fabricator

@@ -148,7 +148,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 func=nodes.create_prm_pairs,
                 inputs=[
                     "modelling.feat.rtx_kg2",
-                    "modelling.int.known_pairs",
+                    "integration.model_input.treats",
                 ],
                 outputs="modelling.prm.known_pairs",
                 name="create_prm_known_pairs",

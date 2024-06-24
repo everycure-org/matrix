@@ -58,6 +58,8 @@ def create_feat_nodes(
     raw_nodes["is_drug"] = raw_nodes["category"].apply(lambda x: x in drug_types)
     raw_nodes["is_disease"] = raw_nodes["category"].apply(lambda x: x in disease_types)
 
+    # breakpoint()
+
     # Add flag for set of drugs appearing in ground truth positive set
     known_pairs = known_pairs.toPandas()
     ground_pos = known_pairs[known_pairs["y"].eq(1)]
@@ -82,7 +84,7 @@ def create_feat_nodes(
 )
 def create_prm_pairs(
     graph: KnowledgeGraph,
-    data: pd.DataFrame,
+    data: DataFrame,
 ) -> pd.DataFrame:
     """Create primary pairs dataset.
 
@@ -94,6 +96,7 @@ def create_prm_pairs(
         Ground truth data enriched with embeddings.
     """
     # Add embeddings
+    data = data.toPandas()
     data["source_embedding"] = data.apply(
         lambda row: graph._embeddings[row.source], axis=1
     )

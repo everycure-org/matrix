@@ -41,11 +41,7 @@ def create_nodes(df: DataFrame) -> DataFrame:
         df: Nodes dataframe
     """
     return (
-        df.filter(
-            (F.col("category") == "biolink:Disease")
-            | (F.col("category") == "biolink:Drug")
-        )
-        .withColumn("label", F.split(F.col("category"), ":", limit=2).getItem(1))
+        df.withColumn("label", F.split(F.col("category"), ":", limit=2).getItem(1))
         .withColumn(
             "properties",
             F.create_map(F.lit("name"), F.col("name")),
@@ -65,10 +61,14 @@ def create_nodes(df: DataFrame) -> DataFrame:
     },
     allow_subset=True,
 )
-def create_treats(df: DataFrame):
+def create_treats(nodes: DataFrame, df: DataFrame):
     """Function to construct treats relatonship.
 
+    NOTE: This function requies the nodes dataset, as the nodes should be
+    written _prior_ to the relationships.
+
     Args:
+        nodes: nodes dataset
         df: Ground truth dataset
     """
     return (
@@ -77,7 +77,7 @@ def create_treats(df: DataFrame):
         )
         .withColumn(
             "properties",
-            F.create_map(F.lit("treats"), F.col("y")),
+            F.create_map(F.lit("treats"), F.col("y"), F.lit("foo"), F.lit("bar")),
         )
         .withColumn("source_id", F.col("source"))
         .withColumn("target_id", F.col("target"))

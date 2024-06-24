@@ -3,8 +3,10 @@ install:
 
 lock:
 	uv pip compile requirements.in > requirements.txt
+
 test:
-        pytest --testmon -v tests/
+	pytest --testmon -v tests/
+
 integration_test:
 	kedro run -p fabricator
 	kedro run
