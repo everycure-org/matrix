@@ -73,10 +73,7 @@ jobs:
         run: |
           .venv/bin/pytest --testmon -v tests/
 
-      # TODO: Run docker-compose
-      # TODO: Add run of integration
-      
-      - name: Run integration tests 
+      - name: Start docker-compose
+        working-directory: .
         run: |
-           .venv/bin/kedro run -p fabricator
-           .venv/bin/kedro run
+          docker-compose up --abort-on-container-exit --exit-code-from pipeline_test

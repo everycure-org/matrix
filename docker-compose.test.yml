@@ -1,0 +1,8 @@
+services:
+  pipeline_test:
+    build: "pipelines/matrix"
+    entrypoint: |
+      kedro run -p test --runner ThreadRunner
+    depends_on:
+      neo4j-start-up:
+        condition: service_completed_successfully
