@@ -42,7 +42,7 @@ integration.int.known_pairs@spark:
 
 integration.model_input.nodes:
   <<: *_neo4j_ds
-  metadata:
+  save_args:
     query: > 
       MERGE (n {id: event.id}) 
       WITH event, n
@@ -52,7 +52,7 @@ integration.model_input.nodes:
 
 integration.model_input.treats:
   <<: *_neo4j_ds
-  metadata:
+  save_args:
     query: > 
       MATCH (source:Drug {id: event.source_id}), (target:Disease {id: event.target_id})
       WITH source, target, event
@@ -65,6 +65,9 @@ integration.model_input.treats:
         ) YIELD value
       CALL apoc.create.setRelProperties(value.rel, event.property_keys, event.property_values) YIELD rel as r
       RETURN count(*)
+  load_args:
+    query: >
+      MATCH (source:Drug {id})-[]->(target:Disease {id})
 
 # integration.prm.drugs:
 #   <<: *_neo4j_ds

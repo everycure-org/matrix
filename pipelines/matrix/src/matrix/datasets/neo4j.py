@@ -107,6 +107,8 @@ class Neo4JSparkDataset(SparkDataset):
             .option("database", self._database)
             .option("url", self._url)
             .options(**self._credentials)
+            .options(**self._load_args)
+            .load()
         )
 
     def _save(self, data: DataFrame) -> None:
@@ -114,39 +116,38 @@ class Neo4JSparkDataset(SparkDataset):
             data.write.format("org.neo4j.spark.DataSource")
             .option("database", self._database)
             .option("url", self._url)
-            .option("batch.size", 10000)
             .options(**self._credentials)
-            .options(**self.metadata)
-            .save(**self._save_args)
+            .options(**self._save_args)
+            .save(**{"mode": "overwrite"})
         )
 
 
-def cypher_query(query: Union[str, Callable], schema: Optional[StructType] = None):
-    """Decorator to specify Cypher query for Neo4J dataset.
+# def cypher_query(query: Union[str, Callable], schema: Optional[StructType] = None):
+#     """Decorator to specify Cypher query for Neo4J dataset.
 
-    The Cypher query annotator is required to use for nodes that read datasets of
-    the Neo4JSparkDataset type. The `query` argument can either be a string representing
-    a Cypher query, or a callable that yields the Cypher query. The callable will be passed
-    all of the arguments passed into the node, such that they can be used to interpolate the query.
+#     The Cypher query annotator is required to use for nodes that read datasets of
+#     the Neo4JSparkDataset type. The `query` argument can either be a string representing
+#     a Cypher query, or a callable that yields the Cypher query. The callable will be passed
+#     all of the arguments passed into the node, such that they can be used to interpolate the query.
 
-    Args:
-        query: Cypher query to use.
-        schema: Optional PySpark [schema](https://neo4j.com/docs/spark/current/read/define-schema/) to convert to.
-    """
+#     Args:
+#         query: Cypher query to use.
+#         schema: Optional PySpark [schema](https://neo4j.com/docs/spark/current/read/define-schema/) to convert to.
+#     """
 
-    def decorate(func):
-        @wraps(func)
-        def wrapper(read_obj, *args, **kwargs):
-            if callable(query):
-                read_obj.option("query", query(*args, **kwargs))
-            else:
-                read_obj.option("query", query)
+#     def decorate(func):
+#         @wraps(func)
+#         def wrapper(read_obj, *args, **kwargs):
+#             if callable(query):
+#                 read_obj.option("query", query(*args, **kwargs))
+#             else:
+#                 read_obj.option("query", query)
 
-            if schema:
-                read_obj.schema(schema)
+#             if schema:
+#                 read_obj.schema(schema)
 
-            return func(read_obj.load(), *args, **kwargs)
+#             return func(read_obj.load(), *args, **kwargs)
 
-        return wrapper
+#         return wrapper
 
-    return decorate
+#     return decorate

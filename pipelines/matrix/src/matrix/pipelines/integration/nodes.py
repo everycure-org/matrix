@@ -1,88 +1,86 @@
 """Nodes for the ingration pipeline."""
-from typing import List
-from datetime import datetime
+import pandas as pd
 
 import pyspark.sql.functions as F
 from pyspark.sql import DataFrame
-from pyspark.sql.types import StructType, StringType, StructField
 
 from refit.v1.core.inline_has_schema import has_schema
-from matrix.datasets.neo4j import cypher_query
 
 
-@has_schema(
-    schema={
-        "id": "string",
-    },
-    allow_subset=True,
-    relax=True,
-)
-def extract_nodes(raw_nodes: DataFrame, types: List[str]) -> DataFrame:
-    """Function to extract nodes with given type.
+def create_int_pairs(raw_tp: pd.DataFrame, raw_tn: pd.DataFrame):
+    """Create intermediate pairs dataset.
 
     Args:
-        raw_nodes: Raw nodes DataFrame.
-        types: List of types to filter.
+        raw_tp: Raw ground truth positive data.
+        raw_tn: Raw ground truth negative data.
+
+    Returns:
+        Combined ground truth positive and negative data.
     """
-    return raw_nodes.filter(F.col("category").isin(types))
+    raw_tp["y"] = 1
+    raw_tn["y"] = 0
+
+    # Concat
+    return pd.concat([raw_tp, raw_tn], axis="index").reset_index(drop=True)
 
 
 @has_schema(
     schema={
+        "label": "string",
+        "id": "string",
+        "name": "string",
+        "property_keys": "array<string>",
+        "property_values": "array<string>",
+    },
+    allow_subset=True,
+)
+def create_nodes(df: DataFrame) -> DataFrame:
+    """Function to create Neo4J nodes.
+
+    Args:
+        df: Nodes dataframe
+    """
+    return (
+        df.filter(
+            (F.col("category") == "biolink:Disease")
+            | (F.col("category") == "biolink:Drug")
+        )
+        .withColumn("label", F.split(F.col("category"), ":", limit=2).getItem(1))
+        .withColumn(
+            "properties",
+            F.create_map(F.lit("name"), F.col("name")),
+        )
+        .withColumn("property_keys", F.map_keys(F.col("properties")))
+        .withColumn("property_values", F.map_values(F.col("properties")))
+    )
+
+
+@has_schema(
+    schema={
+        "label": "string",
         "source_id": "string",
         "target_id": "string",
+        "property_keys": "array<string>",
+        "property_values": "array<string>",
     },
     allow_subset=True,
-    relax=True,
 )
-def extract_edges(raw_edges: DataFrame) -> DataFrame:
-    """Function to extract edges.
+def create_treats(df: DataFrame):
+    """Function to construct treats relatonship.
 
     Args:
-        raw_edges: Raw edges DataFrame.
+        df: Ground truth dataset
     """
-    return raw_edges
-
-
-def apply_date_filter(data: DataFrame, cutoff_date: datetime) -> None:
-    """Function to create int embeddings.
-
-    Args:
-        data: Dataframe
-        cutoff_date: Cutoff date
-    """
-    return data.filter(F.col("date_discovered") <= cutoff_date)
-
-
-# @cypher_query(
-#     query="""
-#         MATCH (drug:`Drug`)-[:`TREATS`]->(disease:`Disease`)
-#         RETURN
-#             drug.`id` AS drug_label,
-#             disease.`id` AS disease_label,
-#             disease.`date_discovered` AS datetime_str
-#     """,
-#     schema=StructType(
-#         [
-#             StructField("drug_label", StringType(), True),
-#             StructField("disease_label", StringType(), True),
-#             StructField("datetime_str", StringType(), True),
-#         ]
-#     ),
-# )
-@cypher_query(
-    query=lambda drug_label: f""" 
-        MATCH p=(n)-[r:TREATS]->() 
-        WHERE n.category in ['{drug_label}'] 
-        RETURN p
-    """
-)
-def neo4j_decorated(data: DataFrame, drug_label: List[str]):
-    """Function to retrieve Neo4J data.
-
-    Args:
-        data: Dataframe representing query result
-        drug_label: additional arg
-    """
-    print(drug_label)
-    data.show()
+    return (
+        df.withColumn(
+            "label", F.when(F.col("y") == 1, "TREATS").otherwise("NOT_TREATS")
+        )
+        .withColumn(
+            "properties",
+            F.create_map(F.lit("treats"), F.col("y")),
+        )
+        .withColumn("source_id", F.col("source"))
+        .withColumn("target_id", F.col("target"))
+        .withColumn("property_keys", F.map_keys(F.col("properties")))
+        .withColumn("property_values", F.map_values(F.col("properties")))
+    )

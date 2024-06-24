@@ -21,34 +21,6 @@ from .model import ModelWrapper
 
 @has_schema(
     schema={
-        "source": "object",
-        "target": "object",
-        "y": "numeric",
-    },
-    allow_subset=True,
-)
-def create_int_pairs(raw_tp: pd.DataFrame, raw_tn: pd.DataFrame) -> pd.DataFrame:
-    """Create intermediate pairs dataset.
-
-    Args:
-        raw_tp: Raw ground truth positive data.
-        raw_tn: Raw ground truth negative data.
-
-    Returns:
-        Combined ground truth positive and negative data.
-    """
-    # Add label
-    raw_tp["y"] = 1
-    raw_tn["y"] = 0
-
-    # Concat
-    result = pd.concat([raw_tp, raw_tn], axis="index").reset_index(drop=True)
-
-    return result
-
-
-@has_schema(
-    schema={
         "is_drug": "bool",
         "is_disease": "bool",
         "is_ground_pos": "bool",
