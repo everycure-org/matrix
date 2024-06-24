@@ -44,7 +44,7 @@ integration.model_input.nodes:
   <<: *_neo4j_ds
   metadata:
     query: > 
-      MERGE (n {id: event.id, name: event.name}) 
+      MERGE (n {id: event.id}) 
       WITH event, n
       CALL apoc.create.addLabels(n, [event.label]) YIELD node
       CALL apoc.create.setProperties(n, event.property_keys, event.property_values) YIELD node AS n2

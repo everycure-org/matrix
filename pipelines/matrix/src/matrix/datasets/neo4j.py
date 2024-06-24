@@ -114,6 +114,7 @@ class Neo4JSparkDataset(SparkDataset):
             data.write.format("org.neo4j.spark.DataSource")
             .option("database", self._database)
             .option("url", self._url)
+            .option("batch.size", 10000)
             .options(**self._credentials)
             .options(**self.metadata)
             .save(**self._save_args)

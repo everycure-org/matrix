@@ -38,7 +38,7 @@ def _create_nodes(df: DataFrame) -> DataFrame:
         .withColumn("label", F.split(F.col("category"), ":", limit=2).getItem(1))
         .withColumn(
             "properties",
-            F.create_map(F.lit("foo"), F.lit("bar"), F.lit("bar"), F.lit("foo")),
+            F.create_map(F.lit("name"), F.col("name")),
         )
         .withColumn("property_keys", F.map_keys(F.col("properties")))
         .withColumn("property_values", F.map_values(F.col("properties")))
