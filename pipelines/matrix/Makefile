@@ -7,9 +7,11 @@ lock:
 test:
 	pytest --testmon -v tests/
 
-integration_test:
-	kedro run -p fabricator
+integration_test: integration_test
 	kedro run
+
+fabricate:
+	kedro run -p fabricator
 
 build: lock
 	docker build -t matrix .

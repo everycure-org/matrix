@@ -1,4 +1,8 @@
 services:
+  neo4j:
+    image: neo4j:latest
+    #platform: linux/amd64
+
   matrix-pipeline:
     image: matrix-pipeline
     build: "./pipelines/matrix"
