@@ -29,7 +29,7 @@ jobs:
       - uses: actions/checkout@v3
 
       - name: Build docker-compose
-        run: docker buildx bake --file deployments/compose/docker-compose.yml --file deployments/compose/docker-compose.test.yml --file docker-compose-cache.json
+        run: docker buildx bake --file deployments/compose/docker-compose.yml --file deployments/compose/docker-compose.test.yml --file deployments/compose/docker-compose-cache.json
 
       - name: Start docker-compose
         run: |
