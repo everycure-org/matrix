@@ -37,10 +37,10 @@ gcloud iam service-accounts keys create --iam-account=test-gcp@mtrx-hub-dev-3of.
 
 ## Launching the deployment
 
-After completing the installation, run the following command to bring up the services.
+After completing the installation, run the following command from the __project root__ to bring up the services.
 
 ```
-docker-compose up
+docker-compose -f deployments/compose/docker-compose.yml up
 ```
 
 > Alternatively, you can add the `-d` flag at the end of the command to run in the background.
