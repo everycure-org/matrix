@@ -4,6 +4,7 @@ services:
     container_name: neo4j
     image: neo4j:latest
     platform: linux/amd64
+    restart: always
     ports:
       - 7474:7474
       - 7687:7687
@@ -34,8 +35,7 @@ services:
   neo4j-start-up:
     image: neo4j:latest
     platform: linux/amd64
-    entrypoint: |
-      cypher-shell -a neo4j:7687 -u neo4j -p admin -f /tmp/statup-script.cql
+    entrypoint: sh /tmp/entrypoint.sh
     # NOTE: Could not get entrypoint to pick up vars belw
     environment:
       - NEO4J_ADRESS=neo4j:7687
@@ -45,6 +45,7 @@ services:
     # NOTE: Should move this file below elsewhere
     volumes:
       - ./test.cql:/tmp/statup-script.cql:ro
+      - ./entrypoint.sh:/tmp/entrypoint.sh:ro
     depends_on:
       neo4j:
         condition: service_healthy
