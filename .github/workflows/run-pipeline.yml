@@ -3,8 +3,8 @@ name: Run integration tests
 on:
   workflow_dispatch: {}
   push:
-    branches:
-      - ^main$
+    # branches:
+    #   - ^main$
     paths: 
       - pipelines/matrix/**
 
