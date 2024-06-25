@@ -20,7 +20,7 @@ _spark_parquet_ds: &_spark_parquet
 _neo4j_ds: &_neo4j_ds
   type: matrix.datasets.neo4j.Neo4JSparkDataset
   database: everycure
-  url: bolt://127.0.0.1:7687
+  url: ${oc.env:NEO4J_HOST,bolt://127.0.0.1:7687}
   credentials: neo4j_credentials
   save_args:
     mode: "overwrite"
@@ -65,11 +65,12 @@ integration.prm.rtx_kg2.edges:
   <<: *_spark_parquet
   filepath: ${globals:paths.prm}/rtx_kg2/nodes
 
+# FUTURE: Does it make sense to copy DBs?
 integration.model_input.nodes:
   <<: *_neo4j_ds
   save_args:
     query: > 
-      MERGE (n {id: event.id}) 
+      CREATE (n {id: event.id})
       WITH event, n
       CALL apoc.create.addLabels(n, [event.label]) YIELD node
       CALL apoc.create.setProperties(n, event.property_keys, event.property_values) YIELD node AS n2

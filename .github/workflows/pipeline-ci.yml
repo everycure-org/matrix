@@ -76,4 +76,10 @@ jobs:
       - name: Start docker-compose
         working-directory: .
         run: |
-          docker-compose up -f docker-compose.yml -f docker-compose.test.yml --abort-on-container-exit --exit-code-from pipeline_test
+          docker-compose -f docker-compose.yml -f docker-compose.test.yml up --abort-on-container-exit --exit-code-from pipeline_test
+
+      - name: Show logs
+        working-directory: .
+        if: failure()
+        run: |
+          docker-compose -f docker-compose.yaml -f docker-compose.test.yaml logs

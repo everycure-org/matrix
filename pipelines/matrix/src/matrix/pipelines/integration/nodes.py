@@ -5,6 +5,7 @@ import pyspark.sql.functions as F
 from pyspark.sql import DataFrame
 
 from refit.v1.core.inline_has_schema import has_schema
+from refit.v1.core.inline_primary_key import primary_key
 
 
 def create_int_pairs(raw_tp: pd.DataFrame, raw_tn: pd.DataFrame):
@@ -34,6 +35,7 @@ def create_int_pairs(raw_tp: pd.DataFrame, raw_tn: pd.DataFrame):
     },
     allow_subset=True,
 )
+@primary_key(primary_key=["id"])
 def create_nodes(df: DataFrame) -> DataFrame:
     """Function to create Neo4J nodes.
 
@@ -61,10 +63,11 @@ def create_nodes(df: DataFrame) -> DataFrame:
     },
     allow_subset=True,
 )
+@primary_key(primary_key=["source_id", "target_id", "label"])
 def create_treats(nodes: DataFrame, df: DataFrame):
     """Function to construct treats relatonship.
 
-    NOTE: This function requies the nodes dataset, as the nodes should be
+    NOTE: This function requires the nodes dataset, as the nodes should be
     written _prior_ to the relationships.
 
     Args:

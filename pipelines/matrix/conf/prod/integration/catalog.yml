@@ -9,14 +9,14 @@ _bigquery_ds: &_bigquery_ds
   type: matrix.datasets.gcp.BigQueryTableDataset
   project_id: ${oc.env:GCP_PROJECT_ID,mtrx-hub-dev-3of}
 
-integration.raw.rtx_kg2.nodes:
-  <<: *_spark_csv
+integration.raw.rtx_kg2.nodes@spark:
+  <<: *_spark_csv 
   filepath: ${globals:gcs_bucket}/KG/RTX_KG_v2-7-3/rtx_kg2_nodes.tsv
   load_args:
     header: true
     sep: "\t"
 
-integration.raw.rtx_kg2.edges:
+integration.raw.rtx_kg2.edges@spark:
   <<: *_spark_csv
   filepath: ${globals:gcs_bucket}/KG/RTX_KG_v2-7-3/rtx_kg2_edges.tsv
   load_args:

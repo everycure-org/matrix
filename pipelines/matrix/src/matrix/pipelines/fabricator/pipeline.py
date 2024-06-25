@@ -27,7 +27,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 outputs={
                     "nodes": "integration.raw.rtx_kg2.nodes@pandas",
                     "edges": "integration.raw.rtx_kg2.edges@pandas",
-                    "embeddings": "embeddings.int.graphsage@pandas",
+                    "embeddings": "embeddings.int.graphsage",
                 },
                 name="fabricate_datasets",
             ),
