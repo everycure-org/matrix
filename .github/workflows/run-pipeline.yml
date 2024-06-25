@@ -5,8 +5,8 @@ on:
   push:
     # branches:
     #   - ^main$
-    paths: 
-      - pipelines/matrix/**
+    # paths: 
+    #   - pipelines/matrix/**
 
 jobs:
   run-integration-tests:
