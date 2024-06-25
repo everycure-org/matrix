@@ -2,8 +2,9 @@ services:
   # Neo4J database
   neo4j:
     container_name: neo4j
-    image: neo4j:latest
-    platform: linux/amd64
+    # note this works only on MacOS devices (or other ARM chipsets), check
+    # `docker-compose.test.yml` for the override
+    image: arm64v8/neo4j:latest
     restart: always
     ports:
       - 7474:7474
