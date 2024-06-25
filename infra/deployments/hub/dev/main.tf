@@ -16,16 +16,9 @@ module "compute_cluster" {
   gitops_repo_creds = var.gitops_repo_creds
 }
 
-resource "google_bigquery_dataset" "dataset" {
-  for_each       = toset(["rtx-kg2", "robokop"])
-  project        = module.bootstrap_data.content.project_id
-  dataset_id     = "kg_${replace(each.key, "-", "_")}"
-  description    = "Dataset with nodes and edges for ${each.key}"
-  location       = "EU"
-
-  labels = {
-    env = "dev",
-    kg = each.key
-  }
+module "matrix" {
+  source = "../../../modules/stacks/matrix"
+  default_region    = var.default_region
+  project_id        = module.bootstrap_data.content.project_id
+  environment       = "dev"
 }
-
