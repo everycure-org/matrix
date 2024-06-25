@@ -1,10 +1,14 @@
-install:
+venv:
+	uv venv -p 3.11
+install: venv
 	uv pip install -r requirements.in
 
 lock:
 	uv pip compile requirements.in > requirements.txt
+
 test:
-        pytest --testmon -v tests/
+		pytest --testmon -v tests/
+
 integration_test:
 	kedro run -p fabricator
 	kedro run
@@ -18,5 +22,5 @@ licenses:  build
 licenses_container: build
 	docker run \
 		-v $(PWD)/trivy.yaml:/trivy.yaml \
-		-v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy  \
+		-v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy	\
 		image --scanners license --severity UNKNOWN,CRITICAL matrix
