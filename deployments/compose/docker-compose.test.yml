@@ -1,6 +1,6 @@
 services:
-  # neo4j:
-  #   image: neo4j:latest
+  neo4j:
+    image: neo4j:latest
 
   matrix-pipeline:
     image: matrix-pipeline
