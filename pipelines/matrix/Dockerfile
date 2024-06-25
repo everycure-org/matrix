@@ -41,9 +41,7 @@ ADD requirements.txt .
 ADD packages/ ./packages/
 RUN pip install -r requirements.txt
 
-# spark downloads jar's on first launch. This ensures it's baked into the image. Hacky but works
-RUN echo """from pyspark.sql import SparkSession;spark = SparkSession.builder.appName('tmp').getOrCreate();""" | python
+# Apply trick to load drivers etc as part of container
+RUN echo """from pyspark.sql import SparkSession;spark = SparkSession.builder.appName('tmp');getOrCreate();""" | python
 
 ADD . .
-
-# Apply trick to load drivers etc as part of container

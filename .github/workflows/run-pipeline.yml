@@ -1,0 +1,30 @@
+name: CI pipline
+
+on:
+  workflow_dispatch: {}
+  push:
+
+jobs:
+  run-tests:
+
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./pipelines/matrix
+
+    steps:
+      - uses: actions/checkout@v3
+
+
+      - name: Build docker-compose
+        run: |
+          docker-compose -f docker-compose.yml -f docker-compose.test.yml build
+
+      - name: Start docker-compose
+        run: |
+          docker-compose -f docker-compose.yml -f docker-compose.test.yml up --abort-on-container-exit --exit-code-from pipeline_test
+
+      - name: Show logs
+        if: failure()
+        run: |
+          docker-compose -f docker-compose.yaml -f docker-compose.test.yaml logs

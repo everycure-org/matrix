@@ -72,14 +72,3 @@ jobs:
       - name: Run unit tests 
         run: |
           .venv/bin/pytest --testmon -v tests/
-
-      - name: Start docker-compose
-        working-directory: .
-        run: |
-          docker-compose -f docker-compose.yml -f docker-compose.test.yml up --abort-on-container-exit --exit-code-from pipeline_test
-
-      - name: Show logs
-        working-directory: .
-        if: failure()
-        run: |
-          docker-compose -f docker-compose.yaml -f docker-compose.test.yaml logs
