@@ -1,4 +1,4 @@
-name: CI pipline
+name: Run integration tests
 
 on:
   workflow_dispatch: {}
@@ -8,9 +8,6 @@ jobs:
   run-tests:
 
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ./pipelines/matrix
 
     steps:
       - uses: actions/checkout@v3
