@@ -1,7 +1,6 @@
 name: Run integration tests
 
 on:
-  workflow_dispatch: {}
   issue_comment:
     types: [created]
 
@@ -28,7 +27,20 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Get PR branch
+        uses: xt0rted/pull-request-comment-branch@v1
+        id: comment-branch
+
+      - name: Set latest commit status as pending
+        uses: myrotvorets/set-commit-status-action@master
+        with:
+          sha: ${{ steps.comment-branch.outputs.head_sha }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+          status: pending
+
       - uses: actions/checkout@v3
+        with:
+          ref: ${{ steps.comment-branch.outputs.head_ref }}
 
       - name: Build docker-compose
         run: docker buildx bake --file docker-compose.yml --file docker-compose.test.yml --file docker-compose-cache.json
@@ -36,6 +48,14 @@ jobs:
       - name: Start docker-compose
         run: |
           docker-compose -f docker-compose.yml -f docker-compose.test.yml up --abort-on-container-exit --exit-code-from matrix-pipeline
+
+      - name: Set latest commit status as ${{ job.status }}
+        uses: myrotvorets/set-commit-status-action@master
+        if: always()
+        with:
+          sha: ${{ steps.comment-branch.outputs.head_sha }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+          status: ${{ job.status }}
 
       - name: Show logs
         if: failure()
