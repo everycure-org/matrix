@@ -1,7 +1,7 @@
-gcs_bucket: gs://silc-storage
+gcs_bucket: ${oc.env:GCP_BUCKET,gs://silc-storage}
 
 paths:
-  raw: ${gcs_bucket}/kedro/staging/data/01_raw
+  raw: ${gcs_bucket}
   int: ${gcs_bucket}/kedro/staging/data/02_intermediate
   prm: ${gcs_bucket}/kedro/staging/data/03_primary
   feat: ${gcs_bucket}/kedro/staging/data/04_features

@@ -24,6 +24,17 @@ brew install openjdk@11
 
 > NOTE: Don't forget to link your Java installation using the instructions prompted after the downloaded.
 
+### GCP Service account
+
+To correctly leverage the GCP services, you will need a service-account key. You can create a key through the [Google CLI](https://cloud.google.com/storage/docs/gsutil_install) as follows:
+
+> NOTE: This will be provisoned using Terraform and git-crypt in the future.
+
+```bash
+gcloud config set project mtrx-hub-dev-3of
+gcloud iam service-accounts keys create --iam-account=test-gcp@mtrx-hub-dev-3of.iam.gserviceaccount.com  conf/local/service-account.json
+```
+
 ## Launching the deployment
 
 After completing the installation, run the following command to bring up the services.

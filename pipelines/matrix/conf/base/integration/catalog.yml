@@ -69,6 +69,10 @@ integration.prm.rtx_kg2.edges:
 integration.model_input.nodes:
   <<: *_neo4j_ds
   save_args:
+    # NOTE:
+    script: >
+      CREATE CONSTRAINT IF NOT EXISTS FOR (n:Drug) REQUIRE n.id IS UNIQUE;
+      CREATE CONSTRAINT IF NOT EXISTS FOR (n:Disease) REQUIRE n.id IS UNIQUE;
     query: > 
       CREATE (n {id: event.id})
       WITH event, n
