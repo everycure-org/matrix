@@ -1,5 +1,6 @@
 services:
-  pipeline_test:
+  matrix-pipeline:
+    image: matrix-pipeline
     build: "pipelines/matrix"
     entrypoint: |
       kedro run -p test --runner ThreadRunner
