@@ -42,7 +42,7 @@ ADD packages/ ./packages/
 RUN pip install -r requirements.txt
 
 # Cache drivers as part of image
-COPY conf/base/spark.yml spark.yml
+COPY conf/base/spark.yml conf/base/spark.yml
 COPY scripts/maven-deps.py maven-deps.py
 RUN python maven-deps.py
 
