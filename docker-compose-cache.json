@@ -1,0 +1,15 @@
+{
+  "target": {
+    "pipeline_test": {
+      "cache-from": [
+        "type=registry,ref=ghcr.io/everycure-org/matrix-pipeline:cache"
+      ],
+      "cache-to": [
+        "type=registry,ref=ghcr.io/everycure-org/matrix-pipeline:cache"
+      ],
+      "output": [
+        "type=docker"
+      ]
+    }
+  }
+}
