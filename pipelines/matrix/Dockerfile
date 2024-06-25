@@ -42,6 +42,6 @@ ADD packages/ ./packages/
 RUN pip install -r requirements.txt
 
 # Apply trick to load drivers etc as part of container
-RUN echo """from pyspark.sql import SparkSession;spark = SparkSession.builder.appName('tmp');getOrCreate();""" | python
+RUN echo """from pyspark.sql import SparkSession;spark = SparkSession.builder.appName('tmp').getOrCreate();""" | python
 
 ADD . .
