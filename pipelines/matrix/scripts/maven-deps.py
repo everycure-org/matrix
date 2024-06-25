@@ -10,7 +10,9 @@ def main(*args, **kwargs):
     """Main entrypoint.
 
     Python script to initialize a SparkSession with Kedro's
-    configuration for caching purposes.
+    configuration for caching purposes. This script is used as a trick
+    when buliding the docker container to bake the `mvn` dependencies
+    into the docker image instead of loading them upon container start.
     """
     # Locate spark configuration
     with open("conf/base/spark.yml") as f:

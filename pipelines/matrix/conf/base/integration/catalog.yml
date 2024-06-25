@@ -41,11 +41,11 @@ integration.raw.rtx_kg2.edges@spark:
   <<: *_spark_csv
   filepath: ${globals:paths.raw}/rtx_kg2_edges.csv
 
-integration.raw.ground_truth.tp:
+integration.raw.ground_truth.positives:
   <<: *_pandas_csv
   filepath: ${globals:paths.raw}/tp_pairs.txt
 
-integration.raw.ground_truth.tn:
+integration.raw.ground_truth.negatives:
   <<: *_pandas_csv
   filepath: ${globals:paths.raw}/tn_pairs.txt
 

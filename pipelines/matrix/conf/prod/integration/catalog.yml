@@ -23,13 +23,13 @@ integration.raw.rtx_kg2.edges@spark:
     header: true
     sep: "\t"
 
-integration.raw.ground_truth.tp:
+integration.raw.ground_truth.positives:
   <<: *_pandas_csv
   filepath: ${globals:gcs_bucket}/ground_truth_data/tp_pairs.txt
   load_args:
     sep: "\t"
 
-integration.raw.ground_truth.tn:
+integration.raw.ground_truth.negatives:
   <<: *_pandas_csv
   filepath: ${globals:gcs_bucket}/ground_truth_data/tn_pairs.txt
   load_args:

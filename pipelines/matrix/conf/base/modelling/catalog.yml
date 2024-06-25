@@ -7,6 +7,10 @@ _kg_dataset: &_kg_dataset
     engine: pyarrow
     use_nullable_dtypes: True
 
+modelling.prm.known_pairs:
+  <<: *_pandas_parquet
+  filepath: ${globals:paths.prm}/known_pairs
+
 modelling.feat.rtx_kg2:
   <<: *_kg_dataset
   filepath: ${globals:paths.feat}/rtx_kg2_nodes

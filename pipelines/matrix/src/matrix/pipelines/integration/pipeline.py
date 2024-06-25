@@ -28,8 +28,8 @@ def create_pipeline(**kwargs) -> Pipeline:
             node(
                 func=nodes.create_int_pairs,
                 inputs=[
-                    "integration.raw.ground_truth.tp",
-                    "integration.raw.ground_truth.tn",
+                    "integration.raw.ground_truth.positives",
+                    "integration.raw.ground_truth.negatives",
                 ],
                 outputs="integration.int.known_pairs@pandas",
                 name="create_int_known_pairs",
