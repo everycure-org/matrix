@@ -1,11 +1,10 @@
 services:
-  neo4j:
-    image: neo4j:latest
-    #platform: linux/amd64
+  # neo4j:
+  #   image: neo4j:latest
 
   matrix-pipeline:
     image: matrix-pipeline
-    build: "./pipelines/matrix"
+    build: "../../pipelines/matrix"
     entrypoint: |
       kedro run -p test --runner ThreadRunner
     environment:
