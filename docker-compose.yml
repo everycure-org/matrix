@@ -35,16 +35,20 @@ services:
   neo4j-start-up:
     image: neo4j:latest
     platform: linux/amd64
-    entrypoint: sh /tmp/entrypoint.sh
-    # NOTE: Could not get entrypoint to pick up vars belw
+    entrypoint: [ '/bin/bash', '-c' ]
+    command:
+      - |
+        set -e
+        cypher-shell -a $${NEO4J_ADRESS} -u $${NEO4J_USER} -p $${NEO4J_PASS} -f /tmp/statup-script.cql
+        echo "Successfully finished running."
+        echo "Keep container alive to prevent exit code from this service."
+        tail -F /dev/null
     environment:
       - NEO4J_ADRESS=neo4j:7687
       - NEO4J_USER=neo4j
       - NEO4J_PASS=admin
-    # NOTE: Should move this file below elsewhere
     volumes:
       - ./test.cql:/tmp/statup-script.cql:ro
-      - ./entrypoint.sh:/tmp/entrypoint.sh:ro
     depends_on:
       neo4j:
         condition: service_healthy

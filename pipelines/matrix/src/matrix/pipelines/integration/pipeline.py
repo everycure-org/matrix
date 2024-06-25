@@ -22,7 +22,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 inputs=["integration.prm.rtx_kg2.nodes"],
                 outputs="integration.model_input.nodes",
                 name="create_neo4j_nodes",
-                tags=["rtx_kg2"],
+                tags=["rtx_kg2", "neo4j"],
             ),
             # Construct ground_truth
             node(
@@ -33,6 +33,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 ],
                 outputs="integration.int.known_pairs@pandas",
                 name="create_int_known_pairs",
+                tags=["rtx_kg2", "neo4j"],
             ),
             node(
                 func=nodes.create_treats,
@@ -42,6 +43,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 ],
                 outputs="integration.model_input.treats",
                 name="create_neo4j_known_pairs",
+                tags=["rtx_kg2", "neo4j"],
             ),
         ]
     )

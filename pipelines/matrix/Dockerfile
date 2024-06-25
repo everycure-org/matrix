@@ -41,7 +41,9 @@ ADD requirements.txt .
 ADD packages/ ./packages/
 RUN pip install -r requirements.txt
 
-# Apply trick to load drivers etc as part of container
-RUN echo """from pyspark.sql import SparkSession;spark = SparkSession.builder.appName('tmp').getOrCreate();""" | python
+# Cache drivers as part of image
+COPY conf/base/spark.yml spark.yml
+COPY scripts/maven-deps.py maven-deps.py
+RUN python maven-deps.py
 
 ADD . .
