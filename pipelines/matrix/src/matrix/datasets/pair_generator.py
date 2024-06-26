@@ -8,7 +8,7 @@ import random
 
 from matrix.datasets.graph import KnowledgeGraph
 
-from typing import List
+from typing import List, Set
 
 
 class DrugDiseasePairGenerator(abc.ABC):
