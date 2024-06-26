@@ -1,7 +1,50 @@
-embeddings.raw.graphsage:
-  type: "pickle.PickleDataset"
-  filepath: gs://silc-storage/embeddings/original_graphsage_emb_dict_reduced.pickle
+_spark_parquet_ds: &_spark_parquet
+  type: spark.SparkDataset
+  file_format: parquet
+  save_args:
+    mode: overwrite
 
-embeddings.int.graphsage:
-  type: pandas.ParquetDataset
-  filepath: ${globals:paths.int}/embeddings
+_neo4j_ds: &_neo4j_ds
+  type: matrix.datasets.neo4j.Neo4JSparkDataset
+  database: everycure
+  url: ${oc.env:NEO4J_HOST,bolt://127.0.0.1:7687}
+  credentials: neo4j_credentials
+  save_args:
+    mode: "overwrite"
+
+embeddings.prm.graph:
+  <<: *_neo4j_ds
+  save_args:
+    query: > 
+        MATCH (n {id: event.id})
+        WITH event, n
+        CALL apoc.create.setProperty(n, 'feature', toFloat(event.feature)) YIELD node
+        RETURN node
+  load_args:
+    query: >
+      MATCH (n {id: event.id}) RETURN n.id as id, n.feature
+
+embeddings.model_input.gds.graph:
+  <<: *_neo4j_ds
+  load_args:
+    gds: gds.graph.project
+    gds.graphName: &_graph_name graph_with_feature_test
+    gds.nodeProjection: "*"
+    gds.relationshipProjection: "*"
+    gds.configuration.nodeProperties: "feature"
+
+embeddings.models.gds.graphsage:
+  <<: *_neo4j_ds
+  load_args:
+    gds: gds.beta.graphSage.train
+    gds.graphName: *_graph_name
+    gds.configuration.modelName: &_model_name graphsage
+    gds.configuration.featureProperties: ["feature"]
+
+
+embeddings.model_output.gds.graphsage:
+  <<: *_neo4j_ds
+  load_args:
+    gds: gds.beta.graphSage.stream
+    gds.graphName: *_graph_name
+    gds.configuration.modelName: *_model_name

@@ -69,7 +69,7 @@ integration.prm.rtx_kg2.edges:
 integration.model_input.nodes:
   <<: *_neo4j_ds
   save_args:
-    # NOTE:
+    # NOTE: We should add index for all nodes, irregardles of label
     script: >
       CREATE CONSTRAINT IF NOT EXISTS FOR (n:Drug) REQUIRE n.id IS UNIQUE;
       CREATE CONSTRAINT IF NOT EXISTS FOR (n:Disease) REQUIRE n.id IS UNIQUE;
