@@ -1,6 +1,3 @@
-_pandas_csv: &_pandas_csv
-  type:  pandas.CSVDataset
-
 _pandas_parquet: &_pandas_parquet
   type: pandas.ParquetDataset
 
@@ -10,29 +7,9 @@ _kg_dataset: &_kg_dataset
     engine: pyarrow
     use_nullable_dtypes: True
 
-modelling.raw.rtx_kg2.nodes:
-  <<: *_pandas_csv
-  filepath: ${globals:paths.raw}/rtx_kg2_nodes.csv
-
-modelling.raw.rtx_kg2.edges:
-  <<: *_pandas_csv
-  filepath: ${globals:paths.raw}/rtx_kg2_edges.csv
-
-modelling.raw.ground_truth.tp:
-  <<: *_pandas_csv
-  filepath: ${globals:paths.raw}/tp_pairs.txt
-
-modelling.raw.ground_truth.tn:
-  <<: *_pandas_csv
-  filepath: ${globals:paths.raw}/tn_pairs.txt
-
-modelling.int.known_pairs:
-  <<: *_pandas_parquet
-  filepath: ${globals:paths.int}/ground_truth_data/int_known_pairs
-
 modelling.prm.known_pairs:
   <<: *_pandas_parquet
-  filepath: ${globals:paths.prm}/ground_truth_data/prm_known_pairs
+  filepath: ${globals:paths.prm}/known_pairs
 
 modelling.feat.rtx_kg2:
   <<: *_kg_dataset

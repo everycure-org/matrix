@@ -16,3 +16,9 @@ module "compute_cluster" {
   gitops_repo_creds = var.gitops_repo_creds
 }
 
+module "matrix" {
+  source = "../../../modules/stacks/matrix"
+  default_region    = var.default_region
+  project_id        = module.bootstrap_data.content.project_id
+  environment       = "dev"
+}

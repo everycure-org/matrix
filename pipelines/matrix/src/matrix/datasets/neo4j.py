@@ -1,13 +1,15 @@
 """Module containing Neo4JDataset."""
-from typing import Any, Callable, Union, Optional
+from typing import Any
 from copy import deepcopy
 from functools import wraps
 
 from pyspark.sql import DataFrame, SparkSession
-from pyspark.sql.types import StructType
 
 from kedro.io.core import Version
 from kedro_datasets.spark import SparkDataset
+
+
+from refit.v1.core.inject import _parse_for_objects
 
 
 class Neo4JSparkDataset(SparkDataset):
@@ -33,48 +35,40 @@ class Neo4JSparkDataset(SparkDataset):
     ) -> None:
         """Creates a new instance of ``Neo4JDataset``.
 
-        Example reading data:
-        ::
+        Example catalog.yml
+        :::
 
-            # The node function
-            @cypher_query(query="MATCH p=()-[r:TREATS]->() RETURN p")
-            def node(data: Dataframe):
-                ... # Node logic here
-        ::
+        example.neo4j.nodes:
+            type: matrix.datasets.neo4j.Neo4JSparkDataset
+            database: database
+            url: bolt://127.0.0.1:7687
+            credentials:
+                authentication.type: basic
+                authentication.basic.username: user
+                authentication.basic.password: password
 
-        Example reading data with parameters:
-        ::
+            # Map the input dataframe to the graph during writes
+            save_args:
+                script: >
+                    CREATE CONSTRAINT IF NOT EXISTS FOR (n:Label) REQUIRE n.property IS UNIQUE;
+                query:  >
+                    CREATE (n {id: event.id})
 
-            def query(node_label: str, **kwargs):
-                return f"MATCH p=(n)-[r:TREATS]->() WHERE n.category in ['{node_label}'] RETURN p"
+            # Map graph to dataframe during read
+            load_args:
+                # Schema avoids that pyspark needs to run schema inference
+                schema:
+                    object: pyspark.sql.types.StructType
+                    fields:
+                        - object: pyspark.sql.types.StructField
+                          name: property
+                          dataType:
+                            object: pyspark.sql.types.StringType
+                          nullable: False
+                query: >
+                    MATCH (n) RETURN n.property as property
 
-            # The node function
-            @cypher_query(query=query)
-            def node(data: Dataframe, node_label: str):
-                ... # Node logic here
-        ::
-
-
-        Example writing nodes:
-        ::
-            metadata:
-                labels: ":Disease"
-                node.keys: id
-
-
-        Example writing a relationship:
-        ::
-            metadata:
-                relationship: TREATS
-                relationship.save.strategy: keys
-                relationship.source.save.mode: overwrite
-                relationship.source.labels: ":Drug"
-                relationship.source.node.keys: source_id:id
-                relationship.target.save.mode: overwrite
-                relationship.target.labels: ":Disease"
-                relationship.target.node.keys: target_id:id
-                relationship.nodes.map: true
-        ::
+        :::
 
         Args:
             url: URL of the Neo4J instance.
@@ -90,10 +84,13 @@ class Neo4JSparkDataset(SparkDataset):
         self._url = url
         self._credentials = deepcopy(credentials) or {}
 
+        self._load_args = deepcopy(load_args) or {}
+        self._df_schema = self._load_args.pop("schema", None)
+
         super().__init__(
             filepath="filepath",
             save_args=save_args,
-            load_args=load_args,
+            load_args=self._load_args,
             credentials=credentials,
             version=version,
             metadata=metadata,
@@ -102,12 +99,18 @@ class Neo4JSparkDataset(SparkDataset):
     def _load(self) -> Any:
         spark_session = SparkSession.builder.getOrCreate()
 
-        return (
+        load_obj = (
             spark_session.read.format("org.neo4j.spark.DataSource")
             .option("database", self._database)
             .option("url", self._url)
             .options(**self._credentials)
+            .options(**self._load_args)
         )
+
+        if self._df_schema:
+            load_obj = load_obj.schema(_parse_for_objects(self._df_schema))
+
+        return load_obj.load()
 
     def _save(self, data: DataFrame) -> None:
         (
@@ -115,37 +118,6 @@ class Neo4JSparkDataset(SparkDataset):
             .option("database", self._database)
             .option("url", self._url)
             .options(**self._credentials)
-            .options(**self.metadata)
-            .save(**self._save_args)
+            .options(**self._save_args)
+            .save(**{"mode": "overwrite"})
         )
-
-
-def cypher_query(query: Union[str, Callable], schema: Optional[StructType] = None):
-    """Decorator to specify Cypher query for Neo4J dataset.
-
-    The Cypher query annotator is required to use for nodes that read datasets of
-    the Neo4JSparkDataset type. The `query` argument can either be a string representing
-    a Cypher query, or a callable that yields the Cypher query. The callable will be passed
-    all of the arguments passed into the node, such that they can be used to interpolate the query.
-
-    Args:
-        query: Cypher query to use.
-        schema: Optional PySpark [schema](https://neo4j.com/docs/spark/current/read/define-schema/) to convert to.
-    """
-
-    def decorate(func):
-        @wraps(func)
-        def wrapper(read_obj, *args, **kwargs):
-            if callable(query):
-                read_obj.option("query", query(*args, **kwargs))
-            else:
-                read_obj.option("query", query)
-
-            if schema:
-                read_obj.schema(schema)
-
-            return func(read_obj.load(), *args, **kwargs)
-
-        return wrapper
-
-    return decorate
