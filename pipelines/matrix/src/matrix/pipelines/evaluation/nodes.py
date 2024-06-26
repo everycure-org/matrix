@@ -20,36 +20,6 @@ from matrix.pipelines.evaluation.evaluation import Evaluation
 from matrix.pipelines.modelling.model import ModelWrapper
 
 
-# def generate_axes(
-#         graph: KnowledgeGraph,
-#         known_pairs: pd.DataFrame,
-#         disease_prefix: str,
-#     ) -> Tuple[List[str]]:
-#     """Generate a list of drugs and list of diseases.
-
-#     FUTURE: This is temporary placeholder for the future curated lists.
-
-#     Args:
-#         graph: KnowledgeGraph instance.
-#         known_pairs: Labelled ground truth drug-disease pairs dataset.
-#         disease_prefix: Knowledge graph ID prefix for disease list.
-#     Returns:
-#         Tuple containing:
-#             - a list of drug IDs
-#             - a list of disease IDs
-#     """
-#     # List of drugs appearing in the ground truth positive dataset
-#     known_pos_pairs = known_pairs[known_pairs["y"].eq(1)]
-#     drugs_lst = list(known_pos_pairs["source"].unique())
-
-#     # List of diseases in the knowledge graph
-#     disease_nodes = graph._disease_nodes[
-#         graph._disease_nodes["ID"].str.contains(disease_prefix)
-#     ]
-#     disease_lst =
-#     return drugs_lst, diseases_lst
-
-
 @has_schema(
     schema={
         "source": "object",
@@ -116,20 +86,14 @@ def make_test_predictions(
     return transformed
 
 
-# @has_schema(
-#     schema={
-#         "y": "object",
-#         "y_pred": "object",
-#     },
-#     allow_subset=True,
-# )
 @inject_object()
 def evaluate_test_predictions(data: pd.DataFrame, evaluation: Evaluation) -> Any:
     """Function to apply evaluation.
 
     Args:
         data: predictions to evaluate on
-        evaluation: metric to evaluate
+        evaluation: metric to evaluate.
+
     Returns:
         Evaluation report
     """
@@ -138,6 +102,8 @@ def evaluate_test_predictions(data: pd.DataFrame, evaluation: Evaluation) -> Any
 
 def consolidate_reports(*reports) -> dict:
     """Function to consolidate reports into master report.
+
+    TODO: modify and put into eval pipeline
 
     Args:
         reports: tuples of (name, report) pairs.
