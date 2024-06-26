@@ -1,0 +1,16 @@
+services:
+  neo4j:
+    image: neo4j:latest
+
+  matrix-pipeline:
+    image: matrix-pipeline
+    build: "../../pipelines/matrix"
+    entrypoint: |
+      kedro run -p test --runner ThreadRunner
+    environment:
+      NEO4J_HOST: bolt://neo4j:7687
+    depends_on:
+      neo4j:
+        condition: service_healthy
+    networks:
+      - web

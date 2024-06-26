@@ -4,6 +4,8 @@ import pandas as pd
 import numpy as np
 import json
 
+from pyspark.sql import DataFrame
+
 from sklearn.model_selection._split import _BaseKFold
 from sklearn.impute._base import _BaseImputer
 from sklearn.base import BaseEstimator
@@ -21,34 +23,6 @@ from .model import ModelWrapper
 
 @has_schema(
     schema={
-        "source": "object",
-        "target": "object",
-        "y": "numeric",
-    },
-    allow_subset=True,
-)
-def create_int_pairs(raw_tp: pd.DataFrame, raw_tn: pd.DataFrame) -> pd.DataFrame:
-    """Create intermediate pairs dataset.
-
-    Args:
-        raw_tp: Raw ground truth positive data.
-        raw_tn: Raw ground truth negative data.
-
-    Returns:
-        Combined ground truth positive and negative data.
-    """
-    # Add label
-    raw_tp["y"] = 1
-    raw_tn["y"] = 0
-
-    # Concat
-    result = pd.concat([raw_tp, raw_tn], axis="index").reset_index(drop=True)
-
-    return result
-
-
-@has_schema(
-    schema={
         "is_drug": "bool",
         "is_disease": "bool",
         "is_ground_pos": "bool",
@@ -57,11 +31,11 @@ def create_int_pairs(raw_tp: pd.DataFrame, raw_tn: pd.DataFrame) -> pd.DataFrame
     allow_subset=True,
 )
 def create_feat_nodes(
-    raw_nodes: pd.DataFrame,
+    raw_nodes: DataFrame,
     embeddings: pd.DataFrame,
+    known_pairs: DataFrame,
     drug_types: List[str],
     disease_types: List[str],
-    known_pairs: pd.DataFrame,
 ) -> pd.DataFrame:
     """Add features for nodes.
 
@@ -70,21 +44,22 @@ def create_feat_nodes(
     Args:
         raw_nodes: Raw nodes data.
         embeddings: Embeddings data.
+        known_pairs: Ground truth data.
         drug_types: List of drug types.
         disease_types: List of disease types.
-        known_pairs: Ground truth data.
 
     Returns:
         Nodes enriched with features.
     """
     # Merge embeddings
-    raw_nodes = raw_nodes.merge(embeddings, on="id", how="left")
+    raw_nodes = raw_nodes.toPandas().merge(embeddings, on="id", how="left")
 
     # Add drugs and diseases types flags
     raw_nodes["is_drug"] = raw_nodes["category"].apply(lambda x: x in drug_types)
     raw_nodes["is_disease"] = raw_nodes["category"].apply(lambda x: x in disease_types)
 
     # Add flag for set of drugs appearing in ground truth positive set
+    known_pairs = known_pairs.toPandas()
     ground_pos = known_pairs[known_pairs["y"].eq(1)]
     ground_pos_drug_ids = list(ground_pos["source"].unique())
     ground_pos_disease_ids = list(ground_pos["target"].unique())
@@ -107,7 +82,7 @@ def create_feat_nodes(
 )
 def create_prm_pairs(
     graph: KnowledgeGraph,
-    data: pd.DataFrame,
+    data: DataFrame,
 ) -> pd.DataFrame:
     """Create primary pairs dataset.
 
@@ -119,6 +94,7 @@ def create_prm_pairs(
         Ground truth data enriched with embeddings.
     """
     # Add embeddings
+    data = data.toPandas()
     data["source_embedding"] = data.apply(
         lambda row: graph._embeddings[row.source], axis=1
     )

@@ -1,0 +1,52 @@
+_spark_csv_ds: &_spark_csv
+  type: spark.SparkDataset
+  file_format: csv
+
+_pandas_csv: &_pandas_csv
+  type:  pandas.CSVDataset
+
+_bigquery_ds: &_bigquery_ds
+  type: matrix.datasets.gcp.BigQueryTableDataset
+  project_id: ${oc.env:GCP_PROJECT_ID,mtrx-hub-dev-3of}
+
+integration.raw.rtx_kg2.nodes@spark:
+  <<: *_spark_csv 
+  filepath: ${globals:gcs_bucket}/KG/RTX_KG_v2-7-3/rtx_kg2_nodes.tsv
+  load_args:
+    header: true
+    sep: "\t"
+
+integration.raw.rtx_kg2.edges@spark:
+  <<: *_spark_csv
+  filepath: ${globals:gcs_bucket}/KG/RTX_KG_v2-7-3/rtx_kg2_edges.tsv
+  load_args:
+    header: true
+    sep: "\t"
+
+integration.raw.ground_truth.positives:
+  <<: *_pandas_csv
+  filepath: ${globals:gcs_bucket}/ground_truth_data/tp_pairs.txt
+  load_args:
+    sep: "\t"
+
+integration.raw.ground_truth.negatives:
+  <<: *_pandas_csv
+  filepath: ${globals:gcs_bucket}/ground_truth_data/tn_pairs.txt
+  load_args:
+    sep: "\t"
+
+integration.prm.rtx_kg2.nodes:
+  <<: *_bigquery_ds
+  dataset: kg_rtx_kg2
+  table: "nodes_${globals:versions.release}"
+  labels: 
+    kg: rtx_kg2
+    release: ${globals:versions.release}
+
+integration.prm.rtx_kg2.edges:
+  <<: *_bigquery_ds
+  dataset: kg_rtx_kg2
+  table: "edges_${globals:versions.release}"
+  labels: 
+    kg: rtx_kg2
+    release: ${globals:versions.release}

@@ -1,3 +1,9 @@
+_pandas_csv: &_pandas_csv
+  type:  pandas.CSVDataset
+
+_pandas_parquet: &_pandas_parquet
+  type: pandas.ParquetDataset
+
 _spark_csv_ds: &_spark_csv
   type: spark.SparkDataset
   file_format: csv
@@ -5,46 +11,112 @@ _spark_csv_ds: &_spark_csv
     header: true
     sep: ","
 
+_spark_parquet_ds: &_spark_parquet
+  type: spark.SparkDataset
+  file_format: parquet
+  save_args:
+    mode: overwrite
+
 _neo4j_ds: &_neo4j_ds
   type: matrix.datasets.neo4j.Neo4JSparkDataset
   database: everycure
-  url: bolt://127.0.0.1:7687
+  url: ${oc.env:NEO4J_HOST,bolt://127.0.0.1:7687}
   credentials: neo4j_credentials
   save_args:
     mode: "overwrite"
   
-integration.raw.rtx_kg2.nodes:
+integration.raw.rtx_kg2.nodes@pandas:
+  <<: *_pandas_csv
+  filepath: ${globals:paths.raw}/rtx_kg2_nodes.csv
+  
+integration.raw.rtx_kg2.nodes@spark:
   <<: *_spark_csv
   filepath: ${globals:paths.raw}/rtx_kg2_nodes.csv
 
-integration.raw.rtx_kg2.edges:
+integration.raw.rtx_kg2.edges@pandas:
+  <<: *_pandas_csv
+  filepath: ${globals:paths.raw}/rtx_kg2_edges.csv
+
+integration.raw.rtx_kg2.edges@spark:
   <<: *_spark_csv
   filepath: ${globals:paths.raw}/rtx_kg2_edges.csv
 
-integration.prm.drugs:
-  <<: *_neo4j_ds
-  metadata:
-    labels: ":Drug"
-    node.keys: id
+integration.raw.ground_truth.positives:
+  <<: *_pandas_csv
+  filepath: ${globals:paths.raw}/tp_pairs.txt
 
-integration.prm.diseases:
-  <<: *_neo4j_ds
-  metadata:
-    labels: ":Disease"
-    node.keys: id
+integration.raw.ground_truth.negatives:
+  <<: *_pandas_csv
+  filepath: ${globals:paths.raw}/tn_pairs.txt
 
-# TODO: Verify if we can align with Biolink
-integration.prm.treats:
-  <<: *_neo4j_ds
-  metadata:
-    relationship: TREATS
-    relationship.save.strategy: keys
-    relationship.source.save.mode: overwrite
-    relationship.source.labels: ":Drug"
-    relationship.source.node.keys: source_id:id
-    relationship.target.save.mode: overwrite
-    relationship.target.labels: ":Disease"
-    relationship.target.node.keys: target_id:id
+integration.int.known_pairs@pandas:
+  <<: *_pandas_parquet
+  filepath: ${globals:paths.int}/ground_truth
 
-integration.prm.pypher:
+integration.int.known_pairs@spark:
+  <<: *_spark_parquet
+  filepath: ${globals:paths.int}/ground_truth
+
+integration.prm.rtx_kg2.nodes:
+  <<: *_spark_parquet
+  filepath: ${globals:paths.prm}/rtx_kg2/nodes
+
+integration.prm.rtx_kg2.edges:
+  <<: *_spark_parquet
+  filepath: ${globals:paths.prm}/rtx_kg2/nodes
+
+# FUTURE: Does it make sense to copy DBs?
+integration.model_input.nodes:
   <<: *_neo4j_ds
+  save_args:
+    # NOTE:
+    script: >
+      CREATE CONSTRAINT IF NOT EXISTS FOR (n:Drug) REQUIRE n.id IS UNIQUE;
+      CREATE CONSTRAINT IF NOT EXISTS FOR (n:Disease) REQUIRE n.id IS UNIQUE;
+    query: > 
+      CREATE (n {id: event.id})
+      WITH event, n
+      CALL apoc.create.addLabels(n, [event.label]) YIELD node
+      CALL apoc.create.setProperties(n, event.property_keys, event.property_values) YIELD node AS n2
+      RETURN node
+  load_args:
+    query: > 
+      MATCH (n) RETURN n.id AS id, 'biolink:' + labels(n)[0] AS category
+
+integration.model_input.treats:
+  <<: *_neo4j_ds
+  save_args:
+    query: > 
+      MATCH (source:Drug {id: event.source_id}), (target:Disease {id: event.target_id})
+      WITH source, target, event
+      CALL
+        apoc.do.when(
+          not exists((source)-[]->(target)), 
+          'CALL apoc.create.relationship($source, $event.label, {}, $target) YIELD rel RETURN rel',
+          'MATCH (source)-[rel]->(target) return rel',
+          {event:event, source:source, target:target}
+        ) YIELD value
+      CALL apoc.create.setRelProperties(value.rel, event.property_keys, event.property_values) YIELD rel as r
+      RETURN count(*)
+  load_args:
+    schema:
+      object: pyspark.sql.types.StructType
+      fields:
+        - object: pyspark.sql.types.StructField
+          name: source
+          dataType: 
+            object: pyspark.sql.types.StringType
+          nullable: False
+        - object: pyspark.sql.types.StructField
+          name: y
+          dataType: 
+            object: pyspark.sql.types.LongType
+          nullable: False
+        - object: pyspark.sql.types.StructField
+          name: target
+          dataType: 
+            object: pyspark.sql.types.StringType
+          nullable: False
+    query: >
+      MATCH (drug:Drug)-[r:TREATS|NOT_TREATS]->(disease:Disease) 
+      RETURN drug.id as source, toInteger(r.treats) as y, disease.id as target
