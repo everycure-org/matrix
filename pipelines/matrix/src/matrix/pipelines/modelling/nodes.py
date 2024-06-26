@@ -85,7 +85,7 @@ def create_prm_pairs(
     graph: KnowledgeGraph,
     data: DataFrame,
 ) -> pd.DataFrame:
-    """Create primary pairs dataset.
+    """Adds embeddings to drug-diseases dataset.
 
     Args:
         graph: Knowledge graph.
@@ -96,12 +96,7 @@ def create_prm_pairs(
     """
     # Add embeddings
     data = data.toPandas()
-    data["source_embedding"] = data.apply(
-        lambda row: graph._embeddings[row.source], axis=1
-    )
-    data["target_embedding"] = data.apply(
-        lambda row: graph._embeddings[row.target], axis=1
-    )
+    data = graph.add_embeddings(data)
 
     # Return enriched data
     return data

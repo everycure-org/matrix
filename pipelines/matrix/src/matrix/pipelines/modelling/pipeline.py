@@ -151,7 +151,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                     "integration.model_input.treats",
                 ],
                 outputs="modelling.prm.known_pairs",
-                name="create_prm_known_pairs",
+                name="create_prm_pairs",
             ),
             node(
                 func=nodes.make_splits,
