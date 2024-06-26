@@ -20,6 +20,18 @@ evaluation.continuous_ground_truth_classification:
         - object: sklearn.metrics.roc_auc_score
         - object: sklearn.metrics.average_precision_score
 
+evaluation.disease_centric_matrix:
+  evaluation_options:
+    generator:
+      object: matrix.datasets.pair_generator.MatrixTestDiseases
+      drugs_lst_flags:
+          - is_drug
+          - is_ground_pos
+    evaluation:
+      object: matrix.pipelines.evaluation.evaluation.DiscreteMetrics 
+      metrics:
+        - object: sklearn.metrics.roc_auc_score
+        - object: sklearn.metrics.average_precision_score
 
 # # MRR
 # evaluation.mrr:

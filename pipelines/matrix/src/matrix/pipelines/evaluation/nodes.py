@@ -20,28 +20,34 @@ from matrix.pipelines.evaluation.evaluation import Evaluation
 from matrix.pipelines.modelling.model import ModelWrapper
 
 
-def generate_axes(graph: KnowledgeGraph, known_pairs: pd.DataFrame) -> Tuple[List[str]]:
-    """Generate a list of drugs and list of diseases.
+# def generate_axes(
+#         graph: KnowledgeGraph,
+#         known_pairs: pd.DataFrame,
+#         disease_prefix: str,
+#     ) -> Tuple[List[str]]:
+#     """Generate a list of drugs and list of diseases.
 
-    FUTURE: This is temporary placeholder for the future curated lists.
+#     FUTURE: This is temporary placeholder for the future curated lists.
 
-    Args:
-        graph: KnowledgeGraph instance.
-        known_pairs: Labelled ground truth drug-disease pairs dataset.
+#     Args:
+#         graph: KnowledgeGraph instance.
+#         known_pairs: Labelled ground truth drug-disease pairs dataset.
+#         disease_prefix: Knowledge graph ID prefix for disease list.
+#     Returns:
+#         Tuple containing:
+#             - a list of drug IDs
+#             - a list of disease IDs
+#     """
+#     # List of drugs appearing in the ground truth positive dataset
+#     known_pos_pairs = known_pairs[known_pairs["y"].eq(1)]
+#     drugs_lst = list(known_pos_pairs["source"].unique())
 
-    Returns:
-        Tuple containing:
-            - a list of drug IDs
-            - a list of disease IDs
-    """
-    # List of drugs appearing in the ground truth positive dataset
-    known_pos_pairs = known_pairs[known_pairs["y"].eq(1)]
-    drugs_lst = list(known_pos_pairs["source"].unique())
-
-    # List of MONDO diseases in the knowledge graph
-    ...
-
-    return drugs_lst, diseases_lst
+#     # List of diseases in the knowledge graph
+#     disease_nodes = graph._disease_nodes[
+#         graph._disease_nodes["ID"].str.contains(disease_prefix)
+#     ]
+#     disease_lst =
+#     return drugs_lst, diseases_lst
 
 
 @has_schema(
@@ -70,26 +76,23 @@ def generate_test_dataset(
     Returns:
         Pairs dataframe
     """
-    # TODO: Generator might also be a more primitive generator
-    # that outputs e.g., names of drug/diseases, hence entity
-    # resolution to the graph is required before passing on.
-
-    # TODO: Generator might be more advanced, e.g., it traverses known
-    # edges to curate a realistic test dataset.
-
     return generator.generate(graph, known_pairs)
 
 
 def make_test_predictions(
+    graph: KnowledgeGraph,
     data: pd.DataFrame,
     transformers: Dict[str, Dict[str, Union[_BaseImputer, List[str]]]],
     model: ModelWrapper,
     features: List[str],
     score_col_name: str = "treat score",
 ) -> pd.DataFrame:
-    """TO DO.
+    """Generated probability scores for drug-disease dataset.
+
+    TODO: Split dataset -> parallelise for large datasets
 
     Args:
+        graph: Knowledge graph.
         data: Data to predict scores for.
         transformers: Dictionary of trained transformers.
         model: Model making the predictions.
@@ -97,14 +100,13 @@ def make_test_predictions(
         score_col_name: Probability score column name.
 
     Returns:
-        _description_
+        Pairs dataset with additional column containing the probability scores.
     """
-    # TODO: !! Collect embedding vectors for pairs without them
+    # Collect embedding vectors
+    data = graph.add_embeddings(data)
 
     # Apply transformers to data
     transformed = apply_transformers(data, transformers)
-
-    # TODO: Or shall we split in 2 nodes? Yes probably for when we do looped predictions.
     features = _extract_elements_in_list(transformed.columns, features, raise_exc=True)
 
     # Generate model probability scores

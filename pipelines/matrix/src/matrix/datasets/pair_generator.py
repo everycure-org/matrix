@@ -262,18 +262,15 @@ class MatrixTestDiseases(DrugDiseasePairGenerator):
         - drugs in a given list,
         - diseases appearing in the ground-truth positive test dataset,
     while omitting any ground-truth training data.
-
-    Drug-disease pairs in the
-
     """
 
-    def __init__(self, drugs_lst: List[str]) -> None:
+    def __init__(self, drugs_lst_flags: str) -> None:
         """Initializes the MatrixTestDiseases instance.
 
         Args:
-            drugs_lst: A list of drugs defined by knowledge IDs.
+            drugs_lst_flags: List of knowledge graph flags defining a list of drugs.
         """
-        self._drugs_lst = drugs_lst
+        self._drug_axis_flags = drugs_lst_flags
 
     def generate(
         self, graph: KnowledgeGraph, known_pairs: pd.DataFrame
@@ -292,12 +289,13 @@ class MatrixTestDiseases(DrugDiseasePairGenerator):
         test_pairs = known_pairs[is_test]
         train_pairs = known_pairs[~is_test]
 
-        # Define list of diseases
+        # Define lists of  drugs and diseases
         test_diseases_lst = list(test_pairs["target"].unique())
+        drugs_lst = graph.flags_to_ids(self._drug_axis_flags)
 
         # Generate all combinations
         for idx, disease in enumerate(test_diseases_lst):
-            matrix_slice = pd.DataFrame({"source": self._drugs_lst, "target": disease})
+            matrix_slice = pd.DataFrame({"source": drugs_lst, "target": disease})
             test_pos_pairs_in_slice = test_pairs[test_pairs["target"].eq(disease)]
             test_pos_drugs_in_slice = test_pos_pairs_in_slice["source"]
             is_test_pos = matrix_slice["source"].isin(test_pos_drugs_in_slice)

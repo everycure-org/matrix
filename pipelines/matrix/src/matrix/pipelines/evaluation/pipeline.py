@@ -25,6 +25,7 @@ def _create_evaluation_pipeline(model: str, evaluation: str) -> Pipeline:
             node(
                 func=nodes.make_test_predictions,
                 inputs=[
+                    "modelling.feat.rtx_kg2",
                     f"evaluation.{model}.{evaluation}.prm.pairs",
                     f"modelling.{model}.model_input.transformers",
                     f"modelling.{model}.models.model",
