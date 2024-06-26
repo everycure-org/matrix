@@ -30,6 +30,19 @@ class KnowledgeGraph:
         self._disease_nodes = list(nodes[nodes["is_disease"]]["id"])
         self._embeddings = dict(zip(nodes["id"], nodes["embedding"]))
 
+    def flags_to_ids(self, flags: List[str]) -> List[str]:
+        """Helper function for extracting nodes from flag columns.
+
+        Args:
+            flags: List of names of boolean columns in the graph nodes.
+
+        Returns:
+            List of graph nodes id's satisfying all flags.
+        """
+        is_all_flags = self._nodes[flags].all(axis=1)
+        select_nodes = self._nodes[is_all_flags]
+        return list(select_nodes["id"])
+
 
 class KnowledgeGraphDataset(ParquetDataset):
     """Dataset adaptor to read KnowledgeGraph using Kedro's dataset functionality."""
