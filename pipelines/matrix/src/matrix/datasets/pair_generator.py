@@ -47,17 +47,29 @@ class RandomDrugDiseasePairGenerator(SingleLabelPairGenerator):
     """Random drug-disease pair implementation.
 
     Strategy implementing a drug-disease pair generator using randomly sampled drugs and diseases.
+
     """
 
-    def __init__(self, y_label: int, random_state: int, n_unknown: int) -> None:
+    def __init__(
+        self,
+        y_label: int,
+        random_state: int,
+        n_unknown: int,
+        drug_flags: List[str],
+        disease_flags: List[str],
+    ) -> None:
         """Initializes the RandomDrugDiseasePairGenerator instance.
 
         Args:
             y_label: label to assign to generated pairs.
             random_state: Random seed.
             n_unknown: Number of unknown drug-disease pairs to generate.
+            drug_flags: List of knowledge graph flags defining drugs sample set.
+            disease_flags: List of knowledge graph flags defining diseases sample set.
         """
         self._n_unknown = n_unknown
+        self._drug_flags = drug_flags
+        self._disease_flags = disease_flags
         super().__init__(y_label, random_state)
 
     def generate(
@@ -67,22 +79,26 @@ class RandomDrugDiseasePairGenerator(SingleLabelPairGenerator):
 
         Args:
             graph: KnowledgeGraph instance.
-            known_pairs: DataFrame with ground truth drug-disease pairs.
+            known_pairs: DataFrame with known drug-disease pairs.
 
         Returns:
             DataFrame with unknown drug-disease pairs.
         """
-        # Extract ground truth positive training set
+        # Define ground truth dataset
         known_data_set = {
             (drug, disease)
             for drug, disease in zip(known_pairs["source"], known_pairs["target"])
         }
 
-        # Generate unknown data
+        # Defining list of node id's to sample from
+        drug_samp_ids = graph.flags_to_ids(self._drug_flags)
+        disease_samp_ids = graph.flags_to_ids(self._disease_flags)
+
+        # Sample pairs
         unknown_data = []
         while len(unknown_data) < self._n_unknown:
-            drug = random.choice(graph._drug_nodes)
-            disease = random.choice(graph._disease_nodes)
+            drug = random.choice(drug_samp_ids)
+            disease = random.choice(disease_samp_ids)
 
             if (drug, disease) not in known_data_set:
                 unknown_data.append(
@@ -105,17 +121,29 @@ class ReplacementDrugDiseasePairGenerator(SingleLabelPairGenerator):
     """Replacement drug-disease pair implementation.
 
     Strategy implementing a drug-disease pair generator using random drug and disease replacements.
+
     """
 
-    def __init__(self, y_label: int, random_state: int, n_replacements: int) -> None:
+    def __init__(
+        self,
+        y_label: int,
+        random_state: int,
+        n_replacements: int,
+        drug_flags: List[str],
+        disease_flags: List[str],
+    ) -> None:
         """Initializes the ReplacementDrugDiseasePairGenerator instance.
 
         Args:
             y_label: label to assign to generated pairs.
             random_state: Random seed.
             n_replacements: Number of replacements to make.
+            drug_flags: List of knowledge graph flags defining drugs sample set.
+            disease_flags: List of knowledge graph flags defining diseases sample set.
         """
         self._n_replacements = n_replacements
+        self._drug_flags = drug_flags
+        self._disease_flags = disease_flags
         super().__init__(y_label, random_state)
 
     def generate(
@@ -125,7 +153,7 @@ class ReplacementDrugDiseasePairGenerator(SingleLabelPairGenerator):
 
         Args:
             graph: KnowledgeGraph instance.
-            known_pairs: DataFrame with ground truth drug-disease pairs.
+            known_pairs: DataFrame with known drug-disease pairs.
 
         Returns:
             DataFrame with unknown drug-disease pairs.
@@ -135,7 +163,7 @@ class ReplacementDrugDiseasePairGenerator(SingleLabelPairGenerator):
             for drug, disease in zip(known_pairs["source"], known_pairs["target"])
         }
 
-        # Extract ground truth positive training set
+        # Extract known positive training set
         kp_train_pairs = known_pairs[
             (known_pairs["y"] == 1) & (known_pairs["split"] == "TRAIN")
         ]
@@ -151,6 +179,8 @@ class ReplacementDrugDiseasePairGenerator(SingleLabelPairGenerator):
                 graph,
                 kp_drug,
                 kp_disease,
+                self._drug_flags,
+                self._disease_flags,
                 self._n_replacements,
                 known_data_set,
                 self._y_label,
@@ -166,15 +196,22 @@ class ReplacementDrugDiseasePairGenerator(SingleLabelPairGenerator):
         graph: KnowledgeGraph,
         kp_drug: str,
         kp_disease: str,
+        drug_flags: List[str],
+        disease_flags: List[str],
         n_replacements: int,
-        known_data_set: set[tuple],
+        known_data_set: Set[tuple],
         y_label: int,
-    ) -> list[str]:
+    ) -> List[str]:
         """Helper function to generate list of drug-disease pairs through replacements."""
+        # Defining list of node id's to sample from
+        drug_samp_ids = graph.flags_to_ids(drug_flags)
+        disease_samp_ids = graph.flags_to_ids(disease_flags)
+
+        # Sample pairs
         unknown_data = []
         while len(unknown_data) < 2 * n_replacements:
-            rand_drug = random.choice(graph._drug_nodes)
-            rand_disease = random.choice(graph._disease_nodes)
+            rand_drug = random.choice(drug_samp_ids)
+            rand_disease = random.choice(disease_samp_ids)
             if (kp_drug, rand_disease) not in known_data_set and (
                 rand_drug,
                 kp_disease,
