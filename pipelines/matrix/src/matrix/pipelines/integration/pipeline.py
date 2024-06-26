@@ -8,35 +8,42 @@ def create_pipeline(**kwargs) -> Pipeline:
     """Create integration pipeline."""
     return pipeline(
         [
-            # Write nodes
+            # Write kg2
             node(
-                func=nodes.extract_nodes,
-                inputs=["integration.raw.rtx_kg2.nodes", "params:modelling.drug_types"],
-                outputs="integration.prm.drugs",
-                name="create_neo4j_drug_nodes",
+                func=lambda x: x,
+                inputs=["integration.raw.rtx_kg2.nodes@spark"],
+                outputs="integration.prm.rtx_kg2.nodes",
+                name="write_rtx_kg2_nodes",
+                tags=["rtx_kg2"],
             ),
+            # Write Neo4J nodes
             node(
-                func=nodes.extract_nodes,
+                func=nodes.create_nodes,
+                inputs=["integration.prm.rtx_kg2.nodes"],
+                outputs="integration.model_input.nodes",
+                name="create_neo4j_nodes",
+                tags=["rtx_kg2", "neo4j"],
+            ),
+            # Construct ground_truth
+            node(
+                func=nodes.create_int_pairs,
                 inputs=[
-                    "integration.raw.rtx_kg2.nodes",
-                    "params:modelling.disease_types",
+                    "integration.raw.ground_truth.positives",
+                    "integration.raw.ground_truth.negatives",
                 ],
-                outputs="integration.prm.diseases",
-                name="create_neo4j_disease_nodes",
+                outputs="integration.int.known_pairs@pandas",
+                name="create_int_known_pairs",
+                tags=["rtx_kg2", "neo4j"],
             ),
-            # Write relationship
             node(
-                func=nodes.extract_edges,
-                inputs=["integration.raw.rtx_kg2.edges"],
-                outputs="integration.prm.treats",
-                name="create_neo4j_edges",
-            ),
-            # Example reading
-            node(
-                func=nodes.neo4j_decorated,
-                inputs=["integration.prm.pypher", "params:integration.drug_label"],
-                outputs=None,
-                name="print",
+                func=nodes.create_treats,
+                inputs=[
+                    "integration.model_input.nodes",
+                    "integration.int.known_pairs@spark",
+                ],
+                outputs="integration.model_input.treats",
+                name="create_neo4j_known_pairs",
+                tags=["rtx_kg2", "neo4j"],
             ),
         ]
     )

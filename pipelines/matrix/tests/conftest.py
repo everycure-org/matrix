@@ -8,6 +8,7 @@ from kedro.framework.project import configure_project, settings
 from kedro.framework.hooks import _create_hook_manager
 
 from kedro.config import OmegaConfigLoader
+from omegaconf.resolvers import oc
 from matrix.resolvers import merge_dicts
 
 
@@ -34,7 +35,7 @@ def config_loader_fixture(conf_source) -> OmegaConfigLoader:
                 "**/parameters*/**",
             ],
         },
-        custom_resolvers={"merge": merge_dicts},
+        custom_resolvers={"merge": merge_dicts, "oc.env": oc.env},
     )
 
 

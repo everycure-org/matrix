@@ -17,3 +17,4 @@ s3fs
 scikit-learn==1.4.0
 scikit-optimize
 xgboost
+hdfs
