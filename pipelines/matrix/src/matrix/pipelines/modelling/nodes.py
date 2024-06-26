@@ -388,15 +388,3 @@ def check_model_performance(
             report[f"{split.lower()}_{name}"] = func(y_true, y_pred)
 
     return json.loads(json.dumps(report, default=float))
-
-
-def consolidate_reports(*reports) -> dict:
-    """Function to consolidate reports into master report.
-
-    Args:
-        reports: tuples of (name, report) pairs.
-
-    Returns:
-        Dictionary representing consolidated report.
-    """
-    return [*reports]
