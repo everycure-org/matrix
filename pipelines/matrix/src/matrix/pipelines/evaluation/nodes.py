@@ -1,6 +1,6 @@
 """Module with nodes for evaluation."""
 import abc
-from typing import Any, List, Dict, Union
+from typing import Any, List, Dict, Union, Tuple
 
 from sklearn.impute._base import _BaseImputer
 
@@ -18,6 +18,30 @@ from matrix.datasets.pair_generator import DrugDiseasePairGenerator
 from matrix.pipelines.modelling.nodes import apply_transformers
 from matrix.pipelines.evaluation.evaluation import Evaluation
 from matrix.pipelines.modelling.model import ModelWrapper
+
+
+def generate_axes(graph: KnowledgeGraph, known_pairs: pd.DataFrame) -> Tuple[List[str]]:
+    """Generate a list of drugs and list of diseases.
+
+    FUTURE: This is temporary placeholder for the future curated lists.
+
+    Args:
+        graph: KnowledgeGraph instance.
+        known_pairs: Labelled ground truth drug-disease pairs dataset.
+
+    Returns:
+        Tuple containing:
+            - a list of drug IDs
+            - a list of disease IDs
+    """
+    # List of drugs appearing in the ground truth positive dataset
+    known_pos_pairs = known_pairs[known_pairs["y"].eq(1)]
+    drugs_lst = list(known_pos_pairs["source"].unique())
+
+    # List of MONDO diseases in the knowledge graph
+    ...
+
+    return drugs_lst, diseases_lst
 
 
 @has_schema(
