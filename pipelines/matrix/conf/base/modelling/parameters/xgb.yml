@@ -1,7 +1,7 @@
 modelling.xgb:
     _overrides:
       generator:
-        object: matrix.datasets.graph.RandomDrugDiseasePairGenerator
+        object: matrix.datasets.pair_generator.RandomDrugDiseasePairGenerator
         y_label: 2
         random_state: ${globals:random_state}
         n_unknown: 100
