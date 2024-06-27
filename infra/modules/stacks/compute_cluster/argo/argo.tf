@@ -58,40 +58,28 @@ resource "helm_release" "argo" {
 
 resource "kubernetes_manifest" "app_of_apps" {
   depends_on = [helm_release.argo]
-  manifest = {
-    apiVersion = "argoproj.io/v1alpha1"
-    kind       = "Application"
-        metadata = {
-      name = "app-of-apps"
-      namespace = "argocd"
-    }
-    spec = {
-      destination = {
-        namespace = "argocd"
-        server    = "https://kubernetes.default.svc"
-      }
-      source = {
-        path           = var.repo_path
-        repoURL        = var.repo_url
-        targetRevision = var.repo_revision
-        directory = {
-          recurse = true
-        }
-      }
-      project = "default"
-      syncPolicy = {
-        syncOptions = [
-          {
-            "CreateNamespace" = true
-          }
-        ]
-        automated = {
-          prune      = true
-          allowEmpty = true
-        }
-      }
-    }
-
-  }
-
+  manifest = yamldecode(
+<<YAML
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: app-of-apps
+  namespace: argocd
+spec:
+  destination:
+    namespace: argocd
+    server: "https://kubernetes.default.svc"
+  source:
+    path: ${var.repo_path}
+    repoURL: ${var.repo_url}
+    targetRevision: ${var.repo_revision}
+  project: default
+  syncPolicy:
+    syncOptions:
+      - CreateNamespace=true
+    automated:
+      prune: true
+      allowEmpty: true
+YAML
+)
 }
