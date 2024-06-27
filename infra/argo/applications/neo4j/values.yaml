@@ -6,3 +6,12 @@ neo4j: # the name of the helm dependency
       memory: 4Gi
       cpu: 2
     # acceptLicenseAgreement: yes
+  volumes:
+    data:
+      mode: "dynamic"
+      dynamic:
+        # In GKE;
+        # * premium-rwo provisions SSD disks (recommended)
+        # * standard-rwo provisions balanced SSD-backed disks
+        # * standard provisions HDD disks
+        storageClassName: premium-rwo
