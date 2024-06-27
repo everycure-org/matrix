@@ -128,13 +128,14 @@ class SpecificRanking(Evaluation):
         items_lst = list(data[self._specific_col].unique())
 
         # Compute average rank of known positives for each item
+        # FUTURE: opportunity for parallelisation here
         ranks_lst = []
         for item in items_lst:
             pairs_for_item = data[data[self._specific_col] == item]
             is_pos = pairs_for_item["y"].eq(1)
             pos_preds = pairs_for_item[is_pos][score_col_name]
             neg_preds = pairs_for_item[~is_pos][score_col_name]
-            neg_preds = neg_preds.sort()  # TODO: Potential bottleneck here
+            neg_preds = neg_preds.sort()
             for prob in pos_preds:
                 rank = len(neg_preds) - bisect.bisect_left(neg_preds, prob) + 1
             ranks_lst.append(rank)
