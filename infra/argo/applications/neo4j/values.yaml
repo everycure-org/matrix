@@ -1,0 +1,4 @@
+acceptLicenseAgreement: yes
+core:
+  standalone: true
+  neo4jPassword: secretpass
