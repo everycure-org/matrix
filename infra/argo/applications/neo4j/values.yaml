@@ -1,4 +1,7 @@
-acceptLicenseAgreement: yes
-core:
-  standalone: true
-  neo4jPassword: secretpass
+  # neo4jPassword: secretpass
+neo4j:
+  name: neo4j
+  resources:
+    memory: 4Gi
+    cpu: 2
+  # acceptLicenseAgreement: yes
