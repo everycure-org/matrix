@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: spark
+  name: neo4j
   namespace: argocd
 spec:
   destination:

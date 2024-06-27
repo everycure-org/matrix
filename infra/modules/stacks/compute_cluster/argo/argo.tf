@@ -70,7 +70,7 @@ spec:
     namespace: argocd
     server: "https://kubernetes.default.svc"
   source:
-    path: ${var.repo_path}
+    path: ${var.repo_path}/app-of-apps
     repoURL: ${var.repo_url}
     targetRevision: ${var.repo_revision}
   project: default
