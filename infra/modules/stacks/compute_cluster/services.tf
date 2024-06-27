@@ -6,7 +6,8 @@ module "argo" {
   repo_url      = var.gitops_repo_url
   repo_creds    = var.gitops_repo_creds
   repo_path     = "infra/argo/"
-  repo_revision = "HEAD"
+  # TODO fix to `HEAD` before merging
+  repo_revision = "feat/neo4j-infra"
 }
 
 module "external_secrets" {
