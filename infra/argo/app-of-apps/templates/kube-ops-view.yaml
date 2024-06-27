@@ -1,0 +1,23 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: kube-ops-view
+  namespace: argocd # application config lives in argocd namespace but app itself in separate NS
+  finalizers:
+    # THIS WILL KILL PRODUCTION! #TODO
+    - resources-finalizer.argocd.argoproj.io 
+spec:
+  destination:
+    namespace: core
+    server: {{ .Values.spec.destination.server }}
+  project: default
+  source:
+    path: infra/argo/applications/kube-ops-view
+    repoURL: {{ .Values.spec.source.repoURL }}
+    targetRevision: {{ .Values.spec.source.targetRevision }}
+  syncPolicy:
+    syncOptions:     # Sync options which modifies sync behavior
+    - CreateNamespace=true # Namespace Auto-Creation ensures that namespace specified as the application destination exists in the destination cluster.
+    automated:
+      prune: true
+      selfHeal: true
