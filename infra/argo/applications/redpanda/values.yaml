@@ -1,0 +1,60 @@
+redpanda:
+  statefulset:
+    # Number of Redpanda brokers (recommend setting this to the number of nodes in the cluster)
+    replicas: 2
+  config:
+    cluster:
+      auto_create_topics_enabled: true
+      max.request.size: 5242880
+      message.max.bytes: 10485760
+      num.partitions: 1
+
+  # TODO fix with proper external domains
+  # currently hacking the external access to point to internal DNS names
+#  external:
+#    enabled: false
+#    domain: redpanda.redpanda.svc.cluster.local
+#    addresses:
+#      - redpanda-0
+#      - redpanda-1
+#  listeners:
+#    kafka:
+#      external:
+#        default:
+#          enabled: false
+#          advertisedPorts:
+#            - 9094
+console:
+  #  ingress:
+  #    enabled: true
+  #    className: ""
+  #    hosts:
+  #    - host: fm.layer.quantumblack.com
+  #    annotations:
+  #      kubernetes.io/ingress.class: "nginx"
+  #      nginx.ingress.kubernetes.io/ssl-passthrough: "true"
+  #      nginx.ingress.kubernetes.io/use-regex: "true"
+  #      nginx.ingress.kubernetes.io/rewrite-target: /$1
+  #      nginx.ingress.kubernetes.io/auth-signin: "https://vouch.fm.layer.quantumblack.com/login?url=$scheme://$http_host$request_uri&vouch-failcount=$auth_resp_failcount&X-Vouch-Token=$auth_resp_jwt&error=$auth_resp_err"
+  #      nginx.ingress.kubernetes.io/auth-url: https://vouch.fm.layer.quantumblack.com/validate
+  #      nginx.ingress.kubernetes.io/auth-response-headers: X-Vouch-IdP-IdToken
+  #      nginx.ingress.kubernetes.io/configuration-snippet: |
+  #        proxy_set_header X-Vouch-IdP-IdToken $auth_resp_x_vouch_idp_idtoken;
+  #      nginx.ingress.kubernetes.io/auth-snippet: |
+  #        auth_request_set $auth_resp_jwt $upstream_http_x_vouch_jwt;
+  #        auth_request_set $auth_resp_err $upstream_http_x_vouch_err;
+  #        auth_request_set $auth_resp_failcount $upstream_http_x_vouch_failcount;
+  #        auth_request_set $auth_resp_x_vouch_idp_idtoken $upstream_http_x_vouch_idp_idtoken;
+  #      nginx.ingress.kubernetes.io/proxy-body-size: 150m
+  #      layer.quantumblack.com/description: Manage redpanda clusters
+  #      layer.quantumblack.com/name: Redpanda Console
+  #      layer.quantumblack.com/sandboxed: "false"
+  #      layer.quantumblack.com/service_type: argo-cd
+  #      layer.quantumblack.com/url: https://fm.layer.quantumblack.com/redpanda-console/
+  console:
+    config:
+      server:
+        basePath: console/
+      kafka:
+        brokers:
+          - redpanda-0.redpanda.redpanda.svc.cluster.local:9093

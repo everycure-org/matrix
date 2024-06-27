@@ -1,0 +1,25 @@
+---
+# Source: app-of-apps/templates/kube-ops-view.yaml
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: kube-ops-view
+  namespace: argocd # application config lives in argocd namespace but app itself in separate NS
+  finalizers:
+    # THIS WILL KILL PRODUCTION! #TODO
+    - resources-finalizer.argocd.argoproj.io 
+spec:
+  destination:
+    namespace: default
+    server: https://kubernetes.default.svc
+  project: default
+  source:
+    path: infra/argo/applications//kube-ops-view
+    repoURL: https://github.com/everycure-org/matrix.git
+    targetRevision: feat/neo4j-infra
+  syncPolicy:
+    syncOptions:     # Sync options which modifies sync behavior
+    - CreateNamespace=true # Namespace Auto-Creation ensures that namespace specified as the application destination exists in the destination cluster.
+    automated:
+      prune: true
+      selfHeal: true
