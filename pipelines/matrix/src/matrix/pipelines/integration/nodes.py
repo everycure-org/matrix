@@ -43,10 +43,13 @@ def create_nodes(df: DataFrame) -> DataFrame:
         df: Nodes dataframe
     """
     return (
-        df.withColumn("label", F.split(F.col("category"), ":", limit=2).getItem(1))
+        df.select("id", "category", "name", "description")
+        .withColumn("label", F.split(F.col("category"), ":", limit=2).getItem(1))
         .withColumn(
             "properties",
-            F.create_map(F.lit("name"), F.col("name")),
+            F.create_map(
+                F.lit("name"), F.col("name"), F.lit("description"), F.col("description")
+            ),
         )
         .withColumn("property_keys", F.map_keys(F.col("properties")))
         .withColumn("property_values", F.map_values(F.col("properties")))
@@ -55,35 +58,58 @@ def create_nodes(df: DataFrame) -> DataFrame:
 
 @has_schema(
     schema={
-        "label": "string",
-        "source_id": "string",
-        "target_id": "string",
-        "property_keys": "array<string>",
-        "property_values": "array<string>",
+        "subject": "string",
+        "predicate": "string",
+        "object": "string",
     },
     allow_subset=True,
 )
-@primary_key(primary_key=["source_id", "target_id", "label"])
-def create_treats(nodes: DataFrame, df: DataFrame):
-    """Function to construct treats relatonship.
-
-    NOTE: This function requires the nodes dataset, as the nodes should be
-    written _prior_ to the relationships.
+def create_edges(nodes: DataFrame, edges: DataFrame):
+    """Function to create Neo4J edges.
 
     Args:
-        nodes: nodes dataset
-        df: Ground truth dataset
+        nodes: nodes dataframe
+        edges: edges dataframe
     """
-    return (
-        df.withColumn(
-            "label", F.when(F.col("y") == 1, "TREATS").otherwise("NOT_TREATS")
-        )
-        .withColumn(
-            "properties",
-            F.create_map(F.lit("treats"), F.col("y"), F.lit("foo"), F.lit("bar")),
-        )
-        .withColumn("source_id", F.col("source"))
-        .withColumn("target_id", F.col("target"))
-        .withColumn("property_keys", F.map_keys(F.col("properties")))
-        .withColumn("property_values", F.map_values(F.col("properties")))
-    )
+
+    breakpoint()
+
+    return edges.select(
+        "subject", "predicate", "object", "knowledge_source"
+    ).withColumn("label", F.split(F.col("predicate"), ":", limit=2).getItem(1))
+
+
+# @has_schema(
+#     schema={
+#         "label": "string",
+#         "source_id": "string",
+#         "target_id": "string",
+#         "property_keys": "array<string>",
+#         "property_values": "array<string>",
+#     },
+#     allow_subset=True,
+# )
+# @primary_key(primary_key=["source_id", "target_id", "label"])
+# def create_treats(nodes: DataFrame, df: DataFrame):
+#     """Function to construct treats relatonship.
+
+#     NOTE: This function requires the nodes dataset, as the nodes should be
+#     written _prior_ to the relationships.
+
+#     Args:
+#         nodes: nodes dataset
+#         df: Ground truth dataset
+#     """
+#     return (
+#         df.withColumn(
+#             "label", F.when(F.col("y") == 1, "TREATS").otherwise("NOT_TREATS")
+#         )
+#         .withColumn(
+#             "properties",
+#             F.create_map(F.lit("treats"), F.col("y"), F.lit("foo"), F.lit("bar")),
+#         )
+#         .withColumn("source_id", F.col("source"))
+#         .withColumn("target_id", F.col("target"))
+#         .withColumn("property_keys", F.map_keys(F.col("properties")))
+#         .withColumn("property_values", F.map_values(F.col("properties")))
+#     )

@@ -10,18 +10,148 @@ _bigquery_ds: &_bigquery_ds
   project_id: ${oc.env:GCP_PROJECT_ID,mtrx-hub-dev-3of}
 
 integration.raw.rtx_kg2.nodes@spark:
-  <<: *_spark_csv 
-  filepath: ${globals:gcs_bucket}/KG/RTX_KG_v2-7-3/rtx_kg2_nodes.tsv
+  type: matrix.datasets.gcp.SparkWithSchemaDataset
+  filepath: ${globals:paths.raw}/rtx_kg2_nodes.tsv
+  file_format: csv
   load_args:
-    header: true
     sep: "\t"
+    schema:
+      object: pyspark.sql.types.StructType
+      fields:
+        - object: pyspark.sql.types.StructField
+          name: id
+          dataType: 
+            object: pyspark.sql.types.StringType
+          nullable: False
+
+        - object: pyspark.sql.types.StructField
+          name: name
+          dataType: 
+            object: pyspark.sql.types.StringType
+          nullable: False
+
+        - object: pyspark.sql.types.StructField
+          name: category
+          dataType: 
+            object: pyspark.sql.types.StringType
+          nullable: False
+
+        - object: pyspark.sql.types.StructField
+          name: all_names
+          dataType: 
+            object: pyspark.sql.types.StringType
+          nullable: False
+
+        - object: pyspark.sql.types.StructField
+          name: all_categories
+          dataType: 
+            object: pyspark.sql.types.StringType
+          nullable: False
+        
+        - object: pyspark.sql.types.StructField
+          name: iri
+          dataType: 
+            object: pyspark.sql.types.StringType
+          nullable: False
+
+        - object: pyspark.sql.types.StructField
+          name: description
+          dataType: 
+            object: pyspark.sql.types.StringType
+          nullable: False
+
+        - object: pyspark.sql.types.StructField
+          name: equivalent_curies
+          dataType: 
+            object: pyspark.sql.types.StringType
+          nullable: False
+
+        - object: pyspark.sql.types.StructField
+          name: publications
+          dataType: 
+            object: pyspark.sql.types.StringType
+          nullable: False
+
+        - object: pyspark.sql.types.StructField
+          name: label
+          dataType: 
+            object: pyspark.sql.types.StringType
+          nullable: False
 
 integration.raw.rtx_kg2.edges@spark:
-  <<: *_spark_csv
-  filepath: ${globals:gcs_bucket}/KG/RTX_KG_v2-7-3/rtx_kg2_edges.tsv
+  type: matrix.datasets.gcp.SparkWithSchemaDataset
+  filepath: ${globals:paths.raw}/rtx_kg2_edges.tsv
+  file_format: csv
   load_args:
-    header: true
     sep: "\t"
+    schema:
+      object: pyspark.sql.types.StructType
+      fields:
+        - object: pyspark.sql.types.StructField
+          name: subject
+          dataType: 
+            object: pyspark.sql.types.StringType
+          nullable: False
+        
+        - object: pyspark.sql.types.StructField
+          name: object
+          dataType: 
+            object: pyspark.sql.types.StringType
+          nullable: False
+        
+        - object: pyspark.sql.types.StructField
+          name: predicate
+          dataType: 
+            object: pyspark.sql.types.StringType
+          nullable: False
+        
+        - object: pyspark.sql.types.StructField
+          name: knowledge_source
+          dataType: 
+            object: pyspark.sql.types.StringType
+          nullable: False
+
+        - object: pyspark.sql.types.StructField
+          name: publications
+          dataType: 
+            object: pyspark.sql.types.StringType
+          nullable: False
+
+        - object: pyspark.sql.types.StructField
+          name: publications_info
+          dataType: 
+            object: pyspark.sql.types.StringType
+          nullable: False
+
+        - object: pyspark.sql.types.StructField
+          name: kg2_ids
+          dataType: 
+            object: pyspark.sql.types.StringType
+          nullable: False
+
+        - object: pyspark.sql.types.StructField
+          name: id
+          dataType: 
+            object: pyspark.sql.types.StringType
+          nullable: False
+
+        - object: pyspark.sql.types.StructField
+          name: type
+          dataType: 
+            object: pyspark.sql.types.StringType
+          nullable: False
+
+        - object: pyspark.sql.types.StructField
+          name: start_id
+          dataType: 
+            object: pyspark.sql.types.StringType
+          nullable: False
+
+        - object: pyspark.sql.types.StructField
+          name: end_id
+          dataType: 
+            object: pyspark.sql.types.StringType
+          nullable: False
 
 integration.raw.ground_truth.positives:
   <<: *_pandas_csv
@@ -39,14 +169,16 @@ integration.prm.rtx_kg2.nodes:
   <<: *_bigquery_ds
   dataset: kg_rtx_kg2
   table: "nodes_${globals:versions.release}"
-  labels: 
-    kg: rtx_kg2
-    release: ${globals:versions.release}
+  save_args:
+    temporaryGcsBucket: ${globals:gcs_bucket}
+    bigQueryTableLabel.kg: rtx_kg2
+    bigQueryTableLabel.release: ${globals:versions.release}
 
 integration.prm.rtx_kg2.edges:
   <<: *_bigquery_ds
   dataset: kg_rtx_kg2
   table: "edges_${globals:versions.release}"
-  labels: 
-    kg: rtx_kg2
-    release: ${globals:versions.release}
+  save_args:
+    temporaryGcsBucket: ${globals:gcs_bucket}
+    bigQueryTableLabel.kg: rtx_kg2
+    bigQueryTableLabel.release: ${globals:versions.release}

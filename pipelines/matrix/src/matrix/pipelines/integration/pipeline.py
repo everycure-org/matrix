@@ -16,7 +16,14 @@ def create_pipeline(**kwargs) -> Pipeline:
                 name="write_rtx_kg2_nodes",
                 tags=["rtx_kg2"],
             ),
-            # Write Neo4J nodes
+            node(
+                func=lambda x: x,
+                inputs=["integration.raw.rtx_kg2.edges@spark"],
+                outputs="integration.prm.rtx_kg2.edges",
+                name="write_rtx_kg2_edges",
+                tags=["rtx_kg2"],
+            ),
+            # Write kg2 Neo4J
             node(
                 func=nodes.create_nodes,
                 inputs=["integration.prm.rtx_kg2.nodes"],
@@ -24,26 +31,36 @@ def create_pipeline(**kwargs) -> Pipeline:
                 name="create_neo4j_nodes",
                 tags=["rtx_kg2", "neo4j"],
             ),
-            # Construct ground_truth
             node(
-                func=nodes.create_int_pairs,
-                inputs=[
-                    "integration.raw.ground_truth.positives",
-                    "integration.raw.ground_truth.negatives",
-                ],
-                outputs="integration.int.known_pairs@pandas",
-                name="create_int_known_pairs",
-                tags=["rtx_kg2", "neo4j"],
-            ),
-            node(
-                func=nodes.create_treats,
+                func=nodes.create_edges,
                 inputs=[
                     "integration.model_input.nodes",
-                    "integration.int.known_pairs@spark",
+                    "integration.prm.rtx_kg2.edges",
                 ],
-                outputs="integration.model_input.treats",
-                name="create_neo4j_known_pairs",
+                outputs="integration.model_input.edges",
+                name="create_neo4j_edges",
                 tags=["rtx_kg2", "neo4j"],
             ),
+            # Construct ground_truth
+            # node(
+            #     func=nodes.create_int_pairs,
+            #     inputs=[
+            #         "integration.raw.ground_truth.positives",
+            #         "integration.raw.ground_truth.negatives",
+            #     ],
+            #     outputs="integration.int.known_pairs@pandas",
+            #     name="create_int_known_pairs",
+            #     tags=["rtx_kg2", "neo4j"],
+            # ),
+            # node(
+            #     func=nodes.create_treats,
+            #     inputs=[
+            #         "integration.model_input.nodes",
+            #         "integration.int.known_pairs@spark",
+            #     ],
+            #     outputs="integration.model_input.treats",
+            #     name="create_neo4j_known_pairs",
+            #     tags=["rtx_kg2", "neo4j"],
+            # ),
         ]
     )

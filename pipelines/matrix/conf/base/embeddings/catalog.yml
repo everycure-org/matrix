@@ -18,17 +18,17 @@ embeddings.prm.graph:
     query: > 
         MATCH (n {id: event.id})
         WITH event, n
-        CALL apoc.create.setProperty(n, 'feature', toFloat(event.feature)) YIELD node
+        CALL apoc.ml.vertexai.embedding
         RETURN node
-  load_args:
-    query: >
-      MATCH (n {id: event.id}) RETURN n.id as id, n.feature
+  # load_args:
+  #   query: >
+  #     MATCH (n {id: event.id}) RETURN n.id as id, toFloat(n.feature) as feature
 
 embeddings.model_input.gds.graph:
   <<: *_neo4j_ds
   load_args:
     gds: gds.graph.project
-    gds.graphName: &_graph_name graph_with_feature_test
+    gds.graphName: &_graph_name graph_with_feat
     gds.nodeProjection: "*"
     gds.relationshipProjection: "*"
     gds.configuration.nodeProperties: "feature"
@@ -38,9 +38,8 @@ embeddings.models.gds.graphsage:
   load_args:
     gds: gds.beta.graphSage.train
     gds.graphName: *_graph_name
-    gds.configuration.modelName: &_model_name graphsage
+    gds.configuration.modelName: &_model_name graphsage_model
     gds.configuration.featureProperties: ["feature"]
-
 
 embeddings.model_output.gds.graphsage:
   <<: *_neo4j_ds
@@ -48,3 +47,13 @@ embeddings.model_output.gds.graphsage:
     gds: gds.beta.graphSage.stream
     gds.graphName: *_graph_name
     gds.configuration.modelName: *_model_name
+
+embeddings.model_output.graphsage:
+  <<: *_neo4j_ds
+  save_args:
+    query: > 
+        MATCH (n)
+        WHERE ID(n) = event.nodeId
+        WITH event, n
+        CALL apoc.create.setProperty(n, 'graphsage_embedding', event.embedding) YIELD node
+        RETURN node
