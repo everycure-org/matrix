@@ -1,6 +1,6 @@
   # neo4jPassword: secretpass
-neo4j_chart:
-  neo4j:
+neo4j: # the name of the helm dependency
+  neo4j: # config level
     name: neo4j
     resources:
       memory: 4Gi
