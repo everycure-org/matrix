@@ -3,8 +3,8 @@ neo4j: # the name of the helm dependency
   neo4j: # config level
     name: neo4j
     resources:
-      memory: 4Gi
-      cpu: 2
+      memory: 2Gi
+      cpu: 0.7
     # acceptLicenseAgreement: yes
   volumes:
     data:
