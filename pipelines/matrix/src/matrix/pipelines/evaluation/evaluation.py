@@ -98,7 +98,8 @@ class SpecificRanking(Evaluation):
 
     In particular, the class encompasses drug or diseases specific Hit@k and Mean Reciprocal Rank (MRR) metrics.
 
-    TODO: Comment about how the metrics are computed.
+    Note that, for each specific drug or disease, we compute the rank of each known positives only against negatives,
+    not including the other known positives.
 
     TODO: unit test
     """
