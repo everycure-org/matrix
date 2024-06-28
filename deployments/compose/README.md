@@ -35,6 +35,14 @@ gcloud config set project mtrx-hub-dev-3of
 gcloud iam service-accounts keys create --iam-account=test-gcp@mtrx-hub-dev-3of.iam.gserviceaccount.com  conf/local/service-account.json
 ```
 
+### Vertex token
+
+To succesfully run embeddings, export your GCP access token using the following command:
+
+```bash
+export VERTEX_AI_ACCESS_TOKEN=$(gcloud auth print-access-token)
+```
+
 ## Launching the deployment
 
 After completing the installation, run the following command from the `deployments/compose` directory to bring up the services.

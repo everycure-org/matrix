@@ -12,6 +12,8 @@ _neo4j_ds: &_neo4j_ds
   save_args:
     mode: "overwrite"
 
+
+# https://neo4j.com/labs/apoc/5/ml/vertexai/#_generate_embeddings_api
 embeddings.prm.graph.embeddings:
   <<: *_neo4j_ds
   save_args:

@@ -1,42 +1,39 @@
 """Embeddings pipeline."""
-from typing import List, Any
+from typing import List, Any, Dict
 
 from kedro.pipeline import Pipeline, node, pipeline
 
 from pyspark.sql import DataFrame
 from pyspark.sql import functions as F
 
-from pyspark.ml.feature import PCA
 from pyspark.ml.functions import array_to_vector, vector_to_array
 from graphdatascience import GraphDataScience
 
 from refit.v1.core.inject import inject_object
 from refit.v1.core.unpack import unpack_params
 
-# TODO: Extract
+# TODO: Extract this into params
 gds = GraphDataScience("bolt://127.0.0.1:7687", auth=("neo4j", "admin"))
 gds.set_database("everycure")
 
 
-def concat_featues(df: DataFrame, features: List[str]):
+def concat_featues(df: DataFrame, features: List[str], vertex_config: Dict[str, str]):
     """Function setup features for node embeddings.
 
     Args:
         df: nodes dataframe
         features: features to use for node embeddings.
-
+        vertex_config: vertex confoiguration to use
     Returns:
         Input features for node computation
     """
     return (
-        df.withColumn("project", F.lit("mtrx-hub-dev-3of"))
+        df.withColumn("project", F.lit(vertex_config.get("project")))
         .withColumn(
             "token",
-            F.lit(
-                "ya29.a0AXooCgvnb6Q5EokZZ7c33WiX9Ihqmqz7Oj34BnH14VB-SDAvgos2340OUA-dA2Ti85HBETOFEUasOm_ZXsowt7_tFX0sh_KoBYDUIb--3j77_hKLXX60fjw9iKoSGS812f9RtE-ZJOc515hQB8VA0Tu9CYnl_rqyMR77i0V5FYkaCgYKAYUSARASFQHGX2MilXcf15EVKngelApHLwOjMA0178"
-            ),
+            F.lit(vertex_config.get("accessToken")),
         )
-        .withColumn("input", F.concat(F.col("id"), F.col("category")))
+        .withColumn("input", F.concat(*[F.col(feature) for feature in features]))
     )
 
 
@@ -113,7 +110,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 func=concat_featues,
                 inputs=[
                     "integration.model_input.nodes",
-                    "params:embeddings.node.attributes",
+                    "params:embeddings.node.features",
                 ],
                 outputs="embeddings.prm.graph.embeddings",
                 name="add_node_embeddings",

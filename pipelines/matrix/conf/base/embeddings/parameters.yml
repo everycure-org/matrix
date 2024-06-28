@@ -1,6 +1,10 @@
+embeddings.vertex_config:
+  project: ${oc.env:GCP_PROJECT,mtrx-hub-dev-3of} 
+  accessToken: ${oc.env:VERTEX_AI_ACCESS_TOKEN}
+
 # Attributes used as input features to compute
 # node embeddings.
-embeddings.node.attributes: ["id", "category"]
+embeddings.node.features: ["id", "category"]
 
 # Defines strategy used to reduce dimensions of the GenAI
 # generated node embeddings.
