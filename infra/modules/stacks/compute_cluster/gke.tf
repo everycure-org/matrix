@@ -1,6 +1,27 @@
 data "google_client_config" "default" {
 }
 
+## TODO decide what to take
+module "autopilot_gke" {
+  source                     = "terraform-google-modules/kubernetes-engine/google//modules/beta-autopilot-private-cluster"
+  project_id                 = var.project_id
+  name                       = "${var.name}-autopilot"
+  deletion_protection        = var.environment == "dev" ? false : true
+  region                     = var.default_region
+  zones                      = var.zones
+  network                    = var.network
+  subnetwork                 = var.subnetwork
+  ip_range_pods              = var.pod_ip_range
+  ip_range_services          = var.svc_ip_range
+  horizontal_pod_autoscaling = true
+  enable_private_endpoint    = false
+  enable_private_nodes       = true
+  master_ipv4_cidr_block     = "172.17.0.0/28"
+  dns_cache                  = false
+
+}
+
+# docs here https://registry.terraform.io/modules/terraform-google-modules/kubernetes-engine/google/latest/submodules/private-cluster
 module "gke" {
   source                     = "terraform-google-modules/kubernetes-engine/google//modules/private-cluster"
   version                    = "31.0.0"
@@ -29,7 +50,7 @@ module "gke" {
       name               = "default-node-pool"
       machine_type       = "e2-medium"
       min_count          = 1
-      max_count          = 100
+      max_count          = 10
       local_ssd_count    = 0
       spot               = false
       disk_size_gb       = 100
@@ -48,6 +69,21 @@ module "gke" {
       # gpu_driver_version          = "LATEST"
       # gpu_sharing_strategy        = "TIME_SHARING"
       # max_shared_clients_per_gpu = 2
+    },
+    {
+      name               = "stable-cpu-pool"
+      # machine_type       = "n4-standard-8"
+      machine_type       = "e2-standard-8"
+      node_locations     = "us-central1-a,us-central1-c"
+      min_count          = 0
+      max_count          = 20
+      local_ssd_count    = 0
+      disk_size_gb       = 200
+      # disk_type = "hyperdisk-balanced"
+      enable_gcfs        = true
+      enable_gvnic       = true
+      service_account    = module.service_accounts.email
+      initial_node_count = 1
     },
   ]
 
@@ -68,10 +104,6 @@ module "gke" {
 
   node_pools_metadata = {
     all = {}
-
-    default-node-pool = {
-      node-pool-metadata-custom-value = "my-node-pool"
-    }
   }
 
   node_pools_taints = {
