@@ -1,6 +1,6 @@
 fabricator.rtx_kg2:
   nodes:
-    num_rows: 500
+    num_rows: 1000
     columns:
       id: 
         type: generate_unique_id
@@ -11,7 +11,6 @@ fabricator.rtx_kg2:
         sample_values:
           - biolink:Drug
           - biolink:Disease
-          - biolink:Pathway
       name:
         type: faker
         provider: name
@@ -40,7 +39,6 @@ fabricator.rtx_kg2:
         sample_values:
           - biolink:Treats
           - biolink:Disease
-          - biolink:subclass_of
       object:
         type: row_apply
         list_of_values: [nodes.id]
