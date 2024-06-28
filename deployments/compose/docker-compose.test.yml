@@ -6,6 +6,8 @@ services:
     image: matrix-pipeline
     build: "../../pipelines/matrix"
     entrypoint: |
+      kedro run -p fabricator
+      kedro run -p integration
       kedro run -p test --runner ThreadRunner
     environment:
       NEO4J_HOST: bolt://neo4j:7687

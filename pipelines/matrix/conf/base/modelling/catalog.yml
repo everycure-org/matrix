@@ -16,7 +16,6 @@ _neo4j_ds: &_neo4j_ds
   save_args:
     mode: "overwrite"
 
-
 modelling.raw.nodes:
   <<: *_neo4j_ds
   load_args:

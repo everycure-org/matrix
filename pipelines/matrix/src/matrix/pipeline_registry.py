@@ -27,9 +27,5 @@ def register_pipelines() -> Dict[str, Pipeline]:
     pipelines["embeddings"] = create_embeddings_pipeline()
     pipelines["fabricator"] = create_fabricator_pipeline()
     pipelines["integration"] = create_integration_pipeline()
-    pipelines["test"] = (
-        create_fabricator_pipeline()
-        + create_integration_pipeline()
-        + create_modelling_pipeline()
-    )
+    pipelines["test"] = create_embeddings_pipeline() + create_modelling_pipeline()
     return pipelines

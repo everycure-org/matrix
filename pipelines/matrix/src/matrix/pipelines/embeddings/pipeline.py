@@ -65,7 +65,7 @@ def add_topological_embeddings(
     projection: Any,
     estimator: Any,
     write_property: str,
-):
+) -> Dict:
     """Function to add graphsage embeddings.
 
     Function leverages the gds library to ochestrate toplogical embedding computation
