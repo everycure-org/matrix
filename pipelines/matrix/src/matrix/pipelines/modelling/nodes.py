@@ -69,42 +69,6 @@ def create_feat_nodes(
     return raw_nodes
 
 
-# @has_schema(
-#     schema={
-#         "source": "object",
-#         "source_embedding": "object",
-#         "target": "object",
-#         "target_embedding": "object",
-#         "y": "numeric",
-#     },
-#     allow_subset=True,
-# )
-# def create_prm_pairs(
-#     graph: KnowledgeGraph,
-#     data: DataFrame,
-# ) -> pd.DataFrame:
-#     """Create primary pairs dataset.
-
-#     Args:
-#         graph: Knowledge graph.
-#         data: Pairs dataset to enrich with embeddings.
-
-#     Returns:
-#         Ground truth data enriched with embeddings.
-#     """
-#     # Add embeddings
-#     data = data.toPandas()
-#     data["source_embedding"] = data.apply(
-#         lambda row: graph._embeddings[row.source], axis=1
-#     )
-#     data["target_embedding"] = data.apply(
-#         lambda row: graph._embeddings[row.target], axis=1
-#     )
-
-#     # Return enriched data
-#     return data
-
-
 @inject_object()
 def make_splits(
     data: DataFrame,
