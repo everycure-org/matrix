@@ -1,4 +1,5 @@
 """Embeddings pipeline."""
+import os
 from typing import List, Any, Dict
 
 from kedro.pipeline import Pipeline, node, pipeline
@@ -13,7 +14,9 @@ from refit.v1.core.inject import inject_object
 from refit.v1.core.unpack import unpack_params
 
 # TODO: Extract this into params
-gds = GraphDataScience("bolt://127.0.0.1:7687", auth=("neo4j", "admin"))
+gds = GraphDataScience(
+    os.environ.get("NEO4J_HOST", "bolt://127.0.0.1:7687"), auth=("neo4j", "admin")
+)
 gds.set_database("everycure")
 
 
