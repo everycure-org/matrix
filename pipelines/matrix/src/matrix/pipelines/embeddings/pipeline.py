@@ -17,24 +17,20 @@ gds = GraphDataScience("bolt://127.0.0.1:7687", auth=("neo4j", "admin"))
 gds.set_database("everycure")
 
 
-def concat_featues(df: DataFrame, features: List[str], vertex_config: Dict[str, str]):
+def concat_features(df: DataFrame, features: List[str], ai_config: Dict[str, str]):
     """Function setup features for node embeddings.
 
     Args:
         df: nodes dataframe
         features: features to use for node embeddings.
-        vertex_config: vertex confoiguration to use
+        ai_config: vertex confoiguration to use
     Returns:
         Input features for node computation
     """
-    return (
-        df.withColumn("project", F.lit(vertex_config.get("project")))
-        .withColumn(
-            "token",
-            F.lit(vertex_config.get("accessToken")),
-        )
-        .withColumn("input", F.concat(*[F.col(feature) for feature in features]))
-    )
+    for key, value in ai_config.items():
+        df = df.withColumn(key, F.lit(value))
+
+    return df.withColumn("input", F.concat(*[F.col(feature) for feature in features]))
 
 
 @inject_object()
@@ -107,10 +103,11 @@ def create_pipeline(**kwargs) -> Pipeline:
         [
             # NOTE: This enriches the current graph with a nummeric property
             node(
-                func=concat_featues,
+                func=concat_features,
                 inputs=[
                     "integration.model_input.nodes",
                     "params:embeddings.node.features",
+                    "params:embeddings.ai_config",
                 ],
                 outputs="embeddings.prm.graph.embeddings",
                 name="add_node_embeddings",

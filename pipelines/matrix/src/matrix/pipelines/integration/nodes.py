@@ -71,9 +71,6 @@ def create_edges(nodes: DataFrame, edges: DataFrame):
         nodes: nodes dataframe
         edges: edges dataframe
     """
-
-    breakpoint()
-
     return edges.select(
         "subject", "predicate", "object", "knowledge_source"
     ).withColumn("label", F.split(F.col("predicate"), ":", limit=2).getItem(1))

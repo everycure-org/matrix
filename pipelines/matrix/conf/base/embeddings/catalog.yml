@@ -14,13 +14,14 @@ _neo4j_ds: &_neo4j_ds
 
 
 # https://neo4j.com/labs/apoc/5/ml/vertexai/#_generate_embeddings_api
+# https://mockgpt.wiremock.io/
 embeddings.prm.graph.embeddings:
   <<: *_neo4j_ds
   save_args:
     query: > 
       MATCH (n:Entity {id: event.id})
       WITH event, n
-      CALL apoc.ml.vertexai.embedding([event.input], event.token, event.project) YIELD index, text, embedding
+      CALL apoc.ml.openai.embedding([event.input], event.apiKey, {endpoint: event.endpoint}) YIELD index, text, embedding
       CALL apoc.create.setProperty(n, "embedding", embedding) YIELD node
       RETURN node
   load_args:

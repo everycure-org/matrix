@@ -1,6 +1,7 @@
-embeddings.vertex_config:
-  project: ${oc.env:GCP_PROJECT,mtrx-hub-dev-3of} 
-  accessToken: ${oc.env:VERTEX_AI_ACCESS_TOKEN}
+# TODO: Setup quick docker container that mocks OpenAI
+embeddings.ai_config:
+  endpoint: https://63401.wiremockapi.cloud/v1
+  apiKey: sk-proj-abc
 
 # Attributes used as input features to compute
 # node embeddings.

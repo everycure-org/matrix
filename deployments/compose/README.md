@@ -37,7 +37,7 @@ gcloud iam service-accounts keys create --iam-account=test-gcp@mtrx-hub-dev-3of.
 
 ### Vertex token
 
-To succesfully run embeddings, export your GCP access token using the following command:
+To succesfully run embeddings in the `prod` environment, export your GCP access token using the following command:
 
 ```bash
 export VERTEX_AI_ACCESS_TOKEN=$(gcloud auth print-access-token)
