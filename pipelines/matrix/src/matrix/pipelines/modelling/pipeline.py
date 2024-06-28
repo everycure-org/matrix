@@ -135,9 +135,8 @@ def create_pipeline(**kwargs) -> Pipeline:
             node(
                 func=nodes.create_feat_nodes,
                 inputs=[
-                    "integration.model_input.nodes",
-                    "embeddings.int.graphsage",
-                    "integration.model_input.treats",
+                    "modelling.raw.nodes",
+                    "integration.model_input.ground_truth",
                     "params:modelling.drug_types",
                     "params:modelling.disease_types",
                 ],
@@ -145,17 +144,11 @@ def create_pipeline(**kwargs) -> Pipeline:
                 name="create_feat_nodes",
             ),
             node(
-                func=nodes.create_prm_pairs,
-                inputs=[
-                    "modelling.feat.rtx_kg2",
-                    "integration.model_input.treats",
-                ],
-                outputs="modelling.prm.known_pairs",
-                name="create_prm_known_pairs",
-            ),
-            node(
                 func=nodes.make_splits,
-                inputs=["modelling.prm.known_pairs", "params:modelling.splitter"],
+                inputs=[
+                    "integration.model_input.ground_truth",
+                    "params:modelling.splitter",
+                ],
                 outputs="modelling.model_input.splits",
                 name="create_splits",
             ),

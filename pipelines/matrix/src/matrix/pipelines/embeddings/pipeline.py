@@ -90,6 +90,7 @@ def add_topological_embeddings(
     model_name = estimator.get("args").get("modelName")
     if gds.model.exists(model_name).exists:
         model = gds.model.get(model_name)
+        gds.model.drop(model)
 
     model, _ = getattr(gds.beta, estimator.get("model")).train(
         graph, **estimator.get("args")

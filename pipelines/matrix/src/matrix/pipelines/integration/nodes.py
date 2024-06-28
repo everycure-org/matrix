@@ -76,37 +76,37 @@ def create_edges(nodes: DataFrame, edges: DataFrame):
     ).withColumn("label", F.split(F.col("predicate"), ":", limit=2).getItem(1))
 
 
-# @has_schema(
-#     schema={
-#         "label": "string",
-#         "source_id": "string",
-#         "target_id": "string",
-#         "property_keys": "array<string>",
-#         "property_values": "array<string>",
-#     },
-#     allow_subset=True,
-# )
-# @primary_key(primary_key=["source_id", "target_id", "label"])
-# def create_treats(nodes: DataFrame, df: DataFrame):
-#     """Function to construct treats relatonship.
+@has_schema(
+    schema={
+        "label": "string",
+        "source_id": "string",
+        "target_id": "string",
+        "property_keys": "array<string>",
+        "property_values": "array<string>",
+    },
+    allow_subset=True,
+)
+@primary_key(primary_key=["source_id", "target_id", "label"])
+def create_treats(nodes: DataFrame, df: DataFrame):
+    """Function to construct treats relatonship.
 
-#     NOTE: This function requires the nodes dataset, as the nodes should be
-#     written _prior_ to the relationships.
+    NOTE: This function requires the nodes dataset, as the nodes should be
+    written _prior_ to the relationships.
 
-#     Args:
-#         nodes: nodes dataset
-#         df: Ground truth dataset
-#     """
-#     return (
-#         df.withColumn(
-#             "label", F.when(F.col("y") == 1, "TREATS").otherwise("NOT_TREATS")
-#         )
-#         .withColumn(
-#             "properties",
-#             F.create_map(F.lit("treats"), F.col("y"), F.lit("foo"), F.lit("bar")),
-#         )
-#         .withColumn("source_id", F.col("source"))
-#         .withColumn("target_id", F.col("target"))
-#         .withColumn("property_keys", F.map_keys(F.col("properties")))
-#         .withColumn("property_values", F.map_values(F.col("properties")))
-#     )
+    Args:
+        nodes: nodes dataset
+        df: Ground truth dataset
+    """
+    return (
+        df.withColumn(
+            "label", F.when(F.col("y") == 1, "TREATS").otherwise("NOT_TREATS")
+        )
+        .withColumn(
+            "properties",
+            F.create_map(F.lit("treats"), F.col("y"), F.lit("foo"), F.lit("bar")),
+        )
+        .withColumn("source_id", F.col("source"))
+        .withColumn("target_id", F.col("target"))
+        .withColumn("property_keys", F.map_keys(F.col("properties")))
+        .withColumn("property_values", F.map_values(F.col("properties")))
+    )

@@ -92,41 +92,27 @@ integration.model_input.edges:
       CALL apoc.create.relationship(subject, event.label, {knowledge_source: event.knowledge_source}, object) YIELD rel
       RETURN rel
 
-# TODO: Merge + move to seperate pipeline
-# integration.model_input.ground_truth:
-#   <<: *_neo4j_ds
-#   save_args:
-#     query: > 
-#       MATCH (source:Drug {id: event.source_id}), (target:Disease {id: event.target_id})
-#       WITH source, target, event
-#       CALL
-#         apoc.do.when(
-#           not exists((source)-[]->(target)), 
-#           'CALL apoc.create.relationship($source, $event.label, {}, $target) YIELD rel RETURN rel',
-#           'MATCH (source)-[rel]->(target) return rel',
-#           {event:event, source:source, target:target}
-#         ) YIELD value
-#       CALL apoc.create.setRelProperties(value.rel, event.property_keys, event.property_values) YIELD rel as r
-#       RETURN count(*)
-#   load_args:
-#     schema:
-#       object: pyspark.sql.types.StructType
-#       fields:
-#         - object: pyspark.sql.types.StructField
-#           name: source
-#           dataType: 
-#             object: pyspark.sql.types.StringType
-#           nullable: False
-#         - object: pyspark.sql.types.StructField
-#           name: y
-#           dataType: 
-#             object: pyspark.sql.types.LongType
-#           nullable: False
-#         - object: pyspark.sql.types.StructField
-#           name: target
-#           dataType: 
-#             object: pyspark.sql.types.StringType
-#           nullable: False
-#     query: >
-#       MATCH (drug:Drug)-[r:TREATS|NOT_TREATS]->(disease:Disease) 
-#       RETURN drug.id as source, toInteger(r.treats) as y, disease.id as target
+integration.model_input.ground_truth:
+  <<: *_neo4j_ds
+  save_args:
+    query: > 
+      MATCH (source:Drug {id: event.source_id}), (target:Disease {id: event.target_id})
+      WITH source, target, event
+      CALL
+        apoc.do.when(
+          not exists((source)-[:GROUND_TRUTH]->(target)), 
+          'CREATE (source)-[rel:GROUND_TRUTH]->(target) RETURN rel',
+          'MATCH (source)-[rel:GROUND_TRUTH]->(target) return rel',
+          {event:event, source:source, target:target}
+        ) YIELD value
+      CALL apoc.create.setRelProperties(value.rel, event.property_keys, event.property_values) YIELD rel as r
+      RETURN count(*)
+  load_args:        
+    query: >
+      MATCH (drug:Drug)-[r:GROUND_TRUTH]->(disease:Disease) 
+      RETURN 
+        drug.id as source, 
+        drug.topological_embedding as source_embedding,
+        disease.id as target, 
+        disease.topological_embedding as target_embedding,
+        toInteger(r.treats) as y
