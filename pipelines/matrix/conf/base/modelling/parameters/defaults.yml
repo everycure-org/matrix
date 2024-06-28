@@ -10,7 +10,7 @@ modelling.disease_types:
 
 
 modelling.splitter:
-    object: sklearn.model_selection.StratifiedShuffleSplit
+    # object: sklearn.model_selection.StratifiedShuffleSplit
     n_splits: 1 
     test_size: 0.1
     random_state: ${globals:random_state}
