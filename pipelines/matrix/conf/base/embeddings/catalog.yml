@@ -12,48 +12,28 @@ _neo4j_ds: &_neo4j_ds
   save_args:
     mode: "overwrite"
 
-embeddings.prm.graph:
+embeddings.prm.graph.embeddings:
   <<: *_neo4j_ds
   save_args:
     query: > 
-        MATCH (n {id: event.id})
-        WITH event, n
-        CALL apoc.ml.vertexai.embedding
-        RETURN node
-  # load_args:
-  #   query: >
-  #     MATCH (n {id: event.id}) RETURN n.id as id, toFloat(n.feature) as feature
-
-embeddings.model_input.gds.graph:
-  <<: *_neo4j_ds
+      MATCH (n:Entity {id: event.id})
+      WITH event, n
+      CALL apoc.ml.vertexai.embedding([event.input], event.token, event.project) YIELD index, text, embedding
+      CALL apoc.create.setProperty(n, "embedding", embedding) YIELD node
+      RETURN node
   load_args:
-    gds: gds.graph.project
-    gds.graphName: &_graph_name graph_with_feat
-    gds.nodeProjection: "*"
-    gds.relationshipProjection: "*"
-    gds.configuration.nodeProperties: "feature"
+    query: >
+      MATCH (n: Entity) RETURN n.id as id, n.embedding as embedding
 
-embeddings.models.gds.graphsage:
-  <<: *_neo4j_ds
-  load_args:
-    gds: gds.beta.graphSage.train
-    gds.graphName: *_graph_name
-    gds.configuration.modelName: &_model_name graphsage_model
-    gds.configuration.featureProperties: ["feature"]
 
-embeddings.model_output.gds.graphsage:
-  <<: *_neo4j_ds
-  load_args:
-    gds: gds.beta.graphSage.stream
-    gds.graphName: *_graph_name
-    gds.configuration.modelName: *_model_name
-
-embeddings.model_output.graphsage:
+embeddings.prm.graph.pca_embeddings:
   <<: *_neo4j_ds
   save_args:
     query: > 
-        MATCH (n)
-        WHERE ID(n) = event.nodeId
-        WITH event, n
-        CALL apoc.create.setProperty(n, 'graphsage_embedding', event.embedding) YIELD node
-        RETURN node
+      MATCH (n:Entity {id: event.id})
+      WITH event, n
+      CALL apoc.create.setProperty(n, "pca_embedding", event.pca_embedding) YIELD node
+      RETURN node
+  load_args:
+    query: >
+      MATCH (n: Entity) RETURN n.id as id, n.pca_embedding as embedding

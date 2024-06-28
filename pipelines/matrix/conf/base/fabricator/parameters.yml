@@ -26,10 +26,6 @@ fabricator.rtx_kg2:
         type: faker
         provider: name
 
-      knowledge_source:
-        type: faker
-        provider: name
-
   edges:
     num_rows: 2000
     columns:
@@ -51,3 +47,7 @@ fabricator.rtx_kg2:
         row_func: "lambda *args: args[0]"
         resize: True
         seed: 49494
+
+      knowledge_source:
+        type: faker
+        provider: name

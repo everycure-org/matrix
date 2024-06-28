@@ -1,0 +1,35 @@
+# Attributes used as input features to compute
+# node embeddings.
+embeddings.node.attributes: ["id", "category"]
+
+# Defines strategy used to reduce dimensions of the GenAI
+# generated node embeddings.
+# https://spark.apache.org/docs/latest/api/python/reference/api/pyspark.ml.feature.PCA.html
+embeddings.dimensionality_reduction:
+  object: pyspark.ml.feature.PCA
+  k: 2
+
+# Defines strategy used to compute topological embeddings,
+# all nodes and relationships in our KG are projected, along with
+# the PCA feature. The graphSage algorithm is hereafter applied
+# and the result is written back to the KG.
+# 
+# Sources:
+#   - https://neo4j.com/docs/graph-data-science/current/management-ops/graph-creation/graph-project/
+#   - https://neo4j.com/docs/graph-data-science-client/current/graph-object/
+#   - https://neo4j.com/docs/graph-data-science-client/current/model-object/
+#   - https://neo4j.com/docs/graph-data-science-client/current/algorithms/ 
+# 
+embeddings.topological:
+  projection:
+    graphName: embeddings
+    nodeProjection: '*'
+    relationshipProjection: '*'
+    config:
+      nodeProperties: &_feature 'pca_embedding'
+  estimator:
+    model: graphSage
+    args:
+      modelName: topological_embeddings
+      featureProperties: [*_feature]
+  write_property: topological_embedding
