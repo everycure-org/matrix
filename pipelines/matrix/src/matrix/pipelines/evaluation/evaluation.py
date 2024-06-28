@@ -152,25 +152,9 @@ class SpecificRanking(Evaluation):
             report[f"{rank_func_generator.name()}"] = np.mean(transformed_rank_lst)
         return json.loads(json.dumps(report, default=float))
 
-    # @classmethod
-    # def hitk(k: int):
-    #     """Returns vectorised ranking function for Hit@k.
-
-    #     The Hit@k metric is the expected value of this function for the ground truth positive ranks.
-
-    #     Args:
-    #         k: Value for k.
-
-    #     Returns:
-    #         Tuple containing function and name of metric.
-    #     """
-    #     rank_func = lambda rank: np.where(rank <= k, 1, 0)
-    #     rank_func_name = "Hit@" + str(k)
-    #     return rank_func, rank_func_name
-
 
 class RankingFunction(abc.ABC):
-    """Class generating a function used in the computation of ranking-based evaluation metrics."""
+    """Class generating a vectorised function used in the computation of ranking-based evaluation metrics."""
 
     def generate(self):
         """Returns function."""
@@ -182,7 +166,7 @@ class RankingFunction(abc.ABC):
 
 
 class MRR(RankingFunction):
-    """Class generating a function for the computation of MRR."""
+    """Class generating a vectorised function for the computation of MRR."""
 
     @staticmethod
     def generate():
@@ -195,15 +179,21 @@ class MRR(RankingFunction):
         return "MRR"
 
 
-# class MRREvaluation(Evaluation):
-#     # Does this function need anything else to operate?
-#     def evaluate(self, data: pd.DataFrame):
-#         # TODO: Implement here
-#         return {"evaluation": "hitk"}
+class HitK(RankingFunction):
+    """Class generating a vectorised function for the computation of Hit@k."""
 
+    def __init__(self, k) -> None:
+        """Initialise instance of Hitk object.
 
-# class HitKEvaluation(Evaluation):
-#     # Does this function need anything else to operate?
-#     def evaluate(self, data: pd.DataFrame):
-#         # TODO: Implement here
-#         return {"evaluation": "hitk"}
+        Args:
+            k: Value for k.
+        """
+        self.k = k
+
+    def generate(self):
+        """Returns function."""
+        return lambda rank: np.where(rank <= self.k, 1, 0)
+
+    def name(self):
+        """Returns name of the function."""
+        return "Hit@" + str(self.k)

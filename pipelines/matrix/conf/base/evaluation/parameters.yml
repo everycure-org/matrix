@@ -45,6 +45,10 @@ evaluation.disease_specific_ranking:
       specific_col: "target"
       rank_func_lst: 
         - object: matrix.pipelines.evaluation.evaluation.MRR
+        - object:  matrix.pipelines.evaluation.evaluation.HitK
+          k: 2
+        - object:  matrix.pipelines.evaluation.evaluation.HitK
+          k: 5
 
       
 
