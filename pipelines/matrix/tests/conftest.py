@@ -7,6 +7,7 @@ from kedro.framework.context import KedroContext
 from kedro.framework.project import configure_project, settings
 from kedro.framework.hooks import _create_hook_manager
 
+from pyspark.sql import SparkSession
 from kedro.config import OmegaConfigLoader
 from omegaconf.resolvers import oc
 from matrix.resolvers import merge_dicts
@@ -55,3 +56,10 @@ def kedro_context_fixture(config_loader) -> KedroContext:
 def configure_matrix_project_fixture():
     """Configure the project for testing."""
     configure_project("matrix")
+
+
+@pytest.fixture(scope="session")
+def spark():
+    """Instantiate the Spark session."""
+    spark = SparkSession.builder.master("local").appName("tests").getOrCreate()
+    yield spark

@@ -131,8 +131,6 @@ def make_splits(
         fold_data.loc[test_index, "split"] = "TEST"
         all_data_frames.append(fold_data)
 
-    breakpoint()
-
     return pd.concat(all_data_frames, axis="index", ignore_index=True)
 
 
