@@ -105,8 +105,7 @@ def test_matrix_test_diseases(
     graph: KnowledgeGraph, known_pairs: pd.DataFrame, splitter
 ):
     # Given a list of drugs, a test-train split for the known data and a test data generator
-    drugs_lst = list(known_pairs["source"].unique())
-    generator = MatrixTestDiseases(drugs_lst)
+    generator = MatrixTestDiseases(["is_drug"])
     known_pairs_split = make_splits(known_pairs, splitter)
 
     # When generating the test dataset
@@ -117,6 +116,7 @@ def test_matrix_test_diseases(
     #   - does not contain test data,
     #   - the drug always lies in the given drug list,
     #   - the disease always appears in the known positive test set.
+    drugs_lst = graph._drug_nodes
     known_positives_test = known_pairs_split[
         (known_pairs_split["y"] == 1) & (known_pairs_split["split"] == "TEST")
     ]

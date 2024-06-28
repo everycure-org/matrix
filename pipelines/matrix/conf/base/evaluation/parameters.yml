@@ -48,10 +48,9 @@ evaluation.disease_specific_ranking:
         - object:  matrix.pipelines.evaluation.evaluation.HitK
           k: 2
         - object:  matrix.pipelines.evaluation.evaluation.HitK
-          k: 5
+          k: 10
 
       
-
 # # MRR
 # evaluation.mrr:
 #   _overrides:
@@ -69,8 +68,6 @@ evaluation.disease_specific_ranking:
 #       object: "matrix.pipelines.evaluation.nodes.HitKEvaluation"
 
 #   evaluation_options: ${merge:${.._evaluation_options},${._overrides}}
-
-
 
 
 # Others can be added on demand..
