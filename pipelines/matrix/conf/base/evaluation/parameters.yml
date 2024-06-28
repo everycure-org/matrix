@@ -33,6 +33,21 @@ evaluation.disease_centric_matrix:
         - object: sklearn.metrics.roc_auc_score
         - object: sklearn.metrics.average_precision_score
 
+evaluation.disease_specific_ranking:
+  evaluation_options:
+    generator:
+      object: matrix.datasets.pair_generator.MatrixTestDiseases
+      drugs_lst_flags:
+          - is_drug
+          - is_ground_pos
+    evaluation:
+      object: matrix.pipelines.evaluation.evaluation.SpecificRanking 
+      specific_col: "target"
+      rank_func_lst: 
+        - object: matrix.pipelines.evaluation.evaluation.MRR
+
+      
+
 # # MRR
 # evaluation.mrr:
 #   _overrides:

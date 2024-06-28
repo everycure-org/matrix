@@ -1,5 +1,6 @@
 """Module containing classes for evaluation."""
 import pandas as pd
+import numpy as np
 import abc
 import json
 import bisect
@@ -98,6 +99,8 @@ class SpecificRanking(Evaluation):
     In particular, the class encompasses drug or diseases specific Hit@k and Mean Reciprocal Rank (MRR) metrics.
 
     TODO: Comment about how the metrics are computed.
+
+    TODO: unit test
     """
 
     @inject_object()
@@ -128,14 +131,13 @@ class SpecificRanking(Evaluation):
         items_lst = list(data[self._specific_col].unique())
 
         # Compute average rank of known positives for each item
-        # FUTURE: opportunity for parallelisation here
         ranks_lst = []
         for item in items_lst:
             pairs_for_item = data[data[self._specific_col] == item]
             is_pos = pairs_for_item["y"].eq(1)
-            pos_preds = pairs_for_item[is_pos][score_col_name]
-            neg_preds = pairs_for_item[~is_pos][score_col_name]
-            neg_preds = neg_preds.sort()
+            pos_preds = list(pairs_for_item[is_pos][score_col_name])
+            neg_preds = list(pairs_for_item[~is_pos][score_col_name])
+            neg_preds.sort()
             for prob in pos_preds:
                 rank = len(neg_preds) - bisect.bisect_left(neg_preds, prob) + 1
             ranks_lst.append(rank)
@@ -143,40 +145,53 @@ class SpecificRanking(Evaluation):
         # Compute average of rank functions and report metrics
         report = {}
         for rank_func_generator in self._rank_func_lst:
-            rank_func, rank_func_name = rank_func_generator()
+            rank_func = rank_func_generator.generate()
             ranks_arr = np.array(ranks_lst)
             transformed_rank_lst = rank_func(ranks_arr)
-            report[f"{rank_func_name}"] = np.mean(transformed_rank_lst)
+            report[f"{rank_func_generator.name()}"] = np.mean(transformed_rank_lst)
         return json.loads(json.dumps(report, default=float))
 
-    @classmethod
-    def hitk(k: int):
-        """Returns vectorised ranking function for Hit@k.
+    # @classmethod
+    # def hitk(k: int):
+    #     """Returns vectorised ranking function for Hit@k.
 
-        The Hit@k metric is the expected value of this function for the ground truth positive ranks.
+    #     The Hit@k metric is the expected value of this function for the ground truth positive ranks.
 
-        Args:
-            k: Value for k.
+    #     Args:
+    #         k: Value for k.
 
-        Returns:
-            Tuple containing function and name of metric.
-        """
-        rank_func = lambda rank: np.where(rank <= k, 1, 0)
-        rank_func_name = "Hit@" + str(k)
-        return rank_func, rank_func_name
+    #     Returns:
+    #         Tuple containing function and name of metric.
+    #     """
+    #     rank_func = lambda rank: np.where(rank <= k, 1, 0)
+    #     rank_func_name = "Hit@" + str(k)
+    #     return rank_func, rank_func_name
 
-    @classmethod
-    def mrr():
-        """Returns ranking function for MRR.
 
-        The MRR metric is the expected value of this function for the ground truth positive ranks.
+class RankingFunction(abc.ABC):
+    """Class generating a function used in the computation of ranking-based evaluation metrics."""
 
-        Returns:
-            Tuple containing function and name of metric.
-        """
-        rank_func = lambda rank: 1 / rank
-        rank_func_name = "MRR"
-        return rank_func, rank_func_name
+    def generate(self):
+        """Returns function."""
+        ...
+
+    def name(self):
+        """Returns name of the function."""
+        ...
+
+
+class MRR(RankingFunction):
+    """Class generating a function for the computation of MRR."""
+
+    @staticmethod
+    def generate():
+        """Returns function."""
+        return lambda rank: 1 / rank
+
+    @staticmethod
+    def name():
+        """Returns name of the function."""
+        return "MRR"
 
 
 # class MRREvaluation(Evaluation):
