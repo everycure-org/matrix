@@ -1,4 +1,7 @@
 services:
+  neo4j:
+    image: neo4j:5.20.0
+
   matrix-pipeline:
     image: matrix-pipeline
     build: "../../pipelines/matrix"
