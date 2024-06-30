@@ -1,26 +1,6 @@
 data "google_client_config" "default" {
 }
 
-## TODO decide what to take
-module "autopilot_gke" {
-  source                     = "terraform-google-modules/kubernetes-engine/google//modules/beta-autopilot-private-cluster"
-  project_id                 = var.project_id
-  name                       = "${var.name}-autopilot"
-  deletion_protection        = var.environment == "dev" ? false : true
-  region                     = var.default_region
-  zones                      = var.zones
-  network                    = var.network
-  subnetwork                 = var.subnetwork
-  ip_range_pods              = var.pod_ip_range
-  ip_range_services          = var.svc_ip_range
-  horizontal_pod_autoscaling = true
-  enable_private_endpoint    = false
-  enable_private_nodes       = true
-  master_ipv4_cidr_block     = "172.17.0.0/28"
-  dns_cache                  = false
-
-}
-
 # docs here https://registry.terraform.io/modules/terraform-google-modules/kubernetes-engine/google/latest/submodules/private-cluster
 module "gke" {
   source                     = "terraform-google-modules/kubernetes-engine/google//modules/private-cluster"

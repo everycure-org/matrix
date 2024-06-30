@@ -1,1 +1,3 @@
 infra/secrets/** filter=git-crypt diff=git-crypt
+infra/secrets/** filter=git-crypt diff=git-crypt
+infra/modules/stacks/cloud_secrets/cloud_secrets.yaml filter=git-crypt diff=git-crypt

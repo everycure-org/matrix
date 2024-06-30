@@ -4,22 +4,6 @@ title: Computer Cluster
 
 This document provides an overview and guide for the shared Kubernetes (k8s) cluster running on GCP in our hub and spoke project setup. The cluster resides in the hub project and is accessible by all development teams / working groups from their respective spoke projects through the shared Virtual Private Cloud (VPC).
 
-## Cluster Configuration
-
-### Cluster Setup
-The shared Kubernetes cluster is hosted in the hub project. Key configuration details include:
-
-- **Region**: `us-central1` (by default)
-- **Node Pools**: Configured with autoscaling enabled
-- **Network**: Shared VPC
-- **GPU nodes**: Currently not enabled but planning to add these as scale to 0 autoscaling group
-
-### Networking
-Networking between the hub and spoke projects leverages a shared VPC:
-- **VPC Name**: `matrix-hub-dev-nw`
-- **Subnets**: one per region, e.g. EU and US
-- **Firewall Rules**: Configured to allow necessary communication between the hub and spoke projects as well as outgoing HTTPs and incoming SSH via GCP IdP
-
 ## Using the cluster for Spark processing
 
 !!! warning
@@ -37,6 +21,25 @@ Networking between the hub and spoke projects leverages a shared VPC:
 
 We will provide `roles/container.developer` and `roles/iap.tunnelResourceAccessor` to everyone in the MATRIX project to enable cluster access. 
 
+## Cluster Configuration
+
+### Cluster Setup
+The shared Kubernetes cluster is hosted in the hub project. Key configuration details include:
+
+- **Region**: `us-central1` (by default)
+- **Node Pools**: Configured with autoscaling enabled
+- **Network**: Shared VPC
+- **GPU nodes**: Currently not enabled but planning to add these as scale to 0 autoscaling group
+
+### Networking
+Networking between the hub and spoke projects leverages a shared VPC:
+- **VPC Name**: `matrix-hub-dev-nw`
+- **Subnets**: one per region, e.g. EU and US
+- **Firewall Rules**: Configured to allow necessary communication between the hub and spoke projects as well as outgoing HTTPs and incoming SSH via GCP IdP
+
+### Secrets
+
+We set all secrets in our `cloud_secrets` terraform module by grabbing our encrypted yaml file from the disk and creating cloud secrets for each of them. 
 <!--
 ## Access and Permissions
 

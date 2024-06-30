@@ -22,3 +22,8 @@ module "matrix" {
   project_id        = module.bootstrap_data.content.project_id
   environment       = "dev"
 }
+
+module "secrets" {
+  source = "../../../modules/components/cloud_secrets"
+  project_id        = module.bootstrap_data.content.project_id
+}

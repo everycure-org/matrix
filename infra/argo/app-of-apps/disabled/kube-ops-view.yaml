@@ -4,7 +4,6 @@ metadata:
   name: kube-ops-view
   namespace: argocd # application config lives in argocd namespace but app itself in separate NS
   finalizers:
-    # THIS WILL KILL PRODUCTION! #TODO
     - resources-finalizer.argocd.argoproj.io 
 spec:
   destination:

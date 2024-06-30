@@ -1,5 +1,6 @@
 neo4j: # the name of the helm dependency
   neo4j: # config level
+  passwordFromSecret: neo4j_password
   password: foobar-2010 #TODO change
     name: neo4j
     resources:

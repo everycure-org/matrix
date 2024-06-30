@@ -9,3 +9,7 @@ variable "sa_annotations" {
   type        = map(string)
   default     = {}
 }
+
+variable "project_id" {
+  
+}
