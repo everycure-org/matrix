@@ -1,5 +1,6 @@
 neo4j: # the name of the helm dependency
   neo4j: # config level
+  edition: "community"
   passwordFromSecret: neo4j-password
   name: neo4j
   resources:
