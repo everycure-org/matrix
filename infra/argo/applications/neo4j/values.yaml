@@ -1,18 +1,18 @@
 neo4j: # the name of the helm dependency
   neo4j: # config level
-  edition: "community"
-  passwordFromSecret: neo4j-password
-  name: neo4j
-  resources:
-    memory: 2Gi
-    cpu: 0.7
-  volumes:
-    data:
-      mode: "dynamic"
-      dynamic:
-        # In GKE;
-        # * premium-rwo provisions SSD disks (recommended)
-        # * standard-rwo provisions balanced SSD-backed disks
-        # * standard provisions HDD disks
-        storageClassName: premium-rwo
-        # storageClassName: hyperdisk-balanced
+    edition: "community"
+    passwordFromSecret: neo4j-password
+    name: neo4j
+    resources:
+      memory: 2Gi
+      cpu: 0.7
+    volumes:
+      data:
+        mode: "dynamic"
+        dynamic:
+          # In GKE;
+          # * premium-rwo provisions SSD disks (recommended)
+          # * standard-rwo provisions balanced SSD-backed disks
+          # * standard provisions HDD disks
+          storageClassName: premium-rwo
+          # storageClassName: hyperdisk-balanced
