@@ -20,3 +20,7 @@ neo4j: # the name of the helm dependency
         # * standard provisions HDD disks
         storageClassName: premium-rwo
         # storageClassName: hyperdisk-balanced
+
+  # FUTURE add env variables here to enable plugins for neo4j
+  # https://neo4j.com/docs/operations-manual/current/kubernetes/plugins/
+  env:
