@@ -9,12 +9,3 @@ module "argo" {
   # TODO fix to `HEAD` before merging
   repo_revision = "feat/neo4j-infra"
 }
-
-module "external_secrets" {
-  depends_on     = [module.gke]
-  source         = "./external_secrets"
-  project_id     = var.project_id
-  k8s_secrets    = var.k8s_secrets
-  default_region = var.default_region
-  cluster_name   = var.name
-}
