@@ -42,6 +42,8 @@ embeddings.prm.graph.pca_embeddings:
     query: >
       MATCH (n: Entity) RETURN n.id as id, n.pca_embedding as embedding
 
+# NOTE: Dummy catalog entry to enforce Kedro dependency
+# between embedding and modelling pipeline.
 embeddings.model_output.graphsage:
   type: yaml.YAMLDataset
   filepath: ${globals:paths.model_output}/graphsage/result.yml
