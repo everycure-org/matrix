@@ -1,6 +1,7 @@
-# see https://github.com/neo4j/helm-charts/issues/313
-# and https://github.com/neo4j/helm-charts/blob/f19b4f9f18e99442bfdd50a2e67a779d7b56ff3d/neo4j/values.yaml#L11
+
 neo4j: # the name of the helm dependency
+  # see https://github.com/neo4j/helm-charts/issues/313
+  # and https://github.com/neo4j/helm-charts/blob/f19b4f9f18e99442bfdd50a2e67a779d7b56ff3d/neo4j/values.yaml#L11
   disableLookups: true
   neo4j: # config level
     edition: "community"
