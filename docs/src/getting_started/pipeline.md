@@ -16,7 +16,7 @@ The ingestion pipeline aims to ingest all the downstream data in BigQuery, our d
 
 ### Integration
 
-The integration stage aims to produce our internal knowledge-graph, in [biolink](https://github.com/usebiolink/biolink) format. As we ingest data from different sources, entity resolution becomes a prevalent topic. The integration step consolidates entities across sources to avoid data duplication in the knowledge graph.
+The integration stage aims to produce our internal knowledge-graph, in [biolink](https://biolink.github.io/biolink-model/) format. As we ingest data from different sources, entity resolution becomes a prevalent topic. The integration step consolidates entities across sources to avoid data duplication in the knowledge graph.
 
 > To data, this step is missing as we're only ingesting data from a single source.
 
