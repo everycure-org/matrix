@@ -1,6 +1,7 @@
 services:
   neo4j:
-    # FUTURE: Newever container version gives issues, update when resolved
+    # FUTURE: Newever container version gives issues, due to `apoc-extended`
+    # and `gds` versions not being released yet. Update when released.
     image: neo4j:5.20.0
 
   matrix-pipeline:
