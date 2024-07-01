@@ -34,6 +34,9 @@ services:
     networks:
       - web
 
+  # MockServer instance that is used to mock a GenAI API conform
+  # the OpenAI API spec. This container is used to enable integration
+  # testing.
   mock-genai:
     image: mockserver/mockserver
     user: root

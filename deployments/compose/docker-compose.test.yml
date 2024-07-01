@@ -1,25 +1,24 @@
 services:
   neo4j:
-    # NOTE: Newever container version gives issues
+    # FUTURE: Newever container version gives issues, update when resolved
     image: neo4j:5.20.0
 
-  # matrix-pipeline:
-  #   image: matrix-pipeline
-  #   build: "../../pipelines/matrix"
-  #   entrypoint:
-  #     - "/bin/sh"
-  #     - -ecx
-  #     - |
-  #         kedro run -p fabricator
-  #         kedro run -p integration
-  #         kedro run -p embeddings
-  #         kedro run --runner ThreadRunner
-      
-  #   environment:
-  #     NEO4J_HOST: bolt://neo4j:7687
-  #     OPENAI_ENDPOINT: http://mock-genai:1080
-  #   depends_on:
-  #     neo4j:
-  #       condition: service_healthy
-  #   networks:
-  #     - web
+  matrix-pipeline:
+    image: matrix-pipeline
+    build: "../../pipelines/matrix"
+    entrypoint:
+      - "/bin/sh"
+      - -ecx
+      - |
+          kedro run -p fabricator
+          kedro run -p integration
+          kedro run -p embeddings
+          kedro run --runner ThreadRunner
+    environment:
+      NEO4J_HOST: bolt://neo4j:7687
+      OPENAI_ENDPOINT: http://mock-genai:1080/v1
+    depends_on:
+      neo4j:
+        condition: service_healthy
+    networks:
+      - web

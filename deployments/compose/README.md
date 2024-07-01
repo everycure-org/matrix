@@ -30,6 +30,10 @@ To correctly leverage the GCP services, you will need a service-account key. You
 
 > NOTE: This will be provisoned using Terraform and git-crypt in the future.
 
+!!! note
+
+    The below token is time bound and thus this command needs to be re-run regularly, it's only meant for temporary local testing, not for a long-running workload. 
+
 ```bash
 gcloud config set project mtrx-hub-dev-3of
 gcloud iam service-accounts keys create --iam-account=test-gcp@mtrx-hub-dev-3of.iam.gserviceaccount.com  conf/local/service-account.json
