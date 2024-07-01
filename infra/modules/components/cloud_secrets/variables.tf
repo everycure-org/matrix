@@ -1,4 +1,0 @@
-variable "project_id" {
-  
-}
-

@@ -14,6 +14,7 @@ module "compute_cluster" {
   environment       = "dev"
   gitops_repo_url   = var.gitops_repo_url
   gitops_repo_creds = var.gitops_repo_creds
+  k8s_secrets = var.k8s_secrets
 }
 
 module "matrix" {
@@ -21,9 +22,4 @@ module "matrix" {
   default_region    = var.default_region
   project_id        = module.bootstrap_data.content.project_id
   environment       = "dev"
-}
-
-module "secrets" {
-  source = "../../../modules/components/cloud_secrets"
-  project_id        = module.bootstrap_data.content.project_id
 }

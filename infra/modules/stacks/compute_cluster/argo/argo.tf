@@ -58,6 +58,7 @@ resource "helm_release" "argo" {
 
 resource "kubernetes_manifest" "app_of_apps" {
   depends_on = [helm_release.argo]
+  # TODO try and remove 
   field_manager {
     force_conflicts = true
   }
