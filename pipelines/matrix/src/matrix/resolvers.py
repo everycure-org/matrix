@@ -1,6 +1,11 @@
 """Custom resolvers for Kedro project."""
-from typing import Dict
+import os
+from typing import Dict, Any, Optional
 from copy import deepcopy
+
+from dotenv import load_dotenv
+
+load_dotenv()
 
 
 def merge_dicts(dict1: Dict, dict2: Dict) -> Dict:
@@ -20,3 +25,18 @@ def merge_dicts(dict1: Dict, dict2: Dict) -> Dict:
         else:
             result[key] = value
     return result
+
+
+def env(key: str) -> Optional[str]:
+    """Load a variable from the environment.
+
+    Args:
+        key (str): Key to load.
+
+    Returns:
+        dict: Value of the key
+    """
+    try:
+        return os.environ[key]
+    except KeyError:
+        raise KeyError(f"Environment variable '{key}' not found")

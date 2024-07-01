@@ -1,0 +1,24 @@
+[
+    {
+        "httpRequest": {
+            "path": "/v1/embeddings",
+            "method": "POST"
+        },
+        "httpResponse": {
+            "body": {
+                "object": "list",
+                "data": [
+                    {
+                        "object": "embedding",
+                        "index": 0,
+                        "embedding": [
+                            -0.005830363,
+                            -0.024080755,
+                            -0.02201979
+                        ]
+                    }
+                ]
+            }
+        }
+    }
+]
