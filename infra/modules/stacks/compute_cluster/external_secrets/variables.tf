@@ -10,6 +10,12 @@ variable "sa_annotations" {
   default     = {}
 }
 
-variable "project_id" {
-  
+variable "project_id" { }
+
+variable "k8s_secrets" {
+  type = map(string)
+  sensitive = true
 }
+
+variable "default_region" { }
+variable "cluster_name" { }
