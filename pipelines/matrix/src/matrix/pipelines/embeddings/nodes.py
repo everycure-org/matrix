@@ -22,27 +22,18 @@ class GraphDS(GraphDataScience):
 
     def __init__(
         self,
-        /,
+        *,
         endpoint: str | Driver | QueryRunner,
         auth: F.Tuple[str] | None = None,
-        aura_ds: bool = False,
         database: str | None = None,
-        arrow: str | bool = True,
-        arrow_disable_server_verification: bool = True,
-        arrow_tls_root_certs: bytes | None = None,
-        bookmarks: Any | None = None,
     ):
         """Create `GraphDataScience` instance."""
         super().__init__(
             endpoint,
-            tuple(auth),
-            aura_ds,
-            database,
-            arrow,
-            arrow_disable_server_verification,
-            arrow_tls_root_certs,
-            bookmarks,
+            auth=tuple(auth),
         )
+
+        self.set_database(database)
 
 
 def concat_features(df: DataFrame, features: List[str], ai_config: Dict[str, str]):
