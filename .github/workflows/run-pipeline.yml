@@ -2,7 +2,7 @@ name: run-integration-tests
 
 on:
   push:
-    branch:
+    branches:
       - main
   issue_comment:
     types: [created]
