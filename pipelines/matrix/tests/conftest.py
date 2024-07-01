@@ -61,5 +61,10 @@ def configure_matrix_project_fixture():
 @pytest.fixture(scope="session")
 def spark():
     """Instantiate the Spark session."""
-    spark = SparkSession.builder.master("local").appName("tests").getOrCreate()
+    spark = (
+        SparkSession.builder.config("spark.sql.shuffle.partitions", 1)
+        .master("local")
+        .appName("tests")
+        .getOrCreate()
+    )
     yield spark

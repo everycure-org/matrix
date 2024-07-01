@@ -9,6 +9,7 @@ _neo4j_ds: &_neo4j_ds
 embeddings.prm.graph.embeddings:
   <<: *_neo4j_ds
   save_args:
+    # NOTE: This catalog entry is redefined as we're using vertexai instead of openai to generate embeddings.
     query: > 
       MATCH (n:Entity {id: event.id})
       WITH event, n

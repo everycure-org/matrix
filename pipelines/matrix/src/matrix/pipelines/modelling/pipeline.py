@@ -137,6 +137,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 inputs=[
                     "modelling.raw.nodes",
                     "integration.model_input.ground_truth",
+                    "embeddings.model_output.graphsage",
                     "params:modelling.drug_types",
                     "params:modelling.disease_types",
                 ],

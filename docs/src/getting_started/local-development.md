@@ -1,6 +1,15 @@
 # Local development and execution
 
-Our codebase features code that allows for fully localized execution of the pipeline and its' auxiliary services using `docker-compose`. This guide assists you in setting it up.
+Our codebase features code that allows for fully localized execution of the pipeline and its' auxiliary services using `docker-compose`. The deployment consists of two files that can be [merged](https://docs.docker.com/compose/multiple-compose-files/merge/) depending on the intended use, i.e.,
+
+1. The `base` file defines the runtime services, i.e.,
+    - Neo4J graph database
+    - [Mockserver](https://www.mock-server.com/) implementing a OpenAI compatible GenAI API
+2. The `test` file adds in the pipeline container for integration testing
+
+> NOTE: The `test` file is used in our CI to orchestrate the tests.
+
+![](../assets/img/docker-compose.drawio.svg)
 
 ## Pre-requisites
 
@@ -52,7 +61,7 @@ export VERTEX_AI_ACCESS_TOKEN=$(gcloud auth print-access-token)
 After completing the installation, run the following command from the `deployments/compose` directory to bring up the services.
 
 ```
-docker-compose -f deployments/compose/docker-compose.yml up
+docker-compose up
 ```
 
 > Alternatively, you can add the `-d` flag at the end of the command to run in the background.

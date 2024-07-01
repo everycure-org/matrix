@@ -13,8 +13,9 @@ _neo4j_ds: &_neo4j_ds
     mode: "overwrite"
 
 
+# Catalog directly expresses a query to add OpenAI embeddings.
+# https://neo4j.com/labs/apoc/5/installation/
 # https://neo4j.com/labs/apoc/5/ml/vertexai/#_generate_embeddings_api
-# https://mockgpt.wiremock.io/
 embeddings.prm.graph.embeddings:
   <<: *_neo4j_ds
   save_args:
@@ -40,3 +41,7 @@ embeddings.prm.graph.pca_embeddings:
   load_args:
     query: >
       MATCH (n: Entity) RETURN n.id as id, n.pca_embedding as embedding
+
+embeddings.model_output.graphsage:
+  type: yaml.YAMLDataset
+  filepath: ${globals:paths.model_output}/graphsage/result.yml

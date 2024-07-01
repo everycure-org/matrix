@@ -11,10 +11,7 @@ services:
       - "/bin/sh"
       - -ecx
       - |
-          kedro run -p fabricator
-          kedro run -p integration
-          kedro run -p embeddings
-          kedro run --runner ThreadRunner
+          kedro run -p test --runner ThreadRunner
     environment:
       NEO4J_HOST: bolt://neo4j:7687
       OPENAI_ENDPOINT: http://mock-genai:1080/v1

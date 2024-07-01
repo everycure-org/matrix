@@ -33,6 +33,7 @@ from .model import ModelWrapper
 def create_feat_nodes(
     raw_nodes: DataFrame,
     known_pairs: DataFrame,
+    embeddings: pd.DataFrame,
     drug_types: List[str],
     disease_types: List[str],
 ) -> pd.DataFrame:

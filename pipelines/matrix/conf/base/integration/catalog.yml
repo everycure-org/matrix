@@ -69,7 +69,10 @@ integration.prm.rtx_kg2.edges:
 integration.model_input.nodes:
   <<: *_neo4j_ds
   save_args:
-    # NOTE: Adds a property index on ID on all of the nodes
+    # NOTE: Neo4j nodes can have multiple labels. We're adding _all_ nodes in a global
+    # `entity` label on which we generate a unique constraint. This has the side-effect
+    # that an index is created which allows for quick edge inserts down the line.
+    # https://neo4j.com/docs/cypher-manual/current/constraints/
     script: >
       CREATE CONSTRAINT IF NOT EXISTS FOR (n:Entity) REQUIRE n.id IS UNIQUE;
     query: > 
@@ -79,6 +82,8 @@ integration.model_input.nodes:
       CALL apoc.create.setProperties(n, event.property_keys, event.property_values) YIELD node AS n2
       RETURN node
   load_args:
+    # NOTE: The 'biolink' prefixes was removed to have a clean Neo4J UI interface. We're adding
+    # it back into the query as the modelling expects it.
     query: >  
       MATCH (n) RETURN n.id AS id, 'biolink:' + labels(n)[0] AS category 
  
@@ -86,6 +91,8 @@ integration.model_input.nodes:
 integration.model_input.edges:
   <<: *_neo4j_ds
   save_args:
+    # NOTE: The `match:Entity` ensures that the index we created above is leveraged
+    # while inserting edges, thereby speeding up the process massively.
     query: > 
       MATCH (subject:Entity {id: event.subject}), (object:Entity {id: event.object})
       WITH subject, object, event
