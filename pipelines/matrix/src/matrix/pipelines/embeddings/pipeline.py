@@ -1,17 +1,5 @@
 """Embeddings pipeline."""
-import os
-from typing import List, Any, Dict
-
 from kedro.pipeline import Pipeline, node, pipeline
-
-from pyspark.sql import DataFrame
-from pyspark.sql import functions as F
-
-from pyspark.ml.functions import array_to_vector, vector_to_array
-from graphdatascience import GraphDataScience
-
-from refit.v1.core.inject import inject_object
-from refit.v1.core.unpack import unpack_params
 
 from . import nodes
 
@@ -20,7 +8,6 @@ def create_pipeline(**kwargs) -> Pipeline:
     """Create embeddings pipeline."""
     return pipeline(
         [
-            # NOTE: This enriches the current graph with a nummeric property
             node(
                 func=nodes.concat_features,
                 inputs=[
@@ -45,9 +32,10 @@ def create_pipeline(**kwargs) -> Pipeline:
                 inputs={
                     "df": "embeddings.prm.graph.pca_embeddings",
                     "edges": "integration.model_input.edges",
+                    "gds": "params:embeddings.gds",
                     "unpack": "params:embeddings.topological",
                 },
-                outputs="embeddings.model_output.graphsage",  # TODO: Add dummy dataset
+                outputs="embeddings.model_output.graphsage",
                 name="add_topological_embeddings",
             ),
         ]
