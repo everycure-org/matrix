@@ -1,13 +1,16 @@
-name: Run integration tests
+name: run-integration-tests
 
 on:
+  push:
+    branches:
+      - main
   issue_comment:
     types: [created]
 
 jobs:
   run-integration-tests:
 
-    if: github.event.issue.pull_request && contains(github.event.comment.body, '/run-tests')
+    if: (github.event.issue.pull_request && contains(github.event.comment.body, '/run-tests')) || github.event_name == 'push'
 
     runs-on: ubuntu-latest
     permissions: write-all
@@ -28,10 +31,12 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Get PR branch
+        if: ${{ github.event.issue.pull_request }}
         uses: xt0rted/pull-request-comment-branch@v1
         id: comment-branch
 
       - name: Set latest commit status as pending
+        if: ${{ github.event.issue.pull_request }}
         uses: myrotvorets/set-commit-status-action@master
         with:
           sha: ${{ steps.comment-branch.outputs.head_sha }}
@@ -51,7 +56,7 @@ jobs:
 
       - name: Set latest commit status as ${{ job.status }}
         uses: myrotvorets/set-commit-status-action@master
-        if: always()
+        if: ${{ github.event.issue.pull_request }}
         with:
           sha: ${{ steps.comment-branch.outputs.head_sha }}
           token: ${{ secrets.GITHUB_TOKEN }}
