@@ -1,9 +1,9 @@
-name: Run integration tests
+name: run-integration-tests
 
 on:
   push:
-    # branch:
-    #   - main
+    branch:
+      - main
   issue_comment:
     types: [created]
 
