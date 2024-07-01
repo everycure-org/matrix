@@ -3,6 +3,7 @@ kind: Application
 metadata:
   name: kube-ops-view
   namespace: argocd # application config lives in argocd namespace but app itself in separate NS
+  # if someone deletes the application, argo still does cleanup (e.g. namespace below)
   finalizers:
     - resources-finalizer.argocd.argoproj.io 
 spec:
