@@ -14,6 +14,10 @@ resource "google_secret_manager_secret" "secrets" {
   replication {
     auto {}
   }
+  labels = {
+    purpose = "k8s"
+    cluster = var.name
+  }
 }
 
 resource "google_secret_manager_secret_version" "secret_values" {
