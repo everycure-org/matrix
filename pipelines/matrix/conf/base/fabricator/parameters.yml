@@ -1,6 +1,6 @@
 fabricator.rtx_kg2:
   nodes:
-    num_rows: 1000
+    num_rows: 500
     columns:
       id: 
         type: generate_unique_id
@@ -26,7 +26,7 @@ fabricator.rtx_kg2:
         provider: name
 
   edges:
-    num_rows: 2000
+    num_rows: 1000
     columns:
       subject:
         type: row_apply

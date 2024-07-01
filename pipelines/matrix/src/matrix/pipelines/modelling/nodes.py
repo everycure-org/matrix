@@ -72,12 +72,14 @@ def create_feat_nodes(
 
 @inject_object()
 def make_splits(
+    nodes: DataFrame,
     data: DataFrame,
     splitter: _BaseKFold,
 ) -> pd.DataFrame:
     """Function to split data.
 
     Args:
+        nodes: nodes dataframe
         data: Data to split.
         splitter: sklearn splitter object.
 

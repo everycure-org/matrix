@@ -147,6 +147,7 @@ def create_pipeline(**kwargs) -> Pipeline:
             node(
                 func=nodes.make_splits,
                 inputs=[
+                    "modelling.feat.rtx_kg2",
                     "integration.model_input.ground_truth",
                     "params:modelling.splitter",
                 ],

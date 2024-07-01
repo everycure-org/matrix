@@ -1,8 +1,8 @@
 # Establishes connection to localized mock GenAI API for
 # testing purposes.
 embeddings.ai_config:
-  endpoint: ${oc.env:OPENAI_ENDPOINT, http://127.0.0.1:1080/v1} 
-  apiKey: ${oc.env:OPENAI_API_KEY, sk-proj-abc} 
+  endpoint: ${oc.env:OPENAI_ENDPOINT,http://mock-genai:1080/v1} 
+  apiKey: ${oc.env:OPENAI_API_KEY,sk-proj-abc} 
 
 # Attributes used as input features to compute
 # node embeddings.
