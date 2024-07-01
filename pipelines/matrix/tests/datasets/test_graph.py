@@ -10,6 +10,8 @@ from matrix.datasets.graph import (
 )
 from matrix.pipelines.modelling.nodes import make_splits
 
+from pyspark.sql.types import StructType
+
 
 @pytest.fixture(name="graph")
 def graph_fixture() -> KnowledgeGraph:
@@ -77,7 +79,11 @@ def test_replacement_drug_disease_pair_generator(
         drug_flags=["is_drug"],
         disease_flags=["is_disease"],
     )
-    known_pairs_split = make_splits(spark.createDataFrame(known_pairs), splitter)
+    known_pairs_split = make_splits(
+        spark.createDataFrame([], schema=StructType([])),
+        spark.createDataFrame(known_pairs),
+        splitter,
+    )
 
     # When generating unknown pairs
     unknown = generator.generate(graph, known_pairs_split)
