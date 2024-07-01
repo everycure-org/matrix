@@ -1,7 +1,49 @@
-embeddings.raw.graphsage:
-  type: "pickle.PickleDataset"
-  filepath: gs://silc-storage/embeddings/original_graphsage_emb_dict_reduced.pickle
+_spark_parquet_ds: &_spark_parquet
+  type: spark.SparkDataset
+  file_format: parquet
+  save_args:
+    mode: overwrite
 
-embeddings.int.graphsage:
-  type: pandas.ParquetDataset
-  filepath: ${globals:paths.int}/embeddings
+_neo4j_ds: &_neo4j_ds
+  type: matrix.datasets.neo4j.Neo4JSparkDataset
+  database: everycure
+  url: ${oc.env:NEO4J_HOST}
+  credentials: neo4j_credentials
+  save_args:
+    mode: "overwrite"
+
+
+# Catalog directly expresses a query to add OpenAI embeddings.
+# https://neo4j.com/labs/apoc/5/installation/
+# https://neo4j.com/labs/apoc/5/ml/vertexai/#_generate_embeddings_api
+embeddings.prm.graph.embeddings:
+  <<: *_neo4j_ds
+  save_args:
+    query: > 
+      MATCH (n:Entity {id: event.id})
+      WITH event, n
+      CALL apoc.ml.openai.embedding([event.input], event.apiKey, {endpoint: event.endpoint}) YIELD index, text, embedding
+      CALL apoc.create.setProperty(n, "embedding", embedding) YIELD node
+      RETURN node
+  load_args:
+    query: >
+      MATCH (n: Entity) RETURN n.id as id, n.embedding as embedding
+
+
+embeddings.prm.graph.pca_embeddings:
+  <<: *_neo4j_ds
+  save_args:
+    query: > 
+      MATCH (n:Entity {id: event.id})
+      WITH event, n
+      CALL apoc.create.setProperty(n, "pca_embedding", event.pca_embedding) YIELD node
+      RETURN node
+  load_args:
+    query: >
+      MATCH (n: Entity) RETURN n.id as id, n.pca_embedding as embedding
+
+# NOTE: Dummy catalog entry to enforce Kedro dependency
+# between embedding and modelling pipeline.
+embeddings.model_output.graphsage:
+  type: yaml.YAMLDataset
+  filepath: ${globals:paths.model_output}/graphsage/result.yml

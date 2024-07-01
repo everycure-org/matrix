@@ -38,4 +38,6 @@ modelling.kgml_xdtd:
           - target_+
         target_col_name: y
           
+    # NOTE: This leverages the custom `merge` resolver to override
+    # the base options with the override block above.
     model_options: ${merge:${.._model_options},${._overrides}}

@@ -1,19 +1,7 @@
 """Embeddings pipeline."""
-import pandas as pd
-
-from typing import List
-
-from refit.v1.core.inline_has_schema import has_schema
-
 from kedro.pipeline import Pipeline, node, pipeline
 
-
-@has_schema(
-    schema={"id": "object", "embedding": "object"}, allow_subset=True, relax=True
-)
-def create_int_embeddings(raw_embeddings: List) -> pd.DataFrame:
-    """Function to create int embeddings."""
-    return pd.DataFrame(raw_embeddings.items(), columns=["id", "embedding"])
+from . import nodes
 
 
 def create_pipeline(**kwargs) -> Pipeline:
@@ -21,10 +9,34 @@ def create_pipeline(**kwargs) -> Pipeline:
     return pipeline(
         [
             node(
-                func=create_int_embeddings,
-                inputs=["embeddings.raw.graphsage"],
-                outputs="embeddings.int.graphsage",
-                name="create_int_graphsage_embeddings",
+                func=nodes.concat_features,
+                inputs=[
+                    "integration.model_input.nodes",
+                    "params:embeddings.node.features",
+                    "params:embeddings.ai_config",
+                ],
+                outputs="embeddings.prm.graph.embeddings",
+                name="add_node_embeddings",
+            ),
+            node(
+                func=nodes.reduce_dimension,
+                inputs=[
+                    "embeddings.prm.graph.embeddings",
+                    "params:embeddings.dimensionality_reduction",
+                ],
+                outputs="embeddings.prm.graph.pca_embeddings",
+                name="apply_pca",
+            ),
+            node(
+                func=nodes.add_topological_embeddings,
+                inputs={
+                    "df": "embeddings.prm.graph.pca_embeddings",
+                    "edges": "integration.model_input.edges",
+                    "gds": "params:embeddings.gds",
+                    "unpack": "params:embeddings.topological",
+                },
+                outputs="embeddings.model_output.graphsage",
+                name="add_topological_embeddings",
             ),
         ]
     )
