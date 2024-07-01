@@ -10,7 +10,7 @@ on:
 jobs:
   run-integration-tests:
 
-    if: (github.event.issue.pull_request && contains(github.event.comment.body, '/run-tests')) || github.event.issue.pull_request
+    if: (github.event.issue.pull_request && contains(github.event.comment.body, '/run-tests')) || github.event.issue.push
 
     runs-on: ubuntu-latest
     permissions: write-all
