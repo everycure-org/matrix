@@ -15,8 +15,10 @@ services:
       - NEO4J_apoc_export_file_enabled=true
       - NEO4J_apoc_import_file_enabled=true
       - NEO4J_apoc_import_file_use__neo4j__config=true
-      - NEO4J_PLUGINS=["apoc", "graph-data-science"]
+      - NEO4J_PLUGINS=["apoc", "graph-data-science", "apoc-extended"]
       - NEO4J_dbms_security_auth__minimum__password__length=4
+      - NEO4J_dbms_security_procedures_whitelist=gds.*, apoc.*
+      - NEO4J_dbms_security_procedures_unrestricted=gds.*, apoc.*
       - NEO4J_initial_dbms_default__database=everycure
     volumes:
       - ./neo4j_db/data:/data
@@ -31,6 +33,27 @@ services:
       start_period: 10s
     networks:
       - web
+
+  # MockServer instance that is used to mock a GenAI API conform
+  # the OpenAI API spec. This container is used to enable integration
+  # testing.
+  mock-genai:
+    image: mockserver/mockserver
+    user: root
+    ports:
+      - 1080:1080
+    environment:
+      MOCKSERVER_WATCH_INITIALIZATION_JSON: "true"
+      MOCKSERVER_ENABLE_CORS_FOR_API: "true"
+      MOCKSERVER_ENABLE_CORS_FOR_ALL_RESPONSES: "true"
+      MOCKSERVER_INITIALIZATION_JSON_PATH: /openapi/initializer.json
+      MOCKSERVER_LOG_LEVEL: ERROR
+    networks:
+      web:
+        aliases:
+          - mock.genai.com
+    volumes:
+      - ./mockgenai-initializer.json:/openapi/initializer.json:ro
 
 networks:
   web:
