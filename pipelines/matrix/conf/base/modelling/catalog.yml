@@ -7,6 +7,21 @@ _kg_dataset: &_kg_dataset
     engine: pyarrow
     use_nullable_dtypes: True
 
+
+_neo4j_ds: &_neo4j_ds
+  type: matrix.datasets.neo4j.Neo4JSparkDataset
+  database: everycure
+  url: ${oc.env:NEO4J_HOST}
+  credentials: neo4j_credentials
+  save_args:
+    mode: "overwrite"
+
+modelling.raw.nodes:
+  <<: *_neo4j_ds
+  load_args:
+    query: >  
+      MATCH (n:Entity) RETURN n.id AS id, 'biolink:' + labels(n)[1] AS category, n.topological_embedding AS embedding
+
 modelling.prm.known_pairs:
   <<: *_pandas_parquet
   filepath: ${globals:paths.prm}/known_pairs
