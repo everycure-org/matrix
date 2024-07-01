@@ -7,7 +7,7 @@ _pandas_csv: &_pandas_csv
 
 _bigquery_ds: &_bigquery_ds
   type: matrix.datasets.gcp.BigQueryTableDataset
-  project_id: ${oc.env:GCP_PROJECT_ID,mtrx-hub-dev-3of}
+  project_id: ${oc.env:GCP_PROJECT_ID}
 
 integration.raw.rtx_kg2.nodes@spark:
   type: matrix.datasets.gcp.SparkWithSchemaDataset

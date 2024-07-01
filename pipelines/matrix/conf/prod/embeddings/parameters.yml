@@ -1,3 +1,3 @@
 embeddings.ai_config:
-  project: ${oc.env:GCP_PROJECT,mtrx-hub-dev-3of} 
+  project: ${oc.env:GCP_PROJECT} 
   accessToken: ${oc.env:VERTEX_AI_ACCESS_TOKEN}

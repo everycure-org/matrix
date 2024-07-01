@@ -14,7 +14,10 @@ services:
           kedro run -p test --runner ThreadRunner
     environment:
       NEO4J_HOST: bolt://neo4j:7687
+      NEO4J_USER: neo4j
+      NEO4J_PASSWORD: admin
       OPENAI_ENDPOINT: http://mock-genai:1080/v1
+      OPENAI_API_KEY: sk-proj-abc
     depends_on:
       neo4j:
         condition: service_healthy

@@ -1,4 +1,4 @@
-gcs_bucket: ${oc.env:GCP_BUCKET,gs://mtrx-us-central1-hub-dev-storage}
+gcs_bucket: ${oc.env:GCP_BUCKET}
 
 paths:
   raw: ${gcs_bucket}

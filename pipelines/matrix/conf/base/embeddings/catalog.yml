@@ -7,7 +7,7 @@ _spark_parquet_ds: &_spark_parquet
 _neo4j_ds: &_neo4j_ds
   type: matrix.datasets.neo4j.Neo4JSparkDataset
   database: everycure
-  url: ${oc.env:NEO4J_HOST,bolt://127.0.0.1:7687}
+  url: ${oc.env:NEO4J_HOST}
   credentials: neo4j_credentials
   save_args:
     mode: "overwrite"
