@@ -19,6 +19,23 @@ spec:
     container:
       imagePullPolicy: Always
       image: {{ image }}
+      env:
+        - name: NEO4J_HOST
+          value: bolt://127.0.0.1:7687
+        - name: NEO4J_USER
+          value: neo4j
+        - name: NEO4J_PASSWORD
+          value: admin
+        - name: OPENAI_ENDPOINT
+          value: http://mock-genai:1080/v1
+        - name: OPENAI_API_KEY
+          value: dummy
+        - name: GCP_PROJECT
+          value: mtrx-hub-dev-3of
+        - name: GCP_BUCKET
+          value: gs://mtrx-us-central1-hub-dev-storage
+        - name: VERTEX_AI_ACCESS_TOKEN
+          value: dummy
       # env:
       #   - name: AWS_ACCESS_KEY_ID
       #     valueFrom:
@@ -32,7 +49,7 @@ spec:
       #         name: aws-secrets
       #         key: secret_access_key
       command: [kedro]
-      args: ["run", "-p", "{{ pipeline }}", "-n", {% raw %} "{{inputs.parameters.kedro_node}}" {% endraw %}]
+      args: ["run", "-p", "{{ pipeline }}", "-e", "{{ env }}", "-n", {% raw %}"{{inputs.parameters.kedro_node}}" {% endraw %}]
   - name: dag
     dag:
       tasks:
