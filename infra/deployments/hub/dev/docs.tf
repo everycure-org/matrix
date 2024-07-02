@@ -19,6 +19,6 @@ resource "google_project_iam_member" "bindings" {
 }
 
 resource "google_app_engine_application" "appengine_app" {
-  project        = module.bootstrap_data.content.project_id
-  location_id    = substr(var.default_region, 0, length(var.default_region)-1)
+  project     = module.bootstrap_data.content.project_id
+  location_id = substr(var.default_region, 0, length(var.default_region) - 1)
 }

@@ -14,12 +14,12 @@ module "compute_cluster" {
   environment       = "dev"
   gitops_repo_url   = var.gitops_repo_url
   gitops_repo_creds = var.gitops_repo_creds
-  k8s_secrets = var.k8s_secrets
+  k8s_secrets       = var.k8s_secrets
 }
 
 module "matrix" {
-  source = "../../../modules/stacks/matrix"
-  default_region    = var.default_region
-  project_id        = module.bootstrap_data.content.project_id
-  environment       = "dev"
+  source         = "../../../modules/stacks/matrix"
+  default_region = var.default_region
+  project_id     = module.bootstrap_data.content.project_id
+  environment    = "dev"
 }
