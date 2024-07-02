@@ -29,7 +29,13 @@ def generate_argo_config(image, pipeline_name, env):
 
     tasks = get_dependencies(pipeline.node_dependencies)
 
-    output = template.render(image=image, package_name=package_name, tasks=tasks)
+    output = template.render(
+        image=image, 
+        package_name=package_name, 
+        tasks=tasks,
+        pipeline=pipeline
+    )
+    
 
     (SEARCH_PATH / f"argo-{package_name}.yml").write_text(output)
 
