@@ -25,30 +25,32 @@ class DiscreteMetrics(Evaluation):
     """A class representing metrics evaluating discrete binary class prediction."""
 
     @inject_object()
-    def __init__(self, metrics: List[callable], threshold: float = 0.5):
+    def __init__(
+        self, metrics: List[callable], score_col_name: str, threshold: float = 0.5
+    ):
         """Initializes the DiscreteMetrics instance.
 
         Args:
             metrics: List of metrics for binary class predictions
+            score_col_name: Probability score column name.
             threshold: Threshold value for binary class prediction. Defaults to 0.5.
         """
         self._metrics = metrics
         self._threshold = threshold
+        self._score_col_name = score_col_name
 
     def evaluate(
         self,
         data: pd.DataFrame,
-        score_col_name: str = "treat score",
     ) -> Dict:
         """Evaluates metrics on a dataset.
 
         Args:
             data: Labelled drug-disease dataset with probability scores.
             target_col_name: Target label column name.
-            score_col_name: Probability score column name.
         """
         # Binary class predictions and true labels
-        y_pred = data[score_col_name].ge(self._threshold)
+        y_pred = data[self._score_col_name].ge(self._threshold)
         y_true = data["y"]
 
         # Evaluate and report metrics
@@ -62,27 +64,28 @@ class ContinuousMetrics(Evaluation):
     """A class representing metrics evaluating continuous binary class probability scores."""
 
     @inject_object()
-    def __init__(self, metrics: List[callable]):
+    def __init__(self, metrics: List[callable], score_col_name: str):
         """Initializes the ContinuousMetrics instance.
 
         Args:
             metrics: List of metrics for binary class predictions
+            score_col_name: Probability score column name.
         """
         self._metrics = metrics
+        self._score_col_name = score_col_name
 
     def evaluate(
         self,
         data: pd.DataFrame,
-        score_col_name: str = "treat score",
     ) -> Dict:
         """Evaluates metrics on a dataset.
 
         Args:
             data: Labelled drug-disease dataset with probability scores.
-            score_col_name: Probability score column name.
+
         """
         # Binary class predictions and true labels
-        y_score = data[score_col_name]
+        y_score = data[self._score_col_name]
         y_true = data["y"]
 
         # Evaluate and report metrics
@@ -104,7 +107,9 @@ class SpecificRanking(Evaluation):
     """
 
     @inject_object()
-    def __init__(self, rank_func_lst: List[callable], specific_col: str) -> None:
+    def __init__(
+        self, rank_func_lst: List[callable], specific_col: str, score_col_name: str
+    ) -> None:
         """Initializes the SpecificRanking instance.
 
         Args:
@@ -112,20 +117,20 @@ class SpecificRanking(Evaluation):
             specific_col: Column to rank over.
                 Set to "source" for drug-specific ranking.
                 Set to "target" for disease-specific ranking.
+            score_col_name: Probability score column name.
         """
         self._rank_func_lst = rank_func_lst
         self._specific_col = specific_col
+        self._score_col_name = score_col_name
 
     def evaluate(
         self,
         data: pd.DataFrame,
-        score_col_name: str = "treat score",
     ) -> Dict:
         """Evaluates metrics on a dataset.
 
         Args:
             data: Labelled drug-disease dataset with probability scores.
-            score_col_name: Probability score column name.
         """
         # Get items to loop over
         items_lst = list(data[self._specific_col].unique())
@@ -135,8 +140,8 @@ class SpecificRanking(Evaluation):
         for item in items_lst:
             pairs_for_item = data[data[self._specific_col] == item]
             is_pos = pairs_for_item["y"].eq(1)
-            pos_preds = list(pairs_for_item[is_pos][score_col_name])
-            neg_preds = list(pairs_for_item[~is_pos][score_col_name])
+            pos_preds = list(pairs_for_item[is_pos][self._score_col_name])
+            neg_preds = list(pairs_for_item[~is_pos][self._score_col_name])
             neg_preds.sort()
             for prob in pos_preds:
                 rank = len(neg_preds) - bisect.bisect_left(neg_preds, prob) + 1

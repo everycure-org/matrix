@@ -55,7 +55,7 @@ def make_test_predictions(
     transformers: Dict[str, Dict[str, Union[_BaseImputer, List[str]]]],
     model: ModelWrapper,
     features: List[str],
-    score_col_name: str = "treat score",
+    score_col_name: str,
 ) -> pd.DataFrame:
     """Generated probability scores for drug-disease dataset.
 

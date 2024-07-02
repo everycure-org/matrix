@@ -1,3 +1,6 @@
+# Name of column representing main probability score of the model 
+evaluation.score_col_name: ${globals:score_col_name}
+
 # Threshold-based classification metrics for ground truth data
 evaluation.simple_ground_truth_classification:
   evaluation_options:
@@ -8,6 +11,7 @@ evaluation.simple_ground_truth_classification:
       metrics:
         - object: sklearn.metrics.accuracy_score
         - object: sklearn.metrics.f1_score
+      score_col_name: ${globals:score_col_name}
       threshold: 0.5
 
 # Threshold-independent metrics for ground truth data
@@ -20,6 +24,7 @@ evaluation.continuous_ground_truth_classification:
       metrics:
         - object: sklearn.metrics.roc_auc_score
         - object: sklearn.metrics.average_precision_score
+      score_col_name: ${globals:score_col_name}
 
 # All vs. all ranking with all drugs x test diseases matrix
 evaluation.disease_centric_matrix:
@@ -34,6 +39,7 @@ evaluation.disease_centric_matrix:
       metrics:
         - object: sklearn.metrics.roc_auc_score
         - object: sklearn.metrics.average_precision_score
+      score_col_name: ${globals:score_col_name}
 
 # Disease-specific ranking
 evaluation.disease_specific_ranking:
@@ -52,3 +58,4 @@ evaluation.disease_specific_ranking:
           k: 2
         - object:  matrix.pipelines.evaluation.evaluation.HitK
           k: 10
+      score_col_name: ${globals:score_col_name}
