@@ -1,0 +1,18 @@
+# FUTURE could also be spun up on demand by argo on demand
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: spark
+  namespace: argocd
+spec:
+  destination:
+    namespace: spark
+    server: {{ .Values.spec.destination.server }}
+  project: default
+  source:
+    path: {{ .Values.spec.source.repoPath }}/spark
+    repoURL: {{ .Values.spec.source.repoURL }}
+    targetRevision: {{ .Values.spec.source.targetRevision }}
+  syncPolicy:
+    syncOptions:     # Sync options which modifies sync behavior
+    - CreateNamespace=true # Namespace Auto-Creation ensures that namespace specified as the application destination exists in the destination cluster.
