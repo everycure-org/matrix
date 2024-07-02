@@ -109,10 +109,11 @@ def test_replacement_drug_disease_pair_generator(
     [ShuffleSplit(n_splits=1, test_size=2 / 3, random_state=1)],
 )
 def test_matrix_test_diseases(
-    graph: KnowledgeGraph, known_pairs: pd.DataFrame, splitter
+    graph: KnowledgeGraph, known_pairs: pd.DataFrame, splitter, spark
 ):
     # Given a list of drugs, a test-train split for the known data and a test data generator
     generator = MatrixTestDiseases(["is_drug"])
+    breakpoint()
     known_pairs_split = make_splits(
         spark.createDataFrame([], schema=StructType([])),
         spark.createDataFrame(known_pairs),
