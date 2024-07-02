@@ -1,0 +1,5 @@
+argo-workflows:
+  # baseHref: /argo-workflows/
+  server: 
+    extraArgs:
+      - --auth-mode=server
