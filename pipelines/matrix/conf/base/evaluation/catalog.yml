@@ -16,3 +16,7 @@ _pandas_parquet: &_pandas_parquet
 "evaluation.{model}.{evaluation}.reporting.evaluation":
   type: yaml.YAMLDataset
   filepath: ${globals:paths.reporting}/{model}/{evaluation}/report.yml
+
+"evaluation.reporting.report":
+  type: yaml.YAMLDataset
+  filepath: ${globals:paths.reporting}/master_report.yml

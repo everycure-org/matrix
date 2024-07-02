@@ -1,5 +1,5 @@
 """Module with nodes for evaluation."""
-import abc
+import json
 from typing import Any, List, Dict, Union, Tuple
 
 from sklearn.impute._base import _BaseImputer
@@ -11,7 +11,7 @@ from refit.v1.core.inline_has_schema import has_schema
 from refit.v1.core.unpack import unpack_params
 from refit.v1.core.make_list_regexable import _extract_elements_in_list
 
-
+from matrix import settings
 from matrix.datasets.graph import KnowledgeGraph
 from matrix.datasets.pair_generator import DrugDiseasePairGenerator
 
@@ -100,10 +100,8 @@ def evaluate_test_predictions(data: pd.DataFrame, evaluation: Evaluation) -> Any
     return evaluation.evaluate(data)
 
 
-def consolidate_reports(*reports) -> dict:
-    """Function to consolidate reports into master report.
-
-    TODO: modify and put into eval pipeline
+def consolidate_evaluation_reports(*reports) -> dict:
+    """Function to consolidate evaluation reports into master report.
 
     Args:
         reports: tuples of (name, report) pairs.
@@ -111,4 +109,14 @@ def consolidate_reports(*reports) -> dict:
     Returns:
         Dictionary representing consolidated report.
     """
-    return [*reports]
+    reports_lst = [*reports]
+    master_report = dict()
+    for idx_1, model in enumerate(settings.DYNAMIC_PIPELINES_MAPPING.get("modelling")):
+        master_report[model["model_name"]] = dict()
+        for idx_2, evaluation in enumerate(
+            settings.DYNAMIC_PIPELINES_MAPPING.get("evaluation")
+        ):
+            master_report[model["model_name"]][
+                evaluation["evaluation_name"]
+            ] = reports_lst[idx_1 + idx_2]
+    return json.loads(json.dumps(master_report, default=float))
