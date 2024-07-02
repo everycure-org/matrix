@@ -1,0 +1,53 @@
+{# <project_root>/templates/argo_spec.tmpl #}
+apiVersion: argoproj.io/v1alpha1
+kind: Workflow
+metadata:
+  generateName: {{ package_name }}-
+spec:
+  entrypoint: dag
+  templates:
+  - name: kedro
+    metadata:
+      labels:
+        {# Add label to have an ability to remove Kedro Pods easily #}
+        app: kedro-argo
+    retryStrategy:
+      limit: 1
+    inputs:
+      parameters:
+      - name: kedro_node
+    container:
+      imagePullPolicy: Always
+      image: {{ image }}
+      # env:
+      #   - name: AWS_ACCESS_KEY_ID
+      #     valueFrom:
+      #       secretKeyRef:
+      #         {# Secrets name #}
+      #         name: aws-secrets
+      #         key: access_key_id
+      #   - name: AWS_SECRET_ACCESS_KEY
+      #     valueFrom:
+      #       secretKeyRef:
+      #         name: aws-secrets
+      #         key: secret_access_key
+      command: [kedro]{% raw %}
+      args: ["run", "-n",  "{{inputs.parameters.kedro_node}}"]
+      {% endraw %}
+  - name: dag
+    dag:
+      tasks:
+      {% for task in tasks %}
+      - name: {{ task.name }}
+        template: kedro
+        {% if task.deps %}
+        dependencies:
+        {% for dep in task.deps %}
+          - {{ dep }}
+        {% endfor %}
+        {% endif %}
+        arguments:
+          parameters:
+          - name: kedro_node
+            value: {{ task.node }}
+      {% endfor %}
