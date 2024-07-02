@@ -8,7 +8,8 @@ import numpy as np
 class ModelWrapper:
     """Class to represent models.
 
-    TODO: Conventions for different model parts
+    FUTURE: Add `features` and `transformers` to class, such that we can
+    clean up the Kedro viz UI.
     """
 
     def __init__(
