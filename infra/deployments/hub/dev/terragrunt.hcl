@@ -6,5 +6,5 @@ include "root" {
 inputs = {
   gitops_repo_url   = yamldecode(file("${dirname(find_in_parent_folders())}//secrets/github.yaml")).repo
   gitops_repo_creds = yamldecode(file("${dirname(find_in_parent_folders())}//secrets/github.yaml")).creds
-  k8s_secrets = yamldecode(file("${dirname(find_in_parent_folders())}//secrets/k8s_secrets.yaml"))
+  k8s_secrets       = yamldecode(file("${dirname(find_in_parent_folders())}//secrets/k8s_secrets.yaml"))
 }

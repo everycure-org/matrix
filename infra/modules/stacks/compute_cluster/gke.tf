@@ -51,14 +51,14 @@ module "gke" {
       # max_shared_clients_per_gpu = 2
     },
     {
-      name               = "stable-cpu-pool"
+      name = "stable-cpu-pool"
       # machine_type       = "n4-standard-8"
-      machine_type       = "e2-standard-8"
-      node_locations     = "us-central1-a,us-central1-c"
-      min_count          = 0
-      max_count          = 20
-      local_ssd_count    = 0
-      disk_size_gb       = 200
+      machine_type    = "e2-standard-8"
+      node_locations  = "us-central1-a,us-central1-c"
+      min_count       = 0
+      max_count       = 20
+      local_ssd_count = 0
+      disk_size_gb    = 200
       # disk_type = "hyperdisk-balanced"
       enable_gcfs        = true
       enable_gvnic       = true
