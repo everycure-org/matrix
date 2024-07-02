@@ -24,4 +24,5 @@ Please describe the tests that you ran to verify your changes. Provide instructi
 - [ ] I have made corresponding changes to the documentation
 - [ ] I have added tests that prove my fix is effective or that my feature works
 - [ ] Any dependent changes have been merged and published in downstream modules
+- [ ] ran `/run-tests` check at the end of PR collaboration work to execute integration tests
 

@@ -1,0 +1,12 @@
+apiVersion: v2
+name: Neo4J DB
+description: neo4j
+type: application
+version: 0.1.0
+appVersion: "1.0.0"
+
+dependencies:
+# https://neo4j.com/docs/operations-manual/current/kubernetes/quickstart-standalone/server-setup/
+- name: neo4j 
+  version: 5.20.0
+  repository: https://neo4j.github.io/helm-charts/
