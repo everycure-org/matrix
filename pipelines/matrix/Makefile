@@ -18,8 +18,9 @@ fabricate:
 build: lock
 	docker build -t matrix .
 
-docker_push_dev: build
-	docker tag matrix $(dev_docker_image):latest
+docker_push_dev:
+	docker buildx build --platform linux/amd64 -t matrix_amd ./
+	docker tag matrix_amd $(dev_docker_image):latest
 	docker push $(dev_docker_image):latest
 
 licenses:  build
