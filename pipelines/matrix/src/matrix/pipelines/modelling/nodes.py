@@ -22,6 +22,9 @@ from matrix.datasets.pair_generator import SingleLabelPairGenerator
 from .model import ModelWrapper
 
 
+plt.switch_backend("Agg")
+
+
 @has_schema(
     schema={
         "is_drug": "bool",
