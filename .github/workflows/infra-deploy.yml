@@ -1,4 +1,4 @@
-name: Infrastructure Plan
+name: Infrastructure Deploy
 
 # FUTURE
 # This will eventually need to be turned into a call'able workflow_call version where we
@@ -10,7 +10,7 @@ on:
   workflow_dispatch: {}
   push:
     branches:
-      - "^main$"
+      - "main"
     paths: 
       - infra/**
       - .github/workflows/infra-deploy.yml

@@ -37,11 +37,11 @@ variable "gitops_repo_url" {
   type = string
 }
 variable "gitops_repo_creds" {
-  type = string
+  type      = string
   sensitive = true
 }
 
 variable "k8s_secrets" {
-  type = map(string)
+  type      = map(string)
   sensitive = true
 }
