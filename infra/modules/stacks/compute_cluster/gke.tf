@@ -29,6 +29,7 @@ module "gke" {
     {
       name               = "default-node-pool"
       machine_type       = "e2-medium"
+      node_locations     = "us-central1-a"
       min_count          = 1
       max_count          = 10
       local_ssd_count    = 0
@@ -73,6 +74,7 @@ module "gke" {
       "https://www.googleapis.com/auth/logging.write",
       "https://www.googleapis.com/auth/monitoring",
       "https://www.googleapis.com/auth/cloud-platform",
+      "https://www.googleapis.com/auth/devstorage.full_control"
     ]
   }
 
