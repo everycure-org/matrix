@@ -29,7 +29,7 @@ spec:
       #         name: aws-secrets
       #         key: secret_access_key
       command: [kedro]
-      args: ["run", "-p", "{{ pipeline }}", "-n",  "{{inputs.parameters.kedro_node}}"]
+      args: ["run", "-p", "integration", "-n",  "{{inputs.parameters.kedro_node}}" ]
   - name: dag
     dag:
       tasks:
@@ -56,8 +56,8 @@ spec:
       - name: create-neo4j-edges
         template: kedro
         dependencies:
-          - write-rtx-kg2-edges
           - create-neo4j-nodes
+          - write-rtx-kg2-edges
         arguments:
           parameters:
           - name: kedro_node
