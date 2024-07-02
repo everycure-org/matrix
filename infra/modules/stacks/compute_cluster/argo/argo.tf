@@ -56,42 +56,34 @@ resource "helm_release" "argo" {
   ]
 }
 
-resource "helm_release" "argo_app_of_apps" {
-  provider   = helm
-  name       = "argocd-apps"
+resource "kubernetes_manifest" "app_of_apps" {
   depends_on = [helm_release.argo]
-  repository = "https://argoproj.github.io/argo-helm"
-  chart      = "argocd-apps"
-  namespace  = var.namespace
-  version    = "2.0.0"
-
-  values = [
-    yamlencode({
-      "applications" : {
-        "platform" : {
-          "namespace" : var.namespace,
-          "finalizers" : ["resources-finalizer.argocd.argoproj.io"],
-          "project" : "default",
-          "additionalLabels" : {
-            "app.kubernetes.io/part-of" : join("-", ["argo", helm_release.argo.metadata[0].revision])
-          }
-          "source" : {
-            "repoURL" : var.repo_url,
-            "path" : var.repo_path,
-            "targetRevision" : var.repo_revision,
-          },
-          "destination" : {
-            "server" : "https://kubernetes.default.svc",
-            "namespace" : var.namespace
-          },
-          "syncPolicy" : {
-            "automated" : {
-              "prune" : true,
-              "selfHeal" : true
-            }
-          }
-        }
-      }
-    })
-  ]
+  # TODO try and remove 
+  field_manager {
+    force_conflicts = true
+  }
+  manifest = yamldecode(
+    <<YAML
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: app-of-apps
+  namespace: argocd
+spec:
+  destination:
+    namespace: argocd
+    server: "https://kubernetes.default.svc"
+  source:
+    path: ${var.repo_path}/app-of-apps
+    repoURL: ${var.repo_url}
+    targetRevision: ${var.repo_revision}
+  project: default
+  syncPolicy:
+    syncOptions:
+      - CreateNamespace=true
+    automated:
+      prune: true
+      allowEmpty: true
+YAML
+  )
 }

@@ -8,8 +8,3 @@ module "argo" {
   repo_path     = "infra/argo/"
   repo_revision = "HEAD"
 }
-
-module "external_secrets" {
-  depends_on = [module.gke]
-  source     = "./external_secrets"
-}

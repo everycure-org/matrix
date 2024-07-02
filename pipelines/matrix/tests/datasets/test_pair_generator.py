@@ -11,6 +11,8 @@ from matrix.datasets.pair_generator import (
 )
 from matrix.pipelines.modelling.nodes import make_splits
 
+from pyspark.sql.types import StructType
+
 
 @pytest.fixture(name="graph")
 def graph_fixture() -> KnowledgeGraph:
@@ -71,7 +73,7 @@ def test_random_drug_disease_pair_generator(
     [(2, ShuffleSplit(n_splits=1, test_size=0.5, random_state=111))],
 )
 def test_replacement_drug_disease_pair_generator(
-    graph: KnowledgeGraph, known_pairs: pd.DataFrame, n_replacements, splitter
+    graph: KnowledgeGraph, known_pairs: pd.DataFrame, n_replacements, splitter, spark
 ):
     # Given a replacement drug disease pair generator and a test-train split for the known data
     generator = ReplacementDrugDiseasePairGenerator(
@@ -81,7 +83,11 @@ def test_replacement_drug_disease_pair_generator(
         drug_flags=["is_drug"],
         disease_flags=["is_disease"],
     )
-    known_pairs_split = make_splits(known_pairs, splitter)
+    known_pairs_split = make_splits(
+        spark.createDataFrame([], schema=StructType([])),
+        spark.createDataFrame(known_pairs),
+        splitter,
+    )
 
     # When generating unknown pairs
     unknown = generator.generate(graph, known_pairs_split)

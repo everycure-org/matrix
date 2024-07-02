@@ -20,7 +20,7 @@ _spark_parquet_ds: &_spark_parquet
 _neo4j_ds: &_neo4j_ds
   type: matrix.datasets.neo4j.Neo4JSparkDataset
   database: everycure
-  url: ${oc.env:NEO4J_HOST,bolt://127.0.0.1:7687}
+  url: ${oc.env:NEO4J_HOST}
   credentials: neo4j_credentials
   save_args:
     mode: "overwrite"
@@ -63,27 +63,43 @@ integration.prm.rtx_kg2.nodes:
 
 integration.prm.rtx_kg2.edges:
   <<: *_spark_parquet
-  filepath: ${globals:paths.prm}/rtx_kg2/nodes
+  filepath: ${globals:paths.prm}/rtx_kg2/edges
 
 # FUTURE: Does it make sense to copy DBs?
 integration.model_input.nodes:
   <<: *_neo4j_ds
   save_args:
-    # NOTE:
+    # NOTE: Neo4j nodes can have multiple labels. We're adding _all_ nodes in a global
+    # `entity` label on which we generate a unique constraint. This has the side-effect
+    # that an index is created which allows for quick edge inserts down the line.
+    # https://neo4j.com/docs/cypher-manual/current/constraints/
     script: >
-      CREATE CONSTRAINT IF NOT EXISTS FOR (n:Drug) REQUIRE n.id IS UNIQUE;
-      CREATE CONSTRAINT IF NOT EXISTS FOR (n:Disease) REQUIRE n.id IS UNIQUE;
+      CREATE CONSTRAINT IF NOT EXISTS FOR (n:Entity) REQUIRE n.id IS UNIQUE;
     query: > 
-      CREATE (n {id: event.id})
+      CREATE (n:Entity {id: event.id})
       WITH event, n
       CALL apoc.create.addLabels(n, [event.label]) YIELD node
       CALL apoc.create.setProperties(n, event.property_keys, event.property_values) YIELD node AS n2
       RETURN node
   load_args:
-    query: > 
-      MATCH (n) RETURN n.id AS id, 'biolink:' + labels(n)[0] AS category
+    # NOTE: The 'biolink' prefixes was removed to have a clean Neo4J UI interface. We're adding
+    # it back into the query as the modelling expects it.
+    query: >  
+      MATCH (n) RETURN n.id AS id, 'biolink:' + labels(n)[0] AS category 
+ 
 
-integration.model_input.treats:
+integration.model_input.edges:
+  <<: *_neo4j_ds
+  save_args:
+    # NOTE: The `match:Entity` ensures that the index we created above is leveraged
+    # while inserting edges, thereby speeding up the process massively.
+    query: > 
+      MATCH (subject:Entity {id: event.subject}), (object:Entity {id: event.object})
+      WITH subject, object, event
+      CALL apoc.create.relationship(subject, event.label, {knowledge_source: event.knowledge_source}, object) YIELD rel
+      RETURN rel
+
+integration.model_input.ground_truth:
   <<: *_neo4j_ds
   save_args:
     query: > 
@@ -91,32 +107,19 @@ integration.model_input.treats:
       WITH source, target, event
       CALL
         apoc.do.when(
-          not exists((source)-[]->(target)), 
-          'CALL apoc.create.relationship($source, $event.label, {}, $target) YIELD rel RETURN rel',
-          'MATCH (source)-[rel]->(target) return rel',
+          not exists((source)-[:GROUND_TRUTH]->(target)), 
+          'CREATE (source)-[rel:GROUND_TRUTH]->(target) RETURN rel',
+          'MATCH (source)-[rel:GROUND_TRUTH]->(target) return rel',
           {event:event, source:source, target:target}
         ) YIELD value
       CALL apoc.create.setRelProperties(value.rel, event.property_keys, event.property_values) YIELD rel as r
       RETURN count(*)
-  load_args:
-    schema:
-      object: pyspark.sql.types.StructType
-      fields:
-        - object: pyspark.sql.types.StructField
-          name: source
-          dataType: 
-            object: pyspark.sql.types.StringType
-          nullable: False
-        - object: pyspark.sql.types.StructField
-          name: y
-          dataType: 
-            object: pyspark.sql.types.LongType
-          nullable: False
-        - object: pyspark.sql.types.StructField
-          name: target
-          dataType: 
-            object: pyspark.sql.types.StringType
-          nullable: False
+  load_args:        
     query: >
-      MATCH (drug:Drug)-[r:TREATS|NOT_TREATS]->(disease:Disease) 
-      RETURN drug.id as source, toInteger(r.treats) as y, disease.id as target
+      MATCH (drug:Drug)-[r:GROUND_TRUTH]->(disease:Disease) 
+      RETURN 
+        drug.id as source, 
+        drug.topological_embedding as source_embedding,
+        disease.id as target, 
+        disease.topological_embedding as target_embedding,
+        toInteger(r.treats) as y

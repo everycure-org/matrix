@@ -14,7 +14,7 @@ variable "repo_creds" {
 variable "repo_path" {
   description = "Path in repo to deploy by ArgoCD."
   type        = string
-  default     = "platform/argo/app-of-apps/"
+  default     = "infra/argo/app-of-apps/"
 }
 
 variable "repo_revision" {

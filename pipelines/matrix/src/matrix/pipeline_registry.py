@@ -38,6 +38,7 @@ def register_pipelines() -> Dict[str, Pipeline]:
     pipelines["test"] = (
         create_fabricator_pipeline()
         + create_integration_pipeline()
+        + create_embeddings_pipeline()
         + create_modelling_pipeline()
         + create_evaluation_pipeline()
     )

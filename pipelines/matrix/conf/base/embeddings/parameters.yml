@@ -1,0 +1,52 @@
+# Establishes connection to localized mock GenAI API for
+# testing purposes.
+embeddings.ai_config:
+  endpoint: ${oc.env:OPENAI_ENDPOINT} 
+  apiKey: ${oc.env:OPENAI_API_KEY} 
+
+# Attributes used as input features to compute
+# node embeddings.
+embeddings.node.features: ["id", "category"]
+
+# Defines strategy used to reduce dimensions of the GenAI
+# generated node embeddings.
+# https://spark.apache.org/docs/latest/api/python/reference/api/pyspark.ml.feature.PCA.html
+embeddings.dimensionality_reduction:
+  object: pyspark.ml.feature.PCA
+  k: 2
+
+
+# FUTURE: This is a highly temp. solution that serves as PoC of leveraging Neo4J's
+# AI functionality. If works as expected, we'll do a refinement step to clean this up.
+embeddings.gds:
+  object: matrix.pipelines.embeddings.nodes.GraphDS
+  endpoint: ${oc.env:NEO4J_HOST}
+  database: everycure
+  auth:
+    -  ${oc.env:NEO4J_USER}
+    -  ${oc.env:NEO4J_PASSWORD}
+
+# Defines strategy used to compute topological embeddings,
+# all nodes and relationships in our KG are projected, along with
+# the PCA feature. The graphSage algorithm is hereafter applied
+# and the result is written back to the KG.
+# 
+# Sources:
+#   - https://neo4j.com/docs/graph-data-science/current/management-ops/graph-creation/graph-project/
+#   - https://neo4j.com/docs/graph-data-science-client/current/graph-object/
+#   - https://neo4j.com/docs/graph-data-science-client/current/model-object/
+#   - https://neo4j.com/docs/graph-data-science-client/current/algorithms/ 
+# 
+embeddings.topological:
+  projection:
+    graphName: embeddings
+    nodeProjection: '*'
+    relationshipProjection: '*'
+    config:
+      nodeProperties: &_feature 'pca_embedding'
+  estimator:
+    model: graphSage
+    args:
+      modelName: topological_embeddings
+      featureProperties: [*_feature]
+  write_property: topological_embedding

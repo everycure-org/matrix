@@ -33,8 +33,8 @@ from .model import ModelWrapper
 )
 def create_feat_nodes(
     raw_nodes: DataFrame,
-    embeddings: pd.DataFrame,
     known_pairs: DataFrame,
+    embeddings: pd.DataFrame,
     drug_types: List[str],
     disease_types: List[str],
 ) -> pd.DataFrame:
@@ -53,7 +53,7 @@ def create_feat_nodes(
         Nodes enriched with features.
     """
     # Merge embeddings
-    raw_nodes = raw_nodes.toPandas().merge(embeddings, on="id", how="left")
+    raw_nodes = raw_nodes.toPandas()
 
     # Add drugs and diseases types flags
     raw_nodes["is_drug"] = raw_nodes["category"].apply(lambda x: x in drug_types)
@@ -71,51 +71,23 @@ def create_feat_nodes(
     return raw_nodes
 
 
-@has_schema(
-    schema={
-        "source": "object",
-        "source_embedding": "object",
-        "target": "object",
-        "target_embedding": "object",
-        "y": "numeric",
-    },
-    allow_subset=True,
-)
-def create_prm_pairs(
-    graph: KnowledgeGraph,
-    data: DataFrame,
-) -> pd.DataFrame:
-    """Adds embeddings to drug-diseases dataset.
-
-    Args:
-        graph: Knowledge graph.
-        data: Pairs dataset to enrich with embeddings.
-
-    Returns:
-        Ground truth data enriched with embeddings.
-    """
-    # Add embeddings
-    data = data.toPandas()
-    data = graph.add_embeddings(data)
-
-    # Return enriched data
-    return data
-
-
 @inject_object()
 def make_splits(
-    data: pd.DataFrame,
+    nodes: DataFrame,
+    data: DataFrame,
     splitter: _BaseKFold,
 ) -> pd.DataFrame:
     """Function to split data.
 
     Args:
+        nodes: nodes dataframe
         data: Data to split.
         splitter: sklearn splitter object.
 
     Returns:
         Data with split information.
     """
+    data = data.toPandas()
     all_data_frames = []
     for iteration, (train_index, test_index) in enumerate(
         splitter.split(data, data["y"])

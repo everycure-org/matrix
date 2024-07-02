@@ -43,14 +43,37 @@ def create_nodes(df: DataFrame) -> DataFrame:
         df: Nodes dataframe
     """
     return (
-        df.withColumn("label", F.split(F.col("category"), ":", limit=2).getItem(1))
+        df.select("id", "category", "name", "description")
+        .withColumn("label", F.split(F.col("category"), ":", limit=2).getItem(1))
         .withColumn(
             "properties",
-            F.create_map(F.lit("name"), F.col("name")),
+            F.create_map(
+                F.lit("name"), F.col("name"), F.lit("description"), F.col("description")
+            ),
         )
         .withColumn("property_keys", F.map_keys(F.col("properties")))
         .withColumn("property_values", F.map_values(F.col("properties")))
     )
+
+
+@has_schema(
+    schema={
+        "subject": "string",
+        "predicate": "string",
+        "object": "string",
+    },
+    allow_subset=True,
+)
+def create_edges(nodes: DataFrame, edges: DataFrame):
+    """Function to create Neo4J edges.
+
+    Args:
+        nodes: nodes dataframe
+        edges: edges dataframe
+    """
+    return edges.select(
+        "subject", "predicate", "object", "knowledge_source"
+    ).withColumn("label", F.split(F.col("predicate"), ":", limit=2).getItem(1))
 
 
 @has_schema(

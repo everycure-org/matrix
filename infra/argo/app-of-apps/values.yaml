@@ -1,0 +1,7 @@
+spec:
+  destination:
+    server: https://kubernetes.default.svc
+  source:
+    repoURL: https://github.com/everycure-org/matrix.git
+    targetRevision: HEAD
+    repoPath: infra/argo/applications/

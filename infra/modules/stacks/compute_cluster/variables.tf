@@ -24,6 +24,7 @@ variable "zones" {
   default = [
     "us-central1-a",
     "us-central1-b",
+    "us-central1-c",
     "us-central1-f"
   ]
 }
@@ -36,5 +37,11 @@ variable "gitops_repo_url" {
   type = string
 }
 variable "gitops_repo_creds" {
-  type = string
+  type      = string
+  sensitive = true
+}
+
+variable "k8s_secrets" {
+  type      = map(string)
+  sensitive = true
 }
