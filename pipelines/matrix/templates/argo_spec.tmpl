@@ -31,9 +31,8 @@ spec:
       #       secretKeyRef:
       #         name: aws-secrets
       #         key: secret_access_key
-      command: [kedro]{% raw %}
-      args: ["run", "-p", "{{ pipeline }}", "-n",  "{{inputs.parameters.kedro_node}}"]
-      {% endraw %}
+      command: [kedro]
+      args: ["run", "-p", "{{ pipeline }}", "-n", {% raw %} "{{inputs.parameters.kedro_node}}" {% endraw %}]
   - name: dag
     dag:
       tasks:
