@@ -16,7 +16,7 @@ spec:
       - name: kedro_node
     container:
       imagePullPolicy: Always
-      image: test
+      image: us-central1-docker.pkg.dev/mtrx-hub-dev-3of/matrix-images/matrix:latest
       # TODO Add secrets here
       # env:
       #   - name: AWS_ACCESS_KEY_ID
