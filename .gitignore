@@ -18,3 +18,5 @@ neo4j_db/
 # terraform
 **/.terraform/
 **/.terragrunt-cache/
+
+infra/argo/applications/**/charts

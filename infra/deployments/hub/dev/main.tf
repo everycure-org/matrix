@@ -14,6 +14,7 @@ module "compute_cluster" {
   environment       = "dev"
   gitops_repo_url   = var.gitops_repo_url
   gitops_repo_creds = var.gitops_repo_creds
+  k8s_secrets = var.k8s_secrets
 }
 
 module "matrix" {
