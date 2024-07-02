@@ -43,7 +43,7 @@ jobs:
 
   plan:
     runs-on: ubuntu-latest
-    name: Plan and Apply Terraform
+    name: Plan Terraform
     needs: [ checks ]
     permissions:
       contents: 'read'
