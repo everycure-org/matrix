@@ -3,6 +3,5 @@ spec:
     server: https://kubernetes.default.svc
   source:
     repoURL: https://github.com/everycure-org/matrix.git
-    # TODO move to main before merging
-    targetRevision: feat/neo4j-infra
+    targetRevision: HEAD
     repoPath: infra/argo/applications/
