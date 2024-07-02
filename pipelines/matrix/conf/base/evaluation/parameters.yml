@@ -1,4 +1,4 @@
-# Base options (ground truth classification)
+# Threshold-based classification metrics for ground truth data
 evaluation.simple_ground_truth_classification:
   evaluation_options:
     generator:
@@ -10,16 +10,18 @@ evaluation.simple_ground_truth_classification:
         - object: sklearn.metrics.f1_score
       threshold: 0.5
 
+# Threshold-independent metrics for ground truth data
 evaluation.continuous_ground_truth_classification:
   evaluation_options:
     generator:
       object: matrix.datasets.pair_generator.GroundTruthTestPairs
     evaluation:
-      object: matrix.pipelines.evaluation.evaluation.DiscreteMetrics 
+      object: matrix.pipelines.evaluation.evaluation.ContinuousMetrics 
       metrics:
         - object: sklearn.metrics.roc_auc_score
         - object: sklearn.metrics.average_precision_score
 
+# All vs. all ranking with all drugs x test diseases matrix
 evaluation.disease_centric_matrix:
   evaluation_options:
     generator:
@@ -28,11 +30,12 @@ evaluation.disease_centric_matrix:
           - is_drug
           - is_ground_pos
     evaluation:
-      object: matrix.pipelines.evaluation.evaluation.DiscreteMetrics 
+      object: matrix.pipelines.evaluation.evaluation.ContinuousMetrics 
       metrics:
         - object: sklearn.metrics.roc_auc_score
         - object: sklearn.metrics.average_precision_score
 
+# Disease-specific ranking
 evaluation.disease_specific_ranking:
   evaluation_options:
     generator:

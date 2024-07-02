@@ -69,7 +69,6 @@ class ContinuousMetrics(Evaluation):
             metrics: List of metrics for binary class predictions
         """
         self._metrics = metrics
-        self._threshold = threshold
 
     def evaluate(
         self,
