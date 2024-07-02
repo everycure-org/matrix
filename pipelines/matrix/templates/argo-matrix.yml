@@ -1,0 +1,80 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Workflow
+metadata:
+  generateName: matrix-
+spec:
+  entrypoint: dag
+  templates:
+  - name: kedro
+    metadata:
+      labels:
+        app: kedro-argo
+    retryStrategy:
+      limit: 1
+    inputs:
+      parameters:
+      - name: kedro_node
+    container:
+      imagePullPolicy: Always
+      image: test
+      # TODO Add secrets here
+      # env:
+      #   - name: AWS_ACCESS_KEY_ID
+      #     valueFrom:
+      #       secretKeyRef:
+      #               #         name: aws-secrets
+      #         key: access_key_id
+      #   - name: AWS_SECRET_ACCESS_KEY
+      #     valueFrom:
+      #       secretKeyRef:
+      #         name: aws-secrets
+      #         key: secret_access_key
+      command: [kedro]
+      args: ["run", "-n",  "{{inputs.parameters.kedro_node}}"]
+  - name: dag
+    dag:
+      tasks:
+      - name: write-rtx-kg2-nodes
+        template: kedro
+        arguments:
+          parameters:
+          - name: kedro_node
+            value: write_rtx_kg2_nodes
+      - name: write-rtx-kg2-edges
+        template: kedro
+        arguments:
+          parameters:
+          - name: kedro_node
+            value: write_rtx_kg2_edges
+      - name: create-neo4j-nodes
+        template: kedro
+        dependencies:
+          - write-rtx-kg2-nodes
+        arguments:
+          parameters:
+          - name: kedro_node
+            value: create_neo4j_nodes
+      - name: create-neo4j-edges
+        template: kedro
+        dependencies:
+          - create-neo4j-nodes
+          - write-rtx-kg2-edges
+        arguments:
+          parameters:
+          - name: kedro_node
+            value: create_neo4j_edges
+      - name: create-int-known-pairs
+        template: kedro
+        arguments:
+          parameters:
+          - name: kedro_node
+            value: create_int_known_pairs
+      - name: create-neo4j-known-pairs
+        template: kedro
+        dependencies:
+          - create-neo4j-nodes
+          - create-int-known-pairs
+        arguments:
+          parameters:
+          - name: kedro_node
+            value: create_neo4j_known_pairs
