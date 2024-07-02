@@ -63,7 +63,7 @@ resource "kubernetes_manifest" "app_of_apps" {
     force_conflicts = true
   }
   manifest = yamldecode(
-<<YAML
+    <<YAML
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
@@ -85,5 +85,5 @@ spec:
       prune: true
       allowEmpty: true
 YAML
-)
+  )
 }
