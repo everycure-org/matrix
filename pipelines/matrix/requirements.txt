@@ -351,7 +351,7 @@ oauthlib==3.2.2
     # via requests-oauthlib
 omegaconf==2.3.0
     # via kedro
-orjson==3.10.5
+orjson==3.10.6
     # via
     #   fastapi
     #   kedro-viz
