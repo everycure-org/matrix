@@ -103,7 +103,7 @@ integration.model_input.ground_truth:
   <<: *_neo4j_ds
   save_args:
     query: > 
-      MATCH (source:Drug {id: event.source_id}), (target:Disease {id: event.target_id})
+      MATCH (source:Entity {id: event.source_id}), (target:Entity {id: event.target_id})
       WITH source, target, event
       CALL
         apoc.do.when(
