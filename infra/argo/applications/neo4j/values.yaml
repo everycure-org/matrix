@@ -7,11 +7,8 @@ neo4j: # the name of the helm dependency
     edition: "community"
     passwordFromSecret: neo4j-password
     name: neo4j
-    requests:
-      cpu: "2000m"
-      memory: "2Gi"
-    limits:
-      cpu: "4000m"
+    resources:
+      cpu: "4"
       memory: "6Gi"
   volumes:
     data:
