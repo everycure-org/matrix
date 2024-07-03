@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: matrix-parameters
+  namespace: argo-workflows
+  labels:
+    workflows.argoproj.io/configmap-type: Parameter
+data:
+  GCP_PROJECT: mtrx-hub-dev-3of
+  GCP_BUCKET: gs://mtrx-us-central1-hub-dev-storage
