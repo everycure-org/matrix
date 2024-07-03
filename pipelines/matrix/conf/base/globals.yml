@@ -1,6 +1,4 @@
 random_state: 111
-# Column name for main probability score
-score_col_name: "treat score"
 
 versions:
   release: 20240620
