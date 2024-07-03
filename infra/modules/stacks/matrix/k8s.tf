@@ -1,0 +1,15 @@
+resource "kubernetes_config_map" "example" {
+  metadata {
+    name      = "matrix-config"
+    namespace = "argo-workflows"
+    labels = {
+      "workflows.argoproj.io/configmap-type" = "Parameter"
+    }
+  }
+
+  data = {
+    GCP_PROJECT = var.project_id
+    GCP_BUCKET  = var.bucket_name
+  }
+}
+
