@@ -8,7 +8,7 @@ resource "kubernetes_config_map" "parameters" {
   }
 
   data = {
-    GCP_PROJECT = var.project_id
-    GCP_BUCKET  = var.bucket_name
+    GCP_PROJECT_ID = var.project_id
+    GCP_BUCKET     = var.bucket_name
   }
 }
