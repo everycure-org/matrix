@@ -43,23 +43,6 @@ class KnowledgeGraph:
         select_nodes = self._nodes[is_all_flags]
         return list(select_nodes["id"])
 
-    def add_embeddings(self, data: pd.DataFrame) -> pd.DataFrame:
-        """Adds embeddings to drug disease dataset.
-
-        Args:
-            data: Pairs dataset.
-
-        Returns:
-            Pairs dataset with additional columns containing the embeddings.
-        """
-        data["source_embedding"] = data.apply(
-            lambda row: self._embeddings[row.source], axis=1
-        )
-        data["target_embedding"] = data.apply(
-            lambda row: self._embeddings[row.target], axis=1
-        )
-        return data
-
 
 class KnowledgeGraphDataset(ParquetDataset):
     """Dataset adaptor to read KnowledgeGraph using Kedro's dataset functionality."""

@@ -59,7 +59,7 @@ def make_test_predictions(
 ) -> pd.DataFrame:
     """Generated probability scores for drug-disease dataset.
 
-    TODO: Split dataset -> parallelise for large datasets
+    TODO: Parallelise for large datasets
 
     Args:
         graph: Knowledge graph.
@@ -73,7 +73,12 @@ def make_test_predictions(
         Pairs dataset with additional column containing the probability scores.
     """
     # Collect embedding vectors
-    data = graph.add_embeddings(data)
+    data["source_embedding"] = data.apply(
+        lambda row: graph._embeddings[row.source], axis=1
+    )
+    data["target_embedding"] = data.apply(
+        lambda row: graph._embeddings[row.target], axis=1
+    )
 
     # Apply transformers to data
     transformed = apply_transformers(data, transformers)
