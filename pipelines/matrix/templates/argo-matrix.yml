@@ -1,6 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Workflow
 metadata:
+  namespace: argo-workflows
   name: integration
 spec:
   entrypoint: dag
@@ -17,21 +18,36 @@ spec:
       image: us-central1-docker.pkg.dev/mtrx-hub-dev-3of/matrix-images/matrix:latest
       env:
         - name: NEO4J_HOST
-          value: bolt://127.0.0.1:7687
+          value: bolt://neo4j.neo4j.svc.cluster.local:7687
         - name: NEO4J_USER
-          value: neo4j
+          valueFrom:
+            secretKeyRef:
+              name: matrix-secrets
+              key: NEO4J_USER
         - name: NEO4J_PASSWORD
-          value: admin
+          valueFrom:
+            secretKeyRef:
+              name: matrix-secrets
+              key: NEO4J_PASSWORD
         - name: OPENAI_ENDPOINT
           value: http://mock-genai:1080/v1
         - name: OPENAI_API_KEY
           value: dummy
         - name: GCP_PROJECT
-          value: mtrx-hub-dev-3of
+          valueFrom:
+            configMapKeyRef:
+              name: matrix-parameters
+              key: GCP_PROJECT
         - name: GCP_PROJECT_ID
-          value: mtrx-hub-dev-3of
+          valueFrom:
+            configMapKeyRef:
+              name: matrix-parameters
+              key: GCP_PROJECT
         - name: GCP_BUCKET
-          value: gs://mtrx-us-central1-hub-dev-storage
+          valueFrom:
+            configMapKeyRef:
+              name: matrix-parameters
+              key: GCP_BUCKET
         - name: VERTEX_AI_ACCESS_TOKEN
           value: dummy
       # env:
