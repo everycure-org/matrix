@@ -37,7 +37,7 @@ spec:
           valueFrom:
             configMapKeyRef:
               name: matrix-config
-              key: GCP_PROJECT
+              key: GCP_PROJECT_ID
         - name: GCP_BUCKET
           valueFrom:
             configMapKeyRef:
