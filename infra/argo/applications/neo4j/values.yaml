@@ -25,8 +25,10 @@ neo4j: # the name of the helm dependency
   # https://neo4j.com/docs/operations-manual/current/kubernetes/plugins/
   env:
     NEO4J_PLUGINS: '["apoc", "graph-data-science", "apoc-extended"]'
-    NEO4J_initial_dbms_default__database: everycure
   config:
+    # NOTE: This block supports all the configuration options from the config file
+    # https://neo4j.com/docs/operations-manual/current/kubernetes/configuration/#_config
+    # https://neo4j.com/docs/operations-manual/current/configuration/configuration-settings/
     dbms.security.procedures.unrestricted: "gds.*, apoc.*"
     dbms.security.procedures.whitelist: "gds.*, apoc.*"
-    dbms.initial.dbms.default.database: everycure
+    initial.dbms.default_database: everycure
