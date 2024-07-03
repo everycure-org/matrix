@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Workflow
 metadata:
-  name: matrix
+  name: integration
 spec:
   entrypoint: dag
   templates:
@@ -9,8 +9,6 @@ spec:
     metadata:
       labels:
         app: kedro-argo
-    retryStrategy:
-      limit: 1
     inputs:
       parameters:
       - name: kedro_node
@@ -29,6 +27,8 @@ spec:
         - name: OPENAI_API_KEY
           value: dummy
         - name: GCP_PROJECT
+          value: mtrx-hub-dev-3of
+        - name: GCP_PROJECT_ID
           value: mtrx-hub-dev-3of
         - name: GCP_BUCKET
           value: gs://mtrx-us-central1-hub-dev-storage
@@ -73,8 +73,8 @@ spec:
       - name: create-neo4j-edges
         template: kedro
         dependencies:
-          - create-neo4j-nodes
           - write-rtx-kg2-edges
+          - create-neo4j-nodes
         arguments:
           parameters:
           - name: kedro_node
@@ -88,8 +88,8 @@ spec:
       - name: create-neo4j-known-pairs
         template: kedro
         dependencies:
-          - create-neo4j-nodes
           - create-int-known-pairs
+          - create-neo4j-nodes
         arguments:
           parameters:
           - name: kedro_node

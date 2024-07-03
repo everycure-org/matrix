@@ -11,8 +11,6 @@ spec:
       labels:
         {# Add label to have an ability to remove Kedro Pods easily #}
         app: kedro-argo
-    retryStrategy:
-      limit: 1
     inputs:
       parameters:
       - name: kedro_node
@@ -31,6 +29,8 @@ spec:
         - name: OPENAI_API_KEY
           value: dummy
         - name: GCP_PROJECT
+          value: mtrx-hub-dev-3of
+        - name: GCP_PROJECT_ID
           value: mtrx-hub-dev-3of
         - name: GCP_BUCKET
           value: gs://mtrx-us-central1-hub-dev-storage
