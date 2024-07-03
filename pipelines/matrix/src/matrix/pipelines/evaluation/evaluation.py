@@ -6,8 +6,6 @@ import json
 import bisect
 from typing import Dict, List
 
-from refit.v1.core.inject import inject_object
-
 
 class Evaluation(abc.ABC):
     """An abstract class representing evaluation methods for labelled test data."""
@@ -24,10 +22,7 @@ class Evaluation(abc.ABC):
 class DiscreteMetrics(Evaluation):
     """A class representing metrics evaluating discrete binary class prediction."""
 
-    @inject_object()
-    def __init__(
-        self, metrics: List[callable], score_col_name: str, threshold: float = 0.5
-    ):
+    def __init__(self, metrics: dict, score_col_name: str, threshold: float = 0.5):
         """Initializes the DiscreteMetrics instance.
 
         Args:
@@ -63,7 +58,6 @@ class DiscreteMetrics(Evaluation):
 class ContinuousMetrics(Evaluation):
     """A class representing metrics evaluating continuous binary class probability scores."""
 
-    @inject_object()
     def __init__(self, metrics: List[callable], score_col_name: str):
         """Initializes the ContinuousMetrics instance.
 
@@ -106,7 +100,6 @@ class SpecificRanking(Evaluation):
     TODO: unit test
     """
 
-    @inject_object()
     def __init__(
         self, rank_func_lst: List[callable], specific_col: str, score_col_name: str
     ) -> None:
