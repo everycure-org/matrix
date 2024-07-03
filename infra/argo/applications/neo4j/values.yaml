@@ -20,9 +20,13 @@ neo4j: # the name of the helm dependency
         # * standard provisions HDD disks
         storageClassName: premium-rwo
         # storageClassName: hyperdisk-balanced
-      config:
-        dbms.default_database: everycure
 
   # FUTURE add env variables here to enable plugins for neo4j
   # https://neo4j.com/docs/operations-manual/current/kubernetes/plugins/
   env:
+    NEO4J_PLUGINS: '["apoc", "graph-data-science", "apoc-extended"]'
+    NEO4J_initial_dbms_default__database: everycure
+  config:
+    dbms.security.procedures.unrestricted: "gds.*, apoc.*"
+    dbms.security.procedures.whitelist: "gds.*, apoc.*"
+    dbms.initial.dbms.default.database: everycure
