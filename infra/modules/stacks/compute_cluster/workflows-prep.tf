@@ -1,4 +1,4 @@
-resource "kubernetes_config_map" "example" {
+resource "kubernetes_config_map" "parameters" {
   metadata {
     name      = "matrix-config"
     namespace = "argo-workflows"
@@ -12,4 +12,3 @@ resource "kubernetes_config_map" "example" {
     GCP_BUCKET  = var.bucket_name
   }
 }
-
