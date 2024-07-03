@@ -19,35 +19,38 @@ spec:
       image: {{ image }}
       env:
         - name: NEO4J_HOST
-          value: bolt://127.0.0.1:7687
+          value: bolt://neo4j.neo4j.svc.cluster.local:7687
         - name: NEO4J_USER
-          value: neo4j
+          valueFrom:
+            secretKeyRef:
+              name: matrix-secrets
+              key: NEO4J_USER
         - name: NEO4J_PASSWORD
-          value: admin
+          valueFrom:
+            secretKeyRef:
+              name: matrix-secrets
+              key: NEO4J_PASSWORD
         - name: OPENAI_ENDPOINT
           value: http://mock-genai:1080/v1
         - name: OPENAI_API_KEY
           value: dummy
         - name: GCP_PROJECT
-          value: mtrx-hub-dev-3of
+          valueFrom:
+            configMapKeyRef:
+              name: matrix-parameters
+              key: GCP_PROJECT
         - name: GCP_PROJECT_ID
-          value: mtrx-hub-dev-3of
+          valueFrom:
+            configMapKeyRef:
+              name: matrix-parameters
+              key: GCP_PROJECT
         - name: GCP_BUCKET
-          value: gs://mtrx-us-central1-hub-dev-storage
+          valueFrom:
+            configMapKeyRef:
+              name: matrix-parameters
+              key: GCP_BUCKET
         - name: VERTEX_AI_ACCESS_TOKEN
           value: dummy
-      # env:
-      #   - name: AWS_ACCESS_KEY_ID
-      #     valueFrom:
-      #       secretKeyRef:
-      #         {# Secrets name #}
-      #         name: aws-secrets
-      #         key: access_key_id
-      #   - name: AWS_SECRET_ACCESS_KEY
-      #     valueFrom:
-      #       secretKeyRef:
-      #         name: aws-secrets
-      #         key: secret_access_key
       command: [kedro]
       args: ["run", "-p", "{{ pipeline }}", "-e", "{{ env }}", "-n", {% raw %}"{{inputs.parameters.kedro_node}}" {% endraw %}]
   - name: dag
