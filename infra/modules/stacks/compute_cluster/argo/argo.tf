@@ -8,33 +8,33 @@ terraform {
   }
 }
 
-resource "kubectl_manifest" "argo_ns" {
-  yaml_body = <<YAML
-apiVersion: v1
-kind: Namespace
-metadata:
-  name:  ${var.namespace}
-  YAML
+resource "kubernetes_namespace" "argo_ns" {
+  metadata {
+    name = var.namespace
+  }
 }
 
-resource "kubectl_manifest" "argo_creds" {
-  yaml_body = <<YAML
-apiVersion: v1
-kind: Secret
-metadata:
-  name: basic-auth
-  namespace: ${var.namespace}
-  labels:
-    "argocd.argoproj.io/secret-type" : "repository"
-data:
-   type: ${base64encode("git")}
-   url: ${base64encode(var.repo_url)}
-   password: ${base64encode(var.repo_creds)}
-type: Opaque
-  YAML
+resource "kubernetes_secret" "argo_secret" {
+  depends_on = [kubernetes_namespace.argo_ns]
+  metadata {
+    name      = "basic-auth"
+    namespace = var.namespace
+    labels = {
+      "argocd.argoproj.io/secret-type" : "repository"
+    }
+  }
+  data = {
+    # type= base64encode("git")
+    # url= base64encode(var.repo_url)
+    # password= base64encode(var.repo_creds)
+    type     = "git"
+    url      = var.repo_url
+    password = var.repo_creds
+  }
+  type = "Opaque"
 }
-
 resource "helm_release" "argo" {
+  depends_on = [kubernetes_namespace.argo_ns, kubernetes_secret.argo_secret]
   name       = "argo"
   repository = "https://argoproj.github.io/argo-helm"
   chart      = "argo-cd"
@@ -58,10 +58,6 @@ resource "helm_release" "argo" {
 
 resource "kubernetes_manifest" "app_of_apps" {
   depends_on = [helm_release.argo]
-  # TODO try and remove 
-  field_manager {
-    force_conflicts = true
-  }
   manifest = yamldecode(
     <<YAML
 apiVersion: argoproj.io/v1alpha1
