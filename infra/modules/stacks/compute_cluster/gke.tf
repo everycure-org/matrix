@@ -17,7 +17,7 @@ module "gke" {
   subnetwork                 = var.subnetwork
   ip_range_pods              = var.pod_ip_range
   ip_range_services          = var.svc_ip_range
-  http_load_balancing        = false
+  http_load_balancing        = true
   network_policy             = false
   master_ipv4_cidr_block     = "172.16.0.0/28"
   horizontal_pod_autoscaling = true
