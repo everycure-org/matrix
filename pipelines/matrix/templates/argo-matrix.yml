@@ -2,7 +2,7 @@ apiVersion: argoproj.io/v1alpha1
 kind: Workflow
 metadata:
   namespace: argo-workflows
-  name: integration
+  name: integration-2
 spec:
   entrypoint: dag
   templates:
@@ -36,17 +36,17 @@ spec:
         - name: GCP_PROJECT
           valueFrom:
             configMapKeyRef:
-              name: matrix-parameters
+              name: matrix-config
               key: GCP_PROJECT
         - name: GCP_PROJECT_ID
           valueFrom:
             configMapKeyRef:
-              name: matrix-parameters
+              name: matrix-config
               key: GCP_PROJECT
         - name: GCP_BUCKET
           valueFrom:
             configMapKeyRef:
-              name: matrix-parameters
+              name: matrix-config
               key: GCP_BUCKET
         - name: VERTEX_AI_ACCESS_TOKEN
           value: dummy
