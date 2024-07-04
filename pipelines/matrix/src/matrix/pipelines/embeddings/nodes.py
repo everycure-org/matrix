@@ -105,7 +105,8 @@ def add_topological_embeddings(
     # Validate whether the GDS graph exists
     graph_name = projection.get("graphName")
     if gds.graph.exists(graph_name).exists:
-        gds.graph.drop(graph_name, False)
+        G = gds.graph.get(graph_name)
+        gds.graph.drop(G, False)
 
     config = projection.pop("config")
     graph, _ = gds.graph.project(*projection.values(), **config)
