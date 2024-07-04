@@ -94,7 +94,7 @@ def add_topological_embeddings(
     Function leverages the gds library to ochestrate topological embedding computation
     on the nodes of the KG.
 
-    NOTE: The df and adgres input are only added to ensure correct lineage
+    NOTE: The df and edges input are only added to ensure correct lineage
 
     Args:
         df: nodes df
