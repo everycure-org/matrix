@@ -17,6 +17,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 ],
                 outputs="embeddings.prm.graph.embeddings",
                 name="add_node_embeddings",
+                tags=["argo:retries=3"],
             ),
             node(
                 func=nodes.reduce_dimension,
