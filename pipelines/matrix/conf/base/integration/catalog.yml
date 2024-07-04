@@ -98,6 +98,9 @@ integration.model_input.edges:
       WITH subject, object, event
       CALL apoc.create.relationship(subject, event.label, {knowledge_source: event.knowledge_source}, object) YIELD rel
       RETURN rel
+  load_args:
+    query: >  
+      MATCH (subject)-[predicate]->(object) RETURN predicate
 
 integration.model_input.ground_truth:
   <<: *_neo4j_ds

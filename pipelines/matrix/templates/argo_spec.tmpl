@@ -43,9 +43,12 @@ spec:
               name: matrix-secrets
               key: NEO4J_PASSWORD
         - name: OPENAI_ENDPOINT
-          value: http://mock-genai:1080/v1
+          value: https://api.openai.com/v1
         - name: OPENAI_API_KEY
-          value: dummy
+          valueFrom:
+            secretKeyRef:
+              name: matrix-secrets
+              key: OPENAI_API_KEY
         - name: GCP_PROJECT_ID
           valueFrom:
             configMapKeyRef:

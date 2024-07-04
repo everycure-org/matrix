@@ -36,20 +36,22 @@ class GraphDS(GraphDataScience):
         self.set_database(database)
 
 
-def concat_features(df: DataFrame, features: List[str], ai_config: Dict[str, str]):
+def concat_features(nodes: DataFrame, features: List[str], ai_config: Dict[str, str]):
     """Function setup features for node embeddings.
 
     Args:
-        df: nodes dataframe
+        nodes: nodes dataframe
         features: features to use for node embeddings.
         ai_config: vertex confoiguration to use
     Returns:
         Input features for node computation
     """
     for key, value in ai_config.items():
-        df = df.withColumn(key, F.lit(value))
+        nodes = nodes.withColumn(key, F.lit(value))
 
-    return df.withColumn("input", F.concat(*[F.col(feature) for feature in features]))
+    return nodes.withColumn(
+        "input", F.concat(*[F.col(feature) for feature in features])
+    )
 
 
 @inject_object()
