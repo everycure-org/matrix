@@ -38,12 +38,12 @@ spec:
         - name: GCP_PROJECT_ID
           valueFrom:
             configMapKeyRef:
-              name: matrix-parameters
-              key: GCP_PROJECT
+              name: matrix-config
+              key: GCP_PROJECT_ID
         - name: GCP_BUCKET
           valueFrom:
             configMapKeyRef:
-              name: matrix-parameters
+              name: matrix-config
               key: GCP_BUCKET
         - name: VERTEX_AI_ACCESS_TOKEN
           value: dummy
