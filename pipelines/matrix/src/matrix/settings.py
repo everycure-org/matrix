@@ -10,10 +10,10 @@ from typing import Dict
 # Instantiated project hooks.
 # For example, after creating a hooks.py and defining a ProjectHooks class there, do
 # from pandas_viz.hooks import ProjectHooks
-from matrix.hooks import SparkHooks
+from matrix.hooks import *
 
 # Hooks are executed in a Last-In-First-Out (LIFO) order.
-HOOKS = (SparkHooks(),)
+HOOKS = (SparkHooks(), NodeTimerHooks())
 
 # Installed plugins for which to disable hook auto-registration.
 # DISABLE_HOOKS_FOR_PLUGINS = ("kedro-viz",)
