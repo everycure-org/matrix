@@ -1,3 +1,4 @@
+"""Module with utilities to generate Argo workflow."""
 import re
 from pathlib import Path
 
@@ -14,8 +15,15 @@ SEARCH_PATH = Path("templates")
 @click.command()
 @click.argument("image", required=True)
 @click.option("-p", "--pipeline", "pipeline_name", default=None)
-@click.option("--env", "-e", type=str, default=None)
+@click.option("--env", "-e", type=str, default="base")
 def generate_argo_config(image, pipeline_name, env):
+    """Function to render Argo pipeline template.
+
+    Args:
+        image: image to use
+        pipeline_name: name of pipeline to generate
+        env: execution environment
+    """
     loader = FileSystemLoader(searchpath=SEARCH_PATH)
     template_env = Environment(loader=loader, trim_blocks=True, lstrip_blocks=True)
     template = template_env.get_template(TEMPLATE_FILE)
@@ -41,18 +49,37 @@ def generate_argo_config(image, pipeline_name, env):
 
 
 def get_dependencies(dependencies):
+    """Function to yield node dependencies to render Argo template.
+
+    Args:
+        dependencies: pipeline dependencies
+    Return:
+        Dictionary to render Argo template
+    """
     deps_dict = [
         {
             "node": node.name,
             "name": clean_name(node.name),
             "deps": [clean_name(val.name) for val in parent_nodes],
+            **{
+                tag.split("=")[0][len("argo:") :]: tag.split("=")[1]
+                for tag in node.tags()
+                if tag.startswith("argo:")
+            },
         }
         for node, parent_nodes in dependencies.items()
     ]
     return deps_dict
 
 
-def clean_name(name):
+def clean_name(name: str) -> str:
+    """Function to clean the node name.
+
+    Args:
+        name: name of the node
+    Returns:
+        Clean node name, according to Argo's requirements
+    """
     return re.sub(r"[\W_]+", "-", name).strip("-")
 
 

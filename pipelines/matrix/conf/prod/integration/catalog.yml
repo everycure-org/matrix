@@ -153,17 +153,17 @@ _bigquery_ds: &_bigquery_ds
 #             object: pyspark.sql.types.StringType
 #           nullable: False
 
-integration.raw.ground_truth.positives:
-  <<: *_pandas_csv
-  filepath: ${globals:gcs_bucket}/ground_truth_data/tp_pairs.txt
-  load_args:
-    sep: "\t"
+# integration.raw.ground_truth.positives:
+#   <<: *_pandas_csv
+#   filepath: ${globals:gcs_bucket}/ground_truth_data/tp_pairs.txt
+#   load_args:
+#     sep: "\t"
 
-integration.raw.ground_truth.negatives:
-  <<: *_pandas_csv
-  filepath: ${globals:gcs_bucket}/ground_truth_data/tn_pairs.txt
-  load_args:
-    sep: "\t"
+# integration.raw.ground_truth.negatives:
+#   <<: *_pandas_csv
+#   filepath: ${globals:gcs_bucket}/ground_truth_data/tn_pairs.txt
+#   load_args:
+#     sep: "\t"
 
 integration.prm.rtx_kg2.nodes:
   <<: *_bigquery_ds
