@@ -29,6 +29,13 @@ spec:
     container:
       imagePullPolicy: Always
       image: {{ image }}
+      resources: # limit the resources
+        requests:
+          memory: 3Gi
+          cpu: 2
+        limits:
+          memory: 3Gi
+          cpu: 2
       env:
         - name: NEO4J_HOST
           value: bolt://neo4j.neo4j.svc.cluster.local:7687
