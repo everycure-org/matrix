@@ -1,0 +1,62 @@
+# Name of column representing main probability score of the model 
+# Column name for main probability score
+evaluation.score_col_name: &score-col "treat score"
+
+# Threshold-based classification metrics for ground truth data
+evaluation.simple_ground_truth_classification:
+  evaluation_options:
+    generator:
+      object: matrix.datasets.pair_generator.GroundTruthTestPairs
+    evaluation:
+      object: matrix.pipelines.evaluation.evaluation.DiscreteMetrics 
+      metrics:
+        - object: sklearn.metrics.accuracy_score
+        - object: sklearn.metrics.f1_score
+      score_col_name: *score-col
+      threshold: 0.5
+
+# Threshold-independent metrics for ground truth data
+evaluation.continuous_ground_truth_classification:
+  evaluation_options:
+    generator:
+      object: matrix.datasets.pair_generator.GroundTruthTestPairs
+    evaluation:
+      object: matrix.pipelines.evaluation.evaluation.ContinuousMetrics 
+      metrics:
+        - object: sklearn.metrics.roc_auc_score
+        - object: sklearn.metrics.average_precision_score
+      score_col_name: *score-col
+
+# All vs. all ranking with all drugs x test diseases matrix
+evaluation.disease_centric_matrix:
+  evaluation_options:
+    generator:
+      object: matrix.datasets.pair_generator.MatrixTestDiseases
+      drugs_lst_flags:
+          - is_drug
+          - is_ground_pos
+    evaluation:
+      object: matrix.pipelines.evaluation.evaluation.ContinuousMetrics 
+      metrics:
+        - object: sklearn.metrics.roc_auc_score
+        - object: sklearn.metrics.average_precision_score
+      score_col_name: *score-col
+
+# Disease-specific ranking
+evaluation.disease_specific_ranking:
+  evaluation_options:
+    generator:
+      object: matrix.datasets.pair_generator.MatrixTestDiseases
+      drugs_lst_flags:
+          - is_drug
+          - is_ground_pos
+    evaluation:
+      object: matrix.pipelines.evaluation.evaluation.SpecificRanking 
+      specific_col: "target"
+      rank_func_lst: 
+        - object: matrix.pipelines.evaluation.evaluation.MRR
+        - object:  matrix.pipelines.evaluation.evaluation.HitK
+          k: 2
+        - object:  matrix.pipelines.evaluation.evaluation.HitK
+          k: 10
+      score_col_name: *score-col
