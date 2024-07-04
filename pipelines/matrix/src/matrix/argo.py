@@ -62,9 +62,9 @@ def get_dependencies(dependencies):
             "name": clean_name(node.name),
             "deps": [clean_name(val.name) for val in parent_nodes],
             **{
-                tag.split("=")[0][len("argo:") :]: tag.split("=")[1]
-                for tag in node.tags()
-                if tag.startswith("argo:")
+                tag.split("-")[0][len("argo.") :]: tag.split("-")[1]
+                for tag in node.tags
+                if tag.startswith("argo.")
             },
         }
         for node, parent_nodes in dependencies.items()
