@@ -9,7 +9,7 @@ spec:
   arguments:
     parameters:
       - name: image
-        value: "us-central1-docker.pkg.dev/mtrx-hub-dev-3of/matrix-images/matrix:latest"
+        value: "{{ image }}"
       - name: neo4j_host
         value: "bolt://neo4j.neo4j.svc.cluster.local:7687"
       - name: openai_endpoint
