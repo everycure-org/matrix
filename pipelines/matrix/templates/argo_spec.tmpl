@@ -34,6 +34,7 @@ spec:
       parameters:
       - name: kedro_node
       - name: num_retries
+      - name: pipeline
     container:
       imagePullPolicy: Always
       image: {% raw %} "{{ `{{workflow.parameters.image}}` }}" 
@@ -80,7 +81,7 @@ spec:
         - name: VERTEX_AI_ACCESS_TOKEN
           value: dummy
       command: [kedro]
-      args: ["run", "-p", "{{ pipeline }}", "-e", "{{ env }}", "-n", {% raw %}"{{ `{{inputs.parameters.kedro_node}}` }}" {% endraw %}]
+      args: ["run", "-p", {% raw %}"{{ `{{inputs.parameters.pipeline}}` }}" {% endraw %}, "-e", "{{ env }}", "-n", {% raw %}"{{ `{{inputs.parameters.kedro_node}}` }}" {% endraw %}]
   
   {% for pipeline, tasks in pipes.items() %}
   - name: {{ pipeline }}
@@ -97,6 +98,8 @@ spec:
         {% endif %}
         arguments:
           parameters:
+          - name: pipeline
+            value: {{ pipeline }}
           - name: kedro_node
             value: {{ task.node }}
           - name: num_retries
