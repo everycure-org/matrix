@@ -3,7 +3,7 @@ name: run-integration-tests
 on:
   push:
     branches:
-      # - main
+      - main
   issue_comment:
     types: [created]
 
@@ -55,9 +55,9 @@ jobs:
       - name: Build docker-compose
         run: docker buildx bake --file docker-compose.yml --file docker-compose.test.yml --file docker-compose-cache.json
 
-      # - name: Start docker-compose
-      #   run: |
-      #     docker-compose -f docker-compose.yml -f docker-compose.test.yml up --abort-on-container-exit --exit-code-from matrix-pipeline
+      - name: Start docker-compose
+        run: |
+          docker-compose -f docker-compose.yml -f docker-compose.test.yml up --abort-on-container-exit --exit-code-from matrix-pipeline
 
       - name: Set latest commit status as ${{ job.status }}
         uses: myrotvorets/set-commit-status-action@master

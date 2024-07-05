@@ -56,9 +56,9 @@ jobs:
           rm -rf TMP_KEY
       - uses: 'google-github-actions/auth@v2'
         with:
-          project_id: ${{env.project_id}}
-          workload_identity_provider: ${{env.workload_identity_provider}}
-          service_account: ${{env.service_account}}
+          project_id: ${{vars.project_id}}
+          workload_identity_provider: ${{vars.workload_identity_provider}}
+          service_account: ${{vars.service_account}}
 
       - name: Plan
         uses: gruntwork-io/terragrunt-action@v2
@@ -90,9 +90,9 @@ jobs:
           rm -rf TMP_KEY
       - uses: 'google-github-actions/auth@v2'
         with:
-          project_id: ${{env.project_id}}
-          workload_identity_provider: ${{env.workload_identity_provider}}
-          service_account: ${{env.service_account}}
+          project_id: ${{vars.project_id}}
+          workload_identity_provider: ${{vars.workload_identity_provider}}
+          service_account: ${{vars.service_account}}
 
       - name: Deploy
         uses: gruntwork-io/terragrunt-action@v2
