@@ -21,9 +21,7 @@ def cli() -> None:
 
 @click.command()
 @click.argument("image", required=True)
-@click.option("-p", "--pipeline", "pipeline_name", default=None)
-@click.option("--env", "-e", type=str, default="base")
-def generate_argo_config(image, pipeline_name, env):
+def generate_argo_config(image):
     """Function to render Argo pipeline template.
 
     Args:
@@ -39,19 +37,11 @@ def generate_argo_config(image, pipeline_name, env):
     metadata = bootstrap_project(project_path)
     package_name = metadata.package_name
 
-    pipeline_name = pipeline_name or "__default__"
-    pipeline = pipelines.get(pipeline_name)
-
     pipes = {}
     for name, pipeline in pipelines.items():
         pipes[name] = get_dependencies(pipeline.node_dependencies)
 
-    output = template.render(
-        image=image,
-        package_name=package_name,
-        pipes=pipes,
-        env=env,
-    )
+    output = template.render(package_name=package_name, pipes=pipes, image=image)
 
     (SEARCH_PATH / RENDERED_FILE).write_text(output)
 
