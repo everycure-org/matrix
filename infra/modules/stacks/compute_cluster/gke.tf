@@ -1,7 +1,7 @@
 data "google_client_config" "default" {
 }
 
-# docs here 4s://registry.terraform.io/modules/terraform-google-modules/kubernetes-engine/google/latest/submodules/private-cluster
+# docs here https://registry.terraform.io/modules/terraform-google-modules/kubernetes-engine/google/latest/submodules/private-cluster
 module "gke" {
   source              = "terraform-google-modules/kubernetes-engine/google//modules/private-cluster"
   version             = "31.0.0"
