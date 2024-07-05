@@ -8,7 +8,7 @@ spec:
   templates:
   - name: kedro
     retryStrategy:
-      limit: "{{inputs.parameters.num_retries}}"
+      limit: "{{ `inputs.parameters.num_retries}}` }}"
     retryPolicy: "Always"
     backoff:
       duration: "1"      # Must be a string. Default unit is seconds. Could also be a Duration, e.g.: "2m", "6h", "1d"
@@ -66,7 +66,7 @@ spec:
         - name: VERTEX_AI_ACCESS_TOKEN
           value: dummy
       command: [kedro]
-      args: ["run", "-p", "test", "-e", "prod", "-n", "{{inputs.parameters.kedro_node}}" ]
+      args: ["run", "-p", "test", "-e", "prod", "-n",  "{{ `inputs.parameters.kedro_node}}` }}" ]
   - name: dag
     dag:
       tasks:
