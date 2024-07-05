@@ -27,19 +27,19 @@ _neo4j_ds: &_neo4j_ds
   
 integration.raw.rtx_kg2.nodes@pandas:
   <<: *_pandas_csv
-  filepath: ${globals:paths.raw}/tmp/rtx_kg2_nodes.csv
+  filepath: ${globals:paths.raw}/rtx_kg2_nodes.csv
   
 integration.raw.rtx_kg2.nodes@spark:
   <<: *_spark_csv
-  filepath: ${globals:paths.raw}/tmp/rtx_kg2_nodes.csv
+  filepath: ${globals:paths.raw}/rtx_kg2_nodes.csv
 
 integration.raw.rtx_kg2.edges@pandas:
   <<: *_pandas_csv
-  filepath: ${globals:paths.raw}/tmp/rtx_kg2_edges.csv
+  filepath: ${globals:paths.raw}/rtx_kg2_edges.csv
 
 integration.raw.rtx_kg2.edges@spark:
   <<: *_spark_csv
-  filepath: ${globals:paths.raw}/tmp/rtx_kg2_edges.csv
+  filepath: ${globals:paths.raw}/rtx_kg2_edges.csv
 
 integration.raw.ground_truth.positives:
   <<: *_pandas_csv
