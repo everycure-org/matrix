@@ -81,7 +81,9 @@ spec:
           value: dummy
       command: [kedro]
       args: ["run", "-p", "{{ pipeline }}", "-e", "{{ env }}", "-n", {% raw %}"{{ `{{inputs.parameters.kedro_node}}` }}" {% endraw %}]
-  - name: dag
+  
+  {% for pipeline, tasks in pipes.items() %}
+  - name: {{ pipeline }}
     dag:
       tasks:
       {% for task in tasks %}
@@ -100,3 +102,4 @@ spec:
           - name: num_retries
             value: {{ task.get('retries', 0) }}
       {% endfor %}
+  {% endfor %}

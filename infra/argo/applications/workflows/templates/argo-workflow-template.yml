@@ -1,0 +1,1303 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  namespace: argo-workflows
+  name: matrix
+spec:
+  entrypoint: dag
+  arguments:
+    parameters:
+      - name: image
+        value: "us-central1-docker.pkg.dev/mtrx-hub-dev-3of/matrix-images/matrix:latest"
+      - name: neo4j_host
+        value: "bolt://neo4j.neo4j.svc.cluster.local:7687"
+      - name: openai_endpoint
+        value: "https://api.openai.com/v1"
+  templates:
+  - name: kedro
+    retryStrategy:
+      limit: "{{ `{{inputs.parameters.num_retries}}` }}"
+    retryPolicy: "Always"
+    backoff:
+      duration: "1"      # Must be a string. Default unit is seconds. Could also be a Duration, e.g.: "2m", "6h", "1d"
+      factor: 2
+      maxDuration: "1m"  # Must be a string. Default unit is seconds. Could also be a Duration, e.g.: "2m", "6h", "1d"
+    affinity:
+      nodeAntiAffinity: {}
+    metadata:
+      labels:
+        app: kedro-argo
+    inputs:
+      parameters:
+      - name: kedro_node
+      - name: num_retries
+    container:
+      imagePullPolicy: Always
+      image:  "{{ `{{workflow.parameters.image}}` }}" 
+      resources: # limit the resources
+        requests:
+          memory: 3Gi
+          cpu: 2
+        limits:
+          memory: 3Gi
+          cpu: 2
+      env:
+        - name: NEO4J_HOST
+          value:  "{{ `{{workflow.parameters.openai_endpoint}}` }}" 
+        - name: NEO4J_USER
+          valueFrom:
+            secretKeyRef:
+              name: matrix-secrets
+              key: NEO4J_USER
+        - name: NEO4J_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: matrix-secrets
+              key: NEO4J_PASSWORD
+        - name: OPENAI_ENDPOINT
+          value:  "{{ `{{workflow.parameters.image}}` }}" 
+        - name: OPENAI_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: matrix-secrets
+              key: OPENAI_API_KEY
+        - name: GCP_PROJECT_ID
+          valueFrom:
+            configMapKeyRef:
+              name: matrix-config
+              key: GCP_PROJECT_ID
+        - name: GCP_BUCKET
+          valueFrom:
+            configMapKeyRef:
+              name: matrix-config
+              key: GCP_BUCKET
+        - name: VERTEX_AI_ACCESS_TOKEN
+          value: dummy
+      command: [kedro]
+      args: ["run", "-p", "", "-e", "prod", "-n", "{{ `{{inputs.parameters.kedro_node}}` }}" ]
+  
+  - name: __default__
+    dag:
+      tasks:
+      - name: tune-model-xgc-0-parameters
+        template: kedro
+        dependencies:
+          - transform-xgc-0-data
+        arguments:
+          parameters:
+          - name: kedro_node
+            value: tune_model_xgc_0_parameters
+          - name: num_retries
+            value: 0
+      - name: enrich-kgml-xdtd-0-splits
+        template: kedro
+        dependencies:
+          - create-feat-nodes
+          - create-splits
+        arguments:
+          parameters:
+          - name: kedro_node
+            value: enrich_kgml_xdtd_0_splits
+          - name: num_retries
+            value: 0
+      - name: transform-xgc-0-data
+        template: kedro
+        dependencies:
+          - fit-xgc-transformers
+          - enrich-xgc-0-splits
+        arguments:
+          parameters:
+          - name: kedro_node
+            value: transform_xgc_0_data
+          - name: num_retries
+            value: 0
+      - name: transform-xgc-data
+        template: kedro
+        dependencies:
+          - fit-xgc-transformers
+          - create-splits
+        arguments:
+          parameters:
+          - name: kedro_node
+            value: transform_xgc_data
+          - name: num_retries
+            value: 0
+      - name: get-kgml-xdtd-model-predictions
+        template: kedro
+        dependencies:
+          - create-kgml-xdtd-model
+          - transform-kgml-xdtd-data
+        arguments:
+          parameters:
+          - name: kedro_node
+            value: get_kgml_xdtd_model_predictions
+          - name: num_retries
+            value: 0
+      - name: train-xgb-0-model
+        template: kedro
+        dependencies:
+          - transform-xgb-0-data
+          - tune-model-xgb-0-parameters
+        arguments:
+          parameters:
+          - name: kedro_node
+            value: train_xgb_0_model
+          - name: num_retries
+            value: 0
+      - name: enrich-xgc-0-splits
+        template: kedro
+        dependencies:
+          - create-feat-nodes
+          - create-splits
+        arguments:
+          parameters:
+          - name: kedro_node
+            value: enrich_xgc_0_splits
+          - name: num_retries
+            value: 0
+      - name: enrich-xgc-2-splits
+        template: kedro
+        dependencies:
+          - create-feat-nodes
+          - create-splits
+        arguments:
+          parameters:
+          - name: kedro_node
+            value: enrich_xgc_2_splits
+          - name: num_retries
+            value: 0
+      - name: tune-model-kgml-xdtd-0-parameters
+        template: kedro
+        dependencies:
+          - transform-kgml-xdtd-0-data
+        arguments:
+          parameters:
+          - name: kedro_node
+            value: tune_model_kgml_xdtd_0_parameters
+          - name: num_retries
+            value: 0
+      - name: transform-kgml-xdtd-0-data
+        template: kedro
+        dependencies:
+          - enrich-kgml-xdtd-0-splits
+          - fit-kgml-xdtd-transformers
+        arguments:
+          parameters:
+          - name: kedro_node
+            value: transform_kgml_xdtd_0_data
+          - name: num_retries
+            value: 0
+      - name: create-xgc-model
+        template: kedro
+        dependencies:
+          - train-xgc-0-model
+          - train-xgc-2-model
+          - train-xgc-1-model
+        arguments:
+          parameters:
+          - name: kedro_node
+            value: create_xgc_model
+          - name: num_retries
+            value: 0
+      - name: transform-xg-balanced-data
+        template: kedro
+        dependencies:
+          - create-splits
+          - fit-xg-balanced-transformers
+        arguments:
+          parameters:
+          - name: kedro_node
+            value: transform_xg_balanced_data
+          - name: num_retries
+            value: 0
+      - name: enrich-xgb-0-splits
+        template: kedro
+        dependencies:
+          - create-feat-nodes
+          - create-splits
+        arguments:
+          parameters:
+          - name: kedro_node
+            value: enrich_xgb_0_splits
+          - name: num_retries
+            value: 0
+      - name: create-kgml-xdtd-model
+        template: kedro
+        dependencies:
+          - train-kgml-xdtd-0-model
+        arguments:
+          parameters:
+          - name: kedro_node
+            value: create_kgml_xdtd_model
+          - name: num_retries
+            value: 0
+      - name: fit-xg-balanced-transformers
+        template: kedro
+        dependencies:
+          - create-splits
+        arguments:
+          parameters:
+          - name: kedro_node
+            value: fit_xg_balanced_transformers
+          - name: num_retries
+            value: 0
+      - name: enrich-xgc-1-splits
+        template: kedro
+        dependencies:
+          - create-feat-nodes
+          - create-splits
+        arguments:
+          parameters:
+          - name: kedro_node
+            value: enrich_xgc_1_splits
+          - name: num_retries
+            value: 0
+      - name: transform-xgc-1-data
+        template: kedro
+        dependencies:
+          - enrich-xgc-1-splits
+          - fit-xgc-transformers
+        arguments:
+          parameters:
+          - name: kedro_node
+            value: transform_xgc_1_data
+          - name: num_retries
+            value: 0
+      - name: fit-xgb-transformers
+        template: kedro
+        dependencies:
+          - create-splits
+        arguments:
+          parameters:
+          - name: kedro_node
+            value: fit_xgb_transformers
+          - name: num_retries
+            value: 0
+      - name: create-splits
+        template: kedro
+        dependencies:
+          - create-feat-nodes
+        arguments:
+          parameters:
+          - name: kedro_node
+            value: create_splits
+          - name: num_retries
+            value: 0
+      - name: train-xgc-2-model
+        template: kedro
+        dependencies:
+          - transform-xgc-2-data
+          - tune-model-xgc-2-parameters
+        arguments:
+          parameters:
+          - name: kedro_node
+            value: train_xgc_2_model
+          - name: num_retries
+            value: 0
+      - name: tune-model-xgb-0-parameters
+        template: kedro
+        dependencies:
+          - transform-xgb-0-data
+        arguments:
+          parameters:
+          - name: kedro_node
+            value: tune_model_xgb_0_parameters
+          - name: num_retries
+            value: 0
+      - name: transform-xgb-data
+        template: kedro
+        dependencies:
+          - create-splits
+          - fit-xgb-transformers
+        arguments:
+          parameters:
+          - name: kedro_node
+            value: transform_xgb_data
+          - name: num_retries
+            value: 0
+      - name: check-xgb-model-performance
+        template: kedro
+        dependencies:
+          - get-xgb-model-predictions
+        arguments:
+          parameters:
+          - name: kedro_node
+            value: check_xgb_model_performance
+          - name: num_retries
+            value: 0
+      - name: enrich-xg-balanced-0-splits
+        template: kedro
+        dependencies:
+          - create-feat-nodes
+          - create-splits
+        arguments:
+          parameters:
+          - name: kedro_node
+            value: enrich_xg_balanced_0_splits
+          - name: num_retries
+            value: 0
+      - name: fit-kgml-xdtd-transformers
+        template: kedro
+        dependencies:
+          - create-splits
+        arguments:
+          parameters:
+          - name: kedro_node
+            value: fit_kgml_xdtd_transformers
+          - name: num_retries
+            value: 0
+      - name: create-feat-nodes
+        template: kedro
+        arguments:
+          parameters:
+          - name: kedro_node
+            value: create_feat_nodes
+          - name: num_retries
+            value: 0
+      - name: train-xgc-0-model
+        template: kedro
+        dependencies:
+          - transform-xgc-0-data
+          - tune-model-xgc-0-parameters
+        arguments:
+          parameters:
+          - name: kedro_node
+            value: train_xgc_0_model
+          - name: num_retries
+            value: 0
+      - name: get-xg-balanced-model-predictions
+        template: kedro
+        dependencies:
+          - transform-xg-balanced-data
+          - create-xg-balanced-model
+        arguments:
+          parameters:
+          - name: kedro_node
+            value: get_xg_balanced_model_predictions
+          - name: num_retries
+            value: 0
+      - name: get-xgc-model-predictions
+        template: kedro
+        dependencies:
+          - create-xgc-model
+          - transform-xgc-data
+        arguments:
+          parameters:
+          - name: kedro_node
+            value: get_xgc_model_predictions
+          - name: num_retries
+            value: 0
+      - name: get-xgb-model-predictions
+        template: kedro
+        dependencies:
+          - create-xgb-model
+          - transform-xgb-data
+        arguments:
+          parameters:
+          - name: kedro_node
+            value: get_xgb_model_predictions
+          - name: num_retries
+            value: 0
+      - name: train-xg-balanced-0-model
+        template: kedro
+        dependencies:
+          - tune-model-xg-balanced-0-parameters
+          - transform-xg-balanced-0-data
+        arguments:
+          parameters:
+          - name: kedro_node
+            value: train_xg_balanced_0_model
+          - name: num_retries
+            value: 0
+      - name: train-xgc-1-model
+        template: kedro
+        dependencies:
+          - tune-model-xgc-1-parameters
+          - transform-xgc-1-data
+        arguments:
+          parameters:
+          - name: kedro_node
+            value: train_xgc_1_model
+          - name: num_retries
+            value: 0
+      - name: create-xg-balanced-model
+        template: kedro
+        dependencies:
+          - train-xg-balanced-0-model
+        arguments:
+          parameters:
+          - name: kedro_node
+            value: create_xg_balanced_model
+          - name: num_retries
+            value: 0
+      - name: check-xgc-model-performance
+        template: kedro
+        dependencies:
+          - get-xgc-model-predictions
+        arguments:
+          parameters:
+          - name: kedro_node
+            value: check_xgc_model_performance
+          - name: num_retries
+            value: 0
+      - name: create-xgb-model
+        template: kedro
+        dependencies:
+          - train-xgb-0-model
+        arguments:
+          parameters:
+          - name: kedro_node
+            value: create_xgb_model
+          - name: num_retries
+            value: 0
+      - name: transform-xgc-2-data
+        template: kedro
+        dependencies:
+          - enrich-xgc-2-splits
+          - fit-xgc-transformers
+        arguments:
+          parameters:
+          - name: kedro_node
+            value: transform_xgc_2_data
+          - name: num_retries
+            value: 0
+      - name: tune-model-xgc-2-parameters
+        template: kedro
+        dependencies:
+          - transform-xgc-2-data
+        arguments:
+          parameters:
+          - name: kedro_node
+            value: tune_model_xgc_2_parameters
+          - name: num_retries
+            value: 0
+      - name: transform-kgml-xdtd-data
+        template: kedro
+        dependencies:
+          - fit-kgml-xdtd-transformers
+          - create-splits
+        arguments:
+          parameters:
+          - name: kedro_node
+            value: transform_kgml_xdtd_data
+          - name: num_retries
+            value: 0
+      - name: transform-xg-balanced-0-data
+        template: kedro
+        dependencies:
+          - enrich-xg-balanced-0-splits
+          - fit-xg-balanced-transformers
+        arguments:
+          parameters:
+          - name: kedro_node
+            value: transform_xg_balanced_0_data
+          - name: num_retries
+            value: 0
+      - name: transform-xgb-0-data
+        template: kedro
+        dependencies:
+          - enrich-xgb-0-splits
+          - fit-xgb-transformers
+        arguments:
+          parameters:
+          - name: kedro_node
+            value: transform_xgb_0_data
+          - name: num_retries
+            value: 0
+      - name: tune-model-xgc-1-parameters
+        template: kedro
+        dependencies:
+          - transform-xgc-1-data
+        arguments:
+          parameters:
+          - name: kedro_node
+            value: tune_model_xgc_1_parameters
+          - name: num_retries
+            value: 0
+      - name: check-xg-balanced-model-performance
+        template: kedro
+        dependencies:
+          - get-xg-balanced-model-predictions
+        arguments:
+          parameters:
+          - name: kedro_node
+            value: check_xg_balanced_model_performance
+          - name: num_retries
+            value: 0
+      - name: tune-model-xg-balanced-0-parameters
+        template: kedro
+        dependencies:
+          - transform-xg-balanced-0-data
+        arguments:
+          parameters:
+          - name: kedro_node
+            value: tune_model_xg_balanced_0_parameters
+          - name: num_retries
+            value: 0
+      - name: check-kgml-xdtd-model-performance
+        template: kedro
+        dependencies:
+          - get-kgml-xdtd-model-predictions
+        arguments:
+          parameters:
+          - name: kedro_node
+            value: check_kgml_xdtd_model_performance
+          - name: num_retries
+            value: 0
+      - name: train-kgml-xdtd-0-model
+        template: kedro
+        dependencies:
+          - tune-model-kgml-xdtd-0-parameters
+          - transform-kgml-xdtd-0-data
+        arguments:
+          parameters:
+          - name: kedro_node
+            value: train_kgml_xdtd_0_model
+          - name: num_retries
+            value: 0
+      - name: fit-xgc-transformers
+        template: kedro
+        dependencies:
+          - create-splits
+        arguments:
+          parameters:
+          - name: kedro_node
+            value: fit_xgc_transformers
+          - name: num_retries
+            value: 0
+  - name: embeddings
+    dag:
+      tasks:
+      - name: add-node-embeddings
+        template: kedro
+        arguments:
+          parameters:
+          - name: kedro_node
+            value: add_node_embeddings
+          - name: num_retries
+            value: 3
+      - name: apply-pca
+        template: kedro
+        dependencies:
+          - add-node-embeddings
+        arguments:
+          parameters:
+          - name: kedro_node
+            value: apply_pca
+          - name: num_retries
+            value: 0
+      - name: add-topological-embeddings
+        template: kedro
+        dependencies:
+          - apply-pca
+        arguments:
+          parameters:
+          - name: kedro_node
+            value: add_topological_embeddings
+          - name: num_retries
+            value: 0
+  - name: fabricator
+    dag:
+      tasks:
+      - name: fabricate-datasets
+        template: kedro
+        arguments:
+          parameters:
+          - name: kedro_node
+            value: fabricate_datasets
+          - name: num_retries
+            value: 0
+      - name: create-tp-pairs
+        template: kedro
+        dependencies:
+          - fabricate-datasets
+        arguments:
+          parameters:
+          - name: kedro_node
+            value: create_tp_pairs
+          - name: num_retries
+            value: 0
+      - name: create-tn-pairs
+        template: kedro
+        dependencies:
+          - fabricate-datasets
+        arguments:
+          parameters:
+          - name: kedro_node
+            value: create_tn_pairs
+          - name: num_retries
+            value: 0
+  - name: integration
+    dag:
+      tasks:
+      - name: write-rtx-kg2-nodes
+        template: kedro
+        arguments:
+          parameters:
+          - name: kedro_node
+            value: write_rtx_kg2_nodes
+          - name: num_retries
+            value: 0
+      - name: write-rtx-kg2-edges
+        template: kedro
+        arguments:
+          parameters:
+          - name: kedro_node
+            value: write_rtx_kg2_edges
+          - name: num_retries
+            value: 0
+      - name: create-neo4j-nodes
+        template: kedro
+        dependencies:
+          - write-rtx-kg2-nodes
+        arguments:
+          parameters:
+          - name: kedro_node
+            value: create_neo4j_nodes
+          - name: num_retries
+            value: 0
+      - name: create-neo4j-edges
+        template: kedro
+        dependencies:
+          - create-neo4j-nodes
+          - write-rtx-kg2-edges
+        arguments:
+          parameters:
+          - name: kedro_node
+            value: create_neo4j_edges
+          - name: num_retries
+            value: 0
+      - name: create-int-known-pairs
+        template: kedro
+        arguments:
+          parameters:
+          - name: kedro_node
+            value: create_int_known_pairs
+          - name: num_retries
+            value: 0
+      - name: create-neo4j-known-pairs
+        template: kedro
+        dependencies:
+          - create-int-known-pairs
+          - create-neo4j-nodes
+        arguments:
+          parameters:
+          - name: kedro_node
+            value: create_neo4j_known_pairs
+          - name: num_retries
+            value: 0
+  - name: test
+    dag:
+      tasks:
+      - name: tune-model-xgc-0-parameters
+        template: kedro
+        dependencies:
+          - transform-xgc-0-data
+        arguments:
+          parameters:
+          - name: kedro_node
+            value: tune_model_xgc_0_parameters
+          - name: num_retries
+            value: 0
+      - name: enrich-kgml-xdtd-0-splits
+        template: kedro
+        dependencies:
+          - create-feat-nodes
+          - create-splits
+        arguments:
+          parameters:
+          - name: kedro_node
+            value: enrich_kgml_xdtd_0_splits
+          - name: num_retries
+            value: 0
+      - name: transform-xgc-0-data
+        template: kedro
+        dependencies:
+          - fit-xgc-transformers
+          - enrich-xgc-0-splits
+        arguments:
+          parameters:
+          - name: kedro_node
+            value: transform_xgc_0_data
+          - name: num_retries
+            value: 0
+      - name: transform-xgc-data
+        template: kedro
+        dependencies:
+          - fit-xgc-transformers
+          - create-splits
+        arguments:
+          parameters:
+          - name: kedro_node
+            value: transform_xgc_data
+          - name: num_retries
+            value: 0
+      - name: get-kgml-xdtd-model-predictions
+        template: kedro
+        dependencies:
+          - create-kgml-xdtd-model
+          - transform-kgml-xdtd-data
+        arguments:
+          parameters:
+          - name: kedro_node
+            value: get_kgml_xdtd_model_predictions
+          - name: num_retries
+            value: 0
+      - name: train-xgb-0-model
+        template: kedro
+        dependencies:
+          - transform-xgb-0-data
+          - tune-model-xgb-0-parameters
+        arguments:
+          parameters:
+          - name: kedro_node
+            value: train_xgb_0_model
+          - name: num_retries
+            value: 0
+      - name: enrich-xgc-0-splits
+        template: kedro
+        dependencies:
+          - create-feat-nodes
+          - create-splits
+        arguments:
+          parameters:
+          - name: kedro_node
+            value: enrich_xgc_0_splits
+          - name: num_retries
+            value: 0
+      - name: create-tp-pairs
+        template: kedro
+        dependencies:
+          - fabricate-datasets
+        arguments:
+          parameters:
+          - name: kedro_node
+            value: create_tp_pairs
+          - name: num_retries
+            value: 0
+      - name: enrich-xgc-2-splits
+        template: kedro
+        dependencies:
+          - create-feat-nodes
+          - create-splits
+        arguments:
+          parameters:
+          - name: kedro_node
+            value: enrich_xgc_2_splits
+          - name: num_retries
+            value: 0
+      - name: apply-pca
+        template: kedro
+        dependencies:
+          - add-node-embeddings
+        arguments:
+          parameters:
+          - name: kedro_node
+            value: apply_pca
+          - name: num_retries
+            value: 0
+      - name: tune-model-kgml-xdtd-0-parameters
+        template: kedro
+        dependencies:
+          - transform-kgml-xdtd-0-data
+        arguments:
+          parameters:
+          - name: kedro_node
+            value: tune_model_kgml_xdtd_0_parameters
+          - name: num_retries
+            value: 0
+      - name: transform-kgml-xdtd-0-data
+        template: kedro
+        dependencies:
+          - enrich-kgml-xdtd-0-splits
+          - fit-kgml-xdtd-transformers
+        arguments:
+          parameters:
+          - name: kedro_node
+            value: transform_kgml_xdtd_0_data
+          - name: num_retries
+            value: 0
+      - name: create-xgc-model
+        template: kedro
+        dependencies:
+          - train-xgc-0-model
+          - train-xgc-2-model
+          - train-xgc-1-model
+        arguments:
+          parameters:
+          - name: kedro_node
+            value: create_xgc_model
+          - name: num_retries
+            value: 0
+      - name: transform-xg-balanced-data
+        template: kedro
+        dependencies:
+          - create-splits
+          - fit-xg-balanced-transformers
+        arguments:
+          parameters:
+          - name: kedro_node
+            value: transform_xg_balanced_data
+          - name: num_retries
+            value: 0
+      - name: enrich-xgb-0-splits
+        template: kedro
+        dependencies:
+          - create-feat-nodes
+          - create-splits
+        arguments:
+          parameters:
+          - name: kedro_node
+            value: enrich_xgb_0_splits
+          - name: num_retries
+            value: 0
+      - name: create-kgml-xdtd-model
+        template: kedro
+        dependencies:
+          - train-kgml-xdtd-0-model
+        arguments:
+          parameters:
+          - name: kedro_node
+            value: create_kgml_xdtd_model
+          - name: num_retries
+            value: 0
+      - name: fit-xg-balanced-transformers
+        template: kedro
+        dependencies:
+          - create-splits
+        arguments:
+          parameters:
+          - name: kedro_node
+            value: fit_xg_balanced_transformers
+          - name: num_retries
+            value: 0
+      - name: enrich-xgc-1-splits
+        template: kedro
+        dependencies:
+          - create-feat-nodes
+          - create-splits
+        arguments:
+          parameters:
+          - name: kedro_node
+            value: enrich_xgc_1_splits
+          - name: num_retries
+            value: 0
+      - name: transform-xgc-1-data
+        template: kedro
+        dependencies:
+          - enrich-xgc-1-splits
+          - fit-xgc-transformers
+        arguments:
+          parameters:
+          - name: kedro_node
+            value: transform_xgc_1_data
+          - name: num_retries
+            value: 0
+      - name: fit-xgb-transformers
+        template: kedro
+        dependencies:
+          - create-splits
+        arguments:
+          parameters:
+          - name: kedro_node
+            value: fit_xgb_transformers
+          - name: num_retries
+            value: 0
+      - name: create-splits
+        template: kedro
+        dependencies:
+          - create-feat-nodes
+          - create-neo4j-known-pairs
+        arguments:
+          parameters:
+          - name: kedro_node
+            value: create_splits
+          - name: num_retries
+            value: 0
+      - name: add-topological-embeddings
+        template: kedro
+        dependencies:
+          - create-neo4j-edges
+          - apply-pca
+        arguments:
+          parameters:
+          - name: kedro_node
+            value: add_topological_embeddings
+          - name: num_retries
+            value: 0
+      - name: create-tn-pairs
+        template: kedro
+        dependencies:
+          - fabricate-datasets
+        arguments:
+          parameters:
+          - name: kedro_node
+            value: create_tn_pairs
+          - name: num_retries
+            value: 0
+      - name: train-xgc-2-model
+        template: kedro
+        dependencies:
+          - transform-xgc-2-data
+          - tune-model-xgc-2-parameters
+        arguments:
+          parameters:
+          - name: kedro_node
+            value: train_xgc_2_model
+          - name: num_retries
+            value: 0
+      - name: tune-model-xgb-0-parameters
+        template: kedro
+        dependencies:
+          - transform-xgb-0-data
+        arguments:
+          parameters:
+          - name: kedro_node
+            value: tune_model_xgb_0_parameters
+          - name: num_retries
+            value: 0
+      - name: transform-xgb-data
+        template: kedro
+        dependencies:
+          - create-splits
+          - fit-xgb-transformers
+        arguments:
+          parameters:
+          - name: kedro_node
+            value: transform_xgb_data
+          - name: num_retries
+            value: 0
+      - name: check-xgb-model-performance
+        template: kedro
+        dependencies:
+          - get-xgb-model-predictions
+        arguments:
+          parameters:
+          - name: kedro_node
+            value: check_xgb_model_performance
+          - name: num_retries
+            value: 0
+      - name: enrich-xg-balanced-0-splits
+        template: kedro
+        dependencies:
+          - create-feat-nodes
+          - create-splits
+        arguments:
+          parameters:
+          - name: kedro_node
+            value: enrich_xg_balanced_0_splits
+          - name: num_retries
+            value: 0
+      - name: create-int-known-pairs
+        template: kedro
+        dependencies:
+          - create-tn-pairs
+          - create-tp-pairs
+        arguments:
+          parameters:
+          - name: kedro_node
+            value: create_int_known_pairs
+          - name: num_retries
+            value: 0
+      - name: fit-kgml-xdtd-transformers
+        template: kedro
+        dependencies:
+          - create-splits
+        arguments:
+          parameters:
+          - name: kedro_node
+            value: fit_kgml_xdtd_transformers
+          - name: num_retries
+            value: 0
+      - name: write-rtx-kg2-nodes
+        template: kedro
+        dependencies:
+          - fabricate-datasets
+        arguments:
+          parameters:
+          - name: kedro_node
+            value: write_rtx_kg2_nodes
+          - name: num_retries
+            value: 0
+      - name: create-neo4j-edges
+        template: kedro
+        dependencies:
+          - create-neo4j-nodes
+          - write-rtx-kg2-edges
+        arguments:
+          parameters:
+          - name: kedro_node
+            value: create_neo4j_edges
+          - name: num_retries
+            value: 0
+      - name: fabricate-datasets
+        template: kedro
+        arguments:
+          parameters:
+          - name: kedro_node
+            value: fabricate_datasets
+          - name: num_retries
+            value: 0
+      - name: create-feat-nodes
+        template: kedro
+        dependencies:
+          - add-topological-embeddings
+          - create-neo4j-known-pairs
+        arguments:
+          parameters:
+          - name: kedro_node
+            value: create_feat_nodes
+          - name: num_retries
+            value: 0
+      - name: create-neo4j-nodes
+        template: kedro
+        dependencies:
+          - write-rtx-kg2-nodes
+        arguments:
+          parameters:
+          - name: kedro_node
+            value: create_neo4j_nodes
+          - name: num_retries
+            value: 0
+      - name: train-xgc-0-model
+        template: kedro
+        dependencies:
+          - transform-xgc-0-data
+          - tune-model-xgc-0-parameters
+        arguments:
+          parameters:
+          - name: kedro_node
+            value: train_xgc_0_model
+          - name: num_retries
+            value: 0
+      - name: get-xg-balanced-model-predictions
+        template: kedro
+        dependencies:
+          - transform-xg-balanced-data
+          - create-xg-balanced-model
+        arguments:
+          parameters:
+          - name: kedro_node
+            value: get_xg_balanced_model_predictions
+          - name: num_retries
+            value: 0
+      - name: get-xgc-model-predictions
+        template: kedro
+        dependencies:
+          - create-xgc-model
+          - transform-xgc-data
+        arguments:
+          parameters:
+          - name: kedro_node
+            value: get_xgc_model_predictions
+          - name: num_retries
+            value: 0
+      - name: get-xgb-model-predictions
+        template: kedro
+        dependencies:
+          - create-xgb-model
+          - transform-xgb-data
+        arguments:
+          parameters:
+          - name: kedro_node
+            value: get_xgb_model_predictions
+          - name: num_retries
+            value: 0
+      - name: train-xg-balanced-0-model
+        template: kedro
+        dependencies:
+          - tune-model-xg-balanced-0-parameters
+          - transform-xg-balanced-0-data
+        arguments:
+          parameters:
+          - name: kedro_node
+            value: train_xg_balanced_0_model
+          - name: num_retries
+            value: 0
+      - name: train-xgc-1-model
+        template: kedro
+        dependencies:
+          - tune-model-xgc-1-parameters
+          - transform-xgc-1-data
+        arguments:
+          parameters:
+          - name: kedro_node
+            value: train_xgc_1_model
+          - name: num_retries
+            value: 0
+      - name: create-xg-balanced-model
+        template: kedro
+        dependencies:
+          - train-xg-balanced-0-model
+        arguments:
+          parameters:
+          - name: kedro_node
+            value: create_xg_balanced_model
+          - name: num_retries
+            value: 0
+      - name: check-xgc-model-performance
+        template: kedro
+        dependencies:
+          - get-xgc-model-predictions
+        arguments:
+          parameters:
+          - name: kedro_node
+            value: check_xgc_model_performance
+          - name: num_retries
+            value: 0
+      - name: create-xgb-model
+        template: kedro
+        dependencies:
+          - train-xgb-0-model
+        arguments:
+          parameters:
+          - name: kedro_node
+            value: create_xgb_model
+          - name: num_retries
+            value: 0
+      - name: transform-xgc-2-data
+        template: kedro
+        dependencies:
+          - enrich-xgc-2-splits
+          - fit-xgc-transformers
+        arguments:
+          parameters:
+          - name: kedro_node
+            value: transform_xgc_2_data
+          - name: num_retries
+            value: 0
+      - name: create-neo4j-known-pairs
+        template: kedro
+        dependencies:
+          - create-int-known-pairs
+          - create-neo4j-nodes
+        arguments:
+          parameters:
+          - name: kedro_node
+            value: create_neo4j_known_pairs
+          - name: num_retries
+            value: 0
+      - name: tune-model-xgc-2-parameters
+        template: kedro
+        dependencies:
+          - transform-xgc-2-data
+        arguments:
+          parameters:
+          - name: kedro_node
+            value: tune_model_xgc_2_parameters
+          - name: num_retries
+            value: 0
+      - name: transform-kgml-xdtd-data
+        template: kedro
+        dependencies:
+          - fit-kgml-xdtd-transformers
+          - create-splits
+        arguments:
+          parameters:
+          - name: kedro_node
+            value: transform_kgml_xdtd_data
+          - name: num_retries
+            value: 0
+      - name: transform-xg-balanced-0-data
+        template: kedro
+        dependencies:
+          - enrich-xg-balanced-0-splits
+          - fit-xg-balanced-transformers
+        arguments:
+          parameters:
+          - name: kedro_node
+            value: transform_xg_balanced_0_data
+          - name: num_retries
+            value: 0
+      - name: transform-xgb-0-data
+        template: kedro
+        dependencies:
+          - enrich-xgb-0-splits
+          - fit-xgb-transformers
+        arguments:
+          parameters:
+          - name: kedro_node
+            value: transform_xgb_0_data
+          - name: num_retries
+            value: 0
+      - name: tune-model-xgc-1-parameters
+        template: kedro
+        dependencies:
+          - transform-xgc-1-data
+        arguments:
+          parameters:
+          - name: kedro_node
+            value: tune_model_xgc_1_parameters
+          - name: num_retries
+            value: 0
+      - name: check-xg-balanced-model-performance
+        template: kedro
+        dependencies:
+          - get-xg-balanced-model-predictions
+        arguments:
+          parameters:
+          - name: kedro_node
+            value: check_xg_balanced_model_performance
+          - name: num_retries
+            value: 0
+      - name: write-rtx-kg2-edges
+        template: kedro
+        dependencies:
+          - fabricate-datasets
+        arguments:
+          parameters:
+          - name: kedro_node
+            value: write_rtx_kg2_edges
+          - name: num_retries
+            value: 0
+      - name: tune-model-xg-balanced-0-parameters
+        template: kedro
+        dependencies:
+          - transform-xg-balanced-0-data
+        arguments:
+          parameters:
+          - name: kedro_node
+            value: tune_model_xg_balanced_0_parameters
+          - name: num_retries
+            value: 0
+      - name: add-node-embeddings
+        template: kedro
+        dependencies:
+          - create-neo4j-nodes
+        arguments:
+          parameters:
+          - name: kedro_node
+            value: add_node_embeddings
+          - name: num_retries
+            value: 3
+      - name: check-kgml-xdtd-model-performance
+        template: kedro
+        dependencies:
+          - get-kgml-xdtd-model-predictions
+        arguments:
+          parameters:
+          - name: kedro_node
+            value: check_kgml_xdtd_model_performance
+          - name: num_retries
+            value: 0
+      - name: train-kgml-xdtd-0-model
+        template: kedro
+        dependencies:
+          - tune-model-kgml-xdtd-0-parameters
+          - transform-kgml-xdtd-0-data
+        arguments:
+          parameters:
+          - name: kedro_node
+            value: train_kgml_xdtd_0_model
+          - name: num_retries
+            value: 0
+      - name: fit-xgc-transformers
+        template: kedro
+        dependencies:
+          - create-splits
+        arguments:
+          parameters:
+          - name: kedro_node
+            value: fit_xgc_transformers
+          - name: num_retries
+            value: 0
