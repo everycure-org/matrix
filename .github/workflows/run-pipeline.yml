@@ -4,8 +4,17 @@ on:
   push:
     branches:
       - main
-  issue_comment:
-    types: [created]
+  # issue_comment:
+  #   types: [created]
+
+
+# TODO: Extract in GH variables
+env:
+  project_id: 'mtrx-hub-dev-3of'
+  workload_identity_provider: 'projects/938607797672/locations/global/workloadIdentityPools/matrix-pool/providers/matrix-gh-provider'
+  service_account: 'sa-github-actions-rw@mtrx-hub-dev-3of.iam.gserviceaccount.com'
+  region: us-central1
+  image: us-central1-docker.pkg.dev/mtrx-hub-dev-3of/matrix-images/matrix
 
 jobs:
   run-integration-tests:
@@ -13,6 +22,7 @@ jobs:
     if: (github.event.issue.pull_request && contains(github.event.comment.body, '/run-tests')) || github.event_name == 'push'
 
     runs-on: ubuntu-latest
+    environment: dev
     permissions: write-all
     defaults:
       run:
@@ -30,37 +40,59 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Get PR branch
-        if: ${{ github.event.issue.pull_request }}
-        uses: xt0rted/pull-request-comment-branch@v1
-        id: comment-branch
+      # - name: Get PR branch
+      #   if: ${{ github.event.issue.pull_request }}
+      #   uses: xt0rted/pull-request-comment-branch@v1
+      #   id: comment-branch
 
-      - name: Set latest commit status as pending
-        if: ${{ github.event.issue.pull_request }}
-        uses: myrotvorets/set-commit-status-action@master
-        with:
-          sha: ${{ steps.comment-branch.outputs.head_sha }}
-          token: ${{ secrets.GITHUB_TOKEN }}
-          status: pending
+      # - name: Set latest commit status as pending
+      #   if: ${{ github.event.issue.pull_request }}
+      #   uses: myrotvorets/set-commit-status-action@master
+      #   with:
+      #     sha: ${{ steps.comment-branch.outputs.head_sha }}
+      #     token: ${{ secrets.GITHUB_TOKEN }}
+      #     status: pending
 
       - uses: actions/checkout@v3
-        with:
-          ref: ${{ steps.comment-branch.outputs.head_ref }}
+        # with:
+        #   ref: ${{ steps.comment-branch.outputs.head_ref }}
 
       - name: Build docker-compose
         run: docker buildx bake --file docker-compose.yml --file docker-compose.test.yml --file docker-compose-cache.json
 
-      - name: Start docker-compose
-        run: |
-          docker-compose -f docker-compose.yml -f docker-compose.test.yml up --abort-on-container-exit --exit-code-from matrix-pipeline
+      # - name: Start docker-compose
+      #   run: |
+      #     docker-compose -f docker-compose.yml -f docker-compose.test.yml up --abort-on-container-exit --exit-code-from matrix-pipeline
 
-      - name: Set latest commit status as ${{ job.status }}
-        uses: myrotvorets/set-commit-status-action@master
-        if: ${{ github.event.issue.pull_request }}
+      # - name: Set latest commit status as ${{ job.status }}
+      #   uses: myrotvorets/set-commit-status-action@master
+      #   if: ${{ github.event.issue.pull_request }}
+      #   with:
+      #     sha: ${{ steps.comment-branch.outputs.head_sha }}
+      #     token: ${{ secrets.GITHUB_TOKEN }}
+      #     status: ${{ job.status }}
+
+      - uses: 'google-github-actions/auth@v2'
         with:
-          sha: ${{ steps.comment-branch.outputs.head_sha }}
-          token: ${{ secrets.GITHUB_TOKEN }}
-          status: ${{ job.status }}
+          project_id: ${{env.project_id}}
+          workload_identity_provider: ${{env.workload_identity_provider}}
+          service_account: ${{env.service_account}}
+
+      - name: "Set up Cloud SDK"
+        uses: "google-github-actions/setup-gcloud@v1"
+
+      - name: "Use gcloud CLI"
+        run: "gcloud info"
+
+      - name: "Docker auth"
+        run: |-
+          gcloud auth configure-docker ${{ env.region }}-docker.pkg.dev --quiet
+
+      - name: Push image to artifact registry
+        run: |
+          docker images
+          docker tag matrix-pipeline ${{ env.image }}
+          docker push ${{ env.image }}
 
       - name: Show logs
         if: failure()
