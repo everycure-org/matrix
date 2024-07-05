@@ -5,10 +5,16 @@ metadata:
   name: matrix-template
 spec:
   entrypoint: dag
+  arguments:
+    parameters:
+      - name: image
+        value: "us-central1-docker.pkg.dev/mtrx-hub-dev-3of/matrix-images/matrix:latest"
+      - name: neo4j_host
+        value: "bolt://neo4j.neo4j.svc.cluster.local:7687"
   templates:
   - name: kedro
     retryStrategy:
-      limit: "{{ `inputs.parameters.num_retries}}` }}"
+      limit: "{{ `{{inputs.parameters.num_retries}}` }}"
     retryPolicy: "Always"
     backoff:
       duration: "1"      # Must be a string. Default unit is seconds. Could also be a Duration, e.g.: "2m", "6h", "1d"
@@ -25,7 +31,7 @@ spec:
       - name: num_retries
     container:
       imagePullPolicy: Always
-      image: us-central1-docker.pkg.dev/mtrx-hub-dev-3of/matrix-images/matrix:latest
+      image: "{{ `{{workflow.parameters.image}}` }}"
       resources: # limit the resources
         requests:
           memory: 3Gi
@@ -35,7 +41,7 @@ spec:
           cpu: 2
       env:
         - name: NEO4J_HOST
-          value: bolt://neo4j.neo4j.svc.cluster.local:7687
+          value: "{{ `{{workflow.parameters.neo4j_host}}` }}"
         - name: NEO4J_USER
           valueFrom:
             secretKeyRef:
@@ -66,7 +72,7 @@ spec:
         - name: VERTEX_AI_ACCESS_TOKEN
           value: dummy
       command: [kedro]
-      args: ["run", "-p", "test", "-e", "prod", "-n",  "{{ `inputs.parameters.kedro_node}}` }}" ]
+      args: ["run", "-p", "test", "-e", "prod", "-n",  "{{ `{{inputs.parameters.kedro_node}}` }}" ]
   - name: dag
     dag:
       tasks:
