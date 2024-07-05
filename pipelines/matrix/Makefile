@@ -23,6 +23,9 @@ docker_push_dev:
 	docker tag matrix_amd $(dev_docker_image):latest
 	docker push $(dev_docker_image):latest
 
+argo_template:
+	python ./src/matrix/argo.py -p test --env prod $(dev_docker_image):latest
+
 licenses:  build
 	trivy image --scanners license --severity UNKNOWN,CRITICAL matrix
 
