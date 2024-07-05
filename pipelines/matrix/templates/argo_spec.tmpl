@@ -14,6 +14,8 @@ spec:
         value: "bolt://neo4j.neo4j.svc.cluster.local:7687"
       - name: openai_endpoint
         value: "https://api.openai.com/v1"
+      - name: env
+        value: "prod"
   templates:
   - name: kedro
     retryStrategy:
@@ -81,7 +83,7 @@ spec:
         - name: VERTEX_AI_ACCESS_TOKEN
           value: dummy
       command: [kedro]
-      args: ["run", "-p", {% raw %}"{{ `{{inputs.parameters.pipeline}}` }}" {% endraw %}, "-e", "{{ env }}", "-n", {% raw %}"{{ `{{inputs.parameters.kedro_node}}` }}" {% endraw %}]
+      args: ["run", "-p", {% raw %}"{{ `{{inputs.parameters.pipeline}}` }}" {% endraw %}, "-e", {% raw %} "{{ `{{workflow.parameters.env}}` }}", "-n", {% raw %}"{{ `{{inputs.parameters.kedro_node}}` }}" {% endraw %}]
   
   {% for pipeline, tasks in pipes.items() %}
   - name: {{ pipeline }}
