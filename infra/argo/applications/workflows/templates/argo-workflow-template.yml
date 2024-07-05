@@ -46,7 +46,7 @@ spec:
           cpu: 2
       env:
         - name: NEO4J_HOST
-          value:  "{{ `{{workflow.parameters.openai_endpoint}}` }}" 
+          value:  "{{ `{{workflow.parameters.neo4j_host}}` }}" 
         - name: NEO4J_USER
           valueFrom:
             secretKeyRef:
