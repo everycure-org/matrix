@@ -6,6 +6,7 @@ _neo4j_ds: &_neo4j_ds
   save_args:
     mode: "overwrite"
 
+# FUTURE: Enable if required
 # embeddings.prm.graph.embeddings:
 #   <<: *_neo4j_ds
 #   save_args:
