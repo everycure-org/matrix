@@ -70,9 +70,9 @@ jobs:
       - uses: 'google-github-actions/auth@v2'
         if: ${{ success() && github.event_name == 'push' }}
         with:
-          project_id: ${{env.project_id}}
-          workload_identity_provider: ${{env.workload_identity_provider}}
-          service_account: ${{env.service_account}}
+          project_id: ${{vars.project_id}}
+          workload_identity_provider: ${{vars.workload_identity_provider}}
+          service_account: ${{vars.service_account}}
 
       - name: "Set up Cloud SDK"
         if: ${{ success() && github.event_name == 'push' }}
@@ -81,7 +81,7 @@ jobs:
       - name: "Docker auth"
         if: ${{ success() && github.event_name == 'push' }}
         run: |-
-          gcloud auth configure-docker ${{ env.region }}-docker.pkg.dev --quiet
+          gcloud auth configure-docker ${{ vars.region }}-docker.pkg.dev --quiet
 
       - name: Push image to artifact registry
         if: ${{ success() && github.event_name == 'push' }}
