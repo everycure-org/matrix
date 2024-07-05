@@ -19,10 +19,6 @@ env:
   tf_version: '1.5.7'
   tg_version: '0.58.11'
   working_dir: 'infra/'
-  # log into gcp
-  project_id: 'mtrx-hub-dev-3of'
-  workload_identity_provider: 'projects/938607797672/locations/global/workloadIdentityPools/matrix-pool/providers/matrix-gh-provider'
-  service_account: 'sa-github-actions-rw@mtrx-hub-dev-3of.iam.gserviceaccount.com'
 
 jobs:
   checks:
