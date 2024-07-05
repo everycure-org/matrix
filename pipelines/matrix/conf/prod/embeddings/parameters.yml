@@ -1,4 +1,3 @@
-# FUTURE: Enable if required
-# embeddings.ai_config:
-#   project: ${oc.env:GCP_PROJECT_ID} 
-#   accessToken: ${oc.env:VERTEX_AI_ACCESS_TOKEN}
+embeddings.ai_config:
+  project: ${oc.env:GCP_PROJECT_ID} 
+  accessToken: ${oc.env:VERTEX_AI_ACCESS_TOKEN}
