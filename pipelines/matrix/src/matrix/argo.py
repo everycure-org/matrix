@@ -9,7 +9,14 @@ from kedro.framework.project import pipelines
 from kedro.framework.startup import bootstrap_project
 
 TEMPLATE_FILE = "argo_spec.tmpl"
+RENDERED_FILE = "argo-workflow-template.yml"
 SEARCH_PATH = Path("templates")
+
+
+@click.group()
+def cli() -> None:
+    """Main CLI entrypoint."""
+    ...
 
 
 @click.command()
@@ -45,7 +52,7 @@ def generate_argo_config(image, pipeline_name, env):
         env=env,
     )
 
-    (SEARCH_PATH / f"argo-{package_name}.yml").write_text(output)
+    (SEARCH_PATH / RENDERED_FILE).write_text(output)
 
 
 def get_dependencies(dependencies):
@@ -84,4 +91,5 @@ def clean_name(name: str) -> str:
 
 
 if __name__ == "__main__":
-    generate_argo_config()
+    cli.add_command(generate_argo_config)
+    cli()
