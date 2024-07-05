@@ -40,7 +40,8 @@ embeddings.prm.graph.pca_embeddings:
       RETURN node
   load_args:
     query: >
-      MATCH (n: Entity) RETURN n.id as id, n.pca_embedding as embedding
+      MATCH (n: Entity) 
+      RETURN n.id as id, n.pca_embedding as embedding
 
 # NOTE: Dummy catalog entry to enforce Kedro dependency
 # between embedding and modelling pipeline.

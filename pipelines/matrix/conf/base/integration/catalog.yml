@@ -85,7 +85,8 @@ integration.model_input.nodes:
     # NOTE: The 'biolink' prefixes was removed to have a clean Neo4J UI interface. We're adding
     # it back into the query as the modelling expects it.
     query: >  
-      MATCH (n) RETURN n.id AS id, 'biolink:' + labels(n)[0] AS category 
+      MATCH (n) 
+      RETURN n.id AS id, 'biolink:' + labels(n)[0] AS category 
  
 
 integration.model_input.edges:
