@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: WorkflowTemplate
 metadata:
-  namespace: argo-workflows
+  # namespace: argo-workflows
   generateName: matrix
 spec:
   entrypoint: dag
