@@ -1,15 +1,23 @@
 {# <project_root>/templates/argo_spec.tmpl #}
 apiVersion: argoproj.io/v1alpha1
-kind: Workflow
+kind: WorkflowTemplate
 metadata:
   namespace: argo-workflows
-  generateName: {{ package_name }}-
+  name: matrix
 spec:
   entrypoint: dag
+  arguments:
+    parameters:
+      - name: image
+        value: "us-central1-docker.pkg.dev/mtrx-hub-dev-3of/matrix-images/matrix:latest"
+      - name: neo4j_host
+        value: "bolt://neo4j.neo4j.svc.cluster.local:7687"
+      - name: openai_endpoint
+        value: "https://api.openai.com/v1"
   templates:
   - name: kedro
     retryStrategy:
-      limit: {% raw %}"{{inputs.parameters.num_retries}}"
+      limit: {% raw %}"{{ `{{inputs.parameters.num_retries}}` }}"
     {% endraw %}
     retryPolicy: "Always"
     backoff:
@@ -28,7 +36,8 @@ spec:
       - name: num_retries
     container:
       imagePullPolicy: Always
-      image: {{ image }}
+      image: {% raw %} "{{ `{{workflow.parameters.image}}` }}" 
+      {% endraw %}
       resources: # limit the resources
         requests:
           memory: 3Gi
@@ -38,7 +47,8 @@ spec:
           cpu: 2
       env:
         - name: NEO4J_HOST
-          value: bolt://neo4j.neo4j.svc.cluster.local:7687
+          value: {% raw %} "{{ `{{workflow.parameters.openai_endpoint}}` }}" 
+          {% endraw %}
         - name: NEO4J_USER
           valueFrom:
             secretKeyRef:
@@ -50,7 +60,8 @@ spec:
               name: matrix-secrets
               key: NEO4J_PASSWORD
         - name: OPENAI_ENDPOINT
-          value: https://api.openai.com/v1
+          value: {% raw %} "{{ `{{workflow.parameters.image}}` }}" 
+          {% endraw %}
         - name: OPENAI_API_KEY
           valueFrom:
             secretKeyRef:
@@ -69,7 +80,7 @@ spec:
         - name: VERTEX_AI_ACCESS_TOKEN
           value: dummy
       command: [kedro]
-      args: ["run", "-p", "{{ pipeline }}", "-e", "{{ env }}", "-n", {% raw %}"{{inputs.parameters.kedro_node}}" {% endraw %}]
+      args: ["run", "-p", "{{ pipeline }}", "-e", "{{ env }}", "-n", {% raw %}"{{ `{{inputs.parameters.kedro_node}}` }}" {% endraw %}]
   - name: dag
     dag:
       tasks:
