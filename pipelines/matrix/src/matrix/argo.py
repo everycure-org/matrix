@@ -42,13 +42,14 @@ def generate_argo_config(image, pipeline_name, env):
     pipeline_name = pipeline_name or "__default__"
     pipeline = pipelines.get(pipeline_name)
 
-    tasks = get_dependencies(pipeline.node_dependencies)
+    pipes = {}
+    for name, pipeline in pipelines.items():
+        pipes[name] = get_dependencies(pipeline.node_dependencies)
 
     output = template.render(
         image=image,
         package_name=package_name,
-        tasks=tasks,
-        pipeline=pipeline_name,
+        pipes=pipes,
         env=env,
     )
 
