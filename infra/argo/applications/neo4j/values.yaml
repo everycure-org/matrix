@@ -31,6 +31,7 @@ neo4j: # the name of the helm dependency
     # https://neo4j.com/docs/operations-manual/current/configuration/configuration-settings/
     dbms.security.procedures.unrestricted: "gds.*, apoc.*"
     dbms.security.procedures.whitelist: "gds.*, apoc.*"
+    server.directories.import: import
     initial.dbms.default_database: everycure
 
   apoc_config:
