@@ -9,20 +9,21 @@ def create_pipeline(**kwargs) -> Pipeline:
     return pipeline(
         [
             node(
-                func=nodes.concat_features,
+                func=nodes.compute_embeddings,
                 inputs=[
                     "integration.model_input.nodes",
+                    "params:embeddings.gdb",
                     "params:embeddings.node.features",
                     "params:embeddings.ai_config",
                 ],
-                outputs="embeddings.prm.graph.embeddings",
+                outputs="embeddings.prm.graph.embeddings@yaml",
                 name="add_node_embeddings",
                 tags=["argo.retries-3"],
             ),
             node(
                 func=nodes.reduce_dimension,
                 inputs=[
-                    "embeddings.prm.graph.embeddings",
+                    "embeddings.prm.graph.embeddings@neo",
                     "params:embeddings.dimensionality_reduction",
                 ],
                 outputs="embeddings.prm.graph.pca_embeddings",
