@@ -32,7 +32,7 @@ neo4j: # the name of the helm dependency
     dbms.security.procedures.unrestricted: "gds.*, apoc.*"
     dbms.security.procedures.whitelist: "gds.*, apoc.*"
     dbms.security.allow_csv_import_from_file_urls: "true"
-    server.directories.import: /var/lib/neo4j/import
+    # server.directories.import: /var/lib/neo4j/import
     initial.dbms.default_database: everycure
 
   apoc_config:
