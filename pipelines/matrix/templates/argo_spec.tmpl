@@ -50,7 +50,7 @@ spec:
           cpu: 2
       env:
         - name: NEO4J_HOST
-          value: {% raw %} "{{ `{{workflow.parameters.openai_endpoint}}` }}" 
+          value: {% raw %} "{{ `{{workflow.parameters.neo4j_host}}` }}" 
           {% endraw %}
         - name: NEO4J_USER
           valueFrom:
@@ -63,7 +63,7 @@ spec:
               name: matrix-secrets
               key: NEO4J_PASSWORD
         - name: OPENAI_ENDPOINT
-          value: {% raw %} "{{ `{{workflow.parameters.image}}` }}" 
+          value: {% raw %} "{{ `{{workflow.parameters.openai_endpoint}}` }}" 
           {% endraw %}
         - name: OPENAI_API_KEY
           valueFrom:
