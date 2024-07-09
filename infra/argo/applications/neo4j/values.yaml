@@ -38,3 +38,4 @@ neo4j: # the name of the helm dependency
   apoc_config:
     apoc.import.file.enabled: "true"
     apoc.export.file.enabled: "true"
+    apoc.import.file.use_neo4j_config: "true"
