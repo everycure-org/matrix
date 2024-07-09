@@ -19,3 +19,4 @@ scikit-optimize
 xgboost
 hdfs
 graphdatascience
+neo4j>=5.5.0

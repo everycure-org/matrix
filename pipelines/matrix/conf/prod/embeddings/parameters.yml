@@ -1,3 +1,2 @@
 embeddings.ai_config:
-  project: ${oc.env:GCP_PROJECT_ID} 
-  accessToken: ${oc.env:VERTEX_AI_ACCESS_TOKEN}
+  batchSize: 2000

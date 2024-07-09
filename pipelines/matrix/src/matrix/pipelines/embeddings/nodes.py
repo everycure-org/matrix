@@ -8,9 +8,34 @@ from pyspark.sql import functions as F
 
 from pyspark.ml.functions import array_to_vector, vector_to_array
 from graphdatascience import GraphDataScience, QueryRunner
+from neo4j import GraphDatabase
 
 from refit.v1.core.inject import inject_object
 from refit.v1.core.unpack import unpack_params
+
+
+class GraphDB:
+    """Adaptor class to allow injecting the GraphDB object.
+
+    This is due to a drawback where refit cannot inject a tuple into
+    the constructor of an object.
+    """
+
+    def __init__(
+        self,
+        *,
+        endpoint: str | Driver | QueryRunner,
+        auth: F.Tuple[str] | None = None,
+        database: str | None = None,
+    ):
+        """Create `GraphDB` instance."""
+        self._endpoint = endpoint
+        self._auth = tuple(auth)
+        self._database = database
+
+    def driver(self):
+        """Return the driver object."""
+        return GraphDatabase.driver(self._endpoint, auth=self._auth)
 
 
 class GraphDS(GraphDataScience):
@@ -27,13 +52,46 @@ class GraphDS(GraphDataScience):
         auth: F.Tuple[str] | None = None,
         database: str | None = None,
     ):
-        """Create `GraphDataScience` instance."""
+        """Create `GraphDS` instance."""
         super().__init__(
             endpoint,
             auth=tuple(auth),
         )
 
         self.set_database(database)
+
+
+@inject_object()
+def compute_embeddings(
+    input: DataFrame, gdb: GraphDB, features: List[str], ai_config: Dict[str, str]
+):
+    """Function to orchestrate embedding computation in Neo4j.
+
+    Args:
+        input: input df
+        gdb: graph database instance
+        features: features to include to compute embeddings
+        ai_config: genai config
+    """
+    with gdb.driver() as driver:
+        driver.execute_query(
+            f"""
+            CALL apoc.periodic.iterate(
+            "MATCH (p:Entity) RETURN p",
+            "CALL apoc.ml.openai.embedding([item in $_batch | {"+".join(["item.p." + feat for feat in features])}], $apiKey, $configuration) 
+            YIELD index, text, embedding
+            CALL apoc.create.setProperty($_batch[index].p, $attribute, embedding) YIELD node
+            RETURN count(*)
+            ",
+            {{batchMode: "BATCH_SINGLE", batchSize: $batchSize, params: $ai_config}}
+            )
+            YIELD batch, operations
+            """,
+            **ai_config,
+            ai_config=ai_config,
+        )
+
+    return {"success": "true"}
 
 
 def concat_features(nodes: DataFrame, features: List[str], ai_config: Dict[str, str]):
