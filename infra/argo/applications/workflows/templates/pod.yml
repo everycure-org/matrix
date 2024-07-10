@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  namespace: neo4j
+  name: temp-pod
+spec:
+  containers:
+  - name: temp-container
+    image: busybox
+    command: [ "sleep", "3600" ]
+    volumeMounts:
+    - mountPath: /mnt/data
+      name: temp-storage
+  volumes:
+  - name: temp-storage
+    persistentVolumeClaim:
+      claimName: data-neo4j-0
