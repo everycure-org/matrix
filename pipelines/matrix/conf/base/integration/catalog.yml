@@ -1,6 +1,12 @@
 _pandas_csv: &_pandas_csv
   type:  pandas.CSVDataset
 
+_pandas_tsv: &_pandas_tsv
+  type: pandas.CSVDataset
+  load_args:
+    header: true
+    sep: "\t"
+
 _pandas_parquet: &_pandas_parquet
   type: pandas.ParquetDataset
 
@@ -10,6 +16,13 @@ _spark_csv_ds: &_spark_csv
   load_args:
     header: true
     sep: ","
+
+_spark_tsv_ds: &_spark_tsv
+  type: spark.SparkDataset
+  file_format: csv
+  load_args:
+    header: true
+    sep: "\t"
 
 _spark_parquet_ds: &_spark_parquet
   type: spark.SparkDataset
@@ -26,20 +39,24 @@ _neo4j_ds: &_neo4j_ds
     mode: "overwrite"
   
 integration.raw.rtx_kg2.nodes@pandas:
-  <<: *_pandas_csv
-  filepath: ${globals:paths.raw}/rtx_kg2_nodes.csv
+  <<: *_pandas_tsv
+  version: v2.9.2
+  filepath: ${globals:paths.raw}/RTX-KG2/v2.9.2/nodes_c.tsv
   
 integration.raw.rtx_kg2.nodes@spark:
-  <<: *_spark_csv
-  filepath: ${globals:paths.raw}/rtx_kg2_nodes.csv
+  <<: *_spark_tsv
+  version: v2.9.2
+  filepath: ${globals:paths.raw}/RTX-KG2/v2.9.2/nodes_c.tsv
 
 integration.raw.rtx_kg2.edges@pandas:
-  <<: *_pandas_csv
-  filepath: ${globals:paths.raw}/rtx_kg2_edges.csv
+  <<: *_pandas_tsv
+  version: v2.9.2
+  filepath: ${globals:paths.raw}/RTX-KG2/v2.9.2/edges_c.tsv
 
 integration.raw.rtx_kg2.edges@spark:
-  <<: *_spark_csv
-  filepath: ${globals:paths.raw}/rtx_kg2_edges.csv
+  <<: *_spark_tsv
+  version: v2.9.2
+  filepath: ${globals:paths.raw}/RTX-KG2/v2.9.2/edges_c.tsv
 
 integration.raw.ground_truth.positives:
   <<: *_pandas_csv
