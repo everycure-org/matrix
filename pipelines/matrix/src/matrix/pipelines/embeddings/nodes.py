@@ -69,14 +69,14 @@ class GraphDS(GraphDataScience):
 @unpack_params()
 @inject_object()
 def compute_embeddings(
-    input: DataFrame, 
-    gdb: GraphDB, 
+    input: DataFrame,
+    gdb: GraphDB,
     features: List[str],
     api_key: str,
     batch_size: int,
     attribute: str,
     endpoint: str,
-    model: str
+    model: str,
 ):
     """Function to orchestrate embedding computation in Neo4j.
 
@@ -86,39 +86,45 @@ def compute_embeddings(
         features: features to include to compute embeddings
         ai_config: genai config
     """
-
     # Register functions
-    create_stringified_function('iterate', {'name': 'apoc.periodic.iterate'})
-    create_function('openai_embedding', {'name': 'apoc.ml.openai.embedding'}, func_raw=True)
-    create_function('set_property', {'name': 'apoc.create.setProperty'}, func_raw=True)
+    create_stringified_function("iterate", {"name": "apoc.periodic.iterate"})
+    create_function(
+        "openai_embedding", {"name": "apoc.ml.openai.embedding"}, func_raw=True
+    )
+    create_function("set_property", {"name": "apoc.create.setProperty"}, func_raw=True)
 
     # Build query
     p = Pypher()
 
     p.CALL.iterate(
         # Match every :Entity node in the graph
-        cypher.MATCH.node('p', labels='Entity').RETURN.p,
+        cypher.MATCH.node("p", labels="Entity").RETURN.p,
         # For each batch, execute following statements
-        [   
+        [
             # Match OpenAI embedding in a batched manner
-            cypher.CALL.openai_embedding("[item in $_batch | item.p.category]", '$apiKey', "{endpoint: $endpoint, model: $model}").YIELD('index', 'text', 'embedding'),
+            cypher.CALL.openai_embedding(
+                "[item in $_batch | item.p.category]",
+                "$apiKey",
+                "{endpoint: $endpoint, model: $model}",
+            ).YIELD("index", "text", "embedding"),
             # Set the attribute property of the node to the embedding
-            cypher.CALL.set_property('$_batch[index].p', '$attribute', 'embedding').YIELD('node').RETURN('node')
+            cypher.CALL.set_property("$_batch[index].p", "$attribute", "embedding")
+            .YIELD("node")
+            .RETURN("node"),
         ],
         cypher.map(
             batchMode="BATCH_SINGLE",
             batchSize=1000,
-            params=cypher.map(apiKey='key', endpoint='endpoint', attribute='embedding', model="ada")
-        )
+            params=cypher.map(
+                apiKey="key", endpoint="endpoint", attribute="embedding", model="ada"
+            ),
+        ),
     ).YIELD("batch", "operations")
 
     breakpoint()
 
     with gdb.driver() as driver:
-        driver.execute_query(
-            str(p),
-            **p.bound_params
-        )
+        driver.execute_query(str(p), **p.bound_params)
 
     return {"success": "true"}
 
@@ -152,7 +158,9 @@ def reduce_dimension(df: DataFrame, transformer):
         Dataframe with reduced dimension
     """
     # Convert into correct type
-    df = df.withColumn("features", array_to_vector("embedding"))
+    df = df.filter(F.col("embedding").isNotNull()).withColumn(
+        "features", array_to_vector("embedding")
+    )
 
     # Link
     transformer.setInputCol("features")
