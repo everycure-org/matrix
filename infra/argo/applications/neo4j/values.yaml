@@ -20,6 +20,7 @@ neo4j: # the name of the helm dependency
         # * standard provisions HDD disks
         storageClassName: premium-rwo
         # storageClassName: hyperdisk-balanced
+        # https://neo4j.com/docs/operations-manual/current/kubernetes/persistent-volumes/#persistent-volumes-types
         requests:
           storage: 500Gi
 
