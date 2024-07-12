@@ -101,7 +101,8 @@ def compute_embeddings(
     p.CALL.iterate(
         # Match every :Entity node in the graph
         cypher.stringify(cypher.MATCH.node("p", labels="Entity").RETURN.p),
-        # For each batch, execute following statements
+        # For each batch, execute following statements, the $_batch is a special
+        # variable made accessible to access the elements in the batch.
         cypher.stringify(
             [
                 # Match OpenAI embedding in a batched manner, embedding
