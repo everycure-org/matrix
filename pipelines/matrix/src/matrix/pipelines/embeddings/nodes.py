@@ -102,6 +102,7 @@ def compute_embeddings(
     # The apoc iterate is a rather interesting function, that takes stringified
     # cypher queries as input. The first determines the subset of nodes on
     # include, whereas the second query defines the operation to execute.
+    # https://neo4j.com/labs/apoc/4.1/overview/apoc.periodic/apoc.periodic.iterate/
     p.CALL.iterate(
         # Match every :Entity node in the graph
         cypher.stringify(cypher.MATCH.node("p", labels="Entity").RETURN.p),
