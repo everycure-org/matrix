@@ -253,7 +253,7 @@ jupyter-events==0.10.0
     # via jupyter-server
 jupyter-lsp==2.2.5
     # via jupyterlab
-jupyter-server==2.14.1
+jupyter-server==2.14.2
     # via
     #   jupyter-lsp
     #   jupyterlab
@@ -411,7 +411,9 @@ pre-commit-hooks==4.6.0
 prometheus-client==0.20.0
     # via jupyter-server
 prompt-toolkit==3.0.47
-    # via ipython
+    # via
+    #   ipython
+    #   python-cypher
 proto-plus==1.24.0
     # via google-api-core
 protobuf==5.27.2
@@ -464,6 +466,8 @@ pyspark==3.5.1
     #   -r requirements.in
     #   brix-refit
 pytest==8.2.2
+    # via -r requirements.in
+python-cypher==0.20.1
     # via -r requirements.in
 python-dateutil==2.9.0.post0
     # via
@@ -570,6 +574,7 @@ six==1.16.0
     #   asttokens
     #   bleach
     #   hdfs
+    #   python-cypher
     #   python-dateutil
     #   rfc3339-validator
 smmap==5.0.1
