@@ -98,6 +98,10 @@ def compute_embeddings(
 
     # Build query
     p = Pypher()
+
+    # The apoc iterate is a rather interesting function, that takes stringified
+    # cypher queries as input. The first determines the subset of nodes on
+    # include, whereas the second query defines the operation to execute.
     p.CALL.iterate(
         # Match every :Entity node in the graph
         cypher.stringify(cypher.MATCH.node("p", labels="Entity").RETURN.p),
@@ -105,13 +109,15 @@ def compute_embeddings(
         # variable made accessible to access the elements in the batch.
         cypher.stringify(
             [
-                # Match OpenAI embedding in a batched manner, embedding
+                # Apply OpenAI embedding in a batched manner, embedding
                 # is applied on the concatenation of supplied features for each node.
                 cypher.CALL.openai_embedding(f"[item in $_batch | {'+'.join(f'item.p.{attr}' for attr in features)}]", "$apiKey", "{endpoint: $endpoint, model: $model}").YIELD("index", "text", "embedding"),
                 # Set the attribute property of the node to the embedding
                 cypher.CALL.set_property("$_batch[index].p", "$attribute", "embedding").YIELD("node").RETURN("node"),
             ]
         ),
+        # The last argument bridges the variables used in the outer query
+        # and the variables referenced in the stringified params.
         cypher.map(
             batchMode="BATCH_SINGLE",
             parallel="true",
@@ -125,24 +131,6 @@ def compute_embeddings(
         summary = driver.execute_query(str(p), **p.bound_params).summary
 
     return {"success": "true", "time": summary.result_available_after}
-
-
-def concat_features(nodes: DataFrame, features: List[str], ai_config: Dict[str, str]):
-    """Function setup features for node embeddings.
-
-    Args:
-        nodes: nodes dataframe
-        features: features to use for node embeddings.
-        ai_config: vertex confoiguration to use
-    Returns:
-        Input features for node computation
-    """
-    for key, value in ai_config.items():
-        nodes = nodes.withColumn(key, F.lit(value))
-
-    return nodes.withColumn(
-        "input", F.concat(*[F.col(feature) for feature in features])
-    )
 
 
 @inject_object()
