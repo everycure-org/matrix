@@ -112,8 +112,6 @@ def compute_embeddings(
         )
     ).YIELD("batch", "operations")
 
-    print(str(p))
-
     breakpoint()
 
     with gdb.driver() as driver:
