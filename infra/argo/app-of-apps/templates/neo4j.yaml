@@ -13,9 +13,8 @@ spec:
     repoURL: {{ .Values.spec.source.repoURL }}
     # TODO change to HEAD before merging
     targetRevision: feature/argo-wf
-  syncPolicy: {}
-  # syncPolicy:
-  #   syncOptions:     # Sync options which modifies sync behavior
-  #   - CreateNamespace=true # Namespace Auto-Creation ensures that namespace specified as the application destination exists in the destination cluster.
-  #   automated: 
-  #     prune: true
+  syncPolicy:
+    syncOptions:     # Sync options which modifies sync behavior
+    - CreateNamespace=true # Namespace Auto-Creation ensures that namespace specified as the application destination exists in the destination cluster.
+    automated: 
+      prune: true
