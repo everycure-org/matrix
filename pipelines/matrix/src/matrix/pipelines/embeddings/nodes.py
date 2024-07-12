@@ -90,11 +90,10 @@ def compute_embeddings(
         endpoint: endpoint to use
         model: model to use
     """
+    # fmt: off
     # Register functions
     create_function("iterate", {"name": "apoc.periodic.iterate"}, func_raw=True)
-    create_function(
-        "openai_embedding", {"name": "apoc.ml.openai.embedding"}, func_raw=True
-    )
+    create_function("openai_embedding", {"name": "apoc.ml.openai.embedding"}, func_raw=True)
     create_function("set_property", {"name": "apoc.create.setProperty"}, func_raw=True)
 
     # Build query
@@ -107,26 +106,19 @@ def compute_embeddings(
             [
                 # Match OpenAI embedding in a batched manner, embedding
                 # is applied on the concatenation of supplied features for each node.
-                cypher.CALL.openai_embedding(
-                    f"[item in $_batch | {'+'.join(f'item.p.{attr}' for attr in features)}]",
-                    "$apiKey",
-                    "{endpoint: $endpoint, model: $model}",
-                ).YIELD("index", "text", "embedding"),
+                cypher.CALL.openai_embedding(f"[item in $_batch | {'+'.join(f'item.p.{attr}' for attr in features)}]", "$apiKey", "{endpoint: $endpoint, model: $model}").YIELD("index", "text", "embedding"),
                 # Set the attribute property of the node to the embedding
-                cypher.CALL.set_property("$_batch[index].p", "$attribute", "embedding")
-                .YIELD("node")
-                .RETURN("node"),
+                cypher.CALL.set_property("$_batch[index].p", "$attribute", "embedding").YIELD("node").RETURN("node"),
             ]
         ),
         cypher.map(
             batchMode="BATCH_SINGLE",
             parallel="true",
             batchSize=batch_size,
-            params=cypher.map(
-                apiKey=api_key, endpoint=endpoint, attribute=attribute, model=model
-            ),
+            params=cypher.map(apiKey=api_key, endpoint=endpoint, attribute=attribute, model=model),
         ),
     ).YIELD("batch", "operations")
+    # fmt: on
 
     with gdb.driver() as driver:
         summary = driver.execute_query(str(p), **p.bound_params).summary
