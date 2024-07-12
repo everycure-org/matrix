@@ -663,20 +663,20 @@ spec:
   - name: embeddings
     dag:
       tasks:
-      - name: add-node-embeddings
-        template: kedro
-        arguments:
-          parameters:
-          - name: pipeline
-            value: embeddings
-          - name: kedro_node
-            value: add_node_embeddings
-          - name: num_retries
-            value: 3
+      # - name: add-node-embeddings
+      #   template: kedro
+      #   arguments:
+      #     parameters:
+      #     - name: pipeline
+      #       value: embeddings
+      #     - name: kedro_node
+      #       value: add_node_embeddings
+      #     - name: num_retries
+      #       value: 3
       - name: apply-pca
         template: kedro
-        dependencies:
-          - add-node-embeddings
+        # dependencies:
+        #   - add-node-embeddings
         arguments:
           parameters:
           - name: pipeline
