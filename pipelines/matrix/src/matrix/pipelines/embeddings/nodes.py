@@ -105,9 +105,10 @@ def compute_embeddings(
         # For each batch, execute following statements
         cypher.stringify(
             [
-                # Match OpenAI embedding in a batched manner
+                # Match OpenAI embedding in a batched manner, embedding
+                # is applied on the concatenation of supplied features for each node.
                 cypher.CALL.openai_embedding(
-                    "[item in $_batch | item.p.category]",
+                    f"[item in $_batch | {'+'.join(f'item.p.{attr}' for attr in features)}]",
                     "$apiKey",
                     "{endpoint: $endpoint, model: $model}",
                 ).YIELD("index", "text", "embedding"),
