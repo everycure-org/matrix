@@ -11,9 +11,9 @@ embeddings.gdb:
 # Establishes connection to localized mock GenAI API for
 # testing purposes.
 embeddings.ai_config:
-  apiKey: ${oc.env:OPENAI_API_KEY} 
+  api_key: ${oc.env:OPENAI_API_KEY} 
   attribute: embedding
-  batchSize: 1 # NOTE: The MockApi does not support batching, hence disabled
+  batch_size: 1 # NOTE: The MockApi does not support batching, hence disabled
   configuration:
     endpoint: ${oc.env:OPENAI_ENDPOINT}
     model: text-embedding-3-small

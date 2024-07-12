@@ -10,6 +10,11 @@ from pyspark.ml.functions import array_to_vector, vector_to_array
 from graphdatascience import GraphDataScience, QueryRunner
 from neo4j import GraphDatabase
 
+from pypher import __ as cypher, Pypher
+
+from pypher.builder import create_function
+from pypher_utils import create_stringified_function
+
 from refit.v1.core.inject import inject_object
 from refit.v1.core.unpack import unpack_params
 
@@ -61,9 +66,17 @@ class GraphDS(GraphDataScience):
         self.set_database(database)
 
 
+@unpack_params()
 @inject_object()
 def compute_embeddings(
-    input: DataFrame, gdb: GraphDB, features: List[str], ai_config: Dict[str, str]
+    input: DataFrame, 
+    gdb: GraphDB, 
+    features: List[str],
+    api_key: str,
+    batch_size: int,
+    attribute: str,
+    endpoint: str,
+    model: str
 ):
     """Function to orchestrate embedding computation in Neo4j.
 
@@ -73,22 +86,40 @@ def compute_embeddings(
         features: features to include to compute embeddings
         ai_config: genai config
     """
+
+    # Register functions
+    create_stringified_function('iterate', {'name': 'apoc.periodic.iterate'})
+    create_function('openai_embedding', {'name': 'apoc.ml.openai.embedding'}, func_raw=True)
+    create_function('set_property', {'name': 'apoc.create.setProperty'}, func_raw=True)
+
+    # Build query
+    p = Pypher()
+
+    p.CALL.iterate(
+        # Match every :Entity node in the graph
+        cypher.MATCH.node('p', labels='Entity').RETURN.p,
+        # For each batch, execute following statements
+        [   
+            # Match OpenAI embedding in a batched manner
+            cypher.CALL.openai_embedding("[item in $_batch | item.p.category]", '$apiKey', "{endpoint: $endpoint, model: $model}").YIELD('index', 'text', 'embedding'),
+            # Set the attribute property of the node to the embedding
+            cypher.CALL.set_property('$_batch[index].p', '$attribute', 'embedding').YIELD('node').RETURN('node')
+        ],
+        cypher.map(
+            batchMode="BATCH_SINGLE",
+            batchSize=1000,
+            params=cypher.map(apiKey='key', endpoint='endpoint', attribute='embedding', model="ada")
+        )
+    ).YIELD("batch", "operations")
+
+    print(str(p))
+
+    breakpoint()
+
     with gdb.driver() as driver:
         driver.execute_query(
-            f"""
-            CALL apoc.periodic.iterate(
-            "MATCH (p:Entity) RETURN p",
-            "CALL apoc.ml.openai.embedding([item in $_batch | {"+".join(["item.p." + feat for feat in features])}], $apiKey, $configuration) 
-            YIELD index, text, embedding
-            CALL apoc.create.setProperty($_batch[index].p, $attribute, embedding) YIELD node
-            RETURN count(*)
-            ",
-            {{batchMode: "BATCH_SINGLE", batchSize: $batchSize, params: $ai_config}}
-            )
-            YIELD batch, operations
-            """,
-            **ai_config,
-            ai_config=ai_config,
+            str(p),
+            **p.bound_params
         )
 
     return {"success": "true"}

@@ -1,55 +1,39 @@
-from pypher import __, Pypher
+from pypher import __ as cypher, Pypher
 
-from pypher.builder import Func
+from pypher.builder import FuncRaw, create_function
 
-
-from pypher import __, create_function, Pypher
-
-from pypher.builder import Func, FuncRaw
+from pypher_utils import create_stringified_function
 
 
-class ApocIterate(FuncRaw):
-    _CAPITALIZE = False
-    _ALIASES = ["periodic_iterate", "apoc_periodic_iterate"]
-    name = "apoc.periodic.iterate"
+create_stringified_function('iterate', {'name': 'apoc.periodic.iterate'})
+create_function('openai_embedding', {'name': 'apoc.ml.openai.embedding'}, func_raw=True)
+create_function('set_property', {'name': 'apoc.create.setProperty'}, func_raw=True)
 
+# class ApocIterate(MyFunc):
+#     _CAPATILIZE = False # will make the resulting name all caps. Defaults to False
+#     _ADD_PRECEEDING_WS = True # add whitespace before the resulting Cypher string. Defaults to True
+#     _CLEAR_PRECEEDING_WS = True # add whitespace after the resulting Cypher string. Defaults to False
+#     _ALIASES = ['iterate'] # aliases for your custom function. Will throw an exception if it is already defined
+#     name = 'apoc.periodic.iterate' # the string that will be printed in the resulting Cypher. If this isn't defined, the class name will be used
 
-class OpenAIEmbedding(FuncRaw):
-    _CAPITALIZE = False
-    _ALIASES = ["openai_embedding", "apoc_ml_openai_embedding"]
-    name = "apoc.ml.openai.embedding"
-
-
-class ApocSetProperty(FuncRaw):
-    _CAPITALIZE = False
-    _ALIASES = ["set_property", "apoc_create_set_property"]
-    name = "apoc.create.setProperty"
-
-
-from pypher import Pypher
-
+# Build query
 p = Pypher()
 
-# p.ApocIterate(
-#   f"'{__.MATCH.node('n', labels='Entity').RETURN.n}'",
-#   f"'{__.openai_embedding(__.n.property('category'), '$apiKey', '$configuration').YIELD('index', 'text', 'embedding').append(__.CALL.set_property('$attr', 'embedding').YIELD.node)}'",
-#   '{batchMode: "BATCH_SINGLE", batchSize: $batchSize, params: {apiKey: $apiKey, configuration: $configuration}}'
-# ).YIELD('batch', 'operations')
-
-batch_size = p.bind_param(1000, name="batchSize")
-key = p.bind_param("secret", name="key")
-endpoint = p.bind_param("localhost", name="endpoint")
-attribute = p.bind_param("embedding", name="attribute")
-
-p.ApocIterate(
-    f"'{__.MATCH.node('n', labels='Entity').RETURN.n}'",
-    f"'{__.openai_embedding(__.n.property('category'), '$apiKey', '$configuration').YIELD('index', 'text', 'embedding').append(__.CALL.set_property('$attr', 'embedding').YIELD.node.RETURN.node)}'",
-    __.map(
-        batchSize=batch_size,
-        configuration=__.map(apiKey=key, endpoint=endpoint),
-        attribute=attribute,
-    ),
+p.CALL.iterate(
+    # Match every :Entity node in the graph
+    cypher.MATCH.node('p', labels='Entity').RETURN.p,
+    # For each batch, execute following statements
+    [   
+        # Match OpenAI embedding in a batched manner
+        cypher.CALL.openai_embedding("[item in $_batch | item.p.category]", '$apiKey', "{endpoint: $endpoint, model: $model}").YIELD('index', 'text', 'embedding'),
+        # Set the attribute property of the node to the embedding
+        cypher.CALL.set_property('$_batch[index].p', '$attribute', 'embedding').YIELD('node').RETURN('node')
+    ],
+    cypher.map(
+        batchMode="BATCH_SINGLE",
+        batchSize=1000,
+        params=cypher.map(apiKey='key', endpoint='endpoint', attribute='embedding', model="ada")
+    )
 ).YIELD("batch", "operations")
 
 print(str(p))
-print(p.bound_params)
