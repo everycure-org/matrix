@@ -13,7 +13,7 @@ from neo4j import GraphDatabase
 from pypher import __ as cypher, Pypher
 
 from pypher.builder import create_function
-from pypher_utils import create_stringified_function
+from . import pypher_utils
 
 from refit.v1.core.inject import inject_object
 from refit.v1.core.unpack import unpack_params
@@ -84,10 +84,14 @@ def compute_embeddings(
         input: input df
         gdb: graph database instance
         features: features to include to compute embeddings
-        ai_config: genai config
+        api_key: api key to use
+        batch_size: batch size
+        attribute: attribute to add
+        endpoint: endpoint to use
+        model: model to use
     """
     # Register functions
-    create_stringified_function("iterate", {"name": "apoc.periodic.iterate"})
+    create_function("iterate", {"name": "apoc.periodic.iterate"}, func_raw=True)
     create_function(
         "openai_embedding", {"name": "apoc.ml.openai.embedding"}, func_raw=True
     )
@@ -95,38 +99,38 @@ def compute_embeddings(
 
     # Build query
     p = Pypher()
-
     p.CALL.iterate(
         # Match every :Entity node in the graph
-        cypher.MATCH.node("p", labels="Entity").RETURN.p,
+        cypher.stringify(cypher.MATCH.node("p", labels="Entity").RETURN.p),
         # For each batch, execute following statements
-        [
-            # Match OpenAI embedding in a batched manner
-            cypher.CALL.openai_embedding(
-                "[item in $_batch | item.p.category]",
-                "$apiKey",
-                "{endpoint: $endpoint, model: $model}",
-            ).YIELD("index", "text", "embedding"),
-            # Set the attribute property of the node to the embedding
-            cypher.CALL.set_property("$_batch[index].p", "$attribute", "embedding")
-            .YIELD("node")
-            .RETURN("node"),
-        ],
+        cypher.stringify(
+            [
+                # Match OpenAI embedding in a batched manner
+                cypher.CALL.openai_embedding(
+                    "[item in $_batch | item.p.category]",
+                    "$apiKey",
+                    "{endpoint: $endpoint, model: $model}",
+                ).YIELD("index", "text", "embedding"),
+                # Set the attribute property of the node to the embedding
+                cypher.CALL.set_property("$_batch[index].p", "$attribute", "embedding")
+                .YIELD("node")
+                .RETURN("node"),
+            ]
+        ),
         cypher.map(
             batchMode="BATCH_SINGLE",
-            batchSize=1000,
+            parallel="true",
+            batchSize=batch_size,
             params=cypher.map(
-                apiKey="key", endpoint="endpoint", attribute="embedding", model="ada"
+                apiKey=api_key, endpoint=endpoint, attribute=attribute, model=model
             ),
         ),
     ).YIELD("batch", "operations")
 
-    breakpoint()
-
     with gdb.driver() as driver:
-        driver.execute_query(str(p), **p.bound_params)
+        summary = driver.execute_query(str(p), **p.bound_params).summary
 
-    return {"success": "true"}
+    return {"success": "true", "time": summary.result_available_after}
 
 
 def concat_features(nodes: DataFrame, features: List[str], ai_config: Dict[str, str]):

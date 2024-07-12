@@ -10,12 +10,12 @@ def create_pipeline(**kwargs) -> Pipeline:
         [
             node(
                 func=nodes.compute_embeddings,
-                inputs=[
-                    "integration.model_input.nodes",
-                    "params:embeddings.gdb",
-                    "params:embeddings.node.features",
-                    "params:embeddings.ai_config",
-                ],
+                inputs={
+                    "input": "integration.model_input.nodes",
+                    "gdb": "params:embeddings.gdb",
+                    "features": "params:embeddings.node.features",
+                    "unpack": "params:embeddings.ai_config",
+                },
                 outputs="embeddings.prm.graph.embeddings@yaml",
                 name="add_node_embeddings",
                 tags=["argo.retries-3"],

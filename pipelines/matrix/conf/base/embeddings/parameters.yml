@@ -14,9 +14,8 @@ embeddings.ai_config:
   api_key: ${oc.env:OPENAI_API_KEY} 
   attribute: embedding
   batch_size: 1 # NOTE: The MockApi does not support batching, hence disabled
-  configuration:
-    endpoint: ${oc.env:OPENAI_ENDPOINT}
-    model: text-embedding-3-small
+  endpoint: ${oc.env:OPENAI_ENDPOINT}
+  model: text-embedding-3-small
 
 # Attributes used as input features to compute
 # node embeddings.

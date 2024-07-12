@@ -1,17 +1,23 @@
-
+"""Custom Pypher utilities."""
 from pypher import Pypher
 from pypher.builder import FuncRaw
 from pypher.partial import Partial
 from pypher.builder import _MODULE
 
-class FuncWithStringifiedCypherArguments(FuncRaw):
-    _CAPITALIZE = False
+
+class Stringify(FuncRaw):
+    """Pypher Stringify function.
+
+    Custom Pypher function to represent stringification of a Cypher query. This is relevant
+    for operations such as `apoc.periodic.iterate`, which expects stringified cypher queries
+    as arguments.
+    """
 
     def get_args(self):
+        """Function to retrieve args."""
         args = []
 
         for arg in self.args:
-
             # NOTE: Allows specifying multiple statements as an array
             if isinstance(arg, list):
                 arg = " ".join([str(el) for el in arg])
@@ -19,13 +25,18 @@ class FuncWithStringifiedCypherArguments(FuncRaw):
             if isinstance(arg, (Pypher, Partial)):
                 arg.parent = self.parent
 
-            args.append(f"'{str(arg)}'")
+            args.append(f"'{arg}'")
 
-        return ', '.join(args)
-    
+        return ", ".join(args)
 
-def create_stringified_function(name, attrs=None, func_raw=False):
-    """
+    def __unicode__(self):
+        """Unicode function."""
+        return self.get_args()
+
+
+def create_custom_function(name, func, attrs=None, func_raw=False):
+    """Create custom function.
+
     This is a utility function that is used to dynamically create new
     Func or FuncRaw objects.
 
@@ -45,5 +56,7 @@ def create_stringified_function(name, attrs=None, func_raw=False):
         instead of a Func instance
     :return None
     """
+    setattr(_MODULE, name, type(name, (func,), attrs))
 
-    setattr(_MODULE, name, type(name, (FuncWithStringifiedCypherArguments,), attrs))
+
+create_custom_function("stringify", Stringify, {"name": "stringify"})
