@@ -663,40 +663,40 @@ spec:
   - name: embeddings
     dag:
       tasks:
-      - name: add-node-embeddings
+      # - name: add-node-embeddings
+      #   template: kedro
+      #   arguments:
+      #     parameters:
+      #     - name: pipeline
+      #       value: embeddings
+      #     - name: kedro_node
+      #       value: add_node_embeddings
+      #     - name: num_retries
+      #       value: 3
+      - name: apply-pca
         template: kedro
+        # dependencies:
+        #   - add-node-embeddings
         arguments:
           parameters:
           - name: pipeline
             value: embeddings
           - name: kedro_node
-            value: add_node_embeddings
+            value: apply_pca
           - name: num_retries
-            value: 3
-      # - name: apply-pca
-      #   template: kedro
-      #   # dependencies:
-      #   #   - add-node-embeddings
-      #   arguments:
-      #     parameters:
-      #     - name: pipeline
-      #       value: embeddings
-      #     - name: kedro_node
-      #       value: apply_pca
-      #     - name: num_retries
-      #       value: 0
-      # - name: add-topological-embeddings
-      #   template: kedro
-      #   # dependencies:
-      #   #   - apply-pca
-      #   arguments:
-      #     parameters:
-      #     - name: pipeline
-      #       value: embeddings
-      #     - name: kedro_node
-      #       value: add_topological_embeddings
-      #     - name: num_retries
-      #       value: 0
+            value: 0
+      - name: add-topological-embeddings
+        template: kedro
+        # dependencies:
+        #   - apply-pca
+        arguments:
+          parameters:
+          - name: pipeline
+            value: embeddings
+          - name: kedro_node
+            value: add_topological_embeddings
+          - name: num_retries
+            value: 0
   - name: fabricator
     dag:
       tasks:
