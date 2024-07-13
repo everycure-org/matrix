@@ -192,8 +192,7 @@ def add_topological_embeddings(
         graph = gds.graph.get(graph_name)
         gds.graph.drop(graph, False)
 
-    config = projection.pop("config")
-    graph, _ = gds.graph.project(*projection.values(), **config)
+    graph, _ = gds.graph.project(*projection.values())
 
     # Validate whether the model exists
     model_name = estimator.get("args").get("modelName")
