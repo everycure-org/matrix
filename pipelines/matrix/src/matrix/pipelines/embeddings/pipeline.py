@@ -22,10 +22,10 @@ def create_pipeline(**kwargs) -> Pipeline:
             ),
             node(
                 func=nodes.reduce_dimension,
-                inputs=[
-                    "embeddings.prm.graph.embeddings@neo",
-                    "params:embeddings.dimensionality_reduction",
-                ],
+                inputs={
+                    "df": "embeddings.prm.graph.embeddings@neo",
+                    "unpack": "params:embeddings.dimensionality_reduction",
+                },
                 outputs="embeddings.prm.graph.pca_embeddings",
                 name="apply_pca",
             ),
