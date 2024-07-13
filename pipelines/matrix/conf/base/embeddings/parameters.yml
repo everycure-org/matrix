@@ -12,7 +12,7 @@ embeddings.gdb:
 # testing purposes.
 embeddings.ai_config:
   api_key: ${oc.env:OPENAI_API_KEY} 
-  attribute: embedding
+  attribute: &_property embedding
   batch_size: 1 # NOTE: The MockApi does not support batching, hence disabled
   endpoint: ${oc.env:OPENAI_ENDPOINT}
   model: text-embedding-3-small
@@ -25,8 +25,11 @@ embeddings.node.features: ["id", "category"]
 # generated node embeddings.
 # https://spark.apache.org/docs/latest/api/python/reference/api/pyspark.ml.feature.PCA.html
 embeddings.dimensionality_reduction:
-  object: pyspark.ml.feature.PCA
-  k: 2
+  input: *_property
+  output: &_pca_property 'pca_embedding'
+  transformer:
+    object: pyspark.ml.feature.PCA
+    k: 2
 
 # FUTURE: This is a highly temp. solution that serves as PoC of leveraging Neo4J's
 # AI functionality. If works as expected, we'll do a refinement step to clean this up.
@@ -55,11 +58,11 @@ embeddings.topological:
     nodeProjection:
       Entity:
         label: 'Entity'
-        properties: &_property 'pca_embedding'
+        properties: *_pca_property
     relationshipProjection: '*'
   estimator:
     model: graphSage
     args:
       modelName: topological_embeddings
-      featureProperties: [*_property]
+      featureProperties: [*_pca_property]
   write_property: topological_embedding

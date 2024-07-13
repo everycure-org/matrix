@@ -134,19 +134,22 @@ def compute_embeddings(
     return {"success": "true", "time": summary.result_available_after}
 
 
+@unpack_params()
 @inject_object()
-def reduce_dimension(df: DataFrame, transformer):
+def reduce_dimension(df: DataFrame, transformer, input: str, output: str):
     """Function to apply dimensionality reduction.
 
     Args:
         df: to apply technique to
         transformer: transformer to apply
+        input: name of attribute to transform
+        output: name of attribute to store result
     Returns:
         Dataframe with reduced dimension
     """
     # Convert into correct type
-    df = df.filter(F.col("embedding").isNotNull()).withColumn(
-        "features", array_to_vector("embedding")
+    df = df.filter(F.col(input).isNotNull()).withColumn(
+        "features", array_to_vector(input)
     )
 
     # Link
@@ -156,7 +159,7 @@ def reduce_dimension(df: DataFrame, transformer):
     return (
         transformer.fit(df)
         .transform(df)
-        .withColumn("pca_embedding", vector_to_array("pca_features"))
+        .withColumn(output, vector_to_array("pca_features"))
         .drop("pca_features", "features")
     )
 
