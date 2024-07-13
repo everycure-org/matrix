@@ -52,13 +52,14 @@ embeddings.gds:
 embeddings.topological:
   projection:
     graphName: embeddings
-    nodeProjection: '*'
+    nodeProjection:
+      Entity:
+        label: 'Entity'
+        properties: &_property 'pca_embedding'
     relationshipProjection: '*'
-    config:
-      nodeProperties: &_feature 'pca_embedding'
   estimator:
     model: graphSage
     args:
       modelName: topological_embeddings
-      featureProperties: [*_feature]
+      featureProperties: [*_property]
   write_property: topological_embedding
