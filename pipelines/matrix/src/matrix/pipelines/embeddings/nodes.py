@@ -148,9 +148,7 @@ def reduce_dimension(df: DataFrame, transformer, input: str, output: str):
         Dataframe with reduced dimension
     """
     # Convert into correct type
-    df = df.filter(F.col(input).isNotNull()).withColumn(
-        "features", array_to_vector(input)
-    )
+    df = df.withColumn("features", array_to_vector(input))
 
     # Link
     transformer.setInputCol("features")
