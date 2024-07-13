@@ -1,2 +1,2 @@
 embeddings.ai_config:
-  batchSize: 2000
+  batch_size: 2000
