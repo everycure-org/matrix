@@ -164,7 +164,7 @@ def reduce_dimension(df: DataFrame, transformer, input: str, output: str):
 
 @inject_object()
 @unpack_params()
-def add_topological_embeddings(
+def train_topological_embeddings(
     df: DataFrame,
     edges: DataFrame,
     gds: GraphDataScience,
@@ -205,6 +205,28 @@ def add_topological_embeddings(
     model, _ = getattr(gds.beta, estimator.get("model")).train(
         graph, **estimator.get("args")
     )
+
+    return {"success": "true"}
+
+
+@inject_object()
+@unpack_params()
+def write_topological_embeddings(
+    df: DataFrame,
+    edges: DataFrame,
+    gds: GraphDataScience,
+    projection: Any,
+    estimator: Any,
+    write_property: str,
+) -> Dict:
+    """Write topological embeddings."""
+    # Retrieve the graph
+    graph_name = projection.get("graphName")
+    graph = gds.graph.get(graph_name)
+
+    # Retrieve the model
+    model_name = estimator.get("args").get("modelName")
+    model = gds.model.get(model_name)
 
     # Write model output back to graph
     model.predict_write(graph, writeProperty=write_property)
