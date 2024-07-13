@@ -29,8 +29,19 @@ def create_pipeline(**kwargs) -> Pipeline:
                 outputs="embeddings.prm.graph.pca_embeddings",
                 name="apply_pca",
             ),
+            # node(
+            #     func=nodes.train_topological_embeddings,
+            #     inputs={
+            #         "df": "embeddings.prm.graph.pca_embeddings",
+            #         "edges": "integration.model_input.edges",
+            #         "gds": "params:embeddings.gds",
+            #         "unpack": "params:embeddings.topological",
+            #     },
+            #     outputs="dummy",
+            #     name="train_topological_embeddings",
+            # ),
             node(
-                func=nodes.add_topological_embeddings,
+                func=nodes.write_topological_embeddings,
                 inputs={
                     "df": "embeddings.prm.graph.pca_embeddings",
                     "edges": "integration.model_input.edges",
