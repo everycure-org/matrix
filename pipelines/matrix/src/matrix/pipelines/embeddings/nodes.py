@@ -123,7 +123,7 @@ def compute_embeddings(
             batchMode="BATCH_SINGLE",
             parallel="true",
             batchSize=batch_size,
-            concurrency=100,
+            concurrency=50,
             params=cypher.map(apiKey=api_key, endpoint=endpoint, attribute=attribute, model=model),
         ),
     ).YIELD("batch", "operations")
