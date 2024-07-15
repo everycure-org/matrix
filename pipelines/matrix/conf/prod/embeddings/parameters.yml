@@ -1,2 +1,21 @@
 embeddings.ai_config:
   batch_size: 2000
+
+
+# Defines strategy used to reduce dimensions of the GenAI
+# generated node embeddings.
+# https://spark.apache.org/docs/latest/api/python/reference/api/pyspark.ml.feature.PCA.html
+embeddings.dimensionality_reduction:
+  transformer:
+    object: pyspark.ml.feature.PCA
+    k: 100
+
+embeddings.topological:
+  estimator:
+    model: graphSage
+    args:
+      embeddingDimension: 512
+      batchSize: 200000
+      epochs: 10
+      searchDepth: 100
+      learningRate: 0.01
