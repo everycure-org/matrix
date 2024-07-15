@@ -212,8 +212,7 @@ def train_topological_embeddings(
 @inject_object()
 @unpack_params()
 def write_topological_embeddings(
-    df: DataFrame,
-    edges: DataFrame,
+    model: DataFrame,
     gds: GraphDataScience,
     projection: Any,
     estimator: Any,
