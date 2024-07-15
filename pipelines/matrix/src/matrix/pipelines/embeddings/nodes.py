@@ -129,8 +129,6 @@ def compute_embeddings(
     ).YIELD("batch", "operations")
     # fmt: on
 
-    print(str(p))
-
     with gdb.driver() as driver:
         summary = driver.execute_query(str(p), **p.bound_params).summary
 
