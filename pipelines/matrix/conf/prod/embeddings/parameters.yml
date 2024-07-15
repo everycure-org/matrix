@@ -1,5 +1,5 @@
 embeddings.ai_config:
-  batch_size: 500
+  batch_size: 10
 
 
 # Defines strategy used to reduce dimensions of the GenAI
