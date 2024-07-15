@@ -112,7 +112,7 @@ def compute_embeddings(
             [
                 # Apply OpenAI embedding in a batched manner, embedding
                 # is applied on the concatenation of supplied features for each node.
-                cypher.CALL.openai_embedding(f"[item in $_batch | {'+'.join(f'coalesce(item.p.{attr}, \'\')' for attr in features)}]", "$apiKey", "{endpoint: $endpoint, model: $model}").YIELD("index", "text", "embedding"),
+                cypher.CALL.openai_embedding(f"[item in $_batch | item.p.category + coalesce(item.p.name, \"\")]", "$apiKey", "{endpoint: $endpoint, model: $model}").YIELD("index", "text", "embedding"),
                 # Set the attribute property of the node to the embedding
                 cypher.CALL.set_property("$_batch[index].p", "$attribute", "embedding").YIELD("node").RETURN("node"),
             ]
