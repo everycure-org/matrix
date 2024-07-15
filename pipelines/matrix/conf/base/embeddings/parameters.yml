@@ -66,5 +66,4 @@ embeddings.topological:
       modelName: topological_embeddings
       featureProperties: [*_pca_property]
       concurrency: 4
-      storeModelToDisk: true
   write_property: topological_embedding
