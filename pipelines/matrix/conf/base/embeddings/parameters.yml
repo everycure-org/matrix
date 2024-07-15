@@ -19,7 +19,7 @@ embeddings.ai_config:
 
 # Attributes used as input features to compute
 # node embeddings.
-embeddings.node.features: ["id", "category"]
+embeddings.node.features: ["id", "category", "name"]
 
 # Defines strategy used to reduce dimensions of the GenAI
 # generated node embeddings.
