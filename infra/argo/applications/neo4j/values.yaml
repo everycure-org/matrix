@@ -9,7 +9,7 @@ neo4j: # the name of the helm dependency
     name: neo4j
     resources:
       cpu: "4"
-      memory: "6Gi"
+      memory: "8Gi"
   volumes:
     data:
       mode: "dynamic"
