@@ -44,18 +44,6 @@ variable "super_admins" {}
 EOF
 }
 
-generate "provider" {
-  path      = "provider.tf"
-  if_exists = "overwrite_terragrunt"
-  contents  = <<EOF
-provider "google" {
-}
-provider "google-beta" {
-  user_project_override = true
-  billing_project       = "core-422020"
-}
-EOF
-}
 
 # FIXME may need to be moved into another location 
 
