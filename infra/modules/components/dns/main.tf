@@ -23,6 +23,7 @@ resource "google_dns_record_set" "a" {
   ttl          = 300
 
   rrdatas = [
+    # TODO document where these come from (Google gives em to us in AppEngine)
     "216.239.32.21",
     "216.239.34.21",
     "216.239.36.21",
