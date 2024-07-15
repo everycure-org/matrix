@@ -22,7 +22,6 @@ modelling.raw.nodes:
     query: >  
       MATCH (n:Entity) 
       WHERE n:Drug OR n:Disease
-      IF N is disease, then there exists a relation n->equal_to->m:mondo
       RETURN 
         n.id AS id, 'biolink:' + labels(n)[1] AS category, 
         n.topological_embedding AS embedding
