@@ -8,8 +8,8 @@ neo4j: # the name of the helm dependency
     passwordFromSecret: neo4j-password
     name: neo4j
     resources:
-      cpu: "4"
-      memory: "8Gi"
+      cpu: "30" # takes almost full advantage of e2-standard-32 instance
+      memory: "116Gi" # takes almost full advantage of e2-standard-32 instance
   volumes:
     data:
       mode: "dynamic"
@@ -44,68 +44,68 @@ neo4j: # the name of the helm dependency
     apoc.import.file.use_neo4j_config: "true"
 
   logging:
-  serverLogsXml: |-
-    <?xml version="1.0" encoding="UTF-8"?>
-    <!-- Example JSON logging configuration -->
-    <Configuration status="ERROR" monitorInterval="30" packages="org.neo4j.logging.log4j">
-        <Appenders>
-            <!-- Default debug.log, please keep -->
-            <RollingRandomAccessFile name="DebugLog" fileName="${config:server.directories.logs}/debug.log"
-                                     filePattern="$${config:server.directories.logs}/debug.log.%02i">
-                <JsonTemplateLayout eventTemplateUri="classpath:org/neo4j/logging/StructuredLayoutWithMessage.json"/>
-                <Policies>
-                    <SizeBasedTriggeringPolicy size="20 MB"/>
-                </Policies>
-                <DefaultRolloverStrategy fileIndex="min" max="7"/>
-            </RollingRandomAccessFile>
+    serverLogsXml: |-
+      <?xml version="1.0" encoding="UTF-8"?>
+      <!-- Example JSON logging configuration -->
+      <Configuration status="ERROR" monitorInterval="30" packages="org.neo4j.logging.log4j">
+          <Appenders>
+              <!-- Default debug.log, please keep -->
+              <RollingRandomAccessFile name="DebugLog" fileName="${config:server.directories.logs}/debug.log"
+                                       filePattern="$${config:server.directories.logs}/debug.log.%02i">
+                  <JsonTemplateLayout eventTemplateUri="classpath:org/neo4j/logging/StructuredLayoutWithMessage.json"/>
+                  <Policies>
+                      <SizeBasedTriggeringPolicy size="20 MB"/>
+                  </Policies>
+                  <DefaultRolloverStrategy fileIndex="min" max="7"/>
+              </RollingRandomAccessFile>
 
-            <RollingRandomAccessFile name="HttpLog" fileName="${config:server.directories.logs}/http.log"
-                                     filePattern="$${config:server.directories.logs}/http.log.%02i">
-                <JsonTemplateLayout eventTemplateUri="classpath:org/neo4j/logging/StructuredLayoutWithMessage.json"/>
-                <Policies>
-                    <SizeBasedTriggeringPolicy size="20 MB"/>
-                </Policies>
-                <DefaultRolloverStrategy fileIndex="min" max="5"/>
-            </RollingRandomAccessFile>
+              <RollingRandomAccessFile name="HttpLog" fileName="${config:server.directories.logs}/http.log"
+                                       filePattern="$${config:server.directories.logs}/http.log.%02i">
+                  <JsonTemplateLayout eventTemplateUri="classpath:org/neo4j/logging/StructuredLayoutWithMessage.json"/>
+                  <Policies>
+                      <SizeBasedTriggeringPolicy size="20 MB"/>
+                  </Policies>
+                  <DefaultRolloverStrategy fileIndex="min" max="5"/>
+              </RollingRandomAccessFile>
 
-            <RollingRandomAccessFile name="QueryLog" fileName="${config:server.directories.logs}/query.log"
-                                     filePattern="$${config:server.directories.logs}/query.log.%02i">
-                <JsonTemplateLayout eventTemplateUri="classpath:org/neo4j/logging/QueryLogJsonLayout.json"/>
-                <Policies>
-                    <SizeBasedTriggeringPolicy size="20 MB"/>
-                </Policies>
-                <DefaultRolloverStrategy fileIndex="min" max="7"/>
-            </RollingRandomAccessFile>
+              <RollingRandomAccessFile name="QueryLog" fileName="${config:server.directories.logs}/query.log"
+                                       filePattern="$${config:server.directories.logs}/query.log.%02i">
+                  <JsonTemplateLayout eventTemplateUri="classpath:org/neo4j/logging/QueryLogJsonLayout.json"/>
+                  <Policies>
+                      <SizeBasedTriggeringPolicy size="20 MB"/>
+                  </Policies>
+                  <DefaultRolloverStrategy fileIndex="min" max="7"/>
+              </RollingRandomAccessFile>
 
-            <RollingRandomAccessFile name="SecurityLog" fileName="${config:server.directories.logs}/security.log"
-                                     filePattern="$${config:server.directories.logs}/security.log.%02i">
-                <JsonTemplateLayout eventTemplateUri="classpath:org/neo4j/logging/StructuredLayoutWithMessage.json"/>
-                <Policies>
-                    <SizeBasedTriggeringPolicy size="20 MB"/>
-                </Policies>
-                <DefaultRolloverStrategy fileIndex="min" max="7"/>
-            </RollingRandomAccessFile>
-        </Appenders>
+              <RollingRandomAccessFile name="SecurityLog" fileName="${config:server.directories.logs}/security.log"
+                                       filePattern="$${config:server.directories.logs}/security.log.%02i">
+                  <JsonTemplateLayout eventTemplateUri="classpath:org/neo4j/logging/StructuredLayoutWithMessage.json"/>
+                  <Policies>
+                      <SizeBasedTriggeringPolicy size="20 MB"/>
+                  </Policies>
+                  <DefaultRolloverStrategy fileIndex="min" max="7"/>
+              </RollingRandomAccessFile>
+          </Appenders>
 
-        <Loggers>
-            <!-- Log levels. One of DEBUG, INFO, WARN, ERROR or OFF -->
+          <Loggers>
+              <!-- Log levels. One of DEBUG, INFO, WARN, ERROR or OFF -->
 
-            <!-- The debug log is used as the root logger to catch everything -->
-            <Root level="INFO">
-                <AppenderRef ref="DebugLog"/> <!-- Keep this -->
-            </Root>
-            <!-- The query log, must be named "QueryLogger" -->
-            <Logger name="QueryLogger" level="INFO" additivity="false">
-                <AppenderRef ref="QueryLog"/>
-            </Logger>
-            <!-- The http request log, must be named "HttpLogger" -->
-            <Logger name="HttpLogger" level="INFO" additivity="false">
-                <AppenderRef ref="HttpLog"/>
-            </Logger>
-            <!-- The security log, must be named "SecurityLogger" -->
-            <Logger name="SecurityLogger" level="INFO" additivity="false">
-                <AppenderRef ref="SecurityLog"/>
-            </Logger>
-        </Loggers>
-    </Configuration>
+              <!-- The debug log is used as the root logger to catch everything -->
+              <Root level="INFO">
+                  <AppenderRef ref="DebugLog"/> <!-- Keep this -->
+              </Root>
+              <!-- The query log, must be named "QueryLogger" -->
+              <Logger name="QueryLogger" level="INFO" additivity="false">
+                  <AppenderRef ref="QueryLog"/>
+              </Logger>
+              <!-- The http request log, must be named "HttpLogger" -->
+              <Logger name="HttpLogger" level="INFO" additivity="false">
+                  <AppenderRef ref="HttpLog"/>
+              </Logger>
+              <!-- The security log, must be named "SecurityLogger" -->
+              <Logger name="SecurityLogger" level="INFO" additivity="false">
+                  <AppenderRef ref="SecurityLog"/>
+              </Logger>
+          </Loggers>
+      </Configuration>
  
