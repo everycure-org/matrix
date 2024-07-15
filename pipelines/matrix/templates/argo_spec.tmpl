@@ -44,10 +44,10 @@ spec:
       resources: # limit the resources
         requests:
           memory: 6Gi
-          cpu: 2
+          cpu: 4
         limits:
           memory: 6Gi
-          cpu: 2
+          cpu: 4
       env:
         - name: NEO4J_HOST
           value: {% raw %} "{{ `{{workflow.parameters.neo4j_host}}` }}" 
