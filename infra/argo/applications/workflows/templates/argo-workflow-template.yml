@@ -687,8 +687,8 @@ spec:
             value: 0
       - name: train-topological-embeddings
         template: kedro
-        # dependencies:
-        #   - apply-pca
+        dependencies:
+          - apply-pca
         arguments:
           parameters:
           - name: pipeline
