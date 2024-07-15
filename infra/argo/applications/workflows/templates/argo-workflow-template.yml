@@ -39,11 +39,11 @@ spec:
       image:  "{{ `{{workflow.parameters.image}}` }}" 
       resources: # limit the resources
         requests:
-          memory: 8Gi
-          cpu: 4
+          memory: 32Gi
+          cpu: 12
         limits:
-          memory: 8Gi
-          cpu: 4
+          memory: 32Gi
+          cpu: 12
       env:
         - name: NEO4J_HOST
           value:  "{{ `{{workflow.parameters.neo4j_host}}` }}" 
