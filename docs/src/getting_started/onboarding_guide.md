@@ -2,11 +2,62 @@
 
 Welcome to the Matrix onboarding guide! This document provide an introduction to the codebase, and guide you through the process of setting up your local environment.
 
-# Preliminaries
+## Preliminaries
 
 The Matrix project contains a pipeline and auxiliary services designed to identify drug-disease pair candidates for drug-repurposing.
 
 Moreover, the codebase contains the defintion of the infrastructure to run the pipeline on Google Cloud.
+
+## Pre-requisites
+
+This pages assumes basic knowledge of:
+
+- Docker
+- Docker-compose
+- Python
+- YAML
+
+### Docker
+
+Make sure you have [docker](https://www.docker.com/) and [docker-compose](https://docs.docker.com/compose/) installed. Docker can be downloaded directly from the from the [following page](https://docs.docker.com/desktop/install/mac-install/). Once installed, proceed with the following command:
+
+```bash
+brew install docker-compose
+```
+
+> 💡 The default settings of Docker have rather low resources configured, you might want to increase those in Docker desktop.
+
+### Java
+
+Our pipeline uses Spark for distributed computations, which requires Java under the hood.
+```
+brew install openjdk@11
+```
+
+> 🆘 Don't forget to link your Java installation using the instructions prompted after the downloaded.
+
+## Local setup
+
+Our codebase features code that allows for fully localized execution of the pipeline and its' auxiliary services using `docker-compose`. The deployment consists of two files that can be [merged](https://docs.docker.com/compose/multiple-compose-files/merge/) depending on the intended use, i.e.,
+
+1. The base `docker-compose` file defines the runtime services, i.e.,
+    - Neo4J graph database
+    - [Mockserver](https://www.mock-server.com/) implementing a OpenAI compatible GenAI API
+        - This allows for running the full pipeline e2e without a provider token
+2. The `docker-compose.test` file adds in the pipeline container for integration testing
+    - This file is used by our CI/CD setup and can be ignored for local development.
+
+![](../assets/img/docker-compose.drawio.svg)
+
+After completing the installation, run the following command from the `deployments/compose` directory to bring up the services.
+
+```bash
+docker-compose up
+```
+
+> Alternatively, you can add the `-d` flag at the end of the command to run in the background.
+
+To validate whether the setup is running, navigate to [localhost](http://localhost:7474/) in your browser, this will open the Neo4J dashboard. Use `neo4j` and `admin` as the username and password combination sign in.
 
 ## Kedro
 
@@ -23,7 +74,7 @@ We're using [Kedro](https://kedro.org/) as our data pipelining framework. Kedro 
 
 ### Data layer convention
 
-Data used by our pipeline is registered in the data catalog. To add additional structure to the catalog items, we organise our data according to the following convention:
+Data used by our pipeline is registered in the _data catalog_. To add additional structure to the catalog items, we organise our data according to the following convention:
 
 1. __Raw__: Data as received directly from the source, no pre-processing performed.
 2. __Intermediate__: Data with simple cleaning steps applied, e.g., correct typing and column names.
@@ -42,11 +93,22 @@ Data used by our pipeline is registered in the data catalog. To add additional s
 
 ### Data fabrication
 
+> 🔎 For more information regarding the fabricator, navigate to `pipelines/matrix/packages/data_fabricator`.
+
 Our pipeline operates on large datasets, as a result the pipeline may take several hours the complete. Unfortunately, large iteration time leads to decreased developer productivity. For this reason, we've established a data fabricator to enable test runs on synthetic data.
 
 To seamlessly run the same codebase on both the fabricated and the production data, we leverage [Kedro configuration environments](https://docs.kedro.org/en/stable/configuration/configuration_basics.html#configuration-environments).
 
 The situation is depicted below, in the `base` environment our pipeline will plug into the datasets as produced by our fabricator pipeline, whereas the `prod` environment plugs into the production system.
+
+```bash
+# Pipeline uses the base, i.e., local setup by default.
+kedro run -p fabricator
+kedro run
+
+# To leverage the production datasets
+kedro run --env prod
+```
 
 ![](../assets/img/fabrication.drawio.svg)
 
