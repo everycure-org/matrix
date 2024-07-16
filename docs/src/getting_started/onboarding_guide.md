@@ -112,6 +112,89 @@ kedro run --env prod
 
 ![](../assets/img/fabrication.drawio.svg)
 
+### Dependency injection
+
+At the end of the day, data science code is very configuration heavy, and is therefore often flooded with constants. Consider the following example:
+
+```python
+def train_model(
+    data: pd.DataFrame,
+    features: List[str],
+    target_col_name: str = "y"
+) -> sklearn.base.BaseEstimator:
+
+    # Initialise the classifier
+    estimator = xgboost.XGBClassifier(tree_method="hist")
+
+    # Index data
+    mask = data["split"].eq("TRAIN")
+    X_train = data.loc[mask, features]
+    y_train = data.loc[mask, target_col_name]
+
+    # Fit estimator
+    return estimator.fit(X_train.values, y_train.values)
+```
+
+While the code above is easily generalizable, its highly coupled to the `xgboost.XGBClassifier` object. We leverage the [dependency injection](https://www.geeksforgeeks.org/dependency-injectiondi-design-pattern/) pattern to declare the `xgboost.XGBClassifier` as configuration, and pass it into the function as opposed to constructing it within. See the example below:
+
+```yaml
+# Contents of the parameter file, were indicating that
+# `estimator` should be an object of the type `sklearn.base.BaseEstimator`
+# that should be instantiated with the `tree_method` construction arg.
+estimator:
+    object: sklearn.base.BaseEstimator
+    tree_method: hist
+```
+
+```python
+# inject_object() recorgnizes configuration in the above format,
+# and ensures that the decorated function receives the instantiated 
+# objects.
+from refit.v1.core.inject import inject_object
+
+@inject_object()
+def train_model(
+    data: pd.DataFrame,
+    features: List[str],
+    estimator: sklearn.base.BaseEstimator, # Estimator is now an argument
+    target_col_name: str = "y",
+) -> sklearn.base.BaseEstimator:
+
+    # Index data
+    mask = data["split"].eq("TRAIN")
+    X_train = data.loc[mask, features]
+    y_train = data.loc[mask, target_col_name]
+
+    # Fit estimator
+    return estimator.fit(X_train.values, y_train.values)
+```
+
+```python
+def create_pipeline(**kwargs) -> Pipeline:
+    return pipeline(
+        [
+            node(
+                func=train_model,
+                inputs=[
+                    ...
+                    "params:estimator", # Pass in the parameter
+                    ...
+                ],
+                ...
+            ),
+            ...
+        ]
+```
+
+The dependency
+
+### Dynamic pipelines
+
+> 🔎 Dynamic pipelining is a rather new concept in Kedro. We recommend checking out the [Dynamic Pipelines](https://getindata.com/blog/kedro-dynamic-pipelines/) blogpost. This pipelining strategy heavily relies on Kedro's [dataset factories](https://docs.kedro.org/en/stable/data/kedro_dataset_factories.html) feature.
+
+Given the experimental nature of our project, we aim to produce different model flavours. For instance, a model with static hyper-parameters, a model that is hyper-parameter tuned, and an ensemble of hyper-parameter tuned models, etc.
+
+Dynamic pipelines in Kedro allow us to do exactly this. We're defining a single pipeline skeleton, which is instantiated multiple times, with different parameters.
 
 ## Pipeline
 
