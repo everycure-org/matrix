@@ -1,4 +1,5 @@
 """Module containing Neo4JDataset."""
+
 from typing import Any
 from copy import deepcopy
 from functools import wraps
@@ -8,8 +9,11 @@ from pyspark.sql import DataFrame, SparkSession
 from kedro.io.core import Version
 from kedro_datasets.spark import SparkDataset
 
+import logging
 
 from refit.v1.core.inject import _parse_for_objects
+
+logger = logging.Logger(__name__)
 
 
 class Neo4JSparkDataset(SparkDataset):
@@ -113,11 +117,20 @@ class Neo4JSparkDataset(SparkDataset):
         return load_obj.load()
 
     def _save(self, data: DataFrame) -> None:
-        (
-            data.write.format("org.neo4j.spark.DataSource")
-            .option("database", self._database)
-            .option("url", self._url)
-            .options(**self._credentials)
-            .options(**self._save_args)
-            .save(**{"mode": "overwrite"})
-        )
+        try:
+            if self._save_args.get("persist") == False:
+                # skip persistence
+                return None
+            else:
+                (
+                    data.write.format("org.neo4j.spark.DataSource")
+                    .option("database", self._database)
+                    .option("url", self._url)
+                    .options(**self._credentials)
+                    .options(**self._save_args)
+                    .save(**{"mode": "overwrite"})
+                )
+        except Exception as e:
+            logger.error("saving dataset failed with the following parameters")
+            logger.error(self._save_args)
+            raise e

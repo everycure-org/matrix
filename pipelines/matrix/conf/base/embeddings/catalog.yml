@@ -40,11 +40,29 @@ embeddings.prm.graph.pca_embeddings:
       RETURN n.id as id, n.pca_embedding as embedding
 
 embeddings.models.graphsage:
-  type: yaml.YAMLDataset
-  filepath: ${globals:paths.models}/graphsage/result.yml
+  # we do not actually do anything with this DS, thus it's a dummy
+  filepath: ${globals:paths.prm}/graphsage/result.yml
+  type:  yaml.YAMLDataset
 
 # NOTE: Dummy catalog entry to enforce Kedro dependency
 # between embedding and modelling pipeline.
 embeddings.model_output.graphsage:
-  type: yaml.YAMLDataset
-  filepath: ${globals:paths.model_output}/graphsage/result.yml
+  <<: *_neo4j_ds
+  save_args:
+    # Dummy Query that never gets written to because we use GDS to execute the write-back of graphsage
+    persist: false
+  load_args:
+    query: >
+      MATCH (n: Entity) 
+      RETURN 
+          n.id as id, 
+          n.name as name,
+          n.category as category,
+          // n.all_names as all_names,
+          // n.all_names as all_names,
+          n.description as description,
+          n.embedding as node_embedding,
+          n.pca_embedding as pca_embedding,
+          n.topological_embedding as topological_embedding
+          // n.labels as labels,
+          // n.properties as properties

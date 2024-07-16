@@ -9,8 +9,13 @@ lock:
 test:
 	pytest --testmon -v tests/
 
-integration_test: integration_test
-	kedro run
+
+wipe_neo:
+	# assumes you have neo4j running using docker-compose setup from deployments/compose/
+	python scripts/wipe_neo4j.py
+
+integration_test: wipe_neo
+	kedro run -p test --runner ThreadRunner
 
 fabricate:
 	kedro run -p fabricator
