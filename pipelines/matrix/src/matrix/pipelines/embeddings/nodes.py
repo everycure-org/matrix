@@ -8,9 +8,39 @@ from pyspark.sql import functions as F
 
 from pyspark.ml.functions import array_to_vector, vector_to_array
 from graphdatascience import GraphDataScience, QueryRunner
+from neo4j import GraphDatabase
+
+from pypher import __ as cypher, Pypher
+
+from pypher.builder import create_function
+from . import pypher_utils
 
 from refit.v1.core.inject import inject_object
 from refit.v1.core.unpack import unpack_params
+
+
+class GraphDB:
+    """Adaptor class to allow injecting the GraphDB object.
+
+    This is due to a drawback where refit cannot inject a tuple into
+    the constructor of an object.
+    """
+
+    def __init__(
+        self,
+        *,
+        endpoint: str | Driver | QueryRunner,
+        auth: F.Tuple[str] | None = None,
+        database: str | None = None,
+    ):
+        """Create `GraphDB` instance."""
+        self._endpoint = endpoint
+        self._auth = tuple(auth)
+        self._database = database
+
+    def driver(self):
+        """Return the driver object."""
+        return GraphDatabase.driver(self._endpoint, auth=self._auth)
 
 
 class GraphDS(GraphDataScience):
@@ -27,7 +57,7 @@ class GraphDS(GraphDataScience):
         auth: F.Tuple[str] | None = None,
         database: str | None = None,
     ):
-        """Create `GraphDataScience` instance."""
+        """Create `GraphDS` instance."""
         super().__init__(
             endpoint,
             auth=tuple(auth),
@@ -36,34 +66,90 @@ class GraphDS(GraphDataScience):
         self.set_database(database)
 
 
-def concat_features(df: DataFrame, features: List[str], ai_config: Dict[str, str]):
-    """Function setup features for node embeddings.
+@unpack_params()
+@inject_object()
+def compute_embeddings(
+    input: DataFrame,
+    gdb: GraphDB,
+    features: List[str],
+    api_key: str,
+    batch_size: int,
+    attribute: str,
+    endpoint: str,
+    model: str,
+):
+    """Function to orchestrate embedding computation in Neo4j.
 
     Args:
-        df: nodes dataframe
-        features: features to use for node embeddings.
-        ai_config: vertex confoiguration to use
-    Returns:
-        Input features for node computation
+        input: input df
+        gdb: graph database instance
+        features: features to include to compute embeddings
+        api_key: api key to use
+        batch_size: batch size
+        attribute: attribute to add
+        endpoint: endpoint to use
+        model: model to use
     """
-    for key, value in ai_config.items():
-        df = df.withColumn(key, F.lit(value))
+    # fmt: off
+    # Register functions
+    create_function("iterate", {"name": "apoc.periodic.iterate"}, func_raw=True)
+    create_function("openai_embedding", {"name": "apoc.ml.openai.embedding"}, func_raw=True)
+    create_function("set_property", {"name": "apoc.create.setProperty"}, func_raw=True)
 
-    return df.withColumn("input", F.concat(*[F.col(feature) for feature in features]))
+    # Build query
+    p = Pypher()
+
+    # The apoc iterate is a rather interesting function, that takes stringified
+    # cypher queries as input. The first determines the subset of nodes on
+    # include, whereas the second query defines the operation to execute.
+    # https://neo4j.com/labs/apoc/4.1/overview/apoc.periodic/apoc.periodic.iterate/
+    p.CALL.iterate(
+        # Match every :Entity node in the graph
+        cypher.stringify(cypher.MATCH.node("p", labels="Entity").WHERE.p.property('embedding').IS_NULL.RETURN.p),
+        # For each batch, execute following statements, the $_batch is a special
+        # variable made accessible to access the elements in the batch.
+        cypher.stringify(
+            [
+                # Apply OpenAI embedding in a batched manner, embedding
+                # is applied on the concatenation of supplied features for each node.
+                cypher.CALL.openai_embedding(f"[item in $_batch | item.p.category + coalesce(item.p.name, \"\")]", "$apiKey", "{endpoint: $endpoint, model: $model}").YIELD("index", "text", "embedding"),
+                # Set the attribute property of the node to the embedding
+                cypher.CALL.set_property("$_batch[index].p", "$attribute", "embedding").YIELD("node").RETURN("node"),
+            ]
+        ),
+        # The last argument bridges the variables used in the outer query
+        # and the variables referenced in the stringified params.
+        cypher.map(
+            batchMode="BATCH_SINGLE",
+            parallel="true",
+            batchSize=batch_size,
+            concurrency=50,
+            params=cypher.map(apiKey=api_key, endpoint=endpoint, attribute=attribute, model=model),
+        ),
+    ).YIELD("batch", "operations")
+    # fmt: on
+
+    with gdb.driver() as driver:
+        summary = driver.execute_query(str(p), **p.bound_params).summary
+
+    return {"success": "true", "time": summary.result_available_after}
 
 
+@unpack_params()
 @inject_object()
-def reduce_dimension(df: DataFrame, transformer):
+def reduce_dimension(df: DataFrame, transformer, input: str, output: str):
     """Function to apply dimensionality reduction.
 
     Args:
         df: to apply technique to
         transformer: transformer to apply
+        input: name of attribute to transform
+        output: name of attribute to store result
     Returns:
         Dataframe with reduced dimension
     """
     # Convert into correct type
-    df = df.withColumn("features", array_to_vector("embedding"))
+    df = df.withColumn("features", array_to_vector(input))
 
     # Link
     transformer.setInputCol("features")
@@ -72,14 +158,14 @@ def reduce_dimension(df: DataFrame, transformer):
     return (
         transformer.fit(df)
         .transform(df)
-        .withColumn("pca_embedding", vector_to_array("pca_features"))
+        .withColumn(output, vector_to_array("pca_features"))
         .drop("pca_features", "features")
     )
 
 
 @inject_object()
 @unpack_params()
-def add_topological_embeddings(
+def train_topological_embeddings(
     df: DataFrame,
     edges: DataFrame,
     gds: GraphDataScience,
@@ -92,7 +178,7 @@ def add_topological_embeddings(
     Function leverages the gds library to ochestrate topological embedding computation
     on the nodes of the KG.
 
-    NOTE: The df and adgres input are only added to ensure correct lineage
+    NOTE: The df and edges input are only added to ensure correct lineage
 
     Args:
         df: nodes df
@@ -105,10 +191,10 @@ def add_topological_embeddings(
     # Validate whether the GDS graph exists
     graph_name = projection.get("graphName")
     if gds.graph.exists(graph_name).exists:
-        gds.graph.drop(graph_name, False)
+        graph = gds.graph.get(graph_name)
+        gds.graph.drop(graph, False)
 
-    config = projection.pop("config")
-    graph, _ = gds.graph.project(*projection.values(), **config)
+    graph, _ = gds.graph.project(*projection.values())
 
     # Validate whether the model exists
     model_name = estimator.get("args").get("modelName")
@@ -120,6 +206,27 @@ def add_topological_embeddings(
     model, _ = getattr(gds.beta, estimator.get("model")).train(
         graph, **estimator.get("args")
     )
+
+    return {"success": "true"}
+
+
+@inject_object()
+@unpack_params()
+def write_topological_embeddings(
+    model: DataFrame,
+    gds: GraphDataScience,
+    projection: Any,
+    estimator: Any,
+    write_property: str,
+) -> Dict:
+    """Write topological embeddings."""
+    # Retrieve the graph
+    graph_name = projection.get("graphName")
+    graph = gds.graph.get(graph_name)
+
+    # Retrieve the model
+    model_name = estimator.get("args").get("modelName")
+    model = gds.model.get(model_name)
 
     # Write model output back to graph
     model.predict_write(graph, writeProperty=write_property)
