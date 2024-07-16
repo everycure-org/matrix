@@ -14,8 +14,12 @@ embeddings.topological:
   estimator:
     model: graphSage
     args:
+      # Chunyu: 512
       embeddingDimension: 512
-      batchSize: 200000
+      # Chunyu: 200k
+      batchSize: 1000
       epochs: 10
       searchDepth: 100
-      learningRate: 0.01
+      # Chunyu
+      # learningRate: 0.01
+      learningRate: 0.1
