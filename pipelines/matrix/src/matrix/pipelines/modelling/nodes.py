@@ -17,8 +17,12 @@ from refit.v1.core.inline_has_schema import has_schema
 from refit.v1.core.unpack import unpack_params
 from refit.v1.core.make_list_regexable import make_list_regexable
 
-from matrix.datasets.graph import KnowledgeGraph, DrugDiseasePairGenerator
+from matrix.datasets.graph import KnowledgeGraph
+from matrix.datasets.pair_generator import SingleLabelPairGenerator
 from .model import ModelWrapper
+
+
+plt.switch_backend("Agg")
 
 
 @has_schema(
@@ -121,7 +125,7 @@ def make_splits(
 def create_model_input_nodes(
     graph: KnowledgeGraph,
     splits: pd.DataFrame,
-    generator: DrugDiseasePairGenerator,
+    generator: SingleLabelPairGenerator,
 ) -> pd.DataFrame:
     """Function to enrich the splits with drug-disease pairs.
 
@@ -132,7 +136,7 @@ def create_model_input_nodes(
     Args:
         graph: Knowledge graph.
         splits: Data splits.
-        generator: DrugDiseasePairGenerator instance.
+        generator: SingleLabelPairGenerator instance.
 
     Returns:
         Data with enriched splits.
@@ -293,6 +297,8 @@ def create_model(*estimators) -> ModelWrapper:
 
     Args:
         estimators: list of fitted estimators
+    Returns:
+        ModelWrapper encapsulating estimators
     """
     return ModelWrapper(estimators=estimators, agg_func=np.mean)
 
@@ -301,17 +307,17 @@ def create_model(*estimators) -> ModelWrapper:
 @make_list_regexable(source_df="data", make_regexable="features")
 def get_model_predictions(
     data: pd.DataFrame,
-    model: ModelWrapper,  # *estimators estimators: [f"model.shard}"]
+    model: ModelWrapper,
     features: List[str],
     target_col_name: str,
     prediction_suffix: str = "_pred",
     enable_regex: str = True,
 ) -> pd.DataFrame:
-    """Function to run model predictions on input data.
+    """Function to run model class predictions on input data.
 
     Args:
         data: Data to predict on.
-        model: model.
+        model: Model making the predictions.
         features: List of features, may be regex specified.
         target_col_name: Target column name.
         prediction_suffix: Suffix to add to the prediction column, defaults to '_pred'.
@@ -357,15 +363,3 @@ def check_model_performance(
             report[f"{split.lower()}_{name}"] = func(y_true, y_pred)
 
     return json.loads(json.dumps(report, default=float))
-
-
-def consolidate_reports(*reports) -> dict:
-    """Function to consolidate reports into master report.
-
-    Args:
-        reports: tuples of (name, report) pairs.
-
-    Returns:
-        Dictionary representing consolidated report.
-    """
-    return [*reports]
