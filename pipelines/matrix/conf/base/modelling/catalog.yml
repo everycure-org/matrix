@@ -20,7 +20,12 @@ modelling.raw.nodes:
   <<: *_neo4j_ds
   load_args:
     query: >  
-      MATCH (n:Entity) RETURN n.id AS id, 'biolink:' + labels(n)[1] AS category, n.topological_embedding AS embedding
+      MATCH (n:Entity) 
+      WHERE n:Drug OR n:Disease
+      RETURN 
+        n.id AS id, 'biolink:' + labels(n)[1] AS category, 
+        n.topological_embedding AS embedding
+      
 
 modelling.prm.known_pairs:
   <<: *_pandas_parquet
