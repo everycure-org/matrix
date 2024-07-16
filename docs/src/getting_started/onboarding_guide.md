@@ -186,7 +186,7 @@ def create_pipeline(**kwargs) -> Pipeline:
         ]
 ```
 
-The dependency
+The dependency injection pattern is an excellent technique to clean configuration heavy code, and ensure maximum re-usability.
 
 ### Dynamic pipelines
 
