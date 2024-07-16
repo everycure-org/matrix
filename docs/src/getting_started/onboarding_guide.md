@@ -32,16 +32,21 @@ Data used by our pipeline is registered in the data catalog. To add additional s
 5. __Model input__: Dataset transformed for usage by a model.
 6. __Models__: Materialized models, often in the form of a pickle.
 7. __Model output__: Dataset containing column where model predictions are ran.
-8. __Reporting__: Any datasets that provide reporting, e.g., convergence plots.  
+8. __Reporting__: Any datasets that provide reporting, e.g., convergence plots.
+
+> 💡 We name entries in our catalog according to the following format:
+>
+>  `<pipeline>.<layer>.<name>`
 
 ![](../assets/img/convention.png)
 
 ### Data fabrication
 
-Our pipeline operates on large datasets, as a result the pipeline may take several hours the complete. Large iteration time leads to decreased developer productivity. For this reason, we've established a data fabricator to enable test runs on synthetic data.
+Our pipeline operates on large datasets, as a result the pipeline may take several hours the complete. Unfortunately, large iteration time leads to decreased developer productivity. For this reason, we've established a data fabricator to enable test runs on synthetic data.
 
 To seamlessly run the same codebase on both the fabricated and the production data, we leverage [Kedro configuration environments](https://docs.kedro.org/en/stable/configuration/configuration_basics.html#configuration-environments).
 
+The situation is depicted below, in the `base` environment our pipeline will plug into the datasets as produced by our fabricator pipeline, whereas the `prod` environment plugs into the production system.
 
 ![](../assets/img/fabrication.drawio.svg)
 
