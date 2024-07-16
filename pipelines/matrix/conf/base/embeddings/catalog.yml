@@ -59,7 +59,6 @@ embeddings.model_output.graphsage:
           n.name as name,
           n.category as category,
           // n.all_names as all_names,
-          // n.all_names as all_names,
           n.description as description,
           n.embedding as node_embedding,
           n.pca_embedding as pca_embedding,
