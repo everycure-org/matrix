@@ -225,6 +225,20 @@ Embeddings are vectorized representations of the entities in our knowledge graph
 
 > Our graph database, i.e., Neo4J comes with out-of-the-box functionality to compute both node and topological embeddings in-situ. The Kedro pipeline orchestrates the computation of these.
 
+#### Modelling 
+
+The modelling pipeline trains drug repurposing prediction models using knowledge graph embeddings generated in the embeddings pipeline. 
+
+The main steps are as follows:
+1. *Prepare ground truth dataset*. Load ground truth positive and negative drug-disease pairs. Perform test-train split. 
+2. *Synthesise additional training data*. Synthesise additional drug-disease pairs for training using an appropriate sampling strategy.  
+3. *Perform hyperparameter tuning*. Optimise model hyperparameters to maximise performance according to a chosen objective function.  
+4. *Train final model*.  Train a drug repurposing prediction model with hyperparameters found in the previous step. 
+5. *Check model performance*. Computes classification metrics using the test portion of the ground truth data. 
+
+> The step *check model performance* only gives a partial indication of model performance intended as a quick sanity check. The evaluation pipeline must be run before making conclusions about model performance. 
+
+As well as single models, the pipeline has the capability to deal with *ensembles* of models trained with resampled synthesised training data.  
 
 #### Evaluation
 
@@ -263,12 +277,12 @@ In particular, the `catalog` variable provides an interface to the Kedro data ca
 ```
 catalog.list()
 ```
-Items may be loaded into memory using the `catalog.load` method. For example, if we have a catalog item `modelling.model_input.splits`, it may be loaded in as follows. 
+Items may be loaded into memory using the `catalog.load` method. For example, if we have a catalog item `modelling.model_input.splits`, it may be loaded in as follows: 
 ```
 splits = catalog.load('modelling.model_input.splits')
 ```
 
-Functions and classes in the Kedro project source code may be imported as required. For example, a function `train_model` defined in the file `pipelines/matrix/src/matrix/pipelines/modelling/nodes.py` may be loaded in as follows:
+Functions and classes in the Kedro project source code may be imported as required. For example, a function `train_model` defined in the file `pipelines/matrix/src/matrix/pipelines/modelling/nodes.py` may be imported as follows:
 ```
 from matrix.pipelines.modelling.nodes import train_model
 ```
