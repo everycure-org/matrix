@@ -4,6 +4,7 @@ _spark_parquet_ds: &_spark_parquet
   save_args:
     mode: overwrite
 
+
 _pandas_parquet: &_pandas_parquet
   type: pandas.ParquetDataset
 
@@ -22,33 +23,12 @@ _neo4j_ds: &_neo4j_ds
   save_args:
     mode: "overwrite"
 
-# embeddings.prm.graph.nodes:
-#   <<: *_spark_parquet
-#   filepath: ${globals:paths.prm}/graph_nodes
-#   versioned: true
-# 
-# embeddings.prm.graph.edges:
-#   <<: *_spark_parquet
-#   filepath: ${globals:paths.prm}/graph_edges
-#   versioned: true
-# 
-modelling.raw.nodes:
+# filtered down further to drugs/diseases
+modelling.model_input.drugs_diseases_nodes:
   <<: *_spark_parquet
-  filepath: ${globals:paths.model_input}/nodes
-  versioned: true
-  # TODO filter these either in node or through intermediate table
-  #load_args:
-  #  query: >  
-  #    MATCH (n:Entity) 
-  #    WHERE n:Drug OR n:Disease
-  #    RETURN 
-  #      n.id AS id, 'biolink:' + labels(n)[1] AS category, 
-  #      n.topological_embedding AS embedding
-      
-modelling.raw.edges:
-  <<: *_spark_parquet
-  filepath: ${globals:paths.model_input}/edges
-  versioned: true
+  filepath: ${globals:paths.model_input}/drugs_diseases_nodes
+
+
 
 modelling.prm.known_pairs:
   <<: *_pandas_parquet

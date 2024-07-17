@@ -1,9 +1,3 @@
-_spark_parquet_ds: &_spark_parquet
-  type: spark.SparkDataset
-  file_format: parquet
-  save_args:
-    mode: overwrite
-
 _neo4j_ds: &_neo4j_ds
   type: matrix.datasets.neo4j.Neo4JSparkDataset
   database: everycure
@@ -12,6 +6,11 @@ _neo4j_ds: &_neo4j_ds
   save_args:
     mode: "overwrite"
 
+_spark_parquet_ds: &_spark_parquet
+  type: spark.SparkDataset
+  file_format: parquet
+  save_args:
+    mode: overwrite
 
 # Catalog directly expresses a query to add OpenAI embeddings.
 # https://neo4j.com/labs/apoc/5/installation/
@@ -60,8 +59,26 @@ embeddings.model_output.graphsage:
           n.category as category,
           // n.all_names as all_names,
           n.description as description,
-          n.embedding as node_embedding,
-          n.pca_embedding as pca_embedding,
-          n.topological_embedding as topological_embedding
+          // n.embedding as node_embedding,
+          // n.pca_embedding as pca_embedding,
+          n.topological_embedding as topological_embedding,
           // n.labels as labels,
           // n.properties as properties
+
+embeddings.feat.nodes:
+  <<: *_spark_parquet
+  filepath: ${globals:paths.feat}/nodes
+  versioned: true
+  # TODO filter these either in node or through intermediate table
+  #load_args:
+  #  query: >  
+  #    MATCH (n:Entity) 
+  #    WHERE n:Drug OR n:Disease
+  #    RETURN 
+  #      n.id AS id, 'biolink:' + labels(n)[1] AS category, 
+  #      n.topological_embedding AS embedding
+      
+embeddings.feat.edges:
+  <<: *_spark_parquet
+  filepath: ${globals:paths.feat}/edges
+  versioned: true

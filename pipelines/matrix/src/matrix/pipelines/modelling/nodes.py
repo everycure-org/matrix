@@ -3,6 +3,7 @@ from typing import Any, Dict, List, Union, Tuple
 import pandas as pd
 import numpy as np
 import json
+import pyspark.sql.functions as f
 
 from pyspark.sql import DataFrame
 
@@ -25,13 +26,19 @@ from .model import ModelWrapper
 plt.switch_backend("Agg")
 
 
+def prefilter_nodes(nodes: DataFrame) -> DataFrame:
+    return nodes.filter(
+        (f.col("category") == "biolink:Drug") | (f.col("category") == "biolink:Disease")
+    )
+
+
 @has_schema(
     schema={
         "is_drug": "bool",
         "is_disease": "bool",
         "is_ground_pos": "bool",
-        "node_embedding": "object",
-        "pca_embedding": "object",
+        # "node_embedding": "object",
+        # "pca_embedding": "object",
         "topological_embedding": "object",
     },
     allow_subset=True,
