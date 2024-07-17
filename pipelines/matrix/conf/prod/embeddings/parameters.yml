@@ -1,3 +1,0 @@
-embeddings.ai_config:
-  project: ${oc.env:GCP_PROJECT} 
-  accessToken: ${oc.env:VERTEX_AI_ACCESS_TOKEN}
