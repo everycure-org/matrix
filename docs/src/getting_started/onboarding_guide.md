@@ -278,7 +278,7 @@ In particular, the `catalog` variable provides an interface to the Kedro data ca
 catalog.list()
 ```
 Items may be loaded into memory using the `catalog.load` method. For example, if we have a catalog item `modelling.model_input.splits`, it may be loaded in as follows: 
-```
+```python
 splits = catalog.load('modelling.model_input.splits')
 ```
 
