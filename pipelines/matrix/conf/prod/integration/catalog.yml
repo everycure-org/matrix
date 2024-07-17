@@ -153,6 +153,19 @@ integration.raw.rtx_kg2.edges@spark:
             object: pyspark.sql.types.StringType
           nullable: False
 
+integration.raw.robokop.nodes@spark:
+  type: matrix.datasets.gcp.SparkWithSchemaDataset
+  # TODO: Ensure data is uploaded in the correct location
+  filepath: ${globals:paths.raw}/rtx_kg2/${globals:versions.sources.robokop}/nodes.tsv
+  file_format: csv
+  load_args:
+    sep: "\t"
+    schema:
+      # TODO: Define schema here, this is used by Spark to correctly parse the data,
+      # you can borrow inspiration from the other datasets defined in this
+
+# TODO: Add robokop edges dataset
+
 integration.raw.ground_truth.positives:
   <<: *_pandas_csv
   filepath: ${globals:gcs_bucket}/ground_truth_data/tp_pairs.txt
