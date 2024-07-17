@@ -38,7 +38,7 @@ embeddings.feat.nodes:
   save_args:
     temporaryGcsBucket: ${globals:gcs_bucket}
     bigQueryTableLabel.kg: EC
-    bigQueryTableLabel.release: ${globals:versions.release}
+    # bigQueryTableLabel.release: ${globals:versions.release}
   # TODO filter these either in node or through intermediate table
   #load_args:
   #  query: >  
@@ -55,4 +55,4 @@ embeddings.feat.edges:
   save_args:
     temporaryGcsBucket: ${globals:gcs_bucket}
     bigQueryTableLabel.kg: EC
-    bigQueryTableLabel.release: ${globals:versions.release}
+    # bigQueryTableLabel.release: ${globals:versions.release}
