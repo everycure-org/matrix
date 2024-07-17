@@ -274,7 +274,7 @@ To load the `prod` Kedro environment with real data, run another cell with the f
 These commands define several useful global variables on your behalf: `context`, `session`, `catalog` and `pipelines`.
 
 In particular, the `catalog` variable provides an interface to the Kedro data catalog, which includes all data, models and model outputs produced during the latest `prod` run of the Kedro pipeline. The following command lists the available items in the data catalog:
-```
+```python
 catalog.list()
 ```
 Items may be loaded into memory using the `catalog.load` method. For example, if we have a catalog item `modelling.model_input.splits`, it may be loaded in as follows: 
