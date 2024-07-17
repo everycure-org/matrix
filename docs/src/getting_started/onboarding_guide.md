@@ -17,6 +17,24 @@ This pages assumes basic knowledge of:
 - Python
 - YAML
 
+### Python environment
+
+> 💡 We recommend using [pyenv])(https://github.com/pyenv/pyenv) to manage your python version.
+
+We leverage [`uv`](https://github.com/astral-sh/uv) to manage/install our Python requirements. Install as follows:
+
+```bash
+brew install uv
+```
+
+Next, create a `venv` and install the requirements:
+
+```bash
+uv venv
+source .venv/bin/activate
+uv pip install -r requirements.txt
+```
+
 ### Docker
 
 Make sure you have [docker](https://www.docker.com/) and [docker-compose](https://docs.docker.com/compose/) installed. Docker can be downloaded directly from the from the [following page](https://docs.docker.com/desktop/install/mac-install/). Once installed, proceed with the following command:
