@@ -160,7 +160,7 @@ While the code above is easily generalizable, its highly coupled to the `xgboost
 # `estimator` should be an object of the type `sklearn.base.BaseEstimator`
 # that should be instantiated with the `tree_method` construction arg.
 estimator:
-    object: sklearn.base.BaseEstimator
+    object: xgboost.XGBClassifier
     tree_method: hist
 ```
 
