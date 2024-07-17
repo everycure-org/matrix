@@ -3,6 +3,7 @@ gcs_bucket: ${oc.env:GCP_BUCKET}
 versions:
   sources:
     rtx-kg2: v2.7.3
+    robokop: dummy # TODO: Add version here
   release: 20240620
 
 paths:
