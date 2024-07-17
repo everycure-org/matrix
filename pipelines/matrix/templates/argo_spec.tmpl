@@ -19,7 +19,7 @@ spec:
   templates:
   - name: kedro
     retryStrategy:
-      limit: {% raw %}"{{ `{{inputs.parameters.num_retries}}` }}"
+      limit: {% raw %}"{{inputs.parameters.num_retries}}"
     {% endraw %}
     retryPolicy: "Always"
     backoff:
@@ -39,7 +39,7 @@ spec:
       - name: pipeline
     container:
       imagePullPolicy: Always
-      image: {% raw %} "{{ `{{workflow.parameters.image}}` }}" 
+      image: {% raw %} "{{workflow.parameters.image}}" 
       {% endraw %}
       resources: # limit the resources
         requests:
@@ -50,7 +50,7 @@ spec:
           cpu: 4
       env:
         - name: NEO4J_HOST
-          value: {% raw %} "{{ `{{workflow.parameters.neo4j_host}}` }}" 
+          value: {% raw %} "{{workflow.parameters.neo4j_host}}" 
           {% endraw %}
         - name: NEO4J_USER
           valueFrom:
@@ -63,7 +63,7 @@ spec:
               name: matrix-secrets
               key: NEO4J_PASSWORD
         - name: OPENAI_ENDPOINT
-          value: {% raw %} "{{ `{{workflow.parameters.openai_endpoint}}` }}" 
+          value: {% raw %} "{{workflow.parameters.openai_endpoint}}" 
           {% endraw %}
         - name: OPENAI_API_KEY
           valueFrom:
@@ -83,7 +83,7 @@ spec:
         - name: VERTEX_AI_ACCESS_TOKEN
           value: dummy
       command: [kedro]
-      args: ["run", "-p", {% raw %}"{{ `{{inputs.parameters.pipeline}}` }}"{% endraw %}, "-e", {% raw %}"{{ `{{workflow.parameters.env}}` }}"{% endraw %}, "-n", {% raw %}"{{ `{{inputs.parameters.kedro_node}}` }}"{% endraw %}]
+      args: ["run", "-p", {% raw %}"{{inputs.parameters.pipeline}}"{% endraw %}, "-e", {% raw %}"{{workflow.parameters.env}}"{% endraw %}, "-n", {% raw %}"{{inputs.parameters.kedro_node}}"{% endraw %}]
   
   {% for pipeline, tasks in pipes.items() %}
   - name: {{ pipeline }}
