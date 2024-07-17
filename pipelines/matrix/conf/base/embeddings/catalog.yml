@@ -57,13 +57,8 @@ embeddings.model_output.graphsage:
           n.id as id, 
           n.name as name,
           n.category as category,
-          // n.all_names as all_names,
           n.description as description,
-          // n.embedding as node_embedding,
-          // n.pca_embedding as pca_embedding,
-          n.topological_embedding as topological_embedding,
-          // n.labels as labels,
-          // n.properties as properties
+          n.topological_embedding as topological_embedding
 
 embeddings.feat.nodes:
   <<: *_spark_parquet
