@@ -267,7 +267,7 @@ Within a notebook, first run a cell with the following magic command:
 
 By default, this loads the `base` Kedro environment which is used only with fabricated data. 
 To load the `prod` Kedro environment with real data, run another cell with the following command:
-```
+```python
 %reload_kedro --env=prod
 ```
 
