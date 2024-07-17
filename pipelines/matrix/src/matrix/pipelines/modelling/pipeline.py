@@ -133,9 +133,17 @@ def create_pipeline(**kwargs) -> Pipeline:
     create_model_input = pipeline(
         [
             node(
+                func=nodes.prefilter_nodes,
+                inputs=[
+                    "embeddings.feat.nodes",
+                ],
+                outputs="modelling.model_input.drugs_diseases_nodes",
+                name="prefilter_nodes",
+            ),
+            node(
                 func=nodes.create_feat_nodes,
                 inputs=[
-                    "modelling.raw.nodes",
+                    "modelling.model_input.drugs_diseases_nodes",
                     "integration.model_input.ground_truth",
                     "params:modelling.drug_types",
                     "params:modelling.disease_types",

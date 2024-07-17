@@ -59,8 +59,8 @@ def create_pipeline(**kwargs) -> Pipeline:
                     "edges": "integration.model_input.edges",
                 },
                 outputs={
-                    "enriched_nodes": "modelling.raw.nodes",
-                    "enriched_edges": "modelling.raw.edges",
+                    "enriched_nodes": "embeddings.feat.nodes",
+                    "enriched_edges": "embeddings.feat.edges",
                 },
                 name="extract_nodes_edges_from_db",
             ),

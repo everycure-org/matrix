@@ -9,6 +9,8 @@ RUN apt-get update && \
 
 # Package all python dependencies
 ENV PIP_NO_CACHE_DIR=1
+
+WORKDIR /app
 ADD requirements.txt .
 RUN --mount=type=cache,target=/root/.cache pip install -U uv
 

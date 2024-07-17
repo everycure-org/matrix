@@ -1,4 +1,5 @@
-dev_docker_image = "us-central1-docker.pkg.dev/mtrx-hub-dev-3of/matrix-images/matrix"
+dev_docker_image = us-central1-docker.pkg.dev/mtrx-hub-dev-3of/matrix-images/matrix
+
 
 install:
 	uv pip install -r requirements.in
@@ -25,8 +26,8 @@ build: lock
 
 docker_push_dev:
 	docker buildx build --platform linux/amd64 -t matrix_amd ./
-	docker tag matrix_amd $(dev_docker_image):latest
-	docker push $(dev_docker_image):latest
+	docker tag matrix_amd $(dev_docker_image):${USER}
+	docker push $(dev_docker_image):${USER}
 
 argo_template:
 	python ./src/matrix/argo.py generate-argo-config $(dev_docker_image):latest
