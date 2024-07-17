@@ -261,7 +261,7 @@ Jupyter notebooks should be created in the directory `pipelines/matrix/notebooks
 
 Within a notebook, first run a cell with the following magic command:
 
-```
+```python
 %load_ext kedro.ipython
 ```
 
