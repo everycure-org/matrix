@@ -1,9 +1,14 @@
 """Wipes neo4j instance locally."""
 from neo4j import GraphDatabase
+from dotenv import load_dotenv
+import os
 
-URI = "neo4j://localhost:7687"
-AUTH = ("neo4j", "admin")
-with GraphDatabase.driver(URI, auth=AUTH) as driver:
+load_dotenv()
+
+with GraphDatabase.driver(
+    os.environ["NEO4J_HOST"],
+    auth=(os.environ["NEO4J_USER"], os.environ["NEO4J_PASSWORD"]),
+) as driver:
     print(
         "records right now: "
         + str(len(driver.execute_query("MATCH(n) RETURN n").records))
