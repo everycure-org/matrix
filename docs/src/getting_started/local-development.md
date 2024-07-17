@@ -1,3 +1,19 @@
+# Plugging into our cloud environment
+
+## Pre-requisites
+
+Ensure to install the `gcloud` command line utilities, this can be done as follows:
+
+```bash
+brew install --cask google-cloud-sdk
+```
+
+Next, authenticate the client:
+
+```bash
+gcloud auth login
+```
+
 ### GCP Service account
 
 To correctly leverage the GCP services, you will need a service-account key. You can create a key through the [Google CLI](https://cloud.google.com/storage/docs/gsutil_install) as follows:
