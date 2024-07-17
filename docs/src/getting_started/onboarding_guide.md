@@ -254,9 +254,10 @@ The main steps are as follows:
 4. *Train final model*.  Train a drug repurposing prediction model with hyperparameters found in the previous step. 
 5. *Check model performance*. Computes classification metrics using the test portion of the ground truth data. 
 
-> The step *check model performance* only gives a partial indication of model performance intended as a quick sanity check. The evaluation pipeline must be run before making conclusions about model performance. 
-
 As well as single models, the pipeline has the capability to deal with *ensembles* of models trained with resampled synthesised training data.  
+
+> The step *check model performance* only gives a partial indication of model performance intended as a quick sanity check. This is because, in general, the ground truth data alone is not a good reflection of the data distribution that the model will see while performing its task. The evaluation pipeline must be run before making conclusions about model performance. 
+
 
 #### Evaluation
 
