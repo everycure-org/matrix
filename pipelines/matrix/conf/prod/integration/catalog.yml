@@ -162,7 +162,7 @@ integration.raw.robokop.nodes@spark:
     sep: "\t"
     schema:
       # TODO: Define schema here, this is used by Spark to correctly parse the data,
-      # you can borrow inspiration from the other datasets defined in this
+      # you can borrow inspiration from the other datasets defined in this file
 
 # TODO: Add robokop edges dataset
 
