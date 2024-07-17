@@ -257,7 +257,7 @@ Kedro may be used with [Jupyter notebooks](https://docs.kedro.org/en/stable/note
 
 Jupyter notebooks should be created in the directory `pipelines/matrix/notebooks/scratch`. This will be ignored by the matrix git repository. 
 
-*Tip:* A separate git repository for notebook version control may be created inside the `scratch` directory. It can also be to create a symbolic link to `scratch` from a directory of your choice on your machine. 
+> 💡 A separate git repository for notebook version control may be created inside the `scratch` directory. It can also be to create a symbolic link to `scratch` from a directory of your choice on your machine. 
 
 Within a notebook, first run a cell with the following magic command:
 
