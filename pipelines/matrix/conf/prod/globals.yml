@@ -1,7 +1,12 @@
 gcs_bucket: ${oc.env:GCP_BUCKET}
 
+versions:
+  sources:
+    rtx-kg2: v2.7.3
+  release: 20240620
+
 paths:
-  raw: ${gcs_bucket}
+  raw: ${gcs_bucket}/kedro/data/01_raw
   int: ${gcs_bucket}/kedro/staging/data/02_intermediate
   prm: ${gcs_bucket}/kedro/staging/data/03_primary
   feat: ${gcs_bucket}/kedro/staging/data/04_features
