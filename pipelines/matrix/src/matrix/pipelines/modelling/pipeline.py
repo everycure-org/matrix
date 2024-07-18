@@ -139,13 +139,13 @@ def create_pipeline(**kwargs) -> Pipeline:
                     "params:modelling.drug_types",
                     "params:modelling.disease_types",
                 ],
-                outputs="modelling.model_input.drugs_diseases_nodes",
+                outputs="modelling.model_input.drugs_diseases_nodes@spark",
                 name="prefilter_nodes",
             ),
             node(
                 func=nodes.create_feat_nodes,
                 inputs=[
-                    "modelling.model_input.drugs_diseases_nodes",
+                    "modelling.model_input.drugs_diseases_nodes@pandas",
                     "integration.model_input.ground_truth",
                     "params:modelling.drug_types",
                     "params:modelling.disease_types",
