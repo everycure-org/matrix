@@ -26,11 +26,11 @@ _neo4j_ds: &_neo4j_ds
 # filtered down further to drugs/diseases
 modelling.model_input.drugs_diseases_nodes@spark:
   <<: *_spark_parquet
-  filepath: ${globals:paths.model_input}/drugs_diseases_nodes
+  filepath: ${globals:paths.model_input}/drugs_diseases_nodes/
 
 modelling.model_input.drugs_diseases_nodes@pandas:
   <<: *_pandas_parquet
-  filepath: ${globals:paths.model_input}/drugs_diseases_nodes
+  filepath: ${globals:paths.model_input}/drugs_diseases_nodes/
 
 modelling.prm.known_pairs:
   <<: *_pandas_parquet
