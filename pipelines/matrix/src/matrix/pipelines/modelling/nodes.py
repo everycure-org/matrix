@@ -34,6 +34,7 @@ def prefilter_nodes(nodes: DataFrame) -> DataFrame:
         nodes: the nodes dataframe to be filtered
     """
     return nodes.filter(
+        # TODO needs to be expanded
         (f.col("category") == "biolink:Drug") | (f.col("category") == "biolink:Disease")
     )
 
