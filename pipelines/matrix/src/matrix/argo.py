@@ -58,7 +58,7 @@ def get_dependencies(dependencies):
         {
             "node": node.name,
             "name": clean_name(node.name),
-            "deps": [clean_name(val.name) for val in parent_nodes],
+            "deps": [clean_name(val.name) for val in sorted(parent_nodes)],
             **{
                 tag.split("-")[0][len("argo.") :]: tag.split("-")[1]
                 for tag in node.tags
@@ -67,7 +67,7 @@ def get_dependencies(dependencies):
         }
         for node, parent_nodes in dependencies.items()
     ]
-    return deps_dict
+    return sorted(deps_dict, key=lambda d: d["name"])
 
 
 def clean_name(name: str) -> str:
