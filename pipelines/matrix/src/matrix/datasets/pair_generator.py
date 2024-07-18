@@ -5,6 +5,9 @@ Module containing drug-disease pair generator
 import abc
 import pandas as pd
 import random
+import numpy as np
+from tqdm import tqdm
+import logging
 
 from matrix.datasets.graph import KnowledgeGraph
 
@@ -118,117 +121,111 @@ class RandomDrugDiseasePairGenerator(SingleLabelPairGenerator):
 
 
 class ReplacementDrugDiseasePairGenerator(SingleLabelPairGenerator):
-    """Replacement drug-disease pair implementation.
-
-    Strategy implementing a drug-disease pair generator using random drug and disease replacements.
-
-    """
-
     def __init__(
-        self,
-        y_label: int,
-        random_state: int,
-        n_replacements: int,
-        drug_flags: List[str],
-        disease_flags: List[str],
-    ) -> None:
-        """Initializes the ReplacementDrugDiseasePairGenerator instance.
-
-        Args:
-            y_label: label to assign to generated pairs.
-            random_state: Random seed.
-            n_replacements: Number of replacements to make.
-            drug_flags: List of knowledge graph flags defining drugs sample set.
-            disease_flags: List of knowledge graph flags defining diseases sample set.
-        """
-        self._n_replacements = n_replacements
+        self, drug_flags, disease_flags, n_replacements, y_label: int, random_state: int
+    ):
+        super().__init__(y_label, random_state)
         self._drug_flags = drug_flags
         self._disease_flags = disease_flags
-        super().__init__(y_label, random_state)
+        self._n_replacements = n_replacements
+        self._rng = np.random.default_rng(random_state)
 
     def generate(
         self, graph: KnowledgeGraph, known_pairs: pd.DataFrame
     ) -> pd.DataFrame:
-        """Function to generate drug-disease pairs according to the strategy.
+        print(f"1) get drugs and diseases lists")
+        drug_ids = np.array(graph.flags_to_ids(self._drug_flags))
+        disease_ids = np.array(graph.flags_to_ids(self._disease_flags))
+        print(f"1) {len(drug_ids)} drugs and {len(disease_ids)} diseases lists")
 
-        Args:
-            graph: KnowledgeGraph instance.
-            known_pairs: DataFrame with known drug-disease pairs.
+        # Convert known pairs to a set for fast lookup
+        known_pairs_set = set(map(tuple, known_pairs[["source", "target"]].values))
 
-        Returns:
-            DataFrame with unknown drug-disease pairs.
-        """
-        known_data_set = {
-            (drug, disease)
-            for drug, disease in zip(known_pairs["source"], known_pairs["target"])
+        print("2) create maps of embeddings")
+        drug_embeddings = {drug: graph._embeddings[drug] for drug in drug_ids}
+        disease_embeddings = {
+            disease: graph._embeddings[disease] for disease in disease_ids
         }
 
-        # Extract known positive training set
+        print("3) how many replacements do we need? ")
         kp_train_pairs = known_pairs[
             (known_pairs["y"] == 1) & (known_pairs["split"] == "TRAIN")
         ]
-        kp_train_set = {
-            (drug, disease)
-            for drug, disease in zip(kp_train_pairs["source"], kp_train_pairs["target"])
-        }
+        total_replacements = len(kp_train_pairs) * self._n_replacements * 2
 
-        # Generate unknown data
-        unknown_data = []
-        for kp_drug, kp_disease in kp_train_set:
-            unknown_data += ReplacementDrugDiseasePairGenerator._make_replacements(
-                graph,
-                kp_drug,
-                kp_disease,
-                self._drug_flags,
-                self._disease_flags,
-                self._n_replacements,
-                known_data_set,
-                self._y_label,
+        # Generate pairs in chunks
+        chunk_size = 1_000_000  # Adjust this based on available memory
+        generated_pairs = []
+
+        print("4) Iterate in chunks")
+        while len(generated_pairs) < total_replacements:
+            # Generate a chunk of random pairs
+            drug_chunk = self._rng.choice(drug_ids, chunk_size)
+            disease_chunk = self._rng.choice(disease_ids, chunk_size)
+            pairs_chunk = np.column_stack((drug_chunk, disease_chunk))
+
+            # Filter out known pairs
+            mask = np.array(
+                [tuple(pair) not in known_pairs_set for pair in pairs_chunk]
             )
+            new_pairs = pairs_chunk[mask]
 
-        return pd.DataFrame(
-            columns=["source", "source_embedding", "target", "target_embedding", "y"],
-            data=unknown_data,
-        )
+            # Add new pairs to the result
+            generated_pairs.extend(new_pairs)
 
-    @staticmethod
-    def _make_replacements(
-        graph: KnowledgeGraph,
-        kp_drug: str,
-        kp_disease: str,
-        drug_flags: List[str],
-        disease_flags: List[str],
-        n_replacements: int,
-        known_data_set: Set[tuple],
-        y_label: int,
-    ) -> List[str]:
-        """Helper function to generate list of drug-disease pairs through replacements."""
-        # Defining list of node id's to sample from
-        drug_samp_ids = graph.flags_to_ids(drug_flags)
-        disease_samp_ids = graph.flags_to_ids(disease_flags)
+            # Break if we have enough pairs
+            if len(generated_pairs) >= total_replacements:
+                generated_pairs = generated_pairs[:total_replacements]
+                break
 
-        # Sample pairs
+        # Create result DataFrame
+        result = pd.DataFrame(generated_pairs, columns=["source", "target"])
+        result["source_embedding"] = result["source"].map(drug_embeddings)
+        result["target_embedding"] = result["target"].map(disease_embeddings)
+        result["y"] = self._y_label
+
+        return result
+
+    def _generate_pairs(
+        self,
+        graph,
+        kp_train_set,
+        known_data_set,
+        drug_ids,
+        disease_ids,
+        drug_embeddings,
+        disease_embeddings,
+    ):
         unknown_data = []
-        while len(unknown_data) < 2 * n_replacements:
-            rand_drug = random.choice(drug_samp_ids)
-            rand_disease = random.choice(disease_samp_ids)
-            if (kp_drug, rand_disease) not in known_data_set and (
-                rand_drug,
-                kp_disease,
-            ) not in known_data_set:
-                for drug, disease in [
-                    (kp_drug, rand_disease),
-                    (rand_drug, kp_disease),
-                ]:
+        batch_size = 1000  # Adjust this based on your memory constraints
+
+        for kp_drug, kp_disease in tqdm(kp_train_set):
+            pairs_needed = 2 * self._n_replacements
+            while pairs_needed > 0:
+                batch = min(batch_size, pairs_needed)
+
+                rand_drugs = np.random.choice(drug_ids, batch)
+                rand_diseases = np.random.choice(disease_ids, batch)
+
+                new_pairs = set(zip([kp_drug] * batch, rand_diseases)) | set(
+                    zip(rand_drugs, [kp_disease] * batch)
+                )
+                new_pairs -= known_data_set
+
+                for drug, disease in new_pairs:
                     unknown_data.append(
                         [
                             drug,
                             graph._embeddings[drug],
                             disease,
                             graph._embeddings[disease],
-                            y_label,
+                            self._y_label,
                         ]
                     )
+                    pairs_needed -= 1
+                    if pairs_needed == 0:
+                        break
+
         return unknown_data
 
 
