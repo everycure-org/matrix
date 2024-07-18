@@ -125,7 +125,7 @@ integration.model_input.ground_truth:
       RETURN count(*)
   load_args:        
     query: >
-      MATCH (drug:Drug)-[r:GROUND_TRUTH]->(disease:Disease) 
+      MATCH (drug)-[r:GROUND_TRUTH]->(disease) 
       RETURN 
         drug.id as source, 
         drug.topological_embedding as source_embedding,
