@@ -74,15 +74,9 @@ def create_feat_nodes(
     Returns:
         Nodes enriched with features.
     """
-    # Merge embeddings
-    raw_nodes = raw_nodes.toPandas()
-
     # Add drugs and diseases types flags
     raw_nodes["is_drug"] = raw_nodes["category"].apply(lambda x: x in drug_types)
     raw_nodes["is_disease"] = raw_nodes["category"].apply(lambda x: x in disease_types)
-
-    # Add flag for set of drugs appearing in ground truth positive set
-    known_pairs = known_pairs.toPandas()
 
     ground_pos = known_pairs[known_pairs["y"].eq(1)]
     ground_pos_drug_ids = list(ground_pos["source"].unique())
