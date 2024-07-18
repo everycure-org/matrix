@@ -27,15 +27,20 @@ from .model import ModelWrapper
 plt.switch_backend("Agg")
 
 
-def prefilter_nodes(nodes: DataFrame) -> DataFrame:
+def prefilter_nodes(
+    nodes: DataFrame, drug_types: List[str], disease_types: List[str]
+) -> DataFrame:
     """Filters nodes before passing on to modelling nodes.
 
     Args:
         nodes: the nodes dataframe to be filtered
+        drug_types: list of drug types
+        disease_types: list of disease types
+    Returns:
+        Filtered nodes dataframe
     """
     return nodes.filter(
-        # TODO needs to be expanded
-        (f.col("category") == "biolink:Drug") | (f.col("category") == "biolink:Disease")
+        (f.col("category").isin(drug_types)) | (f.col("category").isin(disease_types))
     )
 
 
