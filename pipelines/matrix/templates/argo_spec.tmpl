@@ -46,8 +46,8 @@ spec:
           memory: 6Gi
           cpu: 4
         limits:
-          memory: 6Gi
-          cpu: 4
+          memory: 32Gi
+          cpu: 16
       env:
         - name: NEO4J_HOST
           value: {% raw %} "{{workflow.parameters.neo4j_host}}" 
