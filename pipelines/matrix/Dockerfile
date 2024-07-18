@@ -1,5 +1,5 @@
 ARG BASE_IMAGE=python:3.11-buster
-FROM $BASE_IMAGE as build
+FROM $BASE_IMAGE AS build
 RUN apt-get update && apt-get install -y --no-install-recommends gcc curl g++
 
 # Install OS dependencies
