@@ -1,35 +1,6 @@
-_neo4j_ds: &_neo4j_ds
-  type: matrix.datasets.neo4j.Neo4JSparkDataset
-  database: everycure
-  url: ${oc.env:NEO4J_HOST}
-  credentials: neo4j_credentials
-  save_args:
-    mode: "overwrite"
-
 _bigquery_ds: &_bigquery_ds
   type: matrix.datasets.gcp.BigQueryTableDataset
   project_id: ${oc.env:GCP_PROJECT_ID}
-
-embeddings.prm.graph.embeddings:
-  <<: *_neo4j_ds
-  save_args:
-    # NOTE: This catalog entry is redefined as we're using vertexai instead of openai to generate embeddings.
-    query: > 
-      MATCH (n:Entity {id: event.id})
-      WITH event, n
-      CALL apoc.ml.vertexai.embedding([event.input], event.accessToken, event.project) YIELD index, text, embedding
-      CALL apoc.create.setProperty(n, "embedding", embedding) YIELD node
-      RETURN node
-  load_args:
-    # FUTURE: Validate whether `partitions` read argument speeds up operation.
-    # https://neo4j.com/docs/spark/current/read/options/
-    query: >
-      MATCH (s)-[p]->(o) 
-      RETURN 
-        s.id AS subject,
-        type(p) as predicate,
-        o.id AS object,
-        p.knowledge_source as knowledge_source
 
 embeddings.feat.nodes:
   <<: *_bigquery_ds
@@ -37,15 +8,6 @@ embeddings.feat.nodes:
   table: "nodes_${globals:versions.release}"
   save_args:
     temporaryGcsBucket: ${globals:gcs_bucket}
-    # bigQueryTableLabel.release: ${globals:versions.release}
-  # TODO filter these either in node or through intermediate table
-  #load_args:
-  #  query: >  
-  #    MATCH (n:Entity) 
-  #    WHERE n:Drug OR n:Disease
-  #    RETURN 
-  #      n.id AS id, 'biolink:' + labels(n)[1] AS category, 
-  #      n.topological_embedding AS embedding
 
 embeddings.feat.edges:
   <<: *_bigquery_ds
