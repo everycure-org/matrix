@@ -1,4 +1,5 @@
 """Module with nodes for modelling."""
+
 from typing import Any, Dict, List, Union, Tuple
 import pandas as pd
 import numpy as np
@@ -27,6 +28,11 @@ plt.switch_backend("Agg")
 
 
 def prefilter_nodes(nodes: DataFrame) -> DataFrame:
+    """Filters nodes before passing on to modelling nodes.
+
+    Args:
+        nodes: the nodes dataframe to be filtered
+    """
     return nodes.filter(
         (f.col("category") == "biolink:Drug") | (f.col("category") == "biolink:Disease")
     )
