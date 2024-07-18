@@ -1,8 +1,10 @@
 """Module with nodes for modelling."""
+
 from typing import Any, Dict, List, Union, Tuple
 import pandas as pd
 import numpy as np
 import json
+import pyspark.sql.functions as f
 
 from pyspark.sql import DataFrame
 
@@ -25,19 +27,31 @@ from .model import ModelWrapper
 plt.switch_backend("Agg")
 
 
+def prefilter_nodes(nodes: DataFrame) -> DataFrame:
+    """Filters nodes before passing on to modelling nodes.
+
+    Args:
+        nodes: the nodes dataframe to be filtered
+    """
+    return nodes.filter(
+        (f.col("category") == "biolink:Drug") | (f.col("category") == "biolink:Disease")
+    )
+
+
 @has_schema(
     schema={
         "is_drug": "bool",
         "is_disease": "bool",
         "is_ground_pos": "bool",
-        "embedding": "object",
+        # "node_embedding": "object",
+        # "pca_embedding": "object",
+        "topological_embedding": "object",
     },
     allow_subset=True,
 )
 def create_feat_nodes(
     raw_nodes: DataFrame,
     known_pairs: DataFrame,
-    embeddings: pd.DataFrame,
     drug_types: List[str],
     disease_types: List[str],
 ) -> pd.DataFrame:
@@ -47,7 +61,6 @@ def create_feat_nodes(
 
     Args:
         raw_nodes: Raw nodes data.
-        embeddings: Embeddings data.
         known_pairs: Ground truth data.
         drug_types: List of drug types.
         disease_types: List of disease types.
@@ -58,16 +71,12 @@ def create_feat_nodes(
     # Merge embeddings
     raw_nodes = raw_nodes.toPandas()
 
-    breakpoint()
-
     # Add drugs and diseases types flags
     raw_nodes["is_drug"] = raw_nodes["category"].apply(lambda x: x in drug_types)
     raw_nodes["is_disease"] = raw_nodes["category"].apply(lambda x: x in disease_types)
 
     # Add flag for set of drugs appearing in ground truth positive set
     known_pairs = known_pairs.toPandas()
-
-    breakpoint()
 
     ground_pos = known_pairs[known_pairs["y"].eq(1)]
     ground_pos_drug_ids = list(ground_pos["source"].unique())
