@@ -238,5 +238,10 @@ def write_topological_embeddings(
 def extract_nodes_edges(
     nodes: DataFrame, edges: DataFrame
 ) -> tuple[DataFrame, DataFrame]:
-    """Simple node/edge extractor function."""
+    """Simple node/edge extractor function.
+
+    Args:
+        nodes: the nodes from the KG
+        edges: the edges from the KG
+    """
     return {"enriched_nodes": nodes, "enriched_edges": edges}
