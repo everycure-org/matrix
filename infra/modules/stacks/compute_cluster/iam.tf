@@ -2,6 +2,7 @@ locals {
   k8s_sa_roles = [
     "roles/container.defaultNodeServiceAccount",
     "roles/storage.objectAdmin",
+    "roles/storage.admin", # FUTURE more fine grained, but else it can't list buckets. surprisingly hard to find a predefined role that has storage.buckets.get
     "roles/bigquery.dataEditor",
     "roles/bigquery.user",
     "roles/bigquery.jobUser",
