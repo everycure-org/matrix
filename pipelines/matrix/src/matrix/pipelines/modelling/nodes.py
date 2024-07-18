@@ -75,6 +75,7 @@ def create_feat_nodes(
         Nodes enriched with features.
     """
     pdf_nodes = raw_nodes.toPandas()
+    known_pairs = known_pairs.toPandas()
     # Add drugs and diseases types flags
     pdf_nodes["is_drug"] = pdf_nodes["category"].apply(lambda x: x in drug_types)
     pdf_nodes["is_disease"] = pdf_nodes["category"].apply(lambda x: x in disease_types)

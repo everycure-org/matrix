@@ -350,6 +350,7 @@ numpy==1.24.0
     #   scikit-learn
     #   scikit-optimize
     #   scipy
+    #   termplotlib
     #   xgboost
 oauthlib==3.2.2
     # via requests-oauthlib
@@ -382,7 +383,7 @@ pandas==1.5.3
     #   graphdatascience
     #   kedro-viz
     #   pandera
-pandera==0.20.2
+pandera==0.20.3
     # via brix-refit
 pandocfilters==1.5.1
     # via nbconvert
@@ -429,7 +430,7 @@ pure-eval==0.2.2
     # via stack-data
 py4j==0.10.9.7
     # via pyspark
-pyaml==24.4.0
+pyaml==24.7.0
     # via scikit-optimize
 pyarrow==15.0.2
     # via
@@ -563,7 +564,7 @@ secure==0.3.0
     # via kedro-viz
 send2trash==1.8.3
     # via jupyter-server
-setuptools==70.3.0
+setuptools==71.0.2
     # via jupyterlab
 shellingham==1.5.4
     # via typer
@@ -589,7 +590,7 @@ stack-data==0.6.3
     # via ipython
 starlette==0.37.2
     # via fastapi
-strawberry-graphql==0.235.2
+strawberry-graphql==0.236.0
     # via kedro-viz
 tenacity==8.5.0
     # via plotly
@@ -597,6 +598,8 @@ terminado==0.18.1
     # via
     #   jupyter-server
     #   jupyter-server-terminals
+termplotlib==0.3.9
+    # via -r requirements.in
 text-unidecode==1.3
     # via
     #   faker
