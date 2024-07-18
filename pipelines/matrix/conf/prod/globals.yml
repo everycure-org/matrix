@@ -1,4 +1,5 @@
-gcs_bucket: gs://${oc.env:GCP_BUCKET}
+gcs_bucket: gcs://${oc.env:GCP_BUCKET}
+
 
 paths:
   raw: ${gcs_bucket}
