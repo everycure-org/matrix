@@ -74,18 +74,19 @@ def create_feat_nodes(
     Returns:
         Nodes enriched with features.
     """
+    pdf_nodes = raw_nodes.toPandas()
     # Add drugs and diseases types flags
-    raw_nodes["is_drug"] = raw_nodes["category"].apply(lambda x: x in drug_types)
-    raw_nodes["is_disease"] = raw_nodes["category"].apply(lambda x: x in disease_types)
+    pdf_nodes["is_drug"] = pdf_nodes["category"].apply(lambda x: x in drug_types)
+    pdf_nodes["is_disease"] = pdf_nodes["category"].apply(lambda x: x in disease_types)
 
     ground_pos = known_pairs[known_pairs["y"].eq(1)]
     ground_pos_drug_ids = list(ground_pos["source"].unique())
     ground_pos_disease_ids = list(ground_pos["target"].unique())
-    raw_nodes["is_ground_pos"] = raw_nodes["id"].isin(
+    pdf_nodes["is_ground_pos"] = pdf_nodes["id"].isin(
         ground_pos_drug_ids + ground_pos_disease_ids
     )
 
-    return raw_nodes
+    return pdf_nodes
 
 
 @inject_object()

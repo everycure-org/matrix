@@ -28,9 +28,10 @@ modelling.model_input.drugs_diseases_nodes@spark:
   <<: *_spark_parquet
   filepath: ${globals:paths.model_input}/drugs_diseases_nodes/
 
-modelling.model_input.drugs_diseases_nodes@pandas:
-  <<: *_pandas_parquet
-  filepath: ${globals:paths.model_input}/drugs_diseases_nodes/
+# commented out until https://github.com/fsspec/gcsfs/issues/632 is fixed
+# modelling.model_input.drugs_diseases_nodes@pandas:
+#   <<: *_pandas_parquet
+#   filepath: ${globals:paths.model_input}/drugs_diseases_nodes/
 
 modelling.prm.known_pairs:
   <<: *_pandas_parquet

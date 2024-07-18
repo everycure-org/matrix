@@ -145,7 +145,7 @@ def create_pipeline(**kwargs) -> Pipeline:
             node(
                 func=nodes.create_feat_nodes,
                 inputs=[
-                    "modelling.model_input.drugs_diseases_nodes@pandas",
+                    "modelling.model_input.drugs_diseases_nodes@spark",
                     "integration.model_input.ground_truth",
                     "params:modelling.drug_types",
                     "params:modelling.disease_types",
