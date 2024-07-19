@@ -1,3 +1,4 @@
 pytest
 pytest-testmon
+pytest-watch
 ./packages/data_fabricator
