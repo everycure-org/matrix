@@ -86,7 +86,7 @@ We're using [Kedro](https://kedro.org/) as our data pipelining framework. Kedro 
 1. __Project template__: Standard directory structure to streamline project layout, i.e., configuration, data, and pipelines.
 2. __Data catalog__: A lightweight abstraction for datasets, abstracting references to the file system, in a compact configuration file.
 3. __Pipelines__: A `pipeline` object abstraction, that leverages `nodes` that plug into `datasets` as defined by the data catalog[^1].
-4. __Vizualiation__: Out-of-the-box pipeline visualization based directly on the source code.
+4. __Visualization__: Out-of-the-box pipeline visualization based directly on the source code.
 
 Kedro project directory can be found in `pipelines/matrix` directory with an associated [README.md](../../../pipelines/matrix/README.md) with instructions.
 
