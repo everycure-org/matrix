@@ -31,7 +31,7 @@ modelling.kgml_xdtd:
             n_jobs: -1
             oob_score: true
             random_state: 1023
-            verbose: 0
+            verbose: 1
             warm_start: false
         features: # Features use regex, source_0, source_1, .., target_0, target_1
           - source_+

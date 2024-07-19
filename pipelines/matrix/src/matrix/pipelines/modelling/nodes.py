@@ -7,6 +7,7 @@ import json
 import pyspark.sql.functions as f
 
 from pyspark.sql import DataFrame
+import logging
 
 from sklearn.model_selection._split import _BaseKFold
 from sklearn.impute._base import _BaseImputer
@@ -25,6 +26,7 @@ from .model import ModelWrapper
 
 
 plt.switch_backend("Agg")
+logger = logging.getLogger(__name__)
 
 
 def prefilter_nodes(
@@ -300,6 +302,8 @@ def train_model(
     X_train = data.loc[mask, features]
     y_train = data.loc[mask, target_col_name]
 
+    logger.info("starting model training with the following parameters:")
+    logger.info(estimator.get_params())
     return estimator.fit(X_train.values, y_train.values)
 
 
