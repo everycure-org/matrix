@@ -5,6 +5,13 @@ import os
 
 load_dotenv()
 
+if os.environ.get("NEO4J_PASSWORD", "") is not "":
+    print(
+        "careful, you may be accidentally wiping a remote neo, saving you from this now!"
+    )
+    exit()
+
+
 with GraphDatabase.driver(
     os.environ["NEO4J_HOST"],
     auth=(os.environ["NEO4J_USER"], os.environ["NEO4J_PASSWORD"]),
