@@ -128,6 +128,10 @@ Our pipeline operates on large datasets, as a result the pipeline may take sever
 
 To seamlessly run the same codebase on both the fabricated and the production data, we leverage [Kedro configuration environments](https://docs.kedro.org/en/stable/configuration/configuration_basics.html#configuration-environments).
 
+> 🆘 Our pipeline is equipped with a `base` and `prod` catalog. The `base` catalog defines the full pipeline run on synthetic data. The `prod` catalog, on the other hand, plugs into the production sources.
+>
+> To avoid full re-definition of all catalog and parameter entries, we're employing a `[soft merge](https://docs.kedro.org/en/stable/configuration/advanced_configuration.html#how-to-change-the-merge-strategy-used-by-omegaconfigloader)` strategy. Kedro will _always_ use the `base` config. This means that if another environment is selected, e.g., `prod`, using the `--env` flag, Kedro will override the base configuration with the entries defined in `prod`. Our goal is to _solely_ redefine entries in the `prod` catalog when they deviate from `base`.
+
 The situation is depicted below, in the `base` environment our pipeline will plug into the datasets as produced by our fabricator pipeline, whereas the `prod` environment plugs into the production system.
 
 ```bash
