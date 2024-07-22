@@ -48,7 +48,12 @@ def create_nodes(df: DataFrame) -> DataFrame:
         .withColumn(
             "properties",
             F.create_map(
-                F.lit("name"), F.col("name"), F.lit("description"), F.col("description")
+                F.lit("name"),
+                F.col("name"),
+                F.lit("description"),
+                F.col("description"),
+                F.lit("category"),
+                F.col("category"),
             ),
         )
         .withColumn("property_keys", F.map_keys(F.col("properties")))

@@ -1,3 +1,10 @@
+_spark_parquet_ds: &_spark_parquet
+  type: spark.SparkDataset
+  file_format: parquet
+  save_args:
+    mode: overwrite
+
+
 _pandas_parquet: &_pandas_parquet
   type: pandas.ParquetDataset
 
@@ -16,11 +23,15 @@ _neo4j_ds: &_neo4j_ds
   save_args:
     mode: "overwrite"
 
-modelling.raw.nodes:
-  <<: *_neo4j_ds
-  load_args:
-    query: >  
-      MATCH (n:Entity) RETURN n.id AS id, 'biolink:' + labels(n)[1] AS category, n.topological_embedding AS embedding
+# filtered down further to drugs/diseases
+modelling.model_input.drugs_diseases_nodes@spark:
+  <<: *_spark_parquet
+  filepath: ${globals:paths.model_input}/drugs_diseases_nodes/
+
+# commented out until https://github.com/fsspec/gcsfs/issues/632 is fixed
+# modelling.model_input.drugs_diseases_nodes@pandas:
+#   <<: *_pandas_parquet
+#   filepath: ${globals:paths.model_input}/drugs_diseases_nodes/
 
 modelling.prm.known_pairs:
   <<: *_pandas_parquet
