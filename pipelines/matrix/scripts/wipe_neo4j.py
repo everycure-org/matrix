@@ -3,13 +3,14 @@ from neo4j import GraphDatabase
 from dotenv import load_dotenv
 import os
 
-load_dotenv()
-
+# checking if any existing env variables set the n4j password which hints at prod port forwarding
 if os.environ.get("NEO4J_PASSWORD", "") is not "":
     print(
         "careful, you may be accidentally wiping a remote neo, saving you from this now!"
     )
     exit()
+
+load_dotenv()
 
 
 with GraphDatabase.driver(
