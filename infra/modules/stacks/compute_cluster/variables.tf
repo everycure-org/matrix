@@ -45,3 +45,7 @@ variable "k8s_secrets" {
   type      = map(string)
   sensitive = true
 }
+
+variable "bucket_name" {
+  type = string
+}
