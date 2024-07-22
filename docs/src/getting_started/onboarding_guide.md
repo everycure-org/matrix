@@ -6,7 +6,7 @@ Welcome to the Matrix onboarding guide! This document provide an introduction to
 
 The Matrix project contains a pipeline and auxiliary services designed to identify drug-disease pair candidates for drug-repurposing.
 
-Moreover, the codebase contains the defintion of the infrastructure to run the pipeline on Google Cloud.
+Moreover, the codebase contains the defintion of the infrastructure to run the pipeline on Google Cloud. You can find information on how to connect to the cloud in the [local-development.md](local-development.md)
 
 ## Pre-requisites
 
@@ -19,7 +19,7 @@ This pages assumes basic knowledge of:
 
 ### Python environment
 
-> 💡 We recommend using [pyenv])(https://github.com/pyenv/pyenv) to manage your python version.
+> 💡 We recommend using [pyenv](https://github.com/pyenv/pyenv) to manage your python version.
 
 We leverage [`uv`](https://github.com/astral-sh/uv) to manage/install our Python requirements. Install as follows:
 
@@ -27,7 +27,7 @@ We leverage [`uv`](https://github.com/astral-sh/uv) to manage/install our Python
 brew install uv
 ```
 
-Next, create a `venv` and install the requirements:
+Next, create a `venv` and install the requirements in `pipelines/matrix` directory (this is where you will execute pipeline-related commands):
 
 ```bash
 uv venv
@@ -86,7 +86,9 @@ We're using [Kedro](https://kedro.org/) as our data pipelining framework. Kedro 
 1. __Project template__: Standard directory structure to streamline project layout, i.e., configuration, data, and pipelines.
 2. __Data catalog__: A lightweight abstraction for datasets, abstracting references to the file system, in a compact configuration file.
 3. __Pipelines__: A `pipeline` object abstraction, that leverages `nodes` that plug into `datasets` as defined by the data catalog[^1].
-4. __Vizualiation__: Out-of-the-box pipeline visualization based directly on the source code.
+4. __Visualization__: Out-of-the-box pipeline visualization based directly on the source code.
+
+Kedro project directory can be found in `pipelines/matrix` directory with an associated [README.md](../../../pipelines/matrix/README.md) with instructions.
 
 [^1]: Kedro allows for fine-grained control over pipeline execution, through the [kedro run](https://docs.kedro.org/en/stable/nodes_and_pipelines/run_a_pipeline.html) command.
 
@@ -160,7 +162,7 @@ While the code above is easily generalizable, its highly coupled to the `xgboost
 # `estimator` should be an object of the type `sklearn.base.BaseEstimator`
 # that should be instantiated with the `tree_method` construction arg.
 estimator:
-    object: sklearn.base.BaseEstimator
+    object: xgboost.XGBClassifier
     tree_method: hist
 ```
 
