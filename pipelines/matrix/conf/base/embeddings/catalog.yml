@@ -1,9 +1,3 @@
-_spark_parquet_ds: &_spark_parquet
-  type: spark.SparkDataset
-  file_format: parquet
-  save_args:
-    mode: overwrite
-
 _neo4j_ds: &_neo4j_ds
   type: matrix.datasets.neo4j.Neo4JSparkDataset
   database: everycure
@@ -12,23 +6,24 @@ _neo4j_ds: &_neo4j_ds
   save_args:
     mode: "overwrite"
 
+_spark_parquet_ds: &_spark_parquet
+  type: spark.SparkDataset
+  file_format: parquet
+  save_args:
+    mode: overwrite
 
 # Catalog directly expresses a query to add OpenAI embeddings.
 # https://neo4j.com/labs/apoc/5/installation/
 # https://neo4j.com/labs/apoc/5/ml/vertexai/#_generate_embeddings_api
-embeddings.prm.graph.embeddings:
+embeddings.prm.graph.embeddings@yaml:
+  type: yaml.YAMLDataset
+  filepath: ${globals:paths.prm}/embeddings/result.yml
+
+embeddings.prm.graph.embeddings@neo:
   <<: *_neo4j_ds
-  save_args:
-    query: > 
-      MATCH (n:Entity {id: event.id})
-      WITH event, n
-      CALL apoc.ml.openai.embedding([event.input], event.apiKey, {endpoint: event.endpoint}) YIELD index, text, embedding
-      CALL apoc.create.setProperty(n, "embedding", embedding) YIELD node
-      RETURN node
   load_args:
     query: >
       MATCH (n: Entity) RETURN n.id as id, n.embedding as embedding
-
 
 embeddings.prm.graph.pca_embeddings:
   <<: *_neo4j_ds
@@ -40,10 +35,38 @@ embeddings.prm.graph.pca_embeddings:
       RETURN node
   load_args:
     query: >
-      MATCH (n: Entity) RETURN n.id as id, n.pca_embedding as embedding
+      MATCH (n: Entity) 
+      RETURN n.id as id, n.pca_embedding as embedding
+
+embeddings.models.graphsage:
+  # we do not actually do anything with this DS, thus it's a dummy
+  # https://github.com/kedro-org/kedro/discussions/3758
+  filepath: ${globals:paths.prm}/graphsage/result.yml
+  type:  yaml.YAMLDataset
 
 # NOTE: Dummy catalog entry to enforce Kedro dependency
 # between embedding and modelling pipeline.
 embeddings.model_output.graphsage:
-  type: yaml.YAMLDataset
-  filepath: ${globals:paths.model_output}/graphsage/result.yml
+  <<: *_neo4j_ds
+  save_args:
+    # Dummy Query that never gets written to because we use GDS to execute the write-back of graphsage
+    persist: false
+  load_args:
+    query: >
+      MATCH (n: Entity) 
+      RETURN 
+          n.id as id, 
+          n.name as name,
+          n.category as category,
+          n.description as description,
+          n.topological_embedding as topological_embedding
+
+embeddings.feat.nodes:
+  <<: *_spark_parquet
+  filepath: ${globals:paths.feat}/nodes
+  versioned: true
+      
+embeddings.feat.edges:
+  <<: *_spark_parquet
+  filepath: ${globals:paths.feat}/edges
+  versioned: true

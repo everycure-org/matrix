@@ -19,3 +19,6 @@ scikit-optimize
 xgboost
 hdfs
 graphdatascience
+neo4j>=5.5.0
+python-cypher==0.20.1
+termplotlib
