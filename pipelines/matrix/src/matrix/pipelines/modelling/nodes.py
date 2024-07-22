@@ -1,8 +1,10 @@
 """Module with nodes for modelling."""
+
 from typing import Any, Dict, List, Union, Tuple
 import pandas as pd
 import numpy as np
 import json
+import pyspark.sql.functions as f
 
 from pyspark.sql import DataFrame
 
@@ -25,19 +27,37 @@ from .model import ModelWrapper
 plt.switch_backend("Agg")
 
 
+def prefilter_nodes(
+    nodes: DataFrame, drug_types: List[str], disease_types: List[str]
+) -> DataFrame:
+    """Filters nodes before passing on to modelling nodes.
+
+    Args:
+        nodes: the nodes dataframe to be filtered
+        drug_types: list of drug types
+        disease_types: list of disease types
+    Returns:
+        Filtered nodes dataframe
+    """
+    return nodes.filter(
+        (f.col("category").isin(drug_types)) | (f.col("category").isin(disease_types))
+    )
+
+
 @has_schema(
     schema={
         "is_drug": "bool",
         "is_disease": "bool",
         "is_ground_pos": "bool",
-        "embedding": "object",
+        # "node_embedding": "object",
+        # "pca_embedding": "object",
+        "topological_embedding": "object",
     },
     allow_subset=True,
 )
 def create_feat_nodes(
     raw_nodes: DataFrame,
     known_pairs: DataFrame,
-    embeddings: pd.DataFrame,
     drug_types: List[str],
     disease_types: List[str],
 ) -> pd.DataFrame:
@@ -47,7 +67,6 @@ def create_feat_nodes(
 
     Args:
         raw_nodes: Raw nodes data.
-        embeddings: Embeddings data.
         known_pairs: Ground truth data.
         drug_types: List of drug types.
         disease_types: List of disease types.
@@ -55,23 +74,20 @@ def create_feat_nodes(
     Returns:
         Nodes enriched with features.
     """
-    # Merge embeddings
-    raw_nodes = raw_nodes.toPandas()
-
-    # Add drugs and diseases types flags
-    raw_nodes["is_drug"] = raw_nodes["category"].apply(lambda x: x in drug_types)
-    raw_nodes["is_disease"] = raw_nodes["category"].apply(lambda x: x in disease_types)
-
-    # Add flag for set of drugs appearing in ground truth positive set
+    pdf_nodes = raw_nodes.toPandas()
     known_pairs = known_pairs.toPandas()
+    # Add drugs and diseases types flags
+    pdf_nodes["is_drug"] = pdf_nodes["category"].apply(lambda x: x in drug_types)
+    pdf_nodes["is_disease"] = pdf_nodes["category"].apply(lambda x: x in disease_types)
+
     ground_pos = known_pairs[known_pairs["y"].eq(1)]
     ground_pos_drug_ids = list(ground_pos["source"].unique())
     ground_pos_disease_ids = list(ground_pos["target"].unique())
-    raw_nodes["is_ground_pos"] = raw_nodes["id"].isin(
+    pdf_nodes["is_ground_pos"] = pdf_nodes["id"].isin(
         ground_pos_drug_ids + ground_pos_disease_ids
     )
 
-    return raw_nodes
+    return pdf_nodes
 
 
 @inject_object()

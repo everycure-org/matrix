@@ -136,9 +136,10 @@ class SpecificRanking(Evaluation):
             pos_preds = list(pairs_for_item[is_pos][self._score_col_name])
             neg_preds = list(pairs_for_item[~is_pos][self._score_col_name])
             neg_preds.sort()
+
             for prob in pos_preds:
                 rank = len(neg_preds) - bisect.bisect_left(neg_preds, prob) + 1
-            ranks_lst.append(rank)
+                ranks_lst.append(rank)  # FUTURE: Is this correct?
 
         # Compute average of rank functions and report metrics
         report = {}

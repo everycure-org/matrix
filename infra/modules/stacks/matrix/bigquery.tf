@@ -11,3 +11,15 @@ resource "google_bigquery_dataset" "dataset" {
     kg  = each.key
   }
 }
+
+resource "google_bigquery_dataset" "data_api_dataset" {
+  project     = var.project_id
+  dataset_id  = "data_api"
+  description = "Dataset with EveryCure data API components"
+  location    = "US"
+
+  labels = {
+    env   = var.environment
+    owner = "everycure"
+  }
+}
