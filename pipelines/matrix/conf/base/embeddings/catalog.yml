@@ -60,6 +60,7 @@ embeddings.model_output.graphsage:
           n.category as category,
           n.description as description,
           n.topological_embedding as topological_embedding
+
 embeddings.feat.nodes:
   <<: *_spark_parquet
   filepath: ${globals:paths.feat}/nodes
