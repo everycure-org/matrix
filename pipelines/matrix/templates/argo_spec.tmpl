@@ -1,0 +1,110 @@
+{# <project_root>/templates/argo_spec.tmpl #}
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  namespace: argo-workflows
+  name: matrix
+spec:
+  entrypoint: dag
+  arguments:
+    parameters:
+      - name: image
+        value: "{{ image }}"
+      - name: neo4j_host
+        value: "bolt://neo4j.neo4j.svc.cluster.local:7687"
+      - name: openai_endpoint
+        value: "https://api.openai.com/v1"
+      - name: env
+        value: "prod"
+  templates:
+  - name: kedro
+    retryStrategy:
+      limit: {% raw %}"{{inputs.parameters.num_retries}}"
+    {% endraw %}
+    retryPolicy: "Always"
+    backoff:
+      duration: "1"      # Must be a string. Default unit is seconds. Could also be a Duration, e.g.: "2m", "6h", "1d"
+      factor: 2
+      maxDuration: "1m"  # Must be a string. Default unit is seconds. Could also be a Duration, e.g.: "2m", "6h", "1d"
+    affinity:
+      nodeAntiAffinity: {}
+    metadata:
+      labels:
+        {# Add label to have an ability to remove Kedro Pods easily #}
+        app: kedro-argo
+    inputs:
+      parameters:
+      - name: kedro_node
+      - name: num_retries
+      - name: pipeline
+    container:
+      imagePullPolicy: Always
+      image: {% raw %} "{{workflow.parameters.image}}" 
+      {% endraw %}
+      resources: # limit the resources
+        requests:
+          memory: 6Gi
+          cpu: 4
+        limits:
+          memory: 32Gi
+          cpu: 16
+      env:
+        - name: NEO4J_HOST
+          value: {% raw %} "{{workflow.parameters.neo4j_host}}" 
+          {% endraw %}
+        - name: NEO4J_USER
+          valueFrom:
+            secretKeyRef:
+              name: matrix-secrets
+              key: NEO4J_USER
+        - name: NEO4J_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: matrix-secrets
+              key: NEO4J_PASSWORD
+        - name: OPENAI_ENDPOINT
+          value: {% raw %} "{{workflow.parameters.openai_endpoint}}" 
+          {% endraw %}
+        - name: OPENAI_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: matrix-secrets
+              key: OPENAI_API_KEY
+        - name: GCP_PROJECT_ID
+          valueFrom:
+            configMapKeyRef:
+              name: matrix-config
+              key: GCP_PROJECT_ID
+        - name: GCP_BUCKET
+          valueFrom:
+            configMapKeyRef:
+              name: matrix-config
+              key: GCP_BUCKET
+        - name: VERTEX_AI_ACCESS_TOKEN
+          value: dummy
+      command: [kedro]
+      args: ["run", "-p", {% raw %}"{{inputs.parameters.pipeline}}"{% endraw %}, "-e", {% raw %}"{{workflow.parameters.env}}"{% endraw %}, "-n", {% raw %}"{{inputs.parameters.kedro_node}}"{% endraw %}]
+  
+  {% for pipeline, tasks in pipes.items() %}
+  - name: {{ pipeline }}
+    dag:
+      tasks:
+      {% for task in tasks %}
+      - name: {{ task.name }}
+        template: kedro
+        {% if task.deps %}
+        dependencies:
+        {% for dep in task.deps %}
+          - {{ dep }}
+        {% endfor %}
+        {% endif %}
+        arguments:
+          parameters:
+          - name: pipeline
+            value: {{ pipeline }}
+          - name: kedro_node
+            value: {{ task.node }}
+          - name: num_retries
+            value: {{ task.get('retries', 0) }}
+      {% endfor %}
+  {% endfor %}

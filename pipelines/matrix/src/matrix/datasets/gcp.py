@@ -59,6 +59,10 @@ class BigQueryTableDataset(SparkDataset):
     for the [BigQuery Spark Connector](https://github.com/GoogleCloudDataproc/spark-bigquery-connector)
     """
 
+    # parquet does not support arrays (our embeddings)
+    # https://github.com/GoogleCloudDataproc/spark-bigquery-connector/issues/101
+    DEFAULT_SAVE_ARGS = {"intermediateFormat": "orc"}
+
     def __init__(  # noqa: PLR0913
         self,
         *,

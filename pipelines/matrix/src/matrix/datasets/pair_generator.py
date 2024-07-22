@@ -3,6 +3,7 @@
 Module containing drug-disease pair generator
 """
 import abc
+from tqdm import tqdm
 import pandas as pd
 import random
 
@@ -171,16 +172,19 @@ class ReplacementDrugDiseasePairGenerator(SingleLabelPairGenerator):
             (drug, disease)
             for drug, disease in zip(kp_train_pairs["source"], kp_train_pairs["target"])
         }
+        # Defining list of node id's to sample from
+        drug_samp_ids = graph.flags_to_ids(self._drug_flags)
+        disease_samp_ids = graph.flags_to_ids(self._disease_flags)
 
         # Generate unknown data
         unknown_data = []
-        for kp_drug, kp_disease in kp_train_set:
+        for kp_drug, kp_disease in tqdm(kp_train_set):
             unknown_data += ReplacementDrugDiseasePairGenerator._make_replacements(
                 graph,
                 kp_drug,
                 kp_disease,
-                self._drug_flags,
-                self._disease_flags,
+                drug_samp_ids,
+                disease_samp_ids,
                 self._n_replacements,
                 known_data_set,
                 self._y_label,
@@ -196,17 +200,13 @@ class ReplacementDrugDiseasePairGenerator(SingleLabelPairGenerator):
         graph: KnowledgeGraph,
         kp_drug: str,
         kp_disease: str,
-        drug_flags: List[str],
-        disease_flags: List[str],
+        drug_samp_ids: List[str],
+        disease_samp_ids: List[str],
         n_replacements: int,
         known_data_set: Set[tuple],
         y_label: int,
     ) -> List[str]:
         """Helper function to generate list of drug-disease pairs through replacements."""
-        # Defining list of node id's to sample from
-        drug_samp_ids = graph.flags_to_ids(drug_flags)
-        disease_samp_ids = graph.flags_to_ids(disease_flags)
-
         # Sample pairs
         unknown_data = []
         while len(unknown_data) < 2 * n_replacements:

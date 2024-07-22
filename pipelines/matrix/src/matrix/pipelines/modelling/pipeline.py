@@ -133,11 +133,20 @@ def create_pipeline(**kwargs) -> Pipeline:
     create_model_input = pipeline(
         [
             node(
+                func=nodes.prefilter_nodes,
+                inputs=[
+                    "embeddings.feat.nodes",
+                    "params:modelling.drug_types",
+                    "params:modelling.disease_types",
+                ],
+                outputs="modelling.model_input.drugs_diseases_nodes@spark",
+                name="prefilter_nodes",
+            ),
+            node(
                 func=nodes.create_feat_nodes,
                 inputs=[
-                    "modelling.raw.nodes",
+                    "modelling.model_input.drugs_diseases_nodes@spark",
                     "integration.model_input.ground_truth",
-                    "embeddings.model_output.graphsage",
                     "params:modelling.drug_types",
                     "params:modelling.disease_types",
                 ],
