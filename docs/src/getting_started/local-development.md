@@ -14,6 +14,26 @@ Next, authenticate the client:
 gcloud auth login
 ```
 
+### Accessing the cluster services
+
+> ⚠️ This section assumes basic knowledge of Kubernetes, cluster technology to deploy Docker containers.
+
+Our platform services run on Kubernetes. We recommend installing `k9s` to interact with the cluster services.
+
+```bash
+brew install k9s
+```
+
+```bash
+TODO Add kubectl config command here
+```
+
+To access services on the cluster, launch `k9s` through the command line. The tooling comes with out-of-the-box functionality to setup [port-forwarding](TODO add link). Search for for global cluster resources of `service` type, and hit `shift + f` to activiate port-forwarding.
+
+```bash
+k9s
+```
+
 ### GCP Service account
 
 To correctly leverage the GCP services, you will need a service-account key. You can create a key through the [Google CLI](https://cloud.google.com/storage/docs/gsutil_install) as follows:
