@@ -13,7 +13,10 @@ from typing import Dict
 from matrix.hooks import *
 
 # Hooks are executed in a Last-In-First-Out (LIFO) order.
-HOOKS = (SparkHooks(), NodeTimerHooks())
+HOOKS = (
+    SparkHooks(),
+    NodeTimerHooks(),
+)
 
 # Installed plugins for which to disable hook auto-registration.
 # DISABLE_HOOKS_FOR_PLUGINS = ("kedro-viz",)

@@ -78,6 +78,7 @@ def compute_embeddings(
     attribute: str,
     endpoint: str,
     model: str,
+    concurrency: int,
 ):
     """Function to orchestrate embedding computation in Neo4j.
 
@@ -90,6 +91,7 @@ def compute_embeddings(
         attribute: attribute to add
         endpoint: endpoint to use
         model: model to use
+        concurrency: number of concurrent calls to execute
     """
     # fmt: off
     # Register functions
@@ -99,6 +101,9 @@ def compute_embeddings(
 
     # Build query
     p = Pypher()
+
+    # Due to f-string limitations
+    empty = '\"\"'
 
     # The apoc iterate is a rather interesting function, that takes stringified
     # cypher queries as input. The first determines the subset of nodes on
@@ -113,7 +118,7 @@ def compute_embeddings(
             [
                 # Apply OpenAI embedding in a batched manner, embedding
                 # is applied on the concatenation of supplied features for each node.
-                cypher.CALL.openai_embedding(f"[item in $_batch | item.p.category + coalesce(item.p.name, \"\")]", "$apiKey", "{endpoint: $endpoint, model: $model}").YIELD("index", "text", "embedding"),
+                cypher.CALL.openai_embedding(f"[item in $_batch | {'+'.join(f'coalesce(item.p.{item}, {empty})' for item in features)}]", "$apiKey", "{endpoint: $endpoint, model: $model}").YIELD("index", "text", "embedding"),
                 # Set the attribute property of the node to the embedding
                 cypher.CALL.set_property("$_batch[index].p", "$attribute", "embedding").YIELD("node").RETURN("node"),
             ]
@@ -124,7 +129,7 @@ def compute_embeddings(
             batchMode="BATCH_SINGLE",
             parallel="true",
             batchSize=batch_size,
-            concurrency=50,
+            concurrency=concurrency,
             params=cypher.map(apiKey=api_key, endpoint=endpoint, attribute=attribute, model=model),
         ),
     ).YIELD("batch", "operations")

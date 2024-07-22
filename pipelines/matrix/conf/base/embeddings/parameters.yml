@@ -10,12 +10,14 @@ embeddings.gdb:
 
 # Establishes connection to localized mock GenAI API for
 # testing purposes.
+# https://neo4j.com/labs/apoc/5/ml/openai/
 embeddings.ai_config:
   api_key: ${oc.env:OPENAI_API_KEY} 
   attribute: &_property embedding
   batch_size: 1 # NOTE: The MockApi does not support batching, hence disabled
   endpoint: ${oc.env:OPENAI_ENDPOINT}
   model: text-embedding-3-small
+  concurrency: 50
 
 # Attributes used as input features to compute
 # node embeddings.
