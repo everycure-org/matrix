@@ -27,7 +27,7 @@ def graph_fixture() -> KnowledgeGraph:
                 ["disease:disease_2", False, True, [0, 0, 0, 1]],
                 ["disease:disease_3", False, True, [0, 0, 0, 2]],
             ],
-            columns=["id", "is_drug", "is_disease", "embedding"],
+            columns=["id", "is_drug", "is_disease", "topological_embedding"],
         )
     )
 

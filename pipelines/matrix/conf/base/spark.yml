@@ -1,11 +1,10 @@
 spark.sql.execution.arrow.pyspark.enabled: true
 spark.scheduler.mode: FAIR
-spark.driver.memory: 2g
+spark.driver.memory: 10g
+# only using this due to 
+# https://github.com/fsspec/gcsfs/issues/632
+spark.driver.maxResultSize: 8g
 
 spark.jars: https://storage.googleapis.com/hadoop-lib/gcs/gcs-connector-hadoop3-latest.jar
 spark.jars.packages: com.google.cloud.spark:spark-3.5-bigquery:0.39.0,org.neo4j:neo4j-connector-apache-spark_2.12:5.3.0_for_spark_3
 spark.hadoop.fs.gs.impl: com.google.cloud.hadoop.fs.gcs.GoogleHadoopFileSystem
-
-# https://github.com/GoogleCloudDataproc/hadoop-connectors/issues/52#issuecomment-299604705
-spark.hadoop.google.cloud.auth.service.account.enable: true
-spark.hadoop.google.cloud.auth.service.account.json.keyfile: conf/local/service-account.json

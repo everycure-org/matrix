@@ -1,3 +1,6 @@
+dev_docker_image = us-central1-docker.pkg.dev/mtrx-hub-dev-3of/matrix-images/matrix
+
+
 install:
 	uv pip install -r requirements.in
 
@@ -7,14 +10,27 @@ lock:
 test:
 	pytest --testmon -v tests/
 
-integration_test: integration_test
-	kedro run
+
+wipe_neo:
+	# assumes you have neo4j running using docker-compose setup from deployments/compose/
+	python scripts/wipe_neo4j.py
+
+integration_test: wipe_neo
+	kedro run -p test --runner ThreadRunner
 
 fabricate:
 	kedro run -p fabricator
 
 build: lock
 	docker build -t matrix .
+
+docker_push_dev:
+	docker buildx build --platform linux/amd64 -t matrix_amd ./
+	docker tag matrix_amd $(dev_docker_image):${USER}
+	docker push $(dev_docker_image):${USER}
+
+argo_template:
+	python ./src/matrix/argo.py generate-argo-config $(dev_docker_image):latest
 
 licenses:  build
 	trivy image --scanners license --severity UNKNOWN,CRITICAL matrix

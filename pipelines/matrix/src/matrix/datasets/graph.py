@@ -28,7 +28,7 @@ class KnowledgeGraph:
         # Add type specific indexes
         self._drug_nodes = list(nodes[nodes["is_drug"]]["id"])
         self._disease_nodes = list(nodes[nodes["is_disease"]]["id"])
-        self._embeddings = dict(zip(nodes["id"], nodes["embedding"]))
+        self._embeddings = dict(zip(nodes["id"], nodes["topological_embedding"]))
 
     def flags_to_ids(self, flags: List[str]) -> List[str]:
         """Helper function for extracting nodes from flag columns.

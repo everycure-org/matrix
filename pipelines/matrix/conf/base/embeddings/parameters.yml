@@ -1,20 +1,37 @@
+# Neo4J graph database configuration. Used to orchestrate
+# queries into Neo4j.
+embeddings.gdb:
+  object: matrix.pipelines.embeddings.nodes.GraphDB
+  endpoint: ${oc.env:NEO4J_HOST}
+  database: everycure
+  auth:
+    -  ${oc.env:NEO4J_USER}
+    -  ${oc.env:NEO4J_PASSWORD}
+
 # Establishes connection to localized mock GenAI API for
 # testing purposes.
+# https://neo4j.com/labs/apoc/5/ml/openai/
 embeddings.ai_config:
-  endpoint: ${oc.env:OPENAI_ENDPOINT} 
-  apiKey: ${oc.env:OPENAI_API_KEY} 
+  api_key: ${oc.env:OPENAI_API_KEY} 
+  attribute: &_property embedding
+  batch_size: 1 # NOTE: The MockApi does not support batching, hence disabled
+  endpoint: ${oc.env:OPENAI_ENDPOINT}
+  model: text-embedding-3-small
+  concurrency: 50
 
 # Attributes used as input features to compute
 # node embeddings.
-embeddings.node.features: ["id", "category"]
+embeddings.node.features: ["category", "name"]
 
 # Defines strategy used to reduce dimensions of the GenAI
 # generated node embeddings.
 # https://spark.apache.org/docs/latest/api/python/reference/api/pyspark.ml.feature.PCA.html
 embeddings.dimensionality_reduction:
-  object: pyspark.ml.feature.PCA
-  k: 2
-
+  input: *_property
+  output: &_pca_property 'pca_embedding'
+  transformer:
+    object: pyspark.ml.feature.PCA
+    k: 2
 
 # FUTURE: This is a highly temp. solution that serves as PoC of leveraging Neo4J's
 # AI functionality. If works as expected, we'll do a refinement step to clean this up.
@@ -40,13 +57,15 @@ embeddings.gds:
 embeddings.topological:
   projection:
     graphName: embeddings
-    nodeProjection: '*'
+    nodeProjection:
+      Entity:
+        label: 'Entity'
+        properties: *_pca_property
     relationshipProjection: '*'
-    config:
-      nodeProperties: &_feature 'pca_embedding'
   estimator:
     model: graphSage
     args:
       modelName: topological_embeddings
-      featureProperties: [*_feature]
+      featureProperties: [*_pca_property]
+      concurrency: 4
   write_property: topological_embedding
