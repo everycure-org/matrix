@@ -10,12 +10,12 @@ Moreover, the codebase contains the defintion of the infrastructure to run the p
 
 ## Pre-requisites
 
-This pages assumes basic knowledge of:
-
-- Docker
-- Docker-compose
-- Python
-- YAML
+> This pages assumes basic knowledge of:
+> 
+> - Python
+> - YAML
+> - [Docker](https://docker-curriculum.com/)
+> - [Docker-compose](https://docs.docker.com/compose/)
 
 ### Package manager
 
@@ -30,6 +30,8 @@ We leverage [`uv`](https://github.com/astral-sh/uv) to manage/install our Python
 ```bash
 brew install uv
 ```
+
+> 🆘 Don't forget to link your uv installation using the instructions prompted after the downloaded.
 
 Next, create a `venv` and install the requirements in `pipelines/matrix` directory (this is where you will execute pipeline-related commands):
 
@@ -53,8 +55,9 @@ brew install docker-compose
 
 ### Java
 
-Our pipeline uses Spark for distributed computations, which requires Java under the hood.
-```
+Our pipeline uses [Spark](https://spark.apache.org/) for distributed computations, which requires Java under the hood.
+
+```bash
 brew install openjdk@11
 ```
 
@@ -129,11 +132,11 @@ The situation is depicted below, in the `base` environment our pipeline will plu
 
 ```bash
 # Pipeline uses the base, i.e., local setup by default.
-kedro run -p fabricator
-kedro run
+# The `test` pipeline runs the `fabricator` _and_ the full pipeline.
+kedro run -p test
 
 # To leverage the production datasets
-kedro run --env prod
+kedro --env prod
 ```
 
 ![](../assets/img/fabrication.drawio.svg)
@@ -249,7 +252,7 @@ Embeddings are vectorized representations of the entities in our knowledge graph
 1. GenAI model is used to compute individual node embeddings
 2. GraphSage embedding algorithm is ran on the node embeddings to produce topological embeddings
 
-> Our graph database, i.e., Neo4J comes with out-of-the-box functionality to compute both node and topological embeddings in-situ. The Kedro pipeline orchestrates the computation of these.
+> 🔎 Our graph database, i.e., Neo4J comes with out-of-the-box functionality to compute both node and topological embeddings in-situ. The Kedro pipeline orchestrates the computation of these.
 
 #### Modelling 
 
@@ -264,7 +267,7 @@ The main steps are as follows:
 
 As well as single models, the pipeline has the capability to deal with *ensembles* of models trained with resampled synthesised training data.  
 
-> The step *check model performance* only gives a partial indication of model performance intended as a quick sanity check. This is because, in general, the ground truth data alone is not a good reflection of the data distribution that the model will see while performing its task. The evaluation pipeline must be run before making conclusions about model performance. 
+> 🔎 The step *check model performance* only gives a partial indication of model performance intended as a quick sanity check. This is because, in general, the ground truth data alone is not a good reflection of the data distribution that the model will see while performing its task. The evaluation pipeline must be run before making conclusions about model performance. 
 
 
 #### Evaluation
