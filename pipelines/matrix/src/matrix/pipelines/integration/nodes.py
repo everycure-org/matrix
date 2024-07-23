@@ -113,9 +113,8 @@ def create_treats(nodes: DataFrame, df: DataFrame):
                 F.col("y"),
                 F.lit("foo"),
                 F.lit("bar"),
-                F.lit(
-                    "weight", F.lit(0)
-                ),  # NOTE: This adds a "weight" zero to the graph
+                F.lit("weight"),
+                F.lit(0),  # NOTE: This adds a "weight" zero to the graph
             ),
         )
         .withColumn("source_id", F.col("source"))
