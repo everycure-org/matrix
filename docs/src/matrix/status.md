@@ -1,3 +1,3 @@
-# Pipeline Development Status 
+# Pipeline Status 
 
 ![](../assets/img/status.drawio.svg)

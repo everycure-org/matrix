@@ -1,4 +1,4 @@
-# Dealing with Licenses in our project
+# License handling
 
 To make sure we do not use any software that gets us into trouble later on, we have
 `trivy` scan for licenses of software we use. However, we don't yet have this implemented
