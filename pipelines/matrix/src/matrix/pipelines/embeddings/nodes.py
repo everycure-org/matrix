@@ -70,7 +70,7 @@ class GraphDS(GraphDataScience):
 @unpack_params()
 @inject_object()
 def compute_embeddings(
-    input: DataFrame,
+    #  input: DataFrame,
     gdb: GraphDB,
     features: List[str],
     api_key: str,
@@ -111,7 +111,7 @@ def compute_embeddings(
     # https://neo4j.com/labs/apoc/4.1/overview/apoc.periodic/apoc.periodic.iterate/
     p.CALL.iterate(
         # Match every :Entity node in the graph
-        cypher.stringify(cypher.MATCH.node("p", labels="Entity").WHERE.p.property('$attribute').IS_NULL.RETURN.p),
+        cypher.stringify(cypher.MATCH.node("p", labels="Entity").RETURN.p), # WHERE.p.property('$attribute').IS_NULL
         # For each batch, execute following statements, the $_batch is a special
         # variable made accessible to access the elements in the batch.
         cypher.stringify(
@@ -132,13 +132,21 @@ def compute_embeddings(
             concurrency=concurrency,
             params=cypher.map(apiKey=api_key, endpoint=endpoint, attribute=attribute, model=model),
         ),
-    ).YIELD("batch", "operations")
+    ).YIELD("batch", "operations").UNWIND("batch").AS("b").WITH("b").WHERE("b.failed > 0").RETURN("b.failed")
     # fmt: on
 
+    failed = []
     with gdb.driver() as driver:
-        summary = driver.execute_query(str(p), **p.bound_params).summary
+        failed = driver.execute_query(str(p), **p.bound_params)
 
-    return {"success": "true", "time": summary.result_available_after}
+    breakpoint()
+
+    if len(failed) > 0:
+        raise RuntimeError("Failed batches in the embedding step")
+
+    breakpoint()
+
+    return {"success": "true"}
 
 
 @unpack_params()
