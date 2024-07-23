@@ -43,6 +43,7 @@ jobs:
   plan:
     runs-on: ubuntu-latest
     if: github.ref != 'refs/heads/main'
+    environment: dev
     name: Plan Terraform
     needs: [ checks ]
     permissions:
