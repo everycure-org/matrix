@@ -63,11 +63,11 @@ embeddings.topological:
         label: 'Entity'
         # NOTE: This is saying, train graphsage on the PCA embedding
         properties: *_pca_property
-    relationshipProjection: # CON: There is no way (atleast that I know) to say, include _all_ edges, but not _these_ edges
-      all_edges:
-        properties: 
-          weight:
-            defaultValue: 1
+    relationshipProjection: '*' # CON: There is no way (atleast that I know) to say, include _all_ edges, but not _these_ edges
+    configuration:
+      relationshipProperties:
+        weight:
+          defaultValue: 1
     # TODO: Expand projection to include weight property on the edge, and set it to 1 by default]
   estimator:
     model: graphSage
