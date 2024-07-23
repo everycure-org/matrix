@@ -308,7 +308,7 @@ The ingestion pipeline aims to ingest all the downstream data in BigQuery, our d
 We've established a lightweight data versioning system to ensure we can easily revert to an older version of the input data if required. All of our data should be stored in Google Cloud Storage (GCS) under the following path:
 
 ```
-gs://<bucket>/kedro/data/01_raw/<source>/<version>/[nodes.tsv, edges.tsv]
+gs://<bucket>/kedro/data/01_raw/<source>/<version>/<source_specific_files>
 ```
 
 Next, our pipeline globals provide an explicit listing of the versions that should be used during pipeline run, for instance:
