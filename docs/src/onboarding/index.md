@@ -152,7 +152,7 @@ We're using [Kedro](https://kedro.org/) as our data pipelining framework. Kedro 
 3. __Pipelines__: A `pipeline` object abstraction, that leverages `nodes` that plug into `datasets` as defined by the data catalog[^1].
 4. __Visualization__: Out-of-the-box pipeline visualization based directly on the source code.
 
-Kedro project directory can be found in `pipelines/matrix` directory with an associated [README.md](../../../pipelines/matrix/README.md) with instructions.
+Kedro project directory can be found in `pipelines/matrix` directory with an associated `README.md` with instructions.
 
 [^1]: Kedro allows for fine-grained control over pipeline execution, through the [kedro run](https://docs.kedro.org/en/stable/nodes_and_pipelines/run_a_pipeline.html) command.
 
