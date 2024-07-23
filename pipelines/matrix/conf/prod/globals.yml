@@ -5,11 +5,6 @@ versions:
     rtx-kg2: v2.7.3
   release: 20240620
 
-versions:
-  sources:
-    rtx-kg2: v2.7.3
-  release: 20240620
-
 paths:
   raw: ${gcs_bucket}/kedro/data/01_raw
   int: ${gcs_bucket}/kedro/staging/data/02_intermediate
