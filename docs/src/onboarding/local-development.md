@@ -1,4 +1,4 @@
-# Plugging into our cloud environment
+# Google Cloud Access
 
 ## Pre-requisites
 

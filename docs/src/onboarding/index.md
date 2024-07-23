@@ -14,23 +14,25 @@ Moreover, the codebase contains the defintion of the infrastructure to run the p
 
 ## Pre-requisites
 
-!!! tip
+This page assumes basic knowledge of the following technologies. We will provide instructions how to install them but as a quick reference, below are the necessary tools:
 
-    This page assumes basic knowledge of the following:
+- `python@3.11`
+- `yaml` 
+- `openjdk-11`
+- [`docker`](https://docker-curriculum.com/)
+- [`docker-compose`](https://docs.docker.com/compose/)
 
-    - Python
-    - YAML
-    - [Docker](https://docker-curriculum.com/)
-    - [Docker-compose](https://docs.docker.com/compose/)
 
-### Package manager
-
-Our guide assumes usage of [homebrew](https://brew.sh/) to manage packages.
-
+!!! info "Support on Windows, MacOS and Linux"
+    We are mostly using MacOS but try our best to provide an onboarding for all
+    platforms. This guide assumes Our guide assumes usage of [homebrew](https://brew.sh/)
+    to manage packages on MacOS, [Windows
+    WSL](https://de.wikipedia.org/wiki/Windows-Subsystem_f%C3%BCr_Linux) usage on Windows
+    and some system proficiency for Linux users. If you find your platform could be
+    better supported, do [send a
+    PR](https://github.com/everycure-org/matrix/edit/main/src/docs/src/onboarding/index.md)!
+    
 ### Python environment
-
-!!! tip
-    We recommend using [pyenv](https://github.com/pyenv/pyenv) to manage your python version. Our pipeline has been tested on Python `3.11`.
 
 We leverage [`uv`](https://github.com/astral-sh/uv) to manage/install our Python
 requirements. Install as follows, then create a virtual env and install the requirements:
@@ -285,7 +287,11 @@ The dependency injection pattern is an excellent technique to clean configuratio
 
 Given the experimental nature of our project, we aim to produce different model flavours. For instance, a model with static hyper-parameters, a model that is hyper-parameter tuned, and an ensemble of hyper-parameter tuned models, etc.
 
-Dynamic pipelines in Kedro allow us to do exactly this. We're defining a single pipeline skeleton, which is instantiated multiple times, with different parameters.
+Dynamic pipelines in Kedro allow us to do exactly this. We're defining a single pipeline skeleton, which is instantiated multiple times, with different parameters. The power here lies in the fact that our compute infrastructure now executes all these nodes in isolation from each other, allowing us to train dozens of models in parallel without having to think about compute infrastructure. We simply execute the pipeline and compute instances get provisioned and removed dynamically as we need them, greatly reducing our compute operational and maintenance overhead. 
+
+![](../assets/img/dynamic_pipelines.gif)
+
+The above visualisation comes from [kedro viz](https://github.com/kedro-org/kedro-viz) which we greatly recommend trying out to get a sense of the entire pipeline. 
 
 ## Pipeline
 
@@ -355,6 +361,8 @@ Jupyter notebooks should be created in the directory `pipelines/matrix/notebooks
 
 !!! tip
     A separate git repository for notebook version control may be created inside the `scratch` directory. It can also be nice to create a symbolic link to `scratch` from a directory of your choice on your machine. 
+
+    An example notebook is also added to our documentation [here](./kedro_notebook_example.ipynb) which you can copy into the scratch directory for a quickstart
 
 Within a notebook, first run a cell with the following magic command:
 
