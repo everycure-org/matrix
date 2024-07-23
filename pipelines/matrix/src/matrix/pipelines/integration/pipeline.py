@@ -17,7 +17,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 tags=["rtx_kg2"],
             ),
             node(
-                func=lambda x: x,
+                func=lambda x: x,  # TODO: remove edges with labels treats
                 inputs=["integration.raw.rtx_kg2.edges@spark"],
                 outputs="integration.prm.rtx_kg2.edges",
                 name="write_rtx_kg2_edges",

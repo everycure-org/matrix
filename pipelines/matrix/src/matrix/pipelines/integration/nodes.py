@@ -108,7 +108,15 @@ def create_treats(nodes: DataFrame, df: DataFrame):
         )
         .withColumn(
             "properties",
-            F.create_map(F.lit("treats"), F.col("y"), F.lit("foo"), F.lit("bar")),
+            F.create_map(
+                F.lit("treats"),
+                F.col("y"),
+                F.lit("foo"),
+                F.lit("bar"),
+                F.lit(
+                    "weight", F.lit(0)
+                ),  # NOTE: This adds a "weight" zero to the graph
+            ),
         )
         .withColumn("source_id", F.col("source"))
         .withColumn("target_id", F.col("target"))
