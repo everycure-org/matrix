@@ -321,7 +321,7 @@ versions:
     ... # Other versions here
 ```
 
-Finally, catalog entries should be created to ensure the correct linkage of the catalog entry to the version.
+Finally, catalog entries should be defined to ensure the correct linkage of the catalog entry to the version.
 
 ```yaml
 # catalog.yml
@@ -329,6 +329,8 @@ integration.raw.rtx_kg2.edges:
   filepath: ${globals:paths.raw}/rtx_kg2/${globals:versions.sources.rtx-kg2}/edges.tsv
   ... # Remaining configuration here
 ```
+
+Note specifically the use of `globals:versions.sources.rtx-kg2` in the definition of the catalog entry. Whenever new data becomes available, code changes are limited to bumping the `versions.sources.<source>` entry in the globals.
 
 !!! info
     To date our pipeline only ingests data from the RTX-KG2 source.
