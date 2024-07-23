@@ -15,12 +15,10 @@ generate "provider" {
   contents  = <<EOF
 provider "google" {
   project = "mtrx-hub-dev-3of"
-  user_project_override = true
   billing_project       = "core-422020"
 }
 provider "google-beta" {
   project = "mtrx-hub-dev-3of"
-  user_project_override = true
   billing_project       = "core-422020"
 }
 EOF
