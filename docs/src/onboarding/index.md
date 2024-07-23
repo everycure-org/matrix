@@ -14,12 +14,14 @@ Moreover, the codebase contains the defintion of the infrastructure to run the p
 
 ## Pre-requisites
 
-> This pages assumes basic knowledge of:
-> 
-> - Python
-> - YAML
-> - [Docker](https://docker-curriculum.com/)
-> - [Docker-compose](https://docs.docker.com/compose/)
+!!! tip
+
+    This page assumes basic knowledge of the following:
+
+    - Python
+    - YAML
+    - [Docker](https://docker-curriculum.com/)
+    - [Docker-compose](https://docs.docker.com/compose/)
 
 ### Package manager
 
@@ -27,7 +29,8 @@ Our guide assumes usage of [homebrew](https://brew.sh/) to manage packages.
 
 ### Python environment
 
-> 💡 We recommend using [pyenv](https://github.com/pyenv/pyenv) to manage your python version. Our pipeline has been tested on Python `3.11`.
+!!! tip
+    We recommend using [pyenv](https://github.com/pyenv/pyenv) to manage your python version. Our pipeline has been tested on Python `3.11`.
 
 We leverage [`uv`](https://github.com/astral-sh/uv) to manage/install our Python
 requirements. Install as follows, then create a virtual env and install the requirements:
@@ -130,13 +133,15 @@ After completing the installation, run the following command from the `deploymen
 docker-compose up
 ```
 
-> Alternatively, you can add the `-d` flag at the end of the command to run in the background.
+!!! tip
+    Alternatively, you can add the `-d` flag at the end of the command to run in the background.
 
 To validate whether the setup is running, navigate to [localhost](http://localhost:7474/) in your browser, this will open the Neo4J dashboard. Use `neo4j` and `admin` as the username and password combination sign in.
 
 ## Kedro
 
-> 🔎 Kedro is an open-source framework to write modular data science code. We recommend checking out the [introduction video](https://docs.kedro.org/en/stable/introduction/index.html).
+!!! info
+    Kedro is an open-source framework to write modular data science code. We recommend checking out the [introduction video](https://docs.kedro.org/en/stable/introduction/index.html).
 
 We're using [Kedro](https://kedro.org/) as our data pipelining framework. Kedro is a rather light framework, that comes with the following [key concepts](https://docs.kedro.org/en/stable/get_started/kedro_concepts.html#):
 
@@ -162,23 +167,27 @@ Data used by our pipeline is registered in the _data catalog_. To add additional
 7. __Model output__: Dataset containing column where model predictions are ran.
 8. __Reporting__: Any datasets that provide reporting, e.g., convergence plots.
 
-> 💡 We name entries in our catalog according to the following format:
->
->  `<pipeline>.<layer>.<name>`
+
+!!! tip
+    We name entries in our catalog according to the following format:
+
+    `<pipeline>.<layer>.<name>`
 
 ![](../assets/img/convention.png)
 
 ### Data fabrication
 
-> 🔎 For more information regarding the fabricator, navigate to `pipelines/matrix/packages/data_fabricator`.
+!!! tip
+    For more information regarding the fabricator, navigate to `pipelines/matrix/packages/data_fabricator`.
 
 Our pipeline operates on large datasets, as a result the pipeline may take several hours the complete. Unfortunately, large iteration time leads to decreased developer productivity. For this reason, we've established a data fabricator to enable test runs on synthetic data.
 
 To seamlessly run the same codebase on both the fabricated and the production data, we leverage [Kedro configuration environments](https://docs.kedro.org/en/stable/configuration/configuration_basics.html#configuration-environments).
 
-> 🆘 Our pipeline is equipped with a `base` and `prod` catalog. The `base` catalog defines the full pipeline run on synthetic data. The `prod` catalog, on the other hand, plugs into the production sources.
->
-> To avoid full re-definition of all catalog and parameter entries, we're employing a `[soft merge](https://docs.kedro.org/en/stable/configuration/advanced_configuration.html#how-to-change-the-merge-strategy-used-by-omegaconfigloader)` strategy. Kedro will _always_ use the `base` config. This means that if another environment is selected, e.g., `prod`, using the `--env` flag, Kedro will override the base configuration with the entries defined in `prod`. Our goal is to _solely_ redefine entries in the `prod` catalog when they deviate from `base`.
+!!! warning
+    Our pipeline is equipped with a `base` and `prod` catalog. The `base` catalog defines the full pipeline run on synthetic data. The `prod` catalog, on the other hand, plugs into the production sources.
+
+    To avoid full re-definition of all catalog and parameter entries, we're employing a [soft merge](https://docs.kedro.org/en/stable/configuration/advanced_configuration.html#how-to-change-the-merge-strategy-used-by-omegaconfigloader) strategy. Kedro will _always_ use the `base` config. This means that if another environment is selected, e.g., `prod`, using the `--env` flag, Kedro will override the base configuration with the entries defined in `prod`. Our goal is to _solely_ redefine entries in the `prod` catalog when they deviate from `base`.
 
 The situation is depicted below, in the `base` environment our pipeline will plug into the datasets as produced by our fabricator pipeline, whereas the `prod` environment plugs into the production system.
 
@@ -271,7 +280,8 @@ The dependency injection pattern is an excellent technique to clean configuratio
 
 ### Dynamic pipelines
 
-> 🔎 Dynamic pipelining is a rather new concept in Kedro. We recommend checking out the [Dynamic Pipelines](https://getindata.com/blog/kedro-dynamic-pipelines/) blogpost. This pipelining strategy heavily relies on Kedro's [dataset factories](https://docs.kedro.org/en/stable/data/kedro_dataset_factories.html) feature.
+!!! tip
+    Dynamic pipelining is a rather new concept in Kedro. We recommend checking out the [Dynamic Pipelines](https://getindata.com/blog/kedro-dynamic-pipelines/) blogpost. This pipelining strategy heavily relies on Kedro's [dataset factories](https://docs.kedro.org/en/stable/data/kedro_dataset_factories.html) feature.
 
 Given the experimental nature of our project, we aim to produce different model flavours. For instance, a model with static hyper-parameters, a model that is hyper-parameter tuned, and an ensemble of hyper-parameter tuned models, etc.
 
@@ -289,13 +299,15 @@ Roughly speaking, our pipeline consists of five logical stages, i.e., ingestion,
 
 The ingestion pipeline aims to ingest all the downstream data in BigQuery, our data warehouse of choice. Data from different sources is assigned metadata for lineage tracking.
 
-> To date our pipeline only ingests data from the RTX-KG2 source.
+!!! info
+    To date our pipeline only ingests data from the RTX-KG2 source.
 
 #### Integration
 
 The integration stage aims to produce our internal knowledge-graph, in [biolink](https://biolink.github.io/biolink-model/) format. As we ingest data from different sources, entity resolution becomes a prevalent topic. The integration step consolidates entities across sources to avoid data duplication in the knowledge graph.
 
-> To date, this step is missing as we're only ingesting data from a single source.
+!!! info
+    To date, this step is missing as we're only ingesting data from a single source.
 
 #### Embeddings
 
@@ -304,7 +316,8 @@ Embeddings are vectorized representations of the entities in our knowledge graph
 1. GenAI model is used to compute individual node embeddings
 2. GraphSage embedding algorithm is ran on the node embeddings to produce topological embeddings
 
-> 🔎 Our graph database, i.e., Neo4J comes with out-of-the-box functionality to compute both node and topological embeddings in-situ. The Kedro pipeline orchestrates the computation of these.
+!!! info
+    Our graph database, i.e., [Neo4J](https://neo4j.com/docs/graph-data-science/current/algorithms/) comes with out-of-the-box functionality to compute both node and topological embeddings in-situ. The Kedro pipeline orchestrates the computation of these.
 
 #### Modelling 
 
@@ -319,7 +332,8 @@ The main steps are as follows:
 
 As well as single models, the pipeline has the capability to deal with *ensembles* of models trained with resampled synthesised training data.  
 
-> 🔎 The step *check model performance* only gives a partial indication of model performance intended as a quick sanity check. This is because, in general, the ground truth data alone is not a good reflection of the data distribution that the model will see while performing its task. The evaluation pipeline must be run before making conclusions about model performance. 
+!!! info
+    The step *check model performance* only gives a partial indication of model performance intended as a quick sanity check. This is because, in general, the ground truth data alone is not a good reflection of the data distribution that the model will see while performing its task. The evaluation pipeline must be run before making conclusions about model performance. 
 
 
 #### Evaluation
@@ -339,7 +353,8 @@ Kedro may be used with [Jupyter notebooks](https://docs.kedro.org/en/stable/note
 
 Jupyter notebooks should be created in the directory `pipelines/matrix/notebooks/scratch`. This will be ignored by the matrix git repository. 
 
-> 💡 A separate git repository for notebook version control may be created inside the `scratch` directory. It can also be nice to create a symbolic link to `scratch` from a directory of your choice on your machine. 
+!!! tip
+    A separate git repository for notebook version control may be created inside the `scratch` directory. It can also be nice to create a symbolic link to `scratch` from a directory of your choice on your machine. 
 
 Within a notebook, first run a cell with the following magic command:
 

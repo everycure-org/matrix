@@ -9,7 +9,7 @@ serve: install
 
 install:
 	uv venv
-	uv pip install -r requirements.txt
+	uv pip install --target .venv -r requirements.txt
 
 
 image: 
