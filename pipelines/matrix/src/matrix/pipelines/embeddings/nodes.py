@@ -200,7 +200,8 @@ def train_topological_embeddings(
         graph = gds.graph.get(graph_name)
         gds.graph.drop(graph, False)
 
-    graph, _ = gds.graph.project(*projection.values())
+    config = projection.pop("configuration", None)
+    graph, _ = gds.graph.project(*projection.values(), **config)
 
     # Validate whether the model exists
     model_name = estimator.get("args").get("modelName")
