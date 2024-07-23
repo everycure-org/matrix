@@ -11,7 +11,7 @@ _bigquery_ds: &_bigquery_ds
 
 integration.raw.rtx_kg2.nodes@spark:
   type: matrix.datasets.gcp.SparkWithSchemaDataset
-  filepath: ${globals:paths.raw}/rtx_kg2/${globals:versions.sources.rtx-kg2}/nodes.tsv
+  filepath: ${globals:paths.raw}/rtx_kg2/${globals:versions.sources.rtx-kg2}/nodes_c.tsv
   file_format: csv
   load_args:
     sep: "\t"
@@ -80,7 +80,7 @@ integration.raw.rtx_kg2.nodes@spark:
 
 integration.raw.rtx_kg2.edges@spark:
   type: matrix.datasets.gcp.SparkWithSchemaDataset
-  filepath: ${globals:paths.raw}/rtx_kg2/${globals:versions.sources.rtx-kg2}/edges.tsv
+  filepath: ${globals:paths.raw}/rtx_kg2/${globals:versions.sources.rtx-kg2}/edges_c.tsv
   file_format: csv
   load_args:
     sep: "\t"
