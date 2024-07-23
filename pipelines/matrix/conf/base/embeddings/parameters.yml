@@ -61,34 +61,17 @@ embeddings.topological:
       Entity:
         label: 'Entity'
         properties: *_pca_property
-    relationshipProjection:
-      Treats:
-        type: 'Treats'
-        properties:
-          weight:
-            property: 'weight'
-            defaultValue: 0.0
-      #not-treats:
-      #  type: 'not-treats'
-      #  properties:
-      #    weight: 0
-      GROUND_TRUTH:
-        type: 'GROUND_TRUTH'
-        properties:
-          weight:
-            property: 'weight'
-            defaultValue: 0.0
-      other:
-        type: '*'
-        properties:
-          weight:
-            property: 'weight'
-            defaultValue: 0.0
+    relationshipProjection: '*' # CON: There is no way (atleast that I know) to say, include _all_ edges, but not _these_ edges
+    configuration:
+      relationshipProperties:
+        weight:
+          defaultValue: 1
+    # TODO: Expand projection to include weight property on the edge, and set it to 1 by default]
   estimator:
     model: graphSage
     args:
       modelName: topological_embeddings
       featureProperties: [*_pca_property]
       concurrency: 4
-      relationshipWeightProperty: 'weight'
+      relationshipWeightProperty: 'weight' # harcoded for now, to be improved
   write_property: topological_embedding
