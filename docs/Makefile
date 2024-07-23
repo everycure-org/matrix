@@ -8,8 +8,9 @@ serve: install
 	.venv/bin/mkdocs serve
 
 install:
+	deactivate || echo 'no venv active, continuing'
 	uv venv
-	uv pip install --target .venv -r requirements.txt
+	uv pip install -r requirements.txt
 
 image: 
 	docker build -t docs ./
