@@ -305,6 +305,33 @@ Roughly speaking, our pipeline consists of five logical stages, i.e., ingestion,
 
 The ingestion pipeline aims to ingest all the downstream data in BigQuery, our data warehouse of choice. Data from different sources is assigned metadata for lineage tracking.
 
+We've established a lightweight data versioning system to ensure we can easily revert to an older version of the input data if required. All of our data should be stored in Google Cloud Storage (GCS) under the following path:
+
+```
+gs://<bucket>/kedro/data/01_raw/<source>/<version>/<source_specific_files>
+```
+
+Next, our pipeline globals provide an explicit listing of the versions that should be used during pipeline run, for instance:
+
+```yaml
+# globals.yml
+versions:
+  sources:
+    rtx-kg2: v2.7.3
+    ... # Other versions here
+```
+
+Finally, catalog entries should be defined to ensure the correct linkage of the catalog entry to the version.
+
+```yaml
+# catalog.yml
+integration.raw.rtx_kg2.edges:
+  filepath: ${globals:paths.raw}/rtx_kg2/${globals:versions.sources.rtx-kg2}/edges.tsv
+  ... # Remaining configuration here
+```
+
+Note specifically the use of `globals:versions.sources.rtx-kg2` in the definition of the catalog entry. Whenever new data becomes available, code changes are limited to bumping the `versions.sources.<source>` entry in the globals.
+
 !!! info
     To date our pipeline only ingests data from the RTX-KG2 source.
 
