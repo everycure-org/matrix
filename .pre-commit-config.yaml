@@ -25,3 +25,4 @@ repos:
     rev: v4.6.0  # Use the ref you want to point at
     hooks:
     -   id: debug-statements
+    -   id: check-merge-conflict  

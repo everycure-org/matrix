@@ -11,13 +11,13 @@ hide:
 
 <div class="grid cards" markdown>
 
--   :material-clock-fast:{ .lg .middle } __Getting started Tutorial__
+-   :material-clock-fast:{ .lg .middle } __Onboarding Manual__ 
 
     ---
 
-    Follow our tutorial on how to get started developing and contributing code to the Every Cure MATRIX Pipeline
+    Follow our onboarding document on how to get started developing and contributing code to the Every Cure MATRIX Pipeline
 
-    [:octicons-arrow-right-24: Getting started](./getting_started/)
+    [:octicons-arrow-right-24: Onboarding](./onboarding/)
 
 -   :fontawesome-brands-markdown:{ .lg .middle } __Improve our Documentation__
 
