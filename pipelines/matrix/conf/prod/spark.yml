@@ -1,1 +1,6 @@
 spark.driver.memory: 6g
+
+# TODO: We lost this
+# https://github.com/GoogleCloudDataproc/hadoop-connectors/issues/52#issuecomment-299604705
+spark.hadoop.google.cloud.auth.service.account.enable: true
+spark.hadoop.google.cloud.auth.service.account.json.keyfile: conf/local/service-account.json
