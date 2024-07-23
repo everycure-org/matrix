@@ -24,6 +24,21 @@ def create_int_pairs(raw_tp: pd.DataFrame, raw_tn: pd.DataFrame):
     # Concat
     return pd.concat([raw_tp, raw_tn], axis="index").reset_index(drop=True)
 
+@has_schema(
+    schema={
+        "subject": "string",
+        "predicate": "string",
+        "object": "string",
+    },
+    allow_subset=True,
+)
+def write_edges(edges: DataFrame):
+    """Function to filter out treat and not treat edges and write.
+
+    Args:
+        edges: edges dataframe
+    """
+    return edges.filter(~edges['predicate'].rlike('(?i)treats'))
 
 @has_schema(
     schema={
