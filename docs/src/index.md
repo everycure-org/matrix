@@ -17,7 +17,7 @@ hide:
 
     Follow our onboarding document on how to get started developing and contributing code to the Every Cure MATRIX Pipeline
 
-    [:octicons-arrow-right-24: Onboarding](./onboarding/)
+    [:octicons-arrow-right-24: Onboarding](./onboarding/index.md)
 
 -   :fontawesome-brands-markdown:{ .lg .middle } __Improve our Documentation__
 
@@ -33,7 +33,7 @@ hide:
 
     Want to dive deeper into how the infrastructure is provided? Check out our infrastructure documentation!
 
-    [:octicons-arrow-right-24: Infrastructure](./infrastructure/)
+    [:octicons-arrow-right-24: Infrastructure](./infrastructure/index.md)
 
 -   :simple-graphql:{ .lg .middle } __Data API Specification__
 
@@ -49,7 +49,7 @@ hide:
 
     To find documentation specific to the MATRIX project, check this link!
 
-    [:octicons-arrow-right-24: MATRIX](./matrix/)
+    [:octicons-arrow-right-24: MATRIX](./matrix/index.md)
 </div>
 
 
