@@ -311,7 +311,7 @@ We've established a lightweight data versioning system to ensure we can easily r
 gs://<bucket>/kedro/data/01_raw/<source>/<version>/[nodes.tsv, edges.tsv]
 ```
 
-Next, our pipeline globals provides an explicit listing of the versions that should be used during pipeline run, for instance:
+Next, our pipeline globals provide an explicit listing of the versions that should be used during pipeline run, for instance:
 
 ```yaml
 # globals.yml
