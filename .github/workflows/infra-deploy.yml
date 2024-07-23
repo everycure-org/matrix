@@ -9,20 +9,17 @@ name: Infrastructure Deploy
 on:
   workflow_dispatch: {}
   push:
-    branches:
-      - "main"
     paths: 
-      - infra/**
       - .github/workflows/infra-deploy.yml
+      - infra/modules/**
+      - infra/deployments/**
+      - infra/*.tf
+      - infra/*.hcl
 
 env:
   tf_version: '1.5.7'
   tg_version: '0.58.11'
   working_dir: 'infra/'
-  # log into gcp
-  project_id: 'mtrx-hub-dev-3of'
-  workload_identity_provider: 'projects/938607797672/locations/global/workloadIdentityPools/matrix-pool/providers/matrix-gh-provider'
-  service_account: 'sa-github-actions-rw@mtrx-hub-dev-3of.iam.gserviceaccount.com'
 
 jobs:
   checks:
@@ -43,6 +40,8 @@ jobs:
 
   plan:
     runs-on: ubuntu-latest
+    if: github.ref != 'refs/heads/main'
+    environment: dev
     name: Plan Terraform
     needs: [ checks ]
     permissions:
@@ -60,9 +59,9 @@ jobs:
           rm -rf TMP_KEY
       - uses: 'google-github-actions/auth@v2'
         with:
-          project_id: ${{env.project_id}}
-          workload_identity_provider: ${{env.workload_identity_provider}}
-          service_account: ${{env.service_account}}
+          project_id: ${{vars.project_id}}
+          workload_identity_provider: ${{vars.workload_identity_provider}}
+          service_account: ${{vars.service_account}}
 
       - name: Plan
         uses: gruntwork-io/terragrunt-action@v2
@@ -94,9 +93,9 @@ jobs:
           rm -rf TMP_KEY
       - uses: 'google-github-actions/auth@v2'
         with:
-          project_id: ${{env.project_id}}
-          workload_identity_provider: ${{env.workload_identity_provider}}
-          service_account: ${{env.service_account}}
+          project_id: ${{vars.project_id}}
+          workload_identity_provider: ${{vars.workload_identity_provider}}
+          service_account: ${{vars.service_account}}
 
       - name: Deploy
         uses: gruntwork-io/terragrunt-action@v2

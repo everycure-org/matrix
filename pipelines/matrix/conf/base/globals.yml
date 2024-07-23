@@ -4,7 +4,7 @@ paths:
   raw: data/01_raw
   int: data/02_intermediate
   prm: data/03_primary
-  feat: data/04_features
+  feat: data/04_feature
   model_input: data/05_model_input
   models: data/06_models
   model_output: data/07_model_output

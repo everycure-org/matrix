@@ -8,8 +8,8 @@ neo4j: # the name of the helm dependency
     passwordFromSecret: neo4j-password
     name: neo4j
     resources:
-      memory: 2Gi
-      cpu: 0.7
+      cpu: "30" # takes almost full advantage of e2-standard-32 instance
+      memory: "110Gi" # takes almost full advantage of e2-standard-32 instance
   volumes:
     data:
       mode: "dynamic"
@@ -20,7 +20,92 @@ neo4j: # the name of the helm dependency
         # * standard provisions HDD disks
         storageClassName: premium-rwo
         # storageClassName: hyperdisk-balanced
+        # https://neo4j.com/docs/operations-manual/current/kubernetes/persistent-volumes/#persistent-volumes-types
+        requests:
+          storage: 500Gi
 
   # FUTURE add env variables here to enable plugins for neo4j
   # https://neo4j.com/docs/operations-manual/current/kubernetes/plugins/
   env:
+    NEO4J_PLUGINS: '["apoc", "graph-data-science", "apoc-extended"]'
+  config:
+    # NOTE: This block supports all the configuration options from the config file
+    # https://neo4j.com/docs/operations-manual/current/kubernetes/configuration/#_config
+    # https://neo4j.com/docs/operations-manual/current/configuration/configuration-settings/
+    dbms.security.procedures.unrestricted: "gds.*, apoc.*"
+    dbms.security.procedures.whitelist: "gds.*, apoc.*"
+    dbms.security.allow_csv_import_from_file_urls: "true"
+    # server.directories.import: /var/lib/neo4j/import
+    initial.dbms.default_database: everycure
+
+  apoc_config:
+    apoc.import.file.enabled: "true"
+    apoc.export.file.enabled: "true"
+    apoc.import.file.use_neo4j_config: "true"
+
+  logging:
+    serverLogsXml: |-
+      <?xml version="1.0" encoding="UTF-8"?>
+      <!-- Example JSON logging configuration -->
+      <Configuration status="ERROR" monitorInterval="30" packages="org.neo4j.logging.log4j">
+          <Appenders>
+              <!-- Default debug.log, please keep -->
+              <RollingRandomAccessFile name="DebugLog" fileName="${config:server.directories.logs}/debug.log"
+                                       filePattern="$${config:server.directories.logs}/debug.log.%02i">
+                  <JsonTemplateLayout eventTemplateUri="classpath:org/neo4j/logging/StructuredLayoutWithMessage.json"/>
+                  <Policies>
+                      <SizeBasedTriggeringPolicy size="20 MB"/>
+                  </Policies>
+                  <DefaultRolloverStrategy fileIndex="min" max="7"/>
+              </RollingRandomAccessFile>
+
+              <RollingRandomAccessFile name="HttpLog" fileName="${config:server.directories.logs}/http.log"
+                                       filePattern="$${config:server.directories.logs}/http.log.%02i">
+                  <JsonTemplateLayout eventTemplateUri="classpath:org/neo4j/logging/StructuredLayoutWithMessage.json"/>
+                  <Policies>
+                      <SizeBasedTriggeringPolicy size="20 MB"/>
+                  </Policies>
+                  <DefaultRolloverStrategy fileIndex="min" max="5"/>
+              </RollingRandomAccessFile>
+
+              <RollingRandomAccessFile name="QueryLog" fileName="${config:server.directories.logs}/query.log"
+                                       filePattern="$${config:server.directories.logs}/query.log.%02i">
+                  <JsonTemplateLayout eventTemplateUri="classpath:org/neo4j/logging/QueryLogJsonLayout.json"/>
+                  <Policies>
+                      <SizeBasedTriggeringPolicy size="20 MB"/>
+                  </Policies>
+                  <DefaultRolloverStrategy fileIndex="min" max="7"/>
+              </RollingRandomAccessFile>
+
+              <RollingRandomAccessFile name="SecurityLog" fileName="${config:server.directories.logs}/security.log"
+                                       filePattern="$${config:server.directories.logs}/security.log.%02i">
+                  <JsonTemplateLayout eventTemplateUri="classpath:org/neo4j/logging/StructuredLayoutWithMessage.json"/>
+                  <Policies>
+                      <SizeBasedTriggeringPolicy size="20 MB"/>
+                  </Policies>
+                  <DefaultRolloverStrategy fileIndex="min" max="7"/>
+              </RollingRandomAccessFile>
+          </Appenders>
+
+          <Loggers>
+              <!-- Log levels. One of DEBUG, INFO, WARN, ERROR or OFF -->
+
+              <!-- The debug log is used as the root logger to catch everything -->
+              <Root level="INFO">
+                  <AppenderRef ref="DebugLog"/> <!-- Keep this -->
+              </Root>
+              <!-- The query log, must be named "QueryLogger" -->
+              <Logger name="QueryLogger" level="INFO" additivity="false">
+                  <AppenderRef ref="QueryLog"/>
+              </Logger>
+              <!-- The http request log, must be named "HttpLogger" -->
+              <Logger name="HttpLogger" level="INFO" additivity="false">
+                  <AppenderRef ref="HttpLog"/>
+              </Logger>
+              <!-- The security log, must be named "SecurityLogger" -->
+              <Logger name="SecurityLogger" level="INFO" additivity="false">
+                  <AppenderRef ref="SecurityLog"/>
+              </Logger>
+          </Loggers>
+      </Configuration>
+ 

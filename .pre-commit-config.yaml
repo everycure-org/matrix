@@ -16,3 +16,13 @@ repos:
     hooks:
       - id: nbstripout
         exclude: pipelines/matrix/packages
+  - repo: https://github.com/antonbabenko/pre-commit-terraform
+    rev: v1.92.0
+    hooks:
+      - id: terraform_fmt
+      # - id: terraform_docs
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0  # Use the ref you want to point at
+    hooks:
+    -   id: debug-statements
+    -   id: check-merge-conflict  
