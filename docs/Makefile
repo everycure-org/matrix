@@ -9,8 +9,8 @@ serve: install
 
 install:
 	deactivate || echo 'no venv active, continuing'
-	uv venv
-	uv pip install -r requirements.txt
+	uv venv -p 3.11
+	uv pip install -r requirements.txt -p .venv/bin/python
 
 image: 
 	docker build -t docs ./
