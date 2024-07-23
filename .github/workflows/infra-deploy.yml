@@ -39,6 +39,7 @@ jobs:
 
   plan:
     runs-on: ubuntu-latest
+    environment: dev
     name: Plan Terraform
     needs: [ checks ]
     permissions:
