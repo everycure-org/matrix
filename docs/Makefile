@@ -9,9 +9,7 @@ serve: install
 
 install:
 	uv venv
-<<<<<<< HEAD
 	uv pip install --target .venv -r requirements.txt
-
 
 image: 
 	docker build -t docs ./
@@ -21,6 +19,3 @@ serve_docker: image
 
 deploy: build
 	gcloud app deploy
-=======
-	uv pip install -r requirements.txt
->>>>>>> main
