@@ -1,6 +1,6 @@
 module "bootstrap_data" {
   source      = "../../../modules/components/bootstrap_file_content/"
-  bucket_name = "mtrx-us-central1-hub-dev-storage"
+  bucket_name = var.storage_bucket_name
 }
 
 module "compute_cluster" {
@@ -24,4 +24,8 @@ module "matrix" {
   default_region = var.default_region
   project_id     = module.bootstrap_data.content.project_id
   environment    = "dev"
+}
+
+module "dns" {
+  source = "../../../modules/components/dns"
 }

@@ -21,3 +21,32 @@ This configuration enables secure and controlled access to our infrastructure, w
 ## Terraform
 
 All networking is configured in terraform and changes can be proposed through Pull Requests.
+
+## DNS
+
+Our root DNS is registered with Namecheap. We delegated the SOA records for
+`dev.everycure.org` to the Google DNS servers which means we can control this entire
+subdomain via Google DNS.  Next we defined that domain as a zone in GCP to manage records
+here. Now we can create further subdomains (e.g. `docs` to host this page) in this zone.
+We use this for domain ownership validation and it is also needed for SSL certificates.
+
+The high level flow of the DNS setup is visualized below:
+
+1. We define the DNS records via terraform as part of our infrastructure rollout
+2. The DNS records propagate to the global DNS network and as users enter a domain, their
+browsers make DNS lookup calls to their configured DNS server which points their browser
+at the correct IP address for the given domain they try to access.
+
+![](../assets/img/mtrx_dns.drawio.svg)
+
+??? info "Primer video on DNS"
+    If you need a primer on DNS, this short video may help:
+    
+    <iframe width="560" height="315" src="https://www.youtube.com/embed/UVR9lhUGAyU?si=KAdxf24jYOzasIwf" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+
+### Docs Page
+
+The docs page is hosted via AppEngine. Please check the [their
+documentation](https://cloud.google.com/appengine/docs/standard/securing-custom-domains-with-ssl?hl=en)
+on how to set up AppEngine with SSL and DNS for a custom domain.
+
