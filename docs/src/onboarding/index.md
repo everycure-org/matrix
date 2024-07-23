@@ -314,10 +314,20 @@ gs://<bucket>/kedro/data/01_raw/<source>/<version>/[nodes.tsv, edges.tsv]
 Next, our pipeline globals provides an explicit listing of the versions that should be used during pipeline run, for instance:
 
 ```yaml
+# globals.yml
 versions:
   sources:
     rtx-kg2: v2.7.3
     ... # Other versions here
+```
+
+Finally, catalog entries should be created to ensure the correct linkage of the catalog entry to the version.
+
+```yaml
+# catalog.yml
+integration.raw.rtx_kg2.edges:
+  filepath: ${globals:paths.raw}/rtx_kg2/${globals:versions.sources.rtx-kg2}/edges.tsv
+  ... # Remaining configuration here
 ```
 
 !!! info
