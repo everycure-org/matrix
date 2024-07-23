@@ -61,11 +61,34 @@ embeddings.topological:
       Entity:
         label: 'Entity'
         properties: *_pca_property
-    relationshipProjection: '*'
+    relationshipProjection:
+      Treats:
+        type: 'Treats'
+        properties:
+          weight:
+            property: 'weight'
+            defaultValue: 0.0
+      #not-treats:
+      #  type: 'not-treats'
+      #  properties:
+      #    weight: 0
+      GROUND_TRUTH:
+        type: 'GROUND_TRUTH'
+        properties:
+          weight:
+            property: 'weight'
+            defaultValue: 0.0
+      other:
+        type: '*'
+        properties:
+          weight:
+            property: 'weight'
+            defaultValue: 0.0
   estimator:
     model: graphSage
     args:
       modelName: topological_embeddings
       featureProperties: [*_pca_property]
       concurrency: 4
+      relationshipWeightProperty: 'weight'
   write_property: topological_embedding
