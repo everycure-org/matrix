@@ -12,8 +12,11 @@ on:
     branches:
       - "main"
     paths: 
-      - infra/**
       - .github/workflows/infra-deploy.yml
+      - infra/modules/**
+      - infra/deployments/**
+      - infra/*.tf
+      - infra/*.hcl
 
 env:
   tf_version: '1.5.7'
@@ -39,6 +42,7 @@ jobs:
 
   plan:
     runs-on: ubuntu-latest
+    if: github.ref != 'refs/heads/main'
     name: Plan Terraform
     needs: [ checks ]
     permissions:
