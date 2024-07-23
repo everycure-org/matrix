@@ -1,4 +1,8 @@
-# Onboarding
+---
+title: Onboarding
+---
+
+
 
 Welcome to the Matrix onboarding guide! This document provide an introduction to the codebase, and guide you through the process of setting up your local environment.
 
@@ -25,43 +29,87 @@ Our guide assumes usage of [homebrew](https://brew.sh/) to manage packages.
 
 > 💡 We recommend using [pyenv](https://github.com/pyenv/pyenv) to manage your python version. Our pipeline has been tested on Python `3.11`.
 
-We leverage [`uv`](https://github.com/astral-sh/uv) to manage/install our Python requirements. Install as follows:
+We leverage [`uv`](https://github.com/astral-sh/uv) to manage/install our Python
+requirements. Install as follows, then create a virtual env and install the requirements:
 
-```bash
-brew install uv
-```
 
-> 🆘 Don't forget to link your uv installation using the instructions prompted after the downloaded.
+!!! warning
+    Don't forget to link your uv installation using the instructions prompted after the downloaded.
 
-Next, create a `venv` and install the requirements in `pipelines/matrix` directory (this is where you will execute pipeline-related commands):
+=== "MacOS"
 
-```bash
-uv venv
-source .venv/bin/activate
-uv pip install -r requirements.txt
-```
+    ```bash
+    brew install uv python@3.11
+    uv venv -p 3.11
+    source .venv/bin/activate
+    uv pip install -r requirements.txt
+    ```
+
+=== "Windows (WSL)"
+
+    ```bash
+    curl -LsSf https://astral.sh/uv/install.sh | sh
+    uv venv -p 3.11
+    source .venv/bin/activate
+    uv pip install -r requirements.txt
+    ```
+
+=== "Linux"
+    ```bash
+    # generic
+    curl -LsSf https://astral.sh/uv/install.sh | sh
+    # for arch/manjaro
+    yay -S uv
+    
+    #then
+    uv venv -p 3.11
+    source .venv/bin/activate
+    uv pip install -r requirements.txt
+    ```
 
 ### Docker
 
-Make sure you have [docker](https://www.docker.com/) and [docker-compose](https://docs.docker.com/compose/) installed. Docker can be downloaded directly from the from the [following page](https://docs.docker.com/desktop/install/mac-install/). 
+Make sure you have [docker](https://www.docker.com/) and [docker-compose](https://docs.docker.com/compose/) installed. Docker can be downloaded directly from the from the [following page](https://docs.docker.com/get-docker/). 
 
-Once installed and launched, proceed with the following command:
 
-```bash
-brew install docker-compose
-```
+=== "MacOS"
 
-> 💡 The default settings of Docker have rather low resources configured, you might want to increase those in Docker desktop.
+    ```bash
+    brew install --cask docker #installs docker desktop
+    brew install docker docker-compose #installs CLI commands
+    ```
+
+=== "Linux"
+
+    ```bash
+    sudo apt install docker #installs docker desktop
+    brew install docker docker-compose #installs CLI commands
+    ```
+
+
+!!! Tip 
+    The default settings of Docker have rather low resources configured, you might want to increase those in Docker desktop.
 
 ### Java
 
 Our pipeline uses [Spark](https://spark.apache.org/) for distributed computations, which requires Java under the hood.
 
-```bash
-brew install openjdk@11
-```
+=== "MacOS"
 
-> 🆘 Don't forget to link your Java installation using the instructions prompted after the downloaded.
+    ```bash
+    brew install openjdk@11
+    brew link --overwrite openjdk@11 # makes the java version available in PATH
+    ```
+
+=== "Linux"
+
+    ```bash
+    # Java on Linux is complicated, check for your specific distro how to get JDK@11. 
+
+    # On Arch/Manjaro
+    pacman -S jdk11-openjdk
+    ```
+
 
 ## Local setup
 
