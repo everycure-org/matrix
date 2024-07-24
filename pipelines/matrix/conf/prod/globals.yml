@@ -6,10 +6,10 @@ versions:
 
 paths:
   raw: ${gcs_bucket}/kedro/data/01_raw
-  int: ${gcs_bucket}/kedro/staging/data/02_intermediate
-  prm: ${gcs_bucket}/kedro/staging/data/03_primary
-  feat: ${gcs_bucket}/kedro/staging/data/04_feature
-  model_input: ${gcs_bucket}/kedro/staging/data/05_model_input
-  models: ${gcs_bucket}/kedro/staging/data/06_models
-  model_output: ${gcs_bucket}/kedro/staging/data/07_model_output
-  reporting: ${gcs_bucket}/kedro/staging/data/08_reporting
+  int: ${gcs_bucket}/kedro/data/02_intermediate
+  prm: ${gcs_bucket}/kedro/data/03_primary
+  feat: ${gcs_bucket}/kedro/data/04_feature
+  model_input: ${gcs_bucket}/kedro/data/05_model_input
+  models: ${gcs_bucket}/kedro/data/06_models
+  model_output: ${gcs_bucket}/kedro/data/07_model_output
+  reporting: ${gcs_bucket}/kedro/data/08_reporting
