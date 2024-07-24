@@ -42,8 +42,7 @@ def write_edges(edges: DataFrame, exc_preds: List[str]) -> DataFrame:
         edges: edges dataframe
         exc_preds: list of predicates to be filtered out
     """
-    to_exclude = "|".join(exc_preds)
-    return edges.filter(~edges["predicate"].rlike(to_exclude))
+    return edges.filter(~F.col("predicate").isin(exc_preds))
 
 
 @has_schema(
