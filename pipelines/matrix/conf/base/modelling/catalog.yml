@@ -14,15 +14,6 @@ _kg_dataset: &_kg_dataset
     engine: pyarrow
     use_nullable_dtypes: True
 
-
-_neo4j_ds: &_neo4j_ds
-  type: matrix.datasets.neo4j.Neo4JSparkDataset
-  database: everycure
-  url: ${oc.env:NEO4J_HOST}
-  credentials: neo4j_credentials
-  save_args:
-    mode: "overwrite"
-
 # filtered down further to drugs/diseases
 modelling.model_input.drugs_diseases_nodes@spark:
   <<: *_spark_parquet
