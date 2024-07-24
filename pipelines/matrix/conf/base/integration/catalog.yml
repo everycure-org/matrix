@@ -3,6 +3,7 @@ _pandas_csv: &_pandas_csv
 
 _pandas_parquet: &_pandas_parquet
   type: pandas.ParquetDataset
+  versioned: true
 
 _spark_csv_ds: &_spark_csv
   type: spark.SparkDataset
@@ -14,12 +15,15 @@ _spark_csv_ds: &_spark_csv
 _spark_parquet_ds: &_spark_parquet
   type: spark.SparkDataset
   file_format: parquet
+  versioned: true
   save_args:
     mode: overwrite
 
 _neo4j_ds: &_neo4j_ds
   type: matrix.datasets.neo4j.Neo4JSparkDataset
+  # TODO set database
   database: everycure
+  versioned: true
   url: ${oc.env:NEO4J_HOST}
   credentials: neo4j_credentials
   save_args:
