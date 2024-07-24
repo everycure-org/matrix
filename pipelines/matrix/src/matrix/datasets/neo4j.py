@@ -120,7 +120,7 @@ class Neo4JSparkDataset(SparkDataset):
         )
         with GraphDatabase.driver(url, auth=creds) as driver:
             # TODO: OR do we want to clear out if exists?
-            driver.execute_query(f"CREATE DATABASE {database} IF NOT EXISTS")
+            driver.execute_query(f"CREATE DATABASE `{database}` IF NOT EXISTS")
 
     def _load(self) -> Any:
         spark_session = SparkSession.builder.getOrCreate()
