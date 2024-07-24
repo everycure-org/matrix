@@ -2,8 +2,8 @@
 
 from typing import Any
 from copy import deepcopy
-from functools import wraps
 
+from neo4j import GraphDatabase
 from pyspark.sql import DataFrame, SparkSession
 
 from kedro.io.core import Version
@@ -91,6 +91,8 @@ class Neo4JSparkDataset(SparkDataset):
         self._load_args = deepcopy(load_args) or {}
         self._df_schema = self._load_args.pop("schema", None)
 
+        self._create_db(url, database, credentials)
+
         super().__init__(
             filepath="filepath",
             save_args=save_args,
@@ -99,6 +101,22 @@ class Neo4JSparkDataset(SparkDataset):
             version=version,
             metadata=metadata,
         )
+
+    @staticmethod
+    def _create_db(url: str, database: str, credentials: dict[str, Any] = None):
+        """Function to create database.
+
+        Args:
+            url: URL of the Neo4J instance.
+            database: Name of the Neo4J database.
+            credentials: neo4j credentials
+        """
+        creds = (
+            creds.get("authentication.basic.username"),
+            creds.get("authentication.basic.password"),
+        )
+        with GraphDatabase.driver(url, auth=creds) as driver:
+            driver.execute_query(f"CREATE DATABASE {database} IF NOT EXISTS")
 
     def _load(self) -> Any:
         spark_session = SparkSession.builder.getOrCreate()
