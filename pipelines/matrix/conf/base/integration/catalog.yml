@@ -97,7 +97,7 @@ integration.model_input.edges:
     query: > 
       MATCH (subject:Entity {id: event.subject}), (object:Entity {id: event.object})
       WITH subject, object, event
-      CALL apoc.create.relationship(subject, event.label, {knowledge_source: event.knowledge_source}, object) YIELD rel
+      CALL apoc.create.relationship(subject, event.label, {knowledge_source: event.knowledge_source, include_in_graphsage: event.include_in_graphsage}, object) YIELD rel
       RETURN rel
   load_args:
     query: >
@@ -127,7 +127,7 @@ integration.model_input.ground_truth:
   save_args:
     query: > 
       MATCH (source:Entity {id: event.source_id}), (target:Entity {id: event.target_id})
-      CREATE (source)-[rel:GROUND_TRUTH {weight: 0}]->(target)
+      CREATE (source)-[rel:GROUND_TRUTH {include_in_graphsage: event.include_in_graphsage}]->(target)
       WITH rel, event
       CALL apoc.create.setRelProperties(rel, event.property_keys, event.property_values) YIELD rel as r
       RETURN r

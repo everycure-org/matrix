@@ -1,6 +1,8 @@
 """Nodes for the ingration pipeline."""
 import pandas as pd
 
+from typing import List
+
 import pyspark.sql.functions as F
 from pyspark.sql import DataFrame
 
@@ -23,23 +25,6 @@ def create_int_pairs(raw_tp: pd.DataFrame, raw_tn: pd.DataFrame):
 
     # Concat
     return pd.concat([raw_tp, raw_tn], axis="index").reset_index(drop=True)
-
-
-@has_schema(
-    schema={
-        "subject": "string",
-        "predicate": "string",
-        "object": "string",
-    },
-    allow_subset=True,
-)
-def write_edges(edges: DataFrame):
-    """Function to filter out treat and not treat edges and write.
-
-    Args:
-        edges: edges dataframe
-    """
-    return edges.filter(~edges["predicate"].rlike("(?i)treats"))
 
 
 @has_schema(
@@ -86,16 +71,22 @@ def create_nodes(df: DataFrame) -> DataFrame:
     },
     allow_subset=True,
 )
-def create_edges(nodes: DataFrame, edges: DataFrame):
+def create_edges(nodes: DataFrame, edges: DataFrame, exc_preds: List[str]):
     """Function to create Neo4J edges.
 
     Args:
         nodes: nodes dataframe
         edges: edges dataframe
+        exc_preds: list of predicates excluded downstream
     """
-    return edges.select(
-        "subject", "predicate", "object", "knowledge_source"
-    ).withColumn("label", F.split(F.col("predicate"), ":", limit=2).getItem(1))
+    return (
+        edges.select("subject", "predicate", "object", "knowledge_source")
+        .withColumn("label", F.split(F.col("predicate"), ":", limit=2).getItem(1))
+        .withColumn(
+            "include_in_graphsage",
+            F.lit(0) if F.col("predicate").isin(exc_preds) else F.lit(1),
+        )
+    )
 
 
 @has_schema(
@@ -125,10 +116,14 @@ def create_treats(nodes: DataFrame, df: DataFrame):
         )
         .withColumn(
             "properties",
-            F.create_map(F.lit("treats"), F.col("y"), F.lit("foo"), F.lit("bar")),
+            F.create_map(
+                F.lit("treats"),
+                F.col("y"),
+            ),
         )
         .withColumn("source_id", F.col("source"))
         .withColumn("target_id", F.col("target"))
         .withColumn("property_keys", F.map_keys(F.col("properties")))
         .withColumn("property_values", F.map_values(F.col("properties")))
+        .withColumn("include_in_graphsage", F.lit(0))
     )
