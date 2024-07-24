@@ -70,5 +70,8 @@ embeddings.topological:
       modelName: topological_embeddings
       featureProperties: [*_pca_property]
       concurrency: 4
+      # FUTURE: We're currently leveraging a binary weighting strategy to exclude  
+      # certain relationships. Another option could be to leverage filtering:
+      # https://neo4j.com/docs/graph-data-science/current/management-ops/graph-creation/graph-filter/
       relationshipWeightProperty: *_weight_attribute
   write_property: topological_embedding
