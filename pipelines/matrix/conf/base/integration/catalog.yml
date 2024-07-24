@@ -112,7 +112,7 @@ integration.model_input.ground_truth:
   save_args:
     query: > 
       MATCH (source:Entity {id: event.source_id}), (target:Entity {id: event.target_id})
-      CREATE (source)-[rel:GROUND_TRUTH {include_in_graphsage: 0}]->(target)
+      CREATE (source)-[rel:GROUND_TRUTH {include_in_graphsage: event.include_in_graphsage}]->(target)
       WITH rel, event
       CALL apoc.create.setRelProperties(rel, event.property_keys, event.property_values) YIELD rel as r
       RETURN r
