@@ -1,4 +1,5 @@
 _bigquery_ds: &_bigquery_ds
+  versioned: true
   type: matrix.datasets.gcp.BigQueryTableDataset
   project_id: ${oc.env:GCP_PROJECT_ID}
 
