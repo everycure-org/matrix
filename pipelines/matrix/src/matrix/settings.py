@@ -14,7 +14,7 @@ from matrix.hooks import *
 
 # Hooks are executed in a Last-In-First-Out (LIFO) order.
 HOOKS = (
-    # SparkHooks(),
+    SparkHooks(),
     NodeTimerHooks(),
 )
 
