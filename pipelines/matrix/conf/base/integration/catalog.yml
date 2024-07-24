@@ -107,21 +107,6 @@ integration.model_input.edges:
         type(p) as predicate,
         o.id AS object
 
-# NOTE: What does graph look like?
-# Entire k2 database
-#   Edges (:treats) (not used downstream)
-#   Nodes 
-# GROUND_TRUTH (treats, not treats) (is used downstream)
-
-# Option 1)
-# I could say, let's not bring this relationship into the graph
-# and only introduce it during modelling
-# Drawback: Will only serve us in the short term, as we still require some kind of 
-# functionality to ignore edges during topological embeddings computation
-
-# Option 2)
-# For now, add hardcoded weight == 0 to my ground truth relationship
-# which should be replaced by a more elaborate pipeline anyways
 integration.model_input.ground_truth:
   <<: *_neo4j_ds
   save_args:
