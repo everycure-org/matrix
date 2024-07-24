@@ -37,8 +37,8 @@ fabricator.rtx_kg2:
       predicate:
         type: generate_values
         sample_values:
-          - biolink:Treats
-          - biolink:Disease
+          - biolink:treats
+          - biolink:interacts_with
       object:
         type: row_apply
         list_of_values: [nodes.id]

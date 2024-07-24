@@ -61,10 +61,10 @@ embeddings.topological:
       Entity:
         label: 'Entity'
         properties: *_pca_property
-    relationshipProjection: '*' # CON: There is no way (atleast that I know) to say, include _all_ edges, but not _these_ edges
+    relationshipProjection: '*'
     configuration:
       relationshipProperties:
-        weight:
+        include_in_graphsage:
           defaultValue: 1
   estimator:
     model: graphSage
@@ -72,5 +72,5 @@ embeddings.topological:
       modelName: topological_embeddings
       featureProperties: [*_pca_property]
       concurrency: 4
-      relationshipWeightProperty: 'weight' # harcoded for now, to be improved
+      relationshipWeightProperty: 'include_in_graphsage' #TODO improve from hardcoded version
   write_property: topological_embedding

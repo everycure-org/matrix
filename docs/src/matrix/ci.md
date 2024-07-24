@@ -15,9 +15,3 @@ exported the symmetric key and added it to github actions' secrets.
 ```
 git-crypt export-key /tmp/key && cat /tmp/key | base64 && rm /tmp/key
 ```
-
-## WG 1
-
-## WG 2
-
-## WG 3
