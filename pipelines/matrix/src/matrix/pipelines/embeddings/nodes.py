@@ -111,7 +111,7 @@ def compute_embeddings(
     # https://neo4j.com/labs/apoc/4.1/overview/apoc.periodic/apoc.periodic.iterate/
     p.CALL.iterate(
         # Match every :Entity node in the graph
-        cypher.stringify(cypher.MATCH.node("p", labels="Entity").RETURN.p.WHERE.p.property('$attribute').IS_NULL),
+        cypher.stringify(cypher.MATCH.node("p", labels="Entity").WHERE.p.property('$attribute').IS_NULL.RETURN.p),
         # For each batch, execute following statements, the $_batch is a special
         # variable made accessible to access the elements in the batch.
         cypher.stringify(
