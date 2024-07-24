@@ -70,7 +70,7 @@ class GraphDS(GraphDataScience):
 @unpack_params()
 @inject_object()
 def compute_embeddings(
-    #  input: DataFrame,
+    input: DataFrame,
     gdb: GraphDB,
     features: List[str],
     api_key: str,
