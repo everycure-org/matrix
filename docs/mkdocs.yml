@@ -3,7 +3,7 @@ site_url: https://docs.app.everycure.org
 
 # configuration for edit button in web interface
 repo_url: https://github.com/everycure-org/matrix/
-edit_uri: edit/main/src/docs/src
+edit_uri: edit/main/docs/src
 docs_dir: src/
 theme:
   name: material
