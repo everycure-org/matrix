@@ -1,0 +1,6 @@
+#specify which edges should be filtered out
+integration.write_edges:
+  exc_predicates:
+    - 'Treats'
+    - 'biolink:treats'
+    - 'biolink:not treats'
