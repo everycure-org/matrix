@@ -20,7 +20,6 @@ _kg_dataset: &_kg_dataset
 
 _neo4j_ds: &_neo4j_ds
   type: matrix.datasets.neo4j.Neo4JSparkDataset
-  versioned: true
   database: everycure
   url: ${oc.env:NEO4J_HOST}
   credentials: neo4j_credentials
