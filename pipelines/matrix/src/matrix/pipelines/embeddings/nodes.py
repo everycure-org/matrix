@@ -132,13 +132,17 @@ def compute_embeddings(
             concurrency=concurrency,
             params=cypher.map(apiKey=api_key, endpoint=endpoint, attribute=attribute, model=model),
         ),
-    ).YIELD("batch", "operations")
+    ).YIELD("batch", "operations").UNWIND("batch").AS("b").WITH("b").WHERE("b.failed > 0").RETURN("b.failed")
     # fmt: on
 
+    failed = []
     with gdb.driver() as driver:
-        summary = driver.execute_query(str(p), **p.bound_params).summary
+        failed = driver.execute_query(str(p), **p.bound_params)
 
-    return {"success": "true", "time": summary.result_available_after}
+    if len(failed.records) > 0:
+        raise RuntimeError("Failed batches in the embedding step")
+
+    return {"success": "true"}
 
 
 @unpack_params()
