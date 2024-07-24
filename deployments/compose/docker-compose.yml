@@ -39,6 +39,7 @@ services:
   # testing.
   mock-genai:
     image: mockserver/mockserver
+    restart: unless-stopped
     user: root
     ports:
       - 1080:1080

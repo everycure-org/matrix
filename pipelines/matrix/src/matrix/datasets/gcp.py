@@ -74,6 +74,7 @@ class BigQueryTableDataset(SparkDataset):
         version: Version = None,
         credentials: dict[str, Any] = None,
         metadata: dict[str, Any] = None,
+        **kwargs,
     ) -> None:
         """Creates a new instance of ``Neo4JDataset``.
 
@@ -86,6 +87,7 @@ class BigQueryTableDataset(SparkDataset):
             version: Version of the dataset.
             credentials: Credentials to connect to the Neo4J instance.
             metadata: Metadata to pass to neo4j connector.
+            kwargs: Keyword Args passed to parent.
         """
         self._project_id = project_id
         self._dataset = dataset
@@ -98,6 +100,7 @@ class BigQueryTableDataset(SparkDataset):
             credentials=credentials,
             version=version,
             metadata=metadata,
+            **kwargs,
         )
 
     def _load(self) -> Any:

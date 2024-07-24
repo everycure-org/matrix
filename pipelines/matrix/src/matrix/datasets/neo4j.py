@@ -36,6 +36,7 @@ class Neo4JSparkDataset(SparkDataset):
         version: Version = None,
         credentials: dict[str, Any] = None,
         metadata: dict[str, Any] = None,
+        versioned: bool = False,
     ) -> None:
         """Creates a new instance of ``Neo4JDataset``.
 
@@ -83,6 +84,7 @@ class Neo4JSparkDataset(SparkDataset):
             version: Version of the dataset.
             credentials: Credentials to connect to the Neo4J instance.
             metadata: Metadata to pass to neo4j connector.
+            versioned: Flag to decide if we create new databases or stick to the default one.
         """
         self._database = database
         self._url = url
@@ -90,6 +92,9 @@ class Neo4JSparkDataset(SparkDataset):
 
         self._load_args = deepcopy(load_args) or {}
         self._df_schema = self._load_args.pop("schema", None)
+
+        # handle versioned datasets
+        # TODO
 
         super().__init__(
             filepath="filepath",

@@ -57,6 +57,7 @@ class KnowledgeGraphDataset(ParquetDataset):
         credentials: Dict[str, Any] = None,
         fs_args: Dict[str, Any] = None,
         metadata: Dict[str, Any] = None,
+        **kwargs,
     ) -> None:
         """Initializes the KnowledgeGraphDataset."""
         super().__init__(
@@ -67,6 +68,7 @@ class KnowledgeGraphDataset(ParquetDataset):
             credentials=credentials,
             fs_args=fs_args,
             metadata=metadata,
+            **kwargs,
         )
 
     def _load(self) -> KnowledgeGraph:

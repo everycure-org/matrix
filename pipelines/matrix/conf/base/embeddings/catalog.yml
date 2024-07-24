@@ -8,6 +8,7 @@ _neo4j_ds: &_neo4j_ds
 
 _spark_parquet_ds: &_spark_parquet
   type: spark.SparkDataset
+  versioned: true
   file_format: parquet
   save_args:
     mode: overwrite
@@ -17,6 +18,7 @@ _spark_parquet_ds: &_spark_parquet
 # https://neo4j.com/labs/apoc/5/ml/vertexai/#_generate_embeddings_api
 embeddings.prm.graph.embeddings@yaml:
   type: yaml.YAMLDataset
+  versioned: true
   filepath: ${globals:paths.prm}/embeddings/result.yml
 
 embeddings.prm.graph.embeddings@neo:
@@ -39,6 +41,7 @@ embeddings.prm.graph.pca_embeddings:
       RETURN n.id as id, n.pca_embedding as embedding
 
 embeddings.models.graphsage:
+  versioned: true
   # we do not actually do anything with this DS, thus it's a dummy
   # https://github.com/kedro-org/kedro/discussions/3758
   filepath: ${globals:paths.prm}/graphsage/result.yml
@@ -64,9 +67,7 @@ embeddings.model_output.graphsage:
 embeddings.feat.nodes:
   <<: *_spark_parquet
   filepath: ${globals:paths.feat}/nodes
-  versioned: true
       
 embeddings.feat.edges:
   <<: *_spark_parquet
   filepath: ${globals:paths.feat}/edges
-  versioned: true
