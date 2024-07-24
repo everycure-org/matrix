@@ -59,10 +59,7 @@ class GraphDS(GraphDataScience):
         database: str | None = None,
     ):
         """Create `GraphDS` instance."""
-        super().__init__(
-            endpoint,
-            auth=tuple(auth),
-        )
+        super().__init__(endpoint, auth=tuple(auth), database=database)
 
         self.set_database(database)
 
