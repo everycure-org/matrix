@@ -36,6 +36,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 inputs=[
                     "integration.model_input.nodes",
                     "integration.prm.rtx_kg2.edges",
+                    "params:integration.graphsage_excl_preds",
                 ],
                 outputs="integration.model_input.edges",
                 name="create_neo4j_edges",
