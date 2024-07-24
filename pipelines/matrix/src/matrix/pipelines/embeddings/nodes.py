@@ -139,12 +139,8 @@ def compute_embeddings(
     with gdb.driver() as driver:
         failed = driver.execute_query(str(p), **p.bound_params)
 
-    breakpoint()
-
-    if len(failed) > 0:
+    if len(failed.records) > 0:
         raise RuntimeError("Failed batches in the embedding step")
-
-    breakpoint()
 
     return {"success": "true"}
 
