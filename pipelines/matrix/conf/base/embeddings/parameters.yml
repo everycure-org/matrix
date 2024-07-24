@@ -3,7 +3,7 @@
 embeddings.gdb:
   object: matrix.pipelines.embeddings.nodes.GraphDB
   endpoint: ${oc.env:NEO4J_HOST}
-  database: everycure
+  database: everycure-${globals:versions.release}
   auth:
     -  ${oc.env:NEO4J_USER}
     -  ${oc.env:NEO4J_PASSWORD}
@@ -38,7 +38,7 @@ embeddings.dimensionality_reduction:
 embeddings.gds:
   object: matrix.pipelines.embeddings.nodes.GraphDS
   endpoint: ${oc.env:NEO4J_HOST}
-  database: everycure
+  database: everycure-${globals:versions.release}
   auth:
     -  ${oc.env:NEO4J_USER}
     -  ${oc.env:NEO4J_PASSWORD}

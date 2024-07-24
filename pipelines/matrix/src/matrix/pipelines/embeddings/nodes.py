@@ -59,10 +59,7 @@ class GraphDS(GraphDataScience):
         database: str | None = None,
     ):
         """Create `GraphDS` instance."""
-        super().__init__(
-            endpoint,
-            auth=tuple(auth),
-        )
+        super().__init__(endpoint, auth=tuple(auth), database=database)
 
         self.set_database(database)
 
@@ -111,7 +108,7 @@ def compute_embeddings(
     # https://neo4j.com/labs/apoc/4.1/overview/apoc.periodic/apoc.periodic.iterate/
     p.CALL.iterate(
         # Match every :Entity node in the graph
-        cypher.stringify(cypher.MATCH.node("p", labels="Entity").WHERE.p.property('$attribute').IS_NULL.RETURN.p),
+        cypher.stringify(cypher.MATCH.node("p", labels="Entity").RETURN.p), # .WHERE.p.property('$attribute').IS_NULL
         # For each batch, execute following statements, the $_batch is a special
         # variable made accessible to access the elements in the batch.
         cypher.stringify(
@@ -137,7 +134,7 @@ def compute_embeddings(
 
     failed = []
     with gdb.driver() as driver:
-        failed = driver.execute_query(str(p), **p.bound_params)
+        failed = driver.execute_query(str(p), database_=gdb._database, **p.bound_params)
 
     if len(failed.records) > 0:
         raise RuntimeError("Failed batches in the embedding step")
