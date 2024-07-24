@@ -11,7 +11,7 @@ def create_pipeline(**kwargs) -> Pipeline:
             node(
                 func=nodes.compute_embeddings,
                 inputs={
-                    #  "input": "integration.model_input.nodes",
+                    "input": "integration.model_input.nodes",
                     "gdb": "params:embeddings.gdb",
                     "features": "params:embeddings.node.features",
                     "unpack": "params:embeddings.ai_config",
