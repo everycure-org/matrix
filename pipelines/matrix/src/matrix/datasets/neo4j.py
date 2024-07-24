@@ -121,9 +121,18 @@ class Neo4JSparkDataset(SparkDataset):
             credentials.get("authentication.basic.username"),
             credentials.get("authentication.basic.password"),
         )
-        with GraphDatabase.driver(url, auth=creds) as driver:
+        with GraphDatabase.driver(url, auth=creds, database="system") as driver:
             # TODO: OR do we want to clear out if exists?
-            driver.execute_query(f"CREATE DATABASE `{database}` IF NOT EXISTS")
+            if database not in Neo4JSparkDataset._load_existing_dbs(driver):
+                logging.warning("creating new database %s", database)
+                driver.execute_query(f"CREATE DATABASE `{database}` IF NOT EXISTS")
+
+    @staticmethod
+    def _load_existing_dbs(driver):
+        result = driver.execute_query("SHOW DATABASES")
+        dbs = [record["name"] for record in result[0] if record["name"] != "system"]
+        print(dbs)
+        return dbs
 
     def _load(self) -> Any:
         spark_session = SparkSession.builder.getOrCreate()

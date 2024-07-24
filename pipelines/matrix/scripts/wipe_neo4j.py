@@ -35,7 +35,7 @@ def main():
 
                 for db in databases:
                     print(f"dropping {db}")
-                    system_session.run(f"DROP DATABASE {db} IF EXISTS")
+                    system_session.run(f"DROP DATABASE `{db}` IF EXISTS")
 
             print("\nAll user databases have been wiped.")
 
