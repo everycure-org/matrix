@@ -70,6 +70,8 @@ def create_nodes(df: DataFrame) -> DataFrame:
         "subject": "string",
         "predicate": "string",
         "object": "string",
+        "label": "string",
+        "include_in_graphsage": "object",
     },
     allow_subset=True,
 )
@@ -98,6 +100,7 @@ def create_edges(nodes: DataFrame, edges: DataFrame, exc_preds: List[str]):
         "target_id": "string",
         "property_keys": "array<string>",
         "property_values": "array<string>",
+        "include_in_graphsage": "object",
     },
     allow_subset=True,
 )
