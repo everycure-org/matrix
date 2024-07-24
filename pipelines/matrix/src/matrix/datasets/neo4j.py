@@ -91,8 +91,6 @@ class Neo4JSparkDataset(SparkDataset):
         self._load_args = deepcopy(load_args) or {}
         self._df_schema = self._load_args.pop("schema", None)
 
-        self._create_db(url, database, credentials)
-
         super().__init__(
             filepath="filepath",
             save_args=save_args,
@@ -144,6 +142,10 @@ class Neo4JSparkDataset(SparkDataset):
                 # skip persistence
                 return None
             else:
+                # Create database
+                self._create_db(self._url, self._database, self._credentials)
+
+                # Write dataset
                 (
                     data.write.format("org.neo4j.spark.DataSource")
                     .option("database", self._database)
