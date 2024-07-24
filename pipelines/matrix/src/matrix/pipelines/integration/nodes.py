@@ -1,5 +1,7 @@
 """Nodes for the ingration pipeline."""
 import pandas as pd
+from logging import Logger
+from typing import List
 
 import pyspark.sql.functions as F
 from pyspark.sql import DataFrame
@@ -33,13 +35,15 @@ def create_int_pairs(raw_tp: pd.DataFrame, raw_tn: pd.DataFrame):
     },
     allow_subset=True,
 )
-def write_edges(edges: DataFrame):
-    """Function to filter out treat and not treat edges and write.
+def write_edges(edges: DataFrame, exc_preds: List[str]) -> DataFrame:
+    """Function to filter out specific predicates and write.
 
     Args:
         edges: edges dataframe
+        exc_preds: list of predicates to be filtered out
     """
-    return edges.filter(~edges["predicate"].rlike("(?i)treats"))
+    to_exclude = "|".join(exc_preds)
+    return edges.filter(~edges["predicate"].rlike(to_exclude))
 
 
 @has_schema(

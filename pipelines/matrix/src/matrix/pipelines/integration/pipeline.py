@@ -18,7 +18,10 @@ def create_pipeline(**kwargs) -> Pipeline:
             ),
             node(
                 func=nodes.write_edges,
-                inputs=["integration.raw.rtx_kg2.edges@spark"],
+                inputs=[
+                    "integration.raw.rtx_kg2.edges@spark",
+                    "params:integration.write_edges.exc_predicates",
+                ],
                 outputs="integration.prm.rtx_kg2.edges",
                 name="write_rtx_kg2_edges",
                 tags=["rtx_kg2"],
