@@ -25,3 +25,6 @@ results
 !notebooks/.gitkeep
 !references/.gitkeep
 !results/.gitkeep
+
+# 
+.env
