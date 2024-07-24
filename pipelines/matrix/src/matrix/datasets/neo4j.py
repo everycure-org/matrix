@@ -111,11 +111,15 @@ class Neo4JSparkDataset(SparkDataset):
             database: Name of the Neo4J database.
             credentials: neo4j credentials
         """
+        # NOTE: Little ugly, as it's extracting out Neo4j spark plugin
+        # format. We could pass in user and pass in the dataset, and construct this
+        # in options to avoid this.
         creds = (
-            creds.get("authentication.basic.username"),
-            creds.get("authentication.basic.password"),
+            credentials.get("authentication.basic.username"),
+            credentials.get("authentication.basic.password"),
         )
         with GraphDatabase.driver(url, auth=creds) as driver:
+            # TODO: OR do we want to clear out if exists?
             driver.execute_query(f"CREATE DATABASE {database} IF NOT EXISTS")
 
     def _load(self) -> Any:
