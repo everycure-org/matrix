@@ -61,16 +61,14 @@ embeddings.topological:
       Entity:
         label: 'Entity'
         properties: *_pca_property
-    relationshipProjection: '*' # in the projection, select ALL edges, remove edges where include_in_graphsage is 0
+    relationshipProjection: '*'
     configuration:
-      relationshipProperties:
-        include_in_graphsage:
-          defaultValue: 1
+      relationshipProperties: [&_weight_attribute include_in_graphsage]
   estimator:
     model: graphSage
     args:
       modelName: topological_embeddings
       featureProperties: [*_pca_property]
       concurrency: 4
-      relationshipWeightProperty: 'include_in_graphsage' #TODO improve from hardcoded version
+      relationshipWeightProperty: *_weight_attribute
   write_property: topological_embedding
