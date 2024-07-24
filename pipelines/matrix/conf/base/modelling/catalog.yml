@@ -1,27 +1,21 @@
 _spark_parquet_ds: &_spark_parquet
   type: spark.SparkDataset
   file_format: parquet
+  versioned: true
   save_args:
     mode: overwrite
 
 
 _pandas_parquet: &_pandas_parquet
   type: pandas.ParquetDataset
+  versioned: true
 
 _kg_dataset: &_kg_dataset
   type: matrix.datasets.graph.KnowledgeGraphDataset
+  versioned: true
   load_args:
     engine: pyarrow
     use_nullable_dtypes: True
-
-
-_neo4j_ds: &_neo4j_ds
-  type: matrix.datasets.neo4j.Neo4JSparkDataset
-  database: everycure
-  url: ${oc.env:NEO4J_HOST}
-  credentials: neo4j_credentials
-  save_args:
-    mode: "overwrite"
 
 # filtered down further to drugs/diseases
 modelling.model_input.drugs_diseases_nodes@spark:
