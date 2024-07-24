@@ -318,7 +318,8 @@ Next, our pipeline globals provide an explicit listing of the versions that shou
 versions:
   sources:
     rtx-kg2: v2.7.3
-    ... # Other versions here
+    another-kg: v.1.3.5
+    ... # Other data source versions here
 ```
 
 Finally, catalog entries should be defined to ensure the correct linkage of the catalog entry to the version.
