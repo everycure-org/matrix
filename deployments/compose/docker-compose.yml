@@ -4,7 +4,7 @@ services:
     container_name: neo4j
     # note this works only on MacOS devices (or other ARM chipsets), check
     # `docker-compose.test.yml` for the override
-    image: arm64v8/neo4j:5.21.0
+    image: arm64v8/neo4j:5.21.0-enterprise
     restart: unless-stopped
     ports:
       - 7474:7474
@@ -19,7 +19,7 @@ services:
       - NEO4J_dbms_security_auth__minimum__password__length=4
       - NEO4J_dbms_security_procedures_whitelist=gds.*, apoc.*
       - NEO4J_dbms_security_procedures_unrestricted=gds.*, apoc.*
-      - NEO4J_initial_dbms_default__database=everycure
+      - NEO4J_ACCEPT_LICENSE_AGREEMENT=yes
     volumes:
       - ./neo4j_db/data:/data
       - ./neo4j_db/logs:/logs
@@ -39,6 +39,7 @@ services:
   # testing.
   mock-genai:
     image: mockserver/mockserver
+    restart: unless-stopped
     user: root
     ports:
       - 1080:1080
