@@ -1,11 +1,15 @@
 """Nodes for embeddings pipeline."""
 import os
+import requests
+import openai
+
 from typing import List, Any, Dict
 
 
 from neo4j import Driver
 from pyspark.sql import DataFrame
 from pyspark.sql import functions as F
+from pyspark.sql.types import FloatType, ArrayType
 
 from pyspark.ml.functions import array_to_vector, vector_to_array
 from graphdatascience import GraphDataScience, QueryRunner
@@ -64,6 +68,19 @@ class GraphDS(GraphDataScience):
         self.set_database(database)
 
 
+def batch(endpoint, api_key, batch):
+    headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
+
+    data = {"input": batch, "model": "text-embedding-3-small"}
+
+    response = requests.post(endpoint, headers=headers, json=data)
+
+    if response.status_code == 200:
+        return [item["embedding"] for item in response.json()["data"]]
+    else:
+        raise RuntimeError("error generating embedding")
+
+
 @unpack_params()
 @inject_object()
 def compute_embeddings(
@@ -90,59 +107,31 @@ def compute_embeddings(
         model: model to use
         concurrency: number of concurrent calls to execute
     """
-    # fmt: off
-    # Register functions
-    create_function("iterate", {"name": "apoc.periodic.iterate"}, func_raw=True)
-    create_function("openai_embedding", {"name": "apoc.ml.openai.embedding"}, func_raw=True)
-    create_function("set_property", {"name": "apoc.create.setProperty"}, func_raw=True)
+    batch_udf = F.udf(
+        lambda z: batch(endpoint, api_key, z), ArrayType(ArrayType(FloatType()))
+    )
 
-    # Build query
-    p = Pypher()
+    res = (
+        input.withColumn("row_id", F.monotonically_increasing_id())
+        .withColumn("batch", (F.col("row_id") / batch_size).cast("integer"))
+        .groupBy("batch")
+        .agg(
+            F.collect_list("id").alias("identifier"),
+            F.collect_list("name").alias("input"),
+        )
+        # .withColumn("input", F.array(F.col("input")))
+        .withColumn("embedding", batch_udf(F.col("input")))
+        .withColumn("_conc", F.arrays_zip(F.col("identifier"), F.col("embedding")))
+        .withColumn("exploded", F.explode(F.col("_conc")))
+        .select(
+            F.col("exploded.identifier").alias("identifier"),
+            F.col("exploded.embedding").alias("embedding"),
+        )
+    )
 
-    # Due to f-string limitations
-    empty = '\"\"'
+    breakpoint()
 
-    # The apoc iterate is a rather interesting function, that takes stringified
-    # cypher queries as input. The first determines the subset of nodes on
-    # include, whereas the second query defines the operation to execute.
-    # https://neo4j.com/labs/apoc/4.1/overview/apoc.periodic/apoc.periodic.iterate/
-    p.CALL.iterate(
-        # Match every :Entity node in the graph
-        cypher.stringify(cypher.MATCH.node("p", labels="Entity").WHERE.p.property('$attribute').IS_NULL.RETURN.p),
-        # For each batch, execute following statements, the $_batch is a special
-        # variable made accessible to access the elements in the batch.
-        cypher.stringify(
-            [
-                # Apply OpenAI embedding in a batched manner, embedding
-                # is applied on the concatenation of supplied features for each node.
-                cypher.CALL.openai_embedding(f"[item in $_batch | {'+'.join(f'coalesce(item.p.{item}, {empty})' for item in features)}]", "$apiKey", "{endpoint: $endpoint, model: $model}").YIELD("index", "text", "embedding"),
-                # Set the attribute property of the node to the embedding
-                cypher.CALL.set_property("$_batch[index].p", "$attribute", "embedding").YIELD("node").RETURN("node"),
-            ]
-        ),
-        # The last argument bridges the variables used in the outer query
-        # and the variables referenced in the stringified params.
-        cypher.map(
-            batchMode="BATCH_SINGLE",
-            # FUTURE when this is fixed: https://github.com/neo4j-contrib/neo4j-apoc-procedures/issues/4153 we should be able to max out
-            # our capacity towards the service provider
-            parallel="false",
-            # parallel="false",
-            batchSize=batch_size,
-            concurrency=concurrency,
-            params=cypher.map(apiKey=api_key, endpoint=endpoint, attribute=attribute, model=model),
-        ),
-    ).YIELD("batch", "operations").UNWIND("batch").AS("b").WITH("b").WHERE("b.failed > 0").RETURN("b.failed")
-    # fmt: on
-
-    failed = []
-    with gdb.driver() as driver:
-        failed = driver.execute_query(str(p), database_=gdb._database, **p.bound_params)
-
-    if len(failed.records) > 0:
-        raise RuntimeError("Failed batches in the embedding step")
-
-    return {"success": "true"}
+    return None
 
 
 @unpack_params()
