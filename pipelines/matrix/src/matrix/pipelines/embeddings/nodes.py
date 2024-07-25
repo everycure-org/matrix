@@ -126,7 +126,7 @@ def compute_embeddings(
             batchMode="BATCH_SINGLE",
             # FUTURE when this is fixed: https://github.com/neo4j-contrib/neo4j-apoc-procedures/issues/4153 we should be able to max out
             # our capacity towards the service provider
-            parallel="true",
+            parallel="false",
             # parallel="false",
             batchSize=batch_size,
             concurrency=concurrency,
