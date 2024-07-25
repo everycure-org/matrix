@@ -1,7 +1,5 @@
 """Nodes for embeddings pipeline."""
-import os
 import requests
-import openai
 
 from typing import List, Any, Dict
 
