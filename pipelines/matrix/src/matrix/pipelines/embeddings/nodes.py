@@ -123,15 +123,13 @@ def compute_embeddings(
         # .withColumn("input", F.array(F.col("input")))
         .withColumn(attribute, batch_udf(F.col("input")))
         .withColumn("num_elements", F.size(F.col("id")))
-        # .withColumn("_conc", F.arrays_zip(F.col("id"), F.col(attribute)))
-        # .withColumn("exploded", F.explode(F.col("_conc")))
-        # .select(
-        #     F.col("exploded.id").alias("id"),
-        #     F.col(f"exploded.{attribute}").alias(attribute),
-        # )
+        .withColumn("_conc", F.arrays_zip(F.col("id"), F.col(attribute)))
+        .withColumn("exploded", F.explode(F.col("_conc")))
+        .select(
+            F.col("exploded.id").alias("id"),
+            F.col(f"exploded.{attribute}").alias(attribute),
+        )
     )
-
-    breakpoint()
 
     return res
 
