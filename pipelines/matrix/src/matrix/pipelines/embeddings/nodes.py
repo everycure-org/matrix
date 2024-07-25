@@ -114,10 +114,11 @@ def compute_embeddings(
     res = (
         input.withColumn("row_id", F.monotonically_increasing_id())
         .withColumn("batch", (F.col("row_id") / batch_size).cast("integer"))
+        .withColumn("input", F.concat(*[F.col(feature) for feature in features]))
         .groupBy("batch")
         .agg(
             F.collect_list("id").alias("identifier"),
-            F.collect_list("name").alias("input"),
+            F.collect_list("input").alias("input"),
         )
         # .withColumn("input", F.array(F.col("input")))
         .withColumn("embedding", batch_udf(F.col("input")))

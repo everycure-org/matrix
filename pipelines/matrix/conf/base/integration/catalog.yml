@@ -86,6 +86,7 @@ integration.model_input.nodes:
   load_args:
     # NOTE: The 'biolink' prefixes was removed to have a clean Neo4J UI interface. We're adding
     # it back into the query as the modelling expects it.
+    partitions: 4
     query: >  
       MATCH (n) 
         RETURN 
