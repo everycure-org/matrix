@@ -68,15 +68,6 @@ neo4j: # the name of the helm dependency
                   <DefaultRolloverStrategy fileIndex="min" max="5"/>
               </RollingRandomAccessFile>
 
-              <RollingRandomAccessFile name="QueryLog" fileName="${config:server.directories.logs}/query.log"
-                                       filePattern="$${config:server.directories.logs}/query.log.%02i">
-                  <JsonTemplateLayout eventTemplateUri="classpath:org/neo4j/logging/QueryLogJsonLayout.json"/>
-                  <Policies>
-                      <SizeBasedTriggeringPolicy size="20 MB"/>
-                  </Policies>
-                  <DefaultRolloverStrategy fileIndex="min" max="7"/>
-              </RollingRandomAccessFile>
-
               <RollingRandomAccessFile name="SecurityLog" fileName="${config:server.directories.logs}/security.log"
                                        filePattern="$${config:server.directories.logs}/security.log.%02i">
                   <JsonTemplateLayout eventTemplateUri="classpath:org/neo4j/logging/StructuredLayoutWithMessage.json"/>
@@ -94,10 +85,6 @@ neo4j: # the name of the helm dependency
               <Root level="INFO">
                   <AppenderRef ref="DebugLog"/> <!-- Keep this -->
               </Root>
-              <!-- The query log, must be named "QueryLogger" -->
-              <Logger name="QueryLogger" level="INFO" additivity="false">
-                  <AppenderRef ref="QueryLog"/>
-              </Logger>
               <!-- The http request log, must be named "HttpLogger" -->
               <Logger name="HttpLogger" level="INFO" additivity="false">
                   <AppenderRef ref="HttpLog"/>
