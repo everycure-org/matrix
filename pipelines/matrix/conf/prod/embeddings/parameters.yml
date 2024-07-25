@@ -2,6 +2,7 @@
 # OpenAI embeddings support batching, up to 8000 tokens.
 embeddings.ai_config:
   batch_size: 1500
+  concurrency: 1
 
 # Defines strategy used to reduce dimensions of the GenAI
 # generated node embeddings.
