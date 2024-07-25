@@ -111,9 +111,9 @@ def compute_embeddings(
         lambda z: batch(endpoint, api_key, z), ArrayType(ArrayType(FloatType()))
     )
 
-    return (
+    res = (
         input.withColumn("row_id", F.monotonically_increasing_id())
-        .withColumn("batch", (F.col("row_id") / batch_size).cast("integer"))
+        .withColumn("batch", (F.col("row_id") / (batch_size)).cast("integer"))
         .withColumn("input", F.concat(*[F.col(feature) for feature in features]))
         .groupBy("batch")
         .agg(
@@ -122,13 +122,18 @@ def compute_embeddings(
         )
         # .withColumn("input", F.array(F.col("input")))
         .withColumn(attribute, batch_udf(F.col("input")))
-        .withColumn("_conc", F.arrays_zip(F.col("id"), F.col(attribute)))
-        .withColumn("exploded", F.explode(F.col("_conc")))
-        .select(
-            F.col("exploded.id").alias("id"),
-            F.col(f"exploded.{attribute}").alias(attribute),
-        )
+        .withColumn("num_elements", F.size(F.col("id")))
+        # .withColumn("_conc", F.arrays_zip(F.col("id"), F.col(attribute)))
+        # .withColumn("exploded", F.explode(F.col("_conc")))
+        # .select(
+        #     F.col("exploded.id").alias("id"),
+        #     F.col(f"exploded.{attribute}").alias(attribute),
+        # )
     )
+
+    breakpoint()
+
+    return res
 
 
 @unpack_params()
