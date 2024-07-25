@@ -16,14 +16,14 @@ def create_pipeline(**kwargs) -> Pipeline:
                     "features": "params:embeddings.node.features",
                     "unpack": "params:embeddings.ai_config",
                 },
-                outputs="embeddings.prm.graph.embeddings@yaml",
+                outputs="embeddings.prm.graph.embeddings",
                 name="add_node_embeddings",
                 tags=["argo.retries-3"],
             ),
             node(
                 func=nodes.reduce_dimension,
                 inputs={
-                    "df": "embeddings.prm.graph.embeddings@neo",
+                    "df": "embeddings.prm.graph.embeddings",
                     "unpack": "params:embeddings.dimensionality_reduction",
                 },
                 outputs="embeddings.prm.graph.pca_embeddings",

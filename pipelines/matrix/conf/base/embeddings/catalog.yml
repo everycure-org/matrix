@@ -13,19 +13,10 @@ _spark_parquet_ds: &_spark_parquet
   save_args:
     mode: overwrite
 
-# Catalog directly expresses a query to add OpenAI embeddings.
-# https://neo4j.com/labs/apoc/5/installation/
-# https://neo4j.com/labs/apoc/5/ml/vertexai/#_generate_embeddings_api
-embeddings.prm.graph.embeddings@yaml:
-  type: yaml.YAMLDataset
-  versioned: true
-  filepath: ${globals:paths.prm}/embeddings/result.yml
 
-embeddings.prm.graph.embeddings@neo:
-  <<: *_neo4j_ds
-  load_args:
-    query: >
-      MATCH (n: Entity) RETURN n.id as id, n.embedding as embedding
+embeddings.prm.graph.embeddings:
+  <<: *_spark_parquet
+  filepath: ${globals:paths.feat}/embeddings
 
 embeddings.prm.graph.pca_embeddings:
   <<: *_neo4j_ds
