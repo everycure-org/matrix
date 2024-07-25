@@ -124,10 +124,10 @@ def compute_embeddings(
         # and the variables referenced in the stringified params.
         cypher.map(
             batchMode="BATCH_SINGLE",
-            parallel="false",
             # FUTURE when this is fixed: https://github.com/neo4j-contrib/neo4j-apoc-procedures/issues/4153 we should be able to max out
             # our capacity towards the service provider
-            # parallel="true",
+            parallel="true",
+            # parallel="false",
             batchSize=batch_size,
             concurrency=concurrency,
             params=cypher.map(apiKey=api_key, endpoint=endpoint, attribute=attribute, model=model),
