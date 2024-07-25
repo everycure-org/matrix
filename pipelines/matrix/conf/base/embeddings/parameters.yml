@@ -14,7 +14,7 @@ embeddings.gdb:
 embeddings.ai_config:
   api_key: ${oc.env:OPENAI_API_KEY} 
   attribute: &_property embedding
-  batch_size: 1
+  batch_size: 100
   endpoint: ${oc.env:OPENAI_ENDPOINT}
   model: text-embedding-3-small
   concurrency: 1
