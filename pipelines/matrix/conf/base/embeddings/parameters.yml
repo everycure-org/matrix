@@ -14,7 +14,7 @@ embeddings.gdb:
 embeddings.ai_config:
   api_key: ${oc.env:OPENAI_API_KEY} 
   attribute: &_property embedding
-  batch_size: 1 # NOTE: The MockApi does not support batching, hence disabled
+  batch_size: 10
   endpoint: ${oc.env:OPENAI_ENDPOINT}
   model: text-embedding-3-small
   concurrency: 1

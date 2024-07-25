@@ -88,7 +88,10 @@ integration.model_input.nodes:
     # it back into the query as the modelling expects it.
     query: >  
       MATCH (n) 
-      RETURN n.id AS id, 'biolink:' + labels(n)[0] AS category 
+        RETURN 
+          n.id AS id, 
+          'biolink:' + labels(n)[0] AS category,
+          n.name AS name
  
 
 integration.model_input.edges:
