@@ -94,10 +94,6 @@ neo4j: # the name of the helm dependency
               <Root level="INFO">
                   <AppenderRef ref="DebugLog"/> <!-- Keep this -->
               </Root>
-              <!-- The query log, must be named "QueryLogger" -->
-              <Logger name="QueryLogger" level="INFO" additivity="false">
-                  <AppenderRef ref="QueryLog"/>
-              </Logger>
               <!-- The http request log, must be named "HttpLogger" -->
               <Logger name="HttpLogger" level="INFO" additivity="false">
                   <AppenderRef ref="HttpLog"/>

@@ -17,7 +17,7 @@ embeddings.ai_config:
   batch_size: 1 # NOTE: The MockApi does not support batching, hence disabled
   endpoint: ${oc.env:OPENAI_ENDPOINT}
   model: text-embedding-3-small
-  concurrency: 50
+  concurrency: 5
 
 # Attributes used as input features to compute
 # node embeddings.
