@@ -211,8 +211,9 @@ def train_topological_embeddings(
         gds.model.drop(model)
 
     # Initialize the model
+    config = estimator.pop("configuration", None)
     model, _ = getattr(gds.beta, estimator.get("model")).train(
-        graph, **estimator.get("args")
+        graph, **estimator.get("args"), **config
     )
 
     return {"success": "true"}

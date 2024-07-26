@@ -74,4 +74,6 @@ embeddings.topological:
       # certain relationships. Another option could be to leverage filtering:
       # https://neo4j.com/docs/graph-data-science/current/management-ops/graph-creation/graph-filter/
       relationshipWeightProperty: *_weight_attribute
+    configuration:
+      randomSeed: 42
   write_property: topological_embedding
