@@ -67,7 +67,11 @@ class GraphDS(GraphDataScience):
 
 
 def batch(endpoint, api_key, batch):
+    """Function to resolve batch."""
     headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
+
+    print(len(batch))
+    print(f"len: {len(batch)} batch: {batch}")
 
     data = {"input": batch, "model": "text-embedding-3-small"}
 
@@ -76,6 +80,7 @@ def batch(endpoint, api_key, batch):
     if response.status_code == 200:
         return [item["embedding"] for item in response.json()["data"]]
     else:
+        print(response.status_code)
         raise RuntimeError("error generating embedding")
 
 
