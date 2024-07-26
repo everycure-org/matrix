@@ -88,9 +88,27 @@ def create_edges(nodes: DataFrame, edges: DataFrame, exc_preds: List[str]):
         .withColumn("label", F.split(F.col("predicate"), ":", limit=2).getItem(1))
         .withColumn(
             "include_in_graphsage",
-            F.when(F.col("predicate").isin(exc_preds), F.lit(1)).otherwise(F.lit(1)),
+            F.when(F.col("predicate").isin(exc_preds), F.lit(0)).otherwise(F.lit(1)),
         )
     )
+
+
+@has_schema(
+    schema={
+        "subject": "string",
+        "predicate": "string",
+        "object": "string",
+    },
+    allow_subset=True,
+)
+def write_edges(edges: DataFrame):
+    """Function to filter out treat and not treat edges and write.
+
+    Args:
+        edges: edges dataframe
+    """
+    exc_preds = ["biolink:treats"]
+    return edges.filter(~F.col("predicate").isin(exc_preds))
 
 
 @has_schema(
@@ -115,6 +133,7 @@ def create_treats(nodes: DataFrame, df: DataFrame):
         nodes: nodes dataset
         df: Ground truth dataset
     """
+    df = df.filter("1=0")  # hack to remove all gt
     return (
         df.withColumn(
             "label", F.when(F.col("y") == 1, "TREATS").otherwise("NOT_TREATS")
@@ -130,5 +149,5 @@ def create_treats(nodes: DataFrame, df: DataFrame):
         .withColumn("target_id", F.col("target"))
         .withColumn("property_keys", F.map_keys(F.col("properties")))
         .withColumn("property_values", F.map_values(F.col("properties")))
-        .withColumn("include_in_graphsage", F.lit(1))
+        .withColumn("include_in_graphsage", F.lit(0))
     )
