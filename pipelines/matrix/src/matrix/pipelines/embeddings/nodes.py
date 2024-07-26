@@ -109,6 +109,8 @@ def compute_embeddings(
                 "we actually have embedded everything already or there is an issue with the data. Continuing without taking action"
             )
             return {"success": "true"}
+        else:
+            logger.warning("we still have %s embeddings left to calculate", str(count))
 
     # fmt: off
     # Register functions
