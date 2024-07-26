@@ -88,7 +88,7 @@ def create_edges(nodes: DataFrame, edges: DataFrame, exc_preds: List[str]):
         .withColumn("label", F.split(F.col("predicate"), ":", limit=2).getItem(1))
         .withColumn(
             "include_in_graphsage",
-            F.when(F.col("predicate").isin(exc_preds), F.lit(0)).otherwise(F.lit(1)),
+            F.when(F.col("predicate").isin(exc_preds), F.lit(1)).otherwise(F.lit(1)),
         )
     )
 
@@ -130,5 +130,5 @@ def create_treats(nodes: DataFrame, df: DataFrame):
         .withColumn("target_id", F.col("target"))
         .withColumn("property_keys", F.map_keys(F.col("properties")))
         .withColumn("property_values", F.map_values(F.col("properties")))
-        .withColumn("include_in_graphsage", F.lit(0))
+        .withColumn("include_in_graphsage", F.lit(1))
     )
