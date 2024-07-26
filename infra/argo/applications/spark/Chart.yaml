@@ -9,4 +9,4 @@ dependencies:
 # https://neo4j.com/docs/operations-manual/current/kubernetes/quickstart-standalone/server-setup/
 - name: spark-operator
   version: 1.4.6
-  repository: https://github.com/kubeflow/spark-operator/releases/tag/spark-operator-chart
+  repository: https://github.com/kubeflow/spark-operator/releases/tag/spark-operator
