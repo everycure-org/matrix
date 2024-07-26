@@ -10,7 +10,6 @@ from pyspark.sql import functions as F
 from pyspark.ml.functions import array_to_vector, vector_to_array
 from graphdatascience import GraphDataScience, QueryRunner
 from neo4j import GraphDatabase
-
 from pypher import __ as cypher, Pypher
 
 from pypher.builder import create_function
@@ -18,6 +17,10 @@ from . import pypher_utils
 
 from refit.v1.core.inject import inject_object
 from refit.v1.core.unpack import unpack_params
+
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class GraphDB:
@@ -90,6 +93,23 @@ def compute_embeddings(
         model: model to use
         concurrency: number of concurrent calls to execute
     """
+    # Due to https://github.com/neo4j-contrib/neo4j-apoc-procedures/issues/4156
+    # we first check if we need to do anything here, and if all embeddings are already calculated
+    # we do not do anything
+    with gdb.driver() as driver:
+        q = driver.execute_query(
+            "match (n:Entity) where n.embedding is null return count(*) as count",
+            database_=gdb._database,
+        )
+        rec = q.records[0]
+        count = rec.get("count")
+        if count == 0:
+            # we don't have to embed anything anymore, thus skipping the work below
+            logger.warning(
+                "we actually have embedded everything already or there is an issue with the data. Continuing without taking action"
+            )
+            return {"success": "true"}
+
     # fmt: off
     # Register functions
     create_function("iterate", {"name": "apoc.periodic.iterate"}, func_raw=True)
@@ -108,7 +128,8 @@ def compute_embeddings(
     # https://neo4j.com/labs/apoc/4.1/overview/apoc.periodic/apoc.periodic.iterate/
     p.CALL.iterate(
         # Match every :Entity node in the graph
-        cypher.stringify(cypher.MATCH.node("p", labels="Entity").WHERE.p.property('$attribute').IS_NULL.RETURN.p),
+        # FUTURE 'embedding' is hard coded because we had an issue with the $attribute inside of the `` brackets
+        cypher.stringify(cypher.MATCH.node("p", labels="Entity").WHERE.p.property("embedding").IS_NULL.RETURN.p),
         # For each batch, execute following statements, the $_batch is a special
         # variable made accessible to access the elements in the batch.
         cypher.stringify(
