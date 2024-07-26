@@ -1,1 +1,2 @@
 spark.driver.memory: 100g
+spark.executor.instances: 4

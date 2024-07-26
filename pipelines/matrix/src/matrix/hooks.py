@@ -24,9 +24,11 @@ class SparkHooks:
         spark_conf = SparkConf().setAll(parameters.items())
 
         # Initialise the spark session
-        spark_session_conf = SparkSession.builder.appName(
-            context.project_path.name
-        ).config(conf=spark_conf)
+        spark_session_conf = (
+            SparkSession.builder.master("k8s://https://34.123.77.254")
+            .appName(context.project_path.name)
+            .config(conf=spark_conf)
+        )
         _spark_session = spark_session_conf.getOrCreate()
         _spark_session.sparkContext.setLogLevel("WARN")
 
