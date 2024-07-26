@@ -62,8 +62,6 @@ embeddings.topological:
         label: 'Entity'
         properties: *_pca_property
     relationshipProjection: '*'
-    configuration:
-      relationshipProperties: [&_weight_attribute include_in_graphsage]
   estimator:
     model: graphSage
     args:
@@ -73,7 +71,6 @@ embeddings.topological:
       # FUTURE: We're currently leveraging a binary weighting strategy to exclude  
       # certain relationships. Another option could be to leverage filtering:
       # https://neo4j.com/docs/graph-data-science/current/management-ops/graph-creation/graph-filter/
-      relationshipWeightProperty: *_weight_attribute
     configuration:
       randomSeed: 42
   write_property: topological_embedding
