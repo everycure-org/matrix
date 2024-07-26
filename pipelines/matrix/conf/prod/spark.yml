@@ -1,2 +1,3 @@
 spark.driver.memory: 100g
 spark.executor.instances: 4
+spark.kubernetes.container.image: apache/spark:3.5.1-scala2.12-java11-python3
