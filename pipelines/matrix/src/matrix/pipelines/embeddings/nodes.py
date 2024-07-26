@@ -151,8 +151,7 @@ def compute_embeddings(
     )
 
     res = (
-        input.limit(1000000)
-        .withColumn("row_id", F.monotonically_increasing_id())
+        input.withColumn("row_id", F.monotonically_increasing_id())
         .withColumn("batch", (F.col("row_id") / (batch_size)).cast("integer"))
         .withColumn("input", F.concat(*[F.col(feature) for feature in features]))
         .groupBy("batch")
