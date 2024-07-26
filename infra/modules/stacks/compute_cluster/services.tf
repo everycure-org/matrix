@@ -6,5 +6,5 @@ module "argo" {
   repo_url      = var.gitops_repo_url
   repo_creds    = var.gitops_repo_creds
   repo_path     = "infra/argo/"
-  repo_revision = "HEAD"
+  repo_revision = "feature/spark-embeddings"
 }
