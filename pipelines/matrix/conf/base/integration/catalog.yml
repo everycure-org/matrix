@@ -84,8 +84,6 @@ integration.model_input.nodes:
       CALL apoc.create.setProperties(n, event.property_keys, event.property_values) YIELD node AS n2
       RETURN node
   load_args:
-    # NOTE: The 'biolink' prefixes was removed to have a clean Neo4J UI interface. We're adding
-    # it back into the query as the modelling expects it.
     labels: :Entity
 
 integration.model_input.edges:
