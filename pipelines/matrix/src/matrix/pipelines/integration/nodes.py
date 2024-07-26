@@ -102,7 +102,7 @@ def write_edges(edges: DataFrame):
         edges: edges dataframe
     """
     exc_preds = ["biolink:treats"]
-    return edges.filter(~F.col("predicate").isin(exc_preds))
+    return edges  # .filter(~F.col("predicate").isin(exc_preds))
 
 
 @has_schema(
@@ -126,7 +126,6 @@ def create_treats(nodes: DataFrame, df: DataFrame):
         nodes: nodes dataset
         df: Ground truth dataset
     """
-    df = df.filter("1=0")  # hack to remove all gt
     return (
         df.withColumn(
             "label", F.when(F.col("y") == 1, "TREATS").otherwise("NOT_TREATS")
