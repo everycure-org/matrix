@@ -93,7 +93,7 @@ spec:
           - name: kedro_node
             value: add_node_embeddings
           - name: num_retries
-            value: 1
+            value: 0
       - name: add-topological-embeddings
         template: kedro
         dependencies:
