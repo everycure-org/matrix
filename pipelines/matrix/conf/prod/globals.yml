@@ -2,11 +2,11 @@ gcs_bucket: gs://${oc.env:GCP_BUCKET}
 
 versions:
   sources:
-    rtx-kg2: v2.7.3
+    rtx-kg2: v2.10.0
 
 
 paths:
-  raw: ${gcs_bucket}/kedro/data/01_raw
+  raw: ${gcs_bucket}/data/01_RAW
   int: ${gcs_bucket}/kedro/data/02_intermediate
   prm: ${gcs_bucket}/kedro/data/03_primary
   feat: ${gcs_bucket}/kedro/data/04_feature
