@@ -1,7 +1,8 @@
 random_state: 111
 
 versions:
-  release: 20240620
+  # overwritten in prod environment for shared releases
+  release: local-dev
 
 paths:
   raw: data/01_raw
