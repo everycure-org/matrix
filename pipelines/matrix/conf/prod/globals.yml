@@ -3,7 +3,7 @@ gcs_bucket: gs://${oc.env:GCP_BUCKET}
 versions:
   sources:
     rtx-kg2: v2.7.3
-  release: 20240726
+  release: 20240729
 
 paths:
   raw: ${gcs_bucket}/kedro/data/01_raw
