@@ -5,6 +5,7 @@ metadata:
   name: matrix
 spec:
   entrypoint: dag
+  serviceAccountName: spark-submit-sa
   arguments:
     parameters:
       - name: image
