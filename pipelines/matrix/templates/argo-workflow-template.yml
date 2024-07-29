@@ -35,6 +35,10 @@ spec:
       - name: kedro_node
       - name: num_retries
       - name: pipeline
+      # FUTURE: This brings in the repository as a code artifact
+      # we should add correct branch, set directory and execute our
+      # codebase from that directory to avoid continous push/pull
+      # of the Docker image
       artifacts:
       - name: repo
         path: /src/app
