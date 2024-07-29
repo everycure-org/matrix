@@ -3,6 +3,7 @@ gcs_bucket: gs://${oc.env:GCP_BUCKET}
 versions:
   sources:
     rtx-kg2: v2.7.3
+  # YYYY-MM-DD-<short-slug>
   release: 20240725
 
 paths:
