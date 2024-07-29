@@ -35,6 +35,19 @@ spec:
       - name: kedro_node
       - name: num_retries
       - name: pipeline
+    artifacts:
+      - name: repo
+        path: /src/app
+        git:
+          repo: https://github.com/argoproj/argo-workflows.git
+          singleBranch: true
+          branch: feature/spark-embeddings
+          usernameSecret:
+            name: github-creds
+            key: username
+          passwordSecret:
+            name: github-creds
+            key: password
     container:
       imagePullPolicy: Always
       image:  "us-central1-docker.pkg.dev/mtrx-hub-dev-3of/matrix-images/matrix:laurens" 
