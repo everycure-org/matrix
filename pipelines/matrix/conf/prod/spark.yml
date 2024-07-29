@@ -3,4 +3,6 @@ spark.executor.instances: 4
 spark.kubernetes.container.image: spark:3.5.1-scala2.12-java11-python3-ubuntu
 spark.kubernetes.authenticate.driver.serviceAccountName: spark-submit-sa
 spark.kubernetes.namespace: argo-workflows
-spark.submit.deployMode: cluster
+spark.kubernetes.driver.pod.name: 
+# TODO: Not possible w. Kedro
+# spark.submit.deployMode: cluster

@@ -25,6 +25,7 @@ class SparkHooks:
 
         # Initialise the spark session
         spark_session_conf = (
+            # TODO: Can we use an alias?
             SparkSession.builder.master("k8s://https://34.123.77.254")
             .appName(context.project_path.name)
             .config(conf=spark_conf)
