@@ -35,11 +35,11 @@ spec:
       - name: kedro_node
       - name: num_retries
       - name: pipeline
-    artifacts:
+      artifacts:
       - name: repo
         path: /src/app
         git:
-          repo: https://github.com/argoproj/argo-workflows.git
+          repo: https://github.com/everycure-org/matrix.git
           singleBranch: true
           branch: feature/spark-embeddings
           usernameSecret:
