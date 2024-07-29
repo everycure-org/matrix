@@ -71,6 +71,7 @@ def create_nodes(df: DataFrame) -> DataFrame:
         "predicate": "string",
         "object": "string",
         "label": "string",
+        "include_in_graphsage": "double",
     },
     allow_subset=True,
 )
@@ -82,27 +83,14 @@ def create_edges(nodes: DataFrame, edges: DataFrame, exc_preds: List[str]):
         edges: edges dataframe
         exc_preds: list of predicates excluded downstream
     """
-    return edges.select(
-        "subject", "predicate", "object", "knowledge_source"
-    ).withColumn("label", F.split(F.col("predicate"), ":", limit=2).getItem(1))
-
-
-@has_schema(
-    schema={
-        "subject": "string",
-        "predicate": "string",
-        "object": "string",
-    },
-    allow_subset=True,
-)
-def write_edges(edges: DataFrame):
-    """Function to filter out treat and not treat edges and write.
-
-    Args:
-        edges: edges dataframe
-    """
-    exc_preds = ["biolink:treats"]
-    return edges  # .filter(~F.col("predicate").isin(exc_preds))
+    return (
+        edges.select("subject", "predicate", "object", "knowledge_source")
+        .withColumn("label", F.split(F.col("predicate"), ":", limit=2).getItem(1))
+        .withColumn(
+            "include_in_graphsage",
+            F.when(F.col("predicate").isin(exc_preds), F.lit(0.9)).otherwise(F.lit(1)),
+        )
+    )
 
 
 @has_schema(
@@ -112,6 +100,7 @@ def write_edges(edges: DataFrame):
         "target_id": "string",
         "property_keys": "array<string>",
         "property_values": "array<numeric>",
+        "include_in_graphsage": "double",
     },
     allow_subset=True,
 )
@@ -141,4 +130,5 @@ def create_treats(nodes: DataFrame, df: DataFrame):
         .withColumn("target_id", F.col("target"))
         .withColumn("property_keys", F.map_keys(F.col("properties")))
         .withColumn("property_values", F.map_values(F.col("properties")))
+        .withColumn("include_in_graphsage", F.lit(0.9))
     )
