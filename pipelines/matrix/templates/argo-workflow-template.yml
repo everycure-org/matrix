@@ -4,7 +4,7 @@ metadata:
   namespace: argo-workflows
   generateName: matrix
 spec:
-  entrypoint: embeddings
+  entrypoint: integration
   serviceAccountName: spark-submit-sa
   arguments:
     parameters:
