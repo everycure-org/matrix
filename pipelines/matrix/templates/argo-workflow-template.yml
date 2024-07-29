@@ -2,10 +2,20 @@ apiVersion: argoproj.io/v1alpha1
 kind: Workflow
 metadata:
   namespace: argo-workflows
-  serviceAccountName: spark-submit-sa
   generateName: matrix
 spec:
   entrypoint: embeddings
+  serviceAccountName: spark-submit-sa
+  arguments:
+    parameters:
+      - name: image
+        value: "us-central1-docker.pkg.dev/mtrx-hub-dev-3of/matrix-images/matrix:laurens"
+      - name: neo4j_host
+        value: "bolt://neo4j.neo4j.svc.cluster.local:7687"
+      - name: openai_endpoint
+        value: "https://api.openai.com/v1"
+      - name: env
+        value: "prod"
   templates:
   - name: kedro
     retryStrategy:
