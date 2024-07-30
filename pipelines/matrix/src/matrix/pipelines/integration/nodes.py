@@ -28,14 +28,6 @@ def create_int_pairs(raw_tp: pd.DataFrame, raw_tn: pd.DataFrame):
 
 @has_schema(
     schema={
-        "subject": "string",
-        "predicate": "string",
-        "object": "string",
-    },
-    allow_subset=True,
-)
-@has_schema(
-    schema={
         "label": "string",
         "id": "string",
         "name": "string",
