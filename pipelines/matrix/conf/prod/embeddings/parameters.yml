@@ -10,3 +10,4 @@ embeddings.topological:
   estimator:
     args:
       batchSize: 20000
+      embeddingDimension: 512
