@@ -65,7 +65,7 @@ embeddings.topological:
     configuration:
       relationshipProperties: [&_weight_attribute include_in_graphsage]
   filtering:
-    graphName: filtered_embeddings
+    graphName: filtered_embeddings 
     args:
       node_filter: '*'
       relationship_filter: r.include_in_graphsage = 1.0

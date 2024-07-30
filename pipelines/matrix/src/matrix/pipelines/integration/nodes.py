@@ -112,7 +112,6 @@ def create_treats(nodes: DataFrame, df: DataFrame):
         nodes: nodes dataset
         df: Ground truth dataset
     """
-    df = df.filter("1=0")
     return (
         df.withColumn(
             "label", F.when(F.col("y") == 1, "TREATS").otherwise("NOT_TREATS")

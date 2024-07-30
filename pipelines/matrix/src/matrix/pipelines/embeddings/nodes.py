@@ -170,8 +170,8 @@ def reduce_dimension(df: DataFrame, transformer, input: str, output: str):
     )
 
 
-@inject_object()
 @unpack_params()
+@inject_object()
 def train_topological_embeddings(
     df: DataFrame,
     edges: DataFrame,
