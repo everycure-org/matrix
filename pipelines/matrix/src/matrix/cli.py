@@ -2,6 +2,7 @@
 
 Intended to be invoked via `kedro`.
 """
+from typing import List
 import click
 from kedro.framework.cli.project import (
     ASYNC_ARG_HELP,
@@ -64,6 +65,13 @@ def cli():
 @env_option
 @click.option("--tags", "-t", type=str, multiple=True, help=TAG_ARG_HELP)
 @click.option(
+    "--without-tags",
+    type=str,
+    multiple=True,
+    help="used to filter out nodes with tags that should not be run.",
+    default=[],
+)
+@click.option(
     "--load-versions",
     "-lv",
     type=str,
@@ -93,6 +101,7 @@ def cli():
 )
 def run(
     tags,
+    without_tags,
     env,
     runner,
     is_async,
@@ -115,6 +124,11 @@ def run(
     with KedroSession.create(
         env=env, conf_source=conf_source, extra_params=params
     ) as session:
+        # introduced to filter out tags that should not be run
+        node_names = _filter_nodes_missing_tag(
+            without_tags, pipeline, session, node_names
+        )
+
         session.run(
             tags=tags,
             runner=runner(is_async=is_async),
@@ -126,3 +140,24 @@ def run(
             load_versions=load_versions,
             pipeline_name=pipeline,
         )
+
+
+def _filter_nodes_missing_tag(
+    without_tags: List[str], pipeline: str, session, node_names: List[str]
+):
+    """Filter out nodes that have tags that should not be run."""
+    if len(without_tags) > 0:
+        print("filtering out tags: ", without_tags)
+        # needed to get `pipelines` object below
+        ctx = session.load_context()
+        from kedro.framework.project import pipelines
+
+        pipeline_name = pipeline if pipeline is not None else "__default__"
+        pipeline_obj = pipelines[pipeline_name]
+        # collect node names that do not have the tags to be filtered out
+        node_names = tuple(
+            node.name
+            for node in pipeline_obj.nodes
+            if not (node.tags and any(tag in without_tags for tag in node.tags))
+        )
+    return node_names
