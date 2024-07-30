@@ -40,7 +40,12 @@ def resolve_curie(name: str, endpoint: str) -> str:
         Corresponding curie
     """
     result = requests.get(f"{endpoint}/synonymize", json={"name": name})
-    return result.json().get("name", {}).get("preferred_curie", None)
+
+    element = result.json().get(name)
+    if element:
+        return element.get("preferred_curie", None)
+
+    return None
 
 
 def resolve_nodes(df: pd.DataFrame, endpoint: str) -> pd.DataFrame:
