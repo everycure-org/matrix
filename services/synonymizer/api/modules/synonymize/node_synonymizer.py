@@ -19,11 +19,13 @@ import json
 import pickle
 import platform
 
-from sri_node_normalizer import SriNodeNormalizer
-from category_manager import CategoryManager
+from .sri_node_normalizer import SriNodeNormalizer
+from .category_manager import CategoryManager
 
 # Testing and debugging flags
 DEBUG = False
+
+DB_CONNECTION_STR = os.environ["DB_CONNECTION_STR"]
 
 
 # ################################################################################################
@@ -31,7 +33,6 @@ DEBUG = False
 class NodeSynonymizer:
     # Constructor
     def __init__(self, live="Production"):
-        self.databaseLocation = os.path.dirname(os.path.abspath(__file__))
         self.options = {}
         self.kg_map = {
             "kg_nodes": {},
@@ -45,8 +46,6 @@ class NodeSynonymizer:
             "skip_SRI": {},
             "rename": {},
         }
-
-        self.databaseName = "node_synonymizer_v1.0_KG2.7.3.sqlite"
 
         self.connection = None
         self.connect()
@@ -83,9 +82,7 @@ class NodeSynonymizer:
         if DEBUG is True:
             print("INFO: Connecting to database")
 
-        self.connection = sqlite3.connect(
-            f"{self.databaseLocation}/{self.databaseName}"
-        )
+        self.connection = sqlite3.connect(DB_CONNECTION_STR)
 
     # ############################################################################################
     # Destroy the database connection
