@@ -23,6 +23,13 @@ def create_pipeline(**kwargs) -> Pipeline:
                 name="write_rtx_kg2_edges",
                 tags=["rtx_kg2"],
             ),
+            node(
+                func=nodes.resolve_nodes,
+                inputs=["integration.raw.exp.nodes@pandas"],
+                outputs="integration.prm.exp.nodes",
+                name="resolve_exp_nodes",
+                tags=["exp"],
+            ),
             # Write kg2 Neo4J
             node(
                 func=nodes.create_nodes,
