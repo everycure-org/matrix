@@ -61,7 +61,7 @@ embeddings.topological:
       Entity:
         label: 'Entity'
         properties: *_pca_property
-    relationshipProjection: '*' # in the projection, select ALL edges, remove edges where include_in_graphsage is 0
+    relationshipProjection: '*'
     configuration:
       relationshipProperties: [&_weight_attribute include_in_graphsage]
   estimator:
