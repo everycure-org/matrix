@@ -1,0 +1,33 @@
+_pandas_parquet: &_pandas_parquet
+  type: pandas.ParquetDataset
+  versioned: true
+
+
+_spark_parquet_ds: &_spark_parquet
+  type: spark.SparkDataset
+  file_format: parquet
+  # explicitly set to false to avoid versioning in full_local env
+  versioned: false
+  save_args:
+    mode: overwrite
+
+# -------------------------------------------------------------------------
+# Datasets
+# -------------------------------------------------------------------------
+
+# overwriting the base catalog to use non versioned datasets for local
+integration.int.known_pairs@pandas:
+  <<: *_pandas_parquet
+  filepath: ${globals:paths.int}/ground_truth
+
+integration.int.known_pairs@spark:
+  <<: *_spark_parquet
+  filepath: ${globals:paths.int}/ground_truth
+
+integration.prm.rtx_kg2.nodes:
+  <<: *_spark_parquet
+  filepath: ${globals:paths.prm}/rtx_kg2/nodes
+
+integration.prm.rtx_kg2.edges:
+  <<: *_spark_parquet
+  filepath: ${globals:paths.prm}/rtx_kg2/edges
