@@ -33,6 +33,8 @@ def create_int_pairs(raw_tp: pd.DataFrame, raw_tn: pd.DataFrame):
 def resolve_curie(name: str, endpoint: str) -> str:
     """Function to retrieve curie through the synonymizer.
 
+    FUTURE: Ensure downstream API yields 404 HTTP when not found.
+
     Args:
         name: name of the node
         endpoint: endpoint of the synonymizer
