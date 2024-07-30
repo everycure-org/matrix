@@ -409,7 +409,7 @@ This runs the full pipeline with real data by copying the RAW data from the cent
 To only copy the raw data to local without executing the pipeline, you can use the following command:
 
 ```bash
-kedro run -p copy_raw --env full_local
+kedro run --env full_local --tags first_copy
 ```
 
 Once this command is executed you can also run the entire pipeline but explicitly not 
@@ -421,6 +421,8 @@ kedro run --env full_local --without-tags first_copy
 
 This assumes that all initial nodes that copy big datasets have already been run and that the developers are ensuring they are tagged with `first_copy` tags. 
 
+!!! tip "main takeaway"
+    The `first_copy` tag is used to ensure that the data is copied only once. This is useful when running the pipeline with real data locally. From day 2, remember `kedro run --env full_local --without-tags first_copy` to avoid copying the data again. 
 
 ## Using Kedro with Jupyter notebooks
 
