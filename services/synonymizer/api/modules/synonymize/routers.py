@@ -1,7 +1,7 @@
 from fastapi import APIRouter
 from pydantic import BaseModel
 
-from node_synonymizer import NodeSynonymizer
+from .node_synonymizer import NodeSynonymizer
 
 router = APIRouter(prefix="/synonymize", tags=["synonymize"])
 
