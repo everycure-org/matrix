@@ -93,6 +93,10 @@ neo4j: # the name of the helm dependency
               <Logger name="SecurityLogger" level="INFO" additivity="false">
                   <AppenderRef ref="SecurityLog"/>
               </Logger>
+              <!-- The query log, must be named "QueryLogger" -->
+              <Logger name="QueryLogger" level="OFF" additivity="false">
+                  <AppenderRef ref="QueryLog"/>
+              </Logger>
           </Loggers>
       </Configuration>
  
