@@ -31,7 +31,7 @@ embeddings.dimensionality_reduction:
   output: &_pca_property 'pca_embedding'
   transformer:
     object: pyspark.ml.feature.PCA
-    k: 2
+    k: 100
 
 # FUTURE: This is a highly temp. solution that serves as PoC of leveraging Neo4J's
 # AI functionality. If works as expected, we'll do a refinement step to clean this up.
@@ -74,4 +74,13 @@ embeddings.topological:
       # certain relationships. Another option could be to leverage filtering:
       # https://neo4j.com/docs/graph-data-science/current/management-ops/graph-creation/graph-filter/
       relationshipWeightProperty: *_weight_attribute
+      # Chunyu: 512
+      embeddingDimension: 512
+      # Chunyu: 200k
+      batchSize: 20000
+      epochs: 10
+      searchDepth: 100
+      # Chunyu
+      # learningRate: 0.01
+      learningRate: 0.1
   write_property: topological_embedding
