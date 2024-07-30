@@ -74,6 +74,7 @@ def create_feat_nodes(
     Returns:
         Nodes enriched with features.
     """
+    assert raw_nodes.count() != 0
     pdf_nodes = raw_nodes.toPandas()
     known_pairs = known_pairs.toPandas()
     # Add drugs and diseases types flags
