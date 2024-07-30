@@ -25,8 +25,11 @@ def create_pipeline(**kwargs) -> Pipeline:
             ),
             node(
                 func=nodes.resolve_nodes,
-                inputs=["integration.raw.exp.nodes@pandas"],
-                outputs="integration.prm.exp.nodes",
+                inputs=[
+                    "integration.raw.exp.nodes@pandas",
+                    "params:integration.synonymizer_endpoint",
+                ],
+                outputs="integration.int.exp.nodes@pandas",
                 name="resolve_exp_nodes",
                 tags=["exp"],
             ),

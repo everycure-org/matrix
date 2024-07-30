@@ -1,5 +1,9 @@
 """Nodes for the ingration pipeline."""
 import pandas as pd
+import requests
+
+from functools import partial
+
 from typing import List
 
 import pyspark.sql.functions as F
@@ -26,8 +30,29 @@ def create_int_pairs(raw_tp: pd.DataFrame, raw_tn: pd.DataFrame):
     return pd.concat([raw_tp, raw_tn], axis="index").reset_index(drop=True)
 
 
-def resolve_nodes(df: pd.DataFrame) -> pd.DataFrame:
-    breakpoint()
+def resolve_curie(name: str, endpoint: str) -> str:
+    """Function to retrieve curie through the synonymizer.
+
+    Args:
+        name: name of the node
+        endpoint: endpoint of the synonymizer
+    Returns:
+        Corresponding curie
+    """
+    result = requests.get(f"{endpoint}/synonymize", json={"name": name})
+    return result.json().get("name", {}).get("preferred_curie", None)
+
+
+def resolve_nodes(df: pd.DataFrame, endpoint: str) -> pd.DataFrame:
+    """Function to resolve nodes of the nodes input dataset.
+
+    Args:
+        df: nodes dataframe
+        endpoint: endpoint of the synonymizer
+    Returns:
+        dataframe enriched with Curie column
+    """
+    df["curie"] = df["name"].apply(partial(resolve_curie, endpoint=endpoint))
 
     return df
 
