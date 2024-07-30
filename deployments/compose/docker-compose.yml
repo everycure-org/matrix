@@ -34,6 +34,15 @@ services:
     networks:
       - web
 
+  # Node synonymizer
+  node-synonymizer:
+    build: "../../services/synonymizer"
+    ports:
+      - 8081:8081
+    networks:
+      web:
+
+
   # MockServer instance that is used to mock a GenAI API conform
   # the OpenAI API spec. This container is used to enable integration
   # testing.
