@@ -1,8 +1,5 @@
 """Nodes for the ingration pipeline."""
 import pandas as pd
-from logging import Logger
-from typing import List
-
 from typing import List
 
 import pyspark.sql.functions as F
