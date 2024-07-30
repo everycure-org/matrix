@@ -5,7 +5,6 @@ _spark_parquet_ds: &_spark_parquet
   save_args:
     mode: overwrite
 
-
 _pandas_parquet: &_pandas_parquet
   type: pandas.ParquetDataset
   versioned: true

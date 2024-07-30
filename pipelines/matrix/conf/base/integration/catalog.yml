@@ -47,6 +47,7 @@ integration.raw.rtx_kg2.nodes@pandas:
     sep: "\t"
   save_args:
     header: false
+    index: false
     sep: "\t"
   <<: [*_pandas_csv, *_layer_raw]
 
@@ -56,6 +57,8 @@ integration.raw.rtx_kg2.nodes@spark:
   file_format: csv
   load_args:
     sep: "\t"
+    header: false
+    index: false
     schema:
       object: pyspark.sql.types.StructType
       fields:
@@ -125,6 +128,7 @@ integration.raw.rtx_kg2.edges@pandas:
   save_args:
     sep: "\t"
     header: false
+    index: false
   load_args:
     sep: "\t"
 
@@ -134,6 +138,7 @@ integration.raw.rtx_kg2.edges@spark:
   file_format: csv
   load_args:
     sep: "\t"
+    header: false
     schema:
       object: pyspark.sql.types.StructType
       fields:
