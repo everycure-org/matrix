@@ -1,8 +1,5 @@
 """Nodes for the ingration pipeline."""
 import pandas as pd
-from logging import Logger
-from typing import List
-
 from typing import List
 
 import pyspark.sql.functions as F
@@ -27,6 +24,12 @@ def create_int_pairs(raw_tp: pd.DataFrame, raw_tn: pd.DataFrame):
 
     # Concat
     return pd.concat([raw_tp, raw_tn], axis="index").reset_index(drop=True)
+
+
+def resolve_nodes(df: pd.DataFrame) -> pd.DataFrame:
+    breakpoint()
+
+    return df
 
 
 @has_schema(
