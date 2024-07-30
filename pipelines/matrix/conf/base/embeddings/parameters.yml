@@ -31,7 +31,7 @@ embeddings.dimensionality_reduction:
   output: &_pca_property 'pca_embedding'
   transformer:
     object: pyspark.ml.feature.PCA
-    k: 100
+    k: 3
 
 # FUTURE: This is a highly temp. solution that serves as PoC of leveraging Neo4J's
 # AI functionality. If works as expected, we'll do a refinement step to clean this up.
@@ -77,7 +77,7 @@ embeddings.topological:
       # Chunyu: 512
       embeddingDimension: 512
       # Chunyu: 200k
-      batchSize: 20000
+      batchSize: 20
       epochs: 10
       searchDepth: 100
       # Chunyu
