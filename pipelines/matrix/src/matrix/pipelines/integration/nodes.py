@@ -47,17 +47,17 @@ def create_nodes(df: DataFrame) -> DataFrame:
         df: Nodes dataframe
     """
     return (
-        df.select("id", "category", "name", "description")
+        df.select("id", "name", "category", "description")
         .withColumn("label", F.split(F.col("category"), ":", limit=2).getItem(1))
         .withColumn(
             "properties",
             F.create_map(
                 F.lit("name"),
                 F.col("name"),
-                F.lit("description"),
-                F.col("description"),
                 F.lit("category"),
                 F.col("category"),
+                F.lit("description"),
+                F.col("description"),
             ),
         )
         .withColumn("property_keys", F.map_keys(F.col("properties")))

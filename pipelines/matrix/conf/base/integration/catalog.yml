@@ -55,6 +55,7 @@ integration.raw.rtx_kg2.nodes@spark:
   file_format: csv
   load_args:
     sep: "\t"
+    header: true
     schema:
       object: pyspark.sql.types.StructType
       fields:
@@ -132,6 +133,7 @@ integration.raw.rtx_kg2.edges@spark:
   file_format: csv
   load_args:
     sep: "\t"
+    header: true
     schema:
       object: pyspark.sql.types.StructType
       fields:
@@ -255,7 +257,11 @@ integration.model_input.nodes:
     # it back into the query as the modelling expects it.
     query: >  
       MATCH (n) 
-      RETURN n.id AS id, 'biolink:' + labels(n)[0] AS category 
+      RETURN 
+        n.id AS id, 
+        n.name as name,
+        n.category as category,
+        n.description as description
  
 
 integration.model_input.edges:
