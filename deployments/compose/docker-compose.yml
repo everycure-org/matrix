@@ -37,6 +37,8 @@ services:
   # Node synonymizer
   node-synonymizer:
     build: "../../services/synonymizer"
+    volumes:
+      - "../../services/synonymizer/assets:/usr/src/app/assets"
     ports:
       - 8081:8081
     networks:
