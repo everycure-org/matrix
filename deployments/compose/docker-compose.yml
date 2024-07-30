@@ -37,7 +37,9 @@ services:
   # Node synonymizer
   node-synonymizer:
     build: "../../services/synonymizer"
+
     volumes:
+      # NOTE: Asset files are really big, so mounting them in
       - "../../services/synonymizer/assets:/usr/src/app/assets"
     ports:
       - 8081:8081
