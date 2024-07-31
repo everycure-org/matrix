@@ -42,7 +42,7 @@ _layer_int: &_layer_int
 # Datasets
 # -------------------------------------------------------------------------
 integration.raw.rtx_kg2.nodes@pandas:
-  filepath: ${globals:paths.raw}/rtx_kg2/${globals:versions.sources.rtx-kg2}/nodes_c.tsv
+  filepath: ${globals:paths.raw}/rtx_kg2/${globals:data_sources.rtx-kg2.version}/nodes_c.tsv
   load_args:
     sep: "\t"
   save_args:
@@ -53,7 +53,7 @@ integration.raw.rtx_kg2.nodes@pandas:
 
 integration.raw.rtx_kg2.nodes@spark:
   type: matrix.datasets.gcp.SparkWithSchemaDataset
-  filepath: ${globals:paths.raw}/rtx_kg2/${globals:versions.sources.rtx-kg2}/nodes_c.tsv
+  filepath: ${globals:paths.raw}/rtx_kg2/${globals:data_sources.rtx-kg2.version}/nodes_c.tsv
   file_format: csv
   load_args:
     sep: "\t"
@@ -124,7 +124,7 @@ integration.raw.rtx_kg2.nodes@spark:
 
 integration.raw.rtx_kg2.edges@pandas:
   <<: [*_pandas_csv, *_layer_raw]
-  filepath: ${globals:paths.raw}/rtx_kg2/${globals:versions.sources.rtx-kg2}/edges_c.tsv
+  filepath: ${globals:paths.raw}/rtx_kg2/${globals:data_sources.rtx-kg2.version}/edges_c.tsv
   save_args:
     sep: "\t"
     header: false
@@ -134,7 +134,7 @@ integration.raw.rtx_kg2.edges@pandas:
 
 integration.raw.rtx_kg2.edges@spark:
   type: matrix.datasets.gcp.SparkWithSchemaDataset
-  filepath: ${globals:paths.raw}/rtx_kg2/${globals:versions.sources.rtx-kg2}/edges_c.tsv
+  filepath: ${globals:paths.raw}/rtx_kg2/${globals:data_sources.rtx-kg2.version}/edges_c.tsv
   file_format: csv
   load_args:
     sep: "\t"

@@ -1,0 +1,12 @@
+versions:
+  release: test
+
+paths:
+  raw: data/test/01_raw
+  int: data/test/02_intermediate
+  prm: data/test/03_primary
+  feat: data/test/04_feature
+  model_input: data/test/05_model_input
+  models: data/test/06_models
+  model_output: data/test/07_model_output
+  reporting: data/test/08_reporting

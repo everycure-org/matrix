@@ -131,7 +131,6 @@ class Neo4JSparkDataset(SparkDataset):
     def _load_existing_dbs(driver):
         result = driver.execute_query("SHOW DATABASES")
         dbs = [record["name"] for record in result[0] if record["name"] != "system"]
-        print(dbs)
         return dbs
 
     def _load(self) -> Any:
