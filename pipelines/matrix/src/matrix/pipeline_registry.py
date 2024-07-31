@@ -2,6 +2,9 @@
 from typing import Dict
 from kedro.pipeline import Pipeline
 
+from matrix.pipelines.preprocessing.pipeline import (
+    create_pipeline as create_preprocessing_pipeline,
+)
 from matrix.pipelines.modelling.pipeline import (
     create_pipeline as create_modelling_pipeline,
 )
@@ -28,11 +31,13 @@ def register_pipelines() -> Dict[str, Pipeline]:
     pipelines = {}
 
     pipelines["__default__"] = (
-        create_integration_pipeline()
+        create_preprocessing_pipeline()
+        + create_integration_pipeline()
         + create_embeddings_pipeline()
         + create_modelling_pipeline()
         + create_evaluation_pipeline()
     )
+    pipelines["preprocessing"] = create_preprocessing_pipeline()
     pipelines["modelling"] = create_modelling_pipeline()
     pipelines["embeddings"] = create_embeddings_pipeline()
     pipelines["fabricator"] = create_fabricator_pipeline()
