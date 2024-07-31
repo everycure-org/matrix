@@ -14,7 +14,9 @@ embeddings.gdb:
 embeddings.ai_config:
   api_key: ${oc.env:OPENAI_API_KEY} 
   attribute: &_property embedding
-  batch_size: 1 # NOTE: The MockApi does not support batching, hence disabled
+# https://platform.openai.com/docs/guides/embeddings/faq
+# OpenAI embeddings support batching, up to 8000 tokens.
+  batch_size: 1500
   endpoint: ${oc.env:OPENAI_ENDPOINT}
   model: text-embedding-3-small
   concurrency: 50
@@ -31,7 +33,7 @@ embeddings.dimensionality_reduction:
   output: &_pca_property 'pca_embedding'
   transformer:
     object: pyspark.ml.feature.PCA
-    k: 2
+    k: 100
 
 # FUTURE: This is a highly temp. solution that serves as PoC of leveraging Neo4J's
 # AI functionality. If works as expected, we'll do a refinement step to clean this up.
@@ -80,9 +82,9 @@ embeddings.topological:
       # https://neo4j.com/docs/graph-data-science/current/management-ops/graph-creation/graph-filter/
       relationshipWeightProperty: *_weight_attribute
       # Chunyu: 512
-      embeddingDimension: 3
+      embeddingDimension: 512
       # Chunyu: 200k
-      batchSize: 20
+      batchSize: 20000
       epochs: 10
       searchDepth: 100
       # Chunyu

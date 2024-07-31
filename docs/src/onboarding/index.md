@@ -327,11 +327,11 @@ Finally, catalog entries should be defined to ensure the correct linkage of the 
 ```yaml
 # catalog.yml
 integration.raw.rtx_kg2.edges:
-  filepath: ${globals:paths.raw}/rtx_kg2/${globals:versions.sources.rtx-kg2}/edges.tsv
+  filepath: ${globals:paths.raw}/rtx_kg2/${globals:data_sources.rtx-kg2.version}/edges.tsv
   ... # Remaining configuration here
 ```
 
-Note specifically the use of `globals:versions.sources.rtx-kg2` in the definition of the catalog entry. Whenever new data becomes available, code changes are limited to bumping the `versions.sources.<source>` entry in the globals.
+Note specifically the use of `globals:data_sources.rtx-kg2` in the definition of the catalog entry. Whenever new data becomes available, code changes are limited to bumping the `versions.sources.<source>` entry in the globals.
 
 !!! info
     To date our pipeline only ingests data from the RTX-KG2 source.
@@ -385,9 +385,9 @@ Currently, we have the following evaluation methods.
 
 We have 4 environments declared in the kedro project for `MATRIX`:
 
-- `base`: Contains the base environment with fabricated data.
-- `prod`: Contains the prod environment with real data. All data is read and written from our main GCS bucket.
-- `full_local`: Points at the prod environment for all raw data but then runs the pipeline locally. This is useful for running the entire pipeline with real data yourself without overwriting the prod environment or needing write access to it.
+- `base`: Contains the base environment which reads the real data from GCS and operates fully locally
+- `prod`: Contains the prod environment with real data. All data is read and written from our main Google Cloud storage. Assumes fully stateless local machine operations (e.g. in docker containers)
+- `test`: Fully local and contains parameters that "break" the meaning of algorithms in the pipeline (e.g. 2 dimensions PCA). This is useful for running the entire pipeline quickly with mock data to validate the programming of the pipeline is correct to a large degree. 
 - `local`: A default environment which you can use for local adjustments and tweaks. Changes to this repo are not usually committed to git as they are unique for every developer. 
 
 You can run any of the environments using the `--env` flag. For example, to run the pipeline in the `prod` environment, you can use the following command:
@@ -396,33 +396,40 @@ You can run any of the environments using the `--env` flag. For example, to run 
 kedro run --env prod
 ```
 
-### Run with full data locally
+### Run with fake data locally
 
-To run the full pipeline locally with real data, you can use the following command:
+To run the full pipeline locally with fake data, you can use the following command:
 
 ```bash
-kedro run --env full_local
+kedro run --env test -p test 
 ```
 
-This runs the full pipeline with real data by copying the RAW data from the central GCS bucket but pointing all other datasets to the local file system. 
+This runs the full pipeline with fake data.
+
+
+To run the full data with real data by copying the RAW data from the central GCS bucket and then run everything locally you can simply run the default
+
+```bash
+kedro run
+```
 
 To only copy the raw data to local without executing the pipeline, you can use the following command:
 
 ```bash
-kedro run --env full_local --tags first_copy
+kedro run --tags first_copy
 ```
 
 Once this command is executed you can also run the entire pipeline but explicitly not 
 copy the data again by running
 
 ```bash
-kedro run --env full_local --without-tags first_copy
+kedro run --without-tags first_copy
 ```
 
 This assumes that all initial nodes that copy big datasets have already been run and that the developers are ensuring they are tagged with `first_copy` tags. 
 
-!!! tip "main takeaway"
-    The `first_copy` tag is used to ensure that the data is copied only once. This is useful when running the pipeline with real data locally. From day 2, remember `kedro run --env full_local --without-tags first_copy` to avoid copying the data again. 
+!!! tip "main takeaway for local execution"
+    The `first_copy` tag is used to ensure that the data is copied only once. This is useful when running the pipeline with real data locally. From day 2, remember `kedro run --without-tags first_copy` to avoid copying the data again. 
 
 ## Using Kedro with Jupyter notebooks
 

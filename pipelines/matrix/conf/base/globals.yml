@@ -1,12 +1,18 @@
 random_state: 111
 
+# points at our central GCS_BUCKET where we store our ground truth data
+gcs_bucket: gs://${oc.env:GCP_BUCKET}
 versions:
   release: 20240620
-  sources:
-    rtx-kg2: v2.7.3
+
+data_sources:
+  rtx-kg2:
+    version: v2.7.3
 
 paths:
-  raw: data/01_raw
+  # we read from our central GCS bucket where we store our ground truth data
+  raw: ${gcs_bucket}/kedro/data/01_raw
+  # we write to local disk going forward
   int: data/02_intermediate
   prm: data/03_primary
   feat: data/04_feature
