@@ -31,7 +31,7 @@ embeddings.dimensionality_reduction:
   output: &_pca_property 'pca_embedding'
   transformer:
     object: pyspark.ml.feature.PCA
-    k: 3
+    k: 2
 
 # FUTURE: This is a highly temp. solution that serves as PoC of leveraging Neo4J's
 # AI functionality. If works as expected, we'll do a refinement step to clean this up.

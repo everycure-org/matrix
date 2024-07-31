@@ -1,7 +1,7 @@
 random_state: 111
 
 versions:
-  release: 20240730
+  release: 20240620
   sources:
     rtx-kg2: v2.7.3
 
