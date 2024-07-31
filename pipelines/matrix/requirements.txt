@@ -26,8 +26,6 @@ anyio==3.7.1
     #   watchgod
 appdirs==1.4.4
     # via kedro-telemetry
-appnope==0.1.4
-    # via ipykernel
 argon2-cffi==23.1.0
     # via jupyter-server
 argon2-cffi-bindings==21.2.0
@@ -64,11 +62,11 @@ botocore==1.34.131
     # via -r requirements.in
 build==1.2.1
     # via kedro
-cachetools==5.3.3
+cachetools==5.4.0
     # via
     #   google-auth
     #   kedro
-certifi==2024.6.2
+certifi==2024.7.4
     # via
     #   httpcore
     #   httpx
@@ -96,6 +94,8 @@ cookiecutter==2.6.0
     # via kedro
 cycler==0.12.1
     # via matplotlib
+db-dtypes==1.2.0
+    # via pandas-gbq
 debugpy==1.8.2
     # via ipykernel
 decorator==5.1.1
@@ -108,7 +108,7 @@ dnspython==2.6.1
     # via email-validator
 docopt==0.6.2
     # via hdfs
-dynaconf==3.2.5
+dynaconf==3.2.6
     # via kedro
 email-validator==2.2.0
     # via fastapi
@@ -116,13 +116,13 @@ executing==2.0.1
     # via stack-data
 faker==4.18.0
     # via brix-data-fabricator
-fastapi==0.111.0
+fastapi==0.111.1
     # via kedro-viz
 fastapi-cli==0.0.4
     # via fastapi
 fastjsonschema==2.20.0
     # via nbformat
-fonttools==4.53.0
+fonttools==4.53.1
     # via matplotlib
 fqdn==1.5.1
     # via jsonschema
@@ -144,33 +144,59 @@ gitpython==3.1.43
     # via kedro
 google-api-core==2.19.1
     # via
+    #   google-cloud-bigquery
     #   google-cloud-core
     #   google-cloud-storage
-google-auth==2.30.0
+    #   pandas-gbq
+google-auth==2.32.0
     # via
     #   gcsfs
     #   google-api-core
     #   google-auth-oauthlib
+    #   google-cloud-bigquery
     #   google-cloud-core
     #   google-cloud-storage
-google-auth-oauthlib==1.2.0
-    # via gcsfs
+    #   pandas-gbq
+    #   pydata-google-auth
+google-auth-oauthlib==1.2.1
+    # via
+    #   gcsfs
+    #   pandas-gbq
+    #   pydata-google-auth
+google-cloud-bigquery==3.25.0
+    # via
+    #   -r requirements.in
+    #   pandas-gbq
 google-cloud-core==2.4.1
-    # via google-cloud-storage
-google-cloud-storage==2.17.0
+    # via
+    #   google-cloud-bigquery
+    #   google-cloud-storage
+google-cloud-storage==2.18.0
     # via gcsfs
 google-crc32c==1.5.0
     # via
     #   google-cloud-storage
     #   google-resumable-media
 google-resumable-media==2.7.1
-    # via google-cloud-storage
+    # via
+    #   google-cloud-bigquery
+    #   google-cloud-storage
 googleapis-common-protos==1.63.2
-    # via google-api-core
+    # via
+    #   google-api-core
+    #   grpcio-status
 graphdatascience==1.0.0
     # via -r requirements.in
 graphql-core==3.2.3
     # via strawberry-graphql
+greenlet==3.0.3
+    # via sqlalchemy
+grpcio==1.65.1
+    # via
+    #   google-api-core
+    #   grpcio-status
+grpcio-status==1.65.1
+    # via google-api-core
 h11==0.14.0
     # via
     #   httpcore
@@ -199,7 +225,7 @@ importlib-resources==6.4.0
     # via kedro
 iniconfig==2.0.0
     # via pytest
-ipykernel==6.29.4
+ipykernel==6.29.5
     # via jupyterlab
 ipython==8.26.0
     # via
@@ -228,7 +254,7 @@ json5==0.9.25
     # via jupyterlab-server
 jsonpointer==3.0.0
     # via jsonschema
-jsonschema==4.22.0
+jsonschema==4.23.0
     # via
     #   jupyter-events
     #   jupyterlab-server
@@ -253,7 +279,7 @@ jupyter-events==0.10.0
     # via jupyter-server
 jupyter-lsp==2.2.5
     # via jupyterlab
-jupyter-server==2.14.1
+jupyter-server==2.14.2
     # via
     #   jupyter-lsp
     #   jupyterlab
@@ -262,13 +288,13 @@ jupyter-server==2.14.1
     #   notebook-shim
 jupyter-server-terminals==0.5.3
     # via jupyter-server
-jupyterlab==4.2.3
+jupyterlab==4.2.4
     # via
     #   -r requirements.in
     #   notebook
 jupyterlab-pygments==0.3.0
     # via nbconvert
-jupyterlab-server==2.27.2
+jupyterlab-server==2.27.3
     # via
     #   jupyterlab
     #   notebook
@@ -278,11 +304,11 @@ kedro==0.19.6
     #   kedro-datasets
     #   kedro-telemetry
     #   kedro-viz
-kedro-datasets==3.0.1
+kedro-datasets==4.0.0
     # via -r requirements.in
 kedro-telemetry==0.5.0
     # via -r requirements.in
-kedro-viz==9.1.0
+kedro-viz==9.2.0
     # via -r requirements.in
 kiwisolver==1.4.5
     # via matplotlib
@@ -294,7 +320,7 @@ markupsafe==2.1.5
     # via
     #   jinja2
     #   nbconvert
-matplotlib==3.9.0
+matplotlib==3.9.1
     # via -r requirements.in
 matplotlib-inline==0.1.7
     # via
@@ -305,7 +331,9 @@ mdurl==0.1.2
 mistune==3.0.2
     # via nbconvert
 more-itertools==10.3.0
-    # via kedro
+    # via
+    #   -r requirements.in
+    #   kedro
 multidict==6.0.5
     # via
     #   aiohttp
@@ -339,27 +367,31 @@ numpy==1.24.0
     # via
     #   brix-refit
     #   contourpy
+    #   db-dtypes
     #   matplotlib
     #   pandas
+    #   pandas-gbq
     #   pandera
     #   pyarrow
     #   scikit-learn
     #   scikit-optimize
     #   scipy
     #   xgboost
+nvidia-nccl-cu12==2.22.3
+    # via xgboost
 oauthlib==3.2.2
     # via requests-oauthlib
 omegaconf==2.3.0
     # via kedro
-orjson==3.10.5
-    # via
-    #   fastapi
-    #   kedro-viz
+orjson==3.10.6
+    # via kedro-viz
 overrides==7.7.0
     # via jupyter-server
-packaging==23.2
+packaging==24.1
     # via
     #   build
+    #   db-dtypes
+    #   google-cloud-bigquery
     #   ipykernel
     #   jupyter-server
     #   jupyterlab
@@ -368,6 +400,7 @@ packaging==23.2
     #   lazy-loader
     #   matplotlib
     #   nbconvert
+    #   pandas-gbq
     #   pandera
     #   plotly
     #   pytest
@@ -377,10 +410,14 @@ pandas==1.5.3
     # via
     #   brix-data-fabricator
     #   brix-refit
+    #   db-dtypes
     #   graphdatascience
     #   kedro-viz
+    #   pandas-gbq
     #   pandera
-pandera==0.20.1
+pandas-gbq==0.23.1
+    # via -r requirements.in
+pandera==0.20.3
     # via brix-refit
 pandocfilters==1.5.1
     # via nbconvert
@@ -390,13 +427,13 @@ parso==0.8.4
     # via jedi
 pexpect==4.9.0
     # via ipython
-pillow==10.3.0
+pillow==10.4.0
     # via matplotlib
 platformdirs==4.2.2
     # via
     #   jupyter-core
     #   pytoolconfig
-plotly==5.22.0
+plotly==5.23.0
     # via kedro-viz
 pluggy==1.5.0
     # via
@@ -414,6 +451,7 @@ protobuf==5.27.2
     # via
     #   google-api-core
     #   googleapis-common-protos
+    #   grpcio-status
     #   proto-plus
 psutil==6.0.0
     # via ipykernel
@@ -421,14 +459,17 @@ ptyprocess==0.7.0
     # via
     #   pexpect
     #   terminado
-pure-eval==0.2.2
+pure-eval==0.2.3
     # via stack-data
 py4j==0.10.9.7
     # via pyspark
-pyaml==24.4.0
+pyaml==24.7.0
     # via scikit-optimize
-pyarrow==16.1.0
-    # via -r requirements.in
+pyarrow==17.0.0
+    # via
+    #   -r requirements.in
+    #   db-dtypes
+    #   pandas-gbq
 pyasn1==0.6.0
     # via
     #   pyasn1-modules
@@ -437,13 +478,15 @@ pyasn1-modules==0.4.0
     # via google-auth
 pycparser==2.22
     # via cffi
-pydantic==2.7.4
+pydantic==2.8.2
     # via
     #   fastapi
     #   kedro-viz
     #   pandera
-pydantic-core==2.18.4
+pydantic-core==2.20.1
     # via pydantic
+pydata-google-auth==1.8.2
+    # via pandas-gbq
 pygments==2.18.0
     # via
     #   ipython
@@ -457,13 +500,14 @@ pyspark==3.5.1
     # via
     #   -r requirements.in
     #   brix-refit
-pytest==8.2.2
+pytest==8.3.2
     # via -r requirements.in
 python-dateutil==2.9.0.post0
     # via
     #   arrow
     #   botocore
     #   faker
+    #   google-cloud-bigquery
     #   jupyter-client
     #   matplotlib
     #   pandas
@@ -495,6 +539,8 @@ pyzmq==26.0.3
     #   ipykernel
     #   jupyter-client
     #   jupyter-server
+redis==5.0.7
+    # via robokop-genetics
 referencing==0.35.1
     # via
     #   jsonschema
@@ -505,11 +551,13 @@ requests==2.32.3
     #   cookiecutter
     #   gcsfs
     #   google-api-core
+    #   google-cloud-bigquery
     #   google-cloud-storage
     #   hdfs
     #   jupyterlab-server
     #   kedro-telemetry
     #   requests-oauthlib
+    #   robokop-genetics
 requests-oauthlib==2.0.0
     # via google-auth-oauthlib
 rfc3339-validator==0.1.4
@@ -525,9 +573,11 @@ rich==13.7.1
     #   cookiecutter
     #   kedro
     #   typer
+robokop-genetics @ git+https://github.com/ObesityHub/robokop-genetics.git@bf62c5e246e9baebc63090cce163e8cbf19477b1
+    # via -r requirements.in
 rope==1.13.0
     # via kedro
-rpds-py==0.18.1
+rpds-py==0.19.1
     # via
     #   jsonschema
     #   referencing
@@ -554,8 +604,11 @@ secure==0.3.0
     # via kedro-viz
 send2trash==1.8.3
     # via jupyter-server
-setuptools==70.1.1
-    # via jupyterlab
+setuptools==72.1.0
+    # via
+    #   jupyterlab
+    #   pandas-gbq
+    #   pydata-google-auth
 shellingham==1.5.4
     # via typer
 six==1.16.0
@@ -579,9 +632,9 @@ stack-data==0.6.3
     # via ipython
 starlette==0.37.2
     # via fastapi
-strawberry-graphql==0.235.1
+strawberry-graphql==0.237.2
     # via kedro-viz
-tenacity==8.4.2
+tenacity==9.0.0
     # via plotly
 terminado==0.18.1
     # via
@@ -597,8 +650,6 @@ tinycss2==1.3.0
     # via nbconvert
 toml==0.10.2
     # via kedro
-toposort==1.10
-    # via kedro-viz
 tornado==6.4.1
     # via
     #   ipykernel
@@ -640,15 +691,13 @@ typing-extensions==4.12.2
     #   typing-inspect
 typing-inspect==0.9.0
     # via pandera
-ujson==5.10.0
-    # via fastapi
 uri-template==1.3.0
     # via jsonschema
 urllib3==2.2.2
     # via
     #   botocore
     #   requests
-uvicorn==0.29.0
+uvicorn==0.30.3
     # via
     #   fastapi
     #   kedro-viz
