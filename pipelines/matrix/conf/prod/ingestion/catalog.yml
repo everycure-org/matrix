@@ -1,0 +1,28 @@
+_gbq_table_ds: &_gbq_table_ds
+  type:  pandas.GBQTableDataset
+  project: test-matrix-1
+  credentials: gbq_credentials
+  load_args:
+    reauth: False
+  save_args:
+    chunk_size: 100
+
+ingestion.raw.robokop_kg.edges@pandas:
+  <<: *_gbq_table_ds
+  dataset: robokop_kg_edges_dataset
+  table_name: robokop_kg_edges_table
+
+ingestion.int.robokop_kg.edges@pandas:
+  <<: *_gbq_table_ds
+  dataset: robokop_kg_edges_dataset
+  table_name: robokop_kg_edges_table
+
+ingestion.raw.robokop_kg.nodes@pandas:
+  <<: *_gbq_table_ds
+  dataset: robokop_kg_nodes_dataset
+  table_name: robokop_kg_nodes_table
+
+ingestion.int.robokop_kg.nodes@pandas:
+  <<: *_gbq_table_ds
+  dataset: robokop_kg_nodes_dataset
+  table_name: robokop_kg_nodes_table
