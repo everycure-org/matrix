@@ -1,6 +1,3 @@
-# Endpoint to synonymizer
-integration.synonymizer_endpoint: ${oc.env:SYNONYMIZER_ENDPOINT}
-
 # Specifies which edges are filtered out
 integration.graphsage_excl_preds:
   - 'biolink:treats'

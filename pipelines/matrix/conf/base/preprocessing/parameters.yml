@@ -1,0 +1,2 @@
+# Endpoint to synonymizer
+preprocessing.synonymizer_endpoint: ${oc.env:SYNONYMIZER_ENDPOINT}
