@@ -1,8 +1,5 @@
 """Nodes for the ingration pipeline."""
 import pandas as pd
-import requests
-
-from functools import partial
 
 from typing import List
 
@@ -28,40 +25,6 @@ def create_int_pairs(raw_tp: pd.DataFrame, raw_tn: pd.DataFrame):
 
     # Concat
     return pd.concat([raw_tp, raw_tn], axis="index").reset_index(drop=True)
-
-
-def resolve_curie(name: str, endpoint: str) -> str:
-    """Function to retrieve curie through the synonymizer.
-
-    FUTURE: Ensure downstream API yields 404 HTTP when not found.
-
-    Args:
-        name: name of the node
-        endpoint: endpoint of the synonymizer
-    Returns:
-        Corresponding curie
-    """
-    result = requests.get(f"{endpoint}/synonymize", json={"name": name})
-
-    element = result.json().get(name)
-    if element:
-        return element.get("preferred_curie", None)
-
-    return None
-
-
-def resolve_nodes(df: pd.DataFrame, endpoint: str) -> pd.DataFrame:
-    """Function to resolve nodes of the nodes input dataset.
-
-    Args:
-        df: nodes dataframe
-        endpoint: endpoint of the synonymizer
-    Returns:
-        dataframe enriched with Curie column
-    """
-    df["curie"] = df["name"].apply(partial(resolve_curie, endpoint=endpoint))
-
-    return df
 
 
 @has_schema(
