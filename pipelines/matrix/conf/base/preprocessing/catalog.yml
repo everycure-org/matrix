@@ -1,0 +1,33 @@
+_layer_raw: &_layer_raw
+  metadata:
+    kedro-viz:
+      layer: raw
+
+_layer_int: &_layer_int
+  metadata:
+    kedro-viz:
+      layer: integration
+
+
+# -------------------------------------------------------------------------
+# Datasets
+# -------------------------------------------------------------------------
+
+integration.raw.exp.nodes@pandas:
+  type: pandas.ExcelDataset
+  filepath: ${globals:paths.raw}/medical.xlsx
+  load_args:
+    sheet_name: Nodes
+
+integration.raw.exp.edges@pandas:
+  type: pandas.ExcelDataset
+  filepath: ${globals:paths.raw}/medical.xlsx
+  load_args:
+    sheet_name: Edges
+
+preprocessing.int.exp.nodes@pandas:
+  <<: *_layer_int
+  type: pandas.ExcelDataset
+  filepath: ${globals:paths.int}/medical.xlsx
+  save_args:
+    sheet_name: Nodes
