@@ -64,6 +64,11 @@ embeddings.topological:
     relationshipProjection: '*'
     configuration:
       relationshipProperties: [&_weight_attribute include_in_graphsage]
+  filtering:
+    graphName: filtered_embeddings 
+    args:
+      node_filter: '*'
+      relationship_filter: r.include_in_graphsage = 1.0
   estimator:
     model: graphSage
     args:
