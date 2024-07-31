@@ -13,13 +13,13 @@ _layer_int: &_layer_int
 # Datasets
 # -------------------------------------------------------------------------
 
-integration.raw.exp.nodes@pandas:
+preprocessing.raw.exp.nodes@pandas:
   type: pandas.ExcelDataset
   filepath: ${globals:paths.raw}/medical.xlsx
   load_args:
     sheet_name: Nodes
 
-integration.raw.exp.edges@pandas:
+preprocessing.raw.exp.edges@pandas:
   type: pandas.ExcelDataset
   filepath: ${globals:paths.raw}/medical.xlsx
   load_args:
