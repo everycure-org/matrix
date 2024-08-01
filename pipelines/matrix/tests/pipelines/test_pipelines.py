@@ -23,6 +23,18 @@ def _pipeline_datasets(pipeline) -> set[str]:
     return set.union(*[set(node.inputs + node.outputs) for node in pipeline.nodes])
 
 
+@pytest.fixture(autouse=True)
+def openai_api_env():
+    """Set the OPENAI_API_KEY environment variable for all tests."""
+    os.environ["OPENAI_API_KEY"] = "foo"
+    print("USING FIXTURE")
+    yield
+    # Clean up after the test
+    if "OPENAI_API_KEY" in os.environ:
+        print("ENDING FIXTURE")
+        del os.environ["OPENAI_API_KEY"]
+
+
 @pytest.mark.integration
 def test_unused_catalog_entries(kedro_context, configure_matrix_project):
     """Tests whether all catalog entries are used in the pipeline.

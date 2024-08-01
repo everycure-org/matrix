@@ -12,6 +12,8 @@ addopts = [
     "--ignore=packages",
 
 ]
+[tool.pytest_env]
+OPENAI_API_KEY="sk-abc"
 
 [project]
 name = "matrix"

@@ -11,6 +11,7 @@ from pyspark.sql import SparkSession
 from kedro.config import OmegaConfigLoader
 from omegaconf.resolvers import oc
 from matrix.resolvers import merge_dicts
+import os
 
 
 @pytest.fixture(name="conf_source", scope="session")
@@ -23,7 +24,7 @@ def conf_source_fixture() -> str:
 def config_loader_fixture(conf_source) -> OmegaConfigLoader:
     """Instantiate a config loader."""
     return OmegaConfigLoader(
-        env="base",
+        env="test",
         base_env="base",
         conf_source=conf_source,
         config_patterns={

@@ -142,9 +142,9 @@ To validate whether the setup is running, navigate to [localhost](http://localho
 
 ### .env file for local credentials
 
-If you want to execute the pipeline locally, you need to create a .env file in the root of the `matrix` pipeline. Use the `.env.tmpl` file to get started.
+If you want to execute the pipeline locally, you need to create a .env file in the root of the `matrix` pipeline. Use the `.env.tmpl` file to get started by renaming it to `.env`.
 
-The key (put intended) here is that the pipeline will not run fully without credentials
+The key here is that the pipeline will not run fully without credentials
 for the dependent services (at the moment only OpenAI). Reach out to the team through
 Slack if you need a credential. 
 
