@@ -19,6 +19,10 @@ _spark_parquet_ds: &_spark_parquet
   save_args:
     mode: overwrite
 
+_spark_parquet_nv_ds: &_spark_parquet_nv
+  <<: *_spark_parquet
+  versioned: false
+
 _neo4j_ds: &_neo4j_ds
   type: matrix.datasets.neo4j.Neo4JSparkDataset
   database: everycure-${globals:versions.release}
@@ -234,11 +238,11 @@ integration.int.known_pairs@spark:
   filepath: ${globals:paths.int}/ground_truth
 
 integration.prm.rtx_kg2.nodes:
-  <<: [*_spark_parquet, *_layer_int]
+  <<: [*_spark_parquet_nv, *_layer_int]
   filepath: ${globals:paths.prm}/rtx_kg2/nodes
 
 integration.prm.rtx_kg2.edges:
-  <<: [*_spark_parquet, *_layer_int]
+  <<: [*_spark_parquet_nv, *_layer_int]
   filepath: ${globals:paths.prm}/rtx_kg2/edges
 
 # FUTURE: Does it make sense to copy DBs?

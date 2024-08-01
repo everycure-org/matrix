@@ -28,7 +28,7 @@ class SparkHooks:
             context.project_path.name
         ).config(conf=spark_conf)
         _spark_session = spark_session_conf.getOrCreate()
-        _spark_session.sparkContext.setLogLevel("ERROR")
+        _spark_session.sparkContext.setLogLevel("WARN")
 
 
 class NodeTimerHooks:
