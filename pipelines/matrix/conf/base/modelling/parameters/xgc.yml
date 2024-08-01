@@ -19,7 +19,9 @@ modelling.xgc:
           estimator:
             object: xgboost.XGBClassifier
             random_state: ${globals:random_state}
-          n_calls: 10
+            tree_method: hist
+            device: cuda
+          n_calls: 20
           dimensions:
             - object: skopt.space.Real
               name: learning_rate

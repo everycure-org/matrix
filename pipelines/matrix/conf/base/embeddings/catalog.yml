@@ -1,7 +1,7 @@
 _neo4j_ds: &_neo4j_ds
   type: matrix.datasets.neo4j.Neo4JSparkDataset
   database: everycure-${globals:versions.release}
-  url: ${oc.env:NEO4J_HOST}
+  url: ${globals:neo4j.host}
   credentials: neo4j_credentials
   save_args:
     mode: "overwrite"
@@ -24,8 +24,12 @@ embeddings.prm.graph.embeddings@yaml:
 embeddings.prm.graph.embeddings@neo:
   <<: *_neo4j_ds
   load_args:
-    query: >
-      MATCH (n: Entity) RETURN n.id as id, n.embedding as embedding
+    # NOTE: Using the `query` reader option highly impacts performance, hence resorting to `labels`.
+    # https://neo4j.com/docs/spark/current/read/options/
+    partitions: 16 # Should increase parallelism for PCA
+    labels: ":Entity" #avoids query which drastically increases performance
+    # query: >
+    #   MATCH (n: Entity) RETURN n.id as id, n.embedding as embedding
 
 embeddings.prm.graph.pca_embeddings:
   <<: *_neo4j_ds
