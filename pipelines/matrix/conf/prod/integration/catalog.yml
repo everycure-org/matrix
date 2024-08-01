@@ -1,16 +1,13 @@
 _spark_csv_ds: &_spark_csv
   type: spark.SparkDataset
-  versioned: true
   file_format: csv
 
 _pandas_csv: &_pandas_csv
   type:  pandas.CSVDataset
-  versioned: true
 
 _bigquery_ds: &_bigquery_ds
   type: matrix.datasets.gcp.BigQueryTableDataset
   project_id: ${oc.env:GCP_PROJECT_ID}
-  versioned: true
 
 # -------------------------------------------------------------------------
 # Datasets
