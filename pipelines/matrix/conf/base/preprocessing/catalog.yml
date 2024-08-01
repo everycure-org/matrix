@@ -34,14 +34,14 @@ _spark_csv_ds: &_spark_csv
 preprocessing.raw.exp.nodes:
   <<: *_layer_raw
   type: pandas.ExcelDataset
-  filepath: ${globals:paths.raw}/medical.xlsx
+  filepath: ${globals:paths.raw}/exp.xlsx
   load_args:
     sheet_name: Nodes
 
 preprocessing.raw.exp.edges:
   <<: *_layer_raw
   type: pandas.ExcelDataset
-  filepath: ${globals:paths.raw}/medical.xlsx
+  filepath: ${globals:paths.raw}/exp.xlsx
   load_args:
     sheet_name: Edges
 
