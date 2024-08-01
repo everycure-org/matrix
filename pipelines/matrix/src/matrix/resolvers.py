@@ -40,9 +40,11 @@ def env(key: str, default: str = None) -> Optional[str]:
         str: Value of the key
     """
     try:
+        print(f"key: {key}, default: {default}")
         value = os.environ.get(key, default)
         if value is None:
             raise KeyError()
+        return value
     except KeyError:
         raise KeyError(
             f"Environment variable '{key}' not found or default value {default} is None"

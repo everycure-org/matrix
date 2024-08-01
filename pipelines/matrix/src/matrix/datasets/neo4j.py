@@ -93,9 +93,6 @@ class Neo4JSparkDataset(SparkDataset):
         self._load_args = deepcopy(load_args) or {}
         self._df_schema = self._load_args.pop("schema", None)
 
-        # handle versioned datasets
-        # TODO
-
         super().__init__(
             filepath="filepath",
             save_args=save_args,
