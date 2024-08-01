@@ -93,9 +93,6 @@ class Neo4JSparkDataset(SparkDataset):
         self._load_args = deepcopy(load_args) or {}
         self._df_schema = self._load_args.pop("schema", None)
 
-        # handle versioned datasets
-        # TODO
-
         super().__init__(
             filepath="filepath",
             save_args=save_args,
@@ -131,7 +128,6 @@ class Neo4JSparkDataset(SparkDataset):
     def _load_existing_dbs(driver):
         result = driver.execute_query("SHOW DATABASES")
         dbs = [record["name"] for record in result[0] if record["name"] != "system"]
-        print(dbs)
         return dbs
 
     def _load(self) -> Any:
