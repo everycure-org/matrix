@@ -74,51 +74,50 @@ class GraphDS(GraphDataScience):
         self.set_database(database)
 
 
-class RateLimitException(Exception):
-    """RateLimitException."""
+# class RateLimitException(Exception):
+#     """RateLimitException."""
 
-    pass
-
-
-@retry(
-    wait=wait_random_exponential(min=1, max=60),
-    stop=stop_after_attempt(6),
-    retry=retry_if_exception_type(RateLimitException),
-)
-def batch(endpoint, api_key, batch):
-    """Function to resolve batch."""
-    headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
-
-    print(
-        f"len: {len(batch)} tokens: {sum([num_tokens_from_string(element, 'cl100k_base') for element in batch])}"
-    )
-
-    data = {"input": batch, "model": "text-embedding-3-small"}
-
-    response = requests.post(endpoint, headers=headers, json=data)
-
-    if response.status_code == 200:
-        print(
-            f"remaining requests: '{response.headers['x-ratelimit-remaining-requests']}', remaining tokens: '{response.headers['x-ratelimit-remaining-tokens']}"
-        )
-        return [item["embedding"] for item in response.json()["data"]]
-    else:
-        if response.status_code == 429:
-            print(
-                f"remaining requests: '{response.headers['x-ratelimit-remaining-requests']}', remaining tokens: '{response.headers['x-ratelimit-remaining-tokens']}"
-            )
-            raise RateLimitException()
-
-        print(response.text)
-        raise RuntimeError()
+#     pass
 
 
-def num_tokens_from_string(string: str, encoding_name: str) -> int:
-    """Returns the number of tokens in a text string."""
-    encoding = tiktoken.get_encoding(encoding_name)
-    num_tokens = len(encoding.encode(string))
-    return num_tokens
+# @retry(
+#     wait=wait_random_exponential(min=1, max=60),
+#     stop=stop_after_attempt(6),
+#     retry=retry_if_exception_type(RateLimitException),
+# )
+# def batch(endpoint, api_key, batch):
+#     """Function to resolve batch."""
+#     headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
 
+#     print(
+#         f"len: {len(batch)} tokens: {sum([num_tokens_from_string(element, 'cl100k_base') for element in batch])}"
+#     )
+
+#     data = {"input": batch, "model": "text-embedding-3-small"}
+
+#     response = requests.post(endpoint, headers=headers, json=data)
+
+#     if response.status_code == 200:
+#         print(
+#             f"remaining requests: '{response.headers['x-ratelimit-remaining-requests']}', remaining tokens: '{response.headers['x-ratelimit-remaining-tokens']}"
+#         )
+#         return [item["embedding"] for item in response.json()["data"]]
+#     else:
+#         if response.status_code == 429:
+#             print(
+#                 f"remaining requests: '{response.headers['x-ratelimit-remaining-requests']}', remaining tokens: '{response.headers['x-ratelimit-remaining-tokens']}"
+#             )
+#             raise RateLimitException()
+
+#         print(response.text)
+#         raise RuntimeError()
+
+
+# def num_tokens_from_string(string: str, encoding_name: str) -> int:
+#     """Returns the number of tokens in a text string."""
+#     encoding = tiktoken.get_encoding(encoding_name)
+#     num_tokens = len(encoding.encode(string))
+#     return num_tokens
 
 @unpack_params()
 @inject_object()
@@ -146,8 +145,11 @@ def compute_embeddings(
         model: model to use
         concurrency: number of concurrent calls to execute
     """
+
+    import udfs
+
     batch_udf = F.udf(
-        lambda z: batch(endpoint, api_key, z), ArrayType(ArrayType(FloatType()))
+        lambda z: udfs.batch(endpoint, api_key, z), ArrayType(ArrayType(FloatType()))
     )
 
     res = (
