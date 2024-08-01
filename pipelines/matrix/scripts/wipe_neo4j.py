@@ -36,6 +36,12 @@ def main(
         with connect_to_neo4j() as driver:
             with driver.session(database="system") as system_session:
                 if db_name:
+                    confirm = input(
+                        f"Are you sure you want to drop database '{db_name}'? Type 'y' to confirm: "
+                    )
+                    if confirm.lower() != "y":
+                        print("Operation cancelled.")
+                        return
                     print(f"Dropping database: {db_name}")
                     system_session.run(f"DROP DATABASE `{db_name}` IF EXISTS")
                     print(f"Database {db_name} has been wiped.")
@@ -43,6 +49,13 @@ def main(
                     databases = get_user_databases(system_session)
                     print(f"Found {len(databases)} user database(s)")
                     print(databases)
+
+                    confirm = input(
+                        "Are you sure you want to drop all user databases? Type 'y' to confirm: "
+                    )
+                    if confirm.lower() != "y":
+                        print("Operation cancelled.")
+                        return
 
                     for db in databases:
                         print(f"Dropping {db}")
