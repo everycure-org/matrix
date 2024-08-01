@@ -49,7 +49,7 @@ services:
       MOCKSERVER_ENABLE_CORS_FOR_API: "true"
       MOCKSERVER_ENABLE_CORS_FOR_ALL_RESPONSES: "true"
       MOCKSERVER_INITIALIZATION_JSON_PATH: /openapi/initializer.json
-      MOCKSERVER_LOG_LEVEL: ERROR
+      MOCKSERVER_LOG_LEVEL: DEBUG
     networks:
       web:
         aliases:
