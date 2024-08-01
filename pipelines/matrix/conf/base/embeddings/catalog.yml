@@ -24,7 +24,9 @@ embeddings.prm.graph.embeddings@yaml:
 embeddings.prm.graph.embeddings@neo:
   <<: *_neo4j_ds
   load_args:
-    partitions: 16 #Should increase parallelism for PCA
+    # NOTE: Using the `query` reader option highly impacts performance, hence resorting to `labels`.
+    # https://neo4j.com/docs/spark/current/read/options/
+    partitions: 16 # Should increase parallelism for PCA
     labels: ":Entity" #avoids query which drastically increases performance
     # query: >
     #   MATCH (n: Entity) RETURN n.id as id, n.embedding as embedding
