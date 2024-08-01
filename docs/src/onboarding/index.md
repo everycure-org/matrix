@@ -395,9 +395,9 @@ Currently, we have the following evaluation methods.
 
 We have 4 environments declared in the kedro project for `MATRIX`:
 
-- `base`: Contains the base environment which reads the real data from GCS and operates fully locally
+- `base`: Contains the base environment which reads the real data from GCS and operates in your local compute environment
 - `prod`: Contains the prod environment with real data. All data is read and written from our main Google Cloud Storage. Assumes fully stateless local machine operations (e.g. in docker containers)
-- `test`: Fully local and contains parameters that "break" the meaning of algorithms in the pipeline (e.g. 2 dimensions PCA). This is useful for running the entire pipeline quickly with mock data to validate the programming of the pipeline is correct to a large degree. 
+- `test`: Fully local and contains parameters that "break" the meaning of algorithms in the pipeline (e.g. 2 dimensions PCA). This is useful for running an integration test with mock data to validate the programming of the pipeline is correct to a large degree. 
 - `local`: A default environment which you can use for local adjustments and tweaks. Changes to this repo are not usually committed to git as they are unique for every developer. 
 
 You can run any of the environments using the `--env` flag. For example, to run the pipeline in the `prod` environment, you can use the following command:
