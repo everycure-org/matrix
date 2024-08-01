@@ -16,7 +16,8 @@ wipe_neo:
 	python scripts/wipe_neo4j.py
 
 integration_test: wipe_neo
-	kedro run -p test --runner ThreadRunner
+        # NOTE: We're running without `xgc` due to its long runtime.
+	kedro run --env test -p test --runner ThreadRunner --without-tags xgc
 
 fabricate:
 	kedro run -p fabricator

@@ -48,5 +48,5 @@ To correctly leverage the GCP services, you will need a service-account key. You
 
 ```bash
 gcloud config set project mtrx-hub-dev-3of
-gcloud iam service-accounts keys create --iam-account=test-gcp@mtrx-hub-dev-3of.iam.gserviceaccount.com  conf/local/service-account.json
+gcloud iam service-accounts keys create --iam-account=storage-viewer-sa@mtrx-hub-dev-3of.iam.gserviceaccount.com  conf/local/service-account.json
 ```

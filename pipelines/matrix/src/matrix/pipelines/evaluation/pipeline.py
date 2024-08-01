@@ -51,14 +51,14 @@ def _create_evaluation_pipeline(model: str, evaluation: str) -> Pipeline:
 def create_pipeline(**kwargs) -> Pipeline:
     """Create fabricator pipeline."""
     pipes = []
-    for model in settings.DYNAMIC_PIPELINES_MAPPING.get("modelling"):
+    models = settings.DYNAMIC_PIPELINES_MAPPING.get("modelling")
+    model_names = [model["model_name"] for model in models]
+    for model in model_names:
         for evaluation in settings.DYNAMIC_PIPELINES_MAPPING.get("evaluation"):
             pipes.append(
                 pipeline(
-                    _create_evaluation_pipeline(
-                        model["model_name"], evaluation["evaluation_name"]
-                    ),
-                    tags=model["model_name"],
+                    _create_evaluation_pipeline(model, evaluation["evaluation_name"]),
+                    tags=model,
                 )
             )
     # Consolidate reports
@@ -76,6 +76,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                     ],
                     outputs=f"evaluation.reporting.report",
                     name=f"consolidate_reports",
+                    tags=model_names,
                 ),
             ]
         )
