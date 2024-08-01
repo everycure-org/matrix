@@ -1,6 +1,5 @@
 gcs_bucket: gs://${oc.env:GCP_BUCKET}
 
-
 paths:
   raw: ${gcs_bucket}/kedro/data/01_raw
   int: ${gcs_bucket}/kedro/data/02_intermediate

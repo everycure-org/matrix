@@ -24,8 +24,10 @@ embeddings.prm.graph.embeddings@yaml:
 embeddings.prm.graph.embeddings@neo:
   <<: *_neo4j_ds
   load_args:
-    query: >
-      MATCH (n: Entity) RETURN n.id as id, n.embedding as embedding
+    partitions: 16 #Should increase parallelism for PCA
+    labels: ":Entity" # should avoid 
+    # query: >
+    #   MATCH (n: Entity) RETURN n.id as id, n.embedding as embedding
 
 embeddings.prm.graph.pca_embeddings:
   <<: *_neo4j_ds

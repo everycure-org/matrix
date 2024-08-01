@@ -16,7 +16,7 @@ embeddings.ai_config:
   attribute: &_property embedding
 # https://platform.openai.com/docs/guides/embeddings/faq
 # OpenAI embeddings support batching, up to 8000 tokens.
-  batch_size: 1500
+  batch_size: 500
   endpoint: ${oc.env:OPENAI_ENDPOINT}
   model: text-embedding-3-small
   concurrency: 50

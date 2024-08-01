@@ -3,7 +3,8 @@ random_state: 111
 # points at our central GCS_BUCKET where we store our ground truth data
 gcs_bucket: gs://${oc.env:GCP_BUCKET}
 versions:
-  release: 20240620
+  # overwritten in prod environment for shared releases
+  release: local-dev
 
 data_sources:
   rtx-kg2:
