@@ -15,8 +15,16 @@ def create_pipeline(**kwargs) -> Pipeline:
                     "preprocessing.raw.exp.nodes",
                     "params:preprocessing.synonymizer_endpoint",
                 ],
-                outputs="preprocessing.int.exp.nodes@pandas",
+                outputs="preprocessing.int.exp.nodes_excel",
                 name="resolve_exp_nodes",
+                tags=["exp"],
+            ),
+            # Transcode to pandas
+            node(
+                func=lambda x: x,
+                inputs=["preprocessing.int.exp.nodes_excel"],
+                outputs="preprocessing.int.exp.nodes@pandas",
+                name="transcode_pandas",
                 tags=["exp"],
             ),
             node(

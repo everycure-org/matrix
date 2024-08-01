@@ -45,9 +45,17 @@ preprocessing.raw.exp.edges:
   load_args:
     sheet_name: Edges
 
+preprocessing.int.exp.nodes_excel:
+  <<: [*_layer_int]
+  type: pandas.ExcelDataset
+  filepath: ${globals:paths.int}/exp/nodes.xlsx
+  save_args:
+    sheet_name: Edges
+
 preprocessing.int.exp.nodes@pandas:
   <<: [*_layer_int, *_pandas_csv]
-  filepath: ${globals:paths.int}/exp/nodes.csv
+  type: pandas.ExcelDataset
+  filepath: ${globals:paths.int}/exp/nodes.xlsx
 
 preprocessing.int.exp.nodes@spark:
   <<: [*_layer_int, *_spark_csv]
