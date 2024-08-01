@@ -24,7 +24,7 @@ def conf_source_fixture() -> str:
 def config_loader_fixture(conf_source) -> OmegaConfigLoader:
     """Instantiate a config loader."""
     return OmegaConfigLoader(
-        env="test",
+        env="base",
         base_env="base",
         conf_source=conf_source,
         config_patterns={
