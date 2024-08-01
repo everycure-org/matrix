@@ -140,6 +140,15 @@ docker-compose up
 
 To validate whether the setup is running, navigate to [localhost](http://localhost:7474/) in your browser, this will open the Neo4J dashboard. Use `neo4j` and `admin` as the username and password combination sign in.
 
+### .env file for local credentials
+
+If you want to execute the pipeline locally, you need to create a .env file in the root of the `matrix` pipeline. Use the `.env.tmpl` file to get started.
+
+The key (put intended) here is that the pipeline will not run fully without credentials
+for the dependent services (at the moment only OpenAI). Reach out to the team through
+Slack if you need a credential. 
+
+
 ## Kedro
 
 !!! info
@@ -352,6 +361,7 @@ Embeddings are vectorized representations of the entities in our knowledge graph
 
 !!! info
     Our graph database, i.e., [Neo4J](https://neo4j.com/docs/graph-data-science/current/algorithms/) comes with out-of-the-box functionality to compute both node and topological embeddings in-situ. The Kedro pipeline orchestrates the computation of these.
+
 
 #### Modelling 
 
