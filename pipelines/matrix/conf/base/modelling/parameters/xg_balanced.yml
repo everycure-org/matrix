@@ -46,6 +46,8 @@ modelling.xg_balanced:
             subsample: null
             validate_parameters: null
             verbosity: null
+            tree_method: hist
+            device: cuda
         features: # Features use regex, source_0, source_1, .., target_0, target_1
           - source_+
           - target_+

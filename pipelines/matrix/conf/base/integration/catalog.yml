@@ -19,57 +19,235 @@ _spark_parquet_ds: &_spark_parquet
   save_args:
     mode: overwrite
 
+_spark_parquet_nv_ds: &_spark_parquet_nv
+  <<: *_spark_parquet
+  versioned: false
+
 _neo4j_ds: &_neo4j_ds
   type: matrix.datasets.neo4j.Neo4JSparkDataset
   database: everycure-${globals:versions.release}
-  url: ${oc.env:NEO4J_HOST}
+  url: ${globals:neo4j.host}
   credentials: neo4j_credentials
   save_args:
     mode: "overwrite"
   
+_layer_raw: &_layer_raw
+  metadata:
+    kedro-viz:
+      layer: raw
+
+_layer_int: &_layer_int
+  metadata:
+    kedro-viz:
+      layer: integration
+
+
+# -------------------------------------------------------------------------
+# Datasets
+# -------------------------------------------------------------------------
 integration.raw.rtx_kg2.nodes@pandas:
-  <<: *_pandas_csv
-  filepath: ${globals:paths.raw}/rtx_kg2_nodes.csv
-  
+  filepath: ${globals:paths.raw}/rtx_kg2/${globals:data_sources.rtx-kg2.version}/nodes_c.tsv
+  load_args:
+    sep: "\t"
+  save_args:
+    header: false
+    index: false
+    sep: "\t"
+  <<: [*_pandas_csv, *_layer_raw]
+
 integration.raw.rtx_kg2.nodes@spark:
-  <<: *_spark_csv
-  filepath: ${globals:paths.raw}/rtx_kg2_nodes.csv
+  type: matrix.datasets.gcp.SparkWithSchemaDataset
+  filepath: ${globals:paths.raw}/rtx_kg2/${globals:data_sources.rtx-kg2.version}/nodes_c.tsv
+  file_format: csv
+  load_args:
+    sep: "\t"
+    header: false
+    index: false
+    schema:
+      object: pyspark.sql.types.StructType
+      fields:
+        - object: pyspark.sql.types.StructField
+          name: id
+          dataType: 
+            object: pyspark.sql.types.StringType
+          nullable: False
+
+        - object: pyspark.sql.types.StructField
+          name: name
+          dataType: 
+            object: pyspark.sql.types.StringType
+          nullable: False
+
+        - object: pyspark.sql.types.StructField
+          name: category
+          dataType: 
+            object: pyspark.sql.types.StringType
+          nullable: False
+
+        - object: pyspark.sql.types.StructField
+          name: all_names
+          dataType: 
+            object: pyspark.sql.types.StringType
+          nullable: False
+
+        - object: pyspark.sql.types.StructField
+          name: all_categories
+          dataType: 
+            object: pyspark.sql.types.StringType
+          nullable: False
+        
+        - object: pyspark.sql.types.StructField
+          name: iri
+          dataType: 
+            object: pyspark.sql.types.StringType
+          nullable: False
+
+        - object: pyspark.sql.types.StructField
+          name: description
+          dataType: 
+            object: pyspark.sql.types.StringType
+          nullable: False
+
+        - object: pyspark.sql.types.StructField
+          name: equivalent_curies
+          dataType: 
+            object: pyspark.sql.types.StringType
+          nullable: False
+
+        - object: pyspark.sql.types.StructField
+          name: publications
+          dataType: 
+            object: pyspark.sql.types.StringType
+          nullable: False
+
+        - object: pyspark.sql.types.StructField
+          name: label
+          dataType: 
+            object: pyspark.sql.types.StringType
+          nullable: False
 
 integration.raw.rtx_kg2.edges@pandas:
-  <<: *_pandas_csv
-  filepath: ${globals:paths.raw}/rtx_kg2_edges.csv
+  <<: [*_pandas_csv, *_layer_raw]
+  filepath: ${globals:paths.raw}/rtx_kg2/${globals:data_sources.rtx-kg2.version}/edges_c.tsv
+  save_args:
+    sep: "\t"
+    header: false
+    index: false
+  load_args:
+    sep: "\t"
 
 integration.raw.rtx_kg2.edges@spark:
-  <<: *_spark_csv
-  filepath: ${globals:paths.raw}/rtx_kg2_edges.csv
+  type: matrix.datasets.gcp.SparkWithSchemaDataset
+  filepath: ${globals:paths.raw}/rtx_kg2/${globals:data_sources.rtx-kg2.version}/edges_c.tsv
+  file_format: csv
+  load_args:
+    sep: "\t"
+    header: false
+    schema:
+      object: pyspark.sql.types.StructType
+      fields:
+        - object: pyspark.sql.types.StructField
+          name: subject
+          dataType: 
+            object: pyspark.sql.types.StringType
+          nullable: False
+        
+        - object: pyspark.sql.types.StructField
+          name: object
+          dataType: 
+            object: pyspark.sql.types.StringType
+          nullable: False
+        
+        - object: pyspark.sql.types.StructField
+          name: predicate
+          dataType: 
+            object: pyspark.sql.types.StringType
+          nullable: False
+        
+        - object: pyspark.sql.types.StructField
+          name: knowledge_source
+          dataType: 
+            object: pyspark.sql.types.StringType
+          nullable: False
+
+        - object: pyspark.sql.types.StructField
+          name: publications
+          dataType: 
+            object: pyspark.sql.types.StringType
+          nullable: False
+
+        - object: pyspark.sql.types.StructField
+          name: publications_info
+          dataType: 
+            object: pyspark.sql.types.StringType
+          nullable: False
+
+        - object: pyspark.sql.types.StructField
+          name: kg2_ids
+          dataType: 
+            object: pyspark.sql.types.StringType
+          nullable: False
+
+        - object: pyspark.sql.types.StructField
+          name: id
+          dataType: 
+            object: pyspark.sql.types.StringType
+          nullable: False
+
+        - object: pyspark.sql.types.StructField
+          name: type
+          dataType: 
+            object: pyspark.sql.types.StringType
+          nullable: False
+
+        - object: pyspark.sql.types.StructField
+          name: start_id
+          dataType: 
+            object: pyspark.sql.types.StringType
+          nullable: False
+
+        - object: pyspark.sql.types.StructField
+          name: end_id
+          dataType: 
+            object: pyspark.sql.types.StringType
+          nullable: False
 
 integration.raw.ground_truth.positives:
-  <<: *_pandas_csv
-  filepath: ${globals:paths.raw}/tp_pairs.txt
+  <<: [*_pandas_csv, *_layer_raw]
+  filepath: ${globals:paths.raw}/ground_truth_data/tp_pairs.txt
+  load_args:
+    sep: "\t"
+  save_args: 
+    sep: "\t"
 
 integration.raw.ground_truth.negatives:
-  <<: *_pandas_csv
-  filepath: ${globals:paths.raw}/tn_pairs.txt
+  <<: [*_pandas_csv, *_layer_raw]
+  filepath: ${globals:paths.raw}/ground_truth_data/tn_pairs.txt
+  load_args:
+    sep: "\t"
+  save_args: 
+    sep: "\t"
+
 
 integration.int.known_pairs@pandas:
-  <<: *_pandas_parquet
+  <<: [*_pandas_parquet, *_layer_int]
   filepath: ${globals:paths.int}/ground_truth
 
 integration.int.known_pairs@spark:
-  <<: *_spark_parquet
+  <<: [*_spark_parquet, *_layer_int]
   filepath: ${globals:paths.int}/ground_truth
 
 integration.prm.rtx_kg2.nodes:
-  <<: *_spark_parquet
+  <<: [*_spark_parquet_nv, *_layer_int]
   filepath: ${globals:paths.prm}/rtx_kg2/nodes
 
 integration.prm.rtx_kg2.edges:
-  <<: *_spark_parquet
+  <<: [*_spark_parquet_nv, *_layer_int]
   filepath: ${globals:paths.prm}/rtx_kg2/edges
 
 # FUTURE: Does it make sense to copy DBs?
 integration.model_input.nodes:
-  <<: *_neo4j_ds
+  <<: [*_neo4j_ds, *_layer_int]
   save_args:
     # NOTE: Neo4j nodes can have multiple labels. We're adding _all_ nodes in a global
     # `entity` label on which we generate a unique constraint. This has the side-effect
@@ -88,11 +266,15 @@ integration.model_input.nodes:
     # it back into the query as the modelling expects it.
     query: >  
       MATCH (n) 
-      RETURN n.id AS id, 'biolink:' + labels(n)[0] AS category 
+      RETURN 
+        n.id AS id, 
+        n.name as name,
+        n.category as category,
+        n.description as description
  
 
 integration.model_input.edges:
-  <<: *_neo4j_ds
+  <<: [*_neo4j_ds, *_layer_int]
   save_args:
     # NOTE: The `match:Entity` ensures that the index we created above is leveraged
     # while inserting edges, thereby speeding up the process massively.
@@ -110,7 +292,7 @@ integration.model_input.edges:
         o.id AS object
 
 integration.model_input.ground_truth:
-  <<: *_neo4j_ds
+  <<: [*_neo4j_ds, *_layer_int]
   save_args:
     query: > 
       MATCH (source:Entity {id: event.source_id}), (target:Entity {id: event.target_id})
