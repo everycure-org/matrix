@@ -18,6 +18,7 @@ data/**
 !.gitkeep
 
 .env*
+!.env.tmpl
 
 ##########################
 # Common files
