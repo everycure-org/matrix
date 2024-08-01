@@ -23,7 +23,7 @@ def _pipeline_datasets(pipeline) -> set[str]:
     return set.union(*[set(node.inputs + node.outputs) for node in pipeline.nodes])
 
 
-@pytest.fixture(autouse=True)
+@pytest.fixture(autouse=True, scope="module")
 def openai_api_env():
     """Set the OPENAI_API_KEY environment variable for all tests."""
     os.environ["OPENAI_API_KEY"] = "foo"
