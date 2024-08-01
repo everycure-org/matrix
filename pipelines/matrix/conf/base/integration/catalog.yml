@@ -41,6 +41,40 @@ integration.raw.rtx_kg2.edges@spark:
   <<: *_spark_csv
   filepath: ${globals:paths.raw}/rtx_kg2_edges.csv
 
+integration.raw.RobokopKG.nodes@pandas:
+  filepath: ${globals:paths.raw}/RobokopKG/${globals:data_sources.robokop-kg.version}/nodes.tsv
+  load_args:
+    sep: "\t"
+  save_args:
+    header: false
+    index: false
+    sep: "\t"
+  <<: *_pandas_csv
+
+integration.raw.RobokopKG.nodes@spark:
+  <<: *_spark_csv
+  filepath: ${globals:paths.raw}/RobokopKG/${globals:data_sources.robokop-kg.version}/nodes.tsv
+  file_format: csv
+  load_args:
+    sep: "\t"
+
+integration.raw.RobokopKG.edges@pandas:
+  filepath: ${globals:paths.raw}/RobokopKG/${globals:data_sources.robokop-kg.version}/edges.tsv
+  load_args:
+    sep: "\t"
+  save_args:
+    header: false
+    index: false
+    sep: "\t"
+  <<: *_pandas_csv
+
+integration.raw.RobokopKG.edges@spark:
+  <<: *_spark_csv
+  filepath: ${globals:paths.raw}/RobokopKG/${globals:data_sources.robokop-kg.version}/edges.tsv
+  file_format: csv
+  load_args:
+    sep: "\t"
+
 integration.raw.ground_truth.positives:
   <<: *_pandas_csv
   filepath: ${globals:paths.raw}/tp_pairs.txt
