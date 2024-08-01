@@ -91,6 +91,8 @@ def create_prm_edges(prm_nodes: DataFrame, int_edges: DataFrame) -> DataFrame:
         )
         .drop("ID")
         .filter(F.col("subject").isNotNull() & F.col("object").isNotNull())
+        .withColumn("predicate", F.concat(F.lit("biolink:"), F.col("Label")))
+        .withColumn("knowledge_source", F.lit("EveryCure"))
     )
 
     return res

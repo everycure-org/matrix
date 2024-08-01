@@ -5,6 +5,10 @@ from kedro.pipeline import Pipeline, node, pipeline
 
 from data_fabricator.v0.nodes.fabrication import fabricate_datasets
 
+from pyspark.sql import DataFrame
+
+import pyspark.sql.functions as F
+
 
 def _create_pairs(nodes: pd.DataFrame, num: int = 50) -> pd.DataFrame:
     # Sample random pairs
@@ -15,6 +19,10 @@ def _create_pairs(nodes: pd.DataFrame, num: int = 50) -> pd.DataFrame:
         data=[[drug, disease] for drug, disease in zip(random_drugs, random_diseases)],
         columns=["source", "target"],
     )
+
+
+def _edges_subset(edges: DataFrame, num: int = 10) -> pd.DataFrame:
+    return edges.limit(num).withColumn("knowledge_source", F.lit("EveryCure"))
 
 
 def create_pipeline(**kwargs) -> Pipeline:
@@ -41,6 +49,13 @@ def create_pipeline(**kwargs) -> Pipeline:
                 inputs=["integration.raw.rtx_kg2.nodes@pandas"],
                 outputs="integration.raw.ground_truth.negatives",
                 name="create_tn_pairs",
+            ),
+            # NOTE: Quickly taking a subset
+            node(
+                func=_edges_subset,
+                inputs=["integration.raw.rtx_kg2.edges@spark"],
+                outputs="preprocessing.prm.exp.edges",
+                name="create_exp_edges",
             ),
         ]
     )
