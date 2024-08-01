@@ -30,8 +30,11 @@ class SparkHooks:
             .appName(context.project_path.name)
             .config(conf=spark_conf)
         )
+        
         _spark_session = spark_session_conf.getOrCreate()
         _spark_session.sparkContext.setLogLevel("WARN")
+
+        spark_session_conf.sparkContext.addPyFile("udfs.py")
 
 
 class NodeTimerHooks:
