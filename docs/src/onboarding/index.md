@@ -439,7 +439,7 @@ kedro run --without-tags first_copy
 This assumes that all initial nodes that copy big datasets have already been run and that the developers are ensuring they are tagged with `first_copy` tags. 
 
 !!! tip "main takeaway for local execution"
-    The `first_copy` tag is used to ensure that the data is copied only once. This is useful when running the pipeline with real data locally. From day 2, remember `kedro run --without-tags first_copy` to avoid copying the data again. 
+    The `first_copy` tag is used to ensure that the data is copied only once. This is useful when running the pipeline with real data locally. From day 2, remember `kedro run --without-tags first_copy` to avoid copying the data again. Note however this means you are responsible for updating your local dev copy.
 
 ## Using Kedro with Jupyter notebooks
 
