@@ -4,7 +4,7 @@ random_state: 111
 gcs_bucket: gs://${oc.env:GCP_BUCKET}
 versions:
   # overwritten in prod environment for shared releases
-  release: local-dev
+  release: 20240620
 
 data_sources:
   rtx-kg2:
