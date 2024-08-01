@@ -1,1 +1,1 @@
-spark.driver.memory: 6g
+spark.hadoop.google.cloud.auth.service.account.enable: false
