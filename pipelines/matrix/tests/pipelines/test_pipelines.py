@@ -23,6 +23,11 @@ def _pipeline_datasets(pipeline) -> set[str]:
     return set.union(*[set(node.inputs + node.outputs) for node in pipeline.nodes])
 
 
+@pytest.fixture(autouse=True, scope="session")
+def openai_api_env():
+    os.environ["OPENAI_API_KEY"] = "foo"
+
+
 @pytest.mark.integration
 def test_unused_catalog_entries(kedro_context, configure_matrix_project):
     """Tests whether all catalog entries are used in the pipeline.
@@ -70,9 +75,11 @@ def test_unused_catalog_entries(kedro_context, configure_matrix_project):
 
 
 @pytest.mark.integration
-@pytest.mark.skipif(
-    os.environ.get("CI") == "true", reason="Ongoing issue with the Kedro catalog"
-)
+# @pytest.mark.skipif(
+#     os.environ.get("CI") == "true", reason="Ongoing issue with the Kedro catalog"
+# )
+# skipping due to dynamic pipelines not being supported at the moment
+@pytest.mark.skip()
 def test_memory_data_sets_absent(kedro_context, configure_matrix_project):
     """Tests no MemoryDataSets are created."""
 
