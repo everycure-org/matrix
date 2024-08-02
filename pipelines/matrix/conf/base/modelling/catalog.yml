@@ -67,12 +67,16 @@ modelling.model_input.splits:
   filepath: ${globals:paths.model_output}/{model}/predictions
 
 # NOTE: The mlflow plugin does not seem to like the data factory syntax
+# MOTE: Saving an artifact
+# https://kedro-mlflow.readthedocs.io/en/stable/source/04_experimentation_tracking/03_version_datasets.html#how-to-version-data-in-a-kedro-project
 "modelling.{model}.{shard}.reporting.tuning_convergence_plot":
   type: kedro_mlflow.io.artifacts.MlflowArtifactDataset
   dataset:
     type: matplotlib.MatplotlibWriter
     filepath: ${globals:paths.reporting}/{model}/{shard}/convergence_plot.png
 
+# NOTE: Tracking a model, other serialization formats possible.
+# https://kedro-mlflow.readthedocs.io/en/stable/source/04_experimentation_tracking/04_version_models.html#how-to-track-models-using-mlflow-in-kedro-project
 "modelling.{model}.models.model":
   type: kedro_mlflow.io.models.MlflowModelTrackingDataset
   flavor: mlflow.pyfunc 
