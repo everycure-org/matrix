@@ -154,7 +154,8 @@ Slack if you need a credential.
 
 To read the raw data you do not actually have to be authenticated with gcloud. This is because we leverage hadoop/spark to read the data from GCS and the repository contains a `read-only` service account key that is used by the spark jobs. This file is encrypted however, so you will need to decrypt it. For this we use `git-crypt`. 
 
-Please follow the [instructions on gitcrypt](./git-crypt.md) to be able to read the data by decrypting the file. In essence, we ask you to share a public key with us which we use to encrypt the secret with so we can easily share secrets with each other without sharing them with the rest of the world.  
+Please follow the [instructions on git-crypt](./git-crypt.md) to be able to read the data by decrypting the file. In essence, we ask you to share a public key with us, which we will use to encrypt the secret.
+This way, we can easily share secrets with each other without exposing them to the rest of the world.  
 
 ## Kedro
 
