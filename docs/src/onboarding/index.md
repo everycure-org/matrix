@@ -416,6 +416,7 @@ kedro run --env test -p test
 
 This runs the full pipeline with fake data.
 
+### Run with real data locally
 
 To run the full data with real data by copying the RAW data from the central GCS bucket and then run everything locally you can simply run the default
 
