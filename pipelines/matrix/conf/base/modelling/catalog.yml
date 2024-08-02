@@ -81,10 +81,6 @@ modelling.model_input.splits:
   type: kedro_mlflow.io.models.MlflowModelTrackingDataset
   flavor: mlflow.pyfunc 
   pyfunc_workflow: python_model
-  # type: kedro_mlflow.io.artifacts.MlflowArtifactDataset
-  # dataset:
-  #   type: pickle.PickleDataset
-  #   filepath: ${globals:paths.models}/{model}/model.pickle
 
 # NOTE: Saving a metric, more elaborate strategies possible, e.g., MlflowMetricHistoryDataset
 # https://kedro-mlflow.readthedocs.io/en/stable/source/04_experimentation_tracking/05_version_metrics.html#saving-a-single-float-as-a-metric-with-mlflowmetricdataset
