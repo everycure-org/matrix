@@ -1,11 +1,12 @@
 """Module to represent models."""
+import mlflow
 from typing import List, Callable, Optional
 from sklearn.base import BaseEstimator
 
 import numpy as np
 
 
-class ModelWrapper:
+class ModelWrapper(mlflow.pyfunc.PythonModel):
     """Class to represent models.
 
     FUTURE: Add `features` and `transformers` to class, such that we can
@@ -36,13 +37,13 @@ class ModelWrapper:
         """
         raise NotImplementedError("ModelWrapper is used to house fitted estimators")
 
-    def predict(self, X):
+    def predict(self, context, model_input, params=None):
         """Returns the predicted class.
 
         Args:
             X: input features
         """
-        return self.predict_proba(X).argmax(axis=1)
+        return self.predict_proba(model_input).argmax(axis=1)
 
     def predict_proba(self, X):
         """Method for probability scores of the ModelWrapper.

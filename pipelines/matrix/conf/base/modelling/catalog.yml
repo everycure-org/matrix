@@ -66,13 +66,21 @@ modelling.model_input.splits:
   <<: *_pandas_parquet
   filepath: ${globals:paths.model_output}/{model}/predictions
 
+# NOTE: The mlflow plugin does not seem to like the data factory syntax
 "modelling.{model}.{shard}.reporting.tuning_convergence_plot":
-  type: matplotlib.MatplotlibWriter
-  filepath: ${globals:paths.reporting}/{model}/{shard}/convergence_plot.png
+  type: kedro_mlflow.io.artifacts.MlflowArtifactDataset
+  dataset:
+    type: matplotlib.MatplotlibWriter
+    filepath: ${globals:paths.reporting}/{model}/{shard}/convergence_plot.png
 
 "modelling.{model}.models.model":
-  type: pickle.PickleDataset
-  filepath: ${globals:paths.models}/{model}/model.pickle
+  type: kedro_mlflow.io.models.MlflowModelTrackingDataset
+  flavor: mlflow.pyfunc # matrix.pipelines.modelling.model
+  pyfunc_workflow: python_model
+  # type: kedro_mlflow.io.artifacts.MlflowArtifactDataset
+  # dataset:
+  #   type: pickle.PickleDataset
+  #   filepath: ${globals:paths.models}/{model}/model.pickle
 
 "modelling.{model}.reporting.metrics":
   type: yaml.YAMLDataset
