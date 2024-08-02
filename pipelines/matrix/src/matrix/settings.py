@@ -11,10 +11,10 @@ from matrix.hooks import *
 from kedro_mlflow.framework.hooks import MlflowHook
 
 # Hooks are executed in a Last-In-First-Out (LIFO) order.
-HOOKS = (SparkHooks(), NodeTimerHooks(), MlflowHook())
+HOOKS = (SparkHooks(), NodeTimerHooks())
 
 # Installed plugins for which to disable hook auto-registration.
-DISABLE_HOOKS_FOR_PLUGINS = ("kedro-viz", "kedro_mlflow")
+DISABLE_HOOKS_FOR_PLUGINS = "kedro-viz"
 
 # Class that manages storing KedroSession data.
 from pathlib import Path  # noqa: E402
@@ -40,6 +40,7 @@ CONFIG_LOADER_ARGS = {
     "merge_strategy": {"parameters": "soft"},
     "config_patterns": {
         "spark": ["spark*", "spark*/**"],
+        "mlflow": ["mlflow*", "mlflow*/**"],
         "globals": ["globals*", "globals*/**", "**/globals*"],
         "parameters": [
             "parameters*",
