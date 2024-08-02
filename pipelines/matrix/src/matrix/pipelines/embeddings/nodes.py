@@ -119,6 +119,7 @@ class GraphDS(GraphDataScience):
 #     num_tokens = len(encoding.encode(string))
 #     return num_tokens
 
+
 @unpack_params()
 @inject_object()
 def compute_embeddings(
@@ -145,7 +146,6 @@ def compute_embeddings(
         model: model to use
         concurrency: number of concurrent calls to execute
     """
-
     import udfs
 
     batch_udf = F.udf(
