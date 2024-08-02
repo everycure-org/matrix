@@ -57,6 +57,12 @@ services:
     volumes:
       - ./mockgenai-initializer.json:/openapi/initializer.json:ro
 
+  mlflow:
+    image: ghcr.io/mlflow/mlflow
+    ports:
+      - "5001:5000"
+    command: mlflow server --host 0.0.0.0
+
 networks:
   web:
     name: web
