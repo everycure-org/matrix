@@ -1,4 +1,4 @@
-gcs_bucket: gs://${oc.env:GCP_BUCKET}
+gcs_bucket: gs://${oc.env:GCP_BUCKET, mtrx-us-central1-hub-dev-storage}
 paths:
   raw: ${gcs_bucket}/kedro/data/01_raw
   int: ${gcs_bucket}/kedro/data/02_intermediate
