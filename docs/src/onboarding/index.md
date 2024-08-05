@@ -21,6 +21,8 @@ This page assumes basic knowledge of the following technologies. We will provide
 - `openjdk-11`
 - [`docker`](https://docker-curriculum.com/)
 - [`docker-compose`](https://docs.docker.com/compose/)
+- `gpg` ([windows](https://www.gpg4win.org/), [macos](https://gpgtools.org/), [linux](https://www.gnupg.org/))
+- `gcloud` [CLI](https://cloud.google.com/sdk/gcloud)
 
 
 !!! info "Support on Windows, MacOS and Linux"
@@ -148,6 +150,12 @@ The key here is that the pipeline will not run fully without credentials
 for the dependent services (at the moment only OpenAI). Reach out to the team through
 Slack if you need a credential. 
 
+### Read raw data from GCS
+
+To read the raw data you do not actually have to be authenticated with gcloud. This is because we leverage hadoop/spark to read the data from GCS and the repository contains a `read-only` service account key that is used by the spark jobs. This file is encrypted however, so you will need to decrypt it. For this we use `git-crypt`. 
+
+Please follow the [instructions on git-crypt](./git-crypt.md) to be able to read the data by decrypting the file. In essence, we ask you to share a public key with us, which we will use to encrypt the secret.
+This way, we can easily share secrets with each other without exposing them to the rest of the world.  
 
 ## Kedro
 
