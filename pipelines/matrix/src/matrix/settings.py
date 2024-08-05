@@ -15,11 +15,11 @@ HOOKS = (
     hooks.NodeTimerHooks(),
     MlflowHook(),
     hooks.MLFlowHooks(),
-)  # hooks.SparkHooks(),
+    hooks.SparkHooks(),
+)
 
 # Installed plugins for which to disable hook auto-registration.
-# NOTE: Ord
-DISABLE_HOOKS_FOR_PLUGINS = "kedro-mlflow"
+DISABLE_HOOKS_FOR_PLUGINS = ("kedro-mlflow", "kedro_mlflow")
 
 # Class that manages storing KedroSession data.
 from pathlib import Path  # noqa: E402

@@ -8,41 +8,28 @@ from datetime import datetime
 from typing import Any
 import pandas as pd
 import termplotlib as tpl
+from omegaconf import OmegaConf
 
 import mlflow
-
 
 class MLFlowHooks:
     @hook_impl
     def after_context_created(self, context) -> None:
+
         self._config_loader = context.config_loader
 
-    @hook_impl
-    def before_pipeline_run(self, catalog: DataCatalog, *args) -> None:
-        mlflow.set_tracking_uri(
-            self._config_loader.get("mlflow", {})
-            .get("server", {})
-            .get("mlflow_tracking_uri", None)
-        )
+        # Extract
+        cfg = OmegaConf.create(self._config_loader["mlflow"])
+        experiment_name = cfg.tracking.experiment.name
+        run_name = cfg.tracking.run.name
 
-        experiment_name = (
-            self._config_loader.get("mlflow", {})
-            .get("tracking", {})
-            .get("experiment", {})
-            .get("name", None)
-        )
+        print(experiment_name)
+        print(run_name)
+        
+        # Set tracking uri
+        mlflow.set_tracking_uri(cfg.server.mlflow_tracking_uri)
 
-        run_name = (
-            self._config_loader.get("mlflow", {})
-            .get("tracking", {})
-            .get("run", {})
-            .get("name", None)
-        )
-
-        # Retrieve experiment with name
-        experiments = mlflow.search_experiments(
-            filter_string=f"name = '{experiment_name}'"
-        )
+        experiments = mlflow.search_experiments(filter_string=f"name = '{experiment_name}'")
         if not experiments:
             print("experiment created")
             experiment = mlflow.create_experiment(experiment_name)
@@ -57,11 +44,13 @@ class MLFlowHooks:
             order_by=["start_time DESC"],
             output_format="list",
         )
+
         if not runs:
             # Create run
-            run = mlflow.start_run()
-            print("run created")
+            run = mlflow.start_run(run_name=run_name, experiment_id=experiment)
             run_id = run.info.run_id
+            mlflow.set_tag("created", "lvi")
+            print(f"run created {run_id}")
             mlflow.end_run()
 
         else:
@@ -69,8 +58,8 @@ class MLFlowHooks:
             run_id = runs[0].info.run_id
 
         # TODO: Update catalog value
-        breakpoint()
-
+        OmegaConf.update(cfg, "tracking.run.id", run_id)
+        self._config_loader["mlflow"] = cfg
 
 class SparkHooks:
     """Spark project hook."""
