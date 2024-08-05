@@ -3,43 +3,38 @@ from kedro.framework.hooks import hook_impl
 from pyspark import SparkConf
 from pyspark.sql import SparkSession
 from kedro.pipeline.node import Node
+from kedro.io import DataCatalog
 from datetime import datetime
 from typing import Any
 import pandas as pd
 import termplotlib as tpl
 
-# class MLFlowHooks:
+import mlflow
 
-#     @hook_impl
-#     def after_context_created(self, context) -> None:
-#         self._config_loader = context.config_loader
 
-#     @hook_impl
-#     def before_pipeline_run(self, catalog: DataCatalog, *args) -> None:
+class MLFlowHooks:
+    @hook_impl
+    def after_context_created(self, context) -> None:
+        self._config_loader = context.config_loader
 
-#         mlflow.set_tracking_uri("http://your-tracking-server:5000")
+    @hook_impl
+    def before_pipeline_run(self, catalog: DataCatalog, *args) -> None:
+        mlflow.set_tracking_uri(
+            self._config_loader.get("mlflow", {})
+            .get("server", {})
+            .get("mlflow_tracking_uri", None)
+        )
 
-#         # TODO: Retrieve experiment
-#         experiment = self.get_experiment_by_name()
+        # TODO: Retrieve experiment
+        experiments = mlflow.search_experiments(filter_string="name = 'default'")
+        if len(experiments) == 1:
+            experiment = experiments[0].experiment_id
 
-#         # TODO: Retrieve run id
+        # TODO: Retrieve run id
 
-#         # TODO: Update run id if not exists
+        # TODO: Update run id if not exists
 
-#         update = {"mlflow": {"tracking": {"run": {"name": "dummy"}}}}
-
-#     @staticmethod
-#     def _get_experiment_by_name(experiment_name: str):
-#         # List all experiments
-#         experiments = mlflow.list_experiments()
-
-#         # Search for the experiment with the given name
-#         for experiment in experiments:
-#             if experiment.name == experiment_name:
-#                 return experiment.id
-
-#         # If the experiment is not found, return None
-#         return None
+        update = {"mlflow": {"tracking": {"run": {"name": "dummy"}}}}
 
 
 class SparkHooks:
