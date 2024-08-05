@@ -25,16 +25,51 @@ class MLFlowHooks:
             .get("mlflow_tracking_uri", None)
         )
 
-        # TODO: Retrieve experiment
-        experiments = mlflow.search_experiments(filter_string="name = 'default'")
-        if len(experiments) == 1:
+        experiment_name = (
+            self._config_loader.get("mlflow", {})
+            .get("tracking", {})
+            .get("experiment", {})
+            .get("name", None)
+        )
+
+        run_name = (
+            self._config_loader.get("mlflow", {})
+            .get("tracking", {})
+            .get("run", {})
+            .get("name", None)
+        )
+
+        # Retrieve experiment with name
+        experiments = mlflow.search_experiments(
+            filter_string=f"name = '{experiment_name}'"
+        )
+        if not experiments:
+            print("experiment created")
+            experiment = mlflow.create_experiment(experiment_name)
+        else:
+            print("experiment found")
             experiment = experiments[0].experiment_id
 
-        # TODO: Retrieve run id
+        # Retrieve run
+        runs = mlflow.search_runs(
+            experiment_ids=[experiment],
+            filter_string=f"run_name='{run_name}'",
+            order_by=["start_time DESC"],
+            output_format="list",
+        )
+        if not runs:
+            # Create run
+            run = mlflow.start_run()
+            print("run created")
+            run_id = run.info.run_id
+            mlflow.end_run()
 
-        # TODO: Update run id if not exists
+        else:
+            print("run found")
+            run_id = runs[0].info.run_id
 
-        update = {"mlflow": {"tracking": {"run": {"name": "dummy"}}}}
+        # TODO: Update catalog value
+        breakpoint()
 
 
 class SparkHooks:
