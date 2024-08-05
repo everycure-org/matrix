@@ -2,3 +2,4 @@ infra/secrets/** filter=git-crypt diff=git-crypt
 infra/secrets/** filter=git-crypt diff=git-crypt
 
 pipelines/matrix/conf/local/service-account.json filter=git-crypt-read diff=git-crypt-read
+secret_testfile filter=git-crypt-read diff=git-crypt-read
