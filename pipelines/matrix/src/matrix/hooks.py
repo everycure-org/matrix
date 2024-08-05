@@ -3,7 +3,6 @@ from kedro.framework.hooks import hook_impl
 from pyspark import SparkConf
 from pyspark.sql import SparkSession
 from kedro.pipeline.node import Node
-from kedro.io import DataCatalog
 from datetime import datetime
 from typing import Any
 import pandas as pd
