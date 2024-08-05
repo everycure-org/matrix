@@ -305,15 +305,13 @@ class MatrixTestDiseases(DrugDiseasePairGenerator):
             else:
                 matrix = pd.concat([matrix, matrix_slice], ignore_index=True)
 
-        # Remove training data
-        are_pairs_equal = lambda pair_1, pair_2: (
-            pair_1["source"] == pair_2["source"]
-        ) and (pair_1["target"] == pair_2["target"])
-        is_pair_in_train = lambda pair: pd.Series(
-            [
-                are_pairs_equal(pair, train_pair)
-                for _, train_pair in train_pairs.iterrows()
-            ]
-        ).any()
-        is_in_train = matrix.apply(is_pair_in_train, axis=1)
-        return matrix[~is_in_train]
+        # Create a set of tuples from train_pairs for faster lookup
+        train_pairs_set = set(zip(train_pairs["source"], train_pairs["target"]))
+
+        # Replace is_pair_in_train function with a set lookup
+        is_in_train = matrix.apply(
+            lambda row: (row["source"], row["target"]) in train_pairs_set, axis=1
+        )
+
+        filtered_matrix = matrix[~is_in_train]
+        return filtered_matrix
