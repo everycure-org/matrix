@@ -1,0 +1,36 @@
+_pandas_csv: &_pandas_csv
+  type: pandas.CSVDataset
+
+ingestion.raw.robokop_kg.edges@pandas:
+  <<: *_pandas_csv
+  filepath: ${globals:paths.raw}/robokop_kg_edges.csv
+  load_args:
+    sep: "\t"
+
+ingestion.int.robokop_kg.edges@pandas:
+  <<: *_pandas_csv
+  filepath: ${globals:paths.int}/robokop_kg_edges_nn.csv
+  load_args:
+    sep: "\t"
+  save_args:
+    index: False
+    date_format: '%Y-%m-%d %H:%M'
+    decimal: .
+    sep: "\t"
+
+ingestion.raw.robokop_kg.nodes@pandas:
+  <<: *_pandas_csv
+  filepath: ${globals:paths.raw}/robokop_kg_nodes.csv
+  load_args:
+    sep: "\t"
+
+ingestion.int.robokop_kg.nodes@pandas:
+  <<: *_pandas_csv
+  filepath: ${globals:paths.int}/robokop_kg_nodes_nn.csv
+  load_args:
+    sep: "\t"
+  save_args:
+    index: False
+    date_format: '%Y-%m-%d %H:%M'
+    decimal: .
+    sep: "\t"
