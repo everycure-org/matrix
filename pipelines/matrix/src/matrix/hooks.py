@@ -4,13 +4,18 @@ from pyspark import SparkConf
 from pyspark.sql import SparkSession
 from kedro.pipeline.node import Node
 from datetime import datetime
-from typing import Any
+from typing import Any, Optional, Dict
 import pandas as pd
 import termplotlib as tpl
 
+from kedro.framework.context import KedroContext
+from kedro.io.data_catalog import DataCatalog
+
 
 class SparkHooks:
-    """Spark project hook."""
+    """Spark project hook with lazy initialization and global session override."""
+
+    _spark_session: Optional[SparkSession] = None
 
     @hook_impl
     def after_context_created(self, context) -> None:
@@ -22,13 +27,65 @@ class SparkHooks:
         # Load the spark configuration in spark.yaml using the config loader
         parameters = context.config_loader["spark"]
         spark_conf = SparkConf().setAll(parameters.items())
+        self.context = context
 
-        # Initialise the spark session
-        spark_session_conf = SparkSession.builder.appName(
-            context.project_path.name
-        ).config(conf=spark_conf)
-        _spark_session = spark_session_conf.getOrCreate()
-        _spark_session.sparkContext.setLogLevel("WARN")
+    @classmethod
+    def _initialize_spark(cls, context: KedroContext) -> None:
+        """Initialize SparkSession if not already initialized and set as default."""
+        if cls._spark_session is None:
+            # Clear any existing default session
+            SparkSession.builder.getOrCreate().stop()
+            SparkSession.clearActiveSession()
+            SparkSession.clearDefaultSession()
+
+            parameters = context.config_loader["spark"]
+            if context.env == "prod":
+                parameters = {
+                    k: v
+                    for k, v in parameters.items()
+                    if not k.startswith("spark.hadoop.google.cloud.auth.service")
+                }
+            spark_conf = SparkConf().setAll(parameters.items())
+
+            # Create and set our configured session as the default
+            cls._spark_session = (
+                SparkSession.builder.appName(context.project_path.name)
+                .config(conf=spark_conf)
+                .getOrCreate()
+            )
+            SparkSession.setDefaultSession(cls._spark_session)
+            cls._spark_session.sparkContext.setLogLevel("WARN")
+
+    @hook_impl
+    def after_catalog_created(
+        self,
+        catalog: DataCatalog,
+        conf_catalog: Dict[str, Any],
+        conf_creds: Dict[str, Any],
+        feed_dict: Dict[str, Any],
+        save_version: str,
+        load_versions: Dict[str, str],
+    ) -> None:
+        """Store the KedroContext for later use."""
+        self.catalog = catalog
+
+    @hook_impl
+    def before_dataset_loaded(self, dataset_name: str, node: Any) -> None:
+        """Initialize Spark if the dataset is a Spark dataset."""
+        print(f"Loading dataset: {dataset_name}")
+        dataset = self.catalog._get_dataset(dataset_name)
+        # print all attributes of dataset
+        print(f"Dataset: {dataset}")
+        print(f"Attributes: {dataset.__dict__}")
+        if hasattr(dataset, "_fs_prefix") and dataset._fs_prefix == "spark":
+            self._initialize_spark(self.context)
+
+    @hook_impl
+    def before_dataset_saved(self, dataset_name: str, data: Any, node: Any) -> None:
+        """Initialize Spark if the dataset is a Spark dataset."""
+        dataset = self.catalog._get_dataset(dataset_name)
+        if hasattr(dataset, "_fs_prefix") and dataset._fs_prefix == "spark":
+            self._initialize_spark(self.context)
 
 
 class NodeTimerHooks:
