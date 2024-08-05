@@ -12,10 +12,10 @@ from omegaconf import OmegaConf
 
 import mlflow
 
+
 class MLFlowHooks:
     @hook_impl
     def after_context_created(self, context) -> None:
-
         self._config_loader = context.config_loader
 
         # Extract
@@ -25,11 +25,13 @@ class MLFlowHooks:
 
         print(experiment_name)
         print(run_name)
-        
+
         # Set tracking uri
         mlflow.set_tracking_uri(cfg.server.mlflow_tracking_uri)
 
-        experiments = mlflow.search_experiments(filter_string=f"name = '{experiment_name}'")
+        experiments = mlflow.search_experiments(
+            filter_string=f"name = '{experiment_name}'"
+        )
         if not experiments:
             print("experiment created")
             experiment = mlflow.create_experiment(experiment_name)
@@ -49,7 +51,7 @@ class MLFlowHooks:
             # Create run
             run = mlflow.start_run(run_name=run_name, experiment_id=experiment)
             run_id = run.info.run_id
-            mlflow.set_tag("created", "lvi")
+            mlflow.set_tag("created_by", "kedro")
             print(f"run created {run_id}")
             mlflow.end_run()
 
@@ -60,6 +62,7 @@ class MLFlowHooks:
         # TODO: Update catalog value
         OmegaConf.update(cfg, "tracking.run.id", run_id)
         self._config_loader["mlflow"] = cfg
+
 
 class SparkHooks:
     """Spark project hook."""
