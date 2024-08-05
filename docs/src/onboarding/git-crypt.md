@@ -41,7 +41,7 @@ Copy the entire text and share it with the team leads (check the CODEOWNERS file
 Once the public key was added to the repo, you can unlock the key by running
 
 ```bash
-git-crypt unlock -k read
+git-crypt unlock
 ```
 
 
