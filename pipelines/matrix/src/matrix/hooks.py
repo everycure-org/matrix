@@ -30,17 +30,17 @@ class MLFlowHooks:
         Initialises a MLFlow run and passes it on for
         other hooks to consume.
         """
-        # Extract
         cfg = OmegaConf.create(context.config_loader["mlflow"])
 
-        # Set tracking uri
-        mlflow.set_tracking_uri(cfg.server.mlflow_tracking_uri)
-        experiment_id = self._create_experiment(cfg.tracking.experiment.name)
-        run_id = self._create_run(cfg.tracking.run.name, experiment_id)
+        if cfg.tracking.run.name:
+            # Set tracking uri
+            mlflow.set_tracking_uri(cfg.server.mlflow_tracking_uri)
+            experiment_id = self._create_experiment(cfg.tracking.experiment.name)
+            run_id = self._create_run(cfg.tracking.run.name, experiment_id)
 
-        # Update catalog
-        OmegaConf.update(cfg, "tracking.run.id", run_id)
-        context.config_loader["mlflow"] = cfg
+            # Update catalog
+            OmegaConf.update(cfg, "tracking.run.id", run_id)
+            context.config_loader["mlflow"] = cfg
 
     @staticmethod
     def _create_run(run_name: str, experiment_id: str) -> str:
