@@ -294,7 +294,7 @@ class MatrixTestDiseases(DrugDiseasePairGenerator):
         drugs_lst = graph.flags_to_ids(self._drug_axis_flags)
 
         # Generate all combinations
-        for idx, disease in enumerate(test_diseases_lst):
+        for idx, disease in tqdm(enumerate(test_diseases_lst)):
             matrix_slice = pd.DataFrame({"source": drugs_lst, "target": disease})
             test_pos_pairs_in_slice = test_pairs[test_pairs["target"].eq(disease)]
             test_pos_drugs_in_slice = test_pos_pairs_in_slice["source"]
