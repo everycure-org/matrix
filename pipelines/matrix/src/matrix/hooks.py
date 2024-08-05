@@ -10,6 +10,7 @@ import termplotlib as tpl
 
 from kedro.framework.context import KedroContext
 from kedro.io.data_catalog import DataCatalog
+from kedro_datasets.spark import SparkDataset
 
 
 class SparkHooks:
@@ -32,11 +33,13 @@ class SparkHooks:
     @classmethod
     def _initialize_spark(cls, context: KedroContext) -> None:
         """Initialize SparkSession if not already initialized and set as default."""
+        # if we have not initiated one, we initiate one
         if cls._spark_session is None:
-            # Clear any existing default session
-            SparkSession.builder.getOrCreate().stop()
-            SparkSession.clearActiveSession()
-            SparkSession.clearDefaultSession()
+            print("we are killing spark to create a fresh one")
+            # Clear any existing default session, we take control!
+            sess = SparkSession.getActiveSession()
+            if sess is not None:
+                sess.stop()
 
             parameters = context.config_loader["spark"]
             if context.env == "prod":
@@ -54,8 +57,6 @@ class SparkHooks:
                 .config(conf=spark_conf)
                 .getOrCreate()
             )
-            SparkSession.setDefaultSession(cls._spark_session)
-            cls._spark_session.sparkContext.setLogLevel("WARN")
 
     @hook_impl
     def after_catalog_created(
@@ -70,23 +71,22 @@ class SparkHooks:
         """Store the KedroContext for later use."""
         self.catalog = catalog
 
-    @hook_impl
-    def before_dataset_loaded(self, dataset_name: str, node: Any) -> None:
-        """Initialize Spark if the dataset is a Spark dataset."""
-        print(f"Loading dataset: {dataset_name}")
+    def _check_and_initialize_spark(self, dataset_name: str) -> None:
+        """Check if dataset is SparkDataset and initialize Spark if needed."""
         dataset = self.catalog._get_dataset(dataset_name)
-        # print all attributes of dataset
-        print(f"Dataset: {dataset}")
-        print(f"Attributes: {dataset.__dict__}")
-        if hasattr(dataset, "_fs_prefix") and dataset._fs_prefix == "spark":
+        if isinstance(dataset, SparkDataset):
+            print(f"SparkDataset detected: {dataset}")
             self._initialize_spark(self.context)
 
     @hook_impl
+    def before_dataset_loaded(self, dataset_name: str, node: Any) -> None:
+        """Initialize Spark if the dataset is a SparkDataset."""
+        self._check_and_initialize_spark(dataset_name)
+
+    @hook_impl
     def before_dataset_saved(self, dataset_name: str, data: Any, node: Any) -> None:
-        """Initialize Spark if the dataset is a Spark dataset."""
-        dataset = self.catalog._get_dataset(dataset_name)
-        if hasattr(dataset, "_fs_prefix") and dataset._fs_prefix == "spark":
-            self._initialize_spark(self.context)
+        """Initialize Spark if the dataset is a SparkDataset."""
+        self._check_and_initialize_spark(dataset_name)
 
 
 class NodeTimerHooks:
