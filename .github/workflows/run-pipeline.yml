@@ -58,7 +58,7 @@ jobs:
 
       - name: Start docker-compose
         run: |
-          docker-compose -f docker-compose.yml -f docker-compose.test.yml up --abort-on-container-exit --exit-code-from matrix-pipeline
+          docker compose -f docker-compose.yml -f docker-compose.test.yml up --abort-on-container-exit --exit-code-from matrix-pipeline
 
       - name: Set latest commit status as ${{ job.status }}
         uses: myrotvorets/set-commit-status-action@master
@@ -94,4 +94,4 @@ jobs:
       - name: Show logs
         if: failure()
         run: |
-          docker-compose -f docker-compose.yml -f docker-compose.test.yml logs
+          docker compose -f docker-compose.yml -f docker-compose.test.yml logs
