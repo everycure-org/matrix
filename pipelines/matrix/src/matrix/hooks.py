@@ -8,6 +8,39 @@ from typing import Any
 import pandas as pd
 import termplotlib as tpl
 
+# class MLFlowHooks:
+
+#     @hook_impl
+#     def after_context_created(self, context) -> None:
+#         self._config_loader = context.config_loader
+
+#     @hook_impl
+#     def before_pipeline_run(self, catalog: DataCatalog, *args) -> None:
+
+#         mlflow.set_tracking_uri("http://your-tracking-server:5000")
+
+#         # TODO: Retrieve experiment
+#         experiment = self.get_experiment_by_name()
+
+#         # TODO: Retrieve run id
+
+#         # TODO: Update run id if not exists
+
+#         update = {"mlflow": {"tracking": {"run": {"name": "dummy"}}}}
+
+#     @staticmethod
+#     def _get_experiment_by_name(experiment_name: str):
+#         # List all experiments
+#         experiments = mlflow.list_experiments()
+
+#         # Search for the experiment with the given name
+#         for experiment in experiments:
+#             if experiment.name == experiment_name:
+#                 return experiment.id
+
+#         # If the experiment is not found, return None
+#         return None
+
 
 class SparkHooks:
     """Spark project hook."""
