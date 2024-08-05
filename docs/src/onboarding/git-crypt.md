@@ -56,7 +56,7 @@ sh import_gpg_key.sh
 
 We have 2 keys in the repository:
 
-- `read` key: used to decrypt the SA to read the data on GCS
+- `HUB` key: used to decrypt the SA to read the data on GCS from the hub project.
 - `default` key: used to decrypt additional infra secrets used to set up the infrastructure. Not shared with everyone
 
 ## Additional reading
