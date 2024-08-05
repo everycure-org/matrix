@@ -73,21 +73,36 @@ def make_test_predictions(
         Pairs dataset with additional column containing the probability scores.
     """
     # Collect embedding vectors
+    print(
+        f"Memory usage before collecting embeddings: {data.memory_usage().sum() / 1e6:.2f} MB"
+    )
     data["source_embedding"] = data.apply(
         lambda row: graph._embeddings[row.source], axis=1
     )
     data["target_embedding"] = data.apply(
         lambda row: graph._embeddings[row.target], axis=1
     )
+    print(
+        f"Memory usage after collecting embeddings: {data.memory_usage().sum() / 1e6:.2f} MB"
+    )
 
     # Apply transformers to data
+    print("Applying transformers...")
     transformed = apply_transformers(data, transformers)
+    print(
+        f"Memory usage after applying transformers: {transformed.memory_usage().sum() / 1e6:.2f} MB"
+    )
     features = _extract_elements_in_list(transformed.columns, features, raise_exc=True)
+    print(f"Number of features: {len(features)}")
 
     # Generate model probability scores
+    print("Generating model probability scores...")
     transformed[score_col_name] = model.predict_proba(transformed[features].values)[
         :, 1
     ]
+    print(
+        f"Memory usage after generating scores: {transformed.memory_usage().sum() / 1e6:.2f} MB"
+    )
     return transformed
 
 
