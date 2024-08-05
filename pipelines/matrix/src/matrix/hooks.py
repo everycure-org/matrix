@@ -45,6 +45,7 @@ class SparkHooks:
                     for k, v in parameters.items()
                     if not k.startswith("spark.hadoop.google.cloud.auth.service")
                 }
+            print(f"starting spark session with the following parameters: {parameters}")
             spark_conf = SparkConf().setAll(parameters.items())
 
             # Create and set our configured session as the default
