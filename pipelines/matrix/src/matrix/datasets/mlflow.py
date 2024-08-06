@@ -102,7 +102,7 @@ class MlflowMetricsDataset(MlflowAbstractMetricDataset):
             if not self.mode == "overwrite":
                 raise NotImplementedError()
 
-            for key, value in deepcopy(data.items()):
+            for key, value in data.items():
                 mlflow_client.log_metric(
                     run_id=run_id,
                     key=f"{self._key_prefix}_{key}",
