@@ -19,7 +19,9 @@ class MLFlowHooks:
     to identifiers behind the curtains. However, this name is not
     required to be unique and hence multiple runs for the same name
     may exist. This plugin ensures run names are mapped to single
-    a identifier.
+    a identifier. Can be removed when following issue is resolved:
+
+    https://github.com/Galileo-Galilei/kedro-mlflow/issues/579
     """
 
     @hook_impl
