@@ -58,7 +58,7 @@ def make_test_predictions(
     features: List[str],
     score_col_name: str,
     # TODO make this a parameter
-    batch_by_prefix: str = "target",
+    batch_by: str = "target",
 ) -> pd.DataFrame:
     """Generate probability scores for drug-disease dataset.
 
@@ -69,7 +69,7 @@ def make_test_predictions(
         model: Model making the predictions.
         features: List of features, may be regex specified.
         score_col_name: Probability score column name.
-        batch_by_prefix: Column prefix to use for batching (e.g., "target" or "source").
+        batch_by: Column to use for batching (e.g., "target" or "source").
 
     Returns:
         Pairs dataset with additional column containing the probability scores.
@@ -100,7 +100,7 @@ def make_test_predictions(
         return batch[[score_col_name]]
 
     # Group data by the specified prefix
-    grouped = data.groupby(f"{batch_by_prefix}")
+    grouped = data.groupby(batch_by)
 
     # Process data in batches
     result_parts = []
