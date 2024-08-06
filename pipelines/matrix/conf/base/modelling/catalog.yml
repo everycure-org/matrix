@@ -71,6 +71,7 @@ modelling.model_input.splits:
 # https://kedro-mlflow.readthedocs.io/en/stable/source/04_experimentation_tracking/03_version_datasets.html#how-to-version-data-in-a-kedro-project
 "modelling.{model}.{shard}.reporting.tuning_convergence_plot":
   type: kedro_mlflow.io.artifacts.MlflowArtifactDataset
+  artifact_path: "{model}/{shard}"
   dataset:
     type: matplotlib.MatplotlibWriter
     filepath: ${globals:paths.reporting}/{model}/{shard}/convergence_plot.png
@@ -78,17 +79,16 @@ modelling.model_input.splits:
 # NOTE: Tracking a model, other serialization formats possible.
 # https://kedro-mlflow.readthedocs.io/en/stable/source/04_experimentation_tracking/04_version_models.html#how-to-track-models-using-mlflow-in-kedro-project
 "modelling.{model}.models.model":
-  type: kedro_mlflow.io.models.MlflowModelTrackingDataset
-  flavor: mlflow.pyfunc 
-  pyfunc_workflow: python_model
+  type: kedro_mlflow.io.artifacts.MlflowArtifactDataset
+  dataset:
+    type: kedro_mlflow.io.models.MlflowModelLocalFileSystemDataset
+    flavor: mlflow.pyfunc 
+    pyfunc_workflow: python_model
+    filepath: ${globals:paths.models}/{model}/
+
 
 # NOTE: Saving a metric, more elaborate strategies possible, e.g., MlflowMetricHistoryDataset
 # https://kedro-mlflow.readthedocs.io/en/stable/source/04_experimentation_tracking/05_version_metrics.html#saving-a-single-float-as-a-metric-with-mlflowmetricdataset
-"modelling.{model}.reporting.metric":
-    type: kedro_mlflow.io.metrics.MlflowMetricDataset
-    # run_id: 123456 # OPTIONAL, you should likely let it empty to log in the current run
-    key: test metric
-
 "modelling.{model}.reporting.metrics":
-  type: yaml.YAMLDataset
-  filepath: ${globals:paths.reporting}/{model}/metrics.yml
+  type: matrix.datasets.mlflow.MlflowMetricsDataset
+  key_prefix: "{model}"

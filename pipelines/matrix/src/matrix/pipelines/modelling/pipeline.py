@@ -88,10 +88,7 @@ def _create_model_pipeline(model: str, num_shards: int) -> Pipeline:
                             f"modelling.{model}.{shard}.models.model"
                             for shard in range(num_shards)
                         ],
-                        outputs=[
-                            f"modelling.{model}.models.model",
-                            f"modelling.{model}.reporting.metric",
-                        ],
+                        outputs=f"modelling.{model}.models.model",
                         name=f"create_{model}_model",
                         tags=model,
                     ),

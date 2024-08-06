@@ -311,7 +311,7 @@ def create_model(*estimators) -> ModelWrapper:
     Returns:
         ModelWrapper encapsulating estimators
     """
-    return ModelWrapper(estimators=estimators, agg_func=np.mean), 5
+    return ModelWrapper(estimators=estimators, agg_func=np.mean)
 
 
 @inject_object()
