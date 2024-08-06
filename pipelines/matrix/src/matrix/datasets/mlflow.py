@@ -91,22 +91,21 @@ class MlflowMetricsDataset(MlflowAbstractMetricDataset):
         }
 
     def _save(self, data: Dict[str, Any]):
-        pass
-        # if self._logging_activated:
-        #     self._validate_run_id()
-        #     run_id = self.run_id  # we access it once instead of calling self.run_id everywhere to avoid looking or an active run each time
+        if self._logging_activated:
+            self._validate_run_id()
+            run_id = self.run_id  # we access it once instead of calling self.run_id everywhere to avoid looking or an active run each time
 
-        #     mlflow_client = MlflowClient()
+            mlflow_client = MlflowClient()
 
-        #     save_args = deepcopy(self._save_args)
-        #     if not self.mode == "overwrite":
-        #         raise NotImplementedError()
+            save_args = deepcopy(self._save_args)
+            if not self.mode == "overwrite":
+                raise NotImplementedError()
 
-        #     for key, value in data.items():
-        #         mlflow_client.log_metric(
-        #             run_id=run_id,
-        #             key=f"{self._key_prefix}_{key}",
-        #             value=value,
-        #             step=None,
-        #             **save_args,
-        #         )
+            for key, value in data.items():
+                mlflow_client.log_metric(
+                    run_id=run_id,
+                    key=f"{self._key_prefix}_{key}",
+                    value=value,
+                    step=None,
+                    **save_args,
+                )

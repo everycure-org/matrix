@@ -4,6 +4,10 @@ services:
     # and `gds` versions not being released yet. Update when released.
     image: neo4j:5.21.0-enterprise
 
+  mock-genai:
+    environment:
+      MOCKSERVER_LOG_LEVEL: ERROR
+
   matrix-pipeline:
     image: matrix-pipeline
     build: "../../pipelines/matrix"
