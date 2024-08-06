@@ -17,6 +17,7 @@ services:
       NEO4J_USER: neo4j
       NEO4J_PASSWORD: admin
       OPENAI_ENDPOINT: http://mock-genai:1080/v1
+      MLFLOW_ENDPOINT: http://mlflow:5000
       OPENAI_API_KEY: sk-proj-abc
     depends_on:
       neo4j:
