@@ -7,6 +7,9 @@
 # IDE
 .vscode/
 
+# Drawio
+*.bkp
+
 # Data
 data/
 neo4j_db/
