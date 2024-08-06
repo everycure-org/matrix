@@ -16,7 +16,3 @@ _pandas_parquet: &_pandas_parquet
 "evaluation.{model}.{evaluation}.reporting.evaluation":
   type: matrix.datasets.mlflow.MlflowMetricsDataset
   key_prefix: "{model}.{evaluation}"
-
-# "evaluation.reporting.report":
-#   type: yaml.YAMLDataset
-#   filepath: ${globals:paths.reporting}/master_report.yml
