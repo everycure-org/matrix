@@ -62,24 +62,24 @@ def create_pipeline(**kwargs) -> Pipeline:
                 )
             )
     # Consolidate reports
-    pipes.append(
-        pipeline(
-            [
-                node(
-                    func=nodes.consolidate_evaluation_reports,
-                    inputs=[
-                        f"evaluation.{model['model_name']}.{evaluation['evaluation_name']}.reporting.evaluation"
-                        for model in settings.DYNAMIC_PIPELINES_MAPPING.get("modelling")
-                        for evaluation in settings.DYNAMIC_PIPELINES_MAPPING.get(
-                            "evaluation"
-                        )
-                    ],
-                    outputs=f"evaluation.reporting.report",
-                    name=f"consolidate_reports",
-                    tags=model_names,
-                ),
-            ]
-        )
-    )
+    # pipes.append(
+    #     pipeline(
+    #         [
+    #             node(
+    #                 func=nodes.consolidate_evaluation_reports,
+    #                 inputs=[
+    #                     f"evaluation.{model['model_name']}.{evaluation['evaluation_name']}.reporting.evaluation"
+    #                     for model in settings.DYNAMIC_PIPELINES_MAPPING.get("modelling")
+    #                     for evaluation in settings.DYNAMIC_PIPELINES_MAPPING.get(
+    #                         "evaluation"
+    #                     )
+    #                 ],
+    #                 outputs=f"evaluation.reporting.report",
+    #                 name=f"consolidate_reports",
+    #                 tags=model_names,
+    #             ),
+    #         ]
+    #     )
+    # )
 
     return sum(pipes)

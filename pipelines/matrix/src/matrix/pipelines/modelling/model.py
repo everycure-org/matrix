@@ -37,13 +37,13 @@ class ModelWrapper(mlflow.pyfunc.PythonModel):
         """
         raise NotImplementedError("ModelWrapper is used to house fitted estimators")
 
-    def predict(self, context, model_input, params=None):
+    def predict(self, X):
         """Returns the predicted class.
 
         Args:
             X: input features
         """
-        return self.predict_proba(model_input).argmax(axis=1)
+        return self.predict_proba(X).argmax(axis=1)
 
     def predict_proba(self, X):
         """Method for probability scores of the ModelWrapper.

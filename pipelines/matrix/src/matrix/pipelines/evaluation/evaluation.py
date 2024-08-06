@@ -174,7 +174,7 @@ class MRR(RankingFunction):
     @staticmethod
     def name():
         """Returns name of the function."""
-        return "MRR"
+        return "mrr"
 
 
 class HitK(RankingFunction):
@@ -194,4 +194,4 @@ class HitK(RankingFunction):
 
     def name(self):
         """Returns name of the function."""
-        return "Hit@" + str(self.k)
+        return "hit-" + str(self.k)
