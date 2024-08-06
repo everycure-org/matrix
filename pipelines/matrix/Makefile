@@ -20,7 +20,7 @@ integration_test: wipe_neo
 	kedro run --env test -p test --runner ThreadRunner --without-tags xgc
 
 fabricate:
-	kedro run -p fabricator
+	kedro run -p fabricator --env test
 
 build: lock
 	docker build -t matrix .
