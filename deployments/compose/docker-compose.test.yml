@@ -21,5 +21,7 @@ services:
     depends_on:
       neo4j:
         condition: service_healthy
+      mlflow: 
+        condition: service_healthy
     networks:
       - web
