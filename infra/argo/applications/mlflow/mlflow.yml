@@ -278,7 +278,7 @@ metadata:
 type: Opaque
 data:
   root-user: "YWRtaW4="
-  root-password: "RmRTV0NHQnJrSg=="
+  root-password: "VnRid1NLUkt4Qw=="
 ---
 # Source: MLFlow/charts/mlflow/charts/postgresql/templates/secrets.yaml
 apiVersion: v1
@@ -294,8 +294,8 @@ metadata:
     helm.sh/chart: postgresql-15.5.20
 type: Opaque
 data:
-  postgres-password: "RTlQZnViekVvbA=="
-  password: "bDhxOGtJVUU2Ug=="
+  postgres-password: "dmRyNXpnQ3NDSQ=="
+  password: "SzJweVlkeDF1TQ=="
   # We don't auto-generate LDAP password when it's not provided as we do for other passwords
 ---
 # Source: MLFlow/charts/mlflow/templates/tracking/auth-secret.yaml
@@ -315,7 +315,7 @@ metadata:
 data:
   # We need to ad the username as it is required by the ServiceMonitor object
   admin-user: "dXNlcg=="
-  admin-password: "RkcwTFNOUTRiYw=="
+  admin-password: "SXcyalRmczB0Vw=="
 ---
 # Source: MLFlow/charts/mlflow/charts/minio/templates/provisioning-configmap.yaml
 apiVersion: v1
@@ -550,7 +550,7 @@ spec:
         app.kubernetes.io/version: 2024.7.26
         helm.sh/chart: minio-14.6.29
       annotations:
-        checksum/credentials-secret: d46b1a62967af0e283dd8d2a79b7c6e5e572ddbcd103b2c7f5913af8fb970f8c
+        checksum/credentials-secret: 310b7c8ddd510495738751af1c26ce08aa9196d03e03ab6037d1f5401816f1d3
     spec:
       
       serviceAccountName: release-name-minio

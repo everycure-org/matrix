@@ -1,3 +1,0 @@
-# https://artifacthub.io/packages/helm/bitnami/mlflow
-mlflow:
-  tracking.auth.enabled: false
