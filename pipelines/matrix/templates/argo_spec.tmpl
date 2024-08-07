@@ -10,10 +10,13 @@ spec:
     parameters:
       - name: image
         value: "{{ image }}"
-      - name: release_version
-        value: "lvi"
+      - name: image_tag
+        value: "{{ image_tag }}"
       - name: experiment
         value: "Default"
+      # we use the image tag as the release version as a default
+      - name: release_version
+        value: "{{ image_tag }}"
       - name: neo4j_host
         value: "bolt://neo4j.neo4j.svc.cluster.local:7687"
       - name: mlflow_endpoint
@@ -45,7 +48,7 @@ spec:
       - name: pipeline
     container:
       imagePullPolicy: Always
-      image: {% raw %} "{{workflow.parameters.image}}" 
+      image: {% raw %} "{{workflow.parameters.image}}:{{workflow.parameters.image_tag}}" 
       {% endraw %}
       resources: # limit the resources
         requests:

@@ -20,7 +20,7 @@ integration_test: wipe_neo
 	kedro run --env test -p test --runner ThreadRunner --without-tags xgc
 
 fabricate:
-	kedro run -p fabricator
+	kedro run -p fabricator --env test
 
 build: lock
 	docker build -t matrix .
@@ -31,7 +31,7 @@ docker_push_dev:
 	docker push $(dev_docker_image):${USER}
 
 argo_template:
-	python ./src/matrix/argo.py generate-argo-config $(dev_docker_image):${USER}
+	python ./src/matrix/argo.py generate-argo-config $(dev_docker_image)
 
 licenses:  build
 	trivy image --scanners license --severity UNKNOWN,CRITICAL matrix

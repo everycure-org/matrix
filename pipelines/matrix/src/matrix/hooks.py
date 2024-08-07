@@ -89,18 +89,31 @@ class MLFlowHooks:
         return experiments[0].experiment_id
 
 
+from kedro.framework.context import KedroContext
+
+
 class SparkHooks:
     """Spark project hook."""
 
     @hook_impl
-    def after_context_created(self, context) -> None:
+    def after_context_created(self, context: KedroContext) -> None:
         """Initialise SparkSession.
 
         Initialises a SparkSession using the config defined
         in project's conf folder.
         """
         # Load the spark configuration in spark.yaml using the config loader
+
         parameters = context.config_loader["spark"]
+        # DEBT ugly fix, ideally we overwrite this in the spark.yml config file but currently no
+        # known way of doing so
+        # if prod environment, remove all config keys that start with spark.hadoop.google.cloud.auth.service
+        if context.env == "prod":
+            parameters = {
+                k: v
+                for k, v in parameters.items()
+                if not k.startswith("spark.hadoop.google.cloud.auth.service")
+            }
         spark_conf = SparkConf().setAll(parameters.items())
 
         # Initialise the spark session
