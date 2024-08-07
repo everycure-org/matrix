@@ -23,7 +23,7 @@ neo4j: # the name of the helm dependency
         # storageClassName: hyperdisk-balanced
         # https://neo4j.com/docs/operations-manual/current/kubernetes/persistent-volumes/#persistent-volumes-types
         requests:
-          storage: 500Gi
+          storage: 1500Gi
 
   # FUTURE add env variables here to enable plugins for neo4j
   # https://neo4j.com/docs/operations-manual/current/kubernetes/plugins/
@@ -92,6 +92,10 @@ neo4j: # the name of the helm dependency
               <!-- The security log, must be named "SecurityLogger" -->
               <Logger name="SecurityLogger" level="INFO" additivity="false">
                   <AppenderRef ref="SecurityLog"/>
+              </Logger>
+              <!-- The query log, must be named "QueryLogger" -->
+              <Logger name="QueryLogger" level="OFF" additivity="false">
+                  <AppenderRef ref="QueryLog"/>
               </Logger>
           </Loggers>
       </Configuration>

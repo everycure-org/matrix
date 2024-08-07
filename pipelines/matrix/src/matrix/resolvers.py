@@ -27,16 +27,24 @@ def merge_dicts(dict1: Dict, dict2: Dict) -> Dict:
     return result
 
 
-def env(key: str) -> Optional[str]:
+def env(key: str, default: str = None) -> Optional[str]:
     """Load a variable from the environment.
+
+    See https://omegaconf.readthedocs.io/en/latest/custom_resolvers.html#custom-resolvers
 
     Args:
         key (str): Key to load.
+        default (str): Default value to use instead
 
     Returns:
-        dict: Value of the key
+        str: Value of the key
     """
     try:
-        return os.environ[key]
+        value = os.environ.get(key, default)
+        if value is None:
+            raise KeyError()
+        return value
     except KeyError:
-        raise KeyError(f"Environment variable '{key}' not found")
+        raise KeyError(
+            f"Environment variable '{key}' not found or default value {default} is None"
+        )

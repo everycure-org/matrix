@@ -294,26 +294,24 @@ class MatrixTestDiseases(DrugDiseasePairGenerator):
         drugs_lst = graph.flags_to_ids(self._drug_axis_flags)
 
         # Generate all combinations
-        for idx, disease in enumerate(test_diseases_lst):
+        matrix_slices = []
+        for disease in tqdm(test_diseases_lst):
             matrix_slice = pd.DataFrame({"source": drugs_lst, "target": disease})
             test_pos_pairs_in_slice = test_pairs[test_pairs["target"].eq(disease)]
             test_pos_drugs_in_slice = test_pos_pairs_in_slice["source"]
             is_test_pos = matrix_slice["source"].isin(test_pos_drugs_in_slice)
             matrix_slice["y"] = is_test_pos.astype(int)
-            if idx == 0:
-                matrix = matrix_slice
-            else:
-                matrix = pd.concat([matrix, matrix_slice], ignore_index=True)
+            matrix_slices.append(matrix_slice)
 
-        # Remove training data
-        are_pairs_equal = lambda pair_1, pair_2: (
-            pair_1["source"] == pair_2["source"]
-        ) and (pair_1["target"] == pair_2["target"])
-        is_pair_in_train = lambda pair: pd.Series(
-            [
-                are_pairs_equal(pair, train_pair)
-                for _, train_pair in train_pairs.iterrows()
-            ]
-        ).any()
-        is_in_train = matrix.apply(is_pair_in_train, axis=1)
-        return matrix[~is_in_train]
+        # Concatenate all slices at once
+        matrix = pd.concat(matrix_slices, ignore_index=True)
+        # Create a set of tuples from train_pairs for faster lookup
+        train_pairs_set = set(zip(train_pairs["source"], train_pairs["target"]))
+
+        # Replace is_pair_in_train function with a set lookup
+        is_in_train = matrix.apply(
+            lambda row: (row["source"], row["target"]) in train_pairs_set, axis=1
+        )
+
+        filtered_matrix = matrix[~is_in_train]
+        return filtered_matrix

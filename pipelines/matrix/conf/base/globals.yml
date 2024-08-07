@@ -1,10 +1,31 @@
 random_state: 111
 
+neo4j:
+  # these get overwritten in prod through the env variables, in base we default to 2nd param
+  host: ${oc.env:NEO4J_HOST,bolt://127.0.0.1:7687}
+  user: ${oc.env:NEO4J_USER,neo4j}
+  password: ${oc.env:NEO4J_PASSWORD,admin}
+
+openai:
+  endpoint: https://api.openai.com/v1
+  api_key: ${oc.env:OPENAI_API_KEY}
+
+# points at our central GCS_BUCKET where we store our ground truth data
+gcs_bucket: gs://${oc.env:GCP_BUCKET, mtrx-us-central1-hub-dev-storage}
+gcp_project: ${oc.env:GCP_PROJECT_ID, mtrx-hub-dev-3of}
+
 versions:
-  release: 20240620
+  # overwritten in prod environment for shared releases
+  release: ${oc.env:RELEASE_VERSION, 20240802}
+
+data_sources:
+  rtx-kg2:
+    version: v2.7.3
 
 paths:
-  raw: data/01_raw
+  # we read from our central GCS bucket where we store our ground truth data
+  raw: ${gcs_bucket}/kedro/data/01_raw
+  # we write to local disk going forward
   int: data/02_intermediate
   prm: data/03_primary
   feat: data/04_feature

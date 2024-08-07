@@ -1,14 +1,13 @@
 _neo4j_ds: &_neo4j_ds
   type: matrix.datasets.neo4j.Neo4JSparkDataset
   database: everycure-${globals:versions.release}
-  url: ${oc.env:NEO4J_HOST}
+  url: ${globals:neo4j.host}
   credentials: neo4j_credentials
   save_args:
     mode: "overwrite"
 
 _spark_parquet_ds: &_spark_parquet
   type: spark.SparkDataset
-  versioned: true
   file_format: parquet
   save_args:
     mode: overwrite
@@ -18,14 +17,17 @@ _spark_parquet_ds: &_spark_parquet
 # https://neo4j.com/labs/apoc/5/ml/vertexai/#_generate_embeddings_api
 embeddings.prm.graph.embeddings@yaml:
   type: yaml.YAMLDataset
-  versioned: true
   filepath: ${globals:paths.prm}/embeddings/result.yml
 
 embeddings.prm.graph.embeddings@neo:
   <<: *_neo4j_ds
   load_args:
-    query: >
-      MATCH (n: Entity) RETURN n.id as id, n.embedding as embedding
+    # NOTE: Using the `query` reader option highly impacts performance, hence resorting to `labels`.
+    # https://neo4j.com/docs/spark/current/read/options/
+    partitions: 16 # Should increase parallelism for PCA
+    labels: ":Entity" #avoids query which drastically increases performance
+    # query: >
+    #   MATCH (n: Entity) RETURN n.id as id, n.embedding as embedding
 
 embeddings.prm.graph.pca_embeddings:
   <<: *_neo4j_ds
@@ -41,7 +43,6 @@ embeddings.prm.graph.pca_embeddings:
       RETURN n.id as id, n.pca_embedding as embedding
 
 embeddings.models.graphsage:
-  versioned: true
   # we do not actually do anything with this DS, thus it's a dummy
   # https://github.com/kedro-org/kedro/discussions/3758
   filepath: ${globals:paths.prm}/graphsage/result.yml

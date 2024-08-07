@@ -4,6 +4,7 @@
 # ignore all local configuration
 conf/local/**
 !conf/local/.gitkeep
+!conf/local/service-account.json
 
 # ignore potentially sensitive credentials files
 conf/**/*credentials*
@@ -17,6 +18,8 @@ data/**
 # also keep all .gitkeep files
 !.gitkeep
 
+.env*
+!.env.tmpl
 
 ##########################
 # Common files
@@ -150,3 +153,4 @@ venv.bak/
 # Stats
 stats.json
 session_store.db
+templates/argo-workflow-template.yml
