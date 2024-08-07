@@ -30,10 +30,6 @@ docker_push_dev:
 	docker tag matrix_amd $(dev_docker_image):${USER}
 	docker push $(dev_docker_image):${USER}
 
-docker_push_mlflow:
-	docker tag ghcr.io/mlflow/mlflow us-central1-docker.pkg.dev/mtrx-hub-dev-3of/mlflow/mlflow:latest
-	docker push us-central1-docker.pkg.dev/mtrx-hub-dev-3of/mlflow/mlflow:latest
-
 argo_template:
 	python ./src/matrix/argo.py generate-argo-config $(dev_docker_image):latest
 
