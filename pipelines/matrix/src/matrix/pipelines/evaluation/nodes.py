@@ -57,7 +57,6 @@ def make_test_predictions(
     model: ModelWrapper,
     features: List[str],
     score_col_name: str,
-    # TODO make this a parameter
     batch_by: str = "target",
 ) -> pd.DataFrame:
     """Generate probability scores for drug-disease dataset.
