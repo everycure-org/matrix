@@ -1,12 +1,11 @@
 """Module to represent models."""
-import mlflow
-from typing import List, Callable, Optional
+from typing import List, Callable
 from sklearn.base import BaseEstimator
 
 import numpy as np
 
 
-class ModelWrapper(mlflow.pyfunc.PythonModel):
+class ModelWrapper:  # mlflow.pyfunc.PythonModel
     """Class to represent models.
 
     FUTURE: Add `features` and `transformers` to class, such that we can
