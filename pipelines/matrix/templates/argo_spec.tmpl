@@ -3,15 +3,21 @@ apiVersion: argoproj.io/v1alpha1
 kind: WorkflowTemplate
 metadata:
   namespace: argo-workflows
-  name: matrix
+  name: matrix-lvi
 spec:
   entrypoint: dag
   arguments:
     parameters:
       - name: image
         value: "{{ image }}"
+      - name: release_version
+        value: "lvi"
+      - name: experiment
+        value: "Default"
       - name: neo4j_host
         value: "bolt://neo4j.neo4j.svc.cluster.local:7687"
+      - name: mlflow_endpoint
+        value: "http://mlflow.0.0.1:5001"
       - name: openai_endpoint
         value: "https://api.openai.com/v1"
       - name: env
@@ -49,6 +55,12 @@ spec:
           memory: 32Gi
           cpu: 16
       env:
+        - name: RELEASE_VERSION
+          value: {% raw %} "{{workflow.parameters.release_version}}" 
+          {% endraw %}
+        - name: RELEASE_VERSION
+          value: {% raw %} "{{workflow.parameters.experiment}}" 
+          {% endraw %}
         - name: NEO4J_HOST
           value: {% raw %} "{{workflow.parameters.neo4j_host}}" 
           {% endraw %}

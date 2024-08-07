@@ -1,5 +1,11 @@
 # https://artifacthub.io/packages/helm/bitnami/mlflow
 mlflow:
-  tracking.auth.enabled: false
-  tracking.auth.username: user
-  tracking.auth.password: root
+
+  # Disable tracking server password
+  tracking: 
+    auth:
+      enabled: false
+
+  # FUTURE: Disable minio
+  # minio:
+  #   enabled: false

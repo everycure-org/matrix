@@ -278,7 +278,7 @@ metadata:
 type: Opaque
 data:
   root-user: "YWRtaW4="
-  root-password: "VnRid1NLUkt4Qw=="
+  root-password: "QW40MVVMWnNWRw=="
 ---
 # Source: MLFlow/charts/mlflow/charts/postgresql/templates/secrets.yaml
 apiVersion: v1
@@ -294,28 +294,9 @@ metadata:
     helm.sh/chart: postgresql-15.5.20
 type: Opaque
 data:
-  postgres-password: "dmRyNXpnQ3NDSQ=="
-  password: "SzJweVlkeDF1TQ=="
+  postgres-password: "NEcwZTF0WnRSUA=="
+  password: "aG9JbkROZmZHRg=="
   # We don't auto-generate LDAP password when it's not provided as we do for other passwords
----
-# Source: MLFlow/charts/mlflow/templates/tracking/auth-secret.yaml
-apiVersion: v1
-kind: Secret
-metadata:
-  name: release-name-mlflow-tracking
-  namespace: "mlflow"
-  labels:
-    app.kubernetes.io/instance: release-name
-    app.kubernetes.io/managed-by: Helm
-    app.kubernetes.io/name: mlflow
-    app.kubernetes.io/version: 2.15.0
-    helm.sh/chart: mlflow-1.4.21
-    app.kubernetes.io/part-of: mlflow
-    app.kubernetes.io/component: tracking
-data:
-  # We need to ad the username as it is required by the ServiceMonitor object
-  admin-user: "dXNlcg=="
-  admin-password: "SXcyalRmczB0Vw=="
 ---
 # Source: MLFlow/charts/mlflow/charts/minio/templates/provisioning-configmap.yaml
 apiVersion: v1
@@ -350,25 +331,6 @@ data:
     PGPASSWORD=$POSTGRES_POSTGRES_PASSWORD psql -U postgres <<< "CREATE DATABASE bitnami_mlflow_auth"
     PGPASSWORD=$POSTGRES_POSTGRES_PASSWORD psql -U postgres <<< "GRANT ALL PRIVILEGES ON DATABASE bitnami_mlflow_auth to bn_mlflow"
     PGPASSWORD=$POSTGRES_POSTGRES_PASSWORD psql -U postgres <<< "ALTER DATABASE bitnami_mlflow_auth OWNER TO bn_mlflow"
----
-# Source: MLFlow/charts/mlflow/templates/tracking/configmap-overrides.yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: release-name-mlflow-tracking-auth-overrides
-  namespace: "mlflow"
-  labels:
-    app.kubernetes.io/instance: release-name
-    app.kubernetes.io/managed-by: Helm
-    app.kubernetes.io/name: mlflow
-    app.kubernetes.io/version: 2.15.0
-    helm.sh/chart: mlflow-1.4.21
-data:
-  # Use render-template to substitute with environment variables
-  basic_auth_overrides.ini: |
-    database_uri = {{ MLFLOW_DATABASE_AUTH_URI }}
-    admin_username = {{ MLFLOW_TRACKING_USERNAME }}
-    admin_password = {{ MLFLOW_TRACKING_PASSWORD }}
 ---
 # Source: MLFlow/charts/mlflow/charts/minio/templates/pvc.yaml
 kind: PersistentVolumeClaim
@@ -550,7 +512,7 @@ spec:
         app.kubernetes.io/version: 2024.7.26
         helm.sh/chart: minio-14.6.29
       annotations:
-        checksum/credentials-secret: 310b7c8ddd510495738751af1c26ce08aa9196d03e03ab6037d1f5401816f1d3
+        checksum/credentials-secret: cdf517191c767f599762d9bdbda7e5d7b936474cf3b0ea06649a0c680c5ee64c
     spec:
       
       serviceAccountName: release-name-minio
@@ -735,63 +697,6 @@ spec:
         supplementalGroups: []
         sysctls: []
       initContainers:
-        # Wait for tracking service
-        - name: wait-for-tracking
-          image: docker.io/bitnami/os-shell:12-debian-12-r27
-          imagePullPolicy: IfNotPresent
-          securityContext:
-            allowPrivilegeEscalation: false
-            capabilities:
-              drop:
-              - ALL
-            privileged: false
-            readOnlyRootFilesystem: true
-            runAsGroup: 1001
-            runAsNonRoot: true
-            runAsUser: 1001
-            seLinuxOptions: {}
-            seccompProfile:
-              type: RuntimeDefault
-          command:
-            - bash
-            - -ec
-            - |
-              #!/bin/bash
-              retry_while() {
-                local -r cmd="${1:?cmd is missing}"
-                local -r retries="${2:-12}"
-                local -r sleep_time="${3:-5}"
-                local return_value=1
-        
-                read -r -a command <<< "$cmd"
-                for ((i = 1 ; i <= retries ; i+=1 )); do
-                    "${command[@]}" && return_value=0 && break
-                    sleep "$sleep_time"
-                done
-                return $return_value
-              }
-        
-              check_host() {
-                  local -r host="${1:-?missing host}"
-                  local -r port="${2:-?missing port}"
-                  if wait-for-port --timeout=5 --host=${host} --state=inuse $port ; then
-                     return 0
-                  else
-                     return 1
-                  fi
-              }
-        
-              echo "Checking connection to release-name-mlflow-tracking:80"
-              if ! retry_while "check_host release-name-mlflow-tracking 80"; then
-                  echo "Connection error"
-                  exit 1
-              fi
-        
-              echo "Connection success"
-              exit 0
-          volumeMounts:
-            - name: tmp
-              mountPath: /tmp
       containers:
         - name: mlflow
           image: docker.io/bitnami/mlflow:2.15.0-debian-12-r0
@@ -821,16 +726,6 @@ spec:
               value: "false"
             - name: MLFLOW_TRACKING_URI
               value: "http://release-name-mlflow-tracking:80"
-            - name: MLFLOW_TRACKING_USERNAME
-              valueFrom:
-                secretKeyRef:
-                  name: release-name-mlflow-tracking
-                  key: "admin-user"
-            - name: MLFLOW_TRACKING_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: release-name-mlflow-tracking
-                  key: "admin-password"
           envFrom:
           resources:
             limits:
@@ -888,8 +783,6 @@ spec:
       app.kubernetes.io/component: tracking
   template:
     metadata:
-      annotations:
-        checksum/auth: 21de6d36d34e80621263291441d5290c7565eaa7ecefa591c8c70b6e9f8ce3c4
       labels:
         app.kubernetes.io/instance: release-name
         app.kubernetes.io/managed-by: Helm
@@ -980,130 +873,6 @@ spec:
           volumeMounts:
             - name: tmp
               mountPath: /tmp
-        # Render basic auth configuration
-        - name: get-default-auth-conf
-          image: docker.io/bitnami/mlflow:2.15.0-debian-12-r0
-          imagePullPolicy: IfNotPresent
-          securityContext:
-            allowPrivilegeEscalation: false
-            capabilities:
-              drop:
-              - ALL
-            privileged: false
-            readOnlyRootFilesystem: true
-            runAsGroup: 1001
-            runAsNonRoot: true
-            runAsUser: 1001
-            seLinuxOptions: {}
-            seccompProfile:
-              type: RuntimeDefault
-          command:
-            - bash
-            - -ec
-            - |
-              #!/bin/bash
-              cp /bitnami/mlflow-basic-auth/basic_auth.ini /bitnami/rendered-basic-auth/basic_auth.ini
-          volumeMounts:
-            - name: tmp
-              mountPath: /tmp
-            - name: rendered-basic-auth
-              mountPath: /bitnami/rendered-basic-auth
-        - name: render-auth-conf
-          image: docker.io/bitnami/os-shell:12-debian-12-r27
-          imagePullPolicy: IfNotPresent
-          securityContext:
-            allowPrivilegeEscalation: false
-            capabilities:
-              drop:
-              - ALL
-            privileged: false
-            readOnlyRootFilesystem: true
-            runAsGroup: 1001
-            runAsNonRoot: true
-            runAsUser: 1001
-            seLinuxOptions: {}
-            seccompProfile:
-              type: RuntimeDefault
-          command:
-            - bash
-            - -ec
-            - |
-              #!/bin/bash
-              # First render the overrides
-              render-template /bitnami/basic-auth-overrides/*.ini > /tmp/rendered-overrides.ini
-              # Loop through the ini overrides and apply it to the final basic_auth.ini
-              # read the file line by line
-              while IFS='=' read -r key value
-              do
-                # remove leading and trailing spaces from key and value
-                key="$(echo $key | tr -d " ")"
-                value="$(echo $value | tr -d " ")"
-        
-                ini-file set -s mlflow -k "$key" -v "$value" /bitnami/rendered-basic-auth/basic_auth.ini
-              done < "/tmp/rendered-overrides.ini"
-              # Remove temporary files
-              rm /tmp/rendered-overrides.ini
-          env:
-            - name: MLFLOW_DATABASE_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: release-name-postgresql
-                  key: "password"
-            - name: MLFLOW_DATABASE_AUTH_URI
-              value: "postgresql://bn_mlflow:$(MLFLOW_DATABASE_PASSWORD)@release-name-postgresql:5432/bitnami_mlflow_auth"
-            - name: MLFLOW_TRACKING_USERNAME
-              valueFrom:
-                secretKeyRef:
-                  name: release-name-mlflow-tracking
-                  key: "admin-user"
-            - name: MLFLOW_TRACKING_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: release-name-mlflow-tracking
-                  key: "admin-password"
-          envFrom:
-          volumeMounts:
-            - name: tmp
-              mountPath: /tmp
-            - name: basic-auth-overrides
-              mountPath: /bitnami/basic-auth-overrides
-            - name: rendered-basic-auth
-              mountPath: /bitnami/rendered-basic-auth
-        # Perform upgrade of the Auth Database
-        - name: upgrade-db-auth
-          image: docker.io/bitnami/mlflow:2.15.0-debian-12-r0
-          imagePullPolicy: IfNotPresent
-          securityContext:
-            allowPrivilegeEscalation: false
-            capabilities:
-              drop:
-              - ALL
-            privileged: false
-            readOnlyRootFilesystem: true
-            runAsGroup: 1001
-            runAsNonRoot: true
-            runAsUser: 1001
-            seLinuxOptions: {}
-            seccompProfile:
-              type: RuntimeDefault
-          command:
-            - python
-          args:
-            - -m
-            - mlflow.server.auth
-            - db
-            - upgrade
-            - --url
-            - postgresql://bn_mlflow:$(MLFLOW_DATABASE_PASSWORD)@release-name-postgresql:5432/bitnami_mlflow_auth
-          env:
-            - name: MLFLOW_DATABASE_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: release-name-postgresql
-                  key: "password"
-          volumeMounts:
-            - name: tmp
-              mountPath: /tmp
         # Wait for S3 backend to be ready
         - name: wait-for-s3
           image: docker.io/bitnami/os-shell:12-debian-12-r27
@@ -1187,7 +956,6 @@ spec:
             - --serve-artifacts
             - --host=0.0.0.0
             - --port=5000
-            - --app-name=basic-auth
           env:
             - name: BITNAMI_DEBUG
               value: "false"
@@ -1238,7 +1006,8 @@ spec:
             periodSeconds: 10
             successThreshold: 1
             timeoutSeconds: 5
-            tcpSocket:
+            httpGet:
+              path: /
               port: http
           volumeMounts:
             - name: tmp
@@ -1247,9 +1016,6 @@ spec:
               mountPath: /app/mlruns
             - name: mlartifacts
               mountPath: /app/mlartifacts
-            - name: rendered-basic-auth
-              mountPath: /bitnami/mlflow-basic-auth/basic_auth.ini
-              subPath: basic_auth.ini
             - name: data
               mountPath: /bitnami/mlflow
       volumes:
@@ -1258,11 +1024,6 @@ spec:
         - name: mlruns
           emptyDir: {}
         - name: mlartifacts
-          emptyDir: {}
-        - name: basic-auth-overrides
-          configMap:
-            name: release-name-mlflow-tracking-auth-overrides
-        - name: rendered-basic-auth
           emptyDir: {}
         - name: data
           persistentVolumeClaim:
