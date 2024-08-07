@@ -8,7 +8,7 @@ spec:
   arguments:
     parameters:
       - name: image
-        value: "us-central1-docker.pkg.dev/mtrx-hub-dev-3of/matrix-images/matrix:latest"
+        value: "us-central1-docker.pkg.dev/mtrx-hub-dev-3of/matrix-images/matrix:laurens"
       - name: release_version
         value: "lvi"
       - name: experiment

@@ -31,7 +31,7 @@ docker_push_dev:
 	docker push $(dev_docker_image):${USER}
 
 argo_template:
-	python ./src/matrix/argo.py generate-argo-config $(dev_docker_image):latest
+	python ./src/matrix/argo.py generate-argo-config $(dev_docker_image):${USER}
 
 licenses:  build
 	trivy image --scanners license --severity UNKNOWN,CRITICAL matrix
