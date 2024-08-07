@@ -5,17 +5,21 @@ The matrix pipeline is our main codebase in the Every Cure organization. Its goa
 ![](../assets/img/e2e_flow_simple.excalidraw.svg)
 
 
-
-
 ## Automated Release Pipeline (CI / CD)
 
 ### Testing
 
-We leverage Github Actions to test and build the pipeline. For testing, we leverage a mix of unit and integration tests. The integration tests leverage a set of fabricated datasets to test the end-to-end pipeline without the need to access real data. 
+We leverage Github Actions to test and build the pipeline. For testing, we leverage a mix
+of unit and integration tests. The integration tests leverage a set of fabricated
+datasets to test the end-to-end pipeline without the need to access real data. 
+
+Check the `deployments/compose` folder for details on how we test our pipeline.
 
 ### Building executables
 
-We execute our pipeline on Kubernetes. For this we build container images with github actions and push them to the artifact registry of GCP. See the
+We execute our pipeline on Kubernetes. For this we build container images with github
+actions and push them to the artifact registry of GCP. See the Github actions pipeline
+for how this is implemented. 
 
 ### License handling
 
