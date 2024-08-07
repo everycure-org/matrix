@@ -16,7 +16,7 @@ spec:
       - name: neo4j_host
         value: "bolt://neo4j.neo4j.svc.cluster.local:7687"
       - name: mlflow_endpoint
-        value: "http://mlflow-tracking.mlflow.svc.cluster.local:5000"
+        value: "http://mlflow-tracking.mlflow.svc.cluster.local:80"
       - name: openai_endpoint
         value: "https://api.openai.com/v1"
       - name: env
