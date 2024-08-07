@@ -5,7 +5,7 @@ from sklearn.base import BaseEstimator
 import numpy as np
 
 
-class ModelWrapper:  # mlflow.pyfunc.PythonModel
+class ModelWrapper:
     """Class to represent models.
 
     FUTURE: Add `features` and `transformers` to class, such that we can
