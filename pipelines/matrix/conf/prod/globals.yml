@@ -4,6 +4,7 @@ versions:
   sources:
     rtx-kg2: v2.7.3
     medical_team_data: v1.0_2023_mar_sep
+  release: dummy
 
 paths:
   raw: ${gcs_bucket}/kedro/data/01_raw
