@@ -1,5 +1,0 @@
-tracking:
-  run: 
-    # NOTE: This ensures a stable name during distributed
-    # execution of the workflow.
-    name: test
