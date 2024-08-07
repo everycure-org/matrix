@@ -1,5 +1,6 @@
 from fastapi import APIRouter
 from pydantic import BaseModel
+from typing import List
 
 from .node_synonymizer import NodeSynonymizer
 
@@ -11,7 +12,7 @@ synonymizer = NodeSynonymizer()
 class Search(BaseModel):
     """Model to searches."""
 
-    name: str
+    names: List[str]
 
 
 @router.get("")
@@ -21,4 +22,4 @@ async def get_canonical_curies(search: Search):
     Args:
         Searhc: search string
     """
-    return synonymizer.get_canonical_curies(names=[search.name])
+    return synonymizer.get_canonical_curies(names=search.names)

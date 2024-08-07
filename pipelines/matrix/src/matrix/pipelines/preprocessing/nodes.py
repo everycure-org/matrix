@@ -23,8 +23,10 @@ def resolve_curie(name: str, endpoint: str) -> str:
     Returns:
         Corresponding curie
     """
-    result = requests.get(f"{endpoint}/synonymize", json={"name": name})
+    # For instance, I give {"gives": ["long covid"]}
+    result = requests.get(f"{endpoint}/synonymize", json={"names": [name]})
 
+    # Retrsult {"long covid": {"preferred_curie": "MONDO:x"}}
     element = result.json().get(name)
     if element:
         return element.get("preferred_curie", None)
