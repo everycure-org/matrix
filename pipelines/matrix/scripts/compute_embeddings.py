@@ -9,10 +9,10 @@ from openai import OpenAI
 from tqdm import tqdm
 
 PATH = "feature_list.pkl"
-BATCH_SIZE = 512
+BATCH_SIZE = 256
 
 
-def infer_pubmed(feat_list: list):
+def infer_pubmed(feat_list: list, savename: str):
     """Calculate embeddings with pubmed."""
     feat_list = feat_list
     t1 = time.time()
@@ -41,13 +41,14 @@ def infer_pubmed(feat_list: list):
     print(len(all_embeddings))
     all_embeddings = torch.cat(all_embeddings, dim=0).numpy()
     print(len(all_embeddings))
-    joblib.dump(all_embeddings, "scratch/pubmedbert_sample_embed.joblib")
+    joblib.dump(all_embeddings, f"scratch/{savename}.joblib")  # pubmedbert_sample_embed
     t2 = time.time()
     print("done and saved in ", str(t2 - t1))
 
 
-def infer_openai(feat_list: list):
+def infer_openai(feat_list: list, savename: str):
     """Calculate embeddings with openai api."""
+    client = OpenAI(api_key="sk-proj-Q97qYStldcefLyK3RecVT3BlbkFJhXwJjmvAtS1jVzx3AjII")
     t1 = time.time()
     all_embeddings = []
     for start_id in tqdm(range(0, len(feat_list), BATCH_SIZE)):
@@ -61,31 +62,46 @@ def infer_openai(feat_list: list):
     for batch in all_embeddings:
         for embedding in batch.data:
             final_list.append(embedding.embedding)
-    joblib.dump(np.array(emb_list), "scratch/openai_sample_embed.joblib")
+    joblib.dump(
+        np.array(final_list), f"scratch/{savename}.joblib"
+    )  # f"scratch/openai_sample_embed.joblib")
     t2 = time.time()
     print("done and saved in ", str(t2 - t1))
 
 
-def infer_spacy(feat_list: list, model: str):
+def infer_spacy(feat_list: list, model: str, savename: str):
     """Calculate embeddings with spacy."""
     t1 = time.time()
     nlp = spacy.load(model, disable=["NER"])
     all_embeddings = []
     for feature in tqdm(feat_list):
         doc = nlp(feature)
-        all_embeddings.append(doc.vector())
-    joblib.dump(np.array(emb_list), f"scratch/spacy_{model}_sample_embed.joblib")
+        all_embeddings.append(doc.vector)
+    joblib.dump(np.array(all_embeddings), f"scratch/{model}_{savename}.joblib")
     t2 = time.time()
     print("done and saved in ", str(t2 - t1))
 
 
 if __name__ == "__main__":
-    features = joblib.load("sample_features.joblib")
-    print("pubmed")
-    infer_pubmed(features)
-    print("openai")
-    infer_openai(features)
-    print("spacy")
-    infer_spacy(features, "en_core_web_md")
-    print("scispacy")
-    infer_spacy(features, "en_core_sci_md")
+    full_features = joblib.load("sm_sample_features.joblib")
+    nocat_features = joblib.load("nocat_features.joblib")
+    nonames_features = joblib.load("noname_features.joblib")
+    feat_dict = {
+        "full": full_features,
+        "nonames": nonames_features,
+        "nocat": nocat_features,
+    }
+    for feat_key in feat_dict.keys():
+        if feat_key == "full":
+            continue
+        if feat_key == "nonames":
+            continue
+        features = feat_dict[feat_key]
+        print("pubmed")
+        infer_pubmed(features, f"pubmedbert_sample_embed_{feat_key}")
+        print("openai")
+        infer_openai(features, f"openai_sample_embed_{feat_key}")
+        print("spacy")
+        infer_spacy(features, "en_core_web_md", f"spacy_sample_embed_{feat_key}")
+        print("scispacy")
+        infer_spacy(features, "en_core_sci_md", f"scispacy_sample_embed_{feat_key}")
