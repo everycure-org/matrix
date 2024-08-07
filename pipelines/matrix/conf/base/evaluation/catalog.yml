@@ -1,3 +1,14 @@
+_pandas_csv: &_pandas_csv
+  type: pandas.CSVDataset
+
+_pandas_tsv: &_pandas_tsv
+  type: pandas.CSVDataset
+  load_args:
+    sep: "\t"
+
+_pandas_excel: &_pandas_excel
+  type: pandas.ExcelDataset
+
 _pandas_parquet: &_pandas_parquet
   type: pandas.ParquetDataset
 
@@ -20,3 +31,7 @@ _pandas_parquet: &_pandas_parquet
 "evaluation.reporting.report":
   type: yaml.YAMLDataset
   filepath: ${globals:paths.reporting}/master_report.yml
+
+evaluation.raw.medical:
+  <<: *_pandas_excel
+  filepath: ${globals:paths.raw}/medical_team_data/{globals:versions.sources.medical_team_data}/file.xlsx
