@@ -1,5 +1,6 @@
 """Fabricator pipeline."""
 import pandas as pd
+import pyspark.sql as sql
 
 from kedro.pipeline import Pipeline, node, pipeline
 
@@ -10,7 +11,8 @@ from pyspark.sql import DataFrame
 import pyspark.sql.functions as F
 
 
-def _create_pairs(nodes: pd.DataFrame, num: int = 50) -> pd.DataFrame:
+def _create_pairs(nodes: sql.DataFrame, num: int = 50) -> pd.DataFrame:
+    nodes = nodes.toPandas()
     # Sample random pairs
     random_drugs = nodes["id"].sample(num, replace=True, ignore_index=True)
     random_diseases = nodes["id"].sample(num, replace=True, ignore_index=True)
@@ -40,13 +42,13 @@ def create_pipeline(**kwargs) -> Pipeline:
             ),
             node(
                 func=_create_pairs,
-                inputs=["integration.raw.rtx_kg2.nodes@pandas"],
+                inputs=["integration.raw.rtx_kg2.nodes@spark"],
                 outputs="integration.raw.ground_truth.positives",
                 name="create_tp_pairs",
             ),
             node(
                 func=_create_pairs,
-                inputs=["integration.raw.rtx_kg2.nodes@pandas"],
+                inputs=["integration.raw.rtx_kg2.nodes@spark"],
                 outputs="integration.raw.ground_truth.negatives",
                 name="create_tn_pairs",
             ),

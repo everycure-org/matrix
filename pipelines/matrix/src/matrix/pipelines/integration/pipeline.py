@@ -14,14 +14,14 @@ def create_pipeline(**kwargs) -> Pipeline:
                 inputs=["integration.raw.rtx_kg2.nodes@spark"],
                 outputs="integration.prm.rtx_kg2.nodes",
                 name="write_rtx_kg2_nodes",
-                tags=["rtx_kg2"],
+                tags=["rtx_kg2", "first_copy"],
             ),
             node(
                 func=lambda x: x,
                 inputs=["integration.raw.rtx_kg2.edges@spark"],
                 outputs="integration.prm.rtx_kg2.edges",
                 name="write_rtx_kg2_edges",
-                tags=["rtx_kg2"],
+                tags=["rtx_kg2", "first_copy"],
             ),
             # union edges
             node(
@@ -60,7 +60,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 ],
                 outputs="integration.int.known_pairs@pandas",
                 name="create_int_known_pairs",
-                tags=["rtx_kg2", "neo4j"],
+                tags=["rtx_kg2", "neo4j", "first_copy"],
             ),
             node(
                 func=nodes.create_treats,

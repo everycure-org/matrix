@@ -19,6 +19,7 @@ services:
       - NEO4J_dbms_security_auth__minimum__password__length=4
       - NEO4J_dbms_security_procedures_whitelist=gds.*, apoc.*
       - NEO4J_dbms_security_procedures_unrestricted=gds.*, apoc.*
+      - NEO4J_db_logs_query_enabled=OFF
       - NEO4J_ACCEPT_LICENSE_AGREEMENT=yes
     volumes:
       - ./neo4j_db/data:/data
@@ -62,7 +63,7 @@ services:
       MOCKSERVER_ENABLE_CORS_FOR_API: "true"
       MOCKSERVER_ENABLE_CORS_FOR_ALL_RESPONSES: "true"
       MOCKSERVER_INITIALIZATION_JSON_PATH: /openapi/initializer.json
-      MOCKSERVER_LOG_LEVEL: ERROR
+      MOCKSERVER_LOG_LEVEL: DEBUG
     networks:
       web:
         aliases:

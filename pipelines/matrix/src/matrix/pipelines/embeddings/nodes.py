@@ -10,7 +10,6 @@ from pyspark.sql import functions as F
 from pyspark.ml.functions import array_to_vector, vector_to_array
 from graphdatascience import GraphDataScience, QueryRunner
 from neo4j import GraphDatabase
-
 from pypher import __ as cypher, Pypher
 
 from pypher.builder import create_function
@@ -18,6 +17,10 @@ from . import pypher_utils
 
 from refit.v1.core.inject import inject_object
 from refit.v1.core.unpack import unpack_params
+
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class GraphDB:
@@ -90,6 +93,25 @@ def compute_embeddings(
         model: model to use
         concurrency: number of concurrent calls to execute
     """
+    # Due to https://github.com/neo4j-contrib/neo4j-apoc-procedures/issues/4156
+    # we first check if we need to do anything here, and if all embeddings are already calculated
+    # we do not do anything
+    with gdb.driver() as driver:
+        q = driver.execute_query(
+            "match (n:Entity) where n.embedding is null return count(*) as count",
+            database_=gdb._database,
+        )
+        rec = q.records[0]
+        count = rec.get("count")
+        if count == 0:
+            # we don't have to embed anything anymore, thus skipping the work below
+            logger.warning(
+                "we actually have embedded everything already or there is an issue with the data. Continuing without taking action"
+            )
+            return {"success": "true"}
+        else:
+            logger.warning("we still have %s embeddings left to calculate", str(count))
+
     # fmt: off
     # Register functions
     create_function("iterate", {"name": "apoc.periodic.iterate"}, func_raw=True)
@@ -108,7 +130,8 @@ def compute_embeddings(
     # https://neo4j.com/labs/apoc/4.1/overview/apoc.periodic/apoc.periodic.iterate/
     p.CALL.iterate(
         # Match every :Entity node in the graph
-        cypher.stringify(cypher.MATCH.node("p", labels="Entity").RETURN.p), # .WHERE.p.property('$attribute').IS_NULL
+        # FUTURE 'embedding' is hard coded because we had an issue with the $attribute inside of the `` brackets
+        cypher.stringify(cypher.MATCH.node("p", labels="Entity").WHERE.p.property("embedding").IS_NULL.RETURN.p),
         # For each batch, execute following statements, the $_batch is a special
         # variable made accessible to access the elements in the batch.
         cypher.stringify(
@@ -124,7 +147,10 @@ def compute_embeddings(
         # and the variables referenced in the stringified params.
         cypher.map(
             batchMode="BATCH_SINGLE",
-            parallel="true",
+            # FUTURE when this is fixed: https://github.com/neo4j-contrib/neo4j-apoc-procedures/issues/4153 we should be able to max out
+            # our capacity towards the service provider
+            parallel="false",
+            # parallel="false",
             batchSize=batch_size,
             concurrency=concurrency,
             params=cypher.map(apiKey=api_key, endpoint=endpoint, attribute=attribute, model=model),
@@ -170,13 +196,14 @@ def reduce_dimension(df: DataFrame, transformer, input: str, output: str):
     )
 
 
-@inject_object()
 @unpack_params()
+@inject_object()
 def train_topological_embeddings(
     df: DataFrame,
     edges: DataFrame,
     gds: GraphDataScience,
     projection: Any,
+    filtering: Any,
     estimator: Any,
     write_property: str,
 ) -> Dict:
@@ -192,6 +219,7 @@ def train_topological_embeddings(
         edges: edges df
         gds: the gds object
         projection: gds projection to execute on the graph
+        filtering: filtering to be applied to the projection
         estimator: estimator to apply
         write_property: node property to write result to
     """
@@ -204,6 +232,11 @@ def train_topological_embeddings(
     config = projection.pop("configuration", None)
     graph, _ = gds.graph.project(*projection.values(), **config)
 
+    # Filter out treat/GT nodes from the graph
+    subgraph_name = filtering.get("graphName")
+    filter_args = filtering.pop("args")
+    subgraph, _ = gds.graph.filter(subgraph_name, graph, **filter_args)
+
     # Validate whether the model exists
     model_name = estimator.get("args").get("modelName")
     if gds.model.exists(model_name).exists:
@@ -212,7 +245,7 @@ def train_topological_embeddings(
 
     # Initialize the model
     model, _ = getattr(gds.beta, estimator.get("model")).train(
-        graph, **estimator.get("args")
+        subgraph, **estimator.get("args")
     )
 
     return {"success": "true"}
@@ -225,11 +258,12 @@ def write_topological_embeddings(
     gds: GraphDataScience,
     projection: Any,
     estimator: Any,
+    filtering: Any,
     write_property: str,
 ) -> Dict:
     """Write topological embeddings."""
     # Retrieve the graph
-    graph_name = projection.get("graphName")
+    graph_name = filtering.get("graphName")
     graph = gds.graph.get(graph_name)
 
     # Retrieve the model

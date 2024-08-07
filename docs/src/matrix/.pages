@@ -1,7 +1,4 @@
 nav:
     - index.md
-    - pipeline.md
-    - key_files.md
-    - software_licences.md
+    - important_files.md
     - status.md
-    - ci.md

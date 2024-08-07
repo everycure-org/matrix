@@ -7,7 +7,12 @@ repos:
       # Run the linter.
       - id: ruff
         args: [ --fix ]
-        exclude: pipelines/matrix/packages|services/synonymizer/api/modules/synonymize
+        exclude: |
+          (?x)^(
+            pipelines/matrix/packages|
+            pipelines/matrix/tests/|
+            services/synonymizer/api/modules/synonymize
+          )
       # Run the formatter.
       - id: ruff-format
         exclude: pipelines/matrix/packages

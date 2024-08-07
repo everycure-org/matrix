@@ -2,20 +2,22 @@
 # queries into Neo4j.
 embeddings.gdb:
   object: matrix.pipelines.embeddings.nodes.GraphDB
-  endpoint: ${oc.env:NEO4J_HOST}
+  endpoint: ${globals:neo4j.host}
   database: everycure-${globals:versions.release}
   auth:
-    -  ${oc.env:NEO4J_USER}
-    -  ${oc.env:NEO4J_PASSWORD}
+    -  ${globals:neo4j.user}
+    -  ${globals:neo4j.password}
 
 # Establishes connection to localized mock GenAI API for
 # testing purposes.
 # https://neo4j.com/labs/apoc/5/ml/openai/
 embeddings.ai_config:
-  api_key: ${oc.env:OPENAI_API_KEY} 
+  api_key: ${globals:openai.api_key}
   attribute: &_property embedding
-  batch_size: 1 # NOTE: The MockApi does not support batching, hence disabled
-  endpoint: ${oc.env:OPENAI_ENDPOINT}
+# https://platform.openai.com/docs/guides/embeddings/faq
+# OpenAI embeddings support batching, up to 8000 tokens.
+  batch_size: 500
+  endpoint: ${globals:openai.endpoint}
   model: text-embedding-3-small
   concurrency: 50
 
@@ -31,17 +33,17 @@ embeddings.dimensionality_reduction:
   output: &_pca_property 'pca_embedding'
   transformer:
     object: pyspark.ml.feature.PCA
-    k: 2
+    k: 100
 
 # FUTURE: This is a highly temp. solution that serves as PoC of leveraging Neo4J's
 # AI functionality. If works as expected, we'll do a refinement step to clean this up.
 embeddings.gds:
   object: matrix.pipelines.embeddings.nodes.GraphDS
-  endpoint: ${oc.env:NEO4J_HOST}
+  endpoint: ${globals:neo4j.host}
   database: everycure-${globals:versions.release}
   auth:
-    -  ${oc.env:NEO4J_USER}
-    -  ${oc.env:NEO4J_PASSWORD}
+    -  ${globals:neo4j.user}
+    -  ${globals:neo4j.password}
 
 # Defines strategy used to compute topological embeddings,
 # all nodes and relationships in our KG are projected, along with
@@ -64,6 +66,11 @@ embeddings.topological:
     relationshipProjection: '*'
     configuration:
       relationshipProperties: [&_weight_attribute include_in_graphsage]
+  filtering:
+    graphName: filtered_embeddings 
+    args:
+      node_filter: '*'
+      relationship_filter: r.include_in_graphsage = 1.0
   estimator:
     model: graphSage
     args:
@@ -74,4 +81,13 @@ embeddings.topological:
       # certain relationships. Another option could be to leverage filtering:
       # https://neo4j.com/docs/graph-data-science/current/management-ops/graph-creation/graph-filter/
       relationshipWeightProperty: *_weight_attribute
+      # Chunyu: 512
+      embeddingDimension: 512
+      # Chunyu: 200k
+      batchSize: 20000
+      epochs: 10
+      searchDepth: 100
+      # Chunyu
+      # learningRate: 0.01
+      learningRate: 0.1
   write_property: topological_embedding

@@ -1,16 +1,14 @@
-gcs_bucket: gs://${oc.env:GCP_BUCKET}
-
 versions:
-  sources:
-    rtx-kg2: v2.7.3
-  release: dummy
+  # overwritten in prod environment for shared releases
+  release: ${oc.env:RELEASE_VERSION}
 
+gcs_bucket: gs://${oc.env:GCP_BUCKET, mtrx-us-central1-hub-dev-storage}
 paths:
   raw: ${gcs_bucket}/kedro/data/01_raw
-  int: ${gcs_bucket}/kedro/data/02_intermediate
-  prm: ${gcs_bucket}/kedro/data/03_primary
-  feat: ${gcs_bucket}/kedro/data/04_feature
-  model_input: ${gcs_bucket}/kedro/data/05_model_input
-  models: ${gcs_bucket}/kedro/data/06_models
-  model_output: ${gcs_bucket}/kedro/data/07_model_output
-  reporting: ${gcs_bucket}/kedro/data/08_reporting
+  int: ${gcs_bucket}/releases/${versions.release}/02_intermediate
+  prm: ${gcs_bucket}/releases/${versions.release}/03_primary
+  feat: ${gcs_bucket}/releases/${versions.release}/04_feature
+  model_input: ${gcs_bucket}/releases/${versions.release}/05_model_input
+  models: ${gcs_bucket}/releases/${versions.release}/06_models
+  model_output: ${gcs_bucket}/releases/${versions.release}/07_model_output
+  reporting: ${gcs_bucket}/releases/${versions.release}/08_reporting
