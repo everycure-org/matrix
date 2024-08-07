@@ -19,7 +19,7 @@ HOOKS = (
 )
 
 # Installed plugins for which to disable hook auto-registration.
-DISABLE_HOOKS_FOR_PLUGINS = ("kedro-mlflow", "kedro_mlflow")
+DISABLE_HOOKS_FOR_PLUGINS = ("kedro_mlflow",)
 
 # Class that manages storing KedroSession data.
 from pathlib import Path  # noqa: E402
