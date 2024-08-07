@@ -12,6 +12,7 @@ Next, authenticate the client:
 
 ```bash
 gcloud auth login
+gcloud auth application-default login
 ```
 
 ### Accessing the cluster services
