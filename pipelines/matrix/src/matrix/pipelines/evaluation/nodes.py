@@ -17,6 +17,7 @@ from matrix.datasets.pair_generator import DrugDiseasePairGenerator
 
 from matrix.pipelines.modelling.nodes import apply_transformers
 from matrix.pipelines.evaluation.evaluation import Evaluation
+from matrix.pipelines.evaluation.node_synonymizer.node_synonymizer import NodeSynonymizer
 from matrix.pipelines.modelling.model import ModelWrapper
 
 
@@ -125,3 +126,72 @@ def consolidate_evaluation_reports(*reports) -> dict:
                 evaluation["evaluation_name"]
             ] = reports_lst[idx_1 + idx_2]
     return json.loads(json.dumps(master_report, default=float))
+
+
+def clean_clinical_trial_data(clinical_trial_data: pd.DataFrame, node_synonymizer_db_path: str) -> pd.DataFrame:
+    """Function to clean clinical trials dataset for use in time-split evaluation metrics.
+    
+       Clinical trial data should be a EXCEL format containg 8 columns: 
+       Clinical Trial #, Reason for Rejection, Mapped Drug(s), Mapped Disease, Significantly Better?, Non-Significantly Better?, Non-Significantly Worse?, Significantly Worse?
+       
+       1. We filter out rows with the following conditions:
+            - Missing Mapped Drug(s) name
+            - Missing Mapped Disease name
+            - with reason for rejection
+            - missing values in either significantly better, non-significantly better, non-significantly worse, or significantly worse columns
+            
+       2. Map the disease_id and drug_id to the corresponding curie ids and filter out rows without mapping ids.
+            - add column drug_kg_id
+            - add column disease_kg_id
+       
+       3. Standardize the column names to the following:
+            - Mapped Drug(s) name -> drug_name
+            - Mapped Disease -> disease_name
+            - Significantly Better? -> significantly_better
+            - Non-Significantly Better? -> non_significantly_better
+            - Non-Significantly Worse? -> non_significantly_worse
+            - Significantly Worse? -> significantly_worse
+         
+       4. Only keep the following columns:
+            - drug_name
+            - disease_name
+            - drug_kg_id
+            - disease_kg_id
+            - significantly_better
+            - non_significantly_better
+            - non_significantly_worse
+            - significantly_worse
+
+    Args:
+        clinical_trial_data: Clinical trial data provided by medical team for evaluation.
+
+    Returns:
+        Cleaned clinical trial data.
+    """
+    
+    ## connect to node_synonymizer database
+    node_synonymizer = NodeSynonymizer(node_synonymizer_db_path)
+    
+    # rename all columns to make consistent
+    clinical_trial_data.columns = ['clinical_trial_id', 'reason_for_rejection', \
+                                   'drug_name', 'disease_name', 'significantly_better', \
+                                   'non_significantly_better', 'non_significantly_worse', 'significantly_worse']
+
+    # remove rows with reason for rejection
+    clinical_trial_data = clinical_trial_data[clinical_trial_data['reason_for_rejection'].map(lambda x: type(x) != str)].reset_index(drop=True)
+    
+    # remove rows with missing drug or disease name
+    row_has_missing = clinical_trial_data['drug_name'].isna() | clinical_trial_data['disease_name'].isna()
+    clinical_trial_data = clinical_trial_data[~row_has_missing].reset_index(drop=True)
+    
+    # remove rows with missing values in significantly better, non-significantly better, non-significantly worse, or significantly worse columns
+    row_has_missing = clinical_trial_data['significantly_better'].isna() | clinical_trial_data['non_significantly_better'].isna() | \
+                        clinical_trial_data['non_significantly_worse'].isna() | clinical_trial_data['significantly_worse'].isna()
+    clinical_trial_data = clinical_trial_data[~row_has_missing].reset_index(drop=True)
+    
+    # drop columns: clinical_trial_id, reason_for_rejection
+    clinical_trial_data = clinical_trial_data.drop(columns=['clinical_trial_id', 'reason_for_rejection'])
+    
+    
+    
+    return clinical_trial_data.dropna(subset=["disease_id", "drug_id"])
