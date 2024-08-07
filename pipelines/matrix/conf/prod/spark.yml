@@ -1,3 +1,0 @@
-spark.hadoop.google.cloud.auth.type: COMPUTE_ENGINE
-spark.hadoop.google.cloud.auth.service.account.enable: false
-spark.hadoop.google.cloud.auth.service.account.json.keyfile: null

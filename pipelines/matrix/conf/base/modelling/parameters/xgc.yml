@@ -18,6 +18,7 @@ modelling.xgc:
           object: matrix.pipelines.modelling.tuning.GaussianSearch
           estimator:
             object: xgboost.XGBClassifier
+            n_jobs: 16
             random_state: ${globals:random_state}
             tree_method: hist
             device: cuda
