@@ -34,7 +34,7 @@ tracking:
     pipelines: ["fabricator"]
 
   experiment:
-    name: ${oc.env:EXPERIMENT}
+    name: ${oc.env:EXPERIMENT, Default}
     restore_if_deleted: True  # if the experiment`name` was previously deleted experiment, should we restore it?
 
   run:
