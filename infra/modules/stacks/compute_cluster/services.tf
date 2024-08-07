@@ -7,6 +7,5 @@ module "argo" {
   repo_creds = var.gitops_repo_creds
   repo_path  = "infra/argo/"
 
-  # TODO: Revert
-  repo_revision = "boyscout/mlfow"
+  repo_revision = "HEAD"
 }

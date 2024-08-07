@@ -11,9 +11,7 @@ spec:
   source:
     path: {{ .Values.spec.source.repoPath }}/mlflow
     repoURL: {{ .Values.spec.source.repoURL }}
-
-    # TODO: Set to main
-    targetRevision: boyscout/mlfow
+    targetRevision: HEAD
   syncPolicy:
     syncOptions:     # Sync options which modifies sync behavior
     - CreateNamespace=true # Namespace Auto-Creation ensures that namespace specified as the application destination exists in the destination cluster.
