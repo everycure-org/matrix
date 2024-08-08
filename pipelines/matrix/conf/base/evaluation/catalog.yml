@@ -8,9 +8,18 @@ _pandas_tsv: &_pandas_tsv
 
 _pandas_excel: &_pandas_excel
   type: pandas.ExcelDataset
+  load_args:
+    sheet_name: 0
+  save_args:
+    sheet_name: 0
 
 _pandas_parquet: &_pandas_parquet
   type: pandas.ParquetDataset
+
+_png: &_png
+  type: kedro.extras.datasets.matplotlib.MatplotlibWriter
+  save_args:
+    format: png
 
 "evaluation.{model}.{evaluation}.raw.pairs":
   <<: *_pandas_parquet
@@ -35,3 +44,29 @@ _pandas_parquet: &_pandas_parquet
 evaluation.raw.medical:
   <<: *_pandas_excel
   filepath: ${globals:paths.raw}/medical_team_data/{globals:versions.sources.medical_team_data}/file.xlsx
+
+evaluation.cleanned_clinical_trial_data:
+  <<: *_pandas_parquet
+  filepath: ${globals:paths.int}/cleanned_clinical_trial_data/{globals:versions.sources.cleanned_clinical_trial_data}/file.parquet
+
+
+"evaluation.{model_name}.reporting.time_split_validation_barplot"
+  <<: *_png
+  filepath: ${globals:paths.reporting}/{model_name}/time_split_validation_barplot.png
+
+
+"evaluation.{model_name}.reporting.time_split_validation_classification_auroc"
+  <<: *_pandas_parquet
+  filepath: ${globals:paths.prm}/{model_name}/time_split_validation_classification_auroc.parquet
+
+evaluation.reporting.time_split_validation_classification_auroc:
+  <<: *_pandas_excel
+  filepath: ${globals:paths.reporting}/time_split_validation_classification_auroc.xlsx
+
+"evaluation.{model_name}.reporting.time_split_validation_all_metrics"
+  <<: *_pandas_parquet
+  filepath: ${globals:paths.prm}/{model_name}/time_split_validation_all_metrics.parquet
+
+evaluation.reporting.time_split_validation_all_metrics:
+  <<: *_pandas_excel
+  filepath: ${globals:paths.reporting}/time_split_validation_all_metrics.xlsx
