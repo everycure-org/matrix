@@ -170,7 +170,7 @@ def compute_embeddings(
 
 @unpack_params()
 @inject_object()
-def reduce_dimension(df: DataFrame, transformer, input: str, output: str, skip: bool = False):
+def reduce_dimension(df: DataFrame, transformer, input: str, output: str, skip: bool):
     """Function to apply dimensionality reduction.
 
     Args:
@@ -178,14 +178,14 @@ def reduce_dimension(df: DataFrame, transformer, input: str, output: str, skip: 
         transformer: transformer to apply
         input: name of attribute to transform
         output: name of attribute to store result
-        skip (bool, optional): whether to skip the transformation. Defaults to False
+        skip: whether to skip the PCA transformation and dimensionality reduction
     Returns:
         DataFrame: A DataFrame with either the reduced dimension embeddings or the original
                    embeddings, depending on the 'skip' parameter.
 
     Note: 
-    - If skip is True, the function returns the original embeddings from the LLM model. 
-    - If skip is False, the function returns the embeddings after applying the dimensionality reduction technique.
+    - If skip is true, the function returns the original embeddings from the LLM model. 
+    - If skip is false, the function returns the embeddings after applying the dimensionality reduction technique.
     
     """
     if skip:
