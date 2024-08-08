@@ -5,7 +5,6 @@ embeddings.ai_config:
 
 # Reducing dimensionality reduction to speed up runtime
 embeddings.dimensionality_reduction:
-  skip: true
   transformer:
     k: 2
  
