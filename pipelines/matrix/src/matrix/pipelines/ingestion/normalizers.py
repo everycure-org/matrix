@@ -1,3 +1,4 @@
+"""Node Normalization for Ingestion Pipeline."""
 import os
 import logging
 import requests
@@ -62,6 +63,12 @@ class NodeNormalizer:
         self.variant_node_types = None
 
     def hit_node_norm_service(self, curies, retries=0):
+        """
+            call the NN service
+            :param curies
+            :param retries
+        """
+
         resp: requests.models.Response = requests.post(f'{self.node_norm_endpoint}get_normalized_nodes',
                                                        json={'curies': curies,
                                                              'conflate': self.conflate_node_types,
@@ -259,6 +266,11 @@ class NodeNormalizer:
         return failed_to_normalize
 
     def normalize_sequence_variants(self, variant_nodes: list):
+        """
+        Normalize Genetic Sequence Variants
+
+        :param variant_nodes:
+        """
 
         if not variant_nodes:
             return
@@ -315,7 +327,7 @@ class NodeNormalizer:
 
     def get_current_node_norm_version(self):
         """
-        Retrieves the current production version from the node normalization service
+        Retrieves the current production version from the node normalization service.
         """
         # fetch the node norm openapi spec
         node_norm_openapi_url = f'{self.node_norm_endpoint}openapi.json'
@@ -461,14 +473,14 @@ class EdgeNormalizer:
 
     def get_current_edge_norm_version(self):
         """
-        Retrieves the current production version from the edge normalization service
+        Retrieves the current production version from the edge normalization service.
         """
         versions = self.get_available_versions()
         return versions[0]
 
     def check_bl_version_valid(self, bl_version: str):
         """
-        Checks if the requested version is supported by the API
+        Checks if the requested version is supported by the API.
         """
         if bl_version in self.get_available_versions():
             return True
@@ -476,6 +488,9 @@ class EdgeNormalizer:
             return False
 
     def get_available_versions(self):
+        """
+        Get available versions.
+        """
         # call the versions endpoint
         edge_norm_versions_url = f'{self.edge_norm_endpoint}versions'
         resp: requests.models.Response = requests.get(edge_norm_versions_url)
@@ -490,12 +505,18 @@ class EdgeNormalizer:
             resp.raise_for_status()
 
     def check_node_type_valid(self, node_type: str):
+        """
+        Check Node Type Validity.
+        """
         if node_type in self.get_valid_node_types():
             return True
         else:
             return False
 
     def get_valid_node_types(self):
+        """
+        Gets valid node types.
+        """
         # call the descendants endpoint with the root node type
         edge_norm_descendants_url = f'{self.edge_norm_endpoint}bl/{NAMED_THING}/descendants?version={self.edge_norm_version}'
         resp: requests.models.Response = requests.get(edge_norm_descendants_url)
