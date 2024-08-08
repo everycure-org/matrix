@@ -45,41 +45,40 @@ preprocessing.raw.edges:
   load_args:
     sheet_name: Edges
 
-preprocessing.int.nodes:
+preprocessing.int.resolved_nodes:
   <<: [*_layer_int]
   type: pandas.ExcelDataset
-  filepath: ${globals:paths.int}/medical/nodes.xlsx
+  filepath: ${globals:paths.int}/medical/resolved_nodes.xlsx
   save_args:
     sheet_name: Nodes
+
+preprocessing.int.normalized_nodes:
+  <<: [*_layer_int]
+  type: pandas.ExcelDataset
+  filepath: ${globals:paths.int}/medical/normalized_nodes.xlsx
+  save_args:
+    sheet_name: Nodes
+
+preprocessing.int.nodes@pandas:
+  <<: *_pandas_csv
+  filepath: ${globals:paths.int}/medical/nodes.csv
+
+preprocessing.int.nodes@spark:
+  <<: *_spark_csv
+  filepath: ${globals:paths.int}/medical/nodes.csv
 
 preprocessing.prm.nodes:
-  <<: [*_layer_int]
-  type: pandas.ExcelDataset
-  filepath: ${globals:paths.prm}/medical/nodes.xlsx
-  save_args:
-    sheet_name: Nodes
+  <<: [*_layer_prm, *_spark_csv]
+  filepath: ${globals:paths.prm}/exp/nodes
 
-# preprocessing.int.exp.nodes@pandas:
-#   <<: [*_layer_int, *_pandas_csv]
-#   type: pandas.ExcelDataset
-#   filepath: ${globals:paths.int}/exp/nodes.xlsx
+preprocessing.int.edges@pandas:
+  <<: [*_layer_int, *_pandas_csv]
+  filepath: ${globals:paths.int}/exp/edges.csv
 
-# preprocessing.int.exp.nodes@spark:
-#   <<: [*_layer_int, *_spark_csv]
-#   filepath: ${globals:paths.int}/exp/nodes.csv
+preprocessing.int.edges@spark:
+  <<: [*_layer_int, *_spark_csv]
+  filepath: ${globals:paths.int}/exp/edges.csv
 
-# preprocessing.int.exp.edges@pandas:
-#   <<: [*_layer_int, *_pandas_csv]
-#   filepath: ${globals:paths.int}/exp/edges.csv
-
-# preprocessing.int.exp.edges@spark:
-#   <<: [*_layer_int, *_spark_csv]
-#   filepath: ${globals:paths.int}/exp/edges.csv
-
-# preprocessing.prm.exp.nodes:
-#   <<: [*_layer_prm, *_spark_csv]
-#   filepath: ${globals:paths.prm}/exp/nodes
-
-# preprocessing.prm.exp.edges:
-#   <<: [*_layer_prm, *_spark_csv]
-#   filepath: ${globals:paths.prm}/exp/edges
+preprocessing.prm.exp.edges:
+  <<: [*_layer_prm, *_spark_csv]
+  filepath: ${globals:paths.prm}/exp/edges
