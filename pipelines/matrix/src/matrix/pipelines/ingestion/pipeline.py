@@ -11,7 +11,7 @@ def create_pipeline(**kwargs) -> Pipeline:
             node(
                 func=nodes.normalize_kg_data,
                 inputs=["ingestion.raw.robokop_kg.nodes@pandas", "ingestion.raw.robokop_kg.edges@pandas"],
-                outputs=["ingestion.int.robokop_kg.nodes@pandas", "ingestion.int.robokop_kg.edges@pandas"],
+                outputs=["ingestion.int.robokop_kg.nodes@spark", "ingestion.int.robokop_kg.edges@spark"],
                 name="normalize_kg_data",
                 tags=["RobokopKG", "NodeNormalizer"],
             ),
