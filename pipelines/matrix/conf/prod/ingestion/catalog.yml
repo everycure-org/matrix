@@ -2,9 +2,6 @@ _spark_csv_ds: &_spark_csv
   type: spark.SparkDataset
   file_format: csv
 
-_pandas_csv: &_pandas_csv
-  type:  pandas.CSVDataset
-
 _bigquery_ds: &_bigquery_ds
   type: matrix.datasets.gcp.BigQueryTableDataset
   project_id: ${oc.env:GCP_PROJECT_ID}
@@ -14,20 +11,20 @@ _bigquery_ds: &_bigquery_ds
 # -------------------------------------------------------------------------
 
 # overwriting the base catalog to use the bigquery datasets
-integration.prm.rtx_kg2.nodes:
+ingestion.prm.rtx_kg2.nodes:
   <<: *_bigquery_ds
   dataset: kg_rtx_kg2
-  table: "nodes_${globals:versions.release}"
+  table: "nodes_${globals:versions.rtx-kg2.version}"
   save_args:
     temporaryGcsBucket: ${globals:gcs_bucket}
     bigQueryTableLabel.kg: rtx_kg2
-    bigQueryTableLabel.release: ${globals:versions.release}
+    # bigQueryTableLabel.release: ${globals:versions.release}
 
-integration.prm.rtx_kg2.edges:
+ingestion.prm.rtx_kg2.edges:
   <<: *_bigquery_ds
   dataset: kg_rtx_kg2
-  table: "edges_${globals:versions.release}"
+  table: "edges_${globals:versions.rtx-kg2.version}"
   save_args:
     temporaryGcsBucket: ${globals:gcs_bucket}
     bigQueryTableLabel.kg: rtx_kg2
-    bigQueryTableLabel.release: ${globals:versions.release}
+    # bigQueryTableLabel.release: ${globals:versions.release}
