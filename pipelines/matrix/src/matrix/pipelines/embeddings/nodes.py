@@ -179,6 +179,7 @@ def reduce_dimension(df: DataFrame, transformer, input: str, output: str, skip: 
         input: name of attribute to transform
         output: name of attribute to store result
         skip: whether to skip the PCA transformation and dimensionality reduction
+
     Returns:
         DataFrame: A DataFrame with either the reduced dimension embeddings or the original
                    embeddings, depending on the 'skip' parameter.
@@ -186,7 +187,6 @@ def reduce_dimension(df: DataFrame, transformer, input: str, output: str, skip: 
     Note: 
     - If skip is true, the function returns the original embeddings from the LLM model. 
     - If skip is false, the function returns the embeddings after applying the dimensionality reduction technique.
-    
     """
     if skip:
         return df.withColumn(output, F.col(input))
