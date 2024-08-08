@@ -40,7 +40,10 @@ def normalize(curie: str, endpoint: str):
     Returns:
         Corresponding curie
     """
-    result = requests.get(f"{endpoint}/normalize", json={"names": [name]})
+    if not curie or pd.isna(curie):
+        return None
+
+    result = requests.get(f"{endpoint}/normalize", json={"names": [curie]})
 
     element = result.json().get(curie)
     if element:

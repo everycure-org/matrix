@@ -11,21 +11,21 @@ def create_pipeline(**kwargs) -> Pipeline:
         [
             # NOTE: Running this to get an initial proposal of curies
             # Enrich curie with node synonymizer
-            node(
-                func=partial(
-                    nodes.enrich_df,
-                    func=nodes.resolve,
-                    input_col="name",
-                    target_col="curie",
-                ),
-                inputs=[
-                    "preprocessing.raw.nodes",
-                    "params:preprocessing.synonymizer_endpoint",
-                ],
-                outputs="preprocessing.int.nodes",
-                name="resolve_nodes",
-                tags=["resolve"],
-            ),
+            # node(
+            #     func=partial(
+            #         nodes.enrich_df,
+            #         func=nodes.resolve,
+            #         input_col="name",
+            #         target_col="curie",
+            #     ),
+            #     inputs=[
+            #         "preprocessing.raw.nodes",
+            #         "params:preprocessing.synonymizer_endpoint",
+            #     ],
+            #     outputs="preprocessing.int.nodes",
+            #     name="resolve_nodes",
+            #     tags=["resolve"],
+            # ),
             # NOTE: Running this to get the identifiers in the KG
             # Normalize nodes
             node(
