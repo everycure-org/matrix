@@ -96,7 +96,7 @@ class BigQueryTableDataset(SparkDataset):
         self._dataset = dataset
 
         identifier = re.sub(r"[^a-zA-Z0-9_-]", "_", identifier)
-        self._table = f"{table}_{version}"
+        self._table = f"{table}_{identifier}"
 
         super().__init__(
             filepath="filepath",
