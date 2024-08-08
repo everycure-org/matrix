@@ -65,20 +65,18 @@ def create_pipeline(**kwargs) -> Pipeline:
                 inputs=["preprocessing.raw.edges"],
                 outputs="preprocessing.int.edges@pandas",
                 name="create_int_edges",
-                tags=["exp"],
             ),
-            # # Ensure edges use synonymized identifiers
-            # # NOTE: Charlotte introduces her own identifiers in the
-            # # nodes dataset, to enable edge creation.
-            # node(
-            #     func=nodes.create_prm_edges,
-            #     inputs=[
-            #         "preprocessing.prm.exp.nodes",
-            #         "preprocessing.int.exp.edges@spark",
-            #     ],
-            #     outputs="preprocessing.prm.exp.edges",
-            #     name="create_prm_exp_edges",
-            #     tags=["exp"],
-            # ),
+            # Ensure edges use synonymized identifiers
+            # NOTE: Charlotte introduces her own identifiers in the
+            # nodes dataset, to enable edge creation.
+            node(
+                func=nodes.create_prm_edges,
+                inputs=[
+                    "preprocessing.prm.exp.nodes",
+                    "preprocessing.int.exp.edges@spark",
+                ],
+                outputs="preprocessing.prm.edges",
+                name="create_prm_exp_edges",
+            ),
         ]
     )
