@@ -10,6 +10,15 @@ logger = logging.getLogger(__name__)
 
 
 def normalize_kg_data(nodes_df: pd.DataFrame, edges_df: pd.DataFrame):
+    """Call NodeNormalizer to correct nodes_df.id, edges_df.subject, edges_df.object.
+
+    Args:
+        nodes_df: Nodes
+        edges_df: Edges
+
+    Returns:
+        Corrected Nodes & Edges DataFrames
+    """
     # column_names: list[str] = df.columns.to_list()
     # new_column_names = {c: c.split(":")[0] for c in column_names}
     # df = df.rename(columns=new_column_names)
