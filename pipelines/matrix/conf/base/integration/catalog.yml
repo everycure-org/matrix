@@ -41,7 +41,7 @@ _layer_prm: &_layer_prm
 # -------------------------------------------------------------------------
 
 integration.prm.edges:
-  <<: [*_spark_parquet, *__layer_prm]
+  <<: [*_spark_parquet, *_layer_prm]
   filepath: ${globals:paths.prm}/unified/edges
 
 integration.raw.ground_truth.positives:
