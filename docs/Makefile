@@ -20,5 +20,3 @@ serve_docker: image
 
 deploy: build
 	gcloud app deploy
-
-

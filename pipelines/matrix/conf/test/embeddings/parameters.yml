@@ -8,8 +8,7 @@ embeddings.dimensionality_reduction:
   skip: true
   transformer:
     k: 2
-    
-
+ 
 embeddings.topological:
   estimator:
     args:
