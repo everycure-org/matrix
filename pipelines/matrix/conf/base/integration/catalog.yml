@@ -18,6 +18,12 @@ _neo4j_ds: &_neo4j_ds
   save_args:
     mode: "overwrite"
 
+_layer_raw: &_layer_raw
+  metadata:
+    kedro-viz:
+      layer: raw
+
+
 _layer_int: &_layer_int
   metadata:
     kedro-viz:

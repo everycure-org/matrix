@@ -1,14 +1,21 @@
 _pandas_csv: &_pandas_csv
   type:  pandas.CSVDataset
 
-_spark_parquet_nv_ds: &_spark_parquet_nv
-  <<: *_spark_parquet
-  versioned: false
+_spark_parquet_ds: &_spark_parquet
+  type: spark.SparkDataset
+  file_format: parquet
+  save_args:
+    mode: overwrite
 
 _layer_raw: &_layer_raw
   metadata:
     kedro-viz:
       layer: raw
+
+_layer_int: &_layer_int
+  metadata:
+    kedro-viz:
+      layer: integration
 
 
 # -------------------------------------------------------------------------
@@ -183,9 +190,9 @@ ingestion.raw.rtx_kg2.edges@spark:
           nullable: False
 
 ingestion.prm.rtx_kg2.nodes:
-  <<: [*_spark_parquet_nv, *_layer_int]
+  <<: [*_spark_parquet, *_layer_int]
   filepath: ${globals:paths.prm}/rtx_kg2/nodes
 
 ingestion.prm.rtx_kg2.edges:
-  <<: [*_spark_parquet_nv, *_layer_int]
+  <<: [*_spark_parquet, *_layer_int]
   filepath: ${globals:paths.prm}/rtx_kg2/edges

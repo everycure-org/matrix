@@ -1,7 +1,3 @@
-_spark_csv_ds: &_spark_csv
-  type: spark.SparkDataset
-  file_format: csv
-
 _bigquery_ds: &_bigquery_ds
   type: matrix.datasets.gcp.BigQueryTableDataset
   project_id: ${oc.env:GCP_PROJECT_ID}
