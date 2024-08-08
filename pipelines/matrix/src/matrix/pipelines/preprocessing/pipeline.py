@@ -9,6 +9,7 @@ def create_pipeline(**kwargs) -> Pipeline:
     """Create integration pipeline."""
     return pipeline(
         [
+            # NOTE: Running this to get an initial proposal of curies
             # Enrich curie with node synonymizer
             node(
                 func=partial(
@@ -18,13 +19,14 @@ def create_pipeline(**kwargs) -> Pipeline:
                     target_col="curie",
                 ),
                 inputs=[
-                    "preprocessing.raw.exp.nodes",
+                    "preprocessing.raw.nodes",
                     "params:preprocessing.synonymizer_endpoint",
                 ],
-                outputs="preprocessing.int.exp.nodes",
+                outputs="preprocessing.int.nodes",
                 name="resolve_nodes",
                 tags=["resolve"],
             ),
+            # NOTE: Running this to get the identifiers in the KG
             # Normalize nodes
             node(
                 func=partial(
@@ -34,11 +36,11 @@ def create_pipeline(**kwargs) -> Pipeline:
                     target_col="id",
                 ),
                 inputs=[
-                    "preprocessing.int.exp.nodes",
+                    "preprocessing.int.nodes",
                     "params:preprocessing.synonymizer_endpoint",
                 ],
-                outputs="preprocessing.prm.exp.nodes",
-                name="resolve_nodes",
+                outputs="preprocessing.prm.nodes",
+                name="normalize_nodes",
                 tags=["normalize"],
             ),
             # # Transcode to pandas

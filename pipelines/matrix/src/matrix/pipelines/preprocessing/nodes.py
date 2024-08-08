@@ -59,7 +59,7 @@ def normalize(curie: str, endpoint: str):
 )
 @primary_key(primary_key=["ID"])
 def enrich_df(
-    df: pd.DataFrame, func: Callable, endpoint: str, input_col: str, target_col: str
+    df: pd.DataFrame, endpoint: str, func: Callable, input_col: str, target_col: str
 ) -> pd.DataFrame:
     """Function to resolve nodes of the nodes input dataset.
 
