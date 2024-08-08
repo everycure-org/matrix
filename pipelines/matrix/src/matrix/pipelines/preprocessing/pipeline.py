@@ -33,7 +33,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                     nodes.enrich_df,
                     func=nodes.normalize,
                     input_col="curie",
-                    target_col="id",
+                    target_col="normalized_curie",
                 ),
                 inputs=[
                     "preprocessing.int.resolved_nodes",
@@ -72,8 +72,8 @@ def create_pipeline(**kwargs) -> Pipeline:
             node(
                 func=nodes.create_prm_edges,
                 inputs=[
-                    "preprocessing.prm.exp.nodes",
-                    "preprocessing.int.exp.edges@spark",
+                    "preprocessing.prm.nodes",
+                    "preprocessing.int.edges@spark",
                 ],
                 outputs="preprocessing.prm.edges",
                 name="create_prm_exp_edges",

@@ -88,7 +88,11 @@ def create_prm_nodes(int_nodes: DataFrame) -> DataFrame:
     Returns:
         Primary nodes
     """
-    return int_nodes.filter(F.col("curie").isNotNull())
+    return (
+        int_nodes.filter(F.col("normalized_curie").isNotNull())
+        .drop("curie")
+        .withColumnRenamed("normalized_curie", "curie")
+    )
 
 
 def create_prm_edges(prm_nodes: DataFrame, int_edges: DataFrame) -> DataFrame:
