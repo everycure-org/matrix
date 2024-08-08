@@ -22,6 +22,8 @@ data_sources:
   rtx-kg2:
     version: v2.7.3
 
+  # TODO: Register robokop here
+
 paths:
   # we read from our central GCS bucket where we store our ground truth data
   raw: ${gcs_bucket}/kedro/data/01_raw

@@ -23,7 +23,6 @@ _layer_raw: &_layer_raw
     kedro-viz:
       layer: raw
 
-
 _layer_int: &_layer_int
   metadata:
     kedro-viz:

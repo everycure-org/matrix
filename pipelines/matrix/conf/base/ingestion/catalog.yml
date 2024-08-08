@@ -1,6 +1,17 @@
 _pandas_csv: &_pandas_csv
   type:  pandas.CSVDataset
 
+_spark_csv_ds: &_spark_csv
+  type: spark.SparkDataset
+  file_format: csv
+  
+  # TODO: Might need to give this a quick test
+  load_args:
+    sep: '\t'
+    header: True
+  save_args:
+    mode: overwrite
+
 _spark_parquet_ds: &_spark_parquet
   type: spark.SparkDataset
   file_format: parquet
@@ -196,3 +207,10 @@ ingestion.prm.rtx_kg2.nodes:
 ingestion.prm.rtx_kg2.edges:
   <<: [*_spark_parquet, *_layer_int]
   filepath: ${globals:paths.prm}/rtx_kg2/edges
+
+# TODO: Register raw robokop Spark dataset
+# ingestion.raw.robokop.nodes:
+# <<: [*_spark_csv, *_layer_raw]
+# filepath: ${globals:paths.raw}/robokop/${globals:data_sources.robokop.version}/<file_here>
+
+# TODO: Add edges datast 
