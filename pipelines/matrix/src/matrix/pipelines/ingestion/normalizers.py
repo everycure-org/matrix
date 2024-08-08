@@ -1,23 +1,24 @@
 """Node Normalization for Ingestion Pipeline."""
+
 import os
 import logging
 import requests
 import time
 from robokop_genetics.genetics_normalization import GeneticsNormalizer
 
-NORMALIZATION_CODE_VERSION = '1.2'
-NODE_TYPES = 'category'
-NAMED_THING = 'biolink:NamedThing'
-SYNONYMS = 'equivalent_identifiers'
-INFORMATION_CONTENT = 'information_content'
-DESCRIPTION = 'description'
-PREDICATE = 'predicate'
+NORMALIZATION_CODE_VERSION = "1.2"
+NODE_TYPES = "category"
+NAMED_THING = "biolink:NamedThing"
+SYNONYMS = "equivalent_identifiers"
+INFORMATION_CONTENT = "information_content"
+DESCRIPTION = "description"
+PREDICATE = "predicate"
 
 # node property name for node types that did not normalize
-CUSTOM_NODE_TYPES = 'custom_node_types'
+CUSTOM_NODE_TYPES = "custom_node_types"
 
 # predicate to use when normalization fails
-FALLBACK_EDGE_PREDICATE = 'biolink:related_to'
+FALLBACK_EDGE_PREDICATE = "biolink:related_to"
 
 
 class NodeNormalizer:
@@ -32,14 +33,16 @@ class NodeNormalizer:
         equivalent_identifiers: the list of synonymous ids
     """
 
-    def __init__(self,
-                 node_normalization_version: str = 'latest',
-                 biolink_version: str = 'latest',
-                 strict_normalization: bool = True,
-                 conflate_node_types: bool = False):
+    def __init__(
+        self,
+        node_normalization_version: str = "latest",
+        biolink_version: str = "latest",
+        strict_normalization: bool = True,
+        conflate_node_types: bool = False,
+    ):
         """constructor.
 
-            :param node_normalization_version - not implemented yet
+        :param node_normalization_version - not implemented yet
         """
         self.logger = logging.getLogger(__name__)
 
@@ -57,36 +60,42 @@ class NodeNormalizer:
         self.variant_node_splits = {}
         # normalization map for future look up of all normalized node IDs
         self.node_normalization_lookup = {}
-        self.node_norm_endpoint = os.getenv('NODE_NORMALIZATION_ENDPOINT', 'https://nodenormalization-sri.renci.org/')
+        self.node_norm_endpoint = os.getenv(
+            "NODE_NORMALIZATION_ENDPOINT", "https://nodenormalization-sri.renci.org/"
+        )
         self.sequence_variant_normalizer = None
         self.variant_node_types = None
 
     def hit_node_norm_service(self, curies, retries=0):
         """call the NN service.
 
-            :param curies
-            :param retries
+        :param curies
+        :param retries
         """
 
-        resp: requests.models.Response = requests.post(f'{self.node_norm_endpoint}get_normalized_nodes',
-                                                       json={'curies': curies,
-                                                             'conflate': self.conflate_node_types,
-                                                             'drug_chemical_conflate': self.conflate_node_types,
-                                                             'description': True})
+        resp: requests.models.Response = requests.post(
+            f"{self.node_norm_endpoint}get_normalized_nodes",
+            json={
+                "curies": curies,
+                "conflate": self.conflate_node_types,
+                "drug_chemical_conflate": self.conflate_node_types,
+                "description": True,
+            },
+        )
         if resp.status_code == 200:
             # if successful return the json as an object
             return resp.json()
         else:
-            error_message = f'Node norm response code: {resp.status_code}'
+            error_message = f"Node norm response code: {resp.status_code}"
             if resp.status_code >= 500:
                 # if 5xx retry 3 times
                 retries += 1
                 if retries == 4:
-                    error_message += ', retried 3 times, giving up..'
+                    error_message += ", retried 3 times, giving up.."
                     self.logger.error(error_message)
                     resp.raise_for_status()
                 else:
-                    error_message += f', retrying.. (attempt {retries})'
+                    error_message += f", retrying.. (attempt {retries})"
                     time.sleep(retries * 3)
                     self.logger.error(error_message)
                     return self.hit_node_norm_service(curies, retries)
@@ -94,7 +103,7 @@ class NodeNormalizer:
                 # we should never get a legitimate 4xx response from node norm,
                 # crash with an error for troubleshooting
                 if resp.status_code == 422:
-                    error_message += f'(curies: {curies})'
+                    error_message += f"(curies: {curies})"
                 self.logger.error(error_message)
                 resp.raise_for_status()
 
@@ -108,13 +117,13 @@ class NodeNormalizer:
         :return:
         """
 
-        self.logger.debug(f'Start of normalize_node_data. items: {len(node_list)}')
+        self.logger.debug(f"Start of normalize_node_data. items: {len(node_list)}")
 
         # init the cache - this accumulates all the results from the node norm service
         cached_node_norms: dict = {}
 
         # create a unique set of node ids
-        tmp_normalize: set = set([node['id'] for node in node_list])
+        tmp_normalize: set = set([node["id"] for node in node_list])
 
         # convert the set to a list so we can iterate through it
         to_normalize: list = list(tmp_normalize)
@@ -125,7 +134,7 @@ class NodeNormalizer:
         # get the last index of the list
         last_index: int = len(to_normalize)
 
-        self.logger.debug(f'{last_index} unique nodes found in this group.')
+        self.logger.debug(f"{last_index} unique nodes found in this group.")
 
         # grab chunks of the data frame
         while True:
@@ -137,10 +146,10 @@ class NodeNormalizer:
                 if end_index >= last_index:
                     end_index = last_index
 
-                self.logger.debug(f'Working block {start_index} to {end_index}.')
+                self.logger.debug(f"Working block {start_index} to {end_index}.")
 
                 # collect a slice of records from the data frame
-                data_chunk: list = to_normalize[start_index: end_index]
+                data_chunk: list = to_normalize[start_index:end_index]
 
                 # hit the node norm api
                 normalization_json = self.hit_node_norm_service(curies=data_chunk)
@@ -166,45 +175,51 @@ class NodeNormalizer:
 
         # look up valid node types if needed
         if not self.strict_normalization and not self.biolink_compliant_node_types:
-            biolink_lookup = EdgeNormalizer(edge_normalization_version=self.biolink_version)
+            biolink_lookup = EdgeNormalizer(
+                edge_normalization_version=self.biolink_version
+            )
             self.biolink_compliant_node_types = biolink_lookup.get_valid_node_types()
 
         # for each node update the node with normalized information
         # store the normalized IDs in self.node_normalization_lookup for later look up
         while node_idx < len(node_list):
-
             # get the next node list item by index
             current_node = node_list[node_idx]
-            current_node_id = current_node['id']
+            current_node_id = current_node["id"]
 
             # make sure there is a name
-            if 'name' not in current_node or not current_node['name']:
-                current_node['name'] = current_node['id'].split(':')[-1]
+            if "name" not in current_node or not current_node["name"]:
+                current_node["name"] = current_node["id"].split(":")[-1]
 
             # remove properties with null values, remove newline characters
             for key in list(current_node.keys()):
                 value = current_node[key]
                 if value is None:
-                    del (current_node[key])
+                    del current_node[key]
                 else:
                     if isinstance(value, str):
                         current_node[key] = value.replace("\n", "")
 
             # if strict normalization is off, enforce valid node types
             if not self.strict_normalization:
-
                 if NODE_TYPES not in current_node:
                     current_node[NODE_TYPES] = [NAMED_THING]
 
                 # remove all the bad types and make them a property instead
-                invalid_node_types = [node_type for node_type in current_node[NODE_TYPES] if
-                                      node_type not in self.biolink_compliant_node_types]
+                invalid_node_types = [
+                    node_type
+                    for node_type in current_node[NODE_TYPES]
+                    if node_type not in self.biolink_compliant_node_types
+                ]
                 if invalid_node_types:
                     current_node[CUSTOM_NODE_TYPES] = invalid_node_types
 
                 # keep all the valid types
-                current_node[NODE_TYPES] = [node_type for node_type in current_node[NODE_TYPES] if
-                                            node_type in self.biolink_compliant_node_types]
+                current_node[NODE_TYPES] = [
+                    node_type
+                    for node_type in current_node[NODE_TYPES]
+                    if node_type in self.biolink_compliant_node_types
+                ]
                 # add the NAMED_THING type if it's not there
                 if NAMED_THING not in current_node[NODE_TYPES]:
                     current_node[NODE_TYPES].append(NAMED_THING)
@@ -215,24 +230,27 @@ class NodeNormalizer:
             # did we get a response from the normalizer
             current_node_normalization = cached_node_norms[current_node_id]
             if current_node_normalization is not None:
-
-                current_node_id_section = current_node_normalization['id']
+                current_node_id_section = current_node_normalization["id"]
 
                 # update the node with the normalized info
-                normalized_id = current_node_id_section['identifier']
-                current_node['id'] = normalized_id
-                current_node[NODE_TYPES] = current_node_normalization['type']
-                current_node[SYNONYMS] = list(item['identifier'] for item in current_node_normalization[SYNONYMS])
+                normalized_id = current_node_id_section["identifier"]
+                current_node["id"] = normalized_id
+                current_node[NODE_TYPES] = current_node_normalization["type"]
+                current_node[SYNONYMS] = list(
+                    item["identifier"] for item in current_node_normalization[SYNONYMS]
+                )
 
                 # set the name as the primary label if it exists
-                if 'label' in current_node_id_section:
-                    current_node['name'] = current_node_id_section['label']
+                if "label" in current_node_id_section:
+                    current_node["name"] = current_node_id_section["label"]
 
                 # set the node description and/or information content if they are present
-                if 'information_content' in current_node_normalization:
-                    current_node[INFORMATION_CONTENT] = current_node_normalization[INFORMATION_CONTENT]
-                if 'description' in current_node_id_section:
-                    current_node[DESCRIPTION] = current_node_id_section['description']
+                if "information_content" in current_node_normalization:
+                    current_node[INFORMATION_CONTENT] = current_node_normalization[
+                        INFORMATION_CONTENT
+                    ]
+                if "description" in current_node_id_section:
+                    current_node[DESCRIPTION] = current_node_id_section["description"]
 
                 self.node_normalization_lookup[current_node_id] = [normalized_id]
             else:
@@ -258,7 +276,7 @@ class NodeNormalizer:
             if self.strict_normalization:
                 node_list[:] = [d for d in node_list if d is not None]
 
-        self.logger.debug(f'End of normalize_node_data.')
+        self.logger.debug(f"End of normalize_node_data.")
 
         # return the failed list to the caller
         return failed_to_normalize
@@ -274,28 +292,36 @@ class NodeNormalizer:
 
         if not self.sequence_variant_normalizer:
             self.sequence_variant_normalizer = GeneticsNormalizer(use_cache=False)
-            self.variant_node_types = self.sequence_variant_normalizer.get_sequence_variant_node_types()
+            self.variant_node_types = (
+                self.sequence_variant_normalizer.get_sequence_variant_node_types()
+            )
         variant_node_types = self.variant_node_types
 
-        variant_ids = [node['id'] for node in variant_nodes]
+        variant_ids = [node["id"] for node in variant_nodes]
         variant_nodes.clear()
 
-        sequence_variant_norms = self.sequence_variant_normalizer.normalize_variants(variant_ids)
+        sequence_variant_norms = self.sequence_variant_normalizer.normalize_variants(
+            variant_ids
+        )
         for variant_id, normalization_response in sequence_variant_norms.items():
             for normalization_info in normalization_response:
                 # if the normalization info contains an ID it was a success
-                if 'id' in normalization_info:
+                if "id" in normalization_info:
                     normalized_node = {
-                        'id': normalization_info["id"],
-                        'name': normalization_info["name"],
+                        "id": normalization_info["id"],
+                        "name": normalization_info["name"],
                         # as long as sequence variant types are all the same we can skip this assignment
                         # 'category': normalized_info["type"],
-                        'category': variant_node_types,
-                        'equivalent_identifiers': normalization_info["equivalent_identifiers"]
+                        "category": variant_node_types,
+                        "equivalent_identifiers": normalization_info[
+                            "equivalent_identifiers"
+                        ],
                     }
                     variant_nodes.append(normalized_node)
                     # assume we don't have a split and store the id for look up
-                    self.node_normalization_lookup[variant_id] = [normalization_info["id"]]
+                    self.node_normalization_lookup[variant_id] = [
+                        normalization_info["id"]
+                    ]
                 else:
                     # otherwise an error occurred
                     error_for_logs = f'{normalization_info["error_type"]}: {normalization_info["error_message"]}'
@@ -307,15 +333,15 @@ class NodeNormalizer:
                         # TODO for now we dont preserve other properties on variant nodes that didnt normalize
                         # the splitting makes that complicated and doesnt seem worth it until we have a good use case
                         fake_normalized_node = {
-                            'id': variant_id,
-                            'name': variant_id,
-                            'category': variant_node_types,
-                            'equivalent_identifiers': []
+                            "id": variant_id,
+                            "name": variant_id,
+                            "category": variant_node_types,
+                            "equivalent_identifiers": [],
                         }
                         variant_nodes.append(fake_normalized_node)
             if len(normalization_response) > 1:
                 # if we have more than one response here assume its a split variant and no errors
-                split_ids = [node['id'] for node in normalization_response]
+                split_ids = [node["id"] for node in normalization_response]
                 self.variant_node_splits[variant_id] = split_ids
                 # this will overwrite the previous single IDs stored
                 self.node_normalization_lookup[variant_id] = split_ids
@@ -327,7 +353,7 @@ class NodeNormalizer:
         Retrieves the current production version from the node normalization service.
         """
         # fetch the node norm openapi spec
-        node_norm_openapi_url = f'{self.node_norm_endpoint}openapi.json'
+        node_norm_openapi_url = f"{self.node_norm_endpoint}openapi.json"
         resp: requests.models.Response = requests.get(node_norm_openapi_url)
 
         # did we get a good status code
@@ -335,7 +361,7 @@ class NodeNormalizer:
             # convert json to dict
             openapi: dict = resp.json()
             # extract the version
-            node_norm_version = openapi['info']['version']
+            node_norm_version = openapi["info"]["version"]
             return node_norm_version
         else:
             # this shouldn't happen, raise an exception
@@ -343,10 +369,7 @@ class NodeNormalizer:
 
 
 class EdgeNormalizationResult:
-    def __init__(self,
-                 predicate: str,
-                 inverted: bool = False,
-                 properties: dict = None):
+    def __init__(self, predicate: str, inverted: bool = False, properties: dict = None):
         self.predicate = predicate
         self.inverted = inverted
         self.properties = properties
@@ -357,7 +380,7 @@ class EdgeNormalizer:
     Class that contains methods relating to edge normalization.
     """
 
-    def __init__(self, edge_normalization_version: str = 'latest'):
+    def __init__(self, edge_normalization_version: str = "latest"):
         """constructor.
 
         :param edge_normalization_version - not implemented yet
@@ -368,14 +391,18 @@ class EdgeNormalizer:
         # normalization map for future look up of all normalized predicates
         self.edge_normalization_lookup = {}
         self.cached_edge_norms = {}
-        self.edge_norm_endpoint = os.getenv('EDGE_NORMALIZATION_ENDPOINT', 'https://bl-lookup-sri.renci.org/')
+        self.edge_norm_endpoint = os.getenv(
+            "EDGE_NORMALIZATION_ENDPOINT", "https://bl-lookup-sri.renci.org/"
+        )
 
-        if edge_normalization_version != 'latest':
+        if edge_normalization_version != "latest":
             if self.check_bl_version_valid(edge_normalization_version):
                 self.edge_norm_version = edge_normalization_version
             else:
-                raise requests.exceptions.HTTPError(f'Edge norm version {edge_normalization_version} '
-                                                    f'is not supported by endpoint {self.edge_norm_endpoint}.')
+                raise requests.exceptions.HTTPError(
+                    f"Edge norm version {edge_normalization_version} "
+                    f"is not supported by endpoint {self.edge_norm_endpoint}."
+                )
         else:
             self.edge_norm_version = self.get_current_edge_norm_version()
 
@@ -415,12 +442,12 @@ class EdgeNormalizer:
                 end_index = last_index
 
             # collect a slice of predicates
-            predicate_chunk: list = predicates_to_normalize_list[start_index: end_index]
+            predicate_chunk: list = predicates_to_normalize_list[start_index:end_index]
 
             # hit the edge normalization service
-            request_url = f'{self.edge_norm_endpoint}resolve_predicate?version={self.edge_norm_version}&predicate='
-            request_url += '&predicate='.join(predicate_chunk)
-            self.logger.debug(f'Sending request: {request_url}')
+            request_url = f"{self.edge_norm_endpoint}resolve_predicate?version={self.edge_norm_version}&predicate="
+            request_url += "&predicate=".join(predicate_chunk)
+            self.logger.debug(f"Sending request: {request_url}")
             resp: requests.models.Response = requests.get(request_url)
 
             # if we get a success status code
@@ -434,7 +461,7 @@ class EdgeNormalizer:
                 pass
             else:
                 # this is a real error with the edge normalizer so we bail
-                error_message = f'Edge norm response code: {resp.status_code}'
+                error_message = f"Edge norm response code: {resp.status_code}"
                 self.logger.error(error_message)
                 resp.raise_for_status()
 
@@ -447,22 +474,29 @@ class EdgeNormalizer:
         # walk through the unique predicates and process normalized predicates for the lookup map
         for predicate in predicates_to_normalize:
             # did the service return a value with an identifier
-            if predicate in edge_normalizations and \
-                    (('predicate' in edge_normalizations[predicate]) or \
-                     ('identifier' in edge_normalizations[predicate])):
+            if predicate in edge_normalizations and (
+                ("predicate" in edge_normalizations[predicate])
+                or ("identifier" in edge_normalizations[predicate])
+            ):
                 normalization_info = edge_normalizations[predicate]
-                if 'predicate' in normalization_info:
-                    normalized_predicate = normalization_info.pop('predicate')
+                if "predicate" in normalization_info:
+                    normalized_predicate = normalization_info.pop("predicate")
                 else:
-                    normalized_predicate = normalization_info.pop('identifier')
-                normalization_info.pop('label', None)  # just deleting this key, it's not needed anymore
-                inverted = True if normalization_info.pop('inverted', False) else False
-                self.edge_normalization_lookup[predicate] = EdgeNormalizationResult(predicate=normalized_predicate,
-                                                                                    inverted=inverted,
-                                                                                    properties=normalization_info)
+                    normalized_predicate = normalization_info.pop("identifier")
+                normalization_info.pop(
+                    "label", None
+                )  # just deleting this key, it's not needed anymore
+                inverted = True if normalization_info.pop("inverted", False) else False
+                self.edge_normalization_lookup[predicate] = EdgeNormalizationResult(
+                    predicate=normalized_predicate,
+                    inverted=inverted,
+                    properties=normalization_info,
+                )
             else:
                 # this should not happen but if it does use the fallback predicate
-                self.edge_normalization_lookup[predicate] = EdgeNormalizationResult(predicate=FALLBACK_EDGE_PREDICATE)
+                self.edge_normalization_lookup[predicate] = EdgeNormalizationResult(
+                    predicate=FALLBACK_EDGE_PREDICATE
+                )
                 failed_to_normalize.append(predicate)
 
         # if something failed to normalize output it
@@ -493,7 +527,7 @@ class EdgeNormalizer:
         Get available versions.
         """
         # call the versions endpoint
-        edge_norm_versions_url = f'{self.edge_norm_endpoint}versions'
+        edge_norm_versions_url = f"{self.edge_norm_endpoint}versions"
         resp: requests.models.Response = requests.get(edge_norm_versions_url)
 
         # did we get a good status code
@@ -519,7 +553,7 @@ class EdgeNormalizer:
         Gets valid node types.
         """
         # call the descendants endpoint with the root node type
-        edge_norm_descendants_url = f'{self.edge_norm_endpoint}bl/{NAMED_THING}/descendants?version={self.edge_norm_version}'
+        edge_norm_descendants_url = f"{self.edge_norm_endpoint}bl/{NAMED_THING}/descendants?version={self.edge_norm_version}"
         resp: requests.models.Response = requests.get(edge_norm_descendants_url)
 
         # did we get a good status code
