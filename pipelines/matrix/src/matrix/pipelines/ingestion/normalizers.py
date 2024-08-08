@@ -109,7 +109,8 @@ class NodeNormalizer:
 
     def normalize_node_data(self, node_list: list, block_size: int = 1000) -> list:
         """This method calls the NodeNormalization web service to get the normalized identifier and name of the node.
-        the data comes in as a node list.
+
+        The data comes in as a node list.
 
         :param node_list: A list with items to normalize
         :param block_size: the number of curies in the request
@@ -349,9 +350,7 @@ class NodeNormalizer:
         return variant_nodes
 
     def get_current_node_norm_version(self):
-        """
-        Retrieves the current production version from the node normalization service.
-        """
+        """ Retrieves the current production version from the node normalization service. """
         # fetch the node norm openapi spec
         node_norm_openapi_url = f"{self.node_norm_endpoint}openapi.json"
         resp: requests.models.Response = requests.get(node_norm_openapi_url)
