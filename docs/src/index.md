@@ -4,10 +4,6 @@ hide:
   - toc
   - navigation
 ---
- 
-!!! warning
-
-    this page is still very much a work in progress. We have provided the initial docs page now and are working on making the content "MVP ready".
 
 <div class="grid cards" markdown>
 
@@ -53,6 +49,7 @@ hide:
 </div>
 
 
+<!--
 Our technology stack below (1):
 { .annotate }
 
@@ -68,3 +65,5 @@ Our shared end to end vision of the pipeline is visualised below:
   
 
 ![](./assets/img/mtrx_arch.drawio)
+
+-->

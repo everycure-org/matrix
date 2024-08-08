@@ -7,16 +7,19 @@ https://docs.kedro.org/en/stable/kedro_project_setup/settings.html.
 # Instantiated project hooks.
 # For example, after creating a hooks.py and defining a ProjectHooks class there, do
 # from pandas_viz.hooks import ProjectHooks
-from matrix.hooks import *
+import matrix.hooks as hooks
+from kedro_mlflow.framework.hooks import MlflowHook
 
 # Hooks are executed in a Last-In-First-Out (LIFO) order.
 HOOKS = (
-    SparkHooks(),
-    NodeTimerHooks(),
+    hooks.NodeTimerHooks(),
+    MlflowHook(),
+    hooks.MLFlowHooks(),
+    hooks.SparkHooks(),
 )
 
 # Installed plugins for which to disable hook auto-registration.
-# DISABLE_HOOKS_FOR_PLUGINS = ("kedro-viz",)
+DISABLE_HOOKS_FOR_PLUGINS = ("kedro-mlflow",)
 
 # Class that manages storing KedroSession data.
 from pathlib import Path  # noqa: E402
@@ -39,9 +42,10 @@ CONFIG_LOADER_CLASS = OmegaConfigLoader
 CONFIG_LOADER_ARGS = {
     "base_env": "base",
     "default_run_env": "local",
-    "merge_strategy": {"parameters": "soft"},
+    "merge_strategy": {"parameters": "soft", "mlflow": "soft"},
     "config_patterns": {
         "spark": ["spark*", "spark*/**"],
+        "mlflow": ["mlflow*", "mlflow*/**"],
         "globals": ["globals*", "globals*/**", "**/globals*"],
         "parameters": [
             "parameters*",
