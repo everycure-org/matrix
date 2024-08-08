@@ -22,7 +22,7 @@ def create_pipeline(**kwargs) -> Pipeline:
             #         "preprocessing.raw.nodes",
             #         "params:preprocessing.synonymizer_endpoint",
             #     ],
-            #     outputs="preprocessing.int.nodes",
+            #     outputs="preprocessing.int.resolved_nodes",
             #     name="resolve_nodes",
             #     tags=["resolve"],
             # ),
@@ -36,39 +36,37 @@ def create_pipeline(**kwargs) -> Pipeline:
                     target_col="id",
                 ),
                 inputs=[
-                    "preprocessing.int.nodes",
+                    "preprocessing.int.resolved_nodes",
                     "params:preprocessing.synonymizer_endpoint",
                 ],
-                outputs="preprocessing.prm.nodes",
+                outputs="preprocessing.int.normalized_nodes",
                 name="normalize_nodes",
                 tags=["normalize"],
             ),
-            # # Transcode to pandas
-            # node(
-            #     func=lambda x: x,
-            #     inputs=["preprocessing.int.exp.nodes_excel"],
-            #     outputs="preprocessing.int.exp.nodes@pandas",
-            #     name="transcode_pandas",
-            #     tags=["exp"],
-            # ),
-            # node(
-            #     func=lambda x: x,
-            #     inputs=["preprocessing.raw.exp.edges"],
-            #     outputs="preprocessing.int.exp.edges@pandas",
-            #     name="create_int_edges",
-            #     tags=["exp"],
-            # ),
-            # # NOTE: Filter away all nodes that we could not resolve
-            # # FUTURE: Either Charlotte needs to ensure things join OR
-            # #   We need to agree that unresolved nodes should introduce
-            # #   new concepts.
-            # node(
-            #     func=nodes.create_prm_nodes,
-            #     inputs=["preprocessing.int.exp.nodes@spark"],
-            #     outputs="preprocessing.prm.exp.nodes",
-            #     name="create_prm_exp_nodes",
-            #     tags=["exp"],
-            # ),
+            # Transcode to pandas
+            node(
+                func=lambda x: x,
+                inputs=["preprocessing.int.normalized_nodes"],
+                outputs="preprocessing.int.nodes@pandas",
+                name="transcode_nodes_pandas",
+            ),
+            # NOTE: Filter away all nodes that we could not resolve
+            # FUTURE: Either Charlotte needs to ensure things join OR
+            #   We need to agree that unresolved nodes should introduce
+            #   new concepts.
+            node(
+                func=nodes.create_prm_nodes,
+                inputs=["preprocessing.int.nodes@spark"],
+                outputs="preprocessing.prm.nodes",
+                name="create_prm_nodes",
+            ),
+            node(
+                func=lambda x: x,
+                inputs=["preprocessing.raw.edges"],
+                outputs="preprocessing.int.edges@pandas",
+                name="create_int_edges",
+                tags=["exp"],
+            ),
             # # Ensure edges use synonymized identifiers
             # # NOTE: Charlotte introduces her own identifiers in the
             # # nodes dataset, to enable edge creation.
@@ -82,6 +80,5 @@ def create_pipeline(**kwargs) -> Pipeline:
             #     name="create_prm_exp_edges",
             #     tags=["exp"],
             # ),
-            # # NET: Edges dataset that connects synonymized identifiers
         ]
     )
