@@ -178,8 +178,15 @@ def reduce_dimension(df: DataFrame, transformer, input: str, output: str, skip: 
         transformer: transformer to apply
         input: name of attribute to transform
         output: name of attribute to store result
+        skip (bool, optional): whether to skip the transformation. Defaults to False
     Returns:
-        Dataframe with reduced dimension or original dimension if skipped
+        DataFrame: A DataFrame with either the reduced dimension embeddings or the original
+                   embeddings, depending on the 'skip' parameter.
+
+    Note: 
+    - If skip is True, the function returns the original embeddings from the LLM model. 
+    - If skip is False, the function returns the embeddings after applying the dimensionality reduction technique.
+    
     """
     if skip:
         return df.withColumn(output, F.col(input))
