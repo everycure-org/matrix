@@ -70,6 +70,7 @@ class BigQueryTableDataset(SparkDataset):
         project_id: str,
         dataset: str,
         table: str,
+        identifier: str,
         load_args: dict[str, Any] = None,
         save_args: dict[str, Any] = None,
         version: Version = None,
@@ -83,6 +84,7 @@ class BigQueryTableDataset(SparkDataset):
             project_id: project identifier.
             dataset: Name of the BigQuery dataset.
             table: name of the table.
+            identifier: unique identfier of the table.
             load_args: Arguments to pass to the load method.
             save_args: Arguments to pass to the save
             version: Version of the dataset.

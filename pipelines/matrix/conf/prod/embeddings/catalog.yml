@@ -6,7 +6,7 @@ embeddings.feat.nodes:
   <<: *_bigquery_ds
   dataset: data_api
   table: nodes
-  version: "${globals:versions.release}"
+  identifier: "${globals:versions.release}"
   save_args:
     temporaryGcsBucket: ${globals:gcs_bucket}
 
@@ -14,7 +14,7 @@ embeddings.feat.edges:
   <<: *_bigquery_ds
   dataset: data_api
   table: "edges"
-  version: "${globals:versions.release}"
+  identifier: "${globals:versions.release}"
   save_args:
     temporaryGcsBucket: ${globals:gcs_bucket}
     # bigQueryTableLabel.release: ${globals:versions.release}

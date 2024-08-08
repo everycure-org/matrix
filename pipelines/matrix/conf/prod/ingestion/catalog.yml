@@ -11,7 +11,7 @@ ingestion.prm.rtx_kg2.nodes:
   <<: *_bigquery_ds
   dataset: kg_rtx_kg2
   table: nodes
-  version: "${globals:data_sources.rtx-kg2.version}"
+  identifier: "${globals:data_sources.rtx-kg2.version}"
   save_args:
     temporaryGcsBucket: ${globals:gcs_bucket}
     bigQueryTableLabel.kg: rtx_kg2
@@ -21,7 +21,7 @@ ingestion.prm.rtx_kg2.edges:
   <<: *_bigquery_ds
   dataset: kg_rtx_kg2
   table: edges
-  version: "${globals:data_sources.rtx-kg2.version}"
+  identifier: "${globals:data_sources.rtx-kg2.version}"
   save_args:
     temporaryGcsBucket: ${globals:gcs_bucket}
     bigQueryTableLabel.kg: rtx_kg2
