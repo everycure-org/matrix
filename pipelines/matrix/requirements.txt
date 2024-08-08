@@ -15,6 +15,10 @@ aioitertools==0.11.0
     # via aiobotocore
 aiosignal==1.3.1
     # via aiohttp
+alembic==1.13.2
+    # via mlflow
+aniso8601==9.0.1
+    # via graphene
 annotated-types==0.7.0
     # via pydantic
 antlr4-python3-runtime==4.9.3
@@ -54,6 +58,8 @@ binaryornot==0.4.4
     # via cookiecutter
 bleach==6.1.0
     # via nbconvert
+blinker==1.8.2
+    # via flask
 boltons==24.0.0
     # via brix-refit
 botocore==1.34.131
@@ -68,6 +74,7 @@ cachetools==5.4.0
     # via
     #   google-auth
     #   kedro
+    #   mlflow-skinny
 certifi==2024.7.4
     # via
     #   httpcore
@@ -83,10 +90,14 @@ click==8.1.7
     # via
     #   click-default-group
     #   cookiecutter
+    #   flask
     #   kedro
+    #   mlflow-skinny
     #   uvicorn
 click-default-group==1.2.4
     # via kedro-viz
+cloudpickle==3.0.0
+    # via mlflow-skinny
 comm==0.2.2
     # via ipykernel
 contourpy==1.2.1
@@ -95,6 +106,8 @@ cookiecutter==2.6.0
     # via kedro
 cycler==0.12.1
     # via matplotlib
+databricks-sdk==0.29.0
+    # via mlflow-skinny
 debugpy==1.8.5
     # via ipykernel
 decorator==5.1.1
@@ -103,10 +116,18 @@ decorator==5.1.1
     #   ipython
 defusedxml==0.7.1
     # via nbconvert
+deprecated==1.2.14
+    # via
+    #   opentelemetry-api
+    #   opentelemetry-semantic-conventions
+docker==7.1.0
+    # via mlflow
 docopt==0.6.2
     # via hdfs
 dynaconf==3.2.6
     # via kedro
+entrypoints==0.4
+    # via mlflow-skinny
 executing==2.0.1
     # via stack-data
 faker==4.18.0
@@ -115,6 +136,8 @@ fastapi==0.112.0
     # via kedro-viz
 fastjsonschema==2.20.0
     # via nbformat
+flask==3.0.3
+    # via mlflow
 fonttools==4.53.1
     # via matplotlib
 fqdn==1.5.1
@@ -134,13 +157,16 @@ gcsfs==2024.3.1
 gitdb==4.0.11
     # via gitpython
 gitpython==3.1.43
-    # via kedro
+    # via
+    #   kedro
+    #   mlflow-skinny
 google-api-core==2.19.1
     # via
     #   google-cloud-core
     #   google-cloud-storage
 google-auth==2.32.0
     # via
+    #   databricks-sdk
     #   gcsfs
     #   google-api-core
     #   google-auth-oauthlib
@@ -162,10 +188,19 @@ googleapis-common-protos==1.63.2
     # via google-api-core
 graphdatascience==1.11
     # via -r requirements.in
+graphene==3.3
+    # via mlflow
 graphql-core==3.2.3
-    # via strawberry-graphql
+    # via
+    #   graphene
+    #   graphql-relay
+    #   strawberry-graphql
 greenlet==3.0.3
     # via sqlalchemy
+graphql-relay==3.2.0
+    # via graphene
+gunicorn==22.0.0
+    # via mlflow
 h11==0.14.0
     # via
     #   httpcore
@@ -185,8 +220,11 @@ idna==3.7
     #   jsonschema
     #   requests
     #   yarl
-importlib-metadata==8.2.0
-    # via kedro
+importlib-metadata==7.2.1
+    # via
+    #   kedro
+    #   mlflow-skinny
+    #   opentelemetry-api
 importlib-resources==6.4.0
     # via kedro
 iniconfig==2.0.0
@@ -200,14 +238,18 @@ ipython==8.26.0
     #   kedro-viz
 isoduration==20.11.0
     # via jsonschema
+itsdangerous==2.2.0
+    # via flask
 jedi==0.19.1
     # via ipython
 jinja2==3.1.4
     # via
     #   cookiecutter
+    #   flask
     #   jupyter-server
     #   jupyterlab
     #   jupyterlab-server
+    #   mlflow
     #   nbconvert
 jmespath==1.0.1
     # via botocore
@@ -267,9 +309,14 @@ kedro==0.19.7
     # via
     #   -r requirements.in
     #   kedro-datasets
+    #   kedro-mlflow
     #   kedro-telemetry
     #   kedro-viz
 kedro-datasets==4.1.0
+    # via
+    #   -r requirements.in
+    #   kedro-mlflow
+kedro-mlflow==0.12.2
     # via -r requirements.in
 kedro-telemetry==0.6.0
     # via
@@ -281,14 +328,22 @@ kiwisolver==1.4.5
     # via matplotlib
 lazy-loader==0.4
     # via kedro-datasets
+mako==1.3.5
+    # via alembic
+markdown==3.6
+    # via mlflow
 markdown-it-py==3.0.0
     # via rich
 markupsafe==2.1.5
     # via
     #   jinja2
+    #   mako
     #   nbconvert
-matplotlib==3.9.0
-    # via -r requirements.in
+    #   werkzeug
+matplotlib==3.9.1
+    # via
+    #   -r requirements.in
+    #   mlflow
 matplotlib-inline==0.1.7
     # via
     #   ipykernel
@@ -297,6 +352,12 @@ mdurl==0.1.2
     # via markdown-it-py
 mistune==3.0.2
     # via nbconvert
+mlflow==2.15.0
+    # via
+    #   -r requirements.in
+    #   kedro-mlflow
+mlflow-skinny==2.15.0
+    # via mlflow
 more-itertools==10.3.0
     # via
     #   -r requirements.in
@@ -340,6 +401,7 @@ numpy==1.24.0
     #   contourpy
     #   graphdatascience
     #   matplotlib
+    #   mlflow
     #   pandas
     #   pandera
     #   pyarrow
@@ -354,6 +416,15 @@ oauthlib==3.2.2
     # via requests-oauthlib
 omegaconf==2.3.0
     # via kedro
+opentelemetry-api==1.26.0
+    # via
+    #   mlflow-skinny
+    #   opentelemetry-sdk
+    #   opentelemetry-semantic-conventions
+opentelemetry-sdk==1.26.0
+    # via mlflow-skinny
+opentelemetry-semantic-conventions==0.47b0
+    # via opentelemetry-sdk
 orjson==3.10.6
     # via kedro-viz
 overrides==7.7.0
@@ -361,6 +432,7 @@ overrides==7.7.0
 packaging==24.1
     # via
     #   build
+    #   gunicorn
     #   ipykernel
     #   jupyter-server
     #   jupyterlab
@@ -368,6 +440,7 @@ packaging==24.1
     #   kedro-viz
     #   lazy-loader
     #   matplotlib
+    #   mlflow-skinny
     #   nbconvert
     #   pandera
     #   plotly
@@ -380,6 +453,7 @@ pandas==1.5.3
     #   brix-refit
     #   graphdatascience
     #   kedro-viz
+    #   mlflow
     #   pandera
 pandera==0.20.3
     # via brix-refit
@@ -417,6 +491,7 @@ protobuf==5.27.3
     # via
     #   google-api-core
     #   googleapis-common-protos
+    #   mlflow-skinny
     #   proto-plus
 psutil==6.0.0
     # via ipykernel
@@ -430,10 +505,11 @@ py4j==0.10.9.7
     # via pyspark
 pyaml==24.7.0
     # via scikit-optimize
-pyarrow==16.1.0
+pyarrow==15.0.2
     # via
     #   -r requirements.in
     #   graphdatascience
+    #   mlflow
 pyasn1==0.6.0
     # via
     #   pyasn1-modules
@@ -445,6 +521,7 @@ pycparser==2.22
 pydantic==2.8.2
     # via
     #   fastapi
+    #   kedro-mlflow
     #   kedro-viz
     #   pandera
 pydantic-core==2.20.1
@@ -485,6 +562,7 @@ pytoolconfig==1.3.1
     # via rope
 pytz==2024.1
     # via
+    #   mlflow-skinny
     #   neo4j
     #   pandas
 pyyaml==6.0.1
@@ -492,6 +570,7 @@ pyyaml==6.0.1
     #   cookiecutter
     #   jupyter-events
     #   kedro
+    #   mlflow-skinny
     #   omegaconf
     #   pyaml
     #   uvicorn
@@ -502,6 +581,8 @@ pyzmq==26.1.0
     #   jupyter-server
 redis==5.0.8
     # via robokop-genetics
+querystring-parser==1.2.4
+    # via mlflow
 referencing==0.35.1
     # via
     #   jsonschema
@@ -510,6 +591,8 @@ referencing==0.35.1
 requests==2.32.3
     # via
     #   cookiecutter
+    #   databricks-sdk
+    #   docker
     #   gcsfs
     #   google-api-core
     #   google-cloud-storage
@@ -517,6 +600,7 @@ requests==2.32.3
     #   hdfs
     #   jupyterlab-server
     #   kedro-telemetry
+    #   mlflow-skinny
     #   requests-oauthlib
     #   robokop-genetics
 requests-oauthlib==2.0.0
@@ -552,11 +636,13 @@ s3fs==2024.3.1
 scikit-learn==1.4.0
     # via
     #   -r requirements.in
+    #   mlflow
     #   scikit-optimize
 scikit-optimize==0.10.2
     # via -r requirements.in
 scipy==1.14.0
     # via
+    #   mlflow
     #   scikit-learn
     #   scikit-optimize
     #   xgboost
@@ -573,6 +659,7 @@ six==1.16.0
     #   hdfs
     #   python-cypher
     #   python-dateutil
+    #   querystring-parser
     #   rfc3339-validator
 smmap==5.0.1
     # via gitdb
@@ -582,8 +669,13 @@ sniffio==1.3.1
     #   httpx
 soupsieve==2.5
     # via beautifulsoup4
-sqlalchemy==2.0.32
-    # via kedro-viz
+sqlalchemy==2.0.31
+    # via
+    #   alembic
+    #   kedro-viz
+    #   mlflow
+sqlparse==0.5.1
+    # via mlflow-skinny
 stack-data==0.6.3
     # via ipython
 starlette==0.37.2
@@ -640,10 +732,12 @@ types-python-dateutil==2.9.0.20240316
     # via arrow
 typing-extensions==4.12.2
     # via
+    #   alembic
     #   fastapi
     #   graphdatascience
     #   ipython
     #   kedro
+    #   opentelemetry-sdk
     #   pydantic
     #   pydantic-core
     #   sqlalchemy
@@ -657,6 +751,7 @@ uri-template==1.3.0
 urllib3==2.2.2
     # via
     #   botocore
+    #   docker
     #   requests
 uvicorn==0.30.5
     # via kedro-viz
@@ -678,9 +773,12 @@ websocket-client==1.8.0
     # via jupyter-server
 websockets==12.0
     # via uvicorn
+werkzeug==3.0.3
+    # via flask
 wrapt==1.16.0
     # via
     #   aiobotocore
+    #   deprecated
     #   pandera
 xgboost==2.1.1
     # via -r requirements.in
