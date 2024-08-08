@@ -71,6 +71,20 @@ services:
     volumes:
       - ./mockgenai-initializer.json:/openapi/initializer.json:ro
 
+  mlflow:
+    build: "services/mlflow"
+    ports:
+      - "5001:5000"
+    command: mlflow server --host 0.0.0.0
+    healthcheck:
+      test: wget http://localhost:5000/health || exit 1
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    networks:
+      - web
+
 networks:
   web:
     name: web

@@ -163,7 +163,11 @@ def create_pipeline(**kwargs) -> Pipeline:
                 outputs="modelling.model_input.splits",
                 name="create_splits",
             ),
-        ]
+        ],
+        tags=[
+            model["model_name"]
+            for model in settings.DYNAMIC_PIPELINES_MAPPING.get("modelling")
+        ],
     )
 
     pipes = []
