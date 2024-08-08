@@ -1,0 +1,34 @@
+changelog:
+  exclude:
+    labels:
+      - Release
+      - hide-from-release
+  #   authors:
+  #     - octocat
+  categories:
+    - title: Breaking Changes 🛠
+      labels:
+        - Semver-Major
+        - breaking-change
+    - title: Exciting New Features 🎉
+      labels:
+        - Semver-Minor
+        - Feature
+    - title: Experiments 🧪
+      labels:
+        - experiment report
+    - title: Bugfixes 🐛
+      labels:
+        - bug
+        - Bugfix
+    - title: Technical Enhancements 🧰
+      labels:
+        - enhancement
+        - Simplification
+        - infrastructure
+    - title: Documentation ✏️
+      labels:
+        - documentation
+    - title: Other Changes
+      labels:
+        - "*"
