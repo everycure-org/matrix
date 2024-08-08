@@ -9,6 +9,7 @@ kedro-telemetry>=0.3.1
 kedro-viz>=6.7.0
 kedro~=0.19.5
 matplotlib
+more-itertools~=10.3.0
 notebook
 pyarrow>=14.0.2 
 pyspark==3.5.1
@@ -22,3 +23,4 @@ graphdatascience
 neo4j>=5.5.0
 python-cypher==0.20.1
 termplotlib
+git+https://github.com/ObesityHub/robokop-genetics.git
