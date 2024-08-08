@@ -31,48 +31,55 @@ _spark_csv_ds: &_spark_csv
 # Datasets
 # -------------------------------------------------------------------------
 
-preprocessing.raw.exp.nodes:
+preprocessing.raw.nodes:
   <<: *_layer_raw
   type: pandas.ExcelDataset
   filepath: ${globals:paths.raw}/exp.xlsx
   load_args:
     sheet_name: Nodes
 
-preprocessing.raw.exp.edges:
+preprocessing.raw.edges:
   <<: *_layer_raw
   type: pandas.ExcelDataset
   filepath: ${globals:paths.raw}/exp.xlsx
   load_args:
     sheet_name: Edges
 
-preprocessing.int.exp.nodes_excel:
+preprocessing.int.nodes:
   <<: [*_layer_int]
   type: pandas.ExcelDataset
-  filepath: ${globals:paths.int}/exp/nodes.xlsx
+  filepath: ${globals:paths.int}/medical/nodes.xlsx
   save_args:
     sheet_name: Edges
 
-preprocessing.int.exp.nodes@pandas:
-  <<: [*_layer_int, *_pandas_csv]
-  type: pandas.ExcelDataset
-  filepath: ${globals:paths.int}/exp/nodes.xlsx
-
-preprocessing.int.exp.nodes@spark:
-  <<: [*_layer_int, *_spark_csv]
-  filepath: ${globals:paths.int}/exp/nodes.csv
-
-preprocessing.int.exp.edges@pandas:
-  <<: [*_layer_int, *_pandas_csv]
-  filepath: ${globals:paths.int}/exp/edges.csv
-
-preprocessing.int.exp.edges@spark:
-  <<: [*_layer_int, *_spark_csv]
-  filepath: ${globals:paths.int}/exp/edges.csv
-
 preprocessing.prm.exp.nodes:
-  <<: [*_layer_prm, *_spark_csv]
-  filepath: ${globals:paths.prm}/exp/nodes
+  <<: [*_layer_int]
+  type: pandas.ExcelDataset
+  filepath: ${globals:paths.prm}/exp/nodes.xlsx
+  save_args:
+    sheet_name: Edges
 
-preprocessing.prm.exp.edges:
-  <<: [*_layer_prm, *_spark_csv]
-  filepath: ${globals:paths.prm}/exp/edges
+# preprocessing.int.exp.nodes@pandas:
+#   <<: [*_layer_int, *_pandas_csv]
+#   type: pandas.ExcelDataset
+#   filepath: ${globals:paths.int}/exp/nodes.xlsx
+
+# preprocessing.int.exp.nodes@spark:
+#   <<: [*_layer_int, *_spark_csv]
+#   filepath: ${globals:paths.int}/exp/nodes.csv
+
+# preprocessing.int.exp.edges@pandas:
+#   <<: [*_layer_int, *_pandas_csv]
+#   filepath: ${globals:paths.int}/exp/edges.csv
+
+# preprocessing.int.exp.edges@spark:
+#   <<: [*_layer_int, *_spark_csv]
+#   filepath: ${globals:paths.int}/exp/edges.csv
+
+# preprocessing.prm.exp.nodes:
+#   <<: [*_layer_prm, *_spark_csv]
+#   filepath: ${globals:paths.prm}/exp/nodes
+
+# preprocessing.prm.exp.edges:
+#   <<: [*_layer_prm, *_spark_csv]
+#   filepath: ${globals:paths.prm}/exp/edges

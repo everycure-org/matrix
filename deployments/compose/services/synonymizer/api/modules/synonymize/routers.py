@@ -4,7 +4,7 @@ from typing import List
 
 from .node_synonymizer import NodeSynonymizer
 
-router = APIRouter(prefix="/synonymize", tags=["synonymize"])
+router = APIRouter(prefix="", tags=["synonymize"])
 
 synonymizer = NodeSynonymizer()
 
@@ -15,7 +15,7 @@ class Search(BaseModel):
     names: List[str]
 
 
-@router.get("")
+@router.get("/synonymize")
 async def get_canonical_curies(search: Search):
     """Endpoint to get canonical curies.
 
@@ -23,3 +23,13 @@ async def get_canonical_curies(search: Search):
         Searhc: search string
     """
     return synonymizer.get_canonical_curies(names=search.names)
+
+
+@router.get("/normalize")
+async def get_normalizer_result(search: Search):
+    """Endpoint to get canonical curies.
+
+    Args:
+        Searhc: search string
+    """
+    return synonymizer.get_normalizer_results(entities=search.names)

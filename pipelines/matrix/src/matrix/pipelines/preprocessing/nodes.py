@@ -3,6 +3,7 @@ import requests
 
 import pandas as pd
 
+from typing import Callable
 from functools import partial
 from pyspark.sql import DataFrame
 
@@ -12,10 +13,8 @@ from refit.v1.core.inline_has_schema import has_schema
 from refit.v1.core.inline_primary_key import primary_key
 
 
-def resolve_curie(name: str, endpoint: str) -> str:
+def resolve(name: str, endpoint: str) -> str:
     """Function to retrieve curie through the synonymizer.
-
-    FUTURE: Ensure downstream API yields 404 HTTP when not found.
 
     Args:
         name: name of the node
@@ -23,13 +22,29 @@ def resolve_curie(name: str, endpoint: str) -> str:
     Returns:
         Corresponding curie
     """
-    # For instance, I give {"gives": ["long covid"]}
     result = requests.get(f"{endpoint}/synonymize", json={"names": [name]})
 
-    # Retrsult {"long covid": {"preferred_curie": "MONDO:x"}}
     element = result.json().get(name)
     if element:
         return element.get("preferred_curie", None)
+
+    return None
+
+
+def normalize(curie: str, endpoint: str):
+    """Function to retrieve the normalized identifier through the synonymizer.
+
+    Args:
+        curie: curie of the node
+        endpoint: endpoint of the synonymizer
+    Returns:
+        Corresponding curie
+    """
+    result = requests.get(f"{endpoint}/normalize", json={"names": [name]})
+
+    element = result.json().get(curie)
+    if element:
+        return element.get("id", {}).get("identifier")
 
     return None
 
@@ -43,16 +58,21 @@ def resolve_curie(name: str, endpoint: str) -> str:
     allow_subset=True,
 )
 @primary_key(primary_key=["ID"])
-def resolve_nodes(df: pd.DataFrame, endpoint: str) -> pd.DataFrame:
+def enrich_df(
+    df: pd.DataFrame, func: Callable, endpoint: str, input_col: str, target_col: str
+) -> pd.DataFrame:
     """Function to resolve nodes of the nodes input dataset.
 
     Args:
         df: nodes dataframe
         endpoint: endpoint of the synonymizer
+        func: func to call
+        input_col: input col
+        target_col: target col
     Returns:
         dataframe enriched with Curie column
     """
-    df["curie"] = df["name"].apply(partial(resolve_curie, endpoint=endpoint))
+    df[target_col] = df[input_col].apply(partial(func, endpoint=endpoint))
 
     return df
 
