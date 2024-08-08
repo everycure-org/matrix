@@ -21,8 +21,7 @@ FALLBACK_EDGE_PREDICATE = 'biolink:related_to'
 
 
 class NodeNormalizer:
-    """
-    Class that contains methods relating to node normalization of KGX data.
+    """Class that contains methods relating to node normalization of KGX data.
 
     the input node list should be KGX compliant and have the following columns that may be
     changed during the normalization:
@@ -38,9 +37,9 @@ class NodeNormalizer:
                  biolink_version: str = 'latest',
                  strict_normalization: bool = True,
                  conflate_node_types: bool = False):
-        """
-        constructor
-        :param node_normalization_version - not implemented yet
+        """constructor.
+
+            :param node_normalization_version - not implemented yet
         """
         self.logger = logging.getLogger(__name__)
 
@@ -63,8 +62,8 @@ class NodeNormalizer:
         self.variant_node_types = None
 
     def hit_node_norm_service(self, curies, retries=0):
-        """
-            call the NN service
+        """call the NN service.
+
             :param curies
             :param retries
         """
@@ -100,8 +99,7 @@ class NodeNormalizer:
                 resp.raise_for_status()
 
     def normalize_node_data(self, node_list: list, block_size: int = 1000) -> list:
-        """
-        This method calls the NodeNormalization web service to get the normalized identifier and name of the node.
+        """This method calls the NodeNormalization web service to get the normalized identifier and name of the node.
         the data comes in as a node list.
 
         :param node_list: A list with items to normalize
@@ -266,8 +264,7 @@ class NodeNormalizer:
         return failed_to_normalize
 
     def normalize_sequence_variants(self, variant_nodes: list):
-        """
-        Normalize Genetic Sequence Variants
+        """Normalize Genetic Sequence Variants
 
         :param variant_nodes:
         """
@@ -361,6 +358,11 @@ class EdgeNormalizer:
     """
 
     def __init__(self, edge_normalization_version: str = 'latest'):
+        """constructor.
+
+        :param edge_normalization_version - not implemented yet
+        """
+
         # create a logger
         self.logger = logging.getLogger(__name__)
         # normalization map for future look up of all normalized predicates
@@ -378,8 +380,7 @@ class EdgeNormalizer:
             self.edge_norm_version = self.get_current_edge_norm_version()
 
     def normalize_edge_data(self, edge_list: list, block_size: int = 100) -> list:
-        """
-        This method calls the EdgeNormalization web service to retrieve information for normalizing edges.
+        """This method calls the EdgeNormalization web service to retrieve information for normalizing edges.
 
         :param edge_list: A list of edges to normalize - edges are dictionaries with the PREDICATE constant as a key
         :param block_size: the number of predicates to process in a single call
