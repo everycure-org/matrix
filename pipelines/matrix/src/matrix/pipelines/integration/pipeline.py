@@ -19,7 +19,7 @@ def create_pipeline(**kwargs) -> Pipeline:
             node(
                 func=nodes.create_edges,
                 inputs=[
-                    "ingestion.model_input.nodes",
+                    "integration.model_input.nodes",
                     "ingestion.prm.rtx_kg2.edges",
                     "params:integration.graphsage_excl_preds",
                 ],
