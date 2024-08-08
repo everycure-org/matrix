@@ -55,7 +55,7 @@ def create_pipeline(**kwargs) -> Pipeline:
             # NOTE: Quickly taking a subset
             node(
                 func=_edges_subset,
-                inputs=["integration.raw.rtx_kg2.edges@spark"],
+                inputs=["ingestion.raw.rtx_kg2.edges@spark"],
                 outputs="preprocessing.prm.exp.edges",
                 name="create_exp_edges",
             ),
