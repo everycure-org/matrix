@@ -5,8 +5,10 @@ embeddings.ai_config:
 
 # Reducing dimensionality reduction to speed up runtime
 embeddings.dimensionality_reduction:
+  skip: false
   transformer:
     k: 2
+    
 
 embeddings.topological:
   estimator:

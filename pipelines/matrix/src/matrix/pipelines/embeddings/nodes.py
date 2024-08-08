@@ -170,7 +170,7 @@ def compute_embeddings(
 
 @unpack_params()
 @inject_object()
-def reduce_dimension(df: DataFrame, transformer, input: str, output: str):
+def reduce_dimension(df: DataFrame, transformer, input: str, output: str, skip: bool = False):
     """Function to apply dimensionality reduction.
 
     Args:
@@ -179,8 +179,11 @@ def reduce_dimension(df: DataFrame, transformer, input: str, output: str):
         input: name of attribute to transform
         output: name of attribute to store result
     Returns:
-        Dataframe with reduced dimension
+        Dataframe with reduced dimension or original dimension if skipped
     """
+    if skip:
+        return df.withColumn(output, F.col(input))
+
     # Convert into correct type
     df = df.withColumn("features", array_to_vector(input))
 
