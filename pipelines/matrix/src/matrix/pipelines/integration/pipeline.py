@@ -11,7 +11,7 @@ def create_pipeline(**kwargs) -> Pipeline:
             # Write kg2 Neo4J
             node(
                 func=nodes.create_nodes,
-                inputs=["integration.prm.rtx_kg2.nodes"],
+                inputs=["ingestion.prm.rtx_kg2.nodes"],
                 outputs="integration.model_input.nodes",
                 name="create_neo4j_nodes",
                 tags=["rtx_kg2", "neo4j"],
@@ -19,8 +19,8 @@ def create_pipeline(**kwargs) -> Pipeline:
             node(
                 func=nodes.create_edges,
                 inputs=[
-                    "integration.model_input.nodes",
-                    "integration.prm.rtx_kg2.edges",
+                    "ingestion.model_input.nodes",
+                    "ingestion.prm.rtx_kg2.edges",
                     "params:integration.graphsage_excl_preds",
                 ],
                 outputs="integration.model_input.edges",
