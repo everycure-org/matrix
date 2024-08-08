@@ -1,5 +1,5 @@
 """Module to represent models."""
-from typing import List, Callable, Optional
+from typing import List, Callable
 from sklearn.base import BaseEstimator
 
 import numpy as np
