@@ -52,10 +52,10 @@ preprocessing.int.nodes:
   save_args:
     sheet_name: Edges
 
-preprocessing.prm.exp.nodes:
+preprocessing.prm.nodes:
   <<: [*_layer_int]
   type: pandas.ExcelDataset
-  filepath: ${globals:paths.prm}/exp/nodes.xlsx
+  filepath: ${globals:paths.prm}/medical/nodes.xlsx
   save_args:
     sheet_name: Edges
 
