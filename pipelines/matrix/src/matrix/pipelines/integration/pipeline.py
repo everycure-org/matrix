@@ -11,7 +11,7 @@ def create_pipeline(**kwargs) -> Pipeline:
             # union edges
             node(
                 func=nodes.unify_edges,
-                inputs=["ingestion.prm.rtx_kg2.edges", "preprocessing.prm.exp.edges"],
+                inputs=["ingestion.prm.rtx_kg2.edges", "preprocessing.prm.edges"],
                 outputs="integration.prm.edges",
                 name="create_prm_edges",
                 tags=["rtx_kg2"],
