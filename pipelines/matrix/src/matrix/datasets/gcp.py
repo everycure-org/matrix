@@ -1,6 +1,7 @@
 """Module with GCP datasets for Kedro."""
 from typing import Any, Dict
 from copy import deepcopy
+import re
 
 from kedro.io.core import Version
 from kedro_datasets.spark import SparkDataset
@@ -91,7 +92,9 @@ class BigQueryTableDataset(SparkDataset):
         """
         self._project_id = project_id
         self._dataset = dataset
-        self._table = table
+
+        version = re.sub(r"[^a-zA-Z0-9_-]", "_", version)
+        self._table = f"{table}_{version}"
 
         super().__init__(
             filepath="filepath",
