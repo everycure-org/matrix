@@ -21,6 +21,8 @@ versions:
 data_sources:
   rtx-kg2:
     version: v2.7.3
+  robokop_kg:
+    version: test
 
 paths:
   # we read from our central GCS bucket where we store our ground truth data
