@@ -2,7 +2,7 @@ versions:
   # overwritten in prod environment for shared releases
   release: ${oc.env:RELEASE_VERSION}
 
-gcs_bucket: gs://${oc.env:GCP_BUCKET, mtrx-us-central1-hub-dev-storage}
+gcs_bucket: gs://${oc.env:GCP_BUCKET}
 paths:
   raw: ${gcs_bucket}/kedro/data/01_raw
   int: ${gcs_bucket}/releases/${versions.release}/02_intermediate
