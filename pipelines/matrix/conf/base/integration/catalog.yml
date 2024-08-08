@@ -3,25 +3,12 @@ _pandas_csv: &_pandas_csv
 
 _pandas_parquet: &_pandas_parquet
   type: pandas.ParquetDataset
-  versioned: true
-
-_spark_csv_ds: &_spark_csv
-  type: spark.SparkDataset
-  file_format: csv
-  load_args:
-    header: true
-    sep: ","
 
 _spark_parquet_ds: &_spark_parquet
   type: spark.SparkDataset
   file_format: parquet
-  versioned: true
   save_args:
     mode: overwrite
-
-_spark_parquet_nv_ds: &_spark_parquet_nv
-  <<: *_spark_parquet
-  versioned: false
 
 _neo4j_ds: &_neo4j_ds
   type: matrix.datasets.neo4j.Neo4JSparkDataset
@@ -30,11 +17,12 @@ _neo4j_ds: &_neo4j_ds
   credentials: neo4j_credentials
   save_args:
     mode: "overwrite"
-  
+
 _layer_raw: &_layer_raw
   metadata:
     kedro-viz:
       layer: raw
+
 
 _layer_int: &_layer_int
   metadata:
@@ -45,173 +33,6 @@ _layer_int: &_layer_int
 # -------------------------------------------------------------------------
 # Datasets
 # -------------------------------------------------------------------------
-integration.raw.rtx_kg2.nodes@pandas:
-  filepath: ${globals:paths.raw}/rtx_kg2/${globals:data_sources.rtx-kg2.version}/nodes_c.tsv
-  load_args:
-    sep: "\t"
-  save_args:
-    header: false
-    index: false
-    sep: "\t"
-  <<: [*_pandas_csv, *_layer_raw]
-
-integration.raw.rtx_kg2.nodes@spark:
-  type: matrix.datasets.gcp.SparkWithSchemaDataset
-  filepath: ${globals:paths.raw}/rtx_kg2/${globals:data_sources.rtx-kg2.version}/nodes_c.tsv
-  file_format: csv
-  load_args:
-    sep: "\t"
-    header: false
-    index: false
-    schema:
-      object: pyspark.sql.types.StructType
-      fields:
-        - object: pyspark.sql.types.StructField
-          name: id
-          dataType: 
-            object: pyspark.sql.types.StringType
-          nullable: False
-
-        - object: pyspark.sql.types.StructField
-          name: name
-          dataType: 
-            object: pyspark.sql.types.StringType
-          nullable: False
-
-        - object: pyspark.sql.types.StructField
-          name: category
-          dataType: 
-            object: pyspark.sql.types.StringType
-          nullable: False
-
-        - object: pyspark.sql.types.StructField
-          name: all_names
-          dataType: 
-            object: pyspark.sql.types.StringType
-          nullable: False
-
-        - object: pyspark.sql.types.StructField
-          name: all_categories
-          dataType: 
-            object: pyspark.sql.types.StringType
-          nullable: False
-        
-        - object: pyspark.sql.types.StructField
-          name: iri
-          dataType: 
-            object: pyspark.sql.types.StringType
-          nullable: False
-
-        - object: pyspark.sql.types.StructField
-          name: description
-          dataType: 
-            object: pyspark.sql.types.StringType
-          nullable: False
-
-        - object: pyspark.sql.types.StructField
-          name: equivalent_curies
-          dataType: 
-            object: pyspark.sql.types.StringType
-          nullable: False
-
-        - object: pyspark.sql.types.StructField
-          name: publications
-          dataType: 
-            object: pyspark.sql.types.StringType
-          nullable: False
-
-        - object: pyspark.sql.types.StructField
-          name: label
-          dataType: 
-            object: pyspark.sql.types.StringType
-          nullable: False
-
-integration.raw.rtx_kg2.edges@pandas:
-  <<: [*_pandas_csv, *_layer_raw]
-  filepath: ${globals:paths.raw}/rtx_kg2/${globals:data_sources.rtx-kg2.version}/edges_c.tsv
-  save_args:
-    sep: "\t"
-    header: false
-    index: false
-  load_args:
-    sep: "\t"
-
-integration.raw.rtx_kg2.edges@spark:
-  type: matrix.datasets.gcp.SparkWithSchemaDataset
-  filepath: ${globals:paths.raw}/rtx_kg2/${globals:data_sources.rtx-kg2.version}/edges_c.tsv
-  file_format: csv
-  load_args:
-    sep: "\t"
-    header: false
-    schema:
-      object: pyspark.sql.types.StructType
-      fields:
-        - object: pyspark.sql.types.StructField
-          name: subject
-          dataType: 
-            object: pyspark.sql.types.StringType
-          nullable: False
-        
-        - object: pyspark.sql.types.StructField
-          name: object
-          dataType: 
-            object: pyspark.sql.types.StringType
-          nullable: False
-        
-        - object: pyspark.sql.types.StructField
-          name: predicate
-          dataType: 
-            object: pyspark.sql.types.StringType
-          nullable: False
-        
-        - object: pyspark.sql.types.StructField
-          name: knowledge_source
-          dataType: 
-            object: pyspark.sql.types.StringType
-          nullable: False
-
-        - object: pyspark.sql.types.StructField
-          name: publications
-          dataType: 
-            object: pyspark.sql.types.StringType
-          nullable: False
-
-        - object: pyspark.sql.types.StructField
-          name: publications_info
-          dataType: 
-            object: pyspark.sql.types.StringType
-          nullable: False
-
-        - object: pyspark.sql.types.StructField
-          name: kg2_ids
-          dataType: 
-            object: pyspark.sql.types.StringType
-          nullable: False
-
-        - object: pyspark.sql.types.StructField
-          name: id
-          dataType: 
-            object: pyspark.sql.types.StringType
-          nullable: False
-
-        - object: pyspark.sql.types.StructField
-          name: type
-          dataType: 
-            object: pyspark.sql.types.StringType
-          nullable: False
-
-        - object: pyspark.sql.types.StructField
-          name: start_id
-          dataType: 
-            object: pyspark.sql.types.StringType
-          nullable: False
-
-        - object: pyspark.sql.types.StructField
-          name: end_id
-          dataType: 
-            object: pyspark.sql.types.StringType
-          nullable: False
-
 integration.raw.ground_truth.positives:
   <<: [*_pandas_csv, *_layer_raw]
   filepath: ${globals:paths.raw}/ground_truth_data/tp_pairs.txt
@@ -236,14 +57,6 @@ integration.int.known_pairs@pandas:
 integration.int.known_pairs@spark:
   <<: [*_spark_parquet, *_layer_int]
   filepath: ${globals:paths.int}/ground_truth
-
-integration.prm.rtx_kg2.nodes:
-  <<: [*_spark_parquet_nv, *_layer_int]
-  filepath: ${globals:paths.prm}/rtx_kg2/nodes
-
-integration.prm.rtx_kg2.edges:
-  <<: [*_spark_parquet_nv, *_layer_int]
-  filepath: ${globals:paths.prm}/rtx_kg2/edges
 
 # FUTURE: Does it make sense to copy DBs?
 integration.model_input.nodes:

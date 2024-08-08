@@ -36,7 +36,7 @@ modelling.xg_balanced:
             min_child_weight: null
             monotone_constraints: null
             multi_strategy: null
-            n_jobs: null
+            n_jobs: 16
             num_parallel_tree: null
             objective: multi:softprob
             reg_alpha: null

@@ -12,6 +12,7 @@ Next, authenticate the client:
 
 ```bash
 gcloud auth login
+gcloud auth application-default login
 ```
 
 ### Accessing the cluster services
@@ -35,18 +36,3 @@ To access services on the cluster, launch `k9s` through the command line. The to
 k9s
 ```
 
-### GCP Service account
-
-To correctly leverage the GCP services, you will need a service-account key. You can create a key through the [Google CLI](https://cloud.google.com/storage/docs/gsutil_install) as follows:
-
-!!! info
-    This will be provisoned using Terraform and git-crypt in the future.
-
-!!! note
-
-    The below token is time bound and thus this command needs to be re-run regularly, it's only meant for temporary local testing, not for a long-running workload. 
-
-```bash
-gcloud config set project mtrx-hub-dev-3of
-gcloud iam service-accounts keys create --iam-account=storage-viewer-sa@mtrx-hub-dev-3of.iam.gserviceaccount.com  conf/local/service-account.json
-```

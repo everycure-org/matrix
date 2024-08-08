@@ -10,8 +10,17 @@ spec:
     parameters:
       - name: image
         value: "{{ image }}"
+      - name: image_tag
+        value: "{{ image_tag }}"
+      - name: experiment
+        value: "Default"
+      # we use the image tag as the release version as a default
+      - name: release_version
+        value: "{{ image_tag }}"
       - name: neo4j_host
         value: "bolt://neo4j.neo4j.svc.cluster.local:7687"
+      - name: mlflow_endpoint
+        value: "http://mlflow-tracking.mlflow.svc.cluster.local:80"
       - name: openai_endpoint
         value: "https://api.openai.com/v1"
       - name: env
@@ -39,7 +48,7 @@ spec:
       - name: pipeline
     container:
       imagePullPolicy: Always
-      image: {% raw %} "{{workflow.parameters.image}}" 
+      image: {% raw %} "{{workflow.parameters.image}}:{{workflow.parameters.image_tag}}" 
       {% endraw %}
       resources: # limit the resources
         requests:
@@ -49,8 +58,17 @@ spec:
           memory: 32Gi
           cpu: 16
       env:
+        - name: RELEASE_VERSION
+          value: {% raw %} "{{workflow.parameters.release_version}}" 
+          {% endraw %}
+        - name: EXPERIMENT
+          value: {% raw %} "{{workflow.parameters.experiment}}" 
+          {% endraw %}
         - name: NEO4J_HOST
           value: {% raw %} "{{workflow.parameters.neo4j_host}}" 
+          {% endraw %}
+        - name: MLFLOW_ENDPOINT
+          value: {% raw %} "{{workflow.parameters.mlflow_endpoint}}" 
           {% endraw %}
         - name: NEO4J_USER
           valueFrom:
