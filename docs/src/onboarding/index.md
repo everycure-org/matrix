@@ -124,6 +124,7 @@ Our codebase features code that allows for fully localized execution of the pipe
 
 1. The base `docker-compose` file defines the runtime services, i.e.,
     - Neo4J graph database
+    - [MLFlow](https://www.mlflow.org/docs/latest/index.html) instance
     - [Mockserver](https://www.mock-server.com/) implementing a OpenAI compatible GenAI API
         - This allows for running the full pipeline e2e without a provider token
 2. The `docker-compose.test` file adds in the pipeline container for integration testing
