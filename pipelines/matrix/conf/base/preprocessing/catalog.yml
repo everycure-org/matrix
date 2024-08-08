@@ -50,14 +50,14 @@ preprocessing.int.nodes:
   type: pandas.ExcelDataset
   filepath: ${globals:paths.int}/medical/nodes.xlsx
   save_args:
-    sheet_name: Edges
+    sheet_name: Nodes
 
 preprocessing.prm.nodes:
   <<: [*_layer_int]
   type: pandas.ExcelDataset
   filepath: ${globals:paths.prm}/medical/nodes.xlsx
   save_args:
-    sheet_name: Edges
+    sheet_name: Nodes
 
 # preprocessing.int.exp.nodes@pandas:
 #   <<: [*_layer_int, *_pandas_csv]
