@@ -208,9 +208,19 @@ ingestion.prm.rtx_kg2.edges:
   <<: [*_spark_parquet, *_layer_int]
   filepath: ${globals:paths.prm}/rtx_kg2/edges
 
+
+### Raw
+
 # TODO: Register raw robokop Spark dataset
 # ingestion.raw.robokop.nodes:
 # <<: [*_spark_csv, *_layer_raw]
 # filepath: ${globals:paths.raw}/robokop/${globals:data_sources.robokop.version}/<file_here>
 
 # TODO: Add edges datast 
+
+### prm
+
+# TODO: Turn these intro robokop prm nodes and edges
+# ingestion.prm.rtx_kg2.nodes:
+#   <<: [*_spark_parquet, *_layer_int]
+#   filepath: ${globals:paths.prm}/rtx_kg2/nodes

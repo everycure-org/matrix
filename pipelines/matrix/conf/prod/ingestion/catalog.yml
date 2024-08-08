@@ -26,3 +26,6 @@ ingestion.prm.rtx_kg2.edges:
     temporaryGcsBucket: ${globals:gcs_bucket}
     bigQueryTableLabel.kg: rtx_kg2
     # bigQueryTableLabel.release: ${globals:versions.release}
+
+
+# TODO: Register robokop BigQuery datasets here for prod
