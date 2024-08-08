@@ -60,3 +60,14 @@ evaluation.disease_specific_ranking:
         - object:  matrix.pipelines.evaluation.evaluation.HitK
           k: 10
       score_col_name: *score-col
+
+## Time split validation
+# set up the synonymizer endpoint
+evaluation.synonymizer.endpoint: "http://localhost:8081/synonymize"
+# set up K list for hit at K
+evaluation.time_split_validation.k_list_for_hit_at_k:
+  - 10
+  - 100
+  - 200
+# clinical label for time split validation
+params:evaluation.time_split_validation.clinical_label: "significantly_better"
