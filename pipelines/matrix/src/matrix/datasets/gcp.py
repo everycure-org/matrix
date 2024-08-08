@@ -95,7 +95,7 @@ class BigQueryTableDataset(SparkDataset):
         self._project_id = project_id
         self._dataset = dataset
 
-        version = re.sub(r"[^a-zA-Z0-9_-]", "_", version)
+        identifier = re.sub(r"[^a-zA-Z0-9_-]", "_", identifier)
         self._table = f"{table}_{version}"
 
         super().__init__(
