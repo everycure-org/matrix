@@ -1,0 +1,198 @@
+_pandas_csv: &_pandas_csv
+  type:  pandas.CSVDataset
+
+_spark_parquet_ds: &_spark_parquet
+  type: spark.SparkDataset
+  file_format: parquet
+  save_args:
+    mode: overwrite
+
+_layer_raw: &_layer_raw
+  metadata:
+    kedro-viz:
+      layer: raw
+
+_layer_int: &_layer_int
+  metadata:
+    kedro-viz:
+      layer: integration
+
+
+# -------------------------------------------------------------------------
+# Datasets
+# -------------------------------------------------------------------------      
+
+ingestion.raw.rtx_kg2.nodes@pandas:
+  <<: [*_pandas_csv, *_layer_raw]
+  filepath: ${globals:paths.raw}/rtx_kg2/${globals:data_sources.rtx-kg2.version}/nodes_c.tsv
+  load_args:
+    sep: "\t"
+  save_args:
+    header: false
+    index: false
+    sep: "\t"
+
+ingestion.raw.rtx_kg2.nodes@spark:
+  type: matrix.datasets.gcp.SparkWithSchemaDataset
+  filepath: ${globals:paths.raw}/rtx_kg2/${globals:data_sources.rtx-kg2.version}/nodes_c.tsv
+  file_format: csv
+  load_args:
+    sep: "\t"
+    header: false
+    index: false
+    schema:
+      object: pyspark.sql.types.StructType
+      fields:
+        - object: pyspark.sql.types.StructField
+          name: id
+          dataType: 
+            object: pyspark.sql.types.StringType
+          nullable: False
+
+        - object: pyspark.sql.types.StructField
+          name: name
+          dataType: 
+            object: pyspark.sql.types.StringType
+          nullable: False
+
+        - object: pyspark.sql.types.StructField
+          name: category
+          dataType: 
+            object: pyspark.sql.types.StringType
+          nullable: False
+
+        - object: pyspark.sql.types.StructField
+          name: all_names
+          dataType: 
+            object: pyspark.sql.types.StringType
+          nullable: False
+
+        - object: pyspark.sql.types.StructField
+          name: all_categories
+          dataType: 
+            object: pyspark.sql.types.StringType
+          nullable: False
+        
+        - object: pyspark.sql.types.StructField
+          name: iri
+          dataType: 
+            object: pyspark.sql.types.StringType
+          nullable: False
+
+        - object: pyspark.sql.types.StructField
+          name: description
+          dataType: 
+            object: pyspark.sql.types.StringType
+          nullable: False
+
+        - object: pyspark.sql.types.StructField
+          name: equivalent_curies
+          dataType: 
+            object: pyspark.sql.types.StringType
+          nullable: False
+
+        - object: pyspark.sql.types.StructField
+          name: publications
+          dataType: 
+            object: pyspark.sql.types.StringType
+          nullable: False
+
+        - object: pyspark.sql.types.StructField
+          name: label
+          dataType: 
+            object: pyspark.sql.types.StringType
+          nullable: False
+
+ingestion.raw.rtx_kg2.edges@pandas:
+  <<: [*_pandas_csv, *_layer_raw]
+  filepath: ${globals:paths.raw}/rtx_kg2/${globals:data_sources.rtx-kg2.version}/edges_c.tsv
+  save_args:
+    sep: "\t"
+    header: false
+    index: false
+  load_args:
+    sep: "\t"
+
+ingestion.raw.rtx_kg2.edges@spark:
+  type: matrix.datasets.gcp.SparkWithSchemaDataset
+  filepath: ${globals:paths.raw}/rtx_kg2/${globals:data_sources.rtx-kg2.version}/edges_c.tsv
+  file_format: csv
+  load_args:
+    sep: "\t"
+    header: false
+    schema:
+      object: pyspark.sql.types.StructType
+      fields:
+        - object: pyspark.sql.types.StructField
+          name: subject
+          dataType: 
+            object: pyspark.sql.types.StringType
+          nullable: False
+        
+        - object: pyspark.sql.types.StructField
+          name: object
+          dataType: 
+            object: pyspark.sql.types.StringType
+          nullable: False
+        
+        - object: pyspark.sql.types.StructField
+          name: predicate
+          dataType: 
+            object: pyspark.sql.types.StringType
+          nullable: False
+        
+        - object: pyspark.sql.types.StructField
+          name: knowledge_source
+          dataType: 
+            object: pyspark.sql.types.StringType
+          nullable: False
+
+        - object: pyspark.sql.types.StructField
+          name: publications
+          dataType: 
+            object: pyspark.sql.types.StringType
+          nullable: False
+
+        - object: pyspark.sql.types.StructField
+          name: publications_info
+          dataType: 
+            object: pyspark.sql.types.StringType
+          nullable: False
+
+        - object: pyspark.sql.types.StructField
+          name: kg2_ids
+          dataType: 
+            object: pyspark.sql.types.StringType
+          nullable: False
+
+        - object: pyspark.sql.types.StructField
+          name: id
+          dataType: 
+            object: pyspark.sql.types.StringType
+          nullable: False
+
+        - object: pyspark.sql.types.StructField
+          name: type
+          dataType: 
+            object: pyspark.sql.types.StringType
+          nullable: False
+
+        - object: pyspark.sql.types.StructField
+          name: start_id
+          dataType: 
+            object: pyspark.sql.types.StringType
+          nullable: False
+
+        - object: pyspark.sql.types.StructField
+          name: end_id
+          dataType: 
+            object: pyspark.sql.types.StringType
+          nullable: False
+
+ingestion.prm.rtx_kg2.nodes:
+  <<: [*_spark_parquet, *_layer_int]
+  filepath: ${globals:paths.prm}/rtx_kg2/nodes
+
+ingestion.prm.rtx_kg2.edges:
+  <<: [*_spark_parquet, *_layer_int]
+  filepath: ${globals:paths.prm}/rtx_kg2/edges
