@@ -1,2 +1,0 @@
-# Endpoint to synonymizer
-preprocessing.synonymizer_endpoint: ${oc.env:SYNONYMIZER_ENDPOINT, http://localhost:8081}
