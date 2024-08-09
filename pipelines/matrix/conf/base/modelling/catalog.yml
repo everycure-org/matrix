@@ -70,7 +70,7 @@ modelling.model_input.splits:
   artifact_path: "{model}/{shard}"
   dataset:
     type: matplotlib.MatplotlibWriter
-    filepath: ${globals:paths.reporting}/{model}/{shard}/convergence_plot.png
+    filepath: ${globals:paths.tmp}/{model}/{shard}/convergence_plot.png
 
 # NOTE: Tracking a model, other serialization formats possible.
 # https://kedro-mlflow.readthedocs.io/en/stable/source/04_experimentation_tracking/04_version_models.html#how-to-track-models-using-mlflow-in-kedro-project
