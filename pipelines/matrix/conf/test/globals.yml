@@ -5,12 +5,15 @@ openai:
   endpoint: http://mock-genai:1080/v1
   api_key: dummy
 
+gcs_bucket: gs://${oc.env:GCP_BUCKET, mtrx-us-central1-hub-dev-storage}
+
 paths:
   raw: data/test/01_raw
   int: data/test/02_intermediate
   prm: data/test/03_primary
   feat: data/test/04_feature
   model_input: data/test/05_model_input
-  models: data/test/06_models
+  models: ${gcs_bucket}/data/test/releases/${versions.release}/06_models
   model_output: data/test/07_model_output
-  reporting: data/test/08_reporting
+  # reporting: data/test/08_reporting
+  reporting: ${gcs_bucket}/data/test/releases/${versions.release}/08_reporting
