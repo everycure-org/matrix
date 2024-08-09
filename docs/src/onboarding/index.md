@@ -323,7 +323,7 @@ As an example, the following image shows the pipeline the Every Cure team is bui
 
 ![](../assets/img/mtrx_modeling_flow.drawio.svg)
 
-#### Ingestion
+w#### Ingestion
 
 The ingestion pipeline aims to ingest all the downstream data in BigQuery, our data warehouse of choice. Data from different sources is assigned metadata for lineage tracking.
 
