@@ -11,7 +11,6 @@ changelog:
         - breaking change
     - title: Exciting New Features 🎉
       labels:
-        - Semver-Minor
         - Feature
     - title: Experiments 🧪
       labels:
