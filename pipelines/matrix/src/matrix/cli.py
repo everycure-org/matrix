@@ -151,11 +151,13 @@ def _filter_nodes_missing_tag(
     if not without_tags:
         return node_names
 
-    print("Filtering out tags:", without_tags)
     ctx = session.load_context()
 
     pipeline_name = pipeline or "__default__"
     pipeline_obj: Pipeline = pipelines[pipeline_name]
+
+    if len(node_names) == 0:
+        node_names = [node.name for node in pipeline_obj.nodes]
 
     def should_keep_node(node):
         return not (node.tags and any(tag in without_tags for tag in node.tags))
@@ -164,21 +166,22 @@ def _filter_nodes_missing_tag(
     nodes_to_remove = set(
         node.name for node in pipeline_obj.nodes if not should_keep_node(node)
     )
-    print("removing the following nodes:\n" + "\n".join(nodes_to_remove))
 
     # Step 2: Identify and add downstream nodes
     downstream_nodes = set()
-    downstream_nodes = pipeline.from_nodes(nodes_to_remove).nodes
+    downstream_nodes = pipeline_obj.from_nodes(*list(nodes_to_remove)).nodes
     ds_nodes_names = [node.name for node in downstream_nodes]
-    print("also removing the following downstream nodes:\n" + "\n".join(ds_nodes_names))
 
     nodes_to_remove.update(ds_nodes_names)
 
     # Step 3: Filter the node_names
     filtered_nodes = [node for node in node_names if node not in nodes_to_remove]
 
-    print("Filtered node names:")
-    for node in filtered_nodes:
-        print(node)
+    # Step 4: Handle edge case: If we remove all nodes, we should inform the user
+    # and then exit
+    if len(filtered_nodes) == 0:
+        print("All nodes removed. Exiting.")
+        exit(0)
 
+    print(f"Filtered a total of {len(filtered_nodes)} nodes")
     return filtered_nodes
