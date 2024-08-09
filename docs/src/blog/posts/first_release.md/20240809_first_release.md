@@ -25,6 +25,7 @@ We have established a modular pipeline using Kedro, enabling multi-model executi
 - An integration pipeline for creating our internal knowledge graph. (_Note this currently does very little, as we have not yet added any additional KGs which require integration._)
 - An embeddings pipeline for node and topological embeddings using OpenAI and GraphSAGE
 - A modeling pipeline with hyperparameter tuning and ensemble capabilities
+- Setup of three execution modes: cluster, local, and test data-based
 - An evaluation pipeline to assess model performance
 
 ![](attachments/ss_kedroviz.png)
@@ -36,8 +37,7 @@ Our infrastructure is built on Google Cloud Platform (GCP) and Kubernetes, provi
 - Deployment of a Neo4J database for graph storage and querying
 - Integration of MLflow for experiment tracking and model versioning
 - Implementation of Argo Workflows for orchestrating complex pipeline runs
-- Setup of three execution modes: cluster, local, and test data-based
-- A Kubernetes based infrastructure foundation to host all of the above
+- A Kubernetes based infrastructure foundation to host all of the above codified in code to make it fully reproducible
 
 ![](./attachments/ss_mlflow.png)
 ![](./attachments/ss_argo.png)
