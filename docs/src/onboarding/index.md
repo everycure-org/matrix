@@ -319,6 +319,10 @@ Roughly speaking, our pipeline consists of five logical stages, i.e., ingestion,
 
 ![](../assets/img/status.drawio.svg)
 
+As an example, the following image shows the pipeline the Every Cure team is building to replicate the [KGML-xDTD publication](https://doi.org/10.1101/2022.11.29.518441).
+
+![](../assets/img/mtrx_modeling_flow.drawio.svg)
+
 #### Ingestion
 
 The ingestion pipeline aims to ingest all the downstream data in BigQuery, our data warehouse of choice. Data from different sources is assigned metadata for lineage tracking.
