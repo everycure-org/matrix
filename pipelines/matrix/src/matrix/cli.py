@@ -31,6 +31,8 @@ from kedro.framework.cli.utils import (
 )
 from kedro.framework.session import KedroSession
 from kedro.utils import load_obj
+from kedro.framework.project import pipelines
+from kedro.pipeline.pipeline import Pipeline
 
 
 @click.group(context_settings=CONTEXT_SETTINGS, name=__file__)
@@ -144,20 +146,39 @@ def run(
 
 def _filter_nodes_missing_tag(
     without_tags: List[str], pipeline: str, session, node_names: List[str]
-):
-    """Filter out nodes that have tags that should not be run."""
-    if len(without_tags) > 0:
-        print("filtering out tags: ", without_tags)
-        # needed to get `pipelines` object below
-        ctx = session.load_context()
-        from kedro.framework.project import pipelines
+) -> List[str]:
+    """Filter out nodes that have tags that should not be run and their downstream nodes."""
+    if not without_tags:
+        return node_names
 
-        pipeline_name = pipeline if pipeline is not None else "__default__"
-        pipeline_obj = pipelines[pipeline_name]
-        # collect node names that do not have the tags to be filtered out
-        node_names = tuple(
-            node.name
-            for node in pipeline_obj.nodes
-            if not (node.tags and any(tag in without_tags for tag in node.tags))
-        )
-    return node_names
+    print("Filtering out tags:", without_tags)
+    ctx = session.load_context()
+
+    pipeline_name = pipeline or "__default__"
+    pipeline_obj: Pipeline = pipelines[pipeline_name]
+
+    def should_keep_node(node):
+        return not (node.tags and any(tag in without_tags for tag in node.tags))
+
+    # Step 1: Identify nodes to remove
+    nodes_to_remove = set(
+        node.name for node in pipeline_obj.nodes if not should_keep_node(node)
+    )
+    print("removing the following nodes:\n" + "\n".join(nodes_to_remove))
+
+    # Step 2: Identify and add downstream nodes
+    downstream_nodes = set()
+    downstream_nodes = pipeline.from_nodes(nodes_to_remove).nodes
+    ds_nodes_names = [node.name for node in downstream_nodes]
+    print("also removing the following downstream nodes:\n" + "\n".join(ds_nodes_names))
+
+    nodes_to_remove.update(ds_nodes_names)
+
+    # Step 3: Filter the node_names
+    filtered_nodes = [node for node in node_names if node not in nodes_to_remove]
+
+    print("Filtered node names:")
+    for node in filtered_nodes:
+        print(node)
+
+    return filtered_nodes
