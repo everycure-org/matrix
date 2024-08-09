@@ -70,7 +70,7 @@ def cli():
     "--without-tags",
     type=str,
     multiple=True,
-    help="used to filter out nodes with tags that should not be run.",
+    help="used to filter out nodes with tags that should not be run. All dependent downstream nodes are also removed.",
     default=[],
 )
 @click.option(
