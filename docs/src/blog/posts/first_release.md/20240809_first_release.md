@@ -66,11 +66,11 @@ for our Open Source which is planned for later this year.
 
 For developers and data scientists joining the project, here are some key technical aspects to be aware of:
 
-1. Kedro Framework: We use Kedro for building modular, maintainable, and reproducible data science code. Our pipeline is structured into various stages (ingestion, integration, embeddings, modeling, evaluation) as seen in [`src/matrix/pipeline_registry.py`](pipelines/matrix/src/matrix/pipeline_registry.py).
+1. Kedro Framework: We use Kedro for building modular, maintainable, and reproducible data science code. Our pipeline is structured into various stages (ingestion, integration, embeddings, modeling, evaluation) as seen in `src/matrix/pipeline_registry.py`.
 2. Data Catalog: Our data inputs and outputs are managed through Kedro's data catalog, defined in YAML files under the `conf/base` directory. This provides a centralized way to manage dataset configurations.
-3. Embeddings: We use a combination of OpenAI's API for initial embeddings and GraphSAGE for topological embeddings. The implementation can be found in [`src/matrix/pipelines/embeddings/nodes.py`](pipelines/matrix/src/matrix/pipelines/embeddings/nodes.py).
-4. Modeling: Our modeling pipeline supports multiple model types and hyperparameter tuning. The core logic is in [`src/matrix/pipelines/modelling/nodes.py`](pipelines/matrix/src/matrix/pipelines/modelling/nodes.py).
-5. Evaluation: We've implemented various evaluation metrics for assessing model performance, found in [`src/matrix/pipelines/evaluation/evaluation.py`](pipelines/matrix/src/matrix/pipelines/evaluation/evaluation.py).
+3. Embeddings: We use a combination of OpenAI's API for initial embeddings and GraphSAGE for topological embeddings. The implementation can be found in `src/matrix/pipelines/embeddings/nodes.py`.
+4. Modeling: Our modeling pipeline supports multiple model types and hyperparameter tuning. The core logic is in `src/matrix/pipelines/modelling/nodes.py`.
+5. Evaluation: We've implemented various evaluation metrics for assessing model performance, found in `src/matrix/pipelines/evaluation/evaluation.py`.
 6. Infrastructure as Code: Our GCP and Kubernetes infrastructure is managed using Terraform and Terragrunt, with configurations in the `infra` directory.
 
 ## Next Steps
