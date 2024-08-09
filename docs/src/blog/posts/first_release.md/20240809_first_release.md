@@ -1,5 +1,5 @@
 ---
-draft: true 
+draft: false 
 date: 2024-08-09 
 categories:
   - Release
@@ -8,11 +8,12 @@ authors:
   - lvijnck
 ---
 
-# v0.1 Release: Functional End to End Pipeline running on GCP
+# `v0.1` Release: Functional End to End Pipeline running on GCP
 
 !!! note "First Release"
     This is our first mini release, preparing for a monthly release cadence. Below is a summary of our achievements to date.
 
+For a complete summary of our progress, please check out the [release on GitHub](https://github.com/everycure-org/matrix/releases/tag/v0.1)
 
 ### Key Achievements
 
