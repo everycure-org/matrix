@@ -7,7 +7,7 @@ embeddings.ai_config:
 embeddings.dimensionality_reduction:
   transformer:
     k: 2
- 
+
 embeddings.topological:
   estimator:
     args:
