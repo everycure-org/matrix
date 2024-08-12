@@ -58,7 +58,6 @@ integration.int.known_pairs@spark:
   <<: [*_spark_parquet, *_layer_int]
   filepath: ${globals:paths.int}/ground_truth
 
-
 integration.model_input.nodes:
   <<: [*_neo4j_ds, *_layer_int]
   save_args:
@@ -85,7 +84,6 @@ integration.model_input.nodes:
         n.category as category,
         n.description as description
  
-
 integration.model_input.edges:
   <<: [*_neo4j_ds, *_layer_int]
   save_args:
