@@ -10,5 +10,5 @@ variable "environment" { type = string }
 
 variable "kg_sources" {
   type    = list(string)
-  default = ["rtx-kg2", "robokop", "medical"]
+  default = ["rtx-kg2", "robokop"]
 }
