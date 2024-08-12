@@ -6,7 +6,8 @@ import pandas as pd
 
 
 def _print(df: pd.DataFrame) -> None:
-    print(df)
+    df["curie"] = "dummy"
+    return df
 
 
 def create_pipeline(**kwargs) -> Pipeline:
@@ -16,7 +17,7 @@ def create_pipeline(**kwargs) -> Pipeline:
             node(
                 func=_print,
                 inputs=["preprocessing.raw.nodes"],
-                outputs=None,
+                outputs="preprocessing.int.nodes_resolved",
                 name="load_nodes",
             )
         ]

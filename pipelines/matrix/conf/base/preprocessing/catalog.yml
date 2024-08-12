@@ -3,13 +3,25 @@ _layer_raw: &_layer_raw
     kedro-viz:
       layer: raw
 
+_layer_int: &_layer_int
+  metadata:
+    kedro-viz:
+      layer: intermediate
+
+_sheets_dataset: &_sheets_dataset
+  type: matrix.datasets.gcp.GoogleSheetsDataset
+  key: 1LMtOmA10t7a3lcKeTP7zmptOPIcCBIPFVJt9J7jZ2bQ
+
 # -------------------------------------------------------------------------
 # Datasets
 # -------------------------------------------------------------------------
 
 preprocessing.raw.nodes:
-  <<: *_layer_raw
-  type: matrix.datasets.gcp.GoogleSheetsDataset
-  key: 1LMtOmA10t7a3lcKeTP7zmptOPIcCBIPFVJt9J7jZ2bQ
+  <<: [*_layer_raw, *_sheets_dataset]
   load_args:
     sheet_name: Nodes
+
+preprocessing.int.nodes_resolved:
+  <<: [*_layer_int, *_sheets_dataset]
+  load_args:
+    sheet_name: Nodes Resolved
