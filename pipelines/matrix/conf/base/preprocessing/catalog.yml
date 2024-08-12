@@ -11,6 +11,7 @@ _layer_int: &_layer_int
 _sheets_dataset: &_sheets_dataset
   type: matrix.datasets.gcp.GoogleSheetsDataset
   key: 1LMtOmA10t7a3lcKeTP7zmptOPIcCBIPFVJt9J7jZ2bQ
+  service_file: conf/local/service-account.json
 
 # -------------------------------------------------------------------------
 # Datasets

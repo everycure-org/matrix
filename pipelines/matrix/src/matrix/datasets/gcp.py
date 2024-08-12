@@ -147,6 +147,7 @@ class GoogleSheetsDataset(AbstractVersionedDataset[pd.DataFrame, pd.DataFrame]):
         self,
         *,
         key: str,
+        service_file: str,
         load_args: dict[str, Any] | None = None,
         save_args: dict[str, Any] | None = None,
         version: Version | None = None,
@@ -157,6 +158,7 @@ class GoogleSheetsDataset(AbstractVersionedDataset[pd.DataFrame, pd.DataFrame]):
 
         Args:
             key: Google sheets key
+            service_file: path to service accunt file.
             load_args: Arguments to pass to the load method.
             save_args: Arguments to pass to the save
             version: Version of the dataset.
@@ -164,7 +166,7 @@ class GoogleSheetsDataset(AbstractVersionedDataset[pd.DataFrame, pd.DataFrame]):
             metadata: Metadata to pass to neo4j connector.
             kwargs: Keyword Args passed to parent.
         """
-        gc = pygsheets.authorize(service_file="conf/local/service-account.json")
+        gc = pygsheets.authorize(service_file=service_file)
         self._key = key
         self._sheet = gc.open_by_key(self._key)
 
