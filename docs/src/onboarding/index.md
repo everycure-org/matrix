@@ -415,6 +415,13 @@ You can run any of the environments using the `--env` flag. For example, to run 
 kedro run --env prod
 ```
 
+!!! info
+    Environments are abstracted away by Kedro's data catalog, which in turns is defined as configuration in YAML. The catalog is dynamic, in the sense that it can combine the `base` environment with another environment during execution. This allows for overriding some of the configuration in `base` such that data can flow into different systems according to the selected _environment_. 
+
+    The image below represents a pipeline configuration across three environments, `base`, `prod` and `test`. By default the pipeline reads from Google Cloud Storage (GCS) and writes to the local filesystem. The `prod` environment redefines the output dataset to write to `BigQuery` (as opposed to local). The `test` environment redefines the input dataset to read the output from the fabricator pipeline, thereby having the effect that the pipeline runs on synthetic data.
+
+![](../assets/img/environments.drawio.svg)
+
 ### Run with fake data locally
 
 To run the full pipeline locally with fake data, you can use the following command:
