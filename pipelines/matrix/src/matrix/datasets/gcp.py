@@ -191,7 +191,13 @@ class GoogleSheetsDataset(AbstractVersionedDataset[pd.DataFrame, pd.DataFrame]):
         return wks.get_as_df()
 
     def _save(self, data: pd.DataFrame) -> None:
-        pass
+        wks = self._get_wks_by_name(self._sheet, self._save_args["sheet_name"])
+
+        # Create the worksheet if not exists
+        if wks is None:
+            wks = self._sheet.add_worksheet(self._save_args["sheet_name"])
+
+        wks.set_dataframe(data, (1, 1))
 
     @staticmethod
     def _get_wks_by_name(
