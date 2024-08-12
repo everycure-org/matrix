@@ -1,6 +1,7 @@
 """Module with GCP datasets for Kedro."""
 from typing import Any, Dict
 from copy import deepcopy
+import re
 
 from kedro.io.core import Version
 from kedro_datasets.spark import SparkDataset
@@ -69,6 +70,7 @@ class BigQueryTableDataset(SparkDataset):
         project_id: str,
         dataset: str,
         table: str,
+        identifier: str,
         load_args: dict[str, Any] = None,
         save_args: dict[str, Any] = None,
         version: Version = None,
@@ -82,6 +84,7 @@ class BigQueryTableDataset(SparkDataset):
             project_id: project identifier.
             dataset: Name of the BigQuery dataset.
             table: name of the table.
+            identifier: unique identfier of the table.
             load_args: Arguments to pass to the load method.
             save_args: Arguments to pass to the save
             version: Version of the dataset.
@@ -91,7 +94,9 @@ class BigQueryTableDataset(SparkDataset):
         """
         self._project_id = project_id
         self._dataset = dataset
-        self._table = table
+
+        identifier = re.sub(r"[^a-zA-Z0-9_-]", "_", identifier)
+        self._table = f"{table}_{identifier}"
 
         super().__init__(
             filepath="filepath",
