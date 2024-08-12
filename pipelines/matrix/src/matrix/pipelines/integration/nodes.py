@@ -1,7 +1,6 @@
 """Nodes for the ingration pipeline."""
 import pandas as pd
 from typing import List
-from functools import reduce, partial
 
 import pyspark.sql.functions as F
 from pyspark.sql import DataFrame
@@ -63,17 +62,6 @@ def create_nodes(df: DataFrame) -> DataFrame:
     )
 
 
-def unify_edges(*edges) -> DataFrame:
-    """Function to unify edges datasets."""
-    # Union edges
-    union = reduce(partial(DataFrame.unionByName, allowMissingColumns=True), edges)
-
-    # Deduplicate
-    return union.groupBy(["subject", "predicate", "object"]).agg(
-        F.collect_list("knowledge_source").alias("knowledge_sources")
-    )
-
-
 @has_schema(
     schema={
         "subject": "string",
@@ -93,7 +81,7 @@ def create_edges(nodes: DataFrame, edges: DataFrame, exc_preds: List[str]):
         exc_preds: list of predicates excluded downstream
     """
     return (
-        edges.select("subject", "predicate", "object", "knowledge_sources")
+        edges.select("subject", "predicate", "object", "knowledge_source")
         .withColumn("label", F.split(F.col("predicate"), ":", limit=2).getItem(1))
         .withColumn(
             "include_in_graphsage",

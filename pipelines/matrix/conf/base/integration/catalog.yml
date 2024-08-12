@@ -30,19 +30,9 @@ _layer_int: &_layer_int
       layer: integration
 
 
-_layer_prm: &_layer_prm
-  metadata:
-    kedro-viz:
-      layer: primary
-
-
 # -------------------------------------------------------------------------
 # Datasets
 # -------------------------------------------------------------------------
-
-integration.prm.edges:
-  <<: [*_spark_parquet, *_layer_prm]
-  filepath: ${globals:paths.prm}/unified/edges
 
 integration.raw.ground_truth.positives:
   <<: [*_pandas_csv, *_layer_raw]
@@ -104,7 +94,7 @@ integration.model_input.edges:
     query: > 
       MATCH (subject:Entity {id: event.subject}), (object:Entity {id: event.object})
       WITH subject, object, event
-      CALL apoc.create.relationship(subject, event.label, {knowledge_sources: event.knowledge_sources, include_in_graphsage: event.include_in_graphsage}, object) YIELD rel
+      CALL apoc.create.relationship(subject, event.label, {knowledge_source: event.knowledge_source, include_in_graphsage: event.include_in_graphsage}, object) YIELD rel
       RETURN rel
   load_args:
     query: >
