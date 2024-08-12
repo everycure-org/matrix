@@ -29,6 +29,7 @@ embeddings.node.features: ["category", "name"]
 # generated node embeddings.
 # https://spark.apache.org/docs/latest/api/python/reference/api/pyspark.ml.feature.PCA.html
 embeddings.dimensionality_reduction:
+  skip: false # Set to true to skip PCA
   input: *_property
   output: &_pca_property 'pca_embedding'
   transformer:
