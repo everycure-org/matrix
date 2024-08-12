@@ -58,6 +58,10 @@ spec:
           memory: 32Gi
           cpu: 16
       env:
+        - name: WORKFLOW_ID
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.labels['workflows.argoproj.io/workflow']
         - name: RELEASE_VERSION
           value: {% raw %} "{{workflow.parameters.release_version}}" 
           {% endraw %}
