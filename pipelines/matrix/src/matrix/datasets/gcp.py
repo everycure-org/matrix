@@ -1,5 +1,5 @@
 """Module with GCP datasets for Kedro."""
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 from copy import deepcopy
 import re
 
@@ -164,9 +164,16 @@ class GoogleSheetsDataset(AbstractVersionedDataset[pd.DataFrame, pd.DataFrame]):
             metadata: Metadata to pass to neo4j connector.
             kwargs: Keyword Args passed to parent.
         """
+        gc = pygsheets.authorize(service_file="conf/local/service-account.json")
         self._key = key
-        self._sheet_name = load_args.pop("sheet_name")
-        self._gc = pygsheets.authorize(service_file="conf/local/service-account.json")
+        self._sheet = gc.open_by_key(self._key)
+
+        super().__init__(
+            filepath=None,
+            version=version,
+            exists_function=self._exists,
+            glob_function=None,
+        )
 
         # Handle default load and save arguments
         self._load_args = deepcopy(self.DEFAULT_LOAD_ARGS)
@@ -177,18 +184,29 @@ class GoogleSheetsDataset(AbstractVersionedDataset[pd.DataFrame, pd.DataFrame]):
             self._save_args.update(save_args)
 
     def _load(self) -> pd.DataFrame:
-        sheet = self._gc.open_by_key(self._key)
+        wks = self._get_wks_by_name(self._sheet, self._load_args["sheet_name"])
+        if wks is None:
+            raise DatasetError(f"Sheet with name {self._sheet_name} not found!")
 
-        for wks in sheet.worksheets():
-            if wks.title == self._sheet_name:
-                return wks.get_as_df()
-
-        raise DatasetError(f"Sheet with name {self._sheet_name} not found!")
+        return wks.get_as_df()
 
     def _save(self, data: pd.DataFrame) -> None:
-        raise NotImplementedError("Save method not yet implemented!")
+        pass
+
+    @staticmethod
+    def _get_wks_by_name(
+        spreadsheet: Spreadsheet, sheet_name: str
+    ) -> Optional[Worksheet]:
+        for wks in spreadsheet.worksheets():
+            if wks.title == sheet_name:
+                return wks
+
+        return None
 
     def _describe(self) -> dict[str, Any]:
         return {
             "key": self._key,
         }
+
+    def _exists(self) -> bool:
+        return False
