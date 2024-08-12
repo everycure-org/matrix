@@ -70,19 +70,19 @@ preprocessing.int.nodes@spark:
   <<: *_spark_csv
   filepath: ${globals:paths.int}/medical/nodes.csv
 
-preprocessing.prm.nodes:
-  <<: [*_layer_prm, *_spark_csv]
-  filepath: ${globals:paths.prm}/exp/nodes
+# preprocessing.prm.nodes:
+#   <<: [*_layer_prm, *_spark_csv]
+#   filepath: ${globals:paths.prm}/exp/nodes
 
 # NOTE: Writing to BigQuery to have handover point
-# preprocessing.prm.nodes:
-#   <<: *_bigquery_ds
-#   dataset: kg_medical
-#   table: nodes
-#   identifier: "${globals:data_sources.medical.version}"
-#   save_args:
-#     temporaryGcsBucket: ${globals:gcs_bucket}
-#     bigQueryTableLabel.kg: medical
+preprocessing.prm.nodes:
+  <<: [*_layer_prm, *_bigquery_ds]
+  dataset: kg_medical
+  table: nodes
+  identifier: "${globals:data_sources.medical.version}"
+  save_args:
+    temporaryGcsBucket: ${globals:gcs_bucket}
+    bigQueryTableLabel.kg: medical
 
 preprocessing.int.edges@pandas:
   <<: [*_layer_int, *_pandas_csv]
@@ -92,16 +92,16 @@ preprocessing.int.edges@spark:
   <<: [*_layer_int, *_spark_csv]
   filepath: ${globals:paths.int}/exp/edges.csv
 
-preprocessing.prm.edges:
-  <<: [*_layer_prm, *_spark_csv]
-  filepath: ${globals:paths.prm}/exp/edges
+# preprocessing.prm.edges:
+#   <<: [*_layer_prm, *_spark_csv]
+#   filepath: ${globals:paths.prm}/exp/edges
 
 # NOTE: Writing to BigQuery to have handover point
-# preprocessing.prm.edges:
-#   <<: *_bigquery_ds
-#   dataset: kg_medical
-#   table: edges
-#   identifier: "${globals:data_sources.medical.version}"
-#   save_args:
-#     temporaryGcsBucket: ${globals:gcs_bucket}
-#     bigQueryTableLabel.kg: medical
+preprocessing.prm.edges:
+  <<: [*_layer_prm, *_bigquery_ds]
+  dataset: kg_medical
+  table: edges
+  identifier: "${globals:data_sources.medical.version}"
+  save_args:
+    temporaryGcsBucket: ${globals:gcs_bucket}
+    bigQueryTableLabel.kg: medical
