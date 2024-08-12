@@ -1,14 +1,17 @@
 """Nodes for the ingration pipeline."""
 import pandas as pd
 from typing import List
-
+import mlflow
+import functools
 import pyspark.sql.functions as F
 from pyspark.sql import DataFrame
 
 from refit.v1.core.inline_has_schema import has_schema
 from refit.v1.core.inline_primary_key import primary_key
+from .mlflow_logger import mlflow_log
 
 
+@mlflow_log(log_name="gt", context_name="gt")
 def create_int_pairs(raw_tp: pd.DataFrame, raw_tn: pd.DataFrame):
     """Create intermediate pairs dataset.
 
@@ -23,9 +26,11 @@ def create_int_pairs(raw_tp: pd.DataFrame, raw_tn: pd.DataFrame):
     raw_tn["y"] = 0
 
     # Concat
-    return pd.concat([raw_tp, raw_tn], axis="index").reset_index(drop=True)
+    tptn = pd.concat([raw_tp, raw_tn], axis="index").reset_index(drop=True)
+    return tptn
 
 
+@mlflow_log(log_name="nodes", context_name="input_kg")
 @has_schema(
     schema={
         "label": "string",
@@ -62,6 +67,7 @@ def create_nodes(df: DataFrame) -> DataFrame:
     )
 
 
+@mlflow_log(log_name="edge", context_name="input_kg")
 @has_schema(
     schema={
         "subject": "string",
