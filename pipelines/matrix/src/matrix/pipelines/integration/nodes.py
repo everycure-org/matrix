@@ -26,8 +26,7 @@ def create_int_pairs(raw_tp: pd.DataFrame, raw_tn: pd.DataFrame):
     raw_tn["y"] = 0
 
     # Concat
-    tptn = pd.concat([raw_tp, raw_tn], axis="index").reset_index(drop=True)
-    return tptn
+    return pd.concat([raw_tp, raw_tn], axis="index").reset_index(drop=True)
 
 
 @mlflow_log(log_name="nodes", context_name="input_kg")
