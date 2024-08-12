@@ -8,8 +8,12 @@ from typing import Any, Optional, Dict
 import pandas as pd
 import termplotlib as tpl
 from omegaconf import OmegaConf
+import logging
 
 import mlflow
+
+
+logger = logging.getLogger(__name__)
 
 
 class MLFlowHooks:
@@ -100,6 +104,7 @@ class SparkHooks:
     """Spark project hook with lazy initialization and global session override."""
 
     _spark_session: Optional[SparkSession] = None
+    _already_initialized = False
 
     @hook_impl
     def after_context_created(self, context: KedroContext) -> None:
@@ -128,10 +133,10 @@ class SparkHooks:
         """Initialize SparkSession if not already initialized and set as default."""
         # if we have not initiated one, we initiate one
         if cls._spark_session is None:
-            print("we are killing spark to create a fresh one")
             # Clear any existing default session, we take control!
             sess = SparkSession.getActiveSession()
             if sess is not None:
+                logger.warning("we are killing spark to create a fresh one")
                 sess.stop()
 
             parameters = context.config_loader["spark"]
@@ -150,6 +155,8 @@ class SparkHooks:
                 .config(conf=spark_conf)
                 .getOrCreate()
             )
+        else:
+            logger.debug("SparkSession already initialized")
 
     @hook_impl
     def after_catalog_created(
@@ -166,10 +173,14 @@ class SparkHooks:
 
     def _check_and_initialize_spark(self, dataset_name: str) -> None:
         """Check if dataset is SparkDataset and initialize Spark if needed."""
-        dataset = self.catalog._get_dataset(dataset_name)
+        if self._already_initialized is True:
+            return
+
         if isinstance(dataset, SparkDataset):
-            print(f"SparkDataset detected: {dataset}")
+            dataset = self.catalog._get_dataset(dataset_name)
+            logger.info(f"SparkDataset detected: {dataset}")
             self._initialize_spark(self.context)
+            self._already_initialized = True
 
     @hook_impl
     def before_dataset_loaded(self, dataset_name: str, node: Any) -> None:

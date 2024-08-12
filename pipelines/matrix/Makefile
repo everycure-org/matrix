@@ -13,7 +13,7 @@ test:
 
 wipe_neo:
 	# assumes you have neo4j running using docker-compose setup from deployments/compose/
-	python scripts/wipe_neo4j.py
+	python scripts/wipe_neo4j.py 'everycure-test'
 
 integration_test: wipe_neo
     # NOTE: We're running without `xgc` due to its long runtime.
