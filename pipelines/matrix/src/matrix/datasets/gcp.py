@@ -3,9 +3,22 @@ from typing import Any, Dict
 from copy import deepcopy
 import re
 
+import pandas as pd
+
 from kedro.io.core import Version
 from kedro_datasets.spark import SparkDataset
 from kedro_datasets.spark.spark_dataset import _strip_dbfs_prefix, _get_spark
+from kedro.io.core import (
+    PROTOCOL_DELIMITER,
+    AbstractVersionedDataset,
+    DatasetError,
+    Version,
+    get_filepath_str,
+    get_protocol_and_path,
+)
+
+import pygsheets
+from pygsheets import Worksheet, Spreadsheet
 
 from pyspark.sql import DataFrame, SparkSession
 
@@ -122,3 +135,60 @@ class BigQueryTableDataset(SparkDataset):
             .mode("overwrite")
             .save(f"{self._project_id}.{self._dataset}.{self._table}")
         )
+
+
+class GoogleSheetsDataset(AbstractVersionedDataset[pd.DataFrame, pd.DataFrame]):
+    """Dataset to load data from Google sheets."""
+
+    DEFAULT_LOAD_ARGS: dict[str, Any] = {}
+    DEFAULT_SAVE_ARGS: dict[str, Any] = {}
+
+    def __init__(  # noqa: PLR0913
+        self,
+        *,
+        key: str,
+        load_args: dict[str, Any] | None = None,
+        save_args: dict[str, Any] | None = None,
+        version: Version | None = None,
+        credentials: dict[str, Any] | None = None,
+        metadata: dict[str, Any] | None = None,
+    ) -> None:
+        """Creates a new instance of ``GoogleSheetsDataset``.
+
+        Args:
+            key: Google sheets key
+            load_args: Arguments to pass to the load method.
+            save_args: Arguments to pass to the save
+            version: Version of the dataset.
+            credentials: Credentials to connect to the Neo4J instance.
+            metadata: Metadata to pass to neo4j connector.
+            kwargs: Keyword Args passed to parent.
+        """
+        self._key = key
+        self._sheet_name = load_args.pop("sheet_name")
+        self._gc = pygsheets.authorize(service_file="conf/local/service-account.json")
+
+        # Handle default load and save arguments
+        self._load_args = deepcopy(self.DEFAULT_LOAD_ARGS)
+        if load_args is not None:
+            self._load_args.update(load_args)
+        self._save_args = deepcopy(self.DEFAULT_SAVE_ARGS)
+        if save_args is not None:
+            self._save_args.update(save_args)
+
+    def _load(self) -> pd.DataFrame:
+        sheet = self._gc.open_by_key(self._key)
+
+        for wks in sheet.worksheets():
+            if wks.title == self._sheet_name:
+                return wks.get_as_df()
+
+        raise DatasetError(f"Sheet with name {self._sheet_name} not found!")
+
+    def _save(self, data: pd.DataFrame) -> None:
+        raise NotImplementedError("Save method not yet implemented!")
+
+    def _describe(self) -> dict[str, Any]:
+        return {
+            "key": self._key,
+        }

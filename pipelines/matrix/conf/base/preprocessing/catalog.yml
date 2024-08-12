@@ -1,0 +1,15 @@
+_layer_raw: &_layer_raw
+  metadata:
+    kedro-viz:
+      layer: raw
+
+# -------------------------------------------------------------------------
+# Datasets
+# -------------------------------------------------------------------------
+
+preprocessing.raw.nodes:
+  <<: *_layer_raw
+  type: matrix.datasets.gcp.GoogleSheetsDataset
+  key: 1LMtOmA10t7a3lcKeTP7zmptOPIcCBIPFVJt9J7jZ2bQ
+  load_args:
+    sheet_name: Nodes
