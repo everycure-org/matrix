@@ -213,7 +213,7 @@ def _predict_scores(
     graph: KnowledgeGraph,
     model: ModelWrapper,
     transformers: Dict[str, Dict[str, Union[_BaseImputer, List[str]]]],
-    cleanned_clinical_trial_data: pd.DataFrame,
+    cleaned_clinical_trial_data: pd.DataFrame,
 ) -> pd.DataFrame:
     """Function to generate predicted scores for clinical trial data.
 
@@ -228,30 +228,30 @@ def _predict_scores(
     """
 
     # Collect embedding vectors
-    cleanned_clinical_trial_data["source_embedding"] = cleanned_clinical_trial_data.apply(
+    cleaned_clinical_trial_data["source_embedding"] = cleaned_clinical_trial_data.apply(
         lambda row: graph._embeddings[row.drug_kg_id], axis=1
     )
-    cleanned_clinical_trial_data["target_embedding"] = cleanned_clinical_trial_data.apply(
+    cleaned_clinical_trial_data["target_embedding"] = cleaned_clinical_trial_data.apply(
         lambda row: graph._embeddings[row.disease_kg_id], axis=1
     )
 
     # Apply transformers to data
-    cleanned_clinical_trial_data = apply_transformers(cleanned_clinical_trial_data, transformers)
+    cleaned_clinical_trial_data = apply_transformers(cleaned_clinical_trial_data, transformers)
 
     # Generate model probability scores
-    concatenated_rows = np.array([np.concatenate(row) for row in cleanned_clinical_trial_data[['source_embedding', 'target_embedding']].values])
+    concatenated_rows = np.array([np.concatenate(row) for row in cleaned_clinical_trial_data[['source_embedding', 'target_embedding']].values])
     predicted_scores = model.predict_proba(concatenated_rows)
     num_categories = len(model._estimators[0].classes_)
     if num_categories == 2:
         # we assume first is negative class and second is positive class
         predicted_scores_df =  pd.DataFrame(predicted_scores, columns=['not treat score', 'treat score'])
-        cleanned_clinical_trial_data = pd.concat([cleanned_clinical_trial_data.drop(columns=['source_embedding', 'target_embedding']), predicted_scores_df], axis=1)
+        cleaned_clinical_trial_data = pd.concat([cleaned_clinical_trial_data.drop(columns=['source_embedding', 'target_embedding']), predicted_scores_df], axis=1)
     else:
         # we assume first, second and third are negative, positive and unknown class respectively
         predicted_scores_df =  pd.DataFrame(predicted_scores, columns=['not treat score', 'treat score', 'unknown score'])
-        cleanned_clinical_trial_data = pd.concat([cleanned_clinical_trial_data.drop(columns=['source_embedding', 'target_embedding']), predicted_scores_df], axis=1)
+        cleaned_clinical_trial_data = pd.concat([cleaned_clinical_trial_data.drop(columns=['source_embedding', 'target_embedding']), predicted_scores_df], axis=1)
     
-    return cleanned_clinical_trial_data
+    return cleaned_clinical_trial_data
 
 
 @inject_object()
@@ -260,7 +260,7 @@ def generate_time_split_validation_barplot(
     model: ModelWrapper,
     model_name: str,
     transformers: Dict[str, Dict[str, Union[_BaseImputer, List[str]]]],
-    cleanned_clinical_trial_data: pd.DataFrame,
+    cleaned_clinical_trial_data: pd.DataFrame,
 ) -> plt.Figure:
     """Function to generate evaluation barplot.
 
@@ -280,16 +280,16 @@ def generate_time_split_validation_barplot(
     score_type_lst = ['not treat score', 'treat score', 'unknown score']
 
     ## Generate predicted scores for clinical trial data
-    cleanned_clinical_trial_data = _predict_scores(graph, model, transformers, cleanned_clinical_trial_data)
+    cleaned_clinical_trial_data = _predict_scores(graph, model, transformers, cleaned_clinical_trial_data)
     
     # Boolean series for splitting scores into outcome categories
-    is_trials_category_lst = [cleanned_clinical_trial_data[cat_name]==1 for cat_name in cat_name_lst]
+    is_trials_category_lst = [cleaned_clinical_trial_data[cat_name]==1 for cat_name in cat_name_lst]
 
     # Create subplots
     fig, ax = plt.subplots(1, 3, figsize=(14, 5))
 
     for n, score_type in enumerate(score_type_lst):
-        probs_current_type = cleanned_clinical_trial_data[score_type]
+        probs_current_type = cleaned_clinical_trial_data[score_type]
         score_series_lst = [probs_current_type[is_trials_category] for is_trials_category in is_trials_category_lst]
         quantiles = [list(score_series.quantile([0.25, 0.5, 0.75])) for score_series in score_series_lst]
         heights = [quantile[1] for quantile in quantiles]
@@ -312,7 +312,7 @@ def _generate_time_split_validation_classification_auroc(
                                     graph: KnowledgeGraph,
                                     model: ModelWrapper,
                                     transformers: Dict[str, Dict[str, Union[_BaseImputer, List[str]]]],
-                                    cleanned_clinical_trial_data: pd.DataFrame,
+                                    cleaned_clinical_trial_data: pd.DataFrame,
                                     categ_pos: str, 
                                     categ_neg: str, 
 ) -> float:
@@ -327,7 +327,7 @@ def _generate_time_split_validation_classification_auroc(
         graph: Knowledge graph.
         model: Model making the predictions.
         transformers: Dictionary of trained transformers.
-        cleanned_clinical_trial_data: Clinical trial data.
+        cleaned_clinical_trial_data: Clinical trial data.
         categ_pos: Column name for better clinical trials outcomes.
         categ_neg: Column name for worse clinical trials outcomes.
         
@@ -337,18 +337,18 @@ def _generate_time_split_validation_classification_auroc(
 
     ## Computing treat scores for DD pairs with better and worse clinical trials outcomes respectively
     # Extract drug-disease pairs with better clinical trials outcomes
-    cleanned_clinical_trial_data_pos = cleanned_clinical_trial_data[cleanned_clinical_trial_data[categ_pos]==1]
+    cleaned_clinical_trial_data_pos = cleaned_clinical_trial_data[cleaned_clinical_trial_data[categ_pos]==1]
 
     # Generate predicted scores for clinical trial data with better clinical trials outcomes
-    cleanned_clinical_trial_data_pos = _predict_scores(graph, model, transformers, cleanned_clinical_trial_data_pos)
-    treat_probs_pos = cleanned_clinical_trial_data_pos['treat score'].to_list()
+    cleaned_clinical_trial_data_pos = _predict_scores(graph, model, transformers, cleaned_clinical_trial_data_pos)
+    treat_probs_pos = cleaned_clinical_trial_data_pos['treat score'].to_list()
     
     # Extract drug-disease pairs with worse clinical trials outcomes    
-    cleanned_clinical_trial_data_neg = cleanned_clinical_trial_data[cleanned_clinical_trial_data[categ_neg]==1]
+    cleaned_clinical_trial_data_neg = cleaned_clinical_trial_data[cleaned_clinical_trial_data[categ_neg]==1]
 
     # Generate predicted scores for clinical trial data with worse clinical trials outcomes
-    cleanned_clinical_trial_data_neg = _predict_scores(graph, model, transformers, cleanned_clinical_trial_data_neg)
-    treat_probs_neg = cleanned_clinical_trial_data_neg['treat score'].to_list()
+    cleaned_clinical_trial_data_neg = _predict_scores(graph, model, transformers, cleaned_clinical_trial_data_neg)
+    treat_probs_neg = cleaned_clinical_trial_data_neg['treat score'].to_list()
 
     # Compute AUROC
     y_score = np.concatenate([treat_probs_pos, treat_probs_neg])
@@ -363,7 +363,7 @@ def generate_time_split_validation_classification_auroc(
                                     model: ModelWrapper,
                                     model_name: str,
                                     transformers: Dict[str, Dict[str, Union[_BaseImputer, List[str]]]],
-                                    cleanned_clinical_trial_data: pd.DataFrame,
+                                    cleaned_clinical_trial_data: pd.DataFrame,
 ) -> Tuple[List[float], List[str], str]:
     """Function to generate AUROC scores for time-split evaluation.
 
@@ -388,7 +388,7 @@ def generate_time_split_validation_classification_auroc(
         for j, categ_2 in enumerate(cat_name_lst):
             if i < j:
                 metrics_lst.append(_generate_time_split_validation_classification_auroc(
-                                    graph, model, transformers, cleanned_clinical_trial_data, categ_1, categ_2))
+                                    graph, model, transformers, cleaned_clinical_trial_data, categ_1, categ_2))
                 metric_name_lst.append('AUROC ("'+ categ_1 + '" vs. "'+ categ_2 + '")')
                 
     return (metrics_lst, metric_name_lst, model_name)
@@ -400,7 +400,7 @@ def generate_time_split_validation_all_metrics(
                                     model: ModelWrapper,
                                     model_name: str,
                                     transformers: Dict[str, Dict[str, Union[_BaseImputer, List[str]]]],
-                                    cleanned_clinical_trial_data: pd.DataFrame,
+                                    cleaned_clinical_trial_data: pd.DataFrame,
                                     train_data: pd.DataFrame,
                                     k_lst: List[int],
                                     categ_pos: str,
@@ -426,7 +426,7 @@ def generate_time_split_validation_all_metrics(
         model: Model making the predictions.
         model_name: Name of the model.
         transformers: Dictionary of trained transformers.
-        cleanned_clinical_trial_data: Clinical trial data.
+        cleaned_clinical_trial_data: Clinical trial data.
         train_data: Drug-disease pairs used for training the model.
         k_lst: List of integers for hit@k metrics.
         categ_pos: Column name for clinical trial category.
@@ -442,12 +442,12 @@ def generate_time_split_validation_all_metrics(
         approved_drug_node_list = graph._drug_nodes
         
     # Extract drug-disease pairs with better clinical trials outcomes
-    cleanned_clinical_trial_data_pos = cleanned_clinical_trial_data[cleanned_clinical_trial_data[categ_pos]==1]
+    cleaned_clinical_trial_data_pos = cleaned_clinical_trial_data[cleaned_clinical_trial_data[categ_pos]==1]
 
     # Filter out rows with drugs not in approved_drug_node_list
-    cleanned_clinical_trial_data_pos_filtered = cleanned_clinical_trial_data_pos[cleanned_clinical_trial_data_pos['drug_kg_id'].isin(approved_drug_node_list)]
+    cleaned_clinical_trial_data_pos_filtered = cleaned_clinical_trial_data_pos[cleaned_clinical_trial_data_pos['drug_kg_id'].isin(approved_drug_node_list)]
     
-    test_data = pd.DataFrame({'drug_kg_id': cleanned_clinical_trial_data_pos_filtered['drug_kg_id'].to_list(), 'disease_kg_id': cleanned_clinical_trial_data_pos_filtered['disease_kg_id'].to_list()})
+    test_data = pd.DataFrame({'drug_kg_id': cleaned_clinical_trial_data_pos_filtered['drug_kg_id'].to_list(), 'disease_kg_id': cleaned_clinical_trial_data_pos_filtered['disease_kg_id'].to_list()})
 
     result = perform_disease_centric_evaluation(graph, model, transformers, test_data, train_data, approved_drug_node_list, k_lst, is_return_curves=False)
     result = list(result)
