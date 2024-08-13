@@ -6,7 +6,7 @@ import pandas as pd
 
 
 def _print(df: pd.DataFrame) -> None:
-    df["curie"] = "dummy"
+    df["curie"] = "dummy a"
     return df
 
 

@@ -199,7 +199,15 @@ class GoogleSheetsDataset(AbstractVersionedDataset[pd.DataFrame, pd.DataFrame]):
         if wks is None:
             wks = self._sheet.add_worksheet(self._save_args["sheet_name"])
 
-        wks.set_dataframe(data, (1, 1))
+        for column in self._save_args["write_columns"]:
+            col_idx = self._get_col_index(wks, column)
+
+            if col_idx is None:
+                raise DatasetError(
+                    f"Sheet with {self._sheet_name} does not contain column {column}!"
+                )
+
+            wks.set_dataframe(data[[column]], (1, col_idx + 1))
 
     @staticmethod
     def _get_wks_by_name(
@@ -208,6 +216,14 @@ class GoogleSheetsDataset(AbstractVersionedDataset[pd.DataFrame, pd.DataFrame]):
         for wks in spreadsheet.worksheets():
             if wks.title == sheet_name:
                 return wks
+
+        return None
+
+    @staticmethod
+    def _get_col_index(sheet: Worksheet, col_name: str) -> Optional[int]:
+        for idx, col in enumerate(sheet.get_row(1)):
+            if col == col_name:
+                return idx
 
         return None
 
