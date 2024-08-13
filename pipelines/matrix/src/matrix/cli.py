@@ -69,8 +69,8 @@ def cli():
 @click.option(
     "--without-tags",
     type=str,
-    multiple=True,
-    help="used to filter out nodes with tags that should not be run. All dependent downstream nodes are also removed.",
+    help="used to filter out nodes with tags that should not be run. All dependent downstream nodes are also removed. Note nodes need to have _all_ tags to be removed.",
+    callback=split_string,
     default=[],
 )
 @click.option(
@@ -121,6 +121,7 @@ def run(
     """Run the pipeline."""
     runner = load_obj(runner or "SequentialRunner", "kedro.runner")
     tags = tuple(tags)
+    without_tags = without_tags
     node_names = tuple(node_names)
 
     with KedroSession.create(
@@ -128,7 +129,7 @@ def run(
     ) as session:
         # introduced to filter out tags that should not be run
         node_names = _filter_nodes_missing_tag(
-            without_tags, pipeline, session, node_names
+            tuple(without_tags), pipeline, session, node_names
         )
 
         session.run(
@@ -151,6 +152,8 @@ def _filter_nodes_missing_tag(
     if not without_tags:
         return node_names
 
+    without_tags: Set[str] = set(without_tags)
+
     ctx = session.load_context()
 
     pipeline_name = pipeline or "__default__"
@@ -160,7 +163,11 @@ def _filter_nodes_missing_tag(
         node_names = [node.name for node in pipeline_obj.nodes]
 
     def should_keep_node(node):
-        return not (node.tags and any(tag in without_tags for tag in node.tags))
+        """Remove node if node has all without_tags tags."""
+        if without_tags.intersection(node.tags) == without_tags:
+            return False
+        else:
+            return True
 
     # Step 1: Identify nodes to remove
     nodes_to_remove = set(
