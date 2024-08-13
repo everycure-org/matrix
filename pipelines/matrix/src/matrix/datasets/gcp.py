@@ -186,6 +186,7 @@ class GoogleSheetsDataset(AbstractVersionedDataset[pd.DataFrame, pd.DataFrame]):
             self._save_args.update(save_args)
 
     def _init_sheet(self):
+        """Function to initialize the spreadsheet."""
         if self._sheet is None:
             gc = pygsheets.authorize(service_file=self._service_file)
             self._sheet = gc.open_by_key(self._key)
@@ -208,6 +209,7 @@ class GoogleSheetsDataset(AbstractVersionedDataset[pd.DataFrame, pd.DataFrame]):
         if wks is None:
             wks = self._sheet.add_worksheet(self._save_args["sheet_name"])
 
+        # Write columns
         for column in self._save_args["write_columns"]:
             col_idx = self._get_col_index(wks, column)
 
