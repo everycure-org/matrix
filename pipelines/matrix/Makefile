@@ -19,7 +19,7 @@ wipe_neo:
 
 integration_test: wipe_neo
     # NOTE: We're running without `xgc` due to its long runtime.
-	kedro run --env test -p test --runner ThreadRunner --without-tags xgc
+	kedro run --env test -p test --runner ThreadRunner
 
 fabricate:
 	kedro run -p fabricator --env test
