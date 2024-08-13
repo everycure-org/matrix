@@ -45,29 +45,23 @@ def create_pipeline(**kwargs) -> Pipeline:
             # FUTURE: Either Charlotte needs to ensure things join OR
             #   We need to agree that unresolved nodes should introduce
             #   new concepts.
-            # node(
-            #     func=nodes.create_prm_nodes,
-            #     inputs=["preprocessing.int.nodes@spark"],
-            #     outputs="preprocessing.prm.nodes",
-            #     name="create_prm_nodes",
-            # ),
-            # node(
-            #     func=lambda x: x,
-            #     inputs=["preprocessing.raw.edges"],
-            #     outputs="preprocessing.int.edges@pandas",
-            #     name="create_int_edges",
-            # ),
-            # # Ensure edges use synonymized identifiers
-            # # NOTE: Charlotte introduces her own identifiers in the
-            # # nodes dataset, to enable edge creation.
-            # node(
-            #     func=nodes.create_prm_edges,
-            #     inputs=[
-            #         "preprocessing.prm.nodes",
-            #         "preprocessing.int.edges@spark",
-            #     ],
-            #     outputs="preprocessing.prm.edges",
-            #     name="create_prm_exp_edges",
-            # ),
+            node(
+                func=nodes.create_prm_nodes,
+                inputs=["preprocessing.int.normalized_nodes"],
+                outputs="preprocessing.prm.nodes",
+                name="create_prm_nodes",
+            ),
+            # Ensure edges use synonymized identifiers
+            # NOTE: Charlotte introduces her own identifiers in the
+            # nodes dataset, to enable edge creation.
+            node(
+                func=nodes.create_int_edges,
+                inputs=[
+                    "preprocessing.prm.nodes",
+                    "preprocessing.raw.edges",
+                ],
+                outputs="preprocessing.int.edges",
+                name="create_int_edges",
+            ),
         ]
     )
