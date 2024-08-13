@@ -101,6 +101,35 @@ def create_prm_nodes(int_nodes: pd.DataFrame) -> pd.DataFrame:
     )
 
 
+def create_int_edges(prm_nodes: pd.DataFrame, int_edges: pd.DataFrame) -> pd.DataFrame:
+    """Function to create a primary edges dataset by combining primary nodes with intermediate edges."""
+    index = prm_nodes[["ID", "curie"]]
+
+    res = (
+        int_edges.merge(
+            index.rename(columns={"curie": "SourceId"}),
+            left_on="Source",
+            right_on="ID",
+            how="left",
+        )
+        .drop(columns="ID")
+        .merge(
+            index.rename(columns={"curie": "TargetId"}),
+            left_on="Target",
+            right_on="ID",
+            how="left",
+        )
+        .drop(columns="ID")
+        # .dropna(subset=["subject", "object"])
+    )
+
+    res["Included"] = res.apply(
+        lambda row: not (pd.isna(row["SourceId"]) or pd.isna(row["TargetId"])), axis=1
+    )
+
+    return res.fillna("")
+
+
 # def create_prm_nodes(int_nodes: DataFrame) -> DataFrame:
 #     """Function to create prm nodes dataset.
 

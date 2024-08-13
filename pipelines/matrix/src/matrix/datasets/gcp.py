@@ -198,20 +198,26 @@ class GoogleSheetsDataset(AbstractVersionedDataset[pd.DataFrame, pd.DataFrame]):
     def _load(self) -> pd.DataFrame:
         self._init_sheet()
 
-        wks = self._get_wks_by_name(self._sheet, self._load_args["sheet_name"])
+        sheet_name = self._load_args["sheet_name"]
+        wks = self._get_wks_by_name(self._sheet, sheet_name)
         if wks is None:
-            raise DatasetError(f"Sheet with name {self._sheet_name} not found!")
+            raise DatasetError(f"Sheet with name {sheet_name} not found!")
 
-        return wks.get_as_df()
+        df = wks.get_as_df()
+        if (cols := self._load_args.get("columns", None)) is not None:
+            df = df[cols]
+
+        return df
 
     def _save(self, data: pd.DataFrame) -> None:
         self._init_sheet()
 
-        wks = self._get_wks_by_name(self._sheet, self._save_args["sheet_name"])
+        sheet_name = self._save_args["sheet_name"]
+        wks = self._get_wks_by_name(self._sheet, sheet_name)
 
         # Create the worksheet if not exists
         if wks is None:
-            wks = self._sheet.add_worksheet(self._save_args["sheet_name"])
+            wks = self._sheet.add_worksheet(sheet_name)
 
         # Write columns
         for column in self._save_args["write_columns"]:
@@ -219,7 +225,7 @@ class GoogleSheetsDataset(AbstractVersionedDataset[pd.DataFrame, pd.DataFrame]):
 
             if col_idx is None:
                 raise DatasetError(
-                    f"Sheet with {self._save_args['sheet_name']} does not contain column {column}!"
+                    f"Sheet with {sheet_name} does not contain column {column}!"
                 )
 
             wks.set_dataframe(data[[column]], (1, col_idx + 1))

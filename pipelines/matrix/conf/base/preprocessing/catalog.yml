@@ -16,16 +16,6 @@ _layer_prm: &_layer_prm
 _pandas_csv: &_pandas_csv
   type:  pandas.CSVDataset
 
-_spark_csv_ds: &_spark_csv
-  type: spark.SparkDataset
-  file_format: csv
-  load_args:
-    header: true
-    sep: ","
-  save_args:
-    mode: overwrite
-    header: true
-
 _sheets_dataset: &_sheets_dataset
   type: matrix.datasets.gcp.GoogleSheetsDataset
   key: 1LMtOmA10t7a3lcKeTP7zmptOPIcCBIPFVJt9J7jZ2bQ
@@ -39,6 +29,12 @@ preprocessing.raw.nodes:
   <<: [*_layer_raw, *_sheets_dataset]
   load_args:
     sheet_name: Nodes
+
+preprocessing.raw.edges:
+  <<: [*_layer_raw, *_sheets_dataset]
+  load_args:
+    sheet_name: Edges
+    columns: ["Source", "Target", "Label"]
 
 preprocessing.int.resolved_nodes:
   <<: [*_layer_int, *_sheets_dataset]
@@ -55,73 +51,19 @@ preprocessing.int.normalized_nodes:
     sheet_name: Nodes
     write_columns: ["normalized_curie"]
 
-#   <<: *_layer_raw
-#   type: pandas.ExcelDataset
-#   filepath: ${globals:paths.raw}/exp.xlsx
-#   load_args:
-#     sheet_name: Nodes
+  load_args:
+    sheet_name: Nodes
 
-# preprocessing.raw.edges:
-#   <<: *_layer_raw
-#   type: pandas.ExcelDataset
-#   filepath: ${globals:paths.raw}/exp.xlsx
-#   load_args:
-#     sheet_name: Edges
+preprocessing.int.edges:
+  <<: [*_layer_prm, *_sheets_dataset]
+  save_args:
+    sheet_name: Edges
+    write_columns: ["SourceId", "TargetId", "Included"]
 
-# preprocessing.int.resolved_nodes:
-#   <<: [*_layer_int]
-#   type: pandas.ExcelDataset
-#   filepath: ${globals:paths.int}/medical/resolved_nodes.xlsx
-#   save_args:
-#     sheet_name: Nodes
+preprocessing.prm.nodes:
+  <<: [*_layer_prm, *_pandas_csv]
+  filepath: ${globals:paths.prm}/exp/nodes.csv
 
-# preprocessing.int.normalized_nodes:
-#   <<: [*_layer_int]
-#   type: pandas.ExcelDataset
-#   filepath: ${globals:paths.int}/medical/normalized_nodes.xlsx
-#   save_args:
-#     sheet_name: Nodes
-
-# preprocessing.int.nodes@pandas:
-#   <<: *_pandas_csv
-#   filepath: ${globals:paths.int}/medical/nodes.csv
-
-# preprocessing.int.nodes@spark:
-#   <<: *_spark_csv
-#   filepath: ${globals:paths.int}/medical/nodes.csv
-
-# # preprocessing.prm.nodes:
-# #   <<: [*_layer_prm, *_spark_csv]
-# #   filepath: ${globals:paths.prm}/exp/nodes
-
-# # NOTE: Writing to BigQuery to have handover point
-# preprocessing.prm.nodes:
-#   <<: [*_layer_prm, *_bigquery_ds]
-#   dataset: kg_medical
-#   table: nodes
-#   identifier: "${globals:data_sources.medical.version}"
-#   save_args:
-#     temporaryGcsBucket: ${globals:gcs_bucket}
-#     bigQueryTableLabel.kg: medical
-
-# preprocessing.int.edges@pandas:
-#   <<: [*_layer_int, *_pandas_csv]
-#   filepath: ${globals:paths.int}/exp/edges.csv
-
-# preprocessing.int.edges@spark:
-#   <<: [*_layer_int, *_spark_csv]
-#   filepath: ${globals:paths.int}/exp/edges.csv
-
-# # preprocessing.prm.edges:
-# #   <<: [*_layer_prm, *_spark_csv]
-# #   filepath: ${globals:paths.prm}/exp/edges
-
-# # NOTE: Writing to BigQuery to have handover point
-# preprocessing.prm.edges:
-#   <<: [*_layer_prm, *_bigquery_ds]
-#   dataset: kg_medical
-#   table: edges
-#   identifier: "${globals:data_sources.medical.version}"
-#   save_args:
-#     temporaryGcsBucket: ${globals:gcs_bucket}
-#     bigQueryTableLabel.kg: medical
+preprocessing.prm.edges:
+  <<: [*_layer_prm, *_pandas_csv]
+  filepath: ${globals:paths.prm}/exp/edges.csv
