@@ -177,7 +177,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 _create_model_pipeline(
                     model=model["model_name"], num_shards=model["num_shards"]
                 ),
-                tags=model["model_name"],
+                tags=[model["model_name"], "not-shared"],
             )
         )
 
