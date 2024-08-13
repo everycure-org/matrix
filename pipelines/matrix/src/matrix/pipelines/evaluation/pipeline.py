@@ -93,7 +93,7 @@ def _implement_time_split_validation(model_name: str) -> Pipeline:
                     f"modelling.{model_name}.models.model",
                     model_name,
                     f"modelling.{model_name}.model_input.transformers",
-                    "evaluation.cleanned_clinical_trial_data"
+                    "evaluation.cleaned_clinical_trial_data"
                 ],
                 outputs=f"evaluation.{model_name}.reporting.time_split_validation_barplot",
                 name=f"generate_time_split_validation_barplot_{model_name}"
@@ -105,7 +105,7 @@ def _implement_time_split_validation(model_name: str) -> Pipeline:
                     f"modelling.{model_name}.models.model",
                     model_name,
                     f"modelling.{model_name}.model_input.transformers",
-                    "evaluation.cleanned_clinical_trial_data"
+                    "evaluation.cleaned_clinical_trial_data"
                 ],
                 outputs=f"evaluation.{model_name}.reporting.time_split_validation_classification_auroc",
                 name=f"generate_time_split_validation_classification_auroc_{model_name}"
@@ -117,7 +117,7 @@ def _implement_time_split_validation(model_name: str) -> Pipeline:
                     f"modelling.{model_name}.models.model",
                     model_name,
                     f"modelling.{model_name}.model_input.transformers",
-                    "evaluation.cleanned_clinical_trial_data",
+                    "evaluation.cleaned_clinical_trial_data",
                     "", #TODO: need to check with Alexei where to get this data
                     "params:evaluation.time_split_validation.k_list_for_hit_at_k",
                     "params:evaluation.time_split_validation.clinical_label",
@@ -143,8 +143,8 @@ def implement_time_split_validation_pipeline(**kwargs) -> Pipeline:
                     "evaluation.raw.medical",
                     "params:evaluation.synonymizer.endpoint"
                 ],
-                outputs="evaluation.cleanned_clinical_trial_data",
-                name="cleanned_clinical_trial_data"
+                outputs="evaluation.cleaned_clinical_trial_data",
+                name="cleaned_clinical_trial_data"
             )
         )
     )

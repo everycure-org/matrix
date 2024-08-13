@@ -45,17 +45,15 @@ evaluation.raw.medical:
   <<: *_pandas_excel
   filepath: ${globals:paths.raw}/medical_team_data/{globals:versions.sources.medical_team_data}/file.xlsx
 
-evaluation.cleanned_clinical_trial_data:
+evaluation.cleaned_clinical_trial_data:
   <<: *_pandas_parquet
-  filepath: ${globals:paths.int}/cleanned_clinical_trial_data/{globals:versions.sources.cleanned_clinical_trial_data}/file.parquet
+  filepath: ${globals:paths.int}/cleaned_clinical_trial_data/{globals:versions.sources.cleaned_clinical_trial_data}/file.parquet
 
-
-"evaluation.{model_name}.reporting.time_split_validation_barplot"
+"evaluation.{model_name}.reporting.time_split_validation_barplot":
   <<: *_png
   filepath: ${globals:paths.reporting}/{model_name}/time_split_validation_barplot.png
 
-
-"evaluation.{model_name}.reporting.time_split_validation_classification_auroc"
+"evaluation.{model_name}.reporting.time_split_validation_classification_auroc":
   <<: *_pandas_parquet
   filepath: ${globals:paths.prm}/{model_name}/time_split_validation_classification_auroc.parquet
 
@@ -63,7 +61,7 @@ evaluation.reporting.time_split_validation_classification_auroc:
   <<: *_pandas_excel
   filepath: ${globals:paths.reporting}/time_split_validation_classification_auroc.xlsx
 
-"evaluation.{model_name}.reporting.time_split_validation_all_metrics"
+"evaluation.{model_name}.reporting.time_split_validation_all_metrics":
   <<: *_pandas_parquet
   filepath: ${globals:paths.prm}/{model_name}/time_split_validation_all_metrics.parquet
 
