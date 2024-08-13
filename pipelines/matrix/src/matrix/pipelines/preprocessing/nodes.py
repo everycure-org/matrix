@@ -102,7 +102,7 @@ def create_prm_nodes(int_nodes: pd.DataFrame) -> pd.DataFrame:
 
 
 def create_int_edges(prm_nodes: pd.DataFrame, int_edges: pd.DataFrame) -> pd.DataFrame:
-    """Function to create a primary edges dataset by combining primary nodes with intermediate edges."""
+    """Function to create a intermediate edges dataset by combining primary nodes with intermediate edges."""
     index = prm_nodes[["ID", "curie"]]
 
     res = (
@@ -120,7 +120,6 @@ def create_int_edges(prm_nodes: pd.DataFrame, int_edges: pd.DataFrame) -> pd.Dat
             how="left",
         )
         .drop(columns="ID")
-        # .dropna(subset=["subject", "object"])
     )
 
     res["Included"] = res.apply(
@@ -130,48 +129,15 @@ def create_int_edges(prm_nodes: pd.DataFrame, int_edges: pd.DataFrame) -> pd.Dat
     return res.fillna("")
 
 
-# def create_prm_nodes(int_nodes: DataFrame) -> DataFrame:
-#     """Function to create prm nodes dataset.
+def create_prm_edges(int_edges: pd.DataFrame) -> pd.DataFrame:
+    """Function to create a primary edges dataset by filtering and renaming columns."""
+    # Replace empty strings with nan
+    res = (
+        int_edges.replace(r"^\s*$", np.nan, regex=True)
+        .rename(
+            columns={"SourceId": "subject", "TargetId": "object", "Label": "predicate"}
+        )
+        .dropna(subset=["subject", "object"])
+    )
 
-#     Args:
-#         int_nodes: int nodes dataset
-#     Returns:
-#         Primary nodes
-#     """
-#     return (
-#         int_nodes.filter(F.col("normalized_curie").isNotNull())
-#         .drop("curie")
-#         .withColumnRenamed("normalized_curie", "curie")
-#     )
-
-
-# def create_prm_edges(prm_nodes: DataFrame, int_edges: DataFrame) -> DataFrame:
-#     """Function to create prm edges dataset.
-
-#     Args:
-#         prm_nodes: primary nodes dataset
-#         int_edges: int edges dataset
-#     Returns:
-#         Primary nodes
-#     """
-#     index = prm_nodes.select("ID", "curie")
-
-#     res = (
-#         int_edges.join(
-#             index.withColumnRenamed("curie", "subject"),
-#             int_edges.Source == prm_nodes.ID,
-#             how="left",
-#         )
-#         .drop("ID")
-#         .join(
-#             index.withColumnRenamed("curie", "object"),
-#             int_edges.Target == prm_nodes.ID,
-#             how="left",
-#         )
-#         .drop("ID")
-#         .filter(F.col("subject").isNotNull() & F.col("object").isNotNull())
-#         .withColumn("predicate", F.concat(F.lit("biolink:"), F.col("Label")))
-#         .withColumn("knowledge_source", F.lit("EveryCure"))
-#     )
-
-#     return res
+    return res
