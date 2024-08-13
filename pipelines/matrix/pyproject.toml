@@ -37,3 +37,4 @@ lint.pydocstyle.convention = "google"
 
 [tool.ruff.lint.per-file-ignores]
 "tests/*/**" = ["D"]
+"scripts/**" = ["D"]

@@ -58,6 +58,7 @@ services:
       - ./mockgenai-initializer.json:/openapi/initializer.json:ro
 
   mlflow:
+    container_name: mlflow
     build: "services/mlflow"
     ports:
       - "5001:5000"

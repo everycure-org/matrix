@@ -153,7 +153,6 @@ def _filter_nodes_missing_tag(
         return node_names
 
     without_tags: Set[str] = set(without_tags)
-
     ctx = session.load_context()
 
     pipeline_name = pipeline or "__default__"
