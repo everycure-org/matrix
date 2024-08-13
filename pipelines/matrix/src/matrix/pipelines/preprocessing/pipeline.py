@@ -63,5 +63,13 @@ def create_pipeline(**kwargs) -> Pipeline:
                 outputs="preprocessing.int.edges",
                 name="create_int_edges",
             ),
+            node(
+                func=nodes.create_prm_edges,
+                inputs=[
+                    "preprocessing.int.edges",
+                ],
+                outputs="preprocessing.prm.edges",
+                name="create_prm_exp_edges",
+            ),
         ]
     )

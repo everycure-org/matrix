@@ -59,6 +59,9 @@ preprocessing.int.edges:
   save_args:
     sheet_name: Edges
     write_columns: ["SourceId", "TargetId", "Included"]
+  load_args:
+    sheet_name: Edges
+    columns: ["SourceId", "TargetId", "Label"]
 
 preprocessing.prm.nodes:
   <<: [*_layer_prm, *_pandas_csv]
