@@ -45,12 +45,12 @@ def create_pipeline(**kwargs) -> Pipeline:
             # FUTURE: Either Charlotte needs to ensure things join OR
             #   We need to agree that unresolved nodes should introduce
             #   new concepts.
-            node(
-                func=nodes.create_prm_nodes,
-                inputs=["preprocessing.int.nodes@spark"],
-                outputs="preprocessing.prm.nodes",
-                name="create_prm_nodes",
-            ),
+            # node(
+            #     func=nodes.create_prm_nodes,
+            #     inputs=["preprocessing.int.nodes@spark"],
+            #     outputs="preprocessing.prm.nodes",
+            #     name="create_prm_nodes",
+            # ),
             # node(
             #     func=lambda x: x,
             #     inputs=["preprocessing.raw.edges"],
