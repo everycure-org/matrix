@@ -2,8 +2,9 @@
 import requests
 
 import pandas as pd
+import numpy as np
 
-from typing import Callable
+from typing import Callable, List
 from functools import partial
 from pyspark.sql import DataFrame
 
@@ -52,6 +53,13 @@ def normalize(curie: str, endpoint: str):
     return None
 
 
+def coalesce(s: pd.Series, *series: List[pd.Series]):
+    """Coalesce the column information like a SQL coalesce."""
+    for other in series:
+        s = s.mask(pd.isnull, other)
+    return s
+
+
 @has_schema(
     schema={
         "ID": "numeric",
@@ -62,7 +70,7 @@ def normalize(curie: str, endpoint: str):
 )
 @primary_key(primary_key=["ID"])
 def enrich_df(
-    df: pd.DataFrame, endpoint: str, func: Callable, input_col: str, target_col: str
+    df: pd.DataFrame, endpoint: str, func: Callable, input_cols: str, target_col: str
 ) -> pd.DataFrame:
     """Function to resolve nodes of the nodes input dataset.
 
@@ -70,12 +78,19 @@ def enrich_df(
         df: nodes dataframe
         endpoint: endpoint of the synonymizer
         func: func to call
-        input_col: input col
+        input_cols: input cols, cols are coalesced to obtain single column
         target_col: target col
     Returns:
         dataframe enriched with Curie column
     """
-    df[target_col] = df[input_col].apply(partial(func, endpoint=endpoint))
+    # Replace empty strings with nan
+    df = df.replace(r"^\s*$", np.nan, regex=True)
+
+    # Coalesce input cols
+    col = coalesce(*[df[col] for col in input_cols])
+
+    # Apply enrich function and replace nans by empty space
+    df[target_col] = col.apply(partial(func, endpoint=endpoint)).fillna("")
 
     return df
 

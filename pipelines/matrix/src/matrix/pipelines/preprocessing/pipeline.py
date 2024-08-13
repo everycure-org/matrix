@@ -15,7 +15,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 func=partial(
                     nodes.enrich_df,
                     func=nodes.resolve,
-                    input_col="name",
+                    input_cols=["name"],
                     target_col="curie",
                 ),
                 inputs=[
@@ -31,7 +31,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 func=partial(
                     nodes.enrich_df,
                     func=nodes.normalize,
-                    input_col="curie",
+                    input_cols=["corrected_curie", "curie"],
                     target_col="normalized_curie",
                 ),
                 inputs=[
