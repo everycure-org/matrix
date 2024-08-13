@@ -2,4 +2,4 @@ tracking:
   run: 
     # NOTE: This ensures a stable name during distributed
     # execution of the workflow.
-    name: ${oc.env:RELEASE_VERSION}
+    name: ${oc.env:WORKFLOW_ID}
