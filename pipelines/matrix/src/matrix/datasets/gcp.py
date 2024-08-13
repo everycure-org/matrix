@@ -166,9 +166,9 @@ class GoogleSheetsDataset(AbstractVersionedDataset[pd.DataFrame, pd.DataFrame]):
             metadata: Metadata to pass to neo4j connector.
             kwargs: Keyword Args passed to parent.
         """
-        gc = pygsheets.authorize(service_file=service_file)
         self._key = key
-        self._sheet = gc.open_by_key(self._key)
+        self._service_file = service_file
+        self._sheet = None
 
         super().__init__(
             filepath=None,
@@ -185,7 +185,14 @@ class GoogleSheetsDataset(AbstractVersionedDataset[pd.DataFrame, pd.DataFrame]):
         if save_args is not None:
             self._save_args.update(save_args)
 
+    def _init_sheet(self):
+        if self._sheet is None:
+            gc = pygsheets.authorize(service_file=self._service_file)
+            self._sheet = gc.open_by_key(self._key)
+
     def _load(self) -> pd.DataFrame:
+        self._init_sheet()
+
         wks = self._get_wks_by_name(self._sheet, self._load_args["sheet_name"])
         if wks is None:
             raise DatasetError(f"Sheet with name {self._sheet_name} not found!")
@@ -193,6 +200,8 @@ class GoogleSheetsDataset(AbstractVersionedDataset[pd.DataFrame, pd.DataFrame]):
         return wks.get_as_df()
 
     def _save(self, data: pd.DataFrame) -> None:
+        self._init_sheet()
+
         wks = self._get_wks_by_name(self._sheet, self._save_args["sheet_name"])
 
         # Create the worksheet if not exists
