@@ -6,9 +6,6 @@ import numpy as np
 
 from typing import Callable, List
 from functools import partial
-from pyspark.sql import DataFrame
-
-import pyspark.sql.functions as F
 
 from refit.v1.core.inline_has_schema import has_schema
 from refit.v1.core.inline_primary_key import primary_key
@@ -95,48 +92,57 @@ def enrich_df(
     return df
 
 
-def create_prm_nodes(int_nodes: DataFrame) -> DataFrame:
-    """Function to create prm nodes dataset.
-
-    Args:
-        int_nodes: int nodes dataset
-    Returns:
-        Primary nodes
-    """
+def create_prm_nodes(int_nodes: pd.DataFrame) -> pd.DataFrame:
+    """Function to create a primary nodes dataset by filtering and renaming columns."""
     return (
-        int_nodes.filter(F.col("normalized_curie").isNotNull())
-        .drop("curie")
-        .withColumnRenamed("normalized_curie", "curie")
+        int_nodes[int_nodes["normalized_curie"].notna()]
+        .drop(columns="curie")
+        .rename(columns={"normalized_curie": "curie"})
     )
 
 
-def create_prm_edges(prm_nodes: DataFrame, int_edges: DataFrame) -> DataFrame:
-    """Function to create prm edges dataset.
+# def create_prm_nodes(int_nodes: DataFrame) -> DataFrame:
+#     """Function to create prm nodes dataset.
 
-    Args:
-        prm_nodes: primary nodes dataset
-        int_edges: int edges dataset
-    Returns:
-        Primary nodes
-    """
-    index = prm_nodes.select("ID", "curie")
+#     Args:
+#         int_nodes: int nodes dataset
+#     Returns:
+#         Primary nodes
+#     """
+#     return (
+#         int_nodes.filter(F.col("normalized_curie").isNotNull())
+#         .drop("curie")
+#         .withColumnRenamed("normalized_curie", "curie")
+#     )
 
-    res = (
-        int_edges.join(
-            index.withColumnRenamed("curie", "subject"),
-            int_edges.Source == prm_nodes.ID,
-            how="left",
-        )
-        .drop("ID")
-        .join(
-            index.withColumnRenamed("curie", "object"),
-            int_edges.Target == prm_nodes.ID,
-            how="left",
-        )
-        .drop("ID")
-        .filter(F.col("subject").isNotNull() & F.col("object").isNotNull())
-        .withColumn("predicate", F.concat(F.lit("biolink:"), F.col("Label")))
-        .withColumn("knowledge_source", F.lit("EveryCure"))
-    )
 
-    return res
+# def create_prm_edges(prm_nodes: DataFrame, int_edges: DataFrame) -> DataFrame:
+#     """Function to create prm edges dataset.
+
+#     Args:
+#         prm_nodes: primary nodes dataset
+#         int_edges: int edges dataset
+#     Returns:
+#         Primary nodes
+#     """
+#     index = prm_nodes.select("ID", "curie")
+
+#     res = (
+#         int_edges.join(
+#             index.withColumnRenamed("curie", "subject"),
+#             int_edges.Source == prm_nodes.ID,
+#             how="left",
+#         )
+#         .drop("ID")
+#         .join(
+#             index.withColumnRenamed("curie", "object"),
+#             int_edges.Target == prm_nodes.ID,
+#             how="left",
+#         )
+#         .drop("ID")
+#         .filter(F.col("subject").isNotNull() & F.col("object").isNotNull())
+#         .withColumn("predicate", F.concat(F.lit("biolink:"), F.col("Label")))
+#         .withColumn("knowledge_source", F.lit("EveryCure"))
+#     )
+
+#     return res
