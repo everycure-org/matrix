@@ -36,12 +36,6 @@ def main(
         with connect_to_neo4j() as driver:
             with driver.session(database="system") as system_session:
                 if db_name:
-                    confirm = input(
-                        f"Are you sure you want to drop database '{db_name}'? Type 'y' to confirm: "
-                    )
-                    if confirm.lower() != "y":
-                        print("Operation cancelled.")
-                        return
                     print(f"Dropping database: {db_name}")
                     system_session.run(f"DROP DATABASE `{db_name}` IF EXISTS")
                     print(f"Database {db_name} has been wiped.")

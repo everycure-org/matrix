@@ -121,7 +121,7 @@ class Neo4JSparkDataset(SparkDataset):
         with GraphDatabase.driver(url, auth=creds, database="system") as driver:
             # TODO: OR do we want to clear out if exists?
             if database not in Neo4JSparkDataset._load_existing_dbs(driver):
-                logging.warning("creating new database %s", database)
+                logging.info("creating new database %s", database)
                 driver.execute_query(f"CREATE DATABASE `{database}` IF NOT EXISTS")
 
     @staticmethod
