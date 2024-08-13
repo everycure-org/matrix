@@ -108,7 +108,7 @@ cookiecutter==2.6.0
     # via kedro
 cycler==0.12.1
     # via matplotlib
-databricks-sdk==0.29.0
+databricks-sdk==0.30.0
     # via mlflow-skinny
 debugpy==1.8.5
     # via ipykernel
@@ -318,7 +318,7 @@ jupyterlab-server==2.27.3
     # via
     #   jupyterlab
     #   notebook
-kedro==0.19.7
+kedro==0.19.6
     # via
     #   -r requirements.in
     #   kedro-datasets
@@ -332,9 +332,7 @@ kedro-datasets==4.1.0
 kedro-mlflow==0.12.2
     # via -r requirements.in
 kedro-telemetry==0.6.0
-    # via
-    #   -r requirements.in
-    #   kedro
+    # via -r requirements.in
 kedro-viz==9.2.0
     # via -r requirements.in
 kiwisolver==1.4.5
@@ -353,7 +351,7 @@ markupsafe==2.1.5
     #   mako
     #   nbconvert
     #   werkzeug
-matplotlib==3.9.1.post1
+matplotlib==3.9.2
     # via
     #   -r requirements.in
     #   mlflow
@@ -744,7 +742,6 @@ typing-extensions==4.12.2
     #   fastapi
     #   graphdatascience
     #   ipython
-    #   kedro
     #   opentelemetry-sdk
     #   pydantic
     #   pydantic-core
@@ -763,7 +760,7 @@ urllib3==2.2.2
     #   botocore
     #   docker
     #   requests
-uvicorn==0.30.5
+uvicorn==0.30.6
     # via kedro-viz
 uvloop==0.19.0
     # via uvicorn
