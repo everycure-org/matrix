@@ -26,3 +26,4 @@ preprocessing.int.nodes_resolved:
   <<: [*_layer_int, *_sheets_dataset]
   save_args:
     sheet_name: Nodes Resolved
+    write_columns: ["curie"]
