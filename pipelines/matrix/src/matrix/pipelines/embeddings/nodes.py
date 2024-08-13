@@ -110,7 +110,7 @@ def compute_embeddings(
             )
             return {"success": "true"}
         else:
-            logger.warning("we still have %s embeddings left to calculate", str(count))
+            logger.info("we still have %s embeddings left to calculate", str(count))
 
     # fmt: off
     # Register functions
