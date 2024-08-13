@@ -204,7 +204,7 @@ class GoogleSheetsDataset(AbstractVersionedDataset[pd.DataFrame, pd.DataFrame]):
 
             if col_idx is None:
                 raise DatasetError(
-                    f"Sheet with {self._sheet_name} does not contain column {column}!"
+                    f"Sheet with {self._save_args['sheet_name']} does not contain column {column}!"
                 )
 
             wks.set_dataframe(data[[column]], (1, col_idx + 1))
