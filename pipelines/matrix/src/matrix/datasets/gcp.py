@@ -187,9 +187,9 @@ class GoogleSheetsDataset(AbstractVersionedDataset[pd.DataFrame, pd.DataFrame]):
 
     def _init_sheet(self):
         """Function to initialize the spreadsheet.
-        
+
         This is executed lazily to avoid loading credentials on python runtime launch which creates issues
-        in unit tests. 
+        in unit tests.
         """
         if self._sheet is None:
             gc = pygsheets.authorize(service_file=self._service_file)
