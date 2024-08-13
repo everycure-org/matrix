@@ -25,3 +25,4 @@ python-cypher==0.20.1
 termplotlib
 kedro-mlflow==0.12.2
 mlflow==2.15.0
+pygsheets==2.0.6
