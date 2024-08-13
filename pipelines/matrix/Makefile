@@ -10,6 +10,8 @@ lock:
 test:
 	pytest --testmon -v tests/
 
+venv:
+	uv venv -p 3.10
 
 wipe_neo:
 	# assumes you have neo4j running using docker-compose setup from deployments/compose/
