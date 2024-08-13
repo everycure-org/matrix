@@ -15,11 +15,12 @@ repos:
       # Run the formatter.
       - id: ruff-format
         exclude: pipelines/matrix/packages
-  - repo: https://github.com/kynan/nbstripout
-    rev: 0.7.1
-    hooks:
-      - id: nbstripout
-        exclude: pipelines/matrix/packages
+# Commented out until it's possible to only execute on specific paths
+#   - repo: https://github.com/kynan/nbstripout
+#     rev: 0.7.1
+#     hooks:
+#       - id: nbstripout
+#         exclude: pipelines/matrix/packages
   - repo: https://github.com/antonbabenko/pre-commit-terraform
     rev: v1.92.0
     hooks:
