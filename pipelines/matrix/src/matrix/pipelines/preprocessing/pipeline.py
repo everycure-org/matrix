@@ -41,23 +41,16 @@ def create_pipeline(**kwargs) -> Pipeline:
                 outputs="preprocessing.int.normalized_nodes",
                 name="normalize_nodes",
             ),
-            # # Transcode to pandas
-            # node(
-            #     func=lambda x: x,
-            #     inputs=["preprocessing.int.normalized_nodes"],
-            #     outputs="preprocessing.int.nodes@pandas",
-            #     name="transcode_nodes_pandas",
-            # ),
-            # # NOTE: Filter away all nodes that we could not resolve
-            # # FUTURE: Either Charlotte needs to ensure things join OR
-            # #   We need to agree that unresolved nodes should introduce
-            # #   new concepts.
-            # node(
-            #     func=nodes.create_prm_nodes,
-            #     inputs=["preprocessing.int.nodes@spark"],
-            #     outputs="preprocessing.prm.nodes",
-            #     name="create_prm_nodes",
-            # ),
+            # NOTE: Filter away all nodes that we could not resolve
+            # FUTURE: Either Charlotte needs to ensure things join OR
+            #   We need to agree that unresolved nodes should introduce
+            #   new concepts.
+            node(
+                func=nodes.create_prm_nodes,
+                inputs=["preprocessing.int.nodes@spark"],
+                outputs="preprocessing.prm.nodes",
+                name="create_prm_nodes",
+            ),
             # node(
             #     func=lambda x: x,
             #     inputs=["preprocessing.raw.edges"],
