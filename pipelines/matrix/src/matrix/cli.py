@@ -31,6 +31,8 @@ from kedro.framework.cli.utils import (
 )
 from kedro.framework.session import KedroSession
 from kedro.utils import load_obj
+from kedro.framework.project import pipelines
+from kedro.pipeline.pipeline import Pipeline
 
 
 @click.group(context_settings=CONTEXT_SETTINGS, name=__file__)
@@ -67,8 +69,8 @@ def cli():
 @click.option(
     "--without-tags",
     type=str,
-    multiple=True,
-    help="used to filter out nodes with tags that should not be run.",
+    help="used to filter out nodes with tags that should not be run. All dependent downstream nodes are also removed. Note nodes need to have _all_ tags to be removed.",
+    callback=split_string,
     default=[],
 )
 @click.option(
@@ -119,6 +121,7 @@ def run(
     """Run the pipeline."""
     runner = load_obj(runner or "SequentialRunner", "kedro.runner")
     tags = tuple(tags)
+    without_tags = without_tags
     node_names = tuple(node_names)
 
     with KedroSession.create(
@@ -126,7 +129,7 @@ def run(
     ) as session:
         # introduced to filter out tags that should not be run
         node_names = _filter_nodes_missing_tag(
-            without_tags, pipeline, session, node_names
+            tuple(without_tags), pipeline, session, node_names
         )
 
         session.run(
@@ -144,20 +147,47 @@ def run(
 
 def _filter_nodes_missing_tag(
     without_tags: List[str], pipeline: str, session, node_names: List[str]
-):
-    """Filter out nodes that have tags that should not be run."""
-    if len(without_tags) > 0:
-        print("filtering out tags: ", without_tags)
-        # needed to get `pipelines` object below
-        ctx = session.load_context()
-        from kedro.framework.project import pipelines
+) -> List[str]:
+    """Filter out nodes that have tags that should not be run and their downstream nodes."""
+    if not without_tags:
+        return node_names
 
-        pipeline_name = pipeline if pipeline is not None else "__default__"
-        pipeline_obj = pipelines[pipeline_name]
-        # collect node names that do not have the tags to be filtered out
-        node_names = tuple(
-            node.name
-            for node in pipeline_obj.nodes
-            if not (node.tags and any(tag in without_tags for tag in node.tags))
-        )
-    return node_names
+    without_tags: Set[str] = set(without_tags)
+    ctx = session.load_context()
+
+    pipeline_name = pipeline or "__default__"
+    pipeline_obj: Pipeline = pipelines[pipeline_name]
+
+    if len(node_names) == 0:
+        node_names = [node.name for node in pipeline_obj.nodes]
+
+    def should_keep_node(node):
+        """Remove node if node has all without_tags tags."""
+        if without_tags.intersection(node.tags) == without_tags:
+            return False
+        else:
+            return True
+
+    # Step 1: Identify nodes to remove
+    nodes_to_remove = set(
+        node.name for node in pipeline_obj.nodes if not should_keep_node(node)
+    )
+
+    # Step 2: Identify and add downstream nodes
+    downstream_nodes = set()
+    downstream_nodes = pipeline_obj.from_nodes(*list(nodes_to_remove)).nodes
+    ds_nodes_names = [node.name for node in downstream_nodes]
+
+    nodes_to_remove.update(ds_nodes_names)
+
+    # Step 3: Filter the node_names
+    filtered_nodes = [node for node in node_names if node not in nodes_to_remove]
+
+    # Step 4: Handle edge case: If we remove all nodes, we should inform the user
+    # and then exit
+    if len(filtered_nodes) == 0:
+        print("All nodes removed. Exiting.")
+        exit(0)
+
+    print(f"Filtered a total of {len(filtered_nodes)} nodes")
+    return filtered_nodes
