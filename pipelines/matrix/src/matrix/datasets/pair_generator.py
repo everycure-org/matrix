@@ -8,6 +8,7 @@ import pandas as pd
 import random
 
 from matrix.datasets.graph import KnowledgeGraph
+from kedro.io import AbstractDataset
 
 from typing import List, Set
 
@@ -27,6 +28,31 @@ class DrugDiseasePairGenerator(abc.ABC):
             DataFrame with unknown drug-disease pairs.
         """
         ...
+
+
+class GeneratorWithSideInput:
+    """Generator with dataset input."""
+
+    def __init__(self, dataset: AbstractDataset) -> None:
+        """Initializes the SingleLabelPairGenerator instance.
+
+        Args:
+            dataset: dataset to use
+        """
+        self._data = dataset.load()
+
+    def generate(self, known_pairs: pd.DataFrame) -> pd.DataFrame:
+        """Function to generate drug-disease pairs from the knowledge graph.
+
+        Args:
+            graph: KnowledgeGraph instance.
+            known_pairs: DataFrame with ground truth drug-disease pairs.
+
+        Returns:
+            DataFrame with unknown drug-disease pairs.
+        """
+
+        # TODO add here
 
 
 class SingleLabelPairGenerator(DrugDiseasePairGenerator):
