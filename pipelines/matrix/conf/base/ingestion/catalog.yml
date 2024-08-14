@@ -212,15 +212,37 @@ ingestion.prm.rtx_kg2.edges:
 ### Raw
 
 # TODO: Register raw robokop Spark dataset
-# ingestion.raw.robokop.nodes:
-# <<: [*_spark_csv, *_layer_raw]
-# filepath: ${globals:paths.raw}/robokop/${globals:data_sources.robokop.version}/<file_here>
+ingestion.raw.robokop.nodes@spark:
+ <<: [*_spark_csv, *_layer_raw]
+ filepath: ${globals:paths.raw}/RobokopKG/${globals:data_sources.robokop.version}/nodes.tsv
 
-# TODO: Add edges datast 
+ingestion.raw.robokp.nodes@pandas:
+  <<: [*_pandas_csv, *_layer_raw]
+  filepath: ${globals:paths.raw}/RobokopKG/${globals:data_sources.robokop.version}/nodes.tsv
 
-### prm
+
+# TODO: Add edges datast
+ingestion.raw.robokop.edges@spark:
+ <<: [*_spark_csv, *_layer_raw]
+ filepath: ${globals:paths.raw}/RobokopKG/${globals:data_sources.robokop.version}/edges.tsv
+
+ingestion.raw.robokp.edge@pandas:
+  <<: [*_pandas_csv, *_layer_raw]
+  filepath: ${globals:paths.raw}/RobokopKG/${globals:data_sources.robokop.version}/edges.tsv
 
 # TODO: Turn these intro robokop prm nodes and edges
-# ingestion.prm.rtx_kg2.nodes:
-#   <<: [*_spark_parquet, *_layer_int]
-#   filepath: ${globals:paths.prm}/rtx_kg2/nodes
+ingestion.prm.robokop.nodes@spark:
+   <<: [*_spark_parquet, *_layer_int]
+   filepath: ${globals:paths.raw}/RobokopKG/${globals:data_sources.robokop.version}/nodes.tsv
+
+ingestion.prm.robokp.nodes@pandas:
+  <<: [*_pandas_csv, *_layer_raw]
+  filepath: ${globals:paths.raw}/RobokopKG/${globals:data_sources.robokop.version}/nodes.tsv
+
+ingestion.prm.robokop.edges@spark:
+   <<: [*_spark_parquet, *_layer_int]
+   filepath: ${globals:paths.raw}/RobokopKG/${globals:data_sources.robokop.version}/edges.tsv
+
+ingestion.prm.robokop.edges@pandas:
+   <<: [*_pandas_csv, *_layer_raw]
+   filepath: ${globals:paths.raw}/RobokopKG/${globals:data_sources.robokop.version}/edges.tsv

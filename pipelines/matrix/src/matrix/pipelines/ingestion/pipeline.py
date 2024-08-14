@@ -22,6 +22,22 @@ def create_pipeline(**kwargs) -> Pipeline:
             ),
             # TODO: Add nodes to move robokop nodes and endge files to `prm`
             # TODO: Set tags to `robokop`
+
+            node(
+                func=lambda x: x,
+                inputs=["ingestion.raw.robokop.nodes@spark"],
+                outputs="ingestion.prm.robokop.nodes",
+                name="write_robokop_nodes",
+                tags=["robokop"],
+            ),
+            node(
+                func=lambda x: x,
+                inputs=["ingestion.raw.robokop.edges@spark"],
+                outputs="ingestion.prm.robokop.edges",
+                name="write_robokop_edges",
+                tags=["robokop"],
+            ),
+
             # Run using kedro run -p ingestion -t robokop
         ]
     )

@@ -21,12 +21,14 @@ versions:
 data_sources:
   rtx-kg2:
     version: v2.7.3
+  robokop:
+    version: c5ec1f282158182f
 
   # TODO: Register robokop here
 
 paths:
   # we read from our central GCS bucket where we store our ground truth data
-  raw: ${gcs_bucket}/kedro/data/01_raw
+  raw: ${gcs_bucket}/kedro/data/01_RAW # I think this path should be raw: ${gcs_bucket}/kedro/data/01_RAW
   # we write to local disk going forward
   int: data/02_intermediate
   prm: data/03_primary

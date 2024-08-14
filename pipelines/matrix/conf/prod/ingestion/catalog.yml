@@ -29,3 +29,23 @@ ingestion.prm.rtx_kg2.edges:
 
 
 # TODO: Register robokop BigQuery datasets here for prod
+
+ingestion.prm.robokop.nodes:
+  <<: *_bigquery_ds
+  dataset: robokop-kg
+  table: nodes
+  identifier: "${globals:data_sources.robokop.version}"
+  save_args:
+    temporaryGcsBucket: ${globals:gcs_bucket}
+    bigQueryTableLabel.kg: robokop
+    # bigQueryTableLabel.release: ${globals:versions.release}
+
+ingestion.prm.robokop.edges:
+  <<: *_bigquery_ds
+  dataset: robokop-kg
+  table: edges
+  identifier: "${globals:data_sources.robokop.version}"
+  save_args:
+    temporaryGcsBucket: ${globals:gcs_bucket}
+    bigQueryTableLabel.kg: robokop
+    # bigQueryTableLabel.release: ${globals:versions.release}
