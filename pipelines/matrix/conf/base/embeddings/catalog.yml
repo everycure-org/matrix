@@ -7,7 +7,7 @@ _neo4j_ds: &_neo4j_ds
     mode: "overwrite"
 
 _spark_parquet_ds: &_spark_parquet
-  type: spark.SparkDataset
+  type: matrix.datasets.gcp.LazySparkDataset
   file_format: parquet
   save_args:
     mode: overwrite

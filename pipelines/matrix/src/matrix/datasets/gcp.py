@@ -26,6 +26,17 @@ from matrix.hooks import SparkHooks
 from refit.v1.core.inject import _parse_for_objects
 
 
+class LazySparkDataset(SparkDataset):
+    """Lazy loading spark datasets to avoid loading spark every run.
+
+    A trick that makes our spark loading lazy so we never initiate
+    """
+
+    def _load(self):
+        SparkHooks._initialize_spark()
+        return super()._load()
+
+
 class SparkWithSchemaDataset(SparkDataset):
     """Dataset to load BigQuery data.
 
@@ -59,6 +70,7 @@ class SparkWithSchemaDataset(SparkDataset):
         )
 
     def _load(self) -> DataFrame:
+        SparkHooks._initialize_spark()
         load_path = _strip_dbfs_prefix(self._fs_prefix + str(self._get_load_path()))
         read_obj = _get_spark().read
 
