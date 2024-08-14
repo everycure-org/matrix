@@ -21,6 +21,7 @@ import pygsheets
 from pygsheets import Worksheet, Spreadsheet
 
 from pyspark.sql import DataFrame, SparkSession
+from matrix.hooks import SparkHooks
 
 from refit.v1.core.inject import _parse_for_objects
 
@@ -122,6 +123,8 @@ class BigQueryTableDataset(SparkDataset):
         )
 
     def _load(self) -> Any:
+        # DEBT potentially a better way would be to globally overwrite the getOrCreate() call in the spark library and link back to SparkSession
+        SparkHooks._initialize_spark()
         spark_session = SparkSession.builder.getOrCreate()
 
         return spark_session.read.format("bigquery").load(
