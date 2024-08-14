@@ -140,4 +140,7 @@ def create_prm_edges(int_edges: pd.DataFrame) -> pd.DataFrame:
         .dropna(subset=["subject", "object"])
     )
 
+    res["predicate"] = "biolink:" + res["predicate"]
+    res["knowledge_source"] = "EveryCure"
+
     return res
