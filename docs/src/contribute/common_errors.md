@@ -90,3 +90,47 @@ Unfortuantely one has to dig into the Debug Log of Neo4J to find out the exact i
 1. connect to neo4j instance
 2. cd to `logs`
 3. tail / grep on `debug.log` and check what was logged by the DB
+
+
+## MLFlow error about changing params when executing locally
+
+```
+    raise MlflowException(msg, INVALID_PARAMETER_VALUE)
+mlflow.exceptions.MlflowException: INVALID_PARAMETER_VALUE: Changing param values is not allowed. Param with key='evaluation.simple_ground_truth_classification.evaluation_options.generator.object' was already logged with value='' for run ID='6814719483f34d5ca6e6f1b6f596715c'. Attempted logging new value 'matrix.datasets.pair_generator.GroundTruthTestPairs'.
+
+The cause of this error is typically due to repeated calls
+to an individual run_id event logging.
+
+Incorrect Example:
+---------------------------------------
+with mlflow.start_run():
+    mlflow.log_param("depth", 3)
+    mlflow.log_param("depth", 5)
+---------------------------------------
+
+Which will throw an MlflowException for overwriting a
+logged parameter.
+
+Correct Example:
+---------------------------------------
+with mlflow.start_run():
+    with mlflow.start_run(nested=True):
+        mlflow.log_param("depth", 3)
+    with mlflow.start_run(nested=True):
+        mlflow.log_param("depth", 5)
+---------------------------------------
+
+Which will create a new nested run for each individual
+model and prevent parameter key collisions within the
+tracking store.
+make: *** [integration_test] Error 1
+```
+
+Do 
+```
+docker stop mlflow
+docker rm mlflow
+docker-compose up -d
+``` 
+
+to wipe the local mlflow instance. This error occurs if one has previously run a node against a different environment. 
