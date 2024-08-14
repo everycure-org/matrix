@@ -132,7 +132,7 @@ class SparkHooks:
             # if prod environment, remove all config keys that start with spark.hadoop.google.cloud.auth.service
             if (
                 cls._kedro_context.env == "prod"
-                and os.environ.get("ARGO_POD_UID") is None
+                and os.environ.get("ARGO_POD_UID") is not None
             ):
                 logger.warning(
                     "we're manipulating the spark configuration now. this is done assuming this is a production execution in argo"
