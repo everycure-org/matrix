@@ -39,7 +39,7 @@ class GeneratorWithSideInput:
         Args:
             dataset: dataset to use
         """
-        self._data = dataset.load()
+        self._data = dataset._load()
 
     def generate(self, known_pairs: pd.DataFrame) -> pd.DataFrame:
         """Function to generate drug-disease pairs from the knowledge graph.
@@ -52,7 +52,7 @@ class GeneratorWithSideInput:
             DataFrame with unknown drug-disease pairs.
         """
 
-        # TODO add here
+        # TODO add here using the _data
 
 
 class SingleLabelPairGenerator(DrugDiseasePairGenerator):
