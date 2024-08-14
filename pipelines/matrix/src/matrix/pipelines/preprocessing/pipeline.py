@@ -68,7 +68,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 inputs=[
                     "preprocessing.int.edges",
                 ],
-                outputs="preprocessing.prm.edges",
+                outputs="preprocessing.prm.edges@pandas",
                 name="create_prm_exp_edges",
             ),
         ]

@@ -13,6 +13,14 @@ _layer_prm: &_layer_prm
     kedro-viz:
       layer: primary
 
+_spark_csv: &_spark_csv
+  type: spark.SparkDataset
+  file_format: csv
+  load_args:
+    header: True
+  save_args:
+    mode: overwrite
+
 _pandas_csv: &_pandas_csv
   type:  pandas.CSVDataset
 
@@ -67,6 +75,10 @@ preprocessing.prm.nodes:
   <<: [*_layer_prm, *_pandas_csv]
   filepath: ${globals:paths.prm}/exp/nodes.csv
 
-preprocessing.prm.edges:
+preprocessing.prm.edges@pandas:
   <<: [*_layer_prm, *_pandas_csv]
+  filepath: ${globals:paths.prm}/exp/edges.csv
+
+preprocessing.prm.edges@spark:
+  <<: [*_layer_prm, *_spark_csv]
   filepath: ${globals:paths.prm}/exp/edges.csv
