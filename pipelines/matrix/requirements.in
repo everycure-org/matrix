@@ -5,6 +5,7 @@ hdfs==2.7.3
 ipython>=8.10
 jupyterlab>=3.0
 kedro-datasets>=3.0
+google-cloud-bigquery
 kedro-telemetry>=0.3.1
 kedro-viz>=6.7.0
 # can be unpinned when https://github.com/kedro-org/kedro/issues/4083 is fixed

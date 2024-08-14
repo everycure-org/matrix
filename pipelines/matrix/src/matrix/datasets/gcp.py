@@ -2,6 +2,9 @@
 from typing import Any, Dict, Optional
 from copy import deepcopy
 import re
+from google.cloud import bigquery
+import google.api_core.exceptions as exceptions
+
 
 import pandas as pd
 
@@ -144,6 +147,23 @@ class BigQueryTableDataset(SparkDataset):
         )
 
     def _save(self, data: DataFrame) -> None:
+        bq_client = bigquery.Client()
+        dataset_id = f"{self._project_id}.{self._dataset}"
+
+        # Check if the dataset exists
+        try:
+            bq_client.get_dataset(dataset_id)
+            print(f"Dataset {dataset_id} already exists")
+        except exceptions.NotFound:
+            print(f"Dataset {dataset_id} is not found, will attempt creating it now.")
+
+            # Dataset doesn't exist, so let's create it
+            dataset = bigquery.Dataset(dataset_id)
+            # dataset.location = "US"  # Specify the location, e.g., "US" or "EU"
+
+            dataset = bq_client.create_dataset(dataset, timeout=30)
+            print(f"Created dataset {self._project_id}.{dataset.dataset_id}")
+
         (
             data.write.format("bigquery")
             .options(**self._save_args)
