@@ -175,6 +175,7 @@ gitpython==3.1.43
 google-api-core==2.19.1
     # via
     #   google-api-python-client
+    #   google-cloud-bigquery
     #   google-cloud-core
     #   google-cloud-storage
 google-api-python-client==2.140.0
@@ -187,6 +188,7 @@ google-auth==2.33.0
     #   google-api-python-client
     #   google-auth-httplib2
     #   google-auth-oauthlib
+    #   google-cloud-bigquery
     #   google-cloud-core
     #   google-cloud-storage
 google-auth-httplib2==0.2.0
@@ -195,8 +197,12 @@ google-auth-oauthlib==1.2.1
     # via
     #   gcsfs
     #   pygsheets
+google-cloud-bigquery==3.25.0
+    # via -r requirements.in
 google-cloud-core==2.4.1
-    # via google-cloud-storage
+    # via
+    #   google-cloud-bigquery
+    #   google-cloud-storage
 google-cloud-storage==2.18.2
     # via gcsfs
 google-crc32c==1.5.0
@@ -204,9 +210,13 @@ google-crc32c==1.5.0
     #   google-cloud-storage
     #   google-resumable-media
 google-resumable-media==2.7.2
-    # via google-cloud-storage
+    # via
+    #   google-cloud-bigquery
+    #   google-cloud-storage
 googleapis-common-protos==1.63.2
-    # via google-api-core
+    # via
+    #   google-api-core
+    #   grpcio-status
 graphdatascience==1.11
     # via -r requirements.in
 graphene==3.3
@@ -218,6 +228,12 @@ graphql-core==3.2.3
     #   strawberry-graphql
 graphql-relay==3.2.0
     # via graphene
+grpcio==1.65.4
+    # via
+    #   google-api-core
+    #   grpcio-status
+grpcio-status==1.65.4
+    # via google-api-core
 gunicorn==22.0.0
     # via mlflow
 h11==0.14.0
@@ -449,6 +465,7 @@ overrides==7.7.0
 packaging==24.1
     # via
     #   build
+    #   google-cloud-bigquery
     #   gunicorn
     #   ipykernel
     #   jupyter-server
@@ -508,6 +525,7 @@ protobuf==5.27.3
     # via
     #   google-api-core
     #   googleapis-common-protos
+    #   grpcio-status
     #   mlflow-skinny
     #   proto-plus
 psutil==6.0.0
@@ -573,6 +591,7 @@ python-dateutil==2.9.0.post0
     #   arrow
     #   botocore
     #   faker
+    #   google-cloud-bigquery
     #   jupyter-client
     #   matplotlib
     #   pandas
@@ -618,6 +637,7 @@ requests==2.32.3
     #   docker
     #   gcsfs
     #   google-api-core
+    #   google-cloud-bigquery
     #   google-cloud-storage
     #   graphdatascience
     #   hdfs
