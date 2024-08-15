@@ -8,7 +8,7 @@ from jinja2 import Environment, FileSystemLoader
 from kedro.framework.project import pipelines
 from kedro.framework.startup import bootstrap_project
 
-TEMPLATE_FILE = "argo_spec.tmpl"
+TEMPLATE_FILE = "argo_wf_spec.tmpl"
 RENDERED_FILE = "argo-workflow-template.yml"
 SEARCH_PATH = Path("templates")
 
