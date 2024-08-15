@@ -4,7 +4,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends gcc curl g++
 
 # Install OS dependencies
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends gcc curl g++ openjdk-11-jre-headless vim && \
+    apt-get install -y --no-install-recommends gcc curl g++ openjdk-11-jre-headless && \
     apt-get clean;
 
 # Package all python dependencies
