@@ -19,24 +19,24 @@ resource "google_service_account" "storage_viewer_sa" {
   description  = "Service account with storage object viewer role"
 }
 
-# Assign the storage.objectViewer role to the service account
 resource "google_project_iam_member" "storage_viewer_iam" {
   project = module.bootstrap_data.content.project_id
   role    = "roles/storage.objectViewer"
   member  = "serviceAccount:${google_service_account.storage_viewer_sa.email}"
 }
-
-# Create a custom IAM role that allows creating service account keys
-resource "google_project_iam_custom_role" "sa_key_creator" {
-  role_id     = "serviceAccountKeyCreator"
-  title       = "Service Account Key Creator"
-  description = "Custom role to create service account keys"
-  permissions = ["iam.serviceAccountKeys.create"]
+resource "google_project_iam_member" "bq_data_viewer" {
+  project = module.bootstrap_data.content.project_id
+  role    = "roles/bigquery.dataViewer"
+  member  = "serviceAccount:${google_service_account.storage_viewer_sa.email}"
+}
+resource "google_project_iam_member" "bq_job_user" {
+  project = module.bootstrap_data.content.project_id
+  role    = "roles/bigquery.jobUser"
+  member  = "serviceAccount:${google_service_account.storage_viewer_sa.email}"
 }
 
-# Assign the custom role to the matrix-all group for the specific service account
-resource "google_service_account_iam_member" "matrix_all_sa_key_creator" {
-  service_account_id = google_service_account.storage_viewer_sa.name
-  role               = google_project_iam_custom_role.sa_key_creator.id
-  member             = "group:matrix-all@everycure.org"
+resource "google_project_iam_member" "bq_read_session" {
+  project = module.bootstrap_data.content.project_id
+  role    = "roles/bigquery.readSessionUser"
+  member  = "serviceAccount:${google_service_account.storage_viewer_sa.email}"
 }
