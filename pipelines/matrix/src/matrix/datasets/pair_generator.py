@@ -289,13 +289,14 @@ class MatrixTestDiseases(DrugDiseasePairGenerator):
         test_pairs = known_pairs[is_test]
         train_pairs = known_pairs[~is_test]
 
-        # Define lists of  drugs and diseases
-        test_diseases_lst = list(test_pairs["target"].unique())
+        # Define lists of drugs and diseases
+        test_pos_pairs = test_pairs[test_pairs["y"].eq(1)]
+        test_pos_diseases_lst = list(test_pos_pairs["target"].unique())
         drugs_lst = graph.flags_to_ids(self._drug_axis_flags)
 
         # Generate all combinations
         matrix_slices = []
-        for disease in tqdm(test_diseases_lst):
+        for disease in tqdm(test_pos_diseases_lst):
             matrix_slice = pd.DataFrame({"source": drugs_lst, "target": disease})
             test_pos_pairs_in_slice = test_pairs[test_pairs["target"].eq(disease)]
             test_pos_drugs_in_slice = test_pos_pairs_in_slice["source"]
@@ -314,4 +315,4 @@ class MatrixTestDiseases(DrugDiseasePairGenerator):
         )
 
         filtered_matrix = matrix[~is_in_train]
-        return filtered_matrix
+        return filtered_matrix, matrix, is_in_train # TODO: Remove this
