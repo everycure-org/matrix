@@ -5,6 +5,7 @@ on:
   push:
     paths: 
       - pipelines/matrix/**
+      - .github/workflows/pipeline-ci.yml
 
 
 jobs:
