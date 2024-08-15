@@ -4,7 +4,7 @@ metadata:
   namespace: argo-workflows
   name: matrix-single-node
 spec:
-  entrypoint: dag
+  entrypoint: kedro
   arguments:
     parameters:
       - name: image
