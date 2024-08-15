@@ -17,7 +17,7 @@ gcp_project: ${oc.env:GCP_PROJECT_ID, mtrx-hub-dev-3of}
 
 versions:
   # overwritten in prod environment for shared releases
-  release: ${oc.env:RELEASE_VERSION, 20240807}
+  release: ${oc.env:RELEASE_VERSION, local}
 
 data_sources:
   rtx-kg2:
