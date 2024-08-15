@@ -56,14 +56,10 @@ embeddings.model_output.graphsage:
     # Dummy Query that never gets written to because we use GDS to execute the write-back of graphsage
     persist: false
   load_args:
-    query: >
-      MATCH (n: Entity) 
-      RETURN 
-          n.id as id, 
-          n.name as name,
-          n.category as category,
-          n.description as description,
-          n.topological_embedding as topological_embedding
+    # NOTE: Using the `query` reader option highly impacts performance, hence resorting to `labels`.
+    # https://neo4j.com/docs/spark/current/read/options/
+    partitions: 16 # Should increase parallelism
+    labels: ":Entity" # avoids query which drastically increases performance
 
 embeddings.feat.nodes:
   <<: *_spark_parquet
