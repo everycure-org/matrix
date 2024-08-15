@@ -603,5 +603,6 @@ def create_metrics_report(list_model_metrics_info) -> pd.DataFrame:
     return report
 
 
+@inject_object()
 def generator_example(generator):
     generator.generate(pd.DataFrame())

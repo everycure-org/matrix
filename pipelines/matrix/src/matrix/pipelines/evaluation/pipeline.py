@@ -65,6 +65,13 @@ def create_pipeline(**kwargs) -> Pipeline:
     pipes.append(
         pipeline(
             [
+                # Example using new Generator
+                node(
+                    func=nodes.generator_example,
+                    inputs=["params:evaluation.generator_with_dataset"],
+                    outputs=None,
+                    name="generator_example",
+                ),
                 node(
                     func=nodes.consolidate_evaluation_reports,
                     inputs=[
@@ -145,16 +152,6 @@ def implement_time_split_validation_pipeline(**kwargs) -> Pipeline:
                 ],
                 outputs="evaluation.cleaned_clinical_trial_data",
                 name="cleaned_clinical_trial_data",
-            ),
-            # Example using new Generator
-            node(
-                func=nodes.generator_example,
-                inputs=[
-                    "evaluation.generator_with_dataset:",
-                    "params:evaluation.synonymizer.endpoint",
-                ],
-                outputs=None,
-                name="generator_example",
             ),
         )
     )
