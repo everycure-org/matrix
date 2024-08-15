@@ -5,7 +5,7 @@ _pandas_parquet: &_pandas_parquet
   type: pandas.ParquetDataset
 
 _spark_parquet_ds: &_spark_parquet
-  type: spark.SparkDataset
+  type: matrix.datasets.gcp.LazySparkDataset
   file_format: parquet
   save_args:
     mode: overwrite
