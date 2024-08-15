@@ -3,9 +3,11 @@ versions:
   release: ${oc.env:RELEASE_VERSION}
 
 gcs_bucket: gs://${oc.env:GCP_BUCKET}
+gcp_project: ${oc.env:GCP_PROJECT_ID}
 
 paths:
-  raw: ${gcs_bucket}/kedro/data/01_raw
+  # hard coded against our central data location for raw
+  raw: gs://mtrx-us-central1-hub-dev-storage/kedro/data/01_raw
   int: ${gcs_bucket}/releases/${versions.release}/02_intermediate
   prm: ${gcs_bucket}/releases/${versions.release}/03_primary
   feat: ${gcs_bucket}/releases/${versions.release}/04_feature

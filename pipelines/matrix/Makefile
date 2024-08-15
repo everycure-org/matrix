@@ -2,7 +2,7 @@ dev_docker_image = us-central1-docker.pkg.dev/mtrx-hub-dev-3of/matrix-images/mat
 
 
 install:
-	uv pip install -r requirements.in
+	uv pip install -r requirements.txt
 
 lock:
 	uv pip compile requirements.in > requirements.txt
