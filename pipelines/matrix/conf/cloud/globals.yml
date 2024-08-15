@@ -3,6 +3,7 @@ versions:
   release: ${oc.env:RELEASE_VERSION}
 
 gcs_bucket: gs://${oc.env:GCP_BUCKET}
+gcp_project: ${oc.env:GCP_PROJECT_ID}
 
 paths:
   # hard coded against our central data location for raw

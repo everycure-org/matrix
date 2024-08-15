@@ -205,19 +205,19 @@ Our pipeline operates on large datasets, as a result the pipeline may take sever
 To seamlessly run the same codebase on both the fabricated and the production data, we leverage [Kedro configuration environments](https://docs.kedro.org/en/stable/configuration/configuration_basics.html#configuration-environments).
 
 !!! warning
-    Our pipeline is equipped with a `base` and `prod` catalog. The `base` catalog defines the full pipeline run on synthetic data. The `prod` catalog, on the other hand, plugs into the production sources.
+    Our pipeline is equipped with a `base` and `cloud` catalog. The `base` catalog defines the full pipeline run on synthetic data. The `cloud` catalog, on the other hand, plugs into the cloud environment.
 
-    To avoid full re-definition of all catalog and parameter entries, we're employing a [soft merge](https://docs.kedro.org/en/stable/configuration/advanced_configuration.html#how-to-change-the-merge-strategy-used-by-omegaconfigloader) strategy. Kedro will _always_ use the `base` config. This means that if another environment is selected, e.g., `prod`, using the `--env` flag, Kedro will override the base configuration with the entries defined in `prod`. Our goal is to _solely_ redefine entries in the `prod` catalog when they deviate from `base`.
+    To avoid full re-definition of all catalog and parameter entries, we're employing a [soft merge](https://docs.kedro.org/en/stable/configuration/advanced_configuration.html#how-to-change-the-merge-strategy-used-by-omegaconfigloader) strategy. Kedro will _always_ use the `base` config. This means that if another environment is selected, e.g., `cloud`, using the `--env` flag, Kedro will override the base configuration with the entries defined in `cloud`. Our goal is to _solely_ redefine entries in the `cloud` catalog when they deviate from `base`.
 
-The situation is depicted below, in the `base` environment our pipeline will plug into the datasets as produced by our fabricator pipeline, whereas the `prod` environment plugs into the production system.
+The situation is depicted below, in the `base` environment our pipeline will plug into the datasets as produced by our fabricator pipeline, whereas the `cloud` environment plugs into the cloud systems.
 
 ```bash
 # Pipeline uses the base, i.e., local setup by default.
 # The `test` pipeline runs the `fabricator` _and_ the full pipeline.
 kedro run -p test
 
-# To leverage the production datasets
-kedro --env prod
+# To leverage cloud systems
+kedro --env cloud
 ```
 
 ![](../assets/img/fabrication.drawio.svg)
@@ -405,20 +405,25 @@ Currently, we have the following evaluation methods.
 We have 4 environments declared in the kedro project for `MATRIX`:
 
 - `base`: Contains the base environment which reads the real data from GCS and operates in your local compute environment
-- `prod`: Contains the prod environment with real data. All data is read and written from our main Google Cloud Storage. Assumes fully stateless local machine operations (e.g. in docker containers)
+- `cloud`: Contains the cloud environment with real data. All data is read and written to a GCP project a configured (see below). Assumes fully stateless local machine operations (e.g. in docker containers)
 - `test`: Fully local and contains parameters that "break" the meaning of algorithms in the pipeline (e.g. 2 dimensions PCA). This is useful for running an integration test with mock data to validate the programming of the pipeline is correct to a large degree. 
 - `local`: A default environment which you can use for local adjustments and tweaks. Changes to this repo are not usually committed to git as they are unique for every developer. 
 
-You can run any of the environments using the `--env` flag. For example, to run the pipeline in the `prod` environment, you can use the following command:
+!!! info
+    Our `cloud` environment is equipped with environment variables that allows for configuring the GCP project to use. This is especially relevant to switch between the `hub` and `wg` projects as desired.
+
+    The source code contains a `.env.tmpl` configuration template file. To configure the `cloud` environment, create your own `.env` file from the template and uncomment variables relevant to your configuration. 
+
+You can run any of the environments using the `--env` flag. For example, to run the pipeline in the `cloud` environment, you can use the following command:
 
 ```bash
-kedro run --env prod
+kedro run --env cloud
 ```
 
 !!! info
     Environments are abstracted away by Kedro's data catalog which is, in turn, defined as configuration in YAML. The catalog is dynamic, in the sense that it can combine the `base` environment with another environment during execution. This allows for overriding some of the configuration in `base` such that data can flow into different systems according to the selected _environment_. 
 
-    The image below represents a pipeline configuration across three environments, `base`, `prod` and `test`. By default the pipeline reads from Google Cloud Storage (GCS) and writes to the local filesystem. The `prod` environment redefines the output dataset to write to `BigQuery` (as opposed to local). The `test` environment redefines the input dataset to read the output from the fabricator pipeline, thereby having the effect that the pipeline runs on synthetic data.
+    The image below represents a pipeline configuration across three environments, `base`, `cloud` and `test`. By default the pipeline reads from Google Cloud Storage (GCS) and writes to the local filesystem. The `cloud` environment redefines the output dataset to write to `BigQuery` (as opposed to local). The `test` environment redefines the input dataset to read the output from the fabricator pipeline, thereby having the effect that the pipeline runs on synthetic data.
 
 ![](../assets/img/environments.drawio.svg)
 
@@ -476,14 +481,14 @@ Within a notebook, first run a cell with the following magic command:
 ```
 
 By default, this loads the `base` Kedro environment which is used only with fabricated data. 
-To load the `prod` Kedro environment with real data, run another cell with the following command:
+To load the `cloud` Kedro environment with real data, run another cell with the following command:
 ```python
-%reload_kedro --env=prod
+%reload_kedro --env=cloud
 ```
 
 These commands define several useful global variables on your behalf: `context`, `session`, `catalog` and `pipelines`.
 
-In particular, the `catalog` variable provides an interface to the Kedro data catalog, which includes all data, models and model outputs produced during the latest `prod` run of the Kedro pipeline. The following command lists the available items in the data catalog:
+In particular, the `catalog` variable provides an interface to the Kedro data catalog, which includes all data, models and model outputs produced during the latest `cloud` run of the Kedro pipeline. The following command lists the available items in the data catalog:
 ```python
 catalog.list()
 ```
