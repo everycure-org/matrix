@@ -142,6 +142,15 @@ class SparkHooks:
                     for k, v in parameters.items()
                     if not k.startswith("spark.hadoop.google.cloud.auth.service")
                 }
+            else:
+                logger.info("Executing for enviornment: " + cls._kedro_context.env)
+                logger.info(
+                    "With ARGO_POD_UID set to: " + os.environ.get("ARGO_POD_UID")
+                )
+                logger.info(
+                    "Thus determined not to be in k8s cluster and executing with service-account.json file"
+                )
+
             logging.info(
                 f"starting spark session with the following parameters: {parameters}"
             )
