@@ -19,6 +19,8 @@ neo4j_db/
 **/.venv/
 **/venv/
 
+!.gitkeep
+
 # terraform
 **/.terraform/
 **/.terragrunt-cache/
