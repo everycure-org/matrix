@@ -73,9 +73,13 @@ evaluation.time_split_validation.k_list_for_hit_at_k:
 params:evaluation.time_split_validation.clinical_label: "significantly_better"
 
 evaluation.generator_with_dataset:
+  # Use the new generator
   object: matrix.datasets.pair_generator.GeneratorWithSideInput
+
+  # Load it with dataset
   dataset:
     object: kedro_datasets.pandas.ExcelDataset
+    # Update path to plug into clinical data file
     # filepath: ${globals:paths.raw}/medical_team_data/{globals:versions.sources.medical_team_data}/file.xlsx
     filepath: ${globals:paths.raw}/exp.xlsx
     load_args:
