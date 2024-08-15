@@ -41,13 +41,13 @@ _png: &_png
   type: yaml.YAMLDataset
   filepath: ${globals:paths.reporting}/master_report.yml
 
-evaluation.raw.medical:
-  <<: *_pandas_excel
-  filepath: ${globals:paths.raw}/medical_team_data/{globals:versions.sources.medical_team_data}/file.xlsx
+# evaluation.raw.medical:
+#   <<: *_pandas_excel
+#   filepath: ${globals:paths.raw}/medical_team_data/{globals:versions.sources.medical_team_data}/file.xlsx
 
-evaluation.cleaned_clinical_trial_data:
-  <<: *_pandas_parquet
-  filepath: ${globals:paths.int}/cleaned_clinical_trial_data/{globals:versions.sources.cleaned_clinical_trial_data}/file.parquet
+# evaluation.cleaned_clinical_trial_data:
+#   <<: *_pandas_parquet
+#   filepath: ${globals:paths.int}/cleaned_clinical_trial_data/{globals:versions.sources.cleaned_clinical_trial_data}/file.parquet
 
 "evaluation.{model_name}.reporting.time_split_validation_barplot":
   <<: *_png

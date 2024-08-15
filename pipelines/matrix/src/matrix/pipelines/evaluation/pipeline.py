@@ -83,57 +83,57 @@ def create_pipeline(**kwargs) -> Pipeline:
 
     return sum(pipes)
 
+
 def _implement_time_split_validation(model_name: str) -> Pipeline:
     return pipeline(
         [
             node(
                 func=nodes.generate_time_split_validation_barplot,
                 inputs=[
-                    "modelling.feat.rtx_kg2", #TODO: make it more flexible to fit any KGs
-                    f"modelling.{model_name}.models.model",
-                    model_name,
-                    f"modelling.{model_name}.model_input.transformers",
-                    "evaluation.cleaned_clinical_trial_data"
-                ],
-                outputs=f"evaluation.{model_name}.reporting.time_split_validation_barplot",
-                name=f"generate_time_split_validation_barplot_{model_name}"
-            ),
-            node(
-                func=nodes.generate_time_split_validation_classification_auroc,
-                inputs=[
-                    "modelling.feat.rtx_kg2", #TODO: make it more flexible to fit any KGs
-                    f"modelling.{model_name}.models.model",
-                    model_name,
-                    f"modelling.{model_name}.model_input.transformers",
-                    "evaluation.cleaned_clinical_trial_data"
-                ],
-                outputs=f"evaluation.{model_name}.reporting.time_split_validation_classification_auroc",
-                name=f"generate_time_split_validation_classification_auroc_{model_name}"
-            ),
-            node(
-                func=nodes.generate_time_split_validation_all_metrics,
-                inputs=[
-                    "modelling.feat.rtx_kg2", #TODO: make it more flexible to fit any KGs
+                    "modelling.feat.rtx_kg2",  # TODO: make it more flexible to fit any KGs
                     f"modelling.{model_name}.models.model",
                     model_name,
                     f"modelling.{model_name}.model_input.transformers",
                     "evaluation.cleaned_clinical_trial_data",
-                    "", #TODO: need to check with Alexei where to get this data
+                ],
+                outputs=f"evaluation.{model_name}.reporting.time_split_validation_barplot",
+                name=f"generate_time_split_validation_barplot_{model_name}",
+            ),
+            node(
+                func=nodes.generate_time_split_validation_classification_auroc,
+                inputs=[
+                    "modelling.feat.rtx_kg2",  # TODO: make it more flexible to fit any KGs
+                    f"modelling.{model_name}.models.model",
+                    model_name,
+                    f"modelling.{model_name}.model_input.transformers",
+                    "evaluation.cleaned_clinical_trial_data",
+                ],
+                outputs=f"evaluation.{model_name}.reporting.time_split_validation_classification_auroc",
+                name=f"generate_time_split_validation_classification_auroc_{model_name}",
+            ),
+            node(
+                func=nodes.generate_time_split_validation_all_metrics,
+                inputs=[
+                    "modelling.feat.rtx_kg2",  # TODO: make it more flexible to fit any KGs
+                    f"modelling.{model_name}.models.model",
+                    model_name,
+                    f"modelling.{model_name}.model_input.transformers",
+                    "evaluation.cleaned_clinical_trial_data",
+                    "",  # TODO: need to check with Alexei where to get this data
                     "params:evaluation.time_split_validation.k_list_for_hit_at_k",
                     "params:evaluation.time_split_validation.clinical_label",
                 ],
                 outputs=f"evaluation.{model_name}.reporting.time_split_validation_all_metrics",
-                name=f"generate_time_split_validation_all_metrics_{model_name}"
-            )
+                name=f"generate_time_split_validation_all_metrics_{model_name}",
+            ),
         ]
     )
-    
-    
+
+
 def implement_time_split_validation_pipeline(**kwargs) -> Pipeline:
     """Implement time-split validation pipeline."""
-    
     pipes = []
-    
+
     # Clean clinical trial data
     pipes.append(
         pipeline(
@@ -141,52 +141,59 @@ def implement_time_split_validation_pipeline(**kwargs) -> Pipeline:
                 func=nodes.clean_clinical_trial_data,
                 inputs=[
                     "evaluation.raw.medical",
-                    "params:evaluation.synonymizer.endpoint"
+                    "params:evaluation.synonymizer.endpoint",
                 ],
                 outputs="evaluation.cleaned_clinical_trial_data",
-                name="cleaned_clinical_trial_data"
-            )
+                name="cleaned_clinical_trial_data",
+            ),
+            # Example using new Generator
+            node(
+                func=nodes.generator_example,
+                inputs=[
+                    "evaluation.generator_with_dataset:",
+                    "params:evaluation.synonymizer.endpoint",
+                ],
+                outputs=None,
+                name="generator_example",
+            ),
         )
     )
-    
+
     # Run time split validation pipeline for different models
     auroc_output_name_lst = []
     all_metrics_output_name_lst = []
     for model in settings.DYNAMIC_PIPELINES_MAPPING.get("modelling"):
-            pipes.append(
-                pipeline(
-                    _implement_time_split_validation(
-                        model["model_name"]
-                    ),
-                    tags=[model["model_name"], 'time-split-validation'],
-                )
+        pipes.append(
+            pipeline(
+                _implement_time_split_validation(model["model_name"]),
+                tags=[model["model_name"], "time-split-validation"],
             )
-            auroc_output_name_lst.append(f"evaluation.{model['model_name']}.reporting.time_split_validation_classification_auroc")
-            all_metrics_output_name_lst.append(f"evaluation.{model['model_name']}.reporting.time_split_validation_all_metrics")
-            
+        )
+        auroc_output_name_lst.append(
+            f"evaluation.{model['model_name']}.reporting.time_split_validation_classification_auroc"
+        )
+        all_metrics_output_name_lst.append(
+            f"evaluation.{model['model_name']}.reporting.time_split_validation_all_metrics"
+        )
+
     # Consolidate reports
     pipes.append(
         pipeline(
             [
                 node(
                     func=nodes.create_metrics_report,
-                    inputs=[
-                        auroc_output_name_lst
-                    ],
+                    inputs=[auroc_output_name_lst],
                     outputs="evaluation.reporting.time_split_validation_classification_auroc",
-                    name="create_time_split_validation_classification_auroc_report"
+                    name="create_time_split_validation_classification_auroc_report",
                 ),
                 node(
                     func=nodes.create_metrics_report,
-                    inputs=[
-                        all_metrics_output_name_lst
-                    ],
+                    inputs=[all_metrics_output_name_lst],
                     outputs="evaluation.reporting.time_split_validation_all_metrics",
-                    name="create_time_split_validation_all_metrics_report"
-                )
+                    name="create_time_split_validation_all_metrics_report",
+                ),
             ]
         )
     )
-
 
     return sum(pipes)
