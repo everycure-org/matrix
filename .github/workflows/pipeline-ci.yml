@@ -5,6 +5,7 @@ on:
   push:
     paths: 
       - pipelines/matrix/**
+      - .github/workflows/pipeline-ci.yml
 
 
 jobs:
@@ -57,7 +58,7 @@ jobs:
         run: |
           pip install uv
           uv venv
-          uv pip install -r requirements.txt -r requirements.dev.in
+          uv pip install -r requirements.txt
 
       # cache python dependencies
       - uses: actions/cache@v4

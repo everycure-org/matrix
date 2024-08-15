@@ -1,6 +1,7 @@
 """Kedro project hooks."""
 from kedro.framework.hooks import hook_impl
 from pyspark import SparkConf
+import os
 from pyspark.sql import SparkSession
 from kedro.pipeline.node import Node
 from datetime import datetime
@@ -105,32 +106,18 @@ class SparkHooks:
 
     _spark_session: Optional[SparkSession] = None
     _already_initialized = False
-
-    @hook_impl
-    def after_context_created(self, context: KedroContext) -> None:
-        """Initialise SparkSession.
-
-        Initialises a SparkSession using the config defined
-        in project's conf folder.
-        """
-        # Load the spark configuration in spark.yaml using the config loader
-
-        parameters = context.config_loader["spark"]
-        # DEBT ugly fix, ideally we overwrite this in the spark.yml config file but currently no
-        # known way of doing so
-        # if prod environment, remove all config keys that start with spark.hadoop.google.cloud.auth.service
-        if context.env == "prod":
-            parameters = {
-                k: v
-                for k, v in parameters.items()
-                if not k.startswith("spark.hadoop.google.cloud.auth.service")
-            }
-        spark_conf = SparkConf().setAll(parameters.items())
-        self.context = context
+    _kedro_context: Optional[KedroContext] = None
 
     @classmethod
-    def _initialize_spark(cls, context: KedroContext) -> None:
+    def set_context(cls, context: KedroContext) -> None:
+        """Utility class method that stores context in class as singleton."""
+        cls._kedro_context = context
+
+    @classmethod
+    def _initialize_spark(cls) -> None:
         """Initialize SparkSession if not already initialized and set as default."""
+        if cls._kedro_context is None:
+            raise Exception("kedro context needs to be set before")
         # if we have not initiated one, we initiate one
         if cls._spark_session is None:
             # Clear any existing default session, we take control!
@@ -138,25 +125,51 @@ class SparkHooks:
             if sess is not None:
                 logger.warning("we are killing spark to create a fresh one")
                 sess.stop()
+            parameters = cls._kedro_context.config_loader["spark"]
 
-            parameters = context.config_loader["spark"]
-            if context.env == "prod":
+            # DEBT ugly fix, ideally we overwrite this in the spark.yml config file but currently no
+            # known way of doing so
+            # if prod environment, remove all config keys that start with spark.hadoop.google.cloud.auth.service
+            if (
+                cls._kedro_context.env == "cloud"
+                and os.environ.get("ARGO_NODE_ID") is not None
+            ):
+                logger.warning(
+                    "we're manipulating the spark configuration now. this is done assuming this is a production execution in argo"
+                )
                 parameters = {
                     k: v
                     for k, v in parameters.items()
                     if not k.startswith("spark.hadoop.google.cloud.auth.service")
                 }
-            print(f"starting spark session with the following parameters: {parameters}")
+            else:
+                logger.info("Executing for enviornment: " + cls._kedro_context.env)
+                logger.info(
+                    "With ARGO_POD_UID set to: " + os.environ.get("ARGO_NODE_ID", "")
+                )
+                logger.info(
+                    "Thus determined not to be in k8s cluster and executing with service-account.json file"
+                )
+
+            logging.info(
+                f"starting spark session with the following parameters: {parameters}"
+            )
             spark_conf = SparkConf().setAll(parameters.items())
 
             # Create and set our configured session as the default
             cls._spark_session = (
-                SparkSession.builder.appName(context.project_path.name)
+                SparkSession.builder.appName(cls._kedro_context.project_path.name)
                 .config(conf=spark_conf)
                 .getOrCreate()
             )
         else:
             logger.debug("SparkSession already initialized")
+
+    @hook_impl
+    def after_context_created(self, context: KedroContext) -> None:
+        """Remember context for later spark initialization."""
+        logger.info("Remembering context for spark later")
+        SparkHooks.set_context(context)
 
     @hook_impl
     def after_catalog_created(
@@ -173,14 +186,14 @@ class SparkHooks:
 
     def _check_and_initialize_spark(self, dataset_name: str) -> None:
         """Check if dataset is SparkDataset and initialize Spark if needed."""
-        if self._already_initialized is True:
+        if self.__class__._already_initialized is True:
             return
 
         dataset = self.catalog._get_dataset(dataset_name)
         if isinstance(dataset, SparkDataset):
             logger.info(f"SparkDataset detected: {dataset}")
-            self._initialize_spark(self.context)
-            self._already_initialized = True
+            self._initialize_spark()
+            self.__class__._already_initialized = True
 
     @hook_impl
     def before_dataset_loaded(self, dataset_name: str, node: Any) -> None:
