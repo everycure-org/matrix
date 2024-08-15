@@ -409,6 +409,11 @@ We have 4 environments declared in the kedro project for `MATRIX`:
 - `test`: Fully local and contains parameters that "break" the meaning of algorithms in the pipeline (e.g. 2 dimensions PCA). This is useful for running an integration test with mock data to validate the programming of the pipeline is correct to a large degree. 
 - `local`: A default environment which you can use for local adjustments and tweaks. Changes to this repo are not usually committed to git as they are unique for every developer. 
 
+!!! info
+    Our `cloud` environment is equipped with environment variables that allows for configuring the GCP project to use. This is especially relevant to switch between the `hub` and `wg` projects as desired.
+
+    The source code contains a `.env.tmpl` configuration template file. To configure the `cloud` environment, create your own `.env` file from the template and uncomment variables relevant to your configuration. 
+
 You can run any of the environments using the `--env` flag. For example, to run the pipeline in the `cloud` environment, you can use the following command:
 
 ```bash
