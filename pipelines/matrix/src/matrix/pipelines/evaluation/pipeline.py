@@ -66,6 +66,8 @@ def create_pipeline(**kwargs) -> Pipeline:
         pipeline(
             [
                 # Example using new Generator
+                # This node should be removed, I've just added it as a quick example
+                # to make sure the code snippet works as expected.
                 node(
                     func=nodes.generator_example,
                     inputs=["params:evaluation.generator_with_dataset"],

@@ -39,6 +39,10 @@ class GeneratorWithSideInput:
         Args:
             dataset: dataset to use
         """
+        # NOTE: I'm fine with the rudimentary data cleaning happening in here for now, is we mix
+        # this injection mechanism with ordinary datasets, it may break lineage of the pipeline.
+        # there are ways to fix that again, but let's keep it simple. So proposing to add
+        # the a clean_data() method to this class and turn the class into TimeSplitValidationDataGenerator?
         self._data = dataset._load()
 
     def generate(self, known_pairs: pd.DataFrame) -> pd.DataFrame:
@@ -51,9 +55,8 @@ class GeneratorWithSideInput:
         Returns:
             DataFrame with unknown drug-disease pairs.
         """
+        # Add logic here, will have access to _data to curate dataset you'd like
         breakpoint()
-
-        # TODO add here using the _data
 
 
 class SingleLabelPairGenerator(DrugDiseasePairGenerator):
