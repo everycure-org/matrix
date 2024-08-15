@@ -51,6 +51,7 @@ class GeneratorWithSideInput:
         Returns:
             DataFrame with unknown drug-disease pairs.
         """
+        breakpoint()
 
         # TODO add here using the _data
 

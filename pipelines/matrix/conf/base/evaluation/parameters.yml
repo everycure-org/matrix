@@ -71,3 +71,11 @@ evaluation.time_split_validation.k_list_for_hit_at_k:
   - 200
 # clinical label for time split validation
 params:evaluation.time_split_validation.clinical_label: "significantly_better"
+
+evaluation.generator_with_dataset:
+  object: matrix.datasets.pair_generator.GeneratorWithSideInput
+  dataset:
+    type: kedro_datasets.pandas.ExcelDataset
+    filepath: ${globals:paths.raw}/medical_team_data/{globals:versions.sources.medical_team_data}/file.xlsx
+    load_args:
+      sheet_name: 0
