@@ -5,6 +5,7 @@ hdfs==2.7.3
 ipython>=8.10
 jupyterlab>=3.0
 kedro-datasets>=3.0
+google-cloud-bigquery
 kedro-telemetry>=0.3.1
 kedro-viz>=6.7.0
 # can be unpinned when https://github.com/kedro-org/kedro/issues/4083 is fixed
@@ -26,3 +27,6 @@ termplotlib
 kedro-mlflow==0.12.2
 mlflow==2.15.0
 pygsheets==2.0.6
+# used for convenience libraries, to be moved to a dev requirements eventually  
+typer
+pytest-testmon
