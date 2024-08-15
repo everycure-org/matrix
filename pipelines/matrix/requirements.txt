@@ -95,6 +95,7 @@ click==8.1.7
     #   flask
     #   kedro
     #   mlflow-skinny
+    #   typer
     #   uvicorn
 click-default-group==1.2.4
     # via kedro-viz
@@ -106,6 +107,8 @@ contourpy==1.2.1
     # via matplotlib
 cookiecutter==2.6.0
     # via kedro
+coverage==7.6.1
+    # via pytest-testmon
 cycler==0.12.1
     # via matplotlib
 databricks-sdk==0.30.0
@@ -165,6 +168,7 @@ gitpython==3.1.43
 google-api-core==2.19.1
     # via
     #   google-api-python-client
+    #   google-cloud-bigquery
     #   google-cloud-core
     #   google-cloud-storage
 google-api-python-client==2.140.0
@@ -177,6 +181,7 @@ google-auth==2.33.0
     #   google-api-python-client
     #   google-auth-httplib2
     #   google-auth-oauthlib
+    #   google-cloud-bigquery
     #   google-cloud-core
     #   google-cloud-storage
 google-auth-httplib2==0.2.0
@@ -185,8 +190,12 @@ google-auth-oauthlib==1.2.1
     # via
     #   gcsfs
     #   pygsheets
+google-cloud-bigquery==3.25.0
+    # via -r requirements.in
 google-cloud-core==2.4.1
-    # via google-cloud-storage
+    # via
+    #   google-cloud-bigquery
+    #   google-cloud-storage
 google-cloud-storage==2.18.2
     # via gcsfs
 google-crc32c==1.5.0
@@ -194,9 +203,13 @@ google-crc32c==1.5.0
     #   google-cloud-storage
     #   google-resumable-media
 google-resumable-media==2.7.2
-    # via google-cloud-storage
+    # via
+    #   google-cloud-bigquery
+    #   google-cloud-storage
 googleapis-common-protos==1.63.2
-    # via google-api-core
+    # via
+    #   google-api-core
+    #   grpcio-status
 graphdatascience==1.11
     # via -r requirements.in
 graphene==3.3
@@ -208,6 +221,12 @@ graphql-core==3.2.3
     #   strawberry-graphql
 graphql-relay==3.2.0
     # via graphene
+grpcio==1.65.4
+    # via
+    #   google-api-core
+    #   grpcio-status
+grpcio-status==1.65.4
+    # via google-api-core
 gunicorn==22.0.0
     # via mlflow
 h11==0.14.0
@@ -439,6 +458,7 @@ overrides==7.7.0
 packaging==24.1
     # via
     #   build
+    #   google-cloud-bigquery
     #   gunicorn
     #   ipykernel
     #   jupyter-server
@@ -498,6 +518,7 @@ protobuf==5.27.3
     # via
     #   google-api-core
     #   googleapis-common-protos
+    #   grpcio-status
     #   mlflow-skinny
     #   proto-plus
 psutil==6.0.0
@@ -551,6 +572,10 @@ pyspark==3.5.1
     #   -r requirements.in
     #   brix-refit
 pytest==8.3.2
+    # via
+    #   -r requirements.in
+    #   pytest-testmon
+pytest-testmon==2.1.1
     # via -r requirements.in
 python-cypher==0.20.1
     # via -r requirements.in
@@ -559,6 +584,7 @@ python-dateutil==2.9.0.post0
     #   arrow
     #   botocore
     #   faker
+    #   google-cloud-bigquery
     #   jupyter-client
     #   matplotlib
     #   pandas
@@ -604,6 +630,7 @@ requests==2.32.3
     #   docker
     #   gcsfs
     #   google-api-core
+    #   google-cloud-bigquery
     #   google-cloud-storage
     #   graphdatascience
     #   hdfs
@@ -625,6 +652,7 @@ rich==13.7.1
     # via
     #   cookiecutter
     #   kedro
+    #   typer
 rope==1.13.0
     # via kedro
 rpds-py==0.20.0
@@ -656,8 +684,10 @@ secure==0.3.0
     # via kedro-viz
 send2trash==1.8.3
     # via jupyter-server
-setuptools==72.1.0
+setuptools==72.2.0
     # via jupyterlab
+shellingham==1.5.4
+    # via typer
 six==1.16.0
     # via
     #   asttokens
@@ -673,7 +703,7 @@ sniffio==1.3.1
     # via
     #   anyio
     #   httpx
-soupsieve==2.5
+soupsieve==2.6
     # via beautifulsoup4
 sqlalchemy==2.0.32
     # via
@@ -734,6 +764,8 @@ traitlets==5.14.3
     #   nbformat
 typeguard==4.3.0
     # via pandera
+typer==0.12.3
+    # via -r requirements.in
 types-python-dateutil==2.9.0.20240316
     # via arrow
 typing-extensions==4.12.2
@@ -748,6 +780,7 @@ typing-extensions==4.12.2
     #   sqlalchemy
     #   strawberry-graphql
     #   typeguard
+    #   typer
     #   typing-inspect
 typing-inspect==0.9.0
     # via pandera
