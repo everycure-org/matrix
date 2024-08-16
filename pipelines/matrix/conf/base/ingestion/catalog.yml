@@ -210,39 +210,30 @@ ingestion.prm.rtx_kg2.edges:
 
 
 ### Raw
-
 # TODO: Register raw robokop Spark dataset
 ingestion.raw.robokop.nodes@spark:
  <<: [*_spark_csv, *_layer_raw]
- filepath: ${globals:paths.raw}/RobokopKG/${globals:data_sources.robokop.version}/nodes.tsv
+ filepath: ${globals:paths.raw}/robokop-kg/${globals:data_sources.robokop.version}/nodes.tsv
 
-ingestion.raw.robokp.nodes@pandas:
+ingestion.raw.robokop.nodes@pandas:
   <<: [*_pandas_csv, *_layer_raw]
-  filepath: ${globals:paths.raw}/RobokopKG/${globals:data_sources.robokop.version}/nodes.tsv
+  filepath: ${globals:paths.raw}/robokop-kg/${globals:data_sources.robokop.version}/nodes.tsv
 
-
-# TODO: Add edges datast
+# TODO: Add edges dataset
 ingestion.raw.robokop.edges@spark:
  <<: [*_spark_csv, *_layer_raw]
- filepath: ${globals:paths.raw}/RobokopKG/${globals:data_sources.robokop.version}/edges.tsv
+ filepath: ${globals:paths.raw}/robokop-kg/${globals:data_sources.robokop.version}/edges.tsv
 
-ingestion.raw.robokp.edge@pandas:
+ingestion.raw.robokop.edges@pandas:
   <<: [*_pandas_csv, *_layer_raw]
-  filepath: ${globals:paths.raw}/RobokopKG/${globals:data_sources.robokop.version}/edges.tsv
+  filepath: ${globals:paths.raw}/robokop-kg/${globals:data_sources.robokop.version}/edges.tsv
 
-# TODO: Turn these intro robokop prm nodes and edges
+### PRM
+# TODO: Turn these into robokop prm nodes and edges
 ingestion.prm.robokop.nodes@spark:
    <<: [*_spark_parquet, *_layer_int]
-   filepath: ${globals:paths.raw}/RobokopKG/${globals:data_sources.robokop.version}/nodes.tsv
-
-ingestion.prm.robokp.nodes@pandas:
-  <<: [*_pandas_csv, *_layer_raw]
-  filepath: ${globals:paths.raw}/RobokopKG/${globals:data_sources.robokop.version}/nodes.tsv
+   filepath: ${globals:paths.raw}/robokop-kg/${globals:data_sources.robokop.version}/nodes.tsv
 
 ingestion.prm.robokop.edges@spark:
    <<: [*_spark_parquet, *_layer_int]
-   filepath: ${globals:paths.raw}/RobokopKG/${globals:data_sources.robokop.version}/edges.tsv
-
-ingestion.prm.robokop.edges@pandas:
-   <<: [*_pandas_csv, *_layer_raw]
-   filepath: ${globals:paths.raw}/RobokopKG/${globals:data_sources.robokop.version}/edges.tsv
+   filepath: ${globals:paths.raw}/robokop-kg/${globals:data_sources.robokop.version}/edges.tsv
