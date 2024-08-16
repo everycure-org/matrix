@@ -9,6 +9,7 @@ RUN apt-get update && \
 
 # Package all python dependencies
 ENV PIP_NO_CACHE_DIR=1
+ENV UV_NO_CACHE=true
 
 WORKDIR /app
 ADD requirements.txt .
