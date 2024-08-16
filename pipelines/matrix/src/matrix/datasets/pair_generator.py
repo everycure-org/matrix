@@ -302,9 +302,11 @@ class MatrixTestDiseases(DrugDiseasePairGenerator):
 
         # Concatenate all slices at once
         matrix = pd.concat(matrix_slices, ignore_index=True)
-        
+
         # Label test positives
-        test_pos_pairs_set = set(zip(test_pos_pairs["source"], test_pos_pairs["target"]))
+        test_pos_pairs_set = set(
+            zip(test_pos_pairs["source"], test_pos_pairs["target"])
+        )
         is_in_test_pos = matrix.apply(
             lambda row: (row["source"], row["target"]) in test_pos_pairs_set, axis=1
         )
