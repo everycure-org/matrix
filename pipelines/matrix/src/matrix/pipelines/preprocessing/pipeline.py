@@ -5,6 +5,8 @@ from kedro.pipeline import Pipeline, node, pipeline
 from . import nodes
 
 
+# NOTE: This pipeline in highly preliminary and used for ingestion of the
+# medical data provided in Google Sheets __ONLY__.
 def create_pipeline(**kwargs) -> Pipeline:
     """Create integration pipeline."""
     return pipeline(
