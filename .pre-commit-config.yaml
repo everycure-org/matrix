@@ -11,7 +11,7 @@ repos:
           (?x)^(
             pipelines/matrix/packages|
             pipelines/matrix/tests/|
-            deployments/compose/services/synonymizer/api/modules/synonymize
+            services/synonymizer/api/modules/synonymize
           )
       # Run the formatter.
       - id: ruff-format
@@ -23,7 +23,7 @@ repos:
         exclude: | 
           (?x)^(
             pipelines/matrix/packages|services/|
-            deployments/compose/services/synonymizer/api/modules/synonymize
+            services/synonymizer/api/modules/synonymize
           )
   - repo: https://github.com/antonbabenko/pre-commit-terraform
     rev: v1.92.0
