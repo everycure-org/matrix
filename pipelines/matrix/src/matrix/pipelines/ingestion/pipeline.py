@@ -11,14 +11,14 @@ def create_pipeline(**kwargs) -> Pipeline:
                 inputs=["ingestion.raw.rtx_kg2.nodes@spark"],
                 outputs="ingestion.prm.rtx_kg2.nodes",
                 name="write_rtx_kg2_nodes",
-                tags=["rtx_kg2", "first_copy"],
+                tags=["rtx_kg2"],
             ),
             node(
                 func=lambda x: x,
                 inputs=["ingestion.raw.rtx_kg2.edges@spark"],
                 outputs="ingestion.prm.rtx_kg2.edges",
                 name="write_rtx_kg2_edges",
-                tags=["rtx_kg2", "first_copy"],
+                tags=["rtx_kg2"],
             ),
         ]
     )

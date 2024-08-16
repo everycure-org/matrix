@@ -196,3 +196,11 @@ ingestion.prm.rtx_kg2.nodes:
 ingestion.prm.rtx_kg2.edges:
   <<: [*_spark_parquet, *_layer_int]
   filepath: ${globals:paths.prm}/rtx_kg2/edges
+
+ingestion.prm.ec_medical_team.nodes:
+  <<: [*_spark_parquet, *_layer_int]
+  filepath: ${globals:paths.prm}/ec_medical_team/nodes
+
+ingestion.prm.ec_medical_team.edges:
+  <<: [*_spark_parquet, *_layer_int]
+  filepath: ${globals:paths.prm}/ec_medical_team/edges
