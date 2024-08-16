@@ -62,7 +62,7 @@ _model_options:
       - target_+
     target_col_name: y
 
-  # Defines metrics to be used to evaluate the model.
+  # Define metrics to be used for check of performance 
   metrics:
     accuracy:
       object: sklearn.metrics.accuracy_score
