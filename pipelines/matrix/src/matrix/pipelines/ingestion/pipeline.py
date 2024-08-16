@@ -6,6 +6,7 @@ def create_pipeline(**kwargs) -> Pipeline:
     """Create ingestion pipeline."""
     return pipeline(
         [
+            # rtx-kg2
             node(
                 func=lambda x: x,
                 inputs=["ingestion.raw.rtx_kg2.nodes@spark"],

@@ -70,19 +70,3 @@ preprocessing.int.edges:
   load_args:
     sheet_name: Edges
     columns: ["SourceId", "TargetId", "Label"]
-
-preprocessing.prm.nodes@pandas:
-  <<: [*_layer_prm, *_pandas_csv]
-  filepath: ${globals:paths.raw}/ec-medical-team/${globals:data_sources.ec-medical-team.version}/nodes.csv
-
-preprocessing.prm.nodes@spark:
-  <<: [*_layer_prm, *_pandas_csv]
-  filepath: ${globals:paths.raw}/ec-medical-team/${globals:data_sources.ec-medical-team.version}/nodes.csv
-
-preprocessing.prm.edges@pandas:
-  <<: [*_layer_prm, *_pandas_csv]
-  filepath: ${globals:paths.raw}/ec-medical-team/${globals:data_sources.ec-medical-team.version}/edges.csv
-
-preprocessing.prm.edges@spark:
-  <<: [*_layer_prm, *_spark_csv]
-  filepath: ${globals:paths.raw}/ec-medical-team/${globals:data_sources.ec-medical-team.version}/edges.csv

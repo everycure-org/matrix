@@ -23,7 +23,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                     "params:preprocessing.synonymizer_endpoint",
                 ],
                 outputs="preprocessing.int.resolved_nodes",
-                name="resolve_nodes",
+                name="resolve_ec_medical_team_nodes",
             ),
             # NOTE: Running this to get the identifiers in the KG
             # Normalize nodes
@@ -39,7 +39,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                     "params:preprocessing.synonymizer_endpoint",
                 ],
                 outputs="preprocessing.int.normalized_nodes",
-                name="normalize_nodes",
+                name="normalize_ec_medical_team_nodes",
             ),
             # NOTE: Filter away all nodes that we could not resolve
             # FUTURE: Either Charlotte needs to ensure things join OR
@@ -48,8 +48,8 @@ def create_pipeline(**kwargs) -> Pipeline:
             node(
                 func=nodes.create_prm_nodes,
                 inputs=["preprocessing.int.normalized_nodes"],
-                outputs="preprocessing.prm.nodes",
-                name="create_prm_nodes",
+                outputs="ingestion.raw.ec_medical_team.nodes@pandas",
+                name="create_prm_ec_medical_team_nodes",
             ),
             # Ensure edges use synonymized identifiers
             # NOTE: Charlotte introduces her own identifiers in the
@@ -61,15 +61,15 @@ def create_pipeline(**kwargs) -> Pipeline:
                     "preprocessing.raw.edges",
                 ],
                 outputs="preprocessing.int.edges",
-                name="create_int_edges",
+                name="create_int_ec_medical_team_edges",
             ),
             node(
                 func=nodes.create_prm_edges,
                 inputs=[
                     "preprocessing.int.edges",
                 ],
-                outputs="preprocessing.prm.edges@pandas",
-                name="create_prm_exp_edges",
+                outputs="ingestion.raw.ec_medical_team.edges@pandas",
+                name="create_prm_ec_medical_team_edges",
             ),
         ]
     )
