@@ -103,8 +103,11 @@ def enrich_df(
     return df.fillna("")
 
 
-def create_prm_nodes(int_nodes: pd.DataFrame) -> pd.DataFrame:
-    """Function to create a primary nodes dataset by filtering and renaming columns."""
+def create_int_nodes(int_nodes: pd.DataFrame) -> pd.DataFrame:
+    """Function to create a intermediate nodes dataset by filtering and renaming columns."""
+    # Replace empty strings with nan
+    int_nodes = int_nodes.replace(r"^\s*$", np.nan, regex=True)
+
     return (
         int_nodes[int_nodes["normalized_curie"].notna()]
         .drop(columns="curie")
@@ -140,6 +143,33 @@ def create_int_edges(prm_nodes: pd.DataFrame, int_edges: pd.DataFrame) -> pd.Dat
     return res.fillna("")
 
 
+@has_schema(
+    schema={
+        "category": "object",
+        "id": "object",
+        "name": "object",
+        "description": "object",
+    },
+    allow_subset=True,
+)
+def create_prm_nodes(prm_nodes: pd.DataFrame) -> pd.DataFrame:
+    """Function to create a primary nodes dataset by filtering and renaming columns."""
+    res = prm_nodes[prm_nodes["id"].notna()]
+
+    res["category"] = "biolink" + prm_nodes["entity label"]
+
+    return res
+
+
+@has_schema(
+    schema={
+        "subject": "string",
+        "predicate": "string",
+        "object": "string",
+        "knowledge_source": "string",
+    },
+    allow_subset=True,
+)
 def create_prm_edges(int_edges: pd.DataFrame) -> pd.DataFrame:
     """Function to create a primary edges dataset by filtering and renaming columns."""
     # Replace empty strings with nan
@@ -152,6 +182,6 @@ def create_prm_edges(int_edges: pd.DataFrame) -> pd.DataFrame:
     )
 
     res["predicate"] = "biolink:" + res["predicate"]
-    res["knowledge_source"] = "EveryCure"
+    res["knowledge_source"] = "ec:medical"
 
     return res

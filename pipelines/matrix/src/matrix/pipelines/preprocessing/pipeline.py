@@ -47,10 +47,10 @@ def create_pipeline(**kwargs) -> Pipeline:
             #   We need to agree that unresolved nodes should introduce
             #   new concepts.
             node(
-                func=nodes.create_prm_nodes,
+                func=nodes.create_int_nodes,
                 inputs=["preprocessing.int.normalized_nodes"],
-                outputs="ingestion.raw.ec_medical_team.nodes@pandas",
-                name="create_prm_ec_medical_team_nodes",
+                outputs="preprocessing.int.nodes",
+                name="create_int_ec_medical_team_nodes",
             ),
             # Ensure edges use synonymized identifiers
             # NOTE: Charlotte introduces her own identifiers in the
@@ -58,7 +58,7 @@ def create_pipeline(**kwargs) -> Pipeline:
             node(
                 func=nodes.create_int_edges,
                 inputs=[
-                    "ingestion.raw.ec_medical_team.nodes@pandas",
+                    "preprocessing.int.nodes",
                     "preprocessing.raw.edges",
                 ],
                 outputs="preprocessing.int.edges",
@@ -71,6 +71,14 @@ def create_pipeline(**kwargs) -> Pipeline:
                 ],
                 outputs="ingestion.raw.ec_medical_team.edges@pandas",
                 name="create_prm_ec_medical_team_edges",
+            ),
+            node(
+                func=nodes.create_prm_nodes,
+                inputs=[
+                    "preprocessing.int.nodes",
+                ],
+                outputs="ingestion.raw.ec_medical_team.nodes@pandas",
+                name="create_prm_ec_medical_team_nodes",
             ),
         ]
     )
