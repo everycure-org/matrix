@@ -189,6 +189,23 @@ ingestion.raw.rtx_kg2.edges@spark:
             object: pyspark.sql.types.StringType
           nullable: False
 
+
+ingestion.raw.ec_medical_team.nodes@pandas:
+  <<: [*_layer_prm, *_pandas_csv]
+  filepath: ${globals:paths.raw}/ec_medical_team/${globals:data_sources.ec-medical-team.version}/nodes.csv
+
+ingestion.raw.ec_medical_team.nodes@spark:
+  <<: [*_layer_prm, *_pandas_csv]
+  filepath: ${globals:paths.raw}/ec_medical_team/${globals:data_sources.ec-medical-team.version}/nodes.csv
+
+ingestion.raw.ec_medical_team.edges@pandas:
+  <<: [*_layer_prm, *_pandas_csv]
+  filepath: ${globals:paths.raw}/ec_medical_teamm/${globals:data_sources.ec-medical-team.version}/edges.csv
+
+ingestion.raw.ec_medical_team.edges@spark:
+  <<: [*_layer_prm, *_spark_csv]
+  filepath: ${globals:paths.raw}/ec_medical_team/${globals:data_sources.ec-medical-team.version}/edges.csv
+
 ingestion.prm.rtx_kg2.nodes:
   <<: [*_spark_parquet, *_layer_int]
   filepath: ${globals:paths.prm}/rtx_kg2/nodes
