@@ -39,6 +39,16 @@ def create_pipeline(**kwargs) -> Pipeline:
             # pandas dataframes, while the ingestion pipeline uses spark, therefore
             # we use the @pandas transcoding syntax.
             node(
+                func=fabricate_datasets,
+                inputs={"fabrication_params": "params:fabricator.robokop"},
+                outputs={
+                    "nodes": "ingestion.raw.robokop.nodes@pandas",
+                    "edges": "ingestion.raw.robokop.edges@pandas",
+                },
+                name="fabricate_robokop",
+            ),
+
+            node(
                 func=_create_pairs,
                 inputs=["ingestion.raw.rtx_kg2.nodes@spark"],
                 outputs="integration.raw.ground_truth.positives",

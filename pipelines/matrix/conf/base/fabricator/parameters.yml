@@ -78,4 +78,48 @@ fabricator:
           type: faker
           provider: name
   
-  robokop: null # TODO add nodes and edge fabrication here
+  robokop:  # TODO add nodes and edge fabrication here
+    # robokop nodes definition
+    nodes:
+      num_rows: 150
+      columns:
+        id:
+          type: generate_unique_id
+          prefix: robokop_node_
+        name:
+          type: faker
+          provider: name
+        category:
+          type: generate_values
+          sample_values:
+            - biolink:Drug
+            - biolink:Disease
+
+    # robokop edges definition
+    edges:
+      num_rows: 500
+      columns:
+        # NOTE: This is a rather complex syntax, but is results in a "subject"
+        # column that contains random values from the nodes table defined above.
+        subject:
+          type: row_apply
+          list_of_values: [ nodes.id ]
+          row_func: "lambda *args: args[0]"
+          resize: True
+          seed: 590590
+        # NOTE: This is a rather complex syntax, but is results in a "object"
+        # column that contains random values from the nodes table defined above.
+        object:
+          type: row_apply
+          list_of_values: [ nodes.id ]
+          row_func: "lambda *args: args[0]"
+          resize: True
+          seed: 49494
+        predicate:
+          type: generate_values
+          sample_values:
+            - biolink:treats
+            - biolink:interacts_with
+        knowledge_source:
+          type: faker
+          provider: name
