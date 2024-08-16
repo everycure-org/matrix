@@ -127,6 +127,7 @@ def test_matrix_test_diseases(
     #   - does not contain test data,
     #   - the drug always lies in the given drug list,
     #   - the disease always appears in the known positive test set.
+    #   - the number of data-points labeled with y=1 is equal to the number of known positive test pairs
     drugs_lst = graph._drug_nodes
     known_positives_test = known_pairs_split[
         (known_pairs_split["y"] == 1) & (known_pairs_split["split"] == "TEST")
@@ -145,3 +146,4 @@ def test_matrix_test_diseases(
     ).empty
     assert generated_data["source"].isin(drugs_lst).all()
     assert generated_data["target"].isin(known_pos_test_diseases).all()
+    assert generated_data["y"].sum() == len(known_positives_test)
