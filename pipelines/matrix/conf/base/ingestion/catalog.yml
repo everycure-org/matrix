@@ -7,6 +7,14 @@ _spark_parquet_ds: &_spark_parquet
   save_args:
     mode: overwrite
 
+_spark_csv: &_spark_csv
+  type: spark.SparkDataset
+  file_format: csv
+  load_args:
+    header: True
+  save_args:
+    mode: overwrite
+
 _layer_raw: &_layer_raw
   metadata:
     kedro-viz:
@@ -195,7 +203,7 @@ ingestion.raw.ec_medical_team.nodes@pandas:
   filepath: ${globals:paths.raw}/ec_medical_team/${globals:data_sources.ec-medical-team.version}/nodes.csv
 
 ingestion.raw.ec_medical_team.nodes@spark:
-  <<: [*_spark_parquet, *_layer_int]
+  <<: [*_spark_csv, *_layer_int]
   filepath: ${globals:paths.raw}/ec_medical_team/${globals:data_sources.ec-medical-team.version}/nodes.csv
 
 ingestion.raw.ec_medical_team.edges@pandas:
@@ -203,7 +211,7 @@ ingestion.raw.ec_medical_team.edges@pandas:
   filepath: ${globals:paths.raw}/ec_medical_team/${globals:data_sources.ec-medical-team.version}/edges.csv
 
 ingestion.raw.ec_medical_team.edges@spark:
-  <<: [*_spark_parquet, *_layer_int]
+  <<: [*_spark_csv, *_layer_int]
   filepath: ${globals:paths.raw}/ec_medical_team/${globals:data_sources.ec-medical-team.version}/edges.csv
 
 ingestion.prm.rtx_kg2.nodes:
