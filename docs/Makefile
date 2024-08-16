@@ -8,5 +8,15 @@ serve: install
 	.venv/bin/mkdocs serve
 
 install:
-	uv venv
-	uv pip install -r requirements.txt
+	deactivate || echo 'no venv active, continuing'
+	uv venv -p 3.11
+	uv pip install -r requirements.txt -p .venv/bin/python
+
+image: 
+	docker build -t docs ./
+
+serve_docker: image
+	docker run --rm docs
+
+deploy: build
+	gcloud app deploy

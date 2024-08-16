@@ -128,7 +128,7 @@ class SpecificRanking(Evaluation):
         # Get items to loop over
         items_lst = list(data[self._specific_col].unique())
 
-        # Compute average rank of known positives for each item
+        # Compute ranks of known positives for each item
         ranks_lst = []
         for item in items_lst:
             pairs_for_item = data[data[self._specific_col] == item]
@@ -139,7 +139,7 @@ class SpecificRanking(Evaluation):
 
             for prob in pos_preds:
                 rank = len(neg_preds) - bisect.bisect_left(neg_preds, prob) + 1
-                ranks_lst.append(rank)  # FUTURE: Is this correct?
+                ranks_lst.append(rank)
 
         # Compute average of rank functions and report metrics
         report = {}
@@ -174,7 +174,7 @@ class MRR(RankingFunction):
     @staticmethod
     def name():
         """Returns name of the function."""
-        return "MRR"
+        return "mrr"
 
 
 class HitK(RankingFunction):
@@ -194,4 +194,4 @@ class HitK(RankingFunction):
 
     def name(self):
         """Returns name of the function."""
-        return "Hit@" + str(self.k)
+        return "hit-" + str(self.k)

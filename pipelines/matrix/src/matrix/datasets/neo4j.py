@@ -2,8 +2,8 @@
 
 from typing import Any
 from copy import deepcopy
-from functools import wraps
 
+from neo4j import GraphDatabase
 from pyspark.sql import DataFrame, SparkSession
 
 from kedro.io.core import Version
@@ -36,6 +36,7 @@ class Neo4JSparkDataset(SparkDataset):
         version: Version = None,
         credentials: dict[str, Any] = None,
         metadata: dict[str, Any] = None,
+        versioned: bool = False,
     ) -> None:
         """Creates a new instance of ``Neo4JDataset``.
 
@@ -83,6 +84,7 @@ class Neo4JSparkDataset(SparkDataset):
             version: Version of the dataset.
             credentials: Credentials to connect to the Neo4J instance.
             metadata: Metadata to pass to neo4j connector.
+            versioned: Flag to decide if we create new databases or stick to the default one.
         """
         self._database = database
         self._url = url
@@ -99,6 +101,34 @@ class Neo4JSparkDataset(SparkDataset):
             version=version,
             metadata=metadata,
         )
+
+    @staticmethod
+    def _create_db(url: str, database: str, credentials: dict[str, Any] = None):
+        """Function to create database.
+
+        Args:
+            url: URL of the Neo4J instance.
+            database: Name of the Neo4J database.
+            credentials: neo4j credentials
+        """
+        # NOTE: Little ugly, as it's extracting out Neo4j spark plugin
+        # format. We could pass in user and pass in the dataset, and construct this
+        # in options to avoid this.
+        creds = (
+            credentials.get("authentication.basic.username"),
+            credentials.get("authentication.basic.password"),
+        )
+        with GraphDatabase.driver(url, auth=creds, database="system") as driver:
+            # TODO: OR do we want to clear out if exists?
+            if database not in Neo4JSparkDataset._load_existing_dbs(driver):
+                logging.info("creating new database %s", database)
+                driver.execute_query(f"CREATE DATABASE `{database}` IF NOT EXISTS")
+
+    @staticmethod
+    def _load_existing_dbs(driver):
+        result = driver.execute_query("SHOW DATABASES")
+        dbs = [record["name"] for record in result[0] if record["name"] != "system"]
+        return dbs
 
     def _load(self) -> Any:
         spark_session = SparkSession.builder.getOrCreate()
@@ -122,6 +152,10 @@ class Neo4JSparkDataset(SparkDataset):
                 # skip persistence
                 return None
             else:
+                # Create database
+                self._create_db(self._url, self._database, self._credentials)
+
+                # Write dataset
                 (
                     data.write.format("org.neo4j.spark.DataSource")
                     .option("database", self._database)

@@ -17,6 +17,12 @@ from matrix.pipelines.integration.pipeline import (
 from matrix.pipelines.evaluation.pipeline import (
     create_pipeline as create_evaluation_pipeline,
 )
+from matrix.pipelines.ingestion.pipeline import (
+    create_pipeline as create_ingestion_pipeline,
+)
+from matrix.pipelines.preprocessing.pipeline import (
+    create_pipeline as create_preprocessing_pipeline,
+)
 
 
 def register_pipelines() -> Dict[str, Pipeline]:
@@ -33,6 +39,8 @@ def register_pipelines() -> Dict[str, Pipeline]:
         + create_modelling_pipeline()
         + create_evaluation_pipeline()
     )
+    pipelines["ingestion"] = create_ingestion_pipeline()
+    pipelines["preprocessing"] = create_preprocessing_pipeline()
     pipelines["modelling"] = create_modelling_pipeline()
     pipelines["embeddings"] = create_embeddings_pipeline()
     pipelines["fabricator"] = create_fabricator_pipeline()
@@ -40,9 +48,12 @@ def register_pipelines() -> Dict[str, Pipeline]:
     pipelines["evaluation"] = create_evaluation_pipeline()
     pipelines["test"] = (
         create_fabricator_pipeline()
+        + create_ingestion_pipeline()
         + create_integration_pipeline()
         + create_embeddings_pipeline()
         + create_modelling_pipeline()
         + create_evaluation_pipeline()
     )
+    pipelines["all"] = create_ingestion_pipeline() + pipelines["__default__"]
+    pipelines["experiment"] = create_modelling_pipeline() + create_evaluation_pipeline()
     return pipelines

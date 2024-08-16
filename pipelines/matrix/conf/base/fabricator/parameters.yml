@@ -1,32 +1,57 @@
 fabricator.rtx_kg2:
   nodes:
-    num_rows: 500
+    num_rows: 150
     columns:
       id: 
         type: generate_unique_id
         prefix: node_
       
+      name:
+        type: faker
+        provider: name
+
       category:
         type: generate_values
         sample_values:
           - biolink:Drug
           - biolink:Disease
-      name:
+      all_names:
         type: faker
         provider: name
-      
+      all_categories:
+        type: generate_values
+        sample_values:
+          - biolink:Drug
+          - biolink:Disease
+          - biolink:Gene
+          - biolink:ChemicalSubstance
+          - biolink:Protein
+          - biolink:SmallMolecule
+      iri:
+        type: faker
+        provider: url
+      description:
+        type: faker
+        provider: sentence
+      equivalent_curies:
+        type: faker
+        provider: name
+      publications:
+        type: faker
+        provider: name
+      label:
+        type: faker
+        provider: name
+
       date_discovered:
         type: generate_dates
         start_dt: 2010-01-01
         end_dt: 2020-01-01
         freq: M
 
-      description:
-        type: faker
-        provider: name
 
   edges:
-    num_rows: 1000
+    num_rows: 500
     columns:
       subject:
         type: row_apply
@@ -34,18 +59,17 @@ fabricator.rtx_kg2:
         row_func: "lambda *args: args[0]"
         resize: True
         seed: 590590
-      predicate:
-        type: generate_values
-        sample_values:
-          - biolink:Treats
-          - biolink:Disease
       object:
         type: row_apply
         list_of_values: [nodes.id]
         row_func: "lambda *args: args[0]"
         resize: True
         seed: 49494
-
+      predicate:
+        type: generate_values
+        sample_values:
+          - biolink:treats
+          - biolink:interacts_with
       knowledge_source:
         type: faker
         provider: name

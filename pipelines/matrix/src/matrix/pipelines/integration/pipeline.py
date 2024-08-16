@@ -8,25 +8,10 @@ def create_pipeline(**kwargs) -> Pipeline:
     """Create integration pipeline."""
     return pipeline(
         [
-            # Write kg2
-            node(
-                func=lambda x: x,
-                inputs=["integration.raw.rtx_kg2.nodes@spark"],
-                outputs="integration.prm.rtx_kg2.nodes",
-                name="write_rtx_kg2_nodes",
-                tags=["rtx_kg2"],
-            ),
-            node(
-                func=lambda x: x,
-                inputs=["integration.raw.rtx_kg2.edges@spark"],
-                outputs="integration.prm.rtx_kg2.edges",
-                name="write_rtx_kg2_edges",
-                tags=["rtx_kg2"],
-            ),
             # Write kg2 Neo4J
             node(
                 func=nodes.create_nodes,
-                inputs=["integration.prm.rtx_kg2.nodes"],
+                inputs=["ingestion.prm.rtx_kg2.nodes"],
                 outputs="integration.model_input.nodes",
                 name="create_neo4j_nodes",
                 tags=["rtx_kg2", "neo4j"],
@@ -35,7 +20,8 @@ def create_pipeline(**kwargs) -> Pipeline:
                 func=nodes.create_edges,
                 inputs=[
                     "integration.model_input.nodes",
-                    "integration.prm.rtx_kg2.edges",
+                    "ingestion.prm.rtx_kg2.edges",
+                    "params:integration.graphsage_excl_preds",
                 ],
                 outputs="integration.model_input.edges",
                 name="create_neo4j_edges",
@@ -51,7 +37,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 ],
                 outputs="integration.int.known_pairs@pandas",
                 name="create_int_known_pairs",
-                tags=["rtx_kg2", "neo4j"],
+                tags=["rtx_kg2", "neo4j", "first_copy"],
             ),
             node(
                 func=nodes.create_treats,

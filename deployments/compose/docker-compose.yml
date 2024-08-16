@@ -4,7 +4,7 @@ services:
     container_name: neo4j
     # note this works only on MacOS devices (or other ARM chipsets), check
     # `docker-compose.test.yml` for the override
-    image: arm64v8/neo4j:latest
+    image: arm64v8/neo4j:5.21.0-enterprise
     restart: unless-stopped
     ports:
       - 7474:7474
@@ -19,7 +19,8 @@ services:
       - NEO4J_dbms_security_auth__minimum__password__length=4
       - NEO4J_dbms_security_procedures_whitelist=gds.*, apoc.*
       - NEO4J_dbms_security_procedures_unrestricted=gds.*, apoc.*
-      - NEO4J_initial_dbms_default__database=everycure
+      - NEO4J_db_logs_query_enabled=OFF
+      - NEO4J_ACCEPT_LICENSE_AGREEMENT=yes
     volumes:
       - ./neo4j_db/data:/data
       - ./neo4j_db/logs:/logs
@@ -39,6 +40,7 @@ services:
   # testing.
   mock-genai:
     image: mockserver/mockserver
+    restart: unless-stopped
     user: root
     ports:
       - 1080:1080
@@ -47,13 +49,28 @@ services:
       MOCKSERVER_ENABLE_CORS_FOR_API: "true"
       MOCKSERVER_ENABLE_CORS_FOR_ALL_RESPONSES: "true"
       MOCKSERVER_INITIALIZATION_JSON_PATH: /openapi/initializer.json
-      MOCKSERVER_LOG_LEVEL: ERROR
+      MOCKSERVER_LOG_LEVEL: DEBUG
     networks:
       web:
         aliases:
           - mock.genai.com
     volumes:
       - ./mockgenai-initializer.json:/openapi/initializer.json:ro
+
+  mlflow:
+    container_name: mlflow
+    build: "services/mlflow"
+    ports:
+      - "5001:5000"
+    command: mlflow server --host 0.0.0.0
+    healthcheck:
+      test: wget http://localhost:5000/health || exit 1
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    networks:
+      - web
 
 networks:
   web:

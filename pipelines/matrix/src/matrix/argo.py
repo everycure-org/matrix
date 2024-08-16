@@ -8,7 +8,7 @@ from jinja2 import Environment, FileSystemLoader
 from kedro.framework.project import pipelines
 from kedro.framework.startup import bootstrap_project
 
-TEMPLATE_FILE = "argo_spec.tmpl"
+TEMPLATE_FILE = "argo_wf_spec.tmpl"
 RENDERED_FILE = "argo-workflow-template.yml"
 SEARCH_PATH = Path("templates")
 
@@ -21,11 +21,13 @@ def cli() -> None:
 
 @click.command()
 @click.argument("image", required=True)
-def generate_argo_config(image):
+@click.argument("image_tag", required=False, default="latest")
+def generate_argo_config(image, image_tag):
     """Function to render Argo pipeline template.
 
     Args:
         image: image to use
+        image_tag: image tag to use
         pipeline_name: name of pipeline to generate
         env: execution environment
     """
@@ -41,7 +43,9 @@ def generate_argo_config(image):
     for name, pipeline in pipelines.items():
         pipes[name] = get_dependencies(pipeline.node_dependencies)
 
-    output = template.render(package_name=package_name, pipes=pipes, image=image)
+    output = template.render(
+        package_name=package_name, pipes=pipes, image=image, image_tag=image_tag
+    )
 
     (SEARCH_PATH / RENDERED_FILE).write_text(output)
 

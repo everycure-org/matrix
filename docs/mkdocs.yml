@@ -3,7 +3,7 @@ site_url: https://docs.app.everycure.org
 
 # configuration for edit button in web interface
 repo_url: https://github.com/everycure-org/matrix/
-edit_uri: edit/main/src/docs/src
+edit_uri: edit/main/docs/src
 docs_dir: src/
 theme:
   name: material
@@ -14,16 +14,18 @@ theme:
     - content.tabs.link
     - navigation.expand
     - navigation.indexes
-    - navigation.instant
+    # - navigation.instant
     - navigation.sections
     - navigation.tabs
+    - navigation.path
     - navigation.tracking
     - toc.follow
-    - toc.integrate
+    # - toc.integrate
   icon:
     annotation: material/plus-circle
 
 plugins:
+  - blog
   - drawio
   - mkdocs-jupyter
   - awesome-pages
@@ -50,5 +52,9 @@ markdown_extensions:
   - pymdownx.keys
   - pymdownx.mark
   - pymdownx.tilde
+  - pymdownx.tabbed:
+      alternate_style: true
   - pymdownx.tasklist:
       custom_checkbox: true
+  - toc:
+      toc_depth: 4

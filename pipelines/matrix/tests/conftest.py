@@ -11,6 +11,7 @@ from pyspark.sql import SparkSession
 from kedro.config import OmegaConfigLoader
 from omegaconf.resolvers import oc
 from matrix.resolvers import merge_dicts
+import os
 
 
 @pytest.fixture(name="conf_source", scope="session")

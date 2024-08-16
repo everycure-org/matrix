@@ -7,7 +7,11 @@ repos:
       # Run the linter.
       - id: ruff
         args: [ --fix ]
-        exclude: pipelines/matrix/packages
+        exclude: |
+          (?x)^(
+            pipelines/matrix/packages|
+            pipelines/matrix/tests/
+          )
       # Run the formatter.
       - id: ruff-format
         exclude: pipelines/matrix/packages
@@ -25,3 +29,6 @@ repos:
     rev: v4.6.0  # Use the ref you want to point at
     hooks:
     -   id: debug-statements
+    -   id: check-merge-conflict
+    # FUTURE: Enable for yaml checks
+    # -   id: check-yaml

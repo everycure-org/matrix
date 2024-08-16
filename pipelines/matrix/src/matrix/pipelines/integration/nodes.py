@@ -1,5 +1,6 @@
 """Nodes for the ingration pipeline."""
 import pandas as pd
+from typing import List
 
 import pyspark.sql.functions as F
 from pyspark.sql import DataFrame
@@ -43,17 +44,17 @@ def create_nodes(df: DataFrame) -> DataFrame:
         df: Nodes dataframe
     """
     return (
-        df.select("id", "category", "name", "description")
+        df.select("id", "name", "category", "description")
         .withColumn("label", F.split(F.col("category"), ":", limit=2).getItem(1))
         .withColumn(
             "properties",
             F.create_map(
                 F.lit("name"),
                 F.col("name"),
-                F.lit("description"),
-                F.col("description"),
                 F.lit("category"),
                 F.col("category"),
+                F.lit("description"),
+                F.col("description"),
             ),
         )
         .withColumn("property_keys", F.map_keys(F.col("properties")))
@@ -66,19 +67,27 @@ def create_nodes(df: DataFrame) -> DataFrame:
         "subject": "string",
         "predicate": "string",
         "object": "string",
+        "label": "string",
+        "include_in_graphsage": "numeric",
     },
     allow_subset=True,
 )
-def create_edges(nodes: DataFrame, edges: DataFrame):
+def create_edges(nodes: DataFrame, edges: DataFrame, exc_preds: List[str]):
     """Function to create Neo4J edges.
 
     Args:
         nodes: nodes dataframe
         edges: edges dataframe
+        exc_preds: list of predicates excluded downstream
     """
-    return edges.select(
-        "subject", "predicate", "object", "knowledge_source"
-    ).withColumn("label", F.split(F.col("predicate"), ":", limit=2).getItem(1))
+    return (
+        edges.select("subject", "predicate", "object", "knowledge_source")
+        .withColumn("label", F.split(F.col("predicate"), ":", limit=2).getItem(1))
+        .withColumn(
+            "include_in_graphsage",
+            F.when(F.col("predicate").isin(exc_preds), F.lit(0)).otherwise(F.lit(1)),
+        )
+    )
 
 
 @has_schema(
@@ -87,7 +96,8 @@ def create_edges(nodes: DataFrame, edges: DataFrame):
         "source_id": "string",
         "target_id": "string",
         "property_keys": "array<string>",
-        "property_values": "array<string>",
+        "property_values": "array<numeric>",
+        "include_in_graphsage": "numeric",
     },
     allow_subset=True,
 )
@@ -108,10 +118,14 @@ def create_treats(nodes: DataFrame, df: DataFrame):
         )
         .withColumn(
             "properties",
-            F.create_map(F.lit("treats"), F.col("y"), F.lit("foo"), F.lit("bar")),
+            F.create_map(
+                F.lit("treats"),
+                F.col("y"),
+            ),
         )
         .withColumn("source_id", F.col("source"))
         .withColumn("target_id", F.col("target"))
         .withColumn("property_keys", F.map_keys(F.col("properties")))
         .withColumn("property_values", F.map_values(F.col("properties")))
+        .withColumn("include_in_graphsage", F.lit(0))
     )

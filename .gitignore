@@ -7,6 +7,9 @@
 # IDE
 .vscode/
 
+# Drawio
+*.bkp
+
 # Data
 data/
 neo4j_db/
@@ -20,3 +23,5 @@ neo4j_db/
 **/.terragrunt-cache/
 
 infra/argo/applications/**/charts
+
+deployments/compose/services/synonymizer/
