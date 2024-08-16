@@ -58,7 +58,7 @@ def create_pipeline(**kwargs) -> Pipeline:
             node(
                 func=nodes.create_int_edges,
                 inputs=[
-                    "preprocessing.prm.nodes",
+                    "ingestion.raw.ec_medical_team.nodes@pandas",
                     "preprocessing.raw.edges",
                 ],
                 outputs="preprocessing.int.edges",

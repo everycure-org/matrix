@@ -4,7 +4,7 @@ import requests
 import pandas as pd
 import numpy as np
 
-from typing import Callable, List
+from typing import Callable, List, Optional
 from functools import partial
 
 from refit.v1.core.inline_has_schema import has_schema
@@ -72,7 +72,7 @@ def enrich_df(
     func: Callable,
     input_cols: str,
     target_col: str,
-    coalesce_col: str,
+    coalesce_col: Optional[str] = None,
 ) -> pd.DataFrame:
     """Function to resolve nodes of the nodes input dataset.
 
@@ -95,8 +95,9 @@ def enrich_df(
     # Apply enrich function and replace nans by empty space
     df[target_col] = col.apply(partial(func, endpoint=endpoint))
 
+    # If set, coalesce final result with coalesce col
     if coalesce_col:
-        df[target_col] = coalesce(coalesce_col, df[target_col])
+        df[target_col] = coalesce(df[coalesce_col], df[target_col])
 
     # Ensure to fill nans with empty strings to avoid nans in nodebook
     return df.fillna("")
