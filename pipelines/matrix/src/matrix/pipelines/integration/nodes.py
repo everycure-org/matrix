@@ -27,42 +27,6 @@ def create_int_pairs(raw_tp: pd.DataFrame, raw_tn: pd.DataFrame):
     return pd.concat([raw_tp, raw_tn], axis="index").reset_index(drop=True)
 
 
-@has_schema(
-    schema={
-        "label": "string",
-        "id": "string",
-        "name": "string",
-        "property_keys": "array<string>",
-        "property_values": "array<string>",
-    },
-    allow_subset=True,
-)
-@primary_key(primary_key=["id"])
-def create_nodes(df: DataFrame) -> DataFrame:
-    """Function to create Neo4J nodes.
-
-    Args:
-        df: Nodes dataframe
-    """
-    return (
-        df.select("id", "name", "category", "description")
-        .withColumn("label", F.split(F.col("category"), ":", limit=2).getItem(1))
-        .withColumn(
-            "properties",
-            F.create_map(
-                F.lit("name"),
-                F.col("name"),
-                F.lit("category"),
-                F.col("category"),
-                F.lit("description"),
-                F.col("description"),
-            ),
-        )
-        .withColumn("property_keys", F.map_keys(F.col("properties")))
-        .withColumn("property_values", F.map_values(F.col("properties")))
-    )
-
-
 def unify_edges(*edges) -> DataFrame:
     """Function to unify edges datasets."""
     # Union edges
@@ -81,7 +45,50 @@ def unify_nodes(*nodes) -> DataFrame:
     union = reduce(partial(DataFrame.unionByName, allowMissingColumns=True), nodes)
 
     # Deduplicate
-    return union.groupBy(["id"]).agg(F.collect_list("kg_source").alias("kg_sources"))
+    # FUTURE: We should improve selection of name and description currently
+    # selecting the first non-null, which might not be as desired.
+    return union.groupBy(["id"]).agg(
+        F.collect_list("kg_source").alias("kg_sources"),
+        F.first("name").alias("name"),
+        F.first("description").alias("description"),
+        F.first("category").alias("category"),
+    )
+
+
+@has_schema(
+    schema={
+        "label": "string",
+        "id": "string",
+        "name": "string",
+        "property_keys": "array<string>",
+        "property_values": "array<string>",
+    },
+    allow_subset=True,
+)
+@primary_key(primary_key=["id"])
+def create_nodes(df: DataFrame) -> DataFrame:
+    """Function to create Neo4J nodes.
+
+    Args:
+        df: Nodes dataframe
+    """
+    return (
+        df.select("id", "name", "category", "description", "kg_sources")
+        .withColumn("label", F.split(F.col("category"), ":", limit=2).getItem(1))
+        .withColumn(
+            "properties",
+            F.create_map(
+                F.lit("name"),
+                F.col("name"),
+                F.lit("category"),
+                F.col("category"),
+                F.lit("description"),
+                F.col("description"),
+            ),
+        )
+        .withColumn("property_keys", F.map_keys(F.col("properties")))
+        .withColumn("property_values", F.map_values(F.col("properties")))
+    )
 
 
 @has_schema(
@@ -103,7 +110,9 @@ def create_edges(nodes: DataFrame, edges: DataFrame, exc_preds: List[str]):
         exc_preds: list of predicates excluded downstream
     """
     return (
-        edges.select("subject", "predicate", "object", "knowledge_sources")
+        edges.select(
+            "subject", "predicate", "object", "knowledge_sources", "kg_sources"
+        )
         .withColumn("label", F.split(F.col("predicate"), ":", limit=2).getItem(1))
         .withColumn(
             "include_in_graphsage",

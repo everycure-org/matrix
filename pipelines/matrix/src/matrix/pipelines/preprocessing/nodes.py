@@ -86,7 +86,7 @@ def enrich_df(
     Returns:
         dataframe enriched with Curie column
     """
-    # Replace empty strings with nan
+    # Replace empty strings with nan for processing by pandas, we revert back at end
     df = df.replace(r"^\s*$", np.nan, regex=True)
 
     # Coalesce input cols
