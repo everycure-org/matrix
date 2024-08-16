@@ -33,6 +33,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                     func=nodes.normalize,
                     input_cols=["corrected_curie", "curie"],
                     target_col="normalized_curie",
+                    coalesce_col="id",
                 ),
                 inputs=[
                     "preprocessing.int.resolved_nodes",

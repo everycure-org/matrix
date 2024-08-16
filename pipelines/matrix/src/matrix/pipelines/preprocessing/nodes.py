@@ -67,7 +67,12 @@ def coalesce(s: pd.Series, *series: List[pd.Series]):
 )
 @primary_key(primary_key=["ID"])
 def enrich_df(
-    df: pd.DataFrame, endpoint: str, func: Callable, input_cols: str, target_col: str
+    df: pd.DataFrame,
+    endpoint: str,
+    func: Callable,
+    input_cols: str,
+    target_col: str,
+    coalesce_col: str,
 ) -> pd.DataFrame:
     """Function to resolve nodes of the nodes input dataset.
 
@@ -77,6 +82,7 @@ def enrich_df(
         func: func to call
         input_cols: input cols, cols are coalesced to obtain single column
         target_col: target col
+        coalesce_col: col to coalesce with if None
     Returns:
         dataframe enriched with Curie column
     """
@@ -87,9 +93,13 @@ def enrich_df(
     col = coalesce(*[df[col] for col in input_cols])
 
     # Apply enrich function and replace nans by empty space
-    df[target_col] = col.apply(partial(func, endpoint=endpoint)).fillna("")
+    df[target_col] = col.apply(partial(func, endpoint=endpoint))
 
-    return df
+    if coalesce_col:
+        df[target_col] = coalesce(coalesce_col, df[target_col])
+
+    # Ensure to fill nans with empty strings to avoid nans in nodebook
+    return df.fillna("")
 
 
 def create_prm_nodes(int_nodes: pd.DataFrame) -> pd.DataFrame:
