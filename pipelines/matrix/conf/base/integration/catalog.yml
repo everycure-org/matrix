@@ -40,9 +40,13 @@ _layer_prm: &_layer_prm
 # Datasets
 # -------------------------------------------------------------------------
 
-integration.prm.edges:
+integration.prm.unified_edges:
   <<: [*_spark_parquet, *_layer_prm]
   filepath: ${globals:paths.prm}/unified/edges
+
+integration.prm.unified_nodes:
+  <<: [*_spark_parquet, *_layer_prm]
+  filepath: ${globals:paths.prm}/unified/nodes
 
 integration.raw.ground_truth.positives:
   <<: [*_pandas_csv, *_layer_raw]

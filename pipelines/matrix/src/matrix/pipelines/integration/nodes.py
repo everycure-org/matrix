@@ -70,8 +70,18 @@ def unify_edges(*edges) -> DataFrame:
 
     # Deduplicate
     return union.groupBy(["subject", "predicate", "object"]).agg(
-        F.collect_list("knowledge_source").alias("knowledge_sources")
+        F.collect_list("knowledge_source").alias("knowledge_sources"),
+        F.collect_list("kg_source").alias("kg_sources"),
     )
+
+
+def unify_nodes(*nodes) -> DataFrame:
+    """Function to unify nodes datasets."""
+    # Union nodes
+    union = reduce(partial(DataFrame.unionByName, allowMissingColumns=True), nodes)
+
+    # Deduplicate
+    return union.groupBy(["id"]).agg(F.collect_list("kg_source").alias("kg_sources"))
 
 
 @has_schema(
