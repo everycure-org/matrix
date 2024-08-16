@@ -42,6 +42,7 @@ def unify_edges(*edges) -> DataFrame:
 def unify_nodes(*nodes) -> DataFrame:
     """Function to unify nodes datasets."""
     # Union nodes
+
     union = reduce(partial(DataFrame.unionByName, allowMissingColumns=True), nodes)
 
     # Deduplicate

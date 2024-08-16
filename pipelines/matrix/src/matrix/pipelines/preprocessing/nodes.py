@@ -152,11 +152,19 @@ def create_int_edges(prm_nodes: pd.DataFrame, int_edges: pd.DataFrame) -> pd.Dat
     },
     allow_subset=True,
 )
+@primary_key(primary_key=["id"])
 def create_prm_nodes(prm_nodes: pd.DataFrame) -> pd.DataFrame:
     """Function to create a primary nodes that contains only new nodes introduced by the source."""
-    res = prm_nodes[prm_nodes["id"].notna()]
+    # `new_id` signals that the node should be added to the KG as a new id
+    # we drop the original ID from the spreadsheat, and leverage the new_id as the final id
+    # in the dataframe. We only retain nodes where the new_id is set
+    res = (
+        prm_nodes[prm_nodes["new_id"].notna()]
+        .drop(columns="ID")
+        .rename(columns={"new_id": "id"})
+    )
 
-    res["category"] = "biolink" + prm_nodes["entity label"]
+    res["category"] = "biolink:" + prm_nodes["entity label"]
 
     return res
 
