@@ -205,6 +205,11 @@ ingestion.raw.ec_medical_team.nodes@pandas:
 ingestion.raw.ec_medical_team.nodes@spark:
   <<: [*_spark_csv, *_layer_int]
   filepath: ${globals:paths.raw}/ec_medical_team/${globals:data_sources.ec-medical-team.version}/nodes.csv
+  save_args:
+    mode: overwrite
+    header: True
+  load_args:
+    header: True
 
 ingestion.raw.ec_medical_team.edges@pandas:
   <<: [ *_layer_int, *_pandas_csv]
@@ -213,6 +218,11 @@ ingestion.raw.ec_medical_team.edges@pandas:
 ingestion.raw.ec_medical_team.edges@spark:
   <<: [*_spark_csv, *_layer_int]
   filepath: ${globals:paths.raw}/ec_medical_team/${globals:data_sources.ec-medical-team.version}/edges.csv
+  save_args:
+    mode: overwrite
+    header: True
+  load_args:
+    header: True
 
 ingestion.prm.rtx_kg2.nodes:
   <<: [*_spark_parquet, *_layer_int]
