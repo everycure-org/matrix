@@ -319,6 +319,11 @@ Roughly speaking, our pipeline consists of five logical stages, i.e., ingestion,
 
 ![](../assets/img/status.drawio.svg)
 
+#### Preprocessing
+
+The current pre-processing pipeline is highly preliminary and is used to ingest experimental nodes and edges proposed by our medical team. The pipeline is integrated with a Google
+sheet for rapid hypothesis testing.
+
 #### Ingestion
 
 The ingestion pipeline aims to ingest all the downstream data in BigQuery, our data warehouse of choice. Data from different sources is assigned metadata for lineage tracking.
