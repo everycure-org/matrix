@@ -439,29 +439,13 @@ This runs the full pipeline with fake data.
 
 ### Run with real data locally
 
-To run the full data with real data by copying the RAW data from the central GCS bucket and then run everything locally you can simply run the default
+To run the full pipeline on real data from BigQuery then run everything locally you can simply run the default pipeline:
 
 ```bash
 kedro run
 ```
 
-To only copy the raw data to local without executing the pipeline, you can use the following command:
 
-```bash
-kedro run --tags first_copy
-```
-
-Once this command is executed you can also run the entire pipeline but explicitly not 
-copy the data again by running
-
-```bash
-kedro run --without-tags first_copy
-```
-
-This assumes that all initial nodes that copy big datasets have already been run and that the developers are ensuring they are tagged with `first_copy` tags. 
-
-!!! tip "main takeaway for local execution"
-    The `first_copy` tag is used to ensure that the data is copied only once. This is useful when running the pipeline with real data locally. From day 2, remember `kedro run --without-tags first_copy` to avoid copying the data again. Note however this means you are responsible for updating your local dev copy.
 
 ## Using Kedro with Jupyter notebooks
 
