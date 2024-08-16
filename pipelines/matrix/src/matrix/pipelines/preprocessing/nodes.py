@@ -153,7 +153,7 @@ def create_int_edges(prm_nodes: pd.DataFrame, int_edges: pd.DataFrame) -> pd.Dat
     allow_subset=True,
 )
 def create_prm_nodes(prm_nodes: pd.DataFrame) -> pd.DataFrame:
-    """Function to create a primary nodes dataset by filtering and renaming columns."""
+    """Function to create a primary nodes that contains only new nodes introduced by the source."""
     res = prm_nodes[prm_nodes["id"].notna()]
 
     res["category"] = "biolink" + prm_nodes["entity label"]
@@ -163,10 +163,10 @@ def create_prm_nodes(prm_nodes: pd.DataFrame) -> pd.DataFrame:
 
 @has_schema(
     schema={
-        "subject": "string",
-        "predicate": "string",
-        "object": "string",
-        "knowledge_source": "string",
+        "subject": "object",
+        "predicate": "object",
+        "object": "object",
+        "knowledge_source": "object",
     },
     allow_subset=True,
 )
