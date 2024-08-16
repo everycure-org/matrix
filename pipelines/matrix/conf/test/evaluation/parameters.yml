@@ -1,0 +1,10 @@
+# Reduce list of k values
+evaluation.disease_specific_ranking:
+  evaluation_options:
+    evaluation:
+      rank_func_lst: 
+        - object: matrix.pipelines.evaluation.evaluation.MRR
+        - object:  matrix.pipelines.evaluation.evaluation.HitK
+          k: 2
+        - object:  matrix.pipelines.evaluation.evaluation.HitK
+          k: 10
