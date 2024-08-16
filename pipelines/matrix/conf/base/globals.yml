@@ -11,12 +11,13 @@ openai:
   api_key: ${oc.env:OPENAI_API_KEY}
 
 # points at our central GCS_BUCKET where we store our ground truth data
+# Note: Overwrite with WG project ID & bucket if you want to write to a different project's BigQuery
 gcs_bucket: gs://${oc.env:GCP_BUCKET, mtrx-us-central1-hub-dev-storage}
 gcp_project: ${oc.env:GCP_PROJECT_ID, mtrx-hub-dev-3of}
 
 versions:
   # overwritten in prod environment for shared releases
-  release: ${oc.env:RELEASE_VERSION, 20240802}
+  release: ${oc.env:RELEASE_VERSION, local}
 
 data_sources:
   rtx-kg2:
@@ -28,7 +29,7 @@ data_sources:
 
 paths:
   # we read from our central GCS bucket where we store our ground truth data
-  raw: ${gcs_bucket}/kedro/data/01_raw
+  raw: gs://mtrx-us-central1-hub-dev-storage/kedro/data/01_raw
   # we write to local disk going forward
   int: data/02_intermediate
   prm: data/03_primary

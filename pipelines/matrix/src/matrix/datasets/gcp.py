@@ -2,6 +2,9 @@
 from typing import Any, Dict, Optional
 from copy import deepcopy
 import re
+from google.cloud import bigquery
+import google.api_core.exceptions as exceptions
+
 
 import pandas as pd
 
@@ -21,8 +24,20 @@ import pygsheets
 from pygsheets import Worksheet, Spreadsheet
 
 from pyspark.sql import DataFrame, SparkSession
+from matrix.hooks import SparkHooks
 
 from refit.v1.core.inject import _parse_for_objects
+
+
+class LazySparkDataset(SparkDataset):
+    """Lazy loading spark datasets to avoid loading spark every run.
+
+    A trick that makes our spark loading lazy so we never initiate
+    """
+
+    def _load(self):
+        SparkHooks._initialize_spark()
+        return super()._load()
 
 
 class SparkWithSchemaDataset(SparkDataset):
@@ -58,6 +73,7 @@ class SparkWithSchemaDataset(SparkDataset):
         )
 
     def _load(self) -> DataFrame:
+        SparkHooks._initialize_spark()
         load_path = _strip_dbfs_prefix(self._fs_prefix + str(self._get_load_path()))
         read_obj = _get_spark().read
 
@@ -122,6 +138,8 @@ class BigQueryTableDataset(SparkDataset):
         )
 
     def _load(self) -> Any:
+        # DEBT potentially a better way would be to globally overwrite the getOrCreate() call in the spark library and link back to SparkSession
+        SparkHooks._initialize_spark()
         spark_session = SparkSession.builder.getOrCreate()
 
         return spark_session.read.format("bigquery").load(
@@ -129,6 +147,23 @@ class BigQueryTableDataset(SparkDataset):
         )
 
     def _save(self, data: DataFrame) -> None:
+        bq_client = bigquery.Client()
+        dataset_id = f"{self._project_id}.{self._dataset}"
+
+        # Check if the dataset exists
+        try:
+            bq_client.get_dataset(dataset_id)
+            print(f"Dataset {dataset_id} already exists")
+        except exceptions.NotFound:
+            print(f"Dataset {dataset_id} is not found, will attempt creating it now.")
+
+            # Dataset doesn't exist, so let's create it
+            dataset = bigquery.Dataset(dataset_id)
+            # dataset.location = "US"  # Specify the location, e.g., "US" or "EU"
+
+            dataset = bq_client.create_dataset(dataset, timeout=30)
+            print(f"Created dataset {self._project_id}.{dataset.dataset_id}")
+
         (
             data.write.format("bigquery")
             .options(**self._save_args)
