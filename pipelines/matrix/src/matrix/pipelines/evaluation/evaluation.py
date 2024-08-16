@@ -5,6 +5,7 @@ import abc
 import json
 import bisect
 from typing import Dict, List
+from tqdm import tqdm 
 
 
 class Evaluation(abc.ABC):
@@ -130,7 +131,7 @@ class SpecificRanking(Evaluation):
 
         # Compute ranks of known positives for each item
         ranks_lst = []
-        for item in items_lst:
+        for item in tqdm(items_lst):
             pairs_for_item = data[data[self._specific_col] == item]
             is_pos = pairs_for_item["y"].eq(1)
             pos_preds = list(pairs_for_item[is_pos][self._score_col_name])
