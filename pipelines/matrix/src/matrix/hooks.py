@@ -145,7 +145,7 @@ class SparkHooks:
             else:
                 logger.info(f"Executing for enviornment: {cls._kedro_context.env}")
                 logger.info(
-                    "With ARGO_POD_UID set to: " + os.environ.get("ARGO_NODE_ID", "")
+                    f'With ARGO_POD_UID set to: {os.environ.get("ARGO_NODE_ID", "")}'
                 )
                 logger.info(
                     "Thus determined not to be in k8s cluster and executing with service-account.json file"
