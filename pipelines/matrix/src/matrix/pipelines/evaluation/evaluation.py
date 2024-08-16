@@ -5,7 +5,8 @@ import abc
 import json
 import bisect
 from typing import Dict, List
-from tqdm import tqdm 
+from tqdm import tqdm
+from sklearn.metrics import roc_auc_score
 
 
 class Evaluation(abc.ABC):
@@ -86,7 +87,10 @@ class ContinuousMetrics(Evaluation):
         # Evaluate and report metrics
         report = {}
         for metric in self._metrics:
-            report[f"{metric.__name__}"] = metric(y_true, y_score)
+            if metric == roc_auc_score and y_true.nunique() == 1:
+                report[f"{metric.__name__}"] = 0.5  # roc_auc_score returns nan if there is only one class
+            else:
+                report[f"{metric.__name__}"] = metric(y_true, y_score)
         return json.loads(json.dumps(report, default=float))
 
 
