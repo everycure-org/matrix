@@ -4,7 +4,7 @@ services:
     container_name: neo4j
     # note this works only on MacOS devices (or other ARM chipsets), check
     # `docker-compose.test.yml` for the override
-    image: arm64v8/neo4j:5.21.0-enterprise
+    image: neo4j:5.21.0-enterprise
     restart: unless-stopped
     ports:
       - 7474:7474
