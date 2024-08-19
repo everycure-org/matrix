@@ -1,48 +1,47 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: nginx
+  name: whoami
+  namespace: dev-pascal
 spec:
-  type: ClusterIP
   ports:
     - port: 80
       targetPort: 80
   selector:
-    app: nginx
+    app: whoami
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: nginx
+  name: whoami
+  namespace: dev-pascal
 spec:
   selector:
     matchLabels:
-      app: nginx
+      app: whoami
   template:
     metadata:
       labels:
-        app: nginx
+        app: whoami
     spec:
       containers:
-        - image: nginx
-          name: nginx
+        - image: traefik/whoami
+          name: whoami
           ports:
             - containerPort: 80
-
 ---
-apiVersion: traefik.containo.us/v1alpha1
+apiVersion: traefik.io/v1alpha1
 kind: IngressRoute
 metadata:
-  name: nginx
-
+  name: whoami
+  namespace: dev-pascal
 spec:
   entryPoints:
     - websecure
 
   routes:
-    - match: Host(`nginx.platform.dev.everycure.org`)
+    - match: Host(`whoami.platform.dev.everycure.org`)
       kind: Rule
       services:
-        - name: nginx
-          namespace: pascal-dev
+        - name: whoami
           port: 80

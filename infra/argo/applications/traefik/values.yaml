@@ -6,7 +6,7 @@ external-dns:
 traefik:
   service:
     annotations:
-      external-dns.alpha.kubernetes.io/hostname: platform.dev.everycure.org
+      external-dns.alpha.kubernetes.io/hostname: '*.platform.dev.everycure.org'
   
   providers:
     kubernetesCRD:
