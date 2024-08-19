@@ -58,7 +58,7 @@ def cli():
     "--to-nodes", type=str, default="", help=TO_NODES_HELP, callback=split_node_names
 )
 @click.option(
-    "--nodes", "-n", "node_names", type=str, multiple=True, help=NODE_ARG_HELP
+    "--nodes", "-n", "node_names", type=str, help=NODE_ARG_HELP, callback=split_string
 )
 @click.option(
     "--runner", "-r", type=str, default=None, multiple=False, help=RUNNER_ARG_HELP
