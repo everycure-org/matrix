@@ -1,9 +1,9 @@
 _pandas_csv: &_pandas_csv
   type: pandas.CSVDataset
 
-_bigquery_ds: &_bigquery_ds
-  type: matrix.datasets.gcp.BigQueryTableDataset
-  project_id: ${globals:gcp_project}
+_gbq_table_ds: &_gbq_table_ds
+  type: pandas.GBQTableDataset
+  project: ${globals:gcp_project}
 
 ingestion.raw.robokop_kg.edges@pandas:
   <<: *_pandas_csv
@@ -11,14 +11,23 @@ ingestion.raw.robokop_kg.edges@pandas:
   load_args:
     sep: "\t"
 
-ingestion.int.robokop_kg.edges@spark:
-  <<: *_bigquery_ds
-  dataset: "kg_robokop"
-  table: "edges_test"
+ingestion.raw.robokop_kg.edges@gbq:
+  <<: *_gbq_table_ds
+  dataset: kg_robokop
+  table_name: edges_${globals:data_sources.robokop_kg.version}
+  load_args:
+    reauth: False
   save_args:
-    temporaryGcsBucket: ${globals:gcs_bucket}
-    bigQueryTableLabel.kg: robokop
-    bigQueryTableLabel.release: ${globals:versions.release}
+    chunksize: 100
+
+ingestion.int.robokop_kg.edges@gbq:
+  <<: *_gbq_table_ds
+  dataset: kg_robokop
+  table_name: edges_normalized_${globals:data_sources.robokop_kg.version}
+  load_args:
+    reauth: False
+  save_args:
+    chunksize: 100
 
 ingestion.int.robokop_kg.edges@pandas:
   <<: *_pandas_csv
@@ -37,14 +46,23 @@ ingestion.raw.robokop_kg.nodes@pandas:
   load_args:
     sep: "\t"
 
-ingestion.int.robokop_kg.nodes@spark:
-  <<: *_bigquery_ds
-  dataset: "kg_robokop"
-  table: "nodes_test"
+ingestion.raw.robokop_kg.nodes@gbq:
+  <<: *_gbq_table_ds
+  dataset: kg_robokop
+  table_name: nodes_${globals:data_sources.robokop_kg.version}
+  load_args:
+    reauth: False
   save_args:
-    temporaryGcsBucket: ${globals:gcs_bucket}
-    bigQueryTableLabel.kg: robokop
-    bigQueryTableLabel.release: ${globals:versions.release}
+    chunksize: 100
+
+ingestion.int.robokop_kg.nodes@gbq:
+  <<: *_gbq_table_ds
+  dataset: kg_robokop
+  table_name: nodes_normalized_${globals:data_sources.robokop_kg.version}
+  load_args:
+    reauth: False
+  save_args:
+    chunksize: 100
 
 ingestion.int.robokop_kg.nodes@pandas:
   <<: *_pandas_csv
@@ -56,3 +74,74 @@ ingestion.int.robokop_kg.nodes@pandas:
     date_format: '%Y-%m-%d %H:%M'
     decimal: .
     sep: "\t"
+
+ingestion.raw.rtx_kg2.edges@pandas:
+  <<: *_pandas_csv
+  filepath: ${globals:paths.raw}/rtx_kg2/${globals:data_sources.rtx_kg2.version}/edges.tsv
+  load_args:
+    sep: "\t"
+
+ingestion.raw.rtx_kg2.edges@gbq:
+  <<: *_gbq_table_ds
+  dataset: kg_rtx_kg2
+  table_name: edges_${globals:data_sources.rtx_kg2.version}
+  load_args:
+    reauth: False
+  save_args:
+    chunksize: 100
+
+ingestion.int.rtx_kg2.edges@gbq:
+  <<: *_gbq_table_ds
+  dataset: kg_rtx_kg2
+  table_name: edges_normalized_${globals:data_sources.rtx_kg2.version}
+  load_args:
+    reauth: False
+  save_args:
+    chunksize: 100
+
+ingestion.int.rtx_kg2.edges@pandas:
+  <<: *_pandas_csv
+  filepath: ${globals:paths.int}/rtx_kg2/${globals:data_sources.rtx_kg2.version}/edges.tsv
+  load_args:
+    sep: "\t"
+  save_args:
+    index: False
+    date_format: '%Y-%m-%d %H:%M'
+    decimal: .
+    sep: "\t"
+
+ingestion.raw.rtx_kg2.nodes@pandas:
+  <<: *_pandas_csv
+  filepath: ${globals:paths.raw}/rtx_kg2/${globals:data_sources.rtx_kg2.version}/nodes.tsv
+  load_args:
+    sep: "\t"
+
+ingestion.raw.rtx_kg2.nodes@gbq:
+  <<: *_gbq_table_ds
+  dataset: kg_rtx_kg2
+  table_name: nodes_${globals:data_sources.rtx_kg2.version}
+  load_args:
+    reauth: False
+  save_args:
+    chunksize: 100
+
+ingestion.int.rtx_kg2.nodes@gbq:
+  <<: *_gbq_table_ds
+  dataset: kg_rtx_kg2
+  table_name: nodes_normalized_${globals:data_sources.rtx_kg2.version}
+  load_args:
+    reauth: False
+  save_args:
+    chunksize: 100
+
+ingestion.int.rtx_kg2.nodes@pandas:
+  <<: *_pandas_csv
+  filepath: ${globals:paths.int}/rtx_kg2/${globals:data_sources.rtx_kg2.version}/nodes.tsv
+  load_args:
+    sep: "\t"
+  save_args:
+    index: False
+    date_format: '%Y-%m-%d %H:%M'
+    decimal: .
+    sep: "\t"
+
