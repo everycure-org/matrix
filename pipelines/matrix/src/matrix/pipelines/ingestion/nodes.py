@@ -1,12 +1,34 @@
 """Nodes for the ingestion pipeline."""
 from more_itertools import chunked
 import pandas as pd
-
+import numpy as np
 import logging
 
 from matrix.pipelines.ingestion.normalizers import NodeNormalizer
 
 logger = logging.getLogger(__name__)
+
+def upload_to_bq(nodes_df: pd.DataFrame, edges_df: pd.DataFrame):
+    """Upload to BigQuery
+
+    Args:
+        nodes_df: Nodes
+        edges_df: Edges
+
+    Returns:
+        Nodes & Edges DataFrames
+    """
+    nodes_column_names: list[str] = nodes_df.columns.to_list()
+    new_nodes_column_names = {c: c.split(":")[0] for c in nodes_column_names}
+    nodes_df = nodes_df.rename(columns=new_nodes_column_names)
+    nodes_df = nodes_df.replace(np.nan, '').astype(str)
+
+    edges_column_names: list[str] = edges_df.columns.to_list()
+    new_edges_column_names = {c: c.split(":")[0] for c in edges_column_names}
+    edges_df = nodes_df.rename(columns=new_edges_column_names)
+    edges_df = edges_df.replace(np.nan, '').astype(str)
+
+    return nodes_df, edges_df
 
 
 def normalize_kg_data(nodes_df: pd.DataFrame, edges_df: pd.DataFrame):
@@ -19,9 +41,6 @@ def normalize_kg_data(nodes_df: pd.DataFrame, edges_df: pd.DataFrame):
     Returns:
         Corrected Nodes & Edges DataFrames
     """
-    # column_names: list[str] = df.columns.to_list()
-    # new_column_names = {c: c.split(":")[0] for c in column_names}
-    # df = df.rename(columns=new_column_names)
     id_column_values = nodes_df[["id"]].values.tolist()
     id_column_values_flattened = [','.join(col).strip() for col in id_column_values]
     logger.debug(f"number of entries: {len(id_column_values_flattened)}")
