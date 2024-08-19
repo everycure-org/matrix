@@ -1,0 +1,1414 @@
+---
+# Source: MLFlow/charts/mlflow/charts/minio/templates/networkpolicy.yaml
+kind: NetworkPolicy
+apiVersion: networking.k8s.io/v1
+metadata:
+  name: release-name-minio
+  namespace: "mlflow"
+  labels:
+    app.kubernetes.io/instance: release-name
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: minio
+    app.kubernetes.io/version: 2024.8.3
+    helm.sh/chart: minio-14.6.32
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/instance: release-name
+      app.kubernetes.io/name: minio
+  policyTypes:
+    - Ingress
+    - Egress
+  egress:
+    - {}
+  ingress:
+    # Allow inbound connections
+    - ports:
+        - port: 9001
+        - port: 9000
+---
+# Source: MLFlow/charts/mlflow/charts/minio/templates/provisioning-networkpolicy.yaml
+kind: NetworkPolicy
+apiVersion: networking.k8s.io/v1
+metadata:
+  name: release-name-minio-provisioning
+  namespace: "mlflow"
+  labels:
+    app.kubernetes.io/instance: release-name
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: minio
+    app.kubernetes.io/version: 2024.8.3
+    helm.sh/chart: minio-14.6.32
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/component: minio-provisioning
+  policyTypes:
+    - Ingress
+    - Egress
+  egress:
+    - {}
+  ingress:
+---
+# Source: MLFlow/charts/mlflow/charts/postgresql/templates/primary/networkpolicy.yaml
+kind: NetworkPolicy
+apiVersion: networking.k8s.io/v1
+metadata:
+  name: release-name-postgresql
+  namespace: "mlflow"
+  labels:
+    app.kubernetes.io/instance: release-name
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: postgresql
+    app.kubernetes.io/version: 16.3.0
+    helm.sh/chart: postgresql-15.5.20
+    app.kubernetes.io/component: primary
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/instance: release-name
+      app.kubernetes.io/name: postgresql
+      app.kubernetes.io/component: primary
+  policyTypes:
+    - Ingress
+    - Egress
+  egress:
+    - {}
+  ingress:
+    - ports:
+        - port: 5432
+---
+# Source: MLFlow/charts/mlflow/templates/run/networkpolicy.yaml
+kind: NetworkPolicy
+apiVersion: networking.k8s.io/v1
+metadata:
+  name: release-name-mlflow-run
+  namespace: "mlflow"
+  labels:
+    app.kubernetes.io/instance: release-name
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: mlflow
+    app.kubernetes.io/version: 2.15.1
+    helm.sh/chart: mlflow-1.4.22
+    app.kubernetes.io/part-of: mlflow
+    app.kubernetes.io/component: run
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/instance: release-name
+      app.kubernetes.io/name: mlflow
+      app.kubernetes.io/part-of: mlflow
+      app.kubernetes.io/component: run
+  policyTypes:
+    - Ingress
+    - Egress
+  egress:
+    - {}
+  ingress:
+---
+# Source: MLFlow/charts/mlflow/templates/tracking/networkpolicy.yaml
+kind: NetworkPolicy
+apiVersion: networking.k8s.io/v1
+metadata:
+  name: release-name-mlflow-tracking
+  namespace: "mlflow"
+  labels:
+    app.kubernetes.io/instance: release-name
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: mlflow
+    app.kubernetes.io/version: 2.15.1
+    helm.sh/chart: mlflow-1.4.22
+    app.kubernetes.io/part-of: mlflow
+    app.kubernetes.io/component: tracking
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/instance: release-name
+      app.kubernetes.io/name: mlflow
+      app.kubernetes.io/part-of: mlflow
+      app.kubernetes.io/component: tracking
+  policyTypes:
+    - Ingress
+    - Egress
+  egress:
+    - {}
+  ingress:
+    - ports:
+        - port: 5000
+        - port: 80
+      from:
+---
+# Source: MLFlow/charts/mlflow/charts/minio/templates/pdb.yaml
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: release-name-minio
+  namespace: "mlflow"
+  labels:
+    app.kubernetes.io/instance: release-name
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: minio
+    app.kubernetes.io/version: 2024.8.3
+    helm.sh/chart: minio-14.6.32
+spec:
+  maxUnavailable: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/instance: release-name
+      app.kubernetes.io/name: minio
+---
+# Source: MLFlow/charts/mlflow/charts/postgresql/templates/primary/pdb.yaml
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: release-name-postgresql
+  namespace: "mlflow"
+  labels:
+    app.kubernetes.io/instance: release-name
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: postgresql
+    app.kubernetes.io/version: 16.3.0
+    helm.sh/chart: postgresql-15.5.20
+    app.kubernetes.io/component: primary
+spec:
+  maxUnavailable: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/instance: release-name
+      app.kubernetes.io/name: postgresql
+      app.kubernetes.io/component: primary
+---
+# Source: MLFlow/charts/mlflow/templates/tracking/pdb.yaml
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: release-name-mlflow-tracking
+  namespace: "mlflow"
+  labels:
+    app.kubernetes.io/instance: release-name
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: mlflow
+    app.kubernetes.io/version: 2.15.1
+    helm.sh/chart: mlflow-1.4.22
+    app.kubernetes.io/part-of: mlflow
+    app.kubernetes.io/component: tracking
+spec:
+  maxUnavailable: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/instance: release-name
+      app.kubernetes.io/name: mlflow
+      app.kubernetes.io/part-of: mlflow
+      app.kubernetes.io/component: tracking
+---
+# Source: MLFlow/charts/mlflow/charts/minio/templates/serviceaccount.yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: release-name-minio
+  namespace: "mlflow"
+  labels:
+    app.kubernetes.io/instance: release-name
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: minio
+    app.kubernetes.io/version: 2024.8.3
+    helm.sh/chart: minio-14.6.32
+automountServiceAccountToken: false
+secrets:
+  - name: release-name-minio
+---
+# Source: MLFlow/charts/mlflow/charts/postgresql/templates/serviceaccount.yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: release-name-postgresql
+  namespace: "mlflow"
+  labels:
+    app.kubernetes.io/instance: release-name
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: postgresql
+    app.kubernetes.io/version: 16.3.0
+    helm.sh/chart: postgresql-15.5.20
+automountServiceAccountToken: false
+---
+# Source: MLFlow/charts/mlflow/templates/run/service-account.yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: release-name-mlflow-run
+  namespace: "mlflow"
+  labels:
+    app.kubernetes.io/instance: release-name
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: mlflow
+    app.kubernetes.io/version: 2.15.1
+    helm.sh/chart: mlflow-1.4.22
+    app.kubernetes.io/part-of: mlflow
+    app.kubernetes.io/component: run
+automountServiceAccountToken: false
+---
+# Source: MLFlow/charts/mlflow/templates/tracking/service-account.yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: release-name-mlflow-tracking
+  namespace: "mlflow"
+  labels:
+    app.kubernetes.io/instance: release-name
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: mlflow
+    app.kubernetes.io/version: 2.15.1
+    helm.sh/chart: mlflow-1.4.22
+    app.kubernetes.io/part-of: mlflow
+    app.kubernetes.io/component: tracking
+automountServiceAccountToken: false
+---
+# Source: MLFlow/charts/mlflow/charts/minio/templates/secrets.yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: release-name-minio
+  namespace: "mlflow"
+  labels:
+    app.kubernetes.io/instance: release-name
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: minio
+    app.kubernetes.io/version: 2024.8.3
+    helm.sh/chart: minio-14.6.32
+type: Opaque
+data:
+  root-user: "YWRtaW4="
+  root-password: "RzZBcmh3VE16Yw=="
+---
+# Source: MLFlow/charts/mlflow/charts/postgresql/templates/secrets.yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: release-name-postgresql
+  namespace: "mlflow"
+  labels:
+    app.kubernetes.io/instance: release-name
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: postgresql
+    app.kubernetes.io/version: 16.3.0
+    helm.sh/chart: postgresql-15.5.20
+type: Opaque
+data:
+  postgres-password: "Y0c4bGx5T0M4Vg=="
+  password: "bWJ6b01wR1U5SQ=="
+  # We don't auto-generate LDAP password when it's not provided as we do for other passwords
+---
+# Source: MLFlow/charts/mlflow/charts/minio/templates/provisioning-configmap.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: release-name-minio-provisioning
+  namespace: "mlflow"
+  labels:
+    app.kubernetes.io/instance: release-name
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: minio
+    app.kubernetes.io/version: 2024.8.3
+    helm.sh/chart: minio-14.6.32
+    app.kubernetes.io/component: minio-provisioning
+data:
+---
+# Source: MLFlow/charts/mlflow/charts/postgresql/templates/primary/initialization-configmap.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: release-name-postgresql-init-scripts
+  namespace: "mlflow"
+  labels:
+    app.kubernetes.io/instance: release-name
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: postgresql
+    app.kubernetes.io/version: 16.3.0
+    helm.sh/chart: postgresql-15.5.20
+data:
+  create_auth_db.sh: |
+    #!/bin/bash
+    PGPASSWORD=$POSTGRES_POSTGRES_PASSWORD psql -U postgres <<< "CREATE DATABASE bitnami_mlflow_auth"
+    PGPASSWORD=$POSTGRES_POSTGRES_PASSWORD psql -U postgres <<< "GRANT ALL PRIVILEGES ON DATABASE bitnami_mlflow_auth to bn_mlflow"
+    PGPASSWORD=$POSTGRES_POSTGRES_PASSWORD psql -U postgres <<< "ALTER DATABASE bitnami_mlflow_auth OWNER TO bn_mlflow"
+---
+# Source: MLFlow/charts/mlflow/charts/minio/templates/pvc.yaml
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: release-name-minio
+  namespace: "mlflow"
+  labels:
+    app.kubernetes.io/instance: release-name
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: minio
+    app.kubernetes.io/version: 2024.8.3
+    helm.sh/chart: minio-14.6.32
+spec:
+  accessModes:
+    - "ReadWriteOnce"
+  resources:
+    requests:
+      storage: "8Gi"
+---
+# Source: MLFlow/charts/mlflow/templates/tracking/pvc.yaml
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: release-name-mlflow-tracking
+  namespace: "mlflow"
+  labels:
+    app.kubernetes.io/instance: release-name
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: mlflow
+    app.kubernetes.io/version: 2.15.1
+    helm.sh/chart: mlflow-1.4.22
+    app.kubernetes.io/part-of: mlflow
+    app.kubernetes.io/component: tracking
+spec:
+  accessModes:
+    - "ReadWriteOnce"
+  resources:
+    requests:
+      storage: "8Gi"
+---
+# Source: MLFlow/charts/mlflow/charts/minio/templates/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: release-name-minio
+  namespace: "mlflow"
+  labels:
+    app.kubernetes.io/instance: release-name
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: minio
+    app.kubernetes.io/version: 2024.8.3
+    helm.sh/chart: minio-14.6.32
+spec:
+  type: ClusterIP
+  ports:
+    - name: minio-api
+      port: 80
+      targetPort: minio-api
+      nodePort: null
+    - name: minio-console
+      port: 9001
+      targetPort: minio-console
+      nodePort: null
+  selector:
+    app.kubernetes.io/instance: release-name
+    app.kubernetes.io/name: minio
+---
+# Source: MLFlow/charts/mlflow/charts/postgresql/templates/primary/svc-headless.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: release-name-postgresql-hl
+  namespace: "mlflow"
+  labels:
+    app.kubernetes.io/instance: release-name
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: postgresql
+    app.kubernetes.io/version: 16.3.0
+    helm.sh/chart: postgresql-15.5.20
+    app.kubernetes.io/component: primary
+  annotations:
+spec:
+  type: ClusterIP
+  clusterIP: None
+  # We want all pods in the StatefulSet to have their addresses published for
+  # the sake of the other Postgresql pods even before they're ready, since they
+  # have to be able to talk to each other in order to become ready.
+  publishNotReadyAddresses: true
+  ports:
+    - name: tcp-postgresql
+      port: 5432
+      targetPort: tcp-postgresql
+  selector:
+    app.kubernetes.io/instance: release-name
+    app.kubernetes.io/name: postgresql
+    app.kubernetes.io/component: primary
+---
+# Source: MLFlow/charts/mlflow/charts/postgresql/templates/primary/svc.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: release-name-postgresql
+  namespace: "mlflow"
+  labels:
+    app.kubernetes.io/instance: release-name
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: postgresql
+    app.kubernetes.io/version: 16.3.0
+    helm.sh/chart: postgresql-15.5.20
+    app.kubernetes.io/component: primary
+spec:
+  type: ClusterIP
+  sessionAffinity: None
+  ports:
+    - name: tcp-postgresql
+      port: 5432
+      targetPort: tcp-postgresql
+      nodePort: null
+  selector:
+    app.kubernetes.io/instance: release-name
+    app.kubernetes.io/name: postgresql
+    app.kubernetes.io/component: primary
+---
+# Source: MLFlow/charts/mlflow/templates/tracking/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: release-name-mlflow-tracking
+  namespace: "mlflow"
+  labels:
+    app.kubernetes.io/instance: release-name
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: mlflow
+    app.kubernetes.io/version: 2.15.1
+    helm.sh/chart: mlflow-1.4.22
+    app.kubernetes.io/part-of: mlflow
+    app.kubernetes.io/component: tracking
+spec:
+  type: LoadBalancer
+  sessionAffinity: None
+  externalTrafficPolicy: "Cluster"
+  ports:
+    - name: http
+      port: 80
+      protocol: TCP
+      targetPort: http
+  selector:
+    app.kubernetes.io/instance: release-name
+    app.kubernetes.io/name: mlflow
+    app.kubernetes.io/part-of: mlflow
+    app.kubernetes.io/component: tracking
+---
+# Source: MLFlow/charts/mlflow/charts/minio/templates/standalone/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: release-name-minio
+  namespace: "mlflow"
+  labels:
+    app.kubernetes.io/instance: release-name
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: minio
+    app.kubernetes.io/version: 2024.8.3
+    helm.sh/chart: minio-14.6.32
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/instance: release-name
+      app.kubernetes.io/name: minio
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/instance: release-name
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/name: minio
+        app.kubernetes.io/version: 2024.8.3
+        helm.sh/chart: minio-14.6.32
+      annotations:
+        checksum/credentials-secret: b91ddf49ecceaf45a5c06df96aae03778b6806dae7ff6dc0a6f2464b918b4da2
+    spec:
+      
+      serviceAccountName: release-name-minio
+      affinity:
+        podAffinity:
+          
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - podAffinityTerm:
+                labelSelector:
+                  matchLabels:
+                    app.kubernetes.io/instance: release-name
+                    app.kubernetes.io/name: minio
+                topologyKey: kubernetes.io/hostname
+              weight: 1
+        nodeAffinity:
+          
+      automountServiceAccountToken: false
+      securityContext:
+        fsGroup: 1001
+        fsGroupChangePolicy: OnRootMismatch
+        supplementalGroups: []
+        sysctls: []
+      containers:
+        - name: minio
+          image: docker.io/bitnami/minio:2024.8.3-debian-12-r0
+          imagePullPolicy: "IfNotPresent"
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+              - ALL
+            privileged: false
+            readOnlyRootFilesystem: true
+            runAsGroup: 1001
+            runAsNonRoot: true
+            runAsUser: 1001
+            seLinuxOptions: {}
+            seccompProfile:
+              type: RuntimeDefault
+          env:
+            - name: BITNAMI_DEBUG
+              value: "false"
+            - name: MINIO_SCHEME
+              value: "http"
+            - name: MINIO_FORCE_NEW_KEYS
+              value: "no"
+            - name: MINIO_API_PORT_NUMBER
+              value: "9000"
+            - name: MINIO_ROOT_USER
+              valueFrom:
+                secretKeyRef:
+                  name: release-name-minio
+                  key: root-user
+            - name: MINIO_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: release-name-minio
+                  key: root-password
+            - name: MINIO_DEFAULT_BUCKETS
+              value: mlflow
+            - name: MINIO_BROWSER
+              value: "on"
+            - name: MINIO_PROMETHEUS_AUTH_TYPE
+              value: "public"
+            - name: MINIO_CONSOLE_PORT_NUMBER
+              value: "9001"
+            - name: MINIO_DATA_DIR
+              value: "/bitnami/minio/data"
+          envFrom:
+          ports:
+            - name: minio-api
+              containerPort: 9000
+              protocol: TCP
+            - name: minio-console
+              containerPort: 9001
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /minio/health/live
+              port: minio-api
+              scheme: "HTTP"
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 5
+            successThreshold: 1
+            failureThreshold: 5
+          readinessProbe:
+            tcpSocket:
+              port: minio-api
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 1
+            successThreshold: 1
+            failureThreshold: 5
+          resources:
+            limits:
+              cpu: 375m
+              ephemeral-storage: 2Gi
+              memory: 384Mi
+            requests:
+              cpu: 250m
+              ephemeral-storage: 50Mi
+              memory: 256Mi
+          volumeMounts:
+            - name: empty-dir
+              mountPath: /tmp
+              subPath: tmp-dir
+            - name: empty-dir
+              mountPath: /opt/bitnami/minio/tmp
+              subPath: app-tmp-dir
+            - name: empty-dir
+              mountPath: /.mc
+              subPath: app-mc-dir
+            - name: data
+              mountPath: /bitnami/minio/data
+      volumes:
+        - name: empty-dir
+          emptyDir: {}
+        - name: data
+          persistentVolumeClaim:
+            claimName: release-name-minio
+---
+# Source: MLFlow/charts/mlflow/templates/run/dep-job.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: release-name-mlflow-run
+  namespace: "mlflow"
+  labels:
+    app.kubernetes.io/instance: release-name
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: mlflow
+    app.kubernetes.io/version: 2.15.1
+    helm.sh/chart: mlflow-1.4.22
+    app.kubernetes.io/part-of: mlflow
+    app.kubernetes.io/component: run
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/instance: release-name
+      app.kubernetes.io/name: mlflow
+      app.kubernetes.io/part-of: mlflow
+      app.kubernetes.io/component: run
+  strategy:
+    rollingUpdate: {}
+    type: RollingUpdate
+  template:
+    metadata:
+      annotations:
+        checksum/source: 01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b
+      labels:
+        app.kubernetes.io/instance: release-name
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/name: mlflow
+        app.kubernetes.io/version: 2.15.1
+        helm.sh/chart: mlflow-1.4.22
+        app.kubernetes.io/part-of: mlflow
+        app.kubernetes.io/component: run
+    spec:
+      
+      serviceAccountName: release-name-mlflow-run
+      automountServiceAccountToken: false
+      affinity:
+        podAffinity:
+          
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - podAffinityTerm:
+                labelSelector:
+                  matchLabels:
+                    app.kubernetes.io/instance: release-name
+                    app.kubernetes.io/name: mlflow
+                    app.kubernetes.io/component: run
+                topologyKey: kubernetes.io/hostname
+              weight: 1
+        nodeAffinity:
+          
+      securityContext:
+        fsGroup: 1001
+        fsGroupChangePolicy: Always
+        supplementalGroups: []
+        sysctls: []
+      initContainers:
+      containers:
+        - name: mlflow
+          image: docker.io/bitnami/mlflow:2.15.1-debian-12-r0
+          imagePullPolicy: "IfNotPresent"
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+              - ALL
+            privileged: false
+            readOnlyRootFilesystem: true
+            runAsGroup: 1001
+            runAsNonRoot: true
+            runAsUser: 1001
+            seLinuxOptions: {}
+            seccompProfile:
+              type: RuntimeDefault
+          command:
+            - bash
+          args:
+            - -ec
+            - |
+              #!/bin/bash
+              sleep infinity
+          env:
+            - name: BITNAMI_DEBUG
+              value: "false"
+            - name: MLFLOW_TRACKING_URI
+              value: "http://release-name-mlflow-tracking:80"
+          envFrom:
+          resources:
+            limits:
+              cpu: 750m
+              ephemeral-storage: 2Gi
+              memory: 768Mi
+            requests:
+              cpu: 500m
+              ephemeral-storage: 50Mi
+              memory: 512Mi
+          volumeMounts:
+            - name: source
+              mountPath: /app
+            - name: tmp
+              mountPath: /tmp
+            - name: mlruns
+              mountPath: /app/mlruns
+            - name: mlartifacts
+              mountPath: /app/mlartifacts
+      volumes:
+        - name: tmp
+          emptyDir: {}
+        - name: mlruns
+          emptyDir: {}
+        - name: mlartifacts
+          emptyDir: {}
+        - name: source
+          emptyDir: {}
+        - name: data
+          emptyDir: {}
+---
+# Source: MLFlow/charts/mlflow/templates/tracking/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: release-name-mlflow-tracking
+  namespace: "mlflow"
+  labels:
+    app.kubernetes.io/instance: release-name
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: mlflow
+    app.kubernetes.io/version: 2.15.1
+    helm.sh/chart: mlflow-1.4.22
+    app.kubernetes.io/part-of: mlflow
+    app.kubernetes.io/component: tracking
+spec:
+  replicas: 1
+  strategy:
+    type: RollingUpdate
+  selector:
+    matchLabels:
+      app.kubernetes.io/instance: release-name
+      app.kubernetes.io/name: mlflow
+      app.kubernetes.io/part-of: mlflow
+      app.kubernetes.io/component: tracking
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/instance: release-name
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/name: mlflow
+        app.kubernetes.io/version: 2.15.1
+        helm.sh/chart: mlflow-1.4.22
+        app.kubernetes.io/part-of: mlflow
+        app.kubernetes.io/component: tracking
+    spec:
+      serviceAccountName: release-name-mlflow-tracking
+      
+      automountServiceAccountToken: false
+      affinity:
+        podAffinity:
+          
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - podAffinityTerm:
+                labelSelector:
+                  matchLabels:
+                    app.kubernetes.io/instance: release-name
+                    app.kubernetes.io/name: mlflow
+                    app.kubernetes.io/component: mlflow
+                topologyKey: kubernetes.io/hostname
+              weight: 1
+        nodeAffinity:
+          
+      securityContext:
+        fsGroup: 1001
+        fsGroupChangePolicy: Always
+        supplementalGroups: []
+        sysctls: []
+      initContainers:
+        # Init container for PostgreSQL
+        - name: wait-for-database
+          image: docker.io/bitnami/os-shell:12-debian-12-r27
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+              - ALL
+            privileged: false
+            readOnlyRootFilesystem: true
+            runAsGroup: 1001
+            runAsNonRoot: true
+            runAsUser: 1001
+            seLinuxOptions: {}
+            seccompProfile:
+              type: RuntimeDefault
+          command:
+            - bash
+            - -ec
+            - |
+              #!/bin/bash
+              retry_while() {
+                local -r cmd="${1:?cmd is missing}"
+                local -r retries="${2:-12}"
+                local -r sleep_time="${3:-5}"
+                local return_value=1
+        
+                read -r -a command <<< "$cmd"
+                for ((i = 1 ; i <= retries ; i+=1 )); do
+                    "${command[@]}" && return_value=0 && break
+                    sleep "$sleep_time"
+                done
+                return $return_value
+              }
+        
+              check_host() {
+                  local -r host="${1:-?missing host}"
+                  local -r port="${2:-?missing port}"
+                  if wait-for-port --timeout=5 --host=${host} --state=inuse $port ; then
+                     return 0
+                  else
+                     return 1
+                  fi
+              }
+        
+              echo "Checking connection to release-name-postgresql:5432"
+              if ! retry_while "check_host release-name-postgresql 5432"; then
+                  echo "Connection error"
+                  exit 1
+              fi
+        
+              echo "Connection success"
+              exit 0
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+        # Wait for S3 backend to be ready
+        - name: wait-for-s3
+          image: docker.io/bitnami/os-shell:12-debian-12-r27
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+              - ALL
+            privileged: false
+            readOnlyRootFilesystem: true
+            runAsGroup: 1001
+            runAsNonRoot: true
+            runAsUser: 1001
+            seLinuxOptions: {}
+            seccompProfile:
+              type: RuntimeDefault
+          command:
+            - bash
+            - -ec
+            - |
+              #!/bin/bash
+              retry_while() {
+                local -r cmd="${1:?cmd is missing}"
+                local -r retries="${2:-12}"
+                local -r sleep_time="${3:-5}"
+                local return_value=1
+        
+                read -r -a command <<< "$cmd"
+                for ((i = 1 ; i <= retries ; i+=1 )); do
+                    "${command[@]}" && return_value=0 && break
+                    sleep "$sleep_time"
+                done
+                return $return_value
+              }
+        
+              check_host() {
+                  local -r host="${1:-?missing host}"
+                  local -r port="${2:-?missing port}"
+                  if wait-for-port --timeout=5 --host=${host} --state=inuse $port ; then
+                     return 0
+                  else
+                     return 1
+                  fi
+              }
+        
+              echo "Checking connection to release-name-minio:80"
+              if ! retry_while "check_host release-name-minio 80"; then
+                  echo "Connection error"
+                  exit 1
+              fi
+        
+              echo "Connection success"
+              exit 0
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+      containers:
+        - name: mlflow
+          image: docker.io/bitnami/mlflow:2.15.1-debian-12-r0
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+              - ALL
+            privileged: false
+            readOnlyRootFilesystem: true
+            runAsGroup: 1001
+            runAsNonRoot: true
+            runAsUser: 1001
+            seLinuxOptions: {}
+            seccompProfile:
+              type: RuntimeDefault
+          command:
+            - mlflow
+          args:
+            - server
+            - --backend-store-uri=postgresql://bn_mlflow:$(MLFLOW_DATABASE_PASSWORD)@release-name-postgresql:5432/bitnami_mlflow
+            - --artifacts-destination=s3://mlflow
+            - --serve-artifacts
+            - --host=0.0.0.0
+            - --port=5000
+          env:
+            - name: BITNAMI_DEBUG
+              value: "false"
+            - name: MLFLOW_DATABASE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: release-name-postgresql
+                  key: "password"
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: release-name-minio
+                  key: "root-user"
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: release-name-minio
+                  key: "root-password"
+            - name: MLFLOW_S3_ENDPOINT_URL
+              value: "http://release-name-minio:80"
+          envFrom:
+          resources:
+            limits:
+              cpu: 750m
+              ephemeral-storage: 2Gi
+              memory: 1536Mi
+            requests:
+              cpu: 500m
+              ephemeral-storage: 50Mi
+              memory: 1024Mi
+          ports:
+            - name: http
+              containerPort: 5000
+          livenessProbe:
+            failureThreshold: 5
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 5
+            exec:
+              command:
+                - pgrep
+                - -f
+                - mlflow.server
+          readinessProbe:
+            failureThreshold: 5
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 5
+            httpGet:
+              path: /
+              port: http
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+            - name: mlruns
+              mountPath: /app/mlruns
+            - name: mlartifacts
+              mountPath: /app/mlartifacts
+            - name: data
+              mountPath: /bitnami/mlflow
+      volumes:
+        - name: tmp
+          emptyDir: {}
+        - name: mlruns
+          emptyDir: {}
+        - name: mlartifacts
+          emptyDir: {}
+        - name: data
+          persistentVolumeClaim:
+            claimName: release-name-mlflow-tracking
+---
+# Source: MLFlow/charts/mlflow/charts/postgresql/templates/primary/statefulset.yaml
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: release-name-postgresql
+  namespace: "mlflow"
+  labels:
+    app.kubernetes.io/instance: release-name
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: postgresql
+    app.kubernetes.io/version: 16.3.0
+    helm.sh/chart: postgresql-15.5.20
+    app.kubernetes.io/component: primary
+spec:
+  replicas: 1
+  serviceName: release-name-postgresql-hl
+  updateStrategy:
+    rollingUpdate: {}
+    type: RollingUpdate
+  selector:
+    matchLabels:
+      app.kubernetes.io/instance: release-name
+      app.kubernetes.io/name: postgresql
+      app.kubernetes.io/component: primary
+  template:
+    metadata:
+      name: release-name-postgresql
+      labels:
+        app.kubernetes.io/instance: release-name
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/name: postgresql
+        app.kubernetes.io/version: 16.3.0
+        helm.sh/chart: postgresql-15.5.20
+        app.kubernetes.io/component: primary
+    spec:
+      serviceAccountName: release-name-postgresql
+      
+      automountServiceAccountToken: false
+      affinity:
+        podAffinity:
+          
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - podAffinityTerm:
+                labelSelector:
+                  matchLabels:
+                    app.kubernetes.io/instance: release-name
+                    app.kubernetes.io/name: postgresql
+                    app.kubernetes.io/component: primary
+                topologyKey: kubernetes.io/hostname
+              weight: 1
+        nodeAffinity:
+          
+      securityContext:
+        fsGroup: 1001
+        fsGroupChangePolicy: Always
+        supplementalGroups: []
+        sysctls: []
+      hostNetwork: false
+      hostIPC: false
+      containers:
+        - name: postgresql
+          image: docker.io/bitnami/postgresql:16.3.0-debian-12-r23
+          imagePullPolicy: "IfNotPresent"
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+              - ALL
+            privileged: false
+            readOnlyRootFilesystem: true
+            runAsGroup: 1001
+            runAsNonRoot: true
+            runAsUser: 1001
+            seLinuxOptions: {}
+            seccompProfile:
+              type: RuntimeDefault
+          env:
+            - name: BITNAMI_DEBUG
+              value: "false"
+            - name: POSTGRESQL_PORT_NUMBER
+              value: "5432"
+            - name: POSTGRESQL_VOLUME_DIR
+              value: "/bitnami/postgresql"
+            - name: PGDATA
+              value: "/bitnami/postgresql/data"
+            # Authentication
+            - name: POSTGRES_USER
+              value: "bn_mlflow"
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: release-name-postgresql
+                  key: password
+            - name: POSTGRES_POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: release-name-postgresql
+                  key: postgres-password
+            - name: POSTGRES_DATABASE
+              value: "bitnami_mlflow"
+            # LDAP
+            - name: POSTGRESQL_ENABLE_LDAP
+              value: "no"
+            # TLS
+            - name: POSTGRESQL_ENABLE_TLS
+              value: "no"
+            # Audit
+            - name: POSTGRESQL_LOG_HOSTNAME
+              value: "false"
+            - name: POSTGRESQL_LOG_CONNECTIONS
+              value: "false"
+            - name: POSTGRESQL_LOG_DISCONNECTIONS
+              value: "false"
+            - name: POSTGRESQL_PGAUDIT_LOG_CATALOG
+              value: "off"
+            # Others
+            - name: POSTGRESQL_CLIENT_MIN_MESSAGES
+              value: "error"
+            - name: POSTGRESQL_SHARED_PRELOAD_LIBRARIES
+              value: "pgaudit"
+          ports:
+            - name: tcp-postgresql
+              containerPort: 5432
+          livenessProbe:
+            failureThreshold: 6
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 5
+            exec:
+              command:
+                - /bin/sh
+                - -c
+                - exec pg_isready -U "bn_mlflow" -d "dbname=bitnami_mlflow" -h 127.0.0.1 -p 5432
+          readinessProbe:
+            failureThreshold: 6
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 5
+            exec:
+              command:
+                - /bin/sh
+                - -c
+                - -e
+                - |
+                  exec pg_isready -U "bn_mlflow" -d "dbname=bitnami_mlflow" -h 127.0.0.1 -p 5432
+                  [ -f /opt/bitnami/postgresql/tmp/.initialized ] || [ -f /bitnami/postgresql/.initialized ]
+          resources:
+            limits:
+              cpu: 150m
+              ephemeral-storage: 2Gi
+              memory: 192Mi
+            requests:
+              cpu: 100m
+              ephemeral-storage: 50Mi
+              memory: 128Mi
+          volumeMounts:
+            - name: empty-dir
+              mountPath: /tmp
+              subPath: tmp-dir
+            - name: empty-dir
+              mountPath: /opt/bitnami/postgresql/conf
+              subPath: app-conf-dir
+            - name: empty-dir
+              mountPath: /opt/bitnami/postgresql/tmp
+              subPath: app-tmp-dir
+            - name: custom-init-scripts
+              mountPath: /docker-entrypoint-initdb.d/
+            - name: dshm
+              mountPath: /dev/shm
+            - name: data
+              mountPath: /bitnami/postgresql
+      volumes:
+        - name: empty-dir
+          emptyDir: {}
+        - name: custom-init-scripts
+          configMap:
+            name: release-name-postgresql-init-scripts
+        - name: dshm
+          emptyDir:
+            medium: Memory
+  volumeClaimTemplates:
+    - apiVersion: v1
+      kind: PersistentVolumeClaim
+      metadata:
+        name: data
+      spec:
+        accessModes:
+          - "ReadWriteOnce"
+        resources:
+          requests:
+            storage: "8Gi"
+---
+# Source: MLFlow/charts/mlflow/charts/minio/templates/provisioning-job.yaml
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: release-name-minio-provisioning
+  namespace: "mlflow"
+  labels:
+    app.kubernetes.io/instance: release-name
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: minio
+    app.kubernetes.io/version: 2024.8.3
+    helm.sh/chart: minio-14.6.32
+    app.kubernetes.io/component: minio-provisioning
+  annotations:
+    helm.sh/hook: post-install,post-upgrade
+    helm.sh/hook-delete-policy: before-hook-creation
+spec: 
+  parallelism: 1
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/version: 2024.8.3
+        helm.sh/chart: minio-14.6.32
+        app.kubernetes.io/component: minio-provisioning
+    spec:
+      
+      restartPolicy: OnFailure
+      terminationGracePeriodSeconds: 0
+      securityContext:
+        fsGroup: 1001
+        fsGroupChangePolicy: Always
+        supplementalGroups: []
+        sysctls: []
+      serviceAccountName: release-name-minio
+      initContainers:
+        - name: wait-for-available-minio
+          image: docker.io/bitnami/minio:2024.8.3-debian-12-r0
+          imagePullPolicy: "IfNotPresent"
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+              - ALL
+            privileged: false
+            readOnlyRootFilesystem: true
+            runAsGroup: 1001
+            runAsNonRoot: true
+            runAsUser: 1001
+            seLinuxOptions: {}
+            seccompProfile:
+              type: RuntimeDefault
+          command:
+            - /bin/bash
+            - -c
+            - |-
+              set -e;
+              echo "Waiting for Minio";
+              wait-for-port \
+                --host=release-name-minio \
+                --state=inuse \
+                --timeout=120 \
+                80;
+              echo "Minio is available";
+          resources:
+            limits:
+              cpu: 150m
+              ephemeral-storage: 2Gi
+              memory: 192Mi
+            requests:
+              cpu: 100m
+              ephemeral-storage: 50Mi
+              memory: 128Mi
+      containers:
+        - name: minio
+          image: docker.io/bitnami/minio:2024.8.3-debian-12-r0
+          imagePullPolicy: "IfNotPresent"
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+              - ALL
+            privileged: false
+            readOnlyRootFilesystem: true
+            runAsGroup: 1001
+            runAsNonRoot: true
+            runAsUser: 1001
+            seLinuxOptions: {}
+            seccompProfile:
+              type: RuntimeDefault
+          command:
+            - /bin/bash
+            - -c
+            - >-
+              set -e;
+              echo "Start Minio provisioning";
+
+              function attachPolicy() {
+                local tmp=$(mc admin $1 info provisioning $2 | sed -n -e 's/^Policy.*: \(.*\)$/\1/p');
+                IFS=',' read -r -a CURRENT_POLICIES <<< "$tmp";
+                if [[ ! "${CURRENT_POLICIES[*]}" =~ "$3" ]]; then
+                  mc admin policy attach provisioning $3 --$1=$2;
+                fi;
+              };
+
+              function detachDanglingPolicies() {
+                local tmp=$(mc admin $1 info provisioning $2 | sed -n -e 's/^Policy.*: \(.*\)$/\1/p');
+                IFS=',' read -r -a CURRENT_POLICIES <<< "$tmp";
+                IFS=',' read -r -a DESIRED_POLICIES <<< "$3";
+                for current in "${CURRENT_POLICIES[@]}"; do
+                  if [[ ! "${DESIRED_POLICIES[*]}" =~ "${current}" ]]; then
+                    mc admin policy detach provisioning $current --$1=$2;
+                  fi;
+                done;
+              }
+
+              function addUsersFromFile() {
+                local username=$(grep -oP '^username=\K.+' $1);
+                local password=$(grep -oP '^password=\K.+' $1);
+                local disabled=$(grep -oP '^disabled=\K.+' $1);
+                local policies_list=$(grep -oP '^policies=\K.+' $1);
+                local set_policies=$(grep -oP '^setPolicies=\K.+' $1);
+
+                mc admin user add provisioning "${username}" "${password}";
+
+                IFS=',' read -r -a POLICIES <<< "${policies_list}";
+                for policy in "${POLICIES[@]}"; do
+                  attachPolicy user "${username}" "${policy}";
+                done;
+                if [ "${set_policies}" == "true" ]; then
+                  detachDanglingPolicies user "${username}" "${policies_list}";
+                fi;
+
+                local user_status="enable";
+                if [[ "${disabled}" != "" && "${disabled,,}" == "true" ]]; then
+                  user_status="disable";
+                fi;
+
+                mc admin user "${user_status}" provisioning "${username}";
+              };
+              mc alias set provisioning $MINIO_SCHEME://release-name-minio:80 $MINIO_ROOT_USER $MINIO_ROOT_PASSWORD;
+
+              mc admin service restart provisioning --wait --json;
+              
+              mc anonymous set download provisioning/mlflow;
+
+              echo "End Minio provisioning";
+          env:
+            - name: MINIO_SCHEME
+              value: "http"
+            - name: MINIO_ROOT_USER
+              valueFrom:
+                secretKeyRef:
+                  name: release-name-minio
+                  key: root-user
+            - name: MINIO_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: release-name-minio
+                  key: root-password
+          envFrom:
+          resources:
+            limits:
+              cpu: 150m
+              ephemeral-storage: 2Gi
+              memory: 192Mi
+            requests:
+              cpu: 100m
+              ephemeral-storage: 50Mi
+              memory: 128Mi
+          volumeMounts:
+            - name: empty-dir
+              mountPath: /.mc
+              subPath: app-mc-dir
+            - name: empty-dir
+              mountPath: /opt/bitnami/minio/tmp
+              subPath: app-tmp-dir
+            - name: empty-dir
+              mountPath: /tmp
+              subPath: tmp-dir
+            - name: minio-provisioning
+              mountPath: /etc/ilm
+      volumes:
+        - name: empty-dir
+          emptyDir: {}
+        - name: minio-provisioning
+          configMap:
+            name: release-name-minio-provisioning
