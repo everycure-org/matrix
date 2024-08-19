@@ -88,8 +88,26 @@ def create_pipeline(**kwargs) -> Pipeline:
                 name="create_prm_ec_medical_team_nodes",
                 tags=["ec-medical-kg"],
             ),
-            # TODO: Chunyu add nodes for clinical trails here
-            # Node 1: Take clinical trails, synyonize, and write "curie" back to sheets (NOTE: add tags=["clinical_trails"])
-            # Node 2: Pick up sheet again incl. "curie" from node 1 and write to `ingestion.raw.ec_clinical_trails`  (NOTE: add tags=["clinical_trails"])
+            # NOTE: Take raw clinical trial data and map the "name" to "curie" using the synonymizer
+            node(
+                func=nodes.map_name_to_curie,
+                inputs=[
+                    "evaluation.raw.clinical_trial_data",
+                    "params:preprocessing.synonymizer_endpoint",
+                ],
+                outputs="evaluation.int.mapped_clinical_trial_data",
+                name="mapped_clinical_trial_data",
+                tags=["ec-clinical-trial-data"],
+            ),
+            # NOTE: Clean up the clinical trial data and write it to the GCS bucket
+            node(
+                func=nodes.clean_clinical_trial_data,
+                inputs=[
+                    "evaluation.int.mapped_clinical_trial_data",
+                ],
+                outputs="ingestion.raw.clinical_trial_data@pandas",
+                name="clean_clinical_trial_data",
+                tags=["ec-clinical-trial-data"],
+            ),
         ]
     )
