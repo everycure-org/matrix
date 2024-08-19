@@ -43,12 +43,10 @@ locals {
     initial_node_count = 0
     }
   ]
-
-  mem_node_pools = [for size in [4, 8, 16, 32] : {
-    name               = "c4-highmem-${size}-nodes"
-    machine_type       = "c4-highmem-${size}"
+  mem_node_pools = [for size in [4, 8, 16, 32, 48, 64] : {
+    name               = "n2-standard-${size}-nodes"
+    machine_type       = "n2-standard-${size}"
     node_locations     = "us-central1-a,us-central1-c"
-    disk_type          = "hyperdisk-balanced"
     min_count          = 0
     max_count          = 20
     local_ssd_count    = 0
