@@ -6,6 +6,6 @@ mlflow:
     auth:
       enabled: false
 
-  # FUTURE: Disable minio
+  # Disable minio
   # minio:
   #   enabled: false
