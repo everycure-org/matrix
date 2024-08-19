@@ -35,3 +35,5 @@ paths:
   model_output: data/07_model_output
   reporting: data/08_reporting
   tmp: data/tmp
+  temp_embed: data/temp_embed
+  temp_graphsage: data/temp_graphsage

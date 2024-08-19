@@ -15,6 +15,12 @@ data/**
 # except their sub-folders
 !data/**/
 
+*.pkl
+*.png
+*.joblib
+*.npy
+*.parquet
+
 # also keep all .gitkeep files
 !.gitkeep
 
@@ -156,3 +162,5 @@ session_store.db
 
 mlruns
 templates/argo-workflow-template.yml
+notebooks
+scratch
