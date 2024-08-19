@@ -1,18 +1,19 @@
-apiVersion: traefik.io/v1alpha1
-kind: IngressRoute
-metadata:
-  name: argo
-  namespace: argo-workflows
-spec:
-  entryPoints:
-    - websecure
-
-  routes:
-    - match: Host(`argo.platform.dev.everycure.org`)
-      kind: Rule
-      services:
-        - name: argo-workflows-server
-          port: 2746
+# apiVersion: traefik.io/v1alpha1
+# kind: IngressRoute
+# metadata:
+#   name: argo
+#   namespace: argo-workflows
+# spec:
+#   entryPoints:
+#     - web
+#     - websecure
+# 
+#   routes:
+#     - match: Host(`argo.platform.dev.everycure.org`)
+#       kind: Rule
+#       services:
+#         - name: argo-workflows-server
+#           port: 2746
 
 ---
 apiVersion: v1
@@ -37,7 +38,10 @@ metadata:
   namespace: dev-pascal
 spec:
   entryPoints:
+    - web
     - websecure
+  tls:
+    certResolver: letsencrypt
 
   routes:
     - match: Host(`whoami.platform.dev.everycure.org`)
