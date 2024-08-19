@@ -10,7 +10,7 @@ neo4j: # the name of the helm dependency
     name: neo4j
     resources:
       cpu: "30" # takes almost full advantage of e2-standard-32 instance
-      memory: "235Gi" # takes almost full advantage of e2-standard-32 instance
+      memory: "240Gi" # takes almost full advantage of e2-standard-32 instance
   volumes:
     data:
       mode: "dynamic"
