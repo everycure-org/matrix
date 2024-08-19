@@ -39,5 +39,6 @@ def create_pipeline(**kwargs) -> Pipeline:
                 name="write_ec_medical_team_edges",
                 tags=["ec_medical_team"],
             ),
+            # TODO: Chunyu to add node for ingesting into BigQuery here
         ]
     )

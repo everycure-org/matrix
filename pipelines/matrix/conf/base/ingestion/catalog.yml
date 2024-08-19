@@ -211,6 +211,8 @@ ingestion.raw.ec_medical_team.nodes@spark:
   load_args:
     header: True
 
+# TODO: Chunyu to add clinical trails datasets here
+
 ingestion.raw.ec_medical_team.edges@pandas:
   <<: [ *_layer_int, *_pandas_csv]
   filepath: ${globals:paths.raw}/ec_medical_team/${globals:data_sources.ec-medical-team.version}/edges.csv

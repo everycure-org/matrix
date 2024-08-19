@@ -27,6 +27,8 @@ data_sources:
   ec-medical-team:
     version: 20240816
 
+# TODO: Chunyu to add version for trails datasets here (I would propose to use a date for versioning)
+
 paths:
   # we read from our central GCS bucket where we store our ground truth data
   raw: gs://mtrx-us-central1-hub-dev-storage/kedro/data/01_raw
