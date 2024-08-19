@@ -18266,6 +18266,10 @@ spec:
           - "--accesslog=true"
           - "--accesslog.fields.defaultmode=keep"
           - "--accesslog.fields.headers.defaultmode=drop"
+          - "--certificatesresolvers.letsencrypt.acme.caServer=https://acme-v02.api.letsencrypt.org/directory"
+          - "--certificatesresolvers.letsencrypt.acme.dnsChallenge.provider=gcloud"
+          - "--certificatesresolvers.letsencrypt.acme.email=pascal@everycure.org"
+          - "--certificatesresolvers.letsencrypt.acme.storage=/data/acme.json"
         env:
           - name: POD_NAME
             valueFrom:

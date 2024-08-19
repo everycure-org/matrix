@@ -8,6 +8,16 @@ traefik:
     annotations:
       external-dns.alpha.kubernetes.io/hostname: '*.platform.dev.everycure.org'
   
+  # https://doc.traefik.io/traefik/https/acme/#certificate-resolvers 
+  certResolvers:
+    letsencrypt:
+      email: "pascal@everycure.org"
+      caServer: https://acme-v02.api.letsencrypt.org/directory # Production server
+      # caServer: https://acme-staging-v02.api.letsencrypt.org/directory # Staging server
+      dnsChallenge:
+        provider: gcloud
+      storage: /data/acme.json
+  
   autoscaling:
     enabled: true
     maxReplicas: 3

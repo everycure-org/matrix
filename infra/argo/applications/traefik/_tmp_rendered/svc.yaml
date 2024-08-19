@@ -44,7 +44,7 @@ spec:
     certResolver: letsencrypt
 
   routes:
-    - match: Host(`whoami.platform.dev.everycure.org`)
+    - match: Host(`whoami2.platform.dev.everycure.org`)
       kind: Rule
       services:
         - name: whoami
