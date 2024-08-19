@@ -203,6 +203,7 @@ metadata:
     helm.sh/chart: traefik-30.1.0
     app.kubernetes.io/managed-by: Helm
   annotations:
+    external-dns.alpha.kubernetes.io/hostname: platform.dev.everycure.org
 spec:
   type: LoadBalancer
   selector:
@@ -223,11 +224,8 @@ apiVersion: v1
 kind: Service
 metadata:
   name: nginx
-  annotations:
-    # change nginx.example.com to match an appropriate value
-    external-dns.alpha.kubernetes.io/hostname: nginx.dev.everycure.org
 spec:
-  type: LoadBalancer
+  type: ClusterIP
   ports:
     - port: 80
       targetPort: 80
@@ -288,7 +286,7 @@ spec:
             - --source=ingress
             - --policy=upsert-only
             - --registry=txt
-            - --provider=aws
+            - --provider=google
           ports:
             - name: http
               protocol: TCP
@@ -325,7 +323,6 @@ metadata:
     app.kubernetes.io/managed-by: Helm
   annotations:
 spec:
-  replicas: 1
   selector:
     matchLabels:
       app.kubernetes.io/name: traefik
@@ -414,6 +411,7 @@ spec:
           - "--metrics.prometheus=true"
           - "--metrics.prometheus.entrypoint=metrics"
           - "--providers.kubernetescrd"
+          - "--providers.kubernetescrd.allowCrossNamespace=true"
           - "--providers.kubernetesingress"
           - "--entryPoints.websecure.http.tls=true"
           - "--log.level=INFO"
@@ -456,6 +454,24 @@ spec:
           ports:
             - containerPort: 80
 ---
+# Source: Traefik/charts/traefik/templates/hpa.yaml
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: release-name-traefik
+  namespace: dev-pascal
+  labels:
+    app.kubernetes.io/name: traefik
+    app.kubernetes.io/instance: release-name-dev-pascal
+    helm.sh/chart: traefik-30.1.0
+    app.kubernetes.io/managed-by: Helm
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: release-name-traefik
+  maxReplicas: 3
+---
 # Source: Traefik/charts/traefik/templates/ingressclass.yaml
 apiVersion: networking.k8s.io/v1
 kind: IngressClass
@@ -470,3 +486,21 @@ metadata:
   name: release-name-traefik
 spec:
   controller: traefik.io/ingress-controller
+---
+# Source: Traefik/templates/tmp/svc.yaml
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: nginx
+
+spec:
+  entryPoints:
+    - websecure
+
+  routes:
+    - match: Host(`nginx.platform.dev.everycure.org`)
+      kind: Rule
+      services:
+        - name: nginx
+          namespace: pascal-dev
+          port: 80

@@ -2,11 +2,8 @@ apiVersion: v1
 kind: Service
 metadata:
   name: nginx
-  annotations:
-    # change nginx.example.com to match an appropriate value
-    external-dns.alpha.kubernetes.io/hostname: nginx.dev.everycure.org
 spec:
-  type: LoadBalancer
+  type: ClusterIP
   ports:
     - port: 80
       targetPort: 80
@@ -31,3 +28,21 @@ spec:
           name: nginx
           ports:
             - containerPort: 80
+
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: nginx
+
+spec:
+  entryPoints:
+    - websecure
+
+  routes:
+    - match: Host(`nginx.platform.dev.everycure.org`)
+      kind: Rule
+      services:
+        - name: nginx
+          namespace: pascal-dev
+          port: 80

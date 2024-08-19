@@ -1,4 +1,21 @@
 
-# external-dns:
-#   provider:
-#     name: google
+external-dns:
+  provider:
+    name: google
+
+traefik:
+  service:
+    annotations:
+      external-dns.alpha.kubernetes.io/hostname: platform.dev.everycure.org
+  
+  providers:
+    kubernetesCRD:
+      enabled: true
+      allowCrossNamespace: true
+    
+  autoscaling:
+    enabled: true
+    maxReplicas: 3
+
+  # TODO: add affinity rules
+  # affinity:
