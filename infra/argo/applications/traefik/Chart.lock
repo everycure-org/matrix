@@ -1,0 +1,9 @@
+dependencies:
+- name: traefik
+  repository: https://traefik.github.io/charts
+  version: 30.1.0
+- name: external-dns
+  repository: https://kubernetes-sigs.github.io/external-dns/
+  version: 1.14.5
+digest: sha256:4d027f7214a6626e2172134eb07799a166258fdbf5fafc548771003798bf78a7
+generated: "2024-08-19T17:54:41.668708+02:00"

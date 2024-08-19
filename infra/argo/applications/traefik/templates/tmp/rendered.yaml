@@ -1,0 +1,472 @@
+---
+# Source: Traefik/charts/external-dns/templates/serviceaccount.yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: release-name-external-dns
+  namespace: dev-pascal
+  labels:
+    helm.sh/chart: external-dns-1.14.5
+    app.kubernetes.io/name: external-dns
+    app.kubernetes.io/instance: release-name
+    app.kubernetes.io/version: "0.14.2"
+    app.kubernetes.io/managed-by: Helm
+automountServiceAccountToken:
+---
+# Source: Traefik/charts/traefik/templates/rbac/serviceaccount.yaml
+kind: ServiceAccount
+apiVersion: v1
+metadata:
+  name: release-name-traefik
+  namespace: dev-pascal
+  labels:
+    app.kubernetes.io/name: traefik
+    app.kubernetes.io/instance: release-name-dev-pascal
+    helm.sh/chart: traefik-30.1.0
+    app.kubernetes.io/managed-by: Helm
+  annotations:
+automountServiceAccountToken: false
+---
+# Source: Traefik/charts/external-dns/templates/clusterrole.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: release-name-external-dns
+  labels:
+    helm.sh/chart: external-dns-1.14.5
+    app.kubernetes.io/name: external-dns
+    app.kubernetes.io/instance: release-name
+    app.kubernetes.io/version: "0.14.2"
+    app.kubernetes.io/managed-by: Helm
+rules:
+  - apiGroups: [""]
+    resources: ["nodes"]
+    verbs: ["list","watch"]
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get","watch","list"]
+  - apiGroups: [""]
+    resources: ["services","endpoints"]
+    verbs: ["get","watch","list"]
+  - apiGroups: ["extensions","networking.k8s.io"]
+    resources: ["ingresses"]
+    verbs: ["get","watch","list"]
+---
+# Source: Traefik/charts/traefik/templates/rbac/clusterrole.yaml
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: release-name-traefik-dev-pascal
+  labels:
+    app.kubernetes.io/name: traefik
+    app.kubernetes.io/instance: release-name-dev-pascal
+    helm.sh/chart: traefik-30.1.0
+    app.kubernetes.io/managed-by: Helm
+rules:
+  - apiGroups:
+      - ""
+    resources:
+      - nodes
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - ""
+    resources:
+      - services
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - discovery.k8s.io
+    resources:
+      - endpointslices
+    verbs:
+      - list
+      - watch
+  - apiGroups:
+      - ""
+    resources:
+      - secrets
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - extensions
+      - networking.k8s.io
+    resources:
+      - ingressclasses
+      - ingresses
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - extensions
+      - networking.k8s.io
+    resources:
+      - ingresses/status
+    verbs:
+      - update
+  - apiGroups:
+      - traefik.io
+    resources:
+      - ingressroutes
+      - ingressroutetcps
+      - ingressrouteudps
+      - middlewares
+      - middlewaretcps
+      - serverstransports
+      - serverstransporttcps
+      - tlsoptions
+      - tlsstores
+      - traefikservices
+    verbs:
+      - get
+      - list
+      - watch
+---
+# Source: Traefik/charts/external-dns/templates/clusterrolebinding.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: release-name-external-dns-viewer
+  labels:
+    helm.sh/chart: external-dns-1.14.5
+    app.kubernetes.io/name: external-dns
+    app.kubernetes.io/instance: release-name
+    app.kubernetes.io/version: "0.14.2"
+    app.kubernetes.io/managed-by: Helm
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: release-name-external-dns
+subjects:
+  - kind: ServiceAccount
+    name: release-name-external-dns
+    namespace: dev-pascal
+---
+# Source: Traefik/charts/traefik/templates/rbac/clusterrolebinding.yaml
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: release-name-traefik-dev-pascal
+  labels:
+    app.kubernetes.io/name: traefik
+    app.kubernetes.io/instance: release-name-dev-pascal
+    helm.sh/chart: traefik-30.1.0
+    app.kubernetes.io/managed-by: Helm
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: release-name-traefik-dev-pascal
+subjects:
+  - kind: ServiceAccount
+    name: release-name-traefik
+    namespace: dev-pascal
+---
+# Source: Traefik/charts/external-dns/templates/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: release-name-external-dns
+  namespace: dev-pascal
+  labels:
+    helm.sh/chart: external-dns-1.14.5
+    app.kubernetes.io/name: external-dns
+    app.kubernetes.io/instance: release-name
+    app.kubernetes.io/version: "0.14.2"
+    app.kubernetes.io/managed-by: Helm
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: external-dns
+    app.kubernetes.io/instance: release-name
+  ports:
+    - name: http
+      port: 7979
+      targetPort: http
+      protocol: TCP
+---
+# Source: Traefik/charts/traefik/templates/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: release-name-traefik
+  namespace: dev-pascal
+  labels:
+    app.kubernetes.io/name: traefik
+    app.kubernetes.io/instance: release-name-dev-pascal
+    helm.sh/chart: traefik-30.1.0
+    app.kubernetes.io/managed-by: Helm
+  annotations:
+spec:
+  type: LoadBalancer
+  selector:
+    app.kubernetes.io/name: traefik
+    app.kubernetes.io/instance: release-name-dev-pascal
+  ports:
+  - port: 80
+    name: "web"
+    targetPort: web
+    protocol: TCP
+  - port: 443
+    name: "websecure"
+    targetPort: websecure
+    protocol: TCP
+---
+# Source: Traefik/templates/tmp/svc.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx
+  annotations:
+    # change nginx.example.com to match an appropriate value
+    external-dns.alpha.kubernetes.io/hostname: nginx.dev.everycure.org
+spec:
+  type: LoadBalancer
+  ports:
+    - port: 80
+      targetPort: 80
+  selector:
+    app: nginx
+---
+# Source: Traefik/charts/external-dns/templates/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: release-name-external-dns
+  namespace: dev-pascal
+  labels:
+    helm.sh/chart: external-dns-1.14.5
+    app.kubernetes.io/name: external-dns
+    app.kubernetes.io/instance: release-name
+    app.kubernetes.io/version: "0.14.2"
+    app.kubernetes.io/managed-by: Helm
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: external-dns
+      app.kubernetes.io/instance: release-name
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: external-dns
+        app.kubernetes.io/instance: release-name
+    spec:
+      serviceAccountName: release-name-external-dns
+      securityContext:
+        fsGroup: 65534
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: external-dns
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+              - ALL
+            privileged: false
+            readOnlyRootFilesystem: true
+            runAsGroup: 65532
+            runAsNonRoot: true
+            runAsUser: 65532
+          image: registry.k8s.io/external-dns/external-dns:v0.14.2
+          imagePullPolicy: IfNotPresent
+          args:
+            - --log-level=info
+            - --log-format=text
+            - --interval=1m
+            - --source=service
+            - --source=ingress
+            - --policy=upsert-only
+            - --registry=txt
+            - --provider=aws
+          ports:
+            - name: http
+              protocol: TCP
+              containerPort: 7979
+          livenessProbe:
+            failureThreshold: 2
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 5
+          readinessProbe:
+            failureThreshold: 6
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 5
+---
+# Source: Traefik/charts/traefik/templates/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: release-name-traefik
+  namespace: dev-pascal
+  labels:
+    app.kubernetes.io/name: traefik
+    app.kubernetes.io/instance: release-name-dev-pascal
+    helm.sh/chart: traefik-30.1.0
+    app.kubernetes.io/managed-by: Helm
+  annotations:
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: traefik
+      app.kubernetes.io/instance: release-name-dev-pascal
+  strategy: 
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+    type: RollingUpdate
+  minReadySeconds: 0
+  template: 
+    metadata:
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/path: "/metrics"
+        prometheus.io/port: "9100"
+      labels:
+        app.kubernetes.io/name: traefik
+        app.kubernetes.io/instance: release-name-dev-pascal
+        helm.sh/chart: traefik-30.1.0
+        app.kubernetes.io/managed-by: Helm
+    spec:
+      serviceAccountName: release-name-traefik
+      automountServiceAccountToken: true
+      terminationGracePeriodSeconds: 60
+      hostNetwork: false
+      containers:
+      - image: docker.io/traefik:v3.1.2
+        imagePullPolicy: IfNotPresent
+        name: release-name-traefik
+        resources:
+        readinessProbe:
+          httpGet:
+            path: /ping
+            port: 9000
+            scheme: HTTP
+          failureThreshold: 1
+          initialDelaySeconds: 2
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 2
+        livenessProbe:
+          httpGet:
+            path: /ping
+            port: 9000
+            scheme: HTTP
+          failureThreshold: 3
+          initialDelaySeconds: 2
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 2
+        lifecycle:
+        ports:
+        - name: "metrics"
+          containerPort: 9100
+          protocol: "TCP"
+        - name: "traefik"
+          containerPort: 9000
+          protocol: "TCP"
+        - name: "web"
+          containerPort: 8000
+          protocol: "TCP"
+        - name: "websecure"
+          containerPort: 8443
+          protocol: "TCP"
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          readOnlyRootFilesystem: true
+        volumeMounts:
+          - name: data
+            mountPath: /data
+          - name: tmp
+            mountPath: /tmp
+        args:
+          - "--global.checknewversion"
+          - "--global.sendanonymoususage"
+          - "--entryPoints.metrics.address=:9100/tcp"
+          - "--entryPoints.traefik.address=:9000/tcp"
+          - "--entryPoints.web.address=:8000/tcp"
+          - "--entryPoints.websecure.address=:8443/tcp"
+          - "--api.dashboard=true"
+          - "--ping=true"
+          - "--metrics.prometheus=true"
+          - "--metrics.prometheus.entrypoint=metrics"
+          - "--providers.kubernetescrd"
+          - "--providers.kubernetesingress"
+          - "--entryPoints.websecure.http.tls=true"
+          - "--log.level=INFO"
+        env:
+          - name: POD_NAME
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.name
+          - name: POD_NAMESPACE
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.namespace
+      volumes:
+        - name: data
+          emptyDir: {}
+        - name: tmp
+          emptyDir: {}
+      securityContext:
+        runAsGroup: 65532
+        runAsNonRoot: true
+        runAsUser: 65532
+---
+# Source: Traefik/templates/tmp/svc.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx
+spec:
+  selector:
+    matchLabels:
+      app: nginx
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+        - image: nginx
+          name: nginx
+          ports:
+            - containerPort: 80
+---
+# Source: Traefik/charts/traefik/templates/ingressclass.yaml
+apiVersion: networking.k8s.io/v1
+kind: IngressClass
+metadata:
+  annotations:
+    ingressclass.kubernetes.io/is-default-class: "true"
+  labels:
+    app.kubernetes.io/name: traefik
+    app.kubernetes.io/instance: release-name-dev-pascal
+    helm.sh/chart: traefik-30.1.0
+    app.kubernetes.io/managed-by: Helm
+  name: release-name-traefik
+spec:
+  controller: traefik.io/ingress-controller
