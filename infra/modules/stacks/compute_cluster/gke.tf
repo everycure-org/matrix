@@ -48,6 +48,7 @@ locals {
     name               = "c4-highmem-${size}-nodes"
     machine_type       = "c4-highmem-${size}"
     node_locations     = "us-central1-a,us-central1-c"
+    disk_type          = "hyperdisk-balanced"
     min_count          = 0
     max_count          = 20
     local_ssd_count    = 0
