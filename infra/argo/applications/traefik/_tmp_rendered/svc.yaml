@@ -1,0 +1,68 @@
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: argo
+  namespace: argo-workflows
+spec:
+  entryPoints:
+    - websecure
+
+  routes:
+    - match: Host(`argo.platform.dev.everycure.org`)
+      kind: Rule
+      services:
+        - name: argo-workflows-server
+          port: 2746
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: whoami
+  namespace: dev-pascal
+spec:
+  selector:
+    app: whoami
+  ports:
+    - name: http
+      port: 80
+      targetPort: 80
+  type: ClusterIP
+
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: whoami
+  namespace: dev-pascal
+spec:
+  entryPoints:
+    - websecure
+
+  routes:
+    - match: Host(`whoami.platform.dev.everycure.org`)
+      kind: Rule
+      services:
+        - name: whoami
+          port: 80
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: whoami
+  namespace: dev-pascal
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: whoami
+  template:
+    metadata:
+      labels:
+        app: whoami
+    spec:
+      containers:
+        - name: whoami
+          image: containous/whoami
+          ports:
+            - containerPort: 80
