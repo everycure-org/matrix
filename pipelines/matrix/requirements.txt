@@ -108,6 +108,8 @@ cycler==0.12.1
     # via matplotlib
 databricks-sdk==0.30.0
     # via mlflow-skinny
+db-dtypes==1.3.0
+    # via pandas-gbq
 debugpy==1.8.5
     # via ipykernel
 decorator==5.1.1
@@ -162,20 +164,32 @@ gitpython==3.1.43
     #   mlflow-skinny
 google-api-core==2.19.1
     # via
+    #   google-cloud-bigquery
     #   google-cloud-core
     #   google-cloud-storage
+    #   pandas-gbq
 google-auth==2.33.0
     # via
     #   databricks-sdk
     #   gcsfs
     #   google-api-core
     #   google-auth-oauthlib
+    #   google-cloud-bigquery
     #   google-cloud-core
     #   google-cloud-storage
+    #   pandas-gbq
+    #   pydata-google-auth
 google-auth-oauthlib==1.2.1
-    # via gcsfs
+    # via
+    #   gcsfs
+    #   pandas-gbq
+    #   pydata-google-auth
+google-cloud-bigquery==3.25.0
+    # via pandas-gbq
 google-cloud-core==2.4.1
-    # via google-cloud-storage
+    # via
+    #   google-cloud-bigquery
+    #   google-cloud-storage
 google-cloud-storage==2.18.2
     # via gcsfs
 google-crc32c==1.5.0
@@ -183,9 +197,13 @@ google-crc32c==1.5.0
     #   google-cloud-storage
     #   google-resumable-media
 google-resumable-media==2.7.2
-    # via google-cloud-storage
+    # via
+    #   google-cloud-bigquery
+    #   google-cloud-storage
 googleapis-common-protos==1.63.2
-    # via google-api-core
+    # via
+    #   google-api-core
+    #   grpcio-status
 graphdatascience==1.11
     # via -r requirements.in
 graphene==3.3
@@ -199,6 +217,12 @@ graphql-relay==3.2.0
     # via graphene
 greenlet==3.0.3
     # via sqlalchemy
+grpcio==1.65.4
+    # via
+    #   google-api-core
+    #   grpcio-status
+grpcio-status==1.65.4
+    # via google-api-core
 gunicorn==22.0.0
     # via mlflow
 h11==0.14.0
@@ -397,10 +421,12 @@ numpy==1.24.0
     # via
     #   brix-refit
     #   contourpy
+    #   db-dtypes
     #   graphdatascience
     #   matplotlib
     #   mlflow
     #   pandas
+    #   pandas-gbq
     #   pandera
     #   pyarrow
     #   scikit-learn
@@ -430,6 +456,8 @@ overrides==7.7.0
 packaging==24.1
     # via
     #   build
+    #   db-dtypes
+    #   google-cloud-bigquery
     #   gunicorn
     #   ipykernel
     #   jupyter-server
@@ -440,6 +468,7 @@ packaging==24.1
     #   matplotlib
     #   mlflow-skinny
     #   nbconvert
+    #   pandas-gbq
     #   pandera
     #   plotly
     #   pytest
@@ -449,10 +478,14 @@ pandas==1.5.3
     # via
     #   brix-data-fabricator
     #   brix-refit
+    #   db-dtypes
     #   graphdatascience
     #   kedro-viz
     #   mlflow
+    #   pandas-gbq
     #   pandera
+pandas-gbq==0.23.1
+    # via -r requirements.in
 pandera==0.20.3
     # via brix-refit
 pandocfilters==1.5.1
@@ -489,6 +522,7 @@ protobuf==5.27.3
     # via
     #   google-api-core
     #   googleapis-common-protos
+    #   grpcio-status
     #   mlflow-skinny
     #   proto-plus
 psutil==6.0.0
@@ -506,8 +540,10 @@ pyaml==24.7.0
 pyarrow==15.0.2
     # via
     #   -r requirements.in
+    #   db-dtypes
     #   graphdatascience
     #   mlflow
+    #   pandas-gbq
 pyasn1==0.6.0
     # via
     #   pyasn1-modules
@@ -524,6 +560,8 @@ pydantic==2.8.2
     #   pandera
 pydantic-core==2.20.1
     # via pydantic
+pydata-google-auth==1.8.2
+    # via pandas-gbq
 pygments==2.18.0
     # via
     #   ipython
@@ -546,6 +584,7 @@ python-dateutil==2.9.0.post0
     #   arrow
     #   botocore
     #   faker
+    #   google-cloud-bigquery
     #   jupyter-client
     #   matplotlib
     #   pandas
@@ -593,6 +632,7 @@ requests==2.32.3
     #   docker
     #   gcsfs
     #   google-api-core
+    #   google-cloud-bigquery
     #   google-cloud-storage
     #   graphdatascience
     #   hdfs
@@ -648,8 +688,11 @@ secure==0.3.0
     # via kedro-viz
 send2trash==1.8.3
     # via jupyter-server
-setuptools==72.1.0
-    # via jupyterlab
+setuptools==72.2.0
+    # via
+    #   jupyterlab
+    #   pandas-gbq
+    #   pydata-google-auth
 six==1.16.0
     # via
     #   asttokens
@@ -665,7 +708,7 @@ sniffio==1.3.1
     # via
     #   anyio
     #   httpx
-soupsieve==2.5
+soupsieve==2.6
     # via beautifulsoup4
 sqlalchemy==2.0.32
     # via
