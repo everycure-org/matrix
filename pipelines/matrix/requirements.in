@@ -27,3 +27,4 @@ termplotlib
 git+https://github.com/ObesityHub/robokop-genetics.git
 kedro-mlflow==0.12.2
 mlflow==2.15.0
+pandas-gbq==0.23.1
