@@ -289,29 +289,32 @@ class MatrixTestDiseases(DrugDiseasePairGenerator):
         test_pairs = known_pairs[is_test]
         train_pairs = known_pairs[~is_test]
 
-        # Define lists of  drugs and diseases
-        test_diseases_lst = list(test_pairs["target"].unique())
+        # Define lists of drugs and diseases
+        test_pos_pairs = test_pairs[test_pairs["y"].eq(1)]
+        test_pos_diseases_lst = list(test_pos_pairs["target"].unique())
         drugs_lst = graph.flags_to_ids(self._drug_axis_flags)
 
         # Generate all combinations
         matrix_slices = []
-        for disease in tqdm(test_diseases_lst):
+        for disease in tqdm(test_pos_diseases_lst):
             matrix_slice = pd.DataFrame({"source": drugs_lst, "target": disease})
-            test_pos_pairs_in_slice = test_pairs[test_pairs["target"].eq(disease)]
-            test_pos_drugs_in_slice = test_pos_pairs_in_slice["source"]
-            is_test_pos = matrix_slice["source"].isin(test_pos_drugs_in_slice)
-            matrix_slice["y"] = is_test_pos.astype(int)
             matrix_slices.append(matrix_slice)
 
         # Concatenate all slices at once
         matrix = pd.concat(matrix_slices, ignore_index=True)
-        # Create a set of tuples from train_pairs for faster lookup
-        train_pairs_set = set(zip(train_pairs["source"], train_pairs["target"]))
 
-        # Replace is_pair_in_train function with a set lookup
+        # Label test positives
+        test_pos_pairs_set = set(
+            zip(test_pos_pairs["source"], test_pos_pairs["target"])
+        )
+        is_in_test_pos = matrix.apply(
+            lambda row: (row["source"], row["target"]) in test_pos_pairs_set, axis=1
+        )
+        matrix["y"] = is_in_test_pos.astype(int)
+
+        # Remove train pairs and return
+        train_pairs_set = set(zip(train_pairs["source"], train_pairs["target"]))
         is_in_train = matrix.apply(
             lambda row: (row["source"], row["target"]) in train_pairs_set, axis=1
         )
-
-        filtered_matrix = matrix[~is_in_train]
-        return filtered_matrix
+        return matrix[~is_in_train]
