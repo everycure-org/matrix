@@ -31,7 +31,7 @@ evaluation.raw.clinical_trial_data:
   load_args:
     sheet_name: clinical_trial_DD_pairs
 
-evaluation.int.cleaned_clinical_trial_data:
+evaluation.int.mapped_clinical_trial_data:
   <<: *_sheets_dataset
   save_args:
     sheet_name: clinical_trial_DD_pairs
