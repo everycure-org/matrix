@@ -35,7 +35,7 @@ evaluation.int.cleaned_clinical_trial_data:
   <<: *_sheets_dataset
   save_args:
     sheet_name: clinical_trial_DD_pairs
-    write_columns: ["drug_kg_curie", "disease_kg_curie"]
+    write_columns: ["Mapped Drug Curie", "Mapped Disease Curie"]
 
   load_args:
     sheet_name: clinical_trial_DD_pairs
