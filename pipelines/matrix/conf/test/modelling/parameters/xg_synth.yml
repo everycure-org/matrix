@@ -1,0 +1,4 @@
+modelling.xg_synth:
+    _overrides:
+      generator:
+        n_unknown: 100
