@@ -43,10 +43,25 @@ locals {
     initial_node_count = 0
     }
   ]
+
+  mem_node_pools = [for size in [4, 8, 16, 32] : {
+    name               = "c4-highmem-${size}-nodes"
+    machine_type       = "c4-highmem-${size}"
+    node_locations     = "us-central1-a,us-central1-c"
+    disk_type          = "hyperdisk-balanced"
+    min_count          = 0
+    max_count          = 20
+    local_ssd_count    = 0
+    disk_size_gb       = 200
+    enable_gcfs        = true
+    enable_gvnic       = true
+    initial_node_count = 0
+    }
+  ]
   gpu_node_pools = [
     # FUTURE add GPU pools here
   ]
-  node_pools_combined = concat(local.base_node_pool, local.cpu_node_pools, local.gpu_node_pools)
+  node_pools_combined = concat(local.base_node_pool, local.cpu_node_pools, local.gpu_node_pools, local.mem_node_pools)
 }
 
 # docs here https://registry.terraform.io/modules/terraform-google-modules/kubernetes-engine/google/latest/submodules/private-cluster
