@@ -1,9 +1,9 @@
 versions:
   release: test
 
-openai:
-  endpoint: http://mock-genai:1080/v1
-  api_key: dummy
+# openai:
+#   endpoint: http://mock-genai:1080/v1
+#   api_key: dummy
 
 paths:
   raw: data/test/01_raw
