@@ -35,7 +35,7 @@ jobs:
         working-directory: ./
         run: |
           # starting necessary services for integration tests
-          docker compose -d -f deployments/compose/docker-compose.yml -f deployments/compose/docker-compose.ci.yml up
+          docker compose -f deployments/compose/docker-compose.yml -f deployments/compose/docker-compose.ci.yml up -d
           make integration_test || true
           TEST_RESULT=$?
           # shutting them down again
