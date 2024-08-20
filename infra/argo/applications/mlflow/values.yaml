@@ -5,7 +5,15 @@ mlflow:
   tracking: 
     auth:
       enabled: false
+    command: [ "/bin/sh", "-c" ]
+    args:
+      - server
+      - --backend-store-uri=postgresql://bn_mlflow:$(MLFLOW_DATABASE_PASSWORD)@release-name-postgresql:5432/bitnami_mlflow
+      - --artifacts-destination=gs://mtrx-us-central1-hub-dev-storage/mlflow
+      - --serve-artifacts
+      - --host=0.0.0.0
+      - --port=5000
 
   # Disable minio
-  # minio:
-  #   enabled: false
+  minio:
+    enabled: false
