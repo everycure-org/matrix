@@ -40,6 +40,8 @@ jobs:
       - run: make test
       - run: make compose_down
       - run: make docker_test
+        # only if PR is labelled with "ready" or if branch is main
+        # if: contains(github.event.pull_request.labels.*.name, 'ready') || github.ref == 'refs/heads/main'
 
   push_image:
     needs: [ci]
@@ -70,7 +72,7 @@ jobs:
   # check for license violations
   licenses:
     needs: [ci]
-    if: github.ref == 'refs/heads/main'
+    # if: github.ref == 'refs/heads/main'
     runs-on: "self-hosted"
     defaults:
       run:
