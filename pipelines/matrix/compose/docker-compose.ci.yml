@@ -7,9 +7,9 @@ services:
     # https://docs.docker.com/reference/compose-file/merge/#reset-value
     volumes: !override 
       # note we do NOT mount data which makes the CI container stateless
-      - ./neo4j_data/logs:/logs
-      - ./neo4j_data/import:/var/lib/neo4j/import
-      - ./neo4j_data/plugins:/plugins
+      - /tmp/neo4j_data/logs:/logs
+      - /tmp/neo4j_data/import:/var/lib/neo4j/import
+      - /tmp/neo4j_data/plugins:/plugins
 
   mock-genai:
     environment:
