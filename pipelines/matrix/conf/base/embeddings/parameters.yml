@@ -89,7 +89,7 @@ embeddings.topological:
       # Chunyu: 512
       embeddingDimension: 512
       # Chunyu: 200k
-      batchSize: 20000
+      batchSize: 10000
       epochs: 10
       searchDepth: 100
       # Chunyu
