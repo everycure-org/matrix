@@ -26,6 +26,8 @@ on:
 jobs:
   ci:
     runs-on: 'self-hosted'
+    if: github.event.pull_request.draft == false || github.ref == 'refs/heads/main'
+
     defaults:
       run:
         working-directory: ./pipelines/matrix
@@ -38,8 +40,6 @@ jobs:
       # - run: make test
       # - run: make compose_down
       # - run: make docker_test
-
-      # On Main only, trigger another workflow called "matrix-push"
 
   push_image:
     needs: [ci]
