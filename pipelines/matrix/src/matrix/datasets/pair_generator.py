@@ -6,6 +6,7 @@ import abc
 from tqdm import tqdm
 import pandas as pd
 import random
+from kedro.io import AbstractDataset
 
 from matrix.datasets.graph import KnowledgeGraph
 
@@ -315,3 +316,32 @@ class MatrixTestDiseases(DrugDiseasePairGenerator):
 
         filtered_matrix = matrix[~is_in_train]
         return filtered_matrix
+
+
+class GeneratorWithSideInput:
+    """Generator with dataset input."""
+
+    def __init__(self, dataset: AbstractDataset) -> None:
+        """Initializes the SingleLabelPairGenerator instance.
+
+        Args:
+            dataset: dataset to use
+        """
+        # NOTE: I'm fine with the rudimentary data cleaning happening in here for now, is we mix
+        # this injection mechanism with ordinary datasets, it may break lineage of the pipeline.
+        # there are ways to fix that again, but let's keep it simple. So proposing to add
+        # the a clean_data() method to this class and turn the class into TimeSplitValidationDataGenerator?
+        self._clinical_trail_data = dataset._load()
+
+    def generate(self, known_pairs: pd.DataFrame) -> pd.DataFrame:
+        """Function to generate drug-disease pairs from the knowledge graph.
+
+        Args:
+            graph: KnowledgeGraph instance.
+            known_pairs: DataFrame with ground truth drug-disease pairs.
+
+        Returns:
+            DataFrame with unknown drug-disease pairs.
+        """
+        # Add logic here, will have access to _data to curate dataset you'd like
+        breakpoint()

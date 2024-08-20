@@ -47,6 +47,3 @@ ingestion.prm.ec_medical_team.edges:
     temporaryGcsBucket: ${globals:gcs_bucket}
     bigQueryTableLabel.kg: ec_medical_team
     # bigQueryTableLabel.release: ${globals:versions.release}
-
-
-# TODO: Chuynu to overwrite local ingestion dataset to write to BigQuery

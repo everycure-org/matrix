@@ -60,3 +60,18 @@ evaluation.disease_specific_ranking:
         - object:  matrix.pipelines.evaluation.evaluation.HitK
           k: 10
       score_col_name: *score-col
+
+# Time split
+# TODO: Chunyu to move code for time split
+evaluation.generator_with_dataset:
+  # Use the new generator
+  object: matrix.datasets.pair_generator.GeneratorWithSideInput
+
+  # Load it with dataset
+  dataset:
+    object: kedro_datasets.pandas.CSVDataset
+    # Update path to plug into clinical data file
+    filepath: ${globals:paths.raw}/clinical_trial_data/${globals:data_sources.clinical-trial-data.version}/data.tsv
+    load_args:
+      load_args:
+      sep: "\t"
