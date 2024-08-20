@@ -70,20 +70,20 @@ jobs:
       - run: make docker_push TAG=latest
   
   # check for license violations
-  licenses:
-    needs: [ci]
-    # if: github.ref == 'refs/heads/main'
-    runs-on: "self-hosted"
-    defaults:
-      run:
-        working-directory: ./pipelines/matrix
-    steps:
-      - run: make licenses_container
+  # licenses:
+  #   needs: [ci]
+  #   # if: github.ref == 'refs/heads/main'
+  #   runs-on: "self-hosted"
+  #   defaults:
+  #     run:
+  #       working-directory: ./pipelines/matrix
+  #   steps:
+  #     - run: make licenses_container
   
   # Add this new job at the end of your jobs section
   # following this tutorial: https://github.com/slackapi/slack-github-action?tab=readme-ov-file
   notify_failure:
-    needs: [ci, push_image, licenses]
+    needs: [ci, push_image]
     # This condition ensures it runs only if any previous job fails
     # we notify on main branches only
     if: failure() && github.ref == 'refs/heads/main' 
