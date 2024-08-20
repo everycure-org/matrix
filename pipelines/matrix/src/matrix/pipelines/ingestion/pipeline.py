@@ -20,8 +20,6 @@ def create_pipeline(**kwargs) -> Pipeline:
                 name="write_rtx_kg2_edges",
                 tags=["rtx_kg2"],
             ),
-            # TODO: Add nodes to move robokop nodes and endge files to `prm`
-            # TODO: Set tags to `robokop`
 
             node(
                 func=lambda x: x,

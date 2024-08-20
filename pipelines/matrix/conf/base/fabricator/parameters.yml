@@ -61,7 +61,7 @@ fabricator:
           row_func: "lambda *args: args[0]"
           resize: True
           seed: 590590
-        # NOTE: This is a rather complex syntax, but is results in a "object"
+        # NOTE: This is a rather complex syntax, but is results in an "object"
         # column that contains random values from the nodes table defined above.
         object:
           type: row_apply
@@ -77,8 +77,8 @@ fabricator:
         knowledge_source:
           type: faker
           provider: name
-  
-  robokop:  # TODO add nodes and edge fabrication here
+
+  robokop:
     # robokop nodes definition
     nodes:
       num_rows: 150
@@ -107,7 +107,7 @@ fabricator:
           row_func: "lambda *args: args[0]"
           resize: True
           seed: 590590
-        # NOTE: This is a rather complex syntax, but is results in a "object"
+        # NOTE: This is a rather complex syntax, but is results in an "object"
         # column that contains random values from the nodes table defined above.
         object:
           type: row_apply
