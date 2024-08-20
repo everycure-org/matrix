@@ -11,12 +11,10 @@
 name: CI pipline
 
 on:
-  workflow_dispatch: {}
   push:
     paths: 
       - pipelines/matrix/**
       - .github/workflows/matrix-ci.yml
-
 
 jobs:
   ci:
