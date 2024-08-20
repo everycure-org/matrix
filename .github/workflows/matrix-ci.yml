@@ -96,8 +96,9 @@ jobs:
           channel-id: 'C07HU35MKAQ' #github-notifications
           # For posting a simple plain text message
           slack-message: |
-            GitHub build result: ${{ job.status }}
-            ${{ github.event.pull_request.html_url || github.event.head_commit.url }}
-            Action run link: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+            GitHub Build Failed! 🚨
+
+            👩‍💻 Code URL: ${{ github.event.pull_request.html_url || github.event.head_commit.url }}
+            🚀 Action run link: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         env:
           SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
