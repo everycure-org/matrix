@@ -1,6 +1,6 @@
 dev_docker_image = us-central1-docker.pkg.dev/mtrx-hub-dev-3of/matrix-images/matrix
 
-.PHONY: venv install precommit test compose-down docker_test
+.PHONY: venv install precommit test compose_down docker_test
 
 # executes E2E integration test fully in docker. 
 docker_test: docker_build
@@ -17,10 +17,10 @@ docker_build:
 docker_push: docker_build
 	docker push $(dev_docker_image):${USER}
 
-compose-up:
+compose_down:
 	docker compose -f compose/docker-compose.yml up -d --wait
 
-compose-down:
+compose_down:
 	docker compose -f compose/docker-compose.yml down
 
 install:
@@ -47,7 +47,7 @@ wipe_neo:
 	# assumes you have neo4j running using docker-compose setup from deployments/compose/
 	.venv/bin/python scripts/wipe_neo4j.py 'everycure-test'
 
-integration_test: compose-up wipe_neo
+integration_test: compose_down wipe_neo
 	# NOTE: We are running without xgc due to its long runtime. 
 	.venv/bin/kedro run --env test -p test --runner ThreadRunner --without-tags xgc,not-shared
 
