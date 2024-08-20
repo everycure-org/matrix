@@ -1,3 +1,10 @@
+# This workflow assumes a self hosted runner is set up with python and uv already. 
+# This drastically increases the CI speed but at the cost of some pre-setup
+
+# sudo apt install python3-pip pipx docker docker-compose openjdk-17-jdk
+# pipx install uv
+# pipx ensurepath
+
 name: CI pipline
 
 on:
@@ -19,39 +26,12 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
-      - name: Set up Python 3.11
-        uses: actions/setup-python@v3
-        with:
-          python-version: "3.11"
-      - run: pip install uv
-
-      # ------ SETUP CACHING -------
-      # cache python dependencies
-      - run: mkdir -p .venv # ensures caching of this folder works
-      - uses: actions/cache@v4
-        name: python dependencies caching
-        with:
-          path: ${{ github.workspace }}/pipelines/matrix/.venv/
-          key: venv #always cache 
-          save-always: true
-      # cache pre-commit dependencies
-      - uses: actions/cache@v4
-        name: pre-commit caching
-        with:
-          path: |
-            ~/.cache/pre-commit
-          key: pre-commit # always cache
-          save-always: true
 
       # ------ INSTALLATION -------
       - name: Run pre-commit hook (fail-fast)
         run: |
           uv pip install pre-commit
           uv pre-commit install --install-hooks
-      - name: Print all requirements
-        run: |
-          pip freeze
-
       - name: Run pre-commit hooks
         run: |
           git fetch origin main
