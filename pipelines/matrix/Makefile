@@ -14,6 +14,7 @@ venv:
 	uv venv -p 3.11
 
 precommit-hooks:
+	uv pip install pre-commit
 	.venv/bin/pre-commit install --install-hooks
 
 precommit: precommit-hooks
