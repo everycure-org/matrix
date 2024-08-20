@@ -3,6 +3,22 @@ TAG ?= ${USER}
 
 .PHONY: venv install precommit test compose_down docker_test
 
+venv:
+	uv venv -p 3.11
+install:
+	uv pip install -r requirements.txt
+
+precommit: precommit-hooks
+	git fetch origin
+	.venv/bin/pre-commit run -s origin/main -o HEAD
+
+precommit-hooks:
+	uv pip install pre-commit
+	.venv/bin/pre-commit install --install-hooks
+
+test:
+	TESTMON_DATAFILE=/tmp/.testmondata .venv/bin/pytest --testmon -v tests/
+
 # executes E2E integration test fully in docker. 
 docker_test: docker_build
 	IMG="$(dev_docker_image)" docker compose -f compose/docker-compose.yml \
@@ -24,25 +40,8 @@ compose_down:
 compose_down:
 	docker compose -f compose/docker-compose.yml down
 
-install:
-	uv pip install -r requirements.txt
-
 lock:
 	uv pip compile requirements.in > requirements.txt
-
-test:
-	TESTMON_DATAFILE=/tmp/.testmondata .venv/bin/pytest --testmon -v tests/
-
-venv:
-	uv venv -p 3.11
-
-precommit-hooks:
-	uv pip install pre-commit
-	.venv/bin/pre-commit install --install-hooks
-
-precommit: precommit-hooks
-	git fetch origin
-	.venv/bin/pre-commit run -s origin/main -o HEAD
 
 wipe_neo:
 	# assumes you have neo4j running using docker-compose setup from deployments/compose/
@@ -55,18 +54,11 @@ integration_test: compose_down wipe_neo
 fabricate:
 	.venv/bin/kedro run -p fabricator --env test
 
-build: lock
-	docker build -t matrix .
-
-
 argo_template:
 	python ./src/matrix/argo.py generate-argo-config $(dev_docker_image)
 
-licenses:  build
-	trivy image --scanners license --severity UNKNOWN,CRITICAL matrix
-
-licenses_container: build
+licenses_container: docker_build
 	docker run \
 		-v $(PWD)/trivy.yaml:/trivy.yaml \
 		-v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy  \
-		image --scanners license --severity UNKNOWN,CRITICAL matrix
+		image --scanners license --severity UNKNOWN,CRITICAL $(dev_docker_image)
