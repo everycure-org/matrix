@@ -12,7 +12,7 @@ on:
   push:
     paths: 
       - pipelines/matrix/**
-      - .github/workflows/pipeline-ci.yml
+      - .github/workflows/matrix-ci.yml
 
 
 jobs:
