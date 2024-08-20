@@ -11,7 +11,8 @@ on:
 jobs:
   run-tests:
 
-    runs-on: ubuntu-latest
+    # runs-on: ubuntu-latest
+    runs-on: 'self-hosted'
     defaults:
       run:
         working-directory: ./pipelines/matrix
@@ -21,9 +22,10 @@ jobs:
       - name: Set up Python 3.11
         uses: actions/setup-python@v3
         with:
-          #cache: 'poetry'
           python-version: "3.11"
+      - run: pip install uv
 
+      # ------ SETUP CACHING -------
       # cache python dependencies
       - run: mkdir -p .venv # ensures caching of this folder works
       - uses: actions/cache@v4
@@ -40,10 +42,12 @@ jobs:
             ~/.cache/pre-commit
           key: pre-commit # always cache
           save-always: true
+
+      # ------ INSTALLATION -------
       - name: Run pre-commit hook (fail-fast)
         run: |
-          pip install pre-commit
-          pre-commit install --install-hooks
+          uv pip install pre-commit
+          uv pre-commit install --install-hooks
       - name: Print all requirements
         run: |
           pip freeze
@@ -56,19 +60,9 @@ jobs:
 
       - name: Install the project dependencies
         run: |
-          pip install uv
-          uv venv
-          uv pip install -r requirements.txt
-
-      # cache python dependencies
-      - uses: actions/cache@v4
-        name: pytest-testmon cache
-        with:
-          path: ${{ github.workspace }}/.testmondata
-          key: testmon=${{ github.ref_name }}-${{ matrix.python-version }}
-          restore-keys: testmon=${{ matrix.python-version }}-main
-          save-always: true
+          make venv
+          make install
       
       - name: Run unit tests 
         run: |
-          .venv/bin/pytest --testmon -v tests/
+          make test
