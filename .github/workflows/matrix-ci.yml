@@ -30,20 +30,6 @@ jobs:
 
       # ------ INSTALLATION -------
       - run: make venv
-      - name: Run pre-commit hook (fail-fast)
-        run: |
-          uv pip install pre-commit
-          uv run pre-commit install --install-hooks
-      - name: Run pre-commit hooks
-        run: |
-          git fetch origin main
-          # run pre-commit on everything that's different from main
-          uv run pre-commit run -s origin/main -o HEAD
-
-      - name: Install the project dependencies
-        run: |
-          make install
-      
-      - name: Run unit tests 
-        run: |
-          make test
+      - run: make precommit
+      - run: make install
+      - run: make test
