@@ -31,16 +31,18 @@ jobs:
       - run: make install
       # - run: make precommit
       # - run: make test
-      - name: integration tests
-        working-directory: ./
+
+      - name: Start services for integration tests
         run: |
-          # starting necessary services for integration tests
-          docker compose -f deployments/compose/docker-compose.yml -f deployments/compose/docker-compose.ci.yml up -d
-          pushd ./
-          cd pipelines/matrix
-          make integration_test || true
-          TEST_RESULT=$?
-          popd
-          # shutting them down again
-          docker compose -f deployments/compose/docker-compose.yml -f deployments/compose/docker-compose.ci.yml down
-          exit $TEST_RESULT
+          docker-compose -f deployments/compose/docker-compose.yml -f deployments/compose/docker-compose.ci.yml up -d
+
+      - name: Run integration tests
+        working-directory: pipelines/matrix
+        id: integration_tests
+        run: |
+          make integration_test
+
+      - name: Shut down services
+        if: always()
+        run: |
+          docker-compose -f deployments/compose/docker-compose.yml -f deployments/compose/docker-compose.ci.yml down
