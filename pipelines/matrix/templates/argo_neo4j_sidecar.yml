@@ -55,6 +55,7 @@ spec:
             secretKeyRef:
               name: matrix-secrets
               key: OPENAI_API_KEY
+      imagePullPolicy: Always
       image: us-central1-docker.pkg.dev/mtrx-hub-dev-3of/matrix-images/matrix:laurens
       command: ["/bin/sh", "-c"]
       args:
@@ -105,5 +106,17 @@ spec:
             value: test
           - name: kedro_node
             value: fabricate_datasets,create_tp_pairs,create_tn_pairs,write_rtx_kg2_nodes,write_rtx_kg2_edges,create_neo4j_nodes,create_neo4j_edges
+          - name: num_retries
+            value: 1
+      - name: add-node-embeddings
+        dependencies:
+          - fabricate
+        template: kedro
+        arguments:
+          parameters:
+          - name: pipeline
+            value: embeddings
+          - name: kedro_node
+            value: add_node_embeddings
           - name: num_retries
             value: 1
