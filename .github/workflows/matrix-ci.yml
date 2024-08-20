@@ -11,11 +11,17 @@
 name: CI pipline
 
 on:
-  push:
+  pull_request:
+    # Sequence of patterns matched against refs/heads
+    branches:
+      - main
     paths: 
       - pipelines/matrix/**
       - .github/workflows/matrix-ci.yml
       - .github/workflows/matrix-push.yml
+  push:
+    branches:
+      - main
 
 jobs:
   ci:
@@ -35,8 +41,29 @@ jobs:
 
       # On Main only, trigger another workflow called "matrix-push"
 
-  push:
-    # if: github.ref == 'refs/heads/main'
+  push_image:
     needs: [ci]
-    runs-on: 'self-hosted'
-    uses: './.github/workflows/matrix-push.yml'
+    # only run on main branch
+    if: github.ref == 'refs/heads/main'
+    runs-on: "self-hosted"
+    environment: dev
+    permissions: write-all
+    defaults:
+      run:
+        working-directory: ./pipelines/matrix
+
+    steps:
+      - uses: 'google-github-actions/auth@v2'
+        with:
+          project_id: ${{vars.project_id}}
+          workload_identity_provider: ${{vars.workload_identity_provider}}
+          service_account: ${{vars.service_account}}
+
+      - name: "Set up Cloud SDK"
+        uses: "google-github-actions/setup-gcloud@v1"
+
+      - name: "Docker auth"
+        run: |-
+          gcloud auth configure-docker ${{ vars.region }}-docker.pkg.dev --quiet
+
+      - run: make docker_push
