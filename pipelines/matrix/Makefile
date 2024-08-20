@@ -13,6 +13,10 @@ test:
 venv:
 	uv venv -p 3.11
 
+precommit-hooks:
+	source .venv/bin/activate
+	pre-commit install --install-hooks
+
 wipe_neo:
 	# assumes you have neo4j running using docker-compose setup from deployments/compose/
 	python scripts/wipe_neo4j.py 'everycure-test'
