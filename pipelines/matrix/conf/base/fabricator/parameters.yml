@@ -73,23 +73,46 @@ fabricator.rtx_kg2:
         type: faker
         provider: name
 
-  trails:
-    num_rows: 100
+  clinical_trials:
+    num_rows: 200
     columns:
-      disease_id:
+      drug_name:
+        type: generate_values
+        sample_values:
+          - "dummy_drug_name1"
+          - "dummy_drug_name2"
+          - "dummy_drug_name3"
+          - "dummy_drug_name4"
+          - "dummy_drug_name5"
+      disease_name:
+        type: generate_values
+        sample_values:
+          - "dummy_disease_name1"
+          - "dummy_disease_name2"
+          - "dummy_disease_name3"
+          - "dummy_disease_name4"
+          - "dummy_disease_name5"
+      drug_kg_curie:
         type: row_apply
         list_of_values: [nodes.id]
         row_func: "lambda *args: args[0]"
         resize: True
         seed: 40599
-      drug_id:
+      disease_kg_curie:
         type: row_apply
         list_of_values: [nodes.id]
         row_func: "lambda *args: args[0]"
         resize: True
         seed: 30599
-      id_column:
+      significantly_better:
         type: generate_values
         sample_values: [1, 0]
-
-      # Chunyu to add whatever is needed to get this working
+      non_significantly_better:
+        type: generate_values
+        sample_values: [1, 0]
+      non_significantly_worse:
+        type: generate_values
+        sample_values: [1, 0]
+      significantly_worse:
+        type: generate_values
+        sample_values: [1, 0]
