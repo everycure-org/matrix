@@ -39,6 +39,8 @@ def generate_argo_config(image, image_tag):
     metadata = bootstrap_project(project_path)
     package_name = metadata.package_name
 
+    breakpoint()
+
     pipes = {}
     for name, pipeline in pipelines.items():
         pipes[name] = get_dependencies(pipeline.node_dependencies)
@@ -48,6 +50,14 @@ def generate_argo_config(image, image_tag):
     )
 
     (SEARCH_PATH / RENDERED_FILE).write_text(output)
+
+
+def is_fusable(pipeline):
+    # NOTE: Currently a pipeline is fusable, if all it's nodes have the `argo-wf.fuse` label.
+    if len(pipeline._nodes) == len(pipeline.only_nodes_with_tags("argo-wf.fuse")._nodes):
+        return True
+    
+    return False
 
 
 def get_dependencies(dependencies):
