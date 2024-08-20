@@ -24,8 +24,6 @@ data_sources:
   robokop:
     version: c5ec1f282158182f
 
-  # TODO: Register robokop here
-
 paths:
   # we read from our central GCS bucket where we store our ground truth data
   raw: ${gcs_bucket}/kedro/data/01_RAW # I think this path should be raw: ${gcs_bucket}/kedro/data/01_RAW

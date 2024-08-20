@@ -27,9 +27,6 @@ ingestion.prm.rtx_kg2.edges:
     bigQueryTableLabel.kg: rtx_kg2
     # bigQueryTableLabel.release: ${globals:versions.release}
 
-
-# TODO: Register robokop BigQuery datasets here for prod
-
 ingestion.prm.robokop.nodes:
   <<: *_bigquery_ds
   dataset: robokop-kg

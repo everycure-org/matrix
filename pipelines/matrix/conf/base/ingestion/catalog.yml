@@ -4,8 +4,7 @@ _pandas_csv: &_pandas_csv
 _spark_csv_ds: &_spark_csv
   type: spark.SparkDataset
   file_format: csv
-  
-  # TODO: Might need to give this a quick test
+
   load_args:
     sep: '\t'
     header: True
@@ -210,7 +209,6 @@ ingestion.prm.rtx_kg2.edges:
 
 
 ### Raw
-# TODO: Register raw robokop Spark dataset
 ingestion.raw.robokop.nodes@spark:
  <<: [*_spark_csv, *_layer_raw]
  filepath: ${globals:paths.raw}/robokop-kg/${globals:data_sources.robokop.version}/nodes.tsv
@@ -219,7 +217,6 @@ ingestion.raw.robokop.nodes@pandas:
   <<: [*_pandas_csv, *_layer_raw]
   filepath: ${globals:paths.raw}/robokop-kg/${globals:data_sources.robokop.version}/nodes.tsv
 
-# TODO: Add edges dataset
 ingestion.raw.robokop.edges@spark:
  <<: [*_spark_csv, *_layer_raw]
  filepath: ${globals:paths.raw}/robokop-kg/${globals:data_sources.robokop.version}/edges.tsv
@@ -229,7 +226,6 @@ ingestion.raw.robokop.edges@pandas:
   filepath: ${globals:paths.raw}/robokop-kg/${globals:data_sources.robokop.version}/edges.tsv
 
 ### PRM
-# TODO: Turn these into robokop prm nodes and edges
 ingestion.prm.robokop.nodes@spark:
    <<: [*_spark_parquet, *_layer_int]
    filepath: ${globals:paths.raw}/robokop-kg/${globals:data_sources.robokop.version}/nodes.tsv

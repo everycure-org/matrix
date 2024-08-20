@@ -32,10 +32,10 @@ def create_pipeline(**kwargs) -> Pipeline:
                 },
                 name="fabricate_datasets",
             ),
-            # TODO: Add a new node that fabricates the robokop datasets
+
             # borrowing inspiration from above, the `nodes` and `edges`
             # dict keys above correspond as defined in the fabricator parameters.yml,
-            # while the values map ther results to a catalog entry. We're generating
+            # while the values map the results to a catalog entry. We're generating
             # pandas dataframes, while the ingestion pipeline uses spark, therefore
             # we use the @pandas transcoding syntax.
             node(
