@@ -1,11 +1,6 @@
 _pandas_parquet: &_pandas_parquet
   type: pandas.ParquetDataset
 
-_sheets_dataset: &_sheets_dataset
-  type: matrix.datasets.gcp.GoogleSheetsDataset
-  key: 1Wlrjr8ojUGCfWJg-QF5PzpJFqpD7LLH7b60u2XAngh0
-  service_file: conf/local/service-account.json
-
 # -------------------------------------------------------------------------
 # Datasets
 # -------------------------------------------------------------------------
@@ -26,16 +21,3 @@ _sheets_dataset: &_sheets_dataset
   type: matrix.datasets.mlflow.MlflowMetricsDataset
   key_prefix: "{model}.{evaluation}"
 
-evaluation.raw.clinical_trial_data:
-  <<: *_sheets_dataset
-  load_args:
-    sheet_name: clinical_trial_DD_pairs
-
-evaluation.int.mapped_clinical_trial_data:
-  <<: *_sheets_dataset
-  save_args:
-    sheet_name: clinical_trial_DD_pairs
-    write_columns: ["Mapped Drug Curie", "Mapped Disease Curie"]
-
-  load_args:
-    sheet_name: clinical_trial_DD_pairs

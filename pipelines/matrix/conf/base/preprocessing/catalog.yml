@@ -24,9 +24,14 @@ _spark_csv: &_spark_csv
 _pandas_csv: &_pandas_csv
   type:  pandas.CSVDataset
 
-_sheets_dataset: &_sheets_dataset
+_medical_kg_sheets_dataset: &_medical_kg_sheets_dataset
   type: matrix.datasets.gcp.GoogleSheetsDataset
   key: 1LMtOmA10t7a3lcKeTP7zmptOPIcCBIPFVJt9J7jZ2bQ
+  service_file: conf/local/service-account.json
+
+_medical_clinical_trials_sheet_dataset: &_medical_clinical_trials_sheet_dataset
+  type: matrix.datasets.gcp.GoogleSheetsDataset
+  key: 1Wlrjr8ojUGCfWJg-QF5PzpJFqpD7LLH7b60u2XAngh0
   service_file: conf/local/service-account.json
 
 # -------------------------------------------------------------------------
@@ -34,18 +39,18 @@ _sheets_dataset: &_sheets_dataset
 # -------------------------------------------------------------------------
 
 preprocessing.raw.nodes:
-  <<: [*_layer_raw, *_sheets_dataset]
+  <<: [*_layer_raw, *_medical_kg_sheets_dataset]
   load_args:
     sheet_name: Nodes
 
 preprocessing.raw.edges:
-  <<: [*_layer_raw, *_sheets_dataset]
+  <<: [*_layer_raw, *_medical_kg_sheets_dataset]
   load_args:
     sheet_name: Edges
     columns: ["Source", "Target", "Label"]
 
 preprocessing.int.resolved_nodes:
-  <<: [*_layer_int, *_sheets_dataset]
+  <<: [*_layer_int, *_medical_kg_sheets_dataset]
   save_args:
     sheet_name: Nodes
     write_columns: ["curie"]
@@ -54,7 +59,7 @@ preprocessing.int.resolved_nodes:
     sheet_name: Nodes
 
 preprocessing.int.normalized_nodes:
-  <<: [*_layer_int, *_sheets_dataset]
+  <<: [*_layer_int, *_medical_kg_sheets_dataset]
   save_args:
     sheet_name: Nodes
     write_columns: ["normalized_curie"]
@@ -67,10 +72,24 @@ preprocessing.int.nodes:
   filepath: ${globals:paths.int}/ec_medical_team/nodes
 
 preprocessing.int.edges:
-  <<: [*_layer_prm, *_sheets_dataset]
+  <<: [*_layer_prm, *_medical_kg_sheets_dataset]
   save_args:
     sheet_name: Edges
     write_columns: ["SourceId", "TargetId", "Included"]
   load_args:
     sheet_name: Edges
     columns: ["SourceId", "TargetId", "Label"]
+
+preprocessing.raw.clinical_trial_data:
+  <<: *_medical_clinical_trials_sheet_dataset
+  load_args:
+    sheet_name: clinical_trial_DD_pairs
+
+preprocessing.int.mapped_clinical_trial_data:
+  <<: *_medical_clinical_trials_sheet_dataset
+  save_args:
+    sheet_name: clinical_trial_DD_pairs
+    write_columns: ["Mapped Drug Curie", "Mapped Disease Curie"]
+
+  load_args:
+    sheet_name: clinical_trial_DD_pairs
