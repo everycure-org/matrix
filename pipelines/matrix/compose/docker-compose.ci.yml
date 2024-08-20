@@ -1,0 +1,38 @@
+services:
+  neo4j:
+    # FUTURE: Newever container version gives issues, due to `apoc-extended`
+    # and `gds` versions not being released yet. Update when released.
+    image: neo4j:5.21.0-enterprise
+    # overwriting volumes so we don't have any
+    volumes: []
+
+  mock-genai:
+    environment:
+      MOCKSERVER_LOG_LEVEL: ERROR
+
+  matrix-pipeline:
+    image: matrix-pipeline
+    build: "../"
+    # NOTE: We're omitting --runner ThreadRunner due to a CI
+    # only bug. We suspect that this is due to the hooks setup
+    # that should be resolved in the following issue:
+    # https://github.com/Galileo-Galilei/kedro-mlflow/issues/579
+    entrypoint:
+      - "/bin/sh"
+      - -ecx
+      - |
+          kedro run -e test -p test
+    environment:
+      NEO4J_HOST: bolt://neo4j:7687
+      NEO4J_USER: neo4j
+      NEO4J_PASSWORD: admin
+      OPENAI_ENDPOINT: http://mock-genai:1080/v1
+      MLFLOW_ENDPOINT: http://mlflow:5000
+      OPENAI_API_KEY: sk-proj-abc
+    depends_on:
+      neo4j:
+        condition: service_healthy
+      mlflow: 
+        condition: service_healthy
+    networks:
+      - web
