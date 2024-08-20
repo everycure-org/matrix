@@ -14,11 +14,10 @@ venv:
 	uv venv -p 3.11
 
 precommit-hooks:
-	source .venv/bin/activate
-	venv/bin/pre-commit install --install-hooks
+	.venv/bin/pre-commit install --install-hooks
 
 precommit: precommit-hooks
-    .venv/bin/pre-commit run -s origin/main -o HEAD
+	.venv/bin/pre-commit run -s origin/main -o HEAD
 
 wipe_neo:
 	# assumes you have neo4j running using docker-compose setup from deployments/compose/
