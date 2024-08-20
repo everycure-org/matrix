@@ -40,4 +40,4 @@ jobs:
     needs: [ci]
     runs-on: 'self-hosted'
     # TODO change branch
-    uses: ./.github/workflows/matrix-push.yml@feat/self-hosted-runners
+    uses: ./.github/workflows/matrix-push.yml
