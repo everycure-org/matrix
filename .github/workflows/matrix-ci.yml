@@ -83,7 +83,9 @@ jobs:
   # following this tutorial: https://github.com/slackapi/slack-github-action?tab=readme-ov-file
   notify_failure:
     needs: [ci, push_image, licenses]
-    if: failure()  # This condition ensures it runs only if any previous job fails
+    # This condition ensures it runs only if any previous job fails
+    # we notify on main branches only
+    if: failure() && github.ref == 'refs/heads/main' 
     runs-on: "self-hosted"
     steps:
       - name: Post to a Slack channel
@@ -96,7 +98,7 @@ jobs:
           channel-id: 'C07HU35MKAQ' #github-notifications
           # For posting a simple plain text message
           slack-message: |
-            GitHub Build Failed! 🚨
+            GitHub Build Failed on Main branch! 🚨
 
             👩‍💻 Code URL: ${{ github.event.pull_request.html_url || github.event.head_commit.url }}
             🚀 Action run link: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
