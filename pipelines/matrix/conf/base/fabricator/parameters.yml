@@ -88,5 +88,8 @@ fabricator.rtx_kg2:
         row_func: "lambda *args: args[0]"
         resize: True
         seed: 30599
+      id_column:
+        type: generate_values
+        sample_values: [1, 0]
 
       # Chunyu to add whatever is needed to get this working
