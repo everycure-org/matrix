@@ -318,7 +318,7 @@ class MatrixTestDiseases(DrugDiseasePairGenerator):
         return filtered_matrix
 
 
-class GeneratorWithSideInput:
+class GeneratorWithSideInput:  # TODO: This needs to become TimeSplitDataGenerator
     """Generator with dataset input."""
 
     def __init__(self, dataset: AbstractDataset) -> None:
@@ -344,4 +344,5 @@ class GeneratorWithSideInput:
             DataFrame with unknown drug-disease pairs.
         """
         # Add logic here, will have access to _data to curate dataset you'd like
+        # TODO: Connect with Alexei on what exactly needs to happen here
         breakpoint()
