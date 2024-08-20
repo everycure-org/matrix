@@ -1,4 +1,5 @@
 dev_docker_image = us-central1-docker.pkg.dev/mtrx-hub-dev-3of/matrix-images/matrix
+TAG ?= ${USER}
 
 .PHONY: venv install precommit test compose_down docker_test
 
@@ -12,10 +13,10 @@ docker_test: docker_build
 
 docker_build:
 	docker buildx build --platform linux/amd64 -t $(dev_docker_image) ./
-	docker tag $(dev_docker_image) $(dev_docker_image):${USER}
+	docker tag $(dev_docker_image) $(dev_docker_image):${TAG}
 
 docker_push: docker_build
-	docker push $(dev_docker_image):${USER}
+	docker push $(dev_docker_image):${TAG}
 
 compose_down:
 	docker compose -f compose/docker-compose.yml up -d --wait
