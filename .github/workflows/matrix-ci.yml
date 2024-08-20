@@ -17,9 +17,7 @@ on:
 
 
 jobs:
-  run-tests:
-
-    # runs-on: ubuntu-latest
+  pre-commit:
     runs-on: 'self-hosted'
     defaults:
       run:
@@ -27,9 +25,30 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
-
-      # ------ INSTALLATION -------
       - run: make venv
+      - run: make install
       - run: make precommit
+
+  unit-tests:
+    runs-on: 'self-hosted'
+    defaults:
+      run:
+        working-directory: ./pipelines/matrix
+
+    steps:
+      - uses: actions/checkout@v3
+      - run: make venv
       - run: make install
       - run: make test
+
+  integration-tests:
+    runs-on: 'self-hosted'
+    defaults:
+      run:
+        working-directory: ./pipelines/matrix
+
+    steps:
+      - uses: actions/checkout@v3
+      - run: make venv
+      - run: make install
+      - run: make integration_test
