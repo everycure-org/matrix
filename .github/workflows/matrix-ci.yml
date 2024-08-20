@@ -40,4 +40,5 @@ jobs:
           TEST_RESULT=$?
           # shutting them down again
           docker compose -f deployments/compose/docker-compose.yml down
+          
           exit $TEST_RESULT
