@@ -64,5 +64,5 @@ def create_pipeline(**kwargs) -> Pipeline:
                 },
                 name="extract_nodes_edges_from_db",
             ),
-        ]
+        ], tags=["argo-wf.fuse", "argo-wf.enable-neo4j"]
     )
