@@ -1,8 +1,8 @@
 dev_docker_image = us-central1-docker.pkg.dev/mtrx-hub-dev-3of/matrix-images/matrix
 
+.PHONY: venv install precommit test compose-down docker_build docker_test
 
-ci: venv install precommit test compose-down docker_build
-# ci: compose-down
+docker_test: 
 	IMG="$(dev_docker_image)" docker compose -f compose/docker-compose.yml \
 		-f compose/docker-compose.ci.yml \
 		up \

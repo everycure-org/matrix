@@ -26,4 +26,14 @@ jobs:
         working-directory: ./pipelines/matrix
     steps:
       - uses: actions/checkout@v3
-      - run: make ci
+      # On every PR
+      - run: make venv
+      - run: make install
+      - run: make precommit
+      - run: make test
+      - run: make compose_down
+      - run: make docker_build
+      - run: make docker_test
+      # On Main only
+      - if: github.ref == 'refs/heads/main'
+        run: make docker_push

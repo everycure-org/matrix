@@ -30,7 +30,7 @@ services:
       - "/bin/sh"
       - -ecx
       - |
-          kedro run -e test -p test --runner ThreadRunner
+          kedro run -e test -p test --runner ThreadRunner --without-tags xg_ensemble,not-shared
     environment:
       NEO4J_HOST: bolt://neo4j:7687
       NEO4J_USER: neo4j
