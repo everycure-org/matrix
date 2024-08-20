@@ -8,7 +8,7 @@ lock:
 	uv pip compile requirements.in > requirements.txt
 
 test:
-	pytest --testmon -v tests/
+	.venv/bin/pytest --testmon -v tests/
 
 venv:
 	uv venv -p 3.11
@@ -27,10 +27,10 @@ wipe_neo:
 
 integration_test: wipe_neo
 	# NOTE: We are running without xgc due to its long runtime. 
-	kedro run --env test -p test --runner ThreadRunner --without-tags xgc,not-shared
+	.venv/bin/kedro run --env test -p test --runner ThreadRunner --without-tags xgc,not-shared
 
 fabricate:
-	kedro run -p fabricator --env test
+	.venv/bin/kedro run -p fabricator --env test
 
 build: lock
 	docker build -t matrix .
