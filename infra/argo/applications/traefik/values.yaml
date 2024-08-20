@@ -12,8 +12,8 @@ traefik:
   certResolvers:
     letsencrypt:
       email: "pascal@everycure.org"
-      caServer: https://acme-v02.api.letsencrypt.org/directory # Production server
-      # caServer: https://acme-staging-v02.api.letsencrypt.org/directory # Staging server
+      #caServer: https://acme-v02.api.letsencrypt.org/directory # Production server
+      caServer: https://acme-staging-v02.api.letsencrypt.org/directory # Staging server
       dnsChallenge:
         provider: gcloud
       storage: /data/acme.json
@@ -33,3 +33,11 @@ traefik:
       level: ERROR
     access:
       enabled: true
+
+oauth2-proxy:
+  config:
+    clientID: XX
+    clientSecret: XX
+  extraArgs:
+    provider: google
+    email-domain: 'everycure.org'

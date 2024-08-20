@@ -17875,6 +17875,23 @@ metadata:
     app.kubernetes.io/managed-by: Helm
 automountServiceAccountToken:
 ---
+# Source: Traefik/charts/oauth2-proxy/templates/serviceaccount.yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  labels:
+    app: oauth2-proxy    
+    helm.sh/chart: oauth2-proxy-7.7.9
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/component: authentication-proxy
+    app.kubernetes.io/part-of: oauth2-proxy
+    app.kubernetes.io/name: oauth2-proxy
+    app.kubernetes.io/instance: release-name
+    app.kubernetes.io/version: "7.6.0"
+  name: release-name-oauth2-proxy
+  namespace: dev-pascal
+automountServiceAccountToken: true
+---
 # Source: Traefik/charts/traefik/templates/rbac/serviceaccount.yaml
 kind: ServiceAccount
 apiVersion: v1
@@ -17888,6 +17905,45 @@ metadata:
     app.kubernetes.io/managed-by: Helm
   annotations:
 automountServiceAccountToken: false
+---
+# Source: Traefik/charts/oauth2-proxy/templates/secret.yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  labels:
+    app: oauth2-proxy    
+    helm.sh/chart: oauth2-proxy-7.7.9
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/component: authentication-proxy
+    app.kubernetes.io/part-of: oauth2-proxy
+    app.kubernetes.io/name: oauth2-proxy
+    app.kubernetes.io/instance: release-name
+    app.kubernetes.io/version: "7.6.0"
+  name: release-name-oauth2-proxy
+  namespace: dev-pascal
+type: Opaque
+data:
+  cookie-secret: "WFhYWFhYWFhYWFhYWFhYWA=="
+  client-secret: "WFhYWFhYWFg="
+  client-id: "WFhYWFhYWA=="
+---
+# Source: Traefik/charts/oauth2-proxy/templates/configmap.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  labels:
+    app: oauth2-proxy    
+    helm.sh/chart: oauth2-proxy-7.7.9
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/component: authentication-proxy
+    app.kubernetes.io/part-of: oauth2-proxy
+    app.kubernetes.io/name: oauth2-proxy
+    app.kubernetes.io/instance: release-name
+    app.kubernetes.io/version: "7.6.0"
+  name: release-name-oauth2-proxy
+  namespace: dev-pascal
+data:
+  oauth2_proxy.cfg: "email_domains = [ \"*\" ]\nupstreams = [ \"file:///dev/null\" ]"
 ---
 # Source: Traefik/charts/external-dns/templates/clusterrole.yaml
 apiVersion: rbac.authorization.k8s.io/v1
@@ -18053,6 +18109,38 @@ spec:
       targetPort: http
       protocol: TCP
 ---
+# Source: Traefik/charts/oauth2-proxy/templates/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: oauth2-proxy    
+    helm.sh/chart: oauth2-proxy-7.7.9
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/component: authentication-proxy
+    app.kubernetes.io/part-of: oauth2-proxy
+    app.kubernetes.io/name: oauth2-proxy
+    app.kubernetes.io/instance: release-name
+    app.kubernetes.io/version: "7.6.0"
+  name: release-name-oauth2-proxy
+  namespace: dev-pascal
+spec:
+  type: ClusterIP
+  ports:
+    - port: 80
+      targetPort: http
+      protocol: TCP
+      appProtocol: http
+      name: http
+    - port: 44180
+      protocol: TCP
+      appProtocol: http
+      targetPort: metrics
+      name: metrics
+  selector:    
+    app.kubernetes.io/name: oauth2-proxy
+    app.kubernetes.io/instance: release-name
+---
 # Source: Traefik/charts/traefik/templates/service.yaml
 apiVersion: v1
 kind: Service
@@ -18158,6 +18246,120 @@ spec:
             periodSeconds: 10
             successThreshold: 1
             timeoutSeconds: 5
+---
+# Source: Traefik/charts/oauth2-proxy/templates/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: oauth2-proxy    
+    helm.sh/chart: oauth2-proxy-7.7.9
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/component: authentication-proxy
+    app.kubernetes.io/part-of: oauth2-proxy
+    app.kubernetes.io/name: oauth2-proxy
+    app.kubernetes.io/instance: release-name
+    app.kubernetes.io/version: "7.6.0"
+  name: release-name-oauth2-proxy
+  namespace: dev-pascal
+spec:
+  replicas: 1
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:      
+      app.kubernetes.io/name: oauth2-proxy
+      app.kubernetes.io/instance: release-name
+  template:
+    metadata:
+      annotations:
+        checksum/config: c0329892592df8b1519fac51e84aee8cf879bb8e157e5a04f6556b38b5a2435b
+        checksum/secret: 8fa6fdae65861caa2986544b8860a5205be1937328c8ec2bad6bad076b9e2425
+        checksum/google-secret: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+        checksum/redis-secret: 01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b
+      labels:
+        app: oauth2-proxy        
+        helm.sh/chart: oauth2-proxy-7.7.9
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/component: authentication-proxy
+        app.kubernetes.io/part-of: oauth2-proxy
+        app.kubernetes.io/name: oauth2-proxy
+        app.kubernetes.io/instance: release-name
+        app.kubernetes.io/version: "7.6.0"
+    spec:
+      serviceAccountName: release-name-oauth2-proxy
+      automountServiceAccountToken: true
+      containers:
+      - name: oauth2-proxy
+        image: "quay.io/oauth2-proxy/oauth2-proxy:v7.6.0"
+        imagePullPolicy: IfNotPresent
+        args:
+          - --http-address=0.0.0.0:4180
+          - --https-address=0.0.0.0:4443
+          - --metrics-address=0.0.0.0:44180
+          - --config=/etc/oauth2_proxy/oauth2_proxy.cfg
+        env:
+        - name: OAUTH2_PROXY_CLIENT_ID
+          valueFrom:
+            secretKeyRef:
+              name:  release-name-oauth2-proxy
+              key: client-id
+        - name: OAUTH2_PROXY_CLIENT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name:  release-name-oauth2-proxy
+              key: client-secret
+        - name: OAUTH2_PROXY_COOKIE_SECRET
+          valueFrom:
+            secretKeyRef:
+              name:  release-name-oauth2-proxy
+              key: cookie-secret
+        ports:
+          - containerPort: 4180
+            name: http
+            protocol: TCP
+          - containerPort: 44180
+            protocol: TCP
+            name: metrics
+        livenessProbe:
+          httpGet:
+            path: /ping
+            port: http
+            scheme: HTTP
+          initialDelaySeconds: 0
+          timeoutSeconds: 1
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: http
+            scheme: HTTP
+          initialDelaySeconds: 0
+          timeoutSeconds: 5
+          successThreshold: 1
+          periodSeconds: 10
+        resources:
+          {}
+        volumeMounts:
+        - mountPath: /etc/oauth2_proxy/oauth2_proxy.cfg
+          name: configmain
+          subPath: oauth2_proxy.cfg
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          readOnlyRootFilesystem: true
+          runAsGroup: 2000
+          runAsNonRoot: true
+          runAsUser: 2000
+          seccompProfile:
+            type: RuntimeDefault
+      volumes:
+      - configMap:
+          defaultMode: 420
+          name: release-name-oauth2-proxy
+        name: configmain
+      tolerations:
+        []
 ---
 # Source: Traefik/charts/traefik/templates/deployment.yaml
 apiVersion: apps/v1

@@ -5,5 +5,8 @@ dependencies:
 - name: external-dns
   repository: https://kubernetes-sigs.github.io/external-dns/
   version: 1.14.5
-digest: sha256:4d027f7214a6626e2172134eb07799a166258fdbf5fafc548771003798bf78a7
-generated: "2024-08-19T17:54:41.668708+02:00"
+- name: oauth2-proxy
+  repository: https://oauth2-proxy.github.io/manifests
+  version: 7.7.9
+digest: sha256:c4182c5263fc6bb2f9cf11a60a33fb7216c6d2de24a3f60fab1497fd713212ed
+generated: "2024-08-19T22:51:42.248604+02:00"
