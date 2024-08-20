@@ -42,13 +42,19 @@ jobs:
       - run: make test
 
   integration-tests:
+    needs: 
+      - pre-commit
+      - unit-tests
     runs-on: 'self-hosted'
     defaults:
       run:
-        working-directory: ./pipelines/matrix
+        working-directory: ./deployments/compose
 
     steps:
       - uses: actions/checkout@v3
-      - run: make venv
-      - run: make install
-      - run: make integration_test
+      - name: Build docker-compose
+        run: docker buildx bake --file docker-compose.yml --file docker-compose.test.yml --file docker-compose-cache.json
+
+      - name: Start docker-compose
+        run: |
+          docker compose -f docker-compose.yml -f docker-compose.test.yml up --abort-on-container-exit --exit-code-from matrix-pipeline
