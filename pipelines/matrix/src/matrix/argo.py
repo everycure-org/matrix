@@ -43,6 +43,7 @@ def generate_argo_config(image, image_tag):
 
     pipes = {}
     for name, pipeline in pipelines.items():
+        # TODO: Fuse nodes in topological order to avoid constant recreation of Neo4j
         pipes[name] = get_dependencies(pipeline.node_dependencies)
 
     output = template.render(
@@ -52,6 +53,7 @@ def generate_argo_config(image, image_tag):
     (SEARCH_PATH / RENDERED_FILE).write_text(output)
 
 
+# Validate if nodes can be fused in topological order
 def is_fusable(pipeline):
     # NOTE: Currently a pipeline is fusable, if all it's nodes have the `argo-wf.fuse` label.
     if len(pipeline._nodes) == len(
