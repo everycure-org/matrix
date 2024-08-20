@@ -34,7 +34,7 @@ jobs:
 
       - name: Start services for integration tests
         run: |
-          docker-compose -f deployments/compose/docker-compose.yml -f deployments/compose/docker-compose.ci.yml up -d
+          docker compose -f deployments/compose/docker-compose.yml -f deployments/compose/docker-compose.ci.yml up -d
 
       - name: Run integration tests
         working-directory: pipelines/matrix
@@ -45,4 +45,4 @@ jobs:
       - name: Shut down services
         if: always()
         run: |
-          docker-compose -f deployments/compose/docker-compose.yml -f deployments/compose/docker-compose.ci.yml down
+          docker compose -f deployments/compose/docker-compose.yml -f deployments/compose/docker-compose.ci.yml down
