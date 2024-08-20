@@ -1,7 +1,9 @@
 # This workflow assumes a self hosted runner is set up with python and uv already. 
 # This drastically increases the CI speed but at the cost of some pre-setup
 
-# sudo apt install python3-pip pipx docker docker-compose openjdk-17-jdk
+# sudo apt install python3-pip pipx  openjdk-17-jdk
+# curl -fsSL https://get.docker.com -o get-docker.sh
+# sudo sh get-docker.sh
 # pipx install uv
 # pipx ensurepath
 # sudo cp $(which uv) /usr/local/bin/uv
@@ -17,7 +19,7 @@ on:
 
 
 jobs:
-  pre-commit:
+  ci:
     runs-on: 'self-hosted'
     defaults:
       run:
@@ -28,33 +30,9 @@ jobs:
       - run: make venv
       - run: make install
       - run: make precommit
-
-  unit-tests:
-    runs-on: 'self-hosted'
-    defaults:
-      run:
-        working-directory: ./pipelines/matrix
-
-    steps:
-      - uses: actions/checkout@v3
-      - run: make venv
-      - run: make install
       - run: make test
-
-  integration-tests:
-    needs: 
-      - pre-commit
-      - unit-tests
-    runs-on: 'self-hosted'
-    defaults:
-      run:
-        working-directory: ./deployments/compose
-
-    steps:
-      - uses: actions/checkout@v3
-      - name: Build docker-compose
-        run: docker buildx bake --file docker-compose.yml --file docker-compose.test.yml --file docker-compose-cache.json
-
-      - name: Start docker-compose
+      - name: integration tests
         run: |
+          docker buildx bake --file docker-compose.yml --file docker-compose.test.yml
           docker compose -f docker-compose.yml -f docker-compose.test.yml up --abort-on-container-exit --exit-code-from matrix-pipeline
+        working-directory: ./deployments/compose
