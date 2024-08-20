@@ -34,8 +34,10 @@ jobs:
       - name: integration tests
         working-directory: ./
         run: |
+          # starting necessary services for integration tests
           docker compose -f deployments/compose/docker-compose.yml up -d
           make integration_test || true
           TEST_RESULT=$?
+          # shutting them down again
           docker compose -f deployments/compose/docker-compose.yml down
           exit $TEST_RESULT
