@@ -4,15 +4,24 @@ services:
     # and `gds` versions not being released yet. Update when released.
     image: neo4j:5.21.0-enterprise
     # overwriting volumes so we don't have any
-    volumes: []
+    # https://docs.docker.com/reference/compose-file/merge/#reset-value
+    volumes: !override 
+      # note we do NOT mount data which makes the CI container stateless
+      - ./neo4j_data/logs:/logs
+      - ./neo4j_data/import:/var/lib/neo4j/import
+      - ./neo4j_data/plugins:/plugins
 
   mock-genai:
     environment:
       MOCKSERVER_LOG_LEVEL: ERROR
 
   matrix-pipeline:
-    image: matrix-pipeline
-    build: "../"
+    image: ${IMG}
+    container_name: matrix
+    #build: 
+    #  context: "../"
+    #  platforms: 
+    #    - linux/amd64
     # NOTE: We're omitting --runner ThreadRunner due to a CI
     # only bug. We suspect that this is due to the hooks setup
     # that should be resolved in the following issue:
@@ -21,7 +30,7 @@ services:
       - "/bin/sh"
       - -ecx
       - |
-          kedro run -e test -p test
+          kedro run -e test -p test --runner ThreadRunner
     environment:
       NEO4J_HOST: bolt://neo4j:7687
       NEO4J_USER: neo4j

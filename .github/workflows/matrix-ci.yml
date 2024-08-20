@@ -24,26 +24,6 @@ jobs:
     defaults:
       run:
         working-directory: ./pipelines/matrix
-
     steps:
       - uses: actions/checkout@v3
-      - run: make venv
-      - run: make install
-      # - run: make precommit
-      # - run: make test
-
-      - name: Start services for integration tests
-        working-directory: deployments/compose
-        run: |
-          docker compose -f docker-compose.yml -f docker-compose.ci.yml up -d
-
-      - name: Run integration tests
-        id: integration_tests
-        run: |
-          make integration_test
-
-      - name: Shut down services
-        if: always()
-        working-directory: deployments/compose
-        run: |
-          docker compose -f docker-compose.yml -f docker-compose.ci.yml down
+      - run: make ci
