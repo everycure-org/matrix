@@ -4,6 +4,7 @@
 # sudo apt install python3-pip pipx docker docker-compose openjdk-17-jdk
 # pipx install uv
 # pipx ensurepath
+# sudo cp $(which uv) /usr/local/bin/uv
 
 name: CI pipline
 
@@ -28,6 +29,7 @@ jobs:
       - uses: actions/checkout@v3
 
       # ------ INSTALLATION -------
+      - run: make venv
       - name: Run pre-commit hook (fail-fast)
         run: |
           uv pip install pre-commit
@@ -40,7 +42,6 @@ jobs:
 
       - name: Install the project dependencies
         run: |
-          make venv
           make install
       
       - name: Run unit tests 
