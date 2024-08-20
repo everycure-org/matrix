@@ -18,7 +18,7 @@ precommit-hooks:
 	.venv/bin/pre-commit install --install-hooks
 
 precommit: precommit-hooks
-	git fetch origin/main
+	git fetch origin
 	.venv/bin/pre-commit run -s origin/main -o HEAD
 
 wipe_neo:
