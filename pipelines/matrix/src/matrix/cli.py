@@ -65,7 +65,7 @@ def cli():
     multiple=False,
     help=NODE_ARG_HELP,
     callback=split_string,
-    default=None,
+    default="",
 )
 @click.option(
     "--runner", "-r", type=str, default=None, multiple=False, help=RUNNER_ARG_HELP
