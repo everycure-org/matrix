@@ -12,6 +12,11 @@ addopts = [
     "--ignore=packages",
 
 ]
+norecursedirs = [
+    ".venv",
+    "data",
+    "compose"
+]
 
 [project]
 name = "matrix"

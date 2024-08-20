@@ -30,7 +30,7 @@ lock:
 	uv pip compile requirements.in > requirements.txt
 
 test:
-	.venv/bin/pytest --testmon -v tests/
+	TESTMON_DATAFILE=/tmp/.testmondata .venv/bin/pytest --testmon -v tests/
 
 venv:
 	uv venv -p 3.11
