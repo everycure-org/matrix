@@ -1,8 +1,9 @@
 dev_docker_image = us-central1-docker.pkg.dev/mtrx-hub-dev-3of/matrix-images/matrix
 
-.PHONY: venv install precommit test compose-down docker_build docker_test
+.PHONY: venv install precommit test compose-down docker_test
 
-docker_test: 
+# executes E2E integration test fully in docker. 
+docker_test: docker_build
 	IMG="$(dev_docker_image)" docker compose -f compose/docker-compose.yml \
 		-f compose/docker-compose.ci.yml \
 		up \
