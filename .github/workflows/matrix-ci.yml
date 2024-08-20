@@ -25,12 +25,18 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       # On every PR
-      - run: make venv
-      - run: make install
-      - run: make precommit
-      - run: make test
-      - run: make compose_down
-      - run: make docker_test
-      # On Main only
-      - if: github.ref == 'refs/heads/main'
-        run: make docker_push
+      # - run: make venv
+      # - run: make install
+      # - run: make precommit
+      # - run: make test
+      # - run: make compose_down
+      # - run: make docker_test
+
+      # On Main only, trigger another workflow called "matrix-push"
+
+  push:
+    # if: github.ref == 'refs/heads/main'
+    needs: [ci]
+    runs-on: 'self-hosted'
+    # TODO change branch
+    uses: ./.github/workflows/matrix-push.yml@feat/self-hosted-runners
