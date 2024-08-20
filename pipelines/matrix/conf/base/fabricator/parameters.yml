@@ -49,7 +49,6 @@ fabricator.rtx_kg2:
         end_dt: 2020-01-01
         freq: M
 
-
   edges:
     num_rows: 500
     columns:
@@ -73,3 +72,21 @@ fabricator.rtx_kg2:
       knowledge_source:
         type: faker
         provider: name
+
+  trails:
+    num_rows: 100
+    columns:
+      disease_id:
+        type: row_apply
+        list_of_values: [nodes.id]
+        row_func: "lambda *args: args[0]"
+        resize: True
+        seed: 40599
+      drug_id:
+        type: row_apply
+        list_of_values: [nodes.id]
+        row_func: "lambda *args: args[0]"
+        resize: True
+        seed: 30599
+
+      # Chunyu to add whatever is needed to get this working
