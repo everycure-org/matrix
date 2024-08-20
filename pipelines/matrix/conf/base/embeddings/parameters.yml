@@ -85,7 +85,7 @@ embeddings.topological:
       # Chunyu: 512
       embeddingDimension: 512
       # Chunyu: 200k
-      maxIterations: 100
+      maxIterations: 500
       batchSize: 256
       epochs: 10
       searchDepth: 100
@@ -93,5 +93,5 @@ embeddings.topological:
       tolerance: 1e-8
       # Chunyu
       # learningRate: 0.01
-      learningRate: 0.0001
+      learningRate: 0.001
   write_property: topological_embedding
