@@ -39,5 +39,4 @@ jobs:
     # if: github.ref == 'refs/heads/main'
     needs: [ci]
     runs-on: 'self-hosted'
-    # TODO change branch
-    uses: ./.github/workflows/matrix-push.yml
+    uses: './.github/workflows/matrix-push.yml'
