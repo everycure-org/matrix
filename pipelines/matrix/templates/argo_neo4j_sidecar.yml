@@ -4,7 +4,7 @@ metadata:
   generateName: sidecar-neo4j
   namespace: argo-workflows
 spec:
-  entrypoint: main
+  entrypoint: pipeline
   volumeClaimTemplates:
   - metadata:
       name: neo4j-data                     
@@ -14,7 +14,12 @@ spec:
         requests:
           storage: 100Gi
   templates:
-  - name: main
+  - name: kedro
+    inputs:
+      parameters:
+      - name: kedro_node
+      - name: num_retries
+      - name: pipeline
     container:
       env:
         - name: WORKFLOW_ID
@@ -60,7 +65,7 @@ spec:
             sleep 5
           done
           echo "Neo4j is ready. Starting main application..."
-          kedro run -p test -e test
+          kedro run -p {{inputs.parameters.pipeline}} -e test -n "{{inputs.parameters.kedro_node}}"
     sidecars:
       # Neo4j enterprise sidecar
       - name: neo4j
@@ -89,3 +94,16 @@ spec:
         volumeMounts:
         - name: neo4j-data
           mountPath: /data
+  - name: pipeline
+    dag:
+      tasks:
+      - name: fabricate
+        template: kedro
+        arguments:
+          parameters:
+          - name: pipeline
+            value: test
+          - name: kedro_node
+            value: fabricate_datasets,create_tp_pairs,create_tn_pairs,write_rtx_kg2_nodes,write_rtx_kg2_edges,create_neo4j_nodes,create_neo4j_edges
+          - name: num_retries
+            value: 1
