@@ -196,14 +196,14 @@ def create_prm_edges(int_edges: pd.DataFrame) -> pd.DataFrame:
 
 @has_schema(
     schema={
-        "Clinical Trial #": "object",
-        "Reason for Rejection": "object",
-        "Drug Name": "object",
-        "Disease Name": "object",
-        "Significantly Better?": "object",
-        "Non-Significantly Better?": "object",
-        "Non-Significantly Worse?": "object",
-        "Significantly Worse?": "object"
+        "clinical_trial_id": "object",
+        "reason_for_rejection": "object",
+        "drug_name": "object",
+        "disease_name": "object",
+        "significantly_better": "object",
+        "non_significantly_better": "object",
+        "non_significantly_worse": "object",
+        "significantly_worse": "object"
     },
     allow_subset=True,
     df="df"
@@ -214,7 +214,7 @@ def map_name_to_curie(
 ) -> pd.DataFrame:
     """Function to map drug name or disease name in raw clinical trail dataset to curie using the synonymizer.
        Original Clinical trial data should be a EXCEL format containg 8 columns:
-       Clinical Trial #, Reason for Rejection, Drug Name, Disease Name, Significantly Better?, Non-Significantly Better?, Non-Significantly Worse?, Significantly Worse?
+       clinical_trial_id, reason_for_rejection, drug_name, disease_name, significantly_better, non_significantly_better, non_significantly_worse, significantly_worse
 
     Args:
         df: raw clinical trial dataset from medical team
@@ -224,25 +224,25 @@ def map_name_to_curie(
     """
     
     # Map the drug name to the corresponding curie ids
-    df["Mapped Drug Curie"] = df["Drug Name"].apply(lambda x: resolve(x, endpoint=endpoint))
+    df["drug_kg_curie"] = df["drug_name"].apply(lambda x: resolve(x, endpoint=endpoint))
     # Map the disease name to the corresponding curie ids
-    df["Mapped Disease Curie"] = df["Disease Name"].apply(lambda x: resolve(x, endpoint=endpoint))
+    df["disease_kg_curie"] = df["disease_name"].apply(lambda x: resolve(x, endpoint=endpoint))
     
     return df
 
 
 @has_schema(
     schema={
-        "Clinical Trial #": "object",
-        "Reason for Rejection": "object",
-        "Drug Name": "object",
-        "Disease Name": "object",
-        "Significantly Better?": "object",
-        "Non-Significantly Better?": "object",
-        "Non-Significantly Worse?": "object",
-        "Significantly Worse?": "object",
-        "Mapped Drug Curie": "object",
-        "Mapped Disease Curie": "object"
+        "clinical_trial_id": "object",
+        "reason_for_rejection": "object",
+        "drug_name": "object",
+        "disease_name": "object",
+        "significantly_better": "object",
+        "non_significantly_better": "object",
+        "non_significantly_worse": "object",
+        "significantly_worse": "object"
+        "drug_kg_curie": "object",
+        "disease_kg_curie": "object"
     },
     allow_subset=True,
     df="df"
@@ -252,7 +252,7 @@ def clean_clinical_trial_data(
 ) -> pd.DataFrame:
     """Function to clean the mapped clinical trial dataset for use in time-split evaluation metrics.
        Clinical trial data should be a EXCEL format containg 10 columns:
-       Clinical Trial #, Reason for Rejection, Drug Name, Disease Name, Significantly Better?, Non-Significantly Better?, Non-Significantly Worse?, Significantly Worse?, Mapped Drug Curie, Mapped Disease Curie
+       clinical_trial_id, reason_for_rejection, drug_name, disease_name, significantly_better, non_significantly_better, non_significantly_worse, significantly_worse, drug_kg_curie, disease_kg_curie
        
        2. We filter out rows with the following conditions:
             - Missing drug_kg_curie
@@ -261,14 +261,14 @@ def clean_clinical_trial_data(
             - missing values in either significantly_better, non_significantly_better, non_significantly_worse, or significantly_worse columns
 
        3. Only keep the following columns:
-            - Drug Name
-            - Disease Name
-            - Mapped Drug Curie
-            - Mapped Disease Curie
-            - Significantly Better?
-            - Non-Significantly Better?
-            - Non-Significantly Worse?
-            - Significantly Worse?
+            - drug_name
+            - disease_name
+            - significantly_better
+            - non_significantly_better
+            - non_significantly_worse
+            - significantly_worse
+            - drug_kg_curie
+            - disease_kg_curie
     Args:
         df: raw clinical trial dataset added with mapped drug and disease curies
     Returns:
@@ -277,28 +277,28 @@ def clean_clinical_trial_data(
 
     # remove rows with reason for rejection
     df = df[
-        df["Reason for Rejection"].map(lambda x: type(x) != str)
+        df["reason_for_rejection"].map(lambda x: type(x) != str)
     ].reset_index(drop=True)
 
     # remove rows with missing drug_kg_curie or disease_kg_curie
     row_has_missing = (
-        df["Mapped Drug Curie"].isna()
-        | df["Mapped Disease Curie"].isna()
+        df["drug_kg_curie"].isna()
+        | df["disease_kg_curie"].isna()
     )
     df = df[~row_has_missing].reset_index(drop=True)
 
     # remove rows with missing values in significantly better, non-significantly better, non-significantly worse, or significantly worse columns
     row_has_missing = (
-        df["Significantly Better?"].isna()
-        | df["Non-Significantly Better?"].isna()
-        | df["Non-Significantly Worse?"].isna()
-        | df["Significantly Worse?"].isna()
+        df["significantly_better"].isna()
+        | df["non_significantly_better"].isna()
+        | df["non_significantly_worse"].isna()
+        | df["significantly_worse"].isna()
     )
     df = df[~row_has_missing].reset_index(drop=True)
 
     # drop columns: clinical_trial_id, reason_for_rejection
     df = df.drop(
-        columns=["Clinical Trial #", "Reason for Rejection"]
+        columns=["clinical_trial_id", "reason_for_rejection"]
     )
 
     return df
