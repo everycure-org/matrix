@@ -43,6 +43,13 @@ spec:
               key: GCP_BUCKET
         - name: OPENAI_API_KEY
           value: "foo"
+        - name: OPENAI_ENDPOINT
+          value:  "https://api.openai.com/v1" 
+        - name: OPENAI_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: matrix-secrets
+              key: OPENAI_API_KEY
       image: us-central1-docker.pkg.dev/mtrx-hub-dev-3of/matrix-images/matrix:laurens
       command: ["/bin/sh", "-c"]
       args:

@@ -54,9 +54,11 @@ def generate_argo_config(image, image_tag):
 
 def is_fusable(pipeline):
     # NOTE: Currently a pipeline is fusable, if all it's nodes have the `argo-wf.fuse` label.
-    if len(pipeline._nodes) == len(pipeline.only_nodes_with_tags("argo-wf.fuse")._nodes):
+    if len(pipeline._nodes) == len(
+        pipeline.only_nodes_with_tags("argo-wf.fuse")._nodes
+    ):
         return True
-    
+
     return False
 
 
