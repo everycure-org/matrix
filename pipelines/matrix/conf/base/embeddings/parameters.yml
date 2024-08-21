@@ -90,5 +90,5 @@ embeddings.topological:
       searchDepth: 100
       # Chunyu
       # learningRate: 0.01
-      learningRate: 0.1
+      learningRate: 0.01
   write_property: topological_embedding
