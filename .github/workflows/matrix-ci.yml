@@ -1,0 +1,112 @@
+# This workflow assumes a self hosted runner is set up with python and uv already. 
+# This drastically increases the CI speed but at the cost of some pre-setup
+
+# to connect to the worker use
+# gcloud compute ssh --zone "us-central1-c" "github-actions-runner" --tunnel-through-iap --project "mtrx-hub-dev-3of"
+
+# sudo apt install python3-pip pipx  openjdk-17-jdk
+# curl -fsSL https://get.docker.com -o get-docker.sh
+# sudo sh get-docker.sh
+# pipx install uv
+# pipx ensurepath
+# sudo cp $(which uv) /usr/local/bin/uv
+
+name: CI pipline
+
+on:
+  pull_request:
+    # Sequence of patterns matched against refs/heads
+    branches:
+      - main
+    paths: 
+      - pipelines/matrix/**
+      - .github/workflows/matrix-ci.yml
+      - .github/workflows/matrix-push.yml
+  push:
+    branches:
+      - main
+
+jobs:
+  ci:
+    runs-on: 'self-hosted'
+    if: github.event.pull_request.draft == false || github.ref == 'refs/heads/main'
+
+    defaults:
+      run:
+        working-directory: ./pipelines/matrix
+    steps:
+      - uses: actions/checkout@v3
+      # On every PR
+      - run: make venv
+      - run: make install
+      - run: make precommit
+      - run: make fast_test
+      - run: make full_test
+        if: github.ref == 'refs/heads/main'
+      - run: make compose_down # ensures containers & state are removed
+      - run: make docker_test
+        # only if PR is labelled with "ready" or if branch is main
+        # if: contains(github.event.pull_request.labels.*.name, 'ready') || github.ref == 'refs/heads/main'
+
+  push_image:
+    needs: [ci]
+    if: github.ref == 'refs/heads/main'
+    runs-on: "self-hosted"
+    environment: dev
+    permissions: write-all
+    defaults:
+      run:
+        working-directory: ./pipelines/matrix
+
+    steps:
+      - uses: 'google-github-actions/auth@v2'
+        with:
+          project_id: ${{vars.project_id}}
+          workload_identity_provider: ${{vars.workload_identity_provider}}
+          service_account: ${{vars.service_account}}
+
+      - name: "Set up Cloud SDK"
+        uses: "google-github-actions/setup-gcloud@v1"
+
+      - name: "Docker auth"
+        run: |-
+          gcloud auth configure-docker ${{ vars.region }}-docker.pkg.dev --quiet
+
+      - run: make docker_push TAG=latest
+  
+  # check for license violations
+  # licenses:
+  #   needs: [ci]
+  #   # if: github.ref == 'refs/heads/main'
+  #   runs-on: "self-hosted"
+  #   defaults:
+  #     run:
+  #       working-directory: ./pipelines/matrix
+  #   steps:
+  #     - run: make licenses_container
+  
+  # Add this new job at the end of your jobs section
+  # following this tutorial: https://github.com/slackapi/slack-github-action?tab=readme-ov-file
+  notify_failure:
+    needs: [ci, push_image]
+    # This condition ensures it runs only if any previous job fails
+    # we notify on main branches only
+    if: failure() && github.ref == 'refs/heads/main' 
+    runs-on: "self-hosted"
+    steps:
+      - name: Post to a Slack channel
+        id: slack
+        uses: slackapi/slack-github-action@v1.26.0
+        with:
+          # Slack channel id, channel name, or user id to post message.
+          # See also: https://api.slack.com/methods/chat.postMessage#channels
+          # You can pass in multiple channels to post to by providing a comma-delimited list of channel IDs.
+          channel-id: 'C07HU35MKAQ' #github-notifications
+          # For posting a simple plain text message
+          slack-message: |
+            GitHub Build Failed on Main branch! 🚨
+
+            👩‍💻 Code URL: ${{ github.event.pull_request.html_url || github.event.head_commit.url }}
+            🚀 Action run link: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}

@@ -59,6 +59,7 @@ def main(
 
     except Exception as ex:
         print(f"An error occurred: {ex}")
+        raise ex
 
 
 if __name__ == "__main__":

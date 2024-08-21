@@ -1,5 +1,7 @@
 # MATRIX
 
+[![CI pipline](https://github.com/everycure-org/matrix/actions/workflows/matrix-ci.yml/badge.svg?branch=main)](https://github.com/everycure-org/matrix/actions/workflows/matrix-ci.yml)
+
 This repo contains the infrastructure for the MATRIX project for drug repurposing, including data science pipelines, documentation and data base configurations.
 
 ## Documentation
