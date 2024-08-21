@@ -58,7 +58,7 @@ lock:
 	uv pip compile requirements.in > requirements.txt
 
 wipe_neo:
-	# assumes you have neo4j running using docker-compose setup from deployments/compose/
+	# assumes you have neo4j running using docker-compose from `compose_up`
 	.venv/bin/python scripts/wipe_neo4j.py 'everycure-test'
 
 integration_test: compose_up wipe_neo
