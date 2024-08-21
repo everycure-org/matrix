@@ -22,6 +22,11 @@ on:
       - pipelines/matrix/**
       - .github/workflows/matrix-ci.yml
       - .github/workflows/matrix-push.yml
+    types:
+      - opened
+      - reopened
+      - synchronize
+      - ready_for_review
   push:
     branches:
       - main

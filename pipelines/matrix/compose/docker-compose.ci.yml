@@ -18,6 +18,7 @@ services:
   mock-genai:
     environment:
       MOCKSERVER_LOG_LEVEL: ERROR
+  
 
   matrix-pipeline:
     image: ${IMG}
