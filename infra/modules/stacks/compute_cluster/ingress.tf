@@ -1,10 +1,11 @@
 data "google_dns_managed_zone" "cluster_zone" {
   name = var.dns_zone
 }
-# Reserve a global IP address
-resource "google_compute_global_address" "ingress_ip" {
-  name = "${var.name}-ingress-ip"
-}
+# TODO remove, we use Gateway class instead
+# # Reserve a global IP address
+# resource "google_compute_global_address" "ingress_ip" {
+#   name = "${var.name}-ingress-ip"
+# }
 
 # Create a ConfigMap with the IP and DNS zone information
 resource "kubernetes_config_map" "dns_config" {

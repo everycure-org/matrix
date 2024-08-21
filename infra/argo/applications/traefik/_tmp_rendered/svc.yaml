@@ -28,27 +28,38 @@ spec:
     - name: http
       port: 80
       targetPort: 80
-  type: ClusterIP
-
+  type: NodePort
 ---
-apiVersion: traefik.io/v1alpha1
-kind: IngressRoute
+apiVersion: networking.k8s.io/v1
+kind: Ingress
 metadata:
-  name: whoami
+  name: whoami-ingress
   namespace: dev-pascal
 spec:
-  entryPoints:
-    - web
-    - websecure
-  tls:
-    certResolver: letsencrypt
-
-  routes:
-    - match: Host(`whoami2.platform.dev.everycure.org`)
-      kind: Rule
-      services:
-        - name: whoami
-          port: 80
+  defaultBackend:
+    service:
+      name: whoami
+      port:
+        number: 80
+# ---
+# apiVersion: traefik.io/v1alpha1
+# kind: IngressRoute
+# metadata:
+#   name: whoami
+#   namespace: dev-pascal
+# spec:
+#   entryPoints:
+#     - web
+#     - websecure
+#   tls:
+#     certResolver: letsencrypt
+# 
+#   routes:
+#     - match: Host(`whoami2.platform.dev.everycure.org`)
+#       kind: Rule
+#       services:
+#         - name: whoami
+#           port: 80
 ---
 apiVersion: apps/v1
 kind: Deployment
