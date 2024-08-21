@@ -39,6 +39,8 @@ def generate_argo_config(image, image_tag):
     metadata = bootstrap_project(project_path)
     package_name = metadata.package_name
 
+    fuse(pipelines["fabricator"])
+
     pipes = {}
     for name, pipeline in pipelines.items():
         # TODO: Fuse nodes in topological order to avoid constant recreation of Neo4j
@@ -55,7 +57,6 @@ def generate_argo_config(image, image_tag):
 def is_fusable(pipeline):
     # NOTE: Currently a pipeline is fusable, if all it's nodes have the `argo-wf.fuse` label.
 
-
     if len(pipeline._nodes) == len(
         pipeline.only_nodes_with_tags("argo-wf.fuse")._nodes
     ):
@@ -65,11 +66,10 @@ def is_fusable(pipeline):
 
 
 def fuse(pipeline):
+    # organize into pipelines
+    breakpoint()
 
-    # NOTE: Lol if you don't call pipeline, topological groups is empty?
-    print(pipeline)
-
-    for node in pipeline.nodes
+    [node for node, parent_nodes in pipeline.node_dependencies.items()][1]
 
 
 def get_dependencies(fused_pipeline):
