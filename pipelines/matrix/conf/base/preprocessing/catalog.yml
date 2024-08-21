@@ -89,7 +89,6 @@ preprocessing.int.mapped_clinical_trial_data:
   <<: *_medical_clinical_trials_sheet_dataset
   save_args:
     sheet_name: clinical_trial_DD_pairs
-    write_columns: ["Mapped Drug Curie", "Mapped Disease Curie"]
-
+    write_columns: ["drug_kg_curie", "disease_kg_curie"]
   load_args:
     sheet_name: clinical_trial_DD_pairs

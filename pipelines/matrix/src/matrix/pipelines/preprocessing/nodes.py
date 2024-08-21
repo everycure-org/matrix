@@ -276,10 +276,10 @@ def clean_clinical_trial_data(df: pd.DataFrame) -> pd.DataFrame:
     Returns:
         Cleaned clinical trial data.
     """
+    
     # remove rows with reason for rejection
-    df = df[df["reason_for_rejection"].map(lambda x: type(x) != str)].reset_index(
-        drop=True
-    )
+    df = df[~df["reason_for_rejection"].isna()].reset_index(drop=True)
+    df = df[df["reason_for_rejection"].map(lambda x: len(x.strip()) == 0)].reset_index(drop=True)
 
     # remove rows with missing drug_kg_curie or disease_kg_curie
     row_has_missing = df["drug_kg_curie"].isna() | df["disease_kg_curie"].isna()
@@ -293,6 +293,13 @@ def clean_clinical_trial_data(df: pd.DataFrame) -> pd.DataFrame:
         | df["significantly_worse"].isna()
     )
     df = df[~row_has_missing].reset_index(drop=True)
+    row_keep = (
+        df["significantly_better"].map(lambda x: type(x) != str)
+        & df["non_significantly_better"].map(lambda x: type(x) != str)
+        & df["non_significantly_worse"].map(lambda x: type(x) != str)
+        & df["significantly_worse"].map(lambda x: type(x) != str)
+    )
+    df = df[row_keep].reset_index(drop=True)
 
     # drop columns: clinical_trial_id, reason_for_rejection
     df = df.drop(columns=["clinical_trial_id", "reason_for_rejection"])
