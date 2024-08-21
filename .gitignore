@@ -25,4 +25,3 @@ neo4j_db/
 infra/argo/applications/**/charts
 
 services/synonymizer/assets/
-**/compose/services/synonymizer/
