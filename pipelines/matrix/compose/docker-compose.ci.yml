@@ -18,6 +18,7 @@ services:
   mock-genai:
     environment:
       MOCKSERVER_LOG_LEVEL: ERROR
+  
 
   matrix-pipeline:
     image: ${IMG}
@@ -48,8 +49,6 @@ services:
         condition: service_healthy
       mlflow: 
         condition: service_healthy
-    networks:
-      - web
 volumes:
   neo4j_logs:
   neo4j_import:
