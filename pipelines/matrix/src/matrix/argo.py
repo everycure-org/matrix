@@ -42,7 +42,7 @@ def generate_argo_config(image, image_tag):
     pipes = {}
     for name, pipeline in pipelines.items():
         # TODO: Fuse nodes in topological order to avoid constant recreation of Neo4j
-        pipes[name] = get_dependencies(pipeline.node_dependencies)
+        pipes[name] = get_dependencies(fuse(pipeline))
 
     output = template.render(
         package_name=package_name, pipes=pipes, image=image, image_tag=image_tag
@@ -54,6 +54,8 @@ def generate_argo_config(image, image_tag):
 # Validate if nodes can be fused in topological order
 def is_fusable(pipeline):
     # NOTE: Currently a pipeline is fusable, if all it's nodes have the `argo-wf.fuse` label.
+
+
     if len(pipeline._nodes) == len(
         pipeline.only_nodes_with_tags("argo-wf.fuse")._nodes
     ):
@@ -62,7 +64,15 @@ def is_fusable(pipeline):
     return False
 
 
-def get_dependencies(dependencies):
+def fuse(pipeline):
+
+    # NOTE: Lol if you don't call pipeline, topological groups is empty?
+    print(pipeline)
+
+    for node
+
+
+def get_dependencies(fused_pipeline):
     """Function to yield node dependencies to render Argo template.
 
     Args:
@@ -72,18 +82,18 @@ def get_dependencies(dependencies):
     """
     deps_dict = [
         {
-            "node": node.name,
-            "name": clean_name(node.name),
-            "deps": [clean_name(val.name) for val in sorted(parent_nodes)],
-            **{
-                tag.split("-")[0][len("argo.") :]: tag.split("-")[1]
-                for tag in node.tags
-                if tag.startswith("argo.")
-            },
+            "nodes": [node.name for node in group]
+            # "name": clean_name(node.name),
+            # "deps": [clean_name(val.name) for val in sorted(parent_nodes)],
+            # **{
+            #     tag.split("-")[0][len("argo.") :]: tag.split("-")[1]
+            #     for tag in node.tags
+            #     if tag.startswith("argo.")
+            # },
         }
-        for node, parent_nodes in dependencies.items()
+        for group in fused_pipeline
     ]
-    return sorted(deps_dict, key=lambda d: d["name"])
+    return sorted(deps_dict, key=lambda d: d["nodes"])
 
 
 def clean_name(name: str) -> str:

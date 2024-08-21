@@ -136,7 +136,21 @@ spec:
     dag:
       tasks:
       {% for task in tasks %}
-      - name: {{ task.nodes | join(',') }}
+      - name: {{ task.name }}
         template: kedro
+        {% if task.deps %}
+        dependencies:
+        {% for dep in task.deps %}
+          - {{ dep }}
+        {% endfor %}
+        {% endif %}
+        arguments:
+          parameters:
+          - name: pipeline
+            value: {{ pipeline }}
+          - name: kedro_node
+            value: {{ task.node }}
+          - name: num_retries
+            value: {{ task.get('retries', 0) }}
       {% endfor %}
   {% endfor %}
