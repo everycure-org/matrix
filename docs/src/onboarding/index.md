@@ -3,7 +3,6 @@ title: Onboarding
 ---
 
 
-
 Welcome to the Matrix onboarding guide! This document provide an introduction to the codebase, and guide you through the process of setting up your local environment.
 
 ## Preliminaries
@@ -120,32 +119,53 @@ Our pipeline uses [Spark](https://spark.apache.org/) for distributed computation
 
 ## Local setup
 
-Our codebase features code that allows for fully localized execution of the pipeline and its' auxiliary services using `docker-compose`. The deployment consists of two files that can be [merged](https://docs.docker.com/compose/multiple-compose-files/merge/) depending on the intended use, i.e.,
+The fastest way to check if everything works locally is to execute the following command in `pipelines/matrix`
 
-1. The base `docker-compose` file defines the runtime services, i.e.,
+```
+make
+```
+
+This command executes a number of make targets, namely:
+- set up a virtual environment
+- install the python dependencies
+- lint the codebase
+- test the codebase
+- build the docker image
+- run the docker image
+
+Generally, the `Makefile` is a good place to start to get a sense of how our codebase is structured. 
+
+### Docker compose for local execution
+Our codebase features code that allows for fully localized execution of the pipeline and
+its' auxiliary services using `docker compose`. The deployment consists of two files that
+can be [merged](https://docs.docker.com/compose/multiple-compose-files/merge/) depending
+on the intended use, i.e.,
+
+1. The base `docker compose` file defines the runtime services, i.e.,
     - Neo4J graph database
     - [MLFlow](https://www.mlflow.org/docs/latest/index.html) instance
     - [Mockserver](https://www.mock-server.com/) implementing a OpenAI compatible GenAI API
         - This allows for running the full pipeline e2e without a provider token
-2. The `docker-compose.test` file adds in the pipeline container for integration testing
+2. The `docker-compose.ci` file adds in the pipeline container for integration testing
     - This file is used by our CI/CD setup and can be ignored for local development.
 
 ![](../assets/img/docker-compose.drawio.svg)
 
-After completing the installation, run the following command from the `deployments/compose` directory to bring up the services.
+Run the following command in the `workflows/matrix` directory to bring up the services
+which are required by the pipeline. This way, you can develop the pipeline locally while
+keeping the services running in the background.
 
 ```bash
-docker-compose up
+make compose_up
 ```
-
-!!! tip
-    Alternatively, you can add the `-d` flag at the end of the command to run in the background.
 
 To validate whether the setup is running, navigate to [localhost](http://localhost:7474/) in your browser, this will open the Neo4J dashboard. Use `neo4j` and `admin` as the username and password combination sign in.
 
 ### .env file for local credentials
 
-If you want to execute the pipeline locally, you need to create a .env file in the root of the `matrix` pipeline. Use the `.env.tmpl` file to get started by renaming it to `.env`.
+If you want to execute the pipeline locally (but without docker), you need to create a
+.env file in the root of the `matrix` pipeline. Use the `.env.tmpl` file to get started
+by renaming it to `.env`.
 
 The key here is that the pipeline will not run fully without credentials
 for the dependent services (at the moment only OpenAI). Reach out to the team through
@@ -153,12 +173,17 @@ Slack if you need a credential.
 
 ### Read raw data from GCS
 
-To read the raw data you do not actually have to be authenticated with gcloud. This is because we leverage hadoop/spark to read the data from GCS and the repository contains a `read-only` service account key that is used by the spark jobs. This file is encrypted however, so you will need to decrypt it. For this we use `git-crypt`. 
+To read the raw data you do not actually have to be authenticated with gcloud. This is
+because we leverage hadoop/spark to read the data from GCS and the repository contains a
+`read-only` service account key that is used by the spark jobs. This file is encrypted
+however, so you will need to decrypt it. For this we use `git-crypt`. 
 
-Please follow the [instructions on git-crypt](./git-crypt.md) to be able to read the data by decrypting the file. In essence, we ask you to share a public key with us, which we will use to encrypt the secret.
-This way, we can easily share secrets with each other without exposing them to the rest of the world.  
+Please follow the [instructions on git-crypt](./git-crypt.md) to be able to read the data
+by decrypting the file. In essence, we ask you to share a public key with us, which we
+will use to encrypt the secret.  This way, we can easily share secrets with each other
+without exposing them to the rest of the world.  
 
-## Kedro
+## Pipeline framework: Kedro
 
 !!! info
     Kedro is an open-source framework to write modular data science code. We recommend checking out the [introduction video](https://docs.kedro.org/en/stable/introduction/index.html).
