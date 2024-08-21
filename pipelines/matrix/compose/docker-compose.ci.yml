@@ -47,8 +47,6 @@ services:
         condition: service_healthy
       mlflow: 
         condition: service_healthy
-    networks:
-      - web
 volumes:
   neo4j_logs:
   neo4j_import:
