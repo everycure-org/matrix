@@ -15,7 +15,8 @@ addopts = [
 norecursedirs = [
     ".venv",
     "data",
-    "compose"
+    "compose",
+    "packages",
 ]
 
 [project]

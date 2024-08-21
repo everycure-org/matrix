@@ -37,7 +37,9 @@ jobs:
       - run: make venv
       - run: make install
       - run: make precommit
-      - run: make test
+      - run: make fast_test
+      - run: make full_test
+        if: github.ref == 'refs/heads/main'
       - run: make compose_down
       - run: make docker_test
         # only if PR is labelled with "ready" or if branch is main

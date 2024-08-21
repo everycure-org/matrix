@@ -1,12 +1,19 @@
 dev_docker_image = us-central1-docker.pkg.dev/mtrx-hub-dev-3of/matrix-images/matrix
 TAG ?= ${USER}
+export PYSPARK_PYTHON = .venv/bin/python
 
-default: venv install precommit test docker_test
+# ensures all make targets run in one shell (rather than line by line in new shell)
+.ONESHELL: 
+
+
+default: venv install precommit fast_test docker_test
 	echo "done!"
 
 venv:
-	uv venv -p 3.11
+	if [ ! -d .venv ]; then uv venv -p 3.11; fi
 install:
+	# deactivate any potentially active venv that may be somewhere else
+	deactivate || true
 	uv pip install -r requirements.txt
 
 precommit: precommit-hooks
@@ -17,7 +24,13 @@ precommit-hooks:
 	uv pip install pre-commit
 	.venv/bin/pre-commit install --install-hooks
 
-test:
+full_test:
+	# activate venv to ensure spark doesn't have python driver mismatches
+	.venv/bin/pytest -v tests/
+
+# fast_test: export PYSPARK_PYTHON = .venv/bin/python
+fast_test: 
+	# activate venv to ensure spark doesn't have python driver mismatches
 	TESTMON_DATAFILE=/tmp/.testmondata .venv/bin/pytest --testmon -v tests/
 
 # executes E2E integration test fully in docker. 
