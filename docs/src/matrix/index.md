@@ -13,7 +13,7 @@ We leverage Github Actions to test and build the pipeline. For testing, we lever
 of unit and integration tests. The integration tests leverage a set of fabricated
 datasets to test the end-to-end pipeline without the need to access real data. 
 
-Check the `deployments/compose` folder for details on how we test our pipeline.
+Check the `.github/workflows/matrix-ci.yml` folder for details on how we test our pipeline.
 
 ### Building executables
 
