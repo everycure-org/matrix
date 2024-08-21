@@ -32,8 +32,6 @@ services:
       timeout: 10s
       retries: 10
       start_period: 10s
-    networks:
-      - web
 
   # MockServer instance that is used to mock a GenAI API conform
   # the OpenAI API spec. This container is used to enable integration
@@ -51,10 +49,6 @@ services:
       MOCKSERVER_ENABLE_CORS_FOR_ALL_RESPONSES: "true"
       MOCKSERVER_INITIALIZATION_JSON_PATH: /openapi/initializer.json
       MOCKSERVER_LOG_LEVEL: DEBUG
-    networks:
-      web:
-        aliases:
-          - mock.genai.com
     volumes:
       - ./mockgenai-initializer.json:/openapi/initializer.json:ro
 
@@ -70,10 +64,3 @@ services:
       timeout: 10s
       retries: 5
       start_period: 30s
-    networks:
-      - web
-
-networks:
-  web:
-    name: web
-    driver: bridge
