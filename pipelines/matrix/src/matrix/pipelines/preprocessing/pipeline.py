@@ -103,7 +103,7 @@ def create_pipeline(**kwargs) -> Pipeline:
             node(
                 func=nodes.clean_clinical_trial_data,
                 inputs=[
-                    "evaluation.int.mapped_clinical_trial_data",
+                    "preprocessing.int.mapped_clinical_trial_data",
                 ],
                 outputs="ingestion.raw.clinical_trial_data@pandas",
                 name="clean_clinical_trial_data",
