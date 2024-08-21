@@ -205,15 +205,21 @@ def reduce_dimension(df: DataFrame, transformer, input: str, output: str, skip: 
         .drop("pca_features", "features")
     )
 
+def ingest_edges(nodes, edges: DataFrame, exc_preds: List[str]):
+    return (
+        edges
+        .select("subject", "predicate", "object", "knowledge_source")
+        .withColumn("label", F.split(F.col("predicate"), ":", limit=2).getItem(1))
+        .filter(F.col("predicate").isin(exc_preds))
+    )
 
 @unpack_params()
 @inject_object()
 def train_topological_embeddings(
     df: DataFrame,
-    edges: DataFrame,
     gds: GraphDataScience,
     projection: Any,
-    filtering: Any,
+    # filtering: Any,
     estimator: Any,
     write_property: str,
 ) -> Dict:
@@ -226,10 +232,8 @@ def train_topological_embeddings(
 
     Args:
         df: nodes df
-        edges: edges df
         gds: the gds object
         projection: gds projection to execute on the graph
-        filtering: filtering to be applied to the projection
         estimator: estimator to apply
         write_property: node property to write result to
     """
@@ -239,13 +243,13 @@ def train_topological_embeddings(
         graph = gds.graph.get(graph_name)
         gds.graph.drop(graph, False)
 
-    config = projection.pop("configuration", None)
+    config = projection.pop("configuration", {})
     graph, _ = gds.graph.project(*projection.values(), **config)
 
-    # Filter out treat/GT nodes from the graph
-    subgraph_name = filtering.get("graphName")
-    filter_args = filtering.pop("args")
-    subgraph, _ = gds.graph.filter(subgraph_name, graph, **filter_args)
+    # # Filter out treat/GT nodes from the graph
+    # subgraph_name = filtering.get("graphName")
+    # filter_args = filtering.pop("args")
+    # subgraph, _ = gds.graph.filter(subgraph_name, graph, **filter_args)
 
     # Validate whether the model exists
     model_name = estimator.get("args").get("modelName")
@@ -255,7 +259,7 @@ def train_topological_embeddings(
 
     # Initialize the model
     model, _ = getattr(gds.beta, estimator.get("model")).train(
-        subgraph, **estimator.get("args")
+        graph, **estimator.get("args")
     )
 
     return {"success": "true"}
@@ -268,12 +272,12 @@ def write_topological_embeddings(
     gds: GraphDataScience,
     projection: Any,
     estimator: Any,
-    filtering: Any,
+    # filtering: Any,
     write_property: str,
 ) -> Dict:
     """Write topological embeddings."""
     # Retrieve the graph
-    graph_name = filtering.get("graphName")
+    graph_name = projection.get("graphName")
     graph = gds.graph.get(graph_name)
 
     # Retrieve the model
