@@ -15,8 +15,8 @@ package_name = metadata.package_name
 
 embeddings = pipelines["__default__"]
 
-class FusedNode(Node):
 
+class FusedNode(Node):
     def __init__(  # noqa: PLR0913
         self,
     ):
@@ -37,12 +37,11 @@ class FusedNode(Node):
     @property
     def tags(self) -> set[str]:
         return set().union(*[node.tags for node in self._nodes])
-        
 
     @property
     def name(self):
         return ",".join([node.name for node in self._nodes])
-    
+
     @property
     def _unique_key(self) -> tuple[Any, Any] | Any | tuple:
         def hashable(value: Any) -> tuple[Any, Any] | Any | tuple:
@@ -76,8 +75,10 @@ pipeline: Pipeline = pipelines["__default__"]
 #     for node in group:
 #         nodes[node] = node.outputs
 
+
 def remove_params(elements):
     return [el for el in elements if not el.startswith("params:")]
+
 
 fused = []
 for group in pipeline.grouped_nodes:
@@ -90,7 +91,7 @@ for group in pipeline.grouped_nodes:
                 if set(remove_params(target_node.inputs)) & set(source_node.outputs):
                     found = True
                     source_node.add_node(target_node)
-        
+
         if not found:
             fused_node = FusedNode()
             fused_node.add_node(target_node)
@@ -106,7 +107,7 @@ for group in pipeline.grouped_nodes:
 # for node, parents in embeddings.node_dependencies.items():
 #     print("node", node.name)
 #     print("parent", ",".join([parent.name for parent in parents]))
-    
+
 #     if "argowf.fuse" in node.tags and all(["argowf.fuse" in parent.tags for parent in parents]):
 #         if fuse_node is None:
 #             fuse_node = FusedNode()
