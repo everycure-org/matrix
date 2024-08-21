@@ -15,6 +15,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 inputs=["embeddings.tmp.source_nodes"],
                 outputs="embeddings.tmp.target_nodes",
                 name="extract_neo4j_nodes",
+                tags=["argo-wf.group.topological_embeddings"],
             ),
             # Load spark dataset into local neo instance
             node(
