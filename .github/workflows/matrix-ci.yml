@@ -1,6 +1,9 @@
 # This workflow assumes a self hosted runner is set up with python and uv already. 
 # This drastically increases the CI speed but at the cost of some pre-setup
 
+# to connect to the worker use
+# gcloud compute ssh --zone "us-central1-c" "github-actions-runner" --tunnel-through-iap --project "mtrx-hub-dev-3of"
+
 # sudo apt install python3-pip pipx  openjdk-17-jdk
 # curl -fsSL https://get.docker.com -o get-docker.sh
 # sudo sh get-docker.sh
