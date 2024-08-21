@@ -82,6 +82,7 @@ embeddings.topological:
       # certain relationships. Another option could be to leverage filtering:
       # https://neo4j.com/docs/graph-data-science/current/management-ops/graph-creation/graph-filter/
       # relationshipWeightProperty: *_weight_attribute
+      maxIterations: 1 # TODO: Revert
       # Chunyu: 512
       embeddingDimension: 512
       # Chunyu: 200k
