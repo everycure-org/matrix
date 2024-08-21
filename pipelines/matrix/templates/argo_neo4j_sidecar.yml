@@ -4,7 +4,7 @@ metadata:
   generateName: sidecar-neo4j
   namespace: argo-workflows
 spec:
-  entrypoint: extract-data
+  entrypoint: ingest-in-local-neo
   volumeClaimTemplates:
   - metadata:
       name: neo4j-data                     
