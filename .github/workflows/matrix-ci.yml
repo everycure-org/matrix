@@ -32,6 +32,7 @@ on:
     branches:
       - main
 
+# https://docs.github.com/en/actions/writing-workflows/workflow-syntax-for-github-actions#concurrency
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
