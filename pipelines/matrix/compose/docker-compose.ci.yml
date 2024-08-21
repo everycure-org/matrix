@@ -1,3 +1,7 @@
+# overriding the default compose for CI. Several reasons:
+# 1) we override the neo4j image to Intel
+# 2) override the images to avoid keeping state in CI (no data mount)
+# 3) add an executino of the matrix-pipeline in a container to execute against the services defined in the base compose file 
 services:
   neo4j:
     # FUTURE: Newever container version gives issues, due to `apoc-extended`

@@ -1,7 +1,9 @@
 dev_docker_image = us-central1-docker.pkg.dev/mtrx-hub-dev-3of/matrix-images/matrix
 TAG ?= ${USER}
 
-.PHONY: venv install precommit test compose_down docker_test
+
+default: venv install precommit test docker_test
+	echo "done!"
 
 venv:
 	uv venv -p 3.11
@@ -34,7 +36,7 @@ docker_build:
 docker_push: docker_build
 	docker push $(dev_docker_image):${TAG}
 
-compose_down:
+compose_up:
 	docker compose -f compose/docker-compose.yml up -d --wait
 
 compose_down:
@@ -47,7 +49,7 @@ wipe_neo:
 	# assumes you have neo4j running using docker-compose setup from deployments/compose/
 	.venv/bin/python scripts/wipe_neo4j.py 'everycure-test'
 
-integration_test: compose_down wipe_neo
+integration_test: compose_up wipe_neo
 	# NOTE: We are running without xgc due to its long runtime. 
 	.venv/bin/kedro run --env test -p test --runner ThreadRunner --without-tags xgc,not-shared
 
