@@ -43,6 +43,7 @@ locals {
     initial_node_count = 0
     }
   ]
+
   mem_node_pools = [for size in [4, 8, 16, 32, 48, 64] : {
     name               = "n2-standard-${size}-nodes"
     machine_type       = "n2-standard-${size}"
