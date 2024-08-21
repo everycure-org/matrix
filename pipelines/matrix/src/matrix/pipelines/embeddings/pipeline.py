@@ -8,27 +8,45 @@ def create_pipeline(**kwargs) -> Pipeline:
     """Create embeddings pipeline."""
     return pipeline(
         [
+            # Load data from source neo4j instance
+            # Should be done after adding node embeddings
             node(
-                func=nodes.compute_embeddings,
-                inputs={
-                    "input": "integration.model_input.nodes",
-                    "gdb": "params:embeddings.gdb",
-                    "features": "params:embeddings.node.features",
-                    "unpack": "params:embeddings.ai_config",
-                },
-                outputs="embeddings.prm.graph.embeddings@yaml",
-                name="add_node_embeddings",
-                tags=["argo.retries-3"],
+                func=lambda x: x,
+                inputs=["embeddings.tmp.source_nodes"],
+                outputs="embeddings.tmp.target_nodes",
+                name="extract_neo4j_nodes",
             ),
+
+            # Load spark dataset into local neo instance
             node(
-                func=nodes.reduce_dimension,
-                inputs={
-                    "df": "embeddings.prm.graph.embeddings@neo",
-                    "unpack": "params:embeddings.dimensionality_reduction",
-                },
-                outputs="embeddings.prm.graph.pca_embeddings",
-                name="apply_pca",
+                func=lambda x: x,
+                inputs=["embeddings.tmp.target_nodes"],
+                outputs="embeddings.tmp.input_nodes",
+                name="ingest_neo4j_input_nodes",
             ),
+
+            # Load into target neo4j instance
+            # node(
+            #     func=nodes.compute_embeddings,
+            #     inputs={
+            #         "input": "integration.model_input.nodes",
+            #         "gdb": "params:embeddings.gdb",
+            #         "features": "params:embeddings.node.features",
+            #         "unpack": "params:embeddings.ai_config",
+            #     },
+            #     outputs="embeddings.prm.graph.embeddings@yaml",
+            #     name="add_node_embeddings",
+            #     tags=["argo.retries-3"],
+            # ),
+            # node(
+            #     func=nodes.reduce_dimension,
+            #     inputs={
+            #         "df": "embeddings.prm.graph.embeddings@neo",
+            #         "unpack": "params:embeddings.dimensionality_reduction",
+            #     },
+            #     outputs="embeddings.prm.graph.pca_embeddings",
+            #     name="apply_pca",
+            # ),
             node(
                 func=nodes.train_topological_embeddings,
                 inputs={

@@ -39,8 +39,6 @@ def generate_argo_config(image, image_tag):
     metadata = bootstrap_project(project_path)
     package_name = metadata.package_name
 
-    breakpoint()
-
     pipes = {}
     for name, pipeline in pipelines.items():
         # TODO: Fuse nodes in topological order to avoid constant recreation of Neo4j
