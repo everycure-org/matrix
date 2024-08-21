@@ -69,7 +69,7 @@ def fuse(pipeline):
     # NOTE: Lol if you don't call pipeline, topological groups is empty?
     print(pipeline)
 
-    for node
+    for node in pipeline.nodes
 
 
 def get_dependencies(fused_pipeline):
