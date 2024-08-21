@@ -23,7 +23,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 outputs="embeddings.tmp.input_nodes",
                 name="ingest_neo4j_input_nodes",
             ),
-             node(
+            node(
                 func=nodes.ingest_edges,
                 inputs=[
                     "embeddings.tmp.input_nodes",
