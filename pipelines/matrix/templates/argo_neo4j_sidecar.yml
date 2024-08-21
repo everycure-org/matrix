@@ -78,6 +78,13 @@ spec:
       - name: pipeline
       - name: env
     container:
+      resources: # limit the resources
+        requests:
+          memory: 120Gi
+          cpu: 4
+        limits:
+          memory: 120Gi
+          cpu: 16
       env:
         - name: WORKFLOW_ID
           valueFrom:
@@ -178,7 +185,7 @@ spec:
           - name: pipeline
             value: embeddings
           - name: kedro_node
-            value: ingest_neo4j_input_nodes
+            value: ingest_neo4j_input_nodes,ingest_neo4j_input_edges,train_topological_embeddings,add_topological_embeddings
           - name: env
             value: cloud
           - name: num_retries
