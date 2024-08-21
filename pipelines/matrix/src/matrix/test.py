@@ -71,10 +71,6 @@ def clean_name(name: str) -> str:
 nodes = {}
 
 pipeline: Pipeline = pipelines["__default__"]
-# for group in pipeline.grouped_nodes:
-#     for node in group:
-#         nodes[node] = node.outputs
-
 
 def remove_params(elements):
     return [el for el in elements if not el.startswith("params:")]
