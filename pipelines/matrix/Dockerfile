@@ -25,4 +25,8 @@ COPY conf/base/spark.yml conf/base/spark.yml
 COPY scripts/maven-deps.py maven-deps.py
 RUN python maven-deps.py
 
+# Set git commit sha as env variable, useful for tracing back code to data
+ARG GIT_SHA
+ENV GIT_SHA=$GIT_SHA
+
 ADD . .
