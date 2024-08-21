@@ -41,7 +41,7 @@ embeddings.dimensionality_reduction:
 embeddings.gds:
   object: matrix.pipelines.embeddings.nodes.GraphDS
   endpoint: ${globals:neo4j.host}
-  database: everycure-${globals:versions.release}
+  database: analytics
   auth:
     -  ${globals:neo4j.user}
     -  ${globals:neo4j.password}
@@ -63,30 +63,30 @@ embeddings.topological:
     nodeProjection:
       Entity:
         label: 'Entity'
-        properties: *_pca_property
+        properties: embedding
     relationshipProjection: '*'
-    configuration:
-      relationshipProperties: [&_weight_attribute include_in_graphsage]
-  filtering:
-    graphName: filtered_embeddings 
-    args:
-      node_filter: '*'
-      relationship_filter: r.include_in_graphsage = 1.0
+    # configuration:
+    #   relationshipProperties: [&_weight_attribute include_in_graphsage]
+  # filtering:
+  #   graphName: filtered_embeddings 
+  #   args:
+  #     node_filter: '*'
+  #     relationship_filter: r.include_in_graphsage = 1.0
   estimator:
     model: graphSage
     args:
       modelName: topological_embeddings
-      featureProperties: [*_pca_property]
+      featureProperties: [embedding]
       concurrency: 4
       # FUTURE: We're currently leveraging a binary weighting strategy to exclude  
       # certain relationships. Another option could be to leverage filtering:
       # https://neo4j.com/docs/graph-data-science/current/management-ops/graph-creation/graph-filter/
-      relationshipWeightProperty: *_weight_attribute
+      # relationshipWeightProperty: *_weight_attribute
       # Chunyu: 512
       embeddingDimension: 512
       # Chunyu: 200k
       batchSize: 20000
-      epochs: 10
+      epochs: 1 # TODO: Revert
       searchDepth: 100
       # Chunyu
       # learningRate: 0.01

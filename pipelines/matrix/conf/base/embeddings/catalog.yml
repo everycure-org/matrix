@@ -73,6 +73,17 @@ embeddings.tmp.input_nodes:
       CREATE (n:Entity {id: event.id, embedding: event.pca_embedding})
       RETURN n
 
+embeddings.tmp.input_edges:
+  <<: [*_neo4j_ds]
+  save_args:
+    # NOTE: The `match:Entity` ensures that the index we created above is leveraged
+    # while inserting edges, thereby speeding up the process massively.
+    query: > 
+      MATCH (subject:Entity {id: event.subject}), (object:Entity {id: event.object})
+      WITH subject, object, event
+      CALL apoc.create.relationship(subject, event.label, {}, object) YIELD rel
+      RETURN rel
+
 embeddings.models.graphsage:
   # we do not actually do anything with this DS, thus it's a dummy
   # https://github.com/kedro-org/kedro/discussions/3758

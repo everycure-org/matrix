@@ -23,6 +23,16 @@ def create_pipeline(**kwargs) -> Pipeline:
                 outputs="embeddings.tmp.input_nodes",
                 name="ingest_neo4j_input_nodes",
             ),
+             node(
+                func=nodes.ingest_edges,
+                inputs=[
+                    "embeddings.tmp.input_nodes",
+                    "ingestion.prm.rtx_kg2.edges",
+                    "params:integration.graphsage_excl_preds",
+                ],
+                outputs="embeddings.tmp.input_edges",
+                name="ingest_neo4j_input_edges",
+            ),
             # Load into target neo4j instance
             # node(
             #     func=nodes.compute_embeddings,
@@ -48,8 +58,7 @@ def create_pipeline(**kwargs) -> Pipeline:
             node(
                 func=nodes.train_topological_embeddings,
                 inputs={
-                    "df": "embeddings.prm.graph.pca_embeddings",
-                    "edges": "integration.model_input.edges",
+                    "df": "embeddings.tmp.input_edges",
                     "gds": "params:embeddings.gds",
                     "unpack": "params:embeddings.topological",
                 },
