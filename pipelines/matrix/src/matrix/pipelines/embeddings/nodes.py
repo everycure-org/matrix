@@ -245,6 +245,12 @@ def train_topological_embeddings(
     # Filter out treat/GT nodes from the graph
     subgraph_name = filtering.get("graphName")
     filter_args = filtering.pop("args")
+
+    # Drop graph if exists
+    if gds.graph.exists(subgraph_name).exists:
+        subgraph = gds.graph.get(subgraph_name)
+        gds.graph.drop(subgraph, False)
+
     subgraph, _ = gds.graph.filter(subgraph_name, graph, **filter_args)
 
     # Validate whether the model exists

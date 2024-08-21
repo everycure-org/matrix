@@ -1,20 +1,16 @@
 _bigquery_ds: &_bigquery_ds
   type: matrix.datasets.gcp.BigQueryTableDataset
   project_id: ${oc.env:GCP_PROJECT_ID}
+  dataset: data_api
+  identifier: "${globals:versions.release}"
+  save_args:
+    bigQueryTableLabel.git_sha: ${globals:git_sha}
+    temporaryGcsBucket: ${globals:gcs_bucket}
 
 embeddings.feat.nodes:
   <<: *_bigquery_ds
-  dataset: data_api
   table: nodes
-  identifier: "${globals:versions.release}"
-  save_args:
-    temporaryGcsBucket: ${globals:gcs_bucket}
 
 embeddings.feat.edges:
   <<: *_bigquery_ds
-  dataset: data_api
   table: "edges"
-  identifier: "${globals:versions.release}"
-  save_args:
-    temporaryGcsBucket: ${globals:gcs_bucket}
-    # bigQueryTableLabel.release: ${globals:versions.release}

@@ -1,45 +1,40 @@
-modelling.xgc:
+modelling.rf:
     _overrides:
-      
       generator:
         object: matrix.datasets.pair_generator.ReplacementDrugDiseasePairGenerator
         random_state: ${globals:random_state}
         y_label: 2
-        n_replacements: 2
+        n_replacements: 1
         drug_flags:
           - is_drug
-          - is_ground_pos
         disease_flags:
           - is_disease
-
 
       model_tuning_args:
         tuner:
           object: matrix.pipelines.modelling.tuning.GaussianSearch
           estimator:
-            object: xgboost.XGBClassifier
+            object: sklearn.ensemble.RandomForestClassifier
             n_jobs: 16
             random_state: ${globals:random_state}
-            tree_method: hist
-            device: cuda
           n_calls: 20
           dimensions:
-            - object: skopt.space.Real
-              name: learning_rate
-              low: 0.01
-              high: 0.5
-            - object: skopt.space.Integer
-              name: max_depth
-              low: 3
-              high: 10
-            - object: skopt.space.Real
-              name: lambda
-              low: 0
-              high: 1
             - object: skopt.space.Integer
               name: n_estimators
               low: 50
               high: 2500
+            - object: skopt.space.Integer
+              name: max_depth
+              low: 5
+              high: 100
+            - object: skopt.space.Integer
+              name: min_samples_leaf
+              low: 1
+              high: 10
+            - object: skopt.space.Integer
+              name: min_samples_split
+              low: 2
+              high: 10
           scoring: 
               object: matrix.pipelines.modelling.utils.partial_
               func:
@@ -54,7 +49,7 @@ modelling.xgc:
           - source_+
           - target_+
         target_col_name: y
-    
+          
     # NOTE: This leverages the custom `merge` resolver to override
     # the base options with the override block above.
     model_options: ${merge:${.._model_options},${._overrides}}
