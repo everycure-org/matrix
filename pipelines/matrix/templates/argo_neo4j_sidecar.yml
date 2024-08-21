@@ -4,7 +4,7 @@ metadata:
   generateName: sidecar-neo4j
   namespace: argo-workflows
 spec:
-  entrypoint: pipeline
+  entrypoint: extract-data
   volumeClaimTemplates:
   - metadata:
       name: neo4j-data                     
@@ -20,6 +20,7 @@ spec:
       - name: kedro_node
       - name: num_retries
       - name: pipeline
+      - name: env
     container:
       env:
         - name: WORKFLOW_ID
@@ -27,7 +28,63 @@ spec:
             fieldRef:
               fieldPath: metadata.labels['workflows.argoproj.io/workflow']
         - name: RELEASE_VERSION
-          value:  "test" 
+          value:  "20240820" 
+        - name: EXPERIMENT
+          value:  "sidecar" 
+        - name: MLFLOW_ENDPOINT
+          value:  "http://mlflow-tracking.mlflow.svc.cluster.local:80" 
+        - name: NEO4J_HOST
+          value:  "bolt://neo4j.neo4j.svc.cluster.local:7687" 
+        - name: NEO4J_USER
+          valueFrom:
+            secretKeyRef:
+              name: matrix-secrets
+              key: NEO4J_USER
+        - name: NEO4J_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: matrix-secrets
+              key: NEO4J_PASSWORD
+        - name: GCP_PROJECT_ID
+          valueFrom:
+            configMapKeyRef:
+              name: matrix-config
+              key: GCP_PROJECT_ID
+        - name: GCP_BUCKET
+          valueFrom:
+            configMapKeyRef:
+              name: matrix-config
+              key: GCP_BUCKET
+        - name: OPENAI_API_KEY
+          value: "foo"
+        - name: OPENAI_ENDPOINT
+          value:  "https://api.openai.com/v1" 
+        - name: OPENAI_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: matrix-secrets
+              key: OPENAI_API_KEY
+      imagePullPolicy: Always
+      image: us-central1-docker.pkg.dev/mtrx-hub-dev-3of/matrix-images/matrix:laurens
+      command: ["/bin/sh", "-c"]
+      args:
+        - |
+          kedro run -p {{inputs.parameters.pipeline}} -e "{{inputs.parameters.env}}" -n "{{inputs.parameters.kedro_node}}"
+  - name: kedro-with-neo-sidecar
+    inputs:
+      parameters:
+      - name: kedro_node
+      - name: num_retries
+      - name: pipeline
+      - name: env
+    container:
+      env:
+        - name: WORKFLOW_ID
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.labels['workflows.argoproj.io/workflow']
+        - name: RELEASE_VERSION
+          value:  "20240820" 
         - name: EXPERIMENT
           value:  "test" 
         - name: MLFLOW_ENDPOINT
@@ -66,7 +123,7 @@ spec:
             sleep 5
           done
           echo "Neo4j is ready. Starting main application..."
-          kedro run -p {{inputs.parameters.pipeline}} -e test -n "{{inputs.parameters.kedro_node}}"
+          kedro run -p {{inputs.parameters.pipeline}} -e "{{inputs.parameters.env}}" -n "{{inputs.parameters.kedro_node}}"
     sidecars:
       # Neo4j enterprise sidecar
       - name: neo4j
@@ -95,11 +152,27 @@ spec:
         volumeMounts:
         - name: neo4j-data
           mountPath: /data
+
+  - name: extract-data
+    dag:
+      tasks:
+      - name: extract
+        template: kedro
+        arguments:
+          parameters:
+          - name: pipeline
+            value: embeddings
+          - name: kedro_node
+            value: extract_neo4j_nodes
+          - name: env
+            value: cloud
+          - name: num_retries
+            value: 0
   - name: pipeline
     dag:
       tasks:
       - name: fabricate
-        template: kedro
+        template: kedro-with-neo-sidecar
         arguments:
           parameters:
           - name: pipeline
@@ -108,10 +181,12 @@ spec:
             value: fabricate_datasets,create_tp_pairs,create_tn_pairs,write_rtx_kg2_nodes,write_rtx_kg2_edges,create_neo4j_nodes,create_neo4j_edges
           - name: num_retries
             value: 1
+          - name: env
+            value: test
       - name: add-node-embeddings
         dependencies:
           - fabricate
-        template: kedro
+        template: kedro-with-neo-sidecar
         arguments:
           parameters:
           - name: pipeline
@@ -120,3 +195,5 @@ spec:
             value: add_node_embeddings
           - name: num_retries
             value: 1
+          - name: env
+            value: test

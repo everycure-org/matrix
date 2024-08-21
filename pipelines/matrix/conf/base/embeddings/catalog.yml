@@ -1,6 +1,6 @@
 _neo4j_ds: &_neo4j_ds
   type: matrix.datasets.neo4j.Neo4JSparkDataset
-  database: everycure-${globals:versions.release}
+  database: analytics
   url: ${globals:neo4j.host}
   credentials: neo4j_credentials
   save_args:
@@ -41,6 +41,37 @@ embeddings.prm.graph.pca_embeddings:
     query: >
       MATCH (n: Entity) 
       RETURN n.id as id, n.pca_embedding as embedding
+
+
+# TMP dataset to extract nodes with embeddings
+embeddings.tmp.source_nodes:
+  <<: *_neo4j_ds
+  load_args:
+    # NOTE: The 'biolink' prefixes was removed to have a clean Neo4J UI interface. We're adding
+    # it back into the query as the modelling expects it.
+    query: >  
+      MATCH (n) 
+      RETURN 
+        n.id AS id, 
+        n.pca_embedding as pca_embedding
+
+# tmp dataset with nodes and embeddings
+embeddings.tmp.target_nodes:
+  <<: *_spark_parquet
+  filepath: ${globals:paths.raw}/embeddings/tmp_nodes_with_embeddings
+
+embeddings.tmp.input_nodes:
+  <<: [*_neo4j_ds]
+  save_args:
+    # NOTE: Neo4j nodes can have multiple labels. We're adding _all_ nodes in a global
+    # `entity` label on which we generate a unique constraint. This has the side-effect
+    # that an index is created which allows for quick edge inserts down the line.
+    # https://neo4j.com/docs/cypher-manual/current/constraints/
+    script: >
+      CREATE CONSTRAINT IF NOT EXISTS FOR (n:Entity) REQUIRE n.id IS UNIQUE;
+    query: > 
+      CREATE (n:Entity {id: event.id, embedding: event.pca_embedding})
+      RETURN n
 
 embeddings.models.graphsage:
   # we do not actually do anything with this DS, thus it's a dummy
