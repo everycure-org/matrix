@@ -10,19 +10,19 @@ def create_pipeline(**kwargs) -> Pipeline:
         [
             # Load data from source neo4j instance
             # Should be done after adding node embeddings
-            node(
-                func=lambda x: x,
-                inputs=["embeddings.tmp.source_nodes"],
-                outputs="embeddings.tmp.target_nodes",
-                name="extract_neo4j_nodes",
-            ),
+            # node(
+            #     func=lambda x: x,
+            #     inputs=["embeddings.tmp.source_nodes"],
+            #     outputs="embeddings.tmp.target_nodes",
+            #     name="extract_neo4j_nodes",
+            # )
             # Load spark dataset into local neo instance
             node(
                 func=lambda x: x,
                 inputs=["embeddings.tmp.target_nodes"],
                 outputs="embeddings.tmp.input_nodes",
                 name="ingest_neo4j_input_nodes",
-                tags=["argowf.fuse", "argowf.neo4j"],
+                # tags=["argowf.fuse", "argowf.neo4j"],
             ),
             node(
                 func=nodes.ingest_edges,
@@ -77,8 +77,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 },
                 outputs="embeddings.model_output.graphsage",
                 name="add_topological_embeddings",
-                tags=["argowf.fuse", "argowf.neo4j"],
-                # tags=["argowf.mem-100g"]
+                tags=["argowf.fuse", "argowf.neo4j", "argowf.mem-100g"],
             ),
             # extracts the nodes from neo4j and writes them to BigQuery
             node(

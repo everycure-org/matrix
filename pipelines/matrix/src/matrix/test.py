@@ -13,7 +13,7 @@ project_path = "/Users/laurens/Documents/projects/matrix/pipelines/matrix"
 metadata = bootstrap_project(project_path)
 package_name = metadata.package_name
 
-embeddings = pipelines["__default__"]
+embeddings = pipelines["embeddings"]
 
 
 class FusedNode(Node):
@@ -27,7 +27,7 @@ class FusedNode(Node):
     def add_node(self, node):
         self._nodes.append(node)
 
-    def add_parents(self, parents):
+    def set_parents(self, parents):
         self._parents.update(parents)
 
     @property
@@ -87,7 +87,7 @@ for group in pipeline.grouped_nodes:
         found = False
 
         if "argowf.fuse" in target_node.tags:
-            for source_node in [fn for fn in fused if "argowf.fuse" in fn.tags]:
+            for source_node in [fs for fs in fused if "argowf.fuse" in fs.tags]:
                 if set(remove_params(target_node.inputs)) & set(source_node.outputs):
                     found = True
                     source_node.add_node(target_node)
@@ -95,56 +95,32 @@ for group in pipeline.grouped_nodes:
         if not found:
             fused_node = FusedNode()
             fused_node.add_node(target_node)
+            fused_node.set_parents(
+                [
+                    fs
+                    for fs in fused
+                    if set(remove_params(target_node.inputs)) & set(fs.outputs)
+                ]
+            )
             fused.append(fused_node)
 
 # pipeline.grouped_nodes
-[fuse.name for fuse in fused]
+{fuse.name: {"deps": [f.name for f in fuse._parents]} for fuse in fused}
 
-# %%
-# dep_translation = {}
-# fuse_node = None
-# new_dependencies = {}
-# for node, parents in embeddings.node_dependencies.items():
-#     print("node", node.name)
-#     print("parent", ",".join([parent.name for parent in parents]))
+d = [
+    {
+        "name": clean_name(fuse.name),
+        # "name": clean_name(node.name),
+        "deps": [clean_name(val.name) for val in sorted(fuse._parents)],
+        "tags": fuse.tags,
+        **{
+            tag.split("-")[0][len("argowf.") :]: tag.split("-")[1]
+            for tag in fuse.tags
+            if tag.startswith("argowf.") and "-" in tag
+        },
+    }
+    for fuse in fused
+]
 
-#     if "argowf.fuse" in node.tags and all(["argowf.fuse" in parent.tags for parent in parents]):
-#         if fuse_node is None:
-#             fuse_node = FusedNode()
-
-#         fuse_node.add_node(node)
-#         fuse_node.add_parents([parent if dep_translation.get(parent) is None else dep_translation[parent] for parent in parents if parent not in fuse_node._nodes])
-
-#     else:
-#         if fuse_node:
-
-#             print("stopped fusing", node.name,  all(["argowf.fuse" in parent.tags for parent in parents]))
-
-#             # add translated nodes
-#             for fused_node in fuse_node._nodes:
-#                 dep_translation[fused_node] = fuse_node
-
-#             new_dependencies[fuse_node] = fuse_node._parents
-#             fuse_node = None
-
-#         new_dependencies[node] = [parent if dep_translation.get(parent) is None else dep_translation[parent] for parent in parents]
-
-# if fuse_node:
-#     new_dependencies[fuse_node] = fuse_node._parents
-
-# d = [
-#     {
-#         "name":  clean_name(node.name),
-#         # "name": clean_name(node.name),
-#         "deps": [ clean_name(val.name) for val in sorted(parents)],
-#         **{
-#             tag.split("-")[0][len("argowf.") :]: tag.split("-")[1]
-#             for tag in node.tags
-#             if tag.startswith("argowf.") and "-" in tag
-#         },
-#     }
-#     for node, parents in new_dependencies.items()
-# ]
-
-# sorted(d, key=lambda d: d["name"])
+sorted(d, key=lambda d: d["name"])
 # %%
