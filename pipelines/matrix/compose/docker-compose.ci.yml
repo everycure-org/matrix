@@ -1,16 +1,31 @@
+# overriding the default compose for CI. Several reasons:
+# 1) we override the neo4j image to Intel
+# 2) override the images to avoid keeping state in CI (no data mount)
+# 3) add an executino of the matrix-pipeline in a container to execute against the services defined in the base compose file 
 services:
   neo4j:
     # FUTURE: Newever container version gives issues, due to `apoc-extended`
     # and `gds` versions not being released yet. Update when released.
     image: neo4j:5.21.0-enterprise
+    # overwriting volumes so we don't have any
+    # https://docs.docker.com/reference/compose-file/merge/#reset-value
+    volumes: !override 
+      # note we do NOT mount data which makes the CI container stateless
+      - neo4j_logs:/logs
+      - neo4j_import:/var/lib/neo4j/import
+      - neo4j_plugins:/plugins
 
   mock-genai:
     environment:
       MOCKSERVER_LOG_LEVEL: ERROR
 
   matrix-pipeline:
-    image: matrix-pipeline
-    build: "../../pipelines/matrix"
+    image: ${IMG}
+    container_name: matrix
+    #build: 
+    #  context: "../"
+    #  platforms: 
+    #    - linux/amd64
     # NOTE: We're omitting --runner ThreadRunner due to a CI
     # only bug. We suspect that this is due to the hooks setup
     # that should be resolved in the following issue:
@@ -19,7 +34,7 @@ services:
       - "/bin/sh"
       - -ecx
       - |
-          kedro run -e test -p test
+          kedro run -e test -p test --runner ThreadRunner --without-tags xg_ensemble,not-shared
     environment:
       NEO4J_HOST: bolt://neo4j:7687
       NEO4J_USER: neo4j
@@ -35,3 +50,7 @@ services:
         condition: service_healthy
     networks:
       - web
+volumes:
+  neo4j_logs:
+  neo4j_import:
+  neo4j_plugins:
