@@ -16,7 +16,6 @@ def create_pipeline(**kwargs) -> Pipeline:
                 outputs="embeddings.tmp.target_nodes",
                 name="extract_neo4j_nodes",
             ),
-
             # Load spark dataset into local neo instance
             node(
                 func=lambda x: x,
@@ -24,7 +23,6 @@ def create_pipeline(**kwargs) -> Pipeline:
                 outputs="embeddings.tmp.input_nodes",
                 name="ingest_neo4j_input_nodes",
             ),
-
             # Load into target neo4j instance
             # node(
             #     func=nodes.compute_embeddings,
