@@ -210,7 +210,7 @@ def ingest_edges(nodes, edges: DataFrame, exc_preds: List[str]):
     return (
         edges.select("subject", "predicate", "object", "knowledge_source")
         .withColumn("label", F.split(F.col("predicate"), ":", limit=2).getItem(1))
-        .filter(F.col("predicate").isin(exc_preds))
+        .filter(~F.col("predicate").isin(exc_preds))
     )
 
 
