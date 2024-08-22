@@ -16,4 +16,4 @@ spec:
   rules:
   - backendRefs:
     - name: argo-argocd-server
-      port: 8080
+      port: 80
