@@ -132,14 +132,16 @@ This HTTPRoute resource:
 Our setup leverages these concepts to provide a flexible and powerful routing solution.
 
 
-### Reading material:
+### Additional Resources
 
-- Using Gatweay for Ingress: https://gateway-api.sigs.k8s.io/guides/
-- External DNS & Gateway: https://kubernetes-sigs.github.io/external-dns/v0.13.1/tutorials/gateway-api/
-- https://cert-manager.io/docs/configuration/acme/
-  - Cert manager and Gateway: https://cert-manager.io/docs/usage/gateway/
-- how it works on GKE: https://cloud.google.com/kubernetes-engine/docs/concepts/gateway-api
-- securing it with IaP : https://cloud.google.com/kubernetes-engine/docs/how-to/secure-gateway
+- **Using Gateway for Ingress**: [https://gateway-api.sigs.k8s.io/guides/](https://gateway-api.sigs.k8s.io/guides/)
+- **External DNS & Gateway**: [https://kubernetes-sigs.github.io/external-dns/v0.13.1/tutorials/gateway-api/](https://kubernetes-sigs.github.io/external-dns/v0.13.1/tutorials/gateway-api/)
+- **Cert Manager Configuration**:
+  - **ACME**: [https://cert-manager.io/docs/configuration/acme/](https://cert-manager.io/docs/configuration/acme/)
+  - **Cert Manager and Gateway**: [https://cert-manager.io/docs/usage/gateway/](https://cert-manager.io/docs/usage/gateway/)
+- **Gateway API on GKE**:
+  - **How it Works**: [https://cloud.google.com/kubernetes-engine/docs/concepts/gateway-api](https://cloud.google.com/kubernetes-engine/docs/concepts/gateway-api)
+  - **Securing with IAP**: [https://cloud.google.com/kubernetes-engine/docs/how-to/secure-gateway](https://cloud.google.com/kubernetes-engine/docs/how-to/secure-gateway)
 
 [^1]: https://gateway-api.sigs.k8s.io/
 [^2]: https://gateway-api.sigs.k8s.io/guides/

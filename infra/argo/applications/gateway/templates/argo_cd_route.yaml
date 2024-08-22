@@ -1,3 +1,5 @@
+# This shows how to do cross namespace referencing. This gets deployed in argocd namespace but references the 
+# gateway below through the namespace
 kind: HTTPRoute
 apiVersion: gateway.networking.k8s.io/v1beta1
 metadata:

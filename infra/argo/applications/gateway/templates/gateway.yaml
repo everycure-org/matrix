@@ -41,17 +41,18 @@ spec:
     privateKeySecretRef:
       name: letsencrypt-account-key
     solvers:
+      # HTTP01 solver configuration for simple non wildcard certificate validation
       - http01:
           gatewayHTTPRoute:
             parentRefs:
-              - name: external-http  # Match your Gateway name
+              - name: external-http  # Ensure this matches the name of your Gateway resource
                 group: gateway.networking.k8s.io
-                namespace: {{ .Values.namespace }}
-                kind: Gateway
-      # Alternatively use DNS challenge for wildcards
+                namespace: {{ .Values.namespace }} 
+                kind: Gateway 
+      # DNS01 solver configuration for wildcard certificate validation
       - dns01:
           cloudDNS:
-            project: mtrx-hub-dev-3of
+            project: mtrx-hub-dev-3of  # This should match your Google Cloud project ID
 ---
 # HTTP redirect to HTTPS
 apiVersion: gateway.networking.k8s.io/v1
