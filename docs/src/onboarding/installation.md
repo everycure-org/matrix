@@ -28,7 +28,10 @@ We advise managing your Python installation using [`pyenv`](https://github.com/p
 ### Python environment
 
 We leverage [`uv`](https://github.com/astral-sh/uv) to manage/install our Python
-requirements. Install as follows, then create a virtual env and install the requirements:
+requirements. Note that while many may be used to Conda, UV and Conda cannot be used in parallel. Using Conda is hence at your own risk.
+
+
+Install as follows, then create a virtual env and install the requirements:
 
 
 !!! warning
