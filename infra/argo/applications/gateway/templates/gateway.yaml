@@ -6,6 +6,7 @@ metadata:
   annotations:
     cert-manager.io/cluster-issuer: letsencrypt-prod
 spec:
+  # we need to use the global one to make sure IaP works. 
   gatewayClassName: gke-l7-global-external-managed	
   listeners:
   - name: https
