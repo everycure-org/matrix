@@ -55,15 +55,16 @@ embeddings.prm.graph.embeddings@yaml:
 embeddings.prm.graph.embeddings@neo:
   <<: *_neo4j_ds
   load_args:
-    query: >  
-      MATCH (n) 
-      RETURN 
-        n.id AS id, 
-        n.embedding as embedding
+    partitions: 16
+    labels: ":Entity"
 
-embeddings.feat.graph.pca_embeddings:
+embeddings.feat.graph.node_embeddings:
   <<: *_spark_parquet
   filepath: ${globals:paths.raw}/embeddings/tmp_nodes_with_embeddings
+
+embeddings.feat.graph.pca_node_embeddings:
+  <<: *_spark_parquet
+  filepath: ${globals:paths.raw}/embeddings/tmp_nodes_with_pca_embeddings
 
 
 embeddings.tmp.input_nodes:
