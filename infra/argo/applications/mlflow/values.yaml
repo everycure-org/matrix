@@ -3,6 +3,8 @@ mlflow:
 
   # Disable tracking server password
   tracking: 
+    service:
+      type: ClusterIP
     auth:
       enabled: false
     command: [ "/bin/sh", "-c" ]
