@@ -252,12 +252,15 @@ def reduce_dimension(df: DataFrame, transformer, input: str, output: str, skip: 
     transformer.setInputCol("features")
     transformer.setOutputCol("pca_features")
 
-    return (
+    res = (
         transformer.fit(df)
         .transform(df)
         .withColumn(output, vector_to_array("pca_features"))
         .drop("pca_features", "features")
+        .withColumnRenamed("<labels>", "labels")
     )
+
+    return res
 
 
 def ingest_edges(nodes, edges: DataFrame, exc_preds: List[str]):
