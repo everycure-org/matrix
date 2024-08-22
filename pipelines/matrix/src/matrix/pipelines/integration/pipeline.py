@@ -9,24 +9,18 @@ def create_pipeline(**kwargs) -> Pipeline:
     return pipeline(
         [
             # Write kg2 Neo4J
-            node(
-                func=nodes.create_nodes,
-                inputs=["ingestion.prm.rtx_kg2.nodes"],
-                outputs="integration.model_input.nodes",
-                name="create_neo4j_nodes",
-                tags=["rtx_kg2", "neo4j"],
-            ),
-            node(
-                func=nodes.create_edges,
-                inputs=[
-                    "integration.model_input.nodes",
-                    "ingestion.prm.rtx_kg2.edges",
-                    "params:integration.graphsage_excl_preds",
-                ],
-                outputs="integration.model_input.edges",
-                name="create_neo4j_edges",
-                tags=["rtx_kg2", "neo4j"],
-            ),
+            # Not needed until later
+            # node(
+            #     func=nodes.create_edges,
+            #     inputs=[
+            #         "integration.model_input.nodes",
+            #         "ingestion.prm.rtx_kg2.edges",
+            #         "params:integration.graphsage_excl_preds",
+            #     ],
+            #     outputs="integration.model_input.edges",
+            #     name="create_neo4j_edges",
+            #     tags=["rtx_kg2", "neo4j"],
+            # ),
             # Construct ground_truth
             # FUTURE: Move to ground truth pipeline
             node(

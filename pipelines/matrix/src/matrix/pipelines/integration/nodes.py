@@ -26,68 +26,32 @@ def create_int_pairs(raw_tp: pd.DataFrame, raw_tn: pd.DataFrame):
     return pd.concat([raw_tp, raw_tn], axis="index").reset_index(drop=True)
 
 
-@has_schema(
-    schema={
-        "label": "string",
-        "id": "string",
-        "name": "string",
-        "property_keys": "array<string>",
-        "property_values": "array<string>",
-    },
-    allow_subset=True,
-)
-@primary_key(primary_key=["id"])
-def create_nodes(df: DataFrame) -> DataFrame:
-    """Function to create Neo4J nodes.
+# @has_schema(
+#     schema={
+#         "subject": "string",
+#         "predicate": "string",
+#         "object": "string",
+#         "label": "string",
+#         "include_in_graphsage": "numeric",
+#     },
+#     allow_subset=True,
+# )
+# def create_edges(nodes: DataFrame, edges: DataFrame, exc_preds: List[str]):
+#     """Function to create Neo4J edges.
 
-    Args:
-        df: Nodes dataframe
-    """
-    return (
-        df.select("id", "name", "category", "description")
-        .withColumn("label", F.split(F.col("category"), ":", limit=2).getItem(1))
-        .withColumn(
-            "properties",
-            F.create_map(
-                F.lit("name"),
-                F.col("name"),
-                F.lit("category"),
-                F.col("category"),
-                F.lit("description"),
-                F.col("description"),
-            ),
-        )
-        .withColumn("property_keys", F.map_keys(F.col("properties")))
-        .withColumn("property_values", F.map_values(F.col("properties")))
-    )
-
-
-@has_schema(
-    schema={
-        "subject": "string",
-        "predicate": "string",
-        "object": "string",
-        "label": "string",
-        "include_in_graphsage": "numeric",
-    },
-    allow_subset=True,
-)
-def create_edges(nodes: DataFrame, edges: DataFrame, exc_preds: List[str]):
-    """Function to create Neo4J edges.
-
-    Args:
-        nodes: nodes dataframe
-        edges: edges dataframe
-        exc_preds: list of predicates excluded downstream
-    """
-    return (
-        edges.select("subject", "predicate", "object", "knowledge_source")
-        .withColumn("label", F.split(F.col("predicate"), ":", limit=2).getItem(1))
-        .withColumn(
-            "include_in_graphsage",
-            F.when(F.col("predicate").isin(exc_preds), F.lit(0)).otherwise(F.lit(1)),
-        )
-    )
+#     Args:
+#         nodes: nodes dataframe
+#         edges: edges dataframe
+#         exc_preds: list of predicates excluded downstream
+#     """
+#     return (
+#         edges.select("subject", "predicate", "object", "knowledge_source")
+#         .withColumn("label", F.split(F.col("predicate"), ":", limit=2).getItem(1))
+#         .withColumn(
+#             "include_in_graphsage",
+#             F.when(F.col("predicate").isin(exc_preds), F.lit(0)).otherwise(F.lit(1)),
+#         )
+#     )
 
 
 @has_schema(

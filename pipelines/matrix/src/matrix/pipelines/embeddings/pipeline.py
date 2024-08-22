@@ -8,21 +8,47 @@ def create_pipeline(**kwargs) -> Pipeline:
     """Create embeddings pipeline."""
     return pipeline(
         [
-            # Load data from source neo4j instance
-            # Should be done after adding node embeddings
-            # node(
-            #     func=lambda x: x,
-            #     inputs=["embeddings.tmp.source_nodes"],
-            #     outputs="embeddings.tmp.target_nodes",
-            #     name="extract_neo4j_nodes",
-            # )
+            # Ingest edges into Neo4j
+            node(
+                func=nodes.create_nodes,
+                inputs=["ingestion.prm.rtx_kg2.nodes"],
+                outputs="embeddings.prm.graph_nodes",
+                name="create_neo4j_node_embedding_input_nodes",
+                tags=["argowf.fuse-group.node_embeddings"]
+            ),
+            node(
+                func=nodes.compute_embeddings,
+                inputs={
+                    "input": "embeddings.prm.graph_nodes",
+                    "gdb": "params:embeddings.gdb",
+                    "features": "params:embeddings.node.features",
+                    "unpack": "params:embeddings.ai_config",
+                },
+                outputs="embeddings.prm.graph.embeddings@yaml",
+                name="create_neo4j_node_embeddings",
+                tags=["argowf.fuse-group.node_embeddings"]
+            ),
+            # Reduce dimension
+            # TODO: Materialize as spark dataset
+            node(
+                func=nodes.reduce_dimension,
+                inputs={
+                    "df": "embeddings.prm.graph.embeddings@neo",
+                    "unpack": "params:embeddings.dimensionality_reduction",
+                },
+                outputs="embeddings.feat.graph.pca_embeddings",
+                name="apply_pca",
+                tags=["argowf.fuse-group.node_embeddings"]
+            ),
+
+            # TODO: Needs to be new fusing group
             # Load spark dataset into local neo instance
             node(
                 func=lambda x: x,
-                inputs=["embeddings.tmp.target_nodes"],
+                inputs=["embeddings.feat.graph.pca_embeddings"],
                 outputs="embeddings.tmp.input_nodes",
                 name="ingest_neo4j_input_nodes",
-                # tags=["argowf.fuse", "argowf.neo4j"],
+                tags=["argowf.fuse-group.topological_embeddings"]
             ),
             node(
                 func=nodes.ingest_edges,
@@ -33,30 +59,8 @@ def create_pipeline(**kwargs) -> Pipeline:
                 ],
                 outputs="embeddings.tmp.input_edges",
                 name="ingest_neo4j_input_edges",
-                tags=["argowf.fuse", "argowf.neo4j"],
+                tags=["argowf.fuse-group.topological_embeddings"]
             ),
-            # Load into target neo4j instance
-            # node(
-            #     func=nodes.compute_embeddings,
-            #     inputs={
-            #         "input": "integration.model_input.nodes",
-            #         "gdb": "params:embeddings.gdb",
-            #         "features": "params:embeddings.node.features",
-            #         "unpack": "params:embeddings.ai_config",
-            #     },
-            #     outputs="embeddings.prm.graph.embeddings@yaml",
-            #     name="add_node_embeddings",
-            #     tags=["argo.retries-3"],
-            # ),
-            # node(
-            #     func=nodes.reduce_dimension,
-            #     inputs={
-            #         "df": "embeddings.prm.graph.embeddings@neo",
-            #         "unpack": "params:embeddings.dimensionality_reduction",
-            #     },
-            #     outputs="embeddings.prm.graph.pca_embeddings",
-            #     name="apply_pca",
-            # ),
             node(
                 func=nodes.train_topological_embeddings,
                 inputs={
@@ -66,7 +70,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 },
                 outputs="embeddings.models.graphsage",
                 name="train_topological_embeddings",
-                tags=["argowf.fuse", "argowf.neo4j"],
+                tags=["argowf.fuse-group.topological_embeddings"]
             ),
             node(
                 func=nodes.write_topological_embeddings,
@@ -77,7 +81,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 },
                 outputs="embeddings.model_output.graphsage",
                 name="add_topological_embeddings",
-                tags=["argowf.fuse", "argowf.neo4j", "argowf.mem-100g"],
+                tags=["argowf.fuse-group.topological_embeddings", "argowf.mem-100g"],
             ),
             # extracts the nodes from neo4j and writes them to BigQuery
             node(
@@ -85,7 +89,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 inputs=["embeddings.model_output.graphsage"],
                 outputs="embeddings.feat.nodes",
                 name="extract_nodes_edges_from_db",
-                tags=["argowf.fuse", "argowf.neo4j"],
+                tags=["argowf.fuse-group.topological_embeddings"]
             ),
-        ],
+        ], tags=["argowf.fuse", "argowf.neo4j"],
     )

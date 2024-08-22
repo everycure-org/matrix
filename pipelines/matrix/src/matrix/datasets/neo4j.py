@@ -1,5 +1,5 @@
 """Module containing Neo4JDataset."""
-
+import time
 from typing import Any
 from copy import deepcopy
 
@@ -103,7 +103,7 @@ class Neo4JSparkDataset(SparkDataset):
         )
 
     @staticmethod
-    def _create_db(url: str, database: str, credentials: dict[str, Any] = None):
+    def _create_db(url: str, database: str, overwrite: bool, credentials: dict[str, Any] = None):
         """Function to create database.
 
         Args:
@@ -119,14 +119,21 @@ class Neo4JSparkDataset(SparkDataset):
             credentials.get("authentication.basic.password"),
         )
         with GraphDatabase.driver(url, auth=creds, database="system") as driver:
-            # TODO: OR do we want to clear out if exists?
-            if database not in Neo4JSparkDataset._load_existing_dbs(driver):
+            
+            if overwrite:
+                driver.execute_query(f"CREATE OR REPLACE DATABASE `{database}`")
+                # TODO: Some strange race condition going on here
+                # investigate when makes sense, this will only happen locally.
+                time.sleep(3)
+            
+            elif database not in Neo4JSparkDataset._load_existing_dbs(driver):
                 logging.info("creating new database %s", database)
                 driver.execute_query(f"CREATE DATABASE `{database}` IF NOT EXISTS")
 
     @staticmethod
     def _load_existing_dbs(driver):
         result = driver.execute_query("SHOW DATABASES")
+        print(result)
         dbs = [record["name"] for record in result[0] if record["name"] != "system"]
         return dbs
 
@@ -153,7 +160,8 @@ class Neo4JSparkDataset(SparkDataset):
                 return None
             else:
                 # Create database
-                self._create_db(self._url, self._database, self._credentials)
+                overwrite = self._save_args.pop("mode", "append") == "overwrite"
+                self._create_db(self._url, self._database, overwrite, self._credentials)
 
                 # Write dataset
                 (
