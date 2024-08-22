@@ -146,9 +146,8 @@ class FusedNode(Node):
 
 
 def fuse(pipeline: Pipeline):
-
     fused = []
-    
+
     for group in pipeline.grouped_nodes:
         for target_node in group:
             # Find source node that provides its inputs

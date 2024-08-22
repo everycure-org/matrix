@@ -91,5 +91,5 @@ def create_pipeline(**kwargs) -> Pipeline:
                 tags=["argowf.fuse-group.topological_embeddings"],
             ),
         ],
-        tags=["argowf.fuse", "argowf.neo4j"],
+        tags=["argowf.fuse", "argowf.template-neo4j"],
     )
