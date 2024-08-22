@@ -66,7 +66,7 @@ embeddings.feat.graph.pca_node_embeddings:
   <<: *_spark_parquet
   filepath: ${globals:paths.raw}/embeddings/tmp_nodes_with_pca_embeddings
 
-
+# NOTE: Needs renaming
 embeddings.tmp.input_nodes:
   <<: [*_neo4j_ds]
   save_args:
@@ -81,6 +81,7 @@ embeddings.tmp.input_nodes:
       CREATE (n:Entity {id: event.id, embedding: event.pca_embedding})
       RETURN n
 
+# NOTE: Needs renaming
 embeddings.tmp.input_edges:
   <<: [*_neo4j_ds]
   save_args:

@@ -108,7 +108,6 @@ def create_nodes(df: DataFrame) -> DataFrame:
         )
         .withColumn("property_keys", F.map_keys(F.col("properties")))
         .withColumn("property_values", F.map_values(F.col("properties")))
-        .limit(100000)
     )
 
 
