@@ -50,3 +50,72 @@ The docs page is hosted via AppEngine. Please check the [their
 documentation](https://cloud.google.com/appengine/docs/standard/securing-custom-domains-with-ssl?hl=en)
 on how to set up AppEngine with SSL and DNS for a custom domain.
 
+
+<!-- TODO improve documentation on this -->
+
+we are leveraging the Gateway API from Kubernetes which is relatively new
+
+## Reading material:
+
+- Using Gatweay for Ingress: https://gateway-api.sigs.k8s.io/guides/
+- External DNS & Gateway: https://kubernetes-sigs.github.io/external-dns/v0.13.1/tutorials/gateway-api/
+- https://cert-manager.io/docs/configuration/acme/
+  - Cert manager and Gateway: https://cert-manager.io/docs/usage/gateway/
+- how it works on GKE: https://cloud.google.com/kubernetes-engine/docs/concepts/gateway-api
+- securing it with IaP : https://cloud.google.com/kubernetes-engine/docs/how-to/secure-gateway
+
+
+Example with whoami service
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: whoami
+spec:
+  selector:
+    app: whoami
+  ports:
+    - name: http
+      port: 80
+      targetPort: 80
+  type: ClusterIP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: whoami
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: whoami
+  template:
+    metadata:
+      labels:
+        app: whoami
+    spec:
+      containers:
+        - name: whoami
+          image: containous/whoami
+          ports:
+            - containerPort: 80
+          resources:
+            requests:
+              cpu: 100m
+              memory: 100Mi
+---
+kind: HTTPRoute
+apiVersion: gateway.networking.k8s.io/v1beta1
+metadata:
+  name: whoami-route
+spec:
+  parentRefs: # here we reference the gateway that we want to leverage to route traffic
+  - kind: Gateway
+    name: external-http
+  hostnames:
+  - "whoami-test.platform.dev.everycure.org" # this is the subdomain that we want to route to
+  rules:
+  - backendRefs:
+    - name: whoami
+      port: 80
+```
