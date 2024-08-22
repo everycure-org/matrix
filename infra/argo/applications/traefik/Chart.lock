@@ -1,12 +1,9 @@
 dependencies:
-- name: traefik
-  repository: https://traefik.github.io/charts
-  version: 30.1.0
 - name: external-dns
   repository: https://kubernetes-sigs.github.io/external-dns/
   version: 1.14.5
-- name: oauth2-proxy
-  repository: https://oauth2-proxy.github.io/manifests
-  version: 7.7.9
-digest: sha256:c4182c5263fc6bb2f9cf11a60a33fb7216c6d2de24a3f60fab1497fd713212ed
-generated: "2024-08-19T22:51:42.248604+02:00"
+- name: cert-manager
+  repository: https://charts.jetstack.io
+  version: v1.15.3
+digest: sha256:e2c33bab35f24780684a01cdf6a4f645a09a7e2170911f3b77de53c505ae5ed1
+generated: "2024-08-22T13:08:11.064493+02:00"

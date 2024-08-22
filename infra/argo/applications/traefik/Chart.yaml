@@ -6,12 +6,9 @@ version: 0.1.0
 appVersion: "1.0.0"
 
 dependencies:
-- name: traefik 
-  version: 30.1.0
-  repository: https://traefik.github.io/charts
 - name: external-dns
   version: 1.14.5
   repository: https://kubernetes-sigs.github.io/external-dns/
-- name: oauth2-proxy
-  version: 7.7.9
-  repository: https://oauth2-proxy.github.io/manifests
+- name: cert-manager
+  version: 1.15.3
+  repository: https://charts.jetstack.io

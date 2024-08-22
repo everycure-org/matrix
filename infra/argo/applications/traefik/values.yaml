@@ -2,42 +2,24 @@
 external-dns:
   provider:
     name: google
-
-traefik:
-  service:
-    annotations:
-      external-dns.alpha.kubernetes.io/hostname: '*.platform.dev.everycure.org'
-  
-  # https://doc.traefik.io/traefik/https/acme/#certificate-resolvers 
-  certResolvers:
-    letsencrypt:
-      email: "pascal@everycure.org"
-      #caServer: https://acme-v02.api.letsencrypt.org/directory # Production server
-      caServer: https://acme-staging-v02.api.letsencrypt.org/directory # Staging server
-      dnsChallenge:
-        provider: gcloud
-      storage: /data/acme.json
-  
-  autoscaling:
-    enabled: true
-    maxReplicas: 3
-
-  # TODO: add affinity rules
-  # affinity:
-  ingressRoute:
-    dashboard:
-      enabled: true
-  
-  logs:
-    general:
-      level: ERROR
-    access:
-      enabled: true
-
-oauth2-proxy:
-  config:
-    clientID: XX
-    clientSecret: XX
   extraArgs:
-    provider: google
-    email-domain: 'everycure.org'
+    - --source=gateway-httproute
+  rbac:
+    additionalPermissions:
+      - apiGroups: ["gateway.networking.k8s.io"]
+        resources: ["gateways","httproutes","grpcroutes","tlsroutes","tcproutes","udproutes"] 
+        verbs: ["get","watch","list"]
+      - apiGroups: [""]
+        resources: ["namespaces"]
+        verbs: ["get","watch","list"]
+
+cert-manager:
+  crds:
+    enabled: true
+    keep: false # potentially dangerous to remove them but for now trying to keep ArgoCD fully owning this
+
+  config:
+    apiVersion: controller.config.cert-manager.io/v1alpha1
+    kind: ControllerConfiguration
+    # https://cert-manager.io/docs/usage/gateway/
+    enableGatewayAPI: true
