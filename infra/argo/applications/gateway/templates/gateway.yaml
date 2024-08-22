@@ -44,6 +44,7 @@ spec:
           gatewayHTTPRoute:
             parentRefs:
               - name: external-http  # Match your Gateway name
+                group: gateway.networking.k8s.io
                 namespace: {{ .Values.namespace }}
                 kind: Gateway
       # Alternatively use DNS challenge for wildcards
