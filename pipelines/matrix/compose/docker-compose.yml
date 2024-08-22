@@ -22,24 +22,23 @@ services:
       - NEO4J_db_logs_query_enabled=OFF
       - NEO4J_ACCEPT_LICENSE_AGREEMENT=yes
     volumes:
-      - ./neo4j_db/data:/data
-      - ./neo4j_db/logs:/logs
-      - ./neo4j_db/import:/var/lib/neo4j/import
-      - ./neo4j_db/plugins:/plugins
+      - ./neo4j_data/data:/data
+      - ./neo4j_data/logs:/logs
+      - ./neo4j_data/import:/var/lib/neo4j/import
+      - ./neo4j_data/plugins:/plugins
     healthcheck:
       test: wget http://localhost:7474 || exit 1
       interval: 10s
       timeout: 10s
       retries: 10
       start_period: 10s
-    networks:
-      - web
 
   # MockServer instance that is used to mock a GenAI API conform
   # the OpenAI API spec. This container is used to enable integration
   # testing.
   mock-genai:
     image: mockserver/mockserver
+    container_name: mockserver
     restart: unless-stopped
     user: root
     ports:
@@ -50,10 +49,6 @@ services:
       MOCKSERVER_ENABLE_CORS_FOR_ALL_RESPONSES: "true"
       MOCKSERVER_INITIALIZATION_JSON_PATH: /openapi/initializer.json
       MOCKSERVER_LOG_LEVEL: DEBUG
-    networks:
-      web:
-        aliases:
-          - mock.genai.com
     volumes:
       - ./mockgenai-initializer.json:/openapi/initializer.json:ro
 
@@ -69,10 +64,3 @@ services:
       timeout: 10s
       retries: 5
       start_period: 30s
-    networks:
-      - web
-
-networks:
-  web:
-    name: web
-    driver: bridge

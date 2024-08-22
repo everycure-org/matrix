@@ -93,6 +93,10 @@ embeddings.tmp.input_edges:
       CALL apoc.create.relationship(subject, event.label, {}, object) YIELD rel
       RETURN rel
 
+embeddings.feat.include_in_graphsage@yaml:
+  filepath: ${globals:paths.feat}/graphsage_filter/result.yml
+  type:  yaml.YAMLDataset
+
 embeddings.models.graphsage:
   # we do not actually do anything with this DS, thus it's a dummy
   # https://github.com/kedro-org/kedro/discussions/3758

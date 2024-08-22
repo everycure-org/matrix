@@ -156,3 +156,6 @@ session_store.db
 
 mlruns
 templates/argo-workflow-template.yml
+
+
+compose/neo4j_data/

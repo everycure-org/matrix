@@ -61,7 +61,6 @@ def create_int_pairs(raw_tp: pd.DataFrame, raw_tn: pd.DataFrame):
         "target_id": "string",
         "property_keys": "array<string>",
         "property_values": "array<numeric>",
-        "include_in_graphsage": "numeric",
     },
     allow_subset=True,
 )
@@ -91,5 +90,4 @@ def create_treats(nodes: DataFrame, df: DataFrame):
         .withColumn("target_id", F.col("target"))
         .withColumn("property_keys", F.map_keys(F.col("properties")))
         .withColumn("property_values", F.map_values(F.col("properties")))
-        .withColumn("include_in_graphsage", F.lit(0))
     )

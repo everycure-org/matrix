@@ -65,18 +65,21 @@ embeddings.topological:
         label: 'Entity'
         properties: embedding
     relationshipProjection: '*'
-    # configuration:
-    #   relationshipProperties: [&_weight_attribute include_in_graphsage]
-  # filtering:
-  #   graphName: filtered_embeddings 
-  #   args:
-  #     node_filter: '*'
-  #     relationship_filter: r.include_in_graphsage = 1.0
+    configuration:
+      relationshipProperties: 
+        include_in_graphsage:
+          property: include_in_graphsage
+          defaultValue: 1
+  filtering:
+    graphName: filtered_embeddings 
+    args:
+      node_filter: '*'
+      relationship_filter: r.include_in_graphsage = 1.0
   estimator:
     model: graphSage
     args:
       modelName: topological_embeddings
-      featureProperties: [embedding]
+      featureProperties: [*_pca_property]
       concurrency: 4
       # FUTURE: We're currently leveraging a binary weighting strategy to exclude  
       # certain relationships. Another option could be to leverage filtering:
@@ -90,6 +93,6 @@ embeddings.topological:
       epochs: 1 # TODO: Revert
       searchDepth: 100
       # Chunyu
-      # learningRate: 0.01
-      learningRate: 0.01
+      # learningRate: 0.001
+      learningRate: 0.001
   write_property: topological_embedding
