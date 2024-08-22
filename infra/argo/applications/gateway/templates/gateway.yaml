@@ -35,7 +35,7 @@ metadata:
   name: letsencrypt-prod
 spec:
   acme:
-    email: gcm-admins@everycure.org  # Replace with your email
+    email: gcp-admins@everycure.org  # Replace with your email
     server: https://acme-v02.api.letsencrypt.org/directory
     privateKeySecretRef:
       name: letsencrypt-account-key
