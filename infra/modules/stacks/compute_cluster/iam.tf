@@ -5,6 +5,7 @@ locals {
     "roles/storage.admin", # FUTURE more fine grained, but else it can't list buckets. surprisingly hard to find a predefined role that has storage.buckets.get
     "roles/bigquery.dataEditor",
     "roles/bigquery.user",
+    "roles/dns.admin",
     "roles/bigquery.jobUser",
     "roles/aiplatform.user",
     "roles/artifactregistry.writer",
