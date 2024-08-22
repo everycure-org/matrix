@@ -66,7 +66,10 @@ embeddings.topological:
         properties: *_pca_property
     relationshipProjection: '*'
     configuration:
-      relationshipProperties: [&_weight_attribute include_in_graphsage]
+      relationshipProperties: 
+        include_in_graphsage:
+          property: include_in_graphsage
+          defaultValue: 1
   filtering:
     graphName: filtered_embeddings 
     args:
@@ -81,7 +84,6 @@ embeddings.topological:
       # FUTURE: We're currently leveraging a binary weighting strategy to exclude  
       # certain relationships. Another option could be to leverage filtering:
       # https://neo4j.com/docs/graph-data-science/current/management-ops/graph-creation/graph-filter/
-      relationshipWeightProperty: *_weight_attribute
       maxIterations: 100
       # NOTE: This terminates the epoc primarurely, so setting it to a small number
       sampleSizes: [96, 96]
