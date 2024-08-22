@@ -7,14 +7,24 @@ name: Infrastructure Deploy
 
 
 on:
-  workflow_dispatch: {}
-  push:
+  pull_request:
+    # Sequence of patterns matched against refs/heads
+    branches:
+      - main
+    types:
+      - opened
+      - reopened
+      - synchronize
+      - ready_for_review
     paths: 
       - .github/workflows/infra-deploy.yml
       - infra/modules/**
       - infra/deployments/**
       - infra/*.tf
       - infra/*.hcl
+  push:
+    branches:
+      - main
 
 env:
   tf_version: '1.5.7'
@@ -24,6 +34,7 @@ env:
 jobs:
   checks:
     runs-on: ubuntu-latest
+    if: github.ref != 'refs/heads/main'
     steps:
       - name: 'Checkout'
         uses: actions/checkout@main
@@ -104,3 +115,21 @@ jobs:
           tg_version: ${{ env.tg_version }}
           tg_dir: ${{ env.working_dir }}/deployments/hub/dev
           tg_command: 'apply'
+      
+      - name: Post to a Slack channel
+        # Only post to Slack if the deployment failed and we're on the main branch
+        if: failure() && github.ref == 'refs/heads/main'
+        id: slack
+        uses: slackapi/slack-github-action@v1.26.0
+        with:
+          # Slack channel id, channel name, or user id to post message.
+          # See also: https://api.slack.com/methods/chat.postMessage#channels
+          # You can pass in multiple channels to post to by providing a comma-delimited list of channel IDs.
+          channel-id: 'C07HU35MKAQ' #github-notifications
+          # For posting a simple plain text message
+          slack-message: |
+            **🚧 Terraform Deployment Failed! 🚨**
+            👩‍💻 Code URL: ${{ github.event.pull_request.html_url || github.event.head_commit.url }}
+            🚀 Action run link: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
