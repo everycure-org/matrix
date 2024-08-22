@@ -103,7 +103,9 @@ class Neo4JSparkDataset(SparkDataset):
         )
 
     @staticmethod
-    def _create_db(url: str, database: str, overwrite: bool, credentials: dict[str, Any] = None):
+    def _create_db(
+        url: str, database: str, overwrite: bool, credentials: dict[str, Any] = None
+    ):
         """Function to create database.
 
         Args:
@@ -119,13 +121,12 @@ class Neo4JSparkDataset(SparkDataset):
             credentials.get("authentication.basic.password"),
         )
         with GraphDatabase.driver(url, auth=creds, database="system") as driver:
-            
             if overwrite:
                 driver.execute_query(f"CREATE OR REPLACE DATABASE `{database}`")
                 # TODO: Some strange race condition going on here
                 # investigate when makes sense, this will only happen locally.
                 time.sleep(3)
-            
+
             elif database not in Neo4JSparkDataset._load_existing_dbs(driver):
                 logging.info("creating new database %s", database)
                 driver.execute_query(f"CREATE DATABASE `{database}` IF NOT EXISTS")
