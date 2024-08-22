@@ -51,11 +51,88 @@ documentation](https://cloud.google.com/appengine/docs/standard/securing-custom-
 on how to set up AppEngine with SSL and DNS for a custom domain.
 
 
-<!-- TODO improve documentation on this -->
 
-we are leveraging the Gateway API from Kubernetes which is relatively new
 
-## Reading material:
+
+
+## Gateway API Setup
+
+Our project utilizes the Kubernetes Gateway API, which represents the next generation of Kubernetes Ingress, Load Balancing, and Service Mesh APIs. It's designed to be generic, expressive, and role-oriented[^1]. The core idea of the setup is visualized in this diagram well by Google:
+
+![](https://cloud.google.com/static/kubernetes-engine/images/model-gateway-per-cluster.svg)
+
+### Components
+
+#### 1. External DNS
+
+We've configured External DNS to work with Gateway API resources:
+
+```yaml
+external-dns:
+  provider:
+    name: google
+  extraArgs:
+    - --source=gateway-httproute
+  rbac:
+    additionalPermissions:
+      - apiGroups: ["gateway.networking.k8s.io"]
+        resources: ["gateways","httproutes","grpcroutes","tlsroutes","tcproutes","udproutes"] 
+        verbs: ["get","watch","list"]
+      - apiGroups: [""]
+        resources: ["namespaces"]
+        verbs: ["get","watch","list"]
+```
+
+This configuration allows External DNS to manage DNS records based on Gateway API resources, particularly HTTPRoutes.
+
+#### 2. Cert Manager
+
+We've enabled Cert Manager to work with Gateway API:
+
+```yaml
+cert-manager:
+  config:
+    enableGatewayAPI: true
+```
+
+This allows Cert Manager to provision and manage TLS certificates for Gateway resources[^2].
+
+#### Example: Whoami Service
+
+We've set up a simple "whoami" service to demonstrate the use of Gateway API:
+
+```yaml
+kind: HTTPRoute
+apiVersion: gateway.networking.k8s.io/v1beta1
+metadata:
+  name: whoami-route
+spec:
+  parentRefs:
+  - kind: Gateway
+    name: external-http
+  hostnames:
+  - "whoami-test.platform.dev.everycure.org"
+  rules:
+  - backendRefs:
+    - name: whoami
+      port: 80
+```
+
+This HTTPRoute resource:
+- Associates with a Gateway named "external-http"
+- Routes traffic for the hostname "whoami-test.platform.dev.everycure.org"
+- Directs traffic to the "whoami" service on port 80
+
+### Key Concepts
+
+1. **GatewayClass**: Defines a set of Gateways with a common configuration and behavior.
+2. **Gateway**: Describes how traffic can be translated to Services within the cluster.
+3. **HTTPRoute**: Describes how HTTP requests should be routed by a Gateway.
+
+Our setup leverages these concepts to provide a flexible and powerful routing solution.
+
+
+### Reading material:
 
 - Using Gatweay for Ingress: https://gateway-api.sigs.k8s.io/guides/
 - External DNS & Gateway: https://kubernetes-sigs.github.io/external-dns/v0.13.1/tutorials/gateway-api/
@@ -64,58 +141,5 @@ we are leveraging the Gateway API from Kubernetes which is relatively new
 - how it works on GKE: https://cloud.google.com/kubernetes-engine/docs/concepts/gateway-api
 - securing it with IaP : https://cloud.google.com/kubernetes-engine/docs/how-to/secure-gateway
 
-
-Example with whoami service
-```yaml
-apiVersion: v1
-kind: Service
-metadata:
-  name: whoami
-spec:
-  selector:
-    app: whoami
-  ports:
-    - name: http
-      port: 80
-      targetPort: 80
-  type: ClusterIP
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: whoami
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: whoami
-  template:
-    metadata:
-      labels:
-        app: whoami
-    spec:
-      containers:
-        - name: whoami
-          image: containous/whoami
-          ports:
-            - containerPort: 80
-          resources:
-            requests:
-              cpu: 100m
-              memory: 100Mi
----
-kind: HTTPRoute
-apiVersion: gateway.networking.k8s.io/v1beta1
-metadata:
-  name: whoami-route
-spec:
-  parentRefs: # here we reference the gateway that we want to leverage to route traffic
-  - kind: Gateway
-    name: external-http
-  hostnames:
-  - "whoami-test.platform.dev.everycure.org" # this is the subdomain that we want to route to
-  rules:
-  - backendRefs:
-    - name: whoami
-      port: 80
-```
+[^1]: https://gateway-api.sigs.k8s.io/
+[^2]: https://gateway-api.sigs.k8s.io/guides/
