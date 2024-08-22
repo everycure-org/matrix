@@ -3,7 +3,7 @@ apiVersion: argoproj.io/v1alpha1
 kind: WorkflowTemplate
 metadata:
   namespace: argo-workflows
-  name: matrix
+  name: matrix-lvi
 spec:
   entrypoint: dag
   arguments:
@@ -105,13 +105,12 @@ spec:
       command: [kedro]
       args: ["run", "-p", {% raw %}"{{inputs.parameters.pipeline}}"{% endraw %}, "-e", {% raw %}"{{workflow.parameters.env}}"{% endraw %}, "-n", {% raw %}"{{inputs.parameters.kedro_nodes}}"{% endraw %}]
 
-  - name: kedro-with-neo-sidecar
+  - name: neo4j
     inputs:
       parameters:
-      - name: kedro_node
+      - name: kedro_nodes
       - name: num_retries
       - name: pipeline
-      - name: env
     container:
       resources: # limit the resources
         requests:
@@ -169,7 +168,7 @@ spec:
             sleep 5
           done
           echo "Neo4j is ready. Starting main application..."
-          kedro run -p {% raw %}"{{inputs.parameters.pipeline}}"{% endraw %} -e {% raw %}"{{inputs.parameters.env}}"{% endraw %} -n {% raw %}"{{inputs.parameters.kedro_nodes}}"{% endraw %}
+          kedro run -p {% raw %}"{{inputs.parameters.pipeline}}"{% endraw %} -e {% raw %}"{{workflow.parameters.env}}"{% endraw %} -n {% raw %}"{{inputs.parameters.kedro_nodes}}"{% endraw %}
     
     sidecars:
       # Neo4j enterprise sidecar
@@ -215,5 +214,7 @@ spec:
             value: {{ pipeline }}
           - name: kedro_nodes
             value: {{ task.nodes }}
+          - name: num_retries
+            value: 0
       {% endfor %}
   {% endfor %}
