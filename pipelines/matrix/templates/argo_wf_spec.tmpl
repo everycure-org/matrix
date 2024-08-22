@@ -43,7 +43,7 @@ spec:
         app: kedro-argo
     inputs:
       parameters:
-      - name: kedro_node
+      - name: kedro_nodes
       - name: num_retries
       - name: pipeline
     container:
@@ -102,27 +102,92 @@ spec:
             configMapKeyRef:
               name: matrix-config
               key: GCP_BUCKET
-        - name: VERTEX_AI_ACCESS_TOKEN
-          value: dummy
       command: [kedro]
-      args: ["run", "-p", {% raw %}"{{inputs.parameters.pipeline}}"{% endraw %}, "-e", {% raw %}"{{workflow.parameters.env}}"{% endraw %}, "-n", {% raw %}"{{inputs.parameters.kedro_node}}"{% endraw %}]
-     sidecars:
+      args: ["run", "-p", {% raw %}"{{inputs.parameters.pipeline}}"{% endraw %}, "-e", {% raw %}"{{workflow.parameters.env}}"{% endraw %}, "-n", {% raw %}"{{inputs.parameters.kedro_nodes}}"{% endraw %}]
+
+  - name: kedro-with-neo-sidecar
+    inputs:
+      parameters:
+      - name: kedro_node
+      - name: num_retries
+      - name: pipeline
+      - name: env
+    container:
+      resources: # limit the resources
+        requests:
+          memory: 120Gi
+          cpu: 4
+        limits:
+          memory: 120Gi
+          cpu: 16
+      env:
+        - name: WORKFLOW_ID
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.labels['workflows.argoproj.io/workflow']
+        - name: RELEASE_VERSION
+          value: {% raw %} "{{workflow.parameters.release_version}}" 
+          {% endraw %}
+        - name: EXPERIMENT
+          value: {% raw %} "{{workflow.parameters.experiment}}" 
+          {% endraw %}
+        - name: MLFLOW_ENDPOINT
+          value: {% raw %} "{{workflow.parameters.mlflow_endpoint}}" 
+          {% endraw %}
+        - name: NEO4J_USER
+          value: "neo4j"
+        - name: NEO4J_PASSWORD
+          value: "admin"
+        - name: GCP_PROJECT_ID
+          valueFrom:
+            configMapKeyRef:
+              name: matrix-config
+              key: GCP_PROJECT_ID
+        - name: GCP_BUCKET
+          valueFrom:
+            configMapKeyRef:
+              name: matrix-config
+              key: GCP_BUCKET
+        - name: OPENAI_API_KEY
+          value: "foo"
+        - name: OPENAI_ENDPOINT
+          value: {% raw %} "{{workflow.parameters.openai_endpoint}}" 
+          {% endraw %}
+        - name: OPENAI_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: matrix-secrets
+              key: OPENAI_API_KEY
+      imagePullPolicy: Always
+      image: us-central1-docker.pkg.dev/mtrx-hub-dev-3of/matrix-images/matrix:laurens
+      command: ["/bin/sh", "-c"]
+      args:
+        - |
+          echo "Waiting for Neo4j to be ready..."
+          until curl -s http://localhost:7474/ready; do
+            echo "Waiting..."
+            sleep 5
+          done
+          echo "Neo4j is ready. Starting main application..."
+          kedro run -p {% raw %}"{{inputs.parameters.pipeline}}"{% endraw %} -e {% raw %}"{{inputs.parameters.env}}"{% endraw %} -n {% raw %}"{{inputs.parameters.kedro_nodes}}"{% endraw %}
+    
+    sidecars:
+      # Neo4j enterprise sidecar
       - name: neo4j
         image: neo4j:5.21.0-enterprise
-        command: [nginx, -g, daemon off;]
         env:
         - name: NEO4J_AUTH
           value: "neo4j/admin"
         - name: NEO4J_apoc_export_file_enabled
           value: "true"
         - name: NEO4J_apoc_import_file_enabled
-          value: true
+          value: "true"
         - name: NEO4J_apoc_import_file_use__neo4j__config
-          value: true
+          value: "true"
         - name: NEO4J_PLUGINS
           value: '["apoc", "graph-data-science", "apoc-extended"]'
         - name: NEO4J_dbms_security_auth__minimum__password__length
-          value: 4
+          value: "4"
         - name: NEO4J_dbms_security_procedures_whitelist
           value: "gds.*, apoc.*"
         - name: NEO4J_dbms_security_procedures_unrestricted
@@ -136,7 +201,19 @@ spec:
     dag:
       tasks:
       {% for task in tasks %}
-      - name: {{ task.nodes | join(',') }}
-        template: kedro
+      - name: {{ task.name }}
+        template: {{ task.get('template', 'kedro') }}
+        {% if task.deps %}
+        dependencies:
+        {% for dep in task.deps %}
+          - {{ dep }}
+        {% endfor %}
+        {% endif %}
+        arguments:
+          parameters:
+          - name: pipeline
+            value: {{ pipeline }}
+          - name: kedro_nodes
+            value: {{ task.nodes }}
       {% endfor %}
   {% endfor %}
