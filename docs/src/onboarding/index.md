@@ -171,17 +171,27 @@ The key here is that the pipeline will not run fully without credentials
 for the dependent services (at the moment only OpenAI). Reach out to the team through
 Slack if you need a credential. 
 
-### Read raw data from GCS
+### Read data from GCS
 
-To read the raw data you do not actually have to be authenticated with gcloud. This is
-because we leverage hadoop/spark to read the data from GCS and the repository contains a
-`read-only` service account key that is used by the spark jobs. This file is encrypted
-however, so you will need to decrypt it. For this we use `git-crypt`. 
+To read the data you need to do two things:
+1. Authenticate using the `gcloud` CLI
+2. Get access to the encrypted `service-account.json` file in the repository.
 
-Please follow the [instructions on git-crypt](./git-crypt.md) to be able to read the data
-by decrypting the file. In essence, we ask you to share a public key with us, which we
-will use to encrypt the secret.  This way, we can easily share secrets with each other
-without exposing them to the rest of the world.  
+#### Authenticate with the CLI
+
+This enables you to read and write data using the `gsutil` CLI as well as when using e.g. pandas in python. To do so, you can simply call the following two commands:
+
+```
+gcloud auth login
+gcloud auth application-default login
+```
+The first authenticates the CLI itself (`gsutil`, `gcloud` and `bq`), the second also enables 3rd party applications (such as pandas) to use your access credentials locally. 
+
+#### Decrypt the service account file
+
+We have separated out the instructions for this in the [instructions on git-crypt](./git-crypt.md). 
+
+In essence, we ask you to share a public key with us, which we then use to add an encrypted file to the repository that only you can decrypt. We do this for every collaborator so that we all can decrypt the file while still being able to open source the repository without worrying about others having access to our data. Furthermore we can swap out the service-account.json file and remove people's access to the new file without requiring any actions from anyone remaining on the team. 
 
 ## Pipeline framework: Kedro
 
