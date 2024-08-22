@@ -69,7 +69,6 @@ class GraphDS(GraphDataScience):
         self.set_database(database)
 
 
-
 @has_schema(
     schema={
         "label": "string",

@@ -31,22 +31,23 @@ class FusedNode(Node):
         self._parents.update(parents)
 
     def fuses_with(self, node):
-        
         # If not is not fusable, abort
         if not self.is_fusable:
             return False
-        
+
         if not self.fuse_group == self.get_fuse_group(node.tags):
             print("not fusing due to group")
             return False
-        
+
         # Otherwise, fusable if connected
-        return set(self.clean_dependencies(node.inputs)) & set(self.clean_dependencies(self.outputs))
+        return set(self.clean_dependencies(node.inputs)) & set(
+            self.clean_dependencies(self.outputs)
+        )
 
     @property
     def is_fusable(self):
         return "argowf.fuse" in self.tags
-    
+
     @property
     def fuse_group(self):
         return self.get_fuse_group(self.tags)
@@ -67,7 +68,7 @@ class FusedNode(Node):
     def name(self):
         if self.is_fusable:
             return self.fuse_group
-        
+
         return self._nodes[0].name
 
     @property
@@ -83,13 +84,13 @@ class FusedNode(Node):
             return value
 
         return self.name, hashable(self._nodes)
-    
+
     @staticmethod
     def get_fuse_group(tags):
         for tag in tags:
             if tag.startswith("argowf.fuse-group."):
-                return tag[len("argowf.fuse-group."):]
-        
+                return tag[len("argowf.fuse-group.") :]
+
         return None
 
     @staticmethod
@@ -99,7 +100,11 @@ class FusedNode(Node):
     @staticmethod
     def clean_dependencies(elements):
         # Remove params and remove transcoding
-        return [FusedNode.remove_transcoding(el) for el in elements if not el.startswith("params:")]
+        return [
+            FusedNode.remove_transcoding(el)
+            for el in elements
+            if not el.startswith("params:")
+        ]
 
 
 def clean_name(name: str) -> str:
@@ -112,12 +117,12 @@ def clean_name(name: str) -> str:
     """
     return re.sub(r"[\W_]+", "-", name).strip("-")
 
+
 pipeline: Pipeline = pipelines["__default__"]
 fused = []
 
 for group in pipeline.grouped_nodes:
     for target_node in group:
-        
         # Find source node that provides its inputs
         found = False
 
@@ -133,7 +138,8 @@ for group in pipeline.grouped_nodes:
                 [
                     fs
                     for fs in fused
-                    if set(FusedNode.clean_dependencies(target_node.inputs)) & set(FusedNode.clean_dependencies(fs.outputs))
+                    if set(FusedNode.clean_dependencies(target_node.inputs))
+                    & set(FusedNode.clean_dependencies(fs.outputs))
                 ]
             )
             fused.append(fused_node)
