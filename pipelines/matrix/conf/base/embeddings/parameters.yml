@@ -63,7 +63,7 @@ embeddings.topological:
     nodeProjection:
       Entity:
         label: 'Entity'
-        properties: embedding
+        properties: *_pca_property
     relationshipProjection: '*'
     configuration:
       relationshipProperties: 
@@ -94,5 +94,5 @@ embeddings.topological:
       searchDepth: 100
       # Chunyu
       # learningRate: 0.001
-      learningRate: 0.001
+      learningRate: 0.01
   write_property: topological_embedding
