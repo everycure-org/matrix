@@ -1,19 +1,3 @@
-# Google Cloud Access
-
-## Pre-requisites
-
-Ensure to install the `gcloud` command line utilities, this can be done as follows:
-
-```bash
-brew install --cask google-cloud-sdk
-```
-
-Next, authenticate the client:
-
-```bash
-gcloud auth login
-gcloud auth application-default login
-```
 
 ### Accessing the cluster services
 
