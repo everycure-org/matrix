@@ -9,6 +9,7 @@ import pandas as pd
 
 from refit.v1.core.inject import inject_object
 from refit.v1.core.inline_has_schema import has_schema
+from refit.v1.core.inline_primary_key import primary_key
 from refit.v1.core.unpack import unpack_params
 from refit.v1.core.make_list_regexable import _extract_elements_in_list
 
@@ -50,13 +51,13 @@ def generate_test_dataset(
     return generator.generate(graph, known_pairs)
 
 
+@primary_key(["not treat score", "treat score"])
 def make_test_predictions(
     graph: KnowledgeGraph,
     data: pd.DataFrame,
     transformers: Dict[str, Dict[str, Union[_BaseImputer, List[str]]]],
     model: ModelWrapper,
     features: List[str],
-    score_col_name: str,
     batch_by: str = "target",
 ) -> pd.DataFrame:
     """Generate probability scores for drug-disease dataset.
@@ -92,11 +93,13 @@ def make_test_predictions(
         )
 
         # Generate model probability scores
-        batch[score_col_name] = model.predict_proba(transformed[batch_features].values)[
-            :, 1
-        ]
+        score_results = model.predict_proba(transformed[batch_features].values)
+        batch["not treat score"] = score_results[:, 0]
+        batch['treat score'] = score_results[:, 1]
+        if score_results.shape[1] > 2:
+            batch['unknown score'] = score_results[:, 2]
 
-        return batch[[score_col_name]]
+        return batch
 
     # Group data by the specified prefix
     grouped = data.groupby(batch_by)
@@ -110,7 +113,10 @@ def make_test_predictions(
     results = pd.concat(result_parts, axis=0)
 
     # Add scores to the original dataframe
-    data[score_col_name] = results[score_col_name]
+    data["not treat score"] = results["not treat score"]
+    data["treat score"] = results["treat score"]
+    if results.shape[1] > 2:
+        data["unknown score"] = results["unknown score"]
 
     return data
 
