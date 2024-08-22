@@ -1,4 +1,5 @@
 modelling.xg_ensemble:
     _overrides:
-      generator:
-        n_unknown: 100
+      model_tuning_args:
+        tuner:
+          n_calls: 10

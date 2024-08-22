@@ -269,13 +269,38 @@ def ingest_edges(nodes, edges: DataFrame, exc_preds: List[str]):
     )
 
 
+@inject_object()
+def add_include_in_graphsage(
+    df: DataFrame, gdb: GraphDB, drug_types: List[str], disease_types: List[str]
+) -> Dict:
+    """Function to add include_in_graphsage property.
+
+    Only edges between non drug-disease pairs are included in graphsage.
+    """
+    with gdb.driver() as driver:
+        q = driver.execute_query(
+            """
+            MATCH (n)-[r]-(m)
+            WHERE 
+                n.category IN $drug_types 
+                AND m.category IN $disease_types
+            SET r.include_in_graphsage = 0
+            """,
+            database_=gdb._database,
+            drug_types=drug_types,
+            disease_types=disease_types,
+        )
+
+    return {"success": "true"}
+
+
 @unpack_params()
 @inject_object()
 def train_topological_embeddings(
     df: DataFrame,
     gds: GraphDataScience,
     projection: Any,
-    # filtering: Any,
+    filtering: Any,
     estimator: Any,
     write_property: str,
 ) -> Dict:
@@ -289,6 +314,7 @@ def train_topological_embeddings(
     Args:
         df: nodes df
         gds: the gds object
+        filtering: filtering
         projection: gds projection to execute on the graph
         estimator: estimator to apply
         write_property: node property to write result to
@@ -302,10 +328,16 @@ def train_topological_embeddings(
     config = projection.pop("configuration", {})
     graph, _ = gds.graph.project(*projection.values(), **config)
 
-    # # Filter out treat/GT nodes from the graph
-    # subgraph_name = filtering.get("graphName")
-    # filter_args = filtering.pop("args")
-    # subgraph, _ = gds.graph.filter(subgraph_name, graph, **filter_args)
+    # Filter out treat/GT nodes from the graph
+    subgraph_name = filtering.get("graphName")
+    filter_args = filtering.pop("args")
+
+    # Drop graph if exists
+    if gds.graph.exists(subgraph_name).exists:
+        subgraph = gds.graph.get(subgraph_name)
+        gds.graph.drop(subgraph, False)
+
+    subgraph, _ = gds.graph.filter(subgraph_name, graph, **filter_args)
 
     # Validate whether the model exists
     model_name = estimator.get("args").get("modelName")
@@ -315,7 +347,7 @@ def train_topological_embeddings(
 
     # Initialize the model
     model, _ = getattr(gds.beta, estimator.get("model")).train(
-        graph, **estimator.get("args")
+        subgraph, **estimator.get("args")
     )
 
     return {"success": "true"}
@@ -328,7 +360,7 @@ def write_topological_embeddings(
     gds: GraphDataScience,
     projection: Any,
     estimator: Any,
-    # filtering: Any,
+    filtering: Any,
     write_property: str,
 ) -> Dict:
     """Write topological embeddings."""

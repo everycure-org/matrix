@@ -87,9 +87,22 @@ def create_pipeline(**kwargs) -> Pipeline:
                 ],
             ),
             node(
-                func=nodes.train_topological_embeddings,
+                func=nodes.add_include_in_graphsage,
                 inputs={
                     "df": "embeddings.tmp.input_edges",
+                    "df": "embeddings.prm.graph.pca_embeddings",
+                    "gdb": "params:embeddings.gdb",
+                    "drug_types": "params:modelling.drug_types",
+                    "disease_types": "params:modelling.disease_types",
+                },
+                outputs="embeddings.feat.include_in_graphsage@yaml",
+                name="filter_graphsage",
+            ),
+            node(
+                func=nodes.train_topological_embeddings,
+                inputs={
+                    "df": "embeddings.feat.include_in_graphsage@yaml",
+                    "edges": "integration.model_input.edges",
                     "gds": "params:embeddings.gds",
                     "unpack": "params:embeddings.topological",
                 },
