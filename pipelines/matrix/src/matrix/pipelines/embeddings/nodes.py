@@ -17,6 +17,8 @@ from . import pypher_utils
 
 from refit.v1.core.inject import inject_object
 from refit.v1.core.unpack import unpack_params
+from refit.v1.core.inline_has_schema import has_schema
+from refit.v1.core.inline_primary_key import primary_key
 
 import logging
 
@@ -65,6 +67,43 @@ class GraphDS(GraphDataScience):
         super().__init__(endpoint, auth=tuple(auth), database=database)
 
         self.set_database(database)
+
+
+
+@has_schema(
+    schema={
+        "label": "string",
+        "id": "string",
+        "name": "string",
+        "property_keys": "array<string>",
+        "property_values": "array<string>",
+    },
+    allow_subset=True,
+)
+@primary_key(primary_key=["id"])
+def create_nodes(df: DataFrame) -> DataFrame:
+    """Function to create Neo4J nodes.
+
+    Args:
+        df: Nodes dataframe
+    """
+    return (
+        df.select("id", "name", "category", "description")
+        .withColumn("label", F.split(F.col("category"), ":", limit=2).getItem(1))
+        .withColumn(
+            "properties",
+            F.create_map(
+                F.lit("name"),
+                F.col("name"),
+                F.lit("category"),
+                F.col("category"),
+                F.lit("description"),
+                F.col("description"),
+            ),
+        )
+        .withColumn("property_keys", F.map_keys(F.col("properties")))
+        .withColumn("property_values", F.map_values(F.col("properties")))
+    )
 
 
 @unpack_params()
