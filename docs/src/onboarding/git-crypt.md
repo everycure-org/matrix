@@ -3,6 +3,8 @@
 Our repository uses [git-crypt](https://www.agwa.name/projects/git-crypt/) to encrypt secrets in our code repository. This way, everything one needs to access the data is contained in the repository
 without actually exposing the data itself because a decryption key is required.
 
+<div style="position: relative; width: 100%; height: 0; padding-bottom: 56.25%;"><iframe src="https://us06web.zoom.us/clips/embed/fAnKtX_JDGeJAZgjqlvODUuQuSZ18FRO08Ia9yEdxbS_zMm07xgBMUtY4JrStCKb3gOuZWg-jCyAlgG-2SikYOQA.Qa3KXZe2qmtNyJSH" frameborder="0" allowfullscreen="allowfullscreen" style="position: absolute; width: 100%; height: 100%; top: 0; left: 0; "></iframe></div>
+
 ## Required installations
 
 ```bash
@@ -17,7 +19,7 @@ As a new user execute the following command to generate your [gpg-key](https://d
 ### Generate the key
 To generate a new key, run the following command, we recommend sticking to the defaults
 everywhere. If you already use gpg for signing your git commits, feel free to share your
-existing public key. 
+existing public key (use the gpg command with all default options). 
 
 ```bash
 gpg --full-generate-key
