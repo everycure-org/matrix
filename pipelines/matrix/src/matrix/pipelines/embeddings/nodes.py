@@ -20,6 +20,12 @@ from refit.v1.core.unpack import unpack_params
 from refit.v1.core.inline_has_schema import has_schema
 from refit.v1.core.inline_primary_key import primary_key
 
+from tenacity import (
+    retry,
+    stop_after_attempt,
+    retry_if_exception_type,
+)
+
 import logging
 
 logger = logging.getLogger(__name__)
@@ -102,12 +108,22 @@ def create_nodes(df: DataFrame) -> DataFrame:
         )
         .withColumn("property_keys", F.map_keys(F.col("properties")))
         .withColumn("property_values", F.map_values(F.col("properties")))
-        .limit(100)
+        .limit(100000)
     )
+
+
+class FailedBatchesException(BaseException):
+    """Exception to signal failed batches."""
+
+    pass
 
 
 @unpack_params()
 @inject_object()
+@retry(
+    stop=stop_after_attempt(3),
+    retry=retry_if_exception_type(FailedBatchesException),
+)
 def compute_embeddings(
     input: DataFrame,
     gdb: GraphDB,
@@ -202,7 +218,7 @@ def compute_embeddings(
         failed = driver.execute_query(str(p), database_=gdb._database, **p.bound_params)
 
     if len(failed.records) > 0:
-        raise RuntimeError("Failed batches in the embedding step")
+        raise FailedBatchesException("Failed batches in the embedding step")
 
     return {"success": "true"}
 
@@ -246,11 +262,11 @@ def reduce_dimension(df: DataFrame, transformer, input: str, output: str, skip: 
 
 
 def ingest_edges(nodes, edges: DataFrame, exc_preds: List[str]):
+    """Function to construct Neo4J edges."""
     return (
         edges.select("subject", "predicate", "object", "knowledge_source")
         .withColumn("label", F.split(F.col("predicate"), ":", limit=2).getItem(1))
         .filter(~F.col("predicate").isin(exc_preds))
-        .limit(100)
     )
 
 

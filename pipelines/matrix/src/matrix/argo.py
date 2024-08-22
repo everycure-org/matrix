@@ -1,7 +1,7 @@
 """Module with utilities to generate Argo workflow."""
 import re
 from pathlib import Path
-from typing import Callable, Iterable, Any, Tuple
+from typing import List, Optional, Any
 
 import click
 from jinja2 import Environment, FileSystemLoader
@@ -55,20 +55,26 @@ def generate_argo_config(image, image_tag):
 
 
 class FusedNode(Node):
+    """Class to represent a fused node."""
+
     def __init__(  # noqa: PLR0913
         self,
     ):
+        """Construct new instance of `FusedNode`."""
         self._nodes = []
         self._parents = set()
         self._inputs = []
 
     def add_node(self, node):
+        """Function to add node to group."""
         self._nodes.append(node)
 
     def set_parents(self, parents):
+        """Function to set the parents of the group."""
         self._parents.update(parents)
 
-    def fuses_with(self, node):
+    def fuses_with(self, node) -> bool:
+        """Function verify fusability."""
         # If not is not fusable, abort
         if not self.is_fusable:
             return False
@@ -83,30 +89,37 @@ class FusedNode(Node):
         )
 
     @property
-    def is_fusable(self):
+    def is_fusable(self) -> bool:
+        """Check whether is fusable."""
         return "argowf.fuse" in self.tags
 
     @property
-    def fuse_group(self):
+    def fuse_group(self) -> Optional[str]:
+        """Retrieve fuse group."""
         return self.get_fuse_group(self.tags)
 
     @property
     def nodes(self) -> str:
+        """Retrieve contained nodes."""
         return ",".join([node.name for node in self._nodes])
 
     @property
     def outputs(self) -> set[str]:
+        """Retrieve output datasets."""
         return set().union(*[node.outputs for node in self._nodes])
 
     @property
     def tags(self) -> set[str]:
+        """Retrieve tags."""
         return set().union(*[node.tags for node in self._nodes])
 
     @property
-    def name(self):
+    def name(self) -> str:
+        """Retrieve name of fusedNode."""
         if self.is_fusable:
             return self.fuse_group
 
+        # If not fusable, revert to name of node
         return self._nodes[0].name
 
     @property
@@ -124,7 +137,8 @@ class FusedNode(Node):
         return self.name, hashable(self._nodes)
 
     @staticmethod
-    def get_fuse_group(tags):
+    def get_fuse_group(tags: str) -> Optional[str]:
+        """Function to retrieve fuse group."""
         for tag in tags:
             if tag.startswith("argowf.fuse-group."):
                 return tag[len("argowf.fuse-group.") :]
@@ -132,20 +146,26 @@ class FusedNode(Node):
         return None
 
     @staticmethod
-    def remove_transcoding(dataset: str):
-        return dataset.split("@")[0]
+    def clean_dependencies(elements) -> List[str]:
+        """Function to clean node dependencies.
 
-    @staticmethod
-    def clean_dependencies(elements):
-        # Remove params and remove transcoding
-        return [
-            FusedNode.remove_transcoding(el)
-            for el in elements
-            if not el.startswith("params:")
-        ]
+        Operates by removing params: from the list and dismissing
+        the transcoding operator.
+        """
+        return [el.split("@")[0] for el in elements if not el.startswith("params:")]
 
 
-def fuse(pipeline: Pipeline):
+def fuse(pipeline: Pipeline) -> List[FusedNode]:
+    """Function to fuse given pipeline.
+
+    Leverages the Tags provided by Kedro to fuse nodes for execution
+    by a single Argo Workflow step.
+
+    Args:
+        pipeline: Kedro pipeline
+    Returns
+        List of fusedNodes with their dependencies
+    """
     fused = []
 
     for group in pipeline.grouped_nodes:
@@ -174,11 +194,11 @@ def fuse(pipeline: Pipeline):
     return fused
 
 
-def get_dependencies(fused_pipeline):
+def get_dependencies(fused_pipeline: List[FusedNode]):
     """Function to yield node dependencies to render Argo template.
 
     Args:
-        dependencies: pipeline dependencies
+        fused_pipeline: fused pipeline
     Return:
         Dictionary to render Argo template
     """
