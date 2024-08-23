@@ -27,6 +27,23 @@ from .model import ModelWrapper
 plt.switch_backend("Agg")
 
 
+def create_int_pairs(raw_tp: pd.DataFrame, raw_tn: pd.DataFrame):
+    """Create intermediate pairs dataset.
+
+    Args:
+        raw_tp: Raw ground truth positive data.
+        raw_tn: Raw ground truth negative data.
+
+    Returns:
+        Combined ground truth positive and negative data.
+    """
+    raw_tp["y"] = 1
+    raw_tn["y"] = 0
+
+    # Concat
+    return pd.concat([raw_tp, raw_tn], axis="index").reset_index(drop=True)
+
+
 def prefilter_nodes(
     nodes: DataFrame, drug_types: List[str], disease_types: List[str]
 ) -> DataFrame:
@@ -74,8 +91,9 @@ def create_feat_nodes(
     Returns:
         Nodes enriched with features.
     """
+    # FUTURE: Transcode as pandas instead?
     pdf_nodes = raw_nodes.toPandas()
-    known_pairs = known_pairs.toPandas()
+
     # Add drugs and diseases types flags
     pdf_nodes["is_drug"] = pdf_nodes["category"].apply(lambda x: x in drug_types)
     pdf_nodes["is_disease"] = pdf_nodes["category"].apply(lambda x: x in disease_types)
@@ -90,23 +108,37 @@ def create_feat_nodes(
     return pdf_nodes
 
 
+@has_schema(
+    schema={
+        "source": "object",
+        "source_embedding": "object",
+        "target": "object",
+        "target_embedding": "object",
+        "iteration": "numeric",
+        "split": "object",
+    },
+    allow_subset=True,
+)
 @inject_object()
 def make_splits(
-    nodes: DataFrame,
+    kg: KnowledgeGraph,
     data: DataFrame,
     splitter: _BaseKFold,
 ) -> pd.DataFrame:
     """Function to split data.
 
     Args:
-        nodes: nodes dataframe
+        kg: kg dataset with nodes
         data: Data to split.
         splitter: sklearn splitter object.
 
     Returns:
         Data with split information.
     """
-    data = data.toPandas()
+    # FUTURE: Improve by redoing in Spark
+    data["source_embedding"] = data["source"].apply(lambda s_id: kg._embeddings[s_id])
+    data["target_embedding"] = data["target"].apply(lambda t_id: kg._embeddings[t_id])
+
     all_data_frames = []
     for iteration, (train_index, test_index) in enumerate(
         splitter.split(data, data["y"])
