@@ -13,14 +13,6 @@ _layer_prm: &_layer_prm
     kedro-viz:
       layer: primary
 
-_spark_csv: &_spark_csv
-  type: spark.SparkDataset
-  file_format: csv
-  load_args:
-    header: True
-  save_args:
-    mode: overwrite
-
 _pandas_csv: &_pandas_csv
   type:  pandas.CSVDataset
 

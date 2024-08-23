@@ -1,17 +1,17 @@
+# Sets up our HTTP(S) Gateway for Kubernetes
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: argo-workflows
+  name: gateway
   namespace: argocd
 spec:
   destination:
-    namespace: argo-workflows
+    namespace: gateway
     server: {{ .Values.spec.destination.server }}
   project: default
   source:
-    path: {{ .Values.spec.source.repoPath }}/workflows
+    path: {{ .Values.spec.source.repoPath }}/gateway
     repoURL: {{ .Values.spec.source.repoURL }}
-    # targetRevision: {{ .Values.spec.source.targetRevision }}
     targetRevision: HEAD
   syncPolicy:
     syncOptions:     # Sync options which modifies sync behavior

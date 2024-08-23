@@ -276,10 +276,11 @@ def clean_clinical_trial_data(df: pd.DataFrame) -> pd.DataFrame:
     Returns:
         Cleaned clinical trial data.
     """
-    
     # remove rows with reason for rejection
     df = df[~df["reason_for_rejection"].isna()].reset_index(drop=True)
-    df = df[df["reason_for_rejection"].map(lambda x: len(x.strip()) == 0)].reset_index(drop=True)
+    df = df[df["reason_for_rejection"].map(lambda x: len(x.strip()) == 0)].reset_index(
+        drop=True
+    )
 
     # remove rows with missing drug_kg_curie or disease_kg_curie
     row_has_missing = df["drug_kg_curie"].isna() | df["disease_kg_curie"].isna()

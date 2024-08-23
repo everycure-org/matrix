@@ -12,20 +12,20 @@ ingestion.prm.rtx_kg2.nodes:
   dataset: kg_rtx_kg2
   table: nodes
   identifier: "${globals:data_sources.rtx-kg2.version}"
-  save_args:
+  save_args: 
     temporaryGcsBucket: ${globals:gcs_bucket}
     bigQueryTableLabel.kg: rtx_kg2
-    # bigQueryTableLabel.release: ${globals:versions.release}
+    bigQueryTableLabel.git_sha: ${globals:git_sha}
 
 ingestion.prm.rtx_kg2.edges:
   <<: *_bigquery_ds
   dataset: kg_rtx_kg2
   table: edges
   identifier: "${globals:data_sources.rtx-kg2.version}"
-  save_args:
+  save_args: 
     temporaryGcsBucket: ${globals:gcs_bucket}
     bigQueryTableLabel.kg: rtx_kg2
-    # bigQueryTableLabel.release: ${globals:versions.release}
+    bigQueryTableLabel.git_sha: ${globals:git_sha}
 
 # overwriting the base catalog to use the bigquery datasets
 ingestion.prm.ec_medical_team.nodes:
@@ -36,7 +36,7 @@ ingestion.prm.ec_medical_team.nodes:
   save_args:
     temporaryGcsBucket: ${globals:gcs_bucket}
     bigQueryTableLabel.kg: ec_medical_team
-    # bigQueryTableLabel.release: ${globals:versions.release}
+    bigQueryTableLabel.git_sha: ${globals:git_sha}
 
 ingestion.prm.ec_medical_team.edges:
   <<: *_bigquery_ds
@@ -46,4 +46,4 @@ ingestion.prm.ec_medical_team.edges:
   save_args:
     temporaryGcsBucket: ${globals:gcs_bucket}
     bigQueryTableLabel.kg: ec_medical_team
-    # bigQueryTableLabel.release: ${globals:versions.release}
+    bigQueryTableLabel.git_sha: ${globals:git_sha}

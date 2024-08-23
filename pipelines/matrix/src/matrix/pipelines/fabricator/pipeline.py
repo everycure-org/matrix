@@ -43,7 +43,16 @@ def create_pipeline(**kwargs) -> Pipeline:
                     "edges": "ingestion.raw.rtx_kg2.edges@pandas",
                     "clinical_trials": "ingestion.raw.clinical_trial_data@pandas",
                 },
-                name="fabricate_datasets",
+                name="fabricate_kg2_datasets",
+            ),
+            node(
+                func=fabricate_datasets,
+                inputs={"fabrication_params": "params:fabricator.ec_medical_kg"},
+                outputs={
+                    "nodes": "ingestion.raw.ec_medical_team.nodes@pandas",
+                    "edges": "ingestion.raw.ec_medical_team.edges@pandas",
+                },
+                name="fabricate_ec_medical_datasets",
             ),
             node(
                 func=_create_pairs,

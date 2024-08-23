@@ -42,6 +42,10 @@ embeddings.prm.graph.pca_embeddings:
       MATCH (n: Entity) 
       RETURN n.id as id, n.pca_embedding as embedding
 
+embeddings.feat.include_in_graphsage@yaml:
+  filepath: ${globals:paths.feat}/graphsage_filter/result.yml
+  type:  yaml.YAMLDataset
+
 embeddings.models.graphsage:
   # we do not actually do anything with this DS, thus it's a dummy
   # https://github.com/kedro-org/kedro/discussions/3758
