@@ -2,6 +2,9 @@
 import os
 from typing import List, Any, Dict
 
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
 
 from neo4j import Driver
 from pyspark.sql import DataFrame
@@ -322,26 +325,28 @@ def write_topological_embeddings(
     return {"success": "true"}
 
 
-def generate_pca(nodes: DataFrame) -> Dict:
+def generate_pca(nodes: DataFrame, metadata: DataFrame) -> Dict:
     """Write topological embeddings."""
-    import pandas as pd
-    import numpy as np
-    import matplotlib.pyplot as plt
-
     df = nodes.withColumn("features", array_to_vector("topological_embedding"))
+    # need to convert to pandas for visualisation so might as well do PCA this way
     df = df.toPandas()
     pca = PCA(n_components=2)
     df_pca = pd.DataFrame(pca.fit_transform(np.array(df.features.tolist())))
-    fig = plt.figure(figsize=(5, 10))
-    sns.scatterplot(
-        data=df_pca,
-        x=0,
-        y=1,  # ,
-        # hue='category'
+    df_pca["category"] = metadata.toPandas()["category"]
+    fig = plt.figure(
+        figsize=(
+            10,
+            5,
+        )
     )
+    sns.scatterplot(data=df_pca, x=0, y=1, hue="category")
     plt.suptitle("PCA scatterpot")
     plt.xlabel("PCA 1")
     plt.ylabel("PCA 2")
+    plt.legend(
+        bbox_to_anchor=(1.05, 1), loc="upper left", borderaxespad=0, fontsize="small"
+    )
+    plt.tight_layout(rect=[0, 0, 0.85, 1])
 
     return fig
 
