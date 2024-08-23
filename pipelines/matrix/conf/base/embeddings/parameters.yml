@@ -99,7 +99,7 @@ embeddings.topological:
       learningRate: 0.001
   write_property: topological_embedding
 
-embeddings.visualisation:
+embeddings.topological_pca:
   skip: false # Set to true to skip PCA
   input: 'topological_embedding'
   output: 'pca_embedding'

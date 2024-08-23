@@ -73,13 +73,13 @@ embeddings.feat.edges:
   <<: *_spark_parquet
   filepath: ${globals:paths.feat}/edges
 
-embeddings.reporting.graphsage:
+embeddings.reporting.topological_pca:
   <<: *_spark_parquet
   filepath: ${globals:paths.reporting}/topological_pca
 
-embeddings.model_output.pca_plot:
+embeddings.reporting.topological_pca_plot:
   type: kedro_mlflow.io.artifacts.MlflowArtifactDataset
-  artifact_path: graphsage
+  # artifact_path: topological
   dataset:
     type: matplotlib.MatplotlibWriter
-    filepath: ${globals:paths.reporting}/pca_plot.png
+    filepath: ${globals:paths.tmp}/pca_plot.png
