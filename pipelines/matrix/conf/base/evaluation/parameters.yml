@@ -64,16 +64,25 @@ evaluation.disease_specific_ranking:
       score_col_name: *score-col
 
 # Time split
-# TODO: Chunyu to move code for time split
-evaluation.generator_with_dataset:
-  # Use the new generator
-  object: matrix.datasets.pair_generator.GeneratorWithSideInput
-
-  # Load it with dataset
-  dataset:
-    object: kedro_datasets.pandas.CSVDataset
-    # Update path to plug into clinical data file
-    filepath: ${globals:paths.raw}/clinical_trial_data/${globals:data_sources.clinical-trial-data.version}/data.tsv
-    load_args:
-      load_args:
-      sep: "\t"
+evaluation.time_split_validation:
+  evaluation_options:
+    generator:
+      object: matrix.datasets.pair_generator.TimeSplitValidationDataGenerator
+    evaluation:
+      object: matrix.pipelines.evaluation.evaluation.TimeSplitValidation
+      metrics:
+        - object: sklearn.metrics.accuracy_score
+        - object: sklearn.metrics.f1_score
+        - object: sklearn.metrics.roc_auc_score
+        - object: sklearn.metrics.average_precision_score
+      score_col_name: *score-col
+      threshold: 0.5
+      specific_col: "target"
+      rank_func_lst: 
+        - object: matrix.pipelines.evaluation.evaluation.MRR
+        - object:  matrix.pipelines.evaluation.evaluation.HitK
+          k: 2
+        - object:  matrix.pipelines.evaluation.evaluation.HitK
+          k: 10
+        - object:  matrix.pipelines.evaluation.evaluation.HitK
+          k: 100

@@ -321,31 +321,30 @@ class MatrixTestDiseases(DrugDiseasePairGenerator):
         return matrix[~is_in_train]
 
 
-class GeneratorWithSideInput:  # TODO: This needs to become TimeSplitDataGenerator
-    """Generator with dataset input."""
+class TimeSplitValidationDataGenerator(DrugDiseasePairGenerator):
+    """Generator to create time-split validation data based on clinical trial data."""
 
-    def __init__(self, dataset: AbstractDataset) -> None:
-        """Initializes the SingleLabelPairGenerator instance.
-
-        Args:
-            dataset: dataset to use
-        """
-        # NOTE: I'm fine with the rudimentary data cleaning happening in here for now, is we mix
-        # this injection mechanism with ordinary datasets, it may break lineage of the pipeline.
-        # there are ways to fix that again, but let's keep it simple. So proposing to add
-        # the a clean_data() method to this class and turn the class into TimeSplitValidationDataGenerator?
-        self._clinical_trail_data = dataset._load()
-
-    def generate(self, known_pairs: pd.DataFrame) -> pd.DataFrame:
-        """Function to generate drug-disease pairs from the knowledge graph.
+    def generate(
+        self, graph: KnowledgeGraph, clinical_trial_dataset: pd.DataFrame
+    ) -> pd.DataFrame:
+        """Function generating drug-disease pairs using clinical trial data.
 
         Args:
             graph: KnowledgeGraph instance.
-            known_pairs: DataFrame with ground truth drug-disease pairs.
+            clinical_trial_dataset: cleaned clinical trial data from preprocessing.
 
         Returns:
-            DataFrame with unknown drug-disease pairs.
+            Labelled ground truth drug-disease pairs dataset.
         """
-        # Add logic here, will have access to _data to curate dataset you'd like
-        # TODO: Connect with Alexei on what exactly needs to happen here
-        breakpoint()
+        # Rename some columns to match the expected format
+        clinical_trial_dataset = clinical_trial_dataset.rename(
+            columns={
+                "drug_kg_curie": "source",
+                "disease_kg_curie": "target"
+            }
+        )
+
+        # Assign a label to each pair
+        clinical_trial_dataset["y"] = 1
+
+        return clinical_trial_dataset

@@ -1,6 +1,9 @@
 _pandas_csv: &_pandas_csv
   type:  pandas.CSVDataset
 
+_pandas_parquet: &_pandas_parquet
+  type: pandas.ParquetDataset
+
 _spark_parquet_ds: &_spark_parquet
   type: matrix.datasets.gcp.LazySparkDataset
   file_format: parquet
@@ -216,7 +219,7 @@ ingestion.raw.ec_medical_team.edges@pandas:
   filepath: ${globals:paths.raw}/ec_medical_team/${globals:data_sources.ec-medical-team.version}/edges.csv
 
 ingestion.raw.ec_medical_team.edges@spark:
-  <<: [*_spark_csv, *_layer_int]
+  <<: [*_spark_parquet, *_layer_int]
   filepath: ${globals:paths.raw}/ec_medical_team/${globals:data_sources.ec-medical-team.version}/edges.csv
   save_args:
     mode: overwrite
@@ -225,24 +228,12 @@ ingestion.raw.ec_medical_team.edges@spark:
     header: True
 
 ingestion.raw.clinical_trial_data@pandas:
-  <<: [*_layer_int, *_pandas_csv]
-  filepath: ${globals:paths.raw}/clinical_trial_data/${globals:data_sources.clinical-trial-data.version}/data.tsv
-  load_args:
-    sep: "\t"
-  save_args:
-    header: True
-    index: false
-    sep: "\t"
+  <<: [*_layer_int, *_pandas_parquet]
+  filepath: ${globals:paths.raw}/clinical_trial_data/${globals:data_sources.clinical-trial-data.version}/data
 
 ingestion.raw.clinical_trial_data@spark:
   << : [*_spark_csv, *_layer_int]
-  filepath: ${globals:paths.raw}/clinical_trial_data/${globals:data_sources.clinical-trial-data.version}/data.tsv
-  save_args:
-    mode: overwrite
-    header: True
-  load_args:
-    header: True
-    sep: "\t"
+  filepath: ${globals:paths.raw}/clinical_trial_data/${globals:data_sources.clinical-trial-data.version}/data
 
 ingestion.prm.rtx_kg2.nodes:
   <<: [*_spark_parquet, *_layer_int]
