@@ -47,6 +47,7 @@ docker_test: docker_build
 	IMG="$(dev_docker_image)" docker compose -f compose/docker-compose.yml \
 		-f compose/docker-compose.ci.yml \
 		up \
+		--force-recreate \
 		--abort-on-container-exit \
 		--exit-code-from matrix-pipeline
 
