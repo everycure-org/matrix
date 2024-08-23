@@ -190,6 +190,8 @@ def create_prm_edges(int_edges: pd.DataFrame) -> pd.DataFrame:
     )
 
     res["predicate"] = "biolink:" + res["predicate"]
+
+    # FUTURE: Integrate actual knowledge source
     res["knowledge_source"] = "ec:medical"
 
     return res

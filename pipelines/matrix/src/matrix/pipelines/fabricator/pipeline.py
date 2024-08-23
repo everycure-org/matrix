@@ -27,10 +27,6 @@ def _create_pairs(nodes: DataFrame, num: int = 50) -> pd.DataFrame:
     )
 
 
-def _edges_subset(edges: DataFrame, num: int = 10) -> pd.DataFrame:
-    return edges.limit(num).withColumn("knowledge_source", F.lit("EveryCure"))
-
-
 def create_pipeline(**kwargs) -> Pipeline:
     """Create fabricator pipeline."""
     return pipeline(
@@ -42,7 +38,16 @@ def create_pipeline(**kwargs) -> Pipeline:
                     "nodes": "ingestion.raw.rtx_kg2.nodes@pandas",
                     "edges": "ingestion.raw.rtx_kg2.edges@pandas",
                 },
-                name="fabricate_datasets",
+                name="fabricate_kg2_datasets",
+            ),
+            node(
+                func=fabricate_datasets,
+                inputs={"fabrication_params": "params:fabricator.ec_medical_kg"},
+                outputs={
+                    "nodes": "ingestion.raw.ec_medical_team.nodes@pandas",
+                    "edges": "ingestion.raw.ec_medical_team.edges@pandas",
+                },
+                name="fabricate_ec_medical_datasets",
             ),
             node(
                 func=_create_pairs,
@@ -55,19 +60,6 @@ def create_pipeline(**kwargs) -> Pipeline:
                 inputs=["ingestion.raw.rtx_kg2.nodes@spark"],
                 outputs="integration.raw.ground_truth.negatives",
                 name="create_tn_pairs",
-            ),
-            node(
-                func=lambda x: x,
-                inputs=["ingestion.raw.rtx_kg2.nodes@spark"],
-                outputs="ingestion.raw.ec_medical_team.nodes@spark",
-                name="create_exp_nodes",
-            ),
-            # NOTE: Quickly taking a subset
-            node(
-                func=_edges_subset,
-                inputs=["ingestion.raw.rtx_kg2.edges@spark"],
-                outputs="ingestion.raw.ec_medical_team.edges@spark",
-                name="create_exp_edges",
             ),
         ]
     )
