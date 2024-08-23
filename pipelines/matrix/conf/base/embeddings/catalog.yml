@@ -79,7 +79,7 @@ embeddings.reporting.topological_pca:
 
 embeddings.reporting.topological_pca_plot:
   type: kedro_mlflow.io.artifacts.MlflowArtifactDataset
-  # artifact_path: topological
+  artifact_path: topological
   dataset:
     type: matplotlib.MatplotlibWriter
     filepath: ${globals:paths.tmp}/pca_plot.png
