@@ -10,7 +10,8 @@ repos:
         exclude: |
           (?x)^(
             pipelines/matrix/packages|
-            pipelines/matrix/tests/
+            pipelines/matrix/tests/|
+            services/synonymizer/api/modules/synonymize
           )
       # Run the formatter.
       - id: ruff-format
@@ -19,7 +20,11 @@ repos:
     rev: 0.7.1
     hooks:
       - id: nbstripout
-        exclude: pipelines/matrix/packages
+        exclude: | 
+          (?x)^(
+            pipelines/matrix/packages|services/|
+            services/synonymizer/api/modules/synonymize
+          )
   - repo: https://github.com/antonbabenko/pre-commit-terraform
     rev: v1.92.0
     hooks:
