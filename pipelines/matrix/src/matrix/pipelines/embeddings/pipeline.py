@@ -130,10 +130,23 @@ def create_pipeline(**kwargs) -> Pipeline:
                     "argowf.template-neo4j",
                 ],
             ),
+            # extracts the nodes from neo4j and writes them to BigQuery
+            node(
+                func=lambda x: x,
+                inputs=["embeddings.model_output.graphsage"],
+                outputs="embeddings.feat.nodes",
+                name="extract_nodes_edges_from_db",
+                tags=[
+                    "argowf.fuse",
+                    "argowf.fuse-group.topological_embeddings",
+                    "argowf.template-neo4j",
+                ],
+            ),
+            # Create PCA plot
             node(
                 func=nodes.reduce_dimension,
                 inputs={
-                    "df": "embeddings.model_output.graphsage",
+                    "df": "embeddings.feat.nodes",
                     "unpack": "params:embeddings.topological_pca",
                 },
                 outputs="embeddings.reporting.topological_pca",
@@ -147,18 +160,6 @@ def create_pipeline(**kwargs) -> Pipeline:
                 },
                 outputs="embeddings.reporting.topological_pca_plot",
                 name="create_pca_plot_topological_embeddings",
-            ),
-            # extracts the nodes from neo4j and writes them to BigQuery
-            node(
-                func=lambda x: x,
-                inputs=["embeddings.model_output.graphsage"],
-                outputs="embeddings.feat.nodes",
-                name="extract_nodes_edges_from_db",
-                tags=[
-                    "argowf.fuse",
-                    "argowf.fuse-group.topological_embeddings",
-                    "argowf.template-neo4j",
-                ],
             ),
         ],
     )
