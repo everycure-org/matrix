@@ -8,13 +8,19 @@ from . import nodes
 
 
 def _create_evaluation_pipeline(model: str, evaluation: str) -> Pipeline:
+    
+    if evaluation != "time_split_validation":
+        input_data = "modelling.model_input.splits"
+    else:
+        input_data = "ingestion.raw.clinical_trial_data@pandas"
+    
     return pipeline(
         [
             node(
                 func=nodes.generate_test_dataset,
                 inputs=[
                     "modelling.feat.rtx_kg2",
-                    "modelling.model_input.splits",
+                    input_data,
                     f"params:evaluation.{evaluation}.evaluation_options.generator",
                 ],
                 outputs=f"evaluation.{model}.{evaluation}.prm.pairs",
@@ -27,8 +33,7 @@ def _create_evaluation_pipeline(model: str, evaluation: str) -> Pipeline:
                     f"evaluation.{model}.{evaluation}.prm.pairs",
                     f"modelling.{model}.model_input.transformers",
                     f"modelling.{model}.models.model",
-                    f"params:modelling.{model}.model_options.model_tuning_args.features",
-                    f"params:evaluation.score_col_name",
+                    f"params:modelling.{model}.model_options.model_tuning_args.features"
                 ],
                 outputs=f"evaluation.{model}.{evaluation}.model_output.predictions",
                 name=f"create_{model}_{evaluation}_model_predictions",
