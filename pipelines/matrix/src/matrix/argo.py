@@ -1,10 +1,13 @@
 """Module with utilities to generate Argo workflow."""
 import re
 from pathlib import Path
+from typing import List, Optional, Any
 
 import click
 from jinja2 import Environment, FileSystemLoader
 
+from kedro.pipeline.node import Node
+from kedro.pipeline import Pipeline
 from kedro.framework.project import pipelines
 from kedro.framework.startup import bootstrap_project
 
@@ -41,7 +44,8 @@ def generate_argo_config(image, image_tag):
 
     pipes = {}
     for name, pipeline in pipelines.items():
-        pipes[name] = get_dependencies(pipeline.node_dependencies)
+        # TODO: Fuse nodes in topological order to avoid constant recreation of Neo4j
+        pipes[name] = get_dependencies(fuse(pipeline))
 
     output = template.render(
         package_name=package_name, pipes=pipes, image=image, image_tag=image_tag
@@ -50,26 +54,167 @@ def generate_argo_config(image, image_tag):
     (SEARCH_PATH / RENDERED_FILE).write_text(output)
 
 
-def get_dependencies(dependencies):
+class FusedNode(Node):
+    """Class to represent a fused node."""
+
+    def __init__(  # noqa: PLR0913
+        self,
+    ):
+        """Construct new instance of `FusedNode`."""
+        self._nodes = []
+        self._parents = set()
+        self._inputs = []
+
+    def add_node(self, node):
+        """Function to add node to group."""
+        self._nodes.append(node)
+
+    def set_parents(self, parents):
+        """Function to set the parents of the group."""
+        self._parents.update(parents)
+
+    def fuses_with(self, node) -> bool:
+        """Function verify fusability."""
+        # If not is not fusable, abort
+        if not self.is_fusable:
+            return False
+
+        # If fusing group does not match, abort
+        if not self.fuse_group == self.get_fuse_group(node.tags):
+            return False
+
+        # Otherwise, fusable if connected
+        return set(self.clean_dependencies(node.inputs)) & set(
+            self.clean_dependencies(self.outputs)
+        )
+
+    @property
+    def is_fusable(self) -> bool:
+        """Check whether is fusable."""
+        return "argowf.fuse" in self.tags
+
+    @property
+    def fuse_group(self) -> Optional[str]:
+        """Retrieve fuse group."""
+        return self.get_fuse_group(self.tags)
+
+    @property
+    def nodes(self) -> str:
+        """Retrieve contained nodes."""
+        return ",".join([node.name for node in self._nodes])
+
+    @property
+    def outputs(self) -> set[str]:
+        """Retrieve output datasets."""
+        return set().union(*[node.outputs for node in self._nodes])
+
+    @property
+    def tags(self) -> set[str]:
+        """Retrieve tags."""
+        return set().union(*[node.tags for node in self._nodes])
+
+    @property
+    def name(self) -> str:
+        """Retrieve name of fusedNode."""
+        if self.is_fusable:
+            return self.fuse_group
+
+        # If not fusable, revert to name of node
+        return self._nodes[0].name
+
+    @property
+    def _unique_key(self) -> tuple[Any, Any] | Any | tuple:
+        def hashable(value: Any) -> tuple[Any, Any] | Any | tuple:
+            if isinstance(value, dict):
+                # we sort it because a node with inputs/outputs
+                # {"arg1": "a", "arg2": "b"} is equivalent to
+                # a node with inputs/outputs {"arg2": "b", "arg1": "a"}
+                return tuple(sorted(value.items()))
+            if isinstance(value, list):
+                return tuple(value)
+            return value
+
+        return self.name, hashable(self._nodes)
+
+    @staticmethod
+    def get_fuse_group(tags: str) -> Optional[str]:
+        """Function to retrieve fuse group."""
+        for tag in tags:
+            if tag.startswith("argowf.fuse-group."):
+                return tag[len("argowf.fuse-group.") :]
+
+        return None
+
+    @staticmethod
+    def clean_dependencies(elements) -> List[str]:
+        """Function to clean node dependencies.
+
+        Operates by removing params: from the list and dismissing
+        the transcoding operator.
+        """
+        return [el.split("@")[0] for el in elements if not el.startswith("params:")]
+
+
+def fuse(pipeline: Pipeline) -> List[FusedNode]:
+    """Function to fuse given pipeline.
+
+    Leverages the Tags provided by Kedro to fuse nodes for execution
+    by a single Argo Workflow step.
+
+    Args:
+        pipeline: Kedro pipeline
+    Returns
+        List of fusedNodes with their dependencies
+    """
+    fused = []
+
+    for group in pipeline.grouped_nodes:
+        for target_node in group:
+            # Find source node that provides its inputs
+            found = False
+
+            for source_node in fused:
+                if source_node.fuses_with(target_node):
+                    found = True
+                    source_node.add_node(target_node)
+
+            if not found:
+                fused_node = FusedNode()
+                fused_node.add_node(target_node)
+                fused_node.set_parents(
+                    [
+                        fs
+                        for fs in fused
+                        if set(FusedNode.clean_dependencies(target_node.inputs))
+                        & set(FusedNode.clean_dependencies(fs.outputs))
+                    ]
+                )
+                fused.append(fused_node)
+
+    return fused
+
+
+def get_dependencies(fused_pipeline: List[FusedNode]):
     """Function to yield node dependencies to render Argo template.
 
     Args:
-        dependencies: pipeline dependencies
+        fused_pipeline: fused pipeline
     Return:
         Dictionary to render Argo template
     """
     deps_dict = [
         {
-            "node": node.name,
-            "name": clean_name(node.name),
-            "deps": [clean_name(val.name) for val in sorted(parent_nodes)],
+            "name": clean_name(fuse.name),
+            "nodes": fuse.nodes,
+            "deps": [clean_name(val.name) for val in sorted(fuse._parents)],
+            "tags": fuse.tags,
             **{
-                tag.split("-")[0][len("argo.") :]: tag.split("-")[1]
-                for tag in node.tags
-                if tag.startswith("argo.")
+                tag.split("-")[0][len("argowf.") :]: tag.split("-")[1]
+                for tag in fuse.tags
+                if tag.startswith("argowf.") and "-" in tag
             },
         }
-        for node, parent_nodes in dependencies.items()
+        for fuse in fused_pipeline
     ]
     return sorted(deps_dict, key=lambda d: d["name"])
 
