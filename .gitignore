@@ -23,6 +23,5 @@ neo4j_db/
 **/.terragrunt-cache/
 
 infra/argo/applications/**/charts
-services
 
 services/synonymizer/assets/
