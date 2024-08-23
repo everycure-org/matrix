@@ -126,6 +126,11 @@ def run(
     params,
 ):
     """Run the pipeline."""
+    if pipeline in ["test", "fabricator"] and env in [None, "base"]:
+        raise RuntimeError(
+            "Running the fabricator in the base environment might overwrite production data! Use the test env `-e test` instead."
+        )
+
     runner = load_obj(runner or "SequentialRunner", "kedro.runner")
     tags = tuple(tags)
     without_tags = without_tags
