@@ -2,6 +2,9 @@
 import os
 from typing import List, Any, Dict
 
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
 
 from neo4j import Driver
 from pyspark.sql import DataFrame
@@ -11,6 +14,9 @@ from pyspark.ml.functions import array_to_vector, vector_to_array
 from graphdatascience import GraphDataScience, QueryRunner
 from neo4j import GraphDatabase
 from pypher import __ as cypher, Pypher
+
+from matplotlib.pyplot import plot
+import seaborn as sns
 
 from pypher.builder import create_function
 from . import pypher_utils
@@ -377,6 +383,28 @@ def write_topological_embeddings(
     model.predict_write(graph, writeProperty=write_property)
 
     return {"success": "true"}
+
+
+def visualise_pca(nodes: DataFrame, col: str):
+    """Write topological embeddings."""
+    nodes = nodes.toPandas()
+    nodes[["pca_0", "pca_1"]] = pd.DataFrame(nodes[col].tolist(), index=nodes.index)
+    fig = plt.figure(
+        figsize=(
+            10,
+            5,
+        )
+    )
+    sns.scatterplot(data=nodes, x="pca_0", y="pca_1", hue="category")
+    plt.suptitle("PCA scatterpot")
+    plt.xlabel("PCA 1")
+    plt.ylabel("PCA 2")
+    plt.legend(
+        bbox_to_anchor=(1.05, 1), loc="upper left", borderaxespad=0, fontsize="small"
+    )
+    plt.tight_layout(rect=[0, 0, 0.85, 1])
+
+    return fig
 
 
 def extract_nodes_edges(
