@@ -325,17 +325,19 @@ def write_topological_embeddings(
     return {"success": "true"}
 
 
-def visualise_pca(nodes: DataFrame, metadata: DataFrame):
+def visualise_pca(nodes: DataFrame):
     """Write topological embeddings."""
     nodes = nodes.toPandas()
-    nodes["category"] = metadata.toPandas()["category"]
+    nodes[["pca_0", "pca_1"]] = pd.DataFrame(
+        nodes["pca_embedding"].tolist(), index=nodes.index
+    )
     fig = plt.figure(
         figsize=(
             10,
             5,
         )
     )
-    sns.scatterplot(data=nodes, x=0, y=1, hue="category")
+    sns.scatterplot(data=nodes, x="pca_0", y="pca_1", hue="category")
     plt.suptitle("PCA scatterpot")
     plt.xlabel("PCA 1")
     plt.ylabel("PCA 2")
