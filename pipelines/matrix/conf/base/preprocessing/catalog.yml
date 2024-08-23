@@ -65,6 +65,8 @@ preprocessing.int.normalized_nodes:
 preprocessing.int.nodes:
   <<: [*_layer_int, *_pandas_csv]
   filepath: ${globals:paths.int}/ec_medical_team/nodes
+  load_args:
+    columns: ["name", "entity label", "new_id", "normalized_curie", "description"]
 
 preprocessing.int.edges:
   <<: [*_layer_prm, *_sheets_dataset]
