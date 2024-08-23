@@ -15,7 +15,7 @@ ingestion.prm.rtx_kg2.nodes:
   save_args:
     temporaryGcsBucket: ${globals:gcs_bucket}
     bigQueryTableLabel.kg: rtx_kg2
-    # bigQueryTableLabel.release: ${globals:versions.release}
+    bigQueryTableLabel.git_sha: ${globals:git_sha}
 
 ingestion.prm.rtx_kg2.edges:
   <<: *_bigquery_ds
@@ -25,4 +25,4 @@ ingestion.prm.rtx_kg2.edges:
   save_args:
     temporaryGcsBucket: ${globals:gcs_bucket}
     bigQueryTableLabel.kg: rtx_kg2
-    # bigQueryTableLabel.release: ${globals:versions.release}
+    bigQueryTableLabel.git_sha: ${globals:git_sha}
