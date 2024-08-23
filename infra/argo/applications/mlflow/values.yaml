@@ -22,7 +22,7 @@ mlflow:
   # https://github.com/bitnami/charts/issues/28893
   postgresql:
     auth:
-      existingSecret: pgsql_creds
+      existingSecret: pgsql-creds
 
   # Disable minio
   minio:
