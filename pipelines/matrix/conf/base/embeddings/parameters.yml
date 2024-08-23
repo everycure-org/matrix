@@ -80,9 +80,8 @@ embeddings.topological:
     modelName: topological_embeddings
     # using Chunyus https://github.com/everycure-org/project-silc/blob/main/chunyu-fellowship/scripts/node2vec_pyG/train_node2vec.py
     # note they differ a bit - in neo4j we can implement max and min learning rate, and tolerance
-    configuration:
-      nodeLabels: '*'
-      relationshipTypes: '*'
+    node2vec_args:
+      #modelName: topological_embeddings
       concurrency: 4
       # FUTURE: We're currently leveraging a binary weighting strategy to exclude  
       # certain relationships. Another option could be to leverage filtering:

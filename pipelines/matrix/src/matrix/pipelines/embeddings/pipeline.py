@@ -143,7 +143,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 func=nodes.visualise_pca,
                 inputs={
                     "nodes": "embeddings.reporting.topological_pca",
-                    "col": "params:embeddings.topological_pca.output",
+                    "col": "embeddings.reporting.topological_pca",
                 },
                 outputs="embeddings.reporting.topological_pca_plot",
                 name="create_pca_plot_topological_embeddings",

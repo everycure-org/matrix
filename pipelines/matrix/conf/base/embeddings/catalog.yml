@@ -137,7 +137,7 @@ embeddings.feat.edges:
 
 embeddings.reporting.topological_pca:
   <<: *_spark_parquet
-  filepath: ${globals:paths.reporting}/topological_pca_output
+  filepath: ${globals:paths.reporting}/topological_pca
 
 embeddings.reporting.topological_pca_plot:
   type: kedro_mlflow.io.artifacts.MlflowArtifactDataset
