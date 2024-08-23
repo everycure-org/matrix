@@ -65,16 +65,19 @@ def create_pipeline(**kwargs) -> Pipeline:
                 func=nodes.reduce_dimension,
                 inputs={
                     "df": "embeddings.model_output.graphsage",
-                    "unpack": "params:embeddings.visualisation",
+                    "unpack": "params:embeddings.topological_pca",
                 },
-                outputs="embeddings.reporting.graphsage",
-                name="apply_pca_2",
+                outputs="embeddings.reporting.topological_pca",
+                name="apply_topological_pca",
             ),
             node(
                 func=nodes.visualise_pca,
-                inputs={"nodes": "embeddings.reporting.graphsage"},
-                outputs="embeddings.model_output.pca_plot",
-                name="visualise_embeddings",
+                inputs={
+                    "nodes": "embeddings.reporting.topological_pca",
+                    "col": "params:embeddings.topological_pca.output",
+                },
+                outputs="embeddings.reporting.topological_pca_plot",
+                name="create_pca_plot_topological_embeddings",
             ),
             # extracts the nodes from neo4j and writes them to BigQuery
             node(

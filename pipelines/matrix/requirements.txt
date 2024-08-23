@@ -374,6 +374,7 @@ matplotlib==3.9.2
     # via
     #   -r requirements.in
     #   mlflow
+    #   seaborn
 matplotlib-inline==0.1.7
     # via
     #   ipykernel
@@ -423,7 +424,7 @@ notebook-shim==0.2.4
     # via
     #   jupyterlab
     #   notebook
-numpy==1.24.0
+numpy==1.23.5
     # via
     #   brix-refit
     #   contourpy
@@ -436,6 +437,7 @@ numpy==1.24.0
     #   scikit-learn
     #   scikit-optimize
     #   scipy
+    #   seaborn
     #   termplotlib
     #   xgboost
 oauthlib==3.2.2
@@ -482,6 +484,7 @@ pandas==1.5.3
     #   kedro-viz
     #   mlflow
     #   pandera
+    #   seaborn
 pandera==0.20.3
     # via brix-refit
 pandocfilters==1.5.1
@@ -680,6 +683,8 @@ scipy==1.14.1
     #   scikit-learn
     #   scikit-optimize
     #   xgboost
+seaborn==0.13.2
+    # via -r requirements.in
 secure==0.3.0
     # via kedro-viz
 send2trash==1.8.3
