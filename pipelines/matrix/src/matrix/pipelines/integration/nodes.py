@@ -56,28 +56,6 @@ def unify_nodes(*nodes) -> DataFrame:
     )
 
 
-# @has_schema(
-#     schema={
-#         "subject": "string",
-#         "predicate": "string",
-#         "object": "string",
-#         "label": "string",
-#     },
-#     allow_subset=True,
-# )
-# def create_edges(nodes: DataFrame, edges: DataFrame, exc_preds: List[str]):
-#     """Function to create Neo4J edges.
-
-#     Args:
-#         nodes: nodes dataframe
-#         edges: edges dataframe
-#         exc_preds: list of predicates excluded downstream
-#     """
-#     return edges.select(
-#         "subject", "predicate", "object", "knowledge_sources", "kg_sources"
-#     ).withColumn("label", F.split(F.col("predicate"), ":", limit=2).getItem(1))
-
-
 @has_schema(
     schema={
         "label": "string",
