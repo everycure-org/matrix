@@ -7,6 +7,14 @@ _spark_parquet_ds: &_spark_parquet
   save_args:
     mode: overwrite
 
+_spark_csv: &_spark_csv
+  type: spark.SparkDataset
+  file_format: csv
+  load_args:
+    header: True
+  save_args:
+    mode: overwrite
+
 _layer_raw: &_layer_raw
   metadata:
     kedro-viz:
@@ -189,6 +197,33 @@ ingestion.raw.rtx_kg2.edges@spark:
             object: pyspark.sql.types.StringType
           nullable: False
 
+
+ingestion.raw.ec_medical_team.nodes@pandas:
+  <<: [*_layer_int, *_pandas_csv]
+  filepath: ${globals:paths.raw}/ec_medical_team/${globals:data_sources.ec-medical-team.version}/nodes.csv
+
+ingestion.raw.ec_medical_team.nodes@spark:
+  <<: [*_spark_csv, *_layer_int]
+  filepath: ${globals:paths.raw}/ec_medical_team/${globals:data_sources.ec-medical-team.version}/nodes.csv
+  save_args:
+    mode: overwrite
+    header: True
+  load_args:
+    header: True
+
+ingestion.raw.ec_medical_team.edges@pandas:
+  <<: [ *_layer_int, *_pandas_csv]
+  filepath: ${globals:paths.raw}/ec_medical_team/${globals:data_sources.ec-medical-team.version}/edges.csv
+
+ingestion.raw.ec_medical_team.edges@spark:
+  <<: [*_spark_csv, *_layer_int]
+  filepath: ${globals:paths.raw}/ec_medical_team/${globals:data_sources.ec-medical-team.version}/edges.csv
+  save_args:
+    mode: overwrite
+    header: True
+  load_args:
+    header: True
+
 ingestion.prm.rtx_kg2.nodes:
   <<: [*_spark_parquet, *_layer_int]
   filepath: ${globals:paths.prm}/rtx_kg2/nodes
@@ -196,3 +231,11 @@ ingestion.prm.rtx_kg2.nodes:
 ingestion.prm.rtx_kg2.edges:
   <<: [*_spark_parquet, *_layer_int]
   filepath: ${globals:paths.prm}/rtx_kg2/edges
+
+ingestion.prm.ec_medical_team.nodes:
+  <<: [*_spark_parquet, *_layer_int]
+  filepath: ${globals:paths.prm}/ec_medical_team/nodes
+
+ingestion.prm.ec_medical_team.edges:
+  <<: [*_spark_parquet, *_layer_int]
+  filepath: ${globals:paths.prm}/ec_medical_team/edges

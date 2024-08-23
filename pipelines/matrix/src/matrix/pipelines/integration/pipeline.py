@@ -8,10 +8,29 @@ def create_pipeline(**kwargs) -> Pipeline:
     """Create integration pipeline."""
     return pipeline(
         [
+            node(
+                func=nodes.unify_nodes,
+                inputs=[
+                    "ingestion.prm.rtx_kg2.nodes",
+                    "ingestion.prm.ec_medical_team.nodes",
+                ],
+                outputs="integration.prm.unified_nodes",
+                name="create_prm_unified_nodes",
+            ),
+            # union edges
+            node(
+                func=nodes.unify_edges,
+                inputs=[
+                    "ingestion.prm.rtx_kg2.edges",
+                    "ingestion.prm.ec_medical_team.edges",
+                ],
+                outputs="integration.prm.unified_edges",
+                name="create_prm_unified_edges",
+            ),
             # Write kg2 Neo4J
             node(
                 func=nodes.create_nodes,
-                inputs=["ingestion.prm.rtx_kg2.nodes"],
+                inputs=["integration.prm.unified_nodes"],
                 outputs="integration.model_input.nodes",
                 name="create_neo4j_nodes",
                 tags=["rtx_kg2", "neo4j"],
@@ -20,7 +39,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 func=nodes.create_edges,
                 inputs=[
                     "integration.model_input.nodes",
-                    "ingestion.prm.rtx_kg2.edges",
+                    "integration.prm.unified_edges",
                     "params:integration.graphsage_excl_preds",
                 ],
                 outputs="integration.model_input.edges",
