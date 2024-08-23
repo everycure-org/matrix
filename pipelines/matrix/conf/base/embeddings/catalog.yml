@@ -26,10 +26,10 @@ embeddings.prm.graph_nodes:
     # that an index is created which allows for quick edge inserts down the line.
     # https://neo4j.com/docs/cypher-manual/current/constraints/
     mode: overwrite
-    # script: >
-    #   CREATE CONSTRAINT IF NOT EXISTS FOR (n:Entity) REQUIRE n.id IS UNIQUE;
+    script: >
+      CREATE CONSTRAINT IF NOT EXISTS FOR (n:Entity) REQUIRE n.id IS UNIQUE;
     query: > 
-      CREATE (n:Entity {id: event.id})
+      CREATE (n:Entity {id: event.id, kg_sources: event.kg_sources})
       WITH event, n
       CALL apoc.create.addLabels(n, [event.label]) YIELD node
       CALL apoc.create.setProperties(n, event.property_keys, event.property_values) YIELD node AS n2
