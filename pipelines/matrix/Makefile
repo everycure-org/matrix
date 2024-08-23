@@ -1,5 +1,6 @@
 dev_docker_image = us-central1-docker.pkg.dev/mtrx-hub-dev-3of/matrix-images/matrix
 TAG ?= ${USER}
+GIT_SHA ?= $(shell git rev-parse --short HEAD)
 export PYSPARK_PYTHON = .venv/bin/python
 
 # ensures all make targets run in one shell (rather than line by line in new shell)
@@ -47,14 +48,13 @@ docker_test: docker_build
 	IMG="$(dev_docker_image)" docker compose -f compose/docker-compose.yml \
 		-f compose/docker-compose.ci.yml \
 		up \
+		--force-recreate \
 		--abort-on-container-exit \
 		--exit-code-from matrix-pipeline
 
 docker_build:
-	GIT_SHA=$(shell git rev-parse --short HEAD)
 	docker buildx build --build-arg GIT_SHA=${GIT_SHA} --platform linux/amd64 -t $(dev_docker_image) ./
 	docker tag $(dev_docker_image) $(dev_docker_image):${TAG}
-
 docker_push: docker_build
 	docker push $(dev_docker_image):${TAG}
 

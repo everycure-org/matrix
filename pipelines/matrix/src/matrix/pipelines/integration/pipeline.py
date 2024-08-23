@@ -8,6 +8,25 @@ def create_pipeline(**kwargs) -> Pipeline:
     """Create integration pipeline."""
     return pipeline(
         [
+            node(
+                func=nodes.unify_nodes,
+                inputs=[
+                    "ingestion.prm.rtx_kg2.nodes",
+                    "ingestion.prm.ec_medical_team.nodes",
+                ],
+                outputs="integration.prm.unified_nodes",
+                name="create_prm_unified_nodes",
+            ),
+            # union edges
+            node(
+                func=nodes.unify_edges,
+                inputs=[
+                    "ingestion.prm.rtx_kg2.edges",
+                    "ingestion.prm.ec_medical_team.edges",
+                ],
+                outputs="integration.prm.unified_edges",
+                name="create_prm_unified_edges",
+            ),
             # Write kg2 Neo4J
             # Not needed until later
             # node(
@@ -22,7 +41,7 @@ def create_pipeline(**kwargs) -> Pipeline:
             #     tags=["rtx_kg2", "neo4j"],
             # ),
             # Construct ground_truth
-            # FUTURE: Move to ground truth pipeline
+            # TODO: Needs fixing!
             # node(
             #     func=nodes.create_int_pairs,
             #     inputs=[
