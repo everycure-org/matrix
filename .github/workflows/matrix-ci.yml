@@ -50,7 +50,7 @@ jobs:
       # On every PR
       - run: env # prints out all env variables
       - run: |
-         GIT_SHA=$(git rev-parse --short HEAD)
+         GIT_SHA=${GITHUB_SHA:0:7}
          env
       - run: exit 1
       - run: make venv
@@ -60,7 +60,7 @@ jobs:
       - run: make full_test
         if: github.ref == 'refs/heads/main'
       - run: make compose_down # ensures containers & state are removed
-      - run: make docker_test
+      - run: make docker_test GIT_SHA=${GITHUB_SHA:0:7} #we overwrite the GIT_SHA in the Makefile
         # only if PR is labelled with "ready" or if branch is main
         # if: contains(github.event.pull_request.labels.*.name, 'ready') || github.ref == 'refs/heads/main'
 
