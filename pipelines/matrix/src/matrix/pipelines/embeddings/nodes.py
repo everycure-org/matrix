@@ -287,15 +287,23 @@ def train_topological_embeddings(
     subgraph, _ = gds.graph.filter(subgraph_name, graph, **filter_args)
 
     # Validate whether the model exists
-    model_name = estimator.get("args").get("modelName")
+    model_name = estimator.get("modelName")
     if gds.model.exists(model_name).exists:
         model = gds.model.get(model_name)
         gds.model.drop(model)
 
     # Initialize the model
-    model, _ = getattr(gds.beta, estimator.get("model")).train(
-        subgraph, **estimator.get("args")
-    )
+    estimator_name = estimator.get("model")
+    if estimator_name == "graphSage":
+        model, _ = getattr(gds.beta, estimator.get("model")).train(
+            subgraph, **estimator.get("graphsage_args")
+        )
+    elif estimator_name == "node2vec":
+        model, _ = getattr(gds, estimator.get("model")).stream(
+            subgraph, **estimator.get("node2vec_args")
+        )
+    else:
+        raise ValueError()
 
     return {"success": "true"}
 
@@ -316,7 +324,7 @@ def write_topological_embeddings(
     graph = gds.graph.get(graph_name)
 
     # Retrieve the model
-    model_name = estimator.get("args").get("modelName")
+    model_name = estimator.get("modelName")
     model = gds.model.get(model_name)
 
     # Write model output back to graph
