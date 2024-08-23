@@ -76,10 +76,13 @@ embeddings.topological:
       node_filter: '*'
       relationship_filter: r.include_in_graphsage = 1.0
   estimator:
-    model: graphSage
-    args:
-      modelName: topological_embeddings
-      featureProperties: [*_pca_property]
+    model: node2vec
+    modelName: topological_embeddings
+    # using Chunyus https://github.com/everycure-org/project-silc/blob/main/chunyu-fellowship/scripts/node2vec_pyG/train_node2vec.py
+    # note they differ a bit - in neo4j we can implement max and min learning rate, and tolerance
+    configuration:
+      nodeLabels: '*'
+      relationshipTypes: '*'
       concurrency: 4
       # FUTURE: We're currently leveraging a binary weighting strategy to exclude  
       # certain relationships. Another option could be to leverage filtering:
