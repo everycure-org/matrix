@@ -44,7 +44,7 @@ def generate_argo_config(image, image_tag):
 
     pipes = {}
     for name, pipeline in pipelines.items():
-        # TODO: Fuse nodes in topological order to avoid constant recreation of Neo4j
+        # Fuse nodes in topological order to avoid constant recreation of Neo4j
         pipes[name] = get_dependencies(fuse(pipeline))
 
     output = template.render(
@@ -168,6 +168,7 @@ def fuse(pipeline: Pipeline) -> List[FusedNode]:
     """
     fused = []
 
+    # leveraging Kedro's existing sorting for DAGs here, as this is critical to get right. 
     for group in pipeline.grouped_nodes:
         for target_node in group:
             # Find source node that provides its inputs
@@ -177,7 +178,10 @@ def fuse(pipeline: Pipeline) -> List[FusedNode]:
                 if source_node.fuses_with(target_node):
                     found = True
                     source_node.add_node(target_node)
+                    break
 
+            # we did not find a node we can fuse with thus we consider this node to run by itself
+            # unless something else fuses into _this_ node in a next iteration. 
             if not found:
                 fused_node = FusedNode()
                 fused_node.add_node(target_node)
