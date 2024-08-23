@@ -18,6 +18,7 @@ on:
     # Sequence of patterns matched against refs/heads
     branches:
       - main
+      - develop
     paths: 
       - pipelines/matrix/**
       - .github/workflows/matrix-ci.yml
