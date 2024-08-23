@@ -206,6 +206,31 @@ def reduce_dimension(df: DataFrame, transformer, input: str, output: str, skip: 
     )
 
 
+@inject_object()
+def add_include_in_graphsage(
+    df: DataFrame, gdb: GraphDB, drug_types: List[str], disease_types: List[str]
+) -> Dict:
+    """Function to add include_in_graphsage property.
+
+    Only edges between non drug-disease pairs are included in graphsage.
+    """
+    with gdb.driver() as driver:
+        q = driver.execute_query(
+            """
+            MATCH (n)-[r]-(m)
+            WHERE 
+                n.category IN $drug_types 
+                AND m.category IN $disease_types
+            SET r.include_in_graphsage = 0
+            """,
+            database_=gdb._database,
+            drug_types=drug_types,
+            disease_types=disease_types,
+        )
+
+    return {"success": "true"}
+
+
 @unpack_params()
 @inject_object()
 def train_topological_embeddings(
@@ -245,6 +270,12 @@ def train_topological_embeddings(
     # Filter out treat/GT nodes from the graph
     subgraph_name = filtering.get("graphName")
     filter_args = filtering.pop("args")
+
+    # Drop graph if exists
+    if gds.graph.exists(subgraph_name).exists:
+        subgraph = gds.graph.get(subgraph_name)
+        gds.graph.drop(subgraph, False)
+
     subgraph, _ = gds.graph.filter(subgraph_name, graph, **filter_args)
 
     # Validate whether the model exists

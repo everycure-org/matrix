@@ -9,6 +9,15 @@ export PYSPARK_PYTHON = .venv/bin/python
 default: venv install precommit fast_test compose_down docker_test
 	echo "done!"
 
+prerequisites:
+	@command -v docker >/dev/null 2>&1 || { echo "Error: docker is not installed." >&2; exit 1; }
+	@command -v gcloud >/dev/null 2>&1 || { echo "Error: gcloud is not installed." >&2; exit 1; }
+	@command -v python3 >/dev/null 2>&1 || { echo "Error: python3 is not installed." >&2; exit 1; }
+	@command -v java >/dev/null 2>&1 || { echo "Error: java is not installed." >&2; exit 1; }
+	@command -v uv >/dev/null 2>&1 || { echo "Error: uv is not installed." >&2; exit 1; }
+	@echo "All prerequisites are installed."
+
+
 venv:
 	if [ ! -d .venv ]; then uv venv -p 3.11; fi
 install:
@@ -42,7 +51,8 @@ docker_test: docker_build
 		--exit-code-from matrix-pipeline
 
 docker_build:
-	docker buildx build --platform linux/amd64 -t $(dev_docker_image) ./
+	GIT_SHA=$(shell git rev-parse --short HEAD)
+	docker buildx build --build-arg GIT_SHA=${GIT_SHA} --platform linux/amd64 -t $(dev_docker_image) ./
 	docker tag $(dev_docker_image) $(dev_docker_image):${TAG}
 
 docker_push: docker_build
