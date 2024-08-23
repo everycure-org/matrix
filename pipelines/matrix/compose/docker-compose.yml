@@ -43,8 +43,6 @@ services:
       - "../../../services/synonymizer/assets:/usr/src/app/assets"
     ports:
       - 8081:8081
-    networks:
-      web:
 
 
   # MockServer instance that is used to mock a GenAI API conform
