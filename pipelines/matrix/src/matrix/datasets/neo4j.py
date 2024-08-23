@@ -111,6 +111,7 @@ class Neo4JSparkDataset(SparkDataset):
         Args:
             url: URL of the Neo4J instance.
             database: Name of the Neo4J database.
+            overwrite: Boolean indicating whether to overwrite db
             credentials: neo4j credentials
         """
         # NOTE: Little ugly, as it's extracting out Neo4j spark plugin
