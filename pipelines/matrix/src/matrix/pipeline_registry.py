@@ -37,8 +37,7 @@ def register_pipelines() -> Dict[str, Pipeline]:
     pipelines = {}
 
     pipelines["__default__"] = (
-        create_preprocessing_pipeline()
-        + create_integration_pipeline()
+        create_integration_pipeline()
         + create_embeddings_pipeline()
         + create_modelling_pipeline()
         + create_evaluation_pipeline()
