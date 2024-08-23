@@ -93,7 +93,7 @@ embeddings.topological:
       # Chunyu: 200k
       batchSize: 5000
       epochs: 10
-      searchDepth: 10
+      searchDepth: 4
       # Chunyu
       # learningRate: 0.001
       learningRate: 0.1
