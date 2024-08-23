@@ -30,9 +30,24 @@ _layer_int: &_layer_int
       layer: integration
 
 
+_layer_prm: &_layer_prm
+  metadata:
+    kedro-viz:
+      layer: primary
+
+
 # -------------------------------------------------------------------------
 # Datasets
 # -------------------------------------------------------------------------
+
+integration.prm.unified_edges:
+  <<: [*_spark_parquet, *_layer_prm]
+  filepath: ${globals:paths.prm}/unified/edges
+
+integration.prm.unified_nodes:
+  <<: [*_spark_parquet, *_layer_prm]
+  filepath: ${globals:paths.prm}/unified/nodes
+
 integration.raw.ground_truth.positives:
   <<: [*_pandas_csv, *_layer_raw]
   filepath: ${globals:paths.raw}/ground_truth_data/tp_pairs.txt
@@ -56,6 +71,25 @@ integration.int.known_pairs@pandas:
 integration.int.known_pairs@spark:
   <<: [*_spark_parquet, *_layer_int]
   filepath: ${globals:paths.int}/ground_truth
+ 
+
+integration.model_input.edges:
+  <<: [*_neo4j_ds, *_layer_int]
+  save_args:
+    # NOTE: The `match:Entity` ensures that the index we created above is leveraged
+    # while inserting edges, thereby speeding up the process massively.
+    query: > 
+      MATCH (subject:Entity {id: event.subject}), (object:Entity {id: event.object})
+      WITH subject, object, event
+      CALL apoc.create.relationship(subject, event.label, {kg_sources: event.kg_sources, knowledge_sources: event.knowledge_sources}, object) YIELD rel
+      RETURN rel
+  load_args:
+    query: >
+      MATCH (s)-[p]->(o) 
+      RETURN 
+        s.id AS subject,
+        type(p) as predicate,
+        o.id AS object
 
 integration.model_input.ground_truth:
   <<: [*_neo4j_ds, *_layer_int]

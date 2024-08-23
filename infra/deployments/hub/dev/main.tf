@@ -14,6 +14,7 @@ module "compute_cluster" {
   environment       = "dev"
   gitops_repo_url   = var.gitops_repo_url
   gitops_repo_creds = var.gitops_repo_creds
+  dns_zone          = module.dns.dns_zone
   k8s_secrets       = var.k8s_secrets
   bucket_name       = "mtrx-us-central1-hub-dev-storage"
 }

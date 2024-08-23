@@ -3,9 +3,21 @@ mlflow:
 
   # Disable tracking server password
   tracking: 
+    service:
+      type: ClusterIP
     auth:
       enabled: false
+    # FUTURE: Setup GCS when supported
+    # https://github.com/bitnami/charts/pull/28938
 
-  # FUTURE: Disable minio
-  # minio:
-  #   enabled: false
+    
+
+  # Use our own PGSQL Secret
+  # https://github.com/bitnami/charts/issues/28893
+  postgresql:
+    auth:
+      existingSecret: pgsql-creds
+
+  minio:
+    auth:
+      existingSecret: minio-creds

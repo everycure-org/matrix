@@ -1,6 +1,7 @@
 """Nodes for the ingration pipeline."""
 import pandas as pd
 from typing import List
+from functools import reduce, partial
 
 import pyspark.sql.functions as F
 from pyspark.sql import DataFrame
@@ -26,13 +27,41 @@ def create_int_pairs(raw_tp: pd.DataFrame, raw_tn: pd.DataFrame):
     return pd.concat([raw_tp, raw_tn], axis="index").reset_index(drop=True)
 
 
+def unify_edges(*edges) -> DataFrame:
+    """Function to unify edges datasets."""
+    # Union edges
+    union = reduce(partial(DataFrame.unionByName, allowMissingColumns=True), edges)
+
+    # Deduplicate
+    return union.groupBy(["subject", "predicate", "object"]).agg(
+        F.collect_list("knowledge_source").alias("knowledge_sources"),
+        F.collect_list("kg_source").alias("kg_sources"),
+    )
+
+
+def unify_nodes(*nodes) -> DataFrame:
+    """Function to unify nodes datasets."""
+    # Union nodes
+
+    union = reduce(partial(DataFrame.unionByName, allowMissingColumns=True), nodes)
+
+    # Deduplicate
+    # FUTURE: We should improve selection of name and description currently
+    # selecting the first non-null, which might not be as desired.
+    return union.groupBy(["id"]).agg(
+        F.collect_list("kg_source").alias("kg_sources"),
+        F.first("name").alias("name"),
+        F.first("description").alias("description"),
+        F.first("category").alias("category"),
+    )
+
+
 # @has_schema(
 #     schema={
 #         "subject": "string",
 #         "predicate": "string",
 #         "object": "string",
 #         "label": "string",
-#         "include_in_graphsage": "numeric",
 #     },
 #     allow_subset=True,
 # )
@@ -44,14 +73,9 @@ def create_int_pairs(raw_tp: pd.DataFrame, raw_tn: pd.DataFrame):
 #         edges: edges dataframe
 #         exc_preds: list of predicates excluded downstream
 #     """
-#     return (
-#         edges.select("subject", "predicate", "object", "knowledge_source")
-#         .withColumn("label", F.split(F.col("predicate"), ":", limit=2).getItem(1))
-#         .withColumn(
-#             "include_in_graphsage",
-#             F.when(F.col("predicate").isin(exc_preds), F.lit(0)).otherwise(F.lit(1)),
-#         )
-#     )
+#     return edges.select(
+#         "subject", "predicate", "object", "knowledge_sources", "kg_sources"
+#     ).withColumn("label", F.split(F.col("predicate"), ":", limit=2).getItem(1))
 
 
 @has_schema(
