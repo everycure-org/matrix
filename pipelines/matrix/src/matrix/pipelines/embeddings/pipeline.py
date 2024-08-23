@@ -130,6 +130,14 @@ def create_pipeline(**kwargs) -> Pipeline:
                     "argowf.template-neo4j",
                 ],
             ),
+            node(
+                func=nodes.generate_pca,
+                inputs={
+                    "nodes": "embeddings.model_output.graphsage",
+                },
+                outputs="embeddings.model_output.pca_plot",
+                name="visualise_embeddings",
+            ),
             # extracts the nodes from neo4j and writes them to BigQuery
             node(
                 func=lambda x: x,
