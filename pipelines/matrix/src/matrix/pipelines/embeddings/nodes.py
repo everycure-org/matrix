@@ -15,8 +15,6 @@ from graphdatascience import GraphDataScience, QueryRunner
 from neo4j import GraphDatabase
 from pypher import __ as cypher, Pypher
 
-from sklearn.decomposition import PCA
-
 from matplotlib.pyplot import plot
 import seaborn as sns
 
