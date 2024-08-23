@@ -11,7 +11,7 @@ mlflow:
     # Below is config to setup GCS
     # https://github.com/bitnami/charts/issues/24548
     args:
-      - server
+      - mlflow server
       - --backend-store-uri=postgresql://bn_mlflow:$(MLFLOW_DATABASE_PASSWORD)@release-name-postgresql:5432/bitnami_mlflow
       - --artifacts-destination=gs://mtrx-us-central1-hub-dev-storage/mlflow
       - --serve-artifacts
