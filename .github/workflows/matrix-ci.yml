@@ -22,14 +22,25 @@ on:
       - pipelines/matrix/**
       - .github/workflows/matrix-ci.yml
       - .github/workflows/matrix-push.yml
+    # from https://github.com/reviewdog/action-eslint/issues/29#issuecomment-985939887
+    types:
+      - opened
+      - reopened
+      - synchronize
+      - ready_for_review
   push:
     branches:
       - main
+
 
 jobs:
   ci:
     runs-on: 'self-hosted'
     if: github.event.pull_request.draft == false || github.ref == 'refs/heads/main'
+    # https://docs.github.com/en/actions/writing-workflows/workflow-syntax-for-github-actions#concurrency
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}
+      cancel-in-progress: true
 
     defaults:
       run:
