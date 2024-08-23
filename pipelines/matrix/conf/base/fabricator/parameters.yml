@@ -4,7 +4,7 @@ fabricator.rtx_kg2:
     columns:
       id: 
         type: generate_unique_id
-        prefix: node_
+        prefix: rtx_kg_node_
       
       name:
         type: faker
@@ -70,6 +70,56 @@ fabricator.rtx_kg2:
         sample_values:
           - biolink:treats
           - biolink:interacts_with
+      knowledge_source:
+        type: faker
+        provider: name
+
+
+fabricator.ec_medical_kg:
+  nodes:
+    num_rows: 10
+    columns:
+      id: 
+        type: generate_unique_id
+        prefix: ec_medical_node_
+    
+      name:
+        type: faker
+        provider: name
+
+      description:
+        type: faker
+        provider: sentence
+
+      category:
+        type: generate_values
+        sample_values:
+          - biolink:Drug
+          - biolink:Disease
+
+  edges:
+    num_rows: 50
+    columns:
+      subject:
+        type: row_apply
+        list_of_values: [nodes.id]
+        row_func: "lambda *args: args[0]"
+        resize: True
+        seed: 340590
+      
+      object:
+        type: row_apply
+        list_of_values: [nodes.id]
+        row_func: "lambda *args: args[0]"
+        resize: True
+        seed: 57000
+      
+      predicate:
+        type: generate_values
+        sample_values:
+          - biolink:treats
+          - biolink:interacts_with
+      
       knowledge_source:
         type: faker
         provider: name
