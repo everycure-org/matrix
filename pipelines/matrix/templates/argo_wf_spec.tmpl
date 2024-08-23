@@ -158,7 +158,8 @@ spec:
               name: matrix-secrets
               key: OPENAI_API_KEY
       imagePullPolicy: Always
-      image: {% raw %} "{{workflow.parameters.image}}:{{workflow.parameters.image_tag}}" 
+      image: {% raw %} "{{workflow.parameters.image}}:{{workflow.parameters.image_tag}}" {% endraw %}
+      
       command: ["/bin/sh", "-c"]
       args:
         - |
