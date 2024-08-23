@@ -10,26 +10,6 @@ _spark_parquet_ds: &_spark_parquet
   save_args:
     mode: overwrite
 
-_neo4j_ds: &_neo4j_ds
-  type: matrix.datasets.neo4j.Neo4JSparkDataset
-  database: everycure-${globals:versions.release}
-  url: ${globals:neo4j.host}
-  credentials: neo4j_credentials
-  save_args:
-    mode: "overwrite"
-
-_layer_raw: &_layer_raw
-  metadata:
-    kedro-viz:
-      layer: raw
-
-
-_layer_int: &_layer_int
-  metadata:
-    kedro-viz:
-      layer: integration
-
-
 _layer_prm: &_layer_prm
   metadata:
     kedro-viz:
@@ -48,64 +28,47 @@ integration.prm.unified_nodes:
   <<: [*_spark_parquet, *_layer_prm]
   filepath: ${globals:paths.prm}/unified/nodes
 
-integration.raw.ground_truth.positives:
-  <<: [*_pandas_csv, *_layer_raw]
-  filepath: ${globals:paths.raw}/ground_truth_data/tp_pairs.txt
-  load_args:
-    sep: "\t"
-  save_args: 
-    sep: "\t"
+# integration.raw.ground_truth.positives:
+#   <<: [*_pandas_csv, *_layer_raw]
+#   filepath: ${globals:paths.raw}/ground_truth_data/tp_pairs.txt
+#   load_args:
+#     sep: "\t"
+#   save_args: 
+#     sep: "\t"
 
-integration.raw.ground_truth.negatives:
-  <<: [*_pandas_csv, *_layer_raw]
-  filepath: ${globals:paths.raw}/ground_truth_data/tn_pairs.txt
-  load_args:
-    sep: "\t"
-  save_args: 
-    sep: "\t"
+# integration.raw.ground_truth.negatives:
+#   <<: [*_pandas_csv, *_layer_raw]
+#   filepath: ${globals:paths.raw}/ground_truth_data/tn_pairs.txt
+#   load_args:
+#     sep: "\t"
+#   save_args: 
+#     sep: "\t"
 
-integration.int.known_pairs@pandas:
-  <<: [*_pandas_parquet, *_layer_int]
-  filepath: ${globals:paths.int}/ground_truth
+# integration.int.known_pairs@pandas:
+#   <<: [*_pandas_parquet, *_layer_int]
+#   filepath: ${globals:paths.int}/ground_truth
 
-integration.int.known_pairs@spark:
-  <<: [*_spark_parquet, *_layer_int]
-  filepath: ${globals:paths.int}/ground_truth
- 
+# integration.int.known_pairs@spark:
+#   <<: [*_spark_parquet, *_layer_int]
+#   filepath: ${globals:paths.int}/ground_truth
 
-integration.model_input.edges:
-  <<: [*_neo4j_ds, *_layer_int]
-  save_args:
-    # NOTE: The `match:Entity` ensures that the index we created above is leveraged
-    # while inserting edges, thereby speeding up the process massively.
-    query: > 
-      MATCH (subject:Entity {id: event.subject}), (object:Entity {id: event.object})
-      WITH subject, object, event
-      CALL apoc.create.relationship(subject, event.label, {kg_sources: event.kg_sources, knowledge_sources: event.knowledge_sources}, object) YIELD rel
-      RETURN rel
-  load_args:
-    query: >
-      MATCH (s)-[p]->(o) 
-      RETURN 
-        s.id AS subject,
-        type(p) as predicate,
-        o.id AS object
 
-integration.model_input.ground_truth:
-  <<: [*_neo4j_ds, *_layer_int]
-  save_args:
-    query: > 
-      MATCH (source:Entity {id: event.source_id}), (target:Entity {id: event.target_id})
-      CREATE (source)-[rel:GROUND_TRUTH]->(target)
-      WITH rel, event
-      CALL apoc.create.setRelProperties(rel, event.property_keys, event.property_values) YIELD rel as r
-      RETURN r
-  load_args:        
-    query: >
-      MATCH (drug)-[r:GROUND_TRUTH]->(disease) 
-      RETURN 
-        drug.id as source, 
-        drug.topological_embedding as source_embedding,
-        disease.id as target,
-        disease.topological_embedding as target_embedding,
-        toInteger(r.treats) as y
+# Move to modelling
+# integration.model_input.ground_truth:
+#   <<: [*_neo4j_ds, *_layer_int]
+#   save_args:
+#     query: > 
+#       MATCH (source:Entity {id: event.source_id}), (target:Entity {id: event.target_id})
+#       CREATE (source)-[rel:GROUND_TRUTH]->(target)
+#       WITH rel, event
+#       CALL apoc.create.setRelProperties(rel, event.property_keys, event.property_values) YIELD rel as r
+#       RETURN r
+#   load_args:        
+#     query: >
+#       MATCH (drug)-[r:GROUND_TRUTH]->(disease) 
+#       RETURN 
+#         drug.id as source, 
+#         drug.topological_embedding as source_embedding,
+#         disease.id as target,
+#         disease.topological_embedding as target_embedding,
+#         toInteger(r.treats) as y

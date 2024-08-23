@@ -1,6 +1,5 @@
 """Nodes for the ingration pipeline."""
 import pandas as pd
-from typing import List
 from functools import reduce, partial
 
 import pyspark.sql.functions as F
@@ -8,23 +7,6 @@ from pyspark.sql import DataFrame
 
 from refit.v1.core.inline_has_schema import has_schema
 from refit.v1.core.inline_primary_key import primary_key
-
-
-def create_int_pairs(raw_tp: pd.DataFrame, raw_tn: pd.DataFrame):
-    """Create intermediate pairs dataset.
-
-    Args:
-        raw_tp: Raw ground truth positive data.
-        raw_tn: Raw ground truth negative data.
-
-    Returns:
-        Combined ground truth positive and negative data.
-    """
-    raw_tp["y"] = 1
-    raw_tn["y"] = 0
-
-    # Concat
-    return pd.concat([raw_tp, raw_tn], axis="index").reset_index(drop=True)
 
 
 def unify_edges(*edges) -> DataFrame:
