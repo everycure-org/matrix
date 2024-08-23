@@ -144,4 +144,4 @@ embeddings.reporting.topological_pca_plot:
   artifact_path: topological
   dataset:
     type: matplotlib.MatplotlibWriter
-    filepath: ${globals:paths.reporting}/pca_plot.png
+    filepath: ${globals:paths.tmp}/pca_plot.png
