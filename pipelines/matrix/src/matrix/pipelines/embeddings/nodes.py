@@ -267,7 +267,7 @@ def reduce_dimension(df: DataFrame, transformer, input: str, output: str, skip: 
 def ingest_edges(nodes, edges: DataFrame):
     """Function to construct Neo4J edges."""
     return edges.select(
-        "subject", "predicate", "object", "knowledge_source", "kg_sources"
+        "subject", "predicate", "object", "knowledge_sources", "kg_sources"
     ).withColumn("label", F.split(F.col("predicate"), ":", limit=2).getItem(1))
 
 

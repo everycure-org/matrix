@@ -27,21 +27,8 @@ def create_pipeline(**kwargs) -> Pipeline:
                 outputs="integration.prm.unified_edges",
                 name="create_prm_unified_edges",
             ),
-            # Write kg2 Neo4J
-            # Not needed until later
-            # node(
-            #     func=nodes.create_edges,
-            #     inputs=[
-            #         "integration.model_input.nodes",
-            #         "ingestion.prm.rtx_kg2.edges",
-            #         "params:integration.graphsage_excl_preds",
-            #     ],
-            #     outputs="integration.model_input.edges",
-            #     name="create_neo4j_edges",
-            #     tags=["rtx_kg2", "neo4j"],
-            # ),
-            # Construct ground_truth
-            # TODO: Needs fixing!
+            # TODO: Needs a fix
+            # # Construct ground_truth
             # node(
             #     func=nodes.create_int_pairs,
             #     inputs=[
