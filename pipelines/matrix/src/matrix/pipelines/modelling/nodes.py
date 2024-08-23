@@ -91,6 +91,7 @@ def create_feat_nodes(
     Returns:
         Nodes enriched with features.
     """
+    # FUTURE: Transcode as pandas instead?
     pdf_nodes = raw_nodes.toPandas()
 
     # Add drugs and diseases types flags
