@@ -84,7 +84,7 @@ embeddings.topological:
       # FUTURE: We're currently leveraging a binary weighting strategy to exclude  
       # certain relationships. Another option could be to leverage filtering:
       # https://neo4j.com/docs/graph-data-science/current/management-ops/graph-creation/graph-filter/
-      maxIterations: 10
+      maxIterations: 100
       # NOTE: This terminates the epoch prematurely, so setting it to a small number
       sampleSizes: [25, 10]
       tolerance: 1e-8
@@ -93,9 +93,9 @@ embeddings.topological:
       # Chunyu: 200k
       batchSize: 5000
       epochs: 10
-      searchDepth: 4
+      searchDepth: 100
       # Chunyu
       # learningRate: 0.001
-      learningRate: 0.1
+      learningRate: 0.01
       activationFunction: "ReLu"
   write_property: topological_embedding
