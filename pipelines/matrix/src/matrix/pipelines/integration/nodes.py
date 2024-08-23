@@ -1,6 +1,5 @@
 """Nodes for the ingration pipeline."""
 import pandas as pd
-from typing import List
 from functools import reduce, partial
 
 import pyspark.sql.functions as F
@@ -8,23 +7,6 @@ from pyspark.sql import DataFrame
 
 from refit.v1.core.inline_has_schema import has_schema
 from refit.v1.core.inline_primary_key import primary_key
-
-
-def create_int_pairs(raw_tp: pd.DataFrame, raw_tn: pd.DataFrame):
-    """Create intermediate pairs dataset.
-
-    Args:
-        raw_tp: Raw ground truth positive data.
-        raw_tn: Raw ground truth negative data.
-
-    Returns:
-        Combined ground truth positive and negative data.
-    """
-    raw_tp["y"] = 1
-    raw_tn["y"] = 0
-
-    # Concat
-    return pd.concat([raw_tp, raw_tn], axis="index").reset_index(drop=True)
 
 
 def unify_edges(*edges) -> DataFrame:
@@ -54,64 +36,6 @@ def unify_nodes(*nodes) -> DataFrame:
         F.first("description").alias("description"),
         F.first("category").alias("category"),
     )
-
-
-@has_schema(
-    schema={
-        "label": "string",
-        "id": "string",
-        "name": "string",
-        "property_keys": "array<string>",
-        "property_values": "array<string>",
-    },
-    allow_subset=True,
-)
-@primary_key(primary_key=["id"])
-def create_nodes(df: DataFrame) -> DataFrame:
-    """Function to create Neo4J nodes.
-
-    Args:
-        df: Nodes dataframe
-    """
-    return (
-        df.select("id", "name", "category", "description", "kg_sources")
-        .withColumn("label", F.split(F.col("category"), ":", limit=2).getItem(1))
-        .withColumn(
-            "properties",
-            F.create_map(
-                F.lit("name"),
-                F.col("name"),
-                F.lit("category"),
-                F.col("category"),
-                F.lit("description"),
-                F.col("description"),
-            ),
-        )
-        .withColumn("property_keys", F.map_keys(F.col("properties")))
-        .withColumn("property_values", F.map_values(F.col("properties")))
-    )
-
-
-@has_schema(
-    schema={
-        "subject": "string",
-        "predicate": "string",
-        "object": "string",
-        "label": "string",
-    },
-    allow_subset=True,
-)
-def create_edges(nodes: DataFrame, edges: DataFrame, exc_preds: List[str]):
-    """Function to create Neo4J edges.
-
-    Args:
-        nodes: nodes dataframe
-        edges: edges dataframe
-        exc_preds: list of predicates excluded downstream
-    """
-    return edges.select(
-        "subject", "predicate", "object", "knowledge_sources", "kg_sources"
-    ).withColumn("label", F.split(F.col("predicate"), ":", limit=2).getItem(1))
 
 
 @has_schema(
