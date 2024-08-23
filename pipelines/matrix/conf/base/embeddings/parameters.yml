@@ -98,3 +98,11 @@ embeddings.topological:
       # learningRate: 0.001
       learningRate: 0.001
   write_property: topological_embedding
+
+embeddings.visualisation:
+  skip: false # Set to true to skip PCA
+  input: 'topological_embedding'
+  output: 'pca__embedding'
+  transformer:
+    object: pyspark.ml.feature.PCA
+    k: 2
