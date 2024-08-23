@@ -22,7 +22,7 @@ data "google_dns_managed_zone" "cluster_zone" {
 # }
 
 resource "google_compute_subnetwork" "proxy_only_subnet" {
-  name          = "gateway-ingress"
+  name          = "proxy-only-subnet"
   ip_cidr_range = "10.2.0.0/16" # TODO not hard coded
   region        = var.default_region
   network       = var.network
