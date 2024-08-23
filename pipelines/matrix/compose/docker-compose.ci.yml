@@ -3,6 +3,9 @@
 # 2) override the images to avoid keeping state in CI (no data mount)
 # 3) add an executino of the matrix-pipeline in a container to execute against the services defined in the base compose file 
 services:
+  # not executing the node-synonymizer in CI
+  node-synonymizer: !reset null
+
   neo4j:
     # FUTURE: Newever container version gives issues, due to `apoc-extended`
     # and `gds` versions not being released yet. Update when released.
@@ -43,6 +46,7 @@ services:
       OPENAI_ENDPOINT: http://mock-genai:1080/v1
       MLFLOW_ENDPOINT: http://mlflow:5000
       OPENAI_API_KEY: sk-proj-abc
+      SYNONYMIZER_ENDPOINT: http://node-synonymizer:8081
     depends_on:
       neo4j:
         condition: service_healthy

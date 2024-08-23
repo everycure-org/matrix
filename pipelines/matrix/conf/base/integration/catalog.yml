@@ -30,9 +30,24 @@ _layer_int: &_layer_int
       layer: integration
 
 
+_layer_prm: &_layer_prm
+  metadata:
+    kedro-viz:
+      layer: primary
+
+
 # -------------------------------------------------------------------------
 # Datasets
 # -------------------------------------------------------------------------
+
+integration.prm.unified_edges:
+  <<: [*_spark_parquet, *_layer_prm]
+  filepath: ${globals:paths.prm}/unified/edges
+
+integration.prm.unified_nodes:
+  <<: [*_spark_parquet, *_layer_prm]
+  filepath: ${globals:paths.prm}/unified/nodes
+
 integration.raw.ground_truth.positives:
   <<: [*_pandas_csv, *_layer_raw]
   filepath: ${globals:paths.raw}/ground_truth_data/tp_pairs.txt
@@ -49,7 +64,6 @@ integration.raw.ground_truth.negatives:
   save_args: 
     sep: "\t"
 
-
 integration.int.known_pairs@pandas:
   <<: [*_pandas_parquet, *_layer_int]
   filepath: ${globals:paths.int}/ground_truth
@@ -58,7 +72,7 @@ integration.int.known_pairs@spark:
   <<: [*_spark_parquet, *_layer_int]
   filepath: ${globals:paths.int}/ground_truth
 
-# FUTURE: Does it make sense to copy DBs?
+
 integration.model_input.nodes:
   <<: [*_neo4j_ds, *_layer_int]
   save_args:
@@ -69,7 +83,7 @@ integration.model_input.nodes:
     script: >
       CREATE CONSTRAINT IF NOT EXISTS FOR (n:Entity) REQUIRE n.id IS UNIQUE;
     query: > 
-      CREATE (n:Entity {id: event.id})
+      CREATE (n:Entity {id: event.id, kg_sources: event.kg_sources})
       WITH event, n
       CALL apoc.create.addLabels(n, [event.label]) YIELD node
       CALL apoc.create.setProperties(n, event.property_keys, event.property_values) YIELD node AS n2
@@ -94,7 +108,7 @@ integration.model_input.edges:
     query: > 
       MATCH (subject:Entity {id: event.subject}), (object:Entity {id: event.object})
       WITH subject, object, event
-      CALL apoc.create.relationship(subject, event.label, {knowledge_source: event.knowledge_source}, object) YIELD rel
+      CALL apoc.create.relationship(subject, event.label, {kg_sources: event.kg_sources, knowledge_sources: event.knowledge_sources}, object) YIELD rel
       RETURN rel
   load_args:
     query: >
