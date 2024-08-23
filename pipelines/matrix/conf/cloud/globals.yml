@@ -7,11 +7,13 @@ gcp_project: ${oc.env:GCP_PROJECT_ID}
 
 paths:
   # hard coded against our central data location for raw
+
+  # TODO Need to re-work our approach between what is a "run" and what is a "release"
   raw: gs://mtrx-us-central1-hub-dev-storage/kedro/data/01_raw
-  int: ${gcs_bucket}/releases/${versions.release}/02_intermediate
-  prm: ${gcs_bucket}/releases/${versions.release}/03_primary
-  feat: ${gcs_bucket}/releases/${versions.release}/04_feature
-  model_input: ${gcs_bucket}/releases/${versions.release}/05_model_input
-  models: ${gcs_bucket}/releases/${versions.release}/06_models
-  model_output: ${gcs_bucket}/releases/${versions.release}/07_model_output
-  reporting: ${gcs_bucket}/releases/${versions.release}/08_reporting
+  int: ${gcs_bucket}/runs/${versions.release}/02_intermediate
+  prm: ${gcs_bucket}/runs/${versions.release}/03_primary
+  feat: ${gcs_bucket}/runs/${versions.release}/04_feature
+  model_input: ${gcs_bucket}/runs/${versions.release}/05_model_input
+  models: ${gcs_bucket}/runs/${versions.release}/06_models
+  model_output: ${gcs_bucket}/runs/${versions.releases}/07_model_output
+  reporting: ${gcs_bucket}/runs/${versions.release}/08_reporting
