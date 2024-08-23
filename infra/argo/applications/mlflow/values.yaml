@@ -7,16 +7,10 @@ mlflow:
       type: ClusterIP
     auth:
       enabled: false
-    # command: [ "/bin/sh", "-c" ]
-    # # Below is config to setup GCS
-    # # https://github.com/bitnami/charts/issues/24548
-    # args:
-    #   - mlflow server
-    #   - --backend-store-uri=postgresql://bn_mlflow:$(MLFLOW_DATABASE_PASSWORD)@release-name-postgresql:5432/bitnami_mlflow
-    #   - --artifacts-destination=gs://mtrx-us-central1-hub-dev-storage/mlflow
-    #   - --serve-artifacts
-    #   - --host=0.0.0.0
-    #   - --port=5000
+    # FUTURE: Setup GCS when supported
+    # https://github.com/bitnami/charts/pull/28938
+
+    
 
   # Use our own PGSQL Secret
   # https://github.com/bitnami/charts/issues/28893
@@ -24,6 +18,6 @@ mlflow:
     auth:
       existingSecret: pgsql-creds
 
-  # Disable minio
   minio:
-    enabled: false
+    auth:
+      existingSecret: minio-creds
