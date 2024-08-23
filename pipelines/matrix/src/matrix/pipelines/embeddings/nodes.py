@@ -120,6 +120,8 @@ class FailedBatchesException(BaseException):
 
 @unpack_params()
 @inject_object()
+# we sometimes observed some OpenAI embedding calls failed and thus some very few nodes (~500) remain without embeddings.
+# This way we retry which catches these last few strugglers
 @retry(
     stop=stop_after_attempt(3),
     retry=retry_if_exception_type(FailedBatchesException),
