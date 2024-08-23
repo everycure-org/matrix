@@ -110,7 +110,7 @@ def create_edges(nodes: DataFrame, edges: DataFrame, exc_preds: List[str]):
         exc_preds: list of predicates excluded downstream
     """
     return edges.select(
-        "subject", "predicate", "object", "knowledge_source", "kg_sources"
+        "subject", "predicate", "object", "knowledge_sources", "kg_sources"
     ).withColumn("label", F.split(F.col("predicate"), ":", limit=2).getItem(1))
 
 
