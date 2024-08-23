@@ -82,4 +82,4 @@ embeddings.model_output.pca_plot:
   artifact_path: graphsage
   dataset:
     type: matplotlib.MatplotlibWriter
-    filepath: ${globals:paths.tmp}/pca_plot.png
+    filepath: ${globals:paths.reporting}/pca_plot.png
