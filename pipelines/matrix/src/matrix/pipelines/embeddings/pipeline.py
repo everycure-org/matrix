@@ -141,10 +141,7 @@ def create_pipeline(**kwargs) -> Pipeline:
             ),
             node(
                 func=nodes.visualise_pca,
-                inputs={
-                    "nodes": "embeddings.reporting.graphsage",
-                    "metadata": "integration.model_input.nodes",
-                },
+                inputs={"nodes": "embeddings.reporting.graphsage"},
                 outputs="embeddings.model_output.pca_plot",
                 name="visualise_embeddings",
             ),
