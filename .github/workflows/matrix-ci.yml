@@ -48,6 +48,8 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       # On every PR
+      - run: env # prints out all env variables
+      - run: exit 1
       - run: make venv
       - run: make install
       - run: make precommit
