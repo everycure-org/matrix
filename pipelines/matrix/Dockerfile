@@ -1,4 +1,6 @@
 ARG BASE_IMAGE=python:3.11-buster
+# FUTURE: switch to slim image
+# ARG BASE_IMAGE=python:3.11-slim
 FROM $BASE_IMAGE AS build
 RUN apt-get update && apt-get install -y --no-install-recommends gcc curl g++
 
@@ -9,6 +11,8 @@ RUN apt-get update && \
 
 # Package all python dependencies
 ENV PIP_NO_CACHE_DIR=1
+# FUTURE avoid caching
+#ENV UV_NO_CACHE=true
 
 WORKDIR /app
 ADD requirements.txt .
