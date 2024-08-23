@@ -72,3 +72,10 @@ embeddings.feat.nodes:
 embeddings.feat.edges:
   <<: *_spark_parquet
   filepath: ${globals:paths.feat}/edges
+
+"embeddings.model_output.pca_plot":
+  type: kedro_mlflow.io.artifacts.MlflowArtifactDataset
+  artifact_path: ""
+  dataset:
+    type: matplotlib.MatplotlibWriter
+    filepath: ${globals:paths.tmp}/pca_plot.png

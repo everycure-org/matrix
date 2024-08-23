@@ -12,6 +12,11 @@ from graphdatascience import GraphDataScience, QueryRunner
 from neo4j import GraphDatabase
 from pypher import __ as cypher, Pypher
 
+from sklearn.decomposition import PCA
+
+from matplotlib.pyplot import plot
+import seaborn as sns
+
 from pypher.builder import create_function
 from . import pypher_utils
 
@@ -315,6 +320,30 @@ def write_topological_embeddings(
     model.predict_write(graph, writeProperty=write_property)
 
     return {"success": "true"}
+
+
+def generate_pca(nodes: DataFrame) -> Dict:
+    """Write topological embeddings."""
+    import pandas as pd
+    import numpy as np
+    import matplotlib.pyplot as plt
+
+    df = nodes.withColumn("features", array_to_vector("topological_embedding"))
+    df = df.toPandas()
+    pca = PCA(n_components=2)
+    df_pca = pd.DataFrame(pca.fit_transform(np.array(df.features.tolist())))
+    fig = plt.figure(figsize=(5, 10))
+    sns.scatterplot(
+        data=df_pca,
+        x=0,
+        y=1,  # ,
+        # hue='category'
+    )
+    plt.suptitle("PCA scatterpot")
+    plt.xlabel("PCA 1")
+    plt.ylabel("PCA 2")
+
+    return fig
 
 
 def extract_nodes_edges(
