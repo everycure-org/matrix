@@ -50,8 +50,8 @@ jobs:
       # On every PR
       - run: env # prints out all env variables
       - run: |
-         GIT_SHA=${GITHUB_SHA:0:7}
-         env
+         export GIT_SHA=${GITHUB_SHA:0:7}
+         env | sort
       - run: exit 1
       - run: make venv
       - run: make install
