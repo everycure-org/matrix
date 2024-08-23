@@ -37,7 +37,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 ],
             ),
             node(
-                func=lambda x: x,
+                func=lambda x: x.withColumnRenamed("<labels>", "labels"),
                 inputs=["embeddings.prm.graph.embeddings@neo"],
                 outputs="embeddings.feat.graph.node_embeddings",
                 name="extract_embeddings",

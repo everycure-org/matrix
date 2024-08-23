@@ -258,7 +258,6 @@ def reduce_dimension(df: DataFrame, transformer, input: str, output: str, skip: 
         .transform(df)
         .withColumn(output, vector_to_array("pca_features"))
         .drop("pca_features", "features")
-        .withColumnRenamed("<labels>", "labels")
     )
 
     return res
