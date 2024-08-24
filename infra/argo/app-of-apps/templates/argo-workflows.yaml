@@ -12,7 +12,7 @@ spec:
     path: {{ .Values.spec.source.repoPath }}/workflows
     repoURL: {{ .Values.spec.source.repoURL }}
     # targetRevision: {{ .Values.spec.source.targetRevision }}
-    targetRevision: HEAD
+    targetRevision: develop
   syncPolicy:
     syncOptions:     # Sync options which modifies sync behavior
     - CreateNamespace=true # Namespace Auto-Creation ensures that namespace specified as the application destination exists in the destination cluster.
