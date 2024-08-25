@@ -44,7 +44,7 @@ def generate_argo_config(image, image_tag):
 
     pipes = {}
     for name, pipeline in pipelines.items():
-        # TODO: Fuse nodes in topological order to avoid constant recreation of Neo4j
+        # Fuse nodes in topological order to avoid constant recreation of Neo4j
         pipes[name] = get_dependencies(fuse(pipeline))
 
     output = template.render(
@@ -177,6 +177,7 @@ def fuse(pipeline: Pipeline) -> List[FusedNode]:
                 if source_node.fuses_with(target_node):
                     found = True
                     source_node.add_node(target_node)
+                    break
 
             if not found:
                 fused_node = FusedNode()
