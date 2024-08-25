@@ -9,54 +9,54 @@ def create_pipeline(**kwargs) -> Pipeline:
     return pipeline(
         [
             # Ingest edges into Neo4j
-            node(
-                func=nodes.create_nodes,
-                inputs=["integration.prm.unified_nodes"],
-                outputs="embeddings.prm.graph_nodes",
-                name="create_neo4j_node_embedding_input_nodes",
-                tags=[
-                    "argowf.fuse",
-                    "argowf.fuse-group.node_embeddings",
-                    "argowf.template-neo4j",
-                ],
-            ),
-            node(
-                func=nodes.compute_embeddings,
-                inputs={
-                    "input": "embeddings.prm.graph_nodes",
-                    "gdb": "params:embeddings.gdb",
-                    "features": "params:embeddings.node.features",
-                    "unpack": "params:embeddings.ai_config",
-                },
-                outputs="embeddings.prm.graph.embeddings@yaml",
-                name="create_neo4j_node_embeddings",
-                tags=[
-                    "argowf.fuse",
-                    "argowf.fuse-group.node_embeddings",
-                    "argowf.template-neo4j",
-                ],
-            ),
-            node(
-                func=lambda x: x.withColumnRenamed("<labels>", "labels"),
-                inputs=["embeddings.prm.graph.embeddings@neo"],
-                outputs="embeddings.feat.graph.node_embeddings",
-                name="extract_embeddings",
-                tags=[
-                    "argowf.fuse",
-                    "argowf.fuse-group.node_embeddings",
-                    "argowf.template-neo4j",
-                ],
-            ),
-            # Reduce dimension
-            node(
-                func=nodes.reduce_dimension,
-                inputs={
-                    "df": "embeddings.feat.graph.node_embeddings",
-                    "unpack": "params:embeddings.dimensionality_reduction",
-                },
-                outputs="embeddings.feat.graph.pca_node_embeddings",
-                name="apply_pca",
-            ),
+            # node(
+            #     func=nodes.create_nodes,
+            #     inputs=["integration.prm.unified_nodes"],
+            #     outputs="embeddings.prm.graph_nodes",
+            #     name="create_neo4j_node_embedding_input_nodes",
+            #     tags=[
+            #         "argowf.fuse",
+            #         "argowf.fuse-group.node_embeddings",
+            #         "argowf.template-neo4j",
+            #     ],
+            # ),
+            # node(
+            #     func=nodes.compute_embeddings,
+            #     inputs={
+            #         "input": "embeddings.prm.graph_nodes",
+            #         "gdb": "params:embeddings.gdb",
+            #         "features": "params:embeddings.node.features",
+            #         "unpack": "params:embeddings.ai_config",
+            #     },
+            #     outputs="embeddings.prm.graph.embeddings@yaml",
+            #     name="create_neo4j_node_embeddings",
+            #     tags=[
+            #         "argowf.fuse",
+            #         "argowf.fuse-group.node_embeddings",
+            #         "argowf.template-neo4j",
+            #     ],
+            # ),
+            # node(
+            #     func=lambda x: x.withColumnRenamed("<labels>", "labels"),
+            #     inputs=["embeddings.prm.graph.embeddings@neo"],
+            #     outputs="embeddings.feat.graph.node_embeddings",
+            #     name="extract_embeddings",
+            #     tags=[
+            #         "argowf.fuse",
+            #         "argowf.fuse-group.node_embeddings",
+            #         "argowf.template-neo4j",
+            #     ],
+            # ),
+            # # Reduce dimension
+            # node(
+            #     func=nodes.reduce_dimension,
+            #     inputs={
+            #         "df": "embeddings.feat.graph.node_embeddings",
+            #         "unpack": "params:embeddings.dimensionality_reduction",
+            #     },
+            #     outputs="embeddings.feat.graph.pca_node_embeddings",
+            #     name="apply_pca",
+            # ),
             # Load spark dataset into local neo instance
             node(
                 func=lambda x: x,
@@ -130,10 +130,23 @@ def create_pipeline(**kwargs) -> Pipeline:
                     "argowf.template-neo4j",
                 ],
             ),
+            # extracts the nodes from neo4j and writes them to BigQuery
+            node(
+                func=lambda x: x,
+                inputs=["embeddings.model_output.graphsage"],
+                outputs="embeddings.feat.nodes",
+                name="extract_nodes_edges_from_db",
+                tags=[
+                    "argowf.fuse",
+                    "argowf.fuse-group.topological_embeddings",
+                    "argowf.template-neo4j",
+                ],
+            ),
+            # Create PCA plot
             node(
                 func=nodes.reduce_dimension,
                 inputs={
-                    "df": "embeddings.model_output.graphsage",
+                    "df": "embeddings.feat.nodes",
                     "unpack": "params:embeddings.topological_pca",
                 },
                 outputs="embeddings.reporting.topological_pca",
@@ -147,18 +160,6 @@ def create_pipeline(**kwargs) -> Pipeline:
                 },
                 outputs="embeddings.reporting.topological_pca_plot",
                 name="create_pca_plot_topological_embeddings",
-            ),
-            # extracts the nodes from neo4j and writes them to BigQuery
-            node(
-                func=lambda x: x,
-                inputs=["embeddings.model_output.graphsage"],
-                outputs="embeddings.feat.nodes",
-                name="extract_nodes_edges_from_db",
-                tags=[
-                    "argowf.fuse",
-                    "argowf.fuse-group.topological_embeddings",
-                    "argowf.template-neo4j",
-                ],
             ),
         ],
     )
