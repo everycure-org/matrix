@@ -42,11 +42,7 @@ def _create_evaluation_pipeline(model: str, evaluation: str) -> Pipeline:
                 outputs=f"evaluation.{model}.{evaluation}.reporting.evaluation",
                 name=f"create_{model}_{evaluation}_evaluation",
             ),
-        ],
-        tags=[
-            "argowf.fuse",
-            f"argowf.fuse-group.{model}.{evaluation}",
-        ],
+        ]
     )
 
 

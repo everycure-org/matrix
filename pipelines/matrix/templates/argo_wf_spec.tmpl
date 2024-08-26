@@ -12,8 +12,6 @@ spec:
       release: {% raw %}'{{ workflow.parameters.release_version }}'
       {% endraw %}
   entrypoint: dag
-  ttlStrategy:
-    secondsAfterSuccess: 5
   arguments:
     parameters:
       - name: image
@@ -35,6 +33,10 @@ spec:
         value: "cloud"
   templates:
   - name: kedro
+    retryStrategy:
+      limit: {% raw %}"{{inputs.parameters.num_retries}}"
+    {% endraw %}
+    retryPolicy: "Always"
     backoff:
       duration: "1"      # Must be a string. Default unit is seconds. Could also be a Duration, e.g.: "2m", "6h", "1d"
       factor: 2
@@ -48,6 +50,7 @@ spec:
     inputs:
       parameters:
       - name: kedro_nodes
+      - name: num_retries
       - name: pipeline
     container:
       imagePullPolicy: Always
@@ -112,6 +115,7 @@ spec:
     inputs:
       parameters:
       - name: kedro_nodes
+      - name: num_retries
       - name: pipeline
     container:
       resources: # limit the resources
@@ -217,5 +221,7 @@ spec:
             value: {{ pipeline }}
           - name: kedro_nodes
             value: {{ task.nodes }}
+          - name: num_retries
+            value: 0
       {% endfor %}
   {% endfor %}
