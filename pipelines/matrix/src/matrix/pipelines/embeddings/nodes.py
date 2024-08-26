@@ -393,10 +393,12 @@ def write_topological_embeddings(
     return {"success": "true"}
 
 
-def visualise_pca(nodes: DataFrame, col: str):
+def visualise_pca(nodes: DataFrame, column_name: str):
     """Write topological embeddings."""
-    nodes = nodes.toPandas()
-    nodes[["pca_0", "pca_1"]] = pd.DataFrame(nodes[col].tolist(), index=nodes.index)
+    nodes = nodes.select(column_name, "category").toPandas()
+    nodes[["pca_0", "pca_1"]] = pd.DataFrame(
+        nodes[column_name].tolist(), index=nodes.index
+    )
     fig = plt.figure(
         figsize=(
             10,
