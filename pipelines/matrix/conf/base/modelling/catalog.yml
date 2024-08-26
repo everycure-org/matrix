@@ -13,6 +13,36 @@ _kg_dataset: &_kg_dataset
     engine: pyarrow
     use_nullable_dtypes: True
 
+_layer_raw: &_layer_raw
+  metadata:
+    kedro-viz:
+      layer: raw
+
+_layer_int: &_layer_int
+  metadata:
+    kedro-viz:
+      layer: integration
+
+modelling.raw.ground_truth.positives:
+  <<: [*_pandas_csv, *_layer_raw]
+  filepath: ${globals:paths.raw}/ground_truth_data/tp_pairs.txt
+  load_args:
+    sep: "\t"
+  save_args: 
+    sep: "\t"
+
+modelling.raw.ground_truth.negatives:
+  <<: [*_pandas_csv, *_layer_raw]
+  filepath: ${globals:paths.raw}/ground_truth_data/tn_pairs.txt
+  load_args:
+    sep: "\t"
+  save_args: 
+    sep: "\t"
+
+modelling.int.known_pairs:
+  <<: [*_pandas_parquet, *_layer_int]
+  filepath: ${globals:paths.int}/ground_truth
+
 # filtered down further to drugs/diseases
 modelling.model_input.drugs_diseases_nodes@spark:
   <<: *_spark_parquet
@@ -22,10 +52,6 @@ modelling.model_input.drugs_diseases_nodes@spark:
 # modelling.model_input.drugs_diseases_nodes@pandas:
 #   <<: *_pandas_parquet
 #   filepath: ${globals:paths.model_input}/drugs_diseases_nodes/
-
-modelling.prm.known_pairs:
-  <<: *_pandas_parquet
-  filepath: ${globals:paths.prm}/known_pairs
 
 modelling.feat.rtx_kg2:
   <<: *_kg_dataset
