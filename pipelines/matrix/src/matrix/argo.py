@@ -174,7 +174,6 @@ def fuse(pipeline: Pipeline) -> List[FusedNode]:
     # Kedro provides the `grouped_nodes` property, that yields a list of node groups that can
     # be executed in topological order. We're using this as the starting point for our fusing algorithm.
     for group in pipeline.grouped_nodes:
-        print("new group", [el.name for el in group])
         for target_node in group:
             # Find source node that provides its inputs
             found = False
