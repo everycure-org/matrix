@@ -32,6 +32,8 @@ from tenacity import (
     retry_if_exception_type,
 )
 
+import matplotlib.pyplot as plt
+
 import logging
 
 logger = logging.getLogger(__name__)
@@ -361,11 +363,23 @@ def train_topological_embeddings(
         gds.model.drop(model)
 
     # Initialize the model
-    model, _ = getattr(gds.beta, estimator.get("model")).train(
+    model, attr = getattr(gds.beta, estimator.get("model")).train(
         subgraph, **estimator.get("args")
     )
 
-    return {"success": "true"}
+    # Plot convergence
+    losses = attr.modelInfo["metrics"]["iterationLossesPerEpoch"][0]
+
+    convergence = plt.figure()
+    ax = convergence.add_subplot(1, 1, 1)
+    ax.plot([x for x in range(len(losses))], losses)
+
+    # Add labels and title
+    ax.set_xlabel("Number of Epochs")
+    ax.set_ylabel("Average loss per node")
+    ax.set_title("Loss Chart")
+
+    return {"success": "true"}, convergence
 
 
 @inject_object()

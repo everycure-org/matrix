@@ -3,6 +3,7 @@ mlflow:
 
   # Disable tracking server password
   tracking: 
+    resourcesPreset: large
     service:
       type: ClusterIP
     auth:
