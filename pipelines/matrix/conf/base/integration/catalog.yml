@@ -1,34 +1,8 @@
-_pandas_csv: &_pandas_csv
-  type:  pandas.CSVDataset
-
-_pandas_parquet: &_pandas_parquet
-  type: pandas.ParquetDataset
-
 _spark_parquet_ds: &_spark_parquet
   type: matrix.datasets.gcp.LazySparkDataset
   file_format: parquet
   save_args:
     mode: overwrite
-
-_neo4j_ds: &_neo4j_ds
-  type: matrix.datasets.neo4j.Neo4JSparkDataset
-  database: everycure-${globals:versions.release}
-  url: ${globals:neo4j.host}
-  credentials: neo4j_credentials
-  save_args:
-    mode: "overwrite"
-
-_layer_raw: &_layer_raw
-  metadata:
-    kedro-viz:
-      layer: raw
-
-
-_layer_int: &_layer_int
-  metadata:
-    kedro-viz:
-      layer: integration
-
 
 _layer_prm: &_layer_prm
   metadata:
@@ -47,92 +21,3 @@ integration.prm.unified_edges:
 integration.prm.unified_nodes:
   <<: [*_spark_parquet, *_layer_prm]
   filepath: ${globals:paths.prm}/unified/nodes
-
-integration.raw.ground_truth.positives:
-  <<: [*_pandas_csv, *_layer_raw]
-  filepath: ${globals:paths.raw}/ground_truth_data/tp_pairs.txt
-  load_args:
-    sep: "\t"
-  save_args: 
-    sep: "\t"
-
-integration.raw.ground_truth.negatives:
-  <<: [*_pandas_csv, *_layer_raw]
-  filepath: ${globals:paths.raw}/ground_truth_data/tn_pairs.txt
-  load_args:
-    sep: "\t"
-  save_args: 
-    sep: "\t"
-
-integration.int.known_pairs@pandas:
-  <<: [*_pandas_parquet, *_layer_int]
-  filepath: ${globals:paths.int}/ground_truth
-
-integration.int.known_pairs@spark:
-  <<: [*_spark_parquet, *_layer_int]
-  filepath: ${globals:paths.int}/ground_truth
-
-
-integration.model_input.nodes:
-  <<: [*_neo4j_ds, *_layer_int]
-  save_args:
-    # NOTE: Neo4j nodes can have multiple labels. We're adding _all_ nodes in a global
-    # `entity` label on which we generate a unique constraint. This has the side-effect
-    # that an index is created which allows for quick edge inserts down the line.
-    # https://neo4j.com/docs/cypher-manual/current/constraints/
-    script: >
-      CREATE CONSTRAINT IF NOT EXISTS FOR (n:Entity) REQUIRE n.id IS UNIQUE;
-    query: > 
-      CREATE (n:Entity {id: event.id, kg_sources: event.kg_sources})
-      WITH event, n
-      CALL apoc.create.addLabels(n, [event.label]) YIELD node
-      CALL apoc.create.setProperties(n, event.property_keys, event.property_values) YIELD node AS n2
-      RETURN node
-  load_args:
-    # NOTE: The 'biolink' prefixes was removed to have a clean Neo4J UI interface. We're adding
-    # it back into the query as the modelling expects it.
-    query: >  
-      MATCH (n) 
-      RETURN 
-        n.id AS id, 
-        n.name as name,
-        n.category as category,
-        n.description as description
- 
-
-integration.model_input.edges:
-  <<: [*_neo4j_ds, *_layer_int]
-  save_args:
-    # NOTE: The `match:Entity` ensures that the index we created above is leveraged
-    # while inserting edges, thereby speeding up the process massively.
-    query: > 
-      MATCH (subject:Entity {id: event.subject}), (object:Entity {id: event.object})
-      WITH subject, object, event
-      CALL apoc.create.relationship(subject, event.label, {kg_sources: event.kg_sources, knowledge_sources: event.knowledge_sources}, object) YIELD rel
-      RETURN rel
-  load_args:
-    query: >
-      MATCH (s)-[p]->(o) 
-      RETURN 
-        s.id AS subject,
-        type(p) as predicate,
-        o.id AS object
-
-integration.model_input.ground_truth:
-  <<: [*_neo4j_ds, *_layer_int]
-  save_args:
-    query: > 
-      MATCH (source:Entity {id: event.source_id}), (target:Entity {id: event.target_id})
-      CREATE (source)-[rel:GROUND_TRUTH]->(target)
-      WITH rel, event
-      CALL apoc.create.setRelProperties(rel, event.property_keys, event.property_values) YIELD rel as r
-      RETURN r
-  load_args:        
-    query: >
-      MATCH (drug)-[r:GROUND_TRUTH]->(disease) 
-      RETURN 
-        drug.id as source, 
-        drug.topological_embedding as source_embedding,
-        disease.id as target,
-        disease.topological_embedding as target_embedding,
-        toInteger(r.treats) as y
