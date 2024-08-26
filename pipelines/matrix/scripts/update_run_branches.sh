@@ -52,11 +52,8 @@ build_images() {
     for branch in $branches; do
         echo "Building and pushing image for branch: $branch"
         git checkout $branch
-        pushd ./
-        cd pipelines/matrix
         sanitized_tag=$(sanitize_tag "$branch")
         make docker_push TAG=pascalwhoop-$sanitized_tag
-        popd
         echo "Finished building and pushing image for $branch"
         echo "------------------------"
     done
