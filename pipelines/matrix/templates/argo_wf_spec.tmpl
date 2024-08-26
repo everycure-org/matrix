@@ -3,8 +3,14 @@ apiVersion: argoproj.io/v1alpha1
 kind: WorkflowTemplate
 metadata:
   namespace: argo-workflows
-  name: matrix-lc-run
+  name: matrix
 spec:
+  workflowMetadata:
+    labels:
+      experiment: {% raw %}'{{ workflow.parameters.experiment }}'
+      {% endraw %}
+      release: {% raw %}'{{ workflow.parameters.release_version }}'
+      {% endraw %}
   entrypoint: dag
   arguments:
     parameters:
