@@ -207,8 +207,6 @@ def fuse(pipeline: Pipeline) -> List[FusedNode]:
             else:
                 fused_node = FusedNode()
                 fused_node.add_node(target_node)
-                # Argo is only interested in direct parent-child relationships, so we're now
-                # linking the new node to it's parent nodes based on the node's input datasets.
                 fused_node.add_parents(
                     [
                         fs
