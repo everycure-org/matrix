@@ -6,6 +6,8 @@ metadata:
   name: matrix-lc-run
 spec:
   entrypoint: dag
+  ttlStrategy:
+    secondsAfterSuccess: 5
   arguments:
     parameters:
       - name: image
