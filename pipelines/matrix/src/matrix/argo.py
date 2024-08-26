@@ -173,7 +173,6 @@ def fuse(pipeline: Pipeline) -> List[FusedNode]:
     # Kedro provides the `grouped_nodes` property, that yields a list of node groups that can
     # be executed in topological order. We're using this as the starting point for our fusing algorithm.
     for group in pipeline.grouped_nodes:
-        print("new group", [el.name for el in group])
         for target_node in group:
             # Find source node that provides its inputs
             num_fused = 0
@@ -206,7 +205,6 @@ def fuse(pipeline: Pipeline) -> List[FusedNode]:
             # as an independent node to the result, which implies it will be executed
             # using it's own Argo node unless a downstream node will be fused to it.
             else:
-                print("num", num_fused, "new node for", target_node.name)
                 fused_node = FusedNode()
                 fused_node.add_node(target_node)
                 # Argo is only interested in direct parent-child relationships, so we're now
