@@ -69,11 +69,11 @@ class FusedNode(Node):
         """Function to add node to group."""
         self._nodes.append(node)
 
-    def set_parents(self, parents):
+    def add_parents(self, parents):
         """Function to set the parents of the group."""
-        self._parents.update(parents)
+        self._parents.update(set(parents))
 
-    def fuses_with(self, node: Node) -> bool:
+    def fuses_with(self, node) -> bool:
         """Function verify fusability."""
         # If not is not fusable, abort
         if not self.is_fusable:
@@ -83,9 +83,8 @@ class FusedNode(Node):
         if not self.fuse_group == self.get_fuse_group(node.tags):
             return False
 
-        # Otherwise, fusable if this nodes provides _all_
-        # outputs required by the input node.
-        return set(self.clean_dependencies(node.inputs)) <= set(
+        # Otherwise, fusable if connected
+        return set(self.clean_dependencies(node.inputs)) & set(
             self.clean_dependencies(self.outputs)
         )
 
@@ -174,28 +173,45 @@ def fuse(pipeline: Pipeline) -> List[FusedNode]:
     # Kedro provides the `grouped_nodes` property, that yields a list of node groups that can
     # be executed in topological order. We're using this as the starting point for our fusing algorithm.
     for group in pipeline.grouped_nodes:
+        print("new group", [el.name for el in group])
         for target_node in group:
             # Find source node that provides its inputs
-            found = False
+            num_fused = 0
+            fuse_node = None
 
             # Given a topological node, we're trying to find a parent node
             # to which it can be fused. Nodes can be fused with they have the
             # proper labels and they have dataset dependencies.
             for source_node in fused:
                 if source_node.fuses_with(target_node):
-                    source_node.add_node(target_node)
-                    found = True
-                    break
+                    fuse_node = source_node
+                    num_fused = num_fused + 1
+
+            # We only fuse if there is a single parent to fuse with
+            # if multiple parents, avoid fusing otherwise this might
+            # mess with dependencies.
+            if num_fused == 1:
+                fuse_node.add_node(target_node)
+                fuse_node.add_parents(
+                    [
+                        fs
+                        for fs in fused
+                        if set(FusedNode.clean_dependencies(target_node.inputs))
+                        & set(FusedNode.clean_dependencies(fs.outputs))
+                        if fs != fuse_node
+                    ]
+                )
 
             # If we can't find any nodes to fuse to, we're adding this node
             # as an independent node to the result, which implies it will be executed
             # using it's own Argo node unless a downstream node will be fused to it.
-            if not found:
+            else:
+                print("num", num_fused, "new node for", target_node.name)
                 fused_node = FusedNode()
                 fused_node.add_node(target_node)
                 # Argo is only interested in direct parent-child relationships, so we're now
                 # linking the new node to it's parent nodes based on the node's input datasets.
-                fused_node.set_parents(
+                fused_node.add_parents(
                     [
                         fs
                         for fs in fused
