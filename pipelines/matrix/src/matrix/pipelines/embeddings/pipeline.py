@@ -169,6 +169,10 @@ def create_pipeline(**kwargs) -> Pipeline:
                 },
                 outputs="embeddings.reporting.topological_pca",
                 name="apply_topological_pca",
+                tags=[
+                    "argowf.fuse",
+                    "argowf.fuse-group.topological_pca",
+                ],
             ),
             node(
                 func=nodes.visualise_pca,
@@ -178,6 +182,10 @@ def create_pipeline(**kwargs) -> Pipeline:
                 },
                 outputs="embeddings.reporting.topological_pca_plot",
                 name="create_pca_plot_topological_embeddings",
+                tags=[
+                    "argowf.fuse",
+                    "argowf.fuse-group.topological_pca",
+                ],
             ),
         ],
     )
