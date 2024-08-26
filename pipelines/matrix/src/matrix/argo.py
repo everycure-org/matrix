@@ -73,7 +73,7 @@ class FusedNode(Node):
         """Function to set the parents of the group."""
         self._parents.update(parents)
 
-    def fuses_with(self, node) -> bool:
+    def fuses_with(self, node: Node) -> bool:
         """Function verify fusability."""
         # If not is not fusable, abort
         if not self.is_fusable:
@@ -83,7 +83,8 @@ class FusedNode(Node):
         if not self.fuse_group == self.get_fuse_group(node.tags):
             return False
 
-        # Otherwise, fusable if connected
+        # Otherwise, fusable if this nodes provides _all_
+        # outputs required by the input node.
         return set(self.clean_dependencies(node.inputs)) <= set(
             self.clean_dependencies(self.outputs)
         )
@@ -183,7 +184,6 @@ def fuse(pipeline: Pipeline) -> List[FusedNode]:
             # proper labels and they have dataset dependencies.
             for source_node in fused:
                 if source_node.fuses_with(target_node):
-                    print("fused")
                     source_node.add_node(target_node)
                     found = True
                     break
