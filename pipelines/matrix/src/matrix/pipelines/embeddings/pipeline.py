@@ -48,7 +48,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                     "gds": "params:embeddings.gds",
                     "unpack": "params:embeddings.topological",
                 },
-                outputs="embeddings.models.graphsage",
+                outputs=["embeddings.models.graphsage", "embeddings.reporting.loss"],
                 name="train_topological_embeddings",
             ),
             node(

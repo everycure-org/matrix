@@ -18,6 +18,8 @@ from . import pypher_utils
 from refit.v1.core.inject import inject_object
 from refit.v1.core.unpack import unpack_params
 
+import matplotlib.pyplot as plt
+
 import logging
 
 logger = logging.getLogger(__name__)
@@ -289,9 +291,19 @@ def train_topological_embeddings(
         subgraph, **estimator.get("args")
     )
 
-    breakpoint()
+    # Plot convergence
+    losses = attr.modelInfo["metrics"]["iterationLossesPerEpoch"][0]
 
-    return {"success": "true"}
+    convergence = plt.figure()
+    ax = convergence.add_subplot(1, 1, 1)
+    ax.plot([x for x in range(len(losses))], losses)
+
+    # Add labels and title
+    ax.set_xlabel("Number of Epochs")
+    ax.set_ylabel("Average loss per node")
+    ax.set_title("Loss Chart")
+
+    return {"success": "true"}, convergence
 
 
 @inject_object()

@@ -69,6 +69,15 @@ embeddings.feat.nodes:
   <<: *_spark_parquet
   filepath: ${globals:paths.feat}/nodes
       
+
+embeddings.reporting.loss:
+  type: kedro_mlflow.io.artifacts.MlflowArtifactDataset
+  artifact_path: "topological"
+  dataset:
+    type: matplotlib.MatplotlibWriter
+    filepath: ${globals:paths.tmp}/topological/convergence_plot.png
+
+
 embeddings.feat.edges:
   <<: *_spark_parquet
   filepath: ${globals:paths.feat}/edges
