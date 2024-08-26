@@ -1,5 +1,5 @@
 """Module containing Neo4JDataset."""
-
+import time
 from typing import Any
 from copy import deepcopy
 
@@ -103,12 +103,15 @@ class Neo4JSparkDataset(SparkDataset):
         )
 
     @staticmethod
-    def _create_db(url: str, database: str, credentials: dict[str, Any] = None):
+    def _create_db(
+        url: str, database: str, overwrite: bool, credentials: dict[str, Any] = None
+    ):
         """Function to create database.
 
         Args:
             url: URL of the Neo4J instance.
             database: Name of the Neo4J database.
+            overwrite: Boolean indicating whether to overwrite db
             credentials: neo4j credentials
         """
         # NOTE: Little ugly, as it's extracting out Neo4j spark plugin
@@ -119,8 +122,13 @@ class Neo4JSparkDataset(SparkDataset):
             credentials.get("authentication.basic.password"),
         )
         with GraphDatabase.driver(url, auth=creds, database="system") as driver:
-            # TODO: OR do we want to clear out if exists?
-            if database not in Neo4JSparkDataset._load_existing_dbs(driver):
+            if overwrite:
+                driver.execute_query(f"CREATE OR REPLACE DATABASE `{database}`")
+                # TODO: Some strange race condition going on here
+                # investigate when makes sense, this will only happen locally.
+                time.sleep(3)
+
+            elif database not in Neo4JSparkDataset._load_existing_dbs(driver):
                 logging.info("creating new database %s", database)
                 driver.execute_query(f"CREATE DATABASE `{database}` IF NOT EXISTS")
 
@@ -153,7 +161,8 @@ class Neo4JSparkDataset(SparkDataset):
                 return None
             else:
                 # Create database
-                self._create_db(self._url, self._database, self._credentials)
+                overwrite = self._save_args.pop("mode", "append") == "overwrite"
+                self._create_db(self._url, self._database, overwrite, self._credentials)
 
                 # Write dataset
                 (

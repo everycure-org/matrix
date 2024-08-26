@@ -3,3 +3,9 @@ argo-workflows:
   server: 
     extraArgs:
       - --auth-mode=server
+
+  artifactRepository:
+    archiveLogs: true
+    gcs:
+      bucket: mtrx-us-central1-hub-dev-storage
+      keyFormat: "{{ \"{{workflow.namespace}}/{{workflow.name}}/{{pod.name}}\" }}"

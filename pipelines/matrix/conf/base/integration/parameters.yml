@@ -1,3 +1,0 @@
-# Specifies which edges are filtered out
-integration.graphsage_excl_preds:
-  - 'biolink:treats'

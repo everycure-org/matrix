@@ -9,5 +9,5 @@ dependencies:
 # https://neo4j.com/docs/operations-manual/current/kubernetes/quickstart-standalone/server-setup/
 - name: argo-workflows 
   #version: 0.41.11
-  version: 0.22.8
+  version: 0.40.7
   repository: https://argoproj.github.io/argo-helm

@@ -5,6 +5,12 @@ metadata:
   namespace: argo-workflows
   name: matrix
 spec:
+  workflowMetadata:
+    labels:
+      experiment: {% raw %}'{{ workflow.parameters.experiment }}'
+      {% endraw %}
+      release: {% raw %}'{{ workflow.parameters.release_version }}'
+      {% endraw %}
   entrypoint: dag
   arguments:
     parameters:
@@ -43,7 +49,7 @@ spec:
         app: kedro-argo
     inputs:
       parameters:
-      - name: kedro_node
+      - name: kedro_nodes
       - name: num_retries
       - name: pipeline
     container:
@@ -102,18 +108,107 @@ spec:
             configMapKeyRef:
               name: matrix-config
               key: GCP_BUCKET
-        - name: VERTEX_AI_ACCESS_TOKEN
-          value: dummy
       command: [kedro]
-      args: ["run", "-p", {% raw %}"{{inputs.parameters.pipeline}}"{% endraw %}, "-e", {% raw %}"{{workflow.parameters.env}}"{% endraw %}, "-n", {% raw %}"{{inputs.parameters.kedro_node}}"{% endraw %}]
-  
+      args: ["run", "-p", {% raw %}"{{inputs.parameters.pipeline}}"{% endraw %}, "-e", {% raw %}"{{workflow.parameters.env}}"{% endraw %}, "-n", {% raw %}"{{inputs.parameters.kedro_nodes}}"{% endraw %}]
+
+  - name: neo4j
+    inputs:
+      parameters:
+      - name: kedro_nodes
+      - name: num_retries
+      - name: pipeline
+    container:
+      resources: # limit the resources
+        requests:
+          memory: 120Gi
+          cpu: 4
+        limits:
+          memory: 120Gi
+          cpu: 16
+      env:
+        - name: WORKFLOW_ID
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.labels['workflows.argoproj.io/workflow']
+        - name: RELEASE_VERSION
+          value: {% raw %} "{{workflow.parameters.release_version}}" 
+          {% endraw %}
+        - name: EXPERIMENT
+          value: {% raw %} "{{workflow.parameters.experiment}}" 
+          {% endraw %}
+        - name: MLFLOW_ENDPOINT
+          value: {% raw %} "{{workflow.parameters.mlflow_endpoint}}" 
+          {% endraw %}
+        - name: NEO4J_USER
+          value: "neo4j"
+        - name: NEO4J_PASSWORD
+          value: "admin"
+        - name: GCP_PROJECT_ID
+          valueFrom:
+            configMapKeyRef:
+              name: matrix-config
+              key: GCP_PROJECT_ID
+        - name: GCP_BUCKET
+          valueFrom:
+            configMapKeyRef:
+              name: matrix-config
+              key: GCP_BUCKET
+        - name: OPENAI_API_KEY
+          value: "foo"
+        - name: OPENAI_ENDPOINT
+          value: {% raw %} "{{workflow.parameters.openai_endpoint}}" 
+          {% endraw %}
+        - name: OPENAI_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: matrix-secrets
+              key: OPENAI_API_KEY
+      imagePullPolicy: Always
+      image: {% raw %} "{{workflow.parameters.image}}:{{workflow.parameters.image_tag}}" {% endraw %}
+      
+      command: ["/bin/sh", "-c"]
+      args:
+        - |
+          echo "Waiting for Neo4j to be ready..."
+          until curl -s http://localhost:7474/ready; do
+            echo "Waiting..."
+            sleep 5
+          done
+          echo "Neo4j is ready. Starting main application..."
+          kedro run -p {% raw %}"{{inputs.parameters.pipeline}}"{% endraw %} -e {% raw %}"{{workflow.parameters.env}}"{% endraw %} -n {% raw %}"{{inputs.parameters.kedro_nodes}}"{% endraw %}
+    
+    sidecars:
+      # Neo4j enterprise sidecar
+      - name: neo4j
+        image: neo4j:5.21.0-enterprise
+        env:
+        - name: NEO4J_AUTH
+          value: "neo4j/admin"
+        - name: NEO4J_apoc_export_file_enabled
+          value: "true"
+        - name: NEO4J_apoc_import_file_enabled
+          value: "true"
+        - name: NEO4J_apoc_import_file_use__neo4j__config
+          value: "true"
+        - name: NEO4J_PLUGINS
+          value: '["apoc", "graph-data-science", "apoc-extended"]'
+        - name: NEO4J_dbms_security_auth__minimum__password__length
+          value: "4"
+        - name: NEO4J_dbms_security_procedures_whitelist
+          value: "gds.*, apoc.*"
+        - name: NEO4J_dbms_security_procedures_unrestricted
+          value: "gds.*, apoc.*"
+        - name: NEO4J_db_logs_query_enabled
+          value: "OFF"
+        - name: NEO4J_ACCEPT_LICENSE_AGREEMENT
+          value: "yes"
   {% for pipeline, tasks in pipes.items() %}
   - name: {{ pipeline }}
     dag:
       tasks:
       {% for task in tasks %}
       - name: {{ task.name }}
-        template: kedro
+        template: {{ task.get('template', 'kedro') }}
         {% if task.deps %}
         dependencies:
         {% for dep in task.deps %}
@@ -124,9 +219,9 @@ spec:
           parameters:
           - name: pipeline
             value: {{ pipeline }}
-          - name: kedro_node
-            value: {{ task.node }}
+          - name: kedro_nodes
+            value: {{ task.nodes }}
           - name: num_retries
-            value: {{ task.get('retries', 0) }}
+            value: 0
       {% endfor %}
   {% endfor %}

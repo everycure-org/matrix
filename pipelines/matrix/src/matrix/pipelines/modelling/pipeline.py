@@ -132,6 +132,16 @@ def create_pipeline(**kwargs) -> Pipeline:
     """Create modelling pipeline."""
     create_model_input = pipeline(
         [
+            # Construct ground_truth
+            node(
+                func=nodes.create_int_pairs,
+                inputs=[
+                    "modelling.raw.ground_truth.positives",
+                    "modelling.raw.ground_truth.negatives",
+                ],
+                outputs="modelling.int.known_pairs",
+                name="create_int_known_pairs",
+            ),
             node(
                 func=nodes.prefilter_nodes,
                 inputs=[
@@ -146,7 +156,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 func=nodes.create_feat_nodes,
                 inputs=[
                     "modelling.model_input.drugs_diseases_nodes@spark",
-                    "integration.model_input.ground_truth",
+                    "modelling.int.known_pairs",
                     "params:modelling.drug_types",
                     "params:modelling.disease_types",
                 ],
@@ -157,7 +167,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 func=nodes.make_splits,
                 inputs=[
                     "modelling.feat.rtx_kg2",
-                    "integration.model_input.ground_truth",
+                    "modelling.int.known_pairs",
                     "params:modelling.splitter",
                 ],
                 outputs="modelling.model_input.splits",

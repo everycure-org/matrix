@@ -26,7 +26,7 @@ data_sources:
   # Dataset with node and edge proposals by the
   # EveryCure medical team.
   ec-medical-team:
-    version: 20240816
+    version: 20240823
 
 paths:
   # we read from our central GCS bucket where we store our ground truth data
