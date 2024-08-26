@@ -52,7 +52,8 @@ def _create_model_shard_pipeline(model: str, shard: int) -> Pipeline:
                 outputs=f"modelling.{model}.{shard}.models.model",
                 name=f"train_{model}_{shard}_model",
             ),
-        ]
+        ],
+        tags=["argowf.fuse", f"argowf.fuse-group.{model}.shard-{shard}"],
     )
 
 
@@ -122,7 +123,8 @@ def _create_model_pipeline(model: str, num_shards: int) -> Pipeline:
                         outputs=f"modelling.{model}.reporting.metrics",
                         name=f"check_{model}_model_performance",
                     ),
-                ]
+                ],
+                tags=["argowf.fuse", f"argowf.fuse-group.{model}"],
             ),
         ]
     )
