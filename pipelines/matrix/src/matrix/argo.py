@@ -84,7 +84,7 @@ class FusedNode(Node):
             return False
 
         # Otherwise, fusable if connected
-        return set(self.clean_dependencies(node.inputs)) & set(
+        return set(self.clean_dependencies(node.inputs)) <= set(
             self.clean_dependencies(self.outputs)
         )
 
@@ -106,7 +106,9 @@ class FusedNode(Node):
     @property
     def outputs(self) -> set[str]:
         """Retrieve output datasets."""
-        return set().union(*[node.outputs for node in self._nodes])
+        return set().union(
+            *[self.clean_dependencies(node.outputs) for node in self._nodes]
+        )
 
     @property
     def tags(self) -> set[str]:
@@ -116,7 +118,7 @@ class FusedNode(Node):
     @property
     def name(self) -> str:
         """Retrieve name of fusedNode."""
-        if self.is_fusable:
+        if self.is_fusable and len(self._nodes) > 1:
             return self.fuse_group
 
         # If not fusable, revert to name of node
@@ -171,6 +173,7 @@ def fuse(pipeline: Pipeline) -> List[FusedNode]:
     # Kedro provides the `grouped_nodes` property, that yields a list of node groups that can
     # be executed in topological order. We're using this as the starting point for our fusing algorithm.
     for group in pipeline.grouped_nodes:
+        print("new group", [el.name for el in group])
         for target_node in group:
             # Find source node that provides its inputs
             found = False
@@ -180,8 +183,9 @@ def fuse(pipeline: Pipeline) -> List[FusedNode]:
             # proper labels and they have dataset dependencies.
             for source_node in fused:
                 if source_node.fuses_with(target_node):
-                    found = True
+                    print("fused")
                     source_node.add_node(target_node)
+                    found = True
                     break
 
             # If we can't find any nodes to fuse to, we're adding this node
