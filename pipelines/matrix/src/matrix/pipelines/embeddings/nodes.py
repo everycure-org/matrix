@@ -285,9 +285,11 @@ def train_topological_embeddings(
         gds.model.drop(model)
 
     # Initialize the model
-    model, _ = getattr(gds.beta, estimator.get("model")).train(
+    model, attr = getattr(gds.beta, estimator.get("model")).train(
         subgraph, **estimator.get("args")
     )
+
+    breakpoint()
 
     return {"success": "true"}
 
