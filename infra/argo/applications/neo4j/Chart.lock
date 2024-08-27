@@ -1,6 +1,0 @@
-dependencies:
-- name: neo4j
-  repository: https://neo4j.github.io/helm-charts/
-  version: 5.20.0
-digest: sha256:ef4c643a802b5632bbdcd61b9c04c86f7ea36770198b92f12600c23258863041
-generated: "2024-06-28T13:38:43.768494+02:00"

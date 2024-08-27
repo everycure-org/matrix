@@ -1,0 +1,73 @@
+---
+kind: Gateway
+apiVersion: gateway.networking.k8s.io/v1beta1
+metadata:
+  name: external-http
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+spec:
+  # we need to use the global one to make sure IaP works. 
+  gatewayClassName: gke-l7-global-external-managed	
+  listeners:
+  - name: https
+    hostname: "*.platform.dev.everycure.org"
+    protocol: HTTPS
+    port: 443
+    allowedRoutes:
+      namespaces:
+        from: All
+    tls:
+      mode: Terminate
+      certificateRefs:
+        - name: gateway-cert
+          kind: Secret
+  - name: http
+    hostname: "*.platform.dev.everycure.org"
+    protocol: HTTP
+    port: 80
+    #allowedRoutes:
+    #  namespaces:
+    #    from: All
+
+---
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt-prod
+spec:
+  acme:
+    email: gcp-admins@everycure.org  # Replace with your email
+    server: https://acme-v02.api.letsencrypt.org/directory
+    privateKeySecretRef:
+      name: letsencrypt-account-key
+    solvers:
+      # HTTP01 solver configuration for simple non wildcard certificate validation
+      - http01:
+          gatewayHTTPRoute:
+            parentRefs:
+              - name: external-http  # Ensure this matches the name of your Gateway resource
+                group: gateway.networking.k8s.io
+                namespace: {{ .Values.namespace }} 
+                kind: Gateway 
+      # DNS01 solver configuration for wildcard certificate validation
+      - dns01:
+          cloudDNS:
+            project: mtrx-hub-dev-3of  # This should match your Google Cloud project ID
+---
+# HTTP redirect to HTTPS
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: http-redirect-to-https
+spec:
+  parentRefs:
+  - name: external-http
+    sectionName: http
+  hostnames:
+  - "*.platform.dev.everycure.org"
+  rules:
+  - filters:
+    - type: RequestRedirect
+      requestRedirect:
+        scheme: https
+        statusCode: 301

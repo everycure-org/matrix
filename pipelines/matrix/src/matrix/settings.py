@@ -42,7 +42,7 @@ CONFIG_LOADER_CLASS = OmegaConfigLoader
 CONFIG_LOADER_ARGS = {
     "base_env": "base",
     "default_run_env": "local",
-    "merge_strategy": {"parameters": "soft", "mlflow": "soft"},
+    "merge_strategy": {"parameters": "soft", "mlflow": "soft", "globals": "soft"},
     "config_patterns": {
         "spark": ["spark*", "spark*/**"],
         "mlflow": ["mlflow*", "mlflow*/**"],
@@ -63,10 +63,10 @@ CONFIG_LOADER_ARGS = {
 # https://getindata.com/blog/kedro-dynamic-pipelines/
 DYNAMIC_PIPELINES_MAPPING = {
     "modelling": [
-        {"model_name": "xgb", "num_shards": 1},
-        {"model_name": "xgc", "num_shards": 3},
-        {"model_name": "kgml_xdtd", "num_shards": 1},
-        {"model_name": "xg_balanced", "num_shards": 1},
+        {"model_name": "xg_baseline", "num_shards": 1},
+        {"model_name": "xg_ensemble", "num_shards": 3},
+        {"model_name": "rf", "num_shards": 1},
+        {"model_name": "xg_synth", "num_shards": 1},
     ],
     "evaluation": [
         {"evaluation_name": "simple_ground_truth_classification"},

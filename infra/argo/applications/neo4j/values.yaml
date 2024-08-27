@@ -9,8 +9,8 @@ neo4j: # the name of the helm dependency
     acceptLicenseAgreement: "yes"
     name: neo4j
     resources:
-      cpu: "30" # takes almost full advantage of e2-standard-32 instance
-      memory: "110Gi" # takes almost full advantage of e2-standard-32 instance
+      cpu: "2" # takes almost full advantage of e2-standard-32 instance
+      memory: "8Gi" # takes almost full advantage of e2-standard-32 instance
   volumes:
     data:
       mode: "dynamic"

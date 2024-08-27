@@ -1,0 +1,25 @@
+
+external-dns:
+  provider:
+    name: google
+  extraArgs:
+    - --source=gateway-httproute
+  rbac:
+    additionalPermissions:
+      - apiGroups: ["gateway.networking.k8s.io"]
+        resources: ["gateways","httproutes","grpcroutes","tlsroutes","tcproutes","udproutes"] 
+        verbs: ["get","watch","list"]
+      - apiGroups: [""]
+        resources: ["namespaces"]
+        verbs: ["get","watch","list"]
+
+cert-manager:
+  crds:
+    enabled: true
+    keep: false # potentially dangerous to remove them but for now trying to keep ArgoCD fully owning this
+
+  config:
+    apiVersion: controller.config.cert-manager.io/v1alpha1
+    kind: ControllerConfiguration
+    # https://cert-manager.io/docs/usage/gateway/
+    enableGatewayAPI: true
