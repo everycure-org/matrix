@@ -1,6 +1,7 @@
 """Custom Mlflow datasets."""
 import mlflow
 
+import pandas as pd
 from copy import deepcopy
 from typing import Any, Dict, Union
 
@@ -9,6 +10,40 @@ from mlflow.tracking import MlflowClient
 from kedro_mlflow.io.metrics.mlflow_abstract_metric_dataset import (
     MlflowAbstractMetricDataset,
 )
+
+from kedro.io.core import (
+    PROTOCOL_DELIMITER,
+    AbstractDataset,
+    DatasetError,
+    Version,
+    get_filepath_str,
+    get_protocol_and_path,
+)
+
+from refit.v1.core.inject import _parse_for_objects
+
+
+class MlFlowInputDataDataSet(AbstractDataset):
+    def __init__(self, name: str, dataset: AbstractDataset):
+        self._name = name
+        self._dataset = _parse_for_objects(dataset)
+
+    def _load(self) -> Any:
+        return self._dataset._load()
+
+    def _save(self, data):
+        self._dataset.save(data)
+        mlflow.log_input(mlflow.data.from_pandas(data), context=self._name)
+
+    def _describe(self) -> Dict[str, Any]:
+        """Describe MLflow metrics dataset.
+
+        Returns:
+            Dict[str, Any]: Dictionary with MLflow metrics dataset description.
+        """
+        return {
+            "context": self._context,
+        }
 
 
 class MlflowMetricsDataset(MlflowAbstractMetricDataset):
