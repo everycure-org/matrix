@@ -58,20 +58,21 @@ class FusedNode(Node):
     """Class to represent a fused node."""
 
     def __init__(  # noqa: PLR0913
-        self,
+        self, depth: int
     ):
         """Construct new instance of `FusedNode`."""
         self._nodes = []
         self._parents = set()
         self._inputs = []
+        self.depth = depth
 
     def add_node(self, node):
         """Function to add node to group."""
         self._nodes.append(node)
 
-    def set_parents(self, parents):
+    def add_parents(self, parents):
         """Function to set the parents of the group."""
-        self._parents.update(parents)
+        self._parents.update(set(parents))
 
     def fuses_with(self, node) -> bool:
         """Function verify fusability."""
@@ -106,7 +107,9 @@ class FusedNode(Node):
     @property
     def outputs(self) -> set[str]:
         """Retrieve output datasets."""
-        return set().union(*[node.outputs for node in self._nodes])
+        return set().union(
+            *[self.clean_dependencies(node.outputs) for node in self._nodes]
+        )
 
     @property
     def tags(self) -> set[str]:
@@ -116,7 +119,7 @@ class FusedNode(Node):
     @property
     def name(self) -> str:
         """Retrieve name of fusedNode."""
-        if self.is_fusable:
+        if self.is_fusable and len(self._nodes) > 1:
             return self.fuse_group
 
         # If not fusable, revert to name of node
@@ -170,29 +173,47 @@ def fuse(pipeline: Pipeline) -> List[FusedNode]:
 
     # Kedro provides the `grouped_nodes` property, that yields a list of node groups that can
     # be executed in topological order. We're using this as the starting point for our fusing algorithm.
-    for group in pipeline.grouped_nodes:
+    for depth, group in enumerate(pipeline.grouped_nodes):
         for target_node in group:
             # Find source node that provides its inputs
-            found = False
+            num_fused = 0
+            fuse_node = None
 
             # Given a topological node, we're trying to find a parent node
             # to which it can be fused. Nodes can be fused with they have the
-            # proper labels and they have dataset dependencies.
+            # proper labels and they have dataset dependencies, and the parent
+            # is in the previous node group.
             for source_node in fused:
-                if source_node.fuses_with(target_node):
-                    found = True
-                    source_node.add_node(target_node)
-                    break
+                if (
+                    source_node.fuses_with(target_node)
+                    and source_node.depth == depth - 1
+                ):
+                    fuse_node = source_node
+                    num_fused = num_fused + 1
+
+            # We only fuse if there is a single parent to fuse with
+            # if multiple parents, avoid fusing otherwise this might
+            # mess with dependencies.
+            if num_fused == 1:
+                fuse_node.depth = depth
+                fuse_node.add_node(target_node)
+                fuse_node.add_parents(
+                    [
+                        fs
+                        for fs in fused
+                        if set(FusedNode.clean_dependencies(target_node.inputs))
+                        & set(FusedNode.clean_dependencies(fs.outputs))
+                        if fs != fuse_node
+                    ]
+                )
 
             # If we can't find any nodes to fuse to, we're adding this node
             # as an independent node to the result, which implies it will be executed
             # using it's own Argo node unless a downstream node will be fused to it.
-            if not found:
-                fused_node = FusedNode()
+            else:
+                fused_node = FusedNode(depth)
                 fused_node.add_node(target_node)
-                # Argo is only interested in direct parent-child relationships, so we're now
-                # linking the new node to it's parent nodes based on the node's input datasets.
-                fused_node.set_parents(
+                fused_node.add_parents(
                     [
                         fs
                         for fs in fused
