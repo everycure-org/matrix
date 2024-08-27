@@ -43,12 +43,12 @@ def test_simple_fusing():
             Node(
                 func=dummy_fn,
                 inputs=["dataset_a", "dataset_b"],
-                outputs="dataset_1",
+                outputs="dataset_1@pandas",
             ),
             Node(
                 func=dummy_fn,
                 inputs=[
-                    "dataset_1",
+                    "dataset_1@spark",
                 ],
                 outputs="dataset_2",
             ),
