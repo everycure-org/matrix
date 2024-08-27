@@ -7,7 +7,7 @@ mlflow:
     # https://github.com/mlflow/mlflow/issues/6331
     extraArgs:
       - '--gunicorn-opts="-t 360"'
-    resourcesPreset: large
+    resourcesPreset: 2xlarge
     service:
       type: ClusterIP
     auth:
