@@ -24,8 +24,9 @@ from refit.v1.core.inject import _parse_for_objects
 
 
 class MlFlowInputDataDataSet(AbstractDataset):
-    def __init__(self, name: str, dataset: AbstractDataset):
+    def __init__(self, name: str, context: str, dataset: AbstractDataset):
         self._name = name
+        self._context = context
         self._dataset = _parse_for_objects(dataset)
 
     def _load(self) -> Any:
@@ -33,7 +34,11 @@ class MlFlowInputDataDataSet(AbstractDataset):
 
     def _save(self, data):
         self._dataset.save(data)
-        mlflow.log_input(mlflow.data.from_pandas(data), context=self._name)
+
+        # TODO: Figure out how to link data to data on file system
+        mlflow.log_input(
+            mlflow.data.from_pandas(data, name=self._name), context=self._context
+        )
 
     def _describe(self) -> Dict[str, Any]:
         """Describe MLflow metrics dataset.
@@ -41,9 +46,7 @@ class MlFlowInputDataDataSet(AbstractDataset):
         Returns:
             Dict[str, Any]: Dictionary with MLflow metrics dataset description.
         """
-        return {
-            "context": self._context,
-        }
+        return {"context": self._context, "name": self._name}
 
 
 class MlflowMetricsDataset(MlflowAbstractMetricDataset):
