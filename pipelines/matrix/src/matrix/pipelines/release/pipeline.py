@@ -20,5 +20,11 @@ def create_pipeline(**kwargs) -> Pipeline:
                 outputs="release.prm.kg_edges",
                 name="ingest_kg_edges",
             ),
+            # NOTE: Enable if you want embeddings
+            # node(
+            #     func=lambda _, x: x,
+            #     inputs=["release.prm.kg_nodes", "embeddings.feat.nodes"],
+            #     outputs="release.prm.kg_embeddings",
+            # )
         ]
     )
