@@ -6,7 +6,7 @@ mlflow:
     # we see issues when uploading large files and this is a recommended workaround
     # https://github.com/mlflow/mlflow/issues/6331
     extraArgs:
-      - '--gunicorn-opts "-t 360"'
+      - '--gunicorn-opts="-t 360"'
     resourcesPreset: large
     service:
       type: ClusterIP
