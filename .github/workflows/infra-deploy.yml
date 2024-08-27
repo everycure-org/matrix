@@ -56,11 +56,8 @@ jobs:
   checks:
     runs-on: ubuntu-latest
     needs: [paths_filter]
-    # if: needs.paths_filter.outputs.changed == 'true' && github.ref != 'refs/heads/infra'
+    if: needs.paths_filter.outputs.changed == 'true'
     steps:
-      - run: |
-          # output the previous steps outputs changed
-          echo "changed: ${{ needs.paths_filter.outputs.changed }}"
       - name: 'Checkout'
         uses: actions/checkout@v4
 
@@ -76,7 +73,6 @@ jobs:
 
   plan:
     runs-on: ubuntu-latest
-    if: github.ref != 'refs/heads/infra'
     environment: dev
     name: Plan Terraform
     needs: [ checks ]
