@@ -63,6 +63,7 @@ modelling.feat.rtx_kg2:
 modelling.model_input.splits:
   type: matrix.datasets.mlflow.MlFlowInputDataDataSet
   name: splits
+  context: modelling
   dataset:
     object: kedro_datasets.pandas.ParquetDataset
     filepath: ${globals:paths.model_input}/splits
