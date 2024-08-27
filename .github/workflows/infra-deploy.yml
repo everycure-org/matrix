@@ -23,7 +23,7 @@ on:
 env:
   tf_version: '1.5.7'
   tg_version: '0.58.11'
-  working_dir: 'infra/'
+  # working_dir: 'infra/'
 
 jobs:
   # leveraging a paths-filter approach to be able to make this run required for all PRs while still
