@@ -8,6 +8,15 @@ mlflow:
     extraArgs:
       - '--gunicorn-opts="-t 360"'
     resourcesPreset: 2xlarge
+    resources:
+      requests:
+        cpu: 500Mi
+        memory: 2Gi
+        ephemeral-storage: 5Gi
+      limits:
+        cpu: 1
+        memory: 4Gi
+        ephemeral-storage: 10Gi
     service:
       type: ClusterIP
     auth:
