@@ -125,17 +125,23 @@ def test_fusing_multiple_parents():
             ),
             Node(
                 func=dummy_fn,
+                inputs=None,
+                outputs="dataset_3",
+                name="third_node",
+            ),
+            Node(
+                func=dummy_fn,
                 inputs=[
                     "dataset_1",
                     "dataset_2",
                 ],
-                outputs="dataset_3",
+                outputs="dataset_4",
                 name="child_node",
             ),
             Node(
                 func=dummy_fn,
-                inputs=["dataset_3"],
-                outputs="dataset_4",
+                inputs=["dataset_3", "dataset_4"],
+                outputs="dataset_5",
                 name="grandchild_node",
             ),
         ],
@@ -147,9 +153,9 @@ def test_fusing_multiple_parents():
 
     # Fusing of child and grandchild node, ensure correct naming
     # and recording of parent relationships and dataset outputs.
-    assert len(fused) == 3
-    assert fused[2].name == "dummy"
-    assert fused[2].outputs == set(["dataset_3", "dataset_4"])
-    assert set([parent.name for parent in fused[2]._parents]) == set(
-        ["first_node", "second_node"]
+    assert len(fused) == 4
+    assert fused[3].name == "dummy"
+    assert fused[3].outputs == set(["dataset_4", "dataset_5"])
+    assert set([parent.name for parent in fused[3]._parents]) == set(
+        ["first_node", "second_node", "third_node"]
     )
