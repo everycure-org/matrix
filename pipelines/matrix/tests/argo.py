@@ -16,8 +16,14 @@ def test_no_fusing():
                 func=dummy_fn,
                 inputs=["dataset_a", "dataset_b"],
                 outputs="dataset_c",
+                name="first",
             ),
-            Node(func=dummy_fn, inputs=["dataset_1", "dataset_2"], outputs="dataset_3"),
+            Node(
+                func=dummy_fn,
+                inputs=["dataset_1", "dataset_2"],
+                outputs="dataset_3",
+                name="second",
+            ),
         ],
         tags=["argowf.fuse", "argowf.fuse-group.dummy"],
     )
