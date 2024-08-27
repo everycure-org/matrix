@@ -9,18 +9,13 @@ from . import nodes
 
 def _create_evaluation_pipeline(model: str, evaluation: str) -> Pipeline:
     
-    if evaluation != "time_split_validation":
-        input_data = "modelling.model_input.splits"
-    else:
-        input_data = "ingestion.raw.clinical_trial_data@pandas"
-    
     return pipeline(
         [
             node(
                 func=nodes.generate_test_dataset,
                 inputs=[
                     "modelling.feat.rtx_kg2",
-                    input_data,
+                    "modelling.model_input.splits",
                     f"params:evaluation.{evaluation}.evaluation_options.generator",
                 ],
                 outputs=f"evaluation.{model}.{evaluation}.prm.pairs",

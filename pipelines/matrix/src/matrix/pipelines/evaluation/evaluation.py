@@ -202,12 +202,3 @@ class HitK(RankingFunction):
     def name(self):
         """Returns name of the function."""
         return "hit-" + str(self.k)
-
-class TimeSplitValidation:
-    """A class implementing time-split validation using Alexei's evaluation metrics."""
-
-    def __init__(self, ):
-        """Initializes the TimeSplitValidation instance.
-        
-        """
-        pass

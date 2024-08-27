@@ -64,19 +64,74 @@ evaluation.disease_specific_ranking:
       score_col_name: *score-col
 
 # Time split
-evaluation.time_split_validation:
+evaluation.simple_ground_truth_classification_time_split:
   evaluation_options:
     generator:
-      object: matrix.datasets.pair_generator.TimeSplitValidationDataGenerator
+      object: matrix.datasets.pair_generator.TimeSplitDataGenerator
+      dataset:
+        object: kedro_datasets.pandas.ParquetDataset
+        filepath: ${globals:paths.raw}/clinical_trial_data/${globals:data_sources.clinical-trial-data.version}/data
+      calculate_ranking: "false"
+      drugs_lst_flags:
+          - is_drug
+          - is_ground_pos
     evaluation:
-      object: matrix.pipelines.evaluation.evaluation.TimeSplitValidation
+      object: matrix.pipelines.evaluation.evaluation.DiscreteMetrics
       metrics:
         - object: sklearn.metrics.accuracy_score
         - object: sklearn.metrics.f1_score
+      score_col_name: *score-col
+      threshold: 0.5
+
+evaluation.continuous_ground_truth_classification_time_split:
+  evaluation_options:
+    generator:
+      object: matrix.datasets.pair_generator.TimeSplitDataGenerator
+      dataset:
+        object: kedro_datasets.pandas.ParquetDataset
+        filepath: ${globals:paths.raw}/clinical_trial_data/${globals:data_sources.clinical-trial-data.version}/data
+      calculate_ranking: "false"
+      drugs_lst_flags:
+          - is_drug
+          - is_ground_pos
+    evaluation:
+      object: matrix.pipelines.evaluation.evaluation.ContinuousMetrics
+      metrics:
         - object: sklearn.metrics.roc_auc_score
         - object: sklearn.metrics.average_precision_score
       score_col_name: *score-col
-      threshold: 0.5
+
+evaluation.disease_centric_matrix_time_split:
+  evaluation_options:
+    generator:
+      object: matrix.datasets.pair_generator.TimeSplitDataGenerator
+      dataset:
+        object: kedro_datasets.pandas.ParquetDataset
+        filepath: ${globals:paths.raw}/clinical_trial_data/${globals:data_sources.clinical-trial-data.version}/data
+      calculate_ranking: "true"
+      drugs_lst_flags:
+          - is_drug
+          - is_ground_pos
+    evaluation:
+      object: matrix.pipelines.evaluation.evaluation.ContinuousMetrics
+      metrics:
+        - object: sklearn.metrics.roc_auc_score
+        - object: sklearn.metrics.average_precision_score
+      score_col_name: *score-col
+
+evaluation.disease_specific_ranking_time_split:
+  evaluation_options:
+    generator:
+      object: matrix.datasets.pair_generator.TimeSplitDataGenerator
+      dataset:
+        object: kedro_datasets.pandas.ParquetDataset
+        filepath: ${globals:paths.raw}/clinical_trial_data/${globals:data_sources.clinical-trial-data.version}/data
+      calculate_ranking: "true"
+      drugs_lst_flags:
+          - is_drug
+          - is_ground_pos
+    evaluation:
+      object: matrix.pipelines.evaluation.evaluation.SpecificRanking
       specific_col: "target"
       rank_func_lst: 
         - object: matrix.pipelines.evaluation.evaluation.MRR
@@ -86,3 +141,4 @@ evaluation.time_split_validation:
           k: 10
         - object:  matrix.pipelines.evaluation.evaluation.HitK
           k: 100
+      score_col_name: *score-col
