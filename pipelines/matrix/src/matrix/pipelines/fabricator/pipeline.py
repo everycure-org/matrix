@@ -30,7 +30,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                     "nodes": "ingestion.raw.rtx_kg2.nodes@pandas",
                     "edges": "ingestion.raw.rtx_kg2.edges@pandas",
                 },
-                name="fabricate_datasets",
+                name="fabricate_rtx_kg2",
             ),
 
             # borrowing inspiration from above, the `nodes` and `edges`
