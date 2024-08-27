@@ -64,14 +64,14 @@ CONFIG_LOADER_ARGS = {
 DYNAMIC_PIPELINES_MAPPING = {
     "modelling": [
         {"model_name": "xg_baseline", "num_shards": 1},
-        # {"model_name": "xg_ensemble", "num_shards": 3},
-        # {"model_name": "rf", "num_shards": 1},
-        # {"model_name": "xg_synth", "num_shards": 1},
+        {"model_name": "xg_ensemble", "num_shards": 3},
+        {"model_name": "rf", "num_shards": 1},
+        {"model_name": "xg_synth", "num_shards": 1},
     ],
     "evaluation": [
-        # {"evaluation_name": "simple_ground_truth_classification"},
-        # {"evaluation_name": "continuous_ground_truth_classification"},
-        # {"evaluation_name": "disease_centric_matrix"},
+        {"evaluation_name": "simple_ground_truth_classification"},
+        {"evaluation_name": "continuous_ground_truth_classification"},
+        {"evaluation_name": "disease_centric_matrix"},
         {"evaluation_name": "disease_specific_ranking"},
     ],
 }
