@@ -1,0 +1,43 @@
+_neo4j_ds: &_neo4j_ds
+  type: matrix.datasets.neo4j.Neo4JSparkDataset
+  database: everycure-${globals:versions.release}
+  url: ${globals:neo4j.host}
+  credentials: neo4j_credentials
+  save_args:
+    mode: "overwrite"
+
+
+release.prm.kg_nodes:
+  <<: *_neo4j_ds
+  save_args:
+    mode: overwrite
+    script: >
+      CREATE CONSTRAINT IF NOT EXISTS FOR (n:Entity) REQUIRE n.id IS UNIQUE;
+    query: > 
+      CREATE (n:Entity {id: event.id, kg_sources: event.kg_sources})
+      WITH event, n
+      CALL apoc.create.addLabels(n, [event.label]) YIELD node
+      CALL apoc.create.setProperties(n, event.property_keys, event.property_values) YIELD node AS n2
+      RETURN node
+
+release.prm.kg_edges:
+  <<: [*_neo4j_ds]
+  save_args:
+    # NOTE: The `match:Entity` ensures that the index we created above is leveraged
+    # while inserting edges, thereby speeding up the process massively.
+    query: > 
+      MATCH (subject:Entity {id: event.subject}), (object:Entity {id: event.object})
+      WITH subject, object, event
+      CALL apoc.create.relationship(subject, event.label, {kg_sources: event.kg_sources}, object) YIELD rel
+      RETURN rel
+
+embeddings.prm.kg_edges:
+  <<: [*_neo4j_ds]
+  save_args:
+    # NOTE: The `match:Entity` ensures that the index we created above is leveraged
+    # while inserting edges, thereby speeding up the process massively.
+    query: > 
+      MATCH (subject:Entity {id: event.subject}), (object:Entity {id: event.object})
+      WITH subject, object, event
+      CALL apoc.create.relationship(subject, event.label, {kg_sources: event.kg_sources}, object) YIELD rel
+      RETURN rel
