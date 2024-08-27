@@ -144,6 +144,12 @@ def test_fusing_multiple_parents():
                 outputs="dataset_5",
                 name="grandchild_node",
             ),
+            Node(
+                func=dummy_fn,
+                inputs=["dataset_5"],
+                outputs="dataset_6",
+                name="grandgrandchild_node",
+            ),
         ],
         tags=["argowf.fuse", "argowf.fuse-group.dummy"],
     )
@@ -155,7 +161,7 @@ def test_fusing_multiple_parents():
     # and recording of parent relationships and dataset outputs.
     assert len(fused) == 4
     assert fused[3].name == "dummy"
-    assert fused[3].outputs == set(["dataset_4", "dataset_5"])
+    assert fused[3].outputs == set(["dataset_4", "dataset_5", "dataset_6"])
     assert set([parent.name for parent in fused[3]._parents]) == set(
         ["first_node", "second_node", "third_node"]
     )
