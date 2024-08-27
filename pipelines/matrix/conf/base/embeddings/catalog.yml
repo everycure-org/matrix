@@ -29,7 +29,7 @@ embeddings.prm.graph_nodes:
     # script: >
     #   CREATE CONSTRAINT IF NOT EXISTS FOR (n:Entity) REQUIRE n.id IS UNIQUE;
     query: > 
-      CREATE (n:Entity {id: event.id})
+      CREATE (n:Entity {id: event.id, kg_sources: event.kg_sources})
       WITH event, n
       CALL apoc.create.addLabels(n, [event.label]) YIELD node
       CALL apoc.create.setProperties(n, event.property_keys, event.property_values) YIELD node AS n2
@@ -78,7 +78,7 @@ embeddings.tmp.input_nodes:
     script: >
       CREATE CONSTRAINT IF NOT EXISTS FOR (n:Entity) REQUIRE n.id IS UNIQUE;
     query: > 
-      CREATE (n:Entity {id: event.id, pca_embedding: event.pca_embedding, category: event.category})
+      CREATE (n:Entity {id: event.id, pca_embedding: event.pca_embedding, category: event.category, kg_sources: event.kg_sources})
       WITH event, n
       CALL apoc.create.addLabels(n, event.labels) YIELD node
       RETURN node
@@ -92,7 +92,7 @@ embeddings.tmp.input_edges:
     query: > 
       MATCH (subject:Entity {id: event.subject}), (object:Entity {id: event.object})
       WITH subject, object, event
-      CALL apoc.create.relationship(subject, event.label, {}, object) YIELD rel
+      CALL apoc.create.relationship(subject, event.label, {kg_sources: event.kg_sources}, object) YIELD rel
       RETURN rel
 
 embeddings.feat.include_in_graphsage@yaml:
