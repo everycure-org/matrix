@@ -195,6 +195,7 @@ def fuse(pipeline: Pipeline) -> List[FusedNode]:
             # if multiple parents, avoid fusing otherwise this might
             # mess with dependencies.
             if num_fused == 1:
+                fuse_node.depth = depth
                 fuse_node.add_node(target_node)
                 fuse_node.add_parents(
                     [
