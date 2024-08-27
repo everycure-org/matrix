@@ -51,12 +51,16 @@ jobs:
               - infra/deployments/**
               - infra/*.tf
               - infra/*.hcl
+      
 
   checks:
     runs-on: ubuntu-latest
     needs: [paths_filter]
-    if: needs.paths_filter.outputs.changed == 'true' && github.ref != 'refs/heads/infra'
+    # if: needs.paths_filter.outputs.changed == 'true' && github.ref != 'refs/heads/infra'
     steps:
+      - run: |
+          # output the previous steps outputs changed
+          echo "changed: ${{ needs.paths_filter.outputs.changed }}"
       - name: 'Checkout'
         uses: actions/checkout@v4
 
