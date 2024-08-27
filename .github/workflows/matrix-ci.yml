@@ -25,9 +25,14 @@ on:
       - reopened
       - synchronize
       - ready_for_review
+
   push:
     branches:
       - main
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   # leveraging a paths-filter approach to be able to make this run required for all PRs while still
@@ -57,9 +62,6 @@ jobs:
     needs: [paths_filter]
     if: needs.paths_filter.outputs.changed == 'true' && (github.event.pull_request.draft == false || github.ref == 'refs/heads/main')
     # https://docs.github.com/en/actions/writing-workflows/workflow-syntax-for-github-actions#concurrency
-    concurrency:
-      group: ${{ github.workflow }}-${{ github.ref }}
-      cancel-in-progress: true
 
     defaults:
       run:
