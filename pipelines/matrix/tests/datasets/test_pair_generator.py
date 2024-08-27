@@ -86,8 +86,8 @@ def test_replacement_drug_disease_pair_generator(
     )
 
     known_pairs_split = make_splits(
-        spark.createDataFrame([], schema=StructType([])),
-        spark.createDataFrame(known_pairs),
+        graph,
+        known_pairs,
         splitter,
     )
 
@@ -115,8 +115,8 @@ def test_ground_truth_test_pairs(
     # Given a test-train split for the known data and a test data generator
     generator = GroundTruthTestPairs()
     known_pairs_split = make_splits(
-        spark.createDataFrame([], schema=StructType([])),
-        spark.createDataFrame(known_pairs),
+        graph,
+        known_pairs,
         splitter,
     )
 
@@ -141,8 +141,8 @@ def test_matrix_test_diseases(
     # Given a list of drugs, a test-train split for the known data and a test data generator
     generator = MatrixTestDiseases(["is_drug"])
     known_pairs_split = make_splits(
-        spark.createDataFrame([], schema=StructType([])),
-        spark.createDataFrame(known_pairs),
+        graph,
+        known_pairs,
         splitter,
     )
 
