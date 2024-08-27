@@ -20,6 +20,9 @@ on:
     branches:
       - infra
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
 env:
   tf_version: '1.5.7'
   tg_version: '0.58.11'
