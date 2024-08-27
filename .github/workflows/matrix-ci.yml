@@ -33,6 +33,8 @@ jobs:
   paths_filter:
     if: github.event.pull_request.draft == false || github.ref == 'refs/heads/main'
     runs-on: 'ubuntu-latest'
+    permissions: 
+      pull-requests: read
     outputs: 
       changed: ${{ steps.changes.outputs.changed }}
     steps:
@@ -50,8 +52,6 @@ jobs:
     runs-on: 'self-hosted'
     needs: [paths_filter]
     if: needs.paths_filter.outputs.changed == 'true' && (github.event.pull_request.draft == false || github.ref == 'refs/heads/main')
-    permissions: 
-      pull-requests: read
     # https://docs.github.com/en/actions/writing-workflows/workflow-syntax-for-github-actions#concurrency
     concurrency:
       group: ${{ github.workflow }}-${{ github.ref }}
