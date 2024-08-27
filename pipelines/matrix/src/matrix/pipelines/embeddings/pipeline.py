@@ -10,7 +10,7 @@ def create_pipeline(**kwargs) -> Pipeline:
         [
             # Ingest edges into Neo4j
             node(
-                func=nodes.create_nodes,
+                func=nodes.ingest_nodes,
                 inputs=["integration.prm.unified_nodes"],
                 outputs="embeddings.prm.graph_nodes",
                 name="create_neo4j_node_embedding_input_nodes",
