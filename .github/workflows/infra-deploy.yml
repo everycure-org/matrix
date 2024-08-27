@@ -108,7 +108,7 @@ jobs:
     if: github.ref == 'refs/heads/infra'
     environment: dev
     name: Apply Terraform
-    needs: [ checks ]
+    needs: [ checks, plan ]
     permissions:
       contents: 'read'
       id-token: 'write'
