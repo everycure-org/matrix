@@ -35,6 +35,7 @@ jobs:
     runs-on: 'ubuntu-latest'
     permissions: 
       pull-requests: read
+      contents: 'read'
     outputs: 
       changed: ${{ steps.changes.outputs.changed }}
     steps:
