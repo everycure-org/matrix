@@ -13,8 +13,8 @@ mlflow:
         memory: 2Gi
         ephemeral-storage: 5Gi
       limits:
-        cpu: 1
-        memory: 4Gi
+        cpu: 2
+        memory: 8Gi
         ephemeral-storage: 10Gi
     service:
       type: ClusterIP
