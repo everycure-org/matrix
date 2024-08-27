@@ -20,5 +20,5 @@ variable "repo_path" {
 variable "repo_revision" {
   description = "Revision to deploy by ArgoCD."
   type        = string
-  default     = "HEAD"
+  default     = "infra"
 }
