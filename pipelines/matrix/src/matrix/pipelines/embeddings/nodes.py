@@ -420,8 +420,8 @@ def visualise_pca(nodes: DataFrame, column_name: str):
     )
     sns.scatterplot(data=nodes, x="pca_0", y="pca_1", hue="category")
     plt.suptitle("PCA scatterpot")
-    plt.xlabel("PCA 1")
-    plt.ylabel("PCA 2")
+    plt.xlabel("PC 1")
+    plt.ylabel("PC 2")
     plt.legend(
         bbox_to_anchor=(1.05, 1), loc="upper left", borderaxespad=0, fontsize="small"
     )
