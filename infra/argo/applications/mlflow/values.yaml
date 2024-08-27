@@ -34,3 +34,5 @@ mlflow:
   minio:
     auth:
       existingSecret: minio-creds
+    persistence:
+      size: 64Gi
