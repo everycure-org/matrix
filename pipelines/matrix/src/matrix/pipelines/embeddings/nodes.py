@@ -2,6 +2,9 @@
 import os
 from typing import List, Any, Dict
 
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
 
 from neo4j import Driver
 from pyspark.sql import DataFrame
@@ -12,11 +15,24 @@ from graphdatascience import GraphDataScience, QueryRunner
 from neo4j import GraphDatabase
 from pypher import __ as cypher, Pypher
 
+from matplotlib.pyplot import plot
+import seaborn as sns
+
 from pypher.builder import create_function
 from . import pypher_utils
 
 from refit.v1.core.inject import inject_object
 from refit.v1.core.unpack import unpack_params
+from refit.v1.core.inline_has_schema import has_schema
+from refit.v1.core.inline_primary_key import primary_key
+
+from tenacity import (
+    retry,
+    stop_after_attempt,
+    retry_if_exception_type,
+)
+
+import matplotlib.pyplot as plt
 
 import logging
 
@@ -67,8 +83,55 @@ class GraphDS(GraphDataScience):
         self.set_database(database)
 
 
+@has_schema(
+    schema={
+        "label": "string",
+        "id": "string",
+        "name": "string",
+        "property_keys": "array<string>",
+        "property_values": "array<string>",
+        "kg_sources": "array<string>",
+    },
+    allow_subset=True,
+)
+@primary_key(primary_key=["id"])
+def create_nodes(df: DataFrame) -> DataFrame:
+    """Function to create Neo4J nodes.
+
+    Args:
+        df: Nodes dataframe
+    """
+    return (
+        df.select("id", "name", "category", "description", "kg_sources")
+        .withColumn("label", F.split(F.col("category"), ":", limit=2).getItem(1))
+        .withColumn(
+            "properties",
+            F.create_map(
+                F.lit("name"),
+                F.col("name"),
+                F.lit("category"),
+                F.col("category"),
+                F.lit("description"),
+                F.col("description"),
+            ),
+        )
+        .withColumn("property_keys", F.map_keys(F.col("properties")))
+        .withColumn("property_values", F.map_values(F.col("properties")))
+    )
+
+
+class FailedBatchesException(BaseException):
+    """Exception to signal failed batches."""
+
+    pass
+
+
 @unpack_params()
 @inject_object()
+@retry(
+    stop=stop_after_attempt(3),
+    retry=retry_if_exception_type(FailedBatchesException),
+)
 def compute_embeddings(
     input: DataFrame,
     gdb: GraphDB,
@@ -110,7 +173,7 @@ def compute_embeddings(
             )
             return {"success": "true"}
         else:
-            logger.warning("we still have %s embeddings left to calculate", str(count))
+            logger.info("we still have %s embeddings left to calculate", str(count))
 
     # fmt: off
     # Register functions
@@ -163,14 +226,14 @@ def compute_embeddings(
         failed = driver.execute_query(str(p), database_=gdb._database, **p.bound_params)
 
     if len(failed.records) > 0:
-        raise RuntimeError("Failed batches in the embedding step")
+        raise FailedBatchesException("Failed batches in the embedding step")
 
     return {"success": "true"}
 
 
 @unpack_params()
 @inject_object()
-def reduce_dimension(df: DataFrame, transformer, input: str, output: str):
+def reduce_dimension(df: DataFrame, transformer, input: str, output: str, skip: bool):
     """Function to apply dimensionality reduction.
 
     Args:
@@ -178,9 +241,19 @@ def reduce_dimension(df: DataFrame, transformer, input: str, output: str):
         transformer: transformer to apply
         input: name of attribute to transform
         output: name of attribute to store result
+        skip: whether to skip the PCA transformation and dimensionality reduction
+
     Returns:
-        Dataframe with reduced dimension
+        DataFrame: A DataFrame with either the reduced dimension embeddings or the original
+                   embeddings, depending on the 'skip' parameter.
+
+    Note:
+    - If skip is true, the function returns the original embeddings from the LLM model.
+    - If skip is false, the function returns the embeddings after applying the dimensionality reduction technique.
     """
+    if skip:
+        return df.withColumn(output, F.col(input))
+
     # Convert into correct type
     df = df.withColumn("features", array_to_vector(input))
 
@@ -188,19 +261,60 @@ def reduce_dimension(df: DataFrame, transformer, input: str, output: str):
     transformer.setInputCol("features")
     transformer.setOutputCol("pca_features")
 
-    return (
+    res = (
         transformer.fit(df)
         .transform(df)
         .withColumn(output, vector_to_array("pca_features"))
         .drop("pca_features", "features")
     )
 
+    return res
+
+
+def ingest_edges(nodes, edges: DataFrame):
+    """Function to construct Neo4J edges."""
+    return (
+        edges.select(
+            "subject", "predicate", "object", "knowledge_sources", "kg_sources"
+        )
+        .withColumn("label", F.split(F.col("predicate"), ":", limit=2).getItem(1))
+        # we repartition to 1 partition here to avoid deadlocks in the edges insertion of neo4j.
+        # FUTURE potentially we should repartition in the future to avoid deadlocks. However
+        # with edges, this is harder to do than with nodes (as they are distinct but edges have 2 nodes)
+        # https://neo4j.com/docs/spark/current/performance/tuning/#parallelism
+        .repartition(1)
+    )
+
+
+@inject_object()
+def add_include_in_graphsage(
+    df: DataFrame, gdb: GraphDB, drug_types: List[str], disease_types: List[str]
+) -> Dict:
+    """Function to add include_in_graphsage property.
+
+    Only edges between non drug-disease pairs are included in graphsage.
+    """
+    with gdb.driver() as driver:
+        q = driver.execute_query(
+            """
+            MATCH (n)-[r]-(m)
+            WHERE 
+                n.category IN $drug_types 
+                AND m.category IN $disease_types
+            SET r.include_in_graphsage = 0
+            """,
+            database_=gdb._database,
+            drug_types=drug_types,
+            disease_types=disease_types,
+        )
+
+    return {"success": "true"}
+
 
 @unpack_params()
 @inject_object()
 def train_topological_embeddings(
     df: DataFrame,
-    edges: DataFrame,
     gds: GraphDataScience,
     projection: Any,
     filtering: Any,
@@ -216,10 +330,9 @@ def train_topological_embeddings(
 
     Args:
         df: nodes df
-        edges: edges df
         gds: the gds object
+        filtering: filtering
         projection: gds projection to execute on the graph
-        filtering: filtering to be applied to the projection
         estimator: estimator to apply
         write_property: node property to write result to
     """
@@ -229,12 +342,18 @@ def train_topological_embeddings(
         graph = gds.graph.get(graph_name)
         gds.graph.drop(graph, False)
 
-    config = projection.pop("configuration", None)
+    config = projection.pop("configuration", {})
     graph, _ = gds.graph.project(*projection.values(), **config)
 
     # Filter out treat/GT nodes from the graph
     subgraph_name = filtering.get("graphName")
     filter_args = filtering.pop("args")
+
+    # Drop graph if exists
+    if gds.graph.exists(subgraph_name).exists:
+        subgraph = gds.graph.get(subgraph_name)
+        gds.graph.drop(subgraph, False)
+
     subgraph, _ = gds.graph.filter(subgraph_name, graph, **filter_args)
 
     # Validate whether the model exists
@@ -244,11 +363,23 @@ def train_topological_embeddings(
         gds.model.drop(model)
 
     # Initialize the model
-    model, _ = getattr(gds.beta, estimator.get("model")).train(
+    model, attr = getattr(gds.beta, estimator.get("model")).train(
         subgraph, **estimator.get("args")
     )
 
-    return {"success": "true"}
+    # Plot convergence
+    losses = attr.modelInfo["metrics"]["iterationLossesPerEpoch"][0]
+
+    convergence = plt.figure()
+    ax = convergence.add_subplot(1, 1, 1)
+    ax.plot([x for x in range(len(losses))], losses)
+
+    # Add labels and title
+    ax.set_xlabel("Number of Epochs")
+    ax.set_ylabel("Average loss per node")
+    ax.set_title("Loss Chart")
+
+    return {"success": "true"}, convergence
 
 
 @inject_object()
@@ -263,7 +394,7 @@ def write_topological_embeddings(
 ) -> Dict:
     """Write topological embeddings."""
     # Retrieve the graph
-    graph_name = filtering.get("graphName")
+    graph_name = projection.get("graphName")
     graph = gds.graph.get(graph_name)
 
     # Retrieve the model
@@ -274,6 +405,30 @@ def write_topological_embeddings(
     model.predict_write(graph, writeProperty=write_property)
 
     return {"success": "true"}
+
+
+def visualise_pca(nodes: DataFrame, column_name: str):
+    """Write topological embeddings."""
+    nodes = nodes.select(column_name, "category").toPandas()
+    nodes[["pca_0", "pca_1"]] = pd.DataFrame(
+        nodes[column_name].tolist(), index=nodes.index
+    )
+    fig = plt.figure(
+        figsize=(
+            10,
+            5,
+        )
+    )
+    sns.scatterplot(data=nodes, x="pca_0", y="pca_1", hue="category")
+    plt.suptitle("PCA scatterpot")
+    plt.xlabel("PCA 1")
+    plt.ylabel("PCA 2")
+    plt.legend(
+        bbox_to_anchor=(1.05, 1), loc="upper left", borderaxespad=0, fontsize="small"
+    )
+    plt.tight_layout(rect=[0, 0, 0.85, 1])
+
+    return fig
 
 
 def extract_nodes_edges(

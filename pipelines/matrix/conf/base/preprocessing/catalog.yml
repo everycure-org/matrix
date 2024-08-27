@@ -1,0 +1,77 @@
+_layer_raw: &_layer_raw
+  metadata:
+    kedro-viz:
+      layer: raw
+
+_layer_int: &_layer_int
+  metadata:
+    kedro-viz:
+      layer: integration
+
+_layer_prm: &_layer_prm
+  metadata:
+    kedro-viz:
+      layer: primary
+
+_spark_csv: &_spark_csv
+  type: spark.SparkDataset
+  file_format: csv
+  load_args:
+    header: True
+  save_args:
+    mode: overwrite
+
+_pandas_csv: &_pandas_csv
+  type:  pandas.CSVDataset
+
+_sheets_dataset: &_sheets_dataset
+  type: matrix.datasets.gcp.GoogleSheetsDataset
+  key: 1LMtOmA10t7a3lcKeTP7zmptOPIcCBIPFVJt9J7jZ2bQ
+  service_file: conf/local/service-account.json
+
+# -------------------------------------------------------------------------
+# Datasets
+# -------------------------------------------------------------------------
+
+preprocessing.raw.nodes:
+  <<: [*_layer_raw, *_sheets_dataset]
+  load_args:
+    sheet_name: Nodes
+
+preprocessing.raw.edges:
+  <<: [*_layer_raw, *_sheets_dataset]
+  load_args:
+    sheet_name: Edges
+    columns: ["Source", "Target", "Label"]
+
+preprocessing.int.resolved_nodes:
+  <<: [*_layer_int, *_sheets_dataset]
+  save_args:
+    sheet_name: Nodes
+    write_columns: ["curie"]
+
+  load_args:
+    sheet_name: Nodes
+
+preprocessing.int.normalized_nodes:
+  <<: [*_layer_int, *_sheets_dataset]
+  save_args:
+    sheet_name: Nodes
+    write_columns: ["normalized_curie"]
+
+  load_args:
+    sheet_name: Nodes
+    columns: ["ID", "name", "entity label", "new_id", "normalized_curie", "description"]
+
+preprocessing.int.nodes:
+  <<: [*_layer_int, *_pandas_csv]
+  filepath: ${globals:paths.int}/ec_medical_team/nodes
+
+preprocessing.int.edges:
+  <<: [*_layer_prm, *_sheets_dataset]
+  save_args:
+    sheet_name: Edges
+    write_columns: ["SourceId", "TargetId", "Included"]
+  load_args:
+    sheet_name: Edges
+    columns: ["SourceId", "TargetId", "Label"]

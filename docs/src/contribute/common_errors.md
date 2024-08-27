@@ -6,6 +6,16 @@
 
 
 
+## Module not found in python
+```
+ModuleNotFoundError: No module named <some_module>
+```
+
+Someone added a new dependency to the project.
+Run `make install`
+
+
+
 ## Sending empty batches to OpenAI / Neo4J
 
 ```
@@ -90,3 +100,111 @@ Unfortuantely one has to dig into the Debug Log of Neo4J to find out the exact i
 1. connect to neo4j instance
 2. cd to `logs`
 3. tail / grep on `debug.log` and check what was logged by the DB
+
+
+## MLFlow error about changing params when executing locally
+
+```
+    raise MlflowException(msg, INVALID_PARAMETER_VALUE)
+mlflow.exceptions.MlflowException: INVALID_PARAMETER_VALUE: Changing param values is not allowed. Param with key='evaluation.simple_ground_truth_classification.evaluation_options.generator.object' was already logged with value='' for run ID='6814719483f34d5ca6e6f1b6f596715c'. Attempted logging new value 'matrix.datasets.pair_generator.GroundTruthTestPairs'.
+
+The cause of this error is typically due to repeated calls
+to an individual run_id event logging.
+
+Incorrect Example:
+---------------------------------------
+with mlflow.start_run():
+    mlflow.log_param("depth", 3)
+    mlflow.log_param("depth", 5)
+---------------------------------------
+
+Which will throw an MlflowException for overwriting a
+logged parameter.
+
+Correct Example:
+---------------------------------------
+with mlflow.start_run():
+    with mlflow.start_run(nested=True):
+        mlflow.log_param("depth", 3)
+    with mlflow.start_run(nested=True):
+        mlflow.log_param("depth", 5)
+---------------------------------------
+
+Which will create a new nested run for each individual
+model and prevent parameter key collisions within the
+tracking store.
+make: *** [integration_test] Error 1
+```
+
+Do 
+```
+docker stop mlflow
+docker rm mlflow
+docker-compose up -d
+``` 
+
+to wipe the local mlflow instance. This error occurs if one has previously run a node against a different environment. 
+
+
+## gcloud command fails while venv is activated
+
+```
+E0815 10:47:32.491253   41064 memcache.go:265] couldn't get current server API group list: Get "https://34.123.77.254/api?timeout=32s": getting credentials: exec: executable /opt/homebrew/share/google-cloud-sdk/bin/gke-gcloud-auth-plugin failed with exit code 1
+F0815 10:47:32.722549   41114 cred.go:145] print credential failed with error: Failed to retrieve access token:: failure while executing gcloud, with args [config config-helper --format=json]: exit status 1 (err: ERROR: gcloud crashed (AttributeError): module 'google._upb._message' has no attribute 'MessageMapContainer'
+
+If you would like to report this issue, please run the following command:
+  gcloud feedback
+
+To check gcloud for common problems, please run the following command:
+  gcloud info --run-diagnostics
+)
+E0815 10:47:32.723410   41064 memcache.go:265] couldn't get current server API group list: Get "https://34.123.77.254/api?timeout=32s": getting credentials: exec: executable /opt/homebrew/share/google-cloud-sdk/bin/gke-gcloud-auth-plugin failed with exit code 1
+F0815 10:47:32.968713   41131 cred.go:145] print credential failed with error: Failed to retrieve access token:: failure while executing gcloud, with args [config config-helper --format=json]: exit status 1 (err: ERROR: gcloud crashed (AttributeError): module 'google._upb._message' has no attribute 'MessageMapContainer'
+
+If you would like to report this issue, please run the following command:
+  gcloud feedback
+
+To check gcloud for common problems, please run the following command:
+  gcloud info --run-diagnostics
+)
+E0815 10:47:32.969215   41064 memcache.go:265] couldn't get current server API group list: Get "https://34.123.77.254/api?timeout=32s": getting credentials: exec: executable /opt/homebrew/share/google-cloud-sdk/bin/gke-gcloud-auth-plugin failed with exit code 1
+Unable to connect to the server: getting credentials: exec: executable /opt/homebrew/share/google-cloud-sdk/bin/gke-gcloud-auth-plugin failed with exit code 1
+```
+
+This is caused by a proto-plus dependency in your current python environment that is incompatible with `gcloud`. Because gcloud is also python based it uses the PYTHON_PATH dependencies of the venv. Not ideal, but there's a quick fix:
+
+**Solution: Install `proto-plus` dev instance**
+```bash
+uv pip install proto-plus==1.24.0.dev1
+```
+
+## Docker running out of disk space (usually on MacOS/Windows)
+
+```
+ => ERROR [build  8/12] RUN uv pip install --system -r requirements.txt                                                                                                            23.4s
+------
+ > [build  8/12] RUN uv pip install --system -r requirements.txt:
+8.842 Resolved 259 packages in 8.54s
+23.31 error: Failed to prepare distributions
+23.31   Caused by: Failed to fetch wheel: nvidia-nccl-cu12==2.22.3
+23.31   Caused by: Failed to extract archive
+23.31   Caused by: failed to write to file `/root/.cache/uv/.tmppT25gF/nvidia/nccl/lib/libnccl.so.2`
+23.31   Caused by: No space left on device (os error 28)
+------
+Dockerfile:19
+--------------------
+  17 |     # Install Python dependencies
+  18 |     ADD packages/ ./packages/
+  19 | >>> RUN uv pip install --system -r requirements.txt
+  20 |
+  21 |     # Cache drivers as part of image
+--------------------
+ERROR: failed to solve: process "/bin/sh -c uv pip install --system -r requirements.txt" did not complete successfully: exit code: 2
+make: *** [docker_push_dev] Error 1
+```
+
+Docker runs in a VM on MacOS. This can cause the disk to run full when building a lot of images. [This Stackoverflow post](https://stackoverflow.com/a/48561621) contains 2 options:
+1. `docker system prune -a` to remove all files. This will lead you to re-build layers.
+2. Expand the disk size of the docker VM
+
+

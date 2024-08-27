@@ -1,0 +1,55 @@
+modelling.rf:
+    _overrides:
+      generator:
+        object: matrix.datasets.pair_generator.ReplacementDrugDiseasePairGenerator
+        random_state: ${globals:random_state}
+        y_label: 2
+        n_replacements: 1
+        drug_flags:
+          - is_drug
+        disease_flags:
+          - is_disease
+
+      model_tuning_args:
+        tuner:
+          object: matrix.pipelines.modelling.tuning.GaussianSearch
+          estimator:
+            object: sklearn.ensemble.RandomForestClassifier
+            n_jobs: 16
+            random_state: ${globals:random_state}
+          n_calls: 20
+          dimensions:
+            - object: skopt.space.Integer
+              name: n_estimators
+              low: 50
+              high: 2500
+            - object: skopt.space.Integer
+              name: max_depth
+              low: 5
+              high: 100
+            - object: skopt.space.Integer
+              name: min_samples_leaf
+              low: 1
+              high: 10
+            - object: skopt.space.Integer
+              name: min_samples_split
+              low: 2
+              high: 10
+          scoring: 
+              object: matrix.pipelines.modelling.utils.partial_
+              func:
+                object: sklearn.metrics.f1_score
+              average: macro
+          splitter:
+            object: sklearn.model_selection.StratifiedShuffleSplit
+            n_splits: 1 
+            test_size: 0.1
+            random_state: ${globals:random_state}
+        features: # Features use regex, source_0, source_1, .., target_0, target_1
+          - source_+
+          - target_+
+        target_col_name: y
+          
+    # NOTE: This leverages the custom `merge` resolver to override
+    # the base options with the override block above.
+    model_options: ${merge:${.._model_options},${._overrides}}

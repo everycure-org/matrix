@@ -7,26 +7,62 @@ name: Infrastructure Deploy
 
 
 on:
-  workflow_dispatch: {}
+  pull_request:
+    # Sequence of patterns matched against refs/heads
+    branches:
+      - infra
+    types:
+      - opened
+      - reopened
+      - synchronize
+      - ready_for_review
   push:
-    paths: 
-      - .github/workflows/infra-deploy.yml
-      - infra/modules/**
-      - infra/deployments/**
-      - infra/*.tf
-      - infra/*.hcl
+    branches:
+      - infra
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
 env:
   tf_version: '1.5.7'
   tg_version: '0.58.11'
   working_dir: 'infra/'
 
 jobs:
-  checks:
-    runs-on: ubuntu-latest
+  # leveraging a paths-filter approach to be able to make this run required for all PRs while still
+  # not blocking merging with "Expected" for those runs that have a paths filter
+  # FUTURE eventually github will likely fix this
+  # https://github.com/orgs/community/discussions/26698
+  paths_filter:
+    if: github.event.pull_request.draft == false || github.ref == 'refs/heads/infra'
+    runs-on: 'ubuntu-latest'
+    permissions: 
+      pull-requests: read
+      contents: 'read'
+    outputs: 
+      changed: ${{ steps.changes.outputs.src }}
     steps:
       - name: 'Checkout'
-        uses: actions/checkout@main
+        uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: changes
+        with:
+          filters: |
+            src:
+              - .github/workflows/infra-deploy.yml
+              - infra/modules/**
+              - infra/deployments/**
+              - infra/*.tf
+              - infra/*.hcl
+      
+
+  checks:
+    runs-on: ubuntu-latest
+    needs: [paths_filter]
+    if: needs.paths_filter.outputs.changed == 'true'
+    steps:
+      - name: 'Checkout'
+        uses: actions/checkout@v4
 
       - name: Check terragrunt HCL
         uses: gruntwork-io/terragrunt-action@v2
@@ -40,7 +76,6 @@ jobs:
 
   plan:
     runs-on: ubuntu-latest
-    if: github.ref != 'refs/heads/main'
     environment: dev
     name: Plan Terraform
     needs: [ checks ]
@@ -49,7 +84,7 @@ jobs:
       id-token: 'write'
     steps:
       - name: 'Checkout'
-        uses: actions/checkout@main
+        uses: actions/checkout@v4
       - name: Setup git-crypt
         id: git-crypt
         run: |
@@ -73,17 +108,17 @@ jobs:
 
   deploy:
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/infra'
     environment: dev
     name: Apply Terraform
-    needs: [ checks ]
+    needs: [ checks, plan ]
     permissions:
       contents: 'read'
       id-token: 'write'
     steps:
       # FUTURE avoid duplicate boilerplate somehow on checkout/auth/crypt
       - name: 'Checkout'
-        uses: actions/checkout@main
+        uses: actions/checkout@v4
       - name: Setup git-crypt
         id: git-crypt
         run: |
@@ -104,3 +139,21 @@ jobs:
           tg_version: ${{ env.tg_version }}
           tg_dir: ${{ env.working_dir }}/deployments/hub/dev
           tg_command: 'apply'
+      
+      - name: Post to a Slack channel
+        # Only post to Slack if the deployment failed and we're on the infra branch
+        if: failure() && github.ref == 'refs/heads/infra'
+        id: slack
+        uses: slackapi/slack-github-action@v1.26.0
+        with:
+          # Slack channel id, channel name, or user id to post message.
+          # See also: https://api.slack.com/methods/chat.postMessage#channels
+          # You can pass in multiple channels to post to by providing a comma-delimited list of channel IDs.
+          channel-id: 'C07HU35MKAQ' #github-notifications
+          # For posting a simple plain text message
+          slack-message: |
+            **🚧 Terraform Deployment Failed! 🚨**
+            👩‍💻 Code URL: ${{ github.event.pull_request.html_url || github.event.head_commit.url }}
+            🚀 Action run link: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}

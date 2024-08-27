@@ -25,6 +25,7 @@ theme:
     annotation: material/plus-circle
 
 plugins:
+  - blog
   - drawio
   - mkdocs-jupyter
   - awesome-pages
@@ -55,3 +56,5 @@ markdown_extensions:
       alternate_style: true
   - pymdownx.tasklist:
       custom_checkbox: true
+  - toc:
+      toc_depth: 4

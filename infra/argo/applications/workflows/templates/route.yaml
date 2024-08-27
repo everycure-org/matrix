@@ -1,0 +1,17 @@
+kind: HTTPRoute
+apiVersion: gateway.networking.k8s.io/v1beta1
+metadata:
+  name: argo-workflows-route
+  namespace: argo-workflows
+spec:
+  parentRefs:
+  - kind: Gateway
+    sectionName: https
+    namespace: gateway
+    name: external-http
+  hostnames:
+  - "argo.platform.dev.everycure.org"
+  rules:
+  - backendRefs:
+    - name: argo-workflows-server
+      port: 2746

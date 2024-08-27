@@ -59,4 +59,6 @@ evaluation.disease_specific_ranking:
           k: 2
         - object:  matrix.pipelines.evaluation.evaluation.HitK
           k: 10
+        - object:  matrix.pipelines.evaluation.evaluation.HitK
+          k: 100
       score_col_name: *score-col
