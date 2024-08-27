@@ -1,16 +1,6 @@
 _pandas_csv: &_pandas_csv
   type:  pandas.CSVDataset
 
-_spark_csv_ds: &_spark_csv
-  type: spark.SparkDataset
-  file_format: csv
-
-  load_args:
-    sep: '\t'
-    header: True
-  save_args:
-    mode: overwrite
-
 _spark_parquet_ds: &_spark_parquet
   type: matrix.datasets.gcp.LazySparkDataset
   file_format: parquet
