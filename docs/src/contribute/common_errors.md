@@ -42,6 +42,16 @@ Run `make install`
 
 
 
+## Module not found in python
+```
+ModuleNotFoundError: No module named <some_module>
+```
+
+Someone added a new dependency to the project.
+Run `make install`
+
+
+
 ## Sending empty batches to OpenAI / Neo4J
 
 ```
