@@ -40,7 +40,7 @@ jobs:
     permissions: 
       pull-requests: read
     outputs: 
-      changed: ${{ steps.changes.outputs.changed }}
+      changed: ${{ steps.changes.outputs.src }}
     steps:
       - uses: dorny/paths-filter@v3
         id: changes

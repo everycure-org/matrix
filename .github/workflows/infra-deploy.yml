@@ -37,7 +37,7 @@ jobs:
       pull-requests: read
       contents: 'read'
     outputs: 
-      changed: ${{ steps.changes.outputs.changed }}
+      changed: ${{ steps.changes.outputs.src }}
     steps:
       - name: 'Checkout'
         uses: actions/checkout@v4
