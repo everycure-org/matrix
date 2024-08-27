@@ -299,9 +299,10 @@ def train_topological_embeddings(
             subgraph, **estimator.get("graphsage_args")
         )
     elif estimator_name == "node2vec":
-        model, _ = getattr(gds, estimator.get("model")).stream(
-            subgraph, **estimator.get("node2vec_args")
+        getattr(gds, estimator.get("model")).write(
+            subgraph, **estimator.get("node2vec_args"), writeProperty=write_property
         )
+        # df.to_csv('output_node2vec.csv')
     else:
         raise ValueError()
 
@@ -325,11 +326,10 @@ def write_topological_embeddings(
 
     # Retrieve the model
     model_name = estimator.get("modelName")
-    model = gds.model.get(model_name)
-
-    # Write model output back to graph
-    model.predict_write(graph, writeProperty=write_property)
-
+    if model_name == "graphSage":
+        model = gds.model.get(model_name)
+        # Write model output back to graph
+        model.predict_write(graph, writeProperty=write_property)
     return {"success": "true"}
 
 
