@@ -19,33 +19,49 @@ on:
     branches:
       - main
       - develop
-    paths: 
-      - pipelines/matrix/**
-      - .github/workflows/matrix-ci.yml
-      - .github/workflows/matrix-push.yml
     # from https://github.com/reviewdog/action-eslint/issues/29#issuecomment-985939887
     types:
       - opened
       - reopened
       - synchronize
       - ready_for_review
+
   push:
     branches:
       - main
-    paths: 
-      - pipelines/matrix/**
-      - .github/workflows/matrix-ci.yml
-      - .github/workflows/matrix-push.yml
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
+  # leveraging a paths-filter approach to be able to make this run required for all PRs while still
+  # not blocking merging with "Expected" for those runs that have a paths filter
+  # FUTURE eventually github will likely fix this
+  # https://github.com/orgs/community/discussions/26698
+  paths_filter:
+    if: github.event.pull_request.draft == false || github.ref == 'refs/heads/main'
+    runs-on: 'ubuntu-latest'
+    permissions: 
+      pull-requests: read
+    outputs: 
+      changed: ${{ steps.changes.outputs.src }}
+    steps:
+      - uses: dorny/paths-filter@v3
+        id: changes
+        with:
+          filters: |
+            src:
+              - pipelines/matrix/**
+              - .github/workflows/matrix-ci.yml
+              - .github/workflows/matrix-push.yml
+
+  # run only if some file in 'src' folder was changed
   ci:
     runs-on: 'self-hosted'
-    if: github.event.pull_request.draft == false || github.ref == 'refs/heads/main'
+    needs: [paths_filter]
+    if: needs.paths_filter.outputs.changed == 'true' && (github.event.pull_request.draft == false || github.ref == 'refs/heads/main')
     # https://docs.github.com/en/actions/writing-workflows/workflow-syntax-for-github-actions#concurrency
-    concurrency:
-      group: ${{ github.workflow }}-${{ github.ref }}
-      cancel-in-progress: true
 
     defaults:
       run:
