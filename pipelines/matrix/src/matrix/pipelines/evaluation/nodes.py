@@ -51,7 +51,6 @@ def generate_test_dataset(
     return generator.generate(graph, known_pairs)
 
 
-@primary_key(["not treat score", "treat score"])
 def make_test_predictions(
     graph: KnowledgeGraph,
     data: pd.DataFrame,

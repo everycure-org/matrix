@@ -207,7 +207,6 @@ def create_prm_edges(int_edges: pd.DataFrame) -> pd.DataFrame:
     allow_subset=True,
     df="df",
 )
-@primary_key(["drug_curie", "disease_curie"])
 def map_name_to_curie(
     df: pd.DataFrame,
     endpoint: str,
