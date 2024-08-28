@@ -95,7 +95,7 @@ class GraphDS(GraphDataScience):
     allow_subset=True,
 )
 @primary_key(primary_key=["id"])
-def create_nodes(df: DataFrame) -> DataFrame:
+def ingest_nodes(df: DataFrame) -> DataFrame:
     """Function to create Neo4J nodes.
 
     Args:
