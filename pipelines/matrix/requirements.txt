@@ -32,8 +32,6 @@ anyio==3.7.1
     #   watchgod
 appdirs==1.4.4
     # via kedro-telemetry
-appnope==0.1.4
-    # via ipykernel
 argon2-cffi==23.1.0
     # via jupyter-server
 argon2-cffi-bindings==21.2.0
@@ -111,7 +109,7 @@ coverage==7.6.1
     # via pytest-testmon
 cycler==0.12.1
     # via matplotlib
-databricks-sdk==0.30.0
+databricks-sdk==0.31.0
     # via mlflow-skinny
 debugpy==1.8.5
     # via ipykernel
@@ -137,7 +135,7 @@ executing==2.0.1
     # via stack-data
 faker==4.18.0
     # via brix-data-fabricator
-fastapi==0.112.1
+fastapi==0.112.2
     # via kedro-viz
 fastjsonschema==2.20.0
     # via nbformat
@@ -206,7 +204,7 @@ google-resumable-media==2.7.2
     # via
     #   google-cloud-bigquery
     #   google-cloud-storage
-googleapis-common-protos==1.63.2
+googleapis-common-protos==1.64.0
     # via
     #   google-api-core
     #   grpcio-status
@@ -221,6 +219,8 @@ graphql-core==3.2.3
     #   strawberry-graphql
 graphql-relay==3.2.0
     # via graphene
+greenlet==3.0.3
+    # via sqlalchemy
 grpcio==1.66.0
     # via
     #   google-api-core
@@ -243,9 +243,9 @@ httplib2==0.22.0
     #   google-auth-httplib2
 httptools==0.6.1
     # via uvicorn
-httpx==0.27.0
+httpx==0.27.2
     # via jupyterlab
-idna==3.7
+idna==3.8
     # via
     #   anyio
     #   httpx
@@ -327,7 +327,7 @@ jupyter-server==2.14.2
     #   notebook-shim
 jupyter-server-terminals==0.5.3
     # via jupyter-server
-jupyterlab==4.2.4
+jupyterlab==4.2.5
     # via
     #   -r requirements.in
     #   notebook
@@ -440,6 +440,8 @@ numpy==1.23.5
     #   seaborn
     #   termplotlib
     #   xgboost
+nvidia-nccl-cu12==2.22.3
+    # via xgboost
 oauthlib==3.2.2
     # via requests-oauthlib
 omegaconf==2.3.0
@@ -564,7 +566,7 @@ pygments==2.18.0
     #   rich
 pygsheets==2.0.6
     # via -r requirements.in
-pyparsing==3.1.2
+pyparsing==3.1.4
     # via
     #   httplib2
     #   matplotlib
@@ -651,7 +653,7 @@ rfc3986-validator==0.1.1
     # via
     #   jsonschema
     #   jupyter-events
-rich==13.7.1
+rich==13.8.0
     # via
     #   cookiecutter
     #   kedro
@@ -769,7 +771,7 @@ traitlets==5.14.3
     #   nbformat
 typeguard==4.3.0
     # via pandera
-typer==0.12.4
+typer==0.12.5
     # via -r requirements.in
 types-python-dateutil==2.9.0.20240821
     # via arrow
@@ -829,5 +831,5 @@ xgboost==2.1.1
     # via -r requirements.in
 yarl==1.9.4
     # via aiohttp
-zipp==3.20.0
+zipp==3.20.1
     # via importlib-metadata
