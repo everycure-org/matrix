@@ -5,8 +5,15 @@ mlflow:
   tracking: 
     # we see issues when uploading large files and this is a recommended workaround
     # https://github.com/mlflow/mlflow/issues/6331
-    extraArgs:
-      - '--gunicorn-opts "-t 360"'
+    command: [ "/bin/sh", "-c" ]
+    args: 
+      - >
+        mlflow server
+        --gunicorn-opts="-t 360"
+        --host=0.0.0.0 --port=5000
+        --no-serve-artifacts 
+        --default-artifact-root gs://mtrx-us-central1-hub-dev-storage/mlflow
+        --backend-store-uri=postgresql://bn_mlflow:$(MLFLOW_DATABASE_PASSWORD)@release-name-postgresql:5432/bitnami_mlflow
     resourcesPreset: large
     service:
       type: ClusterIP
@@ -19,10 +26,11 @@ mlflow:
 
   # Use our own PGSQL Secret
   # https://github.com/bitnami/charts/issues/28893
-  postgresql:
-    auth:
-      existingSecret: pgsql-creds
+  # postgresql:
+  #   # auth:
+  #   #   existingSecret: pgsql-creds
 
   minio:
-    auth:
-      existingSecret: minio-creds
+    enabled: false
+    # auth:
+    #   existingSecret: minio-creds

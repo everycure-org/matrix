@@ -15,7 +15,7 @@ from kedro_datasets.pandas import ParquetDataset, CSVDataset
 from kedro_datasets.spark import SparkDataset
 from kedro_datasets.spark.spark_dataset import _strip_dbfs_prefix
 
-from kedro.io.core import PROTOCOL_DELIMITER, AbstractDataset
+from kedro.io.core import AbstractDataset
 
 from refit.v1.core.inject import _parse_for_objects
 

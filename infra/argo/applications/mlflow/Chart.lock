@@ -1,0 +1,6 @@
+dependencies:
+- name: mlflow
+  repository: oci://registry-1.docker.io/bitnamicharts
+  version: 1.4.22
+digest: sha256:24366b2ab165dba402232e680a2e28ddbb4221fc78c433a881a9b162d2cb2898
+generated: "2024-08-28T14:35:34.282129+02:00"
