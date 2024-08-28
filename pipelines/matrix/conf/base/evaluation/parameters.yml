@@ -67,7 +67,7 @@ evaluation.disease_specific_ranking:
 evaluation.simple_ground_truth_classification_time_split:
   evaluation_options:
     generator:
-      object: matrix.datasets.pair_generator.TimeSplitDataGenerator_classification
+      object: matrix.datasets.pair_generator.TimeSplitDataGeneratorClassification
       dataset:
         object: kedro_datasets.pandas.ParquetDataset
         filepath: ${globals:paths.raw}/clinical_trial_data/${globals:data_sources.clinical-trial-data.version}/data
@@ -82,7 +82,7 @@ evaluation.simple_ground_truth_classification_time_split:
 evaluation.continuous_ground_truth_classification_time_split:
   evaluation_options:
     generator:
-      object: matrix.datasets.pair_generator.TimeSplitDataGenerator_classification
+      object: matrix.datasets.pair_generator.TimeSplitDataGeneratorClassification
       dataset:
         object: kedro_datasets.pandas.ParquetDataset
         filepath: ${globals:paths.raw}/clinical_trial_data/${globals:data_sources.clinical-trial-data.version}/data
@@ -96,7 +96,7 @@ evaluation.continuous_ground_truth_classification_time_split:
 evaluation.disease_centric_matrix_time_split:
   evaluation_options:
     generator:
-      object: matrix.datasets.pair_generator.TimeSplitDataGenerator_ranking
+      object: matrix.datasets.pair_generator.TimeSplitDataGeneratorRanking
       dataset:
         object: kedro_datasets.pandas.ParquetDataset
         filepath: ${globals:paths.raw}/clinical_trial_data/${globals:data_sources.clinical-trial-data.version}/data
@@ -113,7 +113,7 @@ evaluation.disease_centric_matrix_time_split:
 evaluation.disease_specific_ranking_time_split:
   evaluation_options:
     generator:
-      object: matrix.datasets.pair_generator.TimeSplitDataGenerator_ranking
+      object: matrix.datasets.pair_generator.TimeSplitDataGeneratorRanking
       dataset:
         object: kedro_datasets.pandas.ParquetDataset
         filepath: ${globals:paths.raw}/clinical_trial_data/${globals:data_sources.clinical-trial-data.version}/data

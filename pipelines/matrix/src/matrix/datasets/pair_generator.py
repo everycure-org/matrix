@@ -38,22 +38,22 @@ def _format_clinical_trail_data(cleaned_linical_trail_data: pd.DataFrame) -> pd.
     Returns:
         formatted clinical trail data.
     """
-    _clinical_trail_data = cleaned_linical_trail_data.copy()
-    _clinical_trail_data = _clinical_trail_data.rename(columns={'drug_kg_curie':'source',
+    clinical_trail_data = cleaned_linical_trail_data.copy()
+    clinical_trail_data = clinical_trail_data.rename(columns={'drug_kg_curie':'source',
                                                                 'disease_kg_curie':'target'})
 
     # Create the 'y' column where y=1 means 'significantly_better' and y=0 means 'significantly_worse'
-    _clinical_trail_data['y'] = _clinical_trail_data.apply(
+    clinical_trail_data['y'] = clinical_trail_data.apply(
         lambda row: 1 if row['significantly_better'] == 1 else (0 if row['significantly_worse'] == 1 else None), 
         axis=1)
     
     # Remove rows where 'y' is None (which means they are not 'significantly_better' or 'significantly_worse')
-    _clinical_trail_data = _clinical_trail_data.dropna(subset=['y'])
+    clinical_trail_data = clinical_trail_data.dropna(subset=['y'])
     
     # Use columns 'source', 'target', and 'y' only
-    _clinical_trail_data = _clinical_trail_data[['source', 'target', 'y']]
+    clinical_trail_data = clinical_trail_data[['source', 'target', 'y']]
 
-    return _clinical_trail_data
+    return clinical_trail_data
 
 class DrugDiseasePairGenerator(abc.ABC):
     """Generator strategy class to represent drug-disease pair generators."""
@@ -363,7 +363,7 @@ class MatrixTestDiseases(DrugDiseasePairGenerator):
         return matrix[~is_in_train]
 
 
-class TimeSplitDataGenerator_classification(DrugDiseasePairGenerator):
+class TimeSplitDataGeneratorClassification(DrugDiseasePairGenerator):
     """Generator with dataset input."""
 
     def __init__(self, dataset: AbstractDataset) -> None:
@@ -387,19 +387,19 @@ class TimeSplitDataGenerator_classification(DrugDiseasePairGenerator):
         train_pairs = known_pairs[~is_test]
         
         # Reformat the clinical trail data to fit the existing framework
-        _clinical_trail_data = _format_clinical_trail_data(self._clinical_trail_data)
+        clinical_trail_data = _format_clinical_trail_data(self._clinical_trail_data)
         
         # Remove train pairs from the clinical trail data
-        _clinical_trail_data = _remove_train_pairs(_clinical_trail_data, train_pairs)
+        clinical_trail_data = _remove_train_pairs(clinical_trail_data, train_pairs)
         
         # Check if column 'y' has both 0 and 1 values
-        if _clinical_trail_data['y'].nunique() != 2:
+        if clinical_trail_data['y'].nunique() != 2:
             raise ValueError("Column 'y' should have both 0 and 1 values.")
         else:
-            return _clinical_trail_data
+            return clinical_trail_data
 
 
-class TimeSplitDataGenerator_ranking(DrugDiseasePairGenerator):
+class TimeSplitDataGeneratorRanking(DrugDiseasePairGenerator):
     """Generator with dataset input."""
 
     def __init__(self, dataset: AbstractDataset, drugs_lst_flags: str) -> None:
@@ -425,16 +425,16 @@ class TimeSplitDataGenerator_ranking(DrugDiseasePairGenerator):
         train_pairs = known_pairs[~is_test]
         
         # Reformat the clinical trail data to fit the existing framework
-        _clinical_trail_data = _format_clinical_trail_data(self._clinical_trail_data)
+        clinical_trail_data = _format_clinical_trail_data(self._clinical_trail_data)
             
         # Define lists of drugs and diseases
-        _clinical_trail_data_pos_pairs = _clinical_trail_data[_clinical_trail_data["y"].eq(1)]
-        _clinical_trail_data_pos_diseases_lst = list(_clinical_trail_data_pos_pairs["target"].unique())
+        clinical_trail_data_pos_pairs = clinical_trail_data[clinical_trail_data["y"].eq(1)]
+        clinical_trail_data_pos_diseases_lst = list(clinical_trail_data_pos_pairs["target"].unique())
         drugs_lst = graph.flags_to_ids(self._drug_axis_flags)
 
         # Generate all combinations
         matrix_slices = []
-        for disease in tqdm(_clinical_trail_data_pos_diseases_lst):
+        for disease in tqdm(clinical_trail_data_pos_diseases_lst):
             matrix_slice = pd.DataFrame({"source": drugs_lst, "target": disease})
             matrix_slices.append(matrix_slice)
 
@@ -442,11 +442,11 @@ class TimeSplitDataGenerator_ranking(DrugDiseasePairGenerator):
         matrix = pd.concat(matrix_slices, ignore_index=True)
 
         # Label test positives
-        _clinical_trail_data_pos_pairs_set = set(
-            zip(_clinical_trail_data_pos_pairs["source"], _clinical_trail_data_pos_pairs["target"])
+        clinical_trail_data_pos_pairs_set = set(
+            zip(clinical_trail_data_pos_pairs["source"], clinical_trail_data_pos_pairs["target"])
         )
         is_in_test_pos = matrix.apply(
-            lambda row: (row["source"], row["target"]) in _clinical_trail_data_pos_pairs_set, axis=1
+            lambda row: (row["source"], row["target"]) in clinical_trail_data_pos_pairs_set, axis=1
         )
         matrix["y"] = is_in_test_pos.astype(int)
 
