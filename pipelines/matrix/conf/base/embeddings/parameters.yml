@@ -3,7 +3,7 @@
 embeddings.gdb:
   object: matrix.pipelines.embeddings.nodes.GraphDB
   endpoint: ${globals:neo4j.host}
-  database: everycure-${globals:versions.release}
+  database: analytics
   auth:
     -  ${globals:neo4j.user}
     -  ${globals:neo4j.password}
@@ -41,7 +41,7 @@ embeddings.dimensionality_reduction:
 embeddings.gds:
   object: matrix.pipelines.embeddings.nodes.GraphDS
   endpoint: ${globals:neo4j.host}
-  database: everycure-${globals:versions.release}
+  database: analytics
   auth:
     -  ${globals:neo4j.user}
     -  ${globals:neo4j.password}
@@ -96,5 +96,13 @@ embeddings.topological:
       searchDepth: 100
       # Chunyu
       # learningRate: 0.001
-      learningRate: 0.001
+      learningRate: 0.01
   write_property: topological_embedding
+
+embeddings.topological_pca:
+  skip: false # Set to true to skip PCA
+  input: 'topological_embedding'
+  output: 'pca_embedding'
+  transformer:
+    object: pyspark.ml.feature.PCA
+    k: 2

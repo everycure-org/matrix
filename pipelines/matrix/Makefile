@@ -79,7 +79,7 @@ fabricate:
 	.venv/bin/kedro run -p fabricator --env test
 
 argo_template:
-	python ./src/matrix/argo.py generate-argo-config $(dev_docker_image)
+	.venv/bin/python ./src/matrix/argo.py generate-argo-config $(dev_docker_image)
 
 licenses_container: docker_build
 	docker run \

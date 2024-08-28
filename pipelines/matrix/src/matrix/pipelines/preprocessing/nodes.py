@@ -108,10 +108,8 @@ def create_int_nodes(int_nodes: pd.DataFrame) -> pd.DataFrame:
     # Replace empty strings with nan
     int_nodes = int_nodes.replace(r"^\s*$", np.nan, regex=True)
 
-    return (
-        int_nodes[int_nodes["normalized_curie"].notna()]
-        .drop(columns="curie")
-        .rename(columns={"normalized_curie": "curie"})
+    return int_nodes[int_nodes["normalized_curie"].notna()].rename(
+        columns={"normalized_curie": "curie"}
     )
 
 

@@ -58,6 +58,7 @@ preprocessing.int.normalized_nodes:
 
   load_args:
     sheet_name: Nodes
+    columns: ["ID", "name", "entity label", "new_id", "normalized_curie", "description"]
 
 preprocessing.int.nodes:
   <<: [*_layer_int, *_pandas_csv]

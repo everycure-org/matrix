@@ -57,13 +57,13 @@ def create_pipeline(**kwargs) -> Pipeline:
             node(
                 func=_create_pairs,
                 inputs=["ingestion.raw.rtx_kg2.nodes@spark"],
-                outputs="integration.raw.ground_truth.positives",
+                outputs="modelling.raw.ground_truth.positives",
                 name="create_tp_pairs",
             ),
             node(
                 func=_create_pairs,
                 inputs=["ingestion.raw.rtx_kg2.nodes@spark"],
-                outputs="integration.raw.ground_truth.negatives",
+                outputs="modelling.raw.ground_truth.negatives",
                 name="create_tn_pairs",
             ),
             node(
