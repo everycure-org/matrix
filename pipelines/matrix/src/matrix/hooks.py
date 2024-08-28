@@ -37,13 +37,10 @@ class MLFlowHooks:
         other hooks to consume.
         """
         cfg = OmegaConf.create(context.config_loader["mlflow"])
-        globs = OmegaConf.create(context.config_loader["globals"])
 
         # Set tracking uri
         mlflow.set_tracking_uri(cfg.server.mlflow_tracking_uri)
-        experiment_id = self._create_experiment(
-            cfg.tracking.experiment.name, globs.ml_flow_artifact_root
-        )
+        experiment_id = self._create_experiment(cfg.tracking.experiment.name)
 
         if cfg.tracking.run.name:
             run_id = self._create_run(cfg.tracking.run.name, experiment_id)
@@ -80,12 +77,11 @@ class MLFlowHooks:
         return runs[0].info.run_id
 
     @staticmethod
-    def _create_experiment(experiment_name: str, artifact_location: str) -> str:
+    def _create_experiment(experiment_name: str) -> str:
         """Function to create experiment.
 
         Args:
             experiment_name: name of the experiment
-            artifact_location: root location of artifacts
         Returns:
             Identifier of experiment
         """
@@ -94,9 +90,7 @@ class MLFlowHooks:
         )
 
         if not experiments:
-            return mlflow.create_experiment(
-                experiment_name, artifact_location=artifact_location
-            )
+            return mlflow.create_experiment(experiment_name)
 
         return experiments[0].experiment_id
 
