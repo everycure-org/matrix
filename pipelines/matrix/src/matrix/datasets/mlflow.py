@@ -47,7 +47,7 @@ class MlFlowInputDataDataSet(AbstractDataset):
         return self._dataset._load()
 
     def _save(self, data):
-        # self._dataset.save(data)
+        self._dataset.save(data)
 
         # FUTURE: Support other datasets
         # FUTURE: Fix the source of data
