@@ -46,12 +46,14 @@ class MlFlowInputDataDataSet(AbstractDataset):
         return self._dataset._load()
 
     def _save(self, data):
-        self._dataset.save(data)
+        # self._dataset.save(data)
 
         # FUTURE: Support other datasets
+        # FUTURE: Fix the source of data
+        # https://github.com/mlflow/mlflow/issues/13015
         if any(isinstance(self._dataset, ds) for ds in [ParquetDataset, CSVDataset]):
             ds = mlflow.data.from_pandas(
-                data, name=self._name, source=(str(self._dataset._filepath))
+                data, name=self._name, source=self._get_full_path(self._dataset)
             )
         else:
             raise NotImplementedError(
@@ -59,6 +61,10 @@ class MlFlowInputDataDataSet(AbstractDataset):
             )
 
         mlflow.log_input(ds, context=self._context)
+
+    @staticmethod
+    def _get_full_path(dataset: AbstractDataset):
+        return f"{dataset._protocol}://{str(dataset._filepath)}"
 
     def _describe(self) -> Dict[str, Any]:
         """Describe MLflow metrics dataset.
