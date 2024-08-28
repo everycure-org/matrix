@@ -268,13 +268,13 @@ ingestion.raw.robokop.nodes@spark:
         - object: pyspark.sql.types.StructField
           name: category
           dataType:
-            object: pyspark.sql.types.ArrayType
+            object: pyspark.sql.types.StringType
           nullable: False
 
         - object: pyspark.sql.types.StructField
           name: equivalent_identifiers
           dataType:
-            object: pyspark.sql.types.ArrayType
+            object: pyspark.sql.types.StringType
           nullable: False
 
         - object: pyspark.sql.types.StructField
