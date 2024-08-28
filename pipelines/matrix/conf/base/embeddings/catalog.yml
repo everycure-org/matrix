@@ -127,8 +127,8 @@ embeddings.reporting.loss:
   type: kedro_mlflow.io.artifacts.MlflowArtifactDataset
   artifact_path: "topological"
   dataset:
-    type: matplotlib.MatplotlibWriter
-    filepath: ${globals:paths.tmp}/topological/convergence_plot.png
+    type: kedro_datasets.matplotlib.MatplotlibWriter
+    filepath: ${globals:paths.tmp}/convergence_plot.png
 
 
 embeddings.feat.edges:
@@ -140,8 +140,8 @@ embeddings.reporting.topological_pca:
   filepath: ${globals:paths.reporting}/topological_pca
 
 embeddings.reporting.topological_pca_plot:
-  type: kedro_mlflow.io.artifacts.MlflowArtifactDataset
+  type: matrix.datasets.mlflow.MLFlowArtifactDataset
   artifact_path: topological
   dataset:
-    type: matplotlib.MatplotlibWriter
+    object: kedro_datasets.matplotlib.MatplotlibWriter
     filepath: ${globals:paths.tmp}/pca_plot.png
