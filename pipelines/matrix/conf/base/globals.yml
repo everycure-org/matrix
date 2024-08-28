@@ -28,10 +28,6 @@ data_sources:
   ec-medical-team:
     version: 20240823
 
-# NOTE: MLFlow plugin does not want additional options,
-# future work should aim to move this in the mlflow options
-ml_flow_artifact_root: None
-
 paths:
   # we read from our central GCS bucket where we store our ground truth data
   raw: gs://mtrx-us-central1-hub-dev-storage/kedro/data/01_raw

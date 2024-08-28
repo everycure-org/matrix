@@ -5,10 +5,6 @@ versions:
 gcs_bucket: gs://${oc.env:GCP_BUCKET}
 gcp_project: ${oc.env:GCP_PROJECT_ID}
 
-# NOTE: MLFlow plugin does not want additional options,
-# future work should aim to move this in the mlflow options
-ml_flow_artifact_root: ${gcs_bucket}/runs/${versions.release}/mlflow
-
 paths:
   # hard coded against our central data location for raw
 

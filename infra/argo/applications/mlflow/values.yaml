@@ -12,7 +12,7 @@ mlflow:
         --gunicorn-opts="-t 360"
         --host=0.0.0.0 --port=5000
         --no-serve-artifacts 
-        --default-artifact-root gs://mtrx-us-central1-hub-dev-storage/mlflow
+        --default-artifact-root gs://mtrx-us-central1-hub-dev-storage
         --backend-store-uri=postgresql://bn_mlflow:$(MLFLOW_DATABASE_PASSWORD)@release-name-postgresql:5432/bitnami_mlflow
     resourcesPreset: large
     service:
