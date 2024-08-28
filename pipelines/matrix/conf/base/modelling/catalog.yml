@@ -66,7 +66,7 @@ modelling.model_input.splits:
   context: modelling
   dataset:
     object: kedro_datasets.pandas.ParquetDataset
-    filepath: ${globals:paths.model_input}/splits
+    filepath: gs://${globals:paths.model_input}/splits
 
 "modelling.{model}.model_input.transformers":
   type: pickle.PickleDataset
