@@ -6,10 +6,14 @@ from copy import deepcopy
 from typing import Any, Dict, Union
 
 from mlflow.tracking import MlflowClient
+from mlflow.data.sources import LocalArtifactDatasetSource
+from mlflow.data.filesystem_dataset_source import FileSystemDatasetSource
 
 from kedro_mlflow.io.metrics.mlflow_abstract_metric_dataset import (
     MlflowAbstractMetricDataset,
 )
+
+from kedro_datasets.pandas import ParquetDataset, CSVDataset
 
 from kedro.io.core import (
     PROTOCOL_DELIMITER,
@@ -24,7 +28,16 @@ from refit.v1.core.inject import _parse_for_objects
 
 
 class MlFlowInputDataDataSet(AbstractDataset):
+    """Kedro dataset to represent MLFlow Input Dataset."""
+
     def __init__(self, name: str, context: str, dataset: AbstractDataset):
+        """Initialise MlflowMetricDataset.
+
+        Args:
+            name (str): name of dataset in MLFlow
+            context: context where dataset is used
+            dataset: Underlying Kedro dataset
+        """
         self._name = name
         self._context = context
         self._dataset = _parse_for_objects(dataset)
@@ -35,10 +48,17 @@ class MlFlowInputDataDataSet(AbstractDataset):
     def _save(self, data):
         self._dataset.save(data)
 
-        # TODO: Figure out how to link data to data on file system
-        mlflow.log_input(
-            mlflow.data.from_pandas(data, name=self._name), context=self._context
-        )
+        # FUTURE: Support other datasets
+        if any(isinstance(self._dataset, ds) for ds in [ParquetDataset, CSVDataset]):
+            ds = mlflow.data.from_pandas(
+                data, name=self._name, source=(str(self._dataset._filepath))
+            )
+        else:
+            raise NotImplementedError(
+                f"MLFlow Logging for dataset of type {type(self._dataset)} not implemented!"
+            )
+
+        mlflow.log_input(ds, context=self._context)
 
     def _describe(self) -> Dict[str, Any]:
         """Describe MLflow metrics dataset.
