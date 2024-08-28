@@ -25,6 +25,9 @@ existing public key (use the gpg command with all default options).
 gpg --full-generate-key
 ```
 
+!!! tip
+    GPG will ask you for a password to protect your key. We recommend skipping this unless you have a strong opinion about having a passphrase. If you do add one, please remember it as we will not be able to provide it to you if you forget it. 
+
 ??? info "Example command output"
 
     ```
