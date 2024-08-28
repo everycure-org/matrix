@@ -6,23 +6,16 @@ from copy import deepcopy
 from typing import Any, Dict, Union
 
 from mlflow.tracking import MlflowClient
-from mlflow.data.sources import LocalArtifactDatasetSource
-from mlflow.data.filesystem_dataset_source import FileSystemDatasetSource
 
 from kedro_mlflow.io.metrics.mlflow_abstract_metric_dataset import (
     MlflowAbstractMetricDataset,
 )
 
 from kedro_datasets.pandas import ParquetDataset, CSVDataset
+from kedro_datasets.spark import SparkDataset
+from kedro_datasets.spark.spark_dataset import _strip_dbfs_prefix
 
-from kedro.io.core import (
-    PROTOCOL_DELIMITER,
-    AbstractDataset,
-    DatasetError,
-    Version,
-    get_filepath_str,
-    get_protocol_and_path,
-)
+from kedro.io.core import PROTOCOL_DELIMITER, AbstractDataset
 
 from refit.v1.core.inject import _parse_for_objects
 
@@ -30,13 +23,21 @@ from refit.v1.core.inject import _parse_for_objects
 class MlFlowInputDataDataSet(AbstractDataset):
     """Kedro dataset to represent MLFlow Input Dataset."""
 
-    def __init__(self, name: str, context: str, dataset: AbstractDataset):
+    def __init__(
+        self,
+        *,
+        name: str,
+        context: str,
+        dataset: AbstractDataset,
+        metadata: dict[str, Any] | None = None,
+    ):
         """Initialise MlflowMetricDataset.
 
         Args:
             name (str): name of dataset in MLFlow
             context: context where dataset is used
             dataset: Underlying Kedro dataset
+            metadata: kedro metadata
         """
         self._name = name
         self._context = context
@@ -46,7 +47,7 @@ class MlFlowInputDataDataSet(AbstractDataset):
         return self._dataset._load()
 
     def _save(self, data):
-        self._dataset.save(data)
+        # self._dataset.save(data)
 
         # FUTURE: Support other datasets
         # FUTURE: Fix the source of data
@@ -54,6 +55,14 @@ class MlFlowInputDataDataSet(AbstractDataset):
         if any(isinstance(self._dataset, ds) for ds in [ParquetDataset, CSVDataset]):
             ds = mlflow.data.from_pandas(
                 data, name=self._name, source=self._get_full_path(self._dataset)
+            )
+        elif isinstance(self._dataset, SparkDataset):
+            ds = mlflow.data.from_spark(
+                data,
+                name=self._name,
+                path=_strip_dbfs_prefix(
+                    self._dataset._fs_prefix + str(self._dataset._get_load_path())
+                ),
             )
         else:
             raise NotImplementedError(
