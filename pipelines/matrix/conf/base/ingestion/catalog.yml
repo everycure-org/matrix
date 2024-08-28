@@ -231,10 +231,6 @@ ingestion.raw.clinical_trial_data@pandas:
   <<: [*_layer_int, *_pandas_parquet]
   filepath: ${globals:paths.raw}/clinical_trial_data/${globals:data_sources.clinical-trial-data.version}/data
 
-ingestion.raw.clinical_trial_data@spark:
-  << : [*_spark_csv, *_layer_int]
-  filepath: ${globals:paths.raw}/clinical_trial_data/${globals:data_sources.clinical-trial-data.version}/data
-
 ingestion.prm.rtx_kg2.nodes:
   <<: [*_spark_parquet, *_layer_int]
   filepath: ${globals:paths.prm}/rtx_kg2/nodes
