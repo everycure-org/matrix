@@ -39,12 +39,13 @@ class MLFlowHooks:
         cfg = OmegaConf.create(context.config_loader["mlflow"])
         globs = OmegaConf.create(context.config_loader["globals"])
 
+        # Set tracking uri
+        mlflow.set_tracking_uri(cfg.server.mlflow_tracking_uri)
+        experiment_id = self._create_experiment(
+            cfg.tracking.experiment.name, globs.ml_flow_artifact_root
+        )
+
         if cfg.tracking.run.name:
-            # Set tracking uri
-            mlflow.set_tracking_uri(cfg.server.mlflow_tracking_uri)
-            experiment_id = self._create_experiment(
-                cfg.tracking.experiment.name, globs.ml_flow_artifact_root
-            )
             run_id = self._create_run(cfg.tracking.run.name, experiment_id)
 
             # Update catalog
