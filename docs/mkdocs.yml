@@ -25,12 +25,16 @@ theme:
     annotation: material/plus-circle
 
 plugins:
-  - blog
   - drawio
   - mkdocs-jupyter
   - awesome-pages
   - search
   # - table-reader
+  # we use the blog plugin to generate the releases page
+  - blog:
+     blog_dir: releases
+     categories: false
+
  
 
 markdown_extensions:
