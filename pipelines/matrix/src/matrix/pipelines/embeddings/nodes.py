@@ -397,7 +397,8 @@ def write_topological_embeddings(
 
     # Retrieve the model
     model_name = estimator.get("modelName")
-    if model_name == "graphSage":
+    model = estimator.get("model")
+    if model == "graphSage":
         model = gds.model.get(model_name)
         # Write model output back to graph
         model.predict_write(graph, writeProperty=write_property)
