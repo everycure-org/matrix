@@ -368,15 +368,12 @@ def train_topological_embeddings(
         model, attr = getattr(gds.beta, estimator.get("model")).train(
             subgraph, **estimator.get("graphsage_args")
         )
-        # Plot convergence
         losses = attr.modelInfo["metrics"]["iterationLossesPerEpoch"][0]
     elif estimator_name == "node2vec":
         attr = getattr(gds, estimator.get("model")).write(
             subgraph, **estimator.get("node2vec_args"), writeProperty=write_property
         )
-        print(attr)
-        losses = attr["lossPerIteration"]
-        # df.to_csv('output_node2vec.csv')
+        losses = [int(x) for x in attr["lossPerIteration"]]
     else:
         raise ValueError()
 
