@@ -383,7 +383,7 @@ def train_topological_embeddings(
         )
         losses = attr.modelInfo["metrics"]["iterationLossesPerEpoch"][0]
     elif estimator_name == "node2vec":
-        attr = getattr(gds, estimator.get("model")).write(
+        attr = getattr(gds.beta, estimator.get("model")).write(
             subgraph, **estimator.get("node2vec_args"), writeProperty=write_property
         )
         losses = [int(x) for x in attr["lossPerIteration"]]
@@ -420,7 +420,8 @@ def write_topological_embeddings(
 
     # Retrieve the model
     model_name = estimator.get("modelName")
-    if model_name == "graphSage":
+    model = estimator.get("model")
+    if model == "graphSage":
         model = gds.model.get(model_name)
         # Write model output back to graph
         model.predict_write(graph, writeProperty=write_property)
