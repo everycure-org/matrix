@@ -4,7 +4,7 @@ import numpy as np
 import abc
 import json
 import bisect
-from typing import Dict, List
+from typing import Dict, List, Union
 from tqdm import tqdm
 from sklearn.metrics import roc_auc_score
 
@@ -202,3 +202,50 @@ class HitK(RankingFunction):
     def name(self):
         """Returns name of the function."""
         return "hit-" + str(self.k)
+
+class RecallAtN(Evaluation):
+    """A class representing the Recall@N metric for drug-disease pairs."""
+
+    def __init__(self, n: int, score_col_name: str):
+        """Initializes the RecallAtN instance.
+
+        Args:
+            n: The N value for Recall@N.
+            score_col_name: Probability score column name.
+        """
+        self._n = n
+        self._score_col_name = score_col_name
+
+    def evaluate(
+        self,
+        data: pd.DataFrame,
+    ) -> Dict:
+        """Evaluates Recall@N on a dataset.
+
+        Args:
+            data: Labelled drug-disease dataset with probability scores.
+        """
+        y_score = data[self._score_col_name]
+        y_true = data["y"]
+
+        print(y_score)
+
+        # Sort indices by score in descending order
+        sorted_indices = np.argsort(y_score)[::-1]
+        
+        # Get the top N predictions
+        top_n_indices = sorted_indices[:self._n]
+        
+        # Calculate hits (true positives in top N)
+        hits = np.sum(y_true[top_n_indices])
+        
+        # Total number of true positives
+        total_positives = np.sum(y_true)
+        
+        # Recall@N = (Number of true positives in top N) / (Total number of true positives)
+        if total_positives == 0:
+            recall = 0  # Avoid division by zero
+        else:
+            recall = hits / total_positives
+
+        return {"recall_at_n": recall}
