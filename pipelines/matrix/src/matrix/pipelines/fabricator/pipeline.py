@@ -58,7 +58,6 @@ def create_pipeline(**kwargs) -> Pipeline:
                 },
                 name="fabricate_robokop_datasets",
             ),
-
             node(
                 func=_create_pairs,
                 inputs=["ingestion.raw.rtx_kg2.nodes@spark"],
