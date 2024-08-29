@@ -13,48 +13,6 @@ from matrix.datasets.graph import KnowledgeGraph
 from typing import List, Set
 
 
-def _remove_train_pairs(df: pd.DataFrame, train_pairs: pd.DataFrame) -> pd.DataFrame:
-    """A helper function to remove train pairs from a given DataFrame.
-    
-    Args:
-        df: DataFrame to remove train pairs from.
-        train_pairs: DataFrame with train pairs.
-    
-    Returns:
-        DataFrame with train pairs removed.
-    """
-    train_pairs_set = set(zip(train_pairs["source"], train_pairs["target"]))
-    is_in_train = df.apply(
-        lambda row: (row["source"], row["target"]) in train_pairs_set, axis=1
-    )
-    return df[~is_in_train]
-
-def _format_clinical_trail_data(cleaned_linical_trail_data: pd.DataFrame) -> pd.DataFrame:
-    """A helper function to format clinical trail data.
-    
-    Args:
-        cleaned_linical_trail_data: clinical trail data filtering out rows without curie or clinical info
-        
-    Returns:
-        formatted clinical trail data.
-    """
-    clinical_trail_data = cleaned_linical_trail_data.copy()
-    clinical_trail_data = clinical_trail_data.rename(columns={'drug_kg_curie':'source',
-                                                                'disease_kg_curie':'target'})
-
-    # Create the 'y' column where y=1 means 'significantly_better' and y=0 means 'significantly_worse'
-    clinical_trail_data['y'] = clinical_trail_data.apply(
-        lambda row: 1 if row['significantly_better'] == 1 else (0 if row['significantly_worse'] == 1 else None), 
-        axis=1)
-    
-    # Remove rows where 'y' is None (which means they are not 'significantly_better' or 'significantly_worse')
-    clinical_trail_data = clinical_trail_data.dropna(subset=['y'])
-    
-    # Use columns 'source', 'target', and 'y' only
-    clinical_trail_data = clinical_trail_data[['source', 'target', 'y']]
-
-    return clinical_trail_data
-
 class DrugDiseasePairGenerator(abc.ABC):
     """Generator strategy class to represent drug-disease pair generators."""
 
@@ -363,73 +321,152 @@ class MatrixTestDiseases(DrugDiseasePairGenerator):
         return matrix[~is_in_train]
 
 
-class TimeSplitDataGeneratorClassification(DrugDiseasePairGenerator):
-    """Generator with dataset input."""
+class TimeSplitGroundTruthTestPairs(DrugDiseasePairGenerator):
+    """Data Generator for Time Split Validation. Use the clinical trial data to replace the test ground truth data.
+
+    Now 1 in the 'y' column means 'significantly_better' and 0 means 'significantly_worse'.
+    The ground truth training data is removed.
+
+    """
 
     def __init__(self, dataset: AbstractDataset) -> None:
         """Initializes the SingleLabelPairGenerator instance.
+
         Args:
             dataset: dataset to use
             drugs_lst_flags: List of knowledge graph flags defining drugs sample set.
         """
         self._clinical_trail_data = dataset._load()
 
-    def generate(self, graph: KnowledgeGraph, known_pairs: pd.DataFrame) -> pd.DataFrame:
+    @staticmethod
+    def _format_clinical_trail_data(
+        cleaned_linical_trail_data: pd.DataFrame,
+    ) -> pd.DataFrame:
+        """A helper function to format clinical trail data.
+
+        Args:
+            cleaned_linical_trail_data: clinical trail data filtering out rows without curie or clinical info
+        Returns:
+            formatted clinical trail data.
+        """
+        clinical_trail_data = cleaned_linical_trail_data.copy()
+        clinical_trail_data = clinical_trail_data.rename(
+            columns={"drug_kg_curie": "source", "disease_kg_curie": "target"}
+        )
+
+        # Create the 'y' column where y=1 means 'significantly_better' and y=0 means 'significantly_worse'
+        clinical_trail_data["y"] = clinical_trail_data.apply(
+            lambda row: 1
+            if row["significantly_better"] == 1
+            else (0 if row["significantly_worse"] == 1 else None),
+            axis=1,
+        )
+
+        # Remove rows where 'y' is None (which means they are not 'significantly_better' or 'significantly_worse')
+        clinical_trail_data = clinical_trail_data.dropna(subset=["y"])
+
+        # Use columns 'source', 'target', and 'y' only
+        clinical_trail_data = clinical_trail_data[["source", "target", "y"]]
+
+        return clinical_trail_data
+
+    @staticmethod
+    def _remove_train_pairs(
+        df: pd.DataFrame, train_pairs: pd.DataFrame
+    ) -> pd.DataFrame:
+        """A helper function to remove train pairs from a given DataFrame.
+
+        Args:
+            df: DataFrame to remove train pairs from.
+            train_pairs: DataFrame with train pairs.
+
+        Returns:
+            DataFrame with train pairs removed.
+        """
+        train_pairs_set = set(zip(train_pairs["source"], train_pairs["target"]))
+        is_in_train = df.apply(
+            lambda row: (row["source"], row["target"]) in train_pairs_set, axis=1
+        )
+        return df[~is_in_train]
+
+    def generate(
+        self, graph: KnowledgeGraph, known_pairs: pd.DataFrame
+    ) -> pd.DataFrame:
         """Function to generate drug-disease pairs from the knowledge graph.
+
         Args:
             graph: KnowledgeGraph instance.
             known_pairs: DataFrame with ground truth drug-disease pairs.
+
         Returns:
             DataFrame with unknown drug-disease pairs.
         """
         # Extract the known DD ground truth used in model training
         is_test = known_pairs["split"].eq("TEST")
         train_pairs = known_pairs[~is_test]
-        
+
         # Reformat the clinical trail data to fit the existing framework
-        clinical_trail_data = _format_clinical_trail_data(self._clinical_trail_data)
-        
+        clinical_trail_data = self._format_clinical_trail_data(
+            self._clinical_trail_data
+        )
+
         # Remove train pairs from the clinical trail data
-        clinical_trail_data = _remove_train_pairs(clinical_trail_data, train_pairs)
-        
+        clinical_trail_data = self._remove_train_pairs(clinical_trail_data, train_pairs)
+
         # Check if column 'y' has both 0 and 1 values
-        if clinical_trail_data['y'].nunique() != 2:
+        if clinical_trail_data["y"].nunique() != 2:
             raise ValueError("Column 'y' should have both 0 and 1 values.")
         else:
             return clinical_trail_data
 
 
-class TimeSplitDataGeneratorRanking(DrugDiseasePairGenerator):
-    """Generator with dataset input."""
+class TimeSplitMatrixTestDiseases(TimeSplitGroundTruthTestPairs):
+    """Data Generator for Time Split Validation. Use the clinical trial data to replace the test ground truth data.
+
+    Now 1 in the 'y' column means 'significantly_better' and 0 means 'significantly_worse'.
+    The diseases of clinical trial data with "significant_better" label x all drugs matrix.
+    The ground truth training data is removed.
+
+    """
 
     def __init__(self, dataset: AbstractDataset, drugs_lst_flags: str) -> None:
         """Initializes the SingleLabelPairGenerator instance.
+
         Args:
             dataset: dataset to use
             drugs_lst_flags: List of knowledge graph flags defining drugs sample set.
         """
-        self._clinical_trail_data = dataset._load()
+        super.__init__(dataset)
         self._drug_axis_flags = drugs_lst_flags
 
-
-    def generate(self, graph: KnowledgeGraph, known_pairs: pd.DataFrame) -> pd.DataFrame:
+    def generate(
+        self, graph: KnowledgeGraph, known_pairs: pd.DataFrame
+    ) -> pd.DataFrame:
         """Function to generate drug-disease pairs from the knowledge graph.
+
         Args:
             graph: KnowledgeGraph instance.
             known_pairs: DataFrame with ground truth drug-disease pairs.
+
         Returns:
             DataFrame with unknown drug-disease pairs.
         """
         # Extract the known DD ground truth used in model training
         is_test = known_pairs["split"].eq("TEST")
         train_pairs = known_pairs[~is_test]
-        
+
         # Reformat the clinical trail data to fit the existing framework
-        clinical_trail_data = _format_clinical_trail_data(self._clinical_trail_data)
-            
+        clinical_trail_data = self._format_clinical_trail_data(
+            self._clinical_trail_data
+        )
+
         # Define lists of drugs and diseases
-        clinical_trail_data_pos_pairs = clinical_trail_data[clinical_trail_data["y"].eq(1)]
-        clinical_trail_data_pos_diseases_lst = list(clinical_trail_data_pos_pairs["target"].unique())
+        clinical_trail_data_pos_pairs = clinical_trail_data[
+            clinical_trail_data["y"].eq(1)
+        ]
+        clinical_trail_data_pos_diseases_lst = list(
+            clinical_trail_data_pos_pairs["target"].unique()
+        )
         drugs_lst = graph.flags_to_ids(self._drug_axis_flags)
 
         # Generate all combinations
@@ -443,14 +480,19 @@ class TimeSplitDataGeneratorRanking(DrugDiseasePairGenerator):
 
         # Label test positives
         clinical_trail_data_pos_pairs_set = set(
-            zip(clinical_trail_data_pos_pairs["source"], clinical_trail_data_pos_pairs["target"])
+            zip(
+                clinical_trail_data_pos_pairs["source"],
+                clinical_trail_data_pos_pairs["target"],
+            )
         )
         is_in_test_pos = matrix.apply(
-            lambda row: (row["source"], row["target"]) in clinical_trail_data_pos_pairs_set, axis=1
+            lambda row: (row["source"], row["target"])
+            in clinical_trail_data_pos_pairs_set,
+            axis=1,
         )
         matrix["y"] = is_in_test_pos.astype(int)
 
         # Remove train pairs and return
-        filtered_matrix = _remove_train_pairs(matrix, train_pairs)
-        
+        filtered_matrix = self._remove_train_pairs(matrix, train_pairs)
+
         return filtered_matrix
