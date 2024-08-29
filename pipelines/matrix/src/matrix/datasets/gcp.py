@@ -191,6 +191,9 @@ class GoogleSheetsDataset(AbstractVersionedDataset[pd.DataFrame, pd.DataFrame]):
     ) -> None:
         """Creates a new instance of ``GoogleSheetsDataset``.
 
+        Ensure to add the service account email to the editors of the Sheet to
+        ensure the service account can write to it.
+
         Args:
             key: Google sheets key
             service_file: path to service accunt file.
