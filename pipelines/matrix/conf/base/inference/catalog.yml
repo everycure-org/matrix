@@ -6,10 +6,13 @@ _sheets_dataset: &_sheets_dataset
 raw.inputs:
   <<: [*_sheets_dataset]
   load_args:
-    sheet_name: Nodes
+    sheet_name: Input
+    columns: ["drug", "disease"]
 
-model_outputs.{model}.predictions:
+# NOTE: Sheet is created for ech model
+"model_outputs.{model}.predictions":
   <<: [*_sheets_dataset]
   save_args:
+    overwrite: True
     sheet_name: "{model}_predictions"
-    col_names: ["drug", "disease", "score"]
+    write_columns: ["drug", "disease", "score"]
