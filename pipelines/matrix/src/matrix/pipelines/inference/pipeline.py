@@ -4,9 +4,12 @@ from matrix import settings
 from kedro.pipeline import Pipeline, node, pipeline
 
 
-def run_inference(model):
+def run_inference(model, df):
     # TODO: You can implement inference here
-    breakpoint()
+    df["score"] = "test"
+
+    return df
+
 
 def create_pipeline(**kwargs) -> Pipeline:
     """Create fabricator pipeline."""
@@ -15,13 +18,10 @@ def create_pipeline(**kwargs) -> Pipeline:
         nodes.append(
             node(
                 func=run_inference,
-                inputs=[
-                    f'modelling.{model["model_name"]}.models.model'
-                ],
-                outputs=f"model_outputs.{model["model_name"]}.predictions",
-                name=f'run_{model["model_name"]}_inference'
+                inputs=[f'modelling.{model["model_name"]}.models.model', "raw.inputs"],
+                outputs=f'model_outputs.{model["model_name"]}.predictions',
+                name=f'run_{model["model_name"]}_inference',
             )
         )
 
     return pipeline(nodes)
-

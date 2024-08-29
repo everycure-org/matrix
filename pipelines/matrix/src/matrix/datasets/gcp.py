@@ -256,19 +256,19 @@ class GoogleSheetsDataset(AbstractVersionedDataset[pd.DataFrame, pd.DataFrame]):
         if wks is None:
             wks = self._sheet.add_worksheet(sheet_name)
 
-        # NOTE: Upon writing, replace empty strings with "" to avoid NaNs in Excel
-        data = data.fillna("")
-
+        if self._save_args.get("overwrite", False):
+            wks.set_dataframe(data, (1, 1))
         # Write columns
-        for column in self._save_args["write_columns"]:
-            col_idx = self._get_col_index(wks, column)
+        else:
+            for column in self._save_args["write_columns"]:
+                col_idx = self._get_col_index(wks, column)
 
-            if col_idx is None:
-                raise DatasetError(
-                    f"Sheet with {sheet_name} does not contain column {column}!"
-                )
+                if col_idx is None:
+                    raise DatasetError(
+                        f"Sheet with {sheet_name} does not contain column {column}!"
+                    )
 
-            wks.set_dataframe(data[[column]], (1, col_idx + 1))
+                wks.set_dataframe(data[[column]], (1, col_idx + 1))
 
     @staticmethod
     def _get_wks_by_name(
