@@ -52,7 +52,7 @@ evaluation.recall_at_n:
           - is_ground_pos
     evaluation:
       object: matrix.pipelines.evaluation.evaluation.RecallAtN
-      n: 100
+      n: 10
       score_col_name: *score-col
 
 # Disease-specific ranking
