@@ -57,6 +57,7 @@ def make_test_predictions(
     transformers: Dict[str, Dict[str, Union[_BaseImputer, List[str]]]],
     model: ModelWrapper,
     features: List[str],
+    score_col_name: str,
     batch_by: str = "target",
 ) -> pd.DataFrame:
     """Generate probability scores for drug-disease dataset.
@@ -92,13 +93,11 @@ def make_test_predictions(
         )
 
         # Generate model probability scores
-        score_results = model.predict_proba(transformed[batch_features].values)
-        batch["not treat score"] = score_results[:, 0]
-        batch['treat score'] = score_results[:, 1]
-        if score_results.shape[1] > 2:
-            batch['unknown score'] = score_results[:, 2]
+        batch[score_col_name] = model.predict_proba(transformed[batch_features].values)[
+            :, 1
+        ]
 
-        return batch
+        return batch[[score_col_name]]
 
     # Group data by the specified prefix
     grouped = data.groupby(batch_by)
