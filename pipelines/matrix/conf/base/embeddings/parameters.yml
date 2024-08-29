@@ -99,6 +99,7 @@ embeddings.topological:
       # Chunyu
       # learningRate: 0.001
       learningRate: 0.01
+      randomSeed: 42
   write_property: topological_embedding
 
 embeddings.topological_pca:
