@@ -280,7 +280,7 @@ ingestion.raw.robokop.edges@pandas:
   load_args:
     sep: "\t"
 
-ingestion.prm.robokop.nodes@spark:
+ingestion.prm.robokop.nodes:
    <<: [*_spark_parquet, *_layer_int]
    filepath: ${globals:paths.prn}/robokop-kg/nodes
 
