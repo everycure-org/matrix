@@ -255,8 +255,6 @@ def reduce_dimension(df: DataFrame, transformer, input: str, output: str, skip: 
         return df.withColumn(output, F.col(input))
 
     # Convert into correct type
-    print(df.show())
-    df.show()
     df = df.withColumn("features", array_to_vector(input))
 
     # Link
