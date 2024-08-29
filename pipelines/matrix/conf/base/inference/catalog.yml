@@ -1,0 +1,15 @@
+_sheets_dataset: &_sheets_dataset
+  type: matrix.datasets.gcp.GoogleSheetsDataset
+  key: 1CioSCCQxUdACn1NfWU9XRyC-9j_ERc2hmZzaDd8XgcQ
+  service_file: conf/local/service-account.json
+
+raw.inputs:
+  <<: [*_sheets_dataset]
+  load_args:
+    sheet_name: Nodes
+
+model_outputs.{model}.predictions:
+  <<: [*_sheets_dataset]
+  save_args:
+    sheet_name: "{model}_predictions"
+    col_names: ["drug", "disease", "score"]

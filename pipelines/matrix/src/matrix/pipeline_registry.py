@@ -32,6 +32,10 @@ from matrix.pipelines.release.pipeline import (
 from matrix.pipelines.matrix_generation.pipeline import (
     create_pipeline as create_matrix_pipeline,
 )
+from matrix.pipelines.inference.pipeline import (
+    create_pipeline as create_inference_pipeline,
+)
+
 
 
 def register_pipelines() -> Dict[str, Pipeline]:
@@ -59,6 +63,7 @@ def register_pipelines() -> Dict[str, Pipeline]:
     pipelines["evaluation"] = create_evaluation_pipeline()
     pipelines["release"] = create_release_pipeline()
     pipelines["matrix_generation"] = create_matrix_pipeline()
+    pipelines["inference"] = create_inference_pipeline()
     pipelines["test"] = (
         create_fabricator_pipeline()
         + create_ingestion_pipeline()

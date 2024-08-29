@@ -64,9 +64,9 @@ CONFIG_LOADER_ARGS = {
 DYNAMIC_PIPELINES_MAPPING = {
     "modelling": [
         {"model_name": "xg_baseline", "num_shards": 1},
-        {"model_name": "xg_ensemble", "num_shards": 3},
-        {"model_name": "rf", "num_shards": 1},
-        {"model_name": "xg_synth", "num_shards": 1},
+        # {"model_name": "xg_ensemble", "num_shards": 3},
+        # {"model_name": "rf", "num_shards": 1},
+        # {"model_name": "xg_synth", "num_shards": 1},
     ],
     "evaluation": [
         {"evaluation_name": "simple_ground_truth_classification"},
