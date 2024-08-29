@@ -4,7 +4,7 @@ import numpy as np
 import abc
 import json
 import bisect
-from typing import Dict, List, Union
+from typing import Dict, List
 from tqdm import tqdm
 from sklearn.metrics import roc_auc_score
 
@@ -225,14 +225,13 @@ class RecallAtN(Evaluation):
         Args:
             data: Labelled drug-disease dataset with probability scores.
         """
+        
         y_score = data[self._score_col_name]
         y_true = data["y"]
-
-        print(y_score)
-
+        
         # Sort indices by score in descending order
         sorted_indices = np.argsort(y_score)[::-1]
-        
+
         # Get the top N predictions
         top_n_indices = sorted_indices[:self._n]
         

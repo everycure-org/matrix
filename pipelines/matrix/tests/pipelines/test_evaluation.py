@@ -101,15 +101,17 @@ def test_specific_ranking(sample_data):
 def test_recall_at_n(sample_data):
     """Test the RecallAtN class."""
     
+    standard_case, edge_case = sample_data
+
     # Test with n=3
     recall_evaluator = RecallAtN(n=3, score_col_name="score")
-    result = recall_evaluator.evaluate(sample_data)
+    result = recall_evaluator.evaluate(standard_case)
     
     assert "recall_at_n" in result
-    assert np.isclose(result["recall_at_n"], 2/3, atol=1e-6)  # 2 out of 3 true positives in top 3
+    assert np.isclose(result["recall_at_n"], 3/3, atol=1e-6)  # 3 out of 3 true positives in top 3
     
     # Test with n=5 (all rows)
     recall_evaluator_all = RecallAtN(n=5, score_col_name="score")
-    result_all = recall_evaluator_all.evaluate(sample_data)
+    result_all = recall_evaluator_all.evaluate(standard_case)
     
     assert np.isclose(result_all["recall_at_n"], 1.0, atol=1e-6)  # All true positives included
