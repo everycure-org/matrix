@@ -3,6 +3,14 @@ _sheets_dataset: &_sheets_dataset
   key: 1CioSCCQxUdACn1NfWU9XRyC-9j_ERc2hmZzaDd8XgcQ
   service_file: conf/local/service-account.json
 
+
+# NOTE: Drug list is not yet published
+raw.evaluation.disease_list:
+  type: pandas.CSVDataset
+  filepath: https://github.com/everycure-org/matrix-disease-list/releases/${globals:data_sources.ec-disease-list.version}/download/matrix-disease-list.tsv
+  load_args:
+    sep: "\t"
+
 raw.inputs:
   <<: [*_sheets_dataset]
   load_args:

@@ -27,6 +27,11 @@ data_sources:
   # EveryCure medical team.
   ec-medical-team:
     version: 20240823
+  # Dataset with drugs as identified by EC.
+  ec-drug-list:
+    version: latest # TODO: We should version
+  ec-disease-list:
+    version: latest
 
 paths:
   # we read from our central GCS bucket where we store our ground truth data
