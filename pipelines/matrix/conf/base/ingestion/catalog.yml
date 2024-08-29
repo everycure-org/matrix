@@ -282,7 +282,7 @@ ingestion.raw.robokop.edges@pandas:
 
 ingestion.prm.robokop.nodes@spark:
    <<: [*_spark_parquet, *_layer_int]
-   filepath: ${globals:paths.raw}/robokop-kg/${globals:data_sources.robokop.version}/nodes.tsv
+   filepath: ${globals:paths.prn}/robokop-kg/nodes
 
 ingestion.prm.robokop.edges@spark:
    <<: [*_spark_parquet, *_layer_int]
