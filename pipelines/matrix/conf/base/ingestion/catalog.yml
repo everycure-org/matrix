@@ -1,11 +1,6 @@
 _pandas_csv: &_pandas_csv
   type:  pandas.CSVDataset
 
-_pandas_tsv: &_pandas_tsv
-  type:  pandas.CSVDataset
-  load_args:
-    sep: "\t"
-
 _spark_parquet_ds: &_spark_parquet
   type: matrix.datasets.gcp.LazySparkDataset
   file_format: parquet
@@ -230,7 +225,7 @@ ingestion.raw.ec_medical_team.edges@spark:
     header: True
 
 ingestion.raw.clinical_trial_data@pandas:
-  <<: [*_layer_int, *_pandas_tsv]
+  <<: [*_layer_int, *_pandas_csv]
   filepath: ${globals:paths.raw}/clinical_trial_data/${globals:data_sources.clinical-trial-data.version}/data.csv
 
 ingestion.prm.rtx_kg2.nodes:
