@@ -340,16 +340,16 @@ class TimeSplitGroundTruthTestPairs(DrugDiseasePairGenerator):
 
     @staticmethod
     def _format_clinical_trail_data(
-        cleaned_linical_trail_data: pd.DataFrame,
+        cleaned_clinical_trail_data: pd.DataFrame,
     ) -> pd.DataFrame:
         """A helper function to format clinical trail data.
 
         Args:
-            cleaned_linical_trail_data: clinical trail data filtering out rows without curie or clinical info
+            cleaned_clinical_trail_data: clinical trail data filtering out rows without curie or clinical info
         Returns:
             formatted clinical trail data.
         """
-        clinical_trail_data = cleaned_linical_trail_data.copy()
+        clinical_trail_data = cleaned_clinical_trail_data.copy()
         clinical_trail_data = clinical_trail_data.rename(
             columns={"drug_kg_curie": "source", "disease_kg_curie": "target"}
         )
