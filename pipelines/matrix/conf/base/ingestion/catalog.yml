@@ -248,7 +248,7 @@ ingestion.raw.robokop.nodes@spark:
   file_format: csv
   load_args:
     sep: "\t"
-    header: false
+    header: true
     index: false
 
 ingestion.raw.robokop.nodes@pandas:
@@ -256,7 +256,7 @@ ingestion.raw.robokop.nodes@pandas:
   filepath: ${globals:paths.raw}/robokop-kg/${globals:data_sources.robokop.version}/nodes.tsv
   save_args:
     sep: "\t"
-    header: false
+    header: true
     index: false
   load_args:
     sep: "\t"
@@ -267,7 +267,7 @@ ingestion.raw.robokop.edges@spark:
   file_format: csv
   load_args:
     sep: "\t"
-    header: false
+    header: true
     index: false
 
 ingestion.raw.robokop.edges@pandas:
@@ -275,7 +275,7 @@ ingestion.raw.robokop.edges@pandas:
   filepath: ${globals:paths.raw}/robokop-kg/${globals:data_sources.robokop.version}/edges.tsv
   save_args:
     sep: "\t"
-    header: false
+    header: true
     index: false
   load_args:
     sep: "\t"
