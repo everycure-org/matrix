@@ -41,14 +41,20 @@ def create_pipeline(**kwargs) -> Pipeline:
             ),
             # robokop
             node(
-                func=lambda x: x.withColumn("kg_source", F.lit("robokop")),
+                # FUTURE: Update selection
+                func=lambda x: x.select(
+                    "id", "name", "category", "information_content"
+                ).withColumn("kg_source", F.lit("robokop")),
                 inputs=["ingestion.raw.robokop.nodes@spark"],
                 outputs="ingestion.int.robokop.nodes",
                 name="write_robokop_nodes",
                 tags=["robokop"],
             ),
             node(
-                func=lambda x: x.withColumn("kg_source", F.lit("robokop")),
+                # FUTURE: Update selection
+                func=lambda x: x.select("subject", "predicate", "object").withColumn(
+                    "kg_source", F.lit("robokop")
+                ),
                 inputs=["ingestion.raw.robokop.edges@spark"],
                 outputs="ingestion.int.robokop.edges",
                 name="write_robokop_edges",
