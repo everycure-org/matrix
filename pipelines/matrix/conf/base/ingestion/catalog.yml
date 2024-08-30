@@ -27,10 +27,8 @@ _layer_int: &_layer_int
 
 
 # -------------------------------------------------------------------------
-# Datasets
-# -------------------------------------------------------------------------      
-
-### RTX_KG2
+# RTX-KG2
+# -------------------------------------------------------------------------  
 ingestion.raw.rtx_kg2.nodes@pandas:
   <<: [*_pandas_csv, *_layer_raw]
   filepath: ${globals:paths.raw}/rtx_kg2/${globals:data_sources.rtx-kg2.version}/nodes_c.tsv
@@ -42,6 +40,7 @@ ingestion.raw.rtx_kg2.nodes@pandas:
     sep: "\t"
 
 ingestion.raw.rtx_kg2.nodes@spark:
+  <<: *_layer_raw
   type: matrix.datasets.gcp.SparkWithSchemaDataset
   filepath: ${globals:paths.raw}/rtx_kg2/${globals:data_sources.rtx-kg2.version}/nodes_c.tsv
   file_format: csv
@@ -123,6 +122,7 @@ ingestion.raw.rtx_kg2.edges@pandas:
     sep: "\t"
 
 ingestion.raw.rtx_kg2.edges@spark:
+  <<: *_layer_raw
   type: matrix.datasets.gcp.SparkWithSchemaDataset
   filepath: ${globals:paths.raw}/rtx_kg2/${globals:data_sources.rtx-kg2.version}/edges_c.tsv
   file_format: csv
@@ -198,21 +198,23 @@ ingestion.raw.rtx_kg2.edges@spark:
             object: pyspark.sql.types.StringType
           nullable: False
 
-ingestion.prm.rtx_kg2.nodes:
+ingestion.int.rtx_kg2.nodes:
   <<: [*_spark_parquet, *_layer_int]
-  filepath: ${globals:paths.prm}/rtx_kg2/nodes
+  filepath: ${globals:paths.int}/rtx_kg2/nodes
 
-ingestion.prm.rtx_kg2.edges:
+ingestion.int.rtx_kg2.edges:
   <<: [*_spark_parquet, *_layer_int]
-  filepath: ${globals:paths.prm}/rtx_kg2/edges
+  filepath: ${globals:paths.int}/rtx_kg2/edges
 
-### EC MEDICAL TEAM
+# -------------------------------------------------------------------------
+# EveryCure Medical
+# -------------------------------------------------------------------------  
 ingestion.raw.ec_medical_team.nodes@pandas:
-  <<: [*_layer_int, *_pandas_csv]
+  <<: [*_layer_raw, *_pandas_csv]
   filepath: ${globals:paths.raw}/ec_medical_team/${globals:data_sources.ec-medical-team.version}/nodes.csv
 
 ingestion.raw.ec_medical_team.nodes@spark:
-  <<: [*_spark_csv, *_layer_int]
+  <<: [*_spark_csv, *_layer_raw]
   filepath: ${globals:paths.raw}/ec_medical_team/${globals:data_sources.ec-medical-team.version}/nodes.csv
   save_args:
     mode: overwrite
@@ -233,16 +235,19 @@ ingestion.raw.ec_medical_team.edges@spark:
   load_args:
     header: True
 
-ingestion.prm.ec_medical_team.nodes:
+ingestion.int.ec_medical_team.nodes:
   <<: [*_spark_parquet, *_layer_int]
-  filepath: ${globals:paths.prm}/ec_medical_team/nodes
+  filepath: ${globals:paths.int}/ec_medical_team/nodes
 
-ingestion.prm.ec_medical_team.edges:
+ingestion.int.ec_medical_team.edges:
   <<: [*_spark_parquet, *_layer_int]
-  filepath: ${globals:paths.prm}/ec_medical_team/edges
+  filepath: ${globals:paths.int}/ec_medical_team/edges
 
-### ROBOKOP
+# -------------------------------------------------------------------------
+# Robokop
+# -------------------------------------------------------------------------  
 ingestion.raw.robokop.nodes@spark:
+  <<: *_layer_raw
   type: matrix.datasets.gcp.LazySparkDataset
   filepath: ${globals:paths.raw}/robokop-kg/${globals:data_sources.robokop.version}/nodes.tsv
   file_format: csv
@@ -262,6 +267,7 @@ ingestion.raw.robokop.nodes@pandas:
     sep: "\t"
 
 ingestion.raw.robokop.edges@spark:
+  <<: *_layer_raw
   type: matrix.datasets.gcp.LazySparkDataset
   filepath: ${globals:paths.raw}/robokop-kg/${globals:data_sources.robokop.version}/edges.tsv
   file_format: csv
@@ -280,11 +286,11 @@ ingestion.raw.robokop.edges@pandas:
   load_args:
     sep: "\t"
 
-ingestion.prm.robokop.nodes:
+ingestion.int.robokop.nodes:
    <<: [*_spark_parquet, *_layer_int]
-   filepath: ${globals:paths.prm}/robokop-kg/nodes
+   filepath: ${globals:paths.int}/robokop-kg/nodes
 
-ingestion.prm.robokop.edges:
+ingestion.int.robokop.edges:
    <<: [*_spark_parquet, *_layer_int]
-   filepath: ${globals:paths.prm}/robokop-kg/edges
+   filepath: ${globals:paths.int}/robokop-kg/edges
 
