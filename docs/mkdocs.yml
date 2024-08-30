@@ -30,7 +30,10 @@ plugins:
   - awesome-pages
   - search
   # - table-reader
-  - git-authors
+  - git-authors:
+     exclude:
+       - "releases/**"
+
   #- git-committers:
   #    repository: everycure-org/matrix
   #    branch: main
