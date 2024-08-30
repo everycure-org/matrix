@@ -111,7 +111,7 @@ def make_test_predictions(
     results = pd.concat(result_parts, axis=0)
 
     # Add scores to the original dataframe
-    data["treat score"] = results["treat score"]
+    data[score_col_name] = results[score_col_name]
 
     return data
 
