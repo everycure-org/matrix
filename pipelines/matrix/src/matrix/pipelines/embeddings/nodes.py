@@ -20,6 +20,7 @@ import seaborn as sns
 
 from pypher.builder import create_function
 from . import pypher_utils
+from graph_algorithms import *
 
 from refit.v1.core.inject import inject_object
 from refit.v1.core.unpack import unpack_params
