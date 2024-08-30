@@ -27,6 +27,27 @@ ingestion.prm.rtx_kg2.edges:
     bigQueryTableLabel.kg: rtx_kg2
     bigQueryTableLabel.git_sha: ${globals:git_sha}
 
+
+# TODO: Revert after moving raw
+ingestion.raw.robokop.nodes@spark:
+  type: matrix.datasets.gcp.LazySparkDataset
+  filepath: gs://mtrx-us-central1-hub-dev-storage/data/01_RAW/KGs/robokop-kg/${globals:data_sources.robokop.version}/nodes.tsv
+  file_format: csv
+  load_args:
+    sep: "\t"
+    header: true
+    index: false
+
+# TODO: Revert after moving raw
+ingestion.raw.robokop.edges@spark:
+  type: matrix.datasets.gcp.LazySparkDataset
+  filepath: gs://mtrx-us-central1-hub-dev-storage/data/01_RAW/KGs/robokop-kg/${globals:data_sources.robokop.version}/edges.tsv
+  file_format: csv
+  load_args:
+    sep: "\t"
+    header: true
+    index: false
+
 ingestion.prm.robokop.nodes:
   <<: *_bigquery_ds
   dataset: robokop-kg
