@@ -86,9 +86,6 @@ def enrich_df(
     Returns:
         dataframe enriched with Curie column
     """
-    # Replace empty strings with nan for processing by pandas, we revert back at end
-    df = df.replace(r"^\s*$", np.nan, regex=True)
-
     # Coalesce input cols
     col = coalesce(*[df[col] for col in input_cols])
 
@@ -99,15 +96,12 @@ def enrich_df(
     if coalesce_col:
         df[target_col] = coalesce(df[coalesce_col], df[target_col])
 
-    # Ensure to fill nans with empty strings to avoid nans in nodebook
-    return df.fillna("")
+    return df
 
 
 def create_int_nodes(int_nodes: pd.DataFrame) -> pd.DataFrame:
     """Function to create a intermediate nodes dataset by filtering and renaming columns."""
     # Replace empty strings with nan
-    int_nodes = int_nodes.replace(r"^\s*$", np.nan, regex=True)
-
     return int_nodes[int_nodes["normalized_curie"].notna()].rename(
         columns={"normalized_curie": "curie"}
     )
@@ -138,7 +132,7 @@ def create_int_edges(prm_nodes: pd.DataFrame, int_edges: pd.DataFrame) -> pd.Dat
         lambda row: not (pd.isna(row["SourceId"]) or pd.isna(row["TargetId"])), axis=1
     )
 
-    return res.fillna("")
+    return res
 
 
 @has_schema(
@@ -179,13 +173,9 @@ def create_prm_nodes(prm_nodes: pd.DataFrame) -> pd.DataFrame:
 def create_prm_edges(int_edges: pd.DataFrame) -> pd.DataFrame:
     """Function to create a primary edges dataset by filtering and renaming columns."""
     # Replace empty strings with nan
-    res = (
-        int_edges.replace(r"^\s*$", np.nan, regex=True)
-        .rename(
-            columns={"SourceId": "subject", "TargetId": "object", "Label": "predicate"}
-        )
-        .dropna(subset=["subject", "object"])
-    )
+    res = int_edges.rename(
+        columns={"SourceId": "subject", "TargetId": "object", "Label": "predicate"}
+    ).dropna(subset=["subject", "object"])
 
     res["predicate"] = "biolink:" + res["predicate"]
     res["knowledge_source"] = "ec:medical"
@@ -211,10 +201,9 @@ def map_name_to_curie(
     df: pd.DataFrame,
     endpoint: str,
 ) -> pd.DataFrame:
-    """Function to map drug name or disease name in raw clinical trail dataset to curie using the synonymizer.
+    """Map drug name to curie.
 
-       Original Clinical trial data should be a EXCEL format containg 8 columns:
-       clinical_trial_id, reason_for_rejection, drug_name, disease_name, significantly_better, non_significantly_better, non_significantly_worse, significantly_worse
+    Function to map drug name or disease name in raw clinical trail dataset to curie using the synonymizer.
 
     Args:
         df: raw clinical trial dataset from medical team
@@ -249,26 +238,10 @@ def map_name_to_curie(
     df="df",
 )
 def clean_clinical_trial_data(df: pd.DataFrame) -> pd.DataFrame:
-    """Function to clean the mapped clinical trial dataset for use in time-split evaluation metrics.
+    """Clean clinical trails data.
 
-       Clinical trial data should be a EXCEL format containg 10 columns:
-       clinical_trial_id, reason_for_rejection, drug_name, disease_name, significantly_better, non_significantly_better, non_significantly_worse, significantly_worse, drug_kg_curie, disease_kg_curie
+    Function to clean the mapped clinical trial dataset for use in time-split evaluation metrics.
 
-       2. We filter out rows with the following conditions:
-            - Missing drug_kg_curie
-            - Missing disease_kg_curie
-            - with reason for rejection
-            - missing values in either significantly_better, non_significantly_better, non_significantly_worse, or significantly_worse columns
-
-       3. Only keep the following columns:
-            - drug_name
-            - disease_name
-            - significantly_better
-            - non_significantly_better
-            - non_significantly_worse
-            - significantly_worse
-            - drug_kg_curie
-            - disease_kg_curie
     Args:
         df: raw clinical trial dataset added with mapped drug and disease curies
     Returns:

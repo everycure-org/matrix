@@ -7,6 +7,7 @@ import google.api_core.exceptions as exceptions
 
 
 import pandas as pd
+import numpy as np
 
 from kedro.io.core import Version
 from kedro_datasets.spark import SparkDataset
@@ -242,7 +243,8 @@ class GoogleSheetsDataset(AbstractVersionedDataset[pd.DataFrame, pd.DataFrame]):
         if (cols := self._load_args.get("columns", None)) is not None:
             df = df[cols]
 
-        return df
+        # NOTE: Upon loading, replace empty strings with NaN
+        return df.replace(r"^\s*$", np.nan, regex=True)
 
     def _save(self, data: pd.DataFrame) -> None:
         self._init_sheet()
@@ -253,6 +255,9 @@ class GoogleSheetsDataset(AbstractVersionedDataset[pd.DataFrame, pd.DataFrame]):
         # Create the worksheet if not exists
         if wks is None:
             wks = self._sheet.add_worksheet(sheet_name)
+
+        # NOTE: Upon writing, replace empty strings with "" to avoid NaNs in Excel
+        data = data.fillna("")
 
         # Write columns
         for column in self._save_args["write_columns"]:
