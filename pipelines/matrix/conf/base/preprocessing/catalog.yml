@@ -91,7 +91,7 @@ preprocessing.int.mapped_clinical_trial_data:
   <<: *_medical_clinical_trials_sheet_dataset
   save_args:
     sheet_name: clinical_trial_DD_pairs
-    write_columns: ["drug_kg_curie", "disease_kg_curie"]
+    write_columns: ["drug_kg_curie", "disease_kg_curie", "conflict"]
   load_args:
     sheet_name: clinical_trial_DD_pairs
     columns:
@@ -105,3 +105,4 @@ preprocessing.int.mapped_clinical_trial_data:
       - "significantly_worse"
       - "drug_kg_curie"
       - "disease_kg_curie"
+      - "conflict"
