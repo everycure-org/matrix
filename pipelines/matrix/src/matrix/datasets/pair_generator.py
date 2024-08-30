@@ -366,7 +366,11 @@ class TimeSplitGroundTruthTestPairs(DrugDiseasePairGenerator):
         clinical_trail_data = clinical_trail_data.dropna(subset=["y"])
 
         # Use columns 'source', 'target', and 'y' only
-        clinical_trail_data = clinical_trail_data[["source", "target", "y"]]
+        clinical_trail_data = (
+            clinical_trail_data[["source", "target", "y"]]
+            .drop_duplicates()
+            .reset_index(drop=True)
+        )
 
         return clinical_trail_data
 

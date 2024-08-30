@@ -205,6 +205,8 @@ def map_name_to_curie(
     """Map drug name to curie.
 
     Function to map drug name or disease name in raw clinical trail dataset to curie using the synonymizer.
+    And check after mapping, if the mapped curies are the same in different rows, we check whether their the
+    clinical performance is the same. If not, we label them as "True" in the "conflict" column, otherwise "False".
 
     Args:
         df: raw clinical trial dataset from medical team
@@ -218,6 +220,20 @@ def map_name_to_curie(
     # Map the disease name to the corresponding curie ids
     df["disease_kg_curie"] = df["disease_name"].apply(
         lambda x: resolve(x, endpoint=endpoint)
+    )
+
+    # check conflict
+    df["conflict"] = (
+        df.groupby(["drug_kg_curie", "disease_kg_curie"])[
+            [
+                "significantly_better",
+                "non_significantly_better",
+                "non_significantly_worse",
+                "significantly_worse",
+            ]
+        ]
+        .transform(lambda x: x.nunique() > 1)
+        .any(axis=1)
     )
 
     return df
@@ -235,13 +251,19 @@ def map_name_to_curie(
         "significantly_worse": "object",
         "drug_kg_curie": "object",
         "disease_kg_curie": "object",
+        "conflict": "object",
     },
     allow_subset=True,
     df="df",
 )
 @primary_key(
-    primary_key=["clinical_trial_id", "drug_kg_curie", "disease_kg_curie"],
-    nullable=True,
+    primary_key=[
+        "clinical_trial_id",
+        "drug_name",
+        "disease_name",
+        "drug_kg_curie",
+        "disease_kg_curie",
+    ]
 )
 def clean_clinical_trial_data(df: pd.DataFrame) -> pd.DataFrame:
     """Clean clinical trails data.
@@ -253,23 +275,40 @@ def clean_clinical_trial_data(df: pd.DataFrame) -> pd.DataFrame:
     Returns:
         Cleaned clinical trial data.
     """
+    df = df[df["conflict"].eq("FALSE")].reset_index(drop=True)
+
     # remove rows with reason for rejection
-    df = df[~df["reason_for_rejection"].isna()].reset_index(drop=True)
+    df = df[
+        df["reason_for_rejection"].isna()
+        | df["reason_for_rejection"].str.strip().eq("")
+    ].reset_index(drop=True)
 
-    # Define columns to check
-    columns_to_check = [
-        "drug_kg_curie",
-        "disease_kg_curie",
-        "significantly_better",
-        "non_significantly_better",
-        "non_significantly_worse",
-        "significantly_worse",
-    ]
+    # remove rows with missing drug_kg_curie or disease_kg_curie
+    df = df.dropna(subset=["drug_kg_curie", "disease_kg_curie"]).reset_index(drop=True)
 
-    # Remove rows with missing values in the specified columns
-    df = df.dropna(subset=columns_to_check).reset_index(drop=True)
+    # remove rows with missing values in significantly better, non-significantly better, non-significantly worse, or significantly worse columns
+    df = df.dropna(
+        subset=[
+            "significantly_better",
+            "non_significantly_better",
+            "non_significantly_worse",
+            "significantly_worse",
+        ]
+    ).reset_index(drop=True)
+    df = df[
+        df[
+            [
+                "significantly_better",
+                "non_significantly_better",
+                "non_significantly_worse",
+                "significantly_worse",
+            ]
+        ]
+        .applymap(lambda x: not isinstance(x, str))
+        .all(axis=1)
+    ].reset_index(drop=True)
 
-    # drop columns: clinical_trial_id, reason_for_rejection
-    df = df.drop(columns=["reason_for_rejection"])
+    # drop column: reason_for_rejection
+    df = df.drop(columns=["reason_for_rejection", "conflict"]).reset_index(drop=True)
 
     return df
