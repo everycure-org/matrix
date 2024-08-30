@@ -214,6 +214,7 @@ def map_name_to_curie(
     """
     # Map the drug name to the corresponding curie ids
     df["drug_kg_curie"] = df["drug_name"].apply(lambda x: resolve(x, endpoint=endpoint))
+
     # Map the disease name to the corresponding curie ids
     df["disease_kg_curie"] = df["disease_name"].apply(
         lambda x: resolve(x, endpoint=endpoint)
@@ -238,7 +239,6 @@ def map_name_to_curie(
     allow_subset=True,
     df="df",
 )
-# TODO: Why are some clinical trails null?
 @primary_key(
     primary_key=["clinical_trial_id", "drug_kg_curie", "disease_kg_curie"],
     nullable=True,
@@ -256,15 +256,6 @@ def clean_clinical_trial_data(df: pd.DataFrame) -> pd.DataFrame:
     # remove rows with reason for rejection
     df = df[~df["reason_for_rejection"].isna()].reset_index(drop=True)
 
-    # Not needed, the GoogleSheetsDataset sets empty strings to N/A now
-    # df = df[df["reason_for_rejection"].map(lambda x: len(x.strip()) == 0)].reset_index(drop=True)
-
-    # Not needed, added to list below
-    # remove rows with missing drug_kg_curie or disease_kg_curie
-    # row_has_missing = df["drug_kg_curie"].isna() | df["disease_kg_curie"].isna()
-    # df = df[~row_has_missing].reset_index(drop=True)
-    # df = df.dropna(subset=columns_to_check).reset_index(drop=True)
-
     # Define columns to check
     columns_to_check = [
         "drug_kg_curie",
@@ -277,10 +268,6 @@ def clean_clinical_trial_data(df: pd.DataFrame) -> pd.DataFrame:
 
     # Remove rows with missing values in the specified columns
     df = df.dropna(subset=columns_to_check).reset_index(drop=True)
-
-    # Not needed? Why are we doing this?
-    # Remove rows where any of the specified columns contain strings
-    # df = df[df[columns_to_check].applymap(lambda x: not isinstance(x, str))].reset_index(drop=True)
 
     # drop columns: clinical_trial_id, reason_for_rejection
     df = df.drop(columns=["reason_for_rejection"])
