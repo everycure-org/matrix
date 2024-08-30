@@ -170,6 +170,7 @@ def create_prm_nodes(prm_nodes: pd.DataFrame) -> pd.DataFrame:
     },
     allow_subset=True,
 )
+@primary_key(primary_key=["subject", "predicate", "object"])
 def create_prm_edges(int_edges: pd.DataFrame) -> pd.DataFrame:
     """Function to create a primary edges dataset by filtering and renaming columns."""
     # Replace empty strings with nan
@@ -237,6 +238,11 @@ def map_name_to_curie(
     allow_subset=True,
     df="df",
 )
+# TODO: Why are some clinical trails null?
+@primary_key(
+    primary_key=["clinical_trial_id", "drug_kg_curie", "disease_kg_curie"],
+    nullable=True,
+)
 def clean_clinical_trial_data(df: pd.DataFrame) -> pd.DataFrame:
     """Clean clinical trails data.
 
@@ -277,6 +283,6 @@ def clean_clinical_trial_data(df: pd.DataFrame) -> pd.DataFrame:
     # df = df[df[columns_to_check].applymap(lambda x: not isinstance(x, str))].reset_index(drop=True)
 
     # drop columns: clinical_trial_id, reason_for_rejection
-    df = df.drop(columns=["clinical_trial_id", "reason_for_rejection"])
+    df = df.drop(columns=["reason_for_rejection"])
 
     return df
