@@ -70,9 +70,7 @@ evaluation.simple_ground_truth_classification_time_split:
       object: matrix.datasets.pair_generator.TimeSplitGroundTruthTestPairs
       dataset:
         object: kedro_datasets.pandas.CSVDataset
-        filepath: ${globals:paths.raw}/clinical_trial_data/${globals:data_sources.clinical-trial-data.version}/data.tsv
-        load_args:
-          sep: "\t"
+        filepath: ${globals:paths.raw}/clinical_trial_data/${globals:data_sources.clinical-trial-data.version}/data.csv
     evaluation:
       object: matrix.pipelines.evaluation.evaluation.DiscreteMetrics
       metrics:
@@ -87,9 +85,7 @@ evaluation.continuous_ground_truth_classification_time_split:
       object: matrix.datasets.pair_generator.TimeSplitGroundTruthTestPairs
       dataset:
         object: kedro_datasets.pandas.CSVDataset
-        filepath: ${globals:paths.raw}/clinical_trial_data/${globals:data_sources.clinical-trial-data.version}/data.tsv
-        load_args:
-          sep: "\t"
+        filepath: ${globals:paths.raw}/clinical_trial_data/${globals:data_sources.clinical-trial-data.version}/data.csv
     evaluation:
       object: matrix.pipelines.evaluation.evaluation.ContinuousMetrics
       metrics:
@@ -103,9 +99,7 @@ evaluation.disease_centric_matrix_time_split:
       object: matrix.datasets.pair_generator.TimeSplitMatrixTestDiseases
       dataset:
         object: kedro_datasets.pandas.CSVDataset
-        filepath: ${globals:paths.raw}/clinical_trial_data/${globals:data_sources.clinical-trial-data.version}/data.tsv
-        load_args:
-          sep: "\t"
+        filepath: ${globals:paths.raw}/clinical_trial_data/${globals:data_sources.clinical-trial-data.version}/data.csv
       drugs_lst_flags:
           - is_drug
           - is_ground_pos
@@ -122,9 +116,7 @@ evaluation.disease_specific_ranking_time_split:
       object: matrix.datasets.pair_generator.TimeSplitMatrixTestDiseases
       dataset:
         object: kedro_datasets.pandas.CSVDataset
-        filepath: ${globals:paths.raw}/clinical_trial_data/${globals:data_sources.clinical-trial-data.version}/data.tsv
-        load_args:
-          sep: "\t"
+        filepath: ${globals:paths.raw}/clinical_trial_data/${globals:data_sources.clinical-trial-data.version}/data.csv
       drugs_lst_flags:
           - is_drug
           - is_ground_pos
