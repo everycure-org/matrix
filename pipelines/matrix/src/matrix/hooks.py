@@ -131,8 +131,8 @@ class SparkHooks:
             # known way of doing so
             # if prod environment, remove all config keys that start with spark.hadoop.google.cloud.auth.service
             if (
-                cls._kedro_context.env == "prod"
-                and os.environ.get("ARGO_POD_UID") is not None
+                cls._kedro_context.env == "cloud"
+                and os.environ.get("ARGO_NODE_ID") is not None
             ):
                 logger.warning(
                     "we're manipulating the spark configuration now. this is done assuming this is a production execution in argo"
@@ -142,6 +142,15 @@ class SparkHooks:
                     for k, v in parameters.items()
                     if not k.startswith("spark.hadoop.google.cloud.auth.service")
                 }
+            else:
+                logger.info(f"Executing for enviornment: {cls._kedro_context.env}")
+                logger.info(
+                    f'With ARGO_POD_UID set to: {os.environ.get("ARGO_NODE_ID", "")}'
+                )
+                logger.info(
+                    "Thus determined not to be in k8s cluster and executing with service-account.json file"
+                )
+
             logging.info(
                 f"starting spark session with the following parameters: {parameters}"
             )

@@ -24,6 +24,7 @@ graphdatascience
 neo4j>=5.5.0
 python-cypher==0.20.1
 termplotlib
+seaborn
 kedro-mlflow==0.12.2
 mlflow==2.15.0
 # used for convenience libraries, to be moved to a dev requirements eventually  

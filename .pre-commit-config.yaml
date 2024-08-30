@@ -10,17 +10,22 @@ repos:
         exclude: |
           (?x)^(
             pipelines/matrix/packages|
-            pipelines/matrix/tests/
+            pipelines/matrix/tests/|
+            services/synonymizer/api/modules/synonymize
           )
       # Run the formatter.
       - id: ruff-format
         exclude: pipelines/matrix/packages
-# Commented out until it's possible to only execute on specific paths
-#   - repo: https://github.com/kynan/nbstripout
-#     rev: 0.7.1
-#     hooks:
-#       - id: nbstripout
-#         exclude: pipelines/matrix/packages
+  - repo: https://github.com/kynan/nbstripout
+    rev: 0.7.1
+    hooks:
+      - id: nbstripout
+        exclude: | 
+          (?x)^(
+            pipelines/matrix/packages|services/|
+            docs/src/experiments/ |
+            services/synonymizer/api/modules/synonymize
+          )
   - repo: https://github.com/antonbabenko/pre-commit-terraform
     rev: v1.92.0
     hooks:
@@ -33,3 +38,9 @@ repos:
     -   id: check-merge-conflict
     # FUTURE: Enable for yaml checks
     # -   id: check-yaml
+
+  # checks github actions files for errors
+  - repo: https://github.com/rhysd/actionlint
+    rev: v1.7.1
+    hooks:
+      - id: actionlint
