@@ -420,7 +420,7 @@ class TimeSplitGroundTruthTestPairs(DrugDiseasePairGenerator):
             return clinical_trail_data
 
 
-class TimeSplitMatrixTestDiseases(DrugDiseasePairGenerator):
+class TimeSplitMatrixTestDiseases(TimeSplitGroundTruthTestPairs):
     """Data Generator for Time Split Validation. Use the clinical trial data to replace the test ground truth data.
 
     Now 1 in the 'y' column means 'significantly_better' and 0 means 'significantly_worse'.
@@ -436,7 +436,7 @@ class TimeSplitMatrixTestDiseases(DrugDiseasePairGenerator):
             dataset: dataset to use
             drugs_lst_flags: List of knowledge graph flags defining drugs sample set.
         """
-        self._clinical_trail_data = dataset._load()
+        super().__init__(dataset)
         self._drug_axis_flags = drugs_lst_flags
 
     def generate(

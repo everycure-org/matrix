@@ -111,10 +111,7 @@ def make_test_predictions(
     results = pd.concat(result_parts, axis=0)
 
     # Add scores to the original dataframe
-    data["not treat score"] = results["not treat score"]
     data["treat score"] = results["treat score"]
-    if results.shape[1] > 2:
-        data["unknown score"] = results["unknown score"]
 
     return data
 
