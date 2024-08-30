@@ -27,6 +27,9 @@ changelog:
     - title: Documentation ✏️
       labels:
         - documentation
+    - title: Newly onboarded colleagues 🚤
+      labels:
+        - onboarding
     - title: Other Changes
       labels:
         - "*"

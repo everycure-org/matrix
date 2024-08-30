@@ -52,7 +52,8 @@ def _create_model_shard_pipeline(model: str, shard: int) -> Pipeline:
                 outputs=f"modelling.{model}.{shard}.models.model",
                 name=f"train_{model}_{shard}_model",
             ),
-        ]
+        ],
+        tags=["argowf.fuse", f"argowf.fuse-group.{model}.shard-{shard}"],
     )
 
 
@@ -122,7 +123,8 @@ def _create_model_pipeline(model: str, num_shards: int) -> Pipeline:
                         outputs=f"modelling.{model}.reporting.metrics",
                         name=f"check_{model}_model_performance",
                     ),
-                ]
+                ],
+                tags=["argowf.fuse", f"argowf.fuse-group.{model}"],
             ),
         ]
     )
@@ -132,6 +134,16 @@ def create_pipeline(**kwargs) -> Pipeline:
     """Create modelling pipeline."""
     create_model_input = pipeline(
         [
+            # Construct ground_truth
+            node(
+                func=nodes.create_int_pairs,
+                inputs=[
+                    "modelling.raw.ground_truth.positives",
+                    "modelling.raw.ground_truth.negatives",
+                ],
+                outputs="modelling.int.known_pairs",
+                name="create_int_known_pairs",
+            ),
             node(
                 func=nodes.prefilter_nodes,
                 inputs=[
@@ -146,7 +158,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 func=nodes.create_feat_nodes,
                 inputs=[
                     "modelling.model_input.drugs_diseases_nodes@spark",
-                    "integration.model_input.ground_truth",
+                    "modelling.int.known_pairs",
                     "params:modelling.drug_types",
                     "params:modelling.disease_types",
                 ],
@@ -157,7 +169,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 func=nodes.make_splits,
                 inputs=[
                     "modelling.feat.rtx_kg2",
-                    "integration.model_input.ground_truth",
+                    "modelling.int.known_pairs",
                     "params:modelling.splitter",
                 ],
                 outputs="modelling.model_input.splits",

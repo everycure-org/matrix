@@ -58,7 +58,14 @@ def cli():
     "--to-nodes", type=str, default="", help=TO_NODES_HELP, callback=split_node_names
 )
 @click.option(
-    "--nodes", "-n", "node_names", type=str, multiple=True, help=NODE_ARG_HELP
+    "--nodes",
+    "-n",
+    "node_names",
+    type=str,
+    multiple=False,
+    help=NODE_ARG_HELP,
+    callback=split_string,
+    default="",
 )
 @click.option(
     "--runner", "-r", type=str, default=None, multiple=False, help=RUNNER_ARG_HELP
@@ -119,6 +126,11 @@ def run(
     params,
 ):
     """Run the pipeline."""
+    if pipeline in ["test", "fabricator"] and env in [None, "base"]:
+        raise RuntimeError(
+            "Running the fabricator in the base environment might overwrite production data! Use the test env `-e test` instead."
+        )
+
     runner = load_obj(runner or "SequentialRunner", "kedro.runner")
     tags = tuple(tags)
     without_tags = without_tags

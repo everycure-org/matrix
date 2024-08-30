@@ -25,7 +25,6 @@ theme:
     annotation: material/plus-circle
 
 plugins:
-  - blog
   - drawio
   - mkdocs-jupyter
   - awesome-pages
@@ -38,6 +37,10 @@ plugins:
   - git-revision-date-localized:
       enable_creation_date: true
       fallback_to_build_date: true
+  # we use the blog plugin to generate the releases page
+  - blog:
+     blog_dir: releases
+     categories: false
 
  
 

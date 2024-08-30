@@ -2,6 +2,9 @@
 from typing import Dict
 from kedro.pipeline import Pipeline
 
+from matrix.pipelines.preprocessing.pipeline import (
+    create_pipeline as create_preprocessing_pipeline,
+)
 from matrix.pipelines.modelling.pipeline import (
     create_pipeline as create_modelling_pipeline,
 )
@@ -23,6 +26,9 @@ from matrix.pipelines.ingestion.pipeline import (
 from matrix.pipelines.preprocessing.pipeline import (
     create_pipeline as create_preprocessing_pipeline,
 )
+from matrix.pipelines.release.pipeline import (
+    create_pipeline as create_release_pipeline,
+)
 
 
 def register_pipelines() -> Dict[str, Pipeline]:
@@ -39,6 +45,7 @@ def register_pipelines() -> Dict[str, Pipeline]:
         + create_modelling_pipeline()
         + create_evaluation_pipeline()
     )
+    pipelines["preprocessing"] = create_preprocessing_pipeline()
     pipelines["ingestion"] = create_ingestion_pipeline()
     pipelines["preprocessing"] = create_preprocessing_pipeline()
     pipelines["modelling"] = create_modelling_pipeline()
@@ -46,6 +53,7 @@ def register_pipelines() -> Dict[str, Pipeline]:
     pipelines["fabricator"] = create_fabricator_pipeline()
     pipelines["integration"] = create_integration_pipeline()
     pipelines["evaluation"] = create_evaluation_pipeline()
+    pipelines["release"] = create_release_pipeline()
     pipelines["test"] = (
         create_fabricator_pipeline()
         + create_ingestion_pipeline()
@@ -53,6 +61,7 @@ def register_pipelines() -> Dict[str, Pipeline]:
         + create_embeddings_pipeline()
         + create_modelling_pipeline()
         + create_evaluation_pipeline()
+        + create_release_pipeline()
     )
     pipelines["all"] = create_ingestion_pipeline() + pipelines["__default__"]
     pipelines["experiment"] = create_modelling_pipeline() + create_evaluation_pipeline()
