@@ -8,8 +8,6 @@ import google.api_core.exceptions as exceptions
 
 import pandas as pd
 
-import pandas as pd
-
 from kedro.io.core import Version
 from kedro_datasets.spark import SparkDataset
 from kedro_datasets.spark.spark_dataset import _strip_dbfs_prefix, _get_spark
