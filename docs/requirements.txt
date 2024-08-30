@@ -12,3 +12,9 @@ openpyxl
 jupyter
 pyyaml
 mkdocs-drawio
+# TODO, not currently used but would be nice
+mkdocs-git-committers-plugin-2
+# alternative to above, just takes names from git, not github profiles
+mkdocs-git-authors-plugin
+
+mkdocs-git-revision-date-localized-plugin
