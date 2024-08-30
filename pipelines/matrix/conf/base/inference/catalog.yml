@@ -11,6 +11,16 @@ raw.evaluation.disease_list:
   load_args:
     sep: "\t"
 
+raw.evaluation.drug_list:
+  type: pandas.CSVDataset
+  # NOTE: This is currently being downloaded through the assets as the repository is private.
+  filepath: https://api.github.com/repos/everycure-org/matrix-drug-list/releases/assets/${globals:data_sources.ec-drug-list.version}
+  fs_args:
+    Accept: application/octet-stream
+    Authorization: token ${oc.env:GH_TOKEN}
+  load_args:
+    sep: "\t"
+
 raw.inputs:
   <<: [*_sheets_dataset]
   load_args:

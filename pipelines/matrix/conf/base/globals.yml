@@ -29,9 +29,13 @@ data_sources:
     version: 20240823
   # Dataset with drugs as identified by EC.
   ec-drug-list:
-    version: latest # TODO: We should version
+    # NOTE: This is currently the artifact id, as the GitHub API only
+    # allows for downloading an artifact by its id. Get the artifact id
+    # of the latest release as follows:
+    # curl -X GET -H "Content-Type: application/json" -H "Authorization: token PAT" -H "Accept: application/vnd.github.v3.raw" https://api.github.com/repos/everycure-org/matrix-drug-list/releases | jq ".[0].assets | map(select(.name == \"drugList.tsv\"))[0] | .id"
+    version: 189324981
   ec-disease-list:
-    version: latest
+    version: latest # TODO: We should version
 
 paths:
   # we read from our central GCS bucket where we store our ground truth data

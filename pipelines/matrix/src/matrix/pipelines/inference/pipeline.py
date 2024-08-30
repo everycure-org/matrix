@@ -4,13 +4,13 @@ from matrix import settings
 from kedro.pipeline import Pipeline, node, pipeline
 
 
-def run_inference(model, df, list):
+def run_inference(model, inputs, diseases, drugs):
     # TODO: You can implement inference here
-    df["score"] = "test"
+    inputs["score"] = "test"
 
     breakpoint()
 
-    return df
+    return inputs
 
 
 def create_pipeline(**kwargs) -> Pipeline:
@@ -24,6 +24,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                     f'modelling.{model["model_name"]}.models.model',
                     "raw.inputs",
                     "raw.evaluation.disease_list",
+                    "raw.evaluation.drug_list",
                 ],
                 outputs=f'model_outputs.{model["model_name"]}.predictions',
                 name=f'run_{model["model_name"]}_inference',
