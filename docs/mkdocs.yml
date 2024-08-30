@@ -31,6 +31,14 @@ plugins:
   - awesome-pages
   - search
   # - table-reader
+  - git-authors
+  #- git-committers:
+  #    repository: everycure-org/matrix
+  #    branch: main
+  - git-revision-date-localized:
+      enable_creation_date: true
+      fallback_to_build_date: true
+
  
 
 markdown_extensions:
