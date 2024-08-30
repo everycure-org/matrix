@@ -23,6 +23,7 @@ repos:
         exclude: | 
           (?x)^(
             pipelines/matrix/packages|services/|
+            docs/src/experiments/ |
             services/synonymizer/api/modules/synonymize
           )
   - repo: https://github.com/antonbabenko/pre-commit-terraform

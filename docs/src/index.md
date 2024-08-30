@@ -46,6 +46,14 @@ hide:
     To find documentation specific to the MATRIX project, check this link!
 
     [:octicons-arrow-right-24: MATRIX](./matrix/index.md)
+
+-   :material-matrix:{ .lg .middle } __Experiment Log__
+
+    ---
+
+    A collection of our executed experiments and insights generated from them can be found here:
+
+    [:octicons-arrow-right-24: Experiments](./experiments/index.md)
 </div>
 
 
