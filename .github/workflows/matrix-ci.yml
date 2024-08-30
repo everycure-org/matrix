@@ -76,9 +76,7 @@ jobs:
       - run: make venv
       - run: make install
       - run: make precommit
-      - run: make fast_test
       - run: make full_test
-        if: github.ref == 'refs/heads/main'
       - run: make compose_down # ensures containers & state are removed
       - run: make docker_test GIT_SHA=${GITHUB_SHA:0:7} #we overwrite the GIT_SHA in the Makefile
         # only if PR is labelled with "ready" or if branch is main
