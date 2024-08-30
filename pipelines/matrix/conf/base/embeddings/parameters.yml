@@ -75,46 +75,31 @@ embeddings.topological:
     args:
       node_filter: '*'
       relationship_filter: r.include_in_graphsage = 1.0
-  estimator:
-    model: node2vec
-    modelName: topological_embeddings
-    # using Chunyus https://github.com/everycure-org/project-silc/blob/main/chunyu-fellowship/scripts/node2vec_pyG/train_node2vec.py
-    # note they differ a bit - in neo4j we can implement max and min learning rate, and tolerance
-    node2vec_args:
-      #modelName: topological_embeddings
-      concurrency: 4
-      walkLength: 30
-      walksPerNode: 10
-      embeddingDimension: 100
-      inOutFactor: 1.0 
-      returnFactor: 1.0 
-      iterations: 100 #for some reason they dont use epochs
-      negativeSamplingRate: 5
-      windowSize: 10
-      initialLearningRate: 0.025
-      randomSeed: 42
-    graphsage_args:
-      modelName: topological_embeddings
-      featureProperties: [*_pca_property]
-      concurrency: 4
-      # FUTURE: We're currently leveraging a binary weighting strategy to exclude  
-      # certain relationships. Another option could be to leverage filtering:
-      # https://neo4j.com/docs/graph-data-science/current/management-ops/graph-creation/graph-filter/
-      maxIterations: 100
-      # NOTE: This terminates the epoc primarurely, so setting it to a small number
-      sampleSizes: [96, 96]
-      tolerance: 1e-8
-      # Chunyu: 512
-      embeddingDimension: 512
-      # Chunyu: 200k
-      batchSize: 5000
-      epochs: 10
-      searchDepth: 100
-      # Chunyu
-      # learningRate: 0.001
-      learningRate: 0.01
-      randomSeed: 42
-  write_property: topological_embedding
+    estimator:
+      model: GDSGraphSage  #GDSNode2Vec
+      args:
+        modelName: topological_embeddings
+        feature_properties: [*_pca_property]
+        concurrency: 4
+        embedding_dim: 512
+        random_seed: 42
+        relationshp_types: '*'
+        epochs: 10
+        iterations: 100
+        in_out_factor: 1.0 
+        return_factor: 1.0 
+        batch_size: 1.0
+        tolerance: 1e-8
+        search_depth: 100
+        learningRate: 0.01
+        initial_learning_rate: 
+        final_learning_rate: 
+        sample_sizes: [96, 96]
+        negative_sampling_rate: 5
+        walkLength: 30
+        walks_per_node: 10
+        window_size: 100
+      write_property: topological_embedding
 
 embeddings.topological_pca:
   skip: false # Set to true to skip PCA
