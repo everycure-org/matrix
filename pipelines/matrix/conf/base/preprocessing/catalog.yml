@@ -77,7 +77,7 @@ preprocessing.raw.clinical_trial_data:
   <<: *_medical_clinical_trials_sheet_dataset
   load_args:
     sheet_name: clinical_trial_DD_pairs
-    columns: &clinical_trails_columns
+    columns: &_clinical_trails_columns
       - "clinical_trial_id"
       - "reason_for_rejection"
       - "drug_name"
@@ -95,6 +95,13 @@ preprocessing.int.mapped_clinical_trial_data:
   load_args:
     sheet_name: clinical_trial_DD_pairs
     columns:
-      - *clinical_trails_columns
+      - "clinical_trial_id"
+      - "reason_for_rejection"
+      - "drug_name"
+      - "disease_name"
+      - "significantly_better"
+      - "non_significantly_better"
+      - "non_significantly_worse"
+      - "significantly_worse"
       - "drug_kg_curie"
       - "disease_kg_curie"
