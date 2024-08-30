@@ -9,6 +9,8 @@ import matplotlib.pyplot as plt
 from neo4j import Driver
 from pyspark.sql import DataFrame
 from pyspark.sql import functions as F
+from pyspark.sql.functions import udf, col
+from pyspark.sql.types import FloatType, ArrayType, StringType
 
 from pyspark.ml.functions import array_to_vector, vector_to_array
 from graphdatascience import GraphDataScience, QueryRunner
@@ -20,6 +22,7 @@ import seaborn as sns
 
 from pypher.builder import create_function
 from . import pypher_utils
+from graph_algorithms import *
 
 from refit.v1.core.inject import inject_object
 from refit.v1.core.unpack import unpack_params
@@ -231,6 +234,13 @@ def compute_embeddings(
     return {"success": "true"}
 
 
+def string_to_float_list(s):
+    """UDF to transform str into list."""
+    if s is not None:
+        return [float(x) for x in s.strip()[1:-1].split(",")]
+    return []
+
+
 @unpack_params()
 @inject_object()
 def reduce_dimension(df: DataFrame, transformer, input: str, output: str, skip: bool):
@@ -253,6 +263,10 @@ def reduce_dimension(df: DataFrame, transformer, input: str, output: str, skip: 
     """
     if skip:
         return df.withColumn(output, F.col(input))
+
+    if isinstance(df.schema[input].dataType, StringType):
+        string_to_float_list_udf = udf(string_to_float_list, ArrayType(FloatType()))
+        df = df.withColumn(input, string_to_float_list_udf(F.col(input)))
 
     # Convert into correct type
     df = df.withColumn("features", array_to_vector(input))
@@ -357,19 +371,27 @@ def train_topological_embeddings(
     subgraph, _ = gds.graph.filter(subgraph_name, graph, **filter_args)
 
     # Validate whether the model exists
-    model_name = estimator.get("args").get("modelName")
+    model_name = estimator.get("modelName")
     if gds.model.exists(model_name).exists:
         model = gds.model.get(model_name)
         gds.model.drop(model)
 
     # Initialize the model
-    model, attr = getattr(gds.beta, estimator.get("model")).train(
-        subgraph, **estimator.get("args")
-    )
+    estimator_name = estimator.get("model")
+    if estimator_name == "graphSage":
+        model, attr = getattr(gds.beta, estimator.get("model")).train(
+            subgraph, **estimator.get("graphsage_args")
+        )
+        losses = attr.modelInfo["metrics"]["iterationLossesPerEpoch"][0]
+    elif estimator_name == "node2vec":
+        attr = getattr(gds.beta, estimator.get("model")).write(
+            subgraph, **estimator.get("node2vec_args"), writeProperty=write_property
+        )
+        losses = [int(x) for x in attr["lossPerIteration"]]
+    else:
+        raise ValueError()
 
     # Plot convergence
-    losses = attr.modelInfo["metrics"]["iterationLossesPerEpoch"][0]
-
     convergence = plt.figure()
     ax = convergence.add_subplot(1, 1, 1)
     ax.plot([x for x in range(len(losses))], losses)
@@ -398,12 +420,12 @@ def write_topological_embeddings(
     graph = gds.graph.get(graph_name)
 
     # Retrieve the model
-    model_name = estimator.get("args").get("modelName")
-    model = gds.model.get(model_name)
-
-    # Write model output back to graph
-    model.predict_write(graph, writeProperty=write_property)
-
+    model_name = estimator.get("modelName")
+    model = estimator.get("model")
+    if model == "graphSage":
+        model = gds.model.get(model_name)
+        # Write model output back to graph
+        model.predict_write(graph, writeProperty=write_property)
     return {"success": "true"}
 
 
@@ -421,8 +443,8 @@ def visualise_pca(nodes: DataFrame, column_name: str):
     )
     sns.scatterplot(data=nodes, x="pca_0", y="pca_1", hue="category")
     plt.suptitle("PCA scatterpot")
-    plt.xlabel("PCA 1")
-    plt.ylabel("PCA 2")
+    plt.xlabel("PC 1")
+    plt.ylabel("PC 2")
     plt.legend(
         bbox_to_anchor=(1.05, 1), loc="upper left", borderaxespad=0, fontsize="small"
     )
