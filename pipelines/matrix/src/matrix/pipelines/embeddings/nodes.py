@@ -9,6 +9,8 @@ import matplotlib.pyplot as plt
 from neo4j import Driver
 from pyspark.sql import DataFrame
 from pyspark.sql import functions as F
+from pyspark.sql.functions import udf, col
+from pyspark.sql.types import FloatType, ArrayType, StringType
 
 from pyspark.ml.functions import array_to_vector, vector_to_array
 from graphdatascience import GraphDataScience, QueryRunner
@@ -231,6 +233,13 @@ def compute_embeddings(
     return {"success": "true"}
 
 
+def string_to_float_list(s):
+    """UDF to transform str into list."""
+    if s is not None:
+        return [float(x) for x in s.strip()[1:-1].split(",")]
+    return []
+
+
 @unpack_params()
 @inject_object()
 def reduce_dimension(df: DataFrame, transformer, input: str, output: str, skip: bool):
@@ -253,6 +262,10 @@ def reduce_dimension(df: DataFrame, transformer, input: str, output: str, skip: 
     """
     if skip:
         return df.withColumn(output, F.col(input))
+
+    if isinstance(df.schema[input].dataType, StringType):
+        string_to_float_list_udf = udf(string_to_float_list, ArrayType(FloatType()))
+        df = df.withColumn(input, string_to_float_list_udf(F.col(input)))
 
     # Convert into correct type
     df = df.withColumn("features", array_to_vector(input))
