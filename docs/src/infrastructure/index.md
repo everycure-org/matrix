@@ -14,15 +14,16 @@ But we believe in a few axioms that we hope get us where we need to go:
 
 **1) Applying the scientific method** leads to new insights that get us closer to our goal. This means reproducible, data-driven analytics of peer-reviewed work, driven by hypotheses about how we can improve things, which are proven through experiments. Therefore, the scientific method is encoded directly into our Git flow.
 
-![](https://cdn.hashnode.com/res/hashnode/image/upload/v1724942557819/iz_tajcpX.png align="center")
+![](../assets/img/infra_intro/scientific_method.excalidraw.svg)
 
 **2) More experiments lead to more insights**. We therefore want to move from 1 all-vs-all prediction every few weeks to hundreds per day, constantly improving our predictive performance.
 
-![](https://cdn.hashnode.com/res/hashnode/image/upload/v1724941113182/rT7ZbMPbC.png align="center")
+![](../assets/img/infra_intro/speed.excalidraw.svg)
 
 **3) Closing the feedback loop** leads to a self-learning system. As we predict scores, we implicitly encode hypotheses in the predictions. These hypotheses can be validated through various ways, and the insights feed back into our models, improving the next iteration. This may be anything from in-silico drug-ligand interactions to off-label compassionate use deployment for individual patients by their treating physicians.
 
-![](https://cdn.hashnode.com/res/hashnode/image/upload/v1724933909581/c4bd4d8d-1dc7-4c15-a354-be0fa13e8f0a.png align="center")
+![](../assets/img/infra_intro/learning_loop.excalidraw.svg)
+
 ## The system to enable us: A shared, scalable compute platform which makes fast distributed experiments easy
 
 Now that we have our high-level strategy defined, we can go about building a system that enables us to achieve these above objectives. In the world of software engineering, there are of course millions of ways to achieve such an objective, but we also have a few non-functional constraints that we consider, such as talent availability, technology maturity, and costs.
@@ -42,7 +43,7 @@ In broad strokes, we opted for the following:
 
 The below sketch visualizes our main technology components and shows what sits "beneath the surface" of the pipeline itself.
 
-![](https://cdn.hashnode.com/res/hashnode/image/upload/v1724941046536/qujqfX-UQ.png align="center")
+![](../assets/img/infra_intro/under_the_surface.excalidraw.svg)
 
 The **pipeline itself is completely independent of the systems on which it is executed**. It can run on a MacBook, in a Docker container, in a `docker compose` setup, or deployed as a distributed pipeline via `kubectl`. This separation of concern allows us to run the entire pipeline in a variety of ways:
 
@@ -58,7 +59,7 @@ The **pipeline itself is completely independent of the systems on which it is ex
 
 Visualized strictly as a stack, the *primary stack* be broken into 5 logical layers: ML, Pipeline, Parallelization, Data/Compute & Infrastructure. Let's dive into each of them in detail now.
 
-![](https://cdn.hashnode.com/res/hashnode/image/upload/v1724938118424/HDB0lICV2.png align="center")
+![](../assets/img/infra_intro/layers.excalidraw.svg)
 
 ### **ML Layer: OpenAI, Neo4J GDS, XGBoost, scikit-learn**
 
@@ -81,7 +82,7 @@ Our pipeline employs parallelization techniques to efficiently process large-sca
 * **Compute Parallelization with Ray**: We are planning to integrate Ray into our pipeline to provide more flexible parallelization, especially for our machine learning workflows. Ray will allow us to easily parallelize Python code and distribute ML tasks across our computational resources. We will use Ray as the interface for data scientists to work with instead of the underlying Kubernetes API, abstracting the compute layer away to logical resource concepts such as GPU count or CPU core count. This addition will drastically speed up operations like hyper-parameter tuning, ensemble model training, and inference.
     
 
-![](https://cdn.hashnode.com/res/hashnode/image/upload/v1724943489111/xuUqWsvvz.png align="center")
+![](../assets/img/infra_intro/compute_data_volume.excalidraw.svg)
 
 By combining Spark for data preprocessing and Ray for ML-specific parallelization, we create a pipeline capable of handling the computational demands of large-scale drug repurposing predictions. Generally, as we progress in the pipeline, the data volume drastically shrinks but the compute requirements follow a different demand pattern. We require high amounts of compute for the graph enrichment (embeddings) and the training and inference stages while the ingestion & data integration require relatively little compute capacity.
 ### Data & Compute Layer: Kubernetes & BigQuery
@@ -154,7 +155,7 @@ Furthermore, we run several services on individual instances, avoiding idle reso
 
 Below is a screenshot of our favorite Kubernetes management tool `k9s` ([GitHub](https://github.com/derailed/k9s)), an amazing CLI tool to interact with the cluster. Note that we use ArgoCD to provision our cluster, more on that later.
 
-![](https://cdn.hashnode.com/res/hashnode/image/upload/v1724933693286/2062bfaa-56c9-4062-8d51-d68a6dc65220.png align="center")
+![](../assets/img/infra_intro/cluster_overview.png)
 
 #### Artifact Registry
 

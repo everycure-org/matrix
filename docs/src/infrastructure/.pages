@@ -2,6 +2,5 @@
 nav:
     - index.md
     - compute_cluster.md
-    - networking.md
-    - gcp_project_template.md
-    - gcp_foundations.md
+    - gcp.md
+    - runbooks
