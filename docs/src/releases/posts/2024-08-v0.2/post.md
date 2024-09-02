@@ -4,7 +4,7 @@ date: 2024-09-02
 categories:
   - Release
 authors:
-  # note we randomly sort these
+  # note we randomly sort these except the first author which is the one that "owns" this release. We may rotate this going forward, TBD
   - lvijnck
   - marcello-deluca
   - sabrinatoro
