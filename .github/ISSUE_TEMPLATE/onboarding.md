@@ -20,6 +20,7 @@ This issue template provides a structured, technical onboarding checklist for ne
   - [ ] Validate `git-crypt unlock` successfull after key was added by codeowner
   - [ ] Read up on [Kedro](https://docs.dev.everycure.org/onboarding/kedro/)
   - [ ] Read up on [pipeline stages](https://docs.dev.everycure.org/onboarding/pipeline/)
+  - [ ] Create `.env` file from the `.env.tmpl` file for non docker-based local runs
   - [ ] Launched [local setup](https://docs.dev.everycure.org/onboarding/local-setup/) and run test pipeline till completion
 
 
