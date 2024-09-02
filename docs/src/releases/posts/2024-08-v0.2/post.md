@@ -28,16 +28,16 @@ pipeline, enhancing its functionality, scalability, and accessibility. For a det
 
 We've completed an end-to-end run focused on Long COVID, generating top-performing drug predictions for 9 distinct LC subtypes. This marks a significant milestone in our ability to produce actionable insights for specific disease areas. This involved:
 
-- Designing a flow to incorporate non-KG custom data sources
+- Designing a flow to incorporate non-KG custom data sources (e.g. input from our Medical Team)
 - Ingesting data from out medical team into the pipeline
-- Integrating the medic team data into our Knowledge Graph
+- Integrating the medical team data into our Knowledge Graph
 
 ![](./attachments/medical-integration.excalidraw.svg)
 
 
 ### 2. Knowledge Graph Enhancements
 
-We've released the first versions of our curated [disease list](https://github.com/everycure-org/matrix-disease-list/releases/tag/2024-07-25) and [drug list](https://github.com/everycure-org/matrix-drug-list/releases/tag/v1.0.3), providing a solid foundation for our repurposing efforts.
+We've released the first versions of our curated [disease list](https://github.com/everycure-org/matrix-disease-list/releases/tag/2024-07-25) and [drug list](https://github.com/everycure-org/matrix-drug-list/releases/tag/v1.0.3),which will become the axes of our all drug vs. all disease predictive matrix.
 
 ### 3. Access to cluster services
 
@@ -49,7 +49,7 @@ We've enabled public access to the services running on our cluster, protected by
 
 ### 3. Infrastructure and Performance Improvements
 
-Neo4J had proven to be bottleneck in our ability to scale pipeline runs. Executing multiple runs of our pipeline concurrently was not feasible, due to a single run of the pipeline using most of the memory. To overcome this, we've implemented the following changes:
+A single Neo4J proved to be a bottleneck in our ability to scale pipeline runs. Executing multiple runs of our pipeline concurrently was not feasible, due to a single run of the pipeline using most of the memory. To overcome this, we've implemented the following changes:
 
 - We've turned Neo4J into an ephemeral compute unit scoped to the lifecycle of our pipeline
 - We've implemented a node fusing algorithm that fuses together multiple Kedro nodes into a single Argo Workflows step on execution on the cluster thereby allowing multiple kedro nodes to be executed on the same Argo Workflow node
