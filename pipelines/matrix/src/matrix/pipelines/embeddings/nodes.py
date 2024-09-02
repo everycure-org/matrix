@@ -372,7 +372,6 @@ def train_topological_embeddings(
 
     # Validate whether the model exists
     model_name = estimator.get("modelName")
-    print(model_name)
     if gds.model.exists(model_name).exists:
         model = gds.model.get(model_name)
         gds.model.drop(model)
@@ -413,7 +412,9 @@ def write_topological_embeddings(
 
     # Retrieve the model
     model_name = estimator.get("modelName")
-    topological_estimator.predict_write(model_name, gds, graph, write_property)
+    topological_estimator.predict_write(
+        gds=gds, model_name=model_name, graph=graph, write_property=write_property
+    )
     return {"success": "true"}
 
 

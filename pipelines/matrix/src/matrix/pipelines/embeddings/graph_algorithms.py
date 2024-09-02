@@ -3,11 +3,10 @@ from abc import ABC
 
 
 class GDSGraphAlgorithm(ABC):
-    """Base class for Graph Algorithms."""
+    """Base class for Graph Algorithms, stores all arguments which canbe then used by child classes."""
 
     def __init__(
         self,
-        model_name="topological_embeddings",
         feature_properties="*",
         relationship_types="*",
         embedding_dim=512,
@@ -32,7 +31,6 @@ class GDSGraphAlgorithm(ABC):
         activation_function="sigmoid",
     ):
         """Get all attributes."""
-        self._model_name = model_name
         self._embedding_dim = embedding_dim
         self._random_seed = random_seed
         self._concurrency = concurrency
@@ -61,10 +59,11 @@ class GDSGraphAlgorithm(ABC):
 class GDSGraphSage(GDSGraphAlgorithm):
     """GraphSAGE algorithm class."""
 
-    def run(self, gds, model_name, subgraph, write_property):
-        """Run training/inference."""
+    # https://neo4j.com/docs/graph-data-science/current/machine-learning/node-embeddings/graph-sage/
+    def run(self, gds, model_name, graph, write_property):
+        """Train the algorithm."""
         model, attr = gds.beta.graphSage.train(
-            subgraph,
+            graph,
             modelName=model_name,
             sampleSizes=self._sample_sizes,
             maxIterations=self._iterations,
@@ -85,20 +84,21 @@ class GDSGraphSage(GDSGraphAlgorithm):
         """Return loss."""
         return self._loss
 
-    def predict_write(self, model_name, gds, subgraph, write_property):
+    def predict_write(self, model_name, gds, graph, write_property):
         """Predict and save."""
         model = gds.model.get(model_name)
-        model.predict_write(subgraph, writeProperty=write_property)
+        model.predict_write(graph, writeProperty=write_property)
 
 
 class GDSNode2Vec(GDSGraphAlgorithm):
     """Node2Vec algorithm class."""
 
-    def run(self, gds, model_name, subgraph, write_property):
-        """Run infer/training."""
+    # https://neo4j.com/docs/graph-data-science/current/machine-learning/node-embeddings/node2vec/
+    def run(self, gds, graph, model_name, write_property):
+        """Train the algorithm and write."""
         attr = gds.node2vec.write(
-            subgraph,
-            # modelName = model_name,
+            graph,
+            model_name,
             walkLength=self._walk_length,
             walksPerNode=self._walks_per_node,
             embeddingDimension=self._embedding_dim,
@@ -114,9 +114,8 @@ class GDSNode2Vec(GDSGraphAlgorithm):
         )
         self._loss = [int(x) for x in attr["lossPerIteration"]]
 
-    def predict_write(self, model_name, gds, subgraph, write_property):
-        """Predict and save."""
-        # dummy function as node2vec doesnt train like GraphSAGE
+    def predict_write(self, model_name, gds, graph, write_property):
+        """Predict and save; dummy function as Node2Vec saves the embeddings after training."""
         return
 
     def return_loss(self):
