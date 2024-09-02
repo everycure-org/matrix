@@ -44,6 +44,7 @@ plugins:
   - blog:
      blog_dir: releases
      categories: false
+      
 
  
 

@@ -17,8 +17,8 @@ changelog:
         - experiment report
     - title: Bugfixes 🐛
       labels:
+        - Bug
         - bug
-        - Bugfix
     - title: Technical Enhancements 🧰
       labels:
         - enhancement
