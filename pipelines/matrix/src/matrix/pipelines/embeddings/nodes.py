@@ -22,7 +22,7 @@ import seaborn as sns
 
 from pypher.builder import create_function
 from . import pypher_utils
-from graph_algorithms import *
+from .graph_algorithms import *
 
 from refit.v1.core.inject import inject_object
 from refit.v1.core.unpack import unpack_params
@@ -330,6 +330,7 @@ def add_include_in_graphsage(
 def train_topological_embeddings(
     df: DataFrame,
     gds: GraphDataScience,
+    topological_estimator: GDSGraphAlgorithm,
     projection: Any,
     filtering: Any,
     estimator: Any,
@@ -347,6 +348,7 @@ def train_topological_embeddings(
         gds: the gds object
         filtering: filtering
         projection: gds projection to execute on the graph
+        topological_estimator: GDS estimator to apply
         estimator: estimator to apply
         write_property: node property to write result to
     """
@@ -355,14 +357,12 @@ def train_topological_embeddings(
     if gds.graph.exists(graph_name).exists:
         graph = gds.graph.get(graph_name)
         gds.graph.drop(graph, False)
-
     config = projection.pop("configuration", {})
     graph, _ = gds.graph.project(*projection.values(), **config)
 
     # Filter out treat/GT nodes from the graph
     subgraph_name = filtering.get("graphName")
     filter_args = filtering.pop("args")
-
     # Drop graph if exists
     if gds.graph.exists(subgraph_name).exists:
         subgraph = gds.graph.get(subgraph_name)
@@ -372,6 +372,7 @@ def train_topological_embeddings(
 
     # Validate whether the model exists
     model_name = estimator.get("modelName")
+    print(model_name)
     if gds.model.exists(model_name).exists:
         model = gds.model.get(model_name)
         gds.model.drop(model)
@@ -399,6 +400,7 @@ def train_topological_embeddings(
 def write_topological_embeddings(
     model: DataFrame,
     gds: GraphDataScience,
+    topological_estimator: GDSGraphAlgorithm,
     projection: Any,
     estimator: Any,
     filtering: Any,
@@ -411,11 +413,7 @@ def write_topological_embeddings(
 
     # Retrieve the model
     model_name = estimator.get("modelName")
-    model = estimator.get("model")
-    if model == "graphSage":
-        model = gds.model.get(model_name)
-        # Write model output back to graph
-        model.predict_write(graph, writeProperty=write_property)
+    topological_estimator.predict_write(model_name, gds, graph, write_property)
     return {"success": "true"}
 
 

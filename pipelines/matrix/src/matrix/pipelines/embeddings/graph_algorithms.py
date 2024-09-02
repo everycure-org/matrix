@@ -7,10 +7,12 @@ class GDSGraphAlgorithm(ABC):
 
     def __init__(
         self,
+        model_name="topological_embeddings",
+        feature_properties="*",
+        relationship_types="*",
         embedding_dim=512,
         random_seed=None,
         concurrency=4,
-        relationship_types="*",
         epochs=10,
         iterations=10,
         in_out_factor=1,
@@ -26,14 +28,14 @@ class GDSGraphAlgorithm(ABC):
         walk_length=80,
         walks_per_node=10,
         window_size=10,
-        negative_sample_weight=20,
+        negative_sampling_weight=20,
         activation_function="sigmoid",
     ):
         """Get all attributes."""
+        self._model_name = model_name
         self._embedding_dim = embedding_dim
         self._random_seed = random_seed
         self._concurrency = concurrency
-        self._relationship_types = relationship_types
         self._epochs = epochs
         self._iterations = iterations
         self._in_out_factor = in_out_factor
@@ -46,25 +48,24 @@ class GDSGraphAlgorithm(ABC):
         self._min_learning_rate = min_learning_rate
         self._sample_sizes = sample_sizes
         self._negative_sampling_rate = negative_sampling_rate
-        self._negative_sampling_weight = negative_sample_weight
+        self._negative_sampling_weight = negative_sampling_weight
         self._walk_length = walk_length
         self._walks_per_node = walks_per_node
         self._window_size = window_size
         self._activation_function = activation_function
+        self._feature_properties = feature_properties
+        self._relationship_types = relationship_types
         self._loss = None
 
 
 class GDSGraphSage(GDSGraphAlgorithm):
     """GraphSAGE algorithm class."""
 
-    def __init__(self):
-        """Import from base class algo."""
-        super().__init__()
-
-    def run(self, gds, subgraph):
+    def run(self, gds, model_name, subgraph, write_property):
         """Run training/inference."""
         model, attr = gds.beta.graphSage.train(
             subgraph,
+            modelName=model_name,
             sampleSizes=self._sample_sizes,
             maxIterations=self._iterations,
             tolerance=self._tolerance,
@@ -73,8 +74,9 @@ class GDSGraphSage(GDSGraphAlgorithm):
             randomSeed=self._random_seed,
             epochs=self._epochs,
             searchDepth=self._search_depth,
-            negativeSampleWeight=self._negative_sample_weight,
+            negativeSampleWeight=self._negative_sampling_weight,
             activationFunction=self._activation_function,
+            featureProperties=self._feature_properties,
         )
         self._loss = attr["modelInfo"]["metrics"]["iterationLossesPerEpoch"][0]
         return model, attr
@@ -83,7 +85,7 @@ class GDSGraphSage(GDSGraphAlgorithm):
         """Return loss."""
         return self._loss
 
-    def predict_and_save(self, model_name, gds, subgraph, write_property):
+    def predict_write(self, model_name, gds, subgraph, write_property):
         """Predict and save."""
         model = gds.model.get(model_name)
         model.predict_write(subgraph, writeProperty=write_property)
@@ -92,14 +94,11 @@ class GDSGraphSage(GDSGraphAlgorithm):
 class GDSNode2Vec(GDSGraphAlgorithm):
     """Node2Vec algorithm class."""
 
-    def __init__(self):
-        """Init."""
-        super().__init__()
-
-    def run(self, gds, subgraph, write_property):
+    def run(self, gds, model_name, subgraph, write_property):
         """Run infer/training."""
         attr = gds.node2vec.write(
             subgraph,
+            # modelName = model_name,
             walkLength=self._walk_length,
             walksPerNode=self._walks_per_node,
             embeddingDimension=self._embedding_dim,
@@ -115,7 +114,7 @@ class GDSNode2Vec(GDSGraphAlgorithm):
         )
         self._loss = [int(x) for x in attr["lossPerIteration"]]
 
-    def predict_and_save(self, model_name, gds, subgraph, write_property):
+    def predict_write(self, model_name, gds, subgraph, write_property):
         """Predict and save."""
         # dummy function as node2vec doesnt train like GraphSAGE
         return

@@ -104,6 +104,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 inputs={
                     "df": "embeddings.feat.include_in_graphsage@yaml",
                     "gds": "params:embeddings.gds",
+                    "topological_estimator": "params:embeddings.topological_estimator",
                     "unpack": "params:embeddings.topological",
                 },
                 outputs=["embeddings.models.graphsage", "embeddings.reporting.loss"],
@@ -119,6 +120,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 inputs={
                     "model": "embeddings.models.graphsage",
                     "gds": "params:embeddings.gds",
+                    "topological_estimator": "params:embeddings.topological_estimator",
                     "unpack": "params:embeddings.topological",
                 },
                 outputs="embeddings.model_output.graphsage",
