@@ -127,7 +127,8 @@ where the `fldr-` folders contain foundations blueprint artifacts (e.g. shared l
 
 ## Project creation and seeding with terraform information
 
-We create projects at the "core" level and provide these projects to ... well project teams. What exactly we provide is documented on the [project setup](./gcp_project_template.md) page. 
+We create projects at the "core" level and provide these projects to  project
+teams. 
 
 ----
 
