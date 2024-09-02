@@ -244,7 +244,7 @@ class GoogleSheetsDataset(AbstractVersionedDataset[pd.DataFrame, pd.DataFrame]):
             df = df[cols]
 
         # NOTE: Upon loading, replace empty strings with NaN
-        return df.replace(r"^\s*$", np.nan, regex=True)
+        return df.replace(r"^\s*$|^N/A$", np.nan, regex=True)
 
     def _save(self, data: pd.DataFrame) -> None:
         self._init_sheet()

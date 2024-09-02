@@ -190,10 +190,10 @@ def create_prm_edges(int_edges: pd.DataFrame) -> pd.DataFrame:
         "reason_for_rejection": "object",
         "drug_name": "object",
         "disease_name": "object",
-        "significantly_better": "object",
-        "non_significantly_better": "object",
-        "non_significantly_worse": "object",
-        "significantly_worse": "object",
+        "significantly_better": "numeric",
+        "non_significantly_better": "numeric",
+        "non_significantly_worse": "numeric",
+        "significantly_worse": "numeric",
     },
     allow_subset=True,
     df="df",
@@ -245,13 +245,13 @@ def map_name_to_curie(
         "reason_for_rejection": "object",
         "drug_name": "object",
         "disease_name": "object",
-        "significantly_better": "object",
-        "non_significantly_better": "object",
-        "non_significantly_worse": "object",
-        "significantly_worse": "object",
         "drug_kg_curie": "object",
         "disease_kg_curie": "object",
         "conflict": "object",
+        "significantly_better": "numeric",
+        "non_significantly_better": "numeric",
+        "non_significantly_worse": "numeric",
+        "significantly_worse": "numeric",
     },
     allow_subset=True,
     df="df",
@@ -259,8 +259,6 @@ def map_name_to_curie(
 @primary_key(
     primary_key=[
         "clinical_trial_id",
-        "drug_name",
-        "disease_name",
         "drug_kg_curie",
         "disease_kg_curie",
     ]
@@ -275,40 +273,26 @@ def clean_clinical_trial_data(df: pd.DataFrame) -> pd.DataFrame:
     Returns:
         Cleaned clinical trial data.
     """
+    # Remove rows with conflicts
     df = df[df["conflict"].eq("FALSE")].reset_index(drop=True)
 
     # remove rows with reason for rejection
-    df = df[
-        df["reason_for_rejection"].isna()
-        | df["reason_for_rejection"].str.strip().eq("")
-    ].reset_index(drop=True)
+    df = df[~df["reason_for_rejection"].isna()].reset_index(drop=True)
 
-    # remove rows with missing drug_kg_curie or disease_kg_curie
-    df = df.dropna(subset=["drug_kg_curie", "disease_kg_curie"]).reset_index(drop=True)
+    # Define columns to check
+    columns_to_check = [
+        "drug_kg_curie",
+        "disease_kg_curie",
+        "significantly_better",
+        "non_significantly_better",
+        "non_significantly_worse",
+        "significantly_worse",
+    ]
 
-    # remove rows with missing values in significantly better, non-significantly better, non-significantly worse, or significantly worse columns
-    df = df.dropna(
-        subset=[
-            "significantly_better",
-            "non_significantly_better",
-            "non_significantly_worse",
-            "significantly_worse",
-        ]
-    ).reset_index(drop=True)
-    df = df[
-        df[
-            [
-                "significantly_better",
-                "non_significantly_better",
-                "non_significantly_worse",
-                "significantly_worse",
-            ]
-        ]
-        .applymap(lambda x: not isinstance(x, str))
-        .all(axis=1)
-    ].reset_index(drop=True)
+    # Remove rows with missing values in cols
+    df = df.dropna(subset=columns_to_check).reset_index(drop=True)
 
-    # drop column: reason_for_rejection
+    # drop columns
     df = df.drop(columns=["reason_for_rejection", "conflict"]).reset_index(drop=True)
 
     return df
