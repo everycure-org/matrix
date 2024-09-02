@@ -10,10 +10,15 @@ authors:
 
 # `v0.1` Release: Functional End to End Pipeline running on GCP
 
-!!! note "First Release"
-    This is our first mini release, preparing for a monthly release cadence. Below is a summary of our achievements to date.
+We are excited to announce the release of our first functional end-to-end pipeline, built on Google Cloud Platform (GCP) using Kedro. Going forward, we aim for a monthly release cadence.
+
+
+<!-- more -->
 
 For a complete summary of our progress, please check out the [release on GitHub](https://github.com/everycure-org/matrix/releases/tag/v0.1)
+
+!!! note "First Release"
+    This is our first mini release, preparing for a monthly release cadence. Below is a summary of our achievements to date.
 
 ### Key Achievements
 

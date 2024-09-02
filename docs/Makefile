@@ -4,7 +4,7 @@
 build: install
 	.venv/bin/mkdocs build -s # build in strict mode, all links must function
 
-serve: install
+serve: 
 	.venv/bin/mkdocs serve
 
 install:
