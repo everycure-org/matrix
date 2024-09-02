@@ -18,7 +18,7 @@ authors:
 # `v0.2`: Functional E2E pipeline with first valuable results for Long Covid research
 
 In this release, we've made significant strides in developing our drug repurposing
-pipeline, enhancing its functionality, scalability, and accessibility. For a detailed list of contriubutions broken down by contributor check our [GitHub Release Page](https://github.com/everycure-org/matrix/releases/tag/v0.2)
+pipeline, enhancing its functionality, scalability, and accessibility. For a detailed list of contributions broken down by contributor check our [GitHub Release Page](https://github.com/everycure-org/matrix/releases/tag/v0.2)
 
 ### Key Achievements
 
@@ -26,7 +26,7 @@ pipeline, enhancing its functionality, scalability, and accessibility. For a det
 
 We've completed an end-to-end run focused on Long COVID, generating top-performing drug predictions for 9 distinct LC subtypes. This marks a significant milestone in our ability to produce actionable insights for specific disease areas. This involved:
 
-- Designing a flow to incorporating non-KG custom data sources
+- Designing a flow to incorporate non-KG custom data sources
 - Ingesting data from out medical team into the pipeline
 - Integrating the medic team data into our Knowledge Graph
 
@@ -49,10 +49,10 @@ We've enabled public access to the services running on our cluster, protected by
 
 Neo4J had proven to be bottleneck in our ability to scale pipeline runs. Executing multiple runs of our pipeline concurrently was not feasible, due to a single run of the pipeline using most of the memory. To overcome this, we've implemented the following changes:
 
-- We've turned Neo4J into an emphemeral compute unit scoped to the lifecycle of our pipeline
-- We've implemented a node fusing algorithm that fuses together multiple Kedro nodes into a single Argo Workflows step on execution on the clusterm thereby allowing multiple kedro nodes to be executed on the same Argo Workflow node
+- We've turned Neo4J into an ephemeral compute unit scoped to the lifecycle of our pipeline
+- We've implemented a node fusing algorithm that fuses together multiple Kedro nodes into a single Argo Workflows step on execution on the cluster thereby allowing multiple kedro nodes to be executed on the same Argo Workflow node
 
-The screenshow below illustrates this behaviour, where multiple steps in the pipeline are grouped together, allowing then to use the same instance of the emphemeral Neo4J instance.
+The screenshot below illustrates this behavior, where multiple steps in the pipeline are grouped together, allowing then to use the same instance of the ephemeral Neo4J instance.
 
 ![](attachments/ss_fusing.png)
 
@@ -68,7 +68,7 @@ Using this sheet, we've developed a preprocessing pipeline to ingest experimenta
 
 ### 5. Model and Embedding Enhancements
 
-Embeddings are critual to the accuracy of our results, and we've performed several experiments to improve our modelling:
+Embeddings are critical to the accuracy of our results, and we've performed several experiments to improve our modelling:
 
  - Conducted several experiments to optimize parameters for our GraphSage model, including updates to learning rates and iteration counts.
 - Implemented and tested various Actor-Critic networks for MOA prediction and shortest path finding in our Knowledge Graph.
