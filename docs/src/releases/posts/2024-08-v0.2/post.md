@@ -20,6 +20,8 @@ authors:
 In this release, we've made significant strides in developing our drug repurposing
 pipeline, enhancing its functionality, scalability, and accessibility. For a detailed list of contributions broken down by contributor check our [GitHub Release Page](https://github.com/everycure-org/matrix/releases/tag/v0.2)
 
+<!-- more -->
+
 ### Key Achievements
 
 ### 1. Long COVID e2e run
