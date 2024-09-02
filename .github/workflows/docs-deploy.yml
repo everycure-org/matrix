@@ -61,7 +61,7 @@ jobs:
   build_and_deploy:
     needs: [paths_filter]
     runs-on: ubuntu-latest
-    name: Deploy Docs
+    name: Build Documentation
     permissions:
       contents: 'read'
       id-token: 'write'

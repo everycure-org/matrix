@@ -15,14 +15,14 @@ authors:
   - leelancashire
 ---
 
-# `v0.2`: Functional E2E pipeline with first valuable results for Long Covid research
+# `v0.2`: Parallel pipeline execution leading to first results for Long Covid research
 
 In this release, we've made significant strides in developing our drug repurposing
 pipeline, enhancing its functionality, scalability, and accessibility. For a detailed list of contributions broken down by contributor check our [GitHub Release Page](https://github.com/everycure-org/matrix/releases/tag/v0.2)
 
 <!-- more -->
 
-### Key Achievements
+## Key Achievements
 
 ### 1. Long COVID e2e run
 
