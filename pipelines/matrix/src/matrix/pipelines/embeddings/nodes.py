@@ -22,7 +22,7 @@ import seaborn as sns
 
 from pypher.builder import create_function
 from . import pypher_utils
-from graph_algorithms import *
+# from .graph_algorithms import *
 
 from refit.v1.core.inject import inject_object
 from refit.v1.core.unpack import unpack_params
@@ -384,7 +384,7 @@ def train_topological_embeddings(
         )
         losses = attr.modelInfo["metrics"]["iterationLossesPerEpoch"][0]
     elif estimator_name == "node2vec":
-        attr = getattr(gds.beta, estimator.get("model")).write(
+        attr = getattr(gds, estimator.get("model")).write(
             subgraph, **estimator.get("node2vec_args"), writeProperty=write_property
         )
         losses = [int(x) for x in attr["lossPerIteration"]]

@@ -44,6 +44,19 @@ def create_int_pairs(raw_tp: pd.DataFrame, raw_tn: pd.DataFrame):
     return pd.concat([raw_tp, raw_tn], axis="index").reset_index(drop=True)
 
 
+from pyspark.sql import DataFrame, functions as F
+from pyspark.sql.types import StringType, ArrayType, FloatType
+from pyspark.sql.functions import udf
+import numpy as np
+
+
+def string_to_float_list(s):
+    """UDF to transform str into list."""
+    if s is not None:
+        return [float(x) for x in s.strip()[1:-1].split(",")]
+    return []
+
+
 def prefilter_nodes(
     nodes: DataFrame, drug_types: List[str], disease_types: List[str]
 ) -> DataFrame:
@@ -56,6 +69,11 @@ def prefilter_nodes(
     Returns:
         Filtered nodes dataframe
     """
+    input = "topological_embedding"
+    if isinstance(nodes.schema[input].dataType, StringType):
+        string_to_float_list_udf = udf(string_to_float_list, ArrayType(FloatType()))
+        nodes = nodes.withColumn(input, string_to_float_list_udf(F.col(input)))
+
     return nodes.filter(
         (f.col("category").isin(drug_types)) | (f.col("category").isin(disease_types))
     )
