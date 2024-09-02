@@ -97,8 +97,8 @@ class GDSNode2Vec(GDSGraphAlgorithm):
     def run(self, gds, graph, model_name, write_property):
         """Train the algorithm and write."""
         attr = gds.node2vec.write(
-            graph,
-            model_name,
+            G=graph,
+            writeProperty=write_property,
             walkLength=self._walk_length,
             walksPerNode=self._walks_per_node,
             embeddingDimension=self._embedding_dim,
@@ -110,7 +110,6 @@ class GDSNode2Vec(GDSGraphAlgorithm):
             initialLearningRate=self._initial_learning_rate,
             minLearningRate=self._min_learning_rate,
             randomSeed=self._random_seed,
-            writeProperty=write_property,
         )
         self._loss = [int(x) for x in attr["lossPerIteration"]]
 
