@@ -217,7 +217,7 @@ class RecallAtN(Evaluation):
         self._n_values = n_values
         self._score_col_name = score_col_name
 
-    def evaluate(self, data: pd.DataFrame) -> Dict[str, float]:
+    def evaluate(self, data: pd.DataFrame) -> Dict:
         """Evaluates Recall@N on a dataset.
 
         Args:
