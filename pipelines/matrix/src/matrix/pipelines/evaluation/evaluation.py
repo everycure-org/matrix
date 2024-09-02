@@ -203,48 +203,49 @@ class HitK(RankingFunction):
         """Returns name of the function."""
         return "hit-" + str(self.k)
 
+
 class RecallAtN(Evaluation):
     """A class representing the Recall@N metric for drug-disease pairs."""
 
-    def __init__(self, n: int, score_col_name: str):
+    def __init__(self, n_values: List[int], score_col_name: str):
         """Initializes the RecallAtN instance.
 
         Args:
-            n: The N value for Recall@N.
+            n_values: A list of N values for Recall@N.
             score_col_name: Probability score column name.
         """
-        self._n = n
+        self._n_values = n_values
         self._score_col_name = score_col_name
 
-    def evaluate(
-        self,
-        data: pd.DataFrame,
-    ) -> Dict:
+    def evaluate(self, data: pd.DataFrame) -> Dict[str, float]:
         """Evaluates Recall@N on a dataset.
 
         Args:
             data: Labelled drug-disease dataset with probability scores.
         """
-        
         y_score = data[self._score_col_name]
         y_true = data["y"]
-        
+
         # Sort indices by score in descending order
         sorted_indices = np.argsort(y_score)[::-1]
 
-        # Get the top N predictions
-        top_n_indices = sorted_indices[:self._n]
-        
-        # Calculate hits (true positives in top N)
-        hits = np.sum(y_true[top_n_indices])
-        
-        # Total number of true positives
-        total_positives = np.sum(y_true)
-        
-        # Recall@N = (Number of true positives in top N) / (Total number of true positives)
-        if total_positives == 0:
-            recall = 0  # Avoid division by zero
-        else:
-            recall = hits / total_positives
+        results = {}
+        for n in self._n_values:
+            # Get the top N predictions
+            top_n_indices = sorted_indices[:n]
 
-        return {"recall_at_n": recall}
+            # Calculate hits (true positives in top N)
+            hits = np.sum(y_true[top_n_indices])
+
+            # Total number of true positives
+            total_positives = np.sum(y_true)
+
+            # Recall@N = (Number of true positives in top N) / (Total number of true positives)
+            if total_positives == 0:
+                recall = 0  # Avoid division by zero
+            else:
+                recall = hits / total_positives
+
+            results[f"recall_at_{n}"] = recall
+
+        return results
