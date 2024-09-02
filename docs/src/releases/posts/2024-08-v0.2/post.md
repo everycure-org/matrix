@@ -98,11 +98,4 @@ and derive insights from complex medical data at scale. We're now better positio
 tackle challenging repurposing scenarios and collaborate effectively across teams.
 
 ![](../../../assets/img/infra_intro/speed.excalidraw.svg)
-![](./attachments/medical-integration.excalidraw.svg)
 
-
-This release represents a significant step forward in our ability to process, analyze,
-and derive insights from complex medical data at scale. We're now better positioned to
-tackle challenging repurposing scenarios and collaborate effectively across teams.
-
-![](../../../assets/img/infra_intro/speed.excalidraw.svg)
