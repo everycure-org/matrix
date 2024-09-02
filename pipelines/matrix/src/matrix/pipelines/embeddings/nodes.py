@@ -407,7 +407,7 @@ def write_topological_embeddings(
     return {"success": "true"}
 
 
-def string_to_float_list(s):
+def string_to_float_list(s: str) -> List[float]:
     """UDF to transform str into list. Fix for Node2Vec array being written as string."""
     if s is not None:
         return [float(x) for x in s.strip()[1:-1].split(",")]
