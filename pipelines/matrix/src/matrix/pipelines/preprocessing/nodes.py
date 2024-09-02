@@ -277,7 +277,10 @@ def clean_clinical_trial_data(df: pd.DataFrame) -> pd.DataFrame:
     df = df[df["conflict"].eq("FALSE")].reset_index(drop=True)
 
     # remove rows with reason for rejection
-    df = df[~df["reason_for_rejection"].isna()].reset_index(drop=True)
+    df = df[
+        df["reason_for_rejection"].isna()
+        | df["reason_for_rejection"].str.strip().eq("")
+    ].reset_index(drop=True)
 
     # Define columns to check
     columns_to_check = [
