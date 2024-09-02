@@ -58,21 +58,9 @@ def prefilter_nodes(
     Returns:
         Filtered nodes dataframe
     """
-    input = "topological_embedding"
-    if isinstance(nodes.schema[input].dataType, StringType):
-        string_to_float_list_udf = udf(string_to_float_list, ArrayType(FloatType()))
-        nodes = nodes.withColumn(input, string_to_float_list_udf(f.col(input)))
-
     return nodes.filter(
         (f.col("category").isin(drug_types)) | (f.col("category").isin(disease_types))
     )
-
-
-def string_to_float_list(s):
-    """UDF to transform str into list."""
-    if s is not None:
-        return [float(x) for x in s.strip()[1:-1].split(",")]
-    return []
 
 
 @has_schema(

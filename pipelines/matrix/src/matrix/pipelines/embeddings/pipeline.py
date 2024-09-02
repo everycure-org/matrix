@@ -134,7 +134,7 @@ def create_pipeline(**kwargs) -> Pipeline:
             ),
             # extracts the nodes from neo4j and writes them to BigQuery
             node(
-                func=lambda x: x,
+                func=nodes.extract_node_embeddings,
                 inputs=["embeddings.model_output.graphsage"],
                 outputs="embeddings.feat.nodes",
                 name="extract_nodes_edges_from_db",
