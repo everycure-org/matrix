@@ -4,13 +4,13 @@
 build: install
 	.venv/bin/mkdocs build -s # build in strict mode, all links must function
 
-serve: install
+serve: 
 	.venv/bin/mkdocs serve
 
 install:
 	deactivate || echo 'no venv active, continuing'
-	uv venv -p 3.11
-	uv pip install -r requirements.txt -p .venv/bin/python
+	if [ ! -d .venv ]; then uv venv -p 3.11; fi
+	uv pip install -r requirements.txt
 
 image: 
 	docker build -t docs ./
