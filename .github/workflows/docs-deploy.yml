@@ -31,7 +31,7 @@ concurrency:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    name: Deploy Docs
+    name: Build Documentation
     permissions:
       contents: 'read'
       id-token: 'write'
