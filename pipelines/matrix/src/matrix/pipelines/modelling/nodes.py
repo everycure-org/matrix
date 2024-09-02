@@ -7,6 +7,8 @@ import json
 import pyspark.sql.functions as f
 
 from pyspark.sql import DataFrame
+from pyspark.sql.functions import udf, col
+from pyspark.sql.types import FloatType, ArrayType, StringType
 
 from sklearn.model_selection._split import _BaseKFold
 from sklearn.impute._base import _BaseImputer
@@ -56,9 +58,10 @@ def prefilter_nodes(
     Returns:
         Filtered nodes dataframe
     """
+    input = "topological_embedding"
     if isinstance(nodes.schema[input].dataType, StringType):
         string_to_float_list_udf = udf(string_to_float_list, ArrayType(FloatType()))
-        nodes = nodes.withColumn(input, string_to_float_list_udf(F.col(input)))
+        nodes = nodes.withColumn(input, string_to_float_list_udf(f.col(input)))
 
     return nodes.filter(
         (f.col("category").isin(drug_types)) | (f.col("category").isin(disease_types))
