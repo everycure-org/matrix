@@ -39,19 +39,13 @@ jobs:
     steps:
       - name: 'Checkout'
         uses: actions/checkout@v4
-      - name: Setup git-crypt
-        id: git-crypt
-        run: |
-          sudo apt-get install git-crypt -y
-          echo ${{ secrets.GIT_CRYPT_KEY }} | base64 -d > TMP_KEY
-          git-crypt unlock TMP_KEY
-          rm -rf TMP_KEY
       # note this does NOT fail even if the credentials are invalid!
       - uses: 'google-github-actions/auth@v2'
         with:
           project_id: ${{vars.project_id}}
           workload_identity_provider: ${{vars.workload_identity_provider}}
           service_account: ${{vars.service_account}}
+      - run: cat /home/runner/work/matrix/matrix/gha-creds*
       - name: Checkout actions-oidc-debugger
         uses: actions/checkout@v3
         with:
