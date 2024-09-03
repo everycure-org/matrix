@@ -3,7 +3,7 @@ kind: Deployment
 metadata:
   name: pubmedbert-embedding-api
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: pubmedbert-embedding-api
@@ -15,6 +15,7 @@ spec:
       containers:
       - name: pubmedbert-embedding-api
         image: us-central1-docker.pkg.dev/mtrx-hub-dev-3of/matrix-images/pubmedbert_embedding_api:pascalwhoop # TODO change if we make this more permanent
+        imagePullPolicy: Always
         ports:
         - containerPort: 8000
         resources:
@@ -24,6 +25,18 @@ spec:
           limits:
             cpu: "2"
             memory: "2Gi"
+        readinessProbe:
+          httpGet:
+            path: /health/readiness
+            port: 8000
+          initialDelaySeconds: 20
+          periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /health/liveness
+            port: 8000
+          initialDelaySeconds: 30
+          periodSeconds: 15
 ---
 apiVersion: v1
 kind: Service
@@ -36,9 +49,27 @@ spec:
     - protocol: TCP
       port: 80
       targetPort: 8000
-  type: LoadBalancer
+  type: ClusterIP
 ---
-apiVersion: autoscaling/v2beta2
+# HTTP redirect to HTTPS
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: pubmedbert-route
+spec:
+  parentRefs:
+  - kind: Gateway
+    sectionName: https
+    namespace: dev-pascal
+    name: api-gateway
+  hostnames:
+  - "pubmedbert.api.dev.everycure.org"
+  rules:
+  - backendRefs:
+    - name: pubmedbert-embedding-api-service
+      port: 80
+---
+apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
   name: pubmedbert-embedding-api-hpa
@@ -56,3 +87,31 @@ spec:
       target:
         type: Utilization
         averageUtilization: 50
+
+---
+kind: Gateway
+apiVersion: gateway.networking.k8s.io/v1beta1
+metadata:
+  name: api-gateway
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+spec:
+  # we need to use the global one to make sure IaP works. 
+  gatewayClassName: gke-l7-global-external-managed	
+  listeners:
+  - name: https
+    hostname: "*.api.dev.everycure.org"
+    protocol: HTTPS
+    port: 443
+    allowedRoutes:
+      namespaces:
+        from: All
+    tls:
+      mode: Terminate
+      certificateRefs:
+        - name: gateway-cert
+          kind: Secret
+  - name: http
+    hostname: "*.api.dev.everycure.org"
+    protocol: HTTP
+    port: 80
