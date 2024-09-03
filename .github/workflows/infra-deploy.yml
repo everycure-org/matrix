@@ -99,6 +99,9 @@ jobs:
 
       - name: Plan
         uses: gruntwork-io/terragrunt-action@v2
+        env:
+          # needed when not setting an env explicitly
+          GOOGLE_PROJECT: ${{ vars.project_id }}
         with:
           tf_version: ${{ env.tf_version }}
           tg_version: ${{ env.tg_version }}
