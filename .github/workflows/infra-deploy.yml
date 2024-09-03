@@ -49,7 +49,7 @@ jobs:
         with:
           project_id: ${{vars.project_id}}
           workload_identity_provider: ${{vars.workload_identity_provider}}
-          service_account: ${{vars.service_account}}
+          service_account: ${{vars.service_account}}s
       - name: Checkout actions-oidc-debugger
         uses: actions/checkout@v3
         with:
