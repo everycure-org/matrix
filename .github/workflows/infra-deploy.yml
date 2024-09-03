@@ -29,23 +29,24 @@ env:
   working_dir: 'infra/'
 
 jobs:
-  debug:
-    runs-on: 'ubuntu-latest'
-    permissions:
-      id-token: 'write'
-      contents: 'read'
+  # Uncomment this for debugging the JWT tokens
+  # debug:
+  #   runs-on: 'ubuntu-latest'
+  #   permissions:
+  #     id-token: 'write'
+  #     contents: 'read'
+  #   steps:
+  #     - name: Checkout actions-oidc-debugger
+  #       uses: actions/checkout@v3
+  #       with:
+  #         repository: github/actions-oidc-debugger
+  #         ref: main
+  #         path: ./.github/actions/actions-oidc-debugger
+  #     - name: Debug OIDC Claims
+  #       uses: ./.github/actions/actions-oidc-debugger
+  #       with:
+  #         audience: '${{ github.server_url }}/${{ github.repository_owner }}'
 
-    steps:
-      - name: Checkout actions-oidc-debugger
-        uses: actions/checkout@v3
-        with:
-          repository: github/actions-oidc-debugger
-          ref: main
-          path: ./.github/actions/actions-oidc-debugger
-      - name: Debug OIDC Claims
-        uses: ./.github/actions/actions-oidc-debugger
-        with:
-          audience: '${{ github.server_url }}/${{ github.repository_owner }}'
   # leveraging a paths-filter approach to be able to make this run required for all PRs while still
   # not blocking merging with "Expected" for those runs that have a paths filter
   # FUTURE eventually github will likely fix this
@@ -92,10 +93,10 @@ jobs:
         run: terraform fmt -check -recursive ${{ env.working_dir }}
 
   plan:
+    # runs under RO user
     runs-on: ubuntu-latest
     name: Plan Terraform
     needs: [ checks ]
-    # environment: dev
     permissions:
       contents: 'read'
       id-token: 'write'
@@ -124,6 +125,7 @@ jobs:
           tg_command: 'plan'
 
   deploy:
+    # runs under RW user
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/infra'
     environment: dev
