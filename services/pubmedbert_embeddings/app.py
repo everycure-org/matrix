@@ -63,6 +63,25 @@ async def create_embedding(request: EmbeddingRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@app.get("/")
+async def root():
+    return {"message": "success"}
+
+
+@app.get("/health/liveness")
+async def liveness_check():
+    return {"status": "alive"}
+
+
+@app.get("/health/readiness")
+async def readiness_check():
+    # Perform a simple operation to check if the model is loaded
+    if tokenizer is not None:
+        return {"status": "ready"}
+    else:
+        raise HTTPException(status_code=500, detail="Service not ready")
+
+
 if __name__ == "__main__":
     import uvicorn
 
