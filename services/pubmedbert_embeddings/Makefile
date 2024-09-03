@@ -3,9 +3,8 @@ GIT_SHA ?= $(shell git rev-parse --short HEAD)
 TAG ?= ${USER}
 
 # Define variables, mostly for testing
-PORT := 8000
-HOST := localhost
-ENDPOINT := v1/embeddings
+ENDPOINT ?= http://localhost:8080
+SLUG ?= /v1/embeddings
 NUM_REQUESTS := 100
 
 lock:
@@ -25,22 +24,22 @@ docker_push: docker_build
 # Test call target (single request)
 test_call:
 	@echo "Testing embeddings API..."
-	@curl -X POST "http://$(HOST):$(PORT)/$(ENDPOINT)" \
+	curl -X POST "$(ENDPOINT)$(SLUG)" \
 		-H "Content-Type: application/json" \
-		-d '{"input": "The patient presents with fever and cough", "model": "microsoft/BiomedNLP-PubMedBERT-base-uncased-abstract-fulltext"}' \
-		| json_pp
+		-d '{"input": "The patient presents with fever and cough", "model": "microsoft/BiomedNLP-PubMedBERT-base-uncased-abstract-fulltext"}'
+		
 
 
 # Define variables
 LOCUST_USERS := 100
 LOCUST_SPAWN_RATE := 10
-LOCUST_RUN_TIME := 20s
+LOCUST_RUN_TIME := 120s
 
 # Run Locust load test
 locust:
 	@echo uv pip install locust
 	@echo "Starting Locust load test..."
-	.venv/bin/locust --host=http://$(HOST):$(PORT) \
+	.venv/bin/locust --host=$(ENDPOINT) \
             --users $(LOCUST_USERS) \
             --spawn-rate $(LOCUST_SPAWN_RATE) \
             --run-time $(LOCUST_RUN_TIME) \
