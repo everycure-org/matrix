@@ -74,6 +74,7 @@ jobs:
 
       # On every PR
       - run: env | sort # prints out all env variables, helpful for debugging
+      - run: exit 1
       - run: make venv
       - run: make install
       - run: make precommit
@@ -91,10 +92,8 @@ jobs:
     needs: [paths_filter, ci]
     steps:
       - run: echo "calling this to ensure CI worked or paths filter lead us here"
-      # if changes true && CI failed -> fail
-      # - run: |
-      #     echo ${{ needs.paths_filter.outputs.changed == true }}
-      #     echo ${{ failure() }}
+      - run: |
+          echo ${{ needs.paths_filter.outputs.changed == true }}
       - run: exit 1
         if: ${{ needs.paths_filter.outputs.changed == true && failure() }}
       - run: echo "Either no files were changed or we had happy CI"
