@@ -36,7 +36,7 @@ class GDSGraphAlgorithm(ABC):
 
 
 class GDSGraphSage(GDSGraphAlgorithm):
-    """GraphSAGE algorithm class."""
+    """GraphSAGE algorithm class. For more information see https://neo4j.com/docs/graph-data-science/current/machine-learning/node-embeddings/graph-sage/."""
 
     def __init__(
         self,
@@ -72,7 +72,6 @@ class GDSGraphSage(GDSGraphAlgorithm):
         self._penalty_l2 = penalty_l2
         self._loss = None
 
-    # https://neo4j.com/docs/graph-data-science/current/machine-learning/node-embeddings/graph-sage/
     def run(
         self, gds: GraphDataScience, graph: Any, model_name: str, write_property: str
     ):
@@ -133,7 +132,7 @@ class GDSNode2Vec(GDSGraphAlgorithm):
         concurrency: int = 4,
         walk_buffer_size: int = 1000,
     ):
-        """Node2Vec Attributes."""
+        """Node2Vec Attributes. For more information see  https://neo4j.com/docs/graph-data-science/current/machine-learning/node-embeddings/node2vec/."""
         super().__init__(embedding_dim, random_seed, concurrency)
         self._walk_length = walk_length
         self._walks_per_node = walks_per_node
@@ -150,7 +149,6 @@ class GDSNode2Vec(GDSGraphAlgorithm):
         self._walk_buffer_size = walk_buffer_size
         self._loss = None
 
-    # https://neo4j.com/docs/graph-data-science/current/machine-learning/node-embeddings/node2vec/
     def run(
         self, gds: GraphDataScience, graph: Any, model_name: str, write_property: str
     ):
