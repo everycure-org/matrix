@@ -414,15 +414,16 @@ def string_to_float_list(s: str) -> List[float]:
     return []
 
 
-def extract_node_embeddings(nodes: DataFrame):
-    """Extract topological embeddings into BQ and change dtype if string."""
-    # Node2Vec seems to write embeddings into a string, we need the following
-    # to convert the topological_embedding col to an array.
-    string_column = "topological_embedding"
-    if isinstance(nodes.schema[string_column].dataType, StringType):
+def extract_node_embeddings(nodes: DataFrame, string_col: str) -> DataFrame:
+    """Extract topological embeddings from Neo4j and write into BQ.
+
+    Need a conditional statement due to Node2Vec writing topological embeddings as string. Raised issue in GDS client:
+    https://github.com/neo4j/graph-data-science-client/issues/742#issuecomment-2324737372.
+    """
+    if isinstance(nodes.schema[string_col].dataType, StringType):
         string_to_float_list_udf = udf(string_to_float_list, ArrayType(FloatType()))
         nodes = nodes.withColumn(
-            string_column, string_to_float_list_udf(F.col(string_column))
+            string_col, string_to_float_list_udf(F.col(string_col))
         )
     return nodes
 
