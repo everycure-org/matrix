@@ -59,18 +59,21 @@ jobs:
               - .github/workflows/matrix-ci.yml
               - .github/workflows/matrix-push.yml
 
-  # run only if some file in 'src' folder was changed
   ci:
     runs-on: 'self-hosted'
     needs: [paths_filter]
     if: needs.paths_filter.outputs.changed == 'true' && (github.event.pull_request.draft == false || github.ref == 'refs/heads/main')
     # https://docs.github.com/en/actions/writing-workflows/workflow-syntax-for-github-actions#concurrency
+    # Map a step output to a job output
+    outputs:
+      status: ${{ steps.finally.outputs.status }}
 
     defaults:
       run:
         working-directory: ./pipelines/matrix
     steps:
       - uses: actions/checkout@v3
+
       # On every PR
       - run: env | sort # prints out all env variables, helpful for debugging
       - run: make venv
@@ -81,6 +84,23 @@ jobs:
       - run: make docker_test GIT_SHA=${GITHUB_SHA:0:7} #we overwrite the GIT_SHA in the Makefile
         # only if PR is labelled with "ready" or if branch is main
         # if: contains(github.event.pull_request.labels.*.name, 'ready') || github.ref == 'refs/heads/main'
+      # workaround as the `failure()` call did not work in downstream matrix_ci_check
+      - run: echo "status=failure" >> "$GITHUB_OUTPUT"
+        id: finally
+        if: failure()
+  
+  # we use this check as required in our PRs to ensure that CI runs but only for our paths. 
+  matrix_ci_check:
+    name: Matrix CI PR Check
+    runs-on: 'ubuntu-latest'
+    if: always()
+    needs: [paths_filter, ci]
+    steps:
+      - run: echo "CI failed, we are exiting" && exit 1
+        if: ${{ needs.paths_filter.outputs.changed == 'true' && needs.ci.outputs.status == 'failure' }}
+      - run: echo "Either no files were changed or we had happy CI, continuing"
+
+      
 
   push_image:
     needs: [ci]
