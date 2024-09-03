@@ -93,9 +93,11 @@ jobs:
     steps:
       - run: echo "calling this to ensure CI worked or paths filter lead us here"
       - run: |
-          echo ${{ needs.paths_filter.outputs.changed == true }}
+          echo ${{ needs.paths_filter.outputs.changed == 'true' }}
       - run: exit 1
-        if: ${{ needs.paths_filter.outputs.changed == true && failure() }}
+        if: ${{ failure() }}
+      - run: exit 1
+        if: ${{ needs.paths_filter.outputs.changed == 'true' && failure() }}
       - run: echo "Either no files were changed or we had happy CI"
 
       
