@@ -85,14 +85,18 @@ jobs:
   
   # we use this check as required in our PRs to ensure that CI runs but only for our paths. 
   matrix_ci_check:
+    name: Matrix CI PR Check
     runs-on: 'ubuntu-latest'
     if: always()
     needs: [paths_filter, ci]
     steps:
       - run: echo "calling this to ensure CI worked or paths filter lead us here"
       # if changes true && CI failed -> fail
+      # - run: |
+      #     echo ${{ needs.paths_filter.outputs.changed == true }}
+      #     echo ${{ failure() }}
       - run: exit 1
-        if: needs.paths_filter.outputs.changed == true && failure()
+        if: ${{ needs.paths_filter.outputs.changed == true && failure() }}
       - run: echo "Either no files were changed or we had happy CI"
 
       
