@@ -45,11 +45,12 @@ jobs:
           echo ${{ secrets.GIT_CRYPT_KEY }} | base64 -d > TMP_KEY
           git-crypt unlock TMP_KEY
           rm -rf TMP_KEY
+      # note this does NOT fail even if the credentials are invalid!
       - uses: 'google-github-actions/auth@v2'
         with:
           project_id: ${{vars.project_id}}
           workload_identity_provider: ${{vars.workload_identity_provider}}
-          service_account: ${{vars.service_account}}s
+          service_account: ${{vars.service_account}}
       - name: Checkout actions-oidc-debugger
         uses: actions/checkout@v3
         with:
@@ -60,6 +61,13 @@ jobs:
         uses: ./.github/actions/actions-oidc-debugger
         with:
           audience: '${{ github.server_url }}/${{ github.repository_owner }}'
+      - name: 'Set up Cloud SDK'
+        uses: 'google-github-actions/setup-gcloud@v2'
+        with:
+          version: '>= 363.0.0'
+  
+      - name: 'Use gcloud CLI'
+        run: 'gsutil ls gs://mtrx-us-central1-hub-dev-storage/'
 
   # leveraging a paths-filter approach to be able to make this run required for all PRs while still
   # not blocking merging with "Expected" for those runs that have a paths filter
