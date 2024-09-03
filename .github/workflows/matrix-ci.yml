@@ -71,6 +71,7 @@ jobs:
         working-directory: ./pipelines/matrix
     steps:
       - uses: actions/checkout@v3
+
       # On every PR
       - run: env | sort # prints out all env variables, helpful for debugging
       - run: make venv
@@ -81,6 +82,20 @@ jobs:
       - run: make docker_test GIT_SHA=${GITHUB_SHA:0:7} #we overwrite the GIT_SHA in the Makefile
         # only if PR is labelled with "ready" or if branch is main
         # if: contains(github.event.pull_request.labels.*.name, 'ready') || github.ref == 'refs/heads/main'
+  
+  # we use this check as required in our PRs to ensure that CI runs but only for our paths. 
+  matrix_ci_check:
+    runs-on: 'ubuntu-latest'
+    if: always()
+    needs: [paths_filter, ci]
+    steps:
+      - run: echo "calling this to ensure CI worked or paths filter lead us here"
+      # if changes true && CI failed -> fail
+      - run: exit 1
+        if: needs.paths_filter.outputs.changed == true && failure()
+      - run: echo "Either no files were changed or we had happy CI"
+
+      
 
   push_image:
     needs: [ci]
