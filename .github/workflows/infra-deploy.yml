@@ -122,7 +122,7 @@ jobs:
           tf_version: ${{ env.tf_version }}
           tg_version: ${{ env.tg_version }}
           tg_dir: ${{ env.working_dir }}/deployments/hub/dev
-          tg_command: 'plan'
+          tg_command: 'plan -lock=false'
 
   deploy:
     # runs under RW user
