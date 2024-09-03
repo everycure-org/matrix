@@ -3,7 +3,6 @@ from pydantic import BaseModel
 from transformers import AutoTokenizer, AutoModel
 import torch
 from typing import List
-import time
 
 app = FastAPI()
 
@@ -28,8 +27,6 @@ class EmbeddingResponse(BaseModel):
 @app.post("/v1/embeddings")
 async def create_embedding(request: EmbeddingRequest):
     try:
-        start_time = time.time()
-
         # Ensure input is a list
         inputs = [request.input] if isinstance(request.input, str) else request.input
 
@@ -43,12 +40,11 @@ async def create_embedding(request: EmbeddingRequest):
             )
             total_tokens += tokens.input_ids.shape[1]
 
-            # Generate embeddings
             with torch.no_grad():
-                outputs = model(**tokens)
-
-            # Use the mean of the last hidden state as the embedding
-            embedding = outputs.last_hidden_state.mean(dim=1).squeeze().tolist()
+                output = model(
+                    **tokens, output_hidden_states=True, return_dict=True
+                ).pooler_output
+                embedding = output.cpu().detach().numpy().tolist()
             embeddings.append(embedding)
 
         # Create a response in OpenAI-like format
@@ -61,9 +57,6 @@ async def create_embedding(request: EmbeddingRequest):
             model=model_name,
             usage={"prompt_tokens": total_tokens, "total_tokens": total_tokens},
         )
-
-        end_time = time.time()
-        print(f"Request processed in {end_time - start_time:.2f} seconds")
 
         return response
     except Exception as e:
