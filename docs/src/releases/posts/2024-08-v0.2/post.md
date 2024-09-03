@@ -28,16 +28,17 @@ pipeline, enhancing its functionality, scalability, and accessibility. For a det
 
 We've completed an end-to-end run focused on Long COVID, generating top-performing drug predictions for 9 distinct LC subtypes. This marks a significant milestone in our ability to produce actionable insights for specific disease areas. This involved:
 
-- Designing a flow to incorporate non-KG custom data sources (e.g. input from our Medical Team)
+- Designing a flow to incorporate non-KG custom data sources (e.g., input from our Medical team)
 - Ingesting data from out medical team into the pipeline
-- Integrating the medical team data into our Knowledge Graph
+- Integrating the Medical team data into our Knowledge Graph
 
 ![](./attachments/medical-integration.excalidraw.svg)
 
 
 ### 2. Knowledge Graph Enhancements
 
-We've released the first versions of our curated [disease list](https://github.com/everycure-org/matrix-disease-list/releases/tag/2024-07-25) and [drug list](https://github.com/everycure-org/matrix-drug-list/releases/tag/v1.0.3),which will become the axes of our all drug vs. all disease predictive matrix.
+
+We've released the first versions of our curated [disease list](https://github.com/everycure-org/matrix-disease-list/releases/tag/2024-07-25) and [drug list](https://github.com/everycure-org/matrix-drug-list/releases/tag/v1.0.3), which will become the axes of our all drug vs all disease predictive matrix.
 
 ### 3. Access to cluster services
 
@@ -49,10 +50,11 @@ We've enabled public access to the services running on our cluster, protected by
 
 ### 3. Infrastructure and Performance Improvements
 
-A single Neo4J proved to be a bottleneck in our ability to scale pipeline runs. Executing multiple runs of our pipeline concurrently was not feasible, due to a single run of the pipeline using most of the memory. To overcome this, we've implemented the following changes:
+
+Neo4J proved to be a bottleneck in our ability to scale pipeline runs. Executing multiple runs of our pipeline concurrently was not feasible, due to a single run of the pipeline using most of the memory. To overcome this, we've implemented the following changes:
 
 - We've turned Neo4J into an ephemeral compute unit scoped to the lifecycle of our pipeline
-- We've implemented a node fusing algorithm that merges multiple Kedro nodes into a single Argo Workflows step.
+- We've implemented a node fusing algorithm that fuses together multiple Kedro nodes into a single Argo Workflows step on execution on the cluster. This allows multiple kedro nodes to be executed on the same Argo Workflow node
 
 The screenshots below illustrate this behavior, where multiple steps in the pipeline are grouped together, allowing then to use the same instance of the ephemeral Neo4J instance.
 
@@ -67,12 +69,12 @@ The view below shows the fusing result, there is a single step in the Workflow f
 
 ### 4. Collaboration and Data Integration
 
-To avoid constant circulation of Excel files across machines, we've introduced a `GoogleSheetsDataset` dataset. The dataset allows for reading and writing to a live google sheet, thereby facilitating seamless collaboration between our medical and technical teams.
+To avoid constant circulation of Excel files across machines, we've introduced a `GoogleSheetsDataset` dataset. The dataset allows for reading and writing to a live google sheet, facilitating seamless collaboration between our medical and technical teams.
 
 ![](attachments/ss_sheets.png)
 
 
-Using this sheet, we've developed a preprocessing pipeline to ingest experimental nodes and edges proposed by our medical team, enabling rapid hypothesis testing.
+Using this sheet, we've developed a preprocessing pipeline to ingest experimental nodes and edges proposed by our Medical team, enabling rapid hypothesis testing.
 
 ### 5. Model and Embedding Enhancements
 
