@@ -30,22 +30,36 @@ env:
 
 jobs:
   # Uncomment this for debugging the JWT tokens
-  # debug:
-  #   runs-on: 'ubuntu-latest'
-  #   permissions:
-  #     id-token: 'write'
-  #     contents: 'read'
-  #   steps:
-  #     - name: Checkout actions-oidc-debugger
-  #       uses: actions/checkout@v3
-  #       with:
-  #         repository: github/actions-oidc-debugger
-  #         ref: main
-  #         path: ./.github/actions/actions-oidc-debugger
-  #     - name: Debug OIDC Claims
-  #       uses: ./.github/actions/actions-oidc-debugger
-  #       with:
-  #         audience: '${{ github.server_url }}/${{ github.repository_owner }}'
+  debug:
+    runs-on: 'ubuntu-latest'
+    permissions:
+      id-token: 'write'
+      contents: 'read'
+    steps:
+      - name: 'Checkout'
+        uses: actions/checkout@v4
+      - name: Setup git-crypt
+        id: git-crypt
+        run: |
+          sudo apt-get install git-crypt -y
+          echo ${{ secrets.GIT_CRYPT_KEY }} | base64 -d > TMP_KEY
+          git-crypt unlock TMP_KEY
+          rm -rf TMP_KEY
+      - uses: 'google-github-actions/auth@v2'
+        with:
+          project_id: ${{vars.project_id}}
+          workload_identity_provider: ${{vars.workload_identity_provider}}
+          service_account: ${{vars.service_account}}
+      - name: Checkout actions-oidc-debugger
+        uses: actions/checkout@v3
+        with:
+          repository: github/actions-oidc-debugger
+          ref: main
+          path: ./.github/actions/actions-oidc-debugger
+      - name: Debug OIDC Claims
+        uses: ./.github/actions/actions-oidc-debugger
+        with:
+          audience: '${{ github.server_url }}/${{ github.repository_owner }}'
 
   # leveraging a paths-filter approach to be able to make this run required for all PRs while still
   # not blocking merging with "Expected" for those runs that have a paths filter
