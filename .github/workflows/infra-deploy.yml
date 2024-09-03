@@ -29,6 +29,24 @@ env:
   working_dir: 'infra/'
 
 jobs:
+  debug:
+    runs-on: 'ubuntu-latest'
+    permissions:
+      id-token: 'write'
+      contents: 'read'
+
+    steps:
+      - name: Checkout actions-oidc-debugger
+        uses: actions/checkout@v3
+        with:
+          repository: github/actions-oidc-debugger
+          ref: main
+          token: ${{ secrets.your-checkout-token }}
+          path: ./.github/actions/actions-oidc-debugger
+      - name: Debug OIDC Claims
+        uses: ./.github/actions/actions-oidc-debugger
+        with:
+          audience: '${{ github.server_url }}/${{ github.repository_owner }}'
   # leveraging a paths-filter approach to be able to make this run required for all PRs while still
   # not blocking merging with "Expected" for those runs that have a paths filter
   # FUTURE eventually github will likely fix this
