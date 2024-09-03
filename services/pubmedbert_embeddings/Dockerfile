@@ -5,10 +5,10 @@ COPY --from=ghcr.io/astral-sh/uv:latest /uv /bin/uv
 WORKDIR /app
 ADD requirements.txt .
 
-RUN --mount=type=cache,target=/root/.cache uv venv && \
+RUN uv venv && \
     uv pip install -r requirements.txt
 ENV PATH=/app/.venv/bin:$PATH
 
 ADD . .
 
-CMD
+CMD "python" "app.py"
