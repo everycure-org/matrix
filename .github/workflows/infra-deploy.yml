@@ -32,6 +32,7 @@ jobs:
   # Uncomment this for debugging the JWT tokens
   debug:
     runs-on: 'ubuntu-latest'
+    environment: dev
     permissions:
       id-token: 'write'
       contents: 'read'
