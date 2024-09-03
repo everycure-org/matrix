@@ -78,6 +78,7 @@ jobs:
     runs-on: ubuntu-latest
     name: Plan Terraform
     needs: [ checks ]
+    environment: dev
     permissions:
       contents: 'read'
       id-token: 'write'
