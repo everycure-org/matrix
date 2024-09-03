@@ -37,6 +37,7 @@ We've completed an end-to-end run focused on Long COVID, generating top-performi
 
 ### 2. Knowledge Graph Enhancements
 
+
 We've released the first versions of our curated [disease list](https://github.com/everycure-org/matrix-disease-list/releases/tag/2024-07-25) and [drug list](https://github.com/everycure-org/matrix-drug-list/releases/tag/v1.0.3), which will become the axes of our all drug vs all disease predictive matrix.
 
 ### 3. Access to cluster services
@@ -49,14 +50,21 @@ We've enabled public access to the services running on our cluster, protected by
 
 ### 3. Infrastructure and Performance Improvements
 
+
 Neo4J proved to be a bottleneck in our ability to scale pipeline runs. Executing multiple runs of our pipeline concurrently was not feasible, due to a single run of the pipeline using most of the memory. To overcome this, we've implemented the following changes:
 
 - We've turned Neo4J into an ephemeral compute unit scoped to the lifecycle of our pipeline
 - We've implemented a node fusing algorithm that fuses together multiple Kedro nodes into a single Argo Workflows step on execution on the cluster. This allows multiple kedro nodes to be executed on the same Argo Workflow node
 
-The screenshot below illustrates this behavior, where multiple steps in the pipeline are grouped together, allowing then to use the same instance of the ephemeral Neo4J instance.
+The screenshots below illustrate this behavior, where multiple steps in the pipeline are grouped together, allowing then to use the same instance of the ephemeral Neo4J instance.
 
-![](attachments/ss_fusing.png)
+The view below shows our Kedro viz graph, each step of the topological embedding computation stage is represented as a distinct Kedro node, the highlighted selection shows fusing intent.
+
+![](attachments/ss_fuse_viz.png)
+
+The view below shows the fusing result, there is a single step in the Workflow for topological embeddings. This step executes multiple Kedro nodes on a Neo4J enabled machine.
+
+![](attachments/ss_fuse_argo.png)
 
 
 ### 4. Collaboration and Data Integration
