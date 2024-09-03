@@ -122,7 +122,7 @@ jobs:
           tf_version: ${{ env.tf_version }}
           tg_version: ${{ env.tg_version }}
           tg_dir: ${{ env.working_dir }}/deployments/hub/dev
-          tg_command: 'plan -lock=false'
+          tg_command: 'plan -lock=false -refresh=false' #we do not check the remote state, this is a compromise that avoids giving read rights to secrets
 
   deploy:
     # runs under RW user
