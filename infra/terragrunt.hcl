@@ -53,6 +53,7 @@ remote_state {
   config = {
     bucket = "mtrx-us-central1-hub-dev-storage"
     prefix = "terragrunt/core/${path_relative_to_include()}/"
+    project = "mtrx-hub-dev-3of"
   }
   generate = {
     path      = "backend.tf"
