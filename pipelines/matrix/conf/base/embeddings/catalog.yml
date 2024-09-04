@@ -125,7 +125,7 @@ embeddings.feat.nodes:
 
 embeddings.reporting.loss:
   type: kedro_mlflow.io.artifacts.MlflowArtifactDataset
-  artifact_path: ${globals:versions.release}/topological
+  artifact_path: topological
   dataset:
     # NOTE: Data needs to be stored locally for MLFlow
     # to be able to upload to GCS. The ML Tracking server
@@ -145,7 +145,7 @@ embeddings.reporting.topological_pca:
 
 embeddings.reporting.topological_pca_plot:
   type: kedro_mlflow.io.artifacts.MlflowArtifactDataset
-  artifact_path: ${globals:versions.release}/topological
+  artifact_path: topological
   dataset:
     # NOTE: Data needs to be stored locally for MLFlow
     # to be able to upload to GCS. The ML Tracking server
