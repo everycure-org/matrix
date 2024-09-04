@@ -61,8 +61,12 @@ modelling.feat.rtx_kg2:
   filepath: ${globals:paths.feat}/rtx_kg2_nodes
 
 modelling.model_input.splits:
-  <<: *_pandas_parquet
-  filepath: ${globals:paths.model_input}/splits
+  type: matrix.datasets.mlflow.MlFlowInputDataDataSet
+  name: splits
+  context: modelling
+  dataset:
+    object: kedro_datasets.pandas.ParquetDataset
+    filepath: gs://${globals:paths.model_input}/splits
 
 "modelling.{model}.model_input.transformers":
   type: pickle.PickleDataset
