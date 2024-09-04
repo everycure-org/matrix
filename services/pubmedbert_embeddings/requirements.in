@@ -2,3 +2,4 @@ transformers
 fastapi 
 uvicorn 
 torch
+joblib
