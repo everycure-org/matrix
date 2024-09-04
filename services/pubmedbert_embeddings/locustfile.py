@@ -1,18 +1,20 @@
 from locust import HttpUser, task, between
 import random
+from faker import Faker
 
-MODEL = "microsoft/BiomedNLP-PubMedBERT-base-uncased-abstract-fulltext"
-INPUT = "The patient presents with fever and cough"
+fake = Faker()
 
 
 def get_payload():
-    num = random.randrange(100)
-    payload = {"model": MODEL, "input": [INPUT for i in range(num)]}
-    # sometimes we give just the text itself
-    if len(payload.get("input")) == 1:
-        payload["input"] = INPUT
+    inputs = [fake.sentence() for i in range(random.randrange(100))]
+    # sometimes we send just a string
+    if len(inputs) == 1:
+        inputs = inputs[0]
 
-    return payload
+    return {
+        "model": "microsoft/BiomedNLP-PubMedBERT-base-uncased-abstract-fulltext",
+        "input": inputs,
+    }
 
 
 class EmbeddingsUser(HttpUser):
