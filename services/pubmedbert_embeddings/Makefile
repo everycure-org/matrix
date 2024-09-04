@@ -2,15 +2,24 @@ dev_docker_image = us-central1-docker.pkg.dev/mtrx-hub-dev-3of/matrix-images/pub
 GIT_SHA ?= $(shell git rev-parse --short HEAD)
 TAG ?= ${USER}
 
-# Define variables, mostly for testing
-ENDPOINT ?= http://localhost:8080
+# Define variables, mostly for testing, you can set these as env variable before to control behaviour
+ENDPOINT ?= http://localhost:8000
+OPENAI_API_KEY ?= dummy
 SLUG ?= /v1/embeddings
+EMBEDDING_MODEL ?= microsoft/BiomedNLP-PubMedBERT-base-uncased-abstract-fulltext
 NUM_REQUESTS := 100
 
 lock:
 	uv pip compile requirements.in > requirements.txt
 
-serve: docker_build
+venv:
+	if [ ! -d .venv ]; then uv venv -p 3.11; fi
+install:
+	# deactivate any potentially active venv that may be somewhere else
+	deactivate || true
+	uv pip install -r requirements.txt
+
+docker_serve: docker_build
 	docker run --rm $(dev_docker_image)
 
 docker_build:
@@ -26,14 +35,15 @@ test_call:
 	@echo "Testing embeddings API..."
 	curl -X POST "$(ENDPOINT)$(SLUG)" \
 		-H "Content-Type: application/json" \
-		-d '{"input": "The patient presents with fever and cough", "model": "microsoft/BiomedNLP-PubMedBERT-base-uncased-abstract-fulltext"}'
+		-H "Authorization: Bearer ${OPENAI_API_KEY}" \
+		-d '{"input": "The patient presents with fever and cough", "model": "${EMBEDDING_MODEL}"}'
 		
 
 
 # Define variables
 LOCUST_USERS := 100
 LOCUST_SPAWN_RATE := 10
-LOCUST_RUN_TIME := 120s
+LOCUST_RUN_TIME := 10s
 
 # Run Locust load test
 locust:
@@ -47,8 +57,5 @@ locust:
             --only-summary
 
 
-# Run server target (optional, if you want to start the server from the Makefile)
-run_server:
-	python main.py
-
-.PHONY: test_call load_test run_server
+serve:
+	.venv/bin/python app.py
