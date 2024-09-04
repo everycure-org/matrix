@@ -20,23 +20,17 @@ spec:
         - containerPort: 8000
         resources:
           requests:
-            cpu: "500m"
+            cpu: "4"
             memory: "512Mi"
           limits:
-            cpu: "2"
+            cpu: "4"
             memory: "2Gi"
-        readinessProbe:
-          httpGet:
-            path: /health/readiness
-            port: 8000
-          initialDelaySeconds: 20
-          periodSeconds: 10
-        livenessProbe:
-          httpGet:
-            path: /health/liveness
-            port: 8000
-          initialDelaySeconds: 30
-          periodSeconds: 15
+        # livenessProbe:
+        #   httpGet:
+        #     path: /
+        #     port: 8000
+        #   initialDelaySeconds: 30
+        #   periodSeconds: 15
 ---
 apiVersion: v1
 kind: Service
@@ -79,7 +73,7 @@ spec:
     kind: Deployment
     name: pubmedbert-embedding-api
   minReplicas: 2
-  maxReplicas: 100
+  maxReplicas: 200
   metrics:
   - type: Resource
     resource:
@@ -87,6 +81,19 @@ spec:
       target:
         type: Utilization
         averageUtilization: 50
+  # Aggressive upscale behaviour because we just hammer our API in one big batch and then it's silence again
+  behavior:
+    scaleUp:
+      policies:
+      - type: Percent
+        value: 1000
+        periodSeconds: 15
+      stabilizationWindowSeconds: 0
+    scaleDown:
+      policies:
+      - type: Percent
+        value: 80
+        periodSeconds: 15
 
 ---
 kind: Gateway
