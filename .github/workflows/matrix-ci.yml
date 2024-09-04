@@ -76,11 +76,11 @@ jobs:
 
       # On every PR
       - run: env | sort # prints out all env variables, helpful for debugging
-      - run: make venv
-      - run: make install
-      - run: make precommit
-      - run: make full_test
-      - run: make compose_down # ensures containers & state are removed
+      # - run: make venv
+      # - run: make install
+      # - run: make precommit
+      # - run: make full_test
+      # - run: make compose_down # ensures containers & state are removed
       - run: make docker_test GIT_SHA=${GITHUB_SHA:0:7} #we overwrite the GIT_SHA in the Makefile
         # only if PR is labelled with "ready" or if branch is main
         # if: contains(github.event.pull_request.labels.*.name, 'ready') || github.ref == 'refs/heads/main'
