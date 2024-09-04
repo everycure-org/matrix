@@ -137,7 +137,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 func=nodes.extract_node_embeddings,
                 inputs={
                     "nodes": "embeddings.model_output.graphsage",
-                    "string_col": "params:embeddings.write_topological",
+                    "string_col": "params:embeddings.write_topological_col",
                 },
                 outputs="embeddings.feat.nodes",
                 name="extract_nodes_edges_from_db",

@@ -104,7 +104,7 @@ embeddings.topological:
 
 embeddings.topological_pca:
   skip: false # Set to true to skip PCA
-  input: 'topological_embedding'
+  input: *_topological_property
   output: 'pca_embedding'
   transformer:
     object: pyspark.ml.feature.PCA
