@@ -2,6 +2,17 @@
 title: Local setup
 ---
 
+## Preliminaries
+
+Our local setup has a base configuration for `linux/arm64` machines. If you have a different platform, copy the `.env.tmpl` file into  `.env` and replace `DOCKER_PLATFORM` with your platform.
+
+| **OS**        | **Platform**                        |
+|---------------|----------------------------------------------|
+| Linux         | x86_64, ARM64, ARM/v7, ARM/v6, PPC64LE, s390x, RISC-V |
+| Windows       | x86_64                                        |
+| macOS         | x86_64, ARM64 (via VM, no native containers)  |
+| FreeBSD       | x86_64 (Experimental)                        |
+
 
 ## Local setup
 
