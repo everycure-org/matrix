@@ -1,0 +1,12 @@
+versions:
+  release: subsample_test
+
+paths:
+  raw: gs://mtrx-us-central1-hub-dev-storage/kedro/data/01_raw
+  int: data/subsample/02_intermediate
+  prm: data/03_primary
+  feat: data/subsample/04_feature
+  model_input: data/subsample/05_model_input
+  models: data/subsample/06_models
+  model_output: data/subsample/07_model_output
+  reporting: data/subsample/08_reporting
