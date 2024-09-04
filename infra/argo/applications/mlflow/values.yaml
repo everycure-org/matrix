@@ -11,8 +11,7 @@ mlflow:
         mlflow server
         --gunicorn-opts="-t 360"
         --host=0.0.0.0 --port=5000
-        --no-serve-artifacts 
-        --default-artifact-root gs://mtrx-us-central1-hub-dev-storage
+        --no-serve-artifacts
         --backend-store-uri=postgresql://bn_mlflow:$(MLFLOW_DATABASE_PASSWORD)@release-name-postgresql:5432/bitnami_mlflow
     resourcesPreset: large
     service:
@@ -22,13 +21,11 @@ mlflow:
     # FUTURE: Setup GCS when supported
     # https://github.com/bitnami/charts/pull/28938
 
-    
-
   # Use our own PGSQL Secret
   # https://github.com/bitnami/charts/issues/28893
-  # postgresql:
-  #   # auth:
-  #   #   existingSecret: pgsql-creds
+  postgresql:
+    auth:
+      existingSecret: pgsql-creds
 
   minio:
     enabled: false
