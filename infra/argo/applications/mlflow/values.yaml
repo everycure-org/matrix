@@ -32,5 +32,3 @@ mlflow:
 
   minio:
     enabled: false
-    # auth:
-    #   existingSecret: minio-creds
