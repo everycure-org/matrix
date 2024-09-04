@@ -47,7 +47,7 @@ LOCUST_RUN_TIME := 10s
 
 # Run Locust load test
 locust:
-	@echo uv pip install locust
+	@echo uv pip install locust faker
 	@echo "Starting Locust load test..."
 	.venv/bin/locust --host=$(ENDPOINT) \
             --users $(LOCUST_USERS) \
