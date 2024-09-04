@@ -30,8 +30,7 @@ data_sources:
 
 # NOTE: MLflow does not like "new options" in the mlflow.yml
 # due to schema validation. Will make PR.
-# mlflow_artifact_root: null
-mlflow_artifact_root: ${gcs_bucket}/runs/${versions.release}/mlflow
+mlflow_artifact_root: null
 
 paths:
   # we read from our central GCS bucket where we store our ground truth data
