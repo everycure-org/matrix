@@ -51,8 +51,6 @@ MATRIX Project - [matrix-ecao@everycure.org](mailto:matrix-ecao@everycure.org);
 Charlie Hempstead - [charlie@everycure.org](mailto:charlie@everycure.org);
 Elliott Sharp - [elliott@everycure.org](mailto:elliott@everycure.org)
 
-*Last updated: 11th June 2024*
-
 ## Role and responsibilities
 
 ### Every Cure MATRIX SteerCo
