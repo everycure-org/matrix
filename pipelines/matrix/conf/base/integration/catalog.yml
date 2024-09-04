@@ -1,5 +1,5 @@
 _spark_parquet_ds: &_spark_parquet
-  object: matrix.datasets.gcp.LazySparkDataset
+  type: matrix.datasets.gcp.LazySparkDataset
   file_format: parquet
   save_args:
     mode: overwrite
@@ -9,25 +9,14 @@ _layer_prm: &_layer_prm
     kedro-viz:
       layer: primary
 
-
 # -------------------------------------------------------------------------
 # Datasets
 # -------------------------------------------------------------------------
 
 integration.prm.unified_edges:
-  <<: *_layer_prm
-  type: matrix.datasets.mlflow.MlFlowInputDataDataSet
-  name: edges
-  context: integration
-  dataset:
-    <<: *_spark_parquet
-    filepath: ${globals:paths.prm}/unified/edges
+  <<: [*_spark_parquet, *_layer_prm]
+  filepath: ${globals:paths.prm}/unified/edges
 
 integration.prm.unified_nodes:
-  <<: *_layer_prm
-  type: matrix.datasets.mlflow.MlFlowInputDataDataSet
-  name: nodes
-  context: integration
-  dataset:
-    <<: *_spark_parquet
-    filepath: ${globals:paths.prm}/unified/nodes
+  <<: [*_spark_parquet, *_layer_prm]
+  filepath: ${globals:paths.prm}/unified/nodes
