@@ -51,6 +51,7 @@ services:
   # testing.
   mock-genai:
     image: mockserver/mockserver
+    platform: ${DOCKER_PLATFORM:-linux/arm64}
     container_name: mockserver
     restart: unless-stopped
     user: root
@@ -67,7 +68,7 @@ services:
 
   mlflow:
     container_name: mlflow
-    build: "services/mlflow"
+    build:  "services/mlflow"
     ports:
       - "5001:5000"
     command: mlflow server --host 0.0.0.0
