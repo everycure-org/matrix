@@ -1,7 +1,6 @@
 """Custom Mlflow datasets."""
 import mlflow
 
-import pandas as pd
 from copy import deepcopy
 from typing import Any, Dict, Union
 
