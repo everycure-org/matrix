@@ -98,7 +98,7 @@ fabricator.ec_medical_kg:
           - biolink:Disease
 
   edges:
-    num_rows: 50
+    num_rows: 20
     columns:
       subject:
         type: row_apply
