@@ -215,6 +215,9 @@ def compute_embeddings(
 def reduce_dimension(df: DataFrame, transformer, input: str, output: str, skip: bool):
     """Function to apply dimensionality reduction.
 
+    Function to apply dimensionality reduction conditionally, if skip is set to true
+    the original input will be returned, otherwise the given transformer will be applied.
+
     Args:
         df: to apply technique to
         transformer: transformer to apply
@@ -225,13 +228,7 @@ def reduce_dimension(df: DataFrame, transformer, input: str, output: str, skip: 
     Returns:
         DataFrame: A DataFrame with either the reduced dimension embeddings or the original
                    embeddings, depending on the 'skip' parameter.
-
-    Note:
-    - If skip is true, the function returns the original embeddings from the LLM model.
-    - If skip is false, the function returns the embeddings after applying the dimensionality reduction technique.
     """
-    breakpoint()
-
     if skip:
         return df.withColumn(output, F.col(input))
 
