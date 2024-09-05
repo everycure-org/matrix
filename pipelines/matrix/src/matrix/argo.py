@@ -25,12 +25,14 @@ def cli() -> None:
 @click.command()
 @click.argument("image", required=True)
 @click.argument("image_tag", required=False, default="latest")
-def generate_argo_config(image, image_tag):
+@click.argument("namespace", required=False, default="argo-workflows")
+def generate_argo_config(image, image_tag, namespace: str):
     """Function to render Argo pipeline template.
 
     Args:
         image: image to use
         image_tag: image tag to use
+        namespace: the namespace in which to store the workflow
         pipeline_name: name of pipeline to generate
         env: execution environment
     """
@@ -48,7 +50,11 @@ def generate_argo_config(image, image_tag):
         pipes[name] = get_dependencies(fuse(pipeline))
 
     output = template.render(
-        package_name=package_name, pipes=pipes, image=image, image_tag=image_tag
+        package_name=package_name,
+        pipes=pipes,
+        image=image,
+        image_tag=image_tag,
+        namespace=namespace,
     )
 
     (SEARCH_PATH / RENDERED_FILE).write_text(output)

@@ -1,0 +1,107 @@
+#!/bin/bash
+
+# Function to check if a command exists
+command_exists() {
+    command -v "$1" >/dev/null 2>&1
+}
+
+# Function to check and set up gcloud and kubectl
+check_dependencies() {
+    if ! command_exists gcloud; then
+        echo "gcloud is not installed. Please install it first."
+        exit 1
+    fi
+
+    if ! command_exists kubectl; then
+        echo "kubectl is not installed. Installing it now..."
+        gcloud components install kubectl
+    fi
+
+    # Ensure gcloud is authenticated and kubectl is configured
+    if ! gcloud auth list --filter=status:ACTIVE --format="value(ACCOUNT)" &>/dev/null; then
+        gcloud auth login
+    fi
+    echo "ensure we are authenticated with kubectl"
+    gcloud container clusters get-credentials compute-cluster --project mtrx-hub-dev-3of --region us-central1
+    # Check if kubectl is working by listing namespaces
+    if ! kubectl get ns &>/dev/null; then
+        echo "kubectl is not working. Exiting..."
+        exit 1
+    fi
+}
+
+# Function to build and push Docker image
+build_push_docker() {
+    make docker_push TAG=$USER
+    # Add your Docker build and push commands here
+}
+
+# Function to build Argo workflow template
+build_argo_template() {
+    echo "Building Argo workflow template..."
+    # TODO duplicated image name reference from Makefile, should clean up
+    IMAGE_NAME="us-central1-docker.pkg.dev/mtrx-hub-dev-3of/matrix-images/matrix"
+    .venv/bin/python ./src/matrix/argo.py generate-argo-config $IMAGE_NAME $USERNAME "dev-$USERNAME"
+}
+
+# Function to create or verify namespace
+ensure_namespace() {
+    local namespace="dev-${USER}"
+    if ! kubectl get namespace "$namespace" &>/dev/null; then
+        kubectl create namespace "$namespace"
+    fi
+    echo "Using namespace: $namespace"
+}
+
+# Function to apply Argo template
+apply_argo_template() {
+    echo "Applying Argo workflow template..."
+    # Add kubectl apply command for your Argo template
+}
+
+# Function to submit Argo workflow
+submit_workflow() {
+    local branch_name=$(git rev-parse --abbrev-ref HEAD)
+    local commit_hash=$(git rev-parse HEAD)
+
+    echo "Submitting Argo workflow..."
+    # Add argo submit command with parameters:
+    # - experiment name (branch name)
+    # - Code (commit hash)
+    # - parameters (from committed code or user input)
+}
+
+# Main function
+main() {
+    set -xe
+    #check_dependencies
+    #build_push_docker
+    build_argo_template
+    #ensure_namespace
+    #apply_argo_template
+    #submit_workflow
+}
+# Parse command line arguments
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        --username)
+            USERNAME="${2:-$USER}"
+            shift 2
+            ;;
+        --help)
+            echo "Usage: $0 [options]"
+            echo "Options:"
+            echo "  --username <username>  Specify the username to use"
+            echo "  --help                  Show this help message"
+            exit 0
+            ;;
+        *)
+            echo "Unknown parameter: $1"
+            exit 1
+            ;;
+    esac
+done
+
+# Run the main function
+main
+
