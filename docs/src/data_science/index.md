@@ -22,7 +22,7 @@ We use **[Neo4j](https://neo4j.com/)** as our graph database, which allows for e
 
 ## Generation of Input Data
 
-### Node Embeddings
+### Node Attribute Embeddings
 
 To transform our knowledge graph into a format suitable for machine learning models, we employ various state-of-the-art node embedding techniques. These methods map each node (representing drugs, diseases, proteins, etc.) to a dense vector in a high-dimensional space, preserving the graph's structural and semantic information.
 
