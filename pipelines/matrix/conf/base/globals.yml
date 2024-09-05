@@ -18,7 +18,7 @@ git_sha: ${oc.env:GIT_SHA, local}
 
 versions:
   # overwritten in prod environment for shared releases
-  release: ${oc.env:RELEASE_VERSION, local}
+  release: ${oc.env:RUN_NAME, local}
 
 data_sources:
   rtx-kg2:
