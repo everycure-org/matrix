@@ -2,7 +2,7 @@
 title: Understanding the Data Science Pipeline That Powers Every Cure's Drug Pipeline
 ---
 
-At Every Cure, we are on a mission to unlock the hidden potential of existing drugs to save lives. We believe that looking at all the existing drugs available in pharmacies today, we can find numerous new uses for these drugs to help people live better lives.
+At Every Cure, we are on a mission to unlock the hidden potential of existing drugs to save lives. We believe that by looking at all the existing drugs available in pharmacies today, we can find numerous new uses for these drugs to help people live better lives.
 
 The answers are hidden in the data somewhere. We *just* have to find them. For that, we follow a comprehensive and data-driven approach that involves ingesting and integrating numerous data sources, then leveraging machine learning models to predict new high-potential drug-disease combinations. 
 
@@ -37,7 +37,7 @@ These embeddings capture complex relationships within the graph, providing rich 
 Given the high-dimensional nature of our node embeddings, we often apply dimensionality reduction techniques to make the data more manageable and to potentially uncover latent structures. This step helps us improve computational efficiency and mitigate the [curse of dimensionality](https://en.wikipedia.org/wiki/Curse_of_dimensionality). Common methods we employ include:
 
 - **[Principal Component Analysis (PCA)](https://en.wikipedia.org/wiki/Principal_component_analysis)**: A linear dimensionality reduction technique that projects the data into a lower-dimensional space while maximizing the variance captured by each component. 
-- **[t-SNE](https://en.wikipedia.org/wiki/T-distributed_stochastic_neighbor_embedding) and [UMAP](https://umap-learn.readthedocs.io/en/latest/)**: Non-linear dimensionality reduction techniques that are particularly useful for visualization and discvoering clusters within the data. These methods are effective at preserving the local and global structure of the data, also making them suitable for exploratory analysis. 
+- **[t-SNE](https://en.wikipedia.org/wiki/T-distributed_stochastic_neighbor_embedding) and [UMAP](https://umap-learn.readthedocs.io/en/latest/)**: Non-linear dimensionality reduction techniques that are particularly useful for visualization and discovering clusters within the data. These methods are effective at preserving the local and global structure of the data, also making them suitable for exploratory analysis. 
 
 ### Topological Embeddings
 
