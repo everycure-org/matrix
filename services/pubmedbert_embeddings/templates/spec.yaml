@@ -63,6 +63,19 @@ spec:
     - name: pubmedbert-embedding-api-service
       port: 80
 ---
+apiVersion: networking.gke.io/v1
+kind: GCPBackendPolicy
+metadata:
+  name: embedding-backend-policy
+spec:
+  default:
+    # maintains 600 seconds before killing http request
+    timeoutSec: 600
+  targetRef:
+    group: ""
+    kind: Service
+    name: pubmedbert-embedding-api-service
+---
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
@@ -72,7 +85,7 @@ spec:
     apiVersion: apps/v1
     kind: Deployment
     name: pubmedbert-embedding-api
-  minReplicas: 2
+  minReplicas: 1
   maxReplicas: 200
   metrics:
   - type: Resource
@@ -81,19 +94,25 @@ spec:
       target:
         type: Utilization
         averageUtilization: 50
+  # TODO could not get this to work reliably just yet so defaulting to default algo instead (100% every 15s, i.e. keep doubling)
   # Aggressive upscale behaviour because we just hammer our API in one big batch and then it's silence again
-  behavior:
-    scaleUp:
-      policies:
-      - type: Percent
-        value: 1000
-        periodSeconds: 15
-      stabilizationWindowSeconds: 0
-    scaleDown:
-      policies:
-      - type: Percent
-        value: 80
-        periodSeconds: 15
+  # behavior:
+  #   scaleUp:
+  #     policies:
+  #     # adds 10 pods right away
+  #     - type: Pods
+  #       value: 10
+  #       periodSeconds: 15
+  #     # if there's more than 10 pods already, then it doubles in size (100% scaleup)
+  #     - type: Percent
+  #       value: 100
+  #       periodSeconds: 15
+  #     stabilizationWindowSeconds: 0
+  #   scaleDown:
+  #     policies:
+  #     - type: Percent
+  #       value: 80
+  #       periodSeconds: 15
 
 ---
 kind: Gateway
