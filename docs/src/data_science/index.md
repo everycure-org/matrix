@@ -8,9 +8,9 @@ The answers are hidden in the data somewhere. We *just* have to find them. For t
 
 Our data-driven approach can be summarized by the following image, demonstrating how we generate embeddings from a Knoweldge Graph that represent relationships between nodes (such as drugs and diseases) in a high-dimensional vector space which can then be used for machine learning based prediction. 
 
-![Knowledge Graph Embedding](../assets/img/KnowledgeGraphEmbedding.png)
+![Knowledge Graph Embedding by EdoardoRamalli, licensed under CC BY-SA 4.0](../assets/img/KnowledgeGraphEmbedding.png)
 
-*Image by EdoardoRamalli - Own work, licensed under [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/). Source: [Wikimedia Commons](https://commons.wikimedia.org/w/index.php?curid=106644260).*
+*Source: [Wikimedia Commons](https://commons.wikimedia.org/w/index.php?curid=106644260).*
 
 ## Leveraging Prior Knowledge
 
