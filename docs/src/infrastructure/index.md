@@ -98,7 +98,7 @@ embeddings.feat.edges:
   type: matrix.datasets.gcp.BigQueryTableDataset
   project_id: ${oc.env:GCP_PROJECT_ID}
   dataset: runs
-  identifier: "${globals:versions.release}"
+  identifier: "${globals:run_name}"
   save_args:
     bigQueryTableLabel.git_sha: ${globals:git_sha}
     temporaryGcsBucket: ${globals:gcs_bucket}

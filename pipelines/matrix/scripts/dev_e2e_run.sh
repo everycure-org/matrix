@@ -32,7 +32,7 @@ check_dependencies() {
 
 # Function to build and push Docker image
 build_push_docker() {
-    make docker_push TAG=$USER
+    make docker_push TAG=$USERNAME
     # Add your Docker build and push commands here
 }
 
@@ -46,7 +46,7 @@ build_argo_template() {
 
 # Function to create or verify namespace
 ensure_namespace() {
-    local namespace="dev-${USER}"
+    local namespace="dev-${USERNAME}"
     if ! kubectl get namespace "$namespace" &>/dev/null; then
         kubectl create namespace "$namespace"
     fi
@@ -57,29 +57,38 @@ ensure_namespace() {
 apply_argo_template() {
     echo "Applying Argo workflow template..."
     # Add kubectl apply command for your Argo template
+    kubectl apply -f templates/argo-workflow-template.yml -n dev-$USERNAME
 }
 
 # Function to submit Argo workflow
 submit_workflow() {
-    local branch_name=$(git rev-parse --abbrev-ref HEAD)
-    local commit_hash=$(git rev-parse HEAD)
 
+    #   -p openai_endpoint=https://api.openai.com/v1 \
     echo "Submitting Argo workflow..."
-    # Add argo submit command with parameters:
-    # - experiment name (branch name)
-    # - Code (commit hash)
-    # - parameters (from committed code or user input)
+    JOB_NAME=$(argo submit -n dev-$USERNAME --from wftmpl/matrix \
+      -p experiment=$(get_experiment_name) \
+      -p run_name=$(get_experiment_name) \
+      -l submit-from-ui=false \
+      --entrypoint __default__ \
+      -o json \
+      | jq -r '.metadata.name')
+    
+    argo watch -n dev-$USERNAME $JOB_NAME
+}
+get_experiment_name() {
+    local branch_name=$(git rev-parse --abbrev-ref HEAD)
+    echo "$branch_name" | tr -c '[:alnum:]-' '-' | sed 's/-$//'
 }
 
 # Main function
 main() {
     set -xe
-    #check_dependencies
-    #build_push_docker
-    build_argo_template
-    #ensure_namespace
-    #apply_argo_template
-    #submit_workflow
+    # check_dependencies
+    # build_push_docker
+    # build_argo_template
+    # ensure_namespace
+    # apply_argo_template
+    submit_workflow
 }
 # Parse command line arguments
 while [[ $# -gt 0 ]]; do
