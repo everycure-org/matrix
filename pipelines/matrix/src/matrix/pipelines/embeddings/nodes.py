@@ -182,19 +182,21 @@ def compute_embeddings(
 
     res = (
         input.withColumn("row_num", F.row_number().over(window))
-        .repartition(16)
+        .repartition(128)
         .withColumn("batch", F.floor((F.col("row_num") - 1) / batch_size))
-        # NOTE: There is quite a lot of node without name and description, thereby resulting
+        # NOTE: There is quite a lot of nodes without name and description, thereby resulting
         # in embeddings of the empty string.
         .withColumn(
             "input",
             F.concat(*[F.coalesce(F.col(feature), F.lit("")) for feature in features]),
         )
+        .withColumn("input", F.substring(F.col("input"), 1, 512))  # TODO: Extract param
         .groupBy("batch")
         .agg(
             F.collect_list("id").alias("id"),
             F.collect_list("input").alias("input"),
         )
+        .repartition(128)
         # .withColumn("num_ids", F.size(F.col("id")))
         # .withColumn("num_input", F.size(F.col("input")))
         # .withColumn("validated",  F.when(F.col("num_ids") == F.col("num_input"), True).otherwise(False))
@@ -205,6 +207,7 @@ def compute_embeddings(
             F.col("exploded.id").alias("id"),
             F.col(f"exploded.{attribute}").alias(attribute),
         )
+        .repartition(128)
     )
 
     return res

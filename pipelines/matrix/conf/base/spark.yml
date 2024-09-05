@@ -1,4 +1,5 @@
 spark.sql.execution.arrow.pyspark.enabled: true
+spark.sql.adaptive.coalescePartitions.enabled: false # NOTE: Do not coalesce partitions
 spark.scheduler.mode: FAIR
 spark.driver.memory: 30g
 # only using this due to 
