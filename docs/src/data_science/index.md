@@ -32,7 +32,7 @@ We experiment with several embedding algorithms, including:
 -  **[OpenAI's language models](https://platform.openai.com/docs/models)**: LLM embedding models such as `text-embedding-3-small`, trained on both medical and non-medical texts.
 
 
-These embeddings capture complex relationships within the graph, providing rich features for our downstream prediction tasks. For example, Node2Vec helps capture local structural properties, while LLM-based embeddings offer semantic richness. 
+These embeddings capture complex and semantic relationships within the graph, providing rich features for our downstream prediction tasks. 
 
 ### Dimensionality Reduction
 
