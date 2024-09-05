@@ -28,7 +28,9 @@ To transform our knowledge graph into a format suitable for machine learning mod
 
 We experiment with several embedding algorithms, including:
 
-- **[PubMedBERT](https://arxiv.org/pdf/2007.15779)** and **[OpenAI's language models](https://platform.openai.com/docs/models)**: For generating LLM-based embeddings that capture the semantic context of biomedical terms. These models are pre-trained on vast medical literature corpora, making them suitable for capturing drug-disease relationships. 
+- **[PubMedBERT](https://arxiv.org/pdf/2007.15779)** : Biomedical BERT model pre-trained specifically on abstracts and full texts from PubMed. Also referred to as BioMedBERT.  
+-  **[OpenAI's language models](https://platform.openai.com/docs/models)**: LLM embedding models such as `text-embedding-3-small`, trained on both medical and non-medical texts.
+
 
 These embeddings capture complex relationships within the graph, providing rich features for our downstream prediction tasks. For example, Node2Vec helps capture local structural properties, while LLM-based embeddings offer semantic richness. 
 
