@@ -6,7 +6,7 @@ fake = Faker()
 
 
 def get_payload():
-    inputs = [fake.sentence() for i in range(random.randrange(100))]
+    inputs = [fake.sentence() for i in range(random.randrange(250))]
     # sometimes we send just a string
     if len(inputs) == 1:
         inputs = inputs[0]
