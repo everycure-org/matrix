@@ -11,6 +11,7 @@ fabricator.rtx_kg2:
         provider: name
 
       category:
+        
         type: generate_values
         sample_values:
           - biolink:Drug

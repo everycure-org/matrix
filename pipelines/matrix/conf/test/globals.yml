@@ -1,9 +1,13 @@
 versions:
   release: test
 
+# openai:
+#   endpoint: ${oc.env:OPENAI_ENDPOINT, http://mock-genai:1080/v1}
+#   api_key: dummy
+
 openai:
-  endpoint: ${oc.env:OPENAI_ENDPOINT, http://mock-genai:1080/v1}
-  api_key: dummy
+  endpoint: ${oc.env:OPENAI_ENDPOINT, https://api.openai.com/v1}
+  api_key: ${oc.env:OPENAI_API_KEY}
 
 paths:
   raw: data/test/01_raw
