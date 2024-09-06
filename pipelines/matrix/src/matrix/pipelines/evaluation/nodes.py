@@ -16,7 +16,7 @@ from matrix import settings
 from matrix.datasets.graph import KnowledgeGraph
 from matrix.datasets.pair_generator import DrugDiseasePairGenerator
 
-from matrix.pipelines.modelling.nodes import apply_transformers
+from matrix.pipelines.matrix_generation.nodes import make_batch_predictions
 from matrix.pipelines.evaluation.evaluation import Evaluation
 from matrix.pipelines.modelling.model import ModelWrapper
 
@@ -73,46 +73,9 @@ def make_test_predictions(
     Returns:
         Pairs dataset with additional column containing the probability scores.
     """
-
-    def process_batch(batch: pd.DataFrame) -> pd.DataFrame:
-        # Collect embedding vectors
-        batch["source_embedding"] = batch.apply(
-            lambda row: graph._embeddings[row.source], axis=1
-        )
-        batch["target_embedding"] = batch.apply(
-            lambda row: graph._embeddings[row.target], axis=1
-        )
-
-        # Apply transformers to data
-        transformed = apply_transformers(batch, transformers)
-
-        # Extract features
-        batch_features = _extract_elements_in_list(
-            transformed.columns, features, raise_exc=True
-        )
-
-        # Generate model probability scores
-        batch[score_col_name] = model.predict_proba(transformed[batch_features].values)[
-            :, 1
-        ]
-
-        return batch[[score_col_name]]
-
-    # Group data by the specified prefix
-    grouped = data.groupby(batch_by)
-
-    # Process data in batches
-    result_parts = []
-    for _, batch in tqdm(grouped):
-        result_parts.append(process_batch(batch))
-
-    # Combine results
-    results = pd.concat(result_parts, axis=0)
-
-    # Add scores to the original dataframe
-    data[score_col_name] = results[score_col_name]
-
-    return data
+    return make_batch_predictions(
+        graph, data, transformers, model, features, score_col_name, batch_by=batch_by
+    )
 
 
 @inject_object()
