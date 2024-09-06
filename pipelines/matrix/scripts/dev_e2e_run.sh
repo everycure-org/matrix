@@ -83,11 +83,11 @@ get_experiment_name() {
 # Main function
 main() {
     set -xe
-    # check_dependencies
-    # build_push_docker
-    # build_argo_template
-    # ensure_namespace
-    # apply_argo_template
+    check_dependencies
+    build_push_docker
+    build_argo_template
+    ensure_namespace
+    apply_argo_template
     submit_workflow
 }
 # Parse command line arguments
