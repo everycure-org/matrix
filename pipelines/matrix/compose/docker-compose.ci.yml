@@ -7,9 +7,11 @@ services:
   node-synonymizer: !reset null
 
   neo4j:
+    # FUTURE: Newever container version gives issues, due to `apoc-extended`
+    # and `gds` versions not being released yet. Update when released.
+    platform: linux/amd64
     # overwriting volumes so we don't have any
     # https://docs.docker.com/reference/compose-file/merge/#reset-value
-    platform: linux/amd64
     volumes: !override 
       # note we do NOT mount data which makes the CI container stateless
       - neo4j_logs:/logs
@@ -17,6 +19,7 @@ services:
       - neo4j_plugins:/plugins
 
   mock-genai:
+    platform: linux/amd64
     environment:
       MOCKSERVER_LOG_LEVEL: ERROR
   
