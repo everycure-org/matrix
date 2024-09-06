@@ -7,7 +7,7 @@ _bigquery_ds: &_bigquery_ds
 # -------------------------------------------------------------------------
 
 # overwriting the base catalog to use the bigquery datasets
-ingestion.prm.rtx_kg2.nodes:
+ingestion.int.rtx_kg2.nodes:
   <<: *_bigquery_ds
   dataset: kg_rtx_kg2
   table: nodes
@@ -17,7 +17,7 @@ ingestion.prm.rtx_kg2.nodes:
     bigQueryTableLabel.kg: rtx_kg2
     bigQueryTableLabel.git_sha: ${globals:git_sha}
 
-ingestion.prm.rtx_kg2.edges:
+ingestion.int.rtx_kg2.edges:
   <<: *_bigquery_ds
   dataset: kg_rtx_kg2
   table: edges
@@ -48,7 +48,7 @@ ingestion.raw.robokop.edges@spark:
     header: true
     index: false
 
-ingestion.prm.robokop.nodes:
+ingestion.int.robokop.nodes:
   <<: *_bigquery_ds
   dataset: robokop-kg
   table: nodes
@@ -58,7 +58,7 @@ ingestion.prm.robokop.nodes:
     bigQueryTableLabel.kg: robokop
     bigQueryTableLabel.git_sha: ${globals:git_sha}
 
-ingestion.prm.robokop.edges:
+ingestion.int.robokop.edges:
   <<: *_bigquery_ds
   dataset: robokop-kg
   table: edges
@@ -69,7 +69,7 @@ ingestion.prm.robokop.edges:
     bigQueryTableLabel.git_sha: ${globals:git_sha}
 
 # overwriting the base catalog to use the bigquery datasets
-ingestion.prm.ec_medical_team.nodes:
+ingestion.int.ec_medical_team.nodes:
   <<: *_bigquery_ds
   dataset: kg_ec_medical_team
   table: nodes
@@ -79,7 +79,7 @@ ingestion.prm.ec_medical_team.nodes:
     bigQueryTableLabel.kg: ec_medical_team
     bigQueryTableLabel.git_sha: ${globals:git_sha}
 
-ingestion.prm.ec_medical_team.edges:
+ingestion.int.ec_medical_team.edges:
   <<: *_bigquery_ds
   dataset: kg_ec_medical_team
   table: edges
