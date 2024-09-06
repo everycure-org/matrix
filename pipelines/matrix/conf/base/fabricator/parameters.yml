@@ -88,7 +88,7 @@ fabricator.robokop:
         prefix: "rs"
       category:
         type: generate_random_arrays
-        delimiter: "|"
+        delimiter: "\x1F"
         sample_values:
             - biolink:Entity
             - biolink:ThingWithTaxon
