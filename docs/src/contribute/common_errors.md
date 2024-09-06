@@ -5,6 +5,32 @@
     that come after us debug issues we solved before. We need this because some errors appear when trying something else and that is not codified because we codify _what works_ not what we tried to get to this working state. However, reoccuring errors often occur in software engineering and experienced project members regularly help by "giving the solution" to the error that "they have seen before". This page seeks to collect those errors.
 
 
+## Attempting to build local instance of matrix pipeline with Python 3.12
+
+If you attempted to build the matrix pipeline locally with Python 3.12, it will fail due to the removal of distutils from Python after version 3.11. you may get a message that looks somewhat like the following:
+
+```
+error: Failed to prepare distributions
+  Caused by: Failed to fetch wheel: numpy==1.23.5
+  Caused by: Build backend failed to determine extra requires with `build_wheel()` with exit status: 1
+
+...
+
+ModuleNotFoundError: No module named 'distutils'
+```
+
+
+
+To fix this, remove the directory ".venv" from `pipelines/matrix` and set the python version to 3.11:
+
+```
+rm -r .venv
+pyenv install 3.11
+pyenv global 3.11
+```
+
+then `make` again.
+
 
 ## Module not found in python
 ```
