@@ -1,7 +1,6 @@
 """Module with nodes for evaluation."""
-import json
 from tqdm import tqdm
-from typing import Any, List, Dict, Union
+from typing import List, Dict, Union
 
 from sklearn.impute._base import _BaseImputer
 
@@ -9,12 +8,9 @@ import pandas as pd
 
 from refit.v1.core.inject import inject_object
 from refit.v1.core.inline_has_schema import has_schema
-from refit.v1.core.unpack import unpack_params
 from refit.v1.core.make_list_regexable import _extract_elements_in_list
 
-from matrix import settings
 from matrix.datasets.graph import KnowledgeGraph
-from matrix.datasets.pair_generator import DrugDiseasePairGenerator
 
 from matrix.pipelines.modelling.nodes import apply_transformers
 from matrix.pipelines.evaluation.evaluation import Evaluation
@@ -42,10 +38,8 @@ def generate_test_dataset(
         known_pairs: Labelled ground truth drug-disease pairs dataset.
         drugs_lst_flags: List of flags defining the list of drugs.
         diseases_lst_flags: List of flags defining the list of drugs
-        generator: Generator strategy
     Returns:
-        Pairs dataframe containing all combinations of drugs and diseases,
-        that do not lie in the training set.
+        Pairs dataframe containing all combinations of drugs and diseases that do not lie in the training set.
     """
     # Collect list of drugs and diseases
     drugs_lst = graph.flags_to_ids(drugs_lst_flags)

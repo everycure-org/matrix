@@ -1,0 +1,10 @@
+_pandas_parquet: &_pandas_parquet
+  type: pandas.ParquetDataset
+
+"matrix_generation.prm.pairs":
+<<: *_pandas_parquet
+filepath: ${globals:paths.prm}/matrix_pairs
+
+"matrix_generation.{model}.model_output.sorted_matrix_predictions":
+  <<: *_pandas_parquet
+  filepath: ${globals:paths.model_output}/{model}/matrix_predictions
