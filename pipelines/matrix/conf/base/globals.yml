@@ -23,8 +23,10 @@ versions:
 data_sources:
   rtx-kg2:
     version: v2.7.3
-  # Dataset with node and edge proposals by the
-  # EveryCure medical team.
+  robokop:
+    version: c5ec1f282158182f
+# Dataset with node and edge proposals by the
+# EveryCure medical team.
   ec-medical-team:
     version: 20240823
   # Cleaned clinical trial data from the

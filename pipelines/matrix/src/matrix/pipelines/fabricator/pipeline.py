@@ -51,6 +51,15 @@ def create_pipeline(**kwargs) -> Pipeline:
                 name="fabricate_ec_medical_datasets",
             ),
             node(
+                func=fabricate_datasets,
+                inputs={"fabrication_params": "params:fabricator.robokop"},
+                outputs={
+                    "nodes": "ingestion.raw.robokop.nodes@pandas",
+                    "edges": "ingestion.raw.robokop.edges@pandas",
+                },
+                name="fabricate_robokop_datasets",
+            ),
+            node(
                 func=_create_pairs,
                 inputs=["ingestion.raw.rtx_kg2.nodes@spark"],
                 outputs="modelling.raw.ground_truth.positives",
