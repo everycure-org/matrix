@@ -73,7 +73,7 @@ preprocessing.int.edges:
     sheet_name: Edges
     columns: ["SourceId", "TargetId", "Label"]
 
-preprocessing.raw.clinical_trial_data:
+preprocessing.raw.clinical_trials_data:
   <<: *_medical_clinical_trials_sheet_dataset
   load_args:
     sheet_name: clinical_trial_DD_pairs
@@ -87,7 +87,7 @@ preprocessing.raw.clinical_trial_data:
       - "non_significantly_worse"
       - "significantly_worse"
 
-preprocessing.int.mapped_clinical_trial_data:
+preprocessing.int.mapped_clinical_trials_data:
   <<: *_medical_clinical_trials_sheet_dataset
   save_args:
     sheet_name: clinical_trial_DD_pairs

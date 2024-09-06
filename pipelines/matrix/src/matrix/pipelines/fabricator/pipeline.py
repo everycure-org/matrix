@@ -37,7 +37,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 outputs={
                     "nodes": "ingestion.raw.rtx_kg2.nodes@pandas",
                     "edges": "ingestion.raw.rtx_kg2.edges@pandas",
-                    "clinical_trials": "ingestion.raw.clinical_trial_data@pandas",
+                    "clinical_trials": "ingestion.raw.clinical_trials_data",
                 },
                 name="fabricate_kg2_datasets",
             ),

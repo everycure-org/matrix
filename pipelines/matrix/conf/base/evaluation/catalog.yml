@@ -6,6 +6,10 @@ _pandas_parquet: &_pandas_parquet
 # Datasets
 # -------------------------------------------------------------------------
 
+evaluation.prm.clinical_trials_data:
+  <<: *_pandas_parquet
+  filepath: ${globals:paths.prm}/clinical_trails_data
+
 "evaluation.{model}.{evaluation}.raw.pairs":
   <<: *_pandas_parquet
   filepath: ${globals:paths.raw}/{model}/{evaluation}/pairs

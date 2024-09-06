@@ -95,19 +95,19 @@ def create_pipeline(**kwargs) -> Pipeline:
                     "preprocessing.raw.clinical_trial_data",
                     "params:preprocessing.synonymizer_endpoint",
                 ],
-                outputs="preprocessing.int.mapped_clinical_trial_data",
-                name="mapped_clinical_trial_data",
-                tags=["ec-clinical-trial-data"],
+                outputs="preprocessing.int.mapped_clinical_trials_data",
+                name="mapped_clinical_trials_data",
+                tags=["ec-clinical-trials-data"],
             ),
             # NOTE: Clean up the clinical trial data and write it to the GCS bucket
             node(
                 func=nodes.clean_clinical_trial_data,
                 inputs=[
-                    "preprocessing.int.mapped_clinical_trial_data",
+                    "preprocessing.int.mapped_clinical_trials_data",
                 ],
-                outputs="ingestion.raw.clinical_trial_data@pandas",
+                outputs="ingestion.raw.clinical_trials_data",
                 name="clean_clinical_trial_data",
-                tags=["ec-clinical-trial-data"],
+                tags=["ec-clinical-trials-data"],
             ),
         ]
     )
