@@ -7,11 +7,9 @@ services:
   node-synonymizer: !reset null
 
   neo4j:
-    # FUTURE: Newever container version gives issues, due to `apoc-extended`
-    # and `gds` versions not being released yet. Update when released.
-    image: neo4j:5.21.0-enterprise
     # overwriting volumes so we don't have any
     # https://docs.docker.com/reference/compose-file/merge/#reset-value
+    platform: linux/amd64
     volumes: !override 
       # note we do NOT mount data which makes the CI container stateless
       - neo4j_logs:/logs
