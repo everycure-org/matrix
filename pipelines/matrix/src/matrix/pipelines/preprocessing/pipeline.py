@@ -92,7 +92,7 @@ def create_pipeline(**kwargs) -> Pipeline:
             node(
                 func=nodes.map_name_to_curie,
                 inputs=[
-                    "preprocessing.raw.clinical_trial_data",
+                    "preprocessing.raw.clinical_trials_data",
                     "params:preprocessing.synonymizer_endpoint",
                 ],
                 outputs="preprocessing.int.mapped_clinical_trials_data",
