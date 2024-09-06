@@ -50,7 +50,7 @@ ingestion.raw.robokop.edges@spark:
 
 ingestion.int.robokop.nodes:
   <<: *_bigquery_ds
-  dataset: robokop-kg
+  dataset: robokop_kg
   table: nodes
   identifier: "${globals:data_sources.robokop.version}"
   save_args:
@@ -60,7 +60,7 @@ ingestion.int.robokop.nodes:
 
 ingestion.int.robokop.edges:
   <<: *_bigquery_ds
-  dataset: robokop-kg
+  dataset: robokop_kg
   table: edges
   identifier: "${globals:data_sources.robokop.version}"
   save_args:
