@@ -21,6 +21,15 @@ This command executes a number of make targets, namely:
 
 Generally, the `Makefile` is a good place to start to get a sense of how our codebase is structured. 
 
+If you attempted to build this software locally with Python 3.12, it will fail due to the removal of distutils from Python after version 3.11. To fix this, remove the directory ".venv" from `pipelines/matrix` and set the python version to 3.11:
+
+```
+pyenv install 3.11
+pyenv global 3.11
+```
+
+then run `make` again.
+
 <div style="position: relative; width: 100%; height: 0; padding-bottom: 56.25%;"><iframe src="https://us06web.zoom.us/clips/embed/ghxELqxMExaMh96j_58dMq8UnXaXEcEtSTRVxXf7zXNd5l4OSgdvC5xwANUE1ydp7afd-M42UkQNe_eUJQkCrXIZ.SAPUAWjHFb-sh7Pj" frameborder="0" allowfullscreen="allowfullscreen" style="position: absolute; width: 100%; height: 100%; top: 0; left: 0; "></iframe></div>
 
 ### Docker compose for local execution
