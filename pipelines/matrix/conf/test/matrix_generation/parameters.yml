@@ -1,0 +1,6 @@
+matrix_generation_options:
+  drugs_lst_flags:
+    - is_drug
+    - is_ground_truth
+  diseases_lst_flags:
+    - is_disease

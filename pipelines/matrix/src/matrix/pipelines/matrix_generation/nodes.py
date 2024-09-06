@@ -35,9 +35,7 @@ def generate_test_dataset(
     drugs_lst_flags: List[str],
     diseases_lst_flags: List[str],
 ) -> pd.DataFrame:
-    """Function to generate matrix dataframe.
-
-    TODO: Need to inject drug and disease lists.
+    """Function to generate matrix dataset.
 
     Args:
         graph: KnowledgeGraph instance
@@ -46,7 +44,8 @@ def generate_test_dataset(
         diseases_lst_flags: List of flags defining the list of drugs
         generator: Generator strategy
     Returns:
-        Pairs dataframe
+        Pairs dataframe containing all combinations of drugs and diseases,
+        that do not lie in the training set.
     """
     # Collect list of drugs and diseases
     drugs_lst = graph.flags_to_ids(drugs_lst_flags)
@@ -147,8 +146,6 @@ def make_predictions_and_sort(
     batch_by: str,
 ) -> pd.DataFrame:
     """Generate and sort probability scores for a drug-disease dataset.
-
-    TODO: Inject batch by column.
 
     FUTURE: Perform parallelised computation instead of batching with a for loop.
 

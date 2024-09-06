@@ -1,0 +1,10 @@
+matrix_generation_options:
+# TODO: Add flags for official drugs and diseases here when available 
+  drugs_lst_flags:
+    - is_drug
+    - is_ground_truth
+  diseases_lst_flags:
+    - is_disease
+    - is_mondo
+  batch_by:
+    - target 
