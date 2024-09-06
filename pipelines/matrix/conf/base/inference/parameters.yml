@@ -1,1 +1,1 @@
-inference.model: xg_ensemble_predictions
+inference.model: modelling.xgb.ensemble.models.model

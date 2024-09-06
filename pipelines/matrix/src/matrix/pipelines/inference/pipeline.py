@@ -11,27 +11,38 @@ def create_pipeline(**kwargs) -> Pipeline:
     for model in settings.DYNAMIC_PIPELINES_MAPPING.get("modelling"):
         nodes.append(
             node(
-                func=nodes.run_inference,
+                func=nodes.resolve_input,
                 inputs={
-                    "model": f'modelling.{model["model_name"]}.models.model',
-                    "nodes": "embeddings.feat.nodes",
-                    "train_df": "modelling.model_input.splits",  # need it to cross-check if drug-disease pairs we inferred are not in the train set
                     "sheet": "raw.inputs",
                     "diseases": "raw.evaluation.disease_list",
                     "drugs": "raw.evaluation.drug_list",
-                    "runner": "params:inference.runner",  # class injected with object_injector, suitable for different inference requests
                 },
-                outputs=f'model_outputs.{model["model_name"]}.predictions',
-                name=f'run_{model["model_name"]}_inference',
+                outputs=[
+                    "inference.nodes.drugs",
+                    "inference.nodes.diseases",
+                    "inference.nodes.type",
+                ],
+                name=f"synonymize",
+            ),
+            node(
+                func=nodes.run_inference,
+                inputs={
+                    "model": "modelling.xgb.ensemble.models.model",
+                    "embeddings": "embeddings.feat.nodes",
+                    "infer_type": "inference.nodes.type",
+                    "drug_nodes": "inference.nodes.drugs",
+                    "disease_nodes": "inference.nodes.diseases",
+                    "train_df": "modelling.model_input.splits",  # need it to cross-check if drug-disease pairs we inferred are not in the train set
+                    "sheet": "raw.inputs",
+                },
+                outputs=f"model_outputs.node.predictions",
+                name=f"run_inference",
             ),
             node(
                 func=nodes.visualise_treat_scores,
-                inputs={
-                    "scores": f'model_outputs.{model["model_name"]}.predictions',
-                    "runner": "params:inference.runner",
-                },
-                outputs=f'model_outputs.{model["model_name"]}.treat_score_visualisations',
-                name=f'visualise_{model["model_name"]}_inference',
+                inputs={"scores": "model_outputs.node.predictions"},
+                outputs="model_outputs.node.visualisations",
+                name=f"visualise_inference",
             ),
         )
     return pipeline(nodes)

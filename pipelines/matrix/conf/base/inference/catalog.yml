@@ -3,6 +3,11 @@ _sheets_dataset: &_sheets_dataset
   key: 1CioSCCQxUdACn1NfWU9XRyC-9j_ERc2hmZzaDd8XgcQ
   service_file: conf/local/service-account.json
 
+_spark_parquet_ds: &_spark_parquet
+  type: matrix.datasets.gcp.LazySparkDataset
+  file_format: parquet
+  save_args:
+    mode: overwrite
 
 # NOTE: Drug list is not yet published
 raw.evaluation.disease_list:
@@ -25,7 +30,19 @@ raw.inputs:
   <<: [*_sheets_dataset]
   load_args:
     sheet_name: Input
-    columns: ["drug", "disease"]
+    columns: ["drug_id", "disease_id"]
+
+inference.nodes.drugs:
+  <<: [*_spark_parquet]
+  filepath: ${globals:paths.reporting}/drug_nodes
+
+inference.nodes.diseases:
+  <<: [*_spark_parquet]
+  filepath: ${globals:paths.reporting}/disease_nodes
+
+inference.nodes.type:
+  filepath: ${globals:paths.reporting}/infer_type
+  type:  yaml.YAMLDataset
 
 # NOTE: Sheet is created for ech model
 "model_outputs.{model}.predictions":
