@@ -116,7 +116,7 @@ def make_batch_predictions(
     return data
 
 
-def make_batch_predictions(
+def make_predictions_and_sort(
     graph: KnowledgeGraph,
     data: pd.DataFrame,
     transformers: Dict[str, Dict[str, Union[_BaseImputer, List[str]]]],
