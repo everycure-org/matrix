@@ -2,14 +2,13 @@ fabricator.rtx_kg2:
   nodes:
     num_rows: 150
     columns:
-      id: 
+      id:
         type: generate_unique_id
         prefix: rtx_kg_node_
-      
+
       name:
         type: faker
         provider: name
-
       category:
         type: generate_values
         sample_values:
@@ -42,23 +41,25 @@ fabricator.rtx_kg2:
       label:
         type: faker
         provider: name
-
       date_discovered:
         type: generate_dates
         start_dt: 2010-01-01
         end_dt: 2020-01-01
         freq: M
 
-
   edges:
     num_rows: 500
     columns:
+      # NOTE: This is a rather complex syntax, but is results in a "subject"
+      # column that contains random values from the nodes table defined above.
       subject:
         type: row_apply
         list_of_values: [nodes.id]
         row_func: "lambda *args: args[0]"
         resize: True
         seed: 590590
+      # NOTE: This is a rather complex syntax, but is results in an "object"
+      # column that contains random values from the nodes table defined above.
       object:
         type: row_apply
         list_of_values: [nodes.id]
@@ -74,6 +75,81 @@ fabricator.rtx_kg2:
         type: faker
         provider: name
 
+fabricator.robokop:
+  # robokop nodes definition
+  nodes:
+    num_rows: 150
+    columns:
+      id:
+        type: generate_unique_id
+        prefix: "CAID:"
+      name:
+        type: generate_unique_id
+        prefix: "rs"
+      category:
+        type: generate_random_arrays
+        delimiter: "\x1F"
+        sample_values:
+            - biolink:Entity
+            - biolink:ThingWithTaxon
+            - biolink:BiologicalEntity
+            - biolink:SequenceVariant
+            - biolink:NamedThing
+            - biolink:OntologyClass
+            - biolink:PhysicalEssence
+            - biolink:PhysicalEssenceOrOccurrent
+            - biolink:GenomicEntity
+            - biolink:OrganismTaxon
+      description:
+        type: faker
+        provider: sentence
+      equivalent_identifiers:
+        type: generate_random_arrays
+        delimiter: "\x1F"
+        sample_values:
+          - NCBITaxon:2
+          - UMLS:C0004611
+          - MESH:D001419
+          - HGVS:NG_029620.1:g.16582A>G
+          - HGVS:CM000669.1:g.149423729A>G
+          - ROBO_VARIANT:HG38|7|149726637|149726638|A|G
+          - HGVS:CM000669.2:g.149726638A>G
+          - HGVS:NC_000007.12:g.149054662A>G
+      information_content:
+        type: faker
+        provider: pydecimal
+        provider_args:
+          left_digits: 3
+          right_digits: 2
+          positive: True
+          min_value: 0
+          max_value: 100
+
+  # robokop edges definition
+  edges:
+    num_rows: 500
+    columns:
+      # NOTE: This is a rather complex syntax, but is results in a "subject"
+      # column that contains random values from the nodes table defined above.
+      subject:
+        type: row_apply
+        list_of_values: [ nodes.id ]
+        row_func: "lambda *args: args[0]"
+        resize: True
+        seed: 590590
+      predicate:
+        type: generate_values
+        sample_values:
+          - biolink:treats
+          - biolink:interacts_with
+      # NOTE: This is a rather complex syntax, but is results in an "object"
+      # column that contains random values from the nodes table defined above.
+      object:
+        type: row_apply
+        list_of_values: [ nodes.id ]
+        row_func: "lambda *args: args[0]"
+        resize: True
+        seed: 49494
 
 fabricator.ec_medical_kg:
   nodes:
