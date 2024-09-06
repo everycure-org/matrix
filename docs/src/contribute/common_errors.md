@@ -32,6 +32,53 @@ pyenv global 3.11
 then `make` again.
 
 
+
+## Hanging up during make process
+While running `make`, you may encounter an issue where the process hangs up around the following step:
+
+```
+[build 12/12] ADD . .
+```
+
+If this step takes more than a few minutes, it is likely that the memory limit in docker is insufficient to build the docker image required to run the pipeline. To fix this issue, open docker and in **settings** adjust the memory limit:
+
+<img width="857" alt="Screen Shot 2024-09-06 at 12 45 13 PM" src="https://github.com/user-attachments/assets/2fc8e558-c1dc-4cb1-ae88-a339a65728ad">
+
+16 GB is the recommended minimum. 
+
+If you do not have access to lots of system memory, also increase the maximum Swap file size. 
+
+
+
+## Unexpected keyword argument 'delimiter'
+
+you may encounter the following error during install:
+
+`TypeError: generate_random_arrays() got an unexpected keyword argument 'delimiter'`
+
+While we are not yet sure what the source of this problem is, it stems from the data fabricator package. it was solved by ensuring that pyenv was managing the python installation (to test this, enter `which python` and make sure it is not a `conda` or `miniconda` folder, then make pyenv the default:
+
+```
+pyenv global 3.11
+```
+
+then removing the virtual environment and the data fabricator build, reinstalling and activating the virtual environment:
+
+```
+rm -rf matrix/pipelines/matrix/.venv
+deactivate
+rm -rf matrix/pipelines/matrix/packages/data_fabricator/build
+make venv
+make install
+source .venv/build/activate
+```
+
+Finally, try running the kedro pipeline test while docker is up and running:
+
+```
+kedro run -p test -e test
+```
+
 ## Module not found in python
 ```
 ModuleNotFoundError: No module named <some_module>
