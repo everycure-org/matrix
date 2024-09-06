@@ -25,7 +25,7 @@ from matrix.pipelines.modelling.model import ModelWrapper
     allow_subset=True,
 )
 @inject_object()
-def generate_test_dataset(
+def generate_pairs(
     graph: KnowledgeGraph,
     known_pairs: pd.DataFrame,
     drugs_lst_flags: List[str],
