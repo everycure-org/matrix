@@ -100,19 +100,21 @@ fabricator.robokop:
             - biolink:PhysicalEssenceOrOccurrent
             - biolink:GenomicEntity
             - biolink:OrganismTaxon
-      equivalent_identifiers:
+      description:
         type: faker
-        provider: words
-        provider_args:
-          ext_word_list:
-            - NCBITaxon:2
-            - UMLS:C0004611
-            - MESH:D001419
-            - HGVS:NG_029620.1:g.16582A>G
-            - HGVS:CM000669.1:g.149423729A>G
-            - ROBO_VARIANT:HG38|7|149726637|149726638|A|G
-            - HGVS:CM000669.2:g.149726638A>G
-            - HGVS:NC_000007.12:g.149054662A>G
+        provider: sentence
+      equivalent_identifiers:
+        type: generate_random_arrays
+        delimiter: "\x1F"
+        sample_values:
+          - NCBITaxon:2
+          - UMLS:C0004611
+          - MESH:D001419
+          - HGVS:NG_029620.1:g.16582A>G
+          - HGVS:CM000669.1:g.149423729A>G
+          - ROBO_VARIANT:HG38|7|149726637|149726638|A|G
+          - HGVS:CM000669.2:g.149726638A>G
+          - HGVS:NC_000007.12:g.149054662A>G
       information_content:
         type: faker
         provider: pydecimal
