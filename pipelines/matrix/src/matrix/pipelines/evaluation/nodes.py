@@ -9,6 +9,7 @@ import pandas as pd
 
 from refit.v1.core.inject import inject_object
 from refit.v1.core.inline_has_schema import has_schema
+from refit.v1.core.inline_primary_key import primary_key
 from refit.v1.core.unpack import unpack_params
 from refit.v1.core.make_list_regexable import _extract_elements_in_list
 
@@ -19,6 +20,39 @@ from matrix.datasets.pair_generator import DrugDiseasePairGenerator
 from matrix.pipelines.modelling.nodes import apply_transformers
 from matrix.pipelines.evaluation.evaluation import Evaluation
 from matrix.pipelines.modelling.model import ModelWrapper
+
+
+def create_prm_clinical_trials(raw_clinical_trials: pd.DataFrame) -> pd.DataFrame:
+    """Function to clean clinical trails dataset.
+
+    Args:
+        raw_clinical_trials: Raw clinical trails data
+    Returns:
+        Cleaned clinical trails data
+    """
+    clinical_trail_data = raw_clinical_trials.rename(
+        columns={"drug_kg_curie": "source", "disease_kg_curie": "target"}
+    )
+
+    # Create the 'y' column where y=1 means 'significantly_better' and y=0 means 'significantly_worse'
+    clinical_trail_data["y"] = clinical_trail_data.apply(
+        lambda row: 1
+        if row["significantly_better"] == 1
+        else (0 if row["significantly_worse"] == 1 else None),
+        axis=1,
+    )
+
+    # Remove rows where 'y' is None (which means they are not 'significantly_better' or 'significantly_worse')
+    clinical_trail_data = clinical_trail_data.dropna(subset=["y"])
+
+    # Use columns 'source', 'target', and 'y' only
+    clinical_trail_data = (
+        clinical_trail_data[["source", "target", "y"]]
+        .drop_duplicates()
+        .reset_index(drop=True)
+    )
+
+    return clinical_trail_data
 
 
 @has_schema(
@@ -34,6 +68,7 @@ def generate_test_dataset(
     graph: KnowledgeGraph,
     known_pairs: pd.DataFrame,
     generator: DrugDiseasePairGenerator,
+    clinical_trials_data: pd.DataFrame,
 ) -> pd.DataFrame:
     """Function to generate test dataset.
 
@@ -44,10 +79,13 @@ def generate_test_dataset(
         graph: KnowledgeGraph instance
         known_pairs: Labelled ground truth drug-disease pairs dataset.
         generator: Generator strategy
+        clinical_trials_data: clinical trails data
     Returns:
         Pairs dataframe
     """
-    return generator.generate(graph, known_pairs)
+    return generator.generate(
+        graph, known_pairs, clinical_trials_data=clinical_trials_data
+    )
 
 
 def make_test_predictions(
