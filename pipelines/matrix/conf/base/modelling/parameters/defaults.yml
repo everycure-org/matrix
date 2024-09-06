@@ -10,10 +10,13 @@ modelling.disease_types:
 
 
 modelling.splitter:
-    object: sklearn.model_selection.StratifiedShuffleSplit
-    n_splits: 1 
-    test_size: 0.1
-    random_state: ${globals:random_state}
+
+  # Defines strategy for cross valitation. Should be a
+  # function from sklearn.model_selection, or our custom function:  
+  object: sklearn.model_selection.StratifiedShuffleSplit
+  n_splits: 1 
+  test_size: 0.1
+  random_state: ${globals:random_state}
 
 # -------------------------------
 # Base options

@@ -8,6 +8,7 @@ import pyspark.sql.functions as f
 
 from pyspark.sql import DataFrame
 
+from sklearn.model_selection import BaseCrossValidator
 from sklearn.model_selection._split import _BaseKFold
 from sklearn.impute._base import _BaseImputer
 from sklearn.base import BaseEstimator
@@ -22,6 +23,8 @@ from refit.v1.core.make_list_regexable import make_list_regexable
 from matrix.datasets.graph import KnowledgeGraph
 from matrix.datasets.pair_generator import SingleLabelPairGenerator
 from .model import ModelWrapper
+
+from .cross_val import DrugStratifiedSplit
 
 
 plt.switch_backend("Agg")
@@ -123,14 +126,14 @@ def create_feat_nodes(
 def make_splits(
     kg: KnowledgeGraph,
     data: DataFrame,
-    splitter: _BaseKFold,
+    splitter: Union[_BaseKFold, BaseCrossValidator, DrugStratifiedSplit],
 ) -> pd.DataFrame:
     """Function to split data.
 
     Args:
         kg: kg dataset with nodes
         data: Data to split.
-        splitter: sklearn splitter object.
+        splitter: sklearn splitter object or DrugStratifiedSplit.
 
     Returns:
         Data with split information.
@@ -139,19 +142,21 @@ def make_splits(
     data["source_embedding"] = data["source"].apply(lambda s_id: kg._embeddings[s_id])
     data["target_embedding"] = data["target"].apply(lambda t_id: kg._embeddings[t_id])
 
-    all_data_frames = []
-    for iteration, (train_index, test_index) in enumerate(
-        splitter.split(data, data["y"])
-    ):
-        all_indices_in_this_fold = list(set(train_index).union(test_index))
-        fold_data = data.loc[all_indices_in_this_fold, :].copy()
-        fold_data.loc[:, "iteration"] = iteration
-        fold_data.loc[train_index, "split"] = "TRAIN"
-        fold_data.loc[test_index, "split"] = "TEST"
-        all_data_frames.append(fold_data)
+    if isinstance(splitter, DrugStratifiedSplit):
+        return splitter.split_with_labels(data)
+    else:
+        all_data_frames = []
+        for iteration, (train_index, test_index) in enumerate(
+            splitter.split(data, data["y"])
+        ):
+            all_indices_in_this_fold = list(set(train_index).union(test_index))
+            fold_data = data.loc[all_indices_in_this_fold, :].copy()
+            fold_data.loc[:, "iteration"] = iteration
+            fold_data.loc[train_index, "split"] = "TRAIN"
+            fold_data.loc[test_index, "split"] = "TEST"
+            all_data_frames.append(fold_data)
 
-    return pd.concat(all_data_frames, axis="index", ignore_index=True)
-
+        return pd.concat(all_data_frames, axis="index", ignore_index=True)
 
 @has_schema(
     schema={
