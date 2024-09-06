@@ -18,6 +18,8 @@ def _create_matrix_generation_pipeline(model: str) -> Pipeline:
                     f"modelling.{model}.models.model",
                     f"params:modelling.{model}.model_options.model_tuning_args.features",
                     f"params:evaluation.score_col_name",
+                    "params:matrix_generation.matrix_generation_options.drug_flags",
+                    "params:matrix_generation.matrix_generation_options.disease_flags",
                 ],
                 outputs=f"matrix_generation.{model}.model_output.sorted_matrix_predictions",
                 name=f"make_{model}_predictions_and_sort",
@@ -35,6 +37,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 inputs=[
                     "modelling.feat.rtx_kg2",
                     "modelling.model_input.splits",
+                    "params:matrix_generation.matrix_generation_options.batch_by",
                 ],
                 outputs="matrix_generation.prm.pairs",
                 name="generate_pairs",

@@ -25,7 +25,6 @@ from matrix.pipelines.modelling.model import ModelWrapper
     schema={
         "source": "object",
         "target": "object",
-        "y": "int",
     },
     allow_subset=True,
 )
@@ -33,7 +32,8 @@ from matrix.pipelines.modelling.model import ModelWrapper
 def generate_test_dataset(
     graph: KnowledgeGraph,
     known_pairs: pd.DataFrame,
-    generator: DrugDiseasePairGenerator,
+    drugs_lst_flags: List[str],
+    diseases_lst_flags: List[str],
 ) -> pd.DataFrame:
     """Function to generate matrix dataframe.
 
@@ -42,11 +42,32 @@ def generate_test_dataset(
     Args:
         graph: KnowledgeGraph instance
         known_pairs: Labelled ground truth drug-disease pairs dataset.
+        drugs_lst_flags: List of flags defining the list of drugs.
+        diseases_lst_flags: List of flags defining the list of drugs
         generator: Generator strategy
     Returns:
         Pairs dataframe
     """
-    return ...
+    # Collect list of drugs and diseases
+    drugs_lst = graph.flags_to_ids(drugs_lst_flags)
+    diseases_lst = graph.flags_to_ids(diseases_lst_flags)
+
+    # Generate all combinations
+    matrix_slices = []
+    for disease in tqdm(diseases_lst):
+        matrix_slice = pd.DataFrame({"source": drugs_lst, "target": disease})
+        matrix_slices.append(matrix_slice)
+
+    # Concatenate all slices at once
+    matrix = pd.concat(matrix_slices, ignore_index=True)
+
+    # Remove training set and return
+    train_pairs = known_pairs[~known_pairs["split"].eq("TEST")]
+    train_pairs_set = set(zip(train_pairs["source"], train_pairs["target"]))
+    is_in_train = matrix.apply(
+        lambda row: (row["source"], row["target"]) in train_pairs_set, axis=1
+    )
+    return matrix[~is_in_train]
 
 
 def make_batch_predictions(
@@ -123,9 +144,13 @@ def make_predictions_and_sort(
     model: ModelWrapper,
     features: List[str],
     score_col_name: str,
-    batch_by: str = "target",
+    batch_by: str,
 ) -> pd.DataFrame:
     """Generate and sort probability scores for a drug-disease dataset.
+
+    TODO: Inject batch by column.
+
+    FUTURE: Perform parallelised computation instead of batching with a for loop.
 
     Args:
         graph: Knowledge graph.
