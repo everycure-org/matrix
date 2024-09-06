@@ -158,6 +158,7 @@ def make_splits(
 
         return pd.concat(all_data_frames, axis="index", ignore_index=True)
 
+
 @has_schema(
     schema={
         "source": "object",

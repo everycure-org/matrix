@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 from sklearn.model_selection import BaseCrossValidator
 
+
 class DrugStratifiedSplit(BaseCrossValidator):
     def __init__(self, n_splits=1, test_size=0.1, random_state=None):
         self.n_splits = n_splits
@@ -10,17 +11,17 @@ class DrugStratifiedSplit(BaseCrossValidator):
 
     def split(self, X, y=None, groups=None):
         rng = np.random.RandomState(self.random_state)
-        
+
         for iteration in range(self.n_splits):
             train_indices, test_indices = [], []
 
-            for _, group in X.groupby('source'):
+            for _, group in X.groupby("source"):
                 indices = group.index.tolist()
                 rng.shuffle(indices)
                 n = len(indices)
                 n_test = max(1, int(np.round(n * self.test_size)))
                 n_train = n - n_test
-                
+
                 train_indices.extend(indices[:n_train])
                 test_indices.extend(indices[n_train:])
 
@@ -31,7 +32,9 @@ class DrugStratifiedSplit(BaseCrossValidator):
 
     def split_with_labels(self, data):
         all_data_frames = []
-        for iteration, (train_index, test_index) in enumerate(self.split(data, data["y"])):
+        for iteration, (train_index, test_index) in enumerate(
+            self.split(data, data["y"])
+        ):
             fold_data = data.copy()
             fold_data.loc[:, "iteration"] = iteration
             fold_data.loc[train_index, "split"] = "TRAIN"
