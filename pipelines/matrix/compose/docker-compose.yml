@@ -2,6 +2,8 @@ services:
   # Neo4J database
   neo4j:
     container_name: neo4j
+    # note this works only on MacOS devices (or other ARM chipsets), check
+    # `docker-compose.test.yml` for the override
     image: neo4j:5.21.0-enterprise
     platform: ${DOCKER_PLATFORM:-linux/arm64}
     restart: unless-stopped
@@ -49,6 +51,7 @@ services:
   # testing.
   mock-genai:
     image: mockserver/mockserver
+    platform: ${DOCKER_PLATFORM:-linux/arm64}
     container_name: mockserver
     restart: unless-stopped
     user: root
@@ -65,7 +68,7 @@ services:
 
   mlflow:
     container_name: mlflow
-    build: "services/mlflow"
+    build:  "services/mlflow"
     ports:
       - "5001:5000"
     command: mlflow server --host 0.0.0.0
