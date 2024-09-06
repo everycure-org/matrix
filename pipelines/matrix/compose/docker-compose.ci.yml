@@ -19,6 +19,7 @@ services:
       - neo4j_plugins:/plugins
 
   mock-genai:
+    platform: linux/amd64
     environment:
       MOCKSERVER_LOG_LEVEL: ERROR
   
