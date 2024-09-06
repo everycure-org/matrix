@@ -87,10 +87,9 @@ fabricator.robokop:
         type: generate_unique_id
         prefix: "rs"
       category:
-        type: faker
-        provider: words
-        provider_args:
-          ext_word_list:
+        type: generate_random_arrays
+        delimiter: "|"
+        sample_values:
             - biolink:Entity
             - biolink:ThingWithTaxon
             - biolink:BiologicalEntity
