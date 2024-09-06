@@ -51,7 +51,7 @@ def _create_evaluation_pipeline(model: str, evaluation: str) -> Pipeline:
 
 
 def create_pipeline(**kwargs) -> Pipeline:
-    """Create fabricator pipeline."""
+    """Create evaluation pipeline."""
     pipes = []
     models = settings.DYNAMIC_PIPELINES_MAPPING.get("modelling")
     model_names = [model["model_name"] for model in models]
