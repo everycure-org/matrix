@@ -86,9 +86,6 @@ def enrich_df(
     Returns:
         dataframe enriched with Curie column
     """
-    # Replace empty strings with nan for processing by pandas, we revert back at end
-    df = df.replace(r"^\s*$", np.nan, regex=True)
-
     # Coalesce input cols
     col = coalesce(*[df[col] for col in input_cols])
 
@@ -99,15 +96,12 @@ def enrich_df(
     if coalesce_col:
         df[target_col] = coalesce(df[coalesce_col], df[target_col])
 
-    # Ensure to fill nans with empty strings to avoid nans in nodebook
-    return df.fillna("")
+    return df
 
 
 def create_int_nodes(int_nodes: pd.DataFrame) -> pd.DataFrame:
     """Function to create a intermediate nodes dataset by filtering and renaming columns."""
     # Replace empty strings with nan
-    int_nodes = int_nodes.replace(r"^\s*$", np.nan, regex=True)
-
     return int_nodes[int_nodes["normalized_curie"].notna()].rename(
         columns={"normalized_curie": "curie"}
     )
@@ -138,7 +132,7 @@ def create_int_edges(prm_nodes: pd.DataFrame, int_edges: pd.DataFrame) -> pd.Dat
         lambda row: not (pd.isna(row["SourceId"]) or pd.isna(row["TargetId"])), axis=1
     )
 
-    return res.fillna("")
+    return res
 
 
 @has_schema(
@@ -176,20 +170,129 @@ def create_prm_nodes(prm_nodes: pd.DataFrame) -> pd.DataFrame:
     },
     allow_subset=True,
 )
+@primary_key(primary_key=["subject", "predicate", "object"])
 def create_prm_edges(int_edges: pd.DataFrame) -> pd.DataFrame:
     """Function to create a primary edges dataset by filtering and renaming columns."""
     # Replace empty strings with nan
-    res = (
-        int_edges.replace(r"^\s*$", np.nan, regex=True)
-        .rename(
-            columns={"SourceId": "subject", "TargetId": "object", "Label": "predicate"}
-        )
-        .dropna(subset=["subject", "object"])
-    )
+    res = int_edges.rename(
+        columns={"SourceId": "subject", "TargetId": "object", "Label": "predicate"}
+    ).dropna(subset=["subject", "object"])
 
     res["predicate"] = "biolink:" + res["predicate"]
-
-    # FUTURE: Integrate actual knowledge source
     res["knowledge_source"] = "ec:medical"
 
     return res
+
+
+@has_schema(
+    schema={
+        "clinical_trial_id": "object",
+        "reason_for_rejection": "object",
+        "drug_name": "object",
+        "disease_name": "object",
+        "significantly_better": "numeric",
+        "non_significantly_better": "numeric",
+        "non_significantly_worse": "numeric",
+        "significantly_worse": "numeric",
+    },
+    allow_subset=True,
+    df="df",
+)
+def map_name_to_curie(
+    df: pd.DataFrame,
+    endpoint: str,
+) -> pd.DataFrame:
+    """Map drug name to curie.
+
+    Function to map drug name or disease name in raw clinical trail dataset to curie using the synonymizer.
+    And check after mapping, if the mapped curies are the same in different rows, we check whether their the
+    clinical performance is the same. If not, we label them as "True" in the "conflict" column, otherwise "False".
+
+    Args:
+        df: raw clinical trial dataset from medical team
+        endpoint: endpoint of the synonymizer
+    Returns:
+        dataframe with two additional columns: "Mapped Drug Curie" and "Mapped Drug Disease"
+    """
+    # Map the drug name to the corresponding curie ids
+    df["drug_kg_curie"] = df["drug_name"].apply(lambda x: resolve(x, endpoint=endpoint))
+
+    # Map the disease name to the corresponding curie ids
+    df["disease_kg_curie"] = df["disease_name"].apply(
+        lambda x: resolve(x, endpoint=endpoint)
+    )
+
+    # check conflict
+    df["conflict"] = (
+        df.groupby(["drug_kg_curie", "disease_kg_curie"])[
+            [
+                "significantly_better",
+                "non_significantly_better",
+                "non_significantly_worse",
+                "significantly_worse",
+            ]
+        ]
+        .transform(lambda x: x.nunique() > 1)
+        .any(axis=1)
+    )
+
+    return df
+
+
+@has_schema(
+    schema={
+        "clinical_trial_id": "object",
+        "reason_for_rejection": "object",
+        "drug_name": "object",
+        "disease_name": "object",
+        "drug_kg_curie": "object",
+        "disease_kg_curie": "object",
+        "conflict": "object",
+        "significantly_better": "numeric",
+        "non_significantly_better": "numeric",
+        "non_significantly_worse": "numeric",
+        "significantly_worse": "numeric",
+    },
+    allow_subset=True,
+    df="df",
+)
+@primary_key(
+    primary_key=[
+        "clinical_trial_id",
+        "drug_kg_curie",
+        "disease_kg_curie",
+    ]
+)
+def clean_clinical_trial_data(df: pd.DataFrame) -> pd.DataFrame:
+    """Clean clinical trails data.
+
+    Function to clean the mapped clinical trial dataset for use in time-split evaluation metrics.
+
+    Args:
+        df: raw clinical trial dataset added with mapped drug and disease curies
+    Returns:
+        Cleaned clinical trial data.
+    """
+    # Remove rows with conflicts
+    df = df[df["conflict"].eq("FALSE")].reset_index(drop=True)
+
+    # remove rows with reason for rejection
+    df = df[df["reason_for_rejection"].isna()].reset_index(drop=True)
+
+    # Define columns to check
+    columns_to_check = [
+        "drug_kg_curie",
+        "disease_kg_curie",
+        "significantly_better",
+        "non_significantly_better",
+        "non_significantly_worse",
+        "significantly_worse",
+    ]
+
+    # Remove rows with missing values in cols
+    df = df.dropna(subset=columns_to_check).reset_index(drop=True)
+
+    # drop columns
+    df = df.drop(columns=["reason_for_rejection", "conflict"]).reset_index(drop=True)
+
+    return df

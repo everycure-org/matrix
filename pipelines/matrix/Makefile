@@ -62,7 +62,8 @@ compose_up:
 	docker compose -f compose/docker-compose.yml up -d --wait
 
 compose_down:
-	docker compose -f compose/docker-compose.yml down
+	bash scripts/compose_down_retry.sh
+	# docker compose -f compose/docker-compose.yml down
 
 lock:
 	uv pip compile requirements.in > requirements.txt
