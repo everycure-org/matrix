@@ -28,7 +28,8 @@ ingestion.int.rtx_kg2.edges:
     bigQueryTableLabel.git_sha: ${globals:git_sha}
 
 
-# TODO: Revert after moving raw
+# TODO the next two datasets should be in the base catalog. However, they are stored in the "new raw layer"
+# which we have not yet migrated to. Thus, we are storing them here to avoid fabrication breaking
 ingestion.raw.robokop.nodes@spark:
   type: matrix.datasets.gcp.LazySparkDataset
   filepath: gs://mtrx-us-central1-hub-dev-storage/data/01_RAW/KGs/robokop-kg/${globals:data_sources.robokop.version}/nodes.tsv
