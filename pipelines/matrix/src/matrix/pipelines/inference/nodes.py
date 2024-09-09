@@ -41,9 +41,6 @@ def resolve_input(sheet, diseases_list, drugs_list):
         drug_nodes = synonymize(drug_id.drug_id.values)
         disease_nodes = synonymize(disease_id.values)
         infer_type = "inferPerPair"
-    print(infer_type)
-    print(drug_nodes)
-    print(disease_nodes)
     return drug_nodes, disease_nodes, infer_type
 
 
