@@ -56,7 +56,7 @@ You may encounter the following error during install:
 
 `TypeError: generate_random_arrays() got an unexpected keyword argument 'delimiter'`
 
-While we are not yet sure what the source of this problem is, it stems from the data fabricator package. it was solved by ensuring that pyenv was managing the python installation (to test this, enter `which python` and make sure it is not a `conda` or `miniconda` folder, then make pyenv the default:
+This issue is due to versions of data fabricator mismatching (v0 vs v1) and it should be solved now. Nevertheless a workaround to solve it was by by ensuring that pyenv is managing the python installation (to test this, enter `which python` and make sure it is not a `conda` or `miniconda` folder, then make pyenv the default):
 
 ```
 pyenv global 3.11
