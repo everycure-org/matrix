@@ -1,1 +1,3 @@
-inference.model: modelling.xgb.ensemble.models.model
+inference.model.model: 
+  object: xgb
+  shard: 3
