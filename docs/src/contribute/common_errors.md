@@ -62,7 +62,7 @@ While we are not yet sure what the source of this problem is, it stems from the 
 pyenv global 3.11
 ```
 
-then removing the virtual environment and the data fabricator build, reinstalling and activating the virtual environment:
+Then removing the virtual environment and the data fabricator build, reinstalling and activating the virtual environment:
 
 ```
 rm -rf matrix/pipelines/matrix/.venv
