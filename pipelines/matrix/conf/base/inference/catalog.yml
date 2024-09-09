@@ -3,11 +3,8 @@ _sheets_dataset: &_sheets_dataset
   key: 1CioSCCQxUdACn1NfWU9XRyC-9j_ERc2hmZzaDd8XgcQ
   service_file: conf/local/service-account.json
 
-_spark_parquet_ds: &_spark_parquet
-  type: matrix.datasets.gcp.LazySparkDataset
-  file_format: parquet
-  save_args:
-    mode: overwrite
+_pandas_csv: &_pandas_csv
+  type:  pandas.CSVDataset
 
 # NOTE: Drug list is not yet published
 raw.evaluation.disease_list:
@@ -30,24 +27,46 @@ raw.inputs:
   <<: [*_sheets_dataset]
   load_args:
     sheet_name: Input
-    columns: ["drug_id", "disease_id"]
+    columns: ["drug_id", "disease_id", "type"]
 
 inference.nodes.drugs:
-  <<: [*_spark_parquet]
-  filepath: ${globals:paths.reporting}/drug_nodes
+  <<: [*_pandas_csv]
+  filepath: ${globals:paths.reporting}/drug_nodes.csv
 
 inference.nodes.diseases:
-  <<: [*_spark_parquet]
-  filepath: ${globals:paths.reporting}/disease_nodes
+  <<: [*_pandas_csv]
+  filepath: ${globals:paths.reporting}/disease_nodes.csv
 
 inference.nodes.type:
-  filepath: ${globals:paths.reporting}/infer_type
-  type:  yaml.YAMLDataset
+  type: pickle.PickleDataset
+  filepath: ${globals:paths.reporting}/infer_type.pkl
 
 # NOTE: Sheet is created for ech model
-"model_outputs.{model}.predictions":
+model_outputs.node.predictions:
   <<: [*_sheets_dataset]
   save_args:
     overwrite: True
-    sheet_name: "{model}_predictions"
-    write_columns: ["drug", "disease", "score"]
+    sheet_name: "node_predictions"
+    write_columns: ["drug", "disease"]
+  load_args:
+    sheet_name: "node_predictions"
+    columns: ["treat_score"]
+
+    ## WIP remove later
+
+inference.embed.nodes:
+  type: pandas.ParquetDataset
+  filepath: ${globals:paths.feat}/nodes
+
+inference.model.xgb:
+  type: pickle.PickleDataset
+  filepath: data/06_models/xg_baseline/model.pkl
+
+model_outputs.node.visualisations:
+  type: kedro_mlflow.io.artifacts.MlflowArtifactDataset
+  artifact_path: "histogram"
+  dataset:
+    type: matplotlib.MatplotlibWriter
+    filepath: ${globals:paths.reporting}/histogram_plot.png
+  
+  
