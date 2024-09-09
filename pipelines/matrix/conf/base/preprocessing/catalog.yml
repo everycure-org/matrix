@@ -13,20 +13,17 @@ _layer_prm: &_layer_prm
     kedro-viz:
       layer: primary
 
-_spark_csv: &_spark_csv
-  type: spark.SparkDataset
-  file_format: csv
-  load_args:
-    header: True
-  save_args:
-    mode: overwrite
-
 _pandas_csv: &_pandas_csv
   type:  pandas.CSVDataset
 
-_sheets_dataset: &_sheets_dataset
+_medical_kg_sheets_dataset: &_medical_kg_sheets_dataset
   type: matrix.datasets.gcp.GoogleSheetsDataset
   key: 1LMtOmA10t7a3lcKeTP7zmptOPIcCBIPFVJt9J7jZ2bQ
+  service_file: conf/local/service-account.json
+
+_medical_clinical_trials_sheet_dataset: &_medical_clinical_trials_sheet_dataset
+  type: matrix.datasets.gcp.GoogleSheetsDataset
+  key: 1Wlrjr8ojUGCfWJg-QF5PzpJFqpD7LLH7b60u2XAngh0
   service_file: conf/local/service-account.json
 
 # -------------------------------------------------------------------------
@@ -34,18 +31,18 @@ _sheets_dataset: &_sheets_dataset
 # -------------------------------------------------------------------------
 
 preprocessing.raw.nodes:
-  <<: [*_layer_raw, *_sheets_dataset]
+  <<: [*_layer_raw, *_medical_kg_sheets_dataset]
   load_args:
     sheet_name: Nodes
 
 preprocessing.raw.edges:
-  <<: [*_layer_raw, *_sheets_dataset]
+  <<: [*_layer_raw, *_medical_kg_sheets_dataset]
   load_args:
     sheet_name: Edges
     columns: ["Source", "Target", "Label"]
 
 preprocessing.int.resolved_nodes:
-  <<: [*_layer_int, *_sheets_dataset]
+  <<: [*_layer_int, *_medical_kg_sheets_dataset]
   save_args:
     sheet_name: Nodes
     write_columns: ["curie"]
@@ -54,7 +51,7 @@ preprocessing.int.resolved_nodes:
     sheet_name: Nodes
 
 preprocessing.int.normalized_nodes:
-  <<: [*_layer_int, *_sheets_dataset]
+  <<: [*_layer_int, *_medical_kg_sheets_dataset]
   save_args:
     sheet_name: Nodes
     write_columns: ["normalized_curie"]
@@ -68,10 +65,44 @@ preprocessing.int.nodes:
   filepath: ${globals:paths.int}/ec_medical_team/nodes
 
 preprocessing.int.edges:
-  <<: [*_layer_prm, *_sheets_dataset]
+  <<: [*_layer_prm, *_medical_kg_sheets_dataset]
   save_args:
     sheet_name: Edges
     write_columns: ["SourceId", "TargetId", "Included"]
   load_args:
     sheet_name: Edges
     columns: ["SourceId", "TargetId", "Label"]
+
+preprocessing.raw.clinical_trials_data:
+  <<: *_medical_clinical_trials_sheet_dataset
+  load_args:
+    sheet_name: clinical_trial_DD_pairs
+    columns:
+      - "clinical_trial_id"
+      - "reason_for_rejection"
+      - "drug_name"
+      - "disease_name"
+      - "significantly_better"
+      - "non_significantly_better"
+      - "non_significantly_worse"
+      - "significantly_worse"
+
+preprocessing.int.mapped_clinical_trials_data:
+  <<: *_medical_clinical_trials_sheet_dataset
+  save_args:
+    sheet_name: clinical_trial_DD_pairs
+    write_columns: ["drug_kg_curie", "disease_kg_curie", "conflict"]
+  load_args:
+    sheet_name: clinical_trial_DD_pairs
+    columns:
+      - "clinical_trial_id"
+      - "reason_for_rejection"
+      - "drug_name"
+      - "disease_name"
+      - "significantly_better"
+      - "non_significantly_better"
+      - "non_significantly_worse"
+      - "significantly_worse"
+      - "drug_kg_curie"
+      - "disease_kg_curie"
+      - "conflict"

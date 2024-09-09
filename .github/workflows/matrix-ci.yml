@@ -92,9 +92,9 @@ jobs:
         # only if PR is labelled with "ready" or if branch is main
         # if: contains(github.event.pull_request.labels.*.name, 'ready') || github.ref == 'refs/heads/main'
       # workaround as the `failure()` call did not work in downstream matrix_ci_check
-      - run: echo "status=failure" >> "$GITHUB_OUTPUT"
-        id: finally
+      - id: finally
         if: failure()
+        run: echo "status=failure" >> "$GITHUB_OUTPUT"
   
   # we use this check as required in our PRs to ensure that CI runs but only for our paths. 
   matrix_ci_check:
@@ -103,8 +103,8 @@ jobs:
     if: always()
     needs: [paths_filter, ci]
     steps:
-      - run: echo "CI failed, we are exiting" && exit 1
-        if: ${{ needs.paths_filter.outputs.changed == 'true' && needs.ci.outputs.status == 'failure' }}
+      - if: ${{ needs.paths_filter.outputs.changed == 'true' && needs.ci.outputs.status == 'failure' }}
+        run: echo "CI failed, we are exiting" && exit 1
       - run: echo "Either no files were changed or we had happy CI, continuing"
 
       
