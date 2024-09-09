@@ -2,20 +2,19 @@
 from matrix import settings
 from kedro.pipeline import Pipeline, node, pipeline
 
-from . import nodes
+from . import nodes as nd
 
 
 def create_pipeline(**kwargs) -> Pipeline:
     """Create fabricator pipeline."""
-    nodes = []
-    for model in settings.DYNAMIC_PIPELINES_MAPPING.get("modelling"):
-        nodes.append(
+    return pipeline(
+        [
             node(
-                func=nodes.resolve_input,
+                func=nd.resolve_input,
                 inputs={
                     "sheet": "raw.inputs",
-                    "diseases": "raw.evaluation.disease_list",
-                    "drugs": "raw.evaluation.drug_list",
+                    "diseases_list": "raw.evaluation.disease_list",
+                    "drugs_list": "raw.evaluation.drug_list",
                 },
                 outputs=[
                     "inference.nodes.drugs",
@@ -25,10 +24,10 @@ def create_pipeline(**kwargs) -> Pipeline:
                 name=f"synonymize",
             ),
             node(
-                func=nodes.run_inference,
+                func=nd.run_inference,
                 inputs={
-                    "model": "modelling.xgb.ensemble.models.model",
-                    "embeddings": "embeddings.feat.nodes",
+                    "model": "inference.model.xgb",  # TODO: link params.yaml so that it feeds into this line?
+                    "embeddings": "inference.embed.nodes",
                     "infer_type": "inference.nodes.type",
                     "drug_nodes": "inference.nodes.drugs",
                     "disease_nodes": "inference.nodes.diseases",
@@ -39,10 +38,13 @@ def create_pipeline(**kwargs) -> Pipeline:
                 name=f"run_inference",
             ),
             node(
-                func=nodes.visualise_treat_scores,
-                inputs={"scores": "model_outputs.node.predictions"},
+                func=nd.visualise_treat_scores,
+                inputs={
+                    "scores": "model_outputs.node.predictions",
+                    "infer_type": "inference.nodes.type",
+                },
                 outputs="model_outputs.node.visualisations",
                 name=f"visualise_inference",
             ),
-        )
-    return pipeline(nodes)
+        ]
+    )

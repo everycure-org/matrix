@@ -2,6 +2,15 @@
 from abc import ABC, abstractmethod
 from typing import List, Type
 import pandas as pd
+import numpy as np
+import seaborn as sns
+import matplotlib.pyplot as plt
+
+from ..modelling.model import ModelWrapper
+
+##########################
+####### BASE MODEL #######
+##########################
 
 
 class inferRunner(ABC):
@@ -12,11 +21,7 @@ class inferRunner(ABC):
         pass
 
     @abstractmethod
-    def ingest(
-        self,
-        model,
-        nodes,
-    ):
+    def ingest_data(self, nodes):
         """Ingest the model, nodes, drug list and disease list of interest."""
         pass
 
@@ -26,7 +31,7 @@ class inferRunner(ABC):
         pass
 
     @abstractmethod
-    def cross_check(self, train_df):
+    def add_metadata(self, train_df):
         """Cross check with training data and flag/remove drug-disease pairs used for training."""
         df = self._scores
         if "training_data" in df.columns:
@@ -34,7 +39,7 @@ class inferRunner(ABC):
                 "cross-check already executed (i.e. detected training_data col in the scores)"
             )
         train_df = train_df.loc[train_df.split == "TRAIN"]
-        train_pairs = set(zip(train_df["drug"], train_df["disease"]))
+        train_pairs = set(zip(train_df["source"], train_df["target"]))
         df["training_data"] = df.apply(
             lambda row: (row["drug"], row["disease"]) in train_pairs, axis=1
         )
@@ -53,9 +58,15 @@ class inferRunner(ABC):
         pass
 
 
+##########################
+#### SPECIFIC MODELS #####
+##########################
+
+
 class inferPerPair(inferRunner):
     """Class for running inference for a single indication."""
 
+    # TODO: need to finish
     def __init__(
         self,
         drug_id,
@@ -67,16 +78,34 @@ class inferPerPair(inferRunner):
 
     def ingest_data(self, nodes):
         """Ingest the model, nodes, drug list and disease list of interest."""
-        drug = nodes.loc[nodes.id == self._drug]
-        disease = nodes.loc[nodes.id == self._disease]
-        self._input = np.concatenate([drug, disease])
+        drug = nodes.loc[nodes.id.isin(self._drug.id)]
+        disease = nodes.loc[nodes.id.isin(self._disease.id)]
+        vectorized_input = [
+            np.concatenate(
+                [
+                    disease.topological_embedding.values[0],
+                    disease.topological_embedding.values[0],
+                ]
+            )
+        ]
+
+        # Ingest metadata for later
+        self._input = vectorized_input
+        self._drug = drug.id.values
+        self._disease = disease.id.values
+        self._disease_meta = disease.description.values
+        self._drug_meta = drug.description.values
+        self._disease_name = disease.name.values
+        self._drug_name = drug.name.values
 
     def run_inference(self, model):
         """Run inference."""
-        score = model(self.input)
+        scores = model.predict_proba(np.array(self._input))[:, 1]
+        print(scores)
         df = pd.DataFrame(
-            {"drug": self._drug, "disease": self._disease, "treat_score": score}
+            {"drug": self._drug, "disease": self._disease, "treat_score": scores}
         )
+        print(scores)
         self._scores = df
 
 
@@ -85,55 +114,97 @@ class inferPerDisease(inferRunner):
 
     def __init__(
         self,
-        drug_id: List,
-        disease_id: LIst,
+        drug_id: List = None,
+        disease_id: List = None,
     ):
         """Initiate base class."""
         self._drug = drug_id
         self._disease = disease_id
 
-    def ingest(
-        self,
-        model,
-        nodes,
-    ):
+    def ingest_data(self, nodes):
         """Ingest the model, nodes, drug list and disease list of interest."""
-        pass
+        drug = nodes.loc[nodes.id.isin(self._drug.id)]  # .topological_embedding.values
+        disease = nodes.loc[
+            nodes.id.isin(self._disease.id)
+        ]  # .topological_embedding.values[0]
+        vectorized_input = []
+        for embed in drug.topological_embedding.values:
+            vectorized_input.append(
+                np.concatenate([embed, disease.topological_embedding.values[0]])
+            )
 
-    def run_inference(self):
+        # Ingest metadata for later
+        self._input = vectorized_input
+        self._drug = drug.id.values
+        self._disease = [disease.id.values[0] for _ in drug.id.values]
+        self._disease_meta = [disease.description.values[0] for _ in drug.id.values]
+        self._drug_meta = drug.description.values
+        self._disease_name = [disease.name.values[0] for _ in drug.id.values]
+        self._drug_name = drug.name.values
+
+    def run_inference(self, model):
         """Run inference."""
+        scores = model.predict_proba(np.array(self._input))[:, 1]
+        print(scores)
+        df = pd.DataFrame(
+            {"drug": self._drug, "disease": self._disease, "treat_score": scores}
+        )
+        print(scores)
+        self._scores = df
+
+    def add_metadata(self, train_df):
+        """Cross check with training data and flag/remove drug-disease pairs used for training."""
+        df = self._scores
+        if "training_data" in df.columns:
+            raise ValueError(
+                "cross-check already executed (i.e. detected training_data col in the scores)"
+            )
+        train_df = train_df.loc[train_df.split == "TRAIN"]
+
+        # Cross check if the drug-disease pair is present in the training data
+        train_pairs = set(zip(train_df["source"], train_df["target"]))
+        df["training_data"] = df.apply(
+            lambda row: (row["drug"], row["disease"]) in train_pairs, axis=1
+        )
+
+        # Add names
+        print(len(self._drug_meta))
+        print(len(self._disease_meta))
+        print(len(self._drug_name))
+        print(len(self._disease_name))
+        df["drug_name"] = self._drug_name
+        df["disease_name"] = self._disease_name
+
+        # Add metadata (eg drug/disease description)
+        df["drug_description"] = self._drug_meta
+        df["disease_description"] = self._disease_meta
+
+        self._scores = df  # loc[:, ['drug','drug_name','drug_description','disease','disease_name','disease_description','treat_score','training_data']]
+
+    def generate_stats(
+        self,
+    ):
+        """Generating descriptive statistics."""
         pass
 
+    def visualise_scores(self, scores):
+        """Base class for visualising scores."""
+        fig, ax = plt.subplots(figsize=(10, 10))
+        sns.kdeplot(scores["treat_score"])
+        ax.set_title("Distribution of Treatment Scores", fontsize=20, fontweight="bold")
+        ax.set_xlabel("Treatment Score", fontsize=16)
+        ax.set_ylabel("Frequency", fontsize=16)
 
-# class inferPerSubtypes(inferRunner):
-#     """Class for running inference for several indications per therapy area."""
+        # Add gridlines for better readability
+        ax.grid(True, linestyle="--", alpha=0.7)
+        caption = (
+            f"Mean: {np.mean(scores.treat_score)}, Std: {np.std(scores.treat_score)}, "
+            f"Min: {min(scores.treat_score)}, Max: {max(scores.treat_score)}"
+        )
+
+        plt.figtext(0.5, 0.01, caption, ha="center", fontsize=14, fontstyle="italic")
+
+        return fig
 
 
-# ### UTILS WIP
-
-# def get_ranked_drugs(model, drug_ids_lst, disease_id, embedding_array, node_to_index):
-#     """
-#     Gives sorted list of "treat" probability scores for a collection of drugs and a single disease
-#     """
-#     pairs = pd.DataFrame({'source': drug_ids_lst,'target': disease_id})
-#     pairs['probs'] = get_probabilities(pairs, model, embedding_array, node_to_index)[:,1]
-#     pairs_sorted = pairs.sort_values('probs', ascending = False).reset_index(drop=True)
-#     drugs_sorted = pairs_sorted.drop(columns='target')
-#     return drugs_sorted
-
-# def restrict_node_type(node_df, node_type_lst):
-#     """
-#     Returns KG nodes restricted to a list of categories.
-#     """
-#     node_df['clean_category'] = node_df['category'].str.contains(('|').join(node_type_lst))
-#     return node_df[node_df['clean_category']==True]
-
-# def get_ranked_drugs(model, drug_ids_lst, disease_id, embedding_array, node_to_index):
-#     """
-#     Gives sorted list of "treat" probability scores for a collection of drugs and a single disease
-#     """
-#     pairs = pd.DataFrame({'source': drug_ids_lst,'target': disease_id})
-#     pairs['probs'] = get_probabilities(pairs, model, embedding_array, node_to_index)[:,1]
-#     pairs_sorted = pairs.sort_values('probs', ascending = False).reset_index(drop=True)
-#     drugs_sorted = pairs_sorted.drop(columns='target')
-#     return drugs_sorted
+# TODO: implement drug centric class
