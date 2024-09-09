@@ -5,7 +5,7 @@ services:
     # note this works only on MacOS devices (or other ARM chipsets), check
     # `docker-compose.test.yml` for the override
     image: neo4j:5.21.0-enterprise
-    platform: ${DOCKER_PLATFORM:-linux/arm64}
+    # platform: ${DOCKER_PLATFORM:-linux/arm64}
     restart: unless-stopped
     ports:
       - 7474:7474
@@ -51,7 +51,7 @@ services:
   # testing.
   mock-genai:
     image: mockserver/mockserver
-    platform: ${DOCKER_PLATFORM:-linux/arm64}
+    # platform: ${DOCKER_PLATFORM:-linux/arm64}
     container_name: mockserver
     restart: unless-stopped
     user: root
