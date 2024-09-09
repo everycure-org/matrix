@@ -219,6 +219,7 @@ def generate_random_arrays(
     sample_values: List[Any],
     allow_duplicates: bool = False,
     length: int = None,
+    delimiter: str = None,
 ) -> List[List[Any]]:
     """Generate random array with sample values.
 
@@ -231,6 +232,7 @@ def generate_random_arrays(
         sample_values: Array that contain the possible values.
         allow_duplicates: Allow duplicated data.
         length: Size of the resulting array (exact).
+        delimiter: Delimiter, if set used to delimit elements in stringified notation.
 
     Returns:
         column: Calculated column.
@@ -252,10 +254,15 @@ def generate_random_arrays(
         ]
         return list_of_lists
 
-    return [
+    res =[
         random.sample(sample_values_updated, k=random.randint(1, len(sample_values)))
         for _ in range(num_rows)
     ]
+
+    if delimiter:
+        res = [delimiter.join(row) for row in res]
+
+    return res
 
 
 @probability_null()
