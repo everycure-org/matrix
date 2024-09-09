@@ -56,7 +56,7 @@ Install as follows, then create a virtual env and install the requirements:
     # generic
     curl -LsSf https://astral.sh/uv/install.sh | sh
     # for arch/manjaro
-    yay -S uv
+    sudo pacman -S uv
     ```
 
 ### Docker
@@ -114,7 +114,33 @@ We leverage Google (GCP) as our Cloud provider, the following cask installation 
 
 After succesfully installation, authenticate the client:
 
+
 ```bash
 gcloud auth login
 gcloud auth application-default login
 ```
+
+### GNU Make
+
+We use `make` and `Makefile`s in a lot of places. If you want to [learn more about makefiles](https://makefiletutorial.com) feel free to do so. The essentials as a user are that you have it installed and can call it via CLI. 
+
+
+=== "MacOS"
+
+    ```bash
+    # nothing to do here, make comes pre-installed with MacOS
+    ```
+
+=== "Windows (WSL)"
+
+    ```bash
+    sudo apt install build-essential
+    ```
+
+=== "Linux"
+    ```bash
+    # Debian based
+    sudo apt install build-essential
+    # for arch/manjaro
+    sudo pacman -S make
+    ```
