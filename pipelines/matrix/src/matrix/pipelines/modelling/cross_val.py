@@ -32,30 +32,28 @@ class DrugStratifiedSplit(BaseCrossValidator):
             y: Ignored, present for API consistency with scikit-learn.
             groups: Ignored, present for API consistency with scikit-learn.
 
-        Yields:
+        Returns:
             tuple: (train_indices, test_indices)
         """
         rng = np.random.RandomState(self.random_state)
 
         for iteration in range(self.n_splits):
             train_indices, test_indices = [], []
-
+            # Grouping sets of pairs by source (eg. drug)
             for _, group in X.groupby("source"):
                 indices = group.index.tolist()
                 rng.shuffle(indices)
                 n = len(indices)
                 n_test = max(1, int(np.round(n * self.test_size)))
-                n_train = n - n_test
-
-                train_indices.extend(indices[:n_train])
-                test_indices.extend(indices[n_train:])
+                train_indices.extend(indices[:-n_test])
+                test_indices.extend(indices[-n_test:])
 
             yield train_indices, test_indices
 
     def get_n_splits(self, X=None, y=None, groups=None):
         """Returns the number of splitting iterations in the cross-validator.
 
-         Args:
+        Args:
             X: Ignored, present for API consistency with scikit-learn.
             y: Ignored, present for API consistency with scikit-learn.
             groups: Ignored, present for API consistency with scikit-learn.
@@ -64,23 +62,3 @@ class DrugStratifiedSplit(BaseCrossValidator):
             int: Returns the number of splitting iterations in the cross-validator.
         """
         return self.n_splits
-
-    def split_with_labels(self, data):
-        """Split the data and add labels for train/test split and iteration.
-
-        Args:
-            data (pandas.DataFrame): The data to be split.
-
-        Returns:
-            pandas.DataFrame: The original data with additional columns for split and iteration.
-        """
-        all_data_frames = []
-        for iteration, (train_index, test_index) in enumerate(
-            self.split(data, data["y"])
-        ):
-            fold_data = data.copy()
-            fold_data.loc[:, "iteration"] = iteration
-            fold_data.loc[train_index, "split"] = "TRAIN"
-            fold_data.loc[test_index, "split"] = "TEST"
-            all_data_frames.append(fold_data)
-        return pd.concat(all_data_frames, axis="index", ignore_index=True)
