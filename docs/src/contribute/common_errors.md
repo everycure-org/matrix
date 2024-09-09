@@ -52,7 +52,7 @@ If you do not have access to lots of system memory, also increase the maximum Sw
 
 ## Unexpected keyword argument 'delimiter'
 
-you may encounter the following error during install:
+You may encounter the following error during install:
 
 `TypeError: generate_random_arrays() got an unexpected keyword argument 'delimiter'`
 
