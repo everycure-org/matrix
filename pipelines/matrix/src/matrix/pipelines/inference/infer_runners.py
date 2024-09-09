@@ -101,11 +101,9 @@ class inferPerPair(inferRunner):
     def run_inference(self, model):
         """Run inference."""
         scores = model.predict_proba(np.array(self._input))[:, 1]
-        print(scores)
         df = pd.DataFrame(
             {"drug": self._drug, "disease": self._disease, "treat_score": scores}
         )
-        print(scores)
         self._scores = df
 
 
@@ -145,11 +143,9 @@ class inferPerDisease(inferRunner):
     def run_inference(self, model):
         """Run inference."""
         scores = model.predict_proba(np.array(self._input))[:, 1]
-        print(scores)
         df = pd.DataFrame(
             {"drug": self._drug, "disease": self._disease, "treat_score": scores}
         )
-        print(scores)
         self._scores = df
 
     def add_metadata(self, train_df):
@@ -168,10 +164,6 @@ class inferPerDisease(inferRunner):
         )
 
         # Add names
-        print(len(self._drug_meta))
-        print(len(self._disease_meta))
-        print(len(self._drug_name))
-        print(len(self._disease_name))
         df["drug_name"] = self._drug_name
         df["disease_name"] = self._disease_name
 
