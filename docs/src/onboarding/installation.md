@@ -137,7 +137,7 @@ Install as follows, then create a virtual env and install the requirements:
     curl -LsSf https://astral.sh/uv/install.sh | sh
     # create virtual environment
     uv venv
-    # (optional for this step) activate virtual environment
+    # activate virtual environment
     source .venv/bin/activate
     
     ```
