@@ -75,6 +75,7 @@ jobs:
       # build Docs
       - run: |
           pip install uv
+          export MKDOCS_GIT_COMMITTERS_APIKEY=$GITHUB_TOKEN
           make build #builds the static files in site/
 
       - uses: 'google-github-actions/auth@v2'
