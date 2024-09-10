@@ -2,7 +2,7 @@
 
 Intended to be invoked via `kedro`.
 """
-from typing import List
+from typing import List, Set
 import click
 from kedro.framework.cli.project import (
     ASYNC_ARG_HELP,
@@ -29,10 +29,17 @@ from kedro.framework.cli.utils import (
     split_string,
     split_node_names,
 )
-from kedro.framework.session import KedroSession
 from kedro.utils import load_obj
-from kedro.framework.project import pipelines
 from kedro.pipeline.pipeline import Pipeline
+from kedro.framework.context.context import _convert_paths_to_absolute_posix
+from kedro.framework.hooks import _create_hook_manager
+from kedro.io.data_catalog import DataCatalog
+from kedro.framework.project import (
+    pipelines,
+    settings,
+)
+
+from matrix.context import CustomKedroSession
 
 
 @click.group(context_settings=CONTEXT_SETTINGS, name=__file__)
@@ -108,6 +115,12 @@ def cli():
     help=PARAMS_ARG_HELP,
     callback=_split_params,
 )
+@click.option(
+    "--to-env",
+    type=str,
+    default=None,
+    help="Custom env to write from, if specified will read from the `env` and write to the `--to-env`",
+)
 def run(
     tags,
     without_tags,
@@ -124,6 +137,7 @@ def run(
     config,
     conf_source,
     params,
+    to_env,
 ):
     """Run the pipeline."""
     if pipeline in ["test", "fabricator"] and env in [None, "base"]:
@@ -136,13 +150,56 @@ def run(
     without_tags = without_tags
     node_names = tuple(node_names)
 
-    with KedroSession.create(
+    with CustomKedroSession.create(
         env=env, conf_source=conf_source, extra_params=params
     ) as session:
         # introduced to filter out tags that should not be run
         node_names = _filter_nodes_missing_tag(
             tuple(without_tags), pipeline, session, node_names
         )
+
+        if to_env:
+            # Load second config loader instance
+            config_loader_class = settings.CONFIG_LOADER_CLASS
+            config_loader = config_loader_class(  # type: ignore[no-any-return]
+                conf_source=session._conf_source,
+                env=to_env,
+                **settings.CONFIG_LOADER_ARGS,
+            )
+            conf_catalog = config_loader["catalog"]
+            conf_catalog = _convert_paths_to_absolute_posix(
+                project_path=session._project_path, conf_dictionary=conf_catalog
+            )
+            conf_creds = config_loader["credentials"]
+            catalog: DataCatalog = settings.DATA_CATALOG_CLASS.from_config(
+                catalog=conf_catalog, credentials=conf_creds
+            )
+
+            # Instantiate pipeline to run
+            name = pipeline or "__default__"
+            pipe = pipelines[name]
+            nodes = pipe.filter(
+                tags=tags,
+                from_nodes=from_nodes,
+                to_nodes=to_nodes,
+                node_names=node_names,
+                from_inputs=from_inputs,
+                to_outputs=to_outputs,
+            )
+
+            # Substiute catalog entries
+            for item in nodes.all_outputs():
+                # NOTE: The `--to-env` can never substitute
+                # any parameters, as parameters are read from
+                # by definition.
+                if item.startswith("params:"):
+                    continue
+
+                session._context._catalog.add(
+                    item, catalog._get_dataset(item), replace=True
+                )
+
+            breakpoint()
 
         session.run(
             tags=tags,

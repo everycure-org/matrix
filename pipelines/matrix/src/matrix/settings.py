@@ -9,6 +9,7 @@ https://docs.kedro.org/en/stable/kedro_project_setup/settings.html.
 # from pandas_viz.hooks import ProjectHooks
 import matrix.hooks as hooks
 from kedro_mlflow.framework.hooks import MlflowHook
+from matrix.context import CustomKedroContext
 
 # Hooks are executed in a Last-In-First-Out (LIFO) order.
 HOOKS = (
@@ -78,7 +79,7 @@ DYNAMIC_PIPELINES_MAPPING = {
 
 # Class that manages Kedro's library components.
 # from kedro.framework.context import KedroContext
-# CONTEXT_CLASS = KedroContext
+CONTEXT_CLASS = CustomKedroContext
 
 # Class that manages the Data Catalog.
 # from kedro.io import DataCatalog
