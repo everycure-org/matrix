@@ -72,6 +72,17 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11' 
+
+      
+      # caching .cache folder which contains a file that caches all contributors of a file. This avoids lengthy API calls during build process
+      - name: Cache .cache folder
+        uses: actions/cache@v3
+        with:
+          path: docs/.cache
+          key: ${{ runner.os }}-docs-cache-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-docs-cache-
+
       # build Docs
       - name: Build Docs
         env:
