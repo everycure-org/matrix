@@ -56,22 +56,18 @@ You may encounter the following error during install:
 
 `TypeError: generate_random_arrays() got an unexpected keyword argument 'delimiter'`
 
-This issue is due to versions of data fabricator mismatching (v0 vs v1) and it should be solved now. Nevertheless a workaround to solve it was by by ensuring that pyenv is managing the python installation (to test this, enter `which python` and make sure it is not a `conda` or `miniconda` folder, then make pyenv the default):
+This issue was caused when we updated a function in the `packages/data_fabricator` package. Since we cannot set a python version of a local dependency, `uv` caches this dependency and does not pull the latest version into the `venv.
 
-```
-pyenv global 3.11
-```
-
-Then removing the virtual environment and the data fabricator build, reinstalling and activating the virtual environment:
-
-```
-rm -rf matrix/pipelines/matrix/.venv
-deactivate
-rm -rf matrix/pipelines/matrix/packages/data_fabricator/build
+**Solution**:
+Run this inside of `pipelines/matrix`
+```bash
+rm -rf .venv/
+rm -rf $(uv cache dir)
 make venv
 make install
-source .venv/build/activate
 ```
+
+This wipes the uv cache, which leads to a functioning installation of the library. This error does not occur in CI because our docker container is always built cleanly. 
 
 Finally, try running the kedro pipeline test while docker is up and running:
 
