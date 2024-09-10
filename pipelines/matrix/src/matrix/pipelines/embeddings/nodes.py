@@ -234,6 +234,13 @@ def compute_embeddings(
     return {"success": "true"}
 
 
+def string_to_float_list(s):
+    """UDF to transform str into list."""
+    if s is not None:
+        return [float(x) for x in s.strip()[1:-1].split(",")]
+    return []
+
+
 @unpack_params()
 @inject_object()
 def reduce_dimension(df: DataFrame, transformer, input: str, output: str, skip: bool):
@@ -256,6 +263,10 @@ def reduce_dimension(df: DataFrame, transformer, input: str, output: str, skip: 
     """
     if skip:
         return df.withColumn(output, F.col(input))
+
+    if isinstance(df.schema[input].dataType, StringType):
+        string_to_float_list_udf = udf(string_to_float_list, ArrayType(FloatType()))
+        df = df.withColumn(input, string_to_float_list_udf(F.col(input)))
 
     # Convert into correct type
     df = df.withColumn("features", array_to_vector(input))
@@ -366,9 +377,10 @@ def train_topological_embeddings(
         gds.model.drop(model)
 
     # Initialize the model
-    model, attr = getattr(gds.beta, estimator.get("model")).train(
-        subgraph, **estimator.get("args")
+    topological_estimator.run(
+        gds=gds, model_name=model_name, graph=subgraph, write_property=write_property
     )
+    losses = topological_estimator.return_loss()
 
     # Plot convergence
     convergence = plt.figure()
@@ -405,27 +417,6 @@ def write_topological_embeddings(
         gds=gds, model_name=model_name, graph=graph, write_property=write_property
     )
     return {"success": "true"}
-
-
-def string_to_float_list(s: str) -> List[float]:
-    """UDF to transform str into list. Fix for Node2Vec array being written as string."""
-    if s is not None:
-        return [float(x) for x in s.strip()[1:-1].split(",")]
-    return []
-
-
-def extract_node_embeddings(nodes: DataFrame, string_col: str) -> DataFrame:
-    """Extract topological embeddings from Neo4j and write into BQ.
-
-    Need a conditional statement due to Node2Vec writing topological embeddings as string. Raised issue in GDS client:
-    https://github.com/neo4j/graph-data-science-client/issues/742#issuecomment-2324737372.
-    """
-    if isinstance(nodes.schema[string_col].dataType, StringType):
-        string_to_float_list_udf = udf(string_to_float_list, ArrayType(FloatType()))
-        nodes = nodes.withColumn(
-            string_col, string_to_float_list_udf(F.col(string_col))
-        )
-    return nodes
 
 
 def visualise_pca(nodes: DataFrame, column_name: str):
