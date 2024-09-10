@@ -24,13 +24,15 @@ class inferRunner(ABC):
         """Ingest the model, nodes, drug list and disease list of interest."""
         pass
 
-    @abstractmethod
-    def run_inference(self):
+    def run_inference(self, model):
         """Run inference."""
-        pass
+        scores = model.predict_proba(np.array(self._input))[:, 1]
+        df = pd.DataFrame(
+            {"drug": self._drug, "disease": self._disease, "treat_score": scores}
+        )
+        self._scores = df
 
-    @abstractmethod
-    def add_metadata(self, train_df: pd.DataFrame):
+    def add_metadata(self, train_df):
         """Cross check with training data and flag/remove drug-disease pairs used for training."""
         df = self._scores
         if "training_data" in df.columns:
@@ -38,11 +40,22 @@ class inferRunner(ABC):
                 "cross-check already executed (i.e. detected training_data col in the scores)"
             )
         train_df = train_df.loc[train_df.split == "TRAIN"]
+
+        # Cross check if the drug-disease pair is present in the training data
         train_pairs = set(zip(train_df["source"], train_df["target"]))
         df["training_data"] = df.apply(
             lambda row: (row["drug"], row["disease"]) in train_pairs, axis=1
         )
-        self._scores = df
+
+        # Add names
+        df["drug_name"] = self._drug_name
+        df["disease_name"] = self._disease_name
+
+        # Add metadata (eg drug/disease description)
+        df["drug_description"] = self._drug_meta
+        df["disease_description"] = self._disease_meta
+
+        self._scores = df  # loc[:, ['drug','drug_name','drug_description','disease','disease_name','disease_description','treat_score','training_data']]
 
     @abstractmethod
     def generate_stats(
@@ -95,39 +108,6 @@ class inferPerPair(inferRunner):
         self._drug_meta = drug.description.values
         self._disease_name = disease.name.values
         self._drug_name = drug.name.values
-
-    def run_inference(self, model):
-        """Run inference."""
-        scores = model.predict_proba(np.array(self._input))[:, 1]
-        df = pd.DataFrame(
-            {"drug": self._drug, "disease": self._disease, "treat_score": scores}
-        )
-        self._scores = df
-
-    def add_metadata(self, train_df: pd.DataFrame):
-        """Cross check with training data and flag/remove drug-disease pairs used for training."""
-        df = self._scores
-        if "training_data" in df.columns:
-            raise ValueError(
-                "cross-check already executed (i.e. detected training_data col in the scores)"
-            )
-        train_df = train_df.loc[train_df.split == "TRAIN"]
-
-        # Cross check if the drug-disease pair is present in the training data
-        train_pairs = set(zip(train_df["source"], train_df["target"]))
-        df["training_data"] = df.apply(
-            lambda row: (row["drug"], row["disease"]) in train_pairs, axis=1
-        )
-
-        # Add names
-        df["drug_name"] = self._drug_name
-        df["disease_name"] = self._disease_name
-
-        # Add metadata (eg drug/disease description)
-        df["drug_description"] = self._drug_meta
-        df["disease_description"] = self._disease_meta
-
-        self._scores = df
 
     def generate_stats(
         self,
@@ -185,39 +165,6 @@ class inferPerDisease(inferRunner):
         self._disease_name = [disease.name.values[0] for _ in drug.id.values]
         self._drug_name = drug.name.values
 
-    def run_inference(self, model):
-        """Run inference."""
-        scores = model.predict_proba(np.array(self._input))[:, 1]
-        df = pd.DataFrame(
-            {"drug": self._drug, "disease": self._disease, "treat_score": scores}
-        )
-        self._scores = df
-
-    def add_metadata(self, train_df):
-        """Cross check with training data and flag/remove drug-disease pairs used for training."""
-        df = self._scores
-        if "training_data" in df.columns:
-            raise ValueError(
-                "cross-check already executed (i.e. detected training_data col in the scores)"
-            )
-        train_df = train_df.loc[train_df.split == "TRAIN"]
-
-        # Cross check if the drug-disease pair is present in the training data
-        train_pairs = set(zip(train_df["source"], train_df["target"]))
-        df["training_data"] = df.apply(
-            lambda row: (row["drug"], row["disease"]) in train_pairs, axis=1
-        )
-
-        # Add names
-        df["drug_name"] = self._drug_name
-        df["disease_name"] = self._disease_name
-
-        # Add metadata (eg drug/disease description)
-        df["drug_description"] = self._drug_meta
-        df["disease_description"] = self._disease_meta
-
-        self._scores = df  # loc[:, ['drug','drug_name','drug_description','disease','disease_name','disease_description','treat_score','training_data']]
-
     def generate_stats(
         self,
     ):
@@ -273,39 +220,6 @@ class inferPerDrug(inferRunner):
         self._drug_meta = [drug.description.values[0] for _ in disease.id.values]
         self._disease_name = disease.description.values
         self._drug_name = [drug.name.values[0] for _ in disease.id.values]
-
-    def run_inference(self, model):
-        """Run inference."""
-        scores = model.predict_proba(np.array(self._input))[:, 1]
-        df = pd.DataFrame(
-            {"drug": self._drug, "disease": self._disease, "treat_score": scores}
-        )
-        self._scores = df
-
-    def add_metadata(self, train_df):
-        """Cross check with training data and flag/remove drug-disease pairs used for training."""
-        df = self._scores
-        if "training_data" in df.columns:
-            raise ValueError(
-                "cross-check already executed (i.e. detected training_data col in the scores)"
-            )
-        train_df = train_df.loc[train_df.split == "TRAIN"]
-
-        # Cross check if the drug-disease pair is present in the training data
-        train_pairs = set(zip(train_df["source"], train_df["target"]))
-        df["training_data"] = df.apply(
-            lambda row: (row["drug"], row["disease"]) in train_pairs, axis=1
-        )
-
-        # Add names
-        df["drug_name"] = self._drug_name
-        df["disease_name"] = self._disease_name
-
-        # Add metadata (eg drug/disease description)
-        df["drug_description"] = self._drug_meta
-        df["disease_description"] = self._disease_meta
-
-        self._scores = df.head(1000)  # current limit is 6250
 
     def generate_stats(
         self,
