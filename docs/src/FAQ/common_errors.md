@@ -32,6 +32,44 @@ pyenv global 3.11
 then `make` again.
 
 
+
+## Hanging up during make process
+While running `make`, you may encounter an issue where the process hangs up around the following step:
+
+```
+[build 12/12] ADD . .
+```
+
+If this step takes more than a few minutes, it is likely that the memory limit in docker is insufficient to build the docker image required to run the pipeline. To fix this issue, open docker and in **settings** adjust the memory limit.  16 GB is the recommended minimum. 
+
+If you do not have access to lots of system memory, you can also increase the maximum Swap file size. 
+
+
+## Unexpected keyword argument 'delimiter'
+
+You may encounter the following error during install:
+
+`TypeError: generate_random_arrays() got an unexpected keyword argument 'delimiter'`
+
+This issue was caused when we updated a function in the `packages/data_fabricator` package. Since we cannot set a python version of a local dependency, `uv` caches this dependency and does not pull the latest version into the `venv.
+
+**Solution**:
+Run this inside of `pipelines/matrix`
+```bash
+rm -rf .venv/
+rm -rf $(uv cache dir)
+make venv
+make install
+```
+
+This wipes the uv cache, which leads to a functioning installation of the library. This error does not occur in CI because our docker container is always built cleanly. 
+
+Finally, try running the kedro pipeline test while docker is up and running:
+
+```
+kedro run -p test -e test
+```
+
 ## Module not found in python
 ```
 ModuleNotFoundError: No module named <some_module>
