@@ -73,9 +73,11 @@ jobs:
         with:
           python-version: '3.11' 
       # build Docs
-      - run: |
+      - name: Build Docs
+        env:
+          MKDOCS_GIT_COMMITTERS_APIKEY: ${{ secrets.GITHUB_TOKEN }}
+        run: |
           pip install uv
-          export MKDOCS_GIT_COMMITTERS_APIKEY=$GITHUB_TOKEN
           make build #builds the static files in site/
 
       - uses: 'google-github-actions/auth@v2'
