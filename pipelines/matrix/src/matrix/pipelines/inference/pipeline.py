@@ -15,6 +15,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                     "sheet": "raw.inputs",
                     "diseases_list": "raw.evaluation.disease_list",
                     "drugs_list": "raw.evaluation.drug_list",
+                    "endpoint": "params:preprocessing.synonymizer_endpoint",
                 },
                 outputs=[
                     "inference.nodes.drugs",
@@ -31,7 +32,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                     "infer_type": "inference.nodes.type",
                     "drug_nodes": "inference.nodes.drugs",
                     "disease_nodes": "inference.nodes.diseases",
-                    "train_df": "modelling.model_input.splits",  # need it to cross-check if drug-disease pairs we inferred are not in the train set
+                    "train_df": "modelling.model_input.splits",
                     "sheet": "raw.inputs",
                 },
                 outputs=f"model_outputs.node.predictions",
