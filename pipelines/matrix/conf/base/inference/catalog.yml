@@ -27,7 +27,7 @@ raw.inputs:
   <<: [*_sheets_dataset]
   load_args:
     sheet_name: Input
-    columns: ["drug_id", "disease_id", "type"]
+    columns: ["drug_id", "disease_id"]
 
 inference.nodes.drugs:
   <<: [*_pandas_csv]
