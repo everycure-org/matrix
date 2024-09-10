@@ -60,7 +60,9 @@ class DrugStratifiedSplit(BaseCrossValidator):
                     yield train_indices, test_indices
                     break
             else:
-                raise ValueError(f"Unable to generate unique train and test sets after {max_attempts} attempts.")
+                raise ValueError(
+                    f"Unable to generate unique train and test sets after {max_attempts} attempts."
+                )
 
     def get_n_splits(self, X=None, y=None, groups=None):
         """Returns the number of splitting iterations in the cross-validator.
