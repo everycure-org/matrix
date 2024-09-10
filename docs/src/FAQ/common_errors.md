@@ -40,14 +40,9 @@ While running `make`, you may encounter an issue where the process hangs up arou
 [build 12/12] ADD . .
 ```
 
-If this step takes more than a few minutes, it is likely that the memory limit in docker is insufficient to build the docker image required to run the pipeline. To fix this issue, open docker and in **settings** adjust the memory limit:
+If this step takes more than a few minutes, it is likely that the memory limit in docker is insufficient to build the docker image required to run the pipeline. To fix this issue, open docker and in **settings** adjust the memory limit.  16 GB is the recommended minimum. 
 
-<img width="857" alt="Screen Shot 2024-09-06 at 12 45 13 PM" src="https://github.com/user-attachments/assets/2fc8e558-c1dc-4cb1-ae88-a339a65728ad">
-
-16 GB is the recommended minimum. 
-
-If you do not have access to lots of system memory, also increase the maximum Swap file size. 
-
+If you do not have access to lots of system memory, you can also increase the maximum Swap file size. 
 
 
 ## Unexpected keyword argument 'delimiter'
