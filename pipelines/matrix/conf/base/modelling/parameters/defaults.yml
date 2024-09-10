@@ -13,7 +13,7 @@ modelling.splitter:
 
   # Defines strategy for cross validation. Can be a function from sklearn.model_selection
   # or our custom DrugStratifiedSplit
-  # object: matrix.pipelines.modelling.cross_val.DrugStratifiedSplit
+  # object: matrix.pipelines.modelling.model_selection.DrugStratifiedSplit
   object: sklearn.model_selection.StratifiedShuffleSplit
   n_splits: 1 
   test_size: 0.1
