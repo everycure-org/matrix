@@ -7,7 +7,7 @@ export PYSPARK_PYTHON = .venv/bin/python
 .ONESHELL: 
 
 
-default: venv install precommit fast_test compose_down docker_test
+default: prerequisites venv install precommit fast_test compose_down docker_test
 	echo "done!"
 
 prerequisites:
