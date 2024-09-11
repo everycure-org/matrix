@@ -16,6 +16,7 @@ def _create_evaluation_pipeline(model: str, evaluation: str) -> Pipeline:
                     "modelling.feat.rtx_kg2",
                     "modelling.model_input.splits",
                     f"params:evaluation.{evaluation}.evaluation_options.generator",
+                    "evaluation.prm.clinical_trials_data",
                 ],
                 outputs=f"evaluation.{model}.{evaluation}.prm.pairs",
                 name=f"create_{model}_{evaluation}_evaluation_pairs",
@@ -51,8 +52,19 @@ def _create_evaluation_pipeline(model: str, evaluation: str) -> Pipeline:
 
 
 def create_pipeline(**kwargs) -> Pipeline:
-    """Create evaluation pipeline."""
-    pipes = []
+    """Create fabricator pipeline."""
+    pipes = [
+        pipeline(
+            [
+                node(
+                    func=nodes.create_prm_clinical_trials,
+                    inputs=["ingestion.raw.clinical_trials_data"],
+                    outputs="evaluation.prm.clinical_trials_data",
+                    name="create_prm_clinical_trails",
+                ),
+            ]
+        )
+    ]
     models = settings.DYNAMIC_PIPELINES_MAPPING.get("modelling")
     model_names = [model["model_name"] for model in models]
     for model in model_names:

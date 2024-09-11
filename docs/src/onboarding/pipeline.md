@@ -90,12 +90,21 @@ As well as single models, the pipeline has the capability to deal with *ensemble
 
 The evaluation pipeline computes various metrics in order to assess the performance of the models trained in the previous stages. 
 
-Currently, we have the following evaluation methods. 
+Currently, we have the following evaluation metrics. 
 
 1. *Threshold-based classification metrics for ground truth data*. Measures how well the model classifies ground truth positive and negatives using threshold-based metrics such as accuracy and F1-score.
 2. *Threshold-independent metrics for ground truth data*. Measures how well the model classifies ground truth positive and negatives using threshold-independent metrics such as AUROC.
 3. *All vs. all ranking with all drugs x test diseases matrix.*. Gives information on all drugs vs all disease ranking performance of models by using threshold-independent metrics such as AUROC and synthesised negatives. The construction of the synthesised negatives are based on a matrix of drug-disease pairs for a given list of all drugs and the list of disease appearing in the ground-truth positive test set. 
 4. *Disease-specific ranking*. Measures the performance of the model at ranking drugs for a fixed disease using metrics such as Hit@k and mean reciprocal rank (MRR). 
+
+The chosen evaluation metrics are defined in the 
+`/pipelines/matrix/conf/<env>/evaluation/parameters.yml` file, where `<env>` is the environment, e.g. `base` or `prod`. 
+
+The computation of each evaluation metric in the pipeline is described in the following diagram.
+
+![](../assets/img/evaluation.drawio.png)
+
+Note that different evaluation metrics may have common nodes and datasets. For instance, disease-specific Hit@k and MRR are computed using the same synthesised negatives. 
 
 ### Release
 
