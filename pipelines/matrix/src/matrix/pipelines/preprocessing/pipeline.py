@@ -71,35 +71,35 @@ def create_pipeline(**kwargs) -> Pipeline:
                 name="clean_clinical_trial_data",
                 tags=["ec-clinical-trials-data"],
             ),
-            # node(
-            #     func=partial(
-            #         nodes.enrich_df_noschema,
-            #         func=nodes.normalize,
-            #         input_cols=["single_ID"],
-            #         target_col="drug_id_curie",
-            #     ),
-            #     inputs=[
-            #         "raw.evaluation.drug_list",
-            #         "params:preprocessing.synonymizer_endpoint",
-            #     ],
-            #     outputs="preprocessing.int.resolved_drug_list",
-            #     name="resolve_drug_list",
-            #     tags=["drug-list"],
-            # ),
-            # node(
-            #     func=partial(
-            #         nodes.enrich_df_noschema,
-            #         func=nodes.normalize,
-            #         input_cols=["category_class"],
-            #         target_col="disease_id_curie",
-            #     ),
-            #     inputs=[
-            #         "raw.evaluation.disease_list",
-            #         "params:preprocessing.synonymizer_endpoint",
-            #     ],
-            #     outputs="preprocessing.int.resolved_disease_list",
-            #     name="resolve_disease_list",
-            #     tags=["disease-list"],
-            # ),
+            node(
+                func=partial(
+                    nodes.enrich_df,
+                    func=nodes.normalize,
+                    input_cols=["single_ID"],
+                    target_col="drug_id_curie",
+                ),
+                inputs=[
+                    "raw.evaluation.drug_list",
+                    "params:preprocessing.synonymizer_endpoint",
+                ],
+                outputs="preprocessing.int.resolved_drug_list",
+                name="resolve_drug_list",
+                tags=["drug-list"],
+            ),
+            node(
+                func=partial(
+                    nodes.enrich_df,
+                    func=nodes.normalize,
+                    input_cols=["category_class"],
+                    target_col="disease_id_curie",
+                ),
+                inputs=[
+                    "raw.evaluation.disease_list",
+                    "params:preprocessing.synonymizer_endpoint",
+                ],
+                outputs="preprocessing.int.resolved_disease_list",
+                name="resolve_disease_list",
+                tags=["disease-list"],
+            ),
         ]
     )
