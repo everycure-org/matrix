@@ -5,25 +5,21 @@ mlflow:
   tracking: 
     # we see issues when uploading large files and this is a recommended workaround
     # https://github.com/mlflow/mlflow/issues/6331
-    extraArgs:
-      - '--gunicorn-opts="-t 360"'
-    resources:
-      requests:
-        cpu: 0.5
-        memory: 2Gi
-        ephemeral-storage: 5Gi
-      limits:
-        cpu: 2
-        memory: 8Gi
-        ephemeral-storage: 10Gi
+    command: [ "/bin/sh", "-c" ]
+    args: 
+      - >
+        mlflow server
+        --gunicorn-opts="-t 360"
+        --host=0.0.0.0 --port=5000
+        --no-serve-artifacts
+        --backend-store-uri=postgresql://bn_mlflow:$(MLFLOW_DATABASE_PASSWORD)@release-name-postgresql:5432/bitnami_mlflow
+    resourcesPreset: large
     service:
       type: ClusterIP
     auth:
       enabled: false
     # FUTURE: Setup GCS when supported
     # https://github.com/bitnami/charts/pull/28938
-
-    
 
   # Use our own PGSQL Secret
   # https://github.com/bitnami/charts/issues/28893
@@ -32,7 +28,4 @@ mlflow:
       existingSecret: pgsql-creds
 
   minio:
-    auth:
-      existingSecret: minio-creds
-    persistence:
-      size: 64Gi
+    enabled: false
