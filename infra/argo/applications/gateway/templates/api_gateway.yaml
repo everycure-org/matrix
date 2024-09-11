@@ -19,7 +19,7 @@ spec:
     tls:
       mode: Terminate
       certificateRefs:
-        - name: gateway-cert
+        - name: api-gateway-cert
           kind: Secret
   - name: http
     hostname: "*.api.dev.everycure.org"
