@@ -2,8 +2,9 @@ nav:
     - index.md
     - onboarding
     - infrastructure
+    - data_science
     - matrix
     - contribute
     - experiments
-    - FAQ.md
+    - FAQ
     - releases
