@@ -13,6 +13,10 @@ import logging
 
 import mlflow
 
+from kedro.framework.context import KedroContext
+from kedro.io.data_catalog import DataCatalog
+from kedro_datasets.spark import SparkDataset
+
 
 logger = logging.getLogger(__name__)
 
@@ -37,11 +41,17 @@ class MLFlowHooks:
         other hooks to consume.
         """
         cfg = OmegaConf.create(context.config_loader["mlflow"])
+        globs = OmegaConf.create(context.config_loader["globals"])
+
+        # Set tracking uri
+        # NOTE: This piece of code ensures that every MLFlow experiment
+        # is created by our Kedro pipeline with the right artifact root.
+        mlflow.set_tracking_uri(cfg.server.mlflow_tracking_uri)
+        experiment_id = self._create_experiment(
+            cfg.tracking.experiment.name, globs.mlflow_artifact_root
+        )
 
         if cfg.tracking.run.name:
-            # Set tracking uri
-            mlflow.set_tracking_uri(cfg.server.mlflow_tracking_uri)
-            experiment_id = self._create_experiment(cfg.tracking.experiment.name)
             run_id = self._create_run(cfg.tracking.run.name, experiment_id)
 
             # Update catalog
@@ -76,11 +86,12 @@ class MLFlowHooks:
         return runs[0].info.run_id
 
     @staticmethod
-    def _create_experiment(experiment_name: str) -> str:
+    def _create_experiment(experiment_name: str, artifact_location: str) -> str:
         """Function to create experiment.
 
         Args:
             experiment_name: name of the experiment
+            artifact_location: artifact location of experiment
         Returns:
             Identifier of experiment
         """
@@ -89,16 +100,11 @@ class MLFlowHooks:
         )
 
         if not experiments:
-            return mlflow.create_experiment(experiment_name)
+            return mlflow.create_experiment(
+                experiment_name, artifact_location=artifact_location
+            )
 
         return experiments[0].experiment_id
-
-
-from kedro.framework.context import KedroContext
-
-from kedro.framework.context import KedroContext
-from kedro.io.data_catalog import DataCatalog
-from kedro_datasets.spark import SparkDataset
 
 
 class SparkHooks:
