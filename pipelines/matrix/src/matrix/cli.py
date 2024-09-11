@@ -2,7 +2,7 @@
 
 Intended to be invoked via `kedro`.
 """
-from typing import List, Set
+from typing import List, Set, Dict, Any
 import click
 from kedro.framework.cli.project import (
     ASYNC_ARG_HELP,
@@ -173,9 +173,9 @@ def run(
                 catalog=conf_catalog, credentials=conf_creds
             )
             from_params = config_loader["parameters"]
+            from_catalog.add_feed_dict(_get_feed_dict(from_params), replace=True)
 
         session.run(
-            from_params=from_params,
             from_catalog=from_catalog,
             tags=tags,
             runner=runner(is_async=is_async),
@@ -187,6 +187,37 @@ def run(
             load_versions=load_versions,
             pipeline_name=pipeline,
         )
+
+
+def _get_feed_dict(params: Dict) -> dict[str, Any]:
+    """Get parameters and return the feed dictionary."""
+    feed_dict = {"parameters": params}
+
+    @staticmethod
+    def _add_param_to_feed_dict(param_name: str, param_value: Any) -> None:
+        """Add param to feed dict.
+
+        This recursively adds parameter paths to the `feed_dict`,
+        whenever `param_value` is a dictionary itself, so that users can
+        specify specific nested parameters in their node inputs.
+
+        Example:
+            >>> param_name = "a"
+            >>> param_value = {"b": 1}
+            >>> _add_param_to_feed_dict(param_name, param_value)
+            >>> assert feed_dict["params:a"] == {"b": 1}
+            >>> assert feed_dict["params:a.b"] == 1
+        """
+        key = f"params:{param_name}"
+        feed_dict[key] = param_value
+        if isinstance(param_value, dict):
+            for key, val in param_value.items():
+                _add_param_to_feed_dict(f"{param_name}.{key}", val)
+
+    for param_name, param_value in params.items():
+        _add_param_to_feed_dict(param_name, param_value)
+
+    return feed_dict
 
 
 def _filter_nodes_missing_tag(
