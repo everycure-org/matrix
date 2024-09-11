@@ -89,6 +89,8 @@ licenses_container: docker_build
 		image --scanners license --severity UNKNOWN,CRITICAL $(dev_docker_image)
 
 clean:
-        rm -rf .pytest_cache .venv
-        rm -rf ~/.cache/uv ~/.cache/pre-commit
-        docker volume prune
+	@echo "cleaning various cache locations to ensure clean installation is possible"
+	@echo "this may be necessary e.g. when updating one of our local packages"
+	rm -rf .pytest_cache .venv
+	rm -rf $(uv cache dir) ~/.cache/pre-commit
+	docker volume prune -f
