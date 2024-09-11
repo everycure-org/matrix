@@ -87,3 +87,8 @@ licenses_container: docker_build
 		-v $(PWD)/trivy.yaml:/trivy.yaml \
 		-v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy  \
 		image --scanners license --severity UNKNOWN,CRITICAL $(dev_docker_image)
+
+clean:
+        rm -rf .pytest_cache .venv
+        rm -rf ~/.cache/uv ~/.cache/pre-commit
+        docker volume prune
