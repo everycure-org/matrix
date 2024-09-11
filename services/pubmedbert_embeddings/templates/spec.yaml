@@ -48,7 +48,7 @@ spec:
   parentRefs:
   - kind: Gateway
     sectionName: https
-    namespace: dev-pascal
+    namespace: gateway
     name: api-gateway
   hostnames:
   - "pubmedbert.api.dev.everycure.org"
