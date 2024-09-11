@@ -11,17 +11,16 @@ from refit.v1.core.inline_has_schema import has_schema
 from refit.v1.core.inline_primary_key import primary_key
 
 
-def resolve(name: str, endpoint: str, input: str = "names") -> str:
+def resolve(name: str, endpoint: str) -> str:
     """Function to retrieve curie through the synonymizer.
 
     Args:
         name: name of the node
         endpoint: endpoint of the synonymizer
-        input: names or curies to be synonymized; names by default
     Returns:
         Corresponding curie
     """
-    result = requests.get(f"{endpoint}/synonymize", json={input: [name]})
+    result = requests.get(f"{endpoint}/synonymize", json={"names": [name]})
 
     element = result.json().get(name)
     if element:
@@ -100,7 +99,7 @@ def enrich_df(
     return df
 
 
-def enrich_drug_disease_df(
+def enrich_df_noschema(
     df: pd.DataFrame,
     endpoint: str,
     func: Callable,
@@ -124,12 +123,11 @@ def enrich_drug_disease_df(
     col = coalesce(*[df[col] for col in input_cols])
 
     # Apply enrich function and replace nans by empty space
-    df[target_col] = col.apply(partial(func, endpoint=endpoint, input="curies"))
+    df[target_col] = col.apply(partial(func, endpoint=endpoint))
 
     # If set, coalesce final result with coalesce col
     if coalesce_col:
         df[target_col] = coalesce(df[coalesce_col], df[target_col])
-
     return df
 
 

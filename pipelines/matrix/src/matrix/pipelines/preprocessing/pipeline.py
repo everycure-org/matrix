@@ -111,8 +111,8 @@ def create_pipeline(**kwargs) -> Pipeline:
             ),
             node(
                 func=partial(
-                    nodes.enrich_drug_disease_df,
-                    func=nodes.resolve,
+                    nodes.enrich_df_noschema,
+                    func=nodes.normalize,
                     input_cols=["single_ID"],
                     target_col="drug_id_curie",
                 ),
@@ -126,8 +126,8 @@ def create_pipeline(**kwargs) -> Pipeline:
             ),
             node(
                 func=partial(
-                    nodes.enrich_drug_disease_df,
-                    func=nodes.resolve,
+                    nodes.enrich_df_noschema,
+                    func=nodes.normalize,
                     input_cols=["category_class"],
                     target_col="disease_id_curie",
                 ),
