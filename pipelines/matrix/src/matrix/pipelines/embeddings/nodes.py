@@ -208,6 +208,7 @@ def compute_embeddings(
             F.col(f"exploded.{attribute}").alias(attribute),
         )
         .repartition(128)
+        .join(input, on="id")
     )
 
     return res
