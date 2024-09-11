@@ -63,7 +63,7 @@ CONFIG_LOADER_ARGS = {
 # https://getindata.com/blog/kedro-dynamic-pipelines/
 DYNAMIC_PIPELINES_MAPPING = {
     "modelling": [
-        {"model_name": "xg_baseline", "num_shards": 1, "run_inference": True},
+        {"model_name": "xg_baseline", "num_shards": 1},
         {"model_name": "xg_ensemble", "num_shards": 3},
         {"model_name": "rf", "num_shards": 1},
         {"model_name": "xg_synth", "num_shards": 1},
