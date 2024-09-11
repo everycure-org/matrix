@@ -157,8 +157,6 @@ def make_predictions_and_sort(
     """
     from sklearn.ensemble._forest import RandomForestClassifier
 
-    # if type(model._estimators[0]) != RandomForestClassifier:
-    #     breakpoint()
     # Generate scores
     data = make_batch_predictions(
         graph, data, transformers, model, features, score_col_name, batch_by=batch_by
@@ -182,6 +180,48 @@ def generate_report(
     Returns:
         Dataframe containing the top pairs with additional information for the drugs and diseases.
     """
-    print("REPORT")
+    # Select the top n_reporting rows
+    top_pairs = data.head(n_reporting)
 
-    return ...
+    # Add additional information for drugs and diseases (TODO: optimise for speed by e.g. caching or using Polars)
+    top_pairs["drug_name"] = top_pairs["source"].apply(
+        lambda x: graph.get_node_attribute(x, "name")
+    )
+    top_pairs["disease_name"] = top_pairs["target"].apply(
+        lambda x: graph.get_node_attribute(x, "name")
+    )
+    top_pairs["drug_description"] = top_pairs["source"].apply(
+        lambda x: graph.get_node_attribute(x, "des")
+    )
+    top_pairs["disease_description"] = top_pairs["target"].apply(
+        lambda x: graph.get_node_attribute(x, "des")
+    )
+
+    # Rename ID columns
+    top_pairs = top_pairs.rename(columns={"source": "drug_id"})
+    top_pairs = top_pairs.rename(columns={"target": "disease_id"})
+
+    # Reorder columns for better readability
+    columns_order = [
+        "drug_id",
+        "drug_name",
+        "drug_description",
+        "disease_id",
+        "disease_name",
+        "disease_description",
+    ] + [
+        col
+        for col in top_pairs.columns
+        if col
+        not in [
+            "source",
+            "drug_name",
+            "drug_description",
+            "target",
+            "disease_name",
+            "disease_description",
+        ]
+    ]
+    top_pairs = top_pairs[columns_order]
+
+    return top_pairs
