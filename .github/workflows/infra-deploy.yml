@@ -146,7 +146,7 @@ jobs:
     # runs under RW user
     runs-on: ubuntu-latest
     # TODO fix
-    if: github.ref == 'refs/heads/infra2'
+    if: github.ref == 'refs/heads/infra'
     environment: dev
     name: Apply Terraform
     needs: [ checks, plan ]
