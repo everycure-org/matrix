@@ -70,27 +70,26 @@ def mock_model():
     return model
 
 
-def test_make_test_predictions(mock_graph, mock_data, mock_transformers, mock_model):
-    with patch(
-        # "matrix.pipelines.evaluation.nodes.apply_transformers",
-        "matrix.pipelines.modelling.nodes.apply_transformers",
-        return_value=pd.DataFrame(),
-    ):
-        with patch(
-            # "matrix.pipelines.evaluation.nodes._extract_elements_in_list",
-            "refit.v1.core.make_list_regexable._extract_elements_in_list",
-            return_value=[],
-        ):
-            result = make_test_predictions(
-                graph=mock_graph,
-                data=mock_data,
-                transformers=mock_transformers,
-                model=mock_model,
-                features=["source_+", "target_+"],
-                score_col_name="score",
-                batch_by="target",
-            )
+def test_make_test_predictions(
+    mock_graph,
+    mock_data,
+    mock_transformers,
+    mock_model,
+):
+    # Given data, embeddings and a model
+    # When we make batched predictions on the model
+    result = make_test_predictions(
+        graph=mock_graph,
+        data=mock_data,
+        transformers=mock_transformers,
+        model=mock_model,
+        features=["source_+", "target_+"],
+        score_col_name="score",
+        batch_by="target",
+    )
 
+    # Then the scores are added for all datapoints in a new column
+    # and the model was called the correct number of times
     assert "score" in result.columns
     assert len(result) == 16
     assert mock_model.predict_proba.call_count == 8  # Called 8x due to batching
