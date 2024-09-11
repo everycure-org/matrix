@@ -123,10 +123,10 @@ class RateLimitException(Exception):
 
 @retry(
     wait=wait_random_exponential(min=1, max=60),
-    stop=stop_after_attempt(3),
-    # retry=retry_if_exception_type(RateLimitException),
+    stop=stop_after_attempt(10),
+    retry=retry_if_exception_type(RateLimitException),
 )
-def batch(endpoint, api_key, batch):
+def batch(endpoint, model, api_key, batch):
     """Function to resolve batch."""
     print(f"processing batch with length {len(batch)}")
 
@@ -134,14 +134,14 @@ def batch(endpoint, api_key, batch):
         raise RuntimeError("Empty batch!")
 
     headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
-    data = {"input": batch, "model": "text-embedding-3-small"}
+    data = {"input": batch, "model": model}
 
     response = requests.post(endpoint, headers=headers, json=data)
 
     if response.status_code == 200:
         return [item["embedding"] for item in response.json()["data"]]
     else:
-        if response.status_code == 429:
+        if response.status_code in [429, 500]:
             print(f"rate limit")
             raise RateLimitException()
 
@@ -175,7 +175,7 @@ def compute_embeddings(
         concurrency: number of concurrent calls to execute
     """
     batch_udf = F.udf(
-        lambda z: batch(endpoint, api_key, z), ArrayType(ArrayType(FloatType()))
+        lambda z: batch(endpoint, model, api_key, z), ArrayType(ArrayType(FloatType()))
     )
 
     window = Window.orderBy(F.lit(1))
