@@ -114,3 +114,12 @@ modelling.model_input.splits:
 "modelling.{model}.reporting.metrics":
   type: matrix.datasets.mlflow.MlflowMetricsDataset
   key_prefix: "{model}"
+
+bte-queries:
+  type: MemoryDataset
+
+bte-raw_results:
+  type: MemoryDataset
+
+bte-final_dataframe:
+  type: MemoryDataset
