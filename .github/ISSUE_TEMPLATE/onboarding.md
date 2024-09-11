@@ -16,7 +16,6 @@ This issue template provides a structured, technical onboarding checklist for ne
 - [ ] Agree to the [MATRIX Code of Conduct](https://github.com/everycure-org/matrix/blob/main/CODE_OF_CONDUCT.md)
 - [ ] [Clone](https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository) the repository
 - [ ] [Read the onboarding guide](https://docs.dev.everycure.org/onboarding/)
-  - [ ] Agree to the [MATRIX Code of Conduct](https://docs.dev.everycure.org/onboarding/)
   - [ ] [Install](https://docs.dev.everycure.org/onboarding/installation/) and verify required OS tooling
   - [ ] Validate [pre-commit](https://pre-commit.com/) hooks are working when calling `pre-commit` from the `.venv`
   - [ ] Setup [Git-Crypt](https://docs.dev.everycure.org/onboarding/git-crypt/#additional-reading) and share GPG public key in the issue
