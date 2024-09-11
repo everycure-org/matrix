@@ -8,3 +8,4 @@ matrix_generation.matrix_generation_options:
     - is_mondo
   batch_by:
     - target 
+  n_reporting: 10000

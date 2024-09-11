@@ -4,3 +4,4 @@ matrix_generation.matrix_generation_options:
     - is_ground_pos
   disease_flags:
     - is_disease
+  n_reporting: 10

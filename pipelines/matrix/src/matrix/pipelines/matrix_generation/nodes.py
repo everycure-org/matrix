@@ -155,6 +155,10 @@ def make_predictions_and_sort(
     Returns:
         Pairs dataset sorted by an additional column containing the probability scores.
     """
+    from sklearn.ensemble._forest import RandomForestClassifier
+
+    # if type(model._estimators[0]) != RandomForestClassifier:
+    #     breakpoint()
     # Generate scores
     data = make_batch_predictions(
         graph, data, transformers, model, features, score_col_name, batch_by=batch_by
@@ -163,3 +167,21 @@ def make_predictions_and_sort(
     # Sort by the probability score
     sorted_data = data.sort_values(by=score_col_name, ascending=False)
     return sorted_data
+
+
+def generate_report(
+    graph: KnowledgeGraph, data: pd.DataFrame, n_reporting: int
+) -> pd.DataFrame:
+    """Generates a report with the top pairs.
+
+    Args:
+        graph: Knowledge graph.
+        data: Pairs dataset.
+        n_reporting: Number of pairs in the report
+
+    Returns:
+        Dataframe containing the top pairs with additional information for the drugs and diseases.
+    """
+    print("REPORT")
+
+    return ...
