@@ -23,10 +23,16 @@ versions:
 data_sources:
   rtx-kg2:
     version: v2.7.3
-  # Dataset with node and edge proposals by the
-  # EveryCure medical team.
+  robokop:
+    version: c5ec1f282158182f
+# Dataset with node and edge proposals by the
+# EveryCure medical team.
   ec-medical-team:
     version: 20240823
+
+# NOTE: MLflow does not like "new options" in the mlflow.yml
+# due to schema validation. Will make PR.
+mlflow_artifact_root: null
 
 paths:
   # we read from our central GCS bucket where we store our ground truth data

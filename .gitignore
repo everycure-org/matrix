@@ -6,6 +6,7 @@
 
 # IDE
 .vscode/
+.idea/
 
 # Drawio
 *.bkp
@@ -17,6 +18,8 @@ neo4j_db/
 # python
 **/.venv/
 **/venv/
+
+!.gitkeep
 
 # terraform
 **/.terraform/
