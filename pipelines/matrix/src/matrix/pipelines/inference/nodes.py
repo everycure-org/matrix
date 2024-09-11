@@ -11,54 +11,26 @@ from ..preprocessing.nodes import resolve
 from matplotlib.figure import Figure
 
 
-def synonymize(node_ids: List, endpoint: str):
-    """WORK IN PROGRESS. Dummy function, to be populated for synonymization.
-
-    Args:
-        node_ids: nodes to synonymize.
-        endpoint: endpoint for the synonymizer
-    """
-    # WIP - linnk synonymizer
-    # synonymized=[]
-    # for name in range(node_ids):
-    #     synonymized.append(resolve(name, endpoint))
-
-    return pd.DataFrame({"id": node_ids})
-
-
 def resolve_input(
     sheet: pd.DataFrame,
-    diseases_list: pd.DataFrame,
-    drugs_list: pd.DataFrame,
-    endpoint: str,
 ):
-    """WORK IN PROGRESS. Run inference on disease or list of diseases and drug list, and write to google sheets.
+    """Run inference on disease or list of diseases and drug list, and write to google sheets.
 
     Args:
-        sheet: google sheet from which we take the drug/disease IDs.
-        diseases_list: list of all diseases to predict against in case of a drug-centric request.
-        drugs_list: list of all diseases to predict against in case of a disease-centric request.
-        endpoint: endpoint for the synonymizer.
+        sheet: google sheet from which we take the drug/disease IDs..
     """
-    # TODO: link synonymizer
     drug_id = sheet["drug_id"]
     disease_id = sheet["disease_id"]
     if (len(drug_id[0]) + len(disease_id[0])) == 0:
         raise ValueError("Need to specify drug, disease or both")
     elif len(disease_id[0]) == 0:
-        drug_nodes = synonymize(drug_id.values, endpoint)
-        disease_nodes = synonymize(diseases_list.category_class.values, endpoint)
         infer_type = "inferPerDrug"
     elif len(drug_id[0]) == 0:
-        drug_nodes = synonymize(drugs_list.single_ID.values, endpoint)
-        disease_nodes = synonymize(disease_id.values, endpoint)
         infer_type = "inferPerDisease"
     else:
-        drug_nodes = synonymize(drug_id.values, endpoint)
-        disease_nodes = synonymize(disease_id.values, endpoint)
         infer_type = "inferPerPair"
     print(infer_type)
-    return drug_nodes, disease_nodes, infer_type
+    return infer_type
 
 
 def run_inference(

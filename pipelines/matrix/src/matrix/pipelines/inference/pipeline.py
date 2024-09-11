@@ -1,7 +1,6 @@
 """Fabricator pipeline."""
 from matrix import settings
 from kedro.pipeline import Pipeline, node, pipeline
-
 from . import nodes as nd
 
 
@@ -13,16 +12,9 @@ def create_pipeline(**kwargs) -> Pipeline:
                 func=nd.resolve_input,
                 inputs={
                     "sheet": "raw.inputs",
-                    "diseases_list": "raw.evaluation.disease_list",
-                    "drugs_list": "raw.evaluation.drug_list",
-                    "endpoint": "params:preprocessing.synonymizer_endpoint",
                 },
-                outputs=[
-                    "inference.nodes.drugs",
-                    "inference.nodes.diseases",
-                    "inference.nodes.type",
-                ],
-                name=f"synonymize",
+                outputs="inference.nodes.type",
+                name=f"choose_infer_type",
             ),
             node(
                 func=nd.run_inference,
