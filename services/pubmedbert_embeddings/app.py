@@ -1,62 +1,54 @@
+"""This is a simple API for generating embeddings using PubMedBERT.
+It exposes two models: A baseline model that was used in a previous publication
+and a model that we think actually is correct, namely a sentence embedding model.
+
+Note this is a temporary solution and we intend to move to a more generic solution.
+"""
+
 from fastapi import FastAPI, HTTPException
-from transformers import pipeline
-import os
-from joblib import Memory
+import time
 import asyncio
 from concurrent.futures import ThreadPoolExecutor
 from typing import List
-from models import EmbeddingRequest, EmbeddingResponse, Usage, Embedding
-
+from data_models import EmbeddingRequest, EmbeddingResponse, Usage, Embedding
+from models import ModelStore
+import logging
 import multiprocessing
 
+logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.INFO)
+
 CPU_COUNT = multiprocessing.cpu_count()
-
 app = FastAPI()
-
-# Load the model and tokenizer using a pipeline
-model_name = os.getenv(
-    "MODEL_NAME", "microsoft/BiomedNLP-PubMedBERT-base-uncased-abstract-fulltext"
-)
-feature_extractor = pipeline(
-    "feature-extraction", model=model_name, tokenizer=model_name
-)
-
-# Setup joblib caching
-cache_dir = f"./.cache/{model_name}"
-if not os.path.exists(cache_dir):
-    os.makedirs(cache_dir)
-memory = Memory(cache_dir, verbose=0, mmap_mode="r")
+model_store = ModelStore()
 
 # Create a thread pool executor
-executor = ThreadPoolExecutor(max_workers=4)  # Adjust the number of workers as needed
+executor = ThreadPoolExecutor(
+    max_workers=CPU_COUNT
+)  # Adjust the number of workers as needed
 
 
-# @memory.cache
-async def get_embedding(texts: List[str]) -> List[float]:
+async def get_embedding(texts: List[str], model_name: str) -> List[float]:
     """Async call to get embedding using the pipeline API of HF."""
-
-    def run_pipeline():
-        features = feature_extractor(
-            texts, padding=True, truncation=True, max_length=512
-        )
-        embedding = features[0][0]  # Get the CLS token embedding
-        token_count = len(feature_extractor.tokenizer.encode(" ".join(texts)))
-        return embedding, token_count
-
-    # Run the pipeline in a separate thread
-    return await asyncio.get_event_loop().run_in_executor(executor, run_pipeline)
+    # manually truncate the text to 512 tokens
+    texts = [text[:512] for text in texts]
+    # Run the call in a separate thread
+    return await asyncio.get_event_loop().run_in_executor(
+        executor, lambda: model_store.get_embeddings(texts, model_name), 0
+    )
 
 
 @app.post("/v1/embeddings")
 async def create_embedding(request: EmbeddingRequest):
     """Main API endpoint for embedding generation."""
     try:
+        start_time = time.time()
         # Ensure input is a list
         inputs = [request.input] if isinstance(request.input, str) else request.input
 
         # Process all inputs concurrently
         if len(inputs) > 0:
-            embeddings, token_count = await get_embedding(inputs)
+            embeddings, token_count = await get_embedding(inputs, request.model)
         else:
             embeddings = []
             token_count = 0
@@ -66,21 +58,30 @@ async def create_embedding(request: EmbeddingRequest):
             object="list",
             data=[
                 Embedding(object="embedding", embedding=emb, index=i)
-                for i, emb in enumerate(embeddings)
+                for i, emb in enumerate(list(embeddings))
             ],
-            model=model_name,
+            model=request.model,
             usage=Usage(prompt_tokens=token_count, total_tokens=token_count),
+        )
+
+        logger.info(
+            f"Generated embeddings for {len(inputs)} inputs in {time.time() - start_time:.2f} seconds and model {request.model}"
         )
 
         return response
     except Exception as e:
+        # print exception and stack trace
+        import traceback
+
+        print(e)
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.get("/")
 async def root():
     # Perform a simple operation to check if the model is loaded
-    if feature_extractor is not None:
+    if model_store is not None:
         return {"status": "ready"}
     else:
         raise HTTPException(status_code=500, detail="Service not ready")
@@ -90,4 +91,11 @@ if __name__ == "__main__":
     import uvicorn
 
     # uvicorn.run(app, host="0.0.0.0", port=8000, limit_concurrency=CPU_COUNT*4, backlog=CPU_COUNT*16)
-    uvicorn.run(app, host="0.0.0.0", port=8000, backlog=CPU_COUNT * 64)
+    uvicorn.run(
+        app,
+        host="0.0.0.0",
+        port=8000,
+        backlog=CPU_COUNT * 64,
+        log_level="info",
+        access_log=True,
+    )
