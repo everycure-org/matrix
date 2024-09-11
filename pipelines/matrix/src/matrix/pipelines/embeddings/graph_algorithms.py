@@ -152,7 +152,12 @@ class GDSNode2Vec(GDSGraphAlgorithm):
     def run(
         self, gds: GraphDataScience, graph: Any, model_name: str, write_property: str
     ):
-        """Trains the algorithm and also writes the embeddings. Note that node2vec algorithm has no separate steps for training and inference (unlike GraphSage), thus training and inference are done via the same write function. This write function produces loss attribute which is required for plotting convergence (which is why we write the embeddings in the train topological_embedding_node)."""
+        """Trains the algorithm and writes embeddings.
+
+        Node2Vec has no separate training and inference steps (unlike GraphSage),
+        so both are done via the same write function. This function also
+        produces a loss attribute, needed for plotting convergence.
+        """
         attr = gds.node2vec.write(
             G=graph,
             writeProperty=write_property,
