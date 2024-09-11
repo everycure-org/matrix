@@ -60,10 +60,10 @@ The integration stage aims to produce our internal knowledge-graph, in [biolink]
 
 ### Embeddings
 
-Embeddings are vectorized representations of the entities in our knowledge graph. These are currently computed using two steps:
+Embeddings are vectorized representations of the entities in our knowledge graph. These are currently computed in two stages:
 
-1. GenAI model is used to compute individual node embeddings
-2. GraphSage embedding algorithm is ran on the node embeddings to produce topological embeddings
+1. Node Attribute Embedding Computation - in this step we use GenAI model (e.g. OpenAI's `text-embedding-3-small`) to compute individual node embeddings. 
+2. Topological Embedding Computation - in this step we use GraphSAGE embedding algorithm on the previously calculated node embeddings. Alternatively, you can also use Node2Vec for topological embeddings computation - the model is not as well in Neo4J however it does not rely on Node Attribute Embedding Computation.
 
 !!! info
     Our graph database, i.e., [Neo4J](https://neo4j.com/docs/graph-data-science/current/algorithms/) comes with out-of-the-box functionality to compute both node and topological embeddings in-situ. The Kedro pipeline orchestrates the computation of these.
