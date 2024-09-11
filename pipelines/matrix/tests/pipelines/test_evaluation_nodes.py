@@ -72,11 +72,13 @@ def mock_model():
 
 def test_make_test_predictions(mock_graph, mock_data, mock_transformers, mock_model):
     with patch(
-        "matrix.pipelines.evaluation.nodes.apply_transformers",
+        # "matrix.pipelines.evaluation.nodes.apply_transformers",
+        "matrix.pipelines.modelling.nodes.apply_transformers",
         return_value=pd.DataFrame(),
     ):
         with patch(
-            "matrix.pipelines.evaluation.nodes._extract_elements_in_list",
+            # "matrix.pipelines.evaluation.nodes._extract_elements_in_list",
+            "refit.v1.core.make_list_regexable._extract_elements_in_list",
             return_value=[],
         ):
             result = make_test_predictions(
