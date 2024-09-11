@@ -17,7 +17,9 @@ class KedroSessionWithFromCatalog(KedroSession):
     datasets.
 
     NOTE: This module has some code duplication due to Kedros' config
-    handling code which is pure spaghetti.
+    handling code which is pure spaghetti. We should cleanup based on:
+
+    https://github.com/kedro-org/kedro/issues/4155
     """
 
     def run(  # noqa: PLR0913
