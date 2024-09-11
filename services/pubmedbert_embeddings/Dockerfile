@@ -9,10 +9,9 @@ RUN uv venv && \
     uv pip install -r requirements.txt
 ENV PATH=/app/.venv/bin:$PATH
 # Download and cache the model
-RUN python -c "from transformers import AutoTokenizer, AutoModel; \
-    model_name='microsoft/BiomedNLP-PubMedBERT-base-uncased-abstract-fulltext'; \
-    AutoTokenizer.from_pretrained(model_name); \
-    AutoModel.from_pretrained(model_name)"
+ADD models.py .
+RUN python -c "from models import ModelStore; \
+    model_store = ModelStore()"
 
 ADD . .
 
