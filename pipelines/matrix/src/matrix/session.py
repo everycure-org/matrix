@@ -141,8 +141,6 @@ class KedroSessionWithFromCatalog(KedroSession):
                 self._logger.info("Replacing %s", item)
                 catalog.add(item, from_catalog._get_dataset(item), replace=True)
 
-        breakpoint()
-
         # Run the runner
         hook_manager = self._hook_manager
         runner = runner or SequentialRunner()
