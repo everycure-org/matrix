@@ -32,7 +32,7 @@ docker_push: docker_build
 
 # Test call target (single request)
 test_call:
-	@curl -s -X POST "$(ENDPOINT)$(SLUG)" \
+	curl -X POST "$(ENDPOINT)$(SLUG)" \
 		-H "Content-Type: application/json" \
 		-H "Authorization: Bearer ${OPENAI_API_KEY}" \
 		-d '{"input": ["The patient presents with fever and cough. Not good", "and now what?"], "model": "${EMBEDDING_MODEL}"}'
