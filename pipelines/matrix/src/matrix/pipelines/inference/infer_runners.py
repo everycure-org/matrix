@@ -7,10 +7,6 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 from ..modelling.model import ModelWrapper
 
-##########################
-####### BASE MODEL #######
-##########################
-
 
 class inferRunner(ABC):
     """Base class for running inference."""
@@ -68,11 +64,6 @@ class inferRunner(ABC):
     def visualise_scores(self, scores: pd.DataFrame):
         """Base class for visualising scores."""
         pass
-
-
-##########################
-#### SPECIFIC MODELS #####
-##########################
 
 
 class inferPerPair(inferRunner):
