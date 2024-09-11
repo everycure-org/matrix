@@ -7,8 +7,8 @@ fabricator.rtx_kg2:
         prefix: rtx_kg_node_
 
       name:
-        type: faker
-        provider: name
+        type: generate_unique_id
+        prefix: name_
       category:
         type: generate_values
         sample_values:
@@ -30,8 +30,8 @@ fabricator.rtx_kg2:
         type: faker
         provider: url
       description:
-        type: faker
-        provider: sentence
+        type: generate_unique_id
+        prefix: description_
       equivalent_curies:
         type: faker
         provider: name

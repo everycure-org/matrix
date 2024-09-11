@@ -184,18 +184,12 @@ def generate_report(
     top_pairs = data.head(n_reporting)
 
     # Add additional information for drugs and diseases (TODO: optimise for speed by e.g. caching or using Polars)
-    top_pairs["drug_name"] = top_pairs["source"].apply(
-        lambda x: graph.get_node_attribute(x, "name")
-    )
-    top_pairs["disease_name"] = top_pairs["target"].apply(
-        lambda x: graph.get_node_attribute(x, "name")
-    )
-    top_pairs["drug_description"] = top_pairs["source"].apply(
-        lambda x: graph.get_node_attribute(x, "des")
-    )
-    top_pairs["disease_description"] = top_pairs["target"].apply(
-        lambda x: graph.get_node_attribute(x, "des")
-    )
+    get_node_name = lambda x: graph.get_node_attribute(x, "name")
+    get_node_description = lambda x: graph.get_node_attribute(x, "description")
+    top_pairs["drug_name"] = top_pairs["source"].apply(get_node_name)
+    top_pairs["disease_name"] = top_pairs["target"].apply(get_node_name)
+    top_pairs["drug_description"] = top_pairs["source"].apply(get_node_description)
+    top_pairs["disease_description"] = top_pairs["target"].apply(get_node_description)
 
     # Rename ID columns
     top_pairs = top_pairs.rename(columns={"source": "drug_id"})
