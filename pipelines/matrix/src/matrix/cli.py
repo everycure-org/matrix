@@ -115,7 +115,7 @@ def cli():
     "--from-env",
     type=str,
     default=None,
-    help="Custom env to write from, if specified will read from the `env` and write to the `--to-env`",
+    help="Custom env to read from, if specified will read from the `--from-env` and write to the `--env`",
 )
 def run(
     tags,
