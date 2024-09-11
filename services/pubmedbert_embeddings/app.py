@@ -34,7 +34,7 @@ async def get_embedding(texts: List[str], model_name: str) -> List[float]:
     texts = [text[:512] for text in texts]
     # Run the call in a separate thread
     return await asyncio.get_event_loop().run_in_executor(
-        executor, lambda: model_store.get_embeddings(texts, model_name), 0
+        executor, lambda: (model_store.get_embeddings(texts, model_name), 0)
     )
 
 
