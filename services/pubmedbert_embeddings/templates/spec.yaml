@@ -21,16 +21,10 @@ spec:
         resources:
           requests:
             cpu: "4"
-            memory: "512Mi"
+            memory: "1Gi"
           limits:
             cpu: "4"
             memory: "2Gi"
-        # livenessProbe:
-        #   httpGet:
-        #     path: /
-        #     port: 8000
-        #   initialDelaySeconds: 30
-        #   periodSeconds: 15
 ---
 apiVersion: v1
 kind: Service
@@ -113,31 +107,3 @@ spec:
   #     - type: Percent
   #       value: 80
   #       periodSeconds: 15
-
----
-kind: Gateway
-apiVersion: gateway.networking.k8s.io/v1beta1
-metadata:
-  name: api-gateway
-  annotations:
-    cert-manager.io/cluster-issuer: letsencrypt-prod
-spec:
-  # we need to use the global one to make sure IaP works. 
-  gatewayClassName: gke-l7-global-external-managed	
-  listeners:
-  - name: https
-    hostname: "*.api.dev.everycure.org"
-    protocol: HTTPS
-    port: 443
-    allowedRoutes:
-      namespaces:
-        from: All
-    tls:
-      mode: Terminate
-      certificateRefs:
-        - name: gateway-cert
-          kind: Secret
-  - name: http
-    hostname: "*.api.dev.everycure.org"
-    protocol: HTTP
-    port: 80
