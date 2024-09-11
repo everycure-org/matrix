@@ -85,7 +85,7 @@ module "gke" {
   network_policy             = false
   master_ipv4_cidr_block     = "172.16.0.0/28"
   horizontal_pod_autoscaling = true
-  filestore_csi_driver       = false
+  filestore_csi_driver       = true
   dns_cache                  = false
   remove_default_node_pool   = true
   enable_private_nodes       = true

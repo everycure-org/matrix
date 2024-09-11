@@ -71,7 +71,7 @@ services:
     build:  "services/mlflow"
     ports:
       - "5001:5000"
-    command: mlflow server --host 0.0.0.0
+    command: mlflow server --host 0.0.0.0 --serve-artifacts
     healthcheck:
       test: wget http://localhost:5000/health || exit 1
       interval: 30s

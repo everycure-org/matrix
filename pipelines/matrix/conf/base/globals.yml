@@ -34,6 +34,10 @@ data_sources:
   clinical-trial-data:
     version: 20230309 # NOTE: Here 0309 is a period of time (here Mar to Sep 2023)
 
+# NOTE: MLflow does not like "new options" in the mlflow.yml
+# due to schema validation. Will make PR.
+mlflow_artifact_root: null
+
 paths:
   # we read from our central GCS bucket where we store our ground truth data
   raw: gs://mtrx-us-central1-hub-dev-storage/kedro/data/01_raw
