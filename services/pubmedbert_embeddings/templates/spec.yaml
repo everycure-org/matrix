@@ -12,6 +12,8 @@ spec:
       labels:
         app: pubmedbert-embedding-api
     spec:
+      nodeSelector:
+        spot: "true"
       containers:
       - name: pubmedbert-embedding-api
         image: us-central1-docker.pkg.dev/mtrx-hub-dev-3of/matrix-images/pubmedbert_embedding_api:pascalwhoop # TODO change if we make this more permanent
