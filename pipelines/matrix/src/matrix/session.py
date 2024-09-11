@@ -135,18 +135,9 @@ class KedroSessionWithFromCatalog(KedroSession):
         )
 
         if from_catalog:
-            # Update all parameters, as these are
-            # set by default.
-            # catalog.add_feed_dict(self._get_feed_dict(from_params), replace=True)
-
             # Update all pipeline inputs to read from
             # the from catalog
             for item in filtered_pipeline.inputs():
-                if item.startswith("params:"):
-                    breakpoint()
-                    catalog.add(item, from_catalog._get_dataset(item), replace=True)
-                    continue
-
                 self._logger.info("Replacing %s", item)
                 catalog.add(item, from_catalog._get_dataset(item), replace=True)
 
