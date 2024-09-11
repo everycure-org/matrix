@@ -34,7 +34,7 @@ from kedro.pipeline.pipeline import Pipeline
 from kedro.framework.project import pipelines, settings
 from kedro.framework.context.context import _convert_paths_to_absolute_posix
 
-from matrix.context import KedroSessionWithFromCatalog
+from matrix.session import KedroSessionWithFromCatalog
 from kedro.io import DataCatalog
 
 
