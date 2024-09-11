@@ -124,11 +124,11 @@ def enrich_drug_disease_df(
     col = coalesce(*[df[col] for col in input_cols])
 
     # Apply enrich function and replace nans by empty space
-    df[target_col] = col.apply(partial(func, endpoint=endpoint))
+    df[target_col] = col.apply(partial(func, endpoint=endpoint, input="curies"))
 
     # If set, coalesce final result with coalesce col
     if coalesce_col:
-        df[target_col] = coalesce(df[coalesce_col], df[target_col], input="curies")
+        df[target_col] = coalesce(df[coalesce_col], df[target_col])
 
     return df
 
