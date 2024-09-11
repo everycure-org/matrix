@@ -11,16 +11,17 @@ from refit.v1.core.inline_has_schema import has_schema
 from refit.v1.core.inline_primary_key import primary_key
 
 
-def resolve(name: str, endpoint: str) -> str:
+def resolve(name: str, endpoint: str, input: str = "names") -> str:
     """Function to retrieve curie through the synonymizer.
 
     Args:
         name: name of the node
         endpoint: endpoint of the synonymizer
+        input: names or curies to be synonymized; names by default
     Returns:
         Corresponding curie
     """
-    result = requests.get(f"{endpoint}/synonymize", json={"names": [name]})
+    result = requests.get(f"{endpoint}/synonymize", json={input: [name]})
 
     element = result.json().get(name)
     if element:
@@ -95,6 +96,39 @@ def enrich_df(
     # If set, coalesce final result with coalesce col
     if coalesce_col:
         df[target_col] = coalesce(df[coalesce_col], df[target_col])
+
+    return df
+
+
+def enrich_drug_disease_df(
+    df: pd.DataFrame,
+    endpoint: str,
+    func: Callable,
+    input_cols: str,
+    target_col: str,
+    coalesce_col: Optional[str] = None,
+) -> pd.DataFrame:
+    """Function to resolve nodes of the nodes input dataset.
+
+    Args:
+        df: nodes dataframe
+        endpoint: endpoint of the synonymizer
+        func: func to call
+        input_cols: input cols, cols are coalesced to obtain single column
+        target_col: target col
+        coalesce_col: col to coalesce with if None
+    Returns:
+        dataframe enriched with Curie column
+    """
+    # Coalesce input cols
+    col = coalesce(*[df[col] for col in input_cols])
+
+    # Apply enrich function and replace nans by empty space
+    df[target_col] = col.apply(partial(func, endpoint=endpoint))
+
+    # If set, coalesce final result with coalesce col
+    if coalesce_col:
+        df[target_col] = coalesce(df[coalesce_col], df[target_col], input="curies")
 
     return df
 
