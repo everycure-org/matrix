@@ -16,8 +16,8 @@ class KedroSessionWithFromCatalog(KedroSession):
     be specified. The from catalog overrides the catalog entry for all input
     datasets.
 
-    NOTE: This module has some code duplication due to Kedros' config
-    handling code which is pure spaghetti. We should cleanup based on:
+    NOTE: This module has some code duplication due to Kedros' complex
+    config setup. We should cleanup based on:
 
     https://github.com/kedro-org/kedro/issues/4155
     """
