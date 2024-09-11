@@ -214,7 +214,7 @@ def generate_report(
         for col in top_pairs.columns
         if col
         not in [
-            "source",
+            "disease_id",
             "drug_name",
             "drug_description",
             "target",
