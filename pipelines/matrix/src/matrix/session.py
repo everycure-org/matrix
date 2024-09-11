@@ -25,7 +25,6 @@ class KedroSessionWithFromCatalog(KedroSession):
     def run(  # noqa: PLR0913
         self,
         from_catalog: DataCatalog,
-        from_params: Dict[str, str],
         pipeline_name: str | None = None,
         tags: Iterable[str] | None = None,
         runner: AbstractRunner | None = None,
@@ -138,14 +137,17 @@ class KedroSessionWithFromCatalog(KedroSession):
         if from_catalog:
             # Update all parameters, as these are
             # set by default.
-            catalog.add_feed_dict(self._get_feed_dict(from_params), replace=True)
+            # catalog.add_feed_dict(self._get_feed_dict(from_params), replace=True)
 
             # Update all pipeline inputs to read from
             # the from catalog
             for item in filtered_pipeline.inputs():
                 if item.startswith("params:"):
+                    breakpoint()
+                    catalog.add(item, from_catalog._get_dataset(item), replace=True)
                     continue
 
+                self._logger.info("Replacing %s", item)
                 catalog.add(item, from_catalog._get_dataset(item), replace=True)
 
         # Run the runner
@@ -181,33 +183,3 @@ class KedroSessionWithFromCatalog(KedroSession):
             catalog=catalog,
         )
         return run_result
-
-    @staticmethod
-    def _get_feed_dict(params: Dict) -> dict[str, Any]:
-        """Get parameters and return the feed dictionary."""
-        feed_dict = {"parameters": params}
-
-        def _add_param_to_feed_dict(param_name: str, param_value: Any) -> None:
-            """Add param to feed dict.
-
-            This recursively adds parameter paths to the `feed_dict`,
-            whenever `param_value` is a dictionary itself, so that users can
-            specify specific nested parameters in their node inputs.
-
-            Example:
-                >>> param_name = "a"
-                >>> param_value = {"b": 1}
-                >>> _add_param_to_feed_dict(param_name, param_value)
-                >>> assert feed_dict["params:a"] == {"b": 1}
-                >>> assert feed_dict["params:a.b"] == 1
-            """
-            key = f"params:{param_name}"
-            feed_dict[key] = param_value
-            if isinstance(param_value, dict):
-                for key, val in param_value.items():
-                    _add_param_to_feed_dict(f"{param_name}.{key}", val)
-
-        for param_name, param_value in params.items():
-            _add_param_to_feed_dict(param_name, param_value)
-
-        return feed_dict
