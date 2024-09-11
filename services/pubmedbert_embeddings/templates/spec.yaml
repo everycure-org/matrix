@@ -26,6 +26,16 @@ spec:
             cpu: "4"
             memory: "8Gi"
 ---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: pubmedbert-embedding-api-pdb
+spec:
+  maxUnavailable: 2
+  selector:
+    matchLabels:
+      app: pubmedbert-embedding-api
+---
 apiVersion: v1
 kind: Service
 metadata:
