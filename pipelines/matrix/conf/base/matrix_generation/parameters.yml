@@ -2,7 +2,7 @@ matrix_generation.matrix_generation_options:
 # TODO: Add flags for official drugs and diseases here when available 
   drug_flags:
     - is_drug
-    - is_ground_truth
+    - is_ground_pos
   disease_flags:
     - is_disease
     - is_mondo

@@ -1,6 +1,6 @@
 matrix_generation.matrix_generation_options:
   drug_flags:
     - is_drug
-    - is_ground_truth
+    - is_ground_pos
   disease_flags:
     - is_disease
