@@ -30,5 +30,5 @@ infra/argo/applications/**/charts
 
 services/synonymizer/assets/
 
-infra/**/Chart.lock
 **/__pycache__/
+infra/**/Chart.lock
