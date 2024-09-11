@@ -46,13 +46,11 @@ model_outputs.node.predictions:
   <<: [*_sheets_dataset]
   save_args:
     overwrite: True
-    sheet_name: "node_predictions"
+    sheet_name: "output_predictions"
     write_columns: ["drug", "disease"]
   load_args:
-    sheet_name: "node_predictions"
+    sheet_name: "output_predictions"
     columns: ["treat_score"]
-
-    ## WIP remove later
 
 inference.embed.nodes:
   type: pandas.ParquetDataset
@@ -67,6 +65,5 @@ model_outputs.node.visualisations:
   artifact_path: "histogram"
   dataset:
     type: matplotlib.MatplotlibWriter
-    filepath: ${globals:paths.reporting}/histogram_plot.png
-  
+    filepath: ${globals:paths.tmp}/histogram_plot.png  
   

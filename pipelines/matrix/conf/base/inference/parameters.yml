@@ -1,3 +1,0 @@
-inference.model.model: 
-  object: xgb
-  shard: 3
