@@ -8,8 +8,7 @@ from sklearn.model_selection import BaseCrossValidator
 class DrugStratifiedSplit(BaseCrossValidator):
     """A cross-validator that provides train/test indices to split data in train/test sets.
 
-    This cross-validator ensures each drug is represented in both training and test sets,
-    and that the train and test sets are unique.
+    This cross-validator ensures each drug is represented in both training and test sets.
     """
 
     def __init__(self, n_splits=1, test_size=0.1, random_state=None):
@@ -34,35 +33,23 @@ class DrugStratifiedSplit(BaseCrossValidator):
 
         Yields:
             tuple: (train_indices, test_indices)
-
-        Raises:
-            ValueError: If unable to generate unique train and test sets after multiple attempts.
         """
         rng = np.random.RandomState(self.random_state)
 
         for _ in range(self.n_splits):
-            max_attempts = 100
-            for attempt in range(max_attempts):
-                train_indices, test_indices = [], []
+            train_indices, test_indices = [], []
 
-                for _, group in X.groupby("source"):
-                    indices = group.index.tolist()
-                    rng.shuffle(indices)
-                    n = len(indices)
-                    n_test = max(1, int(np.round(n * self.test_size)))
-                    n_train = n - n_test
+            for _, group in X.groupby("source"):
+                indices = group.index.tolist()
+                rng.shuffle(indices)
+                n = len(indices)
+                n_test = max(1, int(np.round(n * self.test_size)))
+                n_train = n - n_test
 
-                    train_indices.extend(indices[:n_train])
-                    test_indices.extend(indices[n_train:])
+                train_indices.extend(indices[:n_train])
+                test_indices.extend(indices[n_train:])
 
-                # Check if train and test sets are unique
-                if len(set(train_indices).intersection(set(test_indices))) == 0:
-                    yield train_indices, test_indices
-                    break
-            else:
-                raise ValueError(
-                    f"Unable to generate unique train and test sets after {max_attempts} attempts."
-                )
+            yield train_indices, test_indices
 
     def get_n_splits(self, X=None, y=None, groups=None):
         """Returns the number of splitting iterations in the cross-validator.
