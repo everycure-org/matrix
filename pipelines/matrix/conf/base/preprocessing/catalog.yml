@@ -39,35 +39,23 @@ preprocessing.raw.nodes:
   <<: [*_layer_raw, *_medical_kg_sheets_dataset]
   load_args:
     sheet_name: Nodes
+    columns: ["ID", "name", "entity label", "new_id", "curie", "corrected_curie", "normalized_curie", "description"]
+
+preprocessing.int.nodes:
+  <<: [*_layer_int, *_medical_kg_sheets_dataset]
+  save_args:
+    sheet_name: Nodes
+    write_columns: ["curie", "normalized_curie"]
+
+  load_args:
+    sheet_name: Nodes
+    columns: ["ID", "name", "entity label", "new_id", "normalized_curie", "description"]
 
 preprocessing.raw.edges:
   <<: [*_layer_raw, *_medical_kg_sheets_dataset]
   load_args:
     sheet_name: Edges
     columns: ["Source", "Target", "Label"]
-
-preprocessing.int.resolved_nodes:
-  <<: [*_layer_int, *_medical_kg_sheets_dataset]
-  save_args:
-    sheet_name: Nodes
-    write_columns: ["curie"]
-
-  load_args:
-    sheet_name: Nodes
-
-preprocessing.int.normalized_nodes:
-  <<: [*_layer_int, *_medical_kg_sheets_dataset]
-  save_args:
-    sheet_name: Nodes
-    write_columns: ["normalized_curie"]
-
-  load_args:
-    sheet_name: Nodes
-    columns: ["ID", "name", "entity label", "new_id", "normalized_curie", "description"]
-
-preprocessing.int.nodes:
-  <<: [*_layer_int, *_pandas_csv]
-  filepath: ${globals:paths.int}/ec_medical_team/nodes
 
 preprocessing.int.edges:
   <<: [*_layer_prm, *_medical_kg_sheets_dataset]

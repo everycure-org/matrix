@@ -11,55 +11,17 @@ def create_pipeline(**kwargs) -> Pipeline:
     """Create integration pipeline."""
     return pipeline(
         [
-            # NOTE: Running this to get an initial proposal of curies
-            # Enrich curie with node synonymizer
+            # Normalize nodes
             node(
-                func=partial(
-                    nodes.enrich_df,
-                    func=nodes.resolve,
-                    input_cols=["name"],
-                    target_col="curie",
-                ),
+                func=nodes.create_int_nodes,
                 inputs=[
                     "preprocessing.raw.nodes",
                     "params:preprocessing.synonymizer_endpoint",
                 ],
-                outputs="preprocessing.int.resolved_nodes",
-                name="resolve_ec_medical_team_nodes",
-                tags=["ec-medical-kg"],
-            ),
-            # NOTE: Running this to get the identifiers in the KG
-            # Normalize nodes
-            node(
-                func=partial(
-                    nodes.enrich_df,
-                    func=nodes.normalize,
-                    input_cols=["corrected_curie", "curie"],
-                    target_col="normalized_curie",
-                    coalesce_col="new_id",
-                ),
-                inputs=[
-                    "preprocessing.int.resolved_nodes",
-                    "params:preprocessing.synonymizer_endpoint",
-                ],
-                outputs="preprocessing.int.normalized_nodes",
+                outputs="preprocessing.int.nodes",
                 name="normalize_ec_medical_team_nodes",
                 tags=["ec-medical-kg"],
             ),
-            # NOTE: Filter away all nodes that we could not resolve
-            # FUTURE: Either Charlotte needs to ensure things join OR
-            #   We need to agree that unresolved nodes should introduce
-            #   new concepts.
-            node(
-                func=nodes.create_int_nodes,
-                inputs=["preprocessing.int.normalized_nodes"],
-                outputs="preprocessing.int.nodes",
-                name="create_int_ec_medical_team_nodes",
-                tags=["ec-medical-kg"],
-            ),
-            # Ensure edges use synonymized identifiers
-            # NOTE: Charlotte introduces her own identifiers in the
-            # nodes dataset, to enable edge creation.
             node(
                 func=nodes.create_int_edges,
                 inputs=[
@@ -109,35 +71,35 @@ def create_pipeline(**kwargs) -> Pipeline:
                 name="clean_clinical_trial_data",
                 tags=["ec-clinical-trials-data"],
             ),
-            node(
-                func=partial(
-                    nodes.enrich_df_noschema,
-                    func=nodes.normalize,
-                    input_cols=["single_ID"],
-                    target_col="drug_id_curie",
-                ),
-                inputs=[
-                    "raw.evaluation.drug_list",
-                    "params:preprocessing.synonymizer_endpoint",
-                ],
-                outputs="preprocessing.int.resolved_drug_list",
-                name="resolve_drug_list",
-                tags=["drug-list"],
-            ),
-            node(
-                func=partial(
-                    nodes.enrich_df_noschema,
-                    func=nodes.normalize,
-                    input_cols=["category_class"],
-                    target_col="disease_id_curie",
-                ),
-                inputs=[
-                    "raw.evaluation.disease_list",
-                    "params:preprocessing.synonymizer_endpoint",
-                ],
-                outputs="preprocessing.int.resolved_disease_list",
-                name="resolve_disease_list",
-                tags=["disease-list"],
-            ),
+            # node(
+            #     func=partial(
+            #         nodes.enrich_df_noschema,
+            #         func=nodes.normalize,
+            #         input_cols=["single_ID"],
+            #         target_col="drug_id_curie",
+            #     ),
+            #     inputs=[
+            #         "raw.evaluation.drug_list",
+            #         "params:preprocessing.synonymizer_endpoint",
+            #     ],
+            #     outputs="preprocessing.int.resolved_drug_list",
+            #     name="resolve_drug_list",
+            #     tags=["drug-list"],
+            # ),
+            # node(
+            #     func=partial(
+            #         nodes.enrich_df_noschema,
+            #         func=nodes.normalize,
+            #         input_cols=["category_class"],
+            #         target_col="disease_id_curie",
+            #     ),
+            #     inputs=[
+            #         "raw.evaluation.disease_list",
+            #         "params:preprocessing.synonymizer_endpoint",
+            #     ],
+            #     outputs="preprocessing.int.resolved_disease_list",
+            #     name="resolve_disease_list",
+            #     tags=["disease-list"],
+            # ),
         ]
     )

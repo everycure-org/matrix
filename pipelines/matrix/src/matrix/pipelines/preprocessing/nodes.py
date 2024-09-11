@@ -57,102 +57,89 @@ def coalesce(s: pd.Series, *series: List[pd.Series]):
     return s
 
 
+def enrich_df(
+    df: pd.DataFrame, endpoint: str, func: Callable, input_cols: str, target_col: str
+) -> pd.DataFrame:
+    """Function to resolve nodes of the nodes input dataset.
+
+    Args:
+        df: nodes dataframe
+        endpoint: endpoint of the synonymizer
+        func: func to call
+        input_cols: input cols, cols are coalesced to obtain single column
+        target_col: target col
+    Returns:
+        dataframe enriched with Curie column
+    """
+    # Coalesce input cols
+    col = coalesce(*[df[col] for col in input_cols])
+
+    # Apply enrich function and replace nans by empty space
+    df[target_col] = col.apply(partial(func, endpoint=endpoint))
+
+    return df
+
+
 @has_schema(
     schema={
         "ID": "numeric",
         "name": "object",
         "curie": "object",
+        "normalized_curie": "object",
     },
     allow_subset=True,
 )
 @primary_key(primary_key=["ID"])
-def enrich_df(
-    df: pd.DataFrame,
-    endpoint: str,
-    func: Callable,
-    input_cols: str,
-    target_col: str,
-    coalesce_col: Optional[str] = None,
-) -> pd.DataFrame:
-    """Function to resolve nodes of the nodes input dataset.
-
-    Args:
-        df: nodes dataframe
-        endpoint: endpoint of the synonymizer
-        func: func to call
-        input_cols: input cols, cols are coalesced to obtain single column
-        target_col: target col
-        coalesce_col: col to coalesce with if None
-    Returns:
-        dataframe enriched with Curie column
-    """
-    # Coalesce input cols
-    col = coalesce(*[df[col] for col in input_cols])
-
-    # Apply enrich function and replace nans by empty space
-    df[target_col] = col.apply(partial(func, endpoint=endpoint))
-
-    # If set, coalesce final result with coalesce col
-    if coalesce_col:
-        df[target_col] = coalesce(df[coalesce_col], df[target_col])
-
-    return df
-
-
-def enrich_df_noschema(
-    df: pd.DataFrame,
-    endpoint: str,
-    func: Callable,
-    input_cols: str,
-    target_col: str,
-    coalesce_col: Optional[str] = None,
-) -> pd.DataFrame:
-    """Function to resolve nodes of the nodes input dataset.
-
-    Args:
-        df: nodes dataframe
-        endpoint: endpoint of the synonymizer
-        func: func to call
-        input_cols: input cols, cols are coalesced to obtain single column
-        target_col: target col
-        coalesce_col: col to coalesce with if None
-    Returns:
-        dataframe enriched with Curie column
-    """
-    # Coalesce input cols
-    col = coalesce(*[df[col] for col in input_cols])
-
-    # Apply enrich function and replace nans by empty space
-    df[target_col] = col.apply(partial(func, endpoint=endpoint))
-
-    # If set, coalesce final result with coalesce col
-    if coalesce_col:
-        df[target_col] = coalesce(df[coalesce_col], df[target_col])
-    return df
-
-
-def create_int_nodes(int_nodes: pd.DataFrame) -> pd.DataFrame:
+def create_int_nodes(nodes: pd.DataFrame, endpoint: str) -> pd.DataFrame:
     """Function to create a intermediate nodes dataset by filtering and renaming columns."""
-    # Replace empty strings with nan
-    return int_nodes[int_nodes["normalized_curie"].notna()].rename(
-        columns={"normalized_curie": "curie"}
+    # Enrich curie with node synonymizer
+    resolved = enrich_df(
+        nodes, endpoint, resolve, input_cols=["name"], target_col="curie"
     )
 
+    # Normalize curie, by taking corrected currie or curie
+    normalized = enrich_df(
+        resolved,
+        endpoint,
+        normalize,
+        input_cols=["corrected_curie", "curie"],
+        target_col="normalized_curie",
+    )
 
-def create_int_edges(prm_nodes: pd.DataFrame, int_edges: pd.DataFrame) -> pd.DataFrame:
-    """Function to create a intermediate edges dataset by combining primary nodes with intermediate edges."""
-    index = prm_nodes[["ID", "curie"]]
+    # If new id is specified, we use the new id as a new KG identifier should be introduced
+    normalized["normalized_curie"] = coalesce(
+        normalized["new_id"], normalized["normalized_curie"]
+    )
+
+    return normalized
+
+
+@has_schema(
+    schema={
+        "SourceId": "object",
+        "TargetId": "object",
+    },
+    allow_subset=True,
+)
+def create_int_edges(int_nodes: pd.DataFrame, int_edges: pd.DataFrame) -> pd.DataFrame:
+    """Function to create int edges dataset.
+
+    Function ensures edges dataset link curies in the KG.
+    """
+    # Remove all nodes that could not be resolved, as we wont include
+    # any edges between those.
+    index = int_nodes[int_nodes["normalized_curie"].notna()]
 
     res = (
         int_edges.merge(
-            index.rename(columns={"curie": "SourceId"}),
+            index.rename(columns={"normalized_curie": "SourceId"}),
             left_on="Source",
             right_on="ID",
             how="left",
         )
         .drop(columns="ID")
         .merge(
-            index.rename(columns={"curie": "TargetId"}),
+            index.rename(columns={"normalized_curie": "TargetId"}),
             left_on="Target",
             right_on="ID",
             how="left",
