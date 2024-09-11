@@ -1,8 +1,11 @@
 from locust import HttpUser, task, between
 import random
 from faker import Faker
+from models import BASELINE_MODEL, CHALLENGER_MODEL
 
 fake = Faker()
+
+models = [BASELINE_MODEL, CHALLENGER_MODEL]
 
 
 def get_payload():
@@ -12,7 +15,7 @@ def get_payload():
         inputs = inputs[0]
 
     return {
-        "model": "microsoft/BiomedNLP-PubMedBERT-base-uncased-abstract-fulltext",
+        "model": random.choice(models),
         "input": inputs,
     }
 
