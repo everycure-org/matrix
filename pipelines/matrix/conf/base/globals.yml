@@ -15,6 +15,7 @@ openai:
 gcs_bucket: gs://${oc.env:GCP_BUCKET, mtrx-us-central1-hub-dev-storage}
 gcp_project: ${oc.env:GCP_PROJECT_ID, mtrx-hub-dev-3of}
 git_sha: ${oc.env:GIT_SHA, local}
+gh_token: ${oc.env:GH_TOKEN}
 
 versions:
   # overwritten in prod environment for shared releases

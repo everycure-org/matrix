@@ -110,6 +110,6 @@ preprocessing.raw.drug_list:
   filepath: https://api.github.com/repos/everycure-org/matrix-drug-list/releases/assets/${globals:data_sources.ec-drug-list.version}
   fs_args:
     Accept: application/octet-stream
-    Authorization: token ${oc.env:GH_TOKEN}
+    Authorization: token ${globals:gh_token}
   load_args:
     sep: "\t"
