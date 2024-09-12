@@ -342,11 +342,10 @@ def clean_drug_list(drug_df: pd.DataFrame, endpoint: str) -> pd.DataFrame:
     )
     res = enrich_df(
         res,
-        func=normalize,
-        input_cols=["category_class"],
+        func=partial(normalize, att_to_get="name"),
+        input_cols=["single_ID"],
         target_col="name",
         endpoint=endpoint,
-        att_to_get="name",
     )
     return res.loc[~res["curie"].isna()]
 
@@ -381,14 +380,12 @@ def clean_disease_list(disease_df: pd.DataFrame, endpoint: str) -> pd.DataFrame:
         input_cols=["category_class"],
         target_col="curie",
         endpoint=endpoint,
-        att_to_get="identifier",
     )
     res = enrich_df(
         res,
-        func=normalize,
+        func=partial(normalize, att_to_get="name"),
         input_cols=["category_class"],
         target_col="name",
         endpoint=endpoint,
-        att_to_get="name",
     )
     return res.loc[~res["curie"].isna()]
