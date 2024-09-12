@@ -26,10 +26,6 @@ _medical_clinical_trials_sheet_dataset: &_medical_clinical_trials_sheet_dataset
   key: 1Wlrjr8ojUGCfWJg-QF5PzpJFqpD7LLH7b60u2XAngh0
   service_file: conf/local/service-account.json
 
-_inference_input_sheet_dataset: &_inference_input_sheet_dataset
-  type: matrix.datasets.gcp.GoogleSheetsDataset
-  key: 1CioSCCQxUdACn1NfWU9XRyC-9j_ERc2hmZzaDd8XgcQ
-  service_file: conf/local/service-account.json
 
 # -------------------------------------------------------------------------
 # Datasets
