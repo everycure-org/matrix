@@ -317,7 +317,11 @@ def clean_clinical_trial_data(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-# We cant really implement schema now as drug list is WIP
+@has_schema(
+    schema={"single_ID": "object", "curie": "object"},
+    allow_subset=True,
+)
+# @primary_key(primary_key=["single_ID"]) #TODO: re-introduce once the drug list is ready
 def clean_drug_list(drug_df: pd.DataFrame, endpoint: str) -> pd.DataFrame:
     """Synonymize the drug list and filter out NaNs.
 
@@ -346,11 +350,11 @@ def clean_drug_list(drug_df: pd.DataFrame, endpoint: str) -> pd.DataFrame:
         "synonyms": "object",
         "subsets": "object",
         "crossreferences": "object",
-        "normalized_curie": "object",
+        "curie": "object",
     },
     allow_subset=True,
 )
-@primary_key(primary_key=["category_class", "normalized_curie"])
+@primary_key(primary_key=["category_class", "curie"])
 def clean_disease_list(disease_df: pd.DataFrame, endpoint: str) -> pd.DataFrame:
     """Synonymize the disease list and filter out NaNs.
 
