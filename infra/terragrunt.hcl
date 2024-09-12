@@ -51,8 +51,9 @@ EOF
 remote_state {
   backend = "gcs"
   config = {
-    bucket = "mtrx-us-central1-hub-dev-storage"
-    prefix = "terragrunt/core/${path_relative_to_include()}/"
+    bucket  = "mtrx-us-central1-hub-dev-storage"
+    prefix  = "terragrunt/core/${path_relative_to_include()}/"
+    skip_bucket_creation = true
   }
   generate = {
     path      = "backend.tf"

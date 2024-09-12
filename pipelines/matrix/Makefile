@@ -7,7 +7,7 @@ export PYSPARK_PYTHON = .venv/bin/python
 .ONESHELL: 
 
 
-default: venv install precommit fast_test compose_down docker_test
+default: prerequisites venv install precommit fast_test compose_down docker_test
 	echo "done!"
 
 prerequisites:
@@ -21,7 +21,7 @@ prerequisites:
 
 venv:
 	if [ ! -d .venv ]; then uv venv -p 3.11; fi
-install:
+install: precommit
 	# deactivate any potentially active venv that may be somewhere else
 	deactivate || true
 	uv pip install -r requirements.txt
@@ -62,7 +62,8 @@ compose_up:
 	docker compose -f compose/docker-compose.yml up -d --wait
 
 compose_down:
-	docker compose -f compose/docker-compose.yml down
+	bash scripts/compose_down_retry.sh
+	# docker compose -f compose/docker-compose.yml down
 
 lock:
 	uv pip compile requirements.in > requirements.txt
@@ -86,3 +87,10 @@ licenses_container: docker_build
 		-v $(PWD)/trivy.yaml:/trivy.yaml \
 		-v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy  \
 		image --scanners license --severity UNKNOWN,CRITICAL $(dev_docker_image)
+
+clean:
+	@echo "cleaning various cache locations to ensure clean installation is possible"
+	@echo "this may be necessary e.g. when updating one of our local packages"
+	rm -rf .pytest_cache .venv
+	rm -rf $(uv cache dir) ~/.cache/pre-commit
+	docker volume prune -f

@@ -21,9 +21,14 @@ To generate a new key, run the following command, we recommend sticking to the d
 everywhere. If you already use gpg for signing your git commits, feel free to share your
 existing public key (use the gpg command with all default options). 
 
+Also, do not select any of the options they ask you. Continue pressing enter until you arrive at the prompt: "Key does not expire at all". Select "y" for that. 
+
 ```bash
 gpg --full-generate-key
 ```
+
+!!! tip
+    GPG will ask you for a password to protect your key. We recommend skipping this unless you have a strong opinion about having a passphrase. If you do add one, please remember it as we will not be able to provide it to you if you forget it. (On some versions of GPG, you can't skip this step. Make sure to write down your passphrase so you don't forget it. You'll need it to unlock the git-crypt). 
 
 ??? info "Example command output"
 
@@ -86,14 +91,12 @@ gpg --full-generate-key
     sub   cv25519 2024-08-05 [E]
     ```
 
-
-
 ### Copy the key
 
 Next run the following command
 
 ```
-# alternatively pass in the ID of the key which looks like this 637334785B9F74A364C14FC5A1C5DB60575ED571
+# alternatively, you can pass in the ID of the key which looks like this 637334785B9F74A364C14FC5A1C5DB60575ED571
 gpg --armor --export <used@email.com>
 ```
 
@@ -111,7 +114,7 @@ KtNQIAEAvRQ6jqDyNl4iIaa9mv2qxEJF182ajO5Br6sgoAJv7wI=
 -----END PGP PUBLIC KEY BLOCK-----
 ```
 
-Copy the entire text and share it with the team leads (check the CODEOWNERS file or create a Issue/PR with the key)
+Copy the entire text (from --BEGIN PGP PUBLIC KEY BLOCK-- to --END PGP PUBLIC KEY BLOCK--)  and share it with the team leads (check the CODEOWNERS file or create a Issue/PR with the key)
 
 ### Add the key to the repository
 
@@ -132,6 +135,11 @@ Once the public key was added to the repo, you can unlock the key by running
 ```bash
 git-crypt unlock
 ```
+
+Re-enter the passphrase you used to create the public key to unlock. 
+
+You can lock the key by running 
+```git-crypt lock``` 
 
 ## General setup
 

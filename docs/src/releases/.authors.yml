@@ -1,0 +1,33 @@
+authors:
+  pascalwhoop:
+    name: Pascal Brokmeier
+    description: Engineer
+    avatar: https://github.com/pascalwhoop.png
+  lvijnck:
+    name: Laurens Vijnck
+    description: Engineer
+    avatar: https://github.com/lvijnck.png
+  piotrkan:
+    name: Piotr Kaniewski
+    description: Data Scientist
+    avatar: https://github.com/piotrkan.png
+  alexeistepa:
+    name: Alexei Stepanenko
+    description: Data Scientist
+    avatar: https://github.com/alexeistepa.png
+  leelancashire:
+    name: Lee Lancashire
+    description: Data Scientist
+    avatar: https://github.com/leelancashire.png
+  matentzn:
+    name: Nico Matentzoglu
+    description: Engineer
+    avatar: https://github.com/matentzn.png
+  marcello-deluca:
+    name: Marcello DeLuca
+    description: Engineer
+    avatar: https://github.com/marcello-deluca.png
+  sabrinatoro:
+    name: Sabrina Toro
+    description: Engineer
+    avatar: https://github.com/sabrinatoro.png
