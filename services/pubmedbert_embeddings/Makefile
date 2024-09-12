@@ -6,7 +6,6 @@ TAG ?= ${USER}
 ENDPOINT ?= http://localhost:8000
 OPENAI_API_KEY ?= dummy
 SLUG ?= /v1/embeddings
-EMBEDDING_MODEL ?= microsoft/BiomedNLP-PubMedBERT-base-uncased-abstract-fulltext
 NUM_REQUESTS := 100
 
 lock:
@@ -30,24 +29,15 @@ docker_push: docker_build
 	docker push $(dev_docker_image):${TAG}
 
 
-# Test call target (single request)
-test_call:
-	@echo "Testing embeddings API..."
-	curl -X POST "$(ENDPOINT)$(SLUG)" \
-		-H "Content-Type: application/json" \
-		-H "Authorization: Bearer ${OPENAI_API_KEY}" \
-		-d '{"input": "The patient presents with fever and cough", "model": "${EMBEDDING_MODEL}"}'
-		
-
 
 # Define variables
 LOCUST_USERS := 100
 LOCUST_SPAWN_RATE := 10
-LOCUST_RUN_TIME := 10s
+LOCUST_RUN_TIME := 30s
 
 # Run Locust load test
 locust:
-	@echo uv pip install locust
+	@echo uv pip install locust faker
 	@echo "Starting Locust load test..."
 	.venv/bin/locust --host=$(ENDPOINT) \
             --users $(LOCUST_USERS) \
