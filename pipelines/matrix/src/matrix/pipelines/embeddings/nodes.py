@@ -19,8 +19,6 @@ from neo4j import GraphDatabase
 from matplotlib.pyplot import plot
 import seaborn as sns
 
-from pypher.builder import create_function
-from . import pypher_utils
 from .graph_algorithms import *
 from graphdatascience import GraphDataScience, QueryRunner
 
@@ -33,7 +31,6 @@ from tenacity import (
     retry,
     stop_after_attempt,
     wait_random_exponential,
-    retry_if_exception_type,
 )
 
 import logging
@@ -143,7 +140,7 @@ def batch(endpoint, api_key, batch):
     headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
     data = {"input": batch, "model": "text-embedding-3-small"}
 
-    response = requests.post(endpoint, headers=headers, json=data)
+    response = requests.post(f"{endpoint}/embeddings", headers=headers, json=data)
 
     if response.status_code == 200:
         return [item["embedding"] for item in response.json()["data"]]

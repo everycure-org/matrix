@@ -17,7 +17,7 @@ embeddings.ai_config:
 # OpenAI embeddings support batching, up to 8000 tokens.
   batch_size: 200
   endpoint: ${globals:openai.endpoint}
-  model: text-embedding-3-small
+  model: microsoft/BiomedNLP-PubMedBERT-base-uncased-abstract-fulltext
   concurrency: 50
   attribute: &_property embedding
 
