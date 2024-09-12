@@ -29,12 +29,13 @@ def resolve(name: str, endpoint: str) -> str:
     return None
 
 
-def normalize(curie: str, endpoint: str):
+def normalize(curie: str, endpoint: str, att_to_get: str = "identifier"):
     """Function to retrieve the normalized identifier through the synonymizer.
 
     Args:
         curie: curie of the node
         endpoint: endpoint of the synonymizer
+        att_to_get: attribute to get from API
     Returns:
         Corresponding curie
     """
@@ -45,7 +46,7 @@ def normalize(curie: str, endpoint: str):
 
     element = result.json().get(curie)
     if element:
-        return element.get("id", {}).get("identifier")
+        return element.get("id", {}).get(att_to_get)
 
     return None
 
@@ -318,7 +319,7 @@ def clean_clinical_trial_data(df: pd.DataFrame) -> pd.DataFrame:
 
 
 @has_schema(
-    schema={"single_ID": "object", "curie": "object"},
+    schema={"single_ID": "object", "curie": "object", "name": "object"},
     allow_subset=True,
 )
 # @primary_key(primary_key=["single_ID"]) #TODO: re-introduce once the drug list is ready
@@ -339,6 +340,14 @@ def clean_drug_list(drug_df: pd.DataFrame, endpoint: str) -> pd.DataFrame:
         target_col="curie",
         endpoint=endpoint,
     )
+    res = enrich_df(
+        res,
+        func=normalize,
+        input_cols=["category_class"],
+        target_col="name",
+        endpoint=endpoint,
+        att_to_get="name",
+    )
     return res.loc[~res["curie"].isna()]
 
 
@@ -351,10 +360,11 @@ def clean_drug_list(drug_df: pd.DataFrame, endpoint: str) -> pd.DataFrame:
         "subsets": "object",
         "crossreferences": "object",
         "curie": "object",
+        "name": "object",
     },
     allow_subset=True,
 )
-@primary_key(primary_key=["category_class", "curie"])
+@primary_key(primary_key=["category_class", "curie", "name", "description"])
 def clean_disease_list(disease_df: pd.DataFrame, endpoint: str) -> pd.DataFrame:
     """Synonymize the disease list and filter out NaNs.
 
@@ -371,5 +381,14 @@ def clean_disease_list(disease_df: pd.DataFrame, endpoint: str) -> pd.DataFrame:
         input_cols=["category_class"],
         target_col="curie",
         endpoint=endpoint,
+        att_to_get="identifier",
+    )
+    res = enrich_df(
+        res,
+        func=normalize,
+        input_cols=["category_class"],
+        target_col="name",
+        endpoint=endpoint,
+        att_to_get="name",
     )
     return res.loc[~res["curie"].isna()]
