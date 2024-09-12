@@ -130,7 +130,7 @@ class RateLimitException(Exception):
     stop=stop_after_attempt(3),
     # retry=retry_if_exception_type(RateLimitException),
 )
-def batch(endpoint, api_key, batch):
+def batch(endpoint, model, api_key, batch):
     """Function to resolve batch."""
     print(f"processing batch with length {len(batch)}")
 
@@ -138,7 +138,7 @@ def batch(endpoint, api_key, batch):
         raise RuntimeError("Empty batch!")
 
     headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
-    data = {"input": batch, "model": "text-embedding-3-small"}
+    data = {"input": batch, "model": model}
 
     response = requests.post(f"{endpoint}/embeddings", headers=headers, json=data)
 
@@ -179,7 +179,7 @@ def compute_embeddings(
         concurrency: number of concurrent calls to execute
     """
     batch_udf = F.udf(
-        lambda z: batch(endpoint, api_key, z), ArrayType(ArrayType(FloatType()))
+        lambda z: batch(endpoint, model, api_key, z), ArrayType(ArrayType(FloatType()))
     )
 
     window = Window.orderBy(F.lit(1))
