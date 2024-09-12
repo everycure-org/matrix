@@ -41,7 +41,7 @@ build_argo_template() {
     echo "Building Argo workflow template..."
     # TODO duplicated image name reference from Makefile, should clean up
     IMAGE_NAME="us-central1-docker.pkg.dev/mtrx-hub-dev-3of/matrix-images/matrix"
-    .venv/bin/python ./src/matrix/argo.py generate-argo-config $IMAGE_NAME $USERNAME "dev-$USERNAME"
+    .venv/bin/python ./src/matrix/argo.py generate-argo-config $IMAGE_NAME $USERNAME argo-workflows # "dev-$USERNAME"
 }
 
 # Function to create or verify namespace
@@ -57,7 +57,7 @@ ensure_namespace() {
 apply_argo_template() {
     echo "Applying Argo workflow template..."
     # Add kubectl apply command for your Argo template
-    kubectl apply -f templates/argo-workflow-template.yml -n dev-$USERNAME
+    kubectl apply -f templates/argo-workflow-template.yml -n argo-workflows # -n dev-$USERNAME
 }
 
 # Function to submit Argo workflow
@@ -65,15 +65,14 @@ submit_workflow() {
 
     #   -p openai_endpoint=https://api.openai.com/v1 \
     echo "Submitting Argo workflow..."
-    JOB_NAME=$(argo submit -n dev-$USERNAME --from wftmpl/matrix \
-      -p experiment=$(get_experiment_name) \
+    JOB_NAME=$(argo submit -n argo-workflows --from wftmpl/matrix \
       -p run_name=$(get_experiment_name) \
       -l submit-from-ui=false \
       --entrypoint __default__ \
       -o json \
       | jq -r '.metadata.name')
     
-    argo watch -n dev-$USERNAME $JOB_NAME
+    argo watch -n argo-workflows $JOB_NAME # -n dev-$USERNAME $JOB_NAME
 }
 get_experiment_name() {
     local branch_name=$(git rev-parse --abbrev-ref HEAD)
@@ -86,7 +85,7 @@ main() {
     check_dependencies
     build_push_docker
     build_argo_template
-    ensure_namespace
+    # ensure_namespace NOTE: Currently executing in argo
     apply_argo_template
     submit_workflow
 }

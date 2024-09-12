@@ -19,8 +19,6 @@ from neo4j import GraphDatabase
 from matplotlib.pyplot import plot
 import seaborn as sns
 
-from pypher.builder import create_function
-from . import pypher_utils
 from .graph_algorithms import *
 from graphdatascience import GraphDataScience, QueryRunner
 
@@ -33,7 +31,6 @@ from tenacity import (
     retry,
     stop_after_attempt,
     wait_random_exponential,
-    retry_if_exception_type,
 )
 
 import logging
