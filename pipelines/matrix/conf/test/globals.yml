@@ -5,8 +5,6 @@ openai:
   endpoint: http://mock-genai:1080/v1
   api_key: dummy
 
-gh_token: ${oc.env:GH_TOKEN, dummy}
-
 paths:
   raw: data/test/01_raw
   int: data/test/02_intermediate
