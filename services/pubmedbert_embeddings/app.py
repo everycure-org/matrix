@@ -1,117 +1,87 @@
+"""This is a simple API for generating embeddings using PubMedBERT.
+It exposes two models: A baseline model that was used in a previous publication
+and a model that we think actually is correct, namely a sentence embedding model.
+
+Note this is a temporary solution and we intend to move to a more generic solution.
+"""
+
 from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel, Field
-from transformers import AutoTokenizer, AutoModel
-import torch
-import os
-from joblib import Memory
-
+import time
+import asyncio
+from concurrent.futures import ThreadPoolExecutor
 from typing import List
+from data_models import EmbeddingRequest, EmbeddingResponse, Usage, Embedding
+from models import ModelStore
+import logging
+import multiprocessing
 
+logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.INFO)
+
+CPU_COUNT = multiprocessing.cpu_count()
 app = FastAPI()
+model_store = ModelStore()
 
-# Load the model and tokenizer
-model_name = os.getenv(
-    "MODEL_NAME", "microsoft/BiomedNLP-PubMedBERT-base-uncased-abstract-fulltext"
-)
-tokenizer = AutoTokenizer.from_pretrained(model_name)
-model = AutoModel.from_pretrained(model_name)
-
-# Setup joblib caching
-cache_dir = f"./.cache/{model_name}"
-if not os.path.exists(cache_dir):
-    os.makedirs(cache_dir)
-memory = Memory(cache_dir, verbose=0, mmap_mode="r")
+# Create a thread pool executor
+executor = ThreadPoolExecutor(
+    max_workers=CPU_COUNT
+)  # Adjust the number of workers as needed
 
 
-class EmbeddingRequest(BaseModel):
-    input: str | List[str]
-    model: str = model_name
-
-
-class Embedding(BaseModel):
-    object: str = Field(
-        "embedding",
-        description="The type of object returned, in this case it is an embedding.",
+async def get_embedding(texts: List[str], model_name: str) -> List[float]:
+    """Async call to get embedding using the pipeline API of HF."""
+    # manually truncate the text to 512 tokens
+    texts = [text[:512] for text in texts]
+    # Run the call in a separate thread
+    return await asyncio.get_event_loop().run_in_executor(
+        executor, lambda: (model_store.get_embeddings(texts, model_name), 0)
     )
-    embedding: List[float] = Field(..., description="The embedding vector.")
-    index: int = Field(..., description="The index of the embedding in the input list.")
-
-
-class Usage(BaseModel):
-    prompt_tokens: int = Field(..., description="The number of tokens in the prompt.")
-    total_tokens: int = Field(..., description="The total number of tokens used.")
-
-
-class EmbeddingResponse(BaseModel):
-    object: str = Field(
-        "list",
-        description="The type of object returned, in this case it is a list of embeddings.",
-    )
-    data: List[Embedding] = Field(..., description="The list of embedding vectors.")
-    model: str = Field(..., description="The name of the embedding model used.")
-    usage: Usage = Field(..., description="The usage statistics for the request.")
-
-
-@memory.cache
-async def get_embedding(text: str) -> List[float]:
-    tokens = tokenizer(
-        text, return_tensors="pt", truncation=True, max_length=512, padding=True
-    )
-    token_count = tokens.input_ids.shape[1]
-
-    with torch.no_grad():
-        output = model(**tokens, output_hidden_states=True).pooler_output
-        embedding = output.cpu().detach().numpy().tolist()
-
-    # we get a list of lists, but we just want the first one
-    return embedding[0], token_count
 
 
 @app.post("/v1/embeddings")
 async def create_embedding(request: EmbeddingRequest):
+    """Main API endpoint for embedding generation."""
     try:
+        start_time = time.time()
         # Ensure input is a list
         inputs = [request.input] if isinstance(request.input, str) else request.input
 
-        embeddings = []
-        total_tokens = 0
-
-        for i, text in enumerate(inputs):
-            # Tokenize the input
-            embedding, token_count = await get_embedding(text)
-            embeddings.append(embedding)
-            total_tokens += token_count
+        # Process all inputs concurrently
+        if len(inputs) > 0:
+            embeddings, token_count = await get_embedding(inputs, request.model)
+        else:
+            embeddings = []
+            token_count = 0
 
         # Create a response in OpenAI-like format
         response = EmbeddingResponse(
             object="list",
             data=[
                 Embedding(object="embedding", embedding=emb, index=i)
-                for i, emb in enumerate(embeddings)
+                for i, emb in enumerate(list(embeddings))
             ],
-            model=model_name,
-            usage=Usage(prompt_tokens=total_tokens, total_tokens=total_tokens),
+            model=request.model,
+            usage=Usage(prompt_tokens=token_count, total_tokens=token_count),
+        )
+
+        logger.info(
+            f"Generated embeddings for {len(inputs)} inputs in {time.time() - start_time:.2f} seconds and model {request.model}"
         )
 
         return response
     except Exception as e:
+        # print exception and stack trace
+        import traceback
+
+        print(e)
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.get("/")
 async def root():
-    return {"message": "success"}
-
-
-@app.get("/health/liveness")
-async def liveness_check():
-    return {"status": "alive"}
-
-
-@app.get("/health/readiness")
-async def readiness_check():
     # Perform a simple operation to check if the model is loaded
-    if tokenizer is not None:
+    if model_store is not None:
         return {"status": "ready"}
     else:
         raise HTTPException(status_code=500, detail="Service not ready")
@@ -120,4 +90,12 @@ async def readiness_check():
 if __name__ == "__main__":
     import uvicorn
 
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    # uvicorn.run(app, host="0.0.0.0", port=8000, limit_concurrency=CPU_COUNT*4, backlog=CPU_COUNT*16)
+    uvicorn.run(
+        app,
+        host="0.0.0.0",
+        port=8000,
+        backlog=CPU_COUNT * 64,
+        log_level="info",
+        access_log=True,
+    )

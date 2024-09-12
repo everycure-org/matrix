@@ -8,7 +8,12 @@ ADD requirements.txt .
 RUN uv venv && \
     uv pip install -r requirements.txt
 ENV PATH=/app/.venv/bin:$PATH
+# Download and cache the model
+ADD models.py .
+RUN python -c "from models import ModelStore; \
+    model_store = ModelStore()"
 
 ADD . .
+
 
 CMD "python" "app.py"
