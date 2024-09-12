@@ -113,26 +113,3 @@ preprocessing.raw.drug_list:
     Authorization: token ${oc.env:GH_TOKEN}
   load_args:
     sep: "\t"
-
-
-preprocessing.int.resolved_disease_list:
-  <<: [*_layer_int]
-  type: pandas.CSVDataset
-  filepath: ${globals:paths.int}/disease_list/${globals:data_sources.ec-disease-list.version}/disease_list.tsv
-  save_args:
-    sep: "\t"
-    header: true
-    index: false
-  load_args:
-    sep: "\t"
-
-preprocessing.int.resolved_drug_list:
-  <<: [*_layer_int]
-  type: pandas.CSVDataset
-  filepath: ${globals:paths.int}/drug_list/${globals:data_sources.ec-drug-list.version}/drug_list.tsv
-  save_args:
-    sep: "\t"
-    header: true
-    index: false
-  load_args:
-    sep: "\t"
