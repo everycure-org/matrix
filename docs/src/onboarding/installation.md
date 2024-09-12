@@ -32,7 +32,9 @@ After installing WSL, you need to restart your computer.
 
 ### Cloning Github repos in WSL
 
-WSL does not allow cloning repos by HTTPS so cloning requires using SSH, following the Github tutorials on [generating a new SSH key](https://docs.github.com/en/authentication/connecting-to-github-with-ssh/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent?platform=linux) and [adding a new SSH key to your account](https://docs.github.com/en/authentication/connecting-to-github-with-ssh/adding-a-new-ssh-key-to-your-github-account).
+If you have set up an SSH key between your WSL and Github account in the past, you can skip the following section and go directly to the next section (PyEnv installation).
+
+Cloning repos by HTTPS within WSL is no longer supported and using SSH key is recommended. You can set it up by following the Github tutorials on [generating a new SSH key](https://docs.github.com/en/authentication/connecting-to-github-with-ssh/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent?platform=linux) and [adding a new SSH key to your account](https://docs.github.com/en/authentication/connecting-to-github-with-ssh/adding-a-new-ssh-key-to-your-github-account).
 
 === "WSL"
 
