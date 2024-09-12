@@ -27,5 +27,3 @@ ourselves.
 Use the `Makefile` for most steps
 
 
-## Deployment on Kubernetes
-We currently use a manual deployment with k8s specs in the `templates` folder. We may move this to ArgoCD but for now this is a one-off
