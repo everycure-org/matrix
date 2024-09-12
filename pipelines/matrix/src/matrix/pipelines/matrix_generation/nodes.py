@@ -155,8 +155,6 @@ def make_predictions_and_sort(
     Returns:
         Pairs dataset sorted by an additional column containing the probability scores.
     """
-    from sklearn.ensemble._forest import RandomForestClassifier
-
     # Generate scores
     data = make_batch_predictions(
         graph, data, transformers, model, features, score_col_name, batch_by=batch_by
@@ -184,8 +182,8 @@ def generate_report(
     top_pairs = data.head(n_reporting)
 
     # Add additional information for drugs and diseases (TODO: optimise for speed by e.g. caching or using Polars)
-    get_node_name = lambda x: graph.get_node_attribute(x, "name")
-    get_node_description = lambda x: graph.get_node_attribute(x, "description")
+    get_node_name = lambda x: graph.get_node_attribute(x, "name").item()
+    get_node_description = lambda x: graph.get_node_attribute(x, "description").item()
     top_pairs["drug_name"] = top_pairs["source"].apply(get_node_name)
     top_pairs["disease_name"] = top_pairs["target"].apply(get_node_name)
     top_pairs["drug_description"] = top_pairs["source"].apply(get_node_description)
@@ -208,10 +206,10 @@ def generate_report(
         for col in top_pairs.columns
         if col
         not in [
-            "disease_id",
+            "drug_id",
             "drug_name",
             "drug_description",
-            "target",
+            "disease_id",
             "disease_name",
             "disease_description",
         ]

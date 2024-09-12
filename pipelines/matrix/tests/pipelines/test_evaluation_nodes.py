@@ -1,7 +1,7 @@
 import pytest
 import pandas as pd
 import numpy as np
-from unittest.mock import Mock, patch
+from unittest.mock import Mock
 from matrix.pipelines.evaluation.nodes import make_test_predictions
 from matrix.pipelines.modelling.transformers import FlatArrayTransformer
 
@@ -77,7 +77,7 @@ def test_make_test_predictions(
     mock_model,
 ):
     # Given data, embeddings and a model
-    # When we make batched predictions on the model
+    # When we make batched predictions
     result = make_test_predictions(
         graph=mock_graph,
         data=mock_data,

@@ -50,7 +50,7 @@ class KnowledgeGraph:
             node_id: Node ID.
             col_name: Name of column containing desired attribute
         """
-        return self._nodes[self._nodes["id"] == node_id][[col_name]]
+        return self._nodes[self._nodes["id"] == node_id][col_name]
 
 
 class KnowledgeGraphDataset(ParquetDataset):
