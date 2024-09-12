@@ -75,7 +75,7 @@ fabricator.rtx_kg2:
         type: faker
         provider: name
 
-  ingestion.raw.drug_list:
+  drug_list:
     num_rows: 20
     columns:
       curie: 
@@ -85,7 +85,7 @@ fabricator.rtx_kg2:
         resize: True
         seed: 6850
 
-  ingestion.raw.disease_list:
+  disease_list:
     num_rows: 30
     columns:
       curie: 
