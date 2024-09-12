@@ -40,7 +40,7 @@ locals {
     enable_gcfs        = true
     enable_gvnic       = true
     initial_node_count = 0
-    preemptible        = false
+    spot               = false
     }
   ]
 
