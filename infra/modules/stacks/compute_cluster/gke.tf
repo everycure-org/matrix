@@ -74,7 +74,8 @@ locals {
   gpu_node_pools = [
     # FUTURE add GPU pools here
   ]
-  node_pools_combined = concat(local.base_node_pool, local.cpu_node_pools, local.cpu_spot_node_pools, local.mem_node_pools)
+  # node_pools_combined = concat(local.base_node_pool, local.cpu_node_pools, local.cpu_spot_node_pools, local.mem_node_pools)
+  node_pools_combined = concat(local.base_node_pool, local.cpu_node_pools, local.mem_node_pools)
 }
 
 # docs here https://registry.terraform.io/modules/terraform-google-modules/kubernetes-engine/google/latest/submodules/private-cluster
