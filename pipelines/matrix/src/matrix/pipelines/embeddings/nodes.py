@@ -119,6 +119,10 @@ def ingest_nodes(df: DataFrame) -> DataFrame:
     )
 
 
+# curl -X GET -H "Content-Type: application/json" -H "Authorization: token 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" -H "Accept: application/vnd.github.v3.raw" https://api.github.com/repos/everycure-org/matrix-drug-list/releases
+# curl -X GET -H "Content-Type: application/json" -H "Authorization: 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" -H "Accept: application/vnd.github.v3.raw" https://api.github.com/repos/everycure-org/matrix-drug-list/releases
+
+
 class RateLimitException(Exception):
     """RateLimitException."""
 
@@ -127,7 +131,7 @@ class RateLimitException(Exception):
 
 @retry(
     wait=wait_random_exponential(min=1, max=60),
-    stop=stop_after_attempt(3),
+    stop=stop_after_attempt(10),
     # retry=retry_if_exception_type(RateLimitException),
 )
 def batch(endpoint, model, api_key, batch):
