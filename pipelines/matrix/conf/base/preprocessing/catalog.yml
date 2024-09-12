@@ -26,6 +26,7 @@ _medical_clinical_trials_sheet_dataset: &_medical_clinical_trials_sheet_dataset
   key: 1Wlrjr8ojUGCfWJg-QF5PzpJFqpD7LLH7b60u2XAngh0
   service_file: conf/local/service-account.json
 
+
 # -------------------------------------------------------------------------
 # Datasets
 # -------------------------------------------------------------------------
@@ -34,35 +35,23 @@ preprocessing.raw.nodes:
   <<: [*_layer_raw, *_medical_kg_sheets_dataset]
   load_args:
     sheet_name: Nodes
+    columns: ["ID", "name", "entity label", "new_id", "curie", "corrected_curie", "normalized_curie", "description"]
+
+preprocessing.int.nodes:
+  <<: [*_layer_int, *_medical_kg_sheets_dataset]
+  save_args:
+    sheet_name: Nodes
+    write_columns: ["curie", "normalized_curie"]
+
+  load_args:
+    sheet_name: Nodes
+    columns: ["ID", "name", "entity label", "new_id", "normalized_curie", "description"]
 
 preprocessing.raw.edges:
   <<: [*_layer_raw, *_medical_kg_sheets_dataset]
   load_args:
     sheet_name: Edges
     columns: ["Source", "Target", "Label"]
-
-preprocessing.int.resolved_nodes:
-  <<: [*_layer_int, *_medical_kg_sheets_dataset]
-  save_args:
-    sheet_name: Nodes
-    write_columns: ["curie"]
-
-  load_args:
-    sheet_name: Nodes
-
-preprocessing.int.normalized_nodes:
-  <<: [*_layer_int, *_medical_kg_sheets_dataset]
-  save_args:
-    sheet_name: Nodes
-    write_columns: ["normalized_curie"]
-
-  load_args:
-    sheet_name: Nodes
-    columns: ["ID", "name", "entity label", "new_id", "normalized_curie", "description"]
-
-preprocessing.int.nodes:
-  <<: [*_layer_int, *_pandas_csv]
-  filepath: ${globals:paths.int}/ec_medical_team/nodes
 
 preprocessing.int.edges:
   <<: [*_layer_prm, *_medical_kg_sheets_dataset]
@@ -106,3 +95,21 @@ preprocessing.int.mapped_clinical_trials_data:
       - "drug_kg_curie"
       - "disease_kg_curie"
       - "conflict"
+
+preprocessing.raw.disease_list: 
+  <<: [*_layer_raw]
+  type: pandas.CSVDataset
+  filepath: https://github.com/everycure-org/matrix-disease-list/releases/${globals:data_sources.ec-disease-list.version}/download/matrix-disease-list.tsv
+  load_args:
+    sep: "\t"
+
+preprocessing.raw.drug_list:
+  <<: [*_layer_raw]
+  type: pandas.CSVDataset
+  # NOTE: This is currently being downloaded through the assets as the repository is private.
+  filepath: https://api.github.com/repos/everycure-org/matrix-drug-list/releases/assets/${globals:data_sources.ec-drug-list.version}
+  fs_args:
+    Accept: application/octet-stream
+    Authorization: token ${globals:gh_token}
+  load_args:
+    sep: "\t"
