@@ -3,6 +3,10 @@ run_name: ${oc.env:RUN_NAME}
 gcs_bucket: gs://${oc.env:GCP_BUCKET}
 gcp_project: ${oc.env:GCP_PROJECT_ID}
 
+# NOTE: MLflow does not like "new options" in the mlflow.yml
+# due to schema validation. Will make PR.
+mlflow_artifact_root: ${gcs_bucket}/runs/${run_name}/mlflow
+
 paths:
   # hard coded against our central data location for raw
 

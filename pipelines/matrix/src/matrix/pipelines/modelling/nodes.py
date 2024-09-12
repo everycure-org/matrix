@@ -7,7 +7,10 @@ import json
 import pyspark.sql.functions as f
 
 from pyspark.sql import DataFrame
+from pyspark.sql.functions import udf, col
+from pyspark.sql.types import FloatType, ArrayType, StringType
 
+from sklearn.model_selection import BaseCrossValidator
 from sklearn.model_selection._split import _BaseKFold
 from sklearn.impute._base import _BaseImputer
 from sklearn.base import BaseEstimator
@@ -16,6 +19,7 @@ import matplotlib.pyplot as plt
 
 from refit.v1.core.inject import inject_object
 from refit.v1.core.inline_has_schema import has_schema
+from refit.v1.core.inline_primary_key import primary_key
 from refit.v1.core.unpack import unpack_params
 from refit.v1.core.make_list_regexable import make_list_regexable
 
@@ -23,10 +27,10 @@ from matrix.datasets.graph import KnowledgeGraph
 from matrix.datasets.pair_generator import SingleLabelPairGenerator
 from .model import ModelWrapper
 
-
 plt.switch_backend("Agg")
 
 
+@primary_key(primary_key=["source", "target"])
 def create_int_pairs(raw_tp: pd.DataFrame, raw_tn: pd.DataFrame):
     """Create intermediate pairs dataset.
 
@@ -123,14 +127,14 @@ def create_feat_nodes(
 def make_splits(
     kg: KnowledgeGraph,
     data: DataFrame,
-    splitter: _BaseKFold,
+    splitter: BaseCrossValidator,
 ) -> pd.DataFrame:
     """Function to split data.
 
     Args:
         kg: kg dataset with nodes
         data: Data to split.
-        splitter: sklearn splitter object.
+        splitter: sklearn splitter object (BaseCrossValidator or its subclasses).
 
     Returns:
         Data with split information.

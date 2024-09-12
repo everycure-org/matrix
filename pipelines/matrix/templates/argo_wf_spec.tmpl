@@ -9,7 +9,7 @@ spec:
     labels:
       experiment: {% raw %}'{{ workflow.parameters.experiment }}'
       {% endraw %}
-      release: {% raw %}'{{ workflow.parameters.release_version }}'
+      run: {% raw %}'{{ workflow.parameters.run_name }}'
       {% endraw %}
   entrypoint: dag
   ttlStrategy:
@@ -20,10 +20,10 @@ spec:
         value: "{{ image }}"
       - name: image_tag
         value: "{{ image_tag }}"
-      - name: experiment
-        value: "Default"
+      # - name: experiment
+      #  value: "Default"
       # we use the image tag as the release version as a default
-      - name: release_version
+      - name: run_name
         value: "{{ image_tag }}"
       - name: neo4j_host
         value: "bolt://neo4j.neo4j.svc.cluster.local:7687"
@@ -65,12 +65,13 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: metadata.labels['workflows.argoproj.io/workflow']
-        - name: RELEASE_VERSION
-          value: {% raw %} "{{workflow.parameters.release_version}}" 
+        - name: RUN_NAME
+          value: {% raw %} "{{workflow.parameters.run_name}}" 
           {% endraw %}
-        - name: EXPERIMENT
-          value: {% raw %} "{{workflow.parameters.experiment}}" 
-          {% endraw %}
+        #- name: EXPERIMENT
+        #  value: {% raw %} "{{workflow.parameters.experiment}}" 
+        #  {% endraw %}
+
         - name: NEO4J_HOST
           value: {% raw %} "{{workflow.parameters.neo4j_host}}" 
           {% endraw %}
@@ -126,12 +127,13 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: metadata.labels['workflows.argoproj.io/workflow']
-        - name: RELEASE_VERSION
-          value: {% raw %} "{{workflow.parameters.release_version}}" 
+        - name: RUN_NAME
+          value: {% raw %} "{{workflow.parameters.run_name}}" 
           {% endraw %}
-        - name: EXPERIMENT
-          value: {% raw %} "{{workflow.parameters.experiment}}" 
-          {% endraw %}
+        # - name: EXPERIMENT
+        #  value: {% raw %} "{{workflow.parameters.experiment}}" 
+        #  {% endraw %}
+        
         - name: MLFLOW_ENDPOINT
           value: {% raw %} "{{workflow.parameters.mlflow_endpoint}}" 
           {% endraw %}

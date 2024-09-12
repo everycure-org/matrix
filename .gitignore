@@ -6,6 +6,7 @@
 
 # IDE
 .vscode/
+.idea/
 
 # Drawio
 *.bkp
@@ -18,6 +19,8 @@ neo4j_db/
 **/.venv/
 **/venv/
 
+!.gitkeep
+
 # terraform
 **/.terraform/
 **/.terragrunt-cache/
@@ -25,3 +28,5 @@ neo4j_db/
 infra/argo/applications/**/charts
 
 services/synonymizer/assets/
+
+infra/**/Chart.lock

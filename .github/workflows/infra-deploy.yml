@@ -29,6 +29,42 @@ env:
   working_dir: 'infra/'
 
 jobs:
+  # Uncomment this for debugging the JWT tokens
+  debug:
+    runs-on: 'ubuntu-latest'
+    environment: dev
+    if: github.ref == 'refs/heads/infra'
+    permissions:
+      id-token: 'write'
+      contents: 'read'
+    steps:
+      - name: 'Checkout'
+        uses: actions/checkout@v4
+      # note this does NOT fail even if the credentials are invalid!
+      - uses: 'google-github-actions/auth@v2'
+        with:
+          project_id: ${{vars.project_id}}
+          workload_identity_provider: ${{vars.workload_identity_provider}}
+          service_account: ${{vars.service_account}}
+      - run: cat /home/runner/work/matrix/matrix/gha-creds*
+      - name: Checkout actions-oidc-debugger
+        uses: actions/checkout@v3
+        with:
+          repository: github/actions-oidc-debugger
+          ref: main
+          path: ./.github/actions/actions-oidc-debugger
+      - name: Debug OIDC Claims
+        uses: ./.github/actions/actions-oidc-debugger
+        with:
+          audience: '${{ github.server_url }}/${{ github.repository_owner }}'
+      - name: 'Set up Cloud SDK'
+        uses: 'google-github-actions/setup-gcloud@v2'
+        with:
+          version: '>= 363.0.0'
+  
+      - name: 'Use gcloud CLI'
+        run: 'gsutil ls gs://mtrx-us-central1-hub-dev-storage/'
+
   # leveraging a paths-filter approach to be able to make this run required for all PRs while still
   # not blocking merging with "Expected" for those runs that have a paths filter
   # FUTURE eventually github will likely fix this
@@ -75,8 +111,8 @@ jobs:
         run: terraform fmt -check -recursive ${{ env.working_dir }}
 
   plan:
+    # runs under RO user
     runs-on: ubuntu-latest
-    environment: dev
     name: Plan Terraform
     needs: [ checks ]
     permissions:
@@ -104,10 +140,12 @@ jobs:
           tf_version: ${{ env.tf_version }}
           tg_version: ${{ env.tg_version }}
           tg_dir: ${{ env.working_dir }}/deployments/hub/dev
-          tg_command: 'plan'
+          tg_command: 'plan -lock=false -refresh=false' #we do not check the remote state, this is a compromise that avoids giving read rights to secrets
 
   deploy:
+    # runs under RW user
     runs-on: ubuntu-latest
+    # TODO fix
     if: github.ref == 'refs/heads/infra'
     environment: dev
     name: Apply Terraform

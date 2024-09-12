@@ -26,6 +26,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 ],
                 outputs="preprocessing.int.resolved_nodes",
                 name="resolve_ec_medical_team_nodes",
+                tags=["ec-medical-kg"],
             ),
             # NOTE: Running this to get the identifiers in the KG
             # Normalize nodes
@@ -43,6 +44,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 ],
                 outputs="preprocessing.int.normalized_nodes",
                 name="normalize_ec_medical_team_nodes",
+                tags=["ec-medical-kg"],
             ),
             # NOTE: Filter away all nodes that we could not resolve
             # FUTURE: Either Charlotte needs to ensure things join OR
@@ -53,6 +55,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 inputs=["preprocessing.int.normalized_nodes"],
                 outputs="preprocessing.int.nodes",
                 name="create_int_ec_medical_team_nodes",
+                tags=["ec-medical-kg"],
             ),
             # Ensure edges use synonymized identifiers
             # NOTE: Charlotte introduces her own identifiers in the
@@ -65,6 +68,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 ],
                 outputs="preprocessing.int.edges",
                 name="create_int_ec_medical_team_edges",
+                tags=["ec-medical-kg"],
             ),
             node(
                 func=nodes.create_prm_edges,
@@ -73,6 +77,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 ],
                 outputs="ingestion.raw.ec_medical_team.edges@pandas",
                 name="create_prm_ec_medical_team_edges",
+                tags=["ec-medical-kg"],
             ),
             node(
                 func=nodes.create_prm_nodes,
@@ -81,6 +86,28 @@ def create_pipeline(**kwargs) -> Pipeline:
                 ],
                 outputs="ingestion.raw.ec_medical_team.nodes@pandas",
                 name="create_prm_ec_medical_team_nodes",
+                tags=["ec-medical-kg"],
+            ),
+            # NOTE: Take raw clinical trial data and map the "name" to "curie" using the synonymizer
+            node(
+                func=nodes.map_name_to_curie,
+                inputs=[
+                    "preprocessing.raw.clinical_trials_data",
+                    "params:preprocessing.synonymizer_endpoint",
+                ],
+                outputs="preprocessing.int.mapped_clinical_trials_data",
+                name="mapped_clinical_trials_data",
+                tags=["ec-clinical-trials-data"],
+            ),
+            # NOTE: Clean up the clinical trial data and write it to the GCS bucket
+            node(
+                func=nodes.clean_clinical_trial_data,
+                inputs=[
+                    "preprocessing.int.mapped_clinical_trials_data",
+                ],
+                outputs="ingestion.raw.clinical_trials_data",
+                name="clean_clinical_trial_data",
+                tags=["ec-clinical-trials-data"],
             ),
         ]
     )
