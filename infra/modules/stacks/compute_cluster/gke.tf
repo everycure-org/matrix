@@ -111,6 +111,7 @@ module "gke" {
   # FUTURE: Refine mode pools
   node_pools = local.node_pools_combined
 
+  # FUTURE: Ensure auto generated based on the variable
   node_pools_labels = {
     # label for spot nodes
     "e2-standard-8-spot-nodes" = {
