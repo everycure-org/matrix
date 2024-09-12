@@ -100,15 +100,15 @@ preprocessing.int.mapped_clinical_trials_data:
       - "disease_kg_curie"
       - "conflict"
 
-raw.evaluation.disease_list:
-  #<<: [*_layer_raw]
+preprocessing.raw.disease_list: 
+  <<: [*_layer_raw]
   type: pandas.CSVDataset
   filepath: https://github.com/everycure-org/matrix-disease-list/releases/${globals:data_sources.ec-disease-list.version}/download/matrix-disease-list.tsv
   load_args:
     sep: "\t"
 
-raw.evaluation.drug_list:
-  #<<: [*_layer_raw]
+preprocessing.raw.drug_list:
+  <<: [*_layer_raw]
   type: pandas.CSVDataset
   # NOTE: This is currently being downloaded through the assets as the repository is private.
   filepath: https://api.github.com/repos/everycure-org/matrix-drug-list/releases/assets/${globals:data_sources.ec-drug-list.version}
@@ -118,17 +118,9 @@ raw.evaluation.drug_list:
   load_args:
     sep: "\t"
 
-raw.inputs:
-  <<: [ *_inference_input_sheet_dataset]
-  load_args:
-    sheet_name: Input
-    columns: ["drug_id", "disease_id"]
-  save_args:
-    sheet_name: Input
-    columns: ["drug_id_curie", "disease_id_curie"]
 
 preprocessing.int.resolved_disease_list:
-  #<<: [*_layer_int]
+  <<: [*_layer_int]
   type: pandas.CSVDataset
   filepath: ${globals:paths.int}/disease_list/${globals:data_sources.ec-disease-list.version}/disease_list.tsv
   save_args:
@@ -139,7 +131,7 @@ preprocessing.int.resolved_disease_list:
     sep: "\t"
 
 preprocessing.int.resolved_drug_list:
-  #<<: [*_layer_int]
+  <<: [*_layer_int]
   type: pandas.CSVDataset
   filepath: ${globals:paths.int}/drug_list/${globals:data_sources.ec-drug-list.version}/drug_list.tsv
   save_args:
