@@ -104,7 +104,8 @@ def test_recall_at_n(sample_data):
 
     # Test with multiple N values
     recall_evaluator = RecallAtN(n_values=[3, 5], score_col_name="score")
-    result = recall_evaluator.evaluate(sample_data[0])
+    data_standard_case = sample_data[0]
+    result = recall_evaluator.evaluate(data_standard_case)
 
     assert "recall_at_3" in result
     assert np.isclose(
