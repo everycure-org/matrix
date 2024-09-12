@@ -38,7 +38,7 @@ data_sources:
     # allows for downloading an artifact by its id. Get the artifact id
     # of the latest release as follows:
     # curl -X GET -H "Content-Type: application/json" -H "Authorization: token PAT" -H "Accept: application/vnd.github.v3.raw" https://api.github.com/repos/everycure-org/matrix-drug-list/releases | jq ".[0].assets | map(select(.name == \"drugList.tsv\"))[0] | .id"
-    version: 189324981
+    version: 192198441
   ec-disease-list:
     version: latest # TODO: We should version
 
