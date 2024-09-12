@@ -28,7 +28,7 @@ spec:
       - name: mlflow_endpoint
         value: "http://mlflow-tracking.mlflow.svc.cluster.local:80"
       - name: openai_endpoint
-        value: "https://pubmedbert.api.dev.everycure.org/v1"
+        value: "https://pubmedbert.api.dev.everycure.org/v1/embeddings"
       - name: env
         value: "cloud"
   templates:
@@ -54,7 +54,7 @@ spec:
       resources: # limit the resources
         requests:
           memory: 6Gi
-          cpu: 4
+          cpu: 16
         limits:
           memory: 64Gi
           cpu: 16
