@@ -10,6 +10,7 @@ fabricator.rtx_kg2:
         type: faker
         provider: name
       category:
+        
         type: generate_values
         sample_values:
           - biolink:Drug
