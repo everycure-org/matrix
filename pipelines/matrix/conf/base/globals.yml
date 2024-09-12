@@ -15,6 +15,7 @@ openai:
 gcs_bucket: gs://${oc.env:GCP_BUCKET, mtrx-us-central1-hub-dev-storage}
 gcp_project: ${oc.env:GCP_PROJECT_ID, mtrx-hub-dev-3of}
 git_sha: ${oc.env:GIT_SHA, local}
+gh_token: ${oc.env:GH_TOKEN, dummy}
 
 versions:
   # overwritten in prod environment for shared releases
@@ -33,6 +34,14 @@ data_sources:
   # EveryCure medical team.
   clinical-trial-data:
     version: 20230309 # NOTE: Here 0309 is a period of time (here Mar to Sep 2023)
+  ec-drug-list:
+    # NOTE: This is currently the artifact id, as the GitHub API only
+    # allows for downloading an artifact by its id. Get the artifact id
+    # of the latest release as follows:
+    # curl -X GET -H "Content-Type: application/json" -H "Authorization: token PAT" -H "Accept: application/vnd.github.v3.raw" https://api.github.com/repos/everycure-org/matrix-drug-list/releases | jq ".[0].assets | map(select(.name == \"drugList.tsv\"))[0] | .id"
+    version: 192198441
+  ec-disease-list:
+    version: latest # TODO: We should version
 
 # NOTE: MLflow does not like "new options" in the mlflow.yml
 # due to schema validation. Will make PR.
