@@ -363,7 +363,7 @@ def clean_drug_list(drug_df: pd.DataFrame, endpoint: str) -> pd.DataFrame:
     },
     allow_subset=True,
 )
-@primary_key(primary_key=["category_class", "curie", "name", "description"])
+@primary_key(primary_key=["category_class", "curie"])
 def clean_disease_list(disease_df: pd.DataFrame, endpoint: str) -> pd.DataFrame:
     """Synonymize the disease list and filter out NaNs.
 
