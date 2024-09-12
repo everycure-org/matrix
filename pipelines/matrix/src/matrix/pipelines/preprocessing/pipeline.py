@@ -72,14 +72,9 @@ def create_pipeline(**kwargs) -> Pipeline:
                 tags=["ec-clinical-trials-data"],
             ),
             node(
-                func=partial(
-                    nodes.enrich_df,
-                    func=nodes.normalize,
-                    input_cols=["single_ID"],
-                    target_col="drug_id_curie",
-                ),
+                func=nodes.clean_drug_list,
                 inputs=[
-                    "raw.evaluation.drug_list",
+                    "preprocessing.raw.drug_list",
                     "params:preprocessing.synonymizer_endpoint",
                 ],
                 outputs="preprocessing.int.resolved_drug_list",
@@ -87,14 +82,9 @@ def create_pipeline(**kwargs) -> Pipeline:
                 tags=["drug-list"],
             ),
             node(
-                func=partial(
-                    nodes.enrich_df,
-                    func=nodes.normalize,
-                    input_cols=["category_class"],
-                    target_col="disease_id_curie",
-                ),
+                func=nodes.clean_disease_list,
                 inputs=[
-                    "raw.evaluation.disease_list",
+                    "preprocessing.raw.disease_list",
                     "params:preprocessing.synonymizer_endpoint",
                 ],
                 outputs="preprocessing.int.resolved_disease_list",

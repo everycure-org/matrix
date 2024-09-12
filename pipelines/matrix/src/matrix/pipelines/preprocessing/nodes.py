@@ -315,3 +315,45 @@ def clean_clinical_trial_data(df: pd.DataFrame) -> pd.DataFrame:
     df = df.drop(columns=["reason_for_rejection", "conflict"]).reset_index(drop=True)
 
     return df
+
+
+def clean_drug_list(drug_df: pd.DataFrame, endpoint: str) -> pd.DataFrame:
+    """Synonymize the drug list and filter out NaNs.
+
+    Args:
+        drug_df: disease list in a dataframe format.
+        endpoint: endpoint of the synonymizer.
+
+    Returns:
+        dataframe with synonymized drug IDs in normalized_curie column.
+    """
+    res = enrich_df(
+        drug_df,
+        func=resolve,
+        input_cols=["single_ID"],
+        target_col="normalized_curie",
+        endpoint=endpoint,
+    )
+
+    return res.loc[~res["normalized_curie"].isna()]
+
+
+def clean_disease_list(disease_df: pd.DataFrame, endpoint: str) -> pd.DataFrame:
+    """Synonymize the disease list and filter out NaNs.
+
+    Args:
+        disease_df: disease list in a dataframe format.
+        endpoint: endpoint of the synonymizer.
+
+    Returns:
+        dataframe with synonymized disease IDs in normalized_curie column.
+    """
+    res = enrich_df(
+        disease_df,
+        func=resolve,
+        input_cols=["category_class"],
+        target_col="normalized_curie",
+        endpoint=endpoint,
+    )
+
+    return res.loc[~res["normalized_curie"].isna()]
