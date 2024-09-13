@@ -59,9 +59,7 @@ def create_pipeline(**kwargs) -> Pipeline:
             ),
             # Load spark dataset into local neo instance
             node(
-                func=lambda x: x.select(
-                    "id", "name", "category", "description", "pca_embedding"
-                ),
+                func=lambda x: x.select("id", "name", "category", "pca_embedding"),
                 inputs=["embeddings.feat.graph.pca_node_embeddings"],
                 outputs="embeddings.tmp.input_nodes",
                 name="ingest_neo4j_input_nodes",

@@ -78,7 +78,7 @@ embeddings.tmp.input_nodes:
     script: >
       CREATE CONSTRAINT IF NOT EXISTS FOR (n:Entity) REQUIRE n.id IS UNIQUE;
     query: > 
-      CREATE (n:Entity {id: event.id, pca_embedding: event.pca_embedding, category: event.category, name: event.name, description: event.description, kg_sources: event.kg_sources})
+      CREATE (n:Entity {id: event.id, pca_embedding: event.pca_embedding, category: event.category, kg_sources: event.kg_sources})
       WITH event, n
       CALL apoc.create.addLabels(n, event.labels) YIELD node
       RETURN node
