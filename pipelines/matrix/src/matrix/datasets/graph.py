@@ -43,6 +43,15 @@ class KnowledgeGraph:
         select_nodes = self._nodes[is_all_flags]
         return list(select_nodes["id"])
 
+    def get_node_attribute(self, node_id: str, col_name: str) -> any:
+        """Retrieves chosen node attributes from the ID.
+
+        Args:
+            node_id: Node ID.
+            col_name: Name of column containing desired attribute
+        """
+        return self._nodes[self._nodes["id"] == node_id][col_name]
+
 
 class KnowledgeGraphDataset(ParquetDataset):
     """Dataset adaptor to read KnowledgeGraph using Kedro's dataset functionality."""
