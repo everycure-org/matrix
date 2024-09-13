@@ -3,6 +3,8 @@
 import logging
 from typing import Any, Dict, List
 
+from collections.abc import Callable
+
 import matplotlib.pyplot as plt
 import pandas as pd
 import requests
@@ -126,8 +128,6 @@ class RateLimitException(Exception):
 )
 def batch(endpoint, model, api_key, batch):
     """Function to resolve batch."""
-    print(f"processing batch with length {len(batch)}")
-
     if len(batch) == 0:
         raise RuntimeError("Empty batch!")
 
@@ -140,7 +140,6 @@ def batch(endpoint, model, api_key, batch):
         return [item["embedding"] for item in response.json()["data"]]
     else:
         if response.status_code in [429, 500]:
-            print(f"rate limit")
             raise RateLimitException()
 
         print("error", response.content, response.status_code)
@@ -157,7 +156,6 @@ def compute_embeddings(
     batch_size: int,
     endpoint: str,
     model: str,
-    concurrency: int,
 ):
     """Function to orchestrate embedding computation in Neo4j.
 
@@ -170,7 +168,6 @@ def compute_embeddings(
         attribute: attribute to add
         endpoint: endpoint to use
         model: model to use
-        concurrency: number of concurrent calls to execute
     """
     batch_udf = F.udf(
         lambda z: batch(endpoint, model, api_key, z), ArrayType(ArrayType(FloatType()))
