@@ -15,7 +15,8 @@ This page assumes basic knowledge of the following technologies. We will provide
     better supported, do [send a
     PR](https://github.com/everycure-org/matrix/edit/main/src/docs/src/onboarding/index.md)!
 
-### Windows Subsystem for Linux (WSL)
+<details>
+<summary>Installing Windows Subsystem for Linux (WSL)</summary>
 
 If you are running on Windows, you need to install Windows Subsystem for Linux as the following steps require a UNIX OS. You can follow this [tutorial from Microsoft](https://learn.microsoft.com/en-us/windows/wsl/install). 
 
@@ -29,8 +30,10 @@ If you are running on Windows, you need to install Windows Subsystem for Linux a
     ```
 
 After installing WSL, you need to restart your computer.
+</details>
 
-### Cloning Github repos in WSL
+<details>
+<summary>Cloning Github repos in WSL</summary>
 
 If you have set up an SSH key between your WSL and Github account in the past, you can skip the following section and go directly to the next section (PyEnv installation).
 
@@ -54,6 +57,8 @@ Cloning repos by HTTPS within WSL is no longer supported and using SSH key is re
     # displayed in the terminal to your clipboard
     # then following steps 2-9 on the Github tutorial on adding a new SSH key to your account listed above
     ```
+</details>
+
 
 ### Python (Mac)
 
