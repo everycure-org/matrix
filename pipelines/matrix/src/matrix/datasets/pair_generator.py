@@ -265,7 +265,7 @@ class MatrixTestDiseases(DrugDiseasePairGenerator):
     while omitting any ground-truth training data.
     """
 
-    def __init__(self, drugs_lst_flags: str) -> None:
+    def __init__(self, drugs_lst_flags: List[str]) -> None:
         """Initializes the MatrixTestDiseases instance.
 
         Args:
