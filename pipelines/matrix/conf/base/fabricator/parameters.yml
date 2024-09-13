@@ -7,8 +7,8 @@ fabricator.rtx_kg2:
         prefix: rtx_kg_node_
 
       name:
-        type: faker
-        provider: name
+        type: generate_unique_id
+        prefix: name_
       category:
         type: generate_values
         sample_values:
@@ -30,8 +30,8 @@ fabricator.rtx_kg2:
         type: faker
         provider: url
       description:
-        type: faker
-        provider: sentence
+        type: generate_unique_id
+        prefix: description_
       equivalent_curies:
         type: faker
         provider: name
@@ -80,7 +80,7 @@ fabricator.rtx_kg2:
     columns:
       curie: 
         type: row_apply
-        list_of_values: [nodes.id, nodes.name]
+        list_of_values: [nodes.id]
         row_func: "lambda *args: args[0]"
         resize: True
         seed: 6850
@@ -92,22 +92,22 @@ fabricator.rtx_kg2:
         seed: 6850
 
       
-
   disease_list:
     num_rows: 30
     columns:
       curie: 
         type: row_apply
-        list_of_values: [nodes.id, nodes.name]
+        list_of_values: [nodes.id]
         row_func: "lambda *args: args[0]"
         resize: True
         seed: 65690
       name: 
         type: row_apply
-        list_of_values: [nodes.id, nodes.name]
-        row_func: "lambda *args: args[1]"
+        list_of_values: [nodes.name]
+        row_func: "lambda *args: args[0]"
         resize: True
-        seed: 6850
+        seed: 65690
+        
 
   clinical_trials:
     num_rows: 200
