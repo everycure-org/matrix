@@ -197,14 +197,6 @@ def generate_report(
     top_pairs["drug_name"] = top_pairs["source"].apply(get_drug_name)
     get_disease_name = lambda x: diseases[diseases["curie"].eq(x)]["name"].item()
     top_pairs["disease_name"] = top_pairs["target"].apply(get_disease_name)
-    get_drug_description = lambda x: drugs[drugs["curie"].eq(x)]["description"].item()
-    top_pairs["drug_description"] = top_pairs["source"].apply(get_drug_description)
-    get_disease_description = lambda x: diseases[diseases["curie"].eq(x)][
-        "description"
-    ].item()
-    top_pairs["disease_description"] = top_pairs["target"].apply(
-        get_disease_description
-    )
 
     # Flag known positives and negatives
     known_pair_is_pos = known_pairs["y"].eq(1)
