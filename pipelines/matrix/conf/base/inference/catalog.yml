@@ -7,13 +7,13 @@ _pandas_csv: &_pandas_csv
   type:  pandas.CSVDataset
 
 # NOTE: Drug list is not yet published
-raw.evaluation.disease_list:
+inference.raw.disease_list:
   type: pandas.CSVDataset
   filepath: https://github.com/everycure-org/matrix-disease-list/releases/${globals:data_sources.ec-disease-list.version}/download/matrix-disease-list.tsv
   load_args:
     sep: "\t"
 
-raw.evaluation.drug_list:
+inference.raw.drug_list:
   type: pandas.CSVDataset
   # NOTE: This is currently being downloaded through the assets as the repository is private.
   filepath: https://api.github.com/repos/everycure-org/matrix-drug-list/releases/assets/${globals:data_sources.ec-drug-list.version}
@@ -22,6 +22,26 @@ raw.evaluation.drug_list:
     Authorization: token ${oc.env:GH_TOKEN}
   load_args:
     sep: "\t"
+
+inference.sheet.disease_list:
+  <<: [*_sheets_dataset]
+  save_args:
+    overwrite: True
+    sheet_name: "normalized_disease_list"
+    write_columns: ["category_class","label","definition","synonyms","subsets","crossreferences","curie","name"]
+  load_args:
+    sheet_name: "normalized_disease_list"
+    columns: ["category_class","label","definition","synonyms","subsets","crossreferences","curie","name"]
+
+inference.sheet.drug_list:
+  <<: [*_sheets_dataset]
+  save_args:
+    overwrite: True
+    sheet_name: "normalized_drug_list"
+    write_columns: ['single_ID','Name_EMA','Approved_Europe','Name_PMDA','Approved_Japan','Name_Orange_Book','Approved_USA','Available_USA','ID_Label','Therapy_Name','Combination_Therapy','Ingredient_IDs','curie', 'name']
+  load_args:
+    sheet_name: "normalized_drug_list"
+    columns: ['single_ID','Name_EMA','Approved_Europe','Name_PMDA','Approved_Japan','Name_Orange_Book','Approved_USA','Available_USA','ID_Label','Therapy_Name','Combination_Therapy','Ingredient_IDs','curie', 'name']
 
 raw.inputs:
   <<: [*_sheets_dataset]

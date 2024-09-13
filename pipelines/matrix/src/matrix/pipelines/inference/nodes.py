@@ -11,7 +11,7 @@ from ..preprocessing.nodes import resolve
 from matplotlib.figure import Figure
 
 
-def resolve_input(
+def resolve_input_sheet(
     sheet: pd.DataFrame,
 ):
     """Run inference on disease or list of diseases and drug list, and write to google sheets.

@@ -9,7 +9,19 @@ def create_pipeline(**kwargs) -> Pipeline:
     return pipeline(
         [
             node(
-                func=nd.resolve_input,
+                func=lambda x: x,
+                inputs="ingestion.raw.drug_list",
+                outputs="inference.sheet.drug_list",
+                name=f"ingest_drug_list",
+            ),
+            node(
+                func=lambda x: x,
+                inputs="ingestion.raw.disease_list",
+                outputs="inference.sheet.disease_list",
+                name=f"ingest_disease_list",
+            ),
+            node(
+                func=nd.resolve_input_sheet,
                 inputs={
                     "sheet": "raw.inputs",
                 },
@@ -22,8 +34,8 @@ def create_pipeline(**kwargs) -> Pipeline:
                     "model": "inference.model.xgb",  # TODO: link params.yaml so that it feeds into this line?
                     "embeddings": "inference.embed.nodes",
                     "infer_type": "inference.nodes.type",
-                    "drug_nodes": "inference.nodes.drugs",
-                    "disease_nodes": "inference.nodes.diseases",
+                    "drug_nodes": "ingestion.raw.drug_list:",
+                    "disease_nodes": "ingestion.raw.disease_list:",
                     "train_df": "modelling.model_input.splits",
                     "sheet": "raw.inputs",
                 },
