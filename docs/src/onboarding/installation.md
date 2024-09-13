@@ -15,49 +15,40 @@ This page assumes basic knowledge of the following technologies. We will provide
     better supported, do [send a
     PR](https://github.com/everycure-org/matrix/edit/main/src/docs/src/onboarding/index.md)!
 
-<details>
-<summary>Installing Windows Subsystem for Linux (WSL)</summary>
+??? note "Installing Windows Subsystem for Linux (WSL)"
 
-If you are running on Windows, you need to install Windows Subsystem for Linux as the following steps require a UNIX OS. You can follow this [tutorial from Microsoft](https://learn.microsoft.com/en-us/windows/wsl/install). 
+    If you are running on Windows, you need to install Windows Subsystem for Linux as the following steps require a UNIX OS. You can follow this [tutorial from Microsoft](https://learn.microsoft.com/en-us/windows/wsl/install). 
 
-!!! Tip 
+    === "Windows (Powershell)"
+    
+        ```bash
+        wsl --install
+        ```
+
     If using WSL, you need to ensure the MATRIX Github repo is cloned within WSL.
 
-=== Windows (Powershell)
-   
-    ```bash
-    wsl --install
-    ```
+    ??? Tip "Cloning Github repos in WSL"
 
-After installing WSL, you need to restart your computer.
-</details>
+        Cloning repos by HTTPS within WSL is no longer supported and using SSH key is recommended. You can set it up by following the Github tutorials on [generating a new SSH key](https://docs.github.com/en/authentication/connecting-to-github-with-ssh/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent?platform=linux) and [adding a new SSH key to your account](https://docs.github.com/en/authentication/connecting-to-github-with-ssh/adding-a-new-ssh-key-to-your-github-account).
 
-<details>
-<summary>Cloning Github repos in WSL</summary>
+        === "WSL"
 
-If you have set up an SSH key between your WSL and Github account in the past, you can skip the following section and go directly to the next section (PyEnv installation).
+            ```bash
+            # generate a new SSH key, using your Github login email address
+            ssh-keygen -t ed25519 -C "your_email@example.com"
+            # then you need to enter a passphrase
+            # add ssh-key to your ssh agent
+            # start ssh-agent in the background
+            eval "$(ssh-agent -s)"
+            # add ssh private key to the ssh-agent
+            ssh-add ~/.ssh/id_ed25519
 
-Cloning repos by HTTPS within WSL is no longer supported and using SSH key is recommended. You can set it up by following the Github tutorials on [generating a new SSH key](https://docs.github.com/en/authentication/connecting-to-github-with-ssh/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent?platform=linux) and [adding a new SSH key to your account](https://docs.github.com/en/authentication/connecting-to-github-with-ssh/adding-a-new-ssh-key-to-your-github-account).
-
-=== "WSL"
-
-    ```bash
-    # generate a new SSH key, using your Github login email address
-    ssh-keygen -t ed25519 -C "your_email@example.com"
-    # then you need to enter a passphrase
-    # add ssh-key to your ssh agent
-    # start ssh-agent in the background
-    eval "$(ssh-agent -s)"
-    # add ssh private key to the ssh-agent
-    ssh-add ~/.ssh/id_ed25519
-
-    # add a new ssh key to your account
-    cat ~/.ssh/id_ed25519.pub
-    # Then select and copy the contents of the id_ed25519.pub file
-    # displayed in the terminal to your clipboard
-    # then following steps 2-9 on the Github tutorial on adding a new SSH key to your account listed above
-    ```
-</details>
+            # add a new ssh key to your account
+            cat ~/.ssh/id_ed25519.pub
+            # Then select and copy the contents of the id_ed25519.pub file
+            # displayed in the terminal to your clipboard
+            # then following steps 2-9 on the Github tutorial on adding a new SSH key to your account listed above
+            ```
 
 
 ### Python (Mac)
@@ -69,53 +60,51 @@ We advise managing your Python installation using [`pyenv`](https://github.com/p
     ```bash
     brew install pyenv
     ```
+
+=== "Windows (WSL)"
+
+    Steps for installing pyenv in WSL following the [tutorial on Github](https://github.com/pyenv/pyenv?tab=readme-ov-file#set-up-your-shell-environment-for-pyenv). First, install dependencies (if not already installed):
+
+    ```bash
+    sudo apt-get update; sudo apt-get install -y make build-essential libssl-dev zlib1g-dev \
+    libbz2-dev libreadline-dev libsqlite3-dev wget curl llvm libncursesw5-dev xz-utils \
+    tk-dev libxml2-dev libxmlsec1-dev libffi-dev liblzma-dev
+    ```
     
-### Python (WSL)
+    Then clone the pyenv repository:
 
-Steps for installing pyenv in WSL following the [tutorial on Github](https://github.com/pyenv/pyenv?tab=readme-ov-file#set-up-your-shell-environment-for-pyenv)
+    ```bash
+    git clone https://github.com/pyenv/pyenv.git ~/.pyenv
+    ```
+    
+    Define the PYENV_ROOT environment variable:
 
-1. Install dependencies (if not already installed):
+    ```bash
+    echo 'export PYENV_ROOT="$HOME/.pyenv"' >> ~/.bashrc
+    echo 'export PATH="$PYENV_ROOT/bin:$PATH"' >> ~/.bashrc
+    ```
+    
+    Enable pyenv init:
 
-   ```bash
-   sudo apt-get update; sudo apt-get install -y make build-essential libssl-dev zlib1g-dev \
-   libbz2-dev libreadline-dev libsqlite3-dev wget curl llvm libncursesw5-dev xz-utils \
-   tk-dev libxml2-dev libxmlsec1-dev libffi-dev liblzma-dev
-   ```
-   
-2. Clone the pyenv repository:
+    ```bash
+    echo -e 'if command -v pyenv 1>/dev/null 2>&1; then\n  eval "$(pyenv init -)"\nfi' >> ~/.bashrc
+    ```
+    
+    Restart your shell so the changes take effect:
 
-   ```bash
-   git clone https://github.com/pyenv/pyenv.git ~/.pyenv
-   ```
-   
-3. Define the PYENV_ROOT environment variable:
+    ```bash
+    exec "$SHELL"
+    ```
 
-   ```bash
-   echo 'export PYENV_ROOT="$HOME/.pyenv"' >> ~/.bashrc
-   echo 'export PATH="$PYENV_ROOT/bin:$PATH"' >> ~/.bashrc
-   ```
-   
-4. Enable pyenv init:
+    *Check the pyenv version*:
 
-   ```bash
-   echo -e 'if command -v pyenv 1>/dev/null 2>&1; then\n  eval "$(pyenv init -)"\nfi' >> ~/.bashrc
-   ```
-   
-5. Restart your shell so the changes take effect:
-
-   ```bash
-   exec "$SHELL"
-   ```
-
-6. *Check the pyenv version*:
-
-   ```bash
-   pyenv --version
-   ```
-   
-   This should print the version of pyenv that you have installed, for example: ```bash pyenv 2.3.6.```
-   
-After following these steps, you should have pyenv installed and ready to use on your WSL environment.
+    ```bash
+    pyenv --version
+    ```
+    
+    This should print the version of pyenv that you have installed, for example: ```bash pyenv 2.3.6.```
+    
+    After following these steps, you should have pyenv installed and ready to use on your WSL environment.
 
 ### Python environment
 
@@ -177,7 +166,7 @@ Make sure you have [docker](https://www.docker.com/) and [docker-compose](https:
     brew install docker docker-compose #installs CLI commands
     ```
 
-=== "WSL"
+=== "Windows (WSL)"
     
     ```bash
     # install docker
@@ -208,7 +197,7 @@ Our pipeline uses [Spark](https://spark.apache.org/) for distributed computation
     brew link --overwrite openjdk@11 # makes the java version available in PATH
     ```
 
-=== "WSL"
+=== "Windows (WSL)"
     
     ```bash
     # install jdk
