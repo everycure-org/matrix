@@ -430,3 +430,39 @@ def clean_disease_list(disease_df: pd.DataFrame, endpoint: str) -> pd.DataFrame:
         endpoint=endpoint,
     )
     return res.loc[~res["curie"].isna()]
+
+
+@has_schema(
+    {
+        "drug_id": "object",
+        "disease_id": "object",
+        "norm_drug_id": "object",
+        "norm_disease_id": "object",
+    },
+    allow_subset=True,
+)
+def clean_input_sheet(input_df: pd.DataFrame, endpoint: str) -> pd.DataFrame:
+    """Synonymize the disease list and filter out NaNs.
+
+    Args:
+        input_df: input list in a dataframe format.
+        endpoint: endpoint of the synonymizer.
+
+    Returns:
+        dataframe with synonymized disease IDs in normalized_curie column.
+    """
+    res = enrich_df(
+        input_df,
+        func=normalize,
+        input_cols=["drug_id"],
+        target_col="norm_drug_id",
+        endpoint=endpoint,
+    )
+    res = enrich_df(
+        res,
+        func=normalize,
+        input_cols=["disease_id"],
+        target_col="norm_disease_id",
+        endpoint=endpoint,
+    )
+    return res.fillna("")  # Filling NaNs so that schema is valid

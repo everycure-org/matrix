@@ -49,8 +49,9 @@ inference.sheet.normalized_inputs:
     sheet_name: Input
     columns: ["norm_drug_id", "norm_drug_id"]
   save_args:
+    overwrite: True
     sheet_name: Input
-    columns: ["norm_drug_id", "norm_disease_id"]
+    write_columns: ["norm_drug_id", "norm_disease_id"]
 
 inference.request.type:
   type: pickle.PickleDataset

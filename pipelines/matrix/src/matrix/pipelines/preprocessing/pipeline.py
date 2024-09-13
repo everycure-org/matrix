@@ -93,5 +93,15 @@ def create_pipeline(**kwargs) -> Pipeline:
                 name="resolve_disease_list",
                 tags=["disease-list"],
             ),
+            node(
+                func=nodes.clean_input_sheet,
+                inputs=[
+                    "preprocessing.raw.infer_sheet",
+                    "params:preprocessing.synonymizer_endpoint",
+                ],
+                outputs="inference.sheet.normalized_inputs",
+                name="clean_input_sheet",
+                tags=["inference-input"],
+            ),
         ]
     )
