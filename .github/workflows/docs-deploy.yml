@@ -73,7 +73,10 @@ jobs:
         with:
           python-version: '3.11' 
       # build Docs
-      - run: |
+      - name: Build Docs
+        env:
+          MKDOCS_GIT_COMMITTERS_APIKEY: ${{ secrets.GITHUB_TOKEN }}
+        run: |
           pip install uv
           make build #builds the static files in site/
 

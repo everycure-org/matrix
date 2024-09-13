@@ -16,18 +16,26 @@ _kg_dataset: &_kg_dataset
     engine: pyarrow
     use_nullable_dtypes: True
 
-_layer_raw: &_layer_raw
-  metadata:
-    kedro-viz:
-      layer: raw
 
-_layer_int: &_layer_int
+_model_input_ds: &_model_input_ds
   metadata:
     kedro-viz:
-      layer: integration
+      layer: model_input
+
+_model_ds: &_model_ds
+  metadata:
+    kedro-viz:
+      layer: models
+
+_model_output_ds: &_model_output_ds
+  metadata:
+    kedro-viz:
+      layer: model_output
+
+
 
 modelling.raw.ground_truth.positives:
-  <<: [*_pandas_csv, *_layer_raw]
+  <<: [*_pandas_csv, *_model_input_ds]
   filepath: ${globals:paths.raw}/ground_truth_data/tp_pairs.txt
   load_args:
     sep: "\t"
@@ -35,7 +43,7 @@ modelling.raw.ground_truth.positives:
     sep: "\t"
 
 modelling.raw.ground_truth.negatives:
-  <<: [*_pandas_csv, *_layer_raw]
+  <<: [*_pandas_csv, *_model_input_ds]
   filepath: ${globals:paths.raw}/ground_truth_data/tn_pairs.txt
   load_args:
     sep: "\t"
@@ -43,12 +51,12 @@ modelling.raw.ground_truth.negatives:
     sep: "\t"
 
 modelling.int.known_pairs:
-  <<: [*_pandas_parquet, *_layer_int]
+  <<: [*_pandas_parquet, *_model_input_ds]
   filepath: ${globals:paths.int}/ground_truth
 
 # filtered down further to drugs/diseases
 modelling.model_input.drugs_diseases_nodes@spark:
-  <<: *_spark_parquet
+  <<: [*_spark_parquet, *_model_input_ds]
   filepath: ${globals:paths.model_input}/drugs_diseases_nodes/
 
 # commented out until https://github.com/fsspec/gcsfs/issues/632 is fixed
@@ -57,39 +65,42 @@ modelling.model_input.drugs_diseases_nodes@spark:
 #   filepath: ${globals:paths.model_input}/drugs_diseases_nodes/
 
 modelling.feat.rtx_kg2:
-  <<: *_kg_dataset
+  <<: [*_kg_dataset, *_model_input_ds]
   filepath: ${globals:paths.feat}/rtx_kg2_nodes
 
 modelling.model_input.splits:
-  <<: *_pandas_parquet
+  <<: [*_pandas_parquet, *_model_input_ds]
   filepath: ${globals:paths.model_input}/splits
 
 "modelling.{model}.model_input.transformers":
+  <<: *_model_input_ds
   type: pickle.PickleDataset
   filepath: ${globals:paths.model_input}/{model}/transformers.pickle
 
 "modelling.{model}.model_input.transformed_splits":
-  <<: *_pandas_parquet
+  <<: [*_pandas_parquet, *_model_output_ds]
   filepath: ${globals:paths.model_input}/{model}/transformed_splits
 
 "modelling.{model}.{shard}.model_input.enriched_splits":
-  <<: *_pandas_parquet
+  <<: [*_pandas_parquet, *_model_input_ds]
   filepath: ${globals:paths.model_input}/{model}/{shard}/enriched_splits
 
 "modelling.{model}.{shard}.model_input.transformed_splits":
-  <<: *_pandas_parquet
+  <<: [*_pandas_parquet, *_model_input_ds]
   filepath: ${globals:paths.model_input}/{model}/{shard}/transformed_splits
 
 "modelling.{model}.{shard}.models.model_params":
+  <<: *_model_ds
   type: yaml.YAMLDataset
   filepath: ${globals:paths.models}/{model}/{shard}/model_params.yml
 
 "modelling.{model}.{shard}.models.model":
+  <<: *_model_ds
   type: pickle.PickleDataset
   filepath: ${globals:paths.models}/{model}/{shard}/model.pickle
 
 "modelling.{model}.model_output.predictions":
-  <<: *_pandas_parquet
+  <<: [*_pandas_parquet, *_model_output_ds]
   filepath: ${globals:paths.model_output}/{model}/predictions
 
 # NOTE: Saving an artifact, saving both locally and in MLFlow
@@ -98,6 +109,7 @@ modelling.model_input.splits:
   type: kedro_mlflow.io.artifacts.MlflowArtifactDataset
   artifact_path: "{model}/{shard}"
   dataset:
+    <<: [*_model_output_ds]
     type: matplotlib.MatplotlibWriter
     filepath: ${globals:paths.tmp}/{model}/{shard}/convergence_plot.png
 

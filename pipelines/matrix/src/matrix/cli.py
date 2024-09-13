@@ -2,7 +2,8 @@
 
 Intended to be invoked via `kedro`.
 """
-from typing import List
+
+from typing import List, Set, Dict, Any
 import click
 from kedro.framework.cli.project import (
     ASYNC_ARG_HELP,
@@ -29,10 +30,13 @@ from kedro.framework.cli.utils import (
     split_string,
     split_node_names,
 )
-from kedro.framework.session import KedroSession
 from kedro.utils import load_obj
-from kedro.framework.project import pipelines
 from kedro.pipeline.pipeline import Pipeline
+from kedro.framework.project import pipelines, settings
+from kedro.framework.context.context import _convert_paths_to_absolute_posix
+
+from matrix.session import KedroSessionWithFromCatalog
+from kedro.io import DataCatalog
 
 
 @click.group(context_settings=CONTEXT_SETTINGS, name=__file__)
@@ -108,6 +112,12 @@ def cli():
     help=PARAMS_ARG_HELP,
     callback=_split_params,
 )
+@click.option(
+    "--from-env",
+    type=str,
+    default=None,
+    help="Custom env to read from, if specified will read from the `--from-env` and write to the `--env`",
+)
 def run(
     tags,
     without_tags,
@@ -124,6 +134,7 @@ def run(
     config,
     conf_source,
     params,
+    from_env,
 ):
     """Run the pipeline."""
     if pipeline in ["test", "fabricator"] and env in [None, "base"]:
@@ -133,10 +144,9 @@ def run(
 
     runner = load_obj(runner or "SequentialRunner", "kedro.runner")
     tags = tuple(tags)
-    without_tags = without_tags
     node_names = tuple(node_names)
 
-    with KedroSession.create(
+    with KedroSessionWithFromCatalog.create(
         env=env, conf_source=conf_source, extra_params=params
     ) as session:
         # introduced to filter out tags that should not be run
@@ -144,7 +154,29 @@ def run(
             tuple(without_tags), pipeline, session, node_names
         )
 
+        from_catalog = None
+        from_params = {}
+        if from_env:
+            # Load second config loader instance
+            config_loader_class = settings.CONFIG_LOADER_CLASS
+            config_loader = config_loader_class(  # type: ignore[no-any-return]
+                conf_source=session._conf_source,
+                env=from_env,
+                **settings.CONFIG_LOADER_ARGS,
+            )
+            conf_catalog = config_loader["catalog"]
+            conf_catalog = _convert_paths_to_absolute_posix(
+                project_path=session._project_path, conf_dictionary=conf_catalog
+            )
+            conf_creds = config_loader["credentials"]
+            from_catalog: DataCatalog = settings.DATA_CATALOG_CLASS.from_config(
+                catalog=conf_catalog, credentials=conf_creds
+            )
+            from_params = config_loader["parameters"]
+            from_catalog.add_feed_dict(_get_feed_dict(from_params), replace=True)
+
         session.run(
+            from_catalog=from_catalog,
             tags=tags,
             runner=runner(is_async=is_async),
             node_names=node_names,
@@ -155,6 +187,37 @@ def run(
             load_versions=load_versions,
             pipeline_name=pipeline,
         )
+
+
+def _get_feed_dict(params: Dict) -> dict[str, Any]:
+    """Get parameters and return the feed dictionary."""
+    feed_dict = {"parameters": params}
+
+    @staticmethod
+    def _add_param_to_feed_dict(param_name: str, param_value: Any) -> None:
+        """Add param to feed dict.
+
+        This recursively adds parameter paths to the `feed_dict`,
+        whenever `param_value` is a dictionary itself, so that users can
+        specify specific nested parameters in their node inputs.
+
+        Example:
+            >>> param_name = "a"
+            >>> param_value = {"b": 1}
+            >>> _add_param_to_feed_dict(param_name, param_value)
+            >>> assert feed_dict["params:a"] == {"b": 1}
+            >>> assert feed_dict["params:a.b"] == 1
+        """
+        key = f"params:{param_name}"
+        feed_dict[key] = param_value
+        if isinstance(param_value, dict):
+            for key, val in param_value.items():
+                _add_param_to_feed_dict(f"{param_name}.{key}", val)
+
+    for param_name, param_value in params.items():
+        _add_param_to_feed_dict(param_name, param_value)
+
+    return feed_dict
 
 
 def _filter_nodes_missing_tag(

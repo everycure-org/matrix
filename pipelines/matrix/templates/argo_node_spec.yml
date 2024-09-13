@@ -11,10 +11,11 @@ spec:
         value: "us-central1-docker.pkg.dev/mtrx-hub-dev-3of/matrix-images/matrix"
       - name: image_tag
         value: "latest"
-      - name: experiment
-        value: "Default"
+      # NOTE: Currently disabling experiment
+      # - name: experiment
+      #   value: "Default"
       # we use the image tag as the release version as a default
-      - name: release_version
+      - name: run_name
         value: "latest"
       - name: neo4j_host
         value: "bolt://neo4j.neo4j.svc.cluster.local:7687"
@@ -55,10 +56,10 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: metadata.labels['workflows.argoproj.io/workflow']
-        - name: RELEASE_VERSION
-          value:  "{{workflow.parameters.release_version}}" 
-        - name: EXPERIMENT
-          value:  "{{workflow.parameters.experiment}}" 
+        - name: RUN_NAME
+          value:  "{{workflow.parameters.run_name}}" 
+        # - name: EXPERIMENT
+        #   value:  "{{workflow.parameters.experiment}}" 
         - name: NEO4J_HOST
           value:  "{{workflow.parameters.neo4j_host}}" 
         - name: MLFLOW_ENDPOINT

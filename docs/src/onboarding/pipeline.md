@@ -60,10 +60,10 @@ The integration stage aims to produce our internal knowledge-graph, in [biolink]
 
 ### Embeddings
 
-Embeddings are vectorized representations of the entities in our knowledge graph. These are currently computed using two steps:
+Embeddings are vectorized representations of the entities in our knowledge graph. These are currently computed in two stages:
 
-1. GenAI model is used to compute individual node embeddings
-2. GraphSage embedding algorithm is ran on the node embeddings to produce topological embeddings
+1. Node Attribute Embedding Computation - in this step we use GenAI model (e.g. OpenAI's `text-embedding-3-small`) to compute individual node embeddings. 
+2. Topological Embedding Computation - in this step we use GraphSAGE embedding algorithm on the previously calculated node embeddings. Alternatively, you can also use Node2Vec for topological embeddings computation - the model is not as well in Neo4J however it does not rely on Node Attribute Embedding Computation.
 
 !!! info
     Our graph database, i.e., [Neo4J](https://neo4j.com/docs/graph-data-science/current/algorithms/) comes with out-of-the-box functionality to compute both node and topological embeddings in-situ. The Kedro pipeline orchestrates the computation of these.
@@ -90,19 +90,28 @@ As well as single models, the pipeline has the capability to deal with *ensemble
 
 The evaluation pipeline computes various metrics in order to assess the performance of the models trained in the previous stages. 
 
-Currently, we have the following evaluation methods. 
+Currently, we have the following evaluation metrics. 
 
 1. *Threshold-based classification metrics for ground truth data*. Measures how well the model classifies ground truth positive and negatives using threshold-based metrics such as accuracy and F1-score.
 2. *Threshold-independent metrics for ground truth data*. Measures how well the model classifies ground truth positive and negatives using threshold-independent metrics such as AUROC.
 3. *All vs. all ranking with all drugs x test diseases matrix.*. Gives information on all drugs vs all disease ranking performance of models by using threshold-independent metrics such as AUROC and synthesised negatives. The construction of the synthesised negatives are based on a matrix of drug-disease pairs for a given list of all drugs and the list of disease appearing in the ground-truth positive test set. 
 4. *Disease-specific ranking*. Measures the performance of the model at ranking drugs for a fixed disease using metrics such as Hit@k and mean reciprocal rank (MRR). 
 
+The chosen evaluation metrics are defined in the 
+`/pipelines/matrix/conf/<env>/evaluation/parameters.yml` file, where `<env>` is the environment, e.g. `base` or `prod`. 
+
+The computation of each evaluation metric in the pipeline is described in the following diagram.
+
+![](../assets/img/evaluation.drawio.png)
+
+Note that different evaluation metrics may have common nodes and datasets. For instance, disease-specific Hit@k and MRR are computed using the same synthesised negatives. 
+
 ### Release
 
 Our release pipeline currently builds the final integrated Neo4J data product for consumption. We do not execute this as part of the default pipeline run but with a separate `-p release` execution as we do not want to release every pipeline data output.
 
 !!! info
-    If you wish to populate your local Neo4J instance with the output data for a release, populate the `RELEASE_VERSION` in your `.env` file and run `kedro run -p release -e cloud`.
+    If you wish to populate your local Neo4J instance with the output data for a release, populate the `RUN_NAME` in your `.env` file and run `kedro run -p release -e cloud`.
 
 ## Environments
 

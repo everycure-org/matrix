@@ -3,3 +3,4 @@ fastapi
 uvicorn 
 torch
 joblib
+sentence-transformers

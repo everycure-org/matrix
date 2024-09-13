@@ -1,4 +1,5 @@
 """Nodes for embeddings pipeline."""
+
 from typing import List, Any, Dict
 
 import requests
@@ -9,13 +10,19 @@ import matplotlib.pyplot as plt
 from pyspark.sql import DataFrame
 from pyspark.sql import functions as F
 from pyspark.sql.window import Window
-from pyspark.sql.types import FloatType, ArrayType
+from pyspark.sql.functions import udf, col
+from pyspark.sql.types import FloatType, ArrayType, StringType
+
 from pyspark.ml.functions import array_to_vector, vector_to_array
 
 from neo4j import Driver
 from neo4j import GraphDatabase
 
 from graphdatascience import GraphDataScience, QueryRunner
+from matplotlib.pyplot import plot
+import seaborn as sns
+
+from .graph_algorithms import *
 
 from refit.v1.core.inject import inject_object
 from refit.v1.core.unpack import unpack_params
@@ -298,6 +305,7 @@ def add_include_in_graphsage(
 def train_topological_embeddings(
     df: DataFrame,
     gds: GraphDataScience,
+    topological_estimator: GDSGraphAlgorithm,
     projection: Any,
     filtering: Any,
     estimator: Any,
@@ -315,6 +323,7 @@ def train_topological_embeddings(
         gds: the gds object
         filtering: filtering
         projection: gds projection to execute on the graph
+        topological_estimator: GDS estimator to apply
         estimator: estimator to apply
         write_property: node property to write result to
     """
@@ -323,14 +332,12 @@ def train_topological_embeddings(
     if gds.graph.exists(graph_name).exists:
         graph = gds.graph.get(graph_name)
         gds.graph.drop(graph, False)
-
     config = projection.pop("configuration", {})
     graph, _ = gds.graph.project(*projection.values(), **config)
 
     # Filter out treat/GT nodes from the graph
     subgraph_name = filtering.get("graphName")
     filter_args = filtering.pop("args")
-
     # Drop graph if exists
     if gds.graph.exists(subgraph_name).exists:
         subgraph = gds.graph.get(subgraph_name)
@@ -339,19 +346,18 @@ def train_topological_embeddings(
     subgraph, _ = gds.graph.filter(subgraph_name, graph, **filter_args)
 
     # Validate whether the model exists
-    model_name = estimator.get("args").get("modelName")
+    model_name = estimator.get("modelName")
     if gds.model.exists(model_name).exists:
         model = gds.model.get(model_name)
         gds.model.drop(model)
 
     # Initialize the model
-    model, attr = getattr(gds.beta, estimator.get("model")).train(
-        subgraph, **estimator.get("args")
+    topological_estimator.run(
+        gds=gds, model_name=model_name, graph=subgraph, write_property=write_property
     )
+    losses = topological_estimator.return_loss()
 
     # Plot convergence
-    losses = attr.modelInfo["metrics"]["iterationLossesPerEpoch"][0]
-
     convergence = plt.figure()
     ax = convergence.add_subplot(1, 1, 1)
     ax.plot([x for x in range(len(losses))], losses)
@@ -369,6 +375,7 @@ def train_topological_embeddings(
 def write_topological_embeddings(
     model: DataFrame,
     gds: GraphDataScience,
+    topological_estimator: GDSGraphAlgorithm,
     projection: Any,
     estimator: Any,
     filtering: Any,
@@ -380,13 +387,32 @@ def write_topological_embeddings(
     graph = gds.graph.get(graph_name)
 
     # Retrieve the model
-    model_name = estimator.get("args").get("modelName")
-    model = gds.model.get(model_name)
-
-    # Write model output back to graph
-    model.predict_write(graph, writeProperty=write_property)
-
+    model_name = estimator.get("modelName")
+    topological_estimator.predict_write(
+        gds=gds, model_name=model_name, graph=graph, write_property=write_property
+    )
     return {"success": "true"}
+
+
+def string_to_float_list(s: str) -> List[float]:
+    """UDF to transform str into list. Fix for Node2Vec array being written as string."""
+    if s is not None:
+        return [float(x) for x in s.strip()[1:-1].split(",")]
+    return []
+
+
+def extract_node_embeddings(nodes: DataFrame, string_col: str) -> DataFrame:
+    """Extract topological embeddings from Neo4j and write into BQ.
+
+    Need a conditional statement due to Node2Vec writing topological embeddings as string. Raised issue in GDS client:
+    https://github.com/neo4j/graph-data-science-client/issues/742#issuecomment-2324737372.
+    """
+    if isinstance(nodes.schema[string_col].dataType, StringType):
+        string_to_float_list_udf = udf(string_to_float_list, ArrayType(FloatType()))
+        nodes = nodes.withColumn(
+            string_col, string_to_float_list_udf(F.col(string_col))
+        )
+    return nodes
 
 
 def visualise_pca(nodes: DataFrame, column_name: str):
@@ -403,8 +429,8 @@ def visualise_pca(nodes: DataFrame, column_name: str):
     )
     sns.scatterplot(data=nodes, x="pca_0", y="pca_1", hue="category")
     plt.suptitle("PCA scatterpot")
-    plt.xlabel("PCA 1")
-    plt.ylabel("PCA 2")
+    plt.xlabel("PC 1")
+    plt.ylabel("PC 2")
     plt.legend(
         bbox_to_anchor=(1.05, 1), loc="upper left", borderaxespad=0, fontsize="small"
     )

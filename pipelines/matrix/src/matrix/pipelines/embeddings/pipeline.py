@@ -76,6 +76,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 inputs={
                     "df": "embeddings.feat.include_in_graphsage@yaml",
                     "gds": "params:embeddings.gds",
+                    "topological_estimator": "params:embeddings.topological_estimator",
                     "unpack": "params:embeddings.topological",
                 },
                 outputs=["embeddings.models.graphsage", "embeddings.reporting.loss"],
@@ -91,6 +92,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 inputs={
                     "model": "embeddings.models.graphsage",
                     "gds": "params:embeddings.gds",
+                    "topological_estimator": "params:embeddings.topological_estimator",
                     "unpack": "params:embeddings.topological",
                 },
                 outputs="embeddings.model_output.graphsage",
@@ -104,8 +106,11 @@ def create_pipeline(**kwargs) -> Pipeline:
             ),
             # extracts the nodes from neo4j and writes them to BigQuery
             node(
-                func=lambda x: x,
-                inputs=["embeddings.model_output.graphsage"],
+                func=nodes.extract_node_embeddings,
+                inputs={
+                    "nodes": "embeddings.model_output.graphsage",
+                    "string_col": "params:embeddings.write_topological_col",
+                },
                 outputs="embeddings.feat.nodes",
                 name="extract_nodes_edges_from_db",
                 tags=[

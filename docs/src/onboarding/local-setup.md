@@ -2,9 +2,6 @@
 title: Local setup
 ---
 
-
-## Local setup
-
 The fastest way to check if everything works locally is to execute the following command in `pipelines/matrix`
 
 ```
