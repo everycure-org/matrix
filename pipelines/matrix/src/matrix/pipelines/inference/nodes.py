@@ -11,25 +11,45 @@ from ..preprocessing.nodes import resolve
 from matplotlib.figure import Figure
 
 
-def resolve_input_sheet(
-    sheet: pd.DataFrame,
-):
+def infer_type_from_ids(drug_id: list, disease_id: list) -> str:
+    """Infers the type based on the presence or absence of drug and disease IDs.
+
+    Args:
+        drug_id (list): List containing drug ID(s).
+        disease_id (list): List containing disease ID(s).
+
+    Returns:
+        str: The inferred type ("inferPerDrug", "inferPerDisease", or "inferPerPair").
+
+    Raises:
+        ValueError: If both drug_id and disease_id are empty.
+    """
+    if (len(drug_id[0]) + len(disease_id[0])) == 0:
+        raise ValueError("Need to specify drug, disease, or both")
+    elif len(disease_id[0]) == 0:
+        return "inferPerDrug"
+    elif len(drug_id[0]) == 0:
+        return "inferPerDisease"
+    else:
+        return "inferPerPair"
+
+
+def resolve_input_sheet(sheet: pd.DataFrame) -> pd.DataFrame:
     """Run inference on disease or list of diseases and drug list, and write to google sheets.
 
     Args:
-        sheet: google sheet from which we take the drug/disease IDs..
+        sheet: google sheet from which we take the drug/disease IDs.
+
+    Returns:
+        dataframe saved in gsheets.
     """
+    # Load drug/disases IDs
     drug_id = sheet["drug_id"]
     disease_id = sheet["disease_id"]
-    if (len(drug_id[0]) + len(disease_id[0])) == 0:
-        raise ValueError("Need to specify drug, disease or both")
-    elif len(disease_id[0]) == 0:
-        infer_type = "inferPerDrug"
-    elif len(drug_id[0]) == 0:
-        infer_type = "inferPerDisease"
-    else:
-        infer_type = "inferPerPair"
-    print(infer_type)
+
+    # Infer the request types
+    infer_type = infer_type_from_ids(drug_id, disease_id)
+
     return infer_type
 
 

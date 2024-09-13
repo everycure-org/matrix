@@ -43,21 +43,16 @@ inference.sheet.drug_list:
     sheet_name: "normalized_drug_list"
     columns: ['single_ID','Name_EMA','Approved_Europe','Name_PMDA','Approved_Japan','Name_Orange_Book','Approved_USA','Available_USA','ID_Label','Therapy_Name','Combination_Therapy','Ingredient_IDs','curie', 'name']
 
-raw.inputs:
+inference.sheet.normalized_inputs:
   <<: [*_sheets_dataset]
   load_args:
     sheet_name: Input
-    columns: ["drug_id", "disease_id"]
+    columns: ["norm_drug_id", "norm_drug_id"]
+  save_args:
+    sheet_name: Input
+    columns: ["norm_drug_id", "norm_disease_id"]
 
-inference.nodes.drugs:
-  <<: [*_pandas_csv]
-  filepath: ${globals:paths.reporting}/drug_nodes.csv
-
-inference.nodes.diseases:
-  <<: [*_pandas_csv]
-  filepath: ${globals:paths.reporting}/disease_nodes.csv
-
-inference.nodes.type:
+inference.request.type:
   type: pickle.PickleDataset
   filepath: ${globals:paths.reporting}/infer_type.pkl
 
