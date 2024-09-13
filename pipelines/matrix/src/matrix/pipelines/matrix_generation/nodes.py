@@ -192,7 +192,7 @@ def generate_report(
     # Select the top n_reporting rows
     top_pairs = data.head(n_reporting)
 
-    # Add additional information for drugs and diseases (TODO: optimise for speed by e.g. caching or using Polars)
+    # Add additional information for drugs and diseases
     get_drug_name = lambda x: drugs[drugs["curie"].eq(x)]["name"].item()
     top_pairs["drug_name"] = top_pairs["source"].apply(get_drug_name)
     get_disease_name = lambda x: diseases[diseases["curie"].eq(x)]["name"].item()

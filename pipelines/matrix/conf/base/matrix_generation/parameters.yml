@@ -1,4 +1,4 @@
 matrix_generation.matrix_generation_options:
   batch_by:
     - target 
-  n_reporting: 10000
+  n_reporting: 100000
