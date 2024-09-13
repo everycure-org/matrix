@@ -1,6 +1,6 @@
 _neo4j_ds: &_neo4j_ds
   type: matrix.datasets.neo4j.Neo4JSparkDataset
-  database: everycure-${globals:versions.release}
+  database: everycure-${globals:run_name}
   url: ${globals:neo4j.host}
   credentials: neo4j_credentials
   save_args:

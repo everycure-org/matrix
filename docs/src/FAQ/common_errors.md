@@ -272,3 +272,17 @@ Docker runs in a VM on MacOS. This can cause the disk to run full when building 
 2. Expand the disk size of the docker VM
 
 
+## Too many open files
+
+```
+WARNING  Retrying (Retry(total=2, connect=2, read=5, redirect=5, status=5)) after connection broken by 'NewConnectionError('<urllib3.connection.HTTPConnection object at   connectionpool.py:870
+         0x30a712ad0>: Failed to establish a new connection: [Errno 24] Too many open files')':
+         /api/2.0/mlflow-artifacts/artifacts?path=423706734757444990%2F3c4581c10f50444bb63fca093cd00e73%2Fartifacts%2Fxg_baseline
+WARNING  Retrying (Retry(total=2, connect=2, read=5, redirect=5, status=5)) after connection broken by 'NewConnectionError('<urllib3.connection.HTTPConnection object at   connectionpool.py:870
+         0x30a6efc10>: Failed to establish a new connection: [Errno 24] Too many open files')':
+         /api/2.0/mlflow-artifacts/artifacts/423706734757444990/3c4581c10f50444bb63fca093cd00e73/artifacts/xg_baseline/MLmodel
+WARNING  Retrying (Retry(total=2, connect=2, read=5, redirect=5, status=5)) after connection broken by 'NewConnectionError('<urllib3.connection.HTTPConnection object at   connectionpool.py:870
+         0x30a73fa10>: Failed to establish a new connection: [Errno 24] Too many open files')':
+```
+
+Setting `ulimit -n 1000000` in the shell before running the pipeline will fix this issue.
