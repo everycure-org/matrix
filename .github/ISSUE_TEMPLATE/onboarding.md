@@ -25,6 +25,7 @@ This issue template provides a structured, technical onboarding checklist for ne
   - [ ] Create `.env` file from the `.env.tmpl` file for non docker-based local runs
   - [ ] Launched [local setup](https://docs.dev.everycure.org/onboarding/local-setup/) and run test pipeline till completion
 
+gygygyggy
 
 ### For Engineers
 - [ ] Read the [Infrastructure Introduction Page](https://docs.dev.everycure.org/infrastructure/)
