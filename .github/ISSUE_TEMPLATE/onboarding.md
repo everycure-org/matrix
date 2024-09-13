@@ -13,6 +13,7 @@ This issue template provides a structured, technical onboarding checklist for ne
 
 ## Steps to be completed by new team members
 
+- [ ] Agree to the [MATRIX Code of Conduct](https://github.com/everycure-org/matrix/blob/main/CODE_OF_CONDUCT.md)
 - [ ] [Clone](https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository) the repository
 - [ ] [Read the onboarding guide](https://docs.dev.everycure.org/onboarding/)
   - [ ] [Install](https://docs.dev.everycure.org/onboarding/installation/) and verify required OS tooling

@@ -21,11 +21,13 @@ class NopTuner(BaseEstimator, MetaEstimatorMixin):
     yields the sklearn compatible estimator as provided during initialization.
     """
 
-    def __init__(self, estimator: BaseEstimator):
+    def __init__(self, estimator: BaseEstimator, **kwargs):
         """Initialize the tuner.
 
         Args:
             estimator: sklearn compatible Estimator to tune.
+            **kwargs: Convenience argument that allows to pass unused parameters
+                to the estimator.
         """
         self._estimator = estimator
         super().__init__()

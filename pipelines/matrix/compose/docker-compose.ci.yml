@@ -9,7 +9,7 @@ services:
   neo4j:
     # FUTURE: Newever container version gives issues, due to `apoc-extended`
     # and `gds` versions not being released yet. Update when released.
-    image: neo4j:5.21.0-enterprise
+    platform: linux/amd64
     # overwriting volumes so we don't have any
     # https://docs.docker.com/reference/compose-file/merge/#reset-value
     volumes: !override 
@@ -19,6 +19,7 @@ services:
       - neo4j_plugins:/plugins
 
   mock-genai:
+    platform: linux/amd64
     environment:
       MOCKSERVER_LOG_LEVEL: ERROR
   
