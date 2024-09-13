@@ -58,6 +58,9 @@ embeddings.gds:
 #   - https://neo4j.com/docs/graph-data-science-client/current/algorithms/ 
 # 
 embeddings.topological:
+  # Configuration to perform Neo4J graph
+  # projection into GDS library for algorithm
+  # execution.
   projection:
     graphName: embeddings
     nodeProjection:
@@ -70,16 +73,23 @@ embeddings.topological:
         include_in_graphsage:
           property: include_in_graphsage
           defaultValue: 1
+  
+  # Configuration to apply filtering on projected GDS 
+  # graph, ensuring various edges are removed
+  # prior to model training.
   filtering:
     graphName: filtered_embeddings 
     args:
       node_filter: '*'
       relationship_filter: r.include_in_graphsage = 1.0
+  
+  # Name of the model in Neo4j
   estimator:
     modelName: topological_embeddings
+  
   write_property: &_topological_property 'topological_embedding'
 
-#uncomment for node2vec
+# uncomment for node2vec
 # embeddings.topological_estimator:
 #   object: matrix.pipelines.embeddings.graph_algorithms.GDSNode2Vec 
 #   concurrency: 4
@@ -98,17 +108,18 @@ embeddings.topological:
 embeddings.topological_estimator:
   object: matrix.pipelines.embeddings.graph_algorithms.GDSGraphSage
   concurrency: 4
-  embedding_dim: 512
-  random_seed: 42
   iterations: 100
-  feature_properties: [*_pca_property]
+  sample_sizes: [25, 10]
+  tolerance: 1e-8
+  embedding_dim: 512
+  batch_size: 5000
   epochs: 10
-  sample_sizes: [96, 96]
   search_depth: 100
   learning_rate: 0.01
-  negative_sampling_weight: 20
-  batch_size: 10
-  tolerance: 1e-8
+  activation_function: ReLu
+  random_seed: 42
+  feature_properties: [*_pca_property]
+  # negative_sampling_weight: 20
 
 embeddings.write_topological_col: *_topological_property
 
