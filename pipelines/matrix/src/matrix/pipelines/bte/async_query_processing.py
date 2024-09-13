@@ -32,14 +32,16 @@ async def retry_request(
     headers=None,
     **kwargs,
 ) -> httpx.Response:
-    """Retry an HTTP request with exponential backoff.
+    """Perform an asynchronous HTTP request with retry logic.
 
-    :param request_func: The HTTP request function to call.
-    :param retries: Number of retries before giving up.
-    :param delay: Initial delay between retries, will be doubled after each retry.
-    :param headers: Optional headers to include in the request.
-    :return: The HTTP response.
-    :raises: Raises an exception if all retries fail.
+    :param request_func: Asynchronous function for making the HTTP request (e.g., client.get or client.post).
+    :param args: Positional arguments to pass to the request function.
+    :param retries: Number of times to retry the request in case of failure. Default is 3.
+    :param delay: Delay in seconds between subsequent retries. The delay is exponentially increased with each retry. Default is 2.
+    :param headers: Optional dictionary of HTTP headers to include in the request.
+    :param kwargs: Keyword arguments to pass to the request function.
+    :return: HTTPX Response object.
+    :raises: Raises an HTTPStatusError or RequestError if all retry attempts fail.
     """
     if headers is None:
         headers = {}
@@ -92,35 +94,42 @@ async def check_async_job_status(
     :return: JSON dictionary of the final response if completed, otherwise None.
     """
     while True:
-        response = await retry_request(client.get, job_url)
-        logging.debug(f"Job status response: {response.status_code} - {response.text}")
-        status_response = StatusResponse.parse_obj(response.json())
-        status = status_response.status
-        description = (
-            status_response.logs[0].message
-            if status_response.logs
-            else "No description provided"
-        )
+        try:
+            response = await retry_request(client.get, job_url)
+            logging.debug(
+                f"Job status response: {response.status_code} - {response.text}"
+            )
+            status_response = StatusResponse.parse_obj(response.json())
+            status = status_response.status
+            description = (
+                status_response.logs[0].message
+                if status_response.logs
+                else "No description provided"
+            )
 
-        if status == "Completed" and status_response.response_url:
-            return await fetch_final_results(client, status_response.response_url)
-        elif status in ["Failed", "Error"]:
-            logging.error(f"Job failed with response: {status_response}")
-            raise Exception(f"Job failed: {description}")
-        elif status in ["Pending", "Running", "Queued"]:
-            logging.info(f"Job is still in progress: {description}")
-            await asyncio.sleep(5)
-        else:
-            logging.error(f"Unknown status: {status}. Description: {description}")
+            if status == "Completed" and status_response.response_url:
+                return await fetch_final_results(client, status_response.response_url)
+            elif status in ["Failed", "Error"]:
+                logging.error(f"Job failed with response: {status_response}")
+                raise Exception(f"Job failed: {description}")
+            elif status in ["Pending", "Running", "Queued"]:
+                logging.info(f"Job is still in progress: {description}")
+                await asyncio.sleep(5)
+            else:
+                logging.error(f"Unknown status: {status}. Description: {description}")
+                return None
+        except Exception as e:
+            logging.error(f"Exception while checking job status: {e}")
             return None
 
 
 async def fetch_final_results(client: httpx.AsyncClient, response_url: str) -> dict:
-    """Fetch the final results of an asynchronous job.
+    """Fetch and parse the final results of an asynchronous job.
 
     :param client: HTTPX async client instance.
-    :param response_url: URL to fetch the final results.
-    :return: JSON dictionary response.
+    :param response_url: URL to retrieve the final response.
+    :return: JSON dictionary of the final response.
+    :raises: Raises a ValueError if the response JSON cannot be parsed.
     """
     response = await retry_request(client.get, response_url)
 
@@ -130,7 +139,7 @@ async def fetch_final_results(client: httpx.AsyncClient, response_url: str) -> d
         logging.error(
             f"Failed to parse final response JSON for URL {response_url}: {e}"
         )
-        return None
+        raise
     return response_json
 
 

@@ -41,7 +41,7 @@ def transform_results(raw_results: List[Dict[str, Any]]) -> pd.DataFrame:
                     for n0_binding in result.node_bindings.get("n0", []):
                         chemical_curie = n0_binding.id
                         for analysis in result.analyses or []:
-                            print(f"{n1_node_id}: {chemical_curie}: {analysis.score}")
+                            # print(f"{n1_node_id}: {chemical_curie}: {analysis.score}")
                             transformed_data.append(
                                 {
                                     "target": n1_node_id,
@@ -51,6 +51,6 @@ def transform_results(raw_results: List[Dict[str, Any]]) -> pd.DataFrame:
                             )
 
     result_df = pd.DataFrame(transformed_data, columns=["target", "source", "score"])
-    print(result_df.head())
+    # print(result_df.head())
     logging.info(f"Transform Results: DataFrame shape {result_df.shape}")
     return result_df

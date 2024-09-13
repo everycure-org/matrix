@@ -30,3 +30,9 @@ resources:
   requests:
     cpu: "12"
     memory: "24Gi"
+
+redis:
+  enabled: true
+  resources:
+    requests:
+      memory: "2Gi"
