@@ -132,12 +132,9 @@ class RateLimitException(Exception):
 @retry(
     wait=wait_random_exponential(min=1, max=60),
     stop=stop_after_attempt(10),
-    # retry=retry_if_exception_type(RateLimitException),
 )
 def batch(endpoint, model, api_key, batch):
     """Function to resolve batch."""
-    print(f"processing batch with length {len(batch)}")
-
     if len(batch) == 0:
         raise RuntimeError("Empty batch!")
 
@@ -149,7 +146,7 @@ def batch(endpoint, model, api_key, batch):
     if response.status_code == 200:
         return [item["embedding"] for item in response.json()["data"]]
     else:
-        if response.status_code == 429:
+        if response.status_code in [429, 500]:
             print(f"rate limit")
             raise RateLimitException()
 
@@ -216,6 +213,7 @@ def compute_embeddings(
             F.col(f"exploded.{attribute}").alias(attribute),
         )
         .repartition(128)
+        .join(input, on="id")
     )
 
     return res
