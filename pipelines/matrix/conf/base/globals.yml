@@ -7,7 +7,7 @@ neo4j:
   password: ${oc.env:NEO4J_PASSWORD,admin}
 
 openai:
-  endpoint: https://api.openai.com/v1
+  endpoint: ${oc.env:OPENAI_ENDPOINT, https://api.openai.com/v1}
   api_key: ${oc.env:OPENAI_API_KEY}
 
 # points at our central GCS_BUCKET where we store our ground truth data
@@ -15,11 +15,9 @@ openai:
 gcs_bucket: gs://${oc.env:GCP_BUCKET, mtrx-us-central1-hub-dev-storage}
 gcp_project: ${oc.env:GCP_PROJECT_ID, mtrx-hub-dev-3of}
 git_sha: ${oc.env:GIT_SHA, local}
+gh_token: ${oc.env:GH_TOKEN, dummy}
 
-versions:
-  # overwritten in prod environment for shared releases
-  release: ${oc.env:RELEASE_VERSION, local}
-
+run_name: ${oc.env:RUN_NAME, local}
 data_sources:
   rtx-kg2:
     version: v2.7.3

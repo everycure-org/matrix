@@ -2,6 +2,7 @@
 *.DS_Store
 .ruff_cache/
 **/.testmondata*
+**/.cache/*
 
 
 # IDE
@@ -29,4 +30,5 @@ infra/argo/applications/**/charts
 
 services/synonymizer/assets/
 
+**/__pycache__/
 infra/**/Chart.lock

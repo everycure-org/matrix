@@ -86,11 +86,12 @@ fabricator.rtx_kg2:
         seed: 6850
       name: 
         type: row_apply
-        list_of_values: [nodes.name]
-        row_func: "lambda *args: args[0]"
+        list_of_values: [nodes.id, nodes.name]
+        row_func: "lambda *args: args[1]"
         resize: True
         seed: 6850
 
+      
   disease_list:
     num_rows: 30
     columns:
@@ -106,6 +107,7 @@ fabricator.rtx_kg2:
         row_func: "lambda *args: args[0]"
         resize: True
         seed: 65690
+        
 
   clinical_trials:
     num_rows: 200

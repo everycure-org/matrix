@@ -34,7 +34,7 @@ tracking:
     pipelines: ["fabricator"]
 
   experiment:
-    name: ${globals:versions.release}
+    name: ${globals:run_name}
     restore_if_deleted: True  # if the experiment`name` was previously deleted experiment, should we restore it?
 
   run:

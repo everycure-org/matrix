@@ -5,12 +5,18 @@ _neo4j_ds: &_neo4j_ds
   credentials: neo4j_credentials
   save_args:
     mode: "overwrite"
+  metadata:
+    kedro-viz:
+      layer: embeddings
 
 _spark_parquet_ds: &_spark_parquet
   type: matrix.datasets.gcp.LazySparkDataset
   file_format: parquet
   save_args:
     mode: overwrite
+  metadata:
+    kedro-viz:
+      layer: embeddings
 
 
 # -------------------------------------------------------------------------

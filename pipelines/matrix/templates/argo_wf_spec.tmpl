@@ -2,14 +2,14 @@
 apiVersion: argoproj.io/v1alpha1
 kind: WorkflowTemplate
 metadata:
-  namespace: argo-workflows
+  namespace: {{namespace}}
   name: matrix
 spec:
   workflowMetadata:
     labels:
       experiment: {% raw %}'{{ workflow.parameters.experiment }}'
       {% endraw %}
-      release: {% raw %}'{{ workflow.parameters.release_version }}'
+      run: {% raw %}'{{ workflow.parameters.run_name }}'
       {% endraw %}
   entrypoint: dag
   ttlStrategy:
@@ -23,7 +23,7 @@ spec:
       # - name: experiment
       #  value: "Default"
       # we use the image tag as the release version as a default
-      - name: release_version
+      - name: run_name
         value: "{{ image_tag }}"
       - name: neo4j_host
         value: "bolt://neo4j.neo4j.svc.cluster.local:7687"
@@ -65,8 +65,8 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: metadata.labels['workflows.argoproj.io/workflow']
-        - name: RELEASE_VERSION
-          value: {% raw %} "{{workflow.parameters.release_version}}" 
+        - name: RUN_NAME
+          value: {% raw %} "{{workflow.parameters.run_name}}" 
           {% endraw %}
         #- name: EXPERIMENT
         #  value: {% raw %} "{{workflow.parameters.experiment}}" 
@@ -127,8 +127,8 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: metadata.labels['workflows.argoproj.io/workflow']
-        - name: RELEASE_VERSION
-          value: {% raw %} "{{workflow.parameters.release_version}}" 
+        - name: RUN_NAME
+          value: {% raw %} "{{workflow.parameters.run_name}}" 
           {% endraw %}
         # - name: EXPERIMENT
         #  value: {% raw %} "{{workflow.parameters.experiment}}" 
