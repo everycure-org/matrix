@@ -134,7 +134,7 @@ def batch(endpoint, model, api_key, batch):
     headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
     data = {"input": batch, "model": model}
 
-    response = requests.post(endpoint, headers=headers, json=data)
+    response = requests.post(f"{endpoint}/embeddings", headers=headers, json=data)
 
     if response.status_code == 200:
         return [item["embedding"] for item in response.json()["data"]]
