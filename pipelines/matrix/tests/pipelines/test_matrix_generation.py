@@ -59,10 +59,10 @@ def test_generate_pairs(sample_data):
     # Given drug list, disease list and known pairs
     drugs, diseases, known_pairs, _ = sample_data
 
-    # When generating teh matrix dataset
+    # When generating the matrix dataset
     result = generate_pairs(drugs, diseases, known_pairs)
 
-    # The output is of the correct format, shape and doesn't contain training pairs
+    # Then the output is of the correct format, shape and doesn't contain training pairs
     assert isinstance(result, pd.DataFrame)
     assert set(result.columns) == {"source", "target"}
     assert len(result) == 3  # 2 drugs * 2 diseases - 1 training pair
