@@ -58,28 +58,28 @@ inference.request.type:
   filepath: ${globals:paths.reporting}/infer_type.pkl
 
 # NOTE: Sheet is created for ech model
-model_outputs.node.predictions:
+model_outputs.{model}.predictions:
   <<: [*_sheets_dataset]
   save_args:
     overwrite: True
-    sheet_name: "output_predictions"
+    sheet_name: "{model}_predictions"
     write_columns: ["drug", "disease"]
   load_args:
-    sheet_name: "output_predictions"
+    sheet_name: "{model}_predictions"
     columns: ["treat_score"]
 
 inference.embed.nodes:
   type: pandas.ParquetDataset
   filepath: ${globals:paths.feat}/nodes
 
-inference.model.xgb:
-  type: pickle.PickleDataset
-  filepath: data/06_models/xg_baseline/model.pkl
+# inference.model.xgb:
+#   type: pickle.PickleDataset
+#   filepath: data/06_models/xg_baseline/model.pkl
 
-model_outputs.node.visualisations:
+model_outputs.{model}.visualisations:
   type: kedro_mlflow.io.artifacts.MlflowArtifactDataset
   artifact_path: "histogram"
   dataset:
     type: matplotlib.MatplotlibWriter
-    filepath: ${globals:paths.tmp}/histogram_plot.png  
+    filepath: ${globals:paths.tmp}/{model}/histogram_plot.png  
   
