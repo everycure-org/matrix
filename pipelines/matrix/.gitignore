@@ -159,3 +159,6 @@ templates/argo-workflow-template.yml
 
 
 compose/neo4j_data/
+
+# Ignore notebooks scratch directory
+notebooks/scratch/

@@ -5,6 +5,70 @@
     that come after us debug issues we solved before. We need this because some errors appear when trying something else and that is not codified because we codify _what works_ not what we tried to get to this working state. However, reoccuring errors often occur in software engineering and experienced project members regularly help by "giving the solution" to the error that "they have seen before". This page seeks to collect those errors.
 
 
+## Attempting to build local instance of matrix pipeline with Python 3.12
+
+If you attempted to build the matrix pipeline locally with Python 3.12, it will fail due to the removal of distutils from Python after version 3.11. you may get a message that looks somewhat like the following:
+
+```
+error: Failed to prepare distributions
+  Caused by: Failed to fetch wheel: numpy==1.23.5
+  Caused by: Build backend failed to determine extra requires with `build_wheel()` with exit status: 1
+
+...
+
+ModuleNotFoundError: No module named 'distutils'
+```
+
+
+
+To fix this, remove the directory ".venv" from `pipelines/matrix` and set the python version to 3.11:
+
+```
+rm -r .venv
+pyenv install 3.11
+pyenv global 3.11
+```
+
+then `make` again.
+
+
+
+## Hanging up during make process
+While running `make`, you may encounter an issue where the process hangs up around the following step:
+
+```
+[build 12/12] ADD . .
+```
+
+If this step takes more than a few minutes, it is likely that the memory limit in docker is insufficient to build the docker image required to run the pipeline. To fix this issue, open docker and in **settings** adjust the memory limit.  16 GB is the recommended minimum. 
+
+If you do not have access to lots of system memory, you can also increase the maximum Swap file size. 
+
+
+## Unexpected keyword argument 'delimiter'
+
+You may encounter the following error during install:
+
+`TypeError: generate_random_arrays() got an unexpected keyword argument 'delimiter'`
+
+This issue was caused when we updated a function in the `packages/data_fabricator` package. Since we cannot set a python version of a local dependency, `uv` caches this dependency and does not pull the latest version into the `venv.
+
+**Solution**:
+Run this inside of `pipelines/matrix`
+```bash
+rm -rf .venv/
+rm -rf $(uv cache dir)
+make venv
+make install
+```
+
+This wipes the uv cache, which leads to a functioning installation of the library. This error does not occur in CI because our docker container is always built cleanly. 
+
+Finally, try running the kedro pipeline test while docker is up and running:
+
+```
+kedro run -p test -e test
+```
 
 ## Module not found in python
 ```
