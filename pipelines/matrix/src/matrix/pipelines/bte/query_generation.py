@@ -76,7 +76,7 @@ def generate_queries() -> List[Dict[str, Any]]:
     count = 0
     for index, row in diseases.iterrows():
         count += 1
-        if count > 2:
+        if count > 40:
             break
         if row.get("category_class"):
             curie = row["category_class"]
