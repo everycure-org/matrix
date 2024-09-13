@@ -7,7 +7,7 @@ neo4j:
   password: ${oc.env:NEO4J_PASSWORD,admin}
 
 openai:
-  endpoint: https://api.openai.com/v1
+  endpoint: ${oc.env:OPENAI_ENDPOINT, https://api.openai.com/v1}
   api_key: ${oc.env:OPENAI_API_KEY}
 
 # points at our central GCS_BUCKET where we store our ground truth data
