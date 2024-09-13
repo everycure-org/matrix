@@ -17,10 +17,7 @@ gcp_project: ${oc.env:GCP_PROJECT_ID, mtrx-hub-dev-3of}
 git_sha: ${oc.env:GIT_SHA, local}
 gh_token: ${oc.env:GH_TOKEN, dummy}
 
-versions:
-  # overwritten in prod environment for shared releases
-  release: ${oc.env:RELEASE_VERSION, local}
-
+run_name: ${oc.env:RUN_NAME, local}
 data_sources:
   rtx-kg2:
     version: v2.7.3
