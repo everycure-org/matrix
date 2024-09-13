@@ -26,24 +26,27 @@ from matrix.pipelines.modelling.model import ModelWrapper
 )
 @inject_object()
 def generate_pairs(
-    graph: KnowledgeGraph,
+    drugs: pd.DataFrame,
+    diseases: pd.DataFrame,
     known_pairs: pd.DataFrame,
-    drugs_lst_flags: List[str],
-    diseases_lst_flags: List[str],
 ) -> pd.DataFrame:
     """Function to generate matrix dataset.
 
     Args:
-        graph: KnowledgeGraph instance
+        drugs: Dataframe containing IDs for the list of drugs.
+        diseases: Dataframe containing IDs for the list of diseases.
         known_pairs: Labelled ground truth drug-disease pairs dataset.
-        drugs_lst_flags: List of flags defining the list of drugs.
-        diseases_lst_flags: List of flags defining the list of drugs
+
     Returns:
         Pairs dataframe containing all combinations of drugs and diseases that do not lie in the training set.
     """
     # Collect list of drugs and diseases
-    drugs_lst = graph.flags_to_ids(drugs_lst_flags)
-    diseases_lst = graph.flags_to_ids(diseases_lst_flags)
+    drugs_lst = drugs["curie"].tolist()
+    diseases_lst = diseases["curie"].tolist()
+
+    # Remove duplicates
+    drugs_lst = list(set(drugs_lst))
+    diseases_lst = list(set(diseases_lst))
 
     # Generate all combinations
     matrix_slices = []
@@ -166,28 +169,62 @@ def make_predictions_and_sort(
 
 
 def generate_report(
-    graph: KnowledgeGraph, data: pd.DataFrame, n_reporting: int
+    graph: KnowledgeGraph,
+    data: pd.DataFrame,
+    n_reporting: int,
+    drugs: pd.DataFrame,
+    diseases: pd.DataFrame,
+    known_pairs: pd.DataFrame,
+    score_col_name: str,
 ) -> pd.DataFrame:
     """Generates a report with the top pairs.
 
     Args:
         graph: Knowledge graph.
         data: Pairs dataset.
-        n_reporting: Number of pairs in the report
+        n_reporting: Number of pairs in the report.
+        drugs: Dataframe containing names and IDs for the list of drugs.
+        diseases: Dataframe containing names and IDs for the list of diseases.
+        known_pairs: Labelled ground truth drug-disease pairs dataset.
+        score_col_name: Probability score column name.
 
     Returns:
         Dataframe containing the top pairs with additional information for the drugs and diseases.
     """
+    # Add descriptions to the drugs and disease lists (FUTURE: consider moving to preprocessing)
+    get_node_description = lambda x: graph.get_node_attribute(x, "description").item()
+    drugs["description"] = drugs["curie"].apply(get_node_description)
+    diseases["description"] = diseases["curie"].apply(get_node_description)
+
     # Select the top n_reporting rows
     top_pairs = data.head(n_reporting)
 
     # Add additional information for drugs and diseases (TODO: optimise for speed by e.g. caching or using Polars)
-    get_node_name = lambda x: graph.get_node_attribute(x, "name").item()
-    get_node_description = lambda x: graph.get_node_attribute(x, "description").item()
-    top_pairs["drug_name"] = top_pairs["source"].apply(get_node_name)
-    top_pairs["disease_name"] = top_pairs["target"].apply(get_node_name)
-    top_pairs["drug_description"] = top_pairs["source"].apply(get_node_description)
-    top_pairs["disease_description"] = top_pairs["target"].apply(get_node_description)
+    get_drug_name = lambda x: drugs[drugs["curie"].eq(x)]["name"].item()
+    top_pairs["drug_name"] = top_pairs["source"].apply(get_drug_name)
+    get_disease_name = lambda x: diseases[diseases["curie"].eq(x)]["name"].item()
+    top_pairs["disease_name"] = top_pairs["target"].apply(get_disease_name)
+    get_drug_description = lambda x: drugs[drugs["curie"].eq(x)]["description"].item()
+    top_pairs["drug_description"] = top_pairs["source"].apply(get_drug_description)
+    get_disease_description = lambda x: diseases[diseases["curie"].eq(x)][
+        "description"
+    ].item()
+    top_pairs["disease_description"] = top_pairs["target"].apply(
+        get_disease_description
+    )
+
+    # Flag known positives and negatives
+    known_pair_is_pos = known_pairs["y"].eq(1)
+    known_pos_pairs = known_pairs[known_pair_is_pos]
+    known_neg_pairs = known_pairs[~known_pair_is_pos]
+    known_pos_pairs_set = set(zip(known_pos_pairs["source"], known_pos_pairs["target"]))
+    known_neg_pairs_set = set(zip(known_neg_pairs["source"], known_neg_pairs["target"]))
+    top_pairs["is_known_positive"] = top_pairs.apply(
+        lambda row: (row["source"], row["target"]) in known_pos_pairs_set, axis=1
+    )
+    top_pairs["is_known_negative"] = top_pairs.apply(
+        lambda row: (row["source"], row["target"]) in known_neg_pairs_set, axis=1
+    )
 
     # Rename ID columns
     top_pairs = top_pairs.rename(columns={"source": "drug_id"})
@@ -201,18 +238,9 @@ def generate_report(
         "disease_id",
         "disease_name",
         "disease_description",
-    ] + [
-        col
-        for col in top_pairs.columns
-        if col
-        not in [
-            "drug_id",
-            "drug_name",
-            "drug_description",
-            "disease_id",
-            "disease_name",
-            "disease_description",
-        ]
+        score_col_name,
+        "is_known_positive",
+        "is_known_negative",
     ]
     top_pairs = top_pairs[columns_order]
 
