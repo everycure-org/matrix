@@ -2,6 +2,7 @@
 
 Intended to be invoked via `kedro`.
 """
+
 from typing import List, Set, Dict, Any
 import click
 from kedro.framework.cli.project import (
@@ -143,7 +144,6 @@ def run(
 
     runner = load_obj(runner or "SequentialRunner", "kedro.runner")
     tags = tuple(tags)
-    without_tags = without_tags
     node_names = tuple(node_names)
 
     with KedroSessionWithFromCatalog.create(
