@@ -55,7 +55,7 @@ inference.sheet.normalized_inputs:
 
 inference.request.type:
   type: pickle.PickleDataset
-  filepath: ${globals:paths.reporting}/infer_type.pkl
+  filepath: ${globals:paths.tmp}/infer_type.pkl
 
 # NOTE: Sheet is created for ech model
 model_outputs.{model}.predictions:
