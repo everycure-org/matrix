@@ -219,10 +219,8 @@ def generate_report(
     columns_order = [
         "drug_id",
         "drug_name",
-        "drug_description",
         "disease_id",
         "disease_name",
-        "disease_description",
         score_col_name,
         "is_known_positive",
         "is_known_negative",
