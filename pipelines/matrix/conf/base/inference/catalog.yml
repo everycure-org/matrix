@@ -47,7 +47,7 @@ inference.sheet.normalized_inputs:
   <<: [*_sheets_dataset]
   load_args:
     sheet_name: Input
-    columns: ["norm_drug_id", "norm_drug_id"]
+    columns: ["disease_id", "drug_id","norm_drug_id", "norm_disease_id"]
   save_args:
     overwrite: True
     sheet_name: Input

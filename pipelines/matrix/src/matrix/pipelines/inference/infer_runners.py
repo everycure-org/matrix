@@ -140,8 +140,8 @@ class inferPerDisease(inferRunner):
 
     def ingest_data(self, nodes):
         """Ingest the model, nodes, drug list and disease list of interest."""
-        drug = nodes.loc[nodes.id.isin(self._drug.id)]
-        disease = nodes.loc[nodes.id.isin(self._disease.id)]
+        drug = nodes.loc[nodes.id.isin(self._drug.values)]
+        disease = nodes.loc[nodes.id.isin(self._disease.values)]
         vectorized_input = []
         for embed in drug.topological_embedding.values:
             vectorized_input.append(

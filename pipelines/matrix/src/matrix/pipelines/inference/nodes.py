@@ -24,11 +24,11 @@ def infer_type_from_ids(drug_id: list, disease_id: list) -> str:
     Raises:
         ValueError: If both drug_id and disease_id are empty.
     """
-    if (len(drug_id[0]) + len(disease_id[0])) == 0:
+    if isinstance(disease_id[0], np.float64) & isinstance(drug_id[0], np.float64):
         raise ValueError("Need to specify drug, disease, or both")
-    elif len(disease_id[0]) == 0:
+    elif isinstance(disease_id[0], np.float64):
         return "inferPerDrug"
-    elif len(drug_id[0]) == 0:
+    elif isinstance(drug_id[0], np.float64):
         return "inferPerDisease"
     else:
         return "inferPerPair"
@@ -49,7 +49,7 @@ def resolve_input_sheet(sheet: pd.DataFrame) -> pd.DataFrame:
 
     # Infer the request types
     infer_type = infer_type_from_ids(drug_id, disease_id)
-
+    print(infer_type)
     return infer_type
 
 
@@ -77,7 +77,7 @@ def run_inference(
         scores: treat scores requested written to google sheets
     """
     inferRunner = getattr(infer_runners, infer_type)
-    runner = inferRunner(drug_nodes, disease_nodes)
+    runner = inferRunner(drug_nodes.curie, disease_nodes.curie)
 
     # set up the runner with model, nodes, diseases and drugs
     runner.ingest_data(embeddings)

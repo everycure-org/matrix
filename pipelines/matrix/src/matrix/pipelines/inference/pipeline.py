@@ -23,9 +23,10 @@ def create_pipeline(**kwargs) -> Pipeline:
             node(
                 func=nd.resolve_input_sheet,
                 inputs={
-                    "sheet": "inference.sheet.raw_inputs",
+                    "sheet": "inference.sheet.normalized_inputs",
                 },
-                outputs=["inference.request.type"],
+                outputs="inference.request.type",
+                name="select_request_type",
             ),
             node(
                 func=nd.run_inference,
