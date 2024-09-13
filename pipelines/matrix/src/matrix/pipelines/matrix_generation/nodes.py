@@ -169,7 +169,6 @@ def make_predictions_and_sort(
 
 
 def generate_report(
-    graph: KnowledgeGraph,
     data: pd.DataFrame,
     n_reporting: int,
     drugs: pd.DataFrame,
@@ -180,7 +179,6 @@ def generate_report(
     """Generates a report with the top pairs.
 
     Args:
-        graph: Knowledge graph.
         data: Pairs dataset.
         n_reporting: Number of pairs in the report.
         drugs: Dataframe containing names and IDs for the list of drugs.
@@ -191,11 +189,6 @@ def generate_report(
     Returns:
         Dataframe containing the top pairs with additional information for the drugs and diseases.
     """
-    # Add descriptions to the drugs and disease lists (FUTURE: consider moving to preprocessing)
-    get_node_description = lambda x: graph.get_node_attribute(x, "description").item()
-    drugs["description"] = drugs["curie"].apply(get_node_description)
-    diseases["description"] = diseases["curie"].apply(get_node_description)
-
     # Select the top n_reporting rows
     top_pairs = data.head(n_reporting)
 

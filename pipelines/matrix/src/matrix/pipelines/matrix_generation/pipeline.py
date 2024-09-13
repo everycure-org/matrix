@@ -27,7 +27,6 @@ def _create_matrix_generation_pipeline(model: str) -> Pipeline:
             node(
                 func=nodes.generate_report,
                 inputs=[
-                    "modelling.feat.rtx_kg2",
                     f"matrix_generation.{model}.model_output.sorted_matrix_predictions",
                     "params:matrix_generation.matrix_generation_options.n_reporting",
                     "ingestion.raw.drug_list",
