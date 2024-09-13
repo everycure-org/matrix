@@ -16,24 +16,34 @@ from matrix.pipelines.modelling.model import ModelWrapper
 @pytest.fixture
 def sample_data():
     """Fixture that provides sample data for testing matrix generation functions."""
+    drugs = pd.DataFrame(
+        {
+            "curie": ["drug_1", "drug_2"],
+            "name": ["Drug 1", "Drug 2"],
+            "description": ["Description 1", "Description 2"],
+        }
+    )
+
+    diseases = pd.DataFrame(
+        {
+            "curie": ["disease_1", "disease_2"],
+            "name": ["Disease 1", "Disease 2"],
+            "description": ["Description A", "Description B"],
+        }
+    )
+
     known_pairs = pd.DataFrame(
         {
             "source": ["drug_1", "drug_2", "drug_3"],
             "target": ["disease_1", "disease_2", "disease_3"],
             "split": ["TRAIN", "TEST", "TRAIN"],
+            "y": [1, 0, 1],
         }
     )
 
     nodes = pd.DataFrame(
         {
             "id": ["drug_1", "drug_2", "disease_1", "disease_2"],
-            "name": ["Drug 1", "Drug 2", "Disease 1", "Disease 2"],
-            "description": [
-                "Description 1",
-                "Description 2",
-                "Description A",
-                "Description B",
-            ],
             "is_drug": [True, True, False, False],
             "is_disease": [False, False, True, True],
             "topological_embedding": [np.ones(3) * n for n in range(4)],
@@ -41,17 +51,18 @@ def sample_data():
     )
     graph = KnowledgeGraph(nodes)
 
-    return known_pairs, graph
+    return drugs, diseases, known_pairs, graph
 
 
 def test_generate_pairs(sample_data):
     """Test the generate_pairs function."""
-    known_pairs, graph = sample_data
-    drugs_lst_flags = ["is_drug"]
-    diseases_lst_flags = ["is_disease"]
+    # Given drug list, disease list and known pairs
+    drugs, diseases, known_pairs, _ = sample_data
 
-    result = generate_pairs(graph, known_pairs, drugs_lst_flags, diseases_lst_flags)
+    # When generating teh matrix dataset
+    result = generate_pairs(drugs, diseases, known_pairs)
 
+    # The output is of the correct format, shape and doesn't contain training pairs
     assert isinstance(result, pd.DataFrame)
     assert set(result.columns) == {"source", "target"}
     assert len(result) == 3  # 2 drugs * 2 diseases - 1 training pair
@@ -113,9 +124,9 @@ def test_make_predictions_and_sort(
     mock_transformers,
     mock_model,
 ):
-    _, graph = sample_data
-    # Given data, embeddings and a model
-    # When we make batched predictions and sort
+    # Given a drug list, disease list and objects necessary for inference
+    # When running inference and sorting
+    _, _, _, graph = sample_data
     result = make_predictions_and_sort(
         graph=graph,
         data=mock_data,
@@ -126,8 +137,7 @@ def test_make_predictions_and_sort(
         batch_by="target",
     )
 
-    # Then the scores are added for all datapoints in a new column
-    # and the model was called the correct number of times
+    # Then the output is of the correct format and correctly sorted
     assert "score" in result.columns
     assert isinstance(result, pd.DataFrame)
     assert result["score"].is_monotonic_decreasing
@@ -135,31 +145,33 @@ def test_make_predictions_and_sort(
 
 def test_generate_report(sample_data):
     """Test the generate_report function."""
-    # Given input data, graph containing attributes
-    _, graph = sample_data
+    # Given an input matrix, drug list and disease list
+    drugs, diseases, known_pairs, _ = sample_data
     data = pd.DataFrame(
         {
-            "source": ["drug_1", "drug_2"],
-            "target": ["disease_1", "disease_2"],
-            "probability": [0.8, 0.6],
+            "source": ["drug_1", "drug_2", "drug_1"],
+            "target": ["disease_1", "disease_2", "disease_2"],
+            "probability": [0.8, 0.6, 0.4],
         }
     )
     n_reporting = 2
 
-    # When generating a report
-    result = generate_report(graph, data, n_reporting)
+    # When generating the report
+    result = generate_report(
+        data, n_reporting, drugs, diseases, known_pairs, "probability"
+    )
 
-    # The result is a dataframe of the correct format
+    # Then the report is of the correct structure
     assert isinstance(result, pd.DataFrame)
     assert len(result) == n_reporting
     assert set(result.columns) == {
         "drug_id",
         "drug_name",
-        "drug_description",
         "disease_id",
         "disease_name",
-        "disease_description",
         "probability",
+        "is_known_positive",
+        "is_known_negative",
     }
     assert result["drug_name"].tolist() == ["Drug 1", "Drug 2"]
     assert result["disease_name"].tolist() == ["Disease 1", "Disease 2"]
