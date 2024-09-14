@@ -10,6 +10,7 @@ fabricator.rtx_kg2:
         type: generate_unique_id
         prefix: name_
       category:
+        
         type: generate_values
         sample_values:
           - biolink:Drug
