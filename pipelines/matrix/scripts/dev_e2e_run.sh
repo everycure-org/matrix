@@ -76,8 +76,12 @@ submit_workflow() {
     argo watch -n dev-$USERNAME $JOB_NAME
 }
 get_experiment_name() {
-    local branch_name=$(git rev-parse --abbrev-ref HEAD)
-    echo "$branch_name" | tr -c '[:alnum:]-' '-' | sed 's/-$//'
+    if [ -n "$RUN_NAME" ]; then
+        echo "$RUN_NAME"
+    else
+        local branch_name=$(git rev-parse --abbrev-ref HEAD)
+        echo "$branch_name" | tr -c '[:alnum:]-' '-' | sed 's/-$//'
+    fi
 }
 
 # Main function
@@ -97,11 +101,16 @@ while [[ $# -gt 0 ]]; do
             USERNAME="${2:-$USER}"
             shift 2
             ;;
+        --run-name)
+            RUN_NAME="$2"
+            shift 2
+            ;;
         --help)
             echo "Usage: $0 [options]"
             echo "Options:"
             echo "  --username <username>  Specify the username to use"
-            echo "  --help                  Show this help message"
+            echo "  --run-name <name>      Specify a custom run name"
+            echo "  --help                 Show this help message"
             exit 0
             ;;
         *)

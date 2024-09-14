@@ -31,3 +31,4 @@ pygsheets==2.0.6
 # used for convenience libraries, to be moved to a dev requirements eventually  
 typer
 pytest-testmon
+pytest-mock
