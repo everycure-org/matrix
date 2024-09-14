@@ -23,54 +23,13 @@ _spark_parquet_ds: &_spark_parquet
 # Datasets
 # -------------------------------------------------------------------------
 
-# Dataset to feed node embedding computation
-embeddings.prm.graph_nodes:
-  <<: *_neo4j_ds
-  save_args:
-    # NOTE: Neo4j nodes can have multiple labels. We're adding _all_ nodes in a global
-    # `entity` label on which we generate a unique constraint. This has the side-effect
-    # that an index is created which allows for quick edge inserts down the line.
-    # https://neo4j.com/docs/cypher-manual/current/constraints/
-    mode: overwrite
-    # script: >
-    #   CREATE CONSTRAINT IF NOT EXISTS FOR (n:Entity) REQUIRE n.id IS UNIQUE;
-    query: > 
-      CREATE (n:Entity {id: event.id, kg_sources: event.kg_sources})
-      WITH event, n
-      CALL apoc.create.addLabels(n, [event.label]) YIELD node
-      CALL apoc.create.setProperties(n, event.property_keys, event.property_values) YIELD node AS n2
-      RETURN node
-  load_args:
-    # NOTE: The 'biolink' prefixes was removed to have a clean Neo4J UI interface. We're adding
-    # it back into the query as the modelling expects it.
-    query: >  
-      MATCH (n) 
-      RETURN 
-        n.id AS id, 
-        n.name as name,
-        n.category as category,
-        n.description as description
-
-# Catalog directly expresses a query to add OpenAI embeddings.
-# https://neo4j.com/labs/apoc/5/installation/
-# https://neo4j.com/labs/apoc/5/ml/vertexai/#_generate_embeddings_api
-embeddings.prm.graph.embeddings@yaml:
-  type: yaml.YAMLDataset
-  filepath: ${globals:paths.prm}/embeddings/result.yml
-
-embeddings.prm.graph.embeddings@neo:
-  <<: *_neo4j_ds
-  load_args:
-    partitions: 16
-    labels: ":Entity"
-
 embeddings.feat.graph.node_embeddings:
   <<: *_spark_parquet
-  filepath: ${globals:paths.raw}/embeddings/tmp_nodes_with_embeddings
+  filepath: ${globals:paths.feat}/embeddings/tmp_nodes_with_embeddings
 
 embeddings.feat.graph.pca_node_embeddings:
   <<: *_spark_parquet
-  filepath: ${globals:paths.raw}/embeddings/tmp_nodes_with_pca_embeddings
+  filepath: ${globals:paths.feat}/embeddings/tmp_nodes_with_pca_embeddings
 
 # NOTE: Needs renaming
 embeddings.tmp.input_nodes:

@@ -13,13 +13,12 @@ embeddings.gdb:
 # https://neo4j.com/labs/apoc/5/ml/openai/
 embeddings.ai_config:
   api_key: ${globals:openai.api_key}
-  attribute: &_property embedding
 # https://platform.openai.com/docs/guides/embeddings/faq
 # OpenAI embeddings support batching, up to 8000 tokens.
-  batch_size: 500
+  batch_size: 200
   endpoint: ${globals:openai.endpoint}
   model: text-embedding-3-small
-  concurrency: 50
+  attribute: &_property embedding
 
 # Attributes used as input features to compute
 # node embeddings.
