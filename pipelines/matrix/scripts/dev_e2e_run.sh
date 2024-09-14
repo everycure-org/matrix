@@ -65,7 +65,6 @@ submit_workflow() {
     #   -p openai_endpoint=https://api.openai.com/v1 \
     echo "Submitting Argo workflow..."
     JOB_NAME=$(argo submit -n $NAMESPACE --from wftmpl/matrix \
-      -p experiment=$(get_experiment_name) \
       -p run_name=$(get_experiment_name) \
       -l submit-from-ui=false \
       --entrypoint __default__ \
@@ -89,7 +88,7 @@ main() {
     check_dependencies
     #build_push_docker
     build_argo_template
-    ensure_namespace
+    # ensure_namespace NOTE: Currently executing in argo
     apply_argo_template
     submit_workflow
 }

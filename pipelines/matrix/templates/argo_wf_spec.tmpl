@@ -7,8 +7,6 @@ metadata:
 spec:
   workflowMetadata:
     labels:
-      experiment: {% raw %}'{{ workflow.parameters.experiment }}'
-      {% endraw %}
       run: {% raw %}'{{ workflow.parameters.run_name }}'
       {% endraw %}
   entrypoint: dag
@@ -56,7 +54,7 @@ spec:
       resources: # limit the resources
         requests:
           memory: 6Gi
-          cpu: 4
+          cpu: 16
         limits:
           memory: 64Gi
           cpu: 16

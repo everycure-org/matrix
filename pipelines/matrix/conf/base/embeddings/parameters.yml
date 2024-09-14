@@ -18,6 +18,7 @@ embeddings.ai_config:
   batch_size: 200
   endpoint: ${globals:openai.endpoint}
   model: text-embedding-3-small
+  concurrency: 50
   attribute: &_property embedding
 
 # Attributes used as input features to compute
