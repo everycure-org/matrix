@@ -118,3 +118,30 @@ embeddings.reporting.topological_pca_plot:
     # directly with GCS as a result.
     type: kedro_datasets.matplotlib.MatplotlibWriter
     filepath: ${globals:paths.tmp}/pca_plot.png
+
+
+# -------------------------------------------------------------------------
+# new embeddings pipeline
+# -------------------------------------------------------------------------
+
+# these two datasets are special. They both point to the same underlying data, 
+# which allows us to have a circular dependency without running into issues.
+# we write to the cache dir in an append-only fashion, which is why we can have
+# a circular dependency. Reading occurs with pushdown predication so we almost
+# never read the entire dataset.
+
+embeddings.cache.existing_invocations:
+  type: matrix.datasets.polars.LazyPolarsCacheDataset
+  file_format: parquet
+  credentials: neo4j_credentials
+  save_args:
+    mode: "overwrite"
+  metadata:
+    kedro-viz:
+      layer: embeddings
+
+  filepath: ${globals:paths.cache}/embeddings/
+
+embeddings.cache.new_invocations:
+  <<: *_spark_parquet
+  filepath: ${globals:paths.cache}/embeddings/
