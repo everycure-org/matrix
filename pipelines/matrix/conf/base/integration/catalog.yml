@@ -20,3 +20,20 @@ integration.prm.unified_edges:
 integration.prm.unified_nodes:
   <<: [*_spark_parquet, *_layer_prm]
   filepath: ${globals:paths.prm}/unified/nodes
+
+integration.prm.robokop.nodes:
+  <<: [*_spark_parquet, *_layer_prm]
+  filepath: ${globals:paths.prm}/robokop/nodes
+
+integration.prm.robokop.edges:
+  <<: [*_spark_parquet, *_layer_prm]
+  filepath: ${globals:paths.prm}/robokop/edges
+
+integration.prm.rtx.nodes:
+  <<: [*_spark_parquet, *_layer_prm]
+  filepath: ${globals:paths.prm}/rtx/nodes
+
+integration.prm.rtx.edges:
+  <<: [*_spark_parquet, *_layer_prm]
+  filepath: ${globals:paths.prm}/rtx/edges
+
