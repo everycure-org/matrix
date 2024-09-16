@@ -20,6 +20,7 @@ def _create_evaluation_pipeline(model: str, evaluation: str) -> Pipeline:
                 ],
                 outputs=f"evaluation.{model}.{evaluation}.prm.pairs",
                 name=f"create_{model}_{evaluation}_evaluation_pairs",
+                tag=["create_eval_pairs"],
             ),
             node(
                 func=nodes.make_test_predictions,
