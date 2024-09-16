@@ -131,17 +131,17 @@ embeddings.reporting.topological_pca_plot:
 # never read the entire dataset.
 
 embeddings.cache.existing_invocations:
-  type: matrix.datasets.polars.LazyPolarsCacheDataset
-  file_format: parquet
-  credentials: neo4j_credentials
-  save_args:
-    mode: "overwrite"
-  metadata:
-    kedro-viz:
-      layer: embeddings
-
-  filepath: ${globals:paths.cache}/embeddings/
-
-embeddings.cache.new_invocations:
   <<: *_spark_parquet
   filepath: ${globals:paths.cache}/embeddings/
+  save_args:
+    mode: "error" # no one should ever write to this dataset
+
+embeddings.cache.new_invocations:
+#TODO: We need to figure out how to make this dataset write bloom filters for the
+# `hash` column so that we can leverage predicate pushdown when reading. This will
+# hugely improve performance when filtering embeddings against a very very large cache
+  <<: *_spark_parquet
+  filepath: ${globals:paths.cache}/embeddings/
+  save_args:
+    mode: "append"
+  

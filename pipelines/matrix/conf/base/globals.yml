@@ -56,4 +56,4 @@ paths:
   model_output: data/07_model_output
   reporting: data/08_reporting
   tmp: data/tmp
-  cache: data/cache
+  cache: data/caching_test/cache
