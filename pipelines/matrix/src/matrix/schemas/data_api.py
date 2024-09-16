@@ -43,7 +43,7 @@ class KGNodeSchema(DataFrameModel):
 
     # fmt: off
     id:                                StringType()            = pa.Field(nullable=False)
-    name:                              StringType()            = pa.Field(nullable=False)
+    name:                              StringType()            = pa.Field(nullable=True) #TODO should this be nullable?
     category:                          StringType()            = pa.Field(nullable=False)
     description:                       StringType()            = pa.Field(nullable=True)
     equivalent_identifiers:            ArrayType(StringType()) = pa.Field(nullable=True)
