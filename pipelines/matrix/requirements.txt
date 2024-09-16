@@ -137,7 +137,7 @@ executing==2.1.0
     # via stack-data
 faker==4.18.0
     # via brix-data-fabricator
-fastapi==0.114.1
+fastapi==0.114.2
     # via kedro-viz
 fastjsonschema==2.20.0
     # via nbformat
@@ -245,7 +245,7 @@ httptools==0.6.1
     # via uvicorn
 httpx==0.27.2
     # via jupyterlab
-idna==3.8
+idna==3.10
     # via
     #   anyio
     #   httpx
@@ -486,7 +486,9 @@ pandas==1.5.3
     #   pandera
     #   seaborn
 pandera==0.20.4
-    # via brix-refit
+    # via
+    #   -r requirements.in
+    #   brix-refit
 pandocfilters==1.5.1
     # via nbconvert
 parse==1.20.2
@@ -497,7 +499,7 @@ pexpect==4.9.0
     # via ipython
 pillow==10.4.0
     # via matplotlib
-platformdirs==4.3.2
+platformdirs==4.3.3
     # via
     #   jupyter-core
     #   pytoolconfig
@@ -692,7 +694,7 @@ secure==0.3.0
     # via kedro-viz
 send2trash==1.8.3
     # via jupyter-server
-setuptools==74.1.2
+setuptools==75.0.0
     # via jupyterlab
 shellingham==1.5.4
     # via typer
