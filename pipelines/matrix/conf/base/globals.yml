@@ -47,6 +47,8 @@ mlflow_artifact_root: null
 paths:
   # we read from our central GCS bucket where we store our ground truth data
   raw: gs://mtrx-us-central1-hub-dev-storage/kedro/data/01_raw
+  # TODO: When we merge https://github.com/everycure-org/matrix/pull/122 we should move all raw data to the new location
+  new_raw: ${gcs_bucket}/data/01_RAW/
   # we write to local disk going forward
   int: data/02_intermediate
   prm: data/03_primary
