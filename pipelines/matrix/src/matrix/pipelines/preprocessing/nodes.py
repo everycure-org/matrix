@@ -376,6 +376,8 @@ def clean_drug_list(
     # Validate correct labels
     res["label_included"] = res["category"].isin(drug_types)
 
+    # Filter out nodes for which labels are False
+    res = res.loc[(res["label_included"].values == True)]
     return res.loc[~res["curie"].isna()]
 
 
@@ -432,4 +434,6 @@ def clean_disease_list(
     # Validate correct labels
     res["label_included"] = res["category"].isin(disease_types)
 
+    # Filter out nodes for which labels are False
+    res = res.loc[(res["label_included"].values == True)]
     return res.loc[~res["curie"].isna()]
