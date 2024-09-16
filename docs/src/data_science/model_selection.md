@@ -80,7 +80,7 @@ To ensure robust cross-validation:
 
 ## Hyperparameter Tuning and Model Selection
 
-Cross-validation plays a crucial role in hyperparameter tuning. Techniques like Grid Search CV or Random Search CV use cross-validation to evaluate different hyperparameter combinations and select the best performing model. We have have implemented our own version of a Bayesian hyperparameter optimisation algorithm.
+Cross-validation plays a crucial role in hyperparameter tuning. Techniques like Grid Search CV or Random Search CV use cross-validation to evaluate different hyperparameter combinations and select the best performing model. We have implemented our own version of a Bayesian hyperparameter optimisation algorithm.
 
 ## Leveraging Scikit-learn's Model Selection Library
 
