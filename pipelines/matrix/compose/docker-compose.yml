@@ -38,7 +38,11 @@ services:
   node-synonymizer:
     build: "../../../services/synonymizer"
     environment:
-      - DB_CONNECTION_STR=/usr/src/app/assets/node_synonymizer_v1.0_KG2.7.3.sqlite
+      DB_CONNECTION_STR: /usr/src/app/assets/node_synonymizer_v1.0_KG2.7.3.sqlite
+      NEO4J_HOST: bolt://neo4j:7687
+      NEO4J_USER: neo4j
+      NEO4J_PASSWORD: admin
+      NEO4J_DATABASE: everycure-run-23-aug-setup-4 # TODO Needs fix
     volumes:
       # NOTE: Asset files are really big, so mounting them in
       - "../../../services/synonymizer/assets:/usr/src/app/assets"

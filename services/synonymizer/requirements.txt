@@ -1,3 +1,5 @@
 fastapi
 requests-cache
 uvicorn
+pydantic-settings
+neo4j
