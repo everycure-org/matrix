@@ -107,8 +107,6 @@ def make_test_predictions(
     Returns:
         Pairs dataset with additional column containing the probability scores.
     """
-    breakpoint()
-
     return make_batch_predictions(
         graph, data, transformers, model, features, score_col_name, batch_by=batch_by
     )

@@ -310,6 +310,10 @@ def clean_clinical_trial_data(df: pd.DataFrame) -> pd.DataFrame:
     # Remove rows with conflicts
     df = df[df["conflict"].eq("FALSE")].reset_index(drop=True)
 
+    # Make sure to consider only rows with relevant labels, otherwise
+    # downtstream modelling will fail
+    df = df[df["label_included"].eq("TRUE")].reset_index(drop=True)
+
     # remove rows with reason for rejection
     df = df[df["reason_for_rejection"].isna()].reset_index(drop=True)
 
