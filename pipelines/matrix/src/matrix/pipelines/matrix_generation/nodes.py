@@ -169,14 +169,12 @@ def make_batch_predictions(
 
     # Filter out drugs/diseases which are in the drug list but not in KG
     # FUTURE: Remove the hack once drug list is aligned with KGs
-    print(data.shape)
     data = data.loc[
         (
             (data.source.isin(graph._drug_nodes))
             & (data.target.isin(graph._disease_nodes))
         )
     ]
-    print(data.shape)
 
     # Group data by the specified prefix
     grouped = data.groupby(batch_by)
