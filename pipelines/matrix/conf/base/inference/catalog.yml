@@ -47,7 +47,6 @@ inference.model_input.drug_disease_pairs:
   <<: [*_pandas_parquet]
   filepath: ${globals:paths.tmp}/drug_disease_pairs.
 
-
 # NOTE: Sheet is created for ech model
 inference.{model}.predictions:
   <<: [*_sheets_dataset]
@@ -69,10 +68,6 @@ inference.{model}.report:
     sheet_name: "{model}_predictions"
     columns: ["treat score"]
 
-inference.embed.nodes:
-  type: pandas.ParquetDataset
-  filepath: ${globals:paths.feat}/nodes
-
 inference.int.drug_list:
   <<: *_pandas_csv
   filepath: ${globals:paths.tmp}/drug_list_infer
@@ -87,4 +82,7 @@ inference.{model}.visualisations:
   dataset:
     type: matplotlib.MatplotlibWriter
     filepath: ${globals:paths.tmp}/{model}/histogram_plot.png  
-  
+
+test_model:
+  type: pickle.PickleDataset
+  filepath: data/tmp/xg_ensemble/model.pkl

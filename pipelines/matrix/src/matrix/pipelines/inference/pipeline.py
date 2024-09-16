@@ -58,7 +58,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                             f"modelling.{model['model_name']}.model_input.transformers",
                             f"modelling.{model['model_name']}.models.model",
                             f"params:modelling.{model['model_name']}.model_options.model_tuning_args.features",
-                            "params:evaluation.score_col_name",
+                            "params:inference.score_col_name",
                             "params:inference.matrix_generation_options.batch_by",
                         ],
                         outputs=f"inference.{model['model_name']}.predictions",
@@ -69,15 +69,16 @@ def create_pipeline(**kwargs) -> Pipeline:
                         inputs=[
                             f"inference.{model['model_name']}.predictions",
                             "params:inference.matrix_generation_options.n_reporting",
-                            "ingestion.raw.drug_list",
-                            "ingestion.raw.disease_list",
+                            "inference.raw.drug_list",
+                            "inference.raw.disease_list",
                             "modelling.model_input.splits",
-                            "params:evaluation.score_col_name",
+                            "params:inference.score_col_name",
                         ],
                         outputs=f"inference.{model['model_name']}.report",
                         name=f"add_metadata",
                     ),
-                    # ßnode(func=nd.describe_scores)
+                    # FUTURE: add describe_scores node once we get input from the medical team
+                    # node(func=nd.describe_scores)
                     node(
                         func=nd.visualise_treat_scores,
                         inputs={
