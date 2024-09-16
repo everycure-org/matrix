@@ -7,10 +7,19 @@ without actually exposing the data itself because a decryption key is required.
 
 ## Required installations
 
-```bash
-brew install git-crypt
-brew install gpg
-```
+=== "MacOS"
+
+    ```bash
+    brew install git-crypt
+    brew install gpg
+    ```
+
+=== "Windows (WSL)"
+
+    ```bash
+    sudo apt-get update
+    sudo apt-get install git-crypt
+    ```
 
 ## Joining as a new user
 
@@ -97,7 +106,7 @@ Next run the following command
 
 ```
 # alternatively, you can pass in the ID of the key which looks like this 637334785B9F74A364C14FC5A1C5DB60575ED571
-gpg --armor --export <used@email.com>
+gpg --armor --export used@email.com
 ```
 
 The command should return something like 
