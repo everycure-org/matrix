@@ -108,7 +108,7 @@ While cross-validation is a powerful tool, it's important to be aware of its lim
 
 ## Conclusion
 
-Robust cross-validation is a key compoment of reliable model selection and performance estimation. By carefully choosing and implementing the right CV technique, we can build more trustworthy and generalizable models for drug repurposing and other critical applications in healthcare and beyond.
+Robust cross-validation is a key component of reliable model selection and performance estimation. By carefully choosing and implementing the right CV technique, we can build more trustworthy and generalizable models for drug repurposing and other critical applications in healthcare and beyond.
 
 ## References
 
