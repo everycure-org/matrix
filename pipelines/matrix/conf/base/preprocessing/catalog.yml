@@ -95,6 +95,7 @@ preprocessing.int.mapped_clinical_trials_data:
       - "drug_kg_curie"
       - "disease_kg_curie"
       - "conflict"
+      - "label_included"
 
 preprocessing.raw.disease_list: 
   <<: [*_layer_raw]
