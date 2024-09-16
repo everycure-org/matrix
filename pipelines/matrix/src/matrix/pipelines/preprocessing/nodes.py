@@ -219,8 +219,7 @@ def create_prm_edges(int_edges: pd.DataFrame) -> pd.DataFrame:
     df="df",
 )
 def map_name_to_curie(
-    df: pd.DataFrame,
-    endpoint: str,
+    df: pd.DataFrame, endpoint: str, drug_types: List[str], disease_types: List[str]
 ) -> pd.DataFrame:
     """Map drug name to curie.
 
@@ -231,15 +230,30 @@ def map_name_to_curie(
     Args:
         df: raw clinical trial dataset from medical team
         endpoint: endpoint of the synonymizer
+        drug_types: list of drug types
+        disease_types: list of disease types
     Returns:
         dataframe with two additional columns: "Mapped Drug Curie" and "Mapped Drug Disease"
     """
     # Map the drug name to the corresponding curie ids
-    df["drug_kg_curie"] = df["drug_name"].apply(lambda x: resolve(x, endpoint=endpoint))
+    df["drug_kg_curie"] = df["drug_name"].apply(
+        lambda x: normalize(x, endpoint=endpoint)
+    )
+    df["drug_kg_label"] = df["drug_name"].apply(
+        lambda x: normalize(x, endpoint=endpoint, att_to_get="category")
+    )
 
     # Map the disease name to the corresponding curie ids
     df["disease_kg_curie"] = df["disease_name"].apply(
-        lambda x: resolve(x, endpoint=endpoint)
+        lambda x: normalize(x, endpoint=endpoint)
+    )
+    df["disease_kg_label"] = df["disease_name"].apply(
+        lambda x: normalize(x, endpoint=endpoint, att_to_get="category")
+    )
+
+    # Validate correct labels
+    df["label_included"] = (df["drug_kg_label"].isin(drug_types)) & (
+        df["disease_kg_label"].isin(disease_types)
     )
 
     # check conflict
