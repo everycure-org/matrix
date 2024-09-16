@@ -18,8 +18,6 @@ _spark_parquet_ds: &_spark_parquet
     kedro-viz:
       layer: embeddings
 
-# kedro run -n create-xg-synth-simple-ground-truth-classification-time-split-evaluation-pairs,xg-synth-simple-ground-truth-classification-time-split --from-env cloud
-
 # -------------------------------------------------------------------------
 # Datasets
 # -------------------------------------------------------------------------
