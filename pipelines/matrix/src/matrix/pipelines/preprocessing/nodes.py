@@ -20,7 +20,7 @@ def resolve(name: str, endpoint: str) -> str:
     Returns:
         Corresponding curie
     """
-    result = requests.get(f"{endpoint}/synonymize", json={"names": [name]})
+    result = requests.get(f"{endpoint}/synonymize", json={"name": name})
 
     element = result.json().get(name)
     if element:
@@ -42,7 +42,7 @@ def normalize(curie: str, endpoint: str, att_to_get: str = "identifier"):
     if not curie or pd.isna(curie):
         return None
 
-    result = requests.get(f"{endpoint}/normalize", json={"names": [curie]})
+    result = requests.get(f"{endpoint}/normalize", json={"name": curie})
 
     element = result.json().get(curie)
     if element:
