@@ -106,6 +106,14 @@ The computation of each evaluation metric in the pipeline is described in the fo
 
 Note that different evaluation metrics may have common nodes and datasets. For instance, disease-specific Hit@k and MRR are computed using the same synthesised negatives. 
 
+### Inference (requests)
+
+Our inference pipeline can be used for running ad-hoc requests coming from medical team/stakeholders to generate drug-disease predictions for a specifid drug, disease or a pair of both. The drugs/diseases to predict against are coming from our official drug and disease lists. The pipeline is running inference using a single/several trained models stored as artifacts in MLFlow and utilizes the same version of data that was used for training.
+
+![](../assets/img/inference.drawio.png)
+
+At the moment we don't execute this as a part of the default pipeline.
+
 ### Release
 
 Our release pipeline currently builds the final integrated Neo4J data product for consumption. We do not execute this as part of the default pipeline run but with a separate `-p release` execution as we do not want to release every pipeline data output.
