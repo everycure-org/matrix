@@ -3,11 +3,14 @@
 Module containing knowledge graph representation and utilities.
 """
 import pandas as pd
+import logging
 
 from kedro_datasets.pandas import ParquetDataset
 
 from typing import Any, Dict, Iterator, List, Set
 from kedro.io.core import Version
+
+logger = logging.getLogger(__name__)
 
 
 class KnowledgeGraph:
@@ -42,6 +45,18 @@ class KnowledgeGraph:
         is_all_flags = self._nodes[flags].all(axis=1)
         select_nodes = self._nodes[is_all_flags]
         return list(select_nodes["id"])
+
+    def get_embedding(self, node_id: str):
+        """Retrieves embedding for node with the ID.
+
+        Args:
+            node_id: Node ID.
+
+        Returns:
+            Embedding or None if not found
+        """
+        logger.warning(f"Embedding for node with id '{node_id}' not found!")
+        return self._embeddings.get(node_id, None)
 
     def get_node_attribute(self, node_id: str, col_name: str) -> any:
         """Retrieves chosen node attributes from the ID.

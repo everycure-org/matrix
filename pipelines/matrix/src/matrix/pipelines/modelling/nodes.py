@@ -60,6 +60,8 @@ def prefilter_nodes(
     Returns:
         Filtered nodes dataframe
     """
+    # FUTURE: Is it possible to union drug and diseases and and prefilter KG
+    # in this manner? E.g., union drug and disease list and apply left join
     return nodes.filter(
         (f.col("category").isin(drug_types)) | (f.col("category").isin(disease_types))
     )

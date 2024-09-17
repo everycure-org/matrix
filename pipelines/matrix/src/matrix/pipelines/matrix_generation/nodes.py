@@ -95,11 +95,14 @@ def make_batch_predictions(
     def process_batch(batch: pd.DataFrame) -> pd.DataFrame:
         # Collect embedding vectors
         batch["source_embedding"] = batch.apply(
-            lambda row: graph._embeddings[row.source], axis=1
+            lambda row: graph.get_embedding(row.source), axis=1
         )
         batch["target_embedding"] = batch.apply(
-            lambda row: graph._embeddings[row.target], axis=1
+            lambda row: graph.get_embedding(row.target), axis=1
         )
+
+        # drop rows without source/target embeddings
+        batch = batch.dropna(subset=["source_embedding", "target_embedding"])
 
         # Apply transformers to data
         transformed = apply_transformers(batch, transformers)
