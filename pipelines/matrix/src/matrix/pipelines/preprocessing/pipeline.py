@@ -99,7 +99,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                     "preprocessing.raw.infer_sheet",
                     "params:preprocessing.synonymizer_endpoint",
                 ],
-                outputs="inference.sheet.normalized_inputs",
+                outputs="inference.raw.normalized_inputs",
                 name="clean_input_sheet",
                 tags=["inference-input"],
             ),
