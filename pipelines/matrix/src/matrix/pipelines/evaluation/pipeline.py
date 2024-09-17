@@ -8,9 +8,7 @@ from matrix import settings
 from . import nodes
 
 
-def _create_evaluation_pipeline(
-    model: str, evaluation: str, tags: List[str]
-) -> Pipeline:
+def _create_evaluation_pipeline(model: str, evaluation: str) -> Pipeline:
     return pipeline(
         [
             node(
@@ -48,7 +46,7 @@ def _create_evaluation_pipeline(
                 name=f"create_{model}_{evaluation}_evaluation",
             ),
         ],
-        tags=["argowf.fuse", f"argowf.fuse-group.{model}.{evaluation}", *tags],
+        tags=["argowf.fuse", f"argowf.fuse-group.{model}.{evaluation}"],
     )
 
 
@@ -72,9 +70,7 @@ def create_pipeline(**kwargs) -> Pipeline:
         for evaluation in settings.DYNAMIC_PIPELINES_MAPPING.get("evaluation"):
             pipes.append(
                 pipeline(
-                    _create_evaluation_pipeline(
-                        model, evaluation["evaluation_name"], evaluation["tags"]
-                    ),
+                    _create_evaluation_pipeline(model, evaluation["evaluation_name"]),
                     tags=model,
                 )
             )

@@ -69,26 +69,14 @@ DYNAMIC_PIPELINES_MAPPING = {
         {"model_name": "xg_synth", "num_shards": 1},
     ],
     "evaluation": [
-        # {"evaluation_name": "simple_ground_truth_classification", "tags": []},
-        # {"evaluation_name": "continuous_ground_truth_classification", "tags": []},
-        # {"evaluation_name": "disease_centric_matrix", "tags": []},
-        # {"evaluation_name": "disease_specific_ranking", "tags": []},
-        {
-            "evaluation_name": "simple_ground_truth_classification_time_split",
-            "tags": ["time_split"],
-        },
-        {
-            "evaluation_name": "continuous_ground_truth_classification_time_split",
-            "tags": ["time_split"],
-        },
-        {
-            "evaluation_name": "disease_centric_matrix_time_split",
-            "tags": ["time_split"],
-        },
-        {
-            "evaluation_name": "disease_specific_ranking_time_split",
-            "tags": ["time_split"],
-        },
+        {"evaluation_name": "simple_ground_truth_classification"},
+        {"evaluation_name": "continuous_ground_truth_classification"},
+        {"evaluation_name": "disease_centric_matrix"},
+        {"evaluation_name": "disease_specific_ranking"},
+        {"evaluation_name": "simple_ground_truth_classification_time_split"},
+        {"evaluation_name": "continuous_ground_truth_classification_time_split"},
+        {"evaluation_name": "disease_centric_matrix_time_split"},
+        {"evaluation_name": "disease_specific_ranking_time_split"},
     ],
 }
 
