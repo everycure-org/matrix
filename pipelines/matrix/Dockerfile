@@ -28,6 +28,7 @@ ENV PATH=/app/.venv/bin:$PATH
 COPY conf/base/spark.yml conf/base/spark.yml
 COPY scripts/maven-deps.py maven-deps.py
 RUN python maven-deps.py
+ADD gcs-connector-hadoop3-2.2.2-shaded.jar .
 
 # Set git commit sha as env variable, useful for tracing back code to data
 ARG GIT_SHA
