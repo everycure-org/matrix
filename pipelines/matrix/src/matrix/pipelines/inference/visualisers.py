@@ -3,13 +3,12 @@ from abc import ABC, abstractmethod
 from typing import List, Type
 import pandas as pd
 import numpy as np
-import seaborn as sns
 import matplotlib.pyplot as plt
 from ..modelling.model import ModelWrapper
 
 
-def create_kdeplot(scores: pd.DataFrame, infer_type: str):
-    """Create visualisations based on the treat scores and store them in GCS/MLFlow.
+def create_kdeplot(scores: pd.DataFrame, infer_type: str) -> plt.figure:
+    """Create visualisations based on the treat scores.
 
     Args:
         scores: treat scores generated during the inference.
