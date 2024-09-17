@@ -1,4 +1,5 @@
 """Module with nodes for evaluation."""
+import logging
 from tqdm import tqdm
 from typing import List, Dict, Union
 
@@ -15,6 +16,9 @@ from matrix.datasets.graph import KnowledgeGraph
 from matrix.pipelines.modelling.nodes import apply_transformers
 from matrix.pipelines.evaluation.evaluation import Evaluation
 from matrix.pipelines.modelling.model import ModelWrapper
+
+
+logger = logging.getLogger(__name__)
 
 
 @has_schema(
@@ -95,11 +99,24 @@ def make_batch_predictions(
     def process_batch(batch: pd.DataFrame) -> pd.DataFrame:
         # Collect embedding vectors
         batch["source_embedding"] = batch.apply(
-            lambda row: graph.get_embedding(row.source), axis=1
+            lambda row: graph.get_embedding(row.source, default=pd.NA), axis=1
         )
         batch["target_embedding"] = batch.apply(
-            lambda row: graph.get_embedding(row.target), axis=1
+            lambda row: graph.get_embedding(row.target, default=pd.NA), axis=1
         )
+
+        # Retrieve rows with null embeddings
+        # NOTE: It's possible node embeddings could be missing because of two possible
+        # scenarios. The CURIE does not exist in the KG, or we've not included the curie
+        # as part of our pre-filtering step. We need to introduce a mechanism that allows
+        # for enriching a table with embeddings from Neo4J
+        # https://github.com/everycure-org/matrix/issues/409
+        removed = batch[
+            batch["source_embedding"].isna() | batch["target_embedding"].isna()
+        ]
+        if len(removed.index) > 0:
+            logger.warning(f"Dropped {len(removed.index)} pairs during generation!")
+            logger.warning(removed)
 
         # drop rows without source/target embeddings
         batch = batch.dropna(subset=["source_embedding", "target_embedding"])
