@@ -25,28 +25,28 @@ def _create_evaluation_pipeline(
                 name=f"create_{model}_{evaluation}_evaluation_pairs",
                 tags=["create_eval_pairs"],
             ),
-            # node(
-            #     func=nodes.make_test_predictions,
-            #     inputs=[
-            #         "modelling.feat.rtx_kg2",
-            #         f"evaluation.{model}.{evaluation}.prm.pairs",
-            #         f"modelling.{model}.model_input.transformers",
-            #         f"modelling.{model}.models.model",
-            #         f"params:modelling.{model}.model_options.model_tuning_args.features",
-            #         "params:evaluation.score_col_name",
-            #     ],
-            #     outputs=f"evaluation.{model}.{evaluation}.model_output.predictions",
-            #     name=f"create_{model}_{evaluation}_model_predictions",
-            # ),
-            # node(
-            #     func=nodes.evaluate_test_predictions,
-            #     inputs=[
-            #         f"evaluation.{model}.{evaluation}.model_output.predictions",
-            #         f"params:evaluation.{evaluation}.evaluation_options.evaluation",
-            #     ],
-            #     outputs=f"evaluation.{model}.{evaluation}.reporting.evaluation",
-            #     name=f"create_{model}_{evaluation}_evaluation",
-            # ),
+            node(
+                func=nodes.make_test_predictions,
+                inputs=[
+                    "modelling.feat.rtx_kg2",
+                    f"evaluation.{model}.{evaluation}.prm.pairs",
+                    f"modelling.{model}.model_input.transformers",
+                    f"modelling.{model}.models.model",
+                    f"params:modelling.{model}.model_options.model_tuning_args.features",
+                    "params:evaluation.score_col_name",
+                ],
+                outputs=f"evaluation.{model}.{evaluation}.model_output.predictions",
+                name=f"create_{model}_{evaluation}_model_predictions",
+            ),
+            node(
+                func=nodes.evaluate_test_predictions,
+                inputs=[
+                    f"evaluation.{model}.{evaluation}.model_output.predictions",
+                    f"params:evaluation.{evaluation}.evaluation_options.evaluation",
+                ],
+                outputs=f"evaluation.{model}.{evaluation}.reporting.evaluation",
+                name=f"create_{model}_{evaluation}_evaluation",
+            ),
         ],
         tags=["argowf.fuse", f"argowf.fuse-group.{model}.{evaluation}", *tags],
     )
