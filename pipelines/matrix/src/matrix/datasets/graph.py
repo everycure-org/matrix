@@ -3,11 +3,15 @@
 Module containing knowledge graph representation and utilities.
 """
 import pandas as pd
+import logging
 
 from kedro_datasets.pandas import ParquetDataset
 
-from typing import Any, Dict, Iterator, List, Set
+from typing import Any, Dict, List
 from kedro.io.core import Version
+
+
+logger = logging.getLogger(__name__)
 
 
 class KnowledgeGraph:
@@ -29,6 +33,21 @@ class KnowledgeGraph:
         self._drug_nodes = list(nodes[nodes["is_drug"]]["id"])
         self._disease_nodes = list(nodes[nodes["is_disease"]]["id"])
         self._embeddings = dict(zip(nodes["id"], nodes["topological_embedding"]))
+
+    def get_embedding(self, node_id: str):
+        """Retrieves embedding for node with the ID.
+
+        Args:
+            node_id: Node ID.
+
+        Returns:
+            Embedding or None if not found
+        """
+        res = self._embeddings.get(node_id, None)
+        if res is None:
+            logger.warning(f"Embedding for node with id '{node_id}' not found!")
+
+        return res
 
     def flags_to_ids(self, flags: List[str]) -> List[str]:
         """Helper function for extracting nodes from flag columns.
