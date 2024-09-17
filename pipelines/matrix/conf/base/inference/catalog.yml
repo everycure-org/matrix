@@ -4,7 +4,7 @@ _sheets_dataset: &_sheets_dataset
   service_file: conf/local/service-account.json
 
 _pandas_csv: &_pandas_csv
-  type:  pandas.CSVDataset
+  type:  pandas.CSVDatasetπ
 
 _pandas_parquet: &_pandas_parquet
   type: pandas.ParquetDataset
@@ -48,7 +48,7 @@ inference.model_input.drug_disease_pairs:
   filepath: ${globals:paths.tmp}/drug_disease_pairs.
 
 # NOTE: Sheet is created for ech model
-inference.{model}.predictions:
+inference.{model}.model_output.predictions:
   <<: [*_sheets_dataset]
   save_args:
     overwrite: True
@@ -58,7 +58,7 @@ inference.{model}.predictions:
     sheet_name: "{model}_predictions"
     columns: ["treat score","source", "target"]
 
-inference.{model}.report:
+inference.{model}.reporting.report:
   <<: [*_sheets_dataset]
   save_args:
     overwrite: True
@@ -76,13 +76,9 @@ inference.int.disease_list:
   <<: *_pandas_csv
   filepath: ${globals:paths.tmp}/disease_list_infer
 
-inference.{model}.visualisations:
+inference.{model}.reporting.visualisations:
   type: kedro_mlflow.io.artifacts.MlflowArtifactDataset
   artifact_path: "histogram"
   dataset:
     type: matplotlib.MatplotlibWriter
     filepath: ${globals:paths.tmp}/{model}/histogram_plot.png  
-
-test_model:
-  type: pickle.PickleDataset
-  filepath: data/tmp/xg_ensemble/model.pkl
