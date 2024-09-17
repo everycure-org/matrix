@@ -101,6 +101,9 @@ def make_batch_predictions(
             lambda row: graph.get_embedding(row.target), axis=1
         )
 
+        # drop rows without source/target embeddings
+        batch = batch.dropna(subset=["source_embedding", "target_embedding"])
+
         # Apply transformers to data
         transformed = apply_transformers(batch, transformers)
 
