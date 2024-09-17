@@ -41,7 +41,7 @@ build_argo_template() {
     echo "Building Argo workflow template..."
     # TODO duplicated image name reference from Makefile, should clean up
     IMAGE_NAME="us-central1-docker.pkg.dev/mtrx-hub-dev-3of/matrix-images/matrix"
-    .venv/bin/python ./src/matrix/argo.py generate-argo-config $IMAGE_NAME $USERNAME $NAMESPACE
+    .venv/bin/python ./src/matrix/argo.py generate-argo-config $IMAGE_NAME $RUN_NAME $USERNAME $NAMESPACE
 }
 
 # Function to create or verify namespace
@@ -65,7 +65,7 @@ submit_workflow() {
     #   -p openai_endpoint=https://api.openai.com/v1 \
     echo "Submitting Argo workflow..."
     JOB_NAME=$(argo submit -n $NAMESPACE --from wftmpl/matrix \
-      -p run_name=$(get_experiment_name) \
+      -p run_name=$RUN_NAME \
       -l submit-from-ui=false \
       --entrypoint __default__ \
       -o json \
@@ -129,10 +129,11 @@ done
 
 DEFAULT_USERNAME=$USER
 DEFAULT_NAMESPACE="dev-$DEFAULT_USERNAME"
+DEFAULT_RUN_NAME=$(get_experiment_name)
 # After parsing, set defaults if not provided
 USERNAME="${USERNAME:-$DEFAULT_USERNAME}"
 NAMESPACE="${NAMESPACE:-$DEFAULT_NAMESPACE}"
-
+RUN_NAME="${RUN_NAME:-$DEFAULT_RUN_NAME}"
 echo "Running with the following parameters:"
 echo "======================================"
 echo "Username: $USERNAME"
