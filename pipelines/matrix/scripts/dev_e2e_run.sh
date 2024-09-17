@@ -98,7 +98,11 @@ main() {
 while [[ $# -gt 0 ]]; do
     case $1 in
         --username)
-            USERNAME="${2:-$USER}"
+            USERNAME="$2"
+            shift 2
+            ;;
+        --namespace)
+            NAMESPACE="$2"
             shift 2
             ;;
         --run-name)
@@ -119,6 +123,19 @@ while [[ $# -gt 0 ]]; do
             ;;
     esac
 done
+
+DEFAULT_USERNAME=$USER
+DEFAULT_NAMESPACE="dev-$DEFAULT_USERNAME"
+# After parsing, set defaults if not provided
+USERNAME="${USERNAME:-$DEFAULT_USERNAME}"
+NAMESPACE="${NAMESPACE:-$DEFAULT_NAMESPACE}"
+
+echo "Running with the following parameters:"
+echo "======================================"
+echo "Username: $USERNAME"
+echo "Namespace: $NAMESPACE"
+echo "Run name: $(get_experiment_name)"
+exit 1
 
 # Run the main function
 main
