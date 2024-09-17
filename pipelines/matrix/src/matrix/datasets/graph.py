@@ -34,16 +34,16 @@ class KnowledgeGraph:
         self._disease_nodes = list(nodes[nodes["is_disease"]]["id"])
         self._embeddings = dict(zip(nodes["id"], nodes["topological_embedding"]))
 
-    def get_embedding(self, node_id: str):
+    def get_embedding(self, node_id: str, default: Any = None):
         """Retrieves embedding for node with the ID.
 
         Args:
             node_id: Node ID.
-
+            default: default value to return
         Returns:
             Embedding or None if not found
         """
-        res = self._embeddings.get(node_id, None)
+        res = self._embeddings.get(node_id, default)
         if res is None:
             logger.warning(f"Embedding for node with id '{node_id}' not found!")
 
