@@ -37,6 +37,16 @@ def _create_matrix_generation_pipeline(model: str) -> Pipeline:
                 outputs=f"matrix_generation.{model}.reporting.matrix_report",
                 name=f"generate_{model}_report",
             ),
+            node(
+                func=nodes.make_datashader_plot,
+                inputs=[
+                    f"matrix_generation.{model}.model_output.sorted_matrix_predictions",
+                    "params:evaluation.score_col_name",
+                    "params:matrix_generation.matrix_generation_options.datashader_cmap",
+                ],
+                outputs=f"matrix_generation.{model}.reporting.heatmap_plot",
+                name=f"generate_{model}_datashader_plot",
+            ),
         ],
     )
 
