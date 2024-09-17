@@ -86,7 +86,7 @@ get_experiment_name() {
 main() {
     set -xe
     check_dependencies
-    #build_push_docker
+    build_push_docker
     build_argo_template
     # ensure_namespace NOTE: Currently executing in argo
     apply_argo_template
@@ -139,7 +139,6 @@ echo "======================================"
 echo "Username: $USERNAME"
 echo "Namespace: $NAMESPACE"
 echo "Run name: $(get_experiment_name)"
-exit 1
 
 # Run the main function
 main
