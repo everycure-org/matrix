@@ -6,6 +6,9 @@ from typing import List, Dict, Union
 from sklearn.impute._base import _BaseImputer
 
 import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib.figure import Figure
 
 from refit.v1.core.inject import inject_object
 from refit.v1.core.inline_has_schema import has_schema
@@ -252,3 +255,67 @@ def generate_report(
     top_pairs = top_pairs[columns_order]
 
     return top_pairs
+
+
+def make_datashader_plot(
+    matrix: pd.DataFrame,
+    score_col_name: str,
+    cmap: any,
+    random_state: int = 42,
+) -> Figure:
+    """Generates datashader heatmap for the matrix scores.
+
+    Args:
+        matrix: Matrix dataframe with treat scores.
+        score_col_name: Name of column containing the treat scores.
+        cmap: Colormap for heatmap.
+        random_state: Random seed for row/column shuffling. Defaults to 42.
+
+    Returns:
+        Matplotlib figure containing the heatmap.
+    """
+    # Adding coordinates
+    drug_lst = list(matrix["source"].unique())
+    drug_id_to_index = {_id: n for n, _id in enumerate(drug_lst)}
+
+    disease_lst = list(matrix["target"].unique())
+    disease_id_to_index = {_id: n for n, _id in enumerate(disease_lst)}
+
+    matrix["y_coord"] = matrix["source"].apply(lambda x: drug_id_to_index[x])
+    matrix["x_coord"] = matrix["target"].apply(lambda x: disease_id_to_index[x])
+
+    # Create 2D array from full_matrix
+    matrix_2d = np.zeros((len(disease_lst), len(drug_lst)))
+
+    for _, row in tqdm(matrix.iterrows(), total=len(matrix), desc="Creating 2D array"):
+        matrix_2d[row["x_coord"]][row["y_coord"]] = row[score_col_name]
+
+    # Shuffle the order of rows and columns in matrix_2d
+    np.random.seed(random_state)
+    shuffled_row_indices = np.random.permutation(matrix_2d.shape[0])
+    shuffled_col_indices = np.random.permutation(matrix_2d.shape[1])
+    matrix_2d_shuffled = matrix_2d[shuffled_row_indices][:, shuffled_col_indices]
+
+    # Image
+    da = xr.DataArray(
+        matrix_2d_shuffled,
+        coords=[
+            ("y", np.linspace(0, 10, matrix_2d_shuffled.shape[0])),
+            ("x", np.linspace(0, 10, matrix_2d_shuffled.shape[1])),
+        ],
+    )
+    img = ds.tf.shade(
+        ds.Canvas(plot_height=1000, plot_width=3000).raster(da), cmap=cmap, how="log"
+    )
+
+    # Create matplotlib figure
+    fig, ax = plt.subplots(figsize=(20, 8))
+    ax.imshow(img.to_pil())
+    ax.set_xlabel("Diseases")
+    ax.set_ylabel("Drugs")
+
+    # Turn off axis ticks but keep labels
+    ax.set_xticks([])
+    ax.set_yticks([])
+
+    return fig

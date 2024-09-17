@@ -32,3 +32,4 @@ pygsheets==2.0.6
 typer
 pytest-testmon
 pytest-mock
+datashader
