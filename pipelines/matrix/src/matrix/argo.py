@@ -54,6 +54,7 @@ def generate_argo_config(image, run_name, image_tag, namespace: str):
 
     output = template.render(
         package_name=package_name,
+        run_name=run_name,
         pipes=pipes,
         image=image,
         image_tag=image_tag,

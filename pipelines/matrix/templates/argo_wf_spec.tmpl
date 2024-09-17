@@ -3,7 +3,7 @@ apiVersion: argoproj.io/v1alpha1
 kind: WorkflowTemplate
 metadata:
   namespace: {{namespace}}
-  name: matrix
+  name: {{run_name}}
 spec:
   workflowMetadata:
     labels:
@@ -22,7 +22,7 @@ spec:
       #  value: "Default"
       # we use the image tag as the release version as a default
       - name: run_name
-        value: "{{ image_tag }}"
+        value: "{{ run_name }}"
       - name: neo4j_host
         value: "bolt://neo4j.neo4j.svc.cluster.local:7687"
       - name: mlflow_endpoint

@@ -64,7 +64,7 @@ submit_workflow() {
 
     #   -p openai_endpoint=https://api.openai.com/v1 \
     echo "Submitting Argo workflow..."
-    JOB_NAME=$(argo submit -n $NAMESPACE --from wftmpl/matrix \
+    JOB_NAME=$(argo submit --name $RUN_NAME -n $NAMESPACE --from wftmpl/matrix \
       -p run_name=$RUN_NAME \
       -l submit-from-ui=false \
       --entrypoint __default__ \
