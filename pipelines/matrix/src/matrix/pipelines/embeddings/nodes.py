@@ -139,7 +139,6 @@ def batch(endpoint, model, api_key, batch):
         return [item["embedding"] for item in response.json()["data"]]
     else:
         if response.status_code in [429, 500]:
-            print(f"rate limit")
             raise RateLimitException()
 
         print("error", response.content, response.status_code)
