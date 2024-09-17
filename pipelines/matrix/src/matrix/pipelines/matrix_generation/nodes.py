@@ -190,13 +190,17 @@ def generate_report(
         Dataframe containing the top pairs with additional information for the drugs and diseases.
     """
     # Select the top n_reporting rows
-    top_pairs = data.head(n_reporting)
+    top_pairs = data.head(n_reporting).copy()
+
+    # Generate curie to name dictionaries
+    drug_curie_to_name = {row["curie"]: row["name"] for _, row in drugs.iterrows()}
+    disease_curie_to_name = {
+        row["curie"]: row["name"] for _, row in diseases.iterrows()
+    }
 
     # Add additional information for drugs and diseases
-    get_drug_name = lambda x: drugs[drugs["curie"].eq(x)]["name"].item()
-    top_pairs["drug_name"] = top_pairs["source"].apply(get_drug_name)
-    get_disease_name = lambda x: diseases[diseases["curie"].eq(x)]["name"].item()
-    top_pairs["disease_name"] = top_pairs["target"].apply(get_disease_name)
+    top_pairs["drug_name"] = top_pairs["source"].map(drug_curie_to_name)
+    top_pairs["disease_name"] = top_pairs["target"].map(disease_curie_to_name)
 
     # Flag known positives and negatives
     known_pair_is_pos = known_pairs["y"].eq(1)
