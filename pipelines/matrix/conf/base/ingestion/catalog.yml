@@ -279,7 +279,7 @@ ingestion.raw.drug_list:
 ingestion.raw.robokop.nodes@spark:
   <<: *_layer_raw
   type: matrix.datasets.gcp.LazySparkDataset
-  filepath: ${globals:paths.raw}/robokop-kg/${globals:data_sources.robokop.version}/nodes.tsv
+  filepath: ${globals:paths.new_raw}/KGs/robokop-kg/${globals:data_sources.robokop.version}/nodes.tsv
   file_format: csv
   load_args:
     sep: "\t"
@@ -288,7 +288,7 @@ ingestion.raw.robokop.nodes@spark:
 
 ingestion.raw.robokop.nodes@pandas:
   <<: [*_pandas_csv, *_layer_raw]
-  filepath: ${globals:paths.raw}/robokop-kg/${globals:data_sources.robokop.version}/nodes.tsv
+  filepath: ${globals:paths.new_raw}/KGs/robokop-kg/${globals:data_sources.robokop.version}/nodes.tsv
   save_args:
     sep: "\t"
     header: true
@@ -299,7 +299,7 @@ ingestion.raw.robokop.nodes@pandas:
 ingestion.raw.robokop.edges@spark:
   <<: *_layer_raw
   type: matrix.datasets.gcp.LazySparkDataset
-  filepath: ${globals:paths.raw}/robokop-kg/${globals:data_sources.robokop.version}/edges.tsv
+  filepath: ${globals:paths.new_raw}/KGs/robokop-kg/${globals:data_sources.robokop.version}/edges.tsv
   file_format: csv
   load_args:
     sep: "\t"
@@ -308,7 +308,7 @@ ingestion.raw.robokop.edges@spark:
 
 ingestion.raw.robokop.edges@pandas:
   <<: [*_pandas_csv, *_layer_raw]
-  filepath: ${globals:paths.raw}/robokop-kg/${globals:data_sources.robokop.version}/edges.tsv
+  filepath: ${globals:paths.new_raw}/KGs/robokop-kg/${globals:data_sources.robokop.version}/edges.tsv
   save_args:
     sep: "\t"
     header: true
