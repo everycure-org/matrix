@@ -7,8 +7,6 @@ router = APIRouter(prefix="", tags=["synonymize"])
 
 synonymizer = NodeSynonymizer()
 
-from neo4j import GraphDatabase
-
 
 class Search(BaseModel):
     """Model to searches."""
