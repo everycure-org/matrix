@@ -47,16 +47,19 @@ def resolve_input_sheet(
         return "Drug-disease specific predictions", drug_list, disease_list
 
 
-def visualise_treat_scores(scores: pd.DataFrame, infer_type: str) -> Figure:
+def visualise_treat_scores(
+    scores: pd.DataFrame, infer_type: str, col_name: str
+) -> Figure:
     """Create visualisations based on the treat scores and store them in GCS/MLFlow.
 
     Args:
         scores: treat scores generated during the inference.
         infer_type: type of inference requested.
+        col_name: name of the column with treat scores
 
     Returns:
         figure: figure saved locally and in MLFlow
     """
     # FUTURE: add more visualisations
-    kde_plot = visualisers.create_kdeplot(scores, infer_type)
+    kde_plot = visualisers.create_kdeplot(scores, infer_type, col_name)
     return kde_plot

@@ -1,24 +1,26 @@
 """Utils for inference running."""
 from abc import ABC, abstractmethod
 from typing import List, Type
+import seaborn as sns
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 from ..modelling.model import ModelWrapper
 
 
-def create_kdeplot(scores: pd.DataFrame, infer_type: str) -> plt.figure:
+def create_kdeplot(scores: pd.DataFrame, infer_type: str, col_name: str) -> plt.figure:
     """Create visualisations based on the treat scores.
 
     Args:
         scores: treat scores generated during the inference.
         infer_type: type of inference requested.
+        col_name: column name to be used for plots.
 
     Returns:
         figure: figure saved locally and in MLFlow
     """
     fig, ax = plt.subplots(figsize=(10, 10))
-    sns.kdeplot(scores["treat score"])
+    sns.kdeplot(scores[col_name])
     ax.set_title(
         f"Distribution of Treatment Scores; {infer_type}",
         fontsize=20,

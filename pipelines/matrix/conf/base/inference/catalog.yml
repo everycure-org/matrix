@@ -15,17 +15,17 @@ inference.raw.disease_list:
     overwrite: True
     sheet_name: "normalized_disease_list"
     write_columns: &_gsheet_disease_columns
-      -category_class
-      -label
-      -definition
-      -synonyms
-      -subsets
-      -crossreferences
-      -curie
-      -name
+      - category_class
+      - label
+      - definition
+      - synonyms
+      - subsets
+      - crossreferences
+      - curie
+      - name
   load_args:
     sheet_name: "normalized_disease_list"
-    columns: [*_gsheet_disease_columns]
+    columns: *_gsheet_disease_columns
 
 inference.raw.drug_list:
   <<: [*_sheets_dataset]
@@ -33,23 +33,23 @@ inference.raw.drug_list:
     overwrite: True
     sheet_name: "normalized_drug_list"
     write_columns: &_gsheet_drug_columns
-      -single_ID
-      -Name_EMA
-      -Approved_Europe
-      -Name_PMDA
-      -Approved_Japan
-      -Name_Orange_Book
-      -Approved_USA
-      -Available_USA
-      -ID_Label
-      -Therapy_Name
-      -Combination_Therapy
-      -Ingredient_IDs
-      -curie
-      -name
+      - single_ID
+      - Name_EMA
+      - Approved_Europe
+      - Name_PMDA
+      - Approved_Japan
+      - Name_Orange_Book
+      - Approved_USA 
+      - Available_USA
+      - ID_Label
+      - Therapy_Name
+      - Combination_Therapy
+      - Ingredient_IDs
+      - curie
+      - name
   load_args:
     sheet_name: "normalized_drug_list"
-    columns: [*_gsheet_drug_columns]
+    columns: *_gsheet_drug_columns
 
 inference.raw.normalized_inputs:
   <<: [*_sheets_dataset]
@@ -67,28 +67,7 @@ inference.int.request_type:
 
 inference.model_input.drug_disease_pairs:
   <<: [*_pandas_parquet]
-  filepath: ${globals:paths.tmp}/drug_disease_pairs.
-
-# NOTE: Sheet is created for ech model
-inference.{model}.model_output.predictions:
-  <<: [*_sheets_dataset]
-  save_args:
-    overwrite: True
-    sheet_name: "{model}_predictions"
-    write_columns: ["drug", "disease"]
-  load_args:
-    sheet_name: "{model}_predictions"
-    columns: ["treat score","source", "target"]
-
-inference.{model}.reporting.report:
-  <<: [*_sheets_dataset]
-  save_args:
-    overwrite: True
-    sheet_name: "{model}_predictions"
-    write_columns: ["source", "drug name","target","disease name",'treat score']
-  load_args:
-    sheet_name: "{model}_predictions"
-    columns: ["treat score"]
+  filepath: ${globals:paths.tmp}/drug_disease_pairs
 
 inference.int.drug_list:
   <<: *_pandas_csv
@@ -98,7 +77,36 @@ inference.int.disease_list:
   <<: *_pandas_csv
   filepath: ${globals:paths.tmp}/disease_list_infer
 
-inference.{model}.reporting.visualisations:
+
+# NOTE: Sheet is created for ech model
+"inference.{model}.model_output.predictions":
+  <<: [*_sheets_dataset]
+  save_args:
+    overwrite: True
+    sheet_name: "{model}_predictions"
+    write_columns: ["source","target","treat score"]
+  load_args:
+    sheet_name: "{model}_predictions"
+    columns: ["source","target","treat score"]
+
+"inference.{model}.reporting.report":
+  <<: [*_sheets_dataset]
+  save_args:
+    overwrite: True
+    sheet_name: "{model}_report"
+    write_columns:
+      - source
+      - target
+      - drug_id
+      - drug_name
+      - disease_id
+      - disease_name
+      - treat_score
+      - is_known_positive
+      - is_known_negative
+  #  
+ #   ["source", "drug_name","target","disease_name",'treat score']
+"inference.{model}.reporting.visualisations":
   type: kedro_mlflow.io.artifacts.MlflowArtifactDataset
   artifact_path: "histogram"
   dataset:
