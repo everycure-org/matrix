@@ -37,7 +37,6 @@ from matrix.pipelines.inference.pipeline import (
 )
 
 
-
 def register_pipelines() -> Dict[str, Pipeline]:
     """Register the project's pipelines.
 
