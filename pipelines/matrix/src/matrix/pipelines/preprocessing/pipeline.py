@@ -56,8 +56,6 @@ def create_pipeline(**kwargs) -> Pipeline:
                 inputs=[
                     "preprocessing.raw.clinical_trials_data",
                     "params:preprocessing.synonymizer_endpoint",
-                    "params:modelling.drug_types",
-                    "params:modelling.disease_types",
                 ],
                 outputs="preprocessing.int.mapped_clinical_trials_data",
                 name="mapped_clinical_trials_data",
@@ -78,7 +76,6 @@ def create_pipeline(**kwargs) -> Pipeline:
                 inputs=[
                     "preprocessing.raw.drug_list",
                     "params:preprocessing.synonymizer_endpoint",
-                    "params:modelling.drug_types",
                 ],
                 outputs="ingestion.raw.drug_list",
                 name="resolve_drug_list",
@@ -89,7 +86,6 @@ def create_pipeline(**kwargs) -> Pipeline:
                 inputs=[
                     "preprocessing.raw.disease_list",
                     "params:preprocessing.synonymizer_endpoint",
-                    "params:modelling.disease_types",
                 ],
                 outputs="ingestion.raw.disease_list",
                 name="resolve_disease_list",

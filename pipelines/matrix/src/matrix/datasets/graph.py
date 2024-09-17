@@ -56,6 +56,9 @@ class KnowledgeGraph:
             Embedding or None if not found
         """
         logger.warning(f"Embedding for node with id '{node_id}' not found!")
+        res = self._embeddings.get(node_id, None)
+        if res is None:
+            raise RuntimeError()
         return self._embeddings.get(node_id, None)
 
     def get_node_attribute(self, node_id: str, col_name: str) -> any:
