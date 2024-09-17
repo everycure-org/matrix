@@ -148,7 +148,7 @@ git-crypt unlock
 Re-enter the passphrase you used to create the public key to unlock. 
 
 You can lock the key by running 
-```git-crypt lock``` 
+```git-crypt lock -a``` 
 
 ## General setup
 
