@@ -12,3 +12,15 @@ matrix_generation.prm.matrix_pairs:
 "matrix_generation.{model}.reporting.matrix_report":
   filepath: ${globals:paths.reporting}/{model}/matrix_report
   type: pandas.CSVDataset
+
+"matrix_generation.{model}.reporting.matrix_datashader_plot":
+  embeddings.reporting.topological_pca_plot:
+  type: kedro_mlflow.io.artifacts.MlflowArtifactDataset
+  artifact_path: matrix
+  dataset:
+    # NOTE: Data needs to be stored locally for MLFlow
+    # to be able to upload to GCS. The ML Tracking server
+    # is setup to not serve artifacts, thereby interacting
+    # directly with GCS as a result.
+    type: kedro_datasets.matplotlib.MatplotlibWriter
+    filepath: ${globals:paths.tmp}/{model}/datashader_plot.png
