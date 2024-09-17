@@ -237,7 +237,7 @@ ingestion.raw.ec_medical_team.edges@spark:
 
 ingestion.raw.clinical_trials_data:
   <<: [*_layer_int, *_pandas_csv]
-  filepath: ${globals:paths.raw}/clinical_trials_data/${globals:data_sources.clinical-trial-data.version}/data.csv
+  filepath: ${globals:paths.raw}/clinical_trials_data/${globals:data_sources.clinical-trial-data.version}/data.tsv
 
 ingestion.int.ec_medical_team.nodes:
   <<: [*_spark_parquet, *_layer_int]
