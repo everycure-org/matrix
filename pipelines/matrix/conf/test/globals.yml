@@ -7,6 +7,7 @@ openai:
 
 paths:
   raw: data/test/01_raw
+  new_raw: data/test/01_raw
   int: data/test/02_intermediate
   prm: data/test/03_primary
   feat: data/test/04_feature
