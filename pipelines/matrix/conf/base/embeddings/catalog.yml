@@ -89,16 +89,8 @@ embeddings.feat.nodes:
       
 
 embeddings.reporting.loss:
-  type: kedro_mlflow.io.artifacts.MlflowArtifactDataset
-  artifact_path: topological
-  dataset:
-    # NOTE: Data needs to be stored locally for MLFlow
-    # to be able to upload to GCS. The ML Tracking server
-    # is setup to not serve artifacts, thereby interacting
-    # directly with GCS as a result.
-    type: kedro_datasets.matplotlib.MatplotlibWriter
-    filepath: ${globals:paths.tmp}/convergence_plot.png
-
+  type: kedro_datasets.matplotlib.MatplotlibWriter
+  filepath: ${globals:paths.tmp}/convergence_plot.png
 
 embeddings.feat.edges:
   <<: *_spark_parquet
@@ -109,12 +101,5 @@ embeddings.reporting.topological_pca:
   filepath: ${globals:paths.reporting}/topological_pca
 
 embeddings.reporting.topological_pca_plot:
-  type: kedro_mlflow.io.artifacts.MlflowArtifactDataset
-  artifact_path: topological
-  dataset:
-    # NOTE: Data needs to be stored locally for MLFlow
-    # to be able to upload to GCS. The ML Tracking server
-    # is setup to not serve artifacts, thereby interacting
-    # directly with GCS as a result.
-    type: kedro_datasets.matplotlib.MatplotlibWriter
-    filepath: ${globals:paths.tmp}/pca_plot.png
+  type: kedro_datasets.matplotlib.MatplotlibWriter
+  filepath: ${globals:paths.tmp}/pca_plot.png
