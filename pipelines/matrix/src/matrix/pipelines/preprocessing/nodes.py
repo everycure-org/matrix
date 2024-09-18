@@ -253,9 +253,10 @@ def map_name_to_curie(
 
     # Validate correct labels
     # NOTE: This is a temp. solution that ensures clinical trails data
-    # only passes on data as contaiend by our pre-filtering in the modelling pipeline
+    # only passes on data as containend by our pre-filtering in the modelling pipeline
     # we aim to refine our evaluation approach as part of a new PR after which
     # this can be removed.
+    # https://github.com/everycure-org/matrix/issues/313
     df["label_included"] = (df["drug_kg_label"].isin(drug_types)) & (
         df["disease_kg_label"].isin(disease_types)
     )
