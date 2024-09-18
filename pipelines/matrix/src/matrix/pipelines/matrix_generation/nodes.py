@@ -28,8 +28,13 @@ def enrich_embeddings(
     drugs: DataFrame,
     diseases: DataFrame,
 ) -> DataFrame:
-    # Construct join here
-    # FUTURE: Output second dataframe with list entries
+    """Function to enrich drug and disease list with embeddings.
+
+    Args:
+        nodes: Dataframe with node embeddings
+        drugs: List of drugs
+        diseases: List of diseases
+    """
     return (
         drugs.withColumn("is_drug", F.lit(True))
         .unionByName(
@@ -126,17 +131,17 @@ def make_batch_predictions(
         )
 
         # Retrieve rows with null embeddings
-        # NOTE: It's possible node embeddings could be missing because of two possible
-        # scenarios. The CURIE does not exist in the KG, or we've not included the curie
-        # as part of our pre-filtering step. We need to introduce a mechanism that allows
-        # for enriching a table with embeddings from Neo4J
+        # NOTE: This only happens in a rare scenario where the node synonymizer
+        # provided an identifier for a node that does _not_ exist in our KG.
         # https://github.com/everycure-org/matrix/issues/409
         removed = batch[
             batch["source_embedding"].isna() | batch["target_embedding"].isna()
         ]
         if len(removed.index) > 0:
             logger.warning(f"Dropped {len(removed.index)} pairs during generation!")
-            logger.warning(removed)
+            logger.warning(
+                "Dropped: %s", ",".join([f"({r.source}, {r.target}" for r in removed])
+            )
 
         # drop rows without source/target embeddings
         batch = batch.dropna(subset=["source_embedding", "target_embedding"])
