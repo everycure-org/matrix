@@ -29,6 +29,23 @@ class DrugDiseasePairGenerator(abc.ABC):
         """
         ...
 
+    @staticmethod
+    def _remove_pairs(df: pd.DataFrame, pairs: pd.DataFrame) -> pd.DataFrame:
+        """A helper function to remove pairs from a given DataFrame.
+
+        Args:
+            df: DataFrame to remove pairs from.
+            pairs: DataFrame with pairs to remove.
+
+        Returns:
+            DataFrame with train pairs removed.
+        """
+        pairs_set = set(zip(pairs["source"], pairs["target"]))
+        is_remove = df.apply(
+            lambda row: (row["source"], row["target"]) in pairs_set, axis=1
+        )
+        return df[~is_remove]
+
 
 class SingleLabelPairGenerator(DrugDiseasePairGenerator):
     """Class representing generators outputting drug-disease pairs with a single label."""
@@ -273,23 +290,6 @@ class MatrixTestDiseases(DrugDiseasePairGenerator):
         """
         self._drug_axis_flags = drugs_lst_flags
 
-    @staticmethod
-    def _remove_pairs(df: pd.DataFrame, pairs: pd.DataFrame) -> pd.DataFrame:
-        """A helper function to remove pairs from a given DataFrame.
-
-        Args:
-            df: DataFrame to remove pairs from.
-            pairs: DataFrame with pairs to remove.
-
-        Returns:
-            DataFrame with train pairs removed.
-        """
-        pairs_set = set(zip(pairs["source"], pairs["target"]))
-        is_remove = df.apply(
-            lambda row: (row["source"], row["target"]) in pairs_set, axis=1
-        )
-        return df[~is_remove]
-
     def _give_disease_centric_matrix(
         self,
         test_pos_pairs: pd.DataFrame,
@@ -391,9 +391,7 @@ class TimeSplitGroundTruthTestPairs(DrugDiseasePairGenerator):
         train_pairs = known_pairs[~is_test]
 
         # Remove train pairs from the clinical trail data
-        clinical_trial_data = self._remove_train_pairs(
-            clinical_trials_data, train_pairs
-        )
+        clinical_trial_data = self._remove_pairs(clinical_trials_data, train_pairs)
 
         # Check if column 'y' has both 0 and 1 values
         if clinical_trial_data["y"].nunique() != 2:
@@ -402,7 +400,7 @@ class TimeSplitGroundTruthTestPairs(DrugDiseasePairGenerator):
             return clinical_trial_data
 
 
-class TimeSplitMatrixTestDiseases(TimeSplitGroundTruthTestPairs):
+class TimeSplitMatrixTestDiseases(MatrixTestDiseases):
     """Data Generator for Time Split Validation. Use the clinical trial data to replace the test ground truth data.
 
     Now 1 in the 'y' column means 'significantly_better' and 0 means 'significantly_worse'.
@@ -473,6 +471,6 @@ class TimeSplitMatrixTestDiseases(TimeSplitGroundTruthTestPairs):
         matrix["y"] = is_in_test_pos.astype(int)
 
         # Remove train pairs
-        filtered_matrix = self._remove_train_pairs(matrix, train_pairs)
+        filtered_matrix = self._remove_pairs(matrix, train_pairs)
 
         return filtered_matrix
