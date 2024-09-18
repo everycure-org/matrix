@@ -187,9 +187,8 @@ def _filter_nodes_missing_tag(
     # Step 4: Handle edge case: If we remove all nodes, we should inform the user
     # and then exit
     if len(filtered_nodes) == 0:
-        console.print(Panel("[bold yellow]All nodes removed. Exiting.[/bold yellow]", 
-                            title="Warning", border_style="yellow"))
+        print("All nodes removed. Exiting.")
         exit(0)
 
-    console.print(f"[blue]Filtered a total of {len(filtered_nodes)} nodes[/blue]")
+    print(f"Filtered a total of {len(filtered_nodes)} nodes")
     return filtered_nodes

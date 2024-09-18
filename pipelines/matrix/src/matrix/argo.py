@@ -29,6 +29,10 @@ def cli() -> None:
 @click.argument("image_tag", required=False, default="latest")
 @click.argument("namespace", required=False, default="argo-workflows")
 def generate_argo_config(image, run_name, image_tag, namespace: str):
+    _generate_argo_config(image, run_name, image_tag, namespace)
+
+
+def _generate_argo_config(image, run_name, image_tag, namespace: str):
     """Function to render Argo pipeline template.
 
     Args:
