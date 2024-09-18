@@ -252,6 +252,10 @@ def map_name_to_curie(
     )
 
     # Validate correct labels
+    # NOTE: This is a temp. solution that ensures clinical trails data
+    # only passes on data as contaiend by our pre-filtering in the modelling pipeline
+    # we aim to refine our evaluation approach as part of a new PR after which
+    # this can be removed.
     df["label_included"] = (df["drug_kg_label"].isin(drug_types)) & (
         df["disease_kg_label"].isin(disease_types)
     )
@@ -341,15 +345,12 @@ def clean_clinical_trial_data(df: pd.DataFrame) -> pd.DataFrame:
     allow_subset=True,
 )
 # @primary_key(primary_key=["single_ID"]) #TODO: re-introduce once the drug list is ready
-def clean_drug_list(
-    drug_df: pd.DataFrame, endpoint: str, drug_types: List[str]
-) -> pd.DataFrame:
+def clean_drug_list(drug_df: pd.DataFrame, endpoint: str) -> pd.DataFrame:
     """Synonymize the drug list and filter out NaNs.
 
     Args:
         drug_df: disease list in a dataframe format.
         endpoint: endpoint of the synonymizer.
-        drug_types: list of drug labels to be validated against.
 
     Returns:
         dataframe with synonymized drug IDs in normalized_curie column.
@@ -377,11 +378,6 @@ def clean_drug_list(
         target_col="name",
         endpoint=endpoint,
     )
-    # Validate correct labels
-    res["label_included"] = res["category"].isin(drug_types)
-
-    # Filter out nodes for which labels are False
-    res = res.loc[(res["label_included"].values == True)]
     return res.loc[~res["curie"].isna()]
 
 
@@ -399,15 +395,12 @@ def clean_drug_list(
     allow_subset=True,
 )
 @primary_key(primary_key=["category_class", "curie"])
-def clean_disease_list(
-    disease_df: pd.DataFrame, endpoint: str, disease_types: List[str]
-) -> pd.DataFrame:
+def clean_disease_list(disease_df: pd.DataFrame, endpoint: str) -> pd.DataFrame:
     """Synonymize the disease list and filter out NaNs.
 
     Args:
         disease_df: disease list in a dataframe format.
         endpoint: endpoint of the synonymizer.
-        disease_types: list of disease labels to be validated against.
 
     Returns:
         dataframe with synonymized disease IDs in normalized_curie column.
@@ -435,9 +428,4 @@ def clean_disease_list(
         target_col="name",
         endpoint=endpoint,
     )
-    # Validate correct labels
-    res["label_included"] = res["category"].isin(disease_types)
-
-    # Filter out nodes for which labels are False
-    res = res.loc[(res["label_included"].values == True)]
     return res.loc[~res["curie"].isna()]

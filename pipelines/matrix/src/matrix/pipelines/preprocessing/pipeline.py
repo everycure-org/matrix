@@ -78,7 +78,6 @@ def create_pipeline(**kwargs) -> Pipeline:
                 inputs=[
                     "preprocessing.raw.drug_list",
                     "params:preprocessing.synonymizer_endpoint",
-                    "params:modelling.drug_types",
                 ],
                 outputs="ingestion.raw.drug_list@pandas",
                 name="resolve_drug_list",
