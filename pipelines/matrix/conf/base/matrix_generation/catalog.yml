@@ -16,11 +16,11 @@ _kg_dataset: &_kg_dataset
 # How to name? This is dataset of drug/diseases w. embeddings
 matrix_generation.feat.nodes@spark:
   <<: *_spark_parquet
-  filepath: ${globals:paths.feat}/rtx_kg2_nodes
+  filepath: ${globals:paths.feat}/matrix_nodes
 
 matrix_generation.feat.nodes@pandas:
   <<: *_kg_dataset
-  filepath: ${globals:paths.feat}/rtx_kg2_nodes
+  filepath: ${globals:paths.feat}/matrix_nodes
 
 matrix_generation.prm.matrix_pairs:
   <<: *_pandas_parquet
