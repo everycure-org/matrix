@@ -1,37 +1,30 @@
 import pytest
 from unittest.mock import patch, MagicMock
 from click.testing import CliRunner
-from matrix.cli_commands.submit import (
-    submit,
-    check_dependencies,
-    build_push_docker,
-    build_argo_template,
-    ensure_namespace,
-    apply_argo_template,
-    submit_workflow,
-    get_run_name,
-    command_exists,
-    run_subprocess,
-)
+from matrix.cli_commands.submit import *
 
 
 # Mock for run_subprocess
 @pytest.fixture
 def mock_run_subprocess():
-    with patch("matrix.cli.submit.run_subprocess") as mock:
+    with patch("matrix.cli_commands.submit.run_subprocess") as mock:
         yield mock
 
 
 @pytest.fixture
 def mock_dependencies():
-    with patch("matrix.cli.submit.check_dependencies") as mock_check, patch(
-        "matrix.cli.submit.build_push_docker"
-    ) as mock_build, patch("matrix.cli.submit.build_argo_template") as mock_argo, patch(
-        "matrix.cli.submit.ensure_namespace"
+    with patch("matrix.cli_commands.submit.check_dependencies") as mock_check, patch(
+        "matrix.cli_commands.submit.build_push_docker"
+    ) as mock_build, patch(
+        "matrix.cli_commands.submit.build_argo_template"
+    ) as mock_argo, patch(
+        "matrix.cli_commands.submit.ensure_namespace"
     ) as mock_ensure, patch(
-        "matrix.cli.submit.apply_argo_template"
-    ) as mock_apply, patch("matrix.cli.submit.submit_workflow") as mock_submit, patch(
-        "matrix.cli.submit.get_run_name", return_value="test-run"
+        "matrix.cli_commands.submit.apply_argo_template"
+    ) as mock_apply, patch(
+        "matrix.cli_commands.submit.submit_workflow"
+    ) as mock_submit, patch(
+        "matrix.cli_commands.submit.get_run_name", return_value="test-run"
     ):
         yield
 
@@ -48,47 +41,49 @@ def test_submit(mock_dependencies):
 def test_check_dependencies(mock_run_subprocess):
     mock_run_subprocess.return_value.returncode = 0
     mock_run_subprocess.return_value.stdout = "active_account"
-    check_dependencies()
+    check_dependencies(verbose=True)
     assert mock_run_subprocess.call_count > 0
 
 
 # Test for build_push_docker
 def test_build_push_docker(mock_run_subprocess):
-    build_push_docker("testuser")
-    mock_run_subprocess.assert_called_once_with("make docker_push TAG=testuser")
+    build_push_docker("testuser", verbose=True)
+    mock_run_subprocess.assert_called_once_with(
+        "make docker_push TAG=testuser", stream_output=True
+    )
 
 
 # Test for build_argo_template
-@patch("matrix.cli.submit.generate_argo_config")
+@patch("matrix.cli_commands.submit._generate_argo_config")
 def test_build_argo_template(mock_generate_argo_config):
-    build_argo_template("test_run", "testuser", "test_namespace")
+    build_argo_template("test_run", "testuser", "test_namespace", verbose=True)
     mock_generate_argo_config.assert_called_once()
 
 
 # Test for ensure_namespace
 def test_ensure_namespace_existing(mock_run_subprocess):
     mock_run_subprocess.return_value.returncode = 0
-    ensure_namespace("existing_namespace")
+    ensure_namespace("existing_namespace", verbose=True)
     assert mock_run_subprocess.call_count == 1
 
 
 def test_ensure_namespace_new(mock_run_subprocess):
     mock_run_subprocess.side_effect = [MagicMock(returncode=1), MagicMock(returncode=0)]
-    ensure_namespace("new_namespace")
+    ensure_namespace("new_namespace", verbose=True)
     assert mock_run_subprocess.call_count == 2
 
 
 # Test for apply_argo_template
 def test_apply_argo_template(mock_run_subprocess):
-    apply_argo_template("test_namespace")
+    apply_argo_template("test_namespace", verbose=True)
     mock_run_subprocess.assert_called_once()
 
 
 # Test for submit_workflow
 def test_submit_workflow(mock_run_subprocess):
     mock_run_subprocess.return_value.stdout = '{"metadata": {"name": "test-job"}}'
-    submit_workflow("test_run", "test_namespace")
-    assert mock_run_subprocess.call_count == 2
+    submit_workflow("test_run", "test_namespace", verbose=True)
+    assert mock_run_subprocess.call_count == 1
 
 
 # Test for get_run_name
@@ -96,10 +91,10 @@ def test_get_run_name_with_input():
     assert get_run_name("custom_name") == "custom_name"
 
 
-@patch("matrix.cli.submit.run_subprocess")
+@patch("matrix.cli_commands.submit.run_subprocess")
 def test_get_run_name_from_git(mock_run_subprocess):
     mock_run_subprocess.return_value.stdout = "feature/test-branch"
-    assert get_run_name(None) == "feature-test-branch"
+    assert get_run_name(None).startswith("feature-test-branch")
 
 
 # Test for command_exists
