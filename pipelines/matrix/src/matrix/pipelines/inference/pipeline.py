@@ -4,6 +4,15 @@ from kedro.pipeline import Pipeline, node, pipeline
 from . import nodes as nd
 from ..matrix_generation import nodes as matrix_gen
 
+# FUTURE: move to data science runbook
+# How to run inference pipeline using models in remote MLFlow:
+# 1. Specify WORKFLOW_ID in .env which corresponds to the run name in MLFlow you want to use for inference
+# 1.1 You can find the run names in mlflow https://mlflow.platform.dev.everycure.org/
+# 2. Execute inference pipeline in cloud by executing the following
+#  > kedro run --env cloud
+# 2.1 Note that you might get an error when running the ingest_disease list node as API reaches max num of rows to be written.
+# If that's the case you can simply re-run from that node onwards
+
 
 def _create_inference_pipeline(model: str) -> Pipeline:
     """Part of the inference pipeline which gets re-executed for each model selected."""
