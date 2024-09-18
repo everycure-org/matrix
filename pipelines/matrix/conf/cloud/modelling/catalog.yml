@@ -1,8 +1,3 @@
-_model_ds: &_model_ds
-  metadata:
-    kedro-viz:
-      layer: models
-
 _reporting_ds: &_reporting_ds
   metadata:
     kedro-viz:
@@ -21,7 +16,9 @@ _reporting_ds: &_reporting_ds
 # NOTE: Tracking a model, other serialization formats possible.
 # https://kedro-mlflow.readthedocs.io/en/stable/source/04_experimentation_tracking/04_version_models.html#how-to-track-models-using-mlflow-in-kedro-project
 "modelling.{model}.models.model":
-  <<: *_model_ds
+  # FUTURE: The Kedro MLFlow plugin does not support metadata, 
+  # add in when provided by the plugin.
+  # <<: *_model_ds
   type: kedro_mlflow.io.models.MlflowModelTrackingDataset
   flavor: mlflow.sklearn
   pyfunc_workflow: python_model
@@ -29,7 +26,9 @@ _reporting_ds: &_reporting_ds
 
 # NOTE: Saving a metric, more elaborate strategies possible, e.g., MlflowMetricHistoryDataset
 # https://kedro-mlflow.readthedocs.io/en/stable/source/04_experimentation_tracking/05_version_metrics.html#saving-a-single-float-as-a-metric-with-mlflowmetricdataset
-"modelling.{model}.reporting.metrics":
-  <<: *_reporting_ds
+"modelling.{model}.reporting.metrics":  
+  # FUTURE: The Kedro MLFlow plugin does not support metadata, 
+  # add in when provided by the plugin.
+  # <<: *_reporting_ds
   type: matrix.datasets.mlflow.MlflowMetricsDataset
   key_prefix: "{model}"
