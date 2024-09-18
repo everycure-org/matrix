@@ -51,9 +51,6 @@ def create_prm_clinical_trials(raw_clinical_trials: pd.DataFrame) -> pd.DataFram
     return clinical_trail_data
 
 
-# add node after, that grabs output
-
-
 @has_schema(
     schema={
         "source": "object",
