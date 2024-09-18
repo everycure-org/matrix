@@ -1,4 +1,5 @@
 """Module with utilities to generate Argo workflow."""
+
 import re
 from pathlib import Path
 from typing import List, Optional, Any
@@ -26,7 +27,11 @@ def cli() -> None:
 @click.argument("image", required=True)
 @click.argument("image_tag", required=False, default="latest")
 @click.argument("namespace", required=False, default="argo-workflows")
-def generate_argo_config(image, image_tag, namespace: str):
+def generate_argo_config(image, run_name, image_tag, namespace: str):
+    _generate_argo_config(image, run_name, image_tag, namespace)
+
+
+def _generate_argo_config(image, run_name, image_tag, namespace: str):
     """Function to render Argo pipeline template.
 
     Args:
