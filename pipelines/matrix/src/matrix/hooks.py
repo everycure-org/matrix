@@ -108,6 +108,7 @@ class MLFlowHooks:
             if len(experiments) == 0:
                 raise Exception("unable to create MLFlow experiment") from e
 
+            logger.info("experiment already exists, re-using")
             return experiments[0].experiment_id
 
 
