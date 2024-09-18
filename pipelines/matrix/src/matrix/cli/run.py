@@ -32,115 +32,41 @@ from kedro.framework.cli.utils import (
 )
 from kedro.utils import load_obj
 from kedro.pipeline.pipeline import Pipeline
+import sys
 from kedro.framework.project import pipelines, settings
 from kedro.framework.context.context import _convert_paths_to_absolute_posix
 
 from matrix.session import KedroSessionWithFromCatalog
 from kedro.io import DataCatalog
+from matrix.utils.submit_cli import *
 
 
-@click.group(context_settings=CONTEXT_SETTINGS, name=__file__)
-def cli():
-    """Command line tools for manipulating a Kedro project."""
-
-
+# fmt: off
 @project_group.command()
-@click.option(
-    "--from-inputs", type=str, default="", help=FROM_INPUTS_HELP, callback=split_string
-)
-@click.option(
-    "--to-outputs", type=str, default="", help=TO_OUTPUTS_HELP, callback=split_string
-)
-@click.option(
-    "--from-nodes",
-    type=str,
-    default="",
-    help=FROM_NODES_HELP,
-    callback=split_node_names,
-)
-@click.option(
-    "--to-nodes", type=str, default="", help=TO_NODES_HELP, callback=split_node_names
-)
-@click.option(
-    "--nodes",
-    "-n",
-    "node_names",
-    type=str,
-    multiple=False,
-    help=NODE_ARG_HELP,
-    callback=split_string,
-    default="",
-)
-@click.option(
-    "--runner", "-r", type=str, default=None, multiple=False, help=RUNNER_ARG_HELP
-)
-@click.option("--async", "is_async", is_flag=True, multiple=False, help=ASYNC_ARG_HELP)
 @env_option
-@click.option("--tags", "-t", type=str, multiple=True, help=TAG_ARG_HELP)
-@click.option(
-    "--without-tags",
-    type=str,
-    help="used to filter out nodes with tags that should not be run. All dependent downstream nodes are also removed. Note nodes need to have _all_ tags to be removed.",
-    callback=split_string,
-    default=[],
-)
-@click.option(
-    "--load-versions",
-    "-lv",
-    type=str,
-    multiple=True,
-    help=LOAD_VERSION_HELP,
-    callback=_split_load_versions,
-)
-@click.option("--pipeline", "-p", type=str, default=None, help=PIPELINE_ARG_HELP)
-@click.option(
-    "--config",
-    "-c",
-    type=click.Path(exists=True, dir_okay=False, resolve_path=True),
-    help=CONFIG_FILE_HELP,
-    callback=_config_file_callback,
-)
-@click.option(
-    "--conf-source",
-    type=click.Path(exists=True, file_okay=False, resolve_path=True),
-    help=CONF_SOURCE_HELP,
-)
-@click.option(
-    "--params",
-    type=click.UNPROCESSED,
-    default="",
-    help=PARAMS_ARG_HELP,
-    callback=_split_params,
-)
-@click.option(
-    "--from-env",
-    type=str,
-    default=None,
-    help="Custom env to read from, if specified will read from the `--from-env` and write to the `--env`",
-)
-def run(
-    tags,
-    without_tags,
-    env,
-    runner,
-    is_async,
-    node_names,
-    to_nodes,
-    from_nodes,
-    from_inputs,
-    to_outputs,
-    load_versions,
-    pipeline,
-    config,
-    conf_source,
-    params,
-    from_env,
-):
+@click.option( "--from-inputs",   type=str, default="", help=FROM_INPUTS_HELP, callback=split_string)
+@click.option( "--to-outputs",    type=str, default="", help=TO_OUTPUTS_HELP, callback=split_string)
+@click.option( "--from-nodes",    type=str, default="", help=FROM_NODES_HELP, callback=split_node_names,)
+@click.option( "--to-nodes",      type=str, default="", help=TO_NODES_HELP, callback=split_node_names)
+@click.option( "--nodes",         "-n", "node_names", type=str, multiple=False, help=NODE_ARG_HELP, callback=split_string, default="",)
+@click.option( "--runner",        "-r", type=str, default=None, multiple=False, help=RUNNER_ARG_HELP)
+@click.option("--async",          "is_async", is_flag=True, multiple=False, help=ASYNC_ARG_HELP) 
+@click.option("--tags",           "-t", type=str, multiple=True, help=TAG_ARG_HELP)
+@click.option( "--without-tags",  "-wt", type=str, help="used to filter out nodes with tags that should not be run. All dependent downstream nodes are also removed. Note nodes need to have _all_ tags to be removed.", callback=split_string, default=[],)
+@click.option( "--load-versions", "-lv", type=str, multiple=True, help=LOAD_VERSION_HELP, callback=_split_load_versions,)
+@click.option("--pipeline",       "-p", type=str, default=None, help=PIPELINE_ARG_HELP)
+@click.option( "--config",        "-c", type=click.Path(exists=True, dir_okay=False, resolve_path=True), help=CONFIG_FILE_HELP, callback=_config_file_callback,)
+@click.option( "--conf-source",   type=click.Path(exists=True, file_okay=False, resolve_path=True), help=CONF_SOURCE_HELP,)
+@click.option( "--params",        type=click.UNPROCESSED, default="", help=PARAMS_ARG_HELP, callback=_split_params,)
+@click.option( "--from-env",      type=str, default=None, help="Custom env to read from, if specified will read from the `--from-env` and write to the `--env`",)
+
+def run( tags, without_tags, env, runner, is_async, node_names, to_nodes, from_nodes, from_inputs, to_outputs, load_versions, pipeline, config, conf_source, params, from_env,):
     """Run the pipeline."""
     if pipeline in ["test", "fabricator"] and env in [None, "base"]:
         raise RuntimeError(
             "Running the fabricator in the base environment might overwrite production data! Use the test env `-e test` instead."
         )
+    # fmt: on
 
     runner = load_obj(runner or "SequentialRunner", "kedro.runner")
     tags = tuple(tags)
@@ -261,8 +187,9 @@ def _filter_nodes_missing_tag(
     # Step 4: Handle edge case: If we remove all nodes, we should inform the user
     # and then exit
     if len(filtered_nodes) == 0:
-        print("All nodes removed. Exiting.")
+        console.print(Panel("[bold yellow]All nodes removed. Exiting.[/bold yellow]", 
+                            title="Warning", border_style="yellow"))
         exit(0)
 
-    print(f"Filtered a total of {len(filtered_nodes)} nodes")
+    console.print(f"[blue]Filtered a total of {len(filtered_nodes)} nodes[/blue]")
     return filtered_nodes
