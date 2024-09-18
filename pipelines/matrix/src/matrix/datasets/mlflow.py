@@ -25,10 +25,12 @@ class MlflowMetricsDataset(MlflowAbstractMetricDataset):
 
     def __init__(
         self,
+        *,
         run_id: str = None,
         load_args: Dict[str, Any] = None,
         save_args: Dict[str, Any] = None,
         key_prefix: str = None,
+        metadata: dict[str, Any] | None = None,
     ):
         """Initialise MlflowMetricDataset.
 
@@ -37,6 +39,7 @@ class MlflowMetricsDataset(MlflowAbstractMetricDataset):
             load_args: dataset load arguments
             save_args: dataset save arguments
             key_prefix: key prefix used for all metrics
+            metadata: dataset metadata
         """
         self.run_id = run_id
         self._load_args = load_args or {}
