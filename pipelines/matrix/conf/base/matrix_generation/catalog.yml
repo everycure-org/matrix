@@ -13,7 +13,6 @@ _kg_dataset: &_kg_dataset
     engine: pyarrow
     use_nullable_dtypes: True
 
-# How to name? This is dataset of drug/diseases w. embeddings
 matrix_generation.feat.nodes@spark:
   <<: *_spark_parquet
   filepath: ${globals:paths.feat}/matrix_nodes
