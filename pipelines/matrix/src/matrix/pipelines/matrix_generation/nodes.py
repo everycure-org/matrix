@@ -7,6 +7,9 @@ from sklearn.impute._base import _BaseImputer
 
 import pandas as pd
 
+from pyspark.sql import DataFrame
+import pyspark.sql.functions as F
+
 from refit.v1.core.inject import inject_object
 from refit.v1.core.inline_has_schema import has_schema
 from refit.v1.core.make_list_regexable import _extract_elements_in_list
@@ -18,6 +21,24 @@ from matrix.pipelines.modelling.model import ModelWrapper
 
 
 logger = logging.getLogger(__name__)
+
+
+def enrich_embeddings(
+    nodes: DataFrame,
+    drugs: DataFrame,
+    diseases: DataFrame,
+) -> DataFrame:
+    # Construct join here
+    # FUTURE: Output second dataframe with list entries
+    return (
+        drugs.withColumn("is_drug", F.lit(True))
+        .unionByName(
+            diseases.withColumn("is_disease", F.lit(True)), allowMissingColumns=True
+        )
+        .withColumnRenamed("curie", "id")
+        .join(nodes, on="id", how="inner")
+        .select("is_drug", "is_disease", "id", "topological_embedding")
+    )
 
 
 @has_schema(

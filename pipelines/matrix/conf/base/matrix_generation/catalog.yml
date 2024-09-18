@@ -1,6 +1,27 @@
 _pandas_parquet: &_pandas_parquet
   type: pandas.ParquetDataset
 
+_spark_parquet_ds: &_spark_parquet
+  type: matrix.datasets.gcp.LazySparkDataset
+  file_format: parquet
+  save_args:
+    mode: overwrite
+
+_kg_dataset: &_kg_dataset
+  type: matrix.datasets.graph.KnowledgeGraphDataset
+  load_args:
+    engine: pyarrow
+    use_nullable_dtypes: True
+
+# How to name? This is dataset of drug/diseases w. embeddings
+matrix_generation.feat.nodes@spark:
+  <<: *_spark_parquet
+  filepath: ${globals:paths.feat}/rtx_kg2_nodes
+
+matrix_generation.feat.nodes@pandas:
+  <<: *_kg_dataset
+  filepath: ${globals:paths.feat}/rtx_kg2_nodes
+
 matrix_generation.prm.matrix_pairs:
   <<: *_pandas_parquet
   filepath: ${globals:paths.prm}/matrix_pairs

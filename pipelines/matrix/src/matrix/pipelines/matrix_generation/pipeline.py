@@ -13,7 +13,7 @@ def _create_matrix_generation_pipeline(model: str) -> Pipeline:
             node(
                 func=nodes.make_predictions_and_sort,
                 inputs=[
-                    "modelling.feat.rtx_kg2",
+                    "matrix_generation.feat.nodes@pandas",
                     "matrix_generation.prm.matrix_pairs",
                     f"modelling.{model}.model_input.transformers",
                     f"modelling.{model}.models.model",
@@ -29,8 +29,8 @@ def _create_matrix_generation_pipeline(model: str) -> Pipeline:
                 inputs=[
                     f"matrix_generation.{model}.model_output.sorted_matrix_predictions",
                     "params:matrix_generation.matrix_generation_options.n_reporting",
-                    "ingestion.raw.drug_list",
-                    "ingestion.raw.disease_list",
+                    "ingestion.raw.drug_list@pandas",
+                    "ingestion.raw.disease_list@pandas",
                     "modelling.model_input.splits",
                     "params:evaluation.score_col_name",
                 ],
@@ -46,14 +46,24 @@ def create_pipeline(**kwargs) -> Pipeline:
     initial_node = pipeline(
         [
             node(
+                func=nodes.enrich_embeddings,
+                inputs=[
+                    "embeddings.feat.nodes",
+                    "ingestion.raw.drug_list@spark",
+                    "ingestion.raw.disease_list@spark",
+                ],
+                outputs="matrix_generation.feat.nodes@spark",
+                name="enrich_matrix_embeddings",
+            ),
+            node(
                 func=nodes.generate_pairs,
                 inputs=[
-                    "ingestion.raw.drug_list",
-                    "ingestion.raw.disease_list",
+                    "ingestion.raw.drug_list@pandas",
+                    "ingestion.raw.disease_list@pandas",
                     "modelling.model_input.splits",
                 ],
                 outputs="matrix_generation.prm.matrix_pairs",
-                name="generate_pairs",
+                name="generate_matrix_pairs",
             ),
         ]
     )
