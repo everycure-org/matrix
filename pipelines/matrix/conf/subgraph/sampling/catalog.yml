@@ -1,0 +1,30 @@
+_spark_parquet_ds: &_spark_parquet
+  type: matrix.datasets.gcp.LazySparkDataset
+  file_format: parquet
+  save_args:
+    mode: overwrite
+
+_layer_prm: &_layer_prm
+  metadata:
+    kedro-viz:
+      layer: primary
+
+# -------------------------------------------------------------------------
+# Datasets
+# -------------------------------------------------------------------------
+
+integration.tmp.unified_edges:
+  <<: [*_spark_parquet, *_layer_prm]
+  filepath: ${globals:paths.prm}/unified/full_edges
+
+integration.tmp.unified_nodes:
+  <<: [*_spark_parquet, *_layer_prm]
+  filepath: ${globals:paths.prm}/unified/full_nodes
+
+integration.prm.unified_edges:
+  <<: [*_spark_parquet, *_layer_prm]
+  filepath: ${globals:paths.prm}/unified/subgraph_edges
+
+integration.prm.unified_nodes:
+  <<: [*_spark_parquet, *_layer_prm]
+  filepath: ${globals:paths.prm}/unified/subgraph_nodes

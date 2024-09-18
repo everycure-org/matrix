@@ -32,6 +32,9 @@ from matrix.pipelines.release.pipeline import (
 from matrix.pipelines.matrix_generation.pipeline import (
     create_pipeline as create_matrix_pipeline,
 )
+from matrix.pipelines.sampling.pipeline import (
+    create_pipeline as create_sampling_pipeline,
+)
 
 
 def register_pipelines() -> Dict[str, Pipeline]:
@@ -55,6 +58,7 @@ def register_pipelines() -> Dict[str, Pipeline]:
     pipelines["modelling"] = create_modelling_pipeline()
     pipelines["embeddings"] = create_embeddings_pipeline()
     pipelines["fabricator"] = create_fabricator_pipeline()
+    pipelines["sampling"] = create_sampling_pipeline()
     pipelines["integration"] = create_integration_pipeline()
     pipelines["evaluation"] = create_evaluation_pipeline()
     pipelines["release"] = create_release_pipeline()
@@ -63,6 +67,15 @@ def register_pipelines() -> Dict[str, Pipeline]:
         create_fabricator_pipeline()
         + create_ingestion_pipeline()
         + create_integration_pipeline()
+        + create_embeddings_pipeline()
+        + create_modelling_pipeline()
+        + create_matrix_pipeline()
+        + create_evaluation_pipeline()
+        + create_release_pipeline()
+    )
+    pipelines["subsample"] = (
+        create_ingestion_pipeline()
+        + create_sampling_pipeline()
         + create_embeddings_pipeline()
         + create_modelling_pipeline()
         + create_matrix_pipeline()

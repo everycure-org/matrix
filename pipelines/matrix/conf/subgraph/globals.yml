@@ -1,0 +1,11 @@
+versions:
+  release: subgraph
+
+paths:
+  int: data/subgraph/02_intermediate
+  prm: data/subgraph/03_primary
+  feat: data/subgraph/04_feature
+  model_input: data/subgraph/05_model_input
+  models: data/subgraph/06_models
+  model_output: data/subgraph/07_model_output
+  reporting: data/subgraph/08_reporting

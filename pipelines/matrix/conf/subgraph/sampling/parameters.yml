@@ -1,0 +1,4 @@
+
+sampling.stratify_by: category
+sampling.sampling_ratio: 0.2
+sampling.sampling_seed: 10
