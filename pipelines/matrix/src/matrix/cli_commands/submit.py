@@ -4,7 +4,9 @@ Intended to be invoked via `kedro`.
 """
 
 import json
+import logging
 import re
+import secrets
 import subprocess
 import sys
 from typing import Any, Dict, List, Optional, Set
@@ -35,7 +37,6 @@ from kedro.framework.cli.utils import (
     split_node_names,
     split_string,
 )
-import secrets
 from kedro.framework.context.context import _convert_paths_to_absolute_posix
 from kedro.framework.project import pipelines, settings
 from kedro.io import DataCatalog
@@ -43,9 +44,20 @@ from kedro.pipeline.pipeline import Pipeline
 from kedro.utils import load_obj
 from rich import print
 from rich.console import Console
+from rich.logging import RichHandler
 from rich.panel import Panel
+from rich.progress import Progress, SpinnerColumn, TextColumn
 from rich.syntax import Syntax
 from rich.table import Table
+
+# Set up logging
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(message)s",
+    datefmt="[%X]",
+    handlers=[RichHandler(rich_tracebacks=True)],
+)
+log = logging.getLogger("rich")
 
 from matrix.argo import _generate_argo_config
 from matrix.session import KedroSessionWithFromCatalog
@@ -62,45 +74,63 @@ def cli():
 # fmt: off
 @project_group.command()
 @click.option("--username", type=str, required=True, help="Specify the username to use")
-@click.option( "--namespace", type=str, default=None, help="Specify a custom namespace")
+@click.option("--namespace", type=str, default=None, help="Specify a custom namespace")
 @click.option("--run-name", type=str, default=None, help="Specify a custom run name")
 @click.option("--verbose", "-v", is_flag=True, default=False, help="Enable verbose output")
+@click.option("--dry-run", is_flag=True, default=False, help="Does everything except submit the workflow")
 # fmt: on
-def submit(username, namespace, run_name, verbose):
+def submit(username: str, namespace: str, run_name: str, verbose: bool, dry_run: bool):
     """Submit the end-to-end workflow."""
+    if verbose:
+        logging.getLogger().setLevel(logging.DEBUG)
+
     run_name = get_run_name(run_name)
     namespace = namespace or f"dev-{username}"
+    
     try:
         console.rule("[bold blue]Submitting Workflow")
+        
+        console.print("Checking dependencies...")
         check_dependencies(verbose=verbose)
         console.print("[green]✓[/green] Dependencies checked")
+        
+        console.print("Building and pushing Docker image...")
         build_push_docker(username, verbose=verbose)
         console.print("[green]✓[/green] Docker image built and pushed")
+        
+        console.print("Building Argo template...")
         build_argo_template(run_name, username, namespace, verbose=verbose)
         console.print("[green]✓[/green] Argo template built")
+        
+        console.print("Ensuring namespace...")
         ensure_namespace(namespace, verbose=verbose)
         console.print("[green]✓[/green] Namespace ensured")
+        
+        console.print("Applying Argo template...")
         apply_argo_template(namespace, verbose=verbose)
         console.print("[green]✓[/green] Argo template applied")
-        submit_workflow(run_name, namespace, verbose=verbose)
-        console.print("[green]✓[/green] Workflow submitted")
+        
+        if not dry_run:
+            console.print("Submitting workflow...")
+            submit_workflow(run_name, namespace, verbose=verbose)
+            console.print("[green]✓[/green] Workflow submitted")
+
         console.print(Panel.fit(
-            f"[bold green]Workflow submitted successfully![/bold green]\n"
+            f"[bold green]Workflow {'prepared' if dry_run else 'submitted'} successfully![/bold green]\n"
             f"Run Name: {run_name}\n"
             f"Namespace: {namespace}",
             title="Submission Summary"
         ))
         
-        # New code to prompt user about opening the workflow in browser
-        if click.confirm("Do you want to open the workflow in your browser?"):
+        if not dry_run and click.confirm("Do you want to open the workflow in your browser?"):
             workflow_url = f"https://argo.platform.dev.everycure.org/workflows/{namespace}/{run_name}"
             click.launch(workflow_url)
             console.print(f"[blue]Opened workflow in browser: {workflow_url}[/blue]")
     except Exception as e:
-        console.print(Panel(f"[bold red]Error during submission:[/bold red]\n{str(e)}", 
-                            title="Error", border_style="red"))
+        console.print(f"[bold red]Error during submission:[/bold red] {str(e)}")
+        if verbose:
+            console.print_exception()
         sys.exit(1)
-
 
 
 def run_subprocess(
@@ -153,12 +183,12 @@ def run_subprocess(
                 cmd, check=check, capture_output=capture_output, text=True, shell=shell
             )
         except subprocess.CalledProcessError as e:
-            click.echo(f"Error executing command: {cmd}")
-            click.echo(f"Exit code: {e.returncode}")
+            console.print(f"Error executing command: {cmd}")
+            console.print(f"Exit code: {e.returncode}")
             if e.stdout:
-                click.echo(f"stdout: {e.stdout}")
+                console.print(f"stdout: {e.stdout}")
             if e.stderr:
-                click.echo(f"stderr: {e.stderr}")
+                console.print(f"stderr: {e.stderr}")
             raise
 
 
@@ -168,12 +198,22 @@ def command_exists(command: str) -> bool:
 
 
 def check_dependencies(verbose: bool):
-    """Check and set up gcloud and kubectl."""
+    """Check and set up gcloud and kubectl dependencies.
+
+    This function verifies that gcloud and kubectl are installed and properly configured.
+    If kubectl is not installed, it attempts to install it using gcloud components.
+
+    Args:
+        verbose (bool): If True, provides more detailed output.
+
+    Raises:
+        EnvironmentError: If gcloud is not installed or kubectl cannot be configured.
+    """
     if not command_exists("gcloud"):
         raise EnvironmentError("gcloud is not installed. Please install it first.")
 
     if not command_exists("kubectl"):
-        click.echo("kubectl is not installed. Installing it now...")
+        console.print("kubectl is not installed. Installing it now...")
         run_subprocess("gcloud components install kubectl")
 
     # Authenticate gcloud
@@ -188,7 +228,7 @@ def check_dependencies(verbose: bool):
     )
 
     if not active_account:
-        click.echo("Authenticating gcloud...")
+        console.print("Authenticating gcloud...")
         run_subprocess("gcloud auth login", stream_output=verbose)
 
     # Configure kubectl
@@ -199,9 +239,9 @@ def check_dependencies(verbose: bool):
     # Check if kubectl is already authenticated
     try:
         run_subprocess("kubectl get nodes", capture_output=True, stream_output=verbose)
-        click.echo("kubectl is already authenticated.")
+        console.print("kubectl is already authenticated.")
     except subprocess.CalledProcessError:
-        click.echo("Authenticating kubectl...")
+        console.print("Authenticating kubectl...")
         run_subprocess(
             f"gcloud container clusters get-credentials {cluster} --project {project} --region {region}"
         )
@@ -217,31 +257,26 @@ def check_dependencies(verbose: bool):
 
 def build_push_docker(username: str, verbose: bool):
     """Build and push Docker image."""
-    click.echo("Building and pushing Docker image...")
     image_name = f"us-central1-docker.pkg.dev/mtrx-hub-dev-3of/matrix-images/matrix:{username}"
     run_subprocess(f"make docker_push TAG={username}", stream_output=verbose)
-    click.echo(f"Successfully built and pushed Docker image: {image_name}")
 
 
 def build_argo_template(run_name, username, namespace, verbose: bool):
     """Build Argo workflow template."""
-    click.echo("Building Argo workflow template...")
     image_name = "us-central1-docker.pkg.dev/mtrx-hub-dev-3of/matrix-images/matrix"
     _generate_argo_config(image_name, run_name, username, namespace)
 
 
 def ensure_namespace(namespace, verbose: bool):
     """Create or verify Kubernetes namespace."""
-    click.echo(f"Using namespace: {namespace}")
     result = run_subprocess(f"kubectl get namespace {namespace}", check=False)
     if result.returncode != 0:
-        click.echo(f"Namespace {namespace} does not exist. Creating it...")
+        console.print(f"Namespace {namespace} does not exist. Creating it...")
         run_subprocess(f"kubectl create namespace {namespace}", check=True, stream_output=verbose)
 
 
 def apply_argo_template(namespace, verbose: bool):
     """Apply the Argo workflow template."""
-    click.echo("Applying Argo workflow template...")
     run_subprocess(
         f"kubectl apply -f templates/argo-workflow-template.yml -n {namespace}",
         check=True,
@@ -251,7 +286,6 @@ def apply_argo_template(namespace, verbose: bool):
 
 def submit_workflow(run_name, namespace, verbose: bool):
     """Submit the Argo workflow and provide instructions for watching."""
-    click.echo("Submitting Argo workflow...")
     submit_cmd = (
         f"argo submit --name {run_name} -n {namespace} "
         f"--from wftmpl/{run_name} -p run_name={run_name} "
@@ -263,18 +297,28 @@ def submit_workflow(run_name, namespace, verbose: bool):
     if not job_name:
         raise RuntimeError("Failed to retrieve job name from Argo submission.")
 
-    click.echo(f"Workflow submitted successfully with job name: {job_name}")
-    click.echo("\nTo watch the workflow progress, run the following command:")
-    click.echo(f"argo watch -n {namespace} {job_name}")
-    click.echo("\nTo view the workflow in the Argo UI, run:")
-    click.echo(f"argo get -n {namespace} {job_name}")
+    console.print(f"Workflow submitted successfully with job name: {job_name}")
+    console.print("\nTo watch the workflow progress, run the following command:")
+    console.print(f"argo watch -n {namespace} {job_name}")
+    console.print("\nTo view the workflow in the Argo UI, run:")
+    console.print(f"argo get -n {namespace} {job_name}")
 
 def get_run_name(run_name: Optional[str]) -> str:
-    """Get the experiment name based on input or Git branch."""
+    """Get the experiment name based on input or Git branch.
+
+    If a run_name is provided, it is returned as-is. Otherwise, a name is generated
+    based on the current Git branch name with a random suffix.
+
+    Args:
+        run_name (Optional[str]): A custom run name provided by the user.
+
+    Returns:
+        str: The final run name to be used for the workflow.
+    """
     if run_name:
         return run_name
     branch_name = run_subprocess(
-        "git rev-parse --abbrev-ref HEAD", capture_output=True
+        "git rev-parse --abbrev-ref HEAD", capture_output=True, stream_output=False
     ).stdout.strip()
     branch_sanitized = re.sub(r"[^a-zA-Z0-9-]", "-", branch_name).rstrip("-")
     random_sfx = str.lower(secrets.token_hex(4))
