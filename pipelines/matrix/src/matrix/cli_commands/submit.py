@@ -223,7 +223,6 @@ def check_dependencies(verbose: bool):
 
 def build_push_docker(username: str, verbose: bool):
     """Build and push Docker image."""
-    image_name = f"us-central1-docker.pkg.dev/mtrx-hub-dev-3of/matrix-images/matrix:{username}"
     run_subprocess(f"make docker_push TAG={username}", stream_output=verbose)
 
 
