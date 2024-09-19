@@ -5,7 +5,7 @@ _spark_parquet_ds: &_spark_parquet
     mode: overwrite
 
 _pandas_csv: &_pandas_csv
-  type:  pandas.CSVDataset
+  type: pandas.CSVDataset
 
 _pandas_parquet: &_pandas_parquet
   type: pandas.ParquetDataset
@@ -41,7 +41,7 @@ modelling.raw.ground_truth.positives:
   filepath: ${globals:paths.raw}/ground_truth_data/tp_pairs.txt
   load_args:
     sep: "\t"
-  save_args: 
+  save_args:
     sep: "\t"
 
 modelling.raw.ground_truth.negatives:
@@ -49,7 +49,7 @@ modelling.raw.ground_truth.negatives:
   filepath: ${globals:paths.raw}/ground_truth_data/tn_pairs.txt
   load_args:
     sep: "\t"
-  save_args: 
+  save_args:
     sep: "\t"
 
 modelling.int.known_pairs:
@@ -120,8 +120,6 @@ modelling.model_input.splits:
   filepath: ${globals:paths.models}/{model}/model.pickle
 
 "modelling.{model}.reporting.metrics":
-  type: matrix.datasets.mlflow.MlflowMetricsDataset
-  key_prefix: "{model}"
   <<: *_reporting_ds
   filepath: ${globals:paths.reporting}/{model}/metrics.yml
   type: yaml.YAMLDataset
