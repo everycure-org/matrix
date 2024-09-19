@@ -1,4 +1,4 @@
-
+<!-- NOTE: This file was partially generated using AI assistance.  -->
 # Running an experiment from a branch on the Every Cure Platform
 
 ## Prerequisites
@@ -6,11 +6,7 @@
 gcloud auth configure-docker us-central1-docker.pkg.dev
 ```
 
-
 ## Run the pipeline
-
-
-Certainly! I'll create documentation for the `submit` command based on the provided `submit.py` file and incorporate it into the `03_run_pipeline_from_branch.md` file. I'll also take into account the context from `index.md` and `pipeline.md`. Here's the updated content for `03_run_pipeline_from_branch.md`:
 
 ```markdown:docs/src/infrastructure/runbooks/03_run_pipeline_from_branch.md
 # Running an experiment from a branch on the Every Cure Platform
@@ -92,11 +88,14 @@ After submitting the workflow, you'll be provided with instructions on how to mo
 
 ## Understanding the Pipeline
 
-For a detailed overview of the pipeline stages (Preprocessing, Ingestion, Integration, Embeddings, Modelling, Evaluation, and Release), please refer to the [Pipeline documentation](../onboarding/pipeline.md).
+For a detailed overview of the pipeline stages (Preprocessing, Ingestion, Integration, Embeddings, Modelling, Evaluation, and Release), please refer to the [Pipeline documentation](../../onboarding/pipeline.md)
 
 ## Environments
 
-The Every Cure Platform supports multiple environments. When submitting a pipeline run, it will use the `cloud` environment by default, which is configured to read and write data from/to GCP resources. For more information on available environments and their configurations, see the [Pipeline documentation](../onboarding/pipeline.md#environments).
+The Every Cure Platform supports multiple environments. When submitting a pipeline run,
+it will use the `cloud` environment by default, which is configured to read and write
+data from/to GCP resources. For more information on available environments and their
+configurations, see the [Pipeline documentation](../../onboarding/pipeline.md#environments).
 
 ## Troubleshooting
 

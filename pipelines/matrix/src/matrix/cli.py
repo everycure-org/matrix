@@ -5,6 +5,7 @@ from kedro.framework.cli.utils import KedroCliError
 
 from matrix.cli_commands.submit import submit
 from matrix.cli_commands.run import run
+from kedro.framework.cli.utils import CONTEXT_SETTINGS
 
 
 @click.group()

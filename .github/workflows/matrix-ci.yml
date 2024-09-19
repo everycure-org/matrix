@@ -38,6 +38,9 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  TQDM_DISABLE: 1
+
 jobs:
   # leveraging a paths-filter approach to be able to make this run required for all PRs while still
   # not blocking merging with "Expected" for those runs that have a paths filter
