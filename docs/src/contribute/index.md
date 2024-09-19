@@ -97,6 +97,21 @@ gitGraph
 - **Pandera**: We (intend) to use [pandera](https://pandera.readthedocs.io/en/stable) for data validation of datasets in our pipeline. We currently still use a proprietary library ("data fabricator") but will remove this before going open source. Follow [this issue](https://github.com/everycure-org/matrix/issues/213) for more.
     
 
+## Rules on using AI to write code
+
+We encourage the use of AI to write code. However, we ask that you follow these guidelines:
+
+- Add the following headers/comments to each file / function that mainly or exclusively written by AI:
+    ```python
+    # NOTE: This file was partially generated using AI assistance.
+    <!-- NOTE: This file was partially generated using AI assistance. -->
+    // NOTE: This file was partially generated using AI assistance.
+    ```
+
+    Please add the comments _above_ a function or class or at the top of the file. Use in-line comments as we primarily want this as part of the codebase, not as part of the documentation.
+
+
+
 ## Infrastructure Development
 
 - We use Terraform Cloud to codify our infrastructure. We have a central [`core`](https://github.com/everycure-org/core) inside our organization where we define all org-level infrastructure (such as creating GCP projects and adjusting quotas)

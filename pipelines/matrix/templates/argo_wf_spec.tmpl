@@ -9,6 +9,7 @@ spec:
     labels:
       run: {% raw %}'{{ workflow.parameters.run_name }}'
       {% endraw %}
+      username: "{{ username }}"
   entrypoint: dag
   ttlStrategy:
     secondsAfterSuccess: 5
