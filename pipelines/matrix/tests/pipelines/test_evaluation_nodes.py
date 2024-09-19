@@ -5,24 +5,77 @@ from unittest.mock import Mock
 from matrix.pipelines.evaluation.nodes import make_test_predictions
 from matrix.pipelines.modelling.transformers import FlatArrayTransformer
 
+from matrix.datasets.graph import KnowledgeGraph
+
 
 @pytest.fixture
 def mock_graph():
-    graph = Mock()
-    graph._embeddings = {
-        # 2 sources, 8 targets
-        "drug_1": [0.1, 0.2, 0.3],
-        "drug_2": [0.4, 0.5, 0.6],
-        "disease_1": [0.7, 0.8, 0.9],
-        "disease_2": [1.0, 1.1, 1.2],
-        "disease_3": [1.3, 1.4, 1.5],
-        "disease_4": [1.6, 1.7, 1.8],
-        "disease_5": [1.9, 2.0, 2.1],
-        "disease_6": [2.2, 2.3, 2.4],
-        "disease_7": [2.5, 2.6, 2.7],
-        "disease_8": [2.8, 2.9, 3.0],
-    }
-    return graph
+    return KnowledgeGraph(
+        nodes=pd.DataFrame(
+            [
+                {
+                    "id": "drug_1",
+                    "topological_embedding": [0.1, 0.2, 0.3],
+                    "is_drug": True,
+                    "is_disease": False,
+                },
+                {
+                    "id": "drug_2",
+                    "topological_embedding": [0.4, 0.5, 0.6],
+                    "is_drug": True,
+                    "is_disease": False,
+                },
+                {
+                    "id": "disease_1",
+                    "topological_embedding": [0.7, 0.8, 0.9],
+                    "is_drug": False,
+                    "is_disease": True,
+                },
+                {
+                    "id": "disease_2",
+                    "topological_embedding": [1.0, 1.1, 1.2],
+                    "is_drug": False,
+                    "is_disease": True,
+                },
+                {
+                    "id": "disease_3",
+                    "topological_embedding": [1.3, 1.4, 1.5],
+                    "is_drug": False,
+                    "is_disease": True,
+                },
+                {
+                    "id": "disease_4",
+                    "topological_embedding": [1.6, 1.7, 1.8],
+                    "is_drug": False,
+                    "is_disease": True,
+                },
+                {
+                    "id": "disease_5",
+                    "topological_embedding": [1.9, 2.0, 2.1],
+                    "is_drug": False,
+                    "is_disease": True,
+                },
+                {
+                    "id": "disease_6",
+                    "topological_embedding": [2.2, 2.3, 2.4],
+                    "is_drug": False,
+                    "is_disease": True,
+                },
+                {
+                    "id": "disease_7",
+                    "topological_embedding": [2.5, 2.6, 2.7],
+                    "is_drug": False,
+                    "is_disease": True,
+                },
+                {
+                    "id": "disease_8",
+                    "topological_embedding": [2.8, 2.9, 3.0],
+                    "is_drug": False,
+                    "is_disease": True,
+                },
+            ]
+        )
+    )
 
 
 @pytest.fixture
@@ -70,7 +123,7 @@ def mock_model():
     return model
 
 
-@pytest.mark.skip(reason="what is this testing?")
+# @pytest.mark.skip(reason="what is this testing?")
 def test_make_test_predictions(
     mock_graph,
     mock_data,
