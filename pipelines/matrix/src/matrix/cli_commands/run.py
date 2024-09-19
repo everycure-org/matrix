@@ -38,7 +38,6 @@ from kedro.framework.context.context import _convert_paths_to_absolute_posix
 
 from matrix.session import KedroSessionWithFromCatalog
 from kedro.io import DataCatalog
-from matrix.utils.submit_cli import *
 
 
 # fmt: off

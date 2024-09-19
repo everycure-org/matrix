@@ -1,0 +1,9 @@
+## 1. Always add the following note to the code you generate:
+```
+# NOTE: This <file/function/class> was partially generated using AI assistance.
+```
+
+Adjust the comment style to the language generated. This way we let people know the file
+was generated, which helps reviewing it with a different lens (i.e. not relying on a
+senior colleague having put a lot of thought into it but being a bit more critical /
+reflecting about it)

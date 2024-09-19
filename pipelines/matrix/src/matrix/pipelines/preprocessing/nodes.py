@@ -20,7 +20,7 @@ def resolve(name: str, endpoint: str) -> str:
     Returns:
         Corresponding curie
     """
-    result = requests.get(f"{endpoint}/synonymize", json={"names": [name]})
+    result = requests.get(f"{endpoint}/synonymize", json={"name": name})
 
     element = result.json().get(name)
     if element:
@@ -42,7 +42,7 @@ def normalize(curie: str, endpoint: str, att_to_get: str = "identifier"):
     if not curie or pd.isna(curie):
         return None
 
-    result = requests.get(f"{endpoint}/normalize", json={"names": [curie]})
+    result = requests.get(f"{endpoint}/normalize", json={"name": curie})
 
     element = result.json().get(curie)
     if element:
@@ -219,8 +219,7 @@ def create_prm_edges(int_edges: pd.DataFrame) -> pd.DataFrame:
     df="df",
 )
 def map_name_to_curie(
-    df: pd.DataFrame,
-    endpoint: str,
+    df: pd.DataFrame, endpoint: str, drug_types: List[str], disease_types: List[str]
 ) -> pd.DataFrame:
     """Map drug name to curie.
 
@@ -231,15 +230,35 @@ def map_name_to_curie(
     Args:
         df: raw clinical trial dataset from medical team
         endpoint: endpoint of the synonymizer
+        drug_types: list of drug types
+        disease_types: list of disease types
     Returns:
         dataframe with two additional columns: "Mapped Drug Curie" and "Mapped Drug Disease"
     """
     # Map the drug name to the corresponding curie ids
-    df["drug_kg_curie"] = df["drug_name"].apply(lambda x: resolve(x, endpoint=endpoint))
+    df["drug_kg_curie"] = df["drug_name"].apply(
+        lambda x: normalize(x, endpoint=endpoint)
+    )
+    df["drug_kg_label"] = df["drug_name"].apply(
+        lambda x: normalize(x, endpoint=endpoint, att_to_get="category")
+    )
 
     # Map the disease name to the corresponding curie ids
     df["disease_kg_curie"] = df["disease_name"].apply(
-        lambda x: resolve(x, endpoint=endpoint)
+        lambda x: normalize(x, endpoint=endpoint)
+    )
+    df["disease_kg_label"] = df["disease_name"].apply(
+        lambda x: normalize(x, endpoint=endpoint, att_to_get="category")
+    )
+
+    # Validate correct labels
+    # NOTE: This is a temp. solution that ensures clinical trails data
+    # only passes on data as containend by our pre-filtering in the modelling pipeline
+    # we aim to refine our evaluation approach as part of a new PR after which
+    # this can be removed.
+    # https://github.com/everycure-org/matrix/issues/313
+    df["label_included"] = (df["drug_kg_label"].isin(drug_types)) & (
+        df["disease_kg_label"].isin(disease_types)
     )
 
     # check conflict
@@ -296,6 +315,10 @@ def clean_clinical_trial_data(df: pd.DataFrame) -> pd.DataFrame:
     # Remove rows with conflicts
     df = df[df["conflict"].eq("FALSE")].reset_index(drop=True)
 
+    # Make sure to consider only rows with relevant labels, otherwise
+    # downtstream modelling will fail
+    df = df[df["label_included"].eq("TRUE")].reset_index(drop=True)
+
     # remove rows with reason for rejection
     df = df[df["reason_for_rejection"].isna()].reset_index(drop=True)
 
@@ -340,6 +363,14 @@ def clean_drug_list(drug_df: pd.DataFrame, endpoint: str) -> pd.DataFrame:
         target_col="curie",
         endpoint=endpoint,
     )
+    # Adding Categtory
+    res = enrich_df(
+        res,
+        func=partial(normalize, att_to_get="category"),
+        input_cols=["single_ID"],
+        target_col="category",
+        endpoint=endpoint,
+    )
 
     res = enrich_df(
         res,
@@ -380,6 +411,15 @@ def clean_disease_list(disease_df: pd.DataFrame, endpoint: str) -> pd.DataFrame:
         func=normalize,
         input_cols=["category_class"],
         target_col="curie",
+        endpoint=endpoint,
+    )
+    # Adding Categtory
+
+    res = enrich_df(
+        res,
+        func=partial(normalize, att_to_get="category"),
+        input_cols=["category_class"],
+        target_col="category",
         endpoint=endpoint,
     )
     res = enrich_df(
