@@ -43,6 +43,8 @@ def enrich_embeddings(
         .withColumnRenamed("curie", "id")
         .join(nodes, on="id", how="inner")
         .select("is_drug", "is_disease", "id", "topological_embedding")
+        .withColumn("is_drug", F.coalesce(F.col("is_drug"), F.lit(False)))
+        .withColumn("is_disease", F.coalesce(F.col("is_disease"), F.lit(False)))
     )
 
 
