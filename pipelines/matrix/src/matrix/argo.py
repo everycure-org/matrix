@@ -1,4 +1,5 @@
 """Module with utilities to generate Argo workflow."""
+
 import re
 from pathlib import Path
 from typing import List, Optional, Any
@@ -25,15 +26,27 @@ def cli() -> None:
 @click.command()
 @click.argument("image", required=True)
 @click.argument("image_tag", required=False, default="latest")
-def generate_argo_config(image, image_tag):
+@click.argument("namespace", required=False, default="argo-workflows")
+def generate_argo_config(
+    image: str, run_name: str, image_tag: str, namespace: str, username: str
+):
     """Function to render Argo pipeline template.
 
     Args:
         image: image to use
+        run_name: name of the run
         image_tag: image tag to use
+        namespace: the namespace in which to store the workflow
         pipeline_name: name of pipeline to generate
         env: execution environment
+        username: user to execute
     """
+    _generate_argo_config(image, run_name, image_tag, namespace, username)
+
+
+def _generate_argo_config(
+    image: str, run_name: str, image_tag: str, namespace: str, username: str
+):
     loader = FileSystemLoader(searchpath=SEARCH_PATH)
     template_env = Environment(loader=loader, trim_blocks=True, lstrip_blocks=True)
     template = template_env.get_template(TEMPLATE_FILE)
@@ -48,7 +61,13 @@ def generate_argo_config(image, image_tag):
         pipes[name] = get_dependencies(fuse(pipeline))
 
     output = template.render(
-        package_name=package_name, pipes=pipes, image=image, image_tag=image_tag
+        package_name=package_name,
+        pipes=pipes,
+        image=image,
+        image_tag=image_tag,
+        namespace=namespace,
+        username=username,
+        run_name=run_name,
     )
 
     (SEARCH_PATH / RENDERED_FILE).write_text(output)

@@ -11,55 +11,17 @@ def create_pipeline(**kwargs) -> Pipeline:
     """Create integration pipeline."""
     return pipeline(
         [
-            # NOTE: Running this to get an initial proposal of curies
-            # Enrich curie with node synonymizer
+            # Normalize nodes
             node(
-                func=partial(
-                    nodes.enrich_df,
-                    func=nodes.resolve,
-                    input_cols=["name"],
-                    target_col="curie",
-                ),
+                func=nodes.create_int_nodes,
                 inputs=[
                     "preprocessing.raw.nodes",
                     "params:preprocessing.synonymizer_endpoint",
                 ],
-                outputs="preprocessing.int.resolved_nodes",
-                name="resolve_ec_medical_team_nodes",
-                tags=["ec-medical-kg"],
-            ),
-            # NOTE: Running this to get the identifiers in the KG
-            # Normalize nodes
-            node(
-                func=partial(
-                    nodes.enrich_df,
-                    func=nodes.normalize,
-                    input_cols=["corrected_curie", "curie"],
-                    target_col="normalized_curie",
-                    coalesce_col="new_id",
-                ),
-                inputs=[
-                    "preprocessing.int.resolved_nodes",
-                    "params:preprocessing.synonymizer_endpoint",
-                ],
-                outputs="preprocessing.int.normalized_nodes",
+                outputs="preprocessing.int.nodes",
                 name="normalize_ec_medical_team_nodes",
                 tags=["ec-medical-kg"],
             ),
-            # NOTE: Filter away all nodes that we could not resolve
-            # FUTURE: Either Charlotte needs to ensure things join OR
-            #   We need to agree that unresolved nodes should introduce
-            #   new concepts.
-            node(
-                func=nodes.create_int_nodes,
-                inputs=["preprocessing.int.normalized_nodes"],
-                outputs="preprocessing.int.nodes",
-                name="create_int_ec_medical_team_nodes",
-                tags=["ec-medical-kg"],
-            ),
-            # Ensure edges use synonymized identifiers
-            # NOTE: Charlotte introduces her own identifiers in the
-            # nodes dataset, to enable edge creation.
             node(
                 func=nodes.create_int_edges,
                 inputs=[
@@ -94,6 +56,8 @@ def create_pipeline(**kwargs) -> Pipeline:
                 inputs=[
                     "preprocessing.raw.clinical_trials_data",
                     "params:preprocessing.synonymizer_endpoint",
+                    "params:modelling.drug_types",
+                    "params:modelling.disease_types",
                 ],
                 outputs="preprocessing.int.mapped_clinical_trials_data",
                 name="mapped_clinical_trials_data",
@@ -108,6 +72,26 @@ def create_pipeline(**kwargs) -> Pipeline:
                 outputs="ingestion.raw.clinical_trials_data",
                 name="clean_clinical_trial_data",
                 tags=["ec-clinical-trials-data"],
+            ),
+            node(
+                func=nodes.clean_drug_list,
+                inputs=[
+                    "preprocessing.raw.drug_list",
+                    "params:preprocessing.synonymizer_endpoint",
+                ],
+                outputs="ingestion.raw.drug_list@pandas",
+                name="resolve_drug_list",
+                tags=["drug-list"],
+            ),
+            node(
+                func=nodes.clean_disease_list,
+                inputs=[
+                    "preprocessing.raw.disease_list",
+                    "params:preprocessing.synonymizer_endpoint",
+                ],
+                outputs="ingestion.raw.disease_list@pandas",
+                name="resolve_disease_list",
+                tags=["disease-list"],
             ),
         ]
     )

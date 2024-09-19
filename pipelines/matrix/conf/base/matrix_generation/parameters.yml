@@ -1,0 +1,4 @@
+matrix_generation.matrix_generation_options:
+  batch_by: # Column to batch over when making predictions
+    - target 
+  n_reporting: 100000 # Number of items in the final report

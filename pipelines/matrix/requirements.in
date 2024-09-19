@@ -8,8 +8,7 @@ kedro-datasets>=3.0
 google-cloud-bigquery
 kedro-telemetry>=0.3.1
 kedro-viz>=6.7.0
-# can be unpinned when https://github.com/kedro-org/kedro/issues/4083 is fixed
-kedro==0.19.6
+kedro
 matplotlib
 notebook
 pyarrow>=14.0.2 
@@ -31,3 +30,8 @@ pygsheets==2.0.6
 # used for convenience libraries, to be moved to a dev requirements eventually  
 typer
 pytest-testmon
+pytest-mock
+rich
+# Temp. fix for the gcloud cli
+# https://github.com/googleapis/python-bigquery/issues/1908
+proto-plus==1.24.0.dev1
