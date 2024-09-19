@@ -23,7 +23,9 @@ MAX_QUERY_RETRIES = 5  # maximum number of times to retry a query
 QUERY_RETRY_DELAY = 4  # time to wait before retrying a failed query
 JOB_CHECK_SLEEP = 0  # time to sleep between job status checks
 DEBUG_QUERY_LIMITER = 8  # change to -1 to disable the limit
-# DEBUG_CSV_PATH = "../../../predictions.csv" # path to the output CSV file for debugging purposes
+DEBUG_CSV_PATH = (
+    "../../../predictions.csv"  # path to the output CSV file for debugging purposes
+)
 
 timeout_config = httpx.Timeout(
     timeout=TOTAL_TIMEOUT, connect=CONNECT_TIMEOUT, read=READ_TIMEOUT
@@ -34,7 +36,7 @@ def generate_trapi_query(curie: str) -> Dict[str, Any]:
     """Generate a TRAPI query for a given CURIE.
 
     :param curie: The CURIE for which to generate the query.
-    :return: The generated Query object.
+    :return: A dictionary representing the TRAPI query object.
     :raises ValueError: If the CURIE is invalid.
     """
     if not curie:
@@ -67,7 +69,7 @@ def generate_trapi_query(curie: str) -> Dict[str, Any]:
 async def generate_queries() -> List[Dict[str, Any]]:
     """Generate list of TRAPI queries from a DataFrame of diseases.
 
-    :return: List of dictionaries, each containing CURIEs and their corresponding TRAPI queries.
+    :return: List of dictionaries, each containing 'curie', 'query', and 'index' keys corresponding to the CURIE, its TRAPI query, and its position in the DataFrame.
     """
     diseases = pd.read_csv(
         "https://github.com/everycure-org/matrix-disease-list/releases/latest/download/matrix-disease-list.tsv",
@@ -153,7 +155,7 @@ async def retry_request(
     :param request_func: Asynchronous function for making the HTTP request (e.g., client.get or client.post).
     :param args: Positional arguments to pass to the request function.
     :param retries: Number of times to retry the request in case of failure. Default is 8.
-    :param delay: Delay in seconds between subsequent retries. The delay is exponentially increased with each retry. Default is 4.
+    :param delay: Initial delay in seconds between retries. The delay is multiplied by the backoff factor with each subsequent retry. Default is 4.
     :param kwargs: Keyword arguments to pass to the request function.
     :return: HTTPX Response object.
     :raises: Raises an HTTPStatusError or RequestError if all retry attempts fail.
@@ -181,7 +183,7 @@ async def post_async_query(client: httpx.AsyncClient, url: str, payload: dict) -
     :param client: HTTPX async client instance.
     :param url: URL to which the query is posted.
     :param payload: Payload of the query.
-    :return: JSON dictionary response.
+    :return: A dictionary parsed from the JSON response.
     """
     logging.info(
         f"Submitting query to {url} with payload: {json.dumps(payload, indent=2)}"
@@ -198,7 +200,9 @@ async def check_async_job_status(
 
     :param client: HTTPX async client instance.
     :param job_url: URL to check the job status.
-    :return: JSON dictionary of the final response if completed, otherwise None.
+    :return:
+        - A dictionary of the final response if the job is completed successfully.
+        - A dictionary with 'status' and 'description' if the job fails, errors, or times out.
     """
     start_time = time.monotonic()
 
@@ -241,8 +245,8 @@ async def fetch_final_results(client: httpx.AsyncClient, response_url: str) -> d
 
     :param client: HTTPX async client instance.
     :param response_url: URL to retrieve the final response.
-    :return: JSON dictionary of the final response.
-    :raises: Raises a ValueError if the response JSON cannot be parsed.
+    :return: A dictionary parsed from the JSON final response.
+    :raises Exception: If the response JSON cannot be parsed.
     """
     logging.info(f"Fetching final results from {response_url}")
     response = await retry_request(client.get, response_url)
@@ -271,6 +275,7 @@ async def process_query(
     :param query_dict: Dictionary containing the query.
     :param index: Index of the query.
     :param result_queue: Queue to put the results of processed queries.
+    :raises: This function handles its own exceptions and does not raise them to the caller.
     """
     for attempt in range(1, MAX_QUERY_RETRIES + 1):
         try:
@@ -355,7 +360,7 @@ async def producer(query_queue: asyncio.Queue, num_consumers: int):
     """Producer task to generate and enqueue queries.
 
     :param query_queue: Queue to enqueue the generated queries.
-    :return: Total number of queries produced.
+    :param num_consumers: Number of consumer tasks to signal completion.
     """
     queries = await generate_queries()
     for query in queries:
@@ -409,62 +414,65 @@ async def consumer(
 async def stream_results(semaphore, client: httpx.AsyncClient) -> List[Dict[str, Any]]:
     """Continuously stream results for TRAPI queries.
 
-    :param semaphore: Semaphore to limit the number of concurrent requests.
+    :param semaphore: An asyncio.Semaphore instance to limit the number of concurrent requests.
     :param client: HTTPX async client instance.
     :return: List of transformed query results.
     """
-    results = []
-    query_queue = asyncio.Queue()
-    result_queue = asyncio.Queue()
+    async with semaphore:
+        results = []
+        query_queue = asyncio.Queue()
+        result_queue = asyncio.Queue()
 
-    num_consumers = MAX_CONCURRENT_REQUESTS
+        num_consumers = MAX_CONCURRENT_REQUESTS
 
-    producer_task = asyncio.create_task(producer(query_queue, num_consumers))
-    logging.info("Producer task created.")
+        producer_task = asyncio.create_task(producer(query_queue, num_consumers))
+        logging.info("Producer task created.")
 
-    consumer_tasks = [
-        asyncio.create_task(consumer(query_queue, result_queue, client))
-        for _ in range(num_consumers)
-    ]
-    logging.info("Consumer tasks created.")
+        consumer_tasks = [
+            asyncio.create_task(consumer(query_queue, result_queue, client))
+            for _ in range(num_consumers)
+        ]
+        logging.info("Consumer tasks created.")
 
-    completion_signals_received = 0
+        completion_signals_received = 0
 
-    while completion_signals_received < num_consumers:
-        result = await result_queue.get()
-        if result is None:
-            completion_signals_received += 1
+        while completion_signals_received < num_consumers:
+            result = await result_queue.get()
+            if result is None:
+                completion_signals_received += 1
+                logging.info(
+                    f"Received completion signal from consumer. Total received: {completion_signals_received}"
+                )
+                result_queue.task_done()
+                continue
+
             logging.info(
-                f"Received completion signal from consumer. Total received: {completion_signals_received}"
+                f"Received result for curie {result['curie']}, starting transformation."
             )
+            transformed_results = await transform_result(result)
+            if transformed_results:
+                results.extend(transformed_results)
+                logging.info(
+                    f"Results transformed and added for curie {result['curie']}"
+                )
             result_queue.task_done()
-            continue
 
         logging.info(
-            f"Received result for curie {result['curie']}, starting transformation."
+            f"All consumers have signaled completion. Collected {len(results)} results in total."
         )
-        transformed_results = await transform_result(result)
-        if transformed_results:
-            results.extend(transformed_results)
-            logging.info(f"Results transformed and added for curie {result['curie']}")
-        result_queue.task_done()
 
-    logging.info(
-        f"All consumers have signaled completion. Collected {len(results)} results in total."
-    )
+        await producer_task
+        await query_queue.join()
+        for consumer_task in consumer_tasks:
+            await consumer_task
 
-    await producer_task
-    await query_queue.join()
-    for consumer_task in consumer_tasks:
-        await consumer_task
-
-    return results
+        return results
 
 
 async def async_bte_kedro_node_function() -> pd.DataFrame:
     """Node function to handle async processing within a Kedro pipeline node.
 
-    :return: DataFrame containing the final results.
+    :return: DataFrame containing the final query results with columns 'target', 'source', and 'score'.
     """
     logging.info("Starting async processing for BTE Kedro node function")
     semaphore = asyncio.Semaphore(MAX_CONCURRENT_REQUESTS)
@@ -490,11 +498,12 @@ async def async_bte_kedro_node_function() -> pd.DataFrame:
 def bte_kedro_node_function() -> pd.DataFrame:
     """Wrapper to run the stream processing function synchronously using asyncio.run.
 
-    :return: DataFrame containing the final results.
+    :return: DataFrame containing the final query results with columns 'target', 'source', and 'score'.
+    :side-effect: Saves the DataFrame to a CSV file at the specified path for debugging.
     """
     df = asyncio.run(async_bte_kedro_node_function())
 
-    save_dataframe_to_csv(df)
+    # save_dataframe_to_csv(df)
     return df
 
 
@@ -503,7 +512,9 @@ def save_dataframe_to_csv(df: pd.DataFrame, file_path: str = DEBUG_CSV_PATH) -> 
 
     :param df: DataFrame to be saved.
     :param file_path: Path where the DataFrame will be saved as a CSV file.
-    :raises ValueError: If the provided DataFrame is empty or file path is invalid.
+    :raises ValueError: If the provided DataFrame is empty.
+    :raises FileNotFoundError: If the specified file path does not exist.
+    :raises PermissionError: If there are insufficient permissions to write to the specified path.
     """
     if df.empty:
         logging.error("The provided DataFrame is empty.")
