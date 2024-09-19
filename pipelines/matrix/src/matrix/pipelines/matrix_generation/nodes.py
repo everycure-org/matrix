@@ -110,6 +110,9 @@ def make_batch_predictions(
 
     This function computes the scores in batches to avoid memory issues.
 
+    FUTURE: Experiment with PySpark for predictions where model is broadcasted.
+    https://dataking.hashnode.dev/making-predictions-on-a-pyspark-dataframe-with-a-scikit-learn-model-ckzzyrudn01lv25nv41i2ajjh
+
     Args:
         graph: Knowledge graph.
         data: Data to predict scores for.
