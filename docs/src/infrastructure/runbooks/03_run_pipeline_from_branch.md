@@ -1,4 +1,4 @@
-
+<!-- NOTE: This file was partially generated using AI assistance.  -->
 # Running an experiment from a branch on the Every Cure Platform
 
 ## Prerequisites
@@ -6,11 +6,7 @@
 gcloud auth configure-docker us-central1-docker.pkg.dev
 ```
 
-
 ## Run the pipeline
-
-
-Certainly! I'll create documentation for the `submit` command based on the provided `submit.py` file and incorporate it into the `03_run_pipeline_from_branch.md` file. I'll also take into account the context from `index.md` and `pipeline.md`. Here's the updated content for `03_run_pipeline_from_branch.md`:
 
 ```markdown:docs/src/infrastructure/runbooks/03_run_pipeline_from_branch.md
 # Running an experiment from a branch on the Every Cure Platform

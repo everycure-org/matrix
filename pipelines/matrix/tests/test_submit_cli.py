@@ -1,3 +1,8 @@
+"""Tests for the submit CLI command.
+
+NOTE: This file was partially generated using AI assistance.
+"""
+
 import pytest
 from unittest.mock import patch, MagicMock
 from click.testing import CliRunner

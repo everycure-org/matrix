@@ -2,6 +2,7 @@
 
 Intended to be invoked via `kedro`.
 """
+# NOTE: This file was partially generated using AI assistance.
 
 import json
 import logging
