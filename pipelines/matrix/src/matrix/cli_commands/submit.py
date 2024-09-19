@@ -41,7 +41,7 @@ def cli():
 @cli.command()
 @click.option("--username", type=str, required=True, help="Specify the username to use")
 @click.option("--namespace", type=str, default=None, help="Specify a custom namespace")
-@click.option("--run-name", type=str, default=None, help="Specify a custom run name")
+@click.option("--run-name", type=str, default=None, help="Specify a custom run name, defaults to branch")
 @click.option("--verbose", "-v", is_flag=True, default=False, help="Enable verbose output")
 @click.option("--dry-run", "-d", is_flag=True, default=False, help="Does everything except submit the workflow")
 # fmt: on
