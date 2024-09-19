@@ -77,7 +77,7 @@ In order to run against the `cloud` environment it's important to set the `RUN_N
     If you wish to pull data from MLFlow it's currently required to setup [port-forwarding](https://emmer.dev/blog/port-forwarding-to-kubernetes/) into the MLFlow tracking container on the cluster. You can do this as follows:
 
     ```bash
-    kubectl port-forward -n mlflow pod/mlflow-tracking-54f5bcd66c-7k9mc 5002:5000
+    kubectl port-forward -n mlflow svc/mlflow-tracking 5002:80
     ```
 
     Next, add the following entry to your `.env` file.
