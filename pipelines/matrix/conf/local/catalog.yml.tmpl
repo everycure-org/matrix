@@ -17,6 +17,7 @@ embeddings.reporting.topological_pca_plot:
     type: kedro_datasets.matplotlib.MatplotlibWriter
     filepath: ${globals:paths.tmp}/pca_plot.png
 
+# Modelling
 "modelling.{model}.{shard}.reporting.tuning_convergence_plot":
   type: kedro_mlflow.io.artifacts.MlflowArtifactDataset
   artifact_path: "{model}/{shard}"
