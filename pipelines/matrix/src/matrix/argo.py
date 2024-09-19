@@ -69,6 +69,7 @@ def _generate_argo_config(
         image_tag=image_tag,
         namespace=namespace,
         username=username,
+        run_name=run_name,
     )
 
     (SEARCH_PATH / RENDERED_FILE).write_text(output)
