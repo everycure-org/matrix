@@ -9,6 +9,7 @@ https://docs.kedro.org/en/stable/kedro_project_setup/settings.html.
 # from pandas_viz.hooks import ProjectHooks
 import matrix.hooks as hooks
 from kedro_mlflow.framework.hooks import MlflowHook
+from logging import config as logging_config
 
 # Hooks are executed in a Last-In-First-Out (LIFO) order.
 HOOKS = (
