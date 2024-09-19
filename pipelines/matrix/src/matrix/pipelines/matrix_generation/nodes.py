@@ -184,42 +184,7 @@ def make_batch_predictions(
     return data
 
 
-def make_predictions_and_sort(
-    graph: KnowledgeGraph,
-    data: pd.DataFrame,
-    transformers: Dict[str, Dict[str, Union[_BaseImputer, List[str]]]],
-    model: ModelWrapper,
-    features: List[str],
-    score_col_name: str,
-    batch_by: str,
-) -> pd.DataFrame:
-    """Generate and sort probability scores for a drug-disease dataset.
-
-    FUTURE: Perform parallelised computation instead of batching with a for loop.
-
-    Args:
-        graph: Knowledge graph.
-        data: Data to predict scores for.
-        transformers: Dictionary of trained transformers.
-        model: Model making the predictions.
-        features: List of features, may be regex specified.
-        score_col_name: Probability score column name.
-        batch_by: Column to use for batching (e.g., "target" or "source").
-
-    Returns:
-        Pairs dataset sorted by an additional column containing the probability scores.
-    """
-    # Generate scores
-    data = make_batch_predictions(
-        graph, data, transformers, model, features, score_col_name, batch_by=batch_by
-    )
-
-    # Sort by the probability score
-    sorted_data = data.sort_values(by=score_col_name, ascending=False)
-    return sorted_data
-
-
-def add_flag_columns(
+def _add_flag_columns(
     matrix: pd.DataFrame, known_pairs: pd.DataFrame, clinical_trials: pd.DataFrame
 ) -> pd.DataFrame:
     """Adds boolean columns flagging known positives and known negatives.
@@ -249,19 +214,59 @@ def add_flag_columns(
 
     # Flag clinical trials data
     matrix["trial_sig_better"] = create_flag_column(
-        clinical_trials[clinical_trials["significantly_better"]]
+        clinical_trials[clinical_trials["significantly_better"] == 1]
     )
     matrix["trial_non_sig_better"] = create_flag_column(
-        clinical_trials[clinical_trials["non_significantly_better"]]
+        clinical_trials[clinical_trials["non_significantly_better"] == 1]
     )
     matrix["trial_sig_worse"] = create_flag_column(
-        clinical_trials[clinical_trials["non_significantly_worse"]]
+        clinical_trials[clinical_trials["non_significantly_worse"] == 1]
     )
     matrix["trial_non_sig_worse"] = create_flag_column(
-        clinical_trials[clinical_trials["significantly_worse"]]
+        clinical_trials[clinical_trials["significantly_worse"] == 1]
     )
 
     return matrix
+
+
+def process_matrix(
+    graph: KnowledgeGraph,
+    data: pd.DataFrame,
+    transformers: Dict[str, Dict[str, Union[_BaseImputer, List[str]]]],
+    model: ModelWrapper,
+    features: List[str],
+    known_pairs: pd.DataFrame,
+    clinical_trials: pd.DataFrame,
+    score_col_name: str,
+    batch_by: str,
+) -> pd.DataFrame:
+    """Generate probability scores, adds flag columns and sorts a drug-disease dataset.
+
+    Args:
+        graph: Knowledge graph.
+        data: Data to predict scores for.
+        transformers: Dictionary of trained transformers.
+        model: Model making the predictions.
+        features: List of features, may be regex specified.
+        known_pairs: Labelled ground truth drug-disease pairs dataset.
+        clinical_trials: Pairs dataset representing outcomes of recent clinical trials.
+        score_col_name: Probability score column name.
+        batch_by: Column to use for batching (e.g., "target" or "source").
+
+    Returns:
+        Pairs dataset sorted by an additional column containing the probability scores.
+    """
+    # Generate scores
+    data = make_batch_predictions(
+        graph, data, transformers, model, features, score_col_name, batch_by=batch_by
+    )
+
+    # Add flag columns for known positives and negatives
+    data = _add_flag_columns(data, known_pairs, clinical_trials)
+
+    # Sort by the probability score
+    sorted_data = data.sort_values(by=score_col_name, ascending=False)
+    return sorted_data
 
 
 def generate_report(

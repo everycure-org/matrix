@@ -29,10 +29,6 @@ matrix_generation.prm.matrix_pairs:
   <<: *_pandas_parquet
   filepath: ${globals:paths.model_output}/{model}/matrix_predictions
 
-"matrix_generation.{model}.model_output.flagged_matrix_predictions":
-  <<: *_pandas_parquet
-  filepath: ${globals:paths.model_output}/{model}/matrix_predictions
-
 "matrix_generation.{model}.reporting.matrix_report":
   filepath: ${globals:paths.reporting}/{model}/matrix_report
   type: pandas.CSVDataset

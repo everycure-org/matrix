@@ -11,33 +11,25 @@ def _create_matrix_generation_pipeline(model: str) -> Pipeline:
     return pipeline(
         [
             node(
-                func=nodes.make_predictions_and_sort,
+                func=nodes.process_matrix,
                 inputs=[
                     "matrix_generation.feat.nodes@pandas",
                     "matrix_generation.prm.matrix_pairs",
                     f"modelling.{model}.model_input.transformers",
                     f"modelling.{model}.models.model",
                     f"params:modelling.{model}.model_options.model_tuning_args.features",
+                    "modelling.model_input.splits",
+                    "ingestion.raw.clinical_trials_data",
                     "params:evaluation.score_col_name",
                     "params:matrix_generation.matrix_generation_options.batch_by",
                 ],
                 outputs=f"matrix_generation.{model}.model_output.sorted_matrix_predictions",
-                name=f"make_{model}_predictions_and_sort",
-            ),
-            node(
-                func=nodes.add_flag_columns,
-                inputs=[
-                    f"matrix_generation.{model}.model_output.sorted_matrix_predictions",
-                    "modelling.model_input.splits",
-                    "ingestion.raw.clinical_trials_data",
-                ],
-                outputs=f"matrix_generation.{model}.model_output.flagged_matrix_predictions",
-                name=f"add_{model}_matrix_flags",
+                name=f"process_{model}_matrix",
             ),
             node(
                 func=nodes.generate_report,
                 inputs=[
-                    f"matrix_generation.{model}.model_output.flagged_matrix_predictions",
+                    f"matrix_generation.{model}.model_output.sorted_matrix_predictions",
                     "params:matrix_generation.matrix_generation_options.n_reporting",
                     "ingestion.raw.drug_list@pandas",
                     "ingestion.raw.disease_list@pandas",
