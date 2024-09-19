@@ -88,15 +88,25 @@ def submit(username: str, namespace: str, run_name: str, verbose: bool, dry_run:
             title="Submission Summary"
         ))
 
-        if not dry_run and click.confirm("Do you want to open the workflow in your browser?"):
-            workflow_url = f"https://argo.platform.dev.everycure.org/workflows/{namespace}/{run_name}"
-            click.launch(workflow_url)
-            console.print(f"[blue]Opened workflow in browser: {workflow_url}[/blue]")
+        prompt_browser_open(dry_run, f"https://argo.platform.dev.everycure.org/workflows/{namespace}/{run_name}")
+
     except Exception as e:
         console.print(f"[bold red]Error during submission:[/bold red] {str(e)}")
         if verbose:
             console.print_exception()
         sys.exit(1)
+
+
+def prompt_browser_open(dry_run: bool, workflow_url: str):
+    """Prompts to open in a browser if not in dry run mode."""
+    # if on macos:
+    if sys.platform == "darwin":
+        run_subprocess("say 'Would you like me to open this in a browser?'")
+    if click.confirm("Would you like me to open this in a browser?"):
+        click.launch(workflow_url)
+    if sys.platform == "darwin":
+        run_subprocess("say 'Certainly!'")
+    console.print(f"[blue]Workflow URL: {workflow_url}[/blue]")
 
 
 def run_subprocess(
