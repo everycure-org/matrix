@@ -56,3 +56,33 @@ by renaming it to `.env`.
 The key here is that the pipeline will not run fully without credentials
 for the dependent services (at the moment only OpenAI). Reach out to the team through
 Slack if you need a credential. 
+
+### Plugging into cloud outputs
+
+We run our full pipeline on production data in the `cloud` environment. Our pipeline is orchestrated using Argo Workflows, and may take several hours to complete. Given our current test process, that solely executes end-to-end tests on synthetic data, it is possible that the pipeline runs into an error due to a node handling data edge cases succesfully.
+
+Troubleshooting such issues is tedious, and validating a fix requires the entire pipeline to be re-executed. This is where the `--from-env` flag comes in.
+
+The figure below visualizes the same pipeline, with the environment distinguishing source/destination systems.
+
+![](../assets/img/from-env-pipeline.drawio.svg)
+
+Now imagine that a node in the pipeline fails. Debugging is hard, due to the remote execution environment. The `--from-env` flag allows for executing a step in the pipeline, in a given environment, while consuming the _input_ datasets from another environment.
+
+![](../assets/img/from-env-run.drawio.svg)
+
+In order to run against the `cloud` environment it's important to set the `RUN_NAME` variable in the `.env` file, as this determines the run for which datasets are pulled.
+
+!!! note 
+    
+    If you wish to pull data from MLFlow it's currently required to setup [port-forwarding](https://emmer.dev/blog/port-forwarding-to-kubernetes/) into the MLFlow tracking container on the cluster. You can do this as follows:
+
+    ```bash
+    kubectl port-forward -n mlflow svc/mlflow-tracking 5002:80
+    ```
+
+    Next, add the following entry to your `.env` file.
+
+    ```dotenv
+    MLFLOW_ENDPOINT=http://127.0.0.1:5002
+    ```
