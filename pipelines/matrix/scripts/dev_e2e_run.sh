@@ -41,23 +41,22 @@ build_argo_template() {
     echo "Building Argo workflow template..."
     # TODO duplicated image name reference from Makefile, should clean up
     IMAGE_NAME="us-central1-docker.pkg.dev/mtrx-hub-dev-3of/matrix-images/matrix"
-    .venv/bin/python ./src/matrix/argo.py generate-argo-config $IMAGE_NAME $USERNAME "dev-$USERNAME"
+    .venv/bin/python ./src/matrix/argo.py generate-argo-config $IMAGE_NAME $USERNAME $NAMESPACE
 }
 
 # Function to create or verify namespace
 ensure_namespace() {
-    local namespace="dev-${USERNAME}"
-    if ! kubectl get namespace "$namespace" &>/dev/null; then
-        kubectl create namespace "$namespace"
+    if ! kubectl get namespace "$NAMESPACE" &>/dev/null; then
+        kubectl create namespace "$NAMESPACE"
     fi
-    echo "Using namespace: $namespace"
+    echo "Using namespace: $NAMESPACE"
 }
 
 # Function to apply Argo template
 apply_argo_template() {
     echo "Applying Argo workflow template..."
     # Add kubectl apply command for your Argo template
-    kubectl apply -f templates/argo-workflow-template.yml -n dev-$USERNAME
+    kubectl apply -f templates/argo-workflow-template.yml -n $NAMESPACE
 }
 
 # Function to submit Argo workflow
@@ -65,15 +64,14 @@ submit_workflow() {
 
     #   -p openai_endpoint=https://api.openai.com/v1 \
     echo "Submitting Argo workflow..."
-    JOB_NAME=$(argo submit -n dev-$USERNAME --from wftmpl/matrix \
-      -p experiment=$(get_experiment_name) \
+    JOB_NAME=$(argo submit -n $NAMESPACE --from wftmpl/matrix \
       -p run_name=$(get_experiment_name) \
       -l submit-from-ui=false \
       --entrypoint __default__ \
       -o json \
       | jq -r '.metadata.name')
     
-    argo watch -n dev-$USERNAME $JOB_NAME
+    argo watch -n $NAMESPACE $JOB_NAME
 }
 get_experiment_name() {
     if [ -n "$RUN_NAME" ]; then
@@ -88,9 +86,9 @@ get_experiment_name() {
 main() {
     set -xe
     check_dependencies
-    build_push_docker
+    #build_push_docker
     build_argo_template
-    ensure_namespace
+    # ensure_namespace NOTE: Currently executing in argo
     apply_argo_template
     submit_workflow
 }
@@ -101,6 +99,10 @@ while [[ $# -gt 0 ]]; do
             USERNAME="${2:-$USER}"
             shift 2
             ;;
+        --namespace)
+            NAMESPACE="${2:-dev-$USER}"
+            shift 2
+            ;;
         --run-name)
             RUN_NAME="$2"
             shift 2
@@ -109,6 +111,7 @@ while [[ $# -gt 0 ]]; do
             echo "Usage: $0 [options]"
             echo "Options:"
             echo "  --username <username>  Specify the username to use"
+            echo "  --namespace <namespace>  Specify a custom namespace"
             echo "  --run-name <name>      Specify a custom run name"
             echo "  --help                 Show this help message"
             exit 0

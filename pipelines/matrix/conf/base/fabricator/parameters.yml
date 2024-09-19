@@ -226,7 +226,7 @@ fabricator.robokop:
           left_digits: 3
           right_digits: 2
           positive: True
-          min_value: 0
+          min_value: 1
           max_value: 100
       publications:
         type: generate_random_arrays

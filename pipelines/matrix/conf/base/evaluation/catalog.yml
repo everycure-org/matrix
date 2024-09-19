@@ -25,8 +25,7 @@ evaluation.prm.clinical_trials_data:
   <<: *_pandas_parquet
   filepath: ${globals:paths.prm}/{model}/{evaluation}/pairs
 
-
 "evaluation.{model}.{evaluation}.reporting.evaluation":
-  type: matrix.datasets.mlflow.MlflowMetricsDataset
-  key_prefix: "{model}.{evaluation}"
+  filepath: ${globals:paths.reporting}/{model}/{evaluation}/result.yml
+  type:  yaml.YAMLDataset
 
