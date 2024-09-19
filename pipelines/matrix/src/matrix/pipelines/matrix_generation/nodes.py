@@ -306,8 +306,11 @@ def generate_report(
     top_pairs["drug_name"] = top_pairs["source"].map(drug_curie_to_name)
     top_pairs["disease_name"] = top_pairs["target"].map(disease_curie_to_name)
 
+    # Round the treat scores to 4 decimal places
+    top_pairs[score_col_name] = top_pairs[score_col_name].round(4)
+
     # breakpoint()
-    # TODO: Merge columns
+    # TODO:Merge columns
 
     # Rename ID columns
     top_pairs = top_pairs.rename(columns={"source": "drug_id"})
