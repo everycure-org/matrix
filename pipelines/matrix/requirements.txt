@@ -337,7 +337,7 @@ jupyterlab-server==2.27.3
     # via
     #   jupyterlab
     #   notebook
-kedro==0.19.6
+kedro==0.19.8
     # via
     #   -r requirements.in
     #   kedro-datasets
@@ -351,7 +351,9 @@ kedro-datasets==4.1.0
 kedro-mlflow==0.12.2
     # via -r requirements.in
 kedro-telemetry==0.6.0
-    # via -r requirements.in
+    # via
+    #   -r requirements.in
+    #   kedro
 kedro-viz==9.2.0
     # via -r requirements.in
 kiwisolver==1.4.7
@@ -785,6 +787,7 @@ typing-extensions==4.12.2
     #   fastapi
     #   graphdatascience
     #   ipython
+    #   kedro
     #   opentelemetry-sdk
     #   pydantic
     #   pydantic-core
