@@ -1,10 +1,14 @@
 """Module with nodes for evaluation."""
+import logging
 from tqdm import tqdm
 from typing import List, Dict, Union
 
 from sklearn.impute._base import _BaseImputer
 
 import pandas as pd
+
+from pyspark.sql import DataFrame
+import pyspark.sql.functions as F
 
 from refit.v1.core.inject import inject_object
 from refit.v1.core.inline_has_schema import has_schema
@@ -13,8 +17,35 @@ from refit.v1.core.make_list_regexable import _extract_elements_in_list
 from matrix.datasets.graph import KnowledgeGraph
 
 from matrix.pipelines.modelling.nodes import apply_transformers
-from matrix.pipelines.evaluation.evaluation import Evaluation
 from matrix.pipelines.modelling.model import ModelWrapper
+
+
+logger = logging.getLogger(__name__)
+
+
+def enrich_embeddings(
+    nodes: DataFrame,
+    drugs: DataFrame,
+    diseases: DataFrame,
+) -> DataFrame:
+    """Function to enrich drug and disease list with embeddings.
+
+    Args:
+        nodes: Dataframe with node embeddings
+        drugs: List of drugs
+        diseases: List of diseases
+    """
+    return (
+        drugs.withColumn("is_drug", F.lit(True))
+        .unionByName(
+            diseases.withColumn("is_disease", F.lit(True)), allowMissingColumns=True
+        )
+        .withColumnRenamed("curie", "id")
+        .join(nodes, on="id", how="inner")
+        .select("is_drug", "is_disease", "id", "topological_embedding")
+        .withColumn("is_drug", F.coalesce(F.col("is_drug"), F.lit(False)))
+        .withColumn("is_disease", F.coalesce(F.col("is_disease"), F.lit(False)))
+    )
 
 
 @has_schema(
@@ -79,6 +110,9 @@ def make_batch_predictions(
 
     This function computes the scores in batches to avoid memory issues.
 
+    FUTURE: Experiment with PySpark for predictions where model is broadcasted.
+    https://dataking.hashnode.dev/making-predictions-on-a-pyspark-dataframe-with-a-scikit-learn-model-ckzzyrudn01lv25nv41i2ajjh
+
     Args:
         graph: Knowledge graph.
         data: Data to predict scores for.
@@ -95,11 +129,28 @@ def make_batch_predictions(
     def process_batch(batch: pd.DataFrame) -> pd.DataFrame:
         # Collect embedding vectors
         batch["source_embedding"] = batch.apply(
-            lambda row: graph._embeddings[row.source], axis=1
+            lambda row: graph.get_embedding(row.source, default=pd.NA), axis=1
         )
         batch["target_embedding"] = batch.apply(
-            lambda row: graph._embeddings[row.target], axis=1
+            lambda row: graph.get_embedding(row.target, default=pd.NA), axis=1
         )
+
+        # Retrieve rows with null embeddings
+        # NOTE: This only happens in a rare scenario where the node synonymizer
+        # provided an identifier for a node that does _not_ exist in our KG.
+        # https://github.com/everycure-org/matrix/issues/409
+        removed = batch[
+            batch["source_embedding"].isna() | batch["target_embedding"].isna()
+        ]
+        if len(removed.index) > 0:
+            logger.warning(f"Dropped {len(removed.index)} pairs during generation!")
+            logger.warning(
+                "Dropped: %s",
+                ",".join([f"({r.source}, {r.target})" for _, r in removed.iterrows()]),
+            )
+
+        # drop rows without source/target embeddings
+        batch = batch.dropna(subset=["source_embedding", "target_embedding"])
 
         # Apply transformers to data
         transformed = apply_transformers(batch, transformers)
@@ -190,13 +241,17 @@ def generate_report(
         Dataframe containing the top pairs with additional information for the drugs and diseases.
     """
     # Select the top n_reporting rows
-    top_pairs = data.head(n_reporting)
+    top_pairs = data.head(n_reporting).copy()
+
+    # Generate curie to name dictionaries
+    drug_curie_to_name = {row["curie"]: row["name"] for _, row in drugs.iterrows()}
+    disease_curie_to_name = {
+        row["curie"]: row["name"] for _, row in diseases.iterrows()
+    }
 
     # Add additional information for drugs and diseases
-    get_drug_name = lambda x: drugs[drugs["curie"].eq(x)]["name"].item()
-    top_pairs["drug_name"] = top_pairs["source"].apply(get_drug_name)
-    get_disease_name = lambda x: diseases[diseases["curie"].eq(x)]["name"].item()
-    top_pairs["disease_name"] = top_pairs["target"].apply(get_disease_name)
+    top_pairs["drug_name"] = top_pairs["source"].map(drug_curie_to_name)
+    top_pairs["disease_name"] = top_pairs["target"].map(disease_curie_to_name)
 
     # Flag known positives and negatives
     known_pair_is_pos = known_pairs["y"].eq(1)
