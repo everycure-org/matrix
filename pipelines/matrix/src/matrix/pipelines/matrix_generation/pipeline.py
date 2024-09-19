@@ -25,13 +25,22 @@ def _create_matrix_generation_pipeline(model: str) -> Pipeline:
                 name=f"make_{model}_predictions_and_sort",
             ),
             node(
-                func=nodes.generate_report,
+                func=nodes.add_flag_columns,
                 inputs=[
                     f"matrix_generation.{model}.model_output.sorted_matrix_predictions",
+                    "modelling.model_input.splits",
+                    "ingestion.raw.clinical_trials_data",
+                ],
+                outputs=f"matrix_generation.{model}.model_output.flagged_matrix_predictions",
+                name=f"add_{model}_matrix_flags",
+            ),
+            node(
+                func=nodes.generate_report,
+                inputs=[
+                    f"matrix_generation.{model}.model_output.flagged_matrix_predictions",
                     "params:matrix_generation.matrix_generation_options.n_reporting",
                     "ingestion.raw.drug_list@pandas",
                     "ingestion.raw.disease_list@pandas",
-                    "modelling.model_input.splits",
                     "params:evaluation.score_col_name",
                 ],
                 outputs=f"matrix_generation.{model}.reporting.matrix_report",

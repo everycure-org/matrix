@@ -18,7 +18,9 @@ from matrix.pipelines.evaluation.evaluation import Evaluation
 from matrix.pipelines.modelling.model import ModelWrapper
 
 
-def create_prm_clinical_trials(raw_clinical_trials: pd.DataFrame) -> pd.DataFrame:
+def create_prm_clinical_trials(
+    raw_clinical_trials: pd.DataFrame,
+) -> pd.DataFrame:  # TODO: remove
     """Function to clean clinical trails dataset.
 
     Args:
