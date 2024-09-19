@@ -1,4 +1,5 @@
 """Ingestion pipeline."""
+
 from kedro.pipeline import Pipeline, node, pipeline
 
 import pyspark.sql.functions as F
@@ -50,9 +51,7 @@ def create_pipeline(**kwargs) -> Pipeline:
             ),
             node(
                 # FUTURE: Update selection
-                func=lambda x: x.select("subject", "predicate", "object").withColumn(
-                    "kg_source", F.lit("robokop")
-                ),
+                func=lambda x: x.withColumn("kg_source", F.lit("robokop")),
                 inputs=["ingestion.raw.robokop.edges@spark"],
                 outputs="ingestion.int.robokop.edges",
                 name="write_robokop_edges",

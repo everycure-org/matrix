@@ -7,6 +7,9 @@ from sklearn.impute._base import _BaseImputer
 
 import pandas as pd
 
+from pyspark.sql import DataFrame
+import pyspark.sql.functions as F
+
 from refit.v1.core.inject import inject_object
 from refit.v1.core.inline_has_schema import has_schema
 from refit.v1.core.make_list_regexable import _extract_elements_in_list
@@ -18,6 +21,31 @@ from matrix.pipelines.modelling.model import ModelWrapper
 
 
 logger = logging.getLogger(__name__)
+
+
+def enrich_embeddings(
+    nodes: DataFrame,
+    drugs: DataFrame,
+    diseases: DataFrame,
+) -> DataFrame:
+    """Function to enrich drug and disease list with embeddings.
+
+    Args:
+        nodes: Dataframe with node embeddings
+        drugs: List of drugs
+        diseases: List of diseases
+    """
+    return (
+        drugs.withColumn("is_drug", F.lit(True))
+        .unionByName(
+            diseases.withColumn("is_disease", F.lit(True)), allowMissingColumns=True
+        )
+        .withColumnRenamed("curie", "id")
+        .join(nodes, on="id", how="inner")
+        .select("is_drug", "is_disease", "id", "topological_embedding")
+        .withColumn("is_drug", F.coalesce(F.col("is_drug"), F.lit(False)))
+        .withColumn("is_disease", F.coalesce(F.col("is_disease"), F.lit(False)))
+    )
 
 
 @has_schema(
@@ -82,6 +110,9 @@ def make_batch_predictions(
 
     This function computes the scores in batches to avoid memory issues.
 
+    FUTURE: Experiment with PySpark for predictions where model is broadcasted.
+    https://dataking.hashnode.dev/making-predictions-on-a-pyspark-dataframe-with-a-scikit-learn-model-ckzzyrudn01lv25nv41i2ajjh
+
     Args:
         graph: Knowledge graph.
         data: Data to predict scores for.
@@ -105,17 +136,18 @@ def make_batch_predictions(
         )
 
         # Retrieve rows with null embeddings
-        # NOTE: It's possible node embeddings could be missing because of two possible
-        # scenarios. The CURIE does not exist in the KG, or we've not included the curie
-        # as part of our pre-filtering step. We need to introduce a mechanism that allows
-        # for enriching a table with embeddings from Neo4J
+        # NOTE: This only happens in a rare scenario where the node synonymizer
+        # provided an identifier for a node that does _not_ exist in our KG.
         # https://github.com/everycure-org/matrix/issues/409
         removed = batch[
             batch["source_embedding"].isna() | batch["target_embedding"].isna()
         ]
         if len(removed.index) > 0:
             logger.warning(f"Dropped {len(removed.index)} pairs during generation!")
-            logger.warning(removed)
+            logger.warning(
+                "Dropped: %s",
+                ",".join([f"({r.source}, {r.target})" for _, r in removed.iterrows()]),
+            )
 
         # drop rows without source/target embeddings
         batch = batch.dropna(subset=["source_embedding", "target_embedding"])

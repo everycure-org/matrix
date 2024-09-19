@@ -7,8 +7,6 @@ metadata:
 spec:
   workflowMetadata:
     labels:
-      experiment: {% raw %}'{{ workflow.parameters.experiment }}'
-      {% endraw %}
       run: {% raw %}'{{ workflow.parameters.run_name }}'
       {% endraw %}
   entrypoint: dag

@@ -123,7 +123,6 @@ class RateLimitException(Exception):
 @retry(
     wait=wait_random_exponential(min=1, max=60),
     stop=stop_after_attempt(10),
-    retry=retry_if_exception_type(RateLimitException),
 )
 def batch(endpoint, model, api_key, batch):
     """Function to resolve batch."""
