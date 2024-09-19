@@ -44,7 +44,7 @@ class KnowledgeGraph:
             Embedding or None if not found
         """
         res = self._embeddings.get(node_id, default)
-        if res is None:
+        if res is default:
             logger.warning(f"Embedding for node with id '{node_id}' not found!")
 
         return res

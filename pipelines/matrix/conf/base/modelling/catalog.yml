@@ -16,7 +16,6 @@ _kg_dataset: &_kg_dataset
     engine: pyarrow
     use_nullable_dtypes: True
 
-
 _model_input_ds: &_model_input_ds
   metadata:
     kedro-viz:

@@ -40,6 +40,24 @@ Data used by our pipeline is registered in the _data catalog_. To add additional
 
 ![](../assets/img/convention.png)
 
+### Dataset transcoding
+
+Our pipeline uses Spark and Pandas interchangeably. To avoid having to manually convert datasets from one type into another, Kedro supports [dataset transcoding](https://github.com/kedro-org/kedro-training/blob/master/training_docs/12_transcoding.md).
+
+In short, this feature allows for defining multiple flavors of a dataset in the catalog, using the syntax below. The advantage of this is that Kedro is aware that `my_dataframe@spark` and `my_dataframe@pandas` refer to the same data, and hence pipeline runtime dependencies are respected.
+
+
+```yaml
+my_dataframe@spark:
+  type: spark.SparkDataSet
+  filepath: data/02_intermediate/data.parquet
+  file_format: parquet
+
+my_dataframe@pandas:
+  type: pandas.ParquetDataSet
+  filepath: data/02_intermediate/data.parquet
+```
+
 ### Data fabrication
 
 !!! tip
@@ -145,9 +163,11 @@ The dependency injection pattern is an excellent technique to clean configuratio
 
 ### Dynamic pipelines
 
-!!! note This is an advanced topic, and can be skipped during the oboarding.
+!!! note 
+    This is an advanced topic, and can be skipped during the oboarding.
 
-!!! tip Dynamic pipelining is a rather new concept in Kedro. We recommend checking out the [Dynamic Pipelines](https://getindata.com/blog/kedro-dynamic-pipelines/) blogpost. This pipelining strategy heavily relies on Kedro's [dataset factories](https://docs.kedro.org/en/stable/data/kedro_dataset_factories.html) feature.
+!!! tip 
+    Dynamic pipelining is a rather new concept in Kedro. We recommend checking out the [Dynamic Pipelines](https://getindata.com/blog/kedro-dynamic-pipelines/) blogpost. This pipelining strategy heavily relies on Kedro's [dataset factories](https://docs.kedro.org/en/stable/data/kedro_dataset_factories.html) feature.
 
 Given the experimental nature of our project, we aim to produce different model flavours. For instance, a model with static hyper-parameters, a model that is hyper-parameter tuned, and an ensemble of hyper-parameter tuned models, etc.
 
