@@ -20,7 +20,7 @@ def resolve(name: str, endpoint: str) -> str:
     Returns:
         Corresponding curie
     """
-    result = requests.get(f"{endpoint}/synonymize", json={"names": [name]})
+    result = requests.get(f"{endpoint}/synonymize", json={"name": name})
 
     element = result.json().get(name)
     if element:
@@ -29,23 +29,24 @@ def resolve(name: str, endpoint: str) -> str:
     return None
 
 
-def normalize(curie: str, endpoint: str):
+def normalize(curie: str, endpoint: str, att_to_get: str = "identifier"):
     """Function to retrieve the normalized identifier through the synonymizer.
 
     Args:
         curie: curie of the node
         endpoint: endpoint of the synonymizer
+        att_to_get: attribute to get from API
     Returns:
         Corresponding curie
     """
     if not curie or pd.isna(curie):
         return None
 
-    result = requests.get(f"{endpoint}/normalize", json={"names": [curie]})
+    result = requests.get(f"{endpoint}/normalize", json={"name": curie})
 
     element = result.json().get(curie)
     if element:
-        return element.get("id", {}).get("identifier")
+        return element.get("id", {}).get(att_to_get)
 
     return None
 
@@ -57,22 +58,8 @@ def coalesce(s: pd.Series, *series: List[pd.Series]):
     return s
 
 
-@has_schema(
-    schema={
-        "ID": "numeric",
-        "name": "object",
-        "curie": "object",
-    },
-    allow_subset=True,
-)
-@primary_key(primary_key=["ID"])
 def enrich_df(
-    df: pd.DataFrame,
-    endpoint: str,
-    func: Callable,
-    input_cols: str,
-    target_col: str,
-    coalesce_col: Optional[str] = None,
+    df: pd.DataFrame, endpoint: str, func: Callable, input_cols: str, target_col: str
 ) -> pd.DataFrame:
     """Function to resolve nodes of the nodes input dataset.
 
@@ -82,7 +69,6 @@ def enrich_df(
         func: func to call
         input_cols: input cols, cols are coalesced to obtain single column
         target_col: target col
-        coalesce_col: col to coalesce with if None
     Returns:
         dataframe enriched with Curie column
     """
@@ -92,35 +78,69 @@ def enrich_df(
     # Apply enrich function and replace nans by empty space
     df[target_col] = col.apply(partial(func, endpoint=endpoint))
 
-    # If set, coalesce final result with coalesce col
-    if coalesce_col:
-        df[target_col] = coalesce(df[coalesce_col], df[target_col])
-
     return df
 
 
-def create_int_nodes(int_nodes: pd.DataFrame) -> pd.DataFrame:
+@has_schema(
+    schema={
+        "ID": "numeric",
+        "name": "object",
+        "curie": "object",
+        "normalized_curie": "object",
+    },
+    allow_subset=True,
+)
+@primary_key(primary_key=["ID"])
+def create_int_nodes(nodes: pd.DataFrame, endpoint: str) -> pd.DataFrame:
     """Function to create a intermediate nodes dataset by filtering and renaming columns."""
-    # Replace empty strings with nan
-    return int_nodes[int_nodes["normalized_curie"].notna()].rename(
-        columns={"normalized_curie": "curie"}
+    # Enrich curie with node synonymizer
+    resolved = enrich_df(
+        nodes, endpoint, resolve, input_cols=["name"], target_col="curie"
     )
 
+    # Normalize curie, by taking corrected currie or curie
+    normalized = enrich_df(
+        resolved,
+        endpoint,
+        normalize,
+        input_cols=["corrected_curie", "curie"],
+        target_col="normalized_curie",
+    )
 
-def create_int_edges(prm_nodes: pd.DataFrame, int_edges: pd.DataFrame) -> pd.DataFrame:
-    """Function to create a intermediate edges dataset by combining primary nodes with intermediate edges."""
-    index = prm_nodes[["ID", "curie"]]
+    # If new id is specified, we use the new id as a new KG identifier should be introduced
+    normalized["normalized_curie"] = coalesce(
+        normalized["new_id"], normalized["normalized_curie"]
+    )
+
+    return normalized
+
+
+@has_schema(
+    schema={
+        "SourceId": "object",
+        "TargetId": "object",
+    },
+    allow_subset=True,
+)
+def create_int_edges(int_nodes: pd.DataFrame, int_edges: pd.DataFrame) -> pd.DataFrame:
+    """Function to create int edges dataset.
+
+    Function ensures edges dataset link curies in the KG.
+    """
+    # Remove all nodes that could not be resolved, as we wont include
+    # any edges between those.
+    index = int_nodes[int_nodes["normalized_curie"].notna()]
 
     res = (
         int_edges.merge(
-            index.rename(columns={"curie": "SourceId"}),
+            index.rename(columns={"normalized_curie": "SourceId"}),
             left_on="Source",
             right_on="ID",
             how="left",
         )
         .drop(columns="ID")
         .merge(
-            index.rename(columns={"curie": "TargetId"}),
+            index.rename(columns={"normalized_curie": "TargetId"}),
             left_on="Target",
             right_on="ID",
             how="left",
@@ -199,8 +219,7 @@ def create_prm_edges(int_edges: pd.DataFrame) -> pd.DataFrame:
     df="df",
 )
 def map_name_to_curie(
-    df: pd.DataFrame,
-    endpoint: str,
+    df: pd.DataFrame, endpoint: str, drug_types: List[str], disease_types: List[str]
 ) -> pd.DataFrame:
     """Map drug name to curie.
 
@@ -211,15 +230,35 @@ def map_name_to_curie(
     Args:
         df: raw clinical trial dataset from medical team
         endpoint: endpoint of the synonymizer
+        drug_types: list of drug types
+        disease_types: list of disease types
     Returns:
         dataframe with two additional columns: "Mapped Drug Curie" and "Mapped Drug Disease"
     """
     # Map the drug name to the corresponding curie ids
-    df["drug_kg_curie"] = df["drug_name"].apply(lambda x: resolve(x, endpoint=endpoint))
+    df["drug_kg_curie"] = df["drug_name"].apply(
+        lambda x: normalize(x, endpoint=endpoint)
+    )
+    df["drug_kg_label"] = df["drug_name"].apply(
+        lambda x: normalize(x, endpoint=endpoint, att_to_get="category")
+    )
 
     # Map the disease name to the corresponding curie ids
     df["disease_kg_curie"] = df["disease_name"].apply(
-        lambda x: resolve(x, endpoint=endpoint)
+        lambda x: normalize(x, endpoint=endpoint)
+    )
+    df["disease_kg_label"] = df["disease_name"].apply(
+        lambda x: normalize(x, endpoint=endpoint, att_to_get="category")
+    )
+
+    # Validate correct labels
+    # NOTE: This is a temp. solution that ensures clinical trails data
+    # only passes on data as containend by our pre-filtering in the modelling pipeline
+    # we aim to refine our evaluation approach as part of a new PR after which
+    # this can be removed.
+    # https://github.com/everycure-org/matrix/issues/313
+    df["label_included"] = (df["drug_kg_label"].isin(drug_types)) & (
+        df["disease_kg_label"].isin(disease_types)
     )
 
     # check conflict
@@ -276,6 +315,10 @@ def clean_clinical_trial_data(df: pd.DataFrame) -> pd.DataFrame:
     # Remove rows with conflicts
     df = df[df["conflict"].eq("FALSE")].reset_index(drop=True)
 
+    # Make sure to consider only rows with relevant labels, otherwise
+    # downtstream modelling will fail
+    df = df[df["label_included"].eq("TRUE")].reset_index(drop=True)
+
     # remove rows with reason for rejection
     df = df[df["reason_for_rejection"].isna()].reset_index(drop=True)
 
@@ -296,3 +339,94 @@ def clean_clinical_trial_data(df: pd.DataFrame) -> pd.DataFrame:
     df = df.drop(columns=["reason_for_rejection", "conflict"]).reset_index(drop=True)
 
     return df
+
+
+@has_schema(
+    schema={"single_ID": "object", "curie": "object", "name": "object"},
+    allow_subset=True,
+)
+# @primary_key(primary_key=["single_ID"]) #TODO: re-introduce once the drug list is ready
+def clean_drug_list(drug_df: pd.DataFrame, endpoint: str) -> pd.DataFrame:
+    """Synonymize the drug list and filter out NaNs.
+
+    Args:
+        drug_df: disease list in a dataframe format.
+        endpoint: endpoint of the synonymizer.
+
+    Returns:
+        dataframe with synonymized drug IDs in normalized_curie column.
+    """
+    res = enrich_df(
+        drug_df,
+        func=normalize,
+        input_cols=["single_ID"],
+        target_col="curie",
+        endpoint=endpoint,
+    )
+    # Adding Categtory
+    res = enrich_df(
+        res,
+        func=partial(normalize, att_to_get="category"),
+        input_cols=["single_ID"],
+        target_col="category",
+        endpoint=endpoint,
+    )
+
+    res = enrich_df(
+        res,
+        func=partial(normalize, att_to_get="name"),
+        input_cols=["single_ID"],
+        target_col="name",
+        endpoint=endpoint,
+    )
+    return res.loc[~res["curie"].isna()]
+
+
+@has_schema(
+    schema={
+        "category_class": "object",
+        "label": "object",
+        "definition": "object",
+        "synonyms": "object",
+        "subsets": "object",
+        "crossreferences": "object",
+        "curie": "object",
+        "name": "object",
+    },
+    allow_subset=True,
+)
+@primary_key(primary_key=["category_class", "curie"])
+def clean_disease_list(disease_df: pd.DataFrame, endpoint: str) -> pd.DataFrame:
+    """Synonymize the disease list and filter out NaNs.
+
+    Args:
+        disease_df: disease list in a dataframe format.
+        endpoint: endpoint of the synonymizer.
+
+    Returns:
+        dataframe with synonymized disease IDs in normalized_curie column.
+    """
+    res = enrich_df(
+        disease_df,
+        func=normalize,
+        input_cols=["category_class"],
+        target_col="curie",
+        endpoint=endpoint,
+    )
+    # Adding Categtory
+
+    res = enrich_df(
+        res,
+        func=partial(normalize, att_to_get="category"),
+        input_cols=["category_class"],
+        target_col="category",
+        endpoint=endpoint,
+    )
+    res = enrich_df(
+        res,
+        func=partial(normalize, att_to_get="name"),
+        input_cols=["category_class"],
+        target_col="name",
+        endpoint=endpoint,
+    )
+    return res.loc[~res["curie"].isna()]

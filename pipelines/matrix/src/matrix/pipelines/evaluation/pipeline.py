@@ -1,4 +1,5 @@
 """Evaluation pipeline."""
+from typing import List
 from kedro.pipeline import Pipeline, node
 from kedro.pipeline.modular_pipeline import pipeline
 
@@ -29,7 +30,7 @@ def _create_evaluation_pipeline(model: str, evaluation: str) -> Pipeline:
                     f"modelling.{model}.model_input.transformers",
                     f"modelling.{model}.models.model",
                     f"params:modelling.{model}.model_options.model_tuning_args.features",
-                    f"params:evaluation.score_col_name",
+                    "params:evaluation.score_col_name",
                 ],
                 outputs=f"evaluation.{model}.{evaluation}.model_output.predictions",
                 name=f"create_{model}_{evaluation}_model_predictions",
@@ -44,15 +45,12 @@ def _create_evaluation_pipeline(model: str, evaluation: str) -> Pipeline:
                 name=f"create_{model}_{evaluation}_evaluation",
             ),
         ],
-        tags=[
-            "argowf.fuse",
-            f"argowf.fuse-group.{model}.{evaluation}",
-        ],
+        tags=["argowf.fuse", f"argowf.fuse-group.{model}.{evaluation}"],
     )
 
 
 def create_pipeline(**kwargs) -> Pipeline:
-    """Create fabricator pipeline."""
+    """Create evaluation pipeline."""
     pipes = [
         pipeline(
             [

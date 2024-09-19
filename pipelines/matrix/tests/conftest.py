@@ -64,6 +64,7 @@ def spark():
     """Instantiate the Spark session."""
     spark = (
         SparkSession.builder.config("spark.sql.shuffle.partitions", 1)
+        .config("spark.executorEnv.PYTHONPATH", "src")
         .master("local")
         .appName("tests")
         .getOrCreate()

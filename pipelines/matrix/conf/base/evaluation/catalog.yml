@@ -1,5 +1,8 @@
 _pandas_parquet: &_pandas_parquet
   type: pandas.ParquetDataset
+  metadata:
+    kedro-viz:
+      layer: evaluation
 
 
 # -------------------------------------------------------------------------
@@ -23,6 +26,6 @@ evaluation.prm.clinical_trials_data:
   filepath: ${globals:paths.prm}/{model}/{evaluation}/pairs
 
 "evaluation.{model}.{evaluation}.reporting.evaluation":
-  type: matrix.datasets.mlflow.MlflowMetricsDataset
-  key_prefix: "{model}.{evaluation}"
+  filepath: ${globals:paths.reporting}/{model}/{evaluation}/result.yml
+  type:  yaml.YAMLDataset
 

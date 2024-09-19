@@ -73,7 +73,7 @@ submit_workflows() {
           -p image=us-central1-docker.pkg.dev/mtrx-hub-dev-3of/matrix-images/matrix \
           -p image_tag=pascalwhoop-$sanitized_tag \
           -p experiment=lc-baseline-run-$sanitized_tag \
-          -p release_version=$sanitized_tag \
+          -p run_name=$sanitized_tag \
           -p neo4j_host=bolt://neo4j.neo4j.svc.cluster.local:7687 \
           -p mlflow_endpoint=http://mlflow-tracking.mlflow.svc.cluster.local:80 \
           -p openai_endpoint=https://api.openai.com/v1 \

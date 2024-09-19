@@ -7,9 +7,10 @@ fabricator.rtx_kg2:
         prefix: rtx_kg_node_
 
       name:
-        type: faker
-        provider: name
+        type: generate_unique_id
+        prefix: name_
       category:
+        
         type: generate_values
         sample_values:
           - biolink:Drug
@@ -30,8 +31,8 @@ fabricator.rtx_kg2:
         type: faker
         provider: url
       description:
-        type: faker
-        provider: sentence
+        type: generate_unique_id
+        prefix: description_
       equivalent_curies:
         type: faker
         provider: name
@@ -74,6 +75,40 @@ fabricator.rtx_kg2:
       knowledge_source:
         type: faker
         provider: name
+
+  drug_list:
+    num_rows: 20
+    columns:
+      curie: 
+        type: row_apply
+        list_of_values: [nodes.id]
+        row_func: "lambda *args: args[0]"
+        resize: True
+        seed: 6850
+      name: 
+        type: row_apply
+        list_of_values: [nodes.id, nodes.name]
+        row_func: "lambda *args: args[1]"
+        resize: True
+        seed: 6850
+
+      
+  disease_list:
+    num_rows: 30
+    columns:
+      curie: 
+        type: row_apply
+        list_of_values: [nodes.id]
+        row_func: "lambda *args: args[0]"
+        resize: True
+        seed: 65690
+      name: 
+        type: row_apply
+        list_of_values: [nodes.name]
+        row_func: "lambda *args: args[0]"
+        resize: True
+        seed: 65690
+        
 
   clinical_trials:
     num_rows: 200
@@ -162,7 +197,7 @@ fabricator.robokop:
           left_digits: 3
           right_digits: 2
           positive: True
-          min_value: 0
+          min_value: 1
           max_value: 100
 
   # robokop edges definition

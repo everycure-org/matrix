@@ -32,6 +32,9 @@ from matrix.pipelines.release.pipeline import (
 from matrix.pipelines.bte.pipeline import (
     create_pipeline as create_bte_pipeline,
 )
+from matrix.pipelines.matrix_generation.pipeline import (
+    create_pipeline as create_matrix_pipeline,
+)
 
 
 def register_pipelines() -> Dict[str, Pipeline]:
@@ -46,6 +49,7 @@ def register_pipelines() -> Dict[str, Pipeline]:
         create_integration_pipeline()
         + create_embeddings_pipeline()
         + create_modelling_pipeline()
+        + create_matrix_pipeline()
         + create_evaluation_pipeline()
     )
     pipelines["preprocessing"] = create_preprocessing_pipeline()
@@ -57,6 +61,7 @@ def register_pipelines() -> Dict[str, Pipeline]:
     pipelines["integration"] = create_integration_pipeline()
     pipelines["evaluation"] = create_evaluation_pipeline()
     pipelines["release"] = create_release_pipeline()
+    pipelines["matrix_generation"] = create_matrix_pipeline()
     pipelines["test"] = (
         create_fabricator_pipeline()
         + create_ingestion_pipeline()
@@ -64,6 +69,7 @@ def register_pipelines() -> Dict[str, Pipeline]:
         + create_embeddings_pipeline()
         + create_bte_pipeline()
         + create_modelling_pipeline()
+        + create_matrix_pipeline()
         + create_evaluation_pipeline()
         + create_release_pipeline()
     )
