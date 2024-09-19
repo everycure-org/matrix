@@ -123,7 +123,6 @@ def mock_model():
     return model
 
 
-# @pytest.mark.skip(reason="what is this testing?")
 def test_make_test_predictions(
     mock_graph,
     mock_data,
