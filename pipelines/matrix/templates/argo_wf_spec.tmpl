@@ -3,7 +3,7 @@ apiVersion: argoproj.io/v1alpha1
 kind: WorkflowTemplate
 metadata:
   namespace: {{namespace}}
-  name: matrix
+  name: {{run_name}}
 spec:
   workflowMetadata:
     labels:
