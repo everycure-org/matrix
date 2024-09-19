@@ -1,0 +1,38 @@
+# NOTE: IF you wish to run against MLFlow, make a copy of this file into local.
+
+# Embeddings
+embeddings.reporting.loss:
+  type: kedro_mlflow.io.artifacts.MlflowArtifactDataset
+  artifact_path: topological
+  dataset:
+    type: kedro_datasets.matplotlib.MatplotlibWriter
+    filepath: ${globals:paths.tmp}/convergence_plot.png
+
+embeddings.reporting.topological_pca_plot:
+  type: kedro_mlflow.io.artifacts.MlflowArtifactDataset
+  artifact_path: topological
+  dataset:
+    type: kedro_datasets.matplotlib.MatplotlibWriter
+    filepath: ${globals:paths.tmp}/pca_plot.png
+
+"modelling.{model}.{shard}.reporting.tuning_convergence_plot":
+  type: kedro_mlflow.io.artifacts.MlflowArtifactDataset
+  artifact_path: "{model}/{shard}"
+  dataset:
+    type: matplotlib.MatplotlibWriter
+    filepath: ${globals:paths.tmp}/{model}/{shard}/convergence_plot.png
+
+"modelling.{model}.models.model":
+  type: kedro_mlflow.io.models.MlflowModelTrackingDataset
+  flavor: mlflow.sklearn
+  pyfunc_workflow: python_model
+  artifact_path: "{model}"
+
+"modelling.{model}.reporting.metrics":  
+  type: matrix.datasets.mlflow.MlflowMetricsDataset
+  key_prefix: "{model}"
+
+"evaluation.{model}.{evaluation}.reporting.evaluation":
+  type: matrix.datasets.mlflow.MlflowMetricsDataset
+  key_prefix: "{model}.{evaluation}"
+
