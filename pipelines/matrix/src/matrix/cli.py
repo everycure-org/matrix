@@ -6,8 +6,10 @@ from kedro.framework.cli.utils import KedroCliError
 from matrix.cli_commands.submit import submit
 from matrix.cli_commands.run import run
 
+from kedro.framework.cli.utils import CONTEXT_SETTINGS
 
-@click.group()
+
+@click.group(context_settings=CONTEXT_SETTINGS, name=__file__)
 def cli():
     """Matrix CLI tools."""
     pass

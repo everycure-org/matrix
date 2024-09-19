@@ -10,46 +10,13 @@ import re
 import secrets
 import subprocess
 import sys
-from typing import Any, Dict, List, Optional, Set
+from typing import Optional
 
 import click
-from kedro.framework.cli.project import (
-    ASYNC_ARG_HELP,
-    CONF_SOURCE_HELP,
-    CONFIG_FILE_HELP,
-    FROM_INPUTS_HELP,
-    FROM_NODES_HELP,
-    LOAD_VERSION_HELP,
-    NODE_ARG_HELP,
-    PARAMS_ARG_HELP,
-    PIPELINE_ARG_HELP,
-    RUNNER_ARG_HELP,
-    TAG_ARG_HELP,
-    TO_NODES_HELP,
-    TO_OUTPUTS_HELP,
-    project_group,
-)
-from kedro.framework.cli.utils import (
-    CONTEXT_SETTINGS,
-    _config_file_callback,
-    _split_load_versions,
-    _split_params,
-    env_option,
-    split_node_names,
-    split_string,
-)
-from kedro.framework.context.context import _convert_paths_to_absolute_posix
-from kedro.framework.project import pipelines, settings
-from kedro.io import DataCatalog
-from kedro.pipeline.pipeline import Pipeline
-from kedro.utils import load_obj
-from rich import print
+from kedro.framework.cli.utils import CONTEXT_SETTINGS
 from rich.console import Console
 from rich.logging import RichHandler
 from rich.panel import Panel
-from rich.progress import Progress, SpinnerColumn, TextColumn
-from rich.syntax import Syntax
-from rich.table import Table
 
 # Set up logging
 logging.basicConfig(
@@ -61,8 +28,6 @@ logging.basicConfig(
 log = logging.getLogger("rich")
 
 from matrix.argo import _generate_argo_config
-from matrix.session import KedroSessionWithFromCatalog
-from matrix.utils.submit_cli import *
 
 console = Console()
 
@@ -73,12 +38,12 @@ def cli():
 
 
 # fmt: off
-@project_group.command()
+@cli.command()
 @click.option("--username", type=str, required=True, help="Specify the username to use")
 @click.option("--namespace", type=str, default=None, help="Specify a custom namespace")
 @click.option("--run-name", type=str, default=None, help="Specify a custom run name")
 @click.option("--verbose", "-v", is_flag=True, default=False, help="Enable verbose output")
-@click.option("--dry-run", is_flag=True, default=False, help="Does everything except submit the workflow")
+@click.option("--dry-run", "-d", is_flag=True, default=False, help="Does everything except submit the workflow")
 # fmt: on
 def submit(username: str, namespace: str, run_name: str, verbose: bool, dry_run: bool):
     """Submit the end-to-end workflow."""
@@ -86,31 +51,31 @@ def submit(username: str, namespace: str, run_name: str, verbose: bool, dry_run:
         logging.getLogger().setLevel(logging.DEBUG)
 
     run_name = get_run_name(run_name)
-    namespace = namespace or f"dev-{username}"
-    
+    namespace = namespace or "argo-workflows"
+
     try:
         console.rule("[bold blue]Submitting Workflow")
-        
+
         console.print("Checking dependencies...")
         check_dependencies(verbose=verbose)
         console.print("[green]✓[/green] Dependencies checked")
-        
+
         console.print("Building and pushing Docker image...")
         build_push_docker(username, verbose=verbose)
         console.print("[green]✓[/green] Docker image built and pushed")
-        
+
         console.print("Building Argo template...")
         build_argo_template(run_name, username, namespace, verbose=verbose)
         console.print("[green]✓[/green] Argo template built")
-        
+
         console.print("Ensuring namespace...")
         ensure_namespace(namespace, verbose=verbose)
         console.print("[green]✓[/green] Namespace ensured")
-        
+
         console.print("Applying Argo template...")
         apply_argo_template(namespace, verbose=verbose)
         console.print("[green]✓[/green] Argo template applied")
-        
+
         if not dry_run:
             console.print("Submitting workflow...")
             submit_workflow(run_name, namespace, verbose=verbose)
@@ -122,7 +87,7 @@ def submit(username: str, namespace: str, run_name: str, verbose: bool, dry_run:
             f"Namespace: {namespace}",
             title="Submission Summary"
         ))
-        
+
         if not dry_run and click.confirm("Do you want to open the workflow in your browser?"):
             workflow_url = f"https://argo.platform.dev.everycure.org/workflows/{namespace}/{run_name}"
             click.launch(workflow_url)
@@ -265,7 +230,7 @@ def build_push_docker(username: str, verbose: bool):
 def build_argo_template(run_name, username, namespace, verbose: bool):
     """Build Argo workflow template."""
     image_name = "us-central1-docker.pkg.dev/mtrx-hub-dev-3of/matrix-images/matrix"
-    _generate_argo_config(image_name, run_name, username, namespace)
+    _generate_argo_config(image_name, run_name, username, namespace, username)
 
 
 def ensure_namespace(namespace, verbose: bool):

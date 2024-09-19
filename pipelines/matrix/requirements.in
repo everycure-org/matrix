@@ -33,3 +33,6 @@ typer
 pytest-testmon
 pytest-mock
 rich
+# Temp. fix for the gcloud cli
+# https://github.com/googleapis/python-bigquery/issues/1908
+proto-plus==1.24.0.dev1
