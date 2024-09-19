@@ -145,7 +145,8 @@ def make_batch_predictions(
         if len(removed.index) > 0:
             logger.warning(f"Dropped {len(removed.index)} pairs during generation!")
             logger.warning(
-                "Dropped: %s", ",".join([f"({r.source}, {r.target}" for r in removed])
+                "Dropped: %s",
+                ",".join([f"({r.source}, {r.target})" for _, r in removed.iterrows()]),
             )
 
         # drop rows without source/target embeddings
