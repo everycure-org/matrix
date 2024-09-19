@@ -220,17 +220,17 @@ def make_predictions_and_sort(
 
 
 def add_flag_columns(
-    matrix: pd.DataFrame, known_pairs: pd.DataFrame, raw_clinical_trials: pd.DataFrame
+    matrix: pd.DataFrame, known_pairs: pd.DataFrame, clinical_trials: pd.DataFrame
 ) -> pd.DataFrame:
-    """_summary_.
+    """Adds boolean columns flagging known positives and known negatives.
 
     Args:
-        matrix: _description_
-        known_pairs: _description_
-        raw_clinical_trials: _description_
+        matrix: Drug-disease pairs dataset.
+        known_pairs: Labelled ground truth drug-disease pairs dataset.
+        clinical_trials: Pairs dataset representing outcomes of recent clinical trials.
 
     Returns:
-        _description_
+        Pairs dataset with flag columns.
     """
 
     def create_flag_column(pairs):
@@ -242,14 +242,26 @@ def add_flag_columns(
     # Flag known positives and negatives
     test_pairs = known_pairs[known_pairs["split"].eq("TEST")]
     test_pair_is_pos = test_pairs["y"].eq(1)
-    test_pos_pairs = known_pairs[test_pair_is_pos]
-    test_neg_pairs = known_pairs[~test_pair_is_pos]
+    test_pos_pairs = test_pairs[test_pair_is_pos]
+    test_neg_pairs = test_pairs[~test_pair_is_pos]
     matrix["is_known_positive"] = create_flag_column(test_pos_pairs)
     matrix["is_known_negative"] = create_flag_column(test_neg_pairs)
 
     # Flag clinical trials data
+    matrix["trial_sig_better"] = create_flag_column(
+        clinical_trials[clinical_trials["significantly_better"]]
+    )
+    matrix["trial_non_sig_better"] = create_flag_column(
+        clinical_trials[clinical_trials["non_significantly_better"]]
+    )
+    matrix["trial_sig_worse"] = create_flag_column(
+        clinical_trials[clinical_trials["non_significantly_worse"]]
+    )
+    matrix["trial_non_sig_worse"] = create_flag_column(
+        clinical_trials[clinical_trials["significantly_worse"]]
+    )
 
-    return
+    return matrix
 
 
 def generate_report(
@@ -257,7 +269,6 @@ def generate_report(
     n_reporting: int,
     drugs: pd.DataFrame,
     diseases: pd.DataFrame,
-    known_pairs: pd.DataFrame,
     score_col_name: str,
 ) -> pd.DataFrame:
     """Generates a report with the top pairs.
@@ -286,11 +297,14 @@ def generate_report(
     top_pairs["drug_name"] = top_pairs["source"].map(drug_curie_to_name)
     top_pairs["disease_name"] = top_pairs["target"].map(disease_curie_to_name)
 
+    # breakpoint()
+    # TODO: Merge columns
+
     # Rename ID columns
     top_pairs = top_pairs.rename(columns={"source": "drug_id"})
     top_pairs = top_pairs.rename(columns={"target": "disease_id"})
 
-    # Reorder columns for better readability
+    # Filter and reorder columns for better readability
     columns_order = [
         "drug_id",
         "drug_name",
