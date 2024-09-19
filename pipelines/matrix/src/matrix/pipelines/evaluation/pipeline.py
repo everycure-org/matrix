@@ -14,17 +14,17 @@ def _create_evaluation_pipeline(model: str, evaluation: str) -> Pipeline:
             node(
                 func=nodes.generate_test_dataset,
                 inputs=[
-                    "modelling.feat.rtx_kg2",
-                    "modelling.model_input.splits",
+                    "modelling.feat.rtx_kg2",  # TODO: REMOVE
+                    "modelling.model_input.splits",  # TODO: REMOVE, replaced by matrix
                     f"params:evaluation.{evaluation}.evaluation_options.generator",
-                    "evaluation.prm.clinical_trials_data",
+                    "evaluation.prm.clinical_trials_data",  # TODO: REMOVE, replaced by matrix
                 ],
                 outputs=f"evaluation.{model}.{evaluation}.prm.pairs",
                 name=f"create_{model}_{evaluation}_evaluation_pairs",
                 tags=["create_eval_pairs"],
             ),
             node(
-                func=nodes.make_test_predictions,
+                func=nodes.make_test_predictions,  # TODO: REMOVE
                 inputs=[
                     "modelling.feat.rtx_kg2",
                     f"evaluation.{model}.{evaluation}.prm.pairs",
@@ -55,7 +55,7 @@ def create_pipeline(**kwargs) -> Pipeline:
     pipes = [
         pipeline(
             [
-                node(
+                node(  # TODO: REMOVE
                     func=nodes.create_prm_clinical_trials,
                     inputs=["ingestion.raw.clinical_trials_data"],
                     outputs="evaluation.prm.clinical_trials_data",
