@@ -88,11 +88,14 @@ After submitting the workflow, you'll be provided with instructions on how to mo
 
 ## Understanding the Pipeline
 
-For a detailed overview of the pipeline stages (Preprocessing, Ingestion, Integration, Embeddings, Modelling, Evaluation, and Release), please refer to the [Pipeline documentation](../onboarding/pipeline.md).
+For a detailed overview of the pipeline stages (Preprocessing, Ingestion, Integration, Embeddings, Modelling, Evaluation, and Release), please refer to the [Pipeline documentation](../../onboarding/pipeline.md)
 
 ## Environments
 
-The Every Cure Platform supports multiple environments. When submitting a pipeline run, it will use the `cloud` environment by default, which is configured to read and write data from/to GCP resources. For more information on available environments and their configurations, see the [Pipeline documentation](../onboarding/pipeline.md#environments).
+The Every Cure Platform supports multiple environments. When submitting a pipeline run,
+it will use the `cloud` environment by default, which is configured to read and write
+data from/to GCP resources. For more information on available environments and their
+configurations, see the [Pipeline documentation](../../onboarding/pipeline.md#environments).
 
 ## Troubleshooting
 
