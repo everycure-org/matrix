@@ -3,21 +3,20 @@
 import logging
 from typing import Any, Dict, List
 
-from collections.abc import Callable
-
 import matplotlib.pyplot as plt
 import pandas as pd
 import requests
 import seaborn as sns
+
 from graphdatascience import GraphDataScience, QueryRunner
-from matplotlib.pyplot import plot
 from neo4j import Driver, GraphDatabase
 from pyspark.ml.functions import array_to_vector, vector_to_array
 from pyspark.sql import DataFrame
 from pyspark.sql import functions as F
-from pyspark.sql.functions import col, udf
+from pyspark.sql.functions import udf
 from pyspark.sql.types import ArrayType, FloatType, StringType
 from pyspark.sql.window import Window
+
 from refit.v1.core.inject import inject_object
 from refit.v1.core.inline_has_schema import has_schema
 from refit.v1.core.inline_primary_key import primary_key
@@ -124,7 +123,6 @@ class RateLimitException(Exception):
 @retry(
     wait=wait_random_exponential(min=1, max=60),
     stop=stop_after_attempt(10),
-    retry=retry_if_exception_type(RateLimitException),
 )
 def batch(endpoint, model, api_key, batch):
     """Function to resolve batch."""

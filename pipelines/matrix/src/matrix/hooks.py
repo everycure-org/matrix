@@ -12,6 +12,7 @@ from omegaconf import OmegaConf
 import logging
 
 import mlflow
+from mlflow.exceptions import RestException
 
 from kedro.framework.context import KedroContext
 from kedro.io.data_catalog import DataCatalog
@@ -95,16 +96,20 @@ class MLFlowHooks:
         Returns:
             Identifier of experiment
         """
-        experiments = mlflow.search_experiments(
-            filter_string=f"name = '{experiment_name}'"
-        )
-
-        if not experiments:
+        try:
             return mlflow.create_experiment(
                 experiment_name, artifact_location=artifact_location
             )
+        except RestException as e:
+            experiments = mlflow.search_experiments(
+                filter_string=f"name = '{experiment_name}'"
+            )
 
-        return experiments[0].experiment_id
+            if len(experiments) == 0:
+                raise Exception("unable to create MLFlow experiment") from e
+
+            logger.info("experiment already exists, re-using")
+            return experiments[0].experiment_id
 
 
 class SparkHooks:

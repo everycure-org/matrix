@@ -16,7 +16,6 @@ _kg_dataset: &_kg_dataset
     engine: pyarrow
     use_nullable_dtypes: True
 
-
 _model_input_ds: &_model_input_ds
   metadata:
     kedro-viz:
@@ -27,12 +26,15 @@ _model_ds: &_model_ds
     kedro-viz:
       layer: models
 
+_reporting_ds: &_reporting_ds
+  metadata:
+    kedro-viz:
+      layer: reporting
+
 _model_output_ds: &_model_output_ds
   metadata:
     kedro-viz:
       layer: model_output
-
-
 
 modelling.raw.ground_truth.positives:
   <<: [*_pandas_csv, *_model_input_ds]
@@ -106,23 +108,18 @@ modelling.model_input.splits:
 # NOTE: Saving an artifact, saving both locally and in MLFlow
 # https://kedro-mlflow.readthedocs.io/en/stable/source/04_experimentation_tracking/03_version_datasets.html#how-to-version-data-in-a-kedro-project
 "modelling.{model}.{shard}.reporting.tuning_convergence_plot":
-  type: kedro_mlflow.io.artifacts.MlflowArtifactDataset
-  artifact_path: "{model}/{shard}"
-  dataset:
-    <<: [*_model_output_ds]
-    type: matplotlib.MatplotlibWriter
-    filepath: ${globals:paths.tmp}/{model}/{shard}/convergence_plot.png
+  <<: *_reporting_ds
+  type: matplotlib.MatplotlibWriter
+  filepath: ${globals:paths.tmp}/{model}/{shard}/convergence_plot.png
 
 # NOTE: Tracking a model, other serialization formats possible.
 # https://kedro-mlflow.readthedocs.io/en/stable/source/04_experimentation_tracking/04_version_models.html#how-to-track-models-using-mlflow-in-kedro-project
 "modelling.{model}.models.model":
-  type: kedro_mlflow.io.models.MlflowModelTrackingDataset
-  flavor: mlflow.sklearn
-  pyfunc_workflow: python_model
-  artifact_path: "{model}"
+  <<: *_model_ds
+  type: pickle.PickleDataset
+  filepath: ${globals:paths.models}/{model}/model.pickle
 
-# NOTE: Saving a metric, more elaborate strategies possible, e.g., MlflowMetricHistoryDataset
-# https://kedro-mlflow.readthedocs.io/en/stable/source/04_experimentation_tracking/05_version_metrics.html#saving-a-single-float-as-a-metric-with-mlflowmetricdataset
 "modelling.{model}.reporting.metrics":
-  type: matrix.datasets.mlflow.MlflowMetricsDataset
-  key_prefix: "{model}"
+  <<: *_reporting_ds
+  filepath: ${globals:paths.reporting}/{model}/metrics.yml
+  type:  yaml.YAMLDataset

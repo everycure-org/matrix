@@ -2,6 +2,7 @@ dev_docker_image = us-central1-docker.pkg.dev/mtrx-hub-dev-3of/matrix-images/mat
 TAG ?= ${USER}
 GIT_SHA ?= $(shell git rev-parse --short HEAD)
 export PYSPARK_PYTHON = .venv/bin/python
+TQDM_DISABLE ?= 1
 
 # ensures all make targets run in one shell (rather than line by line in new shell)
 .ONESHELL: 
@@ -53,7 +54,7 @@ docker_test: docker_build
 		--exit-code-from matrix-pipeline
 
 docker_build:
-	docker buildx build --build-arg GIT_SHA=${GIT_SHA} --platform linux/amd64 -t $(dev_docker_image) ./
+	docker buildx build --progress=plain --build-arg GIT_SHA=${GIT_SHA} --platform linux/amd64 -t $(dev_docker_image) ./
 	docker tag $(dev_docker_image) $(dev_docker_image):${TAG}
 docker_push: docker_build
 	docker push $(dev_docker_image):${TAG}
@@ -74,6 +75,7 @@ wipe_neo:
 
 integration_test: compose_up wipe_neo
 	# NOTE: We are running without xgc due to its long runtime. 
+	ulimit -n 10000
 	.venv/bin/kedro run --env test -p test --runner ThreadRunner --without-tags xgc,not-shared
 
 fabricate:
