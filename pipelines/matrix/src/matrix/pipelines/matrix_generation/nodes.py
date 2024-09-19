@@ -309,8 +309,17 @@ def generate_report(
     # Round the treat scores to 4 decimal places
     top_pairs[score_col_name] = top_pairs[score_col_name].round(4)
 
-    # breakpoint()
-    # TODO:Merge columns
+    # Merge flag columns for readability
+    data["is_known_positive"] = (
+        data["is_known_positive"]
+        | data["trial_sig_better"]
+        | data["trial_non_sig_better"]
+    )
+    data["is_known_negative"] = (
+        data["is_known_negative"]
+        | data["trial_sig_worse"]
+        | data["trial_non_sig_worse"]
+    )
 
     # Rename ID columns
     top_pairs = top_pairs.rename(columns={"source": "drug_id"})
