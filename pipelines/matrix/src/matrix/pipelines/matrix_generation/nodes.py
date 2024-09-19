@@ -219,6 +219,39 @@ def make_predictions_and_sort(
     return sorted_data
 
 
+def add_flag_columns(
+    matrix: pd.DataFrame, known_pairs: pd.DataFrame, raw_clinical_trials: pd.DataFrame
+) -> pd.DataFrame:
+    """_summary_.
+
+    Args:
+        matrix: _description_
+        known_pairs: _description_
+        raw_clinical_trials: _description_
+
+    Returns:
+        _description_
+    """
+
+    def create_flag_column(pairs):
+        pairs_set = set(zip(pairs["source"], pairs["target"]))
+        return matrix.apply(
+            lambda row: (row["source"], row["target"]) in pairs_set, axis=1
+        )
+
+    # Flag known positives and negatives
+    test_pairs = known_pairs[known_pairs["split"].eq("TEST")]
+    test_pair_is_pos = test_pairs["y"].eq(1)
+    test_pos_pairs = known_pairs[test_pair_is_pos]
+    test_neg_pairs = known_pairs[~test_pair_is_pos]
+    matrix["is_known_positive"] = create_flag_column(test_pos_pairs)
+    matrix["is_known_negative"] = create_flag_column(test_neg_pairs)
+
+    # Flag clinical trials data
+
+    return
+
+
 def generate_report(
     data: pd.DataFrame,
     n_reporting: int,
@@ -252,19 +285,6 @@ def generate_report(
     # Add additional information for drugs and diseases
     top_pairs["drug_name"] = top_pairs["source"].map(drug_curie_to_name)
     top_pairs["disease_name"] = top_pairs["target"].map(disease_curie_to_name)
-
-    # Flag known positives and negatives
-    known_pair_is_pos = known_pairs["y"].eq(1)
-    known_pos_pairs = known_pairs[known_pair_is_pos]
-    known_neg_pairs = known_pairs[~known_pair_is_pos]
-    known_pos_pairs_set = set(zip(known_pos_pairs["source"], known_pos_pairs["target"]))
-    known_neg_pairs_set = set(zip(known_neg_pairs["source"], known_neg_pairs["target"]))
-    top_pairs["is_known_positive"] = top_pairs.apply(
-        lambda row: (row["source"], row["target"]) in known_pos_pairs_set, axis=1
-    )
-    top_pairs["is_known_negative"] = top_pairs.apply(
-        lambda row: (row["source"], row["target"]) in known_neg_pairs_set, axis=1
-    )
 
     # Rename ID columns
     top_pairs = top_pairs.rename(columns={"source": "drug_id"})
