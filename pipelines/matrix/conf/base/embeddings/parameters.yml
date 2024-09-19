@@ -95,7 +95,7 @@ embeddings.topological_estimator:
   concurrency: 4
   embedding_dim: 512
   random_seed: 42
-  iterations: 100
+  iterations: 10
   in_out_factor: 1
   return_factor: 1
   initial_learning_rate: 0.025
@@ -103,7 +103,7 @@ embeddings.topological_estimator:
   negative_sampling_rate: 5
   walk_length: 30
   walks_per_node: 10
-  window_size: 100
+  window_size: 10
 
 # embeddings.topological_estimator:
 #   object: matrix.pipelines.embeddings.graph_algorithms.GDSGraphSage
