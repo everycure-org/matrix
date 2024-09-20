@@ -100,9 +100,9 @@ def generate_pairs(
 def make_batch_predictions(
     graph: KnowledgeGraph,
     data: pd.DataFrame,
-    transformers,
+    transformers: Dict[str, Dict[str, Union[_BaseImputer, List[str]]]],
     model: ModelWrapper,
-    features,
+    features: List[str],
     score_col_name: str,
     batch_by: str = "target",
 ) -> pd.DataFrame:
