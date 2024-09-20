@@ -111,7 +111,7 @@ coverage==7.6.1
     # via pytest-testmon
 cycler==0.12.1
     # via matplotlib
-databricks-sdk==0.32.2
+databricks-sdk==0.32.3
     # via mlflow-skinny
 debugpy==1.8.5
     # via ipykernel
@@ -488,7 +488,9 @@ pandas==1.5.3
     #   pandera
     #   seaborn
 pandera==0.20.4
-    # via brix-refit
+    # via
+    #   -r requirements.in
+    #   brix-refit
 pandocfilters==1.5.1
     # via nbconvert
 parse==1.20.2

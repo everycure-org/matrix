@@ -37,8 +37,14 @@ fabricator.rtx_kg2:
         type: faker
         provider: name
       publications:
+        type: generate_random_arrays
+        delimiter: "\u01c2"
+        sample_values:
+          - "PMID:12345678"
+          - "DOI:10.1234/example.5678"
+      international_resource_identifier:
         type: faker
-        provider: name
+        provider: url
       label:
         type: faker
         provider: name
@@ -75,6 +81,29 @@ fabricator.rtx_kg2:
       knowledge_source:
         type: faker
         provider: name
+
+      publications:
+        type: generate_random_arrays
+        delimiter: "\u01c2"
+        sample_values:
+          - "PMID:12345678"
+          - "DOI:10.1234/example.5678"
+      subject_aspect_qualifier:
+        type: faker
+        provider: word
+      subject_direction_qualifier:
+        type: generate_values
+        sample_values:
+          - "increased"
+          - "decreased"
+      object_aspect_qualifier:
+        type: faker
+        provider: word
+      object_direction_qualifier:
+        type: generate_values
+        sample_values:
+          - "increased"
+          - "decreased"
 
   drug_list:
     num_rows: 20
@@ -199,6 +228,30 @@ fabricator.robokop:
           positive: True
           min_value: 1
           max_value: 100
+      publications:
+        type: generate_random_arrays
+        delimiter: "\u001f"
+        sample_values:
+          - "PMID:12345678"
+          - "DOI:10.1234/example.5678"
+      international_resource_identifier:
+        type: faker
+        provider: url
+      all_categories:
+        type: generate_random_arrays
+        delimiter: "\u001f"
+        sample_values:
+          - "biolink:Entity"
+          - "biolink:ThingWithTaxon"
+          - "biolink:BiologicalEntity"
+          - "biolink:SequenceVariant"
+      label:
+        type: generate_random_arrays
+        delimiter: "\u001f"
+        sample_values:
+          - "biolink:NucleicAcidEntity"
+          - "biolink:MolecularEntity"
+          - "biolink:ChemicalOrDrugOrTreatment"
 
   # robokop edges definition
   edges:
@@ -225,6 +278,33 @@ fabricator.robokop:
         row_func: "lambda *args: args[0]"
         resize: True
         seed: 49494
+      publications:
+        type: generate_random_arrays
+        delimiter: "\u001f"
+        sample_values:
+          - "PMID:12345678"
+          - "DOI:10.1234/example.5678"
+      aggregator_knowledge_source:
+        type: faker
+        provider: company
+      subject_aspect_qualifier:
+        type: faker
+        provider: word
+      subject_direction_qualifier:
+        type: generate_values
+        sample_values:
+          - "increased"
+          - "decreased"
+      knowledge_level:
+        type: generate_values
+        sample_values:
+          - "prediction"
+          - "knowledge_assertion"
+      primary_knowledge_source:
+        type: generate_values
+        sample_values:
+          - "infores:semmeddb"
+          - "infores:gtex"
 
 fabricator.ec_medical_kg:
   nodes:
