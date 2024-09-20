@@ -75,7 +75,7 @@ In order to run against the `cloud` environment it's important to set the `RUN_N
 
 ```bash
 # NOTE: You can specify multiple nodes to rerun, using a comma-seperated list
-kedro run --from-env cloud --nodes preprocessing
+kedro run --from-env cloud --nodes preprocessing_node_name
 ```
 
 
