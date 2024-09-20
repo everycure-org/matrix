@@ -8,7 +8,10 @@ import logging
 from kedro_datasets.pandas import ParquetDataset
 
 from typing import Any, Dict, List
-from kedro.io.core import Version
+from kedro.io.core import (
+    DatasetError,
+    Version,
+)
 
 
 logger = logging.getLogger(__name__)
@@ -100,4 +103,17 @@ class KnowledgeGraphDataset(ParquetDataset):
         )
 
     def _load(self) -> KnowledgeGraph:
-        return KnowledgeGraph(super()._load())
+        attempt = 0
+
+        # Retrying due to a very flaky error, causing GCS not retrieving
+        # parquet files on first try.
+        while attempt < 3:
+            try:
+                # Attempt reading the object
+                # https://github.com/everycure-org/matrix/issues/71
+                return KnowledgeGraph(super()._load())
+            except FileNotFoundError:
+                attempt += 1
+                logger.warning("Parquet file not found, retrying!")
+
+        raise DatasetError("Unable to find underlying Parquet file!")
