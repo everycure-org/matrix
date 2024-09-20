@@ -143,13 +143,11 @@ def make_batch_predictions(
             batch["source_embedding"].isna() | batch["target_embedding"].isna()
         ]
         if len(removed.index) > 0:
-            print(f"Dropped {len(removed.index)} pairs during generation!")
-            # breakpoint()
-            # logger.warning(f"Dropped {len(removed.index)} pairs during generation!")
-            # logger.warning(
-            #     "Dropped: %s",
-            #     ",".join([f"({r.source}, {r.target})" for _, r in removed.iterrows()]),
-            # )
+            logger.warning(f"Dropped {len(removed.index)} pairs during generation!")
+            logger.warning(
+                "Dropped: %s",
+                ",".join([f"({r.source}, {r.target})" for _, r in removed.iterrows()]),
+            )
 
         # drop rows without source/target embeddings
         batch = batch.dropna(subset=["source_embedding", "target_embedding"])
