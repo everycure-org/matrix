@@ -78,9 +78,10 @@ In order to run against the `cloud` environment it's important to set the `RUN_N
 kedro run --from-env cloud --nodes preprocessing_node_name
 ```
 
-
-
 !!! note 
+
+    !!! warning
+        Make sure to disable port forwarding once you're done and remove the environment variables from the .env file, otherwise this might result in you pushing local runs to our cloud MLFlow instance.
     
     If you wish to pull data from MLFlow it's currently required to setup [port-forwarding](https://emmer.dev/blog/port-forwarding-to-kubernetes/) into the MLFlow tracking container on the cluster. You can do this as follows:
 
