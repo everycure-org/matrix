@@ -48,6 +48,55 @@ def enrich_embeddings(
     )
 
 
+def _add_flag_columns(
+    matrix: pd.DataFrame, known_pairs: pd.DataFrame, clinical_trials: pd.DataFrame
+) -> pd.DataFrame:
+    """Adds boolean columns flagging known positives and known negatives.
+
+    Args:
+        matrix: Drug-disease pairs dataset.
+        known_pairs: Labelled ground truth drug-disease pairs dataset.
+        clinical_trials: Pairs dataset representing outcomes of recent clinical trials.
+
+    Returns:
+        Pairs dataset with flag columns.
+    """
+
+    def create_flag_column(pairs):
+        pairs_set = set(zip(pairs["source"], pairs["target"]))
+        return matrix.apply(
+            lambda row: (row["source"], row["target"]) in pairs_set, axis=1
+        )
+
+    # Flag known positives and negatives
+    test_pairs = known_pairs[known_pairs["split"].eq("TEST")]
+    test_pair_is_pos = test_pairs["y"].eq(1)
+    test_pos_pairs = test_pairs[test_pair_is_pos]
+    test_neg_pairs = test_pairs[~test_pair_is_pos]
+    matrix["is_known_positive"] = create_flag_column(test_pos_pairs)
+    matrix["is_known_negative"] = create_flag_column(test_neg_pairs)
+
+    # Flag clinical trials data
+    # Rename 'drug_kg_curie' column to 'source' in clinical_trials DataFrame
+    clinical_trials = clinical_trials.rename(
+        columns={"drug_kg_curie": "source", "disease_kg_curie": "target"}
+    )
+    matrix["trial_sig_better"] = create_flag_column(
+        clinical_trials[clinical_trials["significantly_better"] == 1]
+    )
+    matrix["trial_non_sig_better"] = create_flag_column(
+        clinical_trials[clinical_trials["non_significantly_better"] == 1]
+    )
+    matrix["trial_sig_worse"] = create_flag_column(
+        clinical_trials[clinical_trials["non_significantly_worse"] == 1]
+    )
+    matrix["trial_non_sig_worse"] = create_flag_column(
+        clinical_trials[clinical_trials["significantly_worse"] == 1]
+    )
+
+    return matrix
+
+
 @has_schema(
     schema={
         "source": "object",
@@ -60,13 +109,17 @@ def generate_pairs(
     drugs: pd.DataFrame,
     diseases: pd.DataFrame,
     known_pairs: pd.DataFrame,
+    clinical_trials: pd.DataFrame,
 ) -> pd.DataFrame:
     """Function to generate matrix dataset.
+
+    FUTURE: Consider rewriting operations in PySpark for speed
 
     Args:
         drugs: Dataframe containing IDs for the list of drugs.
         diseases: Dataframe containing IDs for the list of diseases.
         known_pairs: Labelled ground truth drug-disease pairs dataset.
+        clinical_trials: Pairs dataset representing outcomes of recent clinical trials.
 
     Returns:
         Pairs dataframe containing all combinations of drugs and diseases that do not lie in the training set.
@@ -88,13 +141,18 @@ def generate_pairs(
     # Concatenate all slices at once
     matrix = pd.concat(matrix_slices, ignore_index=True)
 
-    # Remove training set and return
+    # Remove training set TODO: introduce helper function. Note that the same helper is also used in the pair generator methods which will be rewritten in this PR.
     train_pairs = known_pairs[~known_pairs["split"].eq("TEST")]
     train_pairs_set = set(zip(train_pairs["source"], train_pairs["target"]))
     is_in_train = matrix.apply(
         lambda row: (row["source"], row["target"]) in train_pairs_set, axis=1
     )
-    return matrix[~is_in_train]
+    matrix = matrix[~is_in_train]
+
+    # Add flag columns for known positives and negatives
+    matrix = _add_flag_columns(matrix, known_pairs, clinical_trials)
+
+    return matrix
 
 
 def make_batch_predictions(
@@ -184,67 +242,18 @@ def make_batch_predictions(
     return data
 
 
-def _add_flag_columns(
-    matrix: pd.DataFrame, known_pairs: pd.DataFrame, clinical_trials: pd.DataFrame
-) -> pd.DataFrame:
-    """Adds boolean columns flagging known positives and known negatives.
-
-    Args:
-        matrix: Drug-disease pairs dataset.
-        known_pairs: Labelled ground truth drug-disease pairs dataset.
-        clinical_trials: Pairs dataset representing outcomes of recent clinical trials.
-
-    Returns:
-        Pairs dataset with flag columns.
-    """
-
-    def create_flag_column(pairs):
-        pairs_set = set(zip(pairs["source"], pairs["target"]))
-        return matrix.apply(
-            lambda row: (row["source"], row["target"]) in pairs_set, axis=1
-        )
-
-    # Flag known positives and negatives
-    test_pairs = known_pairs[known_pairs["split"].eq("TEST")]
-    test_pair_is_pos = test_pairs["y"].eq(1)
-    test_pos_pairs = test_pairs[test_pair_is_pos]
-    test_neg_pairs = test_pairs[~test_pair_is_pos]
-    matrix["is_known_positive"] = create_flag_column(test_pos_pairs)
-    matrix["is_known_negative"] = create_flag_column(test_neg_pairs)
-
-    # Flag clinical trials data
-    # Rename 'drug_kg_curie' column to 'source' in clinical_trials DataFrame
-    clinical_trials = clinical_trials.rename(
-        columns={"drug_kg_curie": "source", "disease_kg_curie": "target"}
-    )
-    matrix["trial_sig_better"] = create_flag_column(
-        clinical_trials[clinical_trials["significantly_better"] == 1]
-    )
-    matrix["trial_non_sig_better"] = create_flag_column(
-        clinical_trials[clinical_trials["non_significantly_better"] == 1]
-    )
-    matrix["trial_sig_worse"] = create_flag_column(
-        clinical_trials[clinical_trials["non_significantly_worse"] == 1]
-    )
-    matrix["trial_non_sig_worse"] = create_flag_column(
-        clinical_trials[clinical_trials["significantly_worse"] == 1]
-    )
-
-    return matrix
-
-
-def process_matrix(
+def make_predictions_and_sort(
     graph: KnowledgeGraph,
     data: pd.DataFrame,
     transformers: Dict[str, Dict[str, Union[_BaseImputer, List[str]]]],
     model: ModelWrapper,
     features: List[str],
-    known_pairs: pd.DataFrame,
-    clinical_trials: pd.DataFrame,
     score_col_name: str,
     batch_by: str,
 ) -> pd.DataFrame:
-    """Generate probability scores, adds flag columns and sorts a drug-disease dataset.
+    """Generate and sort probability scores for a drug-disease dataset.
+
+    FUTURE: Perform parallelised computation instead of batching with a for loop.
 
     Args:
         graph: Knowledge graph.
@@ -252,8 +261,6 @@ def process_matrix(
         transformers: Dictionary of trained transformers.
         model: Model making the predictions.
         features: List of features, may be regex specified.
-        known_pairs: Labelled ground truth drug-disease pairs dataset.
-        clinical_trials: Pairs dataset representing outcomes of recent clinical trials.
         score_col_name: Probability score column name.
         batch_by: Column to use for batching (e.g., "target" or "source").
 
@@ -264,9 +271,6 @@ def process_matrix(
     data = make_batch_predictions(
         graph, data, transformers, model, features, score_col_name, batch_by=batch_by
     )
-
-    # Add flag columns for known positives and negatives
-    data = _add_flag_columns(data, known_pairs, clinical_trials)
 
     # Sort by the probability score
     sorted_data = data.sort_values(by=score_col_name, ascending=False)
