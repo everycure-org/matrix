@@ -1,0 +1,3 @@
+matrix_generation.prm.matrix_pairs: # TODO: Remove. This is for testing purposes.   
+  type: pandas.CSVDataset
+  filepath: ${globals:paths.prm}/matrix_pairs
