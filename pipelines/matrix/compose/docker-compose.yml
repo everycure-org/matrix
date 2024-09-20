@@ -5,7 +5,7 @@ services:
     # note this works only on MacOS devices (or other ARM chipsets), check
     # `docker-compose.test.yml` for the override
     image: neo4j:5.21.0-enterprise
-    platform: ${DOCKER_PLATFORM:-linux/arm64}
+    # platform: ${DOCKER_PLATFORM:-linux/arm64}
     restart: unless-stopped
     ports:
       - 7474:7474
@@ -78,6 +78,7 @@ services:
       retries: 5
       start_period: 30s
 
+  # BioThings Explorer
   bte:
     container_name: bte-trapi
     restart: always
@@ -91,8 +92,10 @@ services:
       - DEBUG_COLORS=true
     depends_on:
       - redis
+
+  # Redis for BioThings Explorer async queries
   redis:
-    container_name: bte-redis
+    container_name: redis
     restart: always
     image: "redis:alpine"
     environment:

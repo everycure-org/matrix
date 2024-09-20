@@ -8,21 +8,20 @@ import time
 import pandas as pd
 from typing import List, Dict, Optional, Any, Callable
 
-MAX_CONCURRENT_REQUESTS = 8  # maximum number of concurrent requests allowed
+MAX_CONCURRENT_REQUESTS = 40  # maximum number of concurrent requests allowed
 TOTAL_TIMEOUT = 310  # total timeout configuration for the entire request
 CONNECT_TIMEOUT = 30.0  # timeout configuration for establishing a connection
-READ_TIMEOUT = 250.0  # timeout configuration for HTTP requests
+READ_TIMEOUT = 310.0  # timeout configuration for HTTP requests
 ASYNC_QUERY_URL = (
     "http://localhost:3000/v1/asyncquery"  # URL for asynchronous query processing
 )
-# ASYNC_QUERY_URL = "https://bte.hueb.org/v1/asyncquery"
 MAX_RETRIES = 8  # maximum number of times to retry a request
 RETRY_DELAY = 4  # time to wait before retrying a request
 RETRY_BACKOFF_FACTOR = 2  # exponential backoff factor for retries
 MAX_QUERY_RETRIES = 5  # maximum number of times to retry a query
 QUERY_RETRY_DELAY = 4  # time to wait before retrying a failed query
 JOB_CHECK_SLEEP = 0  # time to sleep between job status checks
-DEBUG_QUERY_LIMITER = 8  # change to -1 to disable the limit
+DEBUG_QUERY_LIMITER = 40  # change to -1 to disable the limit
 DEBUG_CSV_PATH = (
     "../../../predictions.csv"  # path to the output CSV file for debugging purposes
 )
@@ -108,7 +107,7 @@ async def transform_result(response: Dict[str, Any]) -> List[Dict[str, Any]]:
         return results
 
     if not response["message"].get("results"):
-        logging.warning(f"No results found in the message for curie {curie}")
+        logging.info(f"No results found in the message for curie {curie}")
         return results
 
     for result in response["message"]["results"]:
@@ -411,62 +410,58 @@ async def consumer(
     logging.info("Exiting consumer loop.")
 
 
-async def stream_results(semaphore, client: httpx.AsyncClient) -> List[Dict[str, Any]]:
+async def stream_results(client: httpx.AsyncClient) -> List[Dict[str, Any]]:
     """Continuously stream results for TRAPI queries.
 
-    :param semaphore: An asyncio.Semaphore instance to limit the number of concurrent requests.
     :param client: HTTPX async client instance.
     :return: List of transformed query results.
     """
-    async with semaphore:
-        results = []
-        query_queue = asyncio.Queue()
-        result_queue = asyncio.Queue()
+    results = []
+    query_queue = asyncio.Queue()
+    result_queue = asyncio.Queue()
 
-        num_consumers = MAX_CONCURRENT_REQUESTS
+    num_consumers = MAX_CONCURRENT_REQUESTS
 
-        producer_task = asyncio.create_task(producer(query_queue, num_consumers))
-        logging.info("Producer task created.")
+    producer_task = asyncio.create_task(producer(query_queue, num_consumers))
+    logging.info("Producer task created.")
 
-        consumer_tasks = [
-            asyncio.create_task(consumer(query_queue, result_queue, client))
-            for _ in range(num_consumers)
-        ]
-        logging.info("Consumer tasks created.")
+    consumer_tasks = [
+        asyncio.create_task(consumer(query_queue, result_queue, client))
+        for _ in range(num_consumers)
+    ]
+    logging.info("Consumer tasks created.")
 
-        completion_signals_received = 0
+    completion_signals_received = 0
 
-        while completion_signals_received < num_consumers:
-            result = await result_queue.get()
-            if result is None:
-                completion_signals_received += 1
-                logging.info(
-                    f"Received completion signal from consumer. Total received: {completion_signals_received}"
-                )
-                result_queue.task_done()
-                continue
-
+    while completion_signals_received < num_consumers:
+        result = await result_queue.get()
+        if result is None:
+            completion_signals_received += 1
             logging.info(
-                f"Received result for curie {result['curie']}, starting transformation."
+                f"Received completion signal from consumer. Total received: {completion_signals_received}"
             )
-            transformed_results = await transform_result(result)
-            if transformed_results:
-                results.extend(transformed_results)
-                logging.info(
-                    f"Results transformed and added for curie {result['curie']}"
-                )
             result_queue.task_done()
+            continue
 
         logging.info(
-            f"All consumers have signaled completion. Collected {len(results)} results in total."
+            f"Received result for curie {result['curie']}, starting transformation."
         )
+        transformed_results = await transform_result(result)
+        if transformed_results:
+            results.extend(transformed_results)
+            logging.info(f"Results transformed and added for curie {result['curie']}")
+        result_queue.task_done()
 
-        await producer_task
-        await query_queue.join()
-        for consumer_task in consumer_tasks:
-            await consumer_task
+    logging.info(
+        f"All consumers have signaled completion. Collected {len(results)} results in total."
+    )
 
-        return results
+    await producer_task
+    await query_queue.join()
+    for consumer_task in consumer_tasks:
+        await consumer_task
+
+    return results
 
 
 async def async_bte_kedro_node_function() -> pd.DataFrame:
@@ -475,10 +470,9 @@ async def async_bte_kedro_node_function() -> pd.DataFrame:
     :return: DataFrame containing the final query results with columns 'target', 'source', and 'score'.
     """
     logging.info("Starting async processing for BTE Kedro node function")
-    semaphore = asyncio.Semaphore(MAX_CONCURRENT_REQUESTS)
 
     async with httpx.AsyncClient(timeout=timeout_config) as client:
-        results = await stream_results(semaphore, client)
+        results = await stream_results(client)
 
     logging.info(f"Total results collected: {len(results)}")
     if results:
@@ -503,7 +497,7 @@ def bte_kedro_node_function() -> pd.DataFrame:
     """
     df = asyncio.run(async_bte_kedro_node_function())
 
-    # save_dataframe_to_csv(df)
+    save_dataframe_to_csv(df)
     return df
 
 
