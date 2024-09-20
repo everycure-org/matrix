@@ -71,7 +71,14 @@ Now imagine that a node in the pipeline fails. Debugging is hard, due to the rem
 
 ![](../assets/img/from-env-run.drawio.svg)
 
-In order to run against the `cloud` environment it's important to set the `RUN_NAME` variable in the `.env` file, as this determines the run for which datasets are pulled.
+In order to run against the `cloud` environment it's important to set the `RUN_NAME` variable in the `.env` file, as this determines the run for which datasets are pulled. The following command can be used to re-run the node locally, while consuming data from `cloud`:
+
+```bash
+# NOTE: You can specify multiple nodes to rerun, using a comma-seperated list
+kedro run --from-env cloud --nodes preprocessing
+```
+
+
 
 !!! note 
     
