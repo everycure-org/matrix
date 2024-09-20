@@ -14,8 +14,9 @@ def create_pipeline(**kwargs) -> Pipeline:
         [
             node(
                 func=bte_kedro_node_function,
+                # inputs="ingestion.raw.disease_list@pandas",
                 inputs=None,
-                outputs="bte-final_dataframe",
+                outputs="modelling.bte_model.model_output.predictions",
                 name="bte-single_processing_node",
             )
         ]
