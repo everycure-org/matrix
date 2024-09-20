@@ -100,9 +100,9 @@ def generate_pairs(
 def make_batch_predictions(
     graph: KnowledgeGraph,
     data: pd.DataFrame,
-    transformers: Dict[str, Dict[str, Union[_BaseImputer, List[str]]]],
+    transformers,
     model: ModelWrapper,
-    features: List[str],
+    features,
     score_col_name: str,
     batch_by: str = "target",
 ) -> pd.DataFrame:
@@ -143,11 +143,13 @@ def make_batch_predictions(
             batch["source_embedding"].isna() | batch["target_embedding"].isna()
         ]
         if len(removed.index) > 0:
-            logger.warning(f"Dropped {len(removed.index)} pairs during generation!")
-            logger.warning(
-                "Dropped: %s",
-                ",".join([f"({r.source}, {r.target})" for _, r in removed.iterrows()]),
-            )
+            print(f"Dropped {len(removed.index)} pairs during generation!")
+            # breakpoint()
+            # logger.warning(f"Dropped {len(removed.index)} pairs during generation!")
+            # logger.warning(
+            #     "Dropped: %s",
+            #     ",".join([f"({r.source}, {r.target})" for _, r in removed.iterrows()]),
+            # )
 
         # drop rows without source/target embeddings
         batch = batch.dropna(subset=["source_embedding", "target_embedding"])
@@ -165,7 +167,10 @@ def make_batch_predictions(
             :, 1
         ]
 
-        return batch[[score_col_name]]
+        # Drop embedding columns
+        batch = batch.drop(columns=["source_embedding", "target_embedding"])
+
+        return batch
 
     # Group data by the specified prefix
     grouped = data.groupby(batch_by)
@@ -178,10 +183,7 @@ def make_batch_predictions(
     # Combine results
     results = pd.concat(result_parts, axis=0)
 
-    # Add scores to the original dataframe
-    data[score_col_name] = results[score_col_name]
-
-    return data
+    return results
 
 
 def make_predictions_and_sort(
