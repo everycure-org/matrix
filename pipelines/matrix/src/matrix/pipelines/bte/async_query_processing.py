@@ -8,7 +8,7 @@ import time
 import pandas as pd
 from typing import List, Dict, Optional, Any, Callable
 
-MAX_CONCURRENT_REQUESTS = 40  # maximum number of concurrent requests allowed
+MAX_CONCURRENT_REQUESTS = 12  # maximum number of concurrent requests allowed
 TOTAL_TIMEOUT = 310  # total timeout configuration for the entire request
 CONNECT_TIMEOUT = 30.0  # timeout configuration for establishing a connection
 READ_TIMEOUT = 310.0  # timeout configuration for HTTP requests
@@ -20,8 +20,9 @@ RETRY_DELAY = 4  # time to wait before retrying a request
 RETRY_BACKOFF_FACTOR = 2  # exponential backoff factor for retries
 MAX_QUERY_RETRIES = 5  # maximum number of times to retry a query
 QUERY_RETRY_DELAY = 4  # time to wait before retrying a failed query
-JOB_CHECK_SLEEP = 0  # time to sleep between job status checks
-DEBUG_QUERY_LIMITER = 40  # change to -1 to disable the limit
+JOB_CHECK_SLEEP = 0.5  # time to sleep between job status checks
+DISEASE_LIST = pd.DataFrame
+DEBUG_QUERY_LIMITER = 12  # change to -1 to disable the limit
 DEBUG_CSV_PATH = (
     "../../../predictions.csv"  # path to the output CSV file for debugging purposes
 )
@@ -70,15 +71,15 @@ async def generate_queries() -> List[Dict[str, Any]]:
 
     :return: List of dictionaries, each containing 'curie', 'query', and 'index' keys corresponding to the CURIE, its TRAPI query, and its position in the DataFrame.
     """
-    diseases = pd.read_csv(
+    DISEASE_LIST = pd.read_csv(
         "https://github.com/everycure-org/matrix-disease-list/releases/latest/download/matrix-disease-list.tsv",
         sep="\t",
     )
     if DEBUG_QUERY_LIMITER > 0:
-        diseases = diseases.iloc[:DEBUG_QUERY_LIMITER]
+        DISEASE_LIST = DISEASE_LIST.iloc[:DEBUG_QUERY_LIMITER]
 
     queries = []
-    for index, row in diseases.iterrows():
+    for index, row in DISEASE_LIST.iterrows():
         curie = row.get("category_class")
         if curie:
             trapi_query = generate_trapi_query(curie)
@@ -495,6 +496,7 @@ def bte_kedro_node_function() -> pd.DataFrame:
     :return: DataFrame containing the final query results with columns 'target', 'source', and 'score'.
     :side-effect: Saves the DataFrame to a CSV file at the specified path for debugging.
     """
+    # DISEASE_LIST = diseases
     df = asyncio.run(async_bte_kedro_node_function())
 
     save_dataframe_to_csv(df)

@@ -123,6 +123,3 @@ modelling.model_input.splits:
   <<: *_reporting_ds
   filepath: ${globals:paths.reporting}/{model}/metrics.yml
   type: yaml.YAMLDataset
-
-bte-final_dataframe:
-  type: MemoryDataset
