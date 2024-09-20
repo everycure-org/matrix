@@ -7,3 +7,21 @@ Adjust the comment style to the language generated. This way we let people know 
 was generated, which helps reviewing it with a different lens (i.e. not relying on a
 senior colleague having put a lot of thought into it but being a bit more critical /
 reflecting about it)
+
+You should add the above note to  these extensions:
+- .py
+- .js
+- .ts
+- .go
+- .java
+- .tf
+- .md
+- .sh
+- .yml
+- .yaml
+- .mdx
+- .toml
+- .ini
+- .cfg
+- .dockerfile
+- .dockerignore

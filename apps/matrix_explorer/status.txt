@@ -1,0 +1,27 @@
+## Day 1: Getting Started
+
+1. Project Structure Set Up:
+   - Created basic folder structure for frontend and backend components in apps/matrix_explorer.
+   - Initialized a React application for the frontend.
+   - Set up a FastAPI application for the backend.
+
+2. Technology Stack Finalized:
+   - Frontend: React
+   - Backend: FastAPI
+   - Database: PostgreSQL
+
+3. Backend Configuration:
+   - Created main.py with basic FastAPI setup and CORS configuration.
+   - Defined models.py with Pydantic and SQLAlchemy models for Drug-Disease pairs, KG Edges, and KG Nodes.
+   - Set up requirements.in for package management using uv.
+
+4. Docker Configuration:
+   - Created a Dockerfile for the backend.
+   - Set up docker-compose.yml to orchestrate backend and PostgreSQL services.
+
+5. Next Steps:
+   - Implement backend API endpoints for drug and disease searches.
+   - Set up the PostgreSQL database and implement data models.
+   - Begin development of the frontend UI components.
+
+The project has a solid foundation, and we're ready to start implementing core functionality in the coming days.

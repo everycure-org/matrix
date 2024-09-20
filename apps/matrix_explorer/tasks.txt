@@ -1,0 +1,17 @@
+- [X] (1): Set Up Project Structure // Initialize the project repository and set up the basic folder structure for frontend and backend components.
+    - we store the app under apps/matrix_explorer. Both frontend and backend should be in this folder
+- [X] (2): Choose Technology Stack // Finalize the technology stack (React, FastAPI, PostgreSQL) for the application.
+- [ ] (3): Implement Testing // Write unit and integration tests for both frontend and backend components.
+- [ ] (4): Implement Backend API // Create the FastAPI backend with endpoints for searching drugs and diseases. Start with the endpoints exposing the full list of drugs and diseases and fill with sample of data for quick dev workflow
+- [ ] (5): Set Up Database // Configure PostgreSQL database to store drug and disease data.
+- [X] (6): Integrate Elasticsearch // Set up Elasticsearch for efficient fuzzy searching of drug and disease names and IDs.
+    - no longer relevant, we'll pull all drugs and diseases to client and perform fuzzy search on client side
+- [ ] (6): Create Frontend UI // Develop the initial React components for the split-screen layout displaying drugs and diseases.
+- [ ] (7): Connect Frontend to Backend // Implement API calls in the frontend to fetch data from the FastAPI backend.
+- [ ] (8): Implement Client-side Caching // Use local storage or in-memory caching to store drug and disease lists on the client side.
+- [ ] (9): Implement Fuzzy Search // Integrate fuzzy search functionality for both drugs and diseases using the cached data.
+- [ ] (10): Add Sorting Functionality // Implement sorting of drug and disease lists based on the "treat score" when selected.
+- [ ] (11): Implement Debouncing // Add debouncing to the search input to limit API calls and improve performance.
+- [ ] (12): Optimize Performance // Review and optimize the application for performance, including caching strategies and data loading.
+- [ ] (14): Prepare Documentation // Create documentation for the project, including setup instructions and API usage.
+- [ ] (15): Deploy Application // Deploy the application to a cloud service or server for public access.

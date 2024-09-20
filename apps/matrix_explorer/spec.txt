@@ -1,0 +1,72 @@
+## Specification Document (spec.txt)
+
+**Project Title**: Interactive Drug-Disease Exploration Application
+
+---
+
+## Data Specification for Backend
+
+### 1. Data Models
+
+**Drug-Disease Pair Schema**:
+- **source**: string (nullable = true)  
+  - Represents the drug identifier (e.g., CHEMBL.COMPOUND:CHEMBL3184791).
+  
+- **target**: string (nullable = true)  
+  - Represents the disease identifier (e.g., MONDO:0005774).
+  
+- **treat_score**: float (nullable = true)  
+  - A score between 0 and 1 indicating the effectiveness of the drug for the disease.
+  
+- **__index_level_0__**: long (nullable = true)  
+  - An index for internal tracking.
+
+### 2. Database Configuration
+
+- **Database Type**: PostgreSQL or NoSQL (MongoDB) for storing drug and disease data.
+- **Indexing**: Use Elasticsearch for efficient fuzzy searching of drug and disease names and IDs.
+
+### 3. API Endpoints
+
+- **GET /search/drugs**  
+  - **Query Parameters**: `query` (string)  
+  - **Response**: List of drugs matching the query (fuzzy search).
+  
+- **GET /search/diseases**  
+  - **Query Parameters**: `query` (string)  
+  - **Response**: List of diseases matching the query (fuzzy search).
+
+### 4. Client-Side Caching
+
+- **Caching Mechanism**: Use local storage or in-memory caching to store:
+  - List of drugs (approx. 3,000 items).
+  - List of diseases (approx. 12,000 items).
+  
+### 5. Search Functionality
+
+- **Fuzzy Search**: Implement fuzzy search capabilities for both drugs and diseases using the cached data.
+- **Debouncing**: Implement debouncing on the search input to limit the number of API calls.
+
+### 6. Performance Optimization
+
+- **Caching**: Use server-side caching (e.g., Redis) for API responses.
+- **Streaming Responses**: Consider using Server-Sent Events (SSE) or WebSockets for real-time updates in the future.
+- **Pagination**: Implement pagination or infinite scrolling for large datasets.
+
+### 7. Future Enhancements
+
+- **Node Embeddings**: Explore the possibility of integrating node embeddings to show similar drugs and diseases.
+- **Real-time Updates**: Implement features for real-time updates and notifications.
+
+---
+
+## Additional Notes
+
+- **Technology Stack**: 
+  - **Frontend**: React.js
+  - **Backend**: FastAPI
+  - **Database**: PostgreSQL or MongoDB
+  - **Search**: Elasticsearch
+  - **Caching**: Redis or Memcached
+
+- **User Experience**: Focus on responsiveness and interactivity, ensuring a smooth user experience while exploring the drug-disease dataset.

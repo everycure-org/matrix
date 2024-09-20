@@ -1,0 +1,8 @@
+# Project Title: Interactive Drug-Disease Exploration Application
+
+Description: This project aims to develop a high-performance interactive application that
+allows users to explore a dataset of drug-disease pairs. The application will feature a
+responsive UI with fuzzy search capabilities, enabling users to search for drugs and
+diseases by name or ID. The application will cache data on the client side to enhance
+performance and provide a seamless user experience. Future enhancements may include
+displaying similar drugs and diseases based on node embeddings.
