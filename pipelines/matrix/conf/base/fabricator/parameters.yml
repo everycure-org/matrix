@@ -70,12 +70,13 @@ fabricator.rtx_kg2:
       predicate:
         type: generate_values
         sample_values:
-          - biolink:treats
+          # - biolink:treats
           - biolink:interacts_with
       knowledge_source:
         type: faker
         provider: name
 
+ # NOTE: Fabricated drug and disease lists can contain nodes which are not in the drug and disease categories resp. 
   drug_list:
     num_rows: 20
     columns:
@@ -111,33 +112,33 @@ fabricator.rtx_kg2:
         
 
   clinical_trials:
-    num_rows: 200
+    num_rows: 50
     columns:
       drug_kg_curie:
         type: row_apply
-        list_of_values: [nodes.id, nodes.name]
+        list_of_values: [drug_list.curie, drug_list.name]
         row_func: "lambda *args: args[0]"
         resize: True
         seed: 40599
       drug_name:
         type: row_apply
-        list_of_values: [nodes.id, nodes.name]
+        list_of_values: [drug_list.curie, drug_list.name]
         row_func: "lambda *args: args[1]"
         resize: True
         seed: 40599
       disease_kg_curie:
         type: row_apply
-        list_of_values: [nodes.id]
+        list_of_values: [disease_list.curie, disease_list.name]
         row_func: "lambda *args: args[0]"
         resize: True
         seed: 30599
       disease_name:
         type: row_apply
-        list_of_values: [nodes.id, nodes.name]
+        list_of_values: [disease_list.curie, disease_list.name]
         row_func: "lambda *args: args[1]"
         resize: True
         seed: 30599
-      significantly_better:
+      significantly_better: # NOTE: Unlike the real data, the fabricated data can have value 1 in more than one column.  
         type: generate_values
         sample_values: [1, 0]
       non_significantly_better:
