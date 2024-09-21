@@ -53,7 +53,7 @@ def transform_robo_nodes(nodes_df: DataFrame) -> DataFrame:
         .withColumn("all_categories",                    f.split(f.col("category"), "\x1f"))
         .withColumn( "equivalent_identifiers",           f.split(f.col("equivalent_identifiers"), "\x1f"))
         .withColumn("category",                          f.col("all_categories").getItem(0))
-        .withColumn("label",                             f.col("category"))
+        .withColumn("labels",                            f.array(f.col("category")))
         .withColumn("publications",                      f.array(f.lit(None)))
         .withColumn("international_resource_identifier", f.lit(None))
         .select(*cols_for_schema(KGNodeSchema))
