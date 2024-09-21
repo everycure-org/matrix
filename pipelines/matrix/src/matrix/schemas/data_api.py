@@ -49,7 +49,7 @@ class KGNodeSchema(DataFrameModel):
     equivalent_identifiers:            ArrayType(StringType()) = pa.Field(nullable=True)
     all_categories:                    ArrayType(StringType()) = pa.Field(nullable=True)
     publications:                      ArrayType(StringType()) = pa.Field(nullable=True)
-    label:                             StringType()            = pa.Field(nullable=True)
+    labels:                            ArrayType(StringType()) = pa.Field(nullable=True)
     international_resource_identifier: StringType()            = pa.Field(nullable=True)
     # We manually set this for every KG we ingest
     upstream_kg_source:                ArrayType(StringType()) = pa.Field(nullable=False)
