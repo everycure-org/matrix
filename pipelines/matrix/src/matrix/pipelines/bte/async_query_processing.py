@@ -1,48 +1,64 @@
 """This module handles asynchronous query processing for the BTE pipeline."""
+# NOTE: This file was partially generated using AI assistance.
 
 import asyncio
 import logging
 import httpx
-import json
 import time
 import pandas as pd
-from typing import List, Dict, Optional, Any, Callable
+from tenacity import (
+    retry,
+    stop_after_attempt,
+    wait_exponential,
+    retry_if_exception_type,
+)
+from typing import Any, Iterator, Optional
 
-MAX_CONCURRENT_REQUESTS = 12  # maximum number of concurrent requests allowed
-TOTAL_TIMEOUT = 310  # total timeout configuration for the entire request
-CONNECT_TIMEOUT = 30.0  # timeout configuration for establishing a connection
-READ_TIMEOUT = 310.0  # timeout configuration for HTTP requests
+# Configuration constants for managing asynchronous requests and retries
+MAX_CONCURRENT_REQUESTS = 12  # Maximum number of concurrent requests allowed
+TOTAL_TIMEOUT = 310  # Total timeout configuration for the entire request
+CONNECT_TIMEOUT = 30.0  # Timeout configuration for establishing a connection
+READ_TIMEOUT = 310.0  # Timeout configuration for HTTP requests
 ASYNC_QUERY_URL = (
     "http://localhost:3000/v1/asyncquery"  # URL for asynchronous query processing
 )
-MAX_RETRIES = 8  # maximum number of times to retry a request
-RETRY_DELAY = 4  # time to wait before retrying a request
-RETRY_BACKOFF_FACTOR = 2  # exponential backoff factor for retries
-MAX_QUERY_RETRIES = 5  # maximum number of times to retry a query
-QUERY_RETRY_DELAY = 4  # time to wait before retrying a failed query
-JOB_CHECK_SLEEP = 0.5  # time to sleep between job status checks
-DISEASE_LIST = pd.DataFrame
-DEBUG_QUERY_LIMITER = 12  # change to -1 to disable the limit
+MAX_RETRIES = 8  # Maximum number of times to retry a request
+RETRY_DELAY = 4  # Time to wait before retrying a request
+RETRY_BACKOFF_FACTOR = 2  # Exponential backoff factor for retries
+MAX_QUERY_RETRIES = 5  # Maximum number of times to retry a query
+QUERY_RETRY_DELAY = 4  # Time to wait before retrying a failed query
+JOB_CHECK_SLEEP = 0.5  # Time to sleep between job status checks
+DEBUG_QUERY_LIMITER = 8  # Change to -1 to disable the limit
+
+# Load the disease list from a remote TSV file
+DISEASE_LIST = pd.read_csv(
+    "https://github.com/everycure-org/matrix-disease-list/releases/latest/download/matrix-disease-list.tsv",
+    sep="\t",
+)
 DEBUG_CSV_PATH = (
-    "../../../predictions.csv"  # path to the output CSV file for debugging purposes
+    "../../../predictions.csv"  # Path to the output CSV file for debugging purposes
 )
 
+# Configure timeout settings for HTTP requests
 timeout_config = httpx.Timeout(
     timeout=TOTAL_TIMEOUT, connect=CONNECT_TIMEOUT, read=READ_TIMEOUT
 )
 
 
-def generate_trapi_query(curie: str) -> Dict[str, Any]:
+def generate_trapi_query(curie: str) -> dict[str, Any]:
     """Generate a TRAPI query for a given CURIE.
 
-    :param curie: The CURIE for which to generate the query.
-    :return: A dictionary representing the TRAPI query object.
-    :raises ValueError: If the CURIE is invalid.
+    Parameters:
+    curie (str): The CURIE identifier for which to generate the query.
+
+    Returns:
+    dict[str, Any]: A dictionary representing the TRAPI query.
     """
     if not curie:
-        logging.error(f"Invalid curie: {curie}")
+        logging.error("CURIE must not be empty")
         raise ValueError("CURIE must not be empty")
 
+    # Construct the TRAPI query structure
     return {
         "message": {
             "query_graph": {
@@ -66,146 +82,128 @@ def generate_trapi_query(curie: str) -> Dict[str, Any]:
     }
 
 
-async def generate_queries() -> List[Dict[str, Any]]:
-    """Generate list of TRAPI queries from a DataFrame of diseases.
+def generate_queries(disease_list: pd.DataFrame) -> Iterator[dict[str, Any]]:
+    """Generate TRAPI queries from the disease list.
 
-    :return: List of dictionaries, each containing 'curie', 'query', and 'index' keys corresponding to the CURIE, its TRAPI query, and its position in the DataFrame.
+    Yields:
+    Iterator[dict[str, Any]]: An iterator of dictionaries containing the CURIE and the TRAPI query.
     """
-    DISEASE_LIST = pd.read_csv(
-        "https://github.com/everycure-org/matrix-disease-list/releases/latest/download/matrix-disease-list.tsv",
-        sep="\t",
-    )
-    if DEBUG_QUERY_LIMITER > 0:
-        DISEASE_LIST = DISEASE_LIST.iloc[:DEBUG_QUERY_LIMITER]
-
-    queries = []
+    query_count = 0
     for index, row in DISEASE_LIST.iterrows():
+        if 0 < DEBUG_QUERY_LIMITER <= query_count:
+            return
         curie = row.get("category_class")
         if curie:
             trapi_query = generate_trapi_query(curie)
-            queries.append({"curie": curie, "query": trapi_query, "index": index})
-
-    logging.info(f"Generated {len(queries)} queries")
-    return queries
+            yield {"curie": curie, "query": trapi_query, "index": index}
+            query_count += 1
 
 
-async def transform_result(response: Dict[str, Any]) -> List[Dict[str, Any]]:
-    """Transform a single raw query result into a list of dictionaries with target, source, and score.
+def transform_result(response: dict[str, Any]) -> list[dict[str, Any]]:
+    """Transform the raw query response into a list of result dictionaries.
 
-    :param response: The raw response from the query.
-    :return: List of dictionaries with keys 'target', 'source', and 'score'.
+    Parameters:
+    response (dict[str, Any]): The raw response from the query.
+
+    Returns:
+    list[dict[str, Any]]: A list of dictionaries containing transformed results.
     """
     results = []
-    if not response:
-        logging.warning("Received empty response.")
-        return results
-
     curie = response.get("curie")
-    logging.info(f"Transforming results for curie {curie}")
 
-    if "message" not in response or not response["message"]:
-        logging.error(f"Message is missing in the response for curie {curie}")
+    message = response.get("message", {})
+    if not message.get("results"):
+        logging.info(f"No results found for CURIE {curie}")
         return results
 
-    if not response["message"].get("results"):
-        logging.info(f"No results found in the message for curie {curie}")
-        return results
-
-    for result in response["message"]["results"]:
+    # Iterate over the results and extract relevant information
+    for result in message["results"]:
         node_bindings = result.get("node_bindings", {})
-        n1_node_bindings = node_bindings.get("n1", [])
+        n1_bindings = node_bindings.get("n1", [])
         n0_bindings = node_bindings.get("n0", [])
-        if not n1_node_bindings:
-            logging.error(f"n1 node_bindings missing in result for curie {curie}")
-            continue
-
-        n0_bindings = result.get("node_bindings", {}).get("n0", [])
         analyses = result.get("analyses", [])
 
-        if not (len(n1_node_bindings) == len(n0_bindings) == len(analyses)):
-            logging.warning(
-                f"Mismatched lengths of bindings and analyses for curie {curie}"
-            )
+        if not (n1_bindings and n0_bindings and analyses):
+            logging.warning(f"Incomplete data in result for CURIE {curie}")
             continue
 
-        for n1_binding, n0_binding, analysis in zip(
-            n1_node_bindings, n0_bindings, analyses
-        ):
-            result_dict = {
-                "target": n1_binding.get("id"),
-                "source": n0_binding.get("id"),
-                "score": analysis.get("score"),
-            }
-            logging.debug(f"Transformed result: {result_dict}")
-            results.append(result_dict)
+        for n1_binding, n0_binding, analysis in zip(n1_bindings, n0_bindings, analyses):
+            results.append(
+                {
+                    "target": n1_binding.get("id"),
+                    "source": n0_binding.get("id"),
+                    "score": analysis.get("score"),
+                }
+            )
 
-    logging.info(f"Transformed {len(results)} results for curie {curie}")
+    logging.info(f"Transformed {len(results)} results for CURIE {curie}")
     return results
 
 
-async def retry_request(
-    request_func: Callable,
-    *args,
-    retries: int = MAX_RETRIES,
-    delay: int = RETRY_DELAY,
-    **kwargs,
-) -> httpx.Response:
-    """Perform an asynchronous HTTP request with retry logic.
-
-    :param request_func: Asynchronous function for making the HTTP request (e.g., client.get or client.post).
-    :param args: Positional arguments to pass to the request function.
-    :param retries: Number of times to retry the request in case of failure. Default is 8.
-    :param delay: Initial delay in seconds between retries. The delay is multiplied by the backoff factor with each subsequent retry. Default is 4.
-    :param kwargs: Keyword arguments to pass to the request function.
-    :return: HTTPX Response object.
-    :raises: Raises an HTTPStatusError or RequestError if all retry attempts fail.
-    """
-    for attempt in range(retries):
-        try:
-            response = await request_func(*args, **kwargs)
-            response.raise_for_status()
-            return response
-        except (httpx.HTTPStatusError, httpx.RequestError) as e:
-            logging.error(f"Error: {e}. Attempt {attempt + 1} of {retries}")
-            if attempt < retries - 1:
-                logging.debug(
-                    f"Retrying the request. Next attempt in {delay * (RETRY_BACKOFF_FACTOR ** attempt)} seconds."
-                )
-                await asyncio.sleep(delay * (RETRY_BACKOFF_FACTOR**attempt))
-            else:
-                logging.error("Max retries exceeded.")
-                raise
-
-
+@retry(
+    retry=retry_if_exception_type((httpx.HTTPStatusError, httpx.RequestError)),
+    stop=stop_after_attempt(MAX_RETRIES),
+    wait=wait_exponential(multiplier=RETRY_DELAY, max=60),
+    reraise=True,
+)
 async def post_async_query(client: httpx.AsyncClient, url: str, payload: dict) -> dict:
     """Post an asynchronous query to the specified URL.
 
-    :param client: HTTPX async client instance.
-    :param url: URL to which the query is posted.
-    :param payload: Payload of the query.
-    :return: A dictionary parsed from the JSON response.
+    Parameters:
+    client (httpx.AsyncClient): The HTTP client for making requests.
+    url (str): The URL to which the query should be posted.
+    payload (dict): The payload of the query.
+
+    Returns:
+    dict: The JSON response from the server.
     """
-    logging.info(
-        f"Submitting query to {url} with payload: {json.dumps(payload, indent=2)}"
-    )
-    response = await retry_request(client.post, url, json=payload)
-    response_json = response.json()
-    return response_json
+    logging.info(f"Submitting query to {url} with payload: {payload}")
+    response = await client.post(url, json=payload)
+    response.raise_for_status()
+    return response.json()
+
+
+@retry(
+    retry=retry_if_exception_type(
+        (httpx.HTTPStatusError, httpx.RequestError, ValueError)
+    ),
+    stop=stop_after_attempt(MAX_RETRIES),
+    wait=wait_exponential(multiplier=RETRY_DELAY, max=60),
+    reraise=True,
+)
+async def fetch_final_results(client: httpx.AsyncClient, response_url: str) -> dict:
+    """Fetch and parse the final results of an asynchronous job.
+
+    Parameters:
+    client (httpx.AsyncClient): The HTTP client for making requests.
+    response_url (str): The URL from which to fetch the final results.
+
+    Returns:
+    dict: The parsed JSON response containing the final results.
+    """
+    logging.info(f"Fetching final results from {response_url}")
+    response = await client.get(response_url)
+    response.raise_for_status()
+    try:
+        return response.json()
+    except ValueError as e:
+        logging.error(f"Failed to parse JSON from {response_url}: {e}")
+        raise
 
 
 async def check_async_job_status(
     client: httpx.AsyncClient, job_url: str
 ) -> Optional[dict]:
-    """Check the status of an asynchronous job.
+    """Check the status of an asynchronous job and fetch final results if completed.
 
-    :param client: HTTPX async client instance.
-    :param job_url: URL to check the job status.
-    :return:
-        - A dictionary of the final response if the job is completed successfully.
-        - A dictionary with 'status' and 'description' if the job fails, errors, or times out.
+    Parameters:
+    client (httpx.AsyncClient): The HTTP client for making requests.
+    job_url (str): The URL to check the job status.
+
+    Returns:
+    Optional[dict]: The final results if the job is completed, otherwise None.
     """
     start_time = time.monotonic()
-
     while True:
         elapsed_time = time.monotonic() - start_time
         if elapsed_time > TOTAL_TIMEOUT:
@@ -216,7 +214,8 @@ async def check_async_job_status(
             }
 
         try:
-            response = await retry_request(client.get, job_url)
+            response = await client.get(job_url)
+            response.raise_for_status()
             response_json = response.json()
             status = response_json.get("status", "Unknown")
             description = response_json.get(
@@ -235,270 +234,117 @@ async def check_async_job_status(
             else:
                 logging.error(f"Unknown status: {status}. Description: {description}")
                 return {"status": status, "description": description}
+        except (httpx.HTTPStatusError, httpx.RequestError, ValueError) as e:
+            logging.error(f"Error while checking job status for {job_url}: {e}")
+            await asyncio.sleep(QUERY_RETRY_DELAY)
         except Exception as e:
-            logging.error(f"Exception while checking job status for {job_url}: {e}")
+            logging.exception(
+                f"Unexpected error while checking job status for {job_url}: {e}"
+            )
             await asyncio.sleep(QUERY_RETRY_DELAY)
 
 
-async def fetch_final_results(client: httpx.AsyncClient, response_url: str) -> dict:
-    """Fetch and parse the final results of an asynchronous job.
-
-    :param client: HTTPX async client instance.
-    :param response_url: URL to retrieve the final response.
-    :return: A dictionary parsed from the JSON final response.
-    :raises Exception: If the response JSON cannot be parsed.
-    """
-    logging.info(f"Fetching final results from {response_url}")
-    response = await retry_request(client.get, response_url)
-
-    try:
-        response_json = response.json()
-        return response_json
-    except ValueError as e:
-        logging.error(
-            f"Failed to parse final response JSON for URL {response_url}: {e}"
-        )
-        raise Exception("Failed to parse JSON")
-
-
+@retry(
+    retry=retry_if_exception_type(
+        (httpx.HTTPError, asyncio.TimeoutError, ValueError, KeyError, Exception)
+    ),
+    stop=stop_after_attempt(MAX_QUERY_RETRIES),
+    wait=wait_exponential(multiplier=QUERY_RETRY_DELAY, max=60),
+    reraise=True,
+)
 async def process_query(
     client: httpx.AsyncClient,
-    curie: str,
-    query_dict: Dict[str, Any],
-    index: int,
-    result_queue: asyncio.Queue,
-):
-    """Process an individual query, sending results to the result_queue.
+    query: dict[str, Any],
+    semaphore: asyncio.Semaphore,
+) -> Optional[list[dict[str, Any]]]:
+    """Process an individual query and return transformed results.
 
-    :param client: HTTPX async client instance.
-    :param curie: CURIE of the query.
-    :param query_dict: Dictionary containing the query.
-    :param index: Index of the query.
-    :param result_queue: Queue to put the results of processed queries.
-    :raises: This function handles its own exceptions and does not raise them to the caller.
+    Parameters:
+    client (httpx.AsyncClient): The HTTP client for making requests.
+    query (dict[str, Any]): The query to process.
+    semaphore (asyncio.Semaphore): Semaphore to limit concurrent requests.
+
+    Returns:
+    Optional[list[dict[str, Any]]]: A list of transformed results if successful, otherwise None.
     """
-    for attempt in range(1, MAX_QUERY_RETRIES + 1):
-        try:
-            logging.info(f"Attempt {attempt} for query {index} (CURIE: {curie})")
-            initial_response_data = await post_async_query(
-                client, ASYNC_QUERY_URL, query_dict
-            )
-            if not isinstance(
-                initial_response_data, dict
-            ) or not initial_response_data.get("job_url"):
-                logging.error(
-                    f"Invalid initial response for CURIE {curie}: {initial_response_data}"
-                )
-                raise ValueError("Invalid initial response structure.")
+    curie = query["curie"]
+    query_dict = query["query"]
+    index = query["index"]
 
-            final_response_data = await check_async_job_status(
-                client, initial_response_data["job_url"]
-            )
-
-            if final_response_data and final_response_data.get("status") not in [
-                "Failed",
-                "Error",
-            ]:
-                final_response_data.update({"curie": curie, "index": index})
-                await result_queue.put(final_response_data)
-                logging.info(f"Successfully processed query {index} for CURIE {curie}")
-                return
-            else:
-                status = (
-                    final_response_data.get("status")
-                    if final_response_data
-                    else "Unknown"
-                )
-                logging.error(
-                    f"Query {index} for CURIE {curie} failed with status: {status}. Retrying..."
-                )
-                await asyncio.sleep(QUERY_RETRY_DELAY)
-        except (httpx.HTTPError, asyncio.TimeoutError, ValueError) as e:
-            logging.error(
-                f"Error on attempt {attempt} for query {index} (CURIE: {curie}): {e}"
-            )
-            if attempt < MAX_QUERY_RETRIES:
-                logging.info(f"Retrying query {index} for CURIE {curie} after error.")
-                await asyncio.sleep(QUERY_RETRY_DELAY)
-            else:
-                logging.error(
-                    f"Maximum retries reached for query {index} (CURIE: {curie})."
-                )
-        except KeyError as e:
-            logging.exception(
-                f"Missing expected key {e} in response for query {index} (CURIE: {curie})."
-            )
-            if attempt < MAX_QUERY_RETRIES:
-                logging.info(
-                    f"Retrying query {index} for CURIE {curie} due to missing key."
-                )
-                await asyncio.sleep(QUERY_RETRY_DELAY)
-            else:
-                logging.error(
-                    f"Maximum retries reached for query {index} (CURIE: {curie}) due to missing key."
-                )
-        except Exception as e:
-            logging.exception(
-                f"Unexpected error on attempt {attempt} for query {index} (CURIE: {curie}): {e}"
-            )
-            if attempt < MAX_QUERY_RETRIES:
-                logging.info(
-                    f"Retrying query {index} for CURIE {curie} after unexpected error."
-                )
-                await asyncio.sleep(QUERY_RETRY_DELAY)
-            else:
-                logging.error(
-                    f"Maximum retries reached for query {index} (CURIE: {curie}) due to unexpected error."
-                )
-
-    logging.error(
-        f"Failed to process query {index} for CURIE {curie} after {MAX_QUERY_RETRIES} attempts."
-    )
-
-
-async def producer(query_queue: asyncio.Queue, num_consumers: int):
-    """Producer task to generate and enqueue queries.
-
-    :param query_queue: Queue to enqueue the generated queries.
-    :param num_consumers: Number of consumer tasks to signal completion.
-    """
-    queries = await generate_queries()
-    for query in queries:
-        await query_queue.put(query)
-
-    for _ in range(num_consumers):
-        await query_queue.put(None)
-    logging.info("Producer has put all queries and exit signals into the queue.")
-
-
-async def consumer(
-    query_queue: asyncio.Queue, result_queue: asyncio.Queue, client: httpx.AsyncClient
-):
-    """Consumer task to process queries from the query queue and output results.
-
-    :param query_queue: Queue from which to get queries to process.
-    :param result_queue: Queue to put the results of processed queries.
-    :param client: HTTPX async client instance.
-    """
-    while True:
-        query = await query_queue.get()
-        if query is None:
-            query_queue.task_done()
-            break
-
-        try:
-            logging.info(
-                f"Consumer started processing query {query['index']} for curie {query['curie']}"
-            )
-            await process_query(
-                client, query["curie"], query["query"], query["index"], result_queue
-            )
-            logging.info(
-                f"Consumer finished processing query {query['index']} for curie {query['curie']}"
-            )
-        except Exception as e:
-            logging.exception(
-                f"Error processing query {query.get('index', 'Unknown')}: {e}"
-            )
-        finally:
-            query_queue.task_done()
-            if query is not None:
-                logging.info(
-                    f"query_queue task_done called for query {query['index']}."
-                )
-
-    await result_queue.put(None)
-    logging.info("Exiting consumer loop.")
-
-
-async def stream_results(client: httpx.AsyncClient) -> List[Dict[str, Any]]:
-    """Continuously stream results for TRAPI queries.
-
-    :param client: HTTPX async client instance.
-    :return: List of transformed query results.
-    """
-    results = []
-    query_queue = asyncio.Queue()
-    result_queue = asyncio.Queue()
-
-    num_consumers = MAX_CONCURRENT_REQUESTS
-
-    producer_task = asyncio.create_task(producer(query_queue, num_consumers))
-    logging.info("Producer task created.")
-
-    consumer_tasks = [
-        asyncio.create_task(consumer(query_queue, result_queue, client))
-        for _ in range(num_consumers)
-    ]
-    logging.info("Consumer tasks created.")
-
-    completion_signals_received = 0
-
-    while completion_signals_received < num_consumers:
-        result = await result_queue.get()
-        if result is None:
-            completion_signals_received += 1
-            logging.info(
-                f"Received completion signal from consumer. Total received: {completion_signals_received}"
-            )
-            result_queue.task_done()
-            continue
-
-        logging.info(
-            f"Received result for curie {result['curie']}, starting transformation."
+    async with semaphore:
+        logging.info(f"Processing query {index} for CURIE {curie}")
+        initial_response_data = await post_async_query(
+            client, ASYNC_QUERY_URL, query_dict
         )
-        transformed_results = await transform_result(result)
-        if transformed_results:
-            results.extend(transformed_results)
-            logging.info(f"Results transformed and added for curie {result['curie']}")
-        result_queue.task_done()
+        if not initial_response_data.get("job_url"):
+            logging.error(f"Invalid initial response for CURIE {curie}")
+            raise ValueError("Invalid initial response structure.")
 
-    logging.info(
-        f"All consumers have signaled completion. Collected {len(results)} results in total."
-    )
+        final_response_data = await check_async_job_status(
+            client, initial_response_data["job_url"]
+        )
 
-    await producer_task
-    await query_queue.join()
-    for consumer_task in consumer_tasks:
-        await consumer_task
+        if final_response_data and final_response_data.get("status") in [
+            "Completed",
+            "Success",
+        ]:
+            final_response_data.update({"curie": curie, "index": index})
+            transformed_results = transform_result(final_response_data)
+            logging.info(f"Successfully processed query {index} for CURIE {curie}")
+            return transformed_results
+        else:
+            status = (
+                final_response_data.get("status", "Unknown")
+                if final_response_data
+                else "Unknown"
+            )
+            logging.error(
+                f"Query {index} for CURIE {curie} failed with status: {status}."
+            )
+            raise Exception(f"Query failed with status: {status}")
 
-    return results
 
+async def run_async_queries(disease_list: pd.DataFrame) -> pd.DataFrame:
+    """Run asynchronous query processing and return a DataFrame of results.
 
-async def async_bte_kedro_node_function() -> pd.DataFrame:
-    """Node function to handle async processing within a Kedro pipeline node.
-
-    :return: DataFrame containing the final query results with columns 'target', 'source', and 'score'.
+    Returns:
+    pd.DataFrame: A DataFrame containing the results of the queries.
     """
-    logging.info("Starting async processing for BTE Kedro node function")
+    logging.info("Starting asynchronous query processing")
 
     async with httpx.AsyncClient(timeout=timeout_config) as client:
-        results = await stream_results(client)
+        semaphore = asyncio.Semaphore(MAX_CONCURRENT_REQUESTS)
+        queries = list(generate_queries(disease_list))
+        tasks = [
+            asyncio.create_task(process_query(client, query, semaphore))
+            for query in queries
+        ]
+        all_results = []
+        for future in asyncio.as_completed(tasks):
+            try:
+                result = await future
+                if result:
+                    all_results.extend(result)
+            except Exception as e:
+                logging.error(f"An error occurred during query processing: {e}")
 
-    logging.info(f"Total results collected: {len(results)}")
-    if results:
-        logging.debug(f"Sample results: {results[:5]}")
-    else:
-        logging.warning("No results were collected during asynchronous processing.")
+    logging.info(f"Total results collected: {len(all_results)}")
 
-    df = pd.DataFrame(results, columns=["target", "source", "score"])
-
-    logging.info("Async processing completed for BTE Kedro node function")
-    logging.info(f"DataFrame head:\n{df.head()}")
-    logging.info(f"Total rows in DataFrame: {len(df)}")
-
+    df = pd.DataFrame(all_results, columns=["target", "source", "score"])
+    logging.info("Asynchronous query processing completed")
     return df
 
 
-def bte_kedro_node_function() -> pd.DataFrame:
-    """Wrapper to run the stream processing function synchronously using asyncio.run.
+def run_bte_queries(disease_list: pd.DataFrame = DISEASE_LIST) -> pd.DataFrame:
+    """Synchronous wrapper for running asynchronous queries.
 
-    :return: DataFrame containing the final query results with columns 'target', 'source', and 'score'.
-    :side-effect: Saves the DataFrame to a CSV file at the specified path for debugging.
+    Parameters:
+    disease_list (pd.DataFrame): The DataFrame containing the disease list to use.
+
+    Returns:
+    pd.DataFrame: A DataFrame containing the results of the queries.
     """
-    # DISEASE_LIST = diseases
-    df = asyncio.run(async_bte_kedro_node_function())
-
+    df = asyncio.run(run_async_queries(disease_list))
     save_dataframe_to_csv(df)
     return df
 
@@ -506,11 +352,12 @@ def bte_kedro_node_function() -> pd.DataFrame:
 def save_dataframe_to_csv(df: pd.DataFrame, file_path: str = DEBUG_CSV_PATH) -> None:
     """Save the provided DataFrame to a CSV file at the specified path.
 
-    :param df: DataFrame to be saved.
-    :param file_path: Path where the DataFrame will be saved as a CSV file.
-    :raises ValueError: If the provided DataFrame is empty.
-    :raises FileNotFoundError: If the specified file path does not exist.
-    :raises PermissionError: If there are insufficient permissions to write to the specified path.
+    Parameters:
+    df (pd.DataFrame): The DataFrame to save.
+    file_path (str): The file path where the DataFrame should be saved.
+
+    Raises:
+    ValueError: If the DataFrame is empty.
     """
     if df.empty:
         logging.error("The provided DataFrame is empty.")
