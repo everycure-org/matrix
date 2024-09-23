@@ -1,7 +1,7 @@
 """This module creates a pipeline for the BTE process."""
 
 from kedro.pipeline import Pipeline, node
-from .async_query_processing import bte_kedro_node_function
+from .async_query_processing import run_bte_queries
 
 
 def create_pipeline(**kwargs) -> Pipeline:
@@ -13,7 +13,7 @@ def create_pipeline(**kwargs) -> Pipeline:
     return Pipeline(
         [
             node(
-                func=bte_kedro_node_function,
+                func=run_bte_queries,
                 # inputs="ingestion.raw.disease_list@pandas",
                 inputs=None,
                 outputs="modelling.bte_model.model_output.predictions",
