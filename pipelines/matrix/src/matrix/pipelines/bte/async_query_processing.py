@@ -5,6 +5,7 @@ import asyncio
 import logging
 import httpx
 import time
+import itertools
 import pandas as pd
 from tenacity import (
     retry,
@@ -29,12 +30,10 @@ MAX_QUERY_RETRIES = 5  # Maximum number of times to retry a query
 QUERY_RETRY_DELAY = 4  # Time to wait before retrying a failed query
 JOB_CHECK_SLEEP = 0.5  # Time to sleep between job status checks
 DEBUG_QUERY_LIMITER = 8  # Change to -1 to disable the limit
-
-# Load the disease list from a remote TSV file
 DISEASE_LIST = pd.read_csv(
     "https://github.com/everycure-org/matrix-disease-list/releases/latest/download/matrix-disease-list.tsv",
     sep="\t",
-)
+)  # Load the disease list from a remote TSV file
 DEBUG_CSV_PATH = (
     "../../../predictions.csv"  # Path to the output CSV file for debugging purposes
 )
@@ -88,15 +87,11 @@ def generate_queries(disease_list: pd.DataFrame) -> Iterator[dict[str, Any]]:
     Yields:
     Iterator[dict[str, Any]]: An iterator of dictionaries containing the CURIE and the TRAPI query.
     """
-    query_count = 0
-    for index, row in DISEASE_LIST.iterrows():
-        if 0 < DEBUG_QUERY_LIMITER <= query_count:
-            return
+    for index, row in itertools.islice(DISEASE_LIST.iterrows(), DEBUG_QUERY_LIMITER):
         curie = row.get("category_class")
         if curie:
             trapi_query = generate_trapi_query(curie)
             yield {"curie": curie, "query": trapi_query, "index": index}
-            query_count += 1
 
 
 def transform_result(response: dict[str, Any]) -> list[dict[str, Any]]:
@@ -113,7 +108,7 @@ def transform_result(response: dict[str, Any]) -> list[dict[str, Any]]:
 
     message = response.get("message", {})
     if not message.get("results"):
-        logging.info(f"No results found for CURIE {curie}")
+        logging.debug(f"No results found for CURIE {curie}")
         return results
 
     # Iterate over the results and extract relevant information
@@ -157,7 +152,7 @@ async def post_async_query(client: httpx.AsyncClient, url: str, payload: dict) -
     Returns:
     dict: The JSON response from the server.
     """
-    logging.info(f"Submitting query to {url} with payload: {payload}")
+    logging.debug(f"Submitting query to {url} with payload: {payload}")
     response = await client.post(url, json=payload)
     response.raise_for_status()
     return response.json()
@@ -181,7 +176,7 @@ async def fetch_final_results(client: httpx.AsyncClient, response_url: str) -> d
     Returns:
     dict: The parsed JSON response containing the final results.
     """
-    logging.info(f"Fetching final results from {response_url}")
+    logging.debug(f"Fetching final results from {response_url}")
     response = await client.get(response_url)
     response.raise_for_status()
     try:
@@ -221,7 +216,7 @@ async def check_async_job_status(
             description = response_json.get(
                 "description", "No status description provided."
             )
-            logging.info(f"Job status for {job_url}: {status} - {description}")
+            logging.debug(f"Job status for {job_url}: {status} - {description}")
 
             if status == "Completed" and response_json.get("response_url"):
                 return await fetch_final_results(client, response_json["response_url"])
@@ -229,13 +224,13 @@ async def check_async_job_status(
                 logging.error(f"Job failed with response: {response_json}")
                 return {"status": status, "description": description}
             elif status in ["Pending", "Running", "Queued"]:
-                logging.info(f"Job is still in progress: {description}")
+                logging.debug(f"Job is still in progress: {description}")
                 await asyncio.sleep(JOB_CHECK_SLEEP)
             else:
                 logging.error(f"Unknown status: {status}. Description: {description}")
                 return {"status": status, "description": description}
         except (httpx.HTTPStatusError, httpx.RequestError, ValueError) as e:
-            logging.error(f"Error while checking job status for {job_url}: {e}")
+            logging.exception(f"Error while checking job status for {job_url}: {e}")
             await asyncio.sleep(QUERY_RETRY_DELAY)
         except Exception as e:
             logging.exception(
@@ -272,7 +267,7 @@ async def process_query(
     index = query["index"]
 
     async with semaphore:
-        logging.info(f"Processing query {index} for CURIE {curie}")
+        logging.debug(f"Processing query {index} for CURIE {curie}")
         initial_response_data = await post_async_query(
             client, ASYNC_QUERY_URL, query_dict
         )
@@ -290,7 +285,7 @@ async def process_query(
         ]:
             final_response_data.update({"curie": curie, "index": index})
             transformed_results = transform_result(final_response_data)
-            logging.info(f"Successfully processed query {index} for CURIE {curie}")
+            logging.debug(f"Successfully processed query {index} for CURIE {curie}")
             return transformed_results
         else:
             status = (
@@ -310,8 +305,6 @@ async def run_async_queries(disease_list: pd.DataFrame) -> pd.DataFrame:
     Returns:
     pd.DataFrame: A DataFrame containing the results of the queries.
     """
-    logging.info("Starting asynchronous query processing")
-
     async with httpx.AsyncClient(timeout=timeout_config) as client:
         semaphore = asyncio.Semaphore(MAX_CONCURRENT_REQUESTS)
         queries = list(generate_queries(disease_list))
@@ -328,10 +321,9 @@ async def run_async_queries(disease_list: pd.DataFrame) -> pd.DataFrame:
             except Exception as e:
                 logging.error(f"An error occurred during query processing: {e}")
 
-    logging.info(f"Total results collected: {len(all_results)}")
+    logging.debug(f"Total results collected: {len(all_results)}")
 
     df = pd.DataFrame(all_results, columns=["target", "source", "score"])
-    logging.info("Asynchronous query processing completed")
     return df
 
 
@@ -345,7 +337,7 @@ def run_bte_queries(disease_list: pd.DataFrame = DISEASE_LIST) -> pd.DataFrame:
     pd.DataFrame: A DataFrame containing the results of the queries.
     """
     df = asyncio.run(run_async_queries(disease_list))
-    save_dataframe_to_csv(df)
+    # save_dataframe_to_csv(df)
     return df
 
 
@@ -365,7 +357,7 @@ def save_dataframe_to_csv(df: pd.DataFrame, file_path: str = DEBUG_CSV_PATH) -> 
 
     try:
         df.to_csv(file_path, index=False)
-        logging.info(f"DataFrame successfully saved to {file_path}")
+        logging.debug(f"DataFrame successfully saved to {file_path}")
     except (FileNotFoundError, PermissionError) as e:
         logging.exception(f"Failed to save DataFrame to {file_path}: {e}")
         raise
