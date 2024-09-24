@@ -1,14 +1,5 @@
 <!-- NOTE: This file was partially generated using AI assistance.  -->
-# Running an experiment from a branch on the Every Cure Platform
 
-## Prerequisites
-```
-gcloud auth configure-docker us-central1-docker.pkg.dev
-```
-
-## Run the pipeline
-
-```markdown:docs/src/infrastructure/runbooks/03_run_pipeline_from_branch.md
 # Running an experiment from a branch on the Every Cure Platform
 
 This guide explains how to run an experiment from a specific branch using the Every Cure Platform's pipeline submission tool.
