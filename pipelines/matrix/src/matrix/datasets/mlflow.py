@@ -25,6 +25,7 @@ class MlflowMetricsDataset(MlflowAbstractMetricDataset):
 
     def __init__(
         self,
+        *,
         run_id: str = None,
         load_args: Dict[str, Any] = None,
         save_args: Dict[str, Any] = None,

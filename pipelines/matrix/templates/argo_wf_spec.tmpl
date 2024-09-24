@@ -3,12 +3,13 @@ apiVersion: argoproj.io/v1alpha1
 kind: WorkflowTemplate
 metadata:
   namespace: {{namespace}}
-  name: matrix
+  name: {{run_name}}
 spec:
   workflowMetadata:
     labels:
       run: {% raw %}'{{ workflow.parameters.run_name }}'
       {% endraw %}
+      username: "{{ username }}"
   entrypoint: dag
   ttlStrategy:
     secondsAfterSuccess: 5
