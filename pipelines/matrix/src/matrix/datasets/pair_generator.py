@@ -29,6 +29,23 @@ class DrugDiseasePairGenerator(abc.ABC):
         """
         ...
 
+    @staticmethod
+    def _remove_pairs(df: pd.DataFrame, pairs: pd.DataFrame) -> pd.DataFrame:
+        """A helper function to remove pairs from a given DataFrame.
+
+        Args:
+            df: DataFrame to remove pairs from.
+            pairs: DataFrame with pairs to remove.
+
+        Returns:
+            DataFrame with train pairs removed.
+        """
+        pairs_set = set(zip(pairs["source"], pairs["target"]))
+        is_remove = df.apply(
+            lambda row: (row["source"], row["target"]) in pairs_set, axis=1
+        )
+        return df[~is_remove]
+
 
 class SingleLabelPairGenerator(DrugDiseasePairGenerator):
     """Class representing generators outputting drug-disease pairs with a single label."""
@@ -286,6 +303,53 @@ class MatrixTestDiseases(DrugDiseasePairGenerator):  # TODO: modify
         """
         self._drug_axis_flags = drugs_lst_flags
 
+    def _give_disease_centric_matrix(
+        self,
+        test_pos_pairs: pd.DataFrame,
+        removal_pairs: pd.DataFrame,
+        drug_list: list,
+    ) -> pd.DataFrame:
+        """Generate disease-centric matrix.
+
+        The disease-centric matrix is defined as the set of drug disease-pairs for which
+        the drug belongs to a given list and the disease appears in the ground truth positive test set.
+        We remove certain pairs such as the training set.
+        We label the ground truth test positives by y=1 and everything else as y=0.
+
+        Args:
+            test_pos_pairs: _description_
+            removal_pairs: Drug-disease pairs to remove.
+            drug_list: List of node IDs representing the drugs.
+
+        Returns:
+            Labelled drug-disease pairs dataset.
+        """
+        # Compute list of disease IDs
+        test_pos_diseases_lst = list(test_pos_pairs["target"].unique())
+
+        # Generate all combinations
+        matrix_slices = []
+        for disease in tqdm(test_pos_diseases_lst):
+            matrix_slice = pd.DataFrame({"source": drug_list, "target": disease})
+            matrix_slices.append(matrix_slice)
+
+        # Concatenate all slices at once
+        matrix = pd.concat(matrix_slices, ignore_index=True)
+
+        # Label test positives
+        test_pos_pairs_set = set(
+            zip(test_pos_pairs["source"], test_pos_pairs["target"])
+        )
+        is_in_test_pos = matrix.apply(
+            lambda row: (row["source"], row["target"]) in test_pos_pairs_set, axis=1
+        )
+        matrix["y"] = is_in_test_pos.astype(int)
+
+        # Remove train pairs
+        filtered_matrix = self._remove_pairs(matrix, removal_pairs)
+
+        return filtered_matrix
+
     def generate(
         self, graph: KnowledgeGraph, known_pairs: pd.DataFrame, **kwargs
     ) -> pd.DataFrame:
@@ -305,33 +369,9 @@ class MatrixTestDiseases(DrugDiseasePairGenerator):  # TODO: modify
 
         # Define lists of drugs and diseases
         test_pos_pairs = test_pairs[test_pairs["y"].eq(1)]
-        test_pos_diseases_lst = list(test_pos_pairs["target"].unique())
-        drugs_lst = graph.flags_to_ids(self._drug_axis_flags)
+        drug_list = graph.flags_to_ids(self._drug_axis_flags)
 
-        # Generate all combinations
-        matrix_slices = []
-        for disease in tqdm(test_pos_diseases_lst):
-            matrix_slice = pd.DataFrame({"source": drugs_lst, "target": disease})
-            matrix_slices.append(matrix_slice)
-
-        # Concatenate all slices at once
-        matrix = pd.concat(matrix_slices, ignore_index=True)
-
-        # Label test positives
-        test_pos_pairs_set = set(
-            zip(test_pos_pairs["source"], test_pos_pairs["target"])
-        )
-        is_in_test_pos = matrix.apply(
-            lambda row: (row["source"], row["target"]) in test_pos_pairs_set, axis=1
-        )
-        matrix["y"] = is_in_test_pos.astype(int)
-
-        # Remove train pairs and return
-        train_pairs_set = set(zip(train_pairs["source"], train_pairs["target"]))
-        is_in_train = matrix.apply(
-            lambda row: (row["source"], row["target"]) in train_pairs_set, axis=1
-        )
-        return matrix[~is_in_train]
+        return self._give_disease_centric_matrix(test_pos_pairs, train_pairs, drug_list)
 
 
 class TimeSplitGroundTruthTestPairs(DrugDiseasePairGenerator):  # TODO: modify
@@ -341,25 +381,6 @@ class TimeSplitGroundTruthTestPairs(DrugDiseasePairGenerator):  # TODO: modify
     The ground truth training data is removed.
 
     """
-
-    @staticmethod
-    def _remove_train_pairs(
-        df: pd.DataFrame, train_pairs: pd.DataFrame
-    ) -> pd.DataFrame:
-        """A helper function to remove train pairs from a given DataFrame.
-
-        Args:
-            df: DataFrame to remove train pairs from.
-            train_pairs: DataFrame with train pairs.
-
-        Returns:
-            DataFrame with train pairs removed.
-        """
-        train_pairs_set = set(zip(train_pairs["source"], train_pairs["target"]))
-        is_in_train = df.apply(
-            lambda row: (row["source"], row["target"]) in train_pairs_set, axis=1
-        )
-        return df[~is_in_train]
 
     def generate(
         self,
@@ -383,9 +404,7 @@ class TimeSplitGroundTruthTestPairs(DrugDiseasePairGenerator):  # TODO: modify
         train_pairs = known_pairs[~is_test]
 
         # Remove train pairs from the clinical trail data
-        clinical_trial_data = self._remove_train_pairs(
-            clinical_trials_data, train_pairs
-        )
+        clinical_trial_data = self._remove_pairs(clinical_trials_data, train_pairs)
 
         # Check if column 'y' has both 0 and 1 values
         if clinical_trial_data["y"].nunique() != 2:
@@ -394,13 +413,14 @@ class TimeSplitGroundTruthTestPairs(DrugDiseasePairGenerator):  # TODO: modify
             return clinical_trial_data
 
 
-class TimeSplitMatrixTestDiseases(TimeSplitGroundTruthTestPairs):  # TODO: modify
+class TimeSplitMatrixTestDiseases(MatrixTestDiseases):
     """Data Generator for Time Split Validation. Use the clinical trial data to replace the test ground truth data.
 
-    Now 1 in the 'y' column means 'significantly_better' and 0 means 'significantly_worse'.
-    The diseases of clinical trial data with "significant_better" label x all drugs matrix.
-    The ground truth training data is removed.
+    The matrix pairs dataset  consists of diseases of clinical trial data with "significant_better" label x all drugs.
+    Now 1 in the 'y' column means 'significantly_better' and 0 is everything else.
+    All ground truth data (both test and train) is removed.
 
+    TODO: Consider expanding pairs labelled as y=1 to include also "non-significantly better" pairs.
     """
 
     def __init__(self, drugs_lst_flags: str) -> None:
@@ -428,43 +448,13 @@ class TimeSplitMatrixTestDiseases(TimeSplitGroundTruthTestPairs):  # TODO: modif
         Returns:
             DataFrame with unknown drug-disease pairs.
         """
-        # Extract the known DD ground truth used in model training
-        is_test = known_pairs["split"].eq("TEST")
-        train_pairs = known_pairs[~is_test]
-
         # Define lists of drugs and diseases
         clinical_trial_data_pos_pairs = clinical_trials_data[
             clinical_trials_data["y"].eq(1)
         ]
-        clinical_trial_data_pos_diseases_lst = list(
-            clinical_trial_data_pos_pairs["target"].unique()
+        drug_list = graph.flags_to_ids(self._drug_axis_flags)
+
+        # Generate matrix dataset
+        return self._give_disease_centric_matrix(
+            clinical_trial_data_pos_pairs, known_pairs, drug_list
         )
-        drugs_lst = graph.flags_to_ids(self._drug_axis_flags)
-
-        # Generate all combinations
-        matrix_slices = []
-        for disease in tqdm(clinical_trial_data_pos_diseases_lst):
-            matrix_slice = pd.DataFrame({"source": drugs_lst, "target": disease})
-            matrix_slices.append(matrix_slice)
-
-        # Concatenate all slices at once
-        matrix = pd.concat(matrix_slices, ignore_index=True)
-
-        # Label test positives
-        clinical_trial_data_pos_pairs_set = set(
-            zip(
-                clinical_trial_data_pos_pairs["source"],
-                clinical_trial_data_pos_pairs["target"],
-            )
-        )
-        is_in_test_pos = matrix.apply(
-            lambda row: (row["source"], row["target"])
-            in clinical_trial_data_pos_pairs_set,
-            axis=1,
-        )
-        matrix["y"] = is_in_test_pos.astype(int)
-
-        # Remove train pairs and return
-        filtered_matrix = self._remove_train_pairs(matrix, train_pairs)
-
-        return filtered_matrix
