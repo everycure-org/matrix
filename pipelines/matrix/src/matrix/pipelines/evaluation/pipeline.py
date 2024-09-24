@@ -14,26 +14,12 @@ def _create_evaluation_pipeline(model: str, evaluation: str) -> Pipeline:
             node(
                 func=nodes.generate_test_dataset,
                 inputs=[
-                    "modelling.feat.rtx_kg2",  # TODO: REMOVE
-                    "modelling.model_input.splits",  # TODO: REMOVE, replaced by matrix
+                    "modelling.model_input.splits",
+                    f"matrix_generation.{model}.model_output.sorted_matrix_predictions",
                     f"params:evaluation.{evaluation}.evaluation_options.generator",
-                    "evaluation.prm.clinical_trials_data",  # TODO: REMOVE, replaced by matrix
                 ],
                 outputs=f"evaluation.{model}.{evaluation}.prm.pairs",
                 name=f"create_{model}_{evaluation}_evaluation_pairs",
-            ),
-            node(
-                func=nodes.make_test_predictions,  # TODO: REMOVE
-                inputs=[
-                    "modelling.feat.rtx_kg2",
-                    f"evaluation.{model}.{evaluation}.prm.pairs",
-                    f"modelling.{model}.model_input.transformers",
-                    f"modelling.{model}.models.model",
-                    f"params:modelling.{model}.model_options.model_tuning_args.features",
-                    "params:evaluation.score_col_name",
-                ],
-                outputs=f"evaluation.{model}.{evaluation}.model_output.predictions",
-                name=f"create_{model}_{evaluation}_model_predictions",
             ),
             node(
                 func=nodes.evaluate_test_predictions,
@@ -51,18 +37,7 @@ def _create_evaluation_pipeline(model: str, evaluation: str) -> Pipeline:
 
 def create_pipeline(**kwargs) -> Pipeline:
     """Create evaluation pipeline."""
-    pipes = [
-        pipeline(
-            [
-                node(  # TODO: REMOVE
-                    func=nodes.create_prm_clinical_trials,
-                    inputs=["ingestion.raw.clinical_trials_data"],
-                    outputs="evaluation.prm.clinical_trials_data",
-                    name="create_prm_clinical_trails",
-                ),
-            ]
-        )
-    ]
+    pipes = []
     models = settings.DYNAMIC_PIPELINES_MAPPING.get("modelling")
     model_names = [model["model_name"] for model in models]
     for model in model_names:

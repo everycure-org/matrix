@@ -1,3 +1,7 @@
-matrix_generation.prm.matrix_pairs: # TODO: Remove. This is for testing purposes.   
+matrix_generation.prm.matrix_pairs: # This is for testing purposes.   
   type: pandas.CSVDataset
   filepath: ${globals:paths.prm}/matrix_pairs
+
+"matrix_generation.{model}.model_output.sorted_matrix_predictions": # This is for testing purposes. 
+  type: pandas.CSVDataset
+  filepath: ${globals:paths.model_output}/{model}/matrix_predictions
