@@ -392,9 +392,8 @@ class MatrixTestDiseases(DrugDiseasePairGenerator):  # TODO: modify
 class TimeSplitGroundTruthTestPairs(DrugDiseasePairGenerator):
     """Data Generator for Time Split Validation. Use the clinical trial data to replace the test ground truth data.
 
-    Now 1 in the 'y' column means 'significantly_better' and 0 means 'significantly_worse'.
+    Now 1 in the 'y' column means 'successful clinical trial' and 0 means 'unsuccessful clinical trial'.
     The ground truth training data is removed.
-
     """
 
     def generate(
@@ -403,7 +402,7 @@ class TimeSplitGroundTruthTestPairs(DrugDiseasePairGenerator):
         matrix: pd.DataFrame,
         eval_options: dict,
     ) -> pd.DataFrame:
-        """Function generating ground truth pairs given a full matrix dataframe.
+        """Function to generate the dataset given a full matrix dataframe.
 
         Args:
             known_pairs: Labelled ground truth drug-disease pairs dataset.
