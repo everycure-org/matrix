@@ -225,7 +225,7 @@ are empowered to make changes to the infrastructure they need to make their work
 while maintaining a high level of control and visibility.
 
 
-### [ArgoCD](https://argocd.platform.dev.everycure.org)
+### [ArgoCD](https://argo.platform.dev.everycure.org/workflows/)
 
 We use ArgoCD to provision the services running on our Kubernetes cluster. This allows us to define everything running _inside_ the cluster as code. This works by Argo watching a specific Git repository for changes and then automatically provisioning the cluster according to the definitions in that repository.
 
