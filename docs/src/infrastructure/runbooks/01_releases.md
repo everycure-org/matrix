@@ -2,10 +2,6 @@
 title: Create a Release
 ---
 
----
-title: Create a Release
----
-
 ## Overview
 
 This runbook outlines the steps to create a release in our GitHub repository.
