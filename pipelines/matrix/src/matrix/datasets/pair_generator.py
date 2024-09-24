@@ -46,6 +46,27 @@ class DrugDiseasePairGenerator(abc.ABC):
         )
         return df[~is_remove]
 
+    @staticmethod
+    def _check_no_train(data: pd.DataFrame, known_pairs: pd.DataFrame) -> None:
+        """Checks that no pairs in the ground truth training set appear in the data.
+
+        Args:
+            data: Pairs dataset to check.
+            known_pairs: DataFrame with known drug-disease pairs.
+
+        Raises:
+            ValueError: If any training pairs are found in the data.
+        """
+        is_test = known_pairs["split"].eq("TEST")
+        train_pairs = known_pairs[~is_test]
+        train_pairs_set = set(zip(train_pairs["source"], train_pairs["target"]))
+        data_pairs_set = set(zip(data["source"], data["target"]))
+        overlapping_pairs = data_pairs_set.intersection(train_pairs_set)
+        if overlapping_pairs:
+            raise ValueError(
+                f"Found {len(overlapping_pairs)} pairs in test set that also appear in training set."
+            )
+
 
 class SingleLabelPairGenerator(DrugDiseasePairGenerator):
     """Class representing generators outputting drug-disease pairs with a single label."""
@@ -272,15 +293,7 @@ class GroundTruthTestPairs(DrugDiseasePairGenerator):
         data = pd.concat([tp_data, tn_data], ignore_index=True)
 
         # Check that ground truth training pairs do not appear in the test set
-        is_test = known_pairs["split"].eq("TEST")
-        train_pairs = known_pairs[~is_test]
-        train_pairs_set = set(zip(train_pairs["source"], train_pairs["target"]))
-        data_pairs_set = set(zip(data["source"], data["target"]))
-        overlapping_pairs = data_pairs_set.intersection(train_pairs_set)
-        if overlapping_pairs:
-            raise ValueError(
-                f"Found {len(overlapping_pairs)} pairs in test set that also appear in training set."
-            )
+        self._check_no_train(data, known_pairs)
 
         # Return selected pairs
         return data
@@ -383,34 +396,49 @@ class TimeSplitGroundTruthTestPairs(DrugDiseasePairGenerator):  # TODO: modify
     """
 
     def generate(
-        self,
-        graph: KnowledgeGraph,
-        known_pairs: pd.DataFrame,
-        clinical_trials_data: pd.DataFrame,
-        **kwargs,
+        self, known_pairs: pd.DataFrame, matrix: pd.DataFrame, **kwargs
     ) -> pd.DataFrame:
-        """Function to generate drug-disease pairs from the knowledge graph.
+        """Function generating ground truth pairs given a full matrix dataframe.
 
         Args:
             graph: KnowledgeGraph instance.
-            known_pairs: DataFrame with ground truth drug-disease pairs.
-            clinical_trials_data: clinical trails dataset
+            known_pairs: Labelled ground truth drug-disease pairs dataset.
+            matrix: Pairs dataframe representing the full matrix with treat scores.
             kwargs: additional kwargs to use
         Returns:
-            DataFrame with unknown drug-disease pairs.
+            Labelled ground truth drug-disease pairs dataset.
         """
-        # Extract the known DD ground truth used in model training
+        # Restrict matrix and label
+        tp_data = matrix[matrix["is_known_positive"]].assign(y=1)
+        tn_data = matrix[matrix["is_known_negative"]].assign(y=0)
+        data = pd.concat([tp_data, tn_data], ignore_index=True)
+
+        # Check that ground truth training pairs do not appear in the test set
         is_test = known_pairs["split"].eq("TEST")
         train_pairs = known_pairs[~is_test]
+        train_pairs_set = set(zip(train_pairs["source"], train_pairs["target"]))
+        data_pairs_set = set(zip(data["source"], data["target"]))
+        overlapping_pairs = data_pairs_set.intersection(train_pairs_set)
+        if overlapping_pairs:
+            raise ValueError(
+                f"Found {len(overlapping_pairs)} pairs in test set that also appear in training set."
+            )
 
-        # Remove train pairs from the clinical trail data
-        clinical_trial_data = self._remove_pairs(clinical_trials_data, train_pairs)
+        # Return selected pairs
+        return data
 
-        # Check if column 'y' has both 0 and 1 values
-        if clinical_trial_data["y"].nunique() != 2:
-            raise ValueError("Column 'y' should have both 0 and 1 values.")
-        else:
-            return clinical_trial_data
+        # # Extract the known DD ground truth used in model training
+        # is_test = known_pairs["split"].eq("TEST")
+        # train_pairs = known_pairs[~is_test]
+
+        # # Remove train pairs from the clinical trail data
+        # clinical_trial_data = self._remove_pairs(clinical_trials_data, train_pairs)
+
+        # # Check if column 'y' has both 0 and 1 values
+        # if clinical_trial_data["y"].nunique() != 2:
+        #     raise ValueError("Column 'y' should have both 0 and 1 values.")
+        # else:
+        #     return clinical_trial_data
 
 
 class TimeSplitMatrixTestDiseases(MatrixTestDiseases):
