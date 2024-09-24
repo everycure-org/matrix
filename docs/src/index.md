@@ -15,13 +15,13 @@ hide:
 
     [:octicons-arrow-right-24: Onboarding](./onboarding/index.md)
 
--   :material-book-open-page-variant:{ .lg .middle } __Resources__ 
+-   :material-book-open-page-variant:{ .lg .middle } __Useful Links__ 
 
     ---
 
     Find useful links to EveryCure resources.
 
-    [:octicons-arrow-right-24: Resources](./resources/index.md)
+    [:octicons-arrow-right-24: Resources](./links/index.md)
 
 -   :simple-googlecloud:{ .lg .middle } __Understand the Infrastructure__
 

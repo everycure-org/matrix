@@ -1,8 +1,8 @@
 ---
-title: Resources
+title: Useful Links
 ---
 
-# Resources
+# Links
 
 Welcome! Below is a curated list of useful links to various EveryCure resources and tools.
 
