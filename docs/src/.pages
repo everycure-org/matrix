@@ -1,10 +1,11 @@
 nav:
     - index.md
     - onboarding
+    - links
     - infrastructure
     - data_science
     - matrix
-    - contribute
     - experiments
     - FAQ
     - releases
+    - contribute
