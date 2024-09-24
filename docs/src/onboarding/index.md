@@ -29,16 +29,23 @@ As you are walking through the onboarding guide, please create an [onboarding is
 - Escalate barriers / roadblocks to Working Group deliverable completion in a timely manner to MATRIX Working Team
   
 **Working Group 1: Data and Knowledge Graph**
+
   - Project Manager = Carrie Pasfield
+
   - Scientific Lead = Chris Bizon
 
 **Working Group 2: Modeling and Evaluation**
+
   - Project Manager = Robyn Macrae
+
   - Scientific Lead = Andrew Su
 
 **Working Group 3: Validation**
+
   - *N.B. Not kicking-off until ~Sep-Oct 2024*
+
   - Project Manager = *To be named*
+
   - Scientific Lead = *To be named*
 
 ### Workstream Leads

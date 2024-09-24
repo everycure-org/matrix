@@ -1,5 +1,7 @@
 <!-- NOTE: This file was partially generated using AI assistance.  -->
-
+---
+title: Running an experiment from a branch on the Every Cure Platform
+---
 # Running an experiment from a branch on the Every Cure Platform
 
 This guide explains how to run an experiment from a specific branch using the Every Cure Platform's pipeline submission tool.
