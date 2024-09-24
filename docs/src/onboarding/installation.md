@@ -8,7 +8,7 @@ This page assumes basic knowledge of the following technologies. We will provide
 
 !!! info "Support on Windows, MacOS and Linux"
     We are mostly using MacOS but try our best to provide an onboarding for all
-    platforms. This guide assumes Our guide assumes usage of [homebrew](https://brew.sh/)
+    platforms. This guide assumes usage of [homebrew](https://brew.sh/)
     to manage packages on MacOS, [Windows
     WSL](https://en.wikipedia.org/wiki/Windows_Subsystem_for_Linux) usage on Windows
     and some system proficiency for Linux users. If you find your platform could be
