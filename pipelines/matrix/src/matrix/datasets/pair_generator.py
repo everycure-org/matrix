@@ -33,6 +33,8 @@ class DrugDiseasePairGenerator(abc.ABC):
     def _remove_pairs(df: pd.DataFrame, pairs: pd.DataFrame) -> pd.DataFrame:
         """A helper function to remove pairs from a given DataFrame.
 
+        TODO: Remove.
+
         Args:
             df: DataFrame to remove pairs from.
             pairs: DataFrame with pairs to remove.
@@ -49,6 +51,8 @@ class DrugDiseasePairGenerator(abc.ABC):
     @staticmethod
     def _check_no_train(data: pd.DataFrame, known_pairs: pd.DataFrame) -> None:
         """Checks that no pairs in the ground truth training set appear in the data.
+
+        TODO: This could take a long time for large dataframes. Move this to a node that checks each matrix.
 
         Args:
             data: Pairs dataset to check.
@@ -81,6 +85,9 @@ class SingleLabelPairGenerator(DrugDiseasePairGenerator):
         self._y_label = y_label
         self._random_state = random_state
         random.seed(random_state)
+
+
+## Generators for negative sampling during training
 
 
 class RandomDrugDiseasePairGenerator(SingleLabelPairGenerator):
@@ -273,6 +280,9 @@ class ReplacementDrugDiseasePairGenerator(SingleLabelPairGenerator):
         return unknown_data
 
 
+## Generators for evaluation datasets
+
+
 class GroundTruthTestPairs(DrugDiseasePairGenerator):
     """Class representing ground truth test data."""
 
@@ -312,123 +322,29 @@ class GroundTruthTestPairs(DrugDiseasePairGenerator):
         return data
 
 
-# class MatrixTestDiseases(DrugDiseasePairGenerator):  # TODO: modify
-#     """A class representing the test diseases x all drugs matrix.
-
-#     This dataset consists of drug-disease pairs obtained by taking all combinations of:
-#         - drugs in a given list,
-#         - diseases appearing in the ground-truth positive test dataset,
-#     while omitting any ground-truth training data.
-#     """
-
-#     @staticmethod
-#     def _give_disease_centric_matrix(
-#         matrix: pd.DataFrame,
-#         positive_columns_lst: List[str],
-#         removal_columns_lst: List[str],
-#     ) -> pd.DataFrame:
-#         """Generate disease-centric matrix given a full matrix.
-
-#         Args:
-#             matrix: Pairs dataframe representing the full matrix with treat scores.
-#             positive_columns_lst: List of column names defining the "positive" pairs labelled as y=1.
-#             removal_pairs: Drug-disease pairs to remove.
-
-#         Returns:
-#             Labelled drug-disease pairs dataset.
-#         """
-#         # Compute list of disease IDs
-#         test_pos_diseases_lst = list(test_pos_pairs["target"].unique())
-
-#         # Generate all combinations
-#         matrix_slices = []
-#         for disease in tqdm(test_pos_diseases_lst):
-#             matrix_slice = pd.DataFrame({"source": drug_list, "target": disease})
-#             matrix_slices.append(matrix_slice)
-
-#         # Concatenate all slices at once
-#         matrix = pd.concat(matrix_slices, ignore_index=True)
-
-#         # Label test positives
-#         test_pos_pairs_set = set(
-#             zip(test_pos_pairs["source"], test_pos_pairs["target"])
-#         )
-#         is_in_test_pos = matrix.apply(
-#             lambda row: (row["source"], row["target"]) in test_pos_pairs_set, axis=1
-#         )
-#         matrix["y"] = is_in_test_pos.astype(int)
-
-#         # Remove train pairs
-#         filtered_matrix = self._remove_pairs(matrix, removal_pairs)
-
-#         return filtered_matrix
-
-#     def generate(
-#         self, graph: KnowledgeGraph, known_pairs: pd.DataFrame, **kwargs
-#     ) -> pd.DataFrame:
-#         """Function generating the test diseases x all drugs matrix dataset.
-
-#         Args:
-#             graph: KnowledgeGraph instance.
-#             known_pairs: Labelled ground truth drug-disease pairs dataset.
-#             kwargs: additional kwargs to use
-#         Returns:
-#             Labelled drug-disease pairs dataset.
-#         """
-#         # Separate test and train portions of ground truth
-#         is_test = known_pairs["split"].eq("TEST")
-#         test_pairs = known_pairs[is_test]
-#         train_pairs = known_pairs[~is_test]
-
-#         # Define lists of drugs and diseases
-#         test_pos_pairs = test_pairs[test_pairs["y"].eq(1)]
-#         drug_list = graph.flags_to_ids(self._drug_axis_flags)
-
-#         return self._give_disease_centric_matrix(test_pos_pairs, train_pairs, drug_list)
-
-
-class TimeSplitMatrixTestDiseases(MatrixTestDiseases):
-    """Data Generator for Time Split Validation. Use the clinical trial data to replace the test ground truth data.
-
-    The matrix pairs dataset  consists of diseases of clinical trial data with "significant_better" label x all drugs.
-    Now 1 in the 'y' column means 'significantly_better' and 0 is everything else.
-    All ground truth data (both test and train) is removed.
-
-    TODO: Consider expanding pairs labelled as y=1 to include also "non-significantly better" pairs.
-    """
-
-    def __init__(self, drugs_lst_flags: str) -> None:
-        """Initializes the SingleLabelPairGenerator instance.
-
-        Args:
-            drugs_lst_flags: List of knowledge graph flags defining drugs sample set.
-        """
-        self._drug_axis_flags = drugs_lst_flags
+class MatrixTestDiseases(DrugDiseasePairGenerator):
+    """A class representing dataset of pairs required for disease-specific ranking."""
 
     def generate(
         self,
-        graph: KnowledgeGraph,
-        known_pairs: pd.DataFrame,
-        clinical_trials_data: pd.DataFrame,
-        **kwargs,
+        matrix: pd.DataFrame,
+        positive_columns_lst: List[str],
+        removal_columns_lst: List[str],
     ) -> pd.DataFrame:
-        """Function to generate drug-disease pairs from the knowledge graph.
+        """Generate dataset given a full matrix.
 
         Args:
-            graph: KnowledgeGraph instance.
-            known_pairs: DataFrame with ground truth drug-disease pairs.
-            clinical_trials_data: clinical trails dataset
-            kwargs: additional kwargs to use
-        Returns:
-            DataFrame with unknown drug-disease pairs.
-        """
-        # Define lists of drugs and diseases
-        clinical_trial_data_pos_pairs = clinical_trials_data[
-            clinical_trials_data["y"].eq(1)
-        ]
-        drug_list = graph.flags_to_ids(self._drug_axis_flags)
+            matrix: Pairs dataframe representing the full matrix with treat scores.
+            positive_columns_lst: List of column names defining the "positive" pairs labelled as y=1.
+            removal_columns_lst: Drug-disease pairs to remove.
 
-        # Generate matrix dataset
-        return self._give_disease_centric_matrix(
-            clinical_trial_data_pos_pairs, known_pairs, drug_list
-        )
+        Returns:
+            Labelled drug-disease pairs dataset.
+        """
+        # Restrict diseases boolean
+
+        # Removal boolean
+
+        # Combine boolean, restrict boolean and label pairs.
+
+        return None
