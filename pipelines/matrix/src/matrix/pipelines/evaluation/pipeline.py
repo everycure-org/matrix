@@ -11,6 +11,7 @@ from . import nodes
 def _create_evaluation_pipeline(model: str, evaluation: str) -> Pipeline:
     return pipeline(
         [
+            # TODO: add node for training set check with a tag
             node(
                 func=nodes.generate_test_dataset,
                 inputs=[
