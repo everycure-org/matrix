@@ -275,12 +275,14 @@ class GroundTruthTestPairs(DrugDiseasePairGenerator):
     """Class representing ground truth test data."""
 
     def generate(
-        self, known_pairs: pd.DataFrame, matrix: pd.DataFrame, **kwargs
+        self,
+        known_pairs: pd.DataFrame,
+        matrix: pd.DataFrame,
+        **kwargs,
     ) -> pd.DataFrame:
         """Function generating ground truth pairs given a full matrix dataframe.
 
         Args:
-            graph: KnowledgeGraph instance.
             known_pairs: Labelled ground truth drug-disease pairs dataset.
             matrix: Pairs dataframe representing the full matrix with treat scores.
             kwargs: additional kwargs to use
@@ -404,7 +406,6 @@ class TimeSplitGroundTruthTestPairs(DrugDiseasePairGenerator):
         """Function generating ground truth pairs given a full matrix dataframe.
 
         Args:
-            graph: KnowledgeGraph instance.
             known_pairs: Labelled ground truth drug-disease pairs dataset.
             matrix: Pairs dataframe representing the full matrix with treat scores.
             eval_options: Dictionary of parameters containing lists of column names defining positive/negative clinical trials.
