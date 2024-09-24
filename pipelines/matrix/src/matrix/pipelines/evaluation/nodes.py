@@ -31,6 +31,7 @@ def generate_test_dataset(
     known_pairs: pd.DataFrame,
     matrix: pd.DataFrame,
     generator: DrugDiseasePairGenerator,
+    eval_options: dict,
 ) -> pd.DataFrame:
     """Function to generate test dataset.
 
@@ -42,6 +43,7 @@ def generate_test_dataset(
         known_pairs: Labelled ground truth drug-disease pairs dataset.
         matrix: Pairs dataframe representing the full matrix with treat scores.
         generator: Generator strategy.
+        eval_options: Additional parameters required for certain datasets.
 
     Returns:
         Pairs dataframe
@@ -49,6 +51,7 @@ def generate_test_dataset(
     return generator.generate(
         known_pairs,
         matrix,
+        eval_options,
     )
 
 
