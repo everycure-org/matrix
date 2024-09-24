@@ -18,41 +18,6 @@ from matrix.pipelines.evaluation.evaluation import Evaluation
 from matrix.pipelines.modelling.model import ModelWrapper
 
 
-def create_prm_clinical_trials(
-    raw_clinical_trials: pd.DataFrame,
-) -> pd.DataFrame:  # TODO: remove
-    """Function to clean clinical trails dataset.
-
-    Args:
-        raw_clinical_trials: Raw clinical trails data
-    Returns:
-        Cleaned clinical trails data
-    """
-    clinical_trail_data = raw_clinical_trials.rename(
-        columns={"drug_kg_curie": "source", "disease_kg_curie": "target"}
-    )
-
-    # Create the 'y' column where y=1 means 'significantly_better' and y=0 means 'significantly_worse'
-    clinical_trail_data["y"] = clinical_trail_data.apply(
-        lambda row: 1
-        if row["significantly_better"] == 1
-        else (0 if row["significantly_worse"] == 1 else None),
-        axis=1,
-    )
-
-    # Remove rows where 'y' is None (which means they are not 'significantly_better' or 'significantly_worse')
-    clinical_trail_data = clinical_trail_data.dropna(subset=["y"])
-
-    # Use columns 'source', 'target', and 'y' only
-    clinical_trail_data = (
-        clinical_trail_data[["source", "target", "y"]]
-        .drop_duplicates()
-        .reset_index(drop=True)
-    )
-
-    return clinical_trail_data
-
-
 @has_schema(
     schema={
         "source": "object",
@@ -63,10 +28,9 @@ def create_prm_clinical_trials(
 )
 @inject_object()
 def generate_test_dataset(
-    graph: KnowledgeGraph,
     known_pairs: pd.DataFrame,
+    matrix: pd.DataFrame,
     generator: DrugDiseasePairGenerator,
-    clinical_trials_data: pd.DataFrame,
 ) -> pd.DataFrame:
     """Function to generate test dataset.
 
@@ -74,15 +38,17 @@ def generate_test_dataset(
     pairs dataset.
 
     Args:
-        graph: KnowledgeGraph instance
+        graph: KnowledgeGraph instance.
         known_pairs: Labelled ground truth drug-disease pairs dataset.
-        generator: Generator strategy
-        clinical_trials_data: clinical trails data
+        matrix: Pairs dataframe representing the full matrix with treat scores.
+        generator: Generator strategy.
+
     Returns:
         Pairs dataframe
     """
     return generator.generate(
-        graph, known_pairs, clinical_trials_data=clinical_trials_data
+        known_pairs,
+        matrix,
     )
 
 

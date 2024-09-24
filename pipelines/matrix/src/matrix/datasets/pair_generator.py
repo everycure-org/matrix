@@ -237,26 +237,39 @@ class GroundTruthTestPairs(DrugDiseasePairGenerator):
     """Class representing ground truth test data."""
 
     def generate(
-        self, graph: KnowledgeGraph, known_pairs: pd.DataFrame, **kwargs
+        self, known_pairs: pd.DataFrame, matrix: pd.DataFrame, **kwargs
     ) -> pd.DataFrame:
-        """Function generating ground truth pairs.
+        """Function generating ground truth pairs given a full matrix dataframe.
 
         Args:
             graph: KnowledgeGraph instance.
             known_pairs: Labelled ground truth drug-disease pairs dataset.
+            matrix: Pairs dataframe representing the full matrix with treat scores.
             kwargs: additional kwargs to use
         Returns:
             Labelled ground truth drug-disease pairs dataset.
         """
-        # Restrict to test portion
+        # Restrict matrix and label
+        tp_data = matrix[matrix["is_known_positive"]].assign(y=1)
+        tn_data = matrix[matrix["is_known_negative"]].assign(y=0)
+        data = pd.concat([tp_data, tn_data], ignore_index=True)
+
+        # Check that ground truth training pairs do not appear in the test set
         is_test = known_pairs["split"].eq("TEST")
-        test_pairs = known_pairs[is_test]
+        train_pairs = known_pairs[~is_test]
+        train_pairs_set = set(zip(train_pairs["source"], train_pairs["target"]))
+        data_pairs_set = set(zip(data["source"], data["target"]))
+        overlapping_pairs = data_pairs_set.intersection(train_pairs_set)
+        if overlapping_pairs:
+            raise ValueError(
+                f"Found {len(overlapping_pairs)} pairs in test set that also appear in training set."
+            )
 
         # Return selected pairs
-        return test_pairs
+        return data
 
 
-class MatrixTestDiseases(DrugDiseasePairGenerator):
+class MatrixTestDiseases(DrugDiseasePairGenerator):  # TODO: modify
     """A class representing the test diseases x all drugs matrix.
 
     This dataset consists of drug-disease pairs obtained by taking all combinations of:
@@ -321,7 +334,7 @@ class MatrixTestDiseases(DrugDiseasePairGenerator):
         return matrix[~is_in_train]
 
 
-class TimeSplitGroundTruthTestPairs(DrugDiseasePairGenerator):
+class TimeSplitGroundTruthTestPairs(DrugDiseasePairGenerator):  # TODO: modify
     """Data Generator for Time Split Validation. Use the clinical trial data to replace the test ground truth data.
 
     Now 1 in the 'y' column means 'significantly_better' and 0 means 'significantly_worse'.
@@ -381,7 +394,7 @@ class TimeSplitGroundTruthTestPairs(DrugDiseasePairGenerator):
             return clinical_trial_data
 
 
-class TimeSplitMatrixTestDiseases(TimeSplitGroundTruthTestPairs):
+class TimeSplitMatrixTestDiseases(TimeSplitGroundTruthTestPairs):  # TODO: modify
     """Data Generator for Time Split Validation. Use the clinical trial data to replace the test ground truth data.
 
     Now 1 in the 'y' column means 'significantly_better' and 0 means 'significantly_worse'.
