@@ -387,7 +387,7 @@ class MatrixTestDiseases(DrugDiseasePairGenerator):  # TODO: modify
         return self._give_disease_centric_matrix(test_pos_pairs, train_pairs, drug_list)
 
 
-class TimeSplitGroundTruthTestPairs(DrugDiseasePairGenerator):  # TODO: modify
+class TimeSplitGroundTruthTestPairs(DrugDiseasePairGenerator):
     """Data Generator for Time Split Validation. Use the clinical trial data to replace the test ground truth data.
 
     Now 1 in the 'y' column means 'significantly_better' and 0 means 'significantly_worse'.
@@ -396,7 +396,10 @@ class TimeSplitGroundTruthTestPairs(DrugDiseasePairGenerator):  # TODO: modify
     """
 
     def generate(
-        self, known_pairs: pd.DataFrame, matrix: pd.DataFrame, **kwargs
+        self,
+        known_pairs: pd.DataFrame,
+        matrix: pd.DataFrame,
+        eval_options: dict,
     ) -> pd.DataFrame:
         """Function generating ground truth pairs given a full matrix dataframe.
 
@@ -404,41 +407,29 @@ class TimeSplitGroundTruthTestPairs(DrugDiseasePairGenerator):  # TODO: modify
             graph: KnowledgeGraph instance.
             known_pairs: Labelled ground truth drug-disease pairs dataset.
             matrix: Pairs dataframe representing the full matrix with treat scores.
-            kwargs: additional kwargs to use
+            eval_options: Dictionary of parameters containing lists of column names defining positive/negative clinical trials.
+
         Returns:
             Labelled ground truth drug-disease pairs dataset.
         """
-        # Restrict matrix and label
-        tp_data = matrix[matrix["is_known_positive"]].assign(y=1)
-        tn_data = matrix[matrix["is_known_negative"]].assign(y=0)
-        data = pd.concat([tp_data, tn_data], ignore_index=True)
+        # Extract and label positive data
+        positive_data_lst = []
+        for col_name in eval_options["positive_columns"]:
+            positive_data_lst.append(matrix[matrix[col_name]].assign(y=1))
+
+        # Extract and label negative data
+        negative_data_lst = []
+        for col_name in eval_options["negative_columns"]:
+            negative_data_lst.append(matrix[matrix[col_name]].assign(y=0))
+
+        # Combine data
+        data = pd.concat(positive_data_lst + negative_data_lst, ignore_index=True)
 
         # Check that ground truth training pairs do not appear in the test set
-        is_test = known_pairs["split"].eq("TEST")
-        train_pairs = known_pairs[~is_test]
-        train_pairs_set = set(zip(train_pairs["source"], train_pairs["target"]))
-        data_pairs_set = set(zip(data["source"], data["target"]))
-        overlapping_pairs = data_pairs_set.intersection(train_pairs_set)
-        if overlapping_pairs:
-            raise ValueError(
-                f"Found {len(overlapping_pairs)} pairs in test set that also appear in training set."
-            )
+        self._check_no_train(data, known_pairs)
 
         # Return selected pairs
         return data
-
-        # # Extract the known DD ground truth used in model training
-        # is_test = known_pairs["split"].eq("TEST")
-        # train_pairs = known_pairs[~is_test]
-
-        # # Remove train pairs from the clinical trail data
-        # clinical_trial_data = self._remove_pairs(clinical_trials_data, train_pairs)
-
-        # # Check if column 'y' has both 0 and 1 values
-        # if clinical_trial_data["y"].nunique() != 2:
-        #     raise ValueError("Column 'y' should have both 0 and 1 values.")
-        # else:
-        #     return clinical_trial_data
 
 
 class TimeSplitMatrixTestDiseases(MatrixTestDiseases):

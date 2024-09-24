@@ -88,7 +88,12 @@ evaluation.simple_ground_truth_classification_time_split:
         - object: sklearn.metrics.f1_score
       score_col_name: *score-col
       threshold: 0.5
-
+    positive_columns: 
+      - "trial_sig_better"
+      - "trial_non_sig_better"
+    negative_columns:
+      - "trial_sig_worse"
+      - "trial_non_sig_worse"
 evaluation.continuous_ground_truth_classification_time_split:
   evaluation_options:
     generator:

@@ -17,6 +17,7 @@ def _create_evaluation_pipeline(model: str, evaluation: str) -> Pipeline:
                     "modelling.model_input.splits",
                     f"matrix_generation.{model}.model_output.sorted_matrix_predictions",
                     f"params:evaluation.{evaluation}.evaluation_options.generator",
+                    f"params:evaluation.{evaluation}.evaluation_options",  # Certain datasets require additional parameters
                 ],
                 outputs=f"evaluation.{model}.{evaluation}.prm.pairs",
                 name=f"create_{model}_{evaluation}_evaluation_pairs",
