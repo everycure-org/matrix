@@ -15,33 +15,34 @@ from tenacity import (
 )
 from typing import Any, Iterator, Optional
 
-# Configuration constants for managing asynchronous requests and retries
-MAX_CONCURRENT_REQUESTS = 12  # Maximum number of concurrent requests allowed
-TOTAL_TIMEOUT = 310  # Total timeout configuration for the entire request
-CONNECT_TIMEOUT = 30.0  # Timeout configuration for establishing a connection
-READ_TIMEOUT = 310.0  # Timeout configuration for HTTP requests
-ASYNC_QUERY_URL = (
-    "http://localhost:3000/v1/asyncquery"  # URL for asynchronous query processing
-)
-MAX_RETRIES = 8  # Maximum number of times to retry a request
-RETRY_DELAY = 4  # Time to wait before retrying a request
-RETRY_BACKOFF_FACTOR = 2  # Exponential backoff factor for retries
-MAX_QUERY_RETRIES = 5  # Maximum number of times to retry a query
-QUERY_RETRY_DELAY = 4  # Time to wait before retrying a failed query
-JOB_CHECK_SLEEP = 0.5  # Time to sleep between job status checks
-DEBUG_QUERY_LIMITER = 8  # Change to -1 to disable the limit
-DISEASE_LIST = pd.read_csv(
-    "https://github.com/everycure-org/matrix-disease-list/releases/latest/download/matrix-disease-list.tsv",
-    sep="\t",
-)  # Load the disease list from a remote TSV file
-DEBUG_CSV_PATH = (
-    "../../../predictions.csv"  # Path to the output CSV file for debugging purposes
-)
+# # Configuration constants for managing asynchronous requests and retries
+# MAX_CONCURRENT_REQUESTS = 12  # Maximum number of concurrent requests allowed
+# default_timeout = 310  # Total timeout configuration for the entire request
+# CONNECT_TIMEOUT = 30.0  # Timeout configuration for establishing a connection
+# READ_TIMEOUT = 310.0  # Timeout configuration for HTTP requests
+# ASYNC_QUERY_URL = (
+#     "http://localhost:3000/v1/asyncquery"  # URL for asynchronous query processing
+# )
+# MAX_RETRIES = 8  # Maximum number of times to retry a request
+# RETRY_DELAY = 4  # Time to wait before retrying a request
+# RETRY_BACKOFF_FACTOR = 2  # Exponential backoff factor for retries
+# MAX_QUERY_RETRIES = 5  # Maximum number of times to retry a query
+# QUERY_RETRY_DELAY = 4  # Time to wait before retrying a failed query
+# JOB_CHECK_SLEEP = 0.5  # Time to sleep between job status checks
+# DEBUG_QUERY_LIMITER = 8  # Change to -1 to disable the limit
+# # DISEASE_LIST = pd.read_csv(
+# #     "https://github.com/everycure-org/matrix-disease-list/releases/latest/download/matrix-disease-list.tsv",
+# #     sep="\t",
+# # )  # Load the disease list from a remote TSV file
+# DISEASE_LIST = pd.DataFrame
+# DEBUG_CSV_PATH = (
+#     "../../../predictions.csv"  # Path to the output CSV file for debugging purposes
+# )
 
-# Configure timeout settings for HTTP requests
-timeout_config = httpx.Timeout(
-    timeout=TOTAL_TIMEOUT, connect=CONNECT_TIMEOUT, read=READ_TIMEOUT
-)
+# # Configure timeout settings for HTTP requests
+# timeout_config = httpx.Timeout(
+#     timeout=default_timeout, connect=CONNECT_TIMEOUT, read=READ_TIMEOUT
+# )
 
 
 def generate_trapi_query(curie: str) -> dict[str, Any]:
@@ -81,13 +82,15 @@ def generate_trapi_query(curie: str) -> dict[str, Any]:
     }
 
 
-def generate_queries(disease_list: pd.DataFrame) -> Iterator[dict[str, Any]]:
+def generate_queries(
+    disease_list: pd.DataFrame, debug_query_limiter: int
+) -> Iterator[dict]:
     """Generate TRAPI queries from the disease list.
 
     Yields:
     Iterator[dict[str, Any]]: An iterator of dictionaries containing the CURIE and the TRAPI query.
     """
-    for index, row in itertools.islice(DISEASE_LIST.iterrows(), DEBUG_QUERY_LIMITER):
+    for index, row in itertools.islice(disease_list.iterrows(), debug_query_limiter):
         curie = row.get("category_class")
         if curie:
             trapi_query = generate_trapi_query(curie)
@@ -111,7 +114,7 @@ def transform_result(response: dict[str, Any]) -> list[dict[str, Any]]:
         logging.debug(f"No results found for CURIE {curie}")
         return results
 
-    # Iterate over the results and extract relevant information
+    # Iterate over the results and extract source, target, score
     for result in message["results"]:
         node_bindings = result.get("node_bindings", {})
         n1_bindings = node_bindings.get("n1", [])
@@ -137,8 +140,8 @@ def transform_result(response: dict[str, Any]) -> list[dict[str, Any]]:
 
 @retry(
     retry=retry_if_exception_type((httpx.HTTPStatusError, httpx.RequestError)),
-    stop=stop_after_attempt(MAX_RETRIES),
-    wait=wait_exponential(multiplier=RETRY_DELAY, max=60),
+    stop=stop_after_attempt(8),
+    wait=wait_exponential(multiplier=4, max=60),
     reraise=True,
 )
 async def post_async_query(client: httpx.AsyncClient, url: str, payload: dict) -> dict:
@@ -162,8 +165,8 @@ async def post_async_query(client: httpx.AsyncClient, url: str, payload: dict) -
     retry=retry_if_exception_type(
         (httpx.HTTPStatusError, httpx.RequestError, ValueError)
     ),
-    stop=stop_after_attempt(MAX_RETRIES),
-    wait=wait_exponential(multiplier=RETRY_DELAY, max=60),
+    stop=stop_after_attempt(8),
+    wait=wait_exponential(multiplier=4, max=60),
     reraise=True,
 )
 async def fetch_final_results(client: httpx.AsyncClient, response_url: str) -> dict:
@@ -187,7 +190,10 @@ async def fetch_final_results(client: httpx.AsyncClient, response_url: str) -> d
 
 
 async def check_async_job_status(
-    client: httpx.AsyncClient, job_url: str
+    client: httpx.AsyncClient,
+    job_url: str,
+    default_timeout: int,
+    job_check_sleep: float,
 ) -> Optional[dict]:
     """Check the status of an asynchronous job and fetch final results if completed.
 
@@ -201,11 +207,11 @@ async def check_async_job_status(
     start_time = time.monotonic()
     while True:
         elapsed_time = time.monotonic() - start_time
-        if elapsed_time > TOTAL_TIMEOUT:
-            logging.error(f"Job {job_url} timed out after {TOTAL_TIMEOUT} seconds.")
+        if elapsed_time > default_timeout:
+            logging.error(f"Job {job_url} timed out after {default_timeout} seconds.")
             return {
                 "status": "TimedOut",
-                "description": f"Job did not complete within {TOTAL_TIMEOUT} seconds.",
+                "description": f"Job did not complete within {default_timeout} seconds.",
             }
 
         try:
@@ -225,32 +231,35 @@ async def check_async_job_status(
                 return {"status": status, "description": description}
             elif status in ["Pending", "Running", "Queued"]:
                 logging.debug(f"Job is still in progress: {description}")
-                await asyncio.sleep(JOB_CHECK_SLEEP)
+                await asyncio.sleep(job_check_sleep)
             else:
                 logging.error(f"Unknown status: {status}. Description: {description}")
                 return {"status": status, "description": description}
         except (httpx.HTTPStatusError, httpx.RequestError, ValueError) as e:
             logging.exception(f"Error while checking job status for {job_url}: {e}")
-            await asyncio.sleep(QUERY_RETRY_DELAY)
+            await asyncio.sleep(job_check_sleep)
         except Exception as e:
             logging.exception(
                 f"Unexpected error while checking job status for {job_url}: {e}"
             )
-            await asyncio.sleep(QUERY_RETRY_DELAY)
+            await asyncio.sleep(job_check_sleep)
 
 
 @retry(
     retry=retry_if_exception_type(
         (httpx.HTTPError, asyncio.TimeoutError, ValueError, KeyError, Exception)
     ),
-    stop=stop_after_attempt(MAX_QUERY_RETRIES),
-    wait=wait_exponential(multiplier=QUERY_RETRY_DELAY, max=60),
+    stop=stop_after_attempt(5),
+    wait=wait_exponential(multiplier=4, max=60),
     reraise=True,
 )
 async def process_query(
     client: httpx.AsyncClient,
     query: dict[str, Any],
     semaphore: asyncio.Semaphore,
+    async_query_url: str,
+    default_timeout: int,
+    job_check_sleep: float,
 ) -> Optional[list[dict[str, Any]]]:
     """Process an individual query and return transformed results.
 
@@ -269,14 +278,14 @@ async def process_query(
     async with semaphore:
         logging.debug(f"Processing query {index} for CURIE {curie}")
         initial_response_data = await post_async_query(
-            client, ASYNC_QUERY_URL, query_dict
+            client, async_query_url, query_dict
         )
         if not initial_response_data.get("job_url"):
             logging.error(f"Invalid initial response for CURIE {curie}")
             raise ValueError("Invalid initial response structure.")
 
         final_response_data = await check_async_job_status(
-            client, initial_response_data["job_url"]
+            client, initial_response_data["job_url"], default_timeout, job_check_sleep
         )
 
         if final_response_data and final_response_data.get("status") in [
@@ -299,17 +308,35 @@ async def process_query(
             raise Exception(f"Query failed with status: {status}")
 
 
-async def run_async_queries(disease_list: pd.DataFrame) -> pd.DataFrame:
+async def run_async_queries(
+    disease_list: pd.DataFrame,
+    max_concurrent_requests: int,
+    async_query_url: str,
+    default_timeout: int,
+    job_check_sleep: float,
+    debug_query_limiter: int,
+) -> pd.DataFrame:
     """Run asynchronous query processing and return a DataFrame of results.
 
     Returns:
     pd.DataFrame: A DataFrame containing the results of the queries.
     """
+    timeout_config = httpx.Timeout(default_timeout)
+
     async with httpx.AsyncClient(timeout=timeout_config) as client:
-        semaphore = asyncio.Semaphore(MAX_CONCURRENT_REQUESTS)
-        queries = list(generate_queries(disease_list))
+        semaphore = asyncio.Semaphore(max_concurrent_requests)
+        queries = list(generate_queries(disease_list, debug_query_limiter))
         tasks = [
-            asyncio.create_task(process_query(client, query, semaphore))
+            asyncio.create_task(
+                process_query(
+                    client,
+                    query,
+                    semaphore,
+                    async_query_url,
+                    default_timeout,
+                    job_check_sleep,
+                )
+            )
             for query in queries
         ]
         all_results = []
@@ -327,7 +354,15 @@ async def run_async_queries(disease_list: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-def run_bte_queries(disease_list: pd.DataFrame = DISEASE_LIST) -> pd.DataFrame:
+def run_bte_queries(
+    disease_list: pd.DataFrame,
+    async_query_url: str,
+    max_concurrent_requests: int,
+    default_timeout: int,
+    job_check_sleep: float,
+    debug_query_limiter: int,
+    debug_csv_path: str,
+) -> pd.DataFrame:
     """Synchronous wrapper for running asynchronous queries.
 
     Parameters:
@@ -336,12 +371,22 @@ def run_bte_queries(disease_list: pd.DataFrame = DISEASE_LIST) -> pd.DataFrame:
     Returns:
     pd.DataFrame: A DataFrame containing the results of the queries.
     """
-    df = asyncio.run(run_async_queries(disease_list))
-    # save_dataframe_to_csv(df)
+    print(disease_list.head)
+    df = asyncio.run(
+        run_async_queries(
+            disease_list,
+            max_concurrent_requests,
+            async_query_url,
+            default_timeout,
+            job_check_sleep,
+            debug_query_limiter,
+        )
+    )
+    save_dataframe_to_csv(df, debug_csv_path)
     return df
 
 
-def save_dataframe_to_csv(df: pd.DataFrame, file_path: str = DEBUG_CSV_PATH) -> None:
+def save_dataframe_to_csv(df: pd.DataFrame, file_path: str) -> None:
     """Save the provided DataFrame to a CSV file at the specified path.
 
     Parameters:
