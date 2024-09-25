@@ -13,7 +13,13 @@ import pyspark.sql.functions as F
 
 
 def _create_pairs(nodes: DataFrame, num: int = 50, seed: int = 42) -> pd.DataFrame:
-    """Creating 2 sets of random pairs from the nodes.  Ensures no duplicate pairs."""
+    """Creating 2 sets of random pairs from the nodes.  Ensures no duplicate pairs.
+
+    Args:
+        nodes: Dataframe for fabricated nodes.
+        num: Size of each set of random pairs. Defaults to 50.
+        seed: Random seed. Defaults to 42.
+    """
     # NOTE: This is here because the dataset is generated without
     # header as per the KG2 schema. The spark version of the
     # dataset re-introduces the correct schema.
