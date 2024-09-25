@@ -20,7 +20,7 @@ def resolve(name: str, endpoint: str) -> str:
     Returns:
         Corresponding curie
     """
-    result = requests.get(f"{endpoint}/synonymize", json={"name": name})
+    result = requests.get(f"{endpoint}/synonymize", json={"names": name})
 
     element = result.json().get(name)
     if element:
@@ -41,9 +41,7 @@ def normalize(curie: str, endpoint: str, att_to_get: str = "identifier"):
     """
     if not curie or pd.isna(curie):
         return None
-
-    result = requests.get(f"{endpoint}/normalize", json={"name": curie})
-
+    result = requests.get(f"{endpoint}/normalize", json={"names": [curie]})
     element = result.json().get(curie)
     if element:
         return element.get("id", {}).get(att_to_get)
@@ -434,10 +432,13 @@ def clean_disease_list(disease_df: pd.DataFrame, endpoint: str) -> pd.DataFrame:
 
 @has_schema(
     {
+        "timestamp": "object",
         "drug_id": "object",
         "disease_id": "object",
         "norm_drug_id": "object",
         "norm_disease_id": "object",
+        "norm_drug_name": "object",
+        "norm_disease_name": "object",
     },
     allow_subset=True,
 )
@@ -454,15 +455,50 @@ def clean_input_sheet(input_df: pd.DataFrame, endpoint: str) -> pd.DataFrame:
     res = enrich_df(
         input_df,
         func=normalize,
-        input_cols=["drug_id"],
+        input_cols=["Drug_ID"],
         target_col="norm_drug_id",
         endpoint=endpoint,
     )
     res = enrich_df(
         res,
+        func=partial(normalize, att_to_get="name"),
+        input_cols=["Drug_ID"],
+        target_col="norm_drug_name",
+        endpoint=endpoint,
+    )
+    res = enrich_df(
+        res,
         func=normalize,
-        input_cols=["disease_id"],
+        input_cols=["Disease_ID"],
         target_col="norm_disease_id",
         endpoint=endpoint,
     )
-    return res.fillna("")  # Filling NaNs so that schema is valid
+    res = enrich_df(
+        res,
+        func=partial(normalize, att_to_get="name"),
+        input_cols=["Disease_ID"],
+        target_col="norm_disease_name",
+        endpoint=endpoint,
+    )
+    df = res.loc[
+        :,
+        [
+            "Timestamp",
+            "Drug_ID",
+            "Disease_ID",
+            "norm_drug_id",
+            "norm_drug_name",
+            "norm_disease_id",
+            "norm_disease_name",
+        ],
+    ]
+    df.columns = [
+        "timestamp",
+        "drug_id",
+        "disease_id",
+        "norm_drug_id",
+        "norm_drug_name",
+        "norm_disease_id",
+        "norm_disease_name",
+    ]
+    return df.fillna("")  # Filling NaNs so that schema is valid

@@ -122,5 +122,10 @@ preprocessing.raw.drug_list:
 preprocessing.raw.infer_sheet:
   <<: [*_layer_raw, *_sheets_dataset]
   load_args:
-    sheet_name: Input
-    columns: ["drug_id", "disease_id"]
+    sheet_name: form
+    columns:
+      - Timestamp
+      - Drug_ID
+      - Disease_ID
+      - Name
+      - Feedback
