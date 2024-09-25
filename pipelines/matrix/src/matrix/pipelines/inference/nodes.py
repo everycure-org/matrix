@@ -1,7 +1,7 @@
 """Inference pipeline's nodes."""
 from matrix import settings
 from kedro.pipeline import Pipeline, node, pipeline
-from typing import List, Type
+from typing import List, Type, Dict
 import numpy as np
 import pandas as pd
 
@@ -12,7 +12,7 @@ from matplotlib.figure import Figure
 
 def resolve_input_sheet(
     input_sheet: pd.DataFrame, drug_sheet: pd.DataFrame, disease_sheet: pd.DataFrame
-) -> pd.DataFrame:
+) -> (Dict, pd.DataFrame, pd.DataFrame):
     """Run inference on disease or list of diseases and drug list, and write to google sheets.
 
     Args:
@@ -26,29 +26,34 @@ def resolve_input_sheet(
     Raises:
         ValueError: If both drug_id and disease_id are empty.
     """
-    # Load drug/disases IDs
-    drug_id = input_sheet["drug_id"]
-    disease_id = input_sheet["disease_id"]
-
+    # Load drug/disases IDs and timestamp from the msot re
+    drug_id = input_sheet["norm_drug_id"].values[-1]
+    drug_name = input_sheet["norm_drug_name"].values[-1]
+    disease_id = input_sheet["norm_disease_id"].values[-1]
+    disease_name = input_sheet["norm_disease_name"].values[-1]
+    timestamp = input_sheet["timestamp"].values[-1].split(" ")[0]
     # Rule-based check of the request type
-    if isinstance(disease_id[0], np.float64) & isinstance(drug_id[0], np.float64):
+    if isinstance(disease_id, float) and isinstance(drug_id, float):
         raise ValueError("Need to specify drug, disease, or both")
-    elif isinstance(disease_id[0], np.float64):
-        drug_list = pd.DataFrame({"curie": drug_id})
+    elif isinstance(disease_id, float):
+        drug_list = pd.DataFrame({"curie": [drug_id], "name": [drug_name]})
         disease_list = disease_sheet
-        return "Drug-centric predictions", drug_list, disease_list
-    elif isinstance(drug_id[0], np.float64):
+        request = "Drug-centric predictions"
+    elif isinstance(drug_id, float):
         drug_list = drug_sheet
-        disease_list = pd.DataFrame({"curie": disease_id})
-        return "Disease-centric predictions", drug_list, disease_list
+        disease_list = pd.DataFrame({"curie": [disease_id], "name": [disease_name]})
+        request = "Disease-centric predictions"
     else:
-        drug_list = pd.DataFrame({"curie": drug_id})
-        disease_list = pd.DataFrame({"curie": disease_id})
-        return "Drug-disease specific predictions", drug_list, disease_list
+        drug_list = pd.DataFrame({"curie": [drug_id], "name": [drug_name]})
+        disease_list = pd.DataFrame({"curie": [disease_id], "name": [drug_name]})
+        request = "Drug-disease specific predictions"
+    print(drug_list, disease_list)
+    print(request)
+    return {"time": timestamp, "request": request}, drug_list, disease_list
 
 
 def visualise_treat_scores(
-    scores: pd.DataFrame, infer_type: str, col_name: str
+    scores: pd.DataFrame, infer_type: Dict, col_name: str
 ) -> Figure:
     """Create visualisations based on the treat scores and store them in GCS/MLFlow.
 

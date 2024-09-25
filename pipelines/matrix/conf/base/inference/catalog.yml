@@ -9,6 +9,18 @@ _pandas_csv: &_pandas_csv
 _pandas_parquet: &_pandas_parquet
   type: pandas.ParquetDataset
 
+_spark_parquet_ds: &_spark_parquet
+  type: matrix.datasets.gcp.LazySparkDataset
+  file_format: parquet
+  save_args:
+    mode: overwrite
+
+_kg_dataset: &_kg_dataset
+  type: matrix.datasets.graph.KnowledgeGraphDataset
+  load_args:
+    engine: pyarrow
+    use_nullable_dtypes: True
+
 inference.raw.disease_list:
   <<: [*_sheets_dataset]
   save_args:
@@ -53,41 +65,59 @@ inference.raw.drug_list:
 
 inference.raw.normalized_inputs:
   <<: [*_sheets_dataset]
-  load_args:
-    sheet_name: Input
-    columns: ["disease_id", "drug_id","norm_drug_id", "norm_disease_id"]
   save_args:
-    overwrite: True
-    sheet_name: Input
-    write_columns: ["norm_drug_id", "norm_disease_id"]
+    #overwrite: True
+    sheet_name: "input"
+    write_columns: &_gsheet_input_columns
+      - timestamp
+      - drug_id
+      - disease_id
+      - norm_drug_id
+      - norm_disease_id
+      - norm_drug_name
+      - norm_disease_name
+  load_args:
+    #overwrite: True
+    sheet_name: "input"
+    columns: *_gsheet_input_columns
 
 inference.int.request_type:
-  type: pickle.PickleDataset
-  filepath: ${globals:paths.tmp}/infer_type.pkl
+  type: yaml.YAMLDataset
+  filepath: ${globals:paths.tmp}/infer_type.yml
 
 inference.model_input.drug_disease_pairs:
   <<: [*_pandas_parquet]
   filepath: ${globals:paths.tmp}/drug_disease_pairs
 
-inference.int.drug_list:
-  <<: *_pandas_csv
+inference.int.drug_list@pandas:
+  <<: *_pandas_parquet
   filepath: ${globals:paths.tmp}/drug_list_infer
 
-inference.int.disease_list:
-  <<: *_pandas_csv
+inference.int.disease_list@pandas:
+  <<: *_pandas_parquet
+  filepath: ${globals:paths.tmp}/disease_list_infer
+
+inference.int.drug_list@spark:
+  <<: *_spark_parquet
+  filepath: ${globals:paths.tmp}/drug_list_infer
+
+inference.int.disease_list@spark:
+  <<: *_spark_parquet
   filepath: ${globals:paths.tmp}/disease_list_infer
 
 
 # NOTE: Sheet is created for ech model
 "inference.{model}.model_output.predictions":
-  <<: [*_sheets_dataset]
-  save_args:
-    overwrite: True
-    sheet_name: "{model}_predictions"
-    write_columns: ["source","target","treat score"]
-  load_args:
-    sheet_name: "{model}_predictions"
-    columns: ["source","target","treat score"]
+  <<: *_pandas_parquet
+  filepath: ${globals:paths.tmp}/{model}/predictions
+  # #<<: [*_sheets_dataset]
+  # save_args:
+  #   overwrite: True
+  #   sheet_name: "{model}_predictions"
+  #   write_columns: ["source","target","treat_score"]
+  # load_args:
+  #   sheet_name: "{model}_predictions"
+  #   columns: ["source","target","treat_score"]
 
 "inference.{model}.reporting.report":
   <<: [*_sheets_dataset]
@@ -95,8 +125,6 @@ inference.int.disease_list:
     overwrite: True
     sheet_name: "{model}_report"
     write_columns:
-      - source
-      - target
       - drug_id
       - drug_name
       - disease_id
@@ -112,3 +140,11 @@ inference.int.disease_list:
   dataset:
     type: matplotlib.MatplotlibWriter
     filepath: ${globals:paths.tmp}/{model}/histogram_plot.png  
+
+inference.feat.nodes@spark:
+  <<: *_spark_parquet
+  filepath: ${globals:paths.tmp}/matrix_nodes
+
+inference.feat.nodes@pandas:
+  <<: *_kg_dataset
+  filepath: ${globals:paths.tmp}/matrix_nodes

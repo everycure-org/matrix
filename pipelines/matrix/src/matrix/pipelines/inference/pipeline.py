@@ -34,7 +34,7 @@ def _create_inference_pipeline(model: str) -> Pipeline:
             node(
                 func=matrix_gen.make_predictions_and_sort,
                 inputs=[
-                    "modelling.feat.rtx_kg2",
+                    "inference.feat.nodes@pandas",
                     "inference.model_input.drug_disease_pairs",
                     f"modelling.{model}.model_input.transformers",
                     f"modelling.{model}.models.model",
@@ -50,8 +50,8 @@ def _create_inference_pipeline(model: str) -> Pipeline:
                 inputs=[
                     f"inference.{model}.model_output.predictions",
                     "params:inference.matrix_generation_options.n_reporting",
-                    "inference.raw.drug_list",
-                    "inference.raw.disease_list",
+                    "inference.int.drug_list@pandas",
+                    "inference.int.disease_list@pandas",
                     "modelling.model_input.splits",
                     "params:inference.score_col_name",
                 ],
@@ -84,13 +84,13 @@ def create_pipeline(**kwargs) -> Pipeline:
         [
             node(
                 func=lambda x: x,
-                inputs="ingestion.raw.drug_list",
+                inputs="ingestion.raw.drug_list@pandas",
                 outputs="inference.raw.drug_list",
                 name=f"ingest_drug_list",
             ),
             node(
                 func=lambda x: x,
-                inputs="ingestion.raw.disease_list",
+                inputs="ingestion.raw.disease_list@pandas",
                 outputs="inference.raw.disease_list",
                 name=f"ingest_disease_list",
             ),
@@ -103,16 +103,26 @@ def create_pipeline(**kwargs) -> Pipeline:
                 },
                 outputs=[
                     "inference.int.request_type",
-                    "inference.int.drug_list",
-                    "inference.int.disease_list",
+                    "inference.int.drug_list@pandas",
+                    "inference.int.disease_list@pandas",
                 ],
                 name="resolve_input_sheet",
             ),
             node(
+                func=matrix_gen.enrich_embeddings,
+                inputs=[
+                    "embeddings.feat.nodes",
+                    "inference.int.drug_list@spark",
+                    "inference.int.disease_list@spark",
+                ],
+                outputs="inference.feat.nodes@spark",
+                name="enrich_matrix_embeddings",
+            ),
+            node(
                 func=matrix_gen.generate_pairs,
                 inputs=[
-                    "inference.int.drug_list",
-                    "inference.int.disease_list",
+                    "inference.int.drug_list@pandas",
+                    "inference.int.disease_list@pandas",
                     "modelling.model_input.splits",
                 ],
                 outputs=f"inference.model_input.drug_disease_pairs",
