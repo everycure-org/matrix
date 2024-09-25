@@ -235,7 +235,7 @@ class FullMatrixRanking(Evaluation):
             data: Dataset of drug-disease pairs along with a "rank column".
         """
         ranks_arr = data["rank"].to_numpy()
-        quantiles_arr = data["quantile_rank"].to_rank()
+        quantiles_arr = data["quantile_rank"].to_numpy()
         report = {}
 
         # Compute average of rank functions and add to report
