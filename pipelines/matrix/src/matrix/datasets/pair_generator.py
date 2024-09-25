@@ -376,5 +376,6 @@ class FullMatrixPositives(DrugDiseasePairGenerator):
         # Add labels and ranks columns
         positive_pairs["y"] = 1
         positive_pairs["rank"] = positive_pairs.index + 1
+        positive_pairs["quantile_rank"] = positive_pairs["rank"] / len(matrix)
 
         return positive_pairs
