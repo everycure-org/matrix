@@ -48,11 +48,7 @@ def generate_test_dataset(
     Returns:
         Pairs dataframe
     """
-    return generator.generate(
-        known_pairs,
-        matrix,
-        eval_options,
-    )
+    return generator.generate(matrix)
 
 
 def make_test_predictions(

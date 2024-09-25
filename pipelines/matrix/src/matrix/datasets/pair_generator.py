@@ -286,65 +286,75 @@ class ReplacementDrugDiseasePairGenerator(SingleLabelPairGenerator):
 class GroundTruthTestPairs(DrugDiseasePairGenerator):
     """Class representing ground truth test data."""
 
+    def __init__(
+        self, positive_columns: List[str], negative_columns: List[str]
+    ) -> None:
+        """Initialises instance of the class.
+
+        Args:
+            positive_columns: Names of the flag columns in the matrix which represent the positive pairs.
+            negative_columns: Names of the flag columns in the matrix which represent the negative pairs.
+        """
+        self.positive_columns = positive_columns
+        self.negative_columns = negative_columns
+
     def generate(
         self,
-        known_pairs: pd.DataFrame,
         matrix: pd.DataFrame,
-        eval_options: dict,
     ) -> pd.DataFrame:
         """Function to generate the dataset given a full matrix dataframe.
 
         Args:
-            known_pairs: Labelled ground truth drug-disease pairs dataset.
             matrix: Pairs dataframe representing the full matrix with treat scores.
-            eval_options: Dictionary of parameters containing lists of column names for positive/negative data.
 
         Returns:
             Labelled ground truth drug-disease pairs dataset.
         """
         # Extract and label positive data
         positive_data_lst = []
-        for col_name in eval_options["positive_columns"]:
+        for col_name in self.positive_columns:
             positive_data_lst.append(matrix[matrix[col_name]].assign(y=1))
 
         # Extract and label negative data
         negative_data_lst = []
-        for col_name in eval_options["negative_columns"]:
+        for col_name in self.negative_columns:
             negative_data_lst.append(matrix[matrix[col_name]].assign(y=0))
 
         # Combine data
         data = pd.concat(positive_data_lst + negative_data_lst, ignore_index=True)
 
-        # Check that ground truth training pairs do not appear in the test set
-        self._check_no_train(data, known_pairs)
-
         # Return selected pairs
         return data
 
 
-class MatrixTestDiseases(DrugDiseasePairGenerator):
-    """A class representing dataset of pairs required for disease-specific ranking."""
+# class MatrixTestDiseases(DrugDiseasePairGenerator):
+#     """A class representing dataset of pairs required for disease-specific ranking."""
 
-    def generate(
-        self,
-        matrix: pd.DataFrame,
-        positive_columns_lst: List[str],
-        removal_columns_lst: List[str],
-    ) -> pd.DataFrame:
-        """Generate dataset given a full matrix.
+#     def generate(
+#         self,
+#         known_pairs: pd.DataFrame,
+#         matrix: pd.DataFrame,
+#         positive_columns_lst: List[str],
+#         removal_columns_lst: List[str],
+#     ) -> pd.DataFrame:
+#         """Generate dataset given a full matrix.
 
-        Args:
-            matrix: Pairs dataframe representing the full matrix with treat scores.
-            positive_columns_lst: List of column names defining the "positive" pairs labelled as y=1.
-            removal_columns_lst: Drug-disease pairs to remove.
+#         Args:
+#             matrix: Pairs dataframe representing the full matrix with treat scores.
+#             positive_columns_lst: List of column names defining the "positive" pairs labelled as y=1.
+#             removal_columns_lst: Drug-disease pairs to remove.
 
-        Returns:
-            Labelled drug-disease pairs dataset.
-        """
-        # Restrict diseases boolean
+#         Returns:
+#             Labelled drug-disease pairs dataset.
+#         """
+#         # Restrict diseases boolean
+#         is_positive_data = pd.Series(False, index=matrix.index)
+#         breakpoint()
+#         for col_name in eval_options["positive_columns"]:
+#             positive_data_lst.append(matrix[matrix[col_name]].assign(y=1))
 
-        # Removal boolean
+#         # Removal boolean
 
-        # Combine boolean, restrict boolean and label pairs.
+#         # Combine boolean, restrict boolean and label pairs.
 
-        return None
+#         return None
