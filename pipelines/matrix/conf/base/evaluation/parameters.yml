@@ -33,12 +33,12 @@ evaluation.disease_specific_ranking:
       object: matrix.pipelines.evaluation.evaluation.SpecificRanking 
       specific_col: "target"
       rank_func_lst: 
-        - object: matrix.pipelines.evaluation.evaluation.MRR
-        - object:  matrix.pipelines.evaluation.evaluation.HitK
+        - object: matrix.pipelines.evaluation.named_functions.MRR
+        - object:  matrix.pipelines.evaluation.named_functions.HitK
           k: 2
-        - object:  matrix.pipelines.evaluation.evaluation.HitK
+        - object:  matrix.pipelines.evaluation.named_functions.HitK
           k: 10
-        - object:  matrix.pipelines.evaluation.evaluation.HitK
+        - object:  matrix.pipelines.evaluation.named_functions.HitK
           k: 100
       score_col_name: *score-col
 
@@ -52,14 +52,14 @@ evaluation.full_matrix:
     evaluation:
       object: matrix.pipelines.evaluation.evaluation.FullMatrixRanking 
       rank_func_lst: 
-        - object:  matrix.pipelines.evaluation.evaluation.RecallAtNFunc # TODO: Rename after moving to own file 
+        - object:  matrix.pipelines.evaluation.named_functions.RecallAtN 
           n: 2
-        - object:  matrix.pipelines.evaluation.evaluation.RecallAtNFunc
+        - object:  matrix.pipelines.evaluation.named_functions.RecallAtN
           n: 5
-        - object:  matrix.pipelines.evaluation.evaluation.RecallAtNFunc
+        - object:  matrix.pipelines.evaluation.named_functions.RecallAtN
           n: 10
       quantile_func_lst: 
-        - object: matrix.pipelines.evaluation.evaluation.AUROC
+        - object: matrix.pipelines.evaluation.named_functions.AUROC
 
 # Time split - TODO: rename evaluation to trials and write-up explanation
 
@@ -91,15 +91,15 @@ evaluation.disease_specific_ranking_time_split:
       removal_columns: 
         - "is_known_positive"
     evaluation:
-      object: matrix.pipelines.evaluation.evaluation.SpecificRanking
+      object: matrix.pipelines.evaluation.named_functions.SpecificRanking
       specific_col: "target"
       rank_func_lst: 
-        - object: matrix.pipelines.evaluation.evaluation.MRR
-        - object:  matrix.pipelines.evaluation.evaluation.HitK
+        - object: matrix.pipelines.evaluation.named_functions.MRR
+        - object:  matrix.pipelines.evaluation.named_functions.HitK
           k: 2
-        - object:  matrix.pipelines.evaluation.evaluation.HitK
+        - object:  matrix.pipelines.evaluation.named_functions.HitK
           k: 10
-        - object:  matrix.pipelines.evaluation.evaluation.HitK
+        - object:  matrix.pipelines.evaluation.named_functions.HitK
           k: 100
       score_col_name: *score-col
 
