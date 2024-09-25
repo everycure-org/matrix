@@ -71,7 +71,7 @@ jobs:
               - .github/workflows/matrix-push.yml
 
   ci:
-    runs-on: 'ubuntu-latest' #'self-hosted'
+    runs-on:  'ubuntu-latest' # 'self-hosted'
     needs: [paths_filter]
     if: needs.paths_filter.outputs.changed == 'true' && (github.event.pull_request.draft == false || github.ref == 'refs/heads/main')
     # https://docs.github.com/en/actions/writing-workflows/workflow-syntax-for-github-actions#concurrency
@@ -90,13 +90,7 @@ jobs:
 
       # On every PR
       - run: env | sort # prints out all env variables, helpful for debugging
-      # - run: pip install uv # Hack to get GitHub runner to work 
-      - run: sudo apt install python3-pip pipx  openjdk-17-jdk
-      - run: curl -fsSL https://get.docker.com -o get-docker.sh
-      - run: sudo sh get-docker.sh
-      - run: pipx install uv
-      - run: pipx ensurepath
-      - run: sudo cp $(which uv) /usr/local/bin/uv
+      - run: pip install uv
       - run: make venv
       - run: make install
       - run: make precommit
@@ -126,7 +120,7 @@ jobs:
   push_image:
     needs: [ci]
     if: github.ref == 'refs/heads/main'
-    runs-on: 'ubuntu-latest' # "self-hosted"
+    runs-on: 'ubuntu-latest' # 'self-hosted'
     environment: dev
     permissions: write-all
     defaults:
