@@ -19,49 +19,6 @@ evaluation.simple_ground_truth_classification:
       score_col_name: *score-col
       threshold: 0.5
 
-# Threshold-independent metrics for ground truth data
-evaluation.continuous_ground_truth_classification:
-  evaluation_options:
-    generator:
-      object: matrix.datasets.pair_generator.GroundTruthTestPairs
-      positive_columns: 
-        - "is_known_positive"
-      negative_columns:
-        - "is_known_negative"
-    evaluation:
-      object: matrix.pipelines.evaluation.evaluation.ContinuousMetrics 
-      metrics:
-        - object: sklearn.metrics.roc_auc_score
-        - object: sklearn.metrics.average_precision_score
-      score_col_name: *score-col
-
-
-# All vs. all ranking with all drugs x test diseases matrix
-evaluation.disease_centric_matrix:
-  evaluation_options:
-    generator:
-      object: matrix.datasets.pair_generator.MatrixTestDiseases
-      positive_columns: 
-        - "is_known_positive"
-    evaluation:
-      object: matrix.pipelines.evaluation.evaluation.ContinuousMetrics 
-      metrics:
-        - object: sklearn.metrics.roc_auc_score
-        - object: sklearn.metrics.average_precision_score
-      score_col_name: *score-col
-
-# Recall@N
-evaluation.recall_at_n:
-  evaluation_options:
-    generator:
-      object: matrix.datasets.pair_generator.MatrixTestDiseases
-      positive_columns: 
-        - "is_known_positive"
-    evaluation:
-      object: matrix.pipelines.evaluation.evaluation.RecallAtN
-      n_values: [2, 5, 10]
-      score_col_name: *score-col
-
 # Disease-specific ranking
 evaluation.disease_specific_ranking:
   evaluation_options:
@@ -69,6 +26,9 @@ evaluation.disease_specific_ranking:
       object: matrix.datasets.pair_generator.MatrixTestDiseases
       positive_columns: 
         - "is_known_positive"
+      removal_columns:
+        - "trial_sig_better"
+        - "trial_non_sig_better"
     evaluation:
       object: matrix.pipelines.evaluation.evaluation.SpecificRanking 
       specific_col: "target"
@@ -82,7 +42,8 @@ evaluation.disease_specific_ranking:
           k: 100
       score_col_name: *score-col
 
-# Time split
+# Time split - TODO: rename evaluation to trials and write-up explanation
+
 evaluation.simple_ground_truth_classification_time_split:
   evaluation_options:
     generator:
@@ -100,39 +61,6 @@ evaluation.simple_ground_truth_classification_time_split:
         - object: sklearn.metrics.f1_score
       score_col_name: *score-col
       threshold: 0.5
-
-evaluation.continuous_ground_truth_classification_time_split:
-  evaluation_options:
-    generator:
-      object: matrix.datasets.pair_generator.GroundTruthTestPairs
-      positive_columns: 
-        - "trial_sig_better"
-        - "trial_non_sig_better"
-      negative_columns:
-        - "trial_sig_worse"
-        - "trial_non_sig_worse"
-    evaluation:
-      object: matrix.pipelines.evaluation.evaluation.ContinuousMetrics
-      metrics:
-        - object: sklearn.metrics.roc_auc_score
-        - object: sklearn.metrics.average_precision_score
-      score_col_name: *score-col
-
-evaluation.disease_centric_matrix_time_split:
-  evaluation_options:
-    generator:
-      object: matrix.datasets.pair_generator.MatrixTestDiseases
-      positive_columns: 
-        - "trial_sig_better"
-        - "trial_non_sig_better"
-      removal_columns: 
-        - "is_known_positive"
-    evaluation:
-      object: matrix.pipelines.evaluation.evaluation.ContinuousMetrics
-      metrics:
-        - object: sklearn.metrics.roc_auc_score
-        - object: sklearn.metrics.average_precision_score
-      score_col_name: *score-col
 
 evaluation.disease_specific_ranking_time_split:
   evaluation_options:
@@ -155,3 +83,50 @@ evaluation.disease_specific_ranking_time_split:
         - object:  matrix.pipelines.evaluation.evaluation.HitK
           k: 100
       score_col_name: *score-col
+
+
+# Other metrics
+
+# # Threshold-independent metrics for ground truth data
+# evaluation.continuous_ground_truth_classification:
+#   evaluation_options:
+#     generator:
+#       object: matrix.datasets.pair_generator.GroundTruthTestPairs
+#       positive_columns: 
+#         - "is_known_positive"
+#       negative_columns:
+#         - "is_known_negative"
+#     evaluation:
+#       object: matrix.pipelines.evaluation.evaluation.ContinuousMetrics 
+#       metrics:
+#         - object: sklearn.metrics.roc_auc_score
+#         - object: sklearn.metrics.average_precision_score
+#       score_col_name: *score-col
+
+
+# # AUROC with all drugs x test diseases matrix
+# evaluation.disease_centric_matrix:
+#   evaluation_options:
+#     generator:
+#       object: matrix.datasets.pair_generator.MatrixTestDiseases
+#       positive_columns: 
+#         - "is_known_positive"
+#     evaluation:
+#       object: matrix.pipelines.evaluation.evaluation.ContinuousMetrics 
+#       metrics:
+#         - object: sklearn.metrics.roc_auc_score
+#         - object: sklearn.metrics.average_precision_score
+#       score_col_name: *score-col
+
+# # Recall@N
+# evaluation.recall_at_n:
+#   evaluation_options:
+#     generator:
+#       object: matrix.datasets.pair_generator.MatrixTestDiseases
+#       positive_columns: 
+#         - "is_known_positive"
+#     evaluation:
+#       object: matrix.pipelines.evaluation.evaluation.RecallAtN
+#       n_values: [2, 5, 10]
+#       score_col_name: *score-col
+
