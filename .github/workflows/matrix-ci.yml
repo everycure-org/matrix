@@ -120,7 +120,7 @@ jobs:
   push_image:
     needs: [ci]
     if: github.ref == 'refs/heads/main'
-    runs-on: 'ubuntu-latest' # 'self-hosted'
+    runs-on: 'self-hosted'
     environment: dev
     permissions: write-all
     defaults:
