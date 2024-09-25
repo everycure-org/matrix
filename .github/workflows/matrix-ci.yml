@@ -90,7 +90,13 @@ jobs:
 
       # On every PR
       - run: env | sort # prints out all env variables, helpful for debugging
-      - run: pip install uv # Hack to get GitHub runner to work 
+      # - run: pip install uv # Hack to get GitHub runner to work 
+      - run: sudo apt install python3-pip pipx  openjdk-17-jdk
+      - run: curl -fsSL https://get.docker.com -o get-docker.sh
+      - run: sudo sh get-docker.sh
+      - run: pipx install uv
+      - run: pipx ensurepath
+      - run: sudo cp $(which uv) /usr/local/bin/uv
       - run: make venv
       - run: make install
       - run: make precommit
