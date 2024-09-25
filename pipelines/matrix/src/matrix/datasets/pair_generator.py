@@ -10,7 +10,7 @@ from kedro.io import AbstractDataset
 
 from matrix.datasets.graph import KnowledgeGraph
 
-from typing import List, Set
+from typing import List, Set, Union
 
 
 class DrugDiseasePairGenerator(abc.ABC):
@@ -285,34 +285,52 @@ class GroundTruthTestPairs(DrugDiseasePairGenerator):
         return data
 
 
-# class MatrixTestDiseases(DrugDiseasePairGenerator):
-#     """A class representing dataset of pairs required for disease-specific ranking."""
+class MatrixTestDiseases(DrugDiseasePairGenerator):
+    """A class representing dataset of pairs required for disease-specific ranking."""
 
-#     def generate(
-#         self,
-#         known_pairs: pd.DataFrame,
-#         matrix: pd.DataFrame,
-#         positive_columns_lst: List[str],
-#         removal_columns_lst: List[str],
-#     ) -> pd.DataFrame:
-#         """Generate dataset given a full matrix.
+    def __init__(
+        self,
+        positive_columns: List[str],
+        removal_columns: Union[List[str], None] = None,
+    ) -> None:
+        """Initialises instance of the class.
 
-#         Args:
-#             matrix: Pairs dataframe representing the full matrix with treat scores.
-#             positive_columns_lst: List of column names defining the "positive" pairs labelled as y=1.
-#             removal_columns_lst: Drug-disease pairs to remove.
+        Args:
+            positive_columns: Names of the flag columns in the matrix which represent the positive pairs.
+            removal_columns: Names of the flag columns in the matrix which represent the pairs to remove.
+        """
+        self.positive_columns = positive_columns
+        self.removal_columns = removal_columns
 
-#         Returns:
-#             Labelled drug-disease pairs dataset.
-#         """
-#         # Restrict diseases boolean
-#         is_positive_data = pd.Series(False, index=matrix.index)
-#         breakpoint()
-#         for col_name in eval_options["positive_columns"]:
-#             positive_data_lst.append(matrix[matrix[col_name]].assign(y=1))
+    def generate(
+        self,
+        matrix: pd.DataFrame,
+    ) -> pd.DataFrame:
+        """Generate dataset given a full matrix.
 
-#         # Removal boolean
+        Args:
+            matrix: Pairs dataframe representing the full matrix with treat scores.
 
-#         # Combine boolean, restrict boolean and label pairs.
+        Returns:
+            Labelled drug-disease pairs dataset.
+        """
+        # Extract and label positive pairs
+        is_positive = pd.Series(False, index=matrix.index)
+        for col_name in self.positive_columns:
+            is_positive = is_positive | matrix[col_name]
+        positive_pairs = matrix[is_positive]
+        matrix["y"] = is_positive.astype(int)
 
-#         return None
+        # Restriction to diseases in the positive pairs set
+        positive_diseases = positive_pairs["target"].unique()
+        in_output = matrix["target"].isin(positive_diseases)
+
+        # Removal of boolean
+        if self.removal_columns != None:
+            is_remove = pd.Series(False, index=matrix.index)
+            for col_name in self.removal_columns:
+                is_remove = is_remove | matrix[col_name]
+            in_output = in_output | is_remove
+
+        # Apply boolean condition to matrix and return
+        return matrix[in_output]
