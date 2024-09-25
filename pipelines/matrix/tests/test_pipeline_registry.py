@@ -56,7 +56,11 @@ def test_make_embeddings_composition(pipelines):
     integration = pipelines["integration"]
     embeddings = pipelines["embeddings"]
 
-    assert make_embeddings == integration + embeddings
+    assert (
+        len(make_embeddings.nodes) == len(integration.nodes) + len(embeddings.nodes)
+    ), f"Default pipeline (len: {len(make_embeddings.nodes)}) should be the sum of integration (len: {len(integration.nodes)}) and embeddings (len: {len(embeddings.nodes)})"
+
+    assert make_embeddings.nodes == (integration + embeddings).nodes
 
 
 def test_make_modelling_composition(pipelines):
@@ -65,7 +69,11 @@ def test_make_modelling_composition(pipelines):
     matrix_generation = pipelines["matrix_generation"]
     evaluation = pipelines["evaluation"]
 
-    assert make_modelling == modelling + matrix_generation + evaluation
+    assert (
+        len(make_modelling.nodes)
+        == len(modelling.nodes) + len(matrix_generation.nodes) + len(evaluation.nodes)
+    ), f"Make modelling pipeline (len: {len(make_modelling.nodes)}) should be the sum of modelling (len: {len(modelling.nodes)}), matrix_generation (len: {len(matrix_generation.nodes)}) and evaluation (len: {len(evaluation.nodes)})"
+    assert make_modelling.nodes == (modelling + matrix_generation + evaluation).nodes
 
 
 def test_test_pipeline_composition(pipelines):
@@ -77,8 +85,16 @@ def test_test_pipeline_composition(pipelines):
     release = pipelines["release"]
 
     assert (
-        test_pipeline
-        == fabricator + ingestion + make_embeddings + make_modelling + release
+        len(test_pipeline.nodes)
+        == len(fabricator.nodes)
+        + len(ingestion.nodes)
+        + len(make_embeddings.nodes)
+        + len(make_modelling.nodes)
+        + len(release.nodes)
+    ), f"Test pipeline (len: {len(test_pipeline.nodes)}) should be the sum of fabricator (len: {len(fabricator.nodes)}), ingestion (len: {len(ingestion.nodes)}), make_embeddings (len: {len(make_embeddings.nodes)}), make_modelling (len: {len(make_modelling.nodes)}) and release (len: {len(release.nodes)})"
+    assert (
+        test_pipeline.nodes
+        == (fabricator + ingestion + make_embeddings + make_modelling + release).nodes
     )
 
 
@@ -87,7 +103,10 @@ def test_all_pipeline_composition(pipelines):
     ingestion = pipelines["ingestion"]
     default = pipelines["__default__"]
 
-    assert all_pipeline == ingestion + default
+    assert (
+        len(all_pipeline.nodes) == len(ingestion.nodes) + len(default.nodes)
+    ), f"All pipeline (len: {len(all_pipeline.nodes)}) should be the sum of ingestion (len: {len(ingestion.nodes)}) and default (len: {len(default.nodes)})"
+    assert all_pipeline.nodes == (ingestion + default).nodes
 
 
 def test_experiment_pipeline_composition(pipelines):
@@ -95,4 +114,7 @@ def test_experiment_pipeline_composition(pipelines):
     modelling = pipelines["modelling"]
     evaluation = pipelines["evaluation"]
 
-    assert experiment_pipeline == modelling + evaluation
+    assert (
+        len(experiment_pipeline.nodes) == len(modelling.nodes) + len(evaluation.nodes)
+    ), f"Experiment pipeline (len: {len(experiment_pipeline.nodes)}) should be the sum of modelling (len: {len(modelling.nodes)}) and evaluation (len: {len(evaluation.nodes)})"
+    assert experiment_pipeline.nodes == (modelling + evaluation).nodes
