@@ -90,6 +90,7 @@ jobs:
 
       # On every PR
       - run: env | sort # prints out all env variables, helpful for debugging
+      - run: pip install uv # Hack to get GitHub runner to work 
       - run: make venv
       - run: make install
       - run: make precommit
