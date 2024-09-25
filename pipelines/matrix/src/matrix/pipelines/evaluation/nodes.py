@@ -18,6 +18,27 @@ from matrix.pipelines.evaluation.evaluation import Evaluation
 from matrix.pipelines.modelling.model import ModelWrapper
 
 
+def check_no_train(data: pd.DataFrame, known_pairs: pd.DataFrame) -> None:
+    """Checks that no pairs in the ground truth training set appear in the data.
+
+    Args:
+        data: Pairs dataset to check.
+        known_pairs: DataFrame with known drug-disease pairs.
+
+    Raises:
+        ValueError: If any training pairs are found in the data.
+    """
+    is_test = known_pairs["split"].eq("TEST")
+    train_pairs = known_pairs[~is_test]
+    train_pairs_set = set(zip(train_pairs["source"], train_pairs["target"]))
+    data_pairs_set = set(zip(data["source"], data["target"]))
+    overlapping_pairs = data_pairs_set.intersection(train_pairs_set)
+    if overlapping_pairs:
+        raise ValueError(
+            f"Found {len(overlapping_pairs)} pairs in test set that also appear in training set."
+        )
+
+
 @has_schema(
     schema={
         "source": "object",
@@ -28,10 +49,8 @@ from matrix.pipelines.modelling.model import ModelWrapper
 )
 @inject_object()
 def generate_test_dataset(
-    known_pairs: pd.DataFrame,
     matrix: pd.DataFrame,
     generator: DrugDiseasePairGenerator,
-    eval_options: dict,
 ) -> pd.DataFrame:
     """Function to generate test dataset.
 
@@ -39,11 +58,8 @@ def generate_test_dataset(
     pairs dataset.
 
     Args:
-        graph: KnowledgeGraph instance.
-        known_pairs: Labelled ground truth drug-disease pairs dataset.
         matrix: Pairs dataframe representing the full matrix with treat scores.
         generator: Generator strategy.
-        eval_options: Additional parameters required for certain datasets.
 
     Returns:
         Pairs dataframe

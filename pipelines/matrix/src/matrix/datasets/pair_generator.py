@@ -29,48 +29,6 @@ class DrugDiseasePairGenerator(abc.ABC):
         """
         ...
 
-    @staticmethod
-    def _remove_pairs(df: pd.DataFrame, pairs: pd.DataFrame) -> pd.DataFrame:
-        """A helper function to remove pairs from a given DataFrame.
-
-        TODO: Remove.
-
-        Args:
-            df: DataFrame to remove pairs from.
-            pairs: DataFrame with pairs to remove.
-
-        Returns:
-            DataFrame with train pairs removed.
-        """
-        pairs_set = set(zip(pairs["source"], pairs["target"]))
-        is_remove = df.apply(
-            lambda row: (row["source"], row["target"]) in pairs_set, axis=1
-        )
-        return df[~is_remove]
-
-    @staticmethod
-    def _check_no_train(data: pd.DataFrame, known_pairs: pd.DataFrame) -> None:
-        """Checks that no pairs in the ground truth training set appear in the data.
-
-        TODO: This could take a long time for large dataframes. Move this to a node that checks each matrix.
-
-        Args:
-            data: Pairs dataset to check.
-            known_pairs: DataFrame with known drug-disease pairs.
-
-        Raises:
-            ValueError: If any training pairs are found in the data.
-        """
-        is_test = known_pairs["split"].eq("TEST")
-        train_pairs = known_pairs[~is_test]
-        train_pairs_set = set(zip(train_pairs["source"], train_pairs["target"]))
-        data_pairs_set = set(zip(data["source"], data["target"]))
-        overlapping_pairs = data_pairs_set.intersection(train_pairs_set)
-        if overlapping_pairs:
-            raise ValueError(
-                f"Found {len(overlapping_pairs)} pairs in test set that also appear in training set."
-            )
-
 
 class SingleLabelPairGenerator(DrugDiseasePairGenerator):
     """Class representing generators outputting drug-disease pairs with a single label."""
