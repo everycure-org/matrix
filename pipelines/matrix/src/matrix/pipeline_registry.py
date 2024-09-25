@@ -70,10 +70,6 @@ def register_pipelines() -> Dict[str, Pipeline]:
         + pipelines["make_modelling"]
         + create_release_pipeline()
     )
-    pipelines["all"] = (
-        create_ingestion_pipeline()
-        + pipelines["make_embeddings"]
-        + pipelines["make_modelling"]
-    )
+    pipelines["all"] = create_ingestion_pipeline() + pipelines["__default__"]
     pipelines["experiment"] = create_modelling_pipeline() + create_evaluation_pipeline()
     return pipelines
