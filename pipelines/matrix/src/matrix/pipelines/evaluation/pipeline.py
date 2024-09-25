@@ -23,7 +23,7 @@ def _create_evaluation_pipeline(model: str, evaluation: str) -> Pipeline:
             node(
                 func=nodes.evaluate_test_predictions,
                 inputs=[
-                    f"evaluation.{model}.{evaluation}.model_output.predictions",
+                    f"evaluation.{model}.{evaluation}.prm.pairs",
                     f"params:evaluation.{evaluation}.evaluation_options.evaluation",
                 ],
                 outputs=f"evaluation.{model}.{evaluation}.reporting.evaluation",

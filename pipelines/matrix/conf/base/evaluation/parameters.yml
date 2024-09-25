@@ -42,6 +42,23 @@ evaluation.disease_specific_ranking:
           k: 100
       score_col_name: *score-col
 
+# Full matrix Recall@n 
+evaluation.full_matrix_recall:
+  evaluation_options:
+    generator:
+      object: matrix.datasets.pair_generator.FullMatrixPositives
+      positive_columns: 
+        - "is_known_positive"
+    evaluation:
+      object: matrix.pipelines.evaluation.evaluation.RecallAtNPositives 
+      rank_func_lst: 
+        - object:  matrix.pipelines.evaluation.evaluation.HitK
+          k: 2
+        - object:  matrix.pipelines.evaluation.evaluation.HitK
+          k: 10
+        - object:  matrix.pipelines.evaluation.evaluation.HitK
+          k: 100
+
 # Time split - TODO: rename evaluation to trials and write-up explanation
 
 evaluation.simple_ground_truth_classification_time_split:

@@ -247,7 +247,7 @@ class GroundTruthTestPairs(DrugDiseasePairGenerator):
     def __init__(
         self, positive_columns: List[str], negative_columns: List[str]
     ) -> None:
-        """Initialises instance of the class.
+        """Initialises an instance of the class.
 
         Args:
             positive_columns: Names of the flag columns in the matrix which represent the positive pairs.
@@ -293,7 +293,7 @@ class MatrixTestDiseases(DrugDiseasePairGenerator):
         positive_columns: List[str],
         removal_columns: Union[List[str], None] = None,
     ) -> None:
-        """Initialises instance of the class.
+        """Initialises an instance of the class.
 
         Args:
             positive_columns: Names of the flag columns in the matrix which represent the positive pairs.
@@ -334,3 +334,47 @@ class MatrixTestDiseases(DrugDiseasePairGenerator):
 
         # Apply boolean condition to matrix and return
         return matrix[in_output]
+
+
+class FullMatrixPositives(DrugDiseasePairGenerator):
+    """A class that represents the ranks of a set of positive pairs in a full matrix.
+
+    FUTURE: We may want to add an option to remove selected pairs (e.g. other known positives).
+    """
+
+    def __init__(
+        self,
+        positive_columns: List[str],
+    ) -> None:
+        """Initialises instance of the class.
+
+        Args:
+            positive_columns: Names of the flag columns in the matrix which represent the positive pairs.
+        """
+        self.positive_columns = positive_columns
+
+    def generate(
+        self,
+        matrix: pd.DataFrame,
+    ) -> pd.DataFrame:
+        """Generate dataset given a full matrix.
+
+        Args:
+            matrix: Pairs dataframe representing the full matrix with treat scores.
+
+        Returns:
+            Labelled drug-disease pairs dataset.
+        """
+        matrix = matrix.reset_index(drop=True)
+
+        # Extract and label positive pairs
+        is_positive = pd.Series(False, index=matrix.index)
+        for col_name in self.positive_columns:
+            is_positive = is_positive | matrix[col_name]
+        positive_pairs = matrix[is_positive]
+
+        # Add labels and ranks columns
+        positive_pairs["y"] = 1
+        positive_pairs["rank"] = positive_pairs.index + 1
+
+        return positive_pairs
