@@ -99,20 +99,20 @@ def test_specific_ranking(sample_data):
     assert edge_result["hit-1"] == 1.0
 
 
-# def test_recall_at_n(sample_data):
-#     """Test the RecallAtN class."""
+def test_recall_at_n(sample_data):
+    """Test the RecallAtN class."""
 
-#     # Test with multiple N values
-#     recall_evaluator = RecallAtN(n_values=[3, 5], score_col_name="score")
-#     data_standard_case = sample_data[0]
-#     result = recall_evaluator.evaluate(data_standard_case)
+    # Test with multiple N values
+    recall_evaluator = RecallAtN(n_values=[3, 5], score_col_name="score")
+    data_standard_case = sample_data[0]
+    result = recall_evaluator.evaluate(data_standard_case)
 
-#     assert "recall_at_3" in result
-#     assert np.isclose(
-#         result["recall_at_3"], 3 / 3, atol=1e-6
-#     )  # 2 out of 3 true positives in top 3
+    assert "recall_at_3" in result
+    assert np.isclose(
+        result["recall_at_3"], 3 / 3, atol=1e-6
+    )  # 2 out of 3 true positives in top 3
 
-#     assert "recall_at_5" in result
-#     assert np.isclose(
-#         result["recall_at_5"], 1.0, atol=1e-6
-#     )  # All true positives included
+    assert "recall_at_5" in result
+    assert np.isclose(
+        result["recall_at_5"], 1.0, atol=1e-6
+    )  # All true positives included
