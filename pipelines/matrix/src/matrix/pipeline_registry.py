@@ -67,7 +67,6 @@ def register_pipelines() -> Dict[str, Pipeline]:
         + create_ingestion_pipeline()
         + create_integration_pipeline()
         + create_embeddings_pipeline()
-        + create_bte_pipeline()
         + create_modelling_pipeline()
         + create_matrix_pipeline()
         + create_evaluation_pipeline()
