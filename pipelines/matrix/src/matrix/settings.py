@@ -73,7 +73,7 @@ DYNAMIC_PIPELINES_MAPPING = {
         # {"evaluation_name": "disease_specific_ranking"},
         # {"evaluation_name": "simple_ground_truth_classification_time_split"},
         # {"evaluation_name": "disease_specific_ranking_time_split"},
-        {"evaluation_name": "full_matrix_recall"},
+        {"evaluation_name": "full_matrix"},
     ],
 }
 

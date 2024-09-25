@@ -42,22 +42,24 @@ evaluation.disease_specific_ranking:
           k: 100
       score_col_name: *score-col
 
-# Full matrix Recall@n 
-evaluation.full_matrix_recall:
+# Full matrix ranking 
+evaluation.full_matrix:
   evaluation_options:
     generator:
       object: matrix.datasets.pair_generator.FullMatrixPositives
       positive_columns: 
         - "is_known_positive"
     evaluation:
-      object: matrix.pipelines.evaluation.evaluation.RecallAtNPositives 
+      object: matrix.pipelines.evaluation.evaluation.FullMatrixRanking 
       rank_func_lst: 
-        - object:  matrix.pipelines.evaluation.evaluation.HitK
-          k: 2
-        - object:  matrix.pipelines.evaluation.evaluation.HitK
-          k: 10
-        - object:  matrix.pipelines.evaluation.evaluation.HitK
-          k: 100
+        - object:  matrix.pipelines.evaluation.evaluation.RecallAtNFunc # TODO: Rename after moving to own file 
+          n: 2
+        - object:  matrix.pipelines.evaluation.evaluation.RecallAtNFunc
+          n: 5
+        - object:  matrix.pipelines.evaluation.evaluation.RecallAtNFunc
+          n: 10
+      quantile_func_lst: 
+        - object: matrix.pipelines.evaluation.evaluation.AUROC
 
 # Time split - TODO: rename evaluation to trials and write-up explanation
 
