@@ -1,0 +1,11 @@
+_pandas_parquet: &_pandas_parquet
+  type: pandas.ParquetDataset
+
+_model_output_ds: &_model_output_ds
+  metadata:
+    kedro-viz:
+      layer: model_output
+
+"bte.model_output.predictions":
+  <<: [*_pandas_parquet, *_model_output_ds]
+  filepath: ${globals:paths.model_output}/{model}/predictions

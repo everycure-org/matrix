@@ -1,0 +1,7 @@
+bte:
+  max_concurrent_requests: 12 # Maximum number of concurrent requests allowed
+  default_timeout: 310 # Total timeout configuration for the entire request
+  async_query_url: "http://localhost:3000/v1/asyncquery" # URL for asynchronous query processing
+  job_check_sleep: 0.1 # Time to sleep between job status checks
+  debug_query_limiter: 8 # Change to -1 to disable the limit
+  debug_csv_path: "../../../predictions.csv" # Path to the output CSV file for debugging purposes
