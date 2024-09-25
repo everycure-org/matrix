@@ -19,24 +19,31 @@ def _create_pairs(nodes: DataFrame, num: int = 50, seed: int = 42) -> pd.DataFra
     # dataset re-introduces the correct schema.
     nodes = nodes.toPandas()
 
-    # Sample random pairs
-    random_drugs = nodes["id"].sample(
-        num * 2, replace=True, ignore_index=True, random_state=seed
-    )
-    random_diseases = nodes["id"].sample(
-        num * 2, replace=True, ignore_index=True, random_state=2 * seed
-    )
+    is_enough_generated = False
+    while not is_enough_generated:
+        # Sample random pairs (we sample twice the required amount in case duplicates are removed)
+        random_drugs = nodes["id"].sample(
+            num * 4, replace=True, ignore_index=True, random_state=seed
+        )
+        random_diseases = nodes["id"].sample(
+            num * 4, replace=True, ignore_index=True, random_state=2 * seed
+        )
 
-    df = pd.DataFrame(
-        data=[[drug, disease] for drug, disease in zip(random_drugs, random_diseases)],
-        columns=["source", "target"],
-    )
+        df = pd.DataFrame(
+            data=[
+                [drug, disease] for drug, disease in zip(random_drugs, random_diseases)
+            ],
+            columns=["source", "target"],
+        )
 
-    # Remove duplicate pairs
-    df = df.drop_duplicates()
+        # Remove duplicate pairs
+        df = df.drop_duplicates()
+
+        # Check that we still have enough fabricated pairs
+        is_enough_generated = len(df) >= 2 * num
 
     # split df in half and return two df
-    return df[:num], df[num:]
+    return df[:num], df[num : 2 * num]
 
 
 def create_pipeline(**kwargs) -> Pipeline:
