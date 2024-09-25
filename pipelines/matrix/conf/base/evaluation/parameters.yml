@@ -42,18 +42,18 @@ evaluation.disease_centric_matrix:
         - object: sklearn.metrics.average_precision_score
       score_col_name: *score-col
 
-# # Recall@N
-# evaluation.recall_at_n:
-#   evaluation_options:
-#     generator:
-#       object: matrix.datasets.pair_generator.MatrixTestDiseases
-#       drugs_lst_flags:
-#           - is_drug
-#           - is_ground_pos
-#     evaluation:
-#       object: matrix.pipelines.evaluation.evaluation.RecallAtN
-#       n_values: [2, 5, 10]
-#       score_col_name: *score-col
+# Recall@N
+evaluation.recall_at_n:
+  evaluation_options:
+    generator:
+      object: matrix.datasets.pair_generator.MatrixTestDiseases
+      drugs_lst_flags:
+          - is_drug
+          - is_ground_pos
+    evaluation:
+      object: matrix.pipelines.evaluation.evaluation.RecallAtN
+      n_values: [2, 5, 10]
+      score_col_name: *score-col
 
 # Disease-specific ranking
 evaluation.disease_specific_ranking:
