@@ -11,14 +11,11 @@ from . import nodes
 def _create_evaluation_pipeline(model: str, evaluation: str) -> Pipeline:
     return pipeline(
         [
-            # TODO: add node for training set check with a tag
             node(
                 func=nodes.generate_test_dataset,
                 inputs=[
-                    "modelling.model_input.splits",
                     f"matrix_generation.{model}.model_output.sorted_matrix_predictions",
                     f"params:evaluation.{evaluation}.evaluation_options.generator",
-                    f"params:evaluation.{evaluation}.evaluation_options",
                 ],
                 outputs=f"evaluation.{model}.{evaluation}.prm.pairs",
                 name=f"create_{model}_{evaluation}_evaluation_pairs",
@@ -43,6 +40,21 @@ def create_pipeline(**kwargs) -> Pipeline:
     models = settings.DYNAMIC_PIPELINES_MAPPING.get("modelling")
     model_names = [model["model_name"] for model in models]
     for model in model_names:
+        pipes.append(
+            pipeline(
+                [
+                    node(
+                        func=nodes.check_no_train,
+                        inputs=[
+                            f"matrix_generation.{model}.model_output.sorted_matrix_predictions",
+                            "modelling.model_input.splits",
+                        ],
+                        outputs=None,
+                        tags="check_train",
+                    )
+                ]
+            )
+        )
         for evaluation in settings.DYNAMIC_PIPELINES_MAPPING.get("evaluation"):
             pipes.append(
                 pipeline(
