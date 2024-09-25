@@ -71,7 +71,7 @@ jobs:
               - .github/workflows/matrix-push.yml
 
   ci:
-    runs-on: 'self-hosted'
+    runs-on: 'ubuntu-latest' #'self-hosted'
     needs: [paths_filter]
     if: needs.paths_filter.outputs.changed == 'true' && (github.event.pull_request.draft == false || github.ref == 'refs/heads/main')
     # https://docs.github.com/en/actions/writing-workflows/workflow-syntax-for-github-actions#concurrency
@@ -119,7 +119,7 @@ jobs:
   push_image:
     needs: [ci]
     if: github.ref == 'refs/heads/main'
-    runs-on: "self-hosted"
+    runs-on: 'ubuntu-latest' # "self-hosted"
     environment: dev
     permissions: write-all
     defaults:
