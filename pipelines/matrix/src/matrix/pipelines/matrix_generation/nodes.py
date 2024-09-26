@@ -77,7 +77,6 @@ def _add_flag_columns(
     matrix["is_known_negative"] = create_flag_column(test_neg_pairs)
 
     # Flag clinical trials data
-    # Rename 'drug_kg_curie' column to 'source' in clinical_trials DataFrame
     clinical_trials = clinical_trials.rename(
         columns={"drug_kg_curie": "source", "disease_kg_curie": "target"}
     )
