@@ -69,11 +69,13 @@ DYNAMIC_PIPELINES_MAPPING = {
         # {"model_name": "xg_synth", "num_shards": 1},
     ],
     "evaluation": [
-        # {"evaluation_name": "simple_ground_truth_classification"},
-        # {"evaluation_name": "disease_specific_ranking"},
-        # {"evaluation_name": "simple_ground_truth_classification_time_split"},
-        # {"evaluation_name": "disease_specific_ranking_time_split"},
+        {"evaluation_name": "simple_classification"},
+        {"evaluation_name": "disease_specific"},
+        {"evaluation_name": "full_matrix_negatives"},
         {"evaluation_name": "full_matrix"},
+        {"evaluation_name": "simple_classification_trials"},
+        {"evaluation_name": "disease_specific_trials"},
+        {"evaluation_name": "full_matrix_trails"},
     ],
 }
 

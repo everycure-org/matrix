@@ -3,7 +3,7 @@
 evaluation.score_col_name: &score-col "treat score"
 
 # Threshold-based classification metrics for ground truth data
-evaluation.simple_ground_truth_classification:
+evaluation.simple_classification:
   evaluation_options:
     generator:
       object: matrix.datasets.pair_generator.GroundTruthTestPairs
@@ -20,7 +20,7 @@ evaluation.simple_ground_truth_classification:
       threshold: 0.5
 
 # Disease-specific ranking
-evaluation.disease_specific_ranking:
+evaluation.disease_specific:
   evaluation_options:
     generator:
       object: matrix.datasets.pair_generator.MatrixTestDiseases
@@ -53,17 +53,37 @@ evaluation.full_matrix:
       object: matrix.pipelines.evaluation.evaluation.FullMatrixRanking 
       rank_func_lst: 
         - object:  matrix.pipelines.evaluation.named_functions.RecallAtN 
-          n: 2
+          n: 1000
         - object:  matrix.pipelines.evaluation.named_functions.RecallAtN
-          n: 5
+          n: 10000
         - object:  matrix.pipelines.evaluation.named_functions.RecallAtN
-          n: 10
+          n: 100000
+        - object:  matrix.pipelines.evaluation.named_functions.RecallAtN
+          n: 1000000
       quantile_func_lst: 
         - object: matrix.pipelines.evaluation.named_functions.AUROC
 
-# Time split - TODO: rename evaluation to trials and write-up explanation
+# Full matrix ranking for known negatives 
+evaluation.full_matrix_negatives:
+  evaluation_options:
+    generator:
+      object: matrix.datasets.pair_generator.FullMatrixPositives
+      positive_columns: 
+        - "is_known_negative"
+    evaluation:
+      object: matrix.pipelines.evaluation.evaluation.FullMatrixRanking 
+      rank_func_lst: 
+        - object:  matrix.pipelines.evaluation.named_functions.RecallAtN
+          n: 10000
+        - object:  matrix.pipelines.evaluation.named_functions.RecallAtN
+          n: 100000
+      quantile_func_lst: 
+        - object: matrix.pipelines.evaluation.named_functions.AUROC
 
-evaluation.simple_ground_truth_classification_time_split:
+## Clinical trial versions. These use ground truth provided by results of clinical trials occurring after March 2023 (release date of RTX-KG2 v2.7.3).
+
+# Threshold-based classification metrics for ground truth data (clinical trials version)
+evaluation.simple_classification_trials:
   evaluation_options:
     generator:
       object: matrix.datasets.pair_generator.GroundTruthTestPairs
@@ -81,7 +101,8 @@ evaluation.simple_ground_truth_classification_time_split:
       score_col_name: *score-col
       threshold: 0.5
 
-evaluation.disease_specific_ranking_time_split:
+# Disease-specific ranking (clinical trials version)
+evaluation.disease_specific_trials:
   evaluation_options:
     generator:
       object: matrix.datasets.pair_generator.MatrixTestDiseases
@@ -91,7 +112,7 @@ evaluation.disease_specific_ranking_time_split:
       removal_columns: 
         - "is_known_positive"
     evaluation:
-      object: matrix.pipelines.evaluation.named_functions.SpecificRanking
+      object: matrix.pipelines.evaluation.evaluation.SpecificRanking
       specific_col: "target"
       rank_func_lst: 
         - object: matrix.pipelines.evaluation.named_functions.MRR
@@ -102,6 +123,28 @@ evaluation.disease_specific_ranking_time_split:
         - object:  matrix.pipelines.evaluation.named_functions.HitK
           k: 100
       score_col_name: *score-col
+
+# Full matrix ranking (clinical trials version)
+evaluation.full_matrix_trails:
+  evaluation_options:
+    generator:
+      object: matrix.datasets.pair_generator.FullMatrixPositives
+      positive_columns: 
+        - "trial_sig_better"
+        - "trial_non_sig_better"
+    evaluation:
+      object: matrix.pipelines.evaluation.evaluation.FullMatrixRanking 
+      rank_func_lst: 
+        - object:  matrix.pipelines.evaluation.named_functions.RecallAtN 
+          n: 1000
+        - object:  matrix.pipelines.evaluation.named_functions.RecallAtN
+          n: 10000
+        - object:  matrix.pipelines.evaluation.named_functions.RecallAtN
+          n: 100000
+        - object:  matrix.pipelines.evaluation.named_functions.RecallAtN
+          n: 1000000
+      quantile_func_lst: 
+        - object: matrix.pipelines.evaluation.named_functions.AUROC
 
 
 # Other metrics
