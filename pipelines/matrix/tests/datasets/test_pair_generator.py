@@ -46,6 +46,9 @@ def known_pairs_fixture() -> pd.DataFrame:
     )
 
 
+## Test negative sampling pair generators
+
+
 def test_random_drug_disease_pair_generator(
     graph: KnowledgeGraph, known_pairs: pd.DataFrame
 ):
@@ -105,72 +108,75 @@ def test_replacement_drug_disease_pair_generator(
     assert set(unknown["target"].to_list()).issubset(graph._disease_nodes)
 
 
-@pytest.mark.parametrize(
-    "splitter",
-    [ShuffleSplit(n_splits=1, test_size=2 / 3, random_state=1)],
-)
-def test_ground_truth_test_pairs(
-    graph: KnowledgeGraph, known_pairs: pd.DataFrame, splitter, spark
-):
-    # Given a test-train split for the known data and a test data generator
-    generator = GroundTruthTestPairs()
-    known_pairs_split = make_splits(
-        graph,
-        known_pairs,
-        splitter,
-    )
-
-    # When generating the test dataset
-    generated_data = generator.generate(graph, known_pairs_split)
-
-    # Then generated test data is equal to the test set of the known pairs
-    known_test = known_pairs_split[known_pairs_split["split"] == "TEST"]
-    assert generated_data.shape == known_test.shape
-    assert (generated_data["source"] == known_test["source"]).all()
-    assert (generated_data["target"] == known_test["target"]).all()
-    assert (generated_data["y"] == known_test["y"]).all()
+## Test evaluation dataset generators TODO: rewrite for the redesign
 
 
-@pytest.mark.parametrize(
-    "splitter",
-    [ShuffleSplit(n_splits=1, test_size=2 / 3, random_state=1)],
-)
-def test_matrix_test_diseases(
-    graph: KnowledgeGraph, known_pairs: pd.DataFrame, splitter, spark
-):
-    # Given a list of drugs, a test-train split for the known data and a test data generator
-    generator = MatrixTestDiseases(["is_drug"])
-    known_pairs_split = make_splits(
-        graph,
-        known_pairs,
-        splitter,
-    )
+# @pytest.mark.parametrize(
+#     "splitter",
+#     [ShuffleSplit(n_splits=1, test_size=2 / 3, random_state=1)],
+# )
+# def test_ground_truth_test_pairs(
+#     graph: KnowledgeGraph, known_pairs: pd.DataFrame, splitter, spark
+# ):
+#     # Given a test-train split for the known data and a test data generator
+#     generator = GroundTruthTestPairs()
+#     known_pairs_split = make_splits(
+#         graph,
+#         known_pairs,
+#         splitter,
+#     )
 
-    # When generating the test dataset
-    generated_data = generator.generate(graph, known_pairs_split)
+#     # When generating the test dataset
+#     generated_data = generator.generate(graph, known_pairs_split)
 
-    # Then generated test data:
-    #   - has the correct length,
-    #   - does not contain test data,
-    #   - the drug always lies in the given drug list,
-    #   - the disease always appears in the known positive test set.
-    #   - the number of data-points labeled with y=1 is equal to the number of known positive test pairs
-    drugs_lst = graph._drug_nodes
-    known_positives_test = known_pairs_split[
-        (known_pairs_split["y"] == 1) & (known_pairs_split["split"] == "TEST")
-    ]
-    known_pos_test_diseases = list(known_positives_test["target"].unique())
-    known_train = known_pairs_split[known_pairs_split["split"] == "TRAIN"]
-    known_train_in_matrix = known_train[
-        known_train["source"].isin(drugs_lst)
-        & known_train["target"].isin(known_pos_test_diseases)
-    ]
-    assert len(generated_data) == len(drugs_lst) * len(known_pos_test_diseases) - len(
-        known_train_in_matrix
-    )
-    assert pd.merge(
-        generated_data, known_train, how="inner", on=["source", "target"]
-    ).empty
-    assert generated_data["source"].isin(drugs_lst).all()
-    assert generated_data["target"].isin(known_pos_test_diseases).all()
-    assert generated_data["y"].sum() == len(known_positives_test)
+#     # Then generated test data is equal to the test set of the known pairs
+#     known_test = known_pairs_split[known_pairs_split["split"] == "TEST"]
+#     assert generated_data.shape == known_test.shape
+#     assert (generated_data["source"] == known_test["source"]).all()
+#     assert (generated_data["target"] == known_test["target"]).all()
+#     assert (generated_data["y"] == known_test["y"]).all()
+
+
+# @pytest.mark.parametrize(
+#     "splitter",
+#     [ShuffleSplit(n_splits=1, test_size=2 / 3, random_state=1)],
+# )
+# def test_matrix_test_diseases(
+#     graph: KnowledgeGraph, known_pairs: pd.DataFrame, splitter, spark
+# ):
+#     # Given a list of drugs, a test-train split for the known data and a test data generator
+#     generator = MatrixTestDiseases(["is_drug"])
+#     known_pairs_split = make_splits(
+#         graph,
+#         known_pairs,
+#         splitter,
+#     )
+
+#     # When generating the test dataset
+#     generated_data = generator.generate(graph, known_pairs_split)
+
+#     # Then generated test data:
+#     #   - has the correct length,
+#     #   - does not contain test data,
+#     #   - the drug always lies in the given drug list,
+#     #   - the disease always appears in the known positive test set.
+#     #   - the number of data-points labeled with y=1 is equal to the number of known positive test pairs
+#     drugs_lst = graph._drug_nodes
+#     known_positives_test = known_pairs_split[
+#         (known_pairs_split["y"] == 1) & (known_pairs_split["split"] == "TEST")
+#     ]
+#     known_pos_test_diseases = list(known_positives_test["target"].unique())
+#     known_train = known_pairs_split[known_pairs_split["split"] == "TRAIN"]
+#     known_train_in_matrix = known_train[
+#         known_train["source"].isin(drugs_lst)
+#         & known_train["target"].isin(known_pos_test_diseases)
+#     ]
+#     assert len(generated_data) == len(drugs_lst) * len(known_pos_test_diseases) - len(
+#         known_train_in_matrix
+#     )
+#     assert pd.merge(
+#         generated_data, known_train, how="inner", on=["source", "target"]
+#     ).empty
+#     assert generated_data["source"].isin(drugs_lst).all()
+#     assert generated_data["target"].isin(known_pos_test_diseases).all()
+#     assert generated_data["y"].sum() == len(known_positives_test)

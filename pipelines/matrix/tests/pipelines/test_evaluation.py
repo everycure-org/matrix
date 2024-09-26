@@ -6,9 +6,11 @@ from matrix.pipelines.evaluation.evaluation import (
     DiscreteMetrics,
     ContinuousMetrics,
     SpecificRanking,
+    RecallAtN,
+)
+from matrix.pipelines.evaluation.named_functions import (
     MRR,
     HitK,
-    RecallAtN,
 )
 
 
