@@ -15,13 +15,13 @@ hide:
 
     [:octicons-arrow-right-24: Onboarding](./onboarding/index.md)
 
--   :fontawesome-brands-markdown:{ .lg .middle } __Improve our Documentation__
+-   :material-book-open-page-variant:{ .lg .middle } __Useful Links__ 
 
     ---
 
-    This documentation lives through all our contributions. See how to improve it.
+    Find useful links to EveryCure resources.
 
-    [:octicons-arrow-right-24: Docs Contribution](./contribute/documentation.md)
+    [:octicons-arrow-right-24: Resources](./links/index.md)
 
 -   :simple-googlecloud:{ .lg .middle } __Understand the Infrastructure__
 
@@ -54,6 +54,15 @@ hide:
     A collection of our executed experiments and insights generated from them can be found here:
 
     [:octicons-arrow-right-24: Experiments](./experiments/index.md)
+
+-   :material-book-open-page-variant:{ .lg .middle } __Documentation__
+
+    ---
+
+    This documentation lives through all our contributions. See how to improve it.
+
+    [:octicons-arrow-right-24: Docs Contribution](./contribute/documentation.md)
+
 </div>
 
 
