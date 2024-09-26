@@ -1,0 +1,6 @@
+bte:
+  max_concurrent_requests: 12 # Maximum number of concurrent requests allowed
+  default_timeout: 310 # Default timeout configuration for the entire request
+  async_query_url: "http://localhost:3000/v1/asyncquery" # URL for asynchronous query - NOTE: this needs to be updated for kubernetes environment?
+  job_check_sleep: 0.1 # Time to sleep between job status checks
+  n_diseases_limit: -1 # Change to -1 to disable the limit
