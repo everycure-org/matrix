@@ -100,6 +100,12 @@ def _add_flag_columns(
     schema={
         "source": "object",
         "target": "object",
+        "is_known_positive": "bool",
+        "is_known_negative": "bool",
+        "trial_sig_better": "bool",
+        "trial_non_sig_better": "bool",
+        "trial_sig_worse": "bool",
+        "trial_non_sig_worse": "bool",
     },
     allow_subset=True,
 )
@@ -140,7 +146,7 @@ def generate_pairs(
     # Concatenate all slices at once
     matrix = pd.concat(matrix_slices, ignore_index=True)
 
-    # Remove training set TODO: introduce helper function. Note that the same helper is also used in the pair generator methods which will be rewritten in this PR.
+    # Remove training set
     train_pairs = known_pairs[~known_pairs["split"].eq("TEST")]
     train_pairs_set = set(zip(train_pairs["source"], train_pairs["target"]))
     is_in_train = matrix.apply(
@@ -276,6 +282,17 @@ def make_predictions_and_sort(
     return sorted_data
 
 
+@has_schema(
+    schema={
+        "drug_id": "object",
+        "drug_name": "object",
+        "disease_id": "object",
+        "disease_name": "object",
+        "is_known_positive": "bool",
+        "is_known_negative": "bool",
+    },
+    allow_subset=True,
+)
 def generate_report(
     data: pd.DataFrame,
     n_reporting: int,
