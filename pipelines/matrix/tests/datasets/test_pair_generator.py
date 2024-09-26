@@ -1,6 +1,7 @@
 import pytest
 
 import pandas as pd
+import numpy as np
 from sklearn.model_selection import ShuffleSplit
 
 from matrix.datasets.graph import KnowledgeGraph
@@ -9,10 +10,14 @@ from matrix.datasets.pair_generator import (
     ReplacementDrugDiseasePairGenerator,
     MatrixTestDiseases,
     GroundTruthTestPairs,
+    FullMatrixPositives,
 )
 from matrix.pipelines.modelling.nodes import make_splits
 
 from pyspark.sql.types import StructType
+
+
+## Test negative sampling pair generators
 
 
 @pytest.fixture(name="graph")
@@ -44,9 +49,6 @@ def known_pairs_fixture() -> pd.DataFrame:
         ],
         columns=["source", "target", "y"],
     )
-
-
-## Test negative sampling pair generators
 
 
 def test_random_drug_disease_pair_generator(
@@ -108,75 +110,108 @@ def test_replacement_drug_disease_pair_generator(
     assert set(unknown["target"].to_list()).issubset(graph._disease_nodes)
 
 
-## Test evaluation dataset generators TODO: rewrite for the redesign
+## Test evaluation dataset generators
 
 
-# @pytest.mark.parametrize(
-#     "splitter",
-#     [ShuffleSplit(n_splits=1, test_size=2 / 3, random_state=1)],
-# )
-# def test_ground_truth_test_pairs(
-#     graph: KnowledgeGraph, known_pairs: pd.DataFrame, splitter, spark
-# ):
-#     # Given a test-train split for the known data and a test data generator
-#     generator = GroundTruthTestPairs()
-#     known_pairs_split = make_splits(
-#         graph,
-#         known_pairs,
-#         splitter,
-#     )
+@pytest.fixture
+def matrix():
+    """Fixture to create a sample matrix for testing."""
+    np.random.seed(42)  # For reproducibility
 
-#     # When generating the test dataset
-#     generated_data = generator.generate(graph, known_pairs_split)
+    # Create a sample matrix with 100 rows
+    drugs = [f"drug_{i}" for i in range(10)]
+    diseases = [f"disease_{i}" for i in range(10)]
+    pairs = [(drug, disease) for drug in drugs for disease in diseases]
+    data = {
+        "source": [pair[0] for pair in pairs],
+        "target": [pair[1] for pair in pairs],
+        "treat_score": np.random.rand(100),
+        "is_positive_1": np.random.choice([True, False], 100, p=[0.3, 0.7]),
+        "is_positive_2": np.random.choice([True, False], 100, p=[0.3, 0.7]),
+        "is_negative_1": np.random.choice([True, False], 100, p=[0.3, 0.7]),
+        "is_negative_2": np.random.choice([True, False], 100, p=[0.3, 0.7]),
+    }
+    df = pd.DataFrame(data).sort_values("treat_score", ascending=False)
 
-#     # Then generated test data is equal to the test set of the known pairs
-#     known_test = known_pairs_split[known_pairs_split["split"] == "TEST"]
-#     assert generated_data.shape == known_test.shape
-#     assert (generated_data["source"] == known_test["source"]).all()
-#     assert (generated_data["target"] == known_test["target"]).all()
-#     assert (generated_data["y"] == known_test["y"]).all()
+    # Ensure no overlap between positive and negative pairs
+    all_cols = ["is_positive_1", "is_positive_2", "is_negative_1", "is_negative_2"]
+    for col in all_cols:
+        other_cols = [c for c in all_cols if c != col]
+        df.loc[df[col], other_cols] = False
+
+    return df
 
 
-# @pytest.mark.parametrize(
-#     "splitter",
-#     [ShuffleSplit(n_splits=1, test_size=2 / 3, random_state=1)],
-# )
-# def test_matrix_test_diseases(
-#     graph: KnowledgeGraph, known_pairs: pd.DataFrame, splitter, spark
-# ):
-#     # Given a list of drugs, a test-train split for the known data and a test data generator
-#     generator = MatrixTestDiseases(["is_drug"])
-#     known_pairs_split = make_splits(
-#         graph,
-#         known_pairs,
-#         splitter,
-#     )
+def test_ground_truth_test_pairs(matrix):
+    # Given a matrix and a test data generator
+    generator = GroundTruthTestPairs(
+        positive_columns=["is_positive_1", "is_positive_2"],
+        negative_columns=["is_negative_1", "is_negative_2"],
+    )
 
-#     # When generating the test dataset
-#     generated_data = generator.generate(graph, known_pairs_split)
+    # When generating the test dataset
+    generated_data = generator.generate(matrix)
 
-#     # Then generated test data:
-#     #   - has the correct length,
-#     #   - does not contain test data,
-#     #   - the drug always lies in the given drug list,
-#     #   - the disease always appears in the known positive test set.
-#     #   - the number of data-points labeled with y=1 is equal to the number of known positive test pairs
-#     drugs_lst = graph._drug_nodes
-#     known_positives_test = known_pairs_split[
-#         (known_pairs_split["y"] == 1) & (known_pairs_split["split"] == "TEST")
-#     ]
-#     known_pos_test_diseases = list(known_positives_test["target"].unique())
-#     known_train = known_pairs_split[known_pairs_split["split"] == "TRAIN"]
-#     known_train_in_matrix = known_train[
-#         known_train["source"].isin(drugs_lst)
-#         & known_train["target"].isin(known_pos_test_diseases)
-#     ]
-#     assert len(generated_data) == len(drugs_lst) * len(known_pos_test_diseases) - len(
-#         known_train_in_matrix
-#     )
-#     assert pd.merge(
-#         generated_data, known_train, how="inner", on=["source", "target"]
-#     ).empty
-#     assert generated_data["source"].isin(drugs_lst).all()
-#     assert generated_data["target"].isin(known_pos_test_diseases).all()
-#     assert generated_data["y"].sum() == len(known_positives_test)
+    # Then generated test data contains all positive and negative pairs
+    expected_positives = matrix[matrix["is_positive_1"] | matrix["is_positive_2"]]
+    expected_negatives = matrix[matrix["is_negative_1"] | matrix["is_negative_2"]]
+    assert len(generated_data) == len(expected_positives) + len(expected_negatives)
+    assert generated_data[generated_data["y"] == 1].shape[0] == len(expected_positives)
+    assert generated_data[generated_data["y"] == 0].shape[0] == len(expected_negatives)
+    assert set(generated_data.columns) == set(matrix.columns).union({"y"})
+
+
+def test_matrix_test_diseases(matrix):
+    # Given a matrix and a test data generator
+    generator = MatrixTestDiseases(
+        positive_columns=["is_positive_1", "is_positive_2"],
+        removal_columns=["is_negative_1"],
+    )
+
+    # When generating the test dataset
+    generated_data = generator.generate(matrix)
+
+    # Then generated test data:
+    #   - contains all rows where the target is in the positive pairs set
+    #   - does not include rows marked for removal
+    #   - has the correct 'y' labels
+    positive_pairs = matrix[matrix["is_positive_1"] | matrix["is_positive_2"]]
+    positive_diseases = positive_pairs["target"].unique()
+    expected_data = matrix[
+        matrix["target"].isin(positive_diseases) | ~matrix["is_negative_1"]
+    ]
+    expected_data["y"] = (
+        expected_data["is_positive_1"] | expected_data["is_positive_2"]
+    ).astype(int)
+
+    assert len(generated_data) == len(expected_data)
+    assert set(generated_data["target"]).issubset(set(positive_diseases))
+    assert (generated_data["y"] == expected_data["y"]).all()
+    assert set(generated_data.columns) == set(matrix.columns).union({"y"})
+
+
+def test_full_matrix_positives(matrix):
+    # Given a matrix and a full matrix positives generator
+    generator = FullMatrixPositives(positive_columns=["is_positive_1", "is_positive_2"])
+
+    # When generating the dataset
+    generated_data = generator.generate(matrix)
+
+    # Then generated data:
+    #   - contains only positive pairs
+    #   - has correct 'y', 'rank', and 'quantile_rank' columns
+    #   - maintains the original order of the matrix
+    expected_positives = matrix[matrix["is_positive_1"] | matrix["is_positive_2"]]
+
+    assert len(generated_data) == len(expected_positives)
+    assert (generated_data["y"] == 1).all()
+    assert (generated_data["rank"] == generated_data.index + 1).all()
+    assert (
+        generated_data["quantile_rank"] == (generated_data.index + 1) / len(matrix)
+    ).all()
+    assert list(generated_data["source"]) == list(expected_positives["source"])
+    assert list(generated_data["target"]) == list(expected_positives["target"])
+    assert set(generated_data.columns) == set(matrix.columns).union(
+        {"y", "rank", "quantile_rank"}
+    )
+    assert generated_data["treat_score"].is_monotonic_decreasing
