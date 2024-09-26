@@ -3,4 +3,4 @@ bte:
   default_timeout: 310 # Default timeout configuration for the entire request
   async_query_url: "http://localhost:3000/v1/asyncquery" # URL for asynchronous query
   job_check_sleep: 0.1 # Time to sleep between job status checks
-  n_diseases_limit: 4 # Change to -1 to disable the limit
+  n_diseases_limit: 2 # Change to -1 to disable the limit
