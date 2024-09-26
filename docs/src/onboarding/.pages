@@ -3,5 +3,7 @@ nav:
     - installation.md
     - git-crypt.md
     - kedro.md
+    - use_case.md
+    - use_case_data_catalog_exploration.md
     - pipeline.md
     - local-setup.md
