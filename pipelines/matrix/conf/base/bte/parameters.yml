@@ -1,0 +1,3 @@
+bte:
+  default_timeout: 310 # Default timeout configuration
+  job_check_sleep: 0.1 # Time to sleep between job status checks

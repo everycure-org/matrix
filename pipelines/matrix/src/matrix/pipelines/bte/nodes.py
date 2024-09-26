@@ -14,45 +14,17 @@ from tenacity import (
     retry_if_exception_type,
 )
 from typing import Any, Iterator, Optional
-
-# # Configuration constants for managing asynchronous requests and retries
-# MAX_CONCURRENT_REQUESTS = 12  # Maximum number of concurrent requests allowed
-# default_timeout = 310  # Total timeout configuration for the entire request
-# CONNECT_TIMEOUT = 30.0  # Timeout configuration for establishing a connection
-# READ_TIMEOUT = 310.0  # Timeout configuration for HTTP requests
-# ASYNC_QUERY_URL = (
-#     "http://localhost:3000/v1/asyncquery"  # URL for asynchronous query processing
-# )
-# MAX_RETRIES = 8  # Maximum number of times to retry a request
-# RETRY_DELAY = 4  # Time to wait before retrying a request
-# RETRY_BACKOFF_FACTOR = 2  # Exponential backoff factor for retries
-# MAX_QUERY_RETRIES = 5  # Maximum number of times to retry a query
-# QUERY_RETRY_DELAY = 4  # Time to wait before retrying a failed query
-# JOB_CHECK_SLEEP = 0.5  # Time to sleep between job status checks
-# DEBUG_QUERY_LIMITER = 8  # Change to -1 to disable the limit
-# # DISEASE_LIST = pd.read_csv(
-# #     "https://github.com/everycure-org/matrix-disease-list/releases/latest/download/matrix-disease-list.tsv",
-# #     sep="\t",
-# # )  # Load the disease list from a remote TSV file
-# DISEASE_LIST = pd.DataFrame
-# DEBUG_CSV_PATH = (
-#     "../../../predictions.csv"  # Path to the output CSV file for debugging purposes
-# )
-
-# # Configure timeout settings for HTTP requests
-# timeout_config = httpx.Timeout(
-#     timeout=default_timeout, connect=CONNECT_TIMEOUT, read=READ_TIMEOUT
-# )
+from refit.v1.core.inline_has_schema import has_schema
 
 
 def generate_trapi_query(curie: str) -> dict[str, Any]:
     """Generate a TRAPI query for a given CURIE.
 
-    Parameters:
-    curie (str): The CURIE identifier for which to generate the query.
+    Args:
+        curie (str): The CURIE identifier for which to generate the query.
 
     Returns:
-    dict[str, Any]: A dictionary representing the TRAPI query.
+        dict[str, Any]: A dictionary representing the TRAPI query.
     """
     if not curie:
         logging.error("CURIE must not be empty")
@@ -83,28 +55,44 @@ def generate_trapi_query(curie: str) -> dict[str, Any]:
 
 
 def generate_queries(
-    disease_list: pd.DataFrame, debug_query_limiter: int
+    disease_list: pd.DataFrame, n_diseases_limit: int
 ) -> Iterator[dict]:
     """Generate TRAPI queries from the disease list.
 
+    Args:
+        disease_list (pd.DataFrame): A DataFrame containing the list of diseases.
+        n_diseases_limit (int): The maximum number of diseases to process.
+
     Yields:
-    Iterator[dict[str, Any]]: An iterator of dictionaries containing the CURIE and the TRAPI query.
+        Iterator[dict[str, Any]]: An iterator of dictionaries containing the CURIE and the TRAPI query.
     """
-    for index, row in itertools.islice(disease_list.iterrows(), debug_query_limiter):
+    for index, row in (
+        itertools.islice(disease_list.iterrows(), n_diseases_limit)
+        if n_diseases_limit is not None and n_diseases_limit != -1
+        else disease_list.iterrows()
+    ):
         curie = row.get("category_class")
         if curie:
             trapi_query = generate_trapi_query(curie)
             yield {"curie": curie, "query": trapi_query, "index": index}
 
 
-def transform_result(response: dict[str, Any]) -> list[dict[str, Any]]:
+def transform_result(
+    response: dict[str, Any],
+    drug_set1: set,
+    drug_set2: set,
+    drug_mapping_dict: dict[str, str],
+) -> list[dict[str, Any]]:
     """Transform the raw query response into a list of result dictionaries.
 
-    Parameters:
-    response (dict[str, Any]): The raw response from the query.
+    Args:
+        response (dict[str, Any]): The raw response from the query.
+        drug_set1 (set): Set containing drug CURIEs to be used for determining approval status.
+        drug_set2 (set): Set containing drug single_IDs to be used for determining approval status.
+        drug_mapping_dict (dict[str, str]): A dictionary mapping drug CURIEs to their corresponding synonymized IDs.
 
     Returns:
-    list[dict[str, Any]]: A list of dictionaries containing transformed results.
+        list[dict[str, Any]]: A list of dictionaries containing transformed results.
     """
     results = []
     curie = response.get("curie")
@@ -126,15 +114,23 @@ def transform_result(response: dict[str, Any]) -> list[dict[str, Any]]:
             continue
 
         for n1_binding, n0_binding, analysis in zip(n1_bindings, n0_bindings, analyses):
+            drug_curie = n0_binding.get("id")
+            approved = False
+            if drug_curie in drug_set1:
+                approved = True
+            elif drug_curie in drug_set2:
+                approved = True
+                drug_curie = drug_mapping_dict[drug_curie]
             results.append(
                 {
                     "target": n1_binding.get("id"),
-                    "source": n0_binding.get("id"),
+                    "source": drug_curie,
                     "score": analysis.get("score"),
+                    "approved": approved,
                 }
             )
 
-    logging.info(f"Transformed {len(results)} results for CURIE {curie}")
+    logging.debug(f"Transformed {len(results)} results for CURIE {curie}")
     return results
 
 
@@ -147,13 +143,13 @@ def transform_result(response: dict[str, Any]) -> list[dict[str, Any]]:
 async def post_async_query(client: httpx.AsyncClient, url: str, payload: dict) -> dict:
     """Post an asynchronous query to the specified URL.
 
-    Parameters:
-    client (httpx.AsyncClient): The HTTP client for making requests.
-    url (str): The URL to which the query should be posted.
-    payload (dict): The payload of the query.
+    Args:
+        client (httpx.AsyncClient): The HTTP client for making requests.
+        url (str): The URL to which the query should be posted.
+        payload (dict): The payload of the query.
 
     Returns:
-    dict: The JSON response from the server.
+        dict: The JSON response from the server.
     """
     logging.debug(f"Submitting query to {url} with payload: {payload}")
     response = await client.post(url, json=payload)
@@ -172,12 +168,12 @@ async def post_async_query(client: httpx.AsyncClient, url: str, payload: dict) -
 async def fetch_final_results(client: httpx.AsyncClient, response_url: str) -> dict:
     """Fetch and parse the final results of an asynchronous job.
 
-    Parameters:
-    client (httpx.AsyncClient): The HTTP client for making requests.
-    response_url (str): The URL from which to fetch the final results.
+    Args:
+        client (httpx.AsyncClient): The HTTP client for making requests.
+        response_url (str): The URL from which to fetch the final results.
 
     Returns:
-    dict: The parsed JSON response containing the final results.
+        dict: The parsed JSON response containing the final results.
     """
     logging.debug(f"Fetching final results from {response_url}")
     response = await client.get(response_url)
@@ -197,12 +193,14 @@ async def check_async_job_status(
 ) -> Optional[dict]:
     """Check the status of an asynchronous job and fetch final results if completed.
 
-    Parameters:
-    client (httpx.AsyncClient): The HTTP client for making requests.
-    job_url (str): The URL to check the job status.
+    Args:
+        client (httpx.AsyncClient): The HTTP client for making requests.
+        job_url (str): The URL to check the job status.
+        default_timeout (int): The maximum time to wait for the job to complete.
+        job_check_sleep (float): The time to wait between status checks.
 
     Returns:
-    Optional[dict]: The final results if the job is completed, otherwise None.
+        Optional[dict]: The final results if the job is completed, otherwise None.
     """
     start_time = time.monotonic()
     while True:
@@ -260,16 +258,25 @@ async def process_query(
     async_query_url: str,
     default_timeout: int,
     job_check_sleep: float,
+    drug_set1: set,
+    drug_set2: set,
+    drug_mapping_dict: dict[str, str],
 ) -> Optional[list[dict[str, Any]]]:
     """Process an individual query and return transformed results.
 
-    Parameters:
-    client (httpx.AsyncClient): The HTTP client for making requests.
-    query (dict[str, Any]): The query to process.
-    semaphore (asyncio.Semaphore): Semaphore to limit concurrent requests.
+    Args:
+        client (httpx.AsyncClient): The HTTP client for making requests.
+        query (dict[str, Any]): The query to process.
+        semaphore (asyncio.Semaphore): Semaphore to limit concurrent requests.
+        async_query_url (str): The URL to submit the asynchronous query.
+        default_timeout (int): The maximum time to wait for the job to complete.
+        job_check_sleep (float): The time to wait between status checks.
+        drug_set1 (set): Set containing drug CURIEs to be used for determining approval status.
+        drug_set2 (set): Set containing drug single_IDs to be used for determining approval status.
+        drug_mapping_dict (dict[str, str]): A dictionary mapping drug single_IDs to their corresponding synonymized CURIE IDs.
 
     Returns:
-    Optional[list[dict[str, Any]]]: A list of transformed results if successful, otherwise None.
+        Optional[list[dict[str, Any]]]: A list of transformed results if successful, otherwise None.
     """
     curie = query["curie"]
     query_dict = query["query"]
@@ -293,7 +300,9 @@ async def process_query(
             "Success",
         ]:
             final_response_data.update({"curie": curie, "index": index})
-            transformed_results = transform_result(final_response_data)
+            transformed_results = transform_result(
+                final_response_data, drug_set1, drug_set2, drug_mapping_dict
+            )
             logging.debug(f"Successfully processed query {index} for CURIE {curie}")
             return transformed_results
         else:
@@ -310,22 +319,36 @@ async def process_query(
 
 async def run_async_queries(
     disease_list: pd.DataFrame,
+    drug_set1: set,
+    drug_set2: set,
+    drug_mapping_dict: dict,
     max_concurrent_requests: int,
     async_query_url: str,
     default_timeout: int,
     job_check_sleep: float,
-    debug_query_limiter: int,
+    n_diseases_limit: int,
 ) -> pd.DataFrame:
     """Run asynchronous query processing and return a DataFrame of results.
 
+    Args:
+        disease_list (pd.DataFrame): DataFrame containing the list of diseases to query.
+        drug_set1 (set): Set containing drug CURIEs to be used for determining approval status.
+        drug_set2 (set): Set containing drug single_IDs to be used for determining approval status.
+        drug_mapping_dict (dict[str, str]): A dictionary mapping drug single_IDs to their corresponding synonymized CURIE IDs.
+        max_concurrent_requests (int): The maximum number of concurrent queries to allow.
+        async_query_url (str): The URL to submit the asynchronous query.
+        default_timeout (int): The maximum time to wait for the job to complete.
+        job_check_sleep (float): The time to wait between status checks.
+        n_diseases_limit (int): The maximum number of diseases to process.
+
     Returns:
-    pd.DataFrame: A DataFrame containing the results of the queries.
+        pd.DataFrame: A DataFrame containing the results of the queries.
     """
     timeout_config = httpx.Timeout(default_timeout)
 
     async with httpx.AsyncClient(timeout=timeout_config) as client:
         semaphore = asyncio.Semaphore(max_concurrent_requests)
-        queries = list(generate_queries(disease_list, debug_query_limiter))
+        queries = list(generate_queries(disease_list, n_diseases_limit))
         tasks = [
             asyncio.create_task(
                 process_query(
@@ -335,6 +358,9 @@ async def run_async_queries(
                     async_query_url,
                     default_timeout,
                     job_check_sleep,
+                    drug_set1,
+                    drug_set2,
+                    drug_mapping_dict,
                 )
             )
             for query in queries
@@ -350,59 +376,63 @@ async def run_async_queries(
 
     logging.debug(f"Total results collected: {len(all_results)}")
 
-    df = pd.DataFrame(all_results, columns=["target", "source", "score"])
+    schema = {
+        "target": "object",
+        "source": "object",
+        "score": "float64",
+        "approved": "bool",
+    }
+    df = pd.DataFrame({col: pd.Series(dtype=schema[col]) for col in schema})
     return df
 
 
+@has_schema(
+    schema={
+        "target": "object",
+        "source": "object",
+        "score": "float64",
+        "approved": "bool",
+    },
+    allow_subset=True,
+)
 def run_bte_queries(
     disease_list: pd.DataFrame,
+    drug_list: pd.DataFrame,
     async_query_url: str,
     max_concurrent_requests: int,
     default_timeout: int,
     job_check_sleep: float,
-    debug_query_limiter: int,
-    debug_csv_path: str,
+    n_diseases_limit: int,
 ) -> pd.DataFrame:
     """Synchronous wrapper for running asynchronous queries.
 
-    Parameters:
-    disease_list (pd.DataFrame): The DataFrame containing the disease list to use.
+    Args:
+        disease_list (pd.DataFrame): DataFrame containing the list of diseases to query.
+        drug_list (pd.DataFrame): DataFrame containing the list of approved drugs.
+        max_concurrent_requests (int): The maximum number of concurrent queries to allow.
+        async_query_url (str): The URL to submit the asynchronous query.
+        default_timeout (int): The maximum time to wait for the job to complete.
+        job_check_sleep (float): The time to wait between status checks.
+        n_diseases_limit (int): The maximum number of diseases to process.
 
     Returns:
-    pd.DataFrame: A DataFrame containing the results of the queries.
+        pd.DataFrame: A DataFrame containing the results of the queries.
     """
-    print(disease_list.head)
+    drug_set1 = set(drug_list["curie"])
+    drug_set2 = set(drug_list["single_ID"])
+    drug_mapping_dict = dict(zip(drug_list["single_ID"], drug_list["curie"]))
+
     df = asyncio.run(
         run_async_queries(
             disease_list,
+            drug_set1,
+            drug_set2,
+            drug_mapping_dict,
             max_concurrent_requests,
             async_query_url,
             default_timeout,
             job_check_sleep,
-            debug_query_limiter,
+            n_diseases_limit,
         )
     )
-    save_dataframe_to_csv(df, debug_csv_path)
     return df
-
-
-def save_dataframe_to_csv(df: pd.DataFrame, file_path: str) -> None:
-    """Save the provided DataFrame to a CSV file at the specified path.
-
-    Parameters:
-    df (pd.DataFrame): The DataFrame to save.
-    file_path (str): The file path where the DataFrame should be saved.
-
-    Raises:
-    ValueError: If the DataFrame is empty.
-    """
-    if df.empty:
-        logging.error("The provided DataFrame is empty.")
-        raise ValueError("The DataFrame to save is empty.")
-
-    try:
-        df.to_csv(file_path, index=False)
-        logging.debug(f"DataFrame successfully saved to {file_path}")
-    except (FileNotFoundError, PermissionError) as e:
-        logging.exception(f"Failed to save DataFrame to {file_path}: {e}")
-        raise
