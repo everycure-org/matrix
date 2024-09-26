@@ -39,6 +39,42 @@ def check_no_train(data: pd.DataFrame, known_pairs: pd.DataFrame) -> None:
         )
 
 
+def check_ordered(
+    data: pd.DataFrame,
+    score_col_name: str,
+) -> None:
+    """Check if the score column is correctly ordered.
+
+    Args:
+        data: DataFrame containing score column.
+        score_col_name: Name of the column containing the scores.
+
+    Raises:
+        ValueError: If the score column is not correctly ordered.
+    """
+    if not data[score_col_name].is_monotonic_decreasing:
+        raise ValueError(
+            f"The '{score_col_name}' column is not monotonically descending."
+        )
+
+
+def perform_checks(
+    matrix: pd.DataFrame, known_pairs: pd.DataFrame, score_col_name: str
+) -> None:
+    """Perform various checks on the evaluation dataset.
+
+    Args:
+        matrix: DataFrame containing a sorted matrix pairs dataset with probability scores, ranks and quantile ranks.
+        known_pairs: DataFrame with known drug-disease pairs.
+        score_col_name: Name of the column containing the treat scores.
+
+    Raises:
+        ValueError: If any of the checks fail.
+    """
+    check_no_train(matrix, known_pairs)
+    check_ordered(matrix, score_col_name)
+
+
 @has_schema(
     schema={
         "source": "object",
@@ -65,34 +101,6 @@ def generate_test_dataset(
         Pairs dataframe
     """
     return generator.generate(matrix)
-
-
-def make_test_predictions(
-    graph: KnowledgeGraph,
-    data: pd.DataFrame,
-    transformers: Dict[str, Dict[str, Union[_BaseImputer, List[str]]]],
-    model: ModelWrapper,
-    features: List[str],
-    score_col_name: str,
-    batch_by: str = "target",
-) -> pd.DataFrame:
-    """Generate probability scores for drug-disease dataset.
-
-    Args:
-        graph: Knowledge graph.
-        data: Data to predict scores for.
-        transformers: Dictionary of trained transformers.
-        model: Model making the predictions.
-        features: List of features, may be regex specified.
-        score_col_name: Probability score column name.
-        batch_by: Column to use for batching (e.g., "target" or "source").
-
-    Returns:
-        Pairs dataset with additional column containing the probability scores.
-    """
-    return make_batch_predictions(
-        graph, data, transformers, model, features, score_col_name, batch_by=batch_by
-    )
 
 
 @inject_object()

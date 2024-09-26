@@ -44,13 +44,14 @@ def create_pipeline(**kwargs) -> Pipeline:
             pipeline(
                 [
                     node(
-                        func=nodes.check_no_train,
+                        func=nodes.perform_checks,
                         inputs=[
                             f"matrix_generation.{model}.model_output.sorted_matrix_predictions",
                             "modelling.model_input.splits",
+                            "params:evaluation.score_col_name",
                         ],
                         outputs=None,
-                        tags="check_train",
+                        tags="matrix_checks",
                     )
                 ]
             )
