@@ -45,10 +45,8 @@ def resolve_input_sheet(
         request = "Disease-centric predictions"
     else:
         drug_list = pd.DataFrame({"curie": [drug_id], "name": [drug_name]})
-        disease_list = pd.DataFrame({"curie": [disease_id], "name": [drug_name]})
+        disease_list = pd.DataFrame({"curie": [disease_id], "name": [disease_name]})
         request = "Drug-disease specific predictions"
-    print(drug_list, disease_list)
-    print(request)
     return {"time": timestamp, "request": request}, drug_list, disease_list
 
 

@@ -92,7 +92,6 @@ def test_infer_per_pair(sample_data):
     result_type, result_drug_list, result_disease_list = resolve_input_sheet(
         input_sheet, drug_sheet, disease_sheet
     )
-
     # Then we get correct inference type, drug list and disease lists used as input
     assert result_type["request"] == "Drug-disease specific predictions"
     assert result_drug_list.equals(
