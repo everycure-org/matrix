@@ -214,7 +214,7 @@ class ReplacementDrugDiseasePairGenerator(SingleLabelPairGenerator):
         # Sample pairs
         unknown_data = []
         while len(unknown_data) < 2 * n_replacements:
-            # Sample random drug and disease
+            # Sample a random drug and disease
             rand_drug = random.choice(drug_samp_ids)
             rand_disease = random.choice(disease_samp_ids)
             # Perform replacements
