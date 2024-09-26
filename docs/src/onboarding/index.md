@@ -2,10 +2,24 @@
 title: Onboarding
 ---
 
-
 Welcome to the Matrix onboarding guide! This document provides an introduction to the codebase, and guides you through the process of setting up your local environment.
 
-As you are walking through the onboarding guide, please create an [onboarding issue](https://github.com/everycure-org/matrix/issues/new?assignees=&labels=onboarding&projects=&template=onboarding.md&title=%3Cfirstname%3E+%3Clastname%3E) in the codebase for visibility by the codeowners.
+As you are walking through the onboarding guide, please create an [onboarding issue](https://github.com/everycure-org/matrix/issues/new?assignees=&labels=onboarding&projects=&template=onboarding.md&title=%3Cfirstname%3E+%3Clastname%3E) in the codebase for visibility by the codeowners. The rest of this page covers useful background information on Every Cure and the Matrix project, roles and responsibilities, and how we communicate.
+
+## Why Every Cure?
+
+<iframe width="640" height="390" src="https://www.youtube.com/embed/3ElaCVvDZfI?si=lk3b1rSMutyiierm" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+
+## Why Matrix?
+
+<iframe width="640" height="390" src="https://www.youtube.com/embed/67_Z40Ap1pU?si=XlCu7fBHxxkBTchH" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+
+<details> <summary> Podcast summary before you dive in </summary>
+
+  In this episode of "Infinite Loops," Dr. Grant Mitchell, a medical doctor with numerous qualifications, discusses his company Every Cure and its mission to utilize AI for drug repurposing. He explains that many existing drugs, particularly off-patent ones, have the potential to treat a vast number of diseases, but traditional pharmaceutical companies lack the incentive to explore these possibilities. Mitchell shares the motivating story of how he and his co-founder, David Fagenbaum, who survived a rare disease through drug repurposing, founded Every Cure to systematically unlock the potential of existing drugs using artificial intelligence.
+
+  The conversation delves into the innovations and strategies employed by Every Cure, including constructing a comprehensive biomedical knowledge graph and using AI to identify repurposing opportunities. Mitchell emphasizes the importance of combining AI with clinical expertise to efficiently repurpose drugs and help patients quickly. He also highlights Every Cure's nonprofit model, which facilitates collaboration and open data sharing to maximize the impact of their research. Through significant philanthropic support and a strategic agreement with ARPA-H, Every Cure aims to save millions of lives by bringing effective treatments to neglected diseases, demonstrating a powerful intersection of technology, medicine, and altruism.
+</details>
 
 ## Role and responsibilities
 

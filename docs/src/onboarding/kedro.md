@@ -79,7 +79,7 @@ The situation is depicted below, in the `base` environment our pipeline will plu
 # The `test` pipeline runs the `fabricator` _and_ the full pipeline.
 kedro run -p test -e test
 
-# To leverage cloud systems
+# To leverage cloud systems, however note that we should never run env cloud locally
 kedro --env cloud
 ```
 
