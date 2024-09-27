@@ -11,20 +11,20 @@ from refit.v1.core.inline_has_schema import has_schema
 from refit.v1.core.inline_primary_key import primary_key
 
 
-def resolve(name: str, endpoint: str) -> str:
+def resolve(name: str, endpoint: str, att_to_get: str = "preferred_curie") -> str:
     """Function to retrieve curie through the synonymizer.
 
     Args:
         name: name of the node
         endpoint: endpoint of the synonymizer
+        att_to_get: attribute to get from API
     Returns:
         Corresponding curie
     """
-    result = requests.get(f"{endpoint}/synonymize", json={"names": name})
-
+    result = requests.get(f"{endpoint}/synonymize", json={"name": name})
     element = result.json().get(name)
     if element:
-        return element.get("preferred_curie", None)
+        return element.get(att_to_get, None)
 
     return None
 
@@ -332,24 +332,24 @@ def clean_drug_list(drug_df: pd.DataFrame, endpoint: str) -> pd.DataFrame:
     """
     res = enrich_df(
         drug_df,
-        func=normalize,
-        input_cols=["single_ID"],
+        func=partial(resolve, att_to_get="preferred_curie"),
+        input_cols=["ID_Label"],
         target_col="curie",
         endpoint=endpoint,
     )
     # Adding Categtory
     res = enrich_df(
         res,
-        func=partial(normalize, att_to_get="category"),
-        input_cols=["single_ID"],
+        func=partial(resolve, att_to_get="preferred_category"),
+        input_cols=["ID_Label"],
         target_col="category",
         endpoint=endpoint,
     )
 
     res = enrich_df(
         res,
-        func=partial(normalize, att_to_get="name"),
-        input_cols=["single_ID"],
+        func=partial(resolve, att_to_get="preferred_name"),
+        input_cols=["ID_Label"],
         target_col="name",
         endpoint=endpoint,
     )
@@ -382,8 +382,8 @@ def clean_disease_list(disease_df: pd.DataFrame, endpoint: str) -> pd.DataFrame:
     """
     res = enrich_df(
         disease_df,
-        func=normalize,
-        input_cols=["category_class"],
+        func=partial(resolve, att_to_get="preferred_curie"),
+        input_cols=["label"],
         target_col="curie",
         endpoint=endpoint,
     )
@@ -391,15 +391,15 @@ def clean_disease_list(disease_df: pd.DataFrame, endpoint: str) -> pd.DataFrame:
 
     res = enrich_df(
         res,
-        func=partial(normalize, att_to_get="category"),
-        input_cols=["category_class"],
+        func=partial(resolve, att_to_get="preferred_category"),
+        input_cols=["label"],
         target_col="category",
         endpoint=endpoint,
     )
     res = enrich_df(
         res,
-        func=partial(normalize, att_to_get="name"),
-        input_cols=["category_class"],
+        func=partial(resolve, att_to_get="preferred_name"),
+        input_cols=["label"],
         target_col="name",
         endpoint=endpoint,
     )
