@@ -1,8 +1,11 @@
-# Data Catalog: in-depth
+# Data Catalog
 
-`pipelines/matrix/conf/base/ingestion`
+This is an in-depth exploration of the Data Catalog, explaining its structure and how it works.
 
-First part of relevant bits of Data Catalog:
+It is not meant as an exhaustive explanation of every file, but it is a companion to the [use case](use_case.md) that explains how the data catalog is used in the code.
+
+
+## Anchor usage
 
 ```yaml
 _pandas_csv: &_pandas_csv
@@ -50,6 +53,7 @@ _layer_int: &_layer_int
 - The alias _layer_raw can be referenced in other parts of the catalog to apply this layer metadata.
 
  
+## Ingestion resources
 
 ```yaml
 # -------------------------------------------------------------------------
