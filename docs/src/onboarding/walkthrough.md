@@ -12,9 +12,9 @@ Daniel has integrated a new knowledge graph into Matrix and implemented a machin
 
 ### Raw Data
 
-Daniel has integrated a new biomedical toxicity graph, **RTX-KG2**, which is a knowledge graph consisting of node and edge data.
+Daniel has integrated a new biomedical graph, **RTX-KG2**, which is a knowledge graph consisting of node and edge data.
 
-The data can be found at `gs://mtrx-us-central1-hub-dev-storage/data/01_RAW/KGs/rtx_kg2/v2.10.0/.` It includes two `.tsv` files (`edges_c.tsv` and `nodes_c.tsv`) and a database file (`node_synonymizer_v1.0_KG2.10.0.sqlite`).
+The data can be found at `gs://mtrx-us-central1-hub-dev-storage/data/01_RAW/KGs/rtx_kg2/v2.10.0/.` It includes two `.tsv` files (`edges_c.tsv` and `nodes_c.tsv`) and a database file (`node_synonymizer_v1.0_KG2.10.0.sqlite`) used for node synonymization process.
 
 Daniel manually added this data to Google Cloud Storage (GCS), as there is currently no automated ingestion system. However, multiple versions of these graphs are maintained.
 
