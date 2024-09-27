@@ -60,7 +60,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 inputs=[
                     "ingestion.raw.drug_list@pandas",
                     "ingestion.raw.disease_list@pandas",
-                    "matrix_generation.feat.nodes@spark",
+                    "matrix_generation.feat.nodes@pandas",
                     "modelling.model_input.splits",
                 ],
                 outputs="matrix_generation.prm.matrix_pairs",
