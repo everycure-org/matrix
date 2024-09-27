@@ -1,26 +1,28 @@
-# Kedro integration workflow: Data Scientist Daniel
+# Kedro workflow: Data Scientist Daniel
 
-This is an investigation tracing code, data and logic flow from ingestion of a new data source to generation of new embeddings.
+This use case follows the journey of a dataset through the Kedro workflow, from raw data to its use in model training. The dataset was added by the hypothetical Data Scientist, Daniel.
 
 # Task
 
-Daniel has just integrated a new knowledge graph into Matrix; he has also implemented a new ML model for predicting drug x disease efficacy scores. We will reconstruct what Daniel needs to do to go from data, to drug x disease predictions.
+Daniel has integrated a new knowledge graph into Matrix and implemented a machine learning model for predicting drug-disease efficacy scores. We will reconstruct the steps Daniel needs to take to go from raw data to generating drug-disease predictions.
 
 # Integration
 
-## Integrating the new graph into the codebase
+## Integrating the New Graph into the codebase
 
 ### Raw Data
 
-Daniel has integrated a new biomedical toxicity graph, **RTX-KG2**. RTX-KG2 is a knowledge graph, passed in as node and edge data.
+Daniel has integrated a new biomedical toxicity graph, **RTX-KG2**, which is a knowledge graph consisting of node and edge data.
 
-This data can be viewed at `gs://mtrx-us-central1-hub-dev-storage/data/01_RAW/KGs/rtx_kg2/v2.10.0/` and consists of two .tsv files, `edges_c.tsv` and `nodes_c.tsv` and database `node_synonymizer_v1.0_KG2.10.0.sqlite` 
+The data can be found at `gs://mtrx-us-central1-hub-dev-storage/data/01_RAW/KGs/rtx_kg2/v2.10.0/.` It includes two `.tsv` files (`edges_c.tsv` and `nodes_c.tsv`) and a database file (`node_synonymizer_v1.0_KG2.10.0.sqlite`).
 
-Daniel has added this data to GCS manually - there is no automated ingestion system. However, we maintain multiple versions of those graphs.
+Daniel manually added this data to Google Cloud Storage (GCS), as there is currently no automated ingestion system. However, multiple versions of these graphs are maintained.
 
 ### Programmatic access to data
 
-Let’s see how this data is picked up by Kedro.
+Next, let’s look at how Kedro picks up this data.
+
+The ingestion process can be found in the following file:
 
 `pipelines/matrix/src/matrix/pipelines/ingestion/pipeline.py`
 
@@ -74,28 +76,28 @@ def register_pipelines() -> Dict[str, Pipeline]:
 
 ```
 
-⚠️ `register_pipeline()` is special function in Kedro, which defines pipelines for the entire deployment.
+⚠️ `register_pipeline()` is a special function in Kedro that defines pipelines for the entire deployment.
 
 **Data Catalog**
 
 Official documentation: https://docs.kedro.org/en/stable/data/data_catalog.html
 
-In a Kedro project, the Data Catalog is a registry of all data sources available for use by the project. It is specified with a YAML catalog file that maps the names of node inputs and outputs as keys in the `DataCatalog` class.
+In a Kedro project, the Data Catalog is a registry of all data sources available for use by the project. It is specified in a YAML catalog file, which maps the names of node inputs and outputs as keys in the `DataCatalog` class.
 
-Below is an in-depth investigation into Kedro Data Catalog.
+Below is an in-depth investigation into the Kedro Data Catalog:
 
-[Data Catalog: in-depth](Kedro%20integration%20workflow%20Data%20Scientist%20Daniel%2010cb57e013738085a3d2eb1f8ca3ac71/Data%20Catalog%20in-depth%2010db57e0137380bc8ccbc69cbfd34591.md)
+[Data Catalog: In-depth](Kedro%20integration%20workflow%20Data%20Scientist%20Daniel%2010cb57e013738085a3d2eb1f8ca3ac71/Data%20Catalog%20in-depth%2010db57e0137380bc8ccbc69cbfd34591.md)
 
 **Example**
 
-Node `write_rtx_kg2_nodes` will read raw `ingestion.raw.rtx_kg2.nodes` dataset from Spark, and will write them to `ingestion.int.rtx_kg2.nodes` , casting columns to literals. Variables are defined in `globals.yml`.
+The node `write_rtx_kg2_nodes` reads the raw `ingestion.raw.rtx_kg2.nodes` dataset from Spark and writes it to `ingestion.int.rtx_kg2.nodes`, casting columns to literals. Variables are defined in `globals.yml`.
 
-- Read: `gs://mtrx-us-central1-hub-dev-storage/kedro/data/01_raw/rtx_kg2/v2.7.3/nodes_c.tsv`
-- Write: `gs:/mtrx-us-central1-hub-dev-storage/runs/run-sept-first-node2vec-e5962a18/02_intermediate/rtx_kg2/nodes/nodes_c.tsv`
+- **Read**: `gs://mtrx-us-central1-hub-dev-storage/kedro/data/01_raw/rtx_kg2/v2.7.3/nodes_c.tsv`
+- **Write**: `gs://mtrx-us-central1-hub-dev-storage/runs/run-sept-first-node2vec-e5962a18/02_intermediate/rtx_kg2/nodes/nodes_c.tsv`
 
-Importantly, **version** is defined statically in `.yml` code. On the other hand, `RUN_NAME` is pulled from enviornment variables via `run_name: ${oc.env:RUN_NAME}`
+Importantly, the **version** is defined statically in the `.yml` file. On the other hand, `RUN_NAME` is retrieved from environment variables via `run_name: ${oc.env:RUN_NAME}`.
 
-It is still not clear to me where the value of RUN_NAME variable comes from.
+However, it remains unclear where the value of the `RUN_NAME` variable originates from.
 
 ```yaml
 
@@ -174,21 +176,27 @@ ingestion.raw.rtx_kg2.nodes@spark:
 
 ### Kedro Run
 
-How is this pipeline executed?
+**How is this pipeline executed?**
 
-Pipeline object is passed to Kedro’s `register_pipelines` ****, where is becomes exposed to commands such as `kedro run -e local -p ingestion` , which would trigger execution of the pipeline locally.
+The pipeline object is passed to Kedro’s `register_pipelines` function, where it becomes exposed to commands like `kedro run -e local -p ingestion`. This command triggers the execution of the pipeline locally, in the `local` environment, on the local machine.
 
-This would trigger execution of this pipeline, in `local` environment, and on local machine. But this is not the primary way we run our workloads in production.
+However, this is not the primary method for running workloads in production.
 
 ## ArgoCD
 
-Questions:
+### Questions:
 
-- How do we set run name for particular run?
-- What is the mechanism via which a run is submitted to our K8s cluster?
+- How do we set the run name for a particular run?
+- What is the mechanism by which a run is submitted to our Kubernetes (K8s) cluster?
 
-Use cases that pipeline split refactor must cover:
+### Use Cases the Pipeline Split Refactor Must Address:
 
-- User wants to materialize embeddings only.
-- User wants to materialize embeddings + modelling, but the latter fails. In response to this, we want to re-run modelling only, with old embeddings as input.
--
+- A user wants to materialize embeddings only.
+- A user wants to materialize embeddings and modeling, but the latter fails. In response, we want to re-run the modeling only, using the previous embeddings as input.
+
+---
+
+### Key Changes:
+- **Improved clarity**: Minor adjustments to sentence structure for smoother reading.
+- **Phrasing**: Slight rewording of "How is this pipeline executed?" section for precision and flow.
+- **Formatting consistency**: Ensured uniform formatting in the "Questions" and "Use Cases" sections for better readability.
