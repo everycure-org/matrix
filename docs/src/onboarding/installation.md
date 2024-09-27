@@ -8,7 +8,7 @@ This page assumes basic knowledge of the following technologies. We will provide
 
 !!! info "Support on Windows, MacOS and Linux"
     We are mostly using MacOS but try our best to provide an onboarding for all
-    platforms. This guide assumes Our guide assumes usage of [homebrew](https://brew.sh/)
+    platforms. This guide assumes usage of [homebrew](https://brew.sh/)
     to manage packages on MacOS, [Windows
     WSL](https://en.wikipedia.org/wiki/Windows_Subsystem_for_Linux) usage on Windows
     and some system proficiency for Linux users. If you find your platform could be
@@ -114,7 +114,7 @@ requirements. Note that while many may be used to Conda, UV and Conda cannot be 
 
 Python 3.11 is currently **required** to build the matrix pipeline. If you attempt to use Python 3.12, you will likely encounter errors with the recently-removed `distutils` package (see the common errors document for how to solve this) 
 
-Install as follows, then create a virtual env and install the requirements:
+Install as follows, then create a virtual env in the `matrix/pipelines/matrix` directory in the repo and install the requirements `requirements.txt`:
 
 
 !!! warning
