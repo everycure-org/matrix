@@ -59,7 +59,7 @@ def enrich_embeddings(
 def generate_pairs(
     drugs: pd.DataFrame,
     diseases: pd.DataFrame,
-    nodes: pd.DataFrame,
+    graph: KnowledgeGraph,
     known_pairs: pd.DataFrame,
 ) -> pd.DataFrame:
     """Function to generate matrix dataset.
@@ -67,7 +67,7 @@ def generate_pairs(
     Args:
         drugs: Dataframe containing IDs for the list of drugs.
         diseases: Dataframe containing IDs for the list of diseases.
-        nodes: Dataframe with node embeddings
+        graph: Object containing node embeddings.
         known_pairs: Labelled ground truth drug-disease pairs dataset.
 
     Returns:
@@ -82,7 +82,7 @@ def generate_pairs(
     diseases_lst = list(set(diseases_lst))
 
     # Remove drugs and diseases without embeddings
-    nodes_with_embeddings = set(nodes._nodes["id"])
+    nodes_with_embeddings = set(graph._nodes["id"])
     drugs_lst = [drug for drug in drugs_lst if drug in nodes_with_embeddings]
     diseases_lst = [
         disease for disease in diseases_lst if disease in nodes_with_embeddings
