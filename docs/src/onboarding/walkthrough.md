@@ -206,18 +206,11 @@ kedro run -e cloud -p ingestion
 
 This will use data catalog from `cloud` environment, and trigger `ingestion` pipeline, and should result in data being generated in GCS. However, execution of the pipeline will happen locally.
 
-
 ## Cloud
 ### Argo Workflows
 
-## ArgoCD
+The primary mechanism through which we execute our pipelines in `ArgoCD` templates. ArgoCD template contains information about services that need to be deployed on our K8s cluster; resources requests and scheduling information.
 
-### Questions:
+Matrix uses Jinja2 templating to generate a dynamic argo template as per user request, which is being submitted to the K8s cluster.
 
-- How do we set the run name for a particular run?
-- What is the mechanism by which a run is submitted to our Kubernetes (K8s) cluster?
-
-### Use Cases the Pipeline Split Refactor Must Address:
-
-- A user wants to materialize embeddings only.
-- A user wants to materialize embeddings and modeling, but the latter fails. In response, we want to re-run the modeling only, using the previous embeddings as input.
+Argo schema is generated using custom function `kedro submit -- ...`, that parametrizes it with use-case specific requests.
