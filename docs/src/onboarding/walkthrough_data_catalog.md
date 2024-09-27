@@ -1,8 +1,8 @@
-# Data Catalog
+# Walkthrough: Data Catalog
 
 This is an in-depth exploration of the Data Catalog, explaining its structure and how it works.
 
-It is not meant as an exhaustive explanation of every file, but it is a companion to the [use case](use_case.md) that explains how the data catalog is used in the code.
+It is not meant as an exhaustive explanation of every file, but it is a companion to the [Walkthrough: Data Scientist Daniel](walkthrough.md) that explains how the data catalog is used in the code.
 
 
 ## Anchor usage

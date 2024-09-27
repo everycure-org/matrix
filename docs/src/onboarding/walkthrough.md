@@ -1,4 +1,4 @@
-# Kedro workflow: Data Scientist Daniel
+# Walkthrough: Data Scientist Daniel
 
 This use case follows the journey of a dataset through the Kedro workflow, from raw data to its use in model training. The dataset was added by the hypothetical Data Scientist, Daniel.
 
@@ -172,9 +172,9 @@ ingestion.raw.rtx_kg2.nodes@spark:
 
 ```
 
-### Visibility in Kedro
+### As visible in Kedro-Viz
 
-![Screenshot 2024-09-26 at 12.02.52.png](img/kedro_daniel_pipeline.png)
+![Screenshot 2024-09-26 at 12.02.52.png](../assets/img/kedro_daniel_pipeline.png)
 
 ### Kedro Run
 
