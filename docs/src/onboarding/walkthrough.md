@@ -6,11 +6,9 @@ This use case follows the journey of a dataset through the Kedro workflow, from 
 
 Daniel has integrated a new knowledge graph into Matrix and implemented a machine learning model for predicting drug-disease efficacy scores. We will reconstruct the steps Daniel needs to take to go from raw data to generating drug-disease predictions.
 
-# Integration
+# Integrating the New Graph into the codebase
 
-## Integrating the New Graph into the codebase
-
-### Raw Data
+## Raw Data
 
 Daniel has integrated a new biomedical graph, **RTX-KG2**, which is a knowledge graph consisting of node and edge data.
 
@@ -18,7 +16,7 @@ The data can be found at `gs://mtrx-us-central1-hub-dev-storage/data/01_RAW/KGs/
 
 Daniel manually added this data to Google Cloud Storage (GCS), as there is currently no automated ingestion system. However, multiple versions of these graphs are maintained.
 
-### Programmatic access to data
+## Programmatic access to data
 
 Next, let’s look at how Kedro picks up this data.
 
@@ -172,7 +170,7 @@ ingestion.raw.rtx_kg2.nodes@spark:
 
 ```
 
-### As visible in Kedro-Viz
+## As visible in Kedro-Viz
 
 ![Screenshot 2024-09-26 at 12.02.52.png](../assets/img/kedro_daniel_pipeline.png)
 
@@ -185,16 +183,17 @@ The pipeline object is passed to Kedro’s `register_pipelines()` function, wher
 
 However, this is not the primary method for running workloads in production.
 
-### Summary 
+## Summary 
 
 Daniel has successfully integrated a new knowledge graph into the codebase, and added appropriate nodes to data catalog. The new pipeline can be now viewed in Kedro-Viz, and executed to produce node embeddings.
 
 Now, we will look at how this pipeline can be executed.
 
+# Execution
+## Local
 
-
-
-
+## Cloud
+### Argo Workflows
 
 ## ArgoCD
 
