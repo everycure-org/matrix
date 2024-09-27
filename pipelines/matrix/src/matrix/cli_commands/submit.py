@@ -57,6 +57,7 @@ def submit(username: str, namespace: str, run_name: str, verbose: bool, dry_run:
         console.rule("[bold blue]Submitting Workflow")
 
         console.print("Checking dependencies...")
+        # TODO: IMHO this should be verified by Docker.
         check_dependencies(verbose=verbose)
         console.print("[green]✓[/green] Dependencies checked")
 
