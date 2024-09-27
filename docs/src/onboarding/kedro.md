@@ -72,14 +72,15 @@ To seamlessly run the same codebase on both the fabricated and the production da
 
     To avoid full re-definition of all catalog and parameter entries, we're employing a [soft merge](https://docs.kedro.org/en/stable/configuration/advanced_configuration.html#how-to-change-the-merge-strategy-used-by-omegaconfigloader) strategy. Kedro will _always_ use the `base` config. This means that if another environment is selected, e.g., `cloud`, using the `--env` flag, Kedro will override the base configuration with the entries defined in `cloud`. Our goal is to _solely_ redefine entries in the `cloud` catalog when they deviate from `base`.
 
-The situation is depicted below, in the `base` environment our pipeline will plug into the datasets as produced by our fabricator pipeline, whereas the `cloud` environment plugs into the cloud systems.
+The situation is depicted below, in the `base` environment our pipeline will plug into the datasets as produced by our fabricator pipeline, whereas the `cloud` environment plugs into the cloud systems. Note that these commands need to be run in `matrix/pipelines/matrix` with the virtual environment activated.
 
 ```bash
 # Pipeline uses the base, i.e., local setup by default.
 # The `test` pipeline runs the `fabricator` _and_ the full pipeline.
 kedro run -p test -e test
 
-# To leverage cloud systems
+# To leverage cloud systems, you can use `cloud` environment.
+# Note that we should only use `cloud` environment within our cloud cluster, NOT locally.
 kedro --env cloud
 ```
 
