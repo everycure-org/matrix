@@ -190,7 +190,24 @@ Daniel has successfully integrated a new knowledge graph into the codebase, and 
 Now, we will look at how this pipeline can be executed.
 
 # Execution
+
+`Matrix` pipelines were intended as environment-agnostic, and can be executed locally or in the cloud.
+In this section, we will look at how to execute those pipelines in both environments.
+
 ## Local
+
+### via Makefile & Docker
+
+To execute the pipeline locally, Data Scientist Daniel would follow the steps outlined in the [Local Setup guide](integrating-the-new-graph-into-the-codebase.md)
+
+Makefile's `make` will result in all dependencies being installed, and full pipeline in docker (referred to as e2e Docker test, and ultimately triggered with `docker_test` command) will be triggered. `docker-compose.yml` and `docker-compose.ci.yml` will spin up a number of containers (neo4j, mlflow, gen-ai mocker, Matrix pipeline itself), and will trigger the kedro pipeline on the latter with following settings:
+
+```bash
+kedro run -e test -p test --without-tags xg_ensemble,not-shared
+```
+
+This will use data catalog from `test` environment, and trigger `test` pipeline. It also specifies a set of tags that ought to be omitted.
+
 
 ## Cloud
 ### Argo Workflows
