@@ -174,7 +174,7 @@ ingestion.raw.rtx_kg2.nodes@spark:
 
 ### Visibility in Kedro
 
-![Screenshot 2024-09-26 at 12.02.52.png](Kedro%20integration%20workflow%20Data%20Scientist%20Daniel%2010cb57e013738085a3d2eb1f8ca3ac71/Screenshot_2024-09-26_at_12.02.52.png)
+![Screenshot 2024-09-26 at 12.02.52.png](img/kedro_daniel_pipeline.png)
 
 ### Kedro Run
 
