@@ -86,7 +86,7 @@ In a Kedro project, the Data Catalog is a registry of all data sources available
 
 Below is an in-depth investigation into the Kedro Data Catalog:
 
-[Data Catalog: In-depth](use_case_data_catalog_exploration.md)
+[Data Catalog: In-depth](walkthrough_data_catalog.md)
 
 **Example**
 
