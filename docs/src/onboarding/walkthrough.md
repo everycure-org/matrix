@@ -51,13 +51,13 @@ def create_pipeline(**kwargs) -> Pipeline:
     )
 ```
 
-`node` object in Kedro is an arbitrary Python function performing computation
+`node` object in Kedro is an arbitrary Python function performing computation.
 
 - F.lit(): Stands for “literal” and is used to wrap a constant or fixed value in a way that it can be used as a column in PySpark DataFrame transformations.
 - inputs: `ingestion.raw.rtx_kg2.nodes@spark` refers to an object defined in Kedro’s **Data Catalog.**
     - `...@spark` implies that format of the input data is a PySpark DataFrame.
 - outputs: `ingestion.int.rtx_kg2.nodes` refers to an object defined in Kedro’s **Data Catalog.**
-    - Absence is the `...@spark` tag means that this dataset is not explicitly cast as PySpark DataFrame. However, if Data Catalog defines it as such, it will still be written as Spark dataframe.
+    - Absence of the `...@spark` suffix means that this dataset is not explicitly cast as PySpark DataFrame. However, if Data Catalog defines it as such, it will still be written as Spark dataframe.
 
 `create_pipeline()` is then being called in `pipelines/matrix/src/matrix/pipeline_registry.py`
 
@@ -95,9 +95,11 @@ The node `write_rtx_kg2_nodes` reads the raw `ingestion.raw.rtx_kg2.nodes` datas
 - **Read**: `gs://mtrx-us-central1-hub-dev-storage/kedro/data/01_raw/rtx_kg2/v2.7.3/nodes_c.tsv`
 - **Write**: `gs://mtrx-us-central1-hub-dev-storage/runs/run-sept-first-node2vec-e5962a18/02_intermediate/rtx_kg2/nodes/nodes_c.tsv`
 
-Importantly, the **version** is defined statically in the `.yml` file. On the other hand, `RUN_NAME` is retrieved from environment variables via `run_name: ${oc.env:RUN_NAME}`.
+Importantly, the **version** is defined statically in the `.yml` file. On the other hand, `RUN_NAME` is pulled from enviornment variables via `run_name: ${oc.env:RUN_NAME}`. 
 
-However, it remains unclear where the value of the `RUN_NAME` variable originates from.
+These environment variables are defined within `.env` file for local runs.
+
+When ran in the cloud, the name can be specified as a part of argo workflow which gets submitted to the cluster.
 
 ```yaml
 
@@ -178,7 +180,7 @@ ingestion.raw.rtx_kg2.nodes@spark:
 
 **How is this pipeline executed?**
 
-The pipeline object is passed to Kedro’s `register_pipelines` function, where it becomes exposed to commands like `kedro run -e local -p ingestion`. This command triggers the execution of the pipeline locally, in the `local` environment, on the local machine.
+The pipeline object is passed to Kedro’s `register_pipelines()` function, where it becomes exposed to commands like `kedro run -e local -p ingestion`. This command triggers the execution of the pipeline locally, in the `local` environment, on the local machine.
 
 However, this is not the primary method for running workloads in production.
 
@@ -193,10 +195,3 @@ However, this is not the primary method for running workloads in production.
 
 - A user wants to materialize embeddings only.
 - A user wants to materialize embeddings and modeling, but the latter fails. In response, we want to re-run the modeling only, using the previous embeddings as input.
-
----
-
-### Key Changes:
-- **Improved clarity**: Minor adjustments to sentence structure for smoother reading.
-- **Phrasing**: Slight rewording of "How is this pipeline executed?" section for precision and flow.
-- **Formatting consistency**: Ensured uniform formatting in the "Questions" and "Use Cases" sections for better readability.
