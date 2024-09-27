@@ -152,10 +152,6 @@ def make_batch_predictions(
         # drop rows without source/target embeddings
         batch = batch.dropna(subset=["source_embedding", "target_embedding"])
 
-        # hack for when all rows are dropped
-        if batch.shape[0] == 0:
-            return
-
         # Apply transformers to data
         transformed = apply_transformers(batch, transformers)
 
