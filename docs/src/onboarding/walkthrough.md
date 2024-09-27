@@ -176,6 +176,7 @@ ingestion.raw.rtx_kg2.nodes@spark:
 
 ![Screenshot 2024-09-26 at 12.02.52.png](../assets/img/kedro_daniel_pipeline.png)
 
+
 ### Kedro Run
 
 **How is this pipeline executed?**
@@ -183,6 +184,17 @@ ingestion.raw.rtx_kg2.nodes@spark:
 The pipeline object is passed to Kedro’s `register_pipelines()` function, where it becomes exposed to commands like `kedro run -e local -p ingestion`. This command triggers the execution of the pipeline locally, in the `local` environment, on the local machine.
 
 However, this is not the primary method for running workloads in production.
+
+### Summary 
+
+Daniel has successfully integrated a new knowledge graph into the codebase, and added appropriate nodes to data catalog. The new pipeline can be now viewed in Kedro-Viz, and executed to produce node embeddings.
+
+Now, we will look at how this pipeline can be executed.
+
+
+
+
+
 
 ## ArgoCD
 
