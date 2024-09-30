@@ -24,3 +24,10 @@ Welcome! Below is a curated list of useful links to various EveryCure resources 
 - **[Matrix Repository](https://github.com/everycure-org/matrix)** – Core project repository for EveryCure's Matrix platform.
 - **[Matrix Issues](https://github.com/everycure-org/matrix/issues)** – Current issues and backlog for the Matrix project.
 - **[Good First Issues Board](https://github.com/everycure-org/matrix/labels/good%20first%20issue)** – Ideal starting issues for new contributors.
+
+
+## Resources - learning
+- **[What is GitOps?](https://www.youtube.com/watch?v=f5EpcWp0THw)
+- **[ArgoCD Tutorial](https://www.youtube.com/watch?v=MeU5_k9ssrs)
+- **[Awesome Argo - Argo resources collection](https://github.com/akuity/awesome-argo)
+- **[Demystifying Argo Workflows: An Architectural Deep Dive](https://www.youtube.com/watch?v=FBRMURQYbgw)
