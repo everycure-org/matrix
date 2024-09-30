@@ -158,8 +158,12 @@ def make_batch_predictions(
                 ",".join([f"({r.source}, {r.target})" for _, r in removed.iterrows()]),
             )
 
-        # drop rows without source/target embeddings
+        # Drop rows without source/target embeddings
         batch = batch.dropna(subset=["source_embedding", "target_embedding"])
+
+        # Return empty dataframe if all rows are dropped
+        if len(batch) == 0:
+            return batch.drop(columns=["source_embedding", "target_embedding"])
 
         # Apply transformers to data
         transformed = apply_transformers(batch, transformers)
