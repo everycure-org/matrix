@@ -18,7 +18,7 @@ serviceAccount:
 service:
   type: NodePort
   port: 3000
-  nodePort: 31300
+  nodePort: 31800
 
 ingress:
   enabled: false
