@@ -31,8 +31,8 @@ def _create_inference_pipeline(model: str) -> Pipeline:
     """Part of the inference pipeline which gets re-executed for each model selected."""
     return pipeline(
         [
-        # WARNING: If changes are made to the matrix generation pipeline, this code must be changed accordingly.
-        # FUTURE: Experiment with Kedro's modular pipeline feature to solve this issue. 
+            # WARNING: If changes are made to the matrix generation pipeline, this code must be changed accordingly.
+            # FUTURE: Experiment with Kedro's modular pipeline feature to solve this issue.
             node(
                 func=matrix_gen.make_predictions_and_sort,
                 inputs=[
