@@ -3,6 +3,7 @@ TAG ?= ${USER}
 GIT_SHA ?= $(shell git rev-parse --short HEAD)
 export PYSPARK_PYTHON = .venv/bin/python
 TQDM_DISABLE ?= 1
+TARGET_PLATFORM ?= linux/amd64
 
 # ensures all make targets run in one shell (rather than line by line in new shell)
 .ONESHELL: 
@@ -54,7 +55,7 @@ docker_test: docker_build
 		--exit-code-from matrix-pipeline
 
 docker_build:
-	docker buildx build --progress=plain --build-arg GIT_SHA=${GIT_SHA} --platform linux/amd64 -t $(dev_docker_image) ./
+	docker buildx build --progress=plain --build-arg GIT_SHA=${GIT_SHA} --platform $(TARGET_PLATFORM) -t $(dev_docker_image) ./
 	docker tag $(dev_docker_image) $(dev_docker_image):${TAG}
 docker_push: docker_build
 	docker push $(dev_docker_image):${TAG}
