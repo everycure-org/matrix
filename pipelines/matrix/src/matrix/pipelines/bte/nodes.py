@@ -103,10 +103,12 @@ def transform_result(
         n1_bindings = node_bindings.get("n1", [])
         n0_bindings = node_bindings.get("n0", [])
         analyses = result.get("analyses", [])
-
+        if not (n1_bindings and n0_bindings and analyses):
+            logging.warning(f"Incomplete data in result for CURIE {curie}")
+            continue
         for n1_binding, n0_binding, analysis in zip(n1_bindings, n0_bindings, analyses):
             drug_curie = n0_binding.get("id")
-
+            approved = False
             if drug_curie in drug_set1:
                 approved = True
             elif drug_curie in drug_set2:
@@ -325,7 +327,7 @@ async def run_async_queries(
         pd.DataFrame: A DataFrame containing the results of the queries.
     """
     timeout_config = httpx.Timeout(default_timeout)
-
+    all_results = []
     async with httpx.AsyncClient(timeout=timeout_config) as client:
         semaphore = asyncio.Semaphore(max_concurrent_requests)
         queries = list(generate_queries(disease_list, n_diseases_limit))
@@ -345,22 +347,16 @@ async def run_async_queries(
             )
             for query in queries
         ]
-        all_results = []
+
         for future in asyncio.as_completed(tasks):
             try:
                 result = await future
                 if result:
+                    print(result)
                     all_results.extend(result)
             except Exception as e:
                 logging.error(f"An error occurred during query processing: {e}")
-
-    schema = {
-        "target": "object",
-        "source": "object",
-        "score": "float64",
-        "approved": "bool",
-    }
-    df = pd.DataFrame({col: pd.Series(dtype=schema[col]) for col in schema})
+    df = pd.DataFrame(all_results, columns=["target", "source", "score", "approved"])
     return df
 
 
@@ -413,4 +409,26 @@ def run_bte_queries(
             n_diseases_limit,
         )
     )
+    save_dataframe_to_csv(df, "bte_model_output.csv")
     return df
+
+
+def save_dataframe_to_csv(df: pd.DataFrame, file_path: str) -> None:
+    """Save the provided DataFrame to a CSV file at the specified path.
+
+    Args:
+        df (pd.DataFrame): The DataFrame to save.
+        file_path (str): The file path where the DataFrame should be saved.
+
+    Raises:
+        ValueError: If the DataFrame is empty.
+    """
+    if df.empty:
+        logging.error("The provided DataFrame is empty.")
+        raise ValueError("The DataFrame to save is empty.")
+    try:
+        df.to_csv(file_path, index=False)
+        logging.debug(f"DataFrame successfully saved to {file_path}")
+    except (FileNotFoundError, PermissionError) as e:
+        logging.exception(f"Failed to save DataFrame to {file_path}: {e}")
+        raise
