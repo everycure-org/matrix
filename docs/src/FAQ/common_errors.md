@@ -286,3 +286,12 @@ WARNING  Retrying (Retry(total=2, connect=2, read=5, redirect=5, status=5)) afte
 ```
 
 Setting `ulimit -n 1000000` in the shell before running the pipeline will fix this issue.
+
+## `make` stuck on one kedro node forever on MacOS after recent update
+
+It may be necessary to update your rosetta license agreement.
+
+```
+softwareupdate --install-rosetta
+```
+Then agree to the license agreement with `A`
