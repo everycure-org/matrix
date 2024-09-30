@@ -23,13 +23,13 @@ service:
 ingress:
   enabled: false
 
-# resources:
-#   limits:
-#     cpu: "12"
-#     memory: "24Gi"
-#   requests:
-#     cpu: "12"
-#     memory: "24Gi"
+resources:
+  limits:
+    cpu: "12"
+    memory: "24Gi"
+  requests:
+    cpu: "12"
+    memory: "24Gi"
 
 redis:
   enabled: true
