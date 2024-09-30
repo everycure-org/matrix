@@ -21,8 +21,8 @@ spec:
         imagePullPolicy: {{ .Values.image.pullPolicy }}
         env:
         {{- range .Values.env }}
-        - name: {{ .name }}
-          value: {{ .value | quote }}
+          - name: {{ .name }}
+            value: {{ .value | quote }}
         {{- end }}
         resources:
           limits:
