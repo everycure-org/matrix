@@ -220,9 +220,9 @@ Let's investigate the `submit` command.
 1. Retrieve the run name.
 2. Verify that dependencies - `gcloud`, `kubectl` are installed.
 3. Build docker image from the current state of the pipeline, and tag it with user name. 
-4. Generate Argo template, parametrizing it as seen fit.
+4. Generate Argo Workflow template, parametrizing it according to the run specs.
 5. Ensure K8s namespace is available.
-6. Apply Argo Template - deploy to Argo / K8s `kubectl apply -f templates/argo-workflow-template.yml`
+6. Apply the Argo Workflow Template, and deploy it to Argo / K8s `kubectl apply -f templates/argo-workflow-template.yml`
 7. Submit workflow to Argo.
 
 
