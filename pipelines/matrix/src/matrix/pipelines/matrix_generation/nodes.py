@@ -48,6 +48,18 @@ def enrich_embeddings(
     )
 
 
+def spark_to_pd(nodes: DataFrame) -> pd.DataFrame:
+    """Temporary function to transform spark parquet to pandas parquet.
+
+    Related to https://github.com/everycure-org/matrix/issues/71.
+    TODO: replace/remove the function once pyarrow error is fixed.
+
+    Args:
+        nodes: Dataframe with node embeddings
+    """
+    return nodes.toPandas()
+
+
 @has_schema(
     schema={
         "source": "object",

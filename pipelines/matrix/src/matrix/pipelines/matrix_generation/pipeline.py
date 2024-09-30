@@ -13,7 +13,7 @@ def _create_matrix_generation_pipeline(model: str) -> Pipeline:
             node(
                 func=nodes.make_predictions_and_sort,
                 inputs=[
-                    "matrix_generation.feat.nodes@pandas",
+                    "matrix_generation.feat.nodes_kg_ds",
                     "matrix_generation.prm.matrix_pairs",
                     f"modelling.{model}.model_input.transformers",
                     f"modelling.{model}.models.model",
@@ -55,12 +55,22 @@ def create_pipeline(**kwargs) -> Pipeline:
                 outputs="matrix_generation.feat.nodes@spark",
                 name="enrich_matrix_embeddings",
             ),
+            # Hacky fix to save parquet file via pandas rather than spark
+            # related to https://github.com/everycure-org/matrix/issues/71
+            node(
+                func=nodes.spark_to_pd,
+                inputs=[
+                    "matrix_generation.feat.nodes@spark",
+                ],
+                outputs="matrix_generation.feat.nodes_kg_ds",
+                name="transform_parquet_library",
+            ),
             node(
                 func=nodes.generate_pairs,
                 inputs=[
                     "ingestion.raw.drug_list@pandas",
                     "ingestion.raw.disease_list@pandas",
-                    "matrix_generation.feat.nodes@pandas",
+                    "matrix_generation.feat.nodes_kg_ds",
                     "modelling.model_input.splits",
                 ],
                 outputs="matrix_generation.prm.matrix_pairs",
