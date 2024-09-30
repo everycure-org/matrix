@@ -5,7 +5,6 @@ import asyncio
 import logging
 import httpx
 import time
-import itertools
 import pandas as pd
 from tenacity import (
     retry,
@@ -27,7 +26,6 @@ def generate_trapi_query(curie: str) -> dict[str, Any]:
         dict[str, Any]: A dictionary representing the TRAPI query.
     """
     if not curie:
-        logging.error("CURIE must not be empty")
         raise ValueError("CURIE must not be empty")
 
     # Construct the TRAPI query structure
@@ -66,11 +64,9 @@ def generate_queries(
     Yields:
         Iterator[dict[str, Any]]: An iterator of dictionaries containing the CURIE and the TRAPI query.
     """
-    for index, row in (
-        itertools.islice(disease_list.iterrows(), n_diseases_limit)
-        if n_diseases_limit is not None and n_diseases_limit != -1
-        else disease_list.iterrows()
-    ):
+    if n_diseases_limit > 0:
+        disease_list = disease_list.head(n_diseases_limit)
+    for index, row in disease_list.iterrows():
         curie = row.get("category_class")
         if curie:
             trapi_query = generate_trapi_query(curie)
@@ -96,10 +92,9 @@ def transform_result(
     """
     results = []
     curie = response.get("curie")
-
     message = response.get("message", {})
+
     if not message.get("results"):
-        logging.debug(f"No results found for CURIE {curie}")
         return results
 
     # Iterate over the results and extract source, target, score
@@ -109,18 +104,17 @@ def transform_result(
         n0_bindings = node_bindings.get("n0", [])
         analyses = result.get("analyses", [])
 
-        if not (n1_bindings and n0_bindings and analyses):
-            logging.warning(f"Incomplete data in result for CURIE {curie}")
-            continue
-
         for n1_binding, n0_binding, analysis in zip(n1_bindings, n0_bindings, analyses):
             drug_curie = n0_binding.get("id")
-            approved = False
+
             if drug_curie in drug_set1:
                 approved = True
             elif drug_curie in drug_set2:
                 approved = True
                 drug_curie = drug_mapping_dict[drug_curie]
+            else:
+                approved = False
+
             results.append(
                 {
                     "target": n1_binding.get("id"),
@@ -130,7 +124,6 @@ def transform_result(
                 }
             )
 
-    logging.debug(f"Transformed {len(results)} results for CURIE {curie}")
     return results
 
 
@@ -151,7 +144,6 @@ async def post_async_query(client: httpx.AsyncClient, url: str, payload: dict) -
     Returns:
         dict: The JSON response from the server.
     """
-    logging.debug(f"Submitting query to {url} with payload: {payload}")
     response = await client.post(url, json=payload)
     response.raise_for_status()
     return response.json()
@@ -175,7 +167,6 @@ async def fetch_final_results(client: httpx.AsyncClient, response_url: str) -> d
     Returns:
         dict: The parsed JSON response containing the final results.
     """
-    logging.debug(f"Fetching final results from {response_url}")
     response = await client.get(response_url)
     response.raise_for_status()
     try:
@@ -206,7 +197,6 @@ async def check_async_job_status(
     while True:
         elapsed_time = time.monotonic() - start_time
         if elapsed_time > default_timeout:
-            logging.error(f"Job {job_url} timed out after {default_timeout} seconds.")
             return {
                 "status": "TimedOut",
                 "description": f"Job did not complete within {default_timeout} seconds.",
@@ -220,18 +210,14 @@ async def check_async_job_status(
             description = response_json.get(
                 "description", "No status description provided."
             )
-            logging.debug(f"Job status for {job_url}: {status} - {description}")
 
             if status == "Completed" and response_json.get("response_url"):
                 return await fetch_final_results(client, response_json["response_url"])
             elif status in ["Failed", "Error"]:
-                logging.error(f"Job failed with response: {response_json}")
                 return {"status": status, "description": description}
             elif status in ["Pending", "Running", "Queued"]:
-                logging.debug(f"Job is still in progress: {description}")
                 await asyncio.sleep(job_check_sleep)
             else:
-                logging.error(f"Unknown status: {status}. Description: {description}")
                 return {"status": status, "description": description}
         except (httpx.HTTPStatusError, httpx.RequestError, ValueError) as e:
             logging.exception(f"Error while checking job status for {job_url}: {e}")
@@ -283,12 +269,10 @@ async def process_query(
     index = query["index"]
 
     async with semaphore:
-        logging.debug(f"Processing query {index} for CURIE {curie}")
         initial_response_data = await post_async_query(
             client, async_query_url, query_dict
         )
         if not initial_response_data.get("job_url"):
-            logging.error(f"Invalid initial response for CURIE {curie}")
             raise ValueError("Invalid initial response structure.")
 
         final_response_data = await check_async_job_status(
@@ -303,16 +287,12 @@ async def process_query(
             transformed_results = transform_result(
                 final_response_data, drug_set1, drug_set2, drug_mapping_dict
             )
-            logging.debug(f"Successfully processed query {index} for CURIE {curie}")
             return transformed_results
         else:
             status = (
                 final_response_data.get("status", "Unknown")
                 if final_response_data
                 else "Unknown"
-            )
-            logging.error(
-                f"Query {index} for CURIE {curie} failed with status: {status}."
             )
             raise Exception(f"Query failed with status: {status}")
 
@@ -373,8 +353,6 @@ async def run_async_queries(
                     all_results.extend(result)
             except Exception as e:
                 logging.error(f"An error occurred during query processing: {e}")
-
-    logging.debug(f"Total results collected: {len(all_results)}")
 
     schema = {
         "target": "object",
