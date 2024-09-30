@@ -99,6 +99,7 @@ jobs:
         # only if PR is labelled with "ready" or if branch is main
         # if: contains(github.event.pull_request.labels.*.name, 'ready') || github.ref == 'refs/heads/main'
       # workaround as the `failure()` call did not work in downstream matrix_ci_check
+      - run: docker volume prune -f #avoid running out of disk space
       - id: finally
         if: failure()
         run: echo "status=failure" >> "$GITHUB_OUTPUT"
