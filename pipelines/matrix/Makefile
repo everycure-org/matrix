@@ -56,7 +56,6 @@ docker_test: docker_build
 docker_build:
 	docker buildx build --progress=plain --build-arg GIT_SHA=${GIT_SHA} --platform linux/amd64 -t $(dev_docker_image) ./
 	docker tag $(dev_docker_image) $(dev_docker_image):${TAG}
-
 docker_push: docker_build
 	docker push $(dev_docker_image):${TAG}
 
