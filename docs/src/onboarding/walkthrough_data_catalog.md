@@ -43,7 +43,7 @@ _layer_int: &_layer_int
 
 **_spark_parquet_ds: &_spark_parquet**
 
-- This defines a configuration for a Spark dataset using the `matrix.datasets.gcp.LazySparkDataset` class
+- This defines a configuration for a Spark dataset using the `matrix.datasets.gcp.LazySparkDataset` class.
 - The file_format is set to parquet, indicating that Parquet files are used.
 - The save_args section specifies that files should be saved in “overwrite” mode, which means any existing data will be replaced when writing.
 
@@ -74,7 +74,7 @@ ingestion.raw.rtx_kg2.nodes@pandas:
 - `ingestion.raw.rtx_kg2.nodes` dataset in pandas (`pandas.CSVDataset`) format is defined here.
 - `<<: [*_pandas_csv, *_layer_raw]`
     - This line indicates the use of YAML merge syntax, which allows the configuration to inherit properties from the anchors _pandas_csv and _layer_raw:
-        - _pandas_csv defines the use of the pandas.CSVDataset, so this dataset will use Pandas for reading and writing.
+        - `_pandas_csv` defines the use of the pandas.CSVDataset, so this dataset will use Pandas for reading and writing.
         - `_layer_raw` includes metadata specifying that this dataset belongs to the “raw” layer for visualization purposes.
     - By merging these, you avoid redefining the type: pandas.CSVDataset and the layer metadata here.
 - `filepath: ${globals:paths.raw}/rtx_kg2/${globals:data_sources.rtx-kg2.version}/nodes_c.tsv`
@@ -85,7 +85,7 @@ ingestion.raw.rtx_kg2.nodes@pandas:
     - The full path likely resolves to something like `path_to_raw_folder/rtx_kg2/version_xxx/nodes_c.tsv`
 - `load_args`:
     - sep: `"\t"` indicates that the file being loaded is a tab-separated values (TSV) file.
-    •	These are the custom arguments passed to Pandas when loading the dataset, as TSV files use tab characters (`\t`) as the separator.
+    - These are the custom arguments passed to Pandas when loading the dataset, as TSV files use tab characters (`\t`) as the separator.
 - `save_args`:
     - Specifies how the file should be saved back to disk:
         - `header`: false means the header row won’t be written to the file when saving.
