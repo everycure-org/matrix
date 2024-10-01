@@ -48,7 +48,7 @@ redis:
       memory: "2Gi"
 
 initContainers:
-  - name: wait-for-redis
+  - name: bte-wait-for-redis
     image: busybox
     command:
       [
