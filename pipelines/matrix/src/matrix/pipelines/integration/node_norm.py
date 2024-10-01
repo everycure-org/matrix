@@ -27,6 +27,7 @@ class NodeNormalizer:
 
     def __call__(self):
 
+
         robokop_nodes_df = pd.read_csv(self.robokop_nodes, sep="\t")
         rtx_kg2_nodes_df = pd.read_csv(self.rtx_kg2_nodes, sep="\t")
 
@@ -50,11 +51,17 @@ class NodeNormalizer:
 
         # key off these columns for edges: "subject", "predicate", "object", "primary_knowledge_source"
         joined_edges = robokop_edges_df.merge(rtx_kg2_edges_df, on=["subject", "predicate", "object", "primary_knowledge_source"], how="outer", suffixes=('_robokop', '_rtx'))
-        joined_edges.to_csv(pathlib.Path("/tmp/merged_edges.tsv"), sep="\t")
+        # print(joined_edges.shape)
+        # joined_edges.to_csv(pathlib.Path("/tmp/merged_edges.tsv"), sep="\t")
+        deduped_joined_edges = joined_edges.drop_duplicates()
+        # deduped_joined_edges.to_csv(pathlib.Path("/tmp/merged_edges_deduped.tsv"), sep="\t")
 
         # key off these columns for nodes: "id", "category"
         joined_nodes = robokop_nodes_df.merge(rtx_kg2_nodes_df, on=["id", "category"], how="outer", suffixes=('_robokop', '_rtx'))
-        joined_nodes.to_csv(pathlib.Path("/tmp/merged_nodes.tsv"), sep="\t")
+        # print(joined_nodes.shape)
+        # joined_nodes.to_csv(pathlib.Path("/tmp/merged_nodes.tsv"), sep="\t")
+        deduped_joined_nodes = joined_nodes.drop_duplicates()
+        # deduped_joined_nodes.to_csv(pathlib.Path("/tmp/merged_nodes_deduped.tsv"), sep="\t")
 
 
     def normalize_dataframe(self, nodes_df: pd.DataFrame, edges_df: pd.DataFrame):
@@ -81,8 +88,8 @@ class NodeNormalizer:
     def hit_node_norm_service(self, curies, retries=0):
 
         request_json = {'curies': curies,
-                        'conflate': f'{os.getenv("CONFLATE_NODE_TYPES", "false")}',
-                        'drug_chemical_conflate': f'{os.getenv("CONFLATE_NODE_TYPES", "false")}',
+                        'conflate': f'{os.getenv('CONFLATE_NODE_TYPES', "true")}',
+                        'drug_chemical_conflate': f'{os.getenv('CONFLATE_NODE_TYPES', "true")}',
                         'description': "true"}
 
         logger.debug(request_json)
