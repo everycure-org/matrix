@@ -26,7 +26,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                     "job_check_sleep": "params:bte.job_check_sleep",
                     "n_diseases_limit": "params:bte.n_diseases_limit",
                 },
-                outputs="bte.model_output.predictions",
+                outputs="bte.model_output.predictions_csv",
                 name="bte-single_processing_node",
             )
         ]

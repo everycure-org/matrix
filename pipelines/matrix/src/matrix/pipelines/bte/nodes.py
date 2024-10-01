@@ -352,7 +352,6 @@ async def run_async_queries(
             try:
                 result = await future
                 if result:
-                    print(result)
                     all_results.extend(result)
             except Exception as e:
                 logging.error(f"An error occurred during query processing: {e}")
@@ -409,26 +408,4 @@ def run_bte_queries(
             n_diseases_limit,
         )
     )
-    save_dataframe_to_csv(df, "bte_model_output.csv")
     return df
-
-
-def save_dataframe_to_csv(df: pd.DataFrame, file_path: str) -> None:
-    """Save the provided DataFrame to a CSV file at the specified path.
-
-    Args:
-        df (pd.DataFrame): The DataFrame to save.
-        file_path (str): The file path where the DataFrame should be saved.
-
-    Raises:
-        ValueError: If the DataFrame is empty.
-    """
-    if df.empty:
-        logging.error("The provided DataFrame is empty.")
-        raise ValueError("The DataFrame to save is empty.")
-    try:
-        df.to_csv(file_path, index=False)
-        logging.debug(f"DataFrame successfully saved to {file_path}")
-    except (FileNotFoundError, PermissionError) as e:
-        logging.exception(f"Failed to save DataFrame to {file_path}: {e}")
-        raise
