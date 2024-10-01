@@ -46,3 +46,13 @@ redis:
   resources:
     requests:
       memory: "2Gi"
+
+initContainers:
+  - name: wait-for-redis
+    image: busybox
+    command:
+      [
+        "sh",
+        "-c",
+        "until nc -z bte-trapi-redis-master.bte-trapi.svc.cluster.local 6379; do echo waiting for redis; sleep 2; done;",
+      ]
