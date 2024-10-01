@@ -196,7 +196,7 @@ It should be added that most pipelines rely on additional services being present
 ## Local
 ### via Makefile & Docker
 
-To execute this pipeline locally, Data Scientist Daniel would follow steps similar to the ones outlined in the [Local Setup guide](integrating-the-new-graph-into-the-codebase.md)
+To execute this pipeline locally, Data Scientist Daniel would follow steps similar to the ones outlined in the [Local Setup guide](local-setup.md)
 
 However, this pipeline does not have dependencies on any external services, such as Neo4j or MLFlow. Therefore, it can be executed directly via the `kedro` CLI interface.
 
