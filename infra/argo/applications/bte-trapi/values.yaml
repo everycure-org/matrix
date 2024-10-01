@@ -8,6 +8,14 @@ image:
 env:
   - name: SENTRY_ENABLED
     value: "false"
+  - name: REDIS_HOST
+    value: redis
+  - name: REDIS_PORT
+    value: "6379"
+  - name: DEBUG
+    value: "biomedical-id-resolver,bte*"
+  - name: DEBUG_COLORS
+    value: "true"
 
 serviceAccount:
   create: true
