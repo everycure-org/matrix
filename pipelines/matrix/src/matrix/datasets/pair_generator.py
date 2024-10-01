@@ -325,7 +325,7 @@ class MatrixTestDiseases(DrugDiseasePairGenerator):
         positive_diseases = positive_pairs["target"].unique()
         in_output = matrix["target"].isin(positive_diseases)
 
-        # Removal of boolean
+        # Removal of flagged pairs
         if self.removal_columns != None:
             is_remove = pd.Series(False, index=matrix.index)
             for col_name in self.removal_columns:
