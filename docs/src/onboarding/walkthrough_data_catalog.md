@@ -85,7 +85,7 @@ ingestion.raw.rtx_kg2.nodes@pandas:
     - The full path likely resolves to something like `path_to_raw_folder/rtx_kg2/version_xxx/nodes_c.tsv`
 - `load_args`:
     - sep: `"\t"` indicates that the file being loaded is a tab-separated values (TSV) file.
-    •	These are the custom arguments passed to Pandas when loading the dataset, as TSV files use tab characters (`\t`) as the separator.
+    - These are the custom arguments passed to Pandas when loading the dataset, as TSV files use tab characters (`\t`) as the separator.
 - `save_args`:
     - Specifies how the file should be saved back to disk:
         - `header`: false means the header row won’t be written to the file when saving.
