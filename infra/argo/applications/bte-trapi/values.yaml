@@ -46,21 +46,3 @@ redis:
   resources:
     requests:
       memory: "2Gi"
-
-livenessProbe:
-  httpGet:
-    path: /
-    port: 3000
-  initialDelaySeconds: 30
-  periodSeconds: 10
-
-readinessProbe:
-  exec:
-    command:
-      - sh
-      - -c
-      - "nc -z bte-trapi-redis-master.bte-trapi.svc.cluster.local 6379"
-  initialDelaySeconds: 5
-  periodSeconds: 5
-  timeoutSeconds: 2
-  failureThreshold: 10
