@@ -4,28 +4,6 @@ from kedro.pipeline import Pipeline, node, pipeline
 from . import nodes as nd
 from ..matrix_generation import nodes as matrix_gen
 
-# FUTURE: move to data science runbook
-# How to run inference pipeline using models in remote MLFlow:
-# 1. Specify WORKFLOW_ID in .env which corresponds to the run name in MLFlow you want to use for inference
-# 1.1 You can find the run names in mlflow https://mlflow.platform.dev.everycure.org/
-# 2. Ensure that your local MLFlow container is not off so that port 5001 is empty
-# 3. Port-forward to the kubernetes MLFlow service
-# 3.1 Run the following to get the list of services with mlflow namespace
-# > get svc -n mlflow
-# 3.2 Ensure that mlflow-tracking service is active, then port-forward remote port (80) to local 5001
-# > kubectl port-forward svc/mlflow-tracking 5001:80 -n mlflow
-# 3.3 If successful, you should get the following message.
-# You can confirm successful port-forwarding by checking following in your browser http://localhost:5001
-# >> Forwarding from 127.0.0.1:5001 -> 5000
-# >> Forwarding from [::1]:5001 -> 5000
-# 4. In a separate terminal, execute inference pipeline in cloud by executing the following
-#  > kedro run --env cloud
-# 4.1 Note that you might get an error when running the ingest_disease list node as API reaches max num of rows to be written.
-# If that's the case you can simply re-run from that node onwards by using the following command
-#  > kedro run --env cloud --from-nodes resolve_input_sheet
-# 5. Once finished, go back to the terminal with port-forwarding and terminate the port forwarding with ctrl + c
-# 5.1 You can confirm the process was sucessful by re-checking http://localhost:5001 (service shouldnt be available now)
-
 
 def _create_inference_pipeline(model: str) -> Pipeline:
     """Part of the inference pipeline which gets re-executed for each model selected."""
