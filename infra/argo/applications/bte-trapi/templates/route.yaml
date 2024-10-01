@@ -1,18 +1,18 @@
 # NOTE to be adapted for BTE-TRAPI
-# kind: HTTPRoute
-# apiVersion: gateway.networking.k8s.io/v1beta1
-# metadata:
-#   name: mlflow-route
-#   namespace: mlflow
-# spec:
-#   parentRefs:
-#   - kind: Gateway
-#     sectionName: https
-#     namespace: gateway
-#     name: external-http
-#   hostnames:
-#   - "mlflow.platform.dev.everycure.org"
-#   rules:
-#   - backendRefs:
-#     - name: mlflow-tracking
-#       port: 80
+kind: HTTPRoute
+apiVersion: gateway.networking.k8s.io/v1beta1
+metadata:
+  name: bte-route
+  namespace: bte-trapi
+spec:
+  parentRefs:
+    - kind: Gateway
+      sectionName: https
+      namespace: gateway
+      name: external-http
+  hostnames:
+    - "bte.platform.dev.everycure.org"
+  rules:
+    - backendRefs:
+        - name: bte-trapi
+          port: 3000
