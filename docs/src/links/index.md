@@ -29,5 +29,5 @@ Welcome! Below is a curated list of useful links to various EveryCure resources 
 ## Resources - learning
 - **[What is GitOps?](https://www.youtube.com/watch?v=f5EpcWp0THw)
 - **[ArgoCD Tutorial](https://www.youtube.com/watch?v=MeU5_k9ssrs)
-- **[Awesome Argo - Argo resources collection](https://github.com/akuity/awesome-argo)
+- **[Awesome Argo - Argo resources collection](https://github.com/akuity/awesome-argo)**
 - **[Demystifying Argo Workflows: An Architectural Deep Dive](https://www.youtube.com/watch?v=FBRMURQYbgw)**
