@@ -78,7 +78,7 @@ def register_pipelines() -> Dict[str, Pipeline]:
 
 **Data Catalog**
 
-Official documentation: https://docs.kedro.org/en/stable/data/data_catalog.html
+[Official documentation](https://docs.kedro.org/en/stable/data/data_catalog.html)
 
 In a Kedro project, the Data Catalog is a registry of all data sources available for use by the project. It is specified in a YAML catalog file, which maps the names of node inputs and outputs as keys in the `DataCatalog` class.
 
