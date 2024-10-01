@@ -39,7 +39,7 @@ _layer_int: &_layer_int
 **_pandas_csv: &_pandas_csv**
 
 - This defines a dataset configuration using the pandas.CSVDataset class, which is a standard Kedro dataset for handling CSV files.
-- The anchor (`&_pandas_csv`) allows this configuration to be reused elsewhere in the catalog by referencing it with `*pandas_csv`.
+- The anchor (`&_pandas_csv`) allows this configuration to be reused elsewhere in the catalog by referencing it with `*_pandas_csv`.
 
 **_spark_parquet_ds: &_spark_parquet**
 
