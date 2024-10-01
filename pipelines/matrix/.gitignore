@@ -162,5 +162,3 @@ compose/neo4j_data/
 
 # Ignore notebooks scratch directory
 notebooks/scratch/
-
-matrix.code-workspace
