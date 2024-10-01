@@ -41,6 +41,8 @@ resources:
 
 redis:
   enabled: true
+  auth:
+    enabled: false
   resources:
     requests:
       memory: "2Gi"
