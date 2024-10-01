@@ -9,7 +9,7 @@ env:
   - name: SENTRY_ENABLED
     value: "false"
   - name: REDIS_HOST
-    value: redis
+    value: "bte-trapi-redis-master"
   - name: REDIS_PORT
     value: "6379"
   - name: DEBUG
