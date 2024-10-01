@@ -74,7 +74,7 @@ ingestion.raw.rtx_kg2.nodes@pandas:
 - `ingestion.raw.rtx_kg2.nodes` dataset in pandas (`pandas.CSVDataset`) format is defined here.
 - `<<: [*_pandas_csv, *_layer_raw]`
     - This line indicates the use of YAML merge syntax, which allows the configuration to inherit properties from the anchors _pandas_csv and _layer_raw:
-        - _pandas_csv defines the use of the pandas.CSVDataset, so this dataset will use Pandas for reading and writing.
+        - `_pandas_csv` defines the use of the pandas.CSVDataset, so this dataset will use Pandas for reading and writing.
         - `_layer_raw` includes metadata specifying that this dataset belongs to the “raw” layer for visualization purposes.
     - By merging these, you avoid redefining the type: pandas.CSVDataset and the layer metadata here.
 - `filepath: ${globals:paths.raw}/rtx_kg2/${globals:data_sources.rtx-kg2.version}/nodes_c.tsv`
