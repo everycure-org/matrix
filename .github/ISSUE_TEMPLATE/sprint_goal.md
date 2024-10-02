@@ -7,18 +7,18 @@ assignees: ''
 
 ---
 
-**Aim.**
+**Aim:**
 
 ...
 
-**Description.**
+**Description:**
 
 ...
 
-**Completion criteria**
+**Tasks which need to be completed:**
 
 ...
 
-**This task is done when**
+**This task is done when:**
  
 ...
