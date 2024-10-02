@@ -3,7 +3,6 @@
 from kedro.pipeline import Pipeline, node, pipeline
 
 import pyspark.sql.functions as F
-from .nodes import ingest_robokop_nodes
 
 
 def create_pipeline(**kwargs) -> Pipeline:
@@ -43,7 +42,7 @@ def create_pipeline(**kwargs) -> Pipeline:
             ),
             # robokop
             node(
-                func=ingest_robokop_nodes,
+                func=lambda x: x.withColumn("kg_source", F.lit("robokop")),
                 inputs=["ingestion.raw.robokop.nodes@spark"],
                 outputs="ingestion.int.robokop.nodes",
                 name="ingest_robokop_nodes",

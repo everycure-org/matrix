@@ -3,12 +3,8 @@
 from kedro.pipeline import Pipeline, node, pipeline
 
 from . import nodes
-from .standardize import (
-    transform_robo_nodes,
-    transform_robo_edges,
-    transform_rtxkg2_nodes,
-    transform_rtxkg2_edges,
-)
+from .robokop import transform_robo_nodes, transform_robo_edges
+from .rtxkg2 import transform_rtxkg2_nodes, transform_rtxkg2_edges
 
 
 def create_pipeline(**kwargs) -> Pipeline:

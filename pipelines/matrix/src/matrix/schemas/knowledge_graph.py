@@ -31,7 +31,7 @@ class KGEdgeSchema(DataFrameModel):
     object_aspect_qualifier:     StringType()            = pa.Field(nullable = True)
     object_direction_qualifier:  StringType()            = pa.Field(nullable = True)
     # We manually set this for every KG we ingest
-    upstream_kg_source:          ArrayType(StringType()) = pa.Field(nullable = False)
+    upstream_kg_sources:          ArrayType(StringType()) = pa.Field(nullable = False)
     # fmt: on
 
     class Config:  # noqa: D106
