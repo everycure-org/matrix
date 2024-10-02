@@ -46,7 +46,9 @@ def create_pipeline(**kwargs) -> Pipeline:
             node(
                 func=nodes.unify_nodes,
                 inputs=[
-                    "ingestion.int.rtx_kg2.nodes",
+                    "integration.prm.rtx.nodes",
+                    # TODO we'll add robokop in once we have added a node ID normalization stage before
+                    # "integration.prm.robokop.nodes",
                     "ingestion.int.ec_medical_team.nodes",
                 ],
                 outputs="integration.prm.unified_nodes",
