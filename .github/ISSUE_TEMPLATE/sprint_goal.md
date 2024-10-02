@@ -19,6 +19,6 @@ assignees: ''
 
 ...
 
-**This task is done when:**
+**This Sprint Goal is completed when:**
  
 ...
