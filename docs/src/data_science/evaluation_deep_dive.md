@@ -171,7 +171,7 @@ evaluation.simple_classification_trials:
 - `positive_columns` and `negative_columns` define the ground truth sets by specifying columns in the matrix dataframe. 
 - `evaluation` defines the evaluation metrics used. 
 
-#### Example 2 (full matrix, standard version)
+#### Example 2 (full matrix ranking metrics, standard version)
 
 ```yaml
 # Full matrix ranking 
@@ -194,6 +194,14 @@ evaluation.full_matrix:
           n: 1000000
       quantile_func_lst: 
         - object: matrix.pipelines.evaluation.named_functions.AUROC
-```
-
-
+``` 
+- `FullMatrixPositives` is the object defining the dataset containing the necessary information for the computation of the full matrix ranking metrics. This dataset consist of the ground truth positive drug-disease pairs with columns giving:
+    - The matrix rank of each pair
+    - The quantile rank of each pair
+- This is enough for the computation of the metrics since:
+    - Recall@n may be computed using the ranks of the ground truth positive pairs
+    - AUROC may be computed using the quantile ranks of the ground truth positive pairs  
+- `positive_columns` defines the ground truth positive set by specifying columns in the matrix dataframe. 
+- `rank_func_lst` specifies the list of metrics which require the rank for computation.
+- `quantile_func_lst` specifies the list of metrics which require the quantile rank for computation.
+ 
