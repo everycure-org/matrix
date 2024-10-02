@@ -443,7 +443,7 @@ def clean_disease_list(disease_df: pd.DataFrame, endpoint: str) -> pd.DataFrame:
     allow_subset=True,
 )
 def clean_input_sheet(input_df: pd.DataFrame, endpoint: str) -> pd.DataFrame:
-    """Synonymize the disease list and filter out NaNs.
+    """Synonymize the input sheet and filter out NaNs.
 
     Args:
         input_df: input list in a dataframe format.
@@ -452,6 +452,7 @@ def clean_input_sheet(input_df: pd.DataFrame, endpoint: str) -> pd.DataFrame:
     Returns:
         dataframe with synonymized disease IDs in normalized_curie column.
     """
+    # Synonymize Drug_ID column to normalized ID and name compatible with RTX-KG2
     res = enrich_df(
         input_df,
         func=normalize,
@@ -466,6 +467,8 @@ def clean_input_sheet(input_df: pd.DataFrame, endpoint: str) -> pd.DataFrame:
         target_col="norm_drug_name",
         endpoint=endpoint,
     )
+
+    # Synonymize Disease_ID column to normalized ID and name compatible with RTX-KG2
     res = enrich_df(
         res,
         func=normalize,
@@ -480,6 +483,8 @@ def clean_input_sheet(input_df: pd.DataFrame, endpoint: str) -> pd.DataFrame:
         target_col="norm_disease_name",
         endpoint=endpoint,
     )
+
+    # Select columns of interest and rename
     df = res.loc[
         :,
         [
