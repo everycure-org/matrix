@@ -1,20 +1,20 @@
-# Walkthrough: Data Scientist Daniel
+# Walkthrough: New Data Source
 
-This use case follows the journey of a dataset through the Kedro workflow, from raw data to its use in model training. The dataset was added by the hypothetical Data Scientist, Daniel.
+This use case follows the journey of a dataset through the Kedro workflow, from raw data to its use in model training. The dataset was added by the user persona Data Scientist Dominic.
 
 # Task
 
-Daniel has integrated a new knowledge graph into Matrix and implemented a machine learning model for predicting drug-disease efficacy scores. We will reconstruct the steps Daniel needs to take to go from raw data to generating drug-disease predictions.
+Dominic has integrated a new knowledge graph into Matrix and implemented a machine learning model for predicting drug-disease efficacy scores. We will reconstruct the steps Dominic needs to take to go from raw data to generating drug-disease predictions.
 
 # Integrating the New Graph into the codebase
 
 ## Raw Data
 
-Daniel has integrated a new biomedical graph, **RTX-KG2**, which is a knowledge graph consisting of node and edge data.
+Dominic has integrated a new biomedical graph, **RTX-KG2**, which is a knowledge graph consisting of node and edge data.
 
 The data can be found at `gs://mtrx-us-central1-hub-dev-storage/data/01_RAW/KGs/rtx_kg2/v2.10.0/.` It includes two `.tsv` files (`edges_c.tsv` and `nodes_c.tsv`) and a database file (`node_synonymizer_v1.0_KG2.10.0.sqlite`) used for node synonymization process.
 
-Daniel manually added this data to Google Cloud Storage (GCS), as there is currently no automated ingestion system. However, multiple versions of these graphs are maintained.
+Dominic manually added this data to Google Cloud Storage (GCS), as there is currently no automated ingestion system. However, multiple versions of these graphs are maintained.
 
 ## Programmatic access to data
 
@@ -172,7 +172,7 @@ ingestion.raw.rtx_kg2.nodes@spark:
 
 ## As visible in Kedro-Viz
 
-![Screenshot 2024-09-26 at 12.02.52.png](../assets/img/kedro_daniel_pipeline.png)
+![Screenshot 2024-09-26 at 12.02.52.png](../assets/img/kedro_Dominic_pipeline.png)
 
 
 ### Kedro Run
@@ -183,7 +183,7 @@ The pipeline object is passed to Kedro’s `register_pipelines()` function, wher
 
 ## Summary 
 
-Daniel has successfully integrated a new knowledge graph into the codebase, and added appropriate nodes to data catalog. The new pipeline can be now viewed in Kedro-Viz, and executed to produce node embeddings.
+Dominic has successfully integrated a new knowledge graph into the codebase, and added appropriate nodes to data catalog. The new pipeline can be now viewed in Kedro-Viz, and executed to produce node embeddings.
 
 Now, we will look at how this pipeline can be executed.
 
@@ -196,7 +196,7 @@ It should be added that most pipelines rely on additional services being present
 ## Local
 ### via Makefile & Docker
 
-To execute this pipeline locally, Data Scientist Daniel would follow steps similar to the ones outlined in the [Local Setup guide](local-setup.md)
+To execute this pipeline locally, Data Scientist Dominic would follow steps similar to the ones outlined in the [Local Setup guide](local-setup.md)
 
 However, this pipeline does not have dependencies on any external services, such as Neo4j or MLFlow. Therefore, it can be executed directly via the `kedro` CLI interface.
 
