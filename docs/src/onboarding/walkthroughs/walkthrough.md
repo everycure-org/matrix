@@ -172,7 +172,7 @@ ingestion.raw.rtx_kg2.nodes@spark:
 
 ## As visible in Kedro-Viz
 
-![Screenshot 2024-09-26 at 12.02.52.png](../assets/img/kedro_Dominic_pipeline.png)
+![Screenshot 2024-09-26 at 12.02.52.png](../../assets/img/kedro_dominic_pipeline.png)
 
 
 ### Kedro Run
@@ -196,7 +196,7 @@ It should be added that most pipelines rely on additional services being present
 ## Local
 ### via Makefile & Docker
 
-To execute this pipeline locally, Data Scientist Dominic would follow steps similar to the ones outlined in the [Local Setup guide](local-setup.md)
+To execute this pipeline locally, Data Scientist Dominic would follow steps similar to the ones outlined in the [Local Setup guide](../local-setup.md)
 
 However, this pipeline does not have dependencies on any external services, such as Neo4j or MLFlow. Therefore, it can be executed directly via the `kedro` CLI interface.
 
