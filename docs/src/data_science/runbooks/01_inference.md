@@ -44,7 +44,7 @@ MLFLOW_ENDPOINT=http://127.0.0.1:5002
 ```
 
 ## 3. Port-Forward the MLFlow Service
-To access the remote MLFlow server, you need to port-forward from your Kubernetes cluster to your local machine, as mentioned in the [onboarding documentation](https://docs.dev.everycure.org/onboarding/local-setup/). To check whether you port-forwarded successfully, you can check the `http://localhost:5001` in your browser. If successful, it will display the MLFlow UI.
+To access the remote MLFlow server, you need to port-forward from your Kubernetes cluster to your local machine, as mentioned in the [onboarding documentation](https://docs.dev.everycure.org/onboarding/local-setup/). To check whether you port-forwarded successfully, you can check the `http://localhost:5002` in your browser. If successful, it will display the MLFlow UI.
 
 ## 4. Execute the Inference Pipeline
 Open a new terminal and run the inference pipeline using the `--from-env cloud` (as we should never run `--env cloud` locally):
