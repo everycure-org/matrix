@@ -7,6 +7,7 @@ import pandera.pyspark as pa
 from pandera.pyspark import DataFrameModel
 from pyspark.sql.types import *
 from typing import List
+from pyspark.sql import DataFrame
 
 
 def cols_for_schema(schema_obj: DataFrameModel) -> List[str]:
@@ -52,9 +53,31 @@ class KGNodeSchema(DataFrameModel):
     labels:                            ArrayType(StringType()) = pa.Field(nullable=True)
     international_resource_identifier: StringType()            = pa.Field(nullable=True)
     # We manually set this for every KG we ingest
-    upstream_kg_source:                ArrayType(StringType()) = pa.Field(nullable=False)
+    upstream_kg_sources:                ArrayType(StringType()) = pa.Field(nullable=False)
     # fmt: on
 
     class Config:  # noqa: D106
         coerce = True
         strict = True
+
+    def group_nodes_by_id(self, nodes_df: DataFrame) -> DataFrame:
+        """Utility function to group nodes by id.
+
+        This should be used after the IDs are normalized so we can combine node properties from
+        multiple upstream KGs.
+        """
+        # FUTURE: We should improve selection of name and description currently
+        # selecting the first non-null, which might not be as desired.
+        return nodes_df.groupBy("id").agg(
+            F.first("name").alias("name"),
+            F.first("category").alias("category"),
+            F.first("description").alias("description"),
+            F.collect_set("equivalent_identifiers").alias("equivalent_identifiers"),
+            F.collect_set("all_categories").alias("all_categories"),
+            F.collect_set("labels").alias("labels"),
+            F.collect_set("publications").alias("publications"),
+            F.collect_set("international_resource_identifier").alias(
+                "international_resource_identifier"
+            ),
+            F.collect_list("upstream_kg_sources").alias("upstream_kg_sources"),
+        )

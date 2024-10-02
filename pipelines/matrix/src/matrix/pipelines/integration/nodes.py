@@ -27,15 +27,7 @@ def unify_nodes(*nodes) -> DataFrame:
 
     union = reduce(partial(DataFrame.unionByName, allowMissingColumns=True), nodes)
 
-    # Deduplicate
-    # FUTURE: We should improve selection of name and description currently
-    # selecting the first non-null, which might not be as desired.
-    return union.groupBy(["id"]).agg(
-        F.collect_list("kg_source").alias("kg_sources"),
-        F.first("name").alias("name"),
-        F.first("description").alias("description"),
-        F.first("category").alias("category"),
-    )
+    return KGNodeSchema().group_nodes_by_id(union)
 
 
 @has_schema(
