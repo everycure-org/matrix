@@ -197,7 +197,7 @@ evaluation.full_matrix:
 ``` 
 - `FullMatrixPositives` is the object defining the dataset containing the necessary information for the computation of the full matrix ranking metrics. This dataset consist of the ground truth positive drug-disease pairs with columns giving:
     - The matrix rank of each pair
-    - The quantile rank of each pair
+    - The matrix quantile rank of each pair
 - This is enough for the computation of the metrics since:
     - Recall@n may be computed using the ranks of the ground truth positive pairs
     - AUROC may be computed using the quantile ranks of the ground truth positive pairs  
