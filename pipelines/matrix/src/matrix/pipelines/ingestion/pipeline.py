@@ -46,7 +46,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 func=ingest_robokop_nodes,
                 inputs=["ingestion.raw.robokop.nodes@spark"],
                 outputs="ingestion.int.robokop.nodes",
-                name="write_robokop_nodes",
+                name="ingest_robokop_nodes",
                 tags=["robokop"],
             ),
             node(
@@ -54,7 +54,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 func=lambda x: x.withColumn("kg_source", F.lit("robokop")),
                 inputs=["ingestion.raw.robokop.edges@spark"],
                 outputs="ingestion.int.robokop.edges",
-                name="write_robokop_edges",
+                name="ingest_robokop_edges",
                 tags=["robokop"],
             ),
         ]
