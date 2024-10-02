@@ -295,7 +295,7 @@ ingestion.raw.drug_list@spark:
 ingestion.raw.robokop.nodes@spark:
   <<: *_layer_raw
   type: matrix.datasets.gcp.LazySparkDataset
-  filepath: ${globals:paths.new_raw}/KGs/robokop-kg/${globals:data_sources.robokop.version}/nodes.tsv
+  filepath: ${globals:paths.new_raw}/KGs/robokop-kg/${globals:data_sources.robokop.version}/nodes.orig.tsv
   file_format: csv
   load_args:
     sep: "\t"
@@ -304,7 +304,7 @@ ingestion.raw.robokop.nodes@spark:
 
 ingestion.raw.robokop.nodes@pandas:
   <<: [*_pandas_csv, *_layer_raw]
-  filepath: ${globals:paths.new_raw}/KGs/robokop-kg/${globals:data_sources.robokop.version}/nodes.tsv
+  filepath: ${globals:paths.new_raw}/KGs/robokop-kg/${globals:data_sources.robokop.version}/nodes.orig.tsv
   save_args:
     sep: "\t"
     header: true
