@@ -10,10 +10,12 @@ https://docs.kedro.org/en/stable/kedro_project_setup/settings.html.
 import matrix.hooks as hooks
 from kedro_mlflow.framework.hooks import MlflowHook
 
+SECRET_PARAMS = ["embeddings.ai_config.api_key" "embeddings.gds.auth"]
+
 # Hooks are executed in a Last-In-First-Out (LIFO) order.
 HOOKS = (
     hooks.NodeTimerHooks(),
-    MlflowHook(),
+    MlflowHook(blacklisted_params=SECRET_PARAMS),
     hooks.MLFlowHooks(),
     hooks.SparkHooks(),
 )

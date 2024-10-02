@@ -8,6 +8,13 @@ from matrix.schemas.knowledge_graph import KGEdgeSchema, KGNodeSchema, cols_for_
 from pyspark.sql import DataFrame
 import pyspark.sql.functions as f
 
+# FUTURE: We should likely not need to rename these columns as we do below
+# However, KGX is currently not as performant as we need it to be thus
+# we do it manually with spark. This ought to be improved, e.g. by
+# adding parquet support to KGX.
+# or implementing a custom KGX version that leverages spark for higher performance
+# https://github.com/everycure-org/matrix/issues/474
+
 
 @pa.check_output(KGEdgeSchema)
 def transform_robo_edges(edges_df: DataFrame) -> DataFrame:
