@@ -1,4 +1,4 @@
-"""Module with nodes for evaluation."""
+"""Module with nodes for matrix generation."""
 import logging
 from tqdm import tqdm
 from typing import List, Dict, Union
@@ -48,6 +48,18 @@ def enrich_embeddings(
     )
 
 
+def spark_to_pd(nodes: DataFrame) -> pd.DataFrame:
+    """Temporary function to transform spark parquet to pandas parquet.
+
+    Related to https://github.com/everycure-org/matrix/issues/71.
+    TODO: replace/remove the function once pyarrow error is fixed.
+
+    Args:
+        nodes: Dataframe with node embeddings
+    """
+    return nodes.toPandas()
+
+
 @has_schema(
     schema={
         "source": "object",
@@ -59,6 +71,7 @@ def enrich_embeddings(
 def generate_pairs(
     drugs: pd.DataFrame,
     diseases: pd.DataFrame,
+    graph: KnowledgeGraph,
     known_pairs: pd.DataFrame,
 ) -> pd.DataFrame:
     """Function to generate matrix dataset.
@@ -66,6 +79,7 @@ def generate_pairs(
     Args:
         drugs: Dataframe containing IDs for the list of drugs.
         diseases: Dataframe containing IDs for the list of diseases.
+        graph: Object containing node embeddings.
         known_pairs: Labelled ground truth drug-disease pairs dataset.
 
     Returns:
@@ -78,6 +92,13 @@ def generate_pairs(
     # Remove duplicates
     drugs_lst = list(set(drugs_lst))
     diseases_lst = list(set(diseases_lst))
+
+    # Remove drugs and diseases without embeddings
+    nodes_with_embeddings = set(graph._nodes["id"])
+    drugs_lst = [drug for drug in drugs_lst if drug in nodes_with_embeddings]
+    diseases_lst = [
+        disease for disease in diseases_lst if disease in nodes_with_embeddings
+    ]
 
     # Generate all combinations
     matrix_slices = []
@@ -149,8 +170,12 @@ def make_batch_predictions(
                 ",".join([f"({r.source}, {r.target})" for _, r in removed.iterrows()]),
             )
 
-        # drop rows without source/target embeddings
+        # Drop rows without source/target embeddings
         batch = batch.dropna(subset=["source_embedding", "target_embedding"])
+
+        # Return empty dataframe if all rows are dropped
+        if len(batch) == 0:
+            return batch.drop(columns=["source_embedding", "target_embedding"])
 
         # Apply transformers to data
         transformed = apply_transformers(batch, transformers)
@@ -165,7 +190,9 @@ def make_batch_predictions(
             :, 1
         ]
 
-        return batch[[score_col_name]]
+        # Drop embedding columns
+        batch = batch.drop(columns=["source_embedding", "target_embedding"])
+        return batch
 
     # Group data by the specified prefix
     grouped = data.groupby(batch_by)
@@ -178,10 +205,7 @@ def make_batch_predictions(
     # Combine results
     results = pd.concat(result_parts, axis=0)
 
-    # Add scores to the original dataframe
-    data[score_col_name] = results[score_col_name]
-
-    return data
+    return results
 
 
 def make_predictions_and_sort(
