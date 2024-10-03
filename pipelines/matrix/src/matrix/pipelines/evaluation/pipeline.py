@@ -44,7 +44,7 @@ def create_pipeline(**kwargs) -> Pipeline:
             pipeline(
                 [
                     node(
-                        func=nodes.perform_checks,
+                        func=nodes.perform_matrix_checks,
                         inputs=[
                             f"matrix_generation.{model}.model_output.sorted_matrix_predictions",
                             "modelling.model_input.splits",
