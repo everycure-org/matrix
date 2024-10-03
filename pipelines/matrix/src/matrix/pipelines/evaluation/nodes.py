@@ -58,7 +58,7 @@ def check_ordered(
         )
 
 
-def perform_checks(
+def perform_matrix_checks(
     matrix: pd.DataFrame, known_pairs: pd.DataFrame, score_col_name: str
 ) -> None:
     """Perform various checks on the evaluation dataset.
