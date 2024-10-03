@@ -126,7 +126,7 @@ Our release pipeline currently builds the final integrated Neo4J data product fo
 We have 4 environments declared in the kedro project for `MATRIX`:
 
 - `base`: Contains the base environment which reads the real data from GCS and operates in your local compute environment
-- `cloud`: Contains the cloud environment with real data. All data is read and written to a GCP project a configured (see below). Assumes fully stateless local machine operations (e.g. in docker containers)
+- `cloud`: Contains the cloud environment with real data. All data is read and written to a GCP project as configured (see below). Assumes fully stateless local machine operations (e.g. in docker containers)
 - `test`: Fully local and contains parameters that "break" the meaning of algorithms in the pipeline (e.g. 2 dimensions PCA). This is useful for running an integration test with mock data to validate the programming of the pipeline is correct to a large degree. 
 - `local`: A default environment which you can use for local adjustments and tweaks. Changes to this repo are not usually committed to git as they are unique for every developer. 
 
@@ -160,7 +160,7 @@ This runs the full pipeline with fake data.
 
 ### Run with real data locally
 
-To run the full data with real data by copying the RAW data from the central GCS bucket and then run everything locally you can simply run from the default environment. We've setup an intermediate pipeline that copies data to avoid constant copying of the data from cloud.
+To run the full pipeline with real data by copying the RAW data from the central GCS bucket and then run everything locally you can simply run from the default environment. We've setup an intermediate pipeline that copies data to avoid constant copying of the data from cloud.
 
 ```bash
 # Copy data from cloud to local
