@@ -286,3 +286,17 @@ WARNING  Retrying (Retry(total=2, connect=2, read=5, redirect=5, status=5)) afte
 ```
 
 Setting `ulimit -n 1000000` in the shell before running the pipeline will fix this issue.
+
+## `make` stuck or takes forever on an ARM device (MacOS, some modern Windows or Linux)
+
+1) on MacOS It may be necessary to update your rosetta license agreement.
+
+```
+softwareupdate --install-rosetta
+```
+Then agree to the license agreement with `A`
+
+2) Generally, you can also run make with `TARGET_PLATFORM=linux/arm64` which ensures you build a docker image that is actually efficient for your device.
+
+!!! note 
+    We currently do not push the arm64 image to the registry because our cluster runs on intel CPUs. So this is only meant for local development.
