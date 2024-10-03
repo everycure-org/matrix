@@ -314,23 +314,23 @@ class MatrixTestDiseases(DrugDiseasePairGenerator):
         Returns:
             Labelled drug-disease pairs dataset.
         """
-        # Extract and label positive pairs
+        # Extract positive pairs and label in matrix
         is_positive = pd.Series(False, index=matrix.index)
         for col_name in self.positive_columns:
             is_positive = is_positive | matrix[col_name]
         positive_pairs = matrix[is_positive]
         matrix["y"] = is_positive.astype(int)
 
-        # Restriction to diseases in the positive pairs set
+        # Restrict to diseases in the positive pairs set
         positive_diseases = positive_pairs["target"].unique()
         in_output = matrix["target"].isin(positive_diseases)
 
-        # Removal of flagged pairs
+        # Remove flagged pairs
         if self.removal_columns != None:
             is_remove = pd.Series(False, index=matrix.index)
             for col_name in self.removal_columns:
                 is_remove = is_remove | matrix[col_name]
-            in_output = in_output | is_remove
+            in_output = in_output | ~is_remove
 
         # Apply boolean condition to matrix and return
         return matrix[in_output]
@@ -345,13 +345,16 @@ class FullMatrixPositives(DrugDiseasePairGenerator):
     def __init__(
         self,
         positive_columns: List[str],
+        removal_columns: Union[List[str], None] = None,
     ) -> None:
-        """Initialises instance of the class.
+        """Initialises an instance of the class.
 
         Args:
             positive_columns: Names of the flag columns in the matrix which represent the positive pairs.
+            removal_columns: Names of the flag columns in the matrix which represent the pairs to remove.
         """
         self.positive_columns = positive_columns
+        self.removal_columns = removal_columns
 
     def generate(
         self,
@@ -365,17 +368,28 @@ class FullMatrixPositives(DrugDiseasePairGenerator):
         Returns:
             Labelled drug-disease pairs dataset.
         """
-        matrix = matrix.reset_index(drop=True)
+        # Remove flagged pairs
+        if self.removal_columns != None:
+            is_remove = pd.Series(False, index=matrix.index)
+            for col_name in self.removal_columns:
+                is_remove = is_remove | matrix[col_name]
+            matrix = matrix[~is_remove].reset_index(drop=True)
 
         # Extract and label positive pairs
         is_positive = pd.Series(False, index=matrix.index)
         for col_name in self.positive_columns:
             is_positive = is_positive | matrix[col_name]
-        positive_pairs = matrix[is_positive]
+        positive_pairs = matrix[is_positive].assign(y=1)
 
-        # Add labels and ranks columns
-        positive_pairs["y"] = 1
-        positive_pairs["rank"] = positive_pairs.index + 1
-        positive_pairs["quantile_rank"] = positive_pairs["rank"] / len(matrix)
+        # Add ranks columns. Note that this is the rank against known negatives and unknowns only.
+        positive_pairs["full_rank"] = (
+            positive_pairs.index + 1
+        )  # Rank against all pairs including known positives
+        positive_pairs = positive_pairs.reset_index(drop=True)
+        positive_pairs["rank"] = (
+            positive_pairs["full_rank"] - positive_pairs.index
+        )  # Remove contribution from known positives
+        num_non_pos = len(matrix[~is_positive])
+        positive_pairs["quantile_rank"] = positive_pairs["rank"] / num_non_pos
 
         return positive_pairs

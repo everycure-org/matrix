@@ -57,7 +57,7 @@ def _create_model_shard_pipeline(model: str, shard: int) -> Pipeline:
     )
 
 
-def _create_model_pipeline(model: str, iteration, num_shards: int) -> Pipeline:
+def _create_model_pipeline(model: str, num_shards: int) -> Pipeline:
     return sum(
         [
             pipeline(
