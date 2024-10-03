@@ -71,9 +71,19 @@ Now imagine that a node in the pipeline fails. Debugging is hard, due to the rem
 
 ![](../assets/img/from-env-run.drawio.svg)
 
-In order to run against the `cloud` environment it's important to set the `RUN_NAME` variable in the `.env` file, as this determines the run for which datasets are pulled.
+In order to run against the `cloud` environment it's important to set the `RUN_NAME` variable in the `.env` file, as this determines the run for which datasets are pulled. You can find the `RUN_NAME` on the labels of the Argo Workflow.
+
+The following command can be used to re-run the node locally, while consuming data from `cloud`:
+
+```bash
+# NOTE: You can specify multiple nodes to rerun, using a comma-seperated list
+kedro run --from-env cloud --nodes preprocessing_node_name
+```
 
 !!! note 
+
+    !!! warning
+        Make sure to disable port forwarding once you're done and remove the environment variables from the .env file, otherwise this might result in you pushing local runs to our cloud MLFlow instance.
     
     If you wish to pull data from MLFlow it's currently required to setup [port-forwarding](https://emmer.dev/blog/port-forwarding-to-kubernetes/) into the MLFlow tracking container on the cluster. You can do this as follows:
 

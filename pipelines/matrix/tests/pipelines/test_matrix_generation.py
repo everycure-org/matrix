@@ -57,10 +57,10 @@ def sample_data():
 def test_generate_pairs(sample_data):
     """Test the generate_pairs function."""
     # Given drug list, disease list and known pairs
-    drugs, diseases, known_pairs, _ = sample_data
+    drugs, diseases, known_pairs, nodes = sample_data
 
     # When generating the matrix dataset
-    result = generate_pairs(drugs, diseases, known_pairs)
+    result = generate_pairs(drugs, diseases, nodes, known_pairs)
 
     # Then the output is of the correct format, shape and doesn't contain training pairs
     assert isinstance(result, pd.DataFrame)

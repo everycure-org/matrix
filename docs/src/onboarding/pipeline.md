@@ -106,6 +106,14 @@ The computation of each evaluation metric in the pipeline is described in the fo
 
 Note that different evaluation metrics may have common nodes and datasets. For instance, disease-specific Hit@k and MRR are computed using the same synthesised negatives. 
 
+### Inference (requests)
+
+Our inference pipeline can be used for running ad-hoc requests coming from medical team/stakeholders to generate drug-disease predictions for a specifid drug, disease or a pair of both. The drugs/diseases to predict against are coming from our official drug and disease lists (which are versioned in the .env file). The pipeline is running inference using a single/several trained models stored as artifacts in MLFlow and utilizes the same version of data that was used for training. 
+
+![](../assets/img/inference.drawio.png)
+
+You can find the sheet [here](https://docs.google.com/spreadsheets/d/1CioSCCQxUdACn1NfWU9XRyC-9j_ERc2hmZzaDd8XgcQ/edit?gid=0#gid=0). At the moment we don't execute this as a part of the default pipeline. Also note that in order to use the trained models which are stored in the MLFlow (i.e. models trained using e2e pipeline) you will need to execute the inference pipeline from `cloud` environment.
+
 ### Release
 
 Our release pipeline currently builds the final integrated Neo4J data product for consumption. We do not execute this as part of the default pipeline run but with a separate `-p release` execution as we do not want to release every pipeline data output.
@@ -175,7 +183,7 @@ Jupyter notebooks should be created in the directory `pipelines/matrix/notebooks
 !!! tip
     A separate git repository for notebook version control may be created inside the `scratch` directory. It can also be nice to create a symbolic link to `scratch` from a directory of your choice on your machine. 
 
-    An example notebook is also added to our documentation [here](./kedro_notebook_example.ipynb) which you can copy into the scratch directory for a quickstart
+    An example notebook is also added to our documentation [here](./walkthroughs/kedro_notebook_example.ipynb which you can copy into the scratch directory for a quickstart
 
 Within a notebook, first run a cell with the following magic command:
 

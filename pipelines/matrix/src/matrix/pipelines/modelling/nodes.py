@@ -84,8 +84,6 @@ def create_feat_nodes(
 ) -> pd.DataFrame:
     """Add features for nodes.
 
-    FUTURE: Add flags for official set of drugs and diseases when we have them.
-
     Args:
         raw_nodes: Raw nodes data.
         known_pairs: Ground truth data.
