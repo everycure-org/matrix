@@ -14,10 +14,15 @@ In this deep dive, we'll explore the different aspects of our evaluation pipelin
 
 ## Overview of the suite
 
-The primary use-case of our drug repurposing models is to rank millions of drug-disease pairs in order of priority. More precisely, the set of drug disease pairs consists of all combinations of drugs and diseases from curated lists and is referred to as the matrix. A secondary but important use case for drug repurposing system is diseases-specific ranking, that is, ranking a list of drugs in order of likelihood of treating a given disease. Furthermore, in order to avoid failed clinical trials, it is critical that the model does not give high scores to pairs which look like they may represent a viable treatment (hence may enter a clinical trial) but really do not (hence would fail the clinical trial). 
+Our drug repurposing models serve two primary purposes:
 
-These different aspects of model performance are measured by three classes of evaluation metrics which are computed in very different ways.
+1. Matrix-wide ranking: Prioritising millions of drug-disease pairs across the entire matrix. This matrix contains all possible combinations of drugs and diseases from curated lists.
 
+2. Disease-specific ranking: For a given disease, ranking drugs based on their likelihood of being an effective treatment.
+
+Additionally, it's crucial that our models don't assign high scores to drug-disease pairs that appear promising but would likely fail in clinical trials. This helps prevent wasted resources on unsuccessful clinical studies.
+
+To address these different aspects of model performance, we use three classes of evaluation metrics, each computed in distinct ways.
 The following table summarises the evaluation metrics that comprise the current version of our evaluation suite. 
 
 
@@ -37,21 +42,26 @@ We implement time-split validation in our pipeline by using an additional ground
 
 <img src="../assets/deep_dive/matrix_GT.svg" width="700">
 
-The input to the evaluation pipeline consists of the matrix pairs dataset, with the following additional information:
+The input to the evaluation pipeline consists of the matrix pairs dataset with the following information:
 - Flags for pairs in the standard ground truth positive and negative test sets 
 - Separate flags  for test set pairs corresponding to results of recent clinical trials
 - Treat scores for each pair 
 
 In addition, we remove from the matrix any known positive or known negative pair that were used by the model during training.
 
+> __Key philosophy.__ In order to compute ranking metrics, we must synthesise negative pairs since only a small portion of negative pairs are known. To do this, we exploit the fact that the vast majority of drug disease pairs are negatives. However, synthesising negative pairs by random sampling can lead to unexpected and undesirable effects on the data distribution, as well as introducing noise. For example, the distribution for geodesic distance may be altered (see Yang et. al. ). Therefore, our ranking metrics are computed using pairs dataset that are as close as possible to what the model will see while performing it's downstream task.
+
 ### Full matrix ranking metrics
 
 These metrics focus on how well the model ranks the set of pairs comprising the matrix. 
 
-The matrix *rank* of a drug-disease pair $(d,i)$, denoted by $\text{rank}(d,i),$
-refers to it's position among all matrix pairs when they sorted by treat score in descending order. 
+The matrix *rank* of a drug-disease pair $(d,i)$, denoted by $\text{rank}(d,i)$,
+refers to it's position among non-positive matrix pairs when sorted by treat score (descending order). We omit any training pairs and known positives from the ranking, so that $(d,i)$ is only ranked against pairs with unknown or known negative relationship.
 
-The matrix *quantile rank* of a pair is defined as the rank of the pair divided by the total number of pairs in the matrix. This normalized measure ranges from 0 to 1, with lower values indicating higher priority in the ranking.
+
+The matrix *quantile rank* of a pair is defined as the rank of the pair divided by the total number of non-positive pairs in the matrix. Mathematically, 
+$$QR(d,i) = \frac{\text{rank}(d,i)}{N}$$
+where $N$ is the number of known or known negative pairs in the matrix. This normalized measure ranges from 0 to 1, with lower values indicating higher priority in the ranking.
 
 #### Recall@n
 
@@ -64,27 +74,26 @@ where $|\cdot|$ denotes the cardinality (size) of a set.
 We have three variations of the full matrix Recall@n metric corresponding to different choices for the ground truth set $GT$: 
 1.  The *standard version* uses the standard ground truth positive test set
 2.  The *clinical trials version* uses successful clinical trials
-3.  The *negatives version* uses the standard ground truth negatives test set
-
-> *Note*: The negatives version of recall@n differs from the other in that we want it to be as small as possible. 
 
 
 #### AUROC (Area Under the Receiver Operating Characteristic curve)
 
-The AUROC metric evaluates the model's ability to distinguish between positive and negative pairs across all possible ranking thresholds. 
+The AUROC metric evaluates the model's ability to distinguish between positive and negative pairs across all possible ranking thresholds. Formally, it is defined as the area under the ROC curve (see [Wikipedia: Receiver operating characteristic](https://en.wikipedia.org/wiki/Receiver_operating_characteristic)). 
 
-Formally, it is defined as the area under the ROC curve (see [Wikipedia: Receiver operating characteristic](https://en.wikipedia.org/wiki/Receiver_operating_characteristic) for more details). In our case the following equivalent characterisation is more relevant, 
+In our case the following equivalent characterisation is more relevant (details are given in the appendix below), 
 $$\text{AUROC} = 1 - \text{MQR} $$
-where $\text{MQR}$ denotes the *mean quantile rank* among ground truth pairs $GT$. 
+where $\text{MQR}$ denotes the *mean quantile rank* among ground truth pairs $GT$.  
 
-The equivalence stems from the fact that the AUROC is equal to the probability that a randomly chosen positive ranks higher than a randomly chosen negative. More details are given in the appendix below. 
+MQR is a measure between 0 and 1 with lower values indicating better ranking performance, whereas for the AUROC higher values are better
+
+> *Example.* If the AUROC is 0.9, then the MQR is 0.1. Therefore, on average we expect a positive drug-disease pair to rank among the top 10% of matrix pairs, not including other known positives. 
 
 
 ### Disease-specific ranking metrics
 
 These metrics focus on how well the model ranks drugs for individual diseases, particularly those diseases that appear in our ground truth positive set.
 
-For a given disease $i$, the *disease-specific rank* $\text{rank}_i(d)$ of a drug $d$ is defined as the rank of the drug $d$ among all drugs. Note that we omit any training pairs known positives from the ranking, so that $d$ is only ranked against drugs with unknown or withheld known negative relationship with the disease $i$.
+For a given disease $i$, the *disease-specific rank* $\text{rank}_i(d)$ of a drug $d$ is defined as the rank of the drug $d$ among all drugs. As before, we omit any training pairs known positives from the ranking.
 
 We have two versions of disease-specific ranking metrics corresponding to different choices for the set of ground truth pairs $GT$:
 1.  The *standard version* uses the standard ground truth positive test set
@@ -92,14 +101,14 @@ We have two versions of disease-specific ranking metrics corresponding to differ
 
 #### Hit@k
 
-The Hit@k metric measures the proportion ground truth positive pairs,  with disease specific rank not exceeding $k$. Mathematically, it is written as 
-$$\text{Hit}@k = \frac{1}{|GT|} \sum_{(d,i) \in GT} \chi(\text{rank}_i(d) \leq k) $$
-where $\chi(\text{rank}_i(d) \leq k)$ is equal to 1 if $\text{rank}_i(d) \leq k$ and 0 otherwise. 
+The Hit@k metric measures the proportion ground truth positive pairs with disease specific rank not exceeding $k$. Mathematically, it is written as 
+$$\text{Hit}@k = \frac{1}{|GT|} \sum_{(d,i) \in GT} [\text{rank}_i(d) \leq k] $$
+where $[\text{rank}_i(d) \leq k]$ is equal to 1 if $\text{rank}_i(d) \leq k$ and 0 otherwise. 
 
 #### MRR (Mean Reciprocal Rank)
 
 MRR is the average inverse rank of the pairs in the ground truth pairs set. Mathematically, it is defined as 
-$$MRR = \frac{1}{|GT|} \sum_{(d,i) \in GT}\frac{1}{\text{rank}_i(d)} $$
+$$\text{MRR} = \frac{1}{|GT|} \sum_{(d,i) \in GT}\frac{1}{\text{rank}_i(d)} $$
 The MRR ranges from 0 to 1, with higher values indicating better performance.
 
 ### Ground truth classification metrics
@@ -110,11 +119,10 @@ We have two versions corresponding to different choices of test dataset:
 1. The *standard version* uses the standard sets of ground-truth positives (labelled as "treat") and negatives (labelled as "not treat").
 2. The *clinical trials version* uses a dataset of successful recent clinical trial (labelled as "treat") and failed one (labelled as "not treat").  
 
-We fix the threshold to 0.5, that is, the model classifies a drug-disease pair to be "treat" if the treat score is > 0.5 and otherwise "not treat". 
-
 #### Accuracy
 
-Accuracy is the proportion of pairs in the dataset that are correctly classified. 
+Accuracy is the proportion of pairs in the dataset that are correctly classified. We fix the threshold to 0.5, that is, the model classifies a drug-disease pair to be "treat" if the treat score is > 0.5 and otherwise "not treat". 
+
 
 #### F1 Score
 
@@ -205,3 +213,29 @@ evaluation.full_matrix:
 - `rank_func_lst` specifies the list of metrics which require the rank for computation.
 - `quantile_func_lst` specifies the list of metrics which require the quantile rank for computation.
  
+
+## Appendix: Equivalence between AUROC and MQR (optional)
+
+In this section, we justify the equation
+$$\text{AUROC} = 1 - \text{MQR}.$$
+
+This relationship depends on the particular notion of $\text{rank}$ that is defined above. It stems from the fact that the AUROC is equal to the probability that a randomly chosen positive datapoint ranks higher than a randomly chosen negative (Hanley et. al.). 
+
+To see this, let $\mathcal{P}$ and $\mathcal{N}$ denote the set of positive and negative datapoints respectively. By the aforementioned characterisation of AUROC,
+$$\text{AUROC} = \mathbb{P}_{x \sim \mathcal{P}} \mathbb{P}_{y \sim \mathcal{N}} [\gamma(x) \geq \gamma(y)]$$
+where $\gamma$ denotes the probability score. Then, 
+$$
+\mathbb{P}_{y \sim \mathcal{N}} [\gamma(x) \geq \gamma(y)]  = \frac{|\set{y \in \mathcal{N} : \gamma(x) \geq \gamma(y)}|}{N} = \frac{N - |\set{y \in \mathcal{N} : \gamma(y) \leq \gamma(x)}|}{N}
+$$
+where $N = |\mathcal{N}|$. But $|\set{y \in \mathcal{N} : \gamma(y) \leq \gamma(x)}|$ is equal to $\text{rank}(x)$
+ so by the above definition of  quantile rank, 
+$$
+\mathbb{P}_{y \sim \mathcal{N}} [\gamma(x) \geq \gamma(y)] = 1 - \text{QR}(x).
+$$ 
+Substituting back above shows that the desired equation holds.
+
+## References
+
+- Yang, Yang, Ryan N. Lichtenwalter, and Nitesh V. Chawla. "Evaluating link prediction methods." Knowledge and Information Systems 45 (2015): 751-782.
+- Hanley, James A., and Barbara J. McNeil. "The meaning and use of the area under a receiver operating characteristic (ROC) curve." Radiology 143.1 (1982): 29-36.
+
