@@ -150,14 +150,10 @@ class KedroSessionWithFromCatalog(KedroSession):
                 "KedroSession expect an instance of Runner instead of a class."
                 "Have you forgotten the `()` at the end of the statement?"
             )
-        hook_manager.hook.before_pipeline_run(
-            run_params=record_data, pipeline=filtered_pipeline, catalog=catalog
-        )
+        hook_manager.hook.before_pipeline_run(run_params=record_data, pipeline=filtered_pipeline, catalog=catalog)
 
         try:
-            run_result = runner.run(
-                filtered_pipeline, catalog, hook_manager, session_id
-            )
+            run_result = runner.run(filtered_pipeline, catalog, hook_manager, session_id)
             self._run_called = True
         except Exception as error:
             hook_manager.hook.on_pipeline_error(
