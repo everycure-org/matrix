@@ -1,4 +1,5 @@
 """Kedro project hooks."""
+
 from kedro.framework.hooks import hook_impl
 from pyspark import SparkConf
 import os

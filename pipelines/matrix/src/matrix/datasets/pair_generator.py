@@ -2,6 +2,7 @@
 
 Module containing drug-disease pair generator
 """
+
 import abc
 from tqdm import tqdm
 import pandas as pd

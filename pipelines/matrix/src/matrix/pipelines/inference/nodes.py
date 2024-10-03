@@ -1,4 +1,5 @@
 """Inference pipeline's nodes."""
+
 from typing import Dict
 import pandas as pd
 
