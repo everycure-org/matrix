@@ -22,6 +22,8 @@ prerequisites:
 
 venv:
 	if [ ! -d .venv ]; then uv venv -p 3.11; fi
+	.venv/bin/python -m ensurepip --upgrade || true
+
 install: precommit
 	# deactivate any potentially active venv that may be somewhere else
 	deactivate || true
@@ -46,7 +48,7 @@ fast_test:
 	TESTMON_DATAFILE=/tmp/.testmondata .venv/bin/pytest --testmon -v tests/
 
 format:
-	.venv/bin/ruff . --fix
+	.venv/bin/ruff check . --fix
 
 # executes E2E integration test fully in docker. 
 docker_test: docker_build
