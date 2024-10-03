@@ -1,16 +1,15 @@
 """Module with pytest fixtures."""
 
-import pytest
-
 from pathlib import Path
 
-from kedro.framework.context import KedroContext
-from kedro.framework.project import configure_project, settings
-from kedro.framework.hooks import _create_hook_manager
-
-from pyspark.sql import SparkSession
+import pytest
 from kedro.config import OmegaConfigLoader
+from kedro.framework.context import KedroContext
+from kedro.framework.hooks import _create_hook_manager
+from kedro.framework.project import configure_project, settings
 from omegaconf.resolvers import oc
+from pyspark.sql import SparkSession
+
 from matrix.resolvers import merge_dicts
 
 

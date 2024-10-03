@@ -1,15 +1,16 @@
-import pytest
-import pandas as pd
-import numpy as np
 from unittest.mock import Mock
 
+import numpy as np
+import pandas as pd
+import pytest
+
+from matrix.datasets.graph import KnowledgeGraph
 from matrix.pipelines.matrix_generation.nodes import (
     generate_pairs,
-    make_predictions_and_sort,
     generate_report,
+    make_predictions_and_sort,
 )
 from matrix.pipelines.modelling.transformers import FlatArrayTransformer
-from matrix.datasets.graph import KnowledgeGraph
 
 
 @pytest.fixture

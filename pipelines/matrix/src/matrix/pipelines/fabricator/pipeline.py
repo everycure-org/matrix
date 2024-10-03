@@ -1,11 +1,8 @@
 """Fabricator pipeline."""
 
 import pandas as pd
-
-from kedro.pipeline import Pipeline, node, pipeline
-
 from data_fabricator.v0.nodes.fabrication import fabricate_datasets
-
+from kedro.pipeline import Pipeline, node, pipeline
 from pyspark.sql import DataFrame
 
 

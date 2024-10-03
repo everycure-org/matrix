@@ -1,6 +1,6 @@
 """Nodes for the ingration pipeline."""
 
-from functools import reduce, partial
+from functools import partial, reduce
 
 import pyspark.sql.functions as F
 from pyspark.sql import DataFrame

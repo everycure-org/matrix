@@ -1,14 +1,13 @@
-import pytest
-
 import pandas as pd
+import pytest
 from sklearn.model_selection import ShuffleSplit
 
 from matrix.datasets.graph import KnowledgeGraph
 from matrix.datasets.pair_generator import (
+    GroundTruthTestPairs,
+    MatrixTestDiseases,
     RandomDrugDiseasePairGenerator,
     ReplacementDrugDiseasePairGenerator,
-    MatrixTestDiseases,
-    GroundTruthTestPairs,
 )
 from matrix.pipelines.modelling.nodes import make_splits
 

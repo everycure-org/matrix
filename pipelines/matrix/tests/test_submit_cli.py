@@ -3,22 +3,24 @@
 NOTE: This file was partially generated using AI assistance.
 """
 
-import pytest
-from unittest.mock import patch, MagicMock
-from click.testing import CliRunner
-from matrix.cli_commands.submit import (
-    submit,
-    check_dependencies,
-    build_push_docker,
-    build_argo_template,
-    ensure_namespace,
-    apply_argo_template,
-    submit_workflow,
-    get_run_name,
-    command_exists,
-    run_subprocess,
-)
 import subprocess
+from unittest.mock import MagicMock, patch
+
+import pytest
+from click.testing import CliRunner
+
+from matrix.cli_commands.submit import (
+    apply_argo_template,
+    build_argo_template,
+    build_push_docker,
+    check_dependencies,
+    command_exists,
+    ensure_namespace,
+    get_run_name,
+    run_subprocess,
+    submit,
+    submit_workflow,
+)
 
 
 @pytest.fixture

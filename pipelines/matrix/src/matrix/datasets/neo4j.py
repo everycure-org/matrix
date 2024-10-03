@@ -1,17 +1,14 @@
 """Module containing Neo4JDataset."""
 
+import logging
 import time
-from typing import Any
 from copy import deepcopy
-
-from neo4j import GraphDatabase
-from pyspark.sql import DataFrame, SparkSession
+from typing import Any
 
 from kedro.io.core import Version
 from kedro_datasets.spark import SparkDataset
-
-import logging
-
+from neo4j import GraphDatabase
+from pyspark.sql import DataFrame, SparkSession
 from refit.v1.core.inject import _parse_for_objects
 
 logger = logging.Logger(__name__)

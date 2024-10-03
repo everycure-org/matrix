@@ -1,11 +1,12 @@
-import pytest
-import pandas as pd
-import numpy as np
 from unittest.mock import Mock
-from matrix.pipelines.evaluation.nodes import make_test_predictions
-from matrix.pipelines.modelling.transformers import FlatArrayTransformer
+
+import numpy as np
+import pandas as pd
+import pytest
 
 from matrix.datasets.graph import KnowledgeGraph
+from matrix.pipelines.evaluation.nodes import make_test_predictions
+from matrix.pipelines.modelling.transformers import FlatArrayTransformer
 
 
 @pytest.fixture

@@ -1,12 +1,10 @@
 """Nodes for the preprocessing pipeline."""
 
-import requests
+from functools import partial
+from typing import Callable, List
 
 import pandas as pd
-
-from typing import Callable, List
-from functools import partial
-
+import requests
 from refit.v1.core.inline_has_schema import has_schema
 from refit.v1.core.inline_primary_key import primary_key
 

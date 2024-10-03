@@ -1,8 +1,8 @@
 """Ingestion pipeline."""
 
+import pyspark.sql.functions as F
 from kedro.pipeline import Pipeline, node, pipeline
 
-import pyspark.sql.functions as F
 from .nodes import ingest_robokop_nodes
 
 
