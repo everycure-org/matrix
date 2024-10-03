@@ -1,5 +1,6 @@
 """Ingestion pipeline."""
 
+import pyspark.sql.functions as F
 from kedro.pipeline import Pipeline, node, pipeline
 
 
@@ -25,14 +26,18 @@ def create_pipeline(**kwargs) -> Pipeline:
             ),
             # ec-medical-team
             node(
-                func=lambda x: x,
+                func=lambda x: x.withColumn(
+                    "upstream_data_source", F.array(F.lit("ec_medical_team"))
+                ),
                 inputs=["ingestion.raw.ec_medical_team.nodes@spark"],
                 outputs="ingestion.int.ec_medical_team.nodes",
                 name="write_ec_medical_team_nodes",
                 tags=["ec_medical_team"],
             ),
             node(
-                func=lambda x: x,
+                func=lambda x: x.withColumn(
+                    "upstream_data_source", F.array(F.lit("ec_medical_team"))
+                ),
                 inputs=["ingestion.raw.ec_medical_team.edges@spark"],
                 outputs="ingestion.int.ec_medical_team.edges",
                 name="write_ec_medical_team_edges",

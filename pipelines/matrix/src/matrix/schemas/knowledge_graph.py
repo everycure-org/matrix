@@ -33,7 +33,7 @@ class KGEdgeSchema(DataFrameModel):
     object_aspect_qualifier:     StringType()            = pa.Field(nullable = True)
     object_direction_qualifier:  StringType()            = pa.Field(nullable = True)
     # We manually set this for every KG we ingest
-    upstream_kg_sources:          ArrayType(StringType()) = pa.Field(nullable = False)
+    upstream_data_source:          ArrayType(StringType()) = pa.Field(nullable = False)
     # fmt: on
 
     class Config:  # noqa: D106
@@ -55,7 +55,7 @@ class KGNodeSchema(DataFrameModel):
     labels:                            ArrayType(StringType()) = pa.Field(nullable=True)
     international_resource_identifier: StringType()            = pa.Field(nullable=True)
     # We manually set this for every KG we ingest
-    upstream_kg_sources:                ArrayType(StringType()) = pa.Field(nullable=False)
+    upstream_data_source:                ArrayType(StringType()) = pa.Field(nullable=False)
     # fmt: on
 
     class Config:  # noqa: D106
@@ -82,5 +82,5 @@ class KGNodeSchema(DataFrameModel):
             F.collect_set("international_resource_identifier").alias(
                 "international_resource_identifier"
             ),
-            F.collect_list("upstream_kg_sources").alias("upstream_kg_sources"),
+            F.collect_list("upstream_data_source").alias("upstream_data_source"),
         )

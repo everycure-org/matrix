@@ -1,8 +1,10 @@
 """transformation functions for rtxkg2 nodes and edges."""
+
 import pandera.pyspark as pa
-from matrix.schemas.knowledge_graph import KGEdgeSchema, KGNodeSchema, cols_for_schema
-from pyspark.sql import DataFrame
 import pyspark.sql.functions as f
+from pyspark.sql import DataFrame
+
+from matrix.schemas.knowledge_graph import KGEdgeSchema, KGNodeSchema, cols_for_schema
 
 
 @pa.check_output(KGNodeSchema)
@@ -20,7 +22,7 @@ def transform_rtxkg2_nodes(nodes_df: DataFrame) -> DataFrame:
     # fmt: off
     return (
         nodes_df
-        .withColumn("upstream_kg_sources",                f.array(f.lit("rtxkg2")))
+        .withColumn("upstream_data_source",                f.array(f.lit("rtxkg2")))
         .withColumn("labels",                            f.split(f.col("label"), SEP))
         .withColumn("all_categories",                    f.split(f.col("all_categories"), SEP))
         .withColumn("all_categories",                    f.array_distinct(f.concat("labels", "all_categories")))
@@ -48,7 +50,7 @@ def transform_rtxkg2_edges(edges_df: DataFrame) -> DataFrame:
     # fmt: off
     return (
         edges_df
-        .withColumn("upstream_kg_sources",          f.array(f.lit("rtxkg2")))
+        .withColumn("upstream_data_source",          f.array(f.lit("rtxkg2")))
         .withColumn("subject",                     f.col("subject"))
         .withColumn("object",                      f.col("object"))
         .withColumn("predicate",                   f.col("predicate"))

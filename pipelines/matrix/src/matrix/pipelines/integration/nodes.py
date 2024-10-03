@@ -17,8 +17,8 @@ def unify_edges(*edges) -> DataFrame:
 
     # Deduplicate
     return union.groupBy(["subject", "predicate", "object"]).agg(
-        F.collect_list("knowledge_source").alias("knowledge_sources"),
-        F.collect_list("upstream_kg_sources").alias("upstream_kg_sources"),
+        F.collect_set("knowledge_source").alias("knowledge_sources"),
+        F.collect_set("upstream_data_source").alias("upstream_data_source"),
     )
 
 
