@@ -5,3 +5,4 @@ nav:
     - kedro.md
     - pipeline.md
     - local-setup.md
+    - walkthroughs
