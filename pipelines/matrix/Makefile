@@ -49,7 +49,7 @@ fast_test:
 
 
 format-check:
-	.venv/bin/ruff check --select I . --quiet && .venv/bin/ruff check . --quiet || exit 1
+	.venv/bin/ruff check --select I . && .venv/bin/ruff check . || exit 1
 
 format:
 	.venv/bin/ruff check --select I --fix .
