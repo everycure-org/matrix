@@ -20,6 +20,7 @@ logs
 notebooks
 references
 results
+scratch
 
 # except the following
 !logs/.gitkeep
