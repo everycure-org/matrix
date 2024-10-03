@@ -7,7 +7,6 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import requests
 import seaborn as sns
-
 from graphdatascience import GraphDataScience, QueryRunner
 from neo4j import Driver, GraphDatabase
 from pyspark.ml.functions import array_to_vector, vector_to_array
@@ -16,19 +15,17 @@ from pyspark.sql import functions as F
 from pyspark.sql.functions import udf
 from pyspark.sql.types import ArrayType, FloatType, StringType
 from pyspark.sql.window import Window
-
 from refit.v1.core.inject import inject_object
 from refit.v1.core.inline_has_schema import has_schema
 from refit.v1.core.inline_primary_key import primary_key
 from refit.v1.core.unpack import unpack_params
 from tenacity import (
     retry,
-    retry_if_exception_type,
     stop_after_attempt,
     wait_random_exponential,
 )
 
-from .graph_algorithms import *
+from .graph_algorithms import GDSGraphAlgorithm
 
 logger = logging.getLogger(__name__)
 
@@ -270,7 +267,7 @@ def add_include_in_graphsage(
     Only edges between non drug-disease pairs are included in graphsage.
     """
     with gdb.driver() as driver:
-        q = driver.execute_query(
+        driver.execute_query(
             """
             MATCH (n)-[r]-(m)
             WHERE 

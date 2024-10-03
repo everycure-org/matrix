@@ -96,7 +96,7 @@ def _create_model_pipeline(model: str, num_shards: int) -> Pipeline:
                     node(
                         func=nodes.apply_transformers,
                         inputs=[
-                            f"modelling.model_input.splits",
+                            "modelling.model_input.splits",
                             f"modelling.{model}.model_input.transformers",
                         ],
                         outputs=f"modelling.{model}.model_input.transformed_splits",

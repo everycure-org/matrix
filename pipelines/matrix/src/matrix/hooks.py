@@ -234,7 +234,7 @@ class NodeTimerHooks:
             durations[node] = nt["end"] - nt["start"]
 
         print(f"Total pipeline duration: {self.pipeline_end - self.pipeline_start}")
-        print(f"==========================================")
+        print("==========================================")
 
         df = (
             pd.DataFrame.from_dict(durations, orient="index")
@@ -243,9 +243,9 @@ class NodeTimerHooks:
         )
         df["in_seconds"] = df["time"].apply(lambda x: x.total_seconds())
         df["perc_of_total"] = df["in_seconds"] / df["in_seconds"].sum() * 100
-        print(f"Node durations:")
+        print("Node durations:")
         print(df)
-        print(f"==========================================")
+        print("==========================================")
         fig = tpl.figure()
         fig.barh(df["in_seconds"], df.index, force_ascii=True)
         fig.show()

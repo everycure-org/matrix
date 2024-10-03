@@ -6,7 +6,6 @@ import abc
 from tqdm import tqdm
 import pandas as pd
 import random
-from kedro.io import AbstractDataset
 
 from matrix.datasets.graph import KnowledgeGraph
 

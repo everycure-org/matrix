@@ -1,5 +1,5 @@
 """Custom kedro session."""
-from typing import Any, Iterable, Dict
+from typing import Any, Iterable
 
 from kedro import __version__ as kedro_version
 from kedro.framework.session import KedroSession
