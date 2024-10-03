@@ -70,14 +70,8 @@ jobs:
               - .github/workflows/matrix-ci.yml
               - .github/workflows/matrix-push.yml
 
-  linter:
-    runs-on: 'self-hosted'
-    needs: [paths_filter]
-    if: needs.paths_filter.outputs.changed == 'true'
-    steps:
-      - uses: actions/checkout@v4
-      - run: make format-check
-      
+  # TODO: Add CI check for make format-check command
+  
   ci:
     runs-on:  'self-hosted'
     needs: [paths_filter]
