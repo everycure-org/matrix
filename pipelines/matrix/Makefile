@@ -47,6 +47,10 @@ fast_test:
 	# activate venv to ensure spark doesn't have python driver mismatches
 	TESTMON_DATAFILE=/tmp/.testmondata .venv/bin/pytest --testmon -v tests/
 
+
+format-check:
+	.venv/bin/ruff check --select I . --quiet && .venv/bin/ruff check . --quiet || exit 1
+
 format:
 	.venv/bin/ruff check --select I --fix .
 	.venv/bin/ruff check . --fix
