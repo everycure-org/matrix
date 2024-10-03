@@ -1,13 +1,13 @@
 """Nodes for the ingration pipeline."""
 
-import pandas as pd
-from functools import reduce, partial
+from functools import partial, reduce
 
 import pyspark.sql.functions as F
 from pyspark.sql import DataFrame
-
 from refit.v1.core.inline_has_schema import has_schema
 from refit.v1.core.inline_primary_key import primary_key
+
+from matrix.schemas.knowledge_graph import KGNodeSchema
 
 
 def unify_edges(*edges) -> DataFrame:

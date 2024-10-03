@@ -1,11 +1,9 @@
 """Utils for inference running."""
-from abc import ABC, abstractmethod
-from typing import List, Type, Dict
+from typing import Dict
 import seaborn as sns
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-from ..modelling.model import ModelWrapper
 
 
 def create_kdeplot(scores: pd.DataFrame, infer_type: Dict, col_name: str) -> plt.figure:

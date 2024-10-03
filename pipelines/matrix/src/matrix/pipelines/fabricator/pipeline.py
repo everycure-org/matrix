@@ -1,15 +1,12 @@
 """Fabricator pipeline."""
 
 import pandas as pd
-import pyspark.sql as sql
 
 from kedro.pipeline import Pipeline, node, pipeline
 
 from data_fabricator.v0.nodes.fabrication import fabricate_datasets
 
 from pyspark.sql import DataFrame
-
-import pyspark.sql.functions as F
 
 
 def _create_pairs(nodes: DataFrame, num: int = 50, seed: int = 42) -> pd.DataFrame:
