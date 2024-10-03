@@ -47,9 +47,7 @@ def resolve_input_sheet(
     return {"time": timestamp, "request": request}, drug_list, disease_list
 
 
-def visualise_treat_scores(
-    scores: pd.DataFrame, infer_type: Dict, col_name: str
-) -> Figure:
+def visualise_treat_scores(scores: pd.DataFrame, infer_type: Dict, col_name: str) -> Figure:
     """Create visualisations based on the treat scores and store them in GCS/MLFlow.
 
     Args:
