@@ -3,11 +3,13 @@
 It is defined in Pandera which is strongly inspired by Pydantic.
 """
 
-import pandera.pyspark as pa
-from pandera.pyspark import DataFrameModel
-from pyspark.sql.types import *
 from typing import List
+
+import pandera.pyspark as pa
+import pyspark.sql.functions as F
+from pandera.pyspark import DataFrameModel
 from pyspark.sql import DataFrame
+from pyspark.sql.types import ArrayType, StringType
 
 
 def cols_for_schema(schema_obj: DataFrameModel) -> List[str]:
@@ -60,7 +62,8 @@ class KGNodeSchema(DataFrameModel):
         coerce = True
         strict = True
 
-    def group_nodes_by_id(self, nodes_df: DataFrame) -> DataFrame:
+    @classmethod
+    def group_nodes_by_id(cls, nodes_df: DataFrame) -> DataFrame:
         """Utility function to group nodes by id.
 
         This should be used after the IDs are normalized so we can combine node properties from
