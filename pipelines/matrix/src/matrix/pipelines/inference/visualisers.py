@@ -1,4 +1,5 @@
 """Utils for inference running."""
+
 from typing import Dict
 import seaborn as sns
 import pandas as pd

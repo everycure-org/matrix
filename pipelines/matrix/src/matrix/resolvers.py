@@ -1,4 +1,5 @@
 """Custom resolvers for Kedro project."""
+
 import os
 from typing import Dict, Optional
 from copy import deepcopy

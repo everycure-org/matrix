@@ -1,4 +1,5 @@
 """Module with GCP datasets for Kedro."""
+
 from typing import Any, Optional
 from copy import deepcopy
 import re
