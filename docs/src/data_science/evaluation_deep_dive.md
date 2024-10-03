@@ -74,6 +74,7 @@ where $|\cdot|$ denotes the cardinality (size) of a set.
 We have three variations of the full matrix Recall@n metric corresponding to different choices for the ground truth set $GT$: 
 1.  The *standard version* uses the standard ground truth positive test set
 2.  The *clinical trials version* uses successful clinical trials
+3. The *negatives version* which uses the ground truth negative test set. Unlike the others, we want this one to be as small possible
 
 
 #### AUROC (Area Under the Receiver Operating Characteristic curve)
