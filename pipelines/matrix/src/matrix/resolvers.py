@@ -1,6 +1,6 @@
 """Custom resolvers for Kedro project."""
 import os
-from typing import Dict, Any, Optional
+from typing import Dict, Optional
 from copy import deepcopy
 
 from dotenv import load_dotenv
