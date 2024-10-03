@@ -4,18 +4,18 @@ There is no need to edit this file unless you want to change values
 from the Kedro defaults. For further information, including these default values, see
 https://docs.kedro.org/en/stable/kedro_project_setup/settings.html.
 """
+
 # Instantiated project hooks.
 # For example, after creating a hooks.py and defining a ProjectHooks class there, do
 # from pandas_viz.hooks import ProjectHooks
-import matrix.hooks as hooks
 from kedro_mlflow.framework.hooks import MlflowHook
 
-SECRET_PARAMS = ["embeddings.ai_config.api_key" "embeddings.gds.auth"]
+import matrix.hooks as hooks
 
 # Hooks are executed in a Last-In-First-Out (LIFO) order.
 HOOKS = (
     hooks.NodeTimerHooks(),
-    MlflowHook(blacklisted_params=SECRET_PARAMS),
+    MlflowHook(),
     hooks.MLFlowHooks(),
     hooks.SparkHooks(),
 )
@@ -25,6 +25,7 @@ DISABLE_HOOKS_FOR_PLUGINS = ("kedro-mlflow",)
 
 # Class that manages storing KedroSession data.
 from pathlib import Path  # noqa: E402
+
 from kedro_viz.integrations.kedro.sqlite_store import SQLiteStore  # noqa: E402
 
 SESSION_STORE_CLASS = SQLiteStore
@@ -36,8 +37,9 @@ SESSION_STORE_ARGS = {"path": str(Path(__file__).parents[2])}
 
 
 # Class that manages how configuration is loaded.
-from .resolvers import merge_dicts, env
 from kedro.config import OmegaConfigLoader  # noqa: E402
+
+from .resolvers import env, merge_dicts
 
 CONFIG_LOADER_CLASS = OmegaConfigLoader
 # Keyword arguments to pass to the `CONFIG_LOADER_CLASS` constructor.

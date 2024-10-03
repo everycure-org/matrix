@@ -1,9 +1,6 @@
 """transformation functions for robokop nodes and edges."""
 import pandera.pyspark as pa
 import pyspark.sql.types as T
-from pandera.pyspark import DataFrameModel
-from pandera.typing import Series
-from typing import List
 from matrix.schemas.knowledge_graph import KGEdgeSchema, KGNodeSchema, cols_for_schema
 from pyspark.sql import DataFrame
 import pyspark.sql.functions as f
