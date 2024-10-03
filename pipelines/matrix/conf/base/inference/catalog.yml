@@ -1,0 +1,145 @@
+_sheets_dataset: &_sheets_dataset
+  type: matrix.datasets.gcp.GoogleSheetsDataset
+  key: 1CioSCCQxUdACn1NfWU9XRyC-9j_ERc2hmZzaDd8XgcQ
+  service_file: conf/local/service-account.json
+
+_pandas_csv: &_pandas_csv
+  type:  pandas.CSVDataset
+
+_pandas_parquet: &_pandas_parquet
+  type: pandas.ParquetDataset
+
+_spark_parquet_ds: &_spark_parquet
+  type: matrix.datasets.gcp.LazySparkDataset
+  file_format: parquet
+  save_args:
+    mode: overwrite
+
+_kg_dataset: &_kg_dataset
+  type: matrix.datasets.graph.KnowledgeGraphDataset
+  load_args:
+    engine: pyarrow
+    use_nullable_dtypes: True
+
+inference.raw.disease_list:
+  <<: [*_sheets_dataset]
+  save_args:
+    overwrite: True
+    sheet_name: "normalized_disease_list"
+    write_columns: &_gsheet_disease_columns
+      - category_class
+      - label
+      - definition
+      - synonyms
+      - subsets
+      - crossreferences
+      - curie
+      - name
+  load_args:
+    sheet_name: "normalized_disease_list"
+    columns: *_gsheet_disease_columns
+
+inference.raw.drug_list:
+  <<: [*_sheets_dataset]
+  save_args:
+    overwrite: True
+    sheet_name: "normalized_drug_list"
+    write_columns: &_gsheet_drug_columns
+      - single_ID
+      - Name_EMA
+      - Approved_Europe
+      - Name_PMDA
+      - Approved_Japan
+      - Name_Orange_Book
+      - Approved_USA 
+      - Available_USA
+      - ID_Label
+      - Therapy_Name
+      - Combination_Therapy
+      - Ingredient_IDs
+      - curie
+      - name
+  load_args:
+    sheet_name: "normalized_drug_list"
+    columns: *_gsheet_drug_columns
+
+inference.raw.normalized_inputs:
+  <<: [*_sheets_dataset]
+  save_args:
+    #overwrite: True
+    sheet_name: "input"
+    write_columns: &_gsheet_input_columns
+      - timestamp
+      - drug_id
+      - disease_id
+      - norm_drug_id
+      - norm_disease_id
+      - norm_drug_name
+      - norm_disease_name
+  load_args:
+    #overwrite: True
+    sheet_name: "input"
+    columns: *_gsheet_input_columns
+
+inference.int.request_type:
+  type: yaml.YAMLDataset
+  filepath: ${globals:paths.tmp}/infer_type.yml
+
+inference.model_input.drug_disease_pairs:
+  <<: [*_pandas_parquet]
+  filepath: ${globals:paths.tmp}/drug_disease_pairs
+
+inference.int.drug_list@pandas:
+  <<: *_pandas_parquet
+  filepath: ${globals:paths.tmp}/drug_list_infer
+
+inference.int.disease_list@pandas:
+  <<: *_pandas_parquet
+  filepath: ${globals:paths.tmp}/disease_list_infer
+
+inference.int.drug_list@spark:
+  <<: *_spark_parquet
+  filepath: ${globals:paths.tmp}/drug_list_infer
+
+inference.int.disease_list@spark:
+  <<: *_spark_parquet
+  filepath: ${globals:paths.tmp}/disease_list_infer
+
+
+# NOTE: Sheet is created for ech model
+"inference.{model}.model_output.predictions":
+  <<: *_pandas_parquet
+  filepath: ${globals:paths.tmp}/{model}/predictions
+
+"inference.{model}.reporting.report":
+  <<: [*_sheets_dataset]
+  save_args:
+    overwrite: True
+    sheet_name: "{model}_report"
+    write_columns:
+      - drug_id
+      - drug_name
+      - disease_id
+      - disease_name
+      - treat_score
+      - is_known_positive
+      - is_known_negative
+
+"inference.{model}.reporting.visualisations":
+  type: kedro_mlflow.io.artifacts.MlflowArtifactDataset
+  artifact_path: "histogram"
+  dataset:
+    type: matplotlib.MatplotlibWriter
+    filepath: ${globals:paths.tmp}/{model}/histogram_plot.png  
+
+inference.feat.nodes@spark:
+  <<: *_spark_parquet
+  filepath: ${globals:paths.tmp}/matrix_nodes
+
+inference.feat.nodes_kg_ds:
+  <<: *_kg_dataset
+  filepath: ${globals:paths.tmp}/inference_nodes_kg
+
+inference.prm.matrix_pairs:
+  <<: *_pandas_parquet
+  filepath: ${globals:paths.tmp}/inference_pairs

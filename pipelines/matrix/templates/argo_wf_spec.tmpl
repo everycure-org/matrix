@@ -3,7 +3,7 @@ apiVersion: argoproj.io/v1alpha1
 kind: WorkflowTemplate
 metadata:
   namespace: {{namespace}}
-  name: matrix
+  name: {{run_name}}
 spec:
   workflowMetadata:
     labels:
@@ -54,7 +54,7 @@ spec:
       {% endraw %}
       resources: # limit the resources
         requests:
-          memory: 6Gi
+          memory: 64Gi
           cpu: 4
         limits:
           memory: 64Gi
