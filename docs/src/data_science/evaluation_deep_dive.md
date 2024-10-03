@@ -226,9 +226,9 @@ To see this, let $\mathcal{P}$ and $\mathcal{N}$ denote the set of positive and 
 $$\text{AUROC} = \mathbb{P}_{x \sim \mathcal{P}} \mathbb{P}_{y \sim \mathcal{N}} [\gamma(x) \geq \gamma(y)]$$
 where $\gamma$ denotes the probability score. Then, 
 $$
-\mathbb{P}_{y \sim \mathcal{N}} [\gamma(x) \geq \gamma(y)]  = \frac{|\set{y \in \mathcal{N} : \gamma(x) \geq \gamma(y)}|}{N} = \frac{N - |\set{y \in \mathcal{N} : \gamma(y) \leq \gamma(x)}|}{N}
+\mathbb{P}_{y \sim \mathcal{N}} [\gamma(x) \geq \gamma(y)]  = \frac{|\set{y \in \mathcal{N} : \gamma(x) \geq \gamma(y)}|}{N} = \frac{N - |\set{y \in \mathcal{N} : \gamma(y) < \gamma(x)}|}{N}
 $$
-where $N = |\mathcal{N}|$. But $|\set{y \in \mathcal{N} : \gamma(y) \leq \gamma(x)}|$ is equal to $\text{rank}(x)$
+where $N = |\mathcal{N}|$. But $|\set{y \in \mathcal{N} : \gamma(y) < \gamma(x)}|$ is equal to $\text{rank}(x)$
  so by the above definition of  quantile rank, 
 $$
 \mathbb{P}_{y \sim \mathcal{N}} [\gamma(x) \geq \gamma(y)] = 1 - \text{QR}(x).
