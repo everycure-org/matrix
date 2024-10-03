@@ -48,6 +48,7 @@ fast_test:
 	TESTMON_DATAFILE=/tmp/.testmondata .venv/bin/pytest --testmon -v tests/
 
 format:
+	.venv/bin/ruff check --select I --fix .
 	.venv/bin/ruff check . --fix
 
 # executes E2E integration test fully in docker. 

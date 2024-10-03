@@ -1,7 +1,7 @@
 """Module with sklearn compatible transformers."""
-from sklearn.preprocessing import FunctionTransformer
 
 import pandas as pd
+from sklearn.preprocessing import FunctionTransformer
 
 
 class FlatArrayTransformer(FunctionTransformer):

@@ -3,11 +3,11 @@
 from typing import Any, Iterable
 
 from kedro import __version__ as kedro_version
+from kedro.framework.project import pipelines
 from kedro.framework.session import KedroSession
 from kedro.framework.session.session import KedroSessionError
-from kedro.runner import AbstractRunner, SequentialRunner
-from kedro.framework.project import pipelines
 from kedro.io import DataCatalog
+from kedro.runner import AbstractRunner, SequentialRunner
 
 
 class KedroSessionWithFromCatalog(KedroSession):

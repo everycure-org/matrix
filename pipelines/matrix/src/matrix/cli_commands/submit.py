@@ -1,5 +1,3 @@
-from matrix.argo import _generate_argo_config
-
 import json
 import logging
 import re
@@ -13,6 +11,8 @@ from kedro.framework.cli.utils import CONTEXT_SETTINGS
 from rich.console import Console
 from rich.logging import RichHandler
 from rich.panel import Panel
+
+from matrix.argo import _generate_argo_config
 
 # Set up logging
 logging.basicConfig(

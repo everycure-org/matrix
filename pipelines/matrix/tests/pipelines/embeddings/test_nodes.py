@@ -2,10 +2,10 @@ import pytest
 from pyspark.sql.types import (
     ArrayType,
     FloatType,
-    StringType,
-    StructType,
-    StructField,
     IntegerType,
+    StringType,
+    StructField,
+    StructType,
 )
 
 from matrix.pipelines.embeddings.nodes import compute_embeddings

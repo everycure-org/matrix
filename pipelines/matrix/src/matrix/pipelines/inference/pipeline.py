@@ -1,9 +1,11 @@
 """Fabricator pipeline."""
 
-from matrix import settings
 from kedro.pipeline import Pipeline, node, pipeline
-from . import nodes as nd
+
+from matrix import settings
+
 from ..matrix_generation import pipeline as mgp
+from . import nodes as nd
 
 
 def _create_resolution_pipeline() -> Pipeline:

@@ -1,9 +1,8 @@
 """Script to load maven dependencies."""
 
-from pyspark.sql import SparkSession
-from pyspark import SparkConf
-
 import yaml
+from pyspark import SparkConf
+from pyspark.sql import SparkSession
 
 
 def main(*args, **kwargs):

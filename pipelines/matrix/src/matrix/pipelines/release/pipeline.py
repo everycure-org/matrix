@@ -1,7 +1,8 @@
 """Pipeline to release data."""
+
 from kedro.pipeline import Pipeline, node, pipeline
 
-from matrix.pipelines.embeddings.nodes import ingest_nodes, ingest_edges
+from matrix.pipelines.embeddings.nodes import ingest_edges, ingest_nodes
 
 
 def create_pipeline(**kwargs) -> Pipeline:
