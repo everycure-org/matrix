@@ -183,7 +183,7 @@ Jupyter notebooks should be created in the directory `pipelines/matrix/notebooks
 !!! tip
     A separate git repository for notebook version control may be created inside the `scratch` directory. It can also be nice to create a symbolic link to `scratch` from a directory of your choice on your machine. 
 
-    An example notebook is also added to our documentation [here](./kedro_notebook_example.ipynb) which you can copy into the scratch directory for a quickstart
+    An example notebook is also added to our documentation [here](./walkthroughs/kedro_notebook_example.ipynb which you can copy into the scratch directory for a quickstart
 
 Within a notebook, first run a cell with the following magic command:
 
