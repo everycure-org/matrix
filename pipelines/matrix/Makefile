@@ -25,6 +25,7 @@ venv:
 install: precommit
 	# deactivate any potentially active venv that may be somewhere else
 	deactivate || true
+	uv pip compile requirements.in --output-file requirements.txt
 	uv pip install -r requirements.txt
 
 precommit: precommit-hooks
@@ -44,6 +45,9 @@ fast_test:
 	# activate venv to ensure spark doesn't have python driver mismatches
 	TESTMON_DATAFILE=/tmp/.testmondata .venv/bin/pytest --testmon -v tests/
 
+format:
+	.venv/bin/ruff . --fix
+
 # executes E2E integration test fully in docker. 
 docker_test: docker_build
 	IMG="$(dev_docker_image)" docker compose -f compose/docker-compose.yml \
@@ -56,6 +60,7 @@ docker_test: docker_build
 docker_build:
 	docker buildx build --progress=plain --build-arg GIT_SHA=${GIT_SHA} --platform linux/amd64 -t $(dev_docker_image) ./
 	docker tag $(dev_docker_image) $(dev_docker_image):${TAG}
+
 docker_push: docker_build
 	docker push $(dev_docker_image):${TAG}
 
