@@ -38,8 +38,9 @@ source_dir = "src"
 [project.entry-points."kedro.hooks"]
 
 [tool.ruff]
-lint.select = ["D"]
+lint.select = ["D", "F"]
 lint.pydocstyle.convention = "google"
+lint.fixable = ["ALL"]
 
 [tool.ruff.lint.per-file-ignores]
 "tests/*/**" = ["D"]

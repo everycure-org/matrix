@@ -1,12 +1,8 @@
 """Inference pipeline's nodes."""
-from matrix import settings
-from kedro.pipeline import Pipeline, node, pipeline
-from typing import List, Type, Dict
-import numpy as np
+from typing import Dict
 import pandas as pd
 
 from . import visualisers
-from ..modelling.model import ModelWrapper
 from matplotlib.figure import Figure
 
 

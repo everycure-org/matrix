@@ -1,5 +1,5 @@
 """Module with GCP datasets for Kedro."""
-from typing import Any, Dict, Optional
+from typing import Any, Optional
 from copy import deepcopy
 import re
 from google.cloud import bigquery
@@ -13,12 +13,8 @@ from kedro.io.core import Version
 from kedro_datasets.spark import SparkDataset
 from kedro_datasets.spark.spark_dataset import _strip_dbfs_prefix, _get_spark
 from kedro.io.core import (
-    PROTOCOL_DELIMITER,
     AbstractVersionedDataset,
     DatasetError,
-    Version,
-    get_filepath_str,
-    get_protocol_and_path,
 )
 
 import pygsheets
