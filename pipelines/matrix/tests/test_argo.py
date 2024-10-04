@@ -1,7 +1,8 @@
 from kedro.pipeline.node import Node
 from kedro.pipeline import Pipeline
+import pytest
 
-from matrix.argo import fuse
+from matrix.argo import clean_name, fuse
 
 
 def dummy_fn(*args):
@@ -158,3 +159,22 @@ def test_fusing_multiple_parents():
     assert set([parent.name for parent in fused[3]._parents]) == set(
         ["first_node", "second_node", "third_node"]
     ), "Fused node should have parents 'first_node', 'second_node' and 'third_node'"
+
+
+@pytest.mark.parametrize(
+    "input_name, expected",
+    [
+        ("node_name_1", "node-name-1"),  # Basic case with underscore
+        ("node@name!", "node-name"),  # Special characters
+        ("_node_name_", "node-name"),  # Leading and trailing underscores
+        ("-node_name-", "node-name"),  # Leading and trailing dashes
+        ("@@node!!", "node"),  # Leading and trailing special characters
+        ("", ""),  # Empty string
+        ("clean-name", "clean-name"),  # Already clean name
+        ("node__name---test", "node-name-test"),  # Multiple consecutive special characters
+        ("name!!!node$$$name", "name-node-name"),  # Complex case with multiple special characters
+    ],
+)
+def test_clean_name(input_name, expected):
+    """Test clean_name function with various input cases."""
+    assert clean_name(input_name) == expected
