@@ -1,10 +1,11 @@
 import pandas as pd
 from pyspark.sql import DataFrame
+from typing import Tuple
 
 def get_random_selection_of_edges(
     nodes: DataFrame,
     edges: DataFrame
-) -> DataFrame:
+) -> Tuple[DataFrame, DataFrame]:
     """Function that accepts the whole Edges and Nodes
        and makes a random selection of the Edges.
        The idea is to have a dataset that resembles the
