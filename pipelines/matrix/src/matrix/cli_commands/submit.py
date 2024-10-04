@@ -1,12 +1,10 @@
-import time
-from matrix.argo import ARGO_TEMPLATES_DIR_PATH, generate_argo_config
-
 import json
 import logging
 import re
 import secrets
 import subprocess
 import sys
+import time
 from typing import Optional
 
 import click
@@ -14,6 +12,8 @@ from kedro.framework.cli.utils import CONTEXT_SETTINGS
 from rich.console import Console
 from rich.logging import RichHandler
 from rich.panel import Panel
+
+from matrix.argo import ARGO_TEMPLATES_DIR_PATH, generate_argo_config
 
 # Set up logging
 logging.basicConfig(

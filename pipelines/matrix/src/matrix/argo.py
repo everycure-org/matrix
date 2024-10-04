@@ -2,14 +2,13 @@
 
 import re
 from pathlib import Path
-from typing import List, Optional, Any
+from typing import Any, List, Optional
 
 from jinja2 import Environment, FileSystemLoader
-
-from kedro.pipeline.node import Node
-from kedro.pipeline import Pipeline
 from kedro.framework.project import pipelines
 from kedro.framework.startup import bootstrap_project
+from kedro.pipeline import Pipeline
+from kedro.pipeline.node import Node
 
 ARGO_TEMPLATE_FILE = "argo_wf_spec.tmpl"
 ARGO_TEMPLATES_DIR_PATH = Path(__file__).parent.parent.parent / "templates"
