@@ -1,10 +1,11 @@
 """Nodes for the ingration pipeline."""
-import pandas as pd
+
 from functools import reduce, partial
 
 import pyspark.sql.functions as F
 from pyspark.sql import DataFrame
 
+# from matrix.schemas.knowledge_graph import KGNodeSchema
 from refit.v1.core.inline_has_schema import has_schema
 from refit.v1.core.inline_primary_key import primary_key
 
@@ -60,9 +61,7 @@ def create_treats(nodes: DataFrame, df: DataFrame):
         df: Ground truth dataset
     """
     return (
-        df.withColumn(
-            "label", F.when(F.col("y") == 1, "TREATS").otherwise("NOT_TREATS")
-        )
+        df.withColumn("label", F.when(F.col("y") == 1, "TREATS").otherwise("NOT_TREATS"))
         .withColumn(
             "properties",
             F.create_map(

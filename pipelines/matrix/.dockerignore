@@ -2,7 +2,7 @@
 # Kedro PROJECT
 .venv/
 compose/
-
+.cache/
 
 # ignore Dockerfile and .dockerignore
 Dockerfile

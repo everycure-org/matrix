@@ -1,6 +1,7 @@
 """Custom resolvers for Kedro project."""
+
 import os
-from typing import Dict, Any, Optional
+from typing import Dict, Optional
 from copy import deepcopy
 
 from dotenv import load_dotenv
@@ -45,6 +46,4 @@ def env(key: str, default: str = None) -> Optional[str]:
             raise KeyError()
         return value
     except KeyError:
-        raise KeyError(
-            f"Environment variable '{key}' not found or default value {default} is None"
-        )
+        raise KeyError(f"Environment variable '{key}' not found or default value {default} is None")

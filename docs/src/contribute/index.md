@@ -3,7 +3,9 @@
 ## Formatting and Style
 
 We install various style and formatting enforcers in our `pre-commit` command which is configured in `.pre-commit-config.yaml` in the root of the repository. These include `ruff` for python and `terraform` standards. 
-    
+
+!!! tip
+    Definitely recommend installing `ruff` into VSCode and make use of the automatic formatting, imports handling etc. [Extension link](https://marketplace.visualstudio.com/items?itemName=charliermarsh.ruff)
 
 ## Documentation
 
