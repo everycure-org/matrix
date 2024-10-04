@@ -1,4 +1,5 @@
-from matrix.argo import _generate_argo_config
+import time
+from matrix.argo import ARGO_TEMPLATES_DIR_PATH, _generate_argo_config
 
 import json
 import logging
@@ -60,8 +61,12 @@ def submit(username: str, namespace: str, run_name: str, verbose: bool, dry_run:
         console.print("[green]✓[/green] Docker image built and pushed")
 
         console.print("Building Argo template...")
-        build_argo_template(run_name, username, namespace, verbose=verbose)
+        argo_template = build_argo_template(run_name, username, namespace, verbose=verbose)
         console.print("[green]✓[/green] Argo template built")
+
+        console.print("Writing Argo template...")
+        file_path = save_argo_template(argo_template, run_name)
+        console.print(f"[green]✓[/green] Argo template written to {file_path}")
 
         console.print("Ensuring namespace...")
         ensure_namespace(namespace, verbose=verbose)
@@ -221,11 +226,17 @@ def build_push_docker(username: str, verbose: bool):
     run_subprocess(f"make docker_push TAG={username}", stream_output=verbose)
 
 
-def build_argo_template(run_name, username, namespace, verbose: bool):
+def build_argo_template(run_name, username, namespace, verbose: bool) -> str:
     """Build Argo workflow template."""
     image_name = "us-central1-docker.pkg.dev/mtrx-hub-dev-3of/matrix-images/matrix"
-    _generate_argo_config(image_name, run_name, username, namespace, username)
+    return _generate_argo_config(image_name, run_name, username, namespace, username)
 
+def save_argo_template(argo_template: str, run_name: str) -> str:
+    """Save Argo workflow template to file."""
+    file_path = ARGO_TEMPLATES_DIR_PATH / f"argo_template_{run_name}_{time.strftime('%Y%m%d_%H%M%S')}.yaml"
+    with open(file_path, "w") as f:
+        f.write(argo_template)
+    return str(file_path)
 
 def ensure_namespace(namespace, verbose: bool):
     """Create or verify Kubernetes namespace."""
