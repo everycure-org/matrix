@@ -39,6 +39,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 name="transform_rtx_edges",
                 tags=["standardize"],
             ),
+            # TODO missing between transformation and unification are the "node norm API calls"
             node(
                 func=nodes.unify_nodes,
                 inputs=[

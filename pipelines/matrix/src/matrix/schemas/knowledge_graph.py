@@ -13,7 +13,12 @@ from pyspark.sql.types import ArrayType, StringType
 
 
 def cols_for_schema(schema_obj: DataFrameModel) -> List[str]:
-    """Convenience function that returns the columns of a schema."""
+    """Convenience function that returns the columns of a schema.
+
+    The function returns all the columns of the passed model. This is convenient for
+    selecting the columns of a schema in a pipeline using pyspark which then drops all
+    other columns.
+    """
     return list(schema_obj.to_schema().columns.keys())
 
 
@@ -46,22 +51,14 @@ class KGEdgeSchema(DataFrameModel):
             edges_df.groupBy(["subject", "predicate", "object"])
             .agg(
                 F.collect_set("knowledge_level").alias("knowledge_level"),
-                F.flatten(F.collect_set("upstream_data_source")).alias(
-                    "upstream_data_source"
-                ),
+                F.flatten(F.collect_set("upstream_data_source")).alias("upstream_data_source"),
                 # TODO: we shouldn't just take the first one but collect these values from multiple upstream sources
                 F.first("subject_aspect_qualifier").alias("subject_aspect_qualifier"),
-                F.first("subject_direction_qualifier").alias(
-                    "subject_direction_qualifier"
-                ),
-                F.first("object_direction_qualifier").alias(
-                    "object_direction_qualifier"
-                ),
+                F.first("subject_direction_qualifier").alias("subject_direction_qualifier"),
+                F.first("object_direction_qualifier").alias("object_direction_qualifier"),
                 F.first("object_aspect_qualifier").alias("object_aspect_qualifier"),
                 F.first("primary_knowledge_source").alias("primary_knowledge_source"),
-                F.flatten(F.collect_set("aggregator_knowledge_source")).alias(
-                    "aggregator_knowledge_source"
-                ),
+                F.flatten(F.collect_set("aggregator_knowledge_source")).alias("aggregator_knowledge_source"),
                 F.flatten(F.collect_set("publications")).alias("publications"),
             )
             .select(*cols_for_schema(KGEdgeSchema))
@@ -99,24 +96,19 @@ class KGNodeSchema(DataFrameModel):
         """
         # FUTURE: We should improve selection of name and description currently
         # selecting the first non-null, which might not be as desired.
+        # fmt: off
         return (
             nodes_df.groupBy("id")
             .agg(
                 F.first("name").alias("name"),
                 F.first("category").alias("category"),
                 F.first("description").alias("description"),
-                F.first("international_resource_identifier").alias(
-                    "international_resource_identifier"
-                ),
-                F.flatten(F.collect_set("equivalent_identifiers")).alias(
-                    "equivalent_identifiers"
-                ),
+                F.first("international_resource_identifier").alias("international_resource_identifier"),
+                F.flatten(F.collect_set("equivalent_identifiers")).alias("equivalent_identifiers"),
                 F.flatten(F.collect_set("all_categories")).alias("all_categories"),
                 F.flatten(F.collect_set("labels")).alias("labels"),
                 F.flatten(F.collect_set("publications")).alias("publications"),
-                F.flatten(F.collect_list("upstream_data_source")).alias(
-                    "upstream_data_source"
-                ),
+                F.flatten(F.collect_list("upstream_data_source")).alias("upstream_data_source"),
             )
             .select(*cols_for_schema(KGNodeSchema))
         )
