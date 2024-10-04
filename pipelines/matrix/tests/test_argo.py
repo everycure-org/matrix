@@ -8,9 +8,8 @@ def dummy_fn(*args):
     return "dummy"
 
 
-def test_no_fusing():
-    # Given a pipeline with no fusing options
-    pipeline = Pipeline(
+def test_no_nodes_fused_when_no_fuse_options():
+    pipeline_with_no_fusing_options = Pipeline(
         nodes=[
             Node(
                 func=dummy_fn,
@@ -20,7 +19,7 @@ def test_no_fusing():
             ),
             Node(
                 func=dummy_fn,
-                inputs=["dataset_1", "dataset_2"],
+                inputs=["dataset_1", "dataset_2"],  # inputs are different than outputs of previous node
                 outputs="dataset_3",
                 name="second",
             ),
@@ -28,17 +27,15 @@ def test_no_fusing():
         tags=["argowf.fuse", "argowf.fuse-group.dummy"],
     )
 
-    # When applying fusing to the pipeline
-    fused = fuse(pipeline)
+    fused = fuse(pipeline_with_no_fusing_options)
 
-    # Then no nodes fused
-    assert len(fused) == len(pipeline.nodes)
+    assert len(fused) == len(
+        pipeline_with_no_fusing_options.nodes
+    ), "No nodes should be fused when no fuse options are provided"
 
 
 def test_simple_fusing():
-    # Given a pipeline where first nodes provides
-    # all inputs for second node
-    pipeline = Pipeline(
+    pipeline_where_first_node_is_input_for_second = Pipeline(
         nodes=[
             Node(
                 func=dummy_fn,
@@ -56,23 +53,18 @@ def test_simple_fusing():
         tags=["argowf.fuse", "argowf.fuse-group.dummy"],
     )
 
-    # When applying fusing to the pipeline
-    fused = fuse(pipeline)
+    fused = fuse(pipeline_where_first_node_is_input_for_second)
 
-    # Then nodes fused correctly into a singe node,
-    # fuse group is used to name the fused entity, outputs
-    # of fused node is union of outputs of the input nodes
-    # and the fused node has no parents.
-    assert len(fused) == 1
-    assert fused[0].name == "dummy"
-    assert fused[0].outputs == set(["dataset_1", "dataset_2"])
-    assert len(fused[0]._parents) == 0
+    assert len(fused) == 1, "Only one node should be fused"
+    assert fused[0].name == "dummy", "Fused node should have name 'dummy'"
+    assert fused[0].outputs == set(
+        ["dataset_1", "dataset_2"]
+    ), "Fused node should have outputs 'dataset_1' and 'dataset_2'"
+    assert len(fused[0]._parents) == 0, "Fused node should have no parents"
 
 
 def test_no_multiple_parents_no_fusing():
-    # Given a pipeline where child node can be fused to multiple
-    # parents
-    pipeline = Pipeline(
+    pipeline_one2many_fusing_possible = Pipeline(
         nodes=[
             Node(
                 func=dummy_fn,
@@ -98,16 +90,15 @@ def test_no_multiple_parents_no_fusing():
         tags=["argowf.fuse", "argowf.fuse-group.dummy"],
     )
 
-    # When applying fusing to the pipeline
-    fused = fuse(pipeline)
+    fused = fuse(pipeline_one2many_fusing_possible)
 
-    # No fusing has been performed, as child node can be fused
-    # to different parents.
-    assert len(fused) == len(pipeline.nodes)
+    assert len(fused) == len(
+        pipeline_one2many_fusing_possible.nodes
+    ), "No fusing has been performed, as child node can be fused to different parents."
 
 
 def test_fusing_multiple_parents():
-    pipeline = Pipeline(
+    pipeline_with_multiple_parents = Pipeline(
         nodes=[
             Node(
                 func=dummy_fn,
@@ -154,13 +145,16 @@ def test_fusing_multiple_parents():
         tags=["argowf.fuse", "argowf.fuse-group.dummy"],
     )
 
-    # When applying fusing to the pipeline
-    fused = fuse(pipeline)
+    fused = fuse(pipeline_with_multiple_parents)
 
-    # Fusing of child and grandchild node, ensure correct naming
-    # and recording of parent relationships and dataset outputs.
-    assert len(fused) == 4
-    assert fused[3].name == "dummy"
-    assert fused[3].nodes == "child_node,grandchild_node,grandgrandchild_node"
-    assert fused[3].outputs == set(["dataset_4", "dataset_5", "dataset_6"])
-    assert set([parent.name for parent in fused[3]._parents]) == set(["first_node", "second_node", "third_node"])
+    assert len(fused) == 4, "Fusing of child and grandchild node, ensure correct naming"
+    assert fused[3].name == "dummy", "Fused node should have name 'dummy'"
+    assert (
+        fused[3].nodes == "child_node,grandchild_node,grandgrandchild_node"
+    ), "Fused node should have nodes 'child_node,grandchild_node,grandgrandchild_node'"
+    assert fused[3].outputs == set(
+        ["dataset_4", "dataset_5", "dataset_6"]
+    ), "Fused node should have outputs 'dataset_4', 'dataset_5' and 'dataset_6'"
+    assert set([parent.name for parent in fused[3]._parents]) == set(
+        ["first_node", "second_node", "third_node"]
+    ), "Fused node should have parents 'first_node', 'second_node' and 'third_node'"
