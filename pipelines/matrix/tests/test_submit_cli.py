@@ -6,10 +6,21 @@ NOTE: This file was partially generated using AI assistance.
 import pytest
 from unittest.mock import patch, MagicMock
 from click.testing import CliRunner
-from matrix.cli_commands.submit import *
+from matrix.cli_commands.submit import (
+    submit,
+    check_dependencies,
+    build_push_docker,
+    build_argo_template,
+    ensure_namespace,
+    apply_argo_template,
+    submit_workflow,
+    get_run_name,
+    command_exists,
+    run_subprocess,
+)
+import subprocess
 
 
-# Mock for run_subprocess
 @pytest.fixture
 def mock_run_subprocess():
     with patch("matrix.cli_commands.submit.run_subprocess") as mock:
@@ -18,19 +29,13 @@ def mock_run_subprocess():
 
 @pytest.fixture
 def mock_dependencies():
-    with patch("matrix.cli_commands.submit.check_dependencies") as mock_check, patch(
+    with patch("matrix.cli_commands.submit.check_dependencies") as _, patch(
         "matrix.cli_commands.submit.build_push_docker"
-    ) as mock_build, patch(
-        "matrix.cli_commands.submit.build_argo_template"
-    ) as mock_argo, patch(
+    ) as _, patch("matrix.cli_commands.submit.build_argo_template") as _, patch(
         "matrix.cli_commands.submit.ensure_namespace"
-    ) as mock_ensure, patch(
-        "matrix.cli_commands.submit.apply_argo_template"
-    ) as mock_apply, patch(
+    ) as _, patch("matrix.cli_commands.submit.apply_argo_template") as _, patch(
         "matrix.cli_commands.submit.submit_workflow"
-    ) as mock_submit, patch(
-        "matrix.cli_commands.submit.get_run_name", return_value="test-run"
-    ):
+    ) as _, patch("matrix.cli_commands.submit.get_run_name", return_value="test-run"):
         yield
 
 
@@ -53,9 +58,7 @@ def test_check_dependencies(mock_run_subprocess):
 # Test for build_push_docker
 def test_build_push_docker(mock_run_subprocess):
     build_push_docker("testuser", verbose=True)
-    mock_run_subprocess.assert_called_once_with(
-        "make docker_push TAG=testuser", stream_output=True
-    )
+    mock_run_subprocess.assert_called_once_with("make docker_push TAG=testuser", stream_output=True)
 
 
 # Test for build_argo_template
@@ -105,14 +108,10 @@ def test_get_run_name_from_git(mock_run_subprocess):
 # Test for command_exists
 def test_command_exists(mock_run_subprocess):
     mock_run_subprocess.return_value.returncode = 0
-    assert command_exists("existing_command") == True
+    assert command_exists("existing_command") is True
 
     mock_run_subprocess.return_value.returncode = 1
-    assert command_exists("non_existing_command") == False
-
-
-# Separate test for run_subprocess
-import subprocess
+    assert command_exists("non_existing_command") is False
 
 
 @pytest.fixture
@@ -168,9 +167,7 @@ def test_run_subprocess_no_streaming(mock_popen):
 def test_run_subprocess_no_streaming_error(mock_popen):
     # Mock subprocess.run for non-streaming case with error
     with patch("subprocess.run") as mock_run:
-        mock_run.side_effect = subprocess.CalledProcessError(
-            returncode=1, cmd="test", output="", stderr="error"
-        )
+        mock_run.side_effect = subprocess.CalledProcessError(returncode=1, cmd="test", output="", stderr="error")
 
         with pytest.raises(subprocess.CalledProcessError) as exc_info:
             run_subprocess("invalid_command", stream_output=False)

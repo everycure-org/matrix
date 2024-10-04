@@ -678,6 +678,8 @@ ruamel-yaml==0.18.6
     # via pre-commit-hooks
 ruamel-yaml-clib==0.2.8
     # via ruamel-yaml
+ruff==0.6.8
+    # via -r requirements.in
 s3fs==2024.3.1
     # via -r requirements.in
 scikit-learn==1.4.0

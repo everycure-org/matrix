@@ -1,9 +1,11 @@
 """Utils for inference running."""
+
 from typing import Dict
-import seaborn as sns
-import pandas as pd
-import numpy as np
+
 import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+import seaborn as sns
 
 
 def create_kdeplot(scores: pd.DataFrame, infer_type: Dict, col_name: str) -> plt.figure:
@@ -35,8 +37,6 @@ def create_kdeplot(scores: pd.DataFrame, infer_type: Dict, col_name: str) -> plt
     )
 
     plt.figtext(0.5, 0.01, caption, ha="center", fontsize=14, fontstyle="italic")
-    plt.figtext(
-        0.9, 0.01, infer_type["time"], ha="left", fontsize=14, fontstyle="italic"
-    )
+    plt.figtext(0.9, 0.01, infer_type["time"], ha="left", fontsize=14, fontstyle="italic")
 
     return fig

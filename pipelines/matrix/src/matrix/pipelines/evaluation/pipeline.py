@@ -1,7 +1,7 @@
 """Evaluation pipeline."""
+
 from kedro.pipeline import Pipeline, node
 from kedro.pipeline.modular_pipeline import pipeline
-
 from matrix import settings
 
 from . import nodes

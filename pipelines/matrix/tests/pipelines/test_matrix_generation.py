@@ -10,7 +10,6 @@ from matrix.pipelines.matrix_generation.nodes import (
 )
 from matrix.pipelines.modelling.transformers import FlatArrayTransformer
 from matrix.datasets.graph import KnowledgeGraph
-from matrix.pipelines.modelling.model import ModelWrapper
 
 
 @pytest.fixture
@@ -66,23 +65,7 @@ def test_generate_pairs(sample_data):
     assert isinstance(result, pd.DataFrame)
     assert set(result.columns) == {"source", "target"}
     assert len(result) == 3  # 2 drugs * 2 diseases - 1 training pair
-    assert not result.apply(
-        lambda row: (row["source"], row["target"]) in [("drug_1", "disease_1")], axis=1
-    ).any()
-
-
-@pytest.fixture
-def mock_transformers():
-    return {
-        "flat_source_array": {
-            "transformer": FlatArrayTransformer(prefix="source_"),
-            "features": ["source_embedding"],
-        },
-        "flat_target_array": {
-            "transformer": FlatArrayTransformer(prefix="target_"),
-            "features": ["target_embedding"],
-        },
-    }
+    assert not result.apply(lambda row: (row["source"], row["target"]) in [("drug_1", "disease_1")], axis=1).any()
 
 
 @pytest.fixture
@@ -157,9 +140,7 @@ def test_generate_report(sample_data):
     n_reporting = 2
 
     # When generating the report
-    result = generate_report(
-        data, n_reporting, drugs, diseases, known_pairs, "probability"
-    )
+    result = generate_report(data, n_reporting, drugs, diseases, known_pairs, "probability")
 
     # Then the report is of the correct structure
     assert isinstance(result, pd.DataFrame)

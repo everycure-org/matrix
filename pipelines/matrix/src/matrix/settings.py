@@ -8,9 +8,13 @@ https://docs.kedro.org/en/stable/kedro_project_setup/settings.html.
 # Instantiated project hooks.
 # For example, after creating a hooks.py and defining a ProjectHooks class there, do
 # from pandas_viz.hooks import ProjectHooks
+# Class that manages how configuration is loaded.
+from kedro.config import OmegaConfigLoader  # noqa: E402
 from kedro_mlflow.framework.hooks import MlflowHook
 
 import matrix.hooks as hooks
+
+from .resolvers import env, merge_dicts
 
 # Hooks are executed in a Last-In-First-Out (LIFO) order.
 HOOKS = (
@@ -35,11 +39,6 @@ SESSION_STORE_ARGS = {"path": str(Path(__file__).parents[2])}
 # Directory that holds configuration.
 # CONF_SOURCE = "conf"
 
-
-# Class that manages how configuration is loaded.
-from kedro.config import OmegaConfigLoader  # noqa: E402
-
-from .resolvers import env, merge_dicts
 
 CONFIG_LOADER_CLASS = OmegaConfigLoader
 # Keyword arguments to pass to the `CONFIG_LOADER_CLASS` constructor.

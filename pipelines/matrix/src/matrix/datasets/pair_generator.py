@@ -2,6 +2,7 @@
 
 Module containing drug-disease pair generator
 """
+
 import abc
 from tqdm import tqdm
 import pandas as pd
@@ -40,9 +41,7 @@ class DrugDiseasePairGenerator(abc.ABC):
             DataFrame with train pairs removed.
         """
         pairs_set = set(zip(pairs["source"], pairs["target"]))
-        is_remove = df.apply(
-            lambda row: (row["source"], row["target"]) in pairs_set, axis=1
-        )
+        is_remove = df.apply(lambda row: (row["source"], row["target"]) in pairs_set, axis=1)
         return df[~is_remove]
 
 
@@ -90,9 +89,7 @@ class RandomDrugDiseasePairGenerator(SingleLabelPairGenerator):
         self._disease_flags = disease_flags
         super().__init__(y_label, random_state)
 
-    def generate(
-        self, graph: KnowledgeGraph, known_pairs: pd.DataFrame, **kwargs
-    ) -> pd.DataFrame:
+    def generate(self, graph: KnowledgeGraph, known_pairs: pd.DataFrame, **kwargs) -> pd.DataFrame:
         """Function to generate drug-disease pairs according to the strategy.
 
         Args:
@@ -103,10 +100,7 @@ class RandomDrugDiseasePairGenerator(SingleLabelPairGenerator):
             DataFrame with unknown drug-disease pairs.
         """
         # Define ground truth dataset
-        known_data_set = {
-            (drug, disease)
-            for drug, disease in zip(known_pairs["source"], known_pairs["target"])
-        }
+        known_data_set = {(drug, disease) for drug, disease in zip(known_pairs["source"], known_pairs["target"])}
 
         # Defining list of node id's to sample from
         drug_samp_ids = graph.flags_to_ids(self._drug_flags)
@@ -164,9 +158,7 @@ class ReplacementDrugDiseasePairGenerator(SingleLabelPairGenerator):
         self._disease_flags = disease_flags
         super().__init__(y_label, random_state)
 
-    def generate(
-        self, graph: KnowledgeGraph, known_pairs: pd.DataFrame, **kwargs
-    ) -> pd.DataFrame:
+    def generate(self, graph: KnowledgeGraph, known_pairs: pd.DataFrame, **kwargs) -> pd.DataFrame:
         """Function to generate drug-disease pairs according to the strategy.
 
         Args:
@@ -176,19 +168,11 @@ class ReplacementDrugDiseasePairGenerator(SingleLabelPairGenerator):
         Returns:
             DataFrame with unknown drug-disease pairs.
         """
-        known_data_set = {
-            (drug, disease)
-            for drug, disease in zip(known_pairs["source"], known_pairs["target"])
-        }
+        known_data_set = {(drug, disease) for drug, disease in zip(known_pairs["source"], known_pairs["target"])}
 
         # Extract known positive training set
-        kp_train_pairs = known_pairs[
-            (known_pairs["y"] == 1) & (known_pairs["split"] == "TRAIN")
-        ]
-        kp_train_set = {
-            (drug, disease)
-            for drug, disease in zip(kp_train_pairs["source"], kp_train_pairs["target"])
-        }
+        kp_train_pairs = known_pairs[(known_pairs["y"] == 1) & (known_pairs["split"] == "TRAIN")]
+        kp_train_set = {(drug, disease) for drug, disease in zip(kp_train_pairs["source"], kp_train_pairs["target"])}
         # Defining list of node id's to sample from
         drug_samp_ids = graph.flags_to_ids(self._drug_flags)
         disease_samp_ids = graph.flags_to_ids(self._disease_flags)
@@ -252,9 +236,7 @@ class ReplacementDrugDiseasePairGenerator(SingleLabelPairGenerator):
 class GroundTruthTestPairs(DrugDiseasePairGenerator):
     """Class representing ground truth test data."""
 
-    def generate(
-        self, graph: KnowledgeGraph, known_pairs: pd.DataFrame, **kwargs
-    ) -> pd.DataFrame:
+    def generate(self, graph: KnowledgeGraph, known_pairs: pd.DataFrame, **kwargs) -> pd.DataFrame:
         """Function generating ground truth pairs.
 
         Args:
@@ -323,12 +305,8 @@ class MatrixTestDiseases(DrugDiseasePairGenerator):
         matrix = pd.concat(matrix_slices, ignore_index=True)
 
         # Label test positives
-        test_pos_pairs_set = set(
-            zip(test_pos_pairs["source"], test_pos_pairs["target"])
-        )
-        is_in_test_pos = matrix.apply(
-            lambda row: (row["source"], row["target"]) in test_pos_pairs_set, axis=1
-        )
+        test_pos_pairs_set = set(zip(test_pos_pairs["source"], test_pos_pairs["target"]))
+        is_in_test_pos = matrix.apply(lambda row: (row["source"], row["target"]) in test_pos_pairs_set, axis=1)
         matrix["y"] = is_in_test_pos.astype(int)
 
         # Remove train pairs
@@ -336,9 +314,7 @@ class MatrixTestDiseases(DrugDiseasePairGenerator):
 
         return filtered_matrix
 
-    def generate(
-        self, graph: KnowledgeGraph, known_pairs: pd.DataFrame, **kwargs
-    ) -> pd.DataFrame:
+    def generate(self, graph: KnowledgeGraph, known_pairs: pd.DataFrame, **kwargs) -> pd.DataFrame:
         """Function generating the test diseases x all drugs matrix dataset.
 
         Args:
@@ -435,12 +411,8 @@ class TimeSplitMatrixTestDiseases(MatrixTestDiseases):
             DataFrame with unknown drug-disease pairs.
         """
         # Define lists of drugs and diseases
-        clinical_trial_data_pos_pairs = clinical_trials_data[
-            clinical_trials_data["y"].eq(1)
-        ]
+        clinical_trial_data_pos_pairs = clinical_trials_data[clinical_trials_data["y"].eq(1)]
         drug_list = graph.flags_to_ids(self._drug_axis_flags)
 
         # Generate matrix dataset
-        return self._give_disease_centric_matrix(
-            clinical_trial_data_pos_pairs, known_pairs, drug_list
-        )
+        return self._give_disease_centric_matrix(clinical_trial_data_pos_pairs, known_pairs, drug_list)
