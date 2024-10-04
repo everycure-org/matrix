@@ -1,4 +1,5 @@
 """Project pipelines."""
+
 from typing import Dict
 from kedro.pipeline import Pipeline
 
@@ -22,9 +23,6 @@ from matrix.pipelines.evaluation.pipeline import (
 )
 from matrix.pipelines.ingestion.pipeline import (
     create_pipeline as create_ingestion_pipeline,
-)
-from matrix.pipelines.preprocessing.pipeline import (
-    create_pipeline as create_preprocessing_pipeline,
 )
 from matrix.pipelines.release.pipeline import (
     create_pipeline as create_release_pipeline,
