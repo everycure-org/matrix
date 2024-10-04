@@ -35,6 +35,9 @@ from matrix.pipelines.matrix_generation.pipeline import (
 from matrix.pipelines.inference.pipeline import (
     create_pipeline as create_inference_pipeline,
 )
+from matrix.pipelines.kg_sample_generation import (
+    create_pipeline as create_kg_sample_generation_pipeline
+)
 
 
 def register_pipelines() -> Dict[str, Pipeline]:
@@ -75,4 +78,5 @@ def register_pipelines() -> Dict[str, Pipeline]:
     )
     pipelines["all"] = create_ingestion_pipeline() + pipelines["__default__"]
     pipelines["experiment"] = create_modelling_pipeline() + create_evaluation_pipeline()
+    pipelines["kg_sample_generation"] = create_kg_sample_generation_pipeline()
     return pipelines
