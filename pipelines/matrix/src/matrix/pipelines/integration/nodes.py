@@ -50,9 +50,7 @@ def create_treats(nodes: DataFrame, df: DataFrame):
         df: Ground truth dataset
     """
     return (
-        df.withColumn(
-            "label", F.when(F.col("y") == 1, "TREATS").otherwise("NOT_TREATS")
-        )
+        df.withColumn("label", F.when(F.col("y") == 1, "TREATS").otherwise("NOT_TREATS"))
         .withColumn(
             "properties",
             F.create_map(

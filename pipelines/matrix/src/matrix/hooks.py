@@ -1,4 +1,5 @@
 """Kedro project hooks."""
+
 from kedro.framework.hooks import hook_impl
 from pyspark import SparkConf
 import os
@@ -48,9 +49,7 @@ class MLFlowHooks:
         # NOTE: This piece of code ensures that every MLFlow experiment
         # is created by our Kedro pipeline with the right artifact root.
         mlflow.set_tracking_uri(cfg.server.mlflow_tracking_uri)
-        experiment_id = self._create_experiment(
-            cfg.tracking.experiment.name, globs.mlflow_artifact_root
-        )
+        experiment_id = self._create_experiment(cfg.tracking.experiment.name, globs.mlflow_artifact_root)
 
         if cfg.tracking.run.name:
             run_id = self._create_run(cfg.tracking.run.name, experiment_id)
@@ -78,9 +77,7 @@ class MLFlowHooks:
         )
 
         if not runs:
-            with mlflow.start_run(
-                run_name=run_name, experiment_id=experiment_id
-            ) as run:
+            with mlflow.start_run(run_name=run_name, experiment_id=experiment_id) as run:
                 mlflow.set_tag("created_by", "kedro")
                 return run.info.run_id
 
@@ -97,13 +94,9 @@ class MLFlowHooks:
             Identifier of experiment
         """
         try:
-            return mlflow.create_experiment(
-                experiment_name, artifact_location=artifact_location
-            )
+            return mlflow.create_experiment(experiment_name, artifact_location=artifact_location)
         except RestException as e:
-            experiments = mlflow.search_experiments(
-                filter_string=f"name = '{experiment_name}'"
-            )
+            experiments = mlflow.search_experiments(filter_string=f"name = '{experiment_name}'")
 
             if len(experiments) == 0:
                 raise Exception("unable to create MLFlow experiment") from e
@@ -141,37 +134,24 @@ class SparkHooks:
             # DEBT ugly fix, ideally we overwrite this in the spark.yml config file but currently no
             # known way of doing so
             # if prod environment, remove all config keys that start with spark.hadoop.google.cloud.auth.service
-            if (
-                cls._kedro_context.env == "cloud"
-                and os.environ.get("ARGO_NODE_ID") is not None
-            ):
+            if cls._kedro_context.env == "cloud" and os.environ.get("ARGO_NODE_ID") is not None:
                 logger.warning(
                     "we're manipulating the spark configuration now. this is done assuming this is a production execution in argo"
                 )
                 parameters = {
-                    k: v
-                    for k, v in parameters.items()
-                    if not k.startswith("spark.hadoop.google.cloud.auth.service")
+                    k: v for k, v in parameters.items() if not k.startswith("spark.hadoop.google.cloud.auth.service")
                 }
             else:
                 logger.info(f"Executing for enviornment: {cls._kedro_context.env}")
-                logger.info(
-                    f'With ARGO_POD_UID set to: {os.environ.get("ARGO_NODE_ID", "")}'
-                )
-                logger.info(
-                    "Thus determined not to be in k8s cluster and executing with service-account.json file"
-                )
+                logger.info(f'With ARGO_POD_UID set to: {os.environ.get("ARGO_NODE_ID", "")}')
+                logger.info("Thus determined not to be in k8s cluster and executing with service-account.json file")
 
-            logging.info(
-                f"starting spark session with the following parameters: {parameters}"
-            )
+            logging.info(f"starting spark session with the following parameters: {parameters}")
             spark_conf = SparkConf().setAll(parameters.items())
 
             # Create and set our configured session as the default
             cls._spark_session = (
-                SparkSession.builder.appName(cls._kedro_context.project_path.name)
-                .config(conf=spark_conf)
-                .getOrCreate()
+                SparkSession.builder.appName(cls._kedro_context.project_path.name).config(conf=spark_conf).getOrCreate()
             )
         else:
             logger.debug("SparkSession already initialized")
@@ -236,11 +216,7 @@ class NodeTimerHooks:
         print(f"Total pipeline duration: {self.pipeline_end - self.pipeline_start}")
         print("==========================================")
 
-        df = (
-            pd.DataFrame.from_dict(durations, orient="index")
-            .rename(columns={0: "time"})
-            .sort_values("time")
-        )
+        df = pd.DataFrame.from_dict(durations, orient="index").rename(columns={0: "time"}).sort_values("time")
         df["in_seconds"] = df["time"].apply(lambda x: x.total_seconds())
         df["perc_of_total"] = df["in_seconds"] / df["in_seconds"].sum() * 100
         print("Node durations:")

@@ -1,4 +1,5 @@
 """Modelling pipeline."""
+
 from kedro.pipeline import Pipeline, node
 from kedro.pipeline.modular_pipeline import pipeline
 
@@ -85,10 +86,7 @@ def _create_model_pipeline(model: str, num_shards: int) -> Pipeline:
                 [
                     node(
                         func=nodes.create_model,
-                        inputs=[
-                            f"modelling.{model}.{shard}.models.model"
-                            for shard in range(num_shards)
-                        ],
+                        inputs=[f"modelling.{model}.{shard}.models.model" for shard in range(num_shards)],
                         outputs=f"modelling.{model}.models.model",
                         name=f"create_{model}_model",
                         tags=model,
@@ -176,19 +174,14 @@ def create_pipeline(**kwargs) -> Pipeline:
                 name="create_splits",
             ),
         ],
-        tags=[
-            model["model_name"]
-            for model in settings.DYNAMIC_PIPELINES_MAPPING.get("modelling")
-        ],
+        tags=[model["model_name"] for model in settings.DYNAMIC_PIPELINES_MAPPING.get("modelling")],
     )
 
     pipes = []
     for model in settings.DYNAMIC_PIPELINES_MAPPING.get("modelling"):
         pipes.append(
             pipeline(
-                _create_model_pipeline(
-                    model=model["model_name"], num_shards=model["num_shards"]
-                ),
+                _create_model_pipeline(model=model["model_name"], num_shards=model["num_shards"]),
                 tags=[model["model_name"], "not-shared"],
             )
         )
