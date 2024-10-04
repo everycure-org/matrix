@@ -286,3 +286,17 @@ WARNING  Retrying (Retry(total=2, connect=2, read=5, redirect=5, status=5)) afte
 ```
 
 Setting `ulimit -n 1000000` in the shell before running the pipeline will fix this issue.
+
+## Documentation CI breaks with 'user' variable error
+
+```
+  File "/home/runner/work/matrix/matrix/docs/.venv/lib/python3.11/site-packages/mkdocs_git_committers_plugin_2/plugin.py", line 267, in list_contributors
+    authors = self.get_contributors_to_file(path)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/work/matrix/matrix/docs/.venv/lib/python3.11/site-packages/mkdocs_git_committers_plugin_2/plugin.py", line 121, in get_contributors_to_file
+    'avatar': commit['author']['avatar_url'] if user['avatar_url'] is not None else ''
+                                                ^^^^
+UnboundLocalError: cannot access local variable 'user' where it is not associated with a value
+```
+
+TBD why this happens in this PR and how to fix it
