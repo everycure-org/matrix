@@ -1,0 +1,16 @@
+line-length = 120
+exclude = ["*.ipynb"]
+
+[lint]
+ignore = []
+pydocstyle.convention = "google"
+fixable = ["ALL"]
+
+[lint.per-file-ignores]
+"tests/*/**" = ["D"]
+"scripts/**" = ["D"]
+
+[format]
+quote-style = "double"
+skip-magic-trailing-comma = false
+line-ending = "auto"
