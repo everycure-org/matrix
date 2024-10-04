@@ -12,9 +12,8 @@ from kedro.pipeline import Pipeline
 from kedro.framework.project import pipelines
 from kedro.framework.startup import bootstrap_project
 
-TEMPLATE_FILE = "argo_wf_spec.tmpl"
-RENDERED_FILE = "argo-workflow-template.yml"
-SEARCH_PATH = Path("templates")
+ARGO_TEMPLATE_FILE = "argo_wf_spec.tmpl"
+ARGO_TEMPLATES_DIR_PATH = Path(__file__).parent.parent.parent / "templates"
 
 
 @click.group()
@@ -27,9 +26,7 @@ def cli() -> None:
 @click.argument("image", required=True)
 @click.argument("image_tag", required=False, default="latest")
 @click.argument("namespace", required=False, default="argo-workflows")
-def generate_argo_config(
-    image: str, run_name: str, image_tag: str, namespace: str, username: str
-):
+def generate_argo_config(image: str, run_name: str, image_tag: str, namespace: str, username: str):
     """Function to render Argo pipeline template.
 
     Args:
@@ -44,12 +41,10 @@ def generate_argo_config(
     _generate_argo_config(image, run_name, image_tag, namespace, username)
 
 
-def _generate_argo_config(
-    image: str, run_name: str, image_tag: str, namespace: str, username: str
-):
-    loader = FileSystemLoader(searchpath=SEARCH_PATH)
+def _generate_argo_config(image: str, run_name: str, image_tag: str, namespace: str, username: str) -> str:
+    loader = FileSystemLoader(searchpath=ARGO_TEMPLATES_DIR_PATH)
     template_env = Environment(loader=loader, trim_blocks=True, lstrip_blocks=True)
-    template = template_env.get_template(TEMPLATE_FILE)
+    template = template_env.get_template(ARGO_TEMPLATE_FILE)
 
     project_path = Path.cwd()
     metadata = bootstrap_project(project_path)
@@ -70,7 +65,7 @@ def _generate_argo_config(
         run_name=run_name,
     )
 
-    (SEARCH_PATH / RENDERED_FILE).write_text(output)
+    return output
 
 
 class FusedNode(Node):
@@ -104,9 +99,7 @@ class FusedNode(Node):
             return False
 
         # Otherwise, fusable if connected
-        return set(self.clean_dependencies(node.inputs)) & set(
-            self.clean_dependencies(self.outputs)
-        )
+        return set(self.clean_dependencies(node.inputs)) & set(self.clean_dependencies(self.outputs))
 
     @property
     def is_fusable(self) -> bool:
@@ -126,9 +119,7 @@ class FusedNode(Node):
     @property
     def outputs(self) -> set[str]:
         """Retrieve output datasets."""
-        return set().union(
-            *[self.clean_dependencies(node.outputs) for node in self._nodes]
-        )
+        return set().union(*[self.clean_dependencies(node.outputs) for node in self._nodes])
 
     @property
     def tags(self) -> set[str]:
@@ -203,10 +194,7 @@ def fuse(pipeline: Pipeline) -> List[FusedNode]:
             # proper labels and they have dataset dependencies, and the parent
             # is in the previous node group.
             for source_node in fused:
-                if (
-                    source_node.fuses_with(target_node)
-                    and source_node.depth == depth - 1
-                ):
+                if source_node.fuses_with(target_node) and source_node.depth == depth - 1:
                     fuse_node = source_node
                     num_fused = num_fused + 1
 
