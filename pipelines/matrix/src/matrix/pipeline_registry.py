@@ -34,6 +34,6 @@ def register_pipelines() -> Dict[str, Pipeline]:
     pipelines["embeddings"] = create_integration_pipeline() + create_embeddings_pipeline()
     pipelines["modelling"] = create_modelling_pipeline() + create_matrix_pipeline() + create_evaluation_pipeline()
     pipelines["full"] = create_modelling_pipeline() + create_matrix_pipeline() + create_evaluation_pipeline()
-    pipelines["__default__"] = pipelines["make_embeddings"] + pipelines["make_modelling"]
+    pipelines["__default__"] = pipelines["embeddings"] + pipelines["modelling"]
     pipelines["all"] = create_ingestion_pipeline() + pipelines["__default__"]
     return pipelines
