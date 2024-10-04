@@ -15,7 +15,7 @@ ARGO_TEMPLATE_FILE = "argo_wf_spec.tmpl"
 ARGO_TEMPLATES_DIR_PATH = Path(__file__).parent.parent.parent / "templates"
 
 
-def _generate_argo_config(image: str, run_name: str, image_tag: str, namespace: str, username: str) -> str:
+def generate_argo_config(image: str, run_name: str, image_tag: str, namespace: str, username: str) -> str:
     loader = FileSystemLoader(searchpath=ARGO_TEMPLATES_DIR_PATH)
     template_env = Environment(loader=loader, trim_blocks=True, lstrip_blocks=True)
     template = template_env.get_template(ARGO_TEMPLATE_FILE)

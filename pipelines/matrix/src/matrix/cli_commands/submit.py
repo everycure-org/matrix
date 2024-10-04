@@ -1,5 +1,5 @@
 import time
-from matrix.argo import ARGO_TEMPLATES_DIR_PATH, _generate_argo_config
+from matrix.argo import ARGO_TEMPLATES_DIR_PATH, generate_argo_config
 
 import json
 import logging
@@ -229,7 +229,7 @@ def build_push_docker(username: str, verbose: bool):
 def build_argo_template(run_name, username, namespace, verbose: bool) -> str:
     """Build Argo workflow template."""
     image_name = "us-central1-docker.pkg.dev/mtrx-hub-dev-3of/matrix-images/matrix"
-    return _generate_argo_config(image_name, run_name, username, namespace, username)
+    return generate_argo_config(image_name, run_name, username, namespace, username)
 
 def save_argo_template(argo_template: str, run_name: str) -> str:
     """Save Argo workflow template to file."""
