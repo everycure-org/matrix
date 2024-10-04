@@ -1,7 +1,6 @@
 """This module contains custom cross-validation classes for drug-related data."""
 
 import numpy as np
-import pandas as pd
 from sklearn.model_selection import BaseCrossValidator
 
 

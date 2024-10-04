@@ -3,12 +3,13 @@
 Intended to be invoked via `kedro`.
 """
 
-from typing import List, Set, Dict, Any
+from typing import Any, Dict, List, Set
+
 import click
 from kedro.framework.cli.project import (
     ASYNC_ARG_HELP,
-    CONFIG_FILE_HELP,
     CONF_SOURCE_HELP,
+    CONFIG_FILE_HELP,
     FROM_INPUTS_HELP,
     FROM_NODES_HELP,
     LOAD_VERSION_HELP,
@@ -22,22 +23,21 @@ from kedro.framework.cli.project import (
     project_group,
 )
 from kedro.framework.cli.utils import (
-    CONTEXT_SETTINGS,
     _config_file_callback,
-    _split_params,
     _split_load_versions,
+    _split_params,
     env_option,
-    split_string,
     split_node_names,
+    split_string,
 )
-from kedro.utils import load_obj
-from kedro.pipeline.pipeline import Pipeline
-import sys
-from kedro.framework.project import pipelines, settings
 from kedro.framework.context.context import _convert_paths_to_absolute_posix
+from kedro.framework.project import pipelines, settings
+from kedro.io import DataCatalog
+from kedro.pipeline.pipeline import Pipeline
+from kedro.utils import load_obj
 
 from matrix.session import KedroSessionWithFromCatalog
-from kedro.io import DataCatalog
+
 # from matrix.utils.submit_cli import *
 
 
@@ -154,7 +154,6 @@ def _filter_nodes_missing_tag(
         return node_names
 
     without_tags: Set[str] = set(without_tags)
-    ctx = session.load_context()
 
     pipeline_name = pipeline or "__default__"
     pipeline_obj: Pipeline = pipelines[pipeline_name]
