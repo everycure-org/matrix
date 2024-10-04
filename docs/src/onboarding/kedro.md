@@ -29,7 +29,7 @@ Data used by our pipeline is registered in the _data catalog_. To add additional
 4. __Feature__: Primary dataset enriched with features inferred from the data, e.g., enriching an `age` column given a `date-of-birth` column.
 5. __Model input__: Dataset transformed for usage by a model.
 6. __Models__: Materialized models, often in the form of a pickle.
-7. __Model output__: Dataset containing column where model predictions are ran.
+7. __Model output__: Dataset containing column where model predictions are run.
 8. __Reporting__: Any datasets that provide reporting, e.g., convergence plots.
 
 
