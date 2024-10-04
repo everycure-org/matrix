@@ -233,7 +233,7 @@ def build_argo_template(run_name, username, namespace, verbose: bool) -> str:
 
 def save_argo_template(argo_template: str, run_name: str) -> str:
     """Save Argo workflow template to file."""
-    file_path = ARGO_TEMPLATES_DIR_PATH / f"argo_template_{run_name}_{time.strftime('%Y%m%d_%H%M%S')}.yaml"
+    file_path = ARGO_TEMPLATES_DIR_PATH / f"argo_template_{run_name}_{time.strftime('%Y%m%d_%H%M%S')}.yml"
     with open(file_path, "w") as f:
         f.write(argo_template)
     return str(file_path)
