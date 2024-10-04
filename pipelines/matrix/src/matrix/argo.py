@@ -104,6 +104,9 @@ class FusedNode(Node):
         """Retrieve name of fusedNode."""
         if self.is_fusable and len(self._nodes) > 1:
             return self.fuse_group
+        # TODO: Consider if this shouldn't raise an exception
+        elif len(self._nodes) == 0:
+            return "empty"
 
         # If not fusable, revert to name of node
         return self._nodes[0].name
