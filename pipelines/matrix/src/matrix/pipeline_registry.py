@@ -1,17 +1,18 @@
 """Project pipelines."""
 
 from typing import Dict
+
 from kedro.pipeline import Pipeline
 
+from matrix.pipelines.embeddings.pipeline import create_embeddings_pipeline
+from matrix.pipelines.evaluation.pipeline import create_evaluation_pipeline
 from matrix.pipelines.fabricator.pipeline import create_fabricator_pipeline
 from matrix.pipelines.inference.pipeline import create_inference_pipeline
-from matrix.pipelines.preprocessing.pipeline import create_preprocessing_pipeline
-from matrix.pipelines.modelling.pipeline import create_modelling_pipeline
-from matrix.pipelines.embeddings.pipeline import create_embeddings_pipeline
-from matrix.pipelines.integration.pipeline import create_integration_pipeline
-from matrix.pipelines.evaluation.pipeline import create_evaluation_pipeline
 from matrix.pipelines.ingestion.pipeline import create_ingestion_pipeline
+from matrix.pipelines.integration.pipeline import create_integration_pipeline
 from matrix.pipelines.matrix_generation.pipeline import create_matrix_pipeline
+from matrix.pipelines.modelling.pipeline import create_modelling_pipeline
+from matrix.pipelines.preprocessing.pipeline import create_preprocessing_pipeline
 from matrix.pipelines.release.pipeline import create_release_pipeline
 
 

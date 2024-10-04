@@ -1,10 +1,8 @@
 import click
-from kedro.framework.cli.utils import KedroCliError
+from kedro.framework.cli.utils import CONTEXT_SETTINGS, KedroCliError
 
-from matrix.cli_commands.submit import submit
 from matrix.cli_commands.run import run
-
-from kedro.framework.cli.utils import CONTEXT_SETTINGS
+from matrix.cli_commands.submit import submit
 
 
 @click.group(context_settings=CONTEXT_SETTINGS, name=__file__)
