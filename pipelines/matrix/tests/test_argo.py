@@ -3,8 +3,8 @@ from kedro.pipeline import Pipeline
 import pytest
 import pytest
 from kedro.pipeline.node import Node
-from matrix.argo import FusedNode
-from matrix.argo import clean_name, fuse
+
+from matrix.argo import clean_name, fuse, FusedNode
 
 
 def dummy_fn(*args):
@@ -209,6 +209,7 @@ def test_add_node(fused_node: FusedNode, simple_node: Node) -> None:
     assert fused_node._nodes[0] == simple_node
 
 
+# TODO(pascal.bro): Let's determine what the desired behaviour is
 def test_add_parents(fused_node):
     parent1 = FusedNode(depth=1)
     parent2 = FusedNode(depth=1)
@@ -218,6 +219,7 @@ def test_add_parents(fused_node):
     assert parent2 in fused_node._parents
 
 
+# TODO(pascal.bro): Let's determine what the desired behaviour is
 def test_fuses_with(fused_node: FusedNode, simple_node: Node) -> None:
     fused_node.add_node(simple_node)
     fused_node._nodes[0].tags = ["argowf.fuse", "argowf.fuse-group.test"]
@@ -240,6 +242,7 @@ def test_not_fusable(fused_node: FusedNode, simple_node: Node) -> None:
     assert not fused_node.fuses_with(non_fusable_node)
 
 
+# TODO(pascal.bro): Let's determine what the desired behaviour is
 def test_is_fusable(fused_node: FusedNode, simple_node: Node) -> None:
     fused_node.add_node(simple_node)
     fused_node._nodes[0].tags = ["argowf.fuse"]
@@ -251,24 +254,28 @@ def test_not_is_fusable(fused_node: FusedNode, simple_node: Node) -> None:
     assert not fused_node.is_fusable
 
 
+# TODO(pascal.bro): Let's determine what the desired behaviour is
 def test_fuse_group(fused_node: FusedNode, simple_node: Node) -> None:
     fused_node.add_node(simple_node)
     fused_node._nodes[0].tags = ["argowf.fuse-group.test_group"]
     assert fused_node.fuse_group == "test_group"
 
 
+# TODO(pascal.bro): Let's determine what the desired behaviour is
 def test_nodes_property(fused_node: FusedNode, simple_node: Node) -> None:
     fused_node.add_node(simple_node)
     fused_node.add_node(Node(func=dummy_func, name="second_node"))
     assert fused_node.nodes == "simple_node,second_node"
 
 
+# TODO(pascal.bro): Let's determine what the desired behaviour is
 def test_outputs_property(fused_node: FusedNode, simple_node: Node) -> None:
     fused_node.add_node(simple_node)
     fused_node.add_node(Node(func=dummy_func, outputs="dataset_d"))
     assert fused_node.outputs == {"dataset_c", "dataset_d"}
 
 
+# TODO(pascal.bro): Let's determine what the desired behaviour is
 def test_tags_property(fused_node: FusedNode, simple_node: Node) -> None:
     fused_node.add_node(simple_node)
     fused_node._nodes[0].tags = ["tag1", "tag2"]
@@ -283,6 +290,7 @@ def test_name_property_fusable(fused_node: FusedNode, simple_node: Node) -> None
     assert fused_node.name == "test_group"
 
 
+# TODO(pascal.bro): Let's determine what the desired behaviour is
 def test_name_property_not_fusable(fused_node: FusedNode, simple_node: Node) -> None:
     fused_node.add_node(simple_node)
     assert fused_node.name == "simple_node"

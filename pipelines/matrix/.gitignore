@@ -156,6 +156,7 @@ session_store.db
 
 mlruns
 pipelines/matrix/src/matrix/templates/*.yml
+templates/*.yml
 
 compose/neo4j_data/
 
