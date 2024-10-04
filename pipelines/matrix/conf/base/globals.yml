@@ -60,4 +60,5 @@ paths:
   models: data/06_models
   model_output: data/07_model_output
   reporting: data/08_reporting
+  sample: data/09_sample
   tmp: data/tmp
