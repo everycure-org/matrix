@@ -1,8 +1,4 @@
-"""Command line tools for manipulating a Kedro project.
-
-Intended to be invoked via `kedro`.
-"""
-# NOTE: This file was partially generated using AI assistance.
+from matrix.argo import _generate_argo_config
 
 import json
 import logging
@@ -27,7 +23,6 @@ logging.basicConfig(
 )
 log = logging.getLogger("rich")
 
-from matrix.argo import _generate_argo_config
 
 console = Console()
 
