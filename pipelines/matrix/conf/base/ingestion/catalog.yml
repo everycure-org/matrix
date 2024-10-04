@@ -206,6 +206,15 @@ ingestion.int.rtx_kg2.edges:
   <<: [*_spark_parquet, *_layer_int]
   filepath: ${globals:paths.int}/rtx_kg2/edges
 
+ingestion.int.sample.rtx_kg2.nodes:
+  <<: [*_spark_parquet, *_layer_int]
+  filepath: ${globals:paths.sample}/rtx_kg2/nodes
+
+ingestion.int.sample.rtx_kg2.edges:
+  <<: [*_spark_parquet, *_layer_int]
+  filepath: ${globals:paths.sample}/rtx_kg2/edges
+
+
 # -------------------------------------------------------------------------
 # EveryCure Medical
 # -------------------------------------------------------------------------  
