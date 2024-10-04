@@ -22,9 +22,11 @@ prerequisites:
 
 venv:
 	if [ ! -d .venv ]; then uv venv -p 3.11; fi
+
 install: precommit
 	# deactivate any potentially active venv that may be somewhere else
 	deactivate || true
+	uv pip compile requirements.in --output-file requirements.txt	
 	uv pip install -r requirements.txt
 
 precommit: precommit-hooks
