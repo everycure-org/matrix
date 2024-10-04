@@ -7,7 +7,7 @@ from pyspark.sql import DataFrame
 from refit.v1.core.inline_has_schema import has_schema
 from refit.v1.core.inline_primary_key import primary_key
 
-from matrix.schemas.knowledge_graph import KGNodeSchema
+from matrix.schemas.knowledge_graph import KGEdgeSchema, KGNodeSchema
 
 
 def unify_edges(*edges) -> DataFrame:
@@ -16,10 +16,7 @@ def unify_edges(*edges) -> DataFrame:
     union = reduce(partial(DataFrame.unionByName, allowMissingColumns=True), edges)
 
     # Deduplicate
-    return union.groupBy(["subject", "predicate", "object"]).agg(
-        F.collect_set("knowledge_source").alias("knowledge_sources"),
-        F.collect_set("upstream_data_source").alias("upstream_data_source"),
-    )
+    return KGEdgeSchema.group_edges_by_id(union)
 
 
 def unify_nodes(*nodes) -> DataFrame:
