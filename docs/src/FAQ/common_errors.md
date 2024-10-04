@@ -300,3 +300,4 @@ Then agree to the license agreement with `A`
 
 !!! note 
     We currently do not push the arm64 image to the registry because our cluster runs on intel CPUs. So this is only meant for local development.
+
