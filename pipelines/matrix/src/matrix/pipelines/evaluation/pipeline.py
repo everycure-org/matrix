@@ -49,7 +49,7 @@ def _create_evaluation_pipeline(model: str, evaluation: str) -> Pipeline:
     )
 
 
-def create_pipeline(**kwargs) -> Pipeline:
+def create_evaluation_pipeline(**kwargs) -> Pipeline:
     """Create evaluation pipeline."""
     pipes = [
         pipeline(

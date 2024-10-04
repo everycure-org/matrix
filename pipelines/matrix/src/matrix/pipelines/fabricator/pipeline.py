@@ -43,7 +43,7 @@ def _create_pairs(nodes: DataFrame, num: int = 50, seed: int = 42) -> pd.DataFra
     return df[:num], df[num : 2 * num]
 
 
-def create_pipeline(**kwargs) -> Pipeline:
+def create_fabricator_pipeline(**kwargs) -> Pipeline:
     """Create fabricator pipeline."""
     return pipeline(
         [

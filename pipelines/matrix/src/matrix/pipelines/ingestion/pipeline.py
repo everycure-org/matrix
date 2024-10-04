@@ -6,7 +6,7 @@ import pyspark.sql.functions as F
 from .nodes import ingest_robokop_nodes
 
 
-def create_pipeline(**kwargs) -> Pipeline:
+def create_ingestion_pipeline(**kwargs) -> Pipeline:
     """Create ingestion pipeline."""
     # FUTURE: Use dynamic pipeline for this good first issue
     return pipeline(
