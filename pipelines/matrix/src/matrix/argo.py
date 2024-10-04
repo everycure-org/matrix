@@ -57,7 +57,7 @@ class FusedNode(Node):
         """Function to add node to group."""
         self._nodes.append(node)
 
-    def add_parents(self, parents):
+    def add_parents(self, parents: List) -> None:
         """Function to set the parents of the group."""
         self._parents.update(set(parents))
 
