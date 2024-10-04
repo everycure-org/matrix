@@ -8,6 +8,10 @@ The fastest way to check if everything works locally is to execute the following
 make
 ```
 
+!!! tip
+
+    If you are running on an ARM machine (e.g., MacBooks with Apple Silicon), you might not get the best performance. In this case call `make TARGET_PLATFORM=linux/arm64` instead which will build the image for your specific architecture.
+
 This command executes a number of make targets, namely:
 - set up a virtual environment
 - install the python dependencies
