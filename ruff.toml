@@ -1,5 +1,8 @@
 line-length = 120
-exclude = ["*.ipynb"]
+exclude = [
+    "*.ipynb",
+    "pipelines/matrix/packages/*"
+    ]
 
 [lint]
 ignore = []
