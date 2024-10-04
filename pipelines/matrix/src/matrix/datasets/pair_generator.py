@@ -321,7 +321,9 @@ class MatrixTestDiseases(DrugDiseasePairGenerator):
         matrix = self._remove_drug_disease_pairs(matrix, dd_pairs_for_removal)
         return matrix
 
-    def _label_test_positives(self, test_positive_dd_pairs, matrix):
+    def _label_test_positives(
+        self, test_positive_dd_pairs: pd.DataFrame, matrix: pd.DataFrame
+    ) -> pd.DataFrame:
         merged_matrix = matrix.merge(
             test_positive_dd_pairs[["source", "target"]],
             how="left",
@@ -333,7 +335,7 @@ class MatrixTestDiseases(DrugDiseasePairGenerator):
         return matrix_copy
 
     def _generate_drug_disease_combinations(
-        self, drugs_list, test_positive_diseases_list
+        self, drugs_list: List[str], test_positive_diseases_list: List[str]
     ):
         combinations = pd.MultiIndex.from_product(
             [drugs_list, test_positive_diseases_list], names=["source", "target"]
@@ -370,7 +372,9 @@ class MatrixTestDiseases(DrugDiseasePairGenerator):
         drugs_list = graph.flags_to_ids(self._drug_axis_flags)
         return test_positive_dd_pairs, drugs_list
 
-    def _separate_test_and_train_ground_truth(self, known_pairs):
+    def _separate_test_and_train_ground_truth(
+        self, known_pairs: pd.DataFrame
+    ) -> Tuple[pd.DataFrame, pd.DataFrame]:
         is_test = known_pairs["split"].eq("TEST")
         test_pairs = known_pairs[is_test]
         train_pairs = known_pairs[~is_test]
