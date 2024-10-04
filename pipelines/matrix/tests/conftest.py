@@ -42,7 +42,7 @@ def config_loader_fixture(conf_source) -> OmegaConfigLoader:
 
 
 @pytest.fixture(name="kedro_context", scope="session")
-def kedro_context_fixture(config_loader) -> KedroContext:
+def kedro_context_fixture(config_loader: OmegaConfigLoader) -> KedroContext:
     """Instantiate a KedroContext."""
     return KedroContext(
         env="base",

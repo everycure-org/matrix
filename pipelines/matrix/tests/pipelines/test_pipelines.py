@@ -4,6 +4,7 @@ import os
 import yaml
 import re
 
+from kedro.framework.context import KedroContext
 from kedro.framework.project import pipelines
 
 _ALLOWED_LAYERS = [
@@ -28,8 +29,8 @@ def openai_api_env():
     os.environ["OPENAI_API_KEY"] = "foo"
 
 
-@pytest.mark.integration
-def test_unused_catalog_entries(kedro_context, configure_matrix_project):
+@pytest.mark.integration()
+def test_unused_catalog_entries(kedro_context: KedroContext, configure_matrix_project: None) -> None:
     """Tests whether all catalog entries are used in the pipeline.
 
     FUTURE: Fix validating unused dataset entries, this is currently not feasible
@@ -47,8 +48,7 @@ def test_unused_catalog_entries(kedro_context, configure_matrix_project):
     declared_params = [
         entry
         for entry in declared_conf_entries
-        if "params:" in entry
-        and not ("_overrides" in entry or entry.startswith("params:_"))
+        if "params:" in entry and not ("_overrides" in entry or entry.startswith("params:_"))
     ]
 
     unused_params = [
@@ -56,8 +56,7 @@ def test_unused_catalog_entries(kedro_context, configure_matrix_project):
         for declared_param in declared_params
         if not any(
             [
-                declared_param.startswith(used_param)
-                or used_param.startswith(declared_param)
+                declared_param.startswith(used_param) or used_param.startswith(declared_param)
                 for used_param in used_params
             ]
         )
@@ -69,9 +68,7 @@ def test_unused_catalog_entries(kedro_context, configure_matrix_project):
     #     unused_data_sets == set()
     # ), f"The following data sets are not used: {unused_data_sets}"
 
-    assert (
-        unused_params == []
-    ), f"The following parameters are not used: {unused_params}"
+    assert unused_params == [], f"The following parameters are not used: {unused_params}"
 
 
 @pytest.mark.integration
@@ -85,15 +82,12 @@ def test_memory_data_sets_absent(kedro_context, configure_matrix_project):
 
     used_data_sets = set.union(*[_pipeline_datasets(p) for p in pipelines.values()])
 
-    used_data_sets_wout_double_params = {
-        x.replace("params:params:", "params:") for x in used_data_sets
-    }
+    used_data_sets_wout_double_params = {x.replace("params:params:", "params:") for x in used_data_sets}
 
     memory_data_sets = {
         dataset
         for dataset in used_data_sets_wout_double_params
-        if dataset not in kedro_context.catalog.list()
-        and not kedro_context.catalog.exists(dataset)
+        if dataset not in kedro_context.catalog.list() and not kedro_context.catalog.exists(dataset)
     }
 
     assert len(memory_data_sets) == 0, f"{memory_data_sets}"
@@ -131,9 +125,7 @@ def test_catalog_filepath_follows_conventions(conf_source, config_loader):
                 if entry.startswith("_"):
                     continue
 
-                expected_pattern = (
-                    rf"{pipeline}\.({{.*}}\.)*[{' | '.join(_ALLOWED_LAYERS)}]\.*"
-                )
+                expected_pattern = rf"{pipeline}\.({{.*}}\.)*[{' | '.join(_ALLOWED_LAYERS)}]\.*"
                 if not re.search(expected_pattern, entry):
                     failed_results.append(
                         {
