@@ -250,7 +250,6 @@ def ingest_edges(nodes, edges: DataFrame):
             "subject",
             "predicate",
             "object",
-            "knowledge_sources",
             "upstream_data_source",
         )
         .withColumn("label", F.split(F.col("predicate"), ":", limit=2).getItem(1))

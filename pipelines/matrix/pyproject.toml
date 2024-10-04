@@ -39,8 +39,10 @@ source_dir = "src"
 
 [tool.ruff]
 lint.select = ["D", "F"]
+lint.ignore = ["D102"]
 lint.pydocstyle.convention = "google"
 lint.fixable = ["ALL"]
+
 
 [tool.ruff.lint.per-file-ignores]
 "tests/*/**" = ["D"]
