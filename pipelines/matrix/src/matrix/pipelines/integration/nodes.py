@@ -2,6 +2,7 @@
 
 from functools import partial, reduce
 
+import pandera.pyspark as pa
 import pyspark.sql.functions as F
 from pyspark.sql import DataFrame
 from refit.v1.core.inline_has_schema import has_schema
@@ -10,6 +11,7 @@ from refit.v1.core.inline_primary_key import primary_key
 from matrix.schemas.knowledge_graph import KGEdgeSchema, KGNodeSchema
 
 
+@pa.check_output(KGEdgeSchema)
 def unify_edges(*edges) -> DataFrame:
     """Function to unify edges datasets."""
     # Union edges
@@ -19,6 +21,7 @@ def unify_edges(*edges) -> DataFrame:
     return KGEdgeSchema.group_edges_by_id(union)
 
 
+@pa.check_output(KGNodeSchema)
 def unify_nodes(*nodes) -> DataFrame:
     """Function to unify nodes datasets."""
     # Union nodes
