@@ -42,7 +42,7 @@ def _create_resolution_pipeline() -> Pipeline:
 
 def _create_inference_pipeline(model_excl: str, model_incl: str) -> Pipeline:
     """Matrix generation pipeline adjusted for running inference with models of choice."""
-    mg_pipeline = mgp.create_pipeline()
+    mg_pipeline = mgp.create_matrix_pipeline()
     inference_nodes = pipeline(
         [node for node in mg_pipeline.nodes if not any(model in node.name for model in model_excl)]
     )
@@ -92,7 +92,7 @@ def _create_reporting_pipeline(model: str) -> Pipeline:
     )
 
 
-def create_pipeline(**kwargs) -> Pipeline:
+def create_inference_pipeline(**kwargs) -> Pipeline:
     """Create requests pipeline.
 
     The pipelines is composed of static_nodes (i.e. nodes which are run only once at the beginning),
