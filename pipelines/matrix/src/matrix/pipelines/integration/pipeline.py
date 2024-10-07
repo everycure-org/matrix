@@ -3,49 +3,74 @@
 from kedro.pipeline import Pipeline, node, pipeline
 
 from . import nodes
-from .robokop import transform_robo_nodes, transform_robo_edges
-from .rtxkg2 import transform_rtxkg2_nodes, transform_rtxkg2_edges
+from .robokop import transform_robo_edges, transform_robo_nodes
+from .rtxkg2 import transform_rtxkg2_edges, transform_rtxkg2_nodes
 
 
 def create_pipeline(**kwargs) -> Pipeline:
     """Create integration pipeline."""
     return pipeline(
         [
+            # Standardize the KG tabular structure
             node(
                 func=transform_robo_nodes,
                 inputs="ingestion.int.robokop.nodes",
-                outputs="integration.prm.robokop.nodes",
+                outputs="integration.int.robokop.nodes",
                 name="transform_robokop_nodes",
                 tags=["standardize"],
             ),
             node(
                 func=transform_robo_edges,
                 inputs="ingestion.int.robokop.edges",
-                outputs="integration.prm.robokop.edges",
+                outputs="integration.int.robokop.edges",
                 name="transform_robokop_edges",
                 tags=["standardize"],
             ),
             node(
                 func=transform_rtxkg2_nodes,
                 inputs="ingestion.int.rtx_kg2.nodes",
-                outputs="integration.prm.rtx.nodes",
+                outputs="integration.int.rtx.nodes",
                 name="transform_rtx_nodes",
                 tags=["standardize"],
             ),
             node(
                 func=transform_rtxkg2_edges,
                 inputs="ingestion.int.rtx_kg2.edges",
-                outputs="integration.prm.rtx.edges",
+                outputs="integration.int.rtx.edges",
                 name="transform_rtx_edges",
                 tags=["standardize"],
             ),
-            # TODO missing between transformation and unification are the "node norm API calls"
+            # Normalize the KG IDs
+            node(
+                func=nodes.normalize_kg,
+                inputs=[
+                    "integration.int.rtx.nodes",
+                    "integration.int.rtx.edges",
+                ],
+                outputs=[
+                    "integration.int.rtx.nodes.norm",
+                    "integration.int.rtx.edges.norm",
+                ],
+                name="normalize_rtx_kg",
+                tags=["standardize"],
+            ),
+            node(
+                func=nodes.normalize_kg,
+                inputs=[
+                    "integration.int.robokop.nodes",
+                    "integration.int.robokop.edges",
+                ],
+                outputs=[
+                    "integration.int.robokop.nodes.norm",
+                    "integration.int.robokop.edges.norm",
+                ],
+            ),
+            # Unify the KG based on standardized IDs
             node(
                 func=nodes.unify_nodes,
                 inputs=[
-                    "integration.prm.rtx.nodes",
-                    # TODO we'll add robokop in once we have added a node ID normalization stage before
-                    # "integration.prm.robokop.nodes",
+                    "integration.int.rtx.nodes.norm",
+                    "integration.int.robokop.nodes.norm",
                     "ingestion.int.ec_medical_team.nodes",
                 ],
                 outputs="integration.prm.unified_nodes",
@@ -55,9 +80,8 @@ def create_pipeline(**kwargs) -> Pipeline:
             node(
                 func=nodes.unify_edges,
                 inputs=[
-                    "integration.prm.rtx.edges",
-                    # TODO we'll add robokop in once we have added a node ID normalization stage before
-                    # "integration.prm.robokop.edges",
+                    "integration.int.rtx.edges.norm",
+                    "integration.int.robokop.edges.norm",
                     "ingestion.int.ec_medical_team.edges",
                 ],
                 outputs="integration.prm.unified_edges",
