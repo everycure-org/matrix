@@ -14,9 +14,9 @@ In this deep dive, we'll explore the different aspects of our evaluation pipelin
 
 ## Overview of the suite
 
-Our drug repurposing models serve two primary purposes:
+Our drug repurposing models have several use cases, including:
 
-1. Matrix-wide ranking: Prioritising millions of drug-disease pairs across the entire matrix. This matrix contains all possible combinations of drugs and diseases from curated lists.
+1. Matrix-wide ranking: Prioritising millions of drug-disease pairs across the entire matrix, containing all possible combinations of drugs and diseases from curated lists. This is the primary use case for the MATRIX platform.
 
 2. Disease-specific ranking: For a given disease, ranking drugs based on their likelihood of being an effective treatment.
 
