@@ -39,6 +39,43 @@ from kedro.framework.session import KedroSession
 from matrix.session import KedroSessionWithFromCatalog
 
 
+class RunConfig:
+    """Class to represent the run configuration."""
+
+    def __init__(
+        self,
+        env: str,
+        runner: str,
+        is_async: bool,
+        node_names: List[str],
+        to_nodes: List[str],
+        from_nodes: List[str],
+        from_inputs: List[str],
+        to_outputs: List[str],
+        load_versions: List[str],
+        tags: List[str],
+        without_tags: List[str],
+        conf_source: str,
+        params: Dict[str, Any],
+        from_env: str,
+    ):
+        """Construct new instance of `RunConfig`."""
+        self.env = env
+        self.runner = runner
+        self.is_async = is_async
+        self.node_names = node_names
+        self.to_nodes = to_nodes
+        self.from_nodes = from_nodes
+        self.from_inputs = from_inputs
+        self.to_outputs = to_outputs
+        self.load_versions = load_versions
+        self.tags = tags
+        self.without_tags = without_tags
+        self.conf_source = conf_source
+        self.params = params
+        self.from_env = from_env
+
+
 # fmt: off
 @project_group.command()
 @env_option
@@ -59,6 +96,29 @@ from matrix.session import KedroSessionWithFromCatalog
 @click.option( "--from-env",      type=str, default=None, help="Custom env to read from, if specified will read from the `--from-env` and write to the `--env`",)
 def run( tags, without_tags, env, runner, is_async, node_names, to_nodes, from_nodes, from_inputs, to_outputs, load_versions, pipeline, config, conf_source, params, from_env,):
     """Run the pipeline."""
+
+    config = RunConfig(
+        env=env,
+        runner=runner,
+        is_async=is_async,
+        node_names=node_names,
+        to_nodes=to_nodes,
+        from_nodes=from_nodes,
+        from_inputs=from_inputs,
+        to_outputs=to_outputs,
+        load_versions=load_versions,
+        tags=tags,
+        without_tags=without_tags,
+        conf_source=conf_source,
+        params=params,
+        from_env=from_env,
+    )
+    _run(
+            config
+        )
+
+
+def _run(pipeline, env, runner, is_async, node_names, to_nodes, from_nodes, from_inputs, to_outputs, load_versions, tags, without_tags, conf_source, params, from_env):
     if pipeline in ["test", "fabricator"] and env in [None, "base"]:
         raise RuntimeError(
             "Running the fabricator in the base environment might overwrite production data! Use the test env `-e test` instead."
@@ -113,7 +173,6 @@ def run( tags, without_tags, env, runner, is_async, node_names, to_nodes, from_n
             load_versions=load_versions,
             pipeline_name=pipeline,
         )
-
 
 def _get_feed_dict(params: Dict) -> dict[str, Any]:
     """Get parameters and return the feed dictionary."""
