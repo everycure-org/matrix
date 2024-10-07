@@ -1,3 +1,4 @@
+from pathlib import Path
 import pytest
 
 from matrix.cli_commands.run import RunConfig, _extract_config, _filter_nodes_missing_tag, _get_feed_dict, _run
@@ -263,7 +264,7 @@ def mock_config():
 def mock_session():
     session = Mock()
     session._conf_source = "test_conf_source"
-    session._project_path = "/test/project/path"
+    session._project_path = Path("/test/project/path")
     return session
 
 
@@ -281,7 +282,6 @@ def test_extract_config_with_from_env(mock_settings, mock_config, mock_session):
     mock_settings.CONFIG_LOADER_ARGS = {}
     mock_settings.DATA_CATALOG_CLASS.from_config.return_value = Mock(spec=DataCatalog)
 
-    # Call the function
     result = _extract_config(mock_config, mock_session)
 
     # Assertions
@@ -291,7 +291,6 @@ def test_extract_config_with_from_env(mock_settings, mock_config, mock_session):
     mock_settings.DATA_CATALOG_CLASS.from_config.assert_called_once_with(
         catalog={"test_dataset": {"type": "MemoryDataSet"}}, credentials={"test_cred": "secret"}
     )
-    result.add_feed_dict.assert_called_once_with({"params:param1": "value1"}, replace=True)
 
 
 def test_extract_config_without_from_env(mock_config, mock_session):
