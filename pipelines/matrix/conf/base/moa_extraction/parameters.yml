@@ -1,0 +1,2 @@
+moa_extraction.moa_extraction_options:
+  release_version: run-23-aug-setup-4 # Release version of the KG to extract MOAs for
