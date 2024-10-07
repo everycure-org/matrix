@@ -12,7 +12,7 @@ COMPOSE_FILE="compose/docker-compose.yml"
 # Function to check if Docker daemon is running with telemetry
 check_docker_daemon() {
     if ! docker info > /dev/null 2>&1; then
-        echo "$(date '+%Y-%m-%d %H:%M:%S') - Docker daemon not ready. Collecting telemetry..." >> "$LOG_FILE"
+        echo "$(date '+%Y-%m-%d %H:%M:%S') - Docker daemon not ready. Collecting telemetry..."
         
         # Check if Docker service is active
         systemctl status docker
