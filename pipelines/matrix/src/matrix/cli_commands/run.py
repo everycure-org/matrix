@@ -35,7 +35,7 @@ from kedro.framework.project import pipelines, settings
 from kedro.io import DataCatalog
 from kedro.pipeline.pipeline import Pipeline
 from kedro.utils import load_obj
-
+from kedro.framework.session import KedroSession
 from matrix.session import KedroSessionWithFromCatalog
 
 
@@ -144,7 +144,7 @@ def _get_feed_dict(params: Dict) -> dict[str, Any]:
 
 
 def _filter_nodes_missing_tag(
-    without_tags: List[str], pipeline: str, session, node_names: List[str]
+    without_tags: List[str], pipeline: str, session: KedroSession, node_names: List[str]
 ) -> List[str]:
     """Filter out nodes that have tags that should not be run and their downstream nodes."""
     if not without_tags:
