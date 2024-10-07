@@ -1,6 +1,6 @@
 import pytest
 
-from matrix.cli_commands.run import _get_feed_dict
+from matrix.cli_commands.run import _filter_nodes_missing_tag, _get_feed_dict
 
 
 def test_get_feed_dict_simple():
@@ -66,3 +66,126 @@ def test_get_feed_dict_complex_values():
     }
 
     assert _get_feed_dict(params) == expected_output
+
+
+import pytest
+from unittest.mock import MagicMock
+
+
+def test_filter_nodes_no_without_tags():
+    """Test when there are no tags to filter (without_tags is empty)."""
+    without_tags = []
+    pipeline = "test_pipeline"
+    session = MagicMock()  # Mock the Kedro session
+    node_names = ["node1", "node2", "node3"]
+
+    pipelines = {"test_pipeline": MagicMock()}
+    pipelines["test_pipeline"].nodes = [MagicMock(name="node1"), MagicMock(name="node2"), MagicMock(name="node3")]
+
+    result = _filter_nodes_missing_tag(without_tags, pipeline, session, node_names)
+
+    assert result == node_names
+
+
+def test_filter_nodes_all_without_tags():
+    """Test when all nodes have the tag to be filtered."""
+    without_tags = ["tag1"]
+    pipeline = "test_pipeline"
+    session = MagicMock()  # Mock the Kedro session
+    node_names = ["node1", "node2"]
+
+    node1 = MagicMock()
+    node1.name = "node1"
+    node1.tags = {"tag1"}
+
+    node2 = MagicMock()
+    node2.name = "node2"
+    node2.tags = {"tag1"}
+
+    pipelines = {"test_pipeline": MagicMock()}
+    pipelines["test_pipeline"].nodes = [node1, node2]
+
+    with pytest.raises(SystemExit):  # Expecting an exit since all nodes are filtered out
+        _filter_nodes_missing_tag(without_tags, pipeline, session, node_names)
+
+
+def test_filter_nodes_some_without_tags():
+    """Test when only some nodes have the tag to be filtered."""
+    without_tags = ["tag1"]
+    pipeline = "test_pipeline"
+    session = MagicMock()  # Mock the Kedro session
+    node_names = ["node1", "node2", "node3"]
+
+    node1 = MagicMock()
+    node1.name = "node1"
+    node1.tags = {"tag1"}
+
+    node2 = MagicMock()
+    node2.name = "node2"
+    node2.tags = {"tag2"}
+
+    node3 = MagicMock()
+    node3.name = "node3"
+    node3.tags = {"tag1", "tag2"}
+
+    pipelines = {"test_pipeline": MagicMock()}
+    pipelines["test_pipeline"].nodes = [node1, node2, node3]
+
+    result = _filter_nodes_missing_tag(without_tags, pipeline, session, node_names)
+
+    assert result == ["node2"]
+
+
+def test_filter_nodes_downstream_removal():
+    """Test that downstream nodes are also removed."""
+    without_tags = ["tag1"]
+    pipeline = "test_pipeline"
+    session = MagicMock()  # Mock the Kedro session
+    node_names = ["node1", "node2", "node3"]
+
+    node1 = MagicMock()
+    node1.name = "node1"
+    node1.tags = {"tag1"}
+
+    node2 = MagicMock()
+    node2.name = "node2"
+    node2.tags = {"tag2"}
+
+    node3 = MagicMock()
+    node3.name = "node3"
+    node3.tags = {"tag2"}
+
+    pipelines = {"test_pipeline": MagicMock()}
+    pipelines["test_pipeline"].nodes = [node1, node2, node3]
+
+    pipelines["test_pipeline"].from_nodes.return_value = MagicMock()
+    pipelines["test_pipeline"].from_nodes.return_value.nodes = [node2]
+
+    result = _filter_nodes_missing_tag(without_tags, pipeline, session, node_names)
+
+    # node1 is removed due to the tag and node2 is its downstream, so it should also be removed
+    assert result == ["node3"]
+
+
+def test_filter_nodes_empty_node_names():
+    """Test when the node_names list is empty, should consider all nodes in the pipeline."""
+    without_tags = ["tag1"]
+    pipeline = "test_pipeline"
+    session = MagicMock()  # Mock the Kedro session
+    node_names = []
+
+    node1 = MagicMock()
+    node1.name = "node1"
+    node1.tags = {"tag1"}
+
+    node2 = MagicMock()
+    node2.name = "node2"
+    node2.tags = {"tag2"}
+
+    pipelines = {"test_pipeline": MagicMock()}
+    pipelines["test_pipeline"].nodes = [node1, node2]
+
+    result = _filter_nodes_missing_tag(without_tags, pipeline, session, node_names)
+
+    # node1 is removed due to the tag
+    assert result == ["node2"]
