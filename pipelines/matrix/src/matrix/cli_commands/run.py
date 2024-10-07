@@ -3,7 +3,7 @@
 Intended to be invoked via `kedro`.
 """
 
-from typing import Any, Dict, List, Set
+from typing import Any, Dict, List, Optional, Set
 
 import click
 from kedro.framework.cli.project import (
@@ -146,26 +146,7 @@ def _run(config: RunConfig, kedro_session: Any) -> None:
             tuple(config.without_tags), config.pipeline_obj, node_names
         )
 
-        from_catalog = None
-        from_params = {}
-        if config.from_env:
-            # Load second config loader instance
-            config_loader_class = settings.CONFIG_LOADER_CLASS
-            config_loader = config_loader_class(  # type: ignore[no-any-return]
-                conf_source=session._conf_source,
-                env=config.from_env,
-                **settings.CONFIG_LOADER_ARGS,
-            )
-            conf_catalog = config_loader["catalog"]
-            conf_catalog = _convert_paths_to_absolute_posix(
-                project_path=session._project_path, conf_dictionary=conf_catalog
-            )
-            conf_creds = config_loader["credentials"]
-            from_catalog: DataCatalog = settings.DATA_CATALOG_CLASS.from_config(
-                catalog=conf_catalog, credentials=conf_creds
-            )
-            from_params = config_loader["parameters"]
-            from_catalog.add_feed_dict(_get_feed_dict(from_params), replace=True)
+        from_catalog = _extract_config(config, session)
 
         session.run(
             from_catalog=from_catalog,
@@ -179,6 +160,27 @@ def _run(config: RunConfig, kedro_session: Any) -> None:
             load_versions=config.load_versions,
             pipeline_name=config.pipeline_name,
         )
+
+def _extract_config(config, session) -> Optional[DataCatalog]:
+    from_catalog: Optional[DataCatalog] = None
+    if config.from_env:
+        # Load second config loader instance
+        config_loader_class = settings.CONFIG_LOADER_CLASS
+        config_loader = config_loader_class(  # type: ignore[no-any-return]
+                conf_source=session._conf_source,
+                env=config.from_env,
+                **settings.CONFIG_LOADER_ARGS,
+            )
+        conf_catalog = config_loader["catalog"]
+        conf_catalog = _convert_paths_to_absolute_posix(
+                project_path=session._project_path, conf_dictionary=conf_catalog
+            )
+        conf_creds = config_loader["credentials"]
+        from_catalog: DataCatalog = settings.DATA_CATALOG_CLASS.from_config(
+                catalog=conf_catalog, credentials=conf_creds
+            )
+        from_catalog.add_feed_dict(_get_feed_dict(config_loader["parameters"]), replace=True)
+    return from_catalog
 
 
 def _get_feed_dict(params: Dict) -> dict[str, Any]:
