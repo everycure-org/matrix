@@ -49,7 +49,7 @@ The input to the evaluation pipeline consists of the matrix pairs dataset with t
 
 In addition, we remove from the matrix any known positive or known negative pair that were used by the model during training.
 
-> __Key philosophy.__ In order to compute ranking metrics, we must synthesise negative pairs since only a small portion of negative pairs are known. To do this, we exploit the fact that the vast majority of drug disease pairs are negatives. However, synthesising negative pairs by random sampling can lead to unexpected and undesirable effects on the data distribution, as well as introducing noise. For example, the distribution for geodesic distance may be altered (see Yang et. al. ). Therefore, our ranking metrics are computed using pairs dataset that are as close as possible to what the model will see while performing it's downstream task.
+> __Key philosophy.__ In order to compute ranking metrics, we must synthesise negative pairs since only a small portion of negative pairs are known. To do this, we exploit the fact that the vast majority of drug disease pairs are negatives. However, synthesising negative pairs by random sampling can lead to unexpected and undesirable effects on the data distribution, as well as introducing noise. For example, the distribution for geodesic distance may be altered (see Yang et. al. ). Therefore, our ranking metrics are computed using pairs dataset that are as close as possible to what the model will see while performing its downstream task.
 
 ### Full matrix ranking metrics
 
@@ -204,7 +204,7 @@ evaluation.full_matrix:
       quantile_func_lst: 
         - object: matrix.pipelines.evaluation.named_functions.AUROC
 ``` 
-- `FullMatrixPositives` is the object defining the dataset containing the necessary information for the computation of the full matrix ranking metrics. This dataset consist of the ground truth positive drug-disease pairs with columns giving:
+- `FullMatrixPositives` is the object defining the dataset containing the necessary information for the computation of the full matrix ranking metrics. This dataset consists of the ground truth positive drug-disease pairs with columns giving:
     - The matrix rank of each pair
     - The matrix quantile rank of each pair
 - This is enough for the computation of the metrics since:
