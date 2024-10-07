@@ -104,6 +104,8 @@ def ingest_nodes(df: DataFrame) -> DataFrame:
                 F.col("category"),
                 F.lit("description"),
                 F.col("description"),
+                F.lit("upstream_data_source"),
+                F.col("upstream_data_source"),
             ),
         )
         .withColumn("property_keys", F.map_keys(F.col("properties")))

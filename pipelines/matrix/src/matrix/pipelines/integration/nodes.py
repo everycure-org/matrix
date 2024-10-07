@@ -193,6 +193,7 @@ def hit_node_norm_service(
         resp.raise_for_status()
 
 
+# NOTE: we are not taking the label that the API returns, this could actually be important. Do we want the labels/biolink types as well?
 def _extract_ids(response: Dict[str, Any]):
     ids = {}
     for k in response:
