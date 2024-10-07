@@ -70,7 +70,7 @@ fabricator.rtx_kg2:
       predicate:
         type: generate_values
         sample_values:
-          # - biolink:treats
+          - biolink:treats
           - biolink:interacts_with
       knowledge_source:
         type: faker
