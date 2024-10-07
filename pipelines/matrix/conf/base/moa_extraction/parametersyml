@@ -1,0 +1,3 @@
+
+moa_extraction.moa_extraction_options:
+    release_version: run-23-aug-setup-4 # Release version of local neo4j instance
