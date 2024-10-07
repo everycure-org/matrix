@@ -1,4 +1,5 @@
 """Project pipelines."""
+
 from typing import Dict
 from kedro.pipeline import Pipeline
 
@@ -23,14 +24,14 @@ from matrix.pipelines.evaluation.pipeline import (
 from matrix.pipelines.ingestion.pipeline import (
     create_pipeline as create_ingestion_pipeline,
 )
-from matrix.pipelines.preprocessing.pipeline import (
-    create_pipeline as create_preprocessing_pipeline,
-)
 from matrix.pipelines.release.pipeline import (
     create_pipeline as create_release_pipeline,
 )
 from matrix.pipelines.matrix_generation.pipeline import (
     create_pipeline as create_matrix_pipeline,
+)
+from matrix.pipelines.inference.pipeline import (
+    create_pipeline as create_inference_pipeline,
 )
 
 
@@ -59,6 +60,7 @@ def register_pipelines() -> Dict[str, Pipeline]:
     pipelines["evaluation"] = create_evaluation_pipeline()
     pipelines["release"] = create_release_pipeline()
     pipelines["matrix_generation"] = create_matrix_pipeline()
+    pipelines["inference"] = create_inference_pipeline()
     pipelines["test"] = (
         create_fabricator_pipeline()
         + create_ingestion_pipeline()

@@ -2,11 +2,11 @@
 
 Module containing drug-disease pair generator
 """
+
 import abc
 from tqdm import tqdm
 import pandas as pd
 import random
-from kedro.io import AbstractDataset
 
 from matrix.datasets.graph import KnowledgeGraph
 
@@ -77,9 +77,7 @@ class RandomDrugDiseasePairGenerator(SingleLabelPairGenerator):
         self._disease_flags = disease_flags
         super().__init__(y_label, random_state)
 
-    def generate(
-        self, graph: KnowledgeGraph, known_pairs: pd.DataFrame, **kwargs
-    ) -> pd.DataFrame:
+    def generate(self, graph: KnowledgeGraph, known_pairs: pd.DataFrame, **kwargs) -> pd.DataFrame:
         """Function to generate drug-disease pairs according to the strategy.
 
         Args:
@@ -90,10 +88,7 @@ class RandomDrugDiseasePairGenerator(SingleLabelPairGenerator):
             DataFrame with unknown drug-disease pairs.
         """
         # Define ground truth dataset
-        known_data_set = {
-            (drug, disease)
-            for drug, disease in zip(known_pairs["source"], known_pairs["target"])
-        }
+        known_data_set = {(drug, disease) for drug, disease in zip(known_pairs["source"], known_pairs["target"])}
 
         # Defining list of node id's to sample from
         drug_samp_ids = graph.flags_to_ids(self._drug_flags)
@@ -151,9 +146,7 @@ class ReplacementDrugDiseasePairGenerator(SingleLabelPairGenerator):
         self._disease_flags = disease_flags
         super().__init__(y_label, random_state)
 
-    def generate(
-        self, graph: KnowledgeGraph, known_pairs: pd.DataFrame, **kwargs
-    ) -> pd.DataFrame:
+    def generate(self, graph: KnowledgeGraph, known_pairs: pd.DataFrame, **kwargs) -> pd.DataFrame:
         """Function to generate drug-disease pairs according to the strategy.
 
         Args:
@@ -163,19 +156,11 @@ class ReplacementDrugDiseasePairGenerator(SingleLabelPairGenerator):
         Returns:
             DataFrame with unknown drug-disease pairs.
         """
-        known_data_set = {
-            (drug, disease)
-            for drug, disease in zip(known_pairs["source"], known_pairs["target"])
-        }
+        known_data_set = {(drug, disease) for drug, disease in zip(known_pairs["source"], known_pairs["target"])}
 
         # Extract known positive training set
-        kp_train_pairs = known_pairs[
-            (known_pairs["y"] == 1) & (known_pairs["split"] == "TRAIN")
-        ]
-        kp_train_set = {
-            (drug, disease)
-            for drug, disease in zip(kp_train_pairs["source"], kp_train_pairs["target"])
-        }
+        kp_train_pairs = known_pairs[(known_pairs["y"] == 1) & (known_pairs["split"] == "TRAIN")]
+        kp_train_set = {(drug, disease) for drug, disease in zip(kp_train_pairs["source"], kp_train_pairs["target"])}
         # Defining list of node id's to sample from
         drug_samp_ids = graph.flags_to_ids(self._drug_flags)
         disease_samp_ids = graph.flags_to_ids(self._disease_flags)
@@ -244,9 +229,7 @@ class ReplacementDrugDiseasePairGenerator(SingleLabelPairGenerator):
 class GroundTruthTestPairs(DrugDiseasePairGenerator):
     """Class representing ground truth test data."""
 
-    def __init__(
-        self, positive_columns: List[str], negative_columns: List[str]
-    ) -> None:
+    def __init__(self, positive_columns: List[str], negative_columns: List[str]) -> None:
         """Initialises an instance of the class.
 
         Args:
@@ -326,7 +309,7 @@ class MatrixTestDiseases(DrugDiseasePairGenerator):
         in_output = matrix["target"].isin(positive_diseases)
 
         # Remove flagged pairs
-        if self.removal_columns != None:
+        if self.removal_columns is not None:
             is_remove = pd.Series(False, index=matrix.index)
             for col_name in self.removal_columns:
                 is_remove = is_remove | matrix[col_name]
@@ -369,7 +352,7 @@ class FullMatrixPositives(DrugDiseasePairGenerator):
             Labelled drug-disease pairs dataset.
         """
         # Remove flagged pairs
-        if self.removal_columns != None:
+        if self.removal_columns is not None:
             is_remove = pd.Series(False, index=matrix.index)
             for col_name in self.removal_columns:
                 is_remove = is_remove | matrix[col_name]

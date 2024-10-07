@@ -1,4 +1,5 @@
-"""Module with nodes for evaluation."""
+"""Module with nodes for matrix generation."""
+
 import logging
 from tqdm import tqdm
 from typing import List, Dict, Union
@@ -37,9 +38,7 @@ def enrich_embeddings(
     """
     return (
         drugs.withColumn("is_drug", F.lit(True))
-        .unionByName(
-            diseases.withColumn("is_disease", F.lit(True)), allowMissingColumns=True
-        )
+        .unionByName(diseases.withColumn("is_disease", F.lit(True)), allowMissingColumns=True)
         .withColumnRenamed("curie", "id")
         .join(nodes, on="id", how="inner")
         .select("is_drug", "is_disease", "id", "topological_embedding")
@@ -48,9 +47,7 @@ def enrich_embeddings(
     )
 
 
-def _add_flag_columns(
-    matrix: pd.DataFrame, known_pairs: pd.DataFrame, clinical_trials: pd.DataFrame
-) -> pd.DataFrame:
+def _add_flag_columns(matrix: pd.DataFrame, known_pairs: pd.DataFrame, clinical_trials: pd.DataFrame) -> pd.DataFrame:
     """Adds boolean columns flagging known positives and known negatives.
 
     Args:
@@ -64,9 +61,7 @@ def _add_flag_columns(
 
     def create_flag_column(pairs):
         pairs_set = set(zip(pairs["source"], pairs["target"]))
-        return matrix.apply(
-            lambda row: (row["source"], row["target"]) in pairs_set, axis=1
-        )
+        return matrix.apply(lambda row: (row["source"], row["target"]) in pairs_set, axis=1)
 
     # Flag known positives and negatives
     test_pairs = known_pairs[known_pairs["split"].eq("TEST")]
@@ -77,23 +72,27 @@ def _add_flag_columns(
     matrix["is_known_negative"] = create_flag_column(test_neg_pairs)
 
     # Flag clinical trials data
-    clinical_trials = clinical_trials.rename(
-        columns={"drug_kg_curie": "source", "disease_kg_curie": "target"}
-    )
-    matrix["trial_sig_better"] = create_flag_column(
-        clinical_trials[clinical_trials["significantly_better"] == 1]
-    )
+    clinical_trials = clinical_trials.rename(columns={"drug_kg_curie": "source", "disease_kg_curie": "target"})
+    matrix["trial_sig_better"] = create_flag_column(clinical_trials[clinical_trials["significantly_better"] == 1])
     matrix["trial_non_sig_better"] = create_flag_column(
         clinical_trials[clinical_trials["non_significantly_better"] == 1]
     )
-    matrix["trial_sig_worse"] = create_flag_column(
-        clinical_trials[clinical_trials["non_significantly_worse"] == 1]
-    )
-    matrix["trial_non_sig_worse"] = create_flag_column(
-        clinical_trials[clinical_trials["significantly_worse"] == 1]
-    )
+    matrix["trial_sig_worse"] = create_flag_column(clinical_trials[clinical_trials["non_significantly_worse"] == 1])
+    matrix["trial_non_sig_worse"] = create_flag_column(clinical_trials[clinical_trials["significantly_worse"] == 1])
 
     return matrix
+
+
+def spark_to_pd(nodes: DataFrame) -> pd.DataFrame:
+    """Temporary function to transform spark parquet to pandas parquet.
+
+    Related to https://github.com/everycure-org/matrix/issues/71.
+    TODO: replace/remove the function once pyarrow error is fixed.
+
+    Args:
+        nodes: Dataframe with node embeddings
+    """
+    return nodes.toPandas()
 
 
 @has_schema(
@@ -113,6 +112,7 @@ def _add_flag_columns(
 def generate_pairs(
     drugs: pd.DataFrame,
     diseases: pd.DataFrame,
+    graph: KnowledgeGraph,
     known_pairs: pd.DataFrame,
     clinical_trials: pd.DataFrame,
 ) -> pd.DataFrame:
@@ -123,6 +123,7 @@ def generate_pairs(
     Args:
         drugs: Dataframe containing IDs for the list of drugs.
         diseases: Dataframe containing IDs for the list of diseases.
+        graph: Object containing node embeddings.
         known_pairs: Labelled ground truth drug-disease pairs dataset.
         clinical_trials: Pairs dataset representing outcomes of recent clinical trials.
 
@@ -137,6 +138,11 @@ def generate_pairs(
     drugs_lst = list(set(drugs_lst))
     diseases_lst = list(set(diseases_lst))
 
+    # Remove drugs and diseases without embeddings
+    nodes_with_embeddings = set(graph._nodes["id"])
+    drugs_lst = [drug for drug in drugs_lst if drug in nodes_with_embeddings]
+    diseases_lst = [disease for disease in diseases_lst if disease in nodes_with_embeddings]
+
     # Generate all combinations
     matrix_slices = []
     for disease in tqdm(diseases_lst):
@@ -149,9 +155,7 @@ def generate_pairs(
     # Remove training set
     train_pairs = known_pairs[~known_pairs["split"].eq("TEST")]
     train_pairs_set = set(zip(train_pairs["source"], train_pairs["target"]))
-    is_in_train = matrix.apply(
-        lambda row: (row["source"], row["target"]) in train_pairs_set, axis=1
-    )
+    is_in_train = matrix.apply(lambda row: (row["source"], row["target"]) in train_pairs_set, axis=1)
     matrix = matrix[~is_in_train]
 
     # Add flag columns for known positives and negatives
@@ -191,20 +195,14 @@ def make_batch_predictions(
 
     def process_batch(batch: pd.DataFrame) -> pd.DataFrame:
         # Collect embedding vectors
-        batch["source_embedding"] = batch.apply(
-            lambda row: graph.get_embedding(row.source, default=pd.NA), axis=1
-        )
-        batch["target_embedding"] = batch.apply(
-            lambda row: graph.get_embedding(row.target, default=pd.NA), axis=1
-        )
+        batch["source_embedding"] = batch.apply(lambda row: graph.get_embedding(row.source, default=pd.NA), axis=1)
+        batch["target_embedding"] = batch.apply(lambda row: graph.get_embedding(row.target, default=pd.NA), axis=1)
 
         # Retrieve rows with null embeddings
         # NOTE: This only happens in a rare scenario where the node synonymizer
         # provided an identifier for a node that does _not_ exist in our KG.
         # https://github.com/everycure-org/matrix/issues/409
-        removed = batch[
-            batch["source_embedding"].isna() | batch["target_embedding"].isna()
-        ]
+        removed = batch[batch["source_embedding"].isna() | batch["target_embedding"].isna()]
         if len(removed.index) > 0:
             logger.warning(f"Dropped {len(removed.index)} pairs during generation!")
             logger.warning(
@@ -212,23 +210,25 @@ def make_batch_predictions(
                 ",".join([f"({r.source}, {r.target})" for _, r in removed.iterrows()]),
             )
 
-        # drop rows without source/target embeddings
+        # Drop rows without source/target embeddings
         batch = batch.dropna(subset=["source_embedding", "target_embedding"])
+
+        # Return empty dataframe if all rows are dropped
+        if len(batch) == 0:
+            return batch.drop(columns=["source_embedding", "target_embedding"])
 
         # Apply transformers to data
         transformed = apply_transformers(batch, transformers)
 
         # Extract features
-        batch_features = _extract_elements_in_list(
-            transformed.columns, features, raise_exc=True
-        )
+        batch_features = _extract_elements_in_list(transformed.columns, features, raise_exc=True)
 
         # Generate model probability scores
-        batch[score_col_name] = model.predict_proba(transformed[batch_features].values)[
-            :, 1
-        ]
+        batch[score_col_name] = model.predict_proba(transformed[batch_features].values)[:, 1]
 
-        return batch[[score_col_name]]
+        # Drop embedding columns
+        batch = batch.drop(columns=["source_embedding", "target_embedding"])
+        return batch
 
     # Group data by the specified prefix
     grouped = data.groupby(batch_by)
@@ -241,10 +241,7 @@ def make_batch_predictions(
     # Combine results
     results = pd.concat(result_parts, axis=0)
 
-    # Add scores to the original dataframe
-    data[score_col_name] = results[score_col_name]
-
-    return data
+    return results
 
 
 def make_predictions_and_sort(
@@ -273,9 +270,7 @@ def make_predictions_and_sort(
         Pairs dataset sorted by an additional column containing the probability scores.
     """
     # Generate scores
-    data = make_batch_predictions(
-        graph, data, transformers, model, features, score_col_name, batch_by=batch_by
-    )
+    data = make_batch_predictions(graph, data, transformers, model, features, score_col_name, batch_by=batch_by)
 
     # Sort by the probability score
     sorted_data = data.sort_values(by=score_col_name, ascending=False)
@@ -318,9 +313,7 @@ def generate_report(
 
     # Generate curie to name dictionaries
     drug_curie_to_name = {row["curie"]: row["name"] for _, row in drugs.iterrows()}
-    disease_curie_to_name = {
-        row["curie"]: row["name"] for _, row in diseases.iterrows()
-    }
+    disease_curie_to_name = {row["curie"]: row["name"] for _, row in diseases.iterrows()}
 
     # Add additional information for drugs and diseases
     top_pairs["drug_name"] = top_pairs["source"].map(drug_curie_to_name)
@@ -330,16 +323,8 @@ def generate_report(
     top_pairs[score_col_name] = top_pairs[score_col_name].round(4)
 
     # Merge flag columns for readability
-    data["is_known_positive"] = (
-        data["is_known_positive"]
-        | data["trial_sig_better"]
-        | data["trial_non_sig_better"]
-    )
-    data["is_known_negative"] = (
-        data["is_known_negative"]
-        | data["trial_sig_worse"]
-        | data["trial_non_sig_worse"]
-    )
+    data["is_known_positive"] = data["is_known_positive"] | data["trial_sig_better"] | data["trial_non_sig_better"]
+    data["is_known_negative"] = data["is_known_negative"] | data["trial_sig_worse"] | data["trial_non_sig_worse"]
 
     # Rename ID columns
     top_pairs = top_pairs.rename(columns={"source": "drug_id"})

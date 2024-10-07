@@ -11,7 +11,6 @@ from matrix.pipelines.matrix_generation.nodes import (
 )
 from matrix.pipelines.modelling.transformers import FlatArrayTransformer
 from matrix.datasets.graph import KnowledgeGraph
-from matrix.pipelines.modelling.model import ModelWrapper
 
 
 @pytest.fixture
@@ -120,28 +119,20 @@ def mock_model_2():
     return model
 
 
-def test_generate_pairs(
-    sample_drugs, sample_diseases, sample_known_pairs, sample_clinical_trials
-):
+def test_generate_pairs(sample_drugs, sample_diseases, sample_known_pairs, sample_clinical_trials):
     """Test the generate_pairs function."""
     # Given drug list, disease list and ground truth pairs
     # When generating the matrix dataset
-    result = generate_pairs(
-        sample_drugs, sample_diseases, sample_known_pairs, sample_clinical_trials
-    )
+    result = generate_pairs(sample_drugs, sample_diseases, sample_known_pairs, sample_clinical_trials)
 
     # Then the output is of the correct format and shape
     assert isinstance(result, pd.DataFrame)
     assert {"source", "target"}.issubset(set(result.columns))
     assert len(result) == 3  # 2 drugs * 2 diseases - 1 training pair
     # Doesn't contain training pairs
-    assert not result.apply(
-        lambda row: (row["source"], row["target"]) in [("drug_1", "disease_1")], axis=1
-    ).any()
+    assert not result.apply(lambda row: (row["source"], row["target"]) in [("drug_1", "disease_1")], axis=1).any()
     # Boolean flag columns are present
-    check_col = (
-        lambda col_name: (col_name in result.columns) and result[col_name].dtype == bool
-    )
+    check_col = lambda col_name: (col_name in result.columns) and result[col_name].dtype == bool
     assert all(
         check_col(col)
         for col in [
@@ -238,9 +229,7 @@ def test_generate_report(
 ):
     """Test the generate_report function."""
     # Given an input matrix, drug list and disease list
-    matrix = generate_pairs(
-        sample_drugs, sample_diseases, sample_known_pairs, sample_clinical_trials
-    )
+    matrix = generate_pairs(sample_drugs, sample_diseases, sample_known_pairs, sample_clinical_trials)
     matrix_with_scores = make_predictions_and_sort(
         graph=sample_graph,
         data=matrix,
@@ -253,9 +242,7 @@ def test_generate_report(
     n_reporting = 2
 
     # When generating the report
-    result = generate_report(
-        matrix_with_scores, n_reporting, sample_drugs, sample_diseases, "score"
-    )
+    result = generate_report(matrix_with_scores, n_reporting, sample_drugs, sample_diseases, "score")
 
     # Then the report is of the correct structure
     assert isinstance(result, pd.DataFrame)

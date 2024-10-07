@@ -14,8 +14,6 @@ from matrix.datasets.pair_generator import (
 )
 from matrix.pipelines.modelling.nodes import make_splits
 
-from pyspark.sql.types import StructType
-
 
 ## Test negative sampling pair generators
 
@@ -51,9 +49,7 @@ def known_pairs_fixture() -> pd.DataFrame:
     )
 
 
-def test_random_drug_disease_pair_generator(
-    graph: KnowledgeGraph, known_pairs: pd.DataFrame
-):
+def test_random_drug_disease_pair_generator(graph: KnowledgeGraph, known_pairs: pd.DataFrame):
     # Given a random drug disease pair generator
     generator = RandomDrugDiseasePairGenerator(
         random_state=42,
@@ -101,9 +97,7 @@ def test_replacement_drug_disease_pair_generator(
 
     # Then set of unknown pairs generated, where generated pairs
     # are distinct from known pairs and are always (drug, disease) pairs.
-    known_positives_train = known_pairs_split[
-        (known_pairs_split["y"] == 1) & (known_pairs_split["split"] == "TRAIN")
-    ]
+    known_positives_train = known_pairs_split[(known_pairs_split["y"] == 1) & (known_pairs_split["split"] == "TRAIN")]
     assert unknown.shape[0] == 2 * n_replacements * len(known_positives_train)
     assert pd.merge(known_pairs, unknown, how="inner", on=["source", "target"]).empty
     assert set(unknown["source"].to_list()).issubset(graph._drug_nodes)
@@ -177,12 +171,8 @@ def test_matrix_test_diseases(matrix):
     #   - has the correct 'y' labels
     positive_pairs = matrix[matrix["is_positive_1"] | matrix["is_positive_2"]]
     positive_diseases = positive_pairs["target"].unique()
-    expected_data = matrix[
-        matrix["target"].isin(positive_diseases) | ~matrix["is_negative_1"]
-    ]
-    expected_data["y"] = (
-        expected_data["is_positive_1"] | expected_data["is_positive_2"]
-    ).astype(int)
+    expected_data = matrix[matrix["target"].isin(positive_diseases) | ~matrix["is_negative_1"]]
+    expected_data["y"] = (expected_data["is_positive_1"] | expected_data["is_positive_2"]).astype(int)
 
     assert len(generated_data) == len(expected_data)
     assert set(generated_data["target"]).issubset(set(positive_diseases))
@@ -214,8 +204,4 @@ def test_full_matrix_positives(matrix):
     assert generated_data["treat_score"].is_monotonic_decreasing
     assert (generated_data["quantile_rank"].between(0, 1)).all()
     # Check that the rank is computed against non-positive non-removed pairs
-    assert (
-        generated_data["rank"]
-        .between(1, len(matrix) - len(expected_removed) - len(expected_positives) + 1)
-        .all()
-    )
+    assert generated_data["rank"].between(1, len(matrix) - len(expected_removed) - len(expected_positives) + 1).all()

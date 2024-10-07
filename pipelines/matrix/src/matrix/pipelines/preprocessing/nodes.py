@@ -1,10 +1,10 @@
 """Nodes for the preprocessing pipeline."""
+
 import requests
 
 import pandas as pd
-import numpy as np
 
-from typing import Callable, List, Optional
+from typing import Callable, List
 from functools import partial
 
 from refit.v1.core.inline_has_schema import has_schema
@@ -20,7 +20,7 @@ def resolve(name: str, endpoint: str) -> str:
     Returns:
         Corresponding curie
     """
-    result = requests.get(f"{endpoint}/synonymize", json={"name": name})
+    result = requests.get(f"{endpoint}/synonymize", json={"names": name})
 
     element = result.json().get(name)
     if element:
@@ -41,9 +41,7 @@ def normalize(curie: str, endpoint: str, att_to_get: str = "identifier"):
     """
     if not curie or pd.isna(curie):
         return None
-
-    result = requests.get(f"{endpoint}/normalize", json={"name": curie})
-
+    result = requests.get(f"{endpoint}/normalize", json={"names": [curie]})
     element = result.json().get(curie)
     if element:
         return element.get("id", {}).get(att_to_get)
@@ -58,9 +56,7 @@ def coalesce(s: pd.Series, *series: List[pd.Series]):
     return s
 
 
-def enrich_df(
-    df: pd.DataFrame, endpoint: str, func: Callable, input_cols: str, target_col: str
-) -> pd.DataFrame:
+def enrich_df(df: pd.DataFrame, endpoint: str, func: Callable, input_cols: str, target_col: str) -> pd.DataFrame:
     """Function to resolve nodes of the nodes input dataset.
 
     Args:
@@ -94,9 +90,7 @@ def enrich_df(
 def create_int_nodes(nodes: pd.DataFrame, endpoint: str) -> pd.DataFrame:
     """Function to create a intermediate nodes dataset by filtering and renaming columns."""
     # Enrich curie with node synonymizer
-    resolved = enrich_df(
-        nodes, endpoint, resolve, input_cols=["name"], target_col="curie"
-    )
+    resolved = enrich_df(nodes, endpoint, resolve, input_cols=["name"], target_col="curie")
 
     # Normalize curie, by taking corrected currie or curie
     normalized = enrich_df(
@@ -108,9 +102,7 @@ def create_int_nodes(nodes: pd.DataFrame, endpoint: str) -> pd.DataFrame:
     )
 
     # If new id is specified, we use the new id as a new KG identifier should be introduced
-    normalized["normalized_curie"] = coalesce(
-        normalized["new_id"], normalized["normalized_curie"]
-    )
+    normalized["normalized_curie"] = coalesce(normalized["new_id"], normalized["normalized_curie"])
 
     return normalized
 
@@ -148,9 +140,7 @@ def create_int_edges(int_nodes: pd.DataFrame, int_edges: pd.DataFrame) -> pd.Dat
         .drop(columns="ID")
     )
 
-    res["Included"] = res.apply(
-        lambda row: not (pd.isna(row["SourceId"]) or pd.isna(row["TargetId"])), axis=1
-    )
+    res["Included"] = res.apply(lambda row: not (pd.isna(row["SourceId"]) or pd.isna(row["TargetId"])), axis=1)
 
     return res
 
@@ -170,11 +160,7 @@ def create_prm_nodes(prm_nodes: pd.DataFrame) -> pd.DataFrame:
     # `new_id` signals that the node should be added to the KG as a new id
     # we drop the original ID from the spreadsheat, and leverage the new_id as the final id
     # in the dataframe. We only retain nodes where the new_id is set
-    res = (
-        prm_nodes[prm_nodes["new_id"].notna()]
-        .drop(columns="ID")
-        .rename(columns={"new_id": "id"})
-    )
+    res = prm_nodes[prm_nodes["new_id"].notna()].drop(columns="ID").rename(columns={"new_id": "id"})
 
     res["category"] = "biolink:" + prm_nodes["entity label"]
 
@@ -194,9 +180,9 @@ def create_prm_nodes(prm_nodes: pd.DataFrame) -> pd.DataFrame:
 def create_prm_edges(int_edges: pd.DataFrame) -> pd.DataFrame:
     """Function to create a primary edges dataset by filtering and renaming columns."""
     # Replace empty strings with nan
-    res = int_edges.rename(
-        columns={"SourceId": "subject", "TargetId": "object", "Label": "predicate"}
-    ).dropna(subset=["subject", "object"])
+    res = int_edges.rename(columns={"SourceId": "subject", "TargetId": "object", "Label": "predicate"}).dropna(
+        subset=["subject", "object"]
+    )
 
     res["predicate"] = "biolink:" + res["predicate"]
     res["knowledge_source"] = "ec:medical"
@@ -218,9 +204,7 @@ def create_prm_edges(int_edges: pd.DataFrame) -> pd.DataFrame:
     allow_subset=True,
     df="df",
 )
-def map_name_to_curie(
-    df: pd.DataFrame, endpoint: str, drug_types: List[str], disease_types: List[str]
-) -> pd.DataFrame:
+def map_name_to_curie(df: pd.DataFrame, endpoint: str, drug_types: List[str], disease_types: List[str]) -> pd.DataFrame:
     """Map drug name to curie.
 
     Function to map drug name or disease name in raw clinical trail dataset to curie using the synonymizer.
@@ -236,20 +220,12 @@ def map_name_to_curie(
         dataframe with two additional columns: "Mapped Drug Curie" and "Mapped Drug Disease"
     """
     # Map the drug name to the corresponding curie ids
-    df["drug_kg_curie"] = df["drug_name"].apply(
-        lambda x: normalize(x, endpoint=endpoint)
-    )
-    df["drug_kg_label"] = df["drug_name"].apply(
-        lambda x: normalize(x, endpoint=endpoint, att_to_get="category")
-    )
+    df["drug_kg_curie"] = df["drug_name"].apply(lambda x: normalize(x, endpoint=endpoint))
+    df["drug_kg_label"] = df["drug_name"].apply(lambda x: normalize(x, endpoint=endpoint, att_to_get="category"))
 
     # Map the disease name to the corresponding curie ids
-    df["disease_kg_curie"] = df["disease_name"].apply(
-        lambda x: normalize(x, endpoint=endpoint)
-    )
-    df["disease_kg_label"] = df["disease_name"].apply(
-        lambda x: normalize(x, endpoint=endpoint, att_to_get="category")
-    )
+    df["disease_kg_curie"] = df["disease_name"].apply(lambda x: normalize(x, endpoint=endpoint))
+    df["disease_kg_label"] = df["disease_name"].apply(lambda x: normalize(x, endpoint=endpoint, att_to_get="category"))
 
     # Validate correct labels
     # NOTE: This is a temp. solution that ensures clinical trails data
@@ -257,9 +233,7 @@ def map_name_to_curie(
     # we aim to refine our evaluation approach as part of a new PR after which
     # this can be removed.
     # https://github.com/everycure-org/matrix/issues/313
-    df["label_included"] = (df["drug_kg_label"].isin(drug_types)) & (
-        df["disease_kg_label"].isin(disease_types)
-    )
+    df["label_included"] = (df["drug_kg_label"].isin(drug_types)) & (df["disease_kg_label"].isin(disease_types))
 
     # check conflict
     df["conflict"] = (
@@ -430,3 +404,82 @@ def clean_disease_list(disease_df: pd.DataFrame, endpoint: str) -> pd.DataFrame:
         endpoint=endpoint,
     )
     return res.loc[~res["curie"].isna()]
+
+
+@has_schema(
+    {
+        "timestamp": "object",
+        "drug_id": "object",
+        "disease_id": "object",
+        "norm_drug_id": "object",
+        "norm_disease_id": "object",
+        "norm_drug_name": "object",
+        "norm_disease_name": "object",
+    },
+    allow_subset=True,
+)
+def clean_input_sheet(input_df: pd.DataFrame, endpoint: str) -> pd.DataFrame:
+    """Synonymize the input sheet and filter out NaNs.
+
+    Args:
+        input_df: input list in a dataframe format.
+        endpoint: endpoint of the synonymizer.
+
+    Returns:
+        dataframe with synonymized disease IDs in normalized_curie column.
+    """
+    # Synonymize Drug_ID column to normalized ID and name compatible with RTX-KG2
+    res = enrich_df(
+        input_df,
+        func=normalize,
+        input_cols=["Drug_ID"],
+        target_col="norm_drug_id",
+        endpoint=endpoint,
+    )
+    res = enrich_df(
+        res,
+        func=partial(normalize, att_to_get="name"),
+        input_cols=["Drug_ID"],
+        target_col="norm_drug_name",
+        endpoint=endpoint,
+    )
+
+    # Synonymize Disease_ID column to normalized ID and name compatible with RTX-KG2
+    res = enrich_df(
+        res,
+        func=normalize,
+        input_cols=["Disease_ID"],
+        target_col="norm_disease_id",
+        endpoint=endpoint,
+    )
+    res = enrich_df(
+        res,
+        func=partial(normalize, att_to_get="name"),
+        input_cols=["Disease_ID"],
+        target_col="norm_disease_name",
+        endpoint=endpoint,
+    )
+
+    # Select columns of interest and rename
+    df = res.loc[
+        :,
+        [
+            "Timestamp",
+            "Drug_ID",
+            "Disease_ID",
+            "norm_drug_id",
+            "norm_drug_name",
+            "norm_disease_id",
+            "norm_disease_name",
+        ],
+    ]
+    df.columns = [
+        "timestamp",
+        "drug_id",
+        "disease_id",
+        "norm_drug_id",
+        "norm_drug_name",
+        "norm_disease_id",
+        "norm_disease_name",
+    ]
+    return df.fillna("")  # Filling NaNs so that schema is valid

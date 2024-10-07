@@ -4,6 +4,11 @@ There is no need to edit this file unless you want to change values
 from the Kedro defaults. For further information, including these default values, see
 https://docs.kedro.org/en/stable/kedro_project_setup/settings.html.
 """
+
+# Class that manages how configuration is loaded.
+from matrix.resolvers import merge_dicts, env
+from kedro.config import OmegaConfigLoader  # noqa: E402
+
 # Instantiated project hooks.
 # For example, after creating a hooks.py and defining a ProjectHooks class there, do
 # from pandas_viz.hooks import ProjectHooks
@@ -33,10 +38,6 @@ SESSION_STORE_ARGS = {"path": str(Path(__file__).parents[2])}
 # CONF_SOURCE = "conf"
 
 
-# Class that manages how configuration is loaded.
-from .resolvers import merge_dicts, env
-from kedro.config import OmegaConfigLoader  # noqa: E402
-
 CONFIG_LOADER_CLASS = OmegaConfigLoader
 # Keyword arguments to pass to the `CONFIG_LOADER_CLASS` constructor.
 CONFIG_LOADER_ARGS = {
@@ -63,10 +64,10 @@ CONFIG_LOADER_ARGS = {
 # https://getindata.com/blog/kedro-dynamic-pipelines/
 DYNAMIC_PIPELINES_MAPPING = {
     "modelling": [
-        {"model_name": "xg_baseline", "num_shards": 1},
-        {"model_name": "xg_ensemble", "num_shards": 3},
-        {"model_name": "rf", "num_shards": 1},
-        {"model_name": "xg_synth", "num_shards": 1},
+        {"model_name": "xg_baseline", "num_shards": 1, "run_inference": False},
+        {"model_name": "xg_ensemble", "num_shards": 3, "run_inference": True},
+        {"model_name": "rf", "num_shards": 1, "run_inference": False},
+        {"model_name": "xg_synth", "num_shards": 1, "run_inference": False},
     ],
     "evaluation": [
         {"evaluation_name": "simple_classification"},

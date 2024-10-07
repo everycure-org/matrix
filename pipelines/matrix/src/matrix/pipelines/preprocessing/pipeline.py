@@ -1,5 +1,5 @@
 """Preprocessing pipeline."""
-from functools import partial
+
 from kedro.pipeline import Pipeline, node, pipeline
 
 from . import nodes
@@ -92,6 +92,16 @@ def create_pipeline(**kwargs) -> Pipeline:
                 outputs="ingestion.raw.disease_list@pandas",
                 name="resolve_disease_list",
                 tags=["disease-list"],
+            ),
+            node(
+                func=nodes.clean_input_sheet,
+                inputs=[
+                    "preprocessing.raw.infer_sheet",
+                    "params:preprocessing.synonymizer_endpoint",
+                ],
+                outputs="inference.raw.normalized_inputs",
+                name="clean_input_sheet",
+                tags=["inference-input"],
             ),
         ]
     )

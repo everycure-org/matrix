@@ -63,7 +63,7 @@ The integration stage aims to produce our internal knowledge-graph, in [biolink]
 Embeddings are vectorized representations of the entities in our knowledge graph. These are currently computed in two stages:
 
 1. Node Attribute Embedding Computation - in this step we use GenAI model (e.g. OpenAI's `text-embedding-3-small`) to compute individual node embeddings. 
-2. Topological Embedding Computation - in this step we use GraphSAGE embedding algorithm on the previously calculated node embeddings. Alternatively, you can also use Node2Vec for topological embeddings computation - the model is not as well in Neo4J however it does not rely on Node Attribute Embedding Computation.
+2. Topological Embedding Computation - in this step we use GraphSAGE embedding algorithm on the previously calculated node embeddings. Alternatively, you can also use Node2Vec for topological embeddings computation - the model is not as well supported in Neo4J however it does not rely on Node Attribute Embedding Computation.
 
 !!! info
     Our graph database, i.e., [Neo4J](https://neo4j.com/docs/graph-data-science/current/algorithms/) comes with out-of-the-box functionality to compute both node and topological embeddings in-situ. The Kedro pipeline orchestrates the computation of these.
@@ -108,6 +108,14 @@ More details on the metrics computed in each category can be found in the [evalu
 
 
 
+### Inference (requests)
+
+Our inference pipeline can be used for running ad-hoc requests coming from medical team/stakeholders to generate drug-disease predictions for a specifid drug, disease or a pair of both. The drugs/diseases to predict against are coming from our official drug and disease lists (which are versioned in the .env file). The pipeline is running inference using a single/several trained models stored as artifacts in MLFlow and utilizes the same version of data that was used for training. 
+
+![](../assets/img/inference.drawio.png)
+
+You can find the sheet [here](https://docs.google.com/spreadsheets/d/1CioSCCQxUdACn1NfWU9XRyC-9j_ERc2hmZzaDd8XgcQ/edit?gid=0#gid=0). At the moment we don't execute this as a part of the default pipeline. Also note that in order to use the trained models which are stored in the MLFlow (i.e. models trained using e2e pipeline) you will need to execute the inference pipeline from `cloud` environment.
+
 ### Release
 
 Our release pipeline currently builds the final integrated Neo4J data product for consumption. We do not execute this as part of the default pipeline run but with a separate `-p release` execution as we do not want to release every pipeline data output.
@@ -120,7 +128,7 @@ Our release pipeline currently builds the final integrated Neo4J data product fo
 We have 4 environments declared in the kedro project for `MATRIX`:
 
 - `base`: Contains the base environment which reads the real data from GCS and operates in your local compute environment
-- `cloud`: Contains the cloud environment with real data. All data is read and written to a GCP project a configured (see below). Assumes fully stateless local machine operations (e.g. in docker containers)
+- `cloud`: Contains the cloud environment with real data. All data is read and written to a GCP project as configured (see below). Assumes fully stateless local machine operations (e.g. in docker containers)
 - `test`: Fully local and contains parameters that "break" the meaning of algorithms in the pipeline (e.g. 2 dimensions PCA). This is useful for running an integration test with mock data to validate the programming of the pipeline is correct to a large degree. 
 - `local`: A default environment which you can use for local adjustments and tweaks. Changes to this repo are not usually committed to git as they are unique for every developer. 
 
@@ -154,7 +162,7 @@ This runs the full pipeline with fake data.
 
 ### Run with real data locally
 
-To run the full data with real data by copying the RAW data from the central GCS bucket and then run everything locally you can simply run from the default environment. We've setup an intermediate pipeline that copies data to avoid constant copying of the data from cloud.
+To run the full pipeline with real data by copying the RAW data from the central GCS bucket and then run everything locally you can simply run from the default environment. We've setup an intermediate pipeline that copies data to avoid constant copying of the data from cloud.
 
 ```bash
 # Copy data from cloud to local
@@ -177,7 +185,7 @@ Jupyter notebooks should be created in the directory `pipelines/matrix/notebooks
 !!! tip
     A separate git repository for notebook version control may be created inside the `scratch` directory. It can also be nice to create a symbolic link to `scratch` from a directory of your choice on your machine. 
 
-    An example notebook is also added to our documentation [here](./kedro_notebook_example.ipynb) which you can copy into the scratch directory for a quickstart
+    An example notebook is also added to our documentation [here](./walkthroughs/kedro_notebook_example.ipynb which you can copy into the scratch directory for a quickstart
 
 Within a notebook, first run a cell with the following magic command:
 
