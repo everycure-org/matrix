@@ -1,7 +1,6 @@
 """Nodes for the ingration pipeline."""
 
 import logging
-import os
 from functools import partial, reduce
 from typing import Any, Dict, List
 
@@ -25,7 +24,6 @@ from matrix.schemas.knowledge_graph import KGEdgeSchema, KGNodeSchema
 
 # TODO move these into config
 memory = Memory(location=".cache/nodenorm", verbose=0)
-nn_endpoint = f'{os.getenv("NODE_NORMALIZER_SERVER", "https://nodenormalization-sri.renci.org/")}/get_normalized_nodes'
 logger = logging.getLogger(__name__)
 
 
@@ -36,7 +34,8 @@ def unify_edges(*edges) -> DataFrame:
     union = reduce(partial(DataFrame.unionByName, allowMissingColumns=True), edges)
 
     # Deduplicate
-    return KGEdgeSchema.group_edges_by_id(union)
+    df = KGEdgeSchema.group_edges_by_id(union)
+    return df
 
 
 @pa.check_output(KGNodeSchema)
@@ -86,7 +85,15 @@ def create_treats(nodes: DataFrame, df: DataFrame):
     )
 
 
-def normalize_kg(nodes: ps.sql.DataFrame, edges: ps.sql.DataFrame):
+def normalize_kg(
+    nodes: ps.sql.DataFrame,
+    edges: ps.sql.DataFrame,
+    api_endpoint: str,
+    conflate: bool = True,
+    drug_chemical_conflate: bool = True,
+    batch_size: int = 100,
+    parallelism: int = 10,
+):
     """Function normalizes a KG using external API endpoint.
 
     This functions takes the nodes and edges frames for a KG and leverages
@@ -95,12 +102,17 @@ def normalize_kg(nodes: ps.sql.DataFrame, edges: ps.sql.DataFrame):
 
     """
     node_ids = nodes.select("id").distinct().orderBy("id").toPandas()["id"].to_list()
-    node_id_map = batch_map_ids(node_ids)
+    node_id_map = batch_map_ids(node_ids, api_endpoint, batch_size, parallelism, conflate, drug_chemical_conflate)
 
     # convert dict back to a dataframe to parallelize the mapping
     node_id_map_df = pd.DataFrame(list(node_id_map.items()), columns=["id", "normalized_id"])
     spark = ps.sql.SparkSession.builder.getOrCreate()
-    mapping_df = spark.createDataFrame(node_id_map_df)
+    mapping_df = (
+        spark.createDataFrame(node_id_map_df)
+        .withColumn("normalization_success", F.col("normalized_id").isNotNull())
+        # avoids nulls in id column, if we couldn't resolve IDs, we keep original
+        .withColumn("normalized_id", F.coalesce(F.col("normalized_id"), F.col("id")))
+    )
 
     # add normalized_id to nodes
     nodes = (
@@ -111,12 +123,24 @@ def normalize_kg(nodes: ps.sql.DataFrame, edges: ps.sql.DataFrame):
 
     # edges are bit more complex, we need to map both the subject and object
     edges = edges.join(
-        mapping_df.withColumnsRenamed({"id": "subject", "normalized_id": "subject_normalized"}),
+        mapping_df.withColumnsRenamed(
+            {
+                "id": "subject",
+                "normalized_id": "subject_normalized",
+                "normalization_success": "subject_normalization_success",
+            }
+        ),
         on="subject",
         how="left",
     )
     edges = edges.join(
-        mapping_df.withColumnsRenamed({"id": "object", "normalized_id": "object_normalized"}),
+        mapping_df.withColumnsRenamed(
+            {
+                "id": "object",
+                "normalized_id": "object_normalized",
+                "normalization_success": "object_normalization_success",
+            }
+        ),
         on="object",
         how="left",
     )
@@ -127,13 +151,13 @@ def normalize_kg(nodes: ps.sql.DataFrame, edges: ps.sql.DataFrame):
     return nodes, edges
 
 
-@retry(stop_after_attempt(3), wait_random_exponential(min=1, max=10))
+@retry(stop_after_attempt(6), wait_random_exponential(min=1, max=120), before_sleep=logger.warning)
 @memory.cache
 def hit_node_norm_service(
     curies: List[str],
     endpoint: str,
-    conflate: bool = False,
-    drug_chemical_conflate: bool = False,
+    conflate: bool = True,
+    drug_chemical_conflate: bool = True,
 ):
     """Hits the node normalization service with a list of curies.
 
@@ -142,8 +166,8 @@ def hit_node_norm_service(
     Args:
         curies (List[str]): A list of curies to normalize.
         endpoint (str): The endpoint to hit.
-        conflate (bool, optional): Whether to conflate the nodes. Defaults to False.
-        drug_chemical_conflate (bool, optional): Whether to conflate the drug and chemical nodes. Defaults to False.
+        conflate (bool, optional): Whether to conflate the nodes.
+        drug_chemical_conflate (bool, optional): Whether to conflate the drug and chemical nodes.
 
     Returns:
         Dict[str, str]: A dictionary of the form {id: normalized_id}.
@@ -183,13 +207,20 @@ def _extract_ids(response: Dict[str, Any]):
     return ids
 
 
-def batch_map_ids(ids: List[str], batch_size: int = 100, parallelism: int = 10):
+def batch_map_ids(
+    ids: List[str],
+    api_endpoint: str,
+    batch_size: int,
+    parallelism: int,
+    conflate: bool,
+    drug_chemical_conflate: bool,
+) -> Dict[str, str]:
     """Maps a list of ids to their normalized form using the node normalization service.
 
     Args:
-        ids (List[str]): A list of ids to map.
-        batch_size (int, optional): The number of ids to map in a single batch. Defaults to 100.
-        parallelism (int, optional): The number of threads to use for parallel processing. Defaults to 100.
+        ids: A list of ids to map.
+        batch_size: The number of ids to map in a single batch.
+        parallelism: The number of threads to use for parallel processing.
 
     Returns:
         Dict[str, str]: A dictionary of the form {id: normalized_id}.
@@ -200,8 +231,9 @@ def batch_map_ids(ids: List[str], batch_size: int = 100, parallelism: int = 10):
     total_batches = (len(ids) + batch_size - 1) // batch_size
 
     def _process_batch(batch):
-        return hit_node_norm_service(batch, nn_endpoint)
+        return hit_node_norm_service(batch, api_endpoint, conflate, drug_chemical_conflate)
 
+    # process batches in parallel and collect mapping results in dictionary
     with ThreadPoolExecutor(max_workers=parallelism) as executor:
         futures = []
         for i in range(0, len(ids), batch_size):

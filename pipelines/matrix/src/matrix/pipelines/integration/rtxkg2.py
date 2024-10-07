@@ -58,10 +58,10 @@ def transform_rtxkg2_edges(edges_df: DataFrame) -> DataFrame:
         .withColumn("primary_knowledge_source",    f.col("knowledge_source"))
         .withColumn("aggregator_knowledge_source", f.array())
         .withColumn("publications",                f.split(f.col("publications"), SEP))
-        .withColumn("subject_aspect_qualifier",    f.lit(None)) #not present in RTX KG2
-        .withColumn("subject_direction_qualifier", f.lit(None)) #not present in RTX KG2
-        .withColumn("object_aspect_qualifier",     f.lit(None)) #not present in RTX KG2
-        .withColumn("object_direction_qualifier",  f.lit(None)) #not present in RTX KG2
+        .withColumn("subject_aspect_qualifier",    f.lit(None)) #not present in RTX KG2 v2.7, present in v2.10
+        .withColumn("subject_direction_qualifier", f.lit(None)) #not present in RTX KG2 v2.7, present in v2.10
+        .withColumn("object_aspect_qualifier",     f.lit(None)) #not present in RTX KG2 v2.7, present in v2.10
+        .withColumn("object_direction_qualifier",  f.lit(None)) #not present in RTX KG2 v2.7, present in v2.10
         .select(*cols_for_schema(KGEdgeSchema))
     )
     # fmt: on
