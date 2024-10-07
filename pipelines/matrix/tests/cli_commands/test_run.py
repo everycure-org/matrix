@@ -1,6 +1,7 @@
 import pytest
 
-from matrix.cli_commands.run import _filter_nodes_missing_tag, _get_feed_dict
+from matrix.cli_commands.run import _filter_nodes_missing_tag, _get_feed_dict, _run
+from unittest.mock import MagicMock, patch
 
 
 def test_get_feed_dict_simple():
@@ -184,3 +185,174 @@ def test_filter_nodes_empty_node_names():
 
     # node1 is removed due to the tag
     assert result == ["node2"]
+
+
+@pytest.fixture
+def kedro_session_mock():
+    with patch("matrix.session.KedroSessionWithFromCatalog") as mock_session:
+        yield mock_session
+
+
+@pytest.fixture
+def settings_mock():
+    """Mock the settings object."""
+    with patch("your_module.settings") as mock_settings:
+        yield mock_settings
+
+
+@pytest.fixture
+def _filter_nodes_missing_tag_mock():
+    """Mock the _filter_nodes_missing_tag function."""
+    with patch("your_module._filter_nodes_missing_tag") as mock_filter_nodes:
+        yield mock_filter_nodes
+
+
+def test_run_basic(kedro_session_mock, pipelines_mock, _filter_nodes_missing_tag_mock):
+    """Test running the basic _run function."""
+    # Setup mock objects
+    pipelines_mock["__default__"].nodes = []
+
+    _run(
+        pipeline=None,
+        env="test",
+        runner="SequentialRunner",
+        is_async=False,
+        node_names=["node1"],
+        to_nodes=[],
+        from_nodes=[],
+        from_inputs=[],
+        to_outputs=[],
+        load_versions=[],
+        tags=[],
+        without_tags=[],
+        conf_source=None,
+        params={},
+        from_env=None,
+    )
+
+    # Assert that the Kedro session was started
+    kedro_session_mock.create.assert_called_once_with(env="test", conf_source=None, extra_params={})
+
+    # Check that the runner was loaded
+    load_obj.assert_called_once_with("SequentialRunner", "kedro.runner")
+
+    # Ensure that the filtering function was called
+    _filter_nodes_missing_tag_mock.assert_called_once_with(
+        (), pipelines_mock["__default__"], kedro_session_mock.create(), ("node1",)
+    )
+
+    # Ensure that session.run was called with expected parameters
+    kedro_session_mock.create.return_value.run.assert_called_once()
+
+
+def test_run_with_fabricator_env_error():
+    """Test that the _run function raises an error when running 'fabricator' in 'base' environment."""
+    with pytest.raises(RuntimeError, match="might overwrite production data!"):
+        _run(
+            pipeline="fabricator",
+            env="base",
+            runner="SequentialRunner",
+            is_async=False,
+            node_names=["node1"],
+            to_nodes=[],
+            from_nodes=[],
+            from_inputs=[],
+            to_outputs=[],
+            load_versions=[],
+            tags=[],
+            without_tags=[],
+            conf_source=None,
+            params={},
+            from_env=None,
+        )
+
+
+def test_run_with_from_env(
+    kedro_session_mock, load_obj_mock, settings_mock, pipelines_mock, _filter_nodes_missing_tag_mock
+):
+    """Test _run when from_env is provided."""
+    config_loader_mock = MagicMock()
+    settings_mock.CONFIG_LOADER_CLASS.return_value = config_loader_mock
+
+    _run(
+        pipeline=None,
+        env="test",
+        runner="SequentialRunner",
+        is_async=False,
+        node_names=["node1"],
+        to_nodes=[],
+        from_nodes=[],
+        from_inputs=[],
+        to_outputs=[],
+        load_versions=[],
+        tags=[],
+        without_tags=[],
+        conf_source=None,
+        params={},
+        from_env="custom_env",
+    )
+
+    # Ensure a second config loader was created for the 'from_env'
+    config_loader_mock.assert_called_once_with(
+        conf_source=kedro_session_mock.create.return_value._conf_source,
+        env="custom_env",
+        **settings_mock.CONFIG_LOADER_ARGS,
+    )
+
+    # Ensure from_catalog was loaded and passed to the session.run call
+    kedro_session_mock.create.return_value.run.assert_called_once()
+    assert "from_catalog" in kedro_session_mock.create.return_value.run.call_args.kwargs
+
+
+def test_run_with_async_flag(kedro_session_mock, load_obj_mock, pipelines_mock):
+    """Test the _run function with the async flag."""
+    _run(
+        pipeline=None,
+        env="test",
+        runner="SequentialRunner",
+        is_async=True,
+        node_names=["node1"],
+        to_nodes=[],
+        from_nodes=[],
+        from_inputs=[],
+        to_outputs=[],
+        load_versions=[],
+        tags=[],
+        without_tags=[],
+        conf_source=None,
+        params={},
+        from_env=None,
+    )
+
+    # Ensure that the runner is executed with async flag
+    load_obj_mock.assert_called_once_with("SequentialRunner", "kedro.runner")
+    kedro_session_mock.create.return_value.run.assert_called_once()
+    assert kedro_session_mock.create.return_value.run.call_args.kwargs["runner"].is_async is True
+
+
+def test_run_filter_nodes(kedro_session_mock, load_obj_mock, _filter_nodes_missing_tag_mock, pipelines_mock):
+    """Test that nodes are filtered correctly based on tags."""
+    pipelines_mock["__default__"].nodes = []
+
+    _run(
+        pipeline=None,
+        env="test",
+        runner="SequentialRunner",
+        is_async=False,
+        node_names=["node1", "node2"],
+        to_nodes=[],
+        from_nodes=[],
+        from_inputs=[],
+        to_outputs=[],
+        load_versions=[],
+        tags=[],
+        without_tags=["tag1"],
+        conf_source=None,
+        params={},
+        from_env=None,
+    )
+
+    # Ensure that the node filtering function is called
+    _filter_nodes_missing_tag_mock.assert_called_once_with(
+        ("tag1",), pipelines_mock["__default__"], kedro_session_mock.create(), ("node1", "node2")
+    )

@@ -44,6 +44,8 @@ class RunConfig:
 
     def __init__(
         self,
+        pipeline_obj: Pipeline,
+        pipeline_name: str,
         env: str,
         runner: str,
         is_async: bool,
@@ -60,6 +62,8 @@ class RunConfig:
         from_env: str,
     ):
         """Construct new instance of `RunConfig`."""
+        self.pipeline_obj = pipeline_obj
+        self.pipeline_name = pipeline_name
         self.env = env
         self.runner = runner
         self.is_async = is_async
@@ -96,8 +100,12 @@ class RunConfig:
 @click.option( "--from-env",      type=str, default=None, help="Custom env to read from, if specified will read from the `--from-env` and write to the `--env`",)
 def run( tags, without_tags, env, runner, is_async, node_names, to_nodes, from_nodes, from_inputs, to_outputs, load_versions, pipeline, config, conf_source, params, from_env,):
     """Run the pipeline."""
+    pipeline_name = pipeline
+    pipeline_obj = pipelines[pipeline_name]
 
     config = RunConfig(
+        pipeline_obj=pipeline_obj,
+        pipeline_name=pipeline_name,
         env=env,
         runner=runner,
         is_async=is_async,
@@ -114,40 +122,40 @@ def run( tags, without_tags, env, runner, is_async, node_names, to_nodes, from_n
         from_env=from_env,
     )
     _run(
-            config
-        )
+        config
+    )
 
 
-def _run(pipeline, env, runner, is_async, node_names, to_nodes, from_nodes, from_inputs, to_outputs, load_versions, tags, without_tags, conf_source, params, from_env):
-    if pipeline in ["test", "fabricator"] and env in [None, "base"]:
+def _run(config: RunConfig):
+    if config.pipeline_name in ["test", "fabricator"] and config.env in [None, "base"]:
         raise RuntimeError(
             "Running the fabricator in the base environment might overwrite production data! Use the test env `-e test` instead."
         )
     # fmt: on
 
-    runner = load_obj(runner or "SequentialRunner", "kedro.runner")
-    tags = tuple(tags)
-    node_names = tuple(node_names)
+    runner = load_obj(config.runner or "SequentialRunner", "kedro.runner")
+    tags = tuple(config.tags)
+    node_names = tuple(config.node_names)
 
     with KedroSessionWithFromCatalog.create(
-        env=env, conf_source=conf_source, extra_params=params
+        env=config.env, conf_source=config.conf_source, extra_params=config.params
     ) as session:
-        pipeline_name = pipeline or "__default__"
+        pipeline_name = config.pipeline_name or "__default__"
         pipeline_obj: Pipeline = pipelines[pipeline_name]
 
         # introduced to filter out tags that should not be run
         node_names = _filter_nodes_missing_tag(
-            tuple(without_tags), pipeline_obj, session, node_names
+            tuple(config.without_tags), pipeline_obj, session, node_names
         )
 
         from_catalog = None
         from_params = {}
-        if from_env:
+        if config.from_env:
             # Load second config loader instance
             config_loader_class = settings.CONFIG_LOADER_CLASS
             config_loader = config_loader_class(  # type: ignore[no-any-return]
                 conf_source=session._conf_source,
-                env=from_env,
+                env=config.from_env,
                 **settings.CONFIG_LOADER_ARGS,
             )
             conf_catalog = config_loader["catalog"]
@@ -164,14 +172,14 @@ def _run(pipeline, env, runner, is_async, node_names, to_nodes, from_nodes, from
         session.run(
             from_catalog=from_catalog,
             tags=tags,
-            runner=runner(is_async=is_async),
+            runner=runner(is_async=config.is_async),
             node_names=node_names,
-            from_nodes=from_nodes,
-            to_nodes=to_nodes,
-            from_inputs=from_inputs,
-            to_outputs=to_outputs,
-            load_versions=load_versions,
-            pipeline_name=pipeline,
+            from_nodes=config.from_nodes,
+            to_nodes=config.to_nodes,
+            from_inputs=config.from_inputs,
+            to_outputs=config.to_outputs,
+            load_versions=config.load_versions,
+            pipeline_name=config.pipeline_name,
         )
 
 def _get_feed_dict(params: Dict) -> dict[str, Any]:
