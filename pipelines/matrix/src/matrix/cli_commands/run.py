@@ -38,8 +38,6 @@ from kedro.utils import load_obj
 
 from matrix.session import KedroSessionWithFromCatalog
 
-# from matrix.utils.submit_cli import *
-
 
 # fmt: off
 @project_group.command()
@@ -59,7 +57,6 @@ from matrix.session import KedroSessionWithFromCatalog
 @click.option( "--conf-source",   type=click.Path(exists=True, file_okay=False, resolve_path=True), help=CONF_SOURCE_HELP,)
 @click.option( "--params",        type=click.UNPROCESSED, default="", help=PARAMS_ARG_HELP, callback=_split_params,)
 @click.option( "--from-env",      type=str, default=None, help="Custom env to read from, if specified will read from the `--from-env` and write to the `--env`",)
-
 def run( tags, without_tags, env, runner, is_async, node_names, to_nodes, from_nodes, from_inputs, to_outputs, load_versions, pipeline, config, conf_source, params, from_env,):
     """Run the pipeline."""
     if pipeline in ["test", "fabricator"] and env in [None, "base"]:
