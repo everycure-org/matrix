@@ -1,4 +1,5 @@
 """Module for normalizing knowledge graph nodes using an renci API."""
+
 from tenacity import (
     retry,
     stop_after_attempt,
@@ -34,9 +35,7 @@ def union_multiple_kg_nodes(**kwargs):
     unified_kg = reduce(merge_kgs, kgs)
 
     # Combine array columns
-    array_columns = [
-        col for col, dtype in unified_kg.dtypes if dtype.startswith("array")
-    ]
+    array_columns = [col for col, dtype in unified_kg.dtypes if dtype.startswith("array")]
     for col in array_columns:
         unified_kg = unified_kg.groupBy("id").agg(f.collect_set(col).alias(col))
 
@@ -71,9 +70,7 @@ def normalize_kg(nodes: ps.sql.DataFrame, edges: ps.sql.DataFrame):
     node_id_map = batch_map_ids(node_ids)
 
     # convert dict back to a dataframe to parallelize the mapping
-    node_id_map_df = pd.DataFrame(
-        list(node_id_map.items()), columns=["id", "normalized_id"]
-    )
+    node_id_map_df = pd.DataFrame(list(node_id_map.items()), columns=["id", "normalized_id"])
     spark = ps.sql.SparkSession.builder.getOrCreate()
     mapping_df = spark.createDataFrame(node_id_map_df)
 
@@ -86,22 +83,16 @@ def normalize_kg(nodes: ps.sql.DataFrame, edges: ps.sql.DataFrame):
 
     # edges are bit more complex, we need to map both the subject and object
     edges = edges.join(
-        mapping_df.withColumnsRenamed(
-            {"id": "subject", "normalized_id": "subject_normalized"}
-        ),
+        mapping_df.withColumnsRenamed({"id": "subject", "normalized_id": "subject_normalized"}),
         on="subject",
         how="left",
     )
     edges = edges.join(
-        mapping_df.withColumnsRenamed(
-            {"id": "object", "normalized_id": "object_normalized"}
-        ),
+        mapping_df.withColumnsRenamed({"id": "object", "normalized_id": "object_normalized"}),
         on="object",
         how="left",
     )
-    edges = edges.withColumnsRenamed(
-        {"subject": "original_subject", "object": "original_object"}
-    ).withColumnsRenamed(
+    edges = edges.withColumnsRenamed({"subject": "original_subject", "object": "original_object"}).withColumnsRenamed(
         {"subject_normalized": "subject", "object_normalized": "object"}
     )
 
@@ -191,9 +182,7 @@ def batch_map_ids(ids: List[str], batch_size: int = 100, parallelism: int = 10):
             batch = ids[i : i + batch_size]
             futures.append(executor.submit(_process_batch, batch))
 
-        for future in tqdm(
-            as_completed(futures), total=total_batches, desc="Batch Mapping IDs"
-        ):
+        for future in tqdm(as_completed(futures), total=total_batches, desc="Batch Mapping IDs"):
             mappings.update(future.result())
 
     assert len(mappings) == len(ids)
