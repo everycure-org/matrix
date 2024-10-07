@@ -12,8 +12,6 @@ from matrix.datasets.pair_generator import (
 )
 from matrix.pipelines.modelling.nodes import make_splits
 
-from pyspark.sql.types import StructType
-
 
 @pytest.fixture(name="graph")
 def graph_fixture() -> KnowledgeGraph:
@@ -46,9 +44,7 @@ def known_pairs_fixture() -> pd.DataFrame:
     )
 
 
-def test_random_drug_disease_pair_generator(
-    graph: KnowledgeGraph, known_pairs: pd.DataFrame
-):
+def test_random_drug_disease_pair_generator(graph: KnowledgeGraph, known_pairs: pd.DataFrame):
     # Given a random drug disease pair generator
     generator = RandomDrugDiseasePairGenerator(
         random_state=42,
@@ -96,9 +92,7 @@ def test_replacement_drug_disease_pair_generator(
 
     # Then set of unknown pairs generated, where generated pairs
     # are distinct from known pairs and are always (drug, disease) pairs.
-    known_positives_train = known_pairs_split[
-        (known_pairs_split["y"] == 1) & (known_pairs_split["split"] == "TRAIN")
-    ]
+    known_positives_train = known_pairs_split[(known_pairs_split["y"] == 1) & (known_pairs_split["split"] == "TRAIN")]
     assert unknown.shape[0] == 2 * n_replacements * len(known_positives_train)
     assert pd.merge(known_pairs, unknown, how="inner", on=["source", "target"]).empty
     assert set(unknown["source"].to_list()).issubset(graph._drug_nodes)
@@ -109,9 +103,7 @@ def test_replacement_drug_disease_pair_generator(
     "splitter",
     [ShuffleSplit(n_splits=1, test_size=2 / 3, random_state=1)],
 )
-def test_ground_truth_test_pairs(
-    graph: KnowledgeGraph, known_pairs: pd.DataFrame, splitter, spark
-):
+def test_ground_truth_test_pairs(graph: KnowledgeGraph, known_pairs: pd.DataFrame, splitter, spark):
     # Given a test-train split for the known data and a test data generator
     generator = GroundTruthTestPairs()
     known_pairs_split = make_splits(
@@ -135,9 +127,7 @@ def test_ground_truth_test_pairs(
     "splitter",
     [ShuffleSplit(n_splits=1, test_size=2 / 3, random_state=1)],
 )
-def test_matrix_test_diseases(
-    graph: KnowledgeGraph, known_pairs: pd.DataFrame, splitter, spark
-):
+def test_matrix_test_diseases(graph: KnowledgeGraph, known_pairs: pd.DataFrame, splitter, spark):
     # Given a list of drugs, a test-train split for the known data and a test data generator
     generator = MatrixTestDiseases(["is_drug"])
     known_pairs_split = make_splits(
@@ -156,21 +146,14 @@ def test_matrix_test_diseases(
     #   - the disease always appears in the known positive test set.
     #   - the number of data-points labeled with y=1 is equal to the number of known positive test pairs
     drugs_lst = graph._drug_nodes
-    known_positives_test = known_pairs_split[
-        (known_pairs_split["y"] == 1) & (known_pairs_split["split"] == "TEST")
-    ]
+    known_positives_test = known_pairs_split[(known_pairs_split["y"] == 1) & (known_pairs_split["split"] == "TEST")]
     known_pos_test_diseases = list(known_positives_test["target"].unique())
     known_train = known_pairs_split[known_pairs_split["split"] == "TRAIN"]
     known_train_in_matrix = known_train[
-        known_train["source"].isin(drugs_lst)
-        & known_train["target"].isin(known_pos_test_diseases)
+        known_train["source"].isin(drugs_lst) & known_train["target"].isin(known_pos_test_diseases)
     ]
-    assert len(generated_data) == len(drugs_lst) * len(known_pos_test_diseases) - len(
-        known_train_in_matrix
-    )
-    assert pd.merge(
-        generated_data, known_train, how="inner", on=["source", "target"]
-    ).empty
+    assert len(generated_data) == len(drugs_lst) * len(known_pos_test_diseases) - len(known_train_in_matrix)
+    assert pd.merge(generated_data, known_train, how="inner", on=["source", "target"]).empty
     assert generated_data["source"].isin(drugs_lst).all()
     assert generated_data["target"].isin(known_pos_test_diseases).all()
     assert generated_data["y"].sum() == len(known_positives_test)

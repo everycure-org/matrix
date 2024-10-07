@@ -39,8 +39,9 @@ services:
       - "/bin/sh"
       - -ecx
       - |
-          kedro run -e test -p test --without-tags xg_ensemble,not-shared
+          kedro run --runner ThreadRunner -e test -p test --without-tags xg_ensemble,not-shared
     environment:
+      TQDM_DISABLE: 1
       NEO4J_HOST: bolt://neo4j:7687
       NEO4J_USER: neo4j
       NEO4J_PASSWORD: admin

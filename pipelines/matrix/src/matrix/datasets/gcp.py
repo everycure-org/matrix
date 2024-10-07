@@ -1,5 +1,6 @@
 """Module with GCP datasets for Kedro."""
-from typing import Any, Dict, Optional
+
+from typing import Any, Optional
 from copy import deepcopy
 import re
 from google.cloud import bigquery
@@ -13,12 +14,8 @@ from kedro.io.core import Version
 from kedro_datasets.spark import SparkDataset
 from kedro_datasets.spark.spark_dataset import _strip_dbfs_prefix, _get_spark
 from kedro.io.core import (
-    PROTOCOL_DELIMITER,
     AbstractVersionedDataset,
     DatasetError,
-    Version,
-    get_filepath_str,
-    get_protocol_and_path,
 )
 
 import pygsheets
@@ -143,9 +140,7 @@ class BigQueryTableDataset(SparkDataset):
         SparkHooks._initialize_spark()
         spark_session = SparkSession.builder.getOrCreate()
 
-        return spark_session.read.format("bigquery").load(
-            f"{self._project_id}.{self._dataset}.{self._table}"
-        )
+        return spark_session.read.format("bigquery").load(f"{self._project_id}.{self._dataset}.{self._table}")
 
     def _save(self, data: DataFrame) -> None:
         bq_client = bigquery.Client()
@@ -264,16 +259,12 @@ class GoogleSheetsDataset(AbstractVersionedDataset[pd.DataFrame, pd.DataFrame]):
             col_idx = self._get_col_index(wks, column)
 
             if col_idx is None:
-                raise DatasetError(
-                    f"Sheet with {sheet_name} does not contain column {column}!"
-                )
+                raise DatasetError(f"Sheet with {sheet_name} does not contain column {column}!")
 
             wks.set_dataframe(data[[column]], (1, col_idx + 1))
 
     @staticmethod
-    def _get_wks_by_name(
-        spreadsheet: Spreadsheet, sheet_name: str
-    ) -> Optional[Worksheet]:
+    def _get_wks_by_name(spreadsheet: Spreadsheet, sheet_name: str) -> Optional[Worksheet]:
         for wks in spreadsheet.worksheets():
             if wks.title == sheet_name:
                 return wks

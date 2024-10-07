@@ -13,7 +13,8 @@ jupyter
 pyyaml
 mkdocs-drawio
 # TODO, not currently used but would be nice
-mkdocs-git-committers-plugin-2
+# pinned due to https://github.com/ojacques/mkdocs-git-committers-plugin-2/issues/72
+mkdocs-git-committers-plugin-2<2.4.0
 # alternative to above, just takes names from git, not github profiles
 mkdocs-git-authors-plugin
 
