@@ -31,6 +31,7 @@ pygsheets==2.0.6
 typer
 pytest-testmon
 pytest-mock
+pytest-cov
 rich
 ruff==0.6.8 # Matches pre-commit version
 # Temp. fix for the gcloud cli
