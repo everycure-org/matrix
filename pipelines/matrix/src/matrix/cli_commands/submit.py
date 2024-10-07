@@ -9,6 +9,7 @@ from typing import Optional
 
 import click
 from kedro.framework.cli.utils import CONTEXT_SETTINGS
+from kedro.framework.project import pipelines
 from rich.console import Console
 from rich.logging import RichHandler
 from rich.panel import Panel
@@ -229,7 +230,14 @@ def build_push_docker(username: str, verbose: bool):
 def build_argo_template(run_name, username, namespace, verbose: bool) -> str:
     """Build Argo workflow template."""
     image_name = "us-central1-docker.pkg.dev/mtrx-hub-dev-3of/matrix-images/matrix"
-    return generate_argo_config(image_name, run_name, username, namespace, username)
+    return generate_argo_config(
+        image=image_name,
+        run_name=run_name,
+        image_tag=username,
+        namespace=namespace,
+        username=username,
+        pipelines=pipelines,
+    )
 
 def save_argo_template(argo_template: str, run_name: str) -> str:
     """Save Argo workflow template to file."""

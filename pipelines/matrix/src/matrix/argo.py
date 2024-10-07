@@ -2,10 +2,9 @@
 
 import re
 from pathlib import Path
-from typing import Any, List, Optional
+from typing import Any, Dict, List, Optional
 
 from jinja2 import Environment, FileSystemLoader
-from kedro.framework.project import pipelines
 from kedro.framework.startup import bootstrap_project
 from kedro.pipeline import Pipeline
 from kedro.pipeline.node import Node
@@ -14,7 +13,9 @@ ARGO_TEMPLATE_FILE = "argo_wf_spec.tmpl"
 ARGO_TEMPLATES_DIR_PATH = Path(__file__).parent.parent.parent / "templates"
 
 
-def generate_argo_config(image: str, run_name: str, image_tag: str, namespace: str, username: str) -> str:
+def generate_argo_config(
+    image: str, run_name: str, image_tag: str, namespace: str, username: str, pipelines: Dict[str, Pipeline]
+) -> str:
     loader = FileSystemLoader(searchpath=ARGO_TEMPLATES_DIR_PATH)
     template_env = Environment(loader=loader, trim_blocks=True, lstrip_blocks=True)
     template = template_env.get_template(ARGO_TEMPLATE_FILE)
@@ -23,14 +24,14 @@ def generate_argo_config(image: str, run_name: str, image_tag: str, namespace: s
     metadata = bootstrap_project(project_path)
     package_name = metadata.package_name
 
-    pipes = {}
+    pipeline2dependencies = {}
     for name, pipeline in pipelines.items():
         # Fuse nodes in topological order to avoid constant recreation of Neo4j
-        pipes[name] = get_dependencies(fuse(pipeline))
+        pipeline2dependencies[name] = get_dependencies(fuse(pipeline))
 
     output = template.render(
         package_name=package_name,
-        pipes=pipes,
+        pipeline2dependencies=pipeline2dependencies,
         image=image,
         image_tag=image_tag,
         namespace=namespace,
