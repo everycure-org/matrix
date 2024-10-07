@@ -76,7 +76,7 @@ def test_filter_nodes_no_without_tags():
     """Test when there are no tags to filter (without_tags is empty)."""
     without_tags = []
     pipeline = "test_pipeline"
-    session = MagicMock()  # Mock the Kedro session
+    session = MagicMock()
     node_names = ["node1", "node2", "node3"]
 
     pipeline = MagicMock()
@@ -90,8 +90,8 @@ def test_filter_nodes_no_without_tags():
 def test_filter_nodes_all_without_tags():
     """Test when all nodes have the tag to be filtered."""
     without_tags = ["tag1"]
-    pipeline = "test_pipeline"
-    session = MagicMock()  # Mock the Kedro session
+    pipeline = MagicMock()
+    session = MagicMock()
     node_names = ["node1", "node2"]
 
     node1 = MagicMock()
@@ -102,8 +102,7 @@ def test_filter_nodes_all_without_tags():
     node2.name = "node2"
     node2.tags = {"tag1"}
 
-    pipelines = {"test_pipeline": MagicMock()}
-    pipelines["test_pipeline"].nodes = [node1, node2]
+    pipeline.nodes = [node1, node2]
 
     with pytest.raises(SystemExit):  # Expecting an exit since all nodes are filtered out
         _filter_nodes_missing_tag(without_tags, pipeline, session, node_names)
@@ -112,8 +111,8 @@ def test_filter_nodes_all_without_tags():
 def test_filter_nodes_some_without_tags():
     """Test when only some nodes have the tag to be filtered."""
     without_tags = ["tag1"]
-    pipeline = "test_pipeline"
-    session = MagicMock()  # Mock the Kedro session
+    pipeline = MagicMock()
+    session = MagicMock()
     node_names = ["node1", "node2", "node3"]
 
     node1 = MagicMock()
@@ -128,8 +127,7 @@ def test_filter_nodes_some_without_tags():
     node3.name = "node3"
     node3.tags = {"tag1", "tag2"}
 
-    pipelines = {"test_pipeline": MagicMock()}
-    pipelines["test_pipeline"].nodes = [node1, node2, node3]
+    pipeline.nodes = [node1, node2, node3]
 
     result = _filter_nodes_missing_tag(without_tags, pipeline, session, node_names)
 
@@ -139,8 +137,8 @@ def test_filter_nodes_some_without_tags():
 def test_filter_nodes_downstream_removal():
     """Test that downstream nodes are also removed."""
     without_tags = ["tag1"]
-    pipeline = "test_pipeline"
-    session = MagicMock()  # Mock the Kedro session
+    pipeline = MagicMock()
+    session = MagicMock()
     node_names = ["node1", "node2", "node3"]
 
     node1 = MagicMock()
@@ -155,11 +153,9 @@ def test_filter_nodes_downstream_removal():
     node3.name = "node3"
     node3.tags = {"tag2"}
 
-    pipelines = {"test_pipeline": MagicMock()}
-    pipelines["test_pipeline"].nodes = [node1, node2, node3]
-
-    pipelines["test_pipeline"].from_nodes.return_value = MagicMock()
-    pipelines["test_pipeline"].from_nodes.return_value.nodes = [node2]
+    pipeline.nodes = [node1, node2, node3]
+    pipeline.from_nodes.return_value = MagicMock()
+    pipeline.from_nodes.return_value.nodes = [node2]
 
     result = _filter_nodes_missing_tag(without_tags, pipeline, session, node_names)
 
@@ -170,7 +166,7 @@ def test_filter_nodes_downstream_removal():
 def test_filter_nodes_empty_node_names():
     """Test when the node_names list is empty, should consider all nodes in the pipeline."""
     without_tags = ["tag1"]
-    pipeline = "test_pipeline"
+    pipeline = MagicMock()
     session = MagicMock()  # Mock the Kedro session
     node_names = []
 
@@ -182,8 +178,7 @@ def test_filter_nodes_empty_node_names():
     node2.name = "node2"
     node2.tags = {"tag2"}
 
-    pipelines = {"test_pipeline": MagicMock()}
-    pipelines["test_pipeline"].nodes = [node1, node2]
+    pipeline.nodes = [node1, node2]
 
     result = _filter_nodes_missing_tag(without_tags, pipeline, session, node_names)
 
