@@ -43,10 +43,15 @@ def create_pipeline(**kwargs) -> Pipeline:
             # Normalize the KG IDs
             node(
                 func=nodes.normalize_kg,
-                inputs=[
-                    "integration.int.rtx.nodes",
-                    "integration.int.rtx.edges",
-                ],
+                inputs={
+                    "nodes": "integration.int.rtx.nodes",
+                    "edges": "integration.int.rtx.edges",
+                    "api_endpoint": "params:integration.nodenorm.api_endpoint",
+                    "conflate": "params:integration.nodenorm.conflate",
+                    "drug_chemical_conflate": "params:integration.nodenorm.drug_chemical_conflate",
+                    "batch_size": "params:integration.nodenorm.batch_size",
+                    "parallelism": "params:integration.nodenorm.parallelism",
+                },
                 outputs=[
                     "integration.int.rtx.nodes.norm",
                     "integration.int.rtx.edges.norm",
@@ -56,14 +61,20 @@ def create_pipeline(**kwargs) -> Pipeline:
             ),
             node(
                 func=nodes.normalize_kg,
-                inputs=[
-                    "integration.int.robokop.nodes",
-                    "integration.int.robokop.edges",
-                ],
+                inputs={
+                    "nodes": "integration.int.robokop.nodes",
+                    "edges": "integration.int.robokop.edges",
+                    "api_endpoint": "params:integration.nodenorm.api_endpoint",
+                    "conflate": "params:integration.nodenorm.conflate",
+                    "drug_chemical_conflate": "params:integration.nodenorm.drug_chemical_conflate",
+                    "batch_size": "params:integration.nodenorm.batch_size",
+                    "parallelism": "params:integration.nodenorm.parallelism",
+                },
                 outputs=[
                     "integration.int.robokop.nodes.norm",
                     "integration.int.robokop.edges.norm",
                 ],
+                name="normalize_robokop_kg",
             ),
             # Unify the KG based on standardized IDs
             node(

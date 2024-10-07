@@ -46,9 +46,9 @@ class KGEdgeSchema(DataFrameModel):
         strict = True
 
     @classmethod
-    def group_edges_by_id(cls, edges_df: DataFrame) -> DataFrame:
+    def group_edges_by_id(cls, concatenated_edges_df: DataFrame) -> DataFrame:
         return (
-            edges_df.groupBy(["subject", "predicate", "object"])
+            concatenated_edges_df.groupBy(["subject", "predicate", "object"])
             .agg(
                 F.collect_set("knowledge_level").alias("knowledge_level"),
                 F.flatten(F.collect_set("upstream_data_source")).alias("upstream_data_source"),
