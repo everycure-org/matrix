@@ -1,5 +1,5 @@
 """Preprocessing pipeline."""
-from functools import partial
+
 from kedro.pipeline import Pipeline, node, pipeline
 
 from . import nodes

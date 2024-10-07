@@ -33,6 +33,7 @@ pytest-testmon
 tenacity
 pytest-mock
 rich
+ruff==0.6.8 # Matches pre-commit version
 # Temp. fix for the gcloud cli
 # https://github.com/googleapis/python-bigquery/issues/1908
 proto-plus==1.24.0.dev1
