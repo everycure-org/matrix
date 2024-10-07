@@ -169,8 +169,8 @@ class FullMatrixRanking(Evaluation):
 
     def __init__(
         self,
-        rank_func_lst: List[NamedFunction],  # TODO: change to NamedFunction class?
-        quantile_func_lst: List[NamedFunction],
+        rank_func_lst: List[NamedFunction] = None,
+        quantile_func_lst: List[NamedFunction] = None,
     ) -> None:
         """Initializes the SpecificRanking instance.
 
@@ -178,8 +178,8 @@ class FullMatrixRanking(Evaluation):
             rank_func_lst:  List of named functions.
             quantile_func_lst:  List of named functions.
         """
-        self._rank_func_lst = rank_func_lst
-        self._quantile_func_lst = quantile_func_lst
+        self._rank_func_lst = rank_func_lst or []
+        self._quantile_func_lst = quantile_func_lst or []
 
     def evaluate(
         self,
