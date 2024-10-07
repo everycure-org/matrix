@@ -14,7 +14,12 @@ ARGO_TEMPLATES_DIR_PATH = Path(__file__).parent.parent.parent / "templates"
 
 
 def generate_argo_config(
-    image: str, run_name: str, image_tag: str, namespace: str, username: str, pipelines: Dict[str, Pipeline]
+    image: str,
+    run_name: str,
+    image_tag: str,
+    namespace: str,
+    username: str,
+    pipelines: Dict[str, Pipeline],
 ) -> str:
     loader = FileSystemLoader(searchpath=ARGO_TEMPLATES_DIR_PATH)
     template_env = Environment(loader=loader, trim_blocks=True, lstrip_blocks=True)
@@ -31,7 +36,7 @@ def generate_argo_config(
 
     output = template.render(
         package_name=package_name,
-        pipeline2dependencies=pipeline2dependencies,
+        pipelines=pipeline2dependencies,
         image=image,
         image_tag=image_tag,
         namespace=namespace,
