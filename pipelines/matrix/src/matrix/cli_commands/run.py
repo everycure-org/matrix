@@ -35,7 +35,7 @@ from kedro.framework.project import pipelines, settings
 from kedro.io import DataCatalog
 from kedro.pipeline.pipeline import Pipeline
 from kedro.utils import load_obj
-from kedro.framework.session import KedroSession
+
 from matrix.session import KedroSessionWithFromCatalog
 
 
@@ -121,12 +121,13 @@ def run( tags, without_tags, env, runner, is_async, node_names, to_nodes, from_n
         params=params,
         from_env=from_env,
     )
+
     _run(
-        config
+        config, KedroSessionWithFromCatalog
     )
 
 
-def _run(config: RunConfig):
+def _run(config: RunConfig, kedro_session: Any) -> None:
     if config.pipeline_name in ["test", "fabricator"] and config.env in [None, "base"]:
         raise RuntimeError(
             "Running the fabricator in the base environment might overwrite production data! Use the test env `-e test` instead."
@@ -136,16 +137,13 @@ def _run(config: RunConfig):
     runner = load_obj(config.runner or "SequentialRunner", "kedro.runner")
     tags = tuple(config.tags)
     node_names = tuple(config.node_names)
-
-    with KedroSessionWithFromCatalog.create(
+    
+    with kedro_session.create(
         env=config.env, conf_source=config.conf_source, extra_params=config.params
     ) as session:
-        pipeline_name = config.pipeline_name or "__default__"
-        pipeline_obj: Pipeline = pipelines[pipeline_name]
-
         # introduced to filter out tags that should not be run
         node_names = _filter_nodes_missing_tag(
-            tuple(config.without_tags), pipeline_obj, session, node_names
+            tuple(config.without_tags), config.pipeline_obj, node_names
         )
 
         from_catalog = None
@@ -182,6 +180,7 @@ def _run(config: RunConfig):
             pipeline_name=config.pipeline_name,
         )
 
+
 def _get_feed_dict(params: Dict) -> dict[str, Any]:
     """Get parameters and return the feed dictionary."""
     feed_dict = {"parameters": params}
@@ -214,7 +213,7 @@ def _get_feed_dict(params: Dict) -> dict[str, Any]:
 
 
 def _filter_nodes_missing_tag(
-    without_tags: List[str], pipeline_obj: Pipeline, session: KedroSession, node_names: List[str]
+    without_tags: List[str], pipeline_obj: Pipeline, node_names: List[str]
 ) -> List[str]:
     """Filter out nodes that have tags that should not be run and their downstream nodes."""
     if not without_tags:

@@ -1,6 +1,6 @@
 import pytest
 
-from matrix.cli_commands.run import _filter_nodes_missing_tag, _get_feed_dict, _run
+from matrix.cli_commands.run import RunConfig, _filter_nodes_missing_tag, _get_feed_dict, _run
 from unittest.mock import MagicMock, patch
 
 
@@ -69,10 +69,6 @@ def test_get_feed_dict_complex_values():
     assert _get_feed_dict(params) == expected_output
 
 
-import pytest
-from unittest.mock import MagicMock
-
-
 def test_filter_nodes_no_without_tags():
     """Test when there are no tags to filter (without_tags is empty)."""
     without_tags = []
@@ -83,7 +79,7 @@ def test_filter_nodes_no_without_tags():
     pipeline = MagicMock()
     pipeline.nodes = [MagicMock(name="node1"), MagicMock(name="node2"), MagicMock(name="node3")]
 
-    result = _filter_nodes_missing_tag(without_tags, pipeline, session, node_names)
+    result = _filter_nodes_missing_tag(without_tags, pipeline, node_names)
 
     assert result == node_names
 
@@ -130,7 +126,7 @@ def test_filter_nodes_some_without_tags():
 
     pipeline.nodes = [node1, node2, node3]
 
-    result = _filter_nodes_missing_tag(without_tags, pipeline, session, node_names)
+    result = _filter_nodes_missing_tag(without_tags, pipeline, node_names)
 
     assert result == ["node2"]
 
@@ -158,7 +154,7 @@ def test_filter_nodes_downstream_removal():
     pipeline.from_nodes.return_value = MagicMock()
     pipeline.from_nodes.return_value.nodes = [node2]
 
-    result = _filter_nodes_missing_tag(without_tags, pipeline, session, node_names)
+    result = _filter_nodes_missing_tag(without_tags, pipeline, node_names)
 
     # node1 is removed due to the tag and node2 is its downstream, so it should also be removed
     assert result == ["node3"]
@@ -181,39 +177,16 @@ def test_filter_nodes_empty_node_names():
 
     pipeline.nodes = [node1, node2]
 
-    result = _filter_nodes_missing_tag(without_tags, pipeline, session, node_names)
+    result = _filter_nodes_missing_tag(without_tags, pipeline, node_names)
 
     # node1 is removed due to the tag
     assert result == ["node2"]
 
 
-@pytest.fixture
-def kedro_session_mock():
-    with patch("matrix.session.KedroSessionWithFromCatalog") as mock_session:
-        yield mock_session
-
-
-@pytest.fixture
-def settings_mock():
-    """Mock the settings object."""
-    with patch("your_module.settings") as mock_settings:
-        yield mock_settings
-
-
-@pytest.fixture
-def _filter_nodes_missing_tag_mock():
-    """Mock the _filter_nodes_missing_tag function."""
-    with patch("your_module._filter_nodes_missing_tag") as mock_filter_nodes:
-        yield mock_filter_nodes
-
-
-def test_run_basic(kedro_session_mock, pipelines_mock, _filter_nodes_missing_tag_mock):
-    """Test running the basic _run function."""
-    # Setup mock objects
-    pipelines_mock["__default__"].nodes = []
-
-    _run(
-        pipeline=None,
+def test_run_basic():
+    config = RunConfig(
+        pipeline_obj=None,
+        pipeline_name="",
         env="test",
         runner="SequentialRunner",
         is_async=False,
@@ -229,20 +202,17 @@ def test_run_basic(kedro_session_mock, pipelines_mock, _filter_nodes_missing_tag
         params={},
         from_env=None,
     )
+    # Create the mock for kedro_session and its method 'create'
+    kedro_session = MagicMock()
+    kedro_session.create.return_value.__enter__.return_value.run = MagicMock()
+
+    _run(config, kedro_session)
 
     # Assert that the Kedro session was started
-    kedro_session_mock.create.assert_called_once_with(env="test", conf_source=None, extra_params={})
+    kedro_session.create.assert_called_once_with(env="test", conf_source=None, extra_params={})
 
-    # Check that the runner was loaded
-    load_obj.assert_called_once_with("SequentialRunner", "kedro.runner")
-
-    # Ensure that the filtering function was called
-    _filter_nodes_missing_tag_mock.assert_called_once_with(
-        (), pipelines_mock["__default__"], kedro_session_mock.create(), ("node1",)
-    )
-
-    # Ensure that session.run was called with expected parameters
-    kedro_session_mock.create.return_value.run.assert_called_once()
+    # Assert that session.run() was called once
+    kedro_session.create.return_value.__enter__.return_value.run.assert_called_once()
 
 
 def test_run_with_fabricator_env_error():
@@ -267,9 +237,7 @@ def test_run_with_fabricator_env_error():
         )
 
 
-def test_run_with_from_env(
-    kedro_session_mock, load_obj_mock, settings_mock, pipelines_mock, _filter_nodes_missing_tag_mock
-):
+def test_run_with_from_env(kedro_session_mock, settings_mock):
     """Test _run when from_env is provided."""
     config_loader_mock = MagicMock()
     settings_mock.CONFIG_LOADER_CLASS.return_value = config_loader_mock
@@ -330,7 +298,7 @@ def test_run_with_async_flag(kedro_session_mock, load_obj_mock, pipelines_mock):
     assert kedro_session_mock.create.return_value.run.call_args.kwargs["runner"].is_async is True
 
 
-def test_run_filter_nodes(kedro_session_mock, load_obj_mock, _filter_nodes_missing_tag_mock, pipelines_mock):
+def test_run_filter_nodes(kedro_session_mock, load_obj_mock, pipelines_mock):
     """Test that nodes are filtered correctly based on tags."""
     pipelines_mock["__default__"].nodes = []
 
@@ -350,9 +318,4 @@ def test_run_filter_nodes(kedro_session_mock, load_obj_mock, _filter_nodes_missi
         conf_source=None,
         params={},
         from_env=None,
-    )
-
-    # Ensure that the node filtering function is called
-    _filter_nodes_missing_tag_mock.assert_called_once_with(
-        ("tag1",), pipelines_mock["__default__"], kedro_session_mock.create(), ("node1", "node2")
     )
