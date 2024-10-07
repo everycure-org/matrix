@@ -8,6 +8,10 @@ The fastest way to check if everything works locally is to execute the following
 make
 ```
 
+!!! tip
+
+    If you are running on an ARM machine (e.g., MacBooks with Apple Silicon), you might not get the best performance. In this case call `make TARGET_PLATFORM=linux/arm64` instead which will build the image for your specific architecture.
+
 This command executes a number of make targets, namely:
 - set up a virtual environment
 - install the python dependencies
@@ -45,7 +49,7 @@ keeping the services running in the background.
 make compose_up
 ```
 
-To validate whether the setup is running, navigate to [localhost](http://localhost:7474/) in your browser, this will open the Neo4J dashboard. Use `neo4j` and `admin` as the username and password combination sign in.
+To validate whether the setup is running, navigate to [localhost](http://localhost:7474/) in your browser, this will open the Neo4J dashboard. Use `neo4j` and `admin` as the username and password combination sign in. Please note that the Neo4J database would be empty at this stage.
 
 ### .env file for local credentials
 
@@ -71,9 +75,19 @@ Now imagine that a node in the pipeline fails. Debugging is hard, due to the rem
 
 ![](../assets/img/from-env-run.drawio.svg)
 
-In order to run against the `cloud` environment it's important to set the `RUN_NAME` variable in the `.env` file, as this determines the run for which datasets are pulled.
+In order to run against the `cloud` environment it's important to set the `RUN_NAME` variable in the `.env` file, as this determines the run for which datasets are pulled. You can find the `RUN_NAME` on the labels of the Argo Workflow.
+
+The following command can be used to re-run the node locally, while consuming data from `cloud`:
+
+```bash
+# NOTE: You can specify multiple nodes to rerun, using a comma-seperated list
+kedro run --from-env cloud --nodes preprocessing_node_name
+```
 
 !!! note 
+
+    !!! warning
+        Make sure to disable port forwarding once you're done and remove the environment variables from the .env file, otherwise this might result in you pushing local runs to our cloud MLFlow instance.
     
     If you wish to pull data from MLFlow it's currently required to setup [port-forwarding](https://emmer.dev/blog/port-forwarding-to-kubernetes/) into the MLFlow tracking container on the cluster. You can do this as follows:
 
