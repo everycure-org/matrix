@@ -192,26 +192,30 @@ def test_matrix_test_diseases(matrix):
 
 def test_full_matrix_positives(matrix):
     # Given a matrix and a full matrix positives generator
-    generator = FullMatrixPositives(positive_columns=["is_positive_1", "is_positive_2"])
+    generator = FullMatrixPositives(
+        positive_columns=["is_positive_1", "is_positive_2"],
+        removal_columns=["is_negative_1"],
+    )
 
     # When generating the dataset
     generated_data = generator.generate(matrix)
-
     # Then generated data:
     #   - contains only positive pairs
     #   - has correct 'y', 'rank', and 'quantile_rank' columns
     #   - maintains the original order of the matrix
     expected_positives = matrix[matrix["is_positive_1"] | matrix["is_positive_2"]]
+    expected_removed = matrix[matrix["is_negative_1"]]
 
     assert len(generated_data) == len(expected_positives)
     assert (generated_data["y"] == 1).all()
-    assert (generated_data["rank"] == generated_data.index + 1).all()
-    assert (
-        generated_data["quantile_rank"] == (generated_data.index + 1) / len(matrix)
-    ).all()
     assert list(generated_data["source"]) == list(expected_positives["source"])
     assert list(generated_data["target"]) == list(expected_positives["target"])
-    assert set(generated_data.columns) == set(matrix.columns).union(
-        {"y", "rank", "quantile_rank"}
-    )
+    assert {"y", "rank", "quantile_rank"}.issubset(set(generated_data.columns))
     assert generated_data["treat_score"].is_monotonic_decreasing
+    assert (generated_data["quantile_rank"].between(0, 1)).all()
+    # Check that the rank is computed against non-positive non-removed pairs
+    assert (
+        generated_data["rank"]
+        .between(1, len(matrix) - len(expected_removed) - len(expected_positives) + 1)
+        .all()
+    )

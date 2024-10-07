@@ -56,11 +56,11 @@ In addition, we remove from the matrix any known positive or known negative pair
 These metrics focus on how well the model ranks the set of pairs comprising the matrix. 
 
 The matrix *rank* of a drug-disease pair $(d,i)$, denoted by $\text{rank}(d,i)$,
-refers to it's position among non-positive matrix pairs when sorted by treat score (descending order). We omit any training pairs and known positives from the ranking, so that $(d,i)$ is only ranked against pairs with unknown or known negative relationship.
+refers to it's position among non-positive (i.e. unknown or known negative) matrix pairs when sorted by treat score. We omit any training pairs and known positives from the ranking, so that $(d,i)$ is only ranked against pairs with unknown or known negative relationship.
 
 
-The matrix *quantile rank* of a pair is defined as the rank of the pair divided by the total number of non-positive pairs in the matrix. Mathematically, 
-$$QR(d,i) = \frac{\text{rank}(d,i)}{N}$$
+The matrix *quantile rank* of a pair measures the proportion of non-positive pairs that have a lower rank than the pair. It is defined as 
+$$QR(d,i) = \frac{\text{rank}(d,i) - 1}{N}$$
 where $N$ is the number of known or known negative pairs in the matrix. This normalized measure ranges from 0 to 1, with lower values indicating higher priority in the ranking.
 
 #### Recall@n
@@ -228,7 +228,7 @@ where $\gamma$ denotes the probability score. Then,
 $$
 \mathbb{P}_{y \sim \mathcal{N}} [\gamma(x) \geq \gamma(y)]  = \frac{|\set{y \in \mathcal{N} : \gamma(x) \geq \gamma(y)}|}{N} = \frac{N - |\set{y \in \mathcal{N} : \gamma(x) < \gamma(y)}|}{N}
 $$
-where $N = |\mathcal{N}|$. But $|\set{y \in \mathcal{N} : \gamma(x) < \gamma(y)}|$ is equal to $\text{rank}(x)$
+where $N = |\mathcal{N}|$. But $|\set{y \in \mathcal{N} : \gamma(x) < \gamma(y)}|$ is equal to $\text{rank}(x) - 1$
  so by the above definition of  quantile rank, 
 $$
 \mathbb{P}_{y \sim \mathcal{N}} [\gamma(x) \geq \gamma(y)] = 1 - \text{QR}(x).
