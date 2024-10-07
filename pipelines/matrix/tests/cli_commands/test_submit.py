@@ -39,7 +39,6 @@ def mock_dependencies():
         yield
 
 
-# Test for submit command
 def test_submit(mock_dependencies):
     runner = CliRunner()
     result = runner.invoke(submit, ["--username", "testuser"])
@@ -47,7 +46,6 @@ def test_submit(mock_dependencies):
     assert "Workflow submitted successfully!" in result.output
 
 
-# Test for check_dependencies
 def test_check_dependencies(mock_run_subprocess):
     mock_run_subprocess.return_value.returncode = 0
     mock_run_subprocess.return_value.stdout = "active_account"
@@ -55,20 +53,17 @@ def test_check_dependencies(mock_run_subprocess):
     assert mock_run_subprocess.call_count > 0
 
 
-# Test for build_push_docker
 def test_build_push_docker(mock_run_subprocess):
     build_push_docker("testuser", verbose=True)
     mock_run_subprocess.assert_called_once_with("make docker_push TAG=testuser", stream_output=True)
 
 
-# Test for build_argo_template
 @patch("matrix.cli_commands.submit.generate_argo_config")
 def test_build_argo_template(mock_generate_argo_config):
     build_argo_template("test_run", "testuser", "test_namespace", verbose=True)
     mock_generate_argo_config.assert_called_once()
 
 
-# Test for ensure_namespace
 def test_ensure_namespace_existing(mock_run_subprocess):
     mock_run_subprocess.return_value.returncode = 0
     ensure_namespace("existing_namespace", verbose=True)
@@ -81,20 +76,17 @@ def test_ensure_namespace_new(mock_run_subprocess):
     assert mock_run_subprocess.call_count == 2
 
 
-# Test for apply_argo_template
 def test_apply_argo_template(mock_run_subprocess):
     apply_argo_template("test_namespace", verbose=True)
     mock_run_subprocess.assert_called_once()
 
 
-# Test for submit_workflow
 def test_submit_workflow(mock_run_subprocess):
     mock_run_subprocess.return_value.stdout = '{"metadata": {"name": "test-job"}}'
     submit_workflow("test_run", "test_namespace", verbose=True)
     assert mock_run_subprocess.call_count == 1
 
 
-# Test for get_run_name
 def test_get_run_name_with_input():
     assert get_run_name("custom_name") == "custom_name"
 
@@ -105,7 +97,6 @@ def test_get_run_name_from_git(mock_run_subprocess):
     assert get_run_name(None).startswith("feature-test-branch")
 
 
-# Test for command_exists
 def test_command_exists(mock_run_subprocess):
     mock_run_subprocess.return_value.returncode = 0
     assert command_exists("existing_command") is True
