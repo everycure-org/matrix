@@ -23,6 +23,7 @@ def resolve(name: str, endpoint: str, att_to_get: str = "preferred_curie") -> st
     """
     result = requests.get(f"{endpoint}/synonymize", json={"name": name})
     element = result.json().get(name)
+    print(result.json())
     if element:
         return element.get(att_to_get, None)
 
@@ -330,29 +331,22 @@ def clean_drug_list(drug_df: pd.DataFrame, endpoint: str) -> pd.DataFrame:
     Returns:
         dataframe with synonymized drug IDs in normalized_curie column.
     """
-    res = enrich_df(
-        drug_df,
-        func=partial(resolve, att_to_get="preferred_curie"),
-        input_cols=["ID_Label"],
-        target_col="curie",
-        endpoint=endpoint,
-    )
-    # Adding Categtory
-    res = enrich_df(
-        res,
-        func=partial(resolve, att_to_get="preferred_category"),
-        input_cols=["ID_Label"],
-        target_col="category",
-        endpoint=endpoint,
-    )
+    attributes = [
+        ("preferred_curie", "curie"),
+        ("preferred_category", "category"),
+        ("preferred_name", "name"),
+    ]
 
-    res = enrich_df(
-        res,
-        func=partial(resolve, att_to_get="preferred_name"),
-        input_cols=["ID_Label"],
-        target_col="name",
-        endpoint=endpoint,
-    )
+    res = drug_df
+    for att, target in attributes:
+        res = enrich_df(
+            res,
+            func=partial(resolve, att_to_get=att),
+            input_cols=["ID_Label"],
+            target_col=target,
+            endpoint=endpoint,
+        )
+
     return res.loc[~res["curie"].isna()]
 
 
@@ -371,7 +365,7 @@ def clean_drug_list(drug_df: pd.DataFrame, endpoint: str) -> pd.DataFrame:
 )
 @primary_key(primary_key=["category_class", "curie"])
 def clean_disease_list(disease_df: pd.DataFrame, endpoint: str) -> pd.DataFrame:
-    """Synonymize the disease list and filter out NaNs.
+    """Synonymize the IDs, names, and categories within disease list and filter out NaNs.
 
     Args:
         disease_df: disease list in a dataframe format.
@@ -380,29 +374,22 @@ def clean_disease_list(disease_df: pd.DataFrame, endpoint: str) -> pd.DataFrame:
     Returns:
         dataframe with synonymized disease IDs in normalized_curie column.
     """
-    res = enrich_df(
-        disease_df,
-        func=partial(resolve, att_to_get="preferred_curie"),
-        input_cols=["label"],
-        target_col="curie",
-        endpoint=endpoint,
-    )
-    # Adding Categtory
+    attributes = [
+        ("preferred_curie", "curie"),
+        ("preferred_category", "category"),
+        ("preferred_name", "name"),
+    ]
 
-    res = enrich_df(
-        res,
-        func=partial(resolve, att_to_get="preferred_category"),
-        input_cols=["label"],
-        target_col="category",
-        endpoint=endpoint,
-    )
-    res = enrich_df(
-        res,
-        func=partial(resolve, att_to_get="preferred_name"),
-        input_cols=["label"],
-        target_col="name",
-        endpoint=endpoint,
-    )
+    res = disease_df
+    for att, target in attributes:
+        res = enrich_df(
+            res,
+            func=partial(resolve, att_to_get=att),
+            input_cols=["label"],
+            target_col=target,
+            endpoint=endpoint,
+        )
+
     return res.loc[~res["curie"].isna()]
 
 
