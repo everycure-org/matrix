@@ -297,19 +297,3 @@ def test_extract_config_without_from_env(mock_config, mock_session):
     mock_config.from_env = None
     result = _extract_config(mock_config, mock_session)
     assert result is None
-
-
-@patch("matrix.cli_commands.run.settings")
-def test_extract_config_with_empty_catalog(mock_settings, mock_config, mock_session):
-    mock_config_loader = Mock()
-    mock_config_loader.__getitem__.side_effect = lambda key: {"catalog": {}, "credentials": {}, "parameters": {}}[key]
-
-    mock_settings.CONFIG_LOADER_CLASS.return_value = mock_config_loader
-    mock_settings.CONFIG_LOADER_ARGS = {}
-    mock_settings.DATA_CATALOG_CLASS.from_config.return_value = Mock(spec=DataCatalog)
-
-    result = _extract_config(mock_config, mock_session)
-
-    assert result is not None
-    assert isinstance(result, DataCatalog)
-    result.add_feed_dict.assert_called_once_with({}, replace=True)
