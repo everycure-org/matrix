@@ -12,8 +12,8 @@ def create_pipeline(**kwargs) -> Pipeline:
             node(
                 func=nodes.get_random_selection_of_edges,
                 inputs={
-                    "nodes": "ingestion.raw.rtx_kg2.nodes@spark",
-                    "edges": "ingestion.raw.rtx_kg2.edges@spark",
+                    "nodes": "ingestion.int.rtx_kg2.nodes",
+                    "edges": "ingestion.int.rtx_kg2.edges",
                 },
                 outputs={
                     "nodes": "ingestion.int.sample.rtx_kg2.nodes",
