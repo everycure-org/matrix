@@ -79,8 +79,8 @@ def test_filter_nodes_no_without_tags():
     session = MagicMock()  # Mock the Kedro session
     node_names = ["node1", "node2", "node3"]
 
-    pipelines = {"test_pipeline": MagicMock()}
-    pipelines["test_pipeline"].nodes = [MagicMock(name="node1"), MagicMock(name="node2"), MagicMock(name="node3")]
+    pipeline = MagicMock()
+    pipeline.nodes = [MagicMock(name="node1"), MagicMock(name="node2"), MagicMock(name="node3")]
 
     result = _filter_nodes_missing_tag(without_tags, pipeline, session, node_names)
 
