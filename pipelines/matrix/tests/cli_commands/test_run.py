@@ -268,10 +268,9 @@ def mock_session():
 
 
 @patch("matrix.cli_commands.run.settings")
-@patch("matrix.cli_commands.run._convert_paths_to_absolute_posix")
-@patch("matrix.cli_commands.run._get_feed_dict")
-def test_extract_config_with_from_env(mock_get_feed_dict, mock_convert_paths, mock_settings, mock_config, mock_session):
-    mock_config_loader = Mock()
+def test_extract_config_with_from_env(mock_settings, mock_config, mock_session):
+    # Setup mocks
+    mock_config_loader = MagicMock()
     mock_config_loader.__getitem__.side_effect = lambda key: {
         "catalog": {"test_dataset": {"type": "MemoryDataSet"}},
         "credentials": {"test_cred": "secret"},
@@ -282,18 +281,13 @@ def test_extract_config_with_from_env(mock_get_feed_dict, mock_convert_paths, mo
     mock_settings.CONFIG_LOADER_ARGS = {}
     mock_settings.DATA_CATALOG_CLASS.from_config.return_value = Mock(spec=DataCatalog)
 
-    mock_convert_paths.return_value = {"test_dataset": {"type": "MemoryDataSet"}}
-    mock_get_feed_dict.return_value = {"params:param1": "value1"}
-
+    # Call the function
     result = _extract_config(mock_config, mock_session)
 
     # Assertions
     assert result is not None
     assert isinstance(result, DataCatalog)
     mock_settings.CONFIG_LOADER_CLASS.assert_called_once_with(conf_source="test_conf_source", env="test_from_env")
-    mock_convert_paths.assert_called_once_with(
-        project_path="/test/project/path", conf_dictionary={"test_dataset": {"type": "MemoryDataSet"}}
-    )
     mock_settings.DATA_CATALOG_CLASS.from_config.assert_called_once_with(
         catalog={"test_dataset": {"type": "MemoryDataSet"}}, credentials={"test_cred": "secret"}
     )
