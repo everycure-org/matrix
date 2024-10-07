@@ -72,9 +72,12 @@ def run( tags, without_tags, env, runner, is_async, node_names, to_nodes, from_n
     with KedroSessionWithFromCatalog.create(
         env=env, conf_source=conf_source, extra_params=params
     ) as session:
+        pipeline_name = pipeline or "__default__"
+        pipeline_obj: Pipeline = pipelines[pipeline_name]
+
         # introduced to filter out tags that should not be run
         node_names = _filter_nodes_missing_tag(
-            tuple(without_tags), pipeline, session, node_names
+            tuple(without_tags), pipeline_obj, session, node_names
         )
 
         from_catalog = None
@@ -144,16 +147,13 @@ def _get_feed_dict(params: Dict) -> dict[str, Any]:
 
 
 def _filter_nodes_missing_tag(
-    without_tags: List[str], pipeline: str, session: KedroSession, node_names: List[str]
+    without_tags: List[str], pipeline_obj: Pipeline, session: KedroSession, node_names: List[str]
 ) -> List[str]:
     """Filter out nodes that have tags that should not be run and their downstream nodes."""
     if not without_tags:
         return node_names
 
     without_tags: Set[str] = set(without_tags)
-
-    pipeline_name = pipeline or "__default__"
-    pipeline_obj: Pipeline = pipelines[pipeline_name]
 
     if len(node_names) == 0:
         node_names = [node.name for node in pipeline_obj.nodes]
