@@ -199,7 +199,7 @@ spec:
           value: "OFF"
         - name: NEO4J_ACCEPT_LICENSE_AGREEMENT
           value: "yes"
-  {% for pipeline, tasks in pipes.items() %}
+  {% for pipeline, tasks in pipelines.items() %}
   - name: {{ pipeline }}
     dag:
       tasks:
