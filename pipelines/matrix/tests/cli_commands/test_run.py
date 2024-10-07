@@ -219,21 +219,25 @@ def test_run_with_fabricator_env_error():
     """Test that the _run function raises an error when running 'fabricator' in 'base' environment."""
     with pytest.raises(RuntimeError, match="might overwrite production data!"):
         _run(
-            pipeline="fabricator",
-            env="base",
-            runner="SequentialRunner",
-            is_async=False,
-            node_names=["node1"],
-            to_nodes=[],
-            from_nodes=[],
-            from_inputs=[],
-            to_outputs=[],
-            load_versions=[],
-            tags=[],
-            without_tags=[],
-            conf_source=None,
-            params={},
-            from_env=None,
+            config=RunConfig(
+                pipeline_obj=None,
+                pipeline_name="fabricator",
+                env="base",
+                runner="SequentialRunner",
+                is_async=False,
+                node_names=["node1"],
+                to_nodes=[],
+                from_nodes=[],
+                from_inputs=[],
+                to_outputs=[],
+                load_versions=[],
+                tags=[],
+                without_tags=[],
+                conf_source=None,
+                params={},
+                from_env=None,
+            ),
+            kedro_session=MagicMock(),
         )
 
 
