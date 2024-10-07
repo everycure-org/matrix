@@ -2,7 +2,7 @@ from kedro.pipeline.node import Node
 from kedro.pipeline import Pipeline
 import pytest
 
-from matrix.argo import clean_name, fuse, FusedNode
+from matrix.argo import clean_name, fuse, FusedNode, generate_argo_config
 
 
 def dummy_fn(*args):
@@ -319,3 +319,27 @@ def test_clean_dependencies() -> None:
     elements = ["dataset_a@pandas", "params:some_param", "dataset_b"]
     cleaned = FusedNode.clean_dependencies(elements)
     assert cleaned == ["dataset_a", "dataset_b"]
+
+
+def test_generate_argo_config() -> None:
+    image_name = "us-central1-docker.pkg.dev/mtrx-hub-dev-3of/matrix-images/matrix"
+    run_name = "test_run"
+    image_tag = "test_tag"
+    namespace = "test_namespace"
+    username = "test_user"
+    pipelines = {
+        "test": Pipeline(
+            nodes=[Node(func=dummy_func, inputs=["dataset_a", "dataset_b"], outputs="dataset_c", name="simple_node")]
+        )
+    }
+
+    argo_config = generate_argo_config(
+        image=image_name,
+        run_name=run_name,
+        image_tag=image_tag,
+        namespace=namespace,
+        username=username,
+        pipelines=pipelines,
+    )
+
+    assert argo_config is not None
