@@ -3,8 +3,49 @@ fabricator.rtx_kg2:
     num_rows: 150
     columns:
       id:
-        type: generate_unique_id
-        prefix: rtx_kg_node_
+        type: generate_values
+        sample_values:
+          - 'CHEBI:119157'
+          - 'CHEBI:120688'
+          - 'CHEBI:126392'
+          - 'CHEBI:152848'
+          - 'CHEBI:154331'
+          - 'CHEBI:160845'
+          - 'CHEBI:177292'
+          - 'CHEBI:189115'
+          - 'CHEBI:192153'
+          - 'CHEBI:197218'
+          - 'CHEBI:208690'
+          - 'CHEBI:210839'
+          - 'CHEBI:24114'
+          - 'CHEBI:25219'
+          - 'CHEBI:35337'
+          - 'CHEBI:48509'
+          - 'CHEBI:62098'
+          - 'CHEBI:78043'
+          - 'CHEMBL.COMPOUND:CHEMBL1098881'
+          - 'CHEMBL.COMPOUND:CHEMBL1234254'
+          - 'CHEMBL.COMPOUND:CHEMBL1908316'
+          - 'CHEMBL.COMPOUND:CHEMBL1966566'
+          - 'CHEMBL.COMPOUND:CHEMBL4747530'
+          - 'CLO:0030309'
+          # these actually often do not normalize which tests our robustness for NULL values
+          - 'ENSEMBL:ENSG00000259649'
+          - 'ENSEMBL:ENST00000348427'
+          - 'ENSEMBL:ENST00000391109'
+          - 'ENSEMBL:ENST00000459685'
+          - 'ENSEMBL:ENST00000459859'
+          - 'ENSEMBL:ENST00000471365'
+          - 'ENSEMBL:ENST00000479557'
+          - 'ENSEMBL:ENST00000516091'
+          - 'ENSEMBL:ENST00000618957'
+          - 'ENSEMBL:ENST00000624285'
+          - 'ENSEMBL:ENST00000631208'
+          - 'ENSEMBL:ENST00000635574'
+          - 'ENSEMBL:ENST00000653778'
+          - 'ENSEMBL:ENST00000673725'
+          - 'FBgn:0265139'
+          - 'FMA:264280'
 
       name:
         type: generate_unique_id
@@ -185,8 +226,48 @@ fabricator.robokop:
     num_rows: 150
     columns:
       id:ID:
-        type: generate_unique_id
-        prefix: "CAID:"
+        type: generate_values
+        sample_values:
+          - 'CHEBI:119157'
+          - 'CHEBI:120688'
+          - 'CHEBI:126392'
+          - 'CHEBI:152848'
+          - 'CHEBI:154331'
+          - 'CHEBI:160845'
+          - 'CHEBI:177292'
+          - 'CHEBI:189115'
+          - 'CHEBI:192153'
+          - 'CHEBI:197218'
+          - 'CHEBI:208690'
+          - 'CHEBI:210839'
+          - 'CHEBI:24114'
+          - 'CHEBI:25219'
+          - 'CHEBI:35337'
+          - 'CHEBI:48509'
+          - 'CHEBI:62098'
+          - 'CHEBI:78043'
+          - 'CHEMBL.COMPOUND:CHEMBL1098881'
+          - 'CHEMBL.COMPOUND:CHEMBL1234254'
+          - 'CHEMBL.COMPOUND:CHEMBL1908316'
+          - 'CHEMBL.COMPOUND:CHEMBL1966566'
+          - 'CHEMBL.COMPOUND:CHEMBL4747530'
+          - 'CLO:0030309'
+          - 'ENSEMBL:ENSG00000259649'
+          - 'ENSEMBL:ENST00000348427'
+          - 'ENSEMBL:ENST00000391109'
+          - 'ENSEMBL:ENST00000459685'
+          - 'ENSEMBL:ENST00000459859'
+          - 'ENSEMBL:ENST00000471365'
+          - 'ENSEMBL:ENST00000479557'
+          - 'ENSEMBL:ENST00000516091'
+          - 'ENSEMBL:ENST00000618957'
+          - 'ENSEMBL:ENST00000624285'
+          - 'ENSEMBL:ENST00000631208'
+          - 'ENSEMBL:ENST00000635574'
+          - 'ENSEMBL:ENST00000653778'
+          - 'ENSEMBL:ENST00000673725'
+          - 'FBgn:0265139'
+          - 'FMA:264280'
       name:string:
         type: generate_unique_id
         prefix: "rs"
@@ -228,12 +309,12 @@ fabricator.robokop:
           positive: True
           min_value: 1
           max_value: 100
-      #publications:
-      #  type: generate_random_arrays
-      #  delimiter: "\u001f"
-      #  sample_values:
-      #    - "PMID:12345678"
-      #    - "DOI:10.1234/example.5678"
+      publications:string[]:
+        type: generate_random_arrays
+        delimiter: "\u001f"
+        sample_values:
+          - "PMID:12345678"
+          - "DOI:10.1234/example.5678"
       #all_categories:
       #  type: generate_random_arrays
       #  delimiter: "\u001f"

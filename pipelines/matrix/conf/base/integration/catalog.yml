@@ -4,6 +4,10 @@ _spark_parquet_ds: &_spark_parquet
   save_args:
     mode: overwrite
 
+_layer_int: &_layer_int
+  metadata:
+    kedro-viz:
+      layer: integration
 _layer_prm: &_layer_prm
   metadata:
     kedro-viz:
@@ -13,6 +17,43 @@ _layer_prm: &_layer_prm
 # Datasets
 # -------------------------------------------------------------------------
 
+integration.int.robokop.nodes:
+  <<: [*_spark_parquet, *_layer_int]
+  filepath: ${globals:paths.int}/robokop/nodes
+
+integration.int.robokop.edges:
+  <<: [*_spark_parquet, *_layer_int]
+  filepath: ${globals:paths.int}/robokop/edges
+
+integration.int.rtx.nodes:
+  <<: [*_spark_parquet, *_layer_int]
+  filepath: ${globals:paths.int}/rtx/nodes
+
+integration.int.rtx.edges:
+  <<: [*_spark_parquet, *_layer_int]
+  filepath: ${globals:paths.int}/rtx/edges
+
+
+# Normalized KGs
+integration.int.rtx.nodes.norm:
+  <<: [*_spark_parquet, *_layer_int]
+  filepath: ${globals:paths.int}/rtx/nodes.norm
+
+integration.int.rtx.edges.norm:
+  <<: [*_spark_parquet, *_layer_int]
+  filepath: ${globals:paths.int}/rtx/edges.norm
+
+integration.int.robokop.nodes.norm:
+  <<: [*_spark_parquet, *_layer_int]
+  filepath: ${globals:paths.int}/robokop/nodes.norm
+
+integration.int.robokop.edges.norm:
+  <<: [*_spark_parquet, *_layer_int]
+  filepath: ${globals:paths.int}/robokop/edges.norm
+
+
+
+# Unified KGs
 integration.prm.unified_edges:
   <<: [*_spark_parquet, *_layer_prm]
   filepath: ${globals:paths.prm}/unified/edges
@@ -20,20 +61,3 @@ integration.prm.unified_edges:
 integration.prm.unified_nodes:
   <<: [*_spark_parquet, *_layer_prm]
   filepath: ${globals:paths.prm}/unified/nodes
-
-integration.prm.robokop.nodes:
-  <<: [*_spark_parquet, *_layer_prm]
-  filepath: ${globals:paths.prm}/robokop/nodes
-
-integration.prm.robokop.edges:
-  <<: [*_spark_parquet, *_layer_prm]
-  filepath: ${globals:paths.prm}/robokop/edges
-
-integration.prm.rtx.nodes:
-  <<: [*_spark_parquet, *_layer_prm]
-  filepath: ${globals:paths.prm}/rtx/nodes
-
-integration.prm.rtx.edges:
-  <<: [*_spark_parquet, *_layer_prm]
-  filepath: ${globals:paths.prm}/rtx/edges
-
