@@ -1,7 +1,8 @@
 import pytest
 
-from matrix.cli_commands.run import RunConfig, _filter_nodes_missing_tag, _get_feed_dict, _run
-from unittest.mock import MagicMock, patch
+from matrix.cli_commands.run import RunConfig, _extract_config, _filter_nodes_missing_tag, _get_feed_dict, _run
+from unittest.mock import MagicMock, Mock, patch
+from kedro.io import DataCatalog
 
 
 def test_get_feed_dict_simple():
@@ -73,7 +74,6 @@ def test_filter_nodes_no_without_tags():
     """Test when there are no tags to filter (without_tags is empty)."""
     without_tags = []
     pipeline = "test_pipeline"
-    session = MagicMock()
     node_names = ["node1", "node2", "node3"]
 
     pipeline = MagicMock()
@@ -88,7 +88,6 @@ def test_filter_nodes_all_without_tags():
     """Test when all nodes have the tag to be filtered."""
     without_tags = ["tag1"]
     pipeline = MagicMock()
-    session = MagicMock()
     node_names = ["node1", "node2"]
 
     node1 = MagicMock()
@@ -102,14 +101,13 @@ def test_filter_nodes_all_without_tags():
     pipeline.nodes = [node1, node2]
 
     with pytest.raises(SystemExit):  # Expecting an exit since all nodes are filtered out
-        _filter_nodes_missing_tag(without_tags, pipeline, session, node_names)
+        _filter_nodes_missing_tag(without_tags, pipeline, node_names)
 
 
 def test_filter_nodes_some_without_tags():
     """Test when only some nodes have the tag to be filtered."""
     without_tags = ["tag1"]
     pipeline = MagicMock()
-    session = MagicMock()
     node_names = ["node1", "node2", "node3"]
 
     node1 = MagicMock()
@@ -135,7 +133,6 @@ def test_filter_nodes_downstream_removal():
     """Test that downstream nodes are also removed."""
     without_tags = ["tag1"]
     pipeline = MagicMock()
-    session = MagicMock()
     node_names = ["node1", "node2", "node3"]
 
     node1 = MagicMock()
@@ -164,7 +161,6 @@ def test_filter_nodes_empty_node_names():
     """Test when the node_names list is empty, should consider all nodes in the pipeline."""
     without_tags = ["tag1"]
     pipeline = MagicMock()
-    session = MagicMock()  # Mock the Kedro session
     node_names = []
 
     node1 = MagicMock()
@@ -241,17 +237,15 @@ def test_run_with_fabricator_env_error():
         )
 
 
-def test_run_with_from_env(kedro_session_mock, settings_mock):
-    """Test _run when from_env is provided."""
-    config_loader_mock = MagicMock()
-    settings_mock.CONFIG_LOADER_CLASS.return_value = config_loader_mock
-
-    _run(
-        pipeline=None,
+@pytest.fixture
+def mock_config():
+    return RunConfig(
+        pipeline_obj=Mock(),
+        pipeline_name="test_pipeline",
         env="test",
         runner="SequentialRunner",
         is_async=False,
-        node_names=["node1"],
+        node_names=[],
         to_nodes=[],
         from_nodes=[],
         from_inputs=[],
@@ -259,67 +253,70 @@ def test_run_with_from_env(kedro_session_mock, settings_mock):
         load_versions=[],
         tags=[],
         without_tags=[],
-        conf_source=None,
+        conf_source="",
         params={},
-        from_env="custom_env",
+        from_env="test_from_env",
     )
 
-    # Ensure a second config loader was created for the 'from_env'
-    config_loader_mock.assert_called_once_with(
-        conf_source=kedro_session_mock.create.return_value._conf_source,
-        env="custom_env",
-        **settings_mock.CONFIG_LOADER_ARGS,
+
+@pytest.fixture
+def mock_session():
+    session = Mock()
+    session._conf_source = "test_conf_source"
+    session._project_path = "/test/project/path"
+    return session
+
+
+@patch("matrix.cli_commands.run.settings")
+@patch("matrix.cli_commands.run._convert_paths_to_absolute_posix")
+@patch("matrix.cli_commands.run._get_feed_dict")
+def test_extract_config_with_from_env(mock_get_feed_dict, mock_convert_paths, mock_settings, mock_config, mock_session):
+    mock_config_loader = Mock()
+    mock_config_loader.__getitem__.side_effect = lambda key: {
+        "catalog": {"test_dataset": {"type": "MemoryDataSet"}},
+        "credentials": {"test_cred": "secret"},
+        "parameters": {"param1": "value1"},
+    }[key]
+
+    mock_settings.CONFIG_LOADER_CLASS.return_value = mock_config_loader
+    mock_settings.CONFIG_LOADER_ARGS = {}
+    mock_settings.DATA_CATALOG_CLASS.from_config.return_value = Mock(spec=DataCatalog)
+
+    mock_convert_paths.return_value = {"test_dataset": {"type": "MemoryDataSet"}}
+    mock_get_feed_dict.return_value = {"params:param1": "value1"}
+
+    result = _extract_config(mock_config, mock_session)
+
+    # Assertions
+    assert result is not None
+    assert isinstance(result, DataCatalog)
+    mock_settings.CONFIG_LOADER_CLASS.assert_called_once_with(conf_source="test_conf_source", env="test_from_env")
+    mock_convert_paths.assert_called_once_with(
+        project_path="/test/project/path", conf_dictionary={"test_dataset": {"type": "MemoryDataSet"}}
     )
-
-    # Ensure from_catalog was loaded and passed to the session.run call
-    kedro_session_mock.create.return_value.run.assert_called_once()
-    assert "from_catalog" in kedro_session_mock.create.return_value.run.call_args.kwargs
-
-
-def test_run_with_async_flag(kedro_session_mock, load_obj_mock, pipelines_mock):
-    """Test the _run function with the async flag."""
-    _run(
-        pipeline=None,
-        env="test",
-        runner="SequentialRunner",
-        is_async=True,
-        node_names=["node1"],
-        to_nodes=[],
-        from_nodes=[],
-        from_inputs=[],
-        to_outputs=[],
-        load_versions=[],
-        tags=[],
-        without_tags=[],
-        conf_source=None,
-        params={},
-        from_env=None,
+    mock_settings.DATA_CATALOG_CLASS.from_config.assert_called_once_with(
+        catalog={"test_dataset": {"type": "MemoryDataSet"}}, credentials={"test_cred": "secret"}
     )
-
-    # Ensure that the runner is executed with async flag
-    load_obj_mock.assert_called_once_with("SequentialRunner", "kedro.runner")
-    kedro_session_mock.create.return_value.run.assert_called_once()
-    assert kedro_session_mock.create.return_value.run.call_args.kwargs["runner"].is_async is True
+    result.add_feed_dict.assert_called_once_with({"params:param1": "value1"}, replace=True)
 
 
-def test_run_filter_nodes(kedro_session_mock, load_obj_mock, pipelines_mock):
-    """Test that nodes are filtered correctly based on tags."""
-    pipelines_mock["__default__"].nodes = []
+def test_extract_config_without_from_env(mock_config, mock_session):
+    mock_config.from_env = None
+    result = _extract_config(mock_config, mock_session)
+    assert result is None
 
-    _run(
-        pipeline=None,
-        env="test",
-        runner="SequentialRunner",
-        is_async=False,
-        node_names=["node1", "node2"],
-        to_nodes=[],
-        from_nodes=[],
-        from_inputs=[],
-        to_outputs=[],
-        load_versions=[],
-        tags=[],
-        without_tags=["tag1"],
-        conf_source=None,
-        params={},
-        from_env=None,
-    )
+
+@patch("matrix.cli_commands.run.settings")
+def test_extract_config_with_empty_catalog(mock_settings, mock_config, mock_session):
+    mock_config_loader = Mock()
+    mock_config_loader.__getitem__.side_effect = lambda key: {"catalog": {}, "credentials": {}, "parameters": {}}[key]
+
+    mock_settings.CONFIG_LOADER_CLASS.return_value = mock_config_loader
+    mock_settings.CONFIG_LOADER_ARGS = {}
+    mock_settings.DATA_CATALOG_CLASS.from_config.return_value = Mock(spec=DataCatalog)
+
+    result = _extract_config(mock_config, mock_session)
+
+    assert result is not None
+    assert isinstance(result, DataCatalog)
+    result.add_feed_dict.assert_called_once_with({}, replace=True)
