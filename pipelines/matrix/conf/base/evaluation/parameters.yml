@@ -83,6 +83,9 @@ evaluation.full_matrix_negatives:
           n: 10000
         - object:  matrix.pipelines.evaluation.named_functions.RecallAtN
           n: 100000
+      quantile_func_lst: 
+        - object: matrix.pipelines.evaluation.named_functions.AUROC
+
           
 
 ## Clinical trial versions. These use ground truth provided by results of clinical trials occurring after March 2023 (release date of RTX-KG2 v2.7.3).

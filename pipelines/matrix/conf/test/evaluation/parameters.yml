@@ -27,8 +27,6 @@ evaluation.full_matrix:
           n: 10
         - object:  matrix.pipelines.evaluation.named_functions.RecallAtN
           n: 100
-      quantile_func_lst: 
-        - object: matrix.pipelines.evaluation.named_functions.AUROC
 
 evaluation.full_matrix_negatives:
   evaluation_options:
@@ -38,8 +36,6 @@ evaluation.full_matrix_negatives:
           n: 10
         - object:  matrix.pipelines.evaluation.named_functions.RecallAtN
           n: 100
-      quantile_func_lst: 
-        - object: matrix.pipelines.evaluation.named_functions.AUROC
 
 evaluation.full_matrix_trials:
   evaluation_options:
@@ -49,5 +45,3 @@ evaluation.full_matrix_trials:
           n: 10
         - object:  matrix.pipelines.evaluation.named_functions.RecallAtN
           n: 100
-      quantile_func_lst: 
-        - object: matrix.pipelines.evaluation.named_functions.AUROC
