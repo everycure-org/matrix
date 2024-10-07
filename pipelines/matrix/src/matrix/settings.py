@@ -75,7 +75,7 @@ DYNAMIC_PIPELINES_MAPPING = {
         {"evaluation_name": "full_matrix"},
         {"evaluation_name": "simple_classification_trials"},
         {"evaluation_name": "disease_specific_trials"},
-        {"evaluation_name": "full_matrix_trails"},
+        {"evaluation_name": "full_matrix_trials"},
     ],
 }
 
