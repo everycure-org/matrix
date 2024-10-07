@@ -127,7 +127,7 @@ def run( tags, without_tags, env, runner, is_async, node_names, to_nodes, from_n
     )
 
 
-def _run(config: RunConfig, kedro_session: Any) -> None:
+def _run(config: RunConfig, kedro_session: KedroSessionWithFromCatalog) -> None:
     if config.pipeline_name in ["test", "fabricator"] and config.env in [None, "base"]:
         raise RuntimeError(
             "Running the fabricator in the base environment might overwrite production data! Use the test env `-e test` instead."
@@ -161,7 +161,7 @@ def _run(config: RunConfig, kedro_session: Any) -> None:
             pipeline_name=config.pipeline_name,
         )
 
-def _extract_config(config, session) -> Optional[DataCatalog]:
+def _extract_config(config: RunConfig, session: KedroSessionWithFromCatalog) -> Optional[DataCatalog]:
     from_catalog: Optional[DataCatalog] = None
     if config.from_env:
         # Load second config loader instance
