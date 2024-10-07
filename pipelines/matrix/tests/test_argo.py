@@ -235,6 +235,7 @@ def test_fuses_with(fused_node: FusedNode, simple_node: Node) -> None:
     assert fused_node.fuses_with(fusable_node)
 
 
+# TODO(pascal.bro): Let's determine what the desired behaviour is
 def test_not_fusable(fused_node: FusedNode, simple_node: Node) -> None:
     fused_node.add_node(simple_node)
     non_fusable_node = Node(func=dummy_func, inputs=["dataset_x"], outputs="dataset_y", name="non_fusable_node")
@@ -249,6 +250,7 @@ def test_is_fusable(fused_node: FusedNode, simple_node: Node) -> None:
     assert fused_node.is_fusable
 
 
+# TODO(pascal.bro): Let's determine what the desired behaviour is
 def test_not_is_fusable(fused_node: FusedNode, simple_node: Node) -> None:
     fused_node.add_node(simple_node)
     assert not fused_node.is_fusable
@@ -283,6 +285,7 @@ def test_tags_property(fused_node: FusedNode, simple_node: Node) -> None:
     assert fused_node.tags == {"tag1", "tag2", "tag3"}
 
 
+# TODO(pascal.bro): Let's determine what the desired behaviour is
 def test_name_property_fusable(fused_node: FusedNode, simple_node: Node) -> None:
     fused_node.add_node(simple_node)
     fused_node._nodes[0].tags = ["argowf.fuse", "argowf.fuse-group.test_group"]
