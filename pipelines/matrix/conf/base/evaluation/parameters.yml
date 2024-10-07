@@ -130,7 +130,7 @@ evaluation.disease_specific_trials:
       score_col_name: *score-col
 
 # Full matrix ranking (clinical trials version)
-evaluation.full_matrix_trails:
+evaluation.full_matrix_trials:
   evaluation_options:
     generator:
       object: matrix.datasets.pair_generator.FullMatrixPositives
