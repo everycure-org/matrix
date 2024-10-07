@@ -19,7 +19,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                     "nodes": "ingestion.int.sample.rtx_kg2.nodes",
                     "edges": "ingestion.int.sample.rtx_kg2.edges",
                 },
-                name="fabricate_kg2_datasets",
+                name="sampled_kg2_datasets",
             ),
         ]
     )
