@@ -51,6 +51,15 @@ integration.int.robokop.edges.norm:
   <<: [*_spark_parquet, *_layer_int]
   filepath: ${globals:paths.int}/robokop/edges.norm
 
+# mapping tables 
+integration.int.rtx_nodes_norm_mapping:
+  <<: [*_spark_parquet, *_layer_int]
+  filepath: ${globals:paths.int}/rtx/nodes_norm_mapping
+
+integration.int.robokop_nodes_norm_mapping:
+  <<: [*_spark_parquet, *_layer_int]
+  filepath: ${globals:paths.int}/robokop/nodes_norm_mapping
+
 
 
 # Unified KGs

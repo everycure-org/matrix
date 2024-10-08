@@ -22,7 +22,7 @@ def transform_rtxkg2_nodes(nodes_df: DataFrame) -> DataFrame:
     # fmt: off
     return (
         nodes_df
-        .withColumn("upstream_data_source",                f.array(f.lit("rtxkg2")))
+        .withColumn("upstream_data_source",              f.array(f.lit("rtxkg2")))
         .withColumn("labels",                            f.split(f.col("label"), SEP))
         .withColumn("all_categories",                    f.split(f.col("all_categories"), SEP))
         .withColumn("all_categories",                    f.array_distinct(f.concat("labels", "all_categories")))

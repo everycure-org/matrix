@@ -55,6 +55,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 outputs=[
                     "integration.int.rtx.nodes.norm",
                     "integration.int.rtx.edges.norm",
+                    "integration.int.rtx_nodes_norm_mapping",
                 ],
                 name="normalize_rtx_kg",
                 tags=["standardize"],
@@ -73,6 +74,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 outputs=[
                     "integration.int.robokop.nodes.norm",
                     "integration.int.robokop.edges.norm",
+                    "integration.int.robokop_nodes_norm_mapping",
                 ],
                 name="normalize_robokop_kg",
             ),
