@@ -28,8 +28,8 @@ def conf_source() -> Path:
     return x
 
 
-@pytest.fixture(name="config_loader", scope="session")
-def config_loader_fixture(conf_source: Path) -> OmegaConfigLoader:
+@pytest.fixture(scope="session")
+def config_loader(conf_source: Path) -> OmegaConfigLoader:
     """Instantiate a config loader."""
     return OmegaConfigLoader(
         env="base",
@@ -49,8 +49,8 @@ def config_loader_fixture(conf_source: Path) -> OmegaConfigLoader:
     )
 
 
-@pytest.fixture(name="kedro_context", scope="session")
-def kedro_context_fixture(config_loader: OmegaConfigLoader) -> KedroContext:
+@pytest.fixture(scope="session")
+def kedro_context(config_loader: OmegaConfigLoader) -> KedroContext:
     """Instantiate a KedroContext."""
     return KedroContext(
         env="base",
@@ -61,8 +61,8 @@ def kedro_context_fixture(config_loader: OmegaConfigLoader) -> KedroContext:
     )
 
 
-@pytest.fixture(name="configure_matrix_project", scope="session")
-def configure_matrix_project_fixture() -> None:
+@pytest.fixture(scope="session")
+def configure_matrix_project() -> None:
     """Configure the project for testing."""
     configure_project("matrix")
 
