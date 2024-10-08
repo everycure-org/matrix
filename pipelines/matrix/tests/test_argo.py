@@ -347,9 +347,9 @@ spec:
     - name: image
       value: "us-central1-docker.pkg.dev/mtrx-hub-dev-3of/matrix-images/matrix"
     - name: image_tag
-      value: "test_image_tag"
+      value: "test_tag"
     - name: run_name
-      value: "test_image_tag"
+      value: "test_tag"
     - name: neo4j_host
       value: "bolt://neo4j.neo4j.svc.cluster.local:7687"
     - name: mlflow_endpoint
@@ -475,20 +475,25 @@ def test_generate_argo_config(expected_argo_config: Dict[str, Any], matrix_root:
     assert parsed_config["spec"]["entrypoint"] == expected_argo_config["spec"]["entrypoint"]
 
     # Verify arguments
-    parameters = parsed_config["spec"]["arguments"]["parameters"]
+    parameters_actual = parsed_config["spec"]["arguments"]["parameters"]
     parameters_expected = expected_argo_config["spec"]["arguments"]["parameters"]
-    assert len(parameters) == len(parameters_expected), "Config should have 'parameters'"
+    assert len(parameters_actual) == len(parameters_expected), "Config should have 'parameters'"
 
-    for parameter in parameters_expected:
-        assert parameter in parameters, f"Parameter {parameter} not found in config"
+    for parameter_expected, parameter_actual in zip(parameters_expected, parameters_actual):
         assert (
-            parameters[parameter]["value"] == parameters_expected[parameter]["value"]
-        ), f"Parameter {parameter} should have value {parameters_expected[parameter]['value']}"
+            parameter_expected["name"] == parameter_actual["name"]
+        ), f"Parameter {parameter_expected} not equal to {parameter_actual}"
+        assert (
+            parameter_expected["value"] == parameter_actual["value"]
+        ), f"Parameter {parameter_expected} not equal to {parameter_actual}"
 
     # Verify templates
     templates = parsed_config["spec"]["templates"]
-    assert len(templates) == 1, "Config should have 1 template"
+    assert len(templates) == 3, "Config should have 3 template"
     assert templates[0]["name"] == "kedro", "Config should have 'kedro' template"
+    assert templates[1]["name"] == "neo4j", "Config should have 'neo4j' template"
+    assert templates[2]["name"] == "test", "Config should have 'test' template"
+    # TODO: Add missing templates
 
     # Check if the pipeline is included in the templates
     pipeline_names = [template["name"] for template in parsed_config["spec"]["templates"]]
