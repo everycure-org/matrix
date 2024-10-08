@@ -617,8 +617,12 @@ def test_generate_argo_config(expected_argo_config: Dict[str, Any], matrix_root:
 
     # Verify neo4j template
     neo4j_template = next(t for t in templates if t["name"] == "neo4j")
-    assert "kedro_nodes" in neo4j_template["inputs"]["parameters"], "Neo4j template should have kedro_nodes input"
-    assert "pipeline" in neo4j_template["inputs"]["parameters"], "Neo4j template should have pipeline input"
+    assert "kedro_nodes" in [
+        x["name"] for x in neo4j_template["inputs"]["parameters"]
+    ], "Neo4j template should have kedro_nodes input"
+    assert "pipeline" in [
+        x["name"] for x in neo4j_template["inputs"]["parameters"]
+    ], "Neo4j template should have pipeline input"
 
     # Verify neo4j container
     neo4j_container = neo4j_template["container"]
