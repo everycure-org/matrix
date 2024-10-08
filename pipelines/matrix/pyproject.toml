@@ -18,6 +18,9 @@ norecursedirs = [
     "compose",
     "packages",
 ]
+markers = [
+    "integration: mark a test as an integration test."
+]
 
 [project]
 name = "matrix"
