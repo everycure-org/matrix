@@ -1,20 +1,22 @@
 """Nodes for the ingration pipeline."""
 
+import asyncio
 import logging
 from functools import partial, reduce
 from typing import Any, Callable, Dict, List
 
+import aiohttp
 import pandas as pd
 import pandera.pyspark as pa
 import pyspark as ps
 import pyspark.sql.functions as F
-import requests
 from joblib import Memory
 from pyspark.sql import DataFrame
 from refit.v1.core.inline_has_schema import has_schema
 from refit.v1.core.inline_primary_key import primary_key
 from tenacity import (
     retry,
+    retry_if_exception_type,
     wait_exponential,
 )
 from tqdm import tqdm
@@ -104,6 +106,58 @@ def create_treats(nodes: DataFrame, df: DataFrame):
     )
 
 
+@memory.cache
+def batch_map_ids(
+    ids: frozenset[str],
+    api_endpoint: str,
+    batch_size: int,
+    parallelism: int,
+    conflate: bool,
+    drug_chemical_conflate: bool,
+) -> Dict[str, str]:
+    """Maps a list of ids to their normalized form using the node normalization service.
+
+    This function internally uses asynchronous operations but presents a synchronous interface.
+
+    Args:
+        ids: A list of ids to map.
+        api_endpoint: The endpoint to hit for normalization.
+        batch_size: The number of ids to map in a single batch.
+        parallelism: The number of concurrent requests to make.
+        conflate: Whether to conflate the nodes.
+        drug_chemical_conflate: Whether to conflate the drug and chemical nodes.
+
+    Returns:
+        Dict[str, str]: A dictionary of the form {id: normalized_id}.
+    """
+    # NOTE: This function was partially generated using AI assistance.
+
+    async def async_batch_map():
+        mappings = {}
+        ids_list = list(ids)
+        total_batches = (len(ids_list) + batch_size - 1) // batch_size
+
+        async def process_batch(batch, session):
+            return await hit_node_norm_service(batch, api_endpoint, session, conflate, drug_chemical_conflate)
+
+        async with aiohttp.ClientSession() as session:
+            semaphore = asyncio.Semaphore(parallelism)
+
+            async def bounded_process_batch(batch):
+                async with semaphore:
+                    return await process_batch(batch, session)
+
+            tasks = [bounded_process_batch(ids_list[i : i + batch_size]) for i in range(0, len(ids_list), batch_size)]
+
+            for result in tqdm(asyncio.as_completed(tasks), total=total_batches, desc="Batch Mapping IDs"):
+                mappings.update(await result)
+
+        assert len(mappings) == len(ids)
+        return mappings
+
+    return asyncio.run(async_batch_map())
+
+
 def normalize_kg(
     nodes: ps.sql.DataFrame,
     edges: ps.sql.DataFrame,
@@ -115,9 +169,9 @@ def normalize_kg(
 ):
     """Function normalizes a KG using external API endpoint.
 
-    This functions takes the nodes and edges frames for a KG and leverages
+    This function takes the nodes and edges frames for a KG and leverages
     an external API to map the nodes to their normalized IDs.
-    It returns the datasets with
+    It returns the datasets with normalized IDs.
 
     """
     logger.info("collecting node ids for normalization")
@@ -174,21 +228,26 @@ def normalize_kg(
     return nodes, edges, mapping_df
 
 
-@retry(wait_exponential(min=1, max=30), before_sleep=print)
-# @memory.cache
-def hit_node_norm_service(
+@retry(
+    wait=wait_exponential(min=1, max=30),
+    retry=retry_if_exception_type((aiohttp.ClientError, asyncio.TimeoutError)),
+    before_sleep=print,
+)
+async def hit_node_norm_service(
     curies: List[str],
     endpoint: str,
+    session: aiohttp.ClientSession,
     conflate: bool = True,
     drug_chemical_conflate: bool = True,
 ):
-    """Hits the node normalization service with a list of curies.
+    """Hits the node normalization service with a list of curies using aiohttp.
 
     Makes heavy use of tenacity for retries and joblib for caching locally on disk
 
     Args:
         curies (List[str]): A list of curies to normalize.
         endpoint (str): The endpoint to hit.
+        session (aiohttp.ClientSession): The aiohttp session to use for requests.
         conflate (bool, optional): Whether to conflate the nodes.
         drug_chemical_conflate (bool, optional): Whether to conflate the drug and chemical nodes.
 
@@ -204,16 +263,16 @@ def hit_node_norm_service(
     }
 
     logger.debug(request_json)
-    resp: requests.models.Response = requests.post(url=endpoint, json=request_json)
-    logger.debug(resp.json())
-
-    if resp.status_code == 200:
-        # if successful return the json as an object
-        return _extract_ids(resp.json())
-    else:
-        logger.warning(f"Node norm response code: {resp.status_code}")
-        logger.debug(resp.text)
-        resp.raise_for_status()
+    async with session.post(url=endpoint, json=request_json) as resp:
+        if resp.status == 200:
+            response_json = await resp.json()
+            logger.debug(response_json)
+            return _extract_ids(response_json)
+        else:
+            logger.warning(f"Node norm response code: {resp.status}")
+            resp_text = await resp.text()
+            logger.debug(resp_text)
+            resp.raise_for_status()
 
 
 # NOTE: we are not taking the label that the API returns, this could actually be important. Do we want the labels/biolink types as well?
@@ -229,45 +288,3 @@ def _extract_ids(response: Dict[str, Any]):
             logger.warning(f"KeyError for {k}: {response[k]}")
             ids[k] = None
     return ids
-
-
-@memory.cache
-def batch_map_ids(
-    ids: frozenset[str],
-    api_endpoint: str,
-    batch_size: int,
-    parallelism: int,
-    conflate: bool,
-    drug_chemical_conflate: bool,
-) -> Dict[str, str]:
-    """Maps a list of ids to their normalized form using the node normalization service.
-
-    Args:
-        ids: A list of ids to map.
-        batch_size: The number of ids to map in a single batch.
-        parallelism: The number of threads to use for parallel processing.
-
-    Returns:
-        Dict[str, str]: A dictionary of the form {id: normalized_id}.
-    """
-    from concurrent.futures import ThreadPoolExecutor, as_completed
-
-    mappings = {}
-    total_batches = (len(ids) + batch_size - 1) // batch_size
-
-    def _process_batch(batch):
-        return hit_node_norm_service(batch, api_endpoint, conflate, drug_chemical_conflate)
-
-    ids = list(ids)
-    # process batches in parallel and collect mapping results in dictionary
-    with ThreadPoolExecutor(max_workers=parallelism) as executor:
-        futures = []
-        for i in range(0, len(ids), batch_size):
-            batch = ids[i : i + batch_size]
-            futures.append(executor.submit(_process_batch, batch))
-
-        for future in tqdm(as_completed(futures), total=total_batches, desc="Batch Mapping IDs"):
-            mappings.update(future.result())
-
-    assert len(mappings) == len(ids)
-    return mappings
