@@ -1,3 +1,5 @@
+from pathlib import Path
+from typing import Dict, Any
 from kedro.pipeline.node import Node
 from kedro.pipeline import Pipeline
 import pytest
@@ -210,7 +212,7 @@ def test_add_node(fused_node: FusedNode, simple_node: Node) -> None:
 
 # TODO(pascal.bro): Let's determine what the desired behaviour is
 @pytest.mark.skip(reason="Desired behaviour not clear")
-def test_add_parents(fused_node):
+def test_add_parents(fused_node: FusedNode):
     parent1 = FusedNode(depth=1)
     parent2 = FusedNode(depth=1)
     fused_node.add_parents([parent1, parent2])
@@ -326,105 +328,106 @@ def test_clean_dependencies() -> None:
 def expected_argo_config():
     """Fixture to provide expected Argo YAML output for comparison."""
     return yaml.safe_load(
-        """apiVersion: argoproj.io/v1alpha1
-    kind: WorkflowTemplate
+        """
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  namespace: test-namespace
+  name: test-run-name
+spec:
+  workflowMetadata:
+    labels:
+      run: '{{ workflow.parameters.run_name }}'
+      username: "test-user"
+  entrypoint: dag
+  ttlStrategy:
+    secondsAfterSuccess: 5
+  arguments:
+    parameters:
+    - name: image
+      value: "test-image"
+    - name: image_tag
+      value: "test-image-tag"
+    - name: run_name
+      value: "test-image-tag"
+    - name: neo4j_host
+      value: "bolt://neo4j.neo4j.svc.cluster.local:7687"
+    - name: mlflow_endpoint
+      value: "http://mlflow-tracking.mlflow.svc.cluster.local:80"
+    - name: openai_endpoint
+      value: "https://api.openai.com/v1"
+    - name: env
+      value: "cloud"
+  templates:
+  - name: kedro
+    backoff:
+      duration: "1"
+      factor: 2
+      maxDuration: "1m"
+    affinity:
+      nodeAntiAffinity: {}
     metadata:
-    namespace: test-namespace
-    name: test-run-name
-    spec:
-    workflowMetadata:
-        labels:
-        run: '{{ workflow.parameters.run_name }}'
-        username: "test-user"
-    entrypoint: dag
-    ttlStrategy:
-        secondsAfterSuccess: 5
-    arguments:
-        parameters:
-        - name: image
-            value: "test-image"
-        - name: image_tag
-            value: "test-image-tag"
-        - name: run_name
-            value: "test-image-tag"
-        - name: neo4j_host
-            value: "bolt://neo4j.neo4j.svc.cluster.local:7687"
-        - name: mlflow_endpoint
-            value: "http://mlflow-tracking.mlflow.svc.cluster.local:80"
-        - name: openai_endpoint
-            value: "https://api.openai.com/v1"
-        - name: env
-            value: "cloud"
-    templates:
-    - name: kedro
-        backoff:
-        duration: "1"
-        factor: 2
-        maxDuration: "1m"
-        affinity:
-        nodeAntiAffinity: {}
-        metadata:
-        labels:
-            app: kedro-argo
-        inputs:
-        parameters:
-        - name: kedro_nodes
-        - name: pipeline
-        container:
-        imagePullPolicy: Always
-        image: "{{workflow.parameters.image}}:{{workflow.parameters.image_tag}}"
-        resources:
-            requests:
-            memory: 64Gi
-            cpu: 4
-            limits:
-            memory: 64Gi
-            cpu: 16
-        env:
-            - name: WORKFLOW_ID
-            valueFrom:
-                fieldRef:
-                fieldPath: metadata.labels['workflows.argoproj.io/workflow']
-            - name: RUN_NAME
-            value: "{{workflow.parameters.run_name}}"
-            - name: NEO4J_HOST
-            value: "{{workflow.parameters.neo4j_host}}"
-            - name: MLFLOW_ENDPOINT
-            value: "{{workflow.parameters.mlflow_endpoint}}"
-            - name: NEO4J_USER
-            valueFrom:
-                secretKeyRef:
-                name: matrix-secrets
-                key: NEO4J_USER
-            - name: NEO4J_PASSWORD
-            valueFrom:
-                secretKeyRef:
-                name: matrix-secrets
-                key: NEO4J_PASSWORD
-            - name: OPENAI_ENDPOINT
-            value: "{{workflow.parameters.openai_endpoint}}"
-            - name: OPENAI_API_KEY
-            valueFrom:
-                secretKeyRef:
-                name: matrix-secrets
-                key: OPENAI_API_KEY
-            - name: GCP_PROJECT_ID
-            valueFrom:
-                configMapKeyRef:
-                name: matrix-config
-                key: GCP_PROJECT_ID
-            - name: GCP_BUCKET
-            valueFrom:
-                configMapKeyRef:
-                name: matrix-config
-                key: GCP_BUCKET
-        command: [kedro]
-        args: ["run", "-p", "{{inputs.parameters.pipeline}}", "-e", "{{workflow.parameters.env}}", "-n", "{{inputs.parameters.kedro_nodes}}"]
+      labels:
+        app: kedro-argo
+    inputs:
+      parameters:
+      - name: kedro_nodes
+      - name: pipeline
+    container:
+      imagePullPolicy: Always
+      image: "{{workflow.parameters.image}}:{{workflow.parameters.image_tag}}"
+      resources:
+        requests:
+          memory: 64Gi
+          cpu: 4
+        limits:
+          memory: 64Gi
+          cpu: 16
+      env:
+        - name: WORKFLOW_ID
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.labels['workflows.argoproj.io/workflow']
+        - name: RUN_NAME
+          value: "{{workflow.parameters.run_name}}"
+        - name: NEO4J_HOST
+          value: "{{workflow.parameters.neo4j_host}}"
+        - name: MLFLOW_ENDPOINT
+          value: "{{workflow.parameters.mlflow_endpoint}}"
+        - name: NEO4J_USER
+          valueFrom:
+            secretKeyRef:
+              name: matrix-secrets
+              key: NEO4J_USER
+        - name: NEO4J_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: matrix-secrets
+              key: NEO4J_PASSWORD
+        - name: OPENAI_ENDPOINT
+          value: "{{workflow.parameters.openai_endpoint}}"
+        - name: OPENAI_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: matrix-secrets
+              key: OPENAI_API_KEY
+        - name: GCP_PROJECT_ID
+          valueFrom:
+            configMapKeyRef:
+              name: matrix-config
+              key: GCP_PROJECT_ID
+        - name: GCP_BUCKET
+          valueFrom:
+            configMapKeyRef:
+              name: matrix-config
+              key: GCP_BUCKET
+      command: [kedro]
+      args: ["run", "-p", "{{inputs.parameters.pipeline}}", "-e", "{{workflow.parameters.env}}", "-n", "{{inputs.parameters.kedro_nodes}}"]
         """
     )
 
 
-def test_generate_argo_config(expected_argo_config) -> None:
+def test_generate_argo_config(expected_argo_config: Dict[str, Any], matrix_root: Path) -> None:
     image_name = "us-central1-docker.pkg.dev/mtrx-hub-dev-3of/matrix-images/matrix"
     run_name = "test_run"
     image_tag = "test_tag"
@@ -443,6 +446,7 @@ def test_generate_argo_config(expected_argo_config) -> None:
         namespace=namespace,
         username=username,
         pipelines=pipelines,
+        project_path=matrix_root,
     )
 
     assert argo_config is not None

@@ -20,12 +20,12 @@ def generate_argo_config(
     namespace: str,
     username: str,
     pipelines: Dict[str, Pipeline],
+    project_path: Path,
 ) -> str:
     loader = FileSystemLoader(searchpath=ARGO_TEMPLATES_DIR_PATH)
     template_env = Environment(loader=loader, trim_blocks=True, lstrip_blocks=True)
     template = template_env.get_template(ARGO_TEMPLATE_FILE)
 
-    project_path = Path.cwd()
     metadata = bootstrap_project(project_path)
     package_name = metadata.package_name
 
