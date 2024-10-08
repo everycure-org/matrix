@@ -136,9 +136,7 @@ class TestNormalizeFunction(unittest.TestCase):
         mock_get.return_value = mock_response
 
         # When calling the normalizer, yield the response
-        result = normalize(
-            curie="MONDO:0005260", endpoint="http://dummy-endpoint", att_to_get="name"
-        )
+        result = normalize(curie="MONDO:0005260", endpoint="http://dummy-endpoint", att_to_get="name")
 
         # Assert the correct curie is returned
         self.assertEqual(result, "autism spectrum disorder")
@@ -162,9 +160,7 @@ class TestNormalizeFunction(unittest.TestCase):
         mock_get.return_value = mock_response
 
         # When calling the normalizer, yield the response
-        result = normalize(
-            curie="autism", endpoint="http://dummy-endpoint", att_to_get="name"
-        )
+        result = normalize(curie="autism", endpoint="http://dummy-endpoint", att_to_get="name")
 
         # Assert the correct curie is returned
         self.assertEqual(result, "autism spectrum disorder")
