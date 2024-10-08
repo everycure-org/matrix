@@ -333,7 +333,7 @@ apiVersion: argoproj.io/v1alpha1
 kind: WorkflowTemplate
 metadata:
   namespace: test_namespace
-  name: test_run_name
+  name: test_run
 spec:
   workflowMetadata:
     labels:
@@ -453,24 +453,44 @@ def test_generate_argo_config(expected_argo_config: Dict[str, Any], matrix_root:
 
     parsed_config = yaml.safe_load(argo_config)
 
-    # Add assertions to verify the parsed configuration
     assert isinstance(parsed_config, dict), "Parsed config should be a dictionary"
+    # Verify apiVersion
     assert parsed_config["apiVersion"] == expected_argo_config["apiVersion"], "Config should have 'apiVersion'"
+
+    # Verify kind
     assert parsed_config["kind"] == expected_argo_config["kind"], "Config should have 'kind'"
+
+    # Verify metadata
     assert (
         parsed_config["metadata"]["namespace"] == expected_argo_config["metadata"]["namespace"]
     ), "Config should have 'metadata'"
+    assert (
+        parsed_config["metadata"]["name"] == expected_argo_config["metadata"]["name"]
+    ), "Config should have 'metadata'"
 
-    # Verify spec details
+    # Verify spec
+    # Verify entrypoint
     assert parsed_config["spec"]["entrypoint"] == expected_argo_config["spec"]["entrypoint"]
-    assert any(
-        param["name"] == "image" and param["value"] == image_name
-        for param in parsed_config["spec"]["arguments"]["parameters"]
-    )
-    assert any(
-        param["name"] == "image_tag" and param["value"] == image_tag
-        for param in parsed_config["spec"]["arguments"]["parameters"]
-    )
+
+    # Verify arguments
+    parameters = parsed_config["spec"]["arguments"]["parameters"]
+    parameters_expected = expected_argo_config["spec"]["arguments"]["parameters"]
+    assert len(parameters) == len(parameters_expected), "Config should have 'parameters'"
+
+    for parameter in parameters_expected:
+        assert parameter in parameters, f"Parameter {parameter} not found in config"
+        assert (
+            parameters[parameter]["value"] == parameters_expected[parameter]["value"]
+        ), f"Parameter {parameter} should have value {parameters_expected[parameter]['value']}"
+
+    # Verify templates
+    templates = parsed_config["spec"]["templates"]
+    assert len(templates) == 1, "Config should have 1 template"
+    assert templates[0]["name"] == "kedro", "Config should have 'kedro' template"
+
+    # Check if the pipeline is included in the templates
+    pipeline_names = [template["name"] for template in parsed_config["spec"]["templates"]]
+    assert "test" in pipeline_names, "The 'test' pipeline should be included in the templates"
 
     # Check if the pipeline is included in the templates
     pipeline_names = [template["name"] for template in parsed_config["spec"]["templates"]]
