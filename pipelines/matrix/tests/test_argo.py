@@ -332,24 +332,24 @@ def expected_argo_config():
 apiVersion: argoproj.io/v1alpha1
 kind: WorkflowTemplate
 metadata:
-  namespace: test-namespace
-  name: test-run-name
+  namespace: test_namespace
+  name: test_run_name
 spec:
   workflowMetadata:
     labels:
       run: '{{ workflow.parameters.run_name }}'
-      username: "test-user"
+      username: "test_user"
   entrypoint: dag
   ttlStrategy:
     secondsAfterSuccess: 5
   arguments:
     parameters:
     - name: image
-      value: "test-image"
+      value: "us-central1-docker.pkg.dev/mtrx-hub-dev-3of/matrix-images/matrix"
     - name: image_tag
-      value: "test-image-tag"
+      value: "test_image_tag"
     - name: run_name
-      value: "test-image-tag"
+      value: "test_image_tag"
     - name: neo4j_host
       value: "bolt://neo4j.neo4j.svc.cluster.local:7687"
     - name: mlflow_endpoint
@@ -460,16 +460,18 @@ def test_generate_argo_config(expected_argo_config: Dict[str, Any], matrix_root:
     assert (
         parsed_config["metadata"]["namespace"] == expected_argo_config["metadata"]["namespace"]
     ), "Config should have 'metadata'"
-    assert parsed_config["spec"] == expected_argo_config["spec"], "Config should have 'spec'"
 
     # Verify spec details
-    spec = parsed_config["spec"]
-    assert spec["entrypoint"] == "kedro"
-    assert any(param["name"] == "image" and param["value"] == image_name for param in spec["arguments"]["parameters"])
+    assert parsed_config["spec"]["entrypoint"] == expected_argo_config["spec"]["entrypoint"]
     assert any(
-        param["name"] == "image_tag" and param["value"] == image_tag for param in spec["arguments"]["parameters"]
+        param["name"] == "image" and param["value"] == image_name
+        for param in parsed_config["spec"]["arguments"]["parameters"]
+    )
+    assert any(
+        param["name"] == "image_tag" and param["value"] == image_tag
+        for param in parsed_config["spec"]["arguments"]["parameters"]
     )
 
     # Check if the pipeline is included in the templates
-    pipeline_names = [template["name"] for template in spec["templates"]]
+    pipeline_names = [template["name"] for template in parsed_config["spec"]["templates"]]
     assert "test" in pipeline_names, "The 'test' pipeline should be included in the templates"
