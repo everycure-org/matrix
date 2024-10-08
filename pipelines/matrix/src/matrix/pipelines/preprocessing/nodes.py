@@ -414,58 +414,39 @@ def clean_input_sheet(input_df: pd.DataFrame, endpoint: str) -> pd.DataFrame:
     Returns:
         dataframe with synonymized disease IDs in normalized_curie column.
     """
+    res = disease_df
     # Synonymize Drug_ID column to normalized ID and name compatible with RTX-KG2
-    res = enrich_df(
-        input_df,
-        func=normalize,
-        input_cols=["Drug_ID"],
-        target_col="norm_drug_id",
-        endpoint=endpoint,
-    )
-    res = enrich_df(
-        res,
-        func=partial(normalize, att_to_get="name"),
-        input_cols=["Drug_ID"],
-        target_col="norm_drug_name",
-        endpoint=endpoint,
-    )
+    for attribute in [("identifier", "norm_drug_id"), ("name", "norm_drug_name")]:
+        res = enrich_df(
+            res,
+            func=partial(normalize, att_to_get=attribute[0]),
+            input_cols=["Drug_ID"],
+            target_col=attribute[1],
+            endpoint=endpoint,
+        )
 
     # Synonymize Disease_ID column to normalized ID and name compatible with RTX-KG2
-    res = enrich_df(
-        res,
-        func=normalize,
-        input_cols=["Disease_ID"],
-        target_col="norm_disease_id",
-        endpoint=endpoint,
-    )
-    res = enrich_df(
-        res,
-        func=partial(normalize, att_to_get="name"),
-        input_cols=["Disease_ID"],
-        target_col="norm_disease_name",
-        endpoint=endpoint,
-    )
+    for attribute in [("identifier", "norm_disease_id"), ("name", "norm_disease_name")]:
+        res = enrich_df(
+            res,
+            func=partial(normalize, att_to_get=attribute[0]),
+            input_cols=["Disease_ID"],
+            target_col=attribute[1],
+            endpoint=endpoint,
+        )
 
     # Select columns of interest and rename
-    df = res.loc[
-        :,
-        [
-            "Timestamp",
-            "Drug_ID",
-            "Disease_ID",
-            "norm_drug_id",
-            "norm_drug_name",
-            "norm_disease_id",
-            "norm_disease_name",
-        ],
-    ]
-    df.columns = [
-        "timestamp",
-        "drug_id",
-        "disease_id",
+    col_list = [
+        "Timestamp",
+        "Drug_ID",
+        "Disease_ID",
         "norm_drug_id",
         "norm_drug_name",
         "norm_disease_id",
         "norm_disease_name",
     ]
-    return df.fillna("")  # Filling NaNs so that schema is valid
+    df = res.loc[:, col_list]
+    df.columns = [string.lower() for string in col_list]
+
+    # Fill NaNs and return
+    return df.fillna("")
