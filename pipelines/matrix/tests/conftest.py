@@ -1,5 +1,6 @@
 """Module with pytest fixtures."""
 
+from typing import Generator
 import pytest
 
 from pathlib import Path
@@ -14,14 +15,21 @@ from omegaconf.resolvers import oc
 from matrix.resolvers import merge_dicts
 
 
-@pytest.fixture(name="conf_source", scope="session")
-def conf_source_fixture() -> str:
+@pytest.fixture(scope="session")
+def test_resources_root() -> Path:
+    return Path(__file__).parent / "resources"
+
+
+@pytest.fixture(scope="session")
+def conf_source() -> Path:
     """Return the project path."""
-    return str(Path.cwd() / settings.CONF_SOURCE)
+    x = str(Path.cwd() / settings.CONF_SOURCE)
+    y = Path(__file__).parent / settings.CONF_SOURCE
+    return x
 
 
 @pytest.fixture(name="config_loader", scope="session")
-def config_loader_fixture(conf_source) -> OmegaConfigLoader:
+def config_loader_fixture(conf_source: Path) -> OmegaConfigLoader:
     """Instantiate a config loader."""
     return OmegaConfigLoader(
         env="base",
@@ -54,13 +62,13 @@ def kedro_context_fixture(config_loader: OmegaConfigLoader) -> KedroContext:
 
 
 @pytest.fixture(name="configure_matrix_project", scope="session")
-def configure_matrix_project_fixture():
+def configure_matrix_project_fixture() -> None:
     """Configure the project for testing."""
     configure_project("matrix")
 
 
 @pytest.fixture(scope="session")
-def spark():
+def spark() -> Generator[SparkSession, None, None]:
     """Instantiate the Spark session."""
     spark = (
         SparkSession.builder.config("spark.sql.shuffle.partitions", 1)
