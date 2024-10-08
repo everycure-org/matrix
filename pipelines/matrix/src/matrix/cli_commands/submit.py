@@ -1,5 +1,6 @@
 import json
 import logging
+from pathlib import Path
 import re
 import secrets
 import subprocess
@@ -230,6 +231,7 @@ def build_push_docker(username: str, verbose: bool):
 def build_argo_template(run_name, username, namespace, verbose: bool) -> str:
     """Build Argo workflow template."""
     image_name = "us-central1-docker.pkg.dev/mtrx-hub-dev-3of/matrix-images/matrix"
+    matrix_root = Path(__file__).parent.parent 
     return generate_argo_config(
         image=image_name,
         run_name=run_name,
@@ -237,6 +239,7 @@ def build_argo_template(run_name, username, namespace, verbose: bool) -> str:
         namespace=namespace,
         username=username,
         pipelines=pipelines,
+        project_path=matrix_root,
     )
 
 def save_argo_template(argo_template: str, run_name: str) -> str:
