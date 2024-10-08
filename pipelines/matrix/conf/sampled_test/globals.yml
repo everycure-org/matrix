@@ -1,0 +1,17 @@
+versions:
+  release: sampled_test
+
+openai:
+  endpoint: ${oc.env:OPENAI_ENDPOINT, http://localhost:1080/v1}
+  api_key: dummy
+
+paths:
+  raw: data/sampled_test/01_raw
+  new_raw: data/sampled_test/01_raw
+  int: data/sampled_test/02_intermediate
+  prm: data/sampled_test/03_primary
+  feat: data/sampled_test/04_feature
+  model_input: data/sampled_test/05_model_input
+  models: data/sampled_test/06_models
+  model_output: data/sampled_test/07_model_output
+  reporting: data/sampled_test/08_reporting
