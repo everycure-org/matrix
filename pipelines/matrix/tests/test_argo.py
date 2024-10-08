@@ -322,7 +322,109 @@ def test_clean_dependencies() -> None:
     assert cleaned == ["dataset_a", "dataset_b"]
 
 
-def test_generate_argo_config() -> None:
+@pytest.fixture()
+def expected_argo_config():
+    """Fixture to provide expected Argo YAML output for comparison."""
+    return yaml.safe_load(
+        """apiVersion: argoproj.io/v1alpha1
+    kind: WorkflowTemplate
+    metadata:
+    namespace: test-namespace
+    name: test-run-name
+    spec:
+    workflowMetadata:
+        labels:
+        run: '{{ workflow.parameters.run_name }}'
+        username: "test-user"
+    entrypoint: dag
+    ttlStrategy:
+        secondsAfterSuccess: 5
+    arguments:
+        parameters:
+        - name: image
+            value: "test-image"
+        - name: image_tag
+            value: "test-image-tag"
+        - name: run_name
+            value: "test-image-tag"
+        - name: neo4j_host
+            value: "bolt://neo4j.neo4j.svc.cluster.local:7687"
+        - name: mlflow_endpoint
+            value: "http://mlflow-tracking.mlflow.svc.cluster.local:80"
+        - name: openai_endpoint
+            value: "https://api.openai.com/v1"
+        - name: env
+            value: "cloud"
+    templates:
+    - name: kedro
+        backoff:
+        duration: "1"
+        factor: 2
+        maxDuration: "1m"
+        affinity:
+        nodeAntiAffinity: {}
+        metadata:
+        labels:
+            app: kedro-argo
+        inputs:
+        parameters:
+        - name: kedro_nodes
+        - name: pipeline
+        container:
+        imagePullPolicy: Always
+        image: "{{workflow.parameters.image}}:{{workflow.parameters.image_tag}}"
+        resources:
+            requests:
+            memory: 64Gi
+            cpu: 4
+            limits:
+            memory: 64Gi
+            cpu: 16
+        env:
+            - name: WORKFLOW_ID
+            valueFrom:
+                fieldRef:
+                fieldPath: metadata.labels['workflows.argoproj.io/workflow']
+            - name: RUN_NAME
+            value: "{{workflow.parameters.run_name}}"
+            - name: NEO4J_HOST
+            value: "{{workflow.parameters.neo4j_host}}"
+            - name: MLFLOW_ENDPOINT
+            value: "{{workflow.parameters.mlflow_endpoint}}"
+            - name: NEO4J_USER
+            valueFrom:
+                secretKeyRef:
+                name: matrix-secrets
+                key: NEO4J_USER
+            - name: NEO4J_PASSWORD
+            valueFrom:
+                secretKeyRef:
+                name: matrix-secrets
+                key: NEO4J_PASSWORD
+            - name: OPENAI_ENDPOINT
+            value: "{{workflow.parameters.openai_endpoint}}"
+            - name: OPENAI_API_KEY
+            valueFrom:
+                secretKeyRef:
+                name: matrix-secrets
+                key: OPENAI_API_KEY
+            - name: GCP_PROJECT_ID
+            valueFrom:
+                configMapKeyRef:
+                name: matrix-config
+                key: GCP_PROJECT_ID
+            - name: GCP_BUCKET
+            valueFrom:
+                configMapKeyRef:
+                name: matrix-config
+                key: GCP_BUCKET
+        command: [kedro]
+        args: ["run", "-p", "{{inputs.parameters.pipeline}}", "-e", "{{workflow.parameters.env}}", "-n", "{{inputs.parameters.kedro_nodes}}"]
+        """
+    )
+
+
+def test_generate_argo_config(expected_argo_config) -> None:
     image_name = "us-central1-docker.pkg.dev/mtrx-hub-dev-3of/matrix-images/matrix"
     run_name = "test_run"
     image_tag = "test_tag"
@@ -349,16 +451,12 @@ def test_generate_argo_config() -> None:
 
     # Add assertions to verify the parsed configuration
     assert isinstance(parsed_config, dict), "Parsed config should be a dictionary"
-    assert "apiVersion" in parsed_config, "Config should have 'apiVersion'"
-    assert "kind" in parsed_config, "Config should have 'kind'"
-    assert "metadata" in parsed_config, "Config should have 'metadata'"
-    assert "spec" in parsed_config, "Config should have 'spec'"
-
-    # Check specific values
-    assert parsed_config["apiVersion"] == "argoproj.io/v1alpha1"
-    assert parsed_config["kind"] == "Workflow"
-    assert parsed_config["metadata"]["namespace"] == namespace
-    assert parsed_config["metadata"]["generateName"].startswith(f"{username}-{run_name}-")
+    assert parsed_config["apiVersion"] == expected_argo_config["apiVersion"], "Config should have 'apiVersion'"
+    assert parsed_config["kind"] == expected_argo_config["kind"], "Config should have 'kind'"
+    assert (
+        parsed_config["metadata"]["namespace"] == expected_argo_config["metadata"]["namespace"]
+    ), "Config should have 'metadata'"
+    assert parsed_config["spec"] == expected_argo_config["spec"], "Config should have 'spec'"
 
     # Verify spec details
     spec = parsed_config["spec"]

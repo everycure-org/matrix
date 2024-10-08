@@ -1,9 +1,11 @@
+from pathlib import Path
 import pytest
 import glob
 import os
 import yaml
 import re
 
+from kedro.config import OmegaConfigLoader
 from kedro.framework.context import KedroContext
 from kedro.framework.project import pipelines
 
@@ -30,7 +32,9 @@ def openai_api_env():
 
 
 @pytest.mark.integration()
-def test_unused_catalog_entries(kedro_context: KedroContext, configure_matrix_project: None) -> None:
+def test_unused_catalog_entries(
+    test_resources_root: Path, kedro_context: KedroContext, configure_matrix_project: None
+) -> None:
     """Tests whether all catalog entries are used in the pipeline.
 
     FUTURE: Fix validating unused dataset entries, this is currently not feasible
@@ -94,7 +98,7 @@ def test_memory_data_sets_absent(kedro_context, configure_matrix_project):
 
 
 @pytest.mark.integration
-def test_catalog_filepath_follows_conventions(conf_source, config_loader):
+def test_catalog_filepath_follows_conventions(conf_source: Path, config_loader: OmegaConfigLoader):
     """Checks if catalog entry filepaths conform to entry.
 
     The filepath of the catalog entry should be of the format below. More
