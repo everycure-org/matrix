@@ -1,8 +1,9 @@
 import pandas as pd
 from pyspark.sql import DataFrame
 from typing import Tuple
+import pyspark.sql.functions as F
 
-def get_random_selection_of_edges(
+def get_random_selection_from_rtx(
     nodes: DataFrame,
     edges: DataFrame
 ) -> Tuple[DataFrame, DataFrame]:
@@ -21,7 +22,7 @@ def get_random_selection_of_edges(
     # Now we need to select the nodes that have been included in the selection of edges
     cond = (nodes.id == edges_node_ids_df.subject)
     nodes_sample_df = nodes.join(edges_node_ids_df, how='inner', on=cond).select(nodes.columns)
-    return nodes_sample_df, edges_sample_df
+    return nodes_sample_df.withColumn("kg_source", F.lit("rtx_kg2")), edges_sample_df.withColumn("kg_source", F.lit("rtx_kg2"))
 
 
 
