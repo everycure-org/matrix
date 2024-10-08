@@ -30,7 +30,7 @@ def resolve(name: str, endpoint: str, att_to_get: str = "preferred_curie") -> st
 
 
 def normalize(curie: str, endpoint: str, att_to_get: str = "identifier"):
-    """Function to retrieve the normalized identifier through the synonymizer.
+    """Function to retrieve the normalized identifier through the normalizer.
 
     Args:
         curie: curie of the node
