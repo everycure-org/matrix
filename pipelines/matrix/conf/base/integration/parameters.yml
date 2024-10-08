@@ -5,7 +5,7 @@ integration:
     conflate: true
     drug_chemical_conflate: true
     batch_size: 1000
-    parallelism: 30
+    parallelism: 120
 
   unification:
     datasets_to_union:

@@ -15,8 +15,7 @@ from refit.v1.core.inline_has_schema import has_schema
 from refit.v1.core.inline_primary_key import primary_key
 from tenacity import (
     retry,
-    stop_after_attempt,
-    wait_random_exponential,
+    wait_exponential,
 )
 from tqdm import tqdm
 
@@ -121,8 +120,12 @@ def normalize_kg(
     It returns the datasets with
 
     """
+    logger.info("collecting node ids for normalization")
     node_ids = nodes.select("id").distinct().orderBy("id").toPandas()["id"].to_list()
-    node_id_map = batch_map_ids(node_ids, api_endpoint, batch_size, parallelism, conflate, drug_chemical_conflate)
+    logger.info(f"collected {len(node_ids)} node ids for normalization. Performing normalization...")
+    node_id_map = batch_map_ids(
+        frozenset(node_ids), api_endpoint, batch_size, parallelism, conflate, drug_chemical_conflate
+    )
 
     # convert dict back to a dataframe to parallelize the mapping
     node_id_map_df = pd.DataFrame(list(node_id_map.items()), columns=["id", "normalized_id"])
@@ -168,11 +171,11 @@ def normalize_kg(
         {"subject_normalized": "subject", "object_normalized": "object"}
     )
 
-    return nodes, edges
+    return nodes, edges, mapping_df
 
 
-@retry(stop_after_attempt(6), wait_random_exponential(min=1, max=120), before_sleep=logger.warning)
-@memory.cache
+@retry(wait_exponential(min=1, max=30), before_sleep=print)
+# @memory.cache
 def hit_node_norm_service(
     curies: List[str],
     endpoint: str,
@@ -228,8 +231,9 @@ def _extract_ids(response: Dict[str, Any]):
     return ids
 
 
+@memory.cache
 def batch_map_ids(
-    ids: List[str],
+    ids: frozenset[str],
     api_endpoint: str,
     batch_size: int,
     parallelism: int,
@@ -254,6 +258,7 @@ def batch_map_ids(
     def _process_batch(batch):
         return hit_node_norm_service(batch, api_endpoint, conflate, drug_chemical_conflate)
 
+    ids = list(ids)
     # process batches in parallel and collect mapping results in dictionary
     with ThreadPoolExecutor(max_workers=parallelism) as executor:
         futures = []

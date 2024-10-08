@@ -20,5 +20,26 @@
                 ]
             }
         }
+    },
+    {
+        "httpRequest": {
+            "path": "/get_normalized_nodes",
+            "method": "POST"
+        },
+        "httpResponse": {
+            "body": {
+                "MOCK:CURIE:1": {
+                    "id": {
+                        "identifier": "NORMALIZED:CURIE:1"
+                    }
+                },
+                "MOCK:CURIE:2": null,
+                "MOCK:CURIE:3": {
+                    "id": {
+                        "identifier": "NORMALIZED:CURIE:3"
+                    }
+                }
+            }
+        }
     }
 ]
