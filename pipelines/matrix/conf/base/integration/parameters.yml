@@ -6,3 +6,9 @@ integration:
     drug_chemical_conflate: true
     batch_size: 1000
     parallelism: 30
+
+  unification:
+    datasets_to_union:
+      - rtx
+      - medical_team
+      # - robokop # TODO comment out until we have managed to scale the downstream pipeline to 150M edges and 25M nodes

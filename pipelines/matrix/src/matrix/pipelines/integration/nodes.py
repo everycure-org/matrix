@@ -2,7 +2,7 @@
 
 import logging
 from functools import partial, reduce
-from typing import Any, Dict, List
+from typing import Any, Callable, Dict, List
 
 import pandas as pd
 import pandera.pyspark as pa
@@ -28,24 +28,44 @@ logger = logging.getLogger(__name__)
 
 
 @pa.check_output(KGEdgeSchema)
-def unify_edges(*edges) -> DataFrame:
+def unify_edges(datasets_to_union: List[str], **edges) -> DataFrame:
     """Function to unify edges datasets."""
-    # Union edges
-    union = reduce(partial(DataFrame.unionByName, allowMissingColumns=True), edges)
-
-    # Deduplicate
-    df = KGEdgeSchema.group_edges_by_id(union)
-    return df
+    return _unify_datasets(
+        datasets_to_union,
+        schema_group_by_id=KGEdgeSchema.group_edges_by_id,
+        **edges,
+    )
 
 
 @pa.check_output(KGNodeSchema)
-def unify_nodes(*nodes) -> DataFrame:
+def unify_nodes(datasets_to_union: List[str], **nodes) -> DataFrame:
     """Function to unify nodes datasets."""
-    # Union nodes
-    union = reduce(partial(DataFrame.unionByName, allowMissingColumns=True), nodes)
+    return _unify_datasets(
+        datasets_to_union,
+        schema_group_by_id=KGNodeSchema.group_nodes_by_id,
+        **nodes,
+    )
 
-    # Deduplicate
-    return KGNodeSchema.group_nodes_by_id(union)
+
+def _unify_datasets(
+    datasets_to_union: List[str],
+    schema_group_by_id: Callable[[DataFrame], DataFrame],
+    **datasets: DataFrame,
+) -> DataFrame:
+    """
+    Helper function to unify datasets and deduplicate them.
+
+    Args:
+        datasets_to_union: List of dataset names to unify.
+        **datasets: Arbitrary number of DataFrame keyword arguments.
+        schema_group_by_id: Function to deduplicate the unified DataFrame.
+
+    Returns:
+        A unified and deduplicated DataFrame.
+    """
+    selected_dfs = [datasets[name] for name in datasets_to_union if name in datasets]
+    union = reduce(partial(DataFrame.unionByName, allowMissingColumns=True), selected_dfs)
+    return schema_group_by_id(union)
 
 
 @has_schema(
