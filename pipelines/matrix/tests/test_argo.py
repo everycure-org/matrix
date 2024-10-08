@@ -344,26 +344,26 @@ spec:
     secondsAfterSuccess: 5
   arguments:
     parameters:
-    - name: image
-      value: "us-central1-docker.pkg.dev/mtrx-hub-dev-3of/matrix-images/matrix"
-    - name: image_tag
-      value: "test_tag"
-    - name: run_name
-      value: "test_tag"
-    - name: neo4j_host
-      value: "bolt://neo4j.neo4j.svc.cluster.local:7687"
-    - name: mlflow_endpoint
-      value: "http://mlflow-tracking.mlflow.svc.cluster.local:80"
-    - name: openai_endpoint
-      value: "https://api.openai.com/v1"
-    - name: env
-      value: "cloud"
+      - name: image
+        value: "us-central1-docker.pkg.dev/mtrx-hub-dev-3of/matrix-images/matrix"
+      - name: image_tag
+        value: "test_tag"
+      - name: run_name
+        value: "test_tag"
+      - name: neo4j_host
+        value: "bolt://neo4j.neo4j.svc.cluster.local:7687"
+      - name: mlflow_endpoint
+        value: "http://mlflow-tracking.mlflow.svc.cluster.local:80"
+      - name: openai_endpoint
+        value: "https://api.openai.com/v1"
+      - name: env
+        value: "cloud"
   templates:
   - name: kedro
     backoff:
-      duration: "1"
+      duration: "1"      # Must be a string. Default unit is seconds. Could also be a Duration, e.g.: "2m", "6h", "1d"
       factor: 2
-      maxDuration: "1m"
+      maxDuration: "1m"  # Must be a string. Default unit is seconds. Could also be a Duration, e.g.: "2m", "6h", "1d"
     affinity:
       nodeAntiAffinity: {}
     metadata:
@@ -375,8 +375,8 @@ spec:
       - name: pipeline
     container:
       imagePullPolicy: Always
-      image: "{{workflow.parameters.image}}:{{workflow.parameters.image_tag}}"
-      resources:
+      image:  "{{workflow.parameters.image}}:{{workflow.parameters.image_tag}}" 
+      resources: # limit the resources
         requests:
           memory: 64Gi
           cpu: 4
@@ -389,11 +389,11 @@ spec:
             fieldRef:
               fieldPath: metadata.labels['workflows.argoproj.io/workflow']
         - name: RUN_NAME
-          value: "{{workflow.parameters.run_name}}"
+          value:  "{{workflow.parameters.run_name}}" 
         - name: NEO4J_HOST
-          value: "{{workflow.parameters.neo4j_host}}"
+          value:  "{{workflow.parameters.neo4j_host}}" 
         - name: MLFLOW_ENDPOINT
-          value: "{{workflow.parameters.mlflow_endpoint}}"
+          value:  "{{workflow.parameters.mlflow_endpoint}}" 
         - name: NEO4J_USER
           valueFrom:
             secretKeyRef:
@@ -405,7 +405,7 @@ spec:
               name: matrix-secrets
               key: NEO4J_PASSWORD
         - name: OPENAI_ENDPOINT
-          value: "{{workflow.parameters.openai_endpoint}}"
+          value:  "{{workflow.parameters.openai_endpoint}}" 
         - name: OPENAI_API_KEY
           valueFrom:
             secretKeyRef:
@@ -423,6 +423,99 @@ spec:
               key: GCP_BUCKET
       command: [kedro]
       args: ["run", "-p", "{{inputs.parameters.pipeline}}", "-e", "{{workflow.parameters.env}}", "-n", "{{inputs.parameters.kedro_nodes}}"]
+
+  - name: neo4j
+    inputs:
+      parameters:
+      - name: kedro_nodes
+      - name: pipeline
+    container:
+      resources: # limit the resources
+        requests:
+          memory: 120Gi
+          cpu: 4
+        limits:
+          memory: 120Gi
+          cpu: 16
+      env:
+        - name: WORKFLOW_ID
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.labels['workflows.argoproj.io/workflow']
+        - name: RUN_NAME
+          value:  "{{workflow.parameters.run_name}}" 
+        - name: MLFLOW_ENDPOINT
+          value:  "{{workflow.parameters.mlflow_endpoint}}" 
+        - name: NEO4J_USER
+          value: "neo4j"
+        - name: NEO4J_PASSWORD
+          value: "admin"
+        - name: GCP_PROJECT_ID
+          valueFrom:
+            configMapKeyRef:
+              name: matrix-config
+              key: GCP_PROJECT_ID
+        - name: GCP_BUCKET
+          valueFrom:
+            configMapKeyRef:
+              name: matrix-config
+              key: GCP_BUCKET
+        - name: OPENAI_API_KEY
+          value: "foo"
+        - name: OPENAI_ENDPOINT
+          value:  "{{workflow.parameters.openai_endpoint}}" 
+        - name: OPENAI_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: matrix-secrets
+              key: OPENAI_API_KEY
+      imagePullPolicy: Always
+      image:  "{{workflow.parameters.image}}:{{workflow.parameters.image_tag}}"       
+      command: ["/bin/sh", "-c"]
+      args:
+        - |
+          echo "Waiting for Neo4j to be ready..."
+          until curl -s http://localhost:7474/ready; do
+            echo "Waiting..."
+            sleep 5
+          done
+          echo "Neo4j is ready. Starting main application..."
+          kedro run -p "{{inputs.parameters.pipeline}}" -e "{{workflow.parameters.env}}" -n "{{inputs.parameters.kedro_nodes}}"    
+    sidecars:
+      - name: neo4j
+        image: neo4j:5.21.0-enterprise
+        env:
+        - name: NEO4J_AUTH
+          value: "neo4j/admin"
+        - name: NEO4J_apoc_export_file_enabled
+          value: "true"
+        - name: NEO4J_apoc_import_file_enabled
+          value: "true"
+        - name: NEO4J_apoc_import_file_use__neo4j__config
+          value: "true"
+        - name: NEO4J_PLUGINS
+          value: '["apoc", "graph-data-science", "apoc-extended"]'
+        - name: NEO4J_dbms_security_auth__minimum__password__length
+          value: "4"
+        - name: NEO4J_dbms_security_procedures_whitelist
+          value: "gds.*, apoc.*"
+        - name: NEO4J_dbms_security_procedures_unrestricted
+          value: "gds.*, apoc.*"
+        - name: NEO4J_db_logs_query_enabled
+          value: "OFF"
+        - name: NEO4J_ACCEPT_LICENSE_AGREEMENT
+          value: "yes"
+  - name: test
+    dag:
+      tasks:
+      - name: simple-node
+        template: kedro
+        arguments:
+          parameters:
+          - name: pipeline
+            value: test
+          - name: kedro_nodes
+            value: simple_node
         """
     )
 
