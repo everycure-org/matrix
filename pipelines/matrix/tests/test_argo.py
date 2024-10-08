@@ -554,44 +554,94 @@ def test_generate_argo_config(expected_argo_config: Dict[str, Any], matrix_root:
     assert parsed_config["kind"] == expected_argo_config["kind"], "Config should have 'kind'"
 
     # Verify metadata
-
-    # Verify metadata
     assert (
         parsed_config["metadata"]["namespace"] == expected_argo_config["metadata"]["namespace"]
-    ), "Config should have 'metadata'"
+    ), "Config should have correct 'namespace'"
     assert (
         parsed_config["metadata"]["name"] == expected_argo_config["metadata"]["name"]
-    ), "Config should have 'metadata'"
+    ), "Config should have correct 'name'"
 
     # Verify spec
-    # Verify entrypoint
-    assert parsed_config["spec"]["entrypoint"] == expected_argo_config["spec"]["entrypoint"]
+    spec = parsed_config["spec"]
+    expected_spec = expected_argo_config["spec"]
+
+    # Verify workflowMetadata
+    assert (
+        spec["workflowMetadata"]["labels"]["run"] == expected_spec["workflowMetadata"]["labels"]["run"]
+    ), "Config should have correct 'run' label"
+    assert (
+        spec["workflowMetadata"]["labels"]["username"] == expected_spec["workflowMetadata"]["labels"]["username"]
+    ), "Config should have correct 'username' label"
+
+    # Verify entrypoint and ttlStrategy
+    assert spec["entrypoint"] == expected_spec["entrypoint"], "Config should have correct 'entrypoint'"
+    assert (
+        spec["ttlStrategy"]["secondsAfterSuccess"] == expected_spec["ttlStrategy"]["secondsAfterSuccess"]
+    ), "Config should have correct 'ttlStrategy'"
 
     # Verify arguments
-    parameters_actual = parsed_config["spec"]["arguments"]["parameters"]
-    parameters_expected = expected_argo_config["spec"]["arguments"]["parameters"]
-    assert len(parameters_actual) == len(parameters_expected), "Config should have 'parameters'"
+    parameters_actual = spec["arguments"]["parameters"]
+    parameters_expected = expected_spec["arguments"]["parameters"]
+    assert len(parameters_actual) == len(parameters_expected), "Config should have correct number of parameters"
 
     for parameter_expected, parameter_actual in zip(parameters_expected, parameters_actual):
         assert (
             parameter_expected["name"] == parameter_actual["name"]
-        ), f"Parameter {parameter_expected} not equal to {parameter_actual}"
+        ), f"Parameter {parameter_expected['name']} not found or mismatched"
         assert (
             parameter_expected["value"] == parameter_actual["value"]
-        ), f"Parameter {parameter_expected} not equal to {parameter_actual}"
+        ), f"Parameter {parameter_expected['name']} has incorrect value"
 
     # Verify templates
-    templates = parsed_config["spec"]["templates"]
-    assert len(templates) == 3, "Config should have 3 template"
-    assert templates[0]["name"] == "kedro", "Config should have 'kedro' template"
-    assert templates[1]["name"] == "neo4j", "Config should have 'neo4j' template"
-    assert templates[2]["name"] == "test", "Config should have 'test' template"
-    # TODO: Add missing templates
+    templates = spec["templates"]
+    assert len(templates) == 3, "Config should have 3 templates"
+
+    # Verify kedro template
+    kedro_template = next(t for t in templates if t["name"] == "kedro")
+    assert kedro_template["backoff"]["duration"] == "1", "Kedro template should have correct backoff duration"
+    assert kedro_template["backoff"]["factor"] == 2, "Kedro template should have correct backoff factor"
+    assert kedro_template["backoff"]["maxDuration"] == "1m", "Kedro template should have correct max backoff duration"
+    assert "nodeAntiAffinity" in kedro_template["affinity"], "Kedro template should have nodeAntiAffinity"
+    assert kedro_template["metadata"]["labels"]["app"] == "kedro-argo", "Kedro template should have correct label"
+
+    # Verify kedro container
+    kedro_container = kedro_template["container"]
+    assert kedro_container["imagePullPolicy"] == "Always", "Kedro container should have correct imagePullPolicy"
+    assert (
+        kedro_container["image"] == "{{workflow.parameters.image}}:{{workflow.parameters.image_tag}}"
+    ), "Kedro container should have correct image"
+    assert (
+        kedro_container["resources"]["requests"]["memory"] == "64Gi"
+    ), "Kedro container should have correct memory request"
+    assert kedro_container["resources"]["limits"]["cpu"] == 16, "Kedro container should have correct CPU limit"
+
+    # Verify neo4j template
+    neo4j_template = next(t for t in templates if t["name"] == "neo4j")
+    assert "kedro_nodes" in neo4j_template["inputs"]["parameters"], "Neo4j template should have kedro_nodes input"
+    assert "pipeline" in neo4j_template["inputs"]["parameters"], "Neo4j template should have pipeline input"
+
+    # Verify neo4j container
+    neo4j_container = neo4j_template["container"]
+    assert (
+        neo4j_container["resources"]["requests"]["memory"] == "120Gi"
+    ), "Neo4j container should have correct memory request"
+    assert neo4j_container["resources"]["limits"]["cpu"] == 16, "Neo4j container should have correct CPU limit"
+
+    # Verify neo4j sidecar
+    neo4j_sidecar = neo4j_template["sidecars"][0]
+    assert neo4j_sidecar["name"] == "neo4j", "Neo4j sidecar should have correct name"
+    assert neo4j_sidecar["image"] == "neo4j:5.21.0-enterprise", "Neo4j sidecar should have correct image"
+    assert any(
+        env["name"] == "NEO4J_ACCEPT_LICENSE_AGREEMENT" and env["value"] == "yes" for env in neo4j_sidecar["env"]
+    ), "Neo4j sidecar should accept license agreement"
+
+    # Verify test template
+    test_template = next(t for t in templates if t["name"] == "test")
+    assert "dag" in test_template, "Test template should have a DAG"
+    assert len(test_template["dag"]["tasks"]) == 1, "Test template should have one task"
+    assert test_template["dag"]["tasks"][0]["name"] == "simple-node", "Test template should have correct task name"
+    assert test_template["dag"]["tasks"][0]["template"] == "kedro", "Test template task should use kedro template"
 
     # Check if the pipeline is included in the templates
-    pipeline_names = [template["name"] for template in parsed_config["spec"]["templates"]]
-    assert "test" in pipeline_names, "The 'test' pipeline should be included in the templates"
-
-    # Check if the pipeline is included in the templates
-    pipeline_names = [template["name"] for template in parsed_config["spec"]["templates"]]
+    pipeline_names = [template["name"] for template in templates]
     assert "test" in pipeline_names, "The 'test' pipeline should be included in the templates"
