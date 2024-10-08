@@ -93,27 +93,29 @@ class TestNormalizeFunction(unittest.TestCase):
         # Assert the correct curie is returned
         self.assertEqual(result, "MONDO:0005258")
 
-    # @patch('requests.get')
-    # def test_name_normalize_success(self, mock_get):
-    #     # Mimic the API with actual example from the synonymizer
-    #     mock_response = MagicMock()
-    #     mock_response.json.return_value = {
-    #     'autism':{"id": {
-    #         "identifier": "MONDO:0005258",
-    #         "name": "autism spectrum disorder",
-    #         "category": "biolink:Disease",
-    #         "SRI_normalizer_curie": "MONDO:0005258",
-    #         "SRI_normalizer_name": "autism spectrum disorder",
-    #         "SRI_normalizer_category": "biolink:Disease"
-    #     }}
-    #     }
-    #     mock_get.return_value = mock_response
+    @patch("requests.get")
+    def test_name_normalize_success(self, mock_get):
+        # Mimic the API with actual example from the synonymizer
+        mock_response = MagicMock()
+        mock_response.json.return_value = {
+            "autism": {
+                "id": {
+                    "identifier": "MONDO:0005258",
+                    "name": "autism spectrum disorder",
+                    "category": "biolink:Disease",
+                    "SRI_normalizer_curie": "MONDO:0005258",
+                    "SRI_normalizer_name": "autism spectrum disorder",
+                    "SRI_normalizer_category": "biolink:Disease",
+                }
+            }
+        }
+        mock_get.return_value = mock_response
 
-    #     # When calling the normalizer, yield the response
-    #     result = normalize(curie='autism', endpoint='http://dummy-endpoint')
+        # When calling the normalizer, yield the response
+        result = normalize(curie="autism", endpoint="http://dummy-endpoint")
 
-    #     # Assert the correct curie is returned
-    #     self.assertEqual(result, 'MONDO:0005258')
+        # Assert the correct curie is returned
+        self.assertEqual(result, "MONDO:0005258")
 
     @patch("requests.get")
     def test_curie_normalize_success_name(self, mock_get):
@@ -146,7 +148,7 @@ class TestNormalizeFunction(unittest.TestCase):
         # Mimic the API with actual example from the synonymizer
         mock_response = MagicMock()
         mock_response.json.return_value = {
-            "MONDO:0005260": {
+            "autism": {
                 "id": {
                     "identifier": "MONDO:0005258",
                     "name": "autism spectrum disorder",
@@ -190,7 +192,3 @@ class TestNormalizeFunction(unittest.TestCase):
 
         # Assert that None is returned when the curie is missing
         self.assertIsNone(result)
-
-
-if __name__ == "__main__":
-    unittest.main()
