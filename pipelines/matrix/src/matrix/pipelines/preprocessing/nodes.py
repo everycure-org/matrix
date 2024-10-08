@@ -21,9 +21,8 @@ def resolve(name: str, endpoint: str, att_to_get: str = "preferred_curie") -> st
     Returns:
         Corresponding curie
     """
-    result = requests.get(f"{endpoint}/synonymize", json={"name": name})
+    result = requests.get(f"{endpoint}/synonymize", json={"name": [name]})
     element = result.json().get(name)
-    print(result.json())
     if element:
         return element.get(att_to_get, None)
 
