@@ -414,7 +414,7 @@ def clean_input_sheet(input_df: pd.DataFrame, endpoint: str) -> pd.DataFrame:
     Returns:
         dataframe with synonymized disease IDs in normalized_curie column.
     """
-    res = disease_df
+    res = input_df
     # Synonymize Drug_ID column to normalized ID and name compatible with RTX-KG2
     for attribute in [("identifier", "norm_drug_id"), ("name", "norm_drug_name")]:
         res = enrich_df(
