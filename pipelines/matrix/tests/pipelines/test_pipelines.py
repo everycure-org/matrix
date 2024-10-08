@@ -5,6 +5,7 @@ import os
 import yaml
 import re
 
+from kedro.framework.project import configure_project
 from kedro.config import OmegaConfigLoader
 from kedro.framework.context import KedroContext
 from kedro.framework.project import pipelines
@@ -21,6 +22,12 @@ _ALLOWED_LAYERS = [
 ]
 
 
+@pytest.fixture(scope="session", autouse=True)
+def _configure_matrix_project() -> None:
+    """Configure the project for testing."""
+    configure_project("matrix")
+
+
 def _pipeline_datasets(pipeline) -> set[str]:
     """Helper function to retrieve all datasets used by a pipeline."""
     return set.union(*[set(node.inputs + node.outputs) for node in pipeline.nodes])
@@ -33,7 +40,7 @@ def openai_api_env():
 
 @pytest.mark.integration()
 def test_unused_catalog_entries(
-    test_resources_root: Path, kedro_context: KedroContext, configure_matrix_project: None
+    kedro_context: KedroContext,
 ) -> None:
     """Tests whether all catalog entries are used in the pipeline.
 
@@ -81,7 +88,7 @@ def test_unused_catalog_entries(
 # )
 # skipping due to dynamic pipelines not being supported at the moment
 @pytest.mark.skip()
-def test_memory_data_sets_absent(kedro_context, configure_matrix_project):
+def test_memory_data_sets_absent(kedro_context: KedroContext) -> None:
     """Tests no MemoryDataSets are created."""
 
     used_data_sets = set.union(*[_pipeline_datasets(p) for p in pipelines.values()])
@@ -98,7 +105,7 @@ def test_memory_data_sets_absent(kedro_context, configure_matrix_project):
 
 
 @pytest.mark.integration
-def test_catalog_filepath_follows_conventions(conf_source: Path, config_loader: OmegaConfigLoader):
+def test_catalog_filepath_follows_conventions(conf_source: Path, config_loader: OmegaConfigLoader) -> None:
     """Checks if catalog entry filepaths conform to entry.
 
     The filepath of the catalog entry should be of the format below. More

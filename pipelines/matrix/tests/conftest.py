@@ -16,16 +16,18 @@ from matrix.resolvers import merge_dicts
 
 
 @pytest.fixture(scope="session")
+def matrix_root() -> Path:
+    return Path(__file__).parent.parent
+
+
+@pytest.fixture(scope="session")
 def test_resources_root() -> Path:
     return Path(__file__).parent / "resources"
 
 
 @pytest.fixture(scope="session")
-def conf_source() -> Path:
-    """Return the project path."""
-    x = str(Path.cwd() / settings.CONF_SOURCE)
-    y = Path(__file__).parent / settings.CONF_SOURCE
-    return x
+def conf_source(matrix_root: Path) -> Path:
+    return matrix_root / settings.CONF_SOURCE
 
 
 @pytest.fixture(scope="session")
@@ -59,12 +61,6 @@ def kedro_context(config_loader: OmegaConfigLoader) -> KedroContext:
         config_loader=config_loader,
         hook_manager=_create_hook_manager(),
     )
-
-
-@pytest.fixture(scope="session")
-def configure_matrix_project() -> None:
-    """Configure the project for testing."""
-    configure_project("matrix")
 
 
 @pytest.fixture(scope="session")
