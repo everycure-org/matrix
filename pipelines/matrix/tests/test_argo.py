@@ -461,6 +461,8 @@ def test_generate_argo_config(expected_argo_config: Dict[str, Any], matrix_root:
     assert parsed_config["kind"] == expected_argo_config["kind"], "Config should have 'kind'"
 
     # Verify metadata
+
+    # Verify metadata
     assert (
         parsed_config["metadata"]["namespace"] == expected_argo_config["metadata"]["namespace"]
     ), "Config should have 'metadata'"
@@ -473,15 +475,15 @@ def test_generate_argo_config(expected_argo_config: Dict[str, Any], matrix_root:
     assert parsed_config["spec"]["entrypoint"] == expected_argo_config["spec"]["entrypoint"]
 
     # Verify arguments
-    parameters_actual = parsed_config["spec"]["arguments"]["parameters"]
+    parameters = parsed_config["spec"]["arguments"]["parameters"]
     parameters_expected = expected_argo_config["spec"]["arguments"]["parameters"]
-    assert len(parameters_actual) == len(parameters_expected), "Config should have 'parameters'"
+    assert len(parameters) == len(parameters_expected), "Config should have 'parameters'"
 
-    for parameter_expected in parameters_expected:
-        assert parameter_expected in parameters_actual, f"Parameter {parameter_expected} not found in config"
+    for parameter in parameters_expected:
+        assert parameter in parameters, f"Parameter {parameter} not found in config"
         assert (
-            parameters_actual[parameter_expected["name"]]["value"] == parameters_expected["value"]
-        ), f"Parameter {parameter_expected} should have value {parameters_expected[parameter_expected]['value']}"
+            parameters[parameter]["value"] == parameters_expected[parameter]["value"]
+        ), f"Parameter {parameter} should have value {parameters_expected[parameter]['value']}"
 
     # Verify templates
     templates = parsed_config["spec"]["templates"]
