@@ -79,22 +79,24 @@ def create_pipeline(**kwargs) -> Pipeline:
             # Unify the KG based on standardized IDs
             node(
                 func=nodes.unify_nodes,
-                inputs=[
-                    "integration.int.rtx.nodes.norm",
-                    "integration.int.robokop.nodes.norm",
-                    "ingestion.int.ec_medical_team.nodes",
-                ],
+                inputs={
+                    "datasets_to_union": "params:integration.unification.datasets_to_union",
+                    "rtx": "integration.int.rtx.nodes.norm",
+                    "robokop": "integration.int.robokop.nodes.norm",
+                    "medical_team": "ingestion.int.ec_medical_team.nodes",
+                },
                 outputs="integration.prm.unified_nodes",
                 name="create_prm_unified_nodes",
             ),
             # union edges
             node(
                 func=nodes.unify_edges,
-                inputs=[
-                    "integration.int.rtx.edges.norm",
-                    "integration.int.robokop.edges.norm",
-                    "ingestion.int.ec_medical_team.edges",
-                ],
+                inputs={
+                    "datasets_to_union": "params:integration.unification.datasets_to_union",
+                    "rtx": "integration.int.rtx.edges.norm",
+                    "robokop": "integration.int.robokop.edges.norm",
+                    "medical_team": "ingestion.int.ec_medical_team.edges",
+                },
                 outputs="integration.prm.unified_edges",
                 name="create_prm_unified_edges",
             ),
