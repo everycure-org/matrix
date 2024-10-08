@@ -1,6 +1,7 @@
 from kedro.pipeline.node import Node
 from kedro.pipeline import Pipeline
 import pytest
+import yaml
 
 from matrix.argo import clean_name, fuse, FusedNode, generate_argo_config
 
@@ -343,3 +344,30 @@ def test_generate_argo_config() -> None:
     )
 
     assert argo_config is not None
+
+    parsed_config = yaml.safe_load(argo_config)
+
+    # Add assertions to verify the parsed configuration
+    assert isinstance(parsed_config, dict), "Parsed config should be a dictionary"
+    assert "apiVersion" in parsed_config, "Config should have 'apiVersion'"
+    assert "kind" in parsed_config, "Config should have 'kind'"
+    assert "metadata" in parsed_config, "Config should have 'metadata'"
+    assert "spec" in parsed_config, "Config should have 'spec'"
+
+    # Check specific values
+    assert parsed_config["apiVersion"] == "argoproj.io/v1alpha1"
+    assert parsed_config["kind"] == "Workflow"
+    assert parsed_config["metadata"]["namespace"] == namespace
+    assert parsed_config["metadata"]["generateName"].startswith(f"{username}-{run_name}-")
+
+    # Verify spec details
+    spec = parsed_config["spec"]
+    assert spec["entrypoint"] == "kedro"
+    assert any(param["name"] == "image" and param["value"] == image_name for param in spec["arguments"]["parameters"])
+    assert any(
+        param["name"] == "image_tag" and param["value"] == image_tag for param in spec["arguments"]["parameters"]
+    )
+
+    # Check if the pipeline is included in the templates
+    pipeline_names = [template["name"] for template in spec["templates"]]
+    assert "test" in pipeline_names, "The 'test' pipeline should be included in the templates"
