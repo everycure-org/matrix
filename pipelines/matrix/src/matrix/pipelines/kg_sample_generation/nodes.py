@@ -22,7 +22,10 @@ def get_random_selection_from_rtx(
     # Now we need to select the nodes that have been included in the selection of edges
     cond = (nodes.id == edges_node_ids_df.subject)
     nodes_sample_df = nodes.join(edges_node_ids_df, how='inner', on=cond).select(nodes.columns)
-    return nodes_sample_df.withColumn("kg_source", F.lit("rtx_kg2")), edges_sample_df.withColumn("kg_source", F.lit("rtx_kg2"))
+    return {
+        'nodes': nodes_sample_df.withColumn("kg_source", F.lit("rtx_kg2")),
+        'edges': edges_sample_df.withColumn("kg_source", F.lit("rtx_kg2"))
+    }
 
 
 
