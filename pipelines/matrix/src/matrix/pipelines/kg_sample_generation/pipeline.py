@@ -16,8 +16,8 @@ def create_pipeline(**kwargs) -> Pipeline:
                     "edges": "ingestion.int.rtx_kg2.edges",
                 },
                 outputs={
-                    "nodes": "ingestion.int.sample.rtx_kg2.nodes",
-                    "edges": "ingestion.int.sample.rtx_kg2.edges",
+                    "nodes": "ingestion.raw.rtx_kg2.nodes@pandas",
+                    "edges": "ingestion.raw.rtx_kg2.edges@pandas",
                 },
                 name="sampled_kg2_datasets",
             ),

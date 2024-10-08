@@ -21,7 +21,7 @@ def get_random_selection_of_edges(
     # Now we need to select the nodes that have been included in the selection of edges
     cond = (nodes.id == edges_node_ids_df.subject)
     nodes_sample_df = nodes.join(edges_node_ids_df, how='inner', on=cond).select(nodes.columns)
-    return edges_sample_df, nodes_sample_df
+    return nodes_sample_df, edges_sample_df
 
 
 
