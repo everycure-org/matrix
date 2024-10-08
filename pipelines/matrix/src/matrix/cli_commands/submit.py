@@ -11,6 +11,7 @@ from typing import Optional
 import click
 from kedro.framework.cli.utils import CONTEXT_SETTINGS
 from kedro.framework.project import pipelines
+
 from rich.console import Console
 from rich.logging import RichHandler
 from rich.panel import Panel
@@ -63,7 +64,7 @@ def submit(username: str, namespace: str, run_name: str, verbose: bool, dry_run:
         console.print("[green]✓[/green] Docker image built and pushed")
 
         console.print("Building Argo template...")
-        argo_template = build_argo_template(run_name, username, namespace, verbose=verbose)
+        argo_template = build_argo_template(run_name, username, namespace, pipelines)
         console.print("[green]✓[/green] Argo template built")
 
         console.print("Writing Argo template...")
@@ -75,14 +76,17 @@ def submit(username: str, namespace: str, run_name: str, verbose: bool, dry_run:
         console.print("[green]✓[/green] Namespace ensured")
 
         console.print("Applying Argo template...")
+        # TODO: Use filepath in apply_argo_template and add comment explaining what happens insidde.
         apply_argo_template(namespace, verbose=verbose)
         console.print("[green]✓[/green] Argo template applied")
 
         if not dry_run:
             console.print("Submitting workflow...")
+            # TODO: Use filepath in apply_argo_template and add comment explaining what happens insidde.
             submit_workflow(run_name, namespace, verbose=verbose)
             console.print("[green]✓[/green] Workflow submitted")
 
+        # TODO: To finish splitting pipeline - figure out where pipelien and other params are passed to the function
         console.print(Panel.fit(
             f"[bold green]Workflow {'prepared' if dry_run else 'submitted'} successfully![/bold green]\n"
             f"Run Name: {run_name}\n"
@@ -228,7 +232,7 @@ def build_push_docker(username: str, verbose: bool):
     run_subprocess(f"make docker_push TAG={username}", stream_output=verbose)
 
 
-def build_argo_template(run_name, username, namespace, verbose: bool) -> str:
+def build_argo_template(run_name, username, namespace, pipelines) -> str:
     """Build Argo workflow template."""
     image_name = "us-central1-docker.pkg.dev/mtrx-hub-dev-3of/matrix-images/matrix"
     matrix_root = Path(__file__).parent.parent 
