@@ -1,2 +1,16 @@
-moa_extraction.moa_extraction_options:
-  release_version: run-23-aug-setup-4 # Release version of the KG to extract MOAs for
+moa_extraction:
+  neo4j_runner: 
+    object: matrix.pipelines.moa_extraction.neo4j_runners.LocalNeo4jRunner
+    uri: "bolt://localhost:7687"
+    database: "everycure-run-23-aug-setup-4"
+    user: "neo4j"
+    password: "admin"
+  drug_types:
+    - Drug
+    - SmallMolecule
+    - ChemicalEntity
+  disease_types:
+    - Disease
+    - PhenotypicFeature
+    - BehavioralFeature
+    - DiseaseOrPhenotypicFeature
