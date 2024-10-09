@@ -1,10 +1,11 @@
 #!/bin/bash
 # Convience script that gets normalized nodes from the nodenorm endpoint
-set -e
+set -xe
 CURIES="$1"
 IFS=',' read -ra CURIE_ARRAY <<< "$CURIES"
 CURIE_JSON=$(printf '"%s",' "${CURIE_ARRAY[@]}" | sed 's/,$//')
-ENDPOINT="https://nodenorm.transltr.io/1.5/get_normalized_nodes"
+# NOTE: This section was partially generated using AI assistance.
+ENDPOINT="${2:-https://nodenorm.transltr.io/1.5/get_normalized_nodes}"
 
 curl -X POST "$ENDPOINT" \
      -H "Content-Type: application/json" \

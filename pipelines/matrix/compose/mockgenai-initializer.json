@@ -26,20 +26,27 @@
             "path": "/get_normalized_nodes",
             "method": "POST"
         },
-        "httpResponse": {
-            "body": {
-                "MOCK:CURIE:1": {
-                    "id": {
-                        "identifier": "NORMALIZED:CURIE:1"
-                    }
+        "httpResponseTemplate": {
+            "template": {
+                "statusCode": 200,
+                "headers": {
+                    "Content-Type": ["application/json"]
                 },
-                "MOCK:CURIE:2": null,
-                "MOCK:CURIE:3": {
-                    "id": {
-                        "identifier": "NORMALIZED:CURIE:3"
-                    }
-                }
-            }
+                "body": "#set($requestBody = $json.parse($request.body))
+                        #set($response = {})
+                        #foreach($curie in $requestBody.curies)
+                          #set($normalizedId = {
+                            'id': {
+                              'identifier': 'NORMALIZED:' + $curie
+                            }
+                          })
+                          $response.put($curie, $normalizedId)
+                        #end
+                        $json.serialize($response)"
+            },
+            "templateType": "VELOCITY"
         }
     }
 ]
+
+# NOTE: This file was partially generated using AI assistance.
