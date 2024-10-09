@@ -1,0 +1,7 @@
+moa_extraction.category_encoder:
+  type: pickle.PickleDataset
+  filepath: ${globals:paths.feat}/moa_extraction/category_encoder.pickle
+
+moa_extraction.relation_encoder:
+  type: pickle.PickleDataset
+  filepath: ${globals:paths.feat}/moa_extraction/relation_encoder.pickle
