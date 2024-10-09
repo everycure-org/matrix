@@ -55,8 +55,9 @@ Note specifically the use of `globals:data_sources.rtx-kg2` in the definition of
 
 The integration stage aims to produce our internal knowledge-graph, in [biolink](https://biolink.github.io/biolink-model/) format. As we ingest data from different sources, entity resolution becomes a prevalent topic. The integration step consolidates entities across sources to avoid data duplication in the knowledge graph.
 
-!!! info
-    To date, this step is missing as we're only ingesting data from a single source.
+There are 3 main steps in the integration pipeline:
+
+![](../assets/img/kg_integration_approach.excalidraw.svg)
 
 ### Embeddings
 
