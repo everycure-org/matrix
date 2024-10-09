@@ -1,6 +1,5 @@
 import unittest
 from unittest.mock import patch, MagicMock
-import requests
 
 from matrix.pipelines.preprocessing.nodes import resolve, normalize
 
