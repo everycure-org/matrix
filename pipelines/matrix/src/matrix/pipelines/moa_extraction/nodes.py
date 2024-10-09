@@ -1,10 +1,11 @@
 """Module with nodes for evaluation."""
 
-from typing import List
+from typing import List, Tuple
 
 from refit.v1.core.inject import inject_object
 
 from .neo4j_runners import Neo4jRunner
+from .path_embeddings import OneHotEncoder
 
 
 def _tag_edges_between_types(
@@ -96,4 +97,31 @@ def add_tags(
     _tag_edges_between_types(runner, disease_types, disease_types, "disease_disease", batch_size, verbose, prefix)
 
 
-# def get_one_hot_encoding(
+@inject_object()
+def get_one_hot_encodings(runner: Neo4jRunner) -> Tuple[OneHotEncoder, OneHotEncoder]:
+    """Get the one-hot encodings for node categories and edge relations .
+
+    Args:
+        runner: The Neo4j runner.
+
+    Returns:
+        A tuple of OneHotEncoder objects for node categories and edge relations.
+    """
+    # Get the node categories
+    result = runner.run("""
+        MATCH (n)
+        RETURN DISTINCT labels(n)
+    """)
+    node_categories = [category for category in result[0]]
+
+    # Get the edge relations
+    result = runner.run("""
+        MATCH ()-[r]-()
+        RETURN DISTINCT type(r) AS relation
+    """)
+    edge_relations = [relation for relation in result[0]]
+
+    # Create the one-hot encoders
+    node_encoder = OneHotEncoder(node_categories)
+    edge_encoder = OneHotEncoder(edge_relations)
+    return node_encoder, edge_encoder

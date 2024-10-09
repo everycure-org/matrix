@@ -22,7 +22,13 @@ def _preprocessing_pipeline() -> Pipeline:
                 },
                 outputs=None,
                 name="add_tags",
-            )
+            ),
+            node(
+                func=nodes.get_one_hot_encodings,
+                inputs={"runner": "params:moa_extraction.neo4j_runner"},
+                outputs=["moa_extraction.category_encoder", "moa_extraction.relation_encoder"],
+                name="get_one_hot_encodings",
+            ),
         ]
     )
 
