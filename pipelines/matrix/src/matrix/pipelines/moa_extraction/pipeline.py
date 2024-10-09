@@ -13,11 +13,13 @@ def _preprocessing_pipeline() -> Pipeline:
         [
             node(
                 func=nodes.add_tags,
-                inputs=[
-                    "params:moa_extraction.neo4j_runner",
-                    "params:moa_extraction.drug_types",
-                    "params:moa_extraction.disease_types",
-                ],
+                inputs={
+                    "runner": "params:moa_extraction.neo4j_runner",
+                    "drug_types": "params:moa_extraction.preprocessing_options.add_tags.drug_types",
+                    "disease_types": "params:moa_extraction.preprocessing_options.add_tags.disease_types",
+                    "batch_size": "params:moa_extraction.preprocessing_options.add_tags.batch_size",
+                    "verbose": "params:moa_extraction.preprocessing_options.add_tags.verbose",
+                },
                 outputs=None,
                 name="add_tags",
             )

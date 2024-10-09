@@ -2,7 +2,7 @@ moa_extraction:
   neo4j_runner: 
     object: matrix.pipelines.moa_extraction.neo4j_runners.LocalNeo4jRunner
     uri: "bolt://localhost:7687"
-    database: "everycure-run-23-aug-setup-4"
+    database: "everycure-test"
     user: "neo4j"
     password: "admin"
 
@@ -10,14 +10,8 @@ moa_extraction:
     add_tags:
       drug_types:
         - Drug
-        - SmallMolecule
-        - ChemicalEntity
       disease_types:
         - Disease
-        - PhenotypicFeature
-        - BehavioralFeature
-        - DiseaseOrPhenotypicFeature
-      batch_size: 1000000
-      verbose: True
-  
+      batch_size: 500
+      verbose: False
 
