@@ -17,6 +17,7 @@ pytest
 s3fs
 scikit-learn==1.4.0
 scikit-optimize
+torch
 xgboost
 hdfs
 graphdatascience

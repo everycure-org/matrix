@@ -4,7 +4,6 @@ from typing import List
 
 from refit.v1.core.inject import inject_object
 
-
 from .neo4j_runners import Neo4jRunner
 
 
