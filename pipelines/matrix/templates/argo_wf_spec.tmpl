@@ -50,6 +50,7 @@ spec:
       - name: pipeline
     container:
       imagePullPolicy: Always
+      # {{workflow...}} etc. are placeholders within the template. These placeholders will be dynamically substituted with real values when the workflow is submitted, not during the kubectl apply command.
       image: {% raw %} "{{workflow.parameters.image}}:{{workflow.parameters.image_tag}}" 
       {% endraw %}
       resources: # limit the resources
