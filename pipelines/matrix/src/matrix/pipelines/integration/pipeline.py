@@ -80,6 +80,35 @@ def create_pipeline(**kwargs) -> Pipeline:
             ),
             # Unify the KG based on standardized IDs
             node(
+                func=transform_robo_nodes,
+                inputs="ingestion.int.robokop.nodes",
+                outputs="integration.prm.robokop.nodes",
+                name="transform_robokop_nodes",
+                tags=["standardize"],
+            ),
+            node(
+                func=transform_robo_edges,
+                inputs="ingestion.int.robokop.edges",
+                outputs="integration.prm.robokop.edges",
+                name="transform_robokop_edges",
+                tags=["standardize"],
+            ),
+            node(
+                func=transform_rtxkg2_nodes,
+                inputs="ingestion.int.rtx_kg2.nodes",
+                outputs="integration.prm.rtx.nodes",
+                name="transform_rtx_nodes",
+                tags=["standardize"],
+            ),
+            node(
+                func=transform_rtxkg2_edges,
+                inputs="ingestion.int.rtx_kg2.edges",
+                outputs="integration.prm.rtx.edges",
+                name="transform_rtx_edges",
+                tags=["standardize"],
+            ),
+            # TODO missing between transformation and unification are the "node norm API calls"
+            node(
                 func=nodes.unify_nodes,
                 inputs={
                     "datasets_to_union": "params:integration.unification.datasets_to_union",
