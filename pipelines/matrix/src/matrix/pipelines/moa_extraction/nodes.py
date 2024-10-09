@@ -4,6 +4,7 @@ from typing import List
 
 from refit.v1.core.inject import inject_object
 
+
 from .neo4j_runners import Neo4jRunner
 
 
@@ -94,3 +95,6 @@ def add_tags(
     """
     _tag_edges_between_types(runner, drug_types, disease_types, "drug_disease", batch_size, verbose, prefix)
     _tag_edges_between_types(runner, disease_types, disease_types, "disease_disease", batch_size, verbose, prefix)
+
+
+# def get_one_hot_encoding(
