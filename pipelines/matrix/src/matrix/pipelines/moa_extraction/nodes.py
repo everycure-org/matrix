@@ -1,11 +1,13 @@
 """Module with nodes for evaluation."""
 
-from typing import List, Tuple
+from typing import List, Tuple, Dict, Any
 
 from refit.v1.core.inject import inject_object
 
 from .neo4j_runners import Neo4jRunner
 from .path_embeddings import OneHotEncoder
+from .path_mapping import PathMapper
+from matrix.datasets.paths import TwoHopPaths, ThreeHopPaths
 
 
 def _tag_edges_between_types(
@@ -58,7 +60,7 @@ def _tag_edges_between_types(
         WHERE r.{prefix}{tag} IS NULL OR r.{prefix}{tag} = true
         WITH r LIMIT {batch_size}
         SET r.{prefix}{tag} = false
-        RETURN count(r) AS updated
+        RETURN count(r)
     """)
     # Set the tag for the specific edges
     for type_1 in type_1_lst:
@@ -70,7 +72,7 @@ def _tag_edges_between_types(
                 WHERE r.{prefix}{tag} = false
                 WITH r LIMIT {batch_size}
                 SET r.{prefix}{tag} = true
-                RETURN count(r) AS updated
+                RETURN count(r)
             """)
 
 
@@ -110,18 +112,39 @@ def get_one_hot_encodings(runner: Neo4jRunner) -> Tuple[OneHotEncoder, OneHotEnc
     # Get the node categories
     result = runner.run("""
         MATCH (n)
-        RETURN DISTINCT labels(n)
+        RETURN DISTINCT labels(n) AS category
     """)
-    node_categories = [category for category in result[0]]
+    # Neo4j result is a list of lists of the form [["Entity", category]]
+    result_flattened_unique = {item for sublist in result for item in sublist[0]}
+    node_categories = [category for category in result_flattened_unique if category != "Entity"]
 
     # Get the edge relations
     result = runner.run("""
         MATCH ()-[r]-()
         RETURN DISTINCT type(r) AS relation
     """)
-    edge_relations = [relation for relation in result[0]]
+    # Neo4j result is a list of lists of the form [relation]
+    edge_relations = [relation[0] for relation in result]
 
     # Create the one-hot encoders
-    node_encoder = OneHotEncoder(node_categories)
-    edge_encoder = OneHotEncoder(edge_relations)
-    return node_encoder, edge_encoder
+    category_encoder = OneHotEncoder(node_categories)
+    relation_encoder = OneHotEncoder(edge_relations)
+    return category_encoder, relation_encoder
+
+
+@inject_object()
+def map_drug_mech_db(
+    runner: Neo4jRunner,
+    drug_mech_db: Dict[str, Any],
+    mapper: PathMapper,
+    synonymizer_endpoint: str,
+) -> Tuple[TwoHopPaths, ThreeHopPaths]:
+    """Map the DrugMechDB indication paths to 2 and 3-hop paths in the graph.
+
+    Args:
+        runner: The Neo4j runner.
+        drug_mech_db: The DrugMechDB indication paths.
+        mapper: Strategy for mapping paths to the graph.
+        synonymizer_endpoint: The endpoint of the synonymizer.
+    """
+    return mapper.map_paths(drug_mech_db, synonymizer_endpoint)
