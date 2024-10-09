@@ -136,13 +136,13 @@ Install as follows, then create a virtual env in the `matrix/pipelines/matrix` d
     # activate virtual environment
     source .venv/bin/activate
     # Install the requirements.txt file that is in the matrix repository. First navigate to the repo
-    `cd matrix/pipelines/matrix`
+    cd matrix/pipelines/matrix
     # lists files that are hidden, you should see requirements.txt in line
-    `ls -a` 
+    ls -a
     # installs the requirements in the activated uv virtual environment
-    'uv pip install -r requirements.txt' 
+    uv pip install -r requirements.txt'
     # deactivate the virtual environment
-    `deactivate`
+    deactivate
     
     ```
 
@@ -186,7 +186,7 @@ Make sure you have [docker](https://www.docker.com/) and [docker-compose](https:
     # To re-check if your version is now updated
     docker-compose --version
     ```    
-    If you stumble upon socket permission denied error, you can find a potential solution within the [common errors section](../FAQ/common_errors.md)
+    If you stumble upon `socket permission denied` error, you can find a potential solution within the [common errors section](../FAQ/common_errors.md)
 === "Linux"
 
     ```bash
