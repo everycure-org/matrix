@@ -12,9 +12,9 @@ def _tag_edges_between_types(
     type_1_lst: List[str],
     type_2_lst: List[str],
     tag: str,
+    batch_size: int,
+    verbose: bool,
     prefix: str = "_moa_extraction_",
-    batch_size=1000000,
-    verbose: bool = True,
 ) -> None:
     """Tag edges between two types.
 
@@ -27,9 +27,9 @@ def _tag_edges_between_types(
         type_1_lst: List of types for the first node.
         type_2_lst: List of types for the second node.
         tag: The tag to add.
-        prefix: The prefix to add to the tag.
         batch_size: The batch size to use for the query.
         verbose: Whether to print the number of batches completed.
+        prefix: The prefix to add to the tag.
     """
 
     def update_relationships_in_batches(query_with_limit: str):
@@ -74,13 +74,23 @@ def _tag_edges_between_types(
 
 
 @inject_object()
-def add_tags(runner: Neo4jRunner, drug_types: List[str], disease_types: List[str]) -> None:
+def add_tags(
+    runner: Neo4jRunner,
+    drug_types: List[str],
+    disease_types: List[str],
+    batch_size: int,
+    verbose: bool,
+    prefix: str = "_moa_extraction_",
+) -> None:
     """Add tags to the Neo4j database.
 
     Args:
         runner: The Neo4j runner.
         drug_types: List of KG node types representing drugs.
         disease_types: List of KG node types representing diseases.
+        batch_size: The batch size to use for the query.
+        verbose: Whether to print the number of batches completed.
+        prefix: The prefix to add to the tag.
     """
-    _tag_edges_between_types(runner, drug_types, disease_types, "drug_disease")
-    _tag_edges_between_types(runner, disease_types, disease_types, "disease_disease")
+    _tag_edges_between_types(runner, drug_types, disease_types, "drug_disease", batch_size, verbose, prefix)
+    _tag_edges_between_types(runner, disease_types, disease_types, "disease_disease", batch_size, verbose, prefix)
