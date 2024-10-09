@@ -1,8 +1,4 @@
-"""Tests for the submit CLI command.
-
-NOTE: This file was partially generated using AI assistance.
-"""
-
+from pathlib import Path
 import pytest
 from unittest.mock import patch, MagicMock
 from click.testing import CliRunner
@@ -79,7 +75,7 @@ def test_ensure_namespace_new(mock_run_subprocess):
 
 
 def test_apply_argo_template(mock_run_subprocess):
-    apply_argo_template("test_namespace", verbose=True)
+    apply_argo_template("test_namespace", Path("sample_template.yml"), verbose=True)
     mock_run_subprocess.assert_called_once()
 
 
