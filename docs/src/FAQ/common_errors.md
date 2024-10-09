@@ -329,4 +329,3 @@ sudo chmod 660 /var/run/docker.sock
 ```
 Note that these permissions might reset when Docker or WSL is restarted, and you may need to reapply them.
 
-
