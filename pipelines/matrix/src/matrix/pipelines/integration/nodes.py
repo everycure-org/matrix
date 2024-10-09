@@ -1,42 +1,34 @@
 """Nodes for the ingration pipeline."""
 
-from functools import reduce, partial
+from functools import partial, reduce
 
+import pandera.pyspark as pa
 import pyspark.sql.functions as F
 from pyspark.sql import DataFrame
-
-# from matrix.schemas.knowledge_graph import KGNodeSchema
 from refit.v1.core.inline_has_schema import has_schema
 from refit.v1.core.inline_primary_key import primary_key
 
+from matrix.schemas.knowledge_graph import KGEdgeSchema, KGNodeSchema
 
+
+@pa.check_output(KGEdgeSchema)
 def unify_edges(*edges) -> DataFrame:
     """Function to unify edges datasets."""
     # Union edges
     union = reduce(partial(DataFrame.unionByName, allowMissingColumns=True), edges)
 
     # Deduplicate
-    return union.groupBy(["subject", "predicate", "object"]).agg(
-        F.collect_list("knowledge_source").alias("knowledge_sources"),
-        F.collect_list("kg_source").alias("kg_sources"),
-    )
+    return KGEdgeSchema.group_edges_by_id(union)
 
 
+@pa.check_output(KGNodeSchema)
 def unify_nodes(*nodes) -> DataFrame:
     """Function to unify nodes datasets."""
     # Union nodes
 
     union = reduce(partial(DataFrame.unionByName, allowMissingColumns=True), nodes)
 
-    # Deduplicate
-    # FUTURE: We should improve selection of name and description currently
-    # selecting the first non-null, which might not be as desired.
-    return union.groupBy(["id"]).agg(
-        F.collect_list("kg_source").alias("kg_sources"),
-        F.first("name").alias("name"),
-        F.first("description").alias("description"),
-        F.first("category").alias("category"),
-    )
+    return KGNodeSchema.group_nodes_by_id(union)
 
 
 @has_schema(
