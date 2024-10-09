@@ -46,6 +46,10 @@ def cli():
 # fmt: on
 def submit(username: str, namespace: str, run_name: str, verbose: bool, dry_run: bool):
     """Submit the end-to-end workflow."""
+    _submit(username, namespace, run_name, verbose, dry_run)
+
+
+def _submit(username: str, namespace: str, run_name: str, verbose: bool, dry_run: bool) -> None:
     if verbose:
         logging.getLogger().setLevel(logging.DEBUG)
 
@@ -64,6 +68,7 @@ def submit(username: str, namespace: str, run_name: str, verbose: bool, dry_run:
         console.print("[green]✓[/green] Docker image built and pushed")
 
         console.print("Building Argo template...")
+        # TODO: Change which pipelines are passed here. Instead of
         argo_template = build_argo_template(run_name, username, namespace, pipelines)
         console.print("[green]✓[/green] Argo template built")
 
@@ -76,17 +81,15 @@ def submit(username: str, namespace: str, run_name: str, verbose: bool, dry_run:
         console.print("[green]✓[/green] Namespace ensured")
 
         console.print("Applying Argo template...")
-        # TODO: Use filepath in apply_argo_template and add comment explaining what happens insidde.
-        apply_argo_template(namespace, verbose=verbose)
+        apply_argo_template(namespace, file_path, verbose=verbose)
         console.print("[green]✓[/green] Argo template applied")
 
         if not dry_run:
             console.print("Submitting workflow...")
-            # TODO: Use filepath in apply_argo_template and add comment explaining what happens insidde.
             submit_workflow(run_name, namespace, verbose=verbose)
             console.print("[green]✓[/green] Workflow submitted")
 
-        # TODO: To finish splitting pipeline - figure out where pipelien and other params are passed to the function
+        # TODO: To finish splitting pipeline - figure out where pipeline and other params are passed to the function
         console.print(Panel.fit(
             f"[bold green]Workflow {'prepared' if dry_run else 'submitted'} successfully![/bold green]\n"
             f"Run Name: {run_name}\n"
@@ -104,6 +107,8 @@ def submit(username: str, namespace: str, run_name: str, verbose: bool, dry_run:
             console.print_exception()
         sys.exit(1)
 
+
+        
 
 def run_subprocess(
     cmd: str,
@@ -261,10 +266,10 @@ def ensure_namespace(namespace, verbose: bool):
         run_subprocess(f"kubectl create namespace {namespace}", check=True, stream_output=verbose)
 
 
-def apply_argo_template(namespace, verbose: bool):
-    """Apply the Argo workflow template."""
+def apply_argo_template(namespace, file_path: Path, verbose: bool):
+    """Apply the Argo workflow template, creating the resources in Kubernetes"""
     run_subprocess(
-        f"kubectl apply -f templates/argo-workflow-template.yml -n {namespace}",
+        f"kubectl apply -f {file_path} -n {namespace}",
         check=True,
         stream_output=verbose,
     )
