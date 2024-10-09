@@ -51,6 +51,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                             "params:evaluation.score_col_name",
                         ],
                         outputs=None,
+                        name=f"perform_{model}_matrix_checks",
                         tags="matrix_checks",
                     )
                 ]
