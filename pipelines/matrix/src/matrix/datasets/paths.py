@@ -2,6 +2,8 @@
 
 import pandas as pd
 
+from .utils import BaseParquetDataset
+
 
 class KGPaths:
     """Class representing a set of paths in a knowledge graph."""
@@ -41,3 +43,13 @@ class KGPaths:
     def add_paths_from_result(self, paths) -> None:
         """Add a path to the paths_df from the results of a Neo4j query."""
         ...
+
+
+class KGPathsDataset(BaseParquetDataset):
+    """Dataset adaptor to read KGPaths using Kedro's dataset functionality."""
+
+    def _load(self) -> KGPaths:
+        return self._load_with_retry(KGPaths)
+
+
+# Next: add to config

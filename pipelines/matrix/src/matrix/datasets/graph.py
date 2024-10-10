@@ -4,16 +4,11 @@ Module containing knowledge graph representation and utilities.
 """
 
 import pandas as pd
+from typing import Any, List
+
 import logging
 
-from kedro_datasets.pandas import ParquetDataset
-
-from typing import Any, Dict, List
-from kedro.io.core import (
-    DatasetError,
-    Version,
-)
-
+from .utils import BaseParquetDataset
 
 logger = logging.getLogger(__name__)
 
@@ -76,45 +71,8 @@ class KnowledgeGraph:
         return self._nodes[self._nodes["id"] == node_id][col_name]
 
 
-class KnowledgeGraphDataset(ParquetDataset):
+class KnowledgeGraphDataset(BaseParquetDataset):
     """Dataset adaptor to read KnowledgeGraph using Kedro's dataset functionality."""
 
-    def __init__(  # noqa: PLR0913
-        self,
-        *,
-        filepath: str,
-        load_args: Dict[str, Any] = None,
-        save_args: Dict[str, Any] = None,
-        version: Version = None,
-        credentials: Dict[str, Any] = None,
-        fs_args: Dict[str, Any] = None,
-        metadata: Dict[str, Any] = None,
-        **kwargs,
-    ) -> None:
-        """Initializes the KnowledgeGraphDataset."""
-        super().__init__(
-            filepath=filepath,
-            load_args=load_args,
-            save_args=save_args,
-            version=version,
-            credentials=credentials,
-            fs_args=fs_args,
-            metadata=metadata,
-            **kwargs,
-        )
-
     def _load(self) -> KnowledgeGraph:
-        attempt = 0
-
-        # Retrying due to a very flaky error, causing GCS not retrieving
-        # parquet files on first try.
-        while attempt < 3:
-            try:
-                # Attempt reading the object
-                # https://github.com/everycure-org/matrix/issues/71
-                return KnowledgeGraph(super()._load())
-            except FileNotFoundError:
-                attempt += 1
-                logger.warning("Parquet file not found, retrying!")
-
-        raise DatasetError("Unable to find underlying Parquet file!")
+        return self._load_with_retry(KnowledgeGraph)
