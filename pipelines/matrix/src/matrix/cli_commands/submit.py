@@ -59,7 +59,7 @@ def submit(username: str, namespace: str, run_name: str, pipeline: Optional[List
     _submit(username, namespace, run_name, pipelines_to_submit, verbose, dry_run)
 
 
-def _submit(username: str, namespace: str, run_name: str, pipelines: List[Pipeline], verbose: bool, dry_run: bool) -> None:
+def _submit(username: str, namespace: str, run_name: str, pipelines: tuple[Pipeline], verbose: bool, dry_run: bool) -> None:
     try:
         console.rule("[bold blue]Submitting Workflow")
 
