@@ -71,13 +71,19 @@ def test_submit_simple(mock_submit_internal: None, mock_pipelines: None) -> None
     )
 
 
-def test_submit_namespace(mock_submit_internal: None):
+def test_submit_namespace(mock_pipelines: None, mock_submit_internal: None):
     runner = CliRunner()
-    result = runner.invoke(submit, ["--username", "testuser", "--namespace", "test_namespace"])
+    result = runner.invoke(
+        submit, ["--username", "testuser", "--namespace", "test_namespace", "--run-name", "test-run"]
+    )
     assert result.exit_code == 0
-    # assert that mocked _submit was called with the correct arguments
     mock_submit_internal.assert_called_once_with(
-        "testuser", "test_namespace", "test-run", kedro_pipelines, False, False
+        username="testuser",
+        namespace="test_namespace",
+        run_name="test-run",
+        pipelines=mock_pipelines,
+        verbose=False,
+        dry_run=False,
     )
 
 
