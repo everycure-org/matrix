@@ -190,8 +190,10 @@ Make sure you have [docker](https://www.docker.com/) and [docker-compose](https:
 === "Linux"
 
     ```bash
+    # for ubuntu/Debian
     sudo apt install docker #installs docker desktop
-    brew install docker docker-compose #installs CLI commands
+    # for arch/manjaro. NOTE: need to explicitly install `docker-buildx`
+    sudo pacman -Syu docker docker-compose docker-buildx
     ```
 
 
