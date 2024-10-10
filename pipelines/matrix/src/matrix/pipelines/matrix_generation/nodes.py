@@ -258,8 +258,8 @@ def generate_report(
     disease_curie_to_name = {row["curie"]: row["name"] for _, row in diseases.iterrows()}
 
     # Add additional information for drugs and diseases
-    top_pairs["drug_name"] = top_pairs["source"].map(drug_curie_to_name)
-    top_pairs["disease_name"] = top_pairs["target"].map(disease_curie_to_name)
+    top_pairs["kg_drug_name"] = top_pairs["source"].map(drug_curie_to_name)
+    top_pairs["kg_disease_name"] = top_pairs["target"].map(disease_curie_to_name)
 
     # Flag known positives and negatives
     known_pair_is_pos = known_pairs["y"].eq(1)
@@ -275,15 +275,20 @@ def generate_report(
     )
 
     # Rename ID columns
-    top_pairs = top_pairs.rename(columns={"source": "drug_id"})
-    top_pairs = top_pairs.rename(columns={"target": "disease_id"})
+    top_pairs = top_pairs.rename(columns={"source": "kg_drug_id"})
+    top_pairs = top_pairs.rename(columns={"target": "kg_disease_id"})
+
+    # Add corresponding drug/disease names/ids from official lists
+
+    top_pairs["drug_name"] = top_pairs["source"].map(drug_curie_to_name)
+    top_pairs["disease_name"] = top_pairs["target"].map(disease_curie_to_name)
 
     # Reorder columns for better readability
     columns_order = [
-        "drug_id",
-        "drug_name",
-        "disease_id",
-        "disease_name",
+        "kg_drug_id",
+        "kg_drug_name",
+        "kg_disease_id",
+        "kg_disease_name",
         score_col_name,
         "is_known_positive",
         "is_known_negative",
@@ -317,6 +322,6 @@ def generate_metadata(matrix_report: pd.DataFrame) -> pd.DataFrame:
 
     data_sources = ["rtx-kg2", "robokop", "ec-medical-team", "clinical-trial-data", "ec-drug-list", "ec-disease-list"]
     for source in data_sources:
-        metadata[f"{source.replace('-', '_')}_version"] = conf_globals["data_sources"][source]["version"]
+        metadata[f"{source}_version"] = conf_globals["data_sources"][source]["version"]
 
     return pd.DataFrame(metadata, index=[0]).transpose().reset_index()
