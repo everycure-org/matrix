@@ -42,17 +42,36 @@ def mock_submit_internal():
         yield mock
 
 
-def test_submit_simple(mock_dependencies: None, mock_submit_internal: None):
+@pytest.fixture
+def mock_submit_internal():
+    with patch("matrix.cli_commands.submit._submit") as mock:
+        yield mock
+
+
+@pytest.fixture
+def mock_pipelines():
+    pipelines = {"mock_pipeline": MagicMock()}
+
+    with patch("matrix.cli_commands.submit.kedro_pipelines", return_value=pipelines) as mock:
+        yield mock
+
+
+def test_submit_simple(mock_submit_internal: None, mock_pipelines: None) -> None:
     runner = CliRunner()
-    result = runner.invoke(submit, ["--username", "testuser"])
+    result = runner.invoke(submit, ["--username", "testuser", "--run-name", "test-run"])
     assert result.exit_code == 0
-    # assert that mocked _submit was called with the correct arguments
+
     mock_submit_internal.assert_called_once_with(
-        "testuser", "argo-workflows", "test-run", kedro_pipelines, False, False
+        username="testuser",
+        namespace="argo-workflows",
+        run_name="test-run",
+        pipelines=mock_pipelines,
+        verbose=False,
+        dry_run=False,
     )
 
 
-def test_submit_namespace(mock_dependencies: None, mock_submit_internal: None):
+def test_submit_namespace(mock_submit_internal: None):
     runner = CliRunner()
     result = runner.invoke(submit, ["--username", "testuser", "--namespace", "test_namespace"])
     assert result.exit_code == 0
@@ -85,7 +104,7 @@ def test_submit_pipelines(mock_dependencies: None, mock_submit_internal: None):
 
 
 @pytest.mark.skip(reason="Test broken, needs to be fixed")
-def test_submit_multiple_pipelines(mock_dependencies: None, mock_submit_internal: None):
+def test_submit_multiple_pipelines(mock_submit_internal: None):
     runner = CliRunner()
     result = runner.invoke(
         submit,

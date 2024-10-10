@@ -6,7 +6,7 @@ import secrets
 import subprocess
 import sys
 import time
-from typing import List, Optional
+from typing import Optional
 
 import click
 from kedro.framework.cli.utils import CONTEXT_SETTINGS
@@ -40,23 +40,29 @@ def cli():
 # fmt: off
 @cli.command()
 @click.option("--username", type=str, required=True, help="Specify the username to use")
-@click.option("--namespace", type=str, default=None, help="Specify a custom namespace")
+@click.option("--namespace", type=str, default="argo-workflows", help="Specify a custom namespace")
 @click.option("--run-name", type=str, default=None, help="Specify a custom run name, defaults to branch")
 @click.option("--pipeline", type=str, multiple=True, default=None, help="Specify which pipelines to run")
 @click.option("--verbose", "-v", is_flag=True, default=False, help="Enable verbose output")
 @click.option("--dry-run", "-d", is_flag=True, default=False, help="Does everything except submit the workflow")
 # fmt: on
-def submit(username: str, namespace: str, run_name: str, pipeline: Optional[List[str]], verbose: bool, dry_run: bool):
+def submit(username: str, namespace: str, run_name: str, pipeline: tuple[str], verbose: bool, dry_run: bool):
     """Submit the end-to-end workflow."""
     if verbose:
         logging.getLogger().setLevel(logging.DEBUG)
 
     run_name = get_run_name(run_name)
-    namespace = namespace or "argo-workflows"
     
-    pipelines_to_submit = kedro_pipelines if pipeline is None else pipeline
+    pipelines_to_submit = kedro_pipelines if pipeline == () else pipeline
 
-    _submit(username, namespace, run_name, pipelines_to_submit, verbose, dry_run)
+    _submit(
+        username=username,
+        namespace=namespace,
+        run_name=run_name,
+        pipelines=pipelines_to_submit,
+        verbose=verbose,
+        dry_run=dry_run,
+    )
 
 
 def _submit(username: str, namespace: str, run_name: str, pipelines: tuple[Pipeline], verbose: bool, dry_run: bool) -> None:
