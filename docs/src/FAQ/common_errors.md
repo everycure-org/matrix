@@ -301,6 +301,34 @@ Then agree to the license agreement with `A`
 !!! note 
     We currently do not push the arm64 image to the registry because our cluster runs on intel CPUs. So this is only meant for local development.
 
+## Permission denied error when trying to connect to Docker daemon on WSL
+
+We noticed that some WSL users encountered the following error when onboarding, specifically when running `Make` for the first time:
+```
+permission denied while trying to connect to the Docker daemon socket at unix:///var/run/docker.sock: Post "http://%2Fvar%2Frun%2Fdocker.sock/v1.24/images/us-central1-docker.pkg.dev/mtrx-hub-dev-3of/matrix-images/matrix/tag?repo=us-central1-docker.pkg.dev%2Fmtrx-hub-dev-3of%2Fmatrix-images%2Fmatrix&tag=robynmac": dial unix /var/run/docker.sock: connect: permission denied
+make: *** [Makefile:57: docker_build] Error 1
+```
+
+This error indicates that you have not added your user to the docker group. One solution to fix this is to run the following:
+```
+# Create a 'docker' group where members are allowed to interact with the Docker daemon w/o sudo 
+sudo groupadd docker
+
+# Add your user to the group
+sudo usermod -aG docker ${USER}
+
+# Refresh group membership (alternatively you can quit WSL (`wsl --shutdown`) and and re-open WSL terminal)
+su -s ${USER}
+
+# To test if it worked
+docker run hello-world
+```
+If the hello-world container works, then you have successfully added your user to the group, and now you should have correct permissions to interact with docker. However if the error persists after that, you might want to modify the permissions of the docker socket directly. The following command gives the owner of the docker group members read and write access, ensuring that only user who owns the file and members of the docker group can communicate with the docker daemon.
+```
+sudo chmod 660 /var/run/docker.sock
+```
+Note that these permissions might reset when Docker or WSL is restarted, and you may need to reapply them.
+
 ## Runtime error `dictionary changed size during iteration`
 ```
 matrix      | RuntimeError: dictionary changed size during iteration
