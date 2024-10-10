@@ -42,13 +42,45 @@ def mock_submit_internal():
         yield mock
 
 
-def test_submit(mock_dependencies: None, mock_submit_internal: None):
+def test_submit_simple(mock_dependencies: None, mock_submit_internal: None):
     runner = CliRunner()
     result = runner.invoke(submit, ["--username", "testuser"])
     assert result.exit_code == 0
     # assert that mocked _submit was called with the correct arguments
     mock_submit_internal.assert_called_once_with(
         "testuser", "argo-workflows", "test-run", kedro_pipelines, False, False
+    )
+
+
+def test_submit_namespace(mock_dependencies: None, mock_submit_internal: None):
+    runner = CliRunner()
+    result = runner.invoke(submit, ["--username", "testuser", "--namespace", "test_namespace"])
+    assert result.exit_code == 0
+    # assert that mocked _submit was called with the correct arguments
+    mock_submit_internal.assert_called_once_with(
+        "testuser", "test_namespace", "test-run", kedro_pipelines, False, False
+    )
+
+
+def test_submit_pipelines(mock_dependencies: None, mock_submit_internal: None):
+    runner = CliRunner()
+    result = runner.invoke(
+        submit,
+        [
+            "--username",
+            "testuser",
+            "--namespace",
+            "test_namespace",
+            "--pipelines",
+            "test_pipeline",
+            "--pipelines",
+            "test_pipeline2",
+        ],
+    )
+    assert result.exit_code == 0
+    # assert that mocked _submit was called with the correct arguments
+    mock_submit_internal.assert_called_once_with(
+        "testuser", "test_namespace", "test-run", ["test_pipeline", "test_pipeline2"], False, False
     )
 
 
