@@ -148,4 +148,4 @@ def map_drug_mech_db(
         synonymizer_endpoint: The endpoint of the synonymizer.
     """
     paths = mapper.run(runner, drug_mech_db, synonymizer_endpoint)
-    return paths
+    return paths.df
