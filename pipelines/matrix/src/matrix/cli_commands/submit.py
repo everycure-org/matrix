@@ -6,7 +6,7 @@ import secrets
 import subprocess
 import sys
 import time
-from typing import Optional
+from typing import Dict, Optional
 
 import click
 from kedro.framework.cli.utils import CONTEXT_SETTINGS
@@ -65,7 +65,7 @@ def submit(username: str, namespace: str, run_name: str, pipeline: tuple[str], v
     )
 
 
-def _submit(username: str, namespace: str, run_name: str, pipelines: tuple[Pipeline], verbose: bool, dry_run: bool) -> None:
+def _submit(username: str, namespace: str, run_name: str, pipelines: Dict[str, Pipeline], verbose: bool, dry_run: bool) -> None:
     try:
         console.rule("[bold blue]Submitting Workflow")
 
