@@ -15,7 +15,6 @@ from matrix.cli_commands.submit import (
     run_subprocess,
 )
 import subprocess
-from kedro.framework.project import pipelines as kedro_pipelines
 
 
 @pytest.fixture
@@ -44,24 +43,24 @@ def mock_submit_internal():
 
 @pytest.fixture(scope="function")
 def mock_pipelines():
-    pipelines = {
+    pipeline_dict = {
         "mock_pipeline": MagicMock(),
     }
 
-    with patch("matrix.cli_commands.submit.kedro_pipelines", return_value=pipelines) as mock:
+    with patch("matrix.cli_commands.submit.kedro_pipelines", return_value=pipeline_dict) as mock:
         yield mock
 
 
 @pytest.fixture(scope="function")
 def mock_multiple_pipelines():
-    pipelines = {
+    pipeline_dict = {
         "mock_pipeline": MagicMock(),
         "mock_pipeline2": MagicMock(),
         "mock_pipeline3": MagicMock(),
     }
 
-    with patch("matrix.cli_commands.submit.kedro_pipelines", return_value=pipelines) as mock_pipelines:
-        yield mock_pipelines
+    with patch("matrix.cli_commands.submit.kedro_pipelines", new=pipeline_dict) as mock:
+        yield mock
 
 
 def test_submit_simple(mock_submit_internal: None, mock_pipelines: None) -> None:
@@ -115,7 +114,7 @@ def test_submit_pipelines(mock_multiple_pipelines: None, mock_submit_internal: N
         username="testuser",
         namespace="test_namespace",
         run_name="test-run",
-        pipelines={"mock_pipeline2": mock_multiple_pipelines.return_value["mock_pipeline2"]},
+        pipelines={"mock_pipeline2": mock_multiple_pipelines["mock_pipeline2"]},
         verbose=False,
         dry_run=False,
     )
