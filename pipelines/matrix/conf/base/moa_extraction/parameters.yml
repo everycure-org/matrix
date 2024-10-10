@@ -20,4 +20,7 @@ moa_extraction:
       batch_size: 1000000
       verbose: True
   
-
+  path_mapping:
+    mapper: 
+      object: matrix.pipelines.moa_extraction.path_mapping.PathMapper
+    synonymizer_endpoint: http://localhost:5000/synonymize

@@ -7,7 +7,7 @@ from refit.v1.core.inject import inject_object
 from .neo4j_runners import Neo4jRunner
 from .path_embeddings import OneHotEncoder
 from .path_mapping import PathMapper
-from matrix.datasets.paths import TwoHopPaths, ThreeHopPaths
+from matrix.datasets.paths import KGPaths
 
 
 def _tag_edges_between_types(
@@ -138,7 +138,7 @@ def map_drug_mech_db(
     drug_mech_db: Dict[str, Any],
     mapper: PathMapper,
     synonymizer_endpoint: str,
-) -> Tuple[TwoHopPaths, ThreeHopPaths]:
+) -> KGPaths:
     """Map the DrugMechDB indication paths to 2 and 3-hop paths in the graph.
 
     Args:
@@ -147,4 +147,5 @@ def map_drug_mech_db(
         mapper: Strategy for mapping paths to the graph.
         synonymizer_endpoint: The endpoint of the synonymizer.
     """
-    return mapper.map_paths(drug_mech_db, synonymizer_endpoint)
+    paths = mapper.run(runner, drug_mech_db, synonymizer_endpoint)
+    return paths

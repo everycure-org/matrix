@@ -36,6 +36,8 @@ def _preprocessing_pipeline() -> Pipeline:
                 inputs={
                     "runner": "params:moa_extraction.neo4j_runner",
                     "drug_mech_db": "moa_extraction.raw.drug_mech_db",
+                    "mapper": "params:moa_extraction.path_mapping.mapper",
+                    "synonymizer_endpoint": "params:moa_extraction.path_mapping.synonymizer_endpoint",
                 },
                 outputs=None,
                 name="map_drug_mech_db",
