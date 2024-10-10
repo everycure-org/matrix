@@ -47,7 +47,7 @@ def cli():
 @click.option("--dry-run", "-d", is_flag=True, default=False, help="Does everything except submit the workflow")
 # fmt: on
 def submit(username: str, namespace: str, run_name: str, pipeline: tuple[str], verbose: bool, dry_run: bool):
-    """Submit the end-to-end workflow."""
+    """Submit the end-to-end workflow. """
     if verbose:
         logging.getLogger().setLevel(logging.DEBUG)
 
@@ -75,6 +75,23 @@ def submit(username: str, namespace: str, run_name: str, pipeline: tuple[str], v
 
 
 def _submit(username: str, namespace: str, run_name: str, pipelines: Dict[str, Pipeline], verbose: bool, dry_run: bool) -> None:
+    """Submit the end-to-end workflow.
+
+    This class contains redundancy.
+
+    Argo template is generated with all 
+
+    
+
+    Args:
+        username (str): The username to use for the workflow.
+        namespace (str): The namespace to use for the workflow.
+        run_name (str): The name of the run.
+        pipelines (Dict[str, Pipeline]): The pipelines to run.
+        verbose (bool): If True, enable verbose output.
+        dry_run (bool): If True, do not submit the workflow.
+    """
+    
     try:
         console.rule("[bold blue]Submitting Workflow")
 
@@ -285,7 +302,10 @@ def ensure_namespace(namespace, verbose: bool):
 
 
 def apply_argo_template(namespace, file_path: Path, verbose: bool):
-    """Apply the Argo workflow template, making it available in the cluster."""
+    """Apply the Argo workflow template, making it available in the cluster.
+    
+    `kubectl apply -f <file_path> -n <namespace>` will make the template available as a resource (but will not create any other resources, and will not trigger the workshop).
+    """
     run_subprocess(
         f"kubectl apply -f {file_path} -n {namespace}",
         check=True,
@@ -295,11 +315,17 @@ def apply_argo_template(namespace, file_path: Path, verbose: bool):
 
 def submit_workflow(run_name, namespace, verbose: bool):
     """Submit the Argo workflow and provide instructions for watching."""
-    submit_cmd = (
-        f"argo submit --name {run_name} -n {namespace} "
-        f"--from wftmpl/{run_name} -p run_name={run_name} "
-        f"-l submit-from-ui=false --entrypoint __default__ -o json"
-    )
+
+    submit_cmd = " ".join([
+        "argo submit",
+        f"--name {run_name}",
+        f"-n {namespace}",
+        f"--from wftmpl/{run_name}", # name of the template resource (created in previous step)
+        f"-p run_name={run_name}",
+        "-l submit-from-ui=false",
+        "--entrypoint __default__", # entrypoint for the workflow. Pipeline to be triggered is chosen here.
+        "-o json"
+    ])
     result = run_subprocess(submit_cmd, capture_output=True, stream_output=verbose)
     job_name = json.loads(result.stdout).get("metadata", {}).get("name")
 
