@@ -604,7 +604,7 @@ def test_generate_argo_config(expected_argo_config: Dict[str, Any], matrix_root:
 
     # Verify templates
     templates = spec["templates"]
-    assert len(templates) == 3, "Config should have 3 templates"
+    assert len(templates) == 4, "Config should have 4 templates"
 
     # Verify kedro template
     kedro_template = next(t for t in templates if t["name"] == "kedro")
@@ -657,11 +657,13 @@ def test_generate_argo_config(expected_argo_config: Dict[str, Any], matrix_root:
     assert test_template["dag"]["tasks"][0]["template"] == "kedro", "Test template task should use kedro template"
 
     # # Verify test template
-    # cloud_template = next(t for t in templates if t["name"] == "cloud")
-    # assert "dag" in cloud_template, "Test template should have a DAG"
-    # assert len(cloud_template["dag"]["tasks"]) == 1, "Test template should have one task"
-    # assert cloud_template["dag"]["tasks"][0]["name"] == "simple-node-cloud", "Test template should have correct task name"
-    # assert cloud_template["dag"]["tasks"][0]["template"] == "kedro", "Test template task should use kedro template"
+    cloud_template = next(t for t in templates if t["name"] == "cloud")
+    assert "dag" in cloud_template, "Test template should have a DAG"
+    assert len(cloud_template["dag"]["tasks"]) == 1, "Test template should have one task"
+    assert (
+        cloud_template["dag"]["tasks"][0]["name"] == "simple-node-cloud"
+    ), "Test template should have correct task name"
+    assert cloud_template["dag"]["tasks"][0]["template"] == "kedro", "Test template task should use kedro template"
 
     # Check if the pipeline is included in the templates
     pipeline_names = [template["name"] for template in templates]
