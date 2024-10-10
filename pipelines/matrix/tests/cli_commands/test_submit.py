@@ -15,6 +15,7 @@ from matrix.cli_commands.submit import (
     run_subprocess,
 )
 import subprocess
+from kedro.framework.project import pipelines as kedro_pipelines
 
 
 @pytest.fixture
@@ -35,13 +36,20 @@ def mock_dependencies():
         yield
 
 
-# TODO: Fix test
-@pytest.mark.skip(reason="Test broken, needs to be fixed")
-def test_submit(mock_dependencies: None):
+@pytest.fixture
+def mock_submit_internal():
+    with patch("matrix.cli_commands.submit._submit") as mock:
+        yield mock
+
+
+def test_submit(mock_dependencies: None, mock_submit_internal: None):
     runner = CliRunner()
     result = runner.invoke(submit, ["--username", "testuser"])
     assert result.exit_code == 0
-    assert "Workflow submitted successfully!" in result.output
+    # assert that mocked _submit was called with the correct arguments
+    mock_submit_internal.assert_called_once_with(
+        "testuser", "argo-workflows", "test-run", kedro_pipelines, False, False
+    )
 
 
 def test_check_dependencies(mock_run_subprocess):
