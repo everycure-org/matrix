@@ -120,7 +120,18 @@ fabricator.rtx_kg2:
         row_func: "lambda *args: args[1]"
         resize: True
         seed: 6850
-
+      single_ID: 
+        type: row_apply
+        list_of_values: [nodes.id, nodes.name]
+        row_func: "lambda *args: args[0]"
+        resize: True
+        seed: 6851
+      ID_Label: 
+        type: row_apply
+        list_of_values: [nodes.id, nodes.name]
+        row_func: "lambda *args: args[1]"
+        resize: True
+        seed: 6851
       
   disease_list:
     num_rows: 30
@@ -137,6 +148,18 @@ fabricator.rtx_kg2:
         row_func: "lambda *args: args[0]"
         resize: True
         seed: 65690
+      label: 
+        type: row_apply
+        list_of_values: [nodes.id, nodes.name]
+        row_func: "lambda *args: args[0]"
+        resize: True
+        seed: 65691
+      category_class: 
+        type: row_apply
+        list_of_values: [nodes.id, nodes.name]
+        row_func: "lambda *args: args[1]"
+        resize: True
+        seed: 65691
         
 
   clinical_trials:

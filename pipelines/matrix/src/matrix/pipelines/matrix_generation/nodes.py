@@ -258,6 +258,7 @@ def generate_report(
     disease_curie_to_name_kg = {row["curie"]: row["name"] for _, row in diseases.iterrows()}
 
     # Generate curie to name dictionaries for the drug/disease lists
+    print(diseases.columns)
     disease_list_curie_mapping = {row["curie"]: row["label"] for _, row in diseases.iterrows()}
     disease_list_names_mapping = {row["curie"]: row["category_class"] for _, row in diseases.iterrows()}
     drug_list_curie_mapping = {row["curie"]: row["single_ID"] for _, row in drugs.iterrows()}
@@ -280,15 +281,15 @@ def generate_report(
         lambda row: (row["source"], row["target"]) in known_neg_pairs_set, axis=1
     )
 
+    # Add corresponding drug/disease names/ids from official lists
+    top_pairs["disease_id"] = top_pairs["target"].map(disease_list_curie_mapping)
+    top_pairs["disease_name"] = top_pairs["target"].map(disease_list_names_mapping)
+    top_pairs["drug_id"] = top_pairs["source"].map(drug_list_curie_mapping)
+    top_pairs["drug_name"] = top_pairs["source"].map(drug_list_names_mapping)
+
     # Rename ID columns
     top_pairs = top_pairs.rename(columns={"source": "kg_drug_id"})
     top_pairs = top_pairs.rename(columns={"target": "kg_disease_id"})
-
-    # Add corresponding drug/disease names/ids from official lists
-    top_pairs["disease_id"] = top_pairs["source"].map(disease_list_curie_mapping)
-    top_pairs["disease_name"] = top_pairs["source"].map(disease_list_names_mapping)
-    top_pairs["drug_id"] = top_pairs["target"].map(drug_list_curie_mapping)
-    top_pairs["drug_name"] = top_pairs["target"].map(drug_list_names_mapping)
 
     # Add pair ID
     top_pairs["pair_id"] = top_pairs["drug_name"] + "|" + top_pairs["disease_name"]
