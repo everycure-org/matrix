@@ -84,11 +84,13 @@ def _submit(username: str, namespace: str, run_name: str, pipelines_for_workflow
     This class contains redundancy.
 
     The original logic of this class was:
-    1. Create & Apply (push to k8s) Argo template, containing the entire pipeline registry.
-    2. When submitting the workflow, via `__entrypoint__`, the default pipeline is selected.
+    1. Create & Apply (push to k8s) Argo template, containing the entire pipeline registry. This part of the function makes use of pipelines_for_workflow, which will be included in the template.
+    2. When submitting the workflow, via `__entrypoint__`, a pipeline for execution is selected. 
+        It defaults to `__default__`, but can be configured via pipeline_for_execution.
+
+    In the future, we expect to refactor the confusing and dynamic elements of the pipeline, leaving only one parameter - `pipeline` that would specify which pipeline(s) are to be added to worfllow AND submitted.
     
     This meant that it was possible to submit the workflows for other pipelines in Argo CI.
-
 
     Args:
         username (str): The username to use for the workflow.
