@@ -148,13 +148,13 @@ fabricator.rtx_kg2:
         row_func: "lambda *args: args[0]"
         resize: True
         seed: 65690
-      label: 
+      category_class: 
         type: row_apply
         list_of_values: [nodes.id, nodes.name]
         row_func: "lambda *args: args[0]"
         resize: True
         seed: 65691
-      category_class: 
+      label: 
         type: row_apply
         list_of_values: [nodes.id, nodes.name]
         row_func: "lambda *args: args[1]"

@@ -259,8 +259,8 @@ def generate_report(
 
     # Generate curie to name dictionaries for the drug/disease lists
     print(diseases.columns)
-    disease_list_curie_mapping = {row["curie"]: row["label"] for _, row in diseases.iterrows()}
-    disease_list_names_mapping = {row["curie"]: row["category_class"] for _, row in diseases.iterrows()}
+    disease_list_curie_mapping = {row["curie"]: row["category_class"] for _, row in diseases.iterrows()}
+    disease_list_names_mapping = {row["curie"]: row["label"] for _, row in diseases.iterrows()}
     drug_list_curie_mapping = {row["curie"]: row["single_ID"] for _, row in drugs.iterrows()}
     drug_list_names_mapping = {row["curie"]: row["ID_Label"] for _, row in drugs.iterrows()}
 
@@ -292,7 +292,8 @@ def generate_report(
     top_pairs = top_pairs.rename(columns={"target": "kg_disease_id"})
 
     # Add pair ID
-    top_pairs["pair_id"] = top_pairs["drug_name"] + "|" + top_pairs["disease_name"]
+    top_pairs["pair_id"] = top_pairs["drug_id"] + "|" + top_pairs["disease_id"]
+
     # Reorder columns for better readability
     columns_order = [
         "pair_id",
