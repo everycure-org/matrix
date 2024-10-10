@@ -293,9 +293,7 @@ def generate_report(
     return top_pairs
 
 
-def generate_metadata(
-    matrix_report: pd.DataFrame,
-) -> pd.DataFrame:
+def generate_metadata(matrix_report: pd.DataFrame) -> pd.DataFrame:
     """Generates a metadata report.
 
     Args:
@@ -306,23 +304,19 @@ def generate_metadata(
     """
     conf_loader = CONFIG_LOADER_CLASS(CONF_SOURCE, **CONFIG_LOADER_ARGS)
     conf_globals = conf_loader["globals"]
+
     # TODO: Add included_kgs and included_models
-    return (
-        pd.DataFrame(
-            {
-                "timestamp": [datetime.now().strftime("%Y-%m-%d %H:%M:%S")],
-                "workflow_id": [os.getenv("WORKFLOW_ID")],
-                #'run_name': [conf_globals['run_name']],
-                "git_sha": [conf_globals["git_sha"]],
-                "release_version": [conf_globals["versions"]["release"]],
-                "rtx_kg2_version": [conf_globals["data_sources"]["rtx-kg2"]["version"]],
-                "robokop_version": [conf_globals["data_sources"]["robokop"]["version"]],
-                "ec_medical_team_version": [conf_globals["data_sources"]["ec-medical-team"]["version"]],
-                "clinical_trial_data_version": [conf_globals["data_sources"]["clinical-trial-data"]["version"]],
-                "ec_drug_list_version": [conf_globals["data_sources"]["ec-drug-list"]["version"]],
-                "ec_disease_list_version": [conf_globals["data_sources"]["ec-disease-list"]["version"]],
-            }
-        )
-        .transpose()
-        .reset_index()
-    )
+
+    metadata = {
+        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "workflow_id": os.getenv("WORKFLOW_ID"),
+        "run_name": conf_globals["run_name"],
+        "git_sha": conf_globals["git_sha"],
+        "release_version": conf_globals["versions"]["release"],
+    }
+
+    data_sources = ["rtx-kg2", "robokop", "ec-medical-team", "clinical-trial-data", "ec-drug-list", "ec-disease-list"]
+    for source in data_sources:
+        metadata[f"{source.replace('-', '_')}_version"] = conf_globals["data_sources"][source]["version"]
+
+    return pd.DataFrame(metadata, index=[0]).transpose().reset_index()
