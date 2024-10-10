@@ -329,3 +329,24 @@ sudo chmod 660 /var/run/docker.sock
 ```
 Note that these permissions might reset when Docker or WSL is restarted, and you may need to reapply them.
 
+## Runtime error `dictionary changed size during iteration`
+```
+matrix      | RuntimeError: dictionary changed size during iteration
+matrix exited with code 1
+```
+You might encounter this when running integration tests within the docker container. This is a [kedro-related ThreadRunner error](https://github.com/kedro-org/kedro/issues/4191) and should be now fixed within the MATRIX pipeline by pinning a specific kedro version)[]. In case you stumble upon this error during your development, you solve this issue by specifying the following in the requirements.in
+```
+kedro==0.19.6
+```
+
+## MLFlow exception error when running the pipeline
+```
+MlflowException: API request to
+http://127.0.0.1:5001/api/2.0/mlflow/experiments/create failed with exception
+HTTPConnectionPool(host='127.0.0.1', port=5001): Max retries exceeded with url:
+/api/2.0/mlflow/experiments/create (Caused by
+NewConnectionError('<urllib3.connection.HTTPConnection object at 0x130404d90>:
+Failed to establish a new connection: [Errno 61] Connection refused'))
+```
+This error is due to kedro trying to send API requests to your MLFlow container which hasn't been set up. You can set the MLFlow container from your Docker Desktop application or by running `make compose_up` from your terminal. This should set up a healthy docker container to which kedro can send API requests. 
+
