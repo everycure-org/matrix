@@ -254,12 +254,18 @@ def generate_report(
     top_pairs = data.head(n_reporting).copy()
 
     # Generate curie to name dictionaries
-    drug_curie_to_name = {row["curie"]: row["name"] for _, row in drugs.iterrows()}
-    disease_curie_to_name = {row["curie"]: row["name"] for _, row in diseases.iterrows()}
+    drug_curie_to_name_kg = {row["curie"]: row["name"] for _, row in drugs.iterrows()}
+    disease_curie_to_name_kg = {row["curie"]: row["name"] for _, row in diseases.iterrows()}
+
+    # Generate curie to name dictionaries for the drug/disease lists
+    disease_list_curie_mapping = {row["curie"]: row["label"] for _, row in diseases.iterrows()}
+    disease_list_names_mapping = {row["curie"]: row["category_class"] for _, row in diseases.iterrows()}
+    drug_list_curie_mapping = {row["curie"]: row["single_ID"] for _, row in drugs.iterrows()}
+    drug_list_names_mapping = {row["curie"]: row["ID_Label"] for _, row in drugs.iterrows()}
 
     # Add additional information for drugs and diseases
-    top_pairs["kg_drug_name"] = top_pairs["source"].map(drug_curie_to_name)
-    top_pairs["kg_disease_name"] = top_pairs["target"].map(disease_curie_to_name)
+    top_pairs["kg_drug_name"] = top_pairs["source"].map(drug_curie_to_name_kg)
+    top_pairs["kg_disease_name"] = top_pairs["target"].map(disease_curie_to_name_kg)
 
     # Flag known positives and negatives
     known_pair_is_pos = known_pairs["y"].eq(1)
@@ -279,19 +285,27 @@ def generate_report(
     top_pairs = top_pairs.rename(columns={"target": "kg_disease_id"})
 
     # Add corresponding drug/disease names/ids from official lists
+    top_pairs["disease_id"] = top_pairs["source"].map(disease_list_curie_mapping)
+    top_pairs["disease_name"] = top_pairs["source"].map(disease_list_names_mapping)
+    top_pairs["drug_id"] = top_pairs["target"].map(drug_list_curie_mapping)
+    top_pairs["drug_name"] = top_pairs["target"].map(drug_list_names_mapping)
 
-    top_pairs["drug_name"] = top_pairs["source"].map(drug_curie_to_name)
-    top_pairs["disease_name"] = top_pairs["target"].map(disease_curie_to_name)
-
+    # Add pair ID
+    top_pairs["pair_id"] = top_pairs["drug_name"] + "|" + top_pairs["disease_name"]
     # Reorder columns for better readability
     columns_order = [
+        "pair_id",
+        "drug_id",
+        "drug_name",
+        "disease_id",
+        "disease_name",
+        score_col_name,
+        "is_known_positive",
+        "is_known_negative",
         "kg_drug_id",
         "kg_drug_name",
         "kg_disease_id",
         "kg_disease_name",
-        score_col_name,
-        "is_known_positive",
-        "is_known_negative",
     ]
     top_pairs = top_pairs[columns_order]
 
