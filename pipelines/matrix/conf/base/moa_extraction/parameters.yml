@@ -21,6 +21,12 @@ moa_extraction:
       verbose: True
   
   path_mapping:
-    mapper: 
-      object: matrix.pipelines.moa_extraction.path_mapping.PathMapper
-    synonymizer_endpoint: http://localhost:5000/synonymize
+    mapper_two_hop: 
+      object: matrix.pipelines.moa_extraction.path_mapping.SetwisePathMapper
+      num_hops: 2
+      unidirectional: false
+    mapper_three_hop: 
+      object: matrix.pipelines.moa_extraction.path_mapping.SetwisePathMapper
+      num_hops: 3
+      unidirectional: false
+    synonymizer_endpoint: http://localhost:8081/

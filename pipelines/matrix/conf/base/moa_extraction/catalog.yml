@@ -1,3 +1,13 @@
+_two_hop_paths_dataset: &_two_hop_paths_dataset
+  type: matrix.datasets.paths.TwoHopPathsDataset
+  load_args:
+    engine: pyarrow
+
+_three_hop_paths_dataset: &_three_hop_paths_dataset
+  type: matrix.datasets.paths.ThreeHopPathsDataset
+  load_args:
+    engine: pyarrow
+
 moa_extraction.raw.drug_mech_db:
   type: yaml.YAMLDataset
   filepath: ${globals:paths.raw}/moa_extraction/indication_paths.yaml
@@ -9,3 +19,11 @@ moa_extraction.feat.category_encoder:
 moa_extraction.feat.relation_encoder:
   type: pickle.PickleDataset
   filepath: ${globals:paths.feat}/moa_extraction/relation_encoder.pickle
+
+moa_extraction.int.two_hop_indication_paths:
+  <<: *_two_hop_paths_dataset
+  filepath: ${globals:paths.int}/moa_extraction/two_hop_indication_paths.parquet
+
+moa_extraction.int.three_hop_indication_paths:
+  <<: *_three_hop_paths_dataset
+  filepath: ${globals:paths.int}/moa_extraction/three_hop_indication_paths.parquet

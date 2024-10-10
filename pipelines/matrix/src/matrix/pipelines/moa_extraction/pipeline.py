@@ -21,7 +21,7 @@ def _preprocessing_pipeline() -> Pipeline:
                     "verbose": "params:moa_extraction.preprocessing_options.add_tags.verbose",
                 },
                 outputs=None,
-                tags="preprocessing",
+                tags="moa_extraction.preprocessing",
                 name="add_tags",
             ),
             node(
@@ -29,19 +29,31 @@ def _preprocessing_pipeline() -> Pipeline:
                 inputs={"runner": "params:moa_extraction.neo4j_runner"},
                 outputs=["moa_extraction.feat.category_encoder", "moa_extraction.feat.relation_encoder"],
                 name="get_one_hot_encodings",
-                tags="preprocessing",
+                tags="moa_extraction.preprocessing",
             ),
             node(
                 func=nodes.map_drug_mech_db,
                 inputs={
                     "runner": "params:moa_extraction.neo4j_runner",
                     "drug_mech_db": "moa_extraction.raw.drug_mech_db",
-                    "mapper": "params:moa_extraction.path_mapping.mapper",
+                    "mapper": "params:moa_extraction.path_mapping.mapper_two_hop",
                     "synonymizer_endpoint": "params:moa_extraction.path_mapping.synonymizer_endpoint",
                 },
-                outputs=None,
-                name="map_drug_mech_db",
-                tags="preprocessing",
+                outputs="moa_extraction.int.two_hop_indication_paths",
+                name="map_two_hop",
+                tags="moa_extraction.preprocessing",
+            ),
+            node(
+                func=nodes.map_drug_mech_db,
+                inputs={
+                    "runner": "params:moa_extraction.neo4j_runner",
+                    "drug_mech_db": "moa_extraction.raw.drug_mech_db",
+                    "mapper": "params:moa_extraction.path_mapping.mapper_three_hop",
+                    "synonymizer_endpoint": "params:moa_extraction.path_mapping.synonymizer_endpoint",
+                },
+                outputs="moa_extraction.int.three_hop_indication_paths",
+                name="map_three_hop",
+                tags="moa_extraction.preprocessing",
             ),
         ]
     )
