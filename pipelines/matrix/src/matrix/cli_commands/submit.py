@@ -53,6 +53,7 @@ def submit(username: str, namespace: str, run_name: str, pipeline: tuple[str], v
 
     run_name = get_run_name(run_name)
     
+    
     pipelines_to_submit = kedro_pipelines if pipeline == () else pipeline
 
     _submit(
