@@ -51,7 +51,7 @@ This page assumes basic knowledge of the following technologies. We will provide
             ```
 
 
-### Python (Mac)
+### Python
 
 We advise managing your Python installation using [`pyenv`](https://github.com/pyenv/pyenv).
 
@@ -106,7 +106,7 @@ We advise managing your Python installation using [`pyenv`](https://github.com/p
     
     After following these steps, you should have pyenv installed and ready to use on your WSL environment.
 
-### Python environment
+### Virtual environment
 
 We leverage [`uv`](https://github.com/astral-sh/uv) to manage/install our Python
 requirements. Note that while many may be used to Conda, UV and Conda cannot be used in parallel. Using Conda is hence at your own risk.
@@ -136,13 +136,13 @@ Install as follows, then create a virtual env in the `matrix/pipelines/matrix` d
     # activate virtual environment
     source .venv/bin/activate
     # Install the requirements.txt file that is in the matrix repository. First navigate to the repo
-    `cd matrix/pipelines/matrix`
+    cd matrix/pipelines/matrix
     # lists files that are hidden, you should see requirements.txt in line
-    `ls -a` 
+    ls -a
     # installs the requirements in the activated uv virtual environment
-    'uv pip install -r requirements.txt' 
+    uv pip install -r requirements.txt'
     # deactivate the virtual environment
-    `deactivate`
+    deactivate
     
     ```
 
@@ -174,7 +174,19 @@ Make sure you have [docker](https://www.docker.com/) and [docker-compose](https:
     # install docker-compose
     sudo apt install docker-compose
     ```
+    Note that we occassionally observed WSL manager installing outdated version of docker-compose on WSL. You can check it by running the following command:
+    ```bash
+    docker-compose --version 
+    ```
+    Any docker-compose version prior to 2.0 is not well supported within the MATRIX pipeline. Therefore if your version is older than v2.0 run the following:
+    ```bash
+    sudo apt update
+    sudo apt upgrade docker-ce docker-ce-cli containerd.io
 
+    # To re-check if your version is now updated
+    docker-compose --version
+    ```    
+    If you stumble upon `socket permission denied` error, you can find a potential solution within the [common errors section](../FAQ/common_errors.md)
 === "Linux"
 
     ```bash
@@ -185,6 +197,7 @@ Make sure you have [docker](https://www.docker.com/) and [docker-compose](https:
 
 !!! Tip 
     The default settings of Docker have rather low resources configured, you might want to increase those in Docker desktop.
+    
 
 ### Java
 
