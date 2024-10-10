@@ -276,7 +276,7 @@ def ensure_namespace(namespace, verbose: bool):
 
 
 def apply_argo_template(namespace, file_path: Path, verbose: bool):
-    """Apply the Argo workflow template, creating the resources in Kubernetes"""
+    """Apply the Argo workflow template, making it available in the cluster."""
     run_subprocess(
         f"kubectl apply -f {file_path} -n {namespace}",
         check=True,
