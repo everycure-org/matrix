@@ -120,8 +120,7 @@ def test_submit_pipelines(mock_multiple_pipelines: None, mock_submit_internal: N
     )
 
 
-@pytest.mark.skip(reason="Test broken, needs to be fixed")
-def test_submit_multiple_pipelines(mock_submit_internal: None):
+def test_submit_multiple_pipelines(mock_multiple_pipelines: None, mock_submit_internal: None):
     runner = CliRunner()
     result = runner.invoke(
         submit,
@@ -130,6 +129,8 @@ def test_submit_multiple_pipelines(mock_submit_internal: None):
             "testuser",
             "--namespace",
             "test_namespace",
+            "--run-name",
+            "test-run",
             "--pipeline",
             "mock_pipeline2",
             "--pipeline",
@@ -138,7 +139,15 @@ def test_submit_multiple_pipelines(mock_submit_internal: None):
     )
     assert result.exit_code == 0
     mock_submit_internal.assert_called_once_with(
-        "testuser", "test_namespace", "test-run", ("test_pipeline", "test_pipeline2"), False, False
+        username="testuser",
+        namespace="test_namespace",
+        run_name="test-run",
+        pipelines={
+            "mock_pipeline2": mock_multiple_pipelines["mock_pipeline2"],
+            "mock_pipeline3": mock_multiple_pipelines["mock_pipeline3"],
+        },
+        verbose=False,
+        dry_run=False,
     )
 
 
