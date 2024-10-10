@@ -27,12 +27,12 @@ def mock_run_subprocess():
 def mock_dependencies():
     with patch("matrix.cli_commands.submit.check_dependencies") as _, patch(
         "matrix.cli_commands.submit.build_push_docker"
-    ) as _, patch("matrix.cli_commands.submit.build_argo_template") as _, patch(
-        "matrix.cli_commands.submit.ensure_namespace"
     ) as _, patch("matrix.cli_commands.submit.apply_argo_template") as _, patch(
-        "matrix.cli_commands.submit.submit_workflow"
-    ) as _, patch("matrix.cli_commands.submit.get_run_name", return_value="test-run"):
+        "matrix.cli_commands.submit.ensure_namespace"
+    ) as _, patch("matrix.cli_commands.submit.submit_workflow"):
         yield
+
+    # build save and apply are only ones left
 
 
 @pytest.fixture
