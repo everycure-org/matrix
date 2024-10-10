@@ -43,11 +43,11 @@ def cli():
 @click.option("--namespace", type=str, default="argo-workflows", help="Specify a custom namespace")
 @click.option("--run-name", type=str, default=None, help="Specify a custom run name, defaults to branch")
 @click.option("--include_pipeline", type=str, multiple=True, default=None, help="Specify which pipelines to include in workflow template. If not specified, all pipelines are added to the workflow.")
-@click.option("--pipeline_to_run", type=str, multiple=False, default="__default__", help="Specify which pipeline to run.")
+@click.option("--pipeline_for_execution", type=str, default="__default__", help="Specify which pipeline to execute.")
 @click.option("--verbose", "-v", is_flag=True, default=False, help="Enable verbose output")
 @click.option("--dry-run", "-d", is_flag=True, default=False, help="Does everything except submit the workflow")
 # fmt: on
-def submit(username: str, namespace: str, run_name: str, pipeline: tuple[str], verbose: bool, dry_run: bool):
+def submit(username: str, namespace: str, run_name: str, include_pipeline: tuple[str], pipeline_for_execution: str, verbose: bool, dry_run: bool):
     """Submit the end-to-end workflow. """
     if verbose:
         logging.getLogger().setLevel(logging.DEBUG)
@@ -55,27 +55,30 @@ def submit(username: str, namespace: str, run_name: str, pipeline: tuple[str], v
     run_name = get_run_name(run_name)
     
     pipelines_to_submit = {}
-    if pipeline == ():
+    if include_pipeline == ():
         pipelines_to_submit = kedro_pipelines
     else:
-        for pipeline_name in pipeline:
+        for pipeline_name in include_pipeline:
             if pipeline_name not in kedro_pipelines:
-                raise ValueError(f"Requested pipeline {pipeline_name} not found")
+                raise ValueError(f"Requested workflow pipeline {pipeline_name} not found!")
             pipelines_to_submit[pipeline_name] = kedro_pipelines[pipeline_name]
 
+    if pipeline_for_execution not in pipelines_to_submit:
+        raise ValueError(f"Pipeline requested for execution {pipeline_for_execution} not included in workflow!")
 
 
     _submit(
         username=username,
         namespace=namespace,
         run_name=run_name,
-        pipelines=pipelines_to_submit,
+        pipelines_for_workflow=pipelines_to_submit,
+        pipeline_for_execution=pipeline_for_execution,
         verbose=verbose,
         dry_run=dry_run,
     )
 
 
-def _submit(username: str, namespace: str, run_name: str, pipelines: Dict[str, Pipeline], verbose: bool, dry_run: bool) -> None:
+def _submit(username: str, namespace: str, run_name: str, pipelines_for_workflow: Dict[str, Pipeline], pipeline_for_execution: str, verbose: bool, dry_run: bool) -> None:
     """Submit the end-to-end workflow.
 
     This class contains redundancy.
@@ -91,7 +94,8 @@ def _submit(username: str, namespace: str, run_name: str, pipelines: Dict[str, P
         username (str): The username to use for the workflow.
         namespace (str): The namespace to use for the workflow.
         run_name (str): The name of the run.
-        pipelines (Dict[str, Pipeline]): The pipelines to run.
+        pipelines_for_workflow (Dict[str, Pipeline]): The pipelines to run.
+        pipeline_for_execution (str): The pipeline to execute.
         verbose (bool): If True, enable verbose output.
         dry_run (bool): If True, do not submit the workflow.
     """
@@ -107,8 +111,8 @@ def _submit(username: str, namespace: str, run_name: str, pipelines: Dict[str, P
         build_push_docker(username, verbose=verbose)
         console.print("[green]✓[/green] Docker image built and pushed")
 
-        console.print("Building Argo template...")
-        argo_template = build_argo_template(run_name, username, namespace, pipelines)
+        console.print(f"Building Argo template with pipelines {list(pipelines_for_workflow.keys())}...")
+        argo_template = build_argo_template(run_name, username, namespace, pipelines_for_workflow)
         console.print("[green]✓[/green] Argo template built")
 
         console.print("Writing Argo template...")
@@ -124,8 +128,8 @@ def _submit(username: str, namespace: str, run_name: str, pipelines: Dict[str, P
         console.print("[green]✓[/green] Argo template applied")
 
         if not dry_run:
-            console.print("Submitting workflow...")
-            submit_workflow(run_name, namespace, verbose=verbose)
+            console.print(f"Submitting workflow for pipeline: {pipeline_for_execution}...")
+            submit_workflow(run_name, namespace, pipeline_for_execution, verbose=verbose)
             console.print("[green]✓[/green] Workflow submitted")
 
         # TODO: To finish splitting pipeline - figure out where pipeline and other params are passed to the function
@@ -276,7 +280,7 @@ def build_push_docker(username: str, verbose: bool):
     run_subprocess(f"make docker_push TAG={username}", stream_output=verbose)
 
 
-def build_argo_template(run_name, username, namespace, pipelines) -> str:
+def build_argo_template(run_name: str, username: str, namespace: str, pipelines: Dict[str, Pipeline]) -> str:
     """Build Argo workflow template."""
     image_name = "us-central1-docker.pkg.dev/mtrx-hub-dev-3of/matrix-images/matrix"
     matrix_root = Path(__file__).parent.parent 
