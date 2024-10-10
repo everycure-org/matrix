@@ -50,7 +50,21 @@ def mock_submit_internal():
 
 @pytest.fixture
 def mock_pipelines():
-    pipelines = {"mock_pipeline": MagicMock()}
+    pipelines = {
+        "mock_pipeline": MagicMock(),
+    }
+
+    with patch("matrix.cli_commands.submit.kedro_pipelines", return_value=pipelines) as mock:
+        yield mock
+
+
+@pytest.fixture
+def mock_multiple_pipelines():
+    pipelines = {
+        "mock_pipeline": MagicMock(),
+        "mock_pipeline2": MagicMock(),
+        "mock_pipeline3": MagicMock(),
+    }
 
     with patch("matrix.cli_commands.submit.kedro_pipelines", return_value=pipelines) as mock:
         yield mock
@@ -87,7 +101,7 @@ def test_submit_namespace(mock_pipelines: None, mock_submit_internal: None):
     )
 
 
-def test_submit_pipelines(mock_dependencies: None, mock_submit_internal: None):
+def test_submit_pipelines(mock_multiple_pipelines: None, mock_submit_internal: None):
     runner = CliRunner()
     result = runner.invoke(
         submit,
@@ -96,16 +110,20 @@ def test_submit_pipelines(mock_dependencies: None, mock_submit_internal: None):
             "testuser",
             "--namespace",
             "test_namespace",
+            "--run-name",
+            "test-run",
             "--pipeline",
-            "test_pipeline",
-            "--pipeline",
-            "test_pipeline2",
+            "mock_pipeline2",
         ],
     )
     assert result.exit_code == 0
-    # TODO: Fix test - this should be called with Pipeline objects.
     mock_submit_internal.assert_called_once_with(
-        "testuser", "test_namespace", "test-run", ("test_pipeline", "test_pipeline2"), False, False
+        username="testuser",
+        namespace="test_namespace",
+        run_name="test-run",
+        pipelines={"mock_pipeline2": mock_multiple_pipelines["mock_pipeline2"]},
+        verbose=False,
+        dry_run=False,
     )
 
 
@@ -120,13 +138,12 @@ def test_submit_multiple_pipelines(mock_submit_internal: None):
             "--namespace",
             "test_namespace",
             "--pipeline",
-            "test_pipeline",
+            "mock_pipeline2",
             "--pipeline",
-            "test_pipeline2",
+            "mock_pipeline3",
         ],
     )
     assert result.exit_code == 0
-    # TODO: Fix test - this should be called with Pipeline objects.
     mock_submit_internal.assert_called_once_with(
         "testuser", "test_namespace", "test-run", ("test_pipeline", "test_pipeline2"), False, False
     )
