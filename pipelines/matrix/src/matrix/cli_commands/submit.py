@@ -53,7 +53,16 @@ def submit(username: str, namespace: str, run_name: str, pipeline: tuple[str], v
 
     run_name = get_run_name(run_name)
     
-    pipelines_to_submit = kedro_pipelines if pipeline == () else pipeline
+    pipelines_to_submit = {}
+    if pipeline == ():
+        pipelines_to_submit = kedro_pipelines
+    else:
+        for pipeline_name in pipeline:
+            if pipeline_name not in kedro_pipelines:
+                raise ValueError(f"Requested pipeline {pipeline_name} not found")
+            pipelines_to_submit[pipeline_name] = kedro_pipelines[pipeline_name]
+
+
 
     _submit(
         username=username,
