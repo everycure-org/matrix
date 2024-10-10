@@ -42,7 +42,8 @@ def cli():
 @click.option("--username", type=str, required=True, help="Specify the username to use")
 @click.option("--namespace", type=str, default="argo-workflows", help="Specify a custom namespace")
 @click.option("--run-name", type=str, default=None, help="Specify a custom run name, defaults to branch")
-@click.option("--pipeline", type=str, multiple=True, default=None, help="Specify which pipelines to run")
+@click.option("--include_pipeline", type=str, multiple=True, default=None, help="Specify which pipelines to include in workflow template. If not specified, all pipelines are added to the workflow.")
+@click.option("--pipeline_to_run", type=str, multiple=False, default="__default__", help="Specify which pipeline to run.")
 @click.option("--verbose", "-v", is_flag=True, default=False, help="Enable verbose output")
 @click.option("--dry-run", "-d", is_flag=True, default=False, help="Does everything except submit the workflow")
 # fmt: on
@@ -79,9 +80,12 @@ def _submit(username: str, namespace: str, run_name: str, pipelines: Dict[str, P
 
     This class contains redundancy.
 
-    Argo template is generated with all 
-
+    The original logic of this class was:
+    1. Create & Apply (push to k8s) Argo template, containing the entire pipeline registry.
+    2. When submitting the workflow, via `__entrypoint__`, the default pipeline is selected.
     
+    This meant that it was possible to submit the workflows for other pipelines in Argo CI.
+
 
     Args:
         username (str): The username to use for the workflow.
