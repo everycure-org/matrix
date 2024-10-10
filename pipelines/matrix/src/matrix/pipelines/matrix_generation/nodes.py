@@ -268,6 +268,21 @@ def generate_report(
     top_pairs["kg_drug_name"] = top_pairs["source"].map(drug_curie_to_name_kg)
     top_pairs["kg_disease_name"] = top_pairs["target"].map(disease_curie_to_name_kg)
 
+    # Add descriptive stats per diseases
+    top_pairs["mean_top_per_disease"] = top_pairs.groupby("target")[score_col_name].transform("mean")
+    top_pairs["max_top_per_disease"] = top_pairs.groupby("target")[score_col_name].transform("max")
+    top_pairs["min_top_per_disease"] = top_pairs.groupby("target")[score_col_name].transform("min")
+    top_pairs["std_top_per_disease"] = top_pairs.groupby("target")[score_col_name].transform("std")
+
+    top_pairs_all = data.loc[
+        ((data["target"].isin(top_pairs["target"].unique())) | (data["source"].isin(top_pairs["source"].unique())))
+    ]
+    print(top_pairs_all)
+    top_pairs["mean_all_per_disease"] = top_pairs_all.groupby("target")[score_col_name].transform("mean")
+    top_pairs["max_all_per_disease"] = top_pairs_all.groupby("target")[score_col_name].transform("max")
+    top_pairs["min_all_per_disease"] = top_pairs_all.groupby("target")[score_col_name].transform("min")
+    top_pairs["std_all_per_disease"] = top_pairs_all.groupby("target")[score_col_name].transform("std")
+
     # Flag known positives and negatives
     known_pair_is_pos = known_pairs["y"].eq(1)
     known_pos_pairs = known_pairs[known_pair_is_pos]
@@ -308,6 +323,14 @@ def generate_report(
         "kg_drug_name",
         "kg_disease_id",
         "kg_disease_name",
+        "mean_top_per_disease",
+        "max_top_per_disease",
+        "min_top_per_disease",
+        "std_top_per_disease",
+        "mean_all_per_disease",
+        "max_all_per_disease",
+        "min_all_per_disease",
+        "std_all_per_disease",
     ]
     top_pairs = top_pairs[columns_order]
 
