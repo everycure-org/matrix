@@ -42,14 +42,14 @@ def mock_submit_internal():
         yield mock
 
 
-# @pytest.fixture(scope="function")
-# def mock_pipelines():
-#     pipelines = {
-#         "mock_pipeline": MagicMock(),
-#     }
+@pytest.fixture(scope="function")
+def mock_pipelines():
+    pipelines = {
+        "mock_pipeline": MagicMock(),
+    }
 
-#     with patch("matrix.cli_commands.submit.kedro_pipelines", return_value=pipelines) as mock:
-#         yield mock
+    with patch("matrix.cli_commands.submit.kedro_pipelines", return_value=pipelines) as mock:
+        yield mock
 
 
 @pytest.fixture(scope="function")
