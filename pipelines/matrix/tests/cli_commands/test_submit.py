@@ -151,6 +151,93 @@ def test_submit_multiple_pipelines(mock_multiple_pipelines: None, mock_submit_in
     )
 
 
+def test_submit_dry_run(mock_multiple_pipelines: None, mock_submit_internal: None):
+    runner = CliRunner()
+    result = runner.invoke(
+        submit,
+        [
+            "--username",
+            "testuser",
+            "--namespace",
+            "test_namespace",
+            "--run-name",
+            "test-run",
+            "--pipeline",
+            "mock_pipeline2",
+            "--dry-run",
+        ],
+    )
+    assert result.exit_code == 0
+    mock_submit_internal.assert_called_once_with(
+        username="testuser",
+        namespace="test_namespace",
+        run_name="test-run",
+        pipelines={"mock_pipeline2": mock_multiple_pipelines["mock_pipeline2"]},
+        verbose=False,
+        dry_run=True,
+    )
+
+
+def test_submit_verbose(mock_multiple_pipelines: None, mock_submit_internal: None):
+    runner = CliRunner()
+    result = runner.invoke(
+        submit,
+        [
+            "--username",
+            "testuser",
+            "--namespace",
+            "test_namespace",
+            "--run-name",
+            "test-run",
+            "--pipeline",
+            "mock_pipeline3",
+            "--verbose",
+        ],
+    )
+    assert result.exit_code == 0
+    mock_submit_internal.assert_called_once_with(
+        username="testuser",
+        namespace="test_namespace",
+        run_name="test-run",
+        pipelines={"mock_pipeline3": mock_multiple_pipelines["mock_pipeline3"]},
+        verbose=True,
+        dry_run=False,
+    )
+
+
+def test_submit_dry_run_and_verbose(mock_multiple_pipelines: None, mock_submit_internal: None):
+    runner = CliRunner()
+    result = runner.invoke(
+        submit,
+        [
+            "--username",
+            "testuser",
+            "--namespace",
+            "test_namespace",
+            "--run-name",
+            "test-run",
+            "--pipeline",
+            "mock_pipeline2",
+            "--pipeline",
+            "mock_pipeline3",
+            "--dry-run",
+            "--verbose",
+        ],
+    )
+    assert result.exit_code == 0
+    mock_submit_internal.assert_called_once_with(
+        username="testuser",
+        namespace="test_namespace",
+        run_name="test-run",
+        pipelines={
+            "mock_pipeline2": mock_multiple_pipelines["mock_pipeline2"],
+            "mock_pipeline3": mock_multiple_pipelines["mock_pipeline3"],
+        },
+        verbose=True,
+        dry_run=True,
+    )
+
+
 def test_check_dependencies(mock_run_subprocess):
     mock_run_subprocess.return_value.returncode = 0
     mock_run_subprocess.return_value.stdout = "active_account"
