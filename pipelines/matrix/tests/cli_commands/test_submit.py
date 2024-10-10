@@ -44,10 +44,10 @@ def mock_submit_internal():
 @pytest.fixture(scope="function")
 def mock_pipelines():
     pipeline_dict = {
-        "mock_pipeline": MagicMock(),
+        "__default__": MagicMock(),
     }
 
-    with patch("matrix.cli_commands.submit.kedro_pipelines", return_value=pipeline_dict) as mock:
+    with patch("matrix.cli_commands.submit.kedro_pipelines", new=pipeline_dict) as mock:
         yield mock
 
 
@@ -72,10 +72,14 @@ def test_submit_simple(mock_submit_internal: None, mock_pipelines: None) -> None
         username="testuser",
         namespace="argo-workflows",
         run_name="test-run",
-        pipelines=mock_pipelines,
+        pipelines_for_workflow=mock_pipelines,
+        pipeline_for_execution="__default__",
         verbose=False,
         dry_run=False,
     )
+
+
+# NOTE: This function was partially generated using AI assistance.
 
 
 def test_submit_namespace(mock_pipelines: None, mock_submit_internal: None):
@@ -88,7 +92,8 @@ def test_submit_namespace(mock_pipelines: None, mock_submit_internal: None):
         username="testuser",
         namespace="test_namespace",
         run_name="test-run",
-        pipelines=mock_pipelines,
+        pipelines_for_workflow=mock_pipelines,
+        pipeline_for_execution="__default__",
         verbose=False,
         dry_run=False,
     )
@@ -105,7 +110,9 @@ def test_submit_pipelines(mock_multiple_pipelines: None, mock_submit_internal: N
             "test_namespace",
             "--run-name",
             "test-run",
-            "--pipeline",
+            "--include_pipeline",
+            "mock_pipeline2",
+            "--pipeline_for_execution",
             "mock_pipeline2",
         ],
     )
@@ -114,7 +121,8 @@ def test_submit_pipelines(mock_multiple_pipelines: None, mock_submit_internal: N
         username="testuser",
         namespace="test_namespace",
         run_name="test-run",
-        pipelines={"mock_pipeline2": mock_multiple_pipelines["mock_pipeline2"]},
+        pipelines_for_workflow={"mock_pipeline2": mock_multiple_pipelines["mock_pipeline2"]},
+        pipeline_for_execution="mock_pipeline2",
         verbose=False,
         dry_run=False,
     )
@@ -131,10 +139,12 @@ def test_submit_multiple_pipelines(mock_multiple_pipelines: None, mock_submit_in
             "test_namespace",
             "--run-name",
             "test-run",
-            "--pipeline",
+            "--include_pipeline",
             "mock_pipeline2",
-            "--pipeline",
+            "--include_pipeline",
             "mock_pipeline3",
+            "--pipeline_for_execution",
+            "mock_pipeline2",
         ],
     )
     assert result.exit_code == 0
@@ -142,10 +152,11 @@ def test_submit_multiple_pipelines(mock_multiple_pipelines: None, mock_submit_in
         username="testuser",
         namespace="test_namespace",
         run_name="test-run",
-        pipelines={
+        pipelines_for_workflow={
             "mock_pipeline2": mock_multiple_pipelines["mock_pipeline2"],
             "mock_pipeline3": mock_multiple_pipelines["mock_pipeline3"],
         },
+        pipeline_for_execution="mock_pipeline2",
         verbose=False,
         dry_run=False,
     )
@@ -162,7 +173,9 @@ def test_submit_dry_run(mock_multiple_pipelines: None, mock_submit_internal: Non
             "test_namespace",
             "--run-name",
             "test-run",
-            "--pipeline",
+            "--include_pipeline",
+            "mock_pipeline2",
+            "--pipeline_for_execution",
             "mock_pipeline2",
             "--dry-run",
         ],
@@ -172,7 +185,8 @@ def test_submit_dry_run(mock_multiple_pipelines: None, mock_submit_internal: Non
         username="testuser",
         namespace="test_namespace",
         run_name="test-run",
-        pipelines={"mock_pipeline2": mock_multiple_pipelines["mock_pipeline2"]},
+        pipelines_for_workflow={"mock_pipeline2": mock_multiple_pipelines["mock_pipeline2"]},
+        pipeline_for_execution="mock_pipeline2",
         verbose=False,
         dry_run=True,
     )
@@ -189,7 +203,9 @@ def test_submit_verbose(mock_multiple_pipelines: None, mock_submit_internal: Non
             "test_namespace",
             "--run-name",
             "test-run",
-            "--pipeline",
+            "--include_pipeline",
+            "mock_pipeline3",
+            "--pipeline_for_execution",
             "mock_pipeline3",
             "--verbose",
         ],
@@ -199,7 +215,8 @@ def test_submit_verbose(mock_multiple_pipelines: None, mock_submit_internal: Non
         username="testuser",
         namespace="test_namespace",
         run_name="test-run",
-        pipelines={"mock_pipeline3": mock_multiple_pipelines["mock_pipeline3"]},
+        pipelines_for_workflow={"mock_pipeline3": mock_multiple_pipelines["mock_pipeline3"]},
+        pipeline_for_execution="mock_pipeline3",
         verbose=True,
         dry_run=False,
     )
@@ -216,10 +233,12 @@ def test_submit_dry_run_and_verbose(mock_multiple_pipelines: None, mock_submit_i
             "test_namespace",
             "--run-name",
             "test-run",
-            "--pipeline",
+            "--include_pipeline",
             "mock_pipeline2",
-            "--pipeline",
+            "--include_pipeline",
             "mock_pipeline3",
+            "--pipeline_for_execution",
+            "mock_pipeline2",
             "--dry-run",
             "--verbose",
         ],
@@ -229,10 +248,11 @@ def test_submit_dry_run_and_verbose(mock_multiple_pipelines: None, mock_submit_i
         username="testuser",
         namespace="test_namespace",
         run_name="test-run",
-        pipelines={
+        pipelines_for_workflow={
             "mock_pipeline2": mock_multiple_pipelines["mock_pipeline2"],
             "mock_pipeline3": mock_multiple_pipelines["mock_pipeline3"],
         },
+        pipeline_for_execution="mock_pipeline2",
         verbose=True,
         dry_run=True,
     )
