@@ -28,6 +28,7 @@ class LocalNeo4jRunner(Neo4jRunner):
             uri: The URI of the Neo4j instance.
             user: The user to connect to the Neo4j instance.
             password: The password to connect to the Neo4j instance.
+            database: The name of the database containing the knowledge graph.
         """
         self.driver = GraphDatabase.driver(uri, auth=(user, password), database=database)
 
