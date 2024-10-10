@@ -42,11 +42,11 @@ def cli():
 @click.option("--username", type=str, required=True, help="Specify the username to use")
 @click.option("--namespace", type=str, default=None, help="Specify a custom namespace")
 @click.option("--run-name", type=str, default=None, help="Specify a custom run name, defaults to branch")
-@click.option("--pipelines", type=List[str], default=None, help="Specify which pipelines to run")
+@click.option("--pipeline", type=str, multiple=True, default=None, help="Specify which pipelines to run")
 @click.option("--verbose", "-v", is_flag=True, default=False, help="Enable verbose output")
 @click.option("--dry-run", "-d", is_flag=True, default=False, help="Does everything except submit the workflow")
 # fmt: on
-def submit(username: str, namespace: str, run_name: str, pipelines: Optional[List[str]], verbose: bool, dry_run: bool):
+def submit(username: str, namespace: str, run_name: str, pipeline: Optional[List[str]], verbose: bool, dry_run: bool):
     """Submit the end-to-end workflow."""
     if verbose:
         logging.getLogger().setLevel(logging.DEBUG)
@@ -54,7 +54,7 @@ def submit(username: str, namespace: str, run_name: str, pipelines: Optional[Lis
     run_name = get_run_name(run_name)
     namespace = namespace or "argo-workflows"
     
-    pipelines_to_submit = kedro_pipelines if pipelines is None else pipelines
+    pipelines_to_submit = kedro_pipelines if pipeline is None else pipeline
 
     _submit(username, namespace, run_name, pipelines_to_submit, verbose, dry_run)
 
