@@ -6,7 +6,7 @@ from abc import ABC, abstractmethod
 
 from matrix.datasets.paths import KGPaths
 from matrix.pipelines.moa_extraction.neo4j_runners import Neo4jRunner
-from matrix.pipelines.preprocessing.nodes import resolve
+from matrix.pipelines.preprocessing.nodes import resolve, normalize
 
 
 def _map_name_and_curie(name: str, curie: str, endpoint: str) -> str:
@@ -18,8 +18,8 @@ def _map_name_and_curie(name: str, curie: str, endpoint: str) -> str:
         endpoint: The endpoint of the synonymizer.
     """
     mapped_curie = resolve(name, endpoint)
-    # if not mapped_curie:
-    #     mapped_curie = normalize(curie, endpoint)
+    if not mapped_curie:
+        mapped_curie = normalize(curie, endpoint)
 
     return mapped_curie
 
