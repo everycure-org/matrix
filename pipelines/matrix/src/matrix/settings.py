@@ -37,7 +37,7 @@ SESSION_STORE_CLASS = SQLiteStore
 SESSION_STORE_ARGS = {"path": str(Path(__file__).parents[2])}
 
 # Directory that holds configuration.
-# CONF_SOURCE = "conf"
+CONF_SOURCE = "conf"
 
 
 CONFIG_LOADER_CLASS = OmegaConfigLoader

@@ -1,4 +1,5 @@
 """Matrix generation pipeline."""
+
 from kedro.pipeline import Pipeline, node
 from kedro.pipeline.modular_pipeline import pipeline
 
@@ -36,6 +37,12 @@ def _create_matrix_generation_pipeline(model: str) -> Pipeline:
                 ],
                 outputs=f"matrix_generation.{model}.reporting.matrix_report",
                 name=f"generate_{model}_report",
+            ),
+            node(
+                func=nodes.generate_metadata,
+                inputs=[f"matrix_generation.{model}.reporting.matrix_report"],
+                outputs=f"matrix_generation.{model}.reporting.matrix_metadata",
+                name=f"generate_{model}_metadata",
             ),
         ],
     )

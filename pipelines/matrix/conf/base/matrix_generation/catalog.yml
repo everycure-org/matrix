@@ -36,3 +36,7 @@ matrix_generation.prm.matrix_pairs:
 "matrix_generation.{model}.reporting.matrix_report":
   filepath: ${globals:paths.reporting}/{model}/matrix_report
   type: pandas.CSVDataset
+
+"matrix_generation.{model}.reporting.matrix_metadata":
+  filepath: ${globals:paths.reporting}/{model}/matrix_metadata
+  type: pandas.CSVDataset
