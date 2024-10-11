@@ -1,8 +1,8 @@
 """Module with nodes for evaluation."""
-import json
-from typing import Any, List, Dict, Union
 
-from sklearn.impute._base import _BaseImputer
+import json
+from typing import Any
+
 
 import pandas as pd
 
@@ -10,12 +10,9 @@ from refit.v1.core.inject import inject_object
 from refit.v1.core.inline_has_schema import has_schema
 
 from matrix import settings
-from matrix.datasets.graph import KnowledgeGraph
 from matrix.datasets.pair_generator import DrugDiseasePairGenerator
 
-from matrix.pipelines.matrix_generation.nodes import make_batch_predictions
 from matrix.pipelines.evaluation.evaluation import Evaluation
-from matrix.pipelines.modelling.model import ModelWrapper
 
 
 def check_no_train(data: pd.DataFrame, known_pairs: pd.DataFrame) -> None:
@@ -34,9 +31,7 @@ def check_no_train(data: pd.DataFrame, known_pairs: pd.DataFrame) -> None:
     data_pairs_set = set(zip(data["source"], data["target"]))
     overlapping_pairs = data_pairs_set.intersection(train_pairs_set)
     if overlapping_pairs:
-        raise ValueError(
-            f"Found {len(overlapping_pairs)} pairs in test set that also appear in training set."
-        )
+        raise ValueError(f"Found {len(overlapping_pairs)} pairs in test set that also appear in training set.")
 
 
 def check_ordered(
@@ -53,14 +48,10 @@ def check_ordered(
         ValueError: If the score column is not correctly ordered.
     """
     if not data[score_col_name].is_monotonic_decreasing:
-        raise ValueError(
-            f"The '{score_col_name}' column is not monotonically descending."
-        )
+        raise ValueError(f"The '{score_col_name}' column is not monotonically descending.")
 
 
-def perform_matrix_checks(
-    matrix: pd.DataFrame, known_pairs: pd.DataFrame, score_col_name: str
-) -> None:
+def perform_matrix_checks(matrix: pd.DataFrame, known_pairs: pd.DataFrame, score_col_name: str) -> None:
     """Perform various checks on the evaluation dataset.
 
     Args:
@@ -130,10 +121,6 @@ def consolidate_evaluation_reports(*reports) -> dict:
     master_report = dict()
     for idx_1, model in enumerate(settings.DYNAMIC_PIPELINES_MAPPING.get("modelling")):
         master_report[model["model_name"]] = dict()
-        for idx_2, evaluation in enumerate(
-            settings.DYNAMIC_PIPELINES_MAPPING.get("evaluation")
-        ):
-            master_report[model["model_name"]][
-                evaluation["evaluation_name"]
-            ] = reports_lst[idx_1 + idx_2]
+        for idx_2, evaluation in enumerate(settings.DYNAMIC_PIPELINES_MAPPING.get("evaluation")):
+            master_report[model["model_name"]][evaluation["evaluation_name"]] = reports_lst[idx_1 + idx_2]
     return json.loads(json.dumps(master_report, default=float))
