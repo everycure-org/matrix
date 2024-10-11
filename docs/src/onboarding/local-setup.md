@@ -9,7 +9,7 @@ make
 ```
 
 !!! help "Encountering issues?"
-    If you're experiencing any problems running the `MakeFile`, please refer to our [Common Errors FAQ](../faq/common_errors.md) for troubleshooting guidance. This resource contains solutions to frequently encountered issues and may help resolve your problem quickly.
+    If you're experiencing any problems running the `MakeFile`, please refer to our [Common Errors FAQ](../FAQ/common_errors.md) for troubleshooting guidance. This resource contains solutions to frequently encountered issues and may help resolve your problem quickly.
 
 
 !!! tip
