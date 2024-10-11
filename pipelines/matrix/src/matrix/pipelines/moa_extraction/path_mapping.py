@@ -96,11 +96,11 @@ class SetwisePathMapper(PathMapper):
         if self.max_entries:
             drug_mech_db = drug_mech_db[: self.max_entries]
 
-        paths = KGPaths(self.num_hops)
+        paths = KGPaths(num_hops=self.num_hops)
         for db_entry in tqdm(drug_mech_db, desc="Mapping paths"):
             result = self.map_single_moa(runner, db_entry, synonymizer_endpoint, num_attempts)
-            paths.add_paths_from_result(result)
-
+            drugmech_id = db_entry["graph"]["_id"]
+            paths.add_paths_from_result(result, extra_data={"DrugMechDB_id": [drugmech_id] * len(result)})
         return paths
 
     def map_single_moa(
