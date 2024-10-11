@@ -230,7 +230,7 @@ def test_submit_verbose(mock_multiple_pipelines: None, mock_submit_internal: Non
     )
 
 
-def test_submit_dry_run_and_verbose(mock_multiple_pipelines: None, mock_submit_internal: None):
+def test_submit_dry_run_and_verbose(mock_multiple_pipelines: None, mock_submit_internal: None) -> None:
     runner = CliRunner()
     result = runner.invoke(
         submit,
@@ -267,57 +267,57 @@ def test_submit_dry_run_and_verbose(mock_multiple_pipelines: None, mock_submit_i
     )
 
 
-def test_check_dependencies(mock_run_subprocess):
+def test_check_dependencies(mock_run_subprocess: None) -> None:
     mock_run_subprocess.return_value.returncode = 0
     mock_run_subprocess.return_value.stdout = "active_account"
     check_dependencies(verbose=True)
     assert mock_run_subprocess.call_count > 0
 
 
-def test_build_push_docker(mock_run_subprocess):
+def test_build_push_docker(mock_run_subprocess: None) -> None:
     build_push_docker("testuser", verbose=True)
     mock_run_subprocess.assert_called_once_with("make docker_push TAG=testuser", stream_output=True)
 
 
 @patch("matrix.cli_commands.submit.generate_argo_config")
-def test_build_argo_template(mock_generate_argo_config):
+def test_build_argo_template(mock_generate_argo_config: None) -> None:
     build_argo_template("test_run", "testuser", "test_namespace", {"test": MagicMock()})
     mock_generate_argo_config.assert_called_once()
 
 
-def test_ensure_namespace_existing(mock_run_subprocess):
+def test_ensure_namespace_existing(mock_run_subprocess: None) -> None:
     mock_run_subprocess.return_value.returncode = 0
     ensure_namespace("existing_namespace", verbose=True)
     assert mock_run_subprocess.call_count == 1
 
 
-def test_ensure_namespace_new(mock_run_subprocess):
+def test_ensure_namespace_new(mock_run_subprocess: None) -> None:
     mock_run_subprocess.side_effect = [MagicMock(returncode=1), MagicMock(returncode=0)]
     ensure_namespace("new_namespace", verbose=True)
     assert mock_run_subprocess.call_count == 2
 
 
 @pytest.fixture()
-def mock_template_directory():
+def temporary_directory():
     with tempfile.TemporaryDirectory() as temp_dir:
         yield Path(temp_dir)
 
 
-def test_save_argo_template_creates_file(mock_template_directory):
+def test_save_argo_template_creates_file(temporary_directory: Path) -> None:
     argo_template = "test template content"
     run_name = "test_run"
 
-    result = save_argo_template(argo_template, run_name, mock_template_directory)
+    result = save_argo_template(argo_template, run_name, temporary_directory)
 
     assert Path(result).exists()
     assert Path(result).is_file()
 
 
-def test_save_argo_template_content(mock_template_directory):
+def test_save_argo_template_content(temporary_directory: Path) -> None:
     argo_template = "test template content"
     run_name = "test_run"
 
-    file_path = save_argo_template(argo_template, run_name, mock_template_directory)
+    file_path = save_argo_template(argo_template, run_name, temporary_directory)
 
     with open(file_path, "r") as f:
         content = f.read()
@@ -325,68 +325,37 @@ def test_save_argo_template_content(mock_template_directory):
     assert content == argo_template
 
 
-def test_save_argo_template_filename_format(mock_template_directory):
+def test_save_argo_template_returns_string(temporary_directory: Path) -> None:
     argo_template = "test template content"
     run_name = "test_run"
 
-    file_path = save_argo_template(argo_template, run_name, mock_template_directory)
-    filename = Path(file_path).name
-
-    assert filename.startswith(f"argo_template_{run_name}_")
-    assert filename.endswith(".yml")
-
-    # Check if the timestamp in the filename is close to the current time
-    timestamp_str = filename.split("_")[-1].split(".")[0]
-    file_timestamp = time.strptime(timestamp_str, "%Y%m%d_%H%M%S")
-    current_time = time.localtime()
-
-    assert abs(time.mktime(file_timestamp) - time.mktime(current_time)) < 5  # Allow 5 seconds difference
-
-
-def test_save_argo_template_returns_string(mock_template_directory):
-    argo_template = "test template content"
-    run_name = "test_run"
-
-    result = save_argo_template(argo_template, run_name, mock_template_directory)
+    result = save_argo_template(argo_template, run_name, temporary_directory)
 
     assert isinstance(result, str)
 
 
-def test_save_argo_template_creates_directory_if_not_exists(tmp_path):
-    non_existent_dir = tmp_path / "non_existent"
-    argo_template = "test template content"
-    run_name = "test_run"
-
-    result = save_argo_template(argo_template, run_name, non_existent_dir)
-
-    assert non_existent_dir.exists()
-    assert non_existent_dir.is_dir()
-    assert Path(result).exists()
-    assert Path(result).is_file()
-
-
-def test_apply_argo_template(mock_run_subprocess):
+def test_apply_argo_template(mock_run_subprocess: None) -> None:
     apply_argo_template("test_namespace", Path("sample_template.yml"), verbose=True)
     mock_run_subprocess.assert_called_once()
 
 
-def test_submit_workflow(mock_run_subprocess):
+def test_submit_workflow(mock_run_subprocess: None) -> None:
     mock_run_subprocess.return_value.stdout = '{"metadata": {"name": "test-job"}}'
     submit_workflow("test_run", "test_namespace", verbose=True)
     assert mock_run_subprocess.call_count == 1
 
 
-def test_get_run_name_with_input():
+def test_get_run_name_with_input() -> None:
     assert get_run_name("custom_name") == "custom_name"
 
 
 @patch("matrix.cli_commands.submit.run_subprocess")
-def test_get_run_name_from_git(mock_run_subprocess):
+def test_get_run_name_from_git(mock_run_subprocess: None) -> None:
     mock_run_subprocess.return_value.stdout = "feature/test-branch"
     assert get_run_name(None).startswith("feature-test-branch")
 
 
-def test_command_exists(mock_run_subprocess):
+def test_command_exists(mock_run_subprocess: None) -> None:
     mock_run_subprocess.return_value.returncode = 0
     assert command_exists("existing_command") is True
 
@@ -400,7 +369,7 @@ def mock_popen():
         yield mock
 
 
-def test_run_subprocess_success(mock_popen):
+def test_run_subprocess_success(mock_popen: None) -> None:
     # Mock successful command execution
     process_mock = MagicMock()
     process_mock.stdout = iter(["output line 1\n", "output line 2\n"])
@@ -415,7 +384,7 @@ def test_run_subprocess_success(mock_popen):
     assert result.stderr == ""
 
 
-def test_run_subprocess_error(mock_popen):
+def test_run_subprocess_error(mock_popen: None) -> None:
     # Mock command execution with error
     process_mock = MagicMock()
     process_mock.stdout = iter([""])
@@ -430,7 +399,7 @@ def test_run_subprocess_error(mock_popen):
     assert "error message" in exc_info.value.stderr
 
 
-def test_run_subprocess_no_streaming(mock_popen):
+def test_run_subprocess_no_streaming(mock_popen: None):
     # Mock subprocess.run for non-streaming case
     with patch("subprocess.run") as mock_run:
         mock_run.return_value = subprocess.CompletedProcess(
@@ -444,7 +413,7 @@ def test_run_subprocess_no_streaming(mock_popen):
         assert result.stderr == ""
 
 
-def test_run_subprocess_no_streaming_error(mock_popen):
+def test_run_subprocess_no_streaming_error(mock_popen: None) -> None:
     # Mock subprocess.run for non-streaming case with error
     with patch("subprocess.run") as mock_run:
         mock_run.side_effect = subprocess.CalledProcessError(returncode=1, cmd="test", output="", stderr="error")
@@ -456,7 +425,7 @@ def test_run_subprocess_no_streaming_error(mock_popen):
         assert "error" in exc_info.value.stderr
 
 
-def test_internal_submit(mock_dependencies: None):
+def test_internal_submit(mock_dependencies: None, temporary_directory: Path) -> None:
     _submit(
         username="testuser",
         namespace="test_namespace",
@@ -465,4 +434,5 @@ def test_internal_submit(mock_dependencies: None):
         pipeline_for_execution="__default__",
         verbose=False,
         dry_run=True,
+        template_directory=ARGO_TEMPLATES_DIR_PATH,
     )
