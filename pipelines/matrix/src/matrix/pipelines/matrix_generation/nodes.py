@@ -249,6 +249,7 @@ def generate_summary_metadata(meta_col_names, score_col_name, stats_col_names):
 
     # Add metadata for score columns
     summary_metadata[score_col_name] = "Probability score"
+    summary_metadata["pair_id"] = "Unique identifier for each pair"
     summary_metadata["is_known_positive"] = "Whether the pair is a known positive"
     summary_metadata["is_known_negative"] = "Whether the pair is a known negative"
 
@@ -383,7 +384,7 @@ def reorder_columns(
         pd.DataFrame: DataFrame with reordered columns.
     """
     id_columns = ["pair_id", "drug_id", "drug_name", "disease_id", "disease_name"]
-    score_columns = [score_col_name, "is_known_positive", "is_known_negative"]
+    score_columns = [score_col_name]
     kg_columns = list(meta_col_names["kg_data"].keys())
     stat_columns = list(stats_col_names["per_disease"]["top"].keys())
     stat_suffixes = ["_top_per_disease", "_all_per_disease"]

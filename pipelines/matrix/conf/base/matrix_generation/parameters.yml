@@ -5,7 +5,6 @@ matrix_generation.matrix_generation_options:
 
 matrix_generation.metadata:
   kg_data:
-    pair_id: "Unique identifier for each pair"
     kg_drug_id: "Drug identifier in the knowledge graph"
     kg_drug_name: "Drug name in the knowledge graph"
     kg_disease_id: "Disease identifier in the knowledge graph"

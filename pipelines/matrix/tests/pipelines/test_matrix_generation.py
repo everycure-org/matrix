@@ -201,6 +201,8 @@ def test_generate_report(sample_data):
             "kg_disease_id": "KG Disease ID",
             "kg_drug_name": "KG Drug Name",
             "kg_disease_name": "KG Disease Name",
+            "is_known_positive": "Whether the pair is a known positive",
+            "is_known_negative": "Whether the pair is a known negative",
         },
     }
 
