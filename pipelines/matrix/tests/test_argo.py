@@ -549,7 +549,7 @@ def test_generate_argo_config(expected_argo_config: Dict[str, Any], matrix_root:
         namespace=namespace,
         username=username,
         pipelines=pipelines,
-        project_path=matrix_root,
+        package_name="matrix",
     )
 
     assert argo_config is not None

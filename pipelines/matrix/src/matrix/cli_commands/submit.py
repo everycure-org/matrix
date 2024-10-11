@@ -9,6 +9,7 @@ import time
 from typing import Dict, Optional
 
 import click
+from kedro.framework.startup import bootstrap_project
 from kedro.framework.cli.utils import CONTEXT_SETTINGS
 from kedro.framework.project import pipelines as kedro_pipelines
 from kedro.pipeline import Pipeline
@@ -287,7 +288,11 @@ def build_push_docker(username: str, verbose: bool):
 def build_argo_template(run_name: str, username: str, namespace: str, pipelines: Dict[str, Pipeline]) -> str:
     """Build Argo workflow template."""
     image_name = "us-central1-docker.pkg.dev/mtrx-hub-dev-3of/matrix-images/matrix"
-    matrix_root = Path(__file__).parent.parent 
+
+    matrix_root = Path(__file__).parent.parent.parent.parent
+    metadata = bootstrap_project(matrix_root)
+    package_name = metadata.package_name
+
     return generate_argo_config(
         image=image_name,
         run_name=run_name,
@@ -295,7 +300,7 @@ def build_argo_template(run_name: str, username: str, namespace: str, pipelines:
         namespace=namespace,
         username=username,
         pipelines=pipelines,
-        project_path=matrix_root,
+        project_path=package_name,
     )
 
 def save_argo_template(argo_template: str, run_name: str, template_directory: Path) -> str:
