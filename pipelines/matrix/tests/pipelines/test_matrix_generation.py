@@ -169,7 +169,6 @@ def sample_data():
 
 def test_generate_report(sample_data):
     """Test the generate_report function."""
-    # NOTE: This function was partially generated using AI assistance.
     # Given an input matrix, drug list and disease list
     drugs, diseases, known_pairs, _ = sample_data
 
