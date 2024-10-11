@@ -42,8 +42,8 @@ def cli():
 @click.option("--username", type=str, required=True, help="Specify the username to use")
 @click.option("--namespace", type=str, default="argo-workflows", help="Specify a custom namespace")
 @click.option("--run-name", type=str, default=None, help="Specify a custom run name, defaults to branch")
-@click.option("--include_pipeline", type=str, multiple=True, default=None, help="Specify which pipelines to include in workflow template. If not specified, all pipelines are added to the workflow.")
-@click.option("--pipeline_for_execution", type=str, default="__default__", help="Specify which pipeline to execute.")
+@click.option("--include-pipeline", type=str, multiple=True, default=None, help="Specify which pipelines to include in workflow template. If not specified, all pipelines are added to the workflow.")
+@click.option("--pipeline-for-execution", type=str, default="__default__", help="Specify which pipeline to execute.")
 @click.option("--verbose", "-v", is_flag=True, default=False, help="Enable verbose output")
 @click.option("--dry-run", "-d", is_flag=True, default=False, help="Does everything except submit the workflow")
 # fmt: on
