@@ -11,6 +11,7 @@ import pandera.pyspark as pa
 import pyspark as ps
 import pyspark.sql.functions as F
 from joblib import Memory
+from more_itertools import chunked
 from pyspark.sql import DataFrame
 from refit.v1.core.inline_has_schema import has_schema
 from refit.v1.core.inline_primary_key import primary_key
@@ -19,7 +20,6 @@ from tenacity import (
     retry_if_exception_type,
     wait_exponential,
 )
-from tqdm import tqdm
 
 from matrix.schemas.knowledge_graph import KGEdgeSchema, KGNodeSchema
 
@@ -117,10 +117,10 @@ def batch_map_ids(
 ) -> Dict[str, str]:
     """Maps a list of ids to their normalized form using the node normalization service.
 
-    This function internally uses asynchronous operations but presents a synchronous interface.
+    This function is a synchronous wrapper around an asynchronous operation.
 
     Args:
-        ids: A list of ids to map.
+        ids: A frozenset of ids to map.
         api_endpoint: The endpoint to hit for normalization.
         batch_size: The number of ids to map in a single batch.
         parallelism: The number of concurrent requests to make.
@@ -130,32 +130,45 @@ def batch_map_ids(
     Returns:
         Dict[str, str]: A dictionary of the form {id: normalized_id}.
     """
-    # FUTURE: This is rather complex, we should pull it apart and test it
+    results = asyncio.run(
+        async_batch_map_ids(ids, api_endpoint, batch_size, parallelism, conflate, drug_chemical_conflate)
+    )
 
-    async def async_batch_map():
-        mappings = {}
-        ids_list = list(ids)
-        total_batches = (len(ids_list) + batch_size - 1) // batch_size
+    logger.info(f"mapped {len(results)} ids")
+    logger.warning(f"Endpoint did not return results for {len(ids) - len(results)} ids")
+    # ensuring we return a result for every input id, even if it's None
+    return {id: results.get(id) for id in ids}
 
-        async def process_batch(batch, session):
-            return await hit_node_norm_service(batch, api_endpoint, session, conflate, drug_chemical_conflate)
 
-        async with aiohttp.ClientSession() as session:
-            semaphore = asyncio.Semaphore(parallelism)
+async def async_batch_map_ids(
+    ids: frozenset[str],
+    api_endpoint: str,
+    batch_size: int,
+    parallelism: int,
+    conflate: bool,
+    drug_chemical_conflate: bool,
+) -> Dict[str, str]:
+    async with aiohttp.ClientSession() as session:
+        semaphore = asyncio.Semaphore(parallelism)
+        tasks = [
+            process_batch(batch, api_endpoint, session, semaphore, conflate, drug_chemical_conflate)
+            for batch in chunked(ids, batch_size)
+        ]
+        results = await asyncio.gather(*tasks)
 
-            async def bounded_process_batch(batch):
-                async with semaphore:
-                    return await process_batch(batch, session)
+    return dict(item for sublist in results for item in sublist.items())
 
-            tasks = [bounded_process_batch(ids_list[i : i + batch_size]) for i in range(0, len(ids_list), batch_size)]
 
-            for result in tqdm(asyncio.as_completed(tasks), total=total_batches, desc="Batch Mapping IDs"):
-                mappings.update(await result)
-
-        assert len(mappings) == len(ids)
-        return mappings
-
-    return asyncio.run(async_batch_map())
+async def process_batch(
+    batch: List[str],
+    api_endpoint: str,
+    session: aiohttp.ClientSession,
+    semaphore: asyncio.Semaphore,
+    conflate: bool,
+    drug_chemical_conflate: bool,
+) -> Dict[str, str]:
+    async with semaphore:
+        return await hit_node_norm_service(batch, api_endpoint, session, conflate, drug_chemical_conflate)
 
 
 def normalize_kg(
