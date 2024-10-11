@@ -28,6 +28,7 @@ import subprocess
 @pytest.fixture
 def mock_run_subprocess():
     with patch("matrix.cli_commands.submit.run_subprocess") as mock:
+        mock.return_value = MagicMock(stdout='{"metadata": {"name": "mocked-job-name"}}')
         yield mock
 
 
@@ -37,10 +38,8 @@ def mock_dependencies():
         "matrix.cli_commands.submit.build_push_docker"
     ) as _, patch("matrix.cli_commands.submit.apply_argo_template") as _, patch(
         "matrix.cli_commands.submit.ensure_namespace"
-    ) as _, patch("matrix.cli_commands.submit.submit_workflow"):
+    ):
         yield
-
-    # build save and apply are only ones left
 
 
 @pytest.fixture
@@ -428,7 +427,10 @@ def test_run_subprocess_no_streaming_error(mock_popen: None) -> None:
         assert "error" in exc_info.value.stderr
 
 
-def test_internal_submit(mock_dependencies: None, temporary_directory: Path) -> None:
+@pytest.mark.parametrize("pipeline_for_execution", ["__default__", "test_pipeline"])
+def test_internal_submit(
+    mock_run_subprocess: None, mock_dependencies: None, temporary_directory: Path, pipeline_for_execution: str
+) -> None:
     def dummy_func(*args):
         """Dummy function for testing purposes."""
         return args
@@ -449,10 +451,11 @@ def test_internal_submit(mock_dependencies: None, temporary_directory: Path) -> 
                 ]
             ),
         },
-        pipeline_for_execution="__default__",
+        pipeline_for_execution=pipeline_for_execution,
         verbose=False,
-        dry_run=True,
+        dry_run=False,
         template_directory=temporary_directory,
+        allow_interactions=False,
     )
 
     yaml_files = list(temporary_directory.glob("argo_template_test-run_*.yml"))
@@ -488,3 +491,21 @@ def test_internal_submit(mock_dependencies: None, temporary_directory: Path) -> 
     for pipeline in pipeline_templates:
         tasks = pipeline.get("dag", {}).get("tasks", [])
         assert len(tasks) > 0, f"Expected at least one task in the {pipeline['name']} pipeline"
+
+    # Check that the specified pipeline_for_execution is present in the templates
+    assert pipeline_for_execution in pipeline_names, f"Expected '{pipeline_for_execution}' pipeline to be present"
+    # NOTE: This function was partially generated using AI assistance.
+
+    submit_cmd = " ".join(
+        [
+            "argo submit",
+            f"--name test-run",
+            f"-n test_namespace",
+            f"--from wftmpl/test-run",
+            f"-p run_name=test-run",
+            "-l submit-from-ui=false",
+            f"--entrypoint {pipeline_for_execution}",
+            "-o json",
+        ]
+    )
+    mock_run_subprocess.assert_called_with(submit_cmd, capture_output=True, stream_output=False)

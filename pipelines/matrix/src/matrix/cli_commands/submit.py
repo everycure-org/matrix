@@ -88,7 +88,8 @@ def _submit(
         pipeline_for_execution: str, 
         verbose: bool, 
         dry_run: bool, 
-        template_directory: Path
+        template_directory: Path,
+        allow_interactions: bool = True,
     ) -> None:
     """Submit the end-to-end workflow.
 
@@ -112,6 +113,7 @@ def _submit(
         verbose (bool): If True, enable verbose output.
         dry_run (bool): If True, do not submit the workflow.
         template_directory (Path): The directory containing the Argo template.
+        allow_interactions (bool): If True, allow prompts for confirmation
     """
     
     try:
@@ -146,7 +148,6 @@ def _submit(
             submit_workflow(run_name, namespace, pipeline_for_execution, verbose=verbose)
             console.print("[green]✓[/green] Workflow submitted")
 
-        # TODO: To finish splitting pipeline - figure out where pipeline and other params are passed to the function
         console.print(Panel.fit(
             f"[bold green]Workflow {'prepared' if dry_run else 'submitted'} successfully![/bold green]\n"
             f"Run Name: {run_name}\n"
@@ -154,7 +155,7 @@ def _submit(
             title="Submission Summary"
         ))
 
-        if not dry_run and click.confirm("Do you want to open the workflow in your browser?"):
+        if not dry_run and allow_interactions and click.confirm("Do you want to open the workflow in your browser?", default=False):
             workflow_url = f"https://argo.platform.dev.everycure.org/workflows/{namespace}/{run_name}"
             click.launch(workflow_url)
             console.print(f"[blue]Opened workflow in browser: {workflow_url}[/blue]")
