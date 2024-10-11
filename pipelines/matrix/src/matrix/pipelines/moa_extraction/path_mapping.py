@@ -66,15 +66,17 @@ class SetwisePathMapper(PathMapper):
 
     """
 
-    def __init__(self, num_hops: int, unidirectional: bool):
+    def __init__(self, num_hops: int, unidirectional: bool, max_entries: int = None):
         """Initialize the SetwisePathMapper.
 
         Args:
             num_hops: The number of hops in the paths.
             unidirectional: Whether to map onto unidirectional paths only.
+            max_entries: The maximum number of entries to map. If None, all entries are mapped.
         """
         self.num_hops = num_hops
         self.unidirectional = unidirectional
+        self.max_entries = max_entries
 
     def run(
         self,
@@ -82,7 +84,6 @@ class SetwisePathMapper(PathMapper):
         drug_mech_db: Dict[str, Any],
         synonymizer_endpoint: str,
         num_attempts: int = 5,
-        max_entries: int = None,
     ) -> KGPaths:
         """Run the path mapping.
 
@@ -91,10 +92,9 @@ class SetwisePathMapper(PathMapper):
             drug_mech_db: The DrugMechDB indication paths.
             synonymizer_endpoint: The endpoint of the synonymizer.
             num_attempts: The number of attempts to run the query.
-            max_entries: The maximum number of entries to map. If None, all entries are mapped.
         """
-        if max_entries:
-            drug_mech_db = drug_mech_db[:max_entries]
+        if self.max_entries:
+            drug_mech_db = drug_mech_db[: self.max_entries]
 
         paths = KGPaths(self.num_hops)
         for db_entry in tqdm(drug_mech_db, desc="Mapping paths"):
@@ -151,7 +151,7 @@ class SetwisePathMapper(PathMapper):
             match_clause_parts.append(f"-[r{i+1}]{edge_end}")
         match_clause = "".join(match_clause_parts)
 
-        # Construct the where clause (e.g. "(a1.id in ['NCIT:C16325']) AND (a2.id in ['NCIT:C16325'])")
+        # Construct the where clause (e.g. "(a1.id in ['ID:1','ID:2']) AND (a2.id in ['ID:1','ID:2'])")
         where_clause = " AND ".join([f"(a{i}.id in {str(mapped_int_ids)})" for i in range(1, self.num_hops)])
 
         # Construct the neo4j query and run with several attempts (to account for connection issues)

@@ -55,6 +55,13 @@ def _preprocessing_pipeline() -> Pipeline:
                 name="map_three_hop",
                 tags="moa_extraction.preprocessing",
             ),
+            # node(
+            #     func=lambda x: breakpoint(),
+            #     inputs=["moa_extraction.int.three_hop_indication_paths"],
+            #     outputs=None,
+            #     name="inspect_three_hop",
+            #     tags="moa_extraction.preprocessing",
+            # ),
         ]
     )
 
