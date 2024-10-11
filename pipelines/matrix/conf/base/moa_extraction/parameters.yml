@@ -25,8 +25,10 @@ moa_extraction:
       object: matrix.pipelines.moa_extraction.path_mapping.SetwisePathMapper
       num_hops: 2
       unidirectional: false
+      max_entries: 10 # TODO: Remove
     mapper_three_hop: 
       object: matrix.pipelines.moa_extraction.path_mapping.SetwisePathMapper
       num_hops: 3
       unidirectional: false
+      max_entries: 10 # TODO: Remove
     synonymizer_endpoint: http://localhost:8081

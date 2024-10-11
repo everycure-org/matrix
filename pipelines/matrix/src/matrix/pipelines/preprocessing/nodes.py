@@ -337,7 +337,7 @@ def clean_drug_list(drug_df: pd.DataFrame, endpoint: str) -> pd.DataFrame:
         target_col="curie",
         endpoint=endpoint,
     )
-    # Adding Categtory
+    # Adding Category
     res = enrich_df(
         res,
         func=partial(normalize, att_to_get="category"),
