@@ -1,8 +1,13 @@
 from pathlib import Path
+import tempfile
+import time
 import pytest
 from unittest.mock import patch, MagicMock
 from click.testing import CliRunner
+from matrix.argo import ARGO_TEMPLATES_DIR_PATH
 from matrix.cli_commands.submit import (
+    _submit,
+    save_argo_template,
     submit,
     check_dependencies,
     build_push_docker,
@@ -76,10 +81,8 @@ def test_submit_simple(mock_submit_internal: None, mock_pipelines: None) -> None
         pipeline_for_execution="__default__",
         verbose=False,
         dry_run=False,
+        template_directory=ARGO_TEMPLATES_DIR_PATH,
     )
-
-
-# NOTE: This function was partially generated using AI assistance.
 
 
 def test_submit_namespace(mock_pipelines: None, mock_submit_internal: None):
@@ -96,6 +99,7 @@ def test_submit_namespace(mock_pipelines: None, mock_submit_internal: None):
         pipeline_for_execution="__default__",
         verbose=False,
         dry_run=False,
+        template_directory=ARGO_TEMPLATES_DIR_PATH,
     )
 
 
@@ -125,6 +129,7 @@ def test_submit_pipelines(mock_multiple_pipelines: None, mock_submit_internal: N
         pipeline_for_execution="mock_pipeline2",
         verbose=False,
         dry_run=False,
+        template_directory=ARGO_TEMPLATES_DIR_PATH,
     )
 
 
@@ -159,6 +164,7 @@ def test_submit_multiple_pipelines(mock_multiple_pipelines: None, mock_submit_in
         pipeline_for_execution="mock_pipeline2",
         verbose=False,
         dry_run=False,
+        template_directory=ARGO_TEMPLATES_DIR_PATH,
     )
 
 
@@ -189,6 +195,7 @@ def test_submit_dry_run(mock_multiple_pipelines: None, mock_submit_internal: Non
         pipeline_for_execution="mock_pipeline2",
         verbose=False,
         dry_run=True,
+        template_directory=ARGO_TEMPLATES_DIR_PATH,
     )
 
 
@@ -219,6 +226,7 @@ def test_submit_verbose(mock_multiple_pipelines: None, mock_submit_internal: Non
         pipeline_for_execution="mock_pipeline3",
         verbose=True,
         dry_run=False,
+        template_directory=ARGO_TEMPLATES_DIR_PATH,
     )
 
 
@@ -255,6 +263,7 @@ def test_submit_dry_run_and_verbose(mock_multiple_pipelines: None, mock_submit_i
         pipeline_for_execution="mock_pipeline2",
         verbose=True,
         dry_run=True,
+        template_directory=ARGO_TEMPLATES_DIR_PATH,
     )
 
 
@@ -286,6 +295,74 @@ def test_ensure_namespace_new(mock_run_subprocess):
     mock_run_subprocess.side_effect = [MagicMock(returncode=1), MagicMock(returncode=0)]
     ensure_namespace("new_namespace", verbose=True)
     assert mock_run_subprocess.call_count == 2
+
+
+@pytest.fixture()
+def mock_template_directory():
+    with tempfile.TemporaryDirectory() as temp_dir:
+        yield Path(temp_dir)
+
+
+def test_save_argo_template_creates_file(mock_template_directory):
+    argo_template = "test template content"
+    run_name = "test_run"
+
+    result = save_argo_template(argo_template, run_name, mock_template_directory)
+
+    assert Path(result).exists()
+    assert Path(result).is_file()
+
+
+def test_save_argo_template_content(mock_template_directory):
+    argo_template = "test template content"
+    run_name = "test_run"
+
+    file_path = save_argo_template(argo_template, run_name, mock_template_directory)
+
+    with open(file_path, "r") as f:
+        content = f.read()
+
+    assert content == argo_template
+
+
+def test_save_argo_template_filename_format(mock_template_directory):
+    argo_template = "test template content"
+    run_name = "test_run"
+
+    file_path = save_argo_template(argo_template, run_name, mock_template_directory)
+    filename = Path(file_path).name
+
+    assert filename.startswith(f"argo_template_{run_name}_")
+    assert filename.endswith(".yml")
+
+    # Check if the timestamp in the filename is close to the current time
+    timestamp_str = filename.split("_")[-1].split(".")[0]
+    file_timestamp = time.strptime(timestamp_str, "%Y%m%d_%H%M%S")
+    current_time = time.localtime()
+
+    assert abs(time.mktime(file_timestamp) - time.mktime(current_time)) < 5  # Allow 5 seconds difference
+
+
+def test_save_argo_template_returns_string(mock_template_directory):
+    argo_template = "test template content"
+    run_name = "test_run"
+
+    result = save_argo_template(argo_template, run_name, mock_template_directory)
+
+    assert isinstance(result, str)
+
+
+def test_save_argo_template_creates_directory_if_not_exists(tmp_path):
+    non_existent_dir = tmp_path / "non_existent"
+    argo_template = "test template content"
+    run_name = "test_run"
+
+    result = save_argo_template(argo_template, run_name, non_existent_dir)
+
+    assert non_existent_dir.exists()
+    assert non_existent_dir.is_dir()
+    assert Path(result).exists()
+    assert Path(result).is_file()
 
 
 def test_apply_argo_template(mock_run_subprocess):
@@ -377,3 +454,15 @@ def test_run_subprocess_no_streaming_error(mock_popen):
 
         assert exc_info.value.returncode == 1
         assert "error" in exc_info.value.stderr
+
+
+def test_internal_submit(mock_dependencies: None):
+    _submit(
+        username="testuser",
+        namespace="test_namespace",
+        run_name="test-run",
+        pipelines_for_workflow={"test_pipeline": MagicMock()},
+        pipeline_for_execution="__default__",
+        verbose=False,
+        dry_run=True,
+    )
