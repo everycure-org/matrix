@@ -1,5 +1,5 @@
 import pandas as pd
-from pyspark.sql import DataFrame
+from pyspark.sql import DataFrame, SparkSession
 from typing import Tuple
 import pyspark.sql.functions as F
 
@@ -26,11 +26,15 @@ def get_random_selection_from_rtx(
         raw_tp: Raw ground truth positive data.
         raw_tn: Raw ground truth negative data.
     """
-    # First get the edges from the ground_truths as they are needed in the modelling pipeline
+    # First get the edges from the ground_truths as they are needed in the modelling pipeline: 
+    # in make_splits() specifically
     ground_truths_df = create_int_pairs(raw_tp,raw_tn)
-    ground_truths_edges = edges.filter((edges.subject == ground_truths_df.source) | (edges.object == ground_truths_df.target))
+    spark_session = SparkSession.builder.getOrCreate()
+    ground_truths_spark_df = spark_session.createDataFrame(ground_truths_df[['source', 'target']])
+    cond = ((edges.subject == ground_truths_spark_df.source) & (edges.object == ground_truths_spark_df.target))
+    ground_truths_edges = edges.join(ground_truths_spark_df, how='inner', on=cond).select(edges.columns)
     # Now take a sample from the whole KG edges
-    edges_sample_df = edges.sample(withReplacement=False, fraction=0.05, seed=123)
+    edges_sample_df = edges.sample(withReplacement=False, fraction=0.005, seed=123)
     # Now merge the ground truths
     edges_sample_df = edges_sample_df.union(ground_truths_edges).distinct()
     # Now we need to select the nodes. First, make a list with all the IDs
