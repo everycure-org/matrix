@@ -434,5 +434,5 @@ def test_internal_submit(mock_dependencies: None, temporary_directory: Path) -> 
         pipeline_for_execution="__default__",
         verbose=False,
         dry_run=True,
-        template_directory=ARGO_TEMPLATES_DIR_PATH,
+        template_directory=temporary_directory,
     )

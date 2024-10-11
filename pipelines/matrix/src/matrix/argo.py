@@ -5,7 +5,6 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from jinja2 import Environment, FileSystemLoader
-from kedro.framework.startup import bootstrap_project
 from kedro.pipeline import Pipeline
 from kedro.pipeline.node import Node
 
@@ -20,14 +19,11 @@ def generate_argo_config(
     namespace: str,
     username: str,
     pipelines: Dict[str, Pipeline],
-    project_path: Path,
+    package_name: str,
 ) -> str:
     loader = FileSystemLoader(searchpath=ARGO_TEMPLATES_DIR_PATH)
     template_env = Environment(loader=loader, trim_blocks=True, lstrip_blocks=True)
     template = template_env.get_template(ARGO_TEMPLATE_FILE)
-
-    metadata = bootstrap_project(project_path)
-    package_name = metadata.package_name
 
     pipeline2dependencies = {}
     for name, pipeline in pipelines.items():
