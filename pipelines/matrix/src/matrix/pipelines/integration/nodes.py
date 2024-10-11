@@ -130,7 +130,7 @@ def batch_map_ids(
     Returns:
         Dict[str, str]: A dictionary of the form {id: normalized_id}.
     """
-    # NOTE: This function was partially generated using AI assistance.
+    # FUTURE: This is rather complex, we should pull it apart and test it
 
     async def async_batch_map():
         mappings = {}

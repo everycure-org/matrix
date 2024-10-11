@@ -1,7 +1,7 @@
 integration:
   nodenorm:
     # api_endpoint: https://nodenormalization-sri.renci.org/get_normalized_nodes
-    api_endpoint: "https://nodenorm.transltr.io/1.5/get_normalized_nodes"
+    api_endpoint: ${oc.env:NODENORM_ENDPOINT, https://nodenorm.transltr.io/1.5/get_normalized_nodes}
     conflate: true
     drug_chemical_conflate: true
     batch_size: 1000

@@ -1,6 +1,6 @@
 #!/bin/bash
 # Convience script that gets normalized nodes from the nodenorm endpoint
-set -xe
+set -e
 CURIES="$1"
 IFS=',' read -ra CURIE_ARRAY <<< "$CURIES"
 CURIE_JSON=$(printf '"%s",' "${CURIE_ARRAY[@]}" | sed 's/,$//')
