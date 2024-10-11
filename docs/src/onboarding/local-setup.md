@@ -8,6 +8,10 @@ The fastest way to check if everything works locally is to execute the following
 make
 ```
 
+!!! help "Encountering issues?"
+    If you're experiencing any problems running the `MakeFile`, please refer to our [Common Errors FAQ](../faq/common_errors.md) for troubleshooting guidance. This resource contains solutions to frequently encountered issues and may help resolve your problem quickly.
+
+
 !!! tip
 
     If you are running on an ARM machine (e.g., MacBooks with Apple Silicon), you might not get the best performance. In this case call `make TARGET_PLATFORM=linux/arm64` instead which will build the image for your specific architecture.
