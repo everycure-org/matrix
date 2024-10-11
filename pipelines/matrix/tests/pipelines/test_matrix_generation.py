@@ -126,10 +126,60 @@ def test_make_predictions_and_sort(
     assert result["score"].is_monotonic_decreasing
 
 
+@pytest.fixture
+def sample_data():
+    """Fixture that provides sample data for testing matrix generation functions."""
+    drugs = pd.DataFrame(
+        {
+            "curie": ["drug_1", "drug_2"],
+            "name": ["Drug 1", "Drug 2"],
+            "description": ["Description 1", "Description 2"],
+        }
+    )
+
+    diseases = pd.DataFrame(
+        {
+            "curie": ["disease_1", "disease_2"],
+            "name": ["Disease 1", "Disease 2"],
+            "description": ["Description A", "Description B"],
+        }
+    )
+
+    known_pairs = pd.DataFrame(
+        {
+            "source": ["drug_1", "drug_2", "drug_3"],
+            "target": ["disease_1", "disease_2", "disease_3"],
+            "split": ["TRAIN", "TEST", "TRAIN"],
+            "y": [1, 0, 1],
+        }
+    )
+
+    nodes = pd.DataFrame(
+        {
+            "id": ["drug_1", "drug_2", "disease_1", "disease_2"],
+            "is_drug": [True, True, False, False],
+            "is_disease": [False, False, True, True],
+            "topological_embedding": [np.ones(3) * n for n in range(4)],
+        }
+    )
+    graph = KnowledgeGraph(nodes)
+
+    return drugs, diseases, known_pairs, graph
+
+
 def test_generate_report(sample_data):
     """Test the generate_report function."""
+    # NOTE: This function was partially generated using AI assistance.
     # Given an input matrix, drug list and disease list
     drugs, diseases, known_pairs, _ = sample_data
+
+    # Update the sample data to include the new required columns
+    drugs["single_ID"] = ["drug_id_1", "drug_id_2"]
+    drugs["ID_Label"] = ["Drug Label 1", "Drug Label 2"]
+
+    diseases["category_class"] = ["disease_class_1", "disease_class_2"]
+    diseases["label"] = ["Disease Label 1", "Disease Label 2"]
+
     data = pd.DataFrame(
         {
             "source": ["drug_1", "drug_2", "drug_1"],
@@ -137,15 +187,35 @@ def test_generate_report(sample_data):
             "probability": [0.8, 0.6, 0.4],
         }
     )
+
     n_reporting = 2
+    score_col_name = "probability"
+
+    # Mock the stats_col_names and meta_col_names dictionaries
+    stats_col_names = {"per_disease": {"top": {"mean": "Mean score"}, "all": {"mean": "Mean score"}}}
+
+    meta_col_names = {
+        "drug_list": {"drug_id": "Drug ID"},
+        "disease_list": {"disease_id": "Disease ID"},
+        "kg_data": {
+            "kg_drug_id": "KG Drug ID",
+            "kg_disease_id": "KG Disease ID",
+            "kg_drug_name": "KG Drug Name",
+            "kg_disease_name": "KG Disease Name",
+        },
+    }
 
     # When generating the report
-    result = generate_report(data, n_reporting, drugs, diseases, known_pairs, "probability")
+    result = generate_report(
+        data, n_reporting, drugs, diseases, known_pairs, score_col_name, stats_col_names, meta_col_names
+    )
 
     # Then the report is of the correct structure
     assert isinstance(result, pd.DataFrame)
     assert len(result) == n_reporting
-    assert set(result.columns) == {
+
+    expected_columns = {
+        "pair_id",
         "drug_id",
         "drug_name",
         "disease_id",
@@ -153,6 +223,16 @@ def test_generate_report(sample_data):
         "probability",
         "is_known_positive",
         "is_known_negative",
+        "kg_drug_id",
+        "kg_disease_id",
+        "kg_drug_name",
+        "kg_disease_name",
+        "mean_top_per_disease",
+        "mean_all_per_disease",
     }
-    assert result["drug_name"].tolist() == ["Drug 1", "Drug 2"]
-    assert result["disease_name"].tolist() == ["Disease 1", "Disease 2"]
+    assert set(result.columns) == expected_columns
+
+    assert result["drug_name"].tolist() == ["Drug Label 1", "Drug Label 2"]
+    assert result["disease_name"].tolist() == ["Disease Label 1", "Disease Label 2"]
+    assert result["kg_drug_name"].tolist() == ["Drug 1", "Drug 2"]
+    assert result["kg_disease_name"].tolist() == ["Disease 1", "Disease 2"]
