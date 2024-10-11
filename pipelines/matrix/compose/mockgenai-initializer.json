@@ -23,30 +23,12 @@
     },
     {
         "httpRequest": {
-            "path": "/get_normalized_nodes",
+            "path": "/1.5/get_normalized_nodes",
             "method": "POST"
         },
-        "httpResponseTemplate": {
-            "template": {
-                "statusCode": 200,
-                "headers": {
-                    "Content-Type": ["application/json"]
-                },
-                "body": "#set($requestBody = $json.parse($request.body))
-                        #set($response = {})
-                        #foreach($curie in $requestBody.curies)
-                          #set($normalizedId = {
-                            'id': {
-                              'identifier': 'NORMALIZED:' + $curie
-                            }
-                          })
-                          $response.put($curie, $normalizedId)
-                        #end
-                        $json.serialize($response)"
-            },
-            "templateType": "VELOCITY"
+        "httpResponse": {
+            "body": {}
         }
     }
-]
 
-# NOTE: This file was partially generated using AI assistance.
+]
