@@ -2,7 +2,7 @@
 
 import logging
 from tqdm import tqdm
-from typing import List, Dict, Union
+from typing import List, Dict, Union, Tuple
 
 from sklearn.impute._base import _BaseImputer
 
@@ -229,6 +229,174 @@ def make_predictions_and_sort(
     return sorted_data
 
 
+def generate_summary_metadata(meta_col_names, score_col_name, stats_col_names):
+    """
+    Generate metadata for the output matrix.
+
+    Args:
+        meta_col_names (dict): Dictionary containing metadata column names.
+        score_col_name (str): Name of the score column.
+        stats_col_names (dict): Dictionary containing statistical column names.
+
+    Returns:
+        pd.DataFrame: DataFrame containing summary metadata.
+    """
+    summary_metadata = {}
+
+    # Add metadata for ID columns
+    summary_metadata.update(meta_col_names["drug_list"])
+    summary_metadata.update(meta_col_names["disease_list"])
+
+    # Add metadata for score columns
+    summary_metadata[score_col_name] = "Probability score"
+    summary_metadata["is_known_positive"] = "Whether the pair is a known positive"
+    summary_metadata["is_known_negative"] = "Whether the pair is a known negative"
+
+    # Add metadata for KG columns
+    summary_metadata.update(meta_col_names["kg_data"])
+
+    # Add metadata for statistical columns
+    for stat, description in stats_col_names["per_disease"]["top"].items():
+        summary_metadata[f"{stat}_top_per_disease"] = f"{description} in the top n_reporting pairs"
+    for stat, description in stats_col_names["per_disease"]["all"].items():
+        summary_metadata[f"{stat}_all_per_disease"] = f"{description} in all pairs"
+
+    return pd.DataFrame(list(summary_metadata.items()), columns=["Column", "Explanation"])
+
+
+def process_top_pairs(
+    data: pd.DataFrame, n_reporting: int, drugs: pd.DataFrame, diseases: pd.DataFrame, score_col_name: str
+) -> pd.DataFrame:
+    """
+    Process the top pairs from the data and add additional information.
+
+    Args:
+        data (pd.DataFrame): The input DataFrame containing all pairs.
+        n_reporting (int): The number of top pairs to process.
+        drugs (pd.DataFrame): DataFrame containing drug information.
+        diseases (pd.DataFrame): DataFrame containing disease information.
+        score_col_name (str): The name of the column containing the score.
+
+    Returns:
+        pd.DataFrame: Processed DataFrame containing the top pairs with additional information.
+    """
+    top_pairs = data.head(n_reporting).copy()
+
+    # Generate mapping dictionaries
+    drug_mappings = {
+        "kg_name": {row["curie"]: row["name"] for _, row in drugs.iterrows()},
+        "list_id": {row["curie"]: row["single_ID"] for _, row in drugs.iterrows()},
+        "list_name": {row["curie"]: row["ID_Label"] for _, row in drugs.iterrows()},
+    }
+
+    disease_mappings = {
+        "kg_name": {row["curie"]: row["name"] for _, row in diseases.iterrows()},
+        "list_id": {row["curie"]: row["category_class"] for _, row in diseases.iterrows()},
+        "list_name": {row["curie"]: row["label"] for _, row in diseases.iterrows()},
+    }
+
+    # Add additional information
+    top_pairs["kg_drug_name"] = top_pairs["source"].map(drug_mappings["kg_name"])
+    top_pairs["kg_disease_name"] = top_pairs["target"].map(disease_mappings["kg_name"])
+    top_pairs["disease_id"] = top_pairs["target"].map(disease_mappings["list_id"])
+    top_pairs["disease_name"] = top_pairs["target"].map(disease_mappings["list_name"])
+    top_pairs["drug_id"] = top_pairs["source"].map(drug_mappings["list_id"])
+    top_pairs["drug_name"] = top_pairs["source"].map(drug_mappings["list_name"])
+
+    # Rename ID columns and add pair ID
+    top_pairs = top_pairs.rename(columns={"source": "kg_drug_id", "target": "kg_disease_id"})
+    top_pairs["pair_id"] = top_pairs["drug_id"] + "|" + top_pairs["disease_id"]
+
+    return top_pairs
+
+
+def add_descriptive_stats(
+    top_pairs: pd.DataFrame, data: pd.DataFrame, stats_col_names: Dict, score_col_name: str
+) -> pd.DataFrame:
+    """
+    Add descriptive statistics to the top pairs DataFrame.
+
+    Args:
+        top_pairs (pd.DataFrame): DataFrame containing the top pairs.
+        data (pd.DataFrame): The full dataset containing all pairs.
+        stats_col_names (Dict): Dictionary containing the names of statistical columns.
+        score_col_name (str): The name of the column containing the score.
+
+    Returns:
+        pd.DataFrame: DataFrame with added descriptive statistics.
+    """
+    for stat in stats_col_names["per_disease"]["top"].keys():
+        top_pairs[f"{stat}_top_per_disease"] = top_pairs.groupby("kg_disease_id")[score_col_name].transform(stat)
+
+    top_pairs_all = data[
+        data["target"].isin(top_pairs["kg_disease_id"].unique()) | data["source"].isin(top_pairs["kg_drug_id"].unique())
+    ]
+
+    for stat in stats_col_names["per_disease"]["all"].keys():
+        stat_dict = top_pairs_all.groupby("target")[score_col_name].agg(stat).to_dict()
+        top_pairs[f"{stat}_all_per_disease"] = top_pairs["kg_disease_id"].map(stat_dict)
+
+    return top_pairs
+
+
+def flag_known_pairs(top_pairs: pd.DataFrame, known_pairs: pd.DataFrame) -> pd.DataFrame:
+    """
+    Flag known positive and negative pairs in the top pairs DataFrame.
+
+    Args:
+        top_pairs (pd.DataFrame): DataFrame containing the top pairs.
+        known_pairs (pd.DataFrame): DataFrame containing known positive and negative pairs.
+
+    Returns:
+        pd.DataFrame: DataFrame with added flags for known positive and negative pairs.
+    """
+    known_pos_pairs_set = set(
+        zip(known_pairs[known_pairs["y"].eq(1)]["source"], known_pairs[known_pairs["y"].eq(1)]["target"])
+    )
+    known_neg_pairs_set = set(
+        zip(known_pairs[~known_pairs["y"].eq(1)]["source"], known_pairs[~known_pairs["y"].eq(1)]["target"])
+    )
+
+    top_pairs["is_known_positive"] = top_pairs.apply(
+        lambda row: (row["kg_drug_id"], row["kg_disease_id"]) in known_pos_pairs_set, axis=1
+    )
+    top_pairs["is_known_negative"] = top_pairs.apply(
+        lambda row: (row["kg_drug_id"], row["kg_disease_id"]) in known_neg_pairs_set, axis=1
+    )
+
+    return top_pairs
+
+
+def reorder_columns(
+    top_pairs: pd.DataFrame, meta_col_names: Dict, score_col_name: str, stats_col_names: Dict
+) -> pd.DataFrame:
+    """
+    Reorder columns in the top pairs DataFrame.
+
+    Args:
+        top_pairs (pd.DataFrame): DataFrame containing the top pairs.
+        meta_col_names (Dict): Dictionary containing metadata column names.
+        score_col_name (str): The name of the column containing the score.
+        stats_col_names (Dict): Dictionary containing the names of statistical columns.
+
+    Returns:
+        pd.DataFrame: DataFrame with reordered columns.
+    """
+    id_columns = ["pair_id", "drug_id", "drug_name", "disease_id", "disease_name"]
+    score_columns = [score_col_name, "is_known_positive", "is_known_negative"]
+    kg_columns = list(meta_col_names["kg_data"].keys())
+    stat_columns = list(stats_col_names["per_disease"]["top"].keys())
+    stat_suffixes = ["_top_per_disease", "_all_per_disease"]
+
+    columns_order = (
+        id_columns
+        + score_columns
+        + kg_columns
+        + [f"{stat}{suffix}" for stat in stat_columns for suffix in stat_suffixes]
+    )
+    return top_pairs[columns_order]
+
+
 def generate_report(
     data: pd.DataFrame,
     n_reporting: int,
@@ -236,8 +404,10 @@ def generate_report(
     diseases: pd.DataFrame,
     known_pairs: pd.DataFrame,
     score_col_name: str,
-) -> pd.DataFrame:
-    """Generates a report with the top pairs.
+    stats_col_names: Dict[str, Dict[str, Union[Dict[str, str], str]]],
+    meta_col_names: Dict[str, str],
+) -> List[pd.DataFrame]:
+    """Generates a report with the top pairs and metadata.
 
     Args:
         data: Pairs dataset.
@@ -245,122 +415,53 @@ def generate_report(
         drugs: Dataframe containing names and IDs for the list of drugs.
         diseases: Dataframe containing names and IDs for the list of diseases.
         known_pairs: Labelled ground truth drug-disease pairs dataset.
-        score_col_name: Probability score column name.
-
     Returns:
-        Dataframe containing the top pairs with additional information for the drugs and diseases.
+        Dataframe with the top pairs and additional information for the drugs and diseases.
     """
-    # Select the top n_reporting rows
-    top_pairs = data.head(n_reporting).copy()
-
-    # Generate curie to name dictionaries
-    drug_curie_to_name_kg = {row["curie"]: row["name"] for _, row in drugs.iterrows()}
-    disease_curie_to_name_kg = {row["curie"]: row["name"] for _, row in diseases.iterrows()}
-
-    # Generate curie to name dictionaries for the drug/disease lists
-    print(diseases.columns)
-    disease_list_curie_mapping = {row["curie"]: row["category_class"] for _, row in diseases.iterrows()}
-    disease_list_names_mapping = {row["curie"]: row["label"] for _, row in diseases.iterrows()}
-    drug_list_curie_mapping = {row["curie"]: row["single_ID"] for _, row in drugs.iterrows()}
-    drug_list_names_mapping = {row["curie"]: row["ID_Label"] for _, row in drugs.iterrows()}
-
-    # Add additional information for drugs and diseases
-    top_pairs["kg_drug_name"] = top_pairs["source"].map(drug_curie_to_name_kg)
-    top_pairs["kg_disease_name"] = top_pairs["target"].map(disease_curie_to_name_kg)
-
-    # Add descriptive stats per diseases
-    top_pairs["mean_top_per_disease"] = top_pairs.groupby("target")[score_col_name].transform("mean")
-    top_pairs["max_top_per_disease"] = top_pairs.groupby("target")[score_col_name].transform("max")
-    top_pairs["min_top_per_disease"] = top_pairs.groupby("target")[score_col_name].transform("min")
-    top_pairs["std_top_per_disease"] = top_pairs.groupby("target")[score_col_name].transform("std")
-
-    top_pairs_all = data.loc[
-        ((data["target"].isin(top_pairs["target"].unique())) | (data["source"].isin(top_pairs["source"].unique())))
-    ]
-    print(top_pairs_all)
-    top_pairs["mean_all_per_disease"] = top_pairs_all.groupby("target")[score_col_name].transform("mean")
-    top_pairs["max_all_per_disease"] = top_pairs_all.groupby("target")[score_col_name].transform("max")
-    top_pairs["min_all_per_disease"] = top_pairs_all.groupby("target")[score_col_name].transform("min")
-    top_pairs["std_all_per_disease"] = top_pairs_all.groupby("target")[score_col_name].transform("std")
-
-    # Flag known positives and negatives
-    known_pair_is_pos = known_pairs["y"].eq(1)
-    known_pos_pairs = known_pairs[known_pair_is_pos]
-    known_neg_pairs = known_pairs[~known_pair_is_pos]
-    known_pos_pairs_set = set(zip(known_pos_pairs["source"], known_pos_pairs["target"]))
-    known_neg_pairs_set = set(zip(known_neg_pairs["source"], known_neg_pairs["target"]))
-    top_pairs["is_known_positive"] = top_pairs.apply(
-        lambda row: (row["source"], row["target"]) in known_pos_pairs_set, axis=1
-    )
-    top_pairs["is_known_negative"] = top_pairs.apply(
-        lambda row: (row["source"], row["target"]) in known_neg_pairs_set, axis=1
-    )
-
-    # Add corresponding drug/disease names/ids from official lists
-    top_pairs["disease_id"] = top_pairs["target"].map(disease_list_curie_mapping)
-    top_pairs["disease_name"] = top_pairs["target"].map(disease_list_names_mapping)
-    top_pairs["drug_id"] = top_pairs["source"].map(drug_list_curie_mapping)
-    top_pairs["drug_name"] = top_pairs["source"].map(drug_list_names_mapping)
-
-    # Rename ID columns
-    top_pairs = top_pairs.rename(columns={"source": "kg_drug_id"})
-    top_pairs = top_pairs.rename(columns={"target": "kg_disease_id"})
-
-    # Add pair ID
-    top_pairs["pair_id"] = top_pairs["drug_id"] + "|" + top_pairs["disease_id"]
-
-    # Reorder columns for better readability
-    columns_order = [
-        "pair_id",
-        "drug_id",
-        "drug_name",
-        "disease_id",
-        "disease_name",
-        score_col_name,
-        "is_known_positive",
-        "is_known_negative",
-        "kg_drug_id",
-        "kg_drug_name",
-        "kg_disease_id",
-        "kg_disease_name",
-        "mean_top_per_disease",
-        "max_top_per_disease",
-        "min_top_per_disease",
-        "std_top_per_disease",
-        "mean_all_per_disease",
-        "max_all_per_disease",
-        "min_all_per_disease",
-        "std_all_per_disease",
-    ]
-    top_pairs = top_pairs[columns_order]
-
+    top_pairs = process_top_pairs(data, n_reporting, drugs, diseases, score_col_name)
+    top_pairs = add_descriptive_stats(top_pairs, data, stats_col_names, score_col_name)
+    top_pairs = flag_known_pairs(top_pairs, known_pairs)
+    top_pairs = reorder_columns(top_pairs, meta_col_names, score_col_name, stats_col_names)
     return top_pairs
 
 
-def generate_metadata(matrix_report: pd.DataFrame) -> pd.DataFrame:
+def generate_metadata(
+    matrix_report: pd.DataFrame,
+    score_col_name: str,
+    stats_col_names: Dict[str, Dict[str, Union[Dict[str, str], str]]],
+    meta_col_names: Dict[str, str],
+) -> Tuple[pd.DataFrame, pd.DataFrame]:
     """Generates a metadata report.
 
     Args:
         matrix_report: pd.DataFrame, dummy variable to maintain proper lineage to be logged within metadata
-
+        score_col_name: Probability score column name.
+        stats_col_names: Dictionary of column names and their descriptions.
+        meta_col_names: Dictionary of column names and their descriptions.
     Returns:
-        Dataframe containing metadata such as data sources version, timestamp, run name etc.
+        Tuple containing:
+        - Dataframe containing metadata such as data sources version, timestamp, run name etc.
+        - Dataframe with metadata about the output matrix columns.
     """
+    # NOTE: This function was partially generated using AI assistance.
     conf_loader = CONFIG_LOADER_CLASS(CONF_SOURCE, **CONFIG_LOADER_ARGS)
     conf_globals = conf_loader["globals"]
 
-    # TODO: Add included_kgs and included_models
+    MLFLOW_URL = "https://mlflow.platform.dev.everycure.org/"
 
-    metadata = {
+    # Metadata related to the run
+    # TODO: Add included_kgs and included_models
+    run_metadata = {
         "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         "workflow_id": os.getenv("WORKFLOW_ID"),
-        "run_name": conf_globals["run_name"],
+        "mlflow_run_name": conf_globals["run_name"],
+        "mlflow_link": MLFLOW_URL,
         "git_sha": conf_globals["git_sha"],
         "release_version": conf_globals["versions"]["release"],
     }
 
     data_sources = ["rtx-kg2", "robokop", "ec-medical-team", "clinical-trial-data", "ec-drug-list", "ec-disease-list"]
     for source in data_sources:
-        metadata[f"{source}_version"] = conf_globals["data_sources"][source]["version"]
-
-    return pd.DataFrame(metadata, index=[0]).transpose().reset_index()
+        run_metadata[f"{source}_version"] = conf_globals["data_sources"][source]["version"]
+    summary_metadata = generate_summary_metadata(meta_col_names, score_col_name, stats_col_names)
+    return pd.DataFrame(list(run_metadata.items()), columns=["Key", "Value"]), summary_metadata
