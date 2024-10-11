@@ -38,6 +38,6 @@ def register_pipelines() -> Dict[str, Pipeline]:
         + pipelines["modelling_matrix_evaluation"]
         + create_release_pipeline()
     )
+    pipelines["modelling_evaluation"] = create_modelling_pipeline() + create_evaluation_pipeline()
     pipelines["all"] = create_ingestion_pipeline() + pipelines["__default__"]
-    pipelines["experiment"] = create_modelling_pipeline() + create_evaluation_pipeline()
     return pipelines

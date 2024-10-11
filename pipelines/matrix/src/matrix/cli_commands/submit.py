@@ -20,7 +20,6 @@ from rich.panel import Panel
 
 from matrix.argo import ARGO_TEMPLATES_DIR_PATH, generate_argo_config
 
-# Set up logging
 logging.basicConfig(
     level=logging.INFO,
     format="%(message)s",
@@ -51,7 +50,7 @@ def cli():
 def submit(username: str, namespace: str, run_name: str, include_pipeline: tuple[str], pipeline_for_execution: str, verbose: bool, dry_run: bool):
     """Submit the end-to-end workflow. """
     if verbose:
-        logging.getLogger().setLevel(logging.DEBUG)
+        log.setLevel(logging.DEBUG)
 
     run_name = get_run_name(run_name)
     
