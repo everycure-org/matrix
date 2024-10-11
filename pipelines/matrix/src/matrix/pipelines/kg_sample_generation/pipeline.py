@@ -13,8 +13,10 @@ def create_pipeline(**kwargs) -> Pipeline:
             node(
                 func=nodes.get_random_selection_from_rtx,
                 inputs={
-                    "nodes": "ingestion.int.rtx_kg2.nodes",
-                    "edges": "ingestion.int.rtx_kg2.edges",
+                    "nodes" : "ingestion.int.rtx_kg2.nodes",
+                    "edges" : "ingestion.int.rtx_kg2.edges",
+                    "raw_tp": "modelling.raw.ground_truth.positives",
+                    "raw_tn": "modelling.raw.ground_truth.negatives"
                 },
                 outputs={
                     "nodes": "ingestion.sample.rtx_kg2.nodes",
