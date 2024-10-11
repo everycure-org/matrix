@@ -443,7 +443,6 @@ def generate_metadata(
         - Dataframe containing metadata such as data sources version, timestamp, run name etc.
         - Dataframe with metadata about the output matrix columns.
     """
-    # NOTE: This function was partially generated using AI assistance.
     conf_loader = CONFIG_LOADER_CLASS(CONF_SOURCE, **CONFIG_LOADER_ARGS)
     conf_globals = conf_loader["globals"]
 
@@ -451,6 +450,7 @@ def generate_metadata(
 
     # Metadata related to the run
     # TODO: Add included_kgs and included_models
+    # TODO: Add filters (is_steroid)
     run_metadata = {
         "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         "workflow_id": os.getenv("WORKFLOW_ID"),
