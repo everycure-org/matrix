@@ -1,0 +1,4 @@
+apiVersion: v2
+name: dev-namespaces
+description: Namespace configuration for developers
+version: 0.1.0
