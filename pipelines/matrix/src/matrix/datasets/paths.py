@@ -1,8 +1,9 @@
 """Module containing classes for representing and manipulating paths in a knowledge graph."""
 
 import pandas as pd
+from typing import Any, Dict, List
 
-
+import neo4j
 from .utils import BaseParquetDataset
 
 
@@ -67,9 +68,71 @@ class KGPaths:
         """Get the paths for a given source and target node IDs."""
         return self.df[(self.df["source_id"] == source_id) & (self.df["target_id"] == target_id)]
 
-    def add_paths_from_result(self, result) -> None:
-        """Add a path to the df from the results of a Neo4j query."""
-        ...
+    def add_paths_from_result(self, result: List[neo4j.graph.Path], extra_data: Dict[str, List[Any]] = None) -> None:
+        """Add a path to the df from the results of a Neo4j query.
+
+        Args:
+            result: List of neo4j paths.
+            extra_data: Dictionary of extra data to add to the dataframe.
+        """
+        if len(result) == 0:
+            return
+
+        # Initialize data dictionary
+        if extra_data is None:
+            data_dict = dict()
+        else:
+            data_dict = extra_data
+        data_dict["source_name"] = []
+        data_dict["source_id"] = []
+        data_dict["source_type"] = []
+        for i in range(1, self.num_hops):
+            data_dict[f"predicates_{i}"] = []
+            data_dict[f"is_forward_{i}"] = []
+            data_dict[f"intermediate_name_{i}"] = []
+            data_dict[f"intermediate_id_{i}"] = []
+            data_dict[f"intermediate_type_{i}"] = []
+        data_dict[f"predicates_{self.num_hops}"] = []
+        data_dict[f"is_forward_{self.num_hops}"] = []
+        data_dict["target_name"] = []
+        data_dict["target_id"] = []
+        data_dict["target_type"] = []
+
+        # Collecting data
+        for path in result:
+            if len(path) != self.num_hops:
+                raise ValueError(f"Path has {len(path)} hops, expected {self.num_hops}")
+
+            nodes = [(node.get("name"), node.get("id"), node.get("category")) for node in path.nodes]
+            edges_types = [type(edge).__name__ for edge in path.relationships]
+            edge_directions = [edge.start_node == path.nodes[i] for i, edge in enumerate(path.relationships)]
+
+            data_dict["source_name"].append(nodes[0][0])
+            data_dict["source_id"].append(nodes[0][1])
+            data_dict["source_type"].append(nodes[0][2])
+            for i in range(1, self.num_hops):
+                data_dict[f"predicates_{i}"].append(edges_types[i - 1])
+                data_dict[f"is_forward_{i}"].append(edge_directions[i - 1])
+                data_dict[f"intermediate_name_{i}"].append(nodes[i][0])
+                data_dict[f"intermediate_id_{i}"].append(nodes[i][1])
+                data_dict[f"intermediate_type_{i}"].append(nodes[i][2])
+            data_dict[f"predicates_{self.num_hops}"].append(edges_types[-1])
+            data_dict[f"is_forward_{self.num_hops}"].append(edge_directions[-1])
+            data_dict["target_name"].append(nodes[-1][0])
+            data_dict["target_id"].append(nodes[-1][1])
+            data_dict["target_type"].append(nodes[-1][2])
+
+        # Squash varying predicates into comma-separated strings
+        full_new_data = pd.DataFrame(data_dict)
+        predicate_cols = [f"predicates_{i}" for i in range(1, self.num_hops + 1)]
+        non_predicate_cols = [col for col in full_new_data.columns if col not in predicate_cols]
+        grouped = full_new_data.groupby(non_predicate_cols, as_index=False)
+        agg_dict = {col: lambda x: ",".join(x.unique()) for col in predicate_cols}
+        new_data = grouped.agg(agg_dict)
+        new_data.reset_index(drop=True, inplace=True)
+
+        # Add the new data to the existing dataframe
+        self.df = pd.concat([self.df, new_data], ignore_index=True)
 
 
 class KGPathsDataset(BaseParquetDataset):
