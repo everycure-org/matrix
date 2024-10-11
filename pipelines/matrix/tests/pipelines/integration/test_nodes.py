@@ -167,6 +167,3 @@ def test_unify_edges(spark, sample_edges):
     assert set(treat_edge.aggregator_knowledge_source) == {"infores:aggregator1", "infores:aggregator3"}
     assert set(treat_edge.publications) == {"PMID:12345678", "PMID:34567890"}
     assert set(treat_edge.upstream_data_source) == {"source1", "source3"}
-
-
-# Add more tests as needed
