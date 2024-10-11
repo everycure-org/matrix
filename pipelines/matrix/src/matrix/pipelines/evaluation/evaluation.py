@@ -1,4 +1,5 @@
 """Module containing classes for evaluation."""
+
 import pandas as pd
 import numpy as np
 import abc
@@ -91,9 +92,7 @@ class ContinuousMetrics(Evaluation):
         report = {}
         for metric in self._metrics:
             if metric == roc_auc_score and y_true.nunique() == 1:
-                report[
-                    f"{metric.__name__}"
-                ] = 0.5  # roc_auc_score returns nan if there is only one class
+                report[f"{metric.__name__}"] = 0.5  # roc_auc_score returns nan if there is only one class
             else:
                 report[f"{metric.__name__}"] = metric(y_true, y_score)
         return json.loads(json.dumps(report, default=float))
@@ -108,9 +107,7 @@ class SpecificRanking(Evaluation):
     not including the other known positives.
     """
 
-    def __init__(
-        self, rank_func_lst: List[NamedFunction], specific_col: str, score_col_name: str
-    ) -> None:
+    def __init__(self, rank_func_lst: List[NamedFunction], specific_col: str, score_col_name: str) -> None:
         """Initializes the SpecificRanking instance.
 
         Args:
@@ -204,9 +201,7 @@ class FullMatrixRanking(Evaluation):
         for quantile_func_generator in self._quantile_func_lst:
             quantile_func = quantile_func_generator.generate()
             transformed_quantile_lst = quantile_func(quantiles_arr)
-            report[f"{quantile_func_generator.name()}"] = np.mean(
-                transformed_quantile_lst
-            )
+            report[f"{quantile_func_generator.name()}"] = np.mean(transformed_quantile_lst)
 
         # Convert all values in report to float to ensure JSON serialization
         return json.loads(json.dumps(report, default=float))
