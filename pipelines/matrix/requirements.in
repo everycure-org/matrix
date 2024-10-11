@@ -29,6 +29,7 @@ mlflow==2.15.0
 pygsheets==2.0.6
 # used for convenience libraries, to be moved to a dev requirements eventually  
 typer
+pytest
 pytest-testmon
 pytest-mock
 pytest-cov
