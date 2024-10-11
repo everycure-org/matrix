@@ -80,7 +80,16 @@ def submit(username: str, namespace: str, run_name: str, include_pipeline: tuple
     )
 
 
-def _submit(username: str, namespace: str, run_name: str, pipelines_for_workflow: Dict[str, Pipeline], pipeline_for_execution: str, verbose: bool, dry_run: bool, template_directory: Path) -> None:
+def _submit(
+        username: str, 
+        namespace: str, 
+        run_name: str, 
+        pipelines_for_workflow: Dict[str, Pipeline], 
+        pipeline_for_execution: str, 
+        verbose: bool, 
+        dry_run: bool, 
+        template_directory: Path
+    ) -> None:
     """Submit the end-to-end workflow.
 
     This class contains redundancy.
@@ -300,7 +309,7 @@ def build_argo_template(run_name: str, username: str, namespace: str, pipelines:
         namespace=namespace,
         username=username,
         pipelines=pipelines,
-        project_path=package_name,
+        package_name=package_name,
     )
 
 def save_argo_template(argo_template: str, run_name: str, template_directory: Path) -> str:
@@ -330,7 +339,7 @@ def apply_argo_template(namespace, file_path: Path, verbose: bool):
     )
 
 
-def submit_workflow(run_name, namespace, verbose: bool):
+def submit_workflow(run_name: str, namespace: str, pipeline_for_execution: str, verbose: bool):
     """Submit the Argo workflow and provide instructions for watching."""
 
     submit_cmd = " ".join([
@@ -340,7 +349,7 @@ def submit_workflow(run_name, namespace, verbose: bool):
         f"--from wftmpl/{run_name}", # name of the template resource (created in previous step)
         f"-p run_name={run_name}",
         "-l submit-from-ui=false",
-        "--entrypoint __default__", # entrypoint for the workflow. Pipeline to be triggered is chosen here.
+        f"--entrypoint {pipeline_for_execution}", # entrypoint for the workflow. Pipeline to be triggered is chosen here.
         "-o json"
     ])
     result = run_subprocess(submit_cmd, capture_output=True, stream_output=verbose)

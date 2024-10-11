@@ -4,6 +4,9 @@ import time
 import pytest
 from unittest.mock import patch, MagicMock
 from click.testing import CliRunner
+import yaml
+from kedro.pipeline.node import Node
+from kedro.pipeline import Pipeline
 from matrix.argo import ARGO_TEMPLATES_DIR_PATH
 from matrix.cli_commands.submit import (
     _submit,
@@ -341,7 +344,7 @@ def test_apply_argo_template(mock_run_subprocess: None) -> None:
 
 def test_submit_workflow(mock_run_subprocess: None) -> None:
     mock_run_subprocess.return_value.stdout = '{"metadata": {"name": "test-job"}}'
-    submit_workflow("test_run", "test_namespace", verbose=True)
+    submit_workflow("test_run", "test_namespace", "__default__", verbose=True)
     assert mock_run_subprocess.call_count == 1
 
 
@@ -426,13 +429,62 @@ def test_run_subprocess_no_streaming_error(mock_popen: None) -> None:
 
 
 def test_internal_submit(mock_dependencies: None, temporary_directory: Path) -> None:
+    def dummy_func(*args):
+        """Dummy function for testing purposes."""
+        return args
+
     _submit(
         username="testuser",
         namespace="test_namespace",
         run_name="test-run",
-        pipelines_for_workflow={"test_pipeline": MagicMock()},
+        pipelines_for_workflow={
+            "test_pipeline": Pipeline(
+                nodes=[
+                    Node(func=dummy_func, inputs=["dataset_a", "dataset_b"], outputs="dataset_c", name="simple_node")
+                ]
+            ),
+            "__default__": Pipeline(
+                nodes=[
+                    Node(func=dummy_func, inputs=["dataset_a", "dataset_b"], outputs="dataset_c", name="simple_node")
+                ]
+            ),
+        },
         pipeline_for_execution="__default__",
         verbose=False,
         dry_run=True,
         template_directory=temporary_directory,
     )
+
+    yaml_files = list(temporary_directory.glob("argo_template_test-run_*.yml"))
+    assert len(yaml_files) == 1, f"Expected 1 YAML file, found {len(yaml_files)}"
+
+    yaml_file = yaml_files[0]
+    assert yaml_file.is_file(), f"Expected {yaml_file} to be a file"
+    assert yaml_file.name.startswith("argo_template_test-run_"), f"Unexpected file name format: {yaml_file.name}"
+    assert yaml_file.name.endswith(".yml"), f"File does not have .yml extension: {yaml_file.name}"
+
+    # Read and parse the YAML file
+    with open(yaml_file, "r") as f:
+        content = yaml.safe_load(f)
+
+    # Check if the content is a dictionary
+    assert isinstance(content, dict), "Parsed YAML content should be a dictionary"
+
+    # Check for the presence of two pipelines in the templates
+    templates = content.get("spec", {}).get("templates", [])
+    pipeline_templates = [t for t in templates if "dag" in t]
+
+    assert len(pipeline_templates) == 2, "Expected two pipeline templates (test and cloud)"
+
+    pipeline_names = [t["name"] for t in pipeline_templates]
+    assert "test_pipeline" in pipeline_names, "Expected 'test' pipeline to be present"
+    assert "__default__" in pipeline_names, "Expected 'cloud' pipeline to be present"
+
+    # Additional checks
+    assert content["metadata"]["name"] == "test-run", "Expected 'test-run' as the workflow name"
+    assert content["metadata"]["namespace"] == "test_namespace", "Expected 'test_namespace' as the namespace"
+
+    # Check for the presence of tasks in each pipeline
+    for pipeline in pipeline_templates:
+        tasks = pipeline.get("dag", {}).get("tasks", [])
+        assert len(tasks) > 0, f"Expected at least one task in the {pipeline['name']} pipeline"
