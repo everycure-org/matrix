@@ -75,10 +75,11 @@ def submit(username: str, namespace: str, run_name: str, include_pipeline: tuple
         pipeline_for_execution=pipeline_for_execution,
         verbose=verbose,
         dry_run=dry_run,
+        template_directory=ARGO_TEMPLATES_DIR_PATH,
     )
 
 
-def _submit(username: str, namespace: str, run_name: str, pipelines_for_workflow: Dict[str, Pipeline], pipeline_for_execution: str, verbose: bool, dry_run: bool) -> None:
+def _submit(username: str, namespace: str, run_name: str, pipelines_for_workflow: Dict[str, Pipeline], pipeline_for_execution: str, verbose: bool, dry_run: bool, template_directory: Path) -> None:
     """Submit the end-to-end workflow.
 
     This class contains redundancy.
@@ -100,6 +101,7 @@ def _submit(username: str, namespace: str, run_name: str, pipelines_for_workflow
         pipeline_for_execution (str): The pipeline to execute.
         verbose (bool): If True, enable verbose output.
         dry_run (bool): If True, do not submit the workflow.
+        template_directory (Path): The directory containing the Argo template.
     """
     
     try:
@@ -118,7 +120,7 @@ def _submit(username: str, namespace: str, run_name: str, pipelines_for_workflow
         console.print("[green]✓[/green] Argo template built")
 
         console.print("Writing Argo template...")
-        file_path = save_argo_template(argo_template, run_name)
+        file_path = save_argo_template(argo_template, run_name, template_directory)
         console.print(f"[green]✓[/green] Argo template written to {file_path}")
 
         console.print("Ensuring namespace...")
@@ -296,9 +298,9 @@ def build_argo_template(run_name: str, username: str, namespace: str, pipelines:
         project_path=matrix_root,
     )
 
-def save_argo_template(argo_template: str, run_name: str) -> str:
+def save_argo_template(argo_template: str, run_name: str, template_directory: Path) -> str:
     """Save Argo workflow template to file."""
-    file_path = ARGO_TEMPLATES_DIR_PATH / f"argo_template_{run_name}_{time.strftime('%Y%m%d_%H%M%S')}.yml"
+    file_path = template_directory / f"argo_template_{run_name}_{time.strftime('%Y%m%d_%H%M%S')}.yml"
     with open(file_path, "w") as f:
         f.write(argo_template)
     return str(file_path)
