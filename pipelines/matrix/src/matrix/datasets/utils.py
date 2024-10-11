@@ -37,11 +37,12 @@ class BaseParquetDataset(ParquetDataset):
             **kwargs,
         )
 
-    def _load_with_retry(self, result_class, num_retries=3):
+    def _load_with_retry(self, result_class, result_class_arg=None, num_retries=3):
         """Load the dataset with retry logic.
 
         Args:
             result_class: The class to load the result as.
+            result_class_arg: Name of the argument to pass to the result class constructor.
         """
         attempt = 0
 
@@ -50,8 +51,11 @@ class BaseParquetDataset(ParquetDataset):
         while attempt < num_retries:
             try:
                 # Attempt reading the object
-                # https://github.com/everycure-org/matrix/issues/71
-                return result_class(super()._load())
+                # https://github.com/everycure-org/matrix/issues/7
+                if result_class_arg is not None:
+                    return result_class(**{result_class_arg: super()._load()})
+                else:
+                    return result_class(super()._load())
             except FileNotFoundError:
                 attempt += 1
                 logger.warning("Parquet file not found, retrying!")
