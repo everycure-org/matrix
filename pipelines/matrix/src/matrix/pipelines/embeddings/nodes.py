@@ -81,7 +81,7 @@ class GraphDS(GraphDataScience):
         "name": "string",
         "property_keys": "array<string>",
         "property_values": "array<string>",
-        "kg_sources": "array<string>",
+        "upstream_data_source": "array<string>",
     },
     allow_subset=True,
 )
@@ -93,7 +93,7 @@ def ingest_nodes(df: DataFrame) -> DataFrame:
         df: Nodes dataframe
     """
     return (
-        df.select("id", "name", "category", "description", "kg_sources")
+        df.select("id", "name", "category", "description", "upstream_data_source")
         .withColumn("label", F.split(F.col("category"), ":", limit=2).getItem(1))
         .withColumn(
             "properties",
@@ -244,7 +244,12 @@ def reduce_dimension(df: DataFrame, transformer, input: str, output: str, skip: 
 def ingest_edges(nodes, edges: DataFrame):
     """Function to construct Neo4J edges."""
     return (
-        edges.select("subject", "predicate", "object", "knowledge_sources", "kg_sources")
+        edges.select(
+            "subject",
+            "predicate",
+            "object",
+            "upstream_data_source",
+        )
         .withColumn("label", F.split(F.col("predicate"), ":", limit=2).getItem(1))
         # we repartition to 1 partition here to avoid deadlocks in the edges insertion of neo4j.
         # FUTURE potentially we should repartition in the future to avoid deadlocks. However
