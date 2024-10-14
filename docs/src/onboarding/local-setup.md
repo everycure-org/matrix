@@ -8,6 +8,10 @@ The fastest way to check if everything works locally is to execute the following
 make
 ```
 
+!!! help "Encountering issues?"
+    If you're experiencing any problems running the `MakeFile`, please refer to our [Common Errors FAQ](../FAQ/common_errors.md) for troubleshooting guidance. This resource contains solutions to frequently encountered issues and may help resolve your problem quickly.
+
+
 !!! tip
 
     If you are running on an ARM machine (e.g., MacBooks with Apple Silicon), you might not get the best performance. In this case call `make TARGET_PLATFORM=linux/arm64` instead which will build the image for your specific architecture.
@@ -23,6 +27,29 @@ This command executes a number of make targets, namely:
 Generally, the `Makefile` is a good place to start to get a sense of how our codebase is structured. 
 
 <div style="position: relative; width: 100%; height: 0; padding-bottom: 56.25%;"><iframe src="https://us06web.zoom.us/clips/embed/ghxELqxMExaMh96j_58dMq8UnXaXEcEtSTRVxXf7zXNd5l4OSgdvC5xwANUE1ydp7afd-M42UkQNe_eUJQkCrXIZ.SAPUAWjHFb-sh7Pj" frameborder="0" allowfullscreen="allowfullscreen" style="position: absolute; width: 100%; height: 100%; top: 0; left: 0; "></iframe></div>
+
+??? note "Understanding and troubleshooting your `make` run"
+   
+    As mentioned in the video, our pipeline is evolving quickly. Running `make` is a simple and quick way to check if everything works locally as it is composed of several different stages which get executed one after another. When `make` gets executed, what is happening under the hood is that the following seven 'make' "subcommands" get executed:
+    ```
+    Make prerequisites # checks if all prerequisites are set up correctly
+    Make venv # sets up a virtual environment using uv
+    Make install # installs all dependencies within the virtual environment
+    Make precommit # installs and runs pre-commit hooks
+    Make fast_test # tests the codebase 
+    Make compose_down # ensures that there is no docker-compose down running 
+    Make docker_test # executes an integration test, which sets up a docker-compose and kicks off a local CI pipeline
+    ```
+    The Makefile is composed of many other useful commands which might also help you use the codebase with ease. One of such commands is `Make clean` which will clean various cache locations.
+    
+    If you are getting any errors during your default `make` run, first step could be to run `Make clean` and re-run the default Makefile to see whether this could be a cache-related error. If the error persists, a quick way to find the cause of the error is to execute the mentioned `make` subcommands one after another to locate where the error is happening. For instance: if you can run all make commands except docker_test, then it means that there is only an issue with the integration test, and remaining stages of setup work well.
+
+    Note that the most 'complex' step is to run `Make docker_test` as this command executes the entire pipeline in a test environment, with its MLFlow and Neo4j dependencies, within a separate docker container. Therefore, if you get errors when running `Make docker_test`, a good sanity check is to try running the following command to see whether you can execute the pipeline locally (i.e. not in the container:
+    ```
+    kedro run -e test -p test --runner ThreadRunner 
+    ```
+    Note that for this command to work, you need to have your docker-daemon running (can be done by running `Make compose_up` or by turning it on via Docker Desktop). If you can successfully execute the pipeline through that command, then the issue is likely due to docker setup/docker container and might be due to specific OS environments - you can check for potential solutions in `common_errors.md`.
+
 
 ### Docker compose for local execution
 

@@ -37,8 +37,14 @@ fabricator.rtx_kg2:
         type: faker
         provider: name
       publications:
+        type: generate_random_arrays
+        delimiter: "\u01c2"
+        sample_values:
+          - "PMID:12345678"
+          - "DOI:10.1234/example.5678"
+      international_resource_identifier:
         type: faker
-        provider: name
+        provider: url
       label:
         type: faker
         provider: name
@@ -76,7 +82,30 @@ fabricator.rtx_kg2:
         type: faker
         provider: name
 
- # NOTE: Fabricated drug and disease lists can contain nodes which are not in the drug and disease categories resp. 
+      publications:
+        type: generate_random_arrays
+        delimiter: "\u01c2"
+        sample_values:
+          - "PMID:12345678"
+          - "DOI:10.1234/example.5678"
+      subject_aspect_qualifier:
+        type: faker
+        provider: word
+      subject_direction_qualifier:
+        type: generate_values
+        sample_values:
+          - "increased"
+          - "decreased"
+      object_aspect_qualifier:
+        type: faker
+        provider: word
+      object_direction_qualifier:
+        type: generate_values
+        sample_values:
+          - "increased"
+          - "decreased"
+
+# NOTE: Fabricated drug and disease lists can contain nodes which are not in the drug and disease categories resp.
   drug_list:
     num_rows: 20
     columns:
@@ -156,13 +185,13 @@ fabricator.robokop:
   nodes:
     num_rows: 150
     columns:
-      id:
+      id:ID:
         type: generate_unique_id
         prefix: "CAID:"
-      name:
+      name:string:
         type: generate_unique_id
         prefix: "rs"
-      category:
+      category:LABEL:
         type: generate_random_arrays
         delimiter: "\x1F"
         sample_values:
@@ -176,10 +205,10 @@ fabricator.robokop:
             - biolink:PhysicalEssenceOrOccurrent
             - biolink:GenomicEntity
             - biolink:OrganismTaxon
-      description:
+      description:string:
         type: faker
         provider: sentence
-      equivalent_identifiers:
+      equivalent_identifiers:string[]:
         type: generate_random_arrays
         delimiter: "\x1F"
         sample_values:
@@ -191,7 +220,7 @@ fabricator.robokop:
           - ROBO_VARIANT:HG38|7|149726637|149726638|A|G
           - HGVS:CM000669.2:g.149726638A>G
           - HGVS:NC_000007.12:g.149054662A>G
-      information_content:
+      information_content:float:
         type: faker
         provider: pydecimal
         provider_args:
@@ -200,6 +229,27 @@ fabricator.robokop:
           positive: True
           min_value: 1
           max_value: 100
+      #publications:
+      #  type: generate_random_arrays
+      #  delimiter: "\u001f"
+      #  sample_values:
+      #    - "PMID:12345678"
+      #    - "DOI:10.1234/example.5678"
+      #all_categories:
+      #  type: generate_random_arrays
+      #  delimiter: "\u001f"
+      #  sample_values:
+      #    - "biolink:Entity"
+      #    - "biolink:ThingWithTaxon"
+      #    - "biolink:BiologicalEntity"
+      #    - "biolink:SequenceVariant"
+      #label:
+      #  type: generate_random_arrays
+      #  delimiter: "\u001f"
+      #  sample_values:
+      #    - "biolink:NucleicAcidEntity"
+      #    - "biolink:MolecularEntity"
+      #    - "biolink:ChemicalOrDrugOrTreatment"
 
   # robokop edges definition
   edges:
@@ -207,25 +257,78 @@ fabricator.robokop:
     columns:
       # NOTE: This is a rather complex syntax, but is results in a "subject"
       # column that contains random values from the nodes table defined above.
-      subject:
+      subject:START_ID:
         type: row_apply
-        list_of_values: [ nodes.id ]
+        list_of_values: [ nodes.id:ID ]
         row_func: "lambda *args: args[0]"
         resize: True
         seed: 590590
-      predicate:
+      predicate:TYPE:
         type: generate_values
         sample_values:
           - biolink:treats
           - biolink:interacts_with
-      # NOTE: This is a rather complex syntax, but is results in an "object"
-      # column that contains random values from the nodes table defined above.
-      object:
+          - biolink:affects
+          - biolink:subclass_of
+          - biolink:is_nearby_variant_of
+      object:END_ID:
         type: row_apply
-        list_of_values: [ nodes.id ]
+        list_of_values: [ nodes.id:ID ]
         row_func: "lambda *args: args[0]"
         resize: True
         seed: 49494
+      primary_knowledge_source:string:
+        type: generate_values
+        sample_values:
+          - infores:semmeddb
+          - infores:gtex
+          - infores:ubergraph
+          - infores:snpeff
+      knowledge_level:string:
+        type: generate_values
+        sample_values:
+          - prediction
+          - knowledge_assertion
+      agent_type:string:
+        type: generate_values
+        sample_values:
+          - computational_model
+          - manual_agent
+      publications:string[]:
+        type: generate_random_arrays
+        delimiter: "\u001f"
+        sample_values:
+          - "PMID:12345678"
+          - "DOI:10.1234/example.5678"
+      #p_value:float[]:
+      #  type: faker
+      #  provider: pyfloat
+      #  provider_args:
+      #    left_digits: 1
+      #    right_digits: 6
+      #    positive: True
+      #    min_value: 0.000001
+      #    max_value: 0.1
+      object_aspect_qualifier:string:
+        type: faker
+        provider: word
+      object_direction_qualifier:string:
+        type: generate_values
+        sample_values:
+          - increased
+          - decreased
+      qualified_predicate:string:
+        type: generate_values
+        sample_values:
+          - biolink:causes
+          - biolink:treats
+      aggregator_knowledge_source:string[]:
+        type: generate_random_arrays
+        delimiter: "\u001f"
+        sample_values:
+          - infores:aggregator1
+          - infores:aggregator2
+          - infores:aggregator3
 
 fabricator.ec_medical_kg:
   nodes:
