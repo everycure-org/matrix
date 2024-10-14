@@ -5,15 +5,16 @@ from the Kedro defaults. For further information, including these default values
 https://docs.kedro.org/en/stable/kedro_project_setup/settings.html.
 """
 
-# Class that manages how configuration is loaded.
-from matrix.resolvers import merge_dicts, env
-from kedro.config import OmegaConfigLoader  # noqa: E402
-
 # Instantiated project hooks.
 # For example, after creating a hooks.py and defining a ProjectHooks class there, do
 # from pandas_viz.hooks import ProjectHooks
-import matrix.hooks as hooks
+# Class that manages how configuration is loaded.
+from kedro.config import OmegaConfigLoader  # noqa: E402
 from kedro_mlflow.framework.hooks import MlflowHook
+
+import matrix.hooks as hooks
+
+from .resolvers import env, merge_dicts
 
 # Hooks are executed in a Last-In-First-Out (LIFO) order.
 HOOKS = (
@@ -28,6 +29,7 @@ DISABLE_HOOKS_FOR_PLUGINS = ("kedro-mlflow",)
 
 # Class that manages storing KedroSession data.
 from pathlib import Path  # noqa: E402
+
 from kedro_viz.integrations.kedro.sqlite_store import SQLiteStore  # noqa: E402
 
 SESSION_STORE_CLASS = SQLiteStore
