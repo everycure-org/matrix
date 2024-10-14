@@ -193,16 +193,16 @@ evaluation.full_matrix:
     evaluation:
       object: matrix.pipelines.evaluation.evaluation.FullMatrixRanking 
       rank_func_lst: 
-        - object:  matrix.pipelines.evaluation.named_functions.RecallAtN 
+        - object:  matrix.pipelines.evaluation.named_metric_functions.RecallAtN 
           n: 1000
-        - object:  matrix.pipelines.evaluation.named_functions.RecallAtN
+        - object:  matrix.pipelines.evaluation.named_metric_functions.RecallAtN
           n: 10000
-        - object:  matrix.pipelines.evaluation.named_functions.RecallAtN
+        - object:  matrix.pipelines.evaluation.named_metric_functions.RecallAtN
           n: 100000
-        - object:  matrix.pipelines.evaluation.named_functions.RecallAtN
+        - object:  matrix.pipelines.evaluation.named_metric_functions.RecallAtN
           n: 1000000
       quantile_func_lst: 
-        - object: matrix.pipelines.evaluation.named_functions.AUROC
+        - object: matrix.pipelines.evaluation.named_metric_functions.AUROC
 ``` 
 - `FullMatrixPositives` is the object defining the dataset containing the necessary information for the computation of the full matrix ranking metrics. This dataset consists of the ground truth positive drug-disease pairs with columns giving:
     - The matrix rank of each pair
