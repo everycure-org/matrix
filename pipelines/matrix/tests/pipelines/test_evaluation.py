@@ -9,13 +9,13 @@ from matrix.pipelines.evaluation.evaluation import (
     FullMatrixRanking,
     RecallAtN,
 )
-from matrix.pipelines.evaluation.named_functions import (
+from matrix.pipelines.evaluation.named_metric_functions import (
     MRR,
     HitK,
     AUROC,
 )
 
-from matrix.pipelines.evaluation.named_functions import RecallAtN as RecallAtN_
+from matrix.pipelines.evaluation.named_metric_functions import RecallAtN as RecallAtN_
 
 
 @pytest.fixture

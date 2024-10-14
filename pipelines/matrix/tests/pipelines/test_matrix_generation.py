@@ -119,11 +119,11 @@ def mock_model_2():
     return model
 
 
-def test_generate_pairs(sample_drugs, sample_diseases, sample_known_pairs, sample_clinical_trials):
+def test_generate_pairs(sample_drugs, sample_diseases, sample_graph, sample_known_pairs, sample_clinical_trials):
     """Test the generate_pairs function."""
     # Given drug list, disease list and ground truth pairs
     # When generating the matrix dataset
-    result = generate_pairs(sample_drugs, sample_diseases, sample_known_pairs, sample_clinical_trials)
+    result = generate_pairs(sample_drugs, sample_diseases, sample_graph, sample_known_pairs, sample_clinical_trials)
 
     # Then the output is of the correct format and shape
     assert isinstance(result, pd.DataFrame)
@@ -229,7 +229,7 @@ def test_generate_report(
 ):
     """Test the generate_report function."""
     # Given an input matrix, drug list and disease list
-    matrix = generate_pairs(sample_drugs, sample_diseases, sample_known_pairs, sample_clinical_trials)
+    matrix = generate_pairs(sample_drugs, sample_diseases, sample_graph, sample_known_pairs, sample_clinical_trials)
     matrix_with_scores = make_predictions_and_sort(
         graph=sample_graph,
         data=matrix,

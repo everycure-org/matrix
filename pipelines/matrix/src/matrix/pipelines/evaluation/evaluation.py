@@ -10,7 +10,7 @@ from tqdm import tqdm
 
 from sklearn.metrics import roc_auc_score
 
-from matrix.pipelines.evaluation.named_functions import NamedFunction
+from matrix.pipelines.evaluation.named_metric_functions import NamedFunction
 
 
 class Evaluation(abc.ABC):
