@@ -334,9 +334,9 @@ ingestion.raw.robokop.edges@pandas:
 
 ingestion.int.robokop.nodes:
    <<: [*_spark_parquet, *_layer_int]
-   filepath: ${globals:paths.int}/robokop-kg/nodes
+   filepath: ${globals:paths.root}/ingestion/robokop-kg/nodes
 
 ingestion.int.robokop.edges:
    <<: [*_spark_parquet, *_layer_int]
-   filepath: ${globals:paths.int}/robokop-kg/edges
+   filepath: ${globals:paths.ingestion}/robokop-kg/edges
 

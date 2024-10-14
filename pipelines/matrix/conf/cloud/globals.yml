@@ -12,10 +12,23 @@ paths:
 
   # TODO Need to re-work our approach between what is a "run" and what is a "release"
   raw: gs://mtrx-us-central1-hub-dev-storage/kedro/data/01_raw
-  int: ${gcs_bucket}/runs/${run_name}/02_intermediate
-  prm: ${gcs_bucket}/runs/${run_name}/03_primary
-  feat: ${gcs_bucket}/runs/${run_name}/04_feature
-  model_input: ${gcs_bucket}/runs/${run_name}/05_model_input
-  models: ${gcs_bucket}/runs/${run_name}/06_models
-  model_output: ${gcs_bucket}/runs/${run_name}/07_model_output
-  reporting: ${gcs_bucket}/runs/${run_name}/08_reporting
+
+  # All pipelines that consititute to building "KG Artifact" use these paths
+  release:
+    int: ${gcs_bucket}/release/${release_name}/02_intermediate
+    prm: ${gcs_bucket}/release/${release_name}/03_primary
+    feat: ${gcs_bucket}/release/${release_name}/04_feature
+    model_input: ${gcs_bucket}/release/${release_name}/05_model_input
+    models: ${gcs_bucket}/release/${release_name}/06_models
+    model_output: ${gcs_bucket}/release/${release_name}/07_model_output
+    reporting: ${gcs_bucket}/release/${release_name}/08_reporting
+
+  # All modelling pipelines use these paths
+  run:
+    int: ${gcs_bucket}/release/${release_name}/runs/${run_name}/02_intermediate
+    prm: ${gcs_bucket}/release/${release_name}/runs/${run_name}/03_primary
+    feat: ${gcs_bucket}/release/${release_name}/runs/${run_name}/04_feature
+    model_input: ${gcs_bucket}/release/${release_name}/runs/${run_name}/05_model_input
+    models: ${gcs_bucket}/release/${release_name}/runs/${run_name}/06_models
+    model_output: ${gcs_bucket}/release/${release_name}/runs/${run_name}/07_model_output
+    reporting: ${gcs_bucket}/release/${release_name}/runs/${run_name}/08_reporting
