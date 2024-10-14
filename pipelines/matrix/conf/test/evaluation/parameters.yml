@@ -3,45 +3,45 @@ evaluation.disease_specific:
   evaluation_options:
     evaluation:
       rank_func_lst: 
-        - object: matrix.pipelines.evaluation.named_functions.MRR
-        - object:  matrix.pipelines.evaluation.named_functions.HitK
+        - object: matrix.pipelines.evaluation.named_metric_functions.MRR
+        - object:  matrix.pipelines.evaluation.named_metric_functions.HitK
           k: 2
-        - object:  matrix.pipelines.evaluation.named_functions.HitK
+        - object:  matrix.pipelines.evaluation.named_metric_functions.HitK
           k: 5
 
 evaluation.disease_specific_trials:
   evaluation_options:
     evaluation:
       rank_func_lst: 
-        - object: matrix.pipelines.evaluation.named_functions.MRR
-        - object:  matrix.pipelines.evaluation.named_functions.HitK
+        - object: matrix.pipelines.evaluation.named_metric_functions.MRR
+        - object:  matrix.pipelines.evaluation.named_metric_functions.HitK
           k: 2
-        - object:  matrix.pipelines.evaluation.named_functions.HitK
+        - object:  matrix.pipelines.evaluation.named_metric_functions.HitK
           k: 5
 
 evaluation.full_matrix:
   evaluation_options:
     evaluation:
       rank_func_lst: 
-        - object:  matrix.pipelines.evaluation.named_functions.RecallAtN 
+        - object:  matrix.pipelines.evaluation.named_metric_functions.RecallAtN 
           n: 10
-        - object:  matrix.pipelines.evaluation.named_functions.RecallAtN
+        - object:  matrix.pipelines.evaluation.named_metric_functions.RecallAtN
           n: 100
 
 evaluation.full_matrix_negatives:
   evaluation_options:
     evaluation:
       rank_func_lst: 
-        - object:  matrix.pipelines.evaluation.named_functions.RecallAtN 
+        - object:  matrix.pipelines.evaluation.named_metric_functions.RecallAtN 
           n: 10
-        - object:  matrix.pipelines.evaluation.named_functions.RecallAtN
+        - object:  matrix.pipelines.evaluation.named_metric_functions.RecallAtN
           n: 100
 
 evaluation.full_matrix_trials:
   evaluation_options:
     evaluation:
       rank_func_lst: 
-        - object:  matrix.pipelines.evaluation.named_functions.RecallAtN 
+        - object:  matrix.pipelines.evaluation.named_metric_functions.RecallAtN 
           n: 10
-        - object:  matrix.pipelines.evaluation.named_functions.RecallAtN
+        - object:  matrix.pipelines.evaluation.named_metric_functions.RecallAtN
           n: 100
