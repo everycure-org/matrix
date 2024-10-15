@@ -78,7 +78,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                     "topological_estimator": "params:embeddings.topological_estimator",
                     "unpack": "params:embeddings.topological",
                 },
-                outputs=["embeddings.models.graphsage", "embeddings.reporting.loss"],
+                outputs=["embeddings.models.topological_estimator", "embeddings.reporting.loss"],
                 name="train_topological_embeddings",
                 tags=[
                     "argowf.fuse",
@@ -89,7 +89,7 @@ def create_pipeline(**kwargs) -> Pipeline:
             node(
                 func=nodes.write_topological_embeddings,
                 inputs={
-                    "model": "embeddings.models.graphsage",
+                    "model": "embeddings.models.topological_estimator",
                     "gds": "params:embeddings.gds",
                     "topological_estimator": "params:embeddings.topological_estimator",
                     "unpack": "params:embeddings.topological",

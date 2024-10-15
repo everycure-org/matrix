@@ -22,8 +22,11 @@ from tenacity import (
     stop_after_attempt,
     wait_random_exponential,
 )
+import torch
 
 from .graph_algorithms import GDSGraphAlgorithm
+from .graph_algorithms import PygNode2Vec
+
 
 logger = logging.getLogger(__name__)
 
@@ -302,19 +305,14 @@ def train_topological_embeddings(
     estimator: Any,
     write_property: str,
 ) -> Dict:
-    """Function to add graphsage embeddings.
-
-    Function leverages the gds library to ochestrate topological embedding computation
-    on the nodes of the KG.
-
-    NOTE: The df and edges input are only added to ensure correct lineage
+    """Function to train topological embeddings using PygNode2Vec.
 
     Args:
         df: nodes df
         gds: the gds object
-        filtering: filtering
+        topological_estimator: PygNode2Vec estimator to apply
         projection: gds projection to execute on the graph
-        topological_estimator: GDS estimator to apply
+        filtering: filtering
         estimator: estimator to apply
         write_property: node property to write result to
     """
@@ -336,27 +334,34 @@ def train_topological_embeddings(
 
     subgraph, _ = gds.graph.filter(subgraph_name, graph, **filter_args)
 
-    # Validate whether the model exists
-    model_name = estimator.get("modelName")
-    if gds.model.exists(model_name).exists:
-        model = gds.model.get(model_name)
-        gds.model.drop(model)
+    if type(topological_estimator).__name__.startswith("Pyg"):
+        # Get edge list from the subgraph
+        edges = gds.run_cypher(
+            f"CALL gds.graph.relationships.stream('{subgraph_name}') YIELD sourceNodeId, targetNodeId RETURN sourceNodeId, targetNodeId"
+        )
+        edge_index = torch.tensor(edges[["sourceNodeId", "targetNodeId"]].values.T, dtype=torch.long)
+        graph = edge_index
 
-    # Initialize the model
-    topological_estimator.run(gds=gds, model_name=model_name, graph=subgraph, write_property=write_property)
-    losses = topological_estimator.return_loss()
+    # Initialize and train the model
+    model_name = estimator.get("modelName")
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    model, _ = topological_estimator.run(
+        gds=gds, graph=graph, model_name=model_name, write_property=write_property, device=device
+    )
 
     # Plot convergence
+    losses = topological_estimator.return_loss()
     convergence = plt.figure()
     ax = convergence.add_subplot(1, 1, 1)
-    ax.plot([x for x in range(len(losses))], losses)
+    ax.plot(range(len(losses)), losses)
 
     # Add labels and title
     ax.set_xlabel("Number of Epochs")
-    ax.set_ylabel("Average loss per node")
+    ax.set_ylabel("Average loss per epoch")
     ax.set_title("Loss Chart")
 
-    return {"success": "true"}, convergence
+    print(model)
+    return model, convergence
 
 
 @inject_object()
@@ -364,20 +369,36 @@ def train_topological_embeddings(
 def write_topological_embeddings(
     model: DataFrame,
     gds: GraphDataScience,
-    topological_estimator: GDSGraphAlgorithm,
+    topological_estimator: PygNode2Vec,
     projection: Any,
     estimator: Any,
     filtering: Any,
     write_property: str,
 ) -> Dict:
-    """Write topological embeddings."""
+    """Write topological embeddings for PygNode2Vec."""
     # Retrieve the graph
     graph_name = projection.get("graphName")
     graph = gds.graph.get(graph_name)
+    print(graph)
+    # Get the number of nodes in the graph
+    # num_nodes = gds.run_cypher(f"CALL gds.graph.nodeCount('{graph_name}') YIELD nodeCount RETURN nodeCount").iloc[0, 0]
 
-    # Retrieve the model
-    model_name = estimator.get("modelName")
-    topological_estimator.predict_write(gds=gds, model_name=model_name, graph=graph, write_property=write_property)
+    # Generate embeddings
+    if type(topological_estimator).__name__.startswith("Pyg"):
+        # Get edge list from the graph
+        edges = gds.run_cypher(
+            f"CALL gds.graph.relationships.stream('{graph_name}') YIELD sourceNodeId, targetNodeId RETURN sourceNodeId, targetNodeId"
+        )
+        edge_index = torch.tensor(edges[["sourceNodeId", "targetNodeId"]].values.T, dtype=torch.long)
+
+        # Call predict_write method of PygNode2Vec
+        model_name = estimator.get("modelName")
+        topological_estimator.predict_write(
+            gds=gds, graph=edge_index, model_name=model_name, state_dict=model, write_property=write_property
+        )
+    else:
+        model_name = estimator.get("modelName")
+        topological_estimator.predict_write(gds=gds, model_name=model_name, graph=graph, write_property=write_property)
     return {"success": "true"}
 
 
