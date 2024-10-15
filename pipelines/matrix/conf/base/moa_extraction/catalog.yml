@@ -15,10 +15,12 @@ moa_extraction.feat.relation_encoder:
   type: pickle.PickleDataset
   filepath: ${globals:paths.feat}/moa_extraction/relation_encoder.pickle
 
-moa_extraction.int.two_hop_indication_paths:
+"moa_extraction.int.{num_hops}_hop_indication_paths":
   <<: *_kg_paths_dataset
-  filepath: ${globals:paths.int}/moa_extraction/two_hop_indication_paths.parquet
+  filepath: ${globals:paths.int}/moa_extraction/{num_hops}_hop_indication_paths.parquet
 
-moa_extraction.int.three_hop_indication_paths:
+"moa_extraction.prm.{num_hops}_hop_splits":
   <<: *_kg_paths_dataset
-  filepath: ${globals:paths.int}/moa_extraction/three_hop_indication_paths.parquet
+  filepath: ${globals:paths.prm}/moa_extraction/{num_hops}_hop_split.parquet
+
+

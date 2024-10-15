@@ -84,7 +84,13 @@ def create_pipeline(**kwargs) -> Pipeline:
                     "modelling.raw.ground_truth.positives",
                     "modelling.raw.ground_truth.negatives",
                 ],
-                name="create_gn_pairs",
+                name="create_gt_pairs",
+            ),
+            node(
+                func=lambda x: x,
+                inputs=["params:fabricator.drug_mech_db"],
+                outputs="moa_extraction.raw.drug_mech_db",
+                name="create_indication_paths",
             ),
         ]
     )

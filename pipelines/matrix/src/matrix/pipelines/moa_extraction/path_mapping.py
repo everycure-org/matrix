@@ -4,6 +4,7 @@ from typing import Dict, Any, List
 from tqdm import tqdm
 import abc
 import logging
+import random
 import neo4j
 
 from matrix.datasets.paths import KGPaths
@@ -87,6 +88,8 @@ class SetwisePathMapper(PathMapper):
     ) -> KGPaths:
         """Run the path mapping.
 
+        FUTURE: Create a subclass of SetwisePathMapper that paralellises this method.
+
         Args:
             runner: The Neo4j runner.
             drug_mech_db: The DrugMechDB indication paths.
@@ -100,8 +103,43 @@ class SetwisePathMapper(PathMapper):
         for db_entry in tqdm(drug_mech_db, desc="Mapping paths"):
             result = self.map_single_moa(runner, db_entry, synonymizer_endpoint, num_attempts)
             drugmech_id = db_entry["graph"]["_id"]
-            paths.add_paths_from_result(result, extra_data={"DrugMechDB_id": [drugmech_id] * len(result)})
+            paths.add_paths_from_result(
+                result, extra_data={"DrugMechDB_id": [drugmech_id] * len(result), "y": [1] * len(result)}
+            )
         return paths
+
+    @classmethod
+    def _construct_match_clause(cls, num_hops: int, unidirectional: bool) -> str:
+        """Construct the match clause for a path mapping query.
+
+        Example: "-[r1]->(a1)-[r2]->(a2)->[r3]->"
+
+        num_hops: Number of hops in the path.
+        unidirectional: Whether to map onto unidirectional paths only.
+        """
+        edge_end = "->" if unidirectional else "-"
+
+        match_clause_parts = [f"-[r1]{edge_end}"]
+        for i in range(1, num_hops):
+            match_clause_parts.append(f"(a{i})")
+            match_clause_parts.append(f"-[r{i+1}]{edge_end}")
+        match_clause = "".join(match_clause_parts)
+
+        return match_clause
+
+    @classmethod
+    def _construct_where_clause(cls, num_hops: int, intermediate_ids: List[str]) -> str:
+        """Construct the where clause for a path mapping query.
+
+        Example: "(a1.id in ['ID:1','ID:2']) AND (a2.id in ['ID:1','ID:2'])
+
+        Args:
+            num_hops: The number of hops in the path.
+            intermediate_ids: The list of intermediate node IDs.
+
+
+        """
+        return " AND ".join([f"(a{i}.id in {str(intermediate_ids)})" for i in range(1, num_hops)])
 
     def map_single_moa(
         self, runner: Neo4jRunner, db_entry: Dict[str, Any], synonymizer_endpoint: str, num_attempts: int = 5
@@ -143,22 +181,14 @@ class SetwisePathMapper(PathMapper):
         mapped_int_ids = [map_entity(entity["name"], entity["id"]) for entity in intermediate_db_entities]
         mapped_int_ids = [entity for entity in mapped_int_ids if entity]  # Filter out Nones
 
-        # Construct the match clause (e.g. "-[r1]->(a1)-[r2]->(a2)->[r3]->")
-        edge_end = "->" if self.unidirectional else "-"
-        match_clause_parts = [f"-[r1]{edge_end}"]
-        for i in range(1, self.num_hops):
-            match_clause_parts.append(f"(a{i})")
-            match_clause_parts.append(f"-[r{i+1}]{edge_end}")
-        match_clause = "".join(match_clause_parts)
-
-        # Construct the where clause (e.g. "(a1.id in ['ID:1','ID:2']) AND (a2.id in ['ID:1','ID:2'])")
-        where_clause = " AND ".join([f"(a{i}.id in {str(mapped_int_ids)})" for i in range(1, self.num_hops)])
-
-        # Construct the neo4j query and run with several attempts (to account for connection issues)
+        # Construct the neo4j query
+        match_clause = self._construct_match_clause(self.num_hops, self.unidirectional)
+        where_clause = self._construct_where_clause(self.num_hops, mapped_int_ids)
         query = f"""MATCH p=(n:%{{id:'{drug_mapped}'}}){match_clause}(m:%{{id:'{disease_mapped}'}})
                     WHERE {where_clause}
                     RETURN DISTINCT p"""
 
+        # Run the query with several attempts (to account for connection issues)
         attempts = 0
         while attempts < num_attempts:
             try:
@@ -170,3 +200,48 @@ class SetwisePathMapper(PathMapper):
                     f"Failed to map paths for {db_entry['graph']['_id']} (attempt {attempts}/{num_attempts}): {e}"
                 )
         return None
+
+
+class TestPathMapper(PathMapper):
+    """Path mapping strategy for the test environment.
+
+    Simulates the path mapping by randomly sampling a set of paths between drug and disease nodes in the test KG.
+    """
+
+    def __init__(self, num_hops: int, num_paths: int, unidirectional: bool, *args, **kwargs):
+        """Initialize the TestPathMapper.
+
+        Args:
+            num_hops: The number of hops in the paths.
+            num_paths: The maximum number of paths in the KGPaths object.
+            unidirectional: Whether to map onto unidirectional paths only.
+            args: Additional ignored arguments.
+            kwargs: Additional ignored keyword arguments.
+        """
+        self.num_hops = num_hops
+        self.num_paths = num_paths
+        self.unidirectional = unidirectional
+
+    def run(
+        self,
+        runner: Neo4jRunner,
+        drug_mech_db: Dict[str, Any],
+        synonymizer_endpoint: str,
+    ) -> KGPaths:
+        """Run the path mapping.
+
+        Args:
+            runner: The Neo4j runner.
+            drug_mech_db: The DrugMechDB indication paths.
+            synonymizer_endpoint: The endpoint of the synonymizer.
+        """
+        match_clause = SetwisePathMapper._construct_match_clause(self.num_hops, self.unidirectional)
+        query = f"""MATCH p=(n:Drug){match_clause}(m:Disease)
+                    RETURN DISTINCT p"""
+
+        result = _parse_result(runner.run(query))
+
+        paths = KGPaths(num_hops=self.num_hops)
+        random_ids = [random.randint(1, 10) for _ in range(len(result))]
+        paths.add_paths_from_result(result, extra_data={"DrugMechDB_id": random_ids, "y": [1] * len(result)})
+        return paths

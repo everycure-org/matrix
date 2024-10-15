@@ -1,6 +1,8 @@
-"""Module with nodes for evaluation."""
+"""Module with nodes for moa extraction."""
 
+import pandas as pd
 from typing import List, Tuple, Dict, Any
+from sklearn.model_selection import BaseCrossValidator
 
 from refit.v1.core.inject import inject_object
 
@@ -8,6 +10,7 @@ from .neo4j_runners import Neo4jRunner
 from .path_embeddings import OneHotEncoder
 from .path_mapping import PathMapper
 from matrix.datasets.paths import KGPaths
+from matrix.pipelines.modelling.nodes import _apply_splitter
 
 
 def _tag_edges_between_types(
@@ -149,3 +152,22 @@ def map_drug_mech_db(
     """
     paths = mapper.run(runner, drug_mech_db, synonymizer_endpoint)
     return paths.df
+
+
+@inject_object()
+def make_splits(
+    paths_data: KGPaths,
+    splitter: BaseCrossValidator,
+) -> pd.DataFrame:
+    """Function to split a paths dataset with
+
+    Args:
+        paths_data: Knowledge graphs paths dataset.
+        splitter: sklearn splitter object used to create train/test splits.
+
+    Returns:
+        Paths dataset with split information added.
+    """
+    df = paths_data.df
+    df_splits = _apply_splitter(df, splitter)
+    return KGPaths(df=df_splits).df
