@@ -20,6 +20,7 @@ from tenacity import (
     retry_if_exception_type,
     wait_exponential,
 )
+from tqdm.asyncio import tqdm_asyncio
 
 from matrix.schemas.knowledge_graph import KGEdgeSchema, KGNodeSchema
 
@@ -154,7 +155,7 @@ async def async_batch_map_ids(
             process_batch(batch, api_endpoint, session, semaphore, conflate, drug_chemical_conflate)
             for batch in chunked(ids, batch_size)
         ]
-        results = await asyncio.gather(*tasks)
+        results = await tqdm_asyncio.gather(*tasks)
 
     return dict(item for sublist in results for item in sublist.items())
 
