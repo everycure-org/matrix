@@ -17,49 +17,28 @@ _layer_prm: &_layer_prm
 # Datasets
 # -------------------------------------------------------------------------
 
-integration.int.robokop.nodes:
+integration.int.{source}.nodes:
   <<: [*_spark_parquet, *_layer_int]
-  filepath: ${globals:paths.int}/robokop/nodes
+  filepath: ${globals:paths.int}/{source}/nodes
 
-integration.int.robokop.edges:
+integration.int.{source}.edges:
   <<: [*_spark_parquet, *_layer_int]
-  filepath: ${globals:paths.int}/robokop/edges
-
-integration.int.rtx.nodes:
-  <<: [*_spark_parquet, *_layer_int]
-  filepath: ${globals:paths.int}/rtx/nodes
-
-integration.int.rtx.edges:
-  <<: [*_spark_parquet, *_layer_int]
-  filepath: ${globals:paths.int}/rtx/edges
+  filepath: ${globals:paths.int}/{source}/edges
 
 
 # Normalized KGs
-integration.int.rtx.nodes.norm:
+integration.int.{source}.nodes.norm:
   <<: [*_spark_parquet, *_layer_int]
-  filepath: ${globals:paths.int}/rtx/nodes.norm
+  filepath: ${globals:paths.int}/{source}/nodes.norm
 
-integration.int.rtx.edges.norm:
+integration.int.{source}.edges.norm:
   <<: [*_spark_parquet, *_layer_int]
-  filepath: ${globals:paths.int}/rtx/edges.norm
-
-integration.int.robokop.nodes.norm:
-  <<: [*_spark_parquet, *_layer_int]
-  filepath: ${globals:paths.int}/robokop/nodes.norm
-
-integration.int.robokop.edges.norm:
-  <<: [*_spark_parquet, *_layer_int]
-  filepath: ${globals:paths.int}/robokop/edges.norm
+  filepath: ${globals:paths.int}/{source}/edges.norm
 
 # mapping tables 
-integration.int.rtx_nodes_norm_mapping:
+integration.int.{source}.nodes_norm_mapping:
   <<: [*_spark_parquet, *_layer_int]
-  filepath: ${globals:paths.int}/rtx/nodes_norm_mapping
-
-integration.int.robokop_nodes_norm_mapping:
-  <<: [*_spark_parquet, *_layer_int]
-  filepath: ${globals:paths.int}/robokop/nodes_norm_mapping
-
+  filepath: ${globals:paths.int}/{source}/nodes_norm_mapping
 
 
 # Unified KGs
