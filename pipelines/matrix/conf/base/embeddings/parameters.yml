@@ -105,20 +105,31 @@ embeddings.topological:
 #   window_size: 100
 
 embeddings.topological_estimator:
-  object: matrix.pipelines.embeddings.graph_algorithms.GDSGraphSage
-  concurrency: 4
-  iterations: 100
-  sample_sizes: [25, 10]
-  tolerance: 1e-8
-  embedding_dim: 512
-  batch_size: 5000
-  epochs: 10
-  search_depth: 100
-  learning_rate: 0.01
-  activation_function: ReLu
-  random_seed: 42
-  feature_properties: [*_pca_property]
-  # negative_sampling_weight: 20
+  object: matrix.pipelines.embeddings.graph_algorithms.PygNode2Vec
+  # embedding_dim: 128
+  # walk_length: 10
+  # num_walks: 10
+  # workers: 4
+  # window_size: 5
+  # learning_rate: 0.01
+  # epochs: 10
+  # batch_size: 100
+
+# embeddings.topological_estimator:
+#   object: matrix.pipelines.embeddings.graph_algorithms.GDSGraphSage
+#   concurrency: 4
+#   iterations: 100
+#   sample_sizes: [25, 10]
+#   tolerance: 1e-8
+#   embedding_dim: 512
+#   batch_size: 5000
+#   epochs: 10
+#   search_depth: 100
+#   learning_rate: 0.01
+#   activation_function: ReLu
+#   random_seed: 42
+#   feature_properties: [*_pca_property]
+#   # negative_sampling_weight: 20
 
 embeddings.write_topological_col: *_topological_property
 

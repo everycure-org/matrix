@@ -82,6 +82,10 @@ embeddings.model_output.graphsage:
     partitions: 16 # Should increase parallelism
     labels: ":Entity" # avoids query which drastically increases performance
 
+embeddings.models.topological_estimator:
+  type: matrix.datasets.torch_dataset.PyTorchDataset
+  filepath: ${globals:paths.prm}/topological_estimator.pt
+
 embeddings.feat.nodes:
   <<: *_spark_parquet
   filepath: ${globals:paths.embeddings}/feat/nodes_with_embeddings
