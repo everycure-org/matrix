@@ -94,7 +94,8 @@ def ingest_nodes(df: DataFrame) -> DataFrame:
     """
     return (
         df.select("id", "name", "category", "description", "upstream_data_source")
-        .withColumn("label", F.split(F.col("category"), ":", limit=2).getItem(1))
+        .withColumn("label", F.col("category"))
+        # add string properties here
         .withColumn(
             "properties",
             F.create_map(
@@ -108,6 +109,16 @@ def ingest_nodes(df: DataFrame) -> DataFrame:
         )
         .withColumn("property_keys", F.map_keys(F.col("properties")))
         .withColumn("property_values", F.map_values(F.col("properties")))
+        # add array properties here
+        .withColumn(
+            "array_properties",
+            F.create_map(
+                F.lit("upstream_data_source"),
+                F.col("upstream_data_source"),
+            ),
+        )
+        .withColumn("array_property_keys", F.map_keys(F.col("array_properties")))
+        .withColumn("array_property_values", F.map_values(F.col("array_properties")))
     )
 
 

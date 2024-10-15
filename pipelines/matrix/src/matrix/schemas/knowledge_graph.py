@@ -46,13 +46,13 @@ class KGEdgeSchema(DataFrameModel):
         strict = True
 
     @classmethod
-    def group_edges_by_id(cls, edges_df: DataFrame) -> DataFrame:
+    def group_edges_by_id(cls, concatenated_edges_df: DataFrame) -> DataFrame:
         return (
-            edges_df.groupBy(["subject", "predicate", "object"])
+            concatenated_edges_df.groupBy(["subject", "predicate", "object"])
             .agg(
-                F.collect_set("knowledge_level").alias("knowledge_level"),
                 F.flatten(F.collect_set("upstream_data_source")).alias("upstream_data_source"),
                 # TODO: we shouldn't just take the first one but collect these values from multiple upstream sources
+                F.first("knowledge_level").alias("knowledge_level"),
                 F.first("subject_aspect_qualifier").alias("subject_aspect_qualifier"),
                 F.first("subject_direction_qualifier").alias("subject_direction_qualifier"),
                 F.first("object_direction_qualifier").alias("object_direction_qualifier"),

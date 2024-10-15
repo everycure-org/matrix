@@ -4,7 +4,7 @@ fabricator.rtx_kg2:
     columns:
       id:
         type: generate_unique_id
-        prefix: rtx_kg_node_
+        prefix: "GEN:"
 
       name:
         type: generate_unique_id
@@ -186,7 +186,7 @@ fabricator.robokop:
     columns:
       id:ID:
         type: generate_unique_id
-        prefix: "CAID:"
+        prefix: "ROBO:"
       name:string:
         type: generate_unique_id
         prefix: "rs"
@@ -228,12 +228,12 @@ fabricator.robokop:
           positive: True
           min_value: 1
           max_value: 100
-      #publications:
-      #  type: generate_random_arrays
-      #  delimiter: "\u001f"
-      #  sample_values:
-      #    - "PMID:12345678"
-      #    - "DOI:10.1234/example.5678"
+      publications:string[]:
+        type: generate_random_arrays
+        delimiter: "\u001f"
+        sample_values:
+          - "PMID:12345678"
+          - "DOI:10.1234/example.5678"
       #all_categories:
       #  type: generate_random_arrays
       #  delimiter: "\u001f"
