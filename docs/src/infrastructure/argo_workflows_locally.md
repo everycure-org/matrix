@@ -1,7 +1,9 @@
 # Running Argo Workflows locally [ in progress ]
 
-This document describes how to run Argo Workflows locally.
-We might want to make a full integration test that included Argo CD deployment, but this local setup is already useful for validating simple Workflow Templates.
+This document describes how to run Argo Workflows locally. This local setup is useful for validating workflow templates. Of course mounted secrets from the cloud k8s will not work here but it ensures the template structure is valid. 
+
+!!! info
+    For simple argo template validation `argo lint` can also be used. 
 Read more about our Argo toolchain [here](argo_glossary.md).
 
 # Tasks
