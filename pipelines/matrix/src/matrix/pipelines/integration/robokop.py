@@ -63,7 +63,7 @@ def transform_robo_nodes(nodes_df: DataFrame) -> DataFrame:
         nodes_df.withColumn("upstream_data_source",       f.array(f.lit("robokop")))
         .withColumn("all_categories",                    f.split(f.col("category:LABEL"), "\x1f"))
         .withColumn("equivalent_identifiers",            f.split(f.col("equivalent_identifiers:string[]"), "\x1f"))
-        .withColumn("category",                          f.col("all_categories").getItem(0))
+        .withColumn("category",                          f.element_at(f.col("all_categories"), f.size(f.col("all_categories"))))
         .withColumn("labels",                            f.array(f.col("all_categories")))
         .withColumn("publications",                      f.array(f.lit(None)))
         .withColumn("international_resource_identifier", f.lit(None))

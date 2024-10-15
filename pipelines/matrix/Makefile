@@ -2,7 +2,7 @@ dev_docker_image = us-central1-docker.pkg.dev/mtrx-hub-dev-3of/matrix-images/mat
 TAG ?= ${USER}
 GIT_SHA ?= $(shell git rev-parse --short HEAD)
 export PYSPARK_PYTHON = .venv/bin/python
-TQDM_DISABLE ?= 1
+export TQDM_DISABLE ?= 1
 TARGET_PLATFORM ?= linux/amd64
 
 # ensures all make targets run in one shell (rather than line by line in new shell)

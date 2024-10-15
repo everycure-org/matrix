@@ -20,5 +20,15 @@
                 ]
             }
         }
+    },
+    {
+        "httpRequest": {
+            "path": "/1.5/get_normalized_nodes",
+            "method": "POST"
+        },
+        "httpResponse": {
+            "body": {}
+        }
     }
+
 ]
