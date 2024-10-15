@@ -1,5 +1,6 @@
 """Module to represent models."""
-from typing import List, Callable
+
+from typing import List, Literal
 from sklearn.base import BaseEstimator
 
 import numpy as np
@@ -15,16 +16,17 @@ class ModelWrapper:
     def __init__(
         self,
         estimators: List[BaseEstimator],
-        agg_func: Callable,
+        agg_method: Literal["mean", "median"] = "mean",
     ) -> None:
         """Create instance of the model wrapper.
 
         Args:
             estimators: list of estimators.
-            agg_func: function to aggregate ensemble results.
+            agg_method: method to aggregate ensemble results. Either "mean" or "median".
         """
         self._estimators = estimators
-        self._agg_func = agg_func
+        self._agg_method = agg_method
+        self._agg_func = np.mean if agg_method == "mean" else np.median
         super().__init__()
 
     def fit(self, X, y):
@@ -53,7 +55,5 @@ class ModelWrapper:
         Returns:
             Aggregated probabilities scores of the individual models.
         """
-        all_preds = np.array(
-            [estimator.predict_proba(X) for estimator in self._estimators]
-        )
+        all_preds = np.array([estimator.predict_proba(X) for estimator in self._estimators])
         return np.apply_along_axis(self._agg_func, 0, all_preds)
