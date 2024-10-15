@@ -15,8 +15,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 inputs={
                     "nodes" : "ingestion.int.rtx_kg2.nodes",
                     "edges" : "ingestion.int.rtx_kg2.edges",
-                    "raw_tp": "modelling.raw.ground_truth.positives",
-                    "raw_tn": "modelling.raw.ground_truth.negatives"
+                    "known_pairs": "modelling.int.known_pairs",
                 },
                 outputs={
                     "nodes": "ingestion.sample.rtx_kg2.nodes",
