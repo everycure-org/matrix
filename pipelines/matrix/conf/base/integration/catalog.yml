@@ -15,8 +15,8 @@ _layer_prm: &_layer_prm
 
 integration.prm.unified_edges:
   <<: [*_spark_parquet, *_layer_prm]
-  filepath: ${globals:paths.prm}/unified/edges
+  filepath: ${globals:paths.integration}/edges
 
 integration.prm.unified_nodes:
   <<: [*_spark_parquet, *_layer_prm]
-  filepath: ${globals:paths.prm}/unified/nodes
+  filepath: ${globals:paths.integration}/nodes

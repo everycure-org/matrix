@@ -5,15 +5,18 @@ _bigquery_ds: &_bigquery_ds
   identifier: "${globals:run_name}"
   save_args:
     bigQueryTableLabel.git_sha: ${globals:git_sha}
+    # bigQueryTableLabel.rtx: ${globals:data_sources.rtx-kg2.version}
+    # bigQueryTableLabel.medical: ${globals:data_sources.globals:data_sources.ec-medical-team.version.version}
     temporaryGcsBucket: ${globals:gcs_bucket}
 
 embeddings.feat.nodes:
   <<: *_bigquery_ds
   table: nodes
 
-embeddings.feat.edges:
-  <<: *_bigquery_ds
-  table: "edges"
+# FUTURE: Extract edges when relevant, for now no information is enriched
+# embeddings.feat.edges:
+#   <<: *_bigquery_ds
+#   table: "edges"
 
 embeddings.reporting.loss:
   type: kedro_mlflow.io.artifacts.MlflowArtifactDataset

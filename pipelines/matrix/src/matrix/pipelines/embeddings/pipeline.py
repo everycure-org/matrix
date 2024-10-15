@@ -80,7 +80,7 @@ def create_embeddings_pipeline(**kwargs) -> Pipeline:
                     "topological_estimator": "params:embeddings.topological_estimator",
                     "unpack": "params:embeddings.topological",
                 },
-                outputs=["embeddings.models.graphsage", "embeddings.reporting.loss"],
+                outputs=["embeddings.models.graphsage@yaml", "embeddings.reporting.loss"],
                 name="train_topological_embeddings",
                 tags=[
                     "argowf.fuse",
