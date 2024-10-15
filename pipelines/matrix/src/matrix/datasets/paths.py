@@ -103,24 +103,23 @@ class KGPaths:
             if len(path) != self.num_hops:
                 raise ValueError(f"Path has {len(path)} hops, expected {self.num_hops}")
 
-            nodes = [(node.get("name"), node.get("id"), node.get("category")) for node in path.nodes]
             edges_types = [type(edge).__name__ for edge in path.relationships]
             edge_directions = [edge.start_node == path.nodes[i] for i, edge in enumerate(path.relationships)]
 
-            data_dict["source_name"].append(nodes[0][0])
-            data_dict["source_id"].append(nodes[0][1])
-            data_dict["source_type"].append(nodes[0][2])
+            data_dict["source_name"].append(path.nodes[0].get("name"))
+            data_dict["source_id"].append(path.nodes[0].get("id"))
+            data_dict["source_type"].append(path.nodes[0].get("category"))
             for i in range(1, self.num_hops):
                 data_dict[f"predicates_{i}"].append(edges_types[i - 1])
                 data_dict[f"is_forward_{i}"].append(edge_directions[i - 1])
-                data_dict[f"intermediate_name_{i}"].append(nodes[i][0])
-                data_dict[f"intermediate_id_{i}"].append(nodes[i][1])
-                data_dict[f"intermediate_type_{i}"].append(nodes[i][2])
+                data_dict[f"intermediate_name_{i}"].append(path.nodes[i].get("name"))
+                data_dict[f"intermediate_id_{i}"].append(path.nodes[i].get("id"))
+                data_dict[f"intermediate_type_{i}"].append(path.nodes[i].get("category"))
             data_dict[f"predicates_{self.num_hops}"].append(edges_types[-1])
             data_dict[f"is_forward_{self.num_hops}"].append(edge_directions[-1])
-            data_dict["target_name"].append(nodes[-1][0])
-            data_dict["target_id"].append(nodes[-1][1])
-            data_dict["target_type"].append(nodes[-1][2])
+            data_dict["target_name"].append(path.nodes[-1].get("name"))
+            data_dict["target_id"].append(path.nodes[-1].get("id"))
+            data_dict["target_type"].append(path.nodes[-1].get("category"))
 
         # Squash varying predicates into comma-separated strings
         full_new_data = pd.DataFrame(data_dict)
