@@ -179,7 +179,7 @@ def normalize_kg(
     drug_chemical_conflate: bool = True,
     batch_size: int = 100,
     parallelism: int = 10,
-):
+) ->  ps.sql.DataFrame:
     """Function normalizes a KG using external API endpoint.
 
     This function takes the nodes and edges frames for a KG and leverages
