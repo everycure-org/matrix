@@ -79,7 +79,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 name="normalize_robokop_kg",
             ),
             node(
-                func=nodes.unify_nodes,
+                func=nodes.union_nodes,
                 inputs={
                     "datasets_to_union": "params:integration.unification.datasets_to_union",
                     "rtx": "integration.int.rtx.nodes.norm",
@@ -91,7 +91,7 @@ def create_pipeline(**kwargs) -> Pipeline:
             ),
             # union edges
             node(
-                func=nodes.unify_edges,
+                func=nodes.union_edges,
                 inputs={
                     "datasets_to_union": "params:integration.unification.datasets_to_union",
                     "rtx": "integration.int.rtx.edges.norm",

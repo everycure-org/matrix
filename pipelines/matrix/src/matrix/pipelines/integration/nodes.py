@@ -29,9 +29,9 @@ logger = logging.getLogger(__name__)
 
 
 @pa.check_output(KGEdgeSchema)
-def unify_edges(datasets_to_union: List[str], **edges) -> DataFrame:
+def union_edges(datasets_to_union: List[str], **edges) -> DataFrame:
     """Function to unify edges datasets."""
-    return _unify_datasets(
+    return _union_datasets(
         datasets_to_union,
         schema_group_by_id=KGEdgeSchema.group_edges_by_id,
         **edges,
@@ -39,16 +39,16 @@ def unify_edges(datasets_to_union: List[str], **edges) -> DataFrame:
 
 
 @pa.check_output(KGNodeSchema)
-def unify_nodes(datasets_to_union: List[str], **nodes) -> DataFrame:
+def union_nodes(datasets_to_union: List[str], **nodes) -> DataFrame:
     """Function to unify nodes datasets."""
-    return _unify_datasets(
+    return _union_datasets(
         datasets_to_union,
         schema_group_by_id=KGNodeSchema.group_nodes_by_id,
         **nodes,
     )
 
 
-def _unify_datasets(
+def _union_datasets(
     datasets_to_union: List[str],
     schema_group_by_id: Callable[[DataFrame], DataFrame],
     **datasets: DataFrame,
@@ -188,7 +188,7 @@ def normalize_kg(
 
     """
     logger.info("collecting node ids for normalization")
-    node_ids = nodes.select("id").distinct().orderBy("id").toPandas()["id"].to_list()
+    node_ids = nodes.select("id").orderBy("id").toPandas()["id"].to_list()
     logger.info(f"collected {len(node_ids)} node ids for normalization. Performing normalization...")
     node_id_map = batch_map_ids(
         frozenset(node_ids), api_endpoint, batch_size, parallelism, conflate, drug_chemical_conflate

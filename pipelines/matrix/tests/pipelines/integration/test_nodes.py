@@ -134,7 +134,7 @@ def test_unify_nodes(spark, sample_nodes):
     nodes2 = sample_nodes.filter(sample_nodes.id != "CHEBI:119157")
 
     # Call the unify_nodes function
-    result = nodes.unify_nodes(["nodes1", "nodes2"], nodes1=nodes1, nodes2=nodes2)
+    result = nodes.union_nodes(["nodes1", "nodes2"], nodes1=nodes1, nodes2=nodes2)
 
     # Check the result
     assert isinstance(result, DataFrame)
@@ -154,7 +154,7 @@ def test_unify_edges(spark, sample_edges):
     edges2 = sample_edges.filter(sample_edges.subject != "CHEBI:119157")
 
     # Call the unify_edges function
-    result = nodes.unify_edges(["edges1", "edges2"], edges1=edges1, edges2=edges2)
+    result = nodes.union_edges(["edges1", "edges2"], edges1=edges1, edges2=edges2)
 
     # Check the result
     assert isinstance(result, DataFrame)
