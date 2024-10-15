@@ -23,7 +23,7 @@ versions:
   release: ${oc.env:RELEASE_VERSION, local}
 data_sources:
   rtx-kg2:
-    version: v2.7.3
+    version: v2.10.0
   robokop:
     version: c5ec1f282158182f
 # Dataset with node and edge proposals by the
@@ -51,7 +51,7 @@ paths:
   # we read from our central GCS bucket where we store our ground truth data
   raw: gs://mtrx-us-central1-hub-dev-storage/kedro/data/01_raw
   # TODO: When we merge https://github.com/everycure-org/matrix/pull/122 we should move all raw data to the new location
-  new_raw: ${gcs_bucket}/data/01_RAW/
+  kg_raw: ${gcs_bucket}/data/01_RAW/
   # we write to local disk going forward
   int: data/02_intermediate
   prm: data/03_primary
