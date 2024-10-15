@@ -1,9 +1,13 @@
 """Module containing strategies for embedding knowledge graph paths."""
 
+import pandas as pd
+import abc
 from typing import List
 
 import torch
 from torch import Tensor
+
+from matrix.datasets.paths import KGPaths
 
 
 class OneHotEncoder:
@@ -33,3 +37,35 @@ class OneHotEncoder:
             strings: The list of strings to encode.
         """
         return torch.sum(torch.stack([self.get_encoding(string) for string in strings]), dim=0)
+
+
+class PathEmbeddingStrategy(abc.ABC):
+    """Abstract class representing a path embedding strategy."""
+
+    @abc.abstractmethod
+    def generate_embeddings(self, paths_data: KGPaths) -> pd.DataFrame:
+        """Generate embeddings for the paths data.
+
+        Args:
+            paths_data: The paths data.
+        """
+        ...
+
+
+class TypesRelationsAndDirections(PathEmbeddingStrategy):
+    """Class representing a path embedding strategy that uses node types, edge relations and edge directions."""
+
+    def run(
+        self, paths_data: KGPaths, category_encoder: OneHotEncoder, relation_encoder: OneHotEncoder
+    ) -> pd.DataFrame:
+        """Generate embeddings for the paths data.
+
+        Args:
+            paths_data: The paths data.
+        """
+        # num_hops = paths_data.num_hops
+        # breakpoint()
+        return ...
+
+
+# TODO Types and relations embeddings

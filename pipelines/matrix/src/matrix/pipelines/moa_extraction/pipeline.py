@@ -84,7 +84,10 @@ def _training_pipeline() -> Pipeline:
                     node(
                         func=nodes.create_training_features,
                         inputs={
-                            "splits_data": f"moa_extraction.prm.{num_hops}_hop_splits",
+                            "splits": f"moa_extraction.prm.{num_hops}_hop_splits",
+                            "path_embedding_strategy": "params:moa_extraction.path_embeddings.strategy",
+                            "category_encoder": "moa_extraction.feat.category_encoder",
+                            "relation_encoder": "moa_extraction.feat.relation_encoder",
                         },
                         outputs=None,
                         name=f"create_features_{num_hops}_hop",
