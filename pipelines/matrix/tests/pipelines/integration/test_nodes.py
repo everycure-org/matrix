@@ -167,3 +167,88 @@ def test_unify_edges(spark, sample_edges):
     assert set(treat_edge.aggregator_knowledge_source) == {"infores:aggregator1", "infores:aggregator3"}
     assert set(treat_edge.publications) == {"PMID:12345678", "PMID:34567890"}
     assert set(treat_edge.upstream_data_source) == {"source1", "source3"}
+
+
+# Mock the aiohttp ClientSession.post method
+class MockResponse:
+    def __init__(self, json, status):
+        self._json = json
+        self.status = status
+
+    async def json(self):
+        return self._json
+
+    async def __aexit__(self, exc_type, exc, tb):
+        pass
+
+    async def __aenter__(self):
+        return self
+
+
+@pytest.mark.asyncio
+def test_normalize_kg(spark, mocker):
+    # Set up mock data
+    sample_nodes = spark.createDataFrame(
+        [
+            ("CHEBI:119157", "Drug1", "biolink:Drug"),
+            ("MONDO:0005148", "Disease1", "biolink:Disease"),
+        ],
+        ["id", "name", "category"],
+    )
+
+    sample_edges = spark.createDataFrame(
+        [
+            ("CHEBI:119157", "biolink:treats", "MONDO:0005148"),
+        ],
+        ["subject", "predicate", "object"],
+    )
+
+    # mock_response = AsyncMock()
+    # mock_response.status = 200
+    # mock_response.json.return_value = {
+    #     "CHEBI:119157": {"id": {"identifier": "CHEBI:normalized_119157"}},
+    #     "MONDO:0005148": {"id": {"identifier": "MONDO:normalized_0005148"}},
+    # }
+    # mock_post = AsyncMock(return_value=mock_response)
+    # mocker.patch("aiohttp.ClientSession.post", new=mock_post)
+    mocker.patch(
+        "aiohttp.ClientSession.post",
+        return_value=MockResponse(
+            json={
+                "CHEBI:119157": {"id": {"identifier": "CHEBI:normalized_119157"}},
+                "MONDO:0005148": None,
+            },
+            status=200,
+        ),
+    )
+
+    # Call the normalize_kg function
+    normalized_nodes, normalized_edges, mapping_df = nodes.normalize_kg(sample_nodes, sample_edges, "http://dummy")
+
+    # TODO: Add assertions to check the results
+    # Check normalized nodes
+    assert normalized_nodes.count() == 2
+    assert set(normalized_nodes.select("id").toPandas()["id"]) == {
+        "CHEBI:normalized_119157",
+        "MONDO:0005148",
+    }
+    assert "original_id" in normalized_nodes.columns
+    assert "normalization_success" in normalized_nodes.columns
+
+    # # Check normalized edges
+    # assert normalized_edges.count() == 1
+    # edge = normalized_edges.collect()[0]
+    # assert edge.subject == "CHEBI:normalized_119157"
+    # assert edge.object == "MONDO:normalized_0005148"
+    # assert "original_subject" in normalized_edges.columns
+    # assert "original_object" in normalized_edges.columns
+    # assert "subject_normalization_success" in normalized_edges.columns
+    # assert "object_normalization_success" in normalized_edges.columns
+
+    # # Check mapping DataFrame
+    # assert mapping_df.count() == 2
+    # assert set(mapping_df.select("id").toPandas()["id"]) == {"CHEBI:119157", "MONDO:0005148"}
+    # assert set(mapping_df.select("normalized_id").toPandas()["normalized_id"]) == {
+    #     "CHEBI:normalized_119157",
+    #     "MONDO:normalized_0005148",
+    # }
