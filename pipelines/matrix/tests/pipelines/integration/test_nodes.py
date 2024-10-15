@@ -259,22 +259,9 @@ def test_normalize_kg(spark, mocker):
     normalized_nodes, normalized_edges, mapping_df = nodes.normalize_kg(sample_nodes, sample_edges, "http://dummy")
 
     # Then
-    assertDataFrameEqual(
-        normalized_nodes.select("id", "name", "category", "original_id", "normalization_success"), expected_nodes
-    )
-    assertDataFrameEqual(
-        normalized_edges.select(
-            "subject",
-            "predicate",
-            "object",
-            "original_subject",
-            "original_object",
-            "subject_normalization_success",
-            "object_normalization_success",
-        ),
-        expected_edges,
-    )
-    assertDataFrameEqual(mapping_df.select("id", "normalized_id", "normalization_success"), expected_mapping)
+    assertDataFrameEqual(normalized_nodes[expected_nodes.columns], expected_nodes)
+    assertDataFrameEqual(normalized_edges[expected_edges.columns], expected_edges)
+    assertDataFrameEqual(mapping_df[expected_mapping.columns], expected_mapping)
 
 
 # NOTE: This function was partially generated using AI assistance.
