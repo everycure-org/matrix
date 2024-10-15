@@ -1,0 +1,24 @@
+# This workflow is triggered by a pull_request merge event. We want to notify people if a PR is labeled as `breaking change` so that they don't wonder why suddenly main is broken
+
+name: Notify Breaking Changes
+
+on:
+#  pull_request:
+#    types: [closed]
+   pull_request:
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Log github.event
+        run: |
+          echo ${{ toJSON(github.event) }}
+
+      - name: Notify about breaking changes
+        if: contains(github.event.pull_request.labels.*.name, 'breaking change') && github.event.pull_request.merged == 'true'
+        run: |
+          echo "A breaking change was detected in this PR. Please review the changes and update the PR description if necessary."
