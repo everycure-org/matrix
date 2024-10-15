@@ -186,7 +186,6 @@ class MockResponse:
         return self
 
 
-@pytest.mark.asyncio
 def test_normalize_kg(spark, mocker):
     # Given
     sample_nodes = spark.createDataFrame(
