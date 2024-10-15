@@ -64,13 +64,15 @@ class DrugStratifiedSplit(BaseCrossValidator):
         return self.n_splits
 
 
-def GroupAwareSplit(BaseCrossValidator):
+class GroupAwareSplit(BaseCrossValidator):
     """A cross-validator that provides train/test indices to split data in train/test sets.
 
     This cross-validator ensures that the values of a chosen feature do not overlap between the test and train splits.
     """
 
-    def __init__(self, group_by_column: str, n_splits: int = 1, test_size: float = 0.1, random_state: float = None):
+    def __init__(
+        self, group_by_column: str = "source_id", n_splits: int = 1, test_size: float = 0.1, random_state: float = None
+    ) -> None:
         """Initialize the DrugStratifiedSplit cross-validator.
 
         Args:

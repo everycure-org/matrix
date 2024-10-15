@@ -1,3 +1,6 @@
+random_seed: &seed 42 
+
+
 moa_extraction:
   neo4j_runner: 
     object: matrix.pipelines.moa_extraction.neo4j_runners.LocalNeo4jRunner
@@ -6,29 +9,41 @@ moa_extraction:
     user: "neo4j"
     password: "admin"
 
-  preprocessing_options:
-    add_tags:
-      drug_types:
-        - Drug
-        - SmallMolecule
-        - ChemicalEntity
-      disease_types:
-        - Disease
-        - PhenotypicFeature
-        - BehavioralFeature
-        - DiseaseOrPhenotypicFeature
-      batch_size: 1000000
-      verbose: True
+  tagging_options:
+    drug_types:
+      - Drug
+      - SmallMolecule
+      - ChemicalEntity
+    disease_types:
+      - Disease
+      - PhenotypicFeature
+      - BehavioralFeature
+      - DiseaseOrPhenotypicFeature
+    batch_size: 1000000
+    verbose: True
   
   path_mapping:
     mapper_two_hop: 
       object: matrix.pipelines.moa_extraction.path_mapping.SetwisePathMapper
       num_hops: 2
       unidirectional: false
-      max_entries: 10 # TODO: Remove
+      max_entries: 10 # For testing purposes only
     mapper_three_hop: 
       object: matrix.pipelines.moa_extraction.path_mapping.SetwisePathMapper
       num_hops: 3
       unidirectional: false
-      max_entries: 10 # TODO: Remove
+      max_entries: 10 # For testing purposes only
     synonymizer_endpoint: http://localhost:8081
+
+  splits:
+    splitter_two_hop:
+      object: matrix.pipelines.modelling.model_selection.GroupAwareSplit
+      group_by_column: "source_id"
+      test_size: 0.4
+      random_state: *seed
+    splitter_three_hop:
+      object: matrix.pipelines.modelling.model_selection.GroupAwareSplit
+      group_by_column: "source_id"
+      test_size: 0.4
+      random_state: *seed
+

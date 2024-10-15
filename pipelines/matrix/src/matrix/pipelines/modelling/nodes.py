@@ -93,7 +93,33 @@ def create_feat_nodes(
     pdf_nodes["is_drug"] = pdf_nodes["category"].apply(lambda x: x in drug_types)
     pdf_nodes["is_disease"] = pdf_nodes["category"].apply(lambda x: x in disease_types)
 
+    ground_pos = known_pairs[known_pairs["y"].eq(1)]
+    ground_pos_drug_ids = list(ground_pos["source"].unique())
+    ground_pos_disease_ids = list(ground_pos["target"].unique())
+    pdf_nodes["is_ground_pos"] = pdf_nodes["id"].isin(ground_pos_drug_ids + ground_pos_disease_ids)
+
     return pdf_nodes
+
+
+def _apply_splitter(data: DataFrame, splitter: BaseCrossValidator) -> pd.DataFrame:
+    """Apply a splitter to a dataframe.
+
+    Args:
+        data: Data to split.
+        splitter: sklearn splitter object (BaseCrossValidator or its subclasses).
+    Returns:
+        Dataframe with additional columns.
+    """
+    all_data_frames = []
+    for iteration, (train_index, test_index) in enumerate(splitter.split(data, data["y"])):
+        all_indices_in_this_fold = list(set(train_index).union(test_index))
+        fold_data = data.loc[all_indices_in_this_fold, :].copy()
+        fold_data.loc[:, "iteration"] = iteration
+        fold_data.loc[train_index, "split"] = "TRAIN"
+        fold_data.loc[test_index, "split"] = "TEST"
+        all_data_frames.append(fold_data)
+
+    return pd.concat(all_data_frames, axis="index", ignore_index=True)
 
 
 @has_schema(
@@ -113,7 +139,7 @@ def make_splits(
     data: DataFrame,
     splitter: BaseCrossValidator,
 ) -> pd.DataFrame:
-    """Function to split data.
+    """Function to split data and add columns containing the embeddings.
 
     Args:
         kg: kg dataset with nodes
@@ -127,16 +153,7 @@ def make_splits(
     data["source_embedding"] = data["source"].apply(lambda s_id: kg._embeddings[s_id])
     data["target_embedding"] = data["target"].apply(lambda t_id: kg._embeddings[t_id])
 
-    all_data_frames = []
-    for iteration, (train_index, test_index) in enumerate(splitter.split(data, data["y"])):
-        all_indices_in_this_fold = list(set(train_index).union(test_index))
-        fold_data = data.loc[all_indices_in_this_fold, :].copy()
-        fold_data.loc[:, "iteration"] = iteration
-        fold_data.loc[train_index, "split"] = "TRAIN"
-        fold_data.loc[test_index, "split"] = "TEST"
-        all_data_frames.append(fold_data)
-
-    return pd.concat(all_data_frames, axis="index", ignore_index=True)
+    return _apply_splitter(data, splitter)
 
 
 @has_schema(

@@ -15,3 +15,14 @@ moa_extraction:
       batch_size: 500
       verbose: False
 
+  path_mapping:
+    mapper_two_hop: 
+      object: matrix.pipelines.moa_extraction.path_mapping.TestPathMapper
+      num_hops: 2
+      num_paths: 25
+      unidirectional: false
+    mapper_three_hop: 
+      object: matrix.pipelines.moa_extraction.path_mapping.TestPathMapper
+      num_hops: 3
+      num_paths: 10
+      unidirectional: false

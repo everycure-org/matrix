@@ -274,3 +274,8 @@ fabricator.ec_medical_kg:
       knowledge_source:
         type: faker
         provider: name
+
+
+fabricator.drug_mech_db:
+  paths: None     
+        
