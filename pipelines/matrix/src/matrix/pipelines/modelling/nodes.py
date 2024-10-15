@@ -2,7 +2,6 @@
 
 from typing import Any, Dict, List, Union, Tuple
 import pandas as pd
-import numpy as np
 import json
 import pyspark.sql.functions as f
 
@@ -322,15 +321,16 @@ def train_model(
     return estimator.fit(X_train.values, y_train.values)
 
 
-def create_model(*estimators) -> ModelWrapper:
+def create_model(*estimators, agg_method: str = "mean") -> ModelWrapper:
     """Function to create final model.
 
     Args:
         estimators: list of fitted estimators
+        agg_method: method to aggregate ensemble results. Either "mean" or "median".
     Returns:
         ModelWrapper encapsulating estimators
     """
-    return ModelWrapper(estimators=estimators, agg_func=np.mean)
+    return ModelWrapper(estimators=estimators, agg_method=agg_method)
 
 
 @inject_object()
