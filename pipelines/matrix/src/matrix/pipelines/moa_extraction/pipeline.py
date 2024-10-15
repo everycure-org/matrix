@@ -1,8 +1,6 @@
 """
 MOA extraction pipeline.
 """
-# TODO NOW: add a for loop over ["two", "three"] using fstrings
-# TODO: Add test path mapper class
 # TODO: Add mapping success report node
 
 from kedro.pipeline import Pipeline, node
@@ -77,5 +75,33 @@ def _preprocessing_pipeline() -> Pipeline:
     )
 
 
+def _training_pipeline() -> Pipeline:
+    training_strands_lst = []
+    for num_hops in num_hops_lst:
+        training_strands_lst.append(
+            pipeline(
+                [
+                    node(
+                        func=nodes.create_training_features,
+                        inputs={
+                            "splits_data": f"moa_extraction.prm.{num_hops}_hop_splits",
+                        },
+                        outputs=None,
+                        name=f"create_features_{num_hops}_hop",
+                        tags="moa_extraction.training",
+                    ),
+                    # node(
+                    #     func=nodes.train_model,
+                    #     inputs=["moa_extraction.prm.two_hop_splits", "moa_extraction.feat.category_encoder", "moa_extraction.feat.relation_encoder"],
+                    #     outputs="moa_extraction.mdl.model",
+                    #     name=f"train_model_{num_hops}_hop",
+                    #     tags="moa_extraction.training",
+                    # ),
+                ]
+            )
+        )
+    return sum(training_strands_lst)
+
+
 def create_pipeline(**kwargs) -> Pipeline:
-    return _preprocessing_pipeline()
+    return _preprocessing_pipeline() + _training_pipeline()

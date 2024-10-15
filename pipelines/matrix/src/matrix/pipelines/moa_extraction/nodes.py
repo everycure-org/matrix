@@ -171,3 +171,16 @@ def make_splits(
     df = paths_data.df
     df_splits = _apply_splitter(df, splitter)
     return KGPaths(df=df_splits).df
+
+
+def create_training_features(
+    splits_data: KGPaths,
+) -> pd.DataFrame:
+    """Creates vectorised training data.
+
+    Involves enriching the paths dataset with negative samples and computing embeddings for each path.
+
+    Args:
+        splits_data: Dataset of positive indication paths with splits information.
+    """
+    return ...
