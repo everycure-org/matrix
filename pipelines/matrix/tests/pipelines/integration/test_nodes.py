@@ -3,6 +3,7 @@ from matrix.pipelines.integration import nodes
 from matrix.schemas.knowledge_graph import KGEdgeSchema, KGNodeSchema
 from pyspark.sql import DataFrame
 from pyspark.sql.types import ArrayType, StringType, StructField, StructType
+from pyspark.testing import assertDataFrameEqual
 
 
 @pytest.fixture
@@ -187,7 +188,7 @@ class MockResponse:
 
 @pytest.mark.asyncio
 def test_normalize_kg(spark, mocker):
-    # Set up mock data
+    # Given
     sample_nodes = spark.createDataFrame(
         [
             ("CHEBI:119157", "Drug1", "biolink:Drug"),
@@ -203,14 +204,6 @@ def test_normalize_kg(spark, mocker):
         ["subject", "predicate", "object"],
     )
 
-    # mock_response = AsyncMock()
-    # mock_response.status = 200
-    # mock_response.json.return_value = {
-    #     "CHEBI:119157": {"id": {"identifier": "CHEBI:normalized_119157"}},
-    #     "MONDO:0005148": {"id": {"identifier": "MONDO:normalized_0005148"}},
-    # }
-    # mock_post = AsyncMock(return_value=mock_response)
-    # mocker.patch("aiohttp.ClientSession.post", new=mock_post)
     mocker.patch(
         "aiohttp.ClientSession.post",
         return_value=MockResponse(
@@ -222,33 +215,66 @@ def test_normalize_kg(spark, mocker):
         ),
     )
 
-    # Call the normalize_kg function
+    # Expected output DataFrames
+    expected_nodes = spark.createDataFrame(
+        [
+            ("CHEBI:normalized_119157", "Drug1", "biolink:Drug", "CHEBI:119157", True),
+            ("MONDO:0005148", "Disease1", "biolink:Disease", "MONDO:0005148", False),
+        ],
+        ["id", "name", "category", "original_id", "normalization_success"],
+    )
+
+    expected_edges = spark.createDataFrame(
+        [
+            (
+                "CHEBI:normalized_119157",
+                "biolink:treats",
+                "MONDO:0005148",
+                "CHEBI:119157",
+                "MONDO:0005148",
+                True,
+                False,
+            ),
+        ],
+        [
+            "subject",
+            "predicate",
+            "object",
+            "original_subject",
+            "original_object",
+            "subject_normalization_success",
+            "object_normalization_success",
+        ],
+    )
+
+    expected_mapping = spark.createDataFrame(
+        [
+            ("CHEBI:119157", "CHEBI:normalized_119157", True),
+            ("MONDO:0005148", "MONDO:0005148", False),
+        ],
+        ["id", "normalized_id", "normalization_success"],
+    )
+
+    # When
     normalized_nodes, normalized_edges, mapping_df = nodes.normalize_kg(sample_nodes, sample_edges, "http://dummy")
 
-    # TODO: Add assertions to check the results
-    # Check normalized nodes
-    assert normalized_nodes.count() == 2
-    assert set(normalized_nodes.select("id").toPandas()["id"]) == {
-        "CHEBI:normalized_119157",
-        "MONDO:0005148",
-    }
-    assert "original_id" in normalized_nodes.columns
-    assert "normalization_success" in normalized_nodes.columns
+    # Then
+    assertDataFrameEqual(
+        normalized_nodes.select("id", "name", "category", "original_id", "normalization_success"), expected_nodes
+    )
+    assertDataFrameEqual(
+        normalized_edges.select(
+            "subject",
+            "predicate",
+            "object",
+            "original_subject",
+            "original_object",
+            "subject_normalization_success",
+            "object_normalization_success",
+        ),
+        expected_edges,
+    )
+    assertDataFrameEqual(mapping_df.select("id", "normalized_id", "normalization_success"), expected_mapping)
 
-    # # Check normalized edges
-    # assert normalized_edges.count() == 1
-    # edge = normalized_edges.collect()[0]
-    # assert edge.subject == "CHEBI:normalized_119157"
-    # assert edge.object == "MONDO:normalized_0005148"
-    # assert "original_subject" in normalized_edges.columns
-    # assert "original_object" in normalized_edges.columns
-    # assert "subject_normalization_success" in normalized_edges.columns
-    # assert "object_normalization_success" in normalized_edges.columns
 
-    # # Check mapping DataFrame
-    # assert mapping_df.count() == 2
-    # assert set(mapping_df.select("id").toPandas()["id"]) == {"CHEBI:119157", "MONDO:0005148"}
-    # assert set(mapping_df.select("normalized_id").toPandas()["normalized_id"]) == {
-    #     "CHEBI:normalized_119157",
-    #     "MONDO:normalized_0005148",
-    # }
+# NOTE: This function was partially generated using AI assistance.
