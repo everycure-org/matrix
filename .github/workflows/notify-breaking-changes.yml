@@ -6,19 +6,32 @@ on:
 #  pull_request:
 #    types: [closed]
    pull_request:
+    branches:
+      - main
 
 jobs:
   notify:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
       - name: Log github.event
         run: |
           echo ${{ toJSON(github.event) }}
 
-      - name: Notify about breaking changes
-        if: contains(github.event.pull_request.labels.*.name, 'breaking change') && github.event.pull_request.merged == 'true'
-        run: |
-          echo "A breaking change was detected in this PR. Please review the changes and update the PR description if necessary."
+      - name: Post to a Slack channel
+        if: contains(github.event.pull_request.labels, 'breaking change') && github.event.pull_request.merged == 'true'
+        id: slack
+        uses: slackapi/slack-github-action@v1.26.0
+        with:
+          # Slack channel id, channel name, or user id to post message.
+          # See also: https://api.slack.com/methods/chat.postMessage#channels
+          # You can pass in multiple channels to post to by providing a comma-delimited list of channel IDs.
+          # TODO: Change
+          channel-id: 'C07HU35MKAQ' #github-notifications
+          # For posting a simple plain text message
+          slack-message: |
+            GitHub Build Failed on Main branch! 🚨
+
+            👩‍💻 Code URL: ${{ github.event.pull_request.html_url || github.event.head_commit.url }}
+            🚀 Action run link: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN_MATRIX_WORKSPACE }}
