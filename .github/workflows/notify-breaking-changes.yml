@@ -4,7 +4,7 @@ name: Notify Breaking Changes
 
 on:
   pull_request:
-    # types: [closed]
+    types: [closed]
     branches:
       - main
 
@@ -16,7 +16,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Post to a Slack channel
-        # if: contains(github.event.pull_request.labels, 'breaking change') && github.event.pull_request.merged == 'true'
+        if: contains(github.event.pull_request.labels, 'breaking change') && github.event.pull_request.merged == 'true'
         id: slack
         uses: slackapi/slack-github-action@v1.26.0
         with:
@@ -27,8 +27,11 @@ jobs:
           # For posting a simple plain text message
           slack-message: |
             ⚠️ A breaking change was merged into main on PR 
-            [#${{ github.event.pull_request.number }}](${{ github.event.pull_request.html_url }})
-            by @${{ github.event.pull_request.user.login }}
+
+            ## ${{ github.event.pull_request.title }}
+            <${{ github.event.pull_request.html_url }}|#${{ github.event.pull_request.number }}>
+
+            by `${{ github.event.pull_request.user.login }}`
 
             Please check the PR description for more details.
         env:
