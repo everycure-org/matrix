@@ -29,9 +29,10 @@ jobs:
           channel-id: 'C07HU35MKAQ' #github-notifications
           # For posting a simple plain text message
           slack-message: |
-            GitHub Build Failed on Main branch! 🚨
+            ⚠️ A breaking change was merged into main on PR 
+            [#${{ github.event.pull_request.number }}](${{ github.event.pull_request.html_url }})
+            by @${{ github.event.pull_request.user.login }}
 
-            👩‍💻 Code URL: ${{ github.event.pull_request.html_url || github.event.head_commit.url }}
-            🚀 Action run link: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+            Please check the PR description for more details.
         env:
           SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN_MATRIX_WORKSPACE }}
