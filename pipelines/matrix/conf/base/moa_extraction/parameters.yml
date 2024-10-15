@@ -47,3 +47,6 @@ moa_extraction:
       test_size: 0.4
       random_state: *seed
 
+  path_embeddings:
+    strategy:
+      object: matrix.pipelines.moa_extraction.path_embeddings.TypesRelationsAndDirections

@@ -7,7 +7,7 @@ from sklearn.model_selection import BaseCrossValidator
 from refit.v1.core.inject import inject_object
 
 from .neo4j_runners import Neo4jRunner
-from .path_embeddings import OneHotEncoder
+from .path_embeddings import OneHotEncoder, PathEmbeddingStrategy
 from .path_mapping import PathMapper
 from matrix.datasets.paths import KGPaths
 from matrix.pipelines.modelling.nodes import _apply_splitter
@@ -173,14 +173,22 @@ def make_splits(
     return KGPaths(df=df_splits).df
 
 
+@inject_object()
 def create_training_features(
-    splits_data: KGPaths,
+    splits: KGPaths,
+    path_embedding_strategy: PathEmbeddingStrategy,
+    category_encoder: OneHotEncoder,
+    relation_encoder: OneHotEncoder,
 ) -> pd.DataFrame:
-    """Creates vectorised training data.
+    """Creates the vectorised training data.
 
     Involves enriching the paths dataset with negative samples and computing embeddings for each path.
 
     Args:
-        splits_data: Dataset of positive indication paths with splits information.
+        splits: Dataset of positive indication paths with splits information.
+        path_embedding_strategy: Path embedding strategy.
+        category_encoder: One-hot encoder for node categories.
+        relation_encoder: One-hot encoder for edge relations.
     """
+    path_embedding_strategy.run(splits, category_encoder, relation_encoder)
     return ...
