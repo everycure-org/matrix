@@ -447,8 +447,6 @@ def generate_metadata(
     conf_loader = CONFIG_LOADER_CLASS(CONF_SOURCE, **CONFIG_LOADER_ARGS)
     conf_globals = conf_loader["globals"]
 
-    MLFLOW_URL = "https://mlflow.platform.dev.everycure.org/"
-
     # Metadata related to the run
     # TODO: Add included_kgs and included_models
     # TODO: Add filters (is_steroid)
@@ -456,7 +454,7 @@ def generate_metadata(
         "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         "workflow_id": os.getenv("WORKFLOW_ID"),
         "mlflow_run_name": conf_globals["run_name"],
-        "mlflow_link": MLFLOW_URL,
+        "mlflow_link": conf_globals["mlflow_url"],
         "git_sha": conf_globals["git_sha"],
         "release_version": conf_globals["versions"]["release"],
     }

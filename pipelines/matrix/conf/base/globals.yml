@@ -47,6 +47,8 @@ data_sources:
 # due to schema validation. Will make PR.
 mlflow_artifact_root: null
 
+mlflow_url: https://mlflow.platform.dev.everycure.org/
+
 paths:
   # we read from our central GCS bucket where we store our ground truth data
   raw: gs://mtrx-us-central1-hub-dev-storage/kedro/data/01_raw
