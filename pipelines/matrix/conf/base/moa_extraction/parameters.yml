@@ -1,6 +1,3 @@
-random_seed: &seed 42 
-
-
 moa_extraction:
   neo4j_runner: 
     object: matrix.pipelines.moa_extraction.neo4j_runners.LocalNeo4jRunner
@@ -40,15 +37,27 @@ moa_extraction:
       object: matrix.pipelines.modelling.model_selection.GroupAwareSplit
       group_by_column: "source_id"
       test_size: 0.4
-      random_state: *seed
+      random_state: ${globals:random_state}
     splitter_three_hop:
       object: matrix.pipelines.modelling.model_selection.GroupAwareSplit
       group_by_column: "source_id"
       test_size: 0.4
-      random_state: *seed
+      random_state: ${globals:random_state}
 
   path_embeddings:
     strategy:
       object: matrix.pipelines.moa_extraction.path_embeddings.TypesAndRelations
       is_embed_directions: true
  
+  training:
+    two_hop:
+      model:
+        object: sklearn.ensemble.RandomForestClassifier
+      negative_samplers:
+        object: matrix.pipelines.moa_extraction.negative_path_samplers.MockNegativePathSampler
+    three_hop:
+      model:
+        object: sklearn.ensemble.RandomForestClassifier
+      negative_samplers:
+        object: matrix.pipelines.moa_extraction.negative_path_samplers.MockNegativePathSampler
+        
