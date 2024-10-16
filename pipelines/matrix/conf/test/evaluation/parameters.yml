@@ -1,3 +1,5 @@
+# NOTE: All these metrics are overwritten to reduce overall runtime and deal with reduced data size.
+
 # Reduce list of k values
 evaluation.disease_specific:
   evaluation_options:
