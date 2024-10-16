@@ -336,17 +336,16 @@ def clean_drug_list(drug_df: pd.DataFrame, endpoint: str) -> pd.DataFrame:
         ("preferred_name", "name"),
     ]
 
-    res = drug_df
     for att, target in attributes:
-        res = enrich_df(
-            res,
+        drug_df = enrich_df(
+            drug_df,
             func=partial(resolve, att_to_get=att),
             input_cols=["ID_Label"],
             target_col=target,
             endpoint=endpoint,
         )
 
-    return res.loc[~res["curie"].isna()]
+    return drug_df.dropna(subset=["curie"])
 
 
 @has_schema(
@@ -379,17 +378,16 @@ def clean_disease_list(disease_df: pd.DataFrame, endpoint: str) -> pd.DataFrame:
         ("preferred_name", "name"),
     ]
 
-    res = disease_df
     for att, target in attributes:
-        res = enrich_df(
-            res,
+        disease_df = enrich_df(
+            disease_df,
             func=partial(resolve, att_to_get=att),
             input_cols=["label"],
             target_col=target,
             endpoint=endpoint,
         )
 
-    return res.loc[~res["curie"].isna()]
+    return disease_df.dropna(subset=["curie"])
 
 
 @has_schema(
