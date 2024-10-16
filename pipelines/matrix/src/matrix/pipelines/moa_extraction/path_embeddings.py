@@ -12,7 +12,7 @@ from matrix.datasets.paths import KGPaths
 class OneHotEncoder:
     """Class representing a PyTorch one-hot encoder for a set of strings."""
 
-    def __init__(self, strings: List[str]):
+    def __init__(self, strings: List[str]) -> None:
         """Initialize the one-hot encoder.
 
         Args:
@@ -64,7 +64,7 @@ class TypesAndRelations(PathEmbeddingStrategy):
         """
         self.is_embed_directions = is_embed_directions
 
-    def run(self, paths_data: KGPaths, category_encoder: OneHotEncoder, relation_encoder: OneHotEncoder) -> np.array:
+    def run(self, paths_data: KGPaths, category_encoder: OneHotEncoder, relation_encoder: OneHotEncoder) -> np.ndarray:
         """Generate embeddings for the paths data.
 
         Args:
@@ -88,9 +88,32 @@ class TypesAndRelations(PathEmbeddingStrategy):
             relation_encoder: The relation encoder.
             num_hops: The number of hops.
         """
+        # First node embedding
         source_type = category_encoder.get_encoding(path["source_type"])
         N_relations = len(relation_encoder.strings)
         first_vector = np.concatenate([source_type, np.zeros(N_relations)])
         if self.is_embed_directions:
             first_vector = np.concatenate([first_vector, np.zeros(1)])
-        return np.ones(2, 2)
+        vectors_lst = [first_vector]
+
+        # Intermediate nodes and edges embeddings
+        for i in range(1, num_hops):
+            intermediate_type = category_encoder.get_encoding(path[f"intermediate_type_{i}"])
+            predicate = relation_encoder.get_sum_encoding(path[f"predicates_{i}"].split(","))
+            vector = np.concatenate([intermediate_type, predicate])
+            if self.is_embed_directions:
+                is_forward = path[f"is_forward_{i}"]
+                direction_vector = np.zeros(1) if is_forward else np.ones(1)
+                vector = np.concatenate([vector, direction_vector])
+            vectors_lst.append(vector)
+
+        # Last node and edge embeddings
+        target_type = category_encoder.get_encoding(path["target_type"])
+        target_vector = np.concatenate([target_type, np.zeros(N_relations)])
+        if self.is_embed_directions:
+            is_forward = path[f"is_forward_{num_hops}"]
+            direction_vector = np.zeros(1) if is_forward else np.ones(1)
+            target_vector = np.concatenate([target_vector, direction_vector])
+        vectors_lst.append(target_vector)
+
+        return np.array(vectors_lst)

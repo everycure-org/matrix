@@ -1,14 +1,16 @@
 """Module with nodes for moa extraction."""
 
 import pandas as pd
+import numpy as np
 from typing import List, Tuple, Dict, Any
 from sklearn.model_selection import BaseCrossValidator
-
+from sklearn.base import BaseEstimator
 from refit.v1.core.inject import inject_object
 
 from .neo4j_runners import Neo4jRunner
 from .path_embeddings import OneHotEncoder, PathEmbeddingStrategy
 from .path_mapping import PathMapper
+from .negative_path_samplers import NegativePathSampler
 from matrix.datasets.paths import KGPaths
 from matrix.pipelines.modelling.nodes import _apply_splitter
 
@@ -171,22 +173,85 @@ def make_splits(
     return KGPaths(df=df_splits).df
 
 
-@inject_object()
-def create_training_features(
-    splits: KGPaths,
+# @inject_object()
+def _create_training_features(
+    paths: KGPaths,
+    negative_sampler_list: List[NegativePathSampler],
+    runner: Neo4jRunner,
     path_embedding_strategy: PathEmbeddingStrategy,
     category_encoder: OneHotEncoder,
     relation_encoder: OneHotEncoder,
-) -> pd.DataFrame:
+) -> Tuple[np.ndarray, np.ndarray]:
     """Creates the vectorised training data.
 
     Involves enriching the paths dataset with negative samples and computing embeddings for each path.
 
     Args:
-        splits: Dataset of positive indication paths with splits information.
+        paths: Dataset of positive indication paths.
+        negative_sampler_list: List of negative path samplers.
         path_embedding_strategy: Path embedding strategy.
         category_encoder: One-hot encoder for node categories.
         relation_encoder: One-hot encoder for edge relations.
     """
-    data = path_embedding_strategy.run(splits, category_encoder, relation_encoder)
-    return data
+    X = path_embedding_strategy.run(paths, category_encoder, relation_encoder)
+    y = np.ones(len(X))
+
+    # TODO: Add negative samples
+
+    return X, y
+
+
+@inject_object()
+def train_model(
+    model: BaseEstimator,  # TODO: Replace with tuner
+    paths: KGPaths,
+    negative_sampler_list: List[NegativePathSampler],
+    runner: Neo4jRunner,
+    path_embedding_strategy: PathEmbeddingStrategy,
+    category_encoder: OneHotEncoder,
+    relation_encoder: OneHotEncoder,
+) -> BaseEstimator:
+    """Train the model on the entire paths dataset provided.
+
+    Args:
+        model: The model to train.
+        paths: The positive indication paths dataset.
+        negative_sampler_list: List of negative path samplers.
+        runner: The Neo4j runner.
+        path_embedding_strategy: Path embedding strategy.
+        category_encoder: One-hot encoder for node categories.
+        relation_encoder: One-hot encoder for edge relations.
+    """
+    X, y = _create_training_features(
+        paths, negative_sampler_list, runner, path_embedding_strategy, category_encoder, relation_encoder
+    )
+    X = np.reshape(X, (X.shape[0], -1))  # TODO: Remove when transformers are implemented
+    # TODO: Add hyperparameter tuning here
+    return model.fit(X, y)
+
+
+@inject_object()
+def train_model_split(
+    model: BaseEstimator,  # TODO: Replace with tuner
+    paths: KGPaths,
+    negative_sampler_list: List[NegativePathSampler],
+    runner: Neo4jRunner,
+    path_embedding_strategy: PathEmbeddingStrategy,
+    category_encoder: OneHotEncoder,
+    relation_encoder: OneHotEncoder,
+) -> BaseEstimator:
+    """Train the model on the training portion of the paths dataset only.
+
+    Args:
+        model: The model to train.
+        paths: The positive indication paths dataset.
+        negative_sampler_list: List of negative path samplers.
+        runner: The Neo4j runner.
+        path_embedding_strategy: Path embedding strategy.
+        category_encoder: One-hot encoder for node categories.
+        relation_encoder: One-hot encoder for edge relations.
+    """
+    paths_train = KGPaths(df=paths.df[paths.df["split"] == "TRAIN"])
+    return train_model(
+        model, paths_train, negative_sampler_list, runner, path_embedding_strategy, category_encoder, relation_encoder
+    )

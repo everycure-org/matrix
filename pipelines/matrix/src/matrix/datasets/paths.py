@@ -121,7 +121,7 @@ class KGPaths:
             data_dict["target_id"].append(path.nodes[-1].get("id"))
             data_dict["target_type"].append(path.nodes[-1].get("category"))
 
-        # Squash varying predicates into comma-separated strings
+        # Squash multiple predicates into comma-separated strings
         full_new_data = pd.DataFrame(data_dict)
         predicate_cols = [f"predicates_{i}" for i in range(1, self.num_hops + 1)]
         non_predicate_cols = [col for col in full_new_data.columns if col not in predicate_cols]
