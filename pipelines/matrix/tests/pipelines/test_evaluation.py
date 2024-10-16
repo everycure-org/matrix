@@ -71,9 +71,7 @@ def test_continuous_metrics(sample_data):
     assert standard_result["roc_auc_score"] == 1.0
 
     assert "roc_auc_score" in edge_result
-    assert (
-        edge_result["roc_auc_score"] == 0.5
-    )  # ROC AUC is undefined for all same labels, defaults to 0.5
+    assert edge_result["roc_auc_score"] == 0.5  # ROC AUC is undefined for all same labels, defaults to 0.5
 
 
 def test_specific_ranking(sample_data):
@@ -81,9 +79,7 @@ def test_specific_ranking(sample_data):
     # Given standard and edge case datasets, and MRR and Hit@1 as ranking metrics
     standard_case, edge_case = sample_data
     rank_funcs = [MRR(), HitK(k=1)]
-    evaluator = SpecificRanking(
-        rank_funcs, specific_col="source", score_col_name="score"
-    )
+    evaluator = SpecificRanking(rank_funcs, specific_col="source", score_col_name="score")
 
     # When SpecificRanking evaluates both datasets with source-specific ranking
     standard_result = evaluator.evaluate(standard_case)
@@ -108,11 +104,7 @@ def test_recall_at_n(sample_data):
     result = recall_evaluator.evaluate(data_standard_case)
 
     assert "recall_at_3" in result
-    assert np.isclose(
-        result["recall_at_3"], 3 / 3, atol=1e-6
-    )  # 2 out of 3 true positives in top 3
+    assert np.isclose(result["recall_at_3"], 3 / 3, atol=1e-6)  # 2 out of 3 true positives in top 3
 
     assert "recall_at_5" in result
-    assert np.isclose(
-        result["recall_at_5"], 1.0, atol=1e-6
-    )  # All true positives included
+    assert np.isclose(result["recall_at_5"], 1.0, atol=1e-6)  # All true positives included

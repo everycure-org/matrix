@@ -1,4 +1,5 @@
 """GDS Algorithms Classes."""
+
 from abc import ABC, abstractmethod
 from typing import List, Any, Optional
 from graphdatascience import GraphDataScience
@@ -7,25 +8,19 @@ from graphdatascience import GraphDataScience
 class GDSGraphAlgorithm(ABC):
     """Base class for Graph Algorithms, stores all arguments which can be used by child classes."""
 
-    def __init__(
-        self, embedding_dim: int = 512, random_seed: int = None, concurrency: int = 4
-    ):
+    def __init__(self, embedding_dim: int = 512, random_seed: int = None, concurrency: int = 4):
         """Common Attributes."""
         self._embedding_dim = embedding_dim
         self._random_seed = random_seed
         self._concurrency = concurrency
 
     @abstractmethod
-    def run(
-        self, gds: GraphDataScience, graph: Any, model_name: str, write_property: str
-    ):
+    def run(self, gds: GraphDataScience, graph: Any, model_name: str, write_property: str):
         """Run training base constructor."""
         pass
 
     @abstractmethod
-    def predict_write(
-        self, gds: GraphDataScience, graph: Any, model_name: str, write_property: str
-    ):
+    def predict_write(self, gds: GraphDataScience, graph: Any, model_name: str, write_property: str):
         """Predict and write constructors."""
         pass
 
@@ -72,9 +67,7 @@ class GDSGraphSage(GDSGraphAlgorithm):
         self._penalty_l2 = penalty_l2
         self._loss = None
 
-    def run(
-        self, gds: GraphDataScience, graph: Any, model_name: str, write_property: str
-    ):
+    def run(self, gds: GraphDataScience, graph: Any, model_name: str, write_property: str):
         """Train the algorithm."""
         model, attr = gds.beta.graphSage.train(
             graph,
@@ -102,9 +95,7 @@ class GDSGraphSage(GDSGraphAlgorithm):
         """Return loss."""
         return self._loss
 
-    def predict_write(
-        self, gds: GraphDataScience, graph: Any, model_name: str, write_property: str
-    ):
+    def predict_write(self, gds: GraphDataScience, graph: Any, model_name: str, write_property: str):
         """Predict and save."""
         model = gds.model.get(model_name)
         model.predict_write(graph, writeProperty=write_property)
@@ -149,9 +140,7 @@ class GDSNode2Vec(GDSGraphAlgorithm):
         self._walk_buffer_size = walk_buffer_size
         self._loss = None
 
-    def run(
-        self, gds: GraphDataScience, graph: Any, model_name: str, write_property: str
-    ):
+    def run(self, gds: GraphDataScience, graph: Any, model_name: str, write_property: str):
         """Trains the algorithm and writes embeddings.
 
         Node2Vec has no separate training and inference steps (unlike GraphSage),
@@ -179,9 +168,7 @@ class GDSNode2Vec(GDSGraphAlgorithm):
         )
         self._loss = [int(x) for x in attr["lossPerIteration"]]
 
-    def predict_write(
-        self, gds: GraphDataScience, graph: Any, model_name: str, write_property: str
-    ):
+    def predict_write(self, gds: GraphDataScience, graph: Any, model_name: str, write_property: str):
         """Dummy function as Node2vec gets written in the 'run' step due to no separate predict_write function (unlike GraphSage)."""
         return
 

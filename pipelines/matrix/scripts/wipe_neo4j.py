@@ -1,4 +1,5 @@
 """Wipes neo4j instance locally."""
+
 from neo4j import GraphDatabase
 import typer
 from dotenv import load_dotenv
@@ -8,9 +9,7 @@ import os
 # checking if any existing env variables set the n4j password which hints at prod port forwarding
 def avoid_wiping_prod():
     if os.environ.get("NEO4J_PASSWORD", "") != "":
-        print(
-            "careful, you may be accidentally wiping a remote neo, saving you from this now!"
-        )
+        print("careful, you may be accidentally wiping a remote neo, saving you from this now!")
         exit()
 
 
@@ -44,9 +43,7 @@ def main(
                     print(f"Found {len(databases)} user database(s)")
                     print(databases)
 
-                    confirm = input(
-                        "Are you sure you want to drop all user databases? Type 'y' to confirm: "
-                    )
+                    confirm = input("Are you sure you want to drop all user databases? Type 'y' to confirm: ")
                     if confirm.lower() != "y":
                         print("Operation cancelled.")
                         return

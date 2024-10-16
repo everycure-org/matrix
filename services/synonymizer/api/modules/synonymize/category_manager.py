@@ -1,7 +1,6 @@
 #!/usr/bin/python3
 ## This code is created by RTX team (https://github.com/RTXteam/RTX/) used in the version 2.7.3 of RTX-KG2c (Wood et al. 2021 doi: 10.1101/2021.10.17.464747)
-""" A class to access BioLink categories
-"""
+"""A class to access BioLink categories"""
 
 import sys
 
@@ -66,9 +65,7 @@ class CategoryManager:
             with open(filename, "rb") as infile:
                 self.categories = pickle.load(infile)
         else:
-            print(
-                f"INFO: category_manager cache {filename} does not yet exist. Need to create it first."
-            )
+            print(f"INFO: category_manager cache {filename} does not yet exist. Need to create it first.")
 
     # ############################################################################################
     # Retrieve the ancestors of a biolink category from SRI web service
@@ -90,9 +87,7 @@ class CategoryManager:
 
         # Check for a returned error
         if status_code != 200:
-            eprint(
-                f"WARNING: returned with status {status_code} while retrieving ancestors for {category}"
-            )
+            eprint(f"WARNING: returned with status {status_code} while retrieving ancestors for {category}")
             response_list = [category]
             self.categories["ancestors"][category] = response_list
             return response_list

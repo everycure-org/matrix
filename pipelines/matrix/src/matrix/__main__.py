@@ -3,6 +3,7 @@
 matrix file for ensuring the package is executable
 as `matrix` and `python -m matrix`
 """
+
 import importlib
 from pathlib import Path
 

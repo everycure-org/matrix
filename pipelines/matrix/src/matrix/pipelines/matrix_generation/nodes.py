@@ -1,4 +1,5 @@
 """Module with nodes for matrix generation."""
+
 import logging
 from tqdm import tqdm
 from typing import List, Dict, Union
@@ -37,9 +38,7 @@ def enrich_embeddings(
     """
     return (
         drugs.withColumn("is_drug", F.lit(True))
-        .unionByName(
-            diseases.withColumn("is_disease", F.lit(True)), allowMissingColumns=True
-        )
+        .unionByName(diseases.withColumn("is_disease", F.lit(True)), allowMissingColumns=True)
         .withColumnRenamed("curie", "id")
         .join(nodes, on="id", how="inner")
         .select("is_drug", "is_disease", "id", "topological_embedding")
@@ -96,9 +95,7 @@ def generate_pairs(
     # Remove drugs and diseases without embeddings
     nodes_with_embeddings = set(graph._nodes["id"])
     drugs_lst = [drug for drug in drugs_lst if drug in nodes_with_embeddings]
-    diseases_lst = [
-        disease for disease in diseases_lst if disease in nodes_with_embeddings
-    ]
+    diseases_lst = [disease for disease in diseases_lst if disease in nodes_with_embeddings]
 
     # Generate all combinations
     matrix_slices = []
@@ -112,9 +109,7 @@ def generate_pairs(
     # Remove training set and return
     train_pairs = known_pairs[~known_pairs["split"].eq("TEST")]
     train_pairs_set = set(zip(train_pairs["source"], train_pairs["target"]))
-    is_in_train = matrix.apply(
-        lambda row: (row["source"], row["target"]) in train_pairs_set, axis=1
-    )
+    is_in_train = matrix.apply(lambda row: (row["source"], row["target"]) in train_pairs_set, axis=1)
     return matrix[~is_in_train]
 
 
@@ -149,20 +144,14 @@ def make_batch_predictions(
 
     def process_batch(batch: pd.DataFrame) -> pd.DataFrame:
         # Collect embedding vectors
-        batch["source_embedding"] = batch.apply(
-            lambda row: graph.get_embedding(row.source, default=pd.NA), axis=1
-        )
-        batch["target_embedding"] = batch.apply(
-            lambda row: graph.get_embedding(row.target, default=pd.NA), axis=1
-        )
+        batch["source_embedding"] = batch.apply(lambda row: graph.get_embedding(row.source, default=pd.NA), axis=1)
+        batch["target_embedding"] = batch.apply(lambda row: graph.get_embedding(row.target, default=pd.NA), axis=1)
 
         # Retrieve rows with null embeddings
         # NOTE: This only happens in a rare scenario where the node synonymizer
         # provided an identifier for a node that does _not_ exist in our KG.
         # https://github.com/everycure-org/matrix/issues/409
-        removed = batch[
-            batch["source_embedding"].isna() | batch["target_embedding"].isna()
-        ]
+        removed = batch[batch["source_embedding"].isna() | batch["target_embedding"].isna()]
         if len(removed.index) > 0:
             logger.warning(f"Dropped {len(removed.index)} pairs during generation!")
             logger.warning(
@@ -181,14 +170,10 @@ def make_batch_predictions(
         transformed = apply_transformers(batch, transformers)
 
         # Extract features
-        batch_features = _extract_elements_in_list(
-            transformed.columns, features, raise_exc=True
-        )
+        batch_features = _extract_elements_in_list(transformed.columns, features, raise_exc=True)
 
         # Generate model probability scores
-        batch[score_col_name] = model.predict_proba(transformed[batch_features].values)[
-            :, 1
-        ]
+        batch[score_col_name] = model.predict_proba(transformed[batch_features].values)[:, 1]
 
         # Drop embedding columns
         batch = batch.drop(columns=["source_embedding", "target_embedding"])
@@ -234,9 +219,7 @@ def make_predictions_and_sort(
         Pairs dataset sorted by an additional column containing the probability scores.
     """
     # Generate scores
-    data = make_batch_predictions(
-        graph, data, transformers, model, features, score_col_name, batch_by=batch_by
-    )
+    data = make_batch_predictions(graph, data, transformers, model, features, score_col_name, batch_by=batch_by)
 
     # Sort by the probability score
     sorted_data = data.sort_values(by=score_col_name, ascending=False)
@@ -269,9 +252,7 @@ def generate_report(
 
     # Generate curie to name dictionaries
     drug_curie_to_name = {row["curie"]: row["name"] for _, row in drugs.iterrows()}
-    disease_curie_to_name = {
-        row["curie"]: row["name"] for _, row in diseases.iterrows()
-    }
+    disease_curie_to_name = {row["curie"]: row["name"] for _, row in diseases.iterrows()}
 
     # Add additional information for drugs and diseases
     top_pairs["drug_name"] = top_pairs["source"].map(drug_curie_to_name)

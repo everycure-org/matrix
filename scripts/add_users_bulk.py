@@ -31,9 +31,7 @@ def add_user_to_team(org: str, team: str, user: str):
 
 @app.command()
 def add_users_to_team(
-    org: str = typer.Option(
-        help="The name of the GitHub organization.", default="everycure-org"
-    ),
+    org: str = typer.Option(help="The name of the GitHub organization.", default="everycure-org"),
     team: str = typer.Argument(..., help="The slug of the team in the organization."),
 ):
     """Adds users to an organization team from a CSV input list."""

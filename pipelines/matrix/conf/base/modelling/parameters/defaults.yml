@@ -23,7 +23,8 @@ modelling.splitter:
 # Base options
 _model_options:
 
-  agg_method: "mean"  # Default to mean aggregation
+  ensemble:
+    _agg_func: numpy.mean  # Default to mean aggregation
   # Defines strategy for generating drug-disease pairs. Should be a
   # class that implements the DrugDiseasePair generator interface.
   generator:
