@@ -22,11 +22,13 @@ matrix_generation.stats_col_names:
   per_disease:
     top:
       mean: "Mean probability score"
+      median: "Median probability score"
       max: "Maximum probability score"
       min: "Minimum probability score"
       std: "Standard deviation of probability scores"
     all:
       mean: "Mean probability score"
+      median: "Median probability score"
       max: "Maximum probability score"
       min: "Minimum probability score"
       std: "Standard deviation of probability scores"
