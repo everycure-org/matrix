@@ -76,6 +76,8 @@ def create_feat_nodes(
 ) -> pd.DataFrame:
     """Add features for nodes.
 
+    FUTURE: Add flags for official set of drugs and diseases when we have them.
+
     Args:
         raw_nodes: Raw nodes data.
         known_pairs: Ground truth data.
@@ -321,16 +323,16 @@ def train_model(
     return estimator.fit(X_train.values, y_train.values)
 
 
-def create_model(*estimators, agg_method: str = "mean") -> ModelWrapper:
+@inject_object
+def create_model(*estimators, _agg_func) -> ModelWrapper:
     """Function to create final model.
 
     Args:
         estimators: list of fitted estimators
-        agg_method: method to aggregate ensemble results. Either "mean" or "median".
     Returns:
         ModelWrapper encapsulating estimators
     """
-    return ModelWrapper(estimators=estimators, agg_method=agg_method)
+    return ModelWrapper(estimators=estimators, agg_func=_agg_func)
 
 
 @inject_object()

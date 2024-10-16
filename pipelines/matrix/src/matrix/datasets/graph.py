@@ -2,6 +2,7 @@
 
 Module containing knowledge graph representation and utilities.
 """
+
 import pandas as pd
 import logging
 

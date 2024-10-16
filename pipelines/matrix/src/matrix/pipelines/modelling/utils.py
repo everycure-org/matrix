@@ -1,4 +1,5 @@
 """Modules with utilities for modelling."""
+
 from functools import partial
 
 

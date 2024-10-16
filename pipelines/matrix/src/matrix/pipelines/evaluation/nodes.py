@@ -1,4 +1,5 @@
 """Module with nodes for evaluation."""
+
 import json
 from typing import Any, List, Dict, Union
 
@@ -26,15 +27,11 @@ def create_prm_clinical_trials(raw_clinical_trials: pd.DataFrame) -> pd.DataFram
     Returns:
         Cleaned clinical trails data
     """
-    clinical_trail_data = raw_clinical_trials.rename(
-        columns={"drug_kg_curie": "source", "disease_kg_curie": "target"}
-    )
+    clinical_trail_data = raw_clinical_trials.rename(columns={"drug_kg_curie": "source", "disease_kg_curie": "target"})
 
     # Create the 'y' column where y=1 means 'significantly_better' and y=0 means 'significantly_worse'
     clinical_trail_data["y"] = clinical_trail_data.apply(
-        lambda row: 1
-        if row["significantly_better"] == 1
-        else (0 if row["significantly_worse"] == 1 else None),
+        lambda row: 1 if row["significantly_better"] == 1 else (0 if row["significantly_worse"] == 1 else None),
         axis=1,
     )
 
@@ -42,11 +39,7 @@ def create_prm_clinical_trials(raw_clinical_trials: pd.DataFrame) -> pd.DataFram
     clinical_trail_data = clinical_trail_data.dropna(subset=["y"])
 
     # Use columns 'source', 'target', and 'y' only
-    clinical_trail_data = (
-        clinical_trail_data[["source", "target", "y"]]
-        .drop_duplicates()
-        .reset_index(drop=True)
-    )
+    clinical_trail_data = clinical_trail_data[["source", "target", "y"]].drop_duplicates().reset_index(drop=True)
 
     return clinical_trail_data
 
@@ -79,9 +72,7 @@ def generate_test_dataset(
     Returns:
         Pairs dataframe
     """
-    return generator.generate(
-        graph, known_pairs, clinical_trials_data=clinical_trials_data
-    )
+    return generator.generate(graph, known_pairs, clinical_trials_data=clinical_trials_data)
 
 
 def make_test_predictions(
@@ -107,9 +98,7 @@ def make_test_predictions(
     Returns:
         Pairs dataset with additional column containing the probability scores.
     """
-    return make_batch_predictions(
-        graph, data, transformers, model, features, score_col_name, batch_by=batch_by
-    )
+    return make_batch_predictions(graph, data, transformers, model, features, score_col_name, batch_by=batch_by)
 
 
 @inject_object()
@@ -139,10 +128,6 @@ def consolidate_evaluation_reports(*reports) -> dict:
     master_report = dict()
     for idx_1, model in enumerate(settings.DYNAMIC_PIPELINES_MAPPING.get("modelling")):
         master_report[model["model_name"]] = dict()
-        for idx_2, evaluation in enumerate(
-            settings.DYNAMIC_PIPELINES_MAPPING.get("evaluation")
-        ):
-            master_report[model["model_name"]][
-                evaluation["evaluation_name"]
-            ] = reports_lst[idx_1 + idx_2]
+        for idx_2, evaluation in enumerate(settings.DYNAMIC_PIPELINES_MAPPING.get("evaluation")):
+            master_report[model["model_name"]][evaluation["evaluation_name"]] = reports_lst[idx_1 + idx_2]
     return json.loads(json.dumps(master_report, default=float))

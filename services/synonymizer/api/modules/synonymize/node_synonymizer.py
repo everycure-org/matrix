@@ -132,31 +132,21 @@ class NodeSynonymizer:
     def create_indexes(self):
         print("INFO: Creating INDEXes on nodes")
         self.connection.execute("CREATE INDEX idx_nodes_uc_curie ON nodes(uc_curie)")
-        self.connection.execute(
-            "CREATE INDEX idx_nodes_unique_concept_curie ON nodes(unique_concept_curie)"
-        )
+        self.connection.execute("CREATE INDEX idx_nodes_unique_concept_curie ON nodes(unique_concept_curie)")
 
         print("INFO: Creating INDEXes on unique_concepts")
-        self.connection.execute(
-            "CREATE INDEX idx_unique_concepts_uc_curie ON unique_concepts(uc_curie)"
-        )
+        self.connection.execute("CREATE INDEX idx_unique_concepts_uc_curie ON unique_concepts(uc_curie)")
 
         print("INFO: Creating INDEXes on curies")
         self.connection.execute("CREATE INDEX idx_curies_uc_curie ON curies(uc_curie)")
-        self.connection.execute(
-            "CREATE INDEX idx_curies_unique_concept_curie ON curies(unique_concept_curie)"
-        )
+        self.connection.execute("CREATE INDEX idx_curies_unique_concept_curie ON curies(unique_concept_curie)")
 
         print("INFO: Creating INDEXes on names")
         self.connection.execute("CREATE INDEX idx_names_lc_name ON names(lc_name)")
-        self.connection.execute(
-            "CREATE INDEX idx_names_unique_concept_curie ON names(unique_concept_curie)"
-        )
+        self.connection.execute("CREATE INDEX idx_names_unique_concept_curie ON names(unique_concept_curie)")
 
         print("INFO: Creating INDEXes on name_curies")
-        self.connection.execute(
-            "CREATE INDEX idx_name_curies_lc_name ON name_curies(lc_name)"
-        )
+        self.connection.execute("CREATE INDEX idx_name_curies_lc_name ON name_curies(lc_name)")
         self.connection.execute(
             "CREATE INDEX idx_name_curies_unique_concept_curie ON name_curies(unique_concept_curie)"
         )
@@ -183,9 +173,7 @@ class NodeSynonymizer:
                 match = re.match(r"rename (.+?) (.+)", line)
                 if match:
                     self.exceptions["rename"][match.group(1)] = match.group(2)
-                    print(
-                        f"INFO: Will use exception rename {match.group(1)} = {match.group(2)}"
-                    )
+                    print(f"INFO: Will use exception rename {match.group(1)} = {match.group(2)}")
                     is_understood = True
 
                 if not is_understood:
@@ -259,9 +247,7 @@ class NodeSynonymizer:
         test_subset_flag = False
         test_set = {"identifiers": {}}
         if filter_file is not None and filter_file != False:
-            print(
-                f"INFO: Reading special testing filter_file {filter_file} for a tiny little test database"
-            )
+            print(f"INFO: Reading special testing filter_file {filter_file} for a tiny little test database")
             debug_flag = DEBUG
             test_subset_flag = True
             with open(filter_file) as debugfile:
@@ -294,10 +280,7 @@ class NodeSynonymizer:
             original_node_name = node_name
 
             #### Skip some known problems
-            if (
-                node_curie in exceptions_isnot
-                and exceptions_isnot[node_curie] == node_name
-            ):
+            if node_curie in exceptions_isnot and exceptions_isnot[node_curie] == node_name:
                 continue
             if debug_flag is True and "biolink:" in node_curie:
                 continue
@@ -324,9 +307,7 @@ class NodeSynonymizer:
                 print(f"Input: {line.strip()}")
 
             # Perform some data scrubbing
-            scrubbed_values = self.scrub_input(
-                node_curie, node_name, node_category, debug_flag
-            )
+            scrubbed_values = self.scrub_input(node_curie, node_name, node_category, debug_flag)
             node_curie = scrubbed_values["node_curie"]
             uc_node_curie = node_curie.upper()
             node_name = scrubbed_values["node_name"]
@@ -341,23 +322,16 @@ class NodeSynonymizer:
             equivalence = None
             if uc_node_curie in kg_curies:
                 unique_concept_curie = kg_curies[uc_node_curie]["curie"]
-                uc_unique_concept_curie = kg_curies[uc_node_curie][
-                    "uc_unique_concept_curie"
-                ]
+                uc_unique_concept_curie = kg_curies[uc_node_curie]["uc_unique_concept_curie"]
                 if debug_flag:
                     print(
                         f"DEBUG: This curie was already seen. Setting to its uc_unique_concept_curie to {uc_unique_concept_curie}"
                     )
 
             # Check to see if this is a supported prefix or in the translation table
-            if (
-                curie_prefix in normalizer.curie_prefix_tx_arax2sri
-                or curie_prefix in normalizer_supported_prefixes
-            ):
+            if curie_prefix in normalizer.curie_prefix_tx_arax2sri or curie_prefix in normalizer_supported_prefixes:
                 if node_curie in self.exceptions["skip_SRI"]:
-                    print(
-                        f"WARNING: Skipping SRI NN lookup for {node_curie} due to directive in Exceptions.txt file"
-                    )
+                    print(f"WARNING: Skipping SRI NN lookup for {node_curie} due to directive in Exceptions.txt file")
                     equivalence = {
                         "status": "SRI NN skipped per exceptions",
                         "equivalent_identifiers": [],
@@ -368,9 +342,7 @@ class NodeSynonymizer:
                     }
 
                 else:
-                    equivalence = normalizer.get_curie_equivalence(
-                        node_curie, cache_only=True
-                    )
+                    equivalence = normalizer.get_curie_equivalence(node_curie, cache_only=True)
                     if debug_flag:
                         print(
                             "DEBUG: SRI normalizer returned: ",
@@ -383,12 +355,8 @@ class NodeSynonymizer:
                     print(
                         f"INFO: Based on manual exception, renaming SRI node normalizer result {uc_preferred_curie} from {equivalence['preferred_curie_name']} to {self.exceptions['rename'][uc_preferred_curie]}"
                     )
-                    equivalence["preferred_curie_name"] = self.exceptions["rename"][
-                        uc_preferred_curie
-                    ]
-                    equivalence["equivalent_names"] = [
-                        self.exceptions["rename"][uc_preferred_curie]
-                    ]
+                    equivalence["preferred_curie_name"] = self.exceptions["rename"][uc_preferred_curie]
+                    equivalence["equivalent_names"] = [self.exceptions["rename"][uc_preferred_curie]]
 
                 # Extract the preferred designation of the normalizer
                 normalizer_curie = equivalence["preferred_curie"]
@@ -398,9 +366,7 @@ class NodeSynonymizer:
             # Else just warn that there's nothing to look for
             else:
                 if debug_flag:
-                    print(
-                        f"WARNING: CURIE prefix '{curie_prefix}' not supported by normalizer. Skipped."
-                    )
+                    print(f"WARNING: CURIE prefix '{curie_prefix}' not supported by normalizer. Skipped.")
                 equivalence = {
                     "status": "category not supported",
                     "equivalent_identifiers": [],
@@ -414,10 +380,7 @@ class NodeSynonymizer:
             overridden_normalizer_category = normalizer_category
             if equivalence["status"] == "OK":
                 # Unless the normalizer category is a gene and the current category is a protein. Then keep it a protein because we are protein-centric
-                if (
-                    normalizer_category == "biolink:Gene"
-                    and node_category == "biolink:Protein"
-                ):
+                if normalizer_category == "biolink:Gene" and node_category == "biolink:Protein":
                     if debug_flag:
                         print(
                             f"DEBUG: Since this is protein and the normalizer says gene, stay with this one as the unique_concept {node_curie}"
@@ -427,9 +390,7 @@ class NodeSynonymizer:
                     overridden_normalizer_category = node_category
                 else:
                     if debug_flag:
-                        print(
-                            f"DEBUG: Using the SRI normalizer normalized unique_concept {normalizer_curie}"
-                        )
+                        print(f"DEBUG: Using the SRI normalizer normalized unique_concept {normalizer_curie}")
                     unique_concept_curie = normalizer_curie
                     uc_unique_concept_curie = normalizer_curie.upper()
 
@@ -438,16 +399,10 @@ class NodeSynonymizer:
                 # If we've already seen this synonym, then switch to that unique concept
                 # I hope this will save RAM by not creating so many unique concepts that must be coalesced later
                 if node_name.lower() in kg_names:
-                    uc_unique_concept_curie = kg_names[node_name.lower()][
-                        "uc_unique_concept_curie"
-                    ]
-                    unique_concept_curie = kg_unique_concepts[uc_unique_concept_curie][
-                        "curie"
-                    ]
+                    uc_unique_concept_curie = kg_names[node_name.lower()]["uc_unique_concept_curie"]
+                    unique_concept_curie = kg_unique_concepts[uc_unique_concept_curie]["curie"]
                     if debug_flag:
-                        print(
-                            f"DEBUG: Found an existing unique concept by synonym as {unique_concept_curie}"
-                        )
+                        print(f"DEBUG: Found an existing unique concept by synonym as {unique_concept_curie}")
 
                 # Else this node becomes the unique_concept_curie
                 else:
@@ -471,18 +426,14 @@ class NodeSynonymizer:
             # If this unique_concept_curie already exists, embrace it
             if uc_unique_concept_curie in kg_unique_concepts:
                 # Put the current curie in there. Names will be done below.
-                kg_unique_concepts[uc_unique_concept_curie]["all_uc_curies"][
-                    uc_node_curie
-                ] = 1
+                kg_unique_concepts[uc_unique_concept_curie]["all_uc_curies"][uc_node_curie] = 1
 
             # Otherwise, create the entry
             else:
                 # If we got something from the SRI normalizer, start with that
                 if equivalence["status"] == "OK":
                     if debug_flag:
-                        print(
-                            "DEBUG: Create new unique concept based on SRI normalizer info"
-                        )
+                        print("DEBUG: Create new unique concept based on SRI normalizer info")
                     kg_unique_concepts[uc_unique_concept_curie] = {
                         "curie": unique_concept_curie,
                         "name": normalizer_name,
@@ -527,25 +478,15 @@ class NodeSynonymizer:
 
                 # If this equivalient identifier is already there (either from KG2 or previous SRI NN encounter), store the normalizer information
                 if uc_equivalent_identifier in kg_curies:
-                    kg_curies[uc_equivalent_identifier][
-                        "normalizer_name"
-                    ] = equivalent_name
-                    kg_curies[uc_equivalent_identifier][
-                        "normalizer_category"
-                    ] = this_category
+                    kg_curies[uc_equivalent_identifier]["normalizer_name"] = equivalent_name
+                    kg_curies[uc_equivalent_identifier]["normalizer_category"] = this_category
                     if "SRI_NN" not in kg_curies[uc_equivalent_identifier]["source"]:
                         kg_curies[uc_equivalent_identifier]["source"] += ",SRI_NN"
 
                     # Turns out this is not always true as one would have expected. One example is HSFX1 and HSFX2 with
                     # NCBIGene:100130086 and NCBIGene:100506164 but yet they are tied by one protein UniProtKB:Q9UBD0
                     # This system will coalesce them, although the normalizer has them separate
-                    if (
-                        0
-                        and uc_unique_concept_curie
-                        != kg_curies[uc_equivalent_identifier][
-                            "uc_unique_concept_curie"
-                        ]
-                    ):
+                    if 0 and uc_unique_concept_curie != kg_curies[uc_equivalent_identifier]["uc_unique_concept_curie"]:
                         print(
                             f"ERROR 247: at node_curie={node_curie}, expected {uc_unique_concept_curie} == {kg_curies[uc_equivalent_identifier]['uc_unique_concept_curie']}, but no."
                         )
@@ -580,25 +521,19 @@ class NodeSynonymizer:
                         "normalizer_category": this_category,
                         "source": "SRI_NN",
                     }
-                    kg_unique_concepts[uc_unique_concept_curie]["all_uc_curies"][
-                        uc_equivalent_identifier
-                    ] = True
+                    kg_unique_concepts[uc_unique_concept_curie]["all_uc_curies"][uc_equivalent_identifier] = True
 
             # Loop through the equivalent names from the SRI normalizer and add those to the list
             for equivalent_name in equivalence["equivalent_names"]:
                 if equivalent_name == "":
-                    print(
-                        f"ERROR: SRI normalizer equivalent_name is '' for {uc_unique_concept_curie}"
-                    )
+                    print(f"ERROR: SRI normalizer equivalent_name is '' for {uc_unique_concept_curie}")
                     exit()
 
                 # If this equivalent name is already there, just make sure the unique_concept_curie is the same
                 lc_equivalent_name = equivalent_name.lower()
                 if lc_equivalent_name in kg_names:
                     # print(f"INFO: Adding {unique_concept_curie} to synonym {lc_equivalent_name}")
-                    kg_names[lc_equivalent_name]["uc_unique_concept_curies"][
-                        uc_unique_concept_curie
-                    ] = 1
+                    kg_names[lc_equivalent_name]["uc_unique_concept_curies"][uc_unique_concept_curie] = 1
                 # If not, then create it
                 else:
                     kg_names[lc_equivalent_name] = {
@@ -607,15 +542,13 @@ class NodeSynonymizer:
                         "source": "SRI",
                         "uc_unique_concept_curies": {uc_unique_concept_curie: 1},
                     }
-                    kg_unique_concepts[uc_unique_concept_curie]["all_lc_names"][
-                        lc_equivalent_name
-                    ] = 1  # FIXME. A count would be fun
+                    kg_unique_concepts[uc_unique_concept_curie]["all_lc_names"][lc_equivalent_name] = (
+                        1  # FIXME. A count would be fun
+                    )
 
             # If there is already a kg_nodes entry for this curie, then assume this is a synonym
             if uc_node_curie in kg_nodes:
-                uc_unique_concept_curie = kg_nodes[uc_node_curie][
-                    "uc_unique_concept_curie"
-                ]
+                uc_unique_concept_curie = kg_nodes[uc_node_curie]["uc_unique_concept_curie"]
 
                 # For now, just ignore cases where the categories are different. It happens alot
                 # if node_category != kg_nodes[uc_node_curie]['category']:
@@ -646,29 +579,20 @@ class NodeSynonymizer:
                     continue
                 match = re.match(r"^\s+$", equivalent_name)
                 if match:
-                    print(
-                        f"WARNING: equivalent_name for {node_curie} is whitespace but not empty ({equivalent_name})"
-                    )
+                    print(f"WARNING: equivalent_name for {node_curie} is whitespace but not empty ({equivalent_name})")
                     continue
 
                 # If this equivalent name is already there, just make sure the unique_concept_curie is the same
                 if lc_equivalent_name in kg_names:
                     if debug_flag:
                         print(f"DEBUG: Name '{lc_equivalent_name}' already in kg_names")
-                    if (
-                        uc_unique_concept_curie
-                        != kg_names[lc_equivalent_name]["uc_unique_concept_curie"]
-                    ):
-                        kg_names[lc_equivalent_name]["uc_unique_concept_curies"][
-                            uc_unique_concept_curie
-                        ] = 1
+                    if uc_unique_concept_curie != kg_names[lc_equivalent_name]["uc_unique_concept_curie"]:
+                        kg_names[lc_equivalent_name]["uc_unique_concept_curies"][uc_unique_concept_curie] = 1
                         if debug_flag:
                             print(
                                 f"INFO: uc_unique_concept_curie={uc_unique_concept_curie}, but kg_names already has {kg_names[lc_equivalent_name]['uc_unique_concept_curie']}. Oh well, this will be cleaned up later."
                             )
-                            print(
-                                f"INFO: * Adding {uc_unique_concept_curie} to kg_names {lc_equivalent_name}"
-                            )
+                            print(f"INFO: * Adding {uc_unique_concept_curie} to kg_names {lc_equivalent_name}")
                             print(
                                 f"INFO: **** {lc_equivalent_name} has {kg_names[lc_equivalent_name]['uc_unique_concept_curies']}"
                             )
@@ -676,9 +600,7 @@ class NodeSynonymizer:
                 # If not, then create it
                 else:
                     if debug_flag:
-                        print(
-                            f"DEBUG: Name '{lc_equivalent_name}' is not in kg_names. Add it"
-                        )
+                        print(f"DEBUG: Name '{lc_equivalent_name}' is not in kg_names. Add it")
                         print(
                             f"       node_curie={node_curie}, uc_node_curie={uc_node_curie}, uc_unique_concept_curie={uc_unique_concept_curie}, lc_equivalent_name={lc_equivalent_name}"
                         )
@@ -688,9 +610,7 @@ class NodeSynonymizer:
                         "source": "KG2",
                         "uc_unique_concept_curies": {uc_unique_concept_curie: 1},
                     }
-                    kg_unique_concepts[uc_unique_concept_curie]["all_lc_names"][
-                        lc_equivalent_name
-                    ] = 1
+                    kg_unique_concepts[uc_unique_concept_curie]["all_lc_names"][lc_equivalent_name] = 1
 
             # Debugging
             if debug_flag:
@@ -955,9 +875,7 @@ class NodeSynonymizer:
         print("INFO: Looping over all unique_concepts...")
         for uc_curie, concept in kg_unique_concepts.items():
             if debug_flag:
-                print(
-                    "===================================================================="
-                )
+                print("====================================================================")
                 print(
                     f"==== {uc_curie}  {concept['name']}  {concept['category']} has {len(concept['all_uc_curies'])} items"
                 )
@@ -1050,27 +968,20 @@ class NodeSynonymizer:
             is_new_map_changed = False
             iteration += 1
             for uc_unique_concept_curie, target_curie in concept_remap.items():
-                if (
-                    target_curie in concept_remap
-                    and target_curie != concept_remap[target_curie]
-                ):
+                if target_curie in concept_remap and target_curie != concept_remap[target_curie]:
                     forwarded_entries[target_curie] = concept_remap[target_curie]
                     target_curie = concept_remap[target_curie]
                     is_new_map_changed = True
                 new_concept_remap[uc_unique_concept_curie] = target_curie
             if is_new_map_changed:
                 concept_remap = new_concept_remap
-                print(
-                    f"- After iteration {iteration}, there are {len(forwarded_entries)} forwarded entries"
-                )
+                print(f"- After iteration {iteration}, there are {len(forwarded_entries)} forwarded entries")
                 if len(forwarded_entries) < 10:
                     print(json.dumps(forwarded_entries, sort_keys=True, indent=2))
             else:
                 break
             if len(forwarded_entries) == n_prev_forward_entries:
-                print(
-                    f"- Stopped iterating. Two iterations with {len(forwarded_entries)} forwarded entries"
-                )
+                print(f"- Stopped iterating. Two iterations with {len(forwarded_entries)} forwarded entries")
                 break
             if iteration > 123:
                 eprint("ERROR: E98123: Reached 123 iterations")
@@ -1081,9 +992,7 @@ class NodeSynonymizer:
         for uc_unique_concept_curie, target_curie in concept_remap.items():
             # print(f"{uc_unique_concept_curie} --> {target_curie}")
             # Transfer the all_uc_curies entries
-            for uc_curie in kg_unique_concepts[uc_unique_concept_curie][
-                "all_uc_curies"
-            ]:
+            for uc_curie in kg_unique_concepts[uc_unique_concept_curie]["all_uc_curies"]:
                 if uc_curie not in kg_unique_concepts[target_curie]["all_uc_curies"]:
                     kg_unique_concepts[target_curie]["all_uc_curies"][uc_curie] = True
                 if DEBUG:
@@ -1094,29 +1003,21 @@ class NodeSynonymizer:
         #### Remap kg_nodes
         for uc_curie, element in kg_nodes.items():
             if element["uc_unique_concept_curie"] in concept_remap:
-                element["uc_unique_concept_curie"] = concept_remap[
-                    element["uc_unique_concept_curie"]
-                ]
+                element["uc_unique_concept_curie"] = concept_remap[element["uc_unique_concept_curie"]]
 
         #### Remap kg_curies
         for uc_curie, element in kg_curies.items():
             if element["uc_unique_concept_curie"] in concept_remap:
-                element["uc_unique_concept_curie"] = concept_remap[
-                    element["uc_unique_concept_curie"]
-                ]
+                element["uc_unique_concept_curie"] = concept_remap[element["uc_unique_concept_curie"]]
 
         #### Remap kg_names
         for lc_name, element in kg_names.items():
             if element["uc_unique_concept_curie"] in concept_remap:
                 #### Reassign the uc_unique_concept_curie
-                element["uc_unique_concept_curie"] = concept_remap[
-                    element["uc_unique_concept_curie"]
-                ]
+                element["uc_unique_concept_curie"] = concept_remap[element["uc_unique_concept_curie"]]
 
             #### Add in the new one
-            element["uc_unique_concept_curies"][
-                element["uc_unique_concept_curie"]
-            ] = True
+            element["uc_unique_concept_curies"][element["uc_unique_concept_curie"]] = True
 
             #### Remove any remapped uc_curies
             new_uc_unique_concept_curies = {}
@@ -1128,9 +1029,7 @@ class NodeSynonymizer:
         #### Remap kg_name_curies
         for lc_name_uc_curie, element in kg_name_curies.items():
             if element["uc_unique_concept_curie"] in concept_remap:
-                element["uc_unique_concept_curie"] = concept_remap[
-                    element["uc_unique_concept_curie"]
-                ]
+                element["uc_unique_concept_curie"] = concept_remap[element["uc_unique_concept_curie"]]
 
         #### And delete the obsolete unique_concepts
         for uc_curie in concept_remap:
@@ -1173,12 +1072,8 @@ class NodeSynonymizer:
                 continue
 
             if debug_flag:
-                print(
-                    "===================================================================="
-                )
-                print(
-                    f"==== {lc_name}  {concept['name']}  {concept['uc_unique_concept_curie']}"
-                )
+                print("====================================================================")
+                print(f"==== {lc_name}  {concept['name']}  {concept['uc_unique_concept_curie']}")
                 print(json.dumps(concept, indent=2, sort_keys=True))
 
             # Loop over all the equivalences, picking the best ones
@@ -1277,22 +1172,16 @@ class NodeSynonymizer:
             match = re.search(r" \(([A-Z0-9\-]{1,8})\)", node_name)
             if match:
                 names[match.group(1)] = 0
-                newName = re.sub(
-                    r" \([A-Z0-9\-]{1,8}\)", "", node_name, flags=re.IGNORECASE
-                )
+                newName = re.sub(r" \([A-Z0-9\-]{1,8}\)", "", node_name, flags=re.IGNORECASE)
                 names[newName] = 0
 
         # If this is a UniProt identifier, add a synonym that is the naked identifier without the prefix
-        elif re.match("UniProtKB:[A-Z][A-Z0-9]{5}", node_curie) or re.match(
-            "UniProtKB:A[A-Z0-9]{9}", node_curie
-        ):
+        elif re.match("UniProtKB:[A-Z][A-Z0-9]{5}", node_curie) or re.match("UniProtKB:A[A-Z0-9]{9}", node_curie):
             tmp = re.sub("UniProtKB:", "", node_curie)
             names[tmp] = 0
 
         # If this is a PR identifier, add a synonym that is the naked identifier without the prefix
-        elif re.match("PR:[A-Z][A-Z0-9]{5}", node_curie) or re.match(
-            "PR:A[A-Z0-9]{9}", node_curie
-        ):
+        elif re.match("PR:[A-Z][A-Z0-9]{5}", node_curie) or re.match("PR:A[A-Z0-9]{9}", node_curie):
             tmp = re.sub("PR:", "", node_curie)
             names[tmp] = 0
 
@@ -1310,14 +1199,10 @@ class NodeSynonymizer:
 
         # A few special cases
         if re.search("alzheimer ", node_name, flags=re.IGNORECASE):
-            newName = re.sub(
-                "alzheimer ", "alzheimers ", node_name, flags=re.IGNORECASE
-            )
+            newName = re.sub("alzheimer ", "alzheimers ", node_name, flags=re.IGNORECASE)
             names[newName] = 0
 
-            newName = re.sub(
-                "alzheimer ", "alzheimer's ", node_name, flags=re.IGNORECASE
-            )
+            newName = re.sub("alzheimer ", "alzheimer's ", node_name, flags=re.IGNORECASE)
             names[newName] = 0
 
         # Define a set of names that we will supplement with another name manually
@@ -1338,9 +1223,7 @@ class NodeSynonymizer:
     def import_equivalencies(self):
         filename = "kg2_equivalencies.tsv"
         if not os.path.exists(filename):
-            print(
-                f"WARNING: Did not find equivalencies file {filename}. Skipping import"
-            )
+            print(f"WARNING: Did not find equivalencies file {filename}. Skipping import")
             return
         print(f"INFO: Reading equivalencies from {filename}")
         filesize = os.path.getsize(filename)
@@ -1406,35 +1289,28 @@ class NodeSynonymizer:
                     done = True
 
                 if not done:
-                    uc_linking_unique_concept_curie = kg_curies[uc_linking_curie][
-                        "uc_unique_concept_curie"
-                    ]
+                    uc_linking_unique_concept_curie = kg_curies[uc_linking_curie]["uc_unique_concept_curie"]
                     linking_category = kg_curies[uc_linking_curie]["category"]
 
                     if uc_second_curie in kg_curies:
-                        uc_second_unique_concept_curie = kg_curies[uc_second_curie][
-                            "uc_unique_concept_curie"
-                        ]
+                        uc_second_unique_concept_curie = kg_curies[uc_second_curie]["uc_unique_concept_curie"]
                         if "KG2equivs" not in kg_curies[uc_second_curie]["source"]:
                             kg_curies[uc_second_curie]["source"] += ",KG2equivs"
 
                         #### If the two kg_curies already share the same unique concept
-                        if (
-                            uc_linking_unique_concept_curie
-                            == uc_second_unique_concept_curie
-                        ):
+                        if uc_linking_unique_concept_curie == uc_second_unique_concept_curie:
                             stats["already equivalent"] += 1
 
                         #### But if they have different unique concepts, this potentially a problem, but one that will be cleaned up later probably
                         else:
                             stats["association conflict"] += 1
                             # print(f"WARNING: Association conflict: {linking_curie}->{uc_linking_unique_concept_curie} and {second_curie}->{uc_second_unique_concept_curie}")
-                            kg_unique_concepts[uc_linking_unique_concept_curie][
-                                "all_uc_curies"
-                            ][uc_second_curie] = "KG2equivs"
-                            kg_unique_concepts[uc_linking_unique_concept_curie][
-                                "all_uc_curies"
-                            ][uc_second_unique_concept_curie] = "KG2equivs"
+                            kg_unique_concepts[uc_linking_unique_concept_curie]["all_uc_curies"][uc_second_curie] = (
+                                "KG2equivs"
+                            )
+                            kg_unique_concepts[uc_linking_unique_concept_curie]["all_uc_curies"][
+                                uc_second_unique_concept_curie
+                            ] = "KG2equivs"
 
                             # This probably isn't needed, but things are not working the way that I want. FIXME
                             # kg_unique_concepts[uc_second_unique_concept_curie]['all_uc_curies'][uc_linking_curie] = 1
@@ -1456,9 +1332,9 @@ class NodeSynonymizer:
                             "normalizer_category": None,
                             "source": "KG2equivs",
                         }
-                        kg_unique_concepts[uc_linking_unique_concept_curie][
-                            "all_uc_curies"
-                        ][uc_second_curie] = "KG2equivs"
+                        kg_unique_concepts[uc_linking_unique_concept_curie]["all_uc_curies"][uc_second_curie] = (
+                            "KG2equivs"
+                        )
 
                 percentage = int(bytes_read * 100.0 / filesize)
                 if percentage > previous_percentage:
@@ -1497,9 +1373,7 @@ class NodeSynonymizer:
                 if uc_curie in kg_curies:
                     stats["curie_found"] += 1
 
-                    uc_unique_concept_curie = kg_curies[uc_curie][
-                        "uc_unique_concept_curie"
-                    ]
+                    uc_unique_concept_curie = kg_curies[uc_curie]["uc_unique_concept_curie"]
 
                     for name in curie_names:
                         # print(f"- {uc_curie} is also {name}")
@@ -1512,13 +1386,9 @@ class NodeSynonymizer:
                                 "name": name,
                                 "uc_unique_concept_curie": uc_unique_concept_curie,
                                 "source": "KG2syn",
-                                "uc_unique_concept_curies": {
-                                    uc_unique_concept_curie: True
-                                },
+                                "uc_unique_concept_curies": {uc_unique_concept_curie: True},
                             }
-                            kg_unique_concepts[uc_unique_concept_curie]["all_lc_names"][
-                                lc_name
-                            ] = True
+                            kg_unique_concepts[uc_unique_concept_curie]["all_lc_names"][lc_name] = True
 
                         #### If this provenance record is not there yet, add it
                         if combined_key not in kg_name_curies:
@@ -1616,9 +1486,7 @@ class NodeSynonymizer:
                         concept["best_category"] = node_category
                         concept["best_name"] = node_name
 
-                    if node_curie_prefix == "NCBIGENE" and node_full_name.startswith(
-                        "Genetic locus associated with"
-                    ):
+                    if node_curie_prefix == "NCBIGENE" and node_full_name.startswith("Genetic locus associated with"):
                         manual_exception = True
                         concept["best_curie_score"] = 9999
                         concept["best_curie"] = node_curie
@@ -1626,9 +1494,7 @@ class NodeSynonymizer:
                         concept["best_name"] = node_full_name
 
                     if debug_flag:
-                        print(
-                            f"  - After considering related {related_uc_curie}, concept = {concept}"
-                        )
+                        print(f"  - After considering related {related_uc_curie}, concept = {concept}")
 
             drug_score = 0
             disease_score = 0
@@ -1657,12 +1523,8 @@ class NodeSynonymizer:
             #### Looks for concepts that are both a protein and a disease. A sign of trouble
             if protein_score > 0 and disease_score > 0 and not manual_exception:
                 if True:
-                    print(
-                        "==== Protein-Disease CONFLICT! ==================================="
-                    )
-                    print(
-                        f"{uc_unique_concept_curie} '{concept['name']}' is a {concept['category']}"
-                    )
+                    print("==== Protein-Disease CONFLICT! ===================================")
+                    print(f"{uc_unique_concept_curie} '{concept['name']}' is a {concept['category']}")
                     print(f"  concept = {concept}")
                     outfile.write(
                         "\t".join(
@@ -1684,10 +1546,7 @@ class NodeSynonymizer:
                     or "VANDF" in concept["all_curie_prefixes"]
                 ):
                     drug_score += 1
-                if (
-                    "MONDO" in concept["all_curie_prefixes"]
-                    or "DOID" in concept["all_curie_prefixes"]
-                ):
+                if "MONDO" in concept["all_curie_prefixes"] or "DOID" in concept["all_curie_prefixes"]:
                     disease_score += 1
 
                 if drug_score > disease_score:
@@ -1719,13 +1578,9 @@ class NodeSynonymizer:
 
                 if is_problem:
                     print("***** PROBLEM ***************************")
-                    print(
-                        f"{uc_unique_concept_curie} '{concept['name']}' is a {concept['category']}"
-                    )
+                    print(f"{uc_unique_concept_curie} '{concept['name']}' is a {concept['category']}")
                     print(f"  concept = {concept}")
-                    print(
-                        f"  drug_score={drug_score}, disease_score={disease_score}, final_category={final_category}"
-                    )
+                    print(f"  drug_score={drug_score}, disease_score={disease_score}, final_category={final_category}")
                     outfile.write(
                         "\t".join(
                             [
@@ -1739,9 +1594,7 @@ class NodeSynonymizer:
 
             if debug_flag:
                 print("========================================================")
-                print(
-                    f"{uc_unique_concept_curie} '{concept['name']}' is a {concept['category']}"
-                )
+                print(f"{uc_unique_concept_curie} '{concept['name']}' is a {concept['category']}")
                 print(f"  concept = {concept}")
 
             #### Record the necessary remapping
@@ -1763,23 +1616,17 @@ class NodeSynonymizer:
         #### Remap kg_nodes
         for uc_curie, element in kg_nodes.items():
             if element["uc_unique_concept_curie"] in concept_remap:
-                element["uc_unique_concept_curie"] = concept_remap[
-                    element["uc_unique_concept_curie"]
-                ]
+                element["uc_unique_concept_curie"] = concept_remap[element["uc_unique_concept_curie"]]
 
         #### Remap kg_curies
         for uc_curie, element in kg_curies.items():
             if element["uc_unique_concept_curie"] in concept_remap:
-                element["uc_unique_concept_curie"] = concept_remap[
-                    element["uc_unique_concept_curie"]
-                ]
+                element["uc_unique_concept_curie"] = concept_remap[element["uc_unique_concept_curie"]]
 
         #### Remap kg_names
         for lc_name, element in kg_names.items():
             if element["uc_unique_concept_curie"] in concept_remap:
-                element["uc_unique_concept_curie"] = concept_remap[
-                    element["uc_unique_concept_curie"]
-                ]
+                element["uc_unique_concept_curie"] = concept_remap[element["uc_unique_concept_curie"]]
 
             #### Add in the new one                                                                         Maybe should be done, but not used any more anyway?
             # element['uc_unique_concept_curies'][element['uc_unique_concept_curie']] = True
@@ -1794,9 +1641,7 @@ class NodeSynonymizer:
         #### Remap kg_name_curies
         for lc_name_uc_curie, element in kg_name_curies.items():
             if element["uc_unique_concept_curie"] in concept_remap:
-                element["uc_unique_concept_curie"] = concept_remap[
-                    element["uc_unique_concept_curie"]
-                ]
+                element["uc_unique_concept_curie"] = concept_remap[element["uc_unique_concept_curie"]]
 
         #### And update the unique_concepts
         for uc_curie, uc_new_curie in concept_remap.items():
@@ -1808,17 +1653,13 @@ class NodeSynonymizer:
     # ############################################################################################
     # This is just for testing. Doesn't actually do anything
     def update_categories(self):
-        print(
-            "INFO: Scanning through unique_concepts, looking for problem nodes to fix"
-        )
+        print("INFO: Scanning through unique_concepts, looking for problem nodes to fix")
 
         debug = DEBUG
 
         # Get all the unique_concept_curies
         cursor = self.connection.cursor()
-        cursor.execute(
-            "SELECT uc_curie, category, name FROM unique_concepts LIMIT 1000000"
-        )
+        cursor.execute("SELECT uc_curie, category, name FROM unique_concepts LIMIT 1000000")
         unique_concept_rows = cursor.fetchall()
 
         batch_unique_concepts = {}
@@ -1841,16 +1682,11 @@ class NodeSynonymizer:
                 "best_name": unique_concept_row[2],
             }
 
-            if (
-                len(batch_unique_concepts) == 100
-                or unique_concept_row[0] == unique_concept_rows[-1][0]
-            ):
+            if len(batch_unique_concepts) == 100 or unique_concept_row[0] == unique_concept_rows[-1][0]:
                 # Create the SQL "IN" list
                 quote_fixed_uc_curies_list = []
                 for uc_curie in batch_unique_concepts:
-                    uc_curie = re.sub(
-                        r"'", "''", uc_curie
-                    )  # Replace embedded ' characters with ''
+                    uc_curie = re.sub(r"'", "''", uc_curie)  # Replace embedded ' characters with ''
                     quote_fixed_uc_curies_list.append(uc_curie)
                 curies_list_str = "','".join(quote_fixed_uc_curies_list)
 
@@ -1873,51 +1709,25 @@ class NodeSynonymizer:
                     name = row[3]
                     curie_prefix = curie.split(":")[0].upper()
 
-                    if (
-                        node_category
-                        not in batch_unique_concepts[uc_unique_concept_curie][
-                            "all_categories"
-                        ]
-                    ):
-                        batch_unique_concepts[uc_unique_concept_curie][
-                            "all_categories"
-                        ][node_category] = 0
-                    batch_unique_concepts[uc_unique_concept_curie]["all_categories"][
-                        node_category
-                    ] += 1
+                    if node_category not in batch_unique_concepts[uc_unique_concept_curie]["all_categories"]:
+                        batch_unique_concepts[uc_unique_concept_curie]["all_categories"][node_category] = 0
+                    batch_unique_concepts[uc_unique_concept_curie]["all_categories"][node_category] += 1
 
-                    if (
-                        curie_prefix
-                        not in batch_unique_concepts[uc_unique_concept_curie][
-                            "all_curie_prefixes"
-                        ]
-                    ):
-                        batch_unique_concepts[uc_unique_concept_curie][
-                            "all_curie_prefixes"
-                        ][curie_prefix] = 0
-                    batch_unique_concepts[uc_unique_concept_curie][
-                        "all_curie_prefixes"
-                    ][curie_prefix] += 1
+                    if curie_prefix not in batch_unique_concepts[uc_unique_concept_curie]["all_curie_prefixes"]:
+                        batch_unique_concepts[uc_unique_concept_curie]["all_curie_prefixes"][curie_prefix] = 0
+                    batch_unique_concepts[uc_unique_concept_curie]["all_curie_prefixes"][curie_prefix] += 1
 
                     if (
                         curie_prefix in self.uc_curie_prefix_scores
                         and self.uc_curie_prefix_scores[curie_prefix]
-                        > batch_unique_concepts[uc_unique_concept_curie][
-                            "best_curie_score"
-                        ]
+                        > batch_unique_concepts[uc_unique_concept_curie]["best_curie_score"]
                     ):
-                        batch_unique_concepts[uc_unique_concept_curie][
-                            "best_curie_score"
-                        ] = self.uc_curie_prefix_scores[curie_prefix]
-                        batch_unique_concepts[uc_unique_concept_curie][
-                            "best_curie"
-                        ] = curie
-                        batch_unique_concepts[uc_unique_concept_curie][
-                            "best_category"
-                        ] = node_category
-                        batch_unique_concepts[uc_unique_concept_curie][
-                            "best_name"
-                        ] = name
+                        batch_unique_concepts[uc_unique_concept_curie]["best_curie_score"] = (
+                            self.uc_curie_prefix_scores[curie_prefix]
+                        )
+                        batch_unique_concepts[uc_unique_concept_curie]["best_curie"] = curie
+                        batch_unique_concepts[uc_unique_concept_curie]["best_category"] = node_category
+                        batch_unique_concepts[uc_unique_concept_curie]["best_name"] = name
 
                 for uc_unique_concept_curie, concept in batch_unique_concepts.items():
                     drug_score = 0
@@ -1933,8 +1743,7 @@ class NodeSynonymizer:
                     if (
                         "biolink:Disease" in concept["all_categories"]
                         or "biolink:PhenotypicFeature" in concept["all_categories"]
-                        or "biolink:DiseaseOrPhenotypicFeature"
-                        in concept["all_categories"]
+                        or "biolink:DiseaseOrPhenotypicFeature" in concept["all_categories"]
                     ):
                         disease_score = 1
                     if (
@@ -1947,8 +1756,7 @@ class NodeSynonymizer:
 
                     if (
                         False
-                        and uc_unique_concept_curie
-                        != batch_unique_concepts[uc_unique_concept_curie]["best_curie"]
+                        and uc_unique_concept_curie != batch_unique_concepts[uc_unique_concept_curie]["best_curie"]
                     ):
                         print("***************************************************")
                         print(f"{uc_unique_concept_curie} is a {concept['category']}")
@@ -1959,22 +1767,14 @@ class NodeSynonymizer:
 
                     if protein_score > 0 and disease_score > 0:
                         if True:
-                            print(
-                                "==== Protein-Disease CONFLICT! ==================================="
-                            )
-                            print(
-                                f"{uc_unique_concept_curie} '{concept['name']}' is a {concept['category']}"
-                            )
+                            print("==== Protein-Disease CONFLICT! ===================================")
+                            print(f"{uc_unique_concept_curie} '{concept['name']}' is a {concept['category']}")
                             print(f"  concept = {concept}")
 
                     if drug_score > 0 and disease_score > 0:
                         if debug:
-                            print(
-                                "========================================================"
-                            )
-                            print(
-                                f"{uc_unique_concept_curie} '{concept['name']}' is a {concept['category']}"
-                            )
+                            print("========================================================")
+                            print(f"{uc_unique_concept_curie} '{concept['name']}' is a {concept['category']}")
                             print(f"  concept = {concept}")
 
                         if (
@@ -1984,10 +1784,7 @@ class NodeSynonymizer:
                             or "RXNORM" in concept["all_curie_prefixes"]
                         ):
                             drug_score += 1
-                        if (
-                            "MONDO" in concept["all_curie_prefixes"]
-                            or "DOID" in concept["all_curie_prefixes"]
-                        ):
+                        if "MONDO" in concept["all_curie_prefixes"] or "DOID" in concept["all_curie_prefixes"]:
                             disease_score += 1
 
                         if drug_score > disease_score:
@@ -2230,21 +2027,15 @@ class NodeSynonymizer:
                 results[curie] = None
                 uc_curie = curie.upper()
                 curie_map[uc_curie] = curie
-                uc_curie = re.sub(
-                    r"'", "''", uc_curie
-                )  # Replace embedded ' characters with ''
+                uc_curie = re.sub(r"'", "''", uc_curie)  # Replace embedded ' characters with ''
                 uc_curies.append(uc_curie)
                 batch_size += 1
                 if batch_size > 5000:
-                    batches.append(
-                        {"batch_type": "curies", "batch_str": "','".join(uc_curies)}
-                    )
+                    batches.append({"batch_type": "curies", "batch_str": "','".join(uc_curies)})
                     uc_curies = []
                     batch_size = 0
             if batch_size > 0:
-                batches.append(
-                    {"batch_type": "curies", "batch_str": "','".join(uc_curies)}
-                )
+                batches.append({"batch_type": "curies", "batch_str": "','".join(uc_curies)})
 
         # Make sets of comma-separated list strings for the names
         lc_names = []
@@ -2257,21 +2048,15 @@ class NodeSynonymizer:
                 results[name] = None
                 lc_name = name.lower()
                 name_map[lc_name] = name
-                lc_name = re.sub(
-                    r"'", "''", lc_name
-                )  # Replace embedded ' characters with ''
+                lc_name = re.sub(r"'", "''", lc_name)  # Replace embedded ' characters with ''
                 lc_names.append(lc_name)
                 batch_size += 1
                 if batch_size > 5000:
-                    batches.append(
-                        {"batch_type": "names", "batch_str": "','".join(lc_names)}
-                    )
+                    batches.append({"batch_type": "names", "batch_str": "','".join(lc_names)})
                     lc_names = []
                     batch_size = 0
             if batch_size > 0:
-                batches.append(
-                    {"batch_type": "names", "batch_str": "','".join(lc_names)}
-                )
+                batches.append({"batch_type": "names", "batch_str": "','".join(lc_names)})
 
         for batch in batches:
             # print(f"INFO: Batch {i_batch} of {batch['batch_type']}")
@@ -2337,9 +2122,7 @@ class NodeSynonymizer:
 
                     #### Also store tidy categories
                     if return_all_categories:
-                        results[entity][
-                            "expanded_categories"
-                        ] = category_manager.get_expansive_categories(row[4])
+                        results[entity]["expanded_categories"] = category_manager.get_expansive_categories(row[4])
 
                 else:
                     print(f"ERROR: Unable to find entity {entity}")
@@ -2349,9 +2132,7 @@ class NodeSynonymizer:
                 # Create the SQL IN list
                 uc_curies_list = []
                 for uc_curie in batch_curie_map:
-                    uc_curie = re.sub(
-                        r"'", "''", uc_curie
-                    )  # Replace embedded ' characters with ''
+                    uc_curie = re.sub(r"'", "''", uc_curie)  # Replace embedded ' characters with ''
                     uc_curies_list.append(uc_curie)
                 curies_list_str = "','".join(uc_curies_list)
 
@@ -2566,9 +2347,7 @@ class NodeSynonymizer:
             rows = cursor.fetchall()
             synonym_provenance = []
             for row in rows:
-                synonym_provenance.append(
-                    {"name": row[1], "uc_curie": row[2], "source": row[4]}
-                )
+                synonym_provenance.append({"name": row[1], "uc_curie": row[2], "source": row[4]})
 
             # Add this entry to the final results dict
             results[entity] = {
@@ -2586,9 +2365,7 @@ class NodeSynonymizer:
     def get_total_entity_count(self, node_type, kg_name="KG1"):
         # Just get a count of all unique_concepts
         cursor = self.connection.cursor()
-        cursor.execute(
-            "SELECT COUNT(*) FROM unique_concepts WHERE category = ?", (node_type,)
-        )
+        cursor.execute("SELECT COUNT(*) FROM unique_concepts WHERE category = ?", (node_type,))
         rows = cursor.fetchall()
 
         # Return the count value
@@ -2775,9 +2552,7 @@ def run_example_6():
 def run_example_6b():
     synonymizer = NodeSynonymizer()
 
-    print(
-        "==== Get all equivalent nodes in a KG for an input curie ============================"
-    )
+    print("==== Get all equivalent nodes in a KG for an input curie ============================")
     tests = [
         "DOID:14330",
         "UMLS:C0031485",
@@ -2807,9 +2582,7 @@ def run_example_7():
     synonymizer = NodeSynonymizer()
 
     for kg_name in ["KG1", "KG2"]:
-        print(
-            f"==== Get total number of concepts for several types for {kg_name} ============================"
-        )
+        print(f"==== Get total number of concepts for several types for {kg_name} ============================")
         t0 = timeit.default_timer()
         for entity_type in [
             "biolink:ChemicalEntity",
@@ -2819,9 +2592,7 @@ def run_example_7():
             "biolink:Gene",
             "cheesecake",
         ]:
-            print(
-                f"count({entity_type}) = {synonymizer.get_total_entity_count(entity_type, kg_name=kg_name)}"
-            )
+            print(f"count({entity_type}) = {synonymizer.get_total_entity_count(entity_type, kg_name=kg_name)}")
         t1 = timeit.default_timer()
         print("Elapsed time: " + str(t1 - t0))
 
@@ -2842,9 +2613,7 @@ def run_example_9():
     synonymizer = NodeSynonymizer()
     import copy
 
-    print(
-        "==== Get canonical curies for a set of input curies ============================"
-    )
+    print("==== Get canonical curies for a set of input curies ============================")
     curies = [
         "DOID:14330",
         "UMLS:C0031485",
@@ -2871,13 +2640,9 @@ def run_example_9():
     combined_list.extend(names)
 
     t0 = timeit.default_timer()
-    canonical_curies = synonymizer.get_canonical_curies(
-        curies=curies, return_all_categories=True
-    )
+    canonical_curies = synonymizer.get_canonical_curies(curies=curies, return_all_categories=True)
     t1 = timeit.default_timer()
-    canonical_curies2 = synonymizer.get_canonical_curies(
-        names=names, return_all_categories=True
-    )
+    canonical_curies2 = synonymizer.get_canonical_curies(names=names, return_all_categories=True)
     t2 = timeit.default_timer()
     canonical_curies3 = synonymizer.get_canonical_curies(
         curies=combined_list,
@@ -2936,16 +2701,12 @@ def run_example_10():
 def run_example_11():
     synonymizer = NodeSynonymizer()
 
-    print(
-        "==== Get equivalent curies for a set of input curies ============================"
-    )
+    print("==== Get equivalent curies for a set of input curies ============================")
     curies = ["DOID:14330", "UMLS:C0031485"]
     # curies = [ "DOID:14330", "UMLS:C0031485", "FMA:7203", "MESH:D005199", "CHEBI:5855", "DOID:9281xxxxx", "MONDO:0005520" ]
 
     t0 = timeit.default_timer()
-    canonical_curies = synonymizer.get_equivalent_nodes(
-        curies=curies, return_all_categories=True
-    )
+    canonical_curies = synonymizer.get_equivalent_nodes(curies=curies, return_all_categories=True)
     t1 = timeit.default_timer()
     print(json.dumps(canonical_curies, sort_keys=True, indent=2))
     print("Elapsed time: " + str(t1 - t0))
@@ -2955,9 +2716,7 @@ def run_example_11():
 def run_example_12():
     synonymizer = NodeSynonymizer()
 
-    print(
-        "==== Get full information in nouveau normalizer format  ============================"
-    )
+    print("==== Get full information in nouveau normalizer format  ============================")
     entities = ["DOID:14330", "anemia", "aardvark"]
 
     t0 = timeit.default_timer()
@@ -3179,9 +2938,7 @@ def main():
             + f"  {len(synonymizer.kg_map['kg_curies'])} curies\n  {len(synonymizer.kg_map['kg_names'])} names and abbreviations\n"
             + f"  {len(synonymizer.kg_map['kg_name_curies'])} name to curie provenance associations"
         )
-        print(
-            "INFO: Processing complete. Freeing all the memory seems to still take a while though"
-        )
+        print("INFO: Processing complete. Freeing all the memory seems to still take a while though")
 
     # If requested, run the test examples
     if args.test:

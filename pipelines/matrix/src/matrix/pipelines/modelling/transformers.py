@@ -1,4 +1,5 @@
 """Module with sklearn compatible transformers."""
+
 from sklearn.preprocessing import FunctionTransformer
 
 import pandas as pd
