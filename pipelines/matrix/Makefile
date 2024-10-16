@@ -9,7 +9,7 @@ TARGET_PLATFORM ?= linux/amd64
 .ONESHELL: 
 
 
-default: prerequisites venv install precommit fast_test compose_down docker_test
+default: install precommit fast_test compose_down docker_test
 	echo "done!"
 
 prerequisites:
@@ -21,11 +21,11 @@ prerequisites:
 	@echo "All prerequisites are installed."
 
 
-venv:
+venv: prerequisites
 	if [ ! -d .venv ]; then uv venv -p 3.11; fi
 	.venv/bin/python -m ensurepip --upgrade || true
 
-install: precommit
+install: venv
 	# deactivate any potentially active venv that may be somewhere else
 	deactivate || true
 	uv pip compile requirements.in --output-file requirements.txt
