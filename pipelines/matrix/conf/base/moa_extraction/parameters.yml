@@ -49,4 +49,6 @@ moa_extraction:
 
   path_embeddings:
     strategy:
-      object: matrix.pipelines.moa_extraction.path_embeddings.TypesRelationsAndDirections
+      object: matrix.pipelines.moa_extraction.path_embeddings.TypesAndRelations
+      is_embed_directions: true
+ 

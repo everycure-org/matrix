@@ -115,16 +115,14 @@ def get_one_hot_encodings(runner: Neo4jRunner) -> Tuple[OneHotEncoder, OneHotEnc
     # Get the node categories
     result = runner.run("""
         MATCH (n)
-        RETURN DISTINCT labels(n) AS category
+        RETURN DISTINCT n.category
     """)
-    # Neo4j result is a list of lists of the form [["Entity", category]]
-    result_flattened_unique = {item for sublist in result for item in sublist[0]}
-    node_categories = [category for category in result_flattened_unique if category != "Entity"]
-
+    # Flatten because Neo4j result is a list of lists of the form [[category]]
+    node_categories = [item for sublist in result for item in sublist]
     # Get the edge relations
     result = runner.run("""
         MATCH ()-[r]-()
-        RETURN DISTINCT type(r) AS relation
+        RETURN DISTINCT type(r)
     """)
     # Neo4j result is a list of lists of the form [relation]
     edge_relations = [relation[0] for relation in result]
@@ -190,5 +188,5 @@ def create_training_features(
         category_encoder: One-hot encoder for node categories.
         relation_encoder: One-hot encoder for edge relations.
     """
-    path_embedding_strategy.run(splits, category_encoder, relation_encoder)
-    return ...
+    data = path_embedding_strategy.run(splits, category_encoder, relation_encoder)
+    return data
