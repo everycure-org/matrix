@@ -54,13 +54,13 @@ def transform_rtxkg2_edges(edges_df: DataFrame) -> DataFrame:
         edges_df
         .withColumn("upstream_data_source",          f.array(f.lit("rtxkg2")))
         .withColumn("knowledge_level",               f.lit(None).cast(T.StringType()))
-        .withColumn("primary_knowledge_source",      f.element_at(f.split(f.col("knowledge_source:string[]"), "\x1f"), 1))
+        .withColumn("primary_knowledge_source",      f.element_at(f.split(f.col("knowledge_source:string[]"), RTX_SEPARATOR), 1))
         .withColumn("aggregator_knowledge_source",   f.slice(f.split(f.col("knowledge_source:string[]"), RTX_SEPARATOR), 2, 100))
         .withColumn("publications",                  f.split(f.col("publications:string[]"), RTX_SEPARATOR))
-        .withColumn("subject_aspect_qualifier",      f.lit(None).cast(T.StringType()))
-        .withColumn("subject_direction_qualifier",   f.lit(None).cast(T.StringType()))
-        .withColumn("object_aspect_qualifier",       f.lit(None).cast(T.StringType()))
-        .withColumn("object_direction_qualifier",    f.lit(None).cast(T.StringType()))
+        .withColumn("subject_aspect_qualifier",      f.lit(None).cast(T.StringType())) #not present in RTX KG2 at this time
+        .withColumn("subject_direction_qualifier",   f.lit(None).cast(T.StringType())) #not present in RTX KG2 at this time
+        .withColumn("object_aspect_qualifier",       f.lit(None).cast(T.StringType())) #not present in RTX KG2 at this time
+        .withColumn("object_direction_qualifier",    f.lit(None).cast(T.StringType())) #not present in RTX KG2 at this time
         .select(*cols_for_schema(KGEdgeSchema))
     )
     # fmt: on
