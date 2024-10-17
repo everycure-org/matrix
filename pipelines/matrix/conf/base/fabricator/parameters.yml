@@ -10,7 +10,6 @@ fabricator.rtx_kg2:
         type: generate_unique_id
         prefix: name_
       category:
-        
         type: generate_values
         sample_values:
           - biolink:Drug
@@ -21,12 +20,14 @@ fabricator.rtx_kg2:
       all_categories:
         type: generate_values
         sample_values:
-          - biolink:Drug
-          - biolink:Disease
-          - biolink:Gene
-          - biolink:ChemicalSubstance
-          - biolink:Protein
-          - biolink:SmallMolecule
+          # - biolink:Drug
+          # - biolink:Disease
+          # - biolink:Gene
+          # - biolink:ChemicalSubstance
+          # - biolink:Protein
+          # - biolink:SmallMolecule
+          - acts_upstream_of_negative_effect
+          - acts_upstream_of_or_within_negative_effect
       iri:
         type: faker
         provider: url
