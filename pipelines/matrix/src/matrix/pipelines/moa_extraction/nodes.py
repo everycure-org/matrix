@@ -193,10 +193,17 @@ def _create_training_features(
         category_encoder: One-hot encoder for node categories.
         relation_encoder: One-hot encoder for edge relations.
     """
+    # Positive paths
     X = path_embedding_strategy.run(paths, category_encoder, relation_encoder)
     y = np.ones(len(X))
 
-    # TODO: Add negative samples
+    # Negative paths
+    for negative_sampler in negative_sampler_list:
+        negative_paths = negative_sampler.run(paths, runner)
+        X_neg = path_embedding_strategy.run(negative_paths, category_encoder, relation_encoder)
+        y_neg = np.zeros(len(X_neg))
+        X = np.concatenate([X, X_neg])
+        y = np.concatenate([y, y_neg])
 
     return X, y
 
@@ -225,6 +232,7 @@ def train_model(
     X, y = _create_training_features(
         paths, negative_sampler_list, runner, path_embedding_strategy, category_encoder, relation_encoder
     )
+
     X = np.reshape(X, (X.shape[0], -1))  # TODO: Remove when transformers are implemented
     # TODO: Add hyperparameter tuning here
     return model.fit(X, y)

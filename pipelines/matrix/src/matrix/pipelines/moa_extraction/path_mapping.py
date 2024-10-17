@@ -34,14 +34,6 @@ def _map_name_and_curie(name: str, curie: str, endpoint: str) -> str:
     return mapped_curie
 
 
-def _parse_result(result: List[List[neo4j.graph.Path]]) -> List[neo4j.graph.Path]:
-    """Parse the result of a Neo4j query into a list of paths.
-
-    This is necessary because Neo4j returns a list of length 1 for each path.
-    """
-    return [path[0] for path in result]
-
-
 class PathMapper(abc.ABC):
     """Abstract base class for mapping DrugMechDB paths to the knowledge graph."""
 
@@ -110,7 +102,7 @@ class SetwisePathMapper(PathMapper):
 
     @classmethod
     def _construct_match_clause(cls, num_hops: int, unidirectional: bool) -> str:
-        """Construct the match clause for a path mapping query.
+        """Construct an intermediate match clause.
 
         Example: "-[r1]->(a1)-[r2]->(a2)->[r3]->"
 
@@ -192,8 +184,7 @@ class SetwisePathMapper(PathMapper):
         attempts = 0
         while attempts < num_attempts:
             try:
-                result = runner.run(query)
-                return _parse_result(result)
+                return runner.run(query)
             except Exception as e:
                 attempts += 1
                 logger.warning(
@@ -239,7 +230,7 @@ class TestPathMapper(PathMapper):
         query = f"""MATCH p=(n:Drug){match_clause}(m:Disease)
                     RETURN DISTINCT p"""
 
-        result = _parse_result(runner.run(query))
+        result = runner.run(query)
 
         paths = KGPaths(num_hops=self.num_hops)
         random_ids = [random.randint(1, 10) for _ in range(len(result))]

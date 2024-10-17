@@ -54,10 +54,15 @@ moa_extraction:
       model:
         object: sklearn.ensemble.RandomForestClassifier
       negative_samplers:
-        object: matrix.pipelines.moa_extraction.negative_path_samplers.MockNegativePathSampler
+        - object: matrix.pipelines.moa_extraction.negative_path_samplers.ReplacementPathSampler
+          num_replacement_paths: 1
+          unidirectional: false
+          random_state: ${globals:random_state}
     three_hop:
       model:
         object: sklearn.ensemble.RandomForestClassifier
       negative_samplers:
-        object: matrix.pipelines.moa_extraction.negative_path_samplers.MockNegativePathSampler
-        
+        - object: matrix.pipelines.moa_extraction.negative_path_samplers.ReplacementPathSampler
+          num_replacement_paths: 1
+          unidirectional: false
+          random_state: ${globals:random_state}
