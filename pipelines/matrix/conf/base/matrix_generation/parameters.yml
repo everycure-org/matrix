@@ -4,36 +4,43 @@ matrix_generation.matrix_generation_options:
   n_reporting: 100000 # Number of items in the final report
 
 # Note that the order of the dictionary will be reflected in the order of the columns in the final matrix
-matrix_generation.metadata:
-  drug_list:
-    drug_id: "Drug identifier"
-    drug_name: "Drug name"
-  disease_list:
-    disease_id: "Disease identifier"
-    disease_name: "Disease name"
-  kg_data:
-    pair_id: "Unique identifier for each pair"
-    kg_drug_id: "Drug identifier in the knowledge graph"
-    kg_drug_name: "Drug name in the knowledge graph"
-    kg_disease_id: "Disease identifier in the knowledge graph"
-    kg_disease_name: "Disease name in the knowledge graph"
-    is_known_positive: "Whether the pair is a known positive"
-    is_known_negative: "Whether the pair is a known negative"
+matrix_generation.matrix:
+  metadata:
+    drug_list:
+      drug_id: "Drug identifier"
+      drug_name: "Drug name"
+    disease_list:
+      disease_id: "Disease identifier"
+      disease_name: "Disease name"
+    kg_data:
+      pair_id: "Unique identifier for each pair"
+      kg_drug_id: "Drug identifier in the knowledge graph"
+      kg_drug_name: "Drug name in the knowledge graph"
+      kg_disease_id: "Disease identifier in the knowledge graph"
+      kg_disease_name: "Disease name in the knowledge graph"
+  # Note that you can add any stats as long as they are compatible with pandas transform function
+  stats_col_names:
+    per_disease:
+      top:
+        mean: "Mean probability score"
+        median: "Median probability score"
+        max: "Maximum probability score"
+        min: "Minimum probability score"
+        std: "Standard deviation of probability scores"
+      all:
+        mean: "Mean probability score"
+        median: "Median probability score"
+        max: "Maximum probability score"
+        min: "Minimum probability score"
+        std: "Standard deviation of probability scores"
+  tags:
+    drugs:
+      available_USA: "Whether drug is prescriped or discontinued in USA"
+  filters:
+    pairs:
+      is_known_positive: "Whether the pair is a known positive"
+      is_known_negative: "Whether the pair is a known negative"
 
-matrix_generation.stats_col_names:
-  per_disease:
-    top:
-      mean: "Mean probability score"
-      median: "Median probability score"
-      max: "Maximum probability score"
-      min: "Minimum probability score"
-      std: "Standard deviation of probability scores"
-    all:
-      mean: "Mean probability score"
-      median: "Median probability score"
-      max: "Maximum probability score"
-      min: "Minimum probability score"
-      std: "Standard deviation of probability scores"
 
 matrix_generation.run:
   workflow_id: ${oc.env:WORKFLOW_ID, local}}
@@ -47,14 +54,4 @@ matrix_generation.run:
   clinical_trial_data_version: ${globals:data_sources.clinical-trial-data.version}
   ec_drug_list_version: ${globals:data_sources.ec-drug-list.version}
   ec_disease_list_version: ${globals:data_sources.ec-disease-list.version}
-  # per_drug:
-  #   top:
-  #     mean
-  #     max
-  #     min
-  #     std
-  #   all:
-  #     mean
-  #     max
-  #     min
-  #     std
+

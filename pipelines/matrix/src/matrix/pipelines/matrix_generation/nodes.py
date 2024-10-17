@@ -403,8 +403,7 @@ def generate_report(
     diseases: pd.DataFrame,
     known_pairs: pd.DataFrame,
     score_col_name: str,
-    stats_col_names: Dict[str, Dict[str, Union[Dict[str, str], str]]],
-    meta_col_names: Dict[str, str],
+    matrix_params: Dict,
 ) -> List[pd.DataFrame]:
     """Generates a report with the top pairs and metadata.
 
@@ -414,73 +413,48 @@ def generate_report(
         drugs: Dataframe containing names and IDs for the list of drugs.
         diseases: Dataframe containing names and IDs for the list of diseases.
         known_pairs: Labelled ground truth drug-disease pairs dataset.
+        matrix_params: Dictionary containing matrix metadata and other meters.
     Returns:
         Dataframe with the top pairs and additional information for the drugs and diseases.
     """
+    metadata = matrix_params.get("metadata")
+    stats = matrix_params.get("stats_col_names")
+    # TODO: Add tags and filters
+    # tags = matrix_params.get("tags")
+    # filters = matrix_params.get("filters")
     top_pairs = process_top_pairs(data, n_reporting, drugs, diseases, score_col_name)
-    top_pairs = add_descriptive_stats(top_pairs, data, stats_col_names, score_col_name)
+    top_pairs = add_descriptive_stats(top_pairs, data, stats, score_col_name)
     top_pairs = flag_known_pairs(top_pairs, known_pairs)
-    top_pairs = reorder_columns(top_pairs, meta_col_names, score_col_name, stats_col_names)
+    # top_pairs = add_filters(top_pairs, drugs, diseases, filters)
+    # top_pairs = add_tags(top_pairs, known_pairs, tags)
+    top_pairs = reorder_columns(top_pairs, metadata, score_col_name, stats)
     return top_pairs
 
 
 def generate_metadata(
     matrix_report: pd.DataFrame,
     score_col_name: str,
-    stats_col_names: Dict[str, Dict[str, Union[Dict[str, str], str]]],
-    meta_col_names: Dict[str, str],
-    workflow_id: str,
-    mlflow_run_name: str,
-    mlflow_link: str,
-    git_sha: str,
-    release_version: str,
-    rtx_kg2_version: str,
-    robokop_version: str,
-    ec_medical_team_version: str,
-    clinical_trial_data_version: str,
-    ec_drug_list_version: str,
-    ec_disease_list_version: str,
+    matrix_params: Dict,
+    run_metadata: Dict,
 ) -> Tuple[pd.DataFrame, pd.DataFrame]:
     """Generates a metadata report.
 
     Args:
         matrix_report: pd.DataFrame, dummy variable to maintain proper lineage to be logged within metadata
         score_col_name: Probability score column name.
-        stats_col_names: Dictionary of column names and their descriptions.
-        meta_col_names: Dictionary of column names and their descriptions.
-        workflow_id: ID of the workflow. Dummy variable to be logged in mlflow
-        mlflow_run_name: Name of the MLflow run. Dummy variable to be logged in mlflow
-        mlflow_link: Link to the MLflow run. Dummy variable to be logged in mlflow
-        git_sha: SHA of the git commit. Dummy variable to be logged in mlflow
-        release_version: Version of the release. Dummy variable to be logged in mlflow
-        rtx_kg2_version: Version of the RTX KG2. Dummy variable to be logged in mlflow
-        robokop_version: Version of the Robokop. Dummy variable to be logged in mlflow
-        ec_medical_team_version: Version of the EC Medical Team. Dummy variable to be logged in mlflow
-        clinical_trial_data_version: Version of the Clinical Trial Data. Dummy variable to be logged in mlflow
-        ec_drug_list_version: Version of the EC Drug List. Dummy variable to be logged in mlflow
-        ec_disease_list_version: Version of the EC Disease List. Dummy variable to be logged in mlflow
+        matrix_params: Dictionary of column names and their descriptions.
+        run_metadata: Dictionary of run metadata.
     Returns:
         Tuple containing:
         - Dataframe containing metadata such as data sources version, timestamp, run name etc.
         - Dataframe with metadata about the output matrix columns.
     """
-    # Metadata related to the run
-    # TODO: Add included_kgs and included_models
-    # TODO: Add filters (is_steroid)
-    run_metadata = {
+    dict = {
         "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-        "workflow_id": workflow_id,
-        "mlflow_run_name": mlflow_run_name,
-        "mlflow_link": mlflow_link,
-        "git_sha": git_sha,
-        "release_version": release_version,
-        "rtx_kg2_version": rtx_kg2_version,
-        "robokop_version": robokop_version,
-        "ec_medical_team_version": ec_medical_team_version,
-        "clinical_trial_data_version": clinical_trial_data_version,
-        "ec_drug_list_version": ec_drug_list_version,
-        "ec_disease_list_version": ec_disease_list_version,
     }
-
-    summary_metadata = generate_summary_metadata(meta_col_names, score_col_name, stats_col_names)
+    for key, value in run_metadata.items():
+        dict[key] = value
+    metadata = matrix_params.get("metadata")
+    stats = matrix_params.get("stats_col_names")
+    summary_metadata = generate_summary_metadata(metadata, score_col_name, stats)
     return pd.DataFrame(list(run_metadata.items()), columns=["Key", "Value"]), summary_metadata
