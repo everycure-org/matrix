@@ -1,0 +1,10 @@
+paths:
+  # raw: data/test/01_raw
+  # new_raw: data/test/01_raw
+  int: data/sample/02_intermediate
+  prm: data/sample/03_primary
+  feat: data/sample/04_feature
+  model_input: data/sample/05_model_input
+  models: data/sample/06_models
+  model_output: data/sample/07_model_output
+  reporting: data/sample/08_reporting
