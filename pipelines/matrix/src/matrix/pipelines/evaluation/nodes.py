@@ -1,8 +1,8 @@
 """Module with nodes for evaluation."""
-import json
-from typing import Any, List, Dict, Union
 
-from sklearn.impute._base import _BaseImputer
+import json
+from typing import Any
+
 
 import pandas as pd
 
@@ -10,45 +10,60 @@ from refit.v1.core.inject import inject_object
 from refit.v1.core.inline_has_schema import has_schema
 
 from matrix import settings
-from matrix.datasets.graph import KnowledgeGraph
 from matrix.datasets.pair_generator import DrugDiseasePairGenerator
 
-from matrix.pipelines.matrix_generation.nodes import make_batch_predictions
 from matrix.pipelines.evaluation.evaluation import Evaluation
-from matrix.pipelines.modelling.model import ModelWrapper
 
 
-def create_prm_clinical_trials(raw_clinical_trials: pd.DataFrame) -> pd.DataFrame:
-    """Function to clean clinical trails dataset.
+def check_no_train(data: pd.DataFrame, known_pairs: pd.DataFrame) -> None:
+    """Checks that no pairs in the ground truth training set appear in the data.
 
     Args:
-        raw_clinical_trials: Raw clinical trails data
-    Returns:
-        Cleaned clinical trails data
+        data: Pairs dataset to check.
+        known_pairs: DataFrame with known drug-disease pairs.
+
+    Raises:
+        ValueError: If any training pairs are found in the data.
     """
-    clinical_trail_data = raw_clinical_trials.rename(
-        columns={"drug_kg_curie": "source", "disease_kg_curie": "target"}
-    )
+    is_test = known_pairs["split"].eq("TEST")
+    train_pairs = known_pairs[~is_test]
+    train_pairs_set = set(zip(train_pairs["source"], train_pairs["target"]))
+    data_pairs_set = set(zip(data["source"], data["target"]))
+    overlapping_pairs = data_pairs_set.intersection(train_pairs_set)
+    if overlapping_pairs:
+        raise ValueError(f"Found {len(overlapping_pairs)} pairs in test set that also appear in training set.")
 
-    # Create the 'y' column where y=1 means 'significantly_better' and y=0 means 'significantly_worse'
-    clinical_trail_data["y"] = clinical_trail_data.apply(
-        lambda row: 1
-        if row["significantly_better"] == 1
-        else (0 if row["significantly_worse"] == 1 else None),
-        axis=1,
-    )
 
-    # Remove rows where 'y' is None (which means they are not 'significantly_better' or 'significantly_worse')
-    clinical_trail_data = clinical_trail_data.dropna(subset=["y"])
+def check_ordered(
+    data: pd.DataFrame,
+    score_col_name: str,
+) -> None:
+    """Check if the score column is correctly ordered.
 
-    # Use columns 'source', 'target', and 'y' only
-    clinical_trail_data = (
-        clinical_trail_data[["source", "target", "y"]]
-        .drop_duplicates()
-        .reset_index(drop=True)
-    )
+    Args:
+        data: DataFrame containing score column.
+        score_col_name: Name of the column containing the scores.
 
-    return clinical_trail_data
+    Raises:
+        ValueError: If the score column is not correctly ordered.
+    """
+    if not data[score_col_name].is_monotonic_decreasing:
+        raise ValueError(f"The '{score_col_name}' column is not monotonically descending.")
+
+
+def perform_matrix_checks(matrix: pd.DataFrame, known_pairs: pd.DataFrame, score_col_name: str) -> None:
+    """Perform various checks on the evaluation dataset.
+
+    Args:
+        matrix: DataFrame containing a sorted matrix pairs dataset with probability scores, ranks and quantile ranks.
+        known_pairs: DataFrame with known drug-disease pairs.
+        score_col_name: Name of the column containing the treat scores.
+
+    Raises:
+        ValueError: If any of the checks fail.
+    """
+    check_no_train(matrix, known_pairs)
+    check_ordered(matrix, score_col_name)
 
 
 @has_schema(
@@ -61,10 +76,8 @@ def create_prm_clinical_trials(raw_clinical_trials: pd.DataFrame) -> pd.DataFram
 )
 @inject_object()
 def generate_test_dataset(
-    graph: KnowledgeGraph,
-    known_pairs: pd.DataFrame,
+    matrix: pd.DataFrame,
     generator: DrugDiseasePairGenerator,
-    clinical_trials_data: pd.DataFrame,
 ) -> pd.DataFrame:
     """Function to generate test dataset.
 
@@ -72,44 +85,13 @@ def generate_test_dataset(
     pairs dataset.
 
     Args:
-        graph: KnowledgeGraph instance
-        known_pairs: Labelled ground truth drug-disease pairs dataset.
-        generator: Generator strategy
-        clinical_trials_data: clinical trails data
+        matrix: Pairs dataframe representing the full matrix with treat scores.
+        generator: Generator strategy.
+
     Returns:
         Pairs dataframe
     """
-    return generator.generate(
-        graph, known_pairs, clinical_trials_data=clinical_trials_data
-    )
-
-
-def make_test_predictions(
-    graph: KnowledgeGraph,
-    data: pd.DataFrame,
-    transformers: Dict[str, Dict[str, Union[_BaseImputer, List[str]]]],
-    model: ModelWrapper,
-    features: List[str],
-    score_col_name: str,
-    batch_by: str = "target",
-) -> pd.DataFrame:
-    """Generate probability scores for drug-disease dataset.
-
-    Args:
-        graph: Knowledge graph.
-        data: Data to predict scores for.
-        transformers: Dictionary of trained transformers.
-        model: Model making the predictions.
-        features: List of features, may be regex specified.
-        score_col_name: Probability score column name.
-        batch_by: Column to use for batching (e.g., "target" or "source").
-
-    Returns:
-        Pairs dataset with additional column containing the probability scores.
-    """
-    return make_batch_predictions(
-        graph, data, transformers, model, features, score_col_name, batch_by=batch_by
-    )
+    return generator.generate(matrix)
 
 
 @inject_object()
@@ -139,10 +121,6 @@ def consolidate_evaluation_reports(*reports) -> dict:
     master_report = dict()
     for idx_1, model in enumerate(settings.DYNAMIC_PIPELINES_MAPPING.get("modelling")):
         master_report[model["model_name"]] = dict()
-        for idx_2, evaluation in enumerate(
-            settings.DYNAMIC_PIPELINES_MAPPING.get("evaluation")
-        ):
-            master_report[model["model_name"]][
-                evaluation["evaluation_name"]
-            ] = reports_lst[idx_1 + idx_2]
+        for idx_2, evaluation in enumerate(settings.DYNAMIC_PIPELINES_MAPPING.get("evaluation")):
+            master_report[model["model_name"]][evaluation["evaluation_name"]] = reports_lst[idx_1 + idx_2]
     return json.loads(json.dumps(master_report, default=float))

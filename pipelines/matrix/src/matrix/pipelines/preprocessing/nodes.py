@@ -11,26 +11,26 @@ from refit.v1.core.inline_has_schema import has_schema
 from refit.v1.core.inline_primary_key import primary_key
 
 
-def resolve(name: str, endpoint: str) -> str:
+def resolve(name: str, endpoint: str, att_to_get: str = "preferred_curie") -> str:
     """Function to retrieve curie through the synonymizer.
 
     Args:
         name: name of the node
         endpoint: endpoint of the synonymizer
+        att_to_get: attribute to get from API
     Returns:
         Corresponding curie
     """
-    result = requests.get(f"{endpoint}/synonymize", json={"names": name})
-
+    result = requests.get(f"{endpoint}/synonymize", json={"name": name})
     element = result.json().get(name)
     if element:
-        return element.get("preferred_curie", None)
+        return element.get(att_to_get, None)
 
     return None
 
 
 def normalize(curie: str, endpoint: str, att_to_get: str = "identifier"):
-    """Function to retrieve the normalized identifier through the synonymizer.
+    """Function to retrieve the normalized identifier through the normalizer.
 
     Args:
         curie: curie of the node
@@ -41,7 +41,7 @@ def normalize(curie: str, endpoint: str, att_to_get: str = "identifier"):
     """
     if not curie or pd.isna(curie):
         return None
-    result = requests.get(f"{endpoint}/normalize", json={"names": [curie]})
+    result = requests.get(f"{endpoint}/normalize", json={"name": curie})
     element = result.json().get(curie)
     if element:
         return element.get("id", {}).get(att_to_get)
@@ -330,30 +330,22 @@ def clean_drug_list(drug_df: pd.DataFrame, endpoint: str) -> pd.DataFrame:
     Returns:
         dataframe with synonymized drug IDs in normalized_curie column.
     """
-    res = enrich_df(
-        drug_df,
-        func=normalize,
-        input_cols=["single_ID"],
-        target_col="curie",
-        endpoint=endpoint,
-    )
-    # Adding Categtory
-    res = enrich_df(
-        res,
-        func=partial(normalize, att_to_get="category"),
-        input_cols=["single_ID"],
-        target_col="category",
-        endpoint=endpoint,
-    )
+    attributes = [
+        ("preferred_curie", "curie"),
+        ("preferred_category", "category"),
+        ("preferred_name", "name"),
+    ]
 
-    res = enrich_df(
-        res,
-        func=partial(normalize, att_to_get="name"),
-        input_cols=["single_ID"],
-        target_col="name",
-        endpoint=endpoint,
-    )
-    return res.loc[~res["curie"].isna()]
+    for att, target in attributes:
+        drug_df = enrich_df(
+            drug_df,
+            func=partial(resolve, att_to_get=att),
+            input_cols=["ID_Label"],
+            target_col=target,
+            endpoint=endpoint,
+        )
+
+    return drug_df.dropna(subset=["curie"])
 
 
 @has_schema(
@@ -371,7 +363,7 @@ def clean_drug_list(drug_df: pd.DataFrame, endpoint: str) -> pd.DataFrame:
 )
 @primary_key(primary_key=["category_class", "curie"])
 def clean_disease_list(disease_df: pd.DataFrame, endpoint: str) -> pd.DataFrame:
-    """Synonymize the disease list and filter out NaNs.
+    """Synonymize the IDs, names, and categories within disease list and filter out NaNs.
 
     Args:
         disease_df: disease list in a dataframe format.
@@ -380,30 +372,22 @@ def clean_disease_list(disease_df: pd.DataFrame, endpoint: str) -> pd.DataFrame:
     Returns:
         dataframe with synonymized disease IDs in normalized_curie column.
     """
-    res = enrich_df(
-        disease_df,
-        func=normalize,
-        input_cols=["category_class"],
-        target_col="curie",
-        endpoint=endpoint,
-    )
-    # Adding Categtory
+    attributes = [
+        ("preferred_curie", "curie"),
+        ("preferred_category", "category"),
+        ("preferred_name", "name"),
+    ]
 
-    res = enrich_df(
-        res,
-        func=partial(normalize, att_to_get="category"),
-        input_cols=["category_class"],
-        target_col="category",
-        endpoint=endpoint,
-    )
-    res = enrich_df(
-        res,
-        func=partial(normalize, att_to_get="name"),
-        input_cols=["category_class"],
-        target_col="name",
-        endpoint=endpoint,
-    )
-    return res.loc[~res["curie"].isna()]
+    for att, target in attributes:
+        disease_df = enrich_df(
+            disease_df,
+            func=partial(resolve, att_to_get=att),
+            input_cols=["label"],
+            target_col=target,
+            endpoint=endpoint,
+        )
+
+    return disease_df.dropna(subset=["curie"])
 
 
 @has_schema(
@@ -429,57 +413,37 @@ def clean_input_sheet(input_df: pd.DataFrame, endpoint: str) -> pd.DataFrame:
         dataframe with synonymized disease IDs in normalized_curie column.
     """
     # Synonymize Drug_ID column to normalized ID and name compatible with RTX-KG2
-    res = enrich_df(
-        input_df,
-        func=normalize,
-        input_cols=["Drug_ID"],
-        target_col="norm_drug_id",
-        endpoint=endpoint,
-    )
-    res = enrich_df(
-        res,
-        func=partial(normalize, att_to_get="name"),
-        input_cols=["Drug_ID"],
-        target_col="norm_drug_name",
-        endpoint=endpoint,
-    )
+    for attribute in [("identifier", "norm_drug_id"), ("name", "norm_drug_name")]:
+        input_df = enrich_df(
+            input_df,
+            func=partial(normalize, att_to_get=attribute[0]),
+            input_cols=["Drug_ID"],
+            target_col=attribute[1],
+            endpoint=endpoint,
+        )
 
     # Synonymize Disease_ID column to normalized ID and name compatible with RTX-KG2
-    res = enrich_df(
-        res,
-        func=normalize,
-        input_cols=["Disease_ID"],
-        target_col="norm_disease_id",
-        endpoint=endpoint,
-    )
-    res = enrich_df(
-        res,
-        func=partial(normalize, att_to_get="name"),
-        input_cols=["Disease_ID"],
-        target_col="norm_disease_name",
-        endpoint=endpoint,
-    )
+    for attribute in [("identifier", "norm_disease_id"), ("name", "norm_disease_name")]:
+        input_df = enrich_df(
+            input_df,
+            func=partial(normalize, att_to_get=attribute[0]),
+            input_cols=["Disease_ID"],
+            target_col=attribute[1],
+            endpoint=endpoint,
+        )
 
     # Select columns of interest and rename
-    df = res.loc[
-        :,
-        [
-            "Timestamp",
-            "Drug_ID",
-            "Disease_ID",
-            "norm_drug_id",
-            "norm_drug_name",
-            "norm_disease_id",
-            "norm_disease_name",
-        ],
-    ]
-    df.columns = [
-        "timestamp",
-        "drug_id",
-        "disease_id",
+    col_list = [
+        "Timestamp",
+        "Drug_ID",
+        "Disease_ID",
         "norm_drug_id",
         "norm_drug_name",
         "norm_disease_id",
         "norm_disease_name",
     ]
-    return df.fillna("")  # Filling NaNs so that schema is valid
+    df = input_df.loc[:, col_list]
+    df.columns = [string.lower() for string in col_list]
+
+    # Fill NaNs and return
+    return df.fillna("")

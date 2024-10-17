@@ -6,10 +6,16 @@ from matrix.pipelines.evaluation.evaluation import (
     DiscreteMetrics,
     ContinuousMetrics,
     SpecificRanking,
-    MRR,
-    HitK,
+    FullMatrixRanking,
     RecallAtN,
 )
+from matrix.pipelines.evaluation.named_metric_functions import (
+    MRR,
+    HitK,
+    AUROC,
+)
+
+from matrix.pipelines.evaluation.named_metric_functions import RecallAtN as RecallAtN_
 
 
 @pytest.fixture
@@ -34,6 +40,26 @@ def sample_data():
     )
 
     return standard_case, edge_case
+
+
+@pytest.fixture
+def sample_positives():
+    """Fixture that provides sample DataFrames for testing FullMatrixPositives."""
+    data = pd.DataFrame(
+        {
+            "source": [
+                "A",
+                "A",
+                "B",
+            ],
+            "target": [1, 2, 1],
+            "y": [1, 1, 1],
+            "rank": [1, 1, 3],
+        }
+    )
+    # Suppose that there are 2 non-positive matrix in the matrix
+    data["quantile_rank"] = (data["rank"] - 1) / 2
+    return data
 
 
 def test_discrete_metrics(sample_data):
@@ -71,9 +97,7 @@ def test_continuous_metrics(sample_data):
     assert standard_result["roc_auc_score"] == 1.0
 
     assert "roc_auc_score" in edge_result
-    assert (
-        edge_result["roc_auc_score"] == 0.5
-    )  # ROC AUC is undefined for all same labels, defaults to 0.5
+    assert edge_result["roc_auc_score"] == 0.5  # ROC AUC is undefined for all same labels, defaults to 0.5
 
 
 def test_specific_ranking(sample_data):
@@ -81,9 +105,7 @@ def test_specific_ranking(sample_data):
     # Given standard and edge case datasets, and MRR and Hit@1 as ranking metrics
     standard_case, edge_case = sample_data
     rank_funcs = [MRR(), HitK(k=1)]
-    evaluator = SpecificRanking(
-        rank_funcs, specific_col="source", score_col_name="score"
-    )
+    evaluator = SpecificRanking(rank_funcs, specific_col="source", score_col_name="score")
 
     # When SpecificRanking evaluates both datasets with source-specific ranking
     standard_result = evaluator.evaluate(standard_case)
@@ -99,6 +121,32 @@ def test_specific_ranking(sample_data):
     assert edge_result["hit-1"] == 1.0
 
 
+def test_full_matrix_ranking(sample_positives):
+    """Test the FullMatrixRanking class using RecallAtN and AUROC metrics."""
+    # Given a sample dataset that is the output of FullMatrixPositives
+    data = sample_positives
+    rank_funcs = [RecallAtN_(n=2), RecallAtN_(n=3)]
+    quantile_funcs = [AUROC()]
+
+    # When FullMatrixRanking is initialized with RecallAtN and AUROC metrics
+    evaluator = FullMatrixRanking(rank_func_lst=rank_funcs, quantile_func_lst=quantile_funcs)
+
+    # And when it evaluates the dataset
+    result = evaluator.evaluate(data)
+
+    # Then the RecallAtN and AUROC scores should be correctly calculated
+    assert "recall-2" in result
+    assert "recall-3" in result
+    assert "auroc" in result
+
+    # Verify RecallAtN calculations
+    assert np.isclose(result["recall-2"], 2 / 3, atol=1e-6)  # 2 out of 3 true positives in top 2
+    assert np.isclose(result["recall-3"], 1.0, atol=1e-6)  # All 3 true positives in top 3
+
+    # Verify AUROC calculation
+    assert np.isclose(result["auroc"], 2 / 3, atol=1e-6)
+
+
 def test_recall_at_n(sample_data):
     """Test the RecallAtN class."""
 
@@ -108,11 +156,7 @@ def test_recall_at_n(sample_data):
     result = recall_evaluator.evaluate(data_standard_case)
 
     assert "recall_at_3" in result
-    assert np.isclose(
-        result["recall_at_3"], 3 / 3, atol=1e-6
-    )  # 2 out of 3 true positives in top 3
+    assert np.isclose(result["recall_at_3"], 3 / 3, atol=1e-6)  # 2 out of 3 true positives in top 3
 
     assert "recall_at_5" in result
-    assert np.isclose(
-        result["recall_at_5"], 1.0, atol=1e-6
-    )  # All true positives included
+    assert np.isclose(result["recall_at_5"], 1.0, atol=1e-6)  # All true positives included

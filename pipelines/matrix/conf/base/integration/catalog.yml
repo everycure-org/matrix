@@ -4,6 +4,10 @@ _spark_parquet_ds: &_spark_parquet
   save_args:
     mode: overwrite
 
+_layer_int: &_layer_int
+  metadata:
+    kedro-viz:
+      layer: integration
 _layer_prm: &_layer_prm
   metadata:
     kedro-viz:
@@ -13,6 +17,31 @@ _layer_prm: &_layer_prm
 # Datasets
 # -------------------------------------------------------------------------
 
+integration.int.{source}.nodes:
+  <<: [*_spark_parquet, *_layer_int]
+  filepath: ${globals:paths.int}/{source}/nodes
+
+integration.int.{source}.edges:
+  <<: [*_spark_parquet, *_layer_int]
+  filepath: ${globals:paths.int}/{source}/edges
+
+
+# Normalized KGs
+integration.int.{source}.nodes.norm:
+  <<: [*_spark_parquet, *_layer_int]
+  filepath: ${globals:paths.int}/{source}/nodes.norm
+
+integration.int.{source}.edges.norm:
+  <<: [*_spark_parquet, *_layer_int]
+  filepath: ${globals:paths.int}/{source}/edges.norm
+
+# mapping tables 
+integration.int.{source}.nodes_norm_mapping:
+  <<: [*_spark_parquet, *_layer_int]
+  filepath: ${globals:paths.int}/{source}/nodes_norm_mapping
+
+
+# Unified KGs
 integration.prm.unified_edges:
   <<: [*_spark_parquet, *_layer_prm]
   filepath: ${globals:paths.prm}/unified/edges

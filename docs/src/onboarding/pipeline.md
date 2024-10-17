@@ -55,8 +55,9 @@ Note specifically the use of `globals:data_sources.rtx-kg2` in the definition of
 
 The integration stage aims to produce our internal knowledge-graph, in [biolink](https://biolink.github.io/biolink-model/) format. As we ingest data from different sources, entity resolution becomes a prevalent topic. The integration step consolidates entities across sources to avoid data duplication in the knowledge graph.
 
-!!! info
-    To date, this step is missing as we're only ingesting data from a single source.
+There are 3 main steps in the integration pipeline:
+
+![](../assets/img/kg_integration_approach.excalidraw.svg)
 
 ### Embeddings
 
@@ -85,26 +86,28 @@ As well as single models, the pipeline has the capability to deal with *ensemble
 !!! info
     The step *check model performance* only gives a partial indication of model performance intended as a quick sanity check. This is because, in general, the ground truth data alone is not a good reflection of the data distribution that the model will see while performing its task. The evaluation pipeline must be run before making conclusions about model performance. 
 
+### Matrix Generation 
+
+The matrix generation step pipeline uses the models trained in the modelling pipeline to generate score for all pairs in the matrix, that is pairs of drugs and diseases from the official EC lists. 
+
+Flags for known positives and negatives are also generated in this pipeline. In addition, we remove any training data from the matrix as they may have artificially high scores. 
+
 
 ### Evaluation
 
 The evaluation pipeline computes various metrics in order to assess the performance of the models trained in the previous stages. 
 
-Currently, we have the following evaluation metrics. 
+The input to the evaluation pipeline is a dataset of pairs, complete with scores, from the matrix generation pipeline. By using the matrix generation pipeline as an intermediary, we can avoid repeating the computationally expensive steps of model inference and instead focus on computing metrics.  
 
-1. *Threshold-based classification metrics for ground truth data*. Measures how well the model classifies ground truth positive and negatives using threshold-based metrics such as accuracy and F1-score.
-2. *Threshold-independent metrics for ground truth data*. Measures how well the model classifies ground truth positive and negatives using threshold-independent metrics such as AUROC.
-3. *All vs. all ranking with all drugs x test diseases matrix.*. Gives information on all drugs vs all disease ranking performance of models by using threshold-independent metrics such as AUROC and synthesised negatives. The construction of the synthesised negatives are based on a matrix of drug-disease pairs for a given list of all drugs and the list of disease appearing in the ground-truth positive test set. 
-4. *Disease-specific ranking*. Measures the performance of the model at ranking drugs for a fixed disease using metrics such as Hit@k and mean reciprocal rank (MRR). 
+There are several types of metrics computed in this pipeline, organised into three categories:
 
-The chosen evaluation metrics are defined in the 
-`/pipelines/matrix/conf/<env>/evaluation/parameters.yml` file, where `<env>` is the environment, e.g. `base` or `prod`. 
+1. **Full-matrix ranking metrics**: These metrics focus on how well the model ranks the set of pairs comprising the matrix.
+2. **Disease-specific ranking metrics**: These metrics focus on how well the model ranks drugs for a specific disease.
+3. **Ground truth classification metrics**: These metrics focus on the model's ability to distinguish between known positive and known negative drug-disease pairs.
 
-The computation of each evaluation metric in the pipeline is described in the following diagram.
+More details on the metrics computed in each category can be found in the [evaluation deep-dive](/data_science/evaluation_deep_dive.md)
 
-![](../assets/img/evaluation.drawio.png)
 
-Note that different evaluation metrics may have common nodes and datasets. For instance, disease-specific Hit@k and MRR are computed using the same synthesised negatives. 
 
 ### Inference (requests)
 

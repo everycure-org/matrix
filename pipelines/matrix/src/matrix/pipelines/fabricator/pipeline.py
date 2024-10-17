@@ -6,27 +6,24 @@ from kedro.pipeline import Pipeline, node, pipeline
 
 from data_fabricator.v0.nodes.fabrication import fabricate_datasets
 
-from pyspark.sql import DataFrame
 
-
-def _create_pairs(nodes: DataFrame, num: int = 50, seed: int = 42) -> pd.DataFrame:
-    """Creating 2 sets of random pairs from the nodes.  Ensures no duplicate pairs.
+def _create_pairs(drug_list: pd.DataFrame, disease_list: pd.DataFrame, num: int = 100, seed: int = 42) -> pd.DataFrame:
+    """Create 2 sets of random drug-disease pairs. Ensures no duplicate pairs.
 
     Args:
-        nodes: Dataframe for fabricated nodes.
-        num: Size of each set of random pairs. Defaults to 50.
+        drug_list: Dataframe containing the list of drugs.
+        disease_list: Dataframe containing the list of diseases.
+        num: Size of each set of random pairs. Defaults to 100.
         seed: Random seed. Defaults to 42.
-    """
-    # NOTE: This is here because the dataset is generated without
-    # header as per the KG2 schema. The spark version of the
-    # dataset re-introduces the correct schema.
-    nodes = nodes.toPandas()
 
+    Returns:
+        Two dataframes, each containing 'num' unique drug-disease pairs.
+    """
     is_enough_generated = False
     while not is_enough_generated:
         # Sample random pairs (we sample twice the required amount in case duplicates are removed)
-        random_drugs = nodes["id"].sample(num * 4, replace=True, ignore_index=True, random_state=seed)
-        random_diseases = nodes["id"].sample(num * 4, replace=True, ignore_index=True, random_state=2 * seed)
+        random_drugs = drug_list["curie"].sample(num * 4, replace=True, ignore_index=True, random_state=seed)
+        random_diseases = disease_list["curie"].sample(num * 4, replace=True, ignore_index=True, random_state=2 * seed)
 
         df = pd.DataFrame(
             data=[[drug, disease] for drug, disease in zip(random_drugs, random_diseases)],
@@ -79,7 +76,10 @@ def create_fabricator_pipeline(**kwargs) -> Pipeline:
             ),
             node(
                 func=_create_pairs,
-                inputs=["ingestion.raw.rtx_kg2.nodes@spark"],
+                inputs=[
+                    "ingestion.raw.drug_list@pandas",
+                    "ingestion.raw.disease_list@pandas",
+                ],
                 outputs=[
                     "modelling.raw.ground_truth.positives",
                     "modelling.raw.ground_truth.negatives",
