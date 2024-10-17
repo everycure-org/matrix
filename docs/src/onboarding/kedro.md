@@ -5,7 +5,7 @@ title: Kedro
 ## Pipeline framework: Kedro
 
 !!! info
-    Kedro is an open-source framework to write modular data science code. We recommend checking out the [introduction video](https://docs.kedro.org/en/stable/introduction/index.html).
+    Kedro is an open-source framework to write modular data science code. We recommend checking out the [Everycure Knowledge Sharing Session on Kedro](https://us06web.zoom.us/rec/share/qA6wfJWiJbAZEjmD0TadG0LRi2cVxMH8pCekOLO-9aEMaPd8q8Qu7gC-O7xnDSuF.NSCc-IdN-YCn7Ysu) and this [introduction video](https://docs.kedro.org/en/stable/introduction/index.html). 
 
 We're using [Kedro](https://kedro.org/) as our data pipelining framework. Kedro is a rather light framework, that comes with the following [key concepts](https://docs.kedro.org/en/stable/get_started/kedro_concepts.html#):
 
