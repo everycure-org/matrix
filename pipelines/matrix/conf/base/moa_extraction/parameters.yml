@@ -52,7 +52,15 @@ moa_extraction:
   training:
     two_hop:
       model:
-        object: sklearn.ensemble.RandomForestClassifier
+        object: skorch.NeuralNetClassifier
+        module: matrix.pipelines.moa_extraction.pytorch_model.TransformerBinaryClassifier
+        module__token_dim: 100
+        module__num_heads: 4
+        module__num_layers: 2
+        module__dropout: 0.1
+        max_epochs: 10
+        lr: 0.01
+        device: cuda
       negative_samplers:
         - object: matrix.pipelines.moa_extraction.negative_path_samplers.ReplacementPathSampler
           num_replacement_paths: 1
@@ -60,7 +68,15 @@ moa_extraction:
           random_state: ${globals:random_state}
     three_hop:
       model:
-        object: sklearn.ensemble.RandomForestClassifier
+        object: skorch.NeuralNetClassifier
+        module: matrix.pipelines.moa_extraction.pytorch_model.TransformerBinaryClassifier
+        module__token_dim: 100
+        module__num_heads: 4
+        module__num_layers: 2
+        module__dropout: 0.1
+        max_epochs: 10
+        lr: 0.01
+        device: cuda
       negative_samplers:
         - object: matrix.pipelines.moa_extraction.negative_path_samplers.ReplacementPathSampler
           num_replacement_paths: 1
