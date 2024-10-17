@@ -35,23 +35,11 @@ def _create_evaluation_pipeline(model: str, evaluation: str) -> Pipeline:
 
 def create_evaluation_pipeline(**kwargs) -> Pipeline:
     """Create evaluation pipeline."""
-    pipes = []
-    pipelines = [
-        pipeline(
-            [
-                node(
-                    func=nodes.create_prm_clinical_trials,
-                    inputs=["ingestion.raw.clinical_trials_data"],
-                    outputs="evaluation.prm.clinical_trials_data",
-                    name="create_prm_clinical_trails",
-                ),
-            ]
-        )
-    ]
+    pipelines = []
     models = settings.DYNAMIC_PIPELINES_MAPPING.get("modelling")
     model_names = [model["model_name"] for model in models]
     for model in model_names:
-        pipes.append(
+        pipelines.append(
             pipeline(
                 [
                     node(
