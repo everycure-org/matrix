@@ -51,10 +51,10 @@ class PathEmbeddingStrategy(abc.ABC):
         ...
 
 
-class TypesAndRelations(PathEmbeddingStrategy):
+class TwoDimensionalTypesAndRelations(PathEmbeddingStrategy):
     """Class representing a path embedding strategy that uses node types and edge relations.
 
-    Optionally, edge directions can be added as a feature."""
+    Each path is embedded as a sequence of vectors (i.e. a 2D matrix). Optionally, edge directions can also be added as a feature."""
 
     def __init__(self, is_embed_directions: bool = False):
         """Initialize the path embedding strategy.
