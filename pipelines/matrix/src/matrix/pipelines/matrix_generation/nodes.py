@@ -21,8 +21,6 @@ from matrix.pipelines.modelling.nodes import apply_transformers
 from matrix.pipelines.modelling.model import ModelWrapper
 
 from datetime import datetime
-import os
-from matrix.settings import CONFIG_LOADER_CLASS, CONFIG_LOADER_ARGS, CONF_SOURCE
 
 logger = logging.getLogger(__name__)
 
@@ -431,6 +429,17 @@ def generate_metadata(
     score_col_name: str,
     stats_col_names: Dict[str, Dict[str, Union[Dict[str, str], str]]],
     meta_col_names: Dict[str, str],
+    workflow_id: str,
+    mlflow_run_name: str,
+    mlflow_link: str,
+    git_sha: str,
+    release_version: str,
+    rtx_kg2_version: str,
+    robokop_version: str,
+    ec_medical_team_version: str,
+    clinical_trial_data_version: str,
+    ec_drug_list_version: str,
+    ec_disease_list_version: str,
 ) -> Tuple[pd.DataFrame, pd.DataFrame]:
     """Generates a metadata report.
 
@@ -439,28 +448,39 @@ def generate_metadata(
         score_col_name: Probability score column name.
         stats_col_names: Dictionary of column names and their descriptions.
         meta_col_names: Dictionary of column names and their descriptions.
+        workflow_id: ID of the workflow. Dummy variable to be logged in mlflow
+        mlflow_run_name: Name of the MLflow run. Dummy variable to be logged in mlflow
+        mlflow_link: Link to the MLflow run. Dummy variable to be logged in mlflow
+        git_sha: SHA of the git commit. Dummy variable to be logged in mlflow
+        release_version: Version of the release. Dummy variable to be logged in mlflow
+        rtx_kg2_version: Version of the RTX KG2. Dummy variable to be logged in mlflow
+        robokop_version: Version of the Robokop. Dummy variable to be logged in mlflow
+        ec_medical_team_version: Version of the EC Medical Team. Dummy variable to be logged in mlflow
+        clinical_trial_data_version: Version of the Clinical Trial Data. Dummy variable to be logged in mlflow
+        ec_drug_list_version: Version of the EC Drug List. Dummy variable to be logged in mlflow
+        ec_disease_list_version: Version of the EC Disease List. Dummy variable to be logged in mlflow
     Returns:
         Tuple containing:
         - Dataframe containing metadata such as data sources version, timestamp, run name etc.
         - Dataframe with metadata about the output matrix columns.
     """
-    conf_loader = CONFIG_LOADER_CLASS(CONF_SOURCE, **CONFIG_LOADER_ARGS)
-    conf_globals = conf_loader["globals"]
-
     # Metadata related to the run
     # TODO: Add included_kgs and included_models
     # TODO: Add filters (is_steroid)
     run_metadata = {
         "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-        "workflow_id": os.getenv("WORKFLOW_ID"),
-        "mlflow_run_name": conf_globals["run_name"],
-        "mlflow_link": conf_globals["mlflow_url"],
-        "git_sha": conf_globals["git_sha"],
-        "release_version": conf_globals["versions"]["release"],
+        "workflow_id": workflow_id,
+        "mlflow_run_name": mlflow_run_name,
+        "mlflow_link": mlflow_link,
+        "git_sha": git_sha,
+        "release_version": release_version,
+        "rtx_kg2_version": rtx_kg2_version,
+        "robokop_version": robokop_version,
+        "ec_medical_team_version": ec_medical_team_version,
+        "clinical_trial_data_version": clinical_trial_data_version,
+        "ec_drug_list_version": ec_drug_list_version,
+        "ec_disease_list_version": ec_disease_list_version,
     }
 
-    data_sources = ["rtx-kg2", "robokop", "ec-medical-team", "clinical-trial-data", "ec-drug-list", "ec-disease-list"]
-    for source in data_sources:
-        run_metadata[f"{source}_version"] = conf_globals["data_sources"][source]["version"]
     summary_metadata = generate_summary_metadata(meta_col_names, score_col_name, stats_col_names)
     return pd.DataFrame(list(run_metadata.items()), columns=["Key", "Value"]), summary_metadata
