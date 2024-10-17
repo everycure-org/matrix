@@ -61,22 +61,38 @@ class KGPaths:
         return len(self.df)
 
     def get_unique_pairs(self) -> pd.DataFrame:
-        """Get the set of unique source and target nodes in the paths."""
-        return self.df[["source_id", "target_id"]].drop_duplicates()
+        """Get the set of unique source and target nodes in the paths along with their counts."""
+        unique_pairs = self.df[["source_id", "target_id"]].drop_duplicates()
+        pair_counts = self.df.groupby(["source_id", "target_id"]).size().reset_index(name="count")
+        unique_pairs = unique_pairs.merge(pair_counts, on=["source_id", "target_id"], how="left")
+        return unique_pairs
 
     def get_paths_for_pair(self, source_id: str, target_id: str) -> pd.DataFrame:
         """Get the paths for a given source and target node IDs."""
         return self.df[(self.df["source_id"] == source_id) & (self.df["target_id"] == target_id)]
 
-    def add_paths_from_result(self, result: List[neo4j.graph.Path], extra_data: Dict[str, List[Any]] = None) -> None:
+    @classmethod
+    def _parse_result(cls, result: List[List[neo4j.graph.Path]]) -> List[neo4j.graph.Path]:
+        """Parse the result of a Neo4j query into a list of paths.
+
+        This is necessary because Neo4j returns a list of length 1 for each path.
+        """
+        return [path[0] for path in result]
+
+    def add_paths_from_result(
+        self, result: List[List[neo4j.graph.Path]], extra_data: Dict[str, List[Any]] = None
+    ) -> None:
         """Add a path to the df from the results of a Neo4j query.
 
+        Involves squashing multiple paths with the same nodes but different predicates into a single path.
+
         Args:
-            result: List of neo4j paths.
+            result: Result of a Neo4j query (list of lists of length 1 of neo4j paths).
             extra_data: Dictionary of extra data to add to the dataframe.
         """
         if len(result) == 0:
             return
+        result = self._parse_result(result)
 
         # Initialize data dictionary
         if extra_data is None:
@@ -131,7 +147,21 @@ class KGPaths:
         new_data.reset_index(drop=True, inplace=True)
 
         # Add the new data to the existing dataframe
-        self.df = pd.concat([self.df, new_data], ignore_index=True)
+        if len(self.df) > 0:
+            self.df = pd.concat([self.df, new_data], ignore_index=True)
+        else:
+            self.df = new_data
+
+    # def add_paths_from_df(self, df: pd.DataFrame) -> None:
+    #     """Add a dataframe of paths to the set.
+
+    #     Args:
+    #         df: A dataframe of paths. Must conform to schema.
+    #     """
+    #     num_hops = self.get_num_hops(df)
+    #     if num_hops != self.num_hops:
+    #         raise ValueError(f"DataFrame has {num_hops} hops, expected {self.num_hops}")
+    #     self.df = pd.concat([self.df, df], ignore_index=True)
 
 
 class KGPathsDataset(BaseParquetDataset):
