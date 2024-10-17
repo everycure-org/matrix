@@ -1,10 +1,11 @@
 """Inference pipeline's nodes."""
 
 from typing import Dict
+
 import pandas as pd
+from matplotlib.figure import Figure
 
 from . import visualisers
-from matplotlib.figure import Figure
 
 
 def resolve_input_sheet(
