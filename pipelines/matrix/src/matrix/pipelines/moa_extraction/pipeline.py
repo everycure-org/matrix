@@ -82,25 +82,22 @@ def _training_pipeline() -> Pipeline:
         training_strands_lst.append(
             pipeline(
                 [
-                    # node(
-                    #     func=nodes.create_training_features,
-                    #     inputs={
-                    #         "splits": f"moa_extraction.prm.{num_hops}_hop_splits",
-                    #         "path_embedding_strategy": "params:moa_extraction.path_embeddings.strategy",
-                    #         "category_encoder": "moa_extraction.feat.category_encoder",
-                    #         "relation_encoder": "moa_extraction.feat.relation_encoder",
-                    #     },
-                    #     outputs=None,
-                    #     name=f"create_features_{num_hops}_hop",
-                    #     tags="moa_extraction.training",
-                    # ),
+                    node(
+                        func=nodes.generate_negative_paths,
+                        inputs={
+                            "paths": f"moa_extraction.prm.{num_hops}_hop_splits",
+                            "negative_sampler_list": f"params:moa_extraction.training.{num_hops}_hop.negative_samplers",
+                            "runner": "params:moa_extraction.neo4j_runner",
+                        },
+                        outputs=f"moa_extraction.feat.{num_hops}_hop_enriched_paths",
+                        name=f"generate_negative_paths_{num_hops}_hop",
+                        tags="moa_extraction.training",
+                    ),
                     node(
                         func=nodes.train_model_split,
                         inputs={
                             "model": f"params:moa_extraction.training.{num_hops}_hop.model",
-                            "paths": f"moa_extraction.prm.{num_hops}_hop_splits",
-                            "negative_sampler_list": f"params:moa_extraction.training.{num_hops}_hop.negative_samplers",
-                            "runner": "params:moa_extraction.neo4j_runner",
+                            "paths": f"moa_extraction.feat.{num_hops}_hop_enriched_paths",
                             "path_embedding_strategy": "params:moa_extraction.path_embeddings.strategy",
                             "category_encoder": "moa_extraction.feat.category_encoder",
                             "relation_encoder": "moa_extraction.feat.relation_encoder",
@@ -113,9 +110,7 @@ def _training_pipeline() -> Pipeline:
                         func=nodes.train_model,
                         inputs={
                             "model": f"params:moa_extraction.training.{num_hops}_hop.model",
-                            "paths": f"moa_extraction.prm.{num_hops}_hop_splits",
-                            "negative_sampler_list": f"params:moa_extraction.training.{num_hops}_hop.negative_samplers",
-                            "runner": "params:moa_extraction.neo4j_runner",
+                            "paths": f"moa_extraction.feat.{num_hops}_hop_enriched_paths",
                             "path_embedding_strategy": "params:moa_extraction.path_embeddings.strategy",
                             "category_encoder": "moa_extraction.feat.category_encoder",
                             "relation_encoder": "moa_extraction.feat.relation_encoder",
