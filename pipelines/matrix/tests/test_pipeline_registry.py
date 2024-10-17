@@ -30,10 +30,10 @@ def test_all_pipelines_are_pipeline_objects(pipelines: Dict[str, Pipeline]) -> N
 
 def test_default_pipeline_composition(pipelines: Dict[str, Pipeline]) -> None:
     default_pipeline = pipelines["__default__"]
-    embeddings_pipeline = pipelines["integration_embeddings"]
-    modelling_pipeline = pipelines["modelling_matrix_evaluation"]
+    release_pipeline = pipelines["release"]
+    modelling_pipeline = pipelines["run"]
 
     assert (
-        len(default_pipeline.nodes) == len(modelling_pipeline.nodes + embeddings_pipeline.nodes)
-    ), f"Default pipeline (len: {len(default_pipeline.nodes)}) should be the sum of embeddings_pipeline (len: {len(embeddings_pipeline.nodes)}) and make_modelling (len: {len(modelling_pipeline.nodes)})"
-    assert default_pipeline.nodes == (embeddings_pipeline + modelling_pipeline).nodes
+        len(default_pipeline.nodes) == len(modelling_pipeline.nodes + release_pipeline.nodes)
+    ), f"Default pipeline (len: {len(default_pipeline.nodes)}) should be the sum of release_pipeline (len: {len(release_pipeline.nodes)}) and make_modelling (len: {len(modelling_pipeline.nodes)})"
+    assert default_pipeline.nodes == (release_pipeline + modelling_pipeline).nodes

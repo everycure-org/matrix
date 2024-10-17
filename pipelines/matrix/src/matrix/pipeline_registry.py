@@ -4,36 +4,16 @@ from typing import Dict
 
 from kedro.pipeline import Pipeline
 
-from matrix.pipelines.preprocessing.pipeline import (
-    create_pipeline as create_preprocessing_pipeline,
-)
-from matrix.pipelines.modelling.pipeline import (
-    create_pipeline as create_modelling_pipeline,
-)
-from matrix.pipelines.fabricator.pipeline import (
-    create_pipeline as create_fabricator_pipeline,
-)
-from matrix.pipelines.embeddings.pipeline import (
-    create_pipeline as create_embeddings_pipeline,
-)
-from matrix.pipelines.integration.pipeline import (
-    create_pipeline as create_integration_pipeline,
-)
-from matrix.pipelines.evaluation.pipeline import (
-    create_pipeline as create_evaluation_pipeline,
-)
-from matrix.pipelines.ingestion.pipeline import (
-    create_pipeline as create_ingestion_pipeline,
-)
-from matrix.pipelines.release.pipeline import (
-    create_pipeline as create_release_pipeline,
-)
-from matrix.pipelines.matrix_generation.pipeline import (
-    create_pipeline as create_matrix_pipeline,
-)
-from matrix.pipelines.inference.pipeline import (
-    create_pipeline as create_inference_pipeline,
-)
+from matrix.pipelines.preprocessing.pipeline import create_preprocessing_pipeline
+from matrix.pipelines.modelling.pipeline import create_modelling_pipeline
+from matrix.pipelines.fabricator.pipeline import create_fabricator_pipeline
+from matrix.pipelines.embeddings.pipeline import create_embeddings_pipeline
+from matrix.pipelines.integration.pipeline import create_integration_pipeline
+from matrix.pipelines.evaluation.pipeline import create_evaluation_pipeline
+from matrix.pipelines.ingestion.pipeline import create_ingestion_pipeline
+from matrix.pipelines.release.pipeline import create_release_pipeline
+from matrix.pipelines.matrix_generation.pipeline import create_matrix_pipeline
+from matrix.pipelines.inference.pipeline import create_inference_pipeline
 
 
 def register_pipelines() -> Dict[str, Pipeline]:
@@ -44,17 +24,11 @@ def register_pipelines() -> Dict[str, Pipeline]:
     """
     pipelines = {}
 
-    pipelines["make_embeddings"] = create_integration_pipeline() + create_embeddings_pipeline()
-    pipelines["make_modelling"] = create_modelling_pipeline() + create_matrix_pipeline() + create_evaluation_pipeline()
-    pipelines["__default__"] = pipelines["make_embeddings"] + pipelines["make_modelling"]
+    pipelines["release"] = create_integration_pipeline() + create_embeddings_pipeline()
+    pipelines["modelling"] = create_modelling_pipeline() + create_matrix_pipeline() + create_evaluation_pipeline()
+    pipelines["__default__"] = pipelines["release"] + pipelines["run"]
     pipelines["preprocessing"] = create_preprocessing_pipeline()
-    pipelines["ingestion"] = create_ingestion_pipeline()
-    pipelines["preprocessing"] = create_preprocessing_pipeline()
-    pipelines["modelling"] = create_modelling_pipeline()
-    pipelines["embeddings"] = create_embeddings_pipeline()
-    pipelines["fabricator"] = create_fabricator_pipeline()
-    pipelines["integration"] = create_integration_pipeline()
-    pipelines["evaluation"] = create_evaluation_pipeline()
+
     pipelines["release"] = create_release_pipeline()
     pipelines["matrix_generation"] = create_matrix_pipeline()
     pipelines["inference"] = create_inference_pipeline()
