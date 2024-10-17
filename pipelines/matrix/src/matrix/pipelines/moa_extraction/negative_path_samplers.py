@@ -17,14 +17,6 @@ class NegativePathSampler(abc.ABC):
         ...
 
 
-class MockNegativePathSampler(NegativePathSampler):  # TODO: REMOVE
-    """Mock negative path sampler."""
-
-    def run(self) -> KGPaths:
-        """Sample negative paths from the given paths."""
-        return None
-
-
 class ReplacementPathSampler(NegativePathSampler):
     """Samples random paths between the source and target nodes in a given paths dataset."""
 
