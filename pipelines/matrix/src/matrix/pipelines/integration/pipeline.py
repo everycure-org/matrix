@@ -4,7 +4,7 @@ from kedro.pipeline import Pipeline, node, pipeline
 
 from . import nodes
 from .robokop import transform_robo_edges, transform_robo_nodes
-from .rtxkg2 import transform_rtxkg2_edges, transform_rtxkg2_nodes
+from .rtxkg2 import transform_rtxkg2_edges, transform_rtxkg2_nodes, create_biolink_hierarchy
 
 
 def create_pipeline(**kwargs) -> Pipeline:
@@ -12,6 +12,12 @@ def create_pipeline(**kwargs) -> Pipeline:
     return pipeline(
         [
             # Standardize the KG tabular structure
+            node(
+                func=create_biolink_hierarchy,
+                inputs="integration.raw.biolink.predicates",
+                outputs="integration.prm.biolink.hierarchy@pandas",
+                name="create_biolink_hierarchy",
+            ),
             node(
                 func=transform_robo_nodes,
                 inputs="ingestion.int.robokop.nodes",
@@ -35,7 +41,7 @@ def create_pipeline(**kwargs) -> Pipeline:
             ),
             node(
                 func=transform_rtxkg2_edges,
-                inputs="ingestion.int.rtx_kg2.edges",
+                inputs=["ingestion.int.rtx_kg2.edges", "integration.prm.biolink.hierarchy@spark"],
                 outputs="integration.int.rtx.edges",
                 name="transform_rtx_edges",
                 tags=["standardize"],

@@ -59,11 +59,6 @@ def transform_rtxkg2_edges(edges_df: DataFrame, biolink_hierarchy: DataFrame) ->
         Transformed DataFrame.
     """
 
-    # Filter hierarical edges
-    edges_df = edges_df.withColumn("clean_predicate", f.regexp_replace("predicate", "^biolink:")).join(
-        biolink_hierarchy
-    )
-
     # fmt: off
     return (
         edges_df
