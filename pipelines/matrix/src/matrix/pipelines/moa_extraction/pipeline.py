@@ -1,6 +1,7 @@
 """
 MOA extraction pipeline.
 """
+# TODO: Simplify the schema by rename source and target
 # TODO: Add mapping success report node
 # TODO: Add training curve plot to MLFlow report
 
@@ -91,7 +92,7 @@ def _training_pipeline() -> Pipeline:
                         },
                         outputs=f"moa_extraction.feat.{num_hops}_hop_enriched_paths",
                         name=f"generate_negative_paths_{num_hops}_hop",
-                        tags="moa_extraction.training",
+                        tags=["moa_extraction.training", "moa_extraction.negative_sampling"],
                     ),
                     node(
                         func=nodes.train_model_split,
