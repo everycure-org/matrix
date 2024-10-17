@@ -23,6 +23,10 @@ moa_extraction.feat.relation_encoder:
   <<: *_kg_paths_dataset
   filepath: ${globals:paths.prm}/moa_extraction/{num_hops}_hop_split.parquet
 
+"moa_extraction.feat.{num_hops}_hop_enriched_paths":
+  <<: *_kg_paths_dataset
+  filepath: ${globals:paths.feat}/moa_extraction/{num_hops}_hop_enriched_paths.parquet
+
 "moa_extraction.models.{num_hops}_hop_model":
   type: pickle.PickleDataset
   filepath: ${globals:paths.models}/moa_extraction/{num_hops}_hop_model.pickle

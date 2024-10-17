@@ -173,47 +173,34 @@ def make_splits(
     return KGPaths(df=df_splits).df
 
 
-# @inject_object()
-def _create_training_features(
+@inject_object()
+def generate_negative_paths(
     paths: KGPaths,
     negative_sampler_list: List[NegativePathSampler],
     runner: Neo4jRunner,
-    path_embedding_strategy: PathEmbeddingStrategy,
-    category_encoder: OneHotEncoder,
-    relation_encoder: OneHotEncoder,
-) -> Tuple[np.ndarray, np.ndarray]:
-    """Creates the vectorised training data.
-
-    Involves enriching the paths dataset with negative samples and computing embeddings for each path.
+) -> KGPaths:
+    """Enrich a dataset of positive indication paths with negative samples.
 
     Args:
-        paths: Dataset of positive indication paths.
+        paths: Dataset of positive indication paths with splits information.
         negative_sampler_list: List of negative path samplers.
-        path_embedding_strategy: Path embedding strategy.
-        category_encoder: One-hot encoder for node categories.
-        relation_encoder: One-hot encoder for edge relations.
+        runner: The Neo4j runner.
     """
-    # Positive paths
-    X = path_embedding_strategy.run(paths, category_encoder, relation_encoder)
-    y = np.ones(len(X))
+    for split in ["TRAIN", "TEST"]:
+        for negative_sampler in negative_sampler_list:
+            paths_split = KGPaths(df=paths.df[paths.df["split"] == split])
+            negative_paths = negative_sampler.run(paths_split, runner)
+            negative_paths.df["split"] = split
+            negative_paths.df["y"] = 0
+            paths.df = pd.concat([paths.df, negative_paths.df])
 
-    # Negative paths
-    for negative_sampler in negative_sampler_list:
-        negative_paths = negative_sampler.run(paths, runner)
-        X_neg = path_embedding_strategy.run(negative_paths, category_encoder, relation_encoder)
-        y_neg = np.zeros(len(X_neg))
-        X = np.concatenate([X, X_neg])
-        y = np.concatenate([y, y_neg])
-
-    return X, y
+    return paths.df
 
 
 @inject_object()
 def train_model(
     model: BaseEstimator,  # TODO: Replace with tuner
     paths: KGPaths,
-    negative_sampler_list: List[NegativePathSampler],
-    runner: Neo4jRunner,
     path_embedding_strategy: PathEmbeddingStrategy,
     category_encoder: OneHotEncoder,
     relation_encoder: OneHotEncoder,
@@ -222,17 +209,13 @@ def train_model(
 
     Args:
         model: The model to train.
-        paths: The positive indication paths dataset.
-        negative_sampler_list: List of negative path samplers.
-        runner: The Neo4j runner.
+        paths: The paths dataset with a "y" column.
         path_embedding_strategy: Path embedding strategy.
         category_encoder: One-hot encoder for node categories.
         relation_encoder: One-hot encoder for edge relations.
     """
-    X, y = _create_training_features(
-        paths, negative_sampler_list, runner, path_embedding_strategy, category_encoder, relation_encoder
-    )
-
+    X = path_embedding_strategy.run(paths, category_encoder, relation_encoder)
+    y = paths.df["y"].to_numpy()
     X = np.reshape(X, (X.shape[0], -1))  # TODO: Remove when transformers are implemented
     # TODO: Add hyperparameter tuning here
     return model.fit(X, y)
@@ -242,8 +225,6 @@ def train_model(
 def train_model_split(
     model: BaseEstimator,  # TODO: Replace with tuner
     paths: KGPaths,
-    negative_sampler_list: List[NegativePathSampler],
-    runner: Neo4jRunner,
     path_embedding_strategy: PathEmbeddingStrategy,
     category_encoder: OneHotEncoder,
     relation_encoder: OneHotEncoder,
@@ -252,14 +233,10 @@ def train_model_split(
 
     Args:
         model: The model to train.
-        paths: The positive indication paths dataset.
-        negative_sampler_list: List of negative path samplers.
-        runner: The Neo4j runner.
+        paths: The paths dataset with a "y" column and split information.
         path_embedding_strategy: Path embedding strategy.
         category_encoder: One-hot encoder for node categories.
         relation_encoder: One-hot encoder for edge relations.
     """
     paths_train = KGPaths(df=paths.df[paths.df["split"] == "TRAIN"])
-    return train_model(
-        model, paths_train, negative_sampler_list, runner, path_embedding_strategy, category_encoder, relation_encoder
-    )
+    return train_model(model, paths_train, path_embedding_strategy, category_encoder, relation_encoder)
