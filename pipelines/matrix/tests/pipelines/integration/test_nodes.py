@@ -261,6 +261,3 @@ def test_normalize_kg(spark, mocker):
     assertDataFrameEqual(normalized_nodes[expected_nodes.columns], expected_nodes)
     assertDataFrameEqual(normalized_edges[expected_edges.columns], expected_edges)
     assertDataFrameEqual(mapping_df[expected_mapping.columns], expected_mapping)
-
-
-# NOTE: This function was partially generated using AI assistance.

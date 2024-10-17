@@ -1,3 +1,10 @@
+preprocessing:
+  rtx:
+    exclude_labels:
+      - InformationResource
+      - Device
+      - GraphicaLocation
+
 integration:
   nodenorm:
     # api_endpoint: https://nodenormalization-sri.renci.org/get_normalized_nodes
