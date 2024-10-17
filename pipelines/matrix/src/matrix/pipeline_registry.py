@@ -26,22 +26,22 @@ def register_pipelines() -> Dict[str, Pipeline]:
 
     pipelines["release"] = create_integration_pipeline() + create_embeddings_pipeline()
     pipelines["modelling"] = create_modelling_pipeline() + create_matrix_pipeline() + create_evaluation_pipeline()
-    pipelines["__default__"] = pipelines["release"] + pipelines["run"]
-    pipelines["preprocessing"] = create_preprocessing_pipeline()
+    pipelines["__default__"] = pipelines["release"] + pipelines["modelling"]
 
-    pipelines["release"] = create_release_pipeline()
-    pipelines["matrix_generation"] = create_matrix_pipeline()
-    pipelines["inference"] = create_inference_pipeline()
     pipelines["test"] = (
         create_fabricator_pipeline()
         + create_ingestion_pipeline()
-        + create_integration_pipeline()
-        + create_embeddings_pipeline()
-        + create_modelling_pipeline()
-        + create_matrix_pipeline()
-        + create_evaluation_pipeline()
+        + pipelines["release"]
+        + pipelines["modelling"]
         + create_release_pipeline()
     )
-    pipelines["all"] = create_ingestion_pipeline() + pipelines["__default__"]
-    pipelines["experiment"] = create_modelling_pipeline() + create_evaluation_pipeline()
+
+    # Ran manually based on input from medical to release new artifacts from clinical trails and medical KG
+    pipelines["preprocessing"] = create_preprocessing_pipeline()
+
+    # We only run whenever sources change
+    pipelines["ingestion"] = create_ingestion_pipeline()
+
+    # We run only manually based on medical input
+    pipelines["inference"] = create_inference_pipeline()
     return pipelines
