@@ -412,11 +412,10 @@ def clean_input_sheet(input_df: pd.DataFrame, endpoint: str) -> pd.DataFrame:
     Returns:
         dataframe with synonymized disease IDs in normalized_curie column.
     """
-    res = input_df
     # Synonymize Drug_ID column to normalized ID and name compatible with RTX-KG2
     for attribute in [("identifier", "norm_drug_id"), ("name", "norm_drug_name")]:
-        res = enrich_df(
-            res,
+        input_df = enrich_df(
+            input_df,
             func=partial(normalize, att_to_get=attribute[0]),
             input_cols=["Drug_ID"],
             target_col=attribute[1],
@@ -425,8 +424,8 @@ def clean_input_sheet(input_df: pd.DataFrame, endpoint: str) -> pd.DataFrame:
 
     # Synonymize Disease_ID column to normalized ID and name compatible with RTX-KG2
     for attribute in [("identifier", "norm_disease_id"), ("name", "norm_disease_name")]:
-        res = enrich_df(
-            res,
+        input_df = enrich_df(
+            input_df,
             func=partial(normalize, att_to_get=attribute[0]),
             input_cols=["Disease_ID"],
             target_col=attribute[1],
@@ -443,7 +442,7 @@ def clean_input_sheet(input_df: pd.DataFrame, endpoint: str) -> pd.DataFrame:
         "norm_disease_id",
         "norm_disease_name",
     ]
-    df = res.loc[:, col_list]
+    df = input_df.loc[:, col_list]
     df.columns = [string.lower() for string in col_list]
 
     # Fill NaNs and return
