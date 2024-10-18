@@ -7,8 +7,11 @@ import pyspark.sql.functions as f
 
 
 def unnest(predicates: List[Dict[str, Any]], parents: Optional[List[str]] = None):
-    """
-    Function to unnest biolink predicates.
+    """Function to unnest biolink predicate hierarchy.
+
+    The biolink predicates are organized in an hierarchical JSON object. To enable
+    hierarchical deduplication, the JSON object is pre-processed into a flat pandas
+    dataframe that adds the full path to each predicate.
 
     Args:
         predicates: predicates to unnest
@@ -35,6 +38,22 @@ def unnest(predicates: List[Dict[str, Any]], parents: Optional[List[str]] = None
 
 
 def biolink_deduplicate(edges_df: DataFrame, biolink_hierarchy: DataFrame):
+    """Function to deduplicate biolink edges.
+
+    Knowledge graphs in biolink format may contain multiple edges between nodes. Where
+    edges might represent predicates at various depths in the hierarchy. This function
+    deduplicates redundant edges.
+
+    The logic leverages the path to the predicate in the hierarchy, and removes edges
+    for which "deeper" paths in the hierarchy are specified. For example: there exists
+    the following edges (a)-[regulates]-(b), and (a)-[negatively-regulates]-(b). Regulates
+    is on the path (regulates) whereas (regulates, negatively-regulates). In this case
+    negatively-regulates is "deeper" than regulates and hence (a)-[regulates]-(b) is removed.
+
+    Args:
+        edges_df: dataframe with biolink edges
+        biolink_hierarchy: tabular
+    """
     # Filter hierarical edges
     edges_df = edges_df.join(
         biolink_hierarchy.withColumn("predicate", f.concat(f.lit("biolink:"), f.col("predicate"))), on="predicate"
