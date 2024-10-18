@@ -260,7 +260,7 @@ def generate_summary_metadata(meta_col_names, score_col_name, stats_col_names):
     for stat, description in stats_col_names["per_disease"]["all"].items():
         summary_metadata[f"{stat}_all_per_disease"] = f"{description} in all pairs"
 
-    return pd.DataFrame(list(summary_metadata.items()), columns=["Column", "Explanation"])
+    return pd.DataFrame(list(summary_metadata.items()), columns=["Key", "Value"])
 
 
 def process_top_pairs(
@@ -487,5 +487,6 @@ def generate_metadata(
             meta_dict[key] = value
     metadata = matrix_params.get("metadata")
     stats = matrix_params.get("stats_col_names")
-    summary_metadata = generate_summary_metadata(metadata, score_col_name, stats)
-    return pd.DataFrame(list(meta_dict.items()), columns=["Key", "Value"]), summary_metadata
+    legends_df = generate_summary_metadata(metadata, score_col_name, stats)
+    version_df = pd.DataFrame(list(meta_dict.items()), columns=["Key", "Value"])
+    return pd.concat([version_df, legends_df], axis=0)

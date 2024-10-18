@@ -47,10 +47,7 @@ def _create_matrix_generation_pipeline(model: str) -> Pipeline:
                     "matrix_params": "params:matrix_generation.matrix",
                     "run_metadata": "params:matrix_generation.run",
                 },
-                outputs=[
-                    f"matrix_generation.{model}.reporting.matrix_run_metadata",
-                    f"matrix_generation.{model}.reporting.matrix_output_metadata",
-                ],
+                outputs=f"matrix_generation.{model}.reporting.matrix_metadata",
                 name=f"generate_{model}_metadata",
             ),
         ],
