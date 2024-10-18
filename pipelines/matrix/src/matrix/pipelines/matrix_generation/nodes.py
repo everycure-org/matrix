@@ -324,17 +324,18 @@ def add_descriptive_stats(
     Returns:
         pd.DataFrame: DataFrame with added descriptive statistics.
     """
-    for stat in stats_col_names["per_disease"]["top"].keys():
-        top_pairs[f"{stat}_top_per_disease"] = top_pairs.groupby("kg_disease_id")[score_col_name].transform(stat)
-
-    top_pairs_all = data[
-        data["target"].isin(top_pairs["kg_disease_id"].unique()) | data["source"].isin(top_pairs["kg_drug_id"].unique())
-    ]
-
-    for stat in stats_col_names["per_disease"]["all"].keys():
-        stat_dict = top_pairs_all.groupby("target")[score_col_name].agg(stat).to_dict()
-        top_pairs[f"{stat}_all_per_disease"] = top_pairs["kg_disease_id"].map(stat_dict)
-
+    i = 0
+    for entity_type, df_col, id_col in [("disease", "target", "kg_disease_id"), ("drug", "source", "kg_drug_id")]:
+        # Calculate stats for top pairs
+        for stat in stats_col_names[f"per_{entity_type}"]["top"].keys():
+            top_pairs[f"{stat}_top_per_{entity_type}"] = top_pairs.groupby(id_col)[score_col_name].transform(stat)
+            i = i + 1
+        # Calculate stats for all pairs (need to use different df)
+        all_pairs = data[data[df_col].isin(top_pairs[id_col].unique())]
+        for stat in stats_col_names[f"per_{entity_type}"]["all"].keys():
+            stat_dict = all_pairs.groupby(df_col)[score_col_name].agg(stat).to_dict()
+            top_pairs[f"{stat}_all_per_{entity_type}"] = top_pairs[id_col].map(stat_dict)
+            i = i + 1
     return top_pairs
 
 
@@ -386,15 +387,13 @@ def reorder_columns(top_pairs: pd.DataFrame, score_col_name: str, matrix_params:
     score_columns = [score_col_name]
     tag_columns = list(tags["drugs"].keys()) + list(tags["diseases"].keys())
     kg_columns = list(meta_col_names["kg_data"].keys())
-    stat_columns = list(stats_col_names["per_disease"]["top"].keys())
-    stat_suffixes = ["_top_per_disease", "_all_per_disease"]
-    columns_order = (
-        id_columns
-        + score_columns
-        + kg_columns
-        + tag_columns
-        + [f"{stat}{suffix}" for stat in stat_columns for suffix in stat_suffixes]
-    )
+    stat_columns = list()
+    for main_key in ["per_disease", "per_drug"]:
+        for sub_key in ["top", "all"]:
+            stat_columns = stat_columns + [
+                f"{stat}_{sub_key}_{main_key}" for stat in list(stats_col_names[main_key][sub_key].keys())
+            ]
+    columns_order = id_columns + score_columns + kg_columns + tag_columns + stat_columns
 
     # Remove columns that are not in the top pairs DataFrame but are specified in params
     columns_order = [col for col in columns_order if col in top_pairs.columns]

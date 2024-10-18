@@ -23,6 +23,8 @@ matrix_generation.matrix:
     per_disease:
       top:
         mean: "Mean probability score"
+        quantile: "50% quantile of probability score"
+        #quantile_75: "75% quantile of probability score"
         median: "Median probability score"
         max: "Maximum probability score"
         min: "Minimum probability score"
@@ -30,6 +32,22 @@ matrix_generation.matrix:
       all:
         mean: "Mean probability score"
         median: "Median probability score"
+        quantile: "25% quantile of probability score"
+        max: "Maximum probability score"
+        min: "Minimum probability score"
+        std: "Standard deviation of probability scores"
+    per_drug:
+      top:
+        mean: "Mean probability score"
+        median: "Median probability score"
+        quantile: "25% quantile of probability score"
+        max: "Maximum probability score"
+        min: "Minimum probability score"
+        std: "Standard deviation of probability scores"
+      all:
+        mean: "Mean probability score"
+        median: "Median probability score"
+        quantile: "25% quantile of probability score"
         max: "Maximum probability score"
         min: "Minimum probability score"
         std: "Standard deviation of probability scores"
