@@ -132,6 +132,21 @@ fabricator.rtx_kg2:
         row_func: "lambda *args: args[1]"
         resize: True
         seed: 6851
+      is_steroid: 
+        type: generate_values
+        sample_values: [True,False]
+      is_antimicrobial: 
+        type: generate_values
+        sample_values: [True,False]
+      is_glucose_regulator: 
+        type: generate_values
+        sample_values: [True,False]
+      is_chemotherapy: 
+        type: generate_values
+        sample_values: [True,False]
+      available_USA:
+        type: generate_values
+        sample_values: [DISCONTINUED,RX,AVAILABLE]
       
   disease_list:
     num_rows: 30
@@ -160,6 +175,21 @@ fabricator.rtx_kg2:
         row_func: "lambda *args: args[1]"
         resize: True
         seed: 65691
+      is_cancer: 
+        type: generate_values
+        sample_values: [True,False]
+      is_pathogen_caused: 
+        type: generate_values
+        sample_values: [True,False]
+      is_glucose_dysfunction: 
+        type: generate_values
+        sample_values: [True,False]
+      tag_existing_treatment: 
+        type: generate_values
+        sample_values: [True,False]
+      tag_QALY_lost: 
+        type: generate_values
+        sample_values: [LOW, MEDIUM, NONE, VERY HIGH, HIGH, MODERATE]
         
 
   clinical_trials:

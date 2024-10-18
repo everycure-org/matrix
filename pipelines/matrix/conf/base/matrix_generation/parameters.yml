@@ -36,10 +36,19 @@ matrix_generation.matrix:
   tags:
     drugs:
       available_USA: "Whether drug is prescriped or discontinued in USA"
-  filters:
+      is_steroid: "Whether drug is a steroid"
+      is_antimicrobial: "Whether drug is an antimicrobial"
+      is_glucose_regulator: "Whether drug is a glucose regulator"
+      is_chemotherapy: "Whether drug is a chemotherapy"
     pairs:
       is_known_positive: "Whether the pair is a known positive"
       is_known_negative: "Whether the pair is a known negative"
+    diseases:
+      is_cancer: "Whether disease is a cancer"
+      is_pathogen_caused: "Whether disease is a pathogen caused"
+      is_glucose_dysfunction: "Whether disease is a glucose dysfunction"
+      tag_existing_treatment: "Whether disease has existing treatments"
+      tag_QALY_lost: "Whether disease has Quality Adjusted Life Years (QALY) lost"
 
 
 matrix_generation.run:

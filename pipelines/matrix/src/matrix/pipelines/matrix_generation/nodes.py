@@ -366,34 +366,65 @@ def flag_known_pairs(top_pairs: pd.DataFrame, known_pairs: pd.DataFrame) -> pd.D
     return top_pairs
 
 
-def reorder_columns(
-    top_pairs: pd.DataFrame, meta_col_names: Dict, score_col_name: str, stats_col_names: Dict
-) -> pd.DataFrame:
+def reorder_columns(top_pairs: pd.DataFrame, score_col_name: str, matrix_params: Dict) -> pd.DataFrame:
     """
     Reorder columns in the top pairs DataFrame.
 
     Args:
         top_pairs (pd.DataFrame): DataFrame containing the top pairs.
-        meta_col_names (Dict): Dictionary containing metadata column names.
         score_col_name (str): The name of the column containing the score.
-        stats_col_names (Dict): Dictionary containing the names of statistical columns.
+        matrix_params (Dict): Dictionary containing matrix parameters.
 
     Returns:
         pd.DataFrame: DataFrame with reordered columns.
     """
-    id_columns = ["pair_id", "drug_id", "drug_name", "disease_id", "disease_name"]
+    meta_col_names = matrix_params["metadata"]
+    stats_col_names = matrix_params["stats_col_names"]
+    tags = matrix_params["tags"]
+
+    id_columns = list(meta_col_names["drug_list"].keys()) + list(meta_col_names["disease_list"].keys())
     score_columns = [score_col_name]
+    tag_columns = list(tags["drugs"].keys()) + list(tags["diseases"].keys())
     kg_columns = list(meta_col_names["kg_data"].keys())
     stat_columns = list(stats_col_names["per_disease"]["top"].keys())
     stat_suffixes = ["_top_per_disease", "_all_per_disease"]
-
     columns_order = (
         id_columns
         + score_columns
         + kg_columns
+        + tag_columns
         + [f"{stat}{suffix}" for stat in stat_columns for suffix in stat_suffixes]
     )
+
+    # Remove columns that are not in the top pairs DataFrame but are specified in params
+    columns_order = [col for col in columns_order if col in top_pairs.columns]
     return top_pairs[columns_order]
+
+
+def add_tags(top_pairs: pd.DataFrame, drugs: pd.DataFrame, diseases: pd.DataFrame, matrix_params: Dict) -> pd.DataFrame:
+    """
+    Add tag columns to the top pairs DataFrame.
+
+    Args:
+        top_pairs (pd.DataFrame): DataFrame containing the top pairs.
+        drugs (pd.DataFrame): DataFrame containing drug information.
+        diseases (pd.DataFrame): DataFrame containing disease information.
+        matrix_params (Dict): Dictionary containing matrix parameters.
+
+    Returns:
+        pd.DataFrame: DataFrame with added tag columns.
+    """
+    # Add tag columns for drugs and diseasesto the top pairs DataFrame
+    for set, set_id, df in [("drugs", "drug_id", drugs), ("diseases", "disease_id", diseases)]:
+        for tag_name, _ in matrix_params.get(set, {}).items():
+            if tag_name not in df.columns:
+                logger.warning(f"Tag column '{tag_name}' not found in {set} DataFrame. Skipping.")
+            else:
+                tag_mapping = dict(zip(df["curie"], df[tag_name]))
+
+                # Add the tag to top_pairs
+                top_pairs[tag_name] = top_pairs[set_id].map(tag_mapping)
+    return top_pairs
 
 
 def generate_report(
@@ -417,17 +448,13 @@ def generate_report(
     Returns:
         Dataframe with the top pairs and additional information for the drugs and diseases.
     """
-    metadata = matrix_params.get("metadata")
     stats = matrix_params.get("stats_col_names")
-    # TODO: Add tags and filters
-    # tags = matrix_params.get("tags")
-    # filters = matrix_params.get("filters")
+    tags = matrix_params.get("tags")
     top_pairs = process_top_pairs(data, n_reporting, drugs, diseases, score_col_name)
     top_pairs = add_descriptive_stats(top_pairs, data, stats, score_col_name)
     top_pairs = flag_known_pairs(top_pairs, known_pairs)
-    # top_pairs = add_filters(top_pairs, drugs, diseases, filters)
-    # top_pairs = add_tags(top_pairs, known_pairs, tags)
-    top_pairs = reorder_columns(top_pairs, metadata, score_col_name, stats)
+    top_pairs = add_tags(top_pairs, drugs, diseases, tags)
+    top_pairs = reorder_columns(top_pairs, score_col_name, matrix_params)
     return top_pairs
 
 
