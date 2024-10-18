@@ -476,12 +476,16 @@ def generate_metadata(
         - Dataframe containing metadata such as data sources version, timestamp, run name etc.
         - Dataframe with metadata about the output matrix columns.
     """
-    dict = {
+    meta_dict = {
         "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
     }
     for key, value in run_metadata.items():
-        dict[key] = value
+        if key == "versions":
+            for subkey, subvalue in value.items():
+                meta_dict[f"{subkey}_version"] = subvalue["version"]
+        else:
+            meta_dict[key] = value
     metadata = matrix_params.get("metadata")
     stats = matrix_params.get("stats_col_names")
     summary_metadata = generate_summary_metadata(metadata, score_col_name, stats)
-    return pd.DataFrame(list(run_metadata.items()), columns=["Key", "Value"]), summary_metadata
+    return pd.DataFrame(list(meta_dict.items()), columns=["Key", "Value"]), summary_metadata
