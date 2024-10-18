@@ -53,14 +53,18 @@ moa_extraction:
     two_hop:
       model:
         object: skorch.NeuralNetClassifier
-        module: matrix.pipelines.moa_extraction.pytorch_model.TransformerBinaryClassifier
-        module__token_dim: 100
-        module__num_heads: 4
-        module__num_layers: 2
-        module__dropout: 0.1
-        max_epochs: 10
+        module: 
+          object: matrix.pipelines.moa_extraction.models.TransformerBinaryClassifier
+          token_dim: 100
+          num_heads: 4
+          num_layers: 2
+          dropout: 0.1
+        criterion:
+          object: torch.nn.BCEWithLogitsLoss
+        optimizer__weight_decay: 0.01
+        max_epochs: 20
         lr: 0.01
-        device: cuda
+        device: 'cpu'
       negative_samplers:
         - object: matrix.pipelines.moa_extraction.negative_path_samplers.ReplacementPathSampler
           num_replacement_paths: 1
@@ -69,14 +73,18 @@ moa_extraction:
     three_hop:
       model:
         object: skorch.NeuralNetClassifier
-        module: matrix.pipelines.moa_extraction.pytorch_model.TransformerBinaryClassifier
-        module__token_dim: 100
-        module__num_heads: 4
-        module__num_layers: 2
-        module__dropout: 0.1
-        max_epochs: 10
+        module: 
+          object: matrix.pipelines.moa_extraction.models.TransformerBinaryClassifier
+          token_dim: 100
+          num_heads: 4
+          num_layers: 2
+          dropout: 0.1
+        criterion:
+          object: torch.nn.BCEWithLogitsLoss
+        optimizer__weight_decay: 0.01
+        max_epochs: 20
         lr: 0.01
-        device: cuda
+        device: 'cpu'
       negative_samplers:
         - object: matrix.pipelines.moa_extraction.negative_path_samplers.ReplacementPathSampler
           num_replacement_paths: 1

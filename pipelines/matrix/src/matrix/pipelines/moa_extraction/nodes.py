@@ -200,7 +200,7 @@ def generate_negative_paths(
 
 @inject_object()
 def train_model(
-    model: BaseEstimator,  # TODO: Replace with tuner
+    model: BaseEstimator,
     paths: KGPaths,
     path_embedding_strategy: PathEmbeddingStrategy,
     category_encoder: OneHotEncoder,
@@ -217,16 +217,14 @@ def train_model(
     """
     X = path_embedding_strategy.run(paths, category_encoder, relation_encoder)
     y = paths.df["y"].to_numpy()
-    X = np.reshape(X, (X.shape[0], -1))  # TODO: Remove when transformers are implemented
-    # TODO: Add hyperparameter tuning here
-
-    # breakpoint()
+    X = X.astype(np.float32)
+    y = y.astype(np.float32).reshape(-1, 1)
     return model.fit(X, y)
 
 
 @inject_object()
 def train_model_split(
-    model: BaseEstimator,  # TODO: Replace with tuner
+    model: BaseEstimator,
     paths: KGPaths,
     path_embedding_strategy: PathEmbeddingStrategy,
     category_encoder: OneHotEncoder,
