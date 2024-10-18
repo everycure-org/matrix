@@ -1,6 +1,5 @@
 from pathlib import Path
 import tempfile
-import time
 import pytest
 from unittest.mock import patch, MagicMock
 from click.testing import CliRunner
@@ -499,10 +498,10 @@ def test_internal_submit(
     submit_cmd = " ".join(
         [
             "argo submit",
-            f"--name test-run",
-            f"-n test_namespace",
-            f"--from wftmpl/test-run",
-            f"-p run_name=test-run",
+            "--name test-run",
+            "-n test_namespace",
+            "--from wftmpl/test-run",
+            "-p run_name=test-run",
             "-l submit-from-ui=false",
             f"--entrypoint {pipeline_for_execution}",
             "-o json",

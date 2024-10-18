@@ -6,7 +6,7 @@ import pytest
 from pathlib import Path
 
 from kedro.framework.context import KedroContext
-from kedro.framework.project import configure_project, settings
+from kedro.framework.project import settings
 from kedro.framework.hooks import _create_hook_manager
 
 from pyspark.sql import SparkSession
