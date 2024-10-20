@@ -48,6 +48,42 @@ def enrich_embeddings(
     )
 
 
+def _add_flag_columns(matrix: pd.DataFrame, known_pairs: pd.DataFrame, clinical_trials: pd.DataFrame) -> pd.DataFrame:
+    """Adds boolean columns flagging known positives and known negatives.
+
+    Args:
+        matrix: Drug-disease pairs dataset.
+        known_pairs: Labelled ground truth drug-disease pairs dataset.
+        clinical_trials: Pairs dataset representing outcomes of recent clinical trials.
+
+    Returns:
+        Pairs dataset with flag columns.
+    """
+
+    def create_flag_column(pairs):
+        pairs_set = set(zip(pairs["source"], pairs["target"]))
+        return matrix.apply(lambda row: (row["source"], row["target"]) in pairs_set, axis=1)
+
+    # Flag known positives and negatives
+    test_pairs = known_pairs[known_pairs["split"].eq("TEST")]
+    test_pair_is_pos = test_pairs["y"].eq(1)
+    test_pos_pairs = test_pairs[test_pair_is_pos]
+    test_neg_pairs = test_pairs[~test_pair_is_pos]
+    matrix["is_known_positive"] = create_flag_column(test_pos_pairs)
+    matrix["is_known_negative"] = create_flag_column(test_neg_pairs)
+
+    # Flag clinical trials data
+    clinical_trials = clinical_trials.rename(columns={"drug_kg_curie": "source", "disease_kg_curie": "target"})
+    matrix["trial_sig_better"] = create_flag_column(clinical_trials[clinical_trials["significantly_better"] == 1])
+    matrix["trial_non_sig_better"] = create_flag_column(
+        clinical_trials[clinical_trials["non_significantly_better"] == 1]
+    )
+    matrix["trial_sig_worse"] = create_flag_column(clinical_trials[clinical_trials["non_significantly_worse"] == 1])
+    matrix["trial_non_sig_worse"] = create_flag_column(clinical_trials[clinical_trials["significantly_worse"] == 1])
+
+    return matrix
+
+
 def spark_to_pd(nodes: DataFrame) -> pd.DataFrame:
     """Temporary function to transform spark parquet to pandas parquet.
 
@@ -64,6 +100,12 @@ def spark_to_pd(nodes: DataFrame) -> pd.DataFrame:
     schema={
         "source": "object",
         "target": "object",
+        "is_known_positive": "bool",
+        "is_known_negative": "bool",
+        "trial_sig_better": "bool",
+        "trial_non_sig_better": "bool",
+        "trial_sig_worse": "bool",
+        "trial_non_sig_worse": "bool",
     },
     allow_subset=True,
 )
@@ -73,14 +115,18 @@ def generate_pairs(
     diseases: pd.DataFrame,
     graph: KnowledgeGraph,
     known_pairs: pd.DataFrame,
+    clinical_trials: pd.DataFrame,
 ) -> pd.DataFrame:
     """Function to generate matrix dataset.
+
+    FUTURE: Consider rewriting operations in PySpark for speed
 
     Args:
         drugs: Dataframe containing IDs for the list of drugs.
         diseases: Dataframe containing IDs for the list of diseases.
         graph: Object containing node embeddings.
         known_pairs: Labelled ground truth drug-disease pairs dataset.
+        clinical_trials: Pairs dataset representing outcomes of recent clinical trials.
 
     Returns:
         Pairs dataframe containing all combinations of drugs and diseases that do not lie in the training set.
@@ -107,11 +153,16 @@ def generate_pairs(
     # Concatenate all slices at once
     matrix = pd.concat(matrix_slices, ignore_index=True)
 
-    # Remove training set and return
+    # Remove training set
     train_pairs = known_pairs[~known_pairs["split"].eq("TEST")]
     train_pairs_set = set(zip(train_pairs["source"], train_pairs["target"]))
     is_in_train = matrix.apply(lambda row: (row["source"], row["target"]) in train_pairs_set, axis=1)
-    return matrix[~is_in_train]
+    matrix = matrix[~is_in_train]
+
+    # Add flag columns for known positives and negatives
+    matrix = _add_flag_columns(matrix, known_pairs, clinical_trials)
+
+    return matrix
 
 
 def make_batch_predictions(
@@ -431,7 +482,6 @@ def generate_report(
     n_reporting: int,
     drugs: pd.DataFrame,
     diseases: pd.DataFrame,
-    known_pairs: pd.DataFrame,
     score_col_name: str,
     matrix_params: Dict,
 ) -> List[pd.DataFrame]:
@@ -451,7 +501,7 @@ def generate_report(
     tags = matrix_params.get("tags")
     top_pairs = process_top_pairs(data, n_reporting, drugs, diseases, score_col_name)
     top_pairs = add_descriptive_stats(top_pairs, data, stats, score_col_name)
-    top_pairs = flag_known_pairs(top_pairs, known_pairs)
+    # top_pairs = flag_known_pairs(top_pairs, known_pairs)
     top_pairs = add_tags(top_pairs, drugs, diseases, tags)
     top_pairs = reorder_columns(top_pairs, score_col_name, matrix_params)
     return top_pairs

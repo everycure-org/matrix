@@ -128,4 +128,3 @@ preprocessing.raw.infer_sheet:
       - Drug_ID
       - Disease_ID
       - Name
-      - Feedback

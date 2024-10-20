@@ -12,16 +12,16 @@ https://docs.kedro.org/en/stable/kedro_project_setup/settings.html.
 from kedro.config import OmegaConfigLoader  # noqa: E402
 from kedro_mlflow.framework.hooks import MlflowHook
 
-import matrix.hooks as hooks
+import matrix.hooks as matrix_hooks
 
 from .resolvers import env, merge_dicts
 
 # Hooks are executed in a Last-In-First-Out (LIFO) order.
 HOOKS = (
-    hooks.NodeTimerHooks(),
+    matrix_hooks.NodeTimerHooks(),
     MlflowHook(),
-    hooks.MLFlowHooks(),
-    hooks.SparkHooks(),
+    matrix_hooks.MLFlowHooks(),
+    matrix_hooks.SparkHooks(),
 )
 
 # Installed plugins for which to disable hook auto-registration.
@@ -69,15 +69,13 @@ DYNAMIC_PIPELINES_MAPPING = {
         {"model_name": "xg_synth", "num_shards": 1, "run_inference": False},
     ],
     "evaluation": [
-        {"evaluation_name": "simple_ground_truth_classification"},
-        {"evaluation_name": "continuous_ground_truth_classification"},
-        {"evaluation_name": "disease_centric_matrix"},
-        {"evaluation_name": "disease_specific_ranking"},
-        # {"evaluation_name": "recall_at_n"},
-        {"evaluation_name": "simple_ground_truth_classification_time_split"},
-        {"evaluation_name": "continuous_ground_truth_classification_time_split"},
-        {"evaluation_name": "disease_centric_matrix_time_split"},
-        {"evaluation_name": "disease_specific_ranking_time_split"},
+        {"evaluation_name": "simple_classification"},
+        {"evaluation_name": "disease_specific"},
+        {"evaluation_name": "full_matrix_negatives"},
+        {"evaluation_name": "full_matrix"},
+        {"evaluation_name": "simple_classification_trials"},
+        {"evaluation_name": "disease_specific_trials"},
+        {"evaluation_name": "full_matrix_trials"},
     ],
 }
 
