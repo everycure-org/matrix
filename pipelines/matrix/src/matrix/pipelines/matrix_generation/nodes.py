@@ -390,31 +390,23 @@ def add_descriptive_stats(
     return top_pairs
 
 
-def flag_known_pairs(top_pairs: pd.DataFrame, known_pairs: pd.DataFrame) -> pd.DataFrame:
+def flag_known_pairs(top_pairs: pd.DataFrame) -> pd.DataFrame:
     """
     Flag known positive and negative pairs in the top pairs DataFrame.
 
     Args:
         top_pairs (pd.DataFrame): DataFrame containing the top pairs.
-        known_pairs (pd.DataFrame): DataFrame containing known positive and negative pairs.
 
     Returns:
         pd.DataFrame: DataFrame with added flags for known positive and negative pairs.
     """
-    known_pos_pairs_set = set(
-        zip(known_pairs[known_pairs["y"].eq(1)]["source"], known_pairs[known_pairs["y"].eq(1)]["target"])
+    top_pairs["is_known_positive"] = (
+        top_pairs["is_known_positive"] | top_pairs["trial_sig_better"] | top_pairs["trial_non_sig_better"]
     )
-    known_neg_pairs_set = set(
-        zip(known_pairs[~known_pairs["y"].eq(1)]["source"], known_pairs[~known_pairs["y"].eq(1)]["target"])
+    top_pairs["is_known_negative"] = (
+        top_pairs["is_known_negative"] | top_pairs["trial_sig_worse"] | top_pairs["trial_non_sig_worse"]
     )
-
-    top_pairs["is_known_positive"] = top_pairs.apply(
-        lambda row: (row["kg_drug_id"], row["kg_disease_id"]) in known_pos_pairs_set, axis=1
-    )
-    top_pairs["is_known_negative"] = top_pairs.apply(
-        lambda row: (row["kg_drug_id"], row["kg_disease_id"]) in known_neg_pairs_set, axis=1
-    )
-
+    print(top_pairs[["is_known_positive", "is_known_negative"]])
     return top_pairs
 
 
@@ -436,7 +428,7 @@ def reorder_columns(top_pairs: pd.DataFrame, score_col_name: str, matrix_params:
 
     id_columns = list(meta_col_names["drug_list"].keys()) + list(meta_col_names["disease_list"].keys())
     score_columns = [score_col_name]
-    tag_columns = list(tags["drugs"].keys()) + list(tags["diseases"].keys())
+    tag_columns = list(tags["drugs"].keys()) + list(tags["diseases"].keys()) + list(tags["pairs"].keys())
     kg_columns = list(meta_col_names["kg_data"].keys())
     stat_columns = list()
     for main_key in ["per_disease", "per_drug"]:
@@ -501,7 +493,7 @@ def generate_report(
     tags = matrix_params.get("tags")
     top_pairs = process_top_pairs(data, n_reporting, drugs, diseases, score_col_name)
     top_pairs = add_descriptive_stats(top_pairs, data, stats, score_col_name)
-    # top_pairs = flag_known_pairs(top_pairs, known_pairs)
+    top_pairs = flag_known_pairs(top_pairs)
     top_pairs = add_tags(top_pairs, drugs, diseases, tags)
     top_pairs = reorder_columns(top_pairs, score_col_name, matrix_params)
     return top_pairs
