@@ -228,7 +228,7 @@ def sample_data():
         {
             "curie": ["drug_1", "drug_2"],
             "name": ["Drug 1", "Drug 2"],
-            "description": ["Description 1", "Description 2"],
+            "is_steroid": [True, False],
         }
     )
 
@@ -236,7 +236,7 @@ def sample_data():
         {
             "curie": ["disease_1", "disease_2"],
             "name": ["Disease 1", "Disease 2"],
-            "description": ["Description A", "Description B"],
+            "is_cancer": [True, False],
         }
     )
 
@@ -279,6 +279,12 @@ def test_generate_report(sample_data):
             "source": ["drug_1", "drug_2", "drug_1"],
             "target": ["disease_1", "disease_2", "disease_2"],
             "probability": [0.8, 0.6, 0.4],
+            "is_known_positive": [True, False, False],
+            "trial_sig_better": [False, False, False],
+            "trial_non_sig_better": [False, False, False],
+            "trial_sig_worse": [False, False, False],
+            "trial_non_sig_worse": [False, False, False],
+            "is_known_negative": [False, True, False],
         }
     )
 
@@ -286,46 +292,60 @@ def test_generate_report(sample_data):
     score_col_name = "probability"
 
     # Mock the stats_col_names and meta_col_names dictionaries
-    stats_col_names = {"per_disease": {"top": {"mean": "Mean score"}, "all": {"mean": "Mean score"}}}
-
-    meta_col_names = {
-        "drug_list": {"drug_id": "Drug ID"},
-        "disease_list": {"disease_id": "Disease ID"},
-        "kg_data": {
-            "kg_drug_id": "KG Drug ID",
-            "kg_disease_id": "KG Disease ID",
-            "kg_drug_name": "KG Drug Name",
-            "kg_disease_name": "KG Disease Name",
-            "is_known_positive": "Whether the pair is a known positive",
-            "is_known_negative": "Whether the pair is a known negative",
+    matrix_params = {
+        "metadata": {
+            "drug_list": {"drug_id": "Drug ID", "drug_name": "Drug Name"},
+            "disease_list": {"disease_id": "Disease ID", "disease_name": "Disease Name"},
+            "kg_data": {
+                "pair_id": "Unique identifier for each pair",
+                "kg_drug_id": "KG Drug ID",
+                "kg_disease_id": "KG Disease ID",
+                "kg_drug_name": "KG Drug Name",
+                "kg_disease_name": "KG Disease Name",
+            },
+        },
+        "stats_col_names": {
+            "per_disease": {"top": {"mean": "Mean score"}, "all": {"mean": "Mean score"}},
+            "per_drug": {"top": {"mean": "Mean score"}, "all": {"mean": "Mean score"}},
+        },
+        "tags": {
+            "drugs": {"is_steroid": "Whether drug is a steroid"},
+            "pairs": {
+                "is_known_positive": "Whether the pair is a known positive, based on literature and clinical trials",
+                "is_known_negative": "Whether the pair is a known negative, based on literature and clinical trials",
+            },
+            "diseases": {"is_cancer": "Whether disease is a cancer"},
         },
     }
 
     # When generating the report
-    result = generate_report(
-        data, n_reporting, drugs, diseases, known_pairs, score_col_name, stats_col_names, meta_col_names
-    )
+    result = generate_report(data, n_reporting, drugs, diseases, score_col_name, matrix_params)
 
     # Then the report is of the correct structure
     assert isinstance(result, pd.DataFrame)
     assert len(result) == n_reporting
 
     expected_columns = {
-        "pair_id",
         "drug_id",
         "drug_name",
         "disease_id",
         "disease_name",
-        "score",
-        "is_known_positive",
-        "is_known_negative",
+        "probability",
+        "pair_id",
         "kg_drug_id",
         "kg_disease_id",
         "kg_drug_name",
         "kg_disease_name",
+        "is_steroid",
+        "is_known_positive",
+        "is_known_negative",
+        "is_cancer",
         "mean_top_per_disease",
         "mean_all_per_disease",
+        "mean_top_per_drug",
+        "mean_all_per_drug",
     }
+    print(result.columns)
     assert set(result.columns) == expected_columns
 
     assert result["drug_name"].tolist() == ["Drug Label 1", "Drug Label 2"]
