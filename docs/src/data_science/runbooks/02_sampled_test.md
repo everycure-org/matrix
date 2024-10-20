@@ -1,6 +1,4 @@
----
-title: Sample of the EveryCure's Knowledge Graph
----
+# Sample of the EveryCure's Knowledge Graph
 
 ## Background
 
