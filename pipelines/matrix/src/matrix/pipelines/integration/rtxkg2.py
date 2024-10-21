@@ -2,14 +2,13 @@
 
 from typing import Any, Dict
 
-import pandas as pd
 
 import pandera.pyspark as pa
 import pyspark.sql.functions as f
 import pyspark.sql.types as T
 from pyspark.sql import DataFrame
 
-from .biolink import unnest
+from .biolink import biolink_deduplicate, filter_semmed
 from matrix.schemas.knowledge_graph import KGEdgeSchema, KGNodeSchema, cols_for_schema
 
 RTX_SEPARATOR = "\u01c2"
@@ -44,12 +43,8 @@ def transform_rtxkg2_nodes(nodes_df: DataFrame) -> DataFrame:
     # fmt: on
 
 
-def create_biolink_hierarchy(biolink_predicates: Dict[str, Any]) -> pd.DataFrame:
-    return unnest(biolink_predicates)
-
-
 @pa.check_output(KGEdgeSchema)
-def transform_rtxkg2_edges(edges_df: DataFrame, biolink_hierarchy: DataFrame) -> DataFrame:
+def transform_rtxkg2_edges(edges_df: DataFrame, biolink_predicates: Dict[str, Any]) -> DataFrame:
     """Transform RTX KG2 edges to our target schema.
 
     Args:
@@ -60,7 +55,7 @@ def transform_rtxkg2_edges(edges_df: DataFrame, biolink_hierarchy: DataFrame) ->
     """
 
     # fmt: off
-    return (
+    edges = (
         edges_df
         .withColumn("upstream_data_source",          f.array(f.lit("rtxkg2")))
         .withColumn("knowledge_level",               f.lit(None).cast(T.StringType()))
@@ -74,3 +69,5 @@ def transform_rtxkg2_edges(edges_df: DataFrame, biolink_hierarchy: DataFrame) ->
         .select(*cols_for_schema(KGEdgeSchema))
     )
     # fmt: on
+
+    return edges.transform(biolink_deduplicate, biolink_predicates).transform(filter_semmed)

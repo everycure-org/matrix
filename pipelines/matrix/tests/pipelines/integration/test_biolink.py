@@ -65,7 +65,7 @@ def test_unnest(sample_predicates):
     # Given an input dictionary of hierarchical predicate definition
 
     # When calling the unnest function
-    result = biolink.unnest(sample_predicates, parents=[])
+    result = biolink._unnest(sample_predicates, parents=[])
     expected = pd.DataFrame(
         [
             ["composed_primarily_of", ["related_to"]],
@@ -81,11 +81,8 @@ def test_unnest(sample_predicates):
 
 
 def test_biolink_deduplicate(spark, sample_edges, sample_predicates):
-    # Given sample edges and predicates
-    predicates = spark.createDataFrame(biolink.unnest(sample_predicates))
-
     # When applying the biolink deduplicate
-    result = biolink.biolink_deduplicate(sample_edges, predicates)
+    result = biolink.biolink_deduplicate(sample_edges, sample_predicates)
     expected = spark.createDataFrame(
         [
             (
