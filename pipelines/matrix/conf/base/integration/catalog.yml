@@ -22,6 +22,10 @@ _layer_prm: &_layer_prm
 # Datasets
 # -------------------------------------------------------------------------
 
+
+# NOTE: We're plugging into the live source as we expect this to change rather,
+# moreover, we consider it highly unlikely that paths would suddently change
+# across biolink versions.
 integration.raw.biolink.predicates:
   type: kedro_datasets.json.JSONDataset
   filepath: https://biolink.github.io/biolink-model/predicates.json
@@ -60,7 +64,6 @@ integration.int.{source}.edges.norm:
 integration.int.{source}.nodes_norm_mapping:
   <<: [*_spark_parquet, *_layer_int]
   filepath: ${globals:paths.int}/{source}/nodes_norm_mapping
-
 
 # Unified KGs
 integration.prm.unified_edges:
