@@ -29,7 +29,7 @@ def get_random_selection_from_rtx(
     cond = ((edges.subject == ground_truths_spark_df.source) & (edges.object == ground_truths_spark_df.target)) 
     ground_truths_edges = edges.join(ground_truths_spark_df, how='inner', on=cond).select(edges.columns)
     # Now take a sample from the whole KG edges
-    edges_sample_df = edges.sample(withReplacement=False, fraction=0.005, seed=123)
+    edges_sample_df = edges.sample(withReplacement=False, fraction=0.0000005, seed=123)
     # Merge the ground truths
     edges_sample_df = edges_sample_df.union(ground_truths_edges).distinct()
     # Now we need to select the nodes. First, make a list with all the IDs

@@ -82,9 +82,6 @@ def register_pipelines() -> Dict[str, Pipeline]:
     pipelines["sampled_test"] = (
         create_integration_pipeline()
         + create_embeddings_pipeline()
-        + create_modelling_pipeline()
-        + create_matrix_pipeline()
-        + create_evaluation_pipeline()
     )
     pipelines["all"] = create_ingestion_pipeline() + pipelines["__default__"]
     pipelines["experiment"] = create_modelling_pipeline() + create_evaluation_pipeline()
