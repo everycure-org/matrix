@@ -65,6 +65,7 @@ def spark():
     spark = (
         SparkSession.builder.config("spark.sql.shuffle.partitions", 1)
         .config("spark.executorEnv.PYTHONPATH", "src")
+        .config("spark.driver.bindAddress", "127.0.0.1")
         .master("local")
         .appName("tests")
         .getOrCreate()
