@@ -406,7 +406,6 @@ def flag_known_pairs(top_pairs: pd.DataFrame) -> pd.DataFrame:
     top_pairs["is_known_negative"] = (
         top_pairs["is_known_negative"] | top_pairs["trial_sig_worse"] | top_pairs["trial_non_sig_worse"]
     )
-    print(top_pairs[["is_known_positive", "is_known_negative"]])
     return top_pairs
 
 
