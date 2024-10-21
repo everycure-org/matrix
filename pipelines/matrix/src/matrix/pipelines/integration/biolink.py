@@ -1,10 +1,13 @@
 import pandas as pd
+import logging
 
 from typing import Dict, Any, List, Optional
 from pyspark.sql import DataFrame
 
 import pyspark.sql.functions as f
 import pyspark as ps
+
+logger = logging.getLogger(__name__)
 
 
 def _unnest(predicates: List[Dict[str, Any]], parents: Optional[List[str]] = None):
@@ -56,12 +59,15 @@ def biolink_deduplicate(edges_df: DataFrame, biolink_predicates: DataFrame):
         biolink_predicates: JSON object with biolink predicates
     """
 
+    before_count = edges_df.count()
     spark = ps.sql.SparkSession.builder.getOrCreate()
 
+    # Load up biolink hierarchy
     biolink_hierarchy = spark.createDataFrame(_unnest(biolink_predicates)).withColumn(
         "predicate", f.concat(f.lit("biolink:"), f.col("predicate"))
     )
 
+    # Enrich edges with path to predicates in biolink hierarchy
     edges_df = edges_df.join(biolink_hierarchy, on="predicate")
 
     # Compute self join
@@ -82,6 +88,8 @@ def biolink_deduplicate(edges_df: DataFrame, biolink_predicates: DataFrame):
         .select("A.*")
         .drop("parents")
     )
+
+    logger.info(f"dropped {before_count - edges_df.count()} edges")
 
     return res
 
@@ -104,7 +112,7 @@ def filter_semmed(
     # NOTE: Let's think of what features we expose as part of feature store
     # and where we apply filtering
     return (
-        edges_df.withColumn("num_publications", f.size(f.col("publications")))
+        edges_df.withColumn("num_publications", f.size(f.col("publications")))  # TODO: Count unique?
         .join(
             pubmed_mapping_spark.withColumnRenamed("curie", "subject")
             .withColumnRenamed("pmids", "subject_pmids")
@@ -128,6 +136,7 @@ def filter_semmed(
             )
             / (f.log2(f.lit(num_pairs)) - f.min(f.log2(f.col("num_subject_pmids")), f.log2(f.col("num_object_pmids")))),
         )
+        # TODO: For both filters below, only apply filter if edge comes from SemMed
         .filter(f.col("ndg") < f.lit(ndg_threshold))
         .filter(f.col("num_publications") > f.lit(publication_threshold))
     )

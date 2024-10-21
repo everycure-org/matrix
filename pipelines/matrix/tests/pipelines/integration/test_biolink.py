@@ -110,8 +110,4 @@ def test_biolink_deduplicate(spark, sample_edges, sample_predicates):
         ),
     )
 
-    # Then dataframe filtered correctly
-    # NOTE: PySpark is a pain to compare?
-    assert sorted(result.select("subject", "object", "predicate").collect()) == sorted(
-        expected.select("subject", "object", "predicate").collect()
-    )
+    assertDataFrameEqual(result.select(*expected.columns), expected)

@@ -28,7 +28,6 @@ ingestion.int.rtx_kg2.edges:
     bigQueryTableLabel.git_sha: ${globals:git_sha}
 
 
-
 ingestion.int.robokop.nodes:
   <<: *_bigquery_ds
   dataset: robokop_kg
