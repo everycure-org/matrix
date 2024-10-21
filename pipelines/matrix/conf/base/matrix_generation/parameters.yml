@@ -49,6 +49,13 @@ matrix_generation.matrix:
         max: "Maximum probability score"
         min: "Minimum probability score"
         std: "Standard deviation of probability scores"
+    full:
+      mean: "Mean probability score"
+      median: "Median probability score"
+      quantile: "25% quantile of probability score"
+      max: "Maximum probability score"
+      min: "Minimum probability score"
+      std: "Standard deviation of probability scores"
   tags:
     drugs:
       available_USA: "Whether drug is prescriped or discontinued in USA"

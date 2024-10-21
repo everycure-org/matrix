@@ -42,6 +42,7 @@ def _create_matrix_generation_pipeline(model: str) -> Pipeline:
                 func=nodes.generate_metadata,
                 inputs={
                     "matrix_report": f"matrix_generation.{model}.reporting.matrix_report",
+                    "data": f"matrix_generation.{model}.model_output.sorted_matrix_predictions",
                     "score_col_name": "params:evaluation.score_col_name",
                     "matrix_params": "params:matrix_generation.matrix",
                     "run_metadata": "params:matrix_generation.run",

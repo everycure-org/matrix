@@ -503,6 +503,7 @@ def generate_report(
 
 def generate_metadata(
     matrix_report: pd.DataFrame,
+    data: pd.DataFrame,
     score_col_name: str,
     matrix_params: Dict,
     run_metadata: Dict,
@@ -532,7 +533,18 @@ def generate_metadata(
     # Generate legends column and filter out based on
     legends_df = generate_summary_metadata(matrix_params, score_col_name)
     legends_df = legends_df.loc[legends_df["Key"].isin(matrix_report.columns.values)]
+
     # Generate metadata df
     version_df = pd.DataFrame(list(meta_dict.items()), columns=["Key", "Value"])
+
+    # Calculate mean/median/quantile score for the full matrix
+    stats_dict = {"Key": [], "Value": []}
+    for main_key in matrix_params["stats_col_names"]["full"].keys():
+        # Top n stats
+        stats_dict["Key"].append(f"{main_key}_top")
+        stats_dict["Value"].append(getattr(data[score_col_name], main_key)())
+        # Full matrix stats
+        stats_dict["Key"].append(f"{main_key}_full")
+        stats_dict["Value"].append(getattr(matrix_report[score_col_name], main_key)())
     # Concatenate version and legends dfs
-    return pd.concat([version_df, legends_df], axis=0)
+    return pd.concat([version_df, pd.DataFrame(stats_dict), legends_df], axis=0)
