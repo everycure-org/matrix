@@ -30,18 +30,6 @@ integration.raw.biolink.predicates:
   type: kedro_datasets.json.JSONDataset
   filepath: https://biolink.github.io/biolink-model/predicates.json
 
-
-integration.raw.pubmid.pubmedid_mapping:
-  # Example connection to sqllite
-  # TODO: Update to actual db when supplied by Chunyu
-  type: pandas.SQLQueryDataset
-  sql: "select shuttle, shuttle_id from spaceflights.shuttles;"
-  credentials: db_credentials
-  execution_options:
-    stream_results: true
-  load_args:
-    chunksize: 1000
-
 integration.int.{source}.nodes:
   <<: [*_spark_parquet, *_layer_int]
   filepath: ${globals:paths.int}/{source}/nodes
