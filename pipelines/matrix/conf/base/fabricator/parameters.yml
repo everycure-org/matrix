@@ -61,7 +61,7 @@ fabricator.rtx_kg2:
       # column that contains random values from the nodes table defined above.
       subject:
         type: row_apply
-        list_of_values: [nodes.id]
+        list_of_values: [nodes.id:ID]
         row_func: "lambda *args: args[0]"
         resize: True
         seed: 590590
@@ -69,7 +69,7 @@ fabricator.rtx_kg2:
       # column that contains random values from the nodes table defined above.
       object:
         type: row_apply
-        list_of_values: [nodes.id]
+        list_of_values: [nodes.id:ID]
         row_func: "lambda *args: args[0]"
         resize: True
         seed: 49494
@@ -115,13 +115,13 @@ fabricator.rtx_kg2:
     columns:
       curie: 
         type: row_apply
-        list_of_values: [nodes.id]
+        list_of_values:  [nodes.id:ID, nodes.name]
         row_func: "lambda *args: args[0]"
         resize: True
         seed: 6850
       name: 
         type: row_apply
-        list_of_values: [nodes.id, nodes.name]
+        list_of_values: [nodes.id:ID, nodes.name]
         row_func: "lambda *args: args[1]"
         resize: True
         seed: 6850
@@ -132,7 +132,7 @@ fabricator.rtx_kg2:
     columns:
       curie: 
         type: row_apply
-        list_of_values: [nodes.id]
+        list_of_values: [nodes.id:ID]
         row_func: "lambda *args: args[0]"
         resize: True
         seed: 65690
