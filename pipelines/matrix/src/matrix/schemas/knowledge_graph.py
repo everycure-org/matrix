@@ -30,7 +30,7 @@ class KGEdgeSchema(DataFrameModel):
     predicate:                   StringType()            = pa.Field(nullable = False)
     object:                      StringType()            = pa.Field(nullable = False)
     knowledge_level:             StringType()            = pa.Field(nullable = True)
-    primary_knowledge_source:    ArrayType(StringType()) = pa.Field(nullable = True)
+    primary_knowledge_source:    StringType()            = pa.Field(nullable = True)
     aggregator_knowledge_source: ArrayType(StringType()) = pa.Field(nullable = True)
     publications:                ArrayType(StringType()) = pa.Field(nullable = True)
     subject_aspect_qualifier:    StringType()            = pa.Field(nullable = True)
