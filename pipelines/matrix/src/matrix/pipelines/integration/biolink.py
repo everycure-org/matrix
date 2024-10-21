@@ -89,24 +89,35 @@ def biolink_deduplicate(edges_df: DataFrame, biolink_predicates: DataFrame):
 def filter_semmed(edges_df: DataFrame, pubmed_mapping: pd.DataFrame, num_pairs: float = 3.7e7 * 20) -> DataFrame:
     spark = ps.sql.SparkSession.builder.getOrCreate()
 
-    pubmed_mapping_spark = spark.createDataFrame(pubmed_mapping).withColumn("pmids", f.array_distinct(f.col("pmids")))
+    pubmed_mapping_spark = (
+        spark.createDataFrame(pubmed_mapping)
+        .withColumn("pmids", f.array_distinct(f.col("pmids")))
+        .withColumn("num_pmids", f.array_size(f.col("pmids")))
+    )
 
     return (
         edges_df.withColumn("num_publications", f.size(f.col("publications")))
         .join(
-            pubmed_mapping_spark.withColumnRenamed("curie", "subject").withColumnRenamed("pmids", "subject_pmids"),
+            pubmed_mapping_spark.withColumnRenamed("curie", "subject")
+            .withColumnRenamed("pmids", "subject_pmids")
+            .withColumnRenamed("num_pmids", "num_subject_pmids"),
             on="subject",
             how="left",
         )
         .join(
-            pubmed_mapping_spark.withColumnRenamed("curie", "object").withColumnRenamed("pmids", "object_pmids"),
+            pubmed_mapping_spark.withColumnRenamed("curie", "object")
+            .withColumnRenamed("pmids", "object_pmids")
+            .withColumnRenamed("num_pmids", "num_object_pmids"),
             on="object",
             how="left",
         )
         .withColumn("num_common_pmids", f.array_size(f.array_intersect(f.col("subject_pmids"), f.col("object_pmids"))))
         .withColumn(
             "ndg",
-            (f.max(f.log2(f.col("subject_pmids")), f.log2(f.col("object_pmids"))) - f.log2(f.col("num_common_pmids")))
-            / (f.log2(f.lit(num_pairs)) - f.min(f.log2(f.col("subject_pmids")), f.log2(f.col("object_pmids")))),
+            (
+                f.max(f.log2(f.col("num_subject_pmids")), f.log2(f.col("num_object_pmids")))
+                - f.log2(f.col("num_common_pmids"))
+            )
+            / (f.log2(f.lit(num_pairs)) - f.min(f.log2(f.col("num_subject_pmids")), f.log2(f.col("num_object_pmids")))),
         )
     )
