@@ -377,18 +377,17 @@ def add_descriptive_stats(
     Returns:
         pd.DataFrame: DataFrame with added descriptive statistics.
     """
-    i = 0
+    data = data.sort_values(by=score_col_name, ascending=False)
     for entity_type, df_col, id_col in [("disease", "target", "kg_disease_id"), ("drug", "source", "kg_drug_id")]:
         # Calculate stats for top pairs
         for stat in stats_col_names[f"per_{entity_type}"]["top"].keys():
             top_pairs[f"{stat}_top_per_{entity_type}"] = top_pairs.groupby(id_col)[score_col_name].transform(stat)
-            i = i + 1
+
         # Calculate stats for all pairs (need to use different df)
         all_pairs = data[data[df_col].isin(top_pairs[id_col].unique())]
         for stat in stats_col_names[f"per_{entity_type}"]["all"].keys():
-            stat_dict = all_pairs.groupby(df_col)[score_col_name].agg(stat).to_dict()
+            stat_dict = all_pairs.groupby(df_col)[score_col_name].agg(stat)
             top_pairs[f"{stat}_all_per_{entity_type}"] = top_pairs[id_col].map(stat_dict)
-            i = i + 1
     return top_pairs
 
 
@@ -530,11 +529,8 @@ def generate_metadata(
 
     # Generate legends column and filter out based on
     legends_df = generate_summary_metadata(matrix_params, score_col_name)
-    legends_df_columns = [col for col in legends_df.columns if col in matrix_report.columns]
-    legends_df = legends_df[legends_df_columns]
-
+    legends_df = legends_df.loc[legends_df["Key"].isin(matrix_report.columns.values)]
     # Generate metadata df
     version_df = pd.DataFrame(list(meta_dict.items()), columns=["Key", "Value"])
-
     # Concatenate version and legends dfs
     return pd.concat([version_df, legends_df], axis=0)
