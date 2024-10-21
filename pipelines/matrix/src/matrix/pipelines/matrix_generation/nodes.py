@@ -316,7 +316,7 @@ def generate_summary_metadata(matrix_parameters: Dict, score_col_name: str) -> p
     return pd.DataFrame(list(summary_metadata.items()), columns=["Key", "Value"])
 
 
-def process_top_pairs(
+def _process_top_pairs(
     data: pd.DataFrame, n_reporting: int, drugs: pd.DataFrame, diseases: pd.DataFrame, score_col_name: str
 ) -> pd.DataFrame:
     """
@@ -362,7 +362,7 @@ def process_top_pairs(
     return top_pairs
 
 
-def add_descriptive_stats(
+def _add_descriptive_stats(
     top_pairs: pd.DataFrame, data: pd.DataFrame, stats_col_names: Dict, score_col_name: str
 ) -> pd.DataFrame:
     """
@@ -391,7 +391,7 @@ def add_descriptive_stats(
     return top_pairs
 
 
-def flag_known_pairs(top_pairs: pd.DataFrame) -> pd.DataFrame:
+def _flag_known_pairs(top_pairs: pd.DataFrame) -> pd.DataFrame:
     """
     Flag known positive and negative pairs in the top pairs DataFrame.
 
@@ -410,7 +410,7 @@ def flag_known_pairs(top_pairs: pd.DataFrame) -> pd.DataFrame:
     return top_pairs
 
 
-def reorder_columns(top_pairs: pd.DataFrame, score_col_name: str, matrix_params: Dict) -> pd.DataFrame:
+def _reorder_columns(top_pairs: pd.DataFrame, score_col_name: str, matrix_params: Dict) -> pd.DataFrame:
     """
     Reorder columns in the top pairs DataFrame.
 
@@ -443,7 +443,9 @@ def reorder_columns(top_pairs: pd.DataFrame, score_col_name: str, matrix_params:
     return top_pairs[columns_order]
 
 
-def add_tags(top_pairs: pd.DataFrame, drugs: pd.DataFrame, diseases: pd.DataFrame, matrix_params: Dict) -> pd.DataFrame:
+def _add_tags(
+    top_pairs: pd.DataFrame, drugs: pd.DataFrame, diseases: pd.DataFrame, matrix_params: Dict
+) -> pd.DataFrame:
     """
     Add tag columns to the top pairs DataFrame.
 
@@ -491,11 +493,11 @@ def generate_report(
     """
     stats = matrix_params.get("stats_col_names")
     tags = matrix_params.get("tags")
-    top_pairs = process_top_pairs(data, n_reporting, drugs, diseases, score_col_name)
-    top_pairs = add_descriptive_stats(top_pairs, data, stats, score_col_name)
-    top_pairs = flag_known_pairs(top_pairs)
-    top_pairs = add_tags(top_pairs, drugs, diseases, tags)
-    top_pairs = reorder_columns(top_pairs, score_col_name, matrix_params)
+    top_pairs = _process_top_pairs(data, n_reporting, drugs, diseases, score_col_name)
+    top_pairs = _add_descriptive_stats(top_pairs, data, stats, score_col_name)
+    top_pairs = _flag_known_pairs(top_pairs)
+    top_pairs = _add_tags(top_pairs, drugs, diseases, tags)
+    top_pairs = _reorder_columns(top_pairs, score_col_name, matrix_params)
     return top_pairs
 
 
