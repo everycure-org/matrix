@@ -20,7 +20,7 @@ def create_pipeline(**kwargs) -> Pipeline:
             ),
             node(
                 func=transform_robo_edges,
-                inputs="ingestion.int.robokop.edges",
+                inputs=["ingestion.int.robokop.edges", "integration.raw.biolink.predicates"],
                 outputs="integration.int.robokop.edges",
                 name="transform_robokop_edges",
                 tags=["standardize"],
