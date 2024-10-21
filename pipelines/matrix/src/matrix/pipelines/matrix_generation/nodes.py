@@ -278,19 +278,22 @@ def make_predictions_and_sort(
     return sorted_data
 
 
-def generate_summary_metadata(meta_col_names, score_col_name, stats_col_names):
+def generate_summary_metadata(matrix_parameters: Dict, score_col_name: str) -> pd.DataFrame:
     """
     Generate metadata for the output matrix.
 
     Args:
-        meta_col_names (dict): Dictionary containing metadata column names.
+        matrix_parameters (Dict): Dictionary containing matrix parameters.
         score_col_name (str): Name of the score column.
-        stats_col_names (dict): Dictionary containing statistical column names.
 
     Returns:
         pd.DataFrame: DataFrame containing summary metadata.
     """
     summary_metadata = {}
+
+    meta_col_names = matrix_parameters["metadata"]
+    stats_col_names = matrix_parameters["stats_col_names"]
+    tags_col_names = matrix_parameters["tags"]
 
     # Add metadata for ID columns
     summary_metadata.update(meta_col_names["drug_list"])
@@ -298,7 +301,7 @@ def generate_summary_metadata(meta_col_names, score_col_name, stats_col_names):
 
     # Add metadata for KG columns and tags
     summary_metadata.update(meta_col_names["kg_data"])
-    summary_metadata.update(meta_col_names["tags"])
+    summary_metadata.update(tags_col_names)
 
     # Add metadata for statistical columns
     for stat, description in stats_col_names["per_disease"]["top"].items():
@@ -520,8 +523,6 @@ def generate_metadata(
                 meta_dict[f"{subkey}_version"] = subvalue["version"]
         else:
             meta_dict[key] = value
-    metadata = matrix_params.get("metadata")
-    stats = matrix_params.get("stats_col_names")
-    legends_df = generate_summary_metadata(metadata, score_col_name, stats)
+    legends_df = generate_summary_metadata(matrix_params, score_col_name)
     version_df = pd.DataFrame(list(meta_dict.items()), columns=["Key", "Value"])
     return pd.concat([version_df, legends_df], axis=0)
