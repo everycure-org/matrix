@@ -226,35 +226,35 @@ def sample_data():
     """Fixture that provides sample data for testing matrix generation functions."""
     drugs = pd.DataFrame(
         {
-            "curie": ["drug_1", "drug_2"],
-            "name": ["Drug 1", "Drug 2"],
-            "is_steroid": [True, False],
+            "curie": ["drug_1", "drug_2", "drug_3", "drug_4"],
+            "name": ["Drug 1", "Drug 2", "Drug 3", "Drug 4"],
+            "is_steroid": [True, False, False, False],
         }
     )
 
     diseases = pd.DataFrame(
         {
-            "curie": ["disease_1", "disease_2"],
-            "name": ["Disease 1", "Disease 2"],
-            "is_cancer": [True, False],
+            "curie": ["disease_1", "disease_2", "disease_3", "disease_4"],
+            "name": ["Disease 1", "Disease 2", "Disease 3", "Disease 4"],
+            "is_cancer": [True, False, False, False],
         }
     )
 
     known_pairs = pd.DataFrame(
         {
-            "source": ["drug_1", "drug_2", "drug_3"],
-            "target": ["disease_1", "disease_2", "disease_3"],
-            "split": ["TRAIN", "TEST", "TRAIN"],
-            "y": [1, 0, 1],
+            "source": ["drug_1", "drug_2", "drug_3", "drug_4"],
+            "target": ["disease_1", "disease_2", "disease_3", "disease_4"],
+            "split": ["TRAIN", "TEST", "TRAIN", "TRAIN"],
+            "y": [1, 0, 1, 1],
         }
     )
 
     nodes = pd.DataFrame(
         {
-            "id": ["drug_1", "drug_2", "disease_1", "disease_2"],
-            "is_drug": [True, True, False, False],
-            "is_disease": [False, False, True, True],
-            "topological_embedding": [np.ones(3) * n for n in range(4)],
+            "id": ["drug_1", "drug_2", "disease_1", "disease_2", "disease_3", "disease_4"],
+            "is_drug": [True, True, False, False, False, False],
+            "is_disease": [False, False, True, True, True, True],
+            "topological_embedding": [np.ones(3) * n for n in range(6)],
         }
     )
     graph = KnowledgeGraph(nodes)
@@ -268,27 +268,27 @@ def test_generate_report(sample_data):
     drugs, diseases, known_pairs, _ = sample_data
 
     # Update the sample data to include the new required columns
-    drugs["single_ID"] = ["drug_id_1", "drug_id_2"]
-    drugs["ID_Label"] = ["Drug Label 1", "Drug Label 2"]
+    drugs["single_ID"] = ["drug_id_1", "drug_id_2", "drug_id_3", "drug_id_4"]
+    drugs["ID_Label"] = ["Drug Label 1", "Drug Label 2", "Drug Label 3", "Drug Label 4"]
 
-    diseases["category_class"] = ["disease_class_1", "disease_class_2"]
-    diseases["label"] = ["Disease Label 1", "Disease Label 2"]
+    diseases["category_class"] = ["disease_class_1", "disease_class_2", "disease_class_3", "disease_class_4"]
+    diseases["label"] = ["Disease Label 1", "Disease Label 2", "Disease Label 3", "Disease Label 4"]
 
     data = pd.DataFrame(
         {
-            "source": ["drug_1", "drug_2", "drug_1"],
-            "target": ["disease_1", "disease_2", "disease_2"],
-            "probability": [0.8, 0.6, 0.4],
-            "is_known_positive": [True, False, False],
-            "trial_sig_better": [False, False, False],
-            "trial_non_sig_better": [False, False, False],
-            "trial_sig_worse": [False, False, False],
-            "trial_non_sig_worse": [False, False, False],
-            "is_known_negative": [False, True, False],
+            "source": ["drug_1", "drug_2", "drug_3", "drug_4", "drug_2"],
+            "target": ["disease_1", "disease_2", "disease_3", "disease_3", "disease_2"],
+            "probability": [0.8, 0.6, 0.4, 0.2, 0.2],
+            "is_known_positive": [True, False, False, False, False],
+            "trial_sig_better": [False, False, False, False, False],
+            "trial_non_sig_better": [False, False, False, False, False],
+            "trial_sig_worse": [False, False, False, False, False],
+            "trial_non_sig_worse": [False, False, False, False, False],
+            "is_known_negative": [False, True, False, False, False],
         }
     )
 
-    n_reporting = 2
+    n_reporting = 3
     score_col_name = "probability"
 
     # Mock the stats_col_names and meta_col_names dictionaries
@@ -345,10 +345,16 @@ def test_generate_report(sample_data):
         "mean_top_per_drug",
         "mean_all_per_drug",
     }
-    print(result.columns)
     assert set(result.columns) == expected_columns
+    print(result["mean_all_per_disease"])
+    print(result["mean_all_per_drug"])
 
-    assert result["drug_name"].tolist() == ["Drug Label 1", "Drug Label 2"]
-    assert result["disease_name"].tolist() == ["Disease Label 1", "Disease Label 2"]
-    assert result["kg_drug_name"].tolist() == ["Drug 1", "Drug 2"]
-    assert result["kg_disease_name"].tolist() == ["Disease 1", "Disease 2"]
+    assert result["drug_name"].tolist() == ["Drug Label 1", "Drug Label 2", "Drug Label 3"]
+    assert result["disease_name"].tolist() == ["Disease Label 1", "Disease Label 2", "Disease Label 3"]
+    assert result["kg_drug_name"].tolist() == ["Drug 1", "Drug 2", "Drug 3"]
+    assert result["kg_disease_name"].tolist() == ["Disease 1", "Disease 2", "Disease 3"]
+    assert result["probability"].tolist() == pytest.approx([0.8, 0.6, 0.4])
+    assert result["mean_top_per_disease"].tolist() == pytest.approx([0.8, 0.6, 0.4])
+    assert result["mean_all_per_disease"].tolist() == pytest.approx([0.8, 0.4, 0.3])
+    assert result["mean_top_per_drug"].tolist() == pytest.approx([0.8, 0.6, 0.4])
+    assert result["mean_all_per_drug"].tolist() == pytest.approx([0.8, 0.4, 0.4])
