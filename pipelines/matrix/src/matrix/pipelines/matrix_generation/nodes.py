@@ -301,7 +301,11 @@ def generate_summary_metadata(matrix_parameters: Dict, score_col_name: str) -> p
 
     # Add metadata for KG columns and tags
     summary_metadata.update(meta_col_names["kg_data"])
-    summary_metadata.update(tags_col_names)
+
+    # Add metadata for tags and filters
+    summary_metadata.update(tags_col_names["drugs"])
+    summary_metadata.update(tags_col_names["pairs"])
+    summary_metadata.update(tags_col_names["diseases"])
 
     # Add metadata for statistical columns
     for stat, description in stats_col_names["per_disease"]["top"].items():
@@ -523,6 +527,14 @@ def generate_metadata(
                 meta_dict[f"{subkey}_version"] = subvalue["version"]
         else:
             meta_dict[key] = value
+
+    # Generate legends column and filter out based on
     legends_df = generate_summary_metadata(matrix_params, score_col_name)
+    legends_df_columns = [col for col in legends_df.columns if col in matrix_report.columns]
+    legends_df = legends_df[legends_df_columns]
+
+    # Generate metadata df
     version_df = pd.DataFrame(list(meta_dict.items()), columns=["Key", "Value"])
+
+    # Concatenate version and legends dfs
     return pd.concat([version_df, legends_df], axis=0)
