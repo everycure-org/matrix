@@ -34,7 +34,11 @@ def create_pipeline(**kwargs) -> Pipeline:
             ),
             node(
                 func=transform_rtxkg2_edges,
-                inputs=["ingestion.int.rtx_kg2.edges", "integration.prm.biolink.hierarchy@spark"],
+                inputs=[
+                    "ingestion.int.rtx_kg2.edges",
+                    "integration.raw.biolink.predicates",
+                    "integration.raw.pubmid.pubmedid_mapping",
+                ],
                 outputs="integration.int.rtx.edges",
                 name="transform_rtx_edges",
                 tags=["standardize"],

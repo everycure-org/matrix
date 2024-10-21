@@ -26,10 +26,6 @@ integration.raw.biolink.predicates:
   type: kedro_datasets.json.JSONDataset
   filepath: https://biolink.github.io/biolink-model/predicates.json
 
-integration.prm.biolink.hierarchy@pandas:
-  <<: [*_pandas_parquet, *_layer_prm]
-  filepath: ${globals:paths.prm}/biolink_hierarchy.parquet
-
 
 integration.raw.pubmid.pubmedid_mapping:
   # Example connection to sqllite

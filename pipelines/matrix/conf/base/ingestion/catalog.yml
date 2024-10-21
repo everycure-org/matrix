@@ -181,7 +181,7 @@ ingestion.raw.robokop.nodes@pandas:
   load_args:
     sep: "\t"
 
-ingestion.raw.robokop.edgesG@spark:
+ingestion.raw.robokop.edges@spark:
   <<: *_layer_raw
   type: matrix.datasets.gcp.LazySparkDataset
   filepath: ${globals:paths.kg_raw}/KGs/robokop-kg/${globals:data_sources.robokop.version}/edges.orig.tsv
