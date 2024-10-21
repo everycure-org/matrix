@@ -59,9 +59,9 @@ def transform_rtxkg2_edges(edges_df: DataFrame, biolink_predicates: Dict[str, An
     edges = (
         edges_df
         .withColumn("upstream_data_source",          f.array(f.lit("rtxkg2")))
-        .withColumn("knowledge_level",               f.col("knowledge_level").cast(T.StringType()))
-        .withColumn("primary_knowledge_source",      f.split(f.col("primary_knowledge_source"), RTX_SEPARATOR))
-        .withColumn("aggregator_knowledge_source",   f.array(f.col("primary_knowledge_source"))) #not present in RTX KG2 at this time
+        .withColumn("knowledge_level",               f.lit(None).cast(T.StringType()))
+        .withColumn("aggregator_knowledge_source",   f.split(f.col("primary_knowledge_source:string[]"), RTX_SEPARATOR))
+        .withColumn("primary_knowledge_source",      f.element_at(f.col("aggregator_knowledge_source"), 1))
         .withColumn("publications",                  f.split(f.col("publications:string[]"), RTX_SEPARATOR))
         .withColumn("subject_aspect_qualifier",      f.lit(None).cast(T.StringType())) #not present in RTX KG2 at this time
         .withColumn("subject_direction_qualifier",   f.lit(None).cast(T.StringType())) #not present in RTX KG2 at this time

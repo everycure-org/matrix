@@ -2,9 +2,10 @@ fabricator.rtx_kg2:
   nodes:
     num_rows: 150
     columns:
-      id:ID:
+      id:
         type: generate_unique_id
         prefix: "GEN:"
+
       name:
         type: generate_unique_id
         prefix: name_
@@ -13,10 +14,10 @@ fabricator.rtx_kg2:
         sample_values:
           - biolink:Drug
           - biolink:Disease
-      all_names:string[]:
+      all_names:
         type: faker
         provider: name
-      all_categories:string[]:
+      all_categories:
         type: generate_values
         sample_values:
           # - biolink:Drug
@@ -33,10 +34,10 @@ fabricator.rtx_kg2:
       description:
         type: generate_unique_id
         prefix: description_
-      equivalent_curies:string[]:
+      equivalent_curies:
         type: faker
         provider: name
-      publications:string[]:
+      publications:
         type: generate_random_arrays
         delimiter: "\u01c2"
         sample_values:
@@ -45,7 +46,7 @@ fabricator.rtx_kg2:
       international_resource_identifier:
         type: faker
         provider: url
-      :LABEL:
+      label:
         type: faker
         provider: name
       date_discovered:
@@ -78,36 +79,33 @@ fabricator.rtx_kg2:
         sample_values:
           - biolink:treats
           - biolink:interacts_with
-      primary_knowledge_source:
+      knowledge_source:
         type: faker
         provider: name
-      publications:string[]:
+
+      publications:
         type: generate_random_arrays
         delimiter: "\u01c2"
         sample_values:
           - "PMID:12345678"
           - "DOI:10.1234/example.5678"
-      knowledge_level:
+      subject_aspect_qualifier:
+        type: faker
+        provider: word
+      subject_direction_qualifier:
         type: generate_values
         sample_values:
-          - prediction
-          - knowledge_assertion
-      # subject_aspect_qualifier:
-      #   type: faker
-      #   provider: word
-      # subject_direction_qualifier:
-      #   type: generate_values
-      #   sample_values:
-      #     - "increased"
-      #     - "decreased"
-      # object_aspect_qualifier:
-      #   type: faker
-      #   provider: word
-      # object_direction_qualifier:
-      #   type: generate_values
-      #   sample_values:
-      #     - "increased"
-      #     - "decreased"
+          - "increased"
+          - "decreased"
+      object_aspect_qualifier:
+        type: faker
+        provider: word
+      object_direction_qualifier:
+        type: generate_values
+        sample_values:
+          - "increased"
+          - "decreased"
+
 
   # NOTE: Fabricated drug and disease lists can contain nodes which are not in the drug and disease categories resp.
   drug_list:

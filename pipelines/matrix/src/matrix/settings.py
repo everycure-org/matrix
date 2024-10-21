@@ -10,6 +10,7 @@ https://docs.kedro.org/en/stable/kedro_project_setup/settings.html.
 # from pandas_viz.hooks import ProjectHooks
 # Class that manages how configuration is loaded.
 from kedro.config import OmegaConfigLoader  # noqa: E402
+from kedro_mlflow.framework.hooks import MlflowHook
 
 import matrix.hooks as matrix_hooks
 
@@ -18,8 +19,8 @@ from .resolvers import env, merge_dicts
 # Hooks are executed in a Last-In-First-Out (LIFO) order.
 HOOKS = (
     matrix_hooks.NodeTimerHooks(),
-    # MlflowHook(),
-    # matrix_hooks.MLFlowHooks(),
+    MlflowHook(),
+    matrix_hooks.MLFlowHooks(),
     matrix_hooks.SparkHooks(),
 )
 
