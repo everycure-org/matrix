@@ -459,13 +459,12 @@ def _add_tags(
         pd.DataFrame: DataFrame with added tag columns.
     """
     # Add tag columns for drugs and diseasesto the top pairs DataFrame
-    for set, set_id, df in [("drugs", "drug_id", drugs), ("diseases", "disease_id", diseases)]:
+    for set, set_id, df in [("drugs", "kg_drug_id", drugs), ("diseases", "kg_disease_id", diseases)]:
         for tag_name, _ in matrix_params.get(set, {}).items():
             if tag_name not in df.columns:
                 logger.warning(f"Tag column '{tag_name}' not found in {set} DataFrame. Skipping.")
             else:
                 tag_mapping = dict(zip(df["curie"], df[tag_name]))
-
                 # Add the tag to top_pairs
                 top_pairs[tag_name] = top_pairs[set_id].map(tag_mapping)
     return top_pairs
@@ -511,7 +510,8 @@ def generate_metadata(
     """Generates a metadata report.
 
     Args:
-        matrix_report: pd.DataFrame, dummy variable to maintain proper lineage to be logged within metadata
+        matrix_report: pd.DataFrame, matrix report dataset.
+        data: pd.DataFrame, full matrix.
         score_col_name: Probability score column name.
         matrix_params: Dictionary of column names and their descriptions.
         run_metadata: Dictionary of run metadata.
@@ -521,7 +521,7 @@ def generate_metadata(
         - Dataframe with metadata about the output matrix columns.
     """
     meta_dict = {
-        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "timestamp": datetime.now().strftime("%Y-%m-%d"),
     }
     for key, value in run_metadata.items():
         if key == "versions":
