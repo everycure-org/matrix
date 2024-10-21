@@ -107,7 +107,6 @@ def filter_semmed(edges_df: DataFrame, pubmed_mapping: pd.DataFrame, num_pairs: 
         .withColumn(
             "ndg",
             (f.max(f.log2(f.col("subject_pmids")), f.log2(f.col("subject_pmids"))) - f.log2(f.col("num_common_pmids")))
-            / f.log2(f.lit(num_pairs))
-            - f.min(f.log2(f.col("subject_pmids")), f.log2(f.col("subject_pmids"))),
+            / (f.log2(f.lit(num_pairs)) - f.min(f.log2(f.col("subject_pmids")), f.log2(f.col("subject_pmids")))),
         )
     )
