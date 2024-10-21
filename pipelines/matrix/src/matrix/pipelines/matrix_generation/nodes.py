@@ -296,14 +296,9 @@ def generate_summary_metadata(meta_col_names, score_col_name, stats_col_names):
     summary_metadata.update(meta_col_names["drug_list"])
     summary_metadata.update(meta_col_names["disease_list"])
 
-    # Add metadata for score columns
-    summary_metadata[score_col_name] = "Probability score"
-    summary_metadata["pair_id"] = "Unique identifier for each pair"
-    summary_metadata["is_known_positive"] = "Whether the pair is a known positive"
-    summary_metadata["is_known_negative"] = "Whether the pair is a known negative"
-
-    # Add metadata for KG columns
+    # Add metadata for KG columns and tags
     summary_metadata.update(meta_col_names["kg_data"])
+    summary_metadata.update(meta_col_names["tags"])
 
     # Add metadata for statistical columns
     for stat, description in stats_col_names["per_disease"]["top"].items():

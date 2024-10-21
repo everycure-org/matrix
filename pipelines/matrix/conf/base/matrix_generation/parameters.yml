@@ -3,7 +3,6 @@ matrix_generation.matrix_generation_options:
     - target 
   n_reporting: 100000 # Number of items in the final report
 
-# Note that the order of the dictionary will be reflected in the order of the columns in the final matrix
 matrix_generation.matrix:
   metadata:
     drug_list:
@@ -24,7 +23,6 @@ matrix_generation.matrix:
       top:
         mean: "Mean probability score"
         quantile: "50% quantile of probability score"
-        #quantile_75: "75% quantile of probability score"
         median: "Median probability score"
         max: "Maximum probability score"
         min: "Minimum probability score"
