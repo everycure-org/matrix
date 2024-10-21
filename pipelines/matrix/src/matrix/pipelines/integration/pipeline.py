@@ -37,7 +37,6 @@ def create_pipeline(**kwargs) -> Pipeline:
                 inputs=[
                     "ingestion.int.rtx_kg2.edges",
                     "integration.raw.biolink.predicates",
-                    "integration.raw.pubmid.pubmedid_mapping",
                 ],
                 outputs="integration.int.rtx.edges",
                 name="transform_rtx_edges",
