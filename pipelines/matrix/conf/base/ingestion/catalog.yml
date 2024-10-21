@@ -34,8 +34,10 @@ ingestion.raw.rtx_kg2.nodes@pandas:
   filepath: ${globals:paths.kg_raw}/KGs/rtx_kg2/${globals:data_sources.rtx-kg2.version}/nodes_c.tsv
   load_args:
     sep: "\t"
+    header: true
+    index: false
   save_args:
-    header: false
+    header: true
     index: false
     sep: "\t"
 
@@ -46,6 +48,8 @@ ingestion.raw.rtx_kg2.nodes@spark:
   file_format: csv
   load_args:
     sep: "\t"
+    header: true
+  save_args:
     header: true
 
 ingestion.raw.rtx_kg2.edges@pandas:
