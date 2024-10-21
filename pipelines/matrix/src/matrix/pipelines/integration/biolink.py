@@ -95,33 +95,30 @@ def biolink_deduplicate(edges_df: DataFrame, biolink_predicates: DataFrame):
 
 
 def filter_semmed(
+    nodes_df: DataFrame,
     edges_df: DataFrame,
-    pubmed_mapping: pd.DataFrame,
     num_pairs: float = 3.7e7 * 20,
     publication_threshold: int = 1,
     ndg_threshold: float = 0.6,
 ) -> DataFrame:
-    spark = ps.sql.SparkSession.builder.getOrCreate()
-
-    pubmed_mapping_spark = (
-        spark.createDataFrame(pubmed_mapping)
-        .withColumn("pmids", f.array_distinct(f.col("pmids")))
+    # Extract pubmed identifiers
+    nodes_df = (
+        nodes_df.withColumn("pmids", f.array_distinct(f.expr("filter(publications, x -> x like 'PMID:%')")))
         .withColumn("num_pmids", f.array_size(f.col("pmids")))
+        .select("id", "pmids", "num_pmids")
     )
 
-    # NOTE: Let's think of what features we expose as part of feature store
-    # and where we apply filtering
     return (
-        edges_df.withColumn("num_publications", f.size(f.col("publications")))  # TODO: Count unique?
+        edges_df.withColumn("num_publications", f.size(f.col("publications")))
         .join(
-            pubmed_mapping_spark.withColumnRenamed("curie", "subject")
+            nodes_df.withColumnRenamed("id", "subject")
             .withColumnRenamed("pmids", "subject_pmids")
             .withColumnRenamed("num_pmids", "num_subject_pmids"),
             on="subject",
             how="left",
         )
         .join(
-            pubmed_mapping_spark.withColumnRenamed("curie", "object")
+            nodes_df.withColumnRenamed("id", "object")
             .withColumnRenamed("pmids", "object_pmids")
             .withColumnRenamed("num_pmids", "num_object_pmids"),
             on="object",
@@ -137,6 +134,11 @@ def filter_semmed(
             / (f.log2(f.lit(num_pairs)) - f.min(f.log2(f.col("num_subject_pmids")), f.log2(f.col("num_object_pmids")))),
         )
         # TODO: For both filters below, only apply filter if edge comes from SemMed
-        .filter(f.col("ndg") < f.lit(ndg_threshold))
-        .filter(f.col("num_publications") > f.lit(publication_threshold))
+        .filter(
+            (f.col("ndg") < f.lit(ndg_threshold)) & (f.col("primary_knowledge_source") == f.lit("infores:semmeddb"))
+        )
+        .filter(
+            (f.col("num_publications") > f.lit(publication_threshold))
+            & (f.col("primary_knowledge_source") == f.lit("infores:semmeddb"))
+        )
     )
