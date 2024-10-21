@@ -35,6 +35,7 @@ def create_pipeline(**kwargs) -> Pipeline:
             node(
                 func=transform_rtxkg2_edges,
                 inputs=[
+                    "integration.int.rtx.nodes",
                     "ingestion.int.rtx_kg2.edges",
                     "integration.raw.biolink.predicates",
                 ],
