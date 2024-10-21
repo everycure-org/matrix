@@ -30,7 +30,7 @@ class KGEdgeSchema(DataFrameModel):
     predicate:                   StringType()            = pa.Field(nullable = False)
     object:                      StringType()            = pa.Field(nullable = False)
     knowledge_level:             StringType()            = pa.Field(nullable = True)
-    primary_knowledge_source:    StringType()            = pa.Field(nullable = True)
+    primary_knowledge_source:    ArrayType(StringType()) = pa.Field(nullable = True)
     aggregator_knowledge_source: ArrayType(StringType()) = pa.Field(nullable = True)
     publications:                ArrayType(StringType()) = pa.Field(nullable = True)
     subject_aspect_qualifier:    StringType()            = pa.Field(nullable = True)
@@ -80,6 +80,7 @@ class KGNodeSchema(DataFrameModel):
     international_resource_identifier: StringType()            = pa.Field(nullable=True)
     # We manually set this for every KG we ingest
     upstream_data_source:                ArrayType(StringType()) = pa.Field(nullable=False)
+    #upstream_kg_node_ids:                MapType(StringType(), StringType()) = pa.Field(nullable=True)
     # fmt: on
 
     class Config:  # noqa: D106
@@ -108,7 +109,10 @@ class KGNodeSchema(DataFrameModel):
                 F.flatten(F.collect_set("all_categories")).alias("all_categories"),
                 F.flatten(F.collect_set("labels")).alias("labels"),
                 F.flatten(F.collect_set("publications")).alias("publications"),
-                F.flatten(F.collect_list("upstream_data_source")).alias("upstream_data_source"),
+                F.flatten(F.collect_set("upstream_data_source")).alias("upstream_data_source"),
+                # keep all upstream node IDs as a map {kg_name: node_id} so we can trace them later
+                # TODO finish
+                # F.create_map("upstream_data_source", "original_id").alias("upstream_kg_node_ids")
             )
             .select(*cols_for_schema(KGNodeSchema))
         )

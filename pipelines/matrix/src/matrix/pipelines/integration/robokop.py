@@ -14,6 +14,8 @@ from matrix.schemas.knowledge_graph import KGEdgeSchema, KGNodeSchema, cols_for_
 # or implementing a custom KGX version that leverages spark for higher performance
 # https://github.com/everycure-org/matrix/issues/474
 
+ROBOKOP_SEPARATOR = "\x1f"
+
 
 @pa.check_output(KGNodeSchema)
 def transform_robo_nodes(nodes_df: DataFrame) -> DataFrame:
@@ -30,8 +32,8 @@ def transform_robo_nodes(nodes_df: DataFrame) -> DataFrame:
     return (
         nodes_df
         .withColumn("upstream_data_source",              f.array(f.lit("robokop")))
-        .withColumn("all_categories",                    f.split(f.col("category:LABEL"), "\x1f"))
-        .withColumn("equivalent_identifiers",            f.split(f.col("equivalent_identifiers:string[]"), "\x1f"))
+        .withColumn("all_categories",                    f.split(f.col("category:LABEL"), ROBOKOP_SEPARATOR))
+        .withColumn("equivalent_identifiers",            f.split(f.col("equivalent_identifiers:string[]"), ROBOKOP_SEPARATOR))
         .withColumn("category",                          f.element_at(f.col("all_categories"), f.size(f.col("all_categories"))))
         .withColumn("labels",                            f.array(f.col("all_categories")))
         .withColumn("publications",                      f.array(f.lit(None)))
@@ -61,13 +63,13 @@ def transform_robo_edges(edges_df: DataFrame) -> DataFrame:
         .withColumnRenamed("subject:START_ID",                  "subject")
         .withColumnRenamed("predicate:TYPE",                    "predicate")
         .withColumnRenamed("object:END_ID",                     "object")
-        .withColumnRenamed("primary_knowledge_source:string",   "primary_knowledge_source")
+        .withColumnRenamed("primary_knowledge_source:string",   f.array(f.col("primary_knowledge_source")))
         .withColumnRenamed("knowledge_level:string",            "knowledge_level")
         .withColumnRenamed("object_aspect_qualifier:string",    "object_aspect_qualifier")
         .withColumnRenamed("object_direction_qualifier:string", "object_direction_qualifier")
         .withColumn("upstream_data_source",                      f.array(f.lit("robokop")))
-        .withColumn("publications",                             f.split(f.col("publications:string[]"), "\x1f"))
-        .withColumn("aggregator_knowledge_source",              f.split(f.col("aggregator_knowledge_source:string[]"), "\x1f"))
+        .withColumn("publications",                             f.split(f.col("publications:string[]"), ROBOKOP_SEPARATOR))
+        .withColumn("aggregator_knowledge_source",              f.split(f.col("aggregator_knowledge_source:string[]"), ROBOKOP_SEPARATOR))
         .withColumn("subject_aspect_qualifier",                 f.lit(None).cast(T.StringType()))
         .withColumn("subject_direction_qualifier",              f.lit(None).cast(T.StringType()))
         # final selection of columns
