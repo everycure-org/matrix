@@ -1,17 +1,15 @@
 """Module with pytest fixtures."""
 
-import pytest
-
 from pathlib import Path
 
-from kedro.framework.context import KedroContext
-from kedro.framework.project import configure_project, settings
-from kedro.framework.hooks import _create_hook_manager
-
-from pyspark.sql import SparkSession
+import pytest
 from kedro.config import OmegaConfigLoader
-from omegaconf.resolvers import oc
+from kedro.framework.context import KedroContext
+from kedro.framework.hooks import _create_hook_manager
+from kedro.framework.project import configure_project, settings
 from matrix.resolvers import merge_dicts
+from omegaconf.resolvers import oc
+from pyspark.sql import SparkSession
 
 
 @pytest.fixture(name="conf_source", scope="session")
@@ -65,6 +63,7 @@ def spark():
     spark = (
         SparkSession.builder.config("spark.sql.shuffle.partitions", 1)
         .config("spark.executorEnv.PYTHONPATH", "src")
+        .config("spark.driver.bindAddress", "127.0.0.1")
         .master("local")
         .appName("tests")
         .getOrCreate()
