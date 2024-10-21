@@ -541,10 +541,10 @@ def generate_metadata(
     stats_dict = {"Key": [], "Value": []}
     for main_key in matrix_params["stats_col_names"]["full"].keys():
         # Top n stats
-        stats_dict["Key"].append(f"{main_key}_top")
+        stats_dict["Key"].append(f"{main_key}_top_n")
         stats_dict["Value"].append(getattr(matrix_report[score_col_name], main_key)())
         # Full matrix stats
-        stats_dict["Key"].append(f"{main_key}_full")
+        stats_dict["Key"].append(f"{main_key}_full_matrix")
         stats_dict["Value"].append(getattr(data[score_col_name], main_key)())
     # Concatenate version and legends dfs
     return pd.concat([version_df, pd.DataFrame(stats_dict), legends_df], axis=0)
