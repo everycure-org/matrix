@@ -89,7 +89,7 @@ def biolink_deduplicate(edges_df: DataFrame, biolink_predicates: DataFrame):
         .drop("parents")
     )
 
-    logger.info(f"dropped {before_count - edges_df.count()} edges")
+    logger.info(f"dropped {before_count - res.count()} edges")
 
     return res
 
