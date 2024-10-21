@@ -86,7 +86,13 @@ def biolink_deduplicate(edges_df: DataFrame, biolink_predicates: DataFrame):
     return res
 
 
-def filter_semmed(edges_df: DataFrame, pubmed_mapping: pd.DataFrame, num_pairs: float = 3.7e7 * 20) -> DataFrame:
+def filter_semmed(
+    edges_df: DataFrame,
+    pubmed_mapping: pd.DataFrame,
+    num_pairs: float = 3.7e7 * 20,
+    publication_threshold: int = 1,
+    ndg_threshold: float = 0.6,
+) -> DataFrame:
     spark = ps.sql.SparkSession.builder.getOrCreate()
 
     pubmed_mapping_spark = (
@@ -95,6 +101,8 @@ def filter_semmed(edges_df: DataFrame, pubmed_mapping: pd.DataFrame, num_pairs: 
         .withColumn("num_pmids", f.array_size(f.col("pmids")))
     )
 
+    # NOTE: Let's think of what features we expose as part of feature store
+    # and where we apply filtering
     return (
         edges_df.withColumn("num_publications", f.size(f.col("publications")))
         .join(
@@ -120,4 +128,6 @@ def filter_semmed(edges_df: DataFrame, pubmed_mapping: pd.DataFrame, num_pairs: 
             )
             / (f.log2(f.lit(num_pairs)) - f.min(f.log2(f.col("num_subject_pmids")), f.log2(f.col("num_object_pmids")))),
         )
+        .filter(f.col("ndg") < f.lit(ndg_threshold))
+        .filter(f.col("num_publications") > f.lit(publication_threshold))
     )

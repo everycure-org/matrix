@@ -1,14 +1,14 @@
 """transformation functions for rtxkg2 nodes and edges."""
 
 from typing import Any, Dict
-
+import pandas as pd
 
 import pandera.pyspark as pa
 import pyspark.sql.functions as f
 import pyspark.sql.types as T
 from pyspark.sql import DataFrame
 
-from .biolink import biolink_deduplicate, filter_semmed
+from .biolink import biolink_deduplicate
 from matrix.schemas.knowledge_graph import KGEdgeSchema, KGNodeSchema, cols_for_schema
 
 RTX_SEPARATOR = "\u01c2"
@@ -44,12 +44,15 @@ def transform_rtxkg2_nodes(nodes_df: DataFrame) -> DataFrame:
 
 
 @pa.check_output(KGEdgeSchema)
-def transform_rtxkg2_edges(edges_df: DataFrame, biolink_predicates: Dict[str, Any]) -> DataFrame:
+def transform_rtxkg2_edges(
+    edges_df: DataFrame, biolink_predicates: Dict[str, Any], pubmed_mapping: pd.DataFrame
+) -> DataFrame:
     """Transform RTX KG2 edges to our target schema.
 
     Args:
         edges_df: Edges DataFrame.
-
+        biolink_predicates: biolink predicates hierarchy.
+        pubmed_mapping: pubmed mapping
     Returns:
         Transformed DataFrame.
     """
@@ -70,4 +73,4 @@ def transform_rtxkg2_edges(edges_df: DataFrame, biolink_predicates: Dict[str, An
     )
     # fmt: on
 
-    return edges.transform(biolink_deduplicate, biolink_predicates).transform(filter_semmed)
+    return edges.transform(biolink_deduplicate, biolink_predicates)  # .transform(filter_semmed)
