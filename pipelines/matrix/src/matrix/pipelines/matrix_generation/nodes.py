@@ -449,6 +449,19 @@ def _reorder_columns(top_pairs: pd.DataFrame, score_col_name: str, matrix_params
     return top_pairs[columns_order]
 
 
+def _apply_condition(top_pairs: pd.DataFrame, condition: List[str]) -> pd.Series:
+    """Apply a single condition to the top_pairs DataFrame."""
+    return top_pairs[condition].all(axis=1)
+
+
+def _add_master_filter(top_pairs: pd.DataFrame, matrix_params: Dict) -> pd.DataFrame:
+    """Add master_filter tag to the top_pairs DataFrame."""
+    conditions = matrix_params["master"]["conditions"]
+    condition_results = [_apply_condition(top_pairs, cond) for cond in conditions]
+    top_pairs["master_filter"] = pd.DataFrame(condition_results).any(axis=0)
+    return top_pairs
+
+
 def _add_tags(
     top_pairs: pd.DataFrame, drugs: pd.DataFrame, diseases: pd.DataFrame, matrix_params: Dict
 ) -> pd.DataFrame:
@@ -473,30 +486,6 @@ def _add_tags(
                 tag_mapping = dict(zip(df["curie"], df[tag_name]))
                 # Add the tag to top_pairs
                 top_pairs[tag_name] = top_pairs[set_id].map(tag_mapping)
-
-    # # Add master_filter tag
-    # condition_df = pd.DataFrame()
-    # for i, condition in enumerate(matrix_params['master']['conditions']):
-    #     if len(condition) > 1:
-    #         multi_condition = top_pairs[condition[0]] == True
-    #         for col in condition[1:]:
-    #             multi_condition = multi_condition & (top_pairs[col] == True)
-    #     else:
-    #         multi_condition = top_pairs[condition[0]] == True
-
-    #     condition_df[f'condition_{i}'] = multi_condition
-
-    # top_pairs['master_filter'] = condition_df.any(axis=1)
-    def _apply_condition(top_pairs: pd.DataFrame, condition: List[str]) -> pd.Series:
-        """Apply a single condition to the top_pairs DataFrame."""
-        return top_pairs[condition].all(axis=1)
-
-    def _add_master_filter(top_pairs: pd.DataFrame, matrix_params: Dict) -> pd.DataFrame:
-        """Add master_filter tag to the top_pairs DataFrame."""
-        conditions = matrix_params["master"]["conditions"]
-        condition_results = [_apply_condition(top_pairs, cond) for cond in conditions]
-        top_pairs["master_filter"] = pd.DataFrame(condition_results).any(axis=0)
-        return top_pairs
 
     top_pairs = _add_master_filter(top_pairs, matrix_params)
     return top_pairs
