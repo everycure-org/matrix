@@ -84,9 +84,19 @@ def create_pipeline(**kwargs) -> Pipeline:
                 tags=["drug-list"],
             ),
             node(
-                func=nodes.clean_disease_list,
+                func=nodes.enrich_disease_list,
                 inputs=[
                     "preprocessing.raw.disease_list",
+                    "params:preprocessing.enrichment_tags",
+                ],
+                outputs="preprocessing.int.enriched_disease_list",
+                name="enrich_disease_list",
+                tags=["disease-list"],
+            ),
+            node(
+                func=nodes.clean_disease_list,
+                inputs=[
+                    "preprocessing.int.enriched_disease_list",
                     "params:preprocessing.synonymizer_endpoint",
                 ],
                 outputs="ingestion.raw.disease_list@pandas",

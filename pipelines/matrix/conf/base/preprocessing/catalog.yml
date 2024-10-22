@@ -119,6 +119,17 @@ preprocessing.raw.drug_list:
   load_args:
     sep: "\t"
 
+preprocessing.int.enriched_disease_list:
+  <<: [*_layer_raw]
+  type: pandas.CSVDataset
+  filepath: ${globals:paths.raw}/disease_list/${globals:data_sources.ec-disease-list.version}/enriched_disease_list.tsv
+  save_args:
+    sep: "\t"
+    header: true
+    index: false
+  load_args:
+    sep: "\t"
+
 preprocessing.raw.infer_sheet:
   <<: [*_layer_raw, *_sheets_dataset]
   load_args:

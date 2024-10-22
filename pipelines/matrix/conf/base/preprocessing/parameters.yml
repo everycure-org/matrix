@@ -1,1 +1,39 @@
 preprocessing.synonymizer_endpoint: http://localhost:8081
+
+preprocessing.enrichment_tags:
+  pathogen:
+    input_col: label
+    output_col: is_pathogen_caused
+    model_params: 
+      model: gpt-4o-mini
+      prompt: Is this disease usually caused by a pathogen such as bacteria, viruses, parasites, or fungi? Return TRUE or FALSE only
+      temperature: 0.8
+  cancer:
+    input_col: label
+    output_col: is_cancer
+    model_params:
+      model: gpt-4o-mini
+      prompt: "Is this disease a cancer? Return TRUE or FALSE only"
+      temperature: 0.8
+  glucose_dysfunction:
+    input_col: label
+    output_col: is_glucose_dysfunction
+    model_params:
+      model: gpt-4o-mini
+      prompt: Is this disease a disease which is primarily a disease of glucose dysregulation such as diabetes? Return TRUE or FALSE only
+      temperature: 0.8
+  existing_treatment:
+    input_col: label
+    output_col: tag_existing_treatment
+    model_params:
+      model: gpt-4o-mini
+      prompt: Are there existing efficacious treatments that cure, prevent, or treat this disease? Return TRUE if efficacious treatments exist, otherwise return FALSE
+      temperature: 0.8
+  # multiple_input:
+  #   quality_life_years_lost:
+  #     input_col: label
+  #     output_col: tag_QALY_lost
+  #     model_params:
+  #       model: gpt-4o-mini
+  #       prompt: "Output only 'VERY HIGH', 'HIGH', 'MEDIUM', 'LOW', or 'NONE'. Categorize the Quality-Adjusted Life Years (QALYs) lost for {{B}} into the categories above, based morbidity, mortality, and quality adjusted life years lost. To help, {{D}} contains synonyms of the disease and {{C}} provides a definition of the disease. If you are unable to determine QALYs lost for a given disease, used similar diseases to make an estimation"
+  #       temperature: 0.8
