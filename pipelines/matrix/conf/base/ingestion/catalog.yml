@@ -34,6 +34,7 @@ ingestion.raw.rtx_kg2.nodes@pandas:
   filepath: ${globals:paths.kg_raw}/KGs/rtx_kg2/${globals:data_sources.rtx-kg2.version}/nodes_c.tsv
   load_args:
     sep: "\t"
+    # header: true
   save_args:
     header: true
     index: false
