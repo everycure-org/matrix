@@ -15,12 +15,12 @@ paths:
 
   # fabricator: gs://mtrx-us-central1-hub-dev-storage/kedro/fabricator
 
-  # Will take effect in cloud
+  # Release-based
   ingestion: gs://mtrx-us-central1-hub-dev-storage/kedro/ingestion # THIS PAHT
   integration: ${gcs_bucket}/kedro/releases/${release_name}/integration
   embeddings: ${gcs_bucket}/kedro/releases/release/${release_name}/embeddings
 
-  # These datasets are version
+  # Run-based
   modelling: ${gcs_bucket}/kedro/modelling/release/${release_name}/runs/${run_name}
   evaluation: ${gcs_bucket}/kedro/evaluation/release/${release_name}/runs/${run_name}
   matrix_generation: ${gcs_bucket}/kedro/matrix_generation/release/${release_name}runs/${run_name}
