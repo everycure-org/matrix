@@ -241,3 +241,58 @@ def train_model_split(
     """
     paths_train = KGPaths(df=paths.df[paths.df["split"] == "TRAIN"])
     return train_model(model, paths_train, path_embedding_strategy, category_encoder, relation_encoder)
+
+
+def _make_predictions(
+    model: BaseEstimator,
+    pairs: pd.DataFrame,
+    path_rules,  # List[PathRule],
+    path_embedding_strategy: PathEmbeddingStrategy,
+    category_encoder: OneHotEncoder,
+    relation_encoder: OneHotEncoder,
+) -> List[KGPaths]:
+    """Make MOA predictions on the pairs dataset.
+
+    Args:
+        model: The model to make predictions with.
+        pairs: Dataset of drug-disease pairs. Expected columns: (source_id, target_id).
+        path_rules: Path rules to use for generating paths.
+        path_embedding_strategy: Path embedding strategy.
+        category_encoder: One-hot encoder for node categories.
+        relation_encoder: One-hot encoder for edge relations.
+
+    Returns:
+        List of KGPaths objects, one for each pair.
+    """
+    # For each pair, do the following:
+    # Step 1: generate all paths
+    # Step 2: embed paths
+    # Step 3: make predictions
+    # Step 4: Sort by confidence score
+    return ...
+
+
+@inject_object()
+def make_evaluation_predictions(
+    model: BaseEstimator,
+    paths: KGPaths,
+    path_rules,  # List[PathRule],
+    path_embedding_strategy: PathEmbeddingStrategy,
+    category_encoder: OneHotEncoder,
+    relation_encoder: OneHotEncoder,
+) -> List[KGPaths]:
+    """Make MOA predictions on the pairs dataset.
+
+    Args:
+        model: The model to make predictions with.
+        pairs: Dataset of drug-disease pairs. Expected columns: (source_id, target_id).
+        path_rules: Path rules to use for generating paths.
+        path_embedding_strategy: Path embedding strategy.
+        category_encoder: One-hot encoder for node categories.
+        relation_encoder: One-hot encoder for edge relations.
+
+    Returns:
+        List of KGPaths objects, one for each pair.
+    """
+    pairs = paths.df[paths.df["split"] == "TEST"].get_unique_pairs()
+    return _make_predictions(model, pairs, path_rules, path_embedding_strategy, category_encoder, relation_encoder)

@@ -1,9 +1,12 @@
 """
 MOA extraction pipeline.
 """
+# TODO: Make negative path sampling strategies PathGenerator Strategies
 # TODO: Simplify the schema by rename source and target
 # TODO: Add mapping success report node
 # TODO: Add training curve plot to MLFlow report
+# TODO: Onehot to sklearn
+# TODO: Replace neo4j runner by Kedro node
 
 from kedro.pipeline import Pipeline, node
 from kedro.pipeline.modular_pipeline import pipeline
@@ -126,5 +129,31 @@ def _training_pipeline() -> Pipeline:
     return sum(training_strands_lst)
 
 
+def _evaluation_pipeline() -> Pipeline:
+    evaluation_strands_lst = []
+    for num_hops in num_hops_lst:
+        evaluation_strands_lst.append(
+            pipeline(
+                [
+                    node(
+                        func=nodes.make_evaluation_predictions,
+                        inputs={
+                            "model": f"params:moa_extraction.training.{num_hops}_hop.model",
+                            "paths": f"moa_extraction.feat.{num_hops}_hop_enriched_paths",
+                            "path_rules": f"params:moa_extraction.path_rules.{num_hops}_hop",
+                            "path_embedding_strategy": "params:moa_extraction.path_embeddings.strategy",
+                            "category_encoder": "moa_extraction.feat.category_encoder",
+                            "relation_encoder": "moa_extraction.feat.relation_encoder",
+                        },
+                        outputs=f"moa_extraction.evaluation.{num_hops}_hop_predictions",
+                        name=f"make_evaluation_predictions_{num_hops}_hop",
+                        tags=["moa_extraction.evaluation"],
+                    ),
+                ]
+            )
+        )
+    return sum(evaluation_strands_lst)
+
+
 def create_pipeline(**kwargs) -> Pipeline:
-    return _preprocessing_pipeline() + _training_pipeline()
+    return _preprocessing_pipeline() + _training_pipeline() + _evaluation_pipeline()
