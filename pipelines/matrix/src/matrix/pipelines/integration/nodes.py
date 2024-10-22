@@ -1,12 +1,12 @@
 """Nodes for the ingration pipeline."""
 
-import pandas as pd
 import asyncio
 import logging
 from functools import partial, reduce
 from typing import Any, Callable, Dict, List
 
 import aiohttp
+import pandas as pd
 import pandera.pyspark as pa
 import pyspark as ps
 import pyspark.sql.functions as F
@@ -24,23 +24,25 @@ from tqdm.asyncio import tqdm_asyncio
 
 from matrix.schemas.knowledge_graph import KGEdgeSchema, KGNodeSchema
 
+from .biolink import biolink_deduplicate
+
 # TODO move these into config
 memory = Memory(location=".cache/nodenorm", verbose=0)
 logger = logging.getLogger(__name__)
 
 
 @pa.check_output(KGEdgeSchema)
-def union_edges(datasets_to_union: List[str], **edges) -> DataFrame:
+def union_and_deduplicate_edges(datasets_to_union: List[str], biolink_predicates: Dict[str, Any], **edges) -> DataFrame:
     """Function to unify edges datasets."""
     return _union_datasets(
         datasets_to_union,
         schema_group_by_id=KGEdgeSchema.group_edges_by_id,
         **edges,
-    )
+    ).transform(biolink_deduplicate, biolink_predicates)
 
 
 @pa.check_output(KGNodeSchema)
-def union_nodes(datasets_to_union: List[str], **nodes) -> DataFrame:
+def union_and_deduplicate_nodes(datasets_to_union: List[str], **nodes) -> DataFrame:
     """Function to unify nodes datasets."""
     return _union_datasets(
         datasets_to_union,

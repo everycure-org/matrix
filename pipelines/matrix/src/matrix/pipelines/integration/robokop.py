@@ -1,15 +1,11 @@
 """transformation functions for robokop nodes and edges."""
 
-from typing import Any, Dict
-
 import pandera.pyspark as pa
 import pyspark.sql.functions as f
 import pyspark.sql.types as T
 from pyspark.sql import DataFrame
 
 from matrix.schemas.knowledge_graph import KGEdgeSchema, KGNodeSchema, cols_for_schema
-
-from .biolink import biolink_deduplicate
 
 # FUTURE: We should likely not need to rename these columns as we do below
 # However, KGX is currently not as performant as we need it to be thus
@@ -51,7 +47,7 @@ def transform_robo_nodes(nodes_df: DataFrame) -> DataFrame:
 
 
 @pa.check_output(KGEdgeSchema)
-def transform_robo_edges(edges_df: DataFrame, biolink_predicates: Dict[str, Any]) -> DataFrame:
+def transform_robo_edges(edges_df: DataFrame) -> DataFrame:
     """Transform Robokop edges to our target schema.
 
     Args:
@@ -78,5 +74,5 @@ def transform_robo_edges(edges_df: DataFrame, biolink_predicates: Dict[str, Any]
         .withColumn("subject_direction_qualifier",              f.lit(None).cast(T.StringType()))
         # final selection of columns
         .select(*cols_for_schema(KGEdgeSchema))
-    ).transform(biolink_deduplicate, biolink_predicates)  # .transform(filter_semmed)
+    )
     # fmt: on

@@ -20,7 +20,7 @@ def create_pipeline(**kwargs) -> Pipeline:
             ),
             node(
                 func=transform_robo_edges,
-                inputs=["ingestion.int.robokop.edges", "integration.raw.biolink.predicates"],
+                inputs=["ingestion.int.robokop.edges"],
                 outputs="integration.int.robokop.edges",
                 name="transform_robokop_edges",
                 tags=["standardize"],
@@ -34,11 +34,7 @@ def create_pipeline(**kwargs) -> Pipeline:
             ),
             node(
                 func=transform_rtxkg2_edges,
-                inputs=[
-                    "integration.int.rtx.nodes",
-                    "ingestion.int.rtx_kg2.edges",
-                    "integration.raw.biolink.predicates",
-                ],
+                inputs=["integration.int.rtx.nodes", "ingestion.int.rtx_kg2.edges"],
                 outputs="integration.int.rtx.edges",
                 name="transform_rtx_edges",
                 tags=["standardize"],
@@ -82,7 +78,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 name="normalize_robokop_kg",
             ),
             node(
-                func=nodes.union_nodes,
+                func=nodes.union_and_deduplicate_nodes,
                 inputs={
                     "datasets_to_union": "params:integration.unification.datasets_to_union",
                     "rtx": "integration.int.rtx.nodes.norm",
@@ -94,9 +90,10 @@ def create_pipeline(**kwargs) -> Pipeline:
             ),
             # union edges
             node(
-                func=nodes.union_edges,
+                func=nodes.union_and_deduplicate_edges,
                 inputs={
                     "datasets_to_union": "params:integration.unification.datasets_to_union",
+                    "biolink_predicates": "integration.raw.biolink.predicates",
                     "rtx": "integration.int.rtx.edges.norm",
                     "robokop": "integration.int.robokop.edges.norm",
                     "medical_team": "ingestion.int.ec_medical_team.edges",
