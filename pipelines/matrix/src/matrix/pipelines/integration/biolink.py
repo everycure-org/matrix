@@ -108,8 +108,11 @@ def compute_ngd(df: DataFrame, num_pairs: int = 3.7e7 * 20) -> DataFrame:
         "num_common_pmids", f.array_size(f.array_intersect(f.col("subj.pmids"), f.col("obj.pmids")))
     ).withColumn(
         "ndg",
-        (f.max(f.log2(f.col("subj.num_pmids")), f.log2(f.col("obj.num_pmids"))) - f.log2(f.col("num_common_pmids")))
-        / (f.log2(f.lit(num_pairs)) - f.min(f.log2(f.col("subj.num_pmids")), f.log2(f.col("obj.num_pmids")))),
+        (
+            f.greatest(f.log2(f.col("subj.num_pmids")), f.log2(f.col("obj.num_pmids")))
+            - f.log2(f.col("num_common_pmids"))
+        )
+        / (f.log2(f.lit(num_pairs)) - f.least(f.log2(f.col("subj.num_pmids")), f.log2(f.col("obj.num_pmids")))),
     )
 
 
@@ -122,8 +125,8 @@ def filter_semmed(
     # Enrich nodes with pubmed identifiers
     nodes_df = (
         nodes_df.withColumn("pmids", f.array_distinct(f.expr("filter(publications, x -> x like 'PMID:%')")))
-        .withColumn("num_pmids", f.array_size(f.col("num_pmids")))
-        .select("id", "pmids")
+        .withColumn("num_pmids", f.array_size(f.col("pmids")))
+        .select("id", "pmids", "num_pmids")
     )
 
     df = (
@@ -131,13 +134,13 @@ def filter_semmed(
         # Enrich subject pubmed identifiers
         .join(
             nodes_df.alias("subj"),
-            on=[f.col("subject") == f.col("subject.id")],
+            on=[f.col("subject") == f.col("subj.id")],
             how="left",
         )
         # Enrich object pubmed identifiers
         .join(
             nodes_df.alias("obj"),
-            on=[f.col("object") == f.col("object.id")],
+            on=[f.col("object") == f.col("obj.id")],
             how="left",
         )
         .transform(compute_ngd)
