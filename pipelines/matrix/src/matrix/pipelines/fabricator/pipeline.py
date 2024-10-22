@@ -7,7 +7,7 @@ from kedro.pipeline import Pipeline, node, pipeline
 from data_fabricator.v0.nodes.fabrication import fabricate_datasets
 
 
-def _create_pairs(drug_list: pd.DataFrame, disease_list: pd.DataFrame, num: int = 100, seed: int = 42) -> pd.DataFrame:
+def _create_pairs(drug_list: pd.DataFrame, disease_list: pd.DataFrame, num: int = 50, seed: int = 42) -> pd.DataFrame:
     """Create 2 sets of random drug-disease pairs. Ensures no duplicate pairs.
 
     Args:
@@ -21,6 +21,7 @@ def _create_pairs(drug_list: pd.DataFrame, disease_list: pd.DataFrame, num: int 
     """
     is_enough_generated = False
     while not is_enough_generated:
+        print("generating more")
         # Sample random pairs (we sample twice the required amount in case duplicates are removed)
         random_drugs = drug_list["curie"].sample(num * 4, replace=True, ignore_index=True, random_state=seed)
         random_diseases = disease_list["curie"].sample(num * 4, replace=True, ignore_index=True, random_state=2 * seed)
