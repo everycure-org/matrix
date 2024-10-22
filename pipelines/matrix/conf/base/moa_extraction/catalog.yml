@@ -34,3 +34,10 @@ moa_extraction.feat.relation_encoder:
 "moa_extraction.models.{num_hops}_hop_model_split":
   type: pickle.PickleDataset
   filepath: ${globals:paths.models}/moa_extraction/{num_hops}_hop_model_split.pickle
+
+"moa_extraction.evaluation.{num_hops}_hop_predictions":
+  type: partitions.PartitionedDataset
+  path: ${globals:paths.model_output}/moa_extraction/{num_hops}_hop_evaluation_predictions
+  dataset: matrix.datasets.paths.KGPathsDataset
+  load_args:
+    engine: pyarrow

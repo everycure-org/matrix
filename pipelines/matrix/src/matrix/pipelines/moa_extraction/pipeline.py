@@ -142,16 +142,27 @@ def _evaluation_pipeline() -> Pipeline:
                     node(
                         func=nodes.make_evaluation_predictions,
                         inputs={
-                            "model": f"params:moa_extraction.training.{num_hops}_hop.model",
+                            "model": f"moa_extraction.models.{num_hops}_hop_model",
                             "runner": "params:moa_extraction.neo4j_runner",
-                            "paths": f"moa_extraction.prm.{num_hops}_hop_splits",
+                            "positive_paths": f"moa_extraction.prm.{num_hops}_hop_splits",
                             "path_generator": f"params:moa_extraction.evaluation.{num_hops}_hop.path_generators",
                             "path_embedding_strategy": "params:moa_extraction.path_embeddings.strategy",
                             "category_encoder": "moa_extraction.feat.category_encoder",
                             "relation_encoder": "moa_extraction.feat.relation_encoder",
                         },
                         outputs=f"moa_extraction.evaluation.{num_hops}_hop_predictions",
-                        name=f"make_evaluation_predictions_{num_hops}_hop",
+                        name=f"moa_extraction.evaluation.make_{num_hops}_hop_predictions",
+                        tags=["moa_extraction.evaluation"],
+                    ),
+                    node(
+                        func=nodes.compute_evaluation_metrics,
+                        inputs={
+                            "positive_paths": f"moa_extraction.prm.{num_hops}_hop_splits",
+                            "predictions": f"moa_extraction.evaluation.{num_hops}_hop_predictions",
+                            "k_lst": f"params:moa_extraction.evaluation.{num_hops}_hop.k_lst",
+                        },
+                        outputs=f"moa_extraction.evaluation.{num_hops}_hop_metrics",
+                        name=f"moa_extraction.evaluation.compute_{num_hops}_hop_metrics",
                         tags=["moa_extraction.evaluation"],
                     ),
                 ]
