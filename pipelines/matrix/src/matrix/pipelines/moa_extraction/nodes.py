@@ -11,7 +11,7 @@ from refit.v1.core.inject import inject_object
 from .neo4j_runners import Neo4jRunner
 from .path_embeddings import OneHotEncoder, PathEmbeddingStrategy
 from .path_mapping import PathMapper
-from .negative_path_samplers import NegativePathSampler
+from .path_generators import PathGenerator
 from matrix.datasets.paths import KGPaths
 from matrix.pipelines.modelling.nodes import _apply_splitter
 
@@ -177,14 +177,14 @@ def make_splits(
 @inject_object()
 def generate_negative_paths(
     paths: KGPaths,
-    negative_sampler_list: List[NegativePathSampler],
+    negative_sampler_list: List[PathGenerator],
     runner: Neo4jRunner,
 ) -> KGPaths:
     """Enrich a dataset of positive indication paths with negative samples.
 
     Args:
         paths: Dataset of positive indication paths with splits information.
-        negative_sampler_list: List of negative path samplers.
+        negative_sampler_list: List of path generators for negative path samplers.
         runner: The Neo4j runner.
     """
     for split in ["TRAIN", "TEST"]:
@@ -246,7 +246,7 @@ def train_model_split(
 def _make_predictions(
     model: BaseEstimator,
     pairs: pd.DataFrame,
-    path_rules,  # List[PathRule],
+    path_generator: PathGenerator,
     path_embedding_strategy: PathEmbeddingStrategy,
     category_encoder: OneHotEncoder,
     relation_encoder: OneHotEncoder,
@@ -256,7 +256,7 @@ def _make_predictions(
     Args:
         model: The model to make predictions with.
         pairs: Dataset of drug-disease pairs. Expected columns: (source_id, target_id).
-        path_rules: Path rules to use for generating paths.
+        path_generator: Path generator outputting all paths of interest between a given drug disease pair.
         path_embedding_strategy: Path embedding strategy.
         category_encoder: One-hot encoder for node categories.
         relation_encoder: One-hot encoder for edge relations.
@@ -264,6 +264,7 @@ def _make_predictions(
     Returns:
         List of KGPaths objects, one for each pair.
     """
+
     # For each pair, do the following:
     # Step 1: generate all paths
     # Step 2: embed paths

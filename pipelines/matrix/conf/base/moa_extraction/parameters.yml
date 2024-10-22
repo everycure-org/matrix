@@ -66,9 +66,9 @@ moa_extraction:
         lr: 0.01
         device: 'cpu'
       negative_samplers:
-        - object: matrix.pipelines.moa_extraction.negative_path_samplers.ReplacementPathSampler
+        - object: matrix.pipelines.moa_extraction.path_generators.ReplacementPathSampler
           num_replacement_paths: 1
-          unidirectional: false
+          unidirectional: &unidirectional False
           random_state: ${globals:random_state}
     three_hop:
       model:
@@ -86,7 +86,25 @@ moa_extraction:
         lr: 0.01
         device: 'cpu'
       negative_samplers:
-        - object: matrix.pipelines.moa_extraction.negative_path_samplers.ReplacementPathSampler
+        - object: matrix.pipelines.moa_extraction.path_generators.ReplacementPathSampler
           num_replacement_paths: 1
-          unidirectional: false
+          unidirectional: *unidirectional
           random_state: ${globals:random_state}
+
+  evaluation:
+    two_hop:
+      path_generators:
+        object: matrix.pipelines.moa_extraction.path_generators.AllPathsWithTagRules
+        tag_rules:
+          all: ['drug_disease']
+          2: ['disease_disease']
+        num_hops: 2
+        unidirectional: *unidirectional
+    three_hop:
+      path_generators:
+        object: matrix.pipelines.moa_extraction.path_generators.AllPathsWithTagRules
+        tag_rules:
+          all: ['drug_disease']
+          3: ['disease_disease']
+        num_hops: 3
+        unidirectional: *unidirectional
