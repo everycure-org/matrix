@@ -20,7 +20,7 @@ def create_pipeline(**kwargs) -> Pipeline:
             ),
             node(
                 func=transform_robo_edges,
-                inputs="ingestion.int.robokop.edges",
+                inputs=["ingestion.int.robokop.edges", "integration.raw.biolink.predicates"],
                 outputs="integration.int.robokop.edges",
                 name="transform_robokop_edges",
                 tags=["standardize"],
@@ -34,11 +34,7 @@ def create_pipeline(**kwargs) -> Pipeline:
             ),
             node(
                 func=transform_rtxkg2_edges,
-                inputs=[
-                    "integration.int.rtx.nodes",
-                    "ingestion.int.rtx_kg2.edges",
-                    "integration.raw.biolink.predicates",
-                ],
+                inputs=["ingestion.int.rtx_kg2.nodes", "integration.raw.biolink.predicates"],
                 outputs="integration.int.rtx.edges",
                 name="transform_rtx_edges",
                 tags=["standardize"],
