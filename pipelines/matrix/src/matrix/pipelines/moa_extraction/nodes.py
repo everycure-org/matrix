@@ -263,28 +263,49 @@ def _make_predictions(
         relation_encoder: One-hot encoder for edge relations.
 
     Returns:
-        Dictionary of KGPaths objects, one for each pair.
+        Dictionary of KGPaths objects, one for each pair. Each object contains a dataframe with the paths sorted by confidence score.
     """
     paths_dict = dict()
     for _, row in pairs.iterrows():
+        # Generate all paths for the pair
         all_paths_for_pair = path_generator.run(runner, row.source_id, row.target_id)
-        paths_dict["__".join((row.source_id, row.target_id))] = all_paths_for_pair
 
-    # For each pair, do the following:
-    # Step 2: embed paths
-    # Step 3: make predictions
-    # Step 4: Sort by confidence score
+        # Embed the paths
+        X = path_embedding_strategy.run(all_paths_for_pair, category_encoder, relation_encoder)
+        X = X.astype(np.float32)
+
+        # Make predictions
+        y_pred = model.predict_proba(X)[:, 1]  # Returns column vector
+        y_pred = y_pred.reshape(-1, 1)
+
+        # Add predictions to the paths dataframe and sort
+        all_paths_for_pair.df["y_pred"] = y_pred
+        all_paths_for_pair.df = all_paths_for_pair.df.sort_values(by="y_pred", ascending=False)
+        paths_dict["__".join((row.source_id, row.target_id))] = all_paths_for_pair
 
     # Return KGPaths objects as DataFrames
     paths_dict = {k: v.df for k, v in paths_dict.items()}
-    return ...
+    return paths_dict
+
+
+def _get_test_pairs(positive_paths: KGPaths) -> pd.DataFrame:
+    """Get the test pairs from the positive paths dataset.
+
+    Args:
+        positive_paths: Dataset of positive indication paths, with a "split" information.
+
+    Returns:
+        DataFrame of drug-disease pairs.
+    """
+    test_paths = KGPaths(df=positive_paths.df[positive_paths.df["split"] == "TEST"])
+    return test_paths.get_unique_pairs()
 
 
 @inject_object()
 def make_evaluation_predictions(
     model: BaseEstimator,
     runner: Neo4jRunner,
-    paths: KGPaths,
+    positive_paths: KGPaths,
     path_generator: PathGenerator,
     path_embedding_strategy: PathEmbeddingStrategy,
     category_encoder: OneHotEncoder,
@@ -295,8 +316,8 @@ def make_evaluation_predictions(
     Args:
         model: The model to make predictions with.
         runner: The Neo4j runner.
-        paths: Dataset of positive indication paths, with a "split" information.
-        path_generator: Path generator outputting all paths of interest between a given drug disease pair.
+        positive_paths: Dataset of positive indication paths, with a "split" information.
+        path_generator: Path generator outputting all paths of interest between a given drug-disease pair.
         path_embedding_strategy: Path embedding strategy.
         category_encoder: One-hot encoder for node categories.
         relation_encoder: One-hot encoder for edge relations.
@@ -304,8 +325,87 @@ def make_evaluation_predictions(
     Returns:
         Dictionary of KGPaths objects, one for each pair.
     """
-    test_paths = KGPaths(df=paths.df[paths.df["split"] == "TEST"])
-    pairs = test_paths.get_unique_pairs()
+    test_paths = KGPaths(df=positive_paths.df[positive_paths.df["split"] == "TEST"])
+    test_pairs = test_paths.get_unique_pairs()
     return _make_predictions(
-        model, runner, pairs, path_generator, path_embedding_strategy, category_encoder, relation_encoder
+        model, runner, test_pairs, path_generator, path_embedding_strategy, category_encoder, relation_encoder
     )
+
+
+def _label_evaluation_predictions(
+    positive_paths: KGPaths,
+    predictions_for_pair: KGPaths,
+) -> KGPaths:
+    """Label known test positive paths in the predictions.
+
+    Additionally, any known positive paths in the training set are removed from the predictions.
+
+    Args:
+        positive_paths: Dataset of positive indication paths, with a "split" information.
+        predictions_for_pair: KGPaths object with MOA predictions for a given pair.
+
+    Returns:
+        MOA predictions labeled as positive (y=1) or negative (y=0).
+    """
+    num_hops = positive_paths.num_hops
+    if num_hops != predictions_for_pair.num_hops:
+        raise ValueError("Number of hops in positive paths and predictions for pair do not match")
+
+    # Get the columns for the paths dataframe
+    def _is_path_in_set(set_of_paths: KGPaths, path: pd.Series) -> pd.Series:
+        """Check if a given path is present in a set of paths."""
+        cols = KGPaths.get_columns(num_hops)
+        return set_of_paths.df[cols].apply(lambda row: row.equals(path[cols]), axis=1).any()
+
+    # Split the positive paths into test and train
+    is_test = positive_paths.df["split"] == "TEST"
+    test_paths = KGPaths(df=positive_paths.df[is_test])
+    train_paths = KGPaths(df=positive_paths.df[~is_test])
+
+    # Remove any paths that are in the training set
+    predictions_for_pair.df = predictions_for_pair.df[
+        ~predictions_for_pair.df.apply(lambda row: _is_path_in_set(train_paths, row), axis=1)
+    ]
+    # Label the remaining paths
+    predictions_for_pair.df["y"] = predictions_for_pair.df.apply(
+        lambda row: 1 if _is_path_in_set(test_paths, row) else 0, axis=1
+    )
+
+    return predictions_for_pair
+
+
+def compute_evaluation_metrics(
+    positive_paths: KGPaths,
+    predictions: Dict[str, KGPaths],
+    k_lst: List[int],
+) -> Dict[str, float]:
+    """Compute the evaluation metrics for the predictions.
+
+    Args:
+        positive_paths: Dataset of positive indication paths, with a "split" information.
+        predictions: Dictionary of KGPaths objects, one for each pair.
+        k_lst: List of values for Hit@k.
+
+    Returns:
+        Dictionary of evaluation metrics:
+            - Hit@k, one for each value of k.
+            - MRR
+    """
+    # test_pairs = _get_test_pairs(positive_paths)
+
+    # # Compute list of the lowest rank for a positive path for each pair
+    # hit_list = []
+    # # for _, pair in test_pairs.iterrows():
+    # #     pair_id = "__".join((pair.source_id, pair.target_id))
+    # #     predictions_for_pair = predictions[pair_id]
+    # #     labeled_predictions = _label_evaluation_predictions(positive_paths, predictions_for_pair)
+    # for _, predictions_load_func in sorted(predictions.items()):
+    #     predictions_for_pair = predictions_load_func()  # load the actual partition data
+    #     labeled_predictions = _label_evaluation_predictions(positive_paths, predictions_for_pair)
+    # breakpoint()
+    # concat with existing result
+    # result = pd.concat([result, partition_data], ignore_index=True, sort=True)
+
+    # Compute evaluation metrics
+
+    return ...

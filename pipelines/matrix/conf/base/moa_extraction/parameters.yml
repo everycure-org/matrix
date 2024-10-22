@@ -77,7 +77,7 @@ moa_extraction:
           object: matrix.pipelines.moa_extraction.models.TransformerBinaryClassifier
           token_dim: 100
           num_heads: 4
-          num_layers: 2
+          num_layers: 3
           dropout: 0.1
         criterion:
           object: torch.nn.BCEWithLogitsLoss
@@ -101,6 +101,7 @@ moa_extraction:
         num_hops: 2
         unidirectional: *unidirectional
         num_limit: 25 # For testing purposes only
+      k_lst: [5, 25]
     three_hop:
       path_generators:
         object: matrix.pipelines.moa_extraction.path_generators.AllPathsWithTagRules
@@ -110,3 +111,4 @@ moa_extraction:
         num_hops: 3
         unidirectional: *unidirectional
         num_limit: 25 # For testing purposes only
+      k_lst: [5, 25]
