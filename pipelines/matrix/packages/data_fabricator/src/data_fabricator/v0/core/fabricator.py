@@ -1312,7 +1312,7 @@ class MockDataGenerator:
             isinstance(string_references, list)
             and isinstance(string_references[0], str)
             # match table.name or tab_le.na_me or _Tab_le.name or _TAB_le1.Nam
-            and re.match("^[A-Za-z0-9_]+\\.[A-Za-z0-9_]+$", string_references[0])
+            and re.match("^[A-Za-z0-9_]+\\.[A-Za-z0-9_:]+$", string_references[0])
         ):
             actual_values = [
                 self._parse_column_reference(string_reference)
