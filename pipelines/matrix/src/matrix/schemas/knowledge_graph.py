@@ -43,7 +43,7 @@ class KGEdgeSchema(DataFrameModel):
 
     class Config:  # noqa: D106
         coerce = True
-        strict = True
+        strict = False
 
     @classmethod
     def group_edges_by_id(cls, concatenated_edges_df: DataFrame) -> DataFrame:
