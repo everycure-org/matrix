@@ -60,8 +60,8 @@ def transform_rtxkg2_edges(edges_df: DataFrame, biolink_predicates: Dict[str, An
         edges_df
         .withColumn("upstream_data_source",          f.array(f.lit("rtxkg2")))
         .withColumn("knowledge_level",               f.lit(None).cast(T.StringType()))
-        .withColumn("aggregator_knowledge_source",   f.split(f.col("knowledge_source:string[]"), RTX_SEPARATOR))
-        .withColumn("primary_knowledge_source",      f.element_at(f.col("aggregator_knowledge_source"), 1))
+        .withColumn("aggregator_knowledge_source",   f.lit(None)) # DOES NOT EXIST f.split(f.col("knowledge_source:string[]"), RTX_SEPARATOR))
+        .withColumn("primary_knowledge_source",      f.col("primary_knowledge_source"))
         .withColumn("publications",                  f.split(f.col("publications:string[]"), RTX_SEPARATOR))
         .withColumn("subject_aspect_qualifier",      f.lit(None).cast(T.StringType())) #not present in RTX KG2 at this time
         .withColumn("subject_direction_qualifier",   f.lit(None).cast(T.StringType())) #not present in RTX KG2 at this time
