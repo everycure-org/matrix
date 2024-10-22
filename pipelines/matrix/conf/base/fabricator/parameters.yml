@@ -19,14 +19,12 @@ fabricator.rtx_kg2:
       all_categories:string[]:
         type: generate_values
         sample_values:
-          # - biolink:Drug
-          # - biolink:Disease
-          # - biolink:Gene
-          # - biolink:ChemicalSubstance
-          # - biolink:Protein
-          # - biolink:SmallMolecule
-          - acts_upstream_of_negative_effect
-          - acts_upstream_of_or_within_negative_effect
+          - biolink:Drug
+          - biolink:Disease
+          - biolink:Gene
+          - biolink:ChemicalSubstance
+          - biolink:Protein
+          - biolink:SmallMolecule
       iri:
         type: faker
         provider: url
@@ -78,6 +76,9 @@ fabricator.rtx_kg2:
         sample_values:
           - biolink:treats
           - biolink:interacts_with
+          - biolink:affects
+          - biolink:subclass_of
+          - biolink:is_nearby_variant_of
       primary_knowledge_source:
         type: faker
         provider: name
