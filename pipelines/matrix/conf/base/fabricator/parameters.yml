@@ -125,7 +125,7 @@ fabricator.rtx_kg2:
 
   # NOTE: Fabricated drug and disease lists can contain nodes which are not in the drug and disease categories resp.
   drug_list:
-    num_rows: 10
+    num_rows: 20
     columns:
       curie: 
         type: row_apply
@@ -141,7 +141,7 @@ fabricator.rtx_kg2:
         seed: 6850
 
   disease_list:
-    num_rows: 10
+    num_rows: 30
     columns:
       curie: 
         type: row_apply
