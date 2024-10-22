@@ -8,13 +8,9 @@ openai:
 paths:
   raw: data/test/01_raw
   new_raw: data/test/01_raw
-
-  # Release-based
   int: data/test/02_intermediate
   prm: data/test/03_primary
   feat: data/test/04_feature
-
-  # Run-based
   model_input: data/test/05_model_input
   models: data/test/06_models
   model_output: data/test/07_model_output

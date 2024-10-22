@@ -1,5 +1,4 @@
 run_name: ${oc.env:RUN_NAME}
-release_name: ${oc.env:RELEASE_NAME}
 
 gcs_bucket: gs://${oc.env:GCP_BUCKET}
 gcp_project: ${oc.env:GCP_PROJECT_ID}
@@ -12,15 +11,19 @@ paths:
   # hard coded against our central data location for raw
 
   # TODO Need to re-work our approach between what is a "run" and what is a "release"
-  raw:          ${gcs_bucket}/data/01_RAW/
+  raw: gs://mtrx-us-central1-hub-dev-storage/kedro/data/01_raw
 
-  # Release-based
-  int:          ${gcs_bucket}/data/release/${release_name}/02_intermediate
-  prm:          ${gcs_bucket}/data/release/${release_name}/03_primary
-  feat:         ${gcs_bucket}/data/release/${release_name}/04_feature
+  # fabricator: gs://mtrx-us-central1-hub-dev-storage/kedro/fabricator
 
-  # Run-based
-  model_input:  ${gcs_bucket}/data/release/${release_name}/runs/${run_name}/05_model_input
-  models:       ${gcs_bucket}/data/release/${release_name}/runs/${run_name}/06_models
-  model_output: ${gcs_bucket}/data/release/${release_name}/runs/${run_name}/07_model_output
-  reporting:    ${gcs_bucket}/data/release/${release_name}/runs/${run_name}/08_reporting
+  # Will take effect in cloud
+  ingestion: gs://mtrx-us-central1-hub-dev-storage/kedro/ingestion # THIS PAHT
+  integration: ${gcs_bucket}/kedro/releases/${release_name}/integration
+  embeddings: ${gcs_bucket}/kedro/releases/release/${release_name}/embeddings
+
+  # These datasets are version
+  modelling: ${gcs_bucket}/kedro/modelling/release/${release_name}/runs/${run_name}
+  evaluation: ${gcs_bucket}/kedro/evaluation/release/${release_name}/runs/${run_name}
+  matrix_generation: ${gcs_bucket}/kedro/matrix_generation/release/${release_name}runs/${run_name}
+  inference: ${gcs_bucket}/kedro/inference/release/${release_name}/runs/${run_name}
+
+  tmp: ${gcs_bucket}/kedro/tmp
