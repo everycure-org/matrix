@@ -94,51 +94,63 @@ def biolink_deduplicate(edges_df: DataFrame, biolink_predicates: DataFrame):
     return res
 
 
+def compute_ngd(df: DataFrame, num_pairs: int = 3.7e7 * 20) -> DataFrame:
+    """
+    PySpark transformation to compute ngd.
+
+    Args:
+        df: Dataframe
+        num_pairs: num_pairs
+    Returns:
+        Dataframe with ndg score
+    """
+    return df.withColumn(
+        "num_common_pmids", f.array_size(f.array_intersect(f.col("subj.pmids"), f.col("obj.pmids")))
+    ).withColumn(
+        "ndg",
+        (f.max(f.log2(f.col("subj.num_pmids")), f.log2(f.col("obj.num_pmids"))) - f.log2(f.col("num_common_pmids")))
+        / (f.log2(f.lit(num_pairs)) - f.min(f.log2(f.col("subj.num_pmids")), f.log2(f.col("obj.num_pmids")))),
+    )
+
+
 def filter_semmed(
-    nodes_df: DataFrame,
     edges_df: DataFrame,
-    num_pairs: float = 3.7e7 * 20,
+    nodes_df: DataFrame,
     publication_threshold: int = 1,
     ndg_threshold: float = 0.6,
 ) -> DataFrame:
-    # Extract pubmed identifiers
+    # Enrich nodes with pubmed identifiers
     nodes_df = (
         nodes_df.withColumn("pmids", f.array_distinct(f.expr("filter(publications, x -> x like 'PMID:%')")))
-        .withColumn("num_pmids", f.array_size(f.col("pmids")))
-        .select("id", "pmids", "num_pmids")
+        .withColumn("num_pmids", f.array_size(f.col("num_pmids")))
+        .select("id", "pmids")
     )
 
-    return (
-        edges_df.withColumn("num_publications", f.size(f.col("publications")))
+    df = (
+        edges_df
+        # Enrich subject pubmed identifiers
         .join(
-            nodes_df.withColumnRenamed("id", "subject")
-            .withColumnRenamed("pmids", "subject_pmids")
-            .withColumnRenamed("num_pmids", "num_subject_pmids"),
-            on="subject",
+            nodes_df.alias("subj"),
+            on=[f.col("subject") == f.col("subject.id")],
             how="left",
         )
+        # Enrich object pubmed identifiers
         .join(
-            nodes_df.withColumnRenamed("id", "object")
-            .withColumnRenamed("pmids", "object_pmids")
-            .withColumnRenamed("num_pmids", "num_object_pmids"),
-            on="object",
+            nodes_df.alias("obj"),
+            on=[f.col("object") == f.col("object.id")],
             how="left",
         )
-        .withColumn("num_common_pmids", f.array_size(f.array_intersect(f.col("subject_pmids"), f.col("object_pmids"))))
-        .withColumn(
-            "ndg",
-            (
-                f.max(f.log2(f.col("num_subject_pmids")), f.log2(f.col("num_object_pmids")))
-                - f.log2(f.col("num_common_pmids"))
-            )
-            / (f.log2(f.lit(num_pairs)) - f.min(f.log2(f.col("num_subject_pmids")), f.log2(f.col("num_object_pmids")))),
-        )
-        # TODO: For both filters below, only apply filter if edge comes from SemMed
-        .filter(
-            (f.col("ndg") < f.lit(ndg_threshold)) & (f.col("primary_knowledge_source") == f.lit("infores:semmeddb"))
-        )
-        .filter(
-            (f.col("num_publications") > f.lit(publication_threshold))
-            & (f.col("primary_knowledge_source") == f.lit("infores:semmeddb"))
-        )
+        .transform(compute_ngd)
+        # # TODO: For both filters below, only apply filter if edge comes from SemMed
+        # .filter(
+        #     (f.col("ndg") < f.lit(ndg_threshold)) & (f.col("primary_knowledge_source") == f.lit("infores:semmeddb"))
+        # )
+        # .withColumn("num_publications", f.size(f.col("publications")))
+        # .filter(
+        #     (f.col("num_publications") > f.lit(publication_threshold))
+        #     & (f.col("primary_knowledge_source") == f.lit("infores:semmeddb"))
+        # )
+        .drop("subj", "obj")
     )
+
+    return df

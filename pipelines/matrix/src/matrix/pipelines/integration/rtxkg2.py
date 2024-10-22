@@ -9,7 +9,7 @@ from pyspark.sql import DataFrame
 
 from matrix.schemas.knowledge_graph import KGEdgeSchema, KGNodeSchema, cols_for_schema
 
-from .biolink import biolink_deduplicate
+from .biolink import biolink_deduplicate, filter_semmed
 
 RTX_SEPARATOR = "\u01c2"
 
@@ -44,7 +44,7 @@ def transform_rtxkg2_nodes(nodes_df: DataFrame) -> DataFrame:
 
 
 @pa.check_output(KGEdgeSchema)
-def transform_rtxkg2_edges(edges_df: DataFrame, biolink_predicates: Dict[str, Any]) -> DataFrame:
+def transform_rtxkg2_edges(nodes_df: DataFrame, edges_df: DataFrame, biolink_predicates: Dict[str, Any]) -> DataFrame:
     """Transform RTX KG2 edges to our target schema.
 
     Args:
@@ -68,5 +68,5 @@ def transform_rtxkg2_edges(edges_df: DataFrame, biolink_predicates: Dict[str, An
         .withColumn("object_aspect_qualifier",       f.lit(None).cast(T.StringType())) #not present in RTX KG2 at this time
         .withColumn("object_direction_qualifier",    f.lit(None).cast(T.StringType())) #not present in RTX KG2 at this time
         .select(*cols_for_schema(KGEdgeSchema))
-    ).transform(biolink_deduplicate, biolink_predicates)  # .transform(filter_semmed)
+    ).transform(biolink_deduplicate, biolink_predicates).transform(filter_semmed, nodes_df)
     # fmt: on
