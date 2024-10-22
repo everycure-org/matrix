@@ -78,10 +78,10 @@ fabricator.rtx_kg2:
         sample_values:
           - biolink:treats
           - biolink:interacts_with
-      knowledge_source:
+      primary_knowledge_source:
         type: faker
         provider: name
-      publications:
+      publications:string[]:
         type: generate_random_arrays
         delimiter: "\u01c2"
         sample_values:
