@@ -22,40 +22,20 @@ matrix_generation.matrix:
     per_disease:
       top:
         mean: "Mean probability score"
-        quantile: "50% quantile of probability score"
         median: "Median probability score"
-        max: "Maximum probability score"
-        min: "Minimum probability score"
-        std: "Standard deviation of probability scores"
       all:
         mean: "Mean probability score"
         median: "Median probability score"
-        quantile: "25% quantile of probability score"
-        max: "Maximum probability score"
-        min: "Minimum probability score"
-        std: "Standard deviation of probability scores"
     per_drug:
       top:
         mean: "Mean probability score"
         median: "Median probability score"
-        quantile: "25% quantile of probability score"
-        max: "Maximum probability score"
-        min: "Minimum probability score"
-        std: "Standard deviation of probability scores"
       all:
         mean: "Mean probability score"
         median: "Median probability score"
-        quantile: "25% quantile of probability score"
-        max: "Maximum probability score"
-        min: "Minimum probability score"
-        std: "Standard deviation of probability scores"
     full:
       mean: "Mean probability score"
       median: "Median probability score"
-      quantile: "25% quantile of probability score"
-      max: "Maximum probability score"
-      min: "Minimum probability score"
-      std: "Standard deviation of probability scores"
   tags:
     drugs:
       available_USA: "Whether drug is prescriped or discontinued in USA"
@@ -73,7 +53,7 @@ matrix_generation.matrix:
       tag_existing_treatment: "Whether disease has existing treatments"
       tag_QALY_lost: "Whether disease has Quality Adjusted Life Years (QALY) lost"
     master: 
-      legend: "excludes any pairs where the following conditions are met: known positive or negative status, antimicrobial drug with pathogen-caused disease, steroid drug, chemotherapy with cancer, or glucose regulator drug with glucose dysfunction disease"
+      legend: "Excludes any pairs where the following conditions are met: known positive or negative status, antimicrobial drug with pathogen-caused disease, steroid drug, chemotherapy with cancer, or glucose regulator drug with glucose dysfunction disease"
       conditions:
         - [is_known_positive]
         - [is_known_negative]
