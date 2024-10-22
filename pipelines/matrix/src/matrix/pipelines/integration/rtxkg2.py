@@ -1,15 +1,15 @@
 """transformation functions for rtxkg2 nodes and edges."""
 
 from typing import Any, Dict
-import pandas as pd
 
 import pandera.pyspark as pa
 import pyspark.sql.functions as f
 import pyspark.sql.types as T
 from pyspark.sql import DataFrame
 
-from .biolink import biolink_deduplicate
 from matrix.schemas.knowledge_graph import KGEdgeSchema, KGNodeSchema, cols_for_schema
+
+from .biolink import biolink_deduplicate
 
 RTX_SEPARATOR = "\u01c2"
 
@@ -44,9 +44,7 @@ def transform_rtxkg2_nodes(nodes_df: DataFrame) -> DataFrame:
 
 
 @pa.check_output(KGEdgeSchema)
-def transform_rtxkg2_edges(
-    edges_df: DataFrame, biolink_predicates: Dict[str, Any], pubmed_mapping: pd.DataFrame
-) -> DataFrame:
+def transform_rtxkg2_edges(edges_df: DataFrame, biolink_predicates: Dict[str, Any]) -> DataFrame:
     """Transform RTX KG2 edges to our target schema.
 
     Args:
@@ -58,19 +56,17 @@ def transform_rtxkg2_edges(
     """
 
     # fmt: off
-    edges = (
+    return (
         edges_df
         .withColumn("upstream_data_source",          f.array(f.lit("rtxkg2")))
-        .withColumn("knowledge_level",               f.col("knowledge_level").cast(T.StringType()))
-        .withColumn("primary_knowledge_source",      f.col("primary_knowledge_source").cast(T.StringType()))
-        .withColumn("aggregator_knowledge_source",   f.array(f.col("primary_knowledge_source"))) #not present in RTX KG2 at this time
+        .withColumn("knowledge_level",               f.lit(None).cast(T.StringType()))
+        .withColumn("aggregator_knowledge_source",   f.split(f.col("knowledge_source:string[]"), RTX_SEPARATOR))
+        .withColumn("primary_knowledge_source",      f.element_at(f.col("aggregator_knowledge_source"), 1))
         .withColumn("publications",                  f.split(f.col("publications:string[]"), RTX_SEPARATOR))
         .withColumn("subject_aspect_qualifier",      f.lit(None).cast(T.StringType())) #not present in RTX KG2 at this time
         .withColumn("subject_direction_qualifier",   f.lit(None).cast(T.StringType())) #not present in RTX KG2 at this time
         .withColumn("object_aspect_qualifier",       f.lit(None).cast(T.StringType())) #not present in RTX KG2 at this time
         .withColumn("object_direction_qualifier",    f.lit(None).cast(T.StringType())) #not present in RTX KG2 at this time
         .select(*cols_for_schema(KGEdgeSchema))
-    )
+    ).transform(biolink_deduplicate, biolink_predicates)  # .transform(filter_semmed)
     # fmt: on
-
-    return edges.transform(biolink_deduplicate, biolink_predicates)  # .transform(filter_semmed)
