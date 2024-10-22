@@ -35,7 +35,7 @@ moa_extraction:
   splits:
     splitter_two_hop:
       object: matrix.pipelines.modelling.model_selection.GroupAwareSplit
-      group_by_column: "source_id"
+      group_by_column: source_id
       test_size: 0.4
       random_state: ${globals:random_state}
     splitter_three_hop:
