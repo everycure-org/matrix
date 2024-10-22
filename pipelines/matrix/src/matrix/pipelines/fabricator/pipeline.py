@@ -21,7 +21,6 @@ def _create_pairs(drug_list: pd.DataFrame, disease_list: pd.DataFrame, num: int 
     """
     is_enough_generated = False
     while not is_enough_generated:
-        print("not enough")
         # Sample random pairs (we sample twice the required amount in case duplicates are removed)
         random_drugs = drug_list["curie"].sample(num * 4, replace=True, ignore_index=True, random_state=seed)
         random_diseases = disease_list["curie"].sample(num * 4, replace=True, ignore_index=True, random_state=2 * seed)
@@ -33,8 +32,6 @@ def _create_pairs(drug_list: pd.DataFrame, disease_list: pd.DataFrame, num: int 
 
         # Remove duplicate pairs
         df = df.drop_duplicates()
-
-        print(len(df))
 
         # Check that we still have enough fabricated pairs
         is_enough_generated = len(df) >= 2 * num
