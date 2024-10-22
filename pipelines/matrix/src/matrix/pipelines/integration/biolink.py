@@ -130,17 +130,17 @@ def filter_semmed(
     )
 
     df = (
-        edges_df
+        edges_df.alias("edges")
         # Enrich subject pubmed identifiers
         .join(
             nodes_df.alias("subj"),
-            on=[f.col("subject") == f.col("subj.id")],
+            on=[f.col("edges.subject") == f.col("subj.id")],
             how="left",
         )
         # Enrich object pubmed identifiers
         .join(
             nodes_df.alias("obj"),
-            on=[f.col("object") == f.col("obj.id")],
+            on=[f.col("edges.object") == f.col("obj.id")],
             how="left",
         )
         .transform(compute_ngd)
@@ -154,7 +154,7 @@ def filter_semmed(
         #     (f.col("num_publications") > f.lit(publication_threshold))
         #     & (f.col("primary_knowledge_source") == f.lit("infores:semmeddb"))
         # )
-        .drop("subj", "obj")
+        .select("edges.*", "ndg", "num_publications")
     )
 
     return df
