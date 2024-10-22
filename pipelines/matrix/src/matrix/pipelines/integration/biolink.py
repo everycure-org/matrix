@@ -145,15 +145,15 @@ def filter_semmed(
         )
         .transform(compute_ngd)
         .withColumn("num_publications", f.size(f.col("publications")))
-        # TODO: Fix filters
-        # .filter(
-        #     (f.col("ndg") < f.lit(ndg_threshold)) & (f.col("primary_knowledge_source") == f.lit("infores:semmeddb"))
-        # )
-        # .withColumn("num_publications", f.size(f.col("publications")))
-        # .filter(
-        #     (f.col("num_publications") > f.lit(publication_threshold))
-        #     & (f.col("primary_knowledge_source") == f.lit("infores:semmeddb"))
-        # )
+        # fmt: off
+        .filter(
+            # Retrain all semmed edges
+            (f.col("primary_knowledge_source") != f.lit("infores:semmeddb"))
+            |
+            # Retain only semmed edges more than 10 publications or ndg score below 0.6
+            ((f.col("num_publications") > f.lit(publication_threshold)) & (f.col("ndg") < f.lit(ndg_threshold)))
+        )
+        # fmt: on
         .select("edges.*", "ndg", "num_publications")
     )
 
