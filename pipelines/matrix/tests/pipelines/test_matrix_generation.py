@@ -315,6 +315,10 @@ def test_generate_report(sample_data):
                 "is_known_negative": "Whether the pair is a known negative, based on literature and clinical trials",
             },
             "diseases": {"is_cancer": "Whether disease is a cancer"},
+            "master": {
+                "legend": "Excludes any pairs where the following conditions are met: xyz",
+                "conditions": [["is_known_positive"], ["is_known_negative"], ["is_steroid"]],
+            },
         },
     }
 
@@ -336,6 +340,7 @@ def test_generate_report(sample_data):
         "kg_disease_id",
         "kg_drug_name",
         "kg_disease_name",
+        "master_filter",
         "is_steroid",
         "is_known_positive",
         "is_known_negative",
