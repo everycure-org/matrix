@@ -141,6 +141,7 @@ def filter_semmed(
             how="left",
         )
         .transform(compute_ngd)
+        .withColumn("num_publications", f.size(f.col("publications")))
         # # TODO: For both filters below, only apply filter if edge comes from SemMed
         # .filter(
         #     (f.col("ndg") < f.lit(ndg_threshold)) & (f.col("primary_knowledge_source") == f.lit("infores:semmeddb"))
