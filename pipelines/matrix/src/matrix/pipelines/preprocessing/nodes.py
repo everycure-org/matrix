@@ -452,12 +452,12 @@ def clean_input_sheet(input_df: pd.DataFrame, endpoint: str) -> pd.DataFrame:
 
 
 # Temporary function to enrich disease list
-def generate_tag(disease_list: List, model_params: Dict, definition: str = None, synonyms: str = None) -> List:
+def generate_tag(disease_list: List, model_params: Dict, definitions: str = None, synonyms: str = None) -> List:
     """Generates tags based on provided prompts and params through OpenAI API call.
 
     Args:
         disease_list: list- list of disease for which tags should be generated.
-        definition: str - definition of the disease, None
+        definitions: str - definition of the disease, None
         synonyms: str - synonyms of the disease, None
         model_params: Dict - parameters dictionary for openAI API call
     Returns
@@ -465,9 +465,8 @@ def generate_tag(disease_list: List, model_params: Dict, definition: str = None,
     """
     tag_list = []
     client = OpenAI(api_key=os.getenv("OPENAI_KEY"))
-    if (definition is None) | (synonyms is None):
+    if (definitions is None) | (synonyms is None):
         for disease in disease_list:
-            print(model_params.get("prompt").format(disease=disease, synonyms=disease, definition=disease))
             output = client.chat.completions.create(
                 model=model_params.get("model"),
                 messages=[
@@ -477,24 +476,22 @@ def generate_tag(disease_list: List, model_params: Dict, definition: str = None,
                 temperature=model_params.get("temperature"),
             )
             tag_list.append(output.choices[0].message.content)
-        return tag_list
     else:
-        for disease, synonyms, definition in zip(disease_list, synonyms, definition):
-            print(model_params.get("prompt").format(disease=disease, synonyms=disease, definition=disease))
+        for disease, synonym, definition in zip(disease_list, synonyms, definitions):
             output = client.chat.completions.create(
                 model=model_params.get("model"),
                 messages=[
                     {
                         "role": "system",
                         "content": model_params.get("prompt").format(
-                            disease=disease, synonyms=disease, definition=disease
+                            disease=disease, synonym=synonym, definition=definition
                         ),
                     }
                 ],
                 temperature=model_params.get("temperature"),
             )
             tag_list.append(output.choices[0].message.content)
-        return tag_list
+    return tag_list
 
 
 def enrich_disease_list(disease_list: List, params: Dict) -> pd.DataFrame:
@@ -506,31 +503,26 @@ def enrich_disease_list(disease_list: List, params: Dict) -> pd.DataFrame:
     Returns
         pd.DataFrame with x new tag columns (where x corresponds to number of tags specified in params)
     """
-    disease_list = disease_list.head()
-    single_input_params = params["single_input"]
-    for tag in single_input_params.keys():
-        # Skip in case tag is present
-        if tag in disease_list.columns:
-            continue
-        else:
-            print(f"applying tag: '{tag}' to disease list")
-            input_col = single_input_params[tag].get("input_col")
-            output_col = single_input_params[tag].get("output_col")
-            model_params = single_input_params[tag].get("model_params")
-            disease_list[output_col] = generate_tag(disease_list[input_col], model_params)
-    multiple_input_params = params["multiple_input"]
-    for tag in multiple_input_params.keys():
-        # Skip in case tag is present
-        if tag in disease_list.columns:
-            continue
-        else:
-            print(f"applying tag: '{tag}' to disease list")
-            input_col = multiple_input_params[tag].get("input_col")
-            definition_col = multiple_input_params[tag].get("definition")
-            synonym_col = multiple_input_params[tag].get("synonyms")
-            output_col = multiple_input_params[tag].get("output_col")
-            model_params = multiple_input_params[tag].get("model_params")
-            disease_list[output_col] = generate_tag(
-                disease_list[input_col], model_params, disease_list[definition_col], disease_list[synonym_col]
-            )
+    disease_list = disease_list.head(1)
+    for input_type in ["single_input", "multiple_input"]:
+        input_params = params[input_type]
+        for tag, tag_params in input_params.items():
+            # Check if tag is already in disease list
+            if tag in disease_list.columns:
+                continue
+
+            print(f"Applying tag: '{tag}' to disease list")
+            input_col = tag_params["input_col"]
+            output_col = tag_params["output_col"]
+            model_params = tag_params["model_params"]
+
+            # Check whether the tag needs a single or multiple inputs
+            if input_type == "single_input":
+                disease_list[output_col] = generate_tag(disease_list[input_col], model_params)
+            else:
+                definition_col = tag_params["definition"]
+                synonym_col = tag_params["synonyms"]
+                disease_list[output_col] = generate_tag(
+                    disease_list[input_col], model_params, disease_list[definition_col], disease_list[synonym_col]
+                )
     return disease_list
