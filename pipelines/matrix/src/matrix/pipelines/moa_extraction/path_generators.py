@@ -1,5 +1,6 @@
 """Module containing classes for sampling negative paths."""
 
+from typing import Dict, List
 from tqdm import tqdm
 import abc
 
@@ -8,16 +9,16 @@ from matrix.pipelines.moa_extraction.neo4j_runners import Neo4jRunner
 from matrix.pipelines.moa_extraction.path_mapping import SetwisePathMapper
 
 
-class NegativePathSampler(abc.ABC):
-    """Abstract class representing a negative path sampler."""
+class PathGenerator(abc.ABC):
+    """Abstract class representing a KG paths generator."""
 
     @abc.abstractmethod
     def run(self) -> KGPaths:
-        """Sample negative paths from the given paths."""
+        """Generate the paths."""
         ...
 
 
-class ReplacementPathSampler(NegativePathSampler):
+class ReplacementPathSampler(PathGenerator):
     """Samples random paths between the source and target nodes in a given paths dataset."""
 
     def __init__(self, num_replacement_paths: int, unidirectional: bool = True, random_state: int = 1):
@@ -50,7 +51,7 @@ class ReplacementPathSampler(NegativePathSampler):
         return match_clause
 
     def run(self, paths: KGPaths, runner: Neo4jRunner) -> KGPaths:
-        """Sample negative paths from the given paths.
+        """Sample negative paths given a set of positive paths.
 
         FUTURE: Create a subclass where this method is parallelised.
 
@@ -68,7 +69,7 @@ class ReplacementPathSampler(NegativePathSampler):
         return negative_paths
 
     def run_single_pair(self, drug: str, disease: str, count: int, runner: Neo4jRunner, num_hops: int) -> KGPaths:
-        """Sample negative paths from the given paths.
+        """Sample negative paths for the given source drug and target disease.
 
         drug: The drug node ID.
         disease: The disease node ID.
@@ -95,4 +96,64 @@ class ReplacementPathSampler(NegativePathSampler):
         return all_paths
         """
 
+        return runner.run(query)
+
+
+class AllPathsWithTagRules(PathGenerator):
+    """
+    Generates all paths between the given source drug and target disease that match the given tag rules.
+    """
+
+    def __init__(self, tag_rules: Dict[str, List[str]], num_hops: int, unidirectional: bool = True):
+        """Initialise the AllPathsWithTagRules.
+
+        tag_rules: The tag rules to match. This takes the form of a dictionary with keys:
+            'all', '1', '2', ...
+            'all' are the edge tags to omit from all hops
+            '1', '2', ... are edge tags to omit for the first hop, second hop, ... respectively.
+            e.g. tag_rules = {'all': ['drug_disease'], '3': ['disease_disease']}
+        num_hops: The number of hops in the paths.
+        unidirectional: Whether to sample unidirectional paths only.
+        """
+        self.tag_rules = tag_rules
+        self.num_hops = num_hops
+        self.unidirectional = unidirectional
+
+    @classmethod
+    def construct_where_clause(cls, tag_rules: dict, num_hops: int, prefix: str = "_moa_extraction_") -> str:
+        """Construct the where clause for the query.
+
+        E.g. NONE(r IN relationships(path) WHERE r._moa_extraction_drug_disease) AND (NOT r3._moa_extraction_disease_disease)
+
+        Args:
+            tag_rules: The tag rules to match.
+            num_hops: The number of hops in the paths.
+            prefix: The prefix for the tag.
+        """
+        where_clause_parts = []
+        for tag in tag_rules["all"]:
+            where_clause_parts.append(f"NONE(r IN relationships(path) WHERE r.{prefix}{tag})")
+        for hop in range(1, num_hops + 1):
+            for tag in tag_rules[hop]:
+                where_clause_parts.append(f"NOT r{hop}.{prefix}{tag}")
+        where_clause = " AND ".join(where_clause_parts)
+        return where_clause
+
+    def run(self, runner: Neo4jRunner, drug: str, disease: str) -> KGPaths:
+        """Generate the paths.
+
+        Args:
+            runner: The Neo4j runner.
+            drug: The source drug node ID.
+            disease: The target disease node ID.
+        """
+        match_clause = SetwisePathMapper._construct_match_clause(
+            num_hops=self.num_hops, unidirectional=self.unidirectional
+        )
+        where_clause = AllPathsWithTagRules.construct_where_clause(tag_rules=self.tag_rules, num_hops=self.num_hops)
+        query = f"""
+        MATCH path = (start: %{{id:'{drug}'}}){match_clause}(end: %{{id:'{disease}'}})
+        WHERE {where_clause}
+        RETURN path
+        """
         return runner.run(query)

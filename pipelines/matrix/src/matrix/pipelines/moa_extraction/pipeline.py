@@ -1,12 +1,16 @@
 """
 MOA extraction pipeline.
 """
+# TODO: Inject prefix into add_tags and AllPathsWithTagRules
+# TODO: Consider moving neo query helpers top their own file
 # TODO: Make negative path sampling strategies PathGenerator Strategies
 # TODO: Simplify the schema by rename source and target
 # TODO: Add mapping success report node
 # TODO: Add training curve plot to MLFlow report
 # TODO: Onehot to sklearn
 # TODO: Replace neo4j runner by Kedro node
+
+# TODO: reconsider class structure for path generators and negative samplers
 
 from kedro.pipeline import Pipeline, node
 from kedro.pipeline.modular_pipeline import pipeline
@@ -140,7 +144,7 @@ def _evaluation_pipeline() -> Pipeline:
                         inputs={
                             "model": f"params:moa_extraction.training.{num_hops}_hop.model",
                             "paths": f"moa_extraction.feat.{num_hops}_hop_enriched_paths",
-                            "path_rules": f"params:moa_extraction.path_rules.{num_hops}_hop",
+                            "path_generators": f"params:moa_extraction.evaluation.{num_hops}_hop.path_generators",
                             "path_embedding_strategy": "params:moa_extraction.path_embeddings.strategy",
                             "category_encoder": "moa_extraction.feat.category_encoder",
                             "relation_encoder": "moa_extraction.feat.relation_encoder",
