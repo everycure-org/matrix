@@ -7,7 +7,7 @@ title: Customizing Matrix Generation
 
 Enriching the matrix output with tags, filters or statistics is really useful for our medical team as it helps one to navigate the matrix and understand the data. This guide explains how to customize the matrix generation process by modifying the `parameters.yml` file.
 
-The tags, filters, and statistics sections to be appended to the final matrix output can be find within the `parameters.yml` file. The file is located at `pipelines/matrix/conf/base/matrix_generation/parameters.yml`, under `matrix_generation.matrix` section:
+The tags, filters, and statistics sections to be appended to the final matrix output can be found within the `parameters.yml` file. The file is located at `pipelines/matrix/conf/base/matrix_generation/parameters.yml`, under `matrix_generation.matrix` section:
 
 ```yaml
 matrix_generation.matrix:
@@ -22,11 +22,11 @@ matrix_generation.matrix:
     # ... (tag columns)
 ```
 
-Also do note that the actual tags/column names are written in a key:value format; while only key is used in the matrix output, the value is being used as a 'legend' that is appended to the metadata csv file.
+Also do note that the actual tags/column names are written in a key:value format; while only key is used in the matrix output, the value is being used as a 'legend' that is appended to the metadata .csv file.
 
 ## 0. Required fields
 
-The parameters.yaml file also contains the entries essential for good understanding of the matrix output: these entries are defined as `drug_list`, `disease_list`, and `kg_data`.
+The parameters.yaml file contains the entries essential for good understanding of the matrix output: these entries are defined as `drug_list`, `disease_list`, and `kg_data`, and are necessary for the matrix generation process so __do not remove them__.
 
 ```yaml
 matrix_generation.matrix:
@@ -39,7 +39,7 @@ matrix_generation.matrix:
     disease_list:
       disease_id: "Disease identifier"
       disease_name: "Disease name"
-    # KG_data highlights the drug/disease ids which are being used by the model and which are mappable in the KG. The only exception is the `pair_id` which is a unique identifier for each drug-disease pair.
+    # KG_data highlights the drug/disease ids which are being used by the model and which are mappable in the KG. The only exception is the `pair_id` which is a unique identifier for each drug-disease pair which we generate in matrix_generation pipeline.
     kg_data:
       pair_id: "Unique identifier for each pair"
       kg_drug_id: "Drug identifier in the knowledge graph"
@@ -68,7 +68,7 @@ These fields will be used in the `generate_metadata` function to create the meta
 
 ## 1.1 Master filter tag
 
-Note that there is also a `master_filter` tag which is essentially a conditional statement based on several other tags. This is the most important filter for the medical team as it utilizes both drug and disease tags to exclude certain pairs - for example a pair where a drug is an antimicrobial and the disease is a pathogen-caused disease.
+Note that there is also a `master_filter` tag which is essentially a conditional statement based on several other tags. This is the most important filter for the medical team as it utilizes both drug and disease tags to exclude certain pairs - for example a pair where a drug is an antimicrobial and the disease is a pathogen-caused disease. Such pair is not incredibly useful when it comes to drug repurposing as we are trying to find new uses for existing drugs.
 
 The conditions for the `master_filter` tag are defined in the `master` section:
 ```yaml
@@ -76,13 +76,13 @@ matrix_generation.matrix:
   tags:
     master: 
       legend: "excludes any pairs where the following conditions are met: known positive or negative status, antimicrobial drug with pathogen-caused disease, steroid drug, chemotherapy with cancer, or glucose regulator drug with glucose dysfunction disease"
-      conditions:
-        - [is_known_positive]
-        - [is_known_negative]
-        - [is_antimicrobial, is_pathogen_caused]
-        - [is_steroid]
-        - [is_glucose_regulator, is_glucose_dysfunction]
-        - [is_chemotherapy, is_cancer]
+      conditions: # if any of the conditions are met, the tag returns True
+        - [is_known_positive] # if is_known_positive is True, the tag returns True
+        - [is_known_negative] # if is_known_negative is True, the tag returns True
+        - [is_antimicrobial, is_pathogen_caused] # if is_antimicrobial is True AND is_pathogen_caused is True, the tag returns True
+        - [is_steroid] # if is_steroid is True, the tag returns True
+        - [is_glucose_regulator, is_glucose_dysfunction] # if is_glucose_regulator is True AND is_glucose_dysfunction is True, the tag returns True
+        - [is_chemotherapy, is_cancer] # if is_chemotherapy is True AND is_cancer is True, the tag returns True
 ```
 
 ## 2. Customizing Descriptive Statistics
@@ -105,7 +105,7 @@ matrix_generation.matrix:
 
 These statistics will be calculated in the `generate_report` function using pandas' `transform` method. We have statistics for each disease and each drug, and they are calculated per disease and per drug respectively - this way the end-users will have a better understanding of the data's distribution. 
 
-Furthermore, the `stats_col_names` is divided in two sections: `all` and `top`. The `all` section calculates descriptive statistics across the whole matrix (~60 million pairs) while the `top` section calculates statistics only for `n_reporting` pairs (as specified in the `matrix_generation_options` section). You can add any statistics as long as they are compatible with pandas' `transform` method such as `mean`, `median`, `quantile`, `max`, `min`, `std`.
+Furthermore, the `stats_col_names` is divided in two sections: `all` and `top`. The `all` section calculates descriptive statistics (per drug/disease) across the whole matrix (~60 million pairs) while the `top` section calculates statistics only for `n_reporting` pairs (as specified in the `matrix_generation_options` section). You can add any statistics as long as they are compatible with pandas' `transform` method such as `mean`, `median`, `quantile`, `max`, `min`, `std`.
 
 ### 2.1 Full Matrix Descriptive Statistics
 
