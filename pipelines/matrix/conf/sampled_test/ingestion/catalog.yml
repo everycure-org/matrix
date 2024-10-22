@@ -1,0 +1,46 @@
+_layer_raw: &_layer_raw
+  metadata:
+    kedro-viz:
+      layer: raw
+
+_layer_int: &_layer_int
+  metadata:
+    kedro-viz:
+      layer: integration
+
+_spark_parquet_ds: &_spark_parquet
+  type: matrix.datasets.gcp.LazySparkDataset
+  file_format: parquet
+  save_args:
+    mode: overwrite
+
+
+ingestion.raw.rtx_kg2.edges@spark:
+  <<: *_layer_raw
+  type: matrix.datasets.gcp.LazySparkDataset
+  filepath: ${globals:paths.sample_raw}/KGs/samples/rtx_kg2/${globals:data_sources.rtx-kg2.version}/edges_c.tsv
+  file_format: csv
+  load_args:
+    sep: "\t"
+    header: true
+
+
+ingestion.raw.rtx_kg2.nodes@spark:
+  <<: *_layer_raw
+  type: matrix.datasets.gcp.LazySparkDataset
+  filepath: ${globals:paths.sample_raw}/KGs/samples/rtx_kg2/${globals:data_sources.rtx-kg2.version}/nodes_c.tsv
+  file_format: csv
+  load_args:
+    sep: "\t"
+    header: true
+
+
+ingestion.int.rtx_kg2.nodes:
+  <<: [*_spark_parquet, *_layer_int]
+  filepath: ${globals:paths.int_sample}/rtx_kg2/nodes
+
+ingestion.int.rtx_kg2.edges:
+  <<: [*_spark_parquet, *_layer_int]
+  filepath: ${globals:paths.int_sample}/rtx_kg2/edges
+
+

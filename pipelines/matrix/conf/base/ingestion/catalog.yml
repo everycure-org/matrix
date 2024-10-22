@@ -39,7 +39,7 @@ ingestion.raw.rtx_kg2.nodes@pandas:
     index: false
     sep: "\t"
 
-ingestion.raw.rtx_kg2.nodes@spark:
+ingestion.raw.rtx_kg2.nodes@spark: &_kg2_nodes_spark
   <<: *_layer_raw
   type: matrix.datasets.gcp.SparkWithSchemaDataset
   filepath: ${globals:paths.raw}/rtx_kg2/${globals:data_sources.rtx-kg2.version}/nodes_c.tsv
@@ -121,7 +121,7 @@ ingestion.raw.rtx_kg2.edges@pandas:
   load_args:
     sep: "\t"
 
-ingestion.raw.rtx_kg2.edges@spark:
+ingestion.raw.rtx_kg2.edges@spark: &_kg2_edges_spark
   <<: *_layer_raw
   type: matrix.datasets.gcp.SparkWithSchemaDataset
   filepath: ${globals:paths.raw}/rtx_kg2/${globals:data_sources.rtx-kg2.version}/edges_c.tsv
@@ -206,13 +206,13 @@ ingestion.int.rtx_kg2.edges:
   <<: [*_spark_parquet, *_layer_int]
   filepath: ${globals:paths.int}/rtx_kg2/edges
 
-ingestion.sample.rtx_kg2.nodes:
-  <<: [*_spark_parquet, *_layer_int]
-  filepath: ${globals:paths.sample_int}/rtx_kg2/nodes
+ingestion.pre_sample.rtx_kg2.nodes@spark:
+  <<: *_kg2_nodes_spark
+  filepath: ${globals:paths.int}/rtx_kg2/nodes
 
-ingestion.sample.rtx_kg2.edges:
-  <<: [*_spark_parquet, *_layer_int]
-  filepath: ${globals:paths.sample_int}/rtx_kg2/edges
+ingestion.pre_sample.rtx_kg2.edges@spark:
+  <<: *_kg2_edges_spark
+  filepath: ${globals:paths.int}/rtx_kg2/edges
 
 
 

@@ -13,30 +13,16 @@ def create_pipeline(**kwargs) -> Pipeline:
             node(
                 func=nodes.get_random_selection_from_rtx,
                 inputs={
-                    "nodes" : "ingestion.int.rtx_kg2.nodes",
-                    "edges" : "ingestion.int.rtx_kg2.edges",
-                    "known_pairs": "modelling.int.known_pairs",
+                    "nodes" : "ingestion.pre_sample.rtx_kg2.nodes@spark",
+                    "edges" : "ingestion.pre_sample.rtx_kg2.edges@spark",
+                    #"raw_tp": "modelling.raw.ground_truth.positives",
+                    #"raw_tn": "modelling.raw.ground_truth.negatives",
                 },
                 outputs={
-                    "nodes": "ingestion.sample.rtx_kg2.nodes",
-                    "edges": "ingestion.sample.rtx_kg2.edges",
+                    "nodes": "ingestion.raw.rtx_kg2.nodes@spark",
+                    "edges": "ingestion.raw.rtx_kg2.edges@spark",
                 },
-                name="sampled_kg2_datasets",
-            ),
-            # ec-medical-team
-            node(
-                func=lambda x: x,
-                inputs=["ingestion.int.ec_medical_team.nodes"],
-                outputs="ingestion.sample.ec_medical_team.nodes",
-                name="write_ec_medical_team_nodes",
-                tags=["ec_medical_team"],
-            ),
-            node(
-                func=lambda x: x,
-                inputs=["ingestion.int.ec_medical_team.edges"],
-                outputs="ingestion.sample.ec_medical_team.edges",
-                name="write_ec_medical_team_edges",
-                tags=["ec_medical_team"],
+                name="prefilter_rtx_kg2_nodes",
             ),
         ]
     )
