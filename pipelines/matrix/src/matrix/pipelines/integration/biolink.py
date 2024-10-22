@@ -89,7 +89,7 @@ def biolink_deduplicate(edges_df: DataFrame, biolink_predicates: DataFrame):
         .drop("parents")
     )
 
-    logger.info(f"dropped {before_count - res.count()} edges")
+    logger.info(f"dropped {before_count - res.count()} redundant biolink edges")
 
     return res
 
@@ -122,6 +122,8 @@ def filter_semmed(
     publication_threshold: int = 1,
     ndg_threshold: float = 0.6,
 ) -> DataFrame:
+    before_count = edges_df.count()
+
     # Enrich nodes with pubmed identifiers
     nodes_df = (
         nodes_df.withColumn("pmids", f.array_distinct(f.expr("filter(publications, x -> x like 'PMID:%')")))
@@ -156,5 +158,7 @@ def filter_semmed(
         # fmt: on
         .select("edges.*", "ndg", "num_publications")
     )
+
+    logger.info(f"dropped {before_count - df.count()} SemMedDB edges")
 
     return df
