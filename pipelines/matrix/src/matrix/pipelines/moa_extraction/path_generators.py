@@ -104,7 +104,9 @@ class AllPathsWithTagRules(PathGenerator):
     Generates all paths between the given source drug and target disease that match the given tag rules.
     """
 
-    def __init__(self, tag_rules: Dict[str, List[str]], num_hops: int, unidirectional: bool = True):
+    def __init__(
+        self, tag_rules: Dict[str, List[str]], num_hops: int, unidirectional: bool = True, num_limit: int = None
+    ):
         """Initialise the AllPathsWithTagRules.
 
         tag_rules: The tag rules to match. This takes the form of a dictionary with keys:
@@ -114,10 +116,12 @@ class AllPathsWithTagRules(PathGenerator):
             e.g. tag_rules = {'all': ['drug_disease'], '3': ['disease_disease']}
         num_hops: The number of hops in the paths.
         unidirectional: Whether to sample unidirectional paths only.
+        num_limit: The maximum number of paths to return. If None, all paths are returned.
         """
         self.tag_rules = tag_rules
         self.num_hops = num_hops
         self.unidirectional = unidirectional
+        self.num_limit = num_limit
 
     @classmethod
     def construct_where_clause(cls, tag_rules: dict, num_hops: int, prefix: str = "_moa_extraction_") -> str:
@@ -134,8 +138,9 @@ class AllPathsWithTagRules(PathGenerator):
         for tag in tag_rules["all"]:
             where_clause_parts.append(f"NONE(r IN relationships(path) WHERE r.{prefix}{tag})")
         for hop in range(1, num_hops + 1):
-            for tag in tag_rules[hop]:
-                where_clause_parts.append(f"NOT r{hop}.{prefix}{tag}")
+            if hop in tag_rules.keys():
+                for tag in tag_rules[hop]:
+                    where_clause_parts.append(f"NOT r{hop}.{prefix}{tag}")
         where_clause = " AND ".join(where_clause_parts)
         return where_clause
 
@@ -154,6 +159,9 @@ class AllPathsWithTagRules(PathGenerator):
         query = f"""
         MATCH path = (start: %{{id:'{drug}'}}){match_clause}(end: %{{id:'{disease}'}})
         WHERE {where_clause}
-        RETURN path
+        RETURN path LIMIT {self.num_limit}
         """
-        return runner.run(query)
+        result = runner.run(query)
+        paths = KGPaths(num_hops=self.num_hops)
+        paths.add_paths_from_result(result)
+        return paths

@@ -143,8 +143,9 @@ def _evaluation_pipeline() -> Pipeline:
                         func=nodes.make_evaluation_predictions,
                         inputs={
                             "model": f"params:moa_extraction.training.{num_hops}_hop.model",
-                            "paths": f"moa_extraction.feat.{num_hops}_hop_enriched_paths",
-                            "path_generators": f"params:moa_extraction.evaluation.{num_hops}_hop.path_generators",
+                            "runner": "params:moa_extraction.neo4j_runner",
+                            "paths": f"moa_extraction.prm.{num_hops}_hop_splits",
+                            "path_generator": f"params:moa_extraction.evaluation.{num_hops}_hop.path_generators",
                             "path_embedding_strategy": "params:moa_extraction.path_embeddings.strategy",
                             "category_encoder": "moa_extraction.feat.category_encoder",
                             "relation_encoder": "moa_extraction.feat.relation_encoder",

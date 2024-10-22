@@ -245,12 +245,13 @@ def train_model_split(
 
 def _make_predictions(
     model: BaseEstimator,
+    runner: Neo4jRunner,
     pairs: pd.DataFrame,
     path_generator: PathGenerator,
     path_embedding_strategy: PathEmbeddingStrategy,
     category_encoder: OneHotEncoder,
     relation_encoder: OneHotEncoder,
-) -> List[KGPaths]:
+) -> Dict[str, KGPaths]:
     """Make MOA predictions on the pairs dataset.
 
     Args:
@@ -262,38 +263,49 @@ def _make_predictions(
         relation_encoder: One-hot encoder for edge relations.
 
     Returns:
-        List of KGPaths objects, one for each pair.
+        Dictionary of KGPaths objects, one for each pair.
     """
+    paths_dict = dict()
+    for _, row in pairs.iterrows():
+        all_paths_for_pair = path_generator.run(runner, row.source_id, row.target_id)
+        paths_dict["__".join((row.source_id, row.target_id))] = all_paths_for_pair
 
     # For each pair, do the following:
-    # Step 1: generate all paths
     # Step 2: embed paths
     # Step 3: make predictions
     # Step 4: Sort by confidence score
+
+    # Return KGPaths objects as DataFrames
+    paths_dict = {k: v.df for k, v in paths_dict.items()}
     return ...
 
 
 @inject_object()
 def make_evaluation_predictions(
     model: BaseEstimator,
+    runner: Neo4jRunner,
     paths: KGPaths,
-    path_rules,  # List[PathRule],
+    path_generator: PathGenerator,
     path_embedding_strategy: PathEmbeddingStrategy,
     category_encoder: OneHotEncoder,
     relation_encoder: OneHotEncoder,
-) -> List[KGPaths]:
+) -> Dict[str, KGPaths]:
     """Make MOA predictions on the pairs dataset.
 
     Args:
         model: The model to make predictions with.
-        pairs: Dataset of drug-disease pairs. Expected columns: (source_id, target_id).
-        path_rules: Path rules to use for generating paths.
+        runner: The Neo4j runner.
+        paths: Dataset of positive indication paths, with a "split" information.
+        path_generator: Path generator outputting all paths of interest between a given drug disease pair.
         path_embedding_strategy: Path embedding strategy.
         category_encoder: One-hot encoder for node categories.
         relation_encoder: One-hot encoder for edge relations.
 
     Returns:
-        List of KGPaths objects, one for each pair.
+        Dictionary of KGPaths objects, one for each pair.
     """
-    pairs = paths.df[paths.df["split"] == "TEST"].get_unique_pairs()
-    return _make_predictions(model, pairs, path_rules, path_embedding_strategy, category_encoder, relation_encoder)
+    test_paths = KGPaths(df=paths.df[paths.df["split"] == "TEST"])
+    pairs = test_paths.get_unique_pairs()
+    return _make_predictions(
+        model, runner, pairs, path_generator, path_embedding_strategy, category_encoder, relation_encoder
+    )

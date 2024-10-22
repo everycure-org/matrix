@@ -100,6 +100,7 @@ moa_extraction:
           2: ['disease_disease']
         num_hops: 2
         unidirectional: *unidirectional
+        num_limit: 25 # For testing purposes only
     three_hop:
       path_generators:
         object: matrix.pipelines.moa_extraction.path_generators.AllPathsWithTagRules
@@ -108,3 +109,4 @@ moa_extraction:
           3: ['disease_disease']
         num_hops: 3
         unidirectional: *unidirectional
+        num_limit: 25 # For testing purposes only
