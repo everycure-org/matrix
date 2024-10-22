@@ -54,7 +54,7 @@ modelling.raw.ground_truth.negatives:
 
 modelling.int.known_pairs:
   <<: [*_pandas_parquet, *_model_input_ds]
-  filepath: ${globals:paths.int}/ground_truth
+  filepath: ${globals:integration}/ground_truth
 
 # filtered down further to drugs/diseases
 modelling.model_input.drugs_diseases_nodes@spark:

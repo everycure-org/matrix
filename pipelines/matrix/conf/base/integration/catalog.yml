@@ -19,26 +19,26 @@ _layer_prm: &_layer_prm
 
 integration.int.{source}.nodes:
   <<: [*_spark_parquet, *_layer_int]
-  filepath: ${globals:paths.int}/{source}/nodes
+  filepath: ${globals:integration}/{source}/nodes
 
 integration.int.{source}.edges:
   <<: [*_spark_parquet, *_layer_int]
-  filepath: ${globals:paths.int}/{source}/edges
+  filepath: ${globals:integration}/{source}/edges
 
 
 # Normalized KGs
 integration.int.{source}.nodes.norm:
   <<: [*_spark_parquet, *_layer_int]
-  filepath: ${globals:paths.int}/{source}/nodes.norm
+  filepath: ${globals:integration}/{source}/nodes.norm
 
 integration.int.{source}.edges.norm:
   <<: [*_spark_parquet, *_layer_int]
-  filepath: ${globals:paths.int}/{source}/edges.norm
+  filepath: ${globals:integration}/{source}/edges.norm
 
 # mapping tables 
 integration.int.{source}.nodes_norm_mapping:
   <<: [*_spark_parquet, *_layer_int]
-  filepath: ${globals:paths.int}/{source}/nodes_norm_mapping
+  filepath: ${globals:integration}/{source}/nodes_norm_mapping
 
 
 # Unified KGs
