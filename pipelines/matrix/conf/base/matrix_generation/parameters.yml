@@ -63,7 +63,8 @@ matrix_generation.matrix:
         - [is_chemotherapy, is_cancer]
 
 matrix_generation.run:
-  workflow_id: ${oc.env:WORKFLOW_ID, local}}
+  workflow_id: ${oc.env:WORKFLOW_ID, local}
+  run_name: ${globals:run_name}
   mlflow_link: ${globals:mlflow_url}
   git_sha: ${globals:git_sha}
   release_version: ${globals:versions.release}

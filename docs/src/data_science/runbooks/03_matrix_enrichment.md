@@ -117,7 +117,7 @@ stats_col_names:
   full:
     mean: "Mean probability score"
     median: "Median probability score"
-    quantile: "25% quantile of probability score"
+    quantile: "50% quantile of probability score"
     max: "Maximum probability score"
     min: "Minimum probability score"
     std: "Standard deviation of probability scores"
@@ -153,7 +153,7 @@ matrix_generation.matrix:
       all:
         mean: "Mean probability score"
         median: "Median probability score"
-        quantile: "25% quantile of probability score"
+        quantile: "50% quantile of probability score"
         max: "Maximum probability score"
         min: "Minimum probability score"
         std: "Standard deviation of probability scores"
@@ -161,21 +161,21 @@ matrix_generation.matrix:
       top:
         mean: "Mean probability score"
         median: "Median probability score"
-        quantile: "25% quantile of probability score"
+        quantile: "50% quantile of probability score"
         max: "Maximum probability score"
         min: "Minimum probability score"
         std: "Standard deviation of probability scores"
       all:
         mean: "Mean probability score"
         median: "Median probability score"
-        quantile: "25% quantile of probability score"
+        quantile: "50% quantile of probability score"
         max: "Maximum probability score"
         min: "Minimum probability score"
         std: "Standard deviation of probability scores"
     full:
       mean: "Mean probability score"
       median: "Median probability score"
-      quantile: "25% quantile of probability score"
+      quantile: "50% quantile of probability score"
       max: "Maximum probability score"
       min: "Minimum probability score"
       std: "Standard deviation of probability scores"
