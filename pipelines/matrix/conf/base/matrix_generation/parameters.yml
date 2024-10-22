@@ -72,7 +72,15 @@ matrix_generation.matrix:
       is_glucose_dysfunction: "Whether disease is a glucose dysfunction"
       tag_existing_treatment: "Whether disease has existing treatments"
       tag_QALY_lost: "Whether disease has Quality Adjusted Life Years (QALY) lost"
-
+    master: 
+      legend: "excludes any pairs where the following conditions are met: known positive or negative status, antimicrobial drug with pathogen-caused disease, steroid drug, chemotherapy with cancer, or glucose regulator drug with glucose dysfunction disease"
+      conditions:
+        - [is_known_positive]
+        - [is_known_negative]
+        - [is_antimicrobial, is_pathogen_caused]
+        - [is_steroid]
+        - [is_glucose_regulator, is_glucose_dysfunction]
+        - [is_chemotherapy, is_cancer]
 
 matrix_generation.run:
   workflow_id: ${oc.env:WORKFLOW_ID, local}}

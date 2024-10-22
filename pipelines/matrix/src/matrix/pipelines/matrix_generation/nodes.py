@@ -306,6 +306,7 @@ def generate_summary_metadata(matrix_parameters: Dict, score_col_name: str) -> p
     summary_metadata.update(tags_col_names["drugs"])
     summary_metadata.update(tags_col_names["pairs"])
     summary_metadata.update(tags_col_names["diseases"])
+    summary_metadata.update({"master_filter": tags_col_names["master"]["legend"]})
 
     # Add metadata for statistical columns
     for stat, description in stats_col_names["per_disease"]["top"].items():
@@ -428,7 +429,12 @@ def _reorder_columns(top_pairs: pd.DataFrame, score_col_name: str, matrix_params
 
     id_columns = list(meta_col_names["drug_list"].keys()) + list(meta_col_names["disease_list"].keys())
     score_columns = [score_col_name]
-    tag_columns = list(tags["drugs"].keys()) + list(tags["diseases"].keys()) + list(tags["pairs"].keys())
+    tag_columns = (
+        list(["master_filter"])
+        + list(tags["drugs"].keys())
+        + list(tags["diseases"].keys())
+        + list(tags["pairs"].keys())
+    )
     kg_columns = list(meta_col_names["kg_data"].keys())
     stat_columns = list()
     for main_key in ["per_disease", "per_drug"]:
@@ -467,6 +473,32 @@ def _add_tags(
                 tag_mapping = dict(zip(df["curie"], df[tag_name]))
                 # Add the tag to top_pairs
                 top_pairs[tag_name] = top_pairs[set_id].map(tag_mapping)
+
+    # # Add master_filter tag
+    # condition_df = pd.DataFrame()
+    # for i, condition in enumerate(matrix_params['master']['conditions']):
+    #     if len(condition) > 1:
+    #         multi_condition = top_pairs[condition[0]] == True
+    #         for col in condition[1:]:
+    #             multi_condition = multi_condition & (top_pairs[col] == True)
+    #     else:
+    #         multi_condition = top_pairs[condition[0]] == True
+
+    #     condition_df[f'condition_{i}'] = multi_condition
+
+    # top_pairs['master_filter'] = condition_df.any(axis=1)
+    def _apply_condition(top_pairs: pd.DataFrame, condition: List[str]) -> pd.Series:
+        """Apply a single condition to the top_pairs DataFrame."""
+        return top_pairs[condition].all(axis=1)
+
+    def _add_master_filter(top_pairs: pd.DataFrame, matrix_params: Dict) -> pd.DataFrame:
+        """Add master_filter tag to the top_pairs DataFrame."""
+        conditions = matrix_params["master"]["conditions"]
+        condition_results = [_apply_condition(top_pairs, cond) for cond in conditions]
+        top_pairs["master_filter"] = pd.DataFrame(condition_results).any(axis=0)
+        return top_pairs
+
+    top_pairs = _add_master_filter(top_pairs, matrix_params)
     return top_pairs
 
 
