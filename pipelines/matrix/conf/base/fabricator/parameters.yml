@@ -13,7 +13,7 @@ fabricator.rtx_kg2:
         sample_values:
           - biolink:Drug
           - biolink:Disease
-      all_names:string[]:
+      all_names:
         type: faker
         provider: name
       all_categories:string[]:
@@ -87,7 +87,7 @@ fabricator.rtx_kg2:
         sample_values:
           - "PMID:12345678"
           - "DOI:10.1234/example.5678"
-      knowledge_level:
+      knowledge_level:string:
         type: generate_values
         sample_values:
           - prediction
@@ -109,20 +109,38 @@ fabricator.rtx_kg2:
       #     - "increased"
       #     - "decreased"
 
+  # NOTE: Lets see if this is needed later on
+  # pubmed_ids_mapping:
+  #   num_rows: 50
+  #   columns:
+  #     curie:
+  #         type: row_apply
+  #         list_of_values: [nodes.id]
+  #         row_func: "lambda *args: args[0]"
+  #         resize: True
+  #         seed: 590590
+  #     pmids:
+  #         type: generate_random_arrays
+  #         sample_values:
+  #           - "PMID:12345678"
+  #           - "PMID:678"
+  #           - "PMID:195959"
+  #           - "PMID:5059595"
+
   # NOTE: Fabricated drug and disease lists can contain nodes which are not in the drug and disease categories resp.
   drug_list:
     num_rows: 20
     columns:
       curie: 
         type: row_apply
-        list_of_values:  [nodes.id:ID, nodes.name]
+        list_of_values: [nodes.id:ID]
         row_func: "lambda *args: args[0]"
         resize: True
         seed: 6850
       name: 
         type: row_apply
-        list_of_values: [nodes.id:ID, nodes.name]
-        row_func: "lambda *args: args[1]"
+        list_of_values: [nodes.name]
+        row_func: "lambda *args: args[0]"
         resize: True
         seed: 6850
 
@@ -142,7 +160,6 @@ fabricator.rtx_kg2:
         row_func: "lambda *args: args[0]"
         resize: True
         seed: 65690
-        
 
   clinical_trials:
     num_rows: 50
