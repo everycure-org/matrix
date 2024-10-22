@@ -5,7 +5,6 @@ fabricator.rtx_kg2:
       id:
         type: generate_unique_id
         prefix: "GEN:"
-
       name:
         type: generate_unique_id
         prefix: name_
@@ -14,10 +13,10 @@ fabricator.rtx_kg2:
         sample_values:
           - biolink:Drug
           - biolink:Disease
-      all_names:
+      all_names:string[]:
         type: faker
         provider: name
-      all_categories:
+      all_categories:string[]:
         type: generate_values
         sample_values:
           # - biolink:Drug
@@ -34,10 +33,10 @@ fabricator.rtx_kg2:
       description:
         type: generate_unique_id
         prefix: description_
-      equivalent_curies:
+      equivalent_curies:string[]:
         type: faker
         provider: name
-      publications:
+      publications:string[]:
         type: generate_random_arrays
         delimiter: "\u01c2"
         sample_values:
@@ -46,7 +45,7 @@ fabricator.rtx_kg2:
       international_resource_identifier:
         type: faker
         provider: url
-      label:
+      :LABEL:
         type: faker
         provider: name
       date_discovered:

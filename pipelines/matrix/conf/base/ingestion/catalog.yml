@@ -35,7 +35,7 @@ ingestion.raw.rtx_kg2.nodes@pandas:
   load_args:
     sep: "\t"
   save_args:
-    header: false
+    header: true
     index: false
     sep: "\t"
 
