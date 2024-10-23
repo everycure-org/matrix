@@ -336,7 +336,13 @@ def train_topological_embeddings(
     subgraph, _ = gds.graph.filter(subgraph_name, graph, **filter_args)
 
     # Initialize and train the model
+    # Drop model if exists
     model_name = estimator.get("modelName")
+    if gds.model.exists(model_name).any():
+        print("hehe")
+        model = gds.model.get(model_name)
+        gds.model.drop(model)
+
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model, _ = topological_estimator.run(
         gds=gds,
