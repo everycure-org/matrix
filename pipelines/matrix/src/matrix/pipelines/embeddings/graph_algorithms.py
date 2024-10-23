@@ -3,6 +3,7 @@ from typing import List, Any, Optional
 from graphdatascience import GraphDataScience
 import torch
 from torch_geometric.nn import Node2Vec
+from . import torch_utils as tu
 
 
 class GDSGraphAlgorithm(ABC):
@@ -89,81 +90,8 @@ class GDSGraphSage(GDSGraphAlgorithm):
             penaltyL2=self._penalty_l2,
         )
         self._loss = attr["modelInfo"]["metrics"]["iterationLossesPerEpoch"][0]
+        model = tu.generate_dummy_model()
         return model, attr
-
-    def return_loss(self):
-        """Return loss."""
-        return self._loss
-
-    def predict_write(self, gds: GraphDataScience, graph: Any, model_name: str, write_property: str):
-        """Predict and save."""
-        model = gds.model.get(model_name)
-        model.predict_write(graph, writeProperty=write_property)
-
-
-class PygNode2Vec(GDSGraphAlgorithm):
-    """PyTorch Geometric Node2Vec algorithm class."""
-
-    def __init__(
-        self,
-        walk_length: int = 80,
-        walks_per_node: int = 10,
-        p: float = 1.0,
-        q: float = 1.0,
-        num_negative_samples: int = 1,
-        embedding_dim: int = 512,
-        random_seed: Optional[int] = None,
-        concurrency: int = 4,
-        epochs: int = 10,
-    ):
-        """PyTorch Geometric Node2Vec Attributes."""
-        super().__init__(embedding_dim, random_seed, concurrency)
-        self._walk_length = walk_length
-        self._walks_per_node = walks_per_node
-        self._p = p
-        self._q = q
-        self._num_negative_samples = num_negative_samples
-        self._model = None
-        self._loss = None
-        self._epochs = epochs
-
-    def run(self, gds: GraphDataScience, graph: Any, model_name: str, write_property: str, device: str = "cpu"):
-        """Train the algorithm."""
-        print("GRAPH")
-        print(graph)
-        # Convert the graph to PyTorch Geometric format
-        edge_index = graph  # torch.tensor(graph.edges().T, dtype=torch.long)
-
-        # num_nodes = graph.number_of_nodes()
-
-        # Initialize the Node2Vec model
-        self._model = Node2Vec(
-            edge_index,
-            embedding_dim=self._embedding_dim,
-            walk_length=self._walk_length,
-            context_size=self._walks_per_node,
-            walks_per_node=self._walks_per_node,
-            p=self._p,
-            q=self._q,
-            num_negative_samples=self._num_negative_samples,
-            sparse=True,
-        ).to(device)
-
-        # Train the model
-        loader = self._model.loader(batch_size=128, shuffle=True, num_workers=0)
-        optimizer = torch.optim.SparseAdam(list(self._model.parameters()), lr=0.01)
-        self._model.train()
-        for epoch in range(self._epochs):
-            total_loss = []
-            for pos_rw, neg_rw in loader:
-                optimizer.zero_grad()
-                loss = self._model.loss(pos_rw.to(device), neg_rw.to(device))
-                loss.backward()
-                optimizer.step()
-                total_loss.append(loss.item())
-            self._loss = total_loss
-
-        return self._model, {"loss": self._loss}
 
     def return_loss(self):
         """Return loss."""
@@ -174,34 +102,13 @@ class PygNode2Vec(GDSGraphAlgorithm):
         gds: GraphDataScience,
         graph: Any,
         model_name: str,
-        state_dict: torch.Tensor,
         write_property: str,
-        device: str = "cpu",
+        graph_name: str,
+        state_dict: torch.Tensor,
     ):
         """Predict and save."""
-        edge_index = graph
-
-        # Generate embeddings
-        n2vec = Node2Vec(
-            edge_index,
-            embedding_dim=self._embedding_dim,
-            walk_length=self._walk_length,
-            context_size=self._walks_per_node,
-            walks_per_node=self._walks_per_node,
-            p=self._p,
-            q=self._q,
-            num_negative_samples=self._num_negative_samples,
-            sparse=True,
-        ).to(device)
-
-        # Overwrite state dict with actual model
-        n2vec.load_state_dict(state_dict)
-        with torch.no_grad():
-            print(n2vec.cpu())
-            embeddings = n2vec.cpu()
-        # Write embeddings to the graph
-        for node_id, embedding in enumerate(embeddings):
-            gds.run_cypher(f"MATCH (n) WHERE id(n) = {node_id} SET n.{write_property} = {embedding.tolist()}")
+        model = gds.model.get(model_name)
+        model.predict_write(graph, writeProperty=write_property)
 
 
 class GDSNode2Vec(GDSGraphAlgorithm):
@@ -271,10 +178,258 @@ class GDSNode2Vec(GDSGraphAlgorithm):
         )
         self._loss = [int(x) for x in attr["lossPerIteration"]]
 
-    def predict_write(self, gds: GraphDataScience, graph: Any, model_name: str, write_property: str):
+        # Dummy tensor dataset
+        model = tu.generate_dummy_model()
+
+        # Save the model using PyTorchDataset
+        return model, attr
+
+    def predict_write(
+        self,
+        gds: GraphDataScience,
+        graph: Any,
+        model_name: str,
+        write_property: str,
+        graph_name: str,
+        state_dict: torch.Tensor,
+    ):
         """Dummy function as Node2vec gets written in the 'run' step due to no separate predict_write function (unlike GraphSage)."""
         return
 
     def return_loss(self):
         """Return and save."""
         return self._loss
+
+
+# Torch Geometric models
+
+
+class PygNode2Vec(GDSGraphAlgorithm):
+    """PyTorch Geometric Node2Vec algorithm class."""
+
+    def __init__(
+        self,
+        walk_length: int = 80,
+        walks_per_node: int = 10,
+        p: float = 1.0,
+        q: float = 1.0,
+        num_negative_samples: int = 1,
+        embedding_dim: int = 512,
+        random_seed: Optional[int] = None,
+        concurrency: int = 4,
+        epochs: int = 10,
+        sparse: bool = True,  # False,
+        context_size: int = 10,
+        batch_size: int = 128,
+        num_workers: int = 0,
+        learning_rate: float = 0.01,
+        optimizer: str = "SparseAdam",
+    ):
+        """PyTorch Geometric Node2Vec Attributes."""
+        super().__init__(embedding_dim, random_seed, concurrency)
+        self._walk_length = walk_length
+        self._walks_per_node = walks_per_node
+        self._p = p
+        self._q = q
+        self._num_negative_samples = num_negative_samples
+        self._model = None
+        self._loss = None
+        self._epochs = epochs
+        self._batch_size = batch_size
+        self._context_size = context_size
+        self._sparse = sparse
+        self._num_workers = num_workers
+        self._lr = learning_rate
+        self._optimizer = optimizer
+
+    def run(
+        self,
+        gds: GraphDataScience,
+        graph: Any,
+        model_name: str,
+        write_property: str,
+        subgraph: str,
+        device: str = "cpu",
+    ):
+        """Train the algorithm."""
+
+        # Convert the graph to PyTorch Geometric format
+        edge_index, _ = tu.prepare_graph_data(gds, subgraph)
+        # edge_index = tu.generate_edge_index(gds, subgraph)
+
+        # Initialize the Node2Vec model
+        self._model = Node2Vec(
+            edge_index,
+            embedding_dim=self._embedding_dim,
+            walk_length=self._walk_length,
+            context_size=self._context_size,
+            walks_per_node=self._walks_per_node,
+            p=self._p,
+            q=self._q,
+            num_negative_samples=self._num_negative_samples,
+            sparse=self._sparse,
+        ).to(device)
+
+        # Initialize optimizer
+        optimizer_class = getattr(torch.optim, self._optimizer)
+        optimizer = optimizer_class(list(self._model.parameters()), lr=self._lr)
+
+        # Train the model
+        loader = self._model.loader(batch_size=self._batch_size, shuffle=True, num_workers=self._num_workers)
+        self._model.train()
+
+        self._loss = tu.train_model(self._model, loader, self._epochs, optimizer, device)
+
+        return self._model, {"loss": self._loss}
+
+    def return_loss(self):
+        """Return loss."""
+        return self._loss
+
+    def predict_write(
+        self,
+        gds: GraphDataScience,
+        graph: Any,
+        model_name: str,
+        state_dict: torch.Tensor,
+        write_property: str,
+        graph_name: str,
+        device: str = "cpu",
+    ):
+        """Predict and save."""
+        # get edge index
+        edge_index, node_index = tu.prepare_graph_data(gds, graph_name)
+
+        # Generate embeddings
+        n2vec = Node2Vec(
+            edge_index,
+            embedding_dim=self._embedding_dim,
+            walk_length=self._walk_length,
+            context_size=self._walks_per_node,
+            walks_per_node=self._walks_per_node,
+            p=self._p,
+            q=self._q,
+            num_negative_samples=self._num_negative_samples,
+            sparse=True,
+        ).to(device)
+
+        # Overwrite state dict with actual model
+        n2vec.load_state_dict(state_dict)
+        n2vec.eval()
+
+        with torch.no_grad():
+            embeddings = n2vec.embedding.weight.cpu()
+        tu.write_embeddings(gds, embeddings, write_property, node_index)
+
+
+# class PygMetaPath2Vec(GDSGraphAlgorithm):
+#     """PyTorch Geometric MetaPath2Vec algorithm class."""
+
+#     def __init__(
+#         self,
+#         embedding_dim: int = 512,
+#         metapath: List[str] = None,
+#         walk_length: int = 80,
+#         context_size: int = 10,
+#         walks_per_node: int = 10,
+#         num_negative_samples: int = 5,
+#         sparse: bool = True,
+#         random_seed: Optional[int] = None,
+#         concurrency: int = 4,
+#         epochs: int = 10,
+#         batch_size: int = 128,
+#         num_workers: int = 0,
+#         learning_rate: float = 0.01,
+#         optimizer: str = "SparseAdam",
+#     ):
+#         """PyTorch Geometric MetaPath2Vec Attributes."""
+#         super().__init__(embedding_dim, random_seed, concurrency)
+#         self._metapath = metapath
+#         self._walk_length = walk_length
+#         self._context_size = context_size
+#         self._walks_per_node = walks_per_node
+#         self._num_negative_samples = num_negative_samples
+#         self._sparse = sparse
+#         self._model = None
+#         self._loss = None
+#         self._epochs = epochs
+#         self._batch_size = batch_size
+#         self._num_workers = num_workers
+#         self._lr = learning_rate
+#         self._optimizer = optimizer
+
+#     def run(self, gds: GraphDataScience, graph: Any, model_name: str, write_property: str, device: str = "cpu"):
+#         """Train the algorithm."""
+#         # Convert the graph to PyTorch Geometric format
+#         edge_index_dict = graph
+
+#         # Initialize the MetaPath2Vec model
+#         self._model = MetaPath2Vec(
+#             edge_index_dict,
+#             embedding_dim=self._embedding_dim,
+#             metapath=self._metapath,
+#             walk_length=self._walk_length,
+#             context_size=self._context_size,
+#             walks_per_node=self._walks_per_node,
+#             num_negative_samples=self._num_negative_samples,
+#             sparse=self._sparse,
+#         ).to(device)
+
+#         # Initialize optimizer
+#         optimizer_class = getattr(torch.optim, self._optimizer)
+#         optimizer = optimizer_class(list(self._model.parameters()), lr=self._lr)
+
+#         # Train the model
+#         loader = self._model.loader(batch_size=self._batch_size, shuffle=True, num_workers=self._num_workers)
+#         self._model.train()
+
+#         for _ in tqdm(range(self._epochs)):
+#             total_loss = []
+#             for pos_rw, neg_rw in loader:
+#                 optimizer.zero_grad()
+#                 loss = self._model.loss(pos_rw.to(device), neg_rw.to(device))
+#                 loss.backward()
+#                 optimizer.step()
+#                 total_loss.append(loss.item())
+#             self._loss = total_loss
+
+#         return self._model, {"loss": self._loss}
+
+#     def return_loss(self):
+#         """Return loss."""
+#         return self._loss
+
+#     def predict_write(
+#         self,
+#         gds: GraphDataScience,
+#         graph: Any,
+#         model_name: str,
+#         state_dict: torch.Tensor,
+#         write_property: str,
+#         device: str = "cpu",
+#     ):
+#         """Predict and save."""
+#         edge_index_dict = graph
+
+#         # Generate embeddings
+#         m2vec = MetaPath2Vec(
+#             edge_index_dict,
+#             embedding_dim=self._embedding_dim,
+#             metapath=self._metapath,
+#             walk_length=self._walk_length,
+#             context_size=self._context_size,
+#             walks_per_node=self._walks_per_node,
+#             num_negative_samples=self._num_negative_samples,
+#             sparse=self._sparse,
+#         ).to(device)
+
+#         # Overwrite state dict with actual model
+#         m2vec.load_state_dict(state_dict)
+#         m2vec.eval()
+
+#         with torch.no_grad():
+#             for node_type in m2vec.embedding_dict.keys():
+#                 embeddings = m2vec.embedding_dict[node_type].weight.cpu()
+#                 for node_id in tqdm(range(embeddings.size(0))):
+#                     embedding = embeddings[node_id].tolist()
+#                     gds.run_cypher(f"MATCH (n:{node_type}) WHERE id(n) = {node_id} SET n.{write_property} = {embedding}")
