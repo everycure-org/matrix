@@ -67,7 +67,9 @@ def remove_rows_containing_category(nodes: DataFrame, categories: List[str], col
     return nodes.filter(~F.col(column).isin(categories))
 
 
-def unnest_biolink_hierarchy(predicates: List[Dict[str, Any]], parents: Optional[List[str]] = None):
+def unnest_biolink_hierarchy(
+    predicates: List[Dict[str, Any]], parents: Optional[List[str]] = None, pascal_case=False, prefix=""
+):
     """Function to unnest biolink predicate hierarchy.
 
     The biolink predicates are organized in an hierarchical JSON object. To enable
@@ -88,11 +90,25 @@ def unnest_biolink_hierarchy(predicates: List[Dict[str, Any]], parents: Optional
     slices = []
     for predicate in predicates:
         name = predicate.get("name")
+        if pascal_case:
+            name = _pascal_case(name)
+
+        # add prefix if provided
+        name = f"{prefix}{name}"
 
         # Recurse the children
         if children := predicate.get("children"):
-            slices.append(unnest_biolink_hierarchy(children, parents=[*parents, name]))
+            slices.append(
+                unnest_biolink_hierarchy(children, parents=[*parents, name], pascal_case=pascal_case, prefix=prefix)
+            )
 
         slices.append(pd.DataFrame([[name, parents]], columns=["predicate", "parents"]))
 
     return pd.concat(slices, ignore_index=True)
+
+
+def _pascal_case(s: str) -> str:
+    words = s.split("_")
+    for i, word in enumerate(words):
+        words[i] = word[0].upper() + word[1:]
+    return "".join(words)

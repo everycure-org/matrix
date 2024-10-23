@@ -8,7 +8,7 @@ import pyspark.sql.types as T
 from pyspark.sql import DataFrame, Window
 
 from matrix.pipelines.integration.filters import unnest_biolink_hierarchy
-from matrix.schemas.knowledge_graph import KGEdgeSchema, KGNodeSchema, cols_for_schema
+from matrix.schemas.knowledge_graph import KGEdgeSchema, cols_for_schema, KGNodeSchema
 
 # FUTURE: We should likely not need to rename these columns as we do below
 # However, KGX is currently not as performant as we need it to be thus
@@ -55,14 +55,15 @@ def transform_robo_nodes(nodes_df: DataFrame, biolink_categories_df: pd.DataFram
 
 def _determine_most_specific_category(nodes: DataFrame, biolink_categories_df: pd.DataFrame) -> str:
     spark = ps.sql.SparkSession.builder.getOrCreate()
-    labels_hierarchy = spark.createDataFrame(unnest_biolink_hierarchy(biolink_categories_df)).withColumnRenamed(
-        "predicate", "label"
-    )
+    labels_hierarchy = spark.createDataFrame(
+        unnest_biolink_hierarchy(biolink_categories_df, pascal_case=True, prefix="biolink:")
+    ).withColumnRenamed("predicate", "label")
+
     nodes = (
         nodes.withColumn("label", F.explode("all_categories"))
         .join(labels_hierarchy, on="label", how="left")  # add path
         .withColumn("depth", F.size("parents"))
-        .withColumn("row_num", F.row_number().over(Window.partitionBy("id").orderBy("depth")).desc())
+        .withColumn("row_num", F.row_number().over(Window.partitionBy("id").orderBy(F.col("depth").desc())))
         .filter(F.col("row_num") == 1)
         .drop("row_num")
         .withColumn("category", F.col("label"))
