@@ -36,9 +36,6 @@ def transform_rtxkg2_nodes(nodes_df: DataFrame) -> DataFrame:
         .withColumn("publications",                      f.split(f.col("publications:string[]"), RTX_SEPARATOR))
         .withColumn("international_resource_identifier", f.col("iri"))
         .withColumnRenamed("id:ID", "id")
-        .withColumnRenamed("name", "name")
-        .withColumnRenamed("category", "category")
-        .withColumnRenamed("description", "description")
         .select(*cols_for_schema(KGNodeSchema))
     )
     # fmt: on

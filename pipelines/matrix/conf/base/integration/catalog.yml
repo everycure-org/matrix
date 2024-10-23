@@ -30,6 +30,10 @@ integration.raw.biolink.predicates:
   type: kedro_datasets.json.JSONDataset
   filepath: https://biolink.github.io/biolink-model/predicates.json
 
+integration.raw.biolink.categories:
+  type: kedro_datasets.json.JSONDataset
+  filepath: https://biolink.github.io/biolink-model/categories.json
+
 integration.int.{source}.nodes:
   <<: [*_spark_parquet, *_layer_int]
   filepath: ${globals:paths.int}/{source}/nodes

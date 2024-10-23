@@ -1,10 +1,13 @@
 """transformation functions for robokop nodes and edges."""
 
+import pandas as pd
 import pandera.pyspark as pa
-import pyspark.sql.functions as f
+import pyspark as ps
+import pyspark.sql.functions as F
 import pyspark.sql.types as T
-from pyspark.sql import DataFrame
+from pyspark.sql import DataFrame, Window
 
+from matrix.pipelines.integration.filters import unnest_biolink_hierarchy
 from matrix.schemas.knowledge_graph import KGEdgeSchema, KGNodeSchema, cols_for_schema
 
 # FUTURE: We should likely not need to rename these columns as we do below
@@ -18,32 +21,53 @@ ROBOKOP_SEPARATOR = "\x1f"
 
 
 @pa.check_output(KGNodeSchema)
-def transform_robo_nodes(nodes_df: DataFrame) -> DataFrame:
+def transform_robo_nodes(nodes_df: DataFrame, biolink_categories_df: pd.DataFrame) -> DataFrame:
     """Transform Robokop nodes to our target schema.
 
     Args:
         nodes_df: Nodes DataFrame.
+        biolink_categories_df: Biolink categories DataFrame.
 
     Returns:
         Transformed DataFrame.
     """
     # NOTE: This function was partially generated using AI assistance.
     # fmt: off
+
+
     return (
         nodes_df
-        .withColumn("upstream_data_source",              f.array(f.lit("robokop")))
-        .withColumn("all_categories",                    f.split(f.col("category:LABEL"), ROBOKOP_SEPARATOR))
-        .withColumn("equivalent_identifiers",            f.split(f.col("equivalent_identifiers:string[]"), ROBOKOP_SEPARATOR))
-        .withColumn("category",                          f.element_at(f.col("all_categories"), f.size(f.col("all_categories"))))
-        .withColumn("labels",                            f.array(f.col("all_categories")))
-        .withColumn("publications",                      f.array(f.lit(None)))
-        .withColumn("international_resource_identifier", f.lit(None))
+        .withColumn("upstream_data_source",              F.array(F.lit("robokop")))
+        .withColumn("all_categories",                    F.split(F.col("category:LABEL"), ROBOKOP_SEPARATOR))
+        .withColumn("equivalent_identifiers",            F.split(F.col("equivalent_identifiers:string[]"), ROBOKOP_SEPARATOR))
+        .withColumn("labels",                            F.array(F.col("all_categories")))
+        .withColumn("publications",                      F.array(F.lit(None)))
+        .withColumn("international_resource_identifier", F.lit(None))
         .withColumnRenamed("id:ID", "id")
         .withColumnRenamed("name:string", "name")
         .withColumnRenamed("description:string", "description")
+        # getting most specific category
+        .transform(_determine_most_specific_category, biolink_categories_df)
         .select(*cols_for_schema(KGNodeSchema))
     )
     # fmt: on
+
+
+def _determine_most_specific_category(nodes: DataFrame, biolink_categories_df: pd.DataFrame) -> str:
+    spark = ps.sql.SparkSession.builder.getOrCreate()
+    labels_hierarchy = spark.createDataFrame(unnest_biolink_hierarchy(biolink_categories_df)).withColumnRenamed(
+        "predicate", "label"
+    )
+    nodes = (
+        nodes.withColumn("label", F.explode("all_categories"))
+        .join(labels_hierarchy, on="label", how="left")  # add path
+        .withColumn("depth", F.size("parents"))
+        .withColumn("row_num", F.row_number().over(Window.partitionBy("id").orderBy("depth")).desc())
+        .filter(F.col("row_num") == 1)
+        .drop("row_num")
+        .withColumn("category", F.col("label"))
+    )
+    return nodes
 
 
 @pa.check_output(KGEdgeSchema)
@@ -67,11 +91,11 @@ def transform_robo_edges(edges_df: DataFrame) -> DataFrame:
         .withColumnRenamed("primary_knowledge_source:string",   "primary_knowledge_source")
         .withColumnRenamed("object_aspect_qualifier:string",    "object_aspect_qualifier")
         .withColumnRenamed("object_direction_qualifier:string", "object_direction_qualifier")
-        .withColumn("upstream_data_source",                      f.array(f.lit("robokop")))
-        .withColumn("publications",                             f.split(f.col("publications:string[]"), ROBOKOP_SEPARATOR))
-        .withColumn("aggregator_knowledge_source",              f.split(f.col("aggregator_knowledge_source:string[]"), ROBOKOP_SEPARATOR))
-        .withColumn("subject_aspect_qualifier",                 f.lit(None).cast(T.StringType()))
-        .withColumn("subject_direction_qualifier",              f.lit(None).cast(T.StringType()))
+        .withColumn("upstream_data_source",                      F.array(F.lit("robokop")))
+        .withColumn("publications",                             F.split(F.col("publications:string[]"), ROBOKOP_SEPARATOR))
+        .withColumn("aggregator_knowledge_source",              F.split(F.col("aggregator_knowledge_source:string[]"), ROBOKOP_SEPARATOR))
+        .withColumn("subject_aspect_qualifier",                 F.lit(None).cast(T.StringType()))
+        .withColumn("subject_direction_qualifier",              F.lit(None).cast(T.StringType()))
         # final selection of columns
         .select(*cols_for_schema(KGEdgeSchema))
     )
