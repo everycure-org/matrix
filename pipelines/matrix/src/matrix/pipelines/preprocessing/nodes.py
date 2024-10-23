@@ -503,7 +503,6 @@ def enrich_disease_list(disease_list: List, params: Dict) -> pd.DataFrame:
     Returns
         pd.DataFrame with x new tag columns (where x corresponds to number of tags specified in params)
     """
-    disease_list = disease_list.head(1)
     for input_type in ["single_input", "multiple_input"]:
         input_params = params[input_type]
         for tag, tag_params in input_params.items():
