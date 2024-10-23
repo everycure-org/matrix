@@ -1,8 +1,8 @@
 """
 MOA extraction pipeline.
 """
-# TODO: Onehot to sklearn
-# TODO: Replace neo4j runner by Kedro node
+# TODO: Inject score col name?
+# TODO: Add descriptions?
 
 from kedro.pipeline import Pipeline, node
 from kedro.pipeline.modular_pipeline import pipeline
@@ -142,7 +142,7 @@ def _evaluation_pipeline() -> Pipeline:
                             "category_encoder": "moa_extraction.feat.category_encoder",
                             "relation_encoder": "moa_extraction.feat.relation_encoder",
                         },
-                        outputs=f"moa_extraction.model_output.{num_hops}_hop_predictions",
+                        outputs=f"moa_extraction.model_output.{num_hops}_hop_evaluation_predictions",
                         name=f"moa_extraction.evaluation.make_{num_hops}_hop_predictions",
                         tags=["moa_extraction.evaluation"],
                     ),
@@ -150,7 +150,7 @@ def _evaluation_pipeline() -> Pipeline:
                         func=nodes.compute_evaluation_metrics,
                         inputs={
                             "positive_paths": f"moa_extraction.prm.{num_hops}_hop_splits",
-                            "predictions": f"moa_extraction.model_output.{num_hops}_hop_predictions",
+                            "predictions": f"moa_extraction.model_output.{num_hops}_hop_evaluation_predictions",
                             "k_lst": f"params:moa_extraction.evaluation.{num_hops}_hop.k_lst",
                         },
                         outputs=f"moa_extraction.reporting.{num_hops}_hop_metrics",
@@ -163,32 +163,44 @@ def _evaluation_pipeline() -> Pipeline:
     return sum(evaluation_strands_lst)
 
 
-# def _reporting_pipeline() -> Pipeline:
-#     evaluation_strands_lst = []
-#     for num_hops in num_hops_lst:
-#         evaluation_strands_lst.append(
-#             pipeline(
-#                 [
-#                     node(
-#                         func=nodes.make_reporting_predictions,
-#                         inputs={
-#                             "model": f"moa_extraction.models.{num_hops}_hop_model",
-#                             "runner": "params:moa_extraction.neo4j_runner",
-#                             "positive_paths": f"moa_extraction.prm.{num_hops}_hop_splits",
-#                             "path_generator": f"params:moa_extraction.evaluation.{num_hops}_hop.path_generator",
-#                             "path_embedding_strategy": "params:moa_extraction.path_embeddings.strategy",
-#                             "category_encoder": "moa_extraction.feat.category_encoder",
-#                             "relation_encoder": "moa_extraction.feat.relation_encoder",
-#                         },
-#                         outputs=f"moa_extraction.model_output.{num_hops}_hop_predictions",
-#                         name=f"moa_extraction.evaluation.make_{num_hops}_hop_predictions",
-#                         tags=["moa_extraction.evaluation"],
-#                     ),
-#                 ]
-#             )
-#         )
-#     return sum(evaluation_strands_lst)
+def _predictions_pipeline() -> Pipeline:
+    predictions_strands_lst = []
+    for num_hops in num_hops_lst:
+        predictions_strands_lst.append(
+            pipeline(
+                [
+                    node(
+                        func=nodes.make_predictions,
+                        inputs={
+                            "model": f"moa_extraction.models.{num_hops}_hop_model",
+                            "runner": "params:moa_extraction.neo4j_runner",
+                            "pairs": "moa_extraction.raw.top_matrix_drug_disease_pairs",
+                            "path_generator": f"params:moa_extraction.evaluation.{num_hops}_hop.path_generator",
+                            "path_embedding_strategy": "params:moa_extraction.path_embeddings.strategy",
+                            "category_encoder": "moa_extraction.feat.category_encoder",
+                            "relation_encoder": "moa_extraction.feat.relation_encoder",
+                            "num_pairs_limit": "params:moa_extraction.predictions.num_limit",
+                        },
+                        outputs=f"moa_extraction.model_output.{num_hops}_hop_output_predictions",
+                        name=f"moa_extraction.predictions.make_{num_hops}_hop_predictions",
+                        tags=["moa_extraction.reporting"],
+                    ),
+                    node(
+                        func=nodes.generate_predictions_reports,
+                        inputs={
+                            "predictions": f"moa_extraction.model_output.{num_hops}_hop_output_predictions",
+                            "include_edge_directions": "params:moa_extraction.predictions.include_edge_directions",
+                            "num_paths_per_pair_limit": "params:moa_extraction.predictions.num_paths_per_pair_limit",
+                        },
+                        outputs=f"moa_extraction.reporting.{num_hops}_hop_predictions_report",
+                        name=f"moa_extraction.predictions.generate_{num_hops}_hop_predictions_report",
+                        tags=["moa_extraction.reporting"],
+                    ),
+                ]
+            )
+        )
+    return sum(predictions_strands_lst)
 
 
 def create_pipeline(**kwargs) -> Pipeline:
-    return _preprocessing_pipeline() + _training_pipeline() + _evaluation_pipeline()  # + _reporting_pipeline()
+    return _preprocessing_pipeline() + _training_pipeline() + _evaluation_pipeline() + _predictions_pipeline()
