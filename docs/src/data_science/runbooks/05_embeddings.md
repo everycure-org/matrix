@@ -3,20 +3,40 @@ title: Node Embeddings Pipeline
 ---
 <!-- NOTE: This file was partially generated using AI assistance.  -->
 
-# Switching Between Embedding Models
+# Generating Knowledge Graph Embeddings
 
+In order to develop predictive models or thoroughly analyse our KG, we need to represent it in a numerical format. For this purpose we have embedding pipeline which at the moment supports two libraries for topological embedding calculation -  Neo4j Graph Data Science (GDS) and PyTorch Geometric (PyG) libraries. At the moment, we have the following models available
 
-Our pipeline supports multiple graph embedding models, including both Neo4j Graph Data Science (GDS) implementations and PyTorch Geometric implementations. You can easily switch between these models by modifying the `embeddings.topological_estimator` configuration in the `parameters.yml` file.
+* GraphSAGE (GDS)
+* Node2Vec (GDS)
+* Node2Vec (Pyg)
+* Metapath2Vec (PyG) (in-development)
 
-## Switching Models
+## GDS vs PyG
 
-To switch between models, simply uncomment the desired model configuration in the `parameters.yml` file and comment out the others. The available models are:
+Before selecting an embedding model for computations, it is important to understand the differences between GDS and PyG models.
 
-1. GDS Node2Vec
-2. PyTorch Geometric Node2Vec
-3. GDS GraphSAGE
+GDS Models:
+- Work directly with the Neo4j graph structure
+- Training is handled internally by the GDS library but there is limited control over the training
+- The model architecutre is fixed - we have no way of customizing it other than changing hyperparameters
+- No need for data conversion or transfer
+- Once embeddings are calculated, they are directly stored in Neo4j graph as node properties
 
-### Example: Switching to PyTorch Geometric Node2Vec
+PyTorch Geometric Models:
+- Require conversion of graph data from Neo4j to PyTorch tensors
+- We have full control over the training loop and can customize training functionalities (such as scheduler etc)
+- Utilize `torch_utils` library to convert Neo4j graph to PyG friendly formatedge_index format
+- We can generate custom architectures using Pytorch-based models
+- Embeddings are generated as PyTorch tensors and need additional steps to writing embeddings back to Neo4j
+
+## Selecting a specific Model
+To select a specific model, you will need to specify its class within the `embeddings.topological_estimator.object` parameter. This is where you can also specify other parameters such as dimensions of embeddings, learning rate etc (note that if you dont specify the parameters customly, default PyG/GDS parameters will be taken for this model).
+
+#### PyTorch Geometric Node2Vec
+Node2Vec is a skip-gram based method (similar to word2vec) which approximates node embeddings based on the biased random walks. It **does not require attributes in the numerical format** thus if possible, you should skip the node attribute encoding step (usually done with PubMedBERT or OpenAI) if possible. 
+
+Below you can find the parameters required to calculate Node2Vec embeddings. Note that at the moment PyG Node2Vec is not utilizing any special schedulers/optimizers/generalization techniques however these can be customly implemented within `graph_algorithms.py` and `torch_utils.py`. 
 
 ```yaml
 embeddings.topological_estimator:
@@ -38,8 +58,10 @@ embeddings.topological_estimator:
   sparse: False
 ```
 
-### Example: Switching to GDS GraphSAGE
+### GDS GraphSAGE
+Node2Vec is a skip-gram based method (similar to word2vec) which approximates node embeddings based on the biased random walks. It **does not require attributes in the numerical format** thus if possible, you should skip the node attribute encoding step (usually done with PubMedBERT or OpenAI) if possible. 
 
+Below are parameters needed to use GDS Node2Vec.
 ```yaml
 embeddings.topological_estimator:
 object: matrix.pipelines.embeddings.graph_algorithms.GDSGraphSage
@@ -57,52 +79,33 @@ random_seed: 42
 feature_properties: [_pca_property]
 ```
 
-## Differences Between GDS and PyTorch Geometric Models
+### Custom PyG model
+Similar to PyTorch, PyTorch Geometric provides one with all building blocks to define their own NN architecture for graph encoding models. Therefore you should be able to define your own custom PyG model. To develop such model, ensure the model adjusts structurally to `GraphAlgorithm` class within `graph_algorithms.py` and that all building blocks have their own module (such as `torch_utils.py` or e.g. `model.py` for complex architectures)
 
-### Implementation
+## Node Attribute embedding calculation
+Nodes' attributes in our KG contain useful information on nodes' properties which can be critical for predictive modelling. Some embedding models (e.g. GraphSAGE) require these attributes in a numerical format so that they can be utilized when calculating the embeddings. You can specify the model of interest for the embedding calculation within the `embeddings.ai_config` parameter. At the moment, three different LLMs can be utilized to calculate those encodings:
 
-1. GDS Models:
-   - Implemented using Neo4j's Graph Data Science library
-   - Run directly on the Neo4j graph database
-   - Optimized for large-scale graph processing
+OpenAI models
+```yaml
+embeddings.ai_config:
+  api_key: ${globals:openai.api_key} 
+  batch_size: 200
+  endpoint: ${globals:openai.endpoint}
+  model: text-embedding-3-small
+  attribute: &_property embedding
+```
 
-2. PyTorch Geometric Models:
-   - Implemented using the PyTorch Geometric library
-   - Run on PyTorch tensors, requiring graph data to be converted from Neo4j format
-   - Offer more flexibility and customization options
+PubMedBERT models (note that these are very slow)
+```yaml
+embeddings.ai_config:
+  api_key: ${globals:openai.api_key}
+  batch_size: 200
+  endpoint: ${globals:pubmedbert.endpoint}
+  model: microsoft/BiomedNLP-PubMedBERT-base-uncased-abstract-fulltext #You can also choose "NeuML/pubmedbert-base-embeddings"
+  attribute: &_property embedding
+```
 
-### Data Handling
-
-1. GDS Models:
-   - Work directly with the Neo4j graph structure
-   - No need for data conversion or transfer
-
-2. PyTorch Geometric Models:
-   - Require conversion of graph data from Neo4j to PyTorch tensors
-   - Use the `prepare_graph_data()` function to convert Neo4j graph to edge_index format
-
-### Training Process
-
-1. GDS Models:
-   - Training is handled internally by the GDS library
-   - Limited control over the training loop
-
-2. PyTorch Geometric Models:
-   - Full control over the training loop
-   - Custom training function (`train_model()`) implemented for more flexibility
-
-### Embedding Storage
-
-1. GDS Models:
-   - Embeddings are typically stored directly in the Neo4j graph as node properties
-
-2. PyTorch Geometric Models:
-   - Embeddings are generated as PyTorch tensors
-   - Require an additional step to write embeddings back to Neo4j (`write_embeddings()` function)
-
-### Performance Considerations
-
-- GDS Models are generally faster for large-scale graphs due to their native integration with Neo4j
-- PyTorch Geometric Models offer more flexibility and may be preferred for custom implementations or when integrating with other PyTorch-based models
-
-By understanding these differences, you can choose the most appropriate model for your specific use case and easily switch between them by modifying the configuration parameters.
+You can specify which attributes should be encoded here:
+```yaml
+git embeddings.node.features: ["category", "name"]
+```

@@ -24,8 +24,7 @@ from tenacity import (
 )
 import torch
 
-from .graph_algorithms import GDSGraphAlgorithm
-from .graph_algorithms import PygNode2Vec
+from .graph_algorithms import GraphAlgorithm
 
 
 logger = logging.getLogger(__name__)
@@ -299,7 +298,7 @@ def add_include_in_graphsage(df: DataFrame, gdb: GraphDB, drug_types: List[str],
 def train_topological_embeddings(
     df: DataFrame,
     gds: GraphDataScience,
-    topological_estimator: GDSGraphAlgorithm,
+    topological_estimator: GraphAlgorithm,
     projection: Any,
     filtering: Any,
     estimator: Any,
@@ -373,7 +372,7 @@ def train_topological_embeddings(
 def write_topological_embeddings(
     model: DataFrame,
     gds: GraphDataScience,
-    topological_estimator: PygNode2Vec,
+    topological_estimator: GraphAlgorithm,
     projection: Any,
     estimator: Any,
     filtering: Any,
