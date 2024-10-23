@@ -114,6 +114,8 @@ moa_extraction:
       k_lst: [5, 25]
 
   predictions:
-    num_pairs_limit: 10
+    num_pairs_limit: 10 # For testing purposes only
     num_paths_per_pair_limit: 1000
     include_edge_directions: true
+    drug_col_name: drug_id
+    disease_col_name: disease_id

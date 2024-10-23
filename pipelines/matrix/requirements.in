@@ -11,6 +11,7 @@ kedro-viz>=6.7.0
 kedro
 matplotlib
 notebook
+openpyxl
 pyarrow>=14.0.2 
 pyspark==3.5.1
 pytest
