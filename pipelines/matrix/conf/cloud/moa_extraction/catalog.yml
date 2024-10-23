@@ -1,0 +1,3 @@
+"moa_extraction.reporting.{num_hops}_hop_metrics":
+  type: matrix.datasets.mlflow.MlflowMetricsDataset
+  key_prefix: "moa_extraction.{num_hops}_hop"

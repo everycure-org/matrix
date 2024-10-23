@@ -93,22 +93,22 @@ moa_extraction:
 
   evaluation:
     two_hop:
-      path_generators:
+      path_generator:
         object: matrix.pipelines.moa_extraction.path_generators.AllPathsWithTagRules
         tag_rules:
           all: ['drug_disease']
           2: ['disease_disease']
         num_hops: 2
         unidirectional: *unidirectional
-        num_limit: 25 # For testing purposes only
+        # num_limit: 25 # For testing purposes only
       k_lst: [5, 25]
     three_hop:
-      path_generators:
+      path_generator:
         object: matrix.pipelines.moa_extraction.path_generators.AllPathsWithTagRules
         tag_rules:
           all: ['drug_disease']
           3: ['disease_disease']
         num_hops: 3
         unidirectional: *unidirectional
-        num_limit: 25 # For testing purposes only
+        # num_limit: 25 # For testing purposes only
       k_lst: [5, 25]

@@ -156,10 +156,11 @@ class AllPathsWithTagRules(PathGenerator):
             num_hops=self.num_hops, unidirectional=self.unidirectional
         )
         where_clause = AllPathsWithTagRules.construct_where_clause(tag_rules=self.tag_rules, num_hops=self.num_hops)
+        limit_clause = f"LIMIT {self.num_limit}" if self.num_limit is not None else ""
         query = f"""
         MATCH path = (start: %{{id:'{drug}'}}){match_clause}(end: %{{id:'{disease}'}})
         WHERE {where_clause}
-        RETURN path LIMIT {self.num_limit}
+        RETURN path {limit_clause}
         """
         result = runner.run(query)
         paths = KGPaths(num_hops=self.num_hops)
