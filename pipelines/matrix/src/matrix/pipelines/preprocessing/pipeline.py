@@ -83,20 +83,21 @@ def create_pipeline(**kwargs) -> Pipeline:
                 name="resolve_drug_list",
                 tags=["drug-list"],
             ),
+            # FUTURE: Remove this node once we have a new disease list with tags
             node(
                 func=nodes.enrich_disease_list,
                 inputs=[
                     "preprocessing.raw.disease_list",
                     "params:preprocessing.enrichment_tags",
                 ],
-                outputs="preprocessing.int.enriched_disease_list",
+                outputs="preprocessing.raw.enriched_disease_list",
                 name="enrich_disease_list",
                 tags=["disease-list"],
             ),
             node(
                 func=nodes.clean_disease_list,
                 inputs=[
-                    "preprocessing.int.enriched_disease_list",
+                    "preprocessing.raw.enriched_disease_list",
                     "params:preprocessing.synonymizer_endpoint",
                 ],
                 outputs="ingestion.raw.disease_list@pandas",
