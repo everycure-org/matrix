@@ -6,7 +6,7 @@ from torch_geometric.nn import Node2Vec
 from . import torch_utils as tu
 
 
-class GDSGraphAlgorithm(ABC):
+class GraphAlgorithm(ABC):
     """Base class for Graph Algorithms, stores all arguments which can be used by child classes."""
 
     def __init__(self, embedding_dim: int = 512, random_seed: int = None, concurrency: int = 4):
@@ -31,7 +31,7 @@ class GDSGraphAlgorithm(ABC):
         pass
 
 
-class GDSGraphSage(GDSGraphAlgorithm):
+class GDSGraphSage(GraphAlgorithm):
     """GraphSAGE algorithm class. For more information see https://neo4j.com/docs/graph-data-science/current/machine-learning/node-embeddings/graph-sage/."""
 
     def __init__(
@@ -111,7 +111,7 @@ class GDSGraphSage(GDSGraphAlgorithm):
         model.predict_write(graph, writeProperty=write_property)
 
 
-class GDSNode2Vec(GDSGraphAlgorithm):
+class GDSNode2Vec(GraphAlgorithm):
     """Node2Vec algorithm class."""
 
     def __init__(
@@ -204,7 +204,7 @@ class GDSNode2Vec(GDSGraphAlgorithm):
 # Torch Geometric models
 
 
-class PygNode2Vec(GDSGraphAlgorithm):
+class PygNode2Vec(GraphAlgorithm):
     """PyTorch Geometric Node2Vec algorithm class."""
 
     def __init__(
