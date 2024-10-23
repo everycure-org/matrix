@@ -257,13 +257,13 @@ ingestion.int.ec_medical_team.edges:
   <<: [*_spark_parquet, *_layer_int]
   filepath: ${globals:paths.int}/ec_medical_team/edges
 
-ingestion.sample.ec_medical_team.nodes:
-  <<: [*_spark_parquet, *_layer_int]
-  filepath: ${globals:paths.sample_int}/ec_medical_team/nodes
+    #ingestion.sample.ec_medical_team.nodes:
+    #  <<: [*_spark_parquet, *_layer_int]
+    #  filepath: ${globals:paths.sample_int}/ec_medical_team/nodes
 
-ingestion.sample.ec_medical_team.edges:
-  <<: [*_spark_parquet, *_layer_int]
-  filepath: ${globals:paths.sample_int}/ec_medical_team/edges
+    #ingestion.sample.ec_medical_team.edges:
+    #  <<: [*_spark_parquet, *_layer_int]
+    #  filepath: ${globals:paths.sample_int}/ec_medical_team/edges
 
 
 # -------------------------------------------------------------------------

@@ -5,7 +5,7 @@ paths:
   #  raw: This should be taken from GPC's bucket as defined
   #       in base.globals.yml
   #  new_raw: From GCP's bucket too
-  sample_raw: data/01_RAW
+  sample_raw: data/sampled_test/01_RAW
   int_sample: data/sampled_test/02_intermediate
   int: data/02_intermediate
   prm: data/sampled_test/03_primary
