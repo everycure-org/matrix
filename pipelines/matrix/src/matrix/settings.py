@@ -13,8 +13,8 @@ from kedro_mlflow.framework.hooks import MlflowHook
 # Hooks are executed in a Last-In-First-Out (LIFO) order.
 HOOKS = (
     hooks.NodeTimerHooks(),
-    MlflowHook(),
-    hooks.MLFlowHooks(),
+ #   MlflowHook(),
+ #   hooks.MLFlowHooks(),
     hooks.SparkHooks(),
 )
 

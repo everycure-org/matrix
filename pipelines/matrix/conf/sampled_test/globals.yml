@@ -1,3 +1,7 @@
+openai:
+  endpoint: ${oc.env:OPENAI_ENDPOINT, http://localhost:1080/v1}
+  api_key: dummy
+
 versions:
   release: sampled_test
 
