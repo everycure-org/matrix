@@ -167,6 +167,7 @@ def compute_embeddings(
         endpoint: endpoint to use
         model: model to use
     """
+
     batch_udf = F.udf(
         lambda z: batch(endpoint, model, api_key, z), ArrayType(ArrayType(FloatType()))
     )
@@ -228,7 +229,7 @@ def reduce_dimension(df: DataFrame, transformer, input: str, output: str, skip: 
     """
     if skip:
         return df.withColumn(output, F.col(input))
-    breakpoint()
+
     # Convert into correct type
     df = df.withColumn("features", array_to_vector(input))
 

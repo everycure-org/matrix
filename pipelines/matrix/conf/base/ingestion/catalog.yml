@@ -208,11 +208,11 @@ ingestion.int.rtx_kg2.edges:
 
 ingestion.pre_sample.rtx_kg2.nodes@spark:
   <<: *_kg2_nodes_spark
-  filepath: ${globals:paths.int}/rtx_kg2/nodes
+  # filepath: ${globals:paths.int}/rtx_kg2/nodes
 
 ingestion.pre_sample.rtx_kg2.edges@spark:
   <<: *_kg2_edges_spark
-  filepath: ${globals:paths.int}/rtx_kg2/edges
+  # filepath: ${globals:paths.int}/rtx_kg2/edges
 
 
 

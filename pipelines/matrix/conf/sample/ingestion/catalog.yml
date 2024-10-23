@@ -1,0 +1,40 @@
+_layer_raw: &_layer_raw
+  metadata:
+    kedro-viz:
+      layer: raw
+
+_layer_int: &_layer_int
+  metadata:
+    kedro-viz:
+      layer: integration
+
+_spark_parquet_ds: &_spark_parquet
+  type: matrix.datasets.gcp.LazySparkDataset
+  file_format: parquet
+  save_args:
+    mode: overwrite
+
+
+# When done:
+# kedro run -p sample -e sample
+
+# While debugging
+# kedro run -p sample -e sample -t copy (once)
+# kedro run -p sample -e sample -t sample (repeat)
+
+ingestion.raw.rtx_kg2.edges@spark:
+  <<: [*_spark_parquet, *_layer_raw]
+  filepath: ${globals:paths.sample_raw}/KGs/samples/rtx_kg2/nodes
+
+
+ingestion.raw.rtx_kg2.nodes@spark:
+  <<: [*_spark_parquet, *_layer_raw]
+  filepath: ${globals:paths.sample_raw}/KGs/samples/rtx_kg2/edges
+
+
+# This dataset is used to make local copies of the datasets, its the only alternative
+# to running ingestion in multiple environments.
+sample.int.{dataset}:
+  <<: *_spark_parquet
+  filepath: ${globals:paths.int}/copy/{dataset}
+

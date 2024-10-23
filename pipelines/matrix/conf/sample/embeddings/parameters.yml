@@ -1,0 +1,7 @@
+# NOTE: For testing purposes, batching disabled
+embeddings.ai_config:
+  batch_size: 1
+
+embeddings.dimensionality_reduction:
+  transformer:
+    k: 2
