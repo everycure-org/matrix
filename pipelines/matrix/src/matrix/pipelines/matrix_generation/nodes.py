@@ -451,7 +451,10 @@ def _reorder_columns(top_pairs: pd.DataFrame, score_col_name: str, matrix_params
 
 def _apply_condition(top_pairs: pd.DataFrame, condition: List[str]) -> pd.Series:
     """Apply a single condition to the top_pairs DataFrame."""
-    return top_pairs[condition].all(axis=1)
+    valid_columns = [col for col in condition if col in top_pairs.columns]
+    if not valid_columns:
+        return pd.Series([False] * len(top_pairs))
+    return top_pairs[valid_columns].all(axis=1)
 
 
 def _add_master_filter(top_pairs: pd.DataFrame, matrix_params: Dict) -> pd.DataFrame:

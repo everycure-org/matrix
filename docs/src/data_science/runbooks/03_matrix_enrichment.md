@@ -64,7 +64,7 @@ matrix_generation.matrix:
     # Add or remove fields as needed
 ```
 
-These fields will be used in the `generate_metadata` function to create the metadata for each drug-disease pair. Do note that these tags are being extracted from the drug and disease lists and will be used to enrich the metadata - therefore if a specific tag is not available for a drug or disease, it will not be shown in the final matrix.
+These fields will be used in the `generate_metadata` function to create the metadata for each drug-disease pair. Do note that these tags are being extracted from the drug and disease lists and will be used to enrich the matrix - therefore if a specific tag is not available for a drug or disease, it will not be shown in the final matrix.
 
 ## 1.1 Master filter tag
 
