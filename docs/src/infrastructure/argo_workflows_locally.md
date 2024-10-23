@@ -4,7 +4,7 @@ This document describes how to run Argo Workflows locally. This local setup is u
 
 !!! info
     For simple argo template validation `argo lint` can also be used. 
-Read more about our Argo toolchain [here](argo_glossary.md).
+Read more about our Argo toolchain [here](glossary.md).
 
 # Tasks
 
@@ -134,7 +134,7 @@ Navigate to [https://localhost:2746](https://localhost:2746/)
 
 Argo Workflows UI:
 
-![Argo Workflows Locally](../assets/img/local_workflows.png)
+![Argo Workflows Locally](../assets/img/local_workflow.png)
 
 K9s view:
 
