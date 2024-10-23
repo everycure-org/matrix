@@ -21,7 +21,7 @@ preprocessing.enrichment_tags:
       output_col: is_glucose_dysfunction
       model_params:
         model: gpt-4o-mini
-        prompt: Is this disease a disease which is primarily a disease of glucose dysregulation such as diabetes? Return TRUE or FALSE only
+        prompt: Is this disease a disease which is primarily a disease of glucose dysregulation such as diabetes mellitus? Return TRUE or FALSE only
         temperature: 0.8
     existing_treatment:
       input_col: label
