@@ -6,41 +6,15 @@ from tqdm import tqdm
 from typing import List, Tuple, Dict, Any
 from sklearn.model_selection import BaseCrossValidator
 from sklearn.base import BaseEstimator
-from neo4j import GraphDatabase
 
 from refit.v1.core.inject import inject_object
 
 from .path_embeddings import OneHotEncoder, PathEmbeddingStrategy
 from .path_mapping import PathMapper
 from .path_generators import PathGenerator
+from .utils import Neo4jRunner
 from matrix.datasets.paths import KGPaths
 from matrix.pipelines.modelling.nodes import _apply_splitter
-
-
-class Neo4jRunner:
-    """Helper class for running neo4j queries."""
-
-    def __init__(self, uri: str, user: str, password: str, database: str):
-        """Initialize the Neo4j runner.
-
-        Args:
-            uri: The URI of the Neo4j instance.
-            user: The user to connect to the Neo4j instance.
-            password: The password to connect to the Neo4j instance.
-            database: The name of the database containing the knowledge graph.
-        """
-        self.driver = GraphDatabase.driver(uri, auth=(user, password), database=database)
-
-    def run(self, query: str):
-        """Run a query on the Neo4j database.
-
-        Args:
-            query: The query to run.
-        """
-        with self.driver.session() as session:
-            info = session.run(query)
-            x = info.values()
-        return x
 
 
 def _tag_edges_between_types(
@@ -278,7 +252,6 @@ def make_predictions(
     path_embedding_strategy: PathEmbeddingStrategy,
     category_encoder: OneHotEncoder,
     relation_encoder: OneHotEncoder,
-    num_pairs_limit: int = None,
     score_col_name: str = "MOA_score",
 ) -> Dict[str, KGPaths]:
     """Make MOA predictions on the pairs dataset.
@@ -290,17 +263,18 @@ def make_predictions(
         path_embedding_strategy: Path embedding strategy.
         category_encoder: One-hot encoder for node categories.
         relation_encoder: One-hot encoder for edge relations.
-        num_pairs_limit: Optional cut-off for the number of pairs. For testing purposes. Defaults to None.
-
+        score_col_name: The name of the column to use for the confidence score.
     Returns:
         Dictionary of KGPaths objects, one for each pair. Each object contains a dataframe with the paths sorted by confidence score.
     """
-    pairs = pairs.head(num_pairs_limit) if num_pairs_limit is not None else pairs
-
     paths_dict = dict()
     for _, row in tqdm(pairs.iterrows(), total=len(pairs)):
         # Generate all paths for the pair
         all_paths_for_pair = path_generator.run(runner, row.source_id, row.target_id)
+
+        if len(all_paths_for_pair.df) == 0:
+            paths_dict["__".join((row.source_id, row.target_id))] = all_paths_for_pair
+            continue
 
         # Embed the paths
         X = path_embedding_strategy.run(all_paths_for_pair, category_encoder, relation_encoder)
@@ -311,8 +285,8 @@ def make_predictions(
         y_pred = y_pred.reshape(-1, 1)
 
         # Add predictions to the paths dataframe and sort
-        all_paths_for_pair.df["MOA_score"] = y_pred
-        all_paths_for_pair.df = all_paths_for_pair.df.sort_values(by="MOA_score", ascending=False)
+        all_paths_for_pair.df[score_col_name] = y_pred
+        all_paths_for_pair.df = all_paths_for_pair.df.sort_values(by=score_col_name, ascending=False)
         all_paths_for_pair.df = all_paths_for_pair.df.reset_index(drop=True)
         paths_dict["__".join((row.source_id, row.target_id))] = all_paths_for_pair
 
@@ -450,6 +424,53 @@ def compute_evaluation_metrics(
     return report
 
 
+@inject_object()
+def make_output_predictions(
+    model: BaseEstimator,
+    runner: Neo4jRunner,
+    pairs: pd.DataFrame,
+    path_generator: PathGenerator,
+    path_embedding_strategy: PathEmbeddingStrategy,
+    category_encoder: OneHotEncoder,
+    relation_encoder: OneHotEncoder,
+    drug_col_name: str = "source_id",
+    disease_col_name: str = "target_id",
+    num_pairs_limit: int = None,
+    score_col_name: str = "MOA_score",
+) -> Dict[str, KGPaths]:
+    """Make MOA predictions on the pairs dataset.
+
+    Args:
+        model: The model to make predictions with.
+        runner: The Neo4j runner.
+        pairs: Dataset of drug-disease pairs. Expected columns: (source_id, target_id).
+        path_generator: Path generator outputting all paths of interest between a given drug-disease pair.
+        path_embedding_strategy: Path embedding strategy.
+        category_encoder: One-hot encoder for node categories.
+        relation_encoder: One-hot encoder for edge relations.
+        drug_col_name: The name of the column containing the drug IDs.
+        disease_col_name: The name of the column containing the disease IDs.
+        num_pairs_limit: Optional cut-off for the number of pairs. For testing purposes. Defaults to None.
+        score_col_name: The name of the column to use for the confidence score.
+
+    Returns:
+        Dictionary of KGPaths objects, one for each pair.
+    """
+    pairs = pairs.head(num_pairs_limit) if num_pairs_limit is not None else pairs
+    pairs = pairs.rename(columns={drug_col_name: "source_id", disease_col_name: "target_id"})
+
+    return make_predictions(
+        model=model,
+        runner=runner,
+        pairs=pairs,
+        path_generator=path_generator,
+        path_embedding_strategy=path_embedding_strategy,
+        category_encoder=category_encoder,
+        relation_encoder=relation_encoder,
+        score_col_name=score_col_name,
+    )
+
+
 def generate_predictions_reports(
     predictions: Dict[str, KGPaths],
     include_edge_directions: bool = True,
@@ -470,9 +491,14 @@ def generate_predictions_reports(
     for pair_name, predictions_load_func in predictions.items():
         predictions = predictions_load_func()
         predictions_df = predictions.df
+        N_paths = len(predictions_df)
+        if N_paths == 0:
+            reports[pair_name] = {
+                "MOA predictions": pd.DataFrame({"NO PATHS": ["No paths found between the given drug and disease"]})
+            }
+            continue
 
         # Create the pair information dataframe
-        N_paths = len(predictions_df)
         pair_info = pd.DataFrame(
             {
                 "Drug ID": [predictions_df.iloc[0]["source_id"]],
@@ -490,10 +516,10 @@ def generate_predictions_reports(
         predictions_df = predictions_df.reset_index(drop=True)
         cols = KGPaths.get_columns(predictions.num_hops)
         cols.append(score_col_name)
-        cols = [col for col in cols if "source" in col]
-        cols = [col for col in cols if "target" in col]
+        cols = [col for col in cols if "source" not in col]
+        cols = [col for col in cols if "target" not in col]
         if not include_edge_directions:
-            cols = [col for col in cols if "is_forward" in col]
+            cols = [col for col in cols if "is_forward" not in col]
         predictions_df = predictions_df[cols]
 
         # Add the pair information and MOA predictions to a multiframe to be exported as Excel

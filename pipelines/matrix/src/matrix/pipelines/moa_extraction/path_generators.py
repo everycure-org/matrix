@@ -5,7 +5,7 @@ from tqdm import tqdm
 import abc
 
 from matrix.datasets.paths import KGPaths
-from matrix.pipelines.moa_extraction.neo4j_runners import Neo4jRunner
+from matrix.pipelines.moa_extraction.utils import Neo4jRunner
 from matrix.pipelines.moa_extraction.path_mapping import SetwisePathMapper
 
 

@@ -1,6 +1,8 @@
 """
 MOA extraction pipeline.
 """
+# TODO: Add Openpyxl to the dependencies
+# TODO: Fix pair sheet by querying KG
 # TODO: Inject score col name?
 # TODO: Add descriptions?
 
@@ -170,7 +172,7 @@ def _predictions_pipeline() -> Pipeline:
             pipeline(
                 [
                     node(
-                        func=nodes.make_predictions,
+                        func=nodes.make_output_predictions,
                         inputs={
                             "model": f"moa_extraction.models.{num_hops}_hop_model",
                             "runner": "params:moa_extraction.neo4j_runner",
@@ -179,11 +181,13 @@ def _predictions_pipeline() -> Pipeline:
                             "path_embedding_strategy": "params:moa_extraction.path_embeddings.strategy",
                             "category_encoder": "moa_extraction.feat.category_encoder",
                             "relation_encoder": "moa_extraction.feat.relation_encoder",
-                            "num_pairs_limit": "params:moa_extraction.predictions.num_limit",
+                            "drug_col_name": "params:moa_extraction.predictions.drug_col_name",
+                            "disease_col_name": "params:moa_extraction.predictions.disease_col_name",
+                            "num_pairs_limit": "params:moa_extraction.predictions.num_pairs_limit",
                         },
                         outputs=f"moa_extraction.model_output.{num_hops}_hop_output_predictions",
-                        name=f"moa_extraction.predictions.make_{num_hops}_hop_predictions",
-                        tags=["moa_extraction.reporting"],
+                        name=f"moa_extraction.predictions.make_{num_hops}_hop_output_predictions",
+                        tags=["moa_extraction.predictions"],
                     ),
                     node(
                         func=nodes.generate_predictions_reports,
@@ -194,7 +198,7 @@ def _predictions_pipeline() -> Pipeline:
                         },
                         outputs=f"moa_extraction.reporting.{num_hops}_hop_predictions_report",
                         name=f"moa_extraction.predictions.generate_{num_hops}_hop_predictions_report",
-                        tags=["moa_extraction.reporting"],
+                        tags=["moa_extraction.predictions"],
                     ),
                 ]
             )
