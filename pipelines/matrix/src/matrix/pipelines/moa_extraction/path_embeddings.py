@@ -4,13 +4,14 @@ import pandas as pd
 import numpy as np
 import abc
 from typing import List
+from sklearn.preprocessing import OneHotEncoder as SklearnOneHotEncoder
 
 
 from matrix.datasets.paths import KGPaths
 
 
 class OneHotEncoder:
-    """Class representing a PyTorch one-hot encoder for a set of strings."""
+    """Class representing a one-hot encoder for a set of strings using scikit-learn."""
 
     def __init__(self, strings: List[str]) -> None:
         """Initialize the one-hot encoder.
@@ -19,7 +20,8 @@ class OneHotEncoder:
             strings: The list of strings to encode.
         """
         self.strings = strings
-        self.one_hot = np.eye(len(strings))
+        self.encoder = SklearnOneHotEncoder(sparse_output=False, handle_unknown="ignore")
+        self.encoder.fit(np.array(strings).reshape(-1, 1))
 
     def get_encoding(self, string: str) -> np.ndarray:
         """Get the one-hot encoding of a string.
@@ -27,7 +29,7 @@ class OneHotEncoder:
         Args:
             string: The string to encode.
         """
-        return self.one_hot[self.strings.index(string)]
+        return self.encoder.transform([[string]])[0]
 
     def get_sum_encoding(self, strings: List[str]) -> np.ndarray:
         """Get the sum of the one-hot encodings of a list of strings.
@@ -35,7 +37,36 @@ class OneHotEncoder:
         Args:
             strings: The list of strings to encode.
         """
-        return np.sum(np.stack([self.get_encoding(string) for string in strings]), axis=0)
+        return np.sum(self.encoder.transform([[s] for s in strings]), axis=0)
+
+
+# class OneHotEncoder:
+#     """Class representing a one-hot encoder for a set of strings."""
+
+#     def __init__(self, strings: List[str]) -> None:
+#         """Initialize the one-hot encoder.
+
+#         Args:
+#             strings: The list of strings to encode.
+#         """
+#         self.strings = strings
+#         self.one_hot = np.eye(len(strings))
+
+#     def get_encoding(self, string: str) -> np.ndarray:
+#         """Get the one-hot encoding of a string.
+
+#         Args:
+#             string: The string to encode.
+#         """
+#         return self.one_hot[self.strings.index(string)]
+
+#     def get_sum_encoding(self, strings: List[str]) -> np.ndarray:
+#         """Get the sum of the one-hot encodings of a list of strings.
+
+#         Args:
+#             strings: The list of strings to encode.
+#         """
+#         return np.sum(np.stack([self.get_encoding(string) for string in strings]), axis=0)
 
 
 class PathEmbeddingStrategy(abc.ABC):

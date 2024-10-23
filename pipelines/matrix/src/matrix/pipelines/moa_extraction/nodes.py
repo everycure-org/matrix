@@ -417,3 +417,28 @@ def compute_evaluation_metrics(
     report["MRR"] = (1 / rank_arr).mean()
 
     return report
+
+
+# def make_reporting_predictions(
+#     model: BaseEstimator,
+#     runner: Neo4jRunner,
+#     pairs: pd.DataFrame,
+#     path_generator: PathGenerator,
+#     path_embedding_strategy: PathEmbeddingStrategy,
+#     category_encoder: OneHotEncoder,
+#     relation_encoder: OneHotEncoder,
+#     include_directions: bool = False,
+# ) -> Dict[str, KGPaths]:
+#     """Make MOA predictions on the pairs dataset for reporting purposes.
+
+#     Args:
+#         model: The model to make predictions with.
+#         runner: The Neo4j runner.
+#         pairs: Dataset of drug-disease pairs. Expected columns: (drug_id, disease_id).
+#         path_generator: Path generator outputting all paths of interest between a given drug-disease pair.
+#         path_embedding_strategy: Path embedding strategy.
+#         category_encoder: One-hot encoder for node categories.
+#         relation_encoder: One-hot encoder for edge relations.
+#         include_directions: Whether to include the direction of the paths in the prediction reports.
+#     """
+#     pass
