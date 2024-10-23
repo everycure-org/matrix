@@ -15,8 +15,6 @@ def create_pipeline(**kwargs) -> Pipeline:
                 inputs={
                     "nodes" : "ingestion.pre_sample.rtx_kg2.nodes@spark",
                     "edges" : "ingestion.pre_sample.rtx_kg2.edges@spark",
-                    #"raw_tp": "modelling.raw.ground_truth.positives",
-                    #"raw_tn": "modelling.raw.ground_truth.negatives",
                 },
                 outputs={
                     "nodes": "ingestion.raw.rtx_kg2.nodes@spark",
