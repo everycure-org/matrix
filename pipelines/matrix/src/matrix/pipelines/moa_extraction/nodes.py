@@ -3,18 +3,44 @@
 import pandas as pd
 import numpy as np
 from tqdm import tqdm
-
 from typing import List, Tuple, Dict, Any
 from sklearn.model_selection import BaseCrossValidator
 from sklearn.base import BaseEstimator
+from neo4j import GraphDatabase
+
 from refit.v1.core.inject import inject_object
 
-from .neo4j_runners import Neo4jRunner
 from .path_embeddings import OneHotEncoder, PathEmbeddingStrategy
 from .path_mapping import PathMapper
 from .path_generators import PathGenerator
 from matrix.datasets.paths import KGPaths
 from matrix.pipelines.modelling.nodes import _apply_splitter
+
+
+class Neo4jRunner:
+    """Helper class for running neo4j queries."""
+
+    def __init__(self, uri: str, user: str, password: str, database: str):
+        """Initialize the Neo4j runner.
+
+        Args:
+            uri: The URI of the Neo4j instance.
+            user: The user to connect to the Neo4j instance.
+            password: The password to connect to the Neo4j instance.
+            database: The name of the database containing the knowledge graph.
+        """
+        self.driver = GraphDatabase.driver(uri, auth=(user, password), database=database)
+
+    def run(self, query: str):
+        """Run a query on the Neo4j database.
+
+        Args:
+            query: The query to run.
+        """
+        with self.driver.session() as session:
+            info = session.run(query)
+            x = info.values()
+        return x
 
 
 def _tag_edges_between_types(

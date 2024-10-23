@@ -1,6 +1,6 @@
 moa_extraction:
   neo4j_runner: 
-    object: matrix.pipelines.moa_extraction.neo4j_runners.LocalNeo4jRunner
+    object: matrix.pipelines.moa_extraction.nodes.Neo4jRunner
     uri: "bolt://localhost:7687"
     database: "everycure-run-23-aug-setup-4"
     user: "neo4j"
