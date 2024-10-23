@@ -19,16 +19,23 @@ def get_random_selection_from_rtx(
         nodes: Dataframe with raw nodes
         edges: Dataframe with raw edges
     """
+
     # Make the sample
     edges_sample_df = edges.sample(withReplacement=False, fraction=0.0000005, seed=123)
+    
     # Now we need to select the nodes. First, make a list with all the IDs
-    edges_node_ids_df = edges_sample_df.select('subject').union(edges_sample_df.select('object')).distinct()
-    # Now we need to select the nodes that have been included in the selection of edges
-    cond = (nodes.id == edges_node_ids_df.subject)
-    nodes_sample_df = nodes.join(edges_node_ids_df, how='inner', on=cond).select(nodes.columns)
+    edges_node_ids_df = (
+        edges_sample_df.select('subject').withColumnRenamed("subject", "id")
+        .unionByName(
+            edges_sample_df.select('object').withColumnRenamed("object", "id")
+        )
+    ).distinct()
+
+    nodes_sample_df = nodes.join(edges_node_ids_df, how='inner', on="id").select(nodes.columns)
+
     return {
-        'nodes': nodes_sample_df.withColumn("kg_source", F.lit("rtx_kg2")),
-        'edges': edges_sample_df.withColumn("kg_source", F.lit("rtx_kg2"))
+        'nodes': nodes_sample_df,
+        'edges': edges_sample_df
     }
 
 

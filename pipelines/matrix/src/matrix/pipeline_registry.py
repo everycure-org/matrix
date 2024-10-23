@@ -35,7 +35,7 @@ from matrix.pipelines.matrix_generation.pipeline import (
 from matrix.pipelines.inference.pipeline import (
     create_pipeline as create_inference_pipeline,
 )
-from matrix.pipelines.kg_sample_generation import (
+from matrix.pipelines.sample import (
     create_pipeline as create_kg_sample_generation_pipeline
 )
 
@@ -66,7 +66,7 @@ def register_pipelines() -> Dict[str, Pipeline]:
     pipelines["release"] = create_release_pipeline()
     pipelines["matrix_generation"] = create_matrix_pipeline()
     pipelines["inference"] = create_inference_pipeline()
-    pipelines["create_test_sample"] = (
+    pipelines["sample"] = (
         create_kg_sample_generation_pipeline()
     )
     pipelines["test"] = (
@@ -79,6 +79,7 @@ def register_pipelines() -> Dict[str, Pipeline]:
         + create_evaluation_pipeline()
         + create_release_pipeline()
     )
+    # TODO: Delete in the future
     pipelines["sampled_test"] = (
         create_integration_pipeline()
         + create_embeddings_pipeline()
