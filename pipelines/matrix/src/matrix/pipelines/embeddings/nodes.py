@@ -327,6 +327,7 @@ def train_topological_embeddings(
     # Filter out treat/GT nodes from the graph
     subgraph_name = filtering.get("graphName")
     filter_args = filtering.pop("args")
+
     # Drop graph if exists
     if gds.graph.exists(subgraph_name).exists:
         subgraph = gds.graph.get(subgraph_name)
@@ -334,19 +335,16 @@ def train_topological_embeddings(
 
     subgraph, _ = gds.graph.filter(subgraph_name, graph, **filter_args)
 
-    if type(topological_estimator).__name__.startswith("Pyg"):
-        # Get edge list from the subgraph
-        edges = gds.run_cypher(
-            f"CALL gds.graph.relationships.stream('{subgraph_name}') YIELD sourceNodeId, targetNodeId RETURN sourceNodeId, targetNodeId"
-        )
-        edge_index = torch.tensor(edges[["sourceNodeId", "targetNodeId"]].values.T, dtype=torch.long)
-        graph = edge_index
-
     # Initialize and train the model
     model_name = estimator.get("modelName")
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model, _ = topological_estimator.run(
-        gds=gds, graph=graph, model_name=model_name, write_property=write_property, device=device
+        gds=gds,
+        graph=graph,
+        model_name=model_name,
+        write_property=write_property,
+        device=device,
+        subgraph=subgraph_name,
     )
 
     # Plot convergence
@@ -379,26 +377,18 @@ def write_topological_embeddings(
     # Retrieve the graph
     graph_name = projection.get("graphName")
     graph = gds.graph.get(graph_name)
+    print(graph_name)
     print(graph)
-    # Get the number of nodes in the graph
-    # num_nodes = gds.run_cypher(f"CALL gds.graph.nodeCount('{graph_name}') YIELD nodeCount RETURN nodeCount").iloc[0, 0]
-
-    # Generate embeddings
-    if type(topological_estimator).__name__.startswith("Pyg"):
-        # Get edge list from the graph
-        edges = gds.run_cypher(
-            f"CALL gds.graph.relationships.stream('{graph_name}') YIELD sourceNodeId, targetNodeId RETURN sourceNodeId, targetNodeId"
-        )
-        edge_index = torch.tensor(edges[["sourceNodeId", "targetNodeId"]].values.T, dtype=torch.long)
-
-        # Call predict_write method of PygNode2Vec
-        model_name = estimator.get("modelName")
-        topological_estimator.predict_write(
-            gds=gds, graph=edge_index, model_name=model_name, state_dict=model, write_property=write_property
-        )
-    else:
-        model_name = estimator.get("modelName")
-        topological_estimator.predict_write(gds=gds, model_name=model_name, graph=graph, write_property=write_property)
+    # save embeddings
+    model_name = estimator.get("modelName")
+    topological_estimator.predict_write(
+        gds=gds,
+        model_name=model_name,
+        graph=graph,
+        state_dict=model,
+        write_property=write_property,
+        graph_name=graph_name,
+    )
     return {"success": "true"}
 
 
