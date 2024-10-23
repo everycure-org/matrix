@@ -103,7 +103,7 @@ modelling.model_input.splits:
 
 "modelling.{model}.model_output.predictions":
   <<: [*_pandas_parquet, *_model_output_ds]
-  filepath: ${globals:paths.model_output}/{model}/predictions
+  filepath: ${globals:paths.modelling}/{model}/predictions
 
 # NOTE: Saving an artifact, saving both locally and in MLFlow
 # https://kedro-mlflow.readthedocs.io/en/stable/source/04_experimentation_tracking/03_version_datasets.html#how-to-version-data-in-a-kedro-project
