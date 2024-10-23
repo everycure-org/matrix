@@ -5,8 +5,10 @@ from typing import Any, Dict, List
 
 import matplotlib.pyplot as plt
 import pandas as pd
+import ray
 import requests
 import seaborn as sns
+import torch
 from graphdatascience import GraphDataScience, QueryRunner
 from neo4j import Driver, GraphDatabase
 from pyspark.ml.functions import array_to_vector, vector_to_array
@@ -24,6 +26,7 @@ from tenacity import (
     stop_after_attempt,
     wait_random_exponential,
 )
+from transformers import AutoModel, AutoTokenizer
 
 from .graph_algorithms import GDSGraphAlgorithm
 
@@ -430,3 +433,48 @@ def extract_nodes_edges(nodes: DataFrame, edges: DataFrame) -> tuple[DataFrame, 
         edges: the edges from the KG
     """
     return {"enriched_nodes": nodes, "enriched_edges": edges}
+
+
+@unpack_params()
+@inject_object()
+def embeddings_with_ray(
+    input: ray.data.Dataset,
+    features: List[str],
+    attribute: str,
+    model: str,
+    concurrency: int,
+):
+    """Function to compute embeddings using Ray and the specified model.
+
+    Args:
+        input: Ray Dataset
+        features: features to include to compute embeddings
+        attribute: attribute to add
+        model: model to use (e.g. "NeuML/pubmedbert-base-embeddings")
+
+    Returns:
+        Ray Dataset with embeddings added
+    """
+    # NOTE: This function was partially generated using AI assistance.
+
+    class EmbeddingComputer:
+        def __init__(self, model):
+            self.tokenizer = AutoTokenizer.from_pretrained(model)
+            self.model = AutoModel.from_pretrained(model)  # .to("cuda")
+
+        def __call__(self, row):
+            return self.compute_embeddings(row)
+
+        def compute_embeddings(self, row):
+            text = " ".join([str(row[feature]) for feature in features if row[feature]])
+            inputs = self.tokenizer(text, padding=True, truncation=True, return_tensors="pt")  # .to("cuda")
+
+            with torch.no_grad():
+                outputs = self.model(**inputs)
+
+            # Use mean pooling to get sentence embeddings
+            embedding = outputs.last_hidden_state.mean(dim=1).cpu().numpy()[0]
+            row[attribute] = embedding.tolist()
+            return row
+
+    return input.map(EmbeddingComputer, concurrency=concurrency, fn_constructor_kwargs={"model": model})
