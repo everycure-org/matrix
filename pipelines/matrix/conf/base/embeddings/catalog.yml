@@ -24,11 +24,11 @@ _spark_parquet_ds: &_spark_parquet
 
 embeddings.feat.graph.node_embeddings:
   <<: *_spark_parquet
-  filepath: ${globals:paths.feat}/embeddings/tmp_nodes_with_embeddings
+  filepath: ${globals:paths.embeddings}/tmp_nodes_with_embeddings
 
 embeddings.feat.graph.pca_node_embeddings:
   <<: *_spark_parquet
-  filepath: ${globals:paths.feat}/embeddings/tmp_nodes_with_pca_embeddings
+  filepath: ${globals:paths.embeddings}/tmp_nodes_with_pca_embeddings
 
 # NOTE: Needs renaming
 embeddings.tmp.input_nodes:
@@ -60,13 +60,13 @@ embeddings.tmp.input_edges:
       RETURN rel
 
 embeddings.feat.include_in_graphsage@yaml:
-  filepath: ${globals:paths.feat}/graphsage_filter/result.yml
+  filepath: ${globals:paths.embeddings}/graphsage_filter/result.yml
   type:  yaml.YAMLDataset
 
 embeddings.models.graphsage:
   # we do not actually do anything with this DS, thus it's a dummy
   # https://github.com/kedro-org/kedro/discussions/3758
-  filepath: ${globals:paths.prm}/graphsage/result.yml
+  filepath: ${globals:paths.embeddings}/graphsage/result.yml
   type:  yaml.YAMLDataset
 
 # NOTE: Dummy catalog entry to enforce Kedro dependency
@@ -84,7 +84,7 @@ embeddings.model_output.graphsage:
 
 embeddings.feat.nodes:
   <<: *_spark_parquet
-  filepath: ${globals:paths.feat}/nodes
+  filepath: ${globals:paths.embeddings}/nodes
       
 
 embeddings.reporting.loss:
@@ -93,7 +93,7 @@ embeddings.reporting.loss:
 
 embeddings.feat.edges:
   <<: *_spark_parquet
-  filepath: ${globals:paths.feat}/edges
+  filepath: ${globals:paths.embeddings}/edges
 
 embeddings.reporting.topological_pca:
   <<: *_spark_parquet

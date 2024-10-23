@@ -44,8 +44,8 @@ integration.int.{source}.nodes_norm_mapping:
 # Unified KGs
 integration.prm.unified_edges:
   <<: [*_spark_parquet, *_layer_prm]
-  filepath: ${globals:paths.prm}/unified/edges
+  filepath: ${globals:paths.integration}/unified/edges
 
 integration.prm.unified_nodes:
   <<: [*_spark_parquet, *_layer_prm]
-  filepath: ${globals:paths.prm}/unified/nodes
+  filepath: ${globals:paths.integration}/unified/nodes
