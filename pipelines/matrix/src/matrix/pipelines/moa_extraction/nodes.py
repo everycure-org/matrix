@@ -2,6 +2,7 @@
 
 import pandas as pd
 import numpy as np
+from tqdm import tqdm
 
 from typing import List, Tuple, Dict, Any
 from sklearn.model_selection import BaseCrossValidator
@@ -266,7 +267,7 @@ def _make_predictions(
         Dictionary of KGPaths objects, one for each pair. Each object contains a dataframe with the paths sorted by confidence score.
     """
     paths_dict = dict()
-    for _, row in pairs.iterrows():
+    for _, row in tqdm(pairs.iterrows(), total=len(pairs)):
         # Generate all paths for the pair
         all_paths_for_pair = path_generator.run(runner, row.source_id, row.target_id)
 
@@ -281,6 +282,7 @@ def _make_predictions(
         # Add predictions to the paths dataframe and sort
         all_paths_for_pair.df["y_pred"] = y_pred
         all_paths_for_pair.df = all_paths_for_pair.df.sort_values(by="y_pred", ascending=False)
+        all_paths_for_pair.df = all_paths_for_pair.df.reset_index(drop=True)
         paths_dict["__".join((row.source_id, row.target_id))] = all_paths_for_pair
 
     # Return KGPaths objects as DataFrames
@@ -288,7 +290,7 @@ def _make_predictions(
     return paths_dict
 
 
-def _get_test_pairs(positive_paths: KGPaths) -> pd.DataFrame:
+def _give_test_pairs(positive_paths: KGPaths) -> pd.DataFrame:
     """Get the test pairs from the positive paths dataset.
 
     Args:
@@ -325,8 +327,7 @@ def make_evaluation_predictions(
     Returns:
         Dictionary of KGPaths objects, one for each pair.
     """
-    test_paths = KGPaths(df=positive_paths.df[positive_paths.df["split"] == "TEST"])
-    test_pairs = test_paths.get_unique_pairs()
+    test_pairs = _give_test_pairs(positive_paths)
     return _make_predictions(
         model, runner, test_pairs, path_generator, path_embedding_strategy, category_encoder, relation_encoder
     )
@@ -347,29 +348,28 @@ def _label_evaluation_predictions(
     Returns:
         MOA predictions labeled as positive (y=1) or negative (y=0).
     """
+    # Get the columns for the paths dataframe
     num_hops = positive_paths.num_hops
     if num_hops != predictions_for_pair.num_hops:
         raise ValueError("Number of hops in positive paths and predictions for pair do not match")
-
-    # Get the columns for the paths dataframe
-    def _is_path_in_set(set_of_paths: KGPaths, path: pd.Series) -> pd.Series:
-        """Check if a given path is present in a set of paths."""
-        cols = KGPaths.get_columns(num_hops)
-        return set_of_paths.df[cols].apply(lambda row: row.equals(path[cols]), axis=1).any()
+    cols = KGPaths.get_columns(num_hops)
 
     # Split the positive paths into test and train
-    is_test = positive_paths.df["split"] == "TEST"
-    test_paths = KGPaths(df=positive_paths.df[is_test])
-    train_paths = KGPaths(df=positive_paths.df[~is_test])
+    test_paths = positive_paths.df[positive_paths.df["split"] == "TEST"][cols]
+    train_paths = positive_paths.df[positive_paths.df["split"] != "TEST"][cols]
 
-    # Remove any paths that are in the training set
-    predictions_for_pair.df = predictions_for_pair.df[
-        ~predictions_for_pair.df.apply(lambda row: _is_path_in_set(train_paths, row), axis=1)
-    ]
-    # Label the remaining paths
-    predictions_for_pair.df["y"] = predictions_for_pair.df.apply(
-        lambda row: 1 if _is_path_in_set(test_paths, row) else 0, axis=1
-    )
+    # Convert paths to tuples for fast comparison
+    test_paths_set = set(map(tuple, test_paths.values))
+    train_paths_set = set(map(tuple, train_paths.values))
+
+    # Remove any paths that are in the training set and label the remaining paths
+    paths_tuples = predictions_for_pair.df[cols].apply(tuple, axis=1)
+
+    in_train = ~paths_tuples.isin(train_paths_set)
+    predictions_for_pair.df = predictions_for_pair.df[in_train]
+
+    in_test = paths_tuples[in_train].isin(test_paths_set)
+    predictions_for_pair.df["y"] = in_test.astype(int)
 
     return predictions_for_pair
 
@@ -384,6 +384,7 @@ def compute_evaluation_metrics(
     Args:
         positive_paths: Dataset of positive indication paths, with a "split" information.
         predictions: Dictionary of KGPaths objects, one for each pair.
+            Each KGPaths object represents the MOA predictions sorted by the confidence score.
         k_lst: List of values for Hit@k.
 
     Returns:
@@ -391,21 +392,28 @@ def compute_evaluation_metrics(
             - Hit@k, one for each value of k.
             - MRR
     """
-    # test_pairs = _get_test_pairs(positive_paths)
+    test_pairs = _give_test_pairs(positive_paths)
 
-    # # Compute list of the lowest rank for a positive path for each pair
-    # hit_list = []
-    # # for _, pair in test_pairs.iterrows():
-    # #     pair_id = "__".join((pair.source_id, pair.target_id))
-    # #     predictions_for_pair = predictions[pair_id]
-    # #     labeled_predictions = _label_evaluation_predictions(positive_paths, predictions_for_pair)
-    # for _, predictions_load_func in sorted(predictions.items()):
-    #     predictions_for_pair = predictions_load_func()  # load the actual partition data
-    #     labeled_predictions = _label_evaluation_predictions(positive_paths, predictions_for_pair)
-    # breakpoint()
-    # concat with existing result
-    # result = pd.concat([result, partition_data], ignore_index=True, sort=True)
+    # Compute list representing the lowest rank of a positive path for each pair
+    rank_lst = []
+    for _, row in test_pairs.iterrows():
+        drug = row.source_id
+        disease = row.target_id
+        predictions_load_func = predictions[f"{drug}__{disease}"]
+        predictions_for_pair = predictions_load_func()
+        predictions_for_pair.df = predictions_for_pair.df.reset_index(drop=True)
+        labelled_predictions = _label_evaluation_predictions(positive_paths, predictions_for_pair)
+        is_positive = labelled_predictions.df["y"].eq(1)
+        if is_positive.any():
+            positive_ranks = labelled_predictions.df[is_positive].index + 1
+            rank_lst.append(positive_ranks[0])
 
     # Compute evaluation metrics
+    report = dict()
+    rank_arr = np.array(rank_lst)
+    for k in k_lst:
+        hit_at_k = (rank_arr <= k).mean()
+        report[f"Hit@{k}"] = hit_at_k
+    report["MRR"] = (1 / rank_arr).mean()
 
-    return ...
+    return report
