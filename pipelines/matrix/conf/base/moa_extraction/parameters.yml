@@ -112,3 +112,8 @@ moa_extraction:
         unidirectional: *unidirectional
         # num_limit: 25 # For testing purposes only
       k_lst: [5, 25]
+
+  predictions:
+    num_pairs_limit: 10
+    num_paths_per_pair_limit: 1000
+    include_edge_directions: true

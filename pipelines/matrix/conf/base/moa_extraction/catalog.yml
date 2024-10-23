@@ -7,6 +7,10 @@ moa_extraction.raw.drug_mech_db:
   type: yaml.YAMLDataset
   filepath: ${globals:paths.raw}/moa_extraction/indication_paths.yaml
 
+moa_extraction.raw.top_matrix_drug_disease_pairs:
+  type: csv.CSVDataset
+  filepath: ${globals:paths.raw}/moa_extraction/filtered_matrix_report_xg_ensemble_report_17_sept_2024.csv
+
 moa_extraction.feat.category_encoder:
   type: pickle.PickleDataset
   filepath: ${globals:paths.feat}/moa_extraction/category_encoder.pickle
@@ -35,7 +39,7 @@ moa_extraction.feat.relation_encoder:
   type: pickle.PickleDataset
   filepath: ${globals:paths.models}/moa_extraction/{num_hops}_hop_model_split.pickle
 
-"moa_extraction.model_output.{num_hops}_hop_predictions":
+"moa_extraction.model_output.{num_hops}_hop_evaluation_predictions":
   type: partitions.PartitionedDataset
   path: ${globals:paths.model_output}/moa_extraction/{num_hops}_hop_evaluation_predictions
   dataset: matrix.datasets.paths.KGPathsDataset
@@ -45,3 +49,16 @@ moa_extraction.feat.relation_encoder:
 "moa_extraction.reporting.{num_hops}_hop_metrics":
   filepath: ${globals:paths.reporting}/moa_extraction/{num_hops}_hop_metrics
   type:  yaml.YAMLDataset
+
+
+"moa_extraction.model_output.{num_hops}_hop_output_predictions":
+  type: partitions.PartitionedDataset
+  path: ${globals:paths.model_output}/moa_extraction/{num_hops}_hop_output_predictions
+  dataset: matrix.datasets.paths.KGPathsDataset
+  load_args:
+    engine: pyarrow
+
+"moa_extraction.reporting.{num_hops}_hop_predictions_report":
+  type: partitions.PartitionedDataset
+  path: ${globals:paths.reporting}/moa_extraction/{num_hops}_hop_predictions_report
+  dataset: matrix.datasets.excel.ExcelDataset
