@@ -152,17 +152,6 @@ class KGPaths:
         else:
             self.df = new_data
 
-    # def add_paths_from_df(self, df: pd.DataFrame) -> None:
-    #     """Add a dataframe of paths to the set.
-
-    #     Args:
-    #         df: A dataframe of paths. Must conform to schema.
-    #     """
-    #     num_hops = self.get_num_hops(df)
-    #     if num_hops != self.num_hops:
-    #         raise ValueError(f"DataFrame has {num_hops} hops, expected {self.num_hops}")
-    #     self.df = pd.concat([self.df, df], ignore_index=True)
-
 
 class KGPathsDataset(BaseParquetDataset):
     """Dataset adaptor to read KGPaths using Kedro's dataset functionality."""
