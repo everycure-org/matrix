@@ -1,16 +1,14 @@
-"""Module with pytest fixtures."""
-
 from typing import Generator
 import pytest
 
 from pathlib import Path
 
+from kedro.config import OmegaConfigLoader
 from kedro.framework.context import KedroContext
 from kedro.framework.project import settings
 from kedro.framework.hooks import _create_hook_manager
 
 from pyspark.sql import SparkSession
-from kedro.config import OmegaConfigLoader
 from omegaconf.resolvers import oc
 from matrix.resolvers import merge_dicts
 
@@ -69,6 +67,7 @@ def spark() -> Generator[SparkSession, None, None]:
     spark = (
         SparkSession.builder.config("spark.sql.shuffle.partitions", 1)
         .config("spark.executorEnv.PYTHONPATH", "src")
+        .config("spark.driver.bindAddress", "127.0.0.1")
         .master("local")
         .appName("tests")
         .getOrCreate()
