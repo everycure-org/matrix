@@ -13,7 +13,7 @@ def create_pipeline(**kwargs) -> Pipeline:
         [
             node(
                 func=transform_robo_nodes,
-                inputs="ingestion.int.robokop.nodes",
+                inputs=["ingestion.int.robokop.nodes", "integration.raw.biolink.categories"],
                 outputs="integration.int.robokop.nodes",
                 name="transform_robokop_nodes",
                 tags=["standardize"],
@@ -100,6 +100,30 @@ def create_pipeline(**kwargs) -> Pipeline:
                 },
                 outputs="integration.prm.unified_edges",
                 name="create_prm_unified_edges",
+            ),
+            # filter nodes given a set of filter stages
+            node(
+                func=nodes.filer_unified_kg_nodes,
+                inputs=[
+                    "integration.prm.unified_nodes",
+                    "params:integration.filtering.node_filters",
+                ],
+                outputs="integration.prm.filtered_nodes",
+                name="filter_prm_knowledge_graph_nodes",
+                tags=["filtering"],
+            ),
+            # filter edges given a set of filter stages
+            node(
+                func=nodes.filer_unified_kg_edges,
+                inputs=[
+                    "integration.prm.filtered_nodes",
+                    "integration.prm.unified_edges",
+                    "integration.raw.biolink.predicates",
+                    "params:integration.filtering.edge_filters",
+                ],
+                outputs="integration.prm.filtered_edges",
+                name="filter_prm_knowledge_graph_edges",
+                tags=["filtering"],
             ),
         ]
     )

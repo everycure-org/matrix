@@ -1,44 +1,15 @@
-import pandas as pd
-import logging
+"""Filtering functions for the integration pipeline."""
 
-from typing import Dict, Any, List, Optional
+import logging
+from typing import Any, Dict, List, Optional
+
+import pandas as pd
+import pyspark as ps
+import pyspark.sql.functions as F
+import pyspark.sql.functions as f
 from pyspark.sql import DataFrame
 
-import pyspark.sql.functions as f
-import pyspark as ps
-
 logger = logging.getLogger(__name__)
-
-
-def _unnest(predicates: List[Dict[str, Any]], parents: Optional[List[str]] = None):
-    """Function to unnest biolink predicate hierarchy.
-
-    The biolink predicates are organized in an hierarchical JSON object. To enable
-    hierarchical deduplication, the JSON object is pre-processed into a flat pandas
-    dataframe that adds the full path to each predicate.
-
-    Args:
-        predicates: predicates to unnest
-        parents: list of parents in hierarchy
-        depth: depth in the hierarchy
-    Returns:
-        Unnested dataframe
-    """
-
-    if parents is None:
-        parents = []
-
-    slices = []
-    for predicate in predicates:
-        name = predicate.get("name")
-
-        # Recurse the children
-        if children := predicate.get("children"):
-            slices.append(_unnest(children, parents=[*parents, name]))
-
-        slices.append(pd.DataFrame([[name, parents]], columns=["predicate", "parents"]))
-
-    return pd.concat(slices, ignore_index=True)
 
 
 def biolink_deduplicate(edges_df: DataFrame, biolink_predicates: DataFrame):
@@ -59,11 +30,10 @@ def biolink_deduplicate(edges_df: DataFrame, biolink_predicates: DataFrame):
         biolink_predicates: JSON object with biolink predicates
     """
 
-    before_count = edges_df.count()
     spark = ps.sql.SparkSession.builder.getOrCreate()
 
     # Load up biolink hierarchy
-    biolink_hierarchy = spark.createDataFrame(_unnest(biolink_predicates)).withColumn(
+    biolink_hierarchy = spark.createDataFrame(unnest_biolink_hierarchy(biolink_predicates)).withColumn(
         "predicate", f.concat(f.lit("biolink:"), f.col("predicate"))
     )
 
@@ -89,6 +59,40 @@ def biolink_deduplicate(edges_df: DataFrame, biolink_predicates: DataFrame):
         .drop("parents")
     )
 
-    logger.info(f"dropped {before_count - res.count()} redundant biolink edges")
-
     return res
+
+
+def remove_rows_containing_category(nodes: DataFrame, categories: List[str], column: str, **kwargs) -> DataFrame:
+    """Function to remove rows containing a category."""
+    return nodes.filter(~F.col(column).isin(categories))
+
+
+def unnest_biolink_hierarchy(predicates: List[Dict[str, Any]], parents: Optional[List[str]] = None):
+    """Function to unnest biolink predicate hierarchy.
+
+    The biolink predicates are organized in an hierarchical JSON object. To enable
+    hierarchical deduplication, the JSON object is pre-processed into a flat pandas
+    dataframe that adds the full path to each predicate.
+
+    Args:
+        predicates: predicates to unnest
+        parents: list of parents in hierarchy
+        depth: depth in the hierarchy
+    Returns:
+        Unnested dataframe
+    """
+
+    if parents is None:
+        parents = []
+
+    slices = []
+    for predicate in predicates:
+        name = predicate.get("name")
+
+        # Recurse the children
+        if children := predicate.get("children"):
+            slices.append(unnest_biolink_hierarchy(children, parents=[*parents, name]))
+
+        slices.append(pd.DataFrame([[name, parents]], columns=["predicate", "parents"]))
+
+    return pd.concat(slices, ignore_index=True)
