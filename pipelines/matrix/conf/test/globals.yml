@@ -1,5 +1,6 @@
+run_name: test_run
 versions:
-  release: test
+  release: test_release
 
 openai:
   endpoint: ${oc.env:OPENAI_ENDPOINT, http://localhost:1080/v1}
