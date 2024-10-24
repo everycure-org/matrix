@@ -83,6 +83,12 @@ def create_pipeline(**kwargs) -> Pipeline:
                 name="resolve_drug_list",
                 tags=["drug-list"],
             ),
+            node(
+                func=lambda x: x,
+                inputs="ingestion.raw.drug_list@pandas",
+                outputs="ingestion.reporting.drug_list",
+                name="write_drug_list_to_gsheets",
+            ),
             # FUTURE: Remove this node once we have a new disease list with tags
             node(
                 func=nodes.enrich_disease_list,
@@ -103,6 +109,12 @@ def create_pipeline(**kwargs) -> Pipeline:
                 outputs="ingestion.raw.disease_list@pandas",
                 name="resolve_disease_list",
                 tags=["disease-list"],
+            ),
+            node(
+                func=lambda x: x,
+                inputs="ingestion.raw.disease_list@pandas",
+                outputs="ingestion.reporting.disease_list",
+                name="write_disease_list_to_gsheets",
             ),
             node(
                 func=nodes.clean_input_sheet,
