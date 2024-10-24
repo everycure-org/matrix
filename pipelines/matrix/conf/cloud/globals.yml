@@ -12,7 +12,7 @@ paths:
   raw: gs://mtrx-us-central1-hub-dev-storage/kedro/data/01_raw
 
   # Release-based
-  ingestion: gs://mtrx-us-central1-hub-dev-storage/kedro/ingestion # THIS PAHT
+  ingestion: gs://mtrx-us-central1-hub-dev-storage/kedro/ingestion
   integration: ${gcs_bucket}/kedro/releases/${release_name}/integration
   embeddings: ${gcs_bucket}/kedro/releases/release/${release_name}/embeddings
 
