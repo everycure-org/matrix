@@ -121,5 +121,5 @@ modelling.model_input.splits:
 
 "modelling.{model}.reporting.metrics":
   <<: *_reporting_ds
-  filepath: ${globals:paths.evaluation}/{model}/metrics.yml
+  filepath: ${globals:paths.modelling}/{model}/metrics.yml
   type:  yaml.YAMLDataset
