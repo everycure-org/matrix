@@ -2,37 +2,63 @@
 
 import re
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import List, Optional, Any
 
+import click
 from jinja2 import Environment, FileSystemLoader
-from kedro.pipeline import Pipeline
+
 from kedro.pipeline.node import Node
+from kedro.pipeline import Pipeline
+from kedro.framework.project import pipelines
+from kedro.framework.startup import bootstrap_project
 
-ARGO_TEMPLATE_FILE = "argo_wf_spec.tmpl"
-ARGO_TEMPLATES_DIR_PATH = Path(__file__).parent.parent.parent / "templates"
+TEMPLATE_FILE = "argo_wf_spec.tmpl"
+RENDERED_FILE = "argo-workflow-template.yml"
+SEARCH_PATH = Path("templates")
 
 
-def generate_argo_config(
-    image: str,
-    run_name: str,
-    image_tag: str,
-    namespace: str,
-    username: str,
-    pipelines: Dict[str, Pipeline],
-    package_name: str,
-) -> str:
-    loader = FileSystemLoader(searchpath=ARGO_TEMPLATES_DIR_PATH)
+@click.group()
+def cli() -> None:
+    """Main CLI entrypoint."""
+    ...
+
+
+@click.command()
+@click.argument("image", required=True)
+@click.argument("image_tag", required=False, default="latest")
+@click.argument("namespace", required=False, default="argo-workflows")
+def generate_argo_config(image: str, run_name: str, image_tag: str, namespace: str, username: str):
+    """Function to render Argo pipeline template.
+
+    Args:
+        image: image to use
+        run_name: name of the run
+        image_tag: image tag to use
+        namespace: the namespace in which to store the workflow
+        pipeline_name: name of pipeline to generate
+        env: execution environment
+        username: user to execute
+    """
+    _generate_argo_config(image, run_name, image_tag, namespace, username)
+
+
+def _generate_argo_config(image: str, run_name: str, image_tag: str, namespace: str, username: str):
+    loader = FileSystemLoader(searchpath=SEARCH_PATH)
     template_env = Environment(loader=loader, trim_blocks=True, lstrip_blocks=True)
-    template = template_env.get_template(ARGO_TEMPLATE_FILE)
+    template = template_env.get_template(TEMPLATE_FILE)
 
-    pipeline2dependencies = {}
+    project_path = Path.cwd()
+    metadata = bootstrap_project(project_path)
+    package_name = metadata.package_name
+
+    pipes = {}
     for name, pipeline in pipelines.items():
         # Fuse nodes in topological order to avoid constant recreation of Neo4j
-        pipeline2dependencies[name] = get_dependencies(fuse(pipeline))
+        pipes[name] = get_dependencies(fuse(pipeline))
 
     output = template.render(
         package_name=package_name,
-        pipelines=pipeline2dependencies,
+        pipes=pipes,
         image=image,
         image_tag=image_tag,
         namespace=namespace,
@@ -40,7 +66,7 @@ def generate_argo_config(
         run_name=run_name,
     )
 
-    return output
+    (SEARCH_PATH / RENDERED_FILE).write_text(output)
 
 
 class FusedNode(Node):
@@ -59,7 +85,7 @@ class FusedNode(Node):
         """Function to add node to group."""
         self._nodes.append(node)
 
-    def add_parents(self, parents: List) -> None:
+    def add_parents(self, parents):
         """Function to set the parents of the group."""
         self._parents.update(set(parents))
 
@@ -106,9 +132,6 @@ class FusedNode(Node):
         """Retrieve name of fusedNode."""
         if self.is_fusable and len(self._nodes) > 1:
             return self.fuse_group
-        # TODO: Consider if this shouldn't raise an exception
-        elif len(self._nodes) == 0:
-            return "empty"
 
         # If not fusable, revert to name of node
         return self._nodes[0].name
@@ -245,3 +268,8 @@ def clean_name(name: str) -> str:
         Clean node name, according to Argo's requirements
     """
     return re.sub(r"[\W_]+", "-", name).strip("-")
+
+
+if __name__ == "__main__":
+    cli.add_command(generate_argo_config)
+    cli()
