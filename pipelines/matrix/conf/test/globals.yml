@@ -5,19 +5,3 @@ versions:
 openai:
   endpoint: ${oc.env:OPENAI_ENDPOINT, http://localhost:1080/v1}
   api_key: dummy
-
-paths:
-  raw: kedro_data/test/raw
-  new_raw: kedro_data/test/raw
-
-  # Release-based
-  ingestion: kedro_data/test/ingestion
-  integration: kedro_data/test/integration
-  embeddings: kedro_data/test/embeddings
-  
-  # Run-based
-  modelling: kedro_data/test/modelling
-  evaluation: kedro_data/test/evaluation
-  matrix_generation: kedro_data/test/matrix_generation
-  inference: kedro_data/test/inference
-
