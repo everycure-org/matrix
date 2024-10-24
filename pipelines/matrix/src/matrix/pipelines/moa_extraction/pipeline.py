@@ -183,7 +183,7 @@ def _predictions_pipeline() -> Pipeline:
                             "relation_encoder": "moa_extraction.feat.relation_encoder",
                             "drug_col_name": "params:moa_extraction.predictions.drug_col_name",
                             "disease_col_name": "params:moa_extraction.predictions.disease_col_name",
-                            "num_pairs_limit": "params:moa_extraction.predictions.num_pairs_limit",
+                            # "num_pairs_limit": "params:moa_extraction.predictions.num_pairs_limit",
                         },
                         outputs=f"moa_extraction.model_output.{num_hops}_hop_output_predictions",
                         name=f"moa_extraction.predictions.make_{num_hops}_hop_output_predictions",
