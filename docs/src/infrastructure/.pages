@@ -4,3 +4,5 @@ nav:
     - compute_cluster.md
     - gcp.md
     - runbooks
+    - argo_workflows_locally.md
+    - glossary.md
