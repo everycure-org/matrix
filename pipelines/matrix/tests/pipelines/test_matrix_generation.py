@@ -307,6 +307,7 @@ def test_generate_report(sample_data):
         "stats_col_names": {
             "per_disease": {"top": {"mean": "Mean score"}, "all": {"mean": "Mean score"}},
             "per_drug": {"top": {"mean": "Mean score"}, "all": {"mean": "Mean score"}},
+            "full": {"mean": "Mean score", "median": "Median score"},
         },
         "tags": {
             "drugs": {"is_steroid": "Whether drug is a steroid"},
@@ -321,10 +322,30 @@ def test_generate_report(sample_data):
             },
         },
     }
+    run_metadata = {
+        "run_name": "test_run",
+        "git_sha": "test_sha",
+        "data_version": "test_data_version",
+    }
 
     # When generating the report
-    result = generate_report(data, n_reporting, drugs, diseases, score_col_name, matrix_params)
+    result = generate_report(data, n_reporting, drugs, diseases, score_col_name, matrix_params, run_metadata)
+    full_stats = result["statistics"]
+    # Check that the full matrix statistics are correct
+    assert (
+        full_stats["stats_type"]
+        .isin(
+            [
+                "mean_full_matrix",
+                "mean_top_n",
+                "median_full_matrix",
+                "median_top_n",
+            ]
+        )
+        .all()
+    )
 
+    result = result["matrix"]
     # Then the report is of the correct structure
     assert isinstance(result, pd.DataFrame)
     assert len(result) == n_reporting
@@ -351,8 +372,6 @@ def test_generate_report(sample_data):
         "mean_all_per_drug",
     }
     assert set(result.columns) == expected_columns
-    print(result["mean_all_per_disease"])
-    print(result["mean_all_per_drug"])
 
     assert result["drug_name"].tolist() == ["Drug Label 1", "Drug Label 2", "Drug Label 3"]
     assert result["disease_name"].tolist() == ["Disease Label 1", "Disease Label 2", "Disease Label 3"]

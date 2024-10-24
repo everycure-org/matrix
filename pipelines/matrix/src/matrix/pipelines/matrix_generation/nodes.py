@@ -494,36 +494,6 @@ def _add_tags(
     return top_pairs
 
 
-def generate_report(
-    data: pd.DataFrame,
-    n_reporting: int,
-    drugs: pd.DataFrame,
-    diseases: pd.DataFrame,
-    score_col_name: str,
-    matrix_params: Dict,
-) -> List[pd.DataFrame]:
-    """Generates a report with the top pairs and metadata.
-
-    Args:
-        data: Pairs dataset.
-        n_reporting: Number of pairs in the report.
-        drugs: Dataframe containing names and IDs for the list of drugs.
-        diseases: Dataframe containing names and IDs for the list of diseases.
-        known_pairs: Labelled ground truth drug-disease pairs dataset.
-        matrix_params: Dictionary containing matrix metadata and other meters.
-    Returns:
-        Dataframe with the top pairs and additional information for the drugs and diseases.
-    """
-    stats = matrix_params.get("stats_col_names")
-    tags = matrix_params.get("tags")
-    top_pairs = _process_top_pairs(data, n_reporting, drugs, diseases, score_col_name)
-    top_pairs = _add_descriptive_stats(top_pairs, data, stats, score_col_name)
-    top_pairs = _flag_known_pairs(top_pairs)
-    top_pairs = _add_tags(top_pairs, drugs, diseases, tags)
-    top_pairs = _reorder_columns(top_pairs, score_col_name, matrix_params)
-    return top_pairs
-
-
 def generate_metadata(
     matrix_report: pd.DataFrame,
     data: pd.DataFrame,
@@ -562,13 +532,52 @@ def generate_metadata(
     version_df = pd.DataFrame(list(meta_dict.items()), columns=["Key", "Value"])
 
     # Calculate mean/median/quantile score for the full matrix
-    stats_dict = {"Key": [], "Value": []}
+    stats_dict = {"stats_type": [], "value": []}
     for main_key in matrix_params["stats_col_names"]["full"].keys():
         # Top n stats
-        stats_dict["Key"].append(f"{main_key}_top_n")
-        stats_dict["Value"].append(getattr(matrix_report[score_col_name], main_key)())
+        stats_dict["stats_type"].append(f"{main_key}_top_n")
+        stats_dict["value"].append(getattr(matrix_report[score_col_name], main_key)())
         # Full matrix stats
-        stats_dict["Key"].append(f"{main_key}_full_matrix")
-        stats_dict["Value"].append(getattr(data[score_col_name], main_key)())
+        stats_dict["stats_type"].append(f"{main_key}_full_matrix")
+        stats_dict["value"].append(getattr(data[score_col_name], main_key)())
     # Concatenate version and legends dfs
-    return pd.concat([version_df, pd.DataFrame(stats_dict), legends_df], axis=0)
+    return version_df, pd.DataFrame(stats_dict), legends_df
+
+
+def generate_report(
+    data: pd.DataFrame,
+    n_reporting: int,
+    drugs: pd.DataFrame,
+    diseases: pd.DataFrame,
+    score_col_name: str,
+    matrix_params: Dict,
+    run_metadata: Dict,
+) -> List[pd.DataFrame]:
+    """Generates a report with the top pairs and metadata.
+
+    Args:
+        data: Pairs dataset.
+        n_reporting: Number of pairs in the report.
+        drugs: Dataframe containing names and IDs for the list of drugs.
+        diseases: Dataframe containing names and IDs for the list of diseases.
+        score_col_name: Probability score column name.
+        matrix_params: Dictionary containing matrix metadata and other meters.
+        run_metadata: Dictionary containing run metadata.
+        score_col_name: Probability score column name.
+    Returns:
+        Dataframe with the top pairs and additional information for the drugs and diseases.
+    """
+    stats = matrix_params.get("stats_col_names")
+    tags = matrix_params.get("tags")
+    top_pairs = _process_top_pairs(data, n_reporting, drugs, diseases, score_col_name)
+    top_pairs = _add_descriptive_stats(top_pairs, data, stats, score_col_name)
+    top_pairs = _flag_known_pairs(top_pairs)
+    top_pairs = _add_tags(top_pairs, drugs, diseases, tags)
+    top_pairs = _reorder_columns(top_pairs, score_col_name, matrix_params)
+    versions, stats, legends = generate_metadata(top_pairs, data, score_col_name, matrix_params, run_metadata)
+    return {
+        "metadata": versions,
+        "statistics": stats,
+        "legend": legends,
+        "matrix": top_pairs,
+    }

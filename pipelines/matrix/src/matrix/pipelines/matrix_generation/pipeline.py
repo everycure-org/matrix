@@ -34,21 +34,10 @@ def _create_matrix_generation_pipeline(model: str) -> Pipeline:
                     "ingestion.raw.disease_list@pandas",
                     "params:evaluation.score_col_name",
                     "params:matrix_generation.matrix",
+                    "params:matrix_generation.run",
                 ],
                 outputs=f"matrix_generation.{model}.reporting.matrix_report",
                 name=f"generate_{model}_report",
-            ),
-            node(
-                func=nodes.generate_metadata,
-                inputs={
-                    "matrix_report": f"matrix_generation.{model}.reporting.matrix_report",
-                    "data": f"matrix_generation.{model}.model_output.sorted_matrix_predictions",
-                    "score_col_name": "params:evaluation.score_col_name",
-                    "matrix_params": "params:matrix_generation.matrix",
-                    "run_metadata": "params:matrix_generation.run",
-                },
-                outputs=f"matrix_generation.{model}.reporting.matrix_metadata",
-                name=f"generate_{model}_metadata",
             ),
         ],
     )
