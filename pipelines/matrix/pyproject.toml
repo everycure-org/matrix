@@ -18,10 +18,6 @@ norecursedirs = [
     "compose",
     "packages",
 ]
-markers = [
-    "integration: mark a test as an integration test.",
-    "spark: mark a test as a spark test & requires PYSPARK_PYTHON to be set appropriately",
-]
 
 [project]
 name = "matrix"
