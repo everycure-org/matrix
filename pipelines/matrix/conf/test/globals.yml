@@ -7,15 +7,17 @@ openai:
   api_key: dummy
 
 paths:
-  raw: data/test/raw
-  new_raw: data/test/raw
+  raw: kedro_data/test/raw
+  new_raw: kedro_data/test/raw
 
-  ingestion: data/test/ingestion
-  integration: data/test/integration
-  embeddings: data/test/embeddings
+  # Release-based
+  ingestion: kedro_data/test/ingestion
+  integration: kedro_data/test/integration
+  embeddings: kedro_data/test/embeddings
   
-  modelling: data/test/modelling
-  evaluation: data/test/evaluation
-  matrix_generation: data/test/matrix_generation
-  inference: data/test/inference
+  # Run-based
+  modelling: kedro_data/test/modelling
+  evaluation: kedro_data/test/evaluation
+  matrix_generation: kedro_data/test/matrix_generation
+  inference: kedro_data/test/inference
 
