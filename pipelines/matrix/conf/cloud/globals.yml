@@ -9,10 +9,10 @@ mlflow_artifact_root: ${gcs_bucket}/runs/${run_name}/mlflow
 
 paths:
   # TODO Need to re-work our approach between what is a "run" and what is a "release"
-  raw: gs://mtrx-us-central1-hub-dev-storage/kedro/data/01_raw
+  raw: ${source_gcs_bucket}/kedro/data/01_raw
 
   # Release-based
-  ingestion: gs://mtrx-us-central1-hub-dev-storage/kedro/ingestion
+  ingestion: ${gcs_bucket}/kedro/ingestion
   integration: ${gcs_bucket}/kedro/releases/${release_name}/integration
   embeddings: ${gcs_bucket}/kedro/releases/release/${release_name}/embeddings
 
