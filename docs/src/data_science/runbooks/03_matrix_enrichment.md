@@ -7,20 +7,19 @@ title: Customizing Matrix Generation
 
 The matrix generation pipeline is producing scores for drug-disease pairs coming directly from the knowledge graph. The 'raw' output is not very useful for the medical team as it contains over 60 million pairs and is hard to navigate due to non-human readable IDs and lack of metadata. Therefore, we need to make it more human-readable. 
 
-The reporting node is taking top n_reporting pairs and enriching them with metadata, tags, and statistics. The enriched matrix is then being saved in the `matrix_report.csv` and contains columns such as:
-* `pair_id` - unique identifier for pairs
-* `drug_name` / `disease_name` - drug and disease names coming from the drug and disease lists
-* `kg_drug_id` / `kg_disease_id` - drug and disease ids that can be mapped to the KG
-* `score` - prediction score for specific pair
-* `tags` (e.g. `is_antimicrobial`, `is_steroid`, `is_cancer`) - various tags corresponding to specific drug or disease (used for filtering out pairs)
-* `master_filter` - conditional statement excluding specific pairsbased on several tags (e.g. `is_antimicrobial` AND `is_pathogen_caused` -> TRUE)
-* `stats` (e.g. `mean_score`, `median_score`) - various disease- or drug-specific statistics calculated for both n_reporting pairs as well as the whole matrix
+The reporting node is taking top n_reporting pairs and enriching them with metadata, tags, and statistics. The final part of the reporting node is also to generate metadata, legend, and statistics sheets. All these files are then being saved in the `matrix_report.xls` file. The file has the following structure:
+* `matrix_report` sheet - where the main matrix output is stored:
+  * `pair_id` - unique identifier for pairs
+  * `drug_name` / `disease_name` - drug and disease names coming from the drug and disease lists
+  * `kg_drug_id` / `kg_disease_id` - drug and disease ids that can be mapped to the KG
+  * `score` - prediction score for specific pair
+  * `tags` (e.g. `is_antimicrobial`, `is_steroid`, `is_cancer`) - various tags corresponding to specific drug or disease (used for filtering out pairs)
+  * `master_filter` - conditional statement excluding specific pairsbased on several tags (e.g. `is_antimicrobial` AND `is_pathogen_caused` -> TRUE)
+  * `stats` (e.g. `mean_score`, `median_score`) - various disease- or drug-specific statistics calculated for both n_reporting pairs as well as the whole matrix
+* `metadata` sheet - contains run/experiment metadata such as run name, versions of data used, git sha, etc. 
+* `legend` sheet - contains legend for all columns present in the matrix_report.csv
+* `statistics` sheet - contains statistics for full matrix as well as top n_reporting pairs
 
-The `matrix_metadata.xls` file contains a few sheets:
-* `matrix_report` - contains the same data as `matrix_report.csv` file
-* `metadata` - contains run/experiment metadata such as run name, versions of data used, git sha, etc. 
-* `legend` - contains legend for all columns present in the matrix_report.csv
-* `statistics` - contains statistics for full matrix as well as top n_reporting pairs
 
 # Customizing the enrichment of the matrix
 
@@ -41,7 +40,8 @@ matrix_generation.matrix:
 
 Also do note that the actual tags/column names are written in a `key:value` format; while only key is used in the matrix output, the value is being used as a 'legend' that is appended to the metadata .csv file.
 
-## 0. Required fields
+
+## 1. Required fields for matrix_report
 
 The parameters.yaml file contains the entries essential for good understanding of the matrix output: these entries are defined as `drug_list`, `disease_list`, and `kg_data`, and are necessary for the matrix generation process so __do not remove them__.
 
@@ -65,7 +65,7 @@ matrix_generation.matrix:
       kg_disease_name: "Disease name in the knowledge graph"
     # ... (tag columns)
 ```
-## 1. Adding or Removing Tags/Filters
+## 2. Adding or Removing Tags/Filters
 
 To add or remove tags/filters, modify the `metadata` section:
 
@@ -83,7 +83,36 @@ matrix_generation.matrix:
 
 These fields will be used in the `generate_metadata` function to create the metadata for each drug-disease pair. Do note that these tags are being extracted from the drug and disease lists and will be used to enrich the matrix - therefore if a specific tag is not available for a drug or disease, it will not be shown in the final matrix.
 
-## 1.1 Master filter tag
+## 3. Adding or Modifying Tags
+
+Tags are used to provide additional information about drugs, diseases, and drug-disease pairs. They are defined in the `tags` section of the `parameters.yml` file. Here's an overview of the current tag structure:
+
+```yaml
+matrix_generation.matrix:
+  tags:
+    drugs:
+      available_USA: "Whether drug is prescriped or discontinued in USA"
+      is_steroid: "Whether drug is a steroid"
+      is_antimicrobial: "Whether drug is an antimicrobial"
+      is_glucose_regulator: "Whether drug is a glucose regulator"
+      is_chemotherapy: "Whether drug is a chemotherapy"
+    pairs:
+      is_known_positive: "Whether the pair is a known positive, based on literature and clinical trials"
+      is_known_negative: "Whether the pair is a known negative, based on literature and clinical trials"
+    diseases:
+      is_cancer: "Whether disease is a cancer"
+      is_pathogen_caused: "Whether disease is a pathogen caused"
+      is_glucose_dysfunction: "Whether disease is a glucose dysfunction"
+      tag_existing_treatment: "Whether disease has existing treatments"
+      tag_QALY_lost: "Whether disease has Quality Adjusted Life Years (QALY) lost"
+```
+
+To add or modify tags, you will first need to identify whether the specific tag is present in drug or disease list respectively. Note that pairs tags are Work in Progress and will be added in the future. When adding the tag, note that the key will be used as the column name in the output, while the value serves as a description for the legend (which will be used in the legends sheet).
+
+Remember that these tags should correspond to data available in your drug and disease lists. The enrichment process will use these tags to add the relevant information to the matrix report.
+
+
+## 4. Master filter tag
 
 Note that there is also a `master_filter` tag which is essentially a conditional statement based on several other tags. This is the most important filter for the medical team as it utilizes both drug and disease tags to exclude certain pairs - for example a pair where a drug is an antimicrobial and the disease is a pathogen-caused disease. Such pair is not incredibly useful when it comes to drug repurposing as we are trying to find new uses for existing drugs.
 
@@ -102,7 +131,7 @@ matrix_generation.matrix:
         - [is_chemotherapy, is_cancer] # if is_chemotherapy is True AND is_cancer is True, the tag returns True
 ```
 
-## 2. Customizing Descriptive Statistics
+## 5. Customizing Descriptive Statistics
 
 To add, remove, or modify descriptive statistics, update the `stats_col_names` section:
 
@@ -124,9 +153,25 @@ These statistics will be calculated in the `generate_report` function using pand
 
 Furthermore, the `stats_col_names` is divided in two sections: `all` and `top`. The `all` section calculates descriptive statistics (per drug/disease) across the whole matrix (~60 million pairs) while the `top` section calculates statistics only for `n_reporting` pairs (as specified in the `matrix_generation_options` section). You can add any statistics as long as they are compatible with pandas' `transform` method such as `mean`, `median`, `quantile`, `max`, `min`, `std`.
 
-### 2.1 Full Matrix Descriptive Statistics
+## 6. Remaining sheets
 
-We are also calculating some statistics across the whole matrix as well as top_n pairs, these are `mean_score`, `median_score` and `quantile score`. Note that these are reported in the final metadata file, as there is only one value per stastic. These can be found within the `full` and `top_n` sections:
+While the most important sheet is the `matrix_report.csv`, the metadata file includes all information regarding the versions of the data used, naming conventions as well as short summary statistics. 
+
+### 6.1 Metadata sheet
+
+This sheet contains all the metadata regarding the versions of the data used, run-names and links to MLFlow where metrics and specific parameters can be found. These can be specified under `matrix_generation.run` section:
+
+```yaml
+matrix_generation.run:
+  workflow_id: ${oc.env:WORKFLOW_ID, local}}
+  mlflow_link: ${globals:mlflow_url}
+  git_sha: ${globals:git_sha}
+  release_version: ${globals:versions.release}
+  versions: ${globals:data_sources}
+```
+### 6.2 Summary statistics
+
+This sheet contains the summary statistics for the whole matrix as well as the top_n pairs. The statistics can include `mean_score`, `median_score`, `quantile score`, `max_score`, `min_score`, and `std_score`. These can be specified under `stats_col_names` section:
 
 ```yaml
 stats_col_names:
@@ -140,7 +185,11 @@ stats_col_names:
     std: "Standard deviation of probability scores"
 ```
 
-## Examples of statistics/tags to be included
+### 6.3 Legend sheet
+
+This sheet contains the legend for the matrix report. The legend includes the description of the tags used in the matrix report. These are specified as values in the key:value pairs
+
+## Examples of full statistics/tags 
 
 ````yaml
 matrix_generation.matrix:
