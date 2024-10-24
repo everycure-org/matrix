@@ -41,7 +41,7 @@ def _create_matrix_generation_pipeline(model: str) -> Pipeline:
     )
 
 
-def create_pipeline(**kwargs) -> Pipeline:
+def create_matrix_pipeline(**kwargs) -> Pipeline:
     """Create matrix generation pipeline."""
     initial_nodes = pipeline(
         [
@@ -79,15 +79,15 @@ def create_pipeline(**kwargs) -> Pipeline:
             ),
         ]
     )
-    pipes = [initial_nodes]
+    pipelines = [initial_nodes]
     models = settings.DYNAMIC_PIPELINES_MAPPING.get("modelling")
     model_names = [model["model_name"] for model in models]
     for model in model_names:
-        pipes.append(
+        pipelines.append(
             pipeline(
                 _create_matrix_generation_pipeline(model),
                 tags=model,
             )
         )
 
-    return sum(pipes)
+    return sum(pipelines)

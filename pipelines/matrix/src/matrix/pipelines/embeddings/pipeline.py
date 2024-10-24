@@ -1,10 +1,11 @@
 """Embeddings pipeline."""
+
 from kedro.pipeline import Pipeline, node, pipeline
 
 from . import nodes
 
 
-def create_pipeline(**kwargs) -> Pipeline:
+def create_embeddings_pipeline(**kwargs) -> Pipeline:
     """Create embeddings pipeline."""
     return pipeline(
         [
