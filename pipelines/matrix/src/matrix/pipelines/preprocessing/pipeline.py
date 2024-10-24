@@ -92,10 +92,7 @@ def create_pipeline(**kwargs) -> Pipeline:
             # FUTURE: Remove this node once we have a new disease list with tags
             node(
                 func=nodes.enrich_disease_list,
-                inputs=[
-                    "preprocessing.raw.disease_list",
-                    "params:preprocessing.enrichment_tags",
-                ],
+                inputs=["preprocessing.raw.disease_list", "params:preprocessing.enrichment_tags"],
                 outputs="preprocessing.raw.enriched_disease_list",
                 name="enrich_disease_list",
                 tags=["disease-list"],
