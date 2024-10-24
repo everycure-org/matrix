@@ -7,7 +7,7 @@ import pandas as pd
 import pyspark as ps
 import pyspark.sql.functions as F
 import pyspark.sql.functions as f
-from pyspark.sql import DataFrame
+from pyspark.sql import DataFrame, Window
 
 logger = logging.getLogger(__name__)
 
@@ -28,13 +28,15 @@ def biolink_deduplicate(edges_df: DataFrame, biolink_predicates: DataFrame):
     Args:
         edges_df: dataframe with biolink edges
         biolink_predicates: JSON object with biolink predicates
+    Returns:
+        Deduplicated dataframe
     """
 
     spark = ps.sql.SparkSession.builder.getOrCreate()
 
     # Load up biolink hierarchy
-    biolink_hierarchy = spark.createDataFrame(unnest_biolink_hierarchy(biolink_predicates)).withColumn(
-        "predicate", f.concat(f.lit("biolink:"), f.col("predicate"))
+    biolink_hierarchy = spark.createDataFrame(
+        unnest_biolink_hierarchy("predicate", biolink_predicates, prefix="biolink:")
     )
 
     # Enrich edges with path to predicates in biolink hierarchy
@@ -62,15 +64,39 @@ def biolink_deduplicate(edges_df: DataFrame, biolink_predicates: DataFrame):
     return res
 
 
+def determine_most_specific_category(nodes: DataFrame, biolink_categories_df: pd.DataFrame) -> str:
+    """Function to retrieve most specific entry."""
+
+    spark = ps.sql.SparkSession.builder.getOrCreate()
+    labels_hierarchy = spark.createDataFrame(
+        unnest_biolink_hierarchy("label", biolink_categories_df, pascal_case=True, prefix="biolink:")
+    )
+
+    nodes = (
+        nodes.withColumn("label", F.explode("all_categories"))
+        .join(labels_hierarchy, on="label", how="left")  # add path
+        .withColumn("depth", F.size("parents"))
+        .withColumn("row_num", F.row_number().over(Window.partitionBy("id").orderBy(F.col("depth").desc())))
+        .filter(F.col("row_num") == 1)
+        .drop("row_num")
+        .withColumn("category", F.col("label"))
+    )
+    return nodes
+
+
 def remove_rows_containing_category(nodes: DataFrame, categories: List[str], column: str, **kwargs) -> DataFrame:
     """Function to remove rows containing a category."""
     return nodes.filter(~F.col(column).isin(categories))
 
 
 def unnest_biolink_hierarchy(
-    predicates: List[Dict[str, Any]], parents: Optional[List[str]] = None, pascal_case=False, prefix=""
+    scope: str,
+    predicates: List[Dict[str, Any]],
+    parents: Optional[List[str]] = None,
+    pascal_case: bool = False,
+    prefix: str = "",
 ):
-    """Function to unnest biolink predicate hierarchy.
+    """Function to unnest a biolink hierarchy.
 
     The biolink predicates are organized in an hierarchical JSON object. To enable
     hierarchical deduplication, the JSON object is pre-processed into a flat pandas
@@ -79,7 +105,6 @@ def unnest_biolink_hierarchy(
     Args:
         predicates: predicates to unnest
         parents: list of parents in hierarchy
-        depth: depth in the hierarchy
     Returns:
         Unnested dataframe
     """
@@ -99,10 +124,12 @@ def unnest_biolink_hierarchy(
         # Recurse the children
         if children := predicate.get("children"):
             slices.append(
-                unnest_biolink_hierarchy(children, parents=[*parents, name], pascal_case=pascal_case, prefix=prefix)
+                unnest_biolink_hierarchy(
+                    scope, children, parents=[*parents, name], pascal_case=pascal_case, prefix=prefix
+                )
             )
 
-        slices.append(pd.DataFrame([[name, parents]], columns=["predicate", "parents"]))
+        slices.append(pd.DataFrame([[name, parents]], columns=[scope, "parents"]))
 
     return pd.concat(slices, ignore_index=True)
 
