@@ -1,7 +1,6 @@
 """
 MOA extraction pipeline.
 """
-# TODO: Add Openpyxl to the dependencies
 # TODO: Fix pair sheet by querying KG
 # TODO: Inject score col name?
 # TODO: Add descriptions?
