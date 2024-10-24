@@ -6,8 +6,8 @@ openai:
   api_key: dummy
 
 paths:
-  raw: data/test/01_raw
-  new_raw: data/test/01_raw
+  raw: data/test/raw
+  new_raw: data/test/raw
 
   ingestion: data/test/ingestion
   integration: data/test/integration
