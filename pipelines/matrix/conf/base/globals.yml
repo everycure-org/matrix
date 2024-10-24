@@ -13,6 +13,7 @@ openai:
 # points at our central GCS_BUCKET where we store our ground truth data
 # Note: Overwrite with WG project ID & bucket if you want to write to a different project's BigQuery
 gcs_bucket: gs://${oc.env:GCP_BUCKET, mtrx-us-central1-hub-dev-storage}
+source_gcs_bucket: ${gcs_bucket}
 gcp_project: ${oc.env:GCP_PROJECT_ID, mtrx-hub-dev-3of}
 git_sha: ${oc.env:GIT_SHA, local}
 gh_token: ${oc.env:GH_TOKEN, dummy}
@@ -49,7 +50,7 @@ mlflow_artifact_root: null
 
 paths:
   # we read from our central GCS bucket where we store our ground truth data
-  raw: ${gcs_bucket}/kedro/data/01_raw
+  raw: ${source_gcs_bucket}/kedro/data/01_raw
   # TODO: When we merge https://github.com/everycure-org/matrix/pull/122 we should move all raw data to the new location
   new_raw: ${gcs_bucket}/data/01_RAW/
 
