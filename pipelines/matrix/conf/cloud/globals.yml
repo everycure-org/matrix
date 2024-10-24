@@ -8,12 +8,8 @@ gcp_project: ${oc.env:GCP_PROJECT_ID}
 mlflow_artifact_root: ${gcs_bucket}/runs/${run_name}/mlflow
 
 paths:
-  # hard coded against our central data location for raw
-
   # TODO Need to re-work our approach between what is a "run" and what is a "release"
   raw: gs://mtrx-us-central1-hub-dev-storage/kedro/data/01_raw
-
-  # fabricator: gs://mtrx-us-central1-hub-dev-storage/kedro/fabricator
 
   # Release-based
   ingestion: gs://mtrx-us-central1-hub-dev-storage/kedro/ingestion # THIS PAHT
