@@ -3,7 +3,7 @@ TAG ?= ${USER}
 GIT_SHA ?= $(shell git rev-parse --short HEAD)
 export PYSPARK_PYTHON = .venv/bin/python
 export TQDM_DISABLE ?= 1
-TARGET_PLATFORM ?= linux/amd64
+TARGET_PLATFORM ?= linux/arm64
 
 # ensures all make targets run in one shell (rather than line by line in new shell)
 .ONESHELL: 
@@ -28,7 +28,7 @@ venv: prerequisites
 install: venv
 	# deactivate any potentially active venv that may be somewhere else
 	deactivate || true
-	uv pip compile requirements.in --output-file requirements.txt
+	uv pip compile requirements.in --output-file requirements.txt	
 	uv pip install -r requirements.txt
 
 precommit: precommit-hooks
@@ -61,14 +61,14 @@ docker_test: docker_build
 		--exit-code-from matrix-pipeline
 
 docker_build:
-	docker buildx build --progress=plain --build-arg GIT_SHA=${GIT_SHA} --platform $(TARGET_PLATFORM) -t $(dev_docker_image) ./
+	docker buildx build --progress=plain --build-arg GIT_SHA=${GIT_SHA} --platform $(TARGET_PLATFORM) -t $(dev_docker_image) --load ./
 	docker tag $(dev_docker_image) $(dev_docker_image):${TAG}
 
 docker_push: docker_build
 	docker push $(dev_docker_image):${TAG}
 
 compose_up:
-	docker compose -f compose/docker-compose.yml up -d --wait --remove-orphans
+	docker compose -f compose/docker-compose.yml up -d --wait
 
 compose_down:
 	bash scripts/compose_down_retry.sh
