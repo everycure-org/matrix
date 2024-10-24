@@ -36,6 +36,9 @@ from matrix.pipelines.inference.pipeline import (
 from matrix.pipelines.moa_extraction.pipeline import (
     create_pipeline as create_moa_extraction_pipeline,
 )
+from matrix.pipelines.drugmech.pipeline import (
+    create_pipeline as create_drugmech_pipeline,
+)
 
 
 def register_pipelines() -> Dict[str, Pipeline]:
@@ -75,6 +78,7 @@ def register_pipelines() -> Dict[str, Pipeline]:
         + create_evaluation_pipeline()
         + create_release_pipeline()
     )
+    pipelines["drugmech"] = create_drugmech_pipeline()
     pipelines["all"] = create_ingestion_pipeline() + pipelines["__default__"]
     pipelines["experiment"] = create_modelling_pipeline() + create_evaluation_pipeline()
     return pipelines
