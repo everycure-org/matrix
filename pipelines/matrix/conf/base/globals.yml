@@ -29,7 +29,7 @@ data_sources:
 # Dataset with node and edge proposals by the
 # EveryCure medical team.
   ec-medical-team:
-    version: 20241016
+    version: 20240823
   # Cleaned clinical trial data from the
   # EveryCure medical team.
   clinical-trial-data:
@@ -52,12 +52,13 @@ paths:
   raw: gs://mtrx-us-central1-hub-dev-storage/kedro/data/01_raw
   # TODO: When we merge https://github.com/everycure-org/matrix/pull/122 we should move all raw data to the new location
   new_raw: ${gcs_bucket}/data/01_RAW/
-  # we write to local disk going forward
-  int: data/02_intermediate
-  prm: data/03_primary
-  feat: data/04_feature
-  model_input: data/05_model_input
-  models: data/06_models
-  model_output: data/07_model_output
-  reporting: data/08_reporting
+
+  integration: data/integration
+  embeddings: data/embeddings
+  modelling: data/modelling
+  
+  evaluation: data/evaluation
+  matrix_generation: data/matrix_generation
+  inference: data/inference
+
   tmp: data/tmp
