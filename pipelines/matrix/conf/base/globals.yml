@@ -53,12 +53,15 @@ paths:
   # TODO: When we merge https://github.com/everycure-org/matrix/pull/122 we should move all raw data to the new location
   new_raw: ${gcs_bucket}/data/01_RAW/
 
-  integration: data/integration
-  embeddings: data/embeddings
-  modelling: data/modelling
-  
-  evaluation: data/evaluation
-  matrix_generation: data/matrix_generation
-  inference: data/inference
+  # Release-based
+  ingestion: data/ingestion
+  integration: data/releases/${release_name}/integration
+  embeddings: data/releases/release/${release_name}/embeddings
+
+  # Run-based
+  modelling: data/modelling/release/${release_name}/runs/${run_name}
+  evaluation: data/evaluation/release/${release_name}/runs/${run_name}
+  matrix_generation: data/matrix_generation/release/${release_name}runs/${run_name}
+  inference: data/inference/release/${release_name}/runs/${run_name}
 
   tmp: data/tmp
