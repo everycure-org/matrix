@@ -8,7 +8,6 @@ gcp_project: ${oc.env:GCP_PROJECT_ID}
 mlflow_artifact_root: ${gcs_bucket}/runs/${run_name}/mlflow
 
 paths:
-  # TODO Need to re-work our approach between what is a "run" and what is a "release"
   raw: ${base.paths.raw}
 
   # Release-based
