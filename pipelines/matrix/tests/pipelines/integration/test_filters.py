@@ -61,6 +61,28 @@ def sample_edges(spark):
     )
 
 
+@pytest.fixture
+def sample_nodes(spark):
+    return spark.createDataFrame(
+        [
+            (
+                "CHEBI:001",
+                ["biolink:related_to", "biolink:composed_primarily_of"],
+            ),
+            (
+                "CHEBI:002",
+                ["biolink:related_to", "biolink:related_to_at_concept_level", "biolink:broad_match"],
+            ),
+        ],
+        schema=StructType(
+            [
+                StructField("id", StringType(), False),
+                StructField("all_categories", ArrayType(StringType()), False),
+            ]
+        ),
+    )
+
+
 def test_unnest(sample_predicates):
     # Given an input dictionary of hierarchical predicate definition
 
@@ -106,6 +128,31 @@ def test_biolink_deduplicate(spark, sample_edges, sample_predicates):
                 StructField("subject", StringType(), False),
                 StructField("object", StringType(), False),
                 StructField("predicate", StringType(), False),
+            ]
+        ),
+    )
+
+    assertDataFrameEqual(result.select(*expected.columns), expected)
+
+
+def test_determine_most_specific_category(spark, sample_nodes, sample_predicates):
+    # When applying the biolink deduplicate
+    result = filters.determine_most_specific_category(sample_nodes, sample_predicates)
+    expected = spark.createDataFrame(
+        [
+            (
+                "CHEBI:001",
+                "biolink:composed_primarily_of",
+            ),
+            (
+                "CHEBI:002",
+                "biolink:broad_match",
+            ),
+        ],
+        schema=StructType(
+            [
+                StructField("id", StringType(), False),
+                StructField("category", StringType(), False),
             ]
         ),
     )

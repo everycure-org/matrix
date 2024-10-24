@@ -69,7 +69,9 @@ def determine_most_specific_category(nodes: DataFrame, biolink_categories_df: pd
 
     spark = ps.sql.SparkSession.builder.getOrCreate()
     labels_hierarchy = spark.createDataFrame(
-        unnest_biolink_hierarchy("label", biolink_categories_df, pascal_case=True, prefix="biolink:")
+        unnest_biolink_hierarchy(
+            "label", biolink_categories_df, prefix="biolink:"
+        )  # pascal_case=True really confusing!
     )
 
     nodes = (
