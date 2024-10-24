@@ -3,11 +3,28 @@ title: Customizing Matrix Generation
 ---
 <!-- NOTE: This file was partially generated using AI assistance. -->
 
-# Enriching the matrix output via parameters
+# Background
 
-Enriching the matrix output with tags, filters or statistics is really useful for our medical team as it helps one to navigate the matrix and understand the data. This guide explains how to customize the matrix generation process by modifying the `parameters.yml` file.
+The matrix generation pipeline is producing scores for drug-disease pairs coming directly from the knowledge graph. The 'raw' output is not very useful for the medical team as it contains over 60 million pairs and is hard to navigate due to non-human readable IDs and lack of metadata. Therefore, we need to make it more human-readable. 
 
-The tags, filters, and statistics sections to be appended to the final matrix output can be found within the `parameters.yml` file. The file is located at `pipelines/matrix/conf/base/matrix_generation/parameters.yml`, under `matrix_generation.matrix` section:
+The reporting node is taking top n_reporting pairs and enriching them with metadata, tags, and statistics. The enriched matrix is then being saved in the `matrix_report.csv` and contains columns such as:
+* `pair_id` - unique identifier for pairs
+* `drug_name` / `disease_name` - drug and disease names coming from the drug and disease lists
+* `kg_drug_id` / `kg_disease_id` - drug and disease ids that can be mapped to the KG
+* `score` - prediction score for specific pair
+* `tags` (e.g. `is_antimicrobial`, `is_steroid`, `is_cancer`) - various tags corresponding to specific drug or disease (used for filtering out pairs)
+* `master_filter` - conditional statement excluding specific pairsbased on several tags (e.g. `is_antimicrobial` AND `is_pathogen_caused` -> TRUE)
+* `stats` (e.g. `mean_score`, `median_score`) - various disease- or drug-specific statistics calculated for both n_reporting pairs as well as the whole matrix
+
+The `matrix_metadata.xls` file contains a few sheets:
+* `matrix_report` - contains the same data as `matrix_report.csv` file
+* `metadata` - contains run/experiment metadata such as run name, versions of data used, git sha, etc. 
+* `legend` - contains legend for all columns present in the matrix_report.csv
+* `statistics` - contains statistics for full matrix as well as top n_reporting pairs
+
+# Customizing the enrichment of the matrix
+
+This guide explains how to customize the enrichment of the matrix with tags, filters, and statistics by modifying the `parameters.yml` file. The file is located at `pipelines/matrix/conf/base/matrix_generation/parameters.yml`, under `matrix_generation.matrix` section:
 
 ```yaml
 matrix_generation.matrix:
@@ -22,7 +39,7 @@ matrix_generation.matrix:
     # ... (tag columns)
 ```
 
-Also do note that the actual tags/column names are written in a key:value format; while only key is used in the matrix output, the value is being used as a 'legend' that is appended to the metadata .csv file.
+Also do note that the actual tags/column names are written in a `key:value` format; while only key is used in the matrix output, the value is being used as a 'legend' that is appended to the metadata .csv file.
 
 ## 0. Required fields
 
