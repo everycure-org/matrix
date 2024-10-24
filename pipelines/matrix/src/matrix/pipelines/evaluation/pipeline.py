@@ -33,13 +33,13 @@ def _create_evaluation_pipeline(model: str, evaluation: str) -> Pipeline:
     )
 
 
-def create_pipeline(**kwargs) -> Pipeline:
+def create_evaluation_pipeline(**kwargs) -> Pipeline:
     """Create evaluation pipeline."""
-    pipes = []
+    pipelines = []
     models = settings.DYNAMIC_PIPELINES_MAPPING.get("modelling")
     model_names = [model["model_name"] for model in models]
     for model in model_names:
-        pipes.append(
+        pipelines.append(
             pipeline(
                 [
                     node(
@@ -57,11 +57,11 @@ def create_pipeline(**kwargs) -> Pipeline:
             )
         )
         for evaluation in settings.DYNAMIC_PIPELINES_MAPPING.get("evaluation"):
-            pipes.append(
+            pipelines.append(
                 pipeline(
                     _create_evaluation_pipeline(model, evaluation["evaluation_name"]),
                     tags=model,
                 )
             )
 
-    return sum(pipes)
+    return sum(pipelines)
