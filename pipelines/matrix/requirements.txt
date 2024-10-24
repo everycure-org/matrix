@@ -10,6 +10,7 @@ aiohttp==3.10.9
     # via
     #   aiobotocore
     #   gcsfs
+    #   langchain
     #   s3fs
 aioitertools==0.12.0
     # via aiobotocore
@@ -251,6 +252,7 @@ httptools==0.6.1
 httpx==0.27.2
     # via
     #   jupyterlab
+    #   langsmith
     #   openai
 idna==3.10
     # via
@@ -303,8 +305,12 @@ joblib==1.4.2
     #   scikit-optimize
 json5==0.9.25
     # via jupyterlab-server
+jsonpatch==1.33
+    # via langchain-core
 jsonpointer==3.0.0
-    # via jsonschema
+    # via
+    #   jsonpatch
+    #   jsonschema
 jsonschema==4.23.0
     # via
     #   jupyter-events
@@ -362,7 +368,7 @@ kedro-datasets==4.1.0
     # via
     #   -r requirements.in
     #   kedro-mlflow
-kedro-mlflow @ git+https://github.com/pascalwhoop/kedro-mlflow@e9b93fc2641603d03144d480afb256b5f4b4e278#egg=kedro-mlflow
+kedro-mlflow @ git+https://github.com/pascalwhoop/kedro-mlflow@16fb13294da1b19b7adeebeb02d413de3500b22e#egg=kedro-mlflow
     # via -r requirements.in
 kedro-telemetry==0.6.1
     # via -r requirements.in
@@ -370,6 +376,21 @@ kedro-viz==10.0.0
     # via -r requirements.in
 kiwisolver==1.4.7
     # via matplotlib
+langchain==0.3.4
+    # via -r requirements.in
+langchain-core==0.3.12
+    # via
+    #   langchain
+    #   langchain-openai
+    #   langchain-text-splitters
+langchain-openai==0.2.3
+    # via -r requirements.in
+langchain-text-splitters==0.3.0
+    # via langchain
+langsmith==0.1.137
+    # via
+    #   langchain
+    #   langchain-core
 lazy-loader==0.4
     # via kedro-datasets
 mako==1.3.5
@@ -443,6 +464,7 @@ numpy==1.23.5
     #   brix-refit
     #   contourpy
     #   graphdatascience
+    #   langchain
     #   matplotlib
     #   mlflow
     #   pandas
@@ -459,7 +481,9 @@ oauthlib==3.2.2
 omegaconf==2.3.0
     # via kedro
 openai==1.52.1
-    # via -r requirements.in
+    # via
+    #   -r requirements.in
+    #   langchain-openai
 opentelemetry-api==1.27.0
     # via
     #   mlflow-skinny
@@ -470,7 +494,9 @@ opentelemetry-sdk==1.27.0
 opentelemetry-semantic-conventions==0.48b0
     # via opentelemetry-sdk
 orjson==3.10.7
-    # via kedro-viz
+    # via
+    #   kedro-viz
+    #   langsmith
 overrides==7.7.0
     # via jupyter-server
 packaging==24.1
@@ -483,6 +509,7 @@ packaging==24.1
     #   jupyterlab
     #   jupyterlab-server
     #   kedro-viz
+    #   langchain-core
     #   lazy-loader
     #   matplotlib
     #   mlflow-skinny
@@ -576,6 +603,9 @@ pydantic==2.9.2
     #   fastapi
     #   kedro-mlflow
     #   kedro-viz
+    #   langchain
+    #   langchain-core
+    #   langsmith
     #   openai
     #   pandera
 pydantic-core==2.23.4
@@ -636,6 +666,8 @@ pyyaml==6.0.2
     #   cookiecutter
     #   jupyter-events
     #   kedro
+    #   langchain
+    #   langchain-core
     #   mlflow-skinny
     #   omegaconf
     #   pyaml
@@ -652,6 +684,8 @@ referencing==0.35.1
     #   jsonschema
     #   jsonschema-specifications
     #   jupyter-events
+regex==2024.9.11
+    # via tiktoken
 requests==2.32.3
     # via
     #   cookiecutter
@@ -665,10 +699,16 @@ requests==2.32.3
     #   hdfs
     #   jupyterlab-server
     #   kedro-telemetry
+    #   langchain
+    #   langsmith
     #   mlflow-skinny
     #   requests-oauthlib
+    #   requests-toolbelt
+    #   tiktoken
 requests-oauthlib==2.0.0
     # via google-auth-oauthlib
+requests-toolbelt==1.0.0
+    # via langsmith
 rfc3339-validator==0.1.4
     # via
     #   jsonschema
@@ -744,6 +784,7 @@ sqlalchemy==2.0.35
     # via
     #   alembic
     #   kedro-viz
+    #   langchain
     #   mlflow
 sqlparse==0.5.1
     # via mlflow-skinny
@@ -756,6 +797,8 @@ strawberry-graphql==0.246.1
 tenacity==9.0.0
     # via
     #   -r requirements.in
+    #   langchain
+    #   langchain-core
     #   plotly
 terminado==0.18.1
     # via
@@ -771,6 +814,8 @@ textdistance==4.6.3
     # via graphdatascience
 threadpoolctl==3.5.0
     # via scikit-learn
+tiktoken==0.8.0
+    # via langchain-openai
 tinycss2==1.3.0
     # via nbconvert
 toml==0.10.2
@@ -814,6 +859,7 @@ typing-extensions==4.12.2
     #   fastapi
     #   graphdatascience
     #   ipython
+    #   langchain-core
     #   openai
     #   opentelemetry-sdk
     #   pydantic
