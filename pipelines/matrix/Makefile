@@ -68,8 +68,8 @@ docker_push: docker_build
 	docker push $(dev_docker_image):${TAG}
 
 compose_up:
-	docker compose -f compose/docker-compose.yml up -d --wait
-
+	docker compose -f compose/docker-compose.yml up -d --wait --remove-orphans
+	
 compose_down:
 	bash scripts/compose_down_retry.sh
 	# docker compose -f compose/docker-compose.yml down
