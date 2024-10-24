@@ -11,14 +11,14 @@ paths:
   raw: ${base.paths.raw}
 
   # Release-based
-  ingestion: ${gcs_bucket}/kedro_data/ingestion
-  integration: ${gcs_bucket}/kedro_data/releases/${release_name}/integration
-  embeddings: ${gcs_bucket}/kedro_data/releases/release/${release_name}/embeddings
+  ingestion: ${gcs_bucket}/${base.paths.ingestion}
+  integration: ${gcs_bucket}/${base.paths.integration}
+  embeddings: ${gcs_bucket}/${base.paths.embeddings}
 
   # Run-based
-  modelling: ${gcs_bucket}/kedro_data/modelling/release/${release_name}/runs/${run_name}
-  evaluation: ${gcs_bucket}/kedro_data/evaluation/release/${release_name}/runs/${run_name}
-  matrix_generation: ${gcs_bucket}/kedro_data/matrix_generation/release/${release_name}runs/${run_name}
-  inference: ${gcs_bucket}/kedro_data/inference/release/${release_name}/runs/${run_name}
+  modelling: ${gcs_bucket}/${base.paths.modelling}
+  evaluation: ${gcs_bucket}/${base.paths.evaluation}
+  matrix_generation: ${gcs_bucket}/${base.paths.matrix_generation}
+  inference: ${gcs_bucket}/${base.paths.inference}
 
-  tmp: ${gcs_bucket}/kedro/tmp
+  tmp: ${gcs_bucket}/${base.paths.tmp}
