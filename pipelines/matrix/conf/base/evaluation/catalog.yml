@@ -11,13 +11,20 @@ _pandas_parquet: &_pandas_parquet
 
 evaluation.prm.clinical_trials_data:
   <<: *_pandas_parquet
-  filepath: ${globals:paths.prm}/clinical_trails_data
+  filepath: ${globals:paths.integration}/clinical_trails_data
 
-"evaluation.{model}.{evaluation}.model_output.pairs":
+"evaluation.{model}.{evaluation}.raw.pairs":
   <<: *_pandas_parquet
-  filepath: ${globals:paths.prm}/{model}/{evaluation}/pairs
+  filepath: ${globals:paths.raw}/{model}/{evaluation}/pairs
+
+"evaluation.{model}.{evaluation}.prm.pairs":
+  <<: *_pandas_parquet
+  filepath: ${globals:paths.evaluation}/{model}/{evaluation}/pairs
+
+"evaluation.{model}.{evaluation}.model_output.predictions":
+  <<: *_pandas_parquet
+  filepath: ${globals:paths.evaluation}/{model}/{evaluation}/pairs
 
 "evaluation.{model}.{evaluation}.reporting.evaluation":
-  filepath: ${globals:paths.reporting}/{model}/{evaluation}/result.yml
+  filepath: ${globals:paths.evaluation}/{model}/{evaluation}/result.yml
   type:  yaml.YAMLDataset
-
