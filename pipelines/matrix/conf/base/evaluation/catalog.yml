@@ -15,15 +15,15 @@ evaluation.prm.clinical_trials_data:
 
 "evaluation.{model}.{evaluation}.raw.pairs":
   <<: *_pandas_parquet
-  filepath: ${globals:paths.raw}/{model}/{evaluation}/pairs
+  filepath: ${globals:paths.evaluation}/{model}/{evaluation}/pairs/raw
 
 "evaluation.{model}.{evaluation}.prm.pairs":
   <<: *_pandas_parquet
-  filepath: ${globals:paths.evaluation}/{model}/{evaluation}/pairs
+  filepath: ${globals:paths.evaluation}/{model}/{evaluation}/pairs/prm
 
 "evaluation.{model}.{evaluation}.model_output.predictions":
   <<: *_pandas_parquet
-  filepath: ${globals:paths.evaluation}/{model}/{evaluation}/pairs
+  filepath: ${globals:paths.evaluation}/{model}/{evaluation}/pairs/predictions
 
 "evaluation.{model}.{evaluation}.reporting.evaluation":
   filepath: ${globals:paths.evaluation}/{model}/{evaluation}/result.yml
