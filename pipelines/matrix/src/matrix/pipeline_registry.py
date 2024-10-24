@@ -36,6 +36,10 @@ def register_pipelines() -> Dict[str, Pipeline]:
         + create_release_pipeline()
     )
 
+    pipelines["test_release"] = create_fabricator_pipeline() + create_ingestion_pipeline() + pipelines["release"]
+    pipelines["test_modelling"] = pipelines["modelling"] + create_release_pipeline()
+    pipelines["test"] = pipelines["test_release"] + pipelines["test_modelling"]
+
     # Ran manually based on input from medical to release new artifacts from clinical trails and medical KG
     pipelines["preprocessing"] = create_preprocessing_pipeline()
 
