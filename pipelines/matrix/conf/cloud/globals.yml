@@ -9,17 +9,17 @@ mlflow_artifact_root: ${gcs_bucket}/runs/${run_name}/mlflow
 
 paths:
   # TODO Need to re-work our approach between what is a "run" and what is a "release"
-  raw: ${source_gcs_bucket}/kedro/data/01_raw
+  raw: ${base.paths.raw}
 
   # Release-based
-  ingestion: ${gcs_bucket}/kedro/ingestion
-  integration: ${gcs_bucket}/kedro/releases/${release_name}/integration
-  embeddings: ${gcs_bucket}/kedro/releases/release/${release_name}/embeddings
+  ingestion: ${gcs_bucket}/kedro_data/ingestion
+  integration: ${gcs_bucket}/kedro_data/releases/${release_name}/integration
+  embeddings: ${gcs_bucket}/kedro_data/releases/release/${release_name}/embeddings
 
   # Run-based
-  modelling: ${gcs_bucket}/kedro/modelling/release/${release_name}/runs/${run_name}
-  evaluation: ${gcs_bucket}/kedro/evaluation/release/${release_name}/runs/${run_name}
-  matrix_generation: ${gcs_bucket}/kedro/matrix_generation/release/${release_name}runs/${run_name}
-  inference: ${gcs_bucket}/kedro/inference/release/${release_name}/runs/${run_name}
+  modelling: ${gcs_bucket}/kedro_data/modelling/release/${release_name}/runs/${run_name}
+  evaluation: ${gcs_bucket}/kedro_data/evaluation/release/${release_name}/runs/${run_name}
+  matrix_generation: ${gcs_bucket}/kedro_data/matrix_generation/release/${release_name}runs/${run_name}
+  inference: ${gcs_bucket}/kedro_data/inference/release/${release_name}/runs/${run_name}
 
   tmp: ${gcs_bucket}/kedro/tmp
