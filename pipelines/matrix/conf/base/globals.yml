@@ -42,6 +42,10 @@ data_sources:
     version: 192198441 
   ec-disease-list:
     version: latest # TODO: We should version
+  drugmechdb:
+    version: 24-oct-24
+  input_pairs:
+    version: 24-oct-24
 
 # NOTE: MLflow does not like "new options" in the mlflow.yml
 # due to schema validation. Will make PR.
