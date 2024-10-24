@@ -453,7 +453,9 @@ def clean_input_sheet(input_df: pd.DataFrame, endpoint: str) -> pd.DataFrame:
 
 # FUTURE: Remove the functions once we have tags embedded in the disease list
 def generate_tag(disease_list: List, model_params: Dict, definitions: str = None, synonyms: str = None) -> List:
-    """Generates tags based on provided prompts and params through OpenAI API call.
+    """Temporary function to generate tags based on provided prompts and params through OpenAI API call.
+
+    This function is temporary and will be removed once we have tags embedded in the disease list.
 
     Args:
         disease_list: list- list of disease for which tags should be generated.
@@ -495,7 +497,9 @@ def generate_tag(disease_list: List, model_params: Dict, definitions: str = None
 
 
 def enrich_disease_list(disease_list: List, params: Dict) -> pd.DataFrame:
-    """Node enriching existing disease list with llm-generated tags.
+    """Temporary function to enrich existing disease list with llm-generated tags.
+
+    This function  will be removed once we have tags embedded in the disease list.
 
     Args:
         disease_list: pd.DataFrame - merged disease_list with disease names column that will be used for tag generation
