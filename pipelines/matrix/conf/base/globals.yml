@@ -53,9 +53,9 @@ paths:
   raw:                ${source_gcs_bucket}/kedro/data/01_raw
   # TODO: When we merge https://github.com/everycure-org/matrix/pull/122 we should move all raw data to the new location
   kg_raw:             ${gcs_bucket}/data/01_RAW/
+  ingestion:          data/ingestion
 
   # Release-based
-  ingestion:          data/ingestion
   integration:        data/releases/${versions.release}/datasets/integration
   embeddings:         data/releases/${versions.release}/datasets/embeddings
 
