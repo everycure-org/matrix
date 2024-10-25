@@ -13,13 +13,12 @@ from kedro.config import OmegaConfigLoader  # noqa: E402
 # For example, after creating a hooks.py and defining a ProjectHooks class there, do
 # from pandas_viz.hooks import ProjectHooks
 import matrix.hooks as hooks
-from kedro_mlflow.framework.hooks import MlflowHook
 
 # Hooks are executed in a Last-In-First-Out (LIFO) order.
 HOOKS = (
     hooks.NodeTimerHooks(),
-    MlflowHook(),
-    hooks.MLFlowHooks(),
+    # MlflowHook(),
+    # hooks.MLFlowHooks(),
     hooks.SparkHooks(),
 )
 

@@ -82,6 +82,10 @@ int.edges_index:
       CALL apoc.create.relationship(subject, "is_treats", {}, object) YIELD rel
       RETURN rel
 
+output_df:
+  <<: *_spark_parquet
+  filepath: out/paths
+
 # int.all_paths:
 #   <<: *_neo4j_ds
 #   load_args: 
