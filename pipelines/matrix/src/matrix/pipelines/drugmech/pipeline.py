@@ -2,10 +2,11 @@
 
 from kedro.pipeline import Pipeline, node, pipeline
 from pyspark.sql import DataFrame, SparkSession
+from pyspark.sql import functions as F
 
 
 def parse_gt(gt: DataFrame) -> DataFrame:
-    return gt.withColumnRenamed("source", "drug_id").withColumnRenamed("target", "disease_id").limit(100)
+    return gt.withColumnRenamed("source", "drug_id").withColumnRenamed("target", "disease_id").limit(1000)
 
 
 def apply_join(tps: DataFrame):
@@ -22,32 +23,27 @@ def apply_join(tps: DataFrame):
             "query",
             """
             MATCH (source:is_drug), (source:is_drug)-[:is_treats]->(target:is_disease)
-            WITH id(source) as sourceId, collect(id(target)) as targets
-            CALL apoc.path.expandConfig(sourceId, {
-                terminatorNodes: targets,
-                relationshipFilter: '>',
-                labelFilter: '-Drug-SmallMolecule/is_disease',
-                minLevel: 2,
-                maxLevel: 3,
-                uniqueness: 'NODE_PATH'
+            WITH id(source) as sourceId, id(target) as targetId
+                CALL gds.shortestPath.yens.stream("trav", {
+                sourceNode: sourceId,
+                targetNode: targetId,
+                k: 5
             })
             YIELD path
             WITH [n IN nodes(path) | n.id] as p
             RETURN p
-            """,
+           """,
         )
         .option("partitions", 4)
     ).load()
+
+    all_pairs.withColumn("path_len", F.size("p")).orderBy(F.col("path_len").desc()).show(truncate=False)
 
     # result = (
     #     tps
     #     .join(all_pairs, on=["drug_id", "disease_id"], how="left")
     #     .filter(F.col("path").isNotNull())
     # )
-
-    # all_pairs.show()
-    # print(all_pairs.show(truncate=False))
-    print(all_pairs.count())
 
     return all_pairs
 
