@@ -9,7 +9,7 @@ TARGET_PLATFORM ?= linux/amd64
 .ONESHELL: 
 
 
-default: install precommit fast_test compose_down compose_up kedro_test
+default: install precommit fast_test compose_down integration_test
 	echo "done!"
 
 prerequisites:
@@ -53,10 +53,6 @@ fast_test:
 
 format:
 	.venv/bin/ruff check . --fix
-
-# check if the pipeline is correctly working locally
-kedro_test: compose_down compose_up
-	.venv/bin/kedro run -p test -e test --runner ThreadRunner
 
 # executes E2E integration test fully in docker. 
 docker_test: docker_build

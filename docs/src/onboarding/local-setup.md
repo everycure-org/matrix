@@ -22,9 +22,10 @@ This command executes a number of make targets, namely:
 - lint the codebase
 - test the codebase
 - build the docker image
-- run the docker image
+- set up containers for local execution
+- run integration tests
 
-Generally, the `Makefile` is a good place to start to get a sense of how our codebase is structured. 
+Generally, the `Makefile` is a good place to start to get a sense of how our codebase is structured. Once the command runs successfully, you should be able to run the pipeline end-to-end locally (remember to activate your virtual environment first)!
 
 <div style="position: relative; width: 100%; height: 0; padding-bottom: 56.25%;"><iframe src="https://us06web.zoom.us/clips/embed/ghxELqxMExaMh96j_58dMq8UnXaXEcEtSTRVxXf7zXNd5l4OSgdvC5xwANUE1ydp7afd-M42UkQNe_eUJQkCrXIZ.SAPUAWjHFb-sh7Pj" frameborder="0" allowfullscreen="allowfullscreen" style="position: absolute; width: 100%; height: 100%; top: 0; left: 0; "></iframe></div>
 
@@ -39,13 +40,13 @@ Generally, the `Makefile` is a good place to start to get a sense of how our cod
     Make precommit # installs and runs pre-commit hooks
     Make fast_test # tests the codebase 
     Make compose_down # ensures that there is no docker-compose down running 
-    Make kedro_test # executes an local kedro pipeline run in a test environment
+    Make integration_test # executes an local kedro pipeline run in a test environment
     ```
     We encourage you to examine the `Makefile` to get a sense of how the codebase is structured - note that not all commands are part of the default make command. Some useful command which are not part of the default make command are:
     - `Make full_test` which executes all unit tests within the codebase
     - `Make clean` which cleans various cache locations - useful when you're running into cache related issues or when you want to start fresh
     - `Make wipe_neo` which wipes the neo4j database - useful for development purposes
-    - `Make integration_test` which executes e2e integration tests by running the pipeline in a docker container - useful for debugging CI issues 
+    - `Make docker_test` which executes e2e integration tests by running the pipeline in a docker container - useful for debugging CI issues 
     - `Make format` which formats the codebase using `ruff`
     - `Make fabricate` which runs the fabricator pipeline
 
