@@ -15,13 +15,13 @@ openai:
 gcs_bucket: gs://${oc.env:GCP_BUCKET, mtrx-us-central1-hub-dev-storage}
 source_gcs_bucket: ${gcs_bucket}
 gcp_project: ${oc.env:GCP_PROJECT_ID, mtrx-hub-dev-3of}
-git_sha: ${oc.env:GIT_SHA, local-sha}
+git_sha: ${oc.env:GIT_SHA, default-sha}
 gh_token: ${oc.env:GH_TOKEN, dummy}
 
-run_name: ${oc.env:RUN_NAME, local-run}
+run_name: ${oc.env:RUN_NAME, default-run-name}
 versions:
   # overwritten in prod environment for shared releases
-  release: ${oc.env:RELEASE_VERSION, local-release}
+  release: ${oc.env:RELEASE_VERSION, default-release-name}
 data_sources:
   rtx-kg2:
     version: v2.7.3
