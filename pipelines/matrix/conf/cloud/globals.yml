@@ -8,11 +8,10 @@ gcp_project: ${oc.env:GCP_PROJECT_ID}
 mlflow_artifact_root: ${gcs_bucket}/runs/${run_name}/mlflow
 
 paths:
-  raw:                ${base.paths.raw}
+  raw:                gs://mtrx-us-central1-hub-dev-storage/kedro/data/01_raw
+  ingestion:          ${gcs_bucket}/kedro/data/ingestion
 
   # Release-based
-  ingestion:          ${gcs_bucket}/kedro/${base.paths.ingestion}
-
   integration:        ${gcs_bucket}/kedro/data/releases/${versions.release}/datasets/integration
   embeddings:         ${gcs_bucket}/kedro/data/releases/${versions.release}/datasets/embeddings
 
@@ -22,4 +21,4 @@ paths:
   matrix_generation:  ${gcs_bucket}/kedro/data/releases/${versions.release}/runs/${run_name}/datasets/matrix_generation
   inference:          ${gcs_bucket}/kedro/data/releases/${versions.release}/runs/${run_name}/datasets/inference
 
-  tmp:                ${gcs_bucket}/kedro/${base.paths.tmp}
+  tmp:                ${gcs_bucket}/kedro/data/tmp
