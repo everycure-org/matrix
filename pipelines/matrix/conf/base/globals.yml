@@ -20,8 +20,8 @@ gh_token: ${oc.env:GH_TOKEN, dummy}
 
 run_name: ${oc.env:RUN_NAME, default-run-name}
 versions:
-  # overwritten in prod environment for shared releases
-  release: ${oc.env:RELEASE_VERSION, default-release-name}
+  release: 20241025
+
 data_sources:
   rtx-kg2:
     version: v2.10.0
