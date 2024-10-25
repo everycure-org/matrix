@@ -30,6 +30,7 @@ Generally, the `Makefile` is a good place to start to get a sense of how our cod
 
 ??? note "Understanding and troubleshooting your `make` run"
    
+   ### Understanding the `make` command
     As mentioned in the video, our pipeline is evolving quickly. Running `make` is a simple and quick way to check if everything works locally as it is composed of several different stages which get executed one after another. When `make` gets executed, what is happening under the hood is that the following seven 'make' "subcommands" get executed:
     ```
     Make prerequisites # checks if all prerequisites are set up correctly
@@ -38,17 +39,15 @@ Generally, the `Makefile` is a good place to start to get a sense of how our cod
     Make precommit # installs and runs pre-commit hooks
     Make fast_test # tests the codebase 
     Make compose_down # ensures that there is no docker-compose down running 
-    Make docker_test # executes an integration test, which sets up a docker-compose and kicks off a local CI pipeline
+    Make kedro_test # executes an local kedro pipeline run in a test environment
     ```
-    The Makefile is composed of many other useful commands which might also help you use the codebase with ease. One of such commands is `Make clean` which will clean various cache locations.
-    
-    If you are getting any errors during your default `make` run, first step could be to run `Make clean` and re-run the default Makefile to see whether this could be a cache-related error. If the error persists, a quick way to find the cause of the error is to execute the mentioned `make` subcommands one after another to locate where the error is happening. For instance: if you can run all make commands except docker_test, then it means that there is only an issue with the integration test, and remaining stages of setup work well.
-
-    Note that the most 'complex' step is to run `Make docker_test` as this command executes the entire pipeline in a test environment, with its MLFlow and Neo4j dependencies, within a separate docker container. Therefore, if you get errors when running `Make docker_test`, a good sanity check is to try running the following command to see whether you can execute the pipeline locally (i.e. not in the container:
-    ```
-    kedro run -e test -p test --runner ThreadRunner 
-    ```
-    Note that for this command to work, you need to have your docker-daemon running (can be done by running `Make compose_up` or by turning it on via Docker Desktop). If you can successfully execute the pipeline through that command, then the issue is likely due to docker setup/docker container and might be due to specific OS environments - you can check for potential solutions in `common_errors.md`.
+    We encourage you to examine the `Makefile` to get a sense of how the codebase is structured - note that not all commands are part of the default make command. Some useful command which are not part of the default make command are:
+    - `Make full_test` which executes all unit tests within the codebase
+    - `Make clean` which cleans various cache locations - useful when you're running into cache related issues or when you want to start fresh
+    - `Make wipe_neo` which wipes the neo4j database - useful for development purposes
+    - `Make integration_test` which executes e2e integration tests by running the pipeline in a docker container - useful for debugging CI issues 
+    - `Make format` which formats the codebase using `ruff`
+    - `Make fabricate` which runs the fabricator pipeline
 
 
 ### Docker compose for local execution
