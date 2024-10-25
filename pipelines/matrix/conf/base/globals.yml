@@ -56,13 +56,13 @@ paths:
 
   # Release-based
   ingestion: kedro_data/ingestion
-  integration: kedro_data/releases/${release_name}/integration
-  embeddings: kedro_data/releases/release/${release_name}/embeddings
+  integration: kedro_data/releases/${versions.release}/integration
+  embeddings: kedro_data/releases/release/${versions.release}/embeddings
 
   # Run-based
-  modelling: kedro_data/modelling/release/${release_name}/runs/${run_name}
-  evaluation: kedro_data/evaluation/release/${release_name}/runs/${run_name}
-  matrix_generation: kedro_data/matrix_generation/release/${release_name}runs/${run_name}
-  inference: kedro_data/inference/release/${release_name}/runs/${run_name}
+  modelling: kedro_data/modelling/release/${versions.release}/runs/${run_name}
+  evaluation: kedro_data/evaluation/release/${versions.release}/runs/${run_name}
+  matrix_generation: kedro_data/matrix_generation/release/${versions.release}runs/${run_name}
+  inference: kedro_data/inference/release/${versions.release}/runs/${run_name}
 
   tmp: kedro_data/tmp
