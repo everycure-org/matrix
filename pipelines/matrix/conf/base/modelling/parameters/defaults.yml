@@ -24,7 +24,9 @@ modelling.splitter:
 _model_options:
 
   ensemble:
-    _agg_func: numpy.mean  # Default to mean aggregation
+      agg_func: 
+        object: numpy.median
+
   # Defines strategy for generating drug-disease pairs. Should be a
   # class that implements the DrugDiseasePair generator interface.
   generator:

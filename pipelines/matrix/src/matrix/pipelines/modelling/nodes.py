@@ -323,16 +323,18 @@ def train_model(
     return estimator.fit(X_train.values, y_train.values)
 
 
-@inject_object
-def create_model(*estimators, _agg_func) -> ModelWrapper:
+@inject_object()
+def create_model(**kwargs):
     """Function to create final model.
 
     Args:
-        estimators: list of fitted estimators
+        **kwargs: Dictionary containing estimators and agg_func
     Returns:
         ModelWrapper encapsulating estimators
     """
-    return ModelWrapper(estimators=estimators, agg_func=_agg_func)
+    estimators = [v for k, v in kwargs.items() if k.startswith("estimator_")]
+    agg_func = kwargs["agg_func"]
+    return ModelWrapper(estimators=estimators, agg_func=agg_func)
 
 
 @inject_object()
