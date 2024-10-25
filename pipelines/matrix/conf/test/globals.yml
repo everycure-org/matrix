@@ -9,9 +9,9 @@ openai:
 paths:
   raw:                data/test/raw
   kg_raw:             data/test/raw
+  ingestion:          data/test/ingestion
 
   # Release-based
-  ingestion:          data/test/ingestion
   integration:        data/test/releases/${versions.release}/datasets/integration
   embeddings:         data/test/releases/${versions.release}/datasets/embeddings
 
