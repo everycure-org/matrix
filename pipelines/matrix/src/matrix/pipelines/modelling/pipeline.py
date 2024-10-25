@@ -86,7 +86,13 @@ def _create_model_pipeline(model: str, num_shards: int) -> Pipeline:
                 [
                     node(
                         func=nodes.create_model,
-                        inputs=[f"modelling.{model}.{shard}.models.model" for shard in range(num_shards)],
+                        inputs={
+                            **{
+                                f"estimator_{shard}": f"modelling.{model}.{shard}.models.model"
+                                for shard in range(num_shards)
+                            },
+                            "agg_func": f"params:modelling.{model}.model_options.ensemble.agg_func",
+                        },
                         outputs=f"modelling.{model}.models.model",
                         name=f"create_{model}_model",
                         tags=model,
