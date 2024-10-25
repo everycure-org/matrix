@@ -33,6 +33,7 @@ install: venv
 	uv pip compile requirements.in --output-file requirements.txt; \
 	uv pip install -r requirements.txt)
 
+
 precommit: precommit-hooks
 	git fetch origin
 	.venv/bin/pre-commit run -s origin/main -o HEAD
@@ -64,7 +65,7 @@ docker_test: docker_build
 		--exit-code-from matrix-pipeline
 
 docker_build:
-	docker buildx build --progress=plain --build-arg GIT_SHA=${GIT_SHA} --platform $(TARGET_PLATFORM) -t $(dev_docker_image) ./
+	docker buildx build --progress=plain --build-arg GIT_SHA=${GIT_SHA} --platform $(TARGET_PLATFORM) -t $(dev_docker_image) --load ./
 	docker tag $(dev_docker_image) $(dev_docker_image):${TAG}
 
 docker_push: docker_build
@@ -72,7 +73,7 @@ docker_push: docker_build
 
 compose_up:
 	docker compose -f compose/docker-compose.yml up -d --wait --remove-orphans
-
+	
 compose_down:
 	bash scripts/compose_down_retry.sh
 	# docker compose -f compose/docker-compose.yml down
