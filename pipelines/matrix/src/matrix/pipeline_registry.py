@@ -24,19 +24,11 @@ def register_pipelines() -> Dict[str, Pipeline]:
     """
     pipelines = {}
 
-    pipelines["release"] = create_integration_pipeline() + create_embeddings_pipeline()
+    pipelines["kg_release"] = create_integration_pipeline() + create_embeddings_pipeline()
     pipelines["modelling"] = create_modelling_pipeline() + create_matrix_pipeline() + create_evaluation_pipeline()
-    pipelines["__default__"] = pipelines["release"] + pipelines["modelling"]
+    pipelines["__default__"] = pipelines["kg_release"] + pipelines["modelling"]
 
-    pipelines["test"] = (
-        create_fabricator_pipeline()
-        + create_ingestion_pipeline()
-        + pipelines["release"]
-        + pipelines["modelling"]
-        + create_release_pipeline()
-    )
-
-    pipelines["test_release"] = create_fabricator_pipeline() + create_ingestion_pipeline() + pipelines["release"]
+    pipelines["test_release"] = create_fabricator_pipeline() + create_ingestion_pipeline() + pipelines["kg_release"]
     pipelines["test_modelling"] = pipelines["modelling"] + create_release_pipeline()
     pipelines["test"] = pipelines["test_release"] + pipelines["test_modelling"]
 
