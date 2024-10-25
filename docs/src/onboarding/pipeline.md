@@ -105,7 +105,7 @@ There are several types of metrics computed in this pipeline, organised into thr
 2. **Disease-specific ranking metrics**: These metrics focus on how well the model ranks drugs for a specific disease.
 3. **Ground truth classification metrics**: These metrics focus on the model's ability to distinguish between known positive and known negative drug-disease pairs.
 
-More details on the metrics computed in each category can be found in the [evaluation deep-dive](/data_science/evaluation_deep_dive.md)
+More details on the metrics computed in each category can be found in the [evaluation deep-dive](../data_science/evaluation_deep_dive.md)
 
 
 

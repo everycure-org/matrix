@@ -8,14 +8,17 @@ gcp_project: ${oc.env:GCP_PROJECT_ID}
 mlflow_artifact_root: ${gcs_bucket}/runs/${run_name}/mlflow
 
 paths:
-  # hard coded against our central data location for raw
+  raw: ${base.paths.raw}
 
-  # TODO Need to re-work our approach between what is a "run" and what is a "release"
-  raw: gs://mtrx-us-central1-hub-dev-storage/kedro/data/01_raw
-  int: ${gcs_bucket}/runs/${run_name}/02_intermediate
-  prm: ${gcs_bucket}/runs/${run_name}/03_primary
-  feat: ${gcs_bucket}/runs/${run_name}/04_feature
-  model_input: ${gcs_bucket}/runs/${run_name}/05_model_input
-  models: ${gcs_bucket}/runs/${run_name}/06_models
-  model_output: ${gcs_bucket}/runs/${run_name}/07_model_output
-  reporting: ${gcs_bucket}/runs/${run_name}/08_reporting
+  # Release-based
+  ingestion: ${gcs_bucket}/kedro/${base.paths.ingestion}
+  integration: ${gcs_bucket}/kedro/${base.paths.integration}
+  embeddings: ${gcs_bucket}/kedro/${base.paths.embeddings}
+
+  # Run-based
+  modelling: ${gcs_bucket}/kedro/${base.paths.modelling}
+  evaluation: ${gcs_bucket}/kedro/${base.paths.evaluation}
+  matrix_generation: ${gcs_bucket}/kedro/${base.paths.matrix_generation}
+  inference: ${gcs_bucket}/kedro/${base.paths.inference}
+
+  tmp: ${gcs_bucket}/kedro/${base.paths.tmp}

@@ -128,7 +128,7 @@ def _create_model_pipeline(model: str, num_shards: int) -> Pipeline:
     )
 
 
-def create_pipeline(**kwargs) -> Pipeline:
+def create_modelling_pipeline(**kwargs) -> Pipeline:
     """Create modelling pipeline."""
     create_model_input = pipeline(
         [
@@ -177,13 +177,13 @@ def create_pipeline(**kwargs) -> Pipeline:
         tags=[model["model_name"] for model in settings.DYNAMIC_PIPELINES_MAPPING.get("modelling")],
     )
 
-    pipes = []
+    pipelines = []
     for model in settings.DYNAMIC_PIPELINES_MAPPING.get("modelling"):
-        pipes.append(
+        pipelines.append(
             pipeline(
                 _create_model_pipeline(model=model["model_name"], num_shards=model["num_shards"]),
                 tags=[model["model_name"], "not-shared"],
             )
         )
 
-    return sum([create_model_input, *pipes])
+    return sum([create_model_input, *pipelines])
