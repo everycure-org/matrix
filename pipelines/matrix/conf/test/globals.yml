@@ -7,5 +7,18 @@ openai:
   api_key: dummy
 
 paths:
-  raw: data/raw
-  new_raw: data/raw
+  raw: data/test/raw
+  new_raw: data/test/raw
+
+  # Release-based
+  ingestion: data/test/ingestion
+  integration: data/test/releases/${versions.release}/datasets/integration
+  embeddings: data/test/releases/${versions.release}/datasets/embeddings
+
+  # Run-based
+  modelling: data/test/releases/${versions.release}/runs/${run_name}/datasets/modelling
+  evaluation: data/test/releases/${versions.release}/runs/${run_name}/datasets/evaluation
+  matrix_generation: data/test/releases/${versions.release}/runs/${run_name}/datasets/matrix_generation
+  inference: data/test/releases/${versions.release}/runs/${run_name}/datasets/inference
+
+  tmp: data/test/tmp
