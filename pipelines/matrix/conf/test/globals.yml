@@ -7,5 +7,5 @@ openai:
   api_key: dummy
 
 paths:
-  raw: kedro_data/raw
-  new_raw: kedro_data/raw
+  raw: data/raw
+  new_raw: data/raw
