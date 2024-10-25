@@ -50,19 +50,19 @@ mlflow_artifact_root: null
 
 paths:
   # we read from our central GCS bucket where we store our ground truth data
-  raw: ${source_gcs_bucket}/kedro/data/01_raw
+  raw:                ${source_gcs_bucket}/kedro/data/01_raw
   # TODO: When we merge https://github.com/everycure-org/matrix/pull/122 we should move all raw data to the new location
-  kg_raw: ${gcs_bucket}/data/01_RAW/
+  kg_raw:             ${gcs_bucket}/data/01_RAW/
 
   # Release-based
-  ingestion: data/ingestion
-  integration: data/releases/${versions.release}/datasets/integration
-  embeddings: data/releases/${versions.release}/datasets/embeddings
+  ingestion:          data/ingestion
+  integration:        data/releases/${versions.release}/datasets/integration
+  embeddings:         data/releases/${versions.release}/datasets/embeddings
 
   # Run-based
-  modelling: data/releases/${versions.release}/runs/${run_name}/datasets/modelling
-  evaluation: data/releases/${versions.release}/runs/${run_name}/datasets/evaluation
-  matrix_generation: data/releases/${versions.release}/runs/${run_name}/datasets/matrix_generation
-  inference: data/releases/${versions.release}/runs/${run_name}/datasets/inference
+  modelling:          data/releases/${versions.release}/runs/${run_name}/datasets/modelling
+  evaluation:         data/releases/${versions.release}/runs/${run_name}/datasets/evaluation
+  matrix_generation:  data/releases/${versions.release}/runs/${run_name}/datasets/matrix_generation
+  inference:          data/releases/${versions.release}/runs/${run_name}/datasets/inference
 
-  tmp: data/tmp
+  tmp:                data/tmp
