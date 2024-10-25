@@ -495,7 +495,7 @@ def generate_predictions_reports(
         predictions_df = predictions.df
         N_paths = len(predictions_df)
         if N_paths == 0:
-            reports[pair_name] = {
+            reports[pair_name + "_MOA_predictions.xlsx"] = {
                 "MOA predictions": pd.DataFrame({"NO PATHS": ["No paths found between the given drug and disease"]})
             }
             continue
