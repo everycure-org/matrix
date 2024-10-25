@@ -1,4 +1,6 @@
 run_name: ${oc.env:RUN_NAME}
+versions:
+  release: ${oc.env:RELEASE_VERSION}
 
 gcs_bucket: gs://${oc.env:GCP_BUCKET}
 gcp_project: ${oc.env:GCP_PROJECT_ID}
