@@ -55,14 +55,14 @@ paths:
   new_raw: ${gcs_bucket}/data/01_RAW/
 
   # Release-based
-  ingestion: kedro_data/ingestion
-  integration: kedro_data/releases/${versions.release}/integration
-  embeddings: kedro_data/releases/release/${versions.release}/embeddings
+  ingestion: data/ingestion
+  integration: data/releases/${versions.release}/integration
+  embeddings: data/releases/release/${versions.release}/embeddings
 
   # Run-based
-  modelling: kedro_data/modelling/release/${versions.release}/runs/${run_name}
-  evaluation: kedro_data/evaluation/release/${versions.release}/runs/${run_name}
-  matrix_generation: kedro_data/matrix_generation/release/${versions.release}runs/${run_name}
-  inference: kedro_data/inference/release/${versions.release}/runs/${run_name}
+  modelling: data/modelling/release/${versions.release}/runs/${run_name}
+  evaluation: data/evaluation/release/${versions.release}/runs/${run_name}
+  matrix_generation: data/matrix_generation/release/${versions.release}runs/${run_name}
+  inference: data/inference/release/${versions.release}/runs/${run_name}
 
-  tmp: kedro_data/tmp
+  tmp: data/tmp
