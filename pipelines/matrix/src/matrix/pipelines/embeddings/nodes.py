@@ -337,8 +337,7 @@ def train_topological_embeddings(
     # Initialize and train the model
     # Drop model if exists
     model_name = estimator.get("modelName")
-    if gds.model.exists(model_name).any():
-        print("hehe")
+    if gds.model.exists(model_name).exists:
         model = gds.model.get(model_name)
         gds.model.drop(model)
 
