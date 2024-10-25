@@ -1,7 +1,11 @@
-run_name: test_run
+run_name: test-run
 versions:
-  release: test_release
+  release: test-release
 
 openai:
   endpoint: ${oc.env:OPENAI_ENDPOINT, http://localhost:1080/v1}
   api_key: dummy
+
+paths:
+  raw: kedro_data/raw
+  new_raw: kedro_data/raw
