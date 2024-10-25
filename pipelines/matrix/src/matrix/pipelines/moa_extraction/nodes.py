@@ -2,6 +2,8 @@
 
 import pandas as pd
 import numpy as np
+import json
+
 from tqdm import tqdm
 from typing import List, Tuple, Dict, Any
 from sklearn.model_selection import BaseCrossValidator
@@ -421,7 +423,7 @@ def compute_evaluation_metrics(
         report[f"Hit@{k}"] = hit_at_k
     report["MRR"] = (1 / rank_arr).mean()
 
-    return report
+    return json.loads(json.dumps(report, default=float))
 
 
 @inject_object()
@@ -493,7 +495,7 @@ def generate_predictions_reports(
         predictions_df = predictions.df
         N_paths = len(predictions_df)
         if N_paths == 0:
-            reports[pair_name] = {
+            reports[pair_name+"_MOA_Predictions.xlsx"] = {
                 "MOA predictions": pd.DataFrame({"NO PATHS": ["No paths found between the given drug and disease"]})
             }
             continue
@@ -524,6 +526,6 @@ def generate_predictions_reports(
 
         # Add the pair information and MOA predictions to a multiframe to be exported as Excel
         pair_info["Number of displayed paths"] = [len(predictions_df)]
-        reports[pair_name] = {"MOA predictions": predictions_df, "Pair information": pair_info}
+        reports[pair_name+"_MOA_Predictions.xlsx"] = {"MOA predictions": predictions_df, "Pair information": pair_info}
 
     return reports
