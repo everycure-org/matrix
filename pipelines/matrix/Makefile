@@ -28,15 +28,18 @@ venv: prerequisites
 install: venv
 	# deactivate any potentially active venv that may be somewhere else
 	deactivate || true
-	uv pip compile requirements.in --output-file requirements.txt
-	uv pip install -r requirements.txt
+	# activate freshly created venv
+	(source .venv/bin/activate; \
+	uv pip compile requirements.in --output-file requirements.txt; \
+	uv pip install -r requirements.txt)
 
 precommit: precommit-hooks
 	git fetch origin
 	.venv/bin/pre-commit run -s origin/main -o HEAD
 
 precommit-hooks:
-	uv pip install pre-commit
+	(source .venv/bin/activate; \
+	uv pip install pre-commit)
 	.venv/bin/pre-commit install --install-hooks
 
 full_test:
