@@ -414,7 +414,8 @@ matrix      | 24/09/21 04:47:03 WARN WindowExec: No Partition Defined for Window
 matrix      | 24/09/21 04:47:04 WARN WindowExec: No Partition Defined for Window operation! Moving all data to a single partition, this can cause serious performance degradation.
 ```
 You dont need to worry about this warning as this is an expected behavior for our implementation of `LazySparkDataset` in Kedro, allowing us for parallelized computation of embeddings. In the future, we might refactor the code so that the error is not appearing.
-
+### "Environment variable 'OPENAI_API_KEY' not found or default value None is None"
+This error is likely due to having no OPENAI_API_KEY environment variable set up. First, ensure that you have copied the contents of `.env.tmpl `file into `.env` file. This should allow kedro to read environmental variables set up in .env  Note that if you need the actual OPENAI_API_KEY, you will need to reach out to our team
 ### Quota project error
 ```
 WARNING: Your active project does not match the quota project in your local Application Default Credentials file. This might result in unexpected quota issues.
