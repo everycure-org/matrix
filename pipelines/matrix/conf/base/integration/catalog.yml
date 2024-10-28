@@ -35,10 +35,9 @@ integration.raw.biolink.categories:
   filepath: https://biolink.github.io/biolink-model/categories.json
 
 integration.raw.curie_to_pmids@spark:
-  type: spark.SparkJDBCDataset
+  type: matrix.datasets.gcp.RemoteSparkJDBCDataset
   table: curie_to_pmids
-  url: jdbc:sqlite:/Users/laurens/Documents/projects/matrix/pipelines/matrix/data/01_raw/data_01_RAW_KGs_rtx_kg2_v2.10.0_curie_to_pmids_v1.0_KG2.10.0.sqlite
-  # url: jdbc:sqlite:gs://mtrx-us-central1-hub-dev-storage/data/01_RAW/KGs/rtx_kg2/v2.10.0/curie_to_pmids_v1.0_KG2.10.0.sqlite
+  url: jdbc:sqlite:gs://mtrx-us-central1-hub-dev-storage/data/01_RAW/KGs/rtx_kg2/${globals:data_sources.rtx-kg2.version}/curie_to_pmids.sqlite
   load_args:
     properties:
       driver: org.sqlite.JDBC
