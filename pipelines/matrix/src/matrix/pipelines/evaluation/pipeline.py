@@ -16,13 +16,13 @@ def _create_evaluation_pipeline(model: str, evaluation: str) -> Pipeline:
                     f"matrix_generation.{model}.model_output.sorted_matrix_predictions",
                     f"params:evaluation.{evaluation}.evaluation_options.generator",
                 ],
-                outputs=f"evaluation.{model}.{evaluation}.pairs.model_output",
+                outputs=f"evaluation.{model}.{evaluation}.model_output.pairs",
                 name=f"create_{model}_{evaluation}_evaluation_pairs",
             ),
             node(
                 func=nodes.evaluate_test_predictions,
                 inputs=[
-                    f"evaluation.{model}.{evaluation}.pairs.model_output",
+                    f"evaluation.{model}.{evaluation}.model_output.pairs",
                     f"params:evaluation.{evaluation}.evaluation_options.evaluation",
                 ],
                 outputs=f"evaluation.{model}.{evaluation}.result",
