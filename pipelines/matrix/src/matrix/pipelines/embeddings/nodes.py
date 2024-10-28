@@ -24,7 +24,7 @@ from tenacity import (
 )
 import torch
 
-from .graph_algorithms import GraphAlgorithm
+from .gds_algorithms import GraphAlgorithm
 
 
 logger = logging.getLogger(__name__)
@@ -349,7 +349,6 @@ def train_topological_embeddings(
         write_property=write_property,
         device=device,
         subgraph=subgraph_name,
-        relationship_projection=projection.get("relationshipProjection"),
         node_projection=projection.get("nodeProjection"),
         config=config,
     )
@@ -392,7 +391,6 @@ def write_topological_embeddings(
         state_dict=model,
         write_property=write_property,
         graph_name=graph_name,
-        relationship_projection=projection.get("relationshipProjection"),
         node_projection=projection.get("nodeProjection"),
         config=config,
     )
