@@ -36,36 +36,35 @@ integration.raw.biolink.categories:
 
 integration.int.{source}.nodes:
   <<: [*_spark_parquet, *_layer_int]
-  filepath: ${globals:paths.integration}/{source}/nodes
+  filepath: ${globals:paths.integration}/int/{source}/nodes
 
 integration.int.{source}.edges:
   <<: [*_spark_parquet, *_layer_int]
-  filepath: ${globals:paths.integration}/{source}/edges
+  filepath: ${globals:paths.integration}/int/{source}/edges
 
 
 # Normalized KGs
 integration.int.{source}.nodes.norm:
   <<: [*_spark_parquet, *_layer_int]
-  filepath: ${globals:paths.integration}/{source}/nodes.norm
+  filepath: ${globals:paths.integration}/int/{source}/nodes.norm
 
 integration.int.{source}.edges.norm:
   <<: [*_spark_parquet, *_layer_int]
-  filepath: ${globals:paths.integration}/{source}/edges.norm
+  filepath: ${globals:paths.integration}/int/{source}/edges.norm
 
 # mapping tables 
 integration.int.{source}.nodes_norm_mapping:
   <<: [*_spark_parquet, *_layer_int]
-  filepath: ${globals:paths.integration}/{source}/nodes_norm_mapping
+  filepath: ${globals:paths.integration}/int/{source}/nodes_norm_mapping
 
 # Unified KGs
 integration.prm.unified_edges:
   <<: [*_spark_parquet, *_layer_prm]
-  filepath: ${globals:paths.integration}/unified/edges
+  filepath: ${globals:paths.integration}/prm/unified/edges
 
 integration.prm.unified_nodes:
   <<: [*_spark_parquet, *_layer_prm]
-  filepath: ${globals:paths.integration}/unified/nodes
-
+  filepath: ${globals:paths.integration}/prm/unified/nodes
 # filtered KGs
 integration.prm.filtered_edges:
   <<: [*_spark_parquet, *_layer_prm]

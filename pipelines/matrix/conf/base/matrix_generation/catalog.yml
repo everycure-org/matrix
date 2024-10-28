@@ -15,15 +15,15 @@ _kg_dataset: &_kg_dataset
 
 matrix_generation.feat.nodes@spark:
   <<: *_spark_parquet
-  filepath: ${globals:paths.matrix_generation}/matrix_nodes_spark
+  filepath: ${globals:paths.matrix_generation}/feat/matrix_nodes_spark
 
 matrix_generation.feat.nodes_kg_ds:
   <<: *_kg_dataset
-  filepath: ${globals:paths.matrix_generation}/matrix_nodes_kg
+  filepath: ${globals:paths.matrix_generation}/feat/matrix_nodes_kg
 
 matrix_generation.prm.matrix_pairs:
   <<: *_pandas_parquet
-  filepath: ${globals:paths.matrix_generation}/model_output/{model}/matrix_pairs
+  filepath: ${globals:paths.matrix_generation}/prm/{model}/matrix_pairs
 
 "matrix_generation.{model}.model_output.sorted_matrix_predictions@pandas":
   <<: *_pandas_parquet
