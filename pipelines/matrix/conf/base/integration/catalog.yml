@@ -34,6 +34,15 @@ integration.raw.biolink.categories:
   type: kedro_datasets.json.JSONDataset
   filepath: https://biolink.github.io/biolink-model/categories.json
 
+integration.raw.curie_to_pmids@spark:
+  type: spark.SparkJDBCDataset
+  table: curie_to_pmids
+  url: jdbc:sqlite:/Users/laurens/Documents/projects/matrix/pipelines/matrix/data/01_raw/data_01_RAW_KGs_rtx_kg2_v2.10.0_curie_to_pmids_v1.0_KG2.10.0.sqlite
+  # url: jdbc:sqlite:gs://mtrx-us-central1-hub-dev-storage/data/01_RAW/KGs/rtx_kg2/v2.10.0/curie_to_pmids_v1.0_KG2.10.0.sqlite
+  load_args:
+    properties:
+      driver: org.sqlite.JDBC
+
 integration.int.{source}.nodes:
   <<: [*_spark_parquet, *_layer_int]
   filepath: ${globals:paths.int}/{source}/nodes
@@ -41,7 +50,6 @@ integration.int.{source}.nodes:
 integration.int.{source}.edges:
   <<: [*_spark_parquet, *_layer_int]
   filepath: ${globals:paths.int}/{source}/edges
-
 
 # Normalized KGs
 integration.int.{source}.nodes.norm:

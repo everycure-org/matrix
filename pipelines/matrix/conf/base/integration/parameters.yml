@@ -4,6 +4,9 @@ preprocessing:
       - InformationResource
       - Device
       - GraphicaLocation
+    semmed_filters:
+      publication_threshold: 10
+      ngd_threshold: 0.6
 
 integration:
   nodenorm:
