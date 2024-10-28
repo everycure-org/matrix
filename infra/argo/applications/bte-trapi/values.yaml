@@ -33,8 +33,11 @@ ingress:
 
 resources:
   limits:
-  requests:
+    cpu: "2"
     memory: "3Gi"
+  requests:
+    cpu: "1"
+    memory: "2Gi"
 
 redis:
   enabled: true
