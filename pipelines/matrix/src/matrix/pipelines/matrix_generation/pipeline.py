@@ -41,7 +41,7 @@ def _create_matrix_generation_pipeline(model: str) -> Pipeline:
     )
 
 
-def create_matrix_pipeline(**kwargs) -> Pipeline:
+def create_pipeline(**kwargs) -> Pipeline:
     """Create matrix generation pipeline."""
     initial_nodes = pipeline(
         [

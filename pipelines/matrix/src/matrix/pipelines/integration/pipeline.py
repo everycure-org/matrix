@@ -7,7 +7,7 @@ from .robokop import transform_robo_edges, transform_robo_nodes
 from .rtxkg2 import transform_rtxkg2_edges, transform_rtxkg2_nodes
 
 
-def create_integration_pipeline(**kwargs) -> Pipeline:
+def create_pipeline(**kwargs) -> Pipeline:
     """Create integration pipeline."""
     return pipeline(
         [
