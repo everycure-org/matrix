@@ -89,7 +89,7 @@ embeddings.topological:
   write_property: &_topological_property 'topological_embedding'
 
 embeddings.topological_estimator:
-  object: matrix.pipelines.embeddings.graph_algorithms.PygGraphSAGE
+  object: matrix.pipelines.embeddings.pyg_algorithms.PygGraphSage
   embedding_dim: 512
   num_layers: 2
   hidden_channels: 256
