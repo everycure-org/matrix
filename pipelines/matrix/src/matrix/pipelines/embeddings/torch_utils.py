@@ -87,7 +87,7 @@ def prepare_graph_data(
         return edge_index, node_to_index
 
 
-def train_model(model, dataloader, epochs, optimizer, device: str = "cpu") -> List[float]:
+def train_n2v_model(model, dataloader, epochs, optimizer, device: str = "cpu") -> List[float]:
     """
     Trains a model on a given dataloader for a specified number of epochs.
 
@@ -109,6 +109,42 @@ def train_model(model, dataloader, epochs, optimizer, device: str = "cpu") -> Li
             loss.backward()
             optimizer.step()
             total_loss.append(loss.item())
+    return total_loss
+
+
+def train_gnn_model(
+    model, dataloader, epochs, optimizer, device: str = "cpu", criterion: torch.nn.Module = None
+) -> List[float]:
+    """
+    Trains a model on a given dataloader for a specified number of epochs.
+
+    Args:
+        model: The model to be trained.
+        dataloader: The dataloader for the training data.
+        epochs (int): The number of epochs to train the model.
+        optimizer: The optimizer to use for training.
+        device (str, optional): The device to use for training. Defaults to 'cpu'.
+        criterion (torch.nn.Module, optional): The criterion to use for training. Defaults to None.
+
+    Returns:
+        List[float]: A list of total loss values for each epoch.
+    """
+    model.train()
+    total_loss = []
+    for epoch in tqdm(range(epochs), desc="Training"):
+        epoch_loss = 0
+        for batch in dataloader:
+            batch = batch.to(device)
+            optimizer.zero_grad()
+            out = model(batch.x, batch.edge_index)
+            loss = criterion(out, batch.edge_label, batch.edge_label_index)
+            loss.backward()
+            optimizer.step()
+            epoch_loss += loss.item()
+        avg_loss = epoch_loss / len(dataloader)
+        print(f"Epoch {epoch}; Loss", avg_loss)
+        total_loss.append(avg_loss)
+    print(total_loss)
     return total_loss
 
 
