@@ -349,6 +349,9 @@ def train_topological_embeddings(
         write_property=write_property,
         device=device,
         subgraph=subgraph_name,
+        relationship_projection=projection.get("relationshipProjection"),
+        node_projection=projection.get("nodeProjection"),
+        config=config,
     )
 
     # Plot convergence
@@ -361,8 +364,6 @@ def train_topological_embeddings(
     ax.set_xlabel("Number of Epochs")
     ax.set_ylabel("Average loss per epoch")
     ax.set_title("Loss Chart")
-
-    print(model)
     return model, convergence
 
 
@@ -380,9 +381,8 @@ def write_topological_embeddings(
     """Write topological embeddings for PygNode2Vec."""
     # Retrieve the graph
     graph_name = projection.get("graphName")
+    config = projection.pop("configuration", {})
     graph = gds.graph.get(graph_name)
-    print(graph_name)
-    print(graph)
     # save embeddings
     model_name = estimator.get("modelName")
     topological_estimator.predict_write(
@@ -392,6 +392,9 @@ def write_topological_embeddings(
         state_dict=model,
         write_property=write_property,
         graph_name=graph_name,
+        relationship_projection=projection.get("relationshipProjection"),
+        node_projection=projection.get("nodeProjection"),
+        config=config,
     )
     return {"success": "true"}
 
