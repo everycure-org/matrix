@@ -29,9 +29,7 @@ install: venv
 	# deactivate any potentially active venv that may be somewhere else
 	deactivate || true
 	# activate freshly created venv
-	(source .venv/bin/activate; \
-	uv pip compile requirements.in --output-file requirements.txt; \
-	uv pip install -r requirements.txt)
+	uv pip install -r requirements.txt
 
 
 precommit: precommit-hooks
