@@ -200,11 +200,11 @@ ingestion.raw.rtx_kg2.edges@spark:
 
 ingestion.int.rtx_kg2.nodes:
   <<: [*_spark_parquet, *_layer_int]
-  filepath: ${globals:paths.integration}/rtx_kg2/nodes
+  filepath: ${globals:paths.integration}/int/rtx_kg2/nodes
 
 ingestion.int.rtx_kg2.edges:
   <<: [*_spark_parquet, *_layer_int]
-  filepath: ${globals:paths.integration}/rtx_kg2/edges
+  filepath: ${globals:paths.integration}/int/rtx_kg2/edges
 
 # -------------------------------------------------------------------------
 # EveryCure Medical
@@ -241,11 +241,11 @@ ingestion.raw.clinical_trials_data:
 
 ingestion.int.ec_medical_team.nodes:
   <<: [*_spark_parquet, *_layer_int]
-  filepath: ${globals:paths.integration}/ec_medical_team/nodes
+  filepath: ${globals:paths.integration}/int/ec_medical_team/nodes
 
 ingestion.int.ec_medical_team.edges:
   <<: [*_spark_parquet, *_layer_int]
-  filepath: ${globals:paths.integration}/ec_medical_team/edges
+  filepath: ${globals:paths.integration}/int/ec_medical_team/edges
 
 
 # -------------------------------------------------------------------------
@@ -334,9 +334,9 @@ ingestion.raw.robokop.edges@pandas:
 
 ingestion.int.robokop.nodes:
    <<: [*_spark_parquet, *_layer_int]
-   filepath: ${globals:paths.integration}/robokop-kg/nodes
+   filepath: ${globals:paths.integration}/int/robokop-kg/nodes
 
 ingestion.int.robokop.edges:
    <<: [*_spark_parquet, *_layer_int]
-   filepath: ${globals:paths.integration}/robokop-kg/edges
+   filepath: ${globals:paths.integration}/int/robokop-kg/edges
 
