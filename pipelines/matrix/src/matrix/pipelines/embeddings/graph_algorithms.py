@@ -313,7 +313,7 @@ class PygNode2Vec(GraphAlgorithm):
             graph_name,
             properties=False,
             node_properties=node_projection["Entity"]["properties"],
-            edges_excluded=config["relationshipPropertiesg"]["include_in_graphsage"]["property"],
+            edges_included=config["relationshipPropertiesg"]["include_in_graphsage"]["property"],
         )
 
         # Generate embeddings
@@ -395,7 +395,7 @@ class PygGraphSAGE(GraphAlgorithm):
             subgraph,
             properties=True,
             node_properties=node_projection["Entity"]["properties"],
-            edges_excluded=config["relationshipProperties"]["include_in_graphsage"]["property"],
+            edges_included=config["relationshipProperties"]["include_in_graphsage"]["property"],
         )
         data = Data(x=x, edge_index=edge_index)
 
@@ -457,7 +457,7 @@ class PygGraphSAGE(GraphAlgorithm):
             graph_name,
             properties=True,
             node_properties=node_projection["Entity"]["properties"],
-            edges_excluded=config["relationshipProperties"]["include_in_graphsage"]["property"],
+            edges_included=config["relationshipProperties"]["include_in_graphsage"]["property"],
         )
 
         # Initialize the GraphSAGE model

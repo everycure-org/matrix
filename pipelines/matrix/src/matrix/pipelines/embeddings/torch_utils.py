@@ -7,13 +7,32 @@ from tqdm import tqdm
 import torch.nn.functional as F
 
 
-def generate_dummy_model():
+def generate_dummy_model() -> torch.nn.Sequential:
+    """
+    Generate a dummy PyTorch model (required for GDS models).
+
+    Returns:
+        torch.nn.Sequential: A sequential model with a single linear layer.
+    """
     return torch.nn.Sequential(
         torch.nn.Linear(1, 1),
     )
 
 
-def BCE_contrastive_loss(out, edge_label, edge_label_index):
+def BCE_contrastive_loss(out: torch.Tensor, edge_label: torch.Tensor, edge_label_index: torch.Tensor) -> torch.Tensor:
+    """
+    Compute the Binary Cross-Entropy contrastive loss.
+
+    Adapted from https://github.com/pyg-team/pytorch_geometric/blob/master/examples/graph_sage_unsup_ppi.py.
+
+    Args:
+        out (torch.Tensor): The output tensor from the model.
+        edge_label (torch.Tensor): The ground truth labels for the edges.
+        edge_label_index (torch.Tensor): The indices of the edges in the output tensor.
+
+    Returns:
+        torch.Tensor: The computed loss value.
+    """
     out_src = out[edge_label_index[0]]
     out_dst = out[edge_label_index[1]]
     pred = (out_src * out_dst).sum(dim=-1)
@@ -25,7 +44,7 @@ def prepare_graph_data(
     graph_name: str,
     properties: bool = False,
     node_properties: str = None,
-    edges_excluded: str = None,
+    edges_included: str = None,
 ):
     """
     Prepare graph data for PyTorch Geometric models using Cypher queries.
@@ -34,14 +53,15 @@ def prepare_graph_data(
         gds (GraphDataScience): The Graph Data Science driver.
         graph_name (str): The name of the graph projection in Neo4j.
         properties (bool, optional): Whether to return node properties. Defaults to False.
-        params (dict, optional): Additional parameters for the Cypher queries. Defaults to None.
+        node_properties (str, optional): The properties to include in the node query. Defaults to None.
+        edges_included (str, optional): The edges to include in the edge query. Defaults to None.
 
     Returns:
         tuple: A tuple containing:
             - edge_index (torch.Tensor): The edge index tensor for PyG.
             - node_to_index (dict): A mapping from Neo4j node IDs to consecutive indices.
     """
-    # Get all nodes
+    # Get all nodes depending on the properties flag
     if properties:
         node_query = f"""
             CALL gds.graph.streamNodeProperties('{graph_name}', ['{node_properties}'])
@@ -55,7 +75,9 @@ def prepare_graph_data(
             RETURN nodeId
         """
     node_result = gds.run_cypher(node_query)
-    # Create node_to_index mapping
+    if node_result.empty:
+        raise ValueError(f"No nodes found in graph {graph_name}")
+
     node_to_index = {}
     node_features = [] if properties else None
     for idx, row in node_result.iterrows():
@@ -65,11 +87,13 @@ def prepare_graph_data(
 
     # Get all edges
     edge_result = gds.run_cypher(f"""
-        CALL gds.graph.relationshipProperties.stream('{graph_name}',["{edges_excluded}"])
+        CALL gds.graph.relationshipProperties.stream('{graph_name}',["{edges_included}"])
         YIELD sourceNodeId, targetNodeId, propertyValue
         WHERE propertyValue = 1
         RETURN sourceNodeId, targetNodeId
     """)
+    if edge_result.empty:
+        raise ValueError(f"No edges found in graph {graph_name}")
 
     # Convert edges to edge_index format
     edge_index = torch.tensor(
@@ -144,7 +168,6 @@ def train_gnn_model(
         avg_loss = epoch_loss / len(dataloader)
         print(f"Epoch {epoch}; Loss", avg_loss)
         total_loss.append(avg_loss)
-    print(total_loss)
     return total_loss
 
 
@@ -164,7 +187,7 @@ def write_embeddings(gds: GraphDataScience, embeddings: torch.Tensor, write_prop
     if isinstance(node_index, dict):
         node_ids = list(node_index.keys())
     else:
-        node_ids = node_index
+        node_ids = list(node_index)
 
     if len(node_ids) != total_nodes:
         raise ValueError(f"Number of node IDs ({len(node_ids)}) does not match number of embeddings ({total_nodes})")
