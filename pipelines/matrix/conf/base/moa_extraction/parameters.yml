@@ -69,6 +69,8 @@ moa_extraction:
         - object: matrix.pipelines.moa_extraction.path_generators.ReplacementPathSampler
           num_replacement_paths: 1
           unidirectional: &unidirectional False
+          tag_rules:
+            all: ['drug_disease']
           random_state: ${globals:random_state}
     three_hop:
       model:
@@ -89,6 +91,8 @@ moa_extraction:
         - object: matrix.pipelines.moa_extraction.path_generators.ReplacementPathSampler
           num_replacement_paths: 1
           unidirectional: *unidirectional
+          tag_rules:
+            all: ['drug_disease']
           random_state: ${globals:random_state}
 
   evaluation:
