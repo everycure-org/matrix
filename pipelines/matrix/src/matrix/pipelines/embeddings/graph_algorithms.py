@@ -4,7 +4,6 @@ from graphdatascience import GraphDataScience
 import torch
 from torch_geometric.nn import Node2Vec, GraphSAGE
 from torch_geometric.loader import LinkNeighborLoader
-from tqdm import tqdm
 from torch_geometric.data import Data
 from . import torch_utils as tu
 
@@ -258,13 +257,13 @@ class PygNode2Vec(GraphAlgorithm):
         config: dict = None,
     ):
         """Train the algorithm."""
-        node_properties = node_projection["Entity"]["properties"]
-        edges_excluded = config["relationshipProperties"]["include_in_graphsage"]["property"]
         edge_index, _ = tu.prepare_graph_data(
-            gds, subgraph, properties=False, node_properties=node_properties, edge_excluded=edges_excluded
+            gds,
+            subgraph,
+            properties=False,
+            node_properties=node_projection["Entity"]["properties"],
+            edge_excluded=config["relationshipProperties"]["include_in_graphsage"]["property"],
         )
-        # edge_index = tu.generate_edge_index(gds, subgraph)
-
         # Initialize the Node2Vec model
         self._model = Node2Vec(
             edge_index,
@@ -286,7 +285,7 @@ class PygNode2Vec(GraphAlgorithm):
         loader = self._model.loader(batch_size=self._batch_size, shuffle=True, num_workers=self._num_workers)
         self._model.train()
 
-        self._loss = tu.train_model(self._model, loader, self._epochs, optimizer, device)
+        self._loss = tu.train_n2v_model(self._model, loader, self._epochs, optimizer, device)
 
         return self._model, {"loss": self._loss}
 
@@ -303,18 +302,18 @@ class PygNode2Vec(GraphAlgorithm):
         write_property: str,
         graph_name: str,
         device: str = "cpu",
-        projection: dict = None,
         relationship_projection: dict = None,
         node_projection: dict = None,
         config: dict = None,
     ):
         """Predict and save."""
         # get edge index
-        node_properties = node_projection["Entity"]["properties"]
-        edges_excluded = config["relationshipProperties"]["include_in_graphsage"]["property"]
-
         edge_index, node_index = tu.prepare_graph_data(
-            gds, graph_name, properties=False, node_properties=node_properties, edges_excluded=edges_excluded
+            gds,
+            graph_name,
+            properties=False,
+            node_properties=node_projection["Entity"]["properties"],
+            edges_excluded=config["relationshipPropertiesg"]["include_in_graphsage"]["property"],
         )
 
         # Generate embeddings
@@ -391,11 +390,12 @@ class PygGraphSAGE(GraphAlgorithm):
     ):
         """Train the algorithm."""
         # Convert the graph to PyTorch Geometric format
-        node_properties = node_projection["Entity"]["properties"]
-        edges_excluded = config["relationshipProperties"]["include_in_graphsage"]["property"]
-
         edge_index, _, x = tu.prepare_graph_data(
-            gds, subgraph, properties=True, node_properties=node_properties, edges_excluded=edges_excluded
+            gds,
+            subgraph,
+            properties=True,
+            node_properties=node_projection["Entity"]["properties"],
+            edges_excluded=config["relationshipProperties"]["include_in_graphsage"]["property"],
         )
         data = Data(x=x, edge_index=edge_index)
 
@@ -404,10 +404,11 @@ class PygGraphSAGE(GraphAlgorithm):
             in_channels=x.shape[1],
             hidden_channels=self._hidden_channels,
             num_layers=self._num_layers,
-            out_channels=x.shape[1],  # self._embedding_dim,
+            out_channels=self._embedding_dim,
             dropout=self._dropout,
             aggr=self._aggregator,
         ).to(device)
+
         # Initialize optimizer
         optimizer_class = getattr(torch.optim, self._optimizer)
         optimizer = optimizer_class(self._model.parameters(), lr=self._lr)
@@ -422,23 +423,14 @@ class PygGraphSAGE(GraphAlgorithm):
             num_workers=self._num_workers,
         )
         # Train the model
-        self._model.train()
-        self._loss = []
-        for epoch in tqdm(range(self._epochs), desc="Training"):
-            epoch_loss = 0
-            for batch in loader:
-                batch = batch.to(device)
-                optimizer.zero_grad()
-                out = self._model(batch.x, batch.edge_index)
-                loss = self._criterion(out, batch.edge_label, batch.edge_label_index)
-                loss.backward()
-                optimizer.step()
-                epoch_loss += loss.item()
-                print(f"Epoch {epoch}; Loss", loss)
-
-            avg_loss = epoch_loss / len(loader)
-            self._loss.append(avg_loss)
-
+        self._loss = tu.train_gnn_model(
+            model=self._model,
+            dataloader=loader,
+            epochs=self._epochs,
+            optimizer=optimizer,
+            device="cpu",
+            criterion=self._criterion,
+        )
         return self._model, {"loss": self._loss}
 
     def return_loss(self):
@@ -460,10 +452,12 @@ class PygGraphSAGE(GraphAlgorithm):
     ):
         """Predict and save."""
         # Get edge index and node features
-        node_properties = node_projection["Entity"]["properties"]
-        edges_excluded = config["relationshipProperties"]["include_in_graphsage"]["property"]
         edge_index, node_to_index, x = tu.prepare_graph_data(
-            gds, graph_name, properties=True, node_properties=node_properties, edges_excluded=edges_excluded
+            gds,
+            graph_name,
+            properties=True,
+            node_properties=node_projection["Entity"]["properties"],
+            edges_excluded=config["relationshipProperties"]["include_in_graphsage"]["property"],
         )
 
         # Initialize the GraphSAGE model
@@ -471,16 +465,15 @@ class PygGraphSAGE(GraphAlgorithm):
             in_channels=x.shape[1],
             hidden_channels=self._hidden_channels,
             num_layers=self._num_layers,
-            out_channels=x.shape[1],  # self._embedding_dim,
+            out_channels=self._embedding_dim,
             dropout=self._dropout,
             aggr=self._aggregator,
         ).to(device)
-        # Load the trained state
         model.load_state_dict(state_dict)
         model.eval()
 
         # Generate embeddings
         with torch.no_grad():
             embeddings = model(x.to(device), edge_index.to(device)).cpu()
-        # Write embeddings back to the graph
+
         tu.write_embeddings(gds, embeddings, write_property, list(node_to_index.keys()))
