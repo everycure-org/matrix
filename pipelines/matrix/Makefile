@@ -2,6 +2,7 @@ dev_docker_image = us-central1-docker.pkg.dev/mtrx-hub-dev-3of/matrix-images/mat
 TAG ?= ${USER}
 GIT_SHA ?= $(shell git rev-parse --short HEAD)
 export PYSPARK_PYTHON = .venv/bin/python
+export UV_PYTHON = .venv/bin/python
 export TQDM_DISABLE ?= 1
 TARGET_PLATFORM ?= linux/amd64
 
@@ -23,31 +24,31 @@ prerequisites:
 
 venv: prerequisites
 	if [ ! -d .venv ]; then uv venv -p 3.11; fi
-	.venv/bin/python -m ensurepip --upgrade || true
+	uv run python -m ensurepip --upgrade || true
 
 install: venv precommit-hooks
-	uv pip install -r requirements.txt -p .venv/bin/python #force it to install in our venv
+	uv pip install -r requirements.txt #force it to install in our venv
 
 
 precommit: precommit-hooks
 	git fetch origin
-	.venv/bin/pre-commit run -s origin/main -o HEAD
+	uv run pre-commit run -s origin/main -o HEAD
 
 precommit-hooks:
-	uv pip install pre-commit -p .venv/bin/python
-	.venv/bin/pre-commit install --install-hooks
+	uv pip install pre-commit 
+	uv run pre-commit install --install-hooks
 
 full_test:
 	# activate venv to ensure spark doesn't have python driver mismatches
-	.venv/bin/pytest -v tests/
+	uv run pytest -v tests/
 
-# fast_test: export PYSPARK_PYTHON = .venv/bin/python
+# fast_test: export PYSPARK_PYTHON = uv run python
 fast_test: 
 	# activate venv to ensure spark doesn't have python driver mismatches
-	TESTMON_DATAFILE=/tmp/.testmondata .venv/bin/pytest --testmon -v tests/
+	TESTMON_DATAFILE=/tmp/.testmondata uv run pytest --testmon -v tests/
 
 format:
-	.venv/bin/ruff check . --fix
+	uv run ruff check . --fix
 
 # executes E2E integration test fully in docker. 
 docker_test: docker_build
@@ -77,18 +78,18 @@ lock:
 
 wipe_neo:
 	# assumes you have neo4j running using docker-compose from `compose_up`
-	.venv/bin/python scripts/wipe_neo4j.py 'everycure-test'
+	uv run python scripts/wipe_neo4j.py 'everycure-test'
 
 integration_test: compose_up wipe_neo
 	# NOTE: We are running without xgc due to its long runtime. 
 	ulimit -n 10000
-	.venv/bin/kedro run --env test -p test --runner ThreadRunner --without-tags xgc,not-shared
+	uv run kedro run --env test -p test --runner ThreadRunner --without-tags xgc,not-shared
 
 fabricate:
-	.venv/bin/kedro run -p fabricator --env test
+	uv run kedro run -p fabricator --env test
 
 argo_template:
-	.venv/bin/python ./src/matrix/argo.py generate-argo-config $(dev_docker_image)
+	uv run python ./src/matrix/argo.py generate-argo-config $(dev_docker_image)
 
 licenses_container: docker_build
 	docker run \
