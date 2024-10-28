@@ -26,11 +26,37 @@ def register_pipelines() -> Dict[str, Pipeline]:
 
     pipelines["kg_release"] = create_integration_pipeline() + create_embeddings_pipeline()
     pipelines["modelling"] = create_modelling_pipeline() + create_matrix_pipeline() + create_evaluation_pipeline()
-    pipelines["__default__"] = pipelines["kg_release"] + pipelines["modelling"]
+    pipelines["__default__"] = (
+        create_integration_pipeline()
+        + create_embeddings_pipeline()
+        + create_modelling_pipeline()
+        + create_matrix_pipeline()
+        + create_evaluation_pipeline()
+    )
 
-    pipelines["test_release"] = create_fabricator_pipeline() + create_ingestion_pipeline() + pipelines["kg_release"]
-    pipelines["test_modelling"] = pipelines["modelling"] + create_release_pipeline()
-    pipelines["test"] = pipelines["test_release"] + pipelines["test_modelling"]
+    pipelines["test_release"] = (
+        create_fabricator_pipeline()
+        + create_ingestion_pipeline()
+        + create_integration_pipeline()
+        + create_embeddings_pipeline()
+    )
+    pipelines["test_modelling"] = (
+        create_modelling_pipeline()
+        + create_matrix_pipeline()
+        + create_evaluation_pipeline()
+        + create_release_pipeline()
+    )
+
+    pipelines["test"] = (
+        create_fabricator_pipeline()
+        + create_ingestion_pipeline()
+        + create_integration_pipeline()
+        + create_embeddings_pipeline()
+        + create_modelling_pipeline()
+        + create_matrix_pipeline()
+        + create_evaluation_pipeline()
+        + create_release_pipeline()
+    )
 
     # Ran manually based on input from medical to release new artifacts from clinical trails and medical KG
     pipelines["preprocessing"] = create_preprocessing_pipeline()
