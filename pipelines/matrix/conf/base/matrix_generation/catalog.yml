@@ -23,12 +23,12 @@ matrix_generation.feat.nodes_kg_ds:
 
 matrix_generation.prm.matrix_pairs:
   <<: *_pandas_parquet
-  filepath: ${globals:paths.matrix_generation}/prm/{model}/matrix_pairs
+  filepath: ${globals:paths.matrix_generation}/prm/matrix_pairs
 
 "matrix_generation.{model}.model_output.sorted_matrix_predictions@pandas":
   <<: *_pandas_parquet
   filepath: ${globals:paths.matrix_generation}/model_output/{model}/matrix_predictions
 
 "matrix_generation.{model}.reporting.matrix_report":
-  filepath: ${globals:paths.matrix_generation}/model_output/{model}/matrix_report
+  filepath: ${globals:paths.matrix_generation}/reporting/{model}/matrix_report
   type: pandas.CSVDataset
