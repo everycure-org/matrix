@@ -2,9 +2,13 @@
 title: Local setup
 ---
 
-Our codebase is structured around the `Makefile`. This allows for a quick and easy setup of the local environment using one command only. At the end of this section, we will show you how you can set up your entire local environment by using a single `make` command however prior to that, we will explain the set-up on a step-by-step basis.
+Our codebase is structured around the `Makefile`. This allows for a quick and easy setup of the local environment using one command only - the video below explains the Makefile structure and how it relates to our codebase in more detail:
 
-### .env file for local credentials
+<div style="position: relative; width: 100%; height: 0; padding-bottom: 56.25%;"><iframe src="https://us06web.zoom.us/clips/embed/ghxELqxMExaMh96j_58dMq8UnXaXEcEtSTRVxXf7zXNd5l4OSgdvC5xwANUE1ydp7afd-M42UkQNe_eUJQkCrXIZ.SAPUAWjHFb-sh7Pj" frameborder="0" allowfullscreen="allowfullscreen" style="position: absolute; width: 100%; height: 100%; top: 0; left: 0; "></iframe></div>
+
+At the end of this section, we will show you how you can set up your entire local environment by using a single `make` command however prior to that, we will explain the set-up on a step-by-step basis.
+
+### `.env` file for local credentials
 
 To execute the pipeline directly on your local machine, you'll first need to create a `.env` file in the root of the matrix pipeline. Get started by renaming the `.env.tmpl` file to `.env`.
 
@@ -16,9 +20,9 @@ To execute the codebase, you need to set up a virtual environment for the python
 
 ```bash
 make install
-
-# This command wraps the following commands:
-
+```
+This command wraps the following commands:
+```bash
 # Checking the pre-requisites installed
 @command -v docker >/dev/null 2>&1 || { echo "Error: docker is not installed." >&2; exit 1; }
 @command -v gcloud >/dev/null 2>&1 || { echo "Error: gcloud is not installed." >&2; exit 1; }
@@ -42,8 +46,9 @@ We have pre-commit hooks installed to ensure code quality and consistency. To ru
 
 ```bash
 make precommit
-
-# This command wraps the following commands (provided venv is active):
+```
+This command wraps the following commands (provided venv is active):
+```bash
 uv pip install pre-commit
 .venv/bin/pre-commit install --install-hooks
 
@@ -57,8 +62,9 @@ To ensure that the codebase is working as expected, you can run the following co
 
 ```bash
 make fast_test
-
-# This command wraps the following commands (provided venv is active):
+```
+This command wraps the following commands (provided venv is active):
+```bash
 TESTMON_DATAFILE=/tmp/.testmondata .venv/bin/pytest --testmon -v tests/
 ```
 Note that the first time you run this command, it might take a while to complete as it needs to download the testmon data file. However any other fast_test command will be faster as it will use the cached data file.
@@ -86,8 +92,9 @@ keeping the services running in the background.
 
 ```bash
 make compose_up
-
-# Alternatively you can also run the following command from matrix/pipelines/compose directory to bring up the services
+```
+This command wraps the following commands:
+```bash
 docker compose -f compose/docker-compose.yml up -d --wait --remove-orphans
 ```
 
@@ -99,19 +106,22 @@ To run the pipeline end-to-end locally using a fabricated dataset, you can run t
 
 ```bash
 make integration_test
-
-# This command wraps the following commands (provided venv is active and that you have your docker containers up and running):
+```
+This command wraps the following commands (provided venv is active and that you have your docker containers up and running):
+```bash
 .venv/bin/kedro run --env test -p test --runner ThreadRunner --without-tags xgc,not-shared
 ```
 This command will kick off our kedro pipeline in a test environment using a fabricated dataset. This is useful to ensure that the pipeline works as expected locally after you are finished with the local setup.
 
 ### Makefile setup
 
-Except for the `.env` setup, all the sections can be set-up automatically using `Makefile`. Thus, the fastest way to check if everything works locally is to execute the following command in `pipelines/matrix`
+Except for the `.env` setup, all the sections mentioned above can be set-up using a specific `make` command. You can also execute them all at once by running the default `make` command in `pipelines/matrix`:
 
-```
+```bash
 make
 ```
+
+Generally, the `Makefile` is a good place to refer to when you need to re-set your environment. Once the command runs successfully, you should be able to run the pipeline end-to-end locally!
 
 !!! help "Encountering issues?"
     If you're experiencing any problems running the `MakeFile`, please refer to our [Common Errors FAQ](../FAQ/common_errors.md) for troubleshooting guidance. This resource contains solutions to frequently encountered issues and may help resolve your problem quickly.
@@ -121,22 +131,8 @@ make
 
     If you are running on an ARM machine (e.g., MacBooks with Apple Silicon), you might not get the best performance. In this case call `make TARGET_PLATFORM=linux/arm64` instead which will build the image for your specific architecture.
 
-This command executes a number of make targets, namely:
-- set up a virtual environment
-- install the python dependencies
-- lint the codebase
-- test the codebase
-- build the docker image
-- set up containers for local execution
-- run integration tests
-
-Generally, the `Makefile` is a good place to refer to when you need to re-set your environment. Once the command runs successfully, you should be able to run the pipeline end-to-end locally!
-
-<div style="position: relative; width: 100%; height: 0; padding-bottom: 56.25%;"><iframe src="https://us06web.zoom.us/clips/embed/ghxELqxMExaMh96j_58dMq8UnXaXEcEtSTRVxXf7zXNd5l4OSgdvC5xwANUE1ydp7afd-M42UkQNe_eUJQkCrXIZ.SAPUAWjHFb-sh7Pj" frameborder="0" allowfullscreen="allowfullscreen" style="position: absolute; width: 100%; height: 100%; top: 0; left: 0; "></iframe></div>
-
 ??? note "Understanding and troubleshooting your `make` run"
-   
-   ### Understanding the `make` command
+    ### Understanding the `make` command
     As mentioned in the video, our pipeline is evolving quickly. Running `make` is a simple and quick way to check if everything works locally as it is composed of several different stages which get executed one after another. When `make` gets executed, what is happening under the hood is that the following seven 'make' "subcommands" get executed:
     ```
     Make prerequisites # checks if all prerequisites are set up correctly
