@@ -187,7 +187,7 @@ def write_embeddings(gds: GraphDataScience, embeddings: torch.Tensor, write_prop
     if isinstance(node_index, dict):
         node_ids = list(node_index.keys())
     else:
-        node_ids = list(node_index)
+        node_ids = node_index
 
     if len(node_ids) != total_nodes:
         raise ValueError(f"Number of node IDs ({len(node_ids)}) does not match number of embeddings ({total_nodes})")
