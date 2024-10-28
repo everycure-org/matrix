@@ -92,7 +92,7 @@ def _create_reporting_pipeline(model: str) -> Pipeline:
     )
 
 
-def create_inference_pipeline(**kwargs) -> Pipeline:
+def create_pipeline(**kwargs) -> Pipeline:
     """Create requests pipeline.
 
     The pipelines is composed of static_nodes (i.e. nodes which are run only once at the beginning),
