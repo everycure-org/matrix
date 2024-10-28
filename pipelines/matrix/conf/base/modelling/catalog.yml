@@ -36,7 +36,7 @@ _model_output_ds: &_model_output_ds
     kedro-viz:
       layer: model_output
 
-modelling.raw.ground_truth.positives:
+modelling.raw.ground_truth.positives: &_raw_ground_truth_pos
   <<: [*_pandas_csv, *_model_input_ds]
   filepath: ${globals:paths.raw}/ground_truth_data/tp_pairs.txt
   load_args:
@@ -44,13 +44,20 @@ modelling.raw.ground_truth.positives:
   save_args: 
     sep: "\t"
 
-modelling.raw.ground_truth.negatives:
+modelling.raw.ground_truth.negatives: &_raw_ground_truth_neg
   <<: [*_pandas_csv, *_model_input_ds]
   filepath: ${globals:paths.raw}/ground_truth_data/tn_pairs.txt
   load_args:
     sep: "\t"
   save_args: 
     sep: "\t"
+
+modelling.pre_sample.ground_truth.positives:
+  <<: *_raw_ground_truth_pos
+
+modelling.pre_sample.ground_truth.negatives:
+  <<: *_raw_ground_truth_neg
+
 
 modelling.int.known_pairs:
   <<: [*_pandas_parquet, *_model_input_ds]
