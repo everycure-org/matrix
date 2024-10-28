@@ -88,9 +88,6 @@ integration_test: compose_up wipe_neo
 fabricate:
 	uv run kedro run -p fabricator --env test
 
-argo_template:
-	uv run python ./src/matrix/argo.py generate-argo-config $(dev_docker_image)
-
 licenses_container: docker_build
 	docker run \
 		-v $(PWD)/trivy.yaml:/trivy.yaml \
