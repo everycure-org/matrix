@@ -19,27 +19,6 @@ Kedro project directory can be found in `pipelines/matrix` directory with an ass
 
 [^1]: Kedro allows for fine-grained control over pipeline execution, through the [kedro run](https://docs.kedro.org/en/stable/nodes_and_pipelines/run_a_pipeline.html) command.
 
-### Data layer convention
-
-Data used by our pipeline is registered in the _data catalog_. To add additional structure to the catalog items, we organise our data according to the following convention:
-
-1. __Raw__: Data as received directly from the source, no pre-processing performed.
-2. __Intermediate__: Data with simple cleaning steps applied, e.g., correct typing and column names.
-3. __Primary__: Golden datasets, usually obtained by merging _intermediate_ datasets.
-4. __Feature__: Primary dataset enriched with features inferred from the data, e.g., enriching an `age` column given a `date-of-birth` column.
-5. __Model input__: Dataset transformed for usage by a model.
-6. __Models__: Materialized models, often in the form of a pickle.
-7. __Model output__: Dataset containing column where model predictions are run.
-8. __Reporting__: Any datasets that provide reporting, e.g., convergence plots.
-
-
-!!! tip
-    We name entries in our catalog according to the following format:
-
-    `<pipeline>.<layer>.<name>`
-
-![](../assets/img/convention.png)
-
 ### Dataset transcoding
 
 Our pipeline uses Spark and Pandas interchangeably. To avoid having to manually convert datasets from one type into another, Kedro supports [dataset transcoding](https://github.com/kedro-org/kedro-training/blob/master/training_docs/12_transcoding.md).
