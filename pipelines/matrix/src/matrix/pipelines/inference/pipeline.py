@@ -42,7 +42,7 @@ def _create_resolution_pipeline() -> Pipeline:
 
 def _create_inference_pipeline(model_excl: str, model_incl: str) -> Pipeline:
     """Matrix generation pipeline adjusted for running inference with models of choice."""
-    mg_pipeline = mgp.create_matrix_pipeline()
+    mg_pipeline = mgp.create_pipeline()
     inference_nodes = pipeline(
         [node for node in mg_pipeline.nodes if not any(model in node.name for model in model_excl)]
     )
