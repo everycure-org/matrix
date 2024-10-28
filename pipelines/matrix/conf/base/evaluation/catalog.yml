@@ -13,9 +13,9 @@ evaluation.prm.clinical_trials_data:
   <<: *_pandas_parquet
   filepath: ${globals:paths.integration}/clinical_trails_data
 
-"evaluation.{model}.{evaluation}.pairs.raw":
+"evaluation.{model}.{evaluation}.pairs.model_output":
   <<: *_pandas_parquet
-  filepath: ${globals:paths.evaluation}/{model}/{evaluation}/pairs/raw
+  filepath: ${globals:paths.evaluation}/{model}/{evaluation}/pairs/model_output
 
 "evaluation.{model}.{evaluation}.pairs.prm":
   <<: *_pandas_parquet
