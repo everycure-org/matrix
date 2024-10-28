@@ -34,14 +34,6 @@ integration.raw.biolink.categories:
   type: kedro_datasets.json.JSONDataset
   filepath: https://biolink.github.io/biolink-model/categories.json
 
-integration.raw.curie_to_pmids@spark:
-  type: matrix.datasets.gcp.RemoteSparkJDBCDataset
-  table: curie_to_pmids
-  url: jdbc:sqlite:gs://mtrx-us-central1-hub-dev-storage/data/01_RAW/KGs/rtx_kg2/${globals:data_sources.rtx-kg2.version}/curie_to_pmids.sqlite
-  load_args:
-    properties:
-      driver: org.sqlite.JDBC
-
 integration.int.{source}.nodes:
   <<: [*_spark_parquet, *_layer_int]
   filepath: ${globals:paths.int}/{source}/nodes

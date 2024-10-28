@@ -105,7 +105,6 @@ fabricator.rtx_kg2:
           - "increased"
           - "decreased"
 
-
   # NOTE: Lets see if this is needed later on
   pubmed_ids_mapping:
     num_rows: 50

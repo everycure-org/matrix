@@ -36,7 +36,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 func=transform_rtxkg2_edges,
                 inputs=[
                     "ingestion.int.rtx_kg2.edges",
-                    "integration.raw.curie_to_pmids@spark",
+                    "ingestion.int.rtx_kg2.curie_to_pmids",
                     "params:preprocessing.rtx.semmed_filters",
                 ],
                 outputs="integration.int.rtx.edges",

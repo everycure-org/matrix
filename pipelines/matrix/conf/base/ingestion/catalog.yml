@@ -29,6 +29,15 @@ _layer_int: &_layer_int
 # -------------------------------------------------------------------------
 # RTX-KG2
 # -------------------------------------------------------------------------  
+
+ingestion.raw.rtx_kg2.curie_to_pmids@spark:
+  type: matrix.datasets.gcp.RemoteSparkJDBCDataset
+  table: curie_to_pmids
+  url: jdbc:sqlite:${globals:paths.kg_raw}/KGs/rtx_kg2/${globals:data_sources.rtx-kg2.version}/curie_to_pmids.sqlite
+  load_args:
+    properties:
+      driver: org.sqlite.JDBC
+
 ingestion.raw.rtx_kg2.nodes@pandas:
   <<: [*_pandas_csv, *_layer_raw]
   filepath: ${globals:paths.kg_raw}/KGs/rtx_kg2/${globals:data_sources.rtx-kg2.version}/nodes_c.tsv
@@ -76,6 +85,10 @@ ingestion.int.rtx_kg2.nodes:
 ingestion.int.rtx_kg2.edges:
   <<: [*_spark_parquet, *_layer_int]
   filepath: ${globals:paths.int}/rtx_kg2/edges
+
+ingestion.int.rtx_kg2.curie_to_pmids:
+  <<: [*_spark_parquet, *_layer_int]
+  filepath: ${globals:paths.int}/rtx_kg2/curie_to_pmids
 
 # -------------------------------------------------------------------------
 # EveryCure Medical

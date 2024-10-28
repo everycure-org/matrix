@@ -53,7 +53,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                     "clinical_trials": "ingestion.raw.clinical_trials_data",
                     "disease_list": "ingestion.raw.disease_list@pandas",
                     "drug_list": "ingestion.raw.drug_list@pandas",
-                    "pubmed_ids_mapping": "integration.raw.curie_to_pmids@pandas",
+                    "pubmed_ids_mapping": "ingestion.raw.rtx_kg2.curie_to_pmids@pandas",
                 },
                 name="fabricate_kg2_datasets",
             ),

@@ -322,6 +322,7 @@ class RemoteSparkJDBCDataset(SparkJDBCDataset):
         )
 
     def _load(self) -> Any:
+        SparkHooks._initialize_spark()
         bucket = self._client.bucket(self._bucket)
         blob = bucket.blob(self._blob_name)
 
