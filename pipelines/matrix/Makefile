@@ -9,7 +9,7 @@ TARGET_PLATFORM ?= linux/amd64
 .ONESHELL: 
 
 
-default: install precommit fast_test compose_down integration_test
+default: install fast_test compose_down integration_test
 	echo "done!"
 
 prerequisites:
@@ -25,11 +25,8 @@ venv: prerequisites
 	if [ ! -d .venv ]; then uv venv -p 3.11; fi
 	.venv/bin/python -m ensurepip --upgrade || true
 
-install: venv
-	# deactivate any potentially active venv that may be somewhere else
-	deactivate || true
-	# activate freshly created venv
-	uv pip install -r requirements.txt
+install: venv precommit-hooks
+	uv pip install -r requirements.txt -p .venv/bin/python #force it to install in our venv
 
 
 precommit: precommit-hooks
@@ -37,8 +34,7 @@ precommit: precommit-hooks
 	.venv/bin/pre-commit run -s origin/main -o HEAD
 
 precommit-hooks:
-	(source .venv/bin/activate; \
-	uv pip install pre-commit)
+	uv pip install pre-commit -p .venv/bin/python
 	.venv/bin/pre-commit install --install-hooks
 
 full_test:
