@@ -11,11 +11,11 @@ _pandas_parquet: &_pandas_parquet
 
 evaluation.prm.clinical_trials_data:
   <<: *_pandas_parquet
-  filepath: ${globals:paths.integration}/clinical_trails_data
+  filepath: ${globals:paths.integration}/prm/clinical_trails_data
 
 "evaluation.{model}.{evaluation}.model_output.pairs":
   <<: *_pandas_parquet
-  filepath: ${globals:paths.evaluation}/{model}/{evaluation}/pairs/model_output
+  filepath: ${globals:paths.evaluation}/model_output/{model}/{evaluation}/pairs/model_output
 
 "evaluation.{model}.{evaluation}.result":
   filepath: ${globals:paths.evaluation}/{model}/{evaluation}/result.yml
