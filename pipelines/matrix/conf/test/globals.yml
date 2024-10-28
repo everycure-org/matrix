@@ -9,7 +9,6 @@ openai:
 paths:
   raw:                data/test/raw
   kg_raw:             data/test/raw
-  ingestion:          data/test/ingestion
 
   # Upstream version-based
   ingestion:          data/test/ingestion
