@@ -39,4 +39,9 @@ def get_random_selection_from_rtx(
     }
 
 
+def get_random_selection_of_ground_truths(
+    ground_truth_either_df : pd.DataFrame
+) -> pd.DataFrame:
+    return ground_truth_either_df.sample(frac=0.1, replace=False, random_state=123)
+
 
