@@ -128,7 +128,7 @@ def _create_model_pipeline(model: str, num_shards: int) -> Pipeline:
     )
 
 
-def create_modelling_pipeline(**kwargs) -> Pipeline:
+def create_pipeline(**kwargs) -> Pipeline:
     """Create modelling pipeline."""
     create_model_input = pipeline(
         [
