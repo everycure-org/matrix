@@ -68,7 +68,7 @@ modelling.model_input.drugs_diseases_nodes@spark:
 
 modelling.feat.rtx_kg2:
   <<: [*_kg_dataset, *_model_input_ds]
-  filepath: ${globals:paths.embeddings}/rtx_kg2_nodes
+  filepath: ${globals:paths.modelling}/rtx_kg2_nodes
 
 modelling.model_input.splits:
   <<: [*_pandas_parquet, *_model_input_ds]
