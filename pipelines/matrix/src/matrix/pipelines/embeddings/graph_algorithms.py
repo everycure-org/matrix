@@ -2,7 +2,11 @@ from abc import ABC, abstractmethod
 from typing import List, Any, Optional
 from graphdatascience import GraphDataScience
 import torch
-from torch_geometric.nn import Node2Vec
+from torch_geometric.nn import Node2Vec, GraphSAGE
+from torch_geometric.loader import LinkNeighborLoader
+import torch.nn.functional as F
+from tqdm import tqdm
+from torch_geometric.data import Data
 from . import torch_utils as tu
 
 
@@ -274,7 +278,7 @@ class PygNode2Vec(GraphAlgorithm):
         optimizer_class = getattr(torch.optim, self._optimizer)
         optimizer = optimizer_class(list(self._model.parameters()), lr=self._lr)
 
-        # Train the model
+        # Create a loader and train the model
         loader = self._model.loader(batch_size=self._batch_size, shuffle=True, num_workers=self._num_workers)
         self._model.train()
 
@@ -320,3 +324,135 @@ class PygNode2Vec(GraphAlgorithm):
         with torch.no_grad():
             embeddings = n2vec.embedding.weight.cpu()
         tu.write_embeddings(gds, embeddings, write_property, node_index)
+
+
+class PygGraphSAGE(GraphAlgorithm):
+    """PyTorch Geometric GraphSAGE algorithm class."""
+
+    def __init__(
+        self,
+        num_layers: int = 2,
+        hidden_channels: int = 256,
+        embedding_dim: int = 512,
+        random_seed: Optional[int] = None,
+        concurrency: int = 4,
+        epochs: int = 10,
+        batch_size: int = 128,
+        num_neighbors: List[int] = [25, 10],
+        num_workers: int = 0,
+        learning_rate: float = 0.01,
+        optimizer: str = "Adam",
+        aggregator: str = "mean",
+        dropout: float = 0.0,
+        neg_sampling_ratio: float = 1.0,
+    ):
+        """PyTorch Geometric GraphSAGE Attributes."""
+        super().__init__(embedding_dim, random_seed, concurrency)
+        self._num_layers = num_layers
+        self._hidden_channels = hidden_channels
+        self._model = None
+        self._loss = None
+        self._epochs = epochs
+        self._batch_size = batch_size
+        self._num_neighbors = num_neighbors
+        self._num_workers = num_workers
+        self._lr = learning_rate
+        self._optimizer = optimizer
+        self._aggregator = aggregator
+        self._dropout = dropout
+        self._neg_sampling_ratio = neg_sampling_ratio
+
+    def run(
+        self,
+        gds: GraphDataScience,
+        graph: Any,
+        model_name: str,
+        write_property: str,
+        subgraph: str,
+        device: str = "cpu",
+    ):
+        """Train the algorithm."""
+        # Convert the graph to PyTorch Geometric format
+        edge_index, node_to_index, x = tu.prepare_graph_data(gds, subgraph, properties=True)
+        data = Data(x=x, edge_index=edge_index)
+
+        # Initialize the GraphSAGE model
+        self._model = GraphSAGE(
+            in_channels=x.shape[1],
+            hidden_channels=self._hidden_channels,
+            num_layers=self._num_layers,
+            out_channels=x.shape[1],  # self._embedding_dim,
+            dropout=self._dropout,
+            aggr=self._aggregator,
+        ).to(device)
+        # Initialize optimizer
+        optimizer_class = getattr(torch.optim, self._optimizer)
+        optimizer = optimizer_class(self._model.parameters(), lr=self._lr)
+
+        # Create data loader
+        loader = LinkNeighborLoader(
+            data=data,
+            num_neighbors=self._num_neighbors,
+            batch_size=self._batch_size,
+            shuffle=True,
+            neg_sampling_ratio=self._neg_sampling_ratio,
+            num_workers=self._num_workers,
+        )
+        # Train the model
+        self._model.train()
+        self._loss = []
+        for epoch in tqdm(range(self._epochs), desc="Training"):
+            epoch_loss = 0
+            for batch in loader:
+                batch = batch.to(device)
+                optimizer.zero_grad()
+                h = self._model(batch.x, batch.edge_index)
+                h_src = h[batch.edge_label_index[0]]
+                h_dst = h[batch.edge_label_index[1]]
+                pred = (h_src * h_dst).sum(dim=-1)
+                loss = F.binary_cross_entropy_with_logits(pred, batch.edge_label)
+                loss.backward()
+                optimizer.step()
+                epoch_loss += loss.item()
+
+            avg_loss = epoch_loss / len(loader)
+            self._loss.append(avg_loss)
+
+        return self._model, {"loss": self._loss}
+
+    def return_loss(self):
+        """Return loss."""
+        return self._loss
+
+    def predict_write(
+        self,
+        gds: GraphDataScience,
+        graph: Any,
+        model_name: str,
+        state_dict: torch.Tensor,
+        write_property: str,
+        graph_name: str,
+        device: str = "cpu",
+    ):
+        """Predict and save."""
+        # Get edge index and node features
+        edge_index, node_to_index, x = tu.prepare_graph_data(gds, graph_name, properties=True)
+
+        # Initialize the GraphSAGE model
+        model = GraphSAGE(
+            in_channels=x.shape[1],
+            hidden_channels=self._hidden_channels,
+            num_layers=self._num_layers,
+            out_channels=x.shape[1],  # self._embedding_dim,
+            dropout=self._dropout,
+            aggr=self._aggregator,
+        ).to(device)
+        # Load the trained state
+        model.load_state_dict(state_dict)
+        model.eval()
+
+        # Generate embeddings
+        with torch.no_grad():
+            embeddings = model(x.to(device), edge_index.to(device)).cpu()
+        # Write embeddings back to the graph
+        tu.write_embeddings(gds, embeddings, write_property, list(node_to_index.keys()))

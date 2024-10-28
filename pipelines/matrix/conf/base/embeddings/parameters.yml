@@ -104,23 +104,40 @@ embeddings.topological:
 #   walks_per_node: 10
 #   window_size: 100
 
+# embeddings.topological_estimator:
+#   object: matrix.pipelines.embeddings.graph_algorithms.PygNode2Vec
+#   embedding_dim: 512
+#   walk_length: 30
+#   walks_per_node: 10
+#   q: 1.0
+#   p: 1.0
+#   context_size: 10
+#   concurrency: 4
+#   num_negative_samples: 1
+#   num_workers: 0
+#   epochs: 10
+#   batch_size: 128
+#   random_seed: 42
+#   learning_rate: 0.01
+#   optimizer: Adam
+#   sparse: False
+
 embeddings.topological_estimator:
-  object: matrix.pipelines.embeddings.graph_algorithms.PygNode2Vec
+  object: matrix.pipelines.embeddings.graph_algorithms.PygGraphSAGE
   embedding_dim: 512
-  walk_length: 30
-  walks_per_node: 10
-  q: 1.0
-  p: 1.0
-  context_size: 10
+  num_layers: 2
+  hidden_channels: 256
+  num_neighbors: [25, 10]
   concurrency: 4
-  num_negative_samples: 1
   num_workers: 0
   epochs: 10
   batch_size: 128
   random_seed: 42
   learning_rate: 0.01
   optimizer: Adam
-  sparse: False
+  aggregator: mean
+  dropout: 0.0
+  neg_sampling_ratio: 1.
 
 # embeddings.topological_estimator:
 #   object: matrix.pipelines.embeddings.graph_algorithms.GDSGraphSage
