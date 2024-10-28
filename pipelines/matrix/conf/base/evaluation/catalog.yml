@@ -17,6 +17,6 @@ evaluation.prm.clinical_trials_data:
   <<: *_pandas_parquet
   filepath: ${globals:paths.evaluation}/model_output/{model}/{evaluation}/pairs/model_output
 
-"evaluation.{model}.{evaluation}.result":
-  filepath: ${globals:paths.evaluation}/{model}/{evaluation}/result.yml
+"evaluation.{model}.{evaluation}.model_output.result":
+  filepath: ${globals:paths.evaluation}/model_output/{model}/{evaluation}/result.yml
   type:  yaml.YAMLDataset
