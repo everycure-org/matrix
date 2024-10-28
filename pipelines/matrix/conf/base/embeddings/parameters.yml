@@ -70,7 +70,7 @@ embeddings.topological:
     configuration:
       relationshipProperties: 
         include_in_graphsage:
-          property: include_in_graphsage
+          property: 'include_in_graphsage'
           defaultValue: 1
   
   # Configuration to apply filtering on projected GDS 
@@ -138,6 +138,8 @@ embeddings.topological_estimator:
   aggregator: mean
   dropout: 0.0
   neg_sampling_ratio: 1.
+  criterion: 
+    object: matrix.pipelines.embeddings.torch_utils.BCE_contrastive_loss
 
 # embeddings.topological_estimator:
 #   object: matrix.pipelines.embeddings.graph_algorithms.GDSGraphSage

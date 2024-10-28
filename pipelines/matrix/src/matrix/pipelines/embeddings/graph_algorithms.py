@@ -4,7 +4,6 @@ from graphdatascience import GraphDataScience
 import torch
 from torch_geometric.nn import Node2Vec, GraphSAGE
 from torch_geometric.loader import LinkNeighborLoader
-import torch.nn.functional as F
 from tqdm import tqdm
 from torch_geometric.data import Data
 from . import torch_utils as tu
@@ -254,11 +253,16 @@ class PygNode2Vec(GraphAlgorithm):
         write_property: str,
         subgraph: str,
         device: str = "cpu",
+        relationship_projection: dict = None,
+        node_projection: dict = None,
+        config: dict = None,
     ):
         """Train the algorithm."""
-
-        # Convert the graph to PyTorch Geometric format
-        edge_index, _ = tu.prepare_graph_data(gds, subgraph)
+        node_properties = node_projection["Entity"]["properties"]
+        edges_excluded = config["relationshipProperties"]["include_in_graphsage"]["property"]
+        edge_index, _ = tu.prepare_graph_data(
+            gds, subgraph, properties=False, node_properties=node_properties, edge_excluded=edges_excluded
+        )
         # edge_index = tu.generate_edge_index(gds, subgraph)
 
         # Initialize the Node2Vec model
@@ -299,10 +303,19 @@ class PygNode2Vec(GraphAlgorithm):
         write_property: str,
         graph_name: str,
         device: str = "cpu",
+        projection: dict = None,
+        relationship_projection: dict = None,
+        node_projection: dict = None,
+        config: dict = None,
     ):
         """Predict and save."""
         # get edge index
-        edge_index, node_index = tu.prepare_graph_data(gds, graph_name)
+        node_properties = node_projection["Entity"]["properties"]
+        edges_excluded = config["relationshipProperties"]["include_in_graphsage"]["property"]
+
+        edge_index, node_index = tu.prepare_graph_data(
+            gds, graph_name, properties=False, node_properties=node_properties, edges_excluded=edges_excluded
+        )
 
         # Generate embeddings
         n2vec = Node2Vec(
@@ -345,6 +358,7 @@ class PygGraphSAGE(GraphAlgorithm):
         aggregator: str = "mean",
         dropout: float = 0.0,
         neg_sampling_ratio: float = 1.0,
+        criterion: str = None,
     ):
         """PyTorch Geometric GraphSAGE Attributes."""
         super().__init__(embedding_dim, random_seed, concurrency)
@@ -352,6 +366,7 @@ class PygGraphSAGE(GraphAlgorithm):
         self._hidden_channels = hidden_channels
         self._model = None
         self._loss = None
+        self._criterion = criterion
         self._epochs = epochs
         self._batch_size = batch_size
         self._num_neighbors = num_neighbors
@@ -370,10 +385,18 @@ class PygGraphSAGE(GraphAlgorithm):
         write_property: str,
         subgraph: str,
         device: str = "cpu",
+        relationship_projection: dict = None,
+        node_projection: dict = None,
+        config: dict = None,
     ):
         """Train the algorithm."""
         # Convert the graph to PyTorch Geometric format
-        edge_index, node_to_index, x = tu.prepare_graph_data(gds, subgraph, properties=True)
+        node_properties = node_projection["Entity"]["properties"]
+        edges_excluded = config["relationshipProperties"]["include_in_graphsage"]["property"]
+
+        edge_index, _, x = tu.prepare_graph_data(
+            gds, subgraph, properties=True, node_properties=node_properties, edges_excluded=edges_excluded
+        )
         data = Data(x=x, edge_index=edge_index)
 
         # Initialize the GraphSAGE model
@@ -406,14 +429,12 @@ class PygGraphSAGE(GraphAlgorithm):
             for batch in loader:
                 batch = batch.to(device)
                 optimizer.zero_grad()
-                h = self._model(batch.x, batch.edge_index)
-                h_src = h[batch.edge_label_index[0]]
-                h_dst = h[batch.edge_label_index[1]]
-                pred = (h_src * h_dst).sum(dim=-1)
-                loss = F.binary_cross_entropy_with_logits(pred, batch.edge_label)
+                out = self._model(batch.x, batch.edge_index)
+                loss = self._criterion(out, batch.edge_label, batch.edge_label_index)
                 loss.backward()
                 optimizer.step()
                 epoch_loss += loss.item()
+                print(f"Epoch {epoch}; Loss", loss)
 
             avg_loss = epoch_loss / len(loader)
             self._loss.append(avg_loss)
@@ -433,10 +454,17 @@ class PygGraphSAGE(GraphAlgorithm):
         write_property: str,
         graph_name: str,
         device: str = "cpu",
+        relationship_projection: dict = None,
+        node_projection: dict = None,
+        config: dict = None,
     ):
         """Predict and save."""
         # Get edge index and node features
-        edge_index, node_to_index, x = tu.prepare_graph_data(gds, graph_name, properties=True)
+        node_properties = node_projection["Entity"]["properties"]
+        edges_excluded = config["relationshipProperties"]["include_in_graphsage"]["property"]
+        edge_index, node_to_index, x = tu.prepare_graph_data(
+            gds, graph_name, properties=True, node_properties=node_properties, edges_excluded=edges_excluded
+        )
 
         # Initialize the GraphSAGE model
         model = GraphSAGE(
