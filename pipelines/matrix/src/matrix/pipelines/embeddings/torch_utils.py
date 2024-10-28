@@ -12,7 +12,7 @@ def generate_dummy_model():
     )
 
 
-def prepare_graph_data(gds: GraphDataScience, graph_name: str):
+def prepare_graph_data(gds: GraphDataScience, graph_name: str, properties: bool = False):
     """
     Prepare graph data for PyTorch Geometric models using Cypher queries.
 
@@ -26,14 +26,26 @@ def prepare_graph_data(gds: GraphDataScience, graph_name: str):
             - node_to_index (dict): A mapping from Neo4j node IDs to consecutive indices.
     """
     # Get all nodes
-    node_result = gds.run_cypher(f"""
-        CALL gds.graph.streamNodeProperties('{graph_name}', ['pca_embedding'])
-        YIELD nodeId
-        RETURN nodeId
-    """)
-
+    if properties:
+        node_query = f"""
+            CALL gds.graph.streamNodeProperties('{graph_name}', ['pca_embedding'])
+            YIELD nodeId, propertyValue
+            RETURN nodeId, propertyValue
+        """
+    else:
+        node_query = f"""
+            CALL gds.graph.streamNodeProperties('{graph_name}', ['pca_embedding'])
+            YIELD nodeId
+            RETURN nodeId
+        """
+    node_result = gds.run_cypher(node_query)
     # Create node_to_index mapping
-    node_to_index = {row["nodeId"]: idx for idx, row in node_result.iterrows()}
+    node_to_index = {}
+    node_features = [] if properties else None
+    for idx, row in node_result.iterrows():
+        node_to_index[row["nodeId"]] = idx
+        if properties:
+            node_features.append(row["propertyValue"])
 
     # Get all edges
     edge_result = gds.run_cypher(f"""
@@ -51,7 +63,12 @@ def prepare_graph_data(gds: GraphDataScience, graph_name: str):
         dtype=torch.long,
     )
 
-    return edge_index, node_to_index
+    if properties:
+        node_features = torch.tensor(node_features, dtype=torch.float)
+        print(node_features)
+        return edge_index, node_to_index, node_features
+    else:
+        return edge_index, node_to_index
 
 
 # def prepare_graph_data(gds: GraphDataScience, graph_name: str):
@@ -183,7 +200,15 @@ def write_embeddings(gds: GraphDataScience, embeddings: torch.Tensor, write_prop
     """
     total_nodes = len(node_index)
     batch_size = 1000
-    node_ids = list(node_index.values())
+
+    if isinstance(node_index, dict):
+        node_ids = list(node_index.keys())
+    else:
+        node_ids = node_index
+
+    if len(node_ids) != total_nodes:
+        raise ValueError(f"Number of node IDs ({len(node_ids)}) does not match number of embeddings ({total_nodes})")
+
     for i in tqdm(range(0, total_nodes, batch_size)):
         batch_nodes = node_ids[i : i + batch_size]
         batch_embeddings = embeddings[i : i + batch_size].tolist()
