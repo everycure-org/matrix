@@ -10,7 +10,7 @@ In order to develop predictive models or thoroughly analyse our KG, we need to r
 * GraphSAGE (GDS)
 * Node2Vec (GDS)
 * Node2Vec (Pyg)
-* Metapath2Vec (PyG) (in-development)
+* GraphSAGE (PyG)
 
 ## GDS vs PyG
 
@@ -58,25 +58,72 @@ embeddings.topological_estimator:
   sparse: False
 ```
 
+### PyTorch Geometric GraphSAGE
+The `PygGraphSAGE` model is a custom implementation of the GraphSAGE algorithm using PyTorch Geometric. It allows for flexible architecture design and training processes. Below are the parameters required to calculate embeddings using the `PygGraphSAGE` model - note that it implements a custom criterion which can be defined in `torch_utils.py`:
+
+```yaml
+embeddings.topological_estimator:
+  object: matrix.pipelines.embeddings.graph_algorithms.PygGraphSAGE
+  num_layers: 2
+  hidden_channels: 256
+  embedding_dim: 512
+  random_seed: 42
+  concurrency: 4
+  epochs: 10
+  batch_size: 128
+  num_neighbors: [25, 10]
+  num_workers: 0
+  learning_rate: 0.01
+  optimizer: Adam
+  aggregator: mean
+  dropout: 0.0
+  neg_sampling_ratio: 1.0
+  criterion: 
+    object: matrix.pipelines.embeddings.torch_utils.BCE_contrastive_loss
+```
+
+#### GDS Node2Vec
+The GDS Node2Vec model is a skip-gram based method (similar to word2vec) which approximates node embeddings based on biased random walks. It **does not require attributes in the numerical format**, thus if possible, you should skip the node attribute encoding step (usually done with PubMedBERT or OpenAI) if possible. 
+
+Below are the parameters required to calculate embeddings using the GDS Node2Vec model:
+
+```yaml
+embeddings.topological_estimator:
+  object: matrix.pipelines.embeddings.graph_algorithms.GDSNode2Vec 
+  concurrency: 4
+  embedding_dim: 512
+  random_seed: 42
+  iterations: 100
+  in_out_factor: 1
+  return_factor: 1
+  initial_learning_rate: 0.025
+  min_learning_rate: 0.000025
+  negative_sampling_rate: 5
+  walk_length: 30
+  walks_per_node: 10
+  window_size: 100
+```
+
 ### GDS GraphSAGE
 Node2Vec is a skip-gram based method (similar to word2vec) which approximates node embeddings based on the biased random walks. It **does not require attributes in the numerical format** thus if possible, you should skip the node attribute encoding step (usually done with PubMedBERT or OpenAI) if possible. 
 
 Below are parameters needed to use GDS Node2Vec.
 ```yaml
 embeddings.topological_estimator:
-object: matrix.pipelines.embeddings.graph_algorithms.GDSGraphSage
-concurrency: 4
-iterations: 100
-sample_sizes: [25, 10]
-tolerance: 1e-8
-embedding_dim: 512
-batch_size: 5000
-epochs: 10
-search_depth: 100
-learning_rate: 0.01
-activation_function: ReLu
-random_seed: 42
-feature_properties: [_pca_property]
+  object: matrix.pipelines.embeddings.graph_algorithms.GDSGraphSage
+  concurrency: 4
+  iterations: 100
+  sample_sizes: [25, 10]
+  tolerance: 1e-8
+  embedding_dim: 512
+  batch_size: 5000
+  epochs: 10
+  search_depth: 100
+  learning_rate: 0.01
+  activation_function: ReLu
+  random_seed: 42
+  feature_properties: [*_pca_property]
+  negative_sampling_weight: 20
 ```
 
 ### Custom PyG model
