@@ -30,7 +30,6 @@ def conf_source(matrix_root: Path) -> Path:
 
 @pytest.fixture(scope="session")
 def config_loader(conf_source: Path) -> OmegaConfigLoader:
-    """Instantiate a config loader."""
     return OmegaConfigLoader(
         env="base",
         base_env="base",
@@ -51,7 +50,6 @@ def config_loader(conf_source: Path) -> OmegaConfigLoader:
 
 @pytest.fixture(scope="session")
 def kedro_context(config_loader: OmegaConfigLoader) -> KedroContext:
-    """Instantiate a KedroContext."""
     return KedroContext(
         env="base",
         package_name="matrix",
@@ -63,7 +61,6 @@ def kedro_context(config_loader: OmegaConfigLoader) -> KedroContext:
 
 @pytest.fixture(scope="session")
 def spark() -> Generator[SparkSession, None, None]:
-    """Instantiate the Spark session."""
     spark = (
         SparkSession.builder.config("spark.sql.shuffle.partitions", 1)
         .config("spark.executorEnv.PYTHONPATH", "src")
