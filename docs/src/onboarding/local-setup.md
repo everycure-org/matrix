@@ -88,6 +88,10 @@ keeping the services running in the background.
 ```bash
 make compose_up
 ```
+This command wraps the following commands:
+```bash
+docker compose -f compose/docker-compose.yml up -d --wait --remove-orphans
+```
 
 To validate whether the setup is running, navigate to [localhost](http://localhost:7474/) in your browser, this will open the Neo4J dashboard. Use `neo4j` and `admin` as the username and password combination sign in. Please note that the Neo4J database would be empty at this stage.
 
