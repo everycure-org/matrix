@@ -40,6 +40,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 name="copy-ground_truths-neg",
                 tags=["copy"]
             ),
+            
             # Make sample and save files in sample directory
             node(
                 func=nodes.get_random_selection_from_rtx,
@@ -48,18 +49,31 @@ def create_pipeline(**kwargs) -> Pipeline:
                     "edges" : "sample.int.rtx-edges",
                 },
                 outputs={
-                    "nodes": "ingestion.raw.rtx_kg2.nodes@spark",
-                    "edges": "ingestion.raw.rtx_kg2.edges@spark",
+                    "nodes": "ingestion.int.rtx_kg2.nodes",
+                    "edges": "ingestion.int.rtx_kg2.edges",
                 },
                 name="prefilter_rtx_kg2",
                 tags=["sample"]
-            )
+            ),
+            # ec-medical-team
+            node(
+                func=lambda x: x.withColumn("kg_source", F.lit("ec_medical_team")),
+                inputs=["ingestion.raw.ec_medical_team.nodes@spark"],
+                outputs="ingestion.int.ec_medical_team.nodes",
+                name="write_ec_medical_team_nodes",
+                tags=["ec_medical_team"],
+            ),
+            node(
+                func=lambda x: x.withColumn("kg_source", F.lit("ec_medical_team")),
+                inputs=["ingestion.raw.ec_medical_team.edges@spark"],
+                outputs="ingestion.int.ec_medical_team.edges",
+                name="write_ec_medical_team_edges",
+                tags=["ec_medical_team"],
+            ),
         ]
     )
 
 
 
-'''
-'''
 
 
