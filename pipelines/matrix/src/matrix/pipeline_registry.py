@@ -4,6 +4,9 @@ from typing import Dict
 
 from kedro.pipeline import Pipeline
 
+from matrix.pipelines.data_release.pipeline import (
+    create_pipeline as create_data_release_pipeline,
+)
 from matrix.pipelines.embeddings.pipeline import (
     create_pipeline as create_embeddings_pipeline,
 )
@@ -31,9 +34,6 @@ from matrix.pipelines.modelling.pipeline import (
 from matrix.pipelines.preprocessing.pipeline import (
     create_pipeline as create_preprocessing_pipeline,
 )
-from matrix.pipelines.release.pipeline import (
-    create_pipeline as create_release_pipeline,
-)
 
 
 def register_pipelines() -> Dict[str, Pipeline]:
@@ -53,14 +53,14 @@ def register_pipelines() -> Dict[str, Pipeline]:
     )
     pipelines["preprocessing"] = create_preprocessing_pipeline()
     pipelines["ingestion"] = create_ingestion_pipeline()
-    pipelines["release"] = pipelines["__default__"] + pipelines["ingestion"] + pipelines["preprocessing"]
+    pipelines["release"] = pipelines["__default__"] + pipelines["ingestion"]  # + pipelines["preprocessing"]
     pipelines["preprocessing"] = create_preprocessing_pipeline()
     pipelines["modelling"] = create_modelling_pipeline()
     pipelines["embeddings"] = create_embeddings_pipeline()
     pipelines["fabricator"] = create_fabricator_pipeline()
     pipelines["integration"] = create_integration_pipeline()
     pipelines["evaluation"] = create_evaluation_pipeline()
-    pipelines["release"] = create_release_pipeline()
+    pipelines["data_release"] = create_data_release_pipeline()
     pipelines["matrix_generation"] = create_matrix_pipeline()
     pipelines["inference"] = create_inference_pipeline()
     pipelines["test"] = (
@@ -71,7 +71,7 @@ def register_pipelines() -> Dict[str, Pipeline]:
         + create_modelling_pipeline()
         + create_matrix_pipeline()
         + create_evaluation_pipeline()
-        + create_release_pipeline()
+        + create_data_release_pipeline()
     )
     pipelines["all"] = create_ingestion_pipeline() + pipelines["__default__"]
     pipelines["evaluate_model"] = create_matrix_pipeline() + create_evaluation_pipeline()
