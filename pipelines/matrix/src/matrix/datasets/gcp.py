@@ -18,7 +18,7 @@ from kedro_datasets.spark import SparkDataset
 from kedro_datasets.spark.spark_dataset import _get_spark, _strip_dbfs_prefix
 from matrix.hooks import SparkHooks
 from pygsheets import Spreadsheet, Worksheet
-from pyspark.sql import DataFrame, SparkSession
+from pyspark.sql import DataFrame
 from refit.v1.core.inject import _parse_for_objects
 
 
@@ -76,19 +76,10 @@ class SparkWithSchemaDataset(SparkDataset):
 
 
 class BigQueryTableDataset(SparkDataset):
-    """Dataset to load and save data from BigQuery.
-
-    Kedro dataset to load and write data from BigQuery. This is essentially a wrapper
-    for the [BigQuery Spark Connector](https://github.com/GoogleCloudDataproc/spark-bigquery-connector)
-    """
-
-    # parquet does not support arrays (our embeddings)
-    # https://github.com/GoogleCloudDataproc/spark-bigquery-connector/issues/101
-    DEFAULT_SAVE_ARGS = {"intermediateFormat": "orc"}
-
     def __init__(  # noqa: PLR0913
         self,
         *,
+        filepath: str,
         project_id: str,
         dataset: str,
         table: str,
@@ -115,13 +106,16 @@ class BigQueryTableDataset(SparkDataset):
             kwargs: Keyword Args passed to parent.
         """
         self._project_id = project_id
-        self._dataset = dataset
+        self._filepath = filepath
 
         identifier = re.sub(r"[^a-zA-Z0-9_-]", "_", str(identifier))
         self._table = f"{table}_{identifier}"
+        self._dataset_id = f"{self._project_id}.{self._dataset}"
+
+        self._client = bigquery.Client()
 
         super().__init__(
-            filepath="filepath",
+            filepath=filepath,
             save_args=save_args,
             load_args=load_args,
             credentials=credentials,
@@ -131,36 +125,128 @@ class BigQueryTableDataset(SparkDataset):
         )
 
     def _load(self) -> Any:
-        # DEBT potentially a better way would be to globally overwrite the getOrCreate() call in the spark library and link back to SparkSession
         SparkHooks._initialize_spark()
-        spark_session = SparkSession.builder.getOrCreate()
-
-        return spark_session.read.format("bigquery").load(f"{self._project_id}.{self._dataset}.{self._table}")
+        return super()._load()
 
     def _save(self, data: DataFrame) -> None:
-        bq_client = bigquery.Client()
-        dataset_id = f"{self._project_id}.{self._dataset}"
+        # Invoke saving of the underlying spark dataset
+        super()._save(data)
 
-        # Check if the dataset exists
+        # Index the dataset in bigquery
+        self._create_dataset()
+
+        job_config = bigquery.LoadJobConfig(
+            write_disposition=bigquery.WriteDisposition.WRITE_TRUNCATE,
+            source_format=bigquery.SourceFormat.PARQUET,
+        )
+
+        load_job = self._client.load_table_from_uri(
+            self._filepath, f"{self._dataset_id}.{self._table}", job_config=job_config
+        )  # Make an API request.
+
+        load_job.result()
+
+    def _create_dataset(self) -> str:
         try:
-            bq_client.get_dataset(dataset_id)
-            print(f"Dataset {dataset_id} already exists")
+            self._client.get_dataset(self._dataset_id)
+            print(f"Dataset {self._dataset_id} already exists")
         except exceptions.NotFound:
-            print(f"Dataset {dataset_id} is not found, will attempt creating it now.")
+            print(f"Dataset {self._dataset_id} is not found, will attempt creating it now.")
 
             # Dataset doesn't exist, so let's create it
-            dataset = bigquery.Dataset(dataset_id)
+            dataset = bigquery.Dataset(self._dataset_id)
             # dataset.location = "US"  # Specify the location, e.g., "US" or "EU"
 
-            dataset = bq_client.create_dataset(dataset, timeout=30)
+            dataset = self._client.create_dataset(dataset, timeout=30)
             print(f"Created dataset {self._project_id}.{dataset.dataset_id}")
 
-        (
-            data.write.format("bigquery")
-            .options(**self._save_args)
-            .mode("overwrite")
-            .save(f"{self._project_id}.{self._dataset}.{self._table}")
-        )
+
+# class BigQueryTableDataset(SparkDataset):
+#     """Dataset to load and save data from BigQuery.
+
+#     Kedro dataset to load and write data from BigQuery. This is essentially a wrapper
+#     for the [BigQuery Spark Connector](https://github.com/GoogleCloudDataproc/spark-bigquery-connector)
+#     """
+
+#     # parquet does not support arrays (our embeddings)
+#     # https://github.com/GoogleCloudDataproc/spark-bigquery-connector/issues/101
+#     DEFAULT_SAVE_ARGS = {"intermediateFormat": "orc"}
+
+#     def __init__(  # noqa: PLR0913
+#         self,
+#         *,
+#         project_id: str,
+#         dataset: str,
+#         table: str,
+#         identifier: str,
+#         load_args: dict[str, Any] = None,
+#         save_args: dict[str, Any] = None,
+#         version: Version = None,
+#         credentials: dict[str, Any] = None,
+#         metadata: dict[str, Any] = None,
+#         **kwargs,
+#     ) -> None:
+#         """Creates a new instance of ``Neo4JDataset``.
+
+#         Args:
+#             project_id: project identifier.
+#             dataset: Name of the BigQuery dataset.
+#             table: name of the table.
+#             identifier: unique identfier of the table.
+#             load_args: Arguments to pass to the load method.
+#             save_args: Arguments to pass to the save
+#             version: Version of the dataset.
+#             credentials: Credentials to connect to the Neo4J instance.
+#             metadata: Metadata to pass to neo4j connector.
+#             kwargs: Keyword Args passed to parent.
+#         """
+#         self._project_id = project_id
+#         self._dataset = dataset
+
+#         identifier = re.sub(r"[^a-zA-Z0-9_-]", "_", str(identifier))
+#         self._table = f"{table}_{identifier}"
+
+#         super().__init__(
+#             filepath="filepath",
+#             save_args=save_args,
+#             load_args=load_args,
+#             credentials=credentials,
+#             version=version,
+#             metadata=metadata,
+#             **kwargs,
+#         )
+
+#     def _load(self) -> Any:
+#         # DEBT potentially a better way would be to globally overwrite the getOrCreate() call in the spark library and link back to SparkSession
+#         SparkHooks._initialize_spark()
+#         spark_session = SparkSession.builder.getOrCreate()
+
+#         return spark_session.read.format("bigquery").load(f"{self._project_id}.{self._dataset}.{self._table}")
+
+#     def _save(self, data: DataFrame) -> None:
+#         bq_client = bigquery.Client()
+#         dataset_id = f"{self._project_id}.{self._dataset}"
+
+#         # Check if the dataset exists
+#         try:
+#             bq_client.get_dataset(dataset_id)
+#             print(f"Dataset {dataset_id} already exists")
+#         except exceptions.NotFound:
+#             print(f"Dataset {dataset_id} is not found, will attempt creating it now.")
+
+#             # Dataset doesn't exist, so let's create it
+#             dataset = bigquery.Dataset(dataset_id)
+#             # dataset.location = "US"  # Specify the location, e.g., "US" or "EU"
+
+#             dataset = bq_client.create_dataset(dataset, timeout=30)
+#             print(f"Created dataset {self._project_id}.{dataset.dataset_id}")
+
+#         (
+#             data.write.format("bigquery")
+#             .options(**self._save_args)
+#             .mode("overwrite")
+#             .save(f"{self._project_id}.{self._dataset}.{self._table}")
+#         )
 
 
 class GoogleSheetsDataset(AbstractVersionedDataset[pd.DataFrame, pd.DataFrame]):
