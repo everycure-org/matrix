@@ -87,29 +87,29 @@ inference.int.request_type:
 
 inference.model_input.drug_disease_pairs:
   <<: [*_pandas_parquet]
-  filepath: ${globals:paths.tmp}/drug_disease_pairs
+  filepath: ${globals:paths.tmp}/model_input/drug_disease_pairs
 
 inference.int.drug_list@pandas:
   <<: *_pandas_parquet
-  filepath: ${globals:paths.tmp}/drug_list_infer
+  filepath: ${globals:paths.tmp}/int/drug_list_infer
 
 inference.int.disease_list@pandas:
   <<: *_pandas_parquet
-  filepath: ${globals:paths.tmp}/disease_list_infer
+  filepath: ${globals:paths.tmp}/int/disease_list_infer
 
 inference.int.drug_list@spark:
   <<: *_spark_parquet
-  filepath: ${globals:paths.tmp}/drug_list_infer
+  filepath: ${globals:paths.tmp}/int/drug_list_infer
 
 inference.int.disease_list@spark:
   <<: *_spark_parquet
-  filepath: ${globals:paths.tmp}/disease_list_infer
+  filepath: ${globals:paths.tmp}/int/disease_list_infer
 
 
 # NOTE: Sheet is created for ech model
 "inference.{model}.model_output.predictions":
   <<: *_pandas_parquet
-  filepath: ${globals:paths.tmp}/{model}/predictions
+  filepath: ${globals:paths.tmp}/model_output/{model}/predictions
 
 "inference.{model}.reporting.report":
   <<: [*_sheets_dataset]
@@ -130,16 +130,16 @@ inference.int.disease_list@spark:
   artifact_path: "histogram"
   dataset:
     type: matplotlib.MatplotlibWriter
-    filepath: ${globals:paths.tmp}/{model}/histogram_plot.png  
+    filepath: ${globals:paths.tmp}/reporting/{model}/histogram_plot.png  
 
 inference.feat.nodes@spark:
   <<: *_spark_parquet
-  filepath: ${globals:paths.tmp}/matrix_nodes
+  filepath: ${globals:paths.tmp}/feat/matrix_nodes
 
 inference.feat.nodes_kg_ds:
   <<: *_kg_dataset
-  filepath: ${globals:paths.tmp}/inference_nodes_kg
+  filepath: ${globals:paths.tmp}/feat/inference_nodes_kg
 
 inference.prm.matrix_pairs:
   <<: *_pandas_parquet
-  filepath: ${globals:paths.tmp}/inference_pairs
+  filepath: ${globals:paths.tmp}/prm/inference_pairs
