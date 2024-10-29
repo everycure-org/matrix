@@ -1,8 +1,13 @@
 _spark_parquet_ds: &_spark_parquet
   type: matrix.datasets.gcp.LazySparkDataset
   file_format: parquet
+  load_args:
+    header: True
   save_args:
     mode: overwrite
+
+_pandas_parquet: &_pandas_parquet
+  type: pandas.ParquetDataset
 
 _layer_int: &_layer_int
   metadata:
@@ -17,6 +22,18 @@ _layer_prm: &_layer_prm
 # Datasets
 # -------------------------------------------------------------------------
 
+
+# NOTE: We're plugging into the live source as we expect this to change rather,
+# moreover, we consider it highly unlikely that paths would suddently change
+# across biolink versions.
+integration.raw.biolink.predicates:
+  type: kedro_datasets.json.JSONDataset
+  filepath: https://biolink.github.io/biolink-model/predicates.json
+
+integration.raw.biolink.categories:
+  type: kedro_datasets.json.JSONDataset
+  filepath: https://biolink.github.io/biolink-model/categories.json
+
 integration.int.{source}.nodes:
   <<: [*_spark_parquet, *_layer_int]
   filepath: ${globals:paths.integration}/int/{source}/nodes
@@ -24,7 +41,6 @@ integration.int.{source}.nodes:
 integration.int.{source}.edges:
   <<: [*_spark_parquet, *_layer_int]
   filepath: ${globals:paths.integration}/int/{source}/edges
-
 
 # Normalized KGs
 integration.int.{source}.nodes.norm:
@@ -40,7 +56,6 @@ integration.int.{source}.nodes_norm_mapping:
   <<: [*_spark_parquet, *_layer_int]
   filepath: ${globals:paths.integration}/int/{source}/nodes_norm_mapping
 
-
 # Unified KGs
 integration.prm.unified_edges:
   <<: [*_spark_parquet, *_layer_prm]
@@ -49,3 +64,12 @@ integration.prm.unified_edges:
 integration.prm.unified_nodes:
   <<: [*_spark_parquet, *_layer_prm]
   filepath: ${globals:paths.integration}/prm/unified/nodes
+
+# filtered KGs
+integration.prm.filtered_edges:
+  <<: [*_spark_parquet, *_layer_prm]
+  filepath: ${globals:paths.integration}/prm/filtered/edges
+
+integration.prm.filtered_nodes:
+  <<: [*_spark_parquet, *_layer_prm]
+  filepath: ${globals:paths.integration}/prm/filtered/nodes
