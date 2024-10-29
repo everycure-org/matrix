@@ -1,25 +1,35 @@
-"""Module with pytest fixtures."""
+from typing import Generator
+import pytest
 
 from pathlib import Path
 
-import pytest
 from kedro.config import OmegaConfigLoader
 from kedro.framework.context import KedroContext
+from kedro.framework.project import settings
 from kedro.framework.hooks import _create_hook_manager
-from kedro.framework.project import configure_project, settings
-from matrix.resolvers import merge_dicts
-from omegaconf.resolvers import oc
+
 from pyspark.sql import SparkSession
+from omegaconf.resolvers import oc
+from matrix.resolvers import merge_dicts
 
 
-@pytest.fixture(name="conf_source", scope="session")
-def conf_source_fixture() -> str:
-    """Return the project path."""
-    return str(Path.cwd() / settings.CONF_SOURCE)
+@pytest.fixture(scope="session")
+def matrix_root() -> Path:
+    return Path(__file__).parent.parent
 
 
-@pytest.fixture(name="config_loader", scope="session")
-def config_loader_fixture(conf_source) -> OmegaConfigLoader:
+@pytest.fixture(scope="session")
+def test_resources_root() -> Path:
+    return Path(__file__).parent / "resources"
+
+
+@pytest.fixture(scope="session")
+def conf_source(matrix_root: Path) -> Path:
+    return matrix_root / settings.CONF_SOURCE
+
+
+@pytest.fixture(scope="session")
+def config_loader(conf_source: Path) -> OmegaConfigLoader:
     """Instantiate a config loader."""
     return OmegaConfigLoader(
         env="base",
@@ -39,8 +49,8 @@ def config_loader_fixture(conf_source) -> OmegaConfigLoader:
     )
 
 
-@pytest.fixture(name="kedro_context", scope="session")
-def kedro_context_fixture(config_loader) -> KedroContext:
+@pytest.fixture(scope="session")
+def kedro_context(config_loader: OmegaConfigLoader) -> KedroContext:
     """Instantiate a KedroContext."""
     return KedroContext(
         env="base",
@@ -51,14 +61,8 @@ def kedro_context_fixture(config_loader) -> KedroContext:
     )
 
 
-@pytest.fixture(name="configure_matrix_project", scope="session")
-def configure_matrix_project_fixture():
-    """Configure the project for testing."""
-    configure_project("matrix")
-
-
 @pytest.fixture(scope="session")
-def spark():
+def spark() -> Generator[SparkSession, None, None]:
     """Instantiate the Spark session."""
     spark = (
         SparkSession.builder.config("spark.sql.shuffle.partitions", 1)

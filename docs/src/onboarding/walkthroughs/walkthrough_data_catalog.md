@@ -127,9 +127,9 @@ ingestion.raw.rtx_kg2.edges@spark:
 	
 ingestion.int.rtx_kg2.nodes:
   <<: [*_spark_parquet, *_layer_int]
-  filepath: ${globals:paths.int}/rtx_kg2/nodes
+  filepath: ${globals:paths.integration}/rtx_kg2/nodes
 
 ingestion.int.rtx_kg2.edges:
   <<: [*_spark_parquet, *_layer_int]
-  filepath: ${globals:paths.int}/rtx_kg2/edges
+  filepath: ${globals:paths.integration}/rtx_kg2/edges
 ```

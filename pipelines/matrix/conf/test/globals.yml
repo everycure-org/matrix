@@ -1,17 +1,26 @@
+run_name: test-run
 versions:
-  release: test
+  release: test-release
 
 openai:
   endpoint: ${oc.env:OPENAI_ENDPOINT, http://localhost:1080/v1}
   api_key: dummy
 
 paths:
-  raw: data/test/01_raw
-  new_raw: data/test/01_raw
-  int: data/test/02_intermediate
-  prm: data/test/03_primary
-  feat: data/test/04_feature
-  model_input: data/test/05_model_input
-  models: data/test/06_models
-  model_output: data/test/07_model_output
-  reporting: data/test/08_reporting
+  raw:                data/test/raw
+  new_raw:            data/test/raw
+
+  # Upstream version-based
+  ingestion:          data/test/ingestion
+
+  # Release-based
+  integration:        data/test/releases/${versions.release}/datasets/integration
+  embeddings:         data/test/releases/${versions.release}/datasets/embeddings
+
+  # Run-based
+  modelling:          data/test/releases/${versions.release}/runs/${run_name}/datasets/modelling
+  evaluation:         data/test/releases/${versions.release}/runs/${run_name}/datasets/evaluation
+  matrix_generation:  data/test/releases/${versions.release}/runs/${run_name}/datasets/matrix_generation
+  inference:          data/test/releases/${versions.release}/runs/${run_name}/datasets/inference
+
+  tmp:                data/test/tmp
