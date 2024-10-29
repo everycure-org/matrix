@@ -1,5 +1,3 @@
-import pytest
-
 from matrix.datasets.gcp import RemoteSparkJDBCDataset
 
 
