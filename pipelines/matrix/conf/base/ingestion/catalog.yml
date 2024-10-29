@@ -1,7 +1,7 @@
 _pandas_csv: &_pandas_csv
   type:  pandas.CSVDataset
 
-_sheets_dataset: &_sheets_dataset
+_drug_disease_sheets_dataset: &_drug_disease_sheets_dataset
   type: matrix.datasets.gcp.GoogleSheetsDataset
   key: 1NUBiI_RTNEDyGX2sovXd5qjRmkvwiusQdkxEPC0lar4
   service_file: conf/local/service-account.json
@@ -295,7 +295,7 @@ ingestion.raw.drug_list@spark:
     index: false
 
 ingestion.reporting.disease_list:
-  <<: [*_sheets_dataset]
+  <<: [*_drug_disease_sheets_dataset]
   save_args:
     overwrite: True
     sheet_name: diseases_${globals:data_sources.ec-disease-list.version}
@@ -313,7 +313,7 @@ ingestion.reporting.disease_list:
     columns: *_gsheet_disease_columns
 
 ingestion.reporting.drug_list:
-  <<: [*_sheets_dataset]
+  <<: [*_drug_disease_sheets_dataset]
   save_args:
     overwrite: True
     sheet_name: drugs_${globals:data_sources.ec-drug-list.version}
