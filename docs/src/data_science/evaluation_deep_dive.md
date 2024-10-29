@@ -40,7 +40,7 @@ We implement time-split validation in our pipeline by using an additional ground
 
 ## The performance metrics in detail
 
-<img src="../assets/deep_dive/matrix_GT.svg" width="700">
+<img src="../assets/deep_dive/matrix_GT.png" width="700">
 
 The input to the evaluation pipeline consists of the matrix pairs dataset with the following information:
 - Flags for pairs in the standard ground truth positive and negative test sets 
@@ -60,7 +60,9 @@ refers to it's position among non-positive (i.e. unknown or known negative) matr
 
 
 The matrix *quantile rank* of a pair measures the proportion of non-positive pairs that have a lower rank than the pair. It is defined as 
-$$QR(d,i) = \frac{\text{rank}(d,i) - 1}{N}$$
+$$
+QR(d,i) = \frac{\text{rank}(d,i) - 1}{N
+$$
 where $N$ is the number of known or known negative pairs in the matrix. This normalized measure ranges from 0 to 1, with lower values indicating higher priority in the ranking.
 
 #### Recall@n
@@ -218,12 +220,16 @@ evaluation.full_matrix:
 ## Appendix: Equivalence between AUROC and MQR (optional)
 
 In this section, we justify the equation
-$$\text{AUROC} = 1 - \text{MQR}.$$
+$$
+\text{AUROC} = 1 - \text{MQR}.
+$$
 
 This relationship depends on the particular notion of $\text{rank}$ that is defined above. It stems from the fact that the AUROC is equal to the probability that a randomly chosen positive datapoint ranks higher than a randomly chosen negative (Hanley et. al.). 
 
 To see this, let $\mathcal{P}$ and $\mathcal{N}$ denote the set of positive and negative datapoints respectively. By the aforementioned characterisation of AUROC,
-$$\text{AUROC} = \mathbb{P}_{x \sim \mathcal{P}} \mathbb{P}_{y \sim \mathcal{N}} [\gamma(x) \geq \gamma(y)]$$
+$$
+\text{AUROC} = \mathbb{P}_{x \sim \mathcal{P}} \mathbb{P}_{y \sim \mathcal{N}} [\gamma(x) \geq \gamma(y)]
+$$
 where $\gamma$ denotes the probability score. Then, 
 $$
 \mathbb{P}_{y \sim \mathcal{N}} [\gamma(x) \geq \gamma(y)]  = \frac{|\set{y \in \mathcal{N} : \gamma(x) \geq \gamma(y)}|}{N} = \frac{N - |\set{y \in \mathcal{N} : \gamma(x) < \gamma(y)}|}{N}
