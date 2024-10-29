@@ -25,6 +25,10 @@ from pyspark.sql import DataFrame, SparkSession
 from refit.v1.core.inject import _parse_for_objects
 
 
+def sanitize_bq_strings(identifier: str) -> str:
+    return re.sub(r"[^a-zA-Z0-9_-]", "_", str(identifier))
+
+
 class LazySparkDataset(SparkDataset):
     """Lazy loading spark datasets to avoid loading spark every run.
 
@@ -95,7 +99,7 @@ class BigQueryTableDataset(SparkDataset):
         project_id: str,
         dataset: str,
         table: str,
-        identifier: str,
+        identifier: str = None,
         load_args: dict[str, Any] = None,
         save_args: dict[str, Any] = None,
         version: Version = None,
@@ -103,7 +107,7 @@ class BigQueryTableDataset(SparkDataset):
         metadata: dict[str, Any] = None,
         **kwargs,
     ) -> None:
-        """Creates a new instance of ``Neo4JDataset``.
+        """Creates a new instance of ``BigQueryTableDataset``.
 
         Args:
             project_id: project identifier.
@@ -118,10 +122,9 @@ class BigQueryTableDataset(SparkDataset):
             kwargs: Keyword Args passed to parent.
         """
         self._project_id = project_id
-        self._dataset = dataset
+        self._dataset = sanitize_bq_strings(dataset)
 
-        identifier = re.sub(r"[^a-zA-Z0-9_-]", "_", str(identifier))
-        self._table = f"{table}_{identifier}"
+        self._table = sanitize_bq_strings("_".join([table, identifier] if identifier else [table]))
 
         super().__init__(
             filepath="filepath",
