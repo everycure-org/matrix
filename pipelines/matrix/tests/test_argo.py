@@ -49,7 +49,6 @@ def test_simple_fusing():
         tags=["argowf.fuse", "argowf.fuse-group.dummy"],
     )
 
-    # When applying fusing to the pipeline
     fused = fuse(pipeline)
 
     # Then nodes fused correctly into a singe node,
@@ -62,7 +61,7 @@ def test_simple_fusing():
     assert len(fused[0]._parents) == 0
 
 
-def test_no_multiple_parents_no_fusing():
+def test_no_nodes_fused_when_child_can_be_fused_to_multiple_parents():
     # Given a pipeline where child node can be fused to multiple
     # parents
     pipeline = Pipeline(
@@ -90,8 +89,6 @@ def test_no_multiple_parents_no_fusing():
         ],
         tags=["argowf.fuse", "argowf.fuse-group.dummy"],
     )
-
-    # When applying fusing to the pipeline
     fused = fuse(pipeline)
 
     # No fusing has been performed, as child node can be fused
@@ -147,7 +144,6 @@ def test_fusing_multiple_parents():
         tags=["argowf.fuse", "argowf.fuse-group.dummy"],
     )
 
-    # When applying fusing to the pipeline
     fused = fuse(pipeline)
 
     # Fusing of child and grandchild node, ensure correct naming
