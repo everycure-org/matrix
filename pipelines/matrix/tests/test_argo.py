@@ -4,17 +4,21 @@ from kedro.pipeline import Pipeline
 from matrix.argo import fuse
 
 
+def dummy_fn(*args):
+    return "dummy"
+
+
 def test_no_nodes_fused_when_no_fusing_options():
     pipeline = Pipeline(
         nodes=[
             Node(
-                func=lambda: "dummy",
+                func=dummy_fn,
                 inputs=["dataset_a", "dataset_b"],
                 outputs="dataset_c",
                 name="first",
             ),
             Node(
-                func=lambda: "dummy",
+                func=dummy_fn,
                 inputs=["dataset_1", "dataset_2"],
                 outputs="dataset_3",
                 name="second",
@@ -34,12 +38,12 @@ def test_simple_fusing():
     pipeline = Pipeline(
         nodes=[
             Node(
-                func=lambda: "dummy",
+                func=dummy_fn,
                 inputs=["dataset_a", "dataset_b"],
                 outputs="dataset_1@pandas",
             ),
             Node(
-                func=lambda: "dummy",
+                func=dummy_fn,
                 inputs=[
                     "dataset_1@spark",
                 ],
@@ -67,13 +71,13 @@ def test_no_nodes_fused_when_child_can_be_fused_to_multiple_parents():
     pipeline = Pipeline(
         nodes=[
             Node(
-                func=lambda: "dummy",
+                func=dummy_fn,
                 inputs=["dataset_a", "dataset_b"],
                 outputs="dataset_1",
                 name="first_node",
             ),
             Node(
-                func=lambda: "dummy",
+                func=dummy_fn,
                 inputs=[
                     "dataset_c",
                 ],
@@ -81,7 +85,7 @@ def test_no_nodes_fused_when_child_can_be_fused_to_multiple_parents():
                 name="second_node",
             ),
             Node(
-                func=lambda: "dummy",
+                func=dummy_fn,
                 inputs=["dataset_1", "dataset_2"],
                 outputs="dataset_3",
                 name="child_node",
@@ -100,13 +104,13 @@ def test_fusing_multiple_parents():
     pipeline = Pipeline(
         nodes=[
             Node(
-                func=lambda: "dummy",
+                func=dummy_fn,
                 inputs=["dataset_a", "dataset_b"],
                 outputs=["dataset_1"],
                 name="first_node",
             ),
             Node(
-                func=lambda: "dummy",
+                func=dummy_fn,
                 inputs=[
                     "dataset_c",
                 ],
@@ -114,13 +118,13 @@ def test_fusing_multiple_parents():
                 name="second_node",
             ),
             Node(
-                func=lambda: "dummy",
+                func=dummy_fn,
                 inputs=None,
                 outputs="dataset_3",
                 name="third_node",
             ),
             Node(
-                func=lambda: "dummy",
+                func=dummy_fn,
                 inputs=[
                     "dataset_1",
                     "dataset_2",
@@ -129,13 +133,13 @@ def test_fusing_multiple_parents():
                 name="child_node",
             ),
             Node(
-                func=lambda: "dummy",
+                func=dummy_fn,
                 inputs=["dataset_3", "dataset_4"],
                 outputs="dataset_5",
                 name="grandchild_node",
             ),
             Node(
-                func=lambda: "dummy",
+                func=dummy_fn,
                 inputs=["dataset_5"],
                 outputs="dataset_6",
                 name="grandgrandchild_node",
