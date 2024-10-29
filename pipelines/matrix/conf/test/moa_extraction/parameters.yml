@@ -1,17 +1,17 @@
 moa_extraction:
   neo4j_runner: 
-    object: matrix.pipelines.moa_extraction.neo4j_runners.LocalNeo4jRunner
+    object: matrix.pipelines.moa_extraction.utils.Neo4jRunner
     uri: "bolt://localhost:7687"
-    database: "everycure-test"
+    database: "everycure-test-release"
     user: "neo4j"
     password: "admin"
 
   preprocessing_options:
     add_tags:
       drug_types:
-        - Drug
+        - biolink:Drug
       disease_types:
-        - Disease
+        - biolink:Disease
       batch_size: 500
       verbose: False
 
@@ -21,8 +21,10 @@ moa_extraction:
       num_hops: 2
       num_paths: 25
       unidirectional: false
+      num_limit: 25
     mapper_three_hop: 
       object: matrix.pipelines.moa_extraction.path_mapping.TestPathMapper
       num_hops: 3
       num_paths: 10
       unidirectional: false
+      num_limit: 25

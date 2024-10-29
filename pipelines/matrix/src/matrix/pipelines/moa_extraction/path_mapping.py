@@ -196,22 +196,24 @@ class SetwisePathMapper(PathMapper):
 class TestPathMapper(PathMapper):
     """Path mapping strategy for the test environment.
 
-    Simulates the path mapping by randomly sampling a set of paths between drug and disease nodes in the test KG.
+    Simulates the path mapping by randomly sampling a set of paths in the test KG.
     """
 
-    def __init__(self, num_hops: int, num_paths: int, unidirectional: bool, *args, **kwargs):
+    def __init__(self, num_hops: int, num_paths: int, unidirectional: bool, num_limit: int = None, *args, **kwargs):
         """Initialize the TestPathMapper.
 
         Args:
             num_hops: The number of hops in the paths.
             num_paths: The maximum number of paths in the KGPaths object.
             unidirectional: Whether to map onto unidirectional paths only.
+            num_limit: The maximum number of paths to map. If None, all paths are returned.
             args: Additional ignored arguments.
             kwargs: Additional ignored keyword arguments.
         """
         self.num_hops = num_hops
         self.num_paths = num_paths
         self.unidirectional = unidirectional
+        self.num_limit = num_limit
 
     def run(
         self,
@@ -227,12 +229,13 @@ class TestPathMapper(PathMapper):
             synonymizer_endpoint: The endpoint of the synonymizer.
         """
         match_clause = SetwisePathMapper._construct_match_clause(self.num_hops, self.unidirectional)
-        query = f"""MATCH p=(n:Drug){match_clause}(m:Disease)
-                    RETURN DISTINCT p"""
+        limit_clause = f"LIMIT {self.num_limit}" if self.num_limit else ""
+        query = f"""MATCH p=(n){match_clause}(m)
+                    RETURN DISTINCT p {limit_clause}"""
 
         result = runner.run(query)
 
         paths = KGPaths(num_hops=self.num_hops)
-        random_ids = [random.randint(1, 10) for _ in range(len(result))]
+        random_ids = [random.randint(1, 1000) for _ in range(len(result))]
         paths.add_paths_from_result(result, extra_data={"DrugMechDB_id": random_ids, "y": [1] * len(result)})
         return paths
