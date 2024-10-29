@@ -7,7 +7,7 @@ _bigquery_ds: &_bigquery_ds
 # -------------------------------------------------------------------------
 
 # overwriting the base catalog to use the bigquery datasets
-release.prm.bigquery_nodes:
+data_release.prm.bigquery_nodes:
   <<: *_bigquery_ds
   dataset: release_${globals:versions.release}
   table: nodes
@@ -16,7 +16,7 @@ release.prm.bigquery_nodes:
     bigQueryTableLabel.kg: everycure
     bigQueryTableLabel.git_sha: ${globals:git_sha}
 
-release.prm.bigquery_edges:
+data_release.prm.bigquery_edges:
   <<: *_bigquery_ds
   dataset: release_${globals:versions.release}
   table: edges
