@@ -40,7 +40,7 @@ We implement time-split validation in our pipeline by using an additional ground
 
 ## The performance metrics in detail
 
-<img src="../assets/deep_dive/matrix_GT.svg" width="700">
+<img src="../assets/deep_dive/matrix_GT.png" width="700">
 
 The input to the evaluation pipeline consists of the matrix pairs dataset with the following information:
 - Flags for pairs in the standard ground truth positive and negative test sets 
