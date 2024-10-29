@@ -80,6 +80,8 @@ def test_no_catalog_non_param_entries_unused(
     declared_entries = {entry for entry in kedro_context.catalog.list() if not entry.startswith("params:")}
 
     unused_entries = declared_entries - used_entries
+    # Only catalog entry not used should be 'parameters', since we input top-level keys directly.
+    unused_entries.remove("parameters")
 
     assert unused_entries == set(), f"The following entries are not used: {unused_entries}"
 
