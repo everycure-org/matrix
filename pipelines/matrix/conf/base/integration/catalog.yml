@@ -65,11 +65,12 @@ integration.prm.unified_edges:
 integration.prm.unified_nodes:
   <<: [*_spark_parquet, *_layer_prm]
   filepath: ${globals:paths.integration}/prm/unified/nodes
+
 # filtered KGs
 integration.prm.filtered_edges:
   <<: [*_spark_parquet, *_layer_prm]
-  filepath: ${globals:paths.integration}/filtered/edges
+  filepath: ${globals:paths.integration}/prm/filtered/edges
 
 integration.prm.filtered_nodes:
   <<: [*_spark_parquet, *_layer_prm]
-  filepath: ${globals:paths.integration}/filtered/nodes
+  filepath: ${globals:paths.integration}/prm/filtered/nodes
