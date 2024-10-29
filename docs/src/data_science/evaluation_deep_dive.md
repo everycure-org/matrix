@@ -65,7 +65,7 @@ where $|\cdot|$ denotes the cardinality (size) of a set.
 
 We have three variations of the full matrix Recall@n metric corresponding to different choices for the ground truth set $GT$: 
 1.  The *standard version* uses the standard ground truth positive test set
-2.  The *clinical trials version* uses successful clinical trials
+2.  The *clinical trials version* uses successful recent clinical trials
 3. The *negatives version* which uses the ground truth negative test set. Unlike the others, we want this one to be as small possible
 
 
@@ -86,11 +86,11 @@ MQR is a measure between 0 and 1 with lower values indicating better ranking per
 
 These metrics focus on how well the model ranks drugs for individual diseases, particularly those diseases that appear in our ground truth positive set.
 
-For a given disease $i$, the *disease-specific rank* $\text{rank}_i(d)$ of a drug $d$ is defined as the rank of the drug $d$ among all drugs. As before, we omit any training pairs known positives from the ranking.
+For a given disease $i$, the *disease-specific rank* $\text{rank}_i(d)$ of a drug $d$ is defined as the rank of the drug $d$ among all drugs. As well as training pairs we omit any other known positives from the ranking.
 
 We have two versions of disease-specific ranking metrics corresponding to different choices for the set of ground truth pairs $GT$:
 1.  The *standard version* uses the standard ground truth positive test set
-2.  The *clinical trials version* uses successful clinical trials
+2.  The *clinical trials version* uses successful recent clinical trials
 
 #### Hit@k
 
@@ -216,7 +216,7 @@ $$
 In essence, this relationship stems from the fact that the AUROC is equal to the probability that a randomly chosen positive datapoint ranks higher than a randomly chosen negative (Hanley et. al.). 
 
 
-The *rank against non-positives* of pair $(d,i)$, denoted by $\text{rank}_{np}(d,i)$,
+The *rank against non-positives* for a pair $(d,i)$, denoted by $\text{rank}_{np}(d,i)$,
 refers to it's position among non-positive (i.e. unknown or known negative) pairs when sorted by treat score. In other words, it is the rank with any other positive pairs taken out.
 The *quantile rank against non-positives* measures the proportion of non-positive pairs that have a lower rank than the pair. It is defined as 
 $$
@@ -228,11 +228,11 @@ $$
 $$
 
 
-To see the relationship between $\text{AUROC}$ and $\text{MQR}$, let $\mathcal{P}$ and $\mathcal{N}$ denote the set of positive and negative datapoints respectively. By the aforementioned characterisation of AUROC,
+To see the relationship between $\text{AUROC}$ and $\text{MQR}$, let $\mathcal{P}$ and $\mathcal{N}$ denote the set of positive and negative pairs respectively. By the aforementioned characterisation of AUROC,
 $$
 \text{AUROC} = \mathbb{P}_{x \sim \mathcal{P}} \mathbb{P}_{y \sim \mathcal{N}} [\gamma(x) \geq \gamma(y)]
 $$
-where $\gamma$ denotes the probability score. Then, 
+where $\gamma$ denotes the treat score. Then, 
 $$
 \mathbb{P}_{y \sim \mathcal{N}} [\gamma(x) \geq \gamma(y)]  = \frac{|\set{y \in \mathcal{N} : \gamma(x) \geq \gamma(y)}|}{N} = \frac{N - |\set{y \in \mathcal{N} : \gamma(x) < \gamma(y)}|}{N}
 $$
