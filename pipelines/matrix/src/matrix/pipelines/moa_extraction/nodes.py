@@ -190,7 +190,7 @@ def generate_negative_paths(
         negative_sampler_list: List of path generators for negative path samplers.
         runner: The Neo4j runner.
     """
-    for split in ["TRAIN", "TEST"]:  # TODO: Generate samples only for the training set
+    for split in ["TRAIN", "TEST"]:
         for negative_sampler in negative_sampler_list:
             paths_split = KGPaths(df=paths.df[paths.df["split"] == split])
             negative_paths = negative_sampler.run(paths_split, runner)
