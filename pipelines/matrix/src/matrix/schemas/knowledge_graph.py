@@ -110,9 +110,6 @@ class KGNodeSchema(DataFrameModel):
                 F.flatten(F.collect_set("labels")).alias("labels"),
                 F.flatten(F.collect_set("publications")).alias("publications"),
                 F.flatten(F.collect_set("upstream_data_source")).alias("upstream_data_source"),
-                # keep all upstream node IDs as a map {kg_name: node_id} so we can trace them later
-                # TODO finish
-                # F.create_map("upstream_data_source", "original_id").alias("upstream_kg_node_ids")
             )
             .select(*cols_for_schema(KGNodeSchema))
         )

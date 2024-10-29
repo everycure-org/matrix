@@ -118,7 +118,7 @@ def create_pipeline(**kwargs) -> Pipeline:
             ),
             # filter edges given a set of filter stages
             node(
-                func=nodes.filer_unified_kg_edges,
+                func=nodes.filter_unified_kg_edges,
                 inputs=[
                     "integration.prm.filtered_nodes",
                     "integration.prm.unified_edges",

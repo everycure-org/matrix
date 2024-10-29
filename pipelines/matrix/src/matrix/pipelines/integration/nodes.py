@@ -96,7 +96,7 @@ def filer_unified_kg_nodes(
 
 
 @inject_object()
-def filer_unified_kg_edges(
+def filter_unified_kg_edges(
     nodes: DataFrame,
     edges: DataFrame,
     biolink_predicates: Dict[str, Any],
