@@ -20,6 +20,8 @@ class KGPaths:
         if num_hops is not None:
             self.num_hops = num_hops
             self.df = pd.DataFrame(columns=self.get_columns(num_hops))
+            bool_cols = [col for col in self.df.columns if "is_forward" in col]
+            self.df[bool_cols] = self.df[bool_cols].astype(bool)
         elif df is not None:
             self.num_hops = self.get_num_hops(df)
             self.df = df
