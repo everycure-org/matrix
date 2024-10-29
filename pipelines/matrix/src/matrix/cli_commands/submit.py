@@ -1,5 +1,3 @@
-from matrix.argo import _generate_argo_config
-
 import json
 import logging
 import re
@@ -13,6 +11,8 @@ from kedro.framework.cli.utils import CONTEXT_SETTINGS
 from rich.console import Console
 from rich.logging import RichHandler
 from rich.panel import Panel
+
+from matrix.argo import _generate_argo_config
 
 # Set up logging
 logging.basicConfig(
@@ -39,8 +39,9 @@ def cli():
 @click.option("--run-name", type=str, default=None, help="Specify a custom run name, defaults to branch")
 @click.option("--verbose", "-v", is_flag=True, default=False, help="Enable verbose output")
 @click.option("--dry-run", "-d", is_flag=True, default=False, help="Does everything except submit the workflow")
+@click.option("--pipeline", type=str, default="__default__", help="Specify a custom pipeline to run")
 # fmt: on
-def submit(username: str, namespace: str, run_name: str, verbose: bool, dry_run: bool):
+def submit(username: str, namespace: str, run_name: str, verbose: bool, dry_run: bool, pipeline: str):
     """Submit the end-to-end workflow."""
     if verbose:
         logging.getLogger().setLevel(logging.DEBUG)
@@ -73,7 +74,7 @@ def submit(username: str, namespace: str, run_name: str, verbose: bool, dry_run:
 
         if not dry_run:
             console.print("Submitting workflow...")
-            submit_workflow(run_name, namespace, verbose=verbose)
+            submit_workflow(run_name, namespace, verbose=verbose, entrypoint=pipeline)
             console.print("[green]✓[/green] Workflow submitted")
 
         console.print(Panel.fit(
@@ -244,12 +245,12 @@ def apply_argo_template(namespace, verbose: bool):
     )
 
 
-def submit_workflow(run_name, namespace, verbose: bool):
+def submit_workflow(run_name, namespace, verbose: bool, entrypoint: str):
     """Submit the Argo workflow and provide instructions for watching."""
     submit_cmd = (
         f"argo submit --name {run_name} -n {namespace} "
         f"--from wftmpl/{run_name} -p run_name={run_name} "
-        f"-l submit-from-ui=false --entrypoint __default__ -o json"
+        f"-l submit-from-ui=false --entrypoint {entrypoint} -o json"
     )
     result = run_subprocess(submit_cmd, capture_output=True, stream_output=verbose)
     job_name = json.loads(result.stdout).get("metadata", {}).get("name")
