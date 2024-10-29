@@ -13,17 +13,18 @@ openai:
 # points at our central GCS_BUCKET where we store our ground truth data
 # Note: Overwrite with WG project ID & bucket if you want to write to a different project's BigQuery
 gcs_bucket: gs://${oc.env:GCP_BUCKET, mtrx-us-central1-hub-dev-storage}
+source_gcs_bucket: ${gcs_bucket}
 gcp_project: ${oc.env:GCP_PROJECT_ID, mtrx-hub-dev-3of}
-git_sha: ${oc.env:GIT_SHA, local}
+git_sha: ${oc.env:GIT_SHA, default-sha}
 gh_token: ${oc.env:GH_TOKEN, dummy}
 
-run_name: ${oc.env:RUN_NAME, local}
+run_name: ${oc.env:RUN_NAME, default-run-name}
 versions:
-  # overwritten in prod environment for shared releases
-  release: ${oc.env:RELEASE_VERSION, local}
+  release: 20241025
+
 data_sources:
   rtx-kg2:
-    version: v2.7.3
+    version: v2.10.0
   robokop:
     version: c5ec1f282158182f
 # Dataset with node and edge proposals by the
@@ -50,16 +51,19 @@ mlflow_artifact_root: null
 mlflow_url: https://mlflow.platform.dev.everycure.org/
 
 paths:
-  # we read from our central GCS bucket where we store our ground truth data
-  raw: gs://mtrx-us-central1-hub-dev-storage/kedro/data/01_raw
-  # TODO: When we merge https://github.com/everycure-org/matrix/pull/122 we should move all raw data to the new location
-  new_raw: ${gcs_bucket}/data/01_RAW/
-  # we write to local disk going forward
-  int: data/02_intermediate
-  prm: data/03_primary
-  feat: data/04_feature
-  model_input: data/05_model_input
-  models: data/06_models
-  model_output: data/07_model_output
-  reporting: data/08_reporting
-  tmp: data/tmp
+  # Upstream-source versioned
+  raw:                ${source_gcs_bucket}/kedro/data/01_raw
+  kg_raw:            ${gcs_bucket}/data/01_RAW/
+  ingestion:          data/ingestion
+
+  # Release-based
+  integration:        data/releases/${versions.release}/datasets/integration
+  embeddings:         data/releases/${versions.release}/datasets/embeddings
+
+  # Run-based
+  modelling:          data/releases/${versions.release}/runs/${run_name}/datasets/modelling
+  evaluation:         data/releases/${versions.release}/runs/${run_name}/datasets/evaluation
+  matrix_generation:  data/releases/${versions.release}/runs/${run_name}/datasets/matrix_generation
+  inference:          data/releases/${versions.release}/runs/${run_name}/datasets/inference
+
+  tmp:                data/tmp
