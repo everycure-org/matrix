@@ -86,7 +86,6 @@ def test_no_catalog_non_param_entries_unused(
     assert unused_entries == set(), f"The following entries are not used: {unused_entries}"
 
 
-@pytest.mark.integration
 # @pytest.mark.skipif(
 #     os.environ.get("CI") == "true", reason="Ongoing issue with the Kedro catalog"
 # )
@@ -108,7 +107,6 @@ def test_memory_data_sets_absent(kedro_context: KedroContext) -> None:
     assert len(memory_data_sets) == 0, f"{memory_data_sets}"
 
 
-@pytest.mark.integration
 def test_catalog_filepath_follows_conventions(conf_source: Path, config_loader: OmegaConfigLoader) -> None:
     """Checks if catalog entry filepaths conform to entry.
 
@@ -154,7 +152,6 @@ def test_catalog_filepath_follows_conventions(conf_source: Path, config_loader: 
     assert failed_results == [], f"Entries that failed conventions: {failed_results}"
 
 
-@pytest.mark.integration
 def test_parameters_filepath_follows_conventions(conf_source, config_loader):
     """Checks if catalog entry filepaths conform to entry.
 
