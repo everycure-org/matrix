@@ -128,6 +128,25 @@ def sample_edges(spark):
     return spark.createDataFrame(data, schema)
 
 
+@pytest.fixture
+def sample_biolink_predicates():
+    return [
+        {
+            "name": "related_to",
+            "children": [
+                {"name": "disease_has_location", "parent": "related_to"},
+                {
+                    "name": "related_to_at_concept_level",
+                    "parent": "related_to",
+                    "children": [
+                        {"name": "broad_match", "parent": "related_to_at_concept_level"},
+                    ],
+                },
+            ],
+        }
+    ]
+
+
 def test_unify_nodes(spark, sample_nodes):
     # Create two node datasets
     nodes1 = sample_nodes.filter(sample_nodes.id != "MONDO:0005148")
@@ -148,13 +167,15 @@ def test_unify_nodes(spark, sample_nodes):
     assert set(drug_node.upstream_data_source) == {"source1", "source3"}
 
 
-def test_unify_edges(spark, sample_edges):
+def test_unify_edges(spark, sample_edges, sample_biolink_predicates):
     # Create two edge datasets
     edges1 = sample_edges.filter(sample_edges.subject != "CHEBI:120688")
     edges2 = sample_edges.filter(sample_edges.subject != "CHEBI:119157")
 
     # Call the unify_edges function
-    result = nodes.union_and_deduplicate_edges(["edges1", "edges2"], edges1=edges1, edges2=edges2)
+    result = nodes.union_and_deduplicate_edges(
+        ["edges1", "edges2"], sample_biolink_predicates, edges1=edges1, edges2=edges2
+    )
 
     # Check the result
     assert isinstance(result, DataFrame)

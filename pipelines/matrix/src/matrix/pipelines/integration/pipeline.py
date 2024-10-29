@@ -37,7 +37,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 inputs=[
                     "ingestion.int.rtx_kg2.edges",
                     "ingestion.int.rtx_kg2.curie_to_pmids",
-                    "params:preprocessing.rtx.semmed_filters",
+                    "params:integration.preprocessing.rtx.semmed_filters",
                 ],
                 outputs="integration.int.rtx.edges",
                 name="transform_rtx_edges",
