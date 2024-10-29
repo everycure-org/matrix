@@ -30,6 +30,6 @@ matrix_generation.prm.matrix_pairs:
   filepath: ${globals:paths.matrix_generation}/model_output/{model}/matrix_predictions
 
 "matrix_generation.{model}.reporting.matrix_report":
-  filepath: ${globals:paths.reporting}/{model}/matrix_report_${globals:run_name}.xlsx
+  filepath: ${globals:paths.matrix_generation}/{model}/matrix_report_${globals:run_name}.xlsx
   type: pandas.ExcelDataset
   
