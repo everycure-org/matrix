@@ -79,7 +79,7 @@ def register_pipelines() -> Dict[str, Pipeline]:
         + create_evaluation_pipeline()
         + create_release_pipeline()
     )
-    # TODO: Delete in the future
+    # TODO: Pending to add additional steps
     pipelines["sampled_test"] = (
         create_integration_pipeline()
         + create_embeddings_pipeline()

@@ -3,5 +3,23 @@ embeddings.ai_config:
   batch_size: 1
 
 embeddings.dimensionality_reduction:
+  output: &_pca_property 'pca_embedding'
   transformer:
     k: 2
+
+embeddings.topological_estimator:
+  object: matrix.pipelines.embeddings.graph_algorithms.GDSGraphSage
+  concurrency: 4
+  iterations: 2
+  sample_sizes: [25, 10]
+  tolerance: 1e-8
+  embedding_dim: 512
+  batch_size: 5000
+  epochs: 1
+  search_depth: 100
+  learning_rate: 0.01
+  activation_function: ReLu
+  random_seed: 42
+  feature_properties: [*_pca_property]
+  # negative_sampling_weight: 20
+
