@@ -7,7 +7,7 @@ from kedro.pipeline import Pipeline, node, pipeline
 from data_fabricator.v0.nodes.fabrication import fabricate_datasets
 
 
-def _create_pairs(drug_list: pd.DataFrame, disease_list: pd.DataFrame, num: int = 100, seed: int = 42) -> pd.DataFrame:
+def _create_pairs(drug_list: pd.DataFrame, disease_list: pd.DataFrame, num: int = 50, seed: int = 42) -> pd.DataFrame:
     """Create 2 sets of random drug-disease pairs. Ensures no duplicate pairs.
 
     Args:

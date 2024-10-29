@@ -1,10 +1,18 @@
 """transformation functions for rtxkg2 nodes and edges."""
 
+import logging
+
 import pandera.pyspark as pa
 import pyspark.sql.functions as f
+import pyspark.sql.types as T
 from pyspark.sql import DataFrame
 
 from matrix.schemas.knowledge_graph import KGEdgeSchema, KGNodeSchema, cols_for_schema
+
+logger = logging.getLogger(__name__)
+
+
+RTX_SEPARATOR = "\u01c2"
 
 
 @pa.check_output(KGNodeSchema)
@@ -17,51 +25,115 @@ def transform_rtxkg2_nodes(nodes_df: DataFrame) -> DataFrame:
     Returns:
         Transformed DataFrame.
     """
-    SEP = "\u01c2"
-
     # fmt: off
     return (
         nodes_df
         .withColumn("upstream_data_source",              f.array(f.lit("rtxkg2")))
-        .withColumn("labels",                            f.split(f.col("label"), SEP))
-        .withColumn("all_categories",                    f.split(f.col("all_categories"), SEP))
+        .withColumn("labels",                            f.split(f.col(":LABEL"), RTX_SEPARATOR))
+        .withColumn("all_categories",                    f.split(f.col("all_categories:string[]"), RTX_SEPARATOR))
         .withColumn("all_categories",                    f.array_distinct(f.concat("labels", "all_categories")))
-        .withColumn("equivalent_identifiers",            f.split(f.col("equivalent_curies"), SEP))
-        .withColumn("publications",                      f.split(f.col("publications"), SEP))
+        .withColumn("equivalent_identifiers",            f.split(f.col("equivalent_curies:string[]"), RTX_SEPARATOR))
+        .withColumn("publications",                      f.split(f.col("publications:string[]"), RTX_SEPARATOR))
         .withColumn("international_resource_identifier", f.col("iri"))
-        # .withColumn("name", f.split(f.col("name"), "\x1f").getItem(0))
+        .withColumnRenamed("id:ID", "id")
         .select(*cols_for_schema(KGNodeSchema))
     )
     # fmt: on
 
 
 @pa.check_output(KGEdgeSchema)
-def transform_rtxkg2_edges(edges_df: DataFrame) -> DataFrame:
+def transform_rtxkg2_edges(nodes_df: DataFrame, edges_df: DataFrame) -> DataFrame:
     """Transform RTX KG2 edges to our target schema.
 
     Args:
         edges_df: Edges DataFrame.
-
+        pubmed_mapping: pubmed mapping
     Returns:
         Transformed DataFrame.
     """
-    SEP = "\u01c2"
 
     # fmt: off
     return (
         edges_df
         .withColumn("upstream_data_source",          f.array(f.lit("rtxkg2")))
-        .withColumn("subject",                     f.col("subject"))
-        .withColumn("object",                      f.col("object"))
-        .withColumn("predicate",                   f.col("predicate"))
-        .withColumn("knowledge_level",             f.lit(None))  # TODO / Not present in RTX KG2
-        .withColumn("primary_knowledge_source",    f.col("knowledge_source"))
-        .withColumn("aggregator_knowledge_source", f.array())
-        .withColumn("publications",                f.split(f.col("publications"), SEP))
-        .withColumn("subject_aspect_qualifier",    f.lit(None)) #not present in RTX KG2 v2.7, present in v2.10
-        .withColumn("subject_direction_qualifier", f.lit(None)) #not present in RTX KG2 v2.7, present in v2.10
-        .withColumn("object_aspect_qualifier",     f.lit(None)) #not present in RTX KG2 v2.7, present in v2.10
-        .withColumn("object_direction_qualifier",  f.lit(None)) #not present in RTX KG2 v2.7, present in v2.10
+        .withColumn("knowledge_level",               f.lit(None).cast(T.StringType()))
+        .withColumn("aggregator_knowledge_source",   f.lit(None)) # DOES NOT EXIST 
+        .withColumn("primary_knowledge_source",      f.col("primary_knowledge_source"))
+        .withColumn("publications",                  f.split(f.col("publications:string[]"), RTX_SEPARATOR))
+        .withColumn("subject_aspect_qualifier",      f.lit(None).cast(T.StringType())) #not present in RTX KG2 at this time
+        .withColumn("subject_direction_qualifier",   f.lit(None).cast(T.StringType())) #not present in RTX KG2 at this time
+        .withColumn("object_aspect_qualifier",       f.lit(None).cast(T.StringType())) #not present in RTX KG2 at this time
+        .withColumn("object_direction_qualifier",    f.lit(None).cast(T.StringType())) #not present in RTX KG2 at this time
         .select(*cols_for_schema(KGEdgeSchema))
-    )
+    ).transform(filter_semmed, nodes_df)
     # fmt: on
+
+
+def filter_semmed(
+    edges_df: DataFrame,
+    nodes_df: DataFrame,
+    publication_threshold: int = 1,
+    ndg_threshold: float = 0.6,
+) -> DataFrame:
+    before_count = edges_df.count()
+
+    # Enrich nodes with pubmed identifiers
+    nodes_df = (
+        nodes_df.withColumn("pmids", f.array_distinct(f.expr("filter(publications, x -> x like 'PMID:%')")))
+        .withColumn("num_pmids", f.array_size(f.col("pmids")))
+        .select("id", "pmids", "num_pmids")
+    )
+
+    df = (
+        edges_df.alias("edges")
+        # Enrich subject pubmed identifiers
+        .join(
+            nodes_df.alias("subj"),
+            on=[f.col("edges.subject") == f.col("subj.id")],
+            how="left",
+        )
+        # Enrich object pubmed identifiers
+        .join(
+            nodes_df.alias("obj"),
+            on=[f.col("edges.object") == f.col("obj.id")],
+            how="left",
+        )
+        .transform(compute_ngd)
+        .withColumn("num_publications", f.size(f.col("publications")))
+        # fmt: off
+        .filter(
+            # Retrain all semmed edges
+            (f.col("primary_knowledge_source") != f.lit("infores:semmeddb"))
+            |
+            # Retain only semmed edges more than 10 publications or ndg score below 0.6
+            ((f.col("num_publications") > f.lit(publication_threshold)) & (f.col("ndg") < f.lit(ndg_threshold)))
+        )
+        # fmt: on
+        .select("edges.*", "ndg", "num_publications")
+    )
+
+    logger.info(f"dropped {before_count - df.count()} SemMedDB edges")
+
+    return df
+
+
+def compute_ngd(df: DataFrame, num_pairs: int = 3.7e7 * 20) -> DataFrame:
+    """
+    PySpark transformation to compute ngd.
+
+    Args:
+        df: Dataframe
+        num_pairs: num_pairs
+    Returns:
+        Dataframe with ndg score
+    """
+    return df.withColumn(
+        "num_common_pmids", f.array_size(f.array_intersect(f.col("subj.pmids"), f.col("obj.pmids")))
+    ).withColumn(
+        "ndg",
+        (
+            f.greatest(f.log2(f.col("subj.num_pmids")), f.log2(f.col("obj.num_pmids")))
+            - f.log2(f.col("num_common_pmids"))
+        )
+        / (f.log2(f.lit(num_pairs)) - f.least(f.log2(f.col("subj.num_pmids")), f.log2(f.col("obj.num_pmids")))),
+    )

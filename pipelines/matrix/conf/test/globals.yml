@@ -8,12 +8,10 @@ openai:
 
 paths:
   raw:                data/test/raw
-  new_raw:            data/test/raw
-
-  # Upstream version-based
-  ingestion:          data/test/ingestion
+  kg_raw:             data/test/raw
 
   # Release-based
+  ingestion:          data/test/ingestion
   integration:        data/test/releases/${versions.release}/datasets/integration
   embeddings:         data/test/releases/${versions.release}/datasets/embeddings
 
