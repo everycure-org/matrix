@@ -3,7 +3,7 @@
 import asyncio
 import logging
 from functools import partial, reduce
-from typing import Any, Callable, Dict, List
+from typing import Any, Callable, Dict, List, Tuple
 
 import aiohttp
 import pandas as pd
@@ -13,6 +13,7 @@ import pyspark.sql.functions as F
 from joblib import Memory
 from more_itertools import chunked
 from pyspark.sql import DataFrame
+from refit.v1.core.inject import inject_object
 from refit.v1.core.inline_has_schema import has_schema
 from refit.v1.core.inline_primary_key import primary_key
 from tenacity import (
@@ -30,7 +31,7 @@ logger = logging.getLogger(__name__)
 
 
 @pa.check_output(KGEdgeSchema)
-def union_edges(datasets_to_union: List[str], **edges) -> DataFrame:
+def union_and_deduplicate_edges(datasets_to_union: List[str], biolink_predicates: Dict[str, Any], **edges) -> DataFrame:
     """Function to unify edges datasets."""
     return _union_datasets(
         datasets_to_union,
@@ -40,7 +41,7 @@ def union_edges(datasets_to_union: List[str], **edges) -> DataFrame:
 
 
 @pa.check_output(KGNodeSchema)
-def union_nodes(datasets_to_union: List[str], **nodes) -> DataFrame:
+def union_and_deduplicate_nodes(datasets_to_union: List[str], **nodes) -> DataFrame:
     """Function to unify nodes datasets."""
     return _union_datasets(
         datasets_to_union,
@@ -68,6 +69,58 @@ def _union_datasets(
     selected_dfs = [datasets[name] for name in datasets_to_union if name in datasets]
     union = reduce(partial(DataFrame.unionByName, allowMissingColumns=True), selected_dfs)
     return schema_group_by_id(union)
+
+
+def _apply_transformations(
+    df: DataFrame, transformations: List[Tuple[Callable, Dict[str, Any]]], **kwargs
+) -> DataFrame:
+    logger.info(f"Filtering dataframe with {len(transformations)} transformations")
+    last_count = df.count()
+    logger.info(f"Number of dataframe before filtering: {last_count}")
+    for name, transformation in transformations.items():
+        logger.info(f"Applying transformation: {name}")
+        df = df.transform(transformation, **kwargs)
+        new_count = df.count()
+        logger.info(f"Number of dataframe after transformation: {new_count}, cut out {last_count - new_count} rows")
+        last_count = new_count
+
+    return df
+
+
+@inject_object()
+def filer_unified_kg_nodes(
+    nodes: DataFrame,
+    transformations: List[Tuple[Callable, Dict[str, Any]]],
+) -> DataFrame:
+    return _apply_transformations(nodes, transformations)
+
+
+@inject_object()
+def filter_unified_kg_edges(
+    nodes: DataFrame,
+    edges: DataFrame,
+    biolink_predicates: Dict[str, Any],
+    transformations: List[Tuple[Callable, Dict[str, Any]]],
+) -> DataFrame:
+    """Function to filter the knowledge graph edges.
+
+    We first apply a series for filter transformations, and then deduplicate the edges based on the nodes that we dropped.
+    No edge can exist without its nodes.
+    """
+
+    # filter down edges to only include those that are present in the filtered nodes
+    edges_count = edges.count()
+    logger.info(f"Number of edges before filtering: {edges_count}")
+    edges = (
+        edges.alias("edges")
+        .join(nodes.alias("subject"), on=F.col("edges.subject") == F.col("subject.id"), how="inner")
+        .join(nodes.alias("object"), on=F.col("edges.object") == F.col("object.id"), how="inner")
+        .select("edges.*")
+    )
+    new_edges_count = edges.count()
+    logger.info(f"Number of edges after filtering: {new_edges_count}, cut out {edges_count - new_edges_count} edges")
+
+    return _apply_transformations(edges, transformations, biolink_predicates=biolink_predicates)
 
 
 @has_schema(

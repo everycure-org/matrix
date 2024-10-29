@@ -24,7 +24,7 @@ versions:
 
 data_sources:
   rtx-kg2:
-    version: v2.7.3
+    version: v2.10.0
   robokop:
     version: c5ec1f282158182f
 # Dataset with node and edge proposals by the
@@ -51,8 +51,7 @@ mlflow_artifact_root: null
 paths:
   # Upstream-source versioned
   raw:                ${source_gcs_bucket}/kedro/data/01_raw
-  # TODO: When we merge https://github.com/everycure-org/matrix/pull/122 we should move all raw data to the new location
-  new_raw:            ${gcs_bucket}/data/01_RAW/
+  kg_raw:            ${gcs_bucket}/data/01_RAW/
   ingestion:          data/ingestion
 
   # Release-based
