@@ -4,22 +4,17 @@ from kedro.pipeline import Pipeline
 from matrix.argo import fuse
 
 
-def dummy_fn(*args):
-    return "dummy"
-
-
-def test_no_fusing():
-    # Given a pipeline with no fusing options
+def test_no_nodes_fused_when_no_fusing_options():
     pipeline = Pipeline(
         nodes=[
             Node(
-                func=dummy_fn,
+                func=lambda: "dummy",
                 inputs=["dataset_a", "dataset_b"],
                 outputs="dataset_c",
                 name="first",
             ),
             Node(
-                func=dummy_fn,
+                func=lambda: "dummy",
                 inputs=["dataset_1", "dataset_2"],
                 outputs="dataset_3",
                 name="second",
@@ -28,10 +23,8 @@ def test_no_fusing():
         tags=["argowf.fuse", "argowf.fuse-group.dummy"],
     )
 
-    # When applying fusing to the pipeline
     fused = fuse(pipeline)
 
-    # Then no nodes fused
     assert len(fused) == len(pipeline.nodes)
 
 
@@ -41,12 +34,12 @@ def test_simple_fusing():
     pipeline = Pipeline(
         nodes=[
             Node(
-                func=dummy_fn,
+                func=lambda: "dummy",
                 inputs=["dataset_a", "dataset_b"],
                 outputs="dataset_1@pandas",
             ),
             Node(
-                func=dummy_fn,
+                func=lambda: "dummy",
                 inputs=[
                     "dataset_1@spark",
                 ],
@@ -75,13 +68,13 @@ def test_no_multiple_parents_no_fusing():
     pipeline = Pipeline(
         nodes=[
             Node(
-                func=dummy_fn,
+                func=lambda: "dummy",
                 inputs=["dataset_a", "dataset_b"],
                 outputs="dataset_1",
                 name="first_node",
             ),
             Node(
-                func=dummy_fn,
+                func=lambda: "dummy",
                 inputs=[
                     "dataset_c",
                 ],
@@ -89,7 +82,7 @@ def test_no_multiple_parents_no_fusing():
                 name="second_node",
             ),
             Node(
-                func=dummy_fn,
+                func=lambda: "dummy",
                 inputs=["dataset_1", "dataset_2"],
                 outputs="dataset_3",
                 name="child_node",
@@ -110,13 +103,13 @@ def test_fusing_multiple_parents():
     pipeline = Pipeline(
         nodes=[
             Node(
-                func=dummy_fn,
+                func=lambda: "dummy",
                 inputs=["dataset_a", "dataset_b"],
                 outputs=["dataset_1"],
                 name="first_node",
             ),
             Node(
-                func=dummy_fn,
+                func=lambda: "dummy",
                 inputs=[
                     "dataset_c",
                 ],
@@ -124,13 +117,13 @@ def test_fusing_multiple_parents():
                 name="second_node",
             ),
             Node(
-                func=dummy_fn,
+                func=lambda: "dummy",
                 inputs=None,
                 outputs="dataset_3",
                 name="third_node",
             ),
             Node(
-                func=dummy_fn,
+                func=lambda: "dummy",
                 inputs=[
                     "dataset_1",
                     "dataset_2",
@@ -139,13 +132,13 @@ def test_fusing_multiple_parents():
                 name="child_node",
             ),
             Node(
-                func=dummy_fn,
+                func=lambda: "dummy",
                 inputs=["dataset_3", "dataset_4"],
                 outputs="dataset_5",
                 name="grandchild_node",
             ),
             Node(
-                func=dummy_fn,
+                func=lambda: "dummy",
                 inputs=["dataset_5"],
                 outputs="dataset_6",
                 name="grandgrandchild_node",
@@ -163,6 +156,4 @@ def test_fusing_multiple_parents():
     assert fused[3].name == "dummy"
     assert fused[3].nodes == "child_node,grandchild_node,grandgrandchild_node"
     assert fused[3].outputs == set(["dataset_4", "dataset_5", "dataset_6"])
-    assert set([parent.name for parent in fused[3]._parents]) == set(
-        ["first_node", "second_node", "third_node"]
-    )
+    assert set([parent.name for parent in fused[3]._parents]) == set(["first_node", "second_node", "third_node"])
