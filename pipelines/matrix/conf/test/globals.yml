@@ -8,7 +8,7 @@ openai:
 
 paths:
   raw:                data/test/raw
-  new_raw:            data/test/raw
+  kg_raw:             data/test/01_raw
 
   # Upstream version-based
   ingestion:          data/test/ingestion

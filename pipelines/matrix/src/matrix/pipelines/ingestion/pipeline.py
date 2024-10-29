@@ -24,6 +24,13 @@ def create_pipeline(**kwargs) -> Pipeline:
                 name="write_rtx_kg2_edges",
                 tags=["rtx_kg2"],
             ),
+            node(
+                func=lambda x: x,
+                inputs=["ingestion.raw.rtx_kg2.curie_to_pmids@spark"],
+                outputs="ingestion.int.rtx_kg2.curie_to_pmids",
+                name="write_rtx_kg2_curie_to_pmids",
+                tags=["rtx_kg2"],
+            ),
             # ec-medical-team
             node(
                 func=lambda x: x.withColumn("upstream_data_source", F.array(F.lit("ec_medical_team"))),
