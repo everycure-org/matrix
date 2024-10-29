@@ -141,13 +141,13 @@ fabricator.rtx_kg2:
         seed: 6850
       single_ID: 
         type: row_apply
-        list_of_values: [nodes.id, nodes.name]
+        list_of_values: [nodes.id:ID, nodes.name]
         row_func: "lambda *args: args[0]"
         resize: True
         seed: 6850
       ID_Label: 
         type: row_apply
-        list_of_values: [nodes.id, nodes.name]
+        list_of_values: [nodes.id:ID, nodes.name]
         row_func: "lambda *args: args[1]"
         resize: True
         seed: 6850
@@ -195,13 +195,13 @@ fabricator.rtx_kg2:
         seed: 95690
       category_class: 
         type: row_apply
-        list_of_values: [nodes.id, nodes.name]
+        list_of_values: [nodes.id:ID, nodes.name]
         row_func: "lambda *args: args[0]"
         resize: True
         seed: 65690
       label: 
         type: row_apply
-        list_of_values: [nodes.id, nodes.name]
+        list_of_values: [nodes.id:ID, nodes.name]
         row_func: "lambda *args: args[1]"
         resize: True
         seed: 65690
