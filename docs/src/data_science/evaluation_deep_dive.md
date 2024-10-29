@@ -55,19 +55,9 @@ In addition, we remove from the matrix any known positive or known negative pair
 
 These metrics focus on how well the model ranks the set of pairs comprising the matrix. 
 
-The matrix *rank* of a drug-disease pair $(d,i)$, denoted by $\text{rank}(d,i)$,
-refers to it's position among non-positive (i.e. unknown or known negative) matrix pairs when sorted by treat score. We omit any training pairs and known positives from the ranking, so that $(d,i)$ is only ranked against pairs with unknown or known negative relationship.
-
-
-The matrix *quantile rank* of a pair measures the proportion of non-positive pairs that have a lower rank than the pair. It is defined as 
-$$
-QR(d,i) = \frac{\text{rank}(d,i) - 1}{N
-$$
-where $N$ is the number of known or known negative pairs in the matrix. This normalized measure ranges from 0 to 1, with lower values indicating higher priority in the ranking.
-
 #### Recall@n
 
-The *Recall@n* metric is defined as the proportion of ground truth pairs that appear among the top $n$ ranked pairs in the matrix. Mathematically, for a set of ground truth pairs $GT$, it may be written as 
+The *Recall@n* metric is defined as the proportion of ground truth test pairs that appear among the top $n$ ranked pairs in the matrix. Mathematically, for a set of ground truth pairs $GT$ in the test set, it may be written as 
 
 $$\text{Recall@n} = \frac{|\{(d,i) \in GT : \text{rank}(d,i) \leq n\}|}{|GT|}$$
 
@@ -83,9 +73,9 @@ We have three variations of the full matrix Recall@n metric corresponding to dif
 
 The AUROC metric evaluates the model's ability to distinguish between positive and negative pairs across all possible ranking thresholds. Formally, it is defined as the area under the ROC curve (see [Wikipedia: Receiver operating characteristic](https://en.wikipedia.org/wiki/Receiver_operating_characteristic)). 
 
-In our case the following equivalent characterisation is more relevant (details are given in the appendix below), 
+The following equivalent characterisation allows us to efficiently compute the AUROC metric in the codebase, 
 $$\text{AUROC} = 1 - \text{MQR} $$
-where $\text{MQR}$ denotes the *mean quantile rank* among ground truth pairs $GT$.  
+where $\text{MQR}$ denotes the *mean quantile rank against non-positives* among ground truth test pairs $GT$. Details are given in the appendix below.
 
 MQR is a measure between 0 and 1 with lower values indicating better ranking performance, whereas for the AUROC higher values are better
 
@@ -219,14 +209,26 @@ evaluation.full_matrix:
 
 ## Appendix: Equivalence between AUROC and MQR (optional)
 
-In this section, we justify the equation
+In this section, we clarify the definition of mean quantile rank against non-positives $\text{MQR}$ and justify the equation
 $$
 \text{AUROC} = 1 - \text{MQR}.
 $$
+In essence, this relationship stems from the fact that the AUROC is equal to the probability that a randomly chosen positive datapoint ranks higher than a randomly chosen negative (Hanley et. al.). 
 
-This relationship depends on the particular notion of $\text{rank}$ that is defined above. It stems from the fact that the AUROC is equal to the probability that a randomly chosen positive datapoint ranks higher than a randomly chosen negative (Hanley et. al.). 
 
-To see this, let $\mathcal{P}$ and $\mathcal{N}$ denote the set of positive and negative datapoints respectively. By the aforementioned characterisation of AUROC,
+The *rank against non-positives* of pair $(d,i)$, denoted by $\text{rank}_{np}(d,i)$,
+refers to it's position among non-positive (i.e. unknown or known negative) pairs when sorted by treat score. In other words, it is the rank with any other positive pairs taken out.
+The *quantile rank against non-positives* measures the proportion of non-positive pairs that have a lower rank than the pair. It is defined as 
+$$
+QR_{np}(d,i) = \frac{\text{rank}_{np}(d,i) - 1}{N}
+$$
+where $N$ is the number of known or known negative pairs. The mean quantile rank against non-positives is given by 
+$$
+\text{MQR} = \frac{1}{|GT|} \sum_{(d,i) \in GT} QR_{np}(d,i).
+$$
+
+
+To see the relationship between $\text{AUROC}$ and $\text{MQR}$, let $\mathcal{P}$ and $\mathcal{N}$ denote the set of positive and negative datapoints respectively. By the aforementioned characterisation of AUROC,
 $$
 \text{AUROC} = \mathbb{P}_{x \sim \mathcal{P}} \mathbb{P}_{y \sim \mathcal{N}} [\gamma(x) \geq \gamma(y)]
 $$
