@@ -20,7 +20,7 @@ gh_token: ${oc.env:GH_TOKEN, dummy}
 
 run_name: ${oc.env:RUN_NAME, default-run-name}
 versions:
-  release: 20241025
+  release: local-release
 
 data_sources:
   rtx-kg2:
