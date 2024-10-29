@@ -34,9 +34,9 @@ def _create_inference_pipeline(model_excl: str, model_incl: str) -> Pipeline:
     inference_nodes = pipeline(
         [node for node in mg_pipeline.nodes if not any(model in node.name for model in model_excl)]
     )
-    pipes = []
+    pipelines = []
     for model in model_incl:
-        pipes.append(
+        pipelines.append(
             pipeline(
                 [inference_nodes],
                 parameters={
@@ -59,7 +59,7 @@ def _create_inference_pipeline(model_excl: str, model_incl: str) -> Pipeline:
                 },
             )
         )
-    return sum([*pipes])
+    return sum([*pipelines])
 
 
 def _create_reporting_pipeline(model: str) -> Pipeline:
@@ -94,15 +94,15 @@ def create_pipeline(**kwargs) -> Pipeline:
     # Construct the full pipeline
     resolution_nodes = _create_resolution_pipeline()
     inference_nodes = _create_inference_pipeline(model_names_excl, model_names_incl)
-    pipes = [resolution_nodes, inference_nodes]
+    pipelines = [resolution_nodes, inference_nodes]
 
     # Add reporting nodes for each model
     for model in model_names_incl:
-        pipes.append(
+        pipelines.append(
             pipeline(
                 _create_reporting_pipeline(model),
                 tags=model,
             )
         )
 
-    return sum([*pipes])
+    return sum([*pipelines])

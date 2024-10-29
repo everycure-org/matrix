@@ -111,8 +111,10 @@ contourpy==1.3.0
     # via matplotlib
 cookiecutter==2.6.0
     # via kedro
-coverage==7.6.2
-    # via pytest-testmon
+coverage==7.6.1
+    # via
+    #   pytest-cov
+    #   pytest-testmon
 cycler==0.12.1
     # via matplotlib
 databricks-sdk==0.34.0
@@ -630,8 +632,11 @@ pyspark==3.5.1
 pytest==8.3.3
     # via
     #   -r requirements.in
+    #   pytest-cov
     #   pytest-mock
     #   pytest-testmon
+pytest-cov==5.0.0
+    # via -r requirements.in
 pytest-mock==3.14.0
     # via -r requirements.in
 pytest-testmon==2.1.1
