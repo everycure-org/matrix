@@ -17,6 +17,7 @@ from kedro.io.core import (
     Version,
 )
 from kedro_datasets.spark import SparkDataset, SparkJDBCDataset
+from kedro_datasets.spark.spark_dataset import _split_filepath
 from kedro_datasets.spark.spark_dataset import _get_spark, _strip_dbfs_prefix
 from matrix.hooks import SparkHooks
 from pygsheets import Spreadsheet, Worksheet
@@ -307,14 +308,16 @@ class RemoteSparkJDBCDataset(SparkJDBCDataset):
     ) -> None:
         """Creates a new instance of ``RemoteSparkJDBCDataset``."""
         self._client = storage.Client()
-        prefix, protocol, file_name = url.split(":", maxsplit=2)
-        file_name = file_name.lstrip("gs://")
+        protocol, fs_prefix, blob_name = self.split_remote_jdbc_path(url)
 
-        self._bucket, self._blob_name = file_name.split("/", 1)
+        if fs_prefix != "gs://":
+            raise DatasetError("RemoteSparkJDBCDataset currently supports GCS only")
+
+        self._bucket, self._blob_name = blob_name.split("/", maxsplit=1)
 
         super().__init__(
             table=table,
-            url=f"{prefix}:{protocol}:{self._blob_name}",
+            url=f"jdbc:{protocol}:{self._blob_name}",
             load_args=load_args,
             save_args=save_args,
             credentials=credentials,
@@ -337,3 +340,19 @@ class RemoteSparkJDBCDataset(SparkJDBCDataset):
 
     def _save(self, df: DataFrame) -> Any:
         raise DatasetError("Save function for RemoteJDBCDataset not implemented!")
+
+    @staticmethod
+    def split_remote_jdbc_path(url: str):
+        """Function to split jdbc path into components.
+
+        Args:
+            url: URL
+            fs_prefix: filesystem prefix
+        Returns:
+            protocol: jdbc protocol
+            fs_prefix: filesystem prefix
+        """
+        protocol, file_name = url.split(":", maxsplit=1)
+        fs_prefix, file_name = _split_filepath(file_name)
+
+        return protocol, fs_prefix, file_name
