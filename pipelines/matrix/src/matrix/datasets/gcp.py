@@ -106,11 +106,11 @@ class BigQueryTableDataset(SparkDataset):
             kwargs: Keyword Args passed to parent.
         """
         self._project_id = project_id
-        self._filepath = filepath
+        self._path = filepath
 
         identifier = re.sub(r"[^a-zA-Z0-9_-]", "_", str(identifier))
         self._table = f"{table}_{identifier}"
-        self._dataset_id = f"{self._project_id}.{self._dataset}"
+        self._dataset_id = f"{self._project_id}.{dataset}"
 
         self._client = bigquery.Client()
 
@@ -132,18 +132,16 @@ class BigQueryTableDataset(SparkDataset):
         # Invoke saving of the underlying spark dataset
         super()._save(data)
 
-        # Index the dataset in bigquery
+        # Ensure dataset exists
         self._create_dataset()
 
+        # Execute load job
         job_config = bigquery.LoadJobConfig(
-            write_disposition=bigquery.WriteDisposition.WRITE_TRUNCATE,
-            source_format=bigquery.SourceFormat.PARQUET,
+            write_disposition=bigquery.WriteDisposition.WRITE_TRUNCATE, source_format=bigquery.SourceFormat.PARQUET
         )
-
         load_job = self._client.load_table_from_uri(
-            self._filepath, f"{self._dataset_id}.{self._table}", job_config=job_config
-        )  # Make an API request.
-
+            self._path, f"{self._dataset_id}.{self._table}/*", job_config=job_config
+        )
         load_job.result()
 
     def _create_dataset(self) -> str:

@@ -7,13 +7,13 @@ _bigquery_ds: &_bigquery_ds
     bigQueryTableLabel.git_sha: ${globals:git_sha}
     temporaryGcsBucket: ${globals:gcs_bucket}
 
-embeddings.feat.nodes:
-  <<: *_bigquery_ds
-  table: nodes
+# embeddings.feat.nodes:
+#   <<: *_bigquery_ds
+#   table: nodes
 
-embeddings.feat.edges:
-  <<: *_bigquery_ds
-  table: "edges"
+# embeddings.feat.edges:
+#   <<: *_bigquery_ds
+#   table: "edges"
 
 embeddings.reporting.loss:
   type: kedro_mlflow.io.artifacts.MlflowArtifactDataset
