@@ -80,11 +80,11 @@ ingestion.raw.rtx_kg2.edges@spark:
 
 ingestion.int.rtx_kg2.nodes:
   <<: [*_spark_parquet, *_layer_int]
-  filepath: ${globals:paths.int}/rtx_kg2/nodes
+  filepath: ${globals:paths.ingestion}/int/rtx_kg2/${globals:data_sources.rtx-kg2.version}/nodes
 
 ingestion.int.rtx_kg2.edges:
   <<: [*_spark_parquet, *_layer_int]
-  filepath: ${globals:paths.int}/rtx_kg2/edges
+  filepath: ${globals:paths.ingestion}/int/rtx_kg2/${globals:data_sources.rtx-kg2.version}/edges
 
 ingestion.int.rtx_kg2.curie_to_pmids:
   <<: [*_spark_parquet, *_layer_int]
@@ -125,11 +125,11 @@ ingestion.raw.clinical_trials_data:
 
 ingestion.int.ec_medical_team.nodes:
   <<: [*_spark_parquet, *_layer_int]
-  filepath: ${globals:paths.int}/ec_medical_team/nodes
+  filepath: ${globals:paths.ingestion}/int/ec_medical_team/${globals:data_sources.ec-medical-team.version}/nodes
 
 ingestion.int.ec_medical_team.edges:
   <<: [*_spark_parquet, *_layer_int]
-  filepath: ${globals:paths.int}/ec_medical_team/edges
+  filepath: ${globals:paths.ingestion}/int/ec_medical_team/${globals:data_sources.ec-medical-team.version}/edges
 
 
 # -------------------------------------------------------------------------
@@ -218,9 +218,9 @@ ingestion.raw.robokop.edges@pandas:
 
 ingestion.int.robokop.nodes:
    <<: [*_spark_parquet, *_layer_int]
-   filepath: ${globals:paths.int}/robokop-kg/nodes
+   filepath: ${globals:paths.ingestion}/int/robokop-kg/${globals:data_sources.robokop.version}/nodes
 
 ingestion.int.robokop.edges:
    <<: [*_spark_parquet, *_layer_int]
-   filepath: ${globals:paths.int}/robokop-kg/edges
+   filepath: ${globals:paths.ingestion}/int/robokop-kg/${globals:data_sources.robokop.version}/edges
 
