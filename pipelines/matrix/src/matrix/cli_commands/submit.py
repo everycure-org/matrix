@@ -39,7 +39,7 @@ def cli():
 @click.option("--run-name", type=str, default=None, help="Specify a custom run name, defaults to branch")
 @click.option("--verbose", "-v", is_flag=True, default=False, help="Enable verbose output")
 @click.option("--dry-run", "-d", is_flag=True, default=False, help="Does everything except submit the workflow")
-@click.option("--pipeline", type=str, default="__default__", help="Specify a custom pipeline to run")
+@click.option("--pipeline", type=str, required=True, help="Specify a custom pipeline to run")
 # fmt: on
 def submit(username: str, namespace: str, run_name: str, verbose: bool, dry_run: bool, pipeline: str):
     """Submit the end-to-end workflow."""
