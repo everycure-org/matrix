@@ -161,6 +161,7 @@ def compute_embeddings(
     api_key: str,
     batch_size: int,
     endpoint: str,
+    skip: bool,
     model: str,
 ):
     """Function to orchestrate embedding computation in Neo4j.
@@ -174,7 +175,12 @@ def compute_embeddings(
         attribute: attribute to add
         endpoint: endpoint to use
         model: model to use
+        skip: whether to skip the embedding computation
     """
+    if skip:
+        # Adding an empty array of floats to the entire DataFrame
+        return input.withColumn(attribute, F.lit([0.0] * 512))
+
     batch_udf = F.udf(lambda z: batch(endpoint, model, api_key, z), ArrayType(ArrayType(FloatType())))
 
     window = Window.orderBy(F.lit(1))
