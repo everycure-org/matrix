@@ -17,19 +17,19 @@ _spark_parquet_ds: &_spark_parquet
   metadata:
     kedro-viz:
       layer: embeddings
-
+      
 # -------------------------------------------------------------------------
 # Datasets
 # -------------------------------------------------------------------------
 
 embeddings.feat.graph.node_embeddings:
   <<: *_spark_parquet
-  filepath: ${globals:paths.feat}/embeddings/tmp_nodes_with_embeddings
+  filepath: ${globals:paths.embeddings}/feat/tmp_nodes_with_embeddings # Why did I call this tmp?
 
 embeddings.feat.graph.pca_node_embeddings:
   <<: *_spark_parquet
-  filepath: ${globals:paths.feat}/embeddings/tmp_nodes_with_pca_embeddings
-
+  filepath: ${globals:paths.embeddings}/feat/tmp_nodes_with_pca_embeddings
+  
 # NOTE: Needs renaming
 embeddings.tmp.input_nodes:
   <<: [*_neo4j_ds]
@@ -53,20 +53,20 @@ embeddings.tmp.input_edges:
   save_args:
     # NOTE: The `match:Entity` ensures that the index we created above is leveraged
     # while inserting edges, thereby speeding up the process massively.
-    query: > 
+    query: >
       MATCH (subject:Entity {id: event.subject}), (object:Entity {id: event.object})
       WITH subject, object, event
       CALL apoc.create.relationship(subject, event.label, {kg_sources: event.kg_sources}, object) YIELD rel
       RETURN rel
 
 embeddings.feat.include_in_graphsage@yaml:
-  filepath: ${globals:paths.feat}/graphsage_filter/result.yml
+  filepath: ${globals:paths.embeddings}/feat/graphsage_filter_result.yml
   type:  yaml.YAMLDataset
 
 embeddings.models.graphsage:
   # we do not actually do anything with this DS, thus it's a dummy
   # https://github.com/kedro-org/kedro/discussions/3758
-  filepath: ${globals:paths.prm}/graphsage/result.yml
+  filepath: ${globals:paths.embeddings}/models/graphsage_result.yml
   type:  yaml.YAMLDataset
 
 # NOTE: Dummy catalog entry to enforce Kedro dependency
@@ -84,21 +84,16 @@ embeddings.model_output.graphsage:
 
 embeddings.feat.nodes:
   <<: *_spark_parquet
-  filepath: ${globals:paths.feat}/nodes
-      
+  filepath: ${globals:paths.embeddings}/feat/nodes_with_embeddings
 
 embeddings.reporting.loss:
   type: kedro_datasets.matplotlib.MatplotlibWriter
-  filepath: ${globals:paths.tmp}/convergence_plot.png
-
-embeddings.feat.edges:
-  <<: *_spark_parquet
-  filepath: ${globals:paths.feat}/edges
+  filepath: ${globals:paths.embeddings}/reporting/convergence_plot.png
 
 embeddings.reporting.topological_pca:
   <<: *_spark_parquet
-  filepath: ${globals:paths.reporting}/topological_pca
+  filepath: ${globals:paths.embeddings}/reporting/topological_pca
 
 embeddings.reporting.topological_pca_plot:
   type: kedro_datasets.matplotlib.MatplotlibWriter
-  filepath: ${globals:paths.tmp}/pca_plot.png
+  filepath: ${globals:paths.embeddings}/reporting/pca_plot.png

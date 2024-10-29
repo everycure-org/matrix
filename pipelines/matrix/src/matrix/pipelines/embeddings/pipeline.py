@@ -1,4 +1,5 @@
 """Embeddings pipeline."""
+
 from kedro.pipeline import Pipeline, node, pipeline
 
 from . import nodes

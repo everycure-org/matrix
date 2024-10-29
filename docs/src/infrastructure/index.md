@@ -108,7 +108,7 @@ embeddings.feat.edges:
 embeddings.feat.edges:
   type: matrix.datasets.gcp.LazySparkDataset
   file_format: parquet
-  filepath: ${globals:paths.feat}/edges
+  filepath: ${globals:paths.matrix_generation}/edges
 ```
 
 Most of our data is stored on GCS. We leverage BigQuery for what we consider to be
