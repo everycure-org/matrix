@@ -1,0 +1,37 @@
+kind: HTTPRoute
+apiVersion: gateway.networking.k8s.io/v1beta1
+metadata:
+  name: neo4j-route
+  namespace: neo4j
+spec:
+  parentRefs:
+  - kind: Gateway
+    sectionName: https
+    namespace: gateway
+    name: external-http
+  hostnames:
+  - "neo4j.platform.dev.everycure.org"
+  rules:
+  - backendRefs:
+    - name: neo4j
+      port: 7474
+
+---
+
+kind: HTTPRoute
+apiVersion: gateway.networking.k8s.io/v1beta1
+metadata:
+  name: neo4j-route
+  namespace: neo4j
+spec:
+  parentRefs:
+  - kind: Gateway
+    sectionName: https
+    namespace: gateway
+    name: external-http
+  hostnames:
+  - "neo4j_bolt.platform.dev.everycure.org"
+  rules:
+  - backendRefs:
+    - name: neo4j
+      port: 7687
