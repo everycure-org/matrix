@@ -22,53 +22,47 @@ def register_pipelines() -> Dict[str, Pipeline]:
     Returns:
         Mapping from a pipeline name to a ``Pipeline`` object.
     """
-    pipelines = {}
+    # Create base pipelines
+    data_release = create_data_release_pipeline()
+    embeddings = create_embeddings_pipeline()
+    evaluation = create_evaluation_pipeline()
+    fabricator = create_fabricator_pipeline()
+    inference = create_inference_pipeline()
+    ingestion = create_ingestion_pipeline()
+    integration = create_integration_pipeline()
+    matrix_generation = create_matrix_pipeline()
+    modelling = create_modelling_pipeline()
+    preprocessing = create_preprocessing_pipeline()
 
-    # TODO for now leaving embeddings out of KG release, we need to fix embeddings first for the large KG
-    pipelines["kg_release"] = (
-        create_ingestion_pipeline() + create_integration_pipeline() + create_data_release_pipeline()
-    )  # + create_embeddings_pipeline()
-    pipelines["modelling"] = create_modelling_pipeline() + create_matrix_pipeline() + create_evaluation_pipeline()
-    pipelines["__default__"] = (
-        create_integration_pipeline()
-        + create_embeddings_pipeline()
-        + create_modelling_pipeline()
-        + create_matrix_pipeline()
-        + create_evaluation_pipeline()
-    )
+    # Define pipeline combinations
+    pipelines = {
+        # Individual pipelines
+        "data_release": data_release,
+        "embeddings": embeddings,
+        "evaluation": evaluation,
+        "fabricator": fabricator,
+        "inference": inference,  # Run manually based on medical input
+        "ingestion": ingestion,  # Run only when sources change
+        "integration": integration,
+        "matrix_generation": matrix_generation,
+        "preprocessing": preprocessing,  # Run manually for clinical trials and medical KG artifacts
+        # Combined pipelines
+        "kg_release": ingestion + integration + data_release,  # Embeddings temporarily excluded
+        "modelling": modelling + matrix_generation + evaluation,
+        "__default__": integration + embeddings + modelling + matrix_generation + evaluation,
+        # Test pipelines
+        "test_release": fabricator + ingestion + integration + embeddings,
+        "test_modelling": modelling + matrix_generation + evaluation + data_release,
+        "test": (
+            fabricator
+            + ingestion
+            + integration
+            + embeddings
+            + modelling
+            + matrix_generation
+            + evaluation
+            + data_release
+        ),
+    }
 
-    pipelines["test_release"] = (
-        create_fabricator_pipeline()
-        + create_ingestion_pipeline()
-        + create_integration_pipeline()
-        + create_embeddings_pipeline()
-    )
-    pipelines["test_modelling"] = (
-        create_modelling_pipeline()
-        + create_matrix_pipeline()
-        + create_evaluation_pipeline()
-        + create_data_release_pipeline()
-    )
-
-    pipelines["test"] = (
-        create_fabricator_pipeline()
-        + create_ingestion_pipeline()
-        + create_integration_pipeline()
-        + create_embeddings_pipeline()
-        + create_modelling_pipeline()
-        + create_matrix_pipeline()
-        + create_evaluation_pipeline()
-        + create_data_release_pipeline()
-    )
-
-    pipelines["release"] = create_data_release_pipeline()
-
-    # Ran manually based on input from medical to release new artifacts from clinical trails and medical KG
-    pipelines["preprocessing"] = create_preprocessing_pipeline()
-
-    # We only run whenever sources change
-    pipelines["ingestion"] = create_ingestion_pipeline()
-
-    # We run only manually based on medical input
-    pipelines["inference"] = create_inference_pipeline()
     return pipelines
