@@ -121,7 +121,7 @@ class BigQueryTableDataset(SparkDataset):
         self._project_id = project_id
         self._dataset = sanitize_bq_strings(dataset)
 
-        self._table = sanitize_bq_strings("_".join([table, identifier]))
+        self._table = sanitize_bq_strings("_".join([table, identifier] if identifier else [table]))
 
         super().__init__(
             filepath="filepath",
