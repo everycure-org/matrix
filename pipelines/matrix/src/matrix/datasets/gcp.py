@@ -1,6 +1,8 @@
 """Module with GCP datasets for Kedro."""
 
+from google.cloud import storage
 import re
+import os
 from copy import deepcopy
 from typing import Any, Optional
 
@@ -14,7 +16,8 @@ from kedro.io.core import (
     DatasetError,
     Version,
 )
-from kedro_datasets.spark import SparkDataset
+from kedro_datasets.spark import SparkDataset, SparkJDBCDataset
+from kedro_datasets.spark.spark_dataset import _split_filepath
 from kedro_datasets.spark.spark_dataset import _get_spark, _strip_dbfs_prefix
 from matrix.hooks import SparkHooks
 from pygsheets import Spreadsheet, Worksheet
@@ -284,3 +287,75 @@ class GoogleSheetsDataset(AbstractVersionedDataset[pd.DataFrame, pd.DataFrame]):
 
     def _exists(self) -> bool:
         return False
+
+
+class RemoteSparkJDBCDataset(SparkJDBCDataset):
+    """Dataset to allow connection to remote JDBC dataset.
+
+    The JDBC dataset is restricted in the sense that it only allows urls from local. This
+    dataset provides an adaptor to reference to datasets in google cloud storage. The dataset works
+    by downloading the file into local, providing a local cache.
+
+    NOTE: Only works for datasets in Google Cloud Storage
+    """
+
+    def __init__(  # noqa: PLR0913
+        self,
+        *,
+        table: str,
+        url: str,
+        load_args: dict[str, Any] | None = None,
+        save_args: dict[str, Any] | None = None,
+        credentials: dict[str, Any] | None = None,
+        metadata: dict[str, Any] | None = None,
+    ) -> None:
+        """Creates a new instance of ``RemoteSparkJDBCDataset``."""
+        self._client = storage.Client()
+        protocol, fs_prefix, blob_name = self.split_remote_jdbc_path(url)
+
+        if fs_prefix != "gs://":
+            raise DatasetError("RemoteSparkJDBCDataset currently supports GCS only")
+
+        self._bucket, self._blob_name = blob_name.split("/", maxsplit=1)
+
+        super().__init__(
+            table=table,
+            url=f"jdbc:{protocol}:{self._blob_name}",
+            load_args=load_args,
+            save_args=save_args,
+            credentials=credentials,
+            metadata=metadata,
+        )
+
+    def _load(self) -> Any:
+        SparkHooks._initialize_spark()
+        bucket = self._client.bucket(self._bucket)
+        blob = bucket.blob(self._blob_name)
+
+        if not os.path.exists(self._blob_name):
+            print("downloading file to local")
+            os.makedirs(self._blob_name.rsplit("/", maxsplit=1)[0], exist_ok=True)
+            blob.download_to_filename(self._blob_name)
+        else:
+            print("file present skipping")
+
+        return super()._load()
+
+    def _save(self, df: DataFrame) -> Any:
+        raise DatasetError("Save function for RemoteJDBCDataset not implemented!")
+
+    @staticmethod
+    def split_remote_jdbc_path(url: str):
+        """Function to split jdbc path into components.
+
+        Args:
+            url: URL
+            fs_prefix: filesystem prefix
+        Returns:
+            protocol: jdbc protocol
+            fs_prefix: filesystem prefix
+        """
+        protocol, file_name = url.split(":", maxsplit=1)
+        fs_prefix, file_name = _split_filepath(file_name)
+
+        return protocol, fs_prefix, file_name

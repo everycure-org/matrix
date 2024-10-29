@@ -1,11 +1,10 @@
-preprocessing:
-  rtx:
-    exclude_labels:
-      - InformationResource
-      - Device
-      - GraphicaLocation
-
 integration:
+  preprocessing:
+    rtx:
+      semmed_filters:
+        publication_threshold: 10
+        ngd_threshold: 0.6
+
   nodenorm:
     # api_endpoint: https://nodenormalization-sri.renci.org/get_normalized_nodes
     api_endpoint: ${oc.env:NODENORM_ENDPOINT, https://nodenorm.transltr.io/1.5/get_normalized_nodes}

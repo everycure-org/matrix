@@ -1,5 +1,4 @@
 run_name: test-run
-
 versions:
   release: test-release
 
@@ -10,9 +9,9 @@ openai:
 paths:
   raw:                data/test/raw
   kg_raw:             data/test/raw
-
-  # Release-based
+  # Upstream version-based
   ingestion:          data/test/ingestion
+  # Release-based
   integration:        data/test/releases/${versions.release}/datasets/integration
   embeddings:         data/test/releases/${versions.release}/datasets/embeddings
 

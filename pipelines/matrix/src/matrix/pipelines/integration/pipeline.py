@@ -34,7 +34,11 @@ def create_pipeline(**kwargs) -> Pipeline:
             ),
             node(
                 func=transform_rtxkg2_edges,
-                inputs=["integration.int.rtx.nodes", "ingestion.int.rtx_kg2.edges"],
+                inputs=[
+                    "ingestion.int.rtx_kg2.edges",
+                    "ingestion.int.rtx_kg2.curie_to_pmids",
+                    "params:integration.preprocessing.rtx.semmed_filters",
+                ],
                 outputs="integration.int.rtx.edges",
                 name="transform_rtx_edges",
                 tags=["standardize"],
@@ -114,7 +118,7 @@ def create_pipeline(**kwargs) -> Pipeline:
             ),
             # filter edges given a set of filter stages
             node(
-                func=nodes.filer_unified_kg_edges,
+                func=nodes.filter_unified_kg_edges,
                 inputs=[
                     "integration.prm.filtered_nodes",
                     "integration.prm.unified_edges",

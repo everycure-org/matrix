@@ -42,7 +42,6 @@ integration.int.{source}.edges:
   <<: [*_spark_parquet, *_layer_int]
   filepath: ${globals:paths.integration}/int/{source}/edges
 
-
 # Normalized KGs
 integration.int.{source}.nodes.norm:
   <<: [*_spark_parquet, *_layer_int]

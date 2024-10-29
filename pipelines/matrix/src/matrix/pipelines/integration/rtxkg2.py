@@ -2,6 +2,7 @@
 
 import logging
 
+from typing import Dict
 import pandera.pyspark as pa
 import pyspark.sql.functions as f
 import pyspark.sql.types as T
@@ -42,7 +43,7 @@ def transform_rtxkg2_nodes(nodes_df: DataFrame) -> DataFrame:
 
 
 @pa.check_output(KGEdgeSchema)
-def transform_rtxkg2_edges(nodes_df: DataFrame, edges_df: DataFrame) -> DataFrame:
+def transform_rtxkg2_edges(edges_df: DataFrame, curie_to_pmids: DataFrame, semmed_filters: Dict[str, str]) -> DataFrame:
     """Transform RTX KG2 edges to our target schema.
 
     Args:
@@ -65,36 +66,48 @@ def transform_rtxkg2_edges(nodes_df: DataFrame, edges_df: DataFrame) -> DataFram
         .withColumn("object_aspect_qualifier",       f.lit(None).cast(T.StringType())) #not present in RTX KG2 at this time
         .withColumn("object_direction_qualifier",    f.lit(None).cast(T.StringType())) #not present in RTX KG2 at this time
         .select(*cols_for_schema(KGEdgeSchema))
-    ).transform(filter_semmed, nodes_df)
+    ).transform(filter_semmed, curie_to_pmids, **semmed_filters)
     # fmt: on
 
 
 def filter_semmed(
     edges_df: DataFrame,
-    nodes_df: DataFrame,
-    publication_threshold: int = 1,
-    ndg_threshold: float = 0.6,
+    curie_to_pmids: DataFrame,
+    publication_threshold: int,
+    ngd_threshold: float,
 ) -> DataFrame:
+    """Function to filter semmed edges.
+
+    Function that performs additional cleaning on RTX edges obtained by SemMedDB. This
+    replicates preprocessing that Chuynu has been doing. Needs future refinement.
+
+    Args:
+        edges_df: Dataframe with edges
+        curie_to_pmids: Dataframe mapping curies to PubMed Identifiers (PMIDs)
+        publication_threshold: Threshold for publications
+        ngd_threshold: threshold for ngd
+    Returns
+        Filtered dataframe
+    """
     before_count = edges_df.count()
 
-    # Enrich nodes with pubmed identifiers
-    nodes_df = (
-        nodes_df.withColumn("pmids", f.array_distinct(f.expr("filter(publications, x -> x like 'PMID:%')")))
+    curie_to_pmids = (
+        curie_to_pmids.withColumn("pmids", f.from_json("pmids", T.ArrayType(T.IntegerType())))
         .withColumn("num_pmids", f.array_size(f.col("pmids")))
-        .select("id", "pmids", "num_pmids")
+        .withColumnRenamed("curie", "id")
     )
 
     df = (
         edges_df.alias("edges")
         # Enrich subject pubmed identifiers
         .join(
-            nodes_df.alias("subj"),
+            curie_to_pmids.alias("subj"),
             on=[f.col("edges.subject") == f.col("subj.id")],
             how="left",
         )
         # Enrich object pubmed identifiers
         .join(
-            nodes_df.alias("obj"),
+            curie_to_pmids.alias("obj"),
             on=[f.col("edges.object") == f.col("obj.id")],
             how="left",
         )
@@ -106,10 +119,10 @@ def filter_semmed(
             (f.col("primary_knowledge_source") != f.lit("infores:semmeddb"))
             |
             # Retain only semmed edges more than 10 publications or ndg score below 0.6
-            ((f.col("num_publications") > f.lit(publication_threshold)) & (f.col("ndg") < f.lit(ndg_threshold)))
+            ((f.col("num_publications") > f.lit(publication_threshold)) & (f.col("ngd") < f.lit(ngd_threshold)))
         )
         # fmt: on
-        .select("edges.*", "ndg", "num_publications")
+        .select("edges.*", "ngd", "num_publications")
     )
 
     logger.info(f"dropped {before_count - df.count()} SemMedDB edges")
@@ -119,7 +132,7 @@ def filter_semmed(
 
 def compute_ngd(df: DataFrame, num_pairs: int = 3.7e7 * 20) -> DataFrame:
     """
-    PySpark transformation to compute ngd.
+    PySpark transformation to compute Normalized Google Distance (NGD).
 
     Args:
         df: Dataframe
@@ -130,7 +143,7 @@ def compute_ngd(df: DataFrame, num_pairs: int = 3.7e7 * 20) -> DataFrame:
     return df.withColumn(
         "num_common_pmids", f.array_size(f.array_intersect(f.col("subj.pmids"), f.col("obj.pmids")))
     ).withColumn(
-        "ndg",
+        "ngd",
         (
             f.greatest(f.log2(f.col("subj.num_pmids")), f.log2(f.col("obj.num_pmids")))
             - f.log2(f.col("num_common_pmids"))

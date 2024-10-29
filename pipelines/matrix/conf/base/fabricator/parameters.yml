@@ -105,24 +105,23 @@ fabricator.rtx_kg2:
           - "increased"
           - "decreased"
 
-
   # NOTE: Lets see if this is needed later on
-  # pubmed_ids_mapping:
-  #   num_rows: 50
-  #   columns:
-  #     curie:
-  #         type: row_apply
-  #         list_of_values: [nodes.id]
-  #         row_func: "lambda *args: args[0]"
-  #         resize: True
-  #         seed: 590590
-  #     pmids:
-  #         type: generate_random_arrays
-  #         sample_values:
-  #           - "PMID:12345678"
-  #           - "PMID:678"
-  #           - "PMID:195959"
-  #           - "PMID:5059595"
+  pubmed_ids_mapping:
+    num_rows: 50
+    columns:
+      curie:
+          type: row_apply
+          list_of_values: [nodes.id:ID]
+          row_func: "lambda *args: args[0]"
+          resize: True
+          seed: 590590
+      pmids:
+          type: generate_random_arrays
+          sample_values:
+            - 12345678
+            - 678
+            - 195959
+            - 5059595
 
   # NOTE: Fabricated drug and disease lists can contain nodes which are not in the drug and disease categories resp.
   drug_list:
@@ -136,7 +135,7 @@ fabricator.rtx_kg2:
         seed: 6850
       name: 
         type: row_apply
-        list_of_values: [nodes.name, nodes.name]
+        list_of_values: [nodes.id:ID, nodes.name]
         row_func: "lambda *args: args[1]"
         resize: True
         seed: 6850
