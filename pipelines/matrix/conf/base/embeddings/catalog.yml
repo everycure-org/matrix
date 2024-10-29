@@ -24,11 +24,11 @@ _spark_parquet_ds: &_spark_parquet
 
 embeddings.feat.graph.node_embeddings:
   <<: *_spark_parquet
-  filepath: ${globals:paths.embeddings}/tmp_nodes_with_embeddings # Why did I call this tmp?
+  filepath: ${globals:paths.embeddings}/feat/tmp_nodes_with_embeddings # Why did I call this tmp?
 
 embeddings.feat.graph.pca_node_embeddings:
   <<: *_spark_parquet
-  filepath: ${globals:paths.embeddings}/tmp_nodes_with_pca_embeddings
+  filepath: ${globals:paths.embeddings}/feat/tmp_nodes_with_pca_embeddings
   
 # NOTE: Needs renaming
 embeddings.tmp.input_nodes:
@@ -60,13 +60,13 @@ embeddings.tmp.input_edges:
       RETURN rel
 
 embeddings.feat.include_in_graphsage@yaml:
-  filepath: ${globals:paths.embeddings}/graphsage_filter_result.yml
+  filepath: ${globals:paths.embeddings}/feat/graphsage_filter_result.yml
   type:  yaml.YAMLDataset
 
 embeddings.models.graphsage:
   # we do not actually do anything with this DS, thus it's a dummy
   # https://github.com/kedro-org/kedro/discussions/3758
-  filepath: ${globals:paths.embeddings}/graphsage_result.yml
+  filepath: ${globals:paths.embeddings}/models/graphsage_result.yml
   type:  yaml.YAMLDataset
 
 # NOTE: Dummy catalog entry to enforce Kedro dependency
@@ -84,16 +84,16 @@ embeddings.model_output.graphsage:
 
 embeddings.feat.nodes:
   <<: *_spark_parquet
-  filepath: ${globals:paths.embeddings}/nodes_with_embeddings
+  filepath: ${globals:paths.embeddings}/feat/nodes_with_embeddings
 
 embeddings.reporting.loss:
   type: kedro_datasets.matplotlib.MatplotlibWriter
-  filepath: ${globals:paths.embeddings}/convergence_plot.png
+  filepath: ${globals:paths.embeddings}/reporting/convergence_plot.png
 
 embeddings.reporting.topological_pca:
   <<: *_spark_parquet
-  filepath: ${globals:paths.embeddings}/topological_pca
+  filepath: ${globals:paths.embeddings}/reporting/topological_pca
 
 embeddings.reporting.topological_pca_plot:
   type: kedro_datasets.matplotlib.MatplotlibWriter
-  filepath: ${globals:paths.embeddings}/pca_plot.png
+  filepath: ${globals:paths.embeddings}/reporting/pca_plot.png

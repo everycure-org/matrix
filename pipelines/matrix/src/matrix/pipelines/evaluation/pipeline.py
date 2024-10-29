@@ -25,7 +25,7 @@ def _create_evaluation_pipeline(model: str, evaluation: str) -> Pipeline:
                     f"evaluation.{model}.{evaluation}.model_output.pairs",
                     f"params:evaluation.{evaluation}.evaluation_options.evaluation",
                 ],
-                outputs=f"evaluation.{model}.{evaluation}.reporting.evaluation",
+                outputs=f"evaluation.{model}.{evaluation}.model_output.result",
                 name=f"create_{model}_{evaluation}_evaluation",
             ),
         ],
