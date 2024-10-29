@@ -61,6 +61,8 @@ def register_pipelines() -> Dict[str, Pipeline]:
         + create_data_release_pipeline()
     )
 
+    pipelines["release"] = create_data_release_pipeline()
+
     # Ran manually based on input from medical to release new artifacts from clinical trails and medical KG
     pipelines["preprocessing"] = create_preprocessing_pipeline()
 
