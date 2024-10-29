@@ -40,7 +40,7 @@ We implement time-split validation in our pipeline by using an additional ground
 
 ## The performance metrics in detail
 
-<img src="../assets/deep_dive/matrix_GT.png" width="700">
+<img src="../assets/deep_dive/matrix_GT.jpg" width="700">
 
 The input to the evaluation pipeline consists of the matrix pairs dataset with the following information:
 - Flags for pairs in the standard ground truth positive and negative test sets 
@@ -236,7 +236,7 @@ where $\gamma$ denotes the probability score. Then,
 $$
 \mathbb{P}_{y \sim \mathcal{N}} [\gamma(x) \geq \gamma(y)]  = \frac{|\set{y \in \mathcal{N} : \gamma(x) \geq \gamma(y)}|}{N} = \frac{N - |\set{y \in \mathcal{N} : \gamma(x) < \gamma(y)}|}{N}
 $$
-where $N = |\mathcal{N}|$. But $|\set{y \in \mathcal{N} : \gamma(x) < \gamma(y)}|$ is equal to $\text{rank}(x) - 1$
+where $N = |\mathcal{N}|$. But $|\set{y \in \mathcal{N} : \gamma(x) < \gamma(y)}|$ is equal to $\text{rank}_{np}(x) - 1$
  so by the above definition of  quantile rank, 
 $$
 \mathbb{P}_{y \sim \mathcal{N}} [\gamma(x) \geq \gamma(y)] = 1 - \text{QR}(x).
