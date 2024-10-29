@@ -308,6 +308,11 @@ ingestion.reporting.disease_list:
       - crossreferences
       - curie
       - name
+      - is_pathogen_caused
+      - is_cancer
+      - is_glucose_dysfunction
+      - tag_existing_treatment
+      - tag_QALY_lost
   load_args:
     sheet_name: diseases_${globals:data_sources.ec-disease-list.version}
     columns: *_gsheet_disease_columns
@@ -332,6 +337,11 @@ ingestion.reporting.drug_list:
       - Ingredient_IDs
       - curie
       - name
+      - is_antimicrobial
+      - is_steroid
+      - is_cancer
+      - is_glucose_dysfunction
+
   load_args:
     sheet_name: drugs_${globals:data_sources.ec-drug-list.version}
     columns: *_gsheet_drug_columns

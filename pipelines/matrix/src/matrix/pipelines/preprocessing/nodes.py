@@ -392,7 +392,7 @@ def clean_disease_list(disease_df: pd.DataFrame, endpoint: str) -> pd.DataFrame:
             endpoint=endpoint,
         )
 
-    return disease_df.dropna(subset=["curie"])
+    return disease_df.dropna(subset=["curie"]).fillna("")
 
 
 @has_schema(
