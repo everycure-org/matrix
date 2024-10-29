@@ -13,12 +13,14 @@ def create_pipeline(**kwargs) -> Pipeline:
                 inputs=["integration.prm.filtered_nodes"],
                 outputs="release.prm.kg_nodes",
                 name="ingest_kg_nodes",
+                tags=["neo4j"],
             ),
             node(
                 func=ingest_edges,
                 inputs=["release.prm.kg_nodes", "integration.prm.filtered_edges"],
                 outputs="release.prm.kg_edges",
                 name="ingest_kg_edges",
+                tags=["neo4j"],
             ),
             # write to BigQuery
             node(
