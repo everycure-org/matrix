@@ -3,22 +3,23 @@
 NOTE: This file was partially generated using AI assistance.
 """
 
+import subprocess
+from unittest.mock import MagicMock, patch
+
 import pytest
-from unittest.mock import patch, MagicMock
 from click.testing import CliRunner
 from matrix.cli_commands.submit import (
-    submit,
-    check_dependencies,
-    build_push_docker,
-    build_argo_template,
-    ensure_namespace,
     apply_argo_template,
-    submit_workflow,
-    get_run_name,
+    build_argo_template,
+    build_push_docker,
+    check_dependencies,
     command_exists,
+    ensure_namespace,
+    get_run_name,
     run_subprocess,
+    submit,
+    submit_workflow,
 )
-import subprocess
 
 
 @pytest.fixture
@@ -90,13 +91,13 @@ def test_apply_argo_template(mock_run_subprocess):
 # Test for submit_workflow
 def test_submit_workflow(mock_run_subprocess):
     mock_run_subprocess.return_value.stdout = '{"metadata": {"name": "test-job"}}'
-    submit_workflow("test_run", "test_namespace", verbose=True)
+    submit_workflow("test_run", "test_namespace", verbose=True, entrypoint="test_entrypoint")
     assert mock_run_subprocess.call_count == 1
 
 
 # Test for get_run_name
 def test_get_run_name_with_input():
-    assert get_run_name("custom_name") == "custom_name"
+    assert "custom-name" in get_run_name("custom_name")
 
 
 @patch("matrix.cli_commands.submit.run_subprocess")

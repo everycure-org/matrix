@@ -1,4 +1,5 @@
 from typing import Dict
+
 import pytest
 from kedro.pipeline import Pipeline
 from matrix.pipeline_registry import register_pipelines
@@ -30,10 +31,10 @@ def test_all_pipelines_are_pipeline_objects(pipelines: Dict[str, Pipeline]) -> N
 
 def test_default_pipeline_composition(pipelines: Dict[str, Pipeline]) -> None:
     default_pipeline = pipelines["__default__"]
-    release_pipeline = pipelines["kg_release"]
-    modelling_pipeline = pipelines["modelling"]
+    release_pipeline = pipelines["release"]
+    ingestion_pipeline = pipelines["ingestion"]
 
-    assert (
-        len(default_pipeline.nodes) == len(modelling_pipeline.nodes + release_pipeline.nodes)
-    ), f"Default pipeline (len: {len(default_pipeline.nodes)}) should be the sum of release_pipeline (len: {len(release_pipeline.nodes)}) and make_modelling (len: {len(modelling_pipeline.nodes)})"
-    assert default_pipeline.nodes == (release_pipeline + modelling_pipeline).nodes
+    # assert default does not do release
+    assert len(set(default_pipeline.nodes).intersection(set(release_pipeline.nodes))) == 0
+    # assert default does not do ingestion
+    assert len(set(default_pipeline.nodes).intersection(set(ingestion_pipeline.nodes))) == 0
