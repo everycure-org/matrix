@@ -1,5 +1,3 @@
-"""Nodes for the preprocessing pipeline."""
-
 import requests
 
 import pandas as pd
