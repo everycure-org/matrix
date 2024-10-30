@@ -2,11 +2,12 @@ data "google_client_config" "default" {
 }
 
 locals {
+  default_node_locations = "us-central1-a,us-central1-c"
   base_node_pool = [
     {
       name            = "default-node-pool"
       machine_type    = "e2-medium"
-      node_locations  = "us-central1-a"
+      node_locations  = local.default_node_locations
       min_count       = 1
       max_count       = 10
       local_ssd_count = 0
@@ -32,7 +33,7 @@ locals {
   cpu_node_pools = [for size in [8, 16, 32] : {
     name               = "e2-standard-${size}-nodes"
     machine_type       = "e2-standard-${size}"
-    node_locations     = "us-central1-a,us-central1-c"
+    node_locations     = local.default_node_locations
     min_count          = 0
     max_count          = 20
     local_ssd_count    = 0
@@ -47,7 +48,7 @@ locals {
   # cpu_spot_node_pools = [for size in [8, 16, 32] : {
   #   name               = "e2-standard-${size}-spot-nodes"
   #   machine_type       = "e2-standard-${size}"
-  #   node_locations     = "us-central1-a,us-central1-c"
+  #   node_locations     = local.default_node_locations
   #   min_count          = 0
   #   max_count          = 20
   #   local_ssd_count    = 0
@@ -61,7 +62,7 @@ locals {
   mem_node_pools = [for size in [4, 8, 16, 32, 48, 64] : {
     name               = "n2-standard-${size}-nodes"
     machine_type       = "n2-standard-${size}"
-    node_locations     = "us-central1-a,us-central1-c"
+    node_locations     = local.default_node_locations
     min_count          = 0
     max_count          = 20
     local_ssd_count    = 0
@@ -71,11 +72,24 @@ locals {
     initial_node_count = 0
     }
   ]
-  gpu_node_pools = [
-    # FUTURE add GPU pools here
-  ]
-  # node_pools_combined = concat(local.base_node_pool, local.cpu_node_pools, local.cpu_spot_node_pools, local.mem_node_pools)
-  node_pools_combined = concat(local.base_node_pool, local.cpu_node_pools, local.mem_node_pools)
+  gpu_node_pools = [for size in [4, 8, 16, 32, 48, 96] : {
+    name               = "g2-standard-${size}-l4-nodes"
+    machine_type       = "g2-standard-${size}"
+    node_locations     = local.default_node_locations
+    min_count          = 0
+    max_count          = size == 48 ? 20 : 5
+    local_ssd_count    = 0
+    disk_size_gb       = 200
+    enable_gcfs        = true
+    enable_gvnic       = true
+    initial_node_count = 0
+    accelerator_count  = size == 48 ? 1 : 2
+    accelerator_type   = "nvidia-l4"
+    gpu_driver_version = "LATEST"
+  }]
+  
+  # add spot nodes after they are supported
+  node_pools_combined = concat(local.base_node_pool, local.cpu_node_pools, local.mem_node_pools, local.gpu_node_pools)
 }
 
 # docs here https://registry.terraform.io/modules/terraform-google-modules/kubernetes-engine/google/latest/submodules/private-cluster
