@@ -427,3 +427,17 @@ As the error suggests, your active project likely does not match the quota proje
 ```bash
 gcloud auth application-default set-quota-project mtrx-hub-dev-3of
 ```
+
+### Fabricator error `IndexError: tuple index out of range` 
+```
+ERROR    Node fabricate_kg2_datasets: fabricate_datasets() ->  failed with error:                                                                                node.py:386
+                             tuple index out of range  
+IndexError: tuple index out of range
+```
+This error is most likely due to data fabricator version being outdated after the most recent updates to main. A simple solution is to clean your current venv, re-create and re-install the venv with needed dependencies:
+```
+deactivate # ensure no venv is active
+make clean
+make
+```
+However we noted that error persists if you have miniconda3 or conda installed on your system. Note that conda and uv (which is a preferred package management system) are very incompatible and using both might lead to errors. Therefore, if you run the command above and still get the IndexError, please make sure you have no miniconda installed. If you do have miniconda on your system, you might need to remove it or ensure it's completely separated. Once it's removed, you should re-do re-create the matrix repo and re-install venv as mentioned above
