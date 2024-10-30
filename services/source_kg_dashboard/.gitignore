@@ -1,0 +1,11 @@
+.evidence/template
+.svelte-kit
+build
+node_modules
+.DS_Store
+static/data
+# explicitly choosing not to ignore the connection options, because they're handled by git-crypt
+# *.options.yaml
+.vscode/settings.json
+.env
+.evidence/meta
