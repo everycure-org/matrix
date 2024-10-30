@@ -42,6 +42,7 @@ def register_pipelines() -> Dict[str, Pipeline]:
     pipelines["kg_release"] = (
           pipelines["ingestion"]
         + pipelines["integration"]
+        + pipelines["embeddings"]
         + pipelines["data_release"] 
     )  # + embeddings, #TODO currently excluded
     pipelines["modelling_run"] = (
