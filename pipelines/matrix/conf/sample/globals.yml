@@ -6,10 +6,6 @@ versions:
   release: sampled_test
 
 paths:
-  #  raw: This should be taken from GPC's bucket as defined
-  #       in base.globals.yml
-  #  new_raw: From GCP's bucket too
-  sample_raw: data/sampled_test/01_RAW
   int: data/sampled_test/02_intermediate
   prm_ingest: data/03_primary
   prm: data/sampled_test/03_primary
