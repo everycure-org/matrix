@@ -8,4 +8,6 @@ static/data
 # *.options.yaml
 .vscode/settings.json
 .env
-.evidence/meta
+.evidence
+.npmrc
+
