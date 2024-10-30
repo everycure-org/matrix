@@ -61,13 +61,13 @@ moa_extraction:
           dropout: 0.1
         criterion:
           object: torch.nn.BCEWithLogitsLoss
-        optimizer__weight_decay: 0.01
-        max_epochs: 20
+        optimizer__weight_decay: 0.04
+        max_epochs: 40
         lr: 0.01
         device: 'cpu'
       negative_samplers:
         - object: matrix.pipelines.moa_extraction.path_generators.ReplacementPathSampler
-          num_replacement_paths: 1
+          num_replacement_paths: 2
           unidirectional: &unidirectional False
           tag_rules:
             all: ['drug_disease']
@@ -79,17 +79,17 @@ moa_extraction:
           object: matrix.pipelines.moa_extraction.models.TransformerBinaryClassifier
           token_dim: 100
           num_heads: 4
-          num_layers: 3
+          num_layers: 2
           dropout: 0.1
         criterion:
           object: torch.nn.BCEWithLogitsLoss
-        optimizer__weight_decay: 0.01
+        optimizer__weight_decay: 0.03
         max_epochs: 20
         lr: 0.01
         device: 'cpu'
       negative_samplers:
         - object: matrix.pipelines.moa_extraction.path_generators.ReplacementPathSampler
-          num_replacement_paths: 1
+          num_replacement_paths: 2
           unidirectional: *unidirectional
           tag_rules:
             all: ['drug_disease']
