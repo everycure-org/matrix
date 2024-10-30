@@ -18,7 +18,7 @@ Our drug repurposing models have several use cases, including:
 
 1. Matrix-wide ranking: Prioritising millions of drug-disease pairs across the entire matrix, containing all possible combinations of drugs and diseases from curated lists. This is the primary use case for the MATRIX platform.
 
-2. Disease-specific ranking: For a given disease, ranking drugs based on their likelihood of being an effective treatment.
+2. Disease-specific ranking: For a given disease, ranking drugs based on their likelihood scores of being effective treatments.
 
 Additionally, it's crucial that our models don't assign high scores to drug-disease pairs that appear promising but would likely fail in clinical trials. This helps prevent wasted resources on unsuccessful clinical studies.
 
@@ -47,7 +47,7 @@ The input to the evaluation pipeline consists of the matrix pairs dataset with t
 - Separate flags  for test set pairs corresponding to results of recent clinical trials
 - Treat scores for each pair 
 
-In addition, we remove from the matrix any known positive or known negative pair that were used by the model during training.
+In addition, we remove from the matrix any known positive or known negative pairs that were used by the model during training, so that these are not used in the computation of the metrics.
 
 > __Key philosophy.__ In order to compute ranking metrics, we must synthesise negative pairs since only a small portion of negative pairs are known. To do this, we exploit the fact that the vast majority of drug disease pairs are negatives. However, synthesising negative pairs by random sampling can lead to unexpected and undesirable effects on the data distribution, as well as introducing noise. For example, the distribution for geodesic distance may be altered (see Yang et. al. ). Therefore, our ranking metrics are computed using pairs dataset that are as close as possible to what the model will see while performing its downstream task.
 
@@ -61,7 +61,7 @@ The *Recall@n* metric is defined as the proportion of ground truth test pairs th
 
 $$\text{Recall@n} = \frac{|\{(d,i) \in GT : \text{rank}(d,i) \leq n\}|}{|GT|}$$
 
-where $|\cdot|$ denotes the cardinality (size) of a set. 
+where the $\text{rank}(d,i)$ is defined as the rank of a drug $d$ and a disease $i$ among all possible pairs in the matrix and $|\cdot|$ denotes the cardinality (size) of a set. 
 
 We have three variations of the full matrix Recall@n metric corresponding to different choices for the ground truth set $GT$: 
 1.  The *standard version* uses the standard ground truth positive test set
