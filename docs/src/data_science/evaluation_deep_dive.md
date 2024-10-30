@@ -59,7 +59,9 @@ These metrics focus on how well the model ranks the set of pairs comprising the 
 
 The *Recall@n* metric is defined as the proportion of ground truth test pairs that appear among the top $n$ ranked pairs in the matrix. Mathematically, for a set of ground truth pairs $GT$ in the test set, it may be written as 
 
-$$\text{Recall@n} = \frac{|\{(d,i) \in GT : \text{rank}(d,i) \leq n\}|}{|GT|}$$
+$$
+\text{Recall@n} = \frac{|\{(d,i) \in GT : \text{rank}(d,i) \leq n\}|}{|GT|}
+$$
 
 where the $\text{rank}(d,i)$ is defined as the rank of a drug $d$ and a disease $i$ among all possible pairs in the matrix and $|\cdot|$ denotes the cardinality (size) of a set. 
 
@@ -76,8 +78,11 @@ We have three variations of the full matrix Recall@n metric corresponding to dif
 
 The AUROC metric evaluates the model's ability to distinguish between positive and negative pairs across all possible ranking thresholds. Formally, it is defined as the area under the ROC curve (see [Wikipedia: Receiver operating characteristic](https://en.wikipedia.org/wiki/Receiver_operating_characteristic)). 
 
-The following equivalent characterisation allows us to efficiently compute the AUROC metric in the codebase, 
-$$\text{AUROC} = 1 - \text{MQR} $$
+The following equivalent characterisation allows us to efficiently compute the AUROC metric in the codebase,
+
+$$
+\text{AUROC} = 1 - \text{MQR} 
+$$
 where $\text{MQR}$ denotes the *mean quantile rank against non-positives* among ground truth test pairs $GT$. Details are given in the appendix below.
 
 MQR is a measure between 0 and 1 with lower values indicating better ranking performance, whereas for the AUROC higher values are better
