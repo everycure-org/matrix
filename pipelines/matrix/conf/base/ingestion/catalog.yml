@@ -88,7 +88,7 @@ ingestion.int.rtx_kg2.edges:
 
 ingestion.int.rtx_kg2.curie_to_pmids:
   <<: [*_spark_parquet, *_layer_int]
-  filepath: ${globals:paths.ingestion}/int/rtx_kg2/${globals:data_sources.rtx-kg2.version}/curie_to_pmids # TODO: Or should we move elsewhere?
+  filepath: ${globals:paths.ingestion}/int/rtx_kg2/${globals:data_sources.rtx-kg2.version}/curie_to_pmids
 
 # -------------------------------------------------------------------------
 # EveryCure Medical
