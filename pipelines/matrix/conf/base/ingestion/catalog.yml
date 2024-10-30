@@ -32,6 +32,7 @@ _layer_int: &_layer_int
 
 ingestion.raw.rtx_kg2.curie_to_pmids@spark:
   type: matrix.datasets.gcp.RemoteSparkJDBCDataset
+  project: ${globals:gcp_project}
   table: curie_to_pmids
   url: sqlite:${globals:paths.kg_raw}/KGs/rtx_kg2/${globals:data_sources.rtx-kg2.version}/curie_to_pmids.sqlite
   load_args:
