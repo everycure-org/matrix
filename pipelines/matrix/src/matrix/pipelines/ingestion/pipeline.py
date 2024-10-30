@@ -4,7 +4,7 @@ import pyspark.sql.functions as F
 from kedro.pipeline import Pipeline, node, pipeline
 
 
-def create_ingestion_pipeline(**kwargs) -> Pipeline:
+def create_pipeline(**kwargs) -> Pipeline:
     """Create ingestion pipeline."""
     # FUTURE: Use dynamic pipeline for this good first issue
     return pipeline(

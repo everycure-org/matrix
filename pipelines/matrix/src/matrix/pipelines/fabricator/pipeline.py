@@ -40,7 +40,7 @@ def _create_pairs(drug_list: pd.DataFrame, disease_list: pd.DataFrame, num: int 
     return df[:num], df[num : 2 * num]
 
 
-def create_fabricator_pipeline(**kwargs) -> Pipeline:
+def create_pipeline(**kwargs) -> Pipeline:
     """Create fabricator pipeline."""
     return pipeline(
         [
