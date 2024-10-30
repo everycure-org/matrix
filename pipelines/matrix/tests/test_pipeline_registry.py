@@ -36,4 +36,5 @@ def test_default_pipeline_composition(pipelines: Dict[str, Pipeline]) -> None:
     assert (
         len(default_pipeline.nodes) == len(modelling_pipeline.nodes + release_pipeline.nodes)
     ), f"Default pipeline (len: {len(default_pipeline.nodes)}) should be the sum of release_pipeline (len: {len(release_pipeline.nodes)}) and make_modelling (len: {len(modelling_pipeline.nodes)})"
+
     assert default_pipeline.nodes == (release_pipeline + modelling_pipeline).nodes

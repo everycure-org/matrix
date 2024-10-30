@@ -20,11 +20,11 @@ gh_token: ${oc.env:GH_TOKEN, dummy}
 
 run_name: ${oc.env:RUN_NAME, default-run-name}
 versions:
-  release: 20241025
+  release: local-release
 
 data_sources:
   rtx-kg2:
-    version: v2.7.3
+    version: v2.10.0
   robokop:
     version: c5ec1f282158182f
 # Dataset with node and edge proposals by the
@@ -40,7 +40,7 @@ data_sources:
     # allows for downloading an artifact by its id. Get the artifact id
     # of the latest release as follows:
     # curl -X GET -H "Content-Type: application/json" -H "Authorization: token PAT" -H "Accept: application/vnd.github.v3.raw" https://api.github.com/repos/everycure-org/matrix-drug-list/releases | jq ".[0].assets | map(select(.name == \"drugList.tsv\"))[0] | .id"
-    version: 192198441 
+    version: 200891683
   ec-disease-list:
     version: latest # TODO: We should version
 
@@ -48,11 +48,12 @@ data_sources:
 # due to schema validation. Will make PR.
 mlflow_artifact_root: null
 
+mlflow_url: https://mlflow.platform.dev.everycure.org/
+
 paths:
   # Upstream-source versioned
   raw:                ${source_gcs_bucket}/kedro/data/01_raw
-  # TODO: When we merge https://github.com/everycure-org/matrix/pull/122 we should move all raw data to the new location
-  new_raw:            ${gcs_bucket}/data/01_RAW/
+  kg_raw:             ${gcs_bucket}/data/01_RAW/
   ingestion:          data/ingestion
 
   # Release-based

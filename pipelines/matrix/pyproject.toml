@@ -25,8 +25,9 @@ markers = [
 
 [project]
 name = "matrix"
+requires-python = ">=3.11"
 readme = "README.md"
-dynamic = [ "dependencies", "version",]
+dynamic = [ "version"]
 
 [project.scripts]
 matrix = "matrix.__main__:main"

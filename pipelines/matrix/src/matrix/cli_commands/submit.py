@@ -46,6 +46,7 @@ def cli():
 @click.option("--pipeline-for-execution", type=str, default="__default__", help="Specify which pipeline to execute.")
 @click.option("--verbose", "-v", is_flag=True, default=False, help="Enable verbose output")
 @click.option("--dry-run", "-d", is_flag=True, default=False, help="Does everything except submit the workflow")
+@click.option("--pipeline", type=str, default="__default__", help="Specify a custom pipeline to run")
 # fmt: on
 def submit(username: str, namespace: str, run_name: str, include_pipeline: tuple[str], pipeline_for_execution: str, verbose: bool, dry_run: bool):
     """Submit the end-to-end workflow. """
@@ -376,11 +377,10 @@ def get_run_name(run_name: Optional[str]) -> str:
     Returns:
         str: The final run name to be used for the workflow.
     """
-    if run_name:
-        return run_name
-    branch_name = run_subprocess(
-        "git rev-parse --abbrev-ref HEAD", capture_output=True, stream_output=False
-    ).stdout.strip()
-    branch_sanitized = re.sub(r"[^a-zA-Z0-9-]", "-", branch_name).rstrip("-")
+    if not run_name:
+        run_name = run_subprocess(
+            "git rev-parse --abbrev-ref HEAD", capture_output=True, stream_output=False
+        ).stdout.strip()
     random_sfx = str.lower(secrets.token_hex(4))
-    return f"{branch_sanitized}-{random_sfx}"
+    unsanitized_name = f"{run_name}-{random_sfx}"
+    return re.sub(r"[^a-zA-Z0-9-]", "-", unsanitized_name).rstrip("-")
