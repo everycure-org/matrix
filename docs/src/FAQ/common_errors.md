@@ -441,3 +441,19 @@ make clean
 make
 ```
 However we noted that error persists if you have miniconda3 or conda installed on your system. Note that conda and uv (which is a preferred package management system) are very incompatible and using both might lead to errors. Therefore, if you run the command above and still get the IndexError, please make sure you have no miniconda installed. If you do have miniconda on your system, you might need to remove it or ensure it's completely separated. Once it's removed, you should re-do re-create the matrix repo and re-install venv as mentioned above
+
+
+### Error reading data from cloud
+```
+DatasetError: 
+Project was not passed and could not be determined from the environment..
+```
+
+After setting up installing the gcloud SDK, make sure that a default project is set by running:
+```
+gcloud config list
+```
+If no project is listed, then it can be set by running:
+```
+gcloud config set project mtrx-hub-dev-3of
+```
