@@ -147,6 +147,9 @@ def sample_biolink_predicates():
     ]
 
 
+@pytest.mark.spark(
+    help="This test relies on PYSPARK_PYTHON to be set appropriately, and sometimes does not work in VSCode"
+)
 def test_unify_nodes(spark, sample_nodes):
     # Create two node datasets
     nodes1 = sample_nodes.filter(sample_nodes.id != "MONDO:0005148")
@@ -167,6 +170,9 @@ def test_unify_nodes(spark, sample_nodes):
     assert set(drug_node.upstream_data_source) == {"source1", "source3"}
 
 
+@pytest.mark.spark(
+    help="This test relies on PYSPARK_PYTHON to be set appropriately, and sometimes does not work in VSCode"
+)
 def test_unify_edges(spark, sample_edges, sample_biolink_predicates):
     # Create two edge datasets
     edges1 = sample_edges.filter(sample_edges.subject != "CHEBI:120688")
@@ -207,6 +213,9 @@ class MockResponse:
         return self
 
 
+@pytest.mark.spark(
+    help="This test relies on PYSPARK_PYTHON to be set appropriately, and sometimes does not work in VSCode"
+)
 def test_normalize_kg(spark, mocker):
     # Given
     sample_nodes = spark.createDataFrame(
