@@ -179,7 +179,7 @@ spec:
     volumes:
         - name: gds-license
           secret:
-            secretName: neo4j_gds_key
+            secretName: gds-secret
     sidecars:
       # Neo4j enterprise sidecar
       - name: neo4j
