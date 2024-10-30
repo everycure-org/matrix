@@ -173,7 +173,7 @@ spec:
           kedro run -p {% raw %}"{{inputs.parameters.pipeline}}"{% endraw %} -e {% raw %}"{{workflow.parameters.env}}"{% endraw %} -n {% raw %}"{{inputs.parameters.kedro_nodes}}"{% endraw %}
 
       volumeMounts:
-        - name: gds-key-mount
+        - name: gds-key
           mountPath: /etc/gds-key
           readOnly: true
     volumes:
