@@ -42,13 +42,12 @@ def cli():
 @click.option("--username", type=str, required=True, help="Specify the username to use")
 @click.option("--namespace", type=str, default="argo-workflows", help="Specify a custom namespace")
 @click.option("--run-name", type=str, default=None, help="Specify a custom run name, defaults to branch")
+@click.option("--pipeline", type=str, default="__default__", help="Specify which pipeline to execute")
 @click.option("--include-pipeline", type=str, multiple=True, default=None, help="Specify which pipelines to include in workflow template. If not specified, all pipelines are added to the workflow.")
-@click.option("--pipeline-for-execution", type=str, default="__default__", help="Specify which pipeline to execute.")
 @click.option("--verbose", "-v", is_flag=True, default=False, help="Enable verbose output")
 @click.option("--dry-run", "-d", is_flag=True, default=False, help="Does everything except submit the workflow")
-@click.option("--pipeline", type=str, default="__default__", help="Specify a custom pipeline to run")
 # fmt: on
-def submit(username: str, namespace: str, run_name: str, include_pipeline: tuple[str], pipeline_for_execution: str, verbose: bool, dry_run: bool):
+def submit(username: str, namespace: str, run_name: str, pipeline: str, include_pipeline: tuple[str], verbose: bool, dry_run: bool):
     """Submit the end-to-end workflow. """
     if verbose:
         log.setLevel(logging.DEBUG)
@@ -64,8 +63,8 @@ def submit(username: str, namespace: str, run_name: str, include_pipeline: tuple
                 raise ValueError(f"Requested workflow pipeline {pipeline_name} not found!")
             pipelines_to_submit[pipeline_name] = kedro_pipelines[pipeline_name]
 
-    if pipeline_for_execution not in pipelines_to_submit:
-        raise ValueError(f"Pipeline requested for execution {pipeline_for_execution} not included in workflow!")
+    if pipeline not in pipelines_to_submit:
+        raise ValueError(f"Pipeline requested for execution {pipeline} not included in workflow!")
 
 
     _submit(
@@ -73,7 +72,7 @@ def submit(username: str, namespace: str, run_name: str, include_pipeline: tuple
         namespace=namespace,
         run_name=run_name,
         pipelines_for_workflow=pipelines_to_submit,
-        pipeline_for_execution=pipeline_for_execution,
+        pipeline_for_execution=pipeline,
         verbose=verbose,
         dry_run=dry_run,
         template_directory=ARGO_TEMPLATES_DIR_PATH,
