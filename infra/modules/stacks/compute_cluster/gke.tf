@@ -65,13 +65,13 @@ locals {
     machine_type       = "g2-standard-${size}"
     node_locations     = local.default_node_locations
     min_count          = 0
-    max_count          = size == 48 ? 20 : 5
+    max_count          = 20
     local_ssd_count    = 0
     disk_size_gb       = 200
     enable_gcfs        = true
     enable_gvnic       = true
     initial_node_count = 0
-    accelerator_count  = size == 48 ? 1 : 2
+    accelerator_count  = 1
     accelerator_type   = "nvidia-l4"
     gpu_driver_version = "LATEST"
   }]
