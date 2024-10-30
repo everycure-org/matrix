@@ -276,6 +276,21 @@ def add_include_in_graphsage(df: DataFrame, gdb: GraphDB, drug_types: List[str],
 
     Only edges between non drug-disease pairs are included in graphsage.
     """
+
+    """Hardcoded to apply node type selection"""
+
+    with gdb.driver() as driver:
+        driver.execute_query(
+            """
+            WITH ["biolink:ChemicalEntity", "biolink:Gene", "biolink:DiseaseOrPhenotypicFeature"] as node_types
+            MATCH (n)-[r]-(m)
+            WHERE NOT
+                n.category IN node_types
+                OR m.category IN node_types
+                SET r.include_in_graphsage = 0
+                """
+        )
+
     with gdb.driver() as driver:
         driver.execute_query(
             """
