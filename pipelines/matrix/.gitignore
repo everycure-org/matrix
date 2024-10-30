@@ -19,6 +19,7 @@ data/**
 !.gitkeep
 
 .env*
+!.env.defaults
 !.env.tmpl
 
 ##########################
