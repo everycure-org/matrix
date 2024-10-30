@@ -173,13 +173,16 @@ spec:
           kedro run -p {% raw %}"{{inputs.parameters.pipeline}}"{% endraw %} -e {% raw %}"{{workflow.parameters.env}}"{% endraw %} -n {% raw %}"{{inputs.parameters.kedro_nodes}}"{% endraw %}
 
       volumeMounts:
-        - name: gds-license
-          mountPath: /etc/gds-license
+        - name: gds-key-mount
+          mountPath: /etc/gds-key
           readOnly: true
     volumes:
-        - name: gds-license
+        - name: gds-key
           secret:
             secretName: gds-secret
+            items:
+              - key: gds_key
+                path: /etc/gds-key
     sidecars:
       # Neo4j enterprise sidecar
       - name: neo4j
