@@ -95,19 +95,20 @@ def filter_semmed(
         curie_to_pmids.withColumn("pmids", f.from_json("pmids", T.ArrayType(T.IntegerType())))
         .withColumn("num_pmids", f.array_size(f.col("pmids")))
         .withColumnRenamed("curie", "id")
+        .persist()
     )
 
     df = (
         edges_df.alias("edges")
         # Enrich subject pubmed identifiers
         .join(
-            curie_to_pmids.alias("subj"),
+            f.broadcast(curie_to_pmids).alias("subj"),
             on=[f.col("edges.subject") == f.col("subj.id")],
             how="left",
         )
         # Enrich object pubmed identifiers
         .join(
-            curie_to_pmids.alias("obj"),
+            f.broadcast(curie_to_pmids).alias("obj"),
             on=[f.col("edges.object") == f.col("obj.id")],
             how="left",
         )
@@ -124,6 +125,8 @@ def filter_semmed(
         # fmt: on
         .select("edges.*", "ngd", "num_publications")
     )
+
+    curie_to_pmids.unpersist()
 
     logger.info(f"dropped {before_count - df.count()} SemMedDB edges")
 
