@@ -45,20 +45,8 @@ locals {
     }
   ]
 
-  # cpu_spot_node_pools = [for size in [8, 16, 32] : {
-  #   name               = "e2-standard-${size}-spot-nodes"
-  #   machine_type       = "e2-standard-${size}"
-  #   node_locations     = local.default_node_locations
-  #   min_count          = 0
-  #   max_count          = 20
-  #   local_ssd_count    = 0
-  #   disk_size_gb       = 200
-  #   enable_gcfs        = true
-  #   enable_gvnic       = true
-  #   initial_node_count = 0
-  #   spot               = true
-  #   }
-  # ]
+  # consider adding spot nodes
+  
   mem_node_pools = [for size in [4, 8, 16, 32, 48, 64] : {
     name               = "n2-standard-${size}-nodes"
     machine_type       = "n2-standard-${size}"
@@ -88,7 +76,6 @@ locals {
     gpu_driver_version = "LATEST"
   }]
   
-  # add spot nodes after they are supported
   node_pools_combined = concat(local.base_node_pool, local.cpu_node_pools, local.mem_node_pools, local.gpu_node_pools)
 }
 
