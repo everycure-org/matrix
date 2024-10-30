@@ -13,16 +13,16 @@ services:
     # https://neo4j.com/docs/operations-manual/current/docker/ref-settings/
     environment:
       - NEO4J_AUTH=neo4j/admin
-      # - NEO4J_apoc_export_file_enabled=true
-      # - NEO4J_apoc_import_file_enabled=true
-      # - NEO4J_apoc_import_file_use__neo4j__config=true
-      # - NEO4J_PLUGINS=["apoc", "graph-data-science", "apoc-extended"]
-      # - NEO4J_dbms_security_auth__minimum__password__length=4
-      # - NEO4J_dbms_security_procedures_whitelist=gds.*, apoc.*
-      # - NEO4J_dbms_security_procedures_unrestricted=gds.*, apoc.*
-      # - NEO4J_db_logs_query_enabled=OFF
-      # - NEO4J_ACCEPT_LICENSE_AGREEMENT=yes
-      # # - NEO4J_gds_enterprise_license_file=/license/lic.txt
+      - NEO4J_apoc_export_file_enabled=true
+      - NEO4J_apoc_import_file_enabled=true
+      - NEO4J_apoc_import_file_use__neo4j__config=true
+      - NEO4J_PLUGINS=["apoc", "graph-data-science", "apoc-extended"]
+      - NEO4J_dbms_security_auth__minimum__password__length=4
+      - NEO4J_dbms_security_procedures_whitelist=gds.*, apoc.*
+      - NEO4J_dbms_security_procedures_unrestricted=gds.*, apoc.*
+      - NEO4J_db_logs_query_enabled=OFF
+      - NEO4J_ACCEPT_LICENSE_AGREEMENT=yes
+      - NEO4J_gds_enterprise_license_file=/license/lic.txt
       # - gds.enterprise.license_file=/license/lic.txt
     volumes:
       - ./neo4j_data/data:/data
@@ -30,7 +30,7 @@ services:
       - ./neo4j_data/import:/var/lib/neo4j/import
       - ./neo4j_data/plugins:/plugins
       - ./license/lic.txt:/license/lic.txt
-      - ./neo4j.conf:/var/lib/neo4j/conf/neo4j.conf
+      # - ./neo4j.conf:/var/lib/neo4j/conf/neo4j.conf
     healthcheck:
       test: wget http://localhost:7474 || exit 1
       interval: 10s
