@@ -64,8 +64,11 @@ $$\text{Recall@n} = \frac{|\{(d,i) \in GT : \text{rank}(d,i) \leq n\}|}{|GT|}$$
 where the $\text{rank}(d,i)$ is defined as the rank of a drug $d$ and a disease $i$ among all possible pairs in the matrix and $|\cdot|$ denotes the cardinality (size) of a set. 
 
 We have three variations of the full matrix Recall@n metric corresponding to different choices for the ground truth set $GT$: 
+
 1.  The *standard version* uses the standard ground truth positive test set
+
 2.  The *clinical trials version* uses successful recent clinical trials
+
 3. The *negatives version* which uses the ground truth negative test set. Unlike the others, we want this one to be as small possible
 
 
@@ -89,7 +92,9 @@ These metrics focus on how well the model ranks drugs for individual diseases, p
 For a given disease $i$, the *disease-specific rank* $\text{rank}_i(d)$ of a drug $d$ is defined as the rank of the drug $d$ among all drugs. As well as training pairs we omit any other known positives from the ranking.
 
 We have two versions of disease-specific ranking metrics corresponding to different choices for the set of ground truth pairs $GT$:
+
 1.  The *standard version* uses the standard ground truth positive test set
+
 2.  The *clinical trials version* uses successful recent clinical trials
 
 #### Hit@k
@@ -109,7 +114,9 @@ The MRR ranges from 0 to 1, with higher values indicating better performance.
 These metrics assess the model's ability to distinguish between known positive and negative drug-disease pairs, treating the task as a binary classification problem. 
 
 We have two versions corresponding to different choices of test dataset:
+
 1. The *standard version* uses the standard sets of ground-truth positives (labelled as "treat") and negatives (labelled as "not treat").
+
 2. The *clinical trials version* uses a dataset of successful recent clinical trial (labelled as "treat") and failed one (labelled as "not treat").  
 
 #### Accuracy
