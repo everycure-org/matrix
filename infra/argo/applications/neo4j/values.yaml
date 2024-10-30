@@ -47,6 +47,7 @@ neo4j: # the name of the helm dependency
     dbms.security.procedures.whitelist: "gds.*, apoc.*"
     dbms.security.allow_csv_import_from_file_urls: "true"
     # server.directories.import: /var/lib/neo4j/import
+    server.default_advertised_address: "neo4j.platform.dev.everycure.org"
 
   apoc_config:
     apoc.import.file.enabled: "true"
