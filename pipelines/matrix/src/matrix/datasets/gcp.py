@@ -105,6 +105,7 @@ class BigQueryTableDataset(SparkDataset):
             dataset: Name of the BigQuery dataset.
             table: name of the table.
             identifier: unique identfier of the table.
+            file_format: file format to use
             load_args: Arguments to pass to the load method.
             save_args: Arguments to pass to the save
             version: Version of the dataset.
@@ -115,6 +116,7 @@ class BigQueryTableDataset(SparkDataset):
         self._project_id = project_id
         self._path = filepath
         self._format = file_format
+        self._labels = save_args.pop("labels", {})
 
         self._table = self._sanitize_name(f"{table}_{identifier}")
         self._dataset_id = f"{self._project_id}.{self._sanitize_name(dataset)}"
@@ -149,6 +151,7 @@ class BigQueryTableDataset(SparkDataset):
 
         # Register the external table
         table = bigquery.Table(f"{self._dataset_id}.{self._table}")
+        table.labels = self._labels
         table.external_data_configuration = external_config
         table = self._client.create_table(table, exists_ok=False)
 
