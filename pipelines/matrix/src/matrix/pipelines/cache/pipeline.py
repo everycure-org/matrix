@@ -34,6 +34,17 @@ def cache(
 ) -> Tuple[DataFrame, DataFrame]:
     """Function to enrich embeddings with caching mechanism.
 
+    The caching mechanism maintains a SparkDataset in append mode, thereby
+    allowing it to evolve over time. It partitions the dataset according
+    to the given scope and model, thereby speeding up the join process.
+
+    WARNING: Still requires further dealing with race conditions, i.e.,
+    when two pipelines with the same scope/model are running simultaneously
+    this may create duplicate elements in the cache.
+
+    FUTURE: Generalize technique to be able to deal with any call
+    of GenAI interaction.
+
     Args:
         dataframe: dataframe to enrich
         cache: caching dataframe
