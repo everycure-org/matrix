@@ -36,46 +36,46 @@ services:
       retries: 10
       start_period: 10s
 
-  # # Node synonymizer
-  # node-synonymizer:
-  #   build: "../../../services/synonymizer"
-  #   environment:
-  #     DB_CONNECTION_STR: /usr/src/app/assets/node_synonymizer_v1.0_KG2.7.3.sqlite
-  #   volumes:
-  #     # NOTE: Asset files are really big, so mounting them in
-  #     - "../../../services/synonymizer/assets:/usr/src/app/assets"
-  #   ports:
-  #     - 8081:8081
+  # Node synonymizer
+  node-synonymizer:
+    build: "../../../services/synonymizer"
+    environment:
+      DB_CONNECTION_STR: /usr/src/app/assets/node_synonymizer_v1.0_KG2.7.3.sqlite
+    volumes:
+      # NOTE: Asset files are really big, so mounting them in
+      - "../../../services/synonymizer/assets:/usr/src/app/assets"
+    ports:
+      - 8081:8081
 
 
-  # # MockServer instance that is used to mock a openai embeddings endpoint as well a synonimizer API.
-  # # This is used for local development and integration testing
-  # mockserver:
-  #   image: mockserver/mockserver
-  #   # platform: ${DOCKER_PLATFORM:-linux/arm64}
-  #   container_name: mockserver
-  #   restart: unless-stopped
-  #   user: root
-  #   ports:
-  #     - 1080:1080
-  #   environment:
-  #     MOCKSERVER_WATCH_INITIALIZATION_JSON: "true"
-  #     MOCKSERVER_ENABLE_CORS_FOR_API: "true"
-  #     MOCKSERVER_ENABLE_CORS_FOR_ALL_RESPONSES: "true"
-  #     MOCKSERVER_INITIALIZATION_JSON_PATH: /openapi/initializer.json
-  #     MOCKSERVER_LOG_LEVEL: DEBUG
-  #   volumes:
-  #     - ./mockgenai-initializer.json:/openapi/initializer.json:ro
+  # MockServer instance that is used to mock a openai embeddings endpoint as well a synonimizer API.
+  # This is used for local development and integration testing
+  mockserver:
+    image: mockserver/mockserver
+    # platform: ${DOCKER_PLATFORM:-linux/arm64}
+    container_name: mockserver
+    restart: unless-stopped
+    user: root
+    ports:
+      - 1080:1080
+    environment:
+      MOCKSERVER_WATCH_INITIALIZATION_JSON: "true"
+      MOCKSERVER_ENABLE_CORS_FOR_API: "true"
+      MOCKSERVER_ENABLE_CORS_FOR_ALL_RESPONSES: "true"
+      MOCKSERVER_INITIALIZATION_JSON_PATH: /openapi/initializer.json
+      MOCKSERVER_LOG_LEVEL: DEBUG
+    volumes:
+      - ./mockgenai-initializer.json:/openapi/initializer.json:ro
 
-  # mlflow:
-  #   container_name: mlflow
-  #   build:  "services/mlflow"
-  #   ports:
-  #     - "5001:5000"
-  #   command: mlflow server --host 0.0.0.0 --serve-artifacts
-  #   healthcheck:
-  #     test: wget http://localhost:5000/health || exit 1
-  #     interval: 30s
-  #     timeout: 10s
-  #     retries: 5
-  #     start_period: 30s
+  mlflow:
+    container_name: mlflow
+    build:  "services/mlflow"
+    ports:
+      - "5001:5000"
+    command: mlflow server --host 0.0.0.0 --serve-artifacts
+    healthcheck:
+      test: wget http://localhost:5000/health || exit 1
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
