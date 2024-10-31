@@ -166,7 +166,7 @@ class BigQueryTableDataset(SparkDataset):
             dataset = self._client.create_dataset(dataset, timeout=30)
             print(f"Created dataset {self._project_id}.{dataset.dataset_id}")
 
-    @staticmethod()
+    @staticmethod
     def _sanitize_name(name: str) -> str:
         """Function to sanitise BigQuery table or dataset identifiers.
 
