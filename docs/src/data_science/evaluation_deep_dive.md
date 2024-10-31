@@ -39,8 +39,7 @@ Time-split validation is a technique where we divide our dataset based on a temp
 We implement time-split validation in our pipeline by using an additional ground truth test set coming from the results of recent clinical trials. 
 
 ## The performance metrics in detail
-
-<img src="../assets/deep_dive/matrix_GT.jpg" width="700">
+![Matrix with flags for ground truth pairs](../assets/deep_dive/matrix_GT.jpg)
 
 The input to the evaluation pipeline consists of the matrix pairs dataset with the following information:
 - Flags for pairs in the standard ground truth positive and negative test sets 
@@ -83,6 +82,7 @@ The following equivalent characterisation allows us to efficiently compute the A
 $$
 \text{AUROC} = 1 - \text{MQR} 
 $$
+
 where $\text{MQR}$ denotes the *mean quantile rank against non-positives* among ground truth test pairs $GT$. Details are given in the appendix below.
 
 MQR is a measure between 0 and 1 with lower values indicating better ranking performance, whereas for the AUROC higher values are better
@@ -222,37 +222,48 @@ evaluation.full_matrix:
 ## Appendix: Equivalence between AUROC and MQR (optional)
 
 In this section, we clarify the definition of mean quantile rank against non-positives $\text{MQR}$ and justify the equation
+
 $$
 \text{AUROC} = 1 - \text{MQR}.
 $$
+
 In essence, this relationship stems from the fact that the AUROC is equal to the probability that a randomly chosen positive datapoint ranks higher than a randomly chosen negative (Hanley et. al.). 
 
 
 The *rank against non-positives* for a pair $(d,i)$, denoted by $\text{rank}_{np}(d,i)$,
 refers to it's position among non-positive (i.e. unknown or known negative) pairs when sorted by treat score. In other words, it is the rank with any other positive pairs taken out.
 The *quantile rank against non-positives* measures the proportion of non-positive pairs that have a lower rank than the pair. It is defined as 
+
 $$
 QR_{np}(d,i) = \frac{\text{rank}_{np}(d,i) - 1}{N}
 $$
+
 where $N$ is the number of known or known negative pairs. The mean quantile rank against non-positives is given by 
+
 $$
 \text{MQR} = \frac{1}{|GT|} \sum_{(d,i) \in GT} QR_{np}(d,i).
 $$
 
 
 To see the relationship between $\text{AUROC}$ and $\text{MQR}$, let $\mathcal{P}$ and $\mathcal{N}$ denote the set of positive and negative pairs respectively. By the aforementioned characterisation of AUROC,
+
 $$
 \text{AUROC} = \mathbb{P}_{x \sim \mathcal{P}} \mathbb{P}_{y \sim \mathcal{N}} [\gamma(x) \geq \gamma(y)]
 $$
+
 where $\gamma$ denotes the treat score. Then, 
+
 $$
 \mathbb{P}_{y \sim \mathcal{N}} [\gamma(x) \geq \gamma(y)]  = \frac{|\set{y \in \mathcal{N} : \gamma(x) \geq \gamma(y)}|}{N} = \frac{N - |\set{y \in \mathcal{N} : \gamma(x) < \gamma(y)}|}{N}
 $$
+
 where $N = |\mathcal{N}|$. But $|\set{y \in \mathcal{N} : \gamma(x) < \gamma(y)}|$ is equal to $\text{rank}_{np}(x) - 1$
  so by the above definition of  quantile rank, 
+
 $$
 \mathbb{P}_{y \sim \mathcal{N}} [\gamma(x) \geq \gamma(y)] = 1 - \text{QR}(x).
 $$ 
+
 Substituting back above shows that the desired equation holds.
 
 ## References
