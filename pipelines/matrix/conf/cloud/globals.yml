@@ -1,14 +1,18 @@
 run_name: ${oc.env:RUN_NAME}
 
+versions:
+  release: v0.2.3
+  
 gcs_bucket: gs://${oc.env:GCP_BUCKET}
 gcp_project: ${oc.env:GCP_PROJECT_ID}
 
 # NOTE: MLflow does not like "new options" in the mlflow.yml
-# due to schema validation. Will make PR.
+# due to schema validation.
 mlflow_artifact_root: ${gcs_bucket}/runs/${run_name}/mlflow
 
 paths:
   raw:                gs://mtrx-us-central1-hub-dev-storage/kedro/data/01_raw
+  kg_raw:             ${gcs_bucket}/data/01_RAW
   ingestion:          ${gcs_bucket}/kedro/data/ingestion
 
   # Release-based

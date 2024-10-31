@@ -13,7 +13,7 @@ def create_embeddings_pipeline(**kwargs) -> Pipeline:
             node(
                 func=nodes.compute_embeddings,
                 inputs={
-                    "input": "integration.prm.unified_nodes",
+                    "input": "integration.prm.filtered_nodes",
                     "features": "params:embeddings.node.features",
                     "unpack": "params:embeddings.ai_config",
                 },
@@ -46,7 +46,7 @@ def create_embeddings_pipeline(**kwargs) -> Pipeline:
                 func=nodes.ingest_edges,
                 inputs=[
                     "embeddings.tmp.input_nodes",
-                    "integration.prm.unified_edges",
+                    "integration.prm.filtered_edges",
                 ],
                 outputs="embeddings.tmp.input_edges",
                 name="ingest_neo4j_input_edges",

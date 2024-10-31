@@ -38,10 +38,11 @@ def openai_api_env():
     os.environ["OPENAI_API_KEY"] = "foo"
 
 
-def test_no_catalog_param_entries_unused(
+@pytest.mark.integration()
+def test_unused_catalog_entries(
     kedro_context: KedroContext,
 ) -> None:
-    """Tests whether all catalog param entries are used in the pipeline.
+    """Tests whether all catalog entries are used in the pipeline.
 
     FUTURE: Fix validating unused dataset entries, this is currently not feasible
     due to the Kedro dataset mechanism.

@@ -33,6 +33,8 @@ def _create_matrix_generation_pipeline(model: str) -> Pipeline:
                     "ingestion.raw.drug_list@pandas",
                     "ingestion.raw.disease_list@pandas",
                     "params:evaluation.score_col_name",
+                    "params:matrix_generation.matrix",
+                    "params:matrix_generation.run",
                 ],
                 outputs=f"matrix_generation.{model}.reporting.matrix_report",
                 name=f"generate_{model}_report",
