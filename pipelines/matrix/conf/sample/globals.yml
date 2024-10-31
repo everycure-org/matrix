@@ -6,6 +6,7 @@ versions:
   release: sampled_test
 
 paths:
+  raw_local: data/sampled_test/01_RAW
   int: data/sampled_test/02_intermediate
   prm_ingest: data/03_primary
   prm: data/sampled_test/03_primary

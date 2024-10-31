@@ -39,7 +39,7 @@ ingestion.raw.rtx_kg2.nodes@pandas:
     index: false
     sep: "\t"
 
-ingestion.raw.rtx_kg2.nodes@spark: &_kg2_nodes_spark
+ingestion.raw.rtx_kg2.nodes@spark:
   <<: *_layer_raw
   type: matrix.datasets.gcp.SparkWithSchemaDataset
   filepath: ${globals:paths.raw}/rtx_kg2/${globals:data_sources.rtx-kg2.version}/nodes_c.tsv
@@ -121,7 +121,7 @@ ingestion.raw.rtx_kg2.edges@pandas:
   load_args:
     sep: "\t"
 
-ingestion.raw.rtx_kg2.edges@spark: &_kg2_edges_spark
+ingestion.raw.rtx_kg2.edges@spark:
   <<: *_layer_raw
   type: matrix.datasets.gcp.SparkWithSchemaDataset
   filepath: ${globals:paths.raw}/rtx_kg2/${globals:data_sources.rtx-kg2.version}/edges_c.tsv
@@ -205,13 +205,6 @@ ingestion.int.rtx_kg2.nodes:
 ingestion.int.rtx_kg2.edges:
   <<: [*_spark_parquet, *_layer_int]
   filepath: ${globals:paths.int}/rtx_kg2/edges
-
-ingestion.pre_sample.rtx_kg2.nodes@spark:
-  <<: *_kg2_nodes_spark
-
-ingestion.pre_sample.rtx_kg2.edges@spark:
-  <<: *_kg2_edges_spark
-
 
 
 # -------------------------------------------------------------------------
@@ -308,7 +301,7 @@ ingestion.raw.drug_list@spark:
 # -------------------------------------------------------------------------
 # Robokop
 # -------------------------------------------------------------------------  
-ingestion.raw.robokop.nodes@spark: &_robokop_nodes_spark
+ingestion.raw.robokop.nodes@spark:
   <<: *_layer_raw
   type: matrix.datasets.gcp.LazySparkDataset
   filepath: ${globals:paths.new_raw}/KGs/robokop-kg/${globals:data_sources.robokop.version}/nodes.orig.tsv
@@ -328,7 +321,7 @@ ingestion.raw.robokop.nodes@pandas:
   load_args:
     sep: "\t"
 
-ingestion.raw.robokop.edges@spark: &_robokop_edges_spark
+ingestion.raw.robokop.edges@spark:
   <<: *_layer_raw
   type: matrix.datasets.gcp.LazySparkDataset
   filepath: ${globals:paths.new_raw}/KGs/robokop-kg/${globals:data_sources.robokop.version}/edges.orig.tsv
@@ -347,13 +340,6 @@ ingestion.raw.robokop.edges@pandas:
     index: false
   load_args:
     sep: "\t"
-
-ingestion.pre_sample.robokop.nodes@spark:
-  <<: *_robokop_nodes_spark
-
-ingestion.pre_sample.robokop.edges@spark:
-  <<: *_robokop_edges_spark
-
 
 ingestion.int.robokop.nodes:
    <<: [*_spark_parquet, *_layer_int]
