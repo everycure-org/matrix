@@ -45,7 +45,7 @@ locals {
     }
   ]
 
-  # consider adding spot nodes
+  # TODO: consider adding spot nodes
 
   mem_node_pools = [for size in [4, 8, 16, 32, 48, 64] : {
     name               = "n2-standard-${size}-nodes"
@@ -115,13 +115,6 @@ module "gke" {
 
   # FUTURE: Refine mode pools
   node_pools = local.node_pools_combined
-
-  # FUTURE: Ensure auto generated based on the variable
-  node_pools_labels = {
-    for pool in local.node_pools_combined : pool.name => {
-      gpu_node = can(pool.accelerator_count) ? "true" : "false"
-    }
-  }
 
   # https://cloud.google.com/artifact-registry/docs/access-control#gke
   # node_pools_oauth_scopes = {
