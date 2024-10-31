@@ -2,7 +2,7 @@
 # Kedro PROJECT
 .venv/
 compose/
-
+.cache/
 
 # ignore Dockerfile and .dockerignore
 Dockerfile
@@ -20,6 +20,7 @@ logs
 notebooks
 references
 results
+scratch
 
 # except the following
 !logs/.gitkeep

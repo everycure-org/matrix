@@ -55,15 +55,16 @@ Note specifically the use of `globals:data_sources.rtx-kg2` in the definition of
 
 The integration stage aims to produce our internal knowledge-graph, in [biolink](https://biolink.github.io/biolink-model/) format. As we ingest data from different sources, entity resolution becomes a prevalent topic. The integration step consolidates entities across sources to avoid data duplication in the knowledge graph.
 
-!!! info
-    To date, this step is missing as we're only ingesting data from a single source.
+There are 3 main steps in the integration pipeline:
+
+![](../assets/img/kg_integration_approach.excalidraw.svg)
 
 ### Embeddings
 
 Embeddings are vectorized representations of the entities in our knowledge graph. These are currently computed in two stages:
 
 1. Node Attribute Embedding Computation - in this step we use GenAI model (e.g. OpenAI's `text-embedding-3-small`) to compute individual node embeddings. 
-2. Topological Embedding Computation - in this step we use GraphSAGE embedding algorithm on the previously calculated node embeddings. Alternatively, you can also use Node2Vec for topological embeddings computation - the model is not as well in Neo4J however it does not rely on Node Attribute Embedding Computation.
+2. Topological Embedding Computation - in this step we use GraphSAGE embedding algorithm on the previously calculated node embeddings. Alternatively, you can also use Node2Vec for topological embeddings computation - the model is not as well supported in Neo4J however it does not rely on Node Attribute Embedding Computation.
 
 !!! info
     Our graph database, i.e., [Neo4J](https://neo4j.com/docs/graph-data-science/current/algorithms/) comes with out-of-the-box functionality to compute both node and topological embeddings in-situ. The Kedro pipeline orchestrates the computation of these.
@@ -85,40 +86,50 @@ As well as single models, the pipeline has the capability to deal with *ensemble
 !!! info
     The step *check model performance* only gives a partial indication of model performance intended as a quick sanity check. This is because, in general, the ground truth data alone is not a good reflection of the data distribution that the model will see while performing its task. The evaluation pipeline must be run before making conclusions about model performance. 
 
+### Matrix Generation 
+
+The matrix generation step pipeline uses the models trained in the modelling pipeline to generate score for all pairs in the matrix, that is pairs of drugs and diseases from the official EC lists. 
+
+Flags for known positives and negatives are also generated in this pipeline. In addition, we remove any training data from the matrix as they may have artificially high scores. 
+
 
 ### Evaluation
 
 The evaluation pipeline computes various metrics in order to assess the performance of the models trained in the previous stages. 
 
-Currently, we have the following evaluation metrics. 
+The input to the evaluation pipeline is a dataset of pairs, complete with scores, from the matrix generation pipeline. By using the matrix generation pipeline as an intermediary, we can avoid repeating the computationally expensive steps of model inference and instead focus on computing metrics.  
 
-1. *Threshold-based classification metrics for ground truth data*. Measures how well the model classifies ground truth positive and negatives using threshold-based metrics such as accuracy and F1-score.
-2. *Threshold-independent metrics for ground truth data*. Measures how well the model classifies ground truth positive and negatives using threshold-independent metrics such as AUROC.
-3. *All vs. all ranking with all drugs x test diseases matrix.*. Gives information on all drugs vs all disease ranking performance of models by using threshold-independent metrics such as AUROC and synthesised negatives. The construction of the synthesised negatives are based on a matrix of drug-disease pairs for a given list of all drugs and the list of disease appearing in the ground-truth positive test set. 
-4. *Disease-specific ranking*. Measures the performance of the model at ranking drugs for a fixed disease using metrics such as Hit@k and mean reciprocal rank (MRR). 
+There are several types of metrics computed in this pipeline, organised into three categories:
 
-The chosen evaluation metrics are defined in the 
-`/pipelines/matrix/conf/<env>/evaluation/parameters.yml` file, where `<env>` is the environment, e.g. `base` or `prod`. 
+1. **Full-matrix ranking metrics**: These metrics focus on how well the model ranks the set of pairs comprising the matrix.
+2. **Disease-specific ranking metrics**: These metrics focus on how well the model ranks drugs for a specific disease.
+3. **Ground truth classification metrics**: These metrics focus on the model's ability to distinguish between known positive and known negative drug-disease pairs.
 
-The computation of each evaluation metric in the pipeline is described in the following diagram.
+More details on the metrics computed in each category can be found in the [evaluation deep-dive](../data_science/evaluation_deep_dive.md)
 
-![](../assets/img/evaluation.drawio.png)
 
-Note that different evaluation metrics may have common nodes and datasets. For instance, disease-specific Hit@k and MRR are computed using the same synthesised negatives. 
+
+### Inference (requests)
+
+Our inference pipeline can be used for running ad-hoc requests coming from medical team/stakeholders to generate drug-disease predictions for a specifid drug, disease or a pair of both. The drugs/diseases to predict against are coming from our official drug and disease lists (which are versioned in the .env file). The pipeline is running inference using a single/several trained models stored as artifacts in MLFlow and utilizes the same version of data that was used for training. 
+
+![](../assets/img/inference.drawio.png)
+
+You can find the sheet [here](https://docs.google.com/spreadsheets/d/1CioSCCQxUdACn1NfWU9XRyC-9j_ERc2hmZzaDd8XgcQ/edit?gid=0#gid=0). At the moment we don't execute this as a part of the default pipeline. Also note that in order to use the trained models which are stored in the MLFlow (i.e. models trained using e2e pipeline) you will need to execute the inference pipeline from `cloud` environment.
 
 ### Release
 
 Our release pipeline currently builds the final integrated Neo4J data product for consumption. We do not execute this as part of the default pipeline run but with a separate `-p release` execution as we do not want to release every pipeline data output.
 
 !!! info
-    If you wish to populate your local Neo4J instance with the output data for a release, populate the `RELEASE_VERSION` in your `.env` file and run `kedro run -p release -e cloud`.
+    If you wish to populate your local Neo4J instance with the output data for a release, populate the `RUN_NAME` in your `.env` file and run `kedro run -p release --from-env cloud -t neo4j`.
 
 ## Environments
 
 We have 4 environments declared in the kedro project for `MATRIX`:
 
 - `base`: Contains the base environment which reads the real data from GCS and operates in your local compute environment
-- `cloud`: Contains the cloud environment with real data. All data is read and written to a GCP project a configured (see below). Assumes fully stateless local machine operations (e.g. in docker containers)
+- `cloud`: Contains the cloud environment with real data. All data is read and written to a GCP project as configured (see below). Assumes fully stateless local machine operations (e.g. in docker containers)
 - `test`: Fully local and contains parameters that "break" the meaning of algorithms in the pipeline (e.g. 2 dimensions PCA). This is useful for running an integration test with mock data to validate the programming of the pipeline is correct to a large degree. 
 - `local`: A default environment which you can use for local adjustments and tweaks. Changes to this repo are not usually committed to git as they are unique for every developer. 
 
@@ -152,7 +163,7 @@ This runs the full pipeline with fake data.
 
 ### Run with real data locally
 
-To run the full data with real data by copying the RAW data from the central GCS bucket and then run everything locally you can simply run from the default environment. We've setup an intermediate pipeline that copies data to avoid constant copying of the data from cloud.
+To run the full pipeline with real data by copying the RAW data from the central GCS bucket and then run everything locally you can simply run from the default environment. We've setup an intermediate pipeline that copies data to avoid constant copying of the data from cloud.
 
 ```bash
 # Copy data from cloud to local
@@ -175,7 +186,7 @@ Jupyter notebooks should be created in the directory `pipelines/matrix/notebooks
 !!! tip
     A separate git repository for notebook version control may be created inside the `scratch` directory. It can also be nice to create a symbolic link to `scratch` from a directory of your choice on your machine. 
 
-    An example notebook is also added to our documentation [here](./kedro_notebook_example.ipynb) which you can copy into the scratch directory for a quickstart
+    An example notebook is also added to our documentation [here](./walkthroughs/kedro_notebook_example.ipynb which you can copy into the scratch directory for a quickstart
 
 Within a notebook, first run a cell with the following magic command:
 

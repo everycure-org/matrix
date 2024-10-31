@@ -1,1 +1,52 @@
 preprocessing.synonymizer_endpoint: http://localhost:8081
+
+preprocessing.enrichment_tags:
+  single_input:
+    pathogen:
+      input_params:
+        input_col: label
+        output_col: is_pathogen_caused
+        prompt: Is this disease usually caused by a pathogen such as bacteria, viruses, parasites, or fungi? Return TRUE or FALSE only
+      model_params: 
+        object: &openai_chat_model langchain_openai.chat_models.base.ChatOpenAI
+        model: &model_name gpt-4o-mini
+        temperature: &temperature 0.8
+    cancer:
+      input_params:
+        input_col: label
+        output_col: is_cancer
+        prompt: "Is this disease a cancer? Return TRUE or FALSE only"
+      model_params: 
+        object: *openai_chat_model
+        model: *model_name
+        temperature: *temperature
+    glucose_dysfunction:
+      input_params:
+        input_col: label
+        output_col: is_glucose_dysfunction
+        prompt: Is this disease a disease which is primarily a disease of glucose dysregulation such as diabetes mellitus? Return TRUE or FALSE only
+      model_params:
+        object: *openai_chat_model
+        model: *model_name
+        temperature: *temperature
+    existing_treatment:
+      input_params:
+        input_col: label
+        output_col: tag_existing_treatment
+        prompt: Are there existing efficacious treatments that cure, prevent, or treat this disease? Return TRUE if efficacious treatments exist, otherwise return FALSE
+      model_params:
+        object: *openai_chat_model
+        model: *model_name
+        temperature: *temperature
+  multiple_input:
+    quality_life_years_lost:
+      input_params:
+        input_col: label
+        output_col: tag_QALY_lost
+        definition: definition
+        synonyms: synonyms
+        prompt: "Output only 'VERY HIGH', 'HIGH', 'MEDIUM', 'LOW', or 'NONE'. Categorize the Quality-Adjusted Life Years (QALYs) lost for {disease} into the categories above, based on morbidity, mortality, and quality adjusted life years lost. To help, the following list - {synonym} - contains synonyms of the disease and the following list - {definition} -provides a definition of the disease. If you are unable to determine QALYs lost for a given disease, used similar diseases to make an estimation"
+      model_params:
+        object: *openai_chat_model
+        model: *model_name
+        temperature: *temperature

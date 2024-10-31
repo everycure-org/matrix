@@ -98,7 +98,7 @@ embeddings.feat.edges:
   type: matrix.datasets.gcp.BigQueryTableDataset
   project_id: ${oc.env:GCP_PROJECT_ID}
   dataset: runs
-  identifier: "${globals:versions.release}"
+  identifier: "${globals:run_name}"
   save_args:
     bigQueryTableLabel.git_sha: ${globals:git_sha}
     temporaryGcsBucket: ${globals:gcs_bucket}
@@ -108,7 +108,7 @@ embeddings.feat.edges:
 embeddings.feat.edges:
   type: matrix.datasets.gcp.LazySparkDataset
   file_format: parquet
-  filepath: ${globals:paths.feat}/edges
+  filepath: ${globals:paths.matrix_generation}/edges
 ```
 
 Most of our data is stored on GCS. We leverage BigQuery for what we consider to be
@@ -225,7 +225,7 @@ are empowered to make changes to the infrastructure they need to make their work
 while maintaining a high level of control and visibility.
 
 
-### [ArgoCD](https://argocd.platform.dev.everycure.org)
+### [ArgoCD](https://argo.platform.dev.everycure.org/workflows/)
 
 We use ArgoCD to provision the services running on our Kubernetes cluster. This allows us to define everything running _inside_ the cluster as code. This works by Argo watching a specific Git repository for changes and then automatically provisioning the cluster according to the definitions in that repository.
 
