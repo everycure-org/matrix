@@ -95,7 +95,7 @@ embeddings.topological_estimator:
   concurrency: 4
   embedding_dim: 512
   random_seed: 42
-  iterations: 100
+  iterations: 10
   in_out_factor: 1
   return_factor: 1
   initial_learning_rate: 0.025
