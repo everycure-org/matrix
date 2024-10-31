@@ -10,7 +10,6 @@ repos:
         exclude: | 
           (?x)^(
             pipelines/matrix/packages|
-            pipelines/matrix/tests/|
             services/synonymizer/api/modules/synonymize
           )
       # Run the formatter.
