@@ -13,18 +13,17 @@ def load_environment_variables():
 
     .env.defaults is loaded first, then .env overwrites any existing values.
     """
-    # Load defaults first
     defaults_path = Path(".env.defaults")
     if defaults_path.exists():
         load_dotenv(dotenv_path=defaults_path, override=False)
 
-    # Then load .env, overwriting any defaults
     env_path = find_dotenv(usecwd=True)
     if env_path:
         load_dotenv(dotenv_path=env_path, override=True)
 
 
-# Load environment variables at module import
+# This ensures that environment variables are loaded at module import and thus
+# before the pipeline is run or any data is loaded.
 load_environment_variables()
 
 

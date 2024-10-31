@@ -16,10 +16,8 @@ def mock_env_variables():
 @pytest.fixture
 def mock_env_files(tmp_path):
     """Create temporary .env and .env.defaults files for testing."""
-    # Save current working directory
     original_cwd = os.getcwd()
 
-    # Create test env files in temp directory
     defaults_file = tmp_path / ".env.defaults"
     defaults_file.write_text("SHARED_KEY=default_value\nOVERRIDE_KEY=default_value")
 
