@@ -24,6 +24,9 @@ def df_fixture(spark):
     )
 
 
+@pytest.mark.spark(
+    help="This test relies on PYSPARK_PYTHON to be set appropriately, and sometimes does not work in VSCode"
+)
 def test_compute_embeddings(spark, df, mocker):
     def mock_batch(endpoint, model, api_key, batch):
         """Function to mock our batch method, returns array of arrays
