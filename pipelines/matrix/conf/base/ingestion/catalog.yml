@@ -1,6 +1,11 @@
 _pandas_csv: &_pandas_csv
   type:  pandas.CSVDataset
 
+_drug_disease_sheets_dataset: &_drug_disease_sheets_dataset
+  type: matrix.datasets.gcp.GoogleSheetsDataset
+  key: 1NUBiI_RTNEDyGX2sovXd5qjRmkvwiusQdkxEPC0lar4
+  service_file: conf/local/service-account.json
+
 _spark_parquet_ds: &_spark_parquet
   type: matrix.datasets.gcp.LazySparkDataset
   file_format: parquet
@@ -32,6 +37,7 @@ _layer_int: &_layer_int
 
 ingestion.raw.rtx_kg2.curie_to_pmids@spark:
   type: matrix.datasets.gcp.RemoteSparkJDBCDataset
+  project: ${globals:gcp_project}
   table: curie_to_pmids
   url: sqlite:${globals:paths.kg_raw}/KGs/rtx_kg2/${globals:data_sources.rtx-kg2.version}/curie_to_pmids.sqlite
   load_args:
@@ -88,7 +94,7 @@ ingestion.int.rtx_kg2.edges:
 
 ingestion.int.rtx_kg2.curie_to_pmids:
   <<: [*_spark_parquet, *_layer_int]
-  filepath: ${globals:paths.ingestion}/rtx_kg2/${globals:data_sources.rtx-kg2.version}/curie_to_pmids # TODO: Or should we move elsewhere?
+  filepath: ${globals:paths.ingestion}/int/rtx_kg2/${globals:data_sources.rtx-kg2.version}/curie_to_pmids
 
 # -------------------------------------------------------------------------
 # EveryCure Medical
@@ -172,6 +178,58 @@ ingestion.raw.drug_list@spark:
     sep: "\t"
     header: true
     index: false
+
+ingestion.reporting.disease_list:
+  <<: [*_drug_disease_sheets_dataset]
+  save_args:
+    overwrite: True
+    sheet_name: diseases_${globals:data_sources.ec-disease-list.version}
+    write_columns: &_gsheet_disease_columns
+      - category_class
+      - label
+      - definition
+      - synonyms
+      - subsets
+      - crossreferences
+      - curie
+      - name
+      - is_pathogen_caused
+      - is_cancer
+      - is_glucose_dysfunction
+      - tag_existing_treatment
+      - tag_QALY_lost
+  load_args:
+    sheet_name: diseases_${globals:data_sources.ec-disease-list.version}
+    columns: *_gsheet_disease_columns
+
+ingestion.reporting.drug_list:
+  <<: [*_drug_disease_sheets_dataset]
+  save_args:
+    overwrite: True
+    sheet_name: drugs_${globals:data_sources.ec-drug-list.version}
+    write_columns: &_gsheet_drug_columns
+      - single_ID
+      - Name_EMA
+      - Approved_Europe
+      - Name_PMDA
+      - Approved_Japan
+      - Name_Orange_Book
+      - Approved_USA 
+      - Available_USA
+      - ID_Label
+      - Therapy_Name
+      - Combination_Therapy
+      - Ingredient_IDs
+      - curie
+      - name
+      - is_antimicrobial
+      - is_steroid
+      - is_cancer
+      - is_glucose_dysfunction
+
+  load_args:
+    sheet_name: drugs_${globals:data_sources.ec-drug-list.version}
+    columns: *_gsheet_drug_columns
 
 # -------------------------------------------------------------------------
 # Robokop

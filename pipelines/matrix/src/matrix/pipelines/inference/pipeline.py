@@ -9,18 +9,6 @@ def _create_resolution_pipeline() -> Pipeline:
     return pipeline(
         [
             node(
-                func=lambda x: x,
-                inputs="ingestion.raw.drug_list@pandas",
-                outputs="inference.raw.drug_list",
-                name="ingest_drug_list",
-            ),
-            node(
-                func=lambda x: x,
-                inputs="ingestion.raw.disease_list@pandas",
-                outputs="inference.raw.disease_list",
-                name="ingest_disease_list",
-            ),
-            node(
                 func=nd.resolve_input_sheet,
                 inputs={
                     "input_sheet": "inference.raw.normalized_inputs",
