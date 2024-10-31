@@ -28,3 +28,8 @@ moa_extraction:
       num_paths: 10
       unidirectional: false
       num_limit: 25
+
+  predictions:
+    num_pairs_limit: 10 # For testing purposes only
+    drug_col_name: source
+    disease_col_name: target

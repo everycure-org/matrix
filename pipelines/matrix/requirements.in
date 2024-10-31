@@ -32,7 +32,8 @@ ipywidgets
 git+https://github.com/pascalwhoop/kedro-mlflow@68e09e8e5ae4b162ff4ab5a793b5266254e91a0e#egg=kedro-mlflow
 mlflow==2.15.0
 pygsheets==2.0.6
-# used for convenience libraries, to be moved to a dev requirements eventually  
+# used for convenience libraries, to be moved to a dev requirements eventually 
+torch
 typer
 pytest
 pytest-testmon
