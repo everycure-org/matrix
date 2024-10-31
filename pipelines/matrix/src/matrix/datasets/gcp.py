@@ -112,7 +112,7 @@ class BigQueryTableDataset(SparkDataset):
         self._table = f"{table}_{identifier}"
         self._dataset_id = f"{self._project_id}.{dataset}"
 
-        self._client = bigquery.Client()
+        self._client = bigquery.Client(project=self._project_id)
 
         super().__init__(
             filepath=filepath,
@@ -135,14 +135,24 @@ class BigQueryTableDataset(SparkDataset):
         # Ensure dataset exists
         self._create_dataset()
 
-        # Execute load job
-        job_config = bigquery.LoadJobConfig(
-            write_disposition=bigquery.WriteDisposition.WRITE_TRUNCATE, source_format=bigquery.SourceFormat.PARQUET
-        )
-        load_job = self._client.load_table_from_uri(
-            self._path, f"{self._dataset_id}.{self._table}/*", job_config=job_config
-        )
-        load_job.result()
+        breakpoint()
+
+        # Create external table
+        external_config = bigquery.ExternalConfig("PARQUET")
+        external_config.source_uris = [f"{self._path}/*"]
+
+        table = bigquery.Table(f"{self._dataset_id}.{self._table}")
+        table.external_data_configuration = external_config
+        table = self._client.create_table(table, exists_ok=True)
+
+        # # Execute load job
+        # job_config = bigquery.LoadJobConfig(
+        #     write_disposition=bigquery.WriteDisposition.WRITE_TRUNCATE, source_format=bigquery.SourceFormat.PARQUET
+        # )
+        # load_job = self._client.load_table_from_uri(
+        #     self._path, f"{self._dataset_id}.{self._table}/*", job_config=job_config
+        # )
+        # load_job.result()
 
     def _create_dataset(self) -> str:
         try:
