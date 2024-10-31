@@ -171,6 +171,7 @@ spec:
           done
           echo "Neo4j is ready. Starting main application..."
           kedro run -p {% raw %}"{{inputs.parameters.pipeline}}"{% endraw %} -e {% raw %}"{{workflow.parameters.env}}"{% endraw %} -n {% raw %}"{{inputs.parameters.kedro_nodes}}"{% endraw %}
+
     sidecars:
       # Neo4j enterprise sidecar
       - name: neo4j
