@@ -46,7 +46,7 @@ locals {
   ]
 
   # consider adding spot nodes
-  
+
   mem_node_pools = [for size in [4, 8, 16, 32, 48, 64] : {
     name               = "n2-standard-${size}-nodes"
     machine_type       = "n2-standard-${size}"
@@ -60,22 +60,25 @@ locals {
     initial_node_count = 0
     }
   ]
-  gpu_node_pools = [for size in [4, 8, 16, 32, 48, 96] : {
-    name               = "g2-standard-${size}-l4-nodes"
-    machine_type       = "g2-standard-${size}"
-    node_locations     = local.default_node_locations
-    min_count          = 0
-    max_count          = 20
-    local_ssd_count    = 0
-    disk_size_gb       = 200
-    enable_gcfs        = true
-    enable_gvnic       = true
-    initial_node_count = 0
-    accelerator_count  = 1
-    accelerator_type   = "nvidia-l4"
-    gpu_driver_version = "LATEST"
-  }]
-  
+
+  gpu_node_pools = [
+    {
+      name               = "g2-standard-16-l4-nodes" # 1 GPU, 16vCPUs, 64GB RAM
+      machine_type       = "g2-standard-16"
+      node_locations     = local.default_node_locations
+      min_count          = 0
+      max_count          = 20
+      local_ssd_count    = 0
+      disk_size_gb       = 200
+      enable_gcfs        = true
+      enable_gvnic       = true
+      initial_node_count = 0
+      accelerator_count  = 1
+      accelerator_type   = "nvidia-l4"
+      gpu_driver_version = "LATEST"
+    },
+  ]
+
   node_pools_combined = concat(local.base_node_pool, local.cpu_node_pools, local.mem_node_pools, local.gpu_node_pools)
 }
 
