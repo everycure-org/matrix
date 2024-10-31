@@ -7,7 +7,6 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import requests
 import seaborn as sns
-
 from graphdatascience import GraphDataScience, QueryRunner
 from neo4j import Driver, GraphDatabase
 from pyspark.ml.functions import array_to_vector, vector_to_array
@@ -16,19 +15,17 @@ from pyspark.sql import functions as F
 from pyspark.sql.functions import udf
 from pyspark.sql.types import ArrayType, FloatType, StringType
 from pyspark.sql.window import Window
-
 from refit.v1.core.inject import inject_object
 from refit.v1.core.inline_has_schema import has_schema
 from refit.v1.core.inline_primary_key import primary_key
 from refit.v1.core.unpack import unpack_params
 from tenacity import (
     retry,
-    retry_if_exception_type,
     stop_after_attempt,
     wait_random_exponential,
 )
 
-from .graph_algorithms import *
+from .graph_algorithms import GDSGraphAlgorithm
 
 logger = logging.getLogger(__name__)
 
@@ -84,7 +81,7 @@ class GraphDS(GraphDataScience):
         "name": "string",
         "property_keys": "array<string>",
         "property_values": "array<string>",
-        "kg_sources": "array<string>",
+        "upstream_data_source": "array<string>",
     },
     allow_subset=True,
 )
@@ -96,8 +93,9 @@ def ingest_nodes(df: DataFrame) -> DataFrame:
         df: Nodes dataframe
     """
     return (
-        df.select("id", "name", "category", "description", "kg_sources")
-        .withColumn("label", F.split(F.col("category"), ":", limit=2).getItem(1))
+        df.select("id", "name", "category", "description", "upstream_data_source")
+        .withColumn("label", F.col("category"))
+        # add string properties here
         .withColumn(
             "properties",
             F.create_map(
@@ -111,6 +109,16 @@ def ingest_nodes(df: DataFrame) -> DataFrame:
         )
         .withColumn("property_keys", F.map_keys(F.col("properties")))
         .withColumn("property_values", F.map_values(F.col("properties")))
+        # add array properties here
+        .withColumn(
+            "array_properties",
+            F.create_map(
+                F.lit("upstream_data_source"),
+                F.col("upstream_data_source"),
+            ),
+        )
+        .withColumn("array_property_keys", F.map_keys(F.col("array_properties")))
+        .withColumn("array_property_values", F.map_values(F.col("array_properties")))
     )
 
 
@@ -167,9 +175,7 @@ def compute_embeddings(
         endpoint: endpoint to use
         model: model to use
     """
-    batch_udf = F.udf(
-        lambda z: batch(endpoint, model, api_key, z), ArrayType(ArrayType(FloatType()))
-    )
+    batch_udf = F.udf(lambda z: batch(endpoint, model, api_key, z), ArrayType(ArrayType(FloatType())))
 
     window = Window.orderBy(F.lit(1))
 
@@ -250,7 +256,10 @@ def ingest_edges(nodes, edges: DataFrame):
     """Function to construct Neo4J edges."""
     return (
         edges.select(
-            "subject", "predicate", "object", "knowledge_sources", "kg_sources"
+            "subject",
+            "predicate",
+            "object",
+            "upstream_data_source",
         )
         .withColumn("label", F.split(F.col("predicate"), ":", limit=2).getItem(1))
         # we repartition to 1 partition here to avoid deadlocks in the edges insertion of neo4j.
@@ -262,15 +271,13 @@ def ingest_edges(nodes, edges: DataFrame):
 
 
 @inject_object()
-def add_include_in_graphsage(
-    df: DataFrame, gdb: GraphDB, drug_types: List[str], disease_types: List[str]
-) -> Dict:
+def add_include_in_graphsage(df: DataFrame, gdb: GraphDB, drug_types: List[str], disease_types: List[str]) -> Dict:
     """Function to add include_in_graphsage property.
 
     Only edges between non drug-disease pairs are included in graphsage.
     """
     with gdb.driver() as driver:
-        q = driver.execute_query(
+        driver.execute_query(
             """
             MATCH (n)-[r]-(m)
             WHERE 
@@ -338,9 +345,7 @@ def train_topological_embeddings(
         gds.model.drop(model)
 
     # Initialize the model
-    topological_estimator.run(
-        gds=gds, model_name=model_name, graph=subgraph, write_property=write_property
-    )
+    topological_estimator.run(gds=gds, model_name=model_name, graph=subgraph, write_property=write_property)
     losses = topological_estimator.return_loss()
 
     # Plot convergence
@@ -374,9 +379,7 @@ def write_topological_embeddings(
 
     # Retrieve the model
     model_name = estimator.get("modelName")
-    topological_estimator.predict_write(
-        gds=gds, model_name=model_name, graph=graph, write_property=write_property
-    )
+    topological_estimator.predict_write(gds=gds, model_name=model_name, graph=graph, write_property=write_property)
     return {"success": "true"}
 
 
@@ -395,18 +398,14 @@ def extract_node_embeddings(nodes: DataFrame, string_col: str) -> DataFrame:
     """
     if isinstance(nodes.schema[string_col].dataType, StringType):
         string_to_float_list_udf = udf(string_to_float_list, ArrayType(FloatType()))
-        nodes = nodes.withColumn(
-            string_col, string_to_float_list_udf(F.col(string_col))
-        )
+        nodes = nodes.withColumn(string_col, string_to_float_list_udf(F.col(string_col)))
     return nodes
 
 
 def visualise_pca(nodes: DataFrame, column_name: str):
     """Write topological embeddings."""
     nodes = nodes.select(column_name, "category").toPandas()
-    nodes[["pca_0", "pca_1"]] = pd.DataFrame(
-        nodes[column_name].tolist(), index=nodes.index
-    )
+    nodes[["pca_0", "pca_1"]] = pd.DataFrame(nodes[column_name].tolist(), index=nodes.index)
     fig = plt.figure(
         figsize=(
             10,
@@ -417,17 +416,13 @@ def visualise_pca(nodes: DataFrame, column_name: str):
     plt.suptitle("PCA scatterpot")
     plt.xlabel("PC 1")
     plt.ylabel("PC 2")
-    plt.legend(
-        bbox_to_anchor=(1.05, 1), loc="upper left", borderaxespad=0, fontsize="small"
-    )
+    plt.legend(bbox_to_anchor=(1.05, 1), loc="upper left", borderaxespad=0, fontsize="small")
     plt.tight_layout(rect=[0, 0, 0.85, 1])
 
     return fig
 
 
-def extract_nodes_edges(
-    nodes: DataFrame, edges: DataFrame
-) -> tuple[DataFrame, DataFrame]:
+def extract_nodes_edges(nodes: DataFrame, edges: DataFrame) -> tuple[DataFrame, DataFrame]:
     """Simple node/edge extractor function.
 
     Args:

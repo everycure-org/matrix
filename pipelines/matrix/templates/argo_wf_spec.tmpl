@@ -10,9 +10,7 @@ spec:
       run: {% raw %}'{{ workflow.parameters.run_name }}'
       {% endraw %}
       username: "{{ username }}"
-  entrypoint: dag
-  ttlStrategy:
-    secondsAfterSuccess: 5
+  entrypoint: __default__
   arguments:
     parameters:
       - name: image
@@ -54,7 +52,7 @@ spec:
       {% endraw %}
       resources: # limit the resources
         requests:
-          memory: 6Gi
+          memory: 64Gi
           cpu: 4
         limits:
           memory: 64Gi

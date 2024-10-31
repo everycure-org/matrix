@@ -1,14 +1,7 @@
+---
+title: Running an experiment from a branch on the Every Cure Platform
+---
 <!-- NOTE: This file was partially generated using AI assistance.  -->
-# Running an experiment from a branch on the Every Cure Platform
-
-## Prerequisites
-```
-gcloud auth configure-docker us-central1-docker.pkg.dev
-```
-
-## Run the pipeline
-
-```markdown:docs/src/infrastructure/runbooks/03_run_pipeline_from_branch.md
 # Running an experiment from a branch on the Every Cure Platform
 
 This guide explains how to run an experiment from a specific branch using the Every Cure Platform's pipeline submission tool.
@@ -38,37 +31,11 @@ To submit a pipeline run, use the `kedro submit` command. This command builds a 
 kedro submit --username <your-name>
 ```
 
-This command will:
-1. Check and set up dependencies (gcloud, kubectl)
-2. Build and push a Docker image with your username as the tag
-3. Generate an Argo workflow template
-4. Create a namespace if it doesn't exist
-5. Apply the Argo workflow template
-6. Submit the workflow to Argo
+Use the `--help` flag to see all available options:
 
-### Command Options
-
-- `--username`: (Required) Your username for tagging the Docker image and creating the namespace.
-- `--namespace`: (Optional) Specify a custom namespace. Default is `dev-<username>`.
-- `--run-name`: (Optional) Specify a custom run name. If not provided, it will be generated based on your current Git branch.
-- `--verbose`: (Optional) Enable verbose output for debugging.
-
-### Examples
-
-1. Basic submission:
-   ```bash
-   kedro submit --username johndoe
-   ```
-
-2. Custom namespace and run name:
-   ```bash
-   kedro submit --username johndoe --namespace custom-namespace --run-name my-experiment
-   ```
-
-3. Verbose output:
-   ```bash
-   kedro submit --username johndoe --verbose
-   ```
+```bash
+kedro submit --help
+```
 
 ## Monitoring Your Workflow
 

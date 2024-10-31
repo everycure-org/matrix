@@ -45,10 +45,9 @@ services:
     ports:
       - 8081:8081
 
-  # MockServer instance that is used to mock a GenAI API conform
-  # the OpenAI API spec. This container is used to enable integration
-  # testing.
-  mock-genai:
+  # MockServer instance that is used to mock a openai embeddings endpoint as well a synonimizer API.
+  # This is used for local development and integration testing
+  mockserver:
     image: mockserver/mockserver
     # platform: ${DOCKER_PLATFORM:-linux/arm64}
     container_name: mockserver

@@ -5,7 +5,7 @@ title: Kedro
 ## Pipeline framework: Kedro
 
 !!! info
-    Kedro is an open-source framework to write modular data science code. We recommend checking out the [introduction video](https://docs.kedro.org/en/stable/introduction/index.html).
+    Kedro is an open-source framework to write modular data science code. We recommend checking out the [Everycure Knowledge Sharing Session on Kedro](https://us06web.zoom.us/rec/share/qA6wfJWiJbAZEjmD0TadG0LRi2cVxMH8pCekOLO-9aEMaPd8q8Qu7gC-O7xnDSuF.NSCc-IdN-YCn7Ysu) and this [introduction video](https://docs.kedro.org/en/stable/introduction/index.html). 
 
 We're using [Kedro](https://kedro.org/) as our data pipelining framework. Kedro is a rather light framework, that comes with the following [key concepts](https://docs.kedro.org/en/stable/get_started/kedro_concepts.html#):
 
@@ -29,7 +29,7 @@ Data used by our pipeline is registered in the _data catalog_. To add additional
 4. __Feature__: Primary dataset enriched with features inferred from the data, e.g., enriching an `age` column given a `date-of-birth` column.
 5. __Model input__: Dataset transformed for usage by a model.
 6. __Models__: Materialized models, often in the form of a pickle.
-7. __Model output__: Dataset containing column where model predictions are ran.
+7. __Model output__: Dataset containing column where model predictions are run.
 8. __Reporting__: Any datasets that provide reporting, e.g., convergence plots.
 
 
@@ -72,14 +72,15 @@ To seamlessly run the same codebase on both the fabricated and the production da
 
     To avoid full re-definition of all catalog and parameter entries, we're employing a [soft merge](https://docs.kedro.org/en/stable/configuration/advanced_configuration.html#how-to-change-the-merge-strategy-used-by-omegaconfigloader) strategy. Kedro will _always_ use the `base` config. This means that if another environment is selected, e.g., `cloud`, using the `--env` flag, Kedro will override the base configuration with the entries defined in `cloud`. Our goal is to _solely_ redefine entries in the `cloud` catalog when they deviate from `base`.
 
-The situation is depicted below, in the `base` environment our pipeline will plug into the datasets as produced by our fabricator pipeline, whereas the `cloud` environment plugs into the cloud systems.
+The situation is depicted below, in the `base` environment our pipeline will plug into the datasets as produced by our fabricator pipeline, whereas the `cloud` environment plugs into the cloud systems. Note that these commands need to be run in `matrix/pipelines/matrix` with the virtual environment activated.
 
 ```bash
 # Pipeline uses the base, i.e., local setup by default.
 # The `test` pipeline runs the `fabricator` _and_ the full pipeline.
 kedro run -p test -e test
 
-# To leverage cloud systems
+# To leverage cloud systems, you can use `cloud` environment.
+# Note that we should only use `cloud` environment within our cloud cluster, NOT locally.
 kedro --env cloud
 ```
 
