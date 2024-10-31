@@ -16,6 +16,9 @@ ingestion.int.rtx_kg2.nodes:
   filepath: ${globals:paths.int}/rtx_kg2/nodes
   save_args:
     mode: overwrite
+    labels:
+      kg: rtx_kg2
+      git_sha: ${globals:git_sha}
 
 ingestion.int.rtx_kg2.edges:
   <<: *_bigquery_ds
@@ -24,9 +27,9 @@ ingestion.int.rtx_kg2.edges:
   identifier: "${globals:data_sources.rtx-kg2.version}"
   filepath: ${globals:paths.int}/rtx_kg2/edges
   save_args: 
-    temporaryGcsBucket: ${globals:gcs_bucket}
-    bigQueryTableLabel.kg: rtx_kg2
-    bigQueryTableLabel.git_sha: ${globals:git_sha}
+    labels:
+      kg: rtx_kg2
+      git_sha: ${globals:git_sha}
 
 
 ingestion.int.robokop.nodes:
@@ -36,9 +39,9 @@ ingestion.int.robokop.nodes:
   identifier: "${globals:data_sources.robokop.version}"
   filepath: ${globals:paths.int}/robokop-kg/nodes
   save_args:
-    temporaryGcsBucket: ${globals:gcs_bucket}
-    bigQueryTableLabel.kg: robokop
-    bigQueryTableLabel.git_sha: ${globals:git_sha}
+    labels:
+      kg: robokop
+      git_sha: ${globals:git_sha}
 
 ingestion.int.robokop.edges:
   <<: *_bigquery_ds
@@ -47,9 +50,9 @@ ingestion.int.robokop.edges:
   identifier: "${globals:data_sources.robokop.version}"
   filepath: ${globals:paths.int}/robokop-kg/edges
   save_args:
-    temporaryGcsBucket: ${globals:gcs_bucket}
-    bigQueryTableLabel.kg: robokop
-    bigQueryTableLabel.git_sha: ${globals:git_sha}
+    labels:
+      kg: robokop
+      git_sha: ${globals:git_sha}
 
 # overwriting the base catalog to use the bigquery datasets
 ingestion.int.ec_medical_team.nodes:
@@ -59,9 +62,9 @@ ingestion.int.ec_medical_team.nodes:
   identifier: "${globals:data_sources.ec-medical-team.version}"
   filepath: ${globals:paths.int}/ec_medical_team/nodes
   save_args:
-    temporaryGcsBucket: ${globals:gcs_bucket}
-    bigQueryTableLabel.kg: ec_medical_team
-    bigQueryTableLabel.git_sha: ${globals:git_sha}
+    labels:
+      kg: ec_medical_team
+      git_sha: ${globals:git_sha}
 
 ingestion.int.ec_medical_team.edges:
   <<: *_bigquery_ds
@@ -70,6 +73,6 @@ ingestion.int.ec_medical_team.edges:
   identifier: "${globals:data_sources.ec-medical-team.version}"
   filepath: ${globals:paths.int}/ec_medical_team/edges
   save_args:
-    temporaryGcsBucket: ${globals:gcs_bucket}
-    bigQueryTableLabel.kg: ec_medical_team
-    bigQueryTableLabel.git_sha: ${globals:git_sha}
+    labels:
+      kg: ec_medical_team
+      git_sha: ${globals:git_sha}
