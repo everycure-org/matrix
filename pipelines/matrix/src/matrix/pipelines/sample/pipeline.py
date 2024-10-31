@@ -14,10 +14,14 @@ def create_pipeline(**kwargs) -> Pipeline:
             node(
                 func=nodes.get_random_selection_of_ground_truths,
                 inputs={
+                    "gt_positives": "modelling.raw_cloud.ground_truth.positives",
+                    "gt_negatives": "modelling.raw_cloud.ground_truth.negatives",
+                },
+                outputs={
                     "gt_positives": "modelling.raw.ground_truth.positives",
                     "gt_negatives": "modelling.raw.ground_truth.negatives",
+                    "known_pairs": "modelling.int.known_pairs"
                 },
-                outputs="modelling.int.known_pairs",
                 name="sample-ground_truths",
                 tags=["sample"]
             ),
