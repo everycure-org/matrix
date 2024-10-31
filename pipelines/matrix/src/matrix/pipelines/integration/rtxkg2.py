@@ -120,7 +120,7 @@ def filter_semmed(
             (f.col("primary_knowledge_source") != f.lit("infores:semmeddb"))
             |
             # Retain only semmed edges more than 10 publications or ndg score below 0.6
-            ((f.col("num_publications") > f.lit(publication_threshold)) & (f.col("ngd") < f.lit(ngd_threshold)))
+            ((f.col("num_publications") >= f.lit(publication_threshold)) & (f.col("ngd") <= f.lit(ngd_threshold)))
         )
         # fmt: on
         .select("edges.*", "ngd", "num_publications")
