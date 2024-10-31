@@ -1,13 +1,13 @@
 _neo4j_ds: &_neo4j_ds
   type: matrix.datasets.neo4j.Neo4JSparkDataset
-  database: everycure-${globals:run_name}
+  database: everycure-${globals:versions.release}
   url: ${globals:neo4j.host}
   credentials: neo4j_credentials
   save_args:
     mode: "overwrite"
 
 
-release.prm.kg_nodes:
+data_release.prm.kg_nodes:
   <<: *_neo4j_ds
   save_args:
     mode: overwrite
@@ -21,7 +21,7 @@ release.prm.kg_nodes:
       CALL apoc.create.setProperties(n, event.array_property_keys, event.array_property_values) YIELD node AS n3
       RETURN node
 
-release.prm.kg_edges:
+data_release.prm.kg_edges:
   <<: [*_neo4j_ds]
   save_args:
     # NOTE: The `match:Entity` ensures that the index we created above is leveraged
@@ -33,7 +33,7 @@ release.prm.kg_edges:
       RETURN rel
 
 
-release.prm.kg_embeddings:
+data_release.prm.kg_embeddings:
   <<: [*_neo4j_ds]
   save_args:
     # NOTE: The `match:Entity` ensures that the index we created above is leveraged

@@ -11,17 +11,16 @@ def create_integration_pipeline(**kwargs) -> Pipeline:
     """Create integration pipeline."""
     return pipeline(
         [
-            # Standardize the KG tabular structure
             node(
                 func=transform_robo_nodes,
-                inputs="ingestion.int.robokop.nodes",
+                inputs=["ingestion.int.robokop.nodes", "integration.raw.biolink.categories"],
                 outputs="integration.int.robokop.nodes",
                 name="transform_robokop_nodes",
                 tags=["standardize"],
             ),
             node(
                 func=transform_robo_edges,
-                inputs="ingestion.int.robokop.edges",
+                inputs=["ingestion.int.robokop.edges"],
                 outputs="integration.int.robokop.edges",
                 name="transform_robokop_edges",
                 tags=["standardize"],
@@ -35,7 +34,11 @@ def create_integration_pipeline(**kwargs) -> Pipeline:
             ),
             node(
                 func=transform_rtxkg2_edges,
-                inputs="ingestion.int.rtx_kg2.edges",
+                inputs=[
+                    "ingestion.int.rtx_kg2.edges",
+                    "ingestion.int.rtx_kg2.curie_to_pmids",
+                    "params:integration.preprocessing.rtx.semmed_filters",
+                ],
                 outputs="integration.int.rtx.edges",
                 name="transform_rtx_edges",
                 tags=["standardize"],
@@ -79,7 +82,7 @@ def create_integration_pipeline(**kwargs) -> Pipeline:
                 name="normalize_robokop_kg",
             ),
             node(
-                func=nodes.union_nodes,
+                func=nodes.union_and_deduplicate_nodes,
                 inputs={
                     "datasets_to_union": "params:integration.unification.datasets_to_union",
                     "rtx": "integration.int.rtx.nodes.norm",
@@ -91,15 +94,40 @@ def create_integration_pipeline(**kwargs) -> Pipeline:
             ),
             # union edges
             node(
-                func=nodes.union_edges,
+                func=nodes.union_and_deduplicate_edges,
                 inputs={
                     "datasets_to_union": "params:integration.unification.datasets_to_union",
+                    "biolink_predicates": "integration.raw.biolink.predicates",
                     "rtx": "integration.int.rtx.edges.norm",
                     "robokop": "integration.int.robokop.edges.norm",
                     "medical_team": "ingestion.int.ec_medical_team.edges",
                 },
                 outputs="integration.prm.unified_edges",
                 name="create_prm_unified_edges",
+            ),
+            # filter nodes given a set of filter stages
+            node(
+                func=nodes.filer_unified_kg_nodes,
+                inputs=[
+                    "integration.prm.unified_nodes",
+                    "params:integration.filtering.node_filters",
+                ],
+                outputs="integration.prm.filtered_nodes",
+                name="filter_prm_knowledge_graph_nodes",
+                tags=["filtering"],
+            ),
+            # filter edges given a set of filter stages
+            node(
+                func=nodes.filter_unified_kg_edges,
+                inputs=[
+                    "integration.prm.filtered_nodes",
+                    "integration.prm.unified_edges",
+                    "integration.raw.biolink.predicates",
+                    "params:integration.filtering.edge_filters",
+                ],
+                outputs="integration.prm.filtered_edges",
+                name="filter_prm_knowledge_graph_edges",
+                tags=["filtering"],
             ),
         ]
     )

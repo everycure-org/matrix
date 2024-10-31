@@ -14,7 +14,8 @@ jobs:
     steps:
       - name: checkout
         uses: actions/checkout@v4
-
+      - name: print github event
+        run: echo ${{ toJson(github.event) }}
       - name: Post to a Slack channel
         if: contains(github.event.pull_request.labels, 'breaking change') && github.event.pull_request.merged == 'true'
         id: slack
