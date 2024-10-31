@@ -210,6 +210,12 @@ spec:
           value: "OFF"
         - name: NEO4J_ACCEPT_LICENSE_AGREEMENT
           value: "yes"
+        - name: NEO4J_dbms_memory_heap_initial__size
+          value: "100G"
+        - name: NEO4J_dbms_memory_heap_max__size
+          value: "100G"
+        - name: NEO4J_gds_memory
+          value: "100G"
   {% for pipeline, tasks in pipes.items() %}
   - name: {{ pipeline }}
     dag:

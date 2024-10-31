@@ -42,7 +42,9 @@ def generate_argo_config(image: str, run_name: str, image_tag: str, namespace: s
     _generate_argo_config(image, run_name, image_tag, namespace, username)
 
 
-def _generate_argo_config(image: str, run_name: str, image_tag: str, namespace: str, username: str):
+def _generate_argo_config(
+    image: str, run_name: str, image_tag: str, namespace: str, pipeline_name: str, from_nodes: List[str], username: str
+):
     loader = FileSystemLoader(searchpath=SEARCH_PATH)
     template_env = Environment(loader=loader, trim_blocks=True, lstrip_blocks=True)
     template = template_env.get_template(TEMPLATE_FILE)
@@ -51,10 +53,11 @@ def _generate_argo_config(image: str, run_name: str, image_tag: str, namespace: 
     metadata = bootstrap_project(project_path)
     package_name = metadata.package_name
 
-    pipes = {}
-    for name, pipeline in pipelines.items():
-        # Fuse nodes in topological order to avoid constant recreation of Neo4j
-        pipes[name] = get_dependencies(fuse(pipeline))
+    pipeline = pipelines[pipeline_name]
+    if from_nodes:
+        pipeline = pipeline.from_nodes(*from_nodes)
+
+    pipes = {pipeline_name: get_dependencies(fuse(pipeline))}
 
     output = template.render(
         package_name=package_name,
