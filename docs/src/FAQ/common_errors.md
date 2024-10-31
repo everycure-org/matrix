@@ -301,3 +301,159 @@ Then agree to the license agreement with `A`
 !!! note 
     We currently do not push the arm64 image to the registry because our cluster runs on intel CPUs. So this is only meant for local development.
 
+## Permission denied error when trying to connect to Docker daemon on WSL
+
+We noticed that some WSL users encountered the following error when onboarding, specifically when running `Make` for the first time:
+```
+permission denied while trying to connect to the Docker daemon socket at unix:///var/run/docker.sock: Post "http://%2Fvar%2Frun%2Fdocker.sock/v1.24/images/us-central1-docker.pkg.dev/mtrx-hub-dev-3of/matrix-images/matrix/tag?repo=us-central1-docker.pkg.dev%2Fmtrx-hub-dev-3of%2Fmatrix-images%2Fmatrix&tag=robynmac": dial unix /var/run/docker.sock: connect: permission denied
+make: *** [Makefile:57: docker_build] Error 1
+```
+
+This error indicates that you have not added your user to the docker group. One solution to fix this is to run the following:
+```
+# Create a 'docker' group where members are allowed to interact with the Docker daemon w/o sudo 
+sudo groupadd docker
+
+# Add your user to the group
+sudo usermod -aG docker ${USER}
+
+# Refresh group membership (alternatively you can quit WSL (`wsl --shutdown`) and and re-open WSL terminal)
+su -s ${USER}
+
+# To test if it worked
+docker run hello-world
+```
+If the hello-world container works, then you have successfully added your user to the group, and now you should have correct permissions to interact with docker. However if the error persists after that, you might want to modify the permissions of the docker socket directly. The following command gives the owner of the docker group members read and write access, ensuring that only user who owns the file and members of the docker group can communicate with the docker daemon.
+```
+sudo chmod 660 /var/run/docker.sock
+```
+Note that these permissions might reset when Docker or WSL is restarted, and you may need to reapply them.
+
+## Runtime error `dictionary changed size during iteration`
+```
+matrix      | RuntimeError: dictionary changed size during iteration
+matrix exited with code 1
+```
+You might encounter this when running integration tests within the docker container. This is a [kedro-related ThreadRunner error](https://github.com/kedro-org/kedro/issues/4191) and should be now fixed within the MATRIX pipeline by pinning a specific kedro version)[]. In case you stumble upon this error during your development, you solve this issue by specifying the following in the requirements.in
+```
+kedro==0.19.6
+```
+
+## MLFlow exception error when running the pipeline
+```
+MlflowException: API request to
+http://127.0.0.1:5001/api/2.0/mlflow/experiments/create failed with exception
+HTTPConnectionPool(host='127.0.0.1', port=5001): Max retries exceeded with url:
+/api/2.0/mlflow/experiments/create (Caused by
+NewConnectionError('<urllib3.connection.HTTPConnection object at 0x130404d90>:
+Failed to establish a new connection: [Errno 61] Connection refused'))
+```
+This error is due to kedro trying to send API requests to your MLFlow container which hasn't been set up. You can set the MLFlow container from your Docker Desktop application or by running `make compose_up` from your terminal. This should set up a healthy docker container to which kedro can send API requests. 
+
+### Orphan container error when running docker
+```
+Error response from daemon: Conflict. The container name “/mockserver” is already in use by container “a2381853d58b482a3c4b82e17dbb25173e5af75903e98e7cb3481318f6abc7f1". You have to remove (or rename) that container to be able to reuse that name.
+```
+This error occurs when you have a container (mockserver in this instance) that is not properly removed and you try creating a new container with the same name. One solution to fix it is to run 
+```
+docker-compose up --remove-orphans
+```
+Alternatively you can remove the container by running `docker rm <container_id>` (in this case `docker rm mockserver`). **Note that this will remove the container and all data associated with it** so if it's your custom container, care should be taken - in such case you can rename the container instead:
+```
+docker rename mockserver mockserver_old
+```
+
+### MLFlow invalid parameter value error when doing kedro run 
+```
+MlflowException: INVALID_PARAMETER_VALUE: Invalid parameter name:
+'fabricator.robokop.nodes.columns.equivalent_identifiers:string[].type'. Names may only
+contain alphanumerics, underscores (_), dashes (-), periods (.), spaces ( ) and slashes (/).
+
+The cause of this error is typically due to repeated calls
+to an individual run_id event logging.
+```
+Parameter names in MLflow can only include alphanumeric characters, underscores (_), dashes (-), periods (.), spaces ( ), and slashes (/). The issue likely stems from repeated logging attempts to the same run_id, where one or more invalid characters (e.g., colons : or square brackets []) were used in the parameter name. 
+
+To solve this issue, first ensure that you have only alphanumeric characters in the run name in your .env. Also make sure that you have disabled tracking for the `fabricator` pipeline in your mlflow.yml file:
+```yaml
+tracking:
+  # You can specify a list of pipeline names for which tracking will be disabled
+  # Running "kedro run --pipeline=<pipeline_name>" will not log parameters
+  # in a new mlflow run
+
+  disable_tracking:
+    pipelines: ["fabricator"]
+```
+
+Alternatively, you can try to remove the run from the MLFlow UI and re-run the pipeline. You can do it with the following command:
+```bash
+docker stop mlflow
+docker rm -f mlflow
+```
+Then follow Make instructions to setup the container again. 
+
+### API request error when running the pipeline
+```
+MlflowException: API request to
+http://127.0.0.1:5001/api/2.0/mlflow/experiments/create failed with exception
+HTTPConnectionPool(host='127.0.0.1', port=5001): Max retries exceeded with url:
+/api/2.0/mlflow/experiments/create (Caused by
+NewConnectionError('<urllib3.connection.HTTPConnection object at 0x130404d90>:
+Failed to establish a new connection: [Errno 61] Connection refused'))
+```
+This error is due to the MLFlow container not being set up (can also encounter it for neo4j or mockserver). You can set the MLFlow container from your Docker Desktop application or by running `make compose_up` from your terminal. This should set up a healthy docker container to which kedro can send API requests. 
+
+### No Partition defined for this dataset
+```
+matrix      | [09/21/24 04:47:03] INFO     Saving data to                  data_catalog.py:581
+matrix      |                              embeddings.feat.graph.node_embe
+matrix      |                              ddings (LazySparkDataset)...
+24/09/21 04:47:03 WARN WindowExec: No Partition Defined for Window operation! Moving all data to a single partition, this can cause serious performance degradation.
+matrix      | 24/09/21 04:47:03 WARN WindowExec: No Partition Defined for Window operation! Moving all data to a single partition, this can cause serious performance degradation.
+24/09/21 04:47:04 WARN WindowExec: No Partition Defined for Window operation! Moving all data to a single partition, this can cause serious performance degradation.
+matrix      | 24/09/21 04:47:04 WARN WindowExec: No Partition Defined for Window operation! Moving all data to a single partition, this can cause serious performance degradation.
+```
+You dont need to worry about this warning as this is an expected behavior for our implementation of `LazySparkDataset` in Kedro, allowing us for parallelized computation of embeddings. In the future, we might refactor the code so that the error is not appearing.
+### "Environment variable 'OPENAI_API_KEY' not found or default value None is None"
+This error is likely due to having no OPENAI_API_KEY environment variable set up. First, ensure that you have copied the contents of `.env.tmpl `file into `.env` file. This should allow kedro to read environmental variables set up in .env  Note that if you need the actual OPENAI_API_KEY, you will need to reach out to our team
+### Quota project error
+```
+WARNING: Your active project does not match the quota project in your local Application Default Credentials file. This might result in unexpected quota issues.
+
+To update your Application Default Credentials quota project, use the `gcloud auth application-default set-quota-project` command.
+Updated property [core/project].
+```
+As the error suggests, your active project likely does not match the quota project in your local Application Default Credentials file. You can solve this by running the following command:
+```bash
+gcloud auth application-default set-quota-project mtrx-hub-dev-3of
+```
+
+### Fabricator error `IndexError: tuple index out of range` 
+```
+ERROR    Node fabricate_kg2_datasets: fabricate_datasets() ->  failed with error:                                                                                node.py:386
+                             tuple index out of range  
+IndexError: tuple index out of range
+```
+This error is most likely due to data fabricator version being outdated after the most recent updates to main. A simple solution is to clean your current venv, re-create and re-install the venv with needed dependencies:
+```
+deactivate # ensure no venv is active
+make clean
+make
+```
+However we noted that error persists if you have miniconda3 or conda installed on your system. Note that conda and uv (which is a preferred package management system) are very incompatible and using both might lead to errors. Therefore, if you run the command above and still get the IndexError, please make sure you have no miniconda installed. If you do have miniconda on your system, you might need to remove it or ensure it's completely separated. Once it's removed, you should re-do re-create the matrix repo and re-install venv as mentioned above
+
+
+### Error reading data from cloud
+```
+DatasetError: 
+Project was not passed and could not be determined from the environment..
+```
+
+After setting up installing the gcloud SDK, make sure that a default project is set by running:
+```
+gcloud config list
+```
+If no project is listed, then it can be set by running:
+```
+gcloud config set project mtrx-hub-dev-3of
+```

@@ -97,7 +97,6 @@ def create_feat_nodes(
     ground_pos_drug_ids = list(ground_pos["source"].unique())
     ground_pos_disease_ids = list(ground_pos["target"].unique())
     pdf_nodes["is_ground_pos"] = pdf_nodes["id"].isin(ground_pos_drug_ids + ground_pos_disease_ids)
-
     return pdf_nodes
 
 

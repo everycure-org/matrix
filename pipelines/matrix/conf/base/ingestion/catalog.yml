@@ -1,6 +1,11 @@
 _pandas_csv: &_pandas_csv
   type:  pandas.CSVDataset
 
+_drug_disease_sheets_dataset: &_drug_disease_sheets_dataset
+  type: matrix.datasets.gcp.GoogleSheetsDataset
+  key: 1NUBiI_RTNEDyGX2sovXd5qjRmkvwiusQdkxEPC0lar4
+  service_file: conf/local/service-account.json
+
 _spark_parquet_ds: &_spark_parquet
   type: matrix.datasets.gcp.LazySparkDataset
   file_format: parquet
@@ -29,182 +34,67 @@ _layer_int: &_layer_int
 # -------------------------------------------------------------------------
 # RTX-KG2
 # -------------------------------------------------------------------------  
+
+ingestion.raw.rtx_kg2.curie_to_pmids@spark:
+  type: matrix.datasets.gcp.RemoteSparkJDBCDataset
+  project: ${globals:gcp_project}
+  table: curie_to_pmids
+  url: sqlite:${globals:paths.kg_raw}/KGs/rtx_kg2/${globals:data_sources.rtx-kg2.version}/curie_to_pmids.sqlite
+  load_args:
+    properties:
+      driver: org.sqlite.JDBC
+
 ingestion.raw.rtx_kg2.nodes@pandas:
   <<: [*_pandas_csv, *_layer_raw]
-  filepath: ${globals:paths.raw}/rtx_kg2/${globals:data_sources.rtx-kg2.version}/nodes_c.tsv
+  filepath: ${globals:paths.kg_raw}/KGs/rtx_kg2/${globals:data_sources.rtx-kg2.version}/nodes_c.tsv
   load_args:
     sep: "\t"
   save_args:
-    header: false
+    header: true
     index: false
     sep: "\t"
 
 ingestion.raw.rtx_kg2.nodes@spark:
   <<: *_layer_raw
-  type: matrix.datasets.gcp.SparkWithSchemaDataset
-  filepath: ${globals:paths.raw}/rtx_kg2/${globals:data_sources.rtx-kg2.version}/nodes_c.tsv
+  type: matrix.datasets.gcp.LazySparkDataset
+  filepath: ${globals:paths.kg_raw}/KGs/rtx_kg2/${globals:data_sources.rtx-kg2.version}/nodes_c.tsv
   file_format: csv
   load_args:
     sep: "\t"
-    header: false
-    index: false
-    schema:
-      object: pyspark.sql.types.StructType
-      fields:
-        - object: pyspark.sql.types.StructField
-          name: id
-          dataType: 
-            object: pyspark.sql.types.StringType
-          nullable: False
-
-        - object: pyspark.sql.types.StructField
-          name: name
-          dataType: 
-            object: pyspark.sql.types.StringType
-          nullable: False
-
-        - object: pyspark.sql.types.StructField
-          name: category
-          dataType: 
-            object: pyspark.sql.types.StringType
-          nullable: False
-
-        - object: pyspark.sql.types.StructField
-          name: all_names
-          dataType: 
-            object: pyspark.sql.types.StringType
-          nullable: False
-
-        - object: pyspark.sql.types.StructField
-          name: all_categories
-          dataType: 
-            object: pyspark.sql.types.StringType
-          nullable: False
-        
-        - object: pyspark.sql.types.StructField
-          name: iri
-          dataType: 
-            object: pyspark.sql.types.StringType
-          nullable: False
-
-        - object: pyspark.sql.types.StructField
-          name: description
-          dataType: 
-            object: pyspark.sql.types.StringType
-          nullable: False
-
-        - object: pyspark.sql.types.StructField
-          name: equivalent_curies
-          dataType: 
-            object: pyspark.sql.types.StringType
-          nullable: False
-
-        - object: pyspark.sql.types.StructField
-          name: publications
-          dataType: 
-            object: pyspark.sql.types.StringType
-          nullable: False
-
-        - object: pyspark.sql.types.StructField
-          name: label
-          dataType: 
-            object: pyspark.sql.types.StringType
-          nullable: False
+    header: true
 
 ingestion.raw.rtx_kg2.edges@pandas:
   <<: [*_pandas_csv, *_layer_raw]
-  filepath: ${globals:paths.raw}/rtx_kg2/${globals:data_sources.rtx-kg2.version}/edges_c.tsv
+  filepath: ${globals:paths.kg_raw}/KGs/rtx_kg2/${globals:data_sources.rtx-kg2.version}/edges_c.tsv
   save_args:
     sep: "\t"
-    header: false
+    header: true
     index: false
   load_args:
     sep: "\t"
 
 ingestion.raw.rtx_kg2.edges@spark:
   <<: *_layer_raw
-  type: matrix.datasets.gcp.SparkWithSchemaDataset
-  filepath: ${globals:paths.raw}/rtx_kg2/${globals:data_sources.rtx-kg2.version}/edges_c.tsv
+  type: matrix.datasets.gcp.LazySparkDataset
+  filepath: ${globals:paths.kg_raw}/KGs/rtx_kg2/${globals:data_sources.rtx-kg2.version}/edges_c.tsv
   file_format: csv
   load_args:
     sep: "\t"
-    header: false
-    schema:
-      object: pyspark.sql.types.StructType
-      fields:
-        - object: pyspark.sql.types.StructField
-          name: subject
-          dataType: 
-            object: pyspark.sql.types.StringType
-          nullable: False
-        
-        - object: pyspark.sql.types.StructField
-          name: object
-          dataType: 
-            object: pyspark.sql.types.StringType
-          nullable: False
-        
-        - object: pyspark.sql.types.StructField
-          name: predicate
-          dataType: 
-            object: pyspark.sql.types.StringType
-          nullable: False
-        
-        - object: pyspark.sql.types.StructField
-          name: knowledge_source
-          dataType: 
-            object: pyspark.sql.types.StringType
-          nullable: False
-
-        - object: pyspark.sql.types.StructField
-          name: publications
-          dataType: 
-            object: pyspark.sql.types.StringType
-          nullable: False
-
-        - object: pyspark.sql.types.StructField
-          name: publications_info
-          dataType: 
-            object: pyspark.sql.types.StringType
-          nullable: False
-
-        - object: pyspark.sql.types.StructField
-          name: kg2_ids
-          dataType: 
-            object: pyspark.sql.types.StringType
-          nullable: False
-
-        - object: pyspark.sql.types.StructField
-          name: id
-          dataType: 
-            object: pyspark.sql.types.StringType
-          nullable: False
-
-        - object: pyspark.sql.types.StructField
-          name: type
-          dataType: 
-            object: pyspark.sql.types.StringType
-          nullable: False
-
-        - object: pyspark.sql.types.StructField
-          name: start_id
-          dataType: 
-            object: pyspark.sql.types.StringType
-          nullable: False
-
-        - object: pyspark.sql.types.StructField
-          name: end_id
-          dataType: 
-            object: pyspark.sql.types.StringType
-          nullable: False
+    header: true
+  save_args:
+    header: true
 
 ingestion.int.rtx_kg2.nodes:
   <<: [*_spark_parquet, *_layer_int]
-  filepath: ${globals:paths.int}/rtx_kg2/nodes
+  filepath: ${globals:paths.ingestion}/int/rtx_kg2/${globals:data_sources.rtx-kg2.version}/nodes
 
 ingestion.int.rtx_kg2.edges:
   <<: [*_spark_parquet, *_layer_int]
-  filepath: ${globals:paths.int}/rtx_kg2/edges
+  filepath: ${globals:paths.ingestion}/int/rtx_kg2/${globals:data_sources.rtx-kg2.version}/edges
+
+ingestion.int.rtx_kg2.curie_to_pmids:
+  <<: [*_spark_parquet, *_layer_int]
+  filepath: ${globals:paths.ingestion}/int/rtx_kg2/${globals:data_sources.rtx-kg2.version}/curie_to_pmids
 
 # -------------------------------------------------------------------------
 # EveryCure Medical
@@ -241,11 +131,11 @@ ingestion.raw.clinical_trials_data:
 
 ingestion.int.ec_medical_team.nodes:
   <<: [*_spark_parquet, *_layer_int]
-  filepath: ${globals:paths.int}/ec_medical_team/nodes
+  filepath: ${globals:paths.ingestion}/int/ec_medical_team/${globals:data_sources.ec-medical-team.version}/nodes
 
 ingestion.int.ec_medical_team.edges:
   <<: [*_spark_parquet, *_layer_int]
-  filepath: ${globals:paths.int}/ec_medical_team/edges
+  filepath: ${globals:paths.ingestion}/int/ec_medical_team/${globals:data_sources.ec-medical-team.version}/edges
 
 
 # -------------------------------------------------------------------------
@@ -289,13 +179,65 @@ ingestion.raw.drug_list@spark:
     header: true
     index: false
 
+ingestion.reporting.disease_list:
+  <<: [*_drug_disease_sheets_dataset]
+  save_args:
+    overwrite: True
+    sheet_name: diseases_${globals:data_sources.ec-disease-list.version}
+    write_columns: &_gsheet_disease_columns
+      - category_class
+      - label
+      - definition
+      - synonyms
+      - subsets
+      - crossreferences
+      - curie
+      - name
+      - is_pathogen_caused
+      - is_cancer
+      - is_glucose_dysfunction
+      - tag_existing_treatment
+      - tag_QALY_lost
+  load_args:
+    sheet_name: diseases_${globals:data_sources.ec-disease-list.version}
+    columns: *_gsheet_disease_columns
+
+ingestion.reporting.drug_list:
+  <<: [*_drug_disease_sheets_dataset]
+  save_args:
+    overwrite: True
+    sheet_name: drugs_${globals:data_sources.ec-drug-list.version}
+    write_columns: &_gsheet_drug_columns
+      - single_ID
+      - Name_EMA
+      - Approved_Europe
+      - Name_PMDA
+      - Approved_Japan
+      - Name_Orange_Book
+      - Approved_USA 
+      - Available_USA
+      - ID_Label
+      - Therapy_Name
+      - Combination_Therapy
+      - Ingredient_IDs
+      - curie
+      - name
+      - is_antimicrobial
+      - is_steroid
+      - is_cancer
+      - is_glucose_dysfunction
+
+  load_args:
+    sheet_name: drugs_${globals:data_sources.ec-drug-list.version}
+    columns: *_gsheet_drug_columns
+
 # -------------------------------------------------------------------------
 # Robokop
 # -------------------------------------------------------------------------  
 ingestion.raw.robokop.nodes@spark:
   <<: *_layer_raw
   type: matrix.datasets.gcp.LazySparkDataset
-  filepath: ${globals:paths.new_raw}/KGs/robokop-kg/${globals:data_sources.robokop.version}/nodes.tsv
+  filepath: ${globals:paths.kg_raw}/KGs/robokop-kg/${globals:data_sources.robokop.version}/nodes.orig.tsv
   file_format: csv
   load_args:
     sep: "\t"
@@ -304,7 +246,7 @@ ingestion.raw.robokop.nodes@spark:
 
 ingestion.raw.robokop.nodes@pandas:
   <<: [*_pandas_csv, *_layer_raw]
-  filepath: ${globals:paths.new_raw}/KGs/robokop-kg/${globals:data_sources.robokop.version}/nodes.tsv
+  filepath: ${globals:paths.kg_raw}/KGs/robokop-kg/${globals:data_sources.robokop.version}/nodes.orig.tsv
   save_args:
     sep: "\t"
     header: true
@@ -315,7 +257,7 @@ ingestion.raw.robokop.nodes@pandas:
 ingestion.raw.robokop.edges@spark:
   <<: *_layer_raw
   type: matrix.datasets.gcp.LazySparkDataset
-  filepath: ${globals:paths.new_raw}/KGs/robokop-kg/${globals:data_sources.robokop.version}/edges.tsv
+  filepath: ${globals:paths.kg_raw}/KGs/robokop-kg/${globals:data_sources.robokop.version}/edges.orig.tsv
   file_format: csv
   load_args:
     sep: "\t"
@@ -324,7 +266,7 @@ ingestion.raw.robokop.edges@spark:
 
 ingestion.raw.robokop.edges@pandas:
   <<: [*_pandas_csv, *_layer_raw]
-  filepath: ${globals:paths.new_raw}/KGs/robokop-kg/${globals:data_sources.robokop.version}/edges.tsv
+  filepath: ${globals:paths.kg_raw}/KGs/robokop-kg/${globals:data_sources.robokop.version}/edges.orig.tsv
   save_args:
     sep: "\t"
     header: true
@@ -334,9 +276,9 @@ ingestion.raw.robokop.edges@pandas:
 
 ingestion.int.robokop.nodes:
    <<: [*_spark_parquet, *_layer_int]
-   filepath: ${globals:paths.int}/robokop-kg/nodes
+   filepath: ${globals:paths.ingestion}/int/robokop-kg/${globals:data_sources.robokop.version}/nodes
 
 ingestion.int.robokop.edges:
    <<: [*_spark_parquet, *_layer_int]
-   filepath: ${globals:paths.int}/robokop-kg/edges
+   filepath: ${globals:paths.ingestion}/int/robokop-kg/${globals:data_sources.robokop.version}/edges
 

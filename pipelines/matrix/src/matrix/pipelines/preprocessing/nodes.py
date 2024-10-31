@@ -4,33 +4,38 @@ import requests
 
 import pandas as pd
 
-from typing import Callable, List
+from typing import Callable, List, Dict
 from functools import partial
 
 from refit.v1.core.inline_has_schema import has_schema
 from refit.v1.core.inline_primary_key import primary_key
 
+from langchain.prompts import ChatPromptTemplate
+from langchain.output_parsers import CommaSeparatedListOutputParser
+from langchain.schema import HumanMessage, SystemMessage
+from refit.v1.core.inject import inject_object
 
-def resolve(name: str, endpoint: str) -> str:
+
+def resolve(name: str, endpoint: str, att_to_get: str = "preferred_curie") -> str:
     """Function to retrieve curie through the synonymizer.
 
     Args:
         name: name of the node
         endpoint: endpoint of the synonymizer
+        att_to_get: attribute to get from API
     Returns:
         Corresponding curie
     """
-    result = requests.get(f"{endpoint}/synonymize", json={"names": name})
-
+    result = requests.get(f"{endpoint}/synonymize", json={"name": name})
     element = result.json().get(name)
     if element:
-        return element.get("preferred_curie", None)
+        return element.get(att_to_get, None)
 
     return None
 
 
 def normalize(curie: str, endpoint: str, att_to_get: str = "identifier"):
-    """Function to retrieve the normalized identifier through the synonymizer.
+    """Function to retrieve the normalized identifier through the normalizer.
 
     Args:
         curie: curie of the node
@@ -41,7 +46,7 @@ def normalize(curie: str, endpoint: str, att_to_get: str = "identifier"):
     """
     if not curie or pd.isna(curie):
         return None
-    result = requests.get(f"{endpoint}/normalize", json={"names": [curie]})
+    result = requests.get(f"{endpoint}/normalize", json={"name": curie})
     element = result.json().get(curie)
     if element:
         return element.get("id", {}).get(att_to_get)
@@ -330,30 +335,22 @@ def clean_drug_list(drug_df: pd.DataFrame, endpoint: str) -> pd.DataFrame:
     Returns:
         dataframe with synonymized drug IDs in normalized_curie column.
     """
-    res = enrich_df(
-        drug_df,
-        func=normalize,
-        input_cols=["single_ID"],
-        target_col="curie",
-        endpoint=endpoint,
-    )
-    # Adding Category
-    res = enrich_df(
-        res,
-        func=partial(normalize, att_to_get="category"),
-        input_cols=["single_ID"],
-        target_col="category",
-        endpoint=endpoint,
-    )
+    attributes = [
+        ("preferred_curie", "curie"),
+        ("preferred_category", "category"),
+        ("preferred_name", "name"),
+    ]
 
-    res = enrich_df(
-        res,
-        func=partial(normalize, att_to_get="name"),
-        input_cols=["single_ID"],
-        target_col="name",
-        endpoint=endpoint,
-    )
-    return res.loc[~res["curie"].isna()]
+    for att, target in attributes:
+        drug_df = enrich_df(
+            drug_df,
+            func=partial(resolve, att_to_get=att),
+            input_cols=["ID_Label"],
+            target_col=target,
+            endpoint=endpoint,
+        )
+
+    return drug_df.dropna(subset=["curie"])
 
 
 @has_schema(
@@ -371,7 +368,7 @@ def clean_drug_list(drug_df: pd.DataFrame, endpoint: str) -> pd.DataFrame:
 )
 @primary_key(primary_key=["category_class", "curie"])
 def clean_disease_list(disease_df: pd.DataFrame, endpoint: str) -> pd.DataFrame:
-    """Synonymize the disease list and filter out NaNs.
+    """Synonymize the IDs, names, and categories within disease list and filter out NaNs.
 
     Args:
         disease_df: disease list in a dataframe format.
@@ -380,30 +377,22 @@ def clean_disease_list(disease_df: pd.DataFrame, endpoint: str) -> pd.DataFrame:
     Returns:
         dataframe with synonymized disease IDs in normalized_curie column.
     """
-    res = enrich_df(
-        disease_df,
-        func=normalize,
-        input_cols=["category_class"],
-        target_col="curie",
-        endpoint=endpoint,
-    )
-    # Adding Categtory
+    attributes = [
+        ("preferred_curie", "curie"),
+        ("preferred_category", "category"),
+        ("preferred_name", "name"),
+    ]
 
-    res = enrich_df(
-        res,
-        func=partial(normalize, att_to_get="category"),
-        input_cols=["category_class"],
-        target_col="category",
-        endpoint=endpoint,
-    )
-    res = enrich_df(
-        res,
-        func=partial(normalize, att_to_get="name"),
-        input_cols=["category_class"],
-        target_col="name",
-        endpoint=endpoint,
-    )
-    return res.loc[~res["curie"].isna()]
+    for att, target in attributes:
+        disease_df = enrich_df(
+            disease_df,
+            func=partial(resolve, att_to_get=att),
+            input_cols=["label"],
+            target_col=target,
+            endpoint=endpoint,
+        )
+
+    return disease_df.dropna(subset=["curie"]).fillna("")
 
 
 @has_schema(
@@ -429,57 +418,127 @@ def clean_input_sheet(input_df: pd.DataFrame, endpoint: str) -> pd.DataFrame:
         dataframe with synonymized disease IDs in normalized_curie column.
     """
     # Synonymize Drug_ID column to normalized ID and name compatible with RTX-KG2
-    res = enrich_df(
-        input_df,
-        func=normalize,
-        input_cols=["Drug_ID"],
-        target_col="norm_drug_id",
-        endpoint=endpoint,
-    )
-    res = enrich_df(
-        res,
-        func=partial(normalize, att_to_get="name"),
-        input_cols=["Drug_ID"],
-        target_col="norm_drug_name",
-        endpoint=endpoint,
-    )
+    for attribute in [("identifier", "norm_drug_id"), ("name", "norm_drug_name")]:
+        input_df = enrich_df(
+            input_df,
+            func=partial(normalize, att_to_get=attribute[0]),
+            input_cols=["Drug_ID"],
+            target_col=attribute[1],
+            endpoint=endpoint,
+        )
 
     # Synonymize Disease_ID column to normalized ID and name compatible with RTX-KG2
-    res = enrich_df(
-        res,
-        func=normalize,
-        input_cols=["Disease_ID"],
-        target_col="norm_disease_id",
-        endpoint=endpoint,
-    )
-    res = enrich_df(
-        res,
-        func=partial(normalize, att_to_get="name"),
-        input_cols=["Disease_ID"],
-        target_col="norm_disease_name",
-        endpoint=endpoint,
-    )
+    for attribute in [("identifier", "norm_disease_id"), ("name", "norm_disease_name")]:
+        input_df = enrich_df(
+            input_df,
+            func=partial(normalize, att_to_get=attribute[0]),
+            input_cols=["Disease_ID"],
+            target_col=attribute[1],
+            endpoint=endpoint,
+        )
 
     # Select columns of interest and rename
-    df = res.loc[
-        :,
-        [
-            "Timestamp",
-            "Drug_ID",
-            "Disease_ID",
-            "norm_drug_id",
-            "norm_drug_name",
-            "norm_disease_id",
-            "norm_disease_name",
-        ],
-    ]
-    df.columns = [
-        "timestamp",
-        "drug_id",
-        "disease_id",
+    col_list = [
+        "Timestamp",
+        "Drug_ID",
+        "Disease_ID",
         "norm_drug_id",
         "norm_drug_name",
         "norm_disease_id",
         "norm_disease_name",
     ]
-    return df.fillna("")  # Filling NaNs so that schema is valid
+    df = input_df.loc[:, col_list]
+    df.columns = [string.lower() for string in col_list]
+
+    # Fill NaNs and return
+    return df.fillna("")
+
+
+# FUTURE: Remove the functions once we have tags embedded in the disease list
+@inject_object()
+def generate_tag(
+    disease_list: List, model: Dict, definitions: str = None, synonyms: str = None, raw_prompt: str = None
+) -> List:
+    """Temporary function to generate tags based on provided prompts and params through OpenAI API call.
+
+    This function is temporary and will be removed once we have tags embedded in the disease list.
+
+    Args:
+        disease_list: list- list of disease for which tags should be generated.
+        definitions: str - (optional) definition of the disease, needed for prompts requiring multiple inputs.
+        synonyms: str - (optional) synonyms of the disease, needed for prompts requiring multiple inputs.
+        prompt: str - prompt for the tag generation
+        llm_model: str - name of the llm model to use for tag generation
+    Returns
+        List of tags generated by the API call.
+    """
+    # Initialize the output parser
+    output_parser = CommaSeparatedListOutputParser()
+
+    # Generate tags
+    tag_list = []
+    for i, disease in enumerate(disease_list):
+        if (definitions is None) | (synonyms is None):
+            prompt = ChatPromptTemplate.from_messages(
+                [SystemMessage(content=raw_prompt), HumanMessage(content=disease)]
+            )
+            formatted_prompt = prompt.format_messages(disease=disease)
+        else:
+            prompt = ChatPromptTemplate.from_messages(
+                [
+                    SystemMessage(
+                        content=raw_prompt.format(disease=disease, synonym=synonyms[i], definition=definitions[i])
+                    )
+                ]
+            )
+
+            formatted_prompt = prompt.format_messages(disease=disease, synonym=synonyms[i], definition=definitions[i])
+        response = model.invoke(formatted_prompt)
+        tags = output_parser.parse(response.content)
+        tag_list.append(", ".join(tags))
+    return tag_list
+
+
+def enrich_disease_list(disease_list: List, params: Dict) -> pd.DataFrame:
+    """Temporary function to enrich existing disease list with llm-generated tags.
+
+    This function  will be removed once we have tags embedded in the disease list.
+
+    Args:
+        disease_list: pd.DataFrame - merged disease_list with disease names column that will be used for tag generation
+        params: Dict - parameters dictionary specifying tag names, column names, and model params
+        llm_model:  - name of the llm model to use for tag generation
+    Returns
+        pd.DataFrame with x new tag columns (where x corresponds to number of tags specified in params)
+    """
+    disease_list = disease_list
+    for input_type in ["single_input", "multiple_input"]:
+        input_params = params[input_type]
+        for tag, tag_params in input_params.items():
+            # Check if tag is already in disease list
+            if tag in disease_list.columns:
+                continue
+
+            print(f"Applying tag: '{tag}' to disease list")
+
+            input_col = tag_params["input_params"]["input_col"]
+            output_col = tag_params["input_params"]["output_col"]
+            raw_prompt = tag_params["input_params"]["prompt"]
+            model = tag_params["model_params"]
+
+            # Check whether the tag needs a single or multiple inputs
+            if input_type == "single_input":
+                disease_list[output_col] = generate_tag(
+                    disease_list=disease_list[input_col], raw_prompt=raw_prompt, model=model
+                )
+            else:
+                definition_col = tag_params["input_params"]["definition"]
+                synonym_col = tag_params["input_params"]["synonyms"]
+                disease_list[output_col] = generate_tag(
+                    disease_list=disease_list[input_col],
+                    definitions=disease_list[definition_col],
+                    synonyms=disease_list[synonym_col],
+                    raw_prompt=raw_prompt,
+                    model=model,
+                )
+    return disease_list
