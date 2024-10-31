@@ -192,6 +192,7 @@ ingestion.reporting.disease_list:
       - crossreferences
       - curie
       - name
+      - category
       - is_pathogen_caused
       - is_cancer
       - is_glucose_dysfunction
@@ -221,10 +222,11 @@ ingestion.reporting.drug_list:
       - Ingredient_IDs
       - curie
       - name
+      - category
       - is_antimicrobial
       - is_steroid
-      - is_cancer
-      - is_glucose_dysfunction
+      - is_chemotherapy
+      - is_glucose_regulator
 
   load_args:
     sheet_name: drugs_${globals:data_sources.ec-drug-list.version}
