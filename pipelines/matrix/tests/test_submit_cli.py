@@ -42,8 +42,13 @@ def mock_dependencies():
 
 # Test for submit command
 def test_submit(mock_dependencies):
+    # Given in instance of the CLI runner
     runner = CliRunner()
-    result = runner.invoke(submit, ["--username", "testuser"])
+
+    # When invoking the runner with all required parameters
+    result = runner.invoke(submit, ["--username", "testuser", "--pipeline", "__default__"])
+
+    # Then CLI successfully invoked
     assert result.exit_code == 0
     assert "Workflow submitted successfully!" in result.output
 

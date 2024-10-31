@@ -18,3 +18,4 @@ reflecting about it)
 - we use pandera for data validation
 - we use fastapi for API building
 - we use pydantic for data validation and settings management
+- when writing unit tests, organise the test in a "GivenWhenThen" format, making the purpose of the test explicit
