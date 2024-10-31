@@ -337,12 +337,14 @@ def train_topological_embeddings(
     # Filter out treat/GT nodes from the graph
     subgraph_name = filtering.get("graphName")
     filter_args = filtering.pop("args")
+
     # Drop graph if exists
     if gds.graph.exists(subgraph_name).exists:
         subgraph = gds.graph.get(subgraph_name)
         gds.graph.drop(subgraph, False)
 
     subgraph, _ = gds.graph.filter(subgraph_name, graph, **filter_args)
+    gds.graph.drop(graph)
 
     # Validate whether the model exists
     model_name = estimator.get("modelName")
@@ -380,7 +382,7 @@ def write_topological_embeddings(
 ) -> Dict:
     """Write topological embeddings."""
     # Retrieve the graph
-    graph_name = projection.get("graphName")
+    graph_name = filtering.get("graphName")
     graph = gds.graph.get(graph_name)
 
     # Retrieve the model
