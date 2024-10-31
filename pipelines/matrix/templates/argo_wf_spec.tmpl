@@ -160,7 +160,7 @@ spec:
               key: OPENAI_API_KEY
       imagePullPolicy: Always
       image: {% raw %} "{{workflow.parameters.image}}:{{workflow.parameters.image_tag}}" {% endraw %}
-      
+
       command: ["/bin/sh", "-c"]
       args:
         - |
@@ -172,13 +172,26 @@ spec:
           echo "Neo4j is ready. Starting main application..."
           kedro run -p {% raw %}"{{inputs.parameters.pipeline}}"{% endraw %} -e {% raw %}"{{workflow.parameters.env}}"{% endraw %} -n {% raw %}"{{inputs.parameters.kedro_nodes}}"{% endraw %}
     
+    volumes:
+      - name: gds-key
+        secret:
+          secretName: gds-secret
+          items:
+            - key: gds_key
+              path: gds-key
     sidecars:
       # Neo4j enterprise sidecar
       - name: neo4j
         image: neo4j:5.21.0-enterprise
+        volumeMounts:
+          - name: gds-key
+            mountPath: /licences
+            readOnly: true
         env:
         - name: NEO4J_AUTH
           value: "neo4j/admin"
+        - name: NEO4J_gds_enterprise_license__file
+          value: "/licences/gds-key"
         - name: NEO4J_apoc_export_file_enabled
           value: "true"
         - name: NEO4J_apoc_import_file_enabled
