@@ -42,7 +42,11 @@ data_sources:
     # curl -X GET -H "Content-Type: application/json" -H "Authorization: token PAT" -H "Accept: application/vnd.github.v3.raw" https://api.github.com/repos/everycure-org/matrix-drug-list/releases | jq ".[0].assets | map(select(.name == \"drugList.tsv\"))[0] | .id"
     version: 200891683
   ec-disease-list:
-    version: latest # TODO: We should version
+    # NOTE: This is currently the artifact id, as the GitHub API only
+    # allows for downloading an artifact by its id. Get the artifact id
+    # of the latest release as follows:
+    # curl -X GET -H "Content-Type: application/json" -H "Authorization: token PAT" -H "Accept: application/vnd.github.v3.raw" https://api.github.com/repos/everycure-org/matrix-disease-list/releases | jq ".[0].assets | map(select(.name == \"matrix-disease-list.tsv\"))[0] | .id"
+    version: 197752375 
 
 # NOTE: MLflow does not like "new options" in the mlflow.yml
 # due to schema validation. Will make PR.
