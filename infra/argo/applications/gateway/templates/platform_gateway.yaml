@@ -21,6 +21,18 @@ spec:
       certificateRefs:
         - name: gateway-cert
           kind: Secret
+  - name: bolt
+    hostname: "neo4j.platform.dev.everycure.org"
+    protocol: HTTPS
+    port: 7687
+    allowedRoutes:
+      namespaces:
+        from: neo4j
+    tls:
+      mode: Terminate
+      certificateRefs:
+        - name: gateway-cert
+          kind: Secret
   - name: http
     hostname: "*.platform.dev.everycure.org"
     protocol: HTTP
