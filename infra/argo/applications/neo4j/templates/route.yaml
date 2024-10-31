@@ -16,7 +16,25 @@ spec:
     - name: neo4j-reverseproxy-service
       port: 80
 
-# ---
+---
+kind: HTTPRoute
+apiVersion: gateway.networking.k8s.io/v1beta1
+metadata:
+  name: neo4j-route-bolt
+  namespace: neo4j
+spec:
+  parentRefs:
+  - kind: Gateway
+    sectionName: bolt
+    namespace: gateway
+    name: external-http
+  hostnames:
+  - "neo4j.platform.dev.everycure.org"
+  rules:
+  - backendRefs:
+    - name: neo4j-reverseproxy-service
+      port: 80
+
 # 
 # kind: HTTPRoute
 # apiVersion: gateway.networking.k8s.io/v1beta1
