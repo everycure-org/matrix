@@ -27,7 +27,7 @@ spec:
     port: 7687
     allowedRoutes:
       namespaces:
-        from: neo4j
+        from: All
     tls:
       mode: Terminate
       certificateRefs:
