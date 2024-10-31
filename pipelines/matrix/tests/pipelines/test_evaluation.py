@@ -54,11 +54,12 @@ def sample_positives():
             ],
             "target": [1, 2, 1],
             "y": [1, 1, 1],
-            "rank": [1, 1, 3],
+            # Suppose that there are 3 positives and 2 non-positive pairs in the matrix
+            "rank": [1, 2, 5],
+            "non_pos_rank": [1, 1, 3],
         }
     )
-    # Suppose that there are 2 non-positive matrix in the matrix
-    data["quantile_rank"] = (data["rank"] - 1) / 2
+    data["non_pos_quantile_rank"] = (data["non_pos_rank"] - 1) / 2
     return data
 
 
@@ -125,7 +126,7 @@ def test_full_matrix_ranking(sample_positives):
     """Test the FullMatrixRanking class using RecallAtN and AUROC metrics."""
     # Given a sample dataset that is the output of FullMatrixPositives
     data = sample_positives
-    rank_funcs = [RecallAtN_(n=2), RecallAtN_(n=3)]
+    rank_funcs = [RecallAtN_(n=2), RecallAtN_(n=5)]
     quantile_funcs = [AUROC()]
 
     # When FullMatrixRanking is initialized with RecallAtN and AUROC metrics
@@ -136,12 +137,12 @@ def test_full_matrix_ranking(sample_positives):
 
     # Then the RecallAtN and AUROC scores should be correctly calculated
     assert "recall-2" in result
-    assert "recall-3" in result
+    assert "recall-5" in result
     assert "auroc" in result
 
     # Verify RecallAtN calculations
     assert np.isclose(result["recall-2"], 2 / 3, atol=1e-6)  # 2 out of 3 true positives in top 2
-    assert np.isclose(result["recall-3"], 1.0, atol=1e-6)  # All 3 true positives in top 3
+    assert np.isclose(result["recall-5"], 1.0, atol=1e-6)  # All 3 true positives in top 5
 
     # Verify AUROC calculation
     assert np.isclose(result["auroc"], 2 / 3, atol=1e-6)
