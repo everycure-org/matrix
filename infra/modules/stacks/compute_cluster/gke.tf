@@ -60,7 +60,6 @@ locals {
     initial_node_count = 0
     }
   ]
-
   gpu_node_pools = [
     {
       name               = "g2-standard-16-l4-nodes" # 1 GPU, 16vCPUs, 64GB RAM
@@ -116,6 +115,12 @@ module "gke" {
   # FUTURE: Refine mode pools
   node_pools = local.node_pools_combined
 
+  # Mark GPU nodes
+  node_pools_labels = {
+    for pool in local.node_pools_combined : pool.name => {
+      gpu_node = can(pool.accelerator_count) ? "true" : "false"
+    }
+  }
   # https://cloud.google.com/artifact-registry/docs/access-control#gke
   # node_pools_oauth_scopes = {
   #   all = [
