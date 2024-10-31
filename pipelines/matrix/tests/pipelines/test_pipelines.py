@@ -82,6 +82,20 @@ def test_unused_catalog_entries(
     assert unused_params == [], f"The following parameters are not used: {unused_params}"
 
 
+def test_no_catalog_non_param_entries_unused(
+    kedro_context: KedroContext,
+) -> None:
+    used_conf_entries = set.union(*[_pipeline_datasets(p) for p in pipelines.values()])
+    used_entries = {entry for entry in used_conf_entries if "params:" not in entry}
+    declared_entries = {entry for entry in kedro_context.catalog.list() if not entry.startswith("params:")}
+
+    unused_entries = declared_entries - used_entries
+    # Only catalog entry not used should be 'parameters', since we input top-level keys directly.
+    unused_entries.remove("parameters")
+
+    assert unused_entries == set(), f"The following entries are not used: {unused_entries}"
+
+
 @pytest.mark.integration
 # @pytest.mark.skipif(
 #     os.environ.get("CI") == "true", reason="Ongoing issue with the Kedro catalog"
