@@ -131,8 +131,11 @@ def test_generate_pairs(sample_drugs, sample_diseases, sample_graph, sample_know
     assert len(result) == 3  # 2 drugs * 2 diseases - 1 training pair
     # Doesn't contain training pairs
     assert not result.apply(lambda row: (row["source"], row["target"]) in [("drug_1", "disease_1")], axis=1).any()
+
     # Boolean flag columns are present
-    check_col = lambda col_name: (col_name in result.columns) and result[col_name].dtype == bool
+    def check_col(col_name):
+        return (col_name in result.columns) and result[col_name].dtype == bool
+
     assert all(
         check_col(col)
         for col in [
@@ -218,43 +221,164 @@ def test_make_predictions_and_sort(
     assert result["score"].is_monotonic_decreasing
 
 
-def test_generate_report(
-    sample_graph,
-    transformers,
-    mock_model_2,
-    sample_drugs,
-    sample_diseases,
-    sample_known_pairs,
-    sample_clinical_trials,
-):
+@pytest.fixture
+def sample_data():
+    """Fixture that provides sample data for testing matrix generation functions."""
+    drugs = pd.DataFrame(
+        {
+            "curie": ["drug_1", "drug_2", "drug_3", "drug_4"],
+            "name": ["Drug 1", "Drug 2", "Drug 3", "Drug 4"],
+            "is_steroid": [True, False, False, False],
+        }
+    )
+
+    diseases = pd.DataFrame(
+        {
+            "curie": ["disease_1", "disease_2", "disease_3", "disease_4"],
+            "name": ["Disease 1", "Disease 2", "Disease 3", "Disease 4"],
+            "is_cancer": [True, False, False, False],
+        }
+    )
+
+    known_pairs = pd.DataFrame(
+        {
+            "source": ["drug_1", "drug_2", "drug_3", "drug_4"],
+            "target": ["disease_1", "disease_2", "disease_3", "disease_4"],
+            "split": ["TRAIN", "TEST", "TRAIN", "TRAIN"],
+            "y": [1, 0, 1, 1],
+        }
+    )
+
+    nodes = pd.DataFrame(
+        {
+            "id": ["drug_1", "drug_2", "disease_1", "disease_2", "disease_3", "disease_4"],
+            "is_drug": [True, True, False, False, False, False],
+            "is_disease": [False, False, True, True, True, True],
+            "topological_embedding": [np.ones(3) * n for n in range(6)],
+        }
+    )
+    graph = KnowledgeGraph(nodes)
+
+    return drugs, diseases, known_pairs, graph
+
+
+def test_generate_report(sample_data):
     """Test the generate_report function."""
     # Given an input matrix, drug list and disease list
-    matrix = generate_pairs(sample_drugs, sample_diseases, sample_graph, sample_known_pairs, sample_clinical_trials)
-    matrix_with_scores = make_predictions_and_sort(
-        graph=sample_graph,
-        data=matrix,
-        transformers=transformers,
-        model=mock_model_2,
-        features=["source_+", "target_+"],
-        score_col_name="score",
-        batch_by="target",
+    drugs, diseases, known_pairs, _ = sample_data
+
+    # Update the sample data to include the new required columns
+    drugs["single_ID"] = ["drug_id_1", "drug_id_2", "drug_id_3", "drug_id_4"]
+    drugs["ID_Label"] = ["Drug Label 1", "Drug Label 2", "Drug Label 3", "Drug Label 4"]
+
+    diseases["category_class"] = ["disease_class_1", "disease_class_2", "disease_class_3", "disease_class_4"]
+    diseases["label"] = ["Disease Label 1", "Disease Label 2", "Disease Label 3", "Disease Label 4"]
+
+    data = pd.DataFrame(
+        {
+            "source": ["drug_1", "drug_2", "drug_3", "drug_4", "drug_2"],
+            "target": ["disease_1", "disease_2", "disease_3", "disease_3", "disease_2"],
+            "probability": [0.8, 0.6, 0.4, 0.2, 0.2],
+            "is_known_positive": [True, False, False, False, False],
+            "trial_sig_better": [False, False, False, False, False],
+            "trial_non_sig_better": [False, False, False, False, False],
+            "trial_sig_worse": [False, False, False, False, False],
+            "trial_non_sig_worse": [False, False, False, False, False],
+            "is_known_negative": [False, True, False, False, False],
+        }
     )
-    n_reporting = 2
+
+    n_reporting = 3
+    score_col_name = "probability"
+
+    # Mock the stats_col_names and meta_col_names dictionaries
+    matrix_params = {
+        "metadata": {
+            "drug_list": {"drug_id": "Drug ID", "drug_name": "Drug Name"},
+            "disease_list": {"disease_id": "Disease ID", "disease_name": "Disease Name"},
+            "kg_data": {
+                "pair_id": "Unique identifier for each pair",
+                "kg_drug_id": "KG Drug ID",
+                "kg_disease_id": "KG Disease ID",
+                "kg_drug_name": "KG Drug Name",
+                "kg_disease_name": "KG Disease Name",
+            },
+        },
+        "stats_col_names": {
+            "per_disease": {"top": {"mean": "Mean score"}, "all": {"mean": "Mean score"}},
+            "per_drug": {"top": {"mean": "Mean score"}, "all": {"mean": "Mean score"}},
+            "full": {"mean": "Mean score", "median": "Median score"},
+        },
+        "tags": {
+            "drugs": {"is_steroid": "Whether drug is a steroid"},
+            "pairs": {
+                "is_known_positive": "Whether the pair is a known positive, based on literature and clinical trials",
+                "is_known_negative": "Whether the pair is a known negative, based on literature and clinical trials",
+            },
+            "diseases": {"is_cancer": "Whether disease is a cancer"},
+            "master": {
+                "legend": "Excludes any pairs where the following conditions are met: xyz",
+                "conditions": [["is_known_positive"], ["is_known_negative"], ["is_steroid"]],
+            },
+        },
+    }
+    run_metadata = {
+        "run_name": "test_run",
+        "git_sha": "test_sha",
+        "data_version": "test_data_version",
+    }
 
     # When generating the report
-    result = generate_report(matrix_with_scores, n_reporting, sample_drugs, sample_diseases, "score")
+    result = generate_report(data, n_reporting, drugs, diseases, score_col_name, matrix_params, run_metadata)
+    full_stats = result["statistics"]
+    # Check that the full matrix statistics are correct
+    assert (
+        full_stats["stats_type"]
+        .isin(
+            [
+                "mean_full_matrix",
+                "mean_top_n",
+                "median_full_matrix",
+                "median_top_n",
+            ]
+        )
+        .all()
+    )
 
+    result = result["matrix"]
     # Then the report is of the correct structure
     assert isinstance(result, pd.DataFrame)
     assert len(result) == n_reporting
-    assert set(result.columns) == {
+
+    expected_columns = {
         "drug_id",
         "drug_name",
         "disease_id",
         "disease_name",
-        "score",
+        "probability",
+        "pair_id",
+        "kg_drug_id",
+        "kg_disease_id",
+        "kg_drug_name",
+        "kg_disease_name",
+        "master_filter",
+        "is_steroid",
         "is_known_positive",
         "is_known_negative",
+        "is_cancer",
+        "mean_top_per_disease",
+        "mean_all_per_disease",
+        "mean_top_per_drug",
+        "mean_all_per_drug",
     }
-    assert set(result["drug_name"]).issubset({"Drug 1", "Drug 2"})
-    assert set(result["disease_name"]).issubset({"Disease 1", "Disease 2"})
+    assert set(result.columns) == expected_columns
+
+    assert result["drug_name"].tolist() == ["Drug Label 1", "Drug Label 2", "Drug Label 3"]
+    assert result["disease_name"].tolist() == ["Disease Label 1", "Disease Label 2", "Disease Label 3"]
+    assert result["kg_drug_name"].tolist() == ["Drug 1", "Drug 2", "Drug 3"]
+    assert result["kg_disease_name"].tolist() == ["Disease 1", "Disease 2", "Disease 3"]
+    assert result["probability"].tolist() == pytest.approx([0.8, 0.6, 0.4])
+    assert result["mean_top_per_disease"].tolist() == pytest.approx([0.8, 0.6, 0.4])
+    assert result["mean_all_per_disease"].tolist() == pytest.approx([0.8, 0.4, 0.3])
+    assert result["mean_top_per_drug"].tolist() == pytest.approx([0.8, 0.6, 0.4])
+    assert result["mean_all_per_drug"].tolist() == pytest.approx([0.8, 0.4, 0.4])

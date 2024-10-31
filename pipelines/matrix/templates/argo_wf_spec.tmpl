@@ -10,9 +10,7 @@ spec:
       run: {% raw %}'{{ workflow.parameters.run_name }}'
       {% endraw %}
       username: "{{ username }}"
-  entrypoint: dag
-  ttlStrategy:
-    secondsAfterSuccess: 5
+  entrypoint: __default__
   arguments:
     parameters:
       - name: image

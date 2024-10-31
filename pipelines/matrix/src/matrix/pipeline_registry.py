@@ -4,16 +4,16 @@ from typing import Dict
 
 from kedro.pipeline import Pipeline
 
-from matrix.pipelines.preprocessing.pipeline import create_pipeline as create_preprocessing_pipeline
-from matrix.pipelines.modelling.pipeline import create_pipeline as create_modelling_pipeline
-from matrix.pipelines.fabricator.pipeline import create_pipeline as create_fabricator_pipeline
+from matrix.pipelines.data_release.pipeline import create_pipeline as create_data_release_pipeline
 from matrix.pipelines.embeddings.pipeline import create_pipeline as create_embeddings_pipeline
-from matrix.pipelines.integration.pipeline import create_pipeline as create_integration_pipeline
 from matrix.pipelines.evaluation.pipeline import create_pipeline as create_evaluation_pipeline
-from matrix.pipelines.ingestion.pipeline import create_pipeline as create_ingestion_pipeline
-from matrix.pipelines.release.pipeline import create_pipeline as create_release_pipeline
-from matrix.pipelines.matrix_generation.pipeline import create_pipeline as create_matrix_pipeline
+from matrix.pipelines.fabricator.pipeline import create_pipeline as create_fabricator_pipeline
 from matrix.pipelines.inference.pipeline import create_pipeline as create_inference_pipeline
+from matrix.pipelines.ingestion.pipeline import create_pipeline as create_ingestion_pipeline
+from matrix.pipelines.integration.pipeline import create_pipeline as create_integration_pipeline
+from matrix.pipelines.matrix_generation.pipeline import create_pipeline as create_matrix_pipeline
+from matrix.pipelines.modelling.pipeline import create_pipeline as create_modelling_pipeline
+from matrix.pipelines.preprocessing.pipeline import create_pipeline as create_preprocessing_pipeline
 
 
 def register_pipelines() -> Dict[str, Pipeline]:
@@ -22,48 +22,44 @@ def register_pipelines() -> Dict[str, Pipeline]:
     Returns:
         Mapping from a pipeline name to a ``Pipeline`` object.
     """
-    pipelines = {}
+    # Define pipeline combinations
+    pipelines = {
+        # Individual pipelines
+        "preprocessing": create_preprocessing_pipeline(),  # Run manually for clinical trials and medical KG artifacts
+        "fabricator": create_fabricator_pipeline(),
+        "ingestion": create_ingestion_pipeline(),
+        "integration": create_integration_pipeline(),
+        "embeddings": create_embeddings_pipeline(),
+        "data_release": create_data_release_pipeline(),
+        "modelling": create_modelling_pipeline(),
+        "matrix_generation": create_matrix_pipeline(),
+        "evaluation": create_evaluation_pipeline(),
+        "inference": create_inference_pipeline(),  # Run manually based on medical input
+    }
 
-    pipelines["kg_release"] = create_integration_pipeline() + create_embeddings_pipeline()
-    pipelines["modelling"] = create_modelling_pipeline() + create_matrix_pipeline() + create_evaluation_pipeline()
+    # Higher order pipelines
+    # fmt: off
+    pipelines["kg_release"] = (
+          pipelines["ingestion"]
+        + pipelines["integration"]
+        + pipelines["data_release"] 
+    )  # + embeddings, #TODO currently excluded
+    pipelines["modelling_run"] = (
+          pipelines["modelling"]
+        + pipelines["matrix_generation"]
+        + pipelines["evaluation"]
+    )
     pipelines["__default__"] = (
-        create_integration_pipeline()
-        + create_embeddings_pipeline()
-        + create_modelling_pipeline()
-        + create_matrix_pipeline()
-        + create_evaluation_pipeline()
+          pipelines["kg_release"]
+        + pipelines["embeddings"] # TODO move this back to the kg_release once embedding works well
+        + pipelines["modelling_run"]
     )
 
-    pipelines["test_release"] = (
-        create_fabricator_pipeline()
-        + create_ingestion_pipeline()
-        + create_integration_pipeline()
-        + create_embeddings_pipeline()
-    )
-    pipelines["test_modelling"] = (
-        create_modelling_pipeline()
-        + create_matrix_pipeline()
-        + create_evaluation_pipeline()
-        + create_release_pipeline()
-    )
-
+    # Test pipelines
     pipelines["test"] = (
-        create_fabricator_pipeline()
-        + create_ingestion_pipeline()
-        + create_integration_pipeline()
-        + create_embeddings_pipeline()
-        + create_modelling_pipeline()
-        + create_matrix_pipeline()
-        + create_evaluation_pipeline()
-        + create_release_pipeline()
+          pipelines["fabricator"]
+        + pipelines["__default__"]
     )
+    # fmt: on
 
-    # Ran manually based on input from medical to release new artifacts from clinical trails and medical KG
-    pipelines["preprocessing"] = create_preprocessing_pipeline()
-
-    # We only run whenever sources change
-    pipelines["ingestion"] = create_ingestion_pipeline()
-
-    # We run only manually based on medical input
-    pipelines["inference"] = create_inference_pipeline()
     return pipelines
