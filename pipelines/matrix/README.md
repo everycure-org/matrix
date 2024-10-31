@@ -17,7 +17,7 @@ In order to get the best out of the template:
 
 ## How to install dependencies
 
-Declare any dependencies in `requirements.txt` for `pip` installation.
+Declare any dependencies in `requirements.in` for `pip` installation.
 
 To install them, run:
 

@@ -1,4 +1,5 @@
 """Embeddings pipeline."""
+
 from kedro.pipeline import Pipeline, node, pipeline
 
 from . import nodes
@@ -8,44 +9,16 @@ def create_pipeline(**kwargs) -> Pipeline:
     """Create embeddings pipeline."""
     return pipeline(
         [
-            # Ingest edges into Neo4j
-            node(
-                func=nodes.ingest_nodes,
-                inputs=["integration.prm.unified_nodes"],
-                outputs="embeddings.prm.graph_nodes",
-                name="create_neo4j_node_embedding_input_nodes",
-                tags=[
-                    "argowf.fuse",
-                    "argowf.fuse-group.node_embeddings",
-                    "argowf.template-neo4j",
-                ],
-            ),
+            # Compute node embeddings
             node(
                 func=nodes.compute_embeddings,
                 inputs={
-                    "input": "embeddings.prm.graph_nodes",
-                    "gdb": "params:embeddings.gdb",
+                    "input": "integration.prm.filtered_nodes",
                     "features": "params:embeddings.node.features",
                     "unpack": "params:embeddings.ai_config",
                 },
-                outputs="embeddings.prm.graph.embeddings@yaml",
-                name="create_neo4j_node_embeddings",
-                tags=[
-                    "argowf.fuse",
-                    "argowf.fuse-group.node_embeddings",
-                    "argowf.template-neo4j",
-                ],
-            ),
-            node(
-                func=lambda x: x.withColumnRenamed("<labels>", "labels"),
-                inputs=["embeddings.prm.graph.embeddings@neo"],
                 outputs="embeddings.feat.graph.node_embeddings",
-                name="extract_embeddings",
-                tags=[
-                    "argowf.fuse",
-                    "argowf.fuse-group.node_embeddings",
-                    "argowf.template-neo4j",
-                ],
+                name="add_node_embeddings",
             ),
             # Reduce dimension
             node(
@@ -73,7 +46,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 func=nodes.ingest_edges,
                 inputs=[
                     "embeddings.tmp.input_nodes",
-                    "integration.prm.unified_edges",
+                    "integration.prm.filtered_edges",
                 ],
                 outputs="embeddings.tmp.input_edges",
                 name="ingest_neo4j_input_edges",

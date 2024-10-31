@@ -7,10 +7,8 @@ import json
 import pyspark.sql.functions as f
 
 from pyspark.sql import DataFrame
-from pyspark.sql.functions import udf, col
-from pyspark.sql.types import FloatType, ArrayType, StringType
 
-from sklearn.model_selection._split import _BaseKFold
+from sklearn.model_selection import BaseCrossValidator
 from sklearn.impute._base import _BaseImputer
 from sklearn.base import BaseEstimator
 
@@ -18,6 +16,7 @@ import matplotlib.pyplot as plt
 
 from refit.v1.core.inject import inject_object
 from refit.v1.core.inline_has_schema import has_schema
+from refit.v1.core.inline_primary_key import primary_key
 from refit.v1.core.unpack import unpack_params
 from refit.v1.core.make_list_regexable import make_list_regexable
 
@@ -25,10 +24,10 @@ from matrix.datasets.graph import KnowledgeGraph
 from matrix.datasets.pair_generator import SingleLabelPairGenerator
 from .model import ModelWrapper
 
-
 plt.switch_backend("Agg")
 
 
+@primary_key(primary_key=["source", "target"])
 def create_int_pairs(raw_tp: pd.DataFrame, raw_tn: pd.DataFrame):
     """Create intermediate pairs dataset.
 
@@ -46,9 +45,7 @@ def create_int_pairs(raw_tp: pd.DataFrame, raw_tn: pd.DataFrame):
     return pd.concat([raw_tp, raw_tn], axis="index").reset_index(drop=True)
 
 
-def prefilter_nodes(
-    nodes: DataFrame, drug_types: List[str], disease_types: List[str]
-) -> DataFrame:
+def prefilter_nodes(nodes: DataFrame, drug_types: List[str], disease_types: List[str]) -> DataFrame:
     """Filters nodes before passing on to modelling nodes.
 
     Args:
@@ -58,9 +55,7 @@ def prefilter_nodes(
     Returns:
         Filtered nodes dataframe
     """
-    return nodes.filter(
-        (f.col("category").isin(drug_types)) | (f.col("category").isin(disease_types))
-    )
+    return nodes.filter((f.col("category").isin(drug_types)) | (f.col("category").isin(disease_types)))
 
 
 @has_schema(
@@ -82,8 +77,6 @@ def create_feat_nodes(
 ) -> pd.DataFrame:
     """Add features for nodes.
 
-    FUTURE: Add flags for official set of drugs and diseases when we have them.
-
     Args:
         raw_nodes: Raw nodes data.
         known_pairs: Ground truth data.
@@ -103,10 +96,7 @@ def create_feat_nodes(
     ground_pos = known_pairs[known_pairs["y"].eq(1)]
     ground_pos_drug_ids = list(ground_pos["source"].unique())
     ground_pos_disease_ids = list(ground_pos["target"].unique())
-    pdf_nodes["is_ground_pos"] = pdf_nodes["id"].isin(
-        ground_pos_drug_ids + ground_pos_disease_ids
-    )
-
+    pdf_nodes["is_ground_pos"] = pdf_nodes["id"].isin(ground_pos_drug_ids + ground_pos_disease_ids)
     return pdf_nodes
 
 
@@ -125,14 +115,14 @@ def create_feat_nodes(
 def make_splits(
     kg: KnowledgeGraph,
     data: DataFrame,
-    splitter: _BaseKFold,
+    splitter: BaseCrossValidator,
 ) -> pd.DataFrame:
     """Function to split data.
 
     Args:
         kg: kg dataset with nodes
         data: Data to split.
-        splitter: sklearn splitter object.
+        splitter: sklearn splitter object (BaseCrossValidator or its subclasses).
 
     Returns:
         Data with split information.
@@ -140,11 +130,8 @@ def make_splits(
     # FUTURE: Improve by redoing in Spark
     data["source_embedding"] = data["source"].apply(lambda s_id: kg._embeddings[s_id])
     data["target_embedding"] = data["target"].apply(lambda t_id: kg._embeddings[t_id])
-
     all_data_frames = []
-    for iteration, (train_index, test_index) in enumerate(
-        splitter.split(data, data["y"])
-    ):
+    for iteration, (train_index, test_index) in enumerate(splitter.split(data, data["y"])):
         all_indices_in_this_fold = list(set(train_index).union(test_index))
         fold_data = data.loc[all_indices_in_this_fold, :].copy()
         fold_data.loc[:, "iteration"] = iteration
@@ -212,9 +199,7 @@ def fit_transformers(
     mask = data["split"].eq("TRAIN")
 
     # Grab target data
-    target_data = (
-        data.loc[mask, target_col_name] if target_col_name is not None else None
-    )
+    target_data = data.loc[mask, target_col_name] if target_col_name is not None else None
 
     # Iterate transformers
     fitted_transformers = {}
@@ -222,9 +207,7 @@ def fit_transformers(
         # Fit transformer
         features = transform["features"]
 
-        transformer = transform["transformer"].fit(
-            data.loc[mask, features], target_data
-        )
+        transformer = transform["transformer"].fit(data.loc[mask, features], target_data)
 
         fitted_transformers[name] = {"transformer": transformer, "features": features}
 

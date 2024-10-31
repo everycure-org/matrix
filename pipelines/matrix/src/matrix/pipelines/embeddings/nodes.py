@@ -1,43 +1,31 @@
 """Nodes for embeddings pipeline."""
-import os
-from typing import List, Any, Dict
 
-import pandas as pd
-import numpy as np
+import logging
+from typing import Any, Dict, List
+
 import matplotlib.pyplot as plt
-
-from neo4j import Driver
+import pandas as pd
+import requests
+import seaborn as sns
+from graphdatascience import GraphDataScience, QueryRunner
+from neo4j import Driver, GraphDatabase
+from pyspark.ml.functions import array_to_vector, vector_to_array
 from pyspark.sql import DataFrame
 from pyspark.sql import functions as F
-from pyspark.sql.functions import udf, col
-from pyspark.sql.types import FloatType, ArrayType, StringType
-
-from pyspark.ml.functions import array_to_vector, vector_to_array
-from graphdatascience import GraphDataScience, QueryRunner
-from neo4j import GraphDatabase
-from pypher import __ as cypher, Pypher
-
-from matplotlib.pyplot import plot
-import seaborn as sns
-
-from pypher.builder import create_function
-from . import pypher_utils
-from .graph_algorithms import *
-
+from pyspark.sql.functions import udf
+from pyspark.sql.types import ArrayType, FloatType, StringType
+from pyspark.sql.window import Window
 from refit.v1.core.inject import inject_object
-from refit.v1.core.unpack import unpack_params
 from refit.v1.core.inline_has_schema import has_schema
 from refit.v1.core.inline_primary_key import primary_key
-
+from refit.v1.core.unpack import unpack_params
 from tenacity import (
     retry,
     stop_after_attempt,
-    retry_if_exception_type,
+    wait_random_exponential,
 )
 
-import matplotlib.pyplot as plt
-
-import logging
+from .graph_algorithms import GDSGraphAlgorithm
 
 logger = logging.getLogger(__name__)
 
@@ -93,7 +81,7 @@ class GraphDS(GraphDataScience):
         "name": "string",
         "property_keys": "array<string>",
         "property_values": "array<string>",
-        "kg_sources": "array<string>",
+        "upstream_data_source": "array<string>",
     },
     allow_subset=True,
 )
@@ -105,8 +93,9 @@ def ingest_nodes(df: DataFrame) -> DataFrame:
         df: Nodes dataframe
     """
     return (
-        df.select("id", "name", "category", "description", "kg_sources")
-        .withColumn("label", F.split(F.col("category"), ":", limit=2).getItem(1))
+        df.select("id", "name", "category", "description", "upstream_data_source")
+        .withColumn("label", F.col("category"))
+        # add string properties here
         .withColumn(
             "properties",
             F.create_map(
@@ -120,31 +109,59 @@ def ingest_nodes(df: DataFrame) -> DataFrame:
         )
         .withColumn("property_keys", F.map_keys(F.col("properties")))
         .withColumn("property_values", F.map_values(F.col("properties")))
+        # add array properties here
+        .withColumn(
+            "array_properties",
+            F.create_map(
+                F.lit("upstream_data_source"),
+                F.col("upstream_data_source"),
+            ),
+        )
+        .withColumn("array_property_keys", F.map_keys(F.col("array_properties")))
+        .withColumn("array_property_values", F.map_values(F.col("array_properties")))
     )
 
 
-class FailedBatchesException(BaseException):
-    """Exception to signal failed batches."""
+class RateLimitException(Exception):
+    """RateLimitException."""
 
     pass
 
 
+@retry(
+    wait=wait_random_exponential(min=1, max=60),
+    stop=stop_after_attempt(10),
+)
+def batch(endpoint, model, api_key, batch):
+    """Function to resolve batch."""
+    if len(batch) == 0:
+        raise RuntimeError("Empty batch!")
+
+    headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
+    data = {"input": batch, "model": model}
+
+    response = requests.post(f"{endpoint}/embeddings", headers=headers, json=data)
+
+    if response.status_code == 200:
+        return [item["embedding"] for item in response.json()["data"]]
+    else:
+        if response.status_code in [429, 500]:
+            raise RateLimitException()
+
+        print("error", response.content, response.status_code)
+        raise RuntimeError()
+
+
 @unpack_params()
 @inject_object()
-@retry(
-    stop=stop_after_attempt(3),
-    retry=retry_if_exception_type(FailedBatchesException),
-)
 def compute_embeddings(
     input: DataFrame,
-    gdb: GraphDB,
     features: List[str],
+    attribute: str,
     api_key: str,
     batch_size: int,
-    attribute: str,
     endpoint: str,
     model: str,
-    concurrency: int,
 ):
     """Function to orchestrate embedding computation in Neo4j.
 
@@ -157,87 +174,52 @@ def compute_embeddings(
         attribute: attribute to add
         endpoint: endpoint to use
         model: model to use
-        concurrency: number of concurrent calls to execute
     """
-    # Due to https://github.com/neo4j-contrib/neo4j-apoc-procedures/issues/4156
-    # we first check if we need to do anything here, and if all embeddings are already calculated
-    # we do not do anything
-    with gdb.driver() as driver:
-        q = driver.execute_query(
-            "match (n:Entity) where n.embedding is null return count(*) as count",
-            database_=gdb._database,
+    batch_udf = F.udf(lambda z: batch(endpoint, model, api_key, z), ArrayType(ArrayType(FloatType())))
+
+    window = Window.orderBy(F.lit(1))
+
+    res = (
+        input.withColumn("row_num", F.row_number().over(window))
+        .repartition(128)
+        .withColumn("batch", F.floor((F.col("row_num") - 1) / batch_size))
+        # NOTE: There is quite a lot of nodes without name and description, thereby resulting
+        # in embeddings of the empty string.
+        .withColumn(
+            "input",
+            F.concat(*[F.coalesce(F.col(feature), F.lit("")) for feature in features]),
         )
-        rec = q.records[0]
-        count = rec.get("count")
-        if count == 0:
-            # we don't have to embed anything anymore, thus skipping the work below
-            logger.warning(
-                "we actually have embedded everything already or there is an issue with the data. Continuing without taking action"
-            )
-            return {"success": "true"}
-        else:
-            logger.info("we still have %s embeddings left to calculate", str(count))
+        .withColumn("input", F.substring(F.col("input"), 1, 512))  # TODO: Extract param
+        .groupBy("batch")
+        .agg(
+            F.collect_list("id").alias("id"),
+            F.collect_list("input").alias("input"),
+        )
+        .repartition(128)
+        # .withColumn("num_ids", F.size(F.col("id")))
+        # .withColumn("num_input", F.size(F.col("input")))
+        # .withColumn("validated",  F.when(F.col("num_ids") == F.col("num_input"), True).otherwise(False))
+        .withColumn(attribute, batch_udf(F.col("input")))
+        .withColumn("_conc", F.arrays_zip(F.col("id"), F.col(attribute)))
+        .withColumn("exploded", F.explode(F.col("_conc")))
+        .select(
+            F.col("exploded.id").alias("id"),
+            F.col(f"exploded.{attribute}").alias(attribute),
+        )
+        .repartition(128)
+        .join(input, on="id")
+    )
 
-    # fmt: off
-    # Register functions
-    create_function("iterate", {"name": "apoc.periodic.iterate"}, func_raw=True)
-    create_function("openai_embedding", {"name": "apoc.ml.openai.embedding"}, func_raw=True)
-    create_function("set_property", {"name": "apoc.create.setProperty"}, func_raw=True)
-
-    # Build query
-    p = Pypher()
-
-    # Due to f-string limitations
-    empty = '\"\"'
-
-    # The apoc iterate is a rather interesting function, that takes stringified
-    # cypher queries as input. The first determines the subset of nodes on
-    # include, whereas the second query defines the operation to execute.
-    # https://neo4j.com/labs/apoc/4.1/overview/apoc.periodic/apoc.periodic.iterate/
-    p.CALL.iterate(
-        # Match every :Entity node in the graph
-        # FUTURE 'embedding' is hard coded because we had an issue with the $attribute inside of the `` brackets
-        cypher.stringify(cypher.MATCH.node("p", labels="Entity").WHERE.p.property("embedding").IS_NULL.RETURN.p),
-        # For each batch, execute following statements, the $_batch is a special
-        # variable made accessible to access the elements in the batch.
-        cypher.stringify(
-            [
-                # Apply OpenAI embedding in a batched manner, embedding
-                # is applied on the concatenation of supplied features for each node.
-                cypher.CALL.openai_embedding(f"[item in $_batch | {'+'.join(f'coalesce(item.p.{item}, {empty})' for item in features)}]", "$apiKey", "{endpoint: $endpoint, model: $model}").YIELD("index", "text", "embedding"),
-                # Set the attribute property of the node to the embedding
-                cypher.CALL.set_property("$_batch[index].p", "$attribute", "embedding").YIELD("node").RETURN("node"),
-            ]
-        ),
-        # The last argument bridges the variables used in the outer query
-        # and the variables referenced in the stringified params.
-        cypher.map(
-            batchMode="BATCH_SINGLE",
-            # FUTURE when this is fixed: https://github.com/neo4j-contrib/neo4j-apoc-procedures/issues/4153 we should be able to max out
-            # our capacity towards the service provider
-            parallel="false",
-            # parallel="false",
-            batchSize=batch_size,
-            concurrency=concurrency,
-            params=cypher.map(apiKey=api_key, endpoint=endpoint, attribute=attribute, model=model),
-        ),
-    ).YIELD("batch", "operations").UNWIND("batch").AS("b").WITH("b").WHERE("b.failed > 0").RETURN("b.failed")
-    # fmt: on
-
-    failed = []
-    with gdb.driver() as driver:
-        failed = driver.execute_query(str(p), database_=gdb._database, **p.bound_params)
-
-    if len(failed.records) > 0:
-        raise FailedBatchesException("Failed batches in the embedding step")
-
-    return {"success": "true"}
+    return res
 
 
 @unpack_params()
 @inject_object()
 def reduce_dimension(df: DataFrame, transformer, input: str, output: str, skip: bool):
     """Function to apply dimensionality reduction.
+
+    Function to apply dimensionality reduction conditionally, if skip is set to true
+    the original input will be returned, otherwise the given transformer will be applied.
 
     Args:
         df: to apply technique to
@@ -249,10 +231,6 @@ def reduce_dimension(df: DataFrame, transformer, input: str, output: str, skip: 
     Returns:
         DataFrame: A DataFrame with either the reduced dimension embeddings or the original
                    embeddings, depending on the 'skip' parameter.
-
-    Note:
-    - If skip is true, the function returns the original embeddings from the LLM model.
-    - If skip is false, the function returns the embeddings after applying the dimensionality reduction technique.
     """
     if skip:
         return df.withColumn(output, F.col(input))
@@ -278,7 +256,10 @@ def ingest_edges(nodes, edges: DataFrame):
     """Function to construct Neo4J edges."""
     return (
         edges.select(
-            "subject", "predicate", "object", "knowledge_sources", "kg_sources"
+            "subject",
+            "predicate",
+            "object",
+            "upstream_data_source",
         )
         .withColumn("label", F.split(F.col("predicate"), ":", limit=2).getItem(1))
         # we repartition to 1 partition here to avoid deadlocks in the edges insertion of neo4j.
@@ -290,15 +271,13 @@ def ingest_edges(nodes, edges: DataFrame):
 
 
 @inject_object()
-def add_include_in_graphsage(
-    df: DataFrame, gdb: GraphDB, drug_types: List[str], disease_types: List[str]
-) -> Dict:
+def add_include_in_graphsage(df: DataFrame, gdb: GraphDB, drug_types: List[str], disease_types: List[str]) -> Dict:
     """Function to add include_in_graphsage property.
 
     Only edges between non drug-disease pairs are included in graphsage.
     """
     with gdb.driver() as driver:
-        q = driver.execute_query(
+        driver.execute_query(
             """
             MATCH (n)-[r]-(m)
             WHERE 
@@ -366,9 +345,7 @@ def train_topological_embeddings(
         gds.model.drop(model)
 
     # Initialize the model
-    topological_estimator.run(
-        gds=gds, model_name=model_name, graph=subgraph, write_property=write_property
-    )
+    topological_estimator.run(gds=gds, model_name=model_name, graph=subgraph, write_property=write_property)
     losses = topological_estimator.return_loss()
 
     # Plot convergence
@@ -402,9 +379,7 @@ def write_topological_embeddings(
 
     # Retrieve the model
     model_name = estimator.get("modelName")
-    topological_estimator.predict_write(
-        gds=gds, model_name=model_name, graph=graph, write_property=write_property
-    )
+    topological_estimator.predict_write(gds=gds, model_name=model_name, graph=graph, write_property=write_property)
     return {"success": "true"}
 
 
@@ -423,18 +398,14 @@ def extract_node_embeddings(nodes: DataFrame, string_col: str) -> DataFrame:
     """
     if isinstance(nodes.schema[string_col].dataType, StringType):
         string_to_float_list_udf = udf(string_to_float_list, ArrayType(FloatType()))
-        nodes = nodes.withColumn(
-            string_col, string_to_float_list_udf(F.col(string_col))
-        )
+        nodes = nodes.withColumn(string_col, string_to_float_list_udf(F.col(string_col)))
     return nodes
 
 
 def visualise_pca(nodes: DataFrame, column_name: str):
     """Write topological embeddings."""
     nodes = nodes.select(column_name, "category").toPandas()
-    nodes[["pca_0", "pca_1"]] = pd.DataFrame(
-        nodes[column_name].tolist(), index=nodes.index
-    )
+    nodes[["pca_0", "pca_1"]] = pd.DataFrame(nodes[column_name].tolist(), index=nodes.index)
     fig = plt.figure(
         figsize=(
             10,
@@ -445,17 +416,13 @@ def visualise_pca(nodes: DataFrame, column_name: str):
     plt.suptitle("PCA scatterpot")
     plt.xlabel("PC 1")
     plt.ylabel("PC 2")
-    plt.legend(
-        bbox_to_anchor=(1.05, 1), loc="upper left", borderaxespad=0, fontsize="small"
-    )
+    plt.legend(bbox_to_anchor=(1.05, 1), loc="upper left", borderaxespad=0, fontsize="small")
     plt.tight_layout(rect=[0, 0, 0.85, 1])
 
     return fig
 
 
-def extract_nodes_edges(
-    nodes: DataFrame, edges: DataFrame
-) -> tuple[DataFrame, DataFrame]:
+def extract_nodes_edges(nodes: DataFrame, edges: DataFrame) -> tuple[DataFrame, DataFrame]:
     """Simple node/edge extractor function.
 
     Args:

@@ -1,0 +1,3 @@
+"evaluation.{model}.{evaluation}.model_output.result":
+  type: matrix.datasets.mlflow.MlflowMetricsDataset
+  key_prefix: "{model}.{evaluation}"

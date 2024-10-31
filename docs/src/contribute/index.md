@@ -3,7 +3,9 @@
 ## Formatting and Style
 
 We install various style and formatting enforcers in our `pre-commit` command which is configured in `.pre-commit-config.yaml` in the root of the repository. These include `ruff` for python and `terraform` standards. 
-    
+
+!!! tip
+    Definitely recommend installing `ruff` into VSCode and make use of the automatic formatting, imports handling etc. [Extension link](https://marketplace.visualstudio.com/items?itemName=charliermarsh.ruff)
 
 ## Documentation
 
@@ -96,6 +98,21 @@ gitGraph
 
 - **Pandera**: We (intend) to use [pandera](https://pandera.readthedocs.io/en/stable) for data validation of datasets in our pipeline. We currently still use a proprietary library ("data fabricator") but will remove this before going open source. Follow [this issue](https://github.com/everycure-org/matrix/issues/213) for more.
     
+
+## Rules on using AI to write code
+
+We encourage the use of AI to write code. However, we ask that you follow these guidelines:
+
+- Add the following headers/comments to each file / function that mainly or exclusively written by AI:
+    ```python
+    # NOTE: This file was partially generated using AI assistance.
+    <!-- NOTE: This file was partially generated using AI assistance. -->
+    // NOTE: This file was partially generated using AI assistance.
+    ```
+
+    Please add the comments _above_ a function or class or at the top of the file. Use in-line comments as we primarily want this as part of the codebase, not as part of the documentation.
+
+
 
 ## Infrastructure Development
 

@@ -8,8 +8,7 @@ kedro-datasets>=3.0
 google-cloud-bigquery
 kedro-telemetry>=0.3.1
 kedro-viz>=6.7.0
-# can be unpinned when https://github.com/kedro-org/kedro/issues/4083 is fixed
-kedro==0.19.6
+kedro==0.19.6 # due to https://github.com/kedro-org/kedro/issues/4191
 matplotlib
 notebook
 pyarrow>=14.0.2 
@@ -25,9 +24,25 @@ neo4j>=5.5.0
 python-cypher==0.20.1
 termplotlib
 seaborn
-kedro-mlflow==0.12.2
+ipywidgets
+# kedro-mlflow==0.12.2
+git+https://github.com/pascalwhoop/kedro-mlflow@68e09e8e5ae4b162ff4ab5a793b5266254e91a0e#egg=kedro-mlflow
 mlflow==2.15.0
 pygsheets==2.0.6
 # used for convenience libraries, to be moved to a dev requirements eventually  
 typer
+pytest
 pytest-testmon
+tenacity
+pytest-mock
+pytest-cov
+pandera
+rich
+ruff==0.6.8 # Matches pre-commit version
+# Temp. fix for the gcloud cli
+# https://github.com/googleapis/python-bigquery/issues/1908
+proto-plus==1.24.0.dev1
+openai
+langchain-openai
+langchain
+openpyxl
