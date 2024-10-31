@@ -9,27 +9,27 @@ def create_pipeline(**kwargs) -> Pipeline:
     """Create embeddings pipeline."""
     return pipeline(
         [
-            # # Compute node embeddings
-            # node(
-            #     func=nodes.compute_embeddings,
-            #     inputs={
-            #         "input": "integration.prm.filtered_nodes",
-            #         "features": "params:embeddings.node.features",
-            #         "unpack": "params:embeddings.ai_config",
-            #     },
-            #     outputs="embeddings.feat.graph.node_embeddings",
-            #     name="add_node_embeddings",
-            # ),
-            # # Reduce dimension
-            # node(
-            #     func=nodes.reduce_dimension,
-            #     inputs={
-            #         "df": "embeddings.feat.graph.node_embeddings",
-            #         "unpack": "params:embeddings.dimensionality_reduction",
-            #     },
-            #     outputs="embeddings.feat.graph.pca_node_embeddings",
-            #     name="apply_pca",
-            # ),
+            # Compute node embeddings
+            node(
+                func=nodes.compute_embeddings,
+                inputs={
+                    "input": "integration.prm.filtered_nodes",
+                    "features": "params:embeddings.node.features",
+                    "unpack": "params:embeddings.ai_config",
+                },
+                outputs="embeddings.feat.graph.node_embeddings",
+                name="add_node_embeddings",
+            ),
+            # Reduce dimension
+            node(
+                func=nodes.reduce_dimension,
+                inputs={
+                    "df": "embeddings.feat.graph.node_embeddings",
+                    "unpack": "params:embeddings.dimensionality_reduction",
+                },
+                outputs="embeddings.feat.graph.pca_node_embeddings",
+                name="apply_pca",
+            ),
             # Load spark dataset into local neo instance
             node(
                 func=lambda x: x.select("id", "name", "category", "pca_embedding"),
