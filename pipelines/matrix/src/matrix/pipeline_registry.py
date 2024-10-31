@@ -14,6 +14,7 @@ from matrix.pipelines.integration.pipeline import create_pipeline as create_inte
 from matrix.pipelines.matrix_generation.pipeline import create_pipeline as create_matrix_pipeline
 from matrix.pipelines.modelling.pipeline import create_pipeline as create_modelling_pipeline
 from matrix.pipelines.preprocessing.pipeline import create_pipeline as create_preprocessing_pipeline
+from matrix.pipelines.cache.pipeline import create_pipeline as create_cache_pipeline
 
 
 def register_pipelines() -> Dict[str, Pipeline]:
@@ -35,6 +36,7 @@ def register_pipelines() -> Dict[str, Pipeline]:
         "matrix_generation": create_matrix_pipeline(),
         "evaluation": create_evaluation_pipeline(),
         "inference": create_inference_pipeline(),  # Run manually based on medical input
+        "cache": create_cache_pipeline(),
     }
 
     # Higher order pipelines

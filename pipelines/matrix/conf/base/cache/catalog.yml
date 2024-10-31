@@ -1,0 +1,39 @@
+embeddings.cache: &_cache
+  filepath: data/02_intermediate/cache
+  type: matrix.datasets.gcp.SparkWithSchemaDataset
+  file_format: parquet
+  load_args:
+    schema:
+      object: pyspark.sql.types.StructType
+      fields:
+        - object: pyspark.sql.types.StructField
+          name: model
+          dataType: 
+            object: pyspark.sql.types.StringType
+          nullable: False
+        - object: pyspark.sql.types.StructField
+          name: scope
+          dataType: 
+            object: pyspark.sql.types.StringType
+          nullable: False
+        - object: pyspark.sql.types.StructField
+          name: id
+          dataType: 
+            object: pyspark.sql.types.StringType
+          nullable: False
+        - object: pyspark.sql.types.StructField
+          name: embedding
+          dataType: 
+            object: pyspark.sql.types.ArrayType
+            elementType: 
+              object: pyspark.sql.types.DoubleType
+          nullable: False
+    
+  save_args:
+    mode: append
+    partitionBy:
+      - model
+      - scope
+
+embeddings.cache_out:
+  <<: *_cache
