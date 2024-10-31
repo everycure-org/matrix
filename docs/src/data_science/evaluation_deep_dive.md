@@ -105,13 +105,21 @@ We have two versions of disease-specific ranking metrics corresponding to differ
 #### Hit@k
 
 The Hit@k metric measures the proportion ground truth positive pairs with disease specific rank not exceeding $k$. Mathematically, it is written as 
-$$\text{Hit}@k = \frac{1}{|GT|} \sum_{(d,i) \in GT} [\text{rank}_i(d) \leq k] $$
+
+$$
+\text{Hit}@k = \frac{1}{|GT|} \sum_{(d,i) \in GT} [\text{rank}_i(d) \leq k] 
+$$
+
 where $[\text{rank}_i(d) \leq k]$ is equal to 1 if $\text{rank}_i(d) \leq k$ and 0 otherwise. 
 
 #### MRR (Mean Reciprocal Rank)
 
 MRR is the average inverse rank of the pairs in the ground truth pairs set. Mathematically, it is defined as 
-$$\text{MRR} = \frac{1}{|GT|} \sum_{(d,i) \in GT}\frac{1}{\text{rank}_i(d)} $$
+
+$$
+\text{MRR} = \frac{1}{|GT|} \sum_{(d,i) \in GT}\frac{1}{\text{rank}_i(d)} 
+$$
+
 The MRR ranges from 0 to 1, with higher values indicating better performance.
 
 ### Ground truth classification metrics
@@ -254,10 +262,10 @@ $$
 where $\gamma$ denotes the treat score. Then, 
 
 $$
-\mathbb{P}_{y \sim \mathcal{N}} [\gamma(x) \geq \gamma(y)]  = \frac{|\set{y \in \mathcal{N} : \gamma(x) \geq \gamma(y)}|}{N} = \frac{N - |\set{y \in \mathcal{N} : \gamma(x) < \gamma(y)}|}{N}
+\mathbb{P}_{y \sim \mathcal{N}} [\gamma(x) \geq \gamma(y)]  = \frac{|\{y \in \mathcal{N} : \gamma(x) \geq \gamma(y)\}|}{N} = \frac{N - |\{y \in \mathcal{N} : \gamma(x) < \gamma(y)\}|}{N}
 $$
 
-where $N = |\mathcal{N}|$. But $|\set{y \in \mathcal{N} : \gamma(x) < \gamma(y)}|$ is equal to $\text{rank}_{np}(x) - 1$
+where $N = |\mathcal{N}|$. But $|\{y \in \mathcal{N} : \gamma(x) < \gamma(y)\}|$ is equal to $\text{rank}_{np}(x) - 1$
  so by the above definition of  quantile rank, 
 
 $$
