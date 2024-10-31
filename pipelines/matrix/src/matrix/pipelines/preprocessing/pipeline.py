@@ -16,7 +16,8 @@ def create_pipeline(**kwargs) -> Pipeline:
                 func=nodes.create_int_nodes,
                 inputs=[
                     "preprocessing.raw.nodes",
-                    "params:preprocessing.synonymizer_endpoint",
+                    "params:preprocessing.arax_endpoint",
+                    "params:preprocessing.translator_endpoint",
                 ],
                 outputs="preprocessing.int.nodes",
                 name="normalize_ec_medical_team_nodes",
@@ -55,7 +56,8 @@ def create_pipeline(**kwargs) -> Pipeline:
                 func=nodes.map_name_to_curie,
                 inputs=[
                     "preprocessing.raw.clinical_trials_data",
-                    "params:preprocessing.synonymizer_endpoint",
+                    "params:preprocessing.arax_endpoint",
+                    "params:preprocessing.translator_endpoint",
                     "params:modelling.drug_types",
                     "params:modelling.disease_types",
                 ],
@@ -77,7 +79,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 func=nodes.clean_drug_list,
                 inputs=[
                     "preprocessing.raw.drug_list",
-                    "params:preprocessing.synonymizer_endpoint",
+                    "params:preprocessing.translator_endpoint",
                 ],
                 outputs="ingestion.raw.drug_list@pandas",
                 name="resolve_drug_list",
@@ -101,7 +103,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 func=nodes.clean_disease_list,
                 inputs=[
                     "preprocessing.raw.enriched_disease_list",
-                    "params:preprocessing.synonymizer_endpoint",
+                    "params:preprocessing.translator_endpoint",
                 ],
                 outputs="ingestion.raw.disease_list@pandas",
                 name="resolve_disease_list",
@@ -117,7 +119,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 func=nodes.clean_input_sheet,
                 inputs=[
                     "preprocessing.raw.infer_sheet",
-                    "params:preprocessing.synonymizer_endpoint",
+                    "params:preprocessing.translator_endpoint",
                 ],
                 outputs="inference.raw.normalized_inputs",
                 name="clean_input_sheet",
