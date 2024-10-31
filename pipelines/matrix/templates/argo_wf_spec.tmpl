@@ -138,6 +138,8 @@ spec:
           value: "neo4j"
         - name: NEO4J_PASSWORD
           value: "admin"
+        - name: NEO4J_gds_enterprise_license__file
+          value: "/licences/gds-key"
         - name: GCP_PROJECT_ID
           valueFrom:
             configMapKeyRef:
@@ -174,7 +176,7 @@ spec:
 
       volumeMounts:
         - name: gds-key
-          mountPath: /etc/gds-key
+          mountPath: /licences/gds-key
           readOnly: true
     volumes:
         - name: gds-key
@@ -182,7 +184,7 @@ spec:
             secretName: gds-secret
             items:
               - key: gds_key
-                path: /etc/gds-key
+                path: /licences/gds-key
     sidecars:
       # Neo4j enterprise sidecar
       - name: neo4j
