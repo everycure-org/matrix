@@ -15,7 +15,6 @@ ingestion.int.rtx_kg2.nodes:
   identifier: "${globals:data_sources.rtx-kg2.version}"
   filepath: ${globals:paths.int}/rtx_kg2/nodes
   save_args:
-    save_args:
     mode: overwrite
 
 ingestion.int.rtx_kg2.edges:
