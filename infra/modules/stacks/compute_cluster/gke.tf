@@ -114,18 +114,11 @@ module "gke" {
   node_pools = local.node_pools_combined
 
   # FUTURE: Ensure auto generated based on the variable
-  # node_pools_labels = {
-  #   # label for spot nodes
-  #   "e2-standard-8-spot-nodes" = {
-  #     spot = true
-  #   }
-  #   "e2-standard-16-spot-nodes" = {
-  #     spot = true
-  #   }
-  #   "e2-standard-32-spot-nodes" = {
-  #     spot = true
-  #   }
-  # }
+  node_pools_labels = {
+    for pool in local.node_pools_combined : pool.name => {
+      gpu_node = can(pool.accelerator_count) ? "true" : "false"
+    }
+  }
 
   # https://cloud.google.com/artifact-registry/docs/access-control#gke
   # node_pools_oauth_scopes = {
