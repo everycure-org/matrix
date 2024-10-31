@@ -3,17 +3,20 @@ _bigquery_ds: &_bigquery_ds
   project_id: ${oc.env:GCP_PROJECT_ID}
   dataset: runs
   identifier: "${globals:run_name}"
+  file_format: parquet
   save_args:
     bigQueryTableLabel.git_sha: ${globals:git_sha}
     temporaryGcsBucket: ${globals:gcs_bucket}
 
-# embeddings.feat.nodes:
-#   <<: *_bigquery_ds
-#   table: nodes
+embeddings.feat.nodes:
+  <<: *_bigquery_ds
+  table: nodes
+  filepath: ${globals:paths.feat}/nodes
 
-# embeddings.feat.edges:
-#   <<: *_bigquery_ds
-#   table: "edges"
+embeddings.feat.edges:
+  <<: *_bigquery_ds
+  table: "edges"
+  filepath: ${globals:paths.feat}/edges
 
 embeddings.reporting.loss:
   type: kedro_mlflow.io.artifacts.MlflowArtifactDataset
