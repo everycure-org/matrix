@@ -122,7 +122,7 @@ You can find the sheet [here](https://docs.google.com/spreadsheets/d/1CioSCCQxUd
 Our release pipeline currently builds the final integrated Neo4J data product for consumption. We do not execute this as part of the default pipeline run but with a separate `-p release` execution as we do not want to release every pipeline data output.
 
 !!! info
-    If you wish to populate your local Neo4J instance with the output data for a release, populate the `RUN_NAME` in your `.env` file and run `kedro run -p release -e cloud`.
+    If you wish to populate your local Neo4J instance with the output data for a release, populate the `RUN_NAME` in your `.env` file and run `kedro run -p release --from-env cloud -t neo4j`.
 
 ## Environments
 
