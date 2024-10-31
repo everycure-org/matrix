@@ -214,8 +214,6 @@ spec:
           value: "100G"
         - name: NEO4J_dbms_memory_heap_max__size
           value: "100G"
-        - name: NEO4J_gds_memory
-          value: "100G"
   {% for pipeline, tasks in pipes.items() %}
   - name: {{ pipeline }}
     dag:
