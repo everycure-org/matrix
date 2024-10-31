@@ -51,7 +51,7 @@ class GraphDB:
 
     def driver(self):
         """Return the driver object."""
-        return GraphDatabase.driver(self._endpoint, auth=self._auth)
+        return GraphDatabase.driver(self._endpoint, auth=self._auth, database=self._database)
 
 
 class GraphDS(GraphDataScience):
