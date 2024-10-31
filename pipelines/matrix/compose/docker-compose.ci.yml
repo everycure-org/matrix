@@ -18,7 +18,7 @@ services:
       - neo4j_import:/var/lib/neo4j/import
       - neo4j_plugins:/plugins
 
-  mock-genai:
+  mockserver:
     platform: linux/amd64
     environment:
       MOCKSERVER_LOG_LEVEL: ERROR
@@ -30,8 +30,7 @@ services:
     #build: 
     #  context: "../"
     #  platforms: 
-    #    - linux/amd64
-    # NOTE: We're omitting --runner ThreadRunner due to a CI
+    #    - linux/amd64    # NOTE: We're omitting --runner ThreadRunner due to a CI
     # only bug. We suspect that this is due to the hooks setup
     # that should be resolved in the following issue:
     # https://github.com/Galileo-Galilei/kedro-mlflow/issues/579
@@ -39,12 +38,14 @@ services:
       - "/bin/sh"
       - -ecx
       - |
-          kedro run -e test -p test --without-tags xg_ensemble,not-shared
+          kedro run --runner ThreadRunner -e test -p test --without-tags xg_ensemble,not-shared
     environment:
+      TQDM_DISABLE: 1
+      NODENORM_ENDPOINT: http://mockserver:1080/1.5/get_normalized_nodes
       NEO4J_HOST: bolt://neo4j:7687
       NEO4J_USER: neo4j
       NEO4J_PASSWORD: admin
-      OPENAI_ENDPOINT: http://mock-genai:1080/v1
+      OPENAI_ENDPOINT: http://mockserver:1080/v1
       MLFLOW_ENDPOINT: http://mlflow:5000
       OPENAI_API_KEY: sk-proj-abc
       SYNONYMIZER_ENDPOINT: http://node-synonymizer:8081

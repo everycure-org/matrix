@@ -24,6 +24,9 @@ def df_fixture(spark):
     )
 
 
+@pytest.mark.spark(
+    help="This test relies on PYSPARK_PYTHON to be set appropriately, and sometimes does not work in VSCode"
+)
 def test_compute_embeddings(spark, df, mocker):
     def mock_batch(endpoint, model, api_key, batch):
         """Function to mock our batch method, returns array of arrays
@@ -32,14 +35,10 @@ def test_compute_embeddings(spark, df, mocker):
 
     # Ensures our batch method is mocked to return
     # a deterministic embedding on input for our unit test.
-    func1_mock = mocker.patch(
-        "matrix.pipelines.embeddings.nodes.batch", side_effect=mock_batch
-    )
+    _ = mocker.patch("matrix.pipelines.embeddings.nodes.batch", side_effect=mock_batch)
 
     # Given an input dataframe to compute embeddings for
-    result = compute_embeddings(
-        df, ["id"], "embedding", "dummy", 2, "dummy_endpoint", "model"
-    ).orderBy("id")
+    result = compute_embeddings(df, ["id"], "embedding", "dummy", 2, "dummy_endpoint", "model").orderBy("id")
     expected = spark.createDataFrame(
         [
             (1, [1.0], "Alice"),
