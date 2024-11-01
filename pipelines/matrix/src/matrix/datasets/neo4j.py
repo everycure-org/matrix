@@ -1,5 +1,3 @@
-"""Module containing Neo4JDataset."""
-
 import time
 from typing import Any
 from copy import deepcopy

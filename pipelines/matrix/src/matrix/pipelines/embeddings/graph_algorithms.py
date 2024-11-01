@@ -1,5 +1,3 @@
-"""GDS Algorithms Classes."""
-
 from abc import ABC, abstractmethod
 from typing import List, Any, Optional
 from graphdatascience import GraphDataScience

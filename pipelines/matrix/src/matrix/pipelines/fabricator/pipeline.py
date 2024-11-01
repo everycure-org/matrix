@@ -1,5 +1,3 @@
-"""Fabricator pipeline."""
-
 import pandas as pd
 
 from kedro.pipeline import Pipeline, node, pipeline
