@@ -105,7 +105,7 @@ moa_extraction:
 
   evaluation:
     two_hop:
-      path_generator:
+      path_generator: &_two_hop_path_generator
         object: matrix.pipelines.moa_extraction.path_generators.AllPathsWithTagRules
         tag_rules:
           all: ['drug_disease']
@@ -115,7 +115,7 @@ moa_extraction:
         # num_limit: 25 # For testing purposes only
       k_lst: [5, 25]
     three_hop:
-      path_generator:
+      path_generator: &_three_hop_path_generator
         object: matrix.pipelines.moa_extraction.path_generators.AllPathsWithTagRules
         tag_rules:
           all: ['drug_disease']
@@ -131,3 +131,8 @@ moa_extraction:
     include_edge_directions: true
     drug_col_name: drug_id
     disease_col_name: disease_id
+    two_hop:
+      path_generator: *_two_hop_path_generator
+    three_hop:
+      path_generator: *_three_hop_path_generator
+  
