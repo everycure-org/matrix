@@ -1,4 +1,3 @@
-from pathlib import Path
 from kedro.pipeline.node import Node
 from kedro.pipeline import Pipeline
 import pytest
@@ -323,7 +322,7 @@ def test_clean_dependencies() -> None:
     assert cleaned == ["dataset_a", "dataset_b"]
 
 
-def test_generate_argo_config(matrix_root: Path) -> None:
+def test_generate_argo_config() -> None:
     image_name = "us-central1-docker.pkg.dev/mtrx-hub-dev-3of/matrix-images/matrix"
     run_name = "test_run"
     image_tag = "test_tag"
