@@ -1,5 +1,3 @@
-"""Module with nodes for matrix generation."""
-
 import logging
 from tqdm import tqdm
 from typing import List, Dict, Union, Tuple

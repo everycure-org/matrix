@@ -1,5 +1,3 @@
-"""Command line interface for Matrix project."""
-
 import click
 from kedro.framework.cli.utils import KedroCliError
 
