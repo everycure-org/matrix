@@ -35,3 +35,6 @@ infra/**/Chart.lock
 
 
 **/.ipynb_checkpoints/
+
+*/.joblib/**
+scripts/*.xlsx
