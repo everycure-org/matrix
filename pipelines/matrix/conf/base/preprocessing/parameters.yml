@@ -1,3 +1,6 @@
+# Note - right now using both ARAX and translator as translator only accepts CURIEs, not names. 
+# In the medical_data df we do actually normalize by names so have to keep both normalizers
+# If there is a translator endpoint which accepts names, we can remove ARAX
 preprocessing.translator_endpoint: ${oc.env:NODENORM_ENDPOINT, https://nodenorm.transltr.io/1.5/get_normalized_nodes} #http://localhost:8081
 preprocessing.arax_endpoint: http://localhost:8081
 
