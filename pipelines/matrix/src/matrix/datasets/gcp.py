@@ -311,7 +311,7 @@ class RemoteSparkJDBCDataset(SparkJDBCDataset):
         """Creates a new instance of ``RemoteSparkJDBCDataset``."""
         self._client = None
         self._project = project
-        
+
         protocol, fs_prefix, blob_name = self.split_remote_jdbc_path(url)
 
         if fs_prefix != "gs://":
