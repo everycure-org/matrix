@@ -367,7 +367,7 @@ def submit_workflow(run_name: str, namespace: str, pipeline_for_execution: str, 
 def get_run_name(run_name: Optional[str]) -> str:
     """Get the experiment name based on input or Git branch.
 
-    If a run_name is provided, it is returned as-is. Otherwise, a name is generated
+    If a run_name is provided, it is returned sanitized as-is. Otherwise, a name is generated
     based on the current Git branch name with a random suffix.
 
     Args:
@@ -376,10 +376,12 @@ def get_run_name(run_name: Optional[str]) -> str:
     Returns:
         str: The final run name to be used for the workflow.
     """
-    if not run_name:
-        run_name = run_subprocess(
-            "git rev-parse --abbrev-ref HEAD", capture_output=True, stream_output=False
-        ).stdout.strip()
+    if run_name:
+        return re.sub(r"[^a-zA-Z0-9-]", "-", run_name).rstrip("-")
+    
+    run_name = run_subprocess(
+        "git rev-parse --abbrev-ref HEAD", capture_output=True, stream_output=False
+    ).stdout.strip()
     random_sfx = str.lower(secrets.token_hex(4))
     unsanitized_name = f"{run_name}-{random_sfx}"
     return re.sub(r"[^a-zA-Z0-9-]", "-", unsanitized_name).rstrip("-")
