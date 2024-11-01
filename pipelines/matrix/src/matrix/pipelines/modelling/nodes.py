@@ -66,7 +66,6 @@ def prefilter_nodes(nodes: DataFrame, drug_types: List[str], disease_types: List
         "is_drug": "boolean",
         "is_disease": "boolean",
         "is_ground_pos": "boolean",
-        "topological_embedding": "array<float>",
     },
     allow_subset=True,
 )
