@@ -29,6 +29,14 @@ moa_extraction:
       unidirectional: false
       num_limit: 25
 
+  training:
+    two_hop:
+      tuner:
+        n_calls: 10
+    three_hop:
+      tuner:
+        n_calls: 10
+
   predictions:
     num_pairs_limit: 10 # For testing purposes only
     drug_col_name: source

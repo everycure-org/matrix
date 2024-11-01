@@ -58,20 +58,42 @@ moa_extraction:
       is_embed_directions: true
  
   training:
+
     two_hop:
-      model:
-        object: matrix.pipelines.moa_extraction.models.SkorchWrapper
-        module: TransformerBinaryClassifier
-        optimizer: torch.optim.Adam
-        criterion: torch.nn.BCEWithLogitsLoss
-        module__token_dim: 100
-        module__num_heads: 4
-        module__num_layers: 2
-        module__dropout: 0.1
-        optimizer__weight_decay: 0.03
-        max_epochs: 20
-        lr: 0.01
-        device: 'cpu'
+      tuner:
+        object: matrix.pipelines.modelling.tuning.GaussianSearch
+        estimator:
+          object: matrix.pipelines.moa_extraction.models.SkorchWrapper
+          module: TransformerBinaryClassifier
+          optimizer: torch.optim.Adam
+          criterion: torch.nn.BCEWithLogitsLoss
+          module__token_dim: 100
+          module__num_heads: 4
+          device: 'cpu'
+        n_calls: 20
+        dimensions:
+          - object: skopt.space.Real
+            name: module__dropout
+            low: 0
+            high: 0.4
+          - object: skopt.space.Integer
+            name: max_epochs
+            low: 10
+            high: 100
+          - object: skopt.space.Integer
+            name: module__num_layers
+            low: 1
+            high: 5
+        scoring: 
+          object: matrix.pipelines.modelling.utils.partial_
+          func:
+            object: sklearn.metrics.f1_score
+          average: macro
+        splitter:
+          object: sklearn.model_selection.StratifiedShuffleSplit
+          n_splits: 1 
+          test_size: 0.1
+          random_state: ${globals:random_state}
       negative_samplers:
         - object: matrix.pipelines.moa_extraction.path_generators.ReplacementPathSampler
           num_replacement_paths: 2
@@ -79,20 +101,42 @@ moa_extraction:
           edge_omission_rules:
             all: ['drug_disease']
           random_state: ${globals:random_state}
+
     three_hop:
-      model:
-        object: matrix.pipelines.moa_extraction.models.SkorchWrapper
-        module: TransformerBinaryClassifier
-        optimizer: torch.optim.Adam
-        criterion: torch.nn.BCEWithLogitsLoss
-        module__token_dim: 100
-        module__num_heads: 4
-        module__num_layers: 2
-        module__dropout: 0.1
-        optimizer__weight_decay: 0.03
-        max_epochs: 20
-        lr: 0.01
-        device: 'cpu'
+      tuner:
+        object: matrix.pipelines.modelling.tuning.GaussianSearch
+        estimator:
+          object: matrix.pipelines.moa_extraction.models.SkorchWrapper
+          module: TransformerBinaryClassifier
+          optimizer: torch.optim.Adam
+          criterion: torch.nn.BCEWithLogitsLoss
+          module__token_dim: 100
+          module__num_heads: 4
+          device: 'cpu'
+        n_calls: 20
+        dimensions:
+          - object: skopt.space.Real
+            name: module__dropout
+            low: 0
+            high: 0.4
+          - object: skopt.space.Integer
+            name: max_epochs
+            low: 10
+            high: 100
+          - object: skopt.space.Integer
+            name: module__num_layers
+            low: 1
+            high: 5
+        scoring: 
+          object: matrix.pipelines.modelling.utils.partial_
+          func:
+            object: sklearn.metrics.f1_score
+          average: macro
+        splitter:
+          object: sklearn.model_selection.StratifiedShuffleSplit
+          n_splits: 1 
+          test_size: 0.1
+          random_state: ${globals:random_state}
       negative_samplers:
         - object: matrix.pipelines.moa_extraction.path_generators.ReplacementPathSampler
           num_replacement_paths: 2
@@ -102,6 +146,7 @@ moa_extraction:
           random_state: ${globals:random_state}
 
   evaluation:
+
     two_hop:
       path_generator: &_two_hop_path_generator
         object: matrix.pipelines.moa_extraction.path_generators.AllPathsWithRules
@@ -112,6 +157,7 @@ moa_extraction:
         unidirectional: *unidirectional
         # num_limit: 25 # For testing purposes only
       k_lst: [5, 25]
+
     three_hop:
       path_generator: &_three_hop_path_generator
         object: matrix.pipelines.moa_extraction.path_generators.AllPathsWithRules
@@ -122,6 +168,7 @@ moa_extraction:
         unidirectional: *unidirectional
         # num_limit: 25 # For testing purposes only
       k_lst: [5, 25]
+
 
   predictions:
     num_pairs_limit: 10 # For testing purposes only
