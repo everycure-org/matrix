@@ -1,0 +1,122 @@
+- ai_suggested_title: 'Updated Onboarding Guide with Enhanced Installation Instructions
+    and Resources on Kedro'
+  human curated title: 'Updated Onboarding Guide with Enhanced Installation Instructions
+    and Resources on Kedro'
+  title: Mini-updates to the onboarding guide
+- ai_suggested_title: 'Pin Kedro Version to Resolve Dict Change Errors'
+  human curated title: 'Pin Kedro Version to Resolve Dict Change Errors'
+  title: 'fix #448 by pinning kedro to avoid dict change errors'
+- ai_suggested_title: 'Enhanced Onboarding Documentation with Additional Common Errors
+    and Troubleshooting Guide'
+  human curated title: 'Enhanced Onboarding Documentation with Additional Common
+    Errors and Troubleshooting Guide'
+  title: Update common errors and add troubleshooting section in the onboarding doc
+- ai_suggested_title: 'Introduce FAQ Help Box in Local Setup Guide for Improved Troubleshooting'
+  human curated title: 'Introduce FAQ Help Box in Local Setup Guide'
+  title: Add help box to point to FAQ
+- ai_suggested_title: 'Implement RTX Transformation and Improved Data Validation
+    in Version 2.10.0'
+  human curated title: 'Implement RTX Transformation and Improved Data Validation
+    in Version 2.10.0'
+  title: RTX transformation based on 2.10.0
+- ai_suggested_title: 'Integrating Dan Rhodes as a New Git-Crypt Collaborator'
+  human curated title: 'Add Dan Rhodes'' to Git-Crypt'
+  title: Adding Dan's PGP key
+- ai_suggested_title: 'Implement Slack Notifications for Breaking Changes in Main
+    Branch'
+  human curated title: 'Implement Slack Notifications for Breaking Changes in Main
+    Branch'
+  title: Notify people about breaking changes using slack webhook
+- ai_suggested_title: 'Integration of Complementary Metadata Output to Enhance Matrix
+    Usability'
+  human curated title: 'Integration of Complementary Metadata Output to Enhance Matrix
+    Usability'
+  title: Include metadata as output complementary to matrix
+- ai_suggested_title: 'Resolve CI Test Failures by Updating Spark Driver Configuration
+    in Test Environment'
+  human curated title: 'Resolve CI Test Failures by Updating Spark Driver Configuration
+    in Test Environment'
+  title: Bugfix for failing tests on CI with spark driver
+- ai_suggested_title: 'Ensure Virtual Environment Creation During Installation to
+    Prevent Environment Confusion'
+  human curated title: 'Ensure Virtual Environment Creation During Installation to
+    Prevent Environment Confusion'
+  title: Ensure venv is created upon make install to avoid accidental environment
+    confusion
+- ai_suggested_title: 'Enhanced Docker Build Process and Updated Makefile for Improved
+    Development Environment'
+  human curated title: 'Enhanced Docker Build Process and Updated Makefile for Improved
+    Development Environment'
+  title: Update Makefile & dependencies
+- ai_suggested_title: 'Enrich Disease List with Tags Using OpenAI API for Enhanced
+    Data Insight'
+  human curated title: 'Enrich Disease List with Tags Using OpenAI API for Enhanced
+    Data Insight'
+  title: '[Temp] Enrich disease list with tags using OpenAI API'
+- ai_suggested_title: 'Resolved Mockserver Existence Error Post-Refactoring for Improved
+    Docker Service Management'
+  human curated title: 'Resolved Mockserver Existence Error Post-Refactoring for
+    Improved Docker Service Management'
+  title: Fix docker service already existing for mockserver after code refactoring
+- ai_suggested_title: 'Fix MLFlow Metric Issue Allowing Null Run Names for Improved
+    Flexibility'
+  human curated title: 'Fix MLFlow Metric Issue Allowing Null Run Names'
+  title: fix MLFlow metric issue
+- ai_suggested_title: 'Enhance Documentation with Local Argo Workflow Execution Guide'
+  human curated title: 'Enhance Documentation with Local Argo Workflow Execution
+    Guide'
+  title: Add updated docs
+- ai_suggested_title: 'Adding Kevin Schaper as a new git-crypt collaborator for secure
+    code collaboration'
+  human curated title: 'Add Kevin Schaper to Git-Crypt'
+  title: Add 1 git-crypt collaborator - Kevin
+- ai_suggested_title: 'Integrate Evaluation Deep Dive into Documentation Pages for
+    Enhanced User Understanding'
+  human curated title: 'Integrate Evaluation Deep Dive into Documentation Pages'
+  title: Add Evaluation deep dive to pages
+- ai_suggested_title: 'Implement Knowledge Graph Split for Concurrent Experiment
+    Execution on Single Data Release'
+  human curated title: 'Implement Knowledge Graph Split for Concurrent Experiment
+    Execution on Single Data Release'
+  title: Add Knowledge Graph Split to enable multiple experiments to be run on one
+    data release
+- ai_suggested_title: 'Refine Local Setup Procedure and Expand Common Errors Documentation'
+  human curated title: 'Refine Local Setup Procedure and Expand Common Errors Documentation'
+  title: Simplify Make setup and expand docs
+- ai_suggested_title: 'Restored Pipeline Objects in Kedro Run API Lost During Refactor
+    for Enhanced Functionality'
+  human curated title: Add pipelines object back to kedro run -p API which were lost
+    during refactor
+  title: Add pipelines object back to kedro run -p API which were lost during refactor
+- ai_suggested_title: 'Enhancement in Breaking Change Notifications for Better Information
+    Access'
+  human curated title: 'Enhancement in Breaking Change Slack Notifications'
+  title: 'Small trick to get more info on the breaking changes during slack '
+- ai_suggested_title: 'Integration of Neo4J Enterprise License Keys for Enhanced
+    Database Functionality'
+  human curated title: 'AddingNeo4J Enterprise License Keys to unlock enterprise
+    capabilities'
+  title: Adding Neo4J Enterprise License keys
+- ai_suggested_title: 'Return to Standard Definition of Recall@n for Improved Accuracy
+    in Evaluations'
+  human curated title: 'Return to Standard Definition of Recall@n for Improved Accuracy
+    in Evaluations'
+  title: Revert to standard definition of Recall@n
+- ai_suggested_title: 'Improved E2E Run for October Release: Data Validation, Schema
+    Unification, Conflation & Deduping Nodes and Edges, and BigQuery Integration Fixes'
+  human curated title: 'Improved E2E Run for October Release: Data Validation, Schema
+    Unification, Conflation & Deduping Nodes and Edges, and BigQuery Integration Fixes'
+  title: Fixes for October release E2E run
+- ai_suggested_title: 'Fixing Run 0.2.3: Directory Fixes and Workflow Template Update
+    for Improved Data Access and Management'
+  human curated title: 'Fixing Run 0.2.3: Directory Fixes and Workflow Template Update
+    for Improved Data Access and Management'
+  title: fixes for run 0.2.3
+- ai_suggested_title: 'Integration of MathJax for SVG to PNG Conversion in Documentation'
+  human curated title: 'Integration of MathJax for SVG to PNG Conversion in Documentation'
+  title: Feature/math jax
+- ai_suggested_title: 'Enhancements to Unit Tests for Increased Code Coverage and
+    Stability'
+  human curated title: 'Enhancements to Unit Tests for Increased Code Coverage and
+    Stability'
+  title: Unit test improvements
