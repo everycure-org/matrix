@@ -1,5 +1,3 @@
-"""Filtering functions for the integration pipeline."""
-
 import logging
 from typing import Any, Dict, List, Optional
 
