@@ -643,6 +643,11 @@ def test_generate_argo_config(expected_argo_config: Dict[str, Any], matrix_root:
         env["name"] == "NEO4J_ACCEPT_LICENSE_AGREEMENT" and env["value"] == "yes" for env in neo4j_sidecar["env"]
     ), "Neo4j sidecar should accept license agreement"
 
+    # Check if the pipeline is included in the templates
+    pipeline_names = [template["name"] for template in templates]
+    assert "test_pipeline" in pipeline_names, "The 'test_pipeline' pipeline should be included in the templates"
+    assert "cloud_pipeline" in pipeline_names, "The 'cloud_pipeline' pipeline should be included in the templates"
+
     # Verify test_pipeline template
     test_template = next(t for t in templates if t["name"] == "test_pipeline")
     assert "dag" in test_template, "test_pipeline template should have a DAG"
@@ -664,8 +669,3 @@ def test_generate_argo_config(expected_argo_config: Dict[str, Any], matrix_root:
     assert (
         cloud_template["dag"]["tasks"][0]["template"] == "kedro"
     ), "cloud_pipeline template task should use kedro template"
-
-    # Check if the pipeline is included in the templates
-    pipeline_names = [template["name"] for template in templates]
-    assert "test_pipeline" in pipeline_names, "The 'test_pipeline' pipeline should be included in the templates"
-    assert "cloud_pipeline" in pipeline_names, "The 'cloud_pipeline' pipeline should be included in the templates"
