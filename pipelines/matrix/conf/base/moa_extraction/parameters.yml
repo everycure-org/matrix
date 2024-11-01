@@ -61,17 +61,15 @@ moa_extraction:
     two_hop:
       model:
         object: matrix.pipelines.moa_extraction.models.SkorchWrapper
-        module: 
-          object: matrix.pipelines.moa_extraction.models.TransformerBinaryClassifier
-          token_dim: 100
-          num_heads: 4
-          num_layers: 2
-          dropout: 0.1
+        module: TransformerBinaryClassifier
         optimizer: torch.optim.Adam
-        optimizer__weight_decay: 0.04
-        criterion:
-          object: torch.nn.BCEWithLogitsLoss
-        max_epochs: 40
+        criterion: torch.nn.BCEWithLogitsLoss
+        module__token_dim: 100
+        module__num_heads: 4
+        module__num_layers: 2
+        module__dropout: 0.1
+        optimizer__weight_decay: 0.03
+        max_epochs: 20
         lr: 0.01
         device: 'cpu'
       negative_samplers:
@@ -84,16 +82,14 @@ moa_extraction:
     three_hop:
       model:
         object: matrix.pipelines.moa_extraction.models.SkorchWrapper
-        module: 
-          object: matrix.pipelines.moa_extraction.models.TransformerBinaryClassifier
-          token_dim: 100
-          num_heads: 4
-          num_layers: 2
-          dropout: 0.1
+        module: TransformerBinaryClassifier
         optimizer: torch.optim.Adam
+        criterion: torch.nn.BCEWithLogitsLoss
+        module__token_dim: 100
+        module__num_heads: 4
+        module__num_layers: 2
+        module__dropout: 0.1
         optimizer__weight_decay: 0.03
-        criterion:
-          object: torch.nn.BCEWithLogitsLoss
         max_epochs: 20
         lr: 0.01
         device: 'cpu'

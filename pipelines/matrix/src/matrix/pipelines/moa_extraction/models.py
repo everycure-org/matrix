@@ -6,15 +6,26 @@ from torch import nn
 
 
 class SkorchWrapper(skorch.NeuralNetClassifier):
-    """Class to help inject Skorch NeuralNetClassifier objects."""
+    """Class to help inject Skorch NeuralNetClassifier objects through the config."""
 
     def __init__(
         self,
-        module: nn.Module,
+        module: str,
         optimizer: str,
+        criterion: str,
         **kwargs,
     ):
-        super(SkorchWrapper, self).__init__(module=module, optimizer=eval(optimizer), **kwargs)
+        """Initialise the SkorchWrapper.
+
+        Args:
+            module: The module to use.
+            optimizer: The optimizer to use.
+            criterion: The criterion to use.
+            **kwargs: Additional keyword arguments. For instance, module parameter may be passed as module__<param>.
+        """
+        super(SkorchWrapper, self).__init__(
+            module=eval(module), optimizer=eval(optimizer), criterion=eval(criterion), **kwargs
+        )
 
 
 class TransformerBinaryClassifier(nn.Module):
