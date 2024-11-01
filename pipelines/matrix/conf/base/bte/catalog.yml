@@ -8,4 +8,4 @@ _model_output_ds: &_model_output_ds
 
 "bte.model_output.predictions":
   <<: [*_pandas_parquet, *_model_output_ds]
-  filepath: ${globals:paths.model_output}/bte/predictions
+  filepath: ${globals:paths.modelling}/model_output/bte/predictions
