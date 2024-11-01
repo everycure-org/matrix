@@ -191,16 +191,17 @@ def load_example_release_notes() -> str:
 
 
 @memory.cache
-def suggest_pr_title(pr_info: Dict, examples: str) -> str:
+def suggest_pr_title(pr_info: Dict, examples: str, client: openai.OpenAI) -> str:
     """
     Uses GPT-4 to suggest an improved PR title based on the PR details and examples.
 
     Args:
         pr_info (Dict): PR information including title, diff, and labels
         examples (str): Example release notes for context
+        client (openai.OpenAI): OpenAI client instance to reuse
 
     Returns:
-        str: Suggested PR title
+        str: Suggested title
     """
     prompt = f"""You are a technical writer helping to improve PR titles for a release notes document. 
 Please suggest a clear, concise title that describes the change's impact and purpose.
@@ -223,7 +224,6 @@ Respond with ONLY the suggested title, nothing else. Do not wrap the text in quo
 """
 
     try:
-        client = openai.OpenAI()  # Initialize the client
         response = client.chat.completions.create(
             model="gpt-4",
             messages=[
@@ -233,18 +233,19 @@ Respond with ONLY the suggested title, nothing else. Do not wrap the text in quo
             temperature=0.7,
             max_tokens=200,
         )
+        suggested_title = response.choices[0].message.content.strip()
         # log the current title and new title
-        typer.echo(f"Current title: {pr_info['title']}")
-        typer.echo(f"Proposed new title: {response.choices[0].message.content.strip()}")
-        return response.choices[0].message.content.strip()
+        typer.echo(f"\nCurrent title: {pr_info['title']}")
+        typer.echo(f"Proposed new title: {suggested_title}")
+        return suggested_title
     except Exception as e:
-        typer.echo(f"Error getting GPT suggestion: {e}", err=True)
+        typer.echo(f"\nError getting GPT suggestion: {e}", err=True)
         return pr_info["title"]  # Return original title if GPT fails
 
 
 def enhance_pr_titles(df: pd.DataFrame) -> pd.DataFrame:
     """
-    Enhances PR titles using GPT-4 suggestions.
+    Enhances PR titles using GPT-4 suggestions in parallel.
 
     Args:
         df (pd.DataFrame): DataFrame containing PR details
@@ -255,13 +256,36 @@ def enhance_pr_titles(df: pd.DataFrame) -> pd.DataFrame:
     examples = load_example_release_notes()
     df = df.copy()
 
+    # Create a single client instance to be shared
+    client = openai.OpenAI()
+
+    # Function to process a single PR
+    def process_pr(idx_pr_info):
+        idx, pr_info = idx_pr_info
+        suggested_title = suggest_pr_title(pr_info, examples, client)
+        return idx, suggested_title
+
     typer.echo("\nGetting AI suggestions for PR titles...")
 
-    for idx in tqdm(df.index, desc="Getting title suggestions", unit="PR"):
-        pr_info = df.loc[idx].to_dict()
-        suggested_title = suggest_pr_title(pr_info, examples)
-        df.at[idx, "ai_suggested_title"] = suggested_title
-        df.at[idx, "new_title"] = pr_info["title"]  # Keep original as default
+    # Create list of (index, pr_info) tuples for processing
+    pr_items = [(idx, df.loc[idx].to_dict()) for idx in df.index]
+
+    # Use ThreadPoolExecutor for parallel processing
+    max_workers = min(8, len(df))  # Limit concurrent API calls
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+        # Submit all tasks
+        future_to_pr = {executor.submit(process_pr, item): item for item in pr_items}
+
+        # Process completed tasks with progress bar
+        for future in tqdm(
+            as_completed(future_to_pr), total=len(pr_items), desc="Getting title suggestions", unit="PR"
+        ):
+            try:
+                idx, suggested_title = future.result()
+                df.at[idx, "ai_suggested_title"] = suggested_title
+                df.at[idx, "new_title"] = df.at[idx, "title"]  # Keep original as default
+            except Exception as e:
+                typer.echo(f"\nError processing PR: {e}", err=True)
 
     return df
 
