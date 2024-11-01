@@ -4,7 +4,8 @@
 modelling.drug_types:
   - biolink:Drug
   - biolink:SmallMolecule
-  - biolink:ChemicalEntity 
+  - biolink:ChemicalEntity
+  - biolink:MolecularMixture
 
 modelling.disease_types:
   - biolink:Disease
