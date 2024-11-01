@@ -1,5 +1,3 @@
-"""Fabricator pipeline."""
-
 from matrix import settings
 from kedro.pipeline import Pipeline, node, pipeline
 from . import nodes as nd
@@ -10,18 +8,6 @@ def _create_resolution_pipeline() -> Pipeline:
     """Resolution pipeline for filtering out the input."""
     return pipeline(
         [
-            node(
-                func=lambda x: x,
-                inputs="ingestion.raw.drug_list@pandas",
-                outputs="inference.raw.drug_list",
-                name="ingest_drug_list",
-            ),
-            node(
-                func=lambda x: x,
-                inputs="ingestion.raw.disease_list@pandas",
-                outputs="inference.raw.disease_list",
-                name="ingest_disease_list",
-            ),
             node(
                 func=nd.resolve_input_sheet,
                 inputs={
