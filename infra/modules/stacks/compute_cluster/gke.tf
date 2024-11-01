@@ -112,7 +112,7 @@ module "gke" {
   service_account_name       = "sa-k8s-node"
   node_metadata              = "UNSPECIFIED"
 
-  # FUTURE: Refine mode pools
+  # FUTURE: Refine node pools
   node_pools = local.node_pools_combined
 
   # Mark GPU nodes
