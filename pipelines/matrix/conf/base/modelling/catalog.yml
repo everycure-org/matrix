@@ -46,7 +46,7 @@ _model_output_ds: &_model_output_ds
 
 modelling.raw.ground_truth.positives:
   <<: [*_pandas_csv, *_model_input_ds]
-  filepath: ${globals:paths.raw}/ground_truth_data/tp_pairs.txt
+  filepath: ${globals:paths.raw}/ground_truth/translator/${globals:data_sources.gt.version}/tp_pairs.tsv
   load_args:
     sep: "\t"
   save_args:
@@ -54,7 +54,7 @@ modelling.raw.ground_truth.positives:
 
 modelling.raw.ground_truth.negatives:
   <<: [*_pandas_csv, *_model_input_ds]
-  filepath: ${globals:paths.raw}/ground_truth_data/tn_pairs.txt
+  filepath: ${globals:paths.raw}/ground_truth/translator/${globals:data_sources.gt.version}/tn_pairs.tsv
   load_args:
     sep: "\t"
   save_args:
@@ -62,11 +62,11 @@ modelling.raw.ground_truth.negatives:
 
 modelling.int.known_pairs@pandas:
   <<: [*_pandas_csv, *_model_input_ds]
-  filepath: ${globals:paths.modelling}/int/ground_truth.csv
-
+  filepath: ${globals:paths.modelling}/ground_truth/translator/${globals:data_sources.gt.version}/ground_truth.csv
+  
 modelling.int.known_pairs@spark:
   <<: [*_spark_csv, *_model_input_ds]
-  filepath: ${globals:paths.modelling}/int/ground_truth.csv
+  filepath: ${globals:paths.modelling}/ground_truth/translator/${globals:data_sources.gt.version}/ground_truth.csv
 
 # filtered down further to drugs/diseases
 modelling.model_input.drugs_diseases_nodes@spark:

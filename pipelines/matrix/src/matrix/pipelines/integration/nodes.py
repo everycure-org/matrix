@@ -166,6 +166,7 @@ def batch_map_ids(
     parallelism: int,
     conflate: bool,
     drug_chemical_conflate: bool,
+    att_to_get: str = "identifier",
 ) -> Dict[str, str]:
     """Maps a list of ids to their normalized form using the node normalization service.
 
@@ -178,12 +179,12 @@ def batch_map_ids(
         parallelism: The number of concurrent requests to make.
         conflate: Whether to conflate the nodes.
         drug_chemical_conflate: Whether to conflate the drug and chemical nodes.
-
+        att_to_get: The attribute to get from the json response [identifier, label, type]. Defaults to "identifier".
     Returns:
         Dict[str, str]: A dictionary of the form {id: normalized_id}.
     """
     results = asyncio.run(
-        async_batch_map_ids(ids, api_endpoint, batch_size, parallelism, conflate, drug_chemical_conflate)
+        async_batch_map_ids(ids, api_endpoint, batch_size, parallelism, conflate, drug_chemical_conflate, att_to_get)
     )
 
     logger.info(f"mapped {len(results)} ids")
@@ -199,11 +200,12 @@ async def async_batch_map_ids(
     parallelism: int,
     conflate: bool,
     drug_chemical_conflate: bool,
+    att_to_get: str = "identifier",
 ) -> Dict[str, str]:
     async with aiohttp.ClientSession() as session:
         semaphore = asyncio.Semaphore(parallelism)
         tasks = [
-            process_batch(batch, api_endpoint, session, semaphore, conflate, drug_chemical_conflate)
+            process_batch(batch, api_endpoint, session, semaphore, conflate, drug_chemical_conflate, att_to_get)
             for batch in chunked(ids, batch_size)
         ]
         results = await tqdm_asyncio.gather(*tasks)
@@ -218,9 +220,10 @@ async def process_batch(
     semaphore: asyncio.Semaphore,
     conflate: bool,
     drug_chemical_conflate: bool,
+    att_to_get: str = "identifier",
 ) -> Dict[str, str]:
     async with semaphore:
-        return await hit_node_norm_service(batch, api_endpoint, session, conflate, drug_chemical_conflate)
+        return await hit_node_norm_service(batch, api_endpoint, session, conflate, drug_chemical_conflate, att_to_get)
 
 
 def normalize_kg(
@@ -304,6 +307,7 @@ async def hit_node_norm_service(
     session: aiohttp.ClientSession,
     conflate: bool = True,
     drug_chemical_conflate: bool = True,
+    att_to_get: str = "identifier",
 ):
     """Hits the node normalization service with a list of curies using aiohttp.
 
@@ -332,7 +336,7 @@ async def hit_node_norm_service(
         if resp.status == 200:
             response_json = await resp.json()
             logger.debug(response_json)
-            return _extract_ids(response_json)
+            return _extract_ids(response_json, att_to_get)
         else:
             logger.warning(f"Node norm response code: {resp.status}")
             resp_text = await resp.text()
@@ -341,15 +345,33 @@ async def hit_node_norm_service(
 
 
 # NOTE: we are not taking the label that the API returns, this could actually be important. Do we want the labels/biolink types as well?
-def _extract_ids(response: Dict[str, Any]):
+def _extract_ids(response: Dict[str, Any], att_to_get: str = "identifier"):
     ids = {}
     for k in response:
-        try:
-            if response[k] is None:
+        logger.debug(f"Response for key {k}: {response.get(k)}")  # Log the response for each key
+        if att_to_get in ["identifier", "label"]:
+            try:
+                if response.get(k) is None:
+                    logger.warning(f"Response for key {k} is None.")
+                    ids[k] = None
+                else:
+                    ids[k] = response[k]["id"][att_to_get]
+            except KeyError:
+                logger.warning(f"KeyError for {k}: {response[k]}")
                 ids[k] = None
-            else:
-                ids[k] = response[k]["id"]["identifier"]
-        except KeyError:
-            logger.warning(f"KeyError for {k}: {response[k]}")
-            ids[k] = None
+        elif att_to_get == "type":
+            try:
+                if response.get(k) is None:
+                    logger.warning(f"Response for key {k} is None.")
+                    ids[k] = None
+                else:
+                    if isinstance(response[k]["type"], list):
+                        ids[k] = response[k]["type"][0]
+                    else:
+                        ids[k] = response[k]["type"]
+            except KeyError:
+                logger.warning(f"KeyError for {k}: {response[k]}")
+                ids[k] = None
+        else:
+            raise ValueError(f"Invalid att_to_get: {att_to_get}")
     return ids
