@@ -175,7 +175,7 @@ def _predictions_pipeline() -> Pipeline:
                             "model": f"moa_extraction.models.{num_hops}_hop_model",
                             "runner": "params:moa_extraction.neo4j_runner",
                             "pairs": "moa_extraction.raw.input_pairs",
-                            "path_generator": f"params:moa_extraction.evaluation.{num_hops}_hop.path_generator",
+                            "path_generator": f"params:moa_extraction.predictions.{num_hops}_hop.path_generator",
                             "path_embedding_strategy": "params:moa_extraction.path_embeddings.strategy",
                             "category_encoder": "moa_extraction.feat.category_encoder",
                             "relation_encoder": "moa_extraction.feat.relation_encoder",
