@@ -142,7 +142,7 @@ class BigQueryTableDataset(SparkDataset):
         return spark_session.read.format("bigquery").load(f"{self._project_id}.{self._dataset}.{self._table}")
 
     def _save(self, data: DataFrame) -> None:
-        bq_client = bigquery.Client()
+        bq_client = bigquery.Client(project=self._project_id)
         dataset_id = f"{self._project_id}.{self._dataset}"
 
         # Check if the dataset exists
@@ -300,6 +300,7 @@ class RemoteSparkJDBCDataset(SparkJDBCDataset):
     def __init__(  # noqa: PLR0913
         self,
         *,
+        project: str,
         table: str,
         url: str,
         load_args: dict[str, Any] | None = None,
@@ -308,7 +309,9 @@ class RemoteSparkJDBCDataset(SparkJDBCDataset):
         metadata: dict[str, Any] | None = None,
     ) -> None:
         """Creates a new instance of ``RemoteSparkJDBCDataset``."""
-        self._client = None  # Initialize as None
+        self._client = None
+        self._project = project
+        
         protocol, fs_prefix, blob_name = self.split_remote_jdbc_path(url)
 
         if fs_prefix != "gs://":
@@ -332,7 +335,7 @@ class RemoteSparkJDBCDataset(SparkJDBCDataset):
         as it would require an authenticated environment even for unit tests.
         """
         if self._client is None:
-            self._client = storage.Client()
+            self._client = storage.Client(self._project)
         return self._client
 
     def _load(self) -> Any:

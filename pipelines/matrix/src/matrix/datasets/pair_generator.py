@@ -364,13 +364,13 @@ class FullMatrixPositives(DrugDiseasePairGenerator):
             is_positive = is_positive | matrix[col_name]
         positive_pairs = matrix[is_positive].assign(y=1)
 
-        # Add ranks columns. Note that this is the rank against known negatives and unknowns only.
+        ## Add ranks columns.
         # Rank against all pairs including known positives
-        positive_pairs["full_rank"] = positive_pairs.index + 1
+        positive_pairs["rank"] = positive_pairs.index + 1
         positive_pairs = positive_pairs.reset_index(drop=True)
         # Remove contribution from known positives to compute the rank against non-positive pairs
-        positive_pairs["rank"] = positive_pairs["full_rank"] - positive_pairs.index
-        # Compute the quantile rank
+        positive_pairs["non_pos_rank"] = positive_pairs["rank"] - positive_pairs.index
+        # Compute the quantile rank against non-positive pairs
         num_non_pos = len(matrix[~is_positive])
-        positive_pairs["quantile_rank"] = (positive_pairs["rank"] - 1) / num_non_pos
+        positive_pairs["non_pos_quantile_rank"] = (positive_pairs["non_pos_rank"] - 1) / num_non_pos
         return positive_pairs
