@@ -1,5 +1,3 @@
-"""Module with GCP datasets for Kedro."""
-
 import os
 import re
 from copy import deepcopy
