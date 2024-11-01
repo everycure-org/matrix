@@ -1,5 +1,3 @@
-"""Nodes for the ingration pipeline."""
-
 import asyncio
 import logging
 from functools import partial, reduce
