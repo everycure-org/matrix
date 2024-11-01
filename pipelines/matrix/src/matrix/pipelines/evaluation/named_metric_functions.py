@@ -1,8 +1,3 @@
-"""Module containing a collection of named functions.
-
-Used for the computation of ranking metrics.
-"""
-
 import numpy as np
 import abc
 
