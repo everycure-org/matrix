@@ -564,7 +564,7 @@ def clean_gt_data(pos_df: pd.DataFrame, neg_df: pd.DataFrame, endpoint: str) -> 
     )
     neg_df["target"] = neg_df["target"].map(neg_node_id_map)
     # Return updated DataFrames
-    return pos_df.drop_na(subset=["source", "target"]), neg_df.drop_na(subset=["source", "target"])
+    return pos_df.dropna(subset=["source", "target"]), neg_df.dropna(subset=["source", "target"])
 
 
 # FUTURE: Remove the functions once we have tags embedded in the disease list
