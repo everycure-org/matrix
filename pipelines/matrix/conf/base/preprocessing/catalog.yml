@@ -152,7 +152,7 @@ preprocessing.raw.ground_truth.positives:
 preprocessing.raw.ground_truth.negatives:
   <<: [*_layer_raw]
   type: pandas.CSVDataset
-  filepath: ${globals:paths.raw}/ground_truth_data/tp_pairs.txt
+  filepath: ${globals:paths.raw}/ground_truth_data/tn_pairs.txt
   load_args:
     sep: "\t"
   save_args:
