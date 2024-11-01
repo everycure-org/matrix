@@ -2,7 +2,6 @@
 
 from kedro.pipeline import Pipeline, node, pipeline
 from pyspark.sql import DataFrame, SparkSession
-from pyspark.sql import functions as F
 
 
 def parse_gt(gt: DataFrame) -> DataFrame:
@@ -12,38 +11,37 @@ def parse_gt(gt: DataFrame) -> DataFrame:
 def apply_join(tps: DataFrame):
     spark_session = SparkSession.builder.getOrCreate()
 
-    all_pairs = (
-        spark_session.read.format("org.neo4j.spark.DataSource")
-        .option("database", "moa")
-        .option("url", "bolt://127.0.0.1:7687")
-        .option("authentication.type", "basic")
-        .option("authentication.basic.username", "neo4j")
-        .option("authentication.basic.password", "admin")
-        .option(
-            "query",
-            """
-            MATCH (source:is_drug), (source:is_drug)-[:is_treats]->(target:is_disease)
-            WITH id(source) as sourceId, id(target) as targetId
-                CALL gds.shortestPath.yens.stream("trav", {
-                sourceNode: sourceId,
-                targetNode: targetId,
-                k: 5
-            })
-            YIELD path
-            WITH [n IN nodes(path) | n.id] as p
-            RETURN p
-           """,
-        )
-        .option("partitions", 4)
-    ).load()
+    for drug, disease in [("CHEMBL.COMPOUND:CHEMBL137", "MONDO:0002635")]:
+        all_pairs = (
+            spark_session.read.format("org.neo4j.spark.DataSource")
+            .option("database", "moa")
+            .option("url", "bolt://127.0.0.1:7687")
+            .option("authentication.type", "basic")
+            .option("authentication.basic.username", "neo4j")
+            .option("authentication.basic.password", "admin")
+            .option(
+                "query",
+                f"""
+                MATCH p=(drug:Entity {{id: '{drug}'}})-[*2..3]->(disease:Entity {{id: '{disease}'}})
+                WITH [node IN nodes(p) | node.id] as nodes, [node in nodes(p) | labels(node)[1]] as labels, [rel in relationships(p) | type(rel)] as rels
+                RETURN nodes, labels, rels
+            """,
+            )
+        ).load()
 
-    all_pairs.withColumn("path_len", F.size("p")).orderBy(F.col("path_len").desc()).show(truncate=False)
+        print(all_pairs.count())
+
+        breakpoint()
+
+    # all_pairs.withColumn("path_len", F.size("p")).orderBy(F.col("path_len").desc()).show(truncate=False)
 
     # result = (
     #     tps
     #     .join(all_pairs, on=["drug_id", "disease_id"], how="left")
     #     .filter(F.col("path").isNotNull())
     # )
+
+    # TODO: Write this as sharded Spark dataframe
 
     return all_pairs
 
