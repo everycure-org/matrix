@@ -1,5 +1,3 @@
-"""Module containing classes for evaluation."""
-
 import pandas as pd
 import numpy as np
 import abc

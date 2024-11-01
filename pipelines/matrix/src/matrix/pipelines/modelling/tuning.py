@@ -1,4 +1,3 @@
-"""Module with sklearn compatible tuner classes."""
 from typing import List
 
 import numpy as np
@@ -121,8 +120,6 @@ class GaussianSearch(BaseEstimator, MetaEstimatorMixin):
 
         self.convergence_plot = plot_convergence(result).figure
 
-        self.best_params_ = {
-            param.name: val for param, val in zip(self._dimensions, result.x)
-        }
+        self.best_params_ = {param.name: val for param, val in zip(self._dimensions, result.x)}
 
         return self._estimator.set_params(**params)

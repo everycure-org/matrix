@@ -1,5 +1,3 @@
-"""transformation functions for rtxkg2 nodes and edges."""
-
 import logging
 
 from typing import Dict
