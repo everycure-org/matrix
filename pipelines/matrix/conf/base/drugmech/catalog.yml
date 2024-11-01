@@ -19,6 +19,19 @@ _neo4j_ds: &_neo4j_ds
     kedro-viz:
       layer: embeddings
 
+
+drugmech.paths@partitioned:
+  type: partitions.PartitionedDataset
+  path: ${globals:paths.int}/moa_extraction/
+  dataset: matrix.datasets.gcp.LazySparkDataset
+  filename_suffix: ".parquet"
+
+
+drugmech.paths@spark:
+  type: matrix.datasets.gcp.LazySparkDataset
+  filepath: ${globals:paths.int}/moa_extraction/
+
+
 # drugmech.raw.moa:
 #   type: yaml.YAMLDataset
 #   filepath: ${globals:paths.raw}/moa_extraction/indication_paths.yaml
