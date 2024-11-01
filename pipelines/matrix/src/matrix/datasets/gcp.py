@@ -1,8 +1,7 @@
 """Module with GCP datasets for Kedro."""
 
-from google.cloud import storage
-import re
 import os
+import re
 from copy import deepcopy
 from typing import Any, Optional
 
@@ -10,15 +9,14 @@ import google.api_core.exceptions as exceptions
 import numpy as np
 import pandas as pd
 import pygsheets
-from google.cloud import bigquery
+from google.cloud import bigquery, storage
 from kedro.io.core import (
     AbstractVersionedDataset,
     DatasetError,
     Version,
 )
 from kedro_datasets.spark import SparkDataset, SparkJDBCDataset
-from kedro_datasets.spark.spark_dataset import _split_filepath
-from kedro_datasets.spark.spark_dataset import _get_spark, _strip_dbfs_prefix
+from kedro_datasets.spark.spark_dataset import _get_spark, _split_filepath, _strip_dbfs_prefix
 from matrix.hooks import SparkHooks
 from pygsheets import Spreadsheet, Worksheet
 from pyspark.sql import DataFrame, SparkSession
@@ -310,7 +308,7 @@ class RemoteSparkJDBCDataset(SparkJDBCDataset):
         metadata: dict[str, Any] | None = None,
     ) -> None:
         """Creates a new instance of ``RemoteSparkJDBCDataset``."""
-        self._client = storage.Client()
+        self._client = None  # Initialize as None
         protocol, fs_prefix, blob_name = self.split_remote_jdbc_path(url)
 
         if fs_prefix != "gs://":
@@ -327,9 +325,19 @@ class RemoteSparkJDBCDataset(SparkJDBCDataset):
             metadata=metadata,
         )
 
+    def _get_client(self):
+        """Lazily initialize the GCS client when needed.
+
+        NOTE: This is a workaround to avoid the GCS client being initialized on every run.
+        as it would require an authenticated environment even for unit tests.
+        """
+        if self._client is None:
+            self._client = storage.Client()
+        return self._client
+
     def _load(self) -> Any:
         SparkHooks._initialize_spark()
-        bucket = self._client.bucket(self._bucket)
+        bucket = self._get_client().bucket(self._bucket)
         blob = bucket.blob(self._blob_name)
 
         if not os.path.exists(self._blob_name):

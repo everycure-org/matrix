@@ -157,6 +157,8 @@ session_store.db
 mlruns
 templates/argo-workflow-template.yml
 
+# uv stuff
+uv.lock
 
 compose/neo4j_data/
 
