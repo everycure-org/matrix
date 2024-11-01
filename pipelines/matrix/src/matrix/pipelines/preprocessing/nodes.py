@@ -521,48 +521,20 @@ def clean_gt_data(pos_df: pd.DataFrame, neg_df: pd.DataFrame, endpoint: str) -> 
     Returns:
         Cleaned ground truth data.
     """
-    # Synonymize Drug_ID column to normalized ID and name compatible with RTX-KG2
-    pos_node_id_map = batch_map_ids(
-        frozenset(pos_df["source"]),
-        api_endpoint=endpoint,
-        batch_size=1000,
-        parallelism=120,
-        conflate=True,
-        drug_chemical_conflate=False,
-        att_to_get="identifier",
-    )
-    pos_df["source"] = pos_df["source"].map(pos_node_id_map)
-    pos_node_id_map = batch_map_ids(
-        frozenset(pos_df["target"]),
-        api_endpoint=endpoint,
-        batch_size=1000,
-        parallelism=120,
-        conflate=True,
-        drug_chemical_conflate=False,
-        att_to_get="identifier",
-    )
-    pos_df["target"] = pos_df["target"].map(pos_node_id_map)
-    # Synonymize target IDs for negative ground truth data
-    neg_node_id_map = batch_map_ids(
-        frozenset(neg_df["source"]),
-        api_endpoint=endpoint,
-        batch_size=1000,
-        parallelism=120,
-        conflate=True,
-        drug_chemical_conflate=False,
-        att_to_get="identifier",
-    )
-    neg_df["source"] = neg_df["source"].map(neg_node_id_map)
-    neg_node_id_map = batch_map_ids(
-        frozenset(neg_df["target"]),
-        api_endpoint=endpoint,
-        batch_size=1000,
-        parallelism=120,
-        conflate=True,
-        drug_chemical_conflate=False,
-        att_to_get="identifier",
-    )
-    neg_df["target"] = neg_df["target"].map(neg_node_id_map)
+    # Synonymize source and target IDs for both positive and negative ground truth data
+    for df in [pos_df, neg_df]:
+        for col in ["source", "target"]:
+            node_id_map = batch_map_ids(
+                frozenset(df[col]),
+                api_endpoint=endpoint,
+                batch_size=1000,
+                parallelism=120,
+                conflate=True,
+                drug_chemical_conflate=False,
+                att_to_get="identifier",
+            )
+            df[col] = df[col].map(node_id_map)
+
     # Return updated DataFrames
     return pos_df.dropna(subset=["source", "target"]), neg_df.dropna(subset=["source", "target"])
 
