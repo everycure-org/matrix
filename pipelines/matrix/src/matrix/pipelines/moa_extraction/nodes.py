@@ -203,7 +203,7 @@ def generate_negative_paths(
 
 @inject_object()
 def train_model(
-    model: BaseEstimator,
+    tuner: Any,
     paths: KGPaths,
     path_embedding_strategy: PathEmbeddingStrategy,
     category_encoder: OneHotEncoder,
@@ -212,7 +212,7 @@ def train_model(
     """Train the model on the entire paths dataset provided.
 
     Args:
-        model: The model to train.
+        tuner: Tuner object.
         paths: The paths dataset with a "y" column.
         path_embedding_strategy: Path embedding strategy.
         category_encoder: One-hot encoder for node categories.
@@ -220,12 +220,14 @@ def train_model(
     """
     X = path_embedding_strategy.run(paths, category_encoder, relation_encoder).astype(np.float32)
     y = paths.df["y"].to_numpy().astype(np.float32).reshape(-1, 1)
-    return model.fit(X, y)
+    model = tuner.fit(X, y)
+    model.fit(X, y)
+    return model
 
 
 @inject_object()
 def train_model_split(
-    model: BaseEstimator,
+    tuner: Any,
     paths: KGPaths,
     path_embedding_strategy: PathEmbeddingStrategy,
     category_encoder: OneHotEncoder,
@@ -234,14 +236,14 @@ def train_model_split(
     """Train the model on the training portion of the paths dataset only.
 
     Args:
-        model: The model to train.
+        tuner: Tuner object.
         paths: The paths dataset with a "y" column and split information.
         path_embedding_strategy: Path embedding strategy.
         category_encoder: One-hot encoder for node categories.
         relation_encoder: One-hot encoder for edge relations.
     """
     paths_train = KGPaths(df=paths.df[paths.df["split"] == "TRAIN"])
-    return train_model(model, paths_train, path_embedding_strategy, category_encoder, relation_encoder)
+    return train_model(tuner, paths_train, path_embedding_strategy, category_encoder, relation_encoder)
 
 
 def make_predictions(

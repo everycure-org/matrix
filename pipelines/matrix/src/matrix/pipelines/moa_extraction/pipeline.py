@@ -96,7 +96,7 @@ def _training_pipeline() -> Pipeline:
                     node(
                         func=nodes.train_model_split,
                         inputs={
-                            "model": f"params:moa_extraction.training.{num_hops}_hop.model",
+                            "tuner": f"params:moa_extraction.training.{num_hops}_hop.tuner",
                             "paths": f"moa_extraction.feat.{num_hops}_hop_enriched_paths",
                             "path_embedding_strategy": "params:moa_extraction.path_embeddings.strategy",
                             "category_encoder": "moa_extraction.feat.category_encoder",
@@ -109,7 +109,7 @@ def _training_pipeline() -> Pipeline:
                     node(
                         func=nodes.train_model,
                         inputs={
-                            "model": f"params:moa_extraction.training.{num_hops}_hop.model",
+                            "tuner": f"params:moa_extraction.training.{num_hops}_hop.tuner",
                             "paths": f"moa_extraction.feat.{num_hops}_hop_enriched_paths",
                             "path_embedding_strategy": "params:moa_extraction.path_embeddings.strategy",
                             "category_encoder": "moa_extraction.feat.category_encoder",
