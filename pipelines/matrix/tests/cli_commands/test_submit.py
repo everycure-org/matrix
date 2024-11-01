@@ -346,8 +346,16 @@ def test_submit_workflow(mock_run_subprocess: None) -> None:
     assert mock_run_subprocess.call_count == 1
 
 
-def test_get_run_name_with_input() -> None:
-    assert get_run_name("custom_name") == "custom_name"
+@pytest.mark.parametrize(
+    "input_name,expected_name",
+    [
+        ("custom_name", "custom-name"),
+        ("custom-name", "custom-name"),
+        ("custom@name!", "custom-name"),
+    ],
+)
+def test_get_run_name_with_input(input_name: str, expected_name: str) -> None:
+    assert get_run_name(input_name) == expected_name
 
 
 @patch("matrix.cli_commands.submit.run_subprocess")
