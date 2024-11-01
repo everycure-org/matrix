@@ -11,8 +11,12 @@ def parse_gt(gt: DataFrame) -> DataFrame:
 def apply_join(tps: DataFrame):
     spark_session = SparkSession.builder.getOrCreate()
 
-    for drug, disease in [("CHEMBL.COMPOUND:CHEMBL137", "MONDO:0002635")]:
-        all_pairs = (
+    shards = {}
+
+    for idx, (drug, disease) in enumerate(
+        [("CHEMBL.COMPOUND:CHEMBL137", "MONDO:0002635"), ("CHEMBL.COMPOUND:CHEMBL1201258", "MONDO:0005065")]
+    ):
+        shards[f"id={idx}"] = lambda: (
             spark_session.read.format("org.neo4j.spark.DataSource")
             .option("database", "moa")
             .option("url", "bolt://127.0.0.1:7687")
@@ -27,23 +31,14 @@ def apply_join(tps: DataFrame):
                 RETURN nodes, labels, rels
             """,
             )
-        ).load()
+            .load()
+        )
 
-        print(all_pairs.count())
+    return shards
 
-        breakpoint()
 
-    # all_pairs.withColumn("path_len", F.size("p")).orderBy(F.col("path_len").desc()).show(truncate=False)
-
-    # result = (
-    #     tps
-    #     .join(all_pairs, on=["drug_id", "disease_id"], how="left")
-    #     .filter(F.col("path").isNotNull())
-    # )
-
-    # TODO: Write this as sharded Spark dataframe
-
-    return all_pairs
+def load_full(df: DataFrame):
+    df.show()
 
 
 def create_pipeline(**kwargs) -> Pipeline:
@@ -77,9 +72,17 @@ def create_pipeline(**kwargs) -> Pipeline:
                 inputs=[
                     "int.tps",
                 ],
-                outputs="output_df",
+                outputs="drugmech.paths@partitioned",
                 name="create_paths",
                 tags=["generate"],
+            ),
+            node(
+                func=load_full,
+                inputs=[
+                    "drugmech.paths@spark",
+                ],
+                outputs=None,
+                name="load_paths",
             ),
         ]
     )
