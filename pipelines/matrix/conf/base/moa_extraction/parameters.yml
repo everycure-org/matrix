@@ -60,16 +60,17 @@ moa_extraction:
   training:
     two_hop:
       model:
-        object: skorch.NeuralNetClassifier
+        object: matrix.pipelines.moa_extraction.models.SkorchWrapper
         module: 
           object: matrix.pipelines.moa_extraction.models.TransformerBinaryClassifier
           token_dim: 100
           num_heads: 4
           num_layers: 2
           dropout: 0.1
+        optimizer: torch.optim.Adam
+        optimizer__weight_decay: 0.04
         criterion:
           object: torch.nn.BCEWithLogitsLoss
-        optimizer__weight_decay: 0.04
         max_epochs: 40
         lr: 0.01
         device: 'cpu'
@@ -82,16 +83,17 @@ moa_extraction:
           random_state: ${globals:random_state}
     three_hop:
       model:
-        object: skorch.NeuralNetClassifier
+        object: matrix.pipelines.moa_extraction.models.SkorchWrapper
         module: 
           object: matrix.pipelines.moa_extraction.models.TransformerBinaryClassifier
           token_dim: 100
           num_heads: 4
           num_layers: 2
           dropout: 0.1
+        optimizer: torch.optim.Adam
+        optimizer__weight_decay: 0.03
         criterion:
           object: torch.nn.BCEWithLogitsLoss
-        optimizer__weight_decay: 0.03
         max_epochs: 20
         lr: 0.01
         device: 'cpu'
