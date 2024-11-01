@@ -1,10 +1,32 @@
 """Module containing the PyTorch models for the MOA extraction pipeline."""
 
+import torch
+import skorch
 from torch import nn
 
 
+class SkorchWrapper(skorch.NeuralNetClassifier):
+    """Class to help inject Skorch NeuralNetClassifier objects."""
+
+    def __init__(
+        self,
+        module: nn.Module,
+        optimizer: str,
+        **kwargs,
+    ):
+        super(SkorchWrapper, self).__init__(module=module, optimizer=eval(optimizer), **kwargs)
+
+
 class TransformerBinaryClassifier(nn.Module):
-    def __init__(self, token_dim: int, num_heads: int, num_layers: int, dropout: float = 0.1):
+    def __init__(self, token_dim: int, num_heads: int, num_layers: int, dropout: float = 0.1) -> None:
+        """Initialise the TransformerBinaryClassifier.
+
+        Args:
+            token_dim: The dimension of the token embeddings.
+            num_heads: The number of attention heads.
+            num_layers: The number of transformer layers.
+            dropout: The dropout probability.
+        """
         super(TransformerBinaryClassifier, self).__init__()
         self.linear = nn.LazyLinear(token_dim)
         self.transformer_encoder = nn.TransformerEncoder(
@@ -12,7 +34,15 @@ class TransformerBinaryClassifier(nn.Module):
         )
         self.fc = nn.Linear(token_dim, 1)
 
-    def forward(self, x):
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """Forward pass of the TransformerBinaryClassifier.
+
+        Args:
+            x: The input tensor.
+
+        Returns:
+            The output tensor.
+        """
         x = self.linear(x)
         x = self.transformer_encoder(x)
         x = x.mean(dim=1)  # Global average pooling
