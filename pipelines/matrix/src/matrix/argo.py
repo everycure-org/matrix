@@ -1,5 +1,3 @@
-"""Module with utilities to generate Argo workflow."""
-
 import re
 from pathlib import Path
 from typing import List, Optional, Any

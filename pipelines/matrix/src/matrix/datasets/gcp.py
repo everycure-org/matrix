@@ -1,5 +1,3 @@
-"""Module with GCP datasets for Kedro."""
-
 from google.cloud import storage
 import re
 import os

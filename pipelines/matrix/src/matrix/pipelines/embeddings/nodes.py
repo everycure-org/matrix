@@ -1,5 +1,3 @@
-"""Nodes for embeddings pipeline."""
-
 import logging
 from typing import Any, Dict, List
 
