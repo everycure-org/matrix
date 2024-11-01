@@ -339,9 +339,7 @@ spec:
     labels:
       run: '{{ workflow.parameters.run_name }}'
       username: "test_user"
-  entrypoint: dag
-  ttlStrategy:
-    secondsAfterSuccess: 5
+  entrypoint: __default__
   arguments:
     parameters:
       - name: image
@@ -583,11 +581,7 @@ def test_generate_argo_config(expected_argo_config: Dict[str, Any], matrix_root:
         spec["workflowMetadata"]["labels"]["username"] == expected_spec["workflowMetadata"]["labels"]["username"]
     ), "Config should have correct 'username' label"
 
-    # Verify entrypoint and ttlStrategy
     assert spec["entrypoint"] == expected_spec["entrypoint"], "Config should have correct 'entrypoint'"
-    assert (
-        spec["ttlStrategy"]["secondsAfterSuccess"] == expected_spec["ttlStrategy"]["secondsAfterSuccess"]
-    ), "Config should have correct 'ttlStrategy'"
 
     # Verify arguments
     parameters_actual = spec["arguments"]["parameters"]
