@@ -4,7 +4,7 @@ import requests
 
 import pandas as pd
 
-from typing import Callable, List, Dict
+from typing import Callable, List, Dict, Tuple
 from functools import partial
 
 from refit.v1.core.inline_has_schema import has_schema
@@ -506,6 +506,66 @@ def clean_input_sheet(input_df: pd.DataFrame, endpoint: str) -> pd.DataFrame:
 
     # Fill NaNs and return
     return df.fillna("")
+
+
+# GT
+
+
+def clean_gt_data(pos_df: pd.DataFrame, neg_df: pd.DataFrame, endpoint: str) -> Tuple[pd.DataFrame, pd.DataFrame]:
+    """Clean ground truth data.
+
+    Args:
+        pos_df: positive ground truth data.
+        neg_df: negative ground truth data.
+        endpoint: endpoint of the synonymizer.
+    Returns:
+        Cleaned ground truth data.
+    """
+    # Synonymize Drug_ID column to normalized ID and name compatible with RTX-KG2
+    pos_node_id_map = batch_map_ids(
+        frozenset(pos_df["source"]),
+        api_endpoint=endpoint,
+        batch_size=1000,
+        parallelism=120,
+        conflate=True,
+        drug_chemical_conflate=False,
+        att_to_get="identifier",
+    )
+    pos_df["source"] = pos_df["source"].map(pos_node_id_map)
+    pos_node_id_map = batch_map_ids(
+        frozenset(pos_df["target"]),
+        api_endpoint=endpoint,
+        batch_size=1000,
+        parallelism=120,
+        conflate=True,
+        drug_chemical_conflate=False,
+        att_to_get="identifier",
+    )
+    pos_df["target"] = pos_df["target"].map(pos_node_id_map)
+    # Synonymize target IDs for negative ground truth data
+    neg_node_id_map = batch_map_ids(
+        frozenset(neg_df["source"]),
+        api_endpoint=endpoint,
+        batch_size=1000,
+        parallelism=120,
+        conflate=True,
+        drug_chemical_conflate=False,
+        att_to_get="identifier",
+    )
+    neg_df["source"] = neg_df["source"].map(neg_node_id_map)
+    neg_node_id_map = batch_map_ids(
+        frozenset(neg_df["target"]),
+        api_endpoint=endpoint,
+        batch_size=1000,
+        parallelism=120,
+        conflate=True,
+        drug_chemical_conflate=False,
+        att_to_get="identifier",
+    )
+    neg_df["target"] = neg_df["target"].map(neg_node_id_map)
+
+    # Return updated DataFrames
+    return pos_df, neg_df
 
 
 # FUTURE: Remove the functions once we have tags embedded in the disease list

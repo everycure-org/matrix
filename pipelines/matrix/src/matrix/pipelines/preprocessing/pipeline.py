@@ -125,5 +125,16 @@ def create_pipeline(**kwargs) -> Pipeline:
                 name="clean_input_sheet",
                 tags=["inference-input"],
             ),
+            node(
+                func=nodes.clean_gt_data,
+                inputs=[
+                    "preprocessing.raw.ground_truth.positives",
+                    "preprocessing.raw.ground_truth.negatives",
+                    "params:preprocessing.translator_endpoint",
+                ],
+                outputs=["modelling.raw.ground_truth.positives", "modelling.raw.ground_truth.negatives"],
+                name="resolve_gt",
+                tags=["ground-truth"],
+            ),
         ]
     )

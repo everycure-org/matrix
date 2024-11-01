@@ -46,7 +46,7 @@ modelling.raw.ground_truth.positives:
 
 modelling.raw.ground_truth.negatives:
   <<: [*_pandas_csv, *_model_input_ds]
-  filepath: ${globals:paths.raw}/ground_truth_data/tn_pairs.txt
+  filepath: ${globals:paths.integration}/int/ground_truth_data/tn_pairs.tsv
   load_args:
     sep: "\t"
   save_args:
