@@ -50,7 +50,6 @@ moa_extraction.feat.relation_encoder:
   filepath: ${globals:paths.moa_extraction}/reporting/{num_hops}_hop_metrics
   type:  yaml.YAMLDataset
 
-
 "moa_extraction.model_output.{num_hops}_hop_output_predictions":
   type: partitions.PartitionedDataset
   path: ${globals:paths.moa_extraction}/model_output/{num_hops}_hop_output_predictions

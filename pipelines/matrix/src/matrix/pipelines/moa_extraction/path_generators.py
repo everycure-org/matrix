@@ -19,17 +19,21 @@ class PathGenerator(abc.ABC):
         ...
 
 
-class AllPathsWithTagRules(PathGenerator):
+class AllPathsWithRules(PathGenerator):
     """
     Generates all paths between the given source drug and target disease that match the given tag rules.
     """
 
     def __init__(
-        self, tag_rules: Dict[str, List[str]], num_hops: int, unidirectional: bool = True, num_limit: int = None
+        self,
+        edge_omission_rules: Dict[str, List[str]],
+        num_hops: int,
+        unidirectional: bool = True,
+        num_limit: int = None,
     ):
-        """Initialise the AllPathsWithTagRules.
+        """Initialise the AllPathsWithRules.
 
-        tag_rules: The tag rules to match. This takes the form of a dictionary with keys:
+        edge_omission_rules: The edge omission rules to match. This takes the form of a dictionary with keys:
             'all', '1', '2', ...
             'all' are the edge tags to omit from all hops
             '1', '2', ... are edge tags to omit for the first hop, second hop, ... respectively.
@@ -38,28 +42,28 @@ class AllPathsWithTagRules(PathGenerator):
         unidirectional: Whether to sample unidirectional paths only.
         num_limit: The maximum number of paths to return. If None, all paths are returned.
         """
-        self.tag_rules = tag_rules
+        self.edge_omission_rules = edge_omission_rules
         self.num_hops = num_hops
         self.unidirectional = unidirectional
         self.num_limit = num_limit
 
     @classmethod
-    def construct_where_clause(cls, tag_rules: dict, num_hops: int, prefix: str = "_moa_extraction_") -> str:
+    def construct_where_clause(cls, edge_omission_rules: dict, num_hops: int, prefix: str = "_moa_extraction_") -> str:
         """Construct the where clause for the query.
 
         E.g. NONE(r IN relationships(path) WHERE r._moa_extraction_drug_disease) AND (NOT r3._moa_extraction_disease_disease)
 
         Args:
-            tag_rules: The tag rules to match.
+            edge_omission_rules: The edge omission rules to match.
             num_hops: The number of hops in the paths.
             prefix: The prefix for the tag.
         """
         where_clause_parts = []
-        for tag in tag_rules["all"]:
+        for tag in edge_omission_rules["all"]:
             where_clause_parts.append(f"NONE(r IN relationships(path) WHERE r.{prefix}{tag})")
         for hop in range(1, num_hops + 1):
-            if hop in tag_rules.keys():
-                for tag in tag_rules[hop]:
+            if hop in edge_omission_rules.keys():
+                for tag in edge_omission_rules[hop]:
                     where_clause_parts.append(f"NOT r{hop}.{prefix}{tag}")
         where_clause = " AND ".join(where_clause_parts)
         return where_clause
@@ -75,7 +79,9 @@ class AllPathsWithTagRules(PathGenerator):
         match_clause = SetwisePathMapper._construct_match_clause(
             num_hops=self.num_hops, unidirectional=self.unidirectional
         )
-        where_clause = AllPathsWithTagRules.construct_where_clause(tag_rules=self.tag_rules, num_hops=self.num_hops)
+        where_clause = AllPathsWithRules.construct_where_clause(
+            edge_omission_rules=self.edge_omission_rules, num_hops=self.num_hops
+        )
         limit_clause = f"LIMIT {self.num_limit}" if self.num_limit is not None else ""
         query = f"""
         MATCH path = (start: %{{id:'{drug}'}}){match_clause}(end: %{{id:'{disease}'}})
@@ -94,21 +100,21 @@ class ReplacementPathSampler(PathGenerator):
     def __init__(
         self,
         num_replacement_paths: int,
-        tag_rules: Dict[str, List[str]],
+        edge_omission_rules: Dict[str, List[str]],
         unidirectional: bool = True,
         random_state: int = 1,
     ):
         """Initialise the ReplacementPathSampler.
 
         Args:
-            tag_rules: The tag rules to match.
+            edge_omission_rules: The edge omission rules to match.
             num_replacement_paths: The number of replacement paths to sample for each positive path.
             unidirectional: Whether to sample unidirectional paths only.
             random_state: The random state.
         """
         self.num_replacement_paths = num_replacement_paths
         self.unidirectional = unidirectional
-        self.tag_rules = tag_rules
+        self.edge_omission_rules = edge_omission_rules
         self.random_state = random_state
 
     def run(self, paths: KGPaths, runner: Neo4jRunner) -> KGPaths:
@@ -138,8 +144,8 @@ class ReplacementPathSampler(PathGenerator):
         runner: The Neo4j runner.
         num_hops: The number of hops in the paths.
         """
-        all_paths_generator = AllPathsWithTagRules(
-            tag_rules=self.tag_rules, num_hops=num_hops, unidirectional=self.unidirectional
+        all_paths_generator = AllPathsWithRules(
+            edge_omission_rules=self.edge_omission_rules, num_hops=num_hops, unidirectional=self.unidirectional
         )
         all_paths = all_paths_generator.run(runner, drug, disease)
 
