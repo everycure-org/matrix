@@ -1,15 +1,19 @@
 # NOTE: This script was partially generated using AI assistance.
 
 import json
+import platform
 import re
 import subprocess
-from typing import List
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from typing import Dict, List
 
 import pandas as pd
 import typer
+from joblib import Memory
 from tqdm import tqdm
 
 app = typer.Typer()
+memory = Memory(location=".joblib", verbose=0)
 
 
 def run_command(command: List[str]) -> str:
@@ -37,33 +41,73 @@ def extract_pr_numbers(commit_messages: List[str]) -> List[int]:
     return list(set(pr_numbers))  # Remove duplicates
 
 
-def get_pr_details(pr_numbers: List[int]) -> pd.DataFrame:
+def fetch_pr_detail_nocache(pr_number: int) -> Dict:
+    """
+    Non-cached version of fetch_pr_detail.
+    """
+    try:
+        command = ["gh", "pr", "view", str(pr_number), "--json", "number,title,labels,url"]
+        pr_json = run_command(command)
+        pr_info = json.loads(pr_json)
+
+        # Extract labels as a comma-separated string
+        labels = ",".join([label["name"] for label in pr_info.get("labels", [])])
+
+        return {
+            "number": pr_info["number"],
+            "title": pr_info["title"],
+            "current_labels": labels,
+            "new_title": pr_info["title"],
+            "new_labels": labels,
+            "url": pr_info["url"],
+        }
+    except subprocess.CalledProcessError:
+        typer.echo(f"\nWarning: Could not fetch PR #{pr_number}", err=True)
+        return None
+
+
+@memory.cache
+def fetch_pr_detail(pr_number: int) -> Dict:
+    """
+    Fetches details for a single PR.
+
+    Args:
+        pr_number (int): PR number to fetch
+
+    Returns:
+        Dict: PR details or None if failed
+    """
+    return fetch_pr_detail_nocache(pr_number)
+
+
+def get_pr_details(pr_numbers: List[int], use_cache: bool = True) -> pd.DataFrame:
+    """
+    Retrieves PR details from GitHub using thread pool.
+
+    Args:
+        pr_numbers (List[int]): The list of PR numbers.
+        use_cache (bool): Whether to use cached PR details.
+
+    Returns:
+        pd.DataFrame: A DataFrame containing PR details.
+    """
     pr_data = []
+    fetch_func = fetch_pr_detail if use_cache else fetch_pr_detail_nocache
 
-    for pr_number in tqdm(pr_numbers, desc="Fetching PR details", unit="PR"):
-        try:
-            command = ["gh", "pr", "view", str(pr_number), "--json", "number,title,labels"]
-            pr_json = run_command(command)
-            pr_info = json.loads(pr_json)
+    # Use number of CPUs or limit to 8 threads to avoid overwhelming the system
+    max_workers = min(8, len(pr_numbers))
 
-            # Extract labels as a comma-separated string
-            labels = ",".join([label["name"] for label in pr_info.get("labels", [])])
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+        # Submit all PR fetch tasks
+        future_to_pr = {executor.submit(fetch_func, pr_num): pr_num for pr_num in pr_numbers}
 
-            pr_data.append(
-                {
-                    "number": pr_info["number"],
-                    "title": pr_info["title"],
-                    "current_labels": labels,
-                    "new_title": pr_info["title"],  # Column for edited title
-                    "new_labels": labels,  # Column for edited labels
-                }
-            )
+        # Process completed tasks with progress bar
+        for future in tqdm(as_completed(future_to_pr), total=len(pr_numbers), desc="Fetching PR details", unit="PR"):
+            result = future.result()
+            if result:
+                pr_data.append(result)
 
-        except subprocess.CalledProcessError:
-            typer.echo(f"\nWarning: Could not fetch PR #{pr_number}", err=True)
-            continue
-
-    return pd.DataFrame(pr_data)
+    return pd.DataFrame([pr for pr in pr_data if pr is not None])
 
 
 def update_prs(df: pd.DataFrame):
@@ -101,8 +145,40 @@ def update_prs(df: pd.DataFrame):
                     typer.echo(f"\nFailed to remove labels from PR #{pr_number}", err=True)
 
 
+def open_file(filename: str):
+    """
+    Opens a file using the default system application.
+
+    Args:
+        filename (str): Path to the file to open.
+    """
+    try:
+        if platform.system() == "Darwin":  # macOS
+            subprocess.run(["open", filename], check=True)
+        elif platform.system() == "Linux":
+            subprocess.run(["xdg-open", filename], check=True)
+        elif platform.system() == "Windows":
+            subprocess.run(["start", filename], check=True, shell=True)
+        else:
+            typer.echo("Unable to open file: Unsupported operating system", err=True)
+    except subprocess.CalledProcessError as e:
+        typer.echo(f"Error opening file: {e}", err=True)
+
+
 @app.command()
-def prepare_release(previous_tag: str, output_file: str = "release_prs.xlsx"):
+def prepare_release(
+    previous_tag: str,
+    output_file: str = "release_prs.xlsx",
+    no_cache: bool = typer.Option(False, "--no-cache", help="Disable caching of PR details"),
+):
+    """
+    Prepares release notes by processing PRs merged since the given tag.
+
+    Args:
+        previous_tag (str): The previous release git tag.
+        output_file (str): The name of the Excel file to create/update.
+        no_cache (bool): If True, bypass the cache when fetching PR details.
+    """
     typer.echo(f"Collecting PRs since {previous_tag}...")
 
     # Get commit logs and extract PR numbers
@@ -114,13 +190,16 @@ def prepare_release(previous_tag: str, output_file: str = "release_prs.xlsx"):
         raise typer.Exit(1)
 
     # Get PR details and export to Excel
-    pr_details_df = get_pr_details(pr_numbers)
+    pr_details_df = get_pr_details(pr_numbers, use_cache=not no_cache)
     pr_details_df.to_excel(output_file, index=False)
 
     typer.echo(f"\nPR details exported to '{output_file}'.")
     typer.echo("\nPlease edit the file with your desired changes:")
     typer.echo("- Modify 'new_title' column to change PR titles")
     typer.echo("- Modify 'new_labels' column to change PR labels (comma-separated)")
+
+    # Open the file automatically
+    open_file(output_file)
 
     # Wait for user to edit the Excel file
     if not typer.confirm("\nHave you edited the file and ready to continue?"):
