@@ -4,13 +4,15 @@ import re
 import secrets
 import subprocess
 import sys
-from typing import Optional
+from typing import Optional, List
 
 import click
 from kedro.framework.cli.utils import CONTEXT_SETTINGS
 from rich.console import Console
 from rich.logging import RichHandler
 from rich.panel import Panel
+
+from kedro.framework.cli.utils import split_string
 
 from matrix.argo import _generate_argo_config
 
@@ -39,9 +41,10 @@ def cli():
 @click.option("--run-name", type=str, default=None, help="Specify a custom run name, defaults to branch")
 @click.option("--verbose", "-v", is_flag=True, default=False, help="Enable verbose output")
 @click.option("--dry-run", "-d", is_flag=True, default=False, help="Does everything except submit the workflow")
-@click.option("--pipeline", type=str, default="__default__", help="Specify a custom pipeline to run")
+@click.option("--pipeline", type=str, required=True, help="Specify a custom pipeline to run")
+@click.option("--from-nodes", type=str, default="", help="Specify nodes to run from", callback=split_string)
 # fmt: on
-def submit(username: str, namespace: str, run_name: str, verbose: bool, dry_run: bool, pipeline: str):
+def submit(username: str, namespace: str, run_name: str, verbose: bool, dry_run: bool, pipeline: str, from_nodes: List[str]):
     """Submit the end-to-end workflow."""
     if verbose:
         logging.getLogger().setLevel(logging.DEBUG)
@@ -61,7 +64,7 @@ def submit(username: str, namespace: str, run_name: str, verbose: bool, dry_run:
         console.print("[green]✓[/green] Docker image built and pushed")
 
         console.print("Building Argo template...")
-        build_argo_template(run_name, username, namespace, verbose=verbose)
+        build_argo_template(run_name, username, namespace, pipeline, from_nodes, verbose=verbose)
         console.print("[green]✓[/green] Argo template built")
 
         console.print("Ensuring namespace...")
@@ -222,10 +225,10 @@ def build_push_docker(username: str, verbose: bool):
     run_subprocess(f"make docker_push TAG={username}", stream_output=verbose)
 
 
-def build_argo_template(run_name, username, namespace, verbose: bool):
+def build_argo_template(run_name, username, namespace, pipeline: str, from_nodes: str, verbose: bool):
     """Build Argo workflow template."""
     image_name = "us-central1-docker.pkg.dev/mtrx-hub-dev-3of/matrix-images/matrix"
-    _generate_argo_config(image_name, run_name, username, namespace, username)
+    _generate_argo_config(image_name, run_name, username, namespace, pipeline, from_nodes, username)
 
 
 def ensure_namespace(namespace, verbose: bool):

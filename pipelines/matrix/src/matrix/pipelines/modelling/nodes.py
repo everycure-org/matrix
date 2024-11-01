@@ -53,17 +53,17 @@ def prefilter_nodes(nodes: DataFrame, drug_types: List[str], disease_types: List
     Returns:
         Filtered nodes dataframe
     """
-    return nodes.filter((f.col("category").isin(drug_types)) | (f.col("category").isin(disease_types)))
+    return nodes.filter((f.col("category").isin(drug_types)) | (f.col("category").isin(disease_types))).select(
+        "id", "category", "topological_embedding"
+    )
 
 
 @has_schema(
     schema={
-        "is_drug": "bool",
-        "is_disease": "bool",
-        "is_ground_pos": "bool",
-        # "node_embedding": "object",
-        # "pca_embedding": "object",
-        "topological_embedding": "object",
+        "id": "string",
+        "is_drug": "boolean",
+        "is_disease": "boolean",
+        "is_ground_pos": "boolean",
     },
     allow_subset=True,
 )
@@ -84,17 +84,24 @@ def create_feat_nodes(
     Returns:
         Nodes enriched with features.
     """
-    # FUTURE: Transcode as pandas instead?
-    pdf_nodes = raw_nodes.toPandas()
 
-    # Add drugs and diseases types flags
-    pdf_nodes["is_drug"] = pdf_nodes["category"].apply(lambda x: x in drug_types)
-    pdf_nodes["is_disease"] = pdf_nodes["category"].apply(lambda x: x in disease_types)
+    ground_truth_nodes = (
+        known_pairs.withColumn("id", f.col("source"))
+        .unionByName(known_pairs.withColumn("id", f.col("target")))
+        .filter(f.col("y") == 1)
+        .select("id")
+        .distinct()
+        .withColumn("is_ground_pos", f.lit(True))
+    )
 
-    ground_pos = known_pairs[known_pairs["y"].eq(1)]
-    ground_pos_drug_ids = list(ground_pos["source"].unique())
-    ground_pos_disease_ids = list(ground_pos["target"].unique())
-    pdf_nodes["is_ground_pos"] = pdf_nodes["id"].isin(ground_pos_drug_ids + ground_pos_disease_ids)
+    pdf_nodes = (
+        raw_nodes.alias("nodes")
+        .withColumn("is_drug", f.col("category").isin(drug_types))
+        .withColumn("is_disease", f.col("category").isin(disease_types))
+        .join(ground_truth_nodes, on="id", how="left")
+        .fillna({"is_ground_pos": False})
+    )
+
     return pdf_nodes
 
 

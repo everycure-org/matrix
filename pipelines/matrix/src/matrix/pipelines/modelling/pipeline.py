@@ -12,7 +12,7 @@ def _create_model_shard_pipeline(model: str, shard: int) -> Pipeline:
             node(
                 func=nodes.create_model_input_nodes,
                 inputs=[
-                    "modelling.feat.rtx_kg2",
+                    "modelling.feat.rtx_kg2@pandas",
                     "modelling.model_input.splits",
                     f"params:modelling.{model}.model_options.generator",
                 ],
@@ -137,7 +137,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                     "modelling.raw.ground_truth.positives",
                     "modelling.raw.ground_truth.negatives",
                 ],
-                outputs="modelling.int.known_pairs",
+                outputs="modelling.int.known_pairs@pandas",
                 name="create_int_known_pairs",
             ),
             node(
@@ -154,18 +154,18 @@ def create_pipeline(**kwargs) -> Pipeline:
                 func=nodes.create_feat_nodes,
                 inputs=[
                     "modelling.model_input.drugs_diseases_nodes@spark",
-                    "modelling.int.known_pairs",
+                    "modelling.int.known_pairs@spark",
                     "params:modelling.drug_types",
                     "params:modelling.disease_types",
                 ],
-                outputs="modelling.feat.rtx_kg2",
+                outputs="modelling.feat.rtx_kg2@spark",
                 name="create_feat_nodes",
             ),
             node(
                 func=nodes.make_splits,
                 inputs=[
-                    "modelling.feat.rtx_kg2",
-                    "modelling.int.known_pairs",
+                    "modelling.feat.rtx_kg2@pandas",
+                    "modelling.int.known_pairs@pandas",
                     "params:modelling.splitter",
                 ],
                 outputs="modelling.model_input.splits",

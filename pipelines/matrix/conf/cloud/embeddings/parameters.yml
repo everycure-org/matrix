@@ -1,0 +1,2 @@
+embeddings.topological_estimator:
+  concurrency: 32

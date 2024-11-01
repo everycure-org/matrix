@@ -4,6 +4,14 @@ _spark_parquet_ds: &_spark_parquet
   save_args:
     mode: overwrite
 
+_spark_csv: &_spark_csv
+  type: spark.SparkDataset
+  file_format: csv
+  load_args:
+    header: True
+  save_args:
+    mode: overwrite
+
 _pandas_csv: &_pandas_csv
   type:  pandas.CSVDataset
 
@@ -52,9 +60,13 @@ modelling.raw.ground_truth.negatives:
   save_args:
     sep: "\t"
 
-modelling.int.known_pairs:
-  <<: [*_pandas_parquet, *_model_input_ds]
-  filepath: ${globals:paths.integration}/ground_truth/translator/${globals:data_sources.gt.version}/known_pairs
+modelling.int.known_pairs@pandas:
+  <<: [*_pandas_csv, *_model_input_ds]
+  filepath: ${globals:paths.modelling}/ground_truth/translator/${globals:data_sources.gt.version}/ground_truth.csv
+  
+modelling.int.known_pairs@spark:
+  <<: [*_spark_csv, *_model_input_ds]
+  filepath: ${globals:paths.modelling}/ground_truth/translator/${globals:data_sources.gt.version}/ground_truth.csv
 
 # filtered down further to drugs/diseases
 modelling.model_input.drugs_diseases_nodes@spark:
@@ -66,7 +78,12 @@ modelling.model_input.drugs_diseases_nodes@spark:
 #   <<: *_pandas_parquet
 #   filepath: ${globals:paths.modelling}/drugs_diseases_nodes/
 
-modelling.feat.rtx_kg2:
+
+modelling.feat.rtx_kg2@spark:
+  <<: [*_spark_parquet, *_model_input_ds]
+  filepath: ${globals:paths.modelling}/feat/rtx_kg2_nodes
+
+modelling.feat.rtx_kg2@pandas:
   <<: [*_kg_dataset, *_model_input_ds]
   filepath: ${globals:paths.modelling}/feat/rtx_kg2_nodes
 

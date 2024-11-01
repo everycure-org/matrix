@@ -24,7 +24,7 @@ from refit.v1.core.inject import _parse_for_objects
 
 
 def sanitize_bq_strings(identifier: str) -> str:
-    return re.sub(r"[^a-zA-Z0-9_-]", "_", str(identifier))
+    return re.sub(r"[^a-zA-Z0-9_]", "_", str(identifier))
 
 
 class LazySparkDataset(SparkDataset):
