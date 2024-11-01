@@ -1,8 +1,3 @@
-"""This module contains the schema for the knowledge graph exposed by the Data API.
-
-It is defined in Pandera which is strongly inspired by Pydantic.
-"""
-
 from typing import List
 
 import pandera.pyspark as pa
