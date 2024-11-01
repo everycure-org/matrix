@@ -104,7 +104,7 @@ preprocessing.int.mapped_clinical_trials_data:
 preprocessing.raw.disease_list: 
   <<: [*_layer_raw]
   type: pandas.CSVDataset
-  filepath: https://github.com/everycure-org/matrix-disease-list/releases/${globals:data_sources.ec-disease-list.version}/download/matrix-disease-list.tsv
+  filepath: https://api.github.com/repos/everycure-org/matrix-disease-list/releases/assets/${globals:data_sources.ec-disease-list.version}
   load_args:
     sep: "\t"
 
