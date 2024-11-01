@@ -48,7 +48,7 @@ data_sources:
     # of the latest release as follows:
     # curl -X GET -H "Content-Type: application/json" -H "Authorization: token PAT" -H "Accept: application/vnd.github.v3.raw" https://api.github.com/repos/everycure-org/matrix-disease-list/releases | jq ".[0].assets | map(select(.name == \"matrix-disease-list.tsv\"))[0] | .id"
     version: 197752375
-  gt-version:
+  gt:
     version: 20241031
 # NOTE: MLflow does not like "new options" in the mlflow.yml
 # due to schema validation. Will make PR.
