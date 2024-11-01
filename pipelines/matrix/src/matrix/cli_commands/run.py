@@ -1,8 +1,3 @@
-"""Command line tools for manipulating a Kedro project.
-
-Intended to be invoked via `kedro`.
-"""
-
 from typing import Any, Dict, List, Set
 
 import click
