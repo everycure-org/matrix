@@ -218,10 +218,8 @@ def train_model(
         category_encoder: One-hot encoder for node categories.
         relation_encoder: One-hot encoder for edge relations.
     """
-    X = path_embedding_strategy.run(paths, category_encoder, relation_encoder)
-    y = paths.df["y"].to_numpy()
-    X = X.astype(np.float32)
-    y = y.astype(np.float32).reshape(-1, 1)
+    X = path_embedding_strategy.run(paths, category_encoder, relation_encoder).astype(np.float32)
+    y = paths.df["y"].to_numpy().astype(np.float32).reshape(-1, 1)
     return model.fit(X, y)
 
 
