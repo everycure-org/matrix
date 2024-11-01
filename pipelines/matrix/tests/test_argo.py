@@ -525,10 +525,10 @@ def test_generate_argo_config(expected_argo_config: Dict[str, Any], matrix_root:
     namespace = "test_namespace"
     username = "test_user"
     pipelines = {
-        "test": Pipeline(
+        "test_pipeline": Pipeline(
             nodes=[Node(func=dummy_func, inputs=["dataset_a", "dataset_b"], outputs="dataset_c", name="simple_node")]
         ),
-        "cloud": Pipeline(
+        "cloud_pipeline": Pipeline(
             nodes=[
                 Node(
                     func=dummy_func,
@@ -643,22 +643,29 @@ def test_generate_argo_config(expected_argo_config: Dict[str, Any], matrix_root:
         env["name"] == "NEO4J_ACCEPT_LICENSE_AGREEMENT" and env["value"] == "yes" for env in neo4j_sidecar["env"]
     ), "Neo4j sidecar should accept license agreement"
 
-    # Verify test template
-    test_template = next(t for t in templates if t["name"] == "test")
-    assert "dag" in test_template, "Test template should have a DAG"
-    assert len(test_template["dag"]["tasks"]) == 1, "Test template should have one task"
-    assert test_template["dag"]["tasks"][0]["name"] == "simple-node", "Test template should have correct task name"
-    assert test_template["dag"]["tasks"][0]["template"] == "kedro", "Test template task should use kedro template"
+    # Verify test_pipeline template
+    test_template = next(t for t in templates if t["name"] == "test_pipeline")
+    assert "dag" in test_template, "test_pipeline template should have a DAG"
+    assert len(test_template["dag"]["tasks"]) == 1, "test_pipeline template should have one task"
+    assert (
+        test_template["dag"]["tasks"][0]["name"] == "simple-node"
+    ), "test_pipeline template should have correct task name"
+    assert (
+        test_template["dag"]["tasks"][0]["template"] == "kedro"
+    ), "test_pipeline template task should use kedro template"
 
-    # # Verify test template
-    cloud_template = next(t for t in templates if t["name"] == "cloud")
-    assert "dag" in cloud_template, "Test template should have a DAG"
-    assert len(cloud_template["dag"]["tasks"]) == 1, "Test template should have one task"
+    # # Verify cloud_pipeline template
+    cloud_template = next(t for t in templates if t["name"] == "cloud_pipeline")
+    assert "dag" in cloud_template, "cloud_pipeline template should have a DAG"
+    assert len(cloud_template["dag"]["tasks"]) == 1, "cloud_pipeline template should have one task"
     assert (
         cloud_template["dag"]["tasks"][0]["name"] == "simple-node-cloud"
-    ), "Test template should have correct task name"
-    assert cloud_template["dag"]["tasks"][0]["template"] == "kedro", "Test template task should use kedro template"
+    ), "cloud_pipeline template should have correct task name"
+    assert (
+        cloud_template["dag"]["tasks"][0]["template"] == "kedro"
+    ), "cloud_pipeline template task should use kedro template"
 
     # Check if the pipeline is included in the templates
     pipeline_names = [template["name"] for template in templates]
-    assert "test" in pipeline_names, "The 'test' pipeline should be included in the templates"
+    assert "test_pipeline" in pipeline_names, "The 'test_pipeline' pipeline should be included in the templates"
+    assert "cloud_pipeline" in pipeline_names, "The 'cloud_pipeline' pipeline should be included in the templates"

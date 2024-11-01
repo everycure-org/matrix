@@ -43,29 +43,19 @@ def cli():
 @click.option("--namespace", type=str, default="argo-workflows", help="Specify a custom namespace")
 @click.option("--run-name", type=str, default=None, help="Specify a custom run name, defaults to branch")
 @click.option("--pipeline", type=str, default="__default__", help="Specify which pipeline to execute")
-@click.option("--include-pipeline", type=str, multiple=True, default=None, help="Specify which pipelines to include in workflow template. If not specified, all pipelines are added to the workflow.")
 @click.option("--verbose", "-v", is_flag=True, default=False, help="Enable verbose output")
 @click.option("--dry-run", "-d", is_flag=True, default=False, help="Does everything except submit the workflow")
 # fmt: on
-def submit(username: str, namespace: str, run_name: str, pipeline: str, include_pipeline: tuple[str], verbose: bool, dry_run: bool):
+def submit(username: str, namespace: str, run_name: str, pipeline: str, verbose: bool, dry_run: bool):
     """Submit the end-to-end workflow. """
     if verbose:
         log.setLevel(logging.DEBUG)
 
     run_name = get_run_name(run_name)
-    
-    pipelines_to_submit = {}
-    if include_pipeline == ():
-        pipelines_to_submit = kedro_pipelines
-    else:
-        for pipeline_name in include_pipeline:
-            if pipeline_name not in kedro_pipelines:
-                raise ValueError(f"Requested workflow pipeline {pipeline_name} not found!")
-            pipelines_to_submit[pipeline_name] = kedro_pipelines[pipeline_name]
+    pipelines_to_submit = kedro_pipelines
 
     if pipeline not in pipelines_to_submit:
         raise ValueError(f"Pipeline requested for execution {pipeline} not included in workflow!")
-
 
     _submit(
         username=username,
@@ -313,7 +303,6 @@ def build_argo_template(run_name: str, username: str, namespace: str, pipelines:
     )
 
 def save_argo_template(argo_template: str, run_name: str, template_directory: Path) -> str:
-    """Save Argo workflow template to file."""
     file_path = template_directory / f"argo_template_{run_name}_{time.strftime('%Y%m%d_%H%M%S')}.yml"
     with open(file_path, "w") as f:
         f.write(argo_template)
