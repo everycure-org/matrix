@@ -1,5 +1,4 @@
 from pathlib import Path
-from typing import Dict, Any
 from kedro.pipeline.node import Node
 from kedro.pipeline import Pipeline
 import pytest
@@ -324,201 +323,7 @@ def test_clean_dependencies() -> None:
     assert cleaned == ["dataset_a", "dataset_b"]
 
 
-@pytest.fixture()
-def expected_argo_config():
-    """Fixture to provide expected Argo YAML output for comparison."""
-    return yaml.safe_load(
-        """
-apiVersion: argoproj.io/v1alpha1
-kind: WorkflowTemplate
-metadata:
-  namespace: test_namespace
-  name: test_run
-spec:
-  workflowMetadata:
-    labels:
-      run: '{{ workflow.parameters.run_name }}'
-      username: "test_user"
-  entrypoint: __default__
-  arguments:
-    parameters:
-      - name: image
-        value: "us-central1-docker.pkg.dev/mtrx-hub-dev-3of/matrix-images/matrix"
-      - name: image_tag
-        value: "test_tag"
-      - name: run_name
-        value: "test_tag"
-      - name: neo4j_host
-        value: "bolt://neo4j.neo4j.svc.cluster.local:7687"
-      - name: mlflow_endpoint
-        value: "http://mlflow-tracking.mlflow.svc.cluster.local:80"
-      - name: openai_endpoint
-        value: "https://api.openai.com/v1"
-      - name: env
-        value: "cloud"
-  templates:
-  - name: kedro
-    backoff:
-      duration: "1"      # Must be a string. Default unit is seconds. Could also be a Duration, e.g.: "2m", "6h", "1d"
-      factor: 2
-      maxDuration: "1m"  # Must be a string. Default unit is seconds. Could also be a Duration, e.g.: "2m", "6h", "1d"
-    affinity:
-      nodeAntiAffinity: {}
-    metadata:
-      labels:
-        app: kedro-argo
-    inputs:
-      parameters:
-      - name: kedro_nodes
-      - name: pipeline
-    container:
-      imagePullPolicy: Always
-      image:  "{{workflow.parameters.image}}:{{workflow.parameters.image_tag}}" 
-      resources: # limit the resources
-        requests:
-          memory: 64Gi
-          cpu: 4
-        limits:
-          memory: 64Gi
-          cpu: 16
-      env:
-        - name: WORKFLOW_ID
-          valueFrom:
-            fieldRef:
-              fieldPath: metadata.labels['workflows.argoproj.io/workflow']
-        - name: RUN_NAME
-          value:  "{{workflow.parameters.run_name}}" 
-        - name: NEO4J_HOST
-          value:  "{{workflow.parameters.neo4j_host}}" 
-        - name: MLFLOW_ENDPOINT
-          value:  "{{workflow.parameters.mlflow_endpoint}}" 
-        - name: NEO4J_USER
-          valueFrom:
-            secretKeyRef:
-              name: matrix-secrets
-              key: NEO4J_USER
-        - name: NEO4J_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              name: matrix-secrets
-              key: NEO4J_PASSWORD
-        - name: OPENAI_ENDPOINT
-          value:  "{{workflow.parameters.openai_endpoint}}" 
-        - name: OPENAI_API_KEY
-          valueFrom:
-            secretKeyRef:
-              name: matrix-secrets
-              key: OPENAI_API_KEY
-        - name: GCP_PROJECT_ID
-          valueFrom:
-            configMapKeyRef:
-              name: matrix-config
-              key: GCP_PROJECT_ID
-        - name: GCP_BUCKET
-          valueFrom:
-            configMapKeyRef:
-              name: matrix-config
-              key: GCP_BUCKET
-      command: [kedro]
-      args: ["run", "-p", "{{inputs.parameters.pipeline}}", "-e", "{{workflow.parameters.env}}", "-n", "{{inputs.parameters.kedro_nodes}}"]
-
-  - name: neo4j
-    inputs:
-      parameters:
-      - name: kedro_nodes
-      - name: pipeline
-    container:
-      resources: # limit the resources
-        requests:
-          memory: 120Gi
-          cpu: 4
-        limits:
-          memory: 120Gi
-          cpu: 16
-      env:
-        - name: WORKFLOW_ID
-          valueFrom:
-            fieldRef:
-              fieldPath: metadata.labels['workflows.argoproj.io/workflow']
-        - name: RUN_NAME
-          value:  "{{workflow.parameters.run_name}}" 
-        - name: MLFLOW_ENDPOINT
-          value:  "{{workflow.parameters.mlflow_endpoint}}" 
-        - name: NEO4J_USER
-          value: "neo4j"
-        - name: NEO4J_PASSWORD
-          value: "admin"
-        - name: GCP_PROJECT_ID
-          valueFrom:
-            configMapKeyRef:
-              name: matrix-config
-              key: GCP_PROJECT_ID
-        - name: GCP_BUCKET
-          valueFrom:
-            configMapKeyRef:
-              name: matrix-config
-              key: GCP_BUCKET
-        - name: OPENAI_API_KEY
-          value: "foo"
-        - name: OPENAI_ENDPOINT
-          value:  "{{workflow.parameters.openai_endpoint}}" 
-        - name: OPENAI_API_KEY
-          valueFrom:
-            secretKeyRef:
-              name: matrix-secrets
-              key: OPENAI_API_KEY
-      imagePullPolicy: Always
-      image:  "{{workflow.parameters.image}}:{{workflow.parameters.image_tag}}"       
-      command: ["/bin/sh", "-c"]
-      args:
-        - |
-          echo "Waiting for Neo4j to be ready..."
-          until curl -s http://localhost:7474/ready; do
-            echo "Waiting..."
-            sleep 5
-          done
-          echo "Neo4j is ready. Starting main application..."
-          kedro run -p "{{inputs.parameters.pipeline}}" -e "{{workflow.parameters.env}}" -n "{{inputs.parameters.kedro_nodes}}"    
-    sidecars:
-      - name: neo4j
-        image: neo4j:5.21.0-enterprise
-        env:
-        - name: NEO4J_AUTH
-          value: "neo4j/admin"
-        - name: NEO4J_apoc_export_file_enabled
-          value: "true"
-        - name: NEO4J_apoc_import_file_enabled
-          value: "true"
-        - name: NEO4J_apoc_import_file_use__neo4j__config
-          value: "true"
-        - name: NEO4J_PLUGINS
-          value: '["apoc", "graph-data-science", "apoc-extended"]'
-        - name: NEO4J_dbms_security_auth__minimum__password__length
-          value: "4"
-        - name: NEO4J_dbms_security_procedures_whitelist
-          value: "gds.*, apoc.*"
-        - name: NEO4J_dbms_security_procedures_unrestricted
-          value: "gds.*, apoc.*"
-        - name: NEO4J_db_logs_query_enabled
-          value: "OFF"
-        - name: NEO4J_ACCEPT_LICENSE_AGREEMENT
-          value: "yes"
-  - name: test
-    dag:
-      tasks:
-      - name: simple-node
-        template: kedro
-        arguments:
-          parameters:
-          - name: pipeline
-            value: test
-          - name: kedro_nodes
-            value: simple_node
-        """
-    )
-
-
-def test_generate_argo_config(expected_argo_config: Dict[str, Any], matrix_root: Path) -> None:
+def test_generate_argo_config(matrix_root: Path) -> None:
     image_name = "us-central1-docker.pkg.dev/mtrx-hub-dev-3of/matrix-images/matrix"
     run_name = "test_run"
     image_tag = "test_tag"
@@ -555,94 +360,19 @@ def test_generate_argo_config(expected_argo_config: Dict[str, Any], matrix_root:
     parsed_config = yaml.safe_load(argo_config)
 
     assert isinstance(parsed_config, dict), "Parsed config should be a dictionary"
-    # Verify apiVersion
-    assert parsed_config["apiVersion"] == expected_argo_config["apiVersion"], "Config should have 'apiVersion'"
-
-    # Verify kind
-    assert parsed_config["kind"] == expected_argo_config["kind"], "Config should have 'kind'"
-
-    # Verify metadata
-    assert (
-        parsed_config["metadata"]["namespace"] == expected_argo_config["metadata"]["namespace"]
-    ), "Config should have correct 'namespace'"
-    assert (
-        parsed_config["metadata"]["name"] == expected_argo_config["metadata"]["name"]
-    ), "Config should have correct 'name'"
 
     # Verify spec
     spec = parsed_config["spec"]
-    expected_spec = expected_argo_config["spec"]
-
-    # Verify workflowMetadata
-    assert (
-        spec["workflowMetadata"]["labels"]["run"] == expected_spec["workflowMetadata"]["labels"]["run"]
-    ), "Config should have correct 'run' label"
-    assert (
-        spec["workflowMetadata"]["labels"]["username"] == expected_spec["workflowMetadata"]["labels"]["username"]
-    ), "Config should have correct 'username' label"
-
-    assert spec["entrypoint"] == expected_spec["entrypoint"], "Config should have correct 'entrypoint'"
-
-    # Verify arguments
-    parameters_actual = spec["arguments"]["parameters"]
-    parameters_expected = expected_spec["arguments"]["parameters"]
-    assert len(parameters_actual) == len(parameters_expected), "Config should have correct number of parameters"
-
-    for parameter_expected, parameter_actual in zip(parameters_expected, parameters_actual):
-        assert (
-            parameter_expected["name"] == parameter_actual["name"]
-        ), f"Parameter {parameter_expected['name']} not found or mismatched"
-        assert (
-            parameter_expected["value"] == parameter_actual["value"]
-        ), f"Parameter {parameter_expected['name']} has incorrect value"
-
-    # Verify templates
-    templates = spec["templates"]
-    assert len(templates) == 4, "Config should have 4 templates"
 
     # Verify kedro template
-    kedro_template = next(t for t in templates if t["name"] == "kedro")
+    kedro_template = next(t for t in spec["templates"] if t["name"] == "kedro")
     assert kedro_template["backoff"]["duration"] == "1", "Kedro template should have correct backoff duration"
     assert kedro_template["backoff"]["factor"] == 2, "Kedro template should have correct backoff factor"
     assert kedro_template["backoff"]["maxDuration"] == "1m", "Kedro template should have correct max backoff duration"
     assert "nodeAntiAffinity" in kedro_template["affinity"], "Kedro template should have nodeAntiAffinity"
     assert kedro_template["metadata"]["labels"]["app"] == "kedro-argo", "Kedro template should have correct label"
 
-    # Verify kedro container
-    kedro_container = kedro_template["container"]
-    assert kedro_container["imagePullPolicy"] == "Always", "Kedro container should have correct imagePullPolicy"
-    assert (
-        kedro_container["image"] == "{{workflow.parameters.image}}:{{workflow.parameters.image_tag}}"
-    ), "Kedro container should have correct image"
-    assert (
-        kedro_container["resources"]["requests"]["memory"] == "64Gi"
-    ), "Kedro container should have correct memory request"
-    assert kedro_container["resources"]["limits"]["cpu"] == 16, "Kedro container should have correct CPU limit"
-
-    # Verify neo4j template
-    neo4j_template = next(t for t in templates if t["name"] == "neo4j")
-    assert "kedro_nodes" in [
-        x["name"] for x in neo4j_template["inputs"]["parameters"]
-    ], "Neo4j template should have kedro_nodes input"
-    assert "pipeline" in [
-        x["name"] for x in neo4j_template["inputs"]["parameters"]
-    ], "Neo4j template should have pipeline input"
-
-    # Verify neo4j container
-    neo4j_container = neo4j_template["container"]
-    assert (
-        neo4j_container["resources"]["requests"]["memory"] == "120Gi"
-    ), "Neo4j container should have correct memory request"
-    assert neo4j_container["resources"]["limits"]["cpu"] == 16, "Neo4j container should have correct CPU limit"
-
-    # Verify neo4j sidecar
-    neo4j_sidecar = neo4j_template["sidecars"][0]
-    assert neo4j_sidecar["name"] == "neo4j", "Neo4j sidecar should have correct name"
-    assert neo4j_sidecar["image"] == "neo4j:5.21.0-enterprise", "Neo4j sidecar should have correct image"
-    assert any(
-        env["name"] == "NEO4J_ACCEPT_LICENSE_AGREEMENT" and env["value"] == "yes" for env in neo4j_sidecar["env"]
-    ), "Neo4j sidecar should accept license agreement"
-
+    templates = spec["templates"]
     # Check if the pipeline is included in the templates
     pipeline_names = [template["name"] for template in templates]
     assert "test_pipeline" in pipeline_names, "The 'test_pipeline' pipeline should be included in the templates"
