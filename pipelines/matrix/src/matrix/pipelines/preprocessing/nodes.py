@@ -509,7 +509,9 @@ def clean_input_sheet(input_df: pd.DataFrame, endpoint: str) -> pd.DataFrame:
 # GT
 
 
-def clean_gt_data(pos_df: pd.DataFrame, neg_df: pd.DataFrame, endpoint: str) -> Tuple[pd.DataFrame, pd.DataFrame]:
+def clean_gt_data(
+    pos_df: pd.DataFrame, neg_df: pd.DataFrame, nodes: pd.DataFrame, endpoint: str
+) -> Tuple[pd.DataFrame, pd.DataFrame]:
     """Clean ground truth data.
 
     Args:
@@ -519,6 +521,9 @@ def clean_gt_data(pos_df: pd.DataFrame, neg_df: pd.DataFrame, endpoint: str) -> 
     Returns:
         Cleaned ground truth data.
     """
+    # temporarily dropping gt which are not in the nodes dataframe
+    # TODO: remove
+    node_ids = [row.id for row in nodes.select("id").collect()]
     # Synonymize source and target IDs for both positive and negative ground truth data
     for df in [pos_df, neg_df]:
         for col in ["source", "target"]:
@@ -532,6 +537,8 @@ def clean_gt_data(pos_df: pd.DataFrame, neg_df: pd.DataFrame, endpoint: str) -> 
                 att_to_get="identifier",
             )
             df[col] = df[col].map(node_id_map)
+            # TEMPORARY fix to see how lineage goes
+            df = df.loc[~df[col].isin(node_ids)]
 
     # Return updated DataFrames
     return pos_df.dropna(subset=["source", "target"]).drop_duplicates(), neg_df.dropna(
