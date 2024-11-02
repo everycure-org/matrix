@@ -7,15 +7,17 @@ import subprocess
 import tempfile
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import TYPE_CHECKING, Dict, List, Optional
 
 import openai
-import pandas as pd
 import typer
 from joblib import Memory
 from pydantic import BaseModel, Field
 from tenacity import retry, stop_after_attempt, wait_exponential
 from tqdm import tqdm
+
+if TYPE_CHECKING:
+    from pandas import pd
 
 app = typer.Typer()
 memory = Memory(location=".joblib", verbose=0)
@@ -128,7 +130,7 @@ def fetch_pr_detail(pr_number: int) -> Optional[PRInfo]:
     return fetch_pr_detail_nocache(pr_number)
 
 
-def get_pr_details(pr_numbers: List[int], use_cache: bool = True) -> pd.DataFrame:
+def get_pr_details(pr_numbers: List[int], use_cache: bool = True) -> "pd.DataFrame":
     """
     Retrieves PR details from GitHub using thread pool.
 
@@ -157,7 +159,7 @@ def get_pr_details(pr_numbers: List[int], use_cache: bool = True) -> pd.DataFram
     return pd.DataFrame(results)
 
 
-def update_prs(df: pd.DataFrame):
+def update_prs(df: "pd.DataFrame"):
     for _, row in tqdm(list(df.iterrows()), desc="Updating PRs", unit="PR"):
         pr_number = row["number"]
 
@@ -296,7 +298,7 @@ def load_corrections() -> str:
     return corrections_path.read_text()
 
 
-def enhance_pr_titles(df: pd.DataFrame) -> pd.DataFrame:
+def enhance_pr_titles(df: "pd.DataFrame") -> "pd.DataFrame":
     """
     Enhances PR titles using GPT-4 suggestions in parallel.
 
@@ -342,7 +344,7 @@ def enhance_pr_titles(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-def write_excel(df: pd.DataFrame, filename: str):
+def write_excel(df: "pd.DataFrame", filename: str):
     """
     Writes DataFrame to Excel, organizing columns for easy review.
     """
