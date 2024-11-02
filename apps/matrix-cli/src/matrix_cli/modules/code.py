@@ -44,21 +44,22 @@ INCLUSION_PATTERNS = [
 def write_release_article(
     since: str = typer.Argument(..., help="Git reference (SHA, tag, branch) to diff from"),
     output_file: str = typer.Option(None, help="File to write the release article to"),
-    model: str = typer.Option(settings.base_model, help="Model to use for release article generation"),
+    model: str = typer.Option(settings.power_model, help="Model to use for release article generation"),
     disable_rendering: bool = typer.Option(False, help="Disable rendering of the release article"),
 ):
     """Write a release article for a given git reference."""
 
     console.print("[green]Collecting release notes...")
-    notes = get_release_notes(since, model=settings.base_model)
+    notes = get_release_notes(since, model=model)
 
     console.print("[green]Collecting previous articles...")
     previous_articles = get_previous_articles()
 
     console.print("[green]Summarizing code changes...")
-    code_summary = get_ai_code_summary(since, model=settings.base_model)
+    code_summary = get_ai_code_summary(since, model=model)
 
     # prompt user to give guidance on what to focus on in the release article
+    console.print(Markdown(notes))
     focus_direction = console.input(
         "[bold green]Please provide guidance on what to focus on in the release article. Note 'Enter' will end the prompt: "
     )
