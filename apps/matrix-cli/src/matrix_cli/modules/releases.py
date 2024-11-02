@@ -218,7 +218,7 @@ def load_example_release_notes() -> str:
     """
     Loads the example release notes for GPT context.
     """
-    example_path = Path(__file__).parent.parent / "prompts" / "example_release_notes.txt"
+    example_path = Path(__file__).parent / "prompts" / "example_release_notes.txt"
     if example_path.exists():
         return example_path.read_text()
     return ""
@@ -292,7 +292,7 @@ def load_corrections() -> str:
     """
     Loads the corrections for bad PR titles.
     """
-    corrections_path = Path(__file__).parent.parent / "prompts" / "ai_title_suggestion_corrections.yaml"
+    corrections_path = Path(__file__).parent / "prompts" / "ai_title_suggestion_corrections.yaml"
     return corrections_path.read_text()
 
 
