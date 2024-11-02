@@ -4,6 +4,7 @@ import json
 import platform
 import re
 import subprocess
+import tempfile
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 from typing import Dict, List, Optional
@@ -217,7 +218,7 @@ def load_example_release_notes() -> str:
     """
     Loads the example release notes for GPT context.
     """
-    example_path = Path(__file__).parent / "release_preparation" / "example_release_notes.txt"
+    example_path = Path(__file__).parent.parent / "prompts" / "example_release_notes.txt"
     if example_path.exists():
         return example_path.read_text()
     return ""
@@ -291,7 +292,7 @@ def load_corrections() -> str:
     """
     Loads the corrections for bad PR titles.
     """
-    corrections_path = Path(__file__).parent / "release_preparation" / "ai_title_suggestion_corrections.yaml"
+    corrections_path = Path(__file__).parent.parent / "prompts" / "ai_title_suggestion_corrections.yaml"
     return corrections_path.read_text()
 
 
@@ -379,7 +380,7 @@ def write_excel(df: pd.DataFrame, filename: str):
 @app.command()
 def prepare_release(
     previous_tag: str,
-    output_file: str = "release_prs.xlsx",
+    output_file: str = None,
     no_cache: bool = typer.Option(False, "--no-cache", help="Disable caching of PR details"),
     skip_ai: bool = typer.Option(False, "--skip-ai", help="Skip AI title suggestions"),
 ):
@@ -393,6 +394,10 @@ def prepare_release(
         skip_ai (bool): If True, skip AI title suggestions.
     """
     typer.echo(f"Collecting PRs since {previous_tag}...")
+
+    if not output_file:
+        # use temporary directory
+        output_file = tempfile.mktemp(suffix=".xlsx")
 
     # Get commit logs and extract PR numbers
     commit_messages = get_commit_logs(previous_tag)

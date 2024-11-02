@@ -1,0 +1,17 @@
+[project]
+name = "matrix-cli"
+version = "0.1.0"
+description = "CLI for the Matrix project monorepo"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "joblib>=1.4.2",
+    "openai>=1.53.0",
+    "pandas>=2.2.3",
+    "pydantic>=2.9.2",
+    "pydantic-settings>=2.6.1",
+    "pytest>=8.3.3",
+    "tenacity>=9.0.0",
+    "typer>=0.12.5",
+    "openpyxl>=3.1.5",
+]
