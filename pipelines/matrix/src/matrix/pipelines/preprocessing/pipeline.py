@@ -128,6 +128,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 inputs=[
                     "preprocessing.raw.ground_truth.positives",
                     "preprocessing.raw.ground_truth.negatives",
+                    "integration.prm.filtered_nodes",
                     "params:preprocessing.translator_endpoint",
                 ],
                 outputs=["modelling.raw.ground_truth.positives", "modelling.raw.ground_truth.negatives"],
