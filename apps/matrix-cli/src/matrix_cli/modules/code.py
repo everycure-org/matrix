@@ -9,7 +9,6 @@ import yaml
 from rich import print
 from rich.console import Console
 from rich.markdown import Markdown
-from rich.progress import Progress, SpinnerColumn, TextColumn
 from tenacity import retry, stop_after_attempt, wait_exponential
 from vertexai.generative_models import (
     GenerationConfig,
@@ -46,34 +45,25 @@ def write_release_article(
     since: str = typer.Argument(..., help="Git reference (SHA, tag, branch) to diff from"),
     output_file: str = typer.Option(None, help="File to write the release article to"),
     model: str = typer.Option(settings.base_model, help="Model to use for release article generation"),
+    disable_rendering: bool = typer.Option(False, help="Disable rendering of the release article"),
 ):
     """Write a release article for a given git reference."""
 
-    with Progress(
-        SpinnerColumn(),
-        TextColumn("[progress.description]{task.description}"),
-        console=console,
-    ) as progress:
-        task1 = progress.add_task("[cyan]Collecting release notes...")
-        notes = get_release_notes(since, model=settings.base_model)
-        progress.update(task1, completed=1)
+    console.print("[green]Collecting release notes...")
+    notes = get_release_notes(since, model=settings.base_model)
 
-        task2 = progress.add_task("[green]Collecting previous articles...")
-        previous_articles = get_previous_articles()
-        progress.update(task2, completed=1)
+    console.print("[green]Collecting previous articles...")
+    previous_articles = get_previous_articles()
 
-        task3 = progress.add_task("[magenta]Summarizing code changes...")
-        code_summary = get_ai_code_summary(since, model=settings.base_model)
-        progress.update(task3, completed=1)
+    console.print("[green]Summarizing code changes...")
+    code_summary = get_ai_code_summary(since, model=settings.base_model)
 
-        task4 = progress.add_task("[yellow]Generating release article...")
+    # prompt user to give guidance on what to focus on in the release article
+    focus_direction = console.input(
+        "[bold green]Please provide guidance on what to focus on in the release article. Note 'Enter' will end the prompt: "
+    )
 
-        # prompt user to give guidance on what to focus on in the release article
-        focus_direction = console.input(
-            "[bold green]Please provide guidance on what to focus on in the release article. Note 'Enter' will end the prompt: "
-        )
-
-        prompt = f"""
+    prompt = f"""
 # Please write a release article based on the following release notes and git diff:
 
 {notes}
@@ -94,23 +84,19 @@ Please focus on the following topics in the release article:
 {focus_direction}
         """
 
-        generation_config = GenerationConfig(
-            max_output_tokens=10_000,
-            temperature=0.7,
-        )
-
-        response = invoke_model(prompt, model=model, generation_config=generation_config)
-        progress.update(task4, completed=1)
+    response = invoke_model(prompt, model=model)
 
     if output_file:
         with open(output_file, "w") as f:
             f.write(response)
         console.print(f"Release article written to: {output_file}")
-    else:
+    elif not disable_rendering:
         console.print("[bold green]Generated release article:")
         console.print("=" * 100)
         console.print(Markdown(response))
         console.print("=" * 100)
+    else:
+        console.print(response)
 
 
 @app.command()
@@ -181,7 +167,7 @@ def get_release_notes(since: str, model: str) -> str:
     release_template = get_release_template()
     console.print("[bold green]Collecting PR details...")
     pr_details_df = get_pr_details_since(since)[["title", "number"]]
-    pr_details_dict = pr_details_df.to_dict(orient="records")
+    pr_details_dict = pr_details_df.sort_values(by="number").to_dict(orient="records")
     console.print("[bold green]Collecting git diff...")
     diff_output = get_code_diff(since)
 
