@@ -11,18 +11,87 @@ from typing import TYPE_CHECKING, Dict, List, Optional
 
 import openai
 import typer
-from joblib import Memory
 from pydantic import BaseModel, Field
 from tenacity import retry, stop_after_attempt, wait_exponential
 from tqdm import tqdm
+
+from matrix_cli.cache import memory
 
 if TYPE_CHECKING:
     from pandas import pd
 
 app = typer.Typer()
-memory = Memory(location=".joblib", verbose=0)
 WORKERS = 8
 MODEL = "gpt-4o-mini"
+
+
+@app.command()
+def prepare_release(
+    previous_tag: str,
+    output_file: str = None,
+    no_cache: bool = typer.Option(False, "--no-cache", help="Disable caching of PR details"),
+    skip_ai: bool = typer.Option(False, "--skip-ai", help="Skip AI title suggestions"),
+):
+    """
+    Prepares release notes by processing PRs merged since the given tag.
+
+    Args:
+        previous_tag (str): The previous release git tag.
+        output_file (str): The name of the Excel file to create/update.
+        no_cache (bool): If True, bypass the cache when fetching PR details.
+        skip_ai (bool): If True, skip AI title suggestions.
+    """
+    typer.echo(f"Collecting PRs since {previous_tag}...")
+
+    if not output_file:
+        # use temporary directory
+        output_file = tempfile.mktemp(suffix=".xlsx")
+
+    # Get commit logs and extract PR numbers
+    pr_details_df = get_pr_details_since(previous_tag, use_cache=not no_cache)
+
+    # Get AI suggestions for titles if not skipped
+    if not skip_ai:
+        pr_details_df = enhance_pr_titles(pr_details_df)
+
+    # Export to Excel
+    write_excel(pr_details_df, output_file)
+
+    typer.echo(f"\nPR details exported to '{output_file}'.")
+    typer.echo("\nPlease edit the file with your desired changes:")
+    typer.echo("- Review 'ai_suggested_title' column for AI suggestions")
+    typer.echo("- Modify 'new_title' column to change PR titles")
+    typer.echo("- Modify 'new_labels' column to change PR labels (comma-separated)")
+
+    # Open the file automatically
+    open_file_in_desktop_application(output_file)
+
+    # Wait for user to edit the Excel file
+    if not typer.confirm("\nHave you edited the file and ready to continue?"):
+        typer.echo("Operation cancelled.")
+        raise typer.Exit()
+
+    # Read the modified Excel file
+    try:
+        updated_df = pd.read_excel(
+            output_file,
+            dtype={
+                "number": "str",
+                "title": "str",
+                "ai_suggested_title": "str",
+                "new_title": "str",
+                "current_labels": "str",
+                "new_labels": "str",
+                "url": "str",
+                "merge_commit": "str",
+            },
+            keep_default_na=False,  # This prevents empty cells from becoming NaN
+        )
+        update_prs(updated_df)
+        typer.echo("\nAll PR updates completed!")
+    except Exception as e:
+        typer.echo(f"Error processing Excel file: {e}", err=True)
+        raise typer.Exit(1)
 
 
 class PRInfo(BaseModel):
@@ -74,6 +143,15 @@ def run_command(command: List[str]) -> str:
     except subprocess.CalledProcessError as e:
         typer.echo(f"Error running command {' '.join(command)}: {e.stderr}", err=True)
         raise
+
+
+def get_pr_details_since(previous_tag: str, use_cache: bool = True) -> List[PRInfo]:
+    commit_messages = get_commit_logs(previous_tag)
+    pr_numbers = extract_pr_numbers(commit_messages)
+    if not pr_numbers:
+        typer.echo("No PRs found since the previous tag.")
+        raise typer.Exit(1)
+    return get_pr_details(pr_numbers, use_cache)
 
 
 def get_commit_logs(previous_tag: str) -> List[str]:
@@ -155,6 +233,9 @@ def get_pr_details(pr_numbers: List[int], use_cache: bool = True) -> "pd.DataFra
             pr_info = future.result()
             if pr_info:
                 results.append(pr_info.to_dict())
+
+    # importing here for CLI performance reasons
+    import pandas as pd
 
     return pd.DataFrame(results)
 
@@ -377,87 +458,6 @@ def write_excel(df: "pd.DataFrame", filename: str):
         worksheet.column_dimensions[chr(65 + idx)].width = min(max_length + 2, 100)
 
     writer.close()
-
-
-@app.command()
-def prepare_release(
-    previous_tag: str,
-    output_file: str = None,
-    no_cache: bool = typer.Option(False, "--no-cache", help="Disable caching of PR details"),
-    skip_ai: bool = typer.Option(False, "--skip-ai", help="Skip AI title suggestions"),
-):
-    """
-    Prepares release notes by processing PRs merged since the given tag.
-
-    Args:
-        previous_tag (str): The previous release git tag.
-        output_file (str): The name of the Excel file to create/update.
-        no_cache (bool): If True, bypass the cache when fetching PR details.
-        skip_ai (bool): If True, skip AI title suggestions.
-    """
-    typer.echo(f"Collecting PRs since {previous_tag}...")
-
-    if not output_file:
-        # use temporary directory
-        output_file = tempfile.mktemp(suffix=".xlsx")
-
-    # Get commit logs and extract PR numbers
-    commit_messages = get_commit_logs(previous_tag)
-    typer.echo(f"Found {len(commit_messages)} commit messages")
-    # print top 10
-    [typer.echo(f"{msg}") for msg in commit_messages[:10]]
-    typer.echo("Extracting PR numbers...")
-    pr_numbers = extract_pr_numbers(commit_messages)
-
-    if not pr_numbers:
-        typer.echo("No PRs found since the previous tag.")
-        raise typer.Exit(1)
-
-    # Get PR details
-    pr_details_df = get_pr_details(pr_numbers, use_cache=not no_cache)
-
-    # Get AI suggestions for titles if not skipped
-    if not skip_ai:
-        pr_details_df = enhance_pr_titles(pr_details_df)
-
-    # Export to Excel
-    write_excel(pr_details_df, output_file)
-
-    typer.echo(f"\nPR details exported to '{output_file}'.")
-    typer.echo("\nPlease edit the file with your desired changes:")
-    typer.echo("- Review 'ai_suggested_title' column for AI suggestions")
-    typer.echo("- Modify 'new_title' column to change PR titles")
-    typer.echo("- Modify 'new_labels' column to change PR labels (comma-separated)")
-
-    # Open the file automatically
-    open_file_in_desktop_application(output_file)
-
-    # Wait for user to edit the Excel file
-    if not typer.confirm("\nHave you edited the file and ready to continue?"):
-        typer.echo("Operation cancelled.")
-        raise typer.Exit()
-
-    # Read the modified Excel file
-    try:
-        updated_df = pd.read_excel(
-            output_file,
-            dtype={
-                "number": "str",
-                "title": "str",
-                "ai_suggested_title": "str",
-                "new_title": "str",
-                "current_labels": "str",
-                "new_labels": "str",
-                "url": "str",
-                "merge_commit": "str",
-            },
-            keep_default_na=False,  # This prevents empty cells from becoming NaN
-        )
-        update_prs(updated_df)
-        typer.echo("\nAll PR updates completed!")
-    except Exception as e:
-        typer.echo(f"Error processing Excel file: {e}", err=True)
-        raise typer.Exit(1)
 
 
 if __name__ == "__main__":
