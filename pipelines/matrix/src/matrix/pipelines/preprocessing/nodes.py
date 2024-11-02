@@ -538,8 +538,11 @@ def clean_gt_data(
             )
             df[col] = df[col].map(node_id_map)
             # TEMPORARY fix to see how lineage goes
-            df = df.loc[~df[col].isin(node_ids)]
+    print(pos_df.shape, neg_df.shape)
 
+    pos_df = pos_df.loc[((pos_df["source"].isin(node_ids)) & pos_df["target"].isin(node_ids))]
+    neg_df = neg_df.loc[((neg_df["source"].isin(node_ids)) & neg_df["target"].isin(node_ids))]
+    print(pos_df.shape, neg_df.shape)
     # Return updated DataFrames
     return pos_df.dropna(subset=["source", "target"]).drop_duplicates(), neg_df.dropna(
         subset=["source", "target"]
