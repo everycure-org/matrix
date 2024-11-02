@@ -1,3 +1,11 @@
+#!/bin/bash
+
+if [ $# -eq 0 ]; then
+    echo "Error: No git ref passed"
+    exit 1
+fi
+
+
 # this script gives back all code that was added to the repo between two points (e.g. SHA or tags) while avoiding useless files
 git diff --name-only $1 \
     | egrep "\.(md|py|yaml|tf|Makefile|Dockerfile|sh|toml|yml|txt|hcl|git)$" \

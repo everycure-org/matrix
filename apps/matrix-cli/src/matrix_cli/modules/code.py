@@ -4,7 +4,6 @@ import os
 import subprocess
 from pathlib import Path
 
-import google.generativeai as genai
 import typer
 from rich import print
 from rich.markdown import Markdown
@@ -21,10 +20,10 @@ def get_code_diff(since: str) -> str:
     Returns:
         str: Formatted diff output
     """
-    script_path = Path("tools") / "diff_between_code.sh"
+    script_path = Path(os.getcwd()) / "tools" / "diff_between_code.sh"
 
     try:
-        result = subprocess.run([str(script_path), since], capture_output=True, text=True, check=True)
+        result = subprocess.run(["bash", "-c", str(script_path), since], capture_output=True, text=True, check=True)
         return result.stdout
     except subprocess.CalledProcessError as e:
         raise typer.BadParameter(f"Failed to get diff: {e.stderr}")
@@ -49,12 +48,27 @@ def summarize(
     model: str = typer.Option("gemini-pro", help="Model to use for summarization"),
 ):
     """Generate an AI summary of code changes since a specific git reference."""
+
+    import vertexai
+    from vertexai.generative_models import GenerativeModel
+
     try:
+        typer.echo(f"Loading diff...: {model}")
         diff_output = get_code_diff(since)
+        typer.echo("Diff loaded! Loading AI model...")
+        # Configure Gemini
+        vertexai.init()
+        model = GenerativeModel("gemini-1.5-pro-002")
+
+        # response = model.generate_content(
+        #     "What's a good name for a flower shop that specializes in selling bouquets of dried flowers?"
+        # )
+        #
+        # print(response.text)
 
         # Configure Gemini
-        genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
-        model = genai.GenerativeModel(model)
+        # genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
+        # model = genai.GenerativeModel(model)
 
         prompt = f"""Please provide a concise summary of the following code changes. 
         Focus on:
