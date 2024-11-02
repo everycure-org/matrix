@@ -1,10 +1,9 @@
 ---
 draft: false 
-date: 2024-09-02 
+date: 2024-11-01
 categories:
   - Release
 authors:
-
   - RobynMac25
   - alexeistepa
   - chempsEC
@@ -20,62 +19,80 @@ authors:
   - pascalwhoop
   - piotrkan
   - redst4r
-
 ---
 
-# Matrix Platform Release: Enhanced Data Integration, Inference Capabilities, and Scalability
+# `v0.2.2`: Enhanced Data Integration, Robust Synonymization, and Advanced Evaluation
 
-This release of the Matrix Platform delivers significant improvements across data integration, model evaluation, and infrastructure, enabling more efficient and comprehensive drug repurposing analysis.  Key
-highlights include the integration of the Robokop knowledge graph, a new inference pipeline for rapid hypothesis testing, enhanced Neo4j capabilities for improved scalability, and the addition of new
-evaluation metrics.
+This release of the Matrix Platform introduces significant improvements to data integration, synonymization capabilities, and evaluation methodologies, enhancing the platform's ability to generate robust and
+reliable drug repurposing predictions.
 
 <!-- more -->
 
-For a complete list of changes, please refer to the [GitHub release notes](https://github.com/everycure-org/matrix/releases/tag/v[Insert Version Number Here]).
+For a complete list of changes, please refer to the [GitHub release notes](https://github.com/everycure-org/matrix/releases/tag/v0.2.2).
 
-## Key Enhancements
+## Key Enhancements 🚀
 
-### 1. Robokop Data Integration: Expanding the Knowledge Base
+### 1. ROBOKOP Data Integration and RTX 2.10 Upgrade :database:
 
-We've integrated the Robokop knowledge graph into our ingestion pipeline, substantially expanding the dataset used for drug repurposing analysis. This integration provides a richer source of information,
-leading to more comprehensive and nuanced predictions.  Robokop's unique data points enrich our existing knowledge graph, improving the accuracy and reliability of our models.
+The platform now integrates the ROBOKOP knowledge graph, significantly broadening the knowledge base for drug repurposing analysis.  This integration, coupled with the upgrade to RTX 2.10, delivers:
 
+- **Enhanced data coverage:** A richer and more up-to-date knowledge graph for broader insights.
+- **Improved prediction accuracy:** Leveraging the combined power of RTX 2.10 and ROBOKOP enhances the reliability of predictions.
 
-### 2. Streamlined Hypothesis Testing with the Inference Pipeline
+### 2. Robust Synonymization 🔗
 
-A new inference pipeline has been implemented to generate drug-disease predictions based on requests from the medical team.  This significantly streamlines the hypothesis testing process, facilitating rapid
-data analysis and accelerating the drug repurposing workflow. The pipeline allows for efficient querying of the enriched knowledge graph and returns predictions based on the most up-to-date models.
+The synonymization system has been completely overhauled, replacing the previous implementation with a more robust and accurate solution.  This upgrade ensures:
 
-### 3. Enhanced Model Evaluation:  Recall@N and Node2Vec
-
-To further improve our performance analysis, we've added the Recall@N evaluation metric to our pipeline. This metric provides a more granular understanding of model performance at different ranking
-thresholds.  Additionally, we've integrated the Node2Vec algorithm alongside GraphSage for generating topological embeddings, providing alternative approaches to predictive modeling and enhancing the
-robustness of our analysis.
-
-### 4. Scalable Neo4j Infrastructure: Addressing Performance Bottlenecks
-
-Significant infrastructure improvements have been made to address performance bottlenecks within Neo4j.  By converting Neo4j into an ephemeral compute unit scoped to each pipeline run, we now enable
-concurrent execution of multiple pipelines within the cluster. This is complemented by a new node fusing algorithm in our Argo workflows, which efficiently executes multiple Kedro nodes on the same
-Neo4j-enabled machine, optimizing resource utilization and reducing execution times. This effectively transforms Neo4j from a shared resource constraint into a per-job requirement, unlocking significant
-scalability gains.
+- **Improved data consistency:** More precise mapping of drug and disease synonyms for better data integration.
+- **Enhanced data quality:** Reducing ambiguity and noise in the knowledge graph.
+- **Preprocessing Pipeline Integration:** Synonymization is now part of the preprocessing pipeline, streamlining the data preparation process.
 
 
-### 5. Enhanced Reporting and Data Science Methodology Transparency
+### 3. Advanced Evaluation Methodologies 📈
 
-A new matrix generation pipeline provides enhanced report generation with detailed statistics and metadata, making it easier to interpret results.  Furthermore, comprehensive documentation has been added
-detailing our data science methodology for drug repurposing, including a deep dive into our evaluation suite and a walkthrough of new dataset integration.  This enhanced transparency improves understanding
-and collaboration among team members and stakeholders.
+This release introduces key advancements in evaluation methodologies:
+
+- **Time-split Validation:**  Evaluating model performance on data separated by time provides a more realistic assessment of predictive power and reduces the risk of overfitting.
+- **Recall@N Metric:** This new metric offers a more granular performance analysis, enabling threshold-based evaluation and a deeper understanding of model behavior.
+- **Node2Vec Integration:** Complementing the existing GraphSAGE implementation, Node2Vec enhances topological embedding generation, leading to more robust predictive modeling.
+- **Redesigned Evaluation Framework:**  The evaluation framework has been redesigned to integrate seamlessly with the matrix generation pipeline and provide improved reporting, including matrix integration
+and enhanced reporting.
+
+### 4. Matrix Generation Pipeline 🚧
+
+A new matrix generation pipeline has been implemented, providing a streamlined process for generating drug-disease prediction matrices. Key features include:
+
+- **Enhanced reporting:** Detailed statistics and metrics provide greater transparency into the prediction process.
+- **Drug-disease fabrication:** Facilitates the creation of synthetic data for testing and validation.
+- **Drug-stratified train/test split:** A robust 8/1/1 train/test/validation split stratified by drug ensures balanced representation and reduces bias in model training.
 
 
-## Technical Improvements and Bug Fixes
+### 5. Data Release Pipeline 📤
 
-This release also includes numerous technical enhancements and bug fixes, improving the stability, efficiency, and cross-platform compatibility of the Matrix Platform. Notable improvements include:  sparse
-checkout in the CI workflow, cross-platform Docker Compose support, flexible environment data transfers, enhanced disk space management, improved model tuning, and robust retry logic for Docker Compose
-shutdown.  A detailed list of bug fixes is available in the release notes.
+The introduction of a data release pipeline provides a structured process for managing and distributing knowledge graph snapshots, enabling experimentation with different data releases and improving
+reproducibility. This also includes splitting the knowledge graph for experimental purposes.
+
+### 6. Infrastructure and Tooling Enhancements 🛠
+
+Several improvements streamline development and deployment workflows:
+
+- **CI/CD Optimization:** CI jobs are now more efficient, triggering execution only on relevant path changes. The experiment pipeline also now uses `run_name` for consistency.
+- **`make` and Onboarding Improvements:** Enhancements to the `make` targets and onboarding documentation streamline developer setup and project contribution.  A `make clean` target simplifies environment
+cleanup.
+- **Documentation Expansion:** Comprehensive documentation has been added for various aspects of the platform, including data science methodology, onboarding procedures, GraphSAGE comparison experiments,
+Node2Vec experiment results, and running Argo Workflows locally.  The README now directs users to the documentation page for easier access.
+- **Kedro Pinning:** Kedro 0.19.6 is now pinned to prevent a known runtime error, ensuring stability and reproducibility.
+- **MLFlow Removal from Base Environment:** Streamlines the base environment by removing MLFlow, making it lighter and easier to manage.
+- **Spark Integration for Node Embeddings:** Node embeddings processing has been migrated to Spark with custom endpoint integration, improving performance and scalability.
+- **`--from-env` Kedro Option:**  Enables reading data from different environments using the `--from-env` option with the `kedro run` command, enhancing flexibility during development and testing.
+- **Kedro Submit Feature:**  Simplifies end-to-end pipeline execution on the current branch using the `kedro submit` feature.
+- **Local Argo Workflows:**  Facilitates local testing and debugging of Argo workflows.
+- **Neo4J Enterprise License Keys:** Enables access to enterprise features of Neo4J.
+- **Slack Notifications for Breaking Changes:**  Improves communication by sending Slack notifications when breaking changes are merged.
+
 
 
 ## Conclusion
 
-This release represents a significant step forward for the Matrix Platform. The enhancements to data integration, inference capabilities, and infrastructure lay the foundation for more efficient and
-effective drug repurposing research.  The improvements in model evaluation and the added transparency via enhanced documentation will contribute to more robust and reproducible results.  We are excited to
-continue building upon this progress in future releases.
+This release marks a significant step forward for the Matrix Platform, with enhancements across data integration, synonymization, evaluation, and infrastructure.  These improvements provide a more robust,
+efficient, and transparent platform for drug repurposing research.
