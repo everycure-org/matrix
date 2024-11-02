@@ -7,7 +7,9 @@ from pathlib import Path
 import typer
 import yaml
 from rich import print
+from rich.console import Console
 from rich.markdown import Markdown
+from rich.progress import Progress, SpinnerColumn, TextColumn
 from tenacity import retry, stop_after_attempt, wait_exponential
 from vertexai.generative_models import (
     GenerationConfig,
@@ -19,6 +21,7 @@ from matrix_cli.settings import settings
 from matrix_cli.utils import get_git_root
 
 app = typer.Typer(help="Code-related utility commands")
+console = Console()
 
 # use git diff patterns here
 INCLUSION_PATTERNS = [
@@ -42,38 +45,72 @@ INCLUSION_PATTERNS = [
 def write_release_article(
     since: str = typer.Argument(..., help="Git reference (SHA, tag, branch) to diff from"),
     output_file: str = typer.Option(None, help="File to write the release article to"),
-    model: str = typer.Option(settings.power_model, help="Model to use for release article generation"),
+    model: str = typer.Option(settings.base_model, help="Model to use for release article generation"),
 ):
     """Write a release article for a given git reference."""
 
-    typer.echo("Collecting release notes...")
-    notes = _get_release_notes(since, model=settings.base_model)
-    typer.echo("Collecting previous articles...")
-    previous_articles = get_previous_articles()
-    typer.echo("Summarizing code changes...")
-    code_summary = ai_code_summary(since, model=settings.base_model)
+    with Progress(
+        SpinnerColumn(),
+        TextColumn("[progress.description]{task.description}"),
+        console=console,
+    ) as progress:
+        task1 = progress.add_task("[cyan]Collecting release notes...")
+        notes = get_release_notes(since, model=settings.base_model)
+        progress.update(task1, completed=1)
 
-    prompt = f"""Please write a release article based on the following release notes and git diff:
-    {notes}
+        task2 = progress.add_task("[green]Collecting previous articles...")
+        previous_articles = get_previous_articles()
+        progress.update(task2, completed=1)
 
-    Summary of the code changes:
-    {code_summary}
+        task3 = progress.add_task("[magenta]Summarizing code changes...")
+        code_summary = get_ai_code_summary(since, model=settings.base_model)
+        progress.update(task3, completed=1)
 
+        task4 = progress.add_task("[yellow]Generating release article...")
 
-    Here are previous release articles to help with style and tone:
-    {previous_articles}
-    """
+        # prompt user to give guidance on what to focus on in the release article
+        focus_direction = console.input(
+            "[bold green]Please provide guidance on what to focus on in the release article. Note 'Enter' will end the prompt: "
+        )
 
-    typer.echo(f"Invoking model with a prompt of length: {len(prompt)} characters")
+        prompt = f"""
+# Please write a release article based on the following release notes and git diff:
 
-    generation_config = GenerationConfig(max_output_tokens=10_000)
-    response = invoke_model(prompt, model=model, generation_config=generation_config)
+{notes}
+
+# Summary of the code changes:
+{code_summary}
+
+# Here are previous release articles for style reference:
+{previous_articles}
+
+# Requirements:
+- Maintain an objective and professional tone
+- Focus on technical accuracy
+- Ensure a high signal-to-noise ratio for technical readers
+
+## Focus of the article:
+Please focus on the following topics in the release article:
+{focus_direction}
+        """
+
+        generation_config = GenerationConfig(
+            max_output_tokens=10_000,
+            temperature=0.7,
+        )
+
+        response = invoke_model(prompt, model=model, generation_config=generation_config)
+        progress.update(task4, completed=1)
 
     if output_file:
         with open(output_file, "w") as f:
             f.write(response)
+        console.print(f"Release article written to: {output_file}")
     else:
-        print(response)
+        console.print("[bold green]Generated release article:")
+        console.print("=" * 100)
+        console.print(Markdown(response))
+        console.print("=" * 100)
 
 
 @app.command()
@@ -84,9 +121,9 @@ def catchup(
     """Show code changes since a specific git reference."""
     try:
         diff_output = get_code_diff(since)
-        typer.echo(diff_output)
+        console.print(diff_output)
     except Exception as e:
-        typer.echo(f"Error: {str(e)}", err=True)
+        console.print(f"[bold red]Error: {str(e)}", err=True)
         raise typer.Exit(1)
 
 
@@ -97,15 +134,18 @@ def ai_catchup(
 ):
     """Show code changes since a specific git reference."""
 
-    summary = ai_code_summary(since, model)
+    summary = get_ai_code_summary(since, model)
     print(Markdown(summary))
 
 
-def ai_code_summary(since: str, model: str):
+def get_ai_code_summary(since: str, model: str):
     """Show code changes since a specific git reference."""
     diff_output = get_code_diff(since)
+
     prompt = f"""
     Please provide a structured and detailed summary of the following code changes.
+    Please quote select key code snippets in the diff using code blocks if they are 
+    relevant to a developer using the larger project. 
 
     Code diff:
     {diff_output}
@@ -123,8 +163,8 @@ def release_notes(
     """Generate an AI summary of code changes since a specific git reference."""
 
     try:
-        typer.echo("Generating release notes...")
-        response = _get_release_notes(since, model)
+        console.print("Generating release notes...")
+        response = get_release_notes(since, model)
 
         if output_file:
             with open(output_file, "w") as f:
@@ -133,16 +173,16 @@ def release_notes(
             print(Markdown(response))
 
     except Exception as e:
-        typer.echo(f"Error: {str(e)}", err=True)
+        console.print(f"[bold red]Error: {str(e)}", err=True)
         raise typer.Exit(1)
 
 
-def _get_release_notes(since: str, model: str) -> str:
+def get_release_notes(since: str, model: str) -> str:
     release_template = get_release_template()
-    typer.echo("Collecting PR details...")
+    console.print("[bold green]Collecting PR details...")
     pr_details_df = get_pr_details_since(since)[["title", "number"]]
     pr_details_dict = pr_details_df.to_dict(orient="records")
-    typer.echo("Collecting git diff...")
+    console.print("[bold green]Collecting git diff...")
     diff_output = get_code_diff(since)
 
     prompt = f"""Please provide a concise summary of the following code changes. 
@@ -166,7 +206,6 @@ def _get_release_notes(since: str, model: str) -> str:
 
     """
 
-    typer.echo(f"Invoking model with a prompt of length: {len(prompt)} characters")
     return invoke_model(prompt, model)
 
 
@@ -182,22 +221,28 @@ def get_previous_articles() -> list[str]:
     release_notes_path = Path(git_root) / "docs" / "src" / "releases" / "posts"
     # load all markdown files in the directory
     all_articles_content = ""
-    for file in release_notes_path.glob("*.md"):
+    for file in release_notes_path.glob("**/*.md"):
         with open(file, "r") as f:
+            all_articles_content += "=" * 100 + "\n"
+            all_articles_content += file.name + "\n"
             all_articles_content += f.read() + "\n\n"
+            all_articles_content += "=" * 100 + "\n"
 
     return all_articles_content
 
 
-@memory.cache
+@memory.cache()
 @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=4, max=120))
-def invoke_model(prompt: str, model: str, **kwargs) -> str:
+def invoke_model(prompt: str, model: str, generation_config: GenerationConfig = None) -> str:
     import vertexai
     from vertexai.generative_models import GenerativeModel
 
     vertexai.init()
     model_object = GenerativeModel(model)
-    return model_object.generate_content(prompt, **kwargs).text
+    console.print(f"[bold green] Calling Gemini with a prompt of length: {len(prompt)} characters")
+    response = model_object.generate_content(prompt, generation_config=generation_config).text
+    console.print(f"[bold green] Response received. Total length: {len(response)} characters")
+    return response
 
 
 def get_code_diff(since: str) -> str:
@@ -223,4 +268,4 @@ def get_code_diff(since: str) -> str:
         )
         return result.stdout
     except subprocess.CalledProcessError as e:
-        raise typer.BadParameter(f"Failed to get diff: {e.stderr}")
+        raise console.print(f"[bold red]Failed to get diff: {e.stderr}", err=True)

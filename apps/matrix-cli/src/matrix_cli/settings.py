@@ -1,4 +1,9 @@
+import warnings
+
 from pydantic_settings import BaseSettings
+from tqdm import TqdmExperimentalWarning
+
+warnings.filterwarnings("ignore", category=TqdmExperimentalWarning)
 
 
 class MatrixCliSettings(BaseSettings):
