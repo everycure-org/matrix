@@ -1,6 +1,7 @@
 # CLI Tools
 
 Command-line interface for various tasks in the MATRIX project.
+Currently it only supports 
 
 ## Installation
 
