@@ -20,14 +20,17 @@ from tenacity import retry, stop_after_attempt, wait_exponential
 from tqdm.rich import tqdm
 
 from matrix_cli.cache import memory
-from matrix_cli.modules.code import get_code_diff, get_ai_code_summary
+from matrix_cli.modules.code import get_ai_code_summary, get_code_diff
 from matrix_cli.settings import settings
-from matrix_cli.utils import console, get_git_root, invoke_model
+from matrix_cli.utils import console, get_git_root, get_markdown_contents, invoke_model
 
 if TYPE_CHECKING:
     from pandas import pd
 
-app = typer.Typer()
+app = typer.Typer(
+    help="Manage releases and release notes",
+    no_args_is_help=True,
+)
 WORKERS = 8
 MODEL = "gpt-4o-mini"
 
@@ -157,16 +160,7 @@ def get_release_template() -> str:
 def get_previous_articles() -> list[str]:
     git_root = get_git_root()
     release_notes_path = Path(git_root) / "docs" / "src" / "releases" / "posts"
-    # load all markdown files in the directory
-    all_articles_content = ""
-    for file in release_notes_path.glob("**/*.md"):
-        with open(file, "r") as f:
-            all_articles_content += "=" * 100 + "\n"
-            all_articles_content += file.name + "\n"
-            all_articles_content += f.read() + "\n\n"
-            all_articles_content += "=" * 100 + "\n"
-
-    return all_articles_content
+    return get_markdown_contents(release_notes_path)
 
 
 @app.command("pr-titles")
