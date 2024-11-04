@@ -21,9 +21,10 @@ _neo4j_ds: &_neo4j_ds
 
 
 drugmech.paths@partitioned:
-  type: partitions.PartitionedDataset
+  type: matrix.datasets.gcp.ParallelPartitionedDataset
   path: ${globals:paths.int}/moa_extraction/
-  dataset: matrix.datasets.gcp.LazySparkDataset
+  dataset: 
+    <<: *_spark_parquet
   filename_suffix: ".parquet"
 
 
