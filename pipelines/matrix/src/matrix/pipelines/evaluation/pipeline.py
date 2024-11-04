@@ -11,7 +11,7 @@ def _create_evaluation_pipeline(model: str, evaluation: str) -> Pipeline:
             node(
                 func=nodes.generate_test_dataset,
                 inputs=[
-                    f"matrix_generation.{model}.model_output.sorted_matrix_predictions",
+                    f"matrix_generation.{model}.model_output.sorted_matrix_predictions@pandas",
                     f"params:evaluation.{evaluation}.evaluation_options.generator",
                 ],
                 outputs=f"evaluation.{model}.{evaluation}.model_output.pairs",
@@ -43,7 +43,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                     node(
                         func=nodes.perform_matrix_checks,
                         inputs=[
-                            f"matrix_generation.{model}.model_output.sorted_matrix_predictions",
+                            f"matrix_generation.{model}.model_output.sorted_matrix_predictions@pandas",
                             "modelling.model_input.splits",
                             "params:evaluation.score_col_name",
                         ],
