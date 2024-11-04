@@ -33,7 +33,8 @@ jobs:
   debug:
     runs-on: 'ubuntu-latest'
     environment: dev
-    if: github.ref == 'refs/heads/infra'
+    # TODO re-enable this
+    # if: github.ref == 'refs/heads/infra'
     permissions:
       id-token: 'write'
       contents: 'read'
