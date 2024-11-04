@@ -105,6 +105,7 @@ def add_tags(
         prefix: The prefix to add to the tag.
     """
     _tag_edges_between_types(runner, drug_types, disease_types, "drug_disease", batch_size, verbose, prefix)
+    _tag_edges_between_types(runner, drug_types, drug_types, "drug_drug", batch_size, verbose, prefix)
     _tag_edges_between_types(runner, disease_types, disease_types, "disease_disease", batch_size, verbose, prefix)
 
 
