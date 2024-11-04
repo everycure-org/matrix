@@ -1,0 +1,32 @@
+{{- /* Create the namespace-admin Role for each namespace */ -}}
+{{- range $email, $namespace := .Values.users }}
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: {{ $namespace }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: namespace-admin
+  namespace: {{ $namespace }}
+rules:
+- apiGroups: ["*"]
+  resources: ["*"]
+  verbs: ["*"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{ $namespace }}-admin
+  namespace: {{ $namespace }}
+subjects:
+- kind: User
+  name: {{ $email }}
+  apiGroup: rbac.authorization.k8s.io
+roleRef:
+  kind: Role
+  name: namespace-admin
+  apiGroup: rbac.authorization.k8s.io
+{{- end }}
