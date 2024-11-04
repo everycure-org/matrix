@@ -100,8 +100,8 @@ While this feature is still dependent on our manual pipeline execution, we aim t
 
 The introduction of a data release pipeline provides a structured process for managing
 and distributing knowledge graph snapshots, enabling experimentation with different data
-releases and improving reproducibility. This also includes splitting the knowledge graph
-for experimental purposes. 
+releases and improving reproducibility. This also splitting the pipeline into two, 
+allowing `n` experiments linked to a single KG release.
 
 This pipeline is still under development and we aim to fully automate KG snapshot
 releases over the next 2 months to reach a weekly patch and monthly minor release
