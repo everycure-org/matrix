@@ -42,13 +42,17 @@ to RTX 2.10, delivers:
 
 - **Enhanced data coverage:** A richer and more up-to-date knowledge graph for broader insights.
 - **Improved prediction accuracy:** Leveraging the combined power of RTX 2.10 and ROBOKOP enhances the reliability of predictions.
+- **Standardized release in BigQuery:** The Every Cure KG will now be released as a dataset in [BigQuery](https://console.cloud.google.com/bigquery?project=mtrx-hub-dev-3of&ws=!1m4!1m3!3m2!1smtrx-hub-dev-3of!2srelease_v0_2_2). [^1]
+
+
 
 ### 2. Translator project based synonymization 🔗
 
 The synonymization system has been overhauled, replacing the previous ARAX based implementation with a more scalable solution hosted by the translator project.
 
-- **Improved data consistency:** More precise mapping of drug and disease synonyms for better data integration. The API is able to synonymize more nodes and node types.
+- **Improved data consistency:** More precise mapping of drug and disease synonyms for better data integration. The API is able to synonymize more nodes and node types across all KGs. [^2]
 - **Preprocessing Pipeline Integration:** Synonymization is now part of the preprocessing pipeline, streamlining the data preparation process.
+- **Synonymization of drug, disease and medical inputs**: We aligned the synonymization across the pipeline, all leveraging the same API now.
 
 ### 3. Advanced Evaluation Methodologies 📈
 
@@ -66,7 +70,7 @@ A new matrix generation pipeline has been implemented, providing a streamlined p
 - Enhanced evaluation with Recall@N and Hit@K Metrics: The pipeline now incorporates Recall@N and Hit@K metrics to provide comprehensive summaries for full matrix predictions. These metrics offer a more detailed evaluation of model performance by assessing the accuracy of predictions within the top N or K results. 
 - The most recent Node2Vec algorithm has been integrated to enhance topological embedding generation. This improvement leads to more robust predictive modeling by better capturing the structural relationships within the data. More details of run [here](https://mlflow.platform.dev.everycure.org/#/experiments/115/runs/f50acfac0b1e4a76964610910dab5bc0), with example Hit@N metric [here](https://mlflow.platform.dev.everycure.org/#/metric?runs=%5B%22f50acfac0b1e4a76964610910dab5bc0%22%5D&metric=%22rf.disease_specific_ranking_hit-100%22&experiments=%5B%22115%22%5D&plot_metric_keys=%5B%22rf.disease_specific_ranking_hit-100%22%5D&plot_layout=%7B%22autosize%22:true,%22xaxis%22:%7B%7D,%22yaxis%22:%7B%7D%7D&x_axis=relative&y_axis_scale=linear&line_smoothness=1&show_point=false&deselected_curves=%5B%5D&last_linear_y_axis_range=%5B%5D)
 
-- **Enhanced reporting:** Detailed statistics and metrics provide greater transparency into the prediction process.
+- **Enhanced reporting:** [Detailed statistics](https://mlflow.platform.dev.everycure.org/#/experiments/115/runs/f50acfac0b1e4a76964610910dab5bc0) and metrics provide greater transparency into the prediction process.
 - **Drug-stratified train/test split:** A robust 8/1/1 train/test/validation split stratified by drug ensures balanced representation and reduces bias in model training.
 
 ### 5. Ad-hoc Prediction Generation 🧠
@@ -105,35 +109,39 @@ cadence using fully automated workflows.
 
 ### 7. Infrastructure and Tooling Enhancements 🛠
 
-Several improvements streamline development and deployment workflows:
+Several improvements streamline development and deployment workflows based on continous feedback from everyone in the Matrix community:
 
 - **`make` and Onboarding Improvements:** Enhancements to the `make` targets and onboarding documentation streamline developer setup and project contribution.  A `make clean` target simplifies environment cleanup.
-- **Documentation Expansion:** Comprehensive documentation has been added for various aspects of the platform, including data science methodology, onboarding procedures, GraphSAGE comparison experiments,
-Node2Vec experiment results, and running Argo Workflows locally.  The README now directs users to the documentation page for easier access.
-- **`--from-env` Kedro Option:**  Enables reading data from different environments using the `--from-env` option with the `kedro run` command, enhancing flexibility during development and testing.
-- **Kedro Submit Feature:**  Simplifies end-to-end pipeline execution on the current branch using the `kedro submit` feature. This feature will become more powerful going forward, allowing developers to submit workflows from their machine to our shared cluster for execution. 
+- **Documentation Expansion:** Comprehensive documentation has been added for various aspects of the platform, including data science methodology, onboarding procedures, GraphSAGE comparison experiments and Node2Vec experiment results.
+- **Running one node locally with full cloud data:** `--from-env cloud` Enables reading data from specific environments as part of the `kedro run` command, enhancing flexibility during development and testing. This allows developers to test just their changes on full data locally, essentially "forking" off the cloud environment. [(Documentation)](../../../onboarding/local-setup.md#plugging-into-cloud-outputs)
+- **Kedro Submit Feature:**  Simplifies end-to-end pipeline execution on the current branch using the `kedro submit` feature. This feature will become more powerful going forward, allowing developers to submit workflows from their machine to our shared cluster for execution. [(Documentation)](../../../infrastructure/runbooks/03_run_pipeline_from_branch.md) 
 - **Neo4J Enterprise License Keys:** Enables access to enterprise features of Neo4J. We leverage this mainly for hosting several KG versions on a single server as well as using many CPU cores for the GDS library which is usually limited to a parallelism of 4.
 
 ## Next Steps 🔮
 
-In the coming months we will focus on:
+In the coming months we will focus on [^3]:
 
 ### Data Workstreams
 
-- Fully automating the data release pipeline to reach a weekly patch and monthly minor release cadence.
-- Ingesting and integrating the SPOKE KG into the platform.
-- Implement a strategy pattern to allow for selection of the synonymization strategy and adding a vector similarity based synonymization strategy.
-- Build a Data Metrics dashboard based on [evidence.dev](https://evidence.dev) and share statistics about our data sources as well as our data releases.
-- Implement a series of data quality tests and implement filtering steps to remove low quality data.
+- Fully automating the data release pipeline to reach a weekly patch and monthly minor release cadence. [(#612)](https://github.com/everycure-org/matrix/issues/612) 
+- Ingesting and integrating the SPOKE KG into the platform. [#486](https://github.com/everycure-org/matrix/issues/486)
+- Implement a strategy pattern to allow for selection of the synonymization strategy and adding a vector similarity based synonymization strategy. ([Milestone](https://github.com/everycure-org/matrix/milestone/23))
+- Build a Data Metrics dashboard based on [evidence.dev](https://evidence.dev) and share statistics about our data sources as well as our data releases. ([Milestone](https://github.com/everycure-org/matrix/milestone/21))
+- Implement a series of data quality tests and implement filtering steps to remove low quality data. ([#516](https://github.com/everycure-org/matrix/issues/516))
 
 ### Modelling Workstreams
 
-- Implement a first mechanism of action algorithm as part of the pipeline. See [here](https://github.com/everycure-org/matrix/issues/476)
-- Implement first version of timestamped edges and execute time-split-validation experiment. See [here](https://github.com/everycure-org/matrix/issues/588)
-- Compare performance of existing models with TxGNN. See [here](https://github.com/everycure-org/matrix/issues/586)
-- Incorporate K fold cross validation into evaluation suite. See [here](https://github.com/everycure-org/matrix/issues/587)
+- Implement a first mechanism of action algorithm as part of the pipeline. ([#476](https://github.com/everycure-org/matrix/issues/476))
+- Implement first version of timestamped edges and execute time-split-validation experiment. ([#588](https://github.com/everycure-org/matrix/issues/588))
+- Compare performance of existing models with TxGNN. ([#586](https://github.com/everycure-org/matrix/issues/586))
+- Incorporate K fold cross validation into evaluation suite. ([#587](https://github.com/everycure-org/matrix/issues/587))
+
 ### Platform Workstreams
 
-- Add GPUs to the cluster and enable select kedro nodes to run on GPUs
-- Implement self hosted LLM and embedding system to process node embeddings and enable LLM usage in the pipeline at scale
+- Add GPUs to the cluster and enable select kedro nodes to run on GPUs. ([#77](https://github.com/everycure-org/matrix/issues/77))
+- Implement self hosted LLM and embedding system to process node embeddings and enable LLM usage in the pipeline at scale ([Milestone](https://github.com/everycure-org/matrix/milestone/22))
 - [Prepare open sourcing of the repository](https://github.com/everycure-org/matrix/issues?q=is%3Aopen+is%3Aissue+milestone%3A%22Open+Source+MATRIX+Repo%22)
+
+[^1]: Today, we release the nodes and edges as two tables. Going forward we will add additional "feature tables" to the releases that contain specific features such as node embeddings and various other "non biolink" properties. These will be easily join'able with the spine tables based on the primary keys.
+[^2]: We are [actively exploring](https://github.com/everycure-org/matrix/issues/543) the merged KG to understand why some nodes are not synonymized and what the theortical upper bound is for rule based synonymization.
+[^3]: For more details, check our [roadmap view](https://github.com/orgs/everycure-org/projects/2/views/19)
