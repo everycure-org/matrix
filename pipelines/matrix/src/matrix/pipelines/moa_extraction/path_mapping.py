@@ -8,7 +8,7 @@ import random
 import neo4j
 
 from matrix.datasets.paths import KGPaths
-from matrix.pipelines.moa_extraction.utils import Neo4jRunner
+from matrix.pipelines.embeddings.nodes import GraphDB
 from matrix.pipelines.preprocessing.nodes import resolve, normalize
 
 logger = logging.getLogger(__name__)
@@ -38,11 +38,11 @@ class PathMapper(abc.ABC):
     """Abstract base class for mapping DrugMechDB paths to the knowledge graph."""
 
     @abc.abstractmethod
-    def run(self, runner: Neo4jRunner, drug_mech_db: Dict[str, Any], synonymizer_endpoint: str) -> KGPaths:
+    def run(self, runner: GraphDB, drug_mech_db: Dict[str, Any], synonymizer_endpoint: str) -> KGPaths:
         """Run the path mapping.
 
         Args:
-            runner: The Neo4j runner.
+            runner: The GraphDB object representing the KG.
             drug_mech_db: The DrugMechDB indication paths.
             synonymizer_endpoint: The endpoint of the synonymizer.
 
@@ -73,7 +73,7 @@ class SetwisePathMapper(PathMapper):
 
     def run(
         self,
-        runner: Neo4jRunner,
+        runner: GraphDB,
         drug_mech_db: Dict[str, Any],
         synonymizer_endpoint: str,
         num_attempts: int = 5,
@@ -83,7 +83,7 @@ class SetwisePathMapper(PathMapper):
         FUTURE: Create a subclass of SetwisePathMapper that paralellises this method.
 
         Args:
-            runner: The Neo4j runner.
+            runner: The GraphDB object representing the KG.
             drug_mech_db: The DrugMechDB indication paths.
             synonymizer_endpoint: The endpoint of the synonymizer.
             num_attempts: The number of attempts to run the query.
@@ -134,12 +134,12 @@ class SetwisePathMapper(PathMapper):
         return " AND ".join([f"(a{i}.id in {str(intermediate_ids)})" for i in range(1, num_hops)])
 
     def map_single_moa(
-        self, runner: Neo4jRunner, db_entry: Dict[str, Any], synonymizer_endpoint: str, num_attempts: int = 5
+        self, runner: GraphDB, db_entry: Dict[str, Any], synonymizer_endpoint: str, num_attempts: int = 5
     ) -> List[neo4j.graph.Path]:
         """Map a single DrugMechDB MOA.
 
         Args:
-            runner: The Neo4j runner.
+            runner: The GraphDB object representing the KG.
             db_entry: The DrugMechDB entry.
             synonymizer_endpoint: The endpoint of the synonymizer.
             num_attempts: The number of attempts to run the query.
@@ -217,14 +217,14 @@ class TestPathMapper(PathMapper):
 
     def run(
         self,
-        runner: Neo4jRunner,
+        runner: GraphDB,
         drug_mech_db: Dict[str, Any],
         synonymizer_endpoint: str,
     ) -> KGPaths:
         """Run the path mapping.
 
         Args:
-            runner: The Neo4j runner.
+            runner: The GraphDB object representing the KG.
             drug_mech_db: The DrugMechDB indication paths.
             synonymizer_endpoint: The endpoint of the synonymizer.
         """

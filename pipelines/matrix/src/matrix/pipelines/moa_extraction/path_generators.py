@@ -6,7 +6,7 @@ from tqdm import tqdm
 import abc
 
 from matrix.datasets.paths import KGPaths
-from matrix.pipelines.moa_extraction.utils import Neo4jRunner
+from matrix.pipelines.embeddings.nodes import GraphDB
 from matrix.pipelines.moa_extraction.path_mapping import SetwisePathMapper
 
 
@@ -14,7 +14,7 @@ class PathGenerator(abc.ABC):
     """Abstract class representing a KG paths generator."""
 
     @abc.abstractmethod
-    def run(self) -> KGPaths:
+    def run(self, runner: GraphDB) -> KGPaths:
         """Generate the paths."""
         ...
 
@@ -68,11 +68,11 @@ class AllPathsWithRules(PathGenerator):
         where_clause = " AND ".join(where_clause_parts)
         return where_clause
 
-    def run(self, runner: Neo4jRunner, drug: str, disease: str) -> KGPaths:
+    def run(self, runner: GraphDB, drug: str, disease: str) -> KGPaths:
         """Generate the paths.
 
         Args:
-            runner: The Neo4j runner.
+            runner: The GraphDB object representing the KG.
             drug: The source drug node ID.
             disease: The target disease node ID.
         """
@@ -107,8 +107,8 @@ class ReplacementPathSampler(PathGenerator):
         """Initialise the ReplacementPathSampler.
 
         Args:
-            edge_omission_rules: The edge omission rules to match.
             num_replacement_paths: The number of replacement paths to sample for each positive path.
+            edge_omission_rules: The edge omission rules to match.
             unidirectional: Whether to sample unidirectional paths only.
             random_state: The random state.
         """
@@ -117,13 +117,13 @@ class ReplacementPathSampler(PathGenerator):
         self.edge_omission_rules = edge_omission_rules
         self.random_state = random_state
 
-    def run(self, paths: KGPaths, runner: Neo4jRunner) -> KGPaths:
+    def run(self, paths: KGPaths, runner: GraphDB) -> KGPaths:
         """Sample negative paths given a set of positive paths.
 
         FUTURE: Create a subclass where this method is parallelised.
 
         paths: The reference paths dataset.
-        runner: The Neo4j runner.
+        runner: The GraphDB object representing the KG.
         """
         num_hops = paths.num_hops
         negative_paths = KGPaths(num_hops=num_hops)
@@ -135,13 +135,13 @@ class ReplacementPathSampler(PathGenerator):
 
         return negative_paths
 
-    def run_single_pair(self, drug: str, disease: str, count: int, runner: Neo4jRunner, num_hops: int) -> KGPaths:
+    def run_single_pair(self, drug: str, disease: str, count: int, runner: GraphDB, num_hops: int) -> KGPaths:
         """Sample negative paths for the given source drug and target disease.
 
         drug: The drug node ID.
         disease: The disease node ID.
         count: The number of negative paths to sample.
-        runner: The Neo4j runner.
+        runner: The GraphDB object representing the KG.
         num_hops: The number of hops in the paths.
         """
         all_paths_generator = AllPathsWithRules(

@@ -53,6 +53,16 @@ class GraphDB:
         """Return the driver object."""
         return GraphDatabase.driver(self._endpoint, auth=self._auth, database=self._database)
 
+    def run(self, query: str) -> List[Any]:
+        """Run a query on the Neo4j database and get values.
+
+        Args:
+            query: The query to run.
+        """
+        with self.driver().session() as session:
+            info = session.run(query)
+            return info.values()
+
 
 class GraphDS(GraphDataScience):
     """Adaptor class to allow injecting the GDS object.
