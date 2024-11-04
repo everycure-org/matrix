@@ -46,59 +46,59 @@ drugmech.paths@spark:
 #   filepath: ${globals:paths.int}/moa_extraction/paths.csv
 #   file_format: csv
 
-raw.drug_disease_inputs:
-  type: matrix.datasets.gcp.LazySparkDataset
-  file_format: csv
-  filepath: gs://mtrx-us-central1-hub-dev-storage/data/01_RAW/moa_extraction/filtered_matrix_report_xg_ensemble_report_17_sept_2024.csv
-  load_args:
-    header: True
+# raw.drug_disease_inputs:
+#   type: matrix.datasets.gcp.LazySparkDataset
+#   file_format: csv
+#   filepath: gs://mtrx-us-central1-hub-dev-storage/data/01_RAW/moa_extraction/filtered_matrix_report_xg_ensemble_report_17_sept_2024.csv
+#   load_args:
+#     header: True
 
-tps:
-  type: matrix.datasets.gcp.LazySparkDataset
-  filepath: ${globals:paths.raw}/ground_truth_data/tp_pairs.txt
-  file_format: csv
-  load_args:
-    sep: "\t"
-    header: True
+# tps:
+#   type: matrix.datasets.gcp.LazySparkDataset
+#   filepath: ${globals:paths.raw}/ground_truth_data/tp_pairs.txt
+#   file_format: csv
+#   load_args:
+#     sep: "\t"
+#     header: True
 
-int.tps:
-  <<: *_spark_parquet
-  filepath: int/tmps
+# int.tps:
+#   <<: *_spark_parquet
+#   filepath: int/tmps
 
-int.drug.index:
-  <<: *_neo4j_ds
-  save_args:
-    script: >
-      CREATE CONSTRAINT IF NOT EXISTS FOR (n:is_drug) REQUIRE n.id IS UNIQUE;
-    query: >
-      MATCH (n:Entity {id: event.id})
-      WITH n
-      CALL apoc.create.addLabels(n, ['is_drug']) YIELD node
-      RETURN node 
+# int.drug.index:
+#   <<: *_neo4j_ds
+#   save_args:
+#     script: >
+#       CREATE CONSTRAINT IF NOT EXISTS FOR (n:is_drug) REQUIRE n.id IS UNIQUE;
+#     query: >
+#       MATCH (n:Entity {id: event.id})
+#       WITH n
+#       CALL apoc.create.addLabels(n, ['is_drug']) YIELD node
+#       RETURN node 
 
-int.disease.index:
-  <<: *_neo4j_ds
-  save_args:
-    script: >
-      CREATE CONSTRAINT IF NOT EXISTS FOR (n:is_disease) REQUIRE n.id IS UNIQUE;
-    query: >
-      MATCH (n:Entity {id: event.id})
-      WITH n
-      CALL apoc.create.addLabels(n, ['is_disease']) YIELD node
-      RETURN node 
+# int.disease.index:
+#   <<: *_neo4j_ds
+#   save_args:
+#     script: >
+#       CREATE CONSTRAINT IF NOT EXISTS FOR (n:is_disease) REQUIRE n.id IS UNIQUE;
+#     query: >
+#       MATCH (n:Entity {id: event.id})
+#       WITH n
+#       CALL apoc.create.addLabels(n, ['is_disease']) YIELD node
+#       RETURN node 
 
-int.edges_index:
-  <<: *_neo4j_ds
-  save_args:
-    query: >
-      MATCH (subject:Entity {id: event.drug_id}), (object:Entity {id: event.disease_id})
-      WITH subject, object, event
-      CALL apoc.create.relationship(subject, "is_treats", {}, object) YIELD rel
-      RETURN rel
+# int.edges_index:
+#   <<: *_neo4j_ds
+#   save_args:
+#     query: >
+#       MATCH (subject:Entity {id: event.drug_id}), (object:Entity {id: event.disease_id})
+#       WITH subject, object, event
+#       CALL apoc.create.relationship(subject, "is_treats", {}, object) YIELD rel
+#       RETURN rel
 
-output_df:
-  <<: *_spark_parquet
-  filepath: out/paths
+# output_df:
+#   <<: *_spark_parquet
+#   filepath: out/paths
 
 # int.all_paths:
 #   <<: *_neo4j_ds
