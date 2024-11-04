@@ -12,9 +12,6 @@ from matrix.pipelines.integration.pipeline import create_pipeline as create_inte
 from matrix.pipelines.matrix_generation.pipeline import create_pipeline as create_matrix_pipeline
 from matrix.pipelines.modelling.pipeline import create_pipeline as create_modelling_pipeline
 from matrix.pipelines.preprocessing.pipeline import create_pipeline as create_preprocessing_pipeline
-from matrix.pipelines.data_release_with_embeddings.pipeline import (
-    create_pipeline as create_data_release_with_embeddings_pipeline,
-)
 
 
 def register_pipelines() -> Dict[str, Pipeline]:
@@ -32,7 +29,6 @@ def register_pipelines() -> Dict[str, Pipeline]:
         "integration": create_integration_pipeline(),
         "embeddings": create_embeddings_pipeline(),
         "data_release": create_data_release_pipeline(),
-        "data_release_with_embeddings": create_data_release_with_embeddings_pipeline(),
         "modelling": create_modelling_pipeline(),
         "matrix_generation": create_matrix_pipeline(),
         "evaluation": create_evaluation_pipeline(),

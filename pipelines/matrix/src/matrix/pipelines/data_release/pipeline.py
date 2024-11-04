@@ -35,5 +35,12 @@ def create_pipeline(**kwargs) -> Pipeline:
                 name="write_nodes_to_bigquery",
                 tags=["bigquery"],
             ),
+            # NOTE: Enable if you want embeddings
+            # node(
+            #     func=lambda _, x: x,
+            #     inputs=["data_release.prm.kg_nodes", "embeddings.feat.nodes"],
+            #     outputs="data_release.prm.kg_embeddings",
+            # )
+            # need nodes that bring the nodes/edges to BigQuery
         ]
     )
