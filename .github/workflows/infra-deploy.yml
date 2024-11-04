@@ -5,10 +5,8 @@ name: Infrastructure Deploy
 # call this for each terragrunt module that should be deployed depending on the path
 # changed in the repo or the branch we're on. For now it's hard-coded to `hub/dev`
 
-
 on:
   pull_request:
-    # Sequence of patterns matched against refs/heads
     branches:
       - infra
     types:
@@ -19,21 +17,21 @@ on:
   push:
     branches:
       - infra
+  workflow_dispatch: {}
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: false
+
 env:
   tf_version: '1.5.7'
   tg_version: '0.58.11'
   working_dir: 'infra/'
 
 jobs:
-  # Uncomment this for debugging the JWT tokens
   debug:
     runs-on: 'ubuntu-latest'
-      # environment: dev
-      # if: github.ref == 'refs/heads/infra'
+    if: github.event_name == 'workflow_dispatch'  # Only run on manual trigger
     permissions:
       id-token: 'write'
       contents: 'read'
@@ -61,7 +59,6 @@ jobs:
         uses: 'google-github-actions/setup-gcloud@v2'
         with:
           version: '>= 363.0.0'
-  
       - name: 'Use gcloud CLI'
         run: 'gsutil ls gs://mtrx-us-central1-hub-dev-storage/'
 
@@ -90,7 +87,6 @@ jobs:
               - infra/deployments/**
               - infra/*.tf
               - infra/*.hcl
-      
 
   checks:
     runs-on: ubuntu-latest
