@@ -69,7 +69,30 @@ A new matrix generation pipeline has been implemented, providing a streamlined p
 - **Enhanced reporting:** Detailed statistics and metrics provide greater transparency into the prediction process.
 - **Drug-stratified train/test split:** A robust 8/1/1 train/test/validation split stratified by drug ensures balanced representation and reduces bias in model training.
 
-### 5. Data Release Pipeline 📤
+### 5. Ad-hoc Prediction Generation 🧠
+
+A new inference pipeline has been implemented to support on-demand drug repurposing predictions through a user-friendly Google Sheets interface. This pipeline enables:
+
+- **Flexible Prediction Types:**
+  - Drug-centric predictions: Generate predictions for a specific drug against all diseases
+  - Disease-centric predictions: Generate predictions for a specific disease against all drugs
+  - Drug-disease specific predictions: Generate targeted predictions for specific drug-disease pairs
+
+- **Automated Workflow:**
+  - Seamless integration with the matrix generation pipeline
+  - Automated synonymization and normalization of user inputs
+  - Support for multiple model predictions in parallel
+  - Real-time visualization of prediction distributions
+
+- **User-Friendly Interface:**
+  - Input submission through Google Sheets
+  - Automated result reporting and visualization
+  - Integration with our versioned drug and disease lists
+  - Support for batch processing of prediction requests
+
+While this feature is still dependent on our manual pipeline execution, we aim to make this automated so that it can be run on-demand for specific drugs or diseases.
+
+### 6. Data Release Pipeline 📤
 
 The introduction of a data release pipeline provides a structured process for managing
 and distributing knowledge graph snapshots, enabling experimentation with different data
@@ -80,7 +103,7 @@ This pipeline is still under development and we aim to fully automate KG snapsho
 releases over the next 2 months to reach a weekly patch and monthly minor release
 cadence using fully automated workflows.
 
-### 6. Infrastructure and Tooling Enhancements 🛠
+### 7. Infrastructure and Tooling Enhancements 🛠
 
 Several improvements streamline development and deployment workflows:
 
