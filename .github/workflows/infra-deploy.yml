@@ -32,8 +32,8 @@ jobs:
   # Uncomment this for debugging the JWT tokens
   debug:
     runs-on: 'ubuntu-latest'
-      # environment: dev
-      # if: github.ref == 'refs/heads/infra'
+    # environment: dev
+    # if: github.ref == 'refs/heads/infra'
     permissions:
       id-token: 'write'
       contents: 'read'
@@ -41,7 +41,6 @@ jobs:
       - name: 'Checkout'
         uses: actions/checkout@v4
       # note this does NOT fail even if the credentials are invalid!
-      - run: cat /home/runner/work/matrix/matrix/gha-creds*
       - name: Checkout actions-oidc-debugger
         uses: actions/checkout@v3
         with:
@@ -57,6 +56,7 @@ jobs:
           project_id: ${{vars.project_id}}
           workload_identity_provider: ${{vars.workload_identity_provider}}
           service_account: ${{vars.service_account}}
+      - run: cat /home/runner/work/matrix/matrix/gha-creds*
       - name: 'Set up Cloud SDK'
         uses: 'google-github-actions/setup-gcloud@v2'
         with:
