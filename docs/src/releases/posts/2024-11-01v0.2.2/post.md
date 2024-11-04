@@ -89,3 +89,26 @@ Node2Vec experiment results, and running Argo Workflows locally.  The README now
 - **`--from-env` Kedro Option:**  Enables reading data from different environments using the `--from-env` option with the `kedro run` command, enhancing flexibility during development and testing.
 - **Kedro Submit Feature:**  Simplifies end-to-end pipeline execution on the current branch using the `kedro submit` feature. This feature will become more powerful going forward, allowing developers to submit workflows from their machine to our shared cluster for execution. 
 - **Neo4J Enterprise License Keys:** Enables access to enterprise features of Neo4J. We leverage this mainly for hosting several KG versions on a single server as well as using many CPU cores for the GDS library which is usually limited to a parallelism of 4.
+
+## Next Steps 🔮
+
+In the coming months we will focus on:
+
+### Data Workstreams
+
+- Fully automating the data release pipeline to reach a weekly patch and monthly minor release cadence.
+- Ingesting and integrating the SPOKE KG into the platform.
+- Implement a strategy pattern to allow for selection of the synonymization strategy and adding a vector similarity based synonymization strategy.
+- Build a Data Metrics dashboard based on [evidence.dev](https://evidence.dev) and share statistics about our data sources as well as our data releases.
+- Implement a series of data quality tests and implement filtering steps to remove low quality data.
+
+### Modelling Workstreams
+
+- Implement a first mechanism of action algorithm as part of the pipeline
+- Implement first version of timestamped edges and execute time-split-validation experiment 
+
+### Platform Workstreams
+
+- Add GPUs to the cluster and enable select kedro nodes to run on GPUs
+- Implement self hosted LLM and embedding system to process node embeddings and enable LLM usage in the pipeline at scale
+- [Prepare open sourcing of the repository](https://github.com/everycure-org/matrix/issues?q=is%3Aopen+is%3Aissue+milestone%3A%22Open+Source+MATRIX+Repo%22)
