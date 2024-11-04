@@ -59,6 +59,7 @@ paths:
   # Release-based
   integration:        data/releases/${versions.release}/datasets/integration
   embeddings:         data/releases/${versions.release}/datasets/embeddings
+  drugmech:           data/releases/${versions.release}/datasets/drugmech
 
   # Run-based
   modelling:          data/releases/${versions.release}/runs/${run_name}/datasets/modelling

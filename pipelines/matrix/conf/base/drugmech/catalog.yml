@@ -1,0 +1,16 @@
+_spark_parquet_ds: &_spark_parquet
+  type: matrix.datasets.gcp.LazySparkDataset
+  file_format: parquet
+  save_args:
+    mode: overwrite
+
+drugmech.paths@partitioned:
+  type: matrix.datasets.gcp.ParallelPartitionedDataset
+  path: ${globals:paths.int}/moa_extraction/
+  dataset: 
+    <<: *_spark_parquet
+  filename_suffix: ".parquet"
+
+drugmech.paths@spark:
+  type: matrix.datasets.gcp.LazySparkDataset
+  filepath: ${globals:paths.int}/moa_extraction/
