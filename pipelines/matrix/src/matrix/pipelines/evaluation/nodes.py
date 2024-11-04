@@ -1,5 +1,3 @@
-"""Module with nodes for evaluation."""
-
 import json
 from typing import Any
 
