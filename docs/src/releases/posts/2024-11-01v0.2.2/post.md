@@ -55,17 +55,18 @@ The synonymization system has been overhauled, replacing the previous ARAX based
 This release introduces key advancements in evaluation methodologies:
 
 - **Time-split Validation:**  Evaluating model performance on data separated by time provides a more realistic assessment of predictive power and reduces the risk of overfitting.
-- **Recall@N Metric:** This new metric offers a more granular performance analysis, enabling threshold-based evaluation and a deeper understanding of model behavior.
-- **Node2Vec Integration:** Complementing the existing GraphSAGE implementation, Node2Vec enhances topological embedding generation, leading to more robust predictive modeling.
+- **Recall@N Metric:** This new metric provides a more granular performance analysis by evaluating the model's ability to retrieve relevant drug-disease pairs within the top N predictions. This threshold-independent based evaluation metric offers a deeper understanding of model behavior in ranking and recommendations.
+- **Node2Vec Integration:** Complementing the existing GraphSAGE implementation, Node2Vec enhances topological embedding generation. Node2Vec utilizes random walks to capture the structural roles of nodes in a graph, potentially leading to more robust predictive modeling.
 - **Redesigned Evaluation Framework:**  The evaluation framework has been redesigned to integrate seamlessly with the matrix generation pipeline and provide improved reporting, including matrix integration
 and enhanced reporting.
 
 ### 4. Matrix Generation Pipeline 🚧
 
 A new matrix generation pipeline has been implemented, providing a streamlined process for generating drug-disease prediction matrices. Key features include:
+- Enhanced evaluation with Recall@N and Hit@K Metrics: The pipeline now incorporates Recall@N and Hit@K metrics to provide comprehensive summaries for full matrix predictions. These metrics offer a more detailed evaluation of model performance by assessing the accuracy of predictions within the top N or K results. 
+- The most recent Node2Vec algorithm has been integrated to enhance topological embedding generation. This improvement leads to more robust predictive modeling by better capturing the structural relationships within the data. More details of run [here](https://mlflow.platform.dev.everycure.org/#/experiments/115/runs/f50acfac0b1e4a76964610910dab5bc0), with example Hit@N metric [here](https://mlflow.platform.dev.everycure.org/#/metric?runs=%5B%22f50acfac0b1e4a76964610910dab5bc0%22%5D&metric=%22rf.disease_specific_ranking_hit-100%22&experiments=%5B%22115%22%5D&plot_metric_keys=%5B%22rf.disease_specific_ranking_hit-100%22%5D&plot_layout=%7B%22autosize%22:true,%22xaxis%22:%7B%7D,%22yaxis%22:%7B%7D%7D&x_axis=relative&y_axis_scale=linear&line_smoothness=1&show_point=false&deselected_curves=%5B%5D&last_linear_y_axis_range=%5B%5D)
 
 - **Enhanced reporting:** Detailed statistics and metrics provide greater transparency into the prediction process.
-- **Drug-disease fabrication:** Facilitates the creation of synthetic data for testing and validation.
 - **Drug-stratified train/test split:** A robust 8/1/1 train/test/validation split stratified by drug ensures balanced representation and reduces bias in model training.
 
 ### 5. Data Release Pipeline 📤
@@ -104,9 +105,10 @@ In the coming months we will focus on:
 
 ### Modelling Workstreams
 
-- Implement a first mechanism of action algorithm as part of the pipeline
-- Implement first version of timestamped edges and execute time-split-validation experiment 
-
+- Implement a first mechanism of action algorithm as part of the pipeline. See [here](https://github.com/everycure-org/matrix/issues/476)
+- Implement first version of timestamped edges and execute time-split-validation experiment. See [here](https://github.com/everycure-org/matrix/issues/588)
+- Compare performance of existing models with TxGNN. See [here](https://github.com/everycure-org/matrix/issues/586)
+- Incorporate K fold cross validation into evaluation suite. See [here](https://github.com/everycure-org/matrix/issues/587)
 ### Platform Workstreams
 
 - Add GPUs to the cluster and enable select kedro nodes to run on GPUs
