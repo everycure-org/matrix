@@ -1,18 +1,11 @@
-gdb:
-  object: matrix.pipelines.embeddings.nodes.GraphDB
-  endpoint: ${globals:neo4j.host}
-  database: analytics
-  auth:
-    -  ${globals:neo4j.user}
-    -  ${globals:neo4j.password}
-
 moa_extraction:
-  neo4j_runner: 
-    object: matrix.pipelines.moa_extraction.nodes.Neo4jRunner
-    uri: "bolt://localhost:7687"
-    database: "everycure-run-23-aug-setup-4"
-    user: "neo4j"
-    password: "admin"
+  gdb:
+    object: matrix.pipelines.embeddings.nodes.GraphDB
+    endpoint: ${globals:neo4j.host}
+    database: analytics
+    auth:
+      -  ${globals:neo4j.user}
+      -  ${globals:neo4j.password}
 
   tagging_options:
     drug_types:

@@ -1,10 +1,6 @@
 moa_extraction:
-  neo4j_runner: 
-    object: matrix.pipelines.moa_extraction.utils.Neo4jRunner
-    uri: "bolt://localhost:7687"
-    database: "everycure-test-release"
-    user: "neo4j"
-    password: "admin"
+  gdb:
+    database: everycure-test-release
 
   preprocessing_options:
     add_tags:

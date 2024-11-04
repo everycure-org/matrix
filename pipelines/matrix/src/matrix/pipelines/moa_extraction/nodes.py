@@ -14,13 +14,13 @@ from refit.v1.core.inject import inject_object
 from .path_embeddings import OneHotEncoder, PathEmbeddingStrategy
 from .path_mapping import PathMapper
 from .path_generators import PathGenerator
-from .utils import Neo4jRunner
+from matrix.pipelines.embeddings.nodes import GraphDB
 from matrix.datasets.paths import KGPaths
 from matrix.pipelines.modelling.nodes import _apply_splitter
 
 
 def _tag_edges_between_types(
-    runner: Neo4jRunner,
+    runner: GraphDB,
     type_1_lst: List[str],
     type_2_lst: List[str],
     tag: str,
@@ -35,7 +35,7 @@ def _tag_edges_between_types(
     the direction.
 
     Args:
-        runner: The Neo4j runner.
+        runner: The GraphDB object representing the KG..
         type_1_lst: List of types for the first node.
         type_2_lst: List of types for the second node.
         tag: The tag to add.
@@ -87,7 +87,7 @@ def _tag_edges_between_types(
 
 @inject_object()
 def add_tags(
-    runner: Neo4jRunner,
+    runner: GraphDB,
     drug_types: List[str],
     disease_types: List[str],
     batch_size: int,
@@ -97,7 +97,7 @@ def add_tags(
     """Add tags to the Neo4j database.
 
     Args:
-        runner: The Neo4j runner.
+        runner: The GraphDB object representing the KG.
         drug_types: List of KG node types representing drugs.
         disease_types: List of KG node types representing diseases.
         batch_size: The batch size to use for the query.
@@ -109,11 +109,11 @@ def add_tags(
 
 
 @inject_object()
-def get_one_hot_encodings(runner: Neo4jRunner) -> Tuple[OneHotEncoder, OneHotEncoder]:
+def get_one_hot_encodings(runner: GraphDB) -> Tuple[OneHotEncoder, OneHotEncoder]:
     """Get the one-hot encodings for node categories and edge relations .
 
     Args:
-        runner: The Neo4j runner.
+        runner: The GraphDB object representing the KG..
 
     Returns:
         A tuple of OneHotEncoder objects for node categories and edge relations.
@@ -141,7 +141,7 @@ def get_one_hot_encodings(runner: Neo4jRunner) -> Tuple[OneHotEncoder, OneHotEnc
 
 @inject_object()
 def map_drug_mech_db(
-    runner: Neo4jRunner,
+    runner: GraphDB,
     drug_mech_db: Dict[str, Any],
     mapper: PathMapper,
     synonymizer_endpoint: str,
@@ -149,7 +149,7 @@ def map_drug_mech_db(
     """Map the DrugMechDB indication paths to 2 and 3-hop paths in the graph.
 
     Args:
-        runner: The Neo4j runner.
+        runner: The GraphDB object representing the KG..
         drug_mech_db: The DrugMechDB indication paths.
         mapper: Strategy for mapping paths to the graph.
         synonymizer_endpoint: The endpoint of the synonymizer.
@@ -181,14 +181,14 @@ def make_splits(
 def generate_negative_paths(
     paths: KGPaths,
     negative_sampler_list: List[PathGenerator],
-    runner: Neo4jRunner,
+    runner: GraphDB,
 ) -> KGPaths:
     """Enrich a dataset of positive indication paths with negative samples.
 
     Args:
         paths: Dataset of positive indication paths with splits information.
         negative_sampler_list: List of path generators for negative path samplers.
-        runner: The Neo4j runner.
+        runner: The GraphDB object representing the KG..
     """
     for split in ["TRAIN", "TEST"]:
         for negative_sampler in negative_sampler_list:
@@ -248,7 +248,7 @@ def train_model_split(
 
 def make_predictions(
     model: BaseEstimator,
-    runner: Neo4jRunner,
+    runner: GraphDB,
     pairs: pd.DataFrame,
     path_generator: PathGenerator,
     path_embedding_strategy: PathEmbeddingStrategy,
@@ -313,7 +313,7 @@ def _give_test_pairs(positive_paths: KGPaths) -> pd.DataFrame:
 @inject_object()
 def make_evaluation_predictions(
     model: BaseEstimator,
-    runner: Neo4jRunner,
+    runner: GraphDB,
     positive_paths: KGPaths,
     path_generator: PathGenerator,
     path_embedding_strategy: PathEmbeddingStrategy,
@@ -324,7 +324,7 @@ def make_evaluation_predictions(
 
     Args:
         model: The model to make predictions with.
-        runner: The Neo4j runner.
+        runner: The GraphDB object representing the KG..
         positive_paths: Dataset of positive indication paths, with a "split" information.
         path_generator: Path generator outputting all paths of interest between a given drug-disease pair.
         path_embedding_strategy: Path embedding strategy.
@@ -429,7 +429,7 @@ def compute_evaluation_metrics(
 @inject_object()
 def make_output_predictions(
     model: BaseEstimator,
-    runner: Neo4jRunner,
+    runner: GraphDB,
     pairs: pd.DataFrame,
     path_generator: PathGenerator,
     path_embedding_strategy: PathEmbeddingStrategy,
@@ -444,7 +444,7 @@ def make_output_predictions(
 
     Args:
         model: The model to make predictions with.
-        runner: The Neo4j runner.
+        runner: The GraphDB object representing the KG..
         pairs: Dataset of drug-disease pairs. Expected columns: (source_id, target_id).
         path_generator: Path generator outputting all paths of interest between a given drug-disease pair.
         path_embedding_strategy: Path embedding strategy.
