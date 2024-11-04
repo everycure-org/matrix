@@ -1,12 +1,12 @@
 """Module with GCP datasets for Kedro."""
 
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Any, Optional, Dict
 from copy import deepcopy
 import re
 from google.cloud import bigquery
 import google.api_core.exceptions as exceptions
 
-from concurrent.futures import ThreadPoolExecutor, as_completed
 from tqdm import tqdm
 
 import pandas as pd
