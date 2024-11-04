@@ -36,6 +36,14 @@ _model_output_ds: &_model_output_ds
     kedro-viz:
       layer: model_output
 
+_spark_csv: &_spark_csv
+  type: spark.SparkDataset
+  file_format: csv
+  load_args:
+    header: True
+  save_args:
+    mode: overwrite
+
 modelling.raw.ground_truth.positives:
   <<: [*_pandas_csv, *_model_input_ds]
   filepath: ${globals:paths.raw}/ground_truth_data/tp_pairs.txt
@@ -43,6 +51,13 @@ modelling.raw.ground_truth.positives:
     sep: "\t"
   save_args: 
     sep: "\t"
+
+modelling.raw.positives:
+  <<: *_spark_csv
+  filepath: ${globals:paths.raw}/ground_truth_data/tp_pairs.txt
+  load_args:
+    sep: "\t"
+    header: True
 
 modelling.raw.ground_truth.negatives:
   <<: [*_pandas_csv, *_model_input_ds]
