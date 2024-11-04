@@ -32,8 +32,8 @@ jobs:
   # Uncomment this for debugging the JWT tokens
   debug:
     runs-on: 'ubuntu-latest'
-    environment: dev
     # TODO re-enable this
+    # environment: dev
     # if: github.ref == 'refs/heads/infra'
     permissions:
       id-token: 'write'
