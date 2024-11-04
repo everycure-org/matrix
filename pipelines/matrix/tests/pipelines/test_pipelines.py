@@ -39,22 +39,15 @@ def openai_api_env():
 
 
 @pytest.mark.integration()
-def test_unused_catalog_entries(
+def test_no_parameter_entries_from_catalog_unused(
     kedro_context: KedroContext,
 ) -> None:
-    """Tests whether all catalog entries are used in the pipeline.
-
-    FUTURE: Fix validating unused dataset entries, this is currently not feasible
-    due to the Kedro dataset mechanism.
-    """
+    """Tests whether all parameter entries from the catalog are used in the pipeline."""
 
     used_conf_entries = set.union(*[_pipeline_datasets(p) for p in pipelines.values()])
     used_params = [entry for entry in list(used_conf_entries) if "params:" in entry]
 
     declared_conf_entries = kedro_context.catalog.list()
-
-    # used_data_sets = {entry for entry in used_conf_entries if "params:" not in entry}
-    # declared_data_sets = {entry for entry in declared_conf_entries if "params:" not in entry and entry != "parameters"}
 
     declared_params = [
         entry
@@ -80,6 +73,20 @@ def test_unused_catalog_entries(
     # ), f"The following data sets are not used: {unused_data_sets}"
 
     assert unused_params == [], f"The following parameters are not used: {unused_params}"
+
+
+def test_no_non_parameter_entries_from_catalog_unused(
+    kedro_context: KedroContext,
+) -> None:
+    used_conf_entries = set.union(*[_pipeline_datasets(p) for p in pipelines.values()])
+    used_entries = {entry for entry in used_conf_entries if "params:" not in entry}
+    declared_entries = {entry for entry in kedro_context.catalog.list() if not entry.startswith("params:")}
+
+    unused_entries = declared_entries - used_entries
+    # Only catalog entry not used should be 'parameters', since we input top-level keys directly.
+    unused_entries.remove("parameters")
+
+    assert unused_entries == set(), f"The following entries are not used: {unused_entries}"
 
 
 @pytest.mark.integration
