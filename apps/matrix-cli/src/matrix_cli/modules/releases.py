@@ -437,12 +437,35 @@ def open_file_in_desktop_application(filename: str):
 
 def load_example_release_notes() -> str:
     """
-    Loads the example release notes for GPT context.
+    Loads the last 3 release notes from GitHub for GPT context.
+
+    Returns:
+        str: Concatenated release notes from the last 3 releases
     """
-    example_path = Path(__file__).parent / "prompts" / "example_release_notes.txt"
-    if example_path.exists():
-        return example_path.read_text()
-    return ""
+
+    try:
+        # Get list of releases
+        releases_json = run_command(["gh", "release", "list", "--json", "name,tagName"])
+        releases = json.loads(releases_json)
+
+        # Take first 3 releases
+        release_tags = [release["tagName"] for release in releases[:3]]
+
+        # Fetch release notes for each release
+        release_notes = []
+        for tag in release_tags:
+            try:
+                notes = run_command(["gh", "release", "view", tag])
+                release_notes.append(f"# Release {tag}\n{notes}\n")
+            except subprocess.CalledProcessError:
+                console.print(f"[yellow]Warning: Could not fetch release notes for {tag}")
+                continue
+
+        return "\n".join(release_notes)
+
+    except (subprocess.CalledProcessError, json.JSONDecodeError, IndexError) as e:
+        console.print(f"[yellow]Warning: Could not fetch release notes: {str(e)}")
+        return ""
 
 
 @memory.cache
