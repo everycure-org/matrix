@@ -14,9 +14,15 @@ def apply_join(tps: DataFrame):
     shards = {}
 
     for idx, (drug, disease) in enumerate(
-        [("CHEMBL.COMPOUND:CHEMBL137", "MONDO:0002635"), ("CHEMBL.COMPOUND:CHEMBL1201258", "MONDO:0005065")]
+        [
+            ("CHEMBL.COMPOUND:CHEMBL137", "MONDO:0002635"),
+            ("CHEMBL.COMPOUND:CHEMBL1201258", "MONDO:0005065"),
+            ("CHEMBL.COMPOUND:CHEMBL1201258", "MONDO:0005065"),
+            ("CHEMBL.COMPOUND:CHEMBL30", "MONDO:0007186"),
+            # ("CHEMBL.COMPOUND:CHEMBL3707202", "MONDO:0007186")
+        ]
     ):
-        shards[f"id={idx}"] = lambda: (
+        shards[f"shard={idx}"] = lambda: (
             spark_session.read.format("org.neo4j.spark.DataSource")
             .option("database", "moa")
             .option("url", "bolt://127.0.0.1:7687")
