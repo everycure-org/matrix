@@ -2,7 +2,7 @@ from google.cloud import storage
 import re
 import os
 from copy import deepcopy
-from typing import Any, Optional
+from typing import Any, Optional, Dict
 
 import google.api_core.exceptions as exceptions
 import numpy as np
@@ -17,6 +17,8 @@ from kedro.io.core import (
 from kedro_datasets.spark import SparkDataset, SparkJDBCDataset
 from kedro_datasets.spark.spark_dataset import _split_filepath
 from kedro_datasets.spark.spark_dataset import _get_spark, _strip_dbfs_prefix
+from kedro_datasets.partitions.partitioned_dataset import PartitionedDataset
+
 from matrix.hooks import SparkHooks
 from pygsheets import Spreadsheet, Worksheet
 from pyspark.sql import DataFrame, SparkSession
@@ -36,6 +38,47 @@ class LazySparkDataset(SparkDataset):
     def _load(self):
         SparkHooks._initialize_spark()
         return super()._load()
+
+
+class ParallelPartitionedDataset(PartitionedDataset):
+    def _save(self, data: Dict[str, Any]) -> None:
+        # If overwrite is enabled and the path exists, remove it first
+        if self._overwrite and self._filesystem.exists(self._normalized_path):
+            self._filesystem.rm(self._normalized_path, recursive=True)
+
+        # Helper function to save each partition
+        def save_partition(partition_id, partition_data):
+            kwargs = deepcopy(self._dataset_config)
+            partition = self._partition_to_path(partition_id)
+            # Reattach protocol, as some tools like PySpark may require it
+            kwargs[self._filepath_arg] = self._join_protocol(partition)
+            dataset = self._dataset_type(**kwargs)  # type: ignore
+            if callable(partition_data):
+                partition_data = partition_data()  # noqa: PLW2901
+            dataset.save(partition_data)
+
+        # Run the save_partition function concurrently with a max of `max_threads` threads
+        with ThreadPoolExecutor(max_workers=10) as executor:
+            with tqdm(total=len(data), desc="Saving partitions") as pbar:
+                # Submit tasks for each partition
+                futures = {
+                    executor.submit(save_partition, partition_id, partition_data): partition_id
+                    for partition_id, partition_data in sorted(data.items())
+                }
+
+                # Wait for all futures to complete
+                for future in as_completed(futures):
+                    partition_id = futures[future]
+                    try:
+                        future.result()  # Retrieve the result to catch any exceptions
+                    except Exception as e:
+                        print(f"Error saving partition {partition_id}: {e}")
+                        # Handle or log the exception as needed
+                    finally:
+                        pbar.update(1)  # Update the progress bar after each partition is saved
+
+        # Invalidate caches after all partitions are saved
+        self._invalidate_caches()
 
 
 class SparkWithSchemaDataset(SparkDataset):
