@@ -1,5 +1,5 @@
 # This file was automatically generated
-name: matrix
+name: bq
 type: bigquery
 options:
   location: US
