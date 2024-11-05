@@ -16,7 +16,7 @@ from .path_mapping import PathMapper
 from .path_generators import PathGenerator
 from matrix.pipelines.embeddings.nodes import GraphDB
 from matrix.datasets.paths import KGPaths
-from matrix.pipelines.modelling.nodes import _apply_splitter
+from matrix.pipelines.modelling.nodes import apply_splitter
 
 
 def _tag_edges_between_types(
@@ -174,7 +174,7 @@ def make_splits(
         Paths dataset with split information added.
     """
     df = paths_data.df
-    df_splits = _apply_splitter(df, splitter)
+    df_splits = apply_splitter(df, splitter)
     return KGPaths(df=df_splits).df
 
 
