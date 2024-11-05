@@ -57,8 +57,7 @@ class GraphDB:
             query: The query to run.
         """
         with self.driver.session() as session:
-            data = session.run(query).data()
-            return data  # info.consume() #info.values()
+            return session.run(query).data()
 
 
 class GraphDS(GraphDataScience):

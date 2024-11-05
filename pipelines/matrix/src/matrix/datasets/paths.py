@@ -99,56 +99,39 @@ class KGPaths:
             result: Result of a Neo4j query (list of lists of length 1 of neo4j paths).
             extra_data: Dictionary of extra data to add to the dataframe.
         """
-        # breakpoint()
         if len(result) == 0:
             return
-        result = self._parse_result(result)
 
         # Initialize data dictionary
         if extra_data is None:
             data_dict = dict()
         else:
             data_dict = extra_data
-        data_dict["source_name"] = []
-        data_dict["source_id"] = []
-        data_dict["source_type"] = []
+
+        ## Generate dataframe with desired schema
+        # Source (drug) node
+        data_dict["source_name"] = [path["node_names"][0] for path in result]
+        data_dict["source_id"] = [path["node_ids"][0] for path in result]
+        data_dict["source_type"] = [path["node_categories"][0] for path in result]
         for i in range(1, self.num_hops):
-            data_dict[f"predicates_{i}"] = []
-            data_dict[f"is_forward_{i}"] = []
-            data_dict[f"intermediate_name_{i}"] = []
-            data_dict[f"intermediate_id_{i}"] = []
-            data_dict[f"intermediate_type_{i}"] = []
-        data_dict[f"predicates_{self.num_hops}"] = []
-        data_dict[f"is_forward_{self.num_hops}"] = []
-        data_dict["target_name"] = []
-        data_dict["target_id"] = []
-        data_dict["target_type"] = []
+            # All edges except the last one
+            data_dict[f"predicates_{i}"] = [path["edge_types"][i - 1] for path in result]
+            data_dict[f"is_forward_{i}"] = [path["edge_directions"][i - 1] for path in result]
+            # All intermediate nodes
+            data_dict[f"intermediate_name_{i}"] = [path["node_names"][i] for path in result]
+            data_dict[f"intermediate_id_{i}"] = [path["node_ids"][i] for path in result]
+            data_dict[f"intermediate_type_{i}"] = [path["node_categories"][i] for path in result]
+        # Last edge
+        data_dict[f"predicates_{self.num_hops}"] = [path["edge_types"][-1] for path in result]
+        data_dict[f"is_forward_{self.num_hops}"] = [path["edge_directions"][-1] for path in result]
+        # Target (disease) node
+        data_dict["target_name"] = [path["node_names"][-1] for path in result]
+        data_dict["target_id"] = [path["node_ids"][-1] for path in result]
+        data_dict["target_type"] = [path["node_categories"][-1] for path in result]
 
-        # Collecting data
-        for path in result:
-            if len(path) != self.num_hops:
-                raise ValueError(f"Path has {len(path)} hops, expected {self.num_hops}")
-
-            edges_types = [type(edge).__name__ for edge in path.relationships]
-            edge_directions = [edge.start_node == path.nodes[i] for i, edge in enumerate(path.relationships)]
-
-            data_dict["source_name"].append(path.nodes[0].get("name"))
-            data_dict["source_id"].append(path.nodes[0].get("id"))
-            data_dict["source_type"].append(path.nodes[0].get("category"))
-            for i in range(1, self.num_hops):
-                data_dict[f"predicates_{i}"].append(edges_types[i - 1])
-                data_dict[f"is_forward_{i}"].append(edge_directions[i - 1])
-                data_dict[f"intermediate_name_{i}"].append(path.nodes[i].get("name"))
-                data_dict[f"intermediate_id_{i}"].append(path.nodes[i].get("id"))
-                data_dict[f"intermediate_type_{i}"].append(path.nodes[i].get("category"))
-            data_dict[f"predicates_{self.num_hops}"].append(edges_types[-1])
-            data_dict[f"is_forward_{self.num_hops}"].append(edge_directions[-1])
-            data_dict["target_name"].append(path.nodes[-1].get("name"))
-            data_dict["target_id"].append(path.nodes[-1].get("id"))
-            data_dict["target_type"].append(path.nodes[-1].get("category"))
+        full_new_data = pd.DataFrame(data_dict)
 
         # Squash multiple predicates into comma-separated strings
-        full_new_data = pd.DataFrame(data_dict)
         predicate_cols = [f"predicates_{i}" for i in range(1, self.num_hops + 1)]
         non_predicate_cols = [col for col in full_new_data.columns if col not in predicate_cols]
         grouped = full_new_data.groupby(non_predicate_cols, as_index=False)

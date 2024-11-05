@@ -8,6 +8,7 @@ import random
 import neo4j
 
 from matrix.datasets.paths import KGPaths
+from matrix.pipelines.moa_extraction.neo4j_query_clauses import return_clause
 from matrix.pipelines.embeddings.nodes import GraphDB
 from matrix.pipelines.preprocessing.nodes import resolve, normalize
 
@@ -178,7 +179,7 @@ class SetwisePathMapper(PathMapper):
         where_clause = self._construct_where_clause(self.num_hops, mapped_int_ids)
         query = f"""MATCH p=(n:%{{id:'{drug_mapped}'}}){match_clause}(m:%{{id:'{disease_mapped}'}})
                     WHERE {where_clause}
-                    RETURN DISTINCT p"""
+                    {return_clause(limit=self.num_limit)}"""
 
         # Run the query with several attempts (to account for connection issues)
         attempts = 0
@@ -229,17 +230,8 @@ class TestPathMapper(PathMapper):
             synonymizer_endpoint: The endpoint of the synonymizer.
         """
         match_clause = SetwisePathMapper._construct_match_clause(self.num_hops, self.unidirectional)
-        limit_clause = f"LIMIT {self.num_limit}" if self.num_limit else ""
         query = f"""MATCH path=(n){match_clause}(m)
-                    WITH path, 
-                        nodes(path) as nodes, 
-                        relationships(path) as rels
-                    RETURN [n in nodes | n.name] as node_names,
-                        [n in nodes | n.id] as node_ids,
-                        [n in nodes | n.category] as node_categories,
-                        [r in rels | type(r)] as edge_types,
-                        [r in rels | startNode(r) = nodes[apoc.coll.indexOf(rels, r)]] as edge_directions
-                        {limit_clause}"""
+                    {return_clause(limit=self.num_limit)}"""
         result = runner.run(query)
 
         paths = KGPaths(num_hops=self.num_hops)
