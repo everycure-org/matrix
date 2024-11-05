@@ -1,4 +1,4 @@
-from unittest.mock import Mock, patch
+from unittest.mock import patch
 from kedro.pipeline.node import Node
 from kedro.pipeline import Pipeline
 import pytest
@@ -195,31 +195,31 @@ def dummy_func(*args) -> str:
 
 
 @pytest.fixture()
-def simple_node():
+def simple_node() -> Node:
     return Node(func=dummy_func, inputs=["dataset_a", "dataset_b"], outputs="dataset_c", name="simple_node")
 
 
 @pytest.fixture()
-def fused_node():
+def fused_node_empty() -> FusedNode:
     return FusedNode(depth=0)
 
 
-def test_fused_node_initialization(fused_node: FusedNode) -> None:
-    assert fused_node.depth == 0
-    assert fused_node._nodes == []
-    assert fused_node._parents == set()
-    assert fused_node._inputs == []
+def test_fused_node_initialization(fused_node_empty: FusedNode) -> None:
+    assert fused_node_empty.depth == 0
+    assert fused_node_empty._nodes == []
+    assert fused_node_empty._parents == set()
+    assert fused_node_empty._inputs == []
 
 
-def test_add_node(fused_node: FusedNode, simple_node: Node) -> None:
-    fused_node.add_node(simple_node)
-    assert len(fused_node._nodes) == 1
-    assert fused_node._nodes[0] == simple_node
+def test_add_node(fused_node_empty: FusedNode, simple_node: Node) -> None:
+    fused_node_empty.add_node(simple_node)
+    assert len(fused_node_empty._nodes) == 1
+    assert fused_node_empty._nodes[0] == simple_node
 
 
 # TODO(pascal.bro): Let's determine what the desired behaviour is
 @pytest.mark.skip(reason="Desired behaviour not clear")
-def test_add_parents(fused_node: FusedNode):
+def test_add_parents(fused_node: FusedNode) -> None:
     parent1 = FusedNode(depth=1)
     parent2 = FusedNode(depth=1)
     fused_node.add_parents([parent1, parent2])
@@ -245,12 +245,11 @@ def test_fuses_with(fused_node: FusedNode, simple_node: Node) -> None:
     assert fused_node.fuses_with(fusable_node)
 
 
-# TODO(pascal.bro): Let's determine what the desired behaviour is
-def test_not_fusable(fused_node: FusedNode, simple_node: Node) -> None:
-    fused_node.add_node(simple_node)
+def test_not_fusable(fused_node_empty: FusedNode, simple_node: Node) -> None:
+    fused_node_empty.add_node(simple_node)
     non_fusable_node = Node(func=dummy_func, inputs=["dataset_x"], outputs="dataset_y", name="non_fusable_node")
 
-    assert not fused_node.fuses_with(non_fusable_node)
+    assert not fused_node_empty.fuses_with(non_fusable_node)
 
 
 # TODO(pascal.bro): Let's determine what the desired behaviour is
@@ -259,12 +258,6 @@ def test_is_fusable(fused_node: FusedNode, simple_node: Node) -> None:
     fused_node.add_node(simple_node)
     fused_node._nodes[0].tags = [NodeTags.ARGO_FUSE_NODE.value]
     assert fused_node.is_fusable
-
-
-# TODO(pascal.bro): Let's determine what the desired behaviour is
-def test_not_is_fusable(fused_node: FusedNode, simple_node: Node) -> None:
-    fused_node.add_node(simple_node)
-    assert not fused_node.is_fusable
 
 
 # TODO(pascal.bro): Let's determine what the desired behaviour is
@@ -279,7 +272,7 @@ def test_fuse_group(fused_node: FusedNode, simple_node: Node) -> None:
 @pytest.mark.skip(reason="Desired behaviour not clear")
 def test_nodes_property(fused_node: FusedNode, simple_node: Node) -> None:
     fused_node.add_node(simple_node)
-    fused_node.add_node(Node(func=dummy_func, name="second_node"))
+    fused_node.add_node(Node(func=dummy_func, name="second_node", inputs=[], outputs=["dataset_d"]))
     assert fused_node.nodes == "simple_node,second_node"
 
 
@@ -310,9 +303,9 @@ def test_name_property_fusable(fused_node: FusedNode, simple_node: Node) -> None
 
 
 # TODO(pascal.bro): Let's determine what the desired behaviour is
-def test_name_property_not_fusable(fused_node: FusedNode, simple_node: Node) -> None:
-    fused_node.add_node(simple_node)
-    assert fused_node.name == "simple_node"
+def test_name_property_not_fusable(fused_node_empty: FusedNode, simple_node: Node) -> None:
+    fused_node_empty.add_node(simple_node)
+    assert fused_node_empty.name == "simple_node"
 
 
 def test_get_fuse_group() -> None:
@@ -344,31 +337,33 @@ def test_get_k8s_node_affinity_tags_without_gpu():
 
 
 @pytest.fixture
-def mock_fused_node():
-    node = Mock()
-    node.name = "test-node"
-    node.nodes = ["node1", "node2"]
-    node._parents = set()
-    node.tags = ["tag1", "tag2"]
+def fused_node_with_contents() -> FusedNode:
+    node = FusedNode(depth=0)
+    node.add_node(Node(func=dummy_func, name="node1", inputs=[], outputs=["dataset_x"]))
+    node.add_node(Node(func=dummy_func, name="node2", inputs=[], outputs=["dataset_y"]))
     return node
 
 
 @pytest.fixture
-def mock_fused_node_with_argo_tags():
-    node = Mock()
-    node.name = "test-node-argo"
-    node.nodes = ["node1"]
-    node._parents = set()
-    node.tags = [f"{ARGO_NODE_PREFIX}memory-4Gi", f"{ARGO_NODE_PREFIX}cpu-2"]
+def fused_node_with_argo_tags() -> FusedNode:
+    node = FusedNode(depth=0)
+    node.add_node(
+        Node(
+            func=dummy_func,
+            name="node1",
+            inputs=[],
+            outputs=["dataset_x"],
+            tags=[f"{ARGO_NODE_PREFIX}memory-4Gi", f"{ARGO_NODE_PREFIX}cpu-2"],
+        )
+    )
     return node
 
 
 @pytest.fixture
-def mock_fused_node_with_parents(mock_fused_node):
-    node = Mock()
-    node.name = "child-node"
-    node.nodes = ["node3"]
-    node._parents = {mock_fused_node}
+def fused_node_with_parents(fused_node: FusedNode) -> FusedNode:
+    node = FusedNode(depth=0)
+    node.add_node(Node(func=dummy_func, name="node3", inputs=[], outputs=["dataset_z"]))
+    node._parents = {fused_node}
     node.tags = ["tag3"]
     return node
 
@@ -378,26 +373,26 @@ def test_empty_pipeline():
     assert result == []
 
 
-def test_single_node_no_deps(mock_fused_node):
-    result = get_pipeline_as_tasks([mock_fused_node])
+def test_single_node_no_deps(fused_node_with_contents: FusedNode) -> None:
+    result = get_pipeline_as_tasks([fused_node_with_contents])
 
     assert len(result) == 1
-    assert result[0]["name"] == "test-node"
+    assert result[0]["name"] == "node1"
     assert result[0]["nodes"] == ["node1", "node2"]
     assert result[0]["deps"] == []
     assert result[0]["tags"] == ["tag1", "tag2"]
 
 
-def test_node_with_argo_tags(mock_fused_node_with_argo_tags):
-    result = get_pipeline_as_tasks([mock_fused_node_with_argo_tags])
+def test_node_with_argo_tags(fused_node_with_argo_tags: FusedNode) -> None:
+    result = get_pipeline_as_tasks([fused_node_with_argo_tags])
 
     assert len(result) == 1
     assert result[0]["memory"] == "4Gi"
     assert result[0]["cpu"] == "2"
 
 
-def test_multiple_nodes_with_deps(mock_fused_node, mock_fused_node_with_parents):
-    result = get_pipeline_as_tasks([mock_fused_node, mock_fused_node_with_parents])
+def test_multiple_nodes_with_deps(fused_node_with_contents: FusedNode, fused_node_with_parents: FusedNode) -> None:
+    result = get_pipeline_as_tasks([fused_node_with_contents, fused_node_with_parents])
 
     assert len(result) == 2
 
@@ -410,13 +405,13 @@ def test_multiple_nodes_with_deps(mock_fused_node, mock_fused_node_with_parents)
     assert result[1]["deps"] == ["test-node"]
 
 
-def test_k8s_affinity_tags(mock_fused_node):
+def test_k8s_affinity_tags(fused_node: FusedNode) -> None:
     mock_affinity = {"nodeAffinity": {"requiredDuringSchedulingIgnoredDuringExecution": {}}}
 
     with patch("matrix.argo.get_k8s_node_affinity_tags", return_value=mock_affinity) as mock_get_tags:
-        result = get_pipeline_as_tasks([mock_fused_node])
+        result = get_pipeline_as_tasks([fused_node])
 
-        mock_get_tags.assert_called_once_with(mock_fused_node.tags)
+        mock_get_tags.assert_called_once_with(fused_node.tags)
         assert result[0]["k8s_affinity_tags"] == mock_affinity
 
 

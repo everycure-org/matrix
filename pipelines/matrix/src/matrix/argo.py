@@ -215,7 +215,7 @@ def fuse(pipeline: Pipeline) -> List[FusedNode]:
     return fused
 
 
-def get_pipeline_as_tasks(fused_pipeline: List[FusedNode]):
+def get_pipeline_as_tasks(fused_pipeline: List[FusedNode]) -> List[Dict[str, Any]]:
     """Function to return pipeline as a list of tasks with dependencies to render Argo template.
 
     Args:
