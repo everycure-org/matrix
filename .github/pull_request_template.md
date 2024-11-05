@@ -18,4 +18,15 @@
 - [ ] made corresponding changes to the documentation
 - [ ] added tests that prove my fix is effective or that my feature works
 - [ ] Any dependent changes have been merged and published in downstream modules
+- [ ] If breaking changes occur or you need everyone to run a command locally after
+    pulling in latest main, uncomment the below "Merge Notification" section and
+    describe steps necessary for people
 
+
+<!-- uncomment the below section if you want a notice to be sent to our slack community upon
+a successful merge of the PR -->
+
+<!--
+## Merge Notification
+
+-->
