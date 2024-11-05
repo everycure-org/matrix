@@ -580,3 +580,21 @@ def test_generate_argo_config_with_gpu_affinity() -> None:
         cloud_template["dag"]["tasks"][0]["template"] == "kedro"
     ), "cloud_pipeline template task should use kedro template"
     assert "affinity" in cloud_template["dag"]["tasks"][0], "cloud_pipeline template task should have explicit affinity"
+
+    affinities = cloud_template["dag"]["tasks"][0]["affinity"]
+    assert (
+        affinities["nodeAffinity"]["requiredDuringSchedulingIgnoredDuringExecution"]["nodeSelectorTerms"][0][
+            "matchExpressions"
+        ][0]["key"]
+        == NodeTags.K8S_REQUIRE_GPU.value
+    )
+    assert (
+        affinities["nodeAffinity"]["requiredDuringSchedulingIgnoredDuringExecution"]["nodeSelectorTerms"][0][
+            "matchExpressions"
+        ][0]["operator"]
+        == "In"
+    )
+    assert affinities["nodeAffinity"]["requiredDuringSchedulingIgnoredDuringExecution"]["nodeSelectorTerms"][0][
+        "matchExpressions"
+    ][0]["values"] == ["true"]
+    assert len(affinities["nodeAffinity"]["requiredDuringSchedulingIgnoredDuringExecution"]["nodeSelectorTerms"]) == 1

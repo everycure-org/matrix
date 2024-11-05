@@ -217,11 +217,25 @@ spec:
           - {{ dep }}
         {% endfor %}
         {% endif %}
+        {% if task.k8s_affinity_tags %}
+        affinity:
+          nodeAffinity:
+            requiredDuringSchedulingIgnoredDuringExecution:
+              nodeSelectorTerms:
+              - matchExpressions:
+                {% for tag in task.k8s_affinity_tags %}
+                - key: {{ tag }}
+                  operator: In
+                  values:
+                  - "true"
+                {% endfor %}
+        {% endif %}
         arguments:
           parameters:
           - name: pipeline
             value: {{ pipeline_name }}
           - name: kedro_nodes
             value: {{ task.nodes }}
+
       {% endfor %}
   {% endfor %}
