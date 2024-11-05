@@ -25,14 +25,17 @@ def generate_argo_config(
     template_env = Environment(loader=loader, trim_blocks=True, lstrip_blocks=True)
     template = template_env.get_template(ARGO_TEMPLATE_FILE)
 
-    pipeline2dependencies = {}
+    pipeline2tasks = {}
     for name, pipeline in pipelines.items():
-        # Fuse nodes in topological order to avoid constant recreation of Neo4j
-        pipeline2dependencies[name] = get_dependencies(fuse(pipeline))
+        # Fuse fusable nodes in topological order to avoid constant recreation of Neo4j.
+        # Nodes not tagged with ARGO_FUSE_NODE are executed as their own steps.
+        fused_pipeline = fuse(pipeline)
+        # Get dependencies for each pipeline
+        pipeline2tasks[name] = get_pipeline_as_tasks(fused_pipeline)
 
     output = template.render(
         package_name=package_name,
-        pipelines=pipeline2dependencies,
+        pipelines=pipeline2tasks,
         image=image,
         image_tag=image_tag,
         namespace=namespace,
@@ -211,8 +214,8 @@ def fuse(pipeline: Pipeline) -> List[FusedNode]:
     return fused
 
 
-def get_dependencies(fused_pipeline: List[FusedNode]):
-    """Function to yield node dependencies to render Argo template.
+def get_pipeline_as_tasks(fused_pipeline: List[FusedNode]):
+    """Function to return pipeline as a list of tasks with dependencies to render Argo template.
 
     Args:
         fused_pipeline: fused pipeline
@@ -221,17 +224,17 @@ def get_dependencies(fused_pipeline: List[FusedNode]):
     """
     deps_dict = [
         {
-            "name": clean_name(fuse.name),
-            "nodes": fuse.nodes,
-            "deps": [clean_name(val.name) for val in sorted(fuse._parents)],
-            "tags": fuse.tags,
+            "name": clean_name(fused_node.name),
+            "nodes": fused_node.nodes,
+            "deps": [clean_name(val.name) for val in sorted(fused_node._parents)],
+            "tags": fused_node.tags,
             **{
                 tag.split("-")[0][len(ARGO_NODE_PREFIX) :]: tag.split("-")[1]
-                for tag in fuse.tags
+                for tag in fused_node.tags
                 if tag.startswith(ARGO_NODE_PREFIX) and "-" in tag
             },
         }
-        for fuse in fused_pipeline
+        for fused_node in fused_pipeline
     ]
     return sorted(deps_dict, key=lambda d: d["name"])
 
