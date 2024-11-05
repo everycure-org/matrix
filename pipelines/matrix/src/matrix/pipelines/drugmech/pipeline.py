@@ -3,14 +3,18 @@
 import pandas as pd
 from kedro.pipeline import Pipeline, node, pipeline
 from pyspark.sql import DataFrame, SparkSession
+from pyspark.sql import functions as F
 
 
 def apply_join(gt_pos: pd.DataFrame):
     spark_session = SparkSession.builder.getOrCreate()
 
     shards = {}
+    df = gt_pos.groupBy("source").agg(F.collect_list("target").alias("targets"))
 
-    for index, row in gt_pos.toPandas().iloc[:10].iterrows():
+    for index, row in df.toPandas().iloc[:100].iterrows():
+        targets = ",".join(f'"{target}"' for target in row["targets"])
+
         shards[f"shard={index}"] = lambda: (
             spark_session.read.format("org.neo4j.spark.DataSource")
             .option("database", "moa")
@@ -18,13 +22,14 @@ def apply_join(gt_pos: pd.DataFrame):
             .option("authentication.type", "basic")
             .option("authentication.basic.username", "neo4j")
             .option("authentication.basic.password", "admin")
+            #  {{id: '{row["target"]}'}}
             .option(
                 "query",
                 f"""
-                MATCH p=(drug:Entity {{id: '{row["source"]}'}})-[*2..3]->(disease:Entity {{id: '{row["target"]}'}})
-                WITH [node IN nodes(p) | node.id] as nodes, [node in nodes(p) | labels(node)[1]] as labels, [rel in relationships(p) | type(rel)] as rels
-                RETURN nodes, labels, rels
-            """,
+                    MATCH p=(drug:Entity {{id: '{row["source"]}'}})-[*2..3]->(disease:Entity) 
+                    WHERE disease.id IN [{targets}] 
+                    WITH [node IN nodes(p) | node.id] as nodes, [node in nodes(p) | labels(node)[1]] as labels, [rel in relationships(p) | type(rel)] as rels 
+                    RETURN nodes, labels, rels""",
             )
             .load()
         )
@@ -33,6 +38,7 @@ def apply_join(gt_pos: pd.DataFrame):
 
 
 def load_full(df: DataFrame):
+    print(df.count())
     df.show()
 
 
@@ -77,6 +83,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 ],
                 outputs=None,
                 name="load_paths",
+                tags=["generate"],
             ),
         ]
     )
