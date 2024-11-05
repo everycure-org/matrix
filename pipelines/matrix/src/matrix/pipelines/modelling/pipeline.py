@@ -54,7 +54,7 @@ def _create_model_shard_pipeline(model: str, shard: int) -> Pipeline:
             ),
         ],
         tags=[
-            NodeTags.ARGO_FUSE_NODE,
+            NodeTags.ARGO_FUSE_NODE.value,
             fuse_group_tag(model, f"shard-{shard}"),
         ],
     )
@@ -125,7 +125,7 @@ def _create_model_pipeline(model: str, num_shards: int) -> Pipeline:
                     ),
                 ],
                 tags=[
-                    NodeTags.ARGO_FUSE_NODE,
+                    NodeTags.ARGO_FUSE_NODE.value,
                     fuse_group_tag(model),
                 ],
             ),

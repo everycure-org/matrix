@@ -12,14 +12,14 @@ def create_pipeline(**kwargs) -> Pipeline:
                 inputs=["integration.prm.filtered_nodes"],
                 outputs="data_release.prm.kg_nodes",
                 name="ingest_kg_nodes",
-                tags=[NodeTags.NEO4J],
+                tags=[NodeTags.NEO4J.value],
             ),
             node(
                 func=ingest_edges,
                 inputs=["data_release.prm.kg_nodes", "integration.prm.filtered_edges"],
                 outputs="data_release.prm.kg_edges",
                 name="ingest_kg_edges",
-                tags=[NodeTags.NEO4J],
+                tags=[NodeTags.NEO4J.value],
             ),
             # write to BigQuery
             node(
@@ -27,14 +27,14 @@ def create_pipeline(**kwargs) -> Pipeline:
                 inputs=["integration.prm.filtered_edges"],
                 outputs="data_release.prm.bigquery_edges",
                 name="write_edges_to_bigquery",
-                tags=[NodeTags.BIGQUERY],
+                tags=[NodeTags.BIGQUERY.value],
             ),
             node(
                 func=lambda x: x,
                 inputs=["integration.prm.filtered_nodes"],
                 outputs="data_release.prm.bigquery_nodes",
                 name="write_nodes_to_bigquery",
-                tags=[NodeTags.BIGQUERY],
+                tags=[NodeTags.BIGQUERY.value],
             ),
             # NOTE: Enable if you want embeddings
             # node(

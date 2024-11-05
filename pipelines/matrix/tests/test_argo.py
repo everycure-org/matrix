@@ -27,7 +27,7 @@ def test_no_nodes_fused_when_no_fuse_options():
                 name="second",
             ),
         ],
-        tags=[NodeTags.ARGO_FUSE_NODE, fuse_group_tag("dummy")],
+        tags=[NodeTags.ARGO_FUSE_NODE.value, fuse_group_tag("dummy")],
     )
 
     fused = fuse(pipeline_with_no_fusing_options)
@@ -53,7 +53,7 @@ def test_simple_fusing():
                 outputs="dataset_2",
             ),
         ],
-        tags=[NodeTags.ARGO_FUSE_NODE, fuse_group_tag("dummy")],
+        tags=[NodeTags.ARGO_FUSE_NODE.value, fuse_group_tag("dummy")],
     )
 
     fused = fuse(pipeline_where_first_node_is_input_for_second)
@@ -90,7 +90,7 @@ def test_no_multiple_parents_no_fusing():
                 name="child_node",
             ),
         ],
-        tags=[NodeTags.ARGO_FUSE_NODE, fuse_group_tag("dummy")],
+        tags=[NodeTags.ARGO_FUSE_NODE.value, fuse_group_tag("dummy")],
     )
 
     fused = fuse(pipeline_one2many_fusing_possible)
@@ -145,7 +145,7 @@ def test_fusing_multiple_parents():
                 name="grandgrandchild_node",
             ),
         ],
-        tags=[NodeTags.ARGO_FUSE_NODE, fuse_group_tag("dummy")],
+        tags=[NodeTags.ARGO_FUSE_NODE.value, fuse_group_tag("dummy")],
     )
 
     fused = fuse(pipeline_with_multiple_parents)
