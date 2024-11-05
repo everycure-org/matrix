@@ -224,14 +224,14 @@ def test_add_parents(fused_node: FusedNode):
 @pytest.mark.skip(reason="Desired behaviour not clear")
 def test_fuses_with(fused_node: FusedNode, simple_node: Node) -> None:
     fused_node.add_node(simple_node)
-    fused_node._nodes[0].tags = ["argowf.fuse", "argowf.fuse-group.test"]
+    fused_node._nodes[0].tags = [NodeTags.ARGO_FUSE_NODE.value, fuse_group_tag("test")]
 
     fusable_node = Node(
         func=dummy_func,
         inputs=["dataset_c"],
         outputs="dataset_d",
         name="fusable_node",
-        tags=["argowf.fuse", "argowf.fuse-group.test"],
+        tags=[NodeTags.ARGO_FUSE_NODE.value, fuse_group_tag("test")],
     )
 
     assert fused_node.fuses_with(fusable_node)
@@ -249,7 +249,7 @@ def test_not_fusable(fused_node: FusedNode, simple_node: Node) -> None:
 @pytest.mark.skip(reason="Desired behaviour not clear")
 def test_is_fusable(fused_node: FusedNode, simple_node: Node) -> None:
     fused_node.add_node(simple_node)
-    fused_node._nodes[0].tags = ["argowf.fuse"]
+    fused_node._nodes[0].tags = [NodeTags.ARGO_FUSE_NODE.value]
     assert fused_node.is_fusable
 
 
@@ -263,7 +263,7 @@ def test_not_is_fusable(fused_node: FusedNode, simple_node: Node) -> None:
 @pytest.mark.skip(reason="Desired behaviour not clear")
 def test_fuse_group(fused_node: FusedNode, simple_node: Node) -> None:
     fused_node.add_node(simple_node)
-    fused_node._nodes[0].tags = ["argowf.fuse-group.test_group"]
+    fused_node._nodes[0].tags = [fuse_group_tag("test_group")]
     assert fused_node.fuse_group == "test_group"
 
 
@@ -296,7 +296,7 @@ def test_tags_property(fused_node: FusedNode, simple_node: Node) -> None:
 @pytest.mark.skip(reason="Desired behaviour not clear")
 def test_name_property_fusable(fused_node: FusedNode, simple_node: Node) -> None:
     fused_node.add_node(simple_node)
-    fused_node._nodes[0].tags = ["argowf.fuse", "argowf.fuse-group.test_group"]
+    fused_node._nodes[0].tags = [NodeTags.ARGO_FUSE_NODE.value, fuse_group_tag("test_group")]
     fused_node.add_node(Node(func=dummy_func, name="second_node"))
     assert fused_node.name == "test_group"
 
@@ -308,7 +308,7 @@ def test_name_property_not_fusable(fused_node: FusedNode, simple_node: Node) -> 
 
 
 def test_get_fuse_group() -> None:
-    tags = ["argowf.fuse-group.test_group", "other_tag"]
+    tags = [fuse_group_tag("test_group"), "other_tag"]
     assert FusedNode.get_fuse_group(tags) == "test_group"
 
 

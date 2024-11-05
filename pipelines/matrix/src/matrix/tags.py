@@ -1,13 +1,16 @@
 from enum import Enum
 
+ARGO_NODE_PREFIX = "argowf."
+ARGO_FUSE_GROUP_PREFIX = f"{ARGO_NODE_PREFIX}fuse-group."
+
 
 class NodeTags(Enum):
     NEO4J = "neo4j"  # TODO: What is the meaning of this tag?
     BIGQUERY = "bigquery"  # TODO: What is the meaning of this tag?
     ARGO_FUSE_NODE = "argowf.fuse"
-    ARGO_FUSE_TOPOLOGICAL_EMBEDDINGS = "argowf.fuse-group.topological_embeddings"
+    ARGO_FUSE_TOPOLOGICAL_EMBEDDINGS = f"{ARGO_FUSE_GROUP_PREFIX}topological_embeddings"
     ARGO_NEO4J_TEMPLATE = "argowf.template-neo4j"
-    ARGO_FUSE_TOPOLOGICAL_PCA = "argowf.fuse-group.topological_pca"
+    ARGO_FUSE_TOPOLOGICAL_PCA = f"{ARGO_FUSE_GROUP_PREFIX}topological_pca"
     ARGO_MEM_100G = "argowf.mem-100g"
     RTX_KG2 = "rtx_kg2"
     EC_MEDICAL_TEAM = "ec_medical_team"
@@ -22,4 +25,4 @@ class NodeTags(Enum):
 
 
 def fuse_group_tag(model: str, *args: str) -> str:
-    return f"argowf.fuse-group.{model}{'.'.join(arg for arg in args if arg)}"
+    return f"{ARGO_FUSE_GROUP_PREFIX}{model}{'.'.join(arg for arg in args if arg)}"
