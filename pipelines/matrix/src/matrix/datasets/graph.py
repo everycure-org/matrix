@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 class KnowledgeGraph:
     """Class to represent a knowledge graph.
 
-    NOTE: Provide handover point to Neo4J in the future.
+    FUTURE: We should aspire to remove this class
     """
 
     def __init__(self, nodes: pd.DataFrame) -> None:
@@ -31,22 +31,6 @@ class KnowledgeGraph:
         # Add type specific indexes
         self._drug_nodes = list(nodes[nodes["is_drug"]]["id"])
         self._disease_nodes = list(nodes[nodes["is_disease"]]["id"])
-        self._embeddings = dict(zip(nodes["id"], nodes["topological_embedding"]))
-
-    def get_embedding(self, node_id: str, default: Any = None):
-        """Retrieves embedding for node with the ID.
-
-        Args:
-            node_id: Node ID.
-            default: default value to return
-        Returns:
-            Embedding or None if not found
-        """
-        res = self._embeddings.get(node_id, default)
-        if res is default:
-            logger.warning(f"Embedding for node with id '{node_id}' not found!")
-
-        return res
 
     def flags_to_ids(self, flags: List[str]) -> List[str]:
         """Helper function for extracting nodes from flag columns.
@@ -69,6 +53,24 @@ class KnowledgeGraph:
             col_name: Name of column containing desired attribute
         """
         return self._nodes[self._nodes["id"] == node_id][col_name]
+
+
+class PandasParquetDataset(ParquetDataset):
+    def _load(self) -> KnowledgeGraph:
+        attempt = 0
+
+        # Retrying due to a very flaky error, causing GCS not retrieving
+        # parquet files on first try.
+        while attempt < 3:
+            try:
+                # Attempt reading the object
+                # https://github.com/everycure-org/matrix/issues/71
+                return super()._load()
+            except FileNotFoundError:
+                attempt += 1
+                logger.warning("Parquet file not found, retrying!")
+
+        raise DatasetError("Unable to find underlying Parquet file!")
 
 
 class KnowledgeGraphDataset(ParquetDataset):
