@@ -71,7 +71,7 @@ def mock_multiple_pipelines():
 
 def test_submit_simple(mock_submit_internal: None, mock_pipelines: None) -> None:
     runner = CliRunner()
-    result = runner.invoke(submit, ["--username", "testuser", "--run-name", "test-run"])
+    result = runner.invoke(submit, ["--username", "testuser", "--run-name", "test-run", "--pipeline"])
     assert result.exit_code == 0
 
     mock_submit_internal.assert_called_once_with(
