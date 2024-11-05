@@ -73,12 +73,6 @@ modelling.model_input.drugs_diseases_nodes@spark:
   <<: [*_spark_parquet, *_model_input_ds]
   filepath: ${globals:paths.modelling}/model_input/drugs_diseases_nodes/
 
-# commented out until https://github.com/fsspec/gcsfs/issues/632 is fixed
-# modelling.model_input.drugs_diseases_nodes@pandas:
-#   <<: *_pandas_parquet
-#   filepath: ${globals:paths.modelling}/drugs_diseases_nodes/
-
-
 modelling.feat.rtx_kg2@spark:
   <<: [*_spark_parquet, *_model_input_ds]
   filepath: ${globals:paths.modelling}/feat/rtx_kg2_nodes
