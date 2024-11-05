@@ -73,7 +73,7 @@ class GroupAwareSplit(BaseCrossValidator):
     def __init__(
         self, group_by_column: str = "source_id", n_splits: int = 1, test_size: float = 0.1, random_state: float = None
     ) -> None:
-        """Initialize the DrugStratifiedSplit cross-validator.
+        """Initialize the GroupAwareSplit cross-validator.
 
         Args:
             group_by_column: The column name to use for grouping the data.
