@@ -60,6 +60,10 @@ modelling.raw.ground_truth.positives@pandas:
 modelling.raw.ground_truth.positives@spark:
   <<: [*_spark_csv, *_raw_ds]
   filepath: ${globals:paths.raw}/ground_truth/translator/${globals:data_sources.gt.version}/tp_pairs.tsv
+  file_format: csv
+  load_args:
+    sep: "\t"
+    header: true
 
 modelling.raw.ground_truth.negatives@pandas:
   <<: [*_pandas_csv, *_raw_ds]
@@ -72,6 +76,10 @@ modelling.raw.ground_truth.negatives@pandas:
 modelling.raw.ground_truth.negatives@spark:
   <<: [*_spark_csv, *_raw_ds]
   filepath: ${globals:paths.raw}/ground_truth/translator/${globals:data_sources.gt.version}/tn_pairs.tsv
+  file_format: csv
+  load_args:
+    sep: "\t"
+    header: true
 
 modelling.int.known_pairs@pandas:
   <<: [*_pandas_parquet, *_model_input_ds]
@@ -87,7 +95,7 @@ modelling.model_input.drugs_diseases_nodes@spark:
 
 modelling.model_input.drugs_diseases_nodes@pandas:
   <<: [*_kg_dataset, *_model_input_ds]
-  filepath: ${globals:paths.modelling}/feat/nodes
+  filepath: ${globals:paths.modelling}/model_input/drugs_diseases_nodes/
 
 modelling.model_input.splits:
   <<: [*_pandas_parquet, *_model_input_ds]

@@ -12,7 +12,7 @@ def _create_model_shard_pipeline(model: str, shard: int) -> Pipeline:
             node(
                 func=nodes.create_model_input_nodes,
                 inputs=[
-                    "modelling.feat.rtx_kg2@pandas",
+                    "modelling.model_input.drugs_diseases_nodes@pandas",
                     "modelling.model_input.splits",
                     f"params:modelling.{model}.model_options.generator",
                 ],

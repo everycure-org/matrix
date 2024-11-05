@@ -80,8 +80,8 @@ def create_pipeline(**kwargs) -> Pipeline:
                     "ingestion.raw.disease_list@pandas",
                 ],
                 outputs=[
-                    "modelling.raw.ground_truth.positives",
-                    "modelling.raw.ground_truth.negatives",
+                    "modelling.raw.ground_truth.positives@pandas",
+                    "modelling.raw.ground_truth.negatives@pandas",
                 ],
                 name="create_gn_pairs",
             ),
