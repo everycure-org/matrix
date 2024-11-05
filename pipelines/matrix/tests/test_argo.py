@@ -3,7 +3,7 @@ from kedro.pipeline import Pipeline
 import pytest
 import yaml
 
-from matrix.argo import clean_name, fuse, FusedNode, generate_argo_config
+from matrix.argo import clean_name, fuse, FusedNode, generate_argo_config, get_k8s_node_affinity_tags
 from matrix.tags import NodeTags, fuse_group_tag
 
 
@@ -321,6 +321,18 @@ def test_clean_dependencies() -> None:
     elements = ["dataset_a@pandas", "params:some_param", "dataset_b"]
     cleaned = FusedNode.clean_dependencies(elements)
     assert cleaned == ["dataset_a", "dataset_b"]
+
+
+def test_get_k8s_node_affinity_tags_with_gpu():
+    tags = ["some-tag", NodeTags.K8S_REQUIRE_GPU.value, "another-tag"]
+    result = get_k8s_node_affinity_tags(tags)
+    assert result == [NodeTags.K8S_REQUIRE_GPU.value]
+
+
+def test_get_k8s_node_affinity_tags_without_gpu():
+    tags = ["some-tag", "another-tag"]
+    result = get_k8s_node_affinity_tags(tags)
+    assert result == []
 
 
 def test_generate_argo_config() -> None:
