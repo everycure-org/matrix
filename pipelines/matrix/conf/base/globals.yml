@@ -23,7 +23,6 @@ versions:
   release: local-release
 
 data_sources:
-  # Note: t prefix stands for translator-normalized data
   rtx-kg2:
     version: v2.10.0
   robokop:
