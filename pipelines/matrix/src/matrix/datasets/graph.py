@@ -31,6 +31,21 @@ class KnowledgeGraph:
         # Add type specific indexes
         self._drug_nodes = list(nodes[nodes["is_drug"]]["id"])
         self._disease_nodes = list(nodes[nodes["is_disease"]]["id"])
+        self._embeddings = dict(zip(nodes["id"], nodes["topological_embedding"]))
+
+    def get_embedding(self, node_id: str, default: Any = None):
+        """Retrieves embedding for node with the ID.
+        Args:
+            node_id: Node ID.
+            default: default value to return
+        Returns:
+            Embedding or None if not found
+        """
+        res = self._embeddings.get(node_id, default)
+        if res is default:
+            logger.warning(f"Embedding for node with id '{node_id}' not found!")
+
+        return res
 
     def flags_to_ids(self, flags: List[str]) -> List[str]:
         """Helper function for extracting nodes from flag columns.
