@@ -33,6 +33,7 @@ def generate_argo_config(
         # Get dependencies and tasks for each pipeline
         pipeline2tasks[pipeline_name] = get_pipeline_as_tasks(fused_pipeline)
 
+    # If affinity tags are detected, they will override the default K8s affinity rules from kedro template.
     output = template.render(
         package_name=package_name,
         pipelines=pipeline2tasks,
@@ -227,7 +228,8 @@ def get_pipeline_as_tasks(fused_pipeline: List[FusedNode]):
             "name": clean_name(fused_node.name),
             "nodes": fused_node.nodes,
             "deps": [clean_name(val.name) for val in sorted(fused_node._parents)],
-            "tags": fused_node.tags,
+            "k8s_affinity_tags": get_k8s_node_affinity_tags(fused_node.tags),
+            "tags": fused_node.tags,  # TODO: Remove when confirmed tags are not needed
             **{
                 tag.split("-")[0][len(ARGO_NODE_PREFIX) :]: tag.split("-")[1]
                 for tag in fused_node.tags
@@ -248,3 +250,17 @@ def clean_name(name: str) -> str:
         Clean node name, according to Argo's requirements
     """
     return re.sub(r"[\W_]+", "-", name).strip("-")
+
+
+def get_k8s_node_affinity_tags(tags: List[str]) -> List[str]:
+    """Function to return affinity tags for Argo template.
+
+    Args:
+        tags: list of tags
+    Returns:
+        List of affinity tags
+    """
+    if NodeTags.K8S_REQUIRE_GPU.value in tags:
+        return [NodeTags.K8S_REQUIRE_GPU.value]
+
+    return []

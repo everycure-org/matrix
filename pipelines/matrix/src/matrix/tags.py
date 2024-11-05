@@ -16,7 +16,7 @@ class NodeTags(Enum):
     ARGO_MEM_100G = f"{ARGO_NODE_PREFIX}mem-100g"  # TODO: This should be a K8s tag.
 
     # Kubernetes tags - these define affinity rules for K8s
-    K8S_GPU = "gpu_node"
+    K8S_REQUIRE_GPU = "gpu_node"
 
     ## Other tags
     RTX_KG2 = "rtx_kg2"
