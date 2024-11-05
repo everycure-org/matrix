@@ -236,7 +236,7 @@ def get_pipeline_as_tasks(fused_pipeline: List[FusedNode]):
         }
         for fused_node in fused_pipeline
     ]
-    return sorted(deps_dict, key=lambda d: d["name"])
+    return deps_dict
 
 
 def clean_name(name: str) -> str:
