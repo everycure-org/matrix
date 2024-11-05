@@ -26,12 +26,12 @@ def generate_argo_config(
     template = template_env.get_template(ARGO_TEMPLATE_FILE)
 
     pipeline2tasks = {}
-    for name, pipeline in pipelines.items():
+    for pipeline_name, pipeline in pipelines.items():
         # Fuse fusable nodes in topological order to avoid constant recreation of Neo4j.
         # Nodes not tagged with ARGO_FUSE_NODE are executed as their own steps.
         fused_pipeline = fuse(pipeline)
-        # Get dependencies for each pipeline
-        pipeline2tasks[name] = get_pipeline_as_tasks(fused_pipeline)
+        # Get dependencies and tasks for each pipeline
+        pipeline2tasks[pipeline_name] = get_pipeline_as_tasks(fused_pipeline)
 
     output = template.render(
         package_name=package_name,
