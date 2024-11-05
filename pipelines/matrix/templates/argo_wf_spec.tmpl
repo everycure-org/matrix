@@ -45,7 +45,6 @@ spec:
     inputs:
       parameters:
       - name: kedro_nodes
-      - name: pipeline
     container:
       imagePullPolicy: Always
       image: {% raw %} "{{workflow.parameters.image}}:{{workflow.parameters.image_tag}}"        # {{workflow...}} etc. are placeholders within the template. These placeholders will be dynamically substituted with real values when the workflow is submitted, not during the kubectl apply command.
@@ -104,13 +103,12 @@ spec:
               name: matrix-config
               key: GCP_BUCKET
       command: [kedro]
-      args: ["run", "-p", {% raw %}"{{inputs.parameters.pipeline}}"{% endraw %}, "-e", {% raw %}"{{workflow.parameters.env}}"{% endraw %}, "-n", {% raw %}"{{inputs.parameters.kedro_nodes}}"{% endraw %}]
+      args: ["run", "-e", {% raw %}"{{workflow.parameters.env}}"{% endraw %}, "-n", {% raw %}"{{inputs.parameters.kedro_nodes}}"{% endraw %}]
 
   - name: neo4j
     inputs:
       parameters:
       - name: kedro_nodes
-      - name: pipeline
     container:
       resources: # limit the resources
         requests:
@@ -170,7 +168,7 @@ spec:
             sleep 5
           done
           echo "Neo4j is ready. Starting main application..."
-          kedro run -p {% raw %}"{{inputs.parameters.pipeline}}"{% endraw %} -e {% raw %}"{{workflow.parameters.env}}"{% endraw %} -n {% raw %}"{{inputs.parameters.kedro_nodes}}"{% endraw %}
+          kedro run -e {% raw %}"{{workflow.parameters.env}}"{% endraw %} -n {% raw %}"{{inputs.parameters.kedro_nodes}}"{% endraw %}
     
     volumes:
       - name: gds-key
@@ -228,8 +226,6 @@ spec:
         {% endif %}
         arguments:
           parameters:
-          - name: pipeline
-            value: {{ pipeline }}
           - name: kedro_nodes
             value: {{ task.nodes }}
       {% endfor %}
