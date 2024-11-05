@@ -48,20 +48,17 @@ class GraphDB:
         self._endpoint = endpoint
         self._auth = tuple(auth)
         self._database = database
-
-    def driver(self):
-        """Return the driver object."""
-        return GraphDatabase.driver(self._endpoint, auth=self._auth, database=self._database)
+        self.driver = GraphDatabase.driver(self._endpoint, auth=self._auth, database=self._database)
 
     def run(self, query: str) -> List[Any]:
-        """Run a query on the Neo4j database and get values.
+        """Run a query on the Neo4j database and get data.
 
         Args:
             query: The query to run.
         """
-        with self.driver().session() as session:
-            info = session.run(query)
-            return info.values()
+        with self.driver.session() as session:
+            data = session.run(query).data()
+            return data  # info.consume() #info.values()
 
 
 class GraphDS(GraphDataScience):
@@ -286,7 +283,7 @@ def add_include_in_graphsage(df: DataFrame, gdb: GraphDB, drug_types: List[str],
 
     Only edges between non drug-disease pairs are included in graphsage.
     """
-    with gdb.driver() as driver:
+    with gdb.driver as driver:
         driver.execute_query(
             """
             MATCH (n)-[r]-(m)

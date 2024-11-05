@@ -53,7 +53,7 @@ def _tag_edges_between_types(
         total_updated = 0
         while True:
             result = runner.run(query_with_limit)
-            updated = result[0][0]
+            updated = result[0]["count"]  # [0]
             total_updated += updated
             if updated < batch_size:
                 break
@@ -69,7 +69,7 @@ def _tag_edges_between_types(
         WHERE r.{prefix}{tag} IS NULL OR r.{prefix}{tag} = true
         WITH r LIMIT {batch_size}
         SET r.{prefix}{tag} = false
-        RETURN count(r)
+        RETURN count(r) AS count
     """)
     # Set the tag for the specific edges
     for type_1 in type_1_lst:
@@ -81,7 +81,7 @@ def _tag_edges_between_types(
                 WHERE r.{prefix}{tag} = false
                 WITH r LIMIT {batch_size}
                 SET r.{prefix}{tag} = true
-                RETURN count(r)
+                RETURN count(r) AS count
             """)
 
 
@@ -122,17 +122,17 @@ def get_one_hot_encodings(runner: GraphDB) -> Tuple[OneHotEncoder, OneHotEncoder
     # Get the node categories
     result = runner.run("""
         MATCH (n)
-        RETURN DISTINCT n.category
+        RETURN DISTINCT n.category AS category
     """)
-    # Flatten because Neo4j result is a list of lists of the form [[category]]
-    node_categories = [item for sublist in result for item in sublist]
+    # Flatten because Neo4j result is a list of dicts of the form [{"category" : <category>}]
+    node_categories = [item["category"] for item in result]
     # Get the edge relations
     result = runner.run("""
         MATCH ()-[r]-()
-        RETURN DISTINCT type(r)
+        RETURN DISTINCT type(r) AS relation
     """)
-    # Neo4j result is a list of lists of the form [relation]
-    edge_relations = [relation[0] for relation in result]
+    # Neo4j result is a list of dicts of the form [{"relation" : <relation>}]
+    edge_relations = [relation["relation"] for relation in result]
 
     # Create the one-hot encoders
     category_encoder = OneHotEncoder(node_categories)

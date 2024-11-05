@@ -86,12 +86,20 @@ class KGPaths:
     ) -> None:
         """Add a path to the df from the results of a Neo4j query.
 
+        The return clause of the query must be of the form:
+            RETURN [n in nodes | n.name] as node_names,
+                [n in nodes | n.id] as node_ids,
+                [n in nodes | n.category] as node_categories,
+                [r in rels | type(r)] as edge_types,
+                [r in rels | startNode(r) = nodes[apoc.coll.indexOf(rels, r)]] as edge_directions
+
         Involves squashing multiple paths with the same nodes but different predicates into a single path.
 
         Args:
             result: Result of a Neo4j query (list of lists of length 1 of neo4j paths).
             extra_data: Dictionary of extra data to add to the dataframe.
         """
+        # breakpoint()
         if len(result) == 0:
             return
         result = self._parse_result(result)
