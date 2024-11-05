@@ -6,6 +6,8 @@ from jinja2 import Environment, FileSystemLoader
 from kedro.pipeline import Pipeline
 from kedro.pipeline.node import Node
 
+from matrix.tags import NodeTags, ARGO_FUSE_GROUP_PREFIX, ARGO_NODE_PREFIX
+
 ARGO_TEMPLATE_FILE = "argo_wf_spec.tmpl"
 ARGO_TEMPLATES_DIR_PATH = Path(__file__).parent.parent.parent / "templates"
 
@@ -77,7 +79,7 @@ class FusedNode(Node):
     @property
     def is_fusable(self) -> bool:
         """Check whether is fusable."""
-        return "argowf.fuse" in self.tags
+        return NodeTags.ARGO_FUSE_NODE.value in self.tags
 
     @property
     def fuse_group(self) -> Optional[str]:
@@ -129,8 +131,8 @@ class FusedNode(Node):
     def get_fuse_group(tags: str) -> Optional[str]:
         """Function to retrieve fuse group."""
         for tag in tags:
-            if tag.startswith("argowf.fuse-group."):
-                return tag[len("argowf.fuse-group.") :]
+            if tag.startswith(ARGO_FUSE_GROUP_PREFIX):
+                return tag[len(ARGO_FUSE_GROUP_PREFIX) :]
 
         return None
 
@@ -224,9 +226,9 @@ def get_dependencies(fused_pipeline: List[FusedNode]):
             "deps": [clean_name(val.name) for val in sorted(fuse._parents)],
             "tags": fuse.tags,
             **{
-                tag.split("-")[0][len("argowf.") :]: tag.split("-")[1]
+                tag.split("-")[0][len(ARGO_NODE_PREFIX) :]: tag.split("-")[1]
                 for tag in fuse.tags
-                if tag.startswith("argowf.") and "-" in tag
+                if tag.startswith(ARGO_NODE_PREFIX) and "-" in tag
             },
         }
         for fuse in fused_pipeline
