@@ -38,3 +38,29 @@ def generate_match_clause(num_hops: int, unidirectional: bool) -> str:
         match_clause_parts.append(f"(a{i})")
         match_clause_parts.append(f"-[r{i+1}]{edge_end}")
     return "".join(match_clause_parts)
+
+
+def generate_edge_omission_where_clause(
+    edge_omission_rules: dict, num_hops: int, prefix: str = "_moa_extraction_"
+) -> str:
+    """Construct the where clause enforcing edge omission rules.
+
+    E.g. NONE(r IN relationships(path) WHERE r._moa_extraction_drug_disease) AND (NOT r3._moa_extraction_disease_disease)
+
+    Args:
+        edge_omission_rules: The edge omission rules to match.  This takes the form of a dictionary with keys:
+            'all', '1', '2', ...
+            'all' are the edge tags to omit from all hops
+            '1', '2', ... are edge tags to omit for the first hop, second hop, ... respectively.
+            e.g. edge_omission_rules = {'all': ['drug_disease'], '3': ['disease_disease']}
+        num_hops: The number of hops in the paths.
+        prefix: The prefix for the tag.
+    """
+    where_clause_parts = []
+    for tag in edge_omission_rules["all"]:
+        where_clause_parts.append(f"NONE(r IN relationships(path) WHERE r.{prefix}{tag})")
+    for hop in range(1, num_hops + 1):
+        if hop in edge_omission_rules.keys():
+            for tag in edge_omission_rules[hop]:
+                where_clause_parts.append(f"NOT r{hop}.{prefix}{tag}")
+    return " AND ".join(where_clause_parts)

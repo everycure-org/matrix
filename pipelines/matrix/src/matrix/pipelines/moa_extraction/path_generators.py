@@ -6,7 +6,11 @@ from tqdm import tqdm
 import abc
 
 from matrix.datasets.paths import KGPaths
-from matrix.pipelines.moa_extraction.neo4j_query_clauses import generate_return_clause, generate_match_clause
+from matrix.pipelines.moa_extraction.neo4j_query_clauses import (
+    generate_return_clause,
+    generate_match_clause,
+    generate_edge_omission_where_clause,
+)
 from matrix.pipelines.embeddings.nodes import GraphDB
 
 
@@ -33,11 +37,7 @@ class AllPathsWithRules(PathGenerator):
     ):
         """Initialise the AllPathsWithRules.
 
-        edge_omission_rules: The edge omission rules to match. This takes the form of a dictionary with keys:
-            'all', '1', '2', ...
-            'all' are the edge tags to omit from all hops
-            '1', '2', ... are edge tags to omit for the first hop, second hop, ... respectively.
-            e.g. tag_rules = {'all': ['drug_disease'], '3': ['disease_disease']}
+        edge_omission_rules: The edge omission rules to match.
         num_hops: The number of hops in the paths.
         unidirectional: Whether to sample unidirectional paths only.
         num_limit: The maximum number of paths to return. If None, all paths are returned.
@@ -46,27 +46,6 @@ class AllPathsWithRules(PathGenerator):
         self.num_hops = num_hops
         self.unidirectional = unidirectional
         self.num_limit = num_limit
-
-    @classmethod
-    def construct_where_clause(cls, edge_omission_rules: dict, num_hops: int, prefix: str = "_moa_extraction_") -> str:
-        """Construct the where clause for the query.
-
-        E.g. NONE(r IN relationships(path) WHERE r._moa_extraction_drug_disease) AND (NOT r3._moa_extraction_disease_disease)
-
-        Args:
-            edge_omission_rules: The edge omission rules to match.
-            num_hops: The number of hops in the paths.
-            prefix: The prefix for the tag.
-        """
-        where_clause_parts = []
-        for tag in edge_omission_rules["all"]:
-            where_clause_parts.append(f"NONE(r IN relationships(path) WHERE r.{prefix}{tag})")
-        for hop in range(1, num_hops + 1):
-            if hop in edge_omission_rules.keys():
-                for tag in edge_omission_rules[hop]:
-                    where_clause_parts.append(f"NOT r{hop}.{prefix}{tag}")
-        where_clause = " AND ".join(where_clause_parts)
-        return where_clause
 
     def run(self, runner: GraphDB, drug: str, disease: str) -> KGPaths:
         """Generate the paths.
@@ -77,7 +56,7 @@ class AllPathsWithRules(PathGenerator):
             disease: The target disease node ID.
         """
         match_clause = generate_match_clause(num_hops=self.num_hops, unidirectional=self.unidirectional)
-        where_clause = AllPathsWithRules.construct_where_clause(
+        where_clause = generate_edge_omission_where_clause(
             edge_omission_rules=self.edge_omission_rules, num_hops=self.num_hops
         )
         return_clause = generate_return_clause(limit=self.num_limit)
@@ -147,7 +126,7 @@ class ReplacementPathSampler(PathGenerator):
         )
         all_paths = all_paths_generator.run(runner, drug, disease)
 
-        if len(all_paths.df) <= count:  # No need to sample
+        if len(all_paths.df) <= count:  # No need to sample if total number of paths is less than count
             return all_paths
 
         new_paths_df = all_paths.df.sample(n=count, random_state=self.random_state)
