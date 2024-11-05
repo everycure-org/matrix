@@ -9,6 +9,7 @@ warnings.filterwarnings("ignore", category=TqdmExperimentalWarning)
 class MatrixCliSettings(BaseSettings):
     base_model: str = "gemini-1.5-flash-002"
     power_model: str = "gemini-1.5-pro-002"
+    workers: int = 8
 
 
 settings = MatrixCliSettings()
