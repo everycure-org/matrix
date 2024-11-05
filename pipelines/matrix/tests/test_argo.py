@@ -3,7 +3,7 @@ from kedro.pipeline import Pipeline
 import pytest
 import yaml
 
-from matrix.argo import clean_name, fuse, FusedNode
+from matrix.argo import clean_name, fuse, FusedNode, generate_argo_config
 
 
 def dummy_fn(*args):
@@ -322,197 +322,79 @@ def test_clean_dependencies() -> None:
     assert cleaned == ["dataset_a", "dataset_b"]
 
 
-@pytest.fixture()
-def expected_argo_config():
-    """Fixture to provide expected Argo YAML output for comparison."""
-    return yaml.safe_load(
-        """
-apiVersion: argoproj.io/v1alpha1
-kind: WorkflowTemplate
-metadata:
-  namespace: test_namespace
-  name: test_run
-spec:
-  workflowMetadata:
-    labels:
-      run: '{{ workflow.parameters.run_name }}'
-      username: "test_user"
-  entrypoint: dag
-  ttlStrategy:
-    secondsAfterSuccess: 5
-  arguments:
-    parameters:
-      - name: image
-        value: "us-central1-docker.pkg.dev/mtrx-hub-dev-3of/matrix-images/matrix"
-      - name: image_tag
-        value: "test_tag"
-      - name: run_name
-        value: "test_tag"
-      - name: neo4j_host
-        value: "bolt://neo4j.neo4j.svc.cluster.local:7687"
-      - name: mlflow_endpoint
-        value: "http://mlflow-tracking.mlflow.svc.cluster.local:80"
-      - name: openai_endpoint
-        value: "https://api.openai.com/v1"
-      - name: env
-        value: "cloud"
-  templates:
-  - name: kedro
-    backoff:
-      duration: "1"      # Must be a string. Default unit is seconds. Could also be a Duration, e.g.: "2m", "6h", "1d"
-      factor: 2
-      maxDuration: "1m"  # Must be a string. Default unit is seconds. Could also be a Duration, e.g.: "2m", "6h", "1d"
-    affinity:
-      nodeAntiAffinity: {}
-    metadata:
-      labels:
-        app: kedro-argo
-    inputs:
-      parameters:
-      - name: kedro_nodes
-      - name: pipeline
-    container:
-      imagePullPolicy: Always
-      image:  "{{workflow.parameters.image}}:{{workflow.parameters.image_tag}}" 
-      resources: # limit the resources
-        requests:
-          memory: 64Gi
-          cpu: 4
-        limits:
-          memory: 64Gi
-          cpu: 16
-      env:
-        - name: WORKFLOW_ID
-          valueFrom:
-            fieldRef:
-              fieldPath: metadata.labels['workflows.argoproj.io/workflow']
-        - name: RUN_NAME
-          value:  "{{workflow.parameters.run_name}}" 
-        - name: NEO4J_HOST
-          value:  "{{workflow.parameters.neo4j_host}}" 
-        - name: MLFLOW_ENDPOINT
-          value:  "{{workflow.parameters.mlflow_endpoint}}" 
-        - name: NEO4J_USER
-          valueFrom:
-            secretKeyRef:
-              name: matrix-secrets
-              key: NEO4J_USER
-        - name: NEO4J_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              name: matrix-secrets
-              key: NEO4J_PASSWORD
-        - name: OPENAI_ENDPOINT
-          value:  "{{workflow.parameters.openai_endpoint}}" 
-        - name: OPENAI_API_KEY
-          valueFrom:
-            secretKeyRef:
-              name: matrix-secrets
-              key: OPENAI_API_KEY
-        - name: GCP_PROJECT_ID
-          valueFrom:
-            configMapKeyRef:
-              name: matrix-config
-              key: GCP_PROJECT_ID
-        - name: GCP_BUCKET
-          valueFrom:
-            configMapKeyRef:
-              name: matrix-config
-              key: GCP_BUCKET
-      command: [kedro]
-      args: ["run", "-p", "{{inputs.parameters.pipeline}}", "-e", "{{workflow.parameters.env}}", "-n", "{{inputs.parameters.kedro_nodes}}"]
+def test_generate_argo_config() -> None:
+    image_name = "us-central1-docker.pkg.dev/mtrx-hub-dev-3of/matrix-images/matrix"
+    run_name = "test_run"
+    image_tag = "test_tag"
+    namespace = "test_namespace"
+    username = "test_user"
+    pipelines = {
+        "test_pipeline": Pipeline(
+            nodes=[Node(func=dummy_func, inputs=["dataset_a", "dataset_b"], outputs="dataset_c", name="simple_node")]
+        ),
+        "cloud_pipeline": Pipeline(
+            nodes=[
+                Node(
+                    func=dummy_func,
+                    inputs=["dataset_a_cloud", "dataset_b_cloud"],
+                    outputs="dataset_c_cloud",
+                    name="simple_node_cloud",
+                )
+            ]
+        ),
+    }
 
-  - name: neo4j
-    inputs:
-      parameters:
-      - name: kedro_nodes
-      - name: pipeline
-    container:
-      resources: # limit the resources
-        requests:
-          memory: 120Gi
-          cpu: 4
-        limits:
-          memory: 120Gi
-          cpu: 16
-      env:
-        - name: WORKFLOW_ID
-          valueFrom:
-            fieldRef:
-              fieldPath: metadata.labels['workflows.argoproj.io/workflow']
-        - name: RUN_NAME
-          value:  "{{workflow.parameters.run_name}}" 
-        - name: MLFLOW_ENDPOINT
-          value:  "{{workflow.parameters.mlflow_endpoint}}" 
-        - name: NEO4J_USER
-          value: "neo4j"
-        - name: NEO4J_PASSWORD
-          value: "admin"
-        - name: GCP_PROJECT_ID
-          valueFrom:
-            configMapKeyRef:
-              name: matrix-config
-              key: GCP_PROJECT_ID
-        - name: GCP_BUCKET
-          valueFrom:
-            configMapKeyRef:
-              name: matrix-config
-              key: GCP_BUCKET
-        - name: OPENAI_API_KEY
-          value: "foo"
-        - name: OPENAI_ENDPOINT
-          value:  "{{workflow.parameters.openai_endpoint}}" 
-        - name: OPENAI_API_KEY
-          valueFrom:
-            secretKeyRef:
-              name: matrix-secrets
-              key: OPENAI_API_KEY
-      imagePullPolicy: Always
-      image:  "{{workflow.parameters.image}}:{{workflow.parameters.image_tag}}"       
-      command: ["/bin/sh", "-c"]
-      args:
-        - |
-          echo "Waiting for Neo4j to be ready..."
-          until curl -s http://localhost:7474/ready; do
-            echo "Waiting..."
-            sleep 5
-          done
-          echo "Neo4j is ready. Starting main application..."
-          kedro run -p "{{inputs.parameters.pipeline}}" -e "{{workflow.parameters.env}}" -n "{{inputs.parameters.kedro_nodes}}"    
-    sidecars:
-      - name: neo4j
-        image: neo4j:5.21.0-enterprise
-        env:
-        - name: NEO4J_AUTH
-          value: "neo4j/admin"
-        - name: NEO4J_apoc_export_file_enabled
-          value: "true"
-        - name: NEO4J_apoc_import_file_enabled
-          value: "true"
-        - name: NEO4J_apoc_import_file_use__neo4j__config
-          value: "true"
-        - name: NEO4J_PLUGINS
-          value: '["apoc", "graph-data-science", "apoc-extended"]'
-        - name: NEO4J_dbms_security_auth__minimum__password__length
-          value: "4"
-        - name: NEO4J_dbms_security_procedures_whitelist
-          value: "gds.*, apoc.*"
-        - name: NEO4J_dbms_security_procedures_unrestricted
-          value: "gds.*, apoc.*"
-        - name: NEO4J_db_logs_query_enabled
-          value: "OFF"
-        - name: NEO4J_ACCEPT_LICENSE_AGREEMENT
-          value: "yes"
-  - name: test
-    dag:
-      tasks:
-      - name: simple-node
-        template: kedro
-        arguments:
-          parameters:
-          - name: pipeline
-            value: test
-          - name: kedro_nodes
-            value: simple_node
-        """
+    argo_config = generate_argo_config(
+        image=image_name,
+        run_name=run_name,
+        image_tag=image_tag,
+        namespace=namespace,
+        username=username,
+        pipelines=pipelines,
+        package_name="matrix",
     )
+
+    assert argo_config is not None
+
+    parsed_config = yaml.safe_load(argo_config)
+
+    assert isinstance(parsed_config, dict), "Parsed config should be a dictionary"
+
+    # Verify spec
+    spec = parsed_config["spec"]
+
+    # Verify kedro template
+    kedro_template = next(t for t in spec["templates"] if t["name"] == "kedro")
+    assert kedro_template["backoff"]["duration"] == "1", "Kedro template should have correct backoff duration"
+    assert kedro_template["backoff"]["factor"] == 2, "Kedro template should have correct backoff factor"
+    assert kedro_template["backoff"]["maxDuration"] == "1m", "Kedro template should have correct max backoff duration"
+    assert "nodeAntiAffinity" in kedro_template["affinity"], "Kedro template should have nodeAntiAffinity"
+    assert kedro_template["metadata"]["labels"]["app"] == "kedro-argo", "Kedro template should have correct label"
+
+    templates = spec["templates"]
+    # Check if the pipeline is included in the templates
+    pipeline_names = [template["name"] for template in templates]
+    assert "test_pipeline" in pipeline_names, "The 'test_pipeline' pipeline should be included in the templates"
+    assert "cloud_pipeline" in pipeline_names, "The 'cloud_pipeline' pipeline should be included in the templates"
+
+    # Verify test_pipeline template
+    test_template = next(t for t in templates if t["name"] == "test_pipeline")
+    assert "dag" in test_template, "test_pipeline template should have a DAG"
+    assert len(test_template["dag"]["tasks"]) == 1, "test_pipeline template should have one task"
+    assert (
+        test_template["dag"]["tasks"][0]["name"] == "simple-node"
+    ), "test_pipeline template should have correct task name"
+    assert (
+        test_template["dag"]["tasks"][0]["template"] == "kedro"
+    ), "test_pipeline template task should use kedro template"
+
+    # Verify cloud_pipeline template
+    cloud_template = next(t for t in templates if t["name"] == "cloud_pipeline")
+    assert "dag" in cloud_template, "cloud_pipeline template should have a DAG"
+    assert len(cloud_template["dag"]["tasks"]) == 1, "cloud_pipeline template should have one task"
+    assert (
+        cloud_template["dag"]["tasks"][0]["name"] == "simple-node-cloud"
+    ), "cloud_pipeline template should have correct task name"
+    assert (
+        cloud_template["dag"]["tasks"][0]["template"] == "kedro"
+    ), "cloud_pipeline template task should use kedro template"
