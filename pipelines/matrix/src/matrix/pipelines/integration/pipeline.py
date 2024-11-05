@@ -3,6 +3,7 @@ from kedro.pipeline import Pipeline, node, pipeline
 from . import nodes
 from .robokop import transform_robo_edges, transform_robo_nodes
 from .rtxkg2 import transform_rtxkg2_edges, transform_rtxkg2_nodes
+from matrix.tags import NodeTags
 
 
 def create_pipeline(**kwargs) -> Pipeline:
@@ -14,21 +15,21 @@ def create_pipeline(**kwargs) -> Pipeline:
                 inputs=["ingestion.int.robokop.nodes", "integration.raw.biolink.categories"],
                 outputs="integration.int.robokop.nodes",
                 name="transform_robokop_nodes",
-                tags=["standardize"],
+                tags=[NodeTags.STANDARDIZE],
             ),
             node(
                 func=transform_robo_edges,
                 inputs=["ingestion.int.robokop.edges"],
                 outputs="integration.int.robokop.edges",
                 name="transform_robokop_edges",
-                tags=["standardize"],
+                tags=[NodeTags.STANDARDIZE],
             ),
             node(
                 func=transform_rtxkg2_nodes,
                 inputs="ingestion.int.rtx_kg2.nodes",
                 outputs="integration.int.rtx.nodes",
                 name="transform_rtx_nodes",
-                tags=["standardize"],
+                tags=[NodeTags.STANDARDIZE],
             ),
             node(
                 func=transform_rtxkg2_edges,
@@ -39,7 +40,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 ],
                 outputs="integration.int.rtx.edges",
                 name="transform_rtx_edges",
-                tags=["standardize"],
+                tags=[NodeTags.STANDARDIZE],
             ),
             # Normalize the KG IDs
             node(
@@ -59,7 +60,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                     "integration.int.rtx.nodes_norm_mapping",
                 ],
                 name="normalize_rtx_kg",
-                tags=["standardize"],
+                tags=[NodeTags.STANDARDIZE],
             ),
             node(
                 func=nodes.normalize_kg,
@@ -112,7 +113,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 ],
                 outputs="integration.prm.filtered_nodes",
                 name="filter_prm_knowledge_graph_nodes",
-                tags=["filtering"],
+                tags=[NodeTags.FILTER],
             ),
             # filter edges given a set of filter stages
             node(
@@ -125,7 +126,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 ],
                 outputs="integration.prm.filtered_edges",
                 name="filter_prm_knowledge_graph_edges",
-                tags=["filtering"],
+                tags=[NodeTags.FILTER],
             ),
         ]
     )

@@ -1,6 +1,7 @@
 from kedro.pipeline import Pipeline, node, pipeline
 
 from . import nodes
+from matrix.tags import NodeTags
 
 
 # NOTE: This pipeline in highly preliminary and used for ingestion of the
@@ -18,7 +19,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 ],
                 outputs="preprocessing.int.nodes",
                 name="normalize_ec_medical_team_nodes",
-                tags=["ec-medical-kg"],
+                tags=[NodeTags.EC_MEDICAL_KG],
             ),
             node(
                 func=nodes.create_int_edges,
@@ -28,7 +29,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 ],
                 outputs="preprocessing.int.edges",
                 name="create_int_ec_medical_team_edges",
-                tags=["ec-medical-kg"],
+                tags=[NodeTags.EC_MEDICAL_KG],
             ),
             node(
                 func=nodes.create_prm_edges,
@@ -37,7 +38,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 ],
                 outputs="ingestion.raw.ec_medical_team.edges@pandas",
                 name="create_prm_ec_medical_team_edges",
-                tags=["ec-medical-kg"],
+                tags=[NodeTags.EC_MEDICAL_KG],
             ),
             node(
                 func=nodes.create_prm_nodes,
@@ -46,7 +47,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 ],
                 outputs="ingestion.raw.ec_medical_team.nodes@pandas",
                 name="create_prm_ec_medical_team_nodes",
-                tags=["ec-medical-kg"],
+                tags=[NodeTags.EC_MEDICAL_KG],
             ),
             # NOTE: Take raw clinical trial data and map the "name" to "curie" using the synonymizer
             node(
@@ -59,7 +60,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 ],
                 outputs="preprocessing.int.mapped_clinical_trials_data",
                 name="mapped_clinical_trials_data",
-                tags=["ec-clinical-trials-data"],
+                tags=[NodeTags.EC_CLINICAL_TRIALS_DATA],
             ),
             # NOTE: Clean up the clinical trial data and write it to the GCS bucket
             node(
@@ -69,7 +70,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 ],
                 outputs="ingestion.raw.clinical_trials_data",
                 name="clean_clinical_trial_data",
-                tags=["ec-clinical-trials-data"],
+                tags=[NodeTags.EC_CLINICAL_TRIALS_DATA],
             ),
             node(
                 func=nodes.clean_drug_list,
@@ -79,7 +80,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 ],
                 outputs="ingestion.raw.drug_list@pandas",
                 name="resolve_drug_list",
-                tags=["drug-list"],
+                tags=[NodeTags.DRUG_LIST],
             ),
             node(
                 func=lambda x: x,
@@ -93,7 +94,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 inputs=["preprocessing.raw.disease_list", "params:preprocessing.enrichment_tags"],
                 outputs="preprocessing.raw.enriched_disease_list",
                 name="enrich_disease_list",
-                tags=["disease-list"],
+                tags=[NodeTags.DISEASE_LIST],
             ),
             node(
                 func=nodes.clean_disease_list,
@@ -103,7 +104,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 ],
                 outputs="ingestion.raw.disease_list@pandas",
                 name="resolve_disease_list",
-                tags=["disease-list"],
+                tags=[NodeTags.DISEASE_LIST],
             ),
             node(
                 func=lambda x: x,
@@ -119,7 +120,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 ],
                 outputs="inference.raw.normalized_inputs",
                 name="clean_input_sheet",
-                tags=["inference-input"],
+                tags=[NodeTags.INFERENCE_INPUT],
             ),
         ]
     )

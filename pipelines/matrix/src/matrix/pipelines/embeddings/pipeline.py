@@ -1,5 +1,6 @@
 from kedro.pipeline import Pipeline, node, pipeline
 
+from matrix.tags import NodeTags
 from . import nodes
 
 
@@ -35,9 +36,9 @@ def create_pipeline(**kwargs) -> Pipeline:
                 outputs="embeddings.tmp.input_nodes",
                 name="ingest_neo4j_input_nodes",
                 tags=[
-                    "argowf.fuse",
-                    "argowf.fuse-group.topological_embeddings",
-                    "argowf.template-neo4j",
+                    NodeTags.ARGO_FUSE_NODE,
+                    NodeTags.ARGO_FUSE_TOPOLOGICAL_EMBEDDINGS,
+                    NodeTags.ARGO_NEO4J_TEMPLATE,
                 ],
             ),
             node(
@@ -49,9 +50,9 @@ def create_pipeline(**kwargs) -> Pipeline:
                 outputs="embeddings.tmp.input_edges",
                 name="ingest_neo4j_input_edges",
                 tags=[
-                    "argowf.fuse",
-                    "argowf.fuse-group.topological_embeddings",
-                    "argowf.template-neo4j",
+                    NodeTags.ARGO_FUSE_NODE,
+                    NodeTags.ARGO_FUSE_TOPOLOGICAL_EMBEDDINGS,
+                    NodeTags.ARGO_NEO4J_TEMPLATE,
                 ],
             ),
             node(
@@ -65,9 +66,9 @@ def create_pipeline(**kwargs) -> Pipeline:
                 outputs="embeddings.feat.include_in_graphsage@yaml",
                 name="filter_graphsage",
                 tags=[
-                    "argowf.fuse",
-                    "argowf.fuse-group.topological_embeddings",
-                    "argowf.template-neo4j",
+                    NodeTags.ARGO_FUSE_NODE,
+                    NodeTags.ARGO_FUSE_TOPOLOGICAL_EMBEDDINGS,
+                    NodeTags.ARGO_NEO4J_TEMPLATE,
                 ],
             ),
             node(
@@ -81,9 +82,9 @@ def create_pipeline(**kwargs) -> Pipeline:
                 outputs=["embeddings.models.graphsage", "embeddings.reporting.loss"],
                 name="train_topological_embeddings",
                 tags=[
-                    "argowf.fuse",
-                    "argowf.fuse-group.topological_embeddings",
-                    "argowf.template-neo4j",
+                    NodeTags.ARGO_FUSE_NODE,
+                    NodeTags.ARGO_FUSE_TOPOLOGICAL_EMBEDDINGS,
+                    NodeTags.ARGO_NEO4J_TEMPLATE,
                 ],
             ),
             node(
@@ -97,10 +98,10 @@ def create_pipeline(**kwargs) -> Pipeline:
                 outputs="embeddings.model_output.graphsage",
                 name="add_topological_embeddings",
                 tags=[
-                    "argowf.fuse",
-                    "argowf.fuse-group.topological_embeddings",
-                    "argowf.mem-100g",
-                    "argowf.template-neo4j",
+                    NodeTags.ARGO_FUSE_NODE,
+                    NodeTags.ARGO_FUSE_TOPOLOGICAL_EMBEDDINGS,
+                    NodeTags.ARGO_MEM_100G,
+                    NodeTags.ARGO_NEO4J_TEMPLATE,
                 ],
             ),
             # extracts the nodes from neo4j and writes them to BigQuery
@@ -113,9 +114,9 @@ def create_pipeline(**kwargs) -> Pipeline:
                 outputs="embeddings.feat.nodes",
                 name="extract_nodes_edges_from_db",
                 tags=[
-                    "argowf.fuse",
-                    "argowf.fuse-group.topological_embeddings",
-                    "argowf.template-neo4j",
+                    NodeTags.ARGO_FUSE_NODE,
+                    NodeTags.ARGO_FUSE_TOPOLOGICAL_EMBEDDINGS,
+                    NodeTags.ARGO_NEO4J_TEMPLATE,
                 ],
             ),
             # Create PCA plot
@@ -128,8 +129,8 @@ def create_pipeline(**kwargs) -> Pipeline:
                 outputs="embeddings.reporting.topological_pca",
                 name="apply_topological_pca",
                 tags=[
-                    "argowf.fuse",
-                    "argowf.fuse-group.topological_pca",
+                    NodeTags.ARGO_FUSE_NODE,
+                    NodeTags.ARGO_FUSE_TOPOLOGICAL_PCA,
                 ],
             ),
             node(
@@ -141,8 +142,8 @@ def create_pipeline(**kwargs) -> Pipeline:
                 outputs="embeddings.reporting.topological_pca_plot",
                 name="create_pca_plot_topological_embeddings",
                 tags=[
-                    "argowf.fuse",
-                    "argowf.fuse-group.topological_pca",
+                    NodeTags.ARGO_FUSE_NODE,
+                    NodeTags.ARGO_FUSE_TOPOLOGICAL_PCA,
                 ],
             ),
         ],

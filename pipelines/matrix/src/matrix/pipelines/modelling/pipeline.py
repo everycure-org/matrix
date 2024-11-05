@@ -2,6 +2,7 @@ from kedro.pipeline import Pipeline, node
 from kedro.pipeline.modular_pipeline import pipeline
 
 from matrix import settings
+from matrix.tags import NodeTags, fuse_group_tag
 
 from . import nodes
 
@@ -52,7 +53,10 @@ def _create_model_shard_pipeline(model: str, shard: int) -> Pipeline:
                 name=f"train_{model}_{shard}_model",
             ),
         ],
-        tags=["argowf.fuse", f"argowf.fuse-group.{model}.shard-{shard}"],
+        tags=[
+            NodeTags.ARGO_FUSE_NODE,
+            fuse_group_tag(model, f"shard-{shard}"),
+        ],
     )
 
 
@@ -120,7 +124,10 @@ def _create_model_pipeline(model: str, num_shards: int) -> Pipeline:
                         name=f"check_{model}_model_performance",
                     ),
                 ],
-                tags=["argowf.fuse", f"argowf.fuse-group.{model}"],
+                tags=[
+                    NodeTags.ARGO_FUSE_NODE,
+                    fuse_group_tag(model),
+                ],
             ),
         ]
     )

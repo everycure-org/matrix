@@ -1,5 +1,6 @@
 from kedro.pipeline import Pipeline, node, pipeline
 from matrix.pipelines.embeddings.nodes import ingest_edges, ingest_nodes
+from matrix.tags import NodeTags
 
 
 def create_pipeline(**kwargs) -> Pipeline:
@@ -11,14 +12,14 @@ def create_pipeline(**kwargs) -> Pipeline:
                 inputs=["integration.prm.filtered_nodes"],
                 outputs="data_release.prm.kg_nodes",
                 name="ingest_kg_nodes",
-                tags=["neo4j"],
+                tags=[NodeTags.NEO4J],
             ),
             node(
                 func=ingest_edges,
                 inputs=["data_release.prm.kg_nodes", "integration.prm.filtered_edges"],
                 outputs="data_release.prm.kg_edges",
                 name="ingest_kg_edges",
-                tags=["neo4j"],
+                tags=[NodeTags.NEO4J],
             ),
             # write to BigQuery
             node(
@@ -26,14 +27,14 @@ def create_pipeline(**kwargs) -> Pipeline:
                 inputs=["integration.prm.filtered_edges"],
                 outputs="data_release.prm.bigquery_edges",
                 name="write_edges_to_bigquery",
-                tags=["bigquery"],
+                tags=[NodeTags.BIGQUERY],
             ),
             node(
                 func=lambda x: x,
                 inputs=["integration.prm.filtered_nodes"],
                 outputs="data_release.prm.bigquery_nodes",
                 name="write_nodes_to_bigquery",
-                tags=["bigquery"],
+                tags=[NodeTags.BIGQUERY],
             ),
             # NOTE: Enable if you want embeddings
             # node(
