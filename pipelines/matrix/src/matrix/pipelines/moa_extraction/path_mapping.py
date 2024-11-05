@@ -8,7 +8,7 @@ import random
 import neo4j
 
 from matrix.datasets.paths import KGPaths
-from matrix.pipelines.moa_extraction.neo4j_query_clauses import return_clause
+from matrix.pipelines.moa_extraction.neo4j_query_clauses import generate_return_clause, generate_match_clause
 from matrix.pipelines.embeddings.nodes import GraphDB
 from matrix.pipelines.preprocessing.nodes import resolve, normalize
 
@@ -102,25 +102,6 @@ class SetwisePathMapper(PathMapper):
         return paths
 
     @classmethod
-    def _construct_match_clause(cls, num_hops: int, unidirectional: bool) -> str:
-        """Construct an intermediate match clause.
-
-        Example: "-[r1]->(a1)-[r2]->(a2)->[r3]->"
-
-        num_hops: Number of hops in the path.
-        unidirectional: Whether to map onto unidirectional paths only.
-        """
-        edge_end = "->" if unidirectional else "-"
-
-        match_clause_parts = [f"-[r1]{edge_end}"]
-        for i in range(1, num_hops):
-            match_clause_parts.append(f"(a{i})")
-            match_clause_parts.append(f"-[r{i+1}]{edge_end}")
-        match_clause = "".join(match_clause_parts)
-
-        return match_clause
-
-    @classmethod
     def _construct_where_clause(cls, num_hops: int, intermediate_ids: List[str]) -> str:
         """Construct the where clause for a path mapping query.
 
@@ -175,11 +156,12 @@ class SetwisePathMapper(PathMapper):
         mapped_int_ids = [entity for entity in mapped_int_ids if entity]  # Filter out Nones
 
         # Construct the neo4j query
-        match_clause = self._construct_match_clause(self.num_hops, self.unidirectional)
+        match_clause = generate_match_clause(self.num_hops, self.unidirectional)
         where_clause = self._construct_where_clause(self.num_hops, mapped_int_ids)
+        return_clause = generate_return_clause(limit=self.num_limit)
         query = f"""MATCH p=(n:%{{id:'{drug_mapped}'}}){match_clause}(m:%{{id:'{disease_mapped}'}})
                     WHERE {where_clause}
-                    {return_clause(limit=self.num_limit)}"""
+                    {return_clause}"""
 
         # Run the query with several attempts (to account for connection issues)
         attempts = 0
@@ -229,9 +211,10 @@ class TestPathMapper(PathMapper):
             drug_mech_db: The DrugMechDB indication paths.
             synonymizer_endpoint: The endpoint of the synonymizer.
         """
-        match_clause = SetwisePathMapper._construct_match_clause(self.num_hops, self.unidirectional)
+        match_clause = generate_match_clause(self.num_hops, self.unidirectional)
+        return_clause = generate_return_clause(limit=self.num_limit)
         query = f"""MATCH path=(n){match_clause}(m)
-                    {return_clause(limit=self.num_limit)}"""
+                    {return_clause}"""
         result = runner.run(query)
 
         paths = KGPaths(num_hops=self.num_hops)

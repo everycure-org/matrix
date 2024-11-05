@@ -6,8 +6,7 @@ from tqdm import tqdm
 import abc
 
 from matrix.datasets.paths import KGPaths
-from matrix.pipelines.moa_extraction.path_mapping import SetwisePathMapper
-from matrix.pipelines.moa_extraction.neo4j_query_clauses import return_clause
+from matrix.pipelines.moa_extraction.neo4j_query_clauses import generate_return_clause, generate_match_clause
 from matrix.pipelines.embeddings.nodes import GraphDB
 
 
@@ -77,16 +76,15 @@ class AllPathsWithRules(PathGenerator):
             drug: The source drug node ID.
             disease: The target disease node ID.
         """
-        match_clause = SetwisePathMapper._construct_match_clause(
-            num_hops=self.num_hops, unidirectional=self.unidirectional
-        )
+        match_clause = generate_match_clause(num_hops=self.num_hops, unidirectional=self.unidirectional)
         where_clause = AllPathsWithRules.construct_where_clause(
             edge_omission_rules=self.edge_omission_rules, num_hops=self.num_hops
         )
+        return_clause = generate_return_clause(limit=self.num_limit)
         query = f"""
         MATCH path = (start: %{{id:'{drug}'}}){match_clause}(end: %{{id:'{disease}'}})
         WHERE {where_clause}
-        {return_clause(limit=self.num_limit)}
+        {return_clause}
         """
         result = runner.run(query)
         paths = KGPaths(num_hops=self.num_hops)
