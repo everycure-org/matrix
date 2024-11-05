@@ -233,12 +233,11 @@ def map_name_to_curie(
     # Map the drug name to the corresponding arax curie ids which we can then use by translator normalizer
     df["drug_kg_arax_curie"] = df["drug_name"].apply(lambda x: normalize(x, endpoint=arax_endpoint))
     df["disease_kg_arax_curie"] = df["disease_name"].apply(lambda x: normalize(x, endpoint=arax_endpoint))
-    print(df["drug_kg_arax_curie"])
-    print(df["disease_kg_arax_curie"])
+
     # Map the disease name to the corresponding curie ids
     attributes = [
         ("identifier", "drug_kg_curie"),
-        ("label", "drug_kg_label"),
+        ("type", "drug_kg_label"),
     ]
 
     for att, target in attributes:
@@ -255,7 +254,7 @@ def map_name_to_curie(
 
     attributes = [
         ("identifier", "disease_kg_curie"),
-        ("label", "disease_kg_label"),
+        ("type", "disease_kg_label"),
     ]
 
     for att, target in attributes:
@@ -276,6 +275,7 @@ def map_name_to_curie(
     # we aim to refine our evaluation approach as part of a new PR after which
     # this can be removed.
     # https://github.com/everycure-org/matrix/issues/313
+
     df["label_included"] = (df["drug_kg_label"].isin(drug_types)) & (df["disease_kg_label"].isin(disease_types))
 
     # check conflict
@@ -331,14 +331,11 @@ def clean_clinical_trial_data(df: pd.DataFrame) -> pd.DataFrame:
     """
     # Remove rows with conflicts
     df = df[df["conflict"].eq("FALSE")].reset_index(drop=True)
-
     # Make sure to consider only rows with relevant labels, otherwise
     # downtstream modelling will fail
     df = df[df["label_included"].eq("TRUE")].reset_index(drop=True)
-
     # remove rows with reason for rejection
     df = df[df["reason_for_rejection"].isna()].reset_index(drop=True)
-
     # Define columns to check
     columns_to_check = [
         "drug_kg_curie",
@@ -351,10 +348,8 @@ def clean_clinical_trial_data(df: pd.DataFrame) -> pd.DataFrame:
 
     # Remove rows with missing values in cols
     df = df.dropna(subset=columns_to_check).reset_index(drop=True)
-
     # drop columns
     df = df.drop(columns=["reason_for_rejection", "conflict"]).reset_index(drop=True)
-
     return df
 
 
@@ -538,11 +533,8 @@ def clean_gt_data(
             )
             df[col] = df[col].map(node_id_map)
             # TEMPORARY fix to see how lineage goes
-    print(pos_df.shape, neg_df.shape)
-
     pos_df = pos_df.loc[((pos_df["source"].isin(node_ids)) & pos_df["target"].isin(node_ids))]
     neg_df = neg_df.loc[((neg_df["source"].isin(node_ids)) & neg_df["target"].isin(node_ids))]
-    print(pos_df.shape, neg_df.shape)
     # Return updated DataFrames
     return pos_df.dropna(subset=["source", "target"]).drop_duplicates(), neg_df.dropna(
         subset=["source", "target"]
