@@ -108,29 +108,29 @@ def _submit(
     try:
         console.rule("[bold blue]Submitting Workflow")
 
-        # console.print("Checking dependencies...")
-        # check_dependencies(verbose=verbose)
-        # console.print("[green]✓[/green] Dependencies checked")
+        console.print("Checking dependencies...")
+        check_dependencies(verbose=verbose)
+        console.print("[green]✓[/green] Dependencies checked")
 
-        # console.print("Building and pushing Docker image...")
-        # build_push_docker(username, verbose=verbose)
-        # console.print("[green]✓[/green] Docker image built and pushed")
+        console.print("Building and pushing Docker image...")
+        build_push_docker(username, verbose=verbose)
+        console.print("[green]✓[/green] Docker image built and pushed")
 
         console.print("Building Argo template...")
         argo_template = build_argo_template(run_name, username, namespace, pipeline)
         console.print("[green]✓[/green] Argo template built")
 
         console.print("Writing Argo template...")
-        save_argo_template(argo_template, template_directory)
+        file_path = save_argo_template(argo_template, template_directory)
         console.print("[green]✓[/green] Argo template written")
 
         console.print("Ensuring namespace...")
         ensure_namespace(namespace, verbose=verbose)
         console.print("[green]✓[/green] Namespace ensured")
 
-        # console.print("Applying Argo template...")
-        # apply_argo_template(namespace, file_path, verbose=verbose)
-        # console.print("[green]✓[/green] Argo template applied")
+        console.print("Applying Argo template...")
+        apply_argo_template(namespace, file_path, verbose=verbose)
+        console.print("[green]✓[/green] Argo template applied")
 
         if not dry_run:
             console.print("Submitting workflow for pipeline...")
