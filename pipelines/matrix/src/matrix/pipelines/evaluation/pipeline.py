@@ -1,7 +1,7 @@
 from kedro.pipeline import Pipeline, node
 from kedro.pipeline.modular_pipeline import pipeline
 from matrix import settings
-
+from matrix.tags import NodeTags, fuse_group_tag
 from . import nodes
 
 
@@ -27,7 +27,10 @@ def _create_evaluation_pipeline(model: str, evaluation: str) -> Pipeline:
                 name=f"create_{model}_{evaluation}_evaluation",
             ),
         ],
-        tags=["argowf.fuse", f"argowf.fuse-group.{model}.{evaluation}"],
+        tags=[
+            NodeTags.ARGO_FUSE_NODE,
+            fuse_group_tag(model, evaluation),
+        ],
     )
 
 
