@@ -230,9 +230,16 @@ class TestPathMapper(PathMapper):
         """
         match_clause = SetwisePathMapper._construct_match_clause(self.num_hops, self.unidirectional)
         limit_clause = f"LIMIT {self.num_limit}" if self.num_limit else ""
-        query = f"""MATCH p=(n){match_clause}(m)
-                    RETURN DISTINCT p {limit_clause}"""
-
+        query = f"""MATCH path=(n){match_clause}(m)
+                    WITH path, 
+                        nodes(path) as nodes, 
+                        relationships(path) as rels
+                    RETURN [n in nodes | n.name] as node_names,
+                        [n in nodes | n.id] as node_ids,
+                        [n in nodes | n.category] as node_categories,
+                        [r in rels | type(r)] as edge_types,
+                        [r in rels | startNode(r) = nodes[apoc.coll.indexOf(rels, r)]] as edge_directions
+                        {limit_clause}"""
         result = runner.run(query)
 
         paths = KGPaths(num_hops=self.num_hops)
