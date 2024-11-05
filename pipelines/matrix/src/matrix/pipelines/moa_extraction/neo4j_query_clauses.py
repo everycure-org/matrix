@@ -75,7 +75,7 @@ def generate_edge_omission_where_clause(
 def generate_node_condition_where_clause(num_hops: int, intermediate_ids: List[str]) -> str:
     """Construct the where clause for a path mapping query.
 
-    Example: "(a1.id in ['ID:1','ID:2']) AND (a2.id in ['ID:1','ID:2'])
+    Example: "(a1.id in ['ID:1', 'ID:2']) AND (a2.id in ['ID:1', 'ID:2'])
 
     Args:
         num_hops: The number of hops in the path.
