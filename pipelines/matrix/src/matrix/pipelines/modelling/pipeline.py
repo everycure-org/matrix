@@ -155,7 +155,6 @@ def create_pipeline(**kwargs) -> Pipeline:
             node(
                 func=nodes.make_splits,
                 inputs=[
-                    "modelling.feat.nodes@pandas",
                     "modelling.int.known_pairs@pandas",
                     "params:modelling.splitter",
                 ],
