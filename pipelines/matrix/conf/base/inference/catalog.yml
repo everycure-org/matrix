@@ -43,10 +43,6 @@ inference.int.request_type:
   type: yaml.YAMLDataset
   filepath: ${globals:paths.tmp}/infer_type.yml
 
-inference.model_input.drug_disease_pairs:
-  <<: [*_pandas_parquet]
-  filepath: ${globals:paths.tmp}/model_input/drug_disease_pairs
-
 inference.int.drug_list@pandas:
   <<: *_pandas_parquet
   filepath: ${globals:paths.tmp}/int/drug_list_infer
