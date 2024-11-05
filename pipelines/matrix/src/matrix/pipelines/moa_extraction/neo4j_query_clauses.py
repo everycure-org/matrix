@@ -1,5 +1,7 @@
 """Contains functions that generate clauses for constructing complex Neo4j queries."""
 
+from typing import List
+
 
 def generate_return_clause(limit: int = None) -> str:
     """Generates a RETURN clause of the form expected by KGPaths.add_paths_from_result method.
@@ -68,3 +70,15 @@ def generate_edge_omission_where_clause(
             where_clause_parts.append(f"(NOT r{hop}.{prefix}{tag})")
 
     return " AND ".join(where_clause_parts)
+
+
+def generate_node_condition_where_clause(num_hops: int, intermediate_ids: List[str]) -> str:
+    """Construct the where clause for a path mapping query.
+
+    Example: "(a1.id in ['ID:1','ID:2']) AND (a2.id in ['ID:1','ID:2'])
+
+    Args:
+        num_hops: The number of hops in the path.
+        intermediate_ids: The list of intermediate node IDs.
+    """
+    return " AND ".join([f"(a{i}.id in {str(intermediate_ids)})" for i in range(1, num_hops)])
