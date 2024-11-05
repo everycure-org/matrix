@@ -37,6 +37,8 @@ def create_int_pairs(
 ):
     """Create intermediate pairs dataset.
 
+    TODO: Check non-null embedding
+
     Args:
         nodes: nodes dataframe
         raw_tp: Raw ground truth positive data.
@@ -71,6 +73,8 @@ def prefilter_nodes(
     nodes: DataFrame, gt_pos: pd.DataFrame, drug_types: List[str], disease_types: List[str]
 ) -> DataFrame:
     """Prefilter nodes for negative sampling.
+
+    TODO: Check non-null embedding
 
     Args:
         nodes: the nodes dataframe to be filtered
@@ -113,7 +117,6 @@ def prefilter_nodes(
 )
 @inject_object()
 def make_splits(
-    kg: KnowledgeGraph,
     data: DataFrame,
     splitter: BaseCrossValidator,
 ) -> pd.DataFrame:

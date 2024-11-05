@@ -81,7 +81,6 @@ modelling.int.known_pairs@spark:
   <<: [*_spark_parquet, *_model_input_ds]
   filepath: ${globals:paths.modelling}/ground_truth/translator/${globals:data_sources.gt.version}/ground_truth
 
-# filtered down further to drugs/diseases
 modelling.model_input.drugs_diseases_nodes@spark:
   <<: [*_spark_parquet, *_model_input_ds]
   filepath: ${globals:paths.modelling}/model_input/drugs_diseases_nodes/
