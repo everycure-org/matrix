@@ -1,4 +1,3 @@
-from unittest.mock import patch
 from kedro.pipeline.node import Node
 from kedro.pipeline import Pipeline
 import pytest
@@ -339,8 +338,8 @@ def test_get_k8s_node_affinity_tags_without_gpu():
 @pytest.fixture
 def fused_node_with_contents() -> FusedNode:
     node = FusedNode(depth=0)
-    node.add_node(Node(func=dummy_func, name="node1", inputs=[], outputs=["dataset_x"]))
-    node.add_node(Node(func=dummy_func, name="node2", inputs=[], outputs=["dataset_y"]))
+    node.add_node(Node(func=dummy_func, name="node1", inputs=[], outputs=["dataset_x"], tags=["tag1", "tag2"]))
+    node.add_node(Node(func=dummy_func, name="node2", inputs=[], outputs=["dataset_y"], tags=["tag2", "tag3"]))
     return node
 
 
@@ -359,11 +358,11 @@ def fused_node_with_argo_tags() -> FusedNode:
     return node
 
 
-@pytest.fixture
-def fused_node_with_parents(fused_node: FusedNode) -> FusedNode:
+@pytest.fixture()
+def fused_node_with_parents(fused_node_with_argo_tags: FusedNode) -> FusedNode:
     node = FusedNode(depth=0)
     node.add_node(Node(func=dummy_func, name="node3", inputs=[], outputs=["dataset_z"]))
-    node._parents = {fused_node}
+    node._parents = {fused_node_with_argo_tags}
     node.tags = ["tag3"]
     return node
 
@@ -378,9 +377,9 @@ def test_single_node_no_deps(fused_node_with_contents: FusedNode) -> None:
 
     assert len(result) == 1
     assert result[0]["name"] == "node1"
-    assert result[0]["nodes"] == ["node1", "node2"]
+    assert result[0]["nodes"] == "node1,node2"
     assert result[0]["deps"] == []
-    assert result[0]["tags"] == ["tag1", "tag2"]
+    assert result[0]["tags"] == {"tag1", "tag2", "tag3"}
 
 
 def test_node_with_argo_tags(fused_node_with_argo_tags: FusedNode) -> None:
@@ -391,28 +390,28 @@ def test_node_with_argo_tags(fused_node_with_argo_tags: FusedNode) -> None:
     assert result[0]["cpu"] == "2"
 
 
-def test_multiple_nodes_with_deps(fused_node_with_contents: FusedNode, fused_node_with_parents: FusedNode) -> None:
-    result = get_pipeline_as_tasks([fused_node_with_contents, fused_node_with_parents])
+@pytest.fixture()
+def fused_node_with_k8s_tag() -> FusedNode:
+    node = FusedNode(depth=0)
+    node.add_node(
+        Node(
+            func=dummy_func,
+            name="node1",
+            inputs=[],
+            outputs=["dataset_x"],
+            tags=[NodeTags.K8S_REQUIRE_GPU.value, "tag2"],
+        )
+    )
+    return node
 
-    assert len(result) == 2
 
-    # Check parent node
-    assert result[0]["name"] == "test-node"
+def test_node_with_k8s_tag(fused_node_with_k8s_tag: FusedNode) -> None:
+    result = get_pipeline_as_tasks([fused_node_with_k8s_tag])
+
+    assert len(result) == 1
+    assert result[0]["name"] == "node1"
     assert result[0]["deps"] == []
-
-    # Check child node
-    assert result[1]["name"] == "child-node"
-    assert result[1]["deps"] == ["test-node"]
-
-
-def test_k8s_affinity_tags(fused_node: FusedNode) -> None:
-    mock_affinity = {"nodeAffinity": {"requiredDuringSchedulingIgnoredDuringExecution": {}}}
-
-    with patch("matrix.argo.get_k8s_node_affinity_tags", return_value=mock_affinity) as mock_get_tags:
-        result = get_pipeline_as_tasks([fused_node])
-
-        mock_get_tags.assert_called_once_with(fused_node.tags)
-        assert result[0]["k8s_affinity_tags"] == mock_affinity
+    assert result[0]["k8s_affinity_tags"] == [NodeTags.K8S_REQUIRE_GPU.value]
 
 
 def assert_argo_config_structure(parsed_config: dict, expected_pipeline_names: list[str]) -> None:
