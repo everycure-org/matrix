@@ -112,8 +112,6 @@ def prefilter_nodes(
 ) -> DataFrame:
     """Prefilter nodes for negative sampling.
 
-    TODO: Check non-null embedding
-
     Args:
         nodes: the nodes dataframe to be filtered
         gt_pos: dataframe with ground truth positives
