@@ -100,7 +100,7 @@ def create_feat_nodes(
     return pdf_nodes
 
 
-def _apply_splitter(data: DataFrame, splitter: BaseCrossValidator) -> pd.DataFrame:
+def apply_splitter(data: DataFrame, splitter: BaseCrossValidator) -> pd.DataFrame:
     """Apply a splitter to a dataframe.
 
     Args:
@@ -152,7 +152,7 @@ def make_splits(
     data["source_embedding"] = data["source"].apply(lambda s_id: kg._embeddings[s_id])
     data["target_embedding"] = data["target"].apply(lambda t_id: kg._embeddings[t_id])
 
-    return _apply_splitter(data, splitter)
+    return apply_splitter(data, splitter)
 
 
 @has_schema(
