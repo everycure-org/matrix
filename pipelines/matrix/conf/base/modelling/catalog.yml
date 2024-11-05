@@ -16,7 +16,7 @@ _pandas_csv: &_pandas_csv
   type:  pandas.CSVDataset
 
 _pandas_parquet: &_pandas_parquet
-  type: pandas.ParquetDataset
+  type: matrix.datasets.graph.PandasParquetDataset
 
 _kg_dataset: &_kg_dataset
   type: matrix.datasets.graph.KnowledgeGraphDataset
@@ -28,6 +28,11 @@ _model_input_ds: &_model_input_ds
   metadata:
     kedro-viz:
       layer: model_input
+
+_raw_ds: &_raw_ds
+  metadata:
+    kedro-viz:
+      layer: raw
 
 _model_ds: &_model_ds
   metadata:
@@ -44,42 +49,46 @@ _model_output_ds: &_model_output_ds
     kedro-viz:
       layer: model_output
 
-modelling.raw.ground_truth.positives:
-  <<: [*_pandas_csv, *_model_input_ds]
+modelling.raw.ground_truth.positives@pandas:
+  <<: [*_pandas_csv, *_raw_ds]
   filepath: ${globals:paths.raw}/ground_truth/translator/${globals:data_sources.gt.version}/tp_pairs.tsv
   load_args:
     sep: "\t"
   save_args:
     sep: "\t"
 
-modelling.raw.ground_truth.negatives:
-  <<: [*_pandas_csv, *_model_input_ds]
+modelling.raw.ground_truth.positives@spark:
+  <<: [*_spark_csv, *_raw_ds]
+  filepath: ${globals:paths.raw}/ground_truth/translator/${globals:data_sources.gt.version}/tp_pairs.tsv
+
+modelling.raw.ground_truth.negatives@pandas:
+  <<: [*_pandas_csv, *_raw_ds]
   filepath: ${globals:paths.raw}/ground_truth/translator/${globals:data_sources.gt.version}/tn_pairs.tsv
   load_args:
     sep: "\t"
   save_args:
     sep: "\t"
 
+modelling.raw.ground_truth.negatives@spark:
+  <<: [*_spark_csv, *_raw_ds]
+  filepath: ${globals:paths.raw}/ground_truth/translator/${globals:data_sources.gt.version}/tn_pairs.tsv
+
 modelling.int.known_pairs@pandas:
-  <<: [*_pandas_csv, *_model_input_ds]
-  filepath: ${globals:paths.modelling}/ground_truth/translator/${globals:data_sources.gt.version}/ground_truth.csv
+  <<: [*_pandas_parquet, *_model_input_ds]
+  filepath: ${globals:paths.modelling}/ground_truth/translator/${globals:data_sources.gt.version}/ground_truth
   
 modelling.int.known_pairs@spark:
-  <<: [*_spark_csv, *_model_input_ds]
-  filepath: ${globals:paths.modelling}/ground_truth/translator/${globals:data_sources.gt.version}/ground_truth.csv
+  <<: [*_spark_parquet, *_model_input_ds]
+  filepath: ${globals:paths.modelling}/ground_truth/translator/${globals:data_sources.gt.version}/ground_truth
 
 # filtered down further to drugs/diseases
 modelling.model_input.drugs_diseases_nodes@spark:
   <<: [*_spark_parquet, *_model_input_ds]
   filepath: ${globals:paths.modelling}/model_input/drugs_diseases_nodes/
 
-modelling.feat.rtx_kg2@spark:
-  <<: [*_spark_parquet, *_model_input_ds]
-  filepath: ${globals:paths.modelling}/feat/rtx_kg2_nodes
-
-modelling.feat.rtx_kg2@pandas:
+modelling.model_input.drugs_diseases_nodes@pandas:
   <<: [*_kg_dataset, *_model_input_ds]
-  filepath: ${globals:paths.modelling}/feat/rtx_kg2_nodes
+  filepath: ${globals:paths.modelling}/feat/nodes
 
 modelling.model_input.splits:
   <<: [*_pandas_parquet, *_model_input_ds]

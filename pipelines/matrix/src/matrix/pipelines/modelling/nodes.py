@@ -25,36 +25,36 @@ from .model import ModelWrapper
 plt.switch_backend("Agg")
 
 
+@has_schema(
+    schema={"y": "int"},
+    allow_subset=True,
+)
 @primary_key(primary_key=["source", "target"])
-def create_int_pairs(raw_tp: pd.DataFrame, raw_tn: pd.DataFrame):
+def create_int_pairs(
+    nodes: DataFrame,
+    raw_tp: DataFrame,
+    raw_tn: DataFrame,
+):
     """Create intermediate pairs dataset.
 
     Args:
+        nodes: nodes dataframe
         raw_tp: Raw ground truth positive data.
         raw_tn: Raw ground truth negative data.
 
     Returns:
         Combined ground truth positive and negative data.
     """
-    raw_tp["y"] = 1
-    raw_tn["y"] = 0
 
-    # Concat
-    return pd.concat([raw_tp, raw_tn], axis="index").reset_index(drop=True)
-
-
-def prefilter_nodes(nodes: DataFrame, drug_types: List[str], disease_types: List[str]) -> DataFrame:
-    """Filters nodes before passing on to modelling nodes.
-
-    Args:
-        nodes: the nodes dataframe to be filtered
-        drug_types: list of drug types
-        disease_types: list of disease types
-    Returns:
-        Filtered nodes dataframe
-    """
-    return nodes.filter((f.col("category").isin(drug_types)) | (f.col("category").isin(disease_types))).select(
-        "id", "category", "topological_embedding"
+    return (
+        raw_tp.withColumn("y", f.lit(1))
+        .unionByName(raw_tn.withColumn("y", f.lit(0)))
+        .alias("pairs")
+        .join(nodes.withColumn("source", f.col("id")), how="left", on="id")
+        .withColumnRenamed("topological_embedding", "source_embedding")
+        .join(nodes.withColumn("target", f.col("id")), how="left", on="id")
+        .withColumnRenamed("topological_embedding", "target_embedding")
+        .select("pairs.*", "source_embedding", "target_embedding")
     )
 
 
@@ -67,42 +67,37 @@ def prefilter_nodes(nodes: DataFrame, drug_types: List[str], disease_types: List
     },
     allow_subset=True,
 )
-def create_feat_nodes(
-    raw_nodes: DataFrame,
-    known_pairs: DataFrame,
-    drug_types: List[str],
-    disease_types: List[str],
-) -> pd.DataFrame:
-    """Add features for nodes.
+def prefilter_nodes(
+    nodes: DataFrame, gt_pos: pd.DataFrame, drug_types: List[str], disease_types: List[str]
+) -> DataFrame:
+    """Prefilter nodes for negative sampling.
 
     Args:
-        raw_nodes: Raw nodes data.
-        known_pairs: Ground truth data.
-        drug_types: List of drug types.
-        disease_types: List of disease types.
-
+        nodes: the nodes dataframe to be filtered
+        gt_pos: dataframe with ground truth positives
+        drug_types: list of drug types
+        disease_types: list of disease types
     Returns:
-        Nodes enriched with features.
+        Filtered nodes dataframe
     """
 
     ground_truth_nodes = (
-        known_pairs.withColumn("id", f.col("source"))
-        .unionByName(known_pairs.withColumn("id", f.col("target")))
-        .filter(f.col("y") == 1)
+        gt_pos.withColumn("id", f.col("source"))
+        .unionByName(gt_pos.withColumn("id", f.col("target")))
         .select("id")
         .distinct()
         .withColumn("is_ground_pos", f.lit(True))
     )
 
-    pdf_nodes = (
-        raw_nodes.alias("nodes")
+    return (
+        nodes.alias("nodes")
+        .filter((f.col("category").isin(drug_types)) | (f.col("category").isin(disease_types)))
+        .select("id", "category", "topological_embedding")
         .withColumn("is_drug", f.col("category").isin(drug_types))
         .withColumn("is_disease", f.col("category").isin(disease_types))
         .join(ground_truth_nodes, on="id", how="left")
         .fillna({"is_ground_pos": False})
     )
-
-    return pdf_nodes
 
 
 @has_schema(
@@ -132,9 +127,6 @@ def make_splits(
     Returns:
         Data with split information.
     """
-    # FUTURE: Improve by redoing in Spark
-    data["source_embedding"] = data["source"].apply(lambda s_id: kg._embeddings[s_id])
-    data["target_embedding"] = data["target"].apply(lambda t_id: kg._embeddings[t_id])
     all_data_frames = []
     for iteration, (train_index, test_index) in enumerate(splitter.split(data, data["y"])):
         all_indices_in_this_fold = list(set(train_index).union(test_index))
