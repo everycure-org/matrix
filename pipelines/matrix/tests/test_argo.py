@@ -388,7 +388,7 @@ def test_generate_argo_config() -> None:
         test_template["dag"]["tasks"][0]["template"] == "kedro"
     ), "test_pipeline template task should use kedro template"
 
-    # # Verify cloud_pipeline template
+    # Verify cloud_pipeline template
     cloud_template = next(t for t in templates if t["name"] == "cloud_pipeline")
     assert "dag" in cloud_template, "cloud_pipeline template should have a DAG"
     assert len(cloud_template["dag"]["tasks"]) == 1, "cloud_pipeline template should have one task"
