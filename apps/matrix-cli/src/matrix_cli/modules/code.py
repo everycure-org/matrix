@@ -55,10 +55,15 @@ def ai_catchup(
     ),
     until: str = typer.Option("origin/main", help="Git reference to diff to (default: origin/main)"),
     model: str = typer.Option(settings.base_model, help="Model to use for release article generation"),
+    disable_rendering: bool = typer.Option(False, help="Disable rendering of the summary"),
 ):
     """Uses AI to summarize code changes since a specific git reference or timeframe."""
     summary = get_ai_code_summary(since, until, model)
-    rprint(Markdown(summary))
+
+    if not disable_rendering:
+        rprint(Markdown(summary))
+    else:
+        console.print(summary)
 
 
 @app.command()
