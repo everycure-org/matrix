@@ -420,6 +420,35 @@ def test_k8s_affinity_tags(mock_fused_node):
         assert result[0]["k8s_affinity_tags"] == mock_affinity
 
 
+def assert_argo_config_structure(parsed_config: dict, expected_pipeline_names: list[str]) -> None:
+    """Helper function to verify the structure of an Argo workflow config.
+
+    Args:
+        parsed_config: The parsed YAML configuration as a dictionary
+        expected_pipeline_names: List of pipeline names that should be present in templates
+    """
+    assert isinstance(parsed_config, dict), "Parsed config should be a dictionary"
+
+    # Verify spec
+    spec = parsed_config["spec"]
+
+    # Verify kedro template
+    kedro_template = next(t for t in spec["templates"] if t["name"] == "kedro")
+    assert kedro_template["backoff"]["duration"] == "1", "Kedro template should have correct backoff duration"
+    assert kedro_template["backoff"]["factor"] == 2, "Kedro template should have correct backoff factor"
+    assert kedro_template["backoff"]["maxDuration"] == "1m", "Kedro template should have correct max backoff duration"
+    assert "nodeAntiAffinity" in kedro_template["affinity"], "Kedro template should have nodeAntiAffinity"
+    assert kedro_template["metadata"]["labels"]["app"] == "kedro-argo", "Kedro template should have correct label"
+
+    # Check if the pipeline is included in the templates
+    templates = spec["templates"]
+    pipeline_names = [template["name"] for template in templates]
+    for name in expected_pipeline_names:
+        assert name in pipeline_names, f"The '{name}' pipeline should be included in the templates"
+
+    return spec
+
+
 def test_generate_argo_config() -> None:
     image_name = "us-central1-docker.pkg.dev/mtrx-hub-dev-3of/matrix-images/matrix"
     run_name = "test_run"
@@ -453,27 +482,13 @@ def test_generate_argo_config() -> None:
     )
 
     assert argo_config is not None
-
     parsed_config = yaml.safe_load(argo_config)
 
-    assert isinstance(parsed_config, dict), "Parsed config should be a dictionary"
-
-    # Verify spec
-    spec = parsed_config["spec"]
-
-    # Verify kedro template
-    kedro_template = next(t for t in spec["templates"] if t["name"] == "kedro")
-    assert kedro_template["backoff"]["duration"] == "1", "Kedro template should have correct backoff duration"
-    assert kedro_template["backoff"]["factor"] == 2, "Kedro template should have correct backoff factor"
-    assert kedro_template["backoff"]["maxDuration"] == "1m", "Kedro template should have correct max backoff duration"
-    assert "nodeAntiAffinity" in kedro_template["affinity"], "Kedro template should have nodeAntiAffinity"
-    assert kedro_template["metadata"]["labels"]["app"] == "kedro-argo", "Kedro template should have correct label"
+    spec = assert_argo_config_structure(
+        parsed_config=parsed_config, expected_pipeline_names=["test_pipeline", "cloud_pipeline"]
+    )
 
     templates = spec["templates"]
-    # Check if the pipeline is included in the templates
-    pipeline_names = [template["name"] for template in templates]
-    assert "test_pipeline" in pipeline_names, "The 'test_pipeline' pipeline should be included in the templates"
-    assert "cloud_pipeline" in pipeline_names, "The 'cloud_pipeline' pipeline should be included in the templates"
 
     # Verify test_pipeline template
     test_template = next(t for t in templates if t["name"] == "test_pipeline")
@@ -496,3 +511,36 @@ def test_generate_argo_config() -> None:
     assert (
         cloud_template["dag"]["tasks"][0]["template"] == "kedro"
     ), "cloud_pipeline template task should use kedro template"
+
+
+# def test_generate_argo_config_with_gpu_affinity() -> None:
+#     image_name = "us-central1-docker.pkg.dev/mtrx-hub-dev-3of/matrix-images/matrix"
+#     run_name = "test_run"
+#     image_tag = "test_tag"
+#     namespace = "test_namespace"
+#     username = "test_user"
+#     pipelines = {
+#         "test_pipeline": Pipeline(
+#             nodes=[Node(func=dummy_func, inputs=["dataset_a", "dataset_b"], outputs="dataset_c", name="simple_node")]
+#         ),
+#         "cloud_pipeline": Pipeline(
+#             nodes=[
+#                 Node(
+#                     func=dummy_func,
+#                     inputs=["dataset_a_cloud", "dataset_b_cloud"],
+#                     outputs="dataset_c_cloud",
+#                     name="simple_node_cloud",
+#                 )
+#             ]
+#         ),
+#     }
+
+#     argo_config = generate_argo_config(
+#         image=image_name,
+#         run_name=run_name,
+#         image_tag=image_tag,
+#         namespace=namespace,
+#         username=username,
+#         pipelines=pipelines,
+#         package_name="matrix",
+#     )
