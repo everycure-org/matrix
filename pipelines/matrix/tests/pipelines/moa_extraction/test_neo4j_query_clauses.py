@@ -1,0 +1,31 @@
+"""Tests for the Neo4j query clauses."""
+
+from matrix.pipelines.moa_extraction.neo4j_query_clauses import (
+    generate_match_clause,
+    generate_edge_omission_where_clause,
+)
+
+
+def test_generate_match_clause():
+    # Given a number of hops and a direction
+    # When we generate the match clause
+    match_clause_1 = generate_match_clause(3, unidirectional=True)
+    match_clause_2 = generate_match_clause(3, unidirectional=False)
+
+    # Then the result is correct
+    assert match_clause_1 == "-[r1]->(a1)-[r2]->(a2)-[r3]->"
+    assert match_clause_2 == "-[r1]-(a1)-[r2]-(a2)-[r3]-"
+
+
+def test_generate_edge_omission_where_clause():
+    # Given a set of edge omission rules
+    edge_omission_rules = {"all": ["drug_disease"], 3: ["disease_disease"]}
+
+    # When we generate the where clause
+    where_clause = generate_edge_omission_where_clause(edge_omission_rules=edge_omission_rules, num_hops=3)
+
+    # Then the result is correct
+    assert (
+        where_clause
+        == "NONE(r IN relationships(path) WHERE r._moa_extraction_drug_disease) AND (NOT r3._moa_extraction_disease_disease)"
+    )

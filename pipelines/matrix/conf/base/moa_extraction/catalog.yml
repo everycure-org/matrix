@@ -5,11 +5,11 @@ _kg_paths_dataset: &_kg_paths_dataset
 
 moa_extraction.raw.drug_mech_db:
   type: yaml.YAMLDataset
-  filepath: ${globals:paths.moa_extraction}/raw/drugmechdb/${globals:data_sources.drugmechdb.version}/indication_paths.yaml
+  filepath: ${globals:paths.raw}/drugmechdb/${globals:data_sources.drugmechdb.version}/indication_paths.yaml
 
 moa_extraction.raw.pairs_for_moa_prediction:
   type: pandas.CSVDataset
-  filepath: ${globals:paths.moa_extraction}/raw/pairs_for_moa_prediction/${globals:data_sources.pairs_for_moa_prediction.version}/filtered_matrix_report_xg_ensemble_report_17_sept_2024.csv
+  filepath: ${globals:paths.raw}/pairs_for_moa_prediction/${globals:data_sources.pairs_for_moa_prediction.version}/filtered_matrix_report_xg_ensemble_report_17_sept_2024.csv
 
 moa_extraction.feat.category_encoder:
   type: pickle.PickleDataset

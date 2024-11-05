@@ -1,3 +1,5 @@
+"""Tests for MOA extraction model selection classes."""
+
 import pandas as pd
 import pytest
 from matrix.pipelines.moa_extraction.model_selection import GroupAwareSplit
