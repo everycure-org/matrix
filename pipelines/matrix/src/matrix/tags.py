@@ -13,7 +13,10 @@ class NodeTags(Enum):
     ARGO_FUSE_TOPOLOGICAL_EMBEDDINGS = f"{ARGO_FUSE_GROUP_PREFIX}topological_embeddings"
     ARGO_NEO4J_TEMPLATE = f"{ARGO_NODE_PREFIX}template-neo4j"
     ARGO_FUSE_TOPOLOGICAL_PCA = f"{ARGO_FUSE_GROUP_PREFIX}topological_pca"
-    ARGO_MEM_100G = f"{ARGO_NODE_PREFIX}mem-100g"
+    ARGO_MEM_100G = f"{ARGO_NODE_PREFIX}mem-100g"  # TODO: This should be a K8s tag.
+
+    # Kubernetes tags - these define affinity rules for K8s
+    K8S_GPU = "gpu_node"
 
     ## Other tags
     RTX_KG2 = "rtx_kg2"
