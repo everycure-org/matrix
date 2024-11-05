@@ -53,17 +53,26 @@ spec:
       parameters:
       - name: kedro_nodes
       - name: pipeline
+      - name: memory_request
+        default: "64Gi"
+      - name: cpu_request
+        default: "4"
+      - name: memory_limit
+        default: "64Gi"
+      - name: cpu_limit
+        default: "16"
     container:
       imagePullPolicy: Always
       image: {% raw %} "{{workflow.parameters.image}}:{{workflow.parameters.image_tag}}"        # {{workflow...}} etc. are placeholders within the template. These placeholders will be dynamically substituted with real values when the workflow is submitted, not during the kubectl apply command.
       {% endraw %}
-      resources: # limit the resources
+      resources:
         requests:
-          memory: 64Gi
-          cpu: 4
+          # Use input parameters instead of hardcoded values
+          memory: "{{inputs.parameters.memory_request}}"
+          cpu: "{{inputs.parameters.cpu_request}}"
         limits:
-          memory: 64Gi
-          cpu: 16
+          memory: "{{inputs.parameters.memory_limit}}"
+          cpu: "{{inputs.parameters.cpu_limit}}"
       env:
         - name: WORKFLOW_ID
           valueFrom:
@@ -236,6 +245,23 @@ spec:
             value: {{ pipeline_name }}
           - name: kedro_nodes
             value: {{ task.nodes }}
-
+          {% if task.resources %}
+          {% if task.resources.memory_request %}
+          - name: memory_request
+            value: {{ task.resources.memory_request }}
+          {% endif %}
+          {% if task.resources.cpu_request %}
+          - name: cpu_request
+            value: {{ task.resources.cpu_request }}
+          {% endif %}
+          {% if task.resources.memory_limit %}
+          - name: memory_limit
+            value: {{ task.resources.memory_limit }}
+          {% endif %}
+          {% if task.resources.cpu_limit %}
+          - name: cpu_limit
+            value: {{ task.resources.cpu_limit }}
+          {% endif %}
+          {% endif %}
       {% endfor %}
   {% endfor %}
