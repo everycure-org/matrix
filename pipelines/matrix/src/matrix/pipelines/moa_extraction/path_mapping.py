@@ -95,10 +95,11 @@ class SetwisePathMapper(PathMapper):
         paths = KGPaths(num_hops=self.num_hops)
         for db_entry in tqdm(drug_mech_db, desc="Mapping paths"):
             result = self.map_single_moa(runner, db_entry, synonymizer_endpoint, num_attempts)
-            drugmech_id = db_entry["graph"]["_id"]
-            paths.add_paths_from_result(
-                result, extra_data={"DrugMechDB_id": [drugmech_id] * len(result), "y": [1] * len(result)}
-            )
+            if result is not None:
+                drugmech_id = db_entry["graph"]["_id"]
+                paths.add_paths_from_result(
+                    result, extra_data={"DrugMechDB_id": [drugmech_id] * len(result), "y": [1] * len(result)}
+                )
         return paths
 
     @classmethod
@@ -110,8 +111,6 @@ class SetwisePathMapper(PathMapper):
         Args:
             num_hops: The number of hops in the path.
             intermediate_ids: The list of intermediate node IDs.
-
-
         """
         return " AND ".join([f"(a{i}.id in {str(intermediate_ids)})" for i in range(1, num_hops)])
 
@@ -217,7 +216,8 @@ class TestPathMapper(PathMapper):
                     {return_clause}"""
         result = runner.run(query)
 
-        paths = KGPaths(num_hops=self.num_hops)
-        random_ids = [random.randint(1, 1000) for _ in range(len(result))]
-        paths.add_paths_from_result(result, extra_data={"DrugMechDB_id": random_ids, "y": [1] * len(result)})
+        if result is not None:
+            paths = KGPaths(num_hops=self.num_hops)
+            random_ids = [random.randint(1, 1000) for _ in range(len(result))]
+            paths.add_paths_from_result(result, extra_data={"DrugMechDB_id": random_ids, "y": [1] * len(result)})
         return paths

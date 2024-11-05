@@ -20,5 +20,6 @@ paths:
   evaluation:         data/test/releases/${versions.release}/runs/${run_name}/datasets/evaluation
   matrix_generation:  data/test/releases/${versions.release}/runs/${run_name}/datasets/matrix_generation
   inference:          data/test/releases/${versions.release}/runs/${run_name}/datasets/inference
+  moa_extraction:    data/test/releases/${versions.release}/runs/${run_name}/datasets/moa_extraction
 
   tmp:                data/test/tmp
