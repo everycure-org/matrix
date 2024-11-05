@@ -89,7 +89,7 @@ def _submit(
     2. When submitting the workflow, via `__entrypoint__`, a pipeline for execution is selected. 
         It defaults to `__default__`, but can be configured via pipeline_for_execution.
 
-    In the future, we expect to refactor the confusing and dynamic elements of the pipeline, leaving only one parameter - `pipeline` that would specify which pipeline(s) are to be added to worfllow AND submitted.
+    In the future, we expect plan not to have any template at all, but go straight from Kedro to Argo Workflow.
     
     This meant that it was possible to submit the workflows for other pipelines in Argo CI.
 
