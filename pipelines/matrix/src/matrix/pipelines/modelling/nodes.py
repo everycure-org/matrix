@@ -12,6 +12,7 @@ from sklearn.base import BaseEstimator
 
 import matplotlib.pyplot as plt
 
+from functools import wraps
 from refit.v1.core.inject import inject_object
 from refit.v1.core.inline_has_schema import has_schema
 from refit.v1.core.inline_primary_key import primary_key
@@ -25,19 +26,55 @@ from .model import ModelWrapper
 plt.switch_backend("Agg")
 
 
+def no_nulls(columns: List[str]):
+    """Decorator to check columns for null values.
+
+    FUTURE: Move to refit when we figure out how to push messages for breaking changes.
+
+    Args:
+        columns: list of columns to check
+    """
+
+    if isinstance(columns, str):
+        columns = [columns]
+
+    def decorator(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            # Proceed with the function if no null values are found
+            df = func(*args, **kwargs)
+
+            if not all(col_name in df.columns for col_name in columns):
+                raise ValueError(f"DataFrame is missing required columns: {', '.join(columns)}")
+
+            # Check if the specified column has any null values
+            null_rows_df = df.filter(" OR ".join([f"{col_name} IS NULL" for col_name in columns]))
+
+            # Check if the resulting DataFrame is empty
+            if not null_rows_df.isEmpty():
+                # Show rows with null values for debugging
+                null_rows_df.show()
+                raise ValueError(f"DataFrame contains null values in columns: {', '.join(columns)}")
+
+            return df
+
+        return wrapper
+
+    return decorator
+
+
 @has_schema(
     schema={"y": "int"},
     allow_subset=True,
 )
 @primary_key(primary_key=["source", "target"])
+@no_nulls(columns=["source_embedding", "target_embedding"])
 def create_int_pairs(
     nodes: DataFrame,
     raw_tp: DataFrame,
     raw_tn: DataFrame,
 ):
     """Create intermediate pairs dataset.
-
-    TODO: Check non-null embedding
 
     Args:
         nodes: nodes dataframe
@@ -69,6 +106,7 @@ def create_int_pairs(
     },
     allow_subset=True,
 )
+@primary_key(primary_key=["id"])
 def prefilter_nodes(
     nodes: DataFrame, gt_pos: pd.DataFrame, drug_types: List[str], disease_types: List[str]
 ) -> DataFrame:
