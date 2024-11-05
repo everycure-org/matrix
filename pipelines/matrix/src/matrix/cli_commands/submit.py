@@ -5,7 +5,6 @@ import re
 import secrets
 import subprocess
 import sys
-import time
 from typing import Optional, List
 
 import click
@@ -122,8 +121,8 @@ def _submit(
         console.print("[green]✓[/green] Argo template built")
 
         console.print("Writing Argo template...")
-        file_path = save_argo_template(argo_template, run_name, template_directory)
-        console.print(f"[green]✓[/green] Argo template written to {file_path}")
+        file_path = save_argo_template(argo_template, template_directory)
+        console.print("[green]✓[/green] Argo template written")
 
         console.print("Ensuring namespace...")
         ensure_namespace(namespace, verbose=verbose)
@@ -299,12 +298,12 @@ def build_argo_template(run_name: str, username: str, namespace: str, pipeline: 
         image_tag=username,
         namespace=namespace,
         username=username,
-        pipelines=pipeline,
-        package_name=package_name,
+        pipeline=pipeline,
+        package_name=package_name
     )
 
-def save_argo_template(argo_template: str, run_name: str, template_directory: Path) -> str:
-    file_path = template_directory / f"argo_template_{run_name}_{time.strftime('%Y%m%d_%H%M%S')}.yml"
+def save_argo_template(argo_template: str, template_directory: Path) -> str:
+    file_path = template_directory / "argo_template.yml"
     with open(file_path, "w") as f:
         f.write(argo_template)
     return str(file_path)

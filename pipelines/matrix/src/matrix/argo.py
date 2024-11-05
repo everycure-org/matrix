@@ -27,7 +27,7 @@ def generate_argo_config(
 
     output = template.render(
         package_name=package_name,
-        pipelines=pipeline_dependencies,
+        pipeline=pipeline_dependencies,
         image=image,
         image_tag=image_tag,
         namespace=namespace,
