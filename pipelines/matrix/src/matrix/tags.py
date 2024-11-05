@@ -7,11 +7,15 @@ ARGO_FUSE_GROUP_PREFIX = f"{ARGO_NODE_PREFIX}fuse-group."
 class NodeTags(Enum):
     NEO4J = "neo4j"  # TODO: What is the meaning of this tag?
     BIGQUERY = "bigquery"  # TODO: What is the meaning of this tag?
-    ARGO_FUSE_NODE = "argowf.fuse"
+
+    ## Argo tags - these trigger specific behavior in Argo
+    ARGO_FUSE_NODE = f"{ARGO_NODE_PREFIX}fuse"
     ARGO_FUSE_TOPOLOGICAL_EMBEDDINGS = f"{ARGO_FUSE_GROUP_PREFIX}topological_embeddings"
-    ARGO_NEO4J_TEMPLATE = "argowf.template-neo4j"
+    ARGO_NEO4J_TEMPLATE = f"{ARGO_NODE_PREFIX}template-neo4j"
     ARGO_FUSE_TOPOLOGICAL_PCA = f"{ARGO_FUSE_GROUP_PREFIX}topological_pca"
-    ARGO_MEM_100G = "argowf.mem-100g"
+    ARGO_MEM_100G = f"{ARGO_NODE_PREFIX}mem-100g"
+
+    ## Other tags
     RTX_KG2 = "rtx_kg2"
     EC_MEDICAL_TEAM = "ec_medical_team"
     ROBOKOP = "robokop"
