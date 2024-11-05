@@ -8,7 +8,11 @@ import random
 import neo4j
 
 from matrix.datasets.paths import KGPaths
-from matrix.pipelines.moa_extraction.neo4j_query_clauses import generate_return_clause, generate_match_clause
+from matrix.pipelines.moa_extraction.neo4j_query_clauses import (
+    generate_return_clause,
+    generate_match_clause,
+    generate_node_condition_where_clause,
+)
 from matrix.pipelines.embeddings.nodes import GraphDB
 from matrix.pipelines.preprocessing.nodes import resolve, normalize
 
@@ -102,18 +106,6 @@ class SetwisePathMapper(PathMapper):
                 )
         return paths
 
-    @classmethod
-    def _construct_where_clause(cls, num_hops: int, intermediate_ids: List[str]) -> str:
-        """Construct the where clause for a path mapping query.
-
-        Example: "(a1.id in ['ID:1','ID:2']) AND (a2.id in ['ID:1','ID:2'])
-
-        Args:
-            num_hops: The number of hops in the path.
-            intermediate_ids: The list of intermediate node IDs.
-        """
-        return " AND ".join([f"(a{i}.id in {str(intermediate_ids)})" for i in range(1, num_hops)])
-
     def map_single_moa(
         self, runner: GraphDB, db_entry: Dict[str, Any], synonymizer_endpoint: str, num_attempts: int = 5
     ) -> List[neo4j.graph.Path]:
@@ -156,7 +148,7 @@ class SetwisePathMapper(PathMapper):
 
         # Construct the neo4j query
         match_clause = generate_match_clause(self.num_hops, self.unidirectional)
-        where_clause = self._construct_where_clause(self.num_hops, mapped_int_ids)
+        where_clause = generate_node_condition_where_clause(self.num_hops, mapped_int_ids)
         return_clause = generate_return_clause(limit=self.num_limit)
         query = f"""MATCH p=(n:%{{id:'{drug_mapped}'}}){match_clause}(m:%{{id:'{disease_mapped}'}})
                     WHERE {where_clause}
