@@ -8,11 +8,17 @@ Our codebase is structured around the `Makefile`. This allows for a quick and ea
 
 At the end of this section, we will show you how you can set up your entire local environment by using a single `make` command however prior to that, we will explain the set-up on a step-by-step basis.
 
-### `.env` file for local credentials
+### Environment Variables Setup
 
-To execute the pipeline directly on your local machine, you'll first need to create a `.env` file in the root of the matrix pipeline. Get started by renaming the `.env.tmpl` file to `.env`.
+To execute the pipeline directly on your local machine, you'll need to set up your environment variables. We use a two-file system:
 
-Note that the pipeline will not run fully without credentials for the dependent services (at the moment only OpenAI). Reach out to the team through Slack if you need a credential. 
+1. `.env.defaults` - Contains shared default values and is version controlled. This file includes all available configuration options with default values and documentation.
+2. `.env` - Contains your local overrides and credentials (gitignored)
+
+!!! tip
+    Start by reviewing `.env.defaults` to understand available configuration options. In most cases, for local executions no overrides are needed. If you do want to override a variable, create the `.env` file and override the necessary variables.
+
+
 
 ### Virtual environment for python dependencies
 

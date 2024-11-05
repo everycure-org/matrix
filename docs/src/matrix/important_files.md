@@ -2,11 +2,10 @@
 
 ## Files
 
-### `.env` file
+### Environment files
 
-- sets a number of default ENV variables that are needed for the pipeline to run. Note
-this file is ignored in the docker image and thus these ENV variables have to set
-explicitly for any container to work. This file can also be used to locally run against production data by tweaking the Neo4j or base bucket entries here.
+- `.env.defaults`: Contains shared default environment variables and documentation for all available configuration options. This file is version controlled and serves both as default configuration and as documentation.
+- `.env`: Sets local environment variables and credentials, overriding defaults as needed. This file is gitignored to protect sensitive information.
 
 ### `Makefile` file
 

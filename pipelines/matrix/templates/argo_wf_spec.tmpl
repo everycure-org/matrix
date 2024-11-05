@@ -10,7 +10,7 @@ spec:
       run: {% raw %}'{{ workflow.parameters.run_name }}'
       {% endraw %}
       username: "{{ username }}"
-  entrypoint: __default__
+  entrypoint: __pipeline__
   arguments:
     parameters:
       - name: image
@@ -48,7 +48,7 @@ spec:
       - name: pipeline
     container:
       imagePullPolicy: Always
-      image: {% raw %} "{{workflow.parameters.image}}:{{workflow.parameters.image_tag}}" 
+      image: {% raw %} "{{workflow.parameters.image}}:{{workflow.parameters.image_tag}}"        # {{workflow...}} etc. are placeholders within the template. These placeholders will be dynamically substituted with real values when the workflow is submitted, not during the kubectl apply command.
       {% endraw %}
       resources: # limit the resources
         requests:
@@ -214,11 +214,10 @@ spec:
           value: "100G"
         - name: NEO4J_dbms_memory_heap_max__size
           value: "100G"
-  {% for pipeline, tasks in pipes.items() %}
-  - name: {{ pipeline }}
+  - name: __pipeline__
     dag:
       tasks:
-      {% for task in tasks %}
+      {% for task in pipeline %}
       - name: {{ task.name }}
         template: {{ task.get('template', 'kedro') }}
         {% if task.deps %}
@@ -234,4 +233,3 @@ spec:
           - name: kedro_nodes
             value: {{ task.nodes }}
       {% endfor %}
-  {% endfor %}
