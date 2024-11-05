@@ -1,15 +1,6 @@
 moa_extraction:
-  # gdb:
-  #   object: matrix.pipelines.moa_extraction.utils.Neo4jRunner
-  #   uri: ${globals:neo4j.host}
-  #   database: everycure-test-release # analytics
-  #   user:  ${globals:neo4j.user}
-  #   password: ${globals:neo4j.password}
-
-
-  # gdb:
-  #   endpoint: ${globals:neo4j.host}
-  #   database: everycure-test-release # analytics
+  gdb:
+    database: everycure-test-release # analytics
 
   preprocessing_options:
     add_tags:

@@ -2,16 +2,10 @@ moa_extraction:
   gdb:
     object: matrix.pipelines.embeddings.nodes.GraphDB
     endpoint: ${globals:neo4j.host}
-    database: everycure-test-release # everycure-run-23-aug-setup-4 # analytics
+    database: everycure-run-23-aug-setup-4 # analytics
     auth:
       -  ${globals:neo4j.user}
       -  ${globals:neo4j.password}
-  # gdb:
-  #   object: matrix.pipelines.moa_extraction.utils.Neo4jRunner
-  #   uri: ${globals:neo4j.host}
-  #   database: everycure-test-release # analytics
-  #   user:  ${globals:neo4j.user}
-  #   password: ${globals:neo4j.password}
 
   tagging_options:
     drug_types:

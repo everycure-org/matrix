@@ -6,8 +6,9 @@ from tqdm import tqdm
 import abc
 
 from matrix.datasets.paths import KGPaths
-from matrix.pipelines.embeddings.nodes import GraphDB
 from matrix.pipelines.moa_extraction.path_mapping import SetwisePathMapper
+from matrix.pipelines.moa_extraction.neo4j_query_clauses import return_clause
+from matrix.pipelines.embeddings.nodes import GraphDB
 
 
 class PathGenerator(abc.ABC):
@@ -82,11 +83,10 @@ class AllPathsWithRules(PathGenerator):
         where_clause = AllPathsWithRules.construct_where_clause(
             edge_omission_rules=self.edge_omission_rules, num_hops=self.num_hops
         )
-        limit_clause = f"LIMIT {self.num_limit}" if self.num_limit is not None else ""
         query = f"""
         MATCH path = (start: %{{id:'{drug}'}}){match_clause}(end: %{{id:'{disease}'}})
         WHERE {where_clause}
-        RETURN path {limit_clause}
+        {return_clause(limit=self.num_limit)}
         """
         result = runner.run(query)
         paths = KGPaths(num_hops=self.num_hops)
