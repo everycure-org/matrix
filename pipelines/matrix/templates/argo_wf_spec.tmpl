@@ -204,8 +204,8 @@ spec:
           value: "OFF"
         - name: NEO4J_ACCEPT_LICENSE_AGREEMENT
           value: "yes"
-  {% for pipeline, tasks in pipelines.items() %}
-  - name: {{ pipeline }}
+  {% for pipeline_name, tasks in pipelines.items() %}
+  - name: {{ pipeline_name }}
     dag:
       tasks:
       {% for task in tasks %}
@@ -220,7 +220,7 @@ spec:
         arguments:
           parameters:
           - name: pipeline
-            value: {{ pipeline }}
+            value: {{ pipeline_name }}
           - name: kedro_nodes
             value: {{ task.nodes }}
       {% endfor %}
