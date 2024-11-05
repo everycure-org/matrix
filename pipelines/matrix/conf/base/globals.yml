@@ -45,7 +45,7 @@ data_sources:
     version: latest # TODO: We should version
   drugmechdb:
     version: 24-oct-24
-  input_pairs:
+  pairs_for_moa_prediction:
     version: 24-oct-24
 
 # NOTE: MLflow does not like "new options" in the mlflow.yml

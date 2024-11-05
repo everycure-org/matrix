@@ -1,8 +1,6 @@
 """
 MOA extraction pipeline.
 """
-# TODO: Inject score col name?
-# TODO: Add descriptions?
 
 from kedro.pipeline import Pipeline, node
 from kedro.pipeline.modular_pipeline import pipeline
@@ -174,7 +172,7 @@ def _predictions_pipeline() -> Pipeline:
                         inputs={
                             "model": f"moa_extraction.models.{num_hops}_hop_model",
                             "runner": "params:moa_extraction.gdb",
-                            "pairs": "moa_extraction.raw.input_pairs",
+                            "pairs": "moa_extraction.raw.pairs_for_moa_prediction",
                             "path_generator": f"params:moa_extraction.predictions.{num_hops}_hop.path_generator",
                             "path_embedding_strategy": "params:moa_extraction.path_embeddings.strategy",
                             "category_encoder": "moa_extraction.feat.category_encoder",
