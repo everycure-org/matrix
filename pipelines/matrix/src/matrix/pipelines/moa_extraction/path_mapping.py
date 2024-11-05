@@ -56,7 +56,7 @@ class PathMapper(abc.ABC):
 class SetwisePathMapper(PathMapper):
     """Class for mapping DrugMechDB paths to the knowledge graph.
 
-    The strategy employed is as follows:or each drug-disease pair in the DrugMechDB, find all paths in the KG between them whose intermediate nodes also appear as intermediate nodes in the corresponding DrugMechDB MOA graph.
+    The strategy employed is as follows: for each drug-disease pair in the DrugMechDB, find all paths in the KG between them whose intermediate nodes also appear as intermediate nodes in the corresponding DrugMechDB MOA graph.
 
     """
 
