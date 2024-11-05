@@ -28,7 +28,7 @@ def _create_evaluation_pipeline(model: str, evaluation: str) -> Pipeline:
             ),
         ],
         tags=[
-            NodeTags.ARGO_FUSE_NODE,
+            NodeTags.ARGO_FUSE_NODE.value,
             fuse_group_tag(model, evaluation),
         ],
     )
