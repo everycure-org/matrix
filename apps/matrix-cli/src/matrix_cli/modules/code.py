@@ -8,6 +8,7 @@ import typer
 from rich import print as rprint
 from rich.markdown import Markdown
 
+from matrix_cli.gh_api import fetch_pr_detail_nocache
 from matrix_cli.settings import settings
 from matrix_cli.utils import console, get_git_root, get_markdown_contents, invoke_model
 
@@ -58,6 +59,54 @@ def ai_catchup(
     """Uses AI to summarize code changes since a specific git reference or timeframe."""
     summary = get_ai_code_summary(since, until, model)
     rprint(Markdown(summary))
+
+
+@app.command()
+def pr_summary(
+    pr_number: int,
+    model: str = typer.Option(settings.base_model, help="Model to use for PR summary generation"),
+    question: str = typer.Option(None, help="Question to ask about the PR"),
+):
+    """Generate an AI summary of a specific PR, including code changes and context."""
+
+    console.print(f"[green]Fetching PR #{pr_number} details...")
+
+    # Use existing utility to fetch PR details
+    pr_info = fetch_pr_detail_nocache(pr_number)
+    if not pr_info:
+        console.print(f"[bold red]Error: Could not fetch PR #{pr_number}")
+        raise typer.Exit(1)
+
+    prompt = f"""Please provide a comprehensive summary of this Pull Request.
+    Focus on the technical changes and their impact.
+
+    PR Title: {pr_info.title}
+    PR Labels: {pr_info.current_labels}
+    
+    Code Changes:
+    ```diff
+    {pr_info.diff}
+    ```
+
+    Please structure the summary with the following sections:
+    1. Overview of Changes
+    2. Technical Implementation Details
+    3. Potential Impact and Considerations
+    4. Testing Approach (if evident from the changes)
+
+    Keep the tone technical and focus on the key changes and their implications.
+
+    Optionally, the user may have submitted the following question:
+    {question}
+    """
+
+    console.print("[green]Generating AI summary...")
+    response = invoke_model(prompt, model=model)
+
+    console.print("\n[bold green]PR Summary:")
+    console.print("=" * 80)
+    console.print(Markdown(response))
+    console.print("=" * 80)
 
 
 def parse_diff_input(since: str, until: str) -> Tuple[str, str]:

@@ -1,6 +1,8 @@
 import subprocess
 from pathlib import Path
+from typing import List
 
+import typer
 from rich.console import Console
 from tenacity import retry, stop_after_attempt, wait_exponential
 from vertexai.generative_models import (
@@ -54,3 +56,12 @@ def get_markdown_contents(folder_path: Path | str) -> str:
             all_content += "=" * 100 + "\n"
 
     return all_content
+
+
+def run_command(command: List[str]) -> str:
+    try:
+        result = subprocess.run(command, check=True, capture_output=True, text=True)
+        return result.stdout.strip()
+    except subprocess.CalledProcessError as e:
+        typer.echo(f"Error running command {' '.join(command)}: {e.stderr}", err=True)
+        raise
