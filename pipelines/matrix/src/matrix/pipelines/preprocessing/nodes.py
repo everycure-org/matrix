@@ -26,7 +26,7 @@ def resolve(name: str, endpoint: str, att_to_get: str = "preferred_curie") -> st
     Returns:
         Corresponding curie
     """
-    result = requests.get(f"{endpoint}/synonymize", json={"names": [name]})
+    result = requests.get(f"{endpoint}/synonymize", json={"name": name})
     element = result.json().get(name)
     if element:
         return element.get(att_to_get, None)
@@ -46,7 +46,7 @@ def normalize(curie: str, endpoint: str, att_to_get: str = "identifier"):
     """
     if not curie or pd.isna(curie):
         return None
-    result = requests.get(f"{endpoint}/normalize", json={"names": [curie]})
+    result = requests.get(f"{endpoint}/normalize", json={"name": curie})
     element = result.json().get(curie)
     if element:
         return element.get("id", {}).get(att_to_get)
