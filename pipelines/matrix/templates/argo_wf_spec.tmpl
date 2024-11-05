@@ -10,7 +10,7 @@ spec:
       run: {% raw %}'{{ workflow.parameters.run_name }}'
       {% endraw %}
       username: "{{ username }}"
-  entrypoint: __pipeline__
+  entrypoint: pipeline
   arguments:
     parameters:
       - name: image
@@ -32,12 +32,6 @@ spec:
         value: "cloud"
   templates:
   - name: kedro
-    backoff:
-      duration: "1"      # Must be a string. Default unit is seconds. Could also be a Duration, e.g.: "2m", "6h", "1d"
-      factor: 2
-      maxDuration: "1m"  # Must be a string. Default unit is seconds. Could also be a Duration, e.g.: "2m", "6h", "1d"
-    affinity:
-      nodeAntiAffinity: {}
     metadata:
       labels:
         {# Add label to have an ability to remove Kedro Pods easily #}
@@ -162,13 +156,13 @@ spec:
       command: ["/bin/sh", "-c"]
       args:
         - |
-          echo "Waiting for Neo4j to be ready..."
-          until curl -s http://localhost:7474/ready; do
-            echo "Waiting..."
-            sleep 5
-          done
-          echo "Neo4j is ready. Starting main application..."
-          kedro run -e {% raw %}"{{workflow.parameters.env}}"{% endraw %} -n {% raw %}"{{inputs.parameters.kedro_nodes}}"{% endraw %}
+            echo "Waiting for Neo4j to be ready..."
+            until curl -s http://localhost:7474/ready; do
+              echo "Waiting..."
+              sleep 5
+            done
+            echo "Neo4j is ready. Starting main application..."
+            kedro run -e {% raw %}"{{workflow.parameters.env}}"{% endraw %} -n {% raw %}"{{inputs.parameters.kedro_nodes}}"{% endraw %}
     
     volumes:
       - name: gds-key
@@ -212,7 +206,7 @@ spec:
           value: "100G"
         - name: NEO4J_dbms_memory_heap_max__size
           value: "100G"
-  - name: __pipeline__
+  - name: pipeline
     dag:
       tasks:
       {% for task in pipeline %}
