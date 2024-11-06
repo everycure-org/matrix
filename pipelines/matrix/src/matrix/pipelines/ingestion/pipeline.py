@@ -14,7 +14,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 inputs=["ingestion.raw.rtx_kg2.nodes@spark"],
                 outputs="ingestion.int.rtx_kg2.nodes",
                 name="write_rtx_kg2_nodes",
-                tags=["rtx_kg2", "argowf.template-neo4j"],
+                tags=["rtx_kg2"],
             ),
             node(
                 func=lambda x: x,
