@@ -166,3 +166,9 @@ def test_kubernetes_node_can_request_gpu():
         k8s_config=KubernetesExecutionConfig(use_gpu=True),
     )
     assert k8s_node.k8s_config.use_gpu
+
+
+def test_validate_values_are_sane():
+    """Test that validate_values_are_sane raises warnings for unrealistic values."""
+    with pytest.warns(UserWarning, match="CPU .* and memory .* limits and requests are unrealistically high"):
+        KubernetesExecutionConfig(cpu_limit=100, memory_limit=1000)
