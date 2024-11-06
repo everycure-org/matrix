@@ -56,6 +56,14 @@ class KubernetesExecutionConfig(BaseModel):
             )
         return self
 
+    def fuse_config(self, k8s_config: "KubernetesExecutionConfig") -> None:
+        """Fuse in-place with another K8s config."""
+        self.cpu_limit = max(self.cpu_limit, k8s_config.cpu_limit)
+        self.cpu_request = max(self.cpu_request, k8s_config.cpu_request)
+        self.memory_limit = max(self.memory_limit, k8s_config.memory_limit)
+        self.memory_request = max(self.memory_request, k8s_config.memory_request)
+        self.use_gpu = self.use_gpu or k8s_config.use_gpu
+
 
 class KubernetesNode(Node):
     def __init__(self, *args, k8s_config: KubernetesExecutionConfig = KubernetesExecutionConfig(), **kwargs):
