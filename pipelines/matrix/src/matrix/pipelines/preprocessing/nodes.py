@@ -516,8 +516,10 @@ def clean_gt_data(
     Returns:
         Cleaned ground truth data.
     """
-    # temporarily dropping gt which are not in the nodes dataframe
-    # TODO: remove
+    # Since we bumped RTX KG to 2.10, some of the ground truth nodes are not in the nodes dataframe.
+    # This leads to error when we try to make train and test splits. Temporary fix is to drop all nodes
+    # which are not in the nodes dataframe. This issue will hopefully disappear once we switch to our custom GT dataset
+    # Linked to the following issue: https://github.com/everycure-org/matrix/issues/619
     node_ids = [row.id for row in nodes.select("id").collect()]
     # Synonymize source and target IDs for both positive and negative ground truth data
     for df in [pos_df, neg_df]:
@@ -532,10 +534,8 @@ def clean_gt_data(
                 att_to_get="identifier",
             )
             df[col] = df[col].map(node_id_map)
-            # TEMPORARY fix to see how lineage goes
     pos_df = pos_df.loc[((pos_df["source"].isin(node_ids)) & pos_df["target"].isin(node_ids))]
     neg_df = neg_df.loc[((neg_df["source"].isin(node_ids)) & neg_df["target"].isin(node_ids))]
-    # Return updated DataFrames
     return pos_df.dropna(subset=["source", "target"]).drop_duplicates(), neg_df.dropna(
         subset=["source", "target"]
     ).drop_duplicates()
