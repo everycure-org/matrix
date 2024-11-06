@@ -4,9 +4,9 @@ from pydantic import BaseModel, field_validator, model_validator
 
 from matrix.settings import (
     KUBERNETES_DEFAULT_REQUEST_CPU,
-    KUBERNETTES_DEFAULT_LIMIT_CPU,
-    KUBERNETTES_DEFAULT_LIMIT_RAM,
-    KUBERNETTES_DEFAULT_REQUEST_RAM,
+    KUBERNETES_DEFAULT_LIMIT_CPU,
+    KUBERNETES_DEFAULT_LIMIT_RAM,
+    KUBERNETES_DEFAULT_REQUEST_RAM,
 )
 
 
@@ -23,9 +23,9 @@ class KubernetesExecutionConfig(BaseModel):
 
     use_gpu: bool = False
     cpu_request: float = KUBERNETES_DEFAULT_REQUEST_CPU
-    cpu_limit: float = KUBERNETTES_DEFAULT_LIMIT_CPU
-    memory_request: float = KUBERNETTES_DEFAULT_REQUEST_RAM
-    memory_limit: float = KUBERNETTES_DEFAULT_LIMIT_RAM
+    cpu_limit: float = KUBERNETES_DEFAULT_LIMIT_CPU
+    memory_request: float = KUBERNETES_DEFAULT_REQUEST_RAM
+    memory_limit: float = KUBERNETES_DEFAULT_LIMIT_RAM
 
     def model_config(self) -> dict:
         """Pydantic model config."""
