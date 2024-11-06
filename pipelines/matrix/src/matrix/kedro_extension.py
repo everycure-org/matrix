@@ -27,9 +27,7 @@ class KubernetesExecutionConfig(BaseModel):
     memory_request: float = KUBERNETES_DEFAULT_REQUEST_RAM
     memory_limit: float = KUBERNETES_DEFAULT_LIMIT_RAM
 
-    def model_config(self) -> dict:
-        """Pydantic model config."""
-        return {"validate_assignment": True}
+    model_config = {"validate_assignment": True, "extra": "forbid"}
 
     @field_validator("cpu_request", "cpu_limit", "memory_request", "memory_limit")
     @classmethod
@@ -44,7 +42,7 @@ class KubernetesExecutionConfig(BaseModel):
         """Validate that limits are greater than or equal to requests."""
         if self.cpu_limit < self.cpu_request:
             raise ValueError("CPU limit must be greater than or equal to CPU request")
-        if self.memory_limit_gb < self.memory_request_gb:
+        if self.memory_limit < self.memory_request:
             raise ValueError("Memory limit must be greater than or equal to memory request")
         return self
 
