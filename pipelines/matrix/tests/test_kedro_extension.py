@@ -351,10 +351,11 @@ def test_parallel_pipelines(caplog):
     assert successful_run_msg in caplog.text
 
 
-def test_kubernetes_node_factory():
-    def dummy_func(x) -> int:
-        return x
+def dummy_func(x) -> int:
+    return x
 
+
+def test_kubernetes_node_factory():
     k8s_node = kubernetes_node(
         func=dummy_func,
         inputs=["int_number_ds_in"],
@@ -370,3 +371,16 @@ def test_kubernetes_node_factory():
     assert k8s_node.func == kedro_node.func
     assert k8s_node.inputs == kedro_node.inputs
     assert k8s_node.outputs == kedro_node.outputs
+
+
+def test_fuse_config() -> None:
+    k8s_config = KubernetesExecutionConfig(cpu_request=1, cpu_limit=2, memory_request=16, memory_limit=32, use_gpu=True)
+    other_k8s_config = KubernetesExecutionConfig(
+        cpu_request=3, cpu_limit=4, memory_request=32, memory_limit=64, use_gpu=False
+    )
+    k8s_config.fuse_config(other_k8s_config)
+    assert k8s_config.cpu_request == 3
+    assert k8s_config.cpu_limit == 4
+    assert k8s_config.memory_request == 32
+    assert k8s_config.memory_limit == 64
+    assert k8s_config.use_gpu
