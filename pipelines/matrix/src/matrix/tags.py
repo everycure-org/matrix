@@ -1,4 +1,4 @@
-from enum import Enum
+from enum import StrEnum
 
 ARGO_NODE_PREFIX = "argowf."
 ARGO_FUSE_GROUP_PREFIX = f"{ARGO_NODE_PREFIX}fuse-group."
