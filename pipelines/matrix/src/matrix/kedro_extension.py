@@ -1,4 +1,11 @@
 from kedro.pipeline.node import Node
+from pydantic import BaseModel
+
+
+class KubernetesExecutionConfig(BaseModel):
+    """Configuration for Kubernetes execution."""
+
+    use_gpu: bool = False
 
 
 class KubernetesNode(Node):
