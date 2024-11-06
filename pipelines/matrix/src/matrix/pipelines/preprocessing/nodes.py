@@ -16,20 +16,25 @@ from refit.v1.core.inject import inject_object
 from matrix.pipelines.integration.nodes import batch_map_ids
 
 
-def resolve(name: str, endpoint: str, att_to_get: str = "preferred_curie") -> str:
-    """Function to retrieve curie through the synonymizer.
+def resolve_name(curie: str, endpoint: str, att_to_get: str = "curie"):
+    """Function to retrieve the normalized identifier through the normalizer.
 
     Args:
-        name: name of the node
+        curie: curie of the node
         endpoint: endpoint of the synonymizer
         att_to_get: attribute to get from API
     Returns:
         Corresponding curie
     """
-    result = requests.get(f"{endpoint}/synonymize", json={"name": name})
-    element = result.json().get(name)
-    if element:
-        return element.get(att_to_get, None)
+    if not curie or pd.isna(curie):
+        return None
+
+    result = requests.get(f"{endpoint}/lookup?string={curie}&autocomplete=True&highlighting=False&offset=0&limit=10")
+    if len(result.json()) != 0:
+        # We take the first element as it has the highest confidence score
+        # TODO: Examine if that approach is valid
+        element = result.json()[0]
+        return element.get(att_to_get)
 
     return None
 
@@ -50,6 +55,24 @@ def normalize(curie: str, endpoint: str, att_to_get: str = "identifier"):
     element = result.json().get(curie)
     if element:
         return element.get("id", {}).get(att_to_get)
+
+    return None
+
+
+def resolve(name: str, endpoint: str, att_to_get: str = "preferred_curie") -> str:
+    """Function to retrieve curie through the synonymizer.
+
+    Args:
+        name: name of the node
+        endpoint: endpoint of the synonymizer
+        att_to_get: attribute to get from API
+    Returns:
+        Corresponding curie
+    """
+    result = requests.get(f"{endpoint}/synonymize", json={"name": name})
+    element = result.json().get(name)
+    if element:
+        return element.get(att_to_get, None)
 
     return None
 
@@ -92,10 +115,10 @@ def enrich_df(df: pd.DataFrame, endpoint: str, func: Callable, input_cols: str, 
     allow_subset=True,
 )
 @primary_key(primary_key=["ID"])
-def create_int_nodes(nodes: pd.DataFrame, arax_endpoint: str, translator_endpoint: str) -> pd.DataFrame:
+def create_int_nodes(nodes: pd.DataFrame, name_resolver: str, translator_endpoint: str) -> pd.DataFrame:
     """Function to create a intermediate nodes dataset by filtering and renaming columns."""
     # Enrich curie with node synonymizer
-    resolved = enrich_df(nodes, arax_endpoint, resolve, input_cols=["name"], target_col="curie")
+    resolved = enrich_df(nodes, name_resolver, resolve_name, input_cols=["name"], target_col="curie")
 
     # Normalize curie, by taking corrected currie or curie
     normalized_id_map = batch_map_ids(
@@ -213,7 +236,7 @@ def create_prm_edges(int_edges: pd.DataFrame) -> pd.DataFrame:
     df="df",
 )
 def map_name_to_curie(
-    df: pd.DataFrame, arax_endpoint: str, translator_endpoint: str, drug_types: List[str], disease_types: List[str]
+    df: pd.DataFrame, name_resolver: str, translator_endpoint: str, drug_types: List[str], disease_types: List[str]
 ) -> pd.DataFrame:
     """Map drug name to curie.
 
@@ -223,7 +246,7 @@ def map_name_to_curie(
 
     Args:
         df: raw clinical trial dataset from medical team
-        arax_endpoint: endpoint of the synonymizer
+        name_resolver: endpoint of the synonymizer
         translator_endpoint: endpoint of the normalizer
         drug_types: list of drug types
         disease_types: list of disease types
@@ -231,8 +254,8 @@ def map_name_to_curie(
         dataframe with two additional columns: "Mapped Drug Curie" and "Mapped Drug Disease"
     """
     # Map the drug name to the corresponding arax curie ids which we can then use by translator normalizer
-    df["drug_kg_arax_curie"] = df["drug_name"].apply(lambda x: normalize(x, endpoint=arax_endpoint))
-    df["disease_kg_arax_curie"] = df["disease_name"].apply(lambda x: normalize(x, endpoint=arax_endpoint))
+    df["drug_kg_arax_curie"] = df["drug_name"].apply(lambda x: resolve_name(x, endpoint=name_resolver))
+    df["disease_kg_arax_curie"] = df["disease_name"].apply(lambda x: resolve_name(x, endpoint=name_resolver))
 
     # Map the disease name to the corresponding curie ids
     attributes = [
