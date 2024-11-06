@@ -1,0 +1,38 @@
+replicaCount: 1
+
+image:
+  repository: ahueb1/bte-trapi
+  pullPolicy: IfNotPresent
+  tag: latest
+
+env:
+  - name: SENTRY_ENABLED
+    value: "false"
+
+serviceAccount:
+  create: true
+  automount: true
+  annotations: {}
+  name: ""
+
+service:
+  type: NodePort
+  port: 3000
+  nodePort: 31800
+
+ingress:
+  enabled: false
+
+resources:
+  limits:
+    cpu: "4"
+    memory: "12Gi"
+  requests:
+    cpu: "4"
+    memory: "12Gi"
+
+redis:
+  enabled: true
+  resources:
+    requests:
+      memory: "2Gi"
