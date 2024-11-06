@@ -13,7 +13,7 @@ locals {
       local_ssd_count = 0
       spot            = false
       disk_size_gb    = 100
-      disk_type       = "pd-standard"
+      disk_type       = "pd-ssd"
       image_type      = "COS_CONTAINERD"
       enable_gcfs     = false
       enable_gvnic    = false
