@@ -58,6 +58,10 @@ def submit(username: str, namespace: str, run_name: str, pipeline: str, from_nod
     if pipeline in ["fabricator", "test"]:
         raise ValueError("Submitting test pipeline to Argo will result in overwriting source data")
     
+    if from_nodes and pipeline not in ["kg_release"]:
+        # NOTE: This is due to how we version paths for modelling runs, needs further refinement
+        raise ValueError("The `from-nodes` flag only works for the `kg_release` pipeline")
+    
     pipeline_obj = kedro_pipelines[pipeline]
     if from_nodes:
         pipeline_obj = pipeline_obj.from_nodes(*from_nodes)
