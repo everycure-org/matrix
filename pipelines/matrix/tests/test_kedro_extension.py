@@ -96,7 +96,7 @@ def test_gpu_flag():
     assert not config.use_gpu
 
 
-def test_default_values_match_settings():
+def test_default_values_in_k8s_config_matches_settings():
     """Test that default values in KubernetesExecutionConfig match settings."""
     config = KubernetesExecutionConfig()
 
@@ -172,3 +172,16 @@ def test_validate_values_are_sane():
     """Test that validate_values_are_sane raises warnings for unrealistic values."""
     with pytest.warns(UserWarning, match="CPU .* and memory .* limits and requests are unrealistically high"):
         KubernetesExecutionConfig(cpu_limit=100, memory_limit=1000)
+
+
+def test_default_values_in_k8s_node_config_match_settings():
+    k8s_node = KubernetesNode(
+        func=lambda x: x,
+        inputs=["int_number_ds_in"],
+        outputs=["int_number_ds_out"],
+    )
+    assert not k8s_node.k8s_config.use_gpu
+    assert k8s_node.k8s_config.cpu_request == KUBERNETES_DEFAULT_REQUEST_CPU
+    assert k8s_node.k8s_config.cpu_limit == KUBERNETES_DEFAULT_LIMIT_CPU
+    assert k8s_node.k8s_config.memory_request == KUBERNETES_DEFAULT_REQUEST_RAM
+    assert k8s_node.k8s_config.memory_limit == KUBERNETES_DEFAULT_LIMIT_RAM
