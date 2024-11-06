@@ -185,3 +185,21 @@ def test_default_values_in_k8s_node_config_match_settings():
     assert k8s_node.k8s_config.cpu_limit == KUBERNETES_DEFAULT_LIMIT_CPU
     assert k8s_node.k8s_config.memory_request == KUBERNETES_DEFAULT_REQUEST_RAM
     assert k8s_node.k8s_config.memory_limit == KUBERNETES_DEFAULT_LIMIT_RAM
+
+
+def test_k8s_node_can_override_default_values():
+    k8s_node = KubernetesNode(
+        func=lambda x: x,
+        inputs=["int_number_ds_in"],
+        outputs=["int_number_ds_out"],
+        k8s_config=KubernetesExecutionConfig(
+            cpu_request=1,
+            cpu_limit=2,
+            memory_request=16,
+            memory_limit=32,
+        ),
+    )
+    assert k8s_node.k8s_config.cpu_request == 1
+    assert k8s_node.k8s_config.cpu_limit == 2
+    assert k8s_node.k8s_config.memory_request == 16
+    assert k8s_node.k8s_config.memory_limit == 32
