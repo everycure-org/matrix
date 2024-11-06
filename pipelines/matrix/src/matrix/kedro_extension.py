@@ -9,5 +9,6 @@ class KubernetesExecutionConfig(BaseModel):
 
 
 class KubernetesNode(Node):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, k8s_config: KubernetesExecutionConfig = KubernetesExecutionConfig(), **kwargs):
+        self.k8s_config = k8s_config
         super().__init__(*args, **kwargs)
