@@ -79,7 +79,7 @@ class FusedNode(Node):
     @property
     def is_fusable(self) -> bool:
         """Check whether is fusable."""
-        return NodeTags.ARGO_FUSE_NODE.value in self.tags
+        return NodeTags.ARGO_FUSE_NODE in self.tags
 
     @property
     def fuse_group(self) -> Optional[str]:

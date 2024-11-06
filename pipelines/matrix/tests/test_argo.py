@@ -27,7 +27,7 @@ def test_no_nodes_fused_when_no_fuse_options():
                 name="second",
             ),
         ],
-        tags=[NodeTags.ARGO_FUSE_NODE.value, fuse_group_tag("dummy")],
+        tags=[NodeTags.ARGO_FUSE_NODE, fuse_group_tag("dummy")],
     )
 
     fused = fuse(pipeline_with_no_fusing_options)
@@ -53,7 +53,7 @@ def test_simple_fusing():
                 outputs="dataset_2",
             ),
         ],
-        tags=[NodeTags.ARGO_FUSE_NODE.value, fuse_group_tag("dummy")],
+        tags=[NodeTags.ARGO_FUSE_NODE, fuse_group_tag("dummy")],
     )
 
     fused = fuse(pipeline_where_first_node_is_input_for_second)
@@ -90,7 +90,7 @@ def test_no_multiple_parents_no_fusing():
                 name="child_node",
             ),
         ],
-        tags=[NodeTags.ARGO_FUSE_NODE.value, fuse_group_tag("dummy")],
+        tags=[NodeTags.ARGO_FUSE_NODE, fuse_group_tag("dummy")],
     )
 
     fused = fuse(pipeline_one2many_fusing_possible)
@@ -145,7 +145,7 @@ def test_fusing_multiple_parents():
                 name="grandgrandchild_node",
             ),
         ],
-        tags=[NodeTags.ARGO_FUSE_NODE.value, fuse_group_tag("dummy")],
+        tags=[NodeTags.ARGO_FUSE_NODE, fuse_group_tag("dummy")],
     )
 
     fused = fuse(pipeline_with_multiple_parents)
@@ -224,14 +224,14 @@ def test_add_parents(fused_node: FusedNode):
 @pytest.mark.skip(reason="Desired behaviour not clear")
 def test_fuses_with(fused_node: FusedNode, simple_node: Node) -> None:
     fused_node.add_node(simple_node)
-    fused_node._nodes[0].tags = [NodeTags.ARGO_FUSE_NODE.value, fuse_group_tag("test")]
+    fused_node._nodes[0].tags = [NodeTags.ARGO_FUSE_NODE, fuse_group_tag("test")]
 
     fusable_node = Node(
         func=dummy_func,
         inputs=["dataset_c"],
         outputs="dataset_d",
         name="fusable_node",
-        tags=[NodeTags.ARGO_FUSE_NODE.value, fuse_group_tag("test")],
+        tags=[NodeTags.ARGO_FUSE_NODE, fuse_group_tag("test")],
     )
 
     assert fused_node.fuses_with(fusable_node)
@@ -249,7 +249,7 @@ def test_not_fusable(fused_node: FusedNode, simple_node: Node) -> None:
 @pytest.mark.skip(reason="Desired behaviour not clear")
 def test_is_fusable(fused_node: FusedNode, simple_node: Node) -> None:
     fused_node.add_node(simple_node)
-    fused_node._nodes[0].tags = [NodeTags.ARGO_FUSE_NODE.value]
+    fused_node._nodes[0].tags = [NodeTags.ARGO_FUSE_NODE]
     assert fused_node.is_fusable
 
 
@@ -296,7 +296,7 @@ def test_tags_property(fused_node: FusedNode, simple_node: Node) -> None:
 @pytest.mark.skip(reason="Desired behaviour not clear")
 def test_name_property_fusable(fused_node: FusedNode, simple_node: Node) -> None:
     fused_node.add_node(simple_node)
-    fused_node._nodes[0].tags = [NodeTags.ARGO_FUSE_NODE.value, fuse_group_tag("test_group")]
+    fused_node._nodes[0].tags = [NodeTags.ARGO_FUSE_NODE, fuse_group_tag("test_group")]
     fused_node.add_node(Node(func=dummy_func, name="second_node"))
     assert fused_node.name == "test_group"
 
