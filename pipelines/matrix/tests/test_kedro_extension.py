@@ -1,4 +1,5 @@
-from kedro.pipeline import pipeline, Node, Pipeline
+from kedro.pipeline import pipeline, Pipeline
+from kedro.pipeline.node import Node
 import logging
 import pandas as pd
 
@@ -10,11 +11,17 @@ from sklearn.model_selection import train_test_split
 
 
 def get_parametrized_node(node_class: Node) -> Node:
-    """This fixture returns a node, parametrized with node class."""
+    def dummy_func(x: int) -> int:
+        return 2 * x
+
     return node_class(
-        func=lambda x: 2 * x,
-        inputs=["model_input_table@pandas", "params:model_options"],
-        outputs=["X_train", "X_test", "y_train", "y_test"],
+        func=dummy_func,
+        inputs=["int_number_ds_in"],
+        outputs=["int_number_ds_out"],
+        name="dummy_node",
+        tags=["dummy_tag"],
+        confirms=["dummy_confirm"],
+        namespace="dummy_namespace",
     )
 
 
@@ -92,8 +99,8 @@ def get_parametrized_pipeline(node_class: Node) -> Pipeline:
 
 
 def test_parametrized_node():
-    k8s_node = get_parametrized_node(KubernetesNode)
-    assert k8s_node.func(2) == 4
-
     normal_node = get_parametrized_node(Node)
     assert normal_node.func(2) == 4
+
+    k8s_node = get_parametrized_node(KubernetesNode)
+    assert k8s_node.func(2) == 4
