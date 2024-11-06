@@ -15,67 +15,6 @@ from matrix.settings import (
 )
 
 
-def get_parametrized_node(node_class: Node) -> Node:
-    def dummy_func(x: int) -> int:
-        return 2 * x
-
-    return node_class(
-        func=dummy_func,
-        inputs=["int_number_ds_in"],
-        outputs="int_number_ds_out",
-        name="dummy_node",
-        tags=["dummy_tag"],
-        namespace="dummy_namespace",
-    )
-
-
-def test_parametrized_node():
-    normal_node = get_parametrized_node(Node)
-    assert normal_node.func(2) == 4
-
-    k8s_node = get_parametrized_node(KubernetesNode)
-    assert k8s_node.func(2) == 4
-
-
-@pytest.mark.parametrize("node_class", [Node, KubernetesNode])
-def test_parametrized_node_in_simple_pipeline(caplog, node_class):
-    node = get_parametrized_node(node_class)
-    pipeline_obj = pipeline([node])
-    catalog = DataCatalog()
-    catalog.add_feed_dict(
-        {
-            "int_number_ds_in": 10,
-            "int_number_ds_out": 20,
-        }
-    )
-
-    caplog.set_level(logging.DEBUG, logger="kedro")
-    successful_run_msg = "Pipeline execution completed successfully."
-
-    SequentialRunner().run(pipeline_obj, catalog)
-
-    assert successful_run_msg in caplog.text
-
-
-def test_kubernetes_node_default_config():
-    k8s_node = KubernetesNode(
-        func=lambda x: x,
-        inputs=["int_number_ds_in"],
-        outputs=["int_number_ds_out"],
-    )
-    assert not k8s_node.k8s_config.use_gpu
-
-
-def test_kubernetes_node_can_request_gpu():
-    k8s_node = KubernetesNode(
-        func=lambda x: x,
-        inputs=["int_number_ds_in"],
-        outputs=["int_number_ds_out"],
-        k8s_config=KubernetesExecutionConfig(use_gpu=True),
-    )
-    assert k8s_node.k8s_config.use_gpu
-
-
 def test_default_kubernetes_config():
     """Test default configuration values."""
     config = KubernetesExecutionConfig()
@@ -159,7 +98,6 @@ def test_gpu_flag():
 
 def test_default_values_match_settings():
     """Test that default values in KubernetesExecutionConfig match settings."""
-    # NOTE: This test was partially generated using AI assistance.
     config = KubernetesExecutionConfig()
 
     assert config.cpu_request == KUBERNETES_DEFAULT_REQUEST_CPU
@@ -167,3 +105,64 @@ def test_default_values_match_settings():
     assert config.memory_request == KUBERNETES_DEFAULT_REQUEST_RAM
     assert config.memory_limit == KUBERNETES_DEFAULT_LIMIT_RAM
     assert not config.use_gpu  # Default should be False
+
+
+def get_parametrized_node(node_class: Node) -> Node:
+    def dummy_func(x: int) -> int:
+        return 2 * x
+
+    return node_class(
+        func=dummy_func,
+        inputs=["int_number_ds_in"],
+        outputs="int_number_ds_out",
+        name="dummy_node",
+        tags=["dummy_tag"],
+        namespace="dummy_namespace",
+    )
+
+
+def test_parametrized_node():
+    normal_node = get_parametrized_node(Node)
+    assert normal_node.func(2) == 4
+
+    k8s_node = get_parametrized_node(KubernetesNode)
+    assert k8s_node.func(2) == 4
+
+
+@pytest.mark.parametrize("node_class", [Node, KubernetesNode])
+def test_parametrized_node_in_simple_pipeline(caplog, node_class):
+    node = get_parametrized_node(node_class)
+    pipeline_obj = pipeline([node])
+    catalog = DataCatalog()
+    catalog.add_feed_dict(
+        {
+            "int_number_ds_in": 10,
+            "int_number_ds_out": 20,
+        }
+    )
+
+    caplog.set_level(logging.DEBUG, logger="kedro")
+    successful_run_msg = "Pipeline execution completed successfully."
+
+    SequentialRunner().run(pipeline_obj, catalog)
+
+    assert successful_run_msg in caplog.text
+
+
+def test_kubernetes_node_default_config():
+    k8s_node = KubernetesNode(
+        func=lambda x: x,
+        inputs=["int_number_ds_in"],
+        outputs=["int_number_ds_out"],
+    )
+    assert not k8s_node.k8s_config.use_gpu
+
+
+def test_kubernetes_node_can_request_gpu():
+    k8s_node = KubernetesNode(
+        func=lambda x: x,
+        inputs=["int_number_ds_in"],
+        outputs=["int_number_ds_out"],
+        k8s_config=KubernetesExecutionConfig(use_gpu=True),
+    )
+    assert k8s_node.k8s_config.use_gpu
