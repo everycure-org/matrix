@@ -149,8 +149,8 @@ class SetwisePathMapper(PathMapper):
         # Construct the neo4j query
         match_clause = generate_match_clause(self.num_hops, self.unidirectional)
         where_clause = generate_node_condition_where_clause(self.num_hops, mapped_int_ids)
-        return_clause = generate_return_clause(limit=self.num_limit)
-        query = f"""MATCH p=(n:%{{id:'{drug_mapped}'}}){match_clause}(m:%{{id:'{disease_mapped}'}})
+        return_clause = generate_return_clause()
+        query = f"""MATCH path=(n:%{{id:'{drug_mapped}'}}){match_clause}(m:%{{id:'{disease_mapped}'}})
                     WHERE {where_clause}
                     {return_clause}"""
 
