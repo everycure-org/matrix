@@ -14,8 +14,8 @@ def create_pipeline(**kwargs) -> Pipeline:
                 func=nodes.create_int_nodes,
                 inputs=[
                     "preprocessing.raw.nodes",
-                    "params:preprocessing.arax_endpoint",
-                    "params:preprocessing.translator_endpoint",
+                    "params:preprocessing.translator.name_resolver",
+                    "params:preprocessing.translator.normalizer",
                 ],
                 outputs="preprocessing.int.nodes",
                 name="normalize_ec_medical_team_nodes",
@@ -54,8 +54,8 @@ def create_pipeline(**kwargs) -> Pipeline:
                 func=nodes.map_name_to_curie,
                 inputs=[
                     "preprocessing.raw.clinical_trials_data",
-                    "params:preprocessing.arax_endpoint",
-                    "params:preprocessing.translator_endpoint",
+                    "params:preprocessing.translator.name_resolver",
+                    "params:preprocessing.translator.normalizer",
                     "params:modelling.drug_types",
                     "params:modelling.disease_types",
                 ],
@@ -77,7 +77,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 func=nodes.clean_drug_list,
                 inputs=[
                     "preprocessing.raw.drug_list",
-                    "params:preprocessing.translator_endpoint",
+                    "params:preprocessing.translator.normalizer",
                 ],
                 outputs="ingestion.raw.drug_list@pandas",
                 name="resolve_drug_list",
@@ -101,7 +101,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 func=nodes.clean_disease_list,
                 inputs=[
                     "preprocessing.raw.enriched_disease_list",
-                    "params:preprocessing.translator_endpoint",
+                    "params:preprocessing.translator.normalizer",
                 ],
                 outputs="ingestion.raw.disease_list@pandas",
                 name="resolve_disease_list",
@@ -117,7 +117,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 func=nodes.clean_input_sheet,
                 inputs=[
                     "preprocessing.raw.infer_sheet",
-                    "params:preprocessing.translator_endpoint",
+                    "params:preprocessing.translator.normalizer",
                 ],
                 outputs="inference.raw.normalized_inputs",
                 name="clean_input_sheet",
@@ -128,7 +128,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 inputs=[
                     "preprocessing.raw.ground_truth.positives",
                     "preprocessing.raw.ground_truth.negatives",
-                    "params:preprocessing.translator_endpoint",
+                    "params:preprocessing.translator.normalizer",
                 ],
                 outputs=["modelling.raw.ground_truth.positives@pandas", "modelling.raw.ground_truth.negatives@pandas"],
                 name="resolve_gt",
