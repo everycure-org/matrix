@@ -155,6 +155,8 @@ stats.json
 session_store.db
 
 mlruns
+pipelines/matrix/src/matrix/templates/*.yml
+templates/*.yml
 templates/argo-workflow-template.yml
 
 # uv stuff
