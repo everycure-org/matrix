@@ -56,8 +56,8 @@ def transform_rtxkg2_edges(edges_df: DataFrame, curie_to_pmids: DataFrame, semme
         edges_df
         .withColumn("upstream_data_source",          f.array(f.lit("rtxkg2")))
         .withColumn("knowledge_level",               f.lit(None).cast(T.StringType()))
-        .withColumn("aggregator_knowledge_source",   f.lit(None)) # DOES NOT EXIST 
-        .withColumn("primary_knowledge_source",      f.col("primary_knowledge_source"))
+        .withColumn("aggregator_knowledge_source",   f.split(f.col("knowledge_source:string[]"), RTX_SEPARATOR)) # RTX KG2 2.10 does not exist
+        .withColumn("primary_knowledge_source",      f.col("aggregator_knowledge_source").getItem(1)) # RTX KG2 2.10 `primary_knowledge_source``
         .withColumn("publications",                  f.split(f.col("publications:string[]"), RTX_SEPARATOR))
         .withColumn("subject_aspect_qualifier",      f.lit(None).cast(T.StringType())) #not present in RTX KG2 at this time
         .withColumn("subject_direction_qualifier",   f.lit(None).cast(T.StringType())) #not present in RTX KG2 at this time
