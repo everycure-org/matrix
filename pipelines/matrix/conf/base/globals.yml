@@ -24,7 +24,7 @@ versions:
 
 data_sources:
   rtx-kg2:
-    version: v2.7.3
+    version: &_rtx_kg_version 2.7.3
   robokop:
     version: c5ec1f282158182f
 # Dataset with node and edge proposals by the
@@ -48,7 +48,7 @@ data_sources:
     # curl -X GET -H "Content-Type: application/json" -H "Authorization: token PAT" -H "Accept: application/vnd.github.v3.raw" https://api.github.com/repos/everycure-org/matrix-disease-list/releases | jq ".[0].assets | map(select(.name == \"matrix-disease-list.tsv\"))[0] | .id"
     version: 197752375
   gt:
-    version: rtx-kg-2.7.3 # NOTE: This is the version of the GT dataset which was developed for rtx-kg2 as a part of KGML-xDTD pipeline
+    version: *_rtx_kg_version # NOTE: This is the version of the GT dataset which was developed for rtx-kg2 as a part of KGML-xDTD pipeline
 # NOTE: MLflow does not like "new options" in the mlflow.yml
 # due to schema validation. Will make PR.
 mlflow_artifact_root: null
