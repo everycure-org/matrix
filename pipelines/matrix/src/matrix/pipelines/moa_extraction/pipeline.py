@@ -6,9 +6,10 @@ from kedro.pipeline import Pipeline, node
 from kedro.pipeline.modular_pipeline import pipeline
 
 from . import nodes
+from matrix import settings
 
-
-num_hops_lst = ["two", "three"]
+moa_extraction_settings = settings.DYNAMIC_PIPELINES_MAPPING.get("moa_extraction")
+num_hops_lst = [model["num_hops"] for model in moa_extraction_settings]
 
 
 def _preprocessing_pipeline() -> Pipeline:

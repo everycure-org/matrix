@@ -55,7 +55,7 @@ def register_pipelines() -> Dict[str, Pipeline]:
           pipelines["kg_release"]
         + pipelines["embeddings"] # TODO move this back to the kg_release once embedding works well
         + pipelines["modelling_run"]
-        # + pipelines["moa_extraction"]
+        + pipelines["moa_extraction"]
     )
 
     # Test pipelines

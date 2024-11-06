@@ -77,6 +77,10 @@ DYNAMIC_PIPELINES_MAPPING = {
         {"evaluation_name": "disease_specific_trials"},
         {"evaluation_name": "full_matrix_trials"},
     ],
+    "moa_extraction": [
+        {"num_hops": "two"},
+        {"num_hops": "three"},
+    ],
 }
 
 # Class that manages Kedro's library components.
