@@ -88,12 +88,12 @@ class RunConfig:
 @click.option("--tags",           "-t", type=str, multiple=True, help=TAG_ARG_HELP)
 @click.option( "--without-tags",  "-wt", type=str, help="used to filter out nodes with tags that should not be run. All dependent downstream nodes are also removed. Note nodes need to have _all_ tags to be removed.", callback=split_string, default=[],)
 @click.option( "--load-versions", "-lv", type=str, multiple=True, help=LOAD_VERSION_HELP, callback=_split_load_versions,)
-@click.option("--pipeline",       "-p", type=str, help=PIPELINE_ARG_HELP)
+@click.option("--pipeline",       "-p", required=True, type=str, help=PIPELINE_ARG_HELP)
 @click.option( "--config",        "-c", type=click.Path(exists=True, dir_okay=False, resolve_path=True), help=CONFIG_FILE_HELP, callback=_config_file_callback,)
 @click.option( "--conf-source",   type=click.Path(exists=True, file_okay=False, resolve_path=True), help=CONF_SOURCE_HELP,)
 @click.option( "--params",        type=click.UNPROCESSED, default="", help=PARAMS_ARG_HELP, callback=_split_params,)
 @click.option( "--from-env",      type=str, default=None, help="Custom env to read from, if specified will read from the `--from-env` and write to the `--env`",)
-def run( tags, without_tags, env, runner, is_async, node_names, to_nodes, from_nodes, from_inputs, to_outputs, load_versions, pipeline, config, conf_source, params, from_env,):
+def run(tags, without_tags, env, runner, is_async, node_names, to_nodes, from_nodes, from_inputs, to_outputs, load_versions, pipeline, config, conf_source, params, from_env,):
     """Run the pipeline."""
     pipeline_name = pipeline
     pipeline_obj = pipelines[pipeline_name]
