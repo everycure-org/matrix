@@ -352,8 +352,11 @@ def test_parallel_pipelines(caplog):
 
 
 def test_kubernetes_node_factory():
+    def dummy_func(x) -> int:
+        return x
+
     k8s_node = kubernetes_node(
-        func=lambda x: x,
+        func=dummy_func,
         inputs=["int_number_ds_in"],
         outputs=["int_number_ds_out"],
     )
@@ -365,7 +368,7 @@ def test_kubernetes_node_factory():
 
     # Assert that kubernetes_node() and node() from kedro.pipeline.node are equivalent
 
-    kedro_node = node(func=lambda x: x, inputs=["int_number_ds_in"], outputs=["int_number_ds_out"])
+    kedro_node = node(func=dummy_func, inputs=["int_number_ds_in"], outputs=["int_number_ds_out"])
     assert k8s_node.func == kedro_node.func
     assert k8s_node.inputs == kedro_node.inputs
     assert k8s_node.outputs == kedro_node.outputs
