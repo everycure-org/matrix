@@ -66,9 +66,12 @@ class KubernetesExecutionConfig(BaseModel):
 
 
 class KubernetesNode(Node):
+    # TODO: Merge this with former FuseNode
     def __init__(self, *args, k8s_config: KubernetesExecutionConfig = KubernetesExecutionConfig(), **kwargs):
         self.k8s_config = k8s_config
         super().__init__(*args, **kwargs)
+
+    # TODO: Add fuse() method here.
 
 
 def kubernetes_node(
