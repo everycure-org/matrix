@@ -102,7 +102,6 @@ def create_int_pairs(
         "id": "string",
         "is_drug": "boolean",
         "is_disease": "boolean",
-        "is_ground_pos": "boolean",
     },
     allow_subset=True,
 )
