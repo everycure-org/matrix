@@ -125,6 +125,10 @@ def get_release_notes(since: str, model: str) -> str:
     console.print("[bold green]Collecting git diff...")
     diff_output = get_code_diff(since)
 
+    release_yaml = yaml.load(release_template, Loader=yaml.FullLoader)
+    categories = [c["title"] for c in release_yaml["changelog"]["categories"]]
+    categories_md = "\n - ".join([f"## {c}" for c in categories])
+
     prompt = f"""Please provide a concise summary of the following code changes. 
     Focus on creating the content for the following release template following its categories:
 
@@ -143,6 +147,11 @@ def get_release_notes(since: str, model: str) -> str:
     ```yaml
     {yaml.dump(pr_details_dict)}
     ```
+
+    Summarize the PRs into the following categories, each category being a H2 header in markdown (##):
+    {categories_md}
+
+    Format the output as markdown, with the category headers and the key contributions under each category.
 
     """
 
