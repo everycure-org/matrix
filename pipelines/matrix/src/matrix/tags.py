@@ -4,7 +4,7 @@ ARGO_NODE_PREFIX = "argowf."
 ARGO_FUSE_GROUP_PREFIX = f"{ARGO_NODE_PREFIX}fuse-group."
 
 
-class NodeTags(Enum):
+class NodeTags(StrEnum):
     NEO4J = "neo4j"  # TODO: What is the meaning of this tag?
     BIGQUERY = "bigquery"  # TODO: What is the meaning of this tag?
 
