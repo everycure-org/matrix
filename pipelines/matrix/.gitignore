@@ -19,7 +19,7 @@ data/**
 !.gitkeep
 
 .env*
-!.env.tmpl
+!.env.defaults
 
 ##########################
 # Common files
@@ -157,6 +157,10 @@ session_store.db
 mlruns
 pipelines/matrix/src/matrix/templates/*.yml
 templates/*.yml
+templates/argo-workflow-template.yml
+
+# uv stuff
+uv.lock
 
 compose/neo4j_data/
 
