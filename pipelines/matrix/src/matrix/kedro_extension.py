@@ -1,3 +1,4 @@
+from typing import Callable, Iterable
 import warnings
 from kedro.pipeline.node import Node
 from pydantic import BaseModel, field_validator, model_validator
@@ -60,3 +61,26 @@ class KubernetesNode(Node):
     def __init__(self, *args, k8s_config: KubernetesExecutionConfig = KubernetesExecutionConfig(), **kwargs):
         self.k8s_config = k8s_config
         super().__init__(*args, **kwargs)
+
+
+def kubernetes_node(
+    func: Callable,
+    inputs: str | list[str] | dict[str, str] | None,
+    outputs: str | list[str] | dict[str, str] | None,
+    k8s_config: KubernetesExecutionConfig = KubernetesExecutionConfig(),
+    *,
+    name: str | None = None,
+    tags: str | Iterable[str] | None = None,
+    confirms: str | list[str] | None = None,
+    namespace: str | None = None,
+):
+    return KubernetesNode(
+        func,
+        inputs,
+        outputs,
+        k8s_config=k8s_config,
+        name=name,
+        tags=tags,
+        confirms=confirms,
+        namespace=namespace,
+    )
