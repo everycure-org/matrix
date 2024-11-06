@@ -4,6 +4,7 @@ import pytest
 import yaml
 
 from matrix.argo import clean_name, fuse, FusedNode, generate_argo_config
+from matrix.kedro_extension import KubernetesExecutionConfig, KubernetesNode
 
 
 def dummy_fn(*args):
@@ -160,6 +161,54 @@ def test_fusing_multiple_parents():
     assert set([parent.name for parent in fused[3]._parents]) == set(
         ["first_node", "second_node", "third_node"]
     ), "Fused node should have parents 'first_node', 'second_node' and 'third_node'"
+
+
+def test_simple_fusing_with_k8s_config():
+    pipeline_where_first_node_is_input_for_second = Pipeline(
+        nodes=[
+            KubernetesNode(
+                func=dummy_fn,
+                inputs=["dataset_a", "dataset_b"],
+                outputs="dataset_1@pandas",
+                k8s_config=KubernetesExecutionConfig(
+                    cpu_request=1,
+                    cpu_limit=2,
+                    memory_request=16,
+                    memory_limit=32,
+                    use_gpu=True,
+                ),
+            ),
+            KubernetesNode(
+                func=dummy_fn,
+                inputs=[
+                    "dataset_1@spark",
+                ],
+                outputs="dataset_2",
+                k8s_config=KubernetesExecutionConfig(
+                    cpu_request=2,
+                    cpu_limit=2,
+                    memory_request=32,
+                    memory_limit=64,
+                    use_gpu=False,
+                ),
+            ),
+        ],
+        tags=["argowf.fuse", "argowf.fuse-group.dummy"],
+    )
+
+    fused_pipeline = fuse(pipeline_where_first_node_is_input_for_second)
+
+    assert len(fused_pipeline) == 1, "Only one node should be fused"
+    assert fused_pipeline[0].name == "dummy", "Fused node should have name 'dummy'"
+    assert fused_pipeline[0].outputs == set(
+        ["dataset_1", "dataset_2"]
+    ), "Fused node should have outputs 'dataset_1' and 'dataset_2'"
+    assert len(fused_pipeline[0]._parents) == 0, "Fused node should have no parents"
+    assert fused_pipeline[0].k8s_config.cpu_request == 2
+    assert fused_pipeline[0].k8s_config.cpu_limit == 2
+    assert fused_pipeline[0].k8s_config.memory_request == 32
+    assert fused_pipeline[0].k8s_config.memory_limit == 64
+    assert fused_pipeline[0].k8s_config.use_gpu
 
 
 @pytest.mark.parametrize(
