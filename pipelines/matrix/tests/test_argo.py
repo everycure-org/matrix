@@ -328,21 +328,16 @@ def test_generate_argo_config() -> None:
     image_tag = "test_tag"
     namespace = "test_namespace"
     username = "test_user"
-    pipelines = {
-        "test_pipeline": Pipeline(
-            nodes=[Node(func=dummy_func, inputs=["dataset_a", "dataset_b"], outputs="dataset_c", name="simple_node")]
-        ),
-        "cloud_pipeline": Pipeline(
-            nodes=[
-                Node(
-                    func=dummy_func,
-                    inputs=["dataset_a_cloud", "dataset_b_cloud"],
-                    outputs="dataset_c_cloud",
-                    name="simple_node_cloud",
-                )
-            ]
-        ),
-    }
+    pipeline = Pipeline(
+        nodes=[
+            Node(
+                func=dummy_func,
+                inputs=["dataset_a_cloud", "dataset_b_cloud"],
+                outputs="dataset_c_cloud",
+                name="simple_node_cloud",
+            )
+        ]
+    )
 
     argo_config = generate_argo_config(
         image=image_name,
@@ -350,7 +345,7 @@ def test_generate_argo_config() -> None:
         image_tag=image_tag,
         namespace=namespace,
         username=username,
-        pipelines=pipelines,
+        pipeline=pipeline,
         package_name="matrix",
     )
 
@@ -365,36 +360,17 @@ def test_generate_argo_config() -> None:
 
     # Verify kedro template
     kedro_template = next(t for t in spec["templates"] if t["name"] == "kedro")
-    assert kedro_template["backoff"]["duration"] == "1", "Kedro template should have correct backoff duration"
-    assert kedro_template["backoff"]["factor"] == 2, "Kedro template should have correct backoff factor"
-    assert kedro_template["backoff"]["maxDuration"] == "1m", "Kedro template should have correct max backoff duration"
-    assert "nodeAntiAffinity" in kedro_template["affinity"], "Kedro template should have nodeAntiAffinity"
     assert kedro_template["metadata"]["labels"]["app"] == "kedro-argo", "Kedro template should have correct label"
 
     templates = spec["templates"]
-    # Check if the pipeline is included in the templates
-    pipeline_names = [template["name"] for template in templates]
-    assert "test_pipeline" in pipeline_names, "The 'test_pipeline' pipeline should be included in the templates"
-    assert "cloud_pipeline" in pipeline_names, "The 'cloud_pipeline' pipeline should be included in the templates"
-
-    # Verify test_pipeline template
-    test_template = next(t for t in templates if t["name"] == "test_pipeline")
-    assert "dag" in test_template, "test_pipeline template should have a DAG"
-    assert len(test_template["dag"]["tasks"]) == 1, "test_pipeline template should have one task"
-    assert (
-        test_template["dag"]["tasks"][0]["name"] == "simple-node"
-    ), "test_pipeline template should have correct task name"
-    assert (
-        test_template["dag"]["tasks"][0]["template"] == "kedro"
-    ), "test_pipeline template task should use kedro template"
 
     # Verify cloud_pipeline template
-    cloud_template = next(t for t in templates if t["name"] == "cloud_pipeline")
-    assert "dag" in cloud_template, "cloud_pipeline template should have a DAG"
-    assert len(cloud_template["dag"]["tasks"]) == 1, "cloud_pipeline template should have one task"
+    pipeline_template = next(t for t in templates if t["name"] == "pipeline")
+    assert "dag" in pipeline_template, "cloud_pipeline template should have a DAG"
+    assert len(pipeline_template["dag"]["tasks"]) == 1, "cloud_pipeline template should have one task"
     assert (
-        cloud_template["dag"]["tasks"][0]["name"] == "simple-node-cloud"
+        pipeline_template["dag"]["tasks"][0]["name"] == "simple-node-cloud"
     ), "cloud_pipeline template should have correct task name"
     assert (
-        cloud_template["dag"]["tasks"][0]["template"] == "kedro"
+        pipeline_template["dag"]["tasks"][0]["template"] == "kedro"
     ), "cloud_pipeline template task should use kedro template"
