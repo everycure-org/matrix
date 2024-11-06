@@ -31,7 +31,7 @@ tracking:
   # in a new mlflow run
 
   disable_tracking:
-    pipelines: ["fabricator", "test"]
+    pipelines: ["fabricator", "test", "feature"]
 
   experiment:
     name: ${globals:run_name}
