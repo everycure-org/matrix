@@ -3,7 +3,7 @@ from kedro.pipeline.node import Node
 import logging
 import pytest
 
-from matrix.kedro_extension import KubernetesNode
+from matrix.kedro_extension import KubernetesExecutionConfig, KubernetesNode
 from kedro.io import DataCatalog
 from kedro.runner import SequentialRunner
 
@@ -57,3 +57,13 @@ def test_kubernetes_node_default_config():
         outputs=["int_number_ds_out"],
     )
     assert not k8s_node.k8s_config.use_gpu
+
+
+def test_kubernetes_node_can_request_gpu():
+    k8s_node = KubernetesNode(
+        func=lambda x: x,
+        inputs=["int_number_ds_in"],
+        outputs=["int_number_ds_out"],
+        k8s_config=KubernetesExecutionConfig(use_gpu=True),
+    )
+    assert k8s_node.k8s_config.use_gpu
