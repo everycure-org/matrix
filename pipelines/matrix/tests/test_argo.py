@@ -335,12 +335,9 @@ def test_get_k8s_node_affinity_tags_without_gpu():
     assert result == []
 
 
-@pytest.fixture
-def fused_node_with_contents() -> FusedNode:
-    node = FusedNode(depth=0)
-    node.add_node(Node(func=dummy_func, name="node1", inputs=[], outputs=["dataset_x"], tags=["tag1", "tag2"]))
-    node.add_node(Node(func=dummy_func, name="node2", inputs=[], outputs=["dataset_y"], tags=["tag2", "tag3"]))
-    return node
+def test_empty_pipeline():
+    result = get_pipeline_as_tasks([])
+    assert result == []
 
 
 @pytest.fixture
@@ -367,12 +364,23 @@ def fused_node_with_parents(fused_node_with_argo_tags: FusedNode) -> FusedNode:
     return node
 
 
-def test_empty_pipeline():
-    result = get_pipeline_as_tasks([])
-    assert result == []
+def test_node_with_argo_tags(fused_node_with_argo_tags: FusedNode) -> None:
+    result = get_pipeline_as_tasks([fused_node_with_argo_tags])
+
+    assert len(result) == 1
+    assert result[0]["memory"] == "4Gi"
+    assert result[0]["cpu"] == "2"
 
 
-def test_single_node_no_deps(fused_node_with_contents: FusedNode) -> None:
+def test_single_node_no_deps() -> None:
+    fused_node_with_contents = FusedNode(depth=0)
+    fused_node_with_contents.add_node(
+        Node(func=dummy_func, name="node1", inputs=[], outputs=["dataset_x"], tags=["tag1", "tag2"])
+    )
+    fused_node_with_contents.add_node(
+        Node(func=dummy_func, name="node2", inputs=[], outputs=["dataset_y"], tags=["tag2", "tag3"])
+    )
+
     result = get_pipeline_as_tasks([fused_node_with_contents])
 
     assert len(result) == 1
@@ -382,18 +390,9 @@ def test_single_node_no_deps(fused_node_with_contents: FusedNode) -> None:
     assert result[0]["tags"] == {"tag1", "tag2", "tag3"}
 
 
-def test_node_with_argo_tags(fused_node_with_argo_tags: FusedNode) -> None:
-    result = get_pipeline_as_tasks([fused_node_with_argo_tags])
-
-    assert len(result) == 1
-    assert result[0]["memory"] == "4Gi"
-    assert result[0]["cpu"] == "2"
-
-
-@pytest.fixture()
-def fused_node_with_k8s_tag() -> FusedNode:
-    node = FusedNode(depth=0)
-    node.add_node(
+def test_node_with_k8s_tag() -> None:
+    fused_node_with_k8s_tag = FusedNode(depth=0)
+    fused_node_with_k8s_tag.add_node(
         Node(
             func=dummy_func,
             name="node1",
@@ -402,10 +401,7 @@ def fused_node_with_k8s_tag() -> FusedNode:
             tags=[NodeTags.K8S_REQUIRE_GPU.value, "tag2"],
         )
     )
-    return node
 
-
-def test_node_with_k8s_tag(fused_node_with_k8s_tag: FusedNode) -> None:
     result = get_pipeline_as_tasks([fused_node_with_k8s_tag])
 
     assert len(result) == 1
