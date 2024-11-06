@@ -366,8 +366,6 @@ def test_kubernetes_node_factory():
     assert k8s_node.k8s_config.memory_limit == KUBERNETES_DEFAULT_LIMIT_RAM
     assert not k8s_node.k8s_config.use_gpu
 
-    # Assert that kubernetes_node() and node() from kedro.pipeline.node are equivalent
-
     kedro_node = node(func=dummy_func, inputs=["int_number_ds_in"], outputs=["int_number_ds_out"])
     assert k8s_node.func == kedro_node.func
     assert k8s_node.inputs == kedro_node.inputs
