@@ -79,10 +79,13 @@ DYNAMIC_PIPELINES_MAPPING = {
 }
 
 # Kubernetes settings
-KUBERNETES_DEFAULT_LIMIT_RAM = "64Gi"
-KUBERNETES_DEFAULT_REQUEST_RAM = "64Gi"
-KUBERNETES_DEFAULT_LIMIT_CPU = "16"
-KUBERNETES_DEFAULT_REQUEST_CPU = "4"
+# All values are in Gb
+KUBERNETES_DEFAULT_LIMIT_RAM = 64
+KUBERNETES_DEFAULT_REQUEST_RAM = 64
+
+# All values are in number of cores
+KUBERNETES_DEFAULT_LIMIT_CPU = 16
+KUBERNETES_DEFAULT_REQUEST_CPU = 4
 
 # Class that manages Kedro's library components.
 # from kedro.framework.context import KedroContext
