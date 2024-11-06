@@ -56,4 +56,4 @@ def test_kubernetes_node_can_request_gpu():
         inputs=["int_number_ds_in"],
         outputs=["int_number_ds_out"],
     )
-    assert k8s_node is not None
+    assert not k8s_node.k8s_config.use_gpu
