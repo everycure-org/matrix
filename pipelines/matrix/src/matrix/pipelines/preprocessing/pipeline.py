@@ -130,7 +130,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                     "preprocessing.raw.ground_truth.negatives",
                     "params:preprocessing.translator_endpoint",
                 ],
-                outputs=["modelling.raw.ground_truth.positives", "modelling.raw.ground_truth.negatives"],
+                outputs=["modelling.raw.ground_truth.positives@pandas", "modelling.raw.ground_truth.negatives@pandas"],
                 name="resolve_gt",
                 tags=["ground-truth"],
             ),
