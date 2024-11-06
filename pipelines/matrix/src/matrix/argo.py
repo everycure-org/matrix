@@ -61,6 +61,7 @@ class FusedNode(Node):
         """Function to set the parents of the group."""
         self._parents.update(set(parents))
 
+    # TODO: This is not used. Delete during refactoring.
     def fuses_with(self, node) -> bool:
         """Function verify fusability."""
         # If not is not fusable, abort
