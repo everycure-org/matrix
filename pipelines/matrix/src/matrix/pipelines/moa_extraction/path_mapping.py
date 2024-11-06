@@ -43,7 +43,7 @@ class PathMapper(abc.ABC):
     """Abstract base class for mapping DrugMechDB paths to the knowledge graph."""
 
     @abc.abstractmethod
-    def run(self, runner: GraphDB, drug_mech_db: Dict[str, Any], synonymizer_endpoint: str) -> KGPaths:
+    def run(self, runner: GraphDB, drug_mech_db: List[dict], synonymizer_endpoint: str) -> KGPaths:
         """Run the path mapping.
 
         Args:
@@ -79,7 +79,7 @@ class SetwisePathMapper(PathMapper):
     def run(
         self,
         runner: GraphDB,
-        drug_mech_db: Dict[str, Any],
+        drug_mech_db: List[dict],
         synonymizer_endpoint: str,
         num_attempts: int = 5,
     ) -> KGPaths:
@@ -192,7 +192,7 @@ class TestPathMapper(PathMapper):
     def run(
         self,
         runner: GraphDB,
-        drug_mech_db: Dict[str, Any],
+        drug_mech_db: List[dict],
         synonymizer_endpoint: str,
     ) -> KGPaths:
         """Run the path mapping.

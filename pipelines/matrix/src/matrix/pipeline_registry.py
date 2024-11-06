@@ -15,6 +15,9 @@ from matrix.pipelines.matrix_generation.pipeline import create_pipeline as creat
 from matrix.pipelines.modelling.pipeline import create_pipeline as create_modelling_pipeline
 from matrix.pipelines.preprocessing.pipeline import create_pipeline as create_preprocessing_pipeline
 from matrix.pipelines.moa_extraction.pipeline import create_pipeline as create_moa_extraction_pipeline
+from matrix.pipelines.drugmechdb_entity_resolution.pipeline import (
+    create_pipeline as create_drugmechdb_entity_resolution_pipeline,
+)
 
 
 def register_pipelines() -> Dict[str, Pipeline]:
@@ -27,6 +30,7 @@ def register_pipelines() -> Dict[str, Pipeline]:
     pipelines = {
         # Individual pipelines
         "preprocessing": create_preprocessing_pipeline(),  # Run manually for clinical trials and medical KG artifacts
+        "drugmechdb_entity_resolution": create_drugmechdb_entity_resolution_pipeline(),  # Run manually for DrugMechDB entity resolution
         "fabricator": create_fabricator_pipeline(),
         "ingestion": create_ingestion_pipeline(),
         "integration": create_integration_pipeline(),
