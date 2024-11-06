@@ -384,3 +384,8 @@ def test_fuse_config() -> None:
     assert k8s_config.memory_request == 32
     assert k8s_config.memory_limit == 64
     assert k8s_config.use_gpu
+
+
+def test_k8s_pipeline_with_fused_nodes():
+    k8s_pipeline, standard_pipeline = get_parallel_pipelines()
+    assert all(isinstance(node, KubernetesNode) for node in k8s_pipeline.nodes)

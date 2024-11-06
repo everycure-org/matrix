@@ -6,6 +6,8 @@ from jinja2 import Environment, FileSystemLoader
 from kedro.pipeline import Pipeline
 from kedro.pipeline.node import Node
 
+from matrix.kedro_extension import KubernetesNode
+
 ARGO_TEMPLATE_FILE = "argo_wf_spec.tmpl"
 ARGO_TEMPLATES_DIR_PATH = Path(__file__).parent.parent.parent / "templates"
 
@@ -52,10 +54,15 @@ class FusedNode(Node):
         self._parents = set()
         self._inputs = []
         self.depth = depth
+        self.k8s_config = None
 
     def add_node(self, node):
         """Function to add node to group."""
         self._nodes.append(node)
+        if isinstance(node, KubernetesNode) and self.k8s_config is None:
+            self.k8s_config = node.k8s_config
+        elif isinstance(node, KubernetesNode):
+            self.k8s_config.fuse_config(node.k8s_config)
 
     def add_parents(self, parents: List) -> None:
         """Function to set the parents of the group."""
@@ -195,6 +202,11 @@ def fuse(pipeline: Pipeline) -> List[FusedNode]:
             # as an independent node to the result, which implies it will be executed
             # using it's own Argo node unless a downstream node will be fused to it.
             else:
+                if isinstance(target_node, KubernetesNode):
+                    k8s_config = target_node.k8s_config
+                else:
+                    k8s_config = None
+
                 fused_node = FusedNode(depth)
                 fused_node.add_node(target_node)
                 fused_node.add_parents(
@@ -205,6 +217,7 @@ def fuse(pipeline: Pipeline) -> List[FusedNode]:
                         & set(FusedNode.clean_dependencies(fs.outputs))
                     ]
                 )
+                fused_node.k8s_config = k8s_config
                 fused.append(fused_node)
 
     return fused
