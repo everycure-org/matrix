@@ -340,8 +340,7 @@ def test_empty_pipeline():
     assert result == []
 
 
-@pytest.fixture
-def fused_node_with_argo_tags() -> FusedNode:
+def test_node_with_argo_tags() -> None:
     node = FusedNode(depth=0)
     node.add_node(
         Node(
@@ -352,20 +351,8 @@ def fused_node_with_argo_tags() -> FusedNode:
             tags=[f"{ARGO_NODE_PREFIX}memory-4Gi", f"{ARGO_NODE_PREFIX}cpu-2"],
         )
     )
-    return node
 
-
-@pytest.fixture()
-def fused_node_with_parents(fused_node_with_argo_tags: FusedNode) -> FusedNode:
-    node = FusedNode(depth=0)
-    node.add_node(Node(func=dummy_func, name="node3", inputs=[], outputs=["dataset_z"]))
-    node._parents = {fused_node_with_argo_tags}
-    node.tags = ["tag3"]
-    return node
-
-
-def test_node_with_argo_tags(fused_node_with_argo_tags: FusedNode) -> None:
-    result = get_pipeline_as_tasks([fused_node_with_argo_tags])
+    result = get_pipeline_as_tasks([node])
 
     assert len(result) == 1
     assert result[0]["memory"] == "4Gi"
