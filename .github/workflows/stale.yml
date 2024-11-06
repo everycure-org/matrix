@@ -1,0 +1,62 @@
+# NOTE: This file was partially generated using AI assistance.
+
+name: 'Mark and close stale issues and PRs'
+on:
+  schedule:
+    - cron: '0 0 * * *'  # Runs at 00:00 UTC every day
+  workflow_dispatch: # Allows manual triggering
+
+permissions:
+  issues: write
+  pull-requests: write
+
+jobs:
+  stale:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/stale@v9
+        with:
+          # Stale settings
+          days-before-stale: 90
+          days-before-close: 90
+          
+          # Stale issue settings
+          stale-issue-message: |
+            This issue has been automatically marked as stale because it has had no activity in the last 90 days.
+            
+            If this issue is still relevant, please leave a comment to keep it open.
+            Otherwise, it will be closed in 90 days if no further activity occurs.
+          stale-issue-label: 'stale'
+          
+          # Stale PR settings
+          stale-pr-message: |
+            This pull request has been automatically marked as stale because it has had no activity in the last 90 days.
+            
+            If this PR is still relevant:
+            1. Please update it to the latest main/master branch
+            2. Address any existing review comments
+            3. Leave a comment to keep it open
+            
+            Otherwise, it will be closed in 90 days if no further activity occurs.
+          stale-pr-label: 'stale'
+          
+          # Close messages
+          close-issue-message: |
+            This issue has been automatically closed because it has been stale for 90 days with no activity.
+            
+            If you believe this is still relevant, please feel free to reopen it or create a new issue.
+          close-pr-message: |
+            This pull request has been automatically closed because it has been stale for 90 days with no activity.
+            
+            If you believe this is still relevant, please feel free to reopen it or create a new PR.
+          
+          # Exempt labels and milestones
+        #   exempt-issue-labels: 'security,pinned,bug'
+        #   exempt-pr-labels: 'security,pinned,dependencies'
+          exempt-all-milestones: false
+          
+          # Additional settings
+          exempt-draft-pr: false
+          delete-branch: false
+          enable-statistics: true
+          operations-per-run: 100 
