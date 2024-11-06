@@ -10,7 +10,8 @@ spec:
       run: {% raw %}'{{ workflow.parameters.run_name }}'
       {% endraw %}
       username: "{{ username }}"
-  entrypoint: pipeline
+      pipeline: "{{ pipeline_name }}"
+  entrypoint: "{{ pipeline_name }}"
   arguments:
     parameters:
       - name: image
