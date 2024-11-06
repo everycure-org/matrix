@@ -393,8 +393,38 @@ def test_node_with_k8s_tag() -> None:
 
     assert len(result) == 1
     assert result[0]["name"] == "node1"
+    assert result[0]["nodes"] == "node1"
     assert result[0]["deps"] == []
+    assert result[0]["tags"] == {"tag2", NodeTags.K8S_REQUIRE_GPU.value}
     assert result[0]["k8s_affinity_tags"] == [NodeTags.K8S_REQUIRE_GPU.value]
+
+
+# TODO(mateusz.wasilewski): Fix this, ideally by substituting Kedro class
+def test_node_with_resource_requirements() -> None:
+    fused_node_with_resource_requirements = FusedNode(depth=0)
+    fused_node_with_resource_requirements.add_node(
+        Node(
+            func=dummy_func,
+            name="node1",
+            inputs=[],
+            outputs=["dataset_x"],
+            tags=[NodeTags.K8S_REQUIRE_GPU.value, "tag2"],
+        )
+    )
+
+    result = get_pipeline_as_tasks([fused_node_with_resource_requirements])
+
+    assert len(result) == 1
+    assert result[0]["name"] == "node1"
+    assert result[0]["nodes"] == "node1"
+    assert result[0]["deps"] == []
+    assert result[0]["tags"] == {"tag2", NodeTags.K8S_REQUIRE_GPU.value}
+    assert result[0]["k8s_affinity_tags"] == [NodeTags.K8S_REQUIRE_GPU.value]
+
+    assert result[0]["resources"]["cpu_request"] == "1"
+    assert result[0]["resources"]["memory_request"] == "1Gi"
+    assert result[0]["resources"]["cpu_limit"] == "1"
+    assert result[0]["resources"]["memory_limit"] == "1Gi"
 
 
 def assert_argo_config_structure(parsed_config: dict, expected_pipeline_names: list[str]) -> None:
