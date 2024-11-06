@@ -48,7 +48,7 @@ def _preprocessing_pipeline() -> Pipeline:
                             "runner": "params:moa_extraction.gdb",
                             "drug_mech_db": "moa_extraction.raw.drug_mech_db",
                             "mapper": f"params:moa_extraction.path_mapping.mapper_{num_hops}_hop",
-                            "synonymizer_endpoint": "params:moa_extraction.path_mapping.synonymizer_endpoint",
+                            "drugmechdb_entities": "moa_extraction.raw.drugmechdb_entities",
                         },
                         outputs=f"moa_extraction.int.{num_hops}_hop_indication_paths",
                         name=f"map_{num_hops}_hop",

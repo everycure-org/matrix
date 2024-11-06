@@ -476,6 +476,22 @@ fabricator.ec_medical_kg:
         provider: name
 
 
+# Empty DrugMechDB and normalized DrugMechDB entities for TestPathMapper class (for path mapping in the test environment)
 fabricator.drug_mech_db:
   paths: None     
-        
+
+fabricator.drugmechdb_entities: 
+  entities:
+    num_rows: 10
+    columns:
+      DrugMechDB_ID: 
+        type: generate_unique_id
+        prefix: drugmechdb_entity_
+    
+      DrugMechDB_name:
+        type: faker
+        provider: name
+
+      mapped_ID:
+        type: generate_unique_id
+        prefix: resolved_entity_

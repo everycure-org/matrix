@@ -145,7 +145,7 @@ def map_drug_mech_db(
     runner: GraphDB,
     drug_mech_db: List[dict],
     mapper: PathMapper,
-    synonymizer_endpoint: str,
+    drugmechdb_entities: pd.DataFrame,
 ) -> KGPaths:
     """Map the DrugMechDB indication paths to 2 and 3-hop paths in the graph.
 
@@ -153,9 +153,9 @@ def map_drug_mech_db(
         runner: The GraphDB object representing the KG..
         drug_mech_db: The DrugMechDB indication paths.
         mapper: Strategy for mapping paths to the graph.
-        synonymizer_endpoint: The endpoint of the synonymizer.
+        drugmechdb_entities: The normalized DrugMechDB entities.
     """
-    paths = mapper.run(runner, drug_mech_db, synonymizer_endpoint)
+    paths = mapper.run(runner, drug_mech_db, drugmechdb_entities)
     return paths.df
 
 
