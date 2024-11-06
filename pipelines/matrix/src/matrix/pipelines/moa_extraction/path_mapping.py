@@ -123,29 +123,25 @@ class SetwisePathMapper(PathMapper):
             A list of the mapped paths. Empty list if no paths were found. None if the mapping failed.
         """
 
-        def map_entity(name: str, curie: str) -> str:
-            """Map a single entity with the synonymizer."""
-            return None  # _map_name_and_curie(name, curie, synonymizer_endpoint)
+        def get_mapped_entity(drugmechdb_name: str) -> str:
+            """Get the mapped entity for a DrugMechDB name."""
+            drugmechdb_entity = drugmechdb_entities[drugmechdb_entities["DrugMechDB_name"] == drugmechdb_name]
+            return drugmechdb_entity["mapped_ID"].values[0] if len(drugmechdb_entity) > 0 else None
 
         # Get the drug and disease names and curies
         drug_name = db_entry["graph"]["drug"]
-        drug_mesh_curie = db_entry["graph"]["drug_mesh"]
-        drug_bank_curie = db_entry["graph"]["drugbank"]
         disease_name = db_entry["graph"]["disease"]
-        disease_mesh_curie = db_entry["graph"]["disease_mesh"]
 
         # Map the drug and disease names and curies
-        drug_mapped = map_entity(drug_name, drug_mesh_curie)
-        if not drug_mapped:
-            drug_mapped = map_entity(drug_bank_curie, drug_bank_curie)
-        disease_mapped = map_entity(disease_name, disease_mesh_curie)
+        drug_mapped = get_mapped_entity(drug_name)
+        disease_mapped = get_mapped_entity(disease_name)
 
         if not drug_mapped or not disease_mapped:
             return None
 
         # Map intermediate nodes
         intermediate_db_entities = [node for node in db_entry["nodes"] if node["name"] not in [drug_name, disease_name]]
-        mapped_int_ids = [map_entity(entity["name"], entity["id"]) for entity in intermediate_db_entities]
+        mapped_int_ids = [get_mapped_entity(entity["name"]) for entity in intermediate_db_entities]
         mapped_int_ids = [entity for entity in mapped_int_ids if entity]  # Filter out Nones
 
         # Construct the neo4j query
