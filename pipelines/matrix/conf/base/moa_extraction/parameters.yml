@@ -28,7 +28,7 @@ moa_extraction:
       object: matrix.pipelines.moa_extraction.path_mapping.SetwisePathMapper
       num_hops: 3
       unidirectional: false
-    synonymizer_endpoint: http://localhost:8081
+    # synonymizer_endpoint: http://localhost:8081
 
   splits:
     splitter_two_hop:

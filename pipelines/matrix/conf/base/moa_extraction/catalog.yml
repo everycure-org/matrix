@@ -11,6 +11,10 @@ moa_extraction.raw.pairs_for_moa_prediction:
   type: pandas.CSVDataset
   filepath: ${globals:paths.raw}/pairs_for_moa_prediction/${globals:data_sources.pairs_for_moa_prediction.version}/filtered_matrix_report_xg_ensemble_report_17_sept_2024.csv
 
+moa_extraction.raw.drugmechdb_entities:
+  type: pandas.ParquetDataset
+  filepath: ${globals:paths.raw}/drugmechdb_entities/drugmechdb_entities.parquet
+
 moa_extraction.feat.category_encoder:
   type: pickle.PickleDataset
   filepath: ${globals:paths.moa_extraction}/feat/category_encoder.pickle

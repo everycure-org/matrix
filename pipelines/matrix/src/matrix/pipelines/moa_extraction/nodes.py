@@ -143,7 +143,7 @@ def get_one_hot_encodings(runner: GraphDB) -> Tuple[OneHotEncoder, OneHotEncoder
 @inject_object()
 def map_drug_mech_db(
     runner: GraphDB,
-    drug_mech_db: Dict[str, Any],
+    drug_mech_db: List[dict],
     mapper: PathMapper,
     synonymizer_endpoint: str,
 ) -> KGPaths:
