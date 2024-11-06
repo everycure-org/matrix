@@ -72,6 +72,7 @@ def submit(username: str, namespace: str, run_name: str, pipeline: str, from_nod
         username=username,
         namespace=namespace,
         run_name=run_name,
+        pipeline_name=pipeline,
         pipeline=pipeline_obj,
         verbose=verbose,
         dry_run=dry_run,
@@ -83,6 +84,7 @@ def _submit(
         username: str, 
         namespace: str, 
         run_name: str, 
+        pipeline_name: str,
         pipeline: Pipeline,
         verbose: bool, 
         dry_run: bool, 
@@ -106,6 +108,7 @@ def _submit(
         username (str): The username to use for the workflow.
         namespace (str): The namespace to use for the workflow.
         run_name (str): The name of the run.
+        pipeline name (str): Pipeline name.
         pipeline (Pipeline): Pipeline object.
         verbose (bool): If True, enable verbose output.
         dry_run (bool): If True, do not submit the workflow.
@@ -125,7 +128,7 @@ def _submit(
         console.print("[green]✓[/green] Docker image built and pushed")
 
         console.print("Building Argo template...")
-        argo_template = build_argo_template(run_name, username, namespace, pipeline)
+        argo_template = build_argo_template(run_name, username, namespace, pipeline_name, pipeline)
         console.print("[green]✓[/green] Argo template built")
 
         console.print("Writing Argo template...")
@@ -292,7 +295,7 @@ def build_push_docker(username: str, verbose: bool):
     run_subprocess(f"make docker_push TAG={username}", stream_output=verbose)
 
 
-def build_argo_template(run_name: str, username: str, namespace: str, pipeline: Pipeline) -> str:
+def build_argo_template(run_name: str, username: str, namespace: str, pipeline_name: str, pipeline: Pipeline) -> str:
     """Build Argo workflow template."""
     image_name = "us-central1-docker.pkg.dev/mtrx-hub-dev-3of/matrix-images/matrix"
 
@@ -306,6 +309,7 @@ def build_argo_template(run_name: str, username: str, namespace: str, pipeline: 
         image_tag=username,
         namespace=namespace,
         username=username,
+        pipeline_name=pipeline_name,
         pipeline=pipeline,
         package_name=package_name
     )
