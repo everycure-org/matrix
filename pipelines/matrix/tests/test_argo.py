@@ -440,50 +440,6 @@ def assert_argo_config_structure(parsed_config: dict, expected_pipeline_names: l
     for name in expected_pipeline_names:
         assert name in pipeline_names, f"The '{name}' pipeline should be included in the templates"
 
-    return spec
-
-
-def test_generate_argo_config() -> None:
-    image_name = "us-central1-docker.pkg.dev/mtrx-hub-dev-3of/matrix-images/matrix"
-    run_name = "test_run"
-    image_tag = "test_tag"
-    namespace = "test_namespace"
-    username = "test_user"
-    pipelines = {
-        "test_pipeline": Pipeline(
-            nodes=[Node(func=dummy_func, inputs=["dataset_a", "dataset_b"], outputs="dataset_c", name="simple_node")]
-        ),
-        "cloud_pipeline": Pipeline(
-            nodes=[
-                Node(
-                    func=dummy_func,
-                    inputs=["dataset_a_cloud", "dataset_b_cloud"],
-                    outputs="dataset_c_cloud",
-                    name="simple_node_cloud",
-                )
-            ]
-        ),
-    }
-
-    argo_config = generate_argo_config(
-        image=image_name,
-        run_name=run_name,
-        image_tag=image_tag,
-        namespace=namespace,
-        username=username,
-        pipelines=pipelines,
-        package_name="matrix",
-    )
-
-    assert argo_config is not None
-    parsed_config = yaml.safe_load(argo_config)
-
-    spec = assert_argo_config_structure(
-        parsed_config=parsed_config, expected_pipeline_names=["test_pipeline", "cloud_pipeline"]
-    )
-
-    templates = spec["templates"]
-
     # Verify test_pipeline template
     test_template = next(t for t in templates if t["name"] == "test_pipeline")
     assert "dag" in test_template, "test_pipeline template should have a DAG"
@@ -508,79 +464,62 @@ def test_generate_argo_config() -> None:
     assert (
         cloud_template["dag"]["tasks"][0]["template"] == "kedro"
     ), "cloud_pipeline template task should use kedro template"
+
+    return cloud_template
+
+
+@pytest.fixture
+def argo_config(request):
+    base_config_params = {
+        "image": "us-central1-docker.pkg.dev/mtrx-hub-dev-3of/matrix-images/matrix",
+        "run_name": "test_run",
+        "image_tag": "test_tag",
+        "namespace": "test_namespace",
+        "username": "test_user",
+        "package_name": "matrix",
+    }
+    node_tags = getattr(request, "param", [])
+
+    pipelines = {
+        "test_pipeline": Pipeline(
+            nodes=[Node(func=dummy_func, inputs=["dataset_a", "dataset_b"], outputs="dataset_c", name="simple_node")]
+        ),
+        "cloud_pipeline": Pipeline(
+            nodes=[
+                Node(
+                    func=dummy_func,
+                    inputs=["dataset_a_cloud", "dataset_b_cloud"],
+                    outputs="dataset_c_cloud",
+                    name="simple_node_cloud",
+                    tags=node_tags,
+                )
+            ]
+        ),
+    }
+
+    generated_config = generate_argo_config(pipelines=pipelines, **base_config_params)
+    assert generated_config is not None
+    return yaml.safe_load(generated_config)
+
+
+def test_generate_argo_config_no_tags(argo_config):
+    cloud_template = assert_argo_config_structure(
+        parsed_config=argo_config, expected_pipeline_names=["test_pipeline", "cloud_pipeline"]
+    )
+
+    # Verify cloud_pipeline template
     assert (
         "affinity" not in cloud_template["dag"]["tasks"][0]
     ), "cloud_pipeline template task should not have explicit affinity"
 
 
-def test_generate_argo_config_with_gpu_affinity() -> None:
-    image_name = "us-central1-docker.pkg.dev/mtrx-hub-dev-3of/matrix-images/matrix"
-    run_name = "test_run"
-    image_tag = "test_tag"
-    namespace = "test_namespace"
-    username = "test_user"
-    pipelines = {
-        "test_pipeline": Pipeline(
-            nodes=[Node(func=dummy_func, inputs=["dataset_a", "dataset_b"], outputs="dataset_c", name="simple_node")]
-        ),
-        "cloud_pipeline": Pipeline(
-            nodes=[
-                Node(
-                    func=dummy_func,
-                    inputs=["dataset_a_cloud", "dataset_b_cloud"],
-                    outputs="dataset_c_cloud",
-                    name="simple_node_cloud",
-                    tags=[NodeTags.K8S_REQUIRE_GPU.value],
-                )
-            ]
-        ),
-    }
-
-    argo_config = generate_argo_config(
-        image=image_name,
-        run_name=run_name,
-        image_tag=image_tag,
-        namespace=namespace,
-        username=username,
-        pipelines=pipelines,
-        package_name="matrix",
+@pytest.mark.parametrize("argo_config", [[NodeTags.K8S_REQUIRE_GPU.value]], indirect=True)
+def test_generate_argo_config_with_gpu_affinity(argo_config):
+    cloud_template = assert_argo_config_structure(
+        parsed_config=argo_config, expected_pipeline_names=["test_pipeline", "cloud_pipeline"]
     )
-
-    assert argo_config is not None
-    parsed_config = yaml.safe_load(argo_config)
-
-    spec = assert_argo_config_structure(
-        parsed_config=parsed_config, expected_pipeline_names=["test_pipeline", "cloud_pipeline"]
-    )
-
-    templates = spec["templates"]
-
-    # Verify test_pipeline template
-    test_template = next(t for t in templates if t["name"] == "test_pipeline")
-    assert "dag" in test_template, "test_pipeline template should have a DAG"
-    assert len(test_template["dag"]["tasks"]) == 1, "test_pipeline template should have one task"
-    assert (
-        test_template["dag"]["tasks"][0]["name"] == "simple-node"
-    ), "test_pipeline template should have correct task name"
-    assert (
-        test_template["dag"]["tasks"][0]["template"] == "kedro"
-    ), "test_pipeline template task should use kedro template"
-    assert (
-        "affinity" not in test_template["dag"]["tasks"][0]
-    ), "test_pipeline template task should not have explicit affinity"
 
     # Verify cloud_pipeline template
-    cloud_template = next(t for t in templates if t["name"] == "cloud_pipeline")
-    assert "dag" in cloud_template, "cloud_pipeline template should have a DAG"
-    assert len(cloud_template["dag"]["tasks"]) == 1, "cloud_pipeline template should have one task"
-    assert (
-        cloud_template["dag"]["tasks"][0]["name"] == "simple-node-cloud"
-    ), "cloud_pipeline template should have correct task name"
-    assert (
-        cloud_template["dag"]["tasks"][0]["template"] == "kedro"
-    ), "cloud_pipeline template task should use kedro template"
-    assert "affinity" in cloud_template["dag"]["tasks"][0], "cloud_pipeline template task should have explicit affinity"
-
     affinities = cloud_template["dag"]["tasks"][0]["affinity"]
     assert (
         affinities["nodeAffinity"]["requiredDuringSchedulingIgnoredDuringExecution"]["nodeSelectorTerms"][0][
