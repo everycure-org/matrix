@@ -28,5 +28,6 @@ scratch
 !references/.gitkeep
 !results/.gitkeep
 
-# 
+
 .env
+.env.defaults
