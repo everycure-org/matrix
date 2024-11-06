@@ -50,7 +50,7 @@ def test_parametrized_node_in_simple_pipeline(caplog, node_class):
     assert successful_run_msg in caplog.text
 
 
-def test_kubernetes_node_can_request_gpu():
+def test_kubernetes_node_default_config():
     k8s_node = KubernetesNode(
         func=lambda x: x,
         inputs=["int_number_ds_in"],
