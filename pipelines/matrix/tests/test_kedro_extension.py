@@ -322,3 +322,29 @@ def get_parallel_pipelines() -> Pipeline:
     )
 
     return k8s_pipeline, standard_pipeline
+
+
+def test_parallel_pipelines(caplog):
+    k8s_pipeline, standard_pipeline = get_parallel_pipelines()
+
+    assert k8s_pipeline.nodes[0].tags == {"k8s_pipeline"}
+    assert standard_pipeline.nodes[0].tags == {"standard_pipeline"}
+
+    catalog = DataCatalog()
+    catalog.add_feed_dict(
+        {
+            "model_input_table@pandas": pd.DataFrame({"price": [100, 200, 300, 400]}),
+            "params:model_options": {"features": ["price"], "test_size": 0.25, "random_state": 42},
+        }
+    )
+
+    caplog.set_level(logging.DEBUG, logger="kedro")
+    successful_run_msg = "Pipeline execution completed successfully."
+
+    SequentialRunner().run(k8s_pipeline, catalog)
+    assert successful_run_msg in caplog.text
+
+    caplog.clear()
+
+    SequentialRunner().run(standard_pipeline, catalog)
+    assert successful_run_msg in caplog.text
