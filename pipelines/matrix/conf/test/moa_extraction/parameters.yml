@@ -1,6 +1,6 @@
 moa_extraction:
   gdb:
-    database: everycure-test-release # analytics
+    database: everycure-${globals:versions.release}
 
   preprocessing_options:
     add_tags:
