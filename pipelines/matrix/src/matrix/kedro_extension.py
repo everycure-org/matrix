@@ -1,4 +1,4 @@
-from typing import Callable, Iterable
+from typing import Callable, Iterable, Union
 import warnings
 from kedro.pipeline.node import Node
 from pydantic import BaseModel, field_validator, model_validator
@@ -56,8 +56,10 @@ class KubernetesExecutionConfig(BaseModel):
             )
         return self
 
-    def fuse_config(self, k8s_config: "KubernetesExecutionConfig") -> None:
+    def fuse_config(self, k8s_config: Union["KubernetesExecutionConfig", None]) -> None:
         """Fuse in-place with another K8s config."""
+        if k8s_config is None:
+            return
         self.cpu_limit = max(self.cpu_limit, k8s_config.cpu_limit)
         self.cpu_request = max(self.cpu_request, k8s_config.cpu_request)
         self.memory_limit = max(self.memory_limit, k8s_config.memory_limit)
