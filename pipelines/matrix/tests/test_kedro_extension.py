@@ -1,4 +1,5 @@
 from kedro.pipeline import pipeline, Pipeline
+from kedro.pipeline.node import node
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_absolute_error, max_error, r2_score
 from sklearn.model_selection import train_test_split
@@ -8,7 +9,7 @@ from kedro.pipeline.node import Node
 import logging
 import pytest
 
-from matrix.kedro_extension import KubernetesExecutionConfig, KubernetesNode
+from matrix.kedro_extension import KubernetesExecutionConfig, KubernetesNode, kubernetes_node
 from kedro.io import DataCatalog
 from kedro.runner import SequentialRunner
 
@@ -348,3 +349,23 @@ def test_parallel_pipelines(caplog):
 
     SequentialRunner().run(standard_pipeline, catalog)
     assert successful_run_msg in caplog.text
+
+
+def test_kubernetes_node_factory():
+    k8s_node = kubernetes_node(
+        func=lambda x: x,
+        inputs=["int_number_ds_in"],
+        outputs=["int_number_ds_out"],
+    )
+    assert k8s_node.k8s_config.cpu_request == KUBERNETES_DEFAULT_REQUEST_CPU
+    assert k8s_node.k8s_config.cpu_limit == KUBERNETES_DEFAULT_LIMIT_CPU
+    assert k8s_node.k8s_config.memory_request == KUBERNETES_DEFAULT_REQUEST_RAM
+    assert k8s_node.k8s_config.memory_limit == KUBERNETES_DEFAULT_LIMIT_RAM
+    assert not k8s_node.k8s_config.use_gpu
+
+    # Assert that kubernetes_node() and node() from kedro.pipeline.node are equivalent
+
+    kedro_node = node(func=lambda x: x, inputs=["int_number_ds_in"], outputs=["int_number_ds_out"])
+    assert k8s_node.func == kedro_node.func
+    assert k8s_node.inputs == kedro_node.inputs
+    assert k8s_node.outputs == kedro_node.outputs
