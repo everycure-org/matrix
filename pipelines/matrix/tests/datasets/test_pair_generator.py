@@ -87,7 +87,6 @@ def test_replacement_drug_disease_pair_generator(
     )
 
     known_pairs_split = make_splits(
-        graph,
         known_pairs,
         splitter,
     )
