@@ -7,6 +7,13 @@ from matrix.kedro_extension import KubernetesExecutionConfig, KubernetesNode
 from kedro.io import DataCatalog
 from kedro.runner import SequentialRunner
 
+from matrix.settings import (
+    KUBERNETES_DEFAULT_LIMIT_CPU,
+    KUBERNETES_DEFAULT_LIMIT_RAM,
+    KUBERNETES_DEFAULT_REQUEST_CPU,
+    KUBERNETES_DEFAULT_REQUEST_RAM,
+)
+
 
 def get_parametrized_node(node_class: Node) -> Node:
     def dummy_func(x: int) -> int:
@@ -148,3 +155,15 @@ def test_gpu_flag():
 
     config = KubernetesExecutionConfig(use_gpu=False)
     assert not config.use_gpu
+
+
+def test_default_values_match_settings():
+    """Test that default values in KubernetesExecutionConfig match settings."""
+    # NOTE: This test was partially generated using AI assistance.
+    config = KubernetesExecutionConfig()
+
+    assert config.cpu_request == KUBERNETES_DEFAULT_REQUEST_CPU
+    assert config.cpu_limit == KUBERNETES_DEFAULT_LIMIT_CPU
+    assert config.memory_request == KUBERNETES_DEFAULT_REQUEST_RAM
+    assert config.memory_limit == KUBERNETES_DEFAULT_LIMIT_RAM
+    assert not config.use_gpu  # Default should be False
