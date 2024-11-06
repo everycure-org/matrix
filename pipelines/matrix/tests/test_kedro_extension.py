@@ -2,8 +2,11 @@ from kedro.pipeline import pipeline, Pipeline
 from kedro.pipeline.node import Node
 import logging
 import pandas as pd
+import pytest
 
 from matrix.kedro_extension import KubernetesNode
+from kedro.io import DataCatalog
+from kedro.runner import SequentialRunner
 
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import max_error, mean_absolute_error, r2_score
@@ -17,10 +20,9 @@ def get_parametrized_node(node_class: Node) -> Node:
     return node_class(
         func=dummy_func,
         inputs=["int_number_ds_in"],
-        outputs=["int_number_ds_out"],
+        outputs="int_number_ds_out",
         name="dummy_node",
         tags=["dummy_tag"],
-        confirms=["dummy_confirm"],
         namespace="dummy_namespace",
     )
 
@@ -104,3 +106,67 @@ def test_parametrized_node():
 
     k8s_node = get_parametrized_node(KubernetesNode)
     assert k8s_node.func(2) == 4
+
+
+@pytest.mark.parametrize("node_class", [Node, KubernetesNode])
+def test_parametrized_node_in_simple_pipeline(caplog, node_class):
+    node = get_parametrized_node(node_class)
+    pipeline_obj = pipeline([node])
+    catalog = DataCatalog()
+    catalog.add_feed_dict(
+        {
+            "int_number_ds_in": 10,
+            "int_number_ds_out": 20,
+        }
+    )
+
+    caplog.set_level(logging.DEBUG, logger="kedro")
+    successful_run_msg = "Pipeline execution completed successfully."
+
+    SequentialRunner().run(pipeline_obj, catalog)
+
+    assert successful_run_msg in caplog.text
+
+
+# def test_data_science_pipeline(caplog, dummy_data, dummy_parameters):
+#     pipeline_obj = pipeline(
+#         [
+#             ec_node(
+#                 func=lambda x: x,
+#                 inputs=["model_input_table@pandas", "params:model_options"],
+#                 outputs=["X_train", "X_test", "y_train", "y_test"],
+#                 name="node_one",
+#             ),
+#             ec_node(
+#                 func=lambda x: x,
+#                 inputs=["X_train", "y_train"],
+#                 outputs="regressor",
+#                 name="node_two",
+#             ),
+#             ec_node(
+#                 func=lambda x: x,
+#                 inputs=["regressor", "X_test", "y_test"],
+#                 outputs="metrics",
+#                 name="node_three",
+#             ),
+#         ]
+#     )
+#     pipeline = (
+#         pipeline_obj
+#         .from_nodes("split_data_node")
+#         .to_nodes("evaluate_model_node")
+#     )
+#     catalog = DataCatalog()
+#     catalog.add_feed_dict(
+#         {
+#             "model_input_table@pandas" : dummy_data,
+#             "params:model_options": dummy_parameters["model_options"],
+#         }
+#     )
+
+#     caplog.set_level(logging.DEBUG, logger="kedro")
+#     successful_run_msg = "Pipeline execution completed successfully."
+
+#     SequentialRunner().run(pipeline, catalog)
+
+#     assert successful_run_msg in caplog.text
