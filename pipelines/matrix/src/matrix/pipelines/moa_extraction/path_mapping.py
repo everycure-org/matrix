@@ -1,5 +1,7 @@
 """Module containing classes for mapping DrugMechDB paths to the knowledge graph."""
 
+import pandas as pd
+
 from typing import Dict, Any, List
 from tqdm import tqdm
 import abc
@@ -107,14 +109,14 @@ class SetwisePathMapper(PathMapper):
         return paths
 
     def map_single_moa(
-        self, runner: GraphDB, db_entry: Dict[str, Any], synonymizer_endpoint: str, num_attempts: int = 5
+        self, runner: GraphDB, db_entry: Dict[str, Any], drugmechdb_entities: pd.DataFrame, num_attempts: int = 5
     ) -> List[neo4j.graph.Path]:
         """Map a single DrugMechDB MOA.
 
         Args:
             runner: The GraphDB object representing the KG.
             db_entry: The DrugMechDB entry.
-            synonymizer_endpoint: The endpoint of the synonymizer.
+            drugmechdb_entities: The normalized DrugMechDB entities.
             num_attempts: The number of attempts to run the query.
 
         Returns:
@@ -123,7 +125,7 @@ class SetwisePathMapper(PathMapper):
 
         def map_entity(name: str, curie: str) -> str:
             """Map a single entity with the synonymizer."""
-            return _map_name_and_curie(name, curie, synonymizer_endpoint)
+            return None  # _map_name_and_curie(name, curie, synonymizer_endpoint)
 
         # Get the drug and disease names and curies
         drug_name = db_entry["graph"]["drug"]
@@ -193,14 +195,14 @@ class TestPathMapper(PathMapper):
         self,
         runner: GraphDB,
         drug_mech_db: List[dict],
-        synonymizer_endpoint: str,
+        drugmechdb_entities: pd.DataFrame,
     ) -> KGPaths:
         """Run the path mapping.
 
         Args:
             runner: The GraphDB object representing the KG.
             drug_mech_db: The DrugMechDB indication paths.
-            synonymizer_endpoint: The endpoint of the synonymizer.
+            drugmechdb_entities: The normalized DrugMechDB entities.
         """
         match_clause = generate_match_clause(self.num_hops, self.unidirectional)
         return_clause = generate_return_clause(limit=self.num_limit)

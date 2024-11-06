@@ -3,6 +3,8 @@ _kg_paths_dataset: &_kg_paths_dataset
   load_args:
     engine: pyarrow
 
+# Raw datasets
+
 moa_extraction.raw.drug_mech_db:
   type: yaml.YAMLDataset
   filepath: ${globals:paths.raw}/drugmechdb/${globals:data_sources.drugmechdb.version}/indication_paths.yaml
@@ -14,6 +16,8 @@ moa_extraction.raw.pairs_for_moa_prediction:
 moa_extraction.raw.drugmechdb_entities:
   type: pandas.ParquetDataset
   filepath: ${globals:paths.raw}/drugmechdb_entities/drugmechdb_entities.parquet
+
+# Intermediate and output datasets
 
 moa_extraction.feat.category_encoder:
   type: pickle.PickleDataset

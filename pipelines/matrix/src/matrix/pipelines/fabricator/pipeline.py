@@ -93,5 +93,11 @@ def create_pipeline(**kwargs) -> Pipeline:
                 outputs="moa_extraction.raw.drug_mech_db",
                 name="create_indication_paths",
             ),
+            node(
+                func=fabricate_datasets,
+                inputs=["params:fabricator.drugmechdb_entities"],
+                outputs={"entities": "moa_extraction.raw.drugmechdb_entities"},
+                name="create_drugmechdb_entities",
+            ),
         ]
     )
