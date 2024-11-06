@@ -41,7 +41,7 @@ def cli():
 @click.option("--username", type=str, required=True, help="Specify the username to use")
 @click.option("--namespace", type=str, default="argo-workflows", help="Specify a custom namespace")
 @click.option("--run-name", type=str, default=None, help="Specify a custom run name, defaults to branch")
-@click.option("--pipeline", type=str, default="__default__", help="Specify which pipeline to execute")
+@click.option("--pipeline", type=str, required=True, help="Specify which pipeline to execute")
 @click.option("--verbose", "-v", is_flag=True, default=False, help="Enable verbose output")
 @click.option("--dry-run", "-d", is_flag=True, default=False, help="Does everything except submit the workflow")
 @click.option("--from-nodes", type=str, default="", help="Specify nodes to run from", callback=split_string)
@@ -51,14 +51,17 @@ def submit(username: str, namespace: str, run_name: str, pipeline: str, from_nod
     if verbose:
         log.setLevel(logging.DEBUG)
 
-    run_name = get_run_name(run_name)
-
-    if pipeline not in kedro_pipelines:
-        raise ValueError(f"Pipeline requested for execution {pipeline} not included in workflow!")
+    if pipeline not in kedro_pipelines.keys():
+        raise ValueError("Pipeline requested for execution not found")
+    
+    if pipeline in ["fabricator", "test"]:
+        raise ValueError("Submitting test pipeline to Argo will result in overwriting source data")
     
     pipeline_obj = kedro_pipelines[pipeline]
     if from_nodes:
         pipeline_obj = pipeline_obj.from_nodes(*from_nodes)
+
+    run_name = get_run_name(run_name)
 
     _submit(
         username=username,
