@@ -7,11 +7,6 @@ The matrix pipeline is our main codebase in the Every Cure organization. Its goa
 ![](../assets/img/pipeline_stages.drawio.svg)
 
 
-## Overview
-
-Roughly speaking, our pipeline consists of five logical stages, i.e., ingestion, integration, embedding, modelling, and evaluation.
-
-![](../assets/img/status.drawio.svg)
 
 ### Preprocessing
 
