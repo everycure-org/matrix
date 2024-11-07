@@ -1,5 +1,6 @@
 from typing import List
 
+from matrix.argo import fuse
 from matrix.kedro_extension import ArgoNode
 from kedro.pipeline import Pipeline
 
@@ -14,7 +15,7 @@ class ArgoPipeline:
     """
 
     def __init__(self, pipeline: Pipeline):
-        self.nodes = pipeline.nodes
+        self.nodes = fuse(pipeline)
 
     def __len__(self) -> int:
         """Get the number of nodes in the pipeline."""
