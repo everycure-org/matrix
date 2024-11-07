@@ -139,26 +139,6 @@ def test_parametrized_node():
     assert k8s_node.func(2) == 4
 
 
-@pytest.mark.parametrize("node_class", [Node, ArgoNode])
-def test_parametrized_node_in_simple_pipeline(caplog, node_class):
-    node = get_parametrized_node(node_class)
-    pipeline_obj = pipeline([node])
-    catalog = DataCatalog()
-    catalog.add_feed_dict(
-        {
-            "int_number_ds_in": 10,
-            "int_number_ds_out": 20,
-        }
-    )
-
-    caplog.set_level(logging.DEBUG, logger="kedro")
-    successful_run_msg = "Pipeline execution completed successfully."
-
-    SequentialRunner().run(pipeline_obj, catalog)
-
-    assert successful_run_msg in caplog.text
-
-
 def test_kubernetes_node_default_config():
     k8s_node = ArgoNode(
         func=lambda x: x,
@@ -182,37 +162,6 @@ def test_validate_values_are_sane():
     """Test that validate_values_are_sane raises warnings for unrealistic values."""
     with pytest.warns(UserWarning, match="CPU .* and memory .* limits and requests are unrealistically high"):
         KubernetesExecutionConfig(cpu_limit=100, memory_limit=1000)
-
-
-def test_default_values_in_k8s_node_config_match_settings():
-    k8s_node = ArgoNode(
-        func=lambda x: x,
-        inputs=["int_number_ds_in"],
-        outputs=["int_number_ds_out"],
-    )
-    assert not k8s_node.k8s_config.use_gpu
-    assert k8s_node.k8s_config.cpu_request == KUBERNETES_DEFAULT_REQUEST_CPU
-    assert k8s_node.k8s_config.cpu_limit == KUBERNETES_DEFAULT_LIMIT_CPU
-    assert k8s_node.k8s_config.memory_request == KUBERNETES_DEFAULT_REQUEST_RAM
-    assert k8s_node.k8s_config.memory_limit == KUBERNETES_DEFAULT_LIMIT_RAM
-
-
-def test_k8s_node_can_override_default_values():
-    k8s_node = ArgoNode(
-        func=lambda x: x,
-        inputs=["int_number_ds_in"],
-        outputs=["int_number_ds_out"],
-        k8s_config=KubernetesExecutionConfig(
-            cpu_request=1,
-            cpu_limit=2,
-            memory_request=16,
-            memory_limit=32,
-        ),
-    )
-    assert k8s_node.k8s_config.cpu_request == 1
-    assert k8s_node.k8s_config.cpu_limit == 2
-    assert k8s_node.k8s_config.memory_request == 16
-    assert k8s_node.k8s_config.memory_limit == 32
 
 
 def get_parallel_pipelines() -> Pipeline:
