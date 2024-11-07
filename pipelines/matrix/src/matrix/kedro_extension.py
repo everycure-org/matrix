@@ -14,6 +14,8 @@ from matrix.settings import (
 class KubernetesExecutionConfig(BaseModel):
     """Configuration for Kubernetes execution.
 
+    Default values are set in settings.py.
+
     Attributes:
         use_gpu (bool): Flag to indicate if GPU should be used.
         cpu_request (float): CPU cores requested for the container. Written in number of cores.
