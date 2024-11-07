@@ -83,6 +83,7 @@ class KubernetesNode(Node):
             "func": self._func,
             "inputs": self._inputs,
             "outputs": self._outputs,
+            "k8s_config": self.k8s_config,
             "name": self._name,
             "namespace": self._namespace,
             "tags": self._tags,
