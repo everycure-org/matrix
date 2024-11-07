@@ -6,7 +6,7 @@ from jinja2 import Environment, FileSystemLoader
 from kedro.pipeline import Pipeline
 from kedro.pipeline.node import Node
 
-from matrix.kedro_extension import ArgoNode
+from matrix.kedro_extension import ArgoNode, KubernetesExecutionConfig
 
 ARGO_TEMPLATE_FILE = "argo_wf_spec.tmpl"
 ARGO_TEMPLATES_DIR_PATH = Path(__file__).parent.parent.parent / "templates"
@@ -250,9 +250,10 @@ class ArgoWorkflowTemplate:
     This class represents an Argo workflow template composed of ArgoDags.
     """
 
-    def __init__(self, kedro_pipelines: Dict[str, Pipeline]):
+    def __init__(self, kedro_pipelines: Dict[str, Pipeline], default_k8s_config: KubernetesExecutionConfig):
         loader = FileSystemLoader(searchpath=ARGO_TEMPLATES_DIR_PATH)
         template_env = Environment(loader=loader, trim_blocks=True, lstrip_blocks=True)
+        self.default_k8s_config = default_k8s_config
         self.template = template_env.get_template(ARGO_TEMPLATE_FILE)
         self.pipelines = {name: ArgoDag(pipeline) for name, pipeline in kedro_pipelines.items()}
 
