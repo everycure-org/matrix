@@ -1,6 +1,6 @@
 from kedro.pipeline import Pipeline, pipeline
-from matrix.kedro_extension import KubernetesExecutionConfig, argo_node
-from matrix.kedro_extension import (
+from matrix.kedro4argo_node import KubernetesExecutionConfig, argo_node
+from matrix.kedro4argo_node import (
     KUBERNETES_DEFAULT_LIMIT_CPU,
     KUBERNETES_DEFAULT_LIMIT_RAM,
     KUBERNETES_DEFAULT_REQUEST_CPU,

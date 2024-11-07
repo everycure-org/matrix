@@ -4,7 +4,7 @@ import pytest
 import yaml
 
 from matrix.argo import clean_name, fuse, FusedNode, generate_argo_config
-from matrix.kedro_extension import KubernetesExecutionConfig, ArgoNode
+from matrix.kedro4argo_node import KubernetesExecutionConfig, ArgoNode
 
 
 def dummy_fn(*args):
