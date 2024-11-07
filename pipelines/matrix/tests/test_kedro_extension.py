@@ -391,12 +391,48 @@ def test_k8s_pipeline_with_fused_nodes():
     assert all(isinstance(node, KubernetesNode) for node in k8s_pipeline.nodes)
 
 
-def test_k8s_node_initialization():
-    k8s_node = KubernetesNode(
-        func=dummy_func,
-        inputs=["int_number_ds_in"],
-        outputs=["int_number_ds_out"],
-    )
-    pipeline = Pipeline(nodes=[k8s_node])
+def test_initialization_of_pipeline_with_k8s_nodes():
+    nodes = [
+        KubernetesNode(
+            func=dummy_func,
+            inputs=["int_number_ds_in"],
+            outputs=["int_number_ds_out"],
+            k8s_config=KubernetesExecutionConfig(
+                cpu_request=1,
+                cpu_limit=2,
+                memory_request=16,
+                memory_limit=32,
+                use_gpu=True,
+            ),
+        ),
+        KubernetesNode(
+            func=dummy_func,
+            inputs=["int_number_ds_out"],
+            outputs=["int_number_ds_out_2"],
+            k8s_config=KubernetesExecutionConfig(
+                cpu_request=1,
+                cpu_limit=2,
+                memory_request=16,
+                memory_limit=32,
+                use_gpu=True,
+            ),
+        ),
+    ]
 
-    assert isinstance(pipeline.nodes[0], KubernetesNode)
+    k8s_pipeline_without_tags = Pipeline(
+        nodes=nodes,
+    )
+
+    k8s_pipeline_with_tags = Pipeline(
+        nodes=nodes,
+        tags=["argowf.fuse", "argowf.fuse-group.dummy"],
+    )
+
+    assert isinstance(k8s_pipeline_without_tags.nodes[0], KubernetesNode)
+    assert isinstance(k8s_pipeline_without_tags.nodes[1], KubernetesNode)
+
+    assert isinstance(k8s_pipeline_with_tags.nodes[0], KubernetesNode)
+    assert isinstance(k8s_pipeline_with_tags.nodes[1], KubernetesNode)
+
+    assert k8s_pipeline_with_tags.nodes[0].tags == ["argowf.fuse", "argowf.fuse-group.dummy"]
+    assert k8s_pipeline_with_tags.nodes[1].tags == ["argowf.fuse", "argowf.fuse-group.dummy"]
