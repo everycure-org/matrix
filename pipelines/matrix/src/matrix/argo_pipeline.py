@@ -1,6 +1,7 @@
 from typing import List
 
 from matrix.kedro_extension import ArgoNode
+from kedro.pipeline import Pipeline
 
 
 class ArgoPipeline:
@@ -12,13 +13,14 @@ class ArgoPipeline:
         nodes: List of ArgoNode objects representing the pipeline tasks.
     """
 
-    def __init__(self, nodes: List[ArgoNode]):
-        self.nodes = nodes
+    def __init__(self, pipeline: Pipeline):
+        self.nodes = pipeline.nodes
 
     def __len__(self) -> int:
         """Get the number of nodes in the pipeline."""
         return len(self.nodes)
 
+    @property
     def tasks(self) -> List[ArgoNode]:
         """Get Argo tasks of the pipeline.
 
