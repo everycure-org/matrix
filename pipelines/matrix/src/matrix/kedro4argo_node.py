@@ -53,7 +53,7 @@ class KubernetesExecutionConfig(BaseModel):
     @model_validator(mode="after")
     def validate_values_are_sane(self) -> "KubernetesExecutionConfig":
         """Validate that CPU and memory limits and requests are not too high."""
-        if self.cpu_limit > 64 or self.memory_limit > 512:
+        if self.cpu_limit > KUBERNETES_DEFAULT_LIMIT_CPU or self.memory_limit > KUBERNETES_DEFAULT_LIMIT_RAM:
             warnings.warn(
                 f"CPU (limit: {self.cpu_limit}, request: {self.cpu_request}) and memory (limit: {self.memory_limit}, request: {self.memory_request}) limits and requests are unrealistically high - are you sure they were set in Gb and not in Mi?"
             )
