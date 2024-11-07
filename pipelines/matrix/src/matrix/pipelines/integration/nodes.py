@@ -85,7 +85,7 @@ def _apply_transformations(
 
 
 @inject_object()
-def filer_unified_kg_nodes(
+def prefilter_unified_kg_nodes(
     nodes: DataFrame,
     transformations: List[Tuple[Callable, Dict[str, Any]]],
 ) -> DataFrame:
@@ -118,6 +118,30 @@ def filter_unified_kg_edges(
     logger.info(f"Number of edges after filtering: {new_edges_count}, cut out {edges_count - new_edges_count} edges")
 
     return _apply_transformations(edges, transformations, biolink_predicates=biolink_predicates)
+
+
+def filter_nodes_without_edges(
+    nodes: DataFrame,
+    edges: DataFrame,
+) -> DataFrame:
+    """Function to filter nodes without edges.
+
+    Args:
+        nodes: nodes df
+        edges: edge df
+    Returns"
+        Final dataframe of nodes with edges
+    """
+
+    # Construct list of edges
+    edge_nodes = (
+        edges.withColumn("id", F.col("subject"))
+        .unionByName(edges.withColumn("id", F.col("object")))
+        .select("id")
+        .distinct()
+    )
+
+    return nodes.alias("nodes").join(edge_nodes, on="id").select("nodes.*")
 
 
 @memory.cache
