@@ -14,10 +14,12 @@
 ### `requirements.*` files
 
 - define our python requirements. They are compiled through `uv` as can be seen in the `make lock` command.
+<!--
 
 ### `trivy.yaml` file
 
 - used for scanning our docker images for licenses we are wary of and want to avoid using. 
+-->
 
 ## Folders
 
