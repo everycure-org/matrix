@@ -45,3 +45,4 @@ openai
 langchain-openai
 langchain
 openpyxl
+jsonpath-ng

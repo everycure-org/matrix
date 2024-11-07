@@ -18,6 +18,7 @@ from tenacity import (
     wait_exponential,
 )
 from tqdm.asyncio import tqdm_asyncio
+from jsonpath_ng import parse
 
 from matrix.schemas.knowledge_graph import KGEdgeSchema, KGNodeSchema
 
@@ -268,7 +269,7 @@ async def hit_node_norm_service(
     session: aiohttp.ClientSession,
     conflate: bool = True,
     drug_chemical_conflate: bool = True,
-    att_to_get: str = "identifier",
+    json_path_expr: str = "$.id.identifier",
 ):
     """Hits the node normalization service with a list of curies using aiohttp.
 
@@ -280,7 +281,7 @@ async def hit_node_norm_service(
         session (aiohttp.ClientSession): The aiohttp session to use for requests.
         conflate (bool, optional): Whether to conflate the nodes.
         drug_chemical_conflate (bool, optional): Whether to conflate the drug and chemical nodes.
-
+        json_path_expr: JSON path expression for attribute to get
     Returns:
         Dict[str, str]: A dictionary of the form {id: normalized_id}.
 
@@ -297,7 +298,7 @@ async def hit_node_norm_service(
         if resp.status == 200:
             response_json = await resp.json()
             logger.debug(response_json)
-            return _extract_ids(response_json, att_to_get)
+            return _extract_ids(response_json, json_path_expr)
         else:
             logger.warning(f"Node norm response code: {resp.status}")
             resp_text = await resp.text()
@@ -306,33 +307,13 @@ async def hit_node_norm_service(
 
 
 # NOTE: we are not taking the label that the API returns, this could actually be important. Do we want the labels/biolink types as well?
-def _extract_ids(response: Dict[str, Any], att_to_get: str = "identifier"):
+def _extract_ids(response: Dict[str, Any], json_path_expr: str):
     ids = {}
-    for k in response:
-        logger.debug(f"Response for key {k}: {response.get(k)}")  # Log the response for each key
-        if att_to_get in ["identifier", "label"]:
-            try:
-                if response.get(k) is None:
-                    logger.warning(f"Response for key {k} is None.")
-                    ids[k] = None
-                else:
-                    ids[k] = response[k]["id"][att_to_get]
-            except KeyError:
-                logger.warning(f"KeyError for {k}: {response[k]}")
-                ids[k] = None
-        elif att_to_get == "type":
-            try:
-                if response.get(k) is None:
-                    logger.warning(f"Response for key {k} is None.")
-                    ids[k] = None
-                else:
-                    if isinstance(response[k]["type"], list):
-                        ids[k] = response[k]["type"][0]
-                    else:
-                        ids[k] = response[k]["type"]
-            except KeyError:
-                logger.warning(f"KeyError for {k}: {response[k]}")
-                ids[k] = None
-        else:
-            raise ValueError(f"Invalid att_to_get: {att_to_get}")
+    for key, item in response.items():
+        logger.debug(f"Response for key {key}: {response.get(key)}")  # Log the response for each key
+        try:
+            ids[key] = parse(json_path_expr).find(item)[0].value
+        except IndexError:
+            logger.warning(f"KeyError for {key}: {item}")
+            ids[key] = None
     return ids
