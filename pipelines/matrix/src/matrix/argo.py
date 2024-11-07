@@ -6,7 +6,7 @@ from jinja2 import Environment, FileSystemLoader
 from kedro.pipeline import Pipeline
 from kedro.pipeline.node import Node
 
-from matrix.kedro_extension import ArgoNode
+from matrix.kedro4argo_node import ArgoNode
 
 ARGO_TEMPLATE_FILE = "argo_wf_spec.tmpl"
 ARGO_TEMPLATES_DIR_PATH = Path(__file__).parent.parent.parent / "templates"

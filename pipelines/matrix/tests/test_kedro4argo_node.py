@@ -9,11 +9,11 @@ from kedro.pipeline.node import Node
 import logging
 import pytest
 
-from matrix.kedro_extension import KubernetesExecutionConfig, ArgoNode, argo_node
+from matrix.kedro4argo_node import KubernetesExecutionConfig, ArgoNode, argo_node
 from kedro.io import DataCatalog
 from kedro.runner import SequentialRunner
 
-from matrix.kedro_extension import (
+from matrix.kedro4argo_node import (
     KUBERNETES_DEFAULT_LIMIT_CPU,
     KUBERNETES_DEFAULT_LIMIT_RAM,
     KUBERNETES_DEFAULT_REQUEST_CPU,
