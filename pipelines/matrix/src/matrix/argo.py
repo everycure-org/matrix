@@ -171,14 +171,6 @@ class ArgoDag:
     def __iter__(self):
         return iter(self._tasks)
 
-    def fuse_argo_tasks(self) -> "ArgoDag":
-        """Fuse two pipelines."""
-        raise NotImplementedError("Not implemented")
-
-    def get_argo_template(self) -> str:
-        """Get Argo template of the pipeline."""
-        raise NotImplementedError("Not implemented")
-
     @staticmethod
     def fuse(pipeline: Pipeline) -> List[FusedNode]:
         """Function to fuse given pipeline.
@@ -251,6 +243,38 @@ class ArgoDag:
         return fused
 
 
+class ArgoWorkflowTemplate:
+    """Argo workflow template for EveryCure workflows, based on Kedro and Neo4j.
+
+    This class represents an Argo workflow template composed of ArgoDags.
+    """
+
+    def __init__(self, kedro_pipelines: Dict[str, Pipeline]):
+        loader = FileSystemLoader(searchpath=ARGO_TEMPLATES_DIR_PATH)
+        template_env = Environment(loader=loader, trim_blocks=True, lstrip_blocks=True)
+        self.template = template_env.get_template(ARGO_TEMPLATE_FILE)
+        self.pipelines = {name: ArgoDag(pipeline) for name, pipeline in kedro_pipelines.items()}
+
+    def render(
+        self,
+        package_name: str,
+        image: str,
+        image_tag: str,
+        namespace: str,
+        username: str,
+        run_name: str,
+    ) -> str:
+        return self.template.render(
+            package_name=package_name,
+            pipelines=self.pipelines,
+            image=image,
+            image_tag=image_tag,
+            namespace=namespace,
+            username=username,
+            run_name=run_name,
+        )
+
+
 def generate_argo_config(
     image: str,
     run_name: str,
@@ -260,22 +284,13 @@ def generate_argo_config(
     pipelines: Dict[str, Pipeline],
     package_name: str,
 ) -> str:
-    loader = FileSystemLoader(searchpath=ARGO_TEMPLATES_DIR_PATH)
-    template_env = Environment(loader=loader, trim_blocks=True, lstrip_blocks=True)
-    template = template_env.get_template(ARGO_TEMPLATE_FILE)
+    argo_workflow_template = ArgoWorkflowTemplate(pipelines)
 
-    pipeline2argo_pipeline = {}
-    for name, pipeline in pipelines.items():
-        pipeline2argo_pipeline[name] = ArgoDag(pipeline)
-
-    output = template.render(
+    return argo_workflow_template.render(
         package_name=package_name,
-        pipelines=pipeline2argo_pipeline,
         image=image,
         image_tag=image_tag,
         namespace=namespace,
         username=username,
         run_name=run_name,
     )
-
-    return output
