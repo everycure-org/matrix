@@ -20,12 +20,20 @@ sheet for rapid hypothesis testing.
 
 ### Ingestion
 
-The ingestion pipeline aims to ingest all the downstream data in BigQuery, our data warehouse of choice. Data from different sources is assigned metadata for lineage tracking.
+The ingestion pipeline ingests all input data into the workspace of the pipeline. Data from different sources is assigned metadata for lineage tracking.
 
-We've established a lightweight data versioning system to ensure we can easily revert to an older version of the input data if required. All of our data should be stored in Google Cloud Storage (GCS) under the following path:
+We've established a lightweight data versioning system to ensure we can easily revert to
+an older version of the input data if required. All of our data should be stored in
+Google Cloud Storage (GCS) under the following path:
 
 ```
-gs://<bucket>/kedro/data/01_raw/<source>/<version>/<source_specific_files>
+gs://<bucket>/kedro/data/releases/<release_version>/datasets/...
+```
+
+And each run (anything downstream of the KG) that is based on a release stores its data in the following path:
+
+```
+gs://<bucket>/kedro/data/releases/<release_version>/runs/<run_name>/datasets/...
 ```
 
 Next, our pipeline globals provide an explicit listing of the versions that should be used during pipeline run, for instance:
@@ -51,13 +59,18 @@ integration.raw.rtx_kg2.edges:
 Note specifically the use of `globals:data_sources.rtx-kg2` in the definition of the catalog entry. Whenever new data becomes available, code changes are limited to bumping the `versions.sources.<source>` entry in the globals.
 
 !!! info
-    To date our pipeline only ingests data from the RTX-KG2 source.
+    To date our pipeline only ingests 3rd party data from the RTX-KG2 and ROBOKOP sources.
 
 ### Integration
 
 The integration stage aims to produce our internal knowledge-graph, in [biolink](https://biolink.github.io/biolink-model/) format. As we ingest data from different sources, entity resolution becomes a prevalent topic. The integration step consolidates entities across sources to avoid data duplication in the knowledge graph.
 
-There are 3 main steps in the integration pipeline:
+There are 4 main steps in the integration pipeline:
+
+1. **Normalize** the source data to a common format.
+2. **Synonimize** the nodes, to ensure that nodes that describe the same concept have the same ID
+3. **Union & Deduplicate**: Brings all KGs together and deduplicates nodes and edges
+4. **Filtering**: Applies a series of filtering steps to remove nodes and edges based on custom "business logic"
 
 ![](../assets/img/kg_integration_approach.excalidraw.svg)
 
@@ -69,7 +82,7 @@ Our embeddings pipeline computes vectorized representations of the entities in t
 2. Topological Embedding Computation - We have implemented options for GraphSAGE, and Node2Vec algorithms for computation of topological embeddings. Dimensionality reduction (e.g. PCA) has been modularized to enable flexible experimentation. 
 
 !!! info
-    Our graph database, i.e., [Neo4J](https://neo4j.com/docs/graph-data-science/current/algorithms/) comes with out-of-the-box functionality to compute both node and topological embeddings in-situ. The Kedro pipeline orchestrates the computation of these.
+    Our graph database, i.e., [Neo4J](https://neo4j.com/docs/graph-data-science/current/algorithms/) comes with out-of-the-box functionality to compute both node and topological embeddings in-situ. The Kedro pipeline orchestrates the computation of these. However, we aim to move away from this and compute the node embeddings in a separate sub-pipeline, leveraging open source libraries such as Ray and the Hugging Face transformer library to have more control and flexibility over our node embeddings (and to parallelize the computation with many GPUs).
 
 
 ### Modelling 
