@@ -536,12 +536,26 @@ def test_argo_workflow_template_with_per_task_k8s_config() -> None:
 
     argo_workflow_template_common_test(spec)
 
-    # assert that resource in kedro template is default
     kedro_template = next(t for t in spec["templates"] if t["name"] == "kedro")
-    assert kedro_template["resources"] == {
-        "requests": {"memory": "64Gi", "cpu": "4"},
-        "limits": {"memory": "64Gi", "cpu": "16"},
-    }, "Kedro template should have correct resource limits"
+    assert kedro_template["container"]["resources"] == {
+        "requests": {
+            "memory": f"{int(KUBERNETES_DEFAULT_REQUEST_RAM)}Gi",
+            "cpu": int(KUBERNETES_DEFAULT_REQUEST_CPU),
+        },
+        "limits": {
+            "memory": f"{int(KUBERNETES_DEFAULT_LIMIT_RAM)}Gi",
+            "cpu": int(KUBERNETES_DEFAULT_LIMIT_CPU),
+        },
+    }, "Kedro template should have the default resource limits"
+
+    # TODO: Pass these to Argo Workflow Template
+    # test_template = next(t for t in spec["templates"] if t["name"] == "test_pipeline")
+    # cloud_template = next(t for t in spec["templates"] if t["name"] == "cloud_pipeline")
+
+    # assert test_template["container"]["resources"] == {
+    #     "requests": {"memory": "16Gi", "cpu": "1"},
+    #     "limits": {"memory": "32Gi", "cpu": "2"},
+    # }, "test_pipeline template should have correct resource limits"
 
 
 def test_argo_pipeline_without_fusing(parallel_pipelines):
