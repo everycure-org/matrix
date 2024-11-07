@@ -4,14 +4,36 @@ from matrix.kedro_extension import ArgoNode
 
 
 class ArgoPipeline:
-    """Argo pipeline."""
+    """Argo pipeline.
+
+    A class that represents an Argo workflow pipeline composed of ArgoNodes.
+
+    Args:
+        nodes: List of ArgoNode objects representing the pipeline tasks.
+    """
 
     def __init__(self, nodes: List[ArgoNode]):
         self.nodes = nodes
 
-    def get_argo_tasks(self) -> List[ArgoNode]:
-        """Get Argo tasks of the pipeline."""
-        pass
+    def __len__(self) -> int:
+        """Get the number of nodes in the pipeline."""
+        return len(self.nodes)
+
+    def tasks(self) -> List[ArgoNode]:
+        """Get Argo tasks of the pipeline.
+
+        Returns:
+            List[ArgoNode]: List of ArgoNode objects representing pipeline tasks.
+        """
+        return self.nodes
+
+    def kedro_command(self) -> str:
+        """Get the Kedro command for executing the pipeline.
+
+        Returns:
+            str: Kedro command string for pipeline execution.
+        """
+        return "kedro run"  # Basic implementation - may need to be enhanced based on requirements
 
     def fuse_argo_tasks(self) -> "ArgoPipeline":
         """Fuse two pipelines."""
