@@ -88,30 +88,23 @@ Key steps implemented include:
 
 ### Matrix Generation 
 
-The matrix generation step pipeline uses the models trained in the modelling pipeline to generate score for all pairs in the matrix, that is pairs of drugs and diseases from the official EC lists. 
-
-Flags for known positives and negatives are also generated in this pipeline. In addition, we remove any training data from the matrix as they may have artificially high scores. 
-
+The matrix generation pipeline scores all drug-disease pairs using trained models. The process includes flags for known positives and negatives, exclusion of training data for unbiased scoring, and outputs are enriched with metadata and statistics, all exported in an Excel-ready format.
 
 ### Evaluation
 
-The evaluation pipeline computes various metrics in order to assess the performance of the models trained in the previous stages. 
+The evaluation pipeline computes various metrics in order to assess the performance of the models trained in the previous stages. This now supports a broader suite of metrics with enhanced reporting capabilities, including accuracy, F1 Score, Recall@n, AUROC, Hit@k, and MRR. Evaluations are performed using drug-disease pair scores from the matrix generation step, ensuring computational efficiency by avoiding repeated inference.
 
-The input to the evaluation pipeline is a dataset of pairs, complete with scores, from the matrix generation pipeline. By using the matrix generation pipeline as an intermediary, we can avoid repeating the computationally expensive steps of model inference and instead focus on computing metrics.  
+Computed metrics generally fall into three categories:
 
-There are several types of metrics computed in this pipeline, organised into three categories:
-
-1. **Full-matrix ranking metrics**: These metrics focus on how well the model ranks the set of pairs comprising the matrix.
-2. **Disease-specific ranking metrics**: These metrics focus on how well the model ranks drugs for a specific disease.
-3. **Ground truth classification metrics**: These metrics focus on the model's ability to distinguish between known positive and known negative drug-disease pairs.
+1. **Full-matrix ranking metrics**: These metrics focus on how well the model ranks the full set of drug-disease pairs comprising the matrix.
+2. **Disease-specific ranking metrics**: These metrics assess ranking precision for each specific disease.
+3. **Ground truth classification metrics**: These metrics examine the model's ability to distinguish between known positive and known negative drug-disease pairs.
 
 More details on the metrics computed in each category can be found in the [evaluation deep-dive](../data_science/evaluation_deep_dive.md)
 
-
-
 ### Inference (requests)
 
-Our inference pipeline can be used for running ad-hoc requests coming from medical team/stakeholders to generate drug-disease predictions for a specifid drug, disease or a pair of both. The drugs/diseases to predict against are coming from our official drug and disease lists (which are versioned in the .env file). The pipeline is running inference using a single/several trained models stored as artifacts in MLFlow and utilizes the same version of data that was used for training. 
+Our inference pipeline can be used for running ad-hoc on-demand predictions for specific drugs, diseases, or drug-disease pairs requested by the medical team or other stakeholders.  This uses versioned (in the .env file) drug and disease lists and relies on either single or several trained models stored as artifacts in MLFlow. This ensures consistency with the training data version for reliable and reproducible predictions. 
 
 ![](../assets/img/inference.drawio.png)
 
