@@ -219,6 +219,7 @@ def normalize_kg(
     nodes: ps.sql.DataFrame,
     edges: ps.sql.DataFrame,
     api_endpoint: str,
+    json_path_expr="$.id.identifier",
     conflate: bool = True,
     drug_chemical_conflate: bool = True,
     batch_size: int = 100,
@@ -235,7 +236,7 @@ def normalize_kg(
     node_ids = nodes.select("id").orderBy("id").toPandas()["id"].to_list()
     logger.info(f"collected {len(node_ids)} node ids for normalization. Performing normalization...")
     node_id_map = batch_map_ids(
-        frozenset(node_ids), api_endpoint, batch_size, parallelism, conflate, drug_chemical_conflate
+        frozenset(node_ids), api_endpoint, json_path_expr, batch_size, parallelism, conflate, drug_chemical_conflate
     )
 
     # convert dict back to a dataframe to parallelize the mapping
