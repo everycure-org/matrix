@@ -423,16 +423,23 @@ def test_initialization_of_pipeline_with_k8s_nodes():
         nodes=nodes,
     )
 
+    assert isinstance(k8s_pipeline_without_tags.nodes[0], KubernetesNode)
+    assert isinstance(k8s_pipeline_without_tags.nodes[1], KubernetesNode)
+
+    k8s_pipeline_without_tags_from_function = pipeline(nodes)
+
+    assert isinstance(k8s_pipeline_without_tags_from_function.nodes[0], KubernetesNode)
+    assert isinstance(k8s_pipeline_without_tags_from_function.nodes[1], KubernetesNode)
+
     k8s_pipeline_with_tags = Pipeline(
         nodes=nodes,
         tags=["argowf.fuse", "argowf.fuse-group.dummy"],
     )
 
-    assert isinstance(k8s_pipeline_without_tags.nodes[0], KubernetesNode)
-    assert isinstance(k8s_pipeline_without_tags.nodes[1], KubernetesNode)
-
     assert isinstance(k8s_pipeline_with_tags.nodes[0], KubernetesNode)
     assert isinstance(k8s_pipeline_with_tags.nodes[1], KubernetesNode)
 
-    assert k8s_pipeline_with_tags.nodes[0].tags == ["argowf.fuse", "argowf.fuse-group.dummy"]
-    assert k8s_pipeline_with_tags.nodes[1].tags == ["argowf.fuse", "argowf.fuse-group.dummy"]
+    k8s_pipeline_with_tags_from_function = pipeline(nodes, tags=["argowf.fuse", "argowf.fuse-group.dummy"])
+
+    assert isinstance(k8s_pipeline_with_tags_from_function.nodes[0], KubernetesNode)
+    assert isinstance(k8s_pipeline_with_tags_from_function.nodes[1], KubernetesNode)
