@@ -10,6 +10,7 @@ from matrix.kedro_extension import ArgoNode
 
 ARGO_TEMPLATE_FILE = "argo_wf_spec.tmpl"
 ARGO_TEMPLATES_DIR_PATH = Path(__file__).parent.parent.parent / "templates"
+ARGO_DEFAULT_TEMPLATE_FOR_TASKS = "kedro"
 
 
 class FusedNode(Node):
@@ -121,46 +122,59 @@ class FusedNode(Node):
         return [el.split("@")[0] for el in elements if not el.startswith("params:")]
 
 
-class ArgoPipeline:
-    """Argo pipeline.
+class ArgoTask:
+    def __init__(self, node: FusedNode):
+        self.name = self.clean_name(node.name)
+        self.nodes = node.nodes
+        self.deps = [self.clean_name(val.name) for val in sorted(node._parents)]
+        self.tags = node.tags
+        self.template = ARGO_DEFAULT_TEMPLATE_FOR_TASKS
 
-    A class that represents an Argo workflow pipeline composed of ArgoNodes.
+    @staticmethod
+    def clean_name(name: str) -> str:
+        """Function to clean the node name.
+
+        Args:
+            name: name of the node
+        Returns:
+            Clean node name, according to Argo's requirements
+        """
+        return re.sub(r"[\W_]+", "-", name).strip("-")
+
+
+class ArgoPipeline:
+    """Argo pipeline. This class represents an Argo workflow pipeline composed of ArgoTasks.
 
     Args:
-        nodes: List of ArgoNode objects representing the pipeline tasks.
+        pipeline: Kedro pipeline
     """
 
     def __init__(self, pipeline: Pipeline):
-        self.nodes = self.fuse(pipeline)
+        fused_nodes = self.fuse(pipeline)
+        self._tasks = []
+        for node in fused_nodes:
+            self._tasks.append(ArgoTask(node))
 
     def __len__(self) -> int:
-        """Get the number of nodes in the pipeline."""
-        return len(self.nodes)
+        """Get the number of tasks in the pipeline."""
+        return len(self._tasks)
 
     @property
-    def tasks(self) -> List[ArgoNode]:
+    def tasks(self) -> List[ArgoTask]:
         """Get Argo tasks of the pipeline.
 
         Returns:
-            List[ArgoNode]: List of ArgoNode objects representing pipeline tasks.
+            List[ArgoTask]: List of ArgoTask objects representing pipeline tasks.
         """
-        return self.nodes
-
-    def kedro_command(self) -> str:
-        """Get the Kedro command for executing the pipeline.
-
-        Returns:
-            str: Kedro command string for pipeline execution.
-        """
-        return "kedro run"  # Basic implementation - may need to be enhanced based on requirements
+        return self._tasks
 
     def fuse_argo_tasks(self) -> "ArgoPipeline":
         """Fuse two pipelines."""
-        pass
+        raise NotImplementedError("Not implemented")
 
     def get_argo_template(self) -> str:
         """Get Argo template of the pipeline."""
-        pass
+        raise NotImplementedError("Not implemented")
 
     @staticmethod
     def fuse(pipeline: Pipeline) -> List[FusedNode]:
@@ -234,146 +248,6 @@ class ArgoPipeline:
         return fused
 
 
-class ArgoTask:
-    def __init__(self, depth: int):
-        self.depth = depth
-        self._nodes = []
-        self._parents = set()
-        self._inputs = []
-        self.k8s_config = None
-
-    def add_node(self, node):
-        """Function to add node to group."""
-        self._nodes.append(node)
-        if isinstance(node, ArgoNode) and self.k8s_config is None:
-            self.k8s_config = node.k8s_config
-        elif isinstance(node, ArgoNode):
-            self.k8s_config.fuse_config(node.k8s_config)
-
-    def add_parents(self, parents: List) -> None:
-        """Function to set the parents of the group."""
-        self._parents.update(set(parents))
-
-    # TODO: This is not used. Delete during refactoring.
-    def fuses_with(self, node) -> bool:
-        """Function verify fusability."""
-        # If not is not fusable, abort
-        if not self.is_fusable:
-            return False
-
-        # If fusing group does not match, abort
-        if not self.fuse_group == self.get_fuse_group(node.tags):
-            return False
-
-        # Otherwise, fusable if connected
-        return set(self.clean_dependencies(node.inputs)) & set(self.clean_dependencies(self.outputs))
-
-    @property
-    def is_fusable(self) -> bool:
-        """Check whether is fusable."""
-        return "argowf.fuse" in self.tags
-
-    @property
-    def fuse_group(self) -> Optional[str]:
-        """Retrieve fuse group."""
-        return self.get_fuse_group(self.tags)
-
-    @property
-    def nodes(self) -> str:
-        """Retrieve contained nodes."""
-        return ",".join([node.name for node in self._nodes])
-
-    @property
-    def outputs(self) -> set[str]:
-        """Retrieve output datasets."""
-        return set().union(*[self.clean_dependencies(node.outputs) for node in self._nodes])
-
-    @property
-    def tags(self) -> set[str]:
-        """Retrieve tags."""
-        return set().union(*[node.tags for node in self._nodes])
-
-    @property
-    def name(self) -> str:
-        """Retrieve name of fusedNode."""
-        if self.is_fusable and len(self._nodes) > 1:
-            return self.fuse_group
-        # TODO: Consider if this shouldn't raise an exception
-        elif len(self._nodes) == 0:
-            return "empty"
-
-        # If not fusable, revert to name of node
-        return self._nodes[0].name
-
-    @property
-    def _unique_key(self) -> tuple[Any, Any] | Any | tuple:
-        def hashable(value: Any) -> tuple[Any, Any] | Any | tuple:
-            if isinstance(value, dict):
-                # we sort it because a node with inputs/outputs
-                # {"arg1": "a", "arg2": "b"} is equivalent to
-                # a node with inputs/outputs {"arg2": "b", "arg1": "a"}
-                return tuple(sorted(value.items()))
-            if isinstance(value, list):
-                return tuple(value)
-            return value
-
-        return self.name, hashable(self._nodes)
-
-    @staticmethod
-    def get_fuse_group(tags: str) -> Optional[str]:
-        """Function to retrieve fuse group."""
-        for tag in tags:
-            if tag.startswith("argowf.fuse-group."):
-                return tag[len("argowf.fuse-group.") :]
-
-        return None
-
-    @staticmethod
-    def clean_dependencies(elements) -> List[str]:
-        """Function to clean node dependencies.
-
-        Operates by removing params: from the list and dismissing
-        the transcoding operator.
-        """
-        return [el.split("@")[0] for el in elements if not el.startswith("params:")]
-
-
-def get_dependencies(fused_pipeline: List[FusedNode]):
-    """Function to yield node dependencies to render Argo template.
-
-    Args:
-        fused_pipeline: fused pipeline
-    Return:
-        Dictionary to render Argo template
-    """
-    deps_dict = [
-        {
-            "name": clean_name(fuse.name),
-            "nodes": fuse.nodes,
-            "deps": [clean_name(val.name) for val in sorted(fuse._parents)],
-            "tags": fuse.tags,
-            **{
-                tag.split("-")[0][len("argowf.") :]: tag.split("-")[1]
-                for tag in fuse.tags
-                if tag.startswith("argowf.") and "-" in tag
-            },
-        }
-        for fuse in fused_pipeline
-    ]
-    return sorted(deps_dict, key=lambda d: d["name"])
-
-
-def clean_name(name: str) -> str:
-    """Function to clean the node name.
-
-    Args:
-        name: name of the node
-    Returns:
-        Clean node name, according to Argo's requirements
-    """
-    return re.sub(r"[\W_]+", "-", name).strip("-")
-
-
 def generate_argo_config(
     image: str,
     run_name: str,
@@ -387,17 +261,13 @@ def generate_argo_config(
     template_env = Environment(loader=loader, trim_blocks=True, lstrip_blocks=True)
     template = template_env.get_template(ARGO_TEMPLATE_FILE)
 
-    pipeline2dependencies = {}
+    pipeline2argo_pipeline = {}
     for name, pipeline in pipelines.items():
-        # Fuse nodes in topological order to avoid constant recreation of Neo4j
-        # TODO: refactor this to use ArgoNode.
-        #   (1) FuseNode should be replaced by K8sNode OR new FusedPipeline object.
-        #   (2) Get Dependencies should be internal to ArgoNode, removing if from here.
-        pipeline2dependencies[name] = get_dependencies(ArgoPipeline.fuse(pipeline))
+        pipeline2argo_pipeline[name] = ArgoPipeline(pipeline)
 
     output = template.render(
         package_name=package_name,
-        pipelines=pipeline2dependencies,
+        pipelines=pipeline2argo_pipeline,
         image=image,
         image_tag=image_tag,
         namespace=namespace,
