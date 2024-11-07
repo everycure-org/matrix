@@ -260,10 +260,10 @@ def test_build_push_docker(mock_run_subprocess: None) -> None:
     mock_run_subprocess.assert_called_once_with("make docker_push TAG=testuser", stream_output=True)
 
 
-@patch("matrix.cli_commands.submit.generate_argo_config")
-def test_build_argo_template(mock_generate_argo_config: None) -> None:
+@patch("matrix.cli_commands.submit.ArgoWorkflowTemplate")
+def test_build_argo_template(mock_argo_workflow_template: None) -> None:
     build_argo_template("test_run", "testuser", "test_namespace", {"test": MagicMock()})
-    mock_generate_argo_config.assert_called_once()
+    mock_argo_workflow_template.assert_called_once()
 
 
 def test_ensure_namespace_existing(mock_run_subprocess: None) -> None:

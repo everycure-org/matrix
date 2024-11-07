@@ -280,25 +280,3 @@ class ArgoWorkflowTemplate:
             username=username,
             run_name=run_name,
         )
-
-
-def generate_argo_config(
-    image: str,
-    run_name: str,
-    image_tag: str,
-    namespace: str,
-    username: str,
-    pipelines: Dict[str, Pipeline],
-    package_name: str,
-    default_k8s_config: KubernetesExecutionConfig,
-) -> str:
-    argo_workflow_template = ArgoWorkflowTemplate(pipelines, default_k8s_config)
-
-    return argo_workflow_template.render(
-        package_name=package_name,
-        image=image,
-        image_tag=image_tag,
-        namespace=namespace,
-        username=username,
-        run_name=run_name,
-    )
