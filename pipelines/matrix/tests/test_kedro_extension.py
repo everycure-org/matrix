@@ -1,3 +1,4 @@
+from typing import Tuple
 from kedro.pipeline import pipeline, Pipeline
 from kedro.pipeline.node import node
 from sklearn.linear_model import LinearRegression
@@ -215,7 +216,8 @@ def test_k8s_node_can_override_default_values():
     assert k8s_node.k8s_config.memory_limit == 32
 
 
-def get_parallel_pipelines() -> Pipeline:
+@pytest.fixture()
+def parallel_pipelines() -> Tuple[Pipeline, Pipeline]:
     def split_data(data: pd.DataFrame, parameters: dict) -> tuple:
         """Splits data into features and targets training and test sets.
 
@@ -329,8 +331,8 @@ def get_parallel_pipelines() -> Pipeline:
     return k8s_pipeline, standard_pipeline
 
 
-def test_parallel_pipelines(caplog):
-    k8s_pipeline, standard_pipeline = get_parallel_pipelines()
+def test_parallel_pipelines(caplog, parallel_pipelines):
+    k8s_pipeline, standard_pipeline = parallel_pipelines
 
     assert k8s_pipeline.nodes[0].tags == {"k8s_pipeline"}
     assert standard_pipeline.nodes[0].tags == {"standard_pipeline"}
@@ -386,8 +388,8 @@ def test_fuse_config() -> None:
     assert k8s_config.use_gpu
 
 
-def test_k8s_pipeline_with_fused_nodes():
-    k8s_pipeline, standard_pipeline = get_parallel_pipelines()
+def test_k8s_pipeline_with_fused_nodes(parallel_pipelines):
+    k8s_pipeline, standard_pipeline = parallel_pipelines
     assert all(isinstance(node, ArgoNode) for node in k8s_pipeline.nodes)
 
 
