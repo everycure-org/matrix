@@ -37,8 +37,34 @@ The training process is illustrated by the following diagram:
 
 ![Training process](../assets/img/MOA_extraction/path_training.svg)
 
-
 ## Implementation
+
+The following diagram illustrates the overall MOA extraction pipeline:
+
+![MOA pipeline overview](../assets/img/MOA_extraction/MOA_pipeline_overview.svg)
+
+Currently, there are two separate pipelines which must be run in sequence:
+
+1. **DrugMechDB to KG mapping pipeline** This is run once locally. Uses a Node synonymizer to map all entities appearing DrugMechDB to the KG.
+2. **Main MOA extraction pipeline** Performs all other functionality. 
+
+
+The main MOA extraction pipeline itself has four separate components. 
+
+1. **Preprocessing**:
+    - Map paths in the DrugMechDB to the knowledge graph using the mapped DrugMechDB entities. Report the success rate.
+    - Performs test/train split. 
+    - Any other preprocessing task such as preparing one-hot encoders for the node categories and edge predicates. 
+2. **Training**:
+    - Sample negative paths. 
+    - Hyperparameter search and training of the binary classifier using:
+        - training portion of the positive indication paths dataset
+        - full positive indication paths dataset (both test and train)
+3. **Evaluation**:
+    - Make MOA predictions for pairs appearing in the test set of the positive indication paths dataset.
+    - Evaluate the predictions using Hit@k and Mean Reciprocal Rank (MRR) metrics.
+4. **Prediction**:
+    - Generates MOA predictions for a given set of drug-disease pairs.
 
 ## Configuration details
 
