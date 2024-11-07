@@ -3,12 +3,13 @@ import warnings
 from kedro.pipeline.node import Node
 from pydantic import BaseModel, field_validator, model_validator
 
-from matrix.settings import (
-    KUBERNETES_DEFAULT_REQUEST_CPU,
-    KUBERNETES_DEFAULT_LIMIT_CPU,
-    KUBERNETES_DEFAULT_LIMIT_RAM,
-    KUBERNETES_DEFAULT_REQUEST_RAM,
-)
+# Values are in Gb
+KUBERNETES_DEFAULT_LIMIT_RAM = 64
+KUBERNETES_DEFAULT_REQUEST_RAM = 64
+
+# Values are in number of cores
+KUBERNETES_DEFAULT_LIMIT_CPU = 16
+KUBERNETES_DEFAULT_REQUEST_CPU = 4
 
 
 class KubernetesExecutionConfig(BaseModel):

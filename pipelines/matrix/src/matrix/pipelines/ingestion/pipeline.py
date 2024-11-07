@@ -1,12 +1,14 @@
 import pyspark.sql.functions as F
 from kedro.pipeline import Pipeline, pipeline
-from matrix.kedro_extension import KubernetesExecutionConfig, argo_node
-from matrix.settings import (
-    KUBERNETES_DEFAULT_LIMIT_CPU,
-    KUBERNETES_DEFAULT_LIMIT_RAM,
+from matrix.kedro_extension import (
     KUBERNETES_DEFAULT_REQUEST_CPU,
+    KUBERNETES_DEFAULT_LIMIT_CPU,
     KUBERNETES_DEFAULT_REQUEST_RAM,
+    KUBERNETES_DEFAULT_LIMIT_RAM,
+    KubernetesExecutionConfig,
+    argo_node,
 )
+
 
 ingestion_k8s_node_config = KubernetesExecutionConfig(
     cpu_request=KUBERNETES_DEFAULT_REQUEST_CPU,
