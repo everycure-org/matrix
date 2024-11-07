@@ -3,7 +3,7 @@ from kedro.pipeline import Pipeline
 import pytest
 import yaml
 
-from matrix.argo import ArgoDag, ArgoTask, FusedNode, generate_argo_config
+from matrix.argo import ArgoDag, ArgoTask, ArgoWorkflowTemplate, FusedNode
 from matrix.kedro_extension import KubernetesExecutionConfig, ArgoNode
 
 
@@ -374,7 +374,7 @@ def test_clean_dependencies() -> None:
     assert cleaned == ["dataset_a", "dataset_b"]
 
 
-def test_generate_argo_config() -> None:
+def test_argo_workflow_template() -> None:
     image_name = "us-central1-docker.pkg.dev/mtrx-hub-dev-3of/matrix-images/matrix"
     run_name = "test_run"
     image_tag = "test_tag"
@@ -395,17 +395,24 @@ def test_generate_argo_config() -> None:
             ]
         ),
     }
+    default_k8s_config = KubernetesExecutionConfig(
+        cpu_request=1,
+        cpu_limit=2,
+        memory_request=16,
+        memory_limit=32,
+        use_gpu=False,
+    )
 
-    argo_config = generate_argo_config(
+    argo_workflow_template = ArgoWorkflowTemplate(pipelines, default_k8s_config)
+
+    argo_config = argo_workflow_template.render(
+        package_name="test_package",
         image=image_name,
-        run_name=run_name,
         image_tag=image_tag,
         namespace=namespace,
         username=username,
-        pipelines=pipelines,
-        package_name="matrix",
+        run_name=run_name,
     )
-
     assert argo_config is not None
 
     parsed_config = yaml.safe_load(argo_config)

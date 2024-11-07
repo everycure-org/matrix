@@ -253,9 +253,14 @@ class ArgoWorkflowTemplate:
     def __init__(self, kedro_pipelines: Dict[str, Pipeline], default_k8s_config: KubernetesExecutionConfig):
         loader = FileSystemLoader(searchpath=ARGO_TEMPLATES_DIR_PATH)
         template_env = Environment(loader=loader, trim_blocks=True, lstrip_blocks=True)
-        self.default_k8s_config = default_k8s_config
-        self.template = template_env.get_template(ARGO_TEMPLATE_FILE)
-        self.pipelines = {name: ArgoDag(pipeline) for name, pipeline in kedro_pipelines.items()}
+        self._default_k8s_config = default_k8s_config
+        self._template = template_env.get_template(ARGO_TEMPLATE_FILE)
+        self._pipelines = {name: ArgoDag(pipeline) for name, pipeline in kedro_pipelines.items()}
+
+        for dag in self._pipelines.values():
+            for task in dag.tasks:
+                if task.k8s_config == self._default_k8s_config:
+                    task.k8s_config = None
 
     def render(
         self,
@@ -266,9 +271,9 @@ class ArgoWorkflowTemplate:
         username: str,
         run_name: str,
     ) -> str:
-        return self.template.render(
+        return self._template.render(
             package_name=package_name,
-            pipelines=self.pipelines,
+            pipelines=self._pipelines,
             image=image,
             image_tag=image_tag,
             namespace=namespace,
@@ -285,8 +290,9 @@ def generate_argo_config(
     username: str,
     pipelines: Dict[str, Pipeline],
     package_name: str,
+    default_k8s_config: KubernetesExecutionConfig,
 ) -> str:
-    argo_workflow_template = ArgoWorkflowTemplate(pipelines)
+    argo_workflow_template = ArgoWorkflowTemplate(pipelines, default_k8s_config)
 
     return argo_workflow_template.render(
         package_name=package_name,
