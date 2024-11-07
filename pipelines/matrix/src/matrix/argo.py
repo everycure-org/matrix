@@ -6,7 +6,7 @@ from jinja2 import Environment, FileSystemLoader
 from kedro.pipeline import Pipeline
 from kedro.pipeline.node import Node
 
-from matrix.kedro_extension import KubernetesNode
+from matrix.kedro_extension import ArgoNode
 
 ARGO_TEMPLATE_FILE = "argo_wf_spec.tmpl"
 ARGO_TEMPLATES_DIR_PATH = Path(__file__).parent.parent.parent / "templates"
@@ -28,9 +28,9 @@ def generate_argo_config(
     pipeline2dependencies = {}
     for name, pipeline in pipelines.items():
         # Fuse nodes in topological order to avoid constant recreation of Neo4j
-        # TODO: refactor this to use KubernetesNode.
+        # TODO: refactor this to use ArgoNode.
         #   (1) FuseNode should be replaced by K8sNode OR new FusedPipeline object.
-        #   (2) Get Dependencies should be internal to KubernetesNode, removing if from here.
+        #   (2) Get Dependencies should be internal to ArgoNode, removing if from here.
         pipeline2dependencies[name] = get_dependencies(fuse(pipeline))
 
     output = template.render(
@@ -62,9 +62,9 @@ class FusedNode(Node):
     def add_node(self, node):
         """Function to add node to group."""
         self._nodes.append(node)
-        if isinstance(node, KubernetesNode) and self.k8s_config is None:
+        if isinstance(node, ArgoNode) and self.k8s_config is None:
             self.k8s_config = node.k8s_config
-        elif isinstance(node, KubernetesNode):
+        elif isinstance(node, ArgoNode):
             self.k8s_config.fuse_config(node.k8s_config)
 
     def add_parents(self, parents: List) -> None:
@@ -205,7 +205,7 @@ def fuse(pipeline: Pipeline) -> List[FusedNode]:
             # as an independent node to the result, which implies it will be executed
             # using it's own Argo node unless a downstream node will be fused to it.
             else:
-                if isinstance(target_node, KubernetesNode):
+                if isinstance(target_node, ArgoNode):
                     k8s_config = target_node.k8s_config
                 else:
                     k8s_config = None
