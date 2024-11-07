@@ -65,7 +65,7 @@ There are 3 main steps in the integration pipeline:
 
 Our embeddings pipeline computes vectorized representations of the entities in the knowledge graph in two stages:
 
-1. Node Attribute Embedding Computation - We use GenAI models (e.g. OpenAI's `text-embedding-3-small` embedding API), for efficient node embedding, leveraging batch processing to reduce runtime and integrating error handling for API limits. 
+1. Node Attribute Embedding Computation - We use GenAI models (e.g. OpenAI's `text-embedding-3-small` embedding API, and domain specific models such as PubMedBERT), for efficient node embedding, leveraging batch processing to reduce runtime and integrating error handling for API limits. 
 2. Topological Embedding Computation - We have implemented options for GraphSAGE, and Node2Vec algorithms for computation of topological embeddings. Dimensionality reduction (e.g. PCA) has been modularized to enable flexible experimentation. 
 
 !!! info
