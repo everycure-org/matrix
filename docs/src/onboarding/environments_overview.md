@@ -92,3 +92,5 @@ from matrix.pipelines.modelling.nodes import train_model
 ```
 
 Further information may be found [here](https://docs.kedro.org/en/stable/notebooks_and_ipython/kedro_and_notebooks.html). 
+
+[Next up, some advanced kedro features in our codebase :material-skip-next:](./kedro_extensions.md){ .md-button .md-button--primary }

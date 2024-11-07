@@ -1,4 +1,6 @@
 
+This page provides an overview of a few advanced Kedro features and customizations we've implemented in our project.
+
 ## Dataset transcoding
 
 Our pipeline uses Spark and Pandas interchangeably. To avoid having to manually convert datasets from one type into another, Kedro supports [dataset transcoding](https://github.com/kedro-org/kedro-training/blob/master/training_docs/12_transcoding.md).
@@ -139,3 +141,12 @@ The above visualisation comes from [kedro viz](https://github.com/kedro-org/kedr
 
 
 [^1]: Kedro allows for fine-grained control over pipeline execution, through the [kedro run](https://docs.kedro.org/en/stable/nodes_and_pipelines/run_a_pipeline.html) command.
+
+
+## End of the tutorial
+
+This is the end of our onboarding tutorial. We hope you've learned the basics of our project, and are ready to contribute!
+If you want to learn about some specific activities, please check the [walkthroughs](./walkthroughs.md) section.
+
+
+[Specific walkthroughs :material-skip-next:](./walkthroughs.md){ .md-button .md-button--primary }

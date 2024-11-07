@@ -4,7 +4,7 @@ nav:
     - git-crypt.md
     - kedro.md
     - local-setup.md
+    - environments_overview.md
     - kedro_extensions.md
-    - pipeline.md
     - walkthroughs
     - contribute
