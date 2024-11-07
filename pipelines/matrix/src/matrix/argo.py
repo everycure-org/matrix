@@ -128,7 +128,8 @@ class ArgoTask:
         self.nodes = node.nodes
         self.deps = [self.clean_name(val.name) for val in sorted(node._parents)]
         self.tags = node.tags
-        self.template = ARGO_DEFAULT_TEMPLATE_FOR_TASKS
+        self.execution_template = ARGO_DEFAULT_TEMPLATE_FOR_TASKS
+        self.k8s_config = node.k8s_config
 
     @staticmethod
     def clean_name(name: str) -> str:

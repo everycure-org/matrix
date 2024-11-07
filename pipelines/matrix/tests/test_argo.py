@@ -484,12 +484,12 @@ def test_no_nodes_fused_when_no_fuse_options_argo_pipeline():
     argo_tasks = argo_pipeline.tasks
 
     assert argo_tasks[0].name == "first"
-    assert argo_tasks[0].template == "kedro"
+    assert argo_tasks[0].execution_template == "kedro"
     assert argo_tasks[0].deps == []
     assert argo_tasks[0].nodes == "first"
 
     assert argo_tasks[1].name == "second"
-    assert argo_tasks[1].template == "kedro"
+    assert argo_tasks[1].execution_template == "kedro"
     assert argo_tasks[1].deps == []
     assert argo_tasks[1].nodes == "second"
     assert argo_tasks[1].tags == {"some_other_tag"}
@@ -523,6 +523,6 @@ def test_simple_fusing_to_argo_tasks():
 
     assert len(argo_tasks) == 1, "Only one node should be fused"
     assert argo_tasks[0].name == "dummy", "Fused node should have name 'dummy'"
-    assert argo_tasks[0].template == "kedro", "Fused node should use kedro template"
+    assert argo_tasks[0].execution_template == "kedro", "Fused node should use kedro template"
     assert argo_tasks[0].deps == []
     assert argo_tasks[0].tags == {"argowf.fuse", "argowf.fuse-group.dummy"}
