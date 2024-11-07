@@ -18,7 +18,14 @@ from rich.console import Console
 from rich.logging import RichHandler
 from rich.panel import Panel
 
-from matrix.argo import ARGO_TEMPLATES_DIR_PATH, generate_argo_config
+from matrix.argo import ARGO_TEMPLATES_DIR_PATH, ArgoWorkflowTemplate
+from matrix.kedro_extension import KubernetesExecutionConfig
+from matrix.settings import (
+    KUBERNETES_DEFAULT_LIMIT_CPU,
+    KUBERNETES_DEFAULT_LIMIT_RAM,
+    KUBERNETES_DEFAULT_REQUEST_CPU,
+    KUBERNETES_DEFAULT_REQUEST_RAM,
+)
 
 logging.basicConfig(
     level=logging.INFO,
@@ -292,14 +299,22 @@ def build_argo_template(run_name: str, username: str, namespace: str, pipelines:
     metadata = bootstrap_project(matrix_root)
     package_name = metadata.package_name
 
-    return generate_argo_config(
+    default_k8s_config = KubernetesExecutionConfig(
+        cpu_request=KUBERNETES_DEFAULT_REQUEST_CPU,
+        cpu_limit=KUBERNETES_DEFAULT_LIMIT_CPU,
+        memory_request=KUBERNETES_DEFAULT_REQUEST_RAM,
+        memory_limit=KUBERNETES_DEFAULT_LIMIT_RAM,
+        use_gpu=False,
+    )
+    argo_workflow_template = ArgoWorkflowTemplate(pipelines, default_k8s_config)
+
+    return argo_workflow_template.render(
+        package_name=package_name,
         image=image_name,
-        run_name=run_name,
         image_tag=username,
         namespace=namespace,
         username=username,
-        pipelines=pipelines,
-        package_name=package_name,
+        run_name=run_name,
     )
 
 def save_argo_template(argo_template: str, run_name: str, template_directory: Path) -> str:
