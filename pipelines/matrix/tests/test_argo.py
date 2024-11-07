@@ -5,6 +5,12 @@ import yaml
 
 from matrix.argo import ArgoDag, ArgoTask, ArgoWorkflowTemplate, FusedNode
 from matrix.kedro_extension import KubernetesExecutionConfig, ArgoNode
+from matrix.settings import (
+    KUBERNETES_DEFAULT_LIMIT_CPU,
+    KUBERNETES_DEFAULT_LIMIT_RAM,
+    KUBERNETES_DEFAULT_REQUEST_CPU,
+    KUBERNETES_DEFAULT_REQUEST_RAM,
+)
 
 
 def dummy_fn(*args):
@@ -374,6 +380,44 @@ def test_clean_dependencies() -> None:
     assert cleaned == ["dataset_a", "dataset_b"]
 
 
+def argo_workflow_template_common_test(spec: dict) -> None:
+    # Verify kedro template
+    kedro_template = next(t for t in spec["templates"] if t["name"] == "kedro")
+    assert kedro_template["backoff"]["duration"] == "1", "Kedro template should have correct backoff duration"
+    assert kedro_template["backoff"]["factor"] == 2, "Kedro template should have correct backoff factor"
+    assert kedro_template["backoff"]["maxDuration"] == "1m", "Kedro template should have correct max backoff duration"
+    assert "nodeAntiAffinity" in kedro_template["affinity"], "Kedro template should have nodeAntiAffinity"
+    assert kedro_template["metadata"]["labels"]["app"] == "kedro-argo", "Kedro template should have correct label"
+
+    templates = spec["templates"]
+    # Check if the pipeline is included in the templates
+    pipeline_names = [template["name"] for template in templates]
+    assert "test_pipeline" in pipeline_names, "The 'test_pipeline' pipeline should be included in the templates"
+    assert "cloud_pipeline" in pipeline_names, "The 'cloud_pipeline' pipeline should be included in the templates"
+
+    # Verify test_pipeline template
+    test_template = next(t for t in templates if t["name"] == "test_pipeline")
+    assert "dag" in test_template, "test_pipeline template should have a DAG"
+    assert len(test_template["dag"]["tasks"]) == 1, "test_pipeline template should have one task"
+    assert (
+        test_template["dag"]["tasks"][0]["name"] == "simple-node"
+    ), "test_pipeline template should have correct task name"
+    assert (
+        test_template["dag"]["tasks"][0]["template"] == "kedro"
+    ), "test_pipeline template task should use kedro template"
+
+    # Verify cloud_pipeline template
+    cloud_template = next(t for t in templates if t["name"] == "cloud_pipeline")
+    assert "dag" in cloud_template, "cloud_pipeline template should have a DAG"
+    assert len(cloud_template["dag"]["tasks"]) == 1, "cloud_pipeline template should have one task"
+    assert (
+        cloud_template["dag"]["tasks"][0]["name"] == "simple-node-cloud"
+    ), "cloud_pipeline template should have correct task name"
+    assert (
+        cloud_template["dag"]["tasks"][0]["template"] == "kedro"
+    ), "cloud_pipeline template task should use kedro template"
+
+
 def test_argo_workflow_template() -> None:
     image_name = "us-central1-docker.pkg.dev/mtrx-hub-dev-3of/matrix-images/matrix"
     run_name = "test_run"
@@ -422,41 +466,82 @@ def test_argo_workflow_template() -> None:
     # Verify spec
     spec = parsed_config["spec"]
 
-    # Verify kedro template
+    argo_workflow_template_common_test(spec)
+
+
+def test_argo_workflow_template_with_per_task_k8s_config() -> None:
+    image_name = "us-central1-docker.pkg.dev/mtrx-hub-dev-3of/matrix-images/matrix"
+    run_name = "test_run"
+    image_tag = "test_tag"
+    namespace = "test_namespace"
+    username = "test_user"
+    pipelines = {
+        "test_pipeline": Pipeline(
+            nodes=[
+                ArgoNode(
+                    func=dummy_func,
+                    inputs=["dataset_a", "dataset_b"],
+                    outputs="dataset_c",
+                    name="simple_node",
+                    k8s_config=KubernetesExecutionConfig(
+                        cpu_request=KUBERNETES_DEFAULT_REQUEST_CPU,
+                        cpu_limit=KUBERNETES_DEFAULT_LIMIT_CPU,
+                        memory_request=KUBERNETES_DEFAULT_REQUEST_RAM,
+                        memory_limit=KUBERNETES_DEFAULT_LIMIT_RAM,
+                        use_gpu=False,
+                    ),
+                )
+            ]
+        ),
+        "cloud_pipeline": Pipeline(
+            nodes=[
+                ArgoNode(
+                    func=dummy_func,
+                    inputs=["dataset_a_cloud", "dataset_b_cloud"],
+                    outputs="dataset_c_cloud",
+                    name="simple_node_cloud",
+                    k8s_config=KubernetesExecutionConfig(
+                        cpu_request=1, cpu_limit=2, memory_request=16, memory_limit=32, use_gpu=True
+                    ),
+                )
+            ]
+        ),
+    }
+    default_k8s_config = KubernetesExecutionConfig(
+        cpu_request=1,
+        cpu_limit=2,
+        memory_request=16,
+        memory_limit=32,
+        use_gpu=False,
+    )
+
+    argo_workflow_template = ArgoWorkflowTemplate(pipelines, default_k8s_config)
+
+    argo_config = argo_workflow_template.render(
+        package_name="test_package",
+        image=image_name,
+        image_tag=image_tag,
+        namespace=namespace,
+        username=username,
+        run_name=run_name,
+    )
+    assert argo_config is not None
+
+    parsed_config = yaml.safe_load(argo_config)
+
+    assert isinstance(parsed_config, dict), "Parsed config should be a dictionary"
+
+    # Verify spec
+    spec = parsed_config["spec"]
+
+    argo_workflow_template_common_test(spec)
+
+    # assert that resource in kedro template is default
     kedro_template = next(t for t in spec["templates"] if t["name"] == "kedro")
-    assert kedro_template["backoff"]["duration"] == "1", "Kedro template should have correct backoff duration"
-    assert kedro_template["backoff"]["factor"] == 2, "Kedro template should have correct backoff factor"
-    assert kedro_template["backoff"]["maxDuration"] == "1m", "Kedro template should have correct max backoff duration"
-    assert "nodeAntiAffinity" in kedro_template["affinity"], "Kedro template should have nodeAntiAffinity"
-    assert kedro_template["metadata"]["labels"]["app"] == "kedro-argo", "Kedro template should have correct label"
-
-    templates = spec["templates"]
-    # Check if the pipeline is included in the templates
-    pipeline_names = [template["name"] for template in templates]
-    assert "test_pipeline" in pipeline_names, "The 'test_pipeline' pipeline should be included in the templates"
-    assert "cloud_pipeline" in pipeline_names, "The 'cloud_pipeline' pipeline should be included in the templates"
-
-    # Verify test_pipeline template
-    test_template = next(t for t in templates if t["name"] == "test_pipeline")
-    assert "dag" in test_template, "test_pipeline template should have a DAG"
-    assert len(test_template["dag"]["tasks"]) == 1, "test_pipeline template should have one task"
-    assert (
-        test_template["dag"]["tasks"][0]["name"] == "simple-node"
-    ), "test_pipeline template should have correct task name"
-    assert (
-        test_template["dag"]["tasks"][0]["template"] == "kedro"
-    ), "test_pipeline template task should use kedro template"
-
-    # Verify cloud_pipeline template
-    cloud_template = next(t for t in templates if t["name"] == "cloud_pipeline")
-    assert "dag" in cloud_template, "cloud_pipeline template should have a DAG"
-    assert len(cloud_template["dag"]["tasks"]) == 1, "cloud_pipeline template should have one task"
-    assert (
-        cloud_template["dag"]["tasks"][0]["name"] == "simple-node-cloud"
-    ), "cloud_pipeline template should have correct task name"
-    assert (
-        cloud_template["dag"]["tasks"][0]["template"] == "kedro"
-    ), "cloud_pipeline template task should use kedro template"
+    assert kedro_template["resources"] == {
+        "requests": {"memory": "64Gi", "cpu": "4"},
+        "limits": {"memory": "64Gi", "cpu": "16"},
+    }, "Kedro template should have correct resource limits"
 
 
 def test_argo_pipeline_without_fusing(parallel_pipelines):
