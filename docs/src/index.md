@@ -19,14 +19,6 @@ hide:
 
     ---
 
-    Find useful links to EveryCure resources.
-
-    [:octicons-arrow-right-24: Resources](./links/links.md)
-
--   :simple-googlecloud:{ .lg .middle } __Understand the Infrastructure__
-
-    ---
-
     Want to dive deeper into how the infrastructure is provided? Check out our infrastructure documentation!
 
     [:octicons-arrow-right-24: Infrastructure](./infrastructure/index.md)
