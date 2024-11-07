@@ -466,3 +466,14 @@ def test_copy_k8s_node():
     assert copied_k8s_node.k8s_config.memory_limit == 32
     assert copied_k8s_node.k8s_config.use_gpu
     assert copied_k8s_node.tags == {"argowf.fuse", "argowf.fuse-group.dummy"}
+
+    overwritten_k8s_node = k8s_node._copy(
+        k8s_config=KubernetesExecutionConfig(
+            cpu_request=3, cpu_limit=4, memory_request=32, memory_limit=64, use_gpu=False
+        )
+    )
+    assert overwritten_k8s_node.k8s_config.cpu_request == 3
+    assert overwritten_k8s_node.k8s_config.cpu_limit == 4
+    assert overwritten_k8s_node.k8s_config.memory_request == 32
+    assert overwritten_k8s_node.k8s_config.memory_limit == 64
+    assert not overwritten_k8s_node.k8s_config.use_gpu
