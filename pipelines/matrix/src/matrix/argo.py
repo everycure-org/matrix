@@ -28,6 +28,9 @@ def generate_argo_config(
     pipeline2dependencies = {}
     for name, pipeline in pipelines.items():
         # Fuse nodes in topological order to avoid constant recreation of Neo4j
+        # TODO: refactor this to use KubernetesNode.
+        #   (1) FuseNode should be replaced by K8sNode OR new FusedPipeline object.
+        #   (2) Get Dependencies should be internal to KubernetesNode, removing if from here.
         pipeline2dependencies[name] = get_dependencies(fuse(pipeline))
 
     output = template.render(
