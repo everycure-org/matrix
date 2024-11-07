@@ -210,7 +210,7 @@ spec:
       tasks:
       {% for task in tasks %}
       - name: {{ task.name }}
-        template: {{ task.template }}
+        template: {{ task.execution_template }}
         {% if task.deps %}
         dependencies:
         {% for dep in task.deps %}
