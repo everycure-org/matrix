@@ -96,9 +96,11 @@ The evaluation pipeline computes various metrics in order to assess the performa
 
 Computed metrics generally fall into three categories:
 
-1. **Full-matrix ranking metrics**: These metrics focus on how well the model ranks the full set of drug-disease pairs comprising the matrix.
-2. **Disease-specific ranking metrics**: These metrics assess ranking precision for each specific disease.
-3. **Ground truth classification metrics**: These metrics examine the model's ability to distinguish between known positive and known negative drug-disease pairs.
+1. **Full-matrix ranking metrics**: These metrics focus on how well the model ranks the full set of drug-disease pairs comprising the matrix (e.g. AUROC, MRR).
+2. **Disease-specific ranking metrics**: These metrics assess ranking precision for each specific disease (e.g. Hit@k).
+3. **Ground truth classification metrics**: These metrics examine the model's ability to distinguish between known positive and known negative drug-disease pairs (e.g. accuracy, F1 score).
+
+To further enhance the pipeline, we have implemented time-split validation using clinical trial data curated after the publication date of our knowledge graph. This approach ensures that model predictions are assessed on future data, simulating real-world application scenarios and testing the model's predictive power on unseen, temporally shifted information. By evaluating with post-publication clinical trial data, this process validates the model's effectiveness and stability in longitudinal, real-world contexts.
 
 More details on the metrics computed in each category can be found in the [evaluation deep-dive](../data_science/evaluation_deep_dive.md)
 
