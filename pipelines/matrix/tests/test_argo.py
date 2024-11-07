@@ -3,7 +3,7 @@ from kedro.pipeline import Pipeline
 import pytest
 import yaml
 
-from matrix.argo import clean_name, fuse, FusedNode, generate_argo_config
+from matrix.argo import ArgoPipeline, clean_name, FusedNode, generate_argo_config
 from matrix.kedro_extension import KubernetesExecutionConfig, ArgoNode
 
 
@@ -30,7 +30,7 @@ def test_no_nodes_fused_when_no_fuse_options():
         tags=["argowf.fuse", "argowf.fuse-group.dummy"],
     )
 
-    fused = fuse(pipeline_with_no_fusing_options)
+    fused = ArgoPipeline.fuse(pipeline_with_no_fusing_options)
 
     assert len(fused) == len(
         pipeline_with_no_fusing_options.nodes
@@ -56,7 +56,7 @@ def test_simple_fusing():
         tags=["argowf.fuse", "argowf.fuse-group.dummy"],
     )
 
-    fused = fuse(pipeline_where_first_node_is_input_for_second)
+    fused = ArgoPipeline.fuse(pipeline_where_first_node_is_input_for_second)
 
     assert len(fused) == 1, "Only one node should be fused"
     assert fused[0].name == "dummy", "Fused node should have name 'dummy'"
@@ -93,7 +93,7 @@ def test_no_multiple_parents_no_fusing():
         tags=["argowf.fuse", "argowf.fuse-group.dummy"],
     )
 
-    fused = fuse(pipeline_one2many_fusing_possible)
+    fused = ArgoPipeline.fuse(pipeline_one2many_fusing_possible)
 
     assert len(fused) == len(
         pipeline_one2many_fusing_possible.nodes
@@ -148,7 +148,7 @@ def test_fusing_multiple_parents():
         tags=["argowf.fuse", "argowf.fuse-group.dummy"],
     )
 
-    fused = fuse(pipeline_with_multiple_parents)
+    fused = ArgoPipeline.fuse(pipeline_with_multiple_parents)
 
     assert len(fused) == 4, "Fusing of child and grandchild node, ensure correct naming"
     assert fused[3].name == "dummy", "Fused node should have name 'dummy'"
@@ -450,3 +450,80 @@ def test_generate_argo_config() -> None:
     assert (
         cloud_template["dag"]["tasks"][0]["template"] == "kedro"
     ), "cloud_pipeline template task should use kedro template"
+
+
+def test_argo_pipeline_without_fusing(parallel_pipelines):
+    k8s_pipeline, _ = parallel_pipelines
+    argo_pipeline = ArgoPipeline(k8s_pipeline)
+    argo_kedro_command = argo_pipeline.kedro_command()
+    argo_tasks = argo_pipeline.tasks
+
+    assert argo_kedro_command is not None
+    assert len(argo_tasks) == len(k8s_pipeline.nodes)
+
+
+def test_no_nodes_fused_when_no_fuse_options_argo_pipeline():
+    pipeline_with_no_fusing_options = Pipeline(
+        nodes=[
+            ArgoNode(
+                func=dummy_fn,
+                inputs=["dataset_a", "dataset_b"],
+                outputs="dataset_c",
+                name="first",
+                tags=["some_tag"],
+            ),
+            ArgoNode(
+                func=dummy_fn,
+                inputs=["dataset_1", "dataset_2"],  # inputs are different than outputs of previous node
+                outputs="dataset_3",
+                name="second",
+                tags=["some_other_tag"],
+            ),
+        ],
+    )
+
+    argo_pipeline = ArgoPipeline(pipeline_with_no_fusing_options)
+    argo_tasks = argo_pipeline.tasks
+
+    assert argo_tasks[0].name == "first"
+    assert argo_tasks[0].inputs == ["dataset_a", "dataset_b"]
+    assert argo_tasks[0].outputs == ["dataset_c"]
+    assert argo_tasks[0].tags == ["some_tag"]
+    assert argo_tasks[1].name == "second"
+    assert argo_tasks[1].inputs == ["dataset_1", "dataset_2"]
+    assert argo_tasks[1].outputs == ["dataset_3"]
+    assert argo_tasks[1].tags == ["some_other_tag"]
+
+    assert len(argo_tasks) == len(
+        pipeline_with_no_fusing_options.nodes
+    ), "No nodes should be fused when no fuse options are provided"
+
+
+def test_simple_fusing_argo_pipeline():
+    pipeline_where_first_node_is_input_for_second = Pipeline(
+        nodes=[
+            ArgoNode(
+                func=dummy_fn,
+                inputs=["dataset_a", "dataset_b"],
+                outputs="dataset_1@pandas",
+            ),
+            ArgoNode(
+                func=dummy_fn,
+                inputs=[
+                    "dataset_1@spark",
+                ],
+                outputs="dataset_2",
+            ),
+        ],
+        tags=["argowf.fuse", "argowf.fuse-group.dummy"],
+    )
+
+    argo_pipeline = ArgoPipeline(pipeline_where_first_node_is_input_for_second)
+    argo_tasks = argo_pipeline.tasks
+
+    assert len(argo_tasks) == 1, "Only one node should be fused"
+    assert argo_tasks[0].name == "dummy", "Fused node should have name 'dummy'"
+    assert argo_tasks[0].outputs == set(
+        ["dataset_1", "dataset_2"]
+    ), "Fused node should have outputs 'dataset_1' and 'dataset_2'"
+    assert len(argo_tasks[0]._parents) == 0, "Fused node should have no parents"
