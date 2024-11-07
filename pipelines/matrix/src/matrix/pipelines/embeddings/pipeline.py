@@ -77,6 +77,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                     "gds": "params:embeddings.gds",
                     "topological_estimator": "params:embeddings.topological_estimator",
                     "unpack": "params:embeddings.topological",
+                    "torch_device": "params:embeddings.torch_device",
                 },
                 outputs=["embeddings.models.topological_estimator", "embeddings.reporting.loss"],
                 name="train_topological_embeddings",
