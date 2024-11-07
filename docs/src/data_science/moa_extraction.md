@@ -45,7 +45,7 @@ The following diagram illustrates the overall MOA extraction pipeline:
 
 Currently, there are two separate pipelines which must be run in sequence:
 
-1. **DrugMechDB to KG mapping pipeline** This is run once locally. Uses a Node synonymizer to map all entities appearing DrugMechDB to the KG.
+1. **DrugMechDB entity resolution pipeline** This is run once locally. Uses a Node synonymizer to map all entities appearing DrugMechDB to the KG.
 2. **Main MOA extraction pipeline** Performs all other functionality. 
 
 
