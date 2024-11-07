@@ -70,6 +70,10 @@ integration.prm.filtered_edges:
   <<: [*_spark_parquet, *_layer_prm]
   filepath: ${globals:paths.integration}/prm/filtered/edges
 
+integration.prm.prefiltered_nodes:
+  <<: [*_spark_parquet, *_layer_prm]
+  filepath: ${globals:paths.integration}/prm/prefiltered/nodes
+
 integration.prm.filtered_nodes:
   <<: [*_spark_parquet, *_layer_prm]
   filepath: ${globals:paths.integration}/prm/filtered/nodes
