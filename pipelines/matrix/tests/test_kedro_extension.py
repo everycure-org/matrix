@@ -21,6 +21,10 @@ from matrix.settings import (
 )
 
 
+def dummy_func(x) -> int:
+    return x
+
+
 def test_default_kubernetes_config():
     """Test default configuration values."""
     config = KubernetesExecutionConfig()
@@ -349,10 +353,6 @@ def test_parallel_pipelines(caplog):
 
     SequentialRunner().run(standard_pipeline, catalog)
     assert successful_run_msg in caplog.text
-
-
-def dummy_func(x) -> int:
-    return x
 
 
 def test_kubernetes_node_factory():
