@@ -465,4 +465,4 @@ def test_copy_k8s_node():
     assert copied_k8s_node.k8s_config.memory_request == 16
     assert copied_k8s_node.k8s_config.memory_limit == 32
     assert copied_k8s_node.k8s_config.use_gpu
-    assert copied_k8s_node.tags == ["argowf.fuse", "argowf.fuse-group.dummy"]
+    assert copied_k8s_node.tags == {"argowf.fuse", "argowf.fuse-group.dummy"}
