@@ -168,6 +168,9 @@ class ArgoPipeline:
         """
         return self._tasks
 
+    def __iter__(self):
+        return iter(self._tasks)
+
     def fuse_argo_tasks(self) -> "ArgoPipeline":
         """Fuse two pipelines."""
         raise NotImplementedError("Not implemented")

@@ -210,7 +210,7 @@ spec:
       tasks:
       {% for task in tasks %}
       - name: {{ task.name }}
-        template: {{ task.get('template', 'kedro') }}
+        template: {{ task.template }}
         {% if task.deps %}
         dependencies:
         {% for dep in task.deps %}
