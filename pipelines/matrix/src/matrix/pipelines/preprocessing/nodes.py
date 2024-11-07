@@ -124,11 +124,11 @@ def create_int_nodes(nodes: pd.DataFrame, name_resolver: str, translator_endpoin
     normalized_id_map = batch_map_ids(
         frozenset(resolved["curie"].fillna("")),
         api_endpoint=translator_endpoint,
+        json_path_expr="$.id.identifier",
         batch_size=1000,
         parallelism=120,
         conflate=True,
         drug_chemical_conflate=False,
-        att_to_get="identifier",
     )
     resolved["normalized_curie"] = resolved["curie"].map(normalized_id_map)
 
@@ -259,11 +259,11 @@ def map_name_to_curie(
 
     # Map the disease name to the corresponding curie ids
     attributes = [
-        ("identifier", "drug_kg_curie"),
-        ("type", "drug_kg_label"),
+        ("$.id.identifier", "drug_kg_curie"),
+        ("$.type", "drug_kg_label"),
     ]
 
-    for att, target in attributes:
+    for expr, target in attributes:
         node_id_map = batch_map_ids(
             frozenset(df["drug_kg_arax_curie"].fillna("none")),
             api_endpoint=translator_endpoint,
@@ -271,16 +271,16 @@ def map_name_to_curie(
             parallelism=120,
             conflate=True,
             drug_chemical_conflate=False,
-            att_to_get=att,
+            json_path_expr=expr,
         )
         df[target] = df["drug_kg_arax_curie"].map(node_id_map)
 
     attributes = [
-        ("identifier", "disease_kg_curie"),
-        ("type", "disease_kg_label"),
+        ("$.id.identifier", "disease_kg_curie"),
+        ("$.type", "disease_kg_label"),
     ]
 
-    for att, target in attributes:
+    for expr, target in attributes:
         node_id_map = batch_map_ids(
             frozenset(df["disease_kg_arax_curie"].fillna("none")),
             api_endpoint=translator_endpoint,
@@ -288,7 +288,7 @@ def map_name_to_curie(
             parallelism=120,
             conflate=True,
             drug_chemical_conflate=False,
-            att_to_get=att,
+            json_path_expr=expr,
         )
         df[target] = df["disease_kg_arax_curie"].map(node_id_map)
 
@@ -392,12 +392,12 @@ def clean_drug_list(drug_df: pd.DataFrame, endpoint: str) -> pd.DataFrame:
         dataframe with synonymized drug IDs in normalized_curie column.
     """
     attributes = [
-        ("identifier", "curie"),
-        ("label", "name"),
-        ("type", "category"),
+        ("$.id.identifier", "curie"),
+        ("$.id.label", "name"),
+        ("$.type", "category"),
     ]
 
-    for att, target in attributes:
+    for expr, target in attributes:
         node_id_map = batch_map_ids(
             frozenset(drug_df["single_ID"]),
             api_endpoint=endpoint,
@@ -405,7 +405,7 @@ def clean_drug_list(drug_df: pd.DataFrame, endpoint: str) -> pd.DataFrame:
             parallelism=120,
             conflate=True,
             drug_chemical_conflate=False,
-            att_to_get=att,
+            json_path_expr=expr,
         )
         drug_df[target] = drug_df["single_ID"].map(node_id_map)
     return drug_df.dropna(subset=["curie"])
@@ -436,12 +436,12 @@ def clean_disease_list(disease_df: pd.DataFrame, endpoint: str) -> pd.DataFrame:
         dataframe with synonymized disease IDs in normalized_curie column.
     """
     attributes = [
-        ("identifier", "curie"),
-        ("label", "name"),
-        ("type", "category"),
+        ("$.id.identifier", "curie"),
+        ("$.id.label", "name"),
+        ("$.type", "category"),
     ]
 
-    for att, target in attributes:
+    for expr, target in attributes:
         node_id_map = batch_map_ids(
             frozenset(disease_df["category_class"]),
             api_endpoint=endpoint,
@@ -449,7 +449,7 @@ def clean_disease_list(disease_df: pd.DataFrame, endpoint: str) -> pd.DataFrame:
             parallelism=120,
             conflate=True,
             drug_chemical_conflate=False,
-            att_to_get=att,
+            json_path_expr=expr,
         )
         disease_df[target] = disease_df["category_class"].map(node_id_map)
     return disease_df.dropna(subset=["curie"]).fillna("")
@@ -479,11 +479,11 @@ def clean_input_sheet(input_df: pd.DataFrame, endpoint: str) -> pd.DataFrame:
     """
     # Synonymize Drug_ID column to normalized ID and name compatible with RTX-KG2
     attributes = [
-        ("identifier", "norm_drug_id"),
-        ("label", "norm_drug_name"),
+        ("$.id.identifier", "norm_drug_id"),
+        ("$.id.label", "norm_drug_name"),
     ]
 
-    for att, target in attributes:
+    for expr, target in attributes:
         node_id_map = batch_map_ids(
             frozenset(input_df["Drug_ID"]),
             api_endpoint=endpoint,
@@ -491,11 +491,11 @@ def clean_input_sheet(input_df: pd.DataFrame, endpoint: str) -> pd.DataFrame:
             parallelism=120,
             conflate=True,
             drug_chemical_conflate=False,
-            att_to_get=att,
+            json_path_expr=expr,
         )
         input_df[target] = input_df["Drug_ID"].map(node_id_map)
 
-    for att, target in attributes:
+    for expr, target in attributes:
         node_id_map = batch_map_ids(
             frozenset(input_df["Disease_ID"]),
             api_endpoint=endpoint,
@@ -503,7 +503,7 @@ def clean_input_sheet(input_df: pd.DataFrame, endpoint: str) -> pd.DataFrame:
             parallelism=120,
             conflate=True,
             drug_chemical_conflate=False,
-            att_to_get=att,
+            json_path_expr=expr,
         )
         input_df[target] = input_df["Disease_ID"].map(node_id_map)
 
@@ -522,9 +522,6 @@ def clean_input_sheet(input_df: pd.DataFrame, endpoint: str) -> pd.DataFrame:
 
     # Fill NaNs and return
     return df.fillna("")
-
-
-# GT
 
 
 def clean_gt_data(pos_df: pd.DataFrame, neg_df: pd.DataFrame, endpoint: str) -> Tuple[pd.DataFrame, pd.DataFrame]:
@@ -547,7 +544,7 @@ def clean_gt_data(pos_df: pd.DataFrame, neg_df: pd.DataFrame, endpoint: str) -> 
                 parallelism=120,
                 conflate=True,
                 drug_chemical_conflate=False,
-                att_to_get="identifier",
+                json_path_expr="$.id.identifier",
             )
             df[col] = df[col].map(node_id_map)
     return pos_df.dropna(subset=["source", "target"]).drop_duplicates(), neg_df.dropna(

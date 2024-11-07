@@ -148,11 +148,11 @@ def filter_nodes_without_edges(
 def batch_map_ids(
     ids: frozenset[str],
     api_endpoint: str,
+    json_path_expr: str,
     batch_size: int,
     parallelism: int,
     conflate: bool,
     drug_chemical_conflate: bool,
-    att_to_get: str = "identifier",
 ) -> Dict[str, str]:
     """Maps a list of ids to their normalized form using the node normalization service.
 
@@ -165,12 +165,13 @@ def batch_map_ids(
         parallelism: The number of concurrent requests to make.
         conflate: Whether to conflate the nodes.
         drug_chemical_conflate: Whether to conflate the drug and chemical nodes.
-        att_to_get: The attribute to get from the json response [identifier, label, type]. Defaults to "identifier".
     Returns:
         Dict[str, str]: A dictionary of the form {id: normalized_id}.
     """
     results = asyncio.run(
-        async_batch_map_ids(ids, api_endpoint, batch_size, parallelism, conflate, drug_chemical_conflate, att_to_get)
+        async_batch_map_ids(
+            ids, api_endpoint, json_path_expr, batch_size, parallelism, conflate, drug_chemical_conflate
+        )
     )
 
     logger.info(f"mapped {len(results)} ids")
@@ -182,16 +183,16 @@ def batch_map_ids(
 async def async_batch_map_ids(
     ids: frozenset[str],
     api_endpoint: str,
+    json_path_expr: str,
     batch_size: int,
     parallelism: int,
     conflate: bool,
     drug_chemical_conflate: bool,
-    att_to_get: str = "identifier",
 ) -> Dict[str, str]:
     async with aiohttp.ClientSession() as session:
         semaphore = asyncio.Semaphore(parallelism)
         tasks = [
-            process_batch(batch, api_endpoint, session, semaphore, conflate, drug_chemical_conflate, att_to_get)
+            process_batch(batch, api_endpoint, json_path_expr, session, semaphore, conflate, drug_chemical_conflate)
             for batch in chunked(ids, batch_size)
         ]
         results = await tqdm_asyncio.gather(*tasks)
@@ -202,14 +203,16 @@ async def async_batch_map_ids(
 async def process_batch(
     batch: List[str],
     api_endpoint: str,
+    json_path_expr: str,
     session: aiohttp.ClientSession,
     semaphore: asyncio.Semaphore,
     conflate: bool,
     drug_chemical_conflate: bool,
-    att_to_get: str = "identifier",
 ) -> Dict[str, str]:
     async with semaphore:
-        return await hit_node_norm_service(batch, api_endpoint, session, conflate, drug_chemical_conflate, att_to_get)
+        return await hit_node_norm_service(
+            batch, api_endpoint, json_path_expr, session, conflate, drug_chemical_conflate
+        )
 
 
 def normalize_kg(
@@ -290,10 +293,10 @@ def normalize_kg(
 async def hit_node_norm_service(
     curies: List[str],
     endpoint: str,
+    json_path_expr: str,
     session: aiohttp.ClientSession,
     conflate: bool = True,
     drug_chemical_conflate: bool = True,
-    json_path_expr: str = "$.id.identifier",
 ):
     """Hits the node normalization service with a list of curies using aiohttp.
 
@@ -302,10 +305,10 @@ async def hit_node_norm_service(
     Args:
         curies (List[str]): A list of curies to normalize.
         endpoint (str): The endpoint to hit.
+        json_path_expr: (str) JSON path expression for attribute to get
         session (aiohttp.ClientSession): The aiohttp session to use for requests.
         conflate (bool, optional): Whether to conflate the nodes.
         drug_chemical_conflate (bool, optional): Whether to conflate the drug and chemical nodes.
-        json_path_expr: JSON path expression for attribute to get
     Returns:
         Dict[str, str]: A dictionary of the form {id: normalized_id}.
 
