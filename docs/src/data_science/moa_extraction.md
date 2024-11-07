@@ -45,8 +45,8 @@ The following diagram illustrates the overall MOA extraction pipeline:
 
 Currently, there are two separate pipelines which must be run in sequence:
 
-1. **DrugMechDB entity resolution pipeline** This is run once locally. Uses a Node synonymizer to map all entities appearing DrugMechDB to the KG.
-2. **Main MOA extraction pipeline** Performs all other functionality. 
+1. **DrugMechDB entity resolution pipeline** This is run once locally. Uses a Node synonymizer to map all entities appearing in DrugMechDB to the KG. To run this pipeline on your local machine, writing to GCS storage, use the command: ```kedro run -p drugmechdb_entity_resolution -e  cloud```  
+2. **Main MOA extraction pipeline** Performs all other functionality. To run this pipeline on the cluster, use the command: ```kedro submit --username <your name --pipeline moa_extraction>``` 
 
 
 The main MOA extraction pipeline itself has four separate components. 
@@ -68,6 +68,9 @@ The main MOA extraction pipeline itself has four separate components.
 
 ## Configuration details
 
+Next, we give further details about the individual processes that occur within the pipeline, including the configuration details found in `conf/base/parameters.yml` and the underlying objects.
+
+
 ### Path mapping
 
 ### Path embedding
@@ -75,3 +78,6 @@ The main MOA extraction pipeline itself has four separate components.
 ### Negative sampling
 
 ### Path extraction rules
+
+
+## Local runs
