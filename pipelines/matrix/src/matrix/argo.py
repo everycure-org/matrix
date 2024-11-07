@@ -142,7 +142,7 @@ class ArgoTask:
         return re.sub(r"[\W_]+", "-", name).strip("-")
 
 
-class ArgoPipeline:
+class ArgoDag:
     """Argo pipeline. This class represents an Argo workflow pipeline composed of ArgoTasks.
 
     Args:
@@ -171,7 +171,7 @@ class ArgoPipeline:
     def __iter__(self):
         return iter(self._tasks)
 
-    def fuse_argo_tasks(self) -> "ArgoPipeline":
+    def fuse_argo_tasks(self) -> "ArgoDag":
         """Fuse two pipelines."""
         raise NotImplementedError("Not implemented")
 
@@ -266,7 +266,7 @@ def generate_argo_config(
 
     pipeline2argo_pipeline = {}
     for name, pipeline in pipelines.items():
-        pipeline2argo_pipeline[name] = ArgoPipeline(pipeline)
+        pipeline2argo_pipeline[name] = ArgoDag(pipeline)
 
     output = template.render(
         package_name=package_name,
