@@ -8,6 +8,8 @@ from pyspark.sql import DataFrame
 
 from matrix.schemas.knowledge_graph import KGEdgeSchema, KGNodeSchema, cols_for_schema
 
+from refit.v1.core.inline_primary_key import primary_key
+
 logger = logging.getLogger(__name__)
 
 
@@ -57,7 +59,7 @@ def transform_rtxkg2_edges(edges_df: DataFrame, curie_to_pmids: DataFrame, semme
         .withColumn("upstream_data_source",          f.array(f.lit("rtxkg2")))
         .withColumn("knowledge_level",               f.lit(None).cast(T.StringType()))
         .withColumn("aggregator_knowledge_source",   f.split(f.col("knowledge_source:string[]"), RTX_SEPARATOR)) # RTX KG2 2.10 does not exist
-        .withColumn("primary_knowledge_source",      f.col("aggregator_knowledge_source").getItem(1)) # RTX KG2 2.10 `primary_knowledge_source``
+        .withColumn("primary_knowledge_source",      f.col("aggregator_knowledge_source").getItem(0)) # RTX KG2 2.10 `primary_knowledge_source``
         .withColumn("publications",                  f.split(f.col("publications:string[]"), RTX_SEPARATOR))
         .withColumn("subject_aspect_qualifier",      f.lit(None).cast(T.StringType())) #not present in RTX KG2 at this time
         .withColumn("subject_direction_qualifier",   f.lit(None).cast(T.StringType())) #not present in RTX KG2 at this time
@@ -68,6 +70,7 @@ def transform_rtxkg2_edges(edges_df: DataFrame, curie_to_pmids: DataFrame, semme
     # fmt: on
 
 
+@primary_key(df="curie_to_pmids", primary_key="curie")
 def filter_semmed(
     edges_df: DataFrame,
     curie_to_pmids: DataFrame,
@@ -87,8 +90,6 @@ def filter_semmed(
     Returns
         Filtered dataframe
     """
-    # before_count = edges_df.count()
-
     curie_to_pmids = (
         curie_to_pmids.withColumn("pmids", f.from_json("pmids", T.ArrayType(T.IntegerType())))
         .withColumn("num_pmids", f.array_size(f.col("pmids")))
@@ -98,8 +99,9 @@ def filter_semmed(
 
     table = f.broadcast(curie_to_pmids)
 
-    df = (
+    semmed_edges = (
         edges_df.alias("edges")
+        .filter(f.col("primary_knowledge_source") == f.lit("infores:semmeddb"))
         # Enrich subject pubmed identifiers
         .join(
             table.alias("subj"),
@@ -116,21 +118,14 @@ def filter_semmed(
         .withColumn("num_publications", f.size(f.col("publications")))
         # fmt: off
         .filter(
-            # Retrain all semmed edges
-            (f.col("primary_knowledge_source") != f.lit("infores:semmeddb"))
-            |
             # Retain only semmed edges more than 10 publications or ndg score below 0.6
-            ((f.col("num_publications") >= f.lit(publication_threshold)) & (f.col("ngd") <= f.lit(ngd_threshold)))
+            (f.col("num_publications") >= f.lit(publication_threshold)) & (f.col("ngd") <= f.lit(ngd_threshold))
         )
         # fmt: on
-        .select("edges.*", "ngd", "num_publications")
+        .select("edges.*")
     )
 
-    # curie_to_pmids.unpersist()
-
-    # logger.info(f"dropped {before_count - df.count()} SemMedDB edges")
-
-    return df
+    return edges_df.filter(f.col("primary_knowledge_source") != f.lit("infores:semmeddb")).unionByName(semmed_edges)
 
 
 def compute_ngd(df: DataFrame, num_pairs: int = 3.7e7 * 20) -> DataFrame:

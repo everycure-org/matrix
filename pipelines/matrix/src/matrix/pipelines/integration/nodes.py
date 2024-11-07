@@ -12,8 +12,6 @@ from joblib import Memory
 from more_itertools import chunked
 from pyspark.sql import DataFrame
 from refit.v1.core.inject import inject_object
-from refit.v1.core.inline_has_schema import has_schema
-from refit.v1.core.inline_primary_key import primary_key
 from tenacity import (
     retry,
     retry_if_exception_type,
@@ -119,43 +117,6 @@ def filter_unified_kg_edges(
     logger.info(f"Number of edges after filtering: {new_edges_count}, cut out {edges_count - new_edges_count} edges")
 
     return _apply_transformations(edges, transformations, biolink_predicates=biolink_predicates)
-
-
-@has_schema(
-    schema={
-        "label": "string",
-        "source_id": "string",
-        "target_id": "string",
-        "property_keys": "array<string>",
-        "property_values": "array<numeric>",
-    },
-    allow_subset=True,
-)
-@primary_key(primary_key=["source_id", "target_id", "label"])
-def create_treats(nodes: DataFrame, df: DataFrame):
-    """Function to construct treats relatonship.
-
-    NOTE: This function requires the nodes dataset, as the nodes should be
-    written _prior_ to the relationships.
-
-    Args:
-        nodes: nodes dataset
-        df: Ground truth dataset
-    """
-    return (
-        df.withColumn("label", F.when(F.col("y") == 1, "TREATS").otherwise("NOT_TREATS"))
-        .withColumn(
-            "properties",
-            F.create_map(
-                F.lit("treats"),
-                F.col("y"),
-            ),
-        )
-        .withColumn("source_id", F.col("source"))
-        .withColumn("target_id", F.col("target"))
-        .withColumn("property_keys", F.map_keys(F.col("properties")))
-        .withColumn("property_values", F.map_values(F.col("properties")))
-    )
 
 
 @memory.cache

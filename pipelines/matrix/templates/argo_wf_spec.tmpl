@@ -46,11 +46,11 @@ spec:
       {% endraw %}
       resources: # limit the resources
         requests:
-          memory: 128Gi
-          cpu: 64
+          memory: 120Gi
+          cpu: 32
         limits:
-          memory: 128Gi
-          cpu: 64
+          memory: 120Gi
+          cpu: 32
       env:
         - name: WORKFLOW_ID
           valueFrom:
