@@ -389,3 +389,14 @@ def test_fuse_config() -> None:
 def test_k8s_pipeline_with_fused_nodes():
     k8s_pipeline, standard_pipeline = get_parallel_pipelines()
     assert all(isinstance(node, KubernetesNode) for node in k8s_pipeline.nodes)
+
+
+def test_k8s_node_initialization():
+    k8s_node = KubernetesNode(
+        func=dummy_func,
+        inputs=["int_number_ds_in"],
+        outputs=["int_number_ds_out"],
+    )
+    pipeline = Pipeline(nodes=[k8s_node])
+
+    assert isinstance(pipeline.nodes[0], KubernetesNode)
