@@ -181,7 +181,7 @@ google-api-core==2.22.0
     #   google-cloud-storage
 google-api-python-client==2.151.0
     # via pygsheets
-google-auth==2.35.0
+google-auth==2.36.0
     # via
     #   databricks-sdk
     #   gcsfs
@@ -309,6 +309,8 @@ json5==0.9.25
     # via jupyterlab-server
 jsonpatch==1.33
     # via langchain-core
+jsonpath-ng==1.7.0
+    # via -r requirements.in
 jsonpointer==3.0.0
     # via
     #   jsonpatch
@@ -385,11 +387,11 @@ langchain-core==0.3.15
     #   langchain
     #   langchain-openai
     #   langchain-text-splitters
-langchain-openai==0.2.5
+langchain-openai==0.2.6
     # via -r requirements.in
 langchain-text-splitters==0.3.2
     # via langchain
-langsmith==0.1.139
+langsmith==0.1.140
     # via
     #   langchain
     #   langchain-core
@@ -482,20 +484,20 @@ oauthlib==3.2.2
     # via requests-oauthlib
 omegaconf==2.3.0
     # via kedro
-openai==1.54.1
+openai==1.54.3
     # via
     #   -r requirements.in
     #   langchain-openai
 openpyxl==3.1.5
     # via -r requirements.in
-opentelemetry-api==1.27.0
+opentelemetry-api==1.28.0
     # via
     #   mlflow-skinny
     #   opentelemetry-sdk
     #   opentelemetry-semantic-conventions
-opentelemetry-sdk==1.27.0
+opentelemetry-sdk==1.28.0
     # via mlflow-skinny
-opentelemetry-semantic-conventions==0.48b0
+opentelemetry-semantic-conventions==0.49b0
     # via opentelemetry-sdk
 orjson==3.10.11
     # via
@@ -556,6 +558,8 @@ pluggy==1.5.0
     # via
     #   kedro
     #   pytest
+ply==3.11
+    # via jsonpath-ng
 pre-commit-hooks==5.0.0
     # via kedro
 prometheus-client==0.21.0
@@ -692,7 +696,7 @@ referencing==0.35.1
     #   jsonschema
     #   jsonschema-specifications
     #   jupyter-events
-regex==2024.9.11
+regex==2024.11.6
     # via tiktoken
 requests==2.32.3
     # via
@@ -733,7 +737,7 @@ rich==13.9.4
     #   typer
 rope==1.13.0
     # via kedro
-rpds-py==0.20.1
+rpds-py==0.21.0
     # via
     #   jsonschema
     #   referencing
@@ -799,7 +803,7 @@ stack-data==0.6.3
     # via ipython
 starlette==0.41.2
     # via fastapi
-strawberry-graphql==0.247.2
+strawberry-graphql==0.248.0
     # via kedro-viz
 tenacity==9.0.0
     # via
@@ -835,7 +839,7 @@ tornado==6.4.1
     #   jupyterlab
     #   notebook
     #   terminado
-tqdm==4.66.6
+tqdm==4.67.0
     # via
     #   graphdatascience
     #   openai
