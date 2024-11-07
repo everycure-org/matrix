@@ -31,6 +31,10 @@ moa_extraction.feat.relation_encoder:
   <<: *_kg_paths_dataset
   filepath: ${globals:paths.moa_extraction}/int/{num_hops}_hop_indication_paths.parquet
 
+moa_extraction.reporting.{num_hops}_hop_mapping_success:
+  filepath: ${globals:paths.moa_extraction}/reporting/{num_hops}_hop_mapping_success
+  type:  yaml.YAMLDataset
+
 "moa_extraction.prm.{num_hops}_hop_splits":
   <<: *_kg_paths_dataset
   filepath: ${globals:paths.moa_extraction}/prm/{num_hops}_hop_split.parquet

@@ -55,6 +55,17 @@ def _preprocessing_pipeline() -> Pipeline:
                         tags="moa_extraction.preprocessing",
                     ),
                     node(
+                        func=nodes.report_mapping_success,
+                        inputs={
+                            "drugmechdb_entities": "moa_extraction.raw.drugmechdb_entities",
+                            "drug_mech_db": "moa_extraction.raw.drug_mech_db",
+                            "mapped_paths": f"moa_extraction.int.{num_hops}_hop_indication_paths",
+                        },
+                        outputs=f"moa_extraction.reporting.{num_hops}_hop_mapping_success",
+                        name=f"report_mapping_success_{num_hops}_hop",
+                        tags="moa_extraction.preprocessing",
+                    ),
+                    node(
                         func=nodes.make_splits,
                         inputs={
                             "paths_data": f"moa_extraction.int.{num_hops}_hop_indication_paths",
