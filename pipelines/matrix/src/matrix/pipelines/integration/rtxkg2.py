@@ -96,17 +96,19 @@ def filter_semmed(
         .persist()
     )
 
+    table = f.broadcast(curie_to_pmids)
+
     df = (
         edges_df.alias("edges")
         # Enrich subject pubmed identifiers
         .join(
-            f.broadcast(curie_to_pmids).alias("subj"),
+            table.alias("subj"),
             on=[f.col("edges.subject") == f.col("subj.id")],
             how="left",
         )
         # Enrich object pubmed identifiers
         .join(
-            f.broadcast(curie_to_pmids).alias("obj"),
+            table.alias("obj"),
             on=[f.col("edges.object") == f.col("obj.id")],
             how="left",
         )
