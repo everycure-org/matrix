@@ -5,6 +5,7 @@ from typing import Any, Dict, List, Optional
 from jinja2 import Environment, FileSystemLoader
 from kedro.pipeline import Pipeline
 from kedro.pipeline.node import Node
+from matrix.argo import FusedNode, fuse
 
 from matrix.kedro_extension import ArgoNode
 
@@ -44,6 +45,222 @@ def generate_argo_config(
     )
 
     return output
+
+
+class ArgoPipeline:
+    """Argo pipeline.
+
+    A class that represents an Argo workflow pipeline composed of ArgoNodes.
+
+    Args:
+        nodes: List of ArgoNode objects representing the pipeline tasks.
+    """
+
+    def __init__(self, pipeline: Pipeline):
+        self.nodes = self.fuse(pipeline)
+
+    def __len__(self) -> int:
+        """Get the number of nodes in the pipeline."""
+        return len(self.nodes)
+
+    @property
+    def tasks(self) -> List[ArgoNode]:
+        """Get Argo tasks of the pipeline.
+
+        Returns:
+            List[ArgoNode]: List of ArgoNode objects representing pipeline tasks.
+        """
+        return self.nodes
+
+    def kedro_command(self) -> str:
+        """Get the Kedro command for executing the pipeline.
+
+        Returns:
+            str: Kedro command string for pipeline execution.
+        """
+        return "kedro run"  # Basic implementation - may need to be enhanced based on requirements
+
+    def fuse_argo_tasks(self) -> "ArgoPipeline":
+        """Fuse two pipelines."""
+        pass
+
+    def get_argo_template(self) -> str:
+        """Get Argo template of the pipeline."""
+        pass
+
+    def fuse(pipeline: Pipeline) -> List[FusedNode]:
+        """Function to fuse given pipeline.
+
+        Leverages the Tags provided by Kedro to fuse nodes for execution
+        by a single Argo Workflow step.
+
+        Args:
+            pipeline: Kedro pipeline
+        Returns
+            List of fusedNodes with their dependencies
+        """
+        fused = []
+
+        # Kedro provides the `grouped_nodes` property, that yields a list of node groups that can
+        # be executed in topological order. We're using this as the starting point for our fusing algorithm.
+        for depth, group in enumerate(pipeline.grouped_nodes):
+            for target_node in group:
+                # Find source node that provides its inputs
+                num_fused = 0
+                fuse_node = None
+
+                # Given a topological node, we're trying to find a parent node
+                # to which it can be fused. Nodes can be fused with they have the
+                # proper labels and they have dataset dependencies, and the parent
+                # is in the previous node group.
+                for source_node in fused:
+                    if source_node.fuses_with(target_node) and source_node.depth == depth - 1:
+                        fuse_node = source_node
+                        num_fused = num_fused + 1
+
+                # We only fuse if there is a single parent to fuse with
+                # if multiple parents, avoid fusing otherwise this might
+                # mess with dependencies.
+                if num_fused == 1:
+                    fuse_node.depth = depth
+                    fuse_node.add_node(target_node)
+                    fuse_node.add_parents(
+                        [
+                            fs
+                            for fs in fused
+                            if set(FusedNode.clean_dependencies(target_node.inputs))
+                            & set(FusedNode.clean_dependencies(fs.outputs))
+                            if fs != fuse_node
+                        ]
+                    )
+
+                # If we can't find any nodes to fuse to, we're adding this node
+                # as an independent node to the result, which implies it will be executed
+                # using it's own Argo node unless a downstream node will be fused to it.
+                else:
+                    if isinstance(target_node, ArgoNode):
+                        k8s_config = target_node.k8s_config
+                    else:
+                        k8s_config = None
+
+                    fused_node = FusedNode(depth)
+                    fused_node.add_node(target_node)
+                    fused_node.add_parents(
+                        [
+                            fs
+                            for fs in fused
+                            if set(FusedNode.clean_dependencies(target_node.inputs))
+                            & set(FusedNode.clean_dependencies(fs.outputs))
+                        ]
+                    )
+                    fused_node.k8s_config = k8s_config
+                    fused.append(fused_node)
+
+        return fused
+
+
+class ArgoTask:
+    def __init__(self, depth: int):
+        self.depth = depth
+        self._nodes = []
+        self._parents = set()
+        self._inputs = []
+        self.k8s_config = None
+
+    def add_node(self, node):
+        """Function to add node to group."""
+        self._nodes.append(node)
+        if isinstance(node, ArgoNode) and self.k8s_config is None:
+            self.k8s_config = node.k8s_config
+        elif isinstance(node, ArgoNode):
+            self.k8s_config.fuse_config(node.k8s_config)
+
+    def add_parents(self, parents: List) -> None:
+        """Function to set the parents of the group."""
+        self._parents.update(set(parents))
+
+    # TODO: This is not used. Delete during refactoring.
+    def fuses_with(self, node) -> bool:
+        """Function verify fusability."""
+        # If not is not fusable, abort
+        if not self.is_fusable:
+            return False
+
+        # If fusing group does not match, abort
+        if not self.fuse_group == self.get_fuse_group(node.tags):
+            return False
+
+        # Otherwise, fusable if connected
+        return set(self.clean_dependencies(node.inputs)) & set(self.clean_dependencies(self.outputs))
+
+    @property
+    def is_fusable(self) -> bool:
+        """Check whether is fusable."""
+        return "argowf.fuse" in self.tags
+
+    @property
+    def fuse_group(self) -> Optional[str]:
+        """Retrieve fuse group."""
+        return self.get_fuse_group(self.tags)
+
+    @property
+    def nodes(self) -> str:
+        """Retrieve contained nodes."""
+        return ",".join([node.name for node in self._nodes])
+
+    @property
+    def outputs(self) -> set[str]:
+        """Retrieve output datasets."""
+        return set().union(*[self.clean_dependencies(node.outputs) for node in self._nodes])
+
+    @property
+    def tags(self) -> set[str]:
+        """Retrieve tags."""
+        return set().union(*[node.tags for node in self._nodes])
+
+    @property
+    def name(self) -> str:
+        """Retrieve name of fusedNode."""
+        if self.is_fusable and len(self._nodes) > 1:
+            return self.fuse_group
+        # TODO: Consider if this shouldn't raise an exception
+        elif len(self._nodes) == 0:
+            return "empty"
+
+        # If not fusable, revert to name of node
+        return self._nodes[0].name
+
+    @property
+    def _unique_key(self) -> tuple[Any, Any] | Any | tuple:
+        def hashable(value: Any) -> tuple[Any, Any] | Any | tuple:
+            if isinstance(value, dict):
+                # we sort it because a node with inputs/outputs
+                # {"arg1": "a", "arg2": "b"} is equivalent to
+                # a node with inputs/outputs {"arg2": "b", "arg1": "a"}
+                return tuple(sorted(value.items()))
+            if isinstance(value, list):
+                return tuple(value)
+            return value
+
+        return self.name, hashable(self._nodes)
+
+    @staticmethod
+    def get_fuse_group(tags: str) -> Optional[str]:
+        """Function to retrieve fuse group."""
+        for tag in tags:
+            if tag.startswith("argowf.fuse-group."):
+                return tag[len("argowf.fuse-group.") :]
+
+        return None
+
+    @staticmethod
+    def clean_dependencies(elements) -> List[str]:
+        """Function to clean node dependencies.
+
+        Operates by removing params: from the list and dismissing
+        the transcoding operator.
+        """
+        return [el.split("@")[0] for el in elements if not el.startswith("params:")]
 
 
 class FusedNode(Node):
@@ -153,77 +370,6 @@ class FusedNode(Node):
         the transcoding operator.
         """
         return [el.split("@")[0] for el in elements if not el.startswith("params:")]
-
-
-def fuse(pipeline: Pipeline) -> List[FusedNode]:
-    """Function to fuse given pipeline.
-
-    Leverages the Tags provided by Kedro to fuse nodes for execution
-    by a single Argo Workflow step.
-
-    Args:
-        pipeline: Kedro pipeline
-    Returns
-        List of fusedNodes with their dependencies
-    """
-    fused = []
-
-    # Kedro provides the `grouped_nodes` property, that yields a list of node groups that can
-    # be executed in topological order. We're using this as the starting point for our fusing algorithm.
-    for depth, group in enumerate(pipeline.grouped_nodes):
-        for target_node in group:
-            # Find source node that provides its inputs
-            num_fused = 0
-            fuse_node = None
-
-            # Given a topological node, we're trying to find a parent node
-            # to which it can be fused. Nodes can be fused with they have the
-            # proper labels and they have dataset dependencies, and the parent
-            # is in the previous node group.
-            for source_node in fused:
-                if source_node.fuses_with(target_node) and source_node.depth == depth - 1:
-                    fuse_node = source_node
-                    num_fused = num_fused + 1
-
-            # We only fuse if there is a single parent to fuse with
-            # if multiple parents, avoid fusing otherwise this might
-            # mess with dependencies.
-            if num_fused == 1:
-                fuse_node.depth = depth
-                fuse_node.add_node(target_node)
-                fuse_node.add_parents(
-                    [
-                        fs
-                        for fs in fused
-                        if set(FusedNode.clean_dependencies(target_node.inputs))
-                        & set(FusedNode.clean_dependencies(fs.outputs))
-                        if fs != fuse_node
-                    ]
-                )
-
-            # If we can't find any nodes to fuse to, we're adding this node
-            # as an independent node to the result, which implies it will be executed
-            # using it's own Argo node unless a downstream node will be fused to it.
-            else:
-                if isinstance(target_node, ArgoNode):
-                    k8s_config = target_node.k8s_config
-                else:
-                    k8s_config = None
-
-                fused_node = FusedNode(depth)
-                fused_node.add_node(target_node)
-                fused_node.add_parents(
-                    [
-                        fs
-                        for fs in fused
-                        if set(FusedNode.clean_dependencies(target_node.inputs))
-                        & set(FusedNode.clean_dependencies(fs.outputs))
-                    ]
-                )
-                fused_node.k8s_config = k8s_config
-                fused.append(fused_node)
-
-    return fused
 
 
 def get_dependencies(fused_pipeline: List[FusedNode]):
