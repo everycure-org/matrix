@@ -56,28 +56,31 @@ def test_no_nodes_fused_when_no_fuse_options():
     ), "No nodes should be fused when no fuse options are provided"
 
 
-# def test_argo_pipeline_with_fusing():
-#     pipeline_with_fusing = Pipeline(
-#         nodes=[
-#             ArgoNode(
-#                 func=dummy_fn,
-#                 inputs=["dataset_a", "dataset_b"],
-#                 outputs="dataset_1@pandas",
-#             ),
-#             ArgoNode(
-#                 func=dummy_fn,
-#                 inputs=[
-#                     "dataset_1@spark",
-#                 ],
-#                 outputs="dataset_2",
-#             ),
-#         ],
-#         tags=["argowf.fuse", "argowf.fuse-group.dummy"],
-#     )
+def test_simple_fusing():
+    pipeline_where_first_node_is_input_for_second = Pipeline(
+        nodes=[
+            ArgoNode(
+                func=dummy_fn,
+                inputs=["dataset_a", "dataset_b"],
+                outputs="dataset_1@pandas",
+            ),
+            ArgoNode(
+                func=dummy_fn,
+                inputs=[
+                    "dataset_1@spark",
+                ],
+                outputs="dataset_2",
+            ),
+        ],
+        tags=["argowf.fuse", "argowf.fuse-group.dummy"],
+    )
 
-#     argo_pipeline = ArgoPipeline(k8s_pipeline)
-#     argo_kedro_command = argo_pipeline.kedro_command()
-#     argo_tasks = argo_pipeline.tasks
+    argo_pipeline = ArgoPipeline(pipeline_where_first_node_is_input_for_second)
+    argo_tasks = argo_pipeline.tasks
 
-#     assert argo_kedro_command is not None
-#     assert len(argo_tasks) == len(k8s_pipeline.nodes)
+    assert len(argo_tasks) == 1, "Only one node should be fused"
+    assert argo_tasks[0].name == "dummy", "Fused node should have name 'dummy'"
+    assert argo_tasks[0].outputs == set(
+        ["dataset_1", "dataset_2"]
+    ), "Fused node should have outputs 'dataset_1' and 'dataset_2'"
+    assert len(argo_tasks[0]._parents) == 0, "Fused node should have no parents"
