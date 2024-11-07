@@ -13,7 +13,7 @@ from matrix.kedro_extension import KubernetesExecutionConfig, ArgoNode, argo_nod
 from kedro.io import DataCatalog
 from kedro.runner import SequentialRunner
 
-from matrix.settings import (
+from matrix.kedro_extension import (
     KUBERNETES_DEFAULT_LIMIT_CPU,
     KUBERNETES_DEFAULT_LIMIT_RAM,
     KUBERNETES_DEFAULT_REQUEST_CPU,
