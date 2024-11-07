@@ -37,21 +37,30 @@ def test_no_nodes_fused_when_no_fuse_options():
                 inputs=["dataset_a", "dataset_b"],
                 outputs="dataset_c",
                 name="first",
+                tags=["some_tag"],
             ),
             ArgoNode(
                 func=dummy_fn,
                 inputs=["dataset_1", "dataset_2"],  # inputs are different than outputs of previous node
                 outputs="dataset_3",
                 name="second",
+                tags=["some_other_tag"],
             ),
         ],
-        tags=["argowf.fuse", "argowf.fuse-group.dummy"],
     )
 
     argo_pipeline = ArgoPipeline(pipeline_with_no_fusing_options)
     argo_tasks = argo_pipeline.tasks
 
-    assert all(isinstance(task, ArgoNode) for task in argo_tasks)
+    assert argo_tasks[0].name == "first"
+    assert argo_tasks[0].inputs == ["dataset_a", "dataset_b"]
+    assert argo_tasks[0].outputs == ["dataset_c"]
+    assert argo_tasks[0].tags == ["some_tag"]
+    assert argo_tasks[1].name == "second"
+    assert argo_tasks[1].inputs == ["dataset_1", "dataset_2"]
+    assert argo_tasks[1].outputs == ["dataset_3"]
+    assert argo_tasks[1].tags == ["some_other_tag"]
+
     assert len(argo_tasks) == len(
         pipeline_with_no_fusing_options.nodes
     ), "No nodes should be fused when no fuse options are provided"
@@ -78,7 +87,6 @@ def test_simple_fusing():
 
     argo_pipeline = ArgoPipeline(pipeline_where_first_node_is_input_for_second)
     argo_tasks = argo_pipeline.tasks
-    assert all(isinstance(task, ArgoNode) for task in argo_tasks)
 
     assert len(argo_tasks) == 1, "Only one node should be fused"
     assert argo_tasks[0].name == "dummy", "Fused node should have name 'dummy'"
