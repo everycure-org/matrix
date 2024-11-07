@@ -7,15 +7,15 @@ _kg_paths_dataset: &_kg_paths_dataset
 
 moa_extraction.raw.drug_mech_db:
   type: yaml.YAMLDataset
-  filepath: ${globals:paths.raw}/drugmechdb/${globals:data_sources.drugmechdb.version}/indication_paths.yaml
+  filepath: ${globals:paths.raw}/moa_extraction/drugmechdb/${globals:data_sources.drugmechdb.version}/indication_paths.yaml
 
 moa_extraction.raw.pairs_for_moa_prediction:
   type: pandas.CSVDataset
-  filepath: ${globals:paths.raw}/pairs_for_moa_prediction/${globals:data_sources.pairs_for_moa_prediction.version}/filtered_matrix_report_xg_ensemble_report_17_sept_2024.csv
+  filepath: ${globals:paths.raw}/moa_extraction/input_pairs/${globals:data_sources.pairs_for_moa_prediction.version}/filtered_matrix_report_xg_ensemble_report_17_sept_2024.csv
 
 moa_extraction.raw.drugmechdb_entities:
   type: pandas.ParquetDataset
-  filepath: ${globals:paths.raw}/drugmechdb_entities/drugmechdb_entities.parquet
+  filepath: ${globals:paths.raw}/moa_extraction/drugmechdb_entities/drugmechdb_entities.parquet
 
 # Intermediate and output datasets
 
