@@ -486,12 +486,14 @@ def test_no_nodes_fused_when_no_fuse_options_argo_pipeline():
     argo_tasks = argo_pipeline.tasks
 
     assert argo_tasks[0].name == "first"
-    assert argo_tasks[0].inputs == ["dataset_a", "dataset_b"]
-    assert argo_tasks[0].outputs == ["dataset_c"]
-    assert argo_tasks[0].tags == ["some_tag"]
+    assert argo_tasks[0].template == "kedro"
+    assert argo_tasks[0].deps == []
+    assert argo_tasks[0].nodes == ["first"]
+
     assert argo_tasks[1].name == "second"
-    assert argo_tasks[1].inputs == ["dataset_1", "dataset_2"]
-    assert argo_tasks[1].outputs == ["dataset_3"]
+    assert argo_tasks[1].template == "kedro"
+    assert argo_tasks[1].deps == []
+    assert argo_tasks[1].nodes == ["second"]
     assert argo_tasks[1].tags == ["some_other_tag"]
 
     assert len(argo_tasks) == len(
