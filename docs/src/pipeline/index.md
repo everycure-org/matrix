@@ -63,10 +63,10 @@ There are 3 main steps in the integration pipeline:
 
 ### Embeddings
 
-Embeddings are vectorized representations of the entities in our knowledge graph. These are currently computed in two stages:
+Our embeddings pipeline computes vectorized representations of the entities in the knowledge graph in two stages:
 
-1. Node Attribute Embedding Computation - in this step we use GenAI model (e.g. OpenAI's `text-embedding-3-small`) to compute individual node embeddings. 
-2. Topological Embedding Computation - in this step we use GraphSAGE embedding algorithm on the previously calculated node embeddings. Alternatively, you can also use Node2Vec for topological embeddings computation - the model is not as well supported in Neo4J however it does not rely on Node Attribute Embedding Computation.
+1. Node Attribute Embedding Computation - We use GenAI models (e.g. OpenAI's `text-embedding-3-small` embedding API), for efficient node embedding, leveraging batch processing to reduce runtime and integrating error handling for API limits. 
+2. Topological Embedding Computation - We have implemented options for GraphSAGE, and Node2Vec algorithms for computation of topological embeddings. Dimensionality reduction (e.g. PCA) has been modularized to enable flexible experimentation. 
 
 !!! info
     Our graph database, i.e., [Neo4J](https://neo4j.com/docs/graph-data-science/current/algorithms/) comes with out-of-the-box functionality to compute both node and topological embeddings in-situ. The Kedro pipeline orchestrates the computation of these.
@@ -74,19 +74,17 @@ Embeddings are vectorized representations of the entities in our knowledge graph
 
 ### Modelling 
 
-The modelling pipeline trains drug repurposing prediction models using knowledge graph embeddings generated in the embeddings pipeline. 
+The modelling pipeline trains prediction models using drug-disease pairs and knowledge graph embeddings. 
 
-The main steps are as follows:
-1. *Prepare ground truth dataset*. Load ground truth positive and negative drug-disease pairs. Perform test-train split. 
-2. *Synthesise additional training data*. Synthesise additional drug-disease pairs for training using an appropriate sampling strategy.  
-3. *Perform hyperparameter tuning*. Optimise model hyperparameters to maximise performance according to a chosen objective function.  
-4. *Train final model*.  Train a drug repurposing prediction model with hyperparameters found in the previous step. 
-5. *Check model performance*. Computes classification metrics using the test portion of the ground truth data. 
+Key steps implemented include: 
 
-As well as single models, the pipeline has the capability to deal with *ensembles* of models trained with resampled synthesised training data.  
+1. *Prepare ground truth dataset*. Load ground truth positive and negative drug-disease pairs. Perform test-train split using a stratified approach which includes the ability to stratify by drug. This enhances the training-test split, ensuring that the test set is representative of the training set. 
 
-!!! info
-    The step *check model performance* only gives a partial indication of model performance intended as a quick sanity check. This is because, in general, the ground truth data alone is not a good reflection of the data distribution that the model will see while performing its task. The evaluation pipeline must be run before making conclusions about model performance. 
+2. *Synthesise additional training data*. Synthesise additional drug-disease pairs for training using an appropriate sampling strategy.  This is an important step as it allows for the training of models that are not only representative of the training data but also generalise to new, unseen data.
+
+3. *Configure Model*. Multiple model configurations have been implemented (e.g. XGBoost, Random Forest, Ensemble Models), supporting different model types and training strategies with resampled synthesised training data. 
+
+4. *Perform hyperparameter tuning*. Optimise model hyperparameters to maximise performance according to a chosen objective function.  This has been optimized across model types through configuration files rather than hard-coded values, enabling experimentation with different hyperparameters for different models.
 
 ### Matrix Generation 
 
