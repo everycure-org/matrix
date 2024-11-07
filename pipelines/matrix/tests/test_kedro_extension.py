@@ -459,10 +459,10 @@ def test_copy_k8s_node():
         ),
         tags=["argowf.fuse", "argowf.fuse-group.dummy"],
     )
-    copied_k8s_node = k8s_node._copy(cpu_request=3, cpu_limit=4, memory_request=32, memory_limit=64, use_gpu=False)
-    assert copied_k8s_node.k8s_config.cpu_request == 3
-    assert copied_k8s_node.k8s_config.cpu_limit == 4
-    assert copied_k8s_node.k8s_config.memory_request == 32
-    assert copied_k8s_node.k8s_config.memory_limit == 64
-    assert not copied_k8s_node.k8s_config.use_gpu
+    copied_k8s_node = k8s_node._copy()
+    assert copied_k8s_node.k8s_config.cpu_request == 1
+    assert copied_k8s_node.k8s_config.cpu_limit == 2
+    assert copied_k8s_node.k8s_config.memory_request == 16
+    assert copied_k8s_node.k8s_config.memory_limit == 32
+    assert copied_k8s_node.k8s_config.use_gpu
     assert copied_k8s_node.tags == ["argowf.fuse", "argowf.fuse-group.dummy"]
