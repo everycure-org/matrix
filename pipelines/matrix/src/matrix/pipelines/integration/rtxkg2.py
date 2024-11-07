@@ -70,7 +70,7 @@ def transform_rtxkg2_edges(edges_df: DataFrame, curie_to_pmids: DataFrame, semme
     # fmt: on
 
 
-@primary_key(df="curie_to_pmids", primary_key="curie")
+@primary_key(df="curie_to_pmids", primary_key=["curie"])
 def filter_semmed(
     edges_df: DataFrame,
     curie_to_pmids: DataFrame,
