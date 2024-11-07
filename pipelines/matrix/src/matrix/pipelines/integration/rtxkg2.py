@@ -87,7 +87,7 @@ def filter_semmed(
     Returns
         Filtered dataframe
     """
-    before_count = edges_df.count()
+    # before_count = edges_df.count()
 
     curie_to_pmids = (
         curie_to_pmids.withColumn("pmids", f.from_json("pmids", T.ArrayType(T.IntegerType())))
@@ -124,9 +124,9 @@ def filter_semmed(
         .select("edges.*", "ngd", "num_publications")
     )
 
-    curie_to_pmids.unpersist()
+    # curie_to_pmids.unpersist()
 
-    logger.info(f"dropped {before_count - df.count()} SemMedDB edges")
+    # logger.info(f"dropped {before_count - df.count()} SemMedDB edges")
 
     return df
 
