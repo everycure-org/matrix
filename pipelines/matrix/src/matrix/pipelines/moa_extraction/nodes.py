@@ -159,6 +159,34 @@ def map_drug_mech_db(
     return paths.df
 
 
+def report_mapping_success(
+    drugmechdb_entities: pd.DataFrame,
+    drug_mech_db: List[dict],
+    mapped_paths: KGPaths,
+) -> dict:
+    """Report the success of the path mapping.
+
+    Args:
+        drugmechdb_entities: The normalized DrugMechDB entities.
+        drug_mech_db: The DrugMechDB indication paths.
+        mapped_paths: The mapped paths.
+
+    Returns:
+        Dictionary reporting the success of the path mapping.
+    """
+    report = dict()
+    report["pairs_in_drugmechdb"] = len(drug_mech_db)
+    report["pairs_in_mapped_paths"] = len(mapped_paths.get_unique_pairs())
+    report["proportion_pairs_with_mapped_paths"] = (
+        len(mapped_paths.get_unique_pairs()) / len(drug_mech_db) if len(drug_mech_db) > 0 else 0
+    )
+    report["entities_in_drugmechdb"] = len(drugmechdb_entities)
+    report["proportion_entities_mapped"] = (
+        sum(~drugmechdb_entities["mapped_ID"].isna()) / len(drugmechdb_entities) if len(drugmechdb_entities) > 0 else 0
+    )
+    return json.loads(json.dumps(report, default=float))
+
+
 @inject_object()
 def make_splits(
     paths_data: KGPaths,
