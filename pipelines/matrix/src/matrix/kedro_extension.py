@@ -1,4 +1,4 @@
-from typing import Callable, Iterable, Union
+from typing import Callable, Iterable, Union, Any
 import warnings
 from kedro.pipeline.node import Node
 from pydantic import BaseModel, field_validator, model_validator
@@ -97,3 +97,19 @@ def kubernetes_node(
         confirms=confirms,
         namespace=namespace,
     )
+
+    def _copy(self, **overwrite_params: Any) -> KubernetesNode:
+        """
+        Helper function to copy the node, replacing some values.
+        """
+        params = {
+            "func": self._func,
+            "inputs": self._inputs,
+            "outputs": self._outputs,
+            "name": self._name,
+            "namespace": self._namespace,
+            "tags": self._tags,
+            "confirms": self._confirms,
+        }
+        params.update(overwrite_params)
+        return KubernetesNode(**params)  # type: ignore[arg-type]
