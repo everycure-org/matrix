@@ -443,3 +443,26 @@ def test_initialization_of_pipeline_with_k8s_nodes():
 
     assert isinstance(k8s_pipeline_with_tags_from_function.nodes[0], KubernetesNode)
     assert isinstance(k8s_pipeline_with_tags_from_function.nodes[1], KubernetesNode)
+
+
+def test_copy_k8s_node():
+    k8s_node = KubernetesNode(
+        func=dummy_func,
+        inputs=["int_number_ds_in"],
+        outputs=["int_number_ds_out"],
+        k8s_config=KubernetesExecutionConfig(
+            cpu_request=1,
+            cpu_limit=2,
+            memory_request=16,
+            memory_limit=32,
+            use_gpu=True,
+        ),
+        tags=["argowf.fuse", "argowf.fuse-group.dummy"],
+    )
+    copied_k8s_node = k8s_node._copy(cpu_request=3, cpu_limit=4, memory_request=32, memory_limit=64, use_gpu=False)
+    assert copied_k8s_node.k8s_config.cpu_request == 3
+    assert copied_k8s_node.k8s_config.cpu_limit == 4
+    assert copied_k8s_node.k8s_config.memory_request == 32
+    assert copied_k8s_node.k8s_config.memory_limit == 64
+    assert not copied_k8s_node.k8s_config.use_gpu
+    assert copied_k8s_node.tags == ["argowf.fuse", "argowf.fuse-group.dummy"]
