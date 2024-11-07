@@ -282,3 +282,5 @@ We use `make` and `Makefile`s in a lot of places. If you want to [learn more abo
     # for arch/manjaro
     sudo pacman -S make
     ```
+
+[Request access to the data :material-skip-next:](./git-crypt.md){ .md-button .md-button--primary }
