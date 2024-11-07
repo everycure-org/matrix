@@ -303,6 +303,7 @@ def train_topological_embeddings(
     filtering: Any,
     estimator: Any,
     write_property: str,
+    torch_device: str,
 ) -> Dict:
     """Function to train topological embeddings using PygNode2Vec.
 
@@ -314,6 +315,7 @@ def train_topological_embeddings(
         filtering: filtering
         estimator: estimator to apply
         write_property: node property to write result to
+        torch_device: torch device to use (cuda, mps, cpu)
     """
     # Validate whether the GDS graph exists
     graph_name = projection.get("graphName")
@@ -341,7 +343,7 @@ def train_topological_embeddings(
         model = gds.model.get(model_name)
         gds.model.drop(model)
 
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    device = torch.device(torch_device)
     model, _ = topological_estimator.run(
         gds=gds,
         graph=graph,
