@@ -328,6 +328,7 @@ def test_generate_argo_config() -> None:
     image_tag = "test_tag"
     namespace = "test_namespace"
     username = "test_user"
+    pipeline_name = "pipeline"
     pipeline = Pipeline(
         nodes=[
             Node(
@@ -345,6 +346,7 @@ def test_generate_argo_config() -> None:
         image_tag=image_tag,
         namespace=namespace,
         username=username,
+        pipeline_name=pipeline_name,
         pipeline=pipeline,
         package_name="matrix",
     )
@@ -365,7 +367,7 @@ def test_generate_argo_config() -> None:
     templates = spec["templates"]
 
     # Verify cloud_pipeline template
-    pipeline_template = next(t for t in templates if t["name"] == "pipeline")
+    pipeline_template = next(t for t in templates if t["name"] == pipeline_name)
     assert "dag" in pipeline_template, "cloud_pipeline template should have a DAG"
     assert len(pipeline_template["dag"]["tasks"]) == 1, "cloud_pipeline template should have one task"
     assert (
