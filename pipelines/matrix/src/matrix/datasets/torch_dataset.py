@@ -1,3 +1,5 @@
+"""PyTorchDataset implemented from https://github.com/kedro-org/kedro-plugins/pull/735."""
+
 from __future__ import annotations
 
 from copy import deepcopy
