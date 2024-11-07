@@ -24,9 +24,8 @@ GDS Models:
 - Once embeddings are calculated, they are directly stored in Neo4j graph as node properties
 
 PyTorch Geometric Models:
-- Requires conversion of graph data from Neo4j to PyTorch tensors
+- Require conversion of graph data from Neo4j to PyTorch tensors utilizing `torch_utils` library
 - We have full control over the training loop and can customize training functionalities (such as scheduler etc)
-- Utilize `torch_utils` library to convert Neo4j graph to PyG friendly formatedge_index format
 - We can generate custom architectures using Pytorch-based models
 - Embeddings are generated as PyTorch tensors and need additional steps to writing embeddings back to Neo4j
 
