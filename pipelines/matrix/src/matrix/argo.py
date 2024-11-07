@@ -88,6 +88,7 @@ class ArgoPipeline:
         """Get Argo template of the pipeline."""
         pass
 
+    @staticmethod
     def fuse(pipeline: Pipeline) -> List[FusedNode]:
         """Function to fuse given pipeline.
 
