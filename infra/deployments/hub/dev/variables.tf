@@ -16,5 +16,4 @@ variable "storage_bucket_name" {
 
 variable "project_id" {
   description = "mtrx-hub-dev-3of"
-  type        = string
 }
