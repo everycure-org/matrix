@@ -9,7 +9,7 @@ from kedro.pipeline.node import Node
 import logging
 import pytest
 
-from matrix.kedro_extension import KubernetesExecutionConfig, KubernetesNode, kubernetes_node
+from matrix.kedro_extension import KubernetesExecutionConfig, ArgoNode, argo_node
 from kedro.io import DataCatalog
 from kedro.runner import SequentialRunner
 
@@ -135,11 +135,11 @@ def test_parametrized_node():
     normal_node = get_parametrized_node(Node)
     assert normal_node.func(2) == 4
 
-    k8s_node = get_parametrized_node(KubernetesNode)
+    k8s_node = get_parametrized_node(ArgoNode)
     assert k8s_node.func(2) == 4
 
 
-@pytest.mark.parametrize("node_class", [Node, KubernetesNode])
+@pytest.mark.parametrize("node_class", [Node, ArgoNode])
 def test_parametrized_node_in_simple_pipeline(caplog, node_class):
     node = get_parametrized_node(node_class)
     pipeline_obj = pipeline([node])
@@ -160,7 +160,7 @@ def test_parametrized_node_in_simple_pipeline(caplog, node_class):
 
 
 def test_kubernetes_node_default_config():
-    k8s_node = KubernetesNode(
+    k8s_node = ArgoNode(
         func=lambda x: x,
         inputs=["int_number_ds_in"],
         outputs=["int_number_ds_out"],
@@ -169,7 +169,7 @@ def test_kubernetes_node_default_config():
 
 
 def test_kubernetes_node_can_request_gpu():
-    k8s_node = KubernetesNode(
+    k8s_node = ArgoNode(
         func=lambda x: x,
         inputs=["int_number_ds_in"],
         outputs=["int_number_ds_out"],
@@ -185,7 +185,7 @@ def test_validate_values_are_sane():
 
 
 def test_default_values_in_k8s_node_config_match_settings():
-    k8s_node = KubernetesNode(
+    k8s_node = ArgoNode(
         func=lambda x: x,
         inputs=["int_number_ds_in"],
         outputs=["int_number_ds_out"],
@@ -198,7 +198,7 @@ def test_default_values_in_k8s_node_config_match_settings():
 
 
 def test_k8s_node_can_override_default_values():
-    k8s_node = KubernetesNode(
+    k8s_node = ArgoNode(
         func=lambda x: x,
         inputs=["int_number_ds_in"],
         outputs=["int_number_ds_out"],
@@ -264,14 +264,14 @@ def get_parallel_pipelines() -> Pipeline:
 
     k8s_pipeline = pipeline(
         [
-            KubernetesNode(
+            ArgoNode(
                 func=split_data,
                 inputs=["model_input_table@pandas", "params:model_options"],
                 outputs=["X_train", "X_test", "y_train", "y_test"],
                 name="split_data_node",
                 tags=["k8s_pipeline"],
             ),
-            KubernetesNode(
+            ArgoNode(
                 func=train_model,
                 inputs=["X_train", "y_train"],
                 outputs="regressor",
@@ -285,7 +285,7 @@ def get_parallel_pipelines() -> Pipeline:
                 ),
                 tags=["k8s_pipeline"],
             ),
-            KubernetesNode(
+            ArgoNode(
                 func=evaluate_model,
                 inputs=["regressor", "X_test", "y_test"],
                 outputs="metrics",
@@ -356,7 +356,7 @@ def test_parallel_pipelines(caplog):
 
 
 def test_kubernetes_node_factory():
-    k8s_node = kubernetes_node(
+    k8s_node = argo_node(
         func=dummy_func,
         inputs=["int_number_ds_in"],
         outputs=["int_number_ds_out"],
@@ -388,12 +388,12 @@ def test_fuse_config() -> None:
 
 def test_k8s_pipeline_with_fused_nodes():
     k8s_pipeline, standard_pipeline = get_parallel_pipelines()
-    assert all(isinstance(node, KubernetesNode) for node in k8s_pipeline.nodes)
+    assert all(isinstance(node, ArgoNode) for node in k8s_pipeline.nodes)
 
 
 def test_initialization_of_pipeline_with_k8s_nodes():
     nodes = [
-        KubernetesNode(
+        ArgoNode(
             func=dummy_func,
             inputs=["int_number_ds_in"],
             outputs=["int_number_ds_out"],
@@ -405,7 +405,7 @@ def test_initialization_of_pipeline_with_k8s_nodes():
                 use_gpu=True,
             ),
         ),
-        KubernetesNode(
+        ArgoNode(
             func=dummy_func,
             inputs=["int_number_ds_out"],
             outputs=["int_number_ds_out_2"],
@@ -423,30 +423,30 @@ def test_initialization_of_pipeline_with_k8s_nodes():
         nodes=nodes,
     )
 
-    assert isinstance(k8s_pipeline_without_tags.nodes[0], KubernetesNode)
-    assert isinstance(k8s_pipeline_without_tags.nodes[1], KubernetesNode)
+    assert isinstance(k8s_pipeline_without_tags.nodes[0], ArgoNode)
+    assert isinstance(k8s_pipeline_without_tags.nodes[1], ArgoNode)
 
     k8s_pipeline_without_tags_from_function = pipeline(nodes)
 
-    assert isinstance(k8s_pipeline_without_tags_from_function.nodes[0], KubernetesNode)
-    assert isinstance(k8s_pipeline_without_tags_from_function.nodes[1], KubernetesNode)
+    assert isinstance(k8s_pipeline_without_tags_from_function.nodes[0], ArgoNode)
+    assert isinstance(k8s_pipeline_without_tags_from_function.nodes[1], ArgoNode)
 
     k8s_pipeline_with_tags = Pipeline(
         nodes=nodes,
         tags=["argowf.fuse", "argowf.fuse-group.dummy"],
     )
 
-    assert isinstance(k8s_pipeline_with_tags.nodes[0], KubernetesNode)
-    assert isinstance(k8s_pipeline_with_tags.nodes[1], KubernetesNode)
+    assert isinstance(k8s_pipeline_with_tags.nodes[0], ArgoNode)
+    assert isinstance(k8s_pipeline_with_tags.nodes[1], ArgoNode)
 
     k8s_pipeline_with_tags_from_function = pipeline(nodes, tags=["argowf.fuse", "argowf.fuse-group.dummy"])
 
-    assert isinstance(k8s_pipeline_with_tags_from_function.nodes[0], KubernetesNode)
-    assert isinstance(k8s_pipeline_with_tags_from_function.nodes[1], KubernetesNode)
+    assert isinstance(k8s_pipeline_with_tags_from_function.nodes[0], ArgoNode)
+    assert isinstance(k8s_pipeline_with_tags_from_function.nodes[1], ArgoNode)
 
 
 def test_copy_k8s_node():
-    k8s_node = KubernetesNode(
+    k8s_node = ArgoNode(
         func=dummy_func,
         inputs=["int_number_ds_in"],
         outputs=["int_number_ds_out"],

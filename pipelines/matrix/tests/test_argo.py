@@ -4,7 +4,7 @@ import pytest
 import yaml
 
 from matrix.argo import clean_name, fuse, FusedNode, generate_argo_config
-from matrix.kedro_extension import KubernetesExecutionConfig, KubernetesNode
+from matrix.kedro_extension import KubernetesExecutionConfig, ArgoNode
 
 
 def dummy_fn(*args):
@@ -166,7 +166,7 @@ def test_fusing_multiple_parents():
 def test_simple_fusing_with_k8s_config():
     pipeline_where_first_node_is_input_for_second = Pipeline(
         nodes=[
-            KubernetesNode(
+            ArgoNode(
                 func=dummy_fn,
                 inputs=["dataset_a", "dataset_b"],
                 outputs="dataset_1@pandas",
@@ -178,7 +178,7 @@ def test_simple_fusing_with_k8s_config():
                     use_gpu=True,
                 ),
             ),
-            KubernetesNode(
+            ArgoNode(
                 func=dummy_fn,
                 inputs=[
                     "dataset_1@spark",
@@ -196,8 +196,8 @@ def test_simple_fusing_with_k8s_config():
         tags=["argowf.fuse", "argowf.fuse-group.dummy"],
     )
 
-    assert isinstance(pipeline_where_first_node_is_input_for_second.nodes[0], KubernetesNode)
-    assert isinstance(pipeline_where_first_node_is_input_for_second.nodes[1], KubernetesNode)
+    assert isinstance(pipeline_where_first_node_is_input_for_second.nodes[0], ArgoNode)
+    assert isinstance(pipeline_where_first_node_is_input_for_second.nodes[1], ArgoNode)
 
     # fused_pipeline = fuse(pipeline_where_first_node_is_input_for_second)
 

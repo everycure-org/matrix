@@ -69,7 +69,7 @@ class KubernetesExecutionConfig(BaseModel):
         self.use_gpu = self.use_gpu or k8s_config.use_gpu
 
 
-class KubernetesNode(Node):
+class ArgoNode(Node):
     # TODO: Merge this with former FuseNode
     def __init__(self, *args, k8s_config: KubernetesExecutionConfig = KubernetesExecutionConfig(), **kwargs):
         self._k8s_config = k8s_config
@@ -81,7 +81,7 @@ class KubernetesNode(Node):
 
     # TODO: Add fuse() method here.
 
-    def _copy(self, **overwrite_params: Any) -> "KubernetesNode":
+    def _copy(self, **overwrite_params: Any) -> "ArgoNode":
         """
         Helper function to copy the node, replacing some values.
         """
@@ -96,10 +96,10 @@ class KubernetesNode(Node):
             "confirms": self._confirms,
         }
         params.update(overwrite_params)
-        return KubernetesNode(**params)  # type: ignore[arg-type]
+        return ArgoNode(**params)  # type: ignore[arg-type]
 
 
-def kubernetes_node(
+def argo_node(
     func: Callable,
     inputs: str | list[str] | dict[str, str] | None,
     outputs: str | list[str] | dict[str, str] | None,
@@ -110,7 +110,7 @@ def kubernetes_node(
     confirms: str | list[str] | None = None,
     namespace: str | None = None,
 ):
-    return KubernetesNode(
+    return ArgoNode(
         func,
         inputs,
         outputs,

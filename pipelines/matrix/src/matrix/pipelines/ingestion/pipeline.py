@@ -1,6 +1,6 @@
 import pyspark.sql.functions as F
 from kedro.pipeline import Pipeline, pipeline
-from matrix.kedro_extension import KubernetesExecutionConfig, kubernetes_node
+from matrix.kedro_extension import KubernetesExecutionConfig, argo_node
 from matrix.settings import (
     KUBERNETES_DEFAULT_LIMIT_CPU,
     KUBERNETES_DEFAULT_LIMIT_RAM,
@@ -23,7 +23,7 @@ def create_pipeline(**kwargs) -> Pipeline:
     return pipeline(
         [
             # rtx-kg2
-            kubernetes_node(
+            argo_node(
                 func=lambda x: x,
                 inputs=["ingestion.raw.rtx_kg2.nodes@spark"],
                 outputs="ingestion.int.rtx_kg2.nodes",
@@ -31,7 +31,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 tags=["rtx_kg2"],
                 k8s_config=ingestion_k8s_node_config,
             ),
-            kubernetes_node(
+            argo_node(
                 func=lambda x: x,
                 inputs=["ingestion.raw.rtx_kg2.edges@spark"],
                 outputs="ingestion.int.rtx_kg2.edges",
@@ -39,7 +39,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 tags=["rtx_kg2"],
                 k8s_config=ingestion_k8s_node_config,
             ),
-            kubernetes_node(
+            argo_node(
                 func=lambda x: x,
                 inputs=["ingestion.raw.rtx_kg2.curie_to_pmids@spark"],
                 outputs="ingestion.int.rtx_kg2.curie_to_pmids",
@@ -48,7 +48,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 k8s_config=ingestion_k8s_node_config,
             ),
             # ec-medical-team
-            kubernetes_node(
+            argo_node(
                 func=lambda x: x.withColumn("upstream_data_source", F.array(F.lit("ec_medical_team"))),
                 inputs=["ingestion.raw.ec_medical_team.nodes@spark"],
                 outputs="ingestion.int.ec_medical_team.nodes",
@@ -56,7 +56,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 tags=["ec_medical_team"],
                 k8s_config=ingestion_k8s_node_config,
             ),
-            kubernetes_node(
+            argo_node(
                 func=lambda x: x.withColumn("upstream_data_source", F.array(F.lit("ec_medical_team"))),
                 inputs=["ingestion.raw.ec_medical_team.edges@spark"],
                 outputs="ingestion.int.ec_medical_team.edges",
@@ -65,7 +65,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 k8s_config=ingestion_k8s_node_config,
             ),
             # robokop
-            kubernetes_node(
+            argo_node(
                 func=lambda x: x,
                 inputs=["ingestion.raw.robokop.nodes@spark"],
                 outputs="ingestion.int.robokop.nodes",
@@ -73,7 +73,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 tags=["robokop"],
                 k8s_config=ingestion_k8s_node_config,
             ),
-            kubernetes_node(
+            argo_node(
                 # FUTURE: Update selection
                 func=lambda x: x,
                 inputs=["ingestion.raw.robokop.edges@spark"],
