@@ -19,6 +19,10 @@ moa_extraction.raw.drugmechdb_entities:
 
 # Intermediate and output datasets
 
+moa_extraction.reporting.add_tags:
+  type: yaml.YAMLDataset
+  filepath: ${globals:paths.moa_extraction}/reporting/add_tags.yml
+
 moa_extraction.feat.category_encoder:
   type: pickle.PickleDataset
   filepath: ${globals:paths.moa_extraction}/feat/category_encoder.pickle

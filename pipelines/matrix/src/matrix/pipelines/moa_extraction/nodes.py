@@ -107,6 +107,7 @@ def add_tags(
     _tag_edges_between_types(runner, drug_types, disease_types, "drug_disease", batch_size, verbose, prefix)
     _tag_edges_between_types(runner, drug_types, drug_types, "drug_drug", batch_size, verbose, prefix)
     _tag_edges_between_types(runner, disease_types, disease_types, "disease_disease", batch_size, verbose, prefix)
+    return {"success": True}
 
 
 @inject_object()
@@ -146,6 +147,7 @@ def map_drug_mech_db(
     drug_mech_db: List[dict],
     mapper: PathMapper,
     drugmechdb_entities: pd.DataFrame,
+    add_tags_dummy: dict,
 ) -> KGPaths:
     """Map the DrugMechDB indication paths to 2 and 3-hop paths in the graph.
 
@@ -154,6 +156,7 @@ def map_drug_mech_db(
         drug_mech_db: The DrugMechDB indication paths.
         mapper: Strategy for mapping paths to the graph.
         drugmechdb_entities: The normalized DrugMechDB entities.
+        add_tags_dummy: Dummy variable ensuring that the node is run after tags have been added to the KG.
     """
     paths = mapper.run(runner, drug_mech_db, drugmechdb_entities)
     return paths.df
