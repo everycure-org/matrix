@@ -43,10 +43,11 @@ def cli():
 @click.option("--namespace", type=str, default="argo-workflows", help="Specify a custom namespace")
 @click.option("--run-name", type=str, default=None, help="Specify a custom run name, defaults to branch")
 @click.option("--pipeline", type=str, default="__default__", help="Specify which pipeline to execute")
+@click.option("--use-gpus", "-g", is_flag=True, default=False, help="Use GPUs in the workflow")
 @click.option("--verbose", "-v", is_flag=True, default=False, help="Enable verbose output")
 @click.option("--dry-run", "-d", is_flag=True, default=False, help="Does everything except submit the workflow")
 # fmt: on
-def submit(username: str, namespace: str, run_name: str, pipeline: str, verbose: bool, dry_run: bool):
+def submit(username: str, namespace: str, run_name: str, pipeline: str, use_gpus: bool, verbose: bool, dry_run: bool):
     """Submit the end-to-end workflow. """
     if verbose:
         log.setLevel(logging.DEBUG)
@@ -63,6 +64,7 @@ def submit(username: str, namespace: str, run_name: str, pipeline: str, verbose:
         run_name=run_name,
         pipelines_for_workflow=pipelines_to_submit,
         pipeline_for_execution=pipeline,
+        use_gpus=use_gpus,
         verbose=verbose,
         dry_run=dry_run,
         template_directory=ARGO_TEMPLATES_DIR_PATH,
@@ -75,6 +77,7 @@ def _submit(
         run_name: str, 
         pipelines_for_workflow: Dict[str, Pipeline], 
         pipeline_for_execution: str, 
+        use_gpus: bool,
         verbose: bool, 
         dry_run: bool, 
         template_directory: Path,
@@ -117,7 +120,7 @@ def _submit(
         console.print("[green]✓[/green] Docker image built and pushed")
 
         console.print(f"Building Argo template with pipelines {list(pipelines_for_workflow.keys())}...")
-        argo_template = build_argo_template(run_name, username, namespace, pipelines_for_workflow)
+        argo_template = build_argo_template(run_name, username, namespace, pipelines_for_workflow, use_gpus=use_gpus)
         console.print("[green]✓[/green] Argo template built")
 
         console.print("Writing Argo template...")
@@ -284,7 +287,7 @@ def build_push_docker(username: str, verbose: bool):
     run_subprocess(f"make docker_push TAG={username}", stream_output=verbose)
 
 
-def build_argo_template(run_name: str, username: str, namespace: str, pipelines: Dict[str, Pipeline]) -> str:
+def build_argo_template(run_name: str, username: str, namespace: str, pipelines: Dict[str, Pipeline], use_gpus: bool = False) -> str:
     """Build Argo workflow template."""
     image_name = "us-central1-docker.pkg.dev/mtrx-hub-dev-3of/matrix-images/matrix"
 
@@ -300,6 +303,7 @@ def build_argo_template(run_name: str, username: str, namespace: str, pipelines:
         username=username,
         pipelines=pipelines,
         package_name=package_name,
+        use_gpus=use_gpus,
     )
 
 def save_argo_template(argo_template: str, run_name: str, template_directory: Path) -> str:
