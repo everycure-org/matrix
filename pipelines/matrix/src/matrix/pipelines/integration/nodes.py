@@ -9,6 +9,7 @@ import pandera.pyspark as pa
 import pyspark as ps
 import pyspark.sql.functions as F
 from joblib import Memory
+from jsonpath_ng import parse
 from more_itertools import chunked
 from pyspark.sql import DataFrame
 from refit.v1.core.inject import inject_object
@@ -18,7 +19,6 @@ from tenacity import (
     wait_exponential,
 )
 from tqdm.asyncio import tqdm_asyncio
-from jsonpath_ng import parse
 
 from matrix.schemas.knowledge_graph import KGEdgeSchema, KGNodeSchema
 
@@ -148,7 +148,7 @@ def filter_nodes_without_edges(
 def batch_map_ids(
     ids: frozenset[str],
     api_endpoint: str,
-    json_path_expr: str,
+    json_parser: parse,
     batch_size: int,
     parallelism: int,
     conflate: bool,
@@ -169,9 +169,7 @@ def batch_map_ids(
         Dict[str, str]: A dictionary of the form {id: normalized_id}.
     """
     results = asyncio.run(
-        async_batch_map_ids(
-            ids, api_endpoint, json_path_expr, batch_size, parallelism, conflate, drug_chemical_conflate
-        )
+        async_batch_map_ids(ids, api_endpoint, json_parser, batch_size, parallelism, conflate, drug_chemical_conflate)
     )
 
     logger.info(f"mapped {len(results)} ids")
@@ -183,7 +181,7 @@ def batch_map_ids(
 async def async_batch_map_ids(
     ids: frozenset[str],
     api_endpoint: str,
-    json_path_expr: str,
+    json_parser: parse,
     batch_size: int,
     parallelism: int,
     conflate: bool,
@@ -192,7 +190,7 @@ async def async_batch_map_ids(
     async with aiohttp.ClientSession() as session:
         semaphore = asyncio.Semaphore(parallelism)
         tasks = [
-            process_batch(batch, api_endpoint, json_path_expr, session, semaphore, conflate, drug_chemical_conflate)
+            process_batch(batch, api_endpoint, json_parser, session, semaphore, conflate, drug_chemical_conflate)
             for batch in chunked(ids, batch_size)
         ]
         results = await tqdm_asyncio.gather(*tasks)
@@ -203,16 +201,14 @@ async def async_batch_map_ids(
 async def process_batch(
     batch: List[str],
     api_endpoint: str,
-    json_path_expr: str,
+    json_parser: parse,
     session: aiohttp.ClientSession,
     semaphore: asyncio.Semaphore,
     conflate: bool,
     drug_chemical_conflate: bool,
 ) -> Dict[str, str]:
     async with semaphore:
-        return await hit_node_norm_service(
-            batch, api_endpoint, json_path_expr, session, conflate, drug_chemical_conflate
-        )
+        return await hit_node_norm_service(batch, api_endpoint, json_parser, session, conflate, drug_chemical_conflate)
 
 
 def normalize_kg(
@@ -232,11 +228,12 @@ def normalize_kg(
     It returns the datasets with normalized IDs.
 
     """
+    json_parser = parse(json_path_expr)
     logger.info("collecting node ids for normalization")
     node_ids = nodes.select("id").orderBy("id").toPandas()["id"].to_list()
     logger.info(f"collected {len(node_ids)} node ids for normalization. Performing normalization...")
     node_id_map = batch_map_ids(
-        frozenset(node_ids), api_endpoint, json_path_expr, batch_size, parallelism, conflate, drug_chemical_conflate
+        frozenset(node_ids), api_endpoint, json_parser, batch_size, parallelism, conflate, drug_chemical_conflate
     )
 
     # convert dict back to a dataframe to parallelize the mapping
@@ -294,7 +291,7 @@ def normalize_kg(
 async def hit_node_norm_service(
     curies: List[str],
     endpoint: str,
-    json_path_expr: str,
+    json_parser: parse,
     session: aiohttp.ClientSession,
     conflate: bool = True,
     drug_chemical_conflate: bool = True,
@@ -306,7 +303,7 @@ async def hit_node_norm_service(
     Args:
         curies (List[str]): A list of curies to normalize.
         endpoint (str): The endpoint to hit.
-        json_path_expr: (str) JSON path expression for attribute to get
+        json_parser: JSON path expression for attribute to get
         session (aiohttp.ClientSession): The aiohttp session to use for requests.
         conflate (bool, optional): Whether to conflate the nodes.
         drug_chemical_conflate (bool, optional): Whether to conflate the drug and chemical nodes.
@@ -321,12 +318,11 @@ async def hit_node_norm_service(
         "description": "true",
     }
 
-    logger.debug(request_json)
     async with session.post(url=endpoint, json=request_json) as resp:
         if resp.status == 200:
             response_json = await resp.json()
             logger.debug(response_json)
-            return _extract_ids(response_json, json_path_expr)
+            return _extract_ids(response_json, json_parser)
         else:
             logger.warning(f"Node norm response code: {resp.status}")
             resp_text = await resp.text()
@@ -335,13 +331,14 @@ async def hit_node_norm_service(
 
 
 # NOTE: we are not taking the label that the API returns, this could actually be important. Do we want the labels/biolink types as well?
-def _extract_ids(response: Dict[str, Any], json_path_expr: str):
+def _extract_ids(response: Dict[str, Any], json_parser: parse):
     ids = {}
     for key, item in response.items():
         logger.debug(f"Response for key {key}: {response.get(key)}")  # Log the response for each key
         try:
-            ids[key] = parse(json_path_expr).find(item)[0].value
+            ids[key] = json_parser.find(item)[0].value
         except (IndexError, KeyError):
-            logger.warning(f"KeyError for {key}: {item}, {json_path_expr}")
+            logger.debug(f"Not able to normalize for {key}: {item}, {json_parser}")
             ids[key] = None
+
     return ids

@@ -1,14 +1,13 @@
 import logging
-
 from typing import Dict
+
 import pandera.pyspark as pa
 import pyspark.sql.functions as f
 import pyspark.sql.types as T
 from pyspark.sql import DataFrame
+from refit.v1.core.inline_primary_key import primary_key
 
 from matrix.schemas.knowledge_graph import KGEdgeSchema, KGNodeSchema, cols_for_schema
-
-from refit.v1.core.inline_primary_key import primary_key
 
 logger = logging.getLogger(__name__)
 
@@ -76,6 +75,7 @@ def filter_semmed(
     curie_to_pmids: DataFrame,
     publication_threshold: int,
     ngd_threshold: float,
+    limit_pmids: int,
 ) -> DataFrame:
     """Function to filter semmed edges.
 
@@ -92,6 +92,10 @@ def filter_semmed(
     """
     curie_to_pmids = (
         curie_to_pmids.withColumn("pmids", f.from_json("pmids", T.ArrayType(T.IntegerType())))
+        .withColumn("pmids", f.sort_array(f.col("pmids")))
+        .withColumn("limited_pmids", f.slice(f.col("pmids"), 1, limit_pmids))
+        .drop("pmids")
+        .withColumnRenamed("limited_pmids", "pmids")
         .withColumn("num_pmids", f.array_size(f.col("pmids")))
         .withColumnRenamed("curie", "id")
         .persist()
@@ -138,13 +142,16 @@ def compute_ngd(df: DataFrame, num_pairs: int = 3.7e7 * 20) -> DataFrame:
     Returns:
         Dataframe with ndg score
     """
-    return df.withColumn(
-        "num_common_pmids", f.array_size(f.array_intersect(f.col("subj.pmids"), f.col("obj.pmids")))
-    ).withColumn(
-        "ngd",
-        (
-            f.greatest(f.log2(f.col("subj.num_pmids")), f.log2(f.col("obj.num_pmids")))
-            - f.log2(f.col("num_common_pmids"))
+    return (
+        # Take first max_pmids elements from each array
+        df.withColumn(
+            "num_common_pmids", f.array_size(f.array_intersect(f.col("subj.pmids"), f.col("obj.pmids")))
+        ).withColumn(
+            "ngd",
+            (
+                f.greatest(f.log2(f.col("subj.num_pmids")), f.log2(f.col("obj.num_pmids")))
+                - f.log2(f.col("num_common_pmids"))
+            )
+            / (f.log2(f.lit(num_pairs)) - f.least(f.log2(f.col("subj.num_pmids")), f.log2(f.col("obj.num_pmids")))),
         )
-        / (f.log2(f.lit(num_pairs)) - f.least(f.log2(f.col("subj.num_pmids")), f.log2(f.col("obj.num_pmids")))),
     )
