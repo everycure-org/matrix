@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import List, Any, Optional
+from typing import List, Any, Optional, Dict
 from graphdatascience import GraphDataScience
 import torch
 from . import torch_utils as tu
@@ -31,7 +31,7 @@ class GraphAlgorithm(ABC):
 
 
 class GDSGraphSage(GraphAlgorithm):
-    """GraphSAGE algorithm class. For more information see https://neo4j.com/docs/graph-data-science/current/machine-learning/node-embeddings/graph-sage/."""
+    """GraphSAGE algorithm class."""
 
     def __init__(
         self,
@@ -51,7 +51,10 @@ class GDSGraphSage(GraphAlgorithm):
         penalty_l2: float = 0.0,
         concurrency: int = 4,
     ):
-        """GraphSAGE attributes."""
+        """GraphSAGE attributes.
+
+        For more information see https://neo4j.com/docs/graph-data-science/current/machine-learning/node-embeddings/graph-sage/.
+        """
         super().__init__(embedding_dim, random_seed, concurrency)
         self._sample_sizes = sample_sizes
         self._epochs = epochs
@@ -65,7 +68,7 @@ class GDSGraphSage(GraphAlgorithm):
         self._activation_function = activation_function
         self._feature_properties = feature_properties
         self._penalty_l2 = penalty_l2
-        self._loss = None
+        self._loss_lst = None
 
     def run(
         self,
@@ -78,8 +81,19 @@ class GDSGraphSage(GraphAlgorithm):
         relationship_projection: dict = None,
         node_projection: dict = None,
         config: dict = None,
-    ):
-        """Train the algorithm."""
+    ) -> tuple[torch.nn.Sequential, Dict[str, Any]]:
+        """Run and train the topological embedding algorithm.
+
+        gds: GraphDataScience object, required to call both the GDS algorithm and graph itself
+        graph: Neo4j graph object
+        model_name: Name of the model
+        write_property: Attribute to which the embeddings Property to write the embeddings to
+        subgraph: Subgraph to run the algorithm on
+        device: Device to run the algorithm on (not utilized for GDS models but required for PyG models)
+        relationship_projection: Relationship projection i.e. which relationship properties to use (not utilized for GDS models but required for PyG models)
+        node_projection: Node projection i.e. which node properties to use (not utilized for GDS models but required for PyG models)
+        config: Configuration dictionary (not utilized for GDS models but required for PyG models)
+        """
         model, attr = gds.beta.graphSage.train(
             graph,
             modelName=model_name,
@@ -99,13 +113,15 @@ class GDSGraphSage(GraphAlgorithm):
             featureProperties=self._feature_properties,
             penaltyL2=self._penalty_l2,
         )
-        self._loss = attr["modelInfo"]["metrics"]["iterationLossesPerEpoch"][0]
+        self._loss_lst = attr["modelInfo"]["metrics"]["iterationLossesPerEpoch"][0]
+
+        # Note - for PyG models we need to save the model as a PyTorchDataset
         model = tu.generate_dummy_model()
         return model, attr
 
-    def return_loss(self):
+    def return_loss(self) -> List[float]:
         """Return loss."""
-        return self._loss
+        return self._loss_lst
 
     def predict_write(
         self,
@@ -160,7 +176,7 @@ class GDSNode2Vec(GraphAlgorithm):
         self._initial_learning_rate = initial_learning_rate
         self._min_learning_rate = min_learning_rate
         self._walk_buffer_size = walk_buffer_size
-        self._loss = None
+        self._loss_lst = None
 
     def run(
         self,
@@ -173,7 +189,7 @@ class GDSNode2Vec(GraphAlgorithm):
         relationship_projection: dict = None,
         node_projection: dict = None,
         config: dict = None,
-    ):
+    ) -> tuple[torch.nn.Sequential, Dict[str, Any]]:
         """Trains the algorithm and writes embeddings.
 
         Node2Vec has no separate training and inference steps (unlike GraphSage),
@@ -199,7 +215,7 @@ class GDSNode2Vec(GraphAlgorithm):
             randomSeed=self._random_seed,
             walkBufferSize=self._walk_buffer_size,
         )
-        self._loss = [int(x) for x in attr["lossPerIteration"]]
+        self._loss_lst = [int(x) for x in attr["lossPerIteration"]]
 
         # Dummy tensor dataset
         model = tu.generate_dummy_model()
@@ -219,8 +235,8 @@ class GDSNode2Vec(GraphAlgorithm):
         config: dict = None,
     ):
         """Dummy function as Node2vec gets written in the 'run' step due to no separate predict_write function (unlike GraphSage)."""
-        return
+        pass
 
-    def return_loss(self):
+    def return_loss(self) -> List[float]:
         """Return and save."""
-        return self._loss
+        return self._loss_lst

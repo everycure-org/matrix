@@ -1,6 +1,6 @@
 """GDS Algorithms Classes."""
 
-from typing import List, Any, Optional
+from typing import List, Any, Optional, Dict
 from graphdatascience import GraphDataScience
 import torch
 from torch_geometric.nn import Node2Vec, GraphSAGE
@@ -31,7 +31,10 @@ class PygNode2Vec(GraphAlgorithm):
         learning_rate: float = 0.01,
         optimizer: str = "SparseAdam",
     ):
-        """PyTorch Geometric Node2Vec Attributes."""
+        """PyTorch Geometric Node2Vec Attributes.
+
+        For more information on the parameters, see https://pytorch-geometric.readthedocs.io/en/latest/generated/torch_geometric.nn.models.Node2Vec.html.
+        """
         super().__init__(embedding_dim, random_seed, concurrency)
         self._walk_length = walk_length
         self._walks_per_node = walks_per_node
@@ -39,7 +42,7 @@ class PygNode2Vec(GraphAlgorithm):
         self._q = q
         self._num_negative_samples = num_negative_samples
         self._model = None
-        self._loss = None
+        self._loss_lst = None
         self._epochs = epochs
         self._batch_size = batch_size
         self._context_size = context_size
@@ -86,15 +89,16 @@ class PygNode2Vec(GraphAlgorithm):
 
         # Create a loader and train the model
         loader = self._model.loader(batch_size=self._batch_size, shuffle=True, num_workers=self._num_workers)
+
+        # Set Neural Network in training mode and train the model
         self._model.train()
+        self._loss_lst = tu.train_n2v_model(self._model, loader, self._epochs, optimizer, device)
 
-        self._loss = tu.train_n2v_model(self._model, loader, self._epochs, optimizer, device)
-
-        return self._model, {"loss": self._loss}
+        return self._model, {"loss": self._loss_lst}
 
     def return_loss(self):
         """Return loss."""
-        return self._loss
+        return self._loss_lst
 
     def predict_write(
         self,
@@ -128,7 +132,7 @@ class PygNode2Vec(GraphAlgorithm):
             p=self._p,
             q=self._q,
             num_negative_samples=self._num_negative_samples,
-            sparse=True,
+            sparse=self._sparse,
         ).to(device)
 
         # Overwrite state dict with actual model
@@ -161,12 +165,16 @@ class PygGraphSage(GraphAlgorithm):
         neg_sampling_ratio: float = 1.0,
         criterion: str = None,
     ):
-        """PyTorch Geometric GraphSAGE Attributes."""
+        """PyTorch Geometric GraphSAGE Attributes.
+
+
+        For more information on the parameters, see https://pytorch-geometric.readthedocs.io/en/2.4.0/generated/torch_geometric.nn.models.GraphSAGE.html.
+        """
         super().__init__(embedding_dim, random_seed, concurrency)
         self._num_layers = num_layers
         self._hidden_channels = hidden_channels
         self._model = None
-        self._loss = None
+        self._loss_lst = None
         self._criterion = criterion
         self._epochs = epochs
         self._batch_size = batch_size
@@ -188,7 +196,7 @@ class PygGraphSage(GraphAlgorithm):
         device: str = "cpu",
         node_projection: dict = None,
         config: dict = None,
-    ):
+    ) -> tuple[torch.nn.Sequential, Dict[str, Any]]:
         """Train the algorithm."""
         # Convert the graph to PyTorch Geometric format
         edge_index, _, x = tu.prepare_graph_data(
@@ -224,7 +232,7 @@ class PygGraphSage(GraphAlgorithm):
             num_workers=self._num_workers,
         )
         # Train the model
-        self._loss = tu.train_gnn_model(
+        self._loss_lst = tu.train_gnn_model(
             model=self._model,
             dataloader=loader,
             epochs=self._epochs,
@@ -232,11 +240,11 @@ class PygGraphSage(GraphAlgorithm):
             device="cpu",
             criterion=self._criterion,
         )
-        return self._model, {"loss": self._loss}
+        return self._model, {"loss": self._loss_lst}
 
-    def return_loss(self):
+    def return_loss(self) -> List[float]:
         """Return loss."""
-        return self._loss
+        return self._loss_lst
 
     def predict_write(
         self,
