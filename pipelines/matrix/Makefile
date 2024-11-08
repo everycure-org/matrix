@@ -29,6 +29,12 @@ venv: prerequisites
 install: venv precommit-hooks
 	uv pip install -r requirements.txt #force it to install in our venv
 
+install: venv
+	# deactivate any potentially active venv that may be somewhere else
+	deactivate || true
+	uv pip compile requirements.in --output-file requirements.txt	
+	uv pip install -r requirements.txt
+	uv pip install pyg_lib torch_scatter torch_sparse torch_cluster -f https://data.pyg.org/whl/torch-2.4.0+cpu.html
 
 precommit: precommit-hooks
 	git fetch origin
