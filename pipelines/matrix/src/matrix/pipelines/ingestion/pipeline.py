@@ -1,22 +1,12 @@
 import pyspark.sql.functions as F
 from kedro.pipeline import Pipeline, pipeline
 from matrix.kedro4argo_node import (
-    KUBERNETES_DEFAULT_REQUEST_CPU,
-    KUBERNETES_DEFAULT_LIMIT_CPU,
-    KUBERNETES_DEFAULT_REQUEST_RAM,
-    KUBERNETES_DEFAULT_LIMIT_RAM,
     ArgoNodeConfig,
     argo_node,
 )
 
-
-ingestion_argo_node_config = ArgoNodeConfig(
-    cpu_request=KUBERNETES_DEFAULT_REQUEST_CPU,
-    cpu_limit=KUBERNETES_DEFAULT_LIMIT_CPU,
-    memory_request=KUBERNETES_DEFAULT_REQUEST_RAM,
-    memory_limit=KUBERNETES_DEFAULT_LIMIT_RAM,
-    use_gpu=False,
-)
+# Use default config
+ingestion_argo_node_config = ArgoNodeConfig()
 
 
 def create_pipeline(**kwargs) -> Pipeline:

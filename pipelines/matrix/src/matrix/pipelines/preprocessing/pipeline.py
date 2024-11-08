@@ -1,21 +1,10 @@
 from kedro.pipeline import Pipeline, pipeline
 from matrix.kedro4argo_node import ArgoNodeConfig, argo_node
-from matrix.kedro4argo_node import (
-    KUBERNETES_DEFAULT_LIMIT_CPU,
-    KUBERNETES_DEFAULT_LIMIT_RAM,
-    KUBERNETES_DEFAULT_REQUEST_CPU,
-    KUBERNETES_DEFAULT_REQUEST_RAM,
-)
 
 from . import nodes
 
-preprocessing_argo_node_config = ArgoNodeConfig(
-    cpu_request=KUBERNETES_DEFAULT_REQUEST_CPU,
-    cpu_limit=KUBERNETES_DEFAULT_LIMIT_CPU,
-    memory_request=KUBERNETES_DEFAULT_REQUEST_RAM,
-    memory_limit=KUBERNETES_DEFAULT_LIMIT_RAM,
-    use_gpu=False,
-)
+# Use default config
+preprocessing_argo_node_config = ArgoNodeConfig()
 
 
 # NOTE: This pipeline in highly preliminary and used for ingestion of the
