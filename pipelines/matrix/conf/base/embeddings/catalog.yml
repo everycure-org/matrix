@@ -63,12 +63,6 @@ embeddings.feat.include_in_graphsage@yaml:
   filepath: ${globals:paths.embeddings}/feat/graphsage_filter_result.yml
   type:  yaml.YAMLDataset
 
-embeddings.models.graphsage:
-  # we do not actually do anything with this DS, thus it's a dummy
-  # https://github.com/kedro-org/kedro/discussions/3758
-  filepath: ${globals:paths.embeddings}/models/graphsage_result.yml
-  type:  yaml.YAMLDataset
-
 # NOTE: Dummy catalog entry to enforce Kedro dependency
 # between embedding and modelling pipeline.
 embeddings.model_output.graphsage:
