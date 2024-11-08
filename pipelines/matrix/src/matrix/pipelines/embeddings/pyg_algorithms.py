@@ -62,7 +62,18 @@ class PygNode2Vec(GraphAlgorithm):
         node_projection: dict = None,
         config: dict = None,
     ):
-        """Train the algorithm."""
+        """Train the algorithm.
+
+        Args:
+            gds: GraphDataScience instance, used to project graph and get GDS models
+            graph: Graph object that will be used to train the model (dummy; used by GDS)
+            model_name: Name of the graph model to be projected in Neo4j (dummy; used by GDS)
+            write_property: Property/Attribute name to write embeddings to (dummy)
+            subgraph: Subgraph name to use for training (e.g. if GDS filtering is applied, we want subgraph instead of whole graph)
+            device: Device to use for training
+            node_projection: Node projection dictionary, specifies which node properties to use for training
+            config: Configuration dictionary
+        """
         edge_index, _ = tu.prepare_graph_data(
             gds,
             subgraph,
@@ -112,8 +123,20 @@ class PygNode2Vec(GraphAlgorithm):
         node_projection: dict = None,
         config: dict = None,
     ):
-        """Predict and save."""
-        # get edge index
+        """Predict and save.
+
+        Args:
+            gds: GraphDataScience instance, used to project graph and get GDS models
+            graph: Graph object that will be used to train the model (dummy; used by GDS)
+            model_name: Name of the graph model to be projected in Neo4j (dummy; used by GDS)
+            state_dict: State dictionary of the model to be loaded for prediction
+            write_property: Property/Attribute name to write embeddings to
+            graph_name: Subgraph name to use for inference (e.g. if GDS filtering is applied, we want subgraph instead of whole graph)
+            device: Device to use for training
+            node_projection: Node projection dictionary, specifies which node properties to use for training
+            config: Configuration dictionary
+        """
+        # Generate edge index and node index for torch
         edge_index, node_index = tu.prepare_graph_data(
             gds,
             graph_name,
@@ -197,7 +220,18 @@ class PygGraphSage(GraphAlgorithm):
         node_projection: dict = None,
         config: dict = None,
     ) -> tuple[torch.nn.Sequential, Dict[str, Any]]:
-        """Train the algorithm."""
+        """Train the algorithm.
+
+        Args:
+            gds: GraphDataScience instance, used to project graph and get GDS models
+            graph: Graph object that will be used to train the model (dummy; used by GDS)
+            model_name: Name of the graph model to be projected in Neo4j (dummy; used by GDS)
+            write_property: Property/Attribute name to write embeddings to (dummy)
+            subgraph: Subgraph name to use for training (e.g. if GDS filtering is applied, we want subgraph instead of whole graph)
+            device: Device to use for training
+            node_projection: Node projection dictionary, specifies which node properties to use for training
+            config: Configuration dictionary
+        """
         # Convert the graph to PyTorch Geometric format
         edge_index, _, x = tu.prepare_graph_data(
             gds,
@@ -258,7 +292,18 @@ class PygGraphSage(GraphAlgorithm):
         node_projection: dict = None,
         config: dict = None,
     ):
-        """Predict and save."""
+        """Predict and save.
+        Args:
+            gds: GraphDataScience instance, used to project graph and get GDS models
+            graph: Graph object that will be used to train the model (dummy; used by GDS)
+            model_name: Name of the graph model to be projected in Neo4j (dummy; used by GDS)
+            state_dict: State dictionary of the model to be loaded for prediction
+            write_property: Property/Attribute name to write embeddings to
+            graph_name: Subgraph name to use for inference (e.g. if GDS filtering is applied, we want subgraph instead of whole graph)
+            device: Device to use for training
+            node_projection: Node projection dictionary, specifies which node properties to use for training
+            config: Configuration dictionary
+        """
         # Get edge index and node features
         edge_index, node_to_index, x = tu.prepare_graph_data(
             gds,
