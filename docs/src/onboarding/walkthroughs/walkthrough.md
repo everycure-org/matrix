@@ -166,7 +166,7 @@ ingestion.raw.rtx_kg2.nodes@spark:
 	
 	ingestion.int.rtx_kg2.nodes:
   <<: [*_spark_parquet, *_layer_int]
-  filepath: ${globals:paths.int}/rtx_kg2/nodes
+  filepath: ${globals:paths.integration}/rtx_kg2/nodes
 
 ```
 
@@ -215,7 +215,7 @@ Matrix uses Jinja2 templating to generate a dynamic argo template as per user re
 
 Argo schema is generated using custom function `kedro submit -- ...`, that parametrizes it with use-case specific requests.
 
-Let's investigate the `submit` command.
+The `submit` command does the following:
 
 1. Retrieve the run name.
 2. Verify that dependencies - `gcloud`, `kubectl` are installed.
@@ -225,67 +225,4 @@ Let's investigate the `submit` command.
 6. Apply the Argo Workflow Template, and deploy it to Argo / K8s `kubectl apply -f templates/argo-workflow-template.yml`
 7. Submit workflow to Argo.
 
-
-```python
-
-@cli.command()
-@click.option("--username", type=str, required=True, help="Specify the username to use")
-@click.option("--namespace", type=str, default=None, help="Specify a custom namespace")
-@click.option("--run-name", type=str, default=None, help="Specify a custom run name, defaults to branch")
-@click.option("--verbose", "-v", is_flag=True, default=False, help="Enable verbose output")
-@click.option("--dry-run", "-d", is_flag=True, default=False, help="Does everything except submit the workflow")
-# fmt: on
-def submit(username: str, namespace: str, run_name: str, verbose: bool, dry_run: bool):
-    """Submit the end-to-end workflow."""
-    if verbose:
-        logging.getLogger().setLevel(logging.DEBUG)
-
-    run_name = get_run_name(run_name)
-    namespace = namespace or "argo-workflows"
-
-    try:
-        console.rule("[bold blue]Submitting Workflow")
-
-        console.print("Checking dependencies...")
-        check_dependencies(verbose=verbose)
-        console.print("[green]✓[/green] Dependencies checked")
-
-        console.print("Building and pushing Docker image...")
-        build_push_docker(username, verbose=verbose)
-        console.print("[green]✓[/green] Docker image built and pushed")
-
-        console.print("Building Argo template...")
-        build_argo_template(run_name, username, namespace, verbose=verbose)
-        console.print("[green]✓[/green] Argo template built")
-
-        console.print("Ensuring namespace...")
-        ensure_namespace(namespace, verbose=verbose)
-        console.print("[green]✓[/green] Namespace ensured")
-
-        console.print("Applying Argo template...")
-        apply_argo_template(namespace, verbose=verbose)
-        console.print("[green]✓[/green] Argo template applied")
-
-        if not dry_run:
-            console.print("Submitting workflow...")
-            submit_workflow(run_name, namespace, verbose=verbose)
-            console.print("[green]✓[/green] Workflow submitted")
-
-        console.print(Panel.fit(
-            f"[bold green]Workflow {'prepared' if dry_run else 'submitted'} successfully![/bold green]\n"
-            f"Run Name: {run_name}\n"
-            f"Namespace: {namespace}",
-            title="Submission Summary"
-        ))
-
-        if not dry_run and click.confirm("Do you want to open the workflow in your browser?"):
-            workflow_url = f"https://argo.platform.dev.everycure.org/workflows/{namespace}/{run_name}"
-            click.launch(workflow_url)
-            console.print(f"[blue]Opened workflow in browser: {workflow_url}[/blue]")
-    except Exception as e:
-        console.print(f"[bold red]Error during submission:[/bold red] {str(e)}")
-        if verbose:
-            console.print_exception()
-        sys.exit(1)
-
-```
+See `pipelines/matrix/src/matrix/cli_commands/submit.py` for more details.

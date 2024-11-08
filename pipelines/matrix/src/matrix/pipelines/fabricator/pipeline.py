@@ -1,5 +1,3 @@
-"""Fabricator pipeline."""
-
 import pandas as pd
 
 from kedro.pipeline import Pipeline, node, pipeline
@@ -7,7 +5,7 @@ from kedro.pipeline import Pipeline, node, pipeline
 from data_fabricator.v0.nodes.fabrication import fabricate_datasets
 
 
-def _create_pairs(drug_list: pd.DataFrame, disease_list: pd.DataFrame, num: int = 100, seed: int = 42) -> pd.DataFrame:
+def _create_pairs(drug_list: pd.DataFrame, disease_list: pd.DataFrame, num: int = 50, seed: int = 42) -> pd.DataFrame:
     """Create 2 sets of random drug-disease pairs. Ensures no duplicate pairs.
 
     Args:
@@ -53,6 +51,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                     "clinical_trials": "ingestion.raw.clinical_trials_data",
                     "disease_list": "ingestion.raw.disease_list@pandas",
                     "drug_list": "ingestion.raw.drug_list@pandas",
+                    "pubmed_ids_mapping": "ingestion.raw.rtx_kg2.curie_to_pmids@pandas",
                 },
                 name="fabricate_kg2_datasets",
             ),

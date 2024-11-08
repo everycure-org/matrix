@@ -1,5 +1,3 @@
-"""Modelling pipeline."""
-
 from kedro.pipeline import Pipeline, node
 from kedro.pipeline.modular_pipeline import pipeline
 
@@ -177,13 +175,13 @@ def create_pipeline(**kwargs) -> Pipeline:
         tags=[model["model_name"] for model in settings.DYNAMIC_PIPELINES_MAPPING.get("modelling")],
     )
 
-    pipes = []
+    pipelines = []
     for model in settings.DYNAMIC_PIPELINES_MAPPING.get("modelling"):
-        pipes.append(
+        pipelines.append(
             pipeline(
                 _create_model_pipeline(model=model["model_name"], num_shards=model["num_shards"]),
                 tags=[model["model_name"], "not-shared"],
             )
         )
 
-    return sum([create_model_input, *pipes])
+    return sum([create_model_input, *pipelines])

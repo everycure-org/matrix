@@ -18,11 +18,16 @@ norecursedirs = [
     "compose",
     "packages",
 ]
+markers = [
+    "integration: mark a test as an integration test.",
+    "spark: mark a test as a spark test & requires PYSPARK_PYTHON to be set appropriately",
+]
 
 [project]
 name = "matrix"
+requires-python = ">=3.11"
 readme = "README.md"
-dynamic = [ "dependencies", "version",]
+dynamic = [ "version"]
 
 [project.scripts]
 matrix = "matrix.__main__:main"

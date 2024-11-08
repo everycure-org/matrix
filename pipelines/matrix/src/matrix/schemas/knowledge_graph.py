@@ -1,8 +1,3 @@
-"""This module contains the schema for the knowledge graph exposed by the Data API.
-
-It is defined in Pandera which is strongly inspired by Pydantic.
-"""
-
 from typing import List
 
 import pandera.pyspark as pa
@@ -43,7 +38,7 @@ class KGEdgeSchema(DataFrameModel):
 
     class Config:  # noqa: D106
         coerce = True
-        strict = True
+        strict = False
 
     @classmethod
     def group_edges_by_id(cls, concatenated_edges_df: DataFrame) -> DataFrame:
@@ -80,6 +75,7 @@ class KGNodeSchema(DataFrameModel):
     international_resource_identifier: StringType()            = pa.Field(nullable=True)
     # We manually set this for every KG we ingest
     upstream_data_source:                ArrayType(StringType()) = pa.Field(nullable=False)
+    #upstream_kg_node_ids:                MapType(StringType(), StringType()) = pa.Field(nullable=True)
     # fmt: on
 
     class Config:  # noqa: D106
@@ -108,7 +104,7 @@ class KGNodeSchema(DataFrameModel):
                 F.flatten(F.collect_set("all_categories")).alias("all_categories"),
                 F.flatten(F.collect_set("labels")).alias("labels"),
                 F.flatten(F.collect_set("publications")).alias("publications"),
-                F.flatten(F.collect_list("upstream_data_source")).alias("upstream_data_source"),
+                F.flatten(F.collect_set("upstream_data_source")).alias("upstream_data_source"),
             )
             .select(*cols_for_schema(KGNodeSchema))
         )

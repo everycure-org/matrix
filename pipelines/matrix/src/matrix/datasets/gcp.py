@@ -1,5 +1,4 @@
-"""Module with GCP datasets for Kedro."""
-
+import os
 import re
 from copy import deepcopy
 from typing import Any, Optional
@@ -8,18 +7,22 @@ import google.api_core.exceptions as exceptions
 import numpy as np
 import pandas as pd
 import pygsheets
-from google.cloud import bigquery
+from google.cloud import bigquery, storage
 from kedro.io.core import (
     AbstractVersionedDataset,
     DatasetError,
     Version,
 )
-from kedro_datasets.spark import SparkDataset
-from kedro_datasets.spark.spark_dataset import _get_spark, _strip_dbfs_prefix
+from kedro_datasets.spark import SparkDataset, SparkJDBCDataset
+from kedro_datasets.spark.spark_dataset import _get_spark, _split_filepath, _strip_dbfs_prefix
 from matrix.hooks import SparkHooks
 from pygsheets import Spreadsheet, Worksheet
 from pyspark.sql import DataFrame, SparkSession
 from refit.v1.core.inject import _parse_for_objects
+
+
+def sanitize_bq_strings(identifier: str) -> str:
+    return re.sub(r"[^a-zA-Z0-9_-]", "_", str(identifier))
 
 
 class LazySparkDataset(SparkDataset):
@@ -92,7 +95,7 @@ class BigQueryTableDataset(SparkDataset):
         project_id: str,
         dataset: str,
         table: str,
-        identifier: str,
+        identifier: str = None,
         load_args: dict[str, Any] = None,
         save_args: dict[str, Any] = None,
         version: Version = None,
@@ -100,7 +103,7 @@ class BigQueryTableDataset(SparkDataset):
         metadata: dict[str, Any] = None,
         **kwargs,
     ) -> None:
-        """Creates a new instance of ``Neo4JDataset``.
+        """Creates a new instance of ``BigQueryTableDataset``.
 
         Args:
             project_id: project identifier.
@@ -115,10 +118,9 @@ class BigQueryTableDataset(SparkDataset):
             kwargs: Keyword Args passed to parent.
         """
         self._project_id = project_id
-        self._dataset = dataset
+        self._dataset = sanitize_bq_strings(dataset)
 
-        identifier = re.sub(r"[^a-zA-Z0-9_-]", "_", str(identifier))
-        self._table = f"{table}_{identifier}"
+        self._table = sanitize_bq_strings("_".join([table, identifier] if identifier else [table]))
 
         super().__init__(
             filepath="filepath",
@@ -138,7 +140,7 @@ class BigQueryTableDataset(SparkDataset):
         return spark_session.read.format("bigquery").load(f"{self._project_id}.{self._dataset}.{self._table}")
 
     def _save(self, data: DataFrame) -> None:
-        bq_client = bigquery.Client()
+        bq_client = bigquery.Client(project=self._project_id)
         dataset_id = f"{self._project_id}.{self._dataset}"
 
         # Check if the dataset exists
@@ -281,3 +283,88 @@ class GoogleSheetsDataset(AbstractVersionedDataset[pd.DataFrame, pd.DataFrame]):
 
     def _exists(self) -> bool:
         return False
+
+
+class RemoteSparkJDBCDataset(SparkJDBCDataset):
+    """Dataset to allow connection to remote JDBC dataset.
+
+    The JDBC dataset is restricted in the sense that it only allows urls from local. This
+    dataset provides an adaptor to reference to datasets in google cloud storage. The dataset works
+    by downloading the file into local, providing a local cache.
+
+    NOTE: Only works for datasets in Google Cloud Storage
+    """
+
+    def __init__(  # noqa: PLR0913
+        self,
+        *,
+        project: str,
+        table: str,
+        url: str,
+        load_args: dict[str, Any] | None = None,
+        save_args: dict[str, Any] | None = None,
+        credentials: dict[str, Any] | None = None,
+        metadata: dict[str, Any] | None = None,
+    ) -> None:
+        """Creates a new instance of ``RemoteSparkJDBCDataset``."""
+        self._client = None
+        self._project = project
+
+        protocol, fs_prefix, blob_name = self.split_remote_jdbc_path(url)
+
+        if fs_prefix != "gs://":
+            raise DatasetError("RemoteSparkJDBCDataset currently supports GCS only")
+
+        self._bucket, self._blob_name = blob_name.split("/", maxsplit=1)
+
+        super().__init__(
+            table=table,
+            url=f"jdbc:{protocol}:{self._blob_name}",
+            load_args=load_args,
+            save_args=save_args,
+            credentials=credentials,
+            metadata=metadata,
+        )
+
+    def _get_client(self):
+        """Lazily initialize the GCS client when needed.
+
+        NOTE: This is a workaround to avoid the GCS client being initialized on every run.
+        as it would require an authenticated environment even for unit tests.
+        """
+        if self._client is None:
+            self._client = storage.Client(self._project)
+        return self._client
+
+    def _load(self) -> Any:
+        SparkHooks._initialize_spark()
+        bucket = self._get_client().bucket(self._bucket)
+        blob = bucket.blob(self._blob_name)
+
+        if not os.path.exists(self._blob_name):
+            print("downloading file to local")
+            os.makedirs(self._blob_name.rsplit("/", maxsplit=1)[0], exist_ok=True)
+            blob.download_to_filename(self._blob_name)
+        else:
+            print("file present skipping")
+
+        return super()._load()
+
+    def _save(self, df: DataFrame) -> Any:
+        raise DatasetError("Save function for RemoteJDBCDataset not implemented!")
+
+    @staticmethod
+    def split_remote_jdbc_path(url: str):
+        """Function to split jdbc path into components.
+
+        Args:
+            url: URL
+            fs_prefix: filesystem prefix
+        Returns:
+            protocol: jdbc protocol
+            fs_prefix: filesystem prefix
+        """
+        protocol, file_name = url.split(":", maxsplit=1)
+        fs_prefix, file_name = _split_filepath(file_name)
+
+        return protocol, fs_prefix, file_name

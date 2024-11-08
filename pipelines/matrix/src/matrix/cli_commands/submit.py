@@ -1,20 +1,25 @@
-from matrix.argo import _generate_argo_config
-
 import json
 import logging
+from pathlib import Path
 import re
 import secrets
 import subprocess
 import sys
-from typing import Optional
+import time
+from typing import Dict, Optional
 
 import click
+from kedro.framework.startup import bootstrap_project
 from kedro.framework.cli.utils import CONTEXT_SETTINGS
+from kedro.framework.project import pipelines as kedro_pipelines
+from kedro.pipeline import Pipeline
+
 from rich.console import Console
 from rich.logging import RichHandler
 from rich.panel import Panel
 
-# Set up logging
+from matrix.argo import ARGO_TEMPLATES_DIR_PATH, generate_argo_config
+
 logging.basicConfig(
     level=logging.INFO,
     format="%(message)s",
@@ -35,19 +40,71 @@ def cli():
 # fmt: off
 @cli.command()
 @click.option("--username", type=str, required=True, help="Specify the username to use")
-@click.option("--namespace", type=str, default=None, help="Specify a custom namespace")
+@click.option("--namespace", type=str, default="argo-workflows", help="Specify a custom namespace")
 @click.option("--run-name", type=str, default=None, help="Specify a custom run name, defaults to branch")
+@click.option("--pipeline", type=str, default="__default__", help="Specify which pipeline to execute")
 @click.option("--verbose", "-v", is_flag=True, default=False, help="Enable verbose output")
 @click.option("--dry-run", "-d", is_flag=True, default=False, help="Does everything except submit the workflow")
 # fmt: on
-def submit(username: str, namespace: str, run_name: str, verbose: bool, dry_run: bool):
-    """Submit the end-to-end workflow."""
+def submit(username: str, namespace: str, run_name: str, pipeline: str, verbose: bool, dry_run: bool):
+    """Submit the end-to-end workflow. """
     if verbose:
-        logging.getLogger().setLevel(logging.DEBUG)
+        log.setLevel(logging.DEBUG)
 
     run_name = get_run_name(run_name)
-    namespace = namespace or "argo-workflows"
+    pipelines_to_submit = kedro_pipelines
 
+    if pipeline not in pipelines_to_submit:
+        raise ValueError(f"Pipeline requested for execution {pipeline} not included in workflow!")
+
+    _submit(
+        username=username,
+        namespace=namespace,
+        run_name=run_name,
+        pipelines_for_workflow=pipelines_to_submit,
+        pipeline_for_execution=pipeline,
+        verbose=verbose,
+        dry_run=dry_run,
+        template_directory=ARGO_TEMPLATES_DIR_PATH,
+    )
+
+
+def _submit(
+        username: str, 
+        namespace: str, 
+        run_name: str, 
+        pipelines_for_workflow: Dict[str, Pipeline], 
+        pipeline_for_execution: str, 
+        verbose: bool, 
+        dry_run: bool, 
+        template_directory: Path,
+        allow_interactions: bool = True,
+    ) -> None:
+    """Submit the end-to-end workflow.
+
+    This function contains redundancy.
+
+    The original logic of this function was:
+    1. Create & Apply (push to k8s) Argo template, containing the entire pipeline registry. This part of the function makes use of pipelines_for_workflow, which will be included in the template.
+    2. When submitting the workflow, via `__entrypoint__`, a pipeline for execution is selected. 
+        It defaults to `__default__`, but can be configured via pipeline_for_execution.
+
+    In the future, we expect plan not to have any template at all, but go straight from Kedro to Argo Workflow.
+    
+    This meant that it was possible to submit the workflows for other pipelines in Argo CI.
+
+    Args:
+        username (str): The username to use for the workflow.
+        namespace (str): The namespace to use for the workflow.
+        run_name (str): The name of the run.
+        pipelines_for_workflow (Dict[str, Pipeline]): The pipelines to run.
+        pipeline_for_execution (str): The pipeline to execute.
+        verbose (bool): If True, enable verbose output.
+        dry_run (bool): If True, do not submit the workflow.
+        template_directory (Path): The directory containing the Argo template.
+        allow_interactions (bool): If True, allow prompts for confirmation
+    """
+    
     try:
         console.rule("[bold blue]Submitting Workflow")
 
@@ -59,21 +116,25 @@ def submit(username: str, namespace: str, run_name: str, verbose: bool, dry_run:
         build_push_docker(username, verbose=verbose)
         console.print("[green]✓[/green] Docker image built and pushed")
 
-        console.print("Building Argo template...")
-        build_argo_template(run_name, username, namespace, verbose=verbose)
+        console.print(f"Building Argo template with pipelines {list(pipelines_for_workflow.keys())}...")
+        argo_template = build_argo_template(run_name, username, namespace, pipelines_for_workflow)
         console.print("[green]✓[/green] Argo template built")
+
+        console.print("Writing Argo template...")
+        file_path = save_argo_template(argo_template, run_name, template_directory)
+        console.print(f"[green]✓[/green] Argo template written to {file_path}")
 
         console.print("Ensuring namespace...")
         ensure_namespace(namespace, verbose=verbose)
         console.print("[green]✓[/green] Namespace ensured")
 
         console.print("Applying Argo template...")
-        apply_argo_template(namespace, verbose=verbose)
+        apply_argo_template(namespace, file_path, verbose=verbose)
         console.print("[green]✓[/green] Argo template applied")
 
         if not dry_run:
-            console.print("Submitting workflow...")
-            submit_workflow(run_name, namespace, verbose=verbose)
+            console.print(f"Submitting workflow for pipeline: {pipeline_for_execution}...")
+            submit_workflow(run_name, namespace, pipeline_for_execution, verbose=verbose)
             console.print("[green]✓[/green] Workflow submitted")
 
         console.print(Panel.fit(
@@ -83,7 +144,7 @@ def submit(username: str, namespace: str, run_name: str, verbose: bool, dry_run:
             title="Submission Summary"
         ))
 
-        if not dry_run and click.confirm("Do you want to open the workflow in your browser?"):
+        if not dry_run and allow_interactions and click.confirm("Do you want to open the workflow in your browser?", default=False):
             workflow_url = f"https://argo.platform.dev.everycure.org/workflows/{namespace}/{run_name}"
             click.launch(workflow_url)
             console.print(f"[blue]Opened workflow in browser: {workflow_url}[/blue]")
@@ -93,6 +154,8 @@ def submit(username: str, namespace: str, run_name: str, verbose: bool, dry_run:
             console.print_exception()
         sys.exit(1)
 
+
+        
 
 def run_subprocess(
     cmd: str,
@@ -221,11 +284,29 @@ def build_push_docker(username: str, verbose: bool):
     run_subprocess(f"make docker_push TAG={username}", stream_output=verbose)
 
 
-def build_argo_template(run_name, username, namespace, verbose: bool):
+def build_argo_template(run_name: str, username: str, namespace: str, pipelines: Dict[str, Pipeline]) -> str:
     """Build Argo workflow template."""
     image_name = "us-central1-docker.pkg.dev/mtrx-hub-dev-3of/matrix-images/matrix"
-    _generate_argo_config(image_name, run_name, username, namespace, username)
 
+    matrix_root = Path(__file__).parent.parent.parent.parent
+    metadata = bootstrap_project(matrix_root)
+    package_name = metadata.package_name
+
+    return generate_argo_config(
+        image=image_name,
+        run_name=run_name,
+        image_tag=username,
+        namespace=namespace,
+        username=username,
+        pipelines=pipelines,
+        package_name=package_name,
+    )
+
+def save_argo_template(argo_template: str, run_name: str, template_directory: Path) -> str:
+    file_path = template_directory / f"argo_template_{run_name}_{time.strftime('%Y%m%d_%H%M%S')}.yml"
+    with open(file_path, "w") as f:
+        f.write(argo_template)
+    return str(file_path)
 
 def ensure_namespace(namespace, verbose: bool):
     """Create or verify Kubernetes namespace."""
@@ -235,22 +316,31 @@ def ensure_namespace(namespace, verbose: bool):
         run_subprocess(f"kubectl create namespace {namespace}", check=True, stream_output=verbose)
 
 
-def apply_argo_template(namespace, verbose: bool):
-    """Apply the Argo workflow template."""
+def apply_argo_template(namespace, file_path: Path, verbose: bool):
+    """Apply the Argo workflow template, making it available in the cluster.
+    
+    `kubectl apply -f <file_path> -n <namespace>` will make the template available as a resource (but will not create any other resources, and will not trigger the workshop).
+    """
     run_subprocess(
-        f"kubectl apply -f templates/argo-workflow-template.yml -n {namespace}",
+        f"kubectl apply -f {file_path} -n {namespace}",
         check=True,
         stream_output=verbose,
     )
 
 
-def submit_workflow(run_name, namespace, verbose: bool):
+def submit_workflow(run_name: str, namespace: str, pipeline_for_execution: str, verbose: bool):
     """Submit the Argo workflow and provide instructions for watching."""
-    submit_cmd = (
-        f"argo submit --name {run_name} -n {namespace} "
-        f"--from wftmpl/{run_name} -p run_name={run_name} "
-        f"-l submit-from-ui=false --entrypoint __default__ -o json"
-    )
+
+    submit_cmd = " ".join([
+        "argo submit",
+        f"--name {run_name}",
+        f"-n {namespace}",
+        f"--from wftmpl/{run_name}", # name of the template resource (created in previous step)
+        f"-p run_name={run_name}",
+        "-l submit-from-ui=false",
+        f"--entrypoint {pipeline_for_execution}", # entrypoint for the workflow. Pipeline to be triggered is chosen here.
+        "-o json"
+    ])
     result = run_subprocess(submit_cmd, capture_output=True, stream_output=verbose)
     job_name = json.loads(result.stdout).get("metadata", {}).get("name")
 
@@ -266,7 +356,7 @@ def submit_workflow(run_name, namespace, verbose: bool):
 def get_run_name(run_name: Optional[str]) -> str:
     """Get the experiment name based on input or Git branch.
 
-    If a run_name is provided, it is returned as-is. Otherwise, a name is generated
+    If a run_name is provided, it is returned sanitized as-is. Otherwise, a name is generated
     based on the current Git branch name with a random suffix.
 
     Args:
@@ -276,10 +366,11 @@ def get_run_name(run_name: Optional[str]) -> str:
         str: The final run name to be used for the workflow.
     """
     if run_name:
-        return run_name
-    branch_name = run_subprocess(
+        return re.sub(r"[^a-zA-Z0-9-]", "-", run_name).rstrip("-")
+    
+    run_name = run_subprocess(
         "git rev-parse --abbrev-ref HEAD", capture_output=True, stream_output=False
     ).stdout.strip()
-    branch_sanitized = re.sub(r"[^a-zA-Z0-9-]", "-", branch_name).rstrip("-")
     random_sfx = str.lower(secrets.token_hex(4))
-    return f"{branch_sanitized}-{random_sfx}"
+    unsanitized_name = f"{run_name}-{random_sfx}"
+    return re.sub(r"[^a-zA-Z0-9-]", "-", unsanitized_name).rstrip("-")

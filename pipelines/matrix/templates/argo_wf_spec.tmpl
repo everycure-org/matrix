@@ -10,9 +10,7 @@ spec:
       run: {% raw %}'{{ workflow.parameters.run_name }}'
       {% endraw %}
       username: "{{ username }}"
-  entrypoint: dag
-  ttlStrategy:
-    secondsAfterSuccess: 5
+  entrypoint: __default__
   arguments:
     parameters:
       - name: image
@@ -39,7 +37,14 @@ spec:
       factor: 2
       maxDuration: "1m"  # Must be a string. Default unit is seconds. Could also be a Duration, e.g.: "2m", "6h", "1d"
     affinity:
-      nodeAntiAffinity: {}
+      nodeAntiAffinity:
+        requiredDuringSchedulingIgnoredDuringExecution:
+          nodeSelectorTerms:
+          - matchExpressions:
+            - key: gpu_node
+              operator: In
+              values:
+              - "true"
     metadata:
       labels:
         {# Add label to have an ability to remove Kedro Pods easily #}
@@ -50,7 +55,7 @@ spec:
       - name: pipeline
     container:
       imagePullPolicy: Always
-      image: {% raw %} "{{workflow.parameters.image}}:{{workflow.parameters.image_tag}}" 
+      image: {% raw %} "{{workflow.parameters.image}}:{{workflow.parameters.image_tag}}"        # {{workflow...}} etc. are placeholders within the template. These placeholders will be dynamically substituted with real values when the workflow is submitted, not during the kubectl apply command.
       {% endraw %}
       resources: # limit the resources
         requests:
@@ -199,7 +204,7 @@ spec:
           value: "OFF"
         - name: NEO4J_ACCEPT_LICENSE_AGREEMENT
           value: "yes"
-  {% for pipeline, tasks in pipes.items() %}
+  {% for pipeline, tasks in pipelines.items() %}
   - name: {{ pipeline }}
     dag:
       tasks:
