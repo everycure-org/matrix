@@ -13,7 +13,3 @@ variable "storage_bucket_name" {
   default = "mtrx-us-central1-hub-dev-storage"
 
 }
-
-variable "project_id" {
-  description = "mtrx-hub-dev-3of"
-}

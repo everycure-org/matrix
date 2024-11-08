@@ -1,47 +1,46 @@
 locals {
   matrix_all_group = "group:matrix-all@everycure.org"
 
-  matrix_viewers_group = [local.matrix_all_group, "group:mtrx-viewers@everycure.org"]
+  matrix_viewers_group = [local.matrix_all_group, "group:matrix-viewers@everycure.org"]
 
-  data_team_members = [
-    "user:alexei@everycure.org",
-  ]
-
-  platform_team_members = [
-    "user:pascal@everycure.org",
-    "user:laurens@everycure.org"
-  ]
 }
 
 module "project_iam_bindings" {
-  source  = "terraform-google-modules/iam/google//modules/projects_iam"
-  version = "~> 8.0"
+  source   = "terraform-google-modules/iam/google//modules/projects_iam"
+  projects = [module.bootstrap_data.content.project_id]
+  version  = "~> 8.0"
 
-  projects = [var.project_id]
-  mode     = "additive"
+  mode = "additive"
 
   bindings = {
     # Editor permissions
-    "roles/editor" = local.platform_team_members
+    # "roles/editor" = []
 
     # Artifact Registry access
-    "roles/artifactregistry.writer" = concat(
-      local.data_team_members,
-      local.platform_team_members
-    )
+    "roles/artifactregistry.writer" = ["group:techteam@everycure.org"]
 
     # GCS object creator
     "roles/storage.objectCreator" = ["group:techteam@everycure.org"]
 
     # Viewer permissions
-    "roles/viewer" = local.matrix_viewers_group
-    "roles/bigquery.jobUser" = local.matrix_viewers_group
-    "roles/bigquery.dataViewer" = local.matrix_viewers_group
-    "roles/bigquery.studioUser" = local.matrix_viewers_group
-    "roles/bigquery.user" = local.matrix_viewers_group  
+    "roles/viewer"                    = local.matrix_viewers_group
+    "roles/bigquery.jobUser"          = local.matrix_viewers_group
+    "roles/bigquery.dataViewer"       = local.matrix_viewers_group
+    "roles/bigquery.studioUser"       = local.matrix_viewers_group
+    "roles/bigquery.user"             = local.matrix_viewers_group
     "roles/iap.httpsResourceAccessor" = local.matrix_viewers_group
 
     # All Matrix members permissions
     "roles/compute.networkUser" = [local.matrix_all_group]
   }
+
+  conditional_bindings = [
+    {
+      role        = "roles/storage.objectCreator"
+      title       = "matrix_raw_data_access"
+      description = "Allow matrix-all group to create objects only in RAW data folder"
+      expression  = "resource.name.startsWith(\"projects/_/buckets/mtrx-us-central1-hub-dev-storage/objects/data/01_RAW\")"
+      members     = [local.matrix_all_group]
+    }
+  ]
 }
