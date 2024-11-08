@@ -328,6 +328,7 @@ def test_normalize_kg(spark, mocker):
     [
         ("$.id.identifier", "CHEBI:28887"),
         ("$.id.label", "Ofatumumab"),
+        ("$.type[0]", "biolink:SmallMolecule"),
         ("$.type", ["biolink:SmallMolecule", "biolink:MolecularEntity"]),
         ("$.non.existing.attribute", None),
     ],
@@ -340,3 +341,32 @@ def test_extract_ids(nodenorm_response, attribute, expected):
 
     # Then correct response returned
     assert response["CHEMBL.COMPOUND:CHEMBL1201836"] == expected
+
+
+def test_extract_type_not_found():
+    # Given a nodenorm response
+    nodenorm_response = {
+        "CHEMBL.COMPOUND:CHEMBL1201836": {
+            "id": {
+                "identifier": "CHEBI:28887",
+                "label": "Ofatumumab",
+                "description": "An ether in which the oxygen atom is connected to two methyl groups.",
+            },
+            "equivalent_identifiers": [
+                {
+                    "identifier": "CHEBI:28887",
+                    "label": "dimethyl ether",
+                    "description": "An ether in which the oxygen atom is connected to two methyl groups.",
+                },
+                {"identifier": "UNII:AM13FS69BX", "label": "DIMETHYL ETHER"},
+            ],
+            # "type": None, #["biolink:SmallMolecule", "biolink:MolecularEntity"],
+            "information_content": 92.8,
+        }
+    }
+
+    # When extracting an attribute
+    response = nodes._extract_ids(nodenorm_response, "$.type[0]")
+
+    # Then correct response returned
+    assert response["CHEMBL.COMPOUND:CHEMBL1201836"] is None
