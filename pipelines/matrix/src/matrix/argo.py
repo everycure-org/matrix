@@ -18,6 +18,7 @@ def generate_argo_config(
     username: str,
     pipelines: Dict[str, Pipeline],
     package_name: str,
+    use_gpus: bool = False,
 ) -> str:
     loader = FileSystemLoader(searchpath=ARGO_TEMPLATES_DIR_PATH)
     template_env = Environment(loader=loader, trim_blocks=True, lstrip_blocks=True)
