@@ -5,12 +5,12 @@ from matrix.kedro4argo_node import (
     KUBERNETES_DEFAULT_LIMIT_CPU,
     KUBERNETES_DEFAULT_REQUEST_RAM,
     KUBERNETES_DEFAULT_LIMIT_RAM,
-    KubernetesExecutionConfig,
+    ArgoNodeConfig,
     argo_node,
 )
 
 
-ingestion_k8s_node_config = KubernetesExecutionConfig(
+ingestion_argo_node_config = ArgoNodeConfig(
     cpu_request=KUBERNETES_DEFAULT_REQUEST_CPU,
     cpu_limit=KUBERNETES_DEFAULT_LIMIT_CPU,
     memory_request=KUBERNETES_DEFAULT_REQUEST_RAM,
@@ -31,7 +31,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 outputs="ingestion.int.rtx_kg2.nodes",
                 name="write_rtx_kg2_nodes",
                 tags=["rtx_kg2"],
-                k8s_config=ingestion_k8s_node_config,
+                argo_config=ingestion_argo_node_config,
             ),
             argo_node(
                 func=lambda x: x,
@@ -39,7 +39,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 outputs="ingestion.int.rtx_kg2.edges",
                 name="write_rtx_kg2_edges",
                 tags=["rtx_kg2"],
-                k8s_config=ingestion_k8s_node_config,
+                argo_config=ingestion_argo_node_config,
             ),
             argo_node(
                 func=lambda x: x,
@@ -47,7 +47,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 outputs="ingestion.int.rtx_kg2.curie_to_pmids",
                 name="write_rtx_kg2_curie_to_pmids",
                 tags=["rtx_kg2"],
-                k8s_config=ingestion_k8s_node_config,
+                argo_config=ingestion_argo_node_config,
             ),
             # ec-medical-team
             argo_node(
@@ -56,7 +56,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 outputs="ingestion.int.ec_medical_team.nodes",
                 name="write_ec_medical_team_nodes",
                 tags=["ec_medical_team"],
-                k8s_config=ingestion_k8s_node_config,
+                argo_config=ingestion_argo_node_config,
             ),
             argo_node(
                 func=lambda x: x.withColumn("upstream_data_source", F.array(F.lit("ec_medical_team"))),
@@ -64,7 +64,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 outputs="ingestion.int.ec_medical_team.edges",
                 name="write_ec_medical_team_edges",
                 tags=["ec_medical_team"],
-                k8s_config=ingestion_k8s_node_config,
+                argo_config=ingestion_argo_node_config,
             ),
             # robokop
             argo_node(
@@ -73,7 +73,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 outputs="ingestion.int.robokop.nodes",
                 name="ingest_robokop_nodes",
                 tags=["robokop"],
-                k8s_config=ingestion_k8s_node_config,
+                argo_config=ingestion_argo_node_config,
             ),
             argo_node(
                 # FUTURE: Update selection
@@ -82,7 +82,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 outputs="ingestion.int.robokop.edges",
                 name="ingest_robokop_edges",
                 tags=["robokop"],
-                k8s_config=ingestion_k8s_node_config,
+                argo_config=ingestion_argo_node_config,
             ),
         ]
     )

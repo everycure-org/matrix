@@ -1,5 +1,4 @@
 from kedro.pipeline import pipeline, Pipeline
-from kedro.pipeline.node import node
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_absolute_error, max_error, r2_score
 from sklearn.model_selection import train_test_split
@@ -9,7 +8,7 @@ from kedro.pipeline.node import Node
 import logging
 import pytest
 
-from matrix.kedro4argo_node import KubernetesExecutionConfig, ArgoNode, argo_node
+from matrix.kedro4argo_node import ArgoNodeConfig, ArgoNode, argo_node
 from kedro.io import DataCatalog
 from kedro.runner import SequentialRunner
 
@@ -25,9 +24,9 @@ def dummy_func(x) -> int:
     return x
 
 
-def test_default_kubernetes_config():
+def test_default_argo_config():
     """Test default configuration values."""
-    config = KubernetesExecutionConfig()
+    config = ArgoNodeConfig()
     assert not config.use_gpu
     assert config.cpu_request > 0
     assert config.cpu_limit > 0
@@ -47,24 +46,24 @@ def test_default_kubernetes_config():
 def test_negative_resources_raise_error(field, value):
     """Test that negative or zero resource values raise ValueError."""
     with pytest.raises(ValueError, match="Resource values must be positive"):
-        KubernetesExecutionConfig(**{field: value})
+        ArgoNodeConfig(**{field: value})
 
 
 def test_invalid_resource_constraints():
     """Test that invalid resource constraints raise ValueError."""
     # CPU limit less than request
     with pytest.raises(ValueError, match="CPU limit must be greater than or equal to CPU request"):
-        KubernetesExecutionConfig(cpu_request=2.0, cpu_limit=1.0)
+        ArgoNodeConfig(cpu_request=2.0, cpu_limit=1.0)
 
     # Memory limit less than request
     with pytest.raises(ValueError, match="Memory limit must be greater than or equal to memory request"):
-        KubernetesExecutionConfig(memory_request=4.0, memory_limit=2.0)
+        ArgoNodeConfig(memory_request=4.0, memory_limit=2.0)
 
 
 def test_high_resource_values_warning():
     """Test that unrealistically high resource values trigger a warning."""
     with pytest.warns(UserWarning, match="CPU .* and memory .* limits and requests are unrealistically high"):
-        KubernetesExecutionConfig(
+        ArgoNodeConfig(
             cpu_limit=100,
             memory_limit=1000,
         )
@@ -73,7 +72,7 @@ def test_high_resource_values_warning():
 def test_valid_resource_configuration():
     """Test valid resource configuration scenarios."""
     # Equal limits and requests
-    config = KubernetesExecutionConfig(
+    config = ArgoNodeConfig(
         cpu_request=2.0,
         cpu_limit=2.0,
         memory_request=4.0,
@@ -85,7 +84,7 @@ def test_valid_resource_configuration():
     assert config.memory_limit == 4.0
 
     # Limits higher than requests
-    config = KubernetesExecutionConfig(
+    config = ArgoNodeConfig(
         cpu_request=1.0,
         cpu_limit=2.0,
         memory_request=2.0,
@@ -99,16 +98,16 @@ def test_valid_resource_configuration():
 
 def test_gpu_flag():
     """Test GPU flag configuration."""
-    config = KubernetesExecutionConfig(use_gpu=True)
+    config = ArgoNodeConfig(use_gpu=True)
     assert config.use_gpu
 
-    config = KubernetesExecutionConfig(use_gpu=False)
+    config = ArgoNodeConfig(use_gpu=False)
     assert not config.use_gpu
 
 
-def test_default_values_in_k8s_config_matches_settings():
+def test_default_values_in_argo_config_matches_settings():
     """Test that default values in KubernetesExecutionConfig match settings."""
-    config = KubernetesExecutionConfig()
+    config = ArgoNodeConfig()
 
     assert config.cpu_request == KUBERNETES_DEFAULT_REQUEST_CPU
     assert config.cpu_limit == KUBERNETES_DEFAULT_LIMIT_CPU
@@ -139,29 +138,29 @@ def test_parametrized_node():
     assert k8s_node.func(2) == 4
 
 
-def test_kubernetes_node_default_config():
+def test_argo_node_default_config():
     k8s_node = ArgoNode(
         func=lambda x: x,
         inputs=["int_number_ds_in"],
         outputs=["int_number_ds_out"],
     )
-    assert not k8s_node.k8s_config.use_gpu
+    assert not k8s_node.argo_config.use_gpu
 
 
-def test_kubernetes_node_can_request_gpu():
+def test_argo_node_can_request_gpu():
     k8s_node = ArgoNode(
         func=lambda x: x,
         inputs=["int_number_ds_in"],
         outputs=["int_number_ds_out"],
-        k8s_config=KubernetesExecutionConfig(use_gpu=True),
+        argo_config=ArgoNodeConfig(use_gpu=True),
     )
-    assert k8s_node.k8s_config.use_gpu
+    assert k8s_node.argo_config.use_gpu
 
 
 def test_validate_values_are_sane():
     """Test that validate_values_are_sane raises warnings for unrealistic values."""
     with pytest.warns(UserWarning, match="CPU .* and memory .* limits and requests are unrealistically high"):
-        KubernetesExecutionConfig(cpu_limit=100, memory_limit=1000)
+        ArgoNodeConfig(cpu_limit=100, memory_limit=1000)
 
 
 def get_parallel_pipelines() -> Pipeline:
@@ -225,7 +224,7 @@ def get_parallel_pipelines() -> Pipeline:
                 inputs=["X_train", "y_train"],
                 outputs="regressor",
                 name="train_model_node",
-                k8s_config=KubernetesExecutionConfig(
+                argo_config=ArgoNodeConfig(
                     cpu_request=2,
                     cpu_limit=4,
                     memory_request=32,
@@ -239,7 +238,7 @@ def get_parallel_pipelines() -> Pipeline:
                 inputs=["regressor", "X_test", "y_test"],
                 outputs="metrics",
                 name="evaluate_model_node",
-                k8s_config=KubernetesExecutionConfig(
+                argo_config=ArgoNodeConfig(
                     cpu_request=1,
                     cpu_limit=2,
                     memory_request=16,
@@ -304,35 +303,33 @@ def test_parallel_pipelines(caplog):
     assert successful_run_msg in caplog.text
 
 
-def test_kubernetes_node_factory():
-    k8s_node = argo_node(
+def test_argo_node_factory():
+    node = argo_node(
         func=dummy_func,
         inputs=["int_number_ds_in"],
         outputs=["int_number_ds_out"],
     )
-    assert k8s_node.k8s_config.cpu_request == KUBERNETES_DEFAULT_REQUEST_CPU
-    assert k8s_node.k8s_config.cpu_limit == KUBERNETES_DEFAULT_LIMIT_CPU
-    assert k8s_node.k8s_config.memory_request == KUBERNETES_DEFAULT_REQUEST_RAM
-    assert k8s_node.k8s_config.memory_limit == KUBERNETES_DEFAULT_LIMIT_RAM
-    assert not k8s_node.k8s_config.use_gpu
+    assert node.argo_config.cpu_request == KUBERNETES_DEFAULT_REQUEST_CPU
+    assert node.argo_config.cpu_limit == KUBERNETES_DEFAULT_LIMIT_CPU
+    assert node.argo_config.memory_request == KUBERNETES_DEFAULT_REQUEST_RAM
+    assert node.argo_config.memory_limit == KUBERNETES_DEFAULT_LIMIT_RAM
+    assert not node.argo_config.use_gpu
 
     kedro_node = node(func=dummy_func, inputs=["int_number_ds_in"], outputs=["int_number_ds_out"])
-    assert k8s_node.func == kedro_node.func
-    assert k8s_node.inputs == kedro_node.inputs
-    assert k8s_node.outputs == kedro_node.outputs
+    assert node.func == kedro_node.func
+    assert node.inputs == kedro_node.inputs
+    assert node.outputs == kedro_node.outputs
 
 
 def test_fuse_config() -> None:
-    k8s_config = KubernetesExecutionConfig(cpu_request=1, cpu_limit=2, memory_request=16, memory_limit=32, use_gpu=True)
-    other_k8s_config = KubernetesExecutionConfig(
-        cpu_request=3, cpu_limit=4, memory_request=32, memory_limit=64, use_gpu=False
-    )
-    k8s_config.fuse_config(other_k8s_config)
-    assert k8s_config.cpu_request == 3
-    assert k8s_config.cpu_limit == 4
-    assert k8s_config.memory_request == 32
-    assert k8s_config.memory_limit == 64
-    assert k8s_config.use_gpu
+    argo_config = ArgoNodeConfig(cpu_request=1, cpu_limit=2, memory_request=16, memory_limit=32, use_gpu=True)
+    other_argo_config = ArgoNodeConfig(cpu_request=3, cpu_limit=4, memory_request=32, memory_limit=64, use_gpu=False)
+    argo_config.fuse_config(other_argo_config)
+    assert argo_config.cpu_request == 3
+    assert argo_config.cpu_limit == 4
+    assert argo_config.memory_request == 32
+    assert argo_config.memory_limit == 64
+    assert argo_config.use_gpu
 
 
 def test_k8s_pipeline_with_fused_nodes():
@@ -346,7 +343,7 @@ def test_initialization_of_pipeline_with_k8s_nodes():
             func=dummy_func,
             inputs=["int_number_ds_in"],
             outputs=["int_number_ds_out"],
-            k8s_config=KubernetesExecutionConfig(
+            argo_config=ArgoNodeConfig(
                 cpu_request=1,
                 cpu_limit=2,
                 memory_request=16,
@@ -358,7 +355,7 @@ def test_initialization_of_pipeline_with_k8s_nodes():
             func=dummy_func,
             inputs=["int_number_ds_out"],
             outputs=["int_number_ds_out_2"],
-            k8s_config=KubernetesExecutionConfig(
+            argo_config=ArgoNodeConfig(
                 cpu_request=1,
                 cpu_limit=2,
                 memory_request=16,
@@ -395,11 +392,11 @@ def test_initialization_of_pipeline_with_k8s_nodes():
 
 
 def test_copy_k8s_node():
-    k8s_node = ArgoNode(
+    argo_node = ArgoNode(
         func=dummy_func,
         inputs=["int_number_ds_in"],
         outputs=["int_number_ds_out"],
-        k8s_config=KubernetesExecutionConfig(
+        argo_config=ArgoNodeConfig(
             cpu_request=1,
             cpu_limit=2,
             memory_request=16,
@@ -408,21 +405,19 @@ def test_copy_k8s_node():
         ),
         tags=["argowf.fuse", "argowf.fuse-group.dummy"],
     )
-    copied_k8s_node = k8s_node._copy()
-    assert copied_k8s_node.k8s_config.cpu_request == 1
-    assert copied_k8s_node.k8s_config.cpu_limit == 2
-    assert copied_k8s_node.k8s_config.memory_request == 16
-    assert copied_k8s_node.k8s_config.memory_limit == 32
-    assert copied_k8s_node.k8s_config.use_gpu
+    copied_k8s_node = argo_node._copy()
+    assert copied_k8s_node.argo_config.cpu_request == 1
+    assert copied_k8s_node.argo_config.cpu_limit == 2
+    assert copied_k8s_node.argo_config.memory_request == 16
+    assert copied_k8s_node.argo_config.memory_limit == 32
+    assert copied_k8s_node.argo_config.use_gpu
     assert copied_k8s_node.tags == {"argowf.fuse", "argowf.fuse-group.dummy"}
 
-    overwritten_k8s_node = k8s_node._copy(
-        k8s_config=KubernetesExecutionConfig(
-            cpu_request=3, cpu_limit=4, memory_request=32, memory_limit=64, use_gpu=False
-        )
+    overwritten_k8s_node = argo_node._copy(
+        argo_config=ArgoNodeConfig(cpu_request=3, cpu_limit=4, memory_request=32, memory_limit=64, use_gpu=False)
     )
-    assert overwritten_k8s_node.k8s_config.cpu_request == 3
-    assert overwritten_k8s_node.k8s_config.cpu_limit == 4
-    assert overwritten_k8s_node.k8s_config.memory_request == 32
-    assert overwritten_k8s_node.k8s_config.memory_limit == 64
-    assert not overwritten_k8s_node.k8s_config.use_gpu
+    assert overwritten_k8s_node.argo_config.cpu_request == 3
+    assert overwritten_k8s_node.argo_config.cpu_limit == 4
+    assert overwritten_k8s_node.argo_config.memory_request == 32
+    assert overwritten_k8s_node.argo_config.memory_limit == 64
+    assert not overwritten_k8s_node.argo_config.use_gpu
