@@ -260,7 +260,7 @@ def map_name_to_curie(
     # Map the disease name to the corresponding curie ids
     attributes = [
         ("$.id.identifier", "drug_kg_curie"),
-        ("$.type", "drug_kg_label"),
+        ("$.type[0]", "drug_kg_label"),
     ]
 
     for expr, target in attributes:
@@ -277,7 +277,7 @@ def map_name_to_curie(
 
     attributes = [
         ("$.id.identifier", "disease_kg_curie"),
-        ("$.type", "disease_kg_label"),
+        ("$.type[0]", "disease_kg_label"),
     ]
 
     for expr, target in attributes:
@@ -394,7 +394,7 @@ def clean_drug_list(drug_df: pd.DataFrame, endpoint: str) -> pd.DataFrame:
     attributes = [
         ("$.id.identifier", "curie"),
         ("$.id.label", "name"),
-        ("$.type", "category"),
+        ("$[0]", "category"),
     ]
 
     for expr, target in attributes:
@@ -438,7 +438,7 @@ def clean_disease_list(disease_df: pd.DataFrame, endpoint: str) -> pd.DataFrame:
     attributes = [
         ("$.id.identifier", "curie"),
         ("$.id.label", "name"),
-        ("$.type", "category"),
+        ("$.type[0]", "category"),
     ]
 
     for expr, target in attributes:
