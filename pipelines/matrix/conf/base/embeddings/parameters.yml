@@ -15,7 +15,7 @@ embeddings.ai_config:
   api_key: ${globals:openai.api_key}
 # https://platform.openai.com/docs/guides/embeddings/faq
 # OpenAI embeddings support batching, up to 8000 tokens.
-  batch_size: 200
+  batch_size: 100
   endpoint: ${globals:openai.endpoint}
   model: text-embedding-3-small
   attribute: &_property embedding

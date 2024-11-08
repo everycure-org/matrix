@@ -1,5 +1,6 @@
 import os
 import re
+from tqdm import tqdm
 from copy import deepcopy
 from typing import Any, Optional
 
@@ -13,6 +14,7 @@ from kedro.io.core import (
     DatasetError,
     Version,
 )
+from kedro_datasets.partitions import PartitionedDataset
 from kedro_datasets.spark import SparkDataset, SparkJDBCDataset
 from kedro_datasets.spark.spark_dataset import _get_spark, _split_filepath, _strip_dbfs_prefix
 from matrix.hooks import SparkHooks
@@ -368,3 +370,21 @@ class RemoteSparkJDBCDataset(SparkJDBCDataset):
         fs_prefix, file_name = _split_filepath(file_name)
 
         return protocol, fs_prefix, file_name
+
+
+class PartitionedTQDMDataset(PartitionedDataset):
+    def _save(self, data: dict[str, Any]) -> None:
+        if self._overwrite and self._filesystem.exists(self._normalized_path):
+            self._filesystem.rm(self._normalized_path, recursive=True)
+
+        # TODO: Can implement logic to retry here
+        for partition_id, partition_data in tqdm(sorted(data.items())):
+            kwargs = deepcopy(self._dataset_config)
+            partition = self._partition_to_path(partition_id)
+            # join the protocol back since tools like PySpark may rely on it
+            kwargs[self._filepath_arg] = self._join_protocol(partition)
+            dataset = self._dataset_type(**kwargs)  # type: ignore
+            if callable(partition_data):
+                partition_data = partition_data()  # noqa: PLW2901
+            dataset.save(partition_data)
+        self._invalidate_caches()
