@@ -10,6 +10,9 @@ paths:
   raw:                data/test/raw
   kg_raw:             data/test/raw
   # Upstream version-based
+
+  gpu_validation:     data/test/gpu_validation
+
   ingestion:          data/test/ingestion
   # Release-based
   integration:        data/test/releases/${versions.release}/datasets/integration
