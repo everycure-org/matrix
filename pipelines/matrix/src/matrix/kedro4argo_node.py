@@ -12,7 +12,7 @@ KUBERNETES_DEFAULT_LIMIT_CPU = 16
 KUBERNETES_DEFAULT_REQUEST_CPU = 4
 
 
-class KubernetesExecutionConfig(BaseModel):
+class ArgoNodeConfig(BaseModel):
     """Configuration for Kubernetes execution.
 
     Default values are set in settings.py.
@@ -42,7 +42,7 @@ class KubernetesExecutionConfig(BaseModel):
         return v
 
     @model_validator(mode="after")
-    def validate_resource_constraints(self) -> "KubernetesExecutionConfig":
+    def validate_resource_constraints(self) -> "ArgoNodeConfig":
         """Validate that limits are greater than or equal to requests."""
         if self.cpu_limit < self.cpu_request:
             raise ValueError("CPU limit must be greater than or equal to CPU request")
@@ -51,7 +51,7 @@ class KubernetesExecutionConfig(BaseModel):
         return self
 
     @model_validator(mode="after")
-    def validate_values_are_sane(self) -> "KubernetesExecutionConfig":
+    def validate_values_are_sane(self) -> "ArgoNodeConfig":
         """Validate that CPU and memory limits and requests are not too high."""
         if self.cpu_limit > KUBERNETES_DEFAULT_LIMIT_CPU or self.memory_limit > KUBERNETES_DEFAULT_LIMIT_RAM:
             warnings.warn(
@@ -59,26 +59,26 @@ class KubernetesExecutionConfig(BaseModel):
             )
         return self
 
-    def fuse_config(self, k8s_config: Union["KubernetesExecutionConfig", None]) -> None:
+    def fuse_config(self, argo_config: Union["ArgoNodeConfig", None]) -> None:
         """Fuse in-place with another K8s config."""
-        if k8s_config is None:
+        if argo_config is None:
             return
-        self.cpu_limit = max(self.cpu_limit, k8s_config.cpu_limit)
-        self.cpu_request = max(self.cpu_request, k8s_config.cpu_request)
-        self.memory_limit = max(self.memory_limit, k8s_config.memory_limit)
-        self.memory_request = max(self.memory_request, k8s_config.memory_request)
-        self.use_gpu = self.use_gpu or k8s_config.use_gpu
+        self.cpu_limit = max(self.cpu_limit, argo_config.cpu_limit)
+        self.cpu_request = max(self.cpu_request, argo_config.cpu_request)
+        self.memory_limit = max(self.memory_limit, argo_config.memory_limit)
+        self.memory_request = max(self.memory_request, argo_config.memory_request)
+        self.use_gpu = self.use_gpu or argo_config.use_gpu
 
 
 class ArgoNode(Node):
     # TODO: Merge this with former FuseNode
-    def __init__(self, *args, k8s_config: KubernetesExecutionConfig = KubernetesExecutionConfig(), **kwargs):
-        self._k8s_config = k8s_config
+    def __init__(self, *args, argo_config: ArgoNodeConfig = ArgoNodeConfig(), **kwargs):
+        self._argo_config = argo_config
         super().__init__(*args, **kwargs)
 
     @property
-    def k8s_config(self) -> KubernetesExecutionConfig:
-        return self._k8s_config
+    def argo_config(self) -> ArgoNodeConfig:
+        return self._argo_config
 
     # TODO: Add fuse() method here.
 
@@ -90,7 +90,7 @@ class ArgoNode(Node):
             "func": self._func,
             "inputs": self._inputs,
             "outputs": self._outputs,
-            "k8s_config": self._k8s_config,
+            "argo_config": self._argo_config,
             "name": self._name,
             "namespace": self._namespace,
             "tags": self._tags,
@@ -104,7 +104,7 @@ def argo_node(
     func: Callable,
     inputs: str | list[str] | dict[str, str] | None,
     outputs: str | list[str] | dict[str, str] | None,
-    k8s_config: KubernetesExecutionConfig = KubernetesExecutionConfig(),
+    argo_config: ArgoNodeConfig = ArgoNodeConfig(),
     *,
     name: str | None = None,
     tags: str | Iterable[str] | None = None,
@@ -115,7 +115,7 @@ def argo_node(
         func,
         inputs,
         outputs,
-        k8s_config=k8s_config,
+        argo_config=argo_config,
         name=name,
         tags=tags,
         confirms=confirms,

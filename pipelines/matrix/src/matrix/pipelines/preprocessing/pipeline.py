@@ -1,5 +1,5 @@
 from kedro.pipeline import Pipeline, pipeline
-from matrix.kedro4argo_node import KubernetesExecutionConfig, argo_node
+from matrix.kedro4argo_node import ArgoNodeConfig, argo_node
 from matrix.kedro4argo_node import (
     KUBERNETES_DEFAULT_LIMIT_CPU,
     KUBERNETES_DEFAULT_LIMIT_RAM,
@@ -9,7 +9,7 @@ from matrix.kedro4argo_node import (
 
 from . import nodes
 
-preprocessing_k8s_node_config = KubernetesExecutionConfig(
+preprocessing_argo_node_config = ArgoNodeConfig(
     cpu_request=KUBERNETES_DEFAULT_REQUEST_CPU,
     cpu_limit=KUBERNETES_DEFAULT_LIMIT_CPU,
     memory_request=KUBERNETES_DEFAULT_REQUEST_RAM,
@@ -34,7 +34,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 outputs="preprocessing.int.nodes",
                 name="normalize_ec_medical_team_nodes",
                 tags=["ec-medical-kg"],
-                k8s_config=preprocessing_k8s_node_config,
+                argo_config=preprocessing_argo_node_config,
             ),
             argo_node(
                 func=nodes.create_int_edges,
@@ -45,7 +45,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 outputs="preprocessing.int.edges",
                 name="create_int_ec_medical_team_edges",
                 tags=["ec-medical-kg"],
-                k8s_config=preprocessing_k8s_node_config,
+                argo_config=preprocessing_argo_node_config,
             ),
             argo_node(
                 func=nodes.create_prm_edges,
@@ -55,7 +55,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 outputs="ingestion.raw.ec_medical_team.edges@pandas",
                 name="create_prm_ec_medical_team_edges",
                 tags=["ec-medical-kg"],
-                k8s_config=preprocessing_k8s_node_config,
+                argo_config=preprocessing_argo_node_config,
             ),
             argo_node(
                 func=nodes.create_prm_nodes,
@@ -65,7 +65,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 outputs="ingestion.raw.ec_medical_team.nodes@pandas",
                 name="create_prm_ec_medical_team_nodes",
                 tags=["ec-medical-kg"],
-                k8s_config=preprocessing_k8s_node_config,
+                argo_config=preprocessing_argo_node_config,
             ),
             # NOTE: Take raw clinical trial data and map the "name" to "curie" using the synonymizer
             argo_node(
@@ -79,7 +79,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 outputs="preprocessing.int.mapped_clinical_trials_data",
                 name="mapped_clinical_trials_data",
                 tags=["ec-clinical-trials-data"],
-                k8s_config=preprocessing_k8s_node_config,
+                argo_config=preprocessing_argo_node_config,
             ),
             # NOTE: Clean up the clinical trial data and write it to the GCS bucket
             argo_node(
@@ -90,7 +90,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 outputs="ingestion.raw.clinical_trials_data",
                 name="clean_clinical_trial_data",
                 tags=["ec-clinical-trials-data"],
-                k8s_config=preprocessing_k8s_node_config,
+                argo_config=preprocessing_argo_node_config,
             ),
             argo_node(
                 func=nodes.clean_drug_list,
@@ -101,14 +101,14 @@ def create_pipeline(**kwargs) -> Pipeline:
                 outputs="ingestion.raw.drug_list@pandas",
                 name="resolve_drug_list",
                 tags=["drug-list"],
-                k8s_config=preprocessing_k8s_node_config,
+                argo_config=preprocessing_argo_node_config,
             ),
             argo_node(
                 func=lambda x: x,
                 inputs="ingestion.raw.drug_list@pandas",
                 outputs="ingestion.reporting.drug_list",
                 name="write_drug_list_to_gsheets",
-                k8s_config=preprocessing_k8s_node_config,
+                argo_config=preprocessing_argo_node_config,
             ),
             # FUTURE: Remove this node once we have a new disease list with tags
             argo_node(
@@ -120,7 +120,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 outputs="preprocessing.raw.enriched_disease_list",
                 name="enrich_disease_list",
                 tags=["disease-list"],
-                k8s_config=preprocessing_k8s_node_config,
+                argo_config=preprocessing_argo_node_config,
             ),
             argo_node(
                 func=nodes.clean_disease_list,
@@ -131,14 +131,14 @@ def create_pipeline(**kwargs) -> Pipeline:
                 outputs="ingestion.raw.disease_list@pandas",
                 name="resolve_disease_list",
                 tags=["disease-list"],
-                k8s_config=preprocessing_k8s_node_config,
+                argo_config=preprocessing_argo_node_config,
             ),
             argo_node(
                 func=lambda x: x,
                 inputs="ingestion.raw.disease_list@pandas",
                 outputs="ingestion.reporting.disease_list",
                 name="write_disease_list_to_gsheets",
-                k8s_config=preprocessing_k8s_node_config,
+                argo_config=preprocessing_argo_node_config,
             ),
             argo_node(
                 func=nodes.clean_input_sheet,
@@ -149,7 +149,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 outputs="inference.raw.normalized_inputs",
                 name="clean_input_sheet",
                 tags=["inference-input"],
-                k8s_config=preprocessing_k8s_node_config,
+                argo_config=preprocessing_argo_node_config,
             ),
         ]
     )
