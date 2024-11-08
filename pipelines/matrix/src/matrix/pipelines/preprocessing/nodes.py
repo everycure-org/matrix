@@ -1,19 +1,15 @@
-import requests
+from functools import partial
+from typing import Callable, Dict, List, Tuple
 
 import pandas as pd
-
-from typing import Callable, List, Dict, Tuple
-from functools import partial
-
+import requests
+from langchain.output_parsers import CommaSeparatedListOutputParser
+from langchain.prompts import ChatPromptTemplate
+from langchain.schema import HumanMessage, SystemMessage
+from matrix.pipelines.integration.nodes import batch_map_ids
+from refit.v1.core.inject import inject_object
 from refit.v1.core.inline_has_schema import has_schema
 from refit.v1.core.inline_primary_key import primary_key
-
-from langchain.prompts import ChatPromptTemplate
-from langchain.output_parsers import CommaSeparatedListOutputParser
-from langchain.schema import HumanMessage, SystemMessage
-from refit.v1.core.inject import inject_object
-
-from matrix.pipelines.integration.nodes import batch_map_ids
 
 
 def resolve_name(curie: str, endpoint: str, att_to_get: str = "curie"):
@@ -124,7 +120,7 @@ def create_int_nodes(nodes: pd.DataFrame, name_resolver: str, translator_endpoin
     normalized_id_map = batch_map_ids(
         frozenset(resolved["curie"].fillna("")),
         api_endpoint=translator_endpoint,
-        json_path_expr="$.id.identifier",
+        json_parser="$.id.identifier",
         batch_size=1000,
         parallelism=120,
         conflate=True,
@@ -271,7 +267,7 @@ def map_name_to_curie(
             parallelism=120,
             conflate=True,
             drug_chemical_conflate=False,
-            json_path_expr=expr,
+            json_parser=expr,
         )
         df[target] = df["drug_kg_arax_curie"].map(node_id_map)
 
@@ -288,7 +284,7 @@ def map_name_to_curie(
             parallelism=120,
             conflate=True,
             drug_chemical_conflate=False,
-            json_path_expr=expr,
+            json_parser=expr,
         )
         df[target] = df["disease_kg_arax_curie"].map(node_id_map)
 
@@ -405,7 +401,7 @@ def clean_drug_list(drug_df: pd.DataFrame, endpoint: str) -> pd.DataFrame:
             parallelism=120,
             conflate=True,
             drug_chemical_conflate=False,
-            json_path_expr=expr,
+            json_parser=expr,
         )
         drug_df[target] = drug_df["single_ID"].map(node_id_map)
     return drug_df.dropna(subset=["curie"])
@@ -449,7 +445,7 @@ def clean_disease_list(disease_df: pd.DataFrame, endpoint: str) -> pd.DataFrame:
             parallelism=120,
             conflate=True,
             drug_chemical_conflate=False,
-            json_path_expr=expr,
+            json_parser=expr,
         )
         disease_df[target] = disease_df["category_class"].map(node_id_map)
     return disease_df.dropna(subset=["curie"]).fillna("")
@@ -491,7 +487,7 @@ def clean_input_sheet(input_df: pd.DataFrame, endpoint: str) -> pd.DataFrame:
             parallelism=120,
             conflate=True,
             drug_chemical_conflate=False,
-            json_path_expr=expr,
+            json_parser=expr,
         )
         input_df[target] = input_df["Drug_ID"].map(node_id_map)
 
@@ -503,7 +499,7 @@ def clean_input_sheet(input_df: pd.DataFrame, endpoint: str) -> pd.DataFrame:
             parallelism=120,
             conflate=True,
             drug_chemical_conflate=False,
-            json_path_expr=expr,
+            json_parser=expr,
         )
         input_df[target] = input_df["Disease_ID"].map(node_id_map)
 
@@ -544,7 +540,7 @@ def clean_gt_data(pos_df: pd.DataFrame, neg_df: pd.DataFrame, endpoint: str) -> 
                 parallelism=120,
                 conflate=True,
                 drug_chemical_conflate=False,
-                json_path_expr="$.id.identifier",
+                json_parser="$.id.identifier",
             )
             df[col] = df[col].map(node_id_map)
     return pos_df.dropna(subset=["source", "target"]).drop_duplicates(), neg_df.dropna(
