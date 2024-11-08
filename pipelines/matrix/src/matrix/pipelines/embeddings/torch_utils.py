@@ -63,44 +63,6 @@ class ContrastiveLoss:
         return loss
 
 
-# def xent_loss(
-#     out: torch.Tensor,
-#     edge_label: torch.Tensor,
-#     edge_label_index: torch.Tensor,
-#     num_negative_samples: int,
-#     neg_sample_weights: float,
-# ) -> torch.Tensor:
-#     """
-#     Compute the contrastive loss for a GNN model with internal negative sampling.
-
-#     Args:
-#         out (torch.Tensor): The output tensor from the model.
-#         edge_label (torch.Tensor): The ground truth labels for the edges.
-#         edge_label_index (torch.Tensor): The indices of the edges in the output tensor.
-#         num_neg_samples (int): The number of negative samples to generate.
-#         neg_sample_weights (float): The weight of the negative samples.
-
-#     Returns:
-#         torch.Tensor: The computed loss value.
-#     """
-#     # Calculate positive affinities via dot product
-#     pos_src = out[edge_label_index[0]]
-#     pos_dst = out[edge_label_index[1]]
-#     aff = (pos_src * pos_dst).sum(dim=-1)
-
-#     # Generate negative samples and calculate negative affinities via dot product
-#     neg_indices = torch.randint(0, out.size(0), (num_neg_samples, edge_label_index.size(1)), device=out.device)
-#     neg_samples = out[neg_indices]
-#     neg_aff = (pos_src.unsqueeze(1) * neg_samples).sum(dim=-1)
-
-#     # Calculate true and negative cross-entropy losses
-#     true_xent = F.binary_cross_entropy_with_logits(aff, torch.ones_like(aff), reduction="sum")
-#     negative_xent = F.binary_cross_entropy_with_logits(neg_aff, torch.zeros_like(neg_aff), reduction="sum")
-
-#     loss = true_xent + neg_sample_weights * negative_xent
-#     return loss
-
-
 def prepare_graph_data(
     gds: GraphDataScience,
     graph_name: str,
