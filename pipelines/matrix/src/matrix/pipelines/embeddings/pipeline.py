@@ -11,18 +11,18 @@ def create_pipeline(**kwargs) -> Pipeline:
             node(
                 func=nodes.compute_embeddings,
                 inputs={
-                    "input": "integration.prm.filtered_nodes",
+                    "df": "integration.prm.filtered_nodes",
                     "features": "params:embeddings.node.features",
                     "unpack": "params:embeddings.ai_config",
                 },
-                outputs="embeddings.feat.graph.node_embeddings",
+                outputs="embeddings.feat.graph.node_embeddings@partitioned",
                 name="add_node_embeddings",
             ),
             # Reduce dimension
             node(
                 func=nodes.reduce_dimension,
                 inputs={
-                    "df": "embeddings.feat.graph.node_embeddings",
+                    "df": "embeddings.feat.graph.node_embeddings@spark",
                     "unpack": "params:embeddings.dimensionality_reduction",
                 },
                 outputs="embeddings.feat.graph.pca_node_embeddings",

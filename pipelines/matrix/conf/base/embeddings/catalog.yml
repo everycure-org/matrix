@@ -22,9 +22,19 @@ _spark_parquet_ds: &_spark_parquet
 # Datasets
 # -------------------------------------------------------------------------
 
-embeddings.feat.graph.node_embeddings:
+
+embeddings.feat.graph.node_embeddings@partitioned:
+  type: matrix.datasets.gcp.PartitionedTQDMDataset
+  path: ${globals:paths.embeddings}/feat/tmp_nodes_with_embeddings
+  overwrite: True
+  dataset: 
+    <<: *_spark_parquet
+  filename_suffix: ".parquet"
+
+embeddings.feat.graph.node_embeddings@spark:
   <<: *_spark_parquet
   filepath: ${globals:paths.embeddings}/feat/tmp_nodes_with_embeddings # Why did I call this tmp?
+
 
 embeddings.feat.graph.pca_node_embeddings:
   <<: *_spark_parquet

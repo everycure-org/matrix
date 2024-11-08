@@ -1,5 +1,6 @@
 import logging
 from typing import Any, Dict, List
+import math
 
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -10,9 +11,9 @@ from neo4j import Driver, GraphDatabase
 from pyspark.ml.functions import array_to_vector, vector_to_array
 from pyspark.sql import DataFrame
 from pyspark.sql import functions as F
-from pyspark.sql.functions import udf
 from pyspark.sql.types import ArrayType, FloatType, StringType
 from pyspark.sql.window import Window
+import pyspark.sql.types as T
 from refit.v1.core.inject import inject_object
 from refit.v1.core.inline_has_schema import has_schema
 from refit.v1.core.inline_primary_key import primary_key
@@ -153,13 +154,14 @@ def batch(endpoint, model, api_key, batch):
 @unpack_params()
 @inject_object()
 def compute_embeddings(
-    input: DataFrame,
+    df: DataFrame,
     features: List[str],
     attribute: str,
     api_key: str,
     batch_size: int,
     endpoint: str,
     model: str,
+    shard_size: int = 1000000,
 ):
     """Function to orchestrate embedding computation in Neo4j.
 
@@ -173,42 +175,45 @@ def compute_embeddings(
         endpoint: endpoint to use
         model: model to use
     """
+
+    # Retrieve number of elements
+    num_elements = df.count()
+
+    # Compute number of batches
+    num_shards = math.ceil(num_elements / shard_size)
+
     batch_udf = F.udf(lambda z: batch(endpoint, model, api_key, z), ArrayType(ArrayType(FloatType())))
 
-    window = Window.orderBy(F.lit(1))
+    shards = {}
+    for shard in range(num_shards):
+        # Prep for lazy evaluation
+        shards[f"shard={shard}"] = lambda: (
+            df
+            # Limit and order
+            .orderBy("id")
+            .offset(shard * shard_size)
+            .limit(shard * (shard_size + 1))
+            .withColumn("row_num", F.row_number().over(Window.orderBy(F.lit(1))))
+            .withColumn("batch", F.floor((F.col("row_num") - 1) / batch_size))
+            # Collect input vector for elements
+            .withColumn("input", F.concat(*[F.coalesce(F.col(feature), F.lit("")) for feature in features]))
+            .withColumn("input", F.substring(F.col("input"), 1, 512))
+            # Group elements within batch
+            .groupBy("batch")
+            .agg(
+                F.collect_list("id").alias("id"),
+                F.collect_list("input").alias("input"),
+            )
+            .withColumn(attribute, batch_udf(F.col("input")))
+            .withColumn("_conc", F.arrays_zip(F.col("id"), F.col(attribute)))
+            .withColumn("exploded", F.explode(F.col("_conc")))
+            .select(
+                F.col("exploded.id").alias("id"),
+                F.col(f"exploded.{attribute}").alias(attribute),
+            )
+        )
 
-    res = (
-        input.withColumn("row_num", F.row_number().over(window))
-        .repartition(128)
-        .withColumn("batch", F.floor((F.col("row_num") - 1) / batch_size))
-        # NOTE: There is quite a lot of nodes without name and description, thereby resulting
-        # in embeddings of the empty string.
-        .withColumn(
-            "input",
-            F.concat(*[F.coalesce(F.col(feature), F.lit("")) for feature in features]),
-        )
-        .withColumn("input", F.substring(F.col("input"), 1, 512))  # TODO: Extract param
-        .groupBy("batch")
-        .agg(
-            F.collect_list("id").alias("id"),
-            F.collect_list("input").alias("input"),
-        )
-        .repartition(128)
-        # .withColumn("num_ids", F.size(F.col("id")))
-        # .withColumn("num_input", F.size(F.col("input")))
-        # .withColumn("validated",  F.when(F.col("num_ids") == F.col("num_input"), True).otherwise(False))
-        .withColumn(attribute, batch_udf(F.col("input")))
-        .withColumn("_conc", F.arrays_zip(F.col("id"), F.col(attribute)))
-        .withColumn("exploded", F.explode(F.col("_conc")))
-        .select(
-            F.col("exploded.id").alias("id"),
-            F.col(f"exploded.{attribute}").alias(attribute),
-        )
-        .repartition(128)
-        .join(input, on="id")
-    )
-
-    return res
+    return shards
 
 
 @unpack_params()
@@ -381,13 +386,6 @@ def write_topological_embeddings(
     return {"success": "true"}
 
 
-def string_to_float_list(s: str) -> List[float]:
-    """UDF to transform str into list. Fix for Node2Vec array being written as string."""
-    if s is not None:
-        return [float(x) for x in s.strip()[1:-1].split(",")]
-    return []
-
-
 def extract_node_embeddings(nodes: DataFrame, string_col: str) -> DataFrame:
     """Extract topological embeddings from Neo4j and write into BQ.
 
@@ -395,8 +393,8 @@ def extract_node_embeddings(nodes: DataFrame, string_col: str) -> DataFrame:
     https://github.com/neo4j/graph-data-science-client/issues/742#issuecomment-2324737372.
     """
     if isinstance(nodes.schema[string_col].dataType, StringType):
-        string_to_float_list_udf = udf(string_to_float_list, ArrayType(FloatType()))
-        nodes = nodes.withColumn(string_col, string_to_float_list_udf(F.col(string_col)))
+        # nodes = nodes.withColumn(string_col, string_to_float_list_udf(F.col(string_col)))
+        nodes - nodes.withColumn(string_col, F.from_json(F.col(string_col), T.ArrayType(T.IntegerType())))
     return nodes
 
 
