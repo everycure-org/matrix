@@ -1,17 +1,16 @@
 import logging
 from typing import Any, Dict, List
-import math
 
 import matplotlib.pyplot as plt
+from pyspark.sql import DataFrame, SparkSession
 import pandas as pd
 import requests
 import seaborn as sns
 from graphdatascience import GraphDataScience, QueryRunner
 from neo4j import Driver, GraphDatabase
 from pyspark.ml.functions import array_to_vector, vector_to_array
-from pyspark.sql import DataFrame
 from pyspark.sql import functions as F
-from pyspark.sql.types import ArrayType, FloatType, StringType
+from pyspark.sql.types import StringType
 from pyspark.sql.window import Window
 import pyspark.sql.types as T
 from refit.v1.core.inject import inject_object
@@ -151,69 +150,73 @@ def batch(endpoint, model, api_key, batch):
         raise RuntimeError()
 
 
-@unpack_params()
-@inject_object()
-def compute_embeddings(
+def bucketize_nodes(
     df: DataFrame,
-    features: List[str],
-    attribute: str,
-    api_key: str,
-    batch_size: int,
-    endpoint: str,
-    model: str,
-    shard_size: int = 1000000,
+    attributes: str,
+    bucket_size: int = 100,
 ):
-    """Function to orchestrate embedding computation in Neo4j.
+    """Function to bucketize input dataframe.
 
     Args:
-        input: input df
-        gdb: graph database instance
-        features: features to include to compute embeddings
-        api_key: api key to use
-        batch_size: batch size
-        attribute: attribute to add
-        endpoint: endpoint to use
-        model: model to use
+        df: Dataframe to bucketize
+        attributes: to keep
+        bucket_size: size of the buckets
     """
 
     # Retrieve number of elements
     num_elements = df.count()
+    num_buckets = (num_elements + bucket_size - 1) // bucket_size
 
-    # Compute number of batches
-    num_shards = math.ceil(num_elements / shard_size)
+    # Construct df to bucketize
+    spark_session: SparkSession = SparkSession.builder.getOrCreate()
 
-    batch_udf = F.udf(lambda z: batch(endpoint, model, api_key, z), ArrayType(ArrayType(FloatType())))
+    # Bucketize df
+    buckets = spark_session.createDataFrame(
+        data=[(bucket, bucket * bucket_size, (bucket + 1) * bucket_size) for bucket in range(num_buckets)],
+        schema=["bucket", "min_range", "max_range"],
+    )
+
+    # Order and bucketize elements
+    return (
+        df.withColumn("row_num", F.row_number().over(Window.orderBy("id")))
+        .join(buckets, on=[(F.col("row_num") >= (F.col("min_range"))) & (F.col("row_num") < F.col("max_range"))])
+        .select("id", *attributes, "bucket")
+    )
+
+
+@inject_object()
+def compute_embeddings(
+    dfs: Dict[str, DataFrame],
+    features: List[str],
+    model: Dict[str, Any],
+):
+    """Function to bucketize input data.
+
+    Args:
+        df: input df
+        features: features to include to compute embeddings
+        config: configuration for the model
+    """
+
+    def _func(dataframe: pd.DataFrame):
+        return lambda: compute_df_embeddings(dataframe())
 
     shards = {}
-    for shard in range(num_shards):
-        # Prep for lazy evaluation
-        shards[f"shard={shard}"] = lambda: (
-            df
-            # Limit and order
-            .orderBy("id")
-            .offset(shard * shard_size)
-            .limit(shard * (shard_size + 1))
-            .withColumn("row_num", F.row_number().over(Window.orderBy(F.lit(1))))
-            .withColumn("batch", F.floor((F.col("row_num") - 1) / batch_size))
-            # Collect input vector for elements
-            .withColumn("input", F.concat(*[F.coalesce(F.col(feature), F.lit("")) for feature in features]))
-            .withColumn("input", F.substring(F.col("input"), 1, 512))
-            # Group elements within batch
-            .groupBy("batch")
-            .agg(
-                F.collect_list("id").alias("id"),
-                F.collect_list("input").alias("input"),
-            )
-            .withColumn(attribute, batch_udf(F.col("input")))
-            .withColumn("_conc", F.arrays_zip(F.col("id"), F.col(attribute)))
-            .withColumn("exploded", F.explode(F.col("_conc")))
-            .select(
-                F.col("exploded.id").alias("id"),
-                F.col(f"exploded.{attribute}").alias(attribute),
-            )
-        )
+    for path, df in dfs.items():
+        # Little bit hacky, but extracting batch from hive partitioning for input path
+        # FUTURE: Update dataset to pass this in
+        bucket = path.split("/")[0].split("=")[1]
+
+        # Invoke function to compute embeddings
+        shard_path = f"bucket={bucket}/shard"
+        shards[shard_path] = _func(df)
 
     return shards
+
+
+def compute_df_embeddings(df: pd.DataFrame) -> pd.DataFrame:
+    df["embedding"] = [[1, 2, 3, 4]] * len(df)
+    return df
 
 
 @unpack_params()
@@ -235,6 +238,9 @@ def reduce_dimension(df: DataFrame, transformer, input: str, output: str, skip: 
         DataFrame: A DataFrame with either the reduced dimension embeddings or the original
                    embeddings, depending on the 'skip' parameter.
     """
+
+    breakpoint()
+
     if skip:
         return df.withColumn(output, F.col(input))
 

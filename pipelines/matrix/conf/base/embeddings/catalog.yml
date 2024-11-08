@@ -17,24 +17,44 @@ _spark_parquet_ds: &_spark_parquet
   metadata:
     kedro-viz:
       layer: embeddings
+
+_pandas_parquet: &_pandas_parquet
+  type: pandas.ParquetDataset
       
 # -------------------------------------------------------------------------
 # Datasets
 # -------------------------------------------------------------------------
 
 
-embeddings.feat.graph.node_embeddings@partitioned:
+# Dataframe with bucketized nodes
+embeddings.feat.bucketized_nodes@spark:
+  <<: *_spark_parquet
+  filepath: ${globals:paths.embeddings}/feat/bucketized_nodes
+  save_args:
+    mode: overwrite
+    partitionBy:
+      - bucket
+
+embeddings.feat.bucketized_nodes@partitioned:
   type: matrix.datasets.gcp.PartitionedTQDMDataset
-  path: ${globals:paths.embeddings}/feat/tmp_nodes_with_embeddings
-  overwrite: True
+  path: ${globals:paths.embeddings}/feat/bucketized_nodes
   dataset: 
-    <<: *_spark_parquet
+    <<: *_pandas_parquet
   filename_suffix: ".parquet"
 
+embeddings.feat.graph.node_embeddings@partitioned:
+  type: matrix.datasets.gcp.PartitionedTQDMDataset
+  overwrite: True # important otherwise not properly reset on rerun
+  path: ${globals:paths.embeddings}/feat/tmp_nodes_with_embeddings
+  dataset: 
+    <<: *_pandas_parquet
+  filename_suffix: ".parquet"
+
+# Load as kedro parralel dataset in pandas for parallelization
+# TODO: Rename to bucketized
 embeddings.feat.graph.node_embeddings@spark:
   <<: *_spark_parquet
-  filepath: ${globals:paths.embeddings}/feat/tmp_nodes_with_embeddings # Why did I call this tmp?
-
+  filepath: ${globals:paths.embeddings}/feat/tmp_nodes_with_embeddings
 
 embeddings.feat.graph.pca_node_embeddings:
   <<: *_spark_parquet
