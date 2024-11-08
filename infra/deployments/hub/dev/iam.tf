@@ -13,16 +13,11 @@ module "project_iam_bindings" {
   mode = "additive"
 
   bindings = {
-    # Editor permissions
-    # "roles/editor" = []
 
-    # Artifact Registry access
     "roles/artifactregistry.writer" = ["group:techteam@everycure.org"]
 
-    # GCS object creator
     "roles/storage.objectCreator" = ["group:techteam@everycure.org"]
 
-    # Viewer permissions
     "roles/viewer"                    = local.matrix_viewers_group
     "roles/bigquery.jobUser"          = local.matrix_viewers_group
     "roles/bigquery.dataViewer"       = local.matrix_viewers_group
@@ -30,7 +25,6 @@ module "project_iam_bindings" {
     "roles/bigquery.user"             = local.matrix_viewers_group
     "roles/iap.httpsResourceAccessor" = local.matrix_viewers_group
 
-    # All Matrix members permissions
     "roles/compute.networkUser" = [local.matrix_all_group]
   }
 
