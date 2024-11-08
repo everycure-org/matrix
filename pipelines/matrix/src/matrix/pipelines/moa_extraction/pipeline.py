@@ -154,7 +154,7 @@ def _evaluation_pipeline() -> Pipeline:
                             "relation_encoder": "moa_extraction.feat.relation_encoder",
                         },
                         outputs=f"moa_extraction.model_output.{num_hops}_hop_evaluation_predictions",
-                        name=f"moa_extraction.evaluation.make_{num_hops}_hop_predictions",
+                        name=f"evaluation.make_{num_hops}_hop_predictions",
                         tags=["moa_extraction.evaluation"],
                     ),
                     node(
@@ -165,7 +165,7 @@ def _evaluation_pipeline() -> Pipeline:
                             "k_lst": f"params:moa_extraction.evaluation.{num_hops}_hop.k_lst",
                         },
                         outputs=f"moa_extraction.reporting.{num_hops}_hop_metrics",
-                        name=f"moa_extraction.evaluation.compute_{num_hops}_hop_metrics",
+                        name=f"compute_{num_hops}_hop_metrics",
                         tags=["moa_extraction.evaluation"],
                     ),
                 ]
@@ -195,7 +195,7 @@ def _predictions_pipeline() -> Pipeline:
                             "num_pairs_limit": "params:moa_extraction.predictions.num_pairs_limit",
                         },
                         outputs=f"moa_extraction.model_output.{num_hops}_hop_output_predictions",
-                        name=f"moa_extraction.predictions.make_{num_hops}_hop_output_predictions",
+                        name=f"predictions.make_{num_hops}_hop_output_predictions",
                         tags=["moa_extraction.predictions"],
                     ),
                     node(
@@ -205,8 +205,12 @@ def _predictions_pipeline() -> Pipeline:
                             "include_edge_directions": "params:moa_extraction.predictions.include_edge_directions",
                             "num_paths_per_pair_limit": "params:moa_extraction.predictions.num_paths_per_pair_limit",
                         },
-                        outputs=f"moa_extraction.reporting.{num_hops}_hop_predictions_report",
-                        name=f"moa_extraction.predictions.generate_{num_hops}_hop_predictions_report",
+                        outputs={
+                            "excel_reports": f"moa_extraction.reporting.{num_hops}_hop_predictions_report",
+                            "pair_info_dfs": f"moa_extraction.model_output.{num_hops}_hop_pair_info_sql",
+                            "moa_predictions_dfs": f"moa_extraction.model_output.{num_hops}_hop_predictions_sql",
+                        },
+                        name=f"generate_{num_hops}_hop_predictions_report",
                         tags=["moa_extraction.predictions"],
                     ),
                 ]

@@ -152,7 +152,7 @@ def map_drug_mech_db(
     """Map the DrugMechDB indication paths to 2 and 3-hop paths in the graph.
 
     Args:
-        runner: The GraphDB object representing the KG..
+        runner: The GraphDB object representing the KG.
         drug_mech_db: The DrugMechDB indication paths.
         mapper: Strategy for mapping paths to the graph.
         drugmechdb_entities: The normalized DrugMechDB entities.
@@ -521,7 +521,12 @@ def generate_predictions_reports(
     Returns:
         Dictionary of KGPaths objects, one for each pair.
     """
+    # Dictionary of Excel report
     reports = dict()
+    # Combined dataframes for SQL insertion
+    pair_info_dfs = []
+    moa_predictions_dfs = []
+
     for pair_name, predictions_load_func in predictions.items():
         predictions = predictions_load_func()
         predictions_df = predictions.df
@@ -563,4 +568,15 @@ def generate_predictions_reports(
             "Pair information": pair_info,
         }
 
-    return reports
+        # Add to combined dataframes with additional pair ID column
+        pair_ID = "|".join([pair_info.iloc[0]["Drug ID"], pair_info.iloc[0]["Disease ID"]])
+        pair_info["pair_id"] = pair_ID
+        predictions_df["pair_id"] = pair_ID
+        pair_info_dfs.append(pair_info)
+        moa_predictions_dfs.append(predictions_df)
+
+    # Combine all dataframes
+    combined_pair_info = pd.concat(pair_info_dfs, ignore_index=True)
+    combined_predictions = pd.concat(moa_predictions_dfs, ignore_index=True)
+
+    return {"excel_reports": reports, "pair_info_dfs": combined_pair_info, "moa_predictions_dfs": combined_predictions}
