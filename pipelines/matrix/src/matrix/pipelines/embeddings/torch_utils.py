@@ -19,62 +19,86 @@ def generate_dummy_model() -> torch.nn.Sequential:
     )
 
 
-def BCE_contrastive_loss(out: torch.Tensor, edge_label: torch.Tensor, edge_label_index: torch.Tensor) -> torch.Tensor:
-    """
-    Compute the Binary Cross-Entropy contrastive loss for an unsupervised GNN model.
+class ContrastiveLoss:
+    def __init__(self, num_negative_samples: int, neg_sample_weights: float):
+        """
+        Initialize the ContrastiveLoss class.
 
-    Adapted from https://github.com/pyg-team/pytorch_geometric/blob/master/examples/graph_sage_unsup_ppi.py.
+        Args:
+            num_negative_samples (int): The number of negative samples to generate.
+            neg_sample_weights (float): The weight of the negative samples.
+        """
+        self.num_negative_samples = num_negative_samples
+        self.neg_sample_weights = neg_sample_weights
 
-    Args:
-        out (torch.Tensor: The output tensor from the model.
-        edge_label (torch.Tensor): The ground truth labels for the edges.
-        edge_label_index (torch.Tensor): The indices of the edges in the output tensor.
+    def compute(self, out: torch.Tensor, edge_label: torch.Tensor, edge_label_index: torch.Tensor) -> torch.Tensor:
+        """
+        Compute the contrastive loss for a GNN model with internal negative sampling.
 
-    Returns:
-        torch.Tensor: The computed loss value.
-    """
-    out_src = out[edge_label_index[0]]
-    out_dst = out[edge_label_index[1]]
-    pred = (out_src * out_dst).sum(dim=-1)
-    return F.binary_cross_entropy_with_logits(pred, edge_label)
+        Args:
+            out (torch.Tensor): The output tensor from the model.
+            edge_label (torch.Tensor): The ground truth labels for the edges.
+            edge_label_index (torch.Tensor): The indices of the edges in the output tensor.
+
+        Returns:
+            torch.Tensor: The computed loss value.
+        """
+        # Calculate positive affinities via dot product
+        pos_src = out[edge_label_index[0]]
+        pos_dst = out[edge_label_index[1]]
+        aff = (pos_src * pos_dst).sum(dim=-1)
+
+        # Generate negative samples and calculate negative affinities via dot product
+        neg_indices = torch.randint(
+            0, out.size(0), (self.num_negative_samples, edge_label_index.size(1)), device=out.device
+        )
+        neg_samples = out[neg_indices]
+        neg_aff = (pos_src.unsqueeze(1) * neg_samples).sum(dim=-1)
+
+        # Calculate true and negative cross-entropy losses
+        true_xent = F.binary_cross_entropy_with_logits(aff, torch.ones_like(aff), reduction="sum")
+        negative_xent = F.binary_cross_entropy_with_logits(neg_aff, torch.zeros_like(neg_aff), reduction="sum")
+
+        loss = true_xent + self.neg_sample_weights * negative_xent
+        return loss
 
 
-def xent_loss(
-    out: torch.Tensor,
-    edge_label: torch.Tensor,
-    edge_label_index: torch.Tensor,
-    num_neg_samples: int,
-    neg_sample_weights: float,
-) -> torch.Tensor:
-    """
-    Compute the contrastive loss for a GNN model with internal negative sampling.
+# def xent_loss(
+#     out: torch.Tensor,
+#     edge_label: torch.Tensor,
+#     edge_label_index: torch.Tensor,
+#     num_negative_samples: int,
+#     neg_sample_weights: float,
+# ) -> torch.Tensor:
+#     """
+#     Compute the contrastive loss for a GNN model with internal negative sampling.
 
-    Args:
-        out (torch.Tensor): The output tensor from the model.
-        edge_label (torch.Tensor): The ground truth labels for the edges.
-        edge_label_index (torch.Tensor): The indices of the edges in the output tensor.
-        num_neg_samples (int): The number of negative samples to generate.
-        neg_sample_weights (float): The weight of the negative samples.
+#     Args:
+#         out (torch.Tensor): The output tensor from the model.
+#         edge_label (torch.Tensor): The ground truth labels for the edges.
+#         edge_label_index (torch.Tensor): The indices of the edges in the output tensor.
+#         num_neg_samples (int): The number of negative samples to generate.
+#         neg_sample_weights (float): The weight of the negative samples.
 
-    Returns:
-        torch.Tensor: The computed loss value.
-    """
-    # Calculate positive affinities via dot product
-    pos_src = out[edge_label_index[0]]
-    pos_dst = out[edge_label_index[1]]
-    aff = (pos_src * pos_dst).sum(dim=-1)
+#     Returns:
+#         torch.Tensor: The computed loss value.
+#     """
+#     # Calculate positive affinities via dot product
+#     pos_src = out[edge_label_index[0]]
+#     pos_dst = out[edge_label_index[1]]
+#     aff = (pos_src * pos_dst).sum(dim=-1)
 
-    # Generate negative samples and calculate negative affinities via dot product
-    neg_indices = torch.randint(0, out.size(0), (num_neg_samples, edge_label_index.size(1)), device=out.device)
-    neg_samples = out[neg_indices]
-    neg_aff = (pos_src.unsqueeze(1) * neg_samples).sum(dim=-1)
+#     # Generate negative samples and calculate negative affinities via dot product
+#     neg_indices = torch.randint(0, out.size(0), (num_neg_samples, edge_label_index.size(1)), device=out.device)
+#     neg_samples = out[neg_indices]
+#     neg_aff = (pos_src.unsqueeze(1) * neg_samples).sum(dim=-1)
 
-    # Calculate true and negative cross-entropy losses
-    true_xent = F.binary_cross_entropy_with_logits(aff, torch.ones_like(aff), reduction="sum")
-    negative_xent = F.binary_cross_entropy_with_logits(neg_aff, torch.zeros_like(neg_aff), reduction="sum")
+#     # Calculate true and negative cross-entropy losses
+#     true_xent = F.binary_cross_entropy_with_logits(aff, torch.ones_like(aff), reduction="sum")
+#     negative_xent = F.binary_cross_entropy_with_logits(neg_aff, torch.zeros_like(neg_aff), reduction="sum")
 
-    loss = true_xent + neg_sample_weights * negative_xent
-    return loss
+#     loss = true_xent + neg_sample_weights * negative_xent
+#     return loss
 
 
 def prepare_graph_data(
@@ -200,7 +224,7 @@ def train_gnn_model(
             batch = batch.to(device)
             optimizer.zero_grad()
             out = model(batch.x, batch.edge_index)
-            loss = criterion(out, batch.edge_label, batch.edge_label_index)
+            loss = criterion.compute(out, batch.edge_label, batch.edge_label_index)
             loss.backward()
             optimizer.step()
             epoch_loss += loss.item()

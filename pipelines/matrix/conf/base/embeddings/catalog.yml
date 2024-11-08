@@ -84,7 +84,7 @@ embeddings.model_output.graphsage:
 
 embeddings.models.topological_estimator:
   type: matrix.datasets.torch_dataset.PyTorchDataset
-  filepath: ${globals:paths.prm}/topological_estimator.pt
+  filepath: ${globals:paths.embeddings}/models/topological_estimator.pt
 
 embeddings.feat.nodes:
   <<: *_spark_parquet

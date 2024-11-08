@@ -850,7 +850,7 @@ toml==0.10.2
     # via kedro
 torch==2.4.0
     # via -r requirements.in
-torch-geometric==2.0.0
+torch-geometric==2.6.0
     # via -r requirements.in
 tornado==6.4.1
     # via
