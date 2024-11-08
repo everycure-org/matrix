@@ -65,9 +65,11 @@ spec:
         requests:
           memory: 64Gi
           cpu: 4
+          nvidia.com/gpu: {{ 1 if use_gpus else 0 }}
         limits:
           memory: 64Gi
           cpu: 16
+          nvidia.com/gpu: {{ 1 if use_gpus else 0 }}
       env:
         - name: WORKFLOW_ID
           valueFrom:
