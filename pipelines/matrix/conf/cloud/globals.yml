@@ -15,6 +15,8 @@ paths:
   kg_raw:             ${gcs_bucket}/data/01_RAW
   ingestion:          ${gcs_bucket}/kedro/data/ingestion
 
+  gpu_validation:     ${gcs_bucket}/kedro/data/gpu_validation
+
   # Release-based
   integration:        ${gcs_bucket}/kedro/data/releases/${versions.release}/datasets/integration
   embeddings:         ${gcs_bucket}/kedro/data/releases/${versions.release}/datasets/embeddings

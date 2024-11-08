@@ -1,0 +1,4 @@
+
+gpu_validation:
+  type:  pandas.CSVDataset
+  filepath: ${globals:paths.gpu_validation}/dataset.csv
