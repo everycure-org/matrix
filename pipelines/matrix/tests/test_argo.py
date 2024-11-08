@@ -404,6 +404,16 @@ def test_generate_argo_config() -> None:
     assert resources_no_gpu["requests"]["nvidia.com/gpu"] == 0, "GPU request should be 0 when use_gpus=False"
     assert resources_no_gpu["limits"]["nvidia.com/gpu"] == 0, "GPU limit should be 0 when use_gpus=False"
 
+    # Check requests
+    assert resources_no_gpu["requests"]["memory"] == "64Gi", "Memory request should be 64Gi"
+    assert resources_no_gpu["requests"]["cpu"] == 4, "CPU request should be 4"
+    assert resources_no_gpu["requests"]["nvidia.com/gpu"] == 0, "GPU request should be 0"
+
+    # Check limits
+    assert resources_no_gpu["limits"]["memory"] == "64Gi", "Memory limit should be 64Gi"
+    assert resources_no_gpu["limits"]["cpu"] == 16, "CPU limit should be 16"
+    assert resources_no_gpu["limits"]["nvidia.com/gpu"] == 0, "GPU limit should be 0"
+
 
 def test_generate_argo_config_with_gpus() -> None:
     image_name = "us-central1-docker.pkg.dev/mtrx-hub-dev-3of/matrix-images/matrix"
@@ -497,11 +507,11 @@ def test_generate_argo_config_with_gpus() -> None:
     resources = kedro_template["container"]["resources"]
 
     # Check requests
-    assert resources["requests"]["memory"] == "64Gi", "Memory request should be 64Gi"
+    assert resources["requests"]["memory"] == "32Gi", "Memory request should be 32Gi"
     assert resources["requests"]["cpu"] == 4, "CPU request should be 4"
     assert resources["requests"]["nvidia.com/gpu"] == 1, "GPU request should be 1"
 
     # Check limits
-    assert resources["limits"]["memory"] == "64Gi", "Memory limit should be 64Gi"
+    assert resources["limits"]["memory"] == "32Gi", "Memory limit should be 32Gi"
     assert resources["limits"]["cpu"] == 16, "CPU limit should be 16"
     assert resources["limits"]["nvidia.com/gpu"] == 1, "GPU limit should be 1"

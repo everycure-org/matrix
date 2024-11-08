@@ -63,11 +63,11 @@ spec:
       {% endraw %}
       resources: # limit the resources
         requests:
-          memory: 64Gi
+          memory: {{ 32 if use_gpus else 64 }}Gi
           cpu: 4
           nvidia.com/gpu: {{ 1 if use_gpus else 0 }}
         limits:
-          memory: 64Gi
+          memory: {{ 32 if use_gpus else 64 }}Gi
           cpu: 16
           nvidia.com/gpu: {{ 1 if use_gpus else 0 }}
       env:
