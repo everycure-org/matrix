@@ -341,7 +341,7 @@ def _extract_ids(response: Dict[str, Any], json_path_expr: str):
         logger.debug(f"Response for key {key}: {response.get(key)}")  # Log the response for each key
         try:
             ids[key] = parse(json_path_expr).find(item)[0].value
-        except IndexError:
-            logger.warning(f"KeyError for {key}: {item}")
+        except (IndexError, KeyError):
+            logger.warning(f"KeyError for {key}: {item}, {json_path_expr}")
             ids[key] = None
     return ids
