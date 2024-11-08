@@ -37,6 +37,7 @@ def generate_argo_config(
         namespace=namespace,
         username=username,
         run_name=run_name,
+        use_gpus=use_gpus,
     )
 
     return output
