@@ -84,15 +84,16 @@ class GDSGraphSage(GraphAlgorithm):
     ) -> tuple[torch.nn.Sequential, Dict[str, Any]]:
         """Run and train the topological embedding algorithm.
 
-        gds: GraphDataScience object, required to call both the GDS algorithm and graph itself
-        graph: Neo4j graph object
-        model_name: Name of the model
-        write_property: Attribute to which the embeddings Property to write the embeddings to
-        subgraph: Subgraph to run the algorithm on
-        device: Device to run the algorithm on (not utilized for GDS models but required for PyG models)
-        relationship_projection: Relationship projection i.e. which relationship properties to use (not utilized for GDS models but required for PyG models)
-        node_projection: Node projection i.e. which node properties to use (not utilized for GDS models but required for PyG models)
-        config: Configuration dictionary (not utilized for GDS models but required for PyG models)
+        Args:
+            gds: GraphDataScience object, required to call both the GDS algorithm and graph itself
+            graph: Neo4j graph object
+            model_name: Name of the graph model to be projected in Neo4j
+            write_property: Attribute to which the embeddings will be written (not needed for GDS models)
+            subgraph: Subgraph to run the algorithm on (not needed for GDS models)
+            device: Device to run the algorithm on (not utilized for GDS models but required for PyG models)
+            relationship_projection: Relationship projection i.e. which relationship properties to use (not utilized for GDS models but required for PyG models)
+            node_projection: Node projection i.e. which node properties to use (not utilized for GDS models but required for PyG models)
+            config: Configuration dictionary (not utilized for GDS models but required for PyG models)
         """
         model, attr = gds.beta.graphSage.train(
             graph,
@@ -195,6 +196,16 @@ class GDSNode2Vec(GraphAlgorithm):
         Node2Vec has no separate training and inference steps (unlike GraphSage),
         so both are done via the same write function. This function also
         produces a loss attribute, needed for plotting convergence.
+
+        Args:
+            gds: GraphDataScience instance, used to project graph and get GDS models
+            graph: Graph object that will be used to train the model
+            model_name: Name of the graph model to be projected in Neo4j (dummy, not used by Node2Vec)
+            write_property: Property/Attribute name to write embeddings to
+            subgraph: Subgraph name to use for training (not needed for GDS models)
+            device: Device to use for training (dummy, not used by GDS)
+            node_projection: Node projection dictionary, specifies which node properties to use for training
+            config: Configuration dictionary (not used by GDS)
         """
         attr = gds.node2vec.write(
             G=graph,
