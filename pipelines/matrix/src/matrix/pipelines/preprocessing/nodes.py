@@ -394,7 +394,7 @@ def clean_drug_list(drug_df: pd.DataFrame, endpoint: str) -> pd.DataFrame:
     attributes = [
         ("$.id.identifier", "curie"),
         ("$.id.label", "name"),
-        ("$[0]", "category"),
+        ("$.type[0]", "category"),
     ]
 
     for expr, target in attributes:
