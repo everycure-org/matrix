@@ -12,6 +12,7 @@ from matrix.pipelines.integration.pipeline import create_pipeline as create_inte
 from matrix.pipelines.matrix_generation.pipeline import create_pipeline as create_matrix_pipeline
 from matrix.pipelines.modelling.pipeline import create_pipeline as create_modelling_pipeline
 from matrix.pipelines.preprocessing.pipeline import create_pipeline as create_preprocessing_pipeline
+from matrix.pipelines.gpu_validate.pipeline import create_pipeline as create_gpu_validation_pipeline
 
 
 def register_pipelines() -> Dict[str, Pipeline]:
@@ -33,6 +34,7 @@ def register_pipelines() -> Dict[str, Pipeline]:
         "matrix_generation": create_matrix_pipeline(),
         "evaluation": create_evaluation_pipeline(),
         "inference": create_inference_pipeline(),  # Run manually based on medical input
+        "gpu_validation": create_gpu_validation_pipeline(),
     }
 
     # Higher order pipelines
@@ -59,5 +61,6 @@ def register_pipelines() -> Dict[str, Pipeline]:
         + pipelines["__default__"]
     )
     # fmt: on
+    pipelines["gpu_validation"] = pipelines["gpu_validation"]
 
     return pipelines
