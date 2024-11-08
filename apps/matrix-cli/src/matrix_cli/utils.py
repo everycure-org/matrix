@@ -1,17 +1,18 @@
 import subprocess
 from pathlib import Path
-from typing import List
+from typing import TYPE_CHECKING, List
 
 import typer
 from rich.console import Console
 from tenacity import retry, stop_after_attempt, wait_exponential
-from vertexai.generative_models import (
-    GenerationConfig,
-)
 
 from matrix_cli.cache import memory
 
 console = Console()
+
+# fix to avoid long CLI load times
+if TYPE_CHECKING:
+    from vertexai.generative_models import GenerationConfig
 
 
 def get_git_root() -> str:
@@ -22,7 +23,7 @@ def get_git_root() -> str:
 
 @memory.cache()
 @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=4, max=120))
-def invoke_model(prompt: str, model: str, generation_config: GenerationConfig = None) -> str:
+def invoke_model(prompt: str, model: str, generation_config: "GenerationConfig" = None) -> str:
     import vertexai
     from vertexai.generative_models import GenerativeModel
 

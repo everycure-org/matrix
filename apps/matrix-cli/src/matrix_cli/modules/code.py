@@ -39,13 +39,19 @@ def catchup(
     ),
     until: str = typer.Option("origin/main", help="Git reference to diff to (default: origin/main)"),
     model: str = typer.Option(settings.base_model, help="Model to use for release article generation"),
+    disable_rendering: bool = typer.Option(False, help="Disable rendering of the code diff"),
 ):
     """Show code changes since a specific git reference or timeframe."""
     try:
-        get_code_diff(since, until, print_output=True)
+        diff = get_code_diff(since, until)
     except Exception as e:
         console.print(f"[bold red]Error: {str(e)}")
         raise typer.Exit(1)
+
+    if not disable_rendering:
+        rprint(Markdown(diff))
+    else:
+        console.print(diff)
 
 
 @app.command(name="ai-catchup")
@@ -71,6 +77,7 @@ def pr_summary(
     pr_number: int,
     model: str = typer.Option(settings.base_model, help="Model to use for PR summary generation"),
     question: str = typer.Option(None, help="Question to ask about the PR"),
+    disable_rendering: bool = typer.Option(False, help="Disable rendering of the summary"),
 ):
     """Generate an AI summary of a specific PR, including code changes and context."""
 
@@ -108,10 +115,13 @@ def pr_summary(
     console.print("[green]Generating AI summary...")
     response = invoke_model(prompt, model=model)
 
-    console.print("\n[bold green]PR Summary:")
-    console.print("=" * 80)
-    console.print(Markdown(response))
-    console.print("=" * 80)
+    if not disable_rendering:
+        console.print("\n[bold green]PR Summary:")
+        console.print("=" * 80)
+        console.print(Markdown(response))
+        console.print("=" * 80)
+    else:
+        console.print(response)
 
 
 def parse_diff_input(since: str, until: str) -> Tuple[str, str]:
@@ -149,13 +159,12 @@ def parse_diff_input(since: str, until: str) -> Tuple[str, str]:
     return from_ref, until
 
 
-def get_code_diff(since: str, until: str = "origin/main", print_output: bool = False) -> Optional[str]:
+def get_code_diff(since: str, until: str = "origin/main") -> Optional[str]:
     """Get code differences between two git references or time periods.
 
     Args:
         since: Starting git reference or time expression
         until: Ending git reference (default: origin/main)
-        print_output: Whether to print the output directly
 
     Returns:
         str: Formatted diff output
@@ -165,20 +174,17 @@ def get_code_diff(since: str, until: str = "origin/main", print_output: bool = F
 
     command = ["git", "diff", f"{from_ref}..{to_ref}", "--", *INCLUSION_PATTERNS]
 
-    if print_output:
-        subprocess.run(command, check=False, stdout=None, text=True, cwd=git_root)
-    else:
-        try:
-            result = subprocess.run(
-                command,
-                check=True,
-                capture_output=True,
-                text=True,
-                cwd=git_root,
-            )
-            return result.stdout
-        except subprocess.CalledProcessError as e:
-            raise ValueError(f"Failed to get diff: {e.stderr}")
+    try:
+        result = subprocess.run(
+            command,
+            check=True,
+            capture_output=True,
+            text=True,
+            cwd=git_root,
+        )
+        return result.stdout
+    except subprocess.CalledProcessError as e:
+        raise ValueError(f"Failed to get diff: {e.stderr}")
 
 
 def get_ai_code_summary(since: str, until: str = "origin/main", model: str = settings.base_model):
