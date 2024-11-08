@@ -21,12 +21,12 @@ def generate_dummy_model() -> torch.nn.Sequential:
 
 def BCE_contrastive_loss(out: torch.Tensor, edge_label: torch.Tensor, edge_label_index: torch.Tensor) -> torch.Tensor:
     """
-    Compute the Binary Cross-Entropy contrastive loss.
+    Compute the Binary Cross-Entropy contrastive loss for an unsupervised GNN model.
 
     Adapted from https://github.com/pyg-team/pytorch_geometric/blob/master/examples/graph_sage_unsup_ppi.py.
 
     Args:
-        out (torch.Tensor): The output tensor from the model.
+        out (torch.Tensor: The output tensor from the model.
         edge_label (torch.Tensor): The ground truth labels for the edges.
         edge_label_index (torch.Tensor): The indices of the edges in the output tensor.
 
@@ -39,13 +39,51 @@ def BCE_contrastive_loss(out: torch.Tensor, edge_label: torch.Tensor, edge_label
     return F.binary_cross_entropy_with_logits(pred, edge_label)
 
 
+def xent_loss(
+    out: torch.Tensor,
+    edge_label: torch.Tensor,
+    edge_label_index: torch.Tensor,
+    num_neg_samples: int,
+    neg_sample_weights: float,
+) -> torch.Tensor:
+    """
+    Compute the contrastive loss for a GNN model with internal negative sampling.
+
+    Args:
+        out (torch.Tensor): The output tensor from the model.
+        edge_label (torch.Tensor): The ground truth labels for the edges.
+        edge_label_index (torch.Tensor): The indices of the edges in the output tensor.
+        num_neg_samples (int): The number of negative samples to generate.
+        neg_sample_weights (float): The weight of the negative samples.
+
+    Returns:
+        torch.Tensor: The computed loss value.
+    """
+    # Calculate positive affinities via dot product
+    pos_src = out[edge_label_index[0]]
+    pos_dst = out[edge_label_index[1]]
+    aff = (pos_src * pos_dst).sum(dim=-1)
+
+    # Generate negative samples and calculate negative affinities via dot product
+    neg_indices = torch.randint(0, out.size(0), (num_neg_samples, edge_label_index.size(1)), device=out.device)
+    neg_samples = out[neg_indices]
+    neg_aff = (pos_src.unsqueeze(1) * neg_samples).sum(dim=-1)
+
+    # Calculate true and negative cross-entropy losses
+    true_xent = F.binary_cross_entropy_with_logits(aff, torch.ones_like(aff), reduction="sum")
+    negative_xent = F.binary_cross_entropy_with_logits(neg_aff, torch.zeros_like(neg_aff), reduction="sum")
+
+    loss = true_xent + neg_sample_weights * negative_xent
+    return loss
+
+
 def prepare_graph_data(
     gds: GraphDataScience,
     graph_name: str,
     properties: bool = False,
     node_properties: str = None,
     edges_included: str = None,
-):
+) -> tuple[torch.Tensor, Dict[str, int], torch.Tensor]:
     """
     Prepare graph data for PyTorch Geometric models using Cypher queries.
 
@@ -60,6 +98,7 @@ def prepare_graph_data(
         tuple: A tuple containing:
             - edge_index (torch.Tensor): The edge index tensor for PyG.
             - node_to_index (dict): A mapping from Neo4j node IDs to consecutive indices.
+            - node_features (torch.Tensor): The node features tensor.
     """
     # Get all nodes depending on the properties flag
     if properties:
