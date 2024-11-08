@@ -56,6 +56,8 @@ embeddings.gds:
 #   - https://neo4j.com/docs/graph-data-science-client/current/model-object/
 #   - https://neo4j.com/docs/graph-data-science-client/current/algorithms/ 
 # 
+embeddings.torch_device: cpu
+
 embeddings.topological:
   # Configuration to perform Neo4J graph
   # projection into GDS library for algorithm
@@ -73,7 +75,6 @@ embeddings.topological:
           property: 'include_in_graphsage'
           defaultValue: 1
   
-  embeddings.torch_device: cpu
   
   # Configuration to apply filtering on projected GDS 
   # graph, ensuring various edges are removed
@@ -107,7 +108,9 @@ embeddings.topological_estimator:
   dropout: 0.0
   neg_sampling_ratio: 1.
   criterion: 
-    object: matrix.pipelines.embeddings.torch_utils.BCE_contrastive_loss
+    object: matrix.pipelines.embeddings.torch_utils.ContrastiveLoss
+    neg_sample_weights: 20.0
+    num_negative_samples: 1
 
 embeddings.write_topological_col: *_topological_property
 
