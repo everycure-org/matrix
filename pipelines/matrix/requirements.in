@@ -46,3 +46,4 @@ openai
 langchain-openai
 langchain
 openpyxl
+torch
