@@ -4,7 +4,7 @@ integration:
       semmed_filters:
         publication_threshold: 10
         ngd_threshold: 0.6
-        limit_pmids: 1000
+        limit_pmids: 10000
 
   nodenorm:
     # api_endpoint: https://nodenormalization-sri.renci.org/get_normalized_nodes
