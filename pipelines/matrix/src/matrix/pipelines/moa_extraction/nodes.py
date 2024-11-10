@@ -505,6 +505,38 @@ def make_output_predictions(
     )
 
 
+def _squash_directionality(paths: KGPaths, suffix: str = "*", score_col_name: str = "MOA_score") -> pd.DataFrame:
+    """Squash the directionality of the paths.
+
+    Predicates corresponding to backwards edges are marked by a suffix.
+
+    Args:
+        paths: KGPaths object containing the paths with a confidence score.
+        suffix: The suffix to append to the predicates corresponding to backwards edges.
+        score_col_name: The name of the column to use for the confidence score.
+
+    Returns:
+        DataFrame representing the paths with the directionality of the paths squashed.
+    """
+    # Separate the edge and node columns
+    predicate_cols = [f"predicates_{i}" for i in range(1, paths.num_hops + 1)]
+    forward_cols = [f"is_forward_{i}" for i in range(1, paths.num_hops + 1)]
+    not_node_cols = predicate_cols + forward_cols + [score_col_name]
+    node_cols = [col for col in paths.df.columns if col not in not_node_cols]
+
+    # Append suffix to backward predicates and remove the is_forward column
+    for is_forward_col, predicate_col in zip(forward_cols, predicate_cols):
+        is_backward = paths.df[is_forward_col].eq(False)
+        paths.df.loc[is_backward, predicate_col] = paths.df.loc[is_backward, predicate_col] + suffix
+    paths.df = paths.df.drop(columns=forward_cols)
+
+    # Squash the directionality
+    grouped = paths.df.groupby(node_cols, as_index=False)
+    agg_dict = {col: lambda x: ",".join(x.unique()) for col in predicate_cols}
+    agg_dict[score_col_name] = "max"
+    return grouped.agg(agg_dict).reset_index(drop=True)
+
+
 def generate_predictions_reports(
     predictions: Dict[str, KGPaths],
     include_edge_directions: bool = True,
@@ -528,14 +560,17 @@ def generate_predictions_reports(
     moa_predictions_dfs = []
 
     for pair_name, predictions_load_func in predictions.items():
+        # Load the predictions
         predictions = predictions_load_func()
-        predictions_df = predictions.df
-        N_paths = len(predictions_df)
+        N_paths = len(predictions)
         if N_paths == 0:
             reports[pair_name + "_MOA_predictions.xlsx"] = {
                 "MOA predictions": pd.DataFrame({"NO PATHS": ["No paths found between the given drug and disease"]})
             }
             continue
+
+        # Squash the directionality
+        predictions_df = _squash_directionality(predictions)
 
         # Create the pair information dataframe
         pair_info = pd.DataFrame(
@@ -552,13 +587,9 @@ def generate_predictions_reports(
         predictions_df = (
             predictions_df.head(num_paths_per_pair_limit) if num_paths_per_pair_limit is not None else predictions_df
         )
-        predictions_df = predictions_df.reset_index(drop=True)
-        cols = KGPaths.get_columns(predictions.num_hops)
-        cols.append(score_col_name)
+        cols = predictions_df.columns.to_list()
         cols = [col for col in cols if "source" not in col]
         cols = [col for col in cols if "target" not in col]
-        if not include_edge_directions:
-            cols = [col for col in cols if "is_forward" not in col]
         predictions_df = predictions_df[cols]
 
         # Add the pair information and MOA predictions to a multiframe to be exported as Excel
