@@ -30,7 +30,11 @@ class KGPaths:
 
     @classmethod
     def get_columns(cls, num_hops: int) -> list[str]:
-        """Return the list of columns in the dataframe for a given number of hops."""
+        """Return the list of columns in the dataframe for a given number of hops.
+
+        Args:
+            num_hops: The number of hops in the paths.
+        """
         columns = ["source_name", "source_id", "source_type"]
         for i in range(1, num_hops):
             columns += [
@@ -136,8 +140,7 @@ class KGPaths:
         non_predicate_cols = [col for col in full_new_data.columns if col not in predicate_cols]
         grouped = full_new_data.groupby(non_predicate_cols, as_index=False)
         agg_dict = {col: lambda x: ",".join(x.unique()) for col in predicate_cols}
-        new_data = grouped.agg(agg_dict)
-        new_data.reset_index(drop=True, inplace=True)
+        new_data = grouped.agg(agg_dict).reset_index(drop=True)
 
         # Add the new data to the existing dataframe
         if len(self.df) > 0:
