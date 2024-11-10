@@ -6,9 +6,10 @@ _bigquery_ds: &_bigquery_ds
     bigQueryTableLabel.git_sha: ${globals:git_sha}
     temporaryGcsBucket: ${globals:gcs_bucket}
 
-embeddings.feat.nodes:
-  <<: *_bigquery_ds
-  table: embeddings
+# TODO we currently cannot handle datasets with bad characters in the name, thus writing features to storage
+# embeddings.feat.nodes:
+#   <<: *_bigquery_ds
+#   table: embeddings
 
 embeddings.reporting.loss:
   type: kedro_mlflow.io.artifacts.MlflowArtifactDataset
