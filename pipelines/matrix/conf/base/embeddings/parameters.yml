@@ -11,30 +11,29 @@ embeddings.gdb:
 # Establishes connection to localized mock GenAI API for
 # testing purposes.
 # https://neo4j.com/labs/apoc/5/ml/openai/
-embeddings.ai_config:
-  api_key: ${globals:openai.api_key}
-# https://platform.openai.com/docs/guides/embeddings/faq
-# OpenAI embeddings support batching, up to 8000 tokens.
-  batch_size: 100
-  endpoint: ${globals:openai.endpoint}
-  model: text-embedding-3-small
-  attribute: &_property embedding
+# embeddings.ai_config:
+#   api_key: ${globals:openai.api_key}
+# # https://platform.openai.com/docs/guides/embeddings/faq
+# # OpenAI embeddings support batching, up to 8000 tokens.
+#   batch_size: 100
+#   endpoint: ${globals:openai.endpoint}
+#   model: text-embedding-3-small
+#   attribute: &_property embedding
 
-embeddings.model:
-  object: langchain_openai.OpenAIEmbeddings
-  model: text-embedding-3-small
-  dimensions: 100
-
-# Attributes used as input features to compute
-# node embeddings.
-embeddings.node.features: ["category", "name"]
+embeddings.node:
+  batch_size: 50
+  features: ["category", "name"]
+  model:
+    object: langchain_openai.OpenAIEmbeddings
+    model: text-embedding-3-small
+    dimensions: 100
 
 # Defines strategy used to reduce dimensions of the GenAI
 # generated node embeddings.
 # https://spark.apache.org/docs/latest/api/python/reference/api/pyspark.ml.feature.PCA.html
 embeddings.dimensionality_reduction:
   skip: false # Set to true to skip PCA
-  input: *_property
+  input: embedding
   output: &_pca_property 'pca_embedding'
   transformer:
     object: pyspark.ml.feature.PCA
