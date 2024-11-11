@@ -73,7 +73,36 @@ The main MOA extraction pipeline itself has four separate components.
 
 ## Configuration details
 
-Next, we give further details about the individual processes that occur within the pipeline, including the configuration details found in `conf/base/parameters.yml` and the main objects underlying the pipeline.
+Next, we give further details about the individual components of the pipeline, including the configuration details found in `conf/base/parameters.yml` and the main objects underlying the pipeline.
+
+### DrugMechDB database
+
+The DrugMechDB database consists of a knowledge graph for each drug-disease indication pair. The knowledge graph includes nodes for the source drug and target disease, as well as a set of intermediate nodes. Here is an example of a DrugMechDB entry for a given drug-disease indication pair:
+
+<!-- ![DrugMechDB entry](../assets/img/MOA_extraction/drugmechdb_entry.png) -->
+
+<img src="../assets/img/MOA_extraction/drugmechdb_entry.png" alt="DrugMechDB entry" width="1000"/>
+
+The database takes the form of a yaml file with the following structure for each entry
+```yaml
+- directed: true
+    graph:
+        disease: *name of the disease in the indication*
+        disease_mesh: *MESH Identifier for the disease (if known)*
+        drug: *name of the drug in the indication*
+        drug_mesh: *MESH Identifier for the drug (if known)*
+        drugbank: *DrugBank Identifier for the drug (if known)*
+    links:     (the edges of the path)
+    -   key: *Semantics of the relationship (ALL CAPS)*
+        source: *Identifier for source node in edge*
+        target: *Identifier for target node in edge*
+    nodes:     (the nodes in the path)
+    -   id: *Identifier for the node*
+        label: *Concept type for the node*
+        name: *Name of the node*
+    multigraph: true    (required statment for importing paths into networkx).
+
+```
 
 ### Paths in the Knowledge Graph
 
@@ -81,27 +110,142 @@ A knowledge graph path is a primary notion in the MOA pipeline. We allow for the
 
 ![Path example](../assets/img/MOA_extraction/path_example.svg)
 
-The `KGPaths` object is our main tool for encoding lists of paths in the knowledge graph. Essentially, this object represents a list of paths as a dataframe with information about:
+The `matrix.datasets.paths.KGPaths` object is our main tool for encoding lists of paths in the knowledge graph. Essentially, this object represents a list of paths as a dataframe with information about:
 - Source and target node information
 - Intermediate node information
 - Edge predicates (*note*: in the case of multiple predicates these are stored as a comma separated string)
 - Edge directionality  
 
-The `KGPathsDataset` object is a custom Kedro dataset which deals with storing and loading `KGPaths` objects.
+The `matrix.datasets.paths.KGPathsDataset` object is a custom Kedro dataset which deals with storing and loading `KGPaths` objects.
 
 ### Path mapping
 
-We extract a set of positive knowledge graph paths from the DrugMechDB database. 
-The particular strategy for mapping the DrugMechDB paths to the knowledge graph is defined by a strategy class pattern following the `PathMapper` abstract base class. 
+The DrugMechDB database allows us to extract a set of positive indication paths in *our* knowledge graph. 
+This process is non-trivial and the particular method employed in the pipeline is defined by a strategy class pattern following the `PathMapper` abstract base class. 
 
 #### Setwise path mapper
+
+The setwise path mapper uses the intermediate nodes in DrugMechDB but ignores edges completely. More precisely, fix the number of hops to be $n$. Then for each drug disease pair in DrugMechDB, the following steps are performed:
+1. Map the source and target nodes to our knowledge graph. If the node synonymizer is unable to map the entity, the path is discarded.
+2. Extract all intermediate nodes the DrugMechDB entry. Map as many as possible of these entities to our knowledge graph.
+3. Perform a neo4j query to extract all $n$-hop paths between the drug and disease nodes going through exclusively the mapped intermediate nodes.
+
+*Note*: We map entities to our knowledge graph using pre-computed results from the node synonymizer.
+
+To use this strategy for two-hop paths, we add the following parameters to the `path_mapping` section in `parameters.yml` (and similarly for three-hop paths):
+```yaml
+mapper_two_hop:
+  object: matrix.pipelines.moa_extraction.path_mapping.SetwisePathMapper
+  num_hops: 2
+  unidirectional: false
+```
+The parameter `unidirectional` refers to whether to map onto unidirectional (all edges going forwards) paths only.
+
+### Path extraction rules
+
+The path extraction rules are used to filter the paths extracted from the knowledge graph before ranking by the binary classifier. The choice of extraction rules may be used to incorporate medical feedback. They are defined by a strategy class pattern following the `matrix.pipelines.moa_extraction.path_generators.PathGenerator` abstract base class.
+
+#### Edge omission rules
+
+Edge omission rules are used to omit edges with certain tags from the paths. These tags are added in the preprocessing step of the pipeline, in particular, to the following types of edges:
+- `drug_disease`: edges between drug and disease nodes.
+- `drug_drug`: edges between drug nodes.
+- `disease_disease`: edges between disease nodes.
+The sets of categories defined for nodes of drug and disease types are defined in the `tagging_options` section in `parameters.yml`.
+
+An example of edge omission rules for three-hop paths is given below:
+```yaml
+three_hop:
+  path_generator:
+    object: matrix.pipelines.moa_extraction.path_generators.AllPathsWithRules
+    edge_omission_rules:
+        all: ['drug_disease', 'drug_drug']
+        3: ['disease_disease']
+    num_hops: 3
+    unidirectional: False
+```
+
+Here, the `all` key refers to the edges omitted from all paths, and the `3` key refers to the edges omitted from three-hop paths.
+The `unidirectional` parameter refers to whether to omit paths in which at least one edge is in the backwards direction.
 
 
 ### Path embedding
 
+In order to input a path into the binary classifier, it needs to be embedded in numerical form. In the case of a sequence based model (e.g. a transformer model), the path is embedded as a sequence of vectors. 
+The embedding method is defined by a strategy class pattern following the `matrix.pipelines.moa_extraction.path_embeddings.PathEmbeddingStrategy` abstract base class. 
+
+#### Two-dimensional types and relations
+
+The two-dimensional types and relations strategy embeds the path as a 2D matrix using the node category and edge predicates. Optionally, edge directions can also be added as a feature.
+
+More precisely, consider a 2-hop path of the form 
+$$
+(n, r_1, a, r_2, m)
+$$
+where $n$ is the source drug entity, $a$ is the intermediate entity, $m$ is the target disease entity, and $r_1, r_2$ are the edges.
+The embedding is then constructed as follows:
+$$
+\begin{bmatrix}
+\texttt{category}(n) & \texttt{0} & \texttt{0} \\
+ \texttt{category}(a) & \texttt{relation}(r_1) & \texttt{direction}(r_1) \\
+ \texttt{category}(m) & \texttt{relation}(r_2) & \texttt{direction}(r_2)
+\end{bmatrix}
+$$
+where $\texttt{embedding}(n)$ is the embedding of the entity $n$, $\texttt{category}(n)$ is the one-hot category embedding of the entity $n$, $\texttt{relation}(r)$ is the sum of the one-hot relation embeddings of the edge $r$ (there may be several relation types for a given edge), and $\texttt{direction}(r)$ is binary indicator of the directionality of the edge $r$.
+
+
+To use this strategy for two-hop paths, we add the following parameters to the `path_embeddings` section in `parameters.yml`:
+```yaml
+strategy:
+  object: matrix.pipelines.moa_extraction.path_embeddings.TwoDimensionalTypesAndRelations
+  is_embed_directions: true
+```
+
+> **Future work**: Additional features such as LLM embeddings of the node name could be used to improve the path embedding.
+
 ### Negative sampling
 
-### Path extraction rules
+Negative knowledge graph paths are generated by random sampling. The choice of sampling method may have a significant effect on the performance and is defined by strategy class patterns following the `matrix.pipelines.moa_extraction.path_generators.PathGenerator` abstract base class.
+
+One or more negative samplers may be added to the `negative_samplers` list in the `training.{num_hops}_hop` section in `parameters.yml`.
+
+#### Replacement path sampler
+
+The replacement path sampler works by replacing a given positive indication path with a random path between the same source and target nodes. It 
+
+The rationale behind this methodology is two-fold:
+1. On average, there are an extremely large number of paths between any given source and target node representing a known positive drug-disease pair. Most of these paths will not be relevant to the MOA of the drug-disease pair.
+2. Certain patterns may appear in the positive paths mapped from DrugMechDB simply because they are frequent in the overall graph. This may not be reflective of the underlying mechanism of action.
+
+The replacement path sampler may be added to the `negative_samplers` list in the `training.{num_hops}_hop` section in `parameters.yml`: 
+
+```yaml
+  training:
+    two_hop:
+      negative_samplers:
+        - object: matrix.pipelines.moa_extraction.path_generators.ReplacementPathSampler
+          num_replacement_paths: 2
+          unidirectional: False
+          edge_omission_rules:
+            all: ['drug_disease']
+          random_state: ${globals:random_state}
+```
+Here:
+- `num_replacement_paths` is the number of negative paths to sample for each positive path.
+- `unidirectional` is a boolean flagging whether to sample unidirectional paths only.
+- `edge_omission_rules` is a dictionary specifying which edges to omit. In this case, we omit all edges between drug and disease nodes.
+- `random_state` is the random seed used in the random sampling.
+
+> **Future work**: It may also be useful to investigate other sampling methods, for instance, swapping out intermediate nodes with random nodes, or randomly swapping edge predicates.
 
 
-## Local runs
+## Local runs for a more accurate testing environment
+
+While the `moa_extraction` pipeline works in the `test` environment with fabricated data, there is currently one drawback, namely that a mock path mapping strategy is utilised in place of the strategy utilised with full data.
+This is due to the complexity of generating a fabricated version of DrugMechDB which generates mapped paths on a fabricated KG. 
+
+For this reason, a local test environment may be run using the full knowledge graph but a limited amount of input data. This pipeline will run in less than 5 minutes. 
+
+This environment set-up also allows to locally run the pipeline with full data if desired. 
+
+**Caution:** The set-up is currently highly manual and should not be considered a long-term solution. 
