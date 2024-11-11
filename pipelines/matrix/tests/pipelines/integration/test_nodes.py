@@ -1,15 +1,16 @@
+from typing import Any, Dict
+
 import pytest
-from typing import Dict, Any
-from pyspark.sql import DataFrame
+from jsonpath_ng.parser import parse
 from matrix.pipelines.integration import nodes
+from matrix.schemas.knowledge_graph import KGEdgeSchema, KGNodeSchema
+from pyspark.sql import DataFrame
 from pyspark.sql.types import (
     ArrayType,
     StringType,
-    StructType,
     StructField,
+    StructType,
 )
-
-from matrix.schemas.knowledge_graph import KGEdgeSchema, KGNodeSchema
 from pyspark.testing import assertDataFrameEqual
 
 
@@ -326,11 +327,11 @@ def test_normalize_kg(spark, mocker):
 @pytest.mark.parametrize(
     "attribute,expected",
     [
-        ("$.id.identifier", "CHEBI:28887"),
-        ("$.id.label", "Ofatumumab"),
-        ("$.type[0]", "biolink:SmallMolecule"),
-        ("$.type", ["biolink:SmallMolecule", "biolink:MolecularEntity"]),
-        ("$.non.existing.attribute", None),
+        (parse("$.id.identifier"), "CHEBI:28887"),
+        (parse("$.id.label"), "Ofatumumab"),
+        (parse("$.type[0]"), "biolink:SmallMolecule"),
+        (parse("$.type"), ["biolink:SmallMolecule", "biolink:MolecularEntity"]),
+        (parse("$.non.existing.attribute"), None),
     ],
 )
 def test_extract_ids(nodenorm_response, attribute, expected):
@@ -366,7 +367,8 @@ def test_extract_type_not_found():
     }
 
     # When extracting an attribute
-    response = nodes._extract_ids(nodenorm_response, "$.type[0]")
+    json_parser = parse("$.type[0]")
+    response = nodes._extract_ids(nodenorm_response, json_parser)
 
     # Then correct response returned
     assert response["CHEMBL.COMPOUND:CHEMBL1201836"] is None
