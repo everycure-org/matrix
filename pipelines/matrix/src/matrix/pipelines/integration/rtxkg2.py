@@ -92,11 +92,10 @@ def filter_semmed(
     """
     curie_to_pmids = (
         curie_to_pmids.withColumn("pmids", f.from_json("pmids", T.ArrayType(T.IntegerType())))
-        # FUTURE:  remove if no longer an issue in 2.10, else consider an optimisation or accepting slight impact on performance as we'll otherwise be doing comparisons of 20M+ arrays
-        # .withColumn("pmids", f.sort_array(f.col("pmids")))
-        # .withColumn("limited_pmids", f.slice(f.col("pmids"), 1, limit_pmids))
-        # .drop("pmids")
-        # .withColumnRenamed("limited_pmids", "pmids")
+        .withColumn("pmids", f.sort_array(f.col("pmids")))
+        .withColumn("limited_pmids", f.slice(f.col("pmids"), 1, limit_pmids))
+        .drop("pmids")
+        .withColumnRenamed("limited_pmids", "pmids")
         .withColumn("num_pmids", f.array_size(f.col("pmids")))
         .withColumnRenamed("curie", "id")
         .persist()
