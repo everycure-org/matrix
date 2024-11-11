@@ -73,12 +73,12 @@ def _apply_transformations(
 ) -> DataFrame:
     logger.info(f"Filtering dataframe with {len(transformations)} transformations")
     last_count = df.count()
-    logger.info(f"Number of dataframe before filtering: {last_count}")
+    logger.info(f"Number of rows before filtering: {last_count}")
     for name, transformation in transformations.items():
         logger.info(f"Applying transformation: {name}")
         df = df.transform(transformation, **kwargs)
         new_count = df.count()
-        logger.info(f"Number of dataframe after transformation: {new_count}, cut out {last_count - new_count} rows")
+        logger.info(f"Number of rows after transformation: {new_count}, cut out {last_count - new_count} rows")
         last_count = new_count
 
     return df
