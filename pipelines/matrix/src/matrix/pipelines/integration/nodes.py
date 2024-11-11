@@ -173,7 +173,8 @@ def batch_map_ids(
     )
 
     logger.info(f"mapped {len(results)} ids")
-    logger.warning(f"Endpoint did not return results for {len(ids) - len(results)} ids")
+    empty_results = [id for id in ids if not results.get(id)]
+    logger.warning(f"Endpoint did not return results for {len(empty_results)}")
     # ensuring we return a result for every input id, even if it's None
     return {id: results.get(id) for id in ids}
 
