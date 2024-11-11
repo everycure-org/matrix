@@ -134,8 +134,8 @@ def filter_semmed(
     edges_filtered = edges_df.filter(f.col("primary_knowledge_source") != f.lit("infores:semmeddb")).unionByName(
         semmed_edges
     )
-    logger.info(f"Number of edges after filtering: {edges_filtered.count()}")
-    logger.info(f"Number of semmed edges after filtering: {semmed_edges.count()}")
+    # logger.info(f"Number of edges after filtering: {edges_filtered.count()}")
+    # logger.info(f"Number of semmed edges after filtering: {semmed_edges.count()}")
     return edges_filtered
 
 
@@ -149,18 +149,29 @@ def compute_ngd(df: DataFrame, num_pairs: int = 3.7e7 * 20) -> DataFrame:
     Returns:
         Dataframe with ndg score
     """
+
     # we perform a array intersection calculation leveraging join and group by instead of array_intersect as some of the arrays are large (20M+)
-    subject_side = df.select("edges.*", "subj.pmids").withColumn("pmid", f.explode("subj.pmids")).drop("subj.pmids")
-    object_side = df.select("edges.*", "obj.pmids").withColumn("pmid", f.explode("obj.pmids")).drop("obj.pmids")
-    joined = subject_side.join(
-        object_side, on=["pmid", "edges.subject", "edges.predicate", "edges.object"], how="inner"
-    )
+    def _explode(df: DataFrame, col: str) -> DataFrame:
+        return df.select("edges.*", f.explode(f.col(col)).alias("pmid")).drop(col)
+
+    # calculate the number of common pmids between subject and object
     joined = (
-        joined.groupBy("edges.subject", "edges.predicate", "edges.object")
+        df.transform(_explode, col="subj.pmids")
+        .join(_explode(df, "obj.pmids"), on=["pmid", "subject", "predicate", "object"], how="inner")
+        .groupBy("subject", "predicate", "object")
         .agg(f.count("pmid").alias("num_common_pmids"))
-        .select("edges.subject", "edges.predicate", "edges.object", "num_common_pmids")
+        .select("subject", "predicate", "object", "num_common_pmids")
     )
-    df = df.join(joined, on=["edges.subject", "edges.predicate", "edges.object"], how="left")
+
+    df = df.join(
+        joined.alias("joined"),
+        on=[
+            f.col("edges.subject") == f.col("joined.subject"),
+            f.col("edges.predicate") == f.col("joined.predicate"),
+            f.col("edges.object") == f.col("joined.object"),
+        ],
+        how="left",
+    )
     df = (
         # Take first max_pmids elements from each array
         df.withColumn(
