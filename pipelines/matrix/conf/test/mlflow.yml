@@ -1,0 +1,4 @@
+tracking:
+  disable_tracking:
+    # TODO: Allows to run moa_extraction pipeline without tracking in test environment
+    pipelines: ["moa_extraction"]
