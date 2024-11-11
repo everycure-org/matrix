@@ -195,7 +195,7 @@ $$
 \end{bmatrix}
 $$
 
-where $\texttt{embedding}(n)$ is the embedding of the entity $n$, $\texttt{category}(n)$ is the one-hot category embedding of the entity $n$, $\texttt{relation}(r)$ is the sum of the one-hot relation embeddings of the edge $r$ (there may be several relation types for a given edge), and $\texttt{direction}(r)$ is binary indicator of the directionality of the edge $r$.
+where $\texttt{embedding}(n)$ is the embedding of the entity $n$, $\texttt{category}(n)$ is the one-hot category embedding of the entity $n$, $\texttt{relation}(r)$ is the sum of the one-hot relation embeddings of the edge $r$ (there may be several relation types for a given edge), and $\texttt{direction}(r)$ is binary indicator of the directionality.
 
 
 To use this strategy for two-hop paths, we add the following parameters to the `path_embeddings` section in `parameters.yml`:
