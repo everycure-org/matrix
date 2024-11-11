@@ -20,6 +20,11 @@ embeddings.ai_config:
   model: text-embedding-3-small
   attribute: &_property embedding
 
+embeddings.model:
+  object: langchain_openai.OpenAIEmbeddings
+  model: text-embedding-3-small
+  dimensions: 100
+
 # Attributes used as input features to compute
 # node embeddings.
 embeddings.node.features: ["category", "name"]

@@ -198,8 +198,11 @@ def compute_embeddings(
         config: configuration for the model
     """
 
+    # NOTE: Inner function to avoid reference issues on unpacking
+    # the dataframe, therefore leading to only the latest shard
+    # being processed n times.
     def _func(dataframe: pd.DataFrame):
-        return lambda: compute_df_embeddings(dataframe())
+        return lambda: compute_df_embeddings(dataframe(), model, features)
 
     shards = {}
     for path, df in dfs.items():
@@ -214,8 +217,16 @@ def compute_embeddings(
     return shards
 
 
-def compute_df_embeddings(df: pd.DataFrame) -> pd.DataFrame:
-    df["embedding"] = [[1, 2, 3, 4]] * len(df)
+def compute_df_embeddings(df: pd.DataFrame, embedding_model, features: List[str]) -> pd.DataFrame:
+    # Concatinate input features
+    df["combined_text"] = df[features].apply(lambda row: " ".join(row.values.astype(str)), axis=1)
+
+    # Embed entities in batch mode
+    combined_texts = df["combined_text"].tolist()
+    df["embedding"] = embedding_model.embed_documents(combined_texts)
+
+    # Drop added column
+    df = df.drop(columns=["combined_text"])
     return df
 
 
