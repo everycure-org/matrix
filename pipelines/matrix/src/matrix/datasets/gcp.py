@@ -4,6 +4,7 @@ from tqdm import tqdm
 from copy import deepcopy
 from typing import Any, Optional
 
+from concurrent.futures import ThreadPoolExecutor, as_completed
 import google.api_core.exceptions as exceptions
 import numpy as np
 import pandas as pd
@@ -373,21 +374,39 @@ class RemoteSparkJDBCDataset(SparkJDBCDataset):
 
 
 class PartitionedTQDMDataset(PartitionedDataset):
-    def _save(self, data: dict[str, Any]) -> None:
+    def _save(self, data: dict[str, Any], max_workers: int = 10) -> None:
         if self._overwrite and self._filesystem.exists(self._normalized_path):
             self._filesystem.rm(self._normalized_path, recursive=True)
 
-        # TODO: Can implement logic to retry here
-        # TODO: Add parallel processing capbilities here
-        # NOTE: Due to lazy loading capabilties, data is only loaded/saved
-        # per chart here.
-        for partition_id, partition_data in tqdm(sorted(data.items())):
+        # Helper function to process a single partition
+        def process_partition(partition_id, partition_data):
+            # Set up arguments and path
             kwargs = deepcopy(self._dataset_config)
             partition = self._partition_to_path(partition_id)
-            # join the protocol back since tools like PySpark may rely on it
             kwargs[self._filepath_arg] = self._join_protocol(partition)
             dataset = self._dataset_type(**kwargs)  # type: ignore
+
+            # Evaluate partition data if it’s callable
             if callable(partition_data):
                 partition_data = partition_data()  # noqa: PLW2901
+
+            # Save the partition data
             dataset.save(partition_data)
+
+        # Using ThreadPoolExecutor to process partitions concurrently
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            futures = {
+                executor.submit(process_partition, partition_id, partition_data): partition_id
+                for partition_id, partition_data in sorted(data.items())
+            }
+
+            # Track progress with tqdm as threads complete
+            for future in tqdm(as_completed(futures), total=len(futures)):
+                partition_id = futures[future]
+                try:
+                    future.result()  # If any exception occurred, it will be raised here
+                except Exception as e:
+                    print(f"Error processing partition {partition_id}: {e}")
+                    # Optional: Implement retry logic here if desired
+
         self._invalidate_caches()

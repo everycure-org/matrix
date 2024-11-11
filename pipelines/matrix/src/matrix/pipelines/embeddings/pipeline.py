@@ -10,7 +10,11 @@ def create_pipeline(**kwargs) -> Pipeline:
             # Bucketize and partition nodes
             node(
                 func=nodes.bucketize_nodes,
-                inputs={"df": "integration.prm.filtered_nodes", "attributes": "params:embeddings.node.features"},
+                inputs={
+                    "df": "integration.prm.filtered_nodes",
+                    "attributes": "params:embeddings.node.features",
+                    "bucket_size": "params:embeddings.node.batch_size",
+                },
                 outputs="embeddings.feat.bucketized_nodes@spark",
                 name="bucketize_nodes",
             ),
@@ -20,7 +24,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 inputs={
                     "dfs": "embeddings.feat.bucketized_nodes@partitioned",
                     "features": "params:embeddings.node.features",
-                    "model": "params:embeddings.model",
+                    "model": "params:embeddings.node.model",
                 },
                 outputs="embeddings.feat.graph.node_embeddings@partitioned",
                 name="add_node_embeddings",

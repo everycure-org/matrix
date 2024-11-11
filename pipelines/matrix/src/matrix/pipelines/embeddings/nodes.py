@@ -1,4 +1,5 @@
 import logging
+import asyncio
 from typing import Any, Dict, List
 
 import matplotlib.pyplot as plt
@@ -17,11 +18,8 @@ from refit.v1.core.inject import inject_object
 from refit.v1.core.inline_has_schema import has_schema
 from refit.v1.core.inline_primary_key import primary_key
 from refit.v1.core.unpack import unpack_params
-from tenacity import (
-    retry,
-    stop_after_attempt,
-    wait_random_exponential,
-)
+from tenacity import retry, stop_after_attempt, wait_random_exponential
+
 
 from .graph_algorithms import GDSGraphAlgorithm
 
@@ -218,12 +216,17 @@ def compute_embeddings(
 
 
 def compute_df_embeddings(df: pd.DataFrame, embedding_model, features: List[str]) -> pd.DataFrame:
+    # Run the asynchronous function within a synchronous context
+    return asyncio.run(compute_df_embeddings_async(df, embedding_model, features))
+
+
+async def compute_df_embeddings_async(df: pd.DataFrame, embedding_model, features: List[str]) -> pd.DataFrame:
     # Concatinate input features
     df["combined_text"] = df[features].apply(lambda row: " ".join(row.values.astype(str)), axis=1)
 
     # Embed entities in batch mode
     combined_texts = df["combined_text"].tolist()
-    df["embedding"] = embedding_model.embed_documents(combined_texts)
+    df["embedding"] = await embedding_model.aembed_documents(combined_texts)
 
     # Drop added column
     df = df.drop(columns=["combined_text"])
