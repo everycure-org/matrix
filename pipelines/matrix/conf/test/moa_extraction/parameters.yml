@@ -29,9 +29,33 @@ moa_extraction:
     two_hop:
       tuner:
         n_calls: 10
+        estimator:
+          module__token_dim: 2
+          module__num_heads: 1
+        dimensions:
+          - object: skopt.space.Integer
+            name: max_epochs
+            low: 1
+            high: 2
+          - object: skopt.space.Integer
+            name: module__num_layers
+            low: 1
+            high: 2
     three_hop:
       tuner:
         n_calls: 10
+        estimator:
+          module__token_dim: 2
+          module__num_heads: 1
+        dimensions:
+          - object: skopt.space.Integer
+            name: max_epochs
+            low: 1
+            high: 2
+          - object: skopt.space.Integer
+            name: module__num_layers
+            low: 1
+            high: 2
 
   predictions:
     num_pairs_limit: 10 # For testing purposes only
