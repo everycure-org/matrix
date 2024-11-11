@@ -27,6 +27,13 @@ def pull(
     raw_path = Path(target_dir) / "data/01_RAW"
     kedro_raw_path = Path(target_dir) / "kedro/data/01_raw"
 
+    # check that we're in the pipeline root directory, else give warning
+    if not (Path.cwd() / "conf").exists():
+        console.print(
+            "[bold yellow]Warning: You are not in the pipeline root directory. This command is intended to be run from the pipeline root directory. Are you sure you want to continue?"
+        )
+        typer.confirm("Continue?", abort=True)
+
     try:
         os.makedirs(raw_path, exist_ok=True)
         os.makedirs(kedro_raw_path, exist_ok=True)
