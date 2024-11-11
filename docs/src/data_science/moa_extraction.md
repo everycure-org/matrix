@@ -244,8 +244,58 @@ Here:
 While the `moa_extraction` pipeline works in the `test` environment with fabricated data, there is currently one drawback, namely that a mock path mapping strategy is utilised in place of the strategy utilised with full data.
 This is due to the complexity of generating a fabricated version of DrugMechDB which generates mapped paths on a fabricated KG. 
 
-For this reason, a local test environment may be run using the full knowledge graph but a limited amount of input data. This pipeline will run in less than 5 minutes. 
+For this reason, a local environment may be set up, which uses the full knowledge graph but a limited amount of input data. This pipeline will run in less than 5 minutes. 
 
-This environment set-up also allows to locally run the pipeline with full data if desired. 
+This environment set-up also allows to locally run the pipeline end-to-end with full data if desired. 
 
 **Caution:** The set-up is currently highly manual and should not be considered a long-term solution. 
+
+1. Run the `data_release` pipeline to generate a neo4j database containing the knowledge graph on your local machine. Make sure to add the `RELEASE_VERSION = <release version>` (with the release version being the version of the knowledge graph you want to use) to the `pipelines/matrix/.env` file.
+2. Additionally, ensure you have the following lines in `pipelines/matrix/.env`:
+    ```yaml
+    # OpenAI configuration
+    OPENAI_API_KEY=dummy
+
+    # GCP configuration
+    GCP_BUCKET=mtrx-us-central1-hub-dev-storage
+    GCP_PROJECT_ID=mtrx-hub-dev-3of
+    ```
+3. Create a file `conf/local/mlflow.yml` and add the following lines:
+    ```yaml
+    tracking:
+      disable_tracking:
+        pipelines: ["moa_extraction"]
+    ```
+    This is to disable MLFlow tracking for the MOA extraction pipeline.
+4. Create a file `conf/local/moa_extraction/parameters.yml` and add the following lines:
+    ```yaml
+    moa_extraction:
+      gdb:
+        database: <release version>
+
+      path_mapping:
+        mapper_two_hop: 
+          max_entries: 10 # Restrict number of datapoints in DrugMechDB
+        mapper_three_hop: 
+          max_entries: 10 # Restrict number of datapoints in DrugMechDB
+
+      predictions:
+        num_pairs_limit: 10 # Restrict number of pairs in predictions
+    ```
+5. Run the `moa_extraction` pipeline on your local machine using the command:
+    ```
+    kedro run -p moa_extraction -e local --runner=ThreadRunner
+    ```
+
+To run the pipeline locally with full data, modify the `parameters.yml` file as follows:
+  ```yaml
+  moa_extraction:
+    gdb:
+      database: <release version>
+
+    predictions:
+      num_pairs_limit: None 
+  ```
+  Note that this will take several hours to complete, with the majority of the time being spent on running sequential neo4j queries to extract paths in the path mapping, negative sampling, evaluation and prediction steps.
+
+  > **Future work**: We aim to implement a parallelised version of the path extraction in the future, which will run several queries simultaneously.
