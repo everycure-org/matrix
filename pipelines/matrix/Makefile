@@ -4,7 +4,7 @@ GIT_SHA ?= $(shell git rev-parse --short HEAD)
 export PYSPARK_PYTHON = .venv/bin/python
 export UV_PYTHON = .venv/bin/python
 export TQDM_DISABLE ?= 1
-TARGET_PLATFORM ?= linux/amd64
+TARGET_PLATFORM ?= linux/arm64
 
 # ensures all make targets run in one shell (rather than line by line in new shell)
 .ONESHELL: 
@@ -28,7 +28,7 @@ venv: prerequisites
 
 install: venv precommit-hooks
 	uv pip install -r requirements.txt
-	uv pip install pyg_lib torch_scatter torch_sparse torch_cluster -f https://data.pyg.org/whl/torch-2.4.0+cpu.html
+	uv pip install torch_scatter torch_sparse torch_cluster -f https://data.pyg.org/whl/torch-2.4.0+cpu.html
 
 precommit: precommit-hooks
 	git fetch origin
