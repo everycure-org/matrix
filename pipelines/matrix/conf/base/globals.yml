@@ -24,7 +24,7 @@ versions:
 
 data_sources:
   rtx-kg2:
-    version: &_rtx_kg_version v2.7.3
+    version: &_rtx_kg_version v2.7.3 #when bumping to 2.10, we should stop to limit PMID for the semmed filtering
   robokop:
     version: c5ec1f282158182f
 # Dataset with node and edge proposals by the

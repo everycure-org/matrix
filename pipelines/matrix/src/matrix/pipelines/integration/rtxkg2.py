@@ -90,6 +90,8 @@ def filter_semmed(
     Returns
         Filtered dataframe
     """
+    logger.info("Filtering semmed edges")
+    logger.info(f"Number of edges: {edges_df.count()}")
     curie_to_pmids = (
         curie_to_pmids.withColumn("pmids", f.from_json("pmids", T.ArrayType(T.IntegerType())))
         .withColumn("pmids", f.sort_array(f.col("pmids")))
@@ -129,7 +131,12 @@ def filter_semmed(
         .select("edges.*")
     )
 
-    return edges_df.filter(f.col("primary_knowledge_source") != f.lit("infores:semmeddb")).unionByName(semmed_edges)
+    edges_filtered = edges_df.filter(f.col("primary_knowledge_source") != f.lit("infores:semmeddb")).unionByName(
+        semmed_edges
+    )
+    logger.info(f"Number of edges after filtering: {edges_filtered.count()}")
+    logger.info(f"Number of semmed edges after filtering: {semmed_edges.count()}")
+    return edges_filtered
 
 
 def compute_ngd(df: DataFrame, num_pairs: int = 3.7e7 * 20) -> DataFrame:
