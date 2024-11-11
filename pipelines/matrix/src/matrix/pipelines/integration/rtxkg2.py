@@ -90,14 +90,12 @@ def filter_semmed(
     Returns
         Filtered dataframe
     """
-    logger.info("Filtering semmed edges")
-    logger.info(f"Number of edges: {edges_df.count()}")
     curie_to_pmids = (
         curie_to_pmids.withColumn("pmids", f.from_json("pmids", T.ArrayType(T.IntegerType())))
-        # .withColumn("pmids", f.sort_array(f.col("pmids")))
-        # .withColumn("limited_pmids", f.slice(f.col("pmids"), 1, limit_pmids))
-        # .drop("pmids")
-        # .withColumnRenamed("limited_pmids", "pmids")
+        .withColumn("pmids", f.sort_array(f.col("pmids")))
+        .withColumn("limited_pmids", f.slice(f.col("pmids"), 1, limit_pmids))
+        .drop("pmids")
+        .withColumnRenamed("limited_pmids", "pmids")
         .withColumn("num_pmids", f.array_size(f.col("pmids")))
         .withColumnRenamed("curie", "id")
         .persist()
@@ -134,8 +132,6 @@ def filter_semmed(
     edges_filtered = edges_df.filter(f.col("primary_knowledge_source") != f.lit("infores:semmeddb")).unionByName(
         semmed_edges
     )
-    # logger.info(f"Number of edges after filtering: {edges_filtered.count()}")
-    # logger.info(f"Number of semmed edges after filtering: {semmed_edges.count()}")
     return edges_filtered
 
 
@@ -149,32 +145,11 @@ def compute_ngd(df: DataFrame, num_pairs: int = 3.7e7 * 20) -> DataFrame:
     Returns:
         Dataframe with ndg score
     """
-
-    # we perform a array intersection calculation leveraging join and group by instead of array_intersect as some of the arrays are large (20M+)
-    def _explode(df: DataFrame, col: str) -> DataFrame:
-        return df.select("edges.*", f.explode(f.col(col)).alias("pmid")).drop(col)
-
-    # calculate the number of common pmids between subject and object
-    joined = (
-        df.transform(_explode, col="subj.pmids")
-        .join(_explode(df, "obj.pmids"), on=["pmid", "subject", "predicate", "object"], how="inner")
-        .groupBy("subject", "predicate", "object")
-        .agg(f.count("pmid").alias("num_common_pmids"))
-        .select("subject", "predicate", "object", "num_common_pmids")
-    )
-
-    df = df.join(
-        joined.alias("joined"),
-        on=[
-            f.col("edges.subject") == f.col("joined.subject"),
-            f.col("edges.predicate") == f.col("joined.predicate"),
-            f.col("edges.object") == f.col("joined.object"),
-        ],
-        how="left",
-    )
-    df = (
+    return (
         # Take first max_pmids elements from each array
         df.withColumn(
+            "num_common_pmids", f.array_size(f.array_intersect(f.col("subj.pmids"), f.col("obj.pmids")))
+        ).withColumn(
             "ngd",
             (
                 f.greatest(f.log2(f.col("subj.num_pmids")), f.log2(f.col("obj.num_pmids")))
@@ -183,4 +158,3 @@ def compute_ngd(df: DataFrame, num_pairs: int = 3.7e7 * 20) -> DataFrame:
             / (f.log2(f.lit(num_pairs)) - f.least(f.log2(f.col("subj.num_pmids")), f.log2(f.col("obj.num_pmids")))),
         )
     )
-    return df
