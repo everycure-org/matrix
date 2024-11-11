@@ -10,6 +10,7 @@ from matrix.pipelines.integration.nodes import batch_map_ids
 from refit.v1.core.inject import inject_object
 from refit.v1.core.inline_has_schema import has_schema
 from refit.v1.core.inline_primary_key import primary_key
+from jsonpath_ng import parse
 
 
 def resolve_name(curie: str, endpoint: str, att_to_get: str = "curie"):
@@ -111,20 +112,29 @@ def enrich_df(df: pd.DataFrame, endpoint: str, func: Callable, input_cols: str, 
     allow_subset=True,
 )
 @primary_key(primary_key=["ID"])
-def create_int_nodes(nodes: pd.DataFrame, name_resolver: str, translator_endpoint: str) -> pd.DataFrame:
+def create_int_nodes(
+    nodes: pd.DataFrame,
+    name_resolver: str,
+    endpoint: str,
+    conflate: bool,
+    drug_chemical_conflate: bool,
+    batch_size: int,
+    parallelism: int,
+) -> pd.DataFrame:
     """Function to create a intermediate nodes dataset by filtering and renaming columns."""
     # Enrich curie with node synonymizer
     resolved = enrich_df(nodes, name_resolver, resolve_name, input_cols=["name"], target_col="curie")
 
     # Normalize curie, by taking corrected currie or curie
+    json_parser = parse("$.id.identifier")
     normalized_id_map = batch_map_ids(
         frozenset(resolved["curie"].fillna("")),
-        api_endpoint=translator_endpoint,
-        json_parser="$.id.identifier",
-        batch_size=1000,
-        parallelism=120,
-        conflate=True,
-        drug_chemical_conflate=False,
+        api_endpoint=endpoint,
+        json_parser=json_parser,
+        batch_size=batch_size,
+        parallelism=parallelism,
+        conflate=conflate,
+        drug_chemical_conflate=drug_chemical_conflate,
     )
     resolved["normalized_curie"] = resolved["curie"].map(normalized_id_map)
 
@@ -232,7 +242,15 @@ def create_prm_edges(int_edges: pd.DataFrame) -> pd.DataFrame:
     df="df",
 )
 def map_name_to_curie(
-    df: pd.DataFrame, name_resolver: str, translator_endpoint: str, drug_types: List[str], disease_types: List[str]
+    df: pd.DataFrame,
+    name_resolver: str,
+    endpoint: str,
+    drug_types: List[str],
+    disease_types: List[str],
+    conflate: bool,
+    drug_chemical_conflate: bool,
+    batch_size: int,
+    parallelism: int,
 ) -> pd.DataFrame:
     """Map drug name to curie.
 
@@ -243,9 +261,13 @@ def map_name_to_curie(
     Args:
         df: raw clinical trial dataset from medical team
         name_resolver: endpoint of the synonymizer
-        translator_endpoint: endpoint of the normalizer
+        endpoint: endpoint of the normalizer
         drug_types: list of drug types
         disease_types: list of disease types
+        conflate: whether to conflate
+        drug_chemical_conflate: whether to conflate drug and chemical
+        batch_size: batch size
+        parallelism: parallelism
     Returns:
         dataframe with two additional columns: "Mapped Drug Curie" and "Mapped Drug Disease"
     """
@@ -260,14 +282,15 @@ def map_name_to_curie(
     ]
 
     for expr, target in attributes:
+        json_parser = parse(expr)
         node_id_map = batch_map_ids(
             frozenset(df["drug_kg_arax_curie"].fillna("none")),
-            api_endpoint=translator_endpoint,
-            batch_size=1000,
-            parallelism=120,
-            conflate=True,
-            drug_chemical_conflate=False,
-            json_parser=expr,
+            api_endpoint=endpoint,
+            batch_size=batch_size,
+            parallelism=parallelism,
+            conflate=conflate,
+            drug_chemical_conflate=drug_chemical_conflate,
+            json_parser=json_parser,
         )
         df[target] = df["drug_kg_arax_curie"].map(node_id_map)
 
@@ -277,14 +300,15 @@ def map_name_to_curie(
     ]
 
     for expr, target in attributes:
+        json_parser = parse(expr)
         node_id_map = batch_map_ids(
             frozenset(df["disease_kg_arax_curie"].fillna("none")),
-            api_endpoint=translator_endpoint,
-            batch_size=1000,
-            parallelism=120,
-            conflate=True,
-            drug_chemical_conflate=False,
-            json_parser=expr,
+            api_endpoint=endpoint,
+            batch_size=batch_size,
+            parallelism=parallelism,
+            conflate=conflate,
+            drug_chemical_conflate=drug_chemical_conflate,
+            json_parser=json_parser,
         )
         df[target] = df["disease_kg_arax_curie"].map(node_id_map)
 
@@ -377,13 +401,23 @@ def clean_clinical_trial_data(df: pd.DataFrame) -> pd.DataFrame:
     allow_subset=True,
 )
 # @primary_key(primary_key=["single_ID"]) #TODO: re-introduce once the drug list is ready
-def clean_drug_list(drug_df: pd.DataFrame, endpoint: str) -> pd.DataFrame:
+def clean_drug_list(
+    drug_df: pd.DataFrame,
+    endpoint: str,
+    conflate: bool,
+    drug_chemical_conflate: bool,
+    batch_size: int,
+    parallelism: int,
+) -> pd.DataFrame:
     """Synonymize the drug list and filter out NaNs.
 
     Args:
         drug_df: disease list in a dataframe format.
         endpoint: endpoint of the synonymizer.
-
+        conflate: whether to conflate
+        drug_chemical_conflate: whether to conflate drug and chemical
+        batch_size: batch size
+        parallelism: parallelism
     Returns:
         dataframe with synonymized drug IDs in normalized_curie column.
     """
@@ -392,16 +426,16 @@ def clean_drug_list(drug_df: pd.DataFrame, endpoint: str) -> pd.DataFrame:
         ("$.id.label", "name"),
         ("$.type[0]", "category"),
     ]
-
     for expr, target in attributes:
+        json_parser = parse(expr)
         node_id_map = batch_map_ids(
             frozenset(drug_df["single_ID"]),
             api_endpoint=endpoint,
-            batch_size=1000,
-            parallelism=120,
-            conflate=True,
-            drug_chemical_conflate=False,
-            json_parser=expr,
+            batch_size=batch_size,
+            parallelism=parallelism,
+            conflate=conflate,
+            drug_chemical_conflate=drug_chemical_conflate,
+            json_parser=json_parser,
         )
         drug_df[target] = drug_df["single_ID"].map(node_id_map)
     return drug_df.dropna(subset=["curie"])
@@ -421,12 +455,23 @@ def clean_drug_list(drug_df: pd.DataFrame, endpoint: str) -> pd.DataFrame:
     allow_subset=True,
 )
 @primary_key(primary_key=["category_class", "curie"])
-def clean_disease_list(disease_df: pd.DataFrame, endpoint: str) -> pd.DataFrame:
+def clean_disease_list(
+    disease_df: pd.DataFrame,
+    endpoint: str,
+    conflate: bool,
+    drug_chemical_conflate: bool,
+    batch_size: int,
+    parallelism: int,
+) -> pd.DataFrame:
     """Synonymize the IDs, names, and categories within disease list and filter out NaNs.
 
     Args:
         disease_df: disease list in a dataframe format.
         endpoint: endpoint of the synonymizer.
+        conflate: whether to conflate
+        drug_chemical_conflate: whether to conflate drug and chemical
+        batch_size: batch size
+        parallelism: parallelism
 
     Returns:
         dataframe with synonymized disease IDs in normalized_curie column.
@@ -436,16 +481,16 @@ def clean_disease_list(disease_df: pd.DataFrame, endpoint: str) -> pd.DataFrame:
         ("$.id.label", "name"),
         ("$.type[0]", "category"),
     ]
-
     for expr, target in attributes:
+        json_parser = parse(expr)
         node_id_map = batch_map_ids(
             frozenset(disease_df["category_class"]),
             api_endpoint=endpoint,
-            batch_size=1000,
-            parallelism=120,
-            conflate=True,
-            drug_chemical_conflate=False,
-            json_parser=expr,
+            batch_size=batch_size,
+            parallelism=parallelism,
+            conflate=conflate,
+            drug_chemical_conflate=drug_chemical_conflate,
+            json_parser=json_parser,
         )
         disease_df[target] = disease_df["category_class"].map(node_id_map)
     return disease_df.dropna(subset=["curie"]).fillna("")
@@ -463,13 +508,23 @@ def clean_disease_list(disease_df: pd.DataFrame, endpoint: str) -> pd.DataFrame:
     },
     allow_subset=True,
 )
-def clean_input_sheet(input_df: pd.DataFrame, endpoint: str) -> pd.DataFrame:
+def clean_input_sheet(
+    input_df: pd.DataFrame,
+    endpoint: str,
+    conflate: bool,
+    drug_chemical_conflate: bool,
+    batch_size: int,
+    parallelism: int,
+) -> pd.DataFrame:
     """Synonymize the input sheet and filter out NaNs.
 
     Args:
         input_df: input list in a dataframe format.
         endpoint: endpoint of the synonymizer.
-
+        conflate: whether to conflate
+        drug_chemical_conflate: whether to conflate drug and chemical
+        batch_size: batch size
+        parallelism: parallelism
     Returns:
         dataframe with synonymized disease IDs in normalized_curie column.
     """
@@ -478,28 +533,29 @@ def clean_input_sheet(input_df: pd.DataFrame, endpoint: str) -> pd.DataFrame:
         ("$.id.identifier", "norm_drug_id"),
         ("$.id.label", "norm_drug_name"),
     ]
-
     for expr, target in attributes:
+        json_parser = parse(expr)
         node_id_map = batch_map_ids(
             frozenset(input_df["Drug_ID"]),
             api_endpoint=endpoint,
-            batch_size=1000,
-            parallelism=120,
-            conflate=True,
-            drug_chemical_conflate=False,
-            json_parser=expr,
+            batch_size=batch_size,
+            parallelism=parallelism,
+            conflate=conflate,
+            drug_chemical_conflate=drug_chemical_conflate,
+            json_parser=json_parser,
         )
         input_df[target] = input_df["Drug_ID"].map(node_id_map)
 
     for expr, target in attributes:
+        json_parser = parse(expr)
         node_id_map = batch_map_ids(
             frozenset(input_df["Disease_ID"]),
             api_endpoint=endpoint,
-            batch_size=1000,
-            parallelism=120,
-            conflate=True,
-            drug_chemical_conflate=False,
-            json_parser=expr,
+            batch_size=batch_size,
+            parallelism=parallelism,
+            conflate=conflate,
+            drug_chemical_conflate=drug_chemical_conflate,
+            json_parser=json_parser,
         )
         input_df[target] = input_df["Disease_ID"].map(node_id_map)
 
@@ -520,29 +576,43 @@ def clean_input_sheet(input_df: pd.DataFrame, endpoint: str) -> pd.DataFrame:
     return df.fillna("")
 
 
-def clean_gt_data(pos_df: pd.DataFrame, neg_df: pd.DataFrame, endpoint: str) -> Tuple[pd.DataFrame, pd.DataFrame]:
+def clean_gt_data(
+    pos_df: pd.DataFrame,
+    neg_df: pd.DataFrame,
+    endpoint: str,
+    conflate: bool,
+    drug_chemical_conflate: bool,
+    batch_size: int,
+    parallelism: int,
+) -> Tuple[pd.DataFrame, pd.DataFrame]:
     """Clean ground truth data.
 
     Args:
         pos_df: positive ground truth data.
         neg_df: negative ground truth data.
         endpoint: endpoint of the synonymizer.
+        conflate: whether to conflate
+        drug_chemical_conflate: whether to conflate drug and chemical
+        batch_size: batch size
+        parallelism: parallelism
     Returns:
         Cleaned ground truth data.
     """
     # Synonymize source and target IDs for both positive and negative ground truth data
     for df in [pos_df, neg_df]:
         for col in ["source", "target"]:
+            json_parser = parse("$.id.identifier")
             node_id_map = batch_map_ids(
                 frozenset(df[col]),
                 api_endpoint=endpoint,
-                batch_size=1000,
-                parallelism=120,
-                conflate=True,
-                drug_chemical_conflate=False,
-                json_parser="$.id.identifier",
+                batch_size=batch_size,
+                parallelism=parallelism,
+                conflate=conflate,
+                drug_chemical_conflate=drug_chemical_conflate,
+                json_parser=json_parser,
             )
             df[col] = df[col].map(node_id_map)
+
     return pos_df.dropna(subset=["source", "target"]).drop_duplicates(), neg_df.dropna(
         subset=["source", "target"]
     ).drop_duplicates()
