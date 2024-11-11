@@ -6,7 +6,7 @@ title: "MOA extraction pipeline"
 
 Mechanism of action (MOA) prediction models aim to predict the biological pathways by which a given drug acts on a given disease. 
 The MOA extraction module is an example of a path-based approach to MOA prediction. It extracts paths in the the knowledge graph that are likely to be relevant to the MOA of a given drug-disease pair.
-The MOA extraction module is loosely inspired by the [KGML-xDTD](https://github.com/kgml-xdt/kgml-xdt) MOA module which extracts paths in the KG using an adversarial actor-critic reinforcement learning algorithm. 
+The MOA extraction module is loosely inspired by the [KGML-xDTD](https://academic.oup.com/gigascience/article/doi/10.1093/gigascience/giad057/7246583) MOA module which extracts paths in the KG using an adversarial actor-critic reinforcement learning algorithm. 
 In contrast, we use a simpler approach of extracting paths using a supervised binary classifier. 
 
 ## Methodology
@@ -51,7 +51,7 @@ kedro run -p drugmechdb_entity_resolution -e  cloud
 ```  
 2. **Main MOA extraction pipeline** Performs all other functionality. To run this pipeline on the cluster, use the command: 
 ```
-kedro submit --username <your name> --pipeline moa_extraction>
+kedro submit --username <your name> --pipeline <moa_extraction>
 ``` 
 
 The main MOA extraction pipeline itself has four separate components. 
@@ -73,10 +73,29 @@ The main MOA extraction pipeline itself has four separate components.
 
 ## Configuration details
 
-Next, we give further details about the individual processes that occur within the pipeline, including the configuration details found in `conf/base/parameters.yml` and the underlying objects.
+Next, we give further details about the individual processes that occur within the pipeline, including the configuration details found in `conf/base/parameters.yml` and the main objects underlying the pipeline.
 
+### Paths in the Knowledge Graph
+
+A knowledge graph path is a primary notion in the MOA pipeline. We allow for the edges in the paths to have varying directionality. The following diagram represents an example of a 3-hop path according to this convention:
+
+![Path example](../assets/img/MOA_extraction/path_example.svg)
+
+The `KGPaths` object is our main tool for encoding lists of paths in the knowledge graph. Essentially, this object represents a list of paths as a dataframe with information about:
+- Source and target node information
+- Intermediate node information
+- Edge predicates (*note*: in the case of multiple predicates these are stored as a comma separated string)
+- Edge directionality  
+
+The `KGPathsDataset` object is a custom Kedro dataset which deals with storing and loading `KGPaths` objects.
 
 ### Path mapping
+
+We extract a set of positive knowledge graph paths from the DrugMechDB database. 
+The particular strategy for mapping the DrugMechDB paths to the knowledge graph is defined by a strategy class pattern following the `PathMapper` abstract base class. 
+
+#### Setwise path mapper
+
 
 ### Path embedding
 
