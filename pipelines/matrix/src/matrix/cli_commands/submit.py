@@ -1,24 +1,22 @@
 import json
 import logging
-from pathlib import Path
 import re
 import secrets
 import subprocess
 import sys
-from typing import Optional, List
+from pathlib import Path
+from typing import List, Optional
 
 import click
-from kedro.framework.startup import bootstrap_project
-from kedro.framework.cli.utils import CONTEXT_SETTINGS
+from kedro.framework.cli.utils import CONTEXT_SETTINGS, split_string
 from kedro.framework.project import pipelines as kedro_pipelines
+from kedro.framework.startup import bootstrap_project
 from kedro.pipeline import Pipeline
-from kedro.framework.cli.utils import split_string
 from rich.console import Console
 from rich.logging import RichHandler
 from rich.panel import Panel
 
-from matrix.argo import generate_argo_config
-from matrix.argo import ARGO_TEMPLATES_DIR_PATH
+from matrix.argo import ARGO_TEMPLATES_DIR_PATH, generate_argo_config
 
 logging.basicConfig(
     level=logging.INFO,
@@ -42,7 +40,7 @@ def cli():
 @click.option("--username", type=str, required=True, help="Specify the username to use")
 @click.option("--namespace", type=str, default="argo-workflows", help="Specify a custom namespace")
 @click.option("--run-name", type=str, default=None, help="Specify a custom run name, defaults to branch")
-@click.option("--pipeline", type=str, required=True, help="Specify which pipeline to execute")
+@click.option("--pipeline", default="__default__", type=str, required=True, help="Specify which pipeline to execute")
 @click.option("--verbose", "-v", is_flag=True, default=False, help="Enable verbose output")
 @click.option("--dry-run", "-d", is_flag=True, default=False, help="Does everything except submit the workflow")
 @click.option("--from-nodes", type=str, default="", help="Specify nodes to run from", callback=split_string)
