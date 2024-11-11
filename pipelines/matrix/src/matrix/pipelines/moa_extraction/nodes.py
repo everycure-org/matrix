@@ -5,7 +5,7 @@ import numpy as np
 import json
 
 from tqdm import tqdm
-from typing import List, Tuple, Dict, Any
+from typing import List, Tuple, Dict, Any, Optional
 from sklearn.model_selection import BaseCrossValidator
 from sklearn.base import BaseEstimator
 
@@ -469,7 +469,7 @@ def make_output_predictions(
     relation_encoder: OneHotEncoder,
     drug_col_name: str = "source_id",
     disease_col_name: str = "target_id",
-    num_pairs_limit: int = None,
+    num_pairs_limit: Optional[int] = None,
     score_col_name: str = "MOA_score",
 ) -> Dict[str, KGPaths]:
     """Make MOA predictions on the pairs dataset.
@@ -490,6 +490,7 @@ def make_output_predictions(
     Returns:
         Dictionary of KGPaths objects, one for each pair.
     """
+    num_pairs_limit = eval(num_pairs_limit)  # eval() to allow None type injection
     pairs = pairs.head(num_pairs_limit) if num_pairs_limit is not None else pairs
     pairs = pairs.rename(columns={drug_col_name: "source_id", disease_col_name: "target_id"})
 
