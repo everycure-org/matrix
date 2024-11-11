@@ -490,7 +490,8 @@ def make_output_predictions(
     Returns:
         Dictionary of KGPaths objects, one for each pair.
     """
-    num_pairs_limit = eval(num_pairs_limit)  # eval() to allow None type injection
+    if type(num_pairs_limit) is str:
+        num_pairs_limit = eval(num_pairs_limit)  # eval() to allow None type injection
     pairs = pairs.head(num_pairs_limit) if num_pairs_limit is not None else pairs
     pairs = pairs.rename(columns={drug_col_name: "source_id", disease_col_name: "target_id"})
 
