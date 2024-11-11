@@ -1,6 +1,7 @@
 import typer
 
 from matrix_cli.modules.code import app as code_app
+from matrix_cli.modules.data import data_app
 from matrix_cli.modules.gh_users import app as gh_users_app
 from matrix_cli.modules.releases import app as releases_app
 
@@ -26,6 +27,12 @@ app.add_typer(
     code_app,
     name="code",
     help="Code-related utility commands",
+)
+
+app.add_typer(
+    data_app,
+    name="data",
+    help="Data-related utility commands",
 )
 
 if __name__ == "__main__":

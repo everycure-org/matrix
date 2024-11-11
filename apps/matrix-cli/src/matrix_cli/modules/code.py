@@ -1,5 +1,3 @@
-# NOTE: This module was partially generated using AI assistance.
-
 import subprocess
 from pathlib import Path
 from typing import Optional, Tuple
