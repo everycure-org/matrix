@@ -3,12 +3,16 @@ ARG BASE_IMAGE=python:3.11-buster
 # ARG BASE_IMAGE=python:3.11-slim
 FROM $BASE_IMAGE AS build
 # libomp-dev is needed to run xgboost on arm systems
-RUN apt-get update && apt-get install -y --no-install-recommends gcc curl g++ libomp-dev
-
-# Install OS dependencies
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends gcc curl g++ openjdk-11-jre-headless && \
+    apt-get install -y --no-install-recommends \
+    gcc curl g++ openjdk-11-jre-headless \
+    nvidia-cuda-toolkit nvidia-cuda-toolkit-gcc && \
     apt-get clean;
+
+
+# GPU setup
+ENV NVIDIA_VISIBLE_DEVICES=all
+ENV NVIDIA_DRIVER_CAPABILITIES=compute,utility
 
 # Package all python dependencies
 ENV PIP_NO_CACHE_DIR=1
@@ -35,3 +39,5 @@ ARG GIT_SHA
 ENV GIT_SHA=$GIT_SHA
 
 ADD . .
+
+LABEL com.nvidia.volumes.needed="nvidia_driver"
