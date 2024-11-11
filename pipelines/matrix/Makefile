@@ -27,9 +27,6 @@ venv: prerequisites
 	uv run python -m ensurepip --upgrade || true
 
 install: venv precommit-hooks
-	uv pip install -r requirements.txt #force it to install in our venv
-
-install: venv precommit-hooks
 	uv pip install -r requirements.txt
 	uv pip install pyg_lib torch_scatter torch_sparse torch_cluster -f https://data.pyg.org/whl/torch-2.4.0+cpu.html
 
