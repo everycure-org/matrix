@@ -184,6 +184,7 @@ $$
 $$
 where $n$ is the source drug entity, $a$ is the intermediate entity, $m$ is the target disease entity, and $r_1, r_2$ are the edges.
 The embedding is then constructed as follows:
+
 $$
 \begin{bmatrix}
 \texttt{category}(n) & \texttt{0} & \texttt{0} \\
@@ -191,6 +192,7 @@ $$
  \texttt{category}(m) & \texttt{relation}(r_2) & \texttt{direction}(r_2)
 \end{bmatrix}
 $$
+
 where $\texttt{embedding}(n)$ is the embedding of the entity $n$, $\texttt{category}(n)$ is the one-hot category embedding of the entity $n$, $\texttt{relation}(r)$ is the sum of the one-hot relation embeddings of the edge $r$ (there may be several relation types for a given edge), and $\texttt{direction}(r)$ is binary indicator of the directionality of the edge $r$.
 
 
