@@ -94,10 +94,10 @@ def filter_semmed(
     logger.info(f"Number of edges: {edges_df.count()}")
     curie_to_pmids = (
         curie_to_pmids.withColumn("pmids", f.from_json("pmids", T.ArrayType(T.IntegerType())))
-        .withColumn("pmids", f.sort_array(f.col("pmids")))
-        .withColumn("limited_pmids", f.slice(f.col("pmids"), 1, limit_pmids))
-        .drop("pmids")
-        .withColumnRenamed("limited_pmids", "pmids")
+        # .withColumn("pmids", f.sort_array(f.col("pmids")))
+        # .withColumn("limited_pmids", f.slice(f.col("pmids"), 1, limit_pmids))
+        # .drop("pmids")
+        # .withColumnRenamed("limited_pmids", "pmids")
         .withColumn("num_pmids", f.array_size(f.col("pmids")))
         .withColumnRenamed("curie", "id")
         .persist()
@@ -149,11 +149,21 @@ def compute_ngd(df: DataFrame, num_pairs: int = 3.7e7 * 20) -> DataFrame:
     Returns:
         Dataframe with ndg score
     """
-    return (
+    # we perform a array intersection calculation leveraging join and group by instead of array_intersect as some of the arrays are large (20M+)
+    subject_side = df.select("edges.*", "subj.pmids").withColumn("pmid", f.explode("subj.pmids")).drop("subj.pmids")
+    object_side = df.select("edges.*", "obj.pmids").withColumn("pmid", f.explode("obj.pmids")).drop("obj.pmids")
+    joined = subject_side.join(
+        object_side, on=["pmid", "edges.subject", "edges.predicate", "edges.object"], how="inner"
+    )
+    joined = (
+        joined.groupBy("edges.subject", "edges.predicate", "edges.object")
+        .agg(f.count("pmid").alias("num_common_pmids"))
+        .select("edges.subject", "edges.predicate", "edges.object", "num_common_pmids")
+    )
+    df = df.join(joined, on=["edges.subject", "edges.predicate", "edges.object"], how="left")
+    df = (
         # Take first max_pmids elements from each array
         df.withColumn(
-            "num_common_pmids", f.array_size(f.array_intersect(f.col("subj.pmids"), f.col("obj.pmids")))
-        ).withColumn(
             "ngd",
             (
                 f.greatest(f.log2(f.col("subj.num_pmids")), f.log2(f.col("obj.num_pmids")))
@@ -162,3 +172,4 @@ def compute_ngd(df: DataFrame, num_pairs: int = 3.7e7 * 20) -> DataFrame:
             / (f.log2(f.lit(num_pairs)) - f.least(f.log2(f.col("subj.num_pmids")), f.log2(f.col("obj.num_pmids")))),
         )
     )
+    return df
