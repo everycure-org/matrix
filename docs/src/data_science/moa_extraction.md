@@ -179,9 +179,11 @@ The embedding method is defined by a strategy class pattern following the `matri
 The two-dimensional types and relations strategy embeds the path as a 2D matrix using the node category and edge predicates. Optionally, edge directions can also be added as a feature.
 
 More precisely, consider a 2-hop path of the form 
+
 $$
 (n, r_1, a, r_2, m)
 $$
+
 where $n$ is the source drug entity, $a$ is the intermediate entity, $m$ is the target disease entity, and $r_1, r_2$ are the edges.
 The embedding is then constructed as follows:
 
