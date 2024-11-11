@@ -378,6 +378,9 @@ class PartitionedTQDMDataset(PartitionedDataset):
             self._filesystem.rm(self._normalized_path, recursive=True)
 
         # TODO: Can implement logic to retry here
+        # TODO: Add parallel processing capbilities here
+        # NOTE: Due to lazy loading capabilties, data is only loaded/saved
+        # per chart here.
         for partition_id, partition_data in tqdm(sorted(data.items())):
             kwargs = deepcopy(self._dataset_config)
             partition = self._partition_to_path(partition_id)
