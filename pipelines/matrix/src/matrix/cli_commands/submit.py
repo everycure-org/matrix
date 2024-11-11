@@ -122,7 +122,7 @@ def _submit(
         console.print("[green]✓[/green] Dependencies checked")
 
         console.print("Building and pushing Docker image...")
-        build_push_docker(username, verbose=verbose)
+        build_push_docker(run_name, verbose=verbose)
         console.print("[green]✓[/green] Docker image built and pushed")
 
         console.print("Building Argo template...")
@@ -304,7 +304,7 @@ def build_argo_template(run_name: str, username: str, namespace: str, pipeline_n
     return generate_argo_config(
         image=image_name,
         run_name=run_name,
-        image_tag=username,
+        image_tag=run_name,
         namespace=namespace,
         username=username,
         pipeline_name=pipeline_name,
