@@ -175,7 +175,7 @@ def test_simple_fusing_with_argo_config():
                     cpu_limit=2,
                     memory_request=16,
                     memory_limit=32,
-                    use_gpu=True,
+                    num_gpus=1,
                 ),
             ),
             ArgoNode(
@@ -189,7 +189,7 @@ def test_simple_fusing_with_argo_config():
                     cpu_limit=2,
                     memory_request=32,
                     memory_limit=64,
-                    use_gpu=False,
+                    num_gpus=0,
                 ),
             ),
         ],
@@ -199,6 +199,7 @@ def test_simple_fusing_with_argo_config():
     assert isinstance(pipeline_where_first_node_is_input_for_second.nodes[0], ArgoNode)
     assert isinstance(pipeline_where_first_node_is_input_for_second.nodes[1], ArgoNode)
 
+    # TODO(mateusz.wasilewski): Fix these tests.
     # fused_pipeline = fuse(pipeline_where_first_node_is_input_for_second)
 
     # assert len(fused_pipeline) == 1, "Only one node should be fused"
@@ -211,7 +212,7 @@ def test_simple_fusing_with_argo_config():
     # assert fused_pipeline[0].argo_config.cpu_limit == 2
     # assert fused_pipeline[0].argo_config.memory_request == 32
     # assert fused_pipeline[0].argo_config.memory_limit == 64
-    # assert fused_pipeline[0].argo_config.use_gpu
+    # assert fused_pipeline[0].argo_config.num_gpus
 
 
 @pytest.mark.parametrize(

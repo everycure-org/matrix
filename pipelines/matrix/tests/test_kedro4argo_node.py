@@ -27,7 +27,7 @@ def dummy_func(x) -> int:
 def test_default_argo_config():
     """Test default configuration values."""
     config = ArgoNodeConfig()
-    assert not config.use_gpu
+    assert config.num_gpus == 0
     assert config.cpu_request > 0
     assert config.cpu_limit > 0
     assert config.memory_request > 0
@@ -98,11 +98,11 @@ def test_valid_resource_configuration():
 
 def test_gpu_flag():
     """Test GPU flag configuration."""
-    config = ArgoNodeConfig(use_gpu=True)
-    assert config.use_gpu
+    config = ArgoNodeConfig(num_gpus=1)
+    assert config.num_gpus == 1
 
-    config = ArgoNodeConfig(use_gpu=False)
-    assert not config.use_gpu
+    config = ArgoNodeConfig(num_gpus=0)
+    assert config.num_gpus == 0
 
 
 def test_default_values_in_argo_config_matches_settings():
@@ -113,7 +113,7 @@ def test_default_values_in_argo_config_matches_settings():
     assert config.cpu_limit == KUBERNETES_DEFAULT_LIMIT_CPU
     assert config.memory_request == KUBERNETES_DEFAULT_REQUEST_RAM
     assert config.memory_limit == KUBERNETES_DEFAULT_LIMIT_RAM
-    assert not config.use_gpu  # Default should be False
+    assert config.num_gpus == 0
 
 
 def get_parametrized_node(node_class: Node) -> Node:
@@ -144,7 +144,7 @@ def test_argo_node_default_config():
         inputs=["int_number_ds_in"],
         outputs=["int_number_ds_out"],
     )
-    assert not k8s_node.argo_config.use_gpu
+    assert k8s_node.argo_config.num_gpus == 0
 
 
 def test_argo_node_can_request_gpu():
@@ -152,9 +152,9 @@ def test_argo_node_can_request_gpu():
         func=lambda x: x,
         inputs=["int_number_ds_in"],
         outputs=["int_number_ds_out"],
-        argo_config=ArgoNodeConfig(use_gpu=True),
+        argo_config=ArgoNodeConfig(num_gpus=1),
     )
-    assert k8s_node.argo_config.use_gpu
+    assert k8s_node.argo_config.num_gpus == 1
 
 
 def test_validate_values_are_sane():
@@ -229,7 +229,7 @@ def get_parallel_pipelines() -> Pipeline:
                     cpu_limit=4,
                     memory_request=32,
                     memory_limit=128,
-                    use_gpu=True,
+                    num_gpus=1,
                 ),
                 tags=["k8s_pipeline"],
             ),
@@ -313,7 +313,7 @@ def test_argo_node_factory():
     assert node.argo_config.cpu_limit == KUBERNETES_DEFAULT_LIMIT_CPU
     assert node.argo_config.memory_request == KUBERNETES_DEFAULT_REQUEST_RAM
     assert node.argo_config.memory_limit == KUBERNETES_DEFAULT_LIMIT_RAM
-    assert not node.argo_config.use_gpu
+    assert node.argo_config.num_gpus == 0
 
     kedro_node = node(func=dummy_func, inputs=["int_number_ds_in"], outputs=["int_number_ds_out"])
     assert node.func == kedro_node.func
@@ -322,14 +322,26 @@ def test_argo_node_factory():
 
 
 def test_fuse_config() -> None:
-    argo_config = ArgoNodeConfig(cpu_request=1, cpu_limit=2, memory_request=16, memory_limit=32, use_gpu=True)
-    other_argo_config = ArgoNodeConfig(cpu_request=3, cpu_limit=4, memory_request=32, memory_limit=64, use_gpu=False)
+    argo_config = ArgoNodeConfig(
+        cpu_request=1,
+        cpu_limit=2,
+        memory_request=16,
+        memory_limit=32,
+        num_gpus=1,
+    )
+    other_argo_config = ArgoNodeConfig(
+        cpu_request=3,
+        cpu_limit=4,
+        memory_request=32,
+        memory_limit=64,
+        num_gpus=0,
+    )
     argo_config.fuse_config(other_argo_config)
     assert argo_config.cpu_request == 3
     assert argo_config.cpu_limit == 4
     assert argo_config.memory_request == 32
     assert argo_config.memory_limit == 64
-    assert argo_config.use_gpu
+    assert argo_config.num_gpus == 1
 
 
 def test_k8s_pipeline_with_fused_nodes():
@@ -348,7 +360,7 @@ def test_initialization_of_pipeline_with_k8s_nodes():
                 cpu_limit=2,
                 memory_request=16,
                 memory_limit=32,
-                use_gpu=True,
+                num_gpus=1,
             ),
         ),
         ArgoNode(
@@ -360,7 +372,7 @@ def test_initialization_of_pipeline_with_k8s_nodes():
                 cpu_limit=2,
                 memory_request=16,
                 memory_limit=32,
-                use_gpu=True,
+                num_gpus=1,
             ),
         ),
     ]
@@ -401,7 +413,7 @@ def test_copy_k8s_node():
             cpu_limit=2,
             memory_request=16,
             memory_limit=32,
-            use_gpu=True,
+            num_gpus=1,
         ),
         tags=["argowf.fuse", "argowf.fuse-group.dummy"],
     )
@@ -410,14 +422,14 @@ def test_copy_k8s_node():
     assert copied_k8s_node.argo_config.cpu_limit == 2
     assert copied_k8s_node.argo_config.memory_request == 16
     assert copied_k8s_node.argo_config.memory_limit == 32
-    assert copied_k8s_node.argo_config.use_gpu
+    assert copied_k8s_node.argo_config.num_gpus == 1
     assert copied_k8s_node.tags == {"argowf.fuse", "argowf.fuse-group.dummy"}
 
     overwritten_k8s_node = argo_node._copy(
-        argo_config=ArgoNodeConfig(cpu_request=3, cpu_limit=4, memory_request=32, memory_limit=64, use_gpu=False)
+        argo_config=ArgoNodeConfig(cpu_request=3, cpu_limit=4, memory_request=32, memory_limit=64, num_gpus=0)
     )
     assert overwritten_k8s_node.argo_config.cpu_request == 3
     assert overwritten_k8s_node.argo_config.cpu_limit == 4
     assert overwritten_k8s_node.argo_config.memory_request == 32
     assert overwritten_k8s_node.argo_config.memory_limit == 64
-    assert not overwritten_k8s_node.argo_config.use_gpu
+    assert overwritten_k8s_node.argo_config.num_gpus == 0
