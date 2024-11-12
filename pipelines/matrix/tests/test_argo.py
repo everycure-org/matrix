@@ -469,13 +469,13 @@ def test_generate_argo_config(num_gpus: int) -> None:
     pipeline_one_template = next(t for t in templates if t["name"] == "pipeline_one")
     assert "dag" in pipeline_one_template
     assert len(pipeline_one_template["dag"]["tasks"]) == 2
-    assert pipeline_one_template["dag"]["tasks"][0]["name"] == "simple_node_p1_1"
+    assert pipeline_one_template["dag"]["tasks"][0]["name"] == "simple-node-p1-1"
     assert pipeline_one_template["dag"]["tasks"][0]["template"] == "kedro"
-    assert pipeline_one_template["dag"]["tasks"][1]["name"] == "simple_node_p1_2"
+    assert pipeline_one_template["dag"]["tasks"][1]["name"] == "simple-node-p1-2"
 
     # Verify pipeline_two template
     pipeline_two_template = next(t for t in templates if t["name"] == "pipeline_two")
     assert "dag" in pipeline_two_template
     assert len(pipeline_two_template["dag"]["tasks"]) == 1
-    assert pipeline_two_template["dag"]["tasks"][0]["name"] == "simple_node_p2_1"
+    assert pipeline_two_template["dag"]["tasks"][0]["name"] == "simple-node-p2-1"
     assert pipeline_two_template["dag"]["tasks"][0]["template"] == "kedro"
