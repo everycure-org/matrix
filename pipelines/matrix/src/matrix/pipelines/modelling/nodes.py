@@ -29,7 +29,7 @@ plt.switch_backend("Agg")
 def no_nulls(columns: List[str]):
     """Decorator to check columns for null values.
 
-    FUTURE: Move to refit when we figure out how to push messages for breaking changes.
+    FUTURE: Move to pandera when we figure out how to push messages for breaking changes.
 
     Args:
         columns: list of columns to check
