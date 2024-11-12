@@ -4,7 +4,7 @@ from sklearn.metrics import mean_absolute_error, max_error, r2_score
 from sklearn.model_selection import train_test_split
 
 import pandas as pd
-from kedro.pipeline.node import Node
+from kedro.pipeline.node import Node, node
 import logging
 import pytest
 
@@ -304,21 +304,21 @@ def test_parallel_pipelines(caplog):
 
 
 def test_argo_node_factory():
-    node = argo_node(
+    argo_node_instance = argo_node(
         func=dummy_func,
         inputs=["int_number_ds_in"],
         outputs=["int_number_ds_out"],
     )
-    assert node.argo_config.cpu_request == KUBERNETES_DEFAULT_REQUEST_CPU
-    assert node.argo_config.cpu_limit == KUBERNETES_DEFAULT_LIMIT_CPU
-    assert node.argo_config.memory_request == KUBERNETES_DEFAULT_REQUEST_RAM
-    assert node.argo_config.memory_limit == KUBERNETES_DEFAULT_LIMIT_RAM
-    assert node.argo_config.num_gpus == 0
+    assert argo_node_instance.argo_config.cpu_request == KUBERNETES_DEFAULT_REQUEST_CPU
+    assert argo_node_instance.argo_config.cpu_limit == KUBERNETES_DEFAULT_LIMIT_CPU
+    assert argo_node_instance.argo_config.memory_request == KUBERNETES_DEFAULT_REQUEST_RAM
+    assert argo_node_instance.argo_config.memory_limit == KUBERNETES_DEFAULT_LIMIT_RAM
+    assert argo_node_instance.argo_config.num_gpus == 0
 
     kedro_node = node(func=dummy_func, inputs=["int_number_ds_in"], outputs=["int_number_ds_out"])
-    assert node.func == kedro_node.func
-    assert node.inputs == kedro_node.inputs
-    assert node.outputs == kedro_node.outputs
+    assert argo_node_instance.func == kedro_node.func
+    assert argo_node_instance.inputs == kedro_node.inputs
+    assert argo_node_instance.outputs == kedro_node.outputs
 
 
 def test_fuse_config() -> None:
