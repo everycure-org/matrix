@@ -1,33 +1,16 @@
-import subprocess
 from pathlib import Path
-from typing import Optional, Tuple
 
 import typer
 from rich import print as rprint
 from rich.markdown import Markdown
 
-from matrix_cli.gh_api import fetch_pr_detail_nocache
-from matrix_cli.settings import settings
-from matrix_cli.utils import console, get_git_root, get_markdown_contents, invoke_model
+from matrix_cli.components.git import fetch_pr_detail_nocache, get_code_diff
+from matrix_cli.components.settings import settings
+from matrix_cli.components.utils import console, get_git_root, get_markdown_contents, invoke_model
 
 app = typer.Typer(help="Code-related utility commands", no_args_is_help=True)
 
 # use git diff patterns here
-INCLUSION_PATTERNS = [
-    "*.md",
-    "*.py",
-    "*.yaml",
-    "*.tf",
-    "*.Makefile",
-    "*.Dockerfile",
-    "*.sh",
-    "*.toml",
-    "*.yml",
-    "*.txt",
-    "*.hcl",
-    "*.git",
-    ":!**/matrix/packages/*",
-]
 
 
 @app.command()
@@ -120,69 +103,6 @@ def pr_summary(
         console.print("=" * 80)
     else:
         console.print(response)
-
-
-def parse_diff_input(since: str, until: str) -> Tuple[str, str]:
-    """Parse the diff input to handle both reference ranges and time-based queries.
-
-    Args:
-        since: Starting reference or time expression
-        until: Ending reference
-
-    Returns:
-        Tuple[str, str]: Processed from and to references
-    """
-    git_root = get_git_root()
-
-    # Check if input looks like a time expression
-    if any(time_unit in since.lower() for time_unit in ["day", "week", "month", "year", "ago"]):
-        try:
-            cmd = ["git", "log", f"--since={since}", "--format=%H"]
-            result = subprocess.run(
-                cmd,
-                check=True,
-                capture_output=True,
-                text=True,
-                cwd=git_root,
-            )
-            commits = result.stdout.strip().split("\n")
-            if not commits or not commits[-1]:
-                raise ValueError(f"No commits found in the specified timeframe: {since}")
-            from_ref = commits[-1]  # Get the oldest commit
-        except subprocess.CalledProcessError as e:
-            raise ValueError(f"Failed to get commits for timeframe '{since}': {e.stderr}")
-    else:
-        from_ref = since
-
-    return from_ref, until
-
-
-def get_code_diff(since: str, until: str = "origin/main") -> Optional[str]:
-    """Get code differences between two git references or time periods.
-
-    Args:
-        since: Starting git reference or time expression
-        until: Ending git reference (default: origin/main)
-
-    Returns:
-        str: Formatted diff output
-    """
-    git_root = get_git_root()
-    from_ref, to_ref = parse_diff_input(since, until)
-
-    command = ["git", "diff", f"{from_ref}..{to_ref}", "--", *INCLUSION_PATTERNS]
-
-    try:
-        result = subprocess.run(
-            command,
-            check=True,
-            capture_output=True,
-            text=True,
-            cwd=git_root,
-        )
-        return result.stdout
-    except subprocess.CalledProcessError as e:
-        raise ValueError(f"Failed to get diff: {e.stderr}")
 
 
 def get_ai_code_summary(since: str, until: str = "origin/main", model: str = settings.base_model):

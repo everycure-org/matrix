@@ -11,7 +11,7 @@ def mock_git_root(monkeypatch):
     def mock_get_git_root():
         return Path("/fake/git/root")
 
-    monkeypatch.setattr("matrix_cli.modules.code.get_git_root", mock_get_git_root)
+    monkeypatch.setattr("matrix_cli.commands.code.get_git_root", mock_get_git_root)
     return "/fake/git/root"
 
 
@@ -27,7 +27,7 @@ def mock_subprocess_run(monkeypatch):
 def mock_console(monkeypatch):
     """Mock rich console for capturing output."""
     mock_console = MagicMock()
-    monkeypatch.setattr("matrix_cli.modules.code.console", mock_console)
+    monkeypatch.setattr("matrix_cli.commands.code.console", mock_console)
     return mock_console
 
 
@@ -35,5 +35,5 @@ def mock_console(monkeypatch):
 def mock_rprint(monkeypatch):
     """Mock rich print function."""
     mock_print = MagicMock()
-    monkeypatch.setattr("matrix_cli.modules.code.rprint", mock_print)
+    monkeypatch.setattr("matrix_cli.commands.code.rprint", mock_print)
     return mock_print

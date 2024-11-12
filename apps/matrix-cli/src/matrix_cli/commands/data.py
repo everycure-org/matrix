@@ -4,8 +4,8 @@ from pathlib import Path
 
 import typer
 
-from matrix_cli.settings import settings
-from matrix_cli.utils import console
+from matrix_cli.components.settings import settings
+from matrix_cli.components.utils import console
 
 data_app = typer.Typer(help="Data-related utility commands", no_args_is_help=True)
 raw_app = typer.Typer(help="Raw data-related utility commands", no_args_is_help=True)
