@@ -4,13 +4,13 @@ from unittest.mock import MagicMock, patch
 
 import pandas as pd
 import pytest
-from matrix_cli.components import settings
 from matrix_cli.commands.releases import (
     get_pr_details_since,
     get_release_notes,
     suggest_pr_title,
 )
 from matrix_cli.components.models import PRInfo
+from matrix_cli.components.settings import settings
 
 
 @pytest.fixture
