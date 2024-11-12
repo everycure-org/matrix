@@ -4,7 +4,7 @@ integration:
       semmed_filters:
         publication_threshold: 10
         ngd_threshold: 0.6
-        limit_pmids: 30_000_000 # essentially unlimited, but allows for local clipping if local run is desired
+        limit_pmids: 50_000_000 # essentially unlimited, but allows for local clipping if local run is desired
 
   nodenorm:
     # api_endpoint: https://nodenormalization-sri.renci.org/get_normalized_nodes
