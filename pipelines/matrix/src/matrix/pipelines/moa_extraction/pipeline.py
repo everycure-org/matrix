@@ -5,43 +5,61 @@ MOA extraction pipeline.
 from kedro.pipeline import Pipeline, node
 from kedro.pipeline.modular_pipeline import pipeline
 
+import matrix.pipelines.embeddings.nodes as embeddings_nodes
+
 from . import nodes
 from matrix import settings
 
 moa_extraction_settings = settings.DYNAMIC_PIPELINES_MAPPING.get("moa_extraction")
 num_hops_lst = [model["num_hops"] for model in moa_extraction_settings]
 
+# TODO: cleanup tags
+
 
 def _preprocessing_pipeline() -> Pipeline:
     initial_nodes = pipeline(
         [
+            # node(
+            #     func=nodes.get_one_hot_encodings, # TODO rewrite node
+            #     inputs={"runner": "params:moa_extraction.gdb"},
+            #     outputs=["moa_extraction.feat.category_encoder", "moa_extraction.feat.relation_encoder"],
+            #     name="get_one_hot_encodings",
+            #     tags="moa_extraction.preprocessing",
+            # ),
             node(
-                func=nodes.add_tags,
-                inputs={
-                    "runner": "params:moa_extraction.gdb",
-                    "drug_types": "params:moa_extraction.tagging_options.drug_types",
-                    "disease_types": "params:moa_extraction.tagging_options.disease_types",
-                    "batch_size": "params:moa_extraction.tagging_options.batch_size",
-                    "verbose": "params:moa_extraction.tagging_options.verbose",
-                },
-                outputs="moa_extraction.reporting.add_tags",
-                tags=["moa_extraction.preprocessing", "moa_extraction.tagging"],
-                name="add_tags",
+                func=embeddings_nodes.ingest_nodes,
+                inputs=["integration.prm.filtered_nodes"],
+                outputs="moa_extraction.input_nodes",  # .{num_hops}_hop",
+                name="moa_extraction_ingest_neo4j_input_nodes",  # _{num_hops}_hop",
+                tags=["neo4j"],
             ),
-            node(
-                func=nodes.get_one_hot_encodings,
-                inputs={"runner": "params:moa_extraction.gdb"},
-                outputs=["moa_extraction.feat.category_encoder", "moa_extraction.feat.relation_encoder"],
-                name="get_one_hot_encodings",
-                tags="moa_extraction.preprocessing",
-            ),
-        ]
+        ],
     )
     preprocessing_strands_lst = []
     for num_hops in num_hops_lst:
         preprocessing_strands_lst.append(
             pipeline(
                 [
+                    # node(
+                    #     func=embeddings_nodes.ingest_edges,
+                    #     inputs=["moa_extraction.input_nodes.{num_hops}_hop", "integration.prm.filtered_edges"],
+                    #     outputs=f"moa_extraction.input_edges.{num_hops}_hop",
+                    #     name=f"ingest_neo4j_input_edges_{num_hops}_hop",
+                    #     tags=["neo4j"],
+                    # ),
+                    node(
+                        func=nodes.add_tags,
+                        inputs={
+                            "runner": "params:moa_extraction.gdb",
+                            "drug_types": "params:moa_extraction.tagging_options.drug_types",
+                            "disease_types": "params:moa_extraction.tagging_options.disease_types",
+                            "batch_size": "params:moa_extraction.tagging_options.batch_size",
+                            "verbose": "params:moa_extraction.tagging_options.verbose",
+                        },
+                        outputs=f"moa_extraction.reporting.add_tags_{num_hops}_hop",
+                        tags=["moa_extraction.preprocessing", "moa_extraction.tagging"],
+                        name=f"add_tags_{num_hops}_hop",
+                    ),
                     node(
                         func=nodes.map_drug_mech_db,
                         inputs={
@@ -49,7 +67,7 @@ def _preprocessing_pipeline() -> Pipeline:
                             "drug_mech_db": "moa_extraction.raw.drug_mech_db",
                             "mapper": f"params:moa_extraction.path_mapping.mapper_{num_hops}_hop",
                             "drugmechdb_entities": "moa_extraction.raw.drugmechdb_entities",
-                            "add_tags_dummy": "moa_extraction.reporting.add_tags",
+                            "add_tags_dummy": f"moa_extraction.reporting.add_tags_{num_hops}_hop",
                         },
                         outputs=f"moa_extraction.int.{num_hops}_hop_indication_paths",
                         name=f"map_{num_hops}_hop",
@@ -76,7 +94,12 @@ def _preprocessing_pipeline() -> Pipeline:
                         name=f"make_splits_{num_hops}_hop",
                         tags="moa_extraction.preprocessing",
                     ),
-                ]
+                ],
+                tags=[
+                    "argowf.fuse",
+                    f"argowf.fuse-group.moa_extraction_{num_hops}_hop",
+                    "argowf.template-neo4j",
+                ],
             )
         )
     return sum(
