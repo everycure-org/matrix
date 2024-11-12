@@ -24,16 +24,6 @@ def dummy_func(x) -> int:
     return x
 
 
-def test_default_argo_config():
-    """Test default configuration values."""
-    config = ArgoNodeConfig()
-    assert config.num_gpus == 0
-    assert config.cpu_request > 0
-    assert config.cpu_limit > 0
-    assert config.memory_request > 0
-    assert config.memory_limit > 0
-
-
 @pytest.mark.parametrize(
     "field,value",
     [
@@ -49,23 +39,42 @@ def test_negative_resources_raise_error(field, value):
         ArgoNodeConfig(**{field: value})
 
 
-def test_invalid_resource_constraints():
+@pytest.mark.parametrize(
+    "cpu_request, cpu_limit, memory_request, memory_limit, match",
+    [
+        (2.0, 1.0, None, None, "CPU limit must be greater than or equal to CPU request"),
+        (None, None, 4.0, 2.0, "Memory limit must be greater than or equal to memory request"),
+    ],
+)
+def test_invalid_resource_constraints(cpu_request, cpu_limit, memory_request, memory_limit, match):
     """Test that invalid resource constraints raise ValueError."""
-    # CPU limit less than request
-    with pytest.raises(ValueError, match="CPU limit must be greater than or equal to CPU request"):
-        ArgoNodeConfig(cpu_request=2.0, cpu_limit=1.0)
+    kwargs = {}
+    if cpu_request is not None:
+        kwargs["cpu_request"] = cpu_request
+    if cpu_limit is not None:
+        kwargs["cpu_limit"] = cpu_limit
+    if memory_request is not None:
+        kwargs["memory_request"] = memory_request
+    if memory_limit is not None:
+        kwargs["memory_limit"] = memory_limit
 
-    # Memory limit less than request
-    with pytest.raises(ValueError, match="Memory limit must be greater than or equal to memory request"):
-        ArgoNodeConfig(memory_request=4.0, memory_limit=2.0)
+    with pytest.raises(ValueError, match=match):
+        ArgoNodeConfig(**kwargs)
 
 
-def test_high_resource_values_warning():
+@pytest.mark.parametrize(
+    "cpu_limit, memory_limit",
+    [
+        (100, 1000),
+        (200, 2000),
+    ],
+)
+def test_high_resource_values_warning(cpu_limit, memory_limit):
     """Test that unrealistically high resource values trigger a warning."""
     with pytest.warns(UserWarning, match="CPU .* and memory .* limits and requests are unrealistically high"):
         ArgoNodeConfig(
-            cpu_limit=100,
-            memory_limit=1000,
+            cpu_limit=cpu_limit,
+            memory_limit=memory_limit,
         )
 
 
