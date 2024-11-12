@@ -1,10 +1,11 @@
 import logging
-
 from typing import Dict
+
 import pandera.pyspark as pa
 import pyspark.sql.functions as f
 import pyspark.sql.types as T
 from pyspark.sql import DataFrame
+from refit.v1.core.inline_primary_key import primary_key
 
 from matrix.schemas.knowledge_graph import KGEdgeSchema, KGNodeSchema, cols_for_schema
 
@@ -56,8 +57,8 @@ def transform_rtxkg2_edges(edges_df: DataFrame, curie_to_pmids: DataFrame, semme
         edges_df
         .withColumn("upstream_data_source",          f.array(f.lit("rtxkg2")))
         .withColumn("knowledge_level",               f.lit(None).cast(T.StringType()))
-        .withColumn("aggregator_knowledge_source",   f.lit(None)) # DOES NOT EXIST 
-        .withColumn("primary_knowledge_source",      f.col("primary_knowledge_source"))
+        .withColumn("aggregator_knowledge_source",   f.split(f.col("knowledge_source:string[]"), RTX_SEPARATOR)) # RTX KG2 2.10 does not exist
+        .withColumn("primary_knowledge_source",      f.col("aggregator_knowledge_source").getItem(0)) # RTX KG2 2.10 `primary_knowledge_source``
         .withColumn("publications",                  f.split(f.col("publications:string[]"), RTX_SEPARATOR))
         .withColumn("subject_aspect_qualifier",      f.lit(None).cast(T.StringType())) #not present in RTX KG2 at this time
         .withColumn("subject_direction_qualifier",   f.lit(None).cast(T.StringType())) #not present in RTX KG2 at this time
@@ -68,11 +69,13 @@ def transform_rtxkg2_edges(edges_df: DataFrame, curie_to_pmids: DataFrame, semme
     # fmt: on
 
 
+@primary_key(df="curie_to_pmids", primary_key=["curie"])
 def filter_semmed(
     edges_df: DataFrame,
     curie_to_pmids: DataFrame,
     publication_threshold: int,
     ngd_threshold: float,
+    limit_pmids: int,
 ) -> DataFrame:
     """Function to filter semmed edges.
 
@@ -87,25 +90,31 @@ def filter_semmed(
     Returns
         Filtered dataframe
     """
-    before_count = edges_df.count()
-
     curie_to_pmids = (
         curie_to_pmids.withColumn("pmids", f.from_json("pmids", T.ArrayType(T.IntegerType())))
+        .withColumn("pmids", f.sort_array(f.col("pmids")))
+        .withColumn("limited_pmids", f.slice(f.col("pmids"), 1, limit_pmids))
+        .drop("pmids")
+        .withColumnRenamed("limited_pmids", "pmids")
         .withColumn("num_pmids", f.array_size(f.col("pmids")))
         .withColumnRenamed("curie", "id")
+        .persist()
     )
 
-    df = (
+    table = f.broadcast(curie_to_pmids)
+
+    semmed_edges = (
         edges_df.alias("edges")
+        .filter(f.col("primary_knowledge_source") == f.lit("infores:semmeddb"))
         # Enrich subject pubmed identifiers
         .join(
-            curie_to_pmids.alias("subj"),
+            table.alias("subj"),
             on=[f.col("edges.subject") == f.col("subj.id")],
             how="left",
         )
         # Enrich object pubmed identifiers
         .join(
-            curie_to_pmids.alias("obj"),
+            table.alias("obj"),
             on=[f.col("edges.object") == f.col("obj.id")],
             how="left",
         )
@@ -113,19 +122,17 @@ def filter_semmed(
         .withColumn("num_publications", f.size(f.col("publications")))
         # fmt: off
         .filter(
-            # Retrain all semmed edges
-            (f.col("primary_knowledge_source") != f.lit("infores:semmeddb"))
-            |
             # Retain only semmed edges more than 10 publications or ndg score below 0.6
-            ((f.col("num_publications") > f.lit(publication_threshold)) & (f.col("ngd") < f.lit(ngd_threshold)))
+            (f.col("num_publications") >= f.lit(publication_threshold)) & (f.col("ngd") <= f.lit(ngd_threshold))
         )
         # fmt: on
-        .select("edges.*", "ngd", "num_publications")
+        .select("edges.*")
     )
 
-    logger.info(f"dropped {before_count - df.count()} SemMedDB edges")
-
-    return df
+    edges_filtered = edges_df.filter(f.col("primary_knowledge_source") != f.lit("infores:semmeddb")).unionByName(
+        semmed_edges
+    )
+    return edges_filtered
 
 
 def compute_ngd(df: DataFrame, num_pairs: int = 3.7e7 * 20) -> DataFrame:
@@ -138,13 +145,16 @@ def compute_ngd(df: DataFrame, num_pairs: int = 3.7e7 * 20) -> DataFrame:
     Returns:
         Dataframe with ndg score
     """
-    return df.withColumn(
-        "num_common_pmids", f.array_size(f.array_intersect(f.col("subj.pmids"), f.col("obj.pmids")))
-    ).withColumn(
-        "ngd",
-        (
-            f.greatest(f.log2(f.col("subj.num_pmids")), f.log2(f.col("obj.num_pmids")))
-            - f.log2(f.col("num_common_pmids"))
+    return (
+        # Take first max_pmids elements from each array
+        df.withColumn(
+            "num_common_pmids", f.array_size(f.array_intersect(f.col("subj.pmids"), f.col("obj.pmids")))
+        ).withColumn(
+            "ngd",
+            (
+                f.greatest(f.log2(f.col("subj.num_pmids")), f.log2(f.col("obj.num_pmids")))
+                - f.log2(f.col("num_common_pmids"))
+            )
+            / (f.log2(f.lit(num_pairs)) - f.least(f.log2(f.col("subj.num_pmids")), f.log2(f.col("obj.num_pmids")))),
         )
-        / (f.log2(f.lit(num_pairs)) - f.least(f.log2(f.col("subj.num_pmids")), f.log2(f.col("obj.num_pmids")))),
     )

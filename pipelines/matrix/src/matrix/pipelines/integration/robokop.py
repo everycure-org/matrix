@@ -71,7 +71,7 @@ def transform_robo_edges(edges_df: DataFrame) -> DataFrame:
         .withColumnRenamed("primary_knowledge_source:string",   "primary_knowledge_source")
         .withColumnRenamed("object_aspect_qualifier:string",    "object_aspect_qualifier")
         .withColumnRenamed("object_direction_qualifier:string", "object_direction_qualifier")
-        .withColumn("upstream_data_source",                      F.array(F.lit("robokop")))
+        .withColumn("upstream_data_source",                     F.array(F.lit("robokop")))
         .withColumn("publications",                             F.split(F.col("publications:string[]"), ROBOKOP_SEPARATOR))
         .withColumn("aggregator_knowledge_source",              F.split(F.col("aggregator_knowledge_source:string[]"), ROBOKOP_SEPARATOR))
         .withColumn("subject_aspect_qualifier",                 F.lit(None).cast(T.StringType()))
