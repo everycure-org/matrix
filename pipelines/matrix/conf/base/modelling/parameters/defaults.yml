@@ -1,6 +1,3 @@
-# NOTE: needed to add biolink:ChemicalEntity to the drug types as some nodes which are in the GT list
-# get different categories post-normalization than they had with ARAX - eg CHEMBL.COMPOUND:CHEMBL2108737, which is in our GT
-# but has biolink:CHemicalEntity category are not in the drug type list
 modelling.drug_types:
   - biolink:Drug
   - biolink:SmallMolecule
