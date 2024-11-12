@@ -26,7 +26,7 @@ def resolve_name(curie: str, endpoint: str, att_to_get: str = "curie"):
     if not curie or pd.isna(curie):
         return None
 
-    result = requests.get(f"{endpoint}/lookup?string={curie}&autocomplete=True&highlighting=False&offset=0&limit=10")
+    result = requests.get(f"{endpoint}/lookup?string={curie}&autocomplete=True&highlighting=False&offset=0&limit=1")
     if len(result.json()) != 0:
         # We take the first element as it has the highest confidence score
         # TODO: Examine if that approach is valid
@@ -271,9 +271,9 @@ def map_name_to_curie(
     Returns:
         dataframe with two additional columns: "Mapped Drug Curie" and "Mapped Drug Disease"
     """
-    # Map the drug name to the corresponding arax curie ids which we can then use by translator normalizer
-    df["drug_kg_arax_curie"] = df["drug_name"].apply(lambda x: resolve_name(x, endpoint=name_resolver))
-    df["disease_kg_arax_curie"] = df["disease_name"].apply(lambda x: resolve_name(x, endpoint=name_resolver))
+    # Map the drug name to the corresponding rtx-kg2 curie ids which we can then use by translator normalizer
+    df["drug_kg_curie"] = df["drug_name"].apply(lambda x: resolve_name(x, endpoint=name_resolver))
+    df["disease_kg_curie"] = df["disease_name"].apply(lambda x: resolve_name(x, endpoint=name_resolver))
 
     # Map the disease name to the corresponding curie ids
     attributes = [
@@ -284,7 +284,7 @@ def map_name_to_curie(
     for expr, target in attributes:
         json_parser = parse(expr)
         node_id_map = batch_map_ids(
-            frozenset(df["drug_kg_arax_curie"].fillna("none")),
+            frozenset(df["drug_kg_curie"].fillna("none")),
             api_endpoint=endpoint,
             batch_size=batch_size,
             parallelism=parallelism,
@@ -292,7 +292,7 @@ def map_name_to_curie(
             drug_chemical_conflate=drug_chemical_conflate,
             json_parser=json_parser,
         )
-        df[target] = df["drug_kg_arax_curie"].map(node_id_map)
+        df[target] = df["drug_kg_curie"].map(node_id_map)
 
     attributes = [
         ("$.id.identifier", "disease_kg_curie"),
@@ -302,7 +302,7 @@ def map_name_to_curie(
     for expr, target in attributes:
         json_parser = parse(expr)
         node_id_map = batch_map_ids(
-            frozenset(df["disease_kg_arax_curie"].fillna("none")),
+            frozenset(df["disease_kg_curie"].fillna("none")),
             api_endpoint=endpoint,
             batch_size=batch_size,
             parallelism=parallelism,
@@ -310,7 +310,7 @@ def map_name_to_curie(
             drug_chemical_conflate=drug_chemical_conflate,
             json_parser=json_parser,
         )
-        df[target] = df["disease_kg_arax_curie"].map(node_id_map)
+        df[target] = df["disease_kg_curie"].map(node_id_map)
 
     # Validate correct labels
     # NOTE: This is a temp. solution that ensures clinical trails data
