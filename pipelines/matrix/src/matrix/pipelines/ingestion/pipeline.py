@@ -1,12 +1,8 @@
 import pyspark.sql.functions as F
 from kedro.pipeline import Pipeline, pipeline
 from matrix.kedro4argo_node import (
-    ArgoNodeConfig,
     argo_node,
 )
-
-# Use default config
-ingestion_argo_node_config = ArgoNodeConfig()
 
 
 def create_pipeline(**kwargs) -> Pipeline:
@@ -21,7 +17,6 @@ def create_pipeline(**kwargs) -> Pipeline:
                 outputs="ingestion.int.rtx_kg2.nodes",
                 name="write_rtx_kg2_nodes",
                 tags=["rtx_kg2"],
-                argo_config=ingestion_argo_node_config,
             ),
             argo_node(
                 func=lambda x: x,
@@ -29,7 +24,6 @@ def create_pipeline(**kwargs) -> Pipeline:
                 outputs="ingestion.int.rtx_kg2.edges",
                 name="write_rtx_kg2_edges",
                 tags=["rtx_kg2"],
-                argo_config=ingestion_argo_node_config,
             ),
             argo_node(
                 func=lambda x: x,
@@ -37,7 +31,6 @@ def create_pipeline(**kwargs) -> Pipeline:
                 outputs="ingestion.int.rtx_kg2.curie_to_pmids",
                 name="write_rtx_kg2_curie_to_pmids",
                 tags=["rtx_kg2"],
-                argo_config=ingestion_argo_node_config,
             ),
             # ec-medical-team
             argo_node(
@@ -46,7 +39,6 @@ def create_pipeline(**kwargs) -> Pipeline:
                 outputs="ingestion.int.ec_medical_team.nodes",
                 name="write_ec_medical_team_nodes",
                 tags=["ec_medical_team"],
-                argo_config=ingestion_argo_node_config,
             ),
             argo_node(
                 func=lambda x: x.withColumn("upstream_data_source", F.array(F.lit("ec_medical_team"))),
@@ -54,7 +46,6 @@ def create_pipeline(**kwargs) -> Pipeline:
                 outputs="ingestion.int.ec_medical_team.edges",
                 name="write_ec_medical_team_edges",
                 tags=["ec_medical_team"],
-                argo_config=ingestion_argo_node_config,
             ),
             # robokop
             argo_node(
@@ -63,7 +54,6 @@ def create_pipeline(**kwargs) -> Pipeline:
                 outputs="ingestion.int.robokop.nodes",
                 name="ingest_robokop_nodes",
                 tags=["robokop"],
-                argo_config=ingestion_argo_node_config,
             ),
             argo_node(
                 # FUTURE: Update selection
@@ -72,7 +62,6 @@ def create_pipeline(**kwargs) -> Pipeline:
                 outputs="ingestion.int.robokop.edges",
                 name="ingest_robokop_edges",
                 tags=["robokop"],
-                argo_config=ingestion_argo_node_config,
             ),
         ]
     )

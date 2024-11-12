@@ -18,14 +18,14 @@ class ArgoNodeConfig(BaseModel):
     Default values are set in settings.py.
 
     Attributes:
-        use_gpu (bool): Flag to indicate if GPU should be used.
+        num_gpus (int): Number of GPUs requested for the container.
         cpu_request (float): CPU cores requested for the container. Written in number of cores.
         cpu_limit (float): Maximum CPU cores allowed for the container. Written in number of cores.
         memory_request (float): Memory requested for the container in GB.
         memory_limit (float): Maximum memory allowed for the container in GB.
     """
 
-    use_gpu: bool = False
+    num_gpus: int = 0
     cpu_request: float = KUBERNETES_DEFAULT_REQUEST_CPU
     cpu_limit: float = KUBERNETES_DEFAULT_LIMIT_CPU
     memory_request: float = KUBERNETES_DEFAULT_REQUEST_RAM
@@ -67,7 +67,7 @@ class ArgoNodeConfig(BaseModel):
         self.cpu_request = max(self.cpu_request, argo_config.cpu_request)
         self.memory_limit = max(self.memory_limit, argo_config.memory_limit)
         self.memory_request = max(self.memory_request, argo_config.memory_request)
-        self.use_gpu = self.use_gpu or argo_config.use_gpu
+        self.num_gpus = max(self.num_gpus, argo_config.num_gpus)
 
 
 class ArgoNode(Node):
