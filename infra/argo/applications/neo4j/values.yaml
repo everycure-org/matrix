@@ -20,7 +20,7 @@ neo4j: # the name of the helm dependency
   services:
     neo4j:
       spec:
-        type: ClusterIP
+        type: LoadBalancer
       # ports:
       #   http:
       #     enabled: false
