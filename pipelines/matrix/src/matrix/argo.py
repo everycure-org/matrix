@@ -12,6 +12,7 @@ ARGO_TEMPLATE_FILE = "argo_wf_spec.tmpl"
 ARGO_TEMPLATES_DIR_PATH = Path(__file__).parent.parent.parent / "templates"
 
 
+# TODO: After it is possible to configure resources on node level, remove the use_gpus flag.
 def generate_argo_config(
     image: str,
     run_name: str,
@@ -20,6 +21,7 @@ def generate_argo_config(
     username: str,
     pipelines: Dict[str, Pipeline],
     package_name: str,
+    use_gpus: bool = False,
 ) -> str:
     loader = FileSystemLoader(searchpath=ARGO_TEMPLATES_DIR_PATH)
     template_env = Environment(loader=loader, trim_blocks=True, lstrip_blocks=True)
@@ -33,6 +35,7 @@ def generate_argo_config(
         #   (2) Get Dependencies should be internal to ArgoNode, removing if from here.
         pipeline2dependencies[name] = get_dependencies(fuse(pipeline))
 
+    # TODO: After it is possible to configure resources on node level, remove the use_gpus flag.
     output = template.render(
         package_name=package_name,
         pipelines=pipeline2dependencies,
@@ -41,6 +44,7 @@ def generate_argo_config(
         namespace=namespace,
         username=username,
         run_name=run_name,
+        use_gpus=use_gpus,
     )
 
     return output

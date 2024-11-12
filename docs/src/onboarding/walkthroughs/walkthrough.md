@@ -226,3 +226,8 @@ The `submit` command does the following:
 7. Submit workflow to Argo.
 
 See `pipelines/matrix/src/matrix/cli_commands/submit.py` for more details.
+
+### Using GPUs in pipelines
+
+Currently, the way to enable GPUs in a pipeline is to manually set the flag `--use-gpus` when submitting the pipeline.
+This will make the pipeline request GPUs for all of its nodes.

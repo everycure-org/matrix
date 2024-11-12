@@ -56,6 +56,7 @@ paths:
   kg_raw:             ${gcs_bucket}/data/01_RAW
   ingestion:          data/ingestion
 
+  gpu_validation:     data/gpu_validation
   # Release-based
   integration:        data/releases/${versions.release}/datasets/integration
   embeddings:         data/releases/${versions.release}/datasets/embeddings

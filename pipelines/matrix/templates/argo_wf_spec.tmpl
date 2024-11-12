@@ -37,7 +37,11 @@ spec:
       factor: 2
       maxDuration: "1m"  # Must be a string. Default unit is seconds. Could also be a Duration, e.g.: "2m", "6h", "1d"
     affinity:
+      {% if use_gpus %}
+      nodeAffinity:
+      {% else %}
       nodeAntiAffinity:
+      {% endif %}
         requiredDuringSchedulingIgnoredDuringExecution:
           nodeSelectorTerms:
           - matchExpressions:
@@ -59,11 +63,13 @@ spec:
       {% endraw %}
       resources: # limit the resources
         requests:
-          memory: 64Gi
+          memory: {{ 32 if use_gpus else 64 }}Gi
           cpu: 4
+          nvidia.com/gpu: {{ 1 if use_gpus else 0 }}
         limits:
-          memory: 64Gi
+          memory: {{ 32 if use_gpus else 64 }}Gi
           cpu: 16
+          nvidia.com/gpu: {{ 1 if use_gpus else 0 }}
       env:
         - name: WORKFLOW_ID
           valueFrom:
