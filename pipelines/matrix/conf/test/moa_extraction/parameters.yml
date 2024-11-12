@@ -37,8 +37,8 @@ moa_extraction:
         dimensions:
           - object: skopt.space.Integer
             name: max_epochs
-            low: 5
-            high: 6
+            low: 1
+            high: 2
           - object: skopt.space.Integer
             name: module__num_layers
             low: 1
@@ -54,8 +54,8 @@ moa_extraction:
         dimensions:
           - object: skopt.space.Integer
             name: max_epochs
-            low: 7
-            high: 8
+            low: 1
+            high: 2
           - object: skopt.space.Integer
             name: module__num_layers
             low: 1
