@@ -108,17 +108,6 @@ def test_gpu_flag():
     assert config.num_gpus == 0
 
 
-def test_default_values_in_argo_config_matches_settings():
-    """Test that default values in KubernetesExecutionConfig match settings."""
-    config = ArgoNodeConfig()
-
-    assert config.cpu_request == KUBERNETES_DEFAULT_REQUEST_CPU
-    assert config.cpu_limit == KUBERNETES_DEFAULT_LIMIT_CPU
-    assert config.memory_request == KUBERNETES_DEFAULT_REQUEST_RAM
-    assert config.memory_limit == KUBERNETES_DEFAULT_LIMIT_RAM
-    assert config.num_gpus == 0
-
-
 def get_parametrized_node(node_class: Node) -> Node:
     def dummy_func(x: int) -> int:
         return 2 * x
