@@ -8,7 +8,7 @@ from kedro.pipeline.node import Node, node
 import logging
 import pytest
 
-from matrix.kedro4argo_node import ArgoNodeConfig, ArgoNode, argo_node
+from matrix.kedro4argo_node import ArgoResourceConfig, ArgoNode, argo_node
 from kedro.io import DataCatalog
 from kedro.runner import SequentialRunner
 
@@ -36,7 +36,7 @@ def dummy_func(x) -> int:
 def test_negative_resources_raise_error(field, value):
     """Test that negative or zero resource values raise ValueError."""
     with pytest.raises(ValueError, match="Resource values must be positive"):
-        ArgoNodeConfig(**{field: value})
+        ArgoResourceConfig(**{field: value})
 
 
 @pytest.mark.parametrize(
@@ -59,7 +59,7 @@ def test_invalid_resource_constraints(cpu_request, cpu_limit, memory_request, me
         kwargs["memory_limit"] = memory_limit
 
     with pytest.raises(ValueError, match=match):
-        ArgoNodeConfig(**kwargs)
+        ArgoResourceConfig(**kwargs)
 
 
 @pytest.mark.parametrize(
@@ -72,7 +72,7 @@ def test_invalid_resource_constraints(cpu_request, cpu_limit, memory_request, me
 def test_high_resource_values_warning(cpu_limit, memory_limit):
     """Test that unrealistically high resource values trigger a warning."""
     with pytest.warns(UserWarning, match="CPU .* and memory .* limits and requests are unrealistically high"):
-        ArgoNodeConfig(
+        ArgoResourceConfig(
             cpu_limit=cpu_limit,
             memory_limit=memory_limit,
         )
@@ -87,7 +87,7 @@ def test_high_resource_values_warning(cpu_limit, memory_limit):
 )
 def test_valid_resource_configuration(cpu_request, cpu_limit, memory_request, memory_limit):
     """Test valid resource configuration scenarios."""
-    config = ArgoNodeConfig(
+    config = ArgoResourceConfig(
         cpu_request=cpu_request,
         cpu_limit=cpu_limit,
         memory_request=memory_request,
@@ -98,10 +98,10 @@ def test_valid_resource_configuration(cpu_request, cpu_limit, memory_request, me
     assert config.memory_request == memory_request
     assert config.memory_limit == memory_limit
 
-    config = ArgoNodeConfig(num_gpus=1)
+    config = ArgoResourceConfig(num_gpus=1)
     assert config.num_gpus == 1
 
-    config = ArgoNodeConfig(num_gpus=0)
+    config = ArgoResourceConfig(num_gpus=0)
     assert config.num_gpus == 0
 
 
@@ -141,7 +141,7 @@ def test_argo_node_can_request_gpu():
         func=lambda x: x,
         inputs=["int_number_ds_in"],
         outputs=["int_number_ds_out"],
-        argo_config=ArgoNodeConfig(num_gpus=1),
+        argo_config=ArgoResourceConfig(num_gpus=1),
     )
     assert k8s_node.argo_config.num_gpus == 1
 
@@ -149,7 +149,7 @@ def test_argo_node_can_request_gpu():
 def test_validate_values_are_sane():
     """Test that validate_values_are_sane raises warnings for unrealistic values."""
     with pytest.warns(UserWarning, match="CPU .* and memory .* limits and requests are unrealistically high"):
-        ArgoNodeConfig(cpu_limit=100, memory_limit=1000)
+        ArgoResourceConfig(cpu_limit=100, memory_limit=1000)
 
 
 def get_parallel_pipelines() -> Pipeline:
@@ -213,7 +213,7 @@ def get_parallel_pipelines() -> Pipeline:
                 inputs=["X_train", "y_train"],
                 outputs="regressor",
                 name="train_model_node",
-                argo_config=ArgoNodeConfig(
+                argo_config=ArgoResourceConfig(
                     cpu_request=2,
                     cpu_limit=4,
                     memory_request=32,
@@ -227,7 +227,7 @@ def get_parallel_pipelines() -> Pipeline:
                 inputs=["regressor", "X_test", "y_test"],
                 outputs="metrics",
                 name="evaluate_model_node",
-                argo_config=ArgoNodeConfig(
+                argo_config=ArgoResourceConfig(
                     cpu_request=1,
                     cpu_limit=2,
                     memory_request=16,
@@ -314,14 +314,14 @@ def test_argo_node_factory():
 
 
 def test_fuse_config() -> None:
-    argo_config = ArgoNodeConfig(
+    argo_config = ArgoResourceConfig(
         cpu_request=1,
         cpu_limit=2,
         memory_request=16,
         memory_limit=32,
         num_gpus=1,
     )
-    other_argo_config = ArgoNodeConfig(
+    other_argo_config = ArgoResourceConfig(
         cpu_request=3,
         cpu_limit=4,
         memory_request=32,
@@ -342,7 +342,7 @@ def test_initialization_of_pipeline_with_k8s_nodes():
             func=dummy_func,
             inputs=["int_number_ds_in"],
             outputs=["int_number_ds_out"],
-            argo_config=ArgoNodeConfig(
+            argo_config=ArgoResourceConfig(
                 cpu_request=1,
                 cpu_limit=2,
                 memory_request=16,
@@ -354,7 +354,7 @@ def test_initialization_of_pipeline_with_k8s_nodes():
             func=dummy_func,
             inputs=["int_number_ds_out"],
             outputs=["int_number_ds_out_2"],
-            argo_config=ArgoNodeConfig(
+            argo_config=ArgoResourceConfig(
                 cpu_request=1,
                 cpu_limit=2,
                 memory_request=16,
@@ -395,7 +395,7 @@ def test_copy_k8s_node():
         func=dummy_func,
         inputs=["int_number_ds_in"],
         outputs=["int_number_ds_out"],
-        argo_config=ArgoNodeConfig(
+        argo_config=ArgoResourceConfig(
             cpu_request=1,
             cpu_limit=2,
             memory_request=16,
@@ -413,7 +413,7 @@ def test_copy_k8s_node():
     assert copied_k8s_node.tags == {"argowf.fuse", "argowf.fuse-group.dummy"}
 
     overwritten_k8s_node = argo_node._copy(
-        argo_config=ArgoNodeConfig(cpu_request=3, cpu_limit=4, memory_request=32, memory_limit=64, num_gpus=0)
+        argo_config=ArgoResourceConfig(cpu_request=3, cpu_limit=4, memory_request=32, memory_limit=64, num_gpus=0)
     )
     assert overwritten_k8s_node.argo_config.cpu_request == 3
     assert overwritten_k8s_node.argo_config.cpu_limit == 4

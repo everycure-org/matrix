@@ -4,7 +4,7 @@ import pytest
 import yaml
 
 from matrix.argo import clean_name, fuse, FusedNode, generate_argo_config
-from matrix.kedro4argo_node import ArgoNodeConfig, ArgoNode
+from matrix.kedro4argo_node import ArgoResourceConfig, ArgoNode
 
 
 def dummy_fn(*args):
@@ -174,7 +174,7 @@ def test_simple_fusing_with_argo_nodes():
                 func=dummy_fn,
                 inputs=["dataset_a", "dataset_b"],
                 outputs="dataset_1@pandas",
-                argo_config=ArgoNodeConfig(
+                argo_config=ArgoResourceConfig(
                     cpu_request=1,
                     cpu_limit=2,
                     memory_request=16,
@@ -188,7 +188,7 @@ def test_simple_fusing_with_argo_nodes():
                     "dataset_1@spark",
                 ],
                 outputs="dataset_2",
-                argo_config=ArgoNodeConfig(
+                argo_config=ArgoResourceConfig(
                     cpu_request=2,
                     cpu_limit=2,
                     memory_request=32,
@@ -422,9 +422,9 @@ def get_argo_config(num_gpus: int) -> dict:
     return argo_config
 
 
-@pytest.mark.parametrize("num_gpus", [0, 1, 2, 4])
-def test_generate_argo_config(num_gpus: int) -> None:
-    argo_config = get_argo_config(num_gpus)
+@pytest.mark.parametrize("argo_default_resources", [ArgoResourceConfig(), ArgoResourceConfig(num_gpus=1)])
+def test_generate_argo_config(argo_default_resources: ArgoResourceConfig) -> None:
+    argo_config = get_argo_config(argo_default_resources)
     spec = argo_config["spec"]
 
     # Verify kedro template

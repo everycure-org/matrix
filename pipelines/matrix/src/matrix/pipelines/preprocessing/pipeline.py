@@ -1,10 +1,10 @@
 from kedro.pipeline import Pipeline, pipeline
-from matrix.kedro4argo_node import ArgoNodeConfig, argo_node
+from matrix.kedro4argo_node import ArgoResourceConfig, argo_node
 
 from . import nodes
 
 # Use default config
-preprocessing_argo_node_config = ArgoNodeConfig()
+preprocessing_argo_node_config = ArgoResourceConfig()
 
 
 # NOTE: This pipeline in highly preliminary and used for ingestion of the

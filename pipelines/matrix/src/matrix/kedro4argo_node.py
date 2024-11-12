@@ -12,7 +12,7 @@ KUBERNETES_DEFAULT_LIMIT_CPU = 16
 KUBERNETES_DEFAULT_REQUEST_CPU = 4
 
 
-class ArgoNodeConfig(BaseModel):
+class ArgoResourceConfig(BaseModel):
     """Configuration for Kubernetes execution.
 
     Default values are set in settings.py.
@@ -42,7 +42,7 @@ class ArgoNodeConfig(BaseModel):
         return v
 
     @model_validator(mode="after")
-    def validate_resource_constraints(self) -> "ArgoNodeConfig":
+    def validate_resource_constraints(self) -> "ArgoResourceConfig":
         """Validate that limits are greater than or equal to requests."""
         if self.cpu_limit < self.cpu_request:
             raise ValueError("CPU limit must be greater than or equal to CPU request")
@@ -51,7 +51,7 @@ class ArgoNodeConfig(BaseModel):
         return self
 
     @model_validator(mode="after")
-    def validate_values_are_sane(self) -> "ArgoNodeConfig":
+    def validate_values_are_sane(self) -> "ArgoResourceConfig":
         """Validate that CPU and memory limits and requests are not too high."""
         if self.cpu_limit > KUBERNETES_DEFAULT_LIMIT_CPU or self.memory_limit > KUBERNETES_DEFAULT_LIMIT_RAM:
             warnings.warn(
@@ -59,7 +59,7 @@ class ArgoNodeConfig(BaseModel):
             )
         return self
 
-    def fuse_config(self, argo_config: Union["ArgoNodeConfig", None]) -> None:
+    def fuse_config(self, argo_config: Union["ArgoResourceConfig", None]) -> None:
         """Fuse in-place with another K8s config."""
         if argo_config is None:
             return
@@ -72,12 +72,12 @@ class ArgoNodeConfig(BaseModel):
 
 class ArgoNode(Node):
     # TODO: Merge this with former FuseNode
-    def __init__(self, *args, argo_config: ArgoNodeConfig = ArgoNodeConfig(), **kwargs):
+    def __init__(self, *args, argo_config: ArgoResourceConfig = ArgoResourceConfig(), **kwargs):
         self._argo_config = argo_config
         super().__init__(*args, **kwargs)
 
     @property
-    def argo_config(self) -> ArgoNodeConfig:
+    def argo_config(self) -> ArgoResourceConfig:
         return self._argo_config
 
     # TODO: Add fuse() method here.
@@ -104,7 +104,7 @@ def argo_node(
     func: Callable,
     inputs: str | list[str] | dict[str, str] | None,
     outputs: str | list[str] | dict[str, str] | None,
-    argo_config: ArgoNodeConfig = ArgoNodeConfig(),
+    argo_config: ArgoResourceConfig = ArgoResourceConfig(),
     *,
     name: str | None = None,
     tags: str | Iterable[str] | None = None,
