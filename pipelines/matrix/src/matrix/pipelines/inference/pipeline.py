@@ -49,7 +49,7 @@ def _create_inference_pipeline(model_excl: str, model_incl: str) -> Pipeline:
                     "ingestion.raw.disease_list@pandas": "inference.int.disease_list@pandas",
                 },
                 outputs={
-                    f"matrix_generation.{model}.model_output.sorted_matrix_predictions": f"inference.{model}.model_output.predictions",
+                    f"matrix_generation.{model}.model_output.sorted_matrix_predictions@pandas": f"inference.{model}.model_output.predictions@pandas",
                     f"matrix_generation.{model}.reporting.matrix_report": f"inference.{model}.reporting.report",
                     "matrix_generation.prm.matrix_pairs": "inference.prm.matrix_pairs",
                     "matrix_generation.feat.nodes_kg_ds": "inference.feat.nodes_kg_ds",
@@ -67,7 +67,7 @@ def _create_reporting_pipeline(model: str) -> Pipeline:
             node(
                 func=nd.visualise_treat_scores,
                 inputs={
-                    "scores": f"inference.{model}.model_output.predictions",
+                    "scores": f"inference.{model}.model_output.predictions@pandas",
                     "infer_type": "inference.int.request_type",
                     "col_name": "params:inference.score_col_name",
                 },

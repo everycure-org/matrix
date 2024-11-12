@@ -1,10 +1,8 @@
 import pandas as pd
 import pytest
-
 from matrix.pipelines.integration import filters
-
-from pyspark.testing import assertDataFrameEqual
 from pyspark.sql.types import ArrayType, StringType, StructField, StructType
+from pyspark.testing import assertDataFrameEqual
 
 
 @pytest.fixture
@@ -28,6 +26,7 @@ def sample_predicates():
 
 @pytest.fixture
 def sample_edges(spark):
+    # these are using snake_case as returned by the biolink API
     return spark.createDataFrame(
         [
             (
@@ -63,15 +62,16 @@ def sample_edges(spark):
 
 @pytest.fixture
 def sample_nodes(spark):
+    # Note these are explicitly using PascalCase
     return spark.createDataFrame(
         [
             (
                 "CHEBI:001",
-                ["biolink:related_to", "biolink:composed_primarily_of"],
+                ["biolink:RelatedTo", "biolink:ComposedPrimarilyOf"],
             ),
             (
                 "CHEBI:002",
-                ["biolink:related_to", "biolink:related_to_at_concept_level", "biolink:broad_match"],
+                ["biolink:RelatedTo", "biolink:RelatedToAtConceptLevel", "biolink:BroadMatch"],
             ),
         ],
         schema=StructType(
@@ -142,11 +142,11 @@ def test_determine_most_specific_category(spark, sample_nodes, sample_predicates
         [
             (
                 "CHEBI:001",
-                "biolink:composed_primarily_of",
+                "biolink:ComposedPrimarilyOf",
             ),
             (
                 "CHEBI:002",
-                "biolink:broad_match",
+                "biolink:BroadMatch",
             ),
         ],
         schema=StructType(
@@ -158,3 +158,12 @@ def test_determine_most_specific_category(spark, sample_nodes, sample_predicates
     )
 
     assertDataFrameEqual(result.select(*expected.columns), expected)
+
+
+def test_pascal_case():
+    assert filters.to_pascal_case("related_to") == "RelatedTo"
+    assert filters.to_pascal_case("related_to_at_concept_level") == "RelatedToAtConceptLevel"
+    assert filters.to_pascal_case("composed_primarily_of") == "ComposedPrimarilyOf"
+    assert filters.to_pascal_case("broad_match") == "BroadMatch"
+    assert filters.to_pascal_case("named_thing") == "NamedThing"
+    assert filters.to_pascal_case("entity") == "Entity"

@@ -1,8 +1,16 @@
+from typing import Any, Dict
+
 import pytest
+from jsonpath_ng.parser import parse
 from matrix.pipelines.integration import nodes
 from matrix.schemas.knowledge_graph import KGEdgeSchema, KGNodeSchema
 from pyspark.sql import DataFrame
-from pyspark.sql.types import ArrayType, StringType, StructField, StructType
+from pyspark.sql.types import (
+    ArrayType,
+    StringType,
+    StructField,
+    StructType,
+)
 from pyspark.testing import assertDataFrameEqual
 
 
@@ -145,6 +153,29 @@ def sample_biolink_predicates():
             ],
         }
     ]
+
+
+@pytest.fixture
+def nodenorm_response() -> Dict[str, Any]:
+    return {
+        "CHEMBL.COMPOUND:CHEMBL1201836": {
+            "id": {
+                "identifier": "CHEBI:28887",
+                "label": "Ofatumumab",
+                "description": "An ether in which the oxygen atom is connected to two methyl groups.",
+            },
+            "equivalent_identifiers": [
+                {
+                    "identifier": "CHEBI:28887",
+                    "label": "dimethyl ether",
+                    "description": "An ether in which the oxygen atom is connected to two methyl groups.",
+                },
+                {"identifier": "UNII:AM13FS69BX", "label": "DIMETHYL ETHER"},
+            ],
+            "type": ["biolink:SmallMolecule", "biolink:MolecularEntity"],
+            "information_content": 92.8,
+        }
+    }
 
 
 @pytest.mark.spark(
@@ -291,3 +322,53 @@ def test_normalize_kg(spark, mocker):
     assertDataFrameEqual(normalized_nodes[expected_nodes.columns], expected_nodes)
     assertDataFrameEqual(normalized_edges[expected_edges.columns], expected_edges)
     assertDataFrameEqual(mapping_df[expected_mapping.columns], expected_mapping)
+
+
+@pytest.mark.parametrize(
+    "attribute,expected",
+    [
+        (parse("$.id.identifier"), "CHEBI:28887"),
+        (parse("$.id.label"), "Ofatumumab"),
+        (parse("$.type[0]"), "biolink:SmallMolecule"),
+        (parse("$.type"), ["biolink:SmallMolecule", "biolink:MolecularEntity"]),
+        (parse("$.non.existing.attribute"), None),
+    ],
+)
+def test_extract_ids(nodenorm_response, attribute, expected):
+    # Given a nodenorm response
+
+    # When extracting an attribute
+    response = nodes._extract_ids(nodenorm_response, attribute)
+
+    # Then correct response returned
+    assert response["CHEMBL.COMPOUND:CHEMBL1201836"] == expected
+
+
+def test_extract_type_not_found():
+    # Given a nodenorm response
+    nodenorm_response = {
+        "CHEMBL.COMPOUND:CHEMBL1201836": {
+            "id": {
+                "identifier": "CHEBI:28887",
+                "label": "Ofatumumab",
+                "description": "An ether in which the oxygen atom is connected to two methyl groups.",
+            },
+            "equivalent_identifiers": [
+                {
+                    "identifier": "CHEBI:28887",
+                    "label": "dimethyl ether",
+                    "description": "An ether in which the oxygen atom is connected to two methyl groups.",
+                },
+                {"identifier": "UNII:AM13FS69BX", "label": "DIMETHYL ETHER"},
+            ],
+            # "type": None, #["biolink:SmallMolecule", "biolink:MolecularEntity"],
+            "information_content": 92.8,
+        }
+    }
+
+    # When extracting an attribute
+    json_parser = parse("$.type[0]")
+    response = nodes._extract_ids(nodenorm_response, json_parser)
+
+    # Then correct response returned
+    assert response["CHEMBL.COMPOUND:CHEMBL1201836"] is None
