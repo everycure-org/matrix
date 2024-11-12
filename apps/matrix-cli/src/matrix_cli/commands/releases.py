@@ -16,12 +16,13 @@ from rich import print
 from rich.markdown import Markdown
 from tqdm.rich import tqdm
 
-from matrix_cli.cache import memory
-from matrix_cli.gh_api import get_pr_details, update_prs
-from matrix_cli.models import PRInfo
-from matrix_cli.modules.code import get_ai_code_summary, get_code_diff
-from matrix_cli.settings import settings
-from matrix_cli.utils import console, get_git_root, get_markdown_contents, invoke_model, run_command
+from matrix_cli.commands.code import get_ai_code_summary
+from matrix_cli.components.cache import memory
+from matrix_cli.components.gh_api import get_pr_details, update_prs
+from matrix_cli.components.git import get_code_diff
+from matrix_cli.components.models import PRInfo
+from matrix_cli.components.settings import settings
+from matrix_cli.components.utils import console, get_git_root, get_markdown_contents, invoke_model, run_command
 
 if TYPE_CHECKING:
     from pandas import pd

@@ -6,7 +6,7 @@ import typer
 from rich.console import Console
 from tenacity import retry, stop_after_attempt, wait_exponential
 
-from matrix_cli.cache import memory
+from matrix_cli.components.cache import memory
 
 console = Console()
 
@@ -59,9 +59,9 @@ def get_markdown_contents(folder_path: Path | str) -> str:
     return all_content
 
 
-def run_command(command: List[str]) -> str:
+def run_command(command: List[str], cwd: str = None) -> str:
     try:
-        result = subprocess.run(command, check=True, capture_output=True, text=True)
+        result = subprocess.run(command, check=True, capture_output=True, text=True, cwd=cwd)
         return result.stdout.strip()
     except subprocess.CalledProcessError as e:
         typer.echo(f"Error running command {' '.join(command)}: {e.stderr}", err=True)

@@ -2,7 +2,8 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 import typer
-from matrix_cli.modules.code import ai_catchup, catchup, get_code_diff, parse_diff_input
+from matrix_cli.commands.code import ai_catchup, catchup
+from matrix_cli.components.git import get_code_diff, parse_diff_input
 
 
 def test_parse_diff_input_with_time_expression(mock_git_root, mock_subprocess_run):
@@ -88,7 +89,7 @@ def test_ai_catchup_command(mock_git_root, mock_subprocess_run, mock_rprint):
     mock_subprocess_run.side_effect = mock_subprocess_side_effect
 
     # When
-    with patch("matrix_cli.modules.code.invoke_model") as mock_invoke_model:
+    with patch("matrix_cli.commands.code.invoke_model") as mock_invoke_model:
         mock_invoke_model.return_value = "AI generated summary"
         ai_catchup("1 week ago", disable_rendering=False)
 
@@ -115,7 +116,7 @@ def test_catchup_command_error_handling(mock_console):
     """
     # Given
     error_message = "Git command failed"
-    with patch("matrix_cli.modules.code.get_code_diff") as mock_get_diff:
+    with patch("matrix_cli.commands.code.get_code_diff") as mock_get_diff:
         mock_get_diff.side_effect = ValueError(error_message)
 
         # When/Then

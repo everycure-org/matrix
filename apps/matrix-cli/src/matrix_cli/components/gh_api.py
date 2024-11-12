@@ -1,65 +1,17 @@
 # NOTE: This script was partially generated using AI assistance.
 
-import json
 import subprocess
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from typing import TYPE_CHECKING, List, Optional
+from typing import TYPE_CHECKING, List
 
 import typer
+from matrix_cli.components.git import fetch_pr_detail, fetch_pr_detail_nocache
+from matrix_cli.components.settings import settings
+from matrix_cli.components.utils import run_command
 from tqdm.rich import tqdm
-
-from matrix_cli.cache import memory
-from matrix_cli.models import PRInfo
-from matrix_cli.settings import settings
-from matrix_cli.utils import run_command
 
 if TYPE_CHECKING:
     from pandas import pd
-
-
-def fetch_pr_detail_nocache(pr_number: int) -> Optional[PRInfo]:
-    """
-    Non-cached version of fetch_pr_detail.
-    """
-    try:
-        # Fetch PR details including merge commit
-        command = ["gh", "pr", "view", str(pr_number), "--json", "number,title,labels,url,mergeCommit,headRefName"]
-        pr_json = run_command(command)
-        pr_info = json.loads(pr_json)
-
-        # Fetch diff if merge commit exists
-        diff = ""
-        if merge_commit := pr_info.get("mergeCommit") and pr_info["mergeCommit"].get("oid"):
-            try:
-                diff = run_command(["git", "show", merge_commit])
-            except subprocess.CalledProcessError:
-                typer.echo(f"\nWarning: Could not fetch diff for PR #{pr_number}", err=True)
-        else:
-            # If no merge commit, use the head ref name to fetch the diff
-            if head_ref_name := pr_info.get("headRefName"):
-                try:
-                    diff = run_command(["git", "diff", f"origin/main...{head_ref_name}"])
-                except subprocess.CalledProcessError:
-                    typer.echo(f"\nWarning: Could not fetch diff for PR #{pr_number}", err=True)
-
-        return PRInfo.from_github_response(pr_info, diff)
-    except subprocess.CalledProcessError:
-        typer.echo(f"\nWarning: Could not fetch PR #{pr_number}", err=True)
-        return None
-
-
-@memory.cache
-def fetch_pr_detail(pr_number: int) -> Optional[PRInfo]:
-    """
-    Fetches details for a single PR.
-
-    Args:
-        pr_number (int): PR number to fetch
-
-    Returns:
-        Dict: PR details or None if failed
-    """
-    return fetch_pr_detail_nocache(pr_number)
 
 
 def get_pr_details(pr_numbers: List[int], use_cache: bool = True) -> "pd.DataFrame":
