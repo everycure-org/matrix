@@ -1,4 +1,3 @@
-"""Module containing Neo4JDataset."""
 import time
 from typing import Any
 from copy import deepcopy
@@ -103,9 +102,7 @@ class Neo4JSparkDataset(SparkDataset):
         )
 
     @staticmethod
-    def _create_db(
-        url: str, database: str, overwrite: bool, credentials: dict[str, Any] = None
-    ):
+    def _create_db(url: str, database: str, overwrite: bool, credentials: dict[str, Any] = None):
         """Function to create database.
 
         Args:
@@ -156,7 +153,7 @@ class Neo4JSparkDataset(SparkDataset):
 
     def _save(self, data: DataFrame) -> None:
         try:
-            if self._save_args.get("persist") == False:
+            if self._save_args.get("persist") is False:
                 # skip persistence
                 return None
             else:

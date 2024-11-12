@@ -2,7 +2,8 @@ ARG BASE_IMAGE=python:3.11-buster
 # FUTURE: switch to slim image
 # ARG BASE_IMAGE=python:3.11-slim
 FROM $BASE_IMAGE AS build
-RUN apt-get update && apt-get install -y --no-install-recommends gcc curl g++
+# libomp-dev is needed to run xgboost on arm systems
+RUN apt-get update && apt-get install -y --no-install-recommends gcc curl g++ libomp-dev
 
 # Install OS dependencies
 RUN apt-get update && \

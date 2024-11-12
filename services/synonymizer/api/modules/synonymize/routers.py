@@ -1,7 +1,5 @@
 from fastapi import APIRouter
 from pydantic import BaseModel
-from typing import List
-
 from .node_synonymizer import NodeSynonymizer
 
 router = APIRouter(prefix="", tags=["synonymize"])
@@ -12,7 +10,7 @@ synonymizer = NodeSynonymizer()
 class Search(BaseModel):
     """Model to searches."""
 
-    names: List[str]
+    name: str
 
 
 @router.get("/synonymize")
@@ -22,7 +20,7 @@ async def get_canonical_curies(search: Search):
     Args:
         Searhc: search string
     """
-    return synonymizer.get_canonical_curies(names=search.names)
+    return synonymizer.get_canonical_curies(names=[search.name])
 
 
 @router.get("/normalize")
@@ -32,4 +30,4 @@ async def get_normalizer_result(search: Search):
     Args:
         Searhc: search string
     """
-    return synonymizer.get_normalizer_results(entities=search.names)
+    return synonymizer.get_normalizer_results(entities=[search.name])

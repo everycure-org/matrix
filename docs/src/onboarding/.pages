@@ -3,5 +3,8 @@ nav:
     - installation.md
     - git-crypt.md
     - kedro.md
-    - pipeline.md
     - local-setup.md
+    - environments_overview.md
+    - kedro_extensions.md
+    - walkthroughs
+    - contribute

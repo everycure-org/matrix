@@ -1,4 +1,3 @@
-"""Custom Mlflow datasets."""
 import mlflow
 
 from copy import deepcopy
@@ -25,6 +24,7 @@ class MlflowMetricsDataset(MlflowAbstractMetricDataset):
 
     def __init__(
         self,
+        *,
         run_id: str = None,
         load_args: Dict[str, Any] = None,
         save_args: Dict[str, Any] = None,
@@ -94,7 +94,9 @@ class MlflowMetricsDataset(MlflowAbstractMetricDataset):
     def _save(self, data: Dict[str, Any]):
         if self._logging_activated:
             self._validate_run_id()
-            run_id = self.run_id  # we access it once instead of calling self.run_id everywhere to avoid looking or an active run each time
+            run_id = (
+                self.run_id
+            )  # we access it once instead of calling self.run_id everywhere to avoid looking or an active run each time
 
             mlflow_client = MlflowClient()
 

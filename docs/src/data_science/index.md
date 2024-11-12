@@ -74,7 +74,7 @@ Rigorous evaluation is crucial to ensure the reliability and usefulness of our p
 
     - **[Sensitivity (Recall)](https://en.wikipedia.org/wiki/Sensitivity_and_specificity)**: Also known as the true positive rate, sensitivity measures the proportion of actual positives (e.g., a drug that can treat a disease)  that are correctly identified by the model.
     
-    - **[Specificity](https://en.wikipedia.org/wiki/Sensitivity_and_specificity)**: This metric, also called the true negative rate, quantifies the proportion of actual negatives that are correctly identified by the model. Specificity is importnt when false positives need to be minimized, such as in predicting drugs that may not be useful for a disease.
+    - **[Specificity](https://en.wikipedia.org/wiki/Sensitivity_and_specificity)**: This metric, also called the true negative rate, quantifies the proportion of actual negatives that are correctly identified by the model. Specificity is important when false positives need to be minimized, such as in predicting drugs that may not be useful for a disease.
     
     - **[F1 Score](https://en.wikipedia.org/wiki/F1_score)**: The F1 score is the harmonic mean of precision and recall, providing a single metric that balances both false positives and false negatives. It is useful when the class distribution is imbalanced, as it gives a balanced view of a model's performance across both types of error.
     

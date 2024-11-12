@@ -1,11 +1,28 @@
-"""Custom resolvers for Kedro project."""
 import os
-from typing import Dict, Any, Optional
 from copy import deepcopy
+from pathlib import Path
+from typing import Dict, Optional
 
-from dotenv import load_dotenv
+from dotenv import find_dotenv, load_dotenv
 
-load_dotenv()
+
+def load_environment_variables():
+    """Load environment variables from .env.defaults and .env files.
+
+    .env.defaults is loaded first, then .env overwrites any existing values.
+    """
+    defaults_path = Path(".env.defaults")
+    if defaults_path.exists():
+        load_dotenv(dotenv_path=defaults_path, override=False)
+
+    env_path = find_dotenv(usecwd=True)
+    if env_path:
+        load_dotenv(dotenv_path=env_path, override=True)
+
+
+# This ensures that environment variables are loaded at module import and thus
+# before the pipeline is run or any data is loaded.
+load_environment_variables()
 
 
 def merge_dicts(dict1: Dict, dict2: Dict) -> Dict:
@@ -27,7 +44,7 @@ def merge_dicts(dict1: Dict, dict2: Dict) -> Dict:
     return result
 
 
-def env(key: str, default: str = None) -> Optional[str]:
+def env(key: str, default: str = None, allow_null: str = False) -> Optional[str]:
     """Load a variable from the environment.
 
     See https://omegaconf.readthedocs.io/en/latest/custom_resolvers.html#custom-resolvers
@@ -35,16 +52,14 @@ def env(key: str, default: str = None) -> Optional[str]:
     Args:
         key (str): Key to load.
         default (str): Default value to use instead
-
+        allow_null (bool): Bool indicating whether null is allowed
     Returns:
         str: Value of the key
     """
     try:
         value = os.environ.get(key, default)
-        if value is None:
+        if value is None and not allow_null:
             raise KeyError()
         return value
     except KeyError:
-        raise KeyError(
-            f"Environment variable '{key}' not found or default value {default} is None"
-        )
+        raise KeyError(f"Environment variable '{key}' not found or default value {default} is None")

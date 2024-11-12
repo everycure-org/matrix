@@ -1,10 +1,9 @@
 nav:
     - index.md
     - onboarding
-    - infrastructure
-    - data_science
-    - matrix
-    - contribute
+    - pipeline
     - experiments
-    - FAQ
     - releases
+    - FAQ
+    - data_science
+    - infrastructure

@@ -1,0 +1,71 @@
+matrix_generation.matrix_generation_options:
+  batch_by: # Column to batch over when making predictions
+    - target 
+  n_reporting: 100000 # Number of items in the final report
+
+matrix_generation.matrix:
+  metadata:
+    drug_list:
+      drug_id: "Drug identifier"
+      drug_name: "Drug name"
+    disease_list:
+      disease_id: "Disease identifier"
+      disease_name: "Disease name"
+    kg_data:
+      pair_id: "Unique identifier for each pair"
+      kg_drug_id: "Drug identifier in the knowledge graph"
+      kg_drug_name: "Drug name in the knowledge graph"
+      kg_disease_id: "Disease identifier in the knowledge graph"
+      kg_disease_name: "Disease name in the knowledge graph"
+  # Note that you can add any stats as long as they are compatible with pandas transform function
+  stats_col_names:
+    per_disease:
+      top:
+        mean: "Mean probability score"
+        median: "Median probability score"
+      all:
+        mean: "Mean probability score"
+        median: "Median probability score"
+    per_drug:
+      top:
+        mean: "Mean probability score"
+        median: "Median probability score"
+      all:
+        mean: "Mean probability score"
+        median: "Median probability score"
+    full:
+      mean: "Mean probability score"
+      median: "Median probability score"
+  tags:
+    drugs:
+      available_USA: "Whether drug is prescriped or discontinued in USA"
+      is_steroid: "Whether drug is a steroid"
+      is_antimicrobial: "Whether drug is an antimicrobial"
+      is_glucose_regulator: "Whether drug is a glucose regulator"
+      is_chemotherapy: "Whether drug is a chemotherapy"
+    pairs:
+      is_known_positive: "Whether the pair is a known positive, based on literature and clinical trials"
+      is_known_negative: "Whether the pair is a known negative, based on literature and clinical trials"
+    diseases:
+      is_cancer: "Whether disease is a cancer"
+      is_pathogen_caused: "Whether disease is a pathogen caused"
+      is_glucose_dysfunction: "Whether disease is a glucose dysfunction"
+      tag_existing_treatment: "Whether disease has existing treatments"
+      tag_QALY_lost: "Whether disease has Quality Adjusted Life Years (QALY) lost"
+    master: 
+      legend: "Excludes any pairs where the following conditions are met: known positive or negative status, antimicrobial drug with pathogen-caused disease, steroid drug, chemotherapy with cancer, or glucose regulator drug with glucose dysfunction disease"
+      conditions:
+        - [is_known_positive]
+        - [is_known_negative]
+        - [is_antimicrobial, is_pathogen_caused]
+        - [is_steroid]
+        - [is_glucose_regulator, is_glucose_dysfunction]
+        - [is_chemotherapy, is_cancer]
+
+matrix_generation.run:
+  workflow_id: ${oc.env:WORKFLOW_ID, local}
+  run_name: ${globals:run_name}
+  mlflow_link: ${globals:mlflow_url}
+  git_sha: ${globals:git_sha}
+  release_version: ${globals:versions.release}
+  versions: ${globals:data_sources}

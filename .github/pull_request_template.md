@@ -1,19 +1,32 @@
-# Description
+# Description of the changes <!-- required! -->
 
-Please include a summary of the changes and the related Notion milestone. Please also include relevant motivation and context. List any dependencies that are required for this change.
+<!-- Briefly describe the changes you have made. This helps the reviewer understand the changes. -->
 
-# How Has This Been Tested?
 
-Please describe the tests that you ran to verify your changes. Provide instructions so we can reproduce. Please also list any relevant details for your test configuration
+## Fixes / Resolves the following issues:
+<!-- add the issues here. -->
+- 
 
-- [ ] ...
 
 # Checklist:
 
-- [ ] added label to PR (e.g. `enhancement` or `bug`)
-- [ ] I have looked at the diff on github to make sure no unwanted files have been committed. 
-- [ ] I have made corresponding changes to the documentation
-- [ ] I have added tests that prove my fix is effective or that my feature works
-- [ ] Any dependent changes have been merged and published in downstream modules
-- [ ] ran `/run-tests` check at the end of PR collaboration work to execute integration tests
+<!-- Please remove any items from this checklist that are not applicable to this PR. -->
 
+- [ ] added label to PR (e.g. `enhancement` or `bug`)
+- [ ] Ensure the PR is named descriptively. FYI: This name is used as part of our changelog & release notes.
+- [ ] looked at the diff on github to make sure no unwanted files have been committed. 
+- [ ] made corresponding changes to the documentation
+- [ ] added tests that prove my fix is effective or that my feature works
+- [ ] Any dependent changes have been merged and published in downstream modules
+- [ ] If breaking changes occur or you need everyone to run a command locally after
+    pulling in latest main, uncomment the below "Merge Notification" section and
+    describe steps necessary for people
+
+
+<!-- uncomment the below section if you want a notice to be sent to our slack community upon
+a successful merge of the PR -->
+
+<!--
+## Merge Notification
+
+-->
