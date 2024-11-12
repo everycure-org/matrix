@@ -32,11 +32,13 @@ moa_extraction:
         estimator:
           module__token_dim: 2
           module__num_heads: 1
+          optimizer: torch.optim.Adam
+          optimizer__lr: 0.0001
         dimensions:
           - object: skopt.space.Integer
             name: max_epochs
-            low: 1
-            high: 2
+            low: 5
+            high: 6
           - object: skopt.space.Integer
             name: module__num_layers
             low: 1
@@ -47,11 +49,13 @@ moa_extraction:
         estimator:
           module__token_dim: 2
           module__num_heads: 1
+          optimizer: torch.optim.Adam
+          optimizer__lr: 0.0001
         dimensions:
           - object: skopt.space.Integer
             name: max_epochs
-            low: 1
-            high: 2
+            low: 7
+            high: 8
           - object: skopt.space.Integer
             name: module__num_layers
             low: 1

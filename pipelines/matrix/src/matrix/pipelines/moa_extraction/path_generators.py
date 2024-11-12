@@ -107,7 +107,9 @@ class ReplacementPathSampler(PathGenerator):
         for _, row in tqdm(
             paths.get_unique_pairs().iterrows(), desc="Sampling negative paths with replacement strategy..."
         ):
-            new_paths = self.run_single_pair(row["source_id"], row["target_id"], row["count"], runner, num_hops)
+            new_paths = self.run_single_pair(
+                row["source_id"], row["target_id"], row["count"] * self.num_replacement_paths, runner, num_hops
+            )
             negative_paths.df = pd.concat([negative_paths.df, new_paths.df])
 
         return negative_paths
