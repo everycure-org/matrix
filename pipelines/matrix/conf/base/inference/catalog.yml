@@ -60,7 +60,7 @@ inference.int.disease_list@spark:
   filepath: ${globals:paths.tmp}/int/disease_list_infer
 
 
-# NOTE: Sheet is created for ech model
+# NOTE: Sheet is created for each model
 "inference.{model}.model_output.predictions@pandas":
   <<: *_pandas_parquet
   filepath: ${globals:paths.tmp}/model_output/{model}/predictions
