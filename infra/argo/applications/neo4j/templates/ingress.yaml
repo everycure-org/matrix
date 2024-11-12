@@ -1,0 +1,17 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: neo4j-bolt-ingress
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: "neo4j-bolt.dev.everycure.org"
+    http:
+      paths:
+      - path: /
+        backend:
+          service:
+            name: neo4j-lb-neo4j
+            port:
+              number: 7687
+        pathType: Prefix
