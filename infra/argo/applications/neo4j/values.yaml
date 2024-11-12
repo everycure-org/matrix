@@ -13,10 +13,16 @@ neo4j: # the name of the helm dependency
       memory: "8Gi" # takes almost full advantage of e2-standard-32 instance
   # configuration for neo4j services
   # FUTURE do not expose as IP
-  # services:
-  #   neo4j:
-  #     spec:
-  #       type: ClusterIP
+  services:
+    neo4j:
+      spec:
+        type: LoadBalancer
+      ports:
+        http:
+          enabled: false
+        https:
+          enabled: false
+
   # configuration of volumes for neo4j
   volumes:
     data:
