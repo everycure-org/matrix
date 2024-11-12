@@ -291,6 +291,9 @@ def test_parallel_pipelines(caplog):
     SequentialRunner().run(standard_pipeline, catalog)
     assert successful_run_msg in caplog.text
 
+    assert all(isinstance(node, ArgoNode) for node in k8s_pipeline.nodes)
+    assert all(isinstance(node, Node) for node in standard_pipeline.nodes)
+
 
 def test_argo_node_factory():
     argo_node_instance = argo_node(
@@ -331,11 +334,6 @@ def test_fuse_config() -> None:
     assert argo_config.memory_request == 32
     assert argo_config.memory_limit == 64
     assert argo_config.num_gpus == 1
-
-
-def test_k8s_pipeline_with_fused_nodes():
-    k8s_pipeline, standard_pipeline = get_parallel_pipelines()
-    assert all(isinstance(node, ArgoNode) for node in k8s_pipeline.nodes)
 
 
 def test_initialization_of_pipeline_with_k8s_nodes():
