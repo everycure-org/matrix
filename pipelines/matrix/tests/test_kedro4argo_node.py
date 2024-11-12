@@ -78,31 +78,25 @@ def test_high_resource_values_warning(cpu_limit, memory_limit):
         )
 
 
-def test_valid_resource_configuration():
+@pytest.mark.parametrize(
+    "cpu_request, cpu_limit, memory_request, memory_limit",
+    [
+        (2.0, 2.0, 4.0, 4.0),  # Equal limits and requests
+        (1.0, 2.0, 2.0, 4.0),  # Limits higher than requests
+    ],
+)
+def test_valid_resource_configuration(cpu_request, cpu_limit, memory_request, memory_limit):
     """Test valid resource configuration scenarios."""
-    # Equal limits and requests
     config = ArgoNodeConfig(
-        cpu_request=2.0,
-        cpu_limit=2.0,
-        memory_request=4.0,
-        memory_limit=4.0,
+        cpu_request=cpu_request,
+        cpu_limit=cpu_limit,
+        memory_request=memory_request,
+        memory_limit=memory_limit,
     )
-    assert config.cpu_request == 2.0
-    assert config.cpu_limit == 2.0
-    assert config.memory_request == 4.0
-    assert config.memory_limit == 4.0
-
-    # Limits higher than requests
-    config = ArgoNodeConfig(
-        cpu_request=1.0,
-        cpu_limit=2.0,
-        memory_request=2.0,
-        memory_limit=4.0,
-    )
-    assert config.cpu_request == 1.0
-    assert config.cpu_limit == 2.0
-    assert config.memory_request == 2.0
-    assert config.memory_limit == 4.0
+    assert config.cpu_request == cpu_request
+    assert config.cpu_limit == cpu_limit
+    assert config.memory_request == memory_request
+    assert config.memory_limit == memory_limit
 
 
 def test_gpu_flag():
