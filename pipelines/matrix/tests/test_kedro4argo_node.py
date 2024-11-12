@@ -98,9 +98,6 @@ def test_valid_resource_configuration(cpu_request, cpu_limit, memory_request, me
     assert config.memory_request == memory_request
     assert config.memory_limit == memory_limit
 
-
-def test_gpu_flag():
-    """Test GPU flag configuration."""
     config = ArgoNodeConfig(num_gpus=1)
     assert config.num_gpus == 1
 
