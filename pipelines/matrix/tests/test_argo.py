@@ -378,16 +378,29 @@ def get_argo_config(num_gpus: int) -> dict:
     namespace = "test_namespace"
     username = "test_user"
     pipelines = {
-        "test_pipeline": Pipeline(
-            nodes=[Node(func=dummy_func, inputs=["dataset_a", "dataset_b"], outputs="dataset_c", name="simple_node")]
-        ),
-        "cloud_pipeline": Pipeline(
+        "pipeline_one": Pipeline(
             nodes=[
-                Node(
+                ArgoNode(
                     func=dummy_func,
-                    inputs=["dataset_a_cloud", "dataset_b_cloud"],
-                    outputs="dataset_c_cloud",
-                    name="simple_node_cloud",
+                    inputs=["dataset_a", "dataset_b"],
+                    outputs="dataset_c",
+                    name="simple_node_p1_1",
+                ),
+                ArgoNode(
+                    func=dummy_func,
+                    inputs="dataset_c",
+                    outputs="dataset_d",
+                    name="simple_node_p1_2",
+                ),
+            ]
+        ),
+        "pipeline_two": Pipeline(
+            nodes=[
+                ArgoNode(
+                    func=dummy_func,
+                    inputs=["dataset_a"],
+                    outputs="dataset_b",
+                    name="simple_node_p2_1",
                 )
             ]
         ),
@@ -423,56 +436,46 @@ def test_generate_argo_config(num_gpus: int) -> None:
     assert kedro_template["backoff"]["maxDuration"] == "1m"
     assert kedro_template["metadata"]["labels"]["app"] == "kedro-argo"
 
-    # Verify affinity based on GPU configuration
-    if num_gpus > 0:
-        assert "nodeAffinity" in kedro_template["affinity"]
-        assert "nodeAntiAffinity" not in kedro_template["affinity"]
-        selector = kedro_template["affinity"]["nodeAffinity"]["requiredDuringSchedulingIgnoredDuringExecution"][
-            "nodeSelectorTerms"
-        ][0]
-        match_expression = selector["matchExpressions"][0]
-        assert match_expression["key"] == "gpu_node"
-        assert match_expression["operator"] == "In"
-        assert match_expression["values"] == ["true"]
-    else:
-        assert "nodeAntiAffinity" in kedro_template["affinity"]
+    # Verify default anti-affinity for GPU nodes
+    assert "nodeAntiAffinity" in kedro_template["affinity"]
+    selector = kedro_template["affinity"]["nodeAntiAffinity"]["requiredDuringSchedulingIgnoredDuringExecution"][
+        "nodeSelectorTerms"
+    ][0]
+    match_expression = selector["matchExpressions"][0]
+    assert match_expression["key"] == "gpu_node"
+    assert match_expression["operator"] == "In"
+    assert match_expression["values"] == ["true"]
 
     # Verify resources based on GPU configuration
     resources = kedro_template["container"]["resources"]
 
-    expected_config = {
-        "memory": "64Gi",
-        "cpu_request": 4,
-        "cpu_limit": 16,
-        "gpu": num_gpus,
-    }
-
     # Check requests
-    assert resources["requests"]["memory"] == expected_config["memory"]
-    assert resources["requests"]["cpu"] == expected_config["cpu_request"]
-    assert resources["requests"]["nvidia.com/gpu"] == expected_config["gpu"]
+    assert resources["requests"]["memory"] == "64Gi"
+    assert resources["requests"]["cpu"] == 4
+    assert resources["requests"]["nvidia.com/gpu"] == 0
 
     # Check limits
-    assert resources["limits"]["memory"] == expected_config["memory"]
-    assert resources["limits"]["cpu"] == expected_config["cpu_limit"]
-    assert resources["limits"]["nvidia.com/gpu"] == expected_config["gpu"]
+    assert resources["limits"]["memory"] == "64Gi"
+    assert resources["limits"]["cpu"] == 16
+    assert resources["limits"]["nvidia.com/gpu"] == 0
 
     # Verify pipeline templates
     templates = spec["templates"]
     pipeline_names = [template["name"] for template in templates]
-    assert "test_pipeline" in pipeline_names
-    assert "cloud_pipeline" in pipeline_names
+    assert "pipeline_one" in pipeline_names
+    assert "pipeline_two" in pipeline_names
 
-    # Verify test_pipeline template
-    test_template = next(t for t in templates if t["name"] == "test_pipeline")
-    assert "dag" in test_template
-    assert len(test_template["dag"]["tasks"]) == 1
-    assert test_template["dag"]["tasks"][0]["name"] == "simple-node"
-    assert test_template["dag"]["tasks"][0]["template"] == "kedro"
+    # Verify pipeline_one template
+    pipeline_one_template = next(t for t in templates if t["name"] == "pipeline_one")
+    assert "dag" in pipeline_one_template
+    assert len(pipeline_one_template["dag"]["tasks"]) == 2
+    assert pipeline_one_template["dag"]["tasks"][0]["name"] == "simple_node_p1_1"
+    assert pipeline_one_template["dag"]["tasks"][0]["template"] == "kedro"
+    assert pipeline_one_template["dag"]["tasks"][1]["name"] == "simple_node_p1_2"
 
-    # Verify cloud_pipeline template
-    cloud_template = next(t for t in templates if t["name"] == "cloud_pipeline")
-    assert "dag" in cloud_template
-    assert len(cloud_template["dag"]["tasks"]) == 1
-    assert cloud_template["dag"]["tasks"][0]["name"] == "simple-node-cloud"
-    assert cloud_template["dag"]["tasks"][0]["template"] == "kedro"
+    # Verify pipeline_two template
+    pipeline_two_template = next(t for t in templates if t["name"] == "pipeline_two")
+    assert "dag" in pipeline_two_template
+    assert len(pipeline_two_template["dag"]["tasks"]) == 1
+    assert pipeline_two_template["dag"]["tasks"][0]["name"] == "simple_node_p2_1"
+    assert pipeline_two_template["dag"]["tasks"][0]["template"] == "kedro"
