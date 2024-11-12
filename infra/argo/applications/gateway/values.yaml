@@ -13,6 +13,9 @@ external-dns:
       - apiGroups: [""]
         resources: ["namespaces"]
         verbs: ["get","watch","list"]
+      - apiGroups: ["networking.k8s.io"]
+        resources: ["ingresses"]
+        verbs: ["get","watch","list"]
 
 cert-manager:
   crds:
