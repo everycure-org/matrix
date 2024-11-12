@@ -20,12 +20,12 @@ neo4j: # the name of the helm dependency
   services:
     neo4j:
       spec:
-        type: LoadBalancer
-      ports:
-        http:
-          enabled: false
-        https:
-          enabled: false
+        type: ClusterIP
+      # ports:
+      #   http:
+      #     enabled: false
+      #   https:
+      #     enabled: false
   # configuration of volumes for neo4j
   volumes:
     data:
