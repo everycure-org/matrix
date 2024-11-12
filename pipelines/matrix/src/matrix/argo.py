@@ -10,6 +10,7 @@ ARGO_TEMPLATE_FILE = "argo_wf_spec.tmpl"
 ARGO_TEMPLATES_DIR_PATH = Path(__file__).parent.parent.parent / "templates"
 
 
+# TODO: After it is possible to configure resources on node level, remove the use_gpus flag.
 def generate_argo_config(
     image: str,
     run_name: str,
@@ -29,6 +30,7 @@ def generate_argo_config(
         # Fuse nodes in topological order to avoid constant recreation of Neo4j
         pipeline2dependencies[name] = get_dependencies(fuse(pipeline))
 
+    # TODO: After it is possible to configure resources on node level, remove the use_gpus flag.
     output = template.render(
         package_name=package_name,
         pipelines=pipeline2dependencies,

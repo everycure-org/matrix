@@ -71,6 +71,7 @@ def submit(username: str, namespace: str, run_name: str, pipeline: str, use_gpus
     )
 
 
+# TODO: After it is possible to configure resources on node level, remove the use_gpus flag.
 def _submit(
         username: str, 
         namespace: str, 
@@ -287,6 +288,7 @@ def build_push_docker(username: str, verbose: bool):
     run_subprocess(f"make docker_push TAG={username}", stream_output=verbose)
 
 
+# TODO: After it is possible to configure resources on node level, remove the use_gpus flag.
 def build_argo_template(run_name: str, username: str, namespace: str, pipelines: Dict[str, Pipeline], use_gpus: bool = False) -> str:
     """Build Argo workflow template."""
     image_name = "us-central1-docker.pkg.dev/mtrx-hub-dev-3of/matrix-images/matrix"
