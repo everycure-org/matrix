@@ -216,7 +216,7 @@ def normalize_kg(
     nodes: ps.sql.DataFrame,
     edges: ps.sql.DataFrame,
     api_endpoint: str,
-    json_path_expr="$.id.identifier",
+    json_path_expr: str = "$.id.identifier",
     conflate: bool = True,
     drug_chemical_conflate: bool = True,
     batch_size: int = 100,

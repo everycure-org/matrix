@@ -176,7 +176,7 @@ def compute_embeddings(
         skip: whether to skip the embedding computation
     """
     if skip:
-        # Adding an empty array of floats to the entire DataFrame
+        # FUTURE Currently a hack, should be refactored (see https://github.com/everycure-org/matrix/issues/647 )
         return input.withColumn(attribute, F.lit([0.0] * 512))
 
     batch_udf = F.udf(lambda z: batch(endpoint, model, api_key, z), ArrayType(ArrayType(FloatType())))
