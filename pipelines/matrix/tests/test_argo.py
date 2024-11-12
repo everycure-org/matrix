@@ -11,16 +11,17 @@ def dummy_fn(*args):
     return "dummy"
 
 
-def test_no_nodes_fused_when_no_fuse_options():
+@pytest.mark.parametrize("node_class", [Node, ArgoNode])
+def test_no_nodes_fused_when_no_fuse_options(node_class):
     pipeline_with_no_fusing_options = Pipeline(
         nodes=[
-            Node(
+            node_class(
                 func=dummy_fn,
                 inputs=["dataset_a", "dataset_b"],
                 outputs="dataset_c",
                 name="first",
             ),
-            Node(
+            node_class(
                 func=dummy_fn,
                 inputs=["dataset_1", "dataset_2"],  # inputs are different than outputs of previous node
                 outputs="dataset_3",
@@ -37,15 +38,16 @@ def test_no_nodes_fused_when_no_fuse_options():
     ), "No nodes should be fused when no fuse options are provided"
 
 
-def test_simple_fusing():
+@pytest.mark.parametrize("node_class", [Node, ArgoNode])
+def test_simple_fusing(node_class):
     pipeline_where_first_node_is_input_for_second = Pipeline(
         nodes=[
-            Node(
+            node_class(
                 func=dummy_fn,
                 inputs=["dataset_a", "dataset_b"],
                 outputs="dataset_1@pandas",
             ),
-            Node(
+            node_class(
                 func=dummy_fn,
                 inputs=[
                     "dataset_1@spark",
@@ -66,16 +68,17 @@ def test_simple_fusing():
     assert len(fused[0]._parents) == 0, "Fused node should have no parents"
 
 
-def test_no_multiple_parents_no_fusing():
+@pytest.mark.parametrize("node_class", [Node, ArgoNode])
+def test_no_multiple_parents_no_fusing(node_class):
     pipeline_one2many_fusing_possible = Pipeline(
         nodes=[
-            Node(
+            node_class(
                 func=dummy_fn,
                 inputs=["dataset_a", "dataset_b"],
                 outputs="dataset_1",
                 name="first_node",
             ),
-            Node(
+            node_class(
                 func=dummy_fn,
                 inputs=[
                     "dataset_c",
@@ -83,7 +86,7 @@ def test_no_multiple_parents_no_fusing():
                 outputs="dataset_2",
                 name="second_node",
             ),
-            Node(
+            node_class(
                 func=dummy_fn,
                 inputs=["dataset_1", "dataset_2"],
                 outputs="dataset_3",
@@ -100,16 +103,17 @@ def test_no_multiple_parents_no_fusing():
     ), "No fusing has been performed, as child node can be fused to different parents."
 
 
-def test_fusing_multiple_parents():
+@pytest.mark.parametrize("node_class", [Node, ArgoNode])
+def test_fusing_multiple_parents(node_class):
     pipeline_with_multiple_parents = Pipeline(
         nodes=[
-            Node(
+            node_class(
                 func=dummy_fn,
                 inputs=["dataset_a", "dataset_b"],
                 outputs=["dataset_1"],
                 name="first_node",
             ),
-            Node(
+            node_class(
                 func=dummy_fn,
                 inputs=[
                     "dataset_c",
@@ -117,13 +121,13 @@ def test_fusing_multiple_parents():
                 outputs="dataset_2",
                 name="second_node",
             ),
-            Node(
+            node_class(
                 func=dummy_fn,
                 inputs=None,
                 outputs="dataset_3",
                 name="third_node",
             ),
-            Node(
+            node_class(
                 func=dummy_fn,
                 inputs=[
                     "dataset_1",
@@ -132,13 +136,13 @@ def test_fusing_multiple_parents():
                 outputs="dataset_4",
                 name="child_node",
             ),
-            Node(
+            node_class(
                 func=dummy_fn,
                 inputs=["dataset_3", "dataset_4"],
                 outputs="dataset_5",
                 name="grandchild_node",
             ),
-            Node(
+            node_class(
                 func=dummy_fn,
                 inputs=["dataset_5"],
                 outputs="dataset_6",
@@ -163,7 +167,7 @@ def test_fusing_multiple_parents():
     ), "Fused node should have parents 'first_node', 'second_node' and 'third_node'"
 
 
-def test_simple_fusing_with_argo_config():
+def test_simple_fusing_with_argo_nodes():
     pipeline_where_first_node_is_input_for_second = Pipeline(
         nodes=[
             ArgoNode(
@@ -196,8 +200,15 @@ def test_simple_fusing_with_argo_config():
         tags=["argowf.fuse", "argowf.fuse-group.dummy"],
     )
 
-    assert isinstance(pipeline_where_first_node_is_input_for_second.nodes[0], ArgoNode)
-    assert isinstance(pipeline_where_first_node_is_input_for_second.nodes[1], ArgoNode)
+    fused = fuse(pipeline_where_first_node_is_input_for_second)
+
+    assert len(fused) == 1
+
+    assert fused[0].argo_config.cpu_request == 2
+    assert fused[0].argo_config.cpu_limit == 2
+    assert fused[0].argo_config.memory_request == 32
+    assert fused[0].argo_config.memory_limit == 64
+    assert fused[0].argo_config.num_gpus == 1
 
 
 @pytest.mark.parametrize(
