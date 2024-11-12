@@ -23,7 +23,7 @@ RUN --mount=type=cache,target=/root/.cache pip install -U uv
 ADD packages/ ./packages/
 RUN --mount=type=cache,target=/root/.cache uv venv
 RUN --mount=type=cache,target=/root/.cache uv pip install -r requirements.txt
-RUN --mount=type=cache,target=/root/.cache uv pip install --no-build-isolation torch_scatter torch_sparse torch_cluster --find-links https://data.pyg.org/whl/torch-2.4.0+cpu.html
+RUN --mount=type=cache,target=/root/.cache uv pip install --no-build-isolation torch_scatter pyg_lib torch_sparse torch_cluster --find-links https://data.pyg.org/whl/torch-2.4.0+cpu.html
 ENV PATH=/app/.venv/bin:$PATH
 
 # Cache drivers as part of image
