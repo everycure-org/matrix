@@ -88,8 +88,8 @@ class BigQueryTableDataset(SparkDataset):
         project_id: str,
         dataset: str,
         table: str,
-        identifier: str,
         file_format: str,
+        identifier: Optional[str] = None,
         load_args: dict[str, Any] = None,
         save_args: dict[str, Any] = None,
         version: Version = None,
@@ -117,7 +117,7 @@ class BigQueryTableDataset(SparkDataset):
         self._format = file_format
         self._labels = save_args.pop("labels", {})
 
-        self._table = self._sanitize_name(f"{table}_{identifier}")
+        self._table = self._sanitize_name("_".join(el for el in [table, identifier] if el is not None))
         self._dataset_id = f"{self._project_id}.{self._sanitize_name(dataset)}"
 
         self._client = bigquery.Client(project=self._project_id)
