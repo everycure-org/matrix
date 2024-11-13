@@ -156,7 +156,6 @@ def bucketize_nodes(df: DataFrame, bucket_size: int, features: int):
 @inject_object()
 def compute_embeddings(
     dfs: Dict[str, DataFrame],
-    features: List[str],
     model: Dict[str, Any],
 ):
     """Function to bucketize input data.
@@ -171,7 +170,7 @@ def compute_embeddings(
     # the dataframe, therefore leading to only the latest shard
     # being processed n times.
     def _func(dataframe: pd.DataFrame):
-        return lambda: compute_df_embeddings_async(dataframe(), model, features)
+        return lambda: compute_df_embeddings_async(dataframe(), model)
 
     shards = {}
     for path, df in dfs.items():
@@ -187,7 +186,7 @@ def compute_embeddings(
 
 
 @retry(wait=wait_exponential(multiplier=1, min=2, max=10), stop=stop_after_attempt(5))
-async def compute_df_embeddings_async(df: pd.DataFrame, embedding_model, features: List[str]) -> pd.DataFrame:
+async def compute_df_embeddings_async(df: pd.DataFrame, embedding_model) -> pd.DataFrame:
     try:
         # Embed entities in batch mode
         combined_texts = df["input"].tolist()
