@@ -25,7 +25,7 @@ def create_pipeline(**kwargs) -> Pipeline:
             ),
             # Sample embeddings for modelling pipeline
             node(
-                func=lambda x: x,
+                func=nodes.reduce_embeddings,
                 inputs=["embeddings.feat.nodes_in", "integration.prm.filtered_nodes"],
                 outputs="embeddings.feat.nodes",
             ),

@@ -1,14 +1,38 @@
+_spark_parquet_ds: &_spark_parquet
+  type: matrix.datasets.gcp.LazySparkDataset
+  file_format: parquet
+  load_args:
+    header: True
+  save_args:
+    mode: overwrite
+
+_spark_csv: &_spark_csv
+  type: spark.SparkDataset
+  file_format: csv
+  load_args:
+    header: True
+    sep: "\t"
+  save_args:
+    header: True
+    sep: "\t"
+    mode: overwrite
+
 integration.prm.filtered_edges:
+  <<: *_spark_parquet
   filepath: ${globals:paths.raw}/samples/filtered_edges
 
 integration.prm.filtered_nodes:
+  <<: *_spark_parquet
   filepath: ${globals:paths.raw}/samples/filtered_nodes
 
 embeddings.feat.nodes:
+  <<: *_spark_parquet
   filepath: ${globals:paths.raw}/samples/feat_nodes
 
 modelling.raw.ground_truth.positives@spark:
+  <<: *_spark_csv
   filepath: ${globals:paths.raw}/samples/tp_pairs_conflated.tsv
 
 modelling.raw.ground_truth.negatives@spark:
+  <<: *_spark_csv
   filepath: ${globals:paths.raw}/samples/tn_pairs_conflated.tsv
