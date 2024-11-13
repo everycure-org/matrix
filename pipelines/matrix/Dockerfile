@@ -17,13 +17,14 @@ ENV PIP_NO_CACHE_DIR=1
 
 WORKDIR /app
 ADD requirements.txt .
+ADD pyg-requirements.txt .
 RUN --mount=type=cache,target=/root/.cache pip install -U uv
 
 # Install Python dependencies
 ADD packages/ ./packages/
 RUN --mount=type=cache,target=/root/.cache uv venv
 RUN --mount=type=cache,target=/root/.cache uv pip install -r requirements.txt
-RUN --mount=type=cache,target=/root/.cache uv pip install --no-build-isolation torch_scatter pyg_lib torch_sparse torch_cluster --find-links https://data.pyg.org/whl/torch-2.4.0+cpu.html
+RUN --mount=type=cache,target=/root/.cache uv pip install --no-build-isolation -r pyg-requirements.txt
 ENV PATH=/app/.venv/bin:$PATH
 
 # Cache drivers as part of image
