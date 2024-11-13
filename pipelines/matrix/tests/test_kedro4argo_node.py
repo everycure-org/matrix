@@ -151,6 +151,44 @@ def test_serialization(values, expected):
     assert config.model_dump() == expected
 
 
+def test_equal_configs():
+    """Test that identical configurations are considered equal."""
+    config1 = ArgoResourceConfig(
+        num_gpus=1,
+        cpu_request=2,
+        cpu_limit=4,
+        memory_request=8,
+        memory_limit=16,
+    )
+    config2 = ArgoResourceConfig(
+        num_gpus=1,
+        cpu_request=2,
+        cpu_limit=4,
+        memory_request=8,
+        memory_limit=16,
+    )
+    assert config1 == config2
+
+
+def test_unequal_configs():
+    """Test that different configurations are not considered equal."""
+    config1 = ArgoResourceConfig(
+        num_gpus=1,
+        cpu_request=2,
+        cpu_limit=4,
+        memory_request=8,
+        memory_limit=16,
+    )
+    config2 = ArgoResourceConfig(
+        num_gpus=2,  # Different GPU count
+        cpu_request=2,
+        cpu_limit=4,
+        memory_request=8,
+        memory_limit=16,
+    )
+    assert config1 != config2
+
+
 def get_parametrized_node(node_class: Node) -> Node:
     def dummy_func(x: int) -> int:
         return 2 * x
