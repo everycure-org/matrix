@@ -6,7 +6,7 @@ from jinja2 import Environment, FileSystemLoader
 from kedro.pipeline import Pipeline
 from kedro.pipeline.node import Node
 
-from matrix.kedro4argo_node import ArgoNode
+from matrix.kedro4argo_node import ArgoNode, ArgoResourceConfig
 
 ARGO_TEMPLATE_FILE = "argo_wf_spec.tmpl"
 ARGO_TEMPLATES_DIR_PATH = Path(__file__).parent.parent.parent / "templates"
@@ -20,7 +20,7 @@ def generate_argo_config(
     username: str,
     pipelines: Dict[str, Pipeline],
     package_name: str,
-    num_gpus: int,
+    default_execution_resources: ArgoResourceConfig,
 ) -> str:
     loader = FileSystemLoader(searchpath=ARGO_TEMPLATES_DIR_PATH)
     template_env = Environment(loader=loader, trim_blocks=True, lstrip_blocks=True)
@@ -42,7 +42,7 @@ def generate_argo_config(
         namespace=namespace,
         username=username,
         run_name=run_name,
-        num_gpus=num_gpus,
+        default_execution_resources=default_execution_resources,
     )
 
     return output
