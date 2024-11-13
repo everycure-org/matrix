@@ -1,5 +1,4 @@
-from typing import Dict
-from click import Tuple
+from typing import Dict, Tuple
 from kedro.pipeline.node import Node
 from kedro.pipeline import Pipeline
 import pytest
@@ -504,7 +503,7 @@ def get_argo_config(argo_default_resources: ArgoResourceConfig) -> Tuple[Dict, D
     ],
 )
 def test_argo_template_config(argo_default_resources: ArgoResourceConfig) -> None:
-    argo_config = get_argo_config(argo_default_resources)
+    argo_config, pipelines = get_argo_config(argo_default_resources)
     spec = argo_config["spec"]
 
     # Verify kedro template
@@ -550,14 +549,21 @@ def test_argo_template_config(argo_default_resources: ArgoResourceConfig) -> Non
     # Verify pipeline_one template
     pipeline_one_template = next(t for t in templates if t["name"] == "pipeline_one")
     assert "dag" in pipeline_one_template
-    assert len(pipeline_one_template["dag"]["tasks"]) == 2
+    assert len(pipeline_one_template["dag"]["tasks"]) == len(pipelines["pipeline_one"].nodes)
     assert pipeline_one_template["dag"]["tasks"][0]["name"] == "simple-node-p1-1"
     assert pipeline_one_template["dag"]["tasks"][0]["template"] == "kedro"
     assert pipeline_one_template["dag"]["tasks"][1]["name"] == "simple-node-p1-2"
+    assert pipeline_one_template["dag"]["tasks"][1]["template"] == "kedro"
+
+    assert (
+        pipeline_one_template["dag"]["tasks"][0]["resources"]
+        == pipelines["pipeline_one"].nodes[0].argo_config.model_dump()
+    )
+    assert "resources" not in pipeline_one_template["dag"]["tasks"][1]
 
     # Verify pipeline_two template
     pipeline_two_template = next(t for t in templates if t["name"] == "pipeline_two")
     assert "dag" in pipeline_two_template
-    assert len(pipeline_two_template["dag"]["tasks"]) == 1
+    assert len(pipeline_two_template["dag"]["tasks"]) == len(pipelines["pipeline_two"].nodes)
     assert pipeline_two_template["dag"]["tasks"][0]["name"] == "simple-node-p2-1"
     assert pipeline_two_template["dag"]["tasks"][0]["template"] == "kedro"
