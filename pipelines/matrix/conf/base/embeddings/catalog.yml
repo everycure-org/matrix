@@ -82,9 +82,13 @@ embeddings.model_output.graphsage:
     partitions: 16 # Should increase parallelism
     labels: ":Entity" # avoids query which drastically increases performance
 
-embeddings.feat.nodes:
+embeddings.feat.nodes: &_feat_nodes
   <<: *_spark_parquet
   filepath: ${globals:paths.embeddings}/feat/nodes_with_embeddings
+
+embeddings.feat.nodes_in: 
+  # NOTE: This catalog entry is a copy, to enable subsampling of the dataset by the sample pipeline
+  <<: *_feat_nodes
 
 embeddings.reporting.loss:
   type: kedro_datasets.matplotlib.MatplotlibWriter

@@ -66,9 +66,13 @@ integration.prm.unified_nodes:
   filepath: ${globals:paths.integration}/prm/unified/nodes
 
 # filtered KGs
-integration.prm.filtered_edges:
+integration.prm.filtered_edges: &_filtered_edges
   <<: [*_spark_parquet, *_layer_prm]
   filepath: ${globals:paths.integration}/prm/filtered/edges
+
+integration.prm.filtered_edges_in: 
+  # NOTE: This catalog entry is a copy, to enable subsampling of the dataset by the sample pipeline
+  <<: *_filtered_edges
 
 # FUTURE more elegant: Apply all node filters, then all edge filters, then a "cleanup" final step that removes
 # 1. all edges where nodes were deleted
@@ -77,6 +81,10 @@ integration.prm.prefiltered_nodes:
   <<: [*_spark_parquet, *_layer_prm]
   filepath: ${globals:paths.integration}/prm/prefiltered/nodes
 
-integration.prm.filtered_nodes:
+integration.prm.filtered_nodes: &_filtered_nodes
   <<: [*_spark_parquet, *_layer_prm]
   filepath: ${globals:paths.integration}/prm/filtered/nodes
+
+integration.prm.filtered_nodes_in:
+  # NOTE: This catalog entry is a copy, to enable subsampling of the dataset by the sample pipeline
+  <<: *_filtered_nodes
