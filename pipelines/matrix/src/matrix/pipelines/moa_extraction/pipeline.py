@@ -26,13 +26,6 @@ def _preprocessing_pipeline() -> Pipeline:
             #     name="get_one_hot_encodings",
             #     tags="moa_extraction.preprocessing",
             # ),
-            # node(
-            #     func=embeddings_nodes.ingest_nodes,
-            #     inputs=["integration.prm.filtered_nodes"],
-            #     outputs="moa_extraction.input_nodes",  # .{num_hops}_hop",
-            #     name="moa_extraction_ingest_neo4j_input_nodes",  # _{num_hops}_hop",
-            #     tags=["neo4j"],
-            # ),
         ],
     )
     preprocessing_strands_lst = []
@@ -47,13 +40,13 @@ def _preprocessing_pipeline() -> Pipeline:
                         name=f"moa_extraction_ingest_neo4j_input_nodes_{num_hops}_hop",
                         tags=["neo4j"],
                     ),
-                    # node(
-                    #     func=embeddings_nodes.ingest_edges,
-                    #     inputs=["moa_extraction.input_nodes.{num_hops}_hop", "integration.prm.filtered_edges"],
-                    #     outputs=f"moa_extraction.input_edges.{num_hops}_hop",
-                    #     name=f"ingest_neo4j_input_edges_{num_hops}_hop",
-                    #     tags=["neo4j"],
-                    # ),
+                    node(
+                        func=embeddings_nodes.ingest_edges,
+                        inputs=[f"moa_extraction.input_nodes.{num_hops}_hop", "integration.prm.filtered_edges"],
+                        outputs=f"moa_extraction.input_edges.{num_hops}_hop",
+                        name=f"ingest_neo4j_input_edges_{num_hops}_hop",
+                        tags=["neo4j"],
+                    ),
                     node(
                         func=nodes.add_tags,
                         inputs={
