@@ -426,9 +426,9 @@ def get_argo_config(argo_default_resources: ArgoResourceConfig) -> Tuple[Dict, D
                     outputs="dataset_c",
                     name="simple_node_p1_1",
                     argo_config=ArgoResourceConfig(
-                        num_gpus=0,
+                        num_gpus=1,
                         cpu_request=4,
-                        cpu_limit=8,
+                        cpu_limit=7,
                         memory_request=16,
                         memory_limit=32,
                     ),
@@ -449,11 +449,11 @@ def get_argo_config(argo_default_resources: ArgoResourceConfig) -> Tuple[Dict, D
                     outputs="dataset_b",
                     name="simple_node_p2_1",
                     argo_config=ArgoResourceConfig(
-                        num_gpus=1,
+                        num_gpus=0,
                         cpu_request=4,
-                        cpu_limit=7,
-                        memory_request=16,
-                        memory_limit=32,
+                        cpu_limit=16,
+                        memory_request=64,
+                        memory_limit=64,
                     ),
                 )
             ]
@@ -519,12 +519,28 @@ def test_get_pipeline2dependencies(argo_default_resources: ArgoResourceConfig) -
     assert pipeline2dependencies["pipeline_one"][1]["nodes"] == "simple_node_p1_2"
     assert pipeline2dependencies["pipeline_one"][0]["tags"] == set()
     assert pipeline2dependencies["pipeline_one"][1]["tags"] == set()
+    assert pipeline2dependencies["pipeline_one"][0]["resources"] == {
+        "cpu_limit": 8,
+        "cpu_request": 4,
+        "memory_limit": "32Gi",
+        "memory_request": "16Gi",
+        "num_gpus": 1,
+    }
+    # no explicit resources defined for the second node
+    assert "resources" not in pipeline2dependencies["pipeline_one"][1]
 
     assert len(pipeline2dependencies["pipeline_two"]) == 1
     assert pipeline2dependencies["pipeline_two"][0]["name"] == "simple-node-p2-1"
     assert pipeline2dependencies["pipeline_two"][0]["deps"] == []
     assert pipeline2dependencies["pipeline_two"][0]["nodes"] == "simple_node_p2_1"
     assert pipeline2dependencies["pipeline_two"][0]["tags"] == set()
+    assert pipeline2dependencies["pipeline_two"][0]["resources"] == {
+        "cpu_limit": 7,
+        "cpu_request": 4,
+        "memory_limit": "64Gi",
+        "memory_request": "16Gi",
+        "num_gpus": 1,
+    }
 
 
 @pytest.mark.parametrize(
