@@ -555,12 +555,18 @@ def test_argo_template_config(argo_default_resources: ArgoResourceConfig) -> Non
     assert pipeline_one_template["dag"]["tasks"][1]["name"] == "simple-node-p1-2"
     assert pipeline_one_template["dag"]["tasks"][1]["template"] == "kedro"
 
-    assert (
-        pipeline_one_template["dag"]["tasks"][0]["container"]["resources"]
-        == pipelines["pipeline_one"].nodes[0].argo_config.model_dump()
-    )
+    assert "container" in pipeline_one_template["dag"]["tasks"][0]
+    assert "resources" in pipeline_one_template["dag"]["tasks"][0]["container"]
+    resources_p1_1 = pipeline_one_template["dag"]["tasks"][0]["container"]["resources"]
+    actual_resources_p1_1 = pipelines["pipeline_one"].nodes[0].argo_config.model_dump()
+    assert resources_p1_1["requests"]["memory"] == actual_resources_p1_1["memory_request"]
+    assert resources_p1_1["requests"]["cpu"] == actual_resources_p1_1["cpu_request"]
+    assert resources_p1_1["requests"]["nvidia.com/gpu"] == actual_resources_p1_1["num_gpus"]
+    assert resources_p1_1["limits"]["memory"] == actual_resources_p1_1["memory_limit"]
+    assert resources_p1_1["limits"]["cpu"] == actual_resources_p1_1["cpu_limit"]
+    assert resources_p1_1["limits"]["nvidia.com/gpu"] == actual_resources_p1_1["num_gpus"]
+
     assert "container" not in pipeline_one_template["dag"]["tasks"][1]
-    assert "resources" not in pipeline_one_template["dag"]["tasks"][1]
 
     # Verify pipeline_two template
     pipeline_two_template = next(t for t in templates if t["name"] == "pipeline_two")
