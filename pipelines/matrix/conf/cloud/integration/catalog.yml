@@ -1,25 +1,24 @@
 _bigquery_ds: &_bigquery_ds
   type: matrix.datasets.gcp.BigQueryTableDataset
   project_id: ${oc.env:GCP_PROJECT_ID}
+  dataset: release_${globals:versions.release}
+  file_format: parquet
+  save_args:
+    mode: overwrite
+    labels:
+      git_sha: ${globals:git_sha}
 
 # -------------------------------------------------------------------------
 # Datasets
 # -------------------------------------------------------------------------
 
 # overwriting the base catalog to use the bigquery datasets
-data_release.prm.bigquery_nodes:
+integration.prm.filtered_nodes:
   <<: *_bigquery_ds
-  dataset: release_${globals:versions.release}
+  filepath: ${globals:paths.integration}/prm/filtered/nodes
   table: nodes
-  save_args: 
-    temporaryGcsBucket: ${globals:gcs_bucket}
-    bigQueryTableLabel.kg: everycure
-    bigQueryTableLabel.git_sha: ${globals:git_sha}
 
-data_release.prm.bigquery_edges:
+integration.prm.filtered_edges:
   <<: *_bigquery_ds
-  dataset: release_${globals:versions.release}
+  filepath: ${globals:paths.integration}/prm/filtered/edges
   table: edges
-  save_args: 
-    temporaryGcsBucket: ${globals:gcs_bucket}
-    bigQueryTableLabel.kg: everycure
