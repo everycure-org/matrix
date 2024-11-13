@@ -44,8 +44,9 @@ def cli():
 @click.option("--verbose", "-v", is_flag=True, default=True, help="Enable verbose output")
 @click.option("--dry-run", "-d", is_flag=True, default=False, help="Does everything except submit the workflow")
 @click.option("--from-nodes", type=str, default="", help="Specify nodes to run from", callback=split_string)
+@click.option("--is-test", is_flag=True, default=False, help="Submit to test folder")
 # fmt: on
-def submit(username: str, namespace: str, run_name: str, pipeline: str, from_nodes: List[str], verbose: bool, dry_run: bool):
+def submit(username: str, namespace: str, run_name: str, pipeline: str, from_nodes: List[str], verbose: bool, dry_run: bool, is_test: bool):
     """Submit the end-to-end workflow. """
     if verbose:
         log.setLevel(logging.DEBUG)
@@ -75,6 +76,7 @@ def submit(username: str, namespace: str, run_name: str, pipeline: str, from_nod
         verbose=verbose,
         dry_run=dry_run,
         template_directory=ARGO_TEMPLATES_DIR_PATH,
+        is_test=is_test,
     )
 
 
@@ -88,6 +90,7 @@ def _submit(
         dry_run: bool, 
         template_directory: Path,
         allow_interactions: bool = True,
+        is_test: bool = False,
     ) -> None:
     """Submit the end-to-end workflow.
 
@@ -112,6 +115,7 @@ def _submit(
         dry_run (bool): If True, do not submit the workflow.
         template_directory (Path): The directory containing the Argo template.
         allow_interactions (bool): If True, allow prompts for confirmation
+        is_test (bool): If True, submit to test folder, not release folder
     """
     
     try:
@@ -126,7 +130,7 @@ def _submit(
         console.print("[green]✓[/green] Docker image built and pushed")
 
         console.print("Building Argo template...")
-        argo_template = build_argo_template(run_name, username, namespace, pipeline_name, pipeline)
+        argo_template = build_argo_template(run_name, username, namespace, pipeline_name, pipeline, is_test=is_test)
         console.print("[green]✓[/green] Argo template built")
 
         console.print("Writing Argo template...")
@@ -293,13 +297,18 @@ def build_push_docker(username: str, verbose: bool):
     run_subprocess(f"make docker_push TAG={username}", stream_output=verbose)
 
 
-def build_argo_template(run_name: str, username: str, namespace: str, pipeline_name: str, pipeline: Pipeline) -> str:
+def build_argo_template(run_name: str, username: str, namespace: str, pipeline_name: str, pipeline: Pipeline, is_test: bool) -> str:
     """Build Argo workflow template."""
     image_name = "us-central1-docker.pkg.dev/mtrx-hub-dev-3of/matrix-images/matrix"
 
     matrix_root = Path(__file__).parent.parent.parent.parent
     metadata = bootstrap_project(matrix_root)
     package_name = metadata.package_name
+
+    if is_test:
+        release_folder_name = "tests"
+    else:
+        release_folder_name = "releases"
 
     return generate_argo_config(
         image=image_name,
@@ -309,7 +318,8 @@ def build_argo_template(run_name: str, username: str, namespace: str, pipeline_n
         username=username,
         pipeline_name=pipeline_name,
         pipeline=pipeline,
-        package_name=package_name
+        package_name=package_name,
+        release_folder_name=release_folder_name,
     )
 
 def save_argo_template(argo_template: str, template_directory: Path) -> str:

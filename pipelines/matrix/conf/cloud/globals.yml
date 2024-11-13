@@ -1,26 +1,31 @@
 run_name: ${oc.env:RUN_NAME}
 
 versions:
-  release: v0.2.4-rc.1
+  release: v0.2.4-rc.2
   
 gcs_bucket: gs://${oc.env:GCP_BUCKET}
 gcp_project: ${oc.env:GCP_PROJECT_ID}
+
+release_folder_name: ${oc.env:RELEASE_FOLDER_NAME, releases}
+# NOTE if you're submitting to the cloud, 
+root_dir: ${gcs_bucket}/kedro/data/${release_folder_name}/${versions.release}
+# root_dir: ${gcs_bucket}/kedro/data/tests/${versions.release}
 
 # NOTE: MLflow does not like "new options" in the mlflow.yml
 # due to schema validation.
 mlflow_artifact_root: ${gcs_bucket}/runs/${run_name}/mlflow
 
 paths:
-  raw:                gs://mtrx-us-central1-hub-dev-storage/kedro/data/01_raw
+  raw:                ${gcs_bucket}/kedro/data/01_raw
   kg_raw:             ${gcs_bucket}/data/01_RAW
 
   # Release-based
-  ingestion:          ${gcs_bucket}/kedro/data/releases/${versions.release}/datasets/ingestion
-  integration:        ${gcs_bucket}/kedro/data/releases/${versions.release}/datasets/integration
-  embeddings:         ${gcs_bucket}/kedro/data/releases/${versions.release}/datasets/embeddings
+  ingestion:          ${root_dir}/datasets/ingestion
+  integration:        ${root_dir}/datasets/integration
+  embeddings:         ${root_dir}/datasets/embeddings
 
   # Run-based
-  modelling:          ${gcs_bucket}/kedro/data/releases/${versions.release}/runs/${run_name}/datasets/modelling
-  evaluation:         ${gcs_bucket}/kedro/data/releases/${versions.release}/runs/${run_name}/datasets/evaluation
-  matrix_generation:  ${gcs_bucket}/kedro/data/releases/${versions.release}/runs/${run_name}/datasets/matrix_generation
-  inference:          ${gcs_bucket}/kedro/data/releases/${versions.release}/runs/${run_name}/datasets/inference
+  modelling:          ${root_dir}/datasets/modelling
+  evaluation:         ${root_dir}/datasets/evaluation
+  matrix_generation:  ${root_dir}/datasets/matrix_generation
+  inference:          ${root_dir}/datasets/inference
