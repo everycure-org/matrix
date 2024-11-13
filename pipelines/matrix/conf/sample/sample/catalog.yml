@@ -36,3 +36,6 @@ modelling.raw.ground_truth.positives@spark:
 modelling.raw.ground_truth.negatives@spark:
   <<: *_spark_csv
   filepath: ${globals:paths.raw}/samples/tn_pairs_conflated.tsv
+
+
+# FUTURE: Clinical trails, drug and disease lists
