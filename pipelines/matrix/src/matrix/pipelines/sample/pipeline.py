@@ -14,6 +14,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                     "gt_negatives": "modelling.raw.ground_truth_in.negatives@spark",
                     "nodes": "integration.prm.filtered_nodes_in",
                     "edges": "integration.prm.filtered_edges_in",
+                    "unpack": "params:sampling.configuration",
                 },
                 outputs={
                     "gt_positives": "modelling.raw.ground_truth.positives@spark",

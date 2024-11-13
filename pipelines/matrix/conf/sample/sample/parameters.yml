@@ -1,0 +1,4 @@
+sampling.configuration:
+  gt_fraction: 0.05
+  nodes_fraction: 0.01
+  edges_fraction: 1

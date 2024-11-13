@@ -4,16 +4,22 @@ from typing import Tuple
 
 import pyspark.sql.functions as F
 
+from refit.v1.core.unpack import unpack_params
 
+
+@unpack_params()
 def sample(
     gt_positives: pd.DataFrame,
     gt_negatives: pd.DataFrame,
     nodes: DataFrame,
     edges: DataFrame,
+    gt_fraction: float,
+    nodes_fraction: float,
+    edges_fraction: float,
 ) -> Tuple[DataFrame, DataFrame]:
     """Function to sample datasets.
 
-    Sampling is currently performed by sampling ground truth data, and grabbing
+    Sampling is currently performed by sampling ground truth GT data, and grabbing
     a subset of nodes N that contains the ground truth subset. Edges are thereafter
     restricted to edges that connect nodes in N, and a fraction of those edges is sampled.
 
@@ -22,6 +28,9 @@ def sample(
         gt_negatives: gt negatives
         nodes: nodes df
         edges: edges df
+        gt_fraction: fraction of gt to retain
+        nodes_fraction: fraction of nodes to retain
+        edges_fraction: fraction of edges to retain
     Returns:
         Filtered artifacts
     """
@@ -35,11 +44,11 @@ def sample(
         return df.withColumn(column, F.col("id")).select(column)
 
     # Sample GT
-    gt_positives_sample = gt_positives.sample(fraction=0.05, withReplacement=False, seed=123)
-    gt_negatives_sample = gt_negatives.sample(fraction=0.05, withReplacement=False, seed=123)
+    gt_positives_sample = gt_positives.sample(fraction=gt_fraction, withReplacement=False, seed=123)
+    gt_negatives_sample = gt_negatives.sample(fraction=gt_fraction, withReplacement=False, seed=123)
 
     # Sample additional nodes
-    nodes_sample = nodes.sample(fraction=0.1, withReplacement=False, seed=123).select("id")
+    nodes_sample = nodes.sample(fraction=nodes_fraction, withReplacement=False, seed=123).select("id")
 
     # Construct node selection
     node_selection = (
@@ -50,10 +59,12 @@ def sample(
     )
 
     # Construct edge selection
+    # Limit edge DF to edges that connect nodes in the subset, and
+    # take fraction.
     edge_selection = (
         edges.join(_make_joinable(node_selection, column="subject"), on="subject")
         .join(_make_joinable(node_selection, column="object"), on="object")
-        .sample(fraction=0.05, withReplacement=False, seed=123)
+        .sample(fraction=edges_fraction, withReplacement=False, seed=123)
     )
 
     return {
