@@ -17,7 +17,7 @@ moa_extraction.raw.drugmechdb_entities:
   type: pandas.ParquetDataset
   filepath: ${globals:paths.raw}/moa_extraction/drugmechdb_entities/drugmechdb_entities.parquet
 
-# Neo4j datasets
+# Neo4j databases
 
 "moa_extraction.input_nodes.{num_hops}_hop":
   type: matrix.datasets.neo4j.Neo4JSparkDataset

@@ -1,6 +1,10 @@
 moa_extraction:
-  gdb:
-    database: everycure-${globals:versions.release}
+  # Note: We need to use the same database name as is set in catalog.yml
+  gdb_two_hop: 
+    database: test-analytics-two-hop
+  gdb_three_hop: 
+    database: test-analytics-three-hop
+
 
   tagging_options:
     drug_types:
