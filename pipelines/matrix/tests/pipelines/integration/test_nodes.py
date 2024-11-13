@@ -5,6 +5,7 @@ from jsonpath_ng.parser import parse
 from matrix.pipelines.integration import nodes
 from matrix.schemas.knowledge_graph import KGEdgeSchema, KGNodeSchema
 from pyspark.sql import DataFrame
+from pyspark.sql import functions as F
 from pyspark.sql.types import (
     ArrayType,
     StringType,
@@ -178,16 +179,59 @@ def nodenorm_response() -> Dict[str, Any]:
     }
 
 
+@pytest.fixture
+def sample_biolink_category_hierarchy():
+    """
+    Returns a simplified subset of the biolink category hierarchy focusing on test-relevant categories.
+    """
+    return [
+        {
+            "name": "NamedThing",
+            "children": [
+                {
+                    "name": "chemical_entity",
+                    "parent": "NamedThing",
+                    "children": [
+                        {
+                            "name": "molecular_mixture",
+                            "parent": "chemical_entity",
+                            "children": [{"name": "Drug", "parent": "molecular_mixture"}],
+                        }
+                    ],
+                },
+                {
+                    "name": "biological_entity",
+                    "parent": "NamedThing",
+                    "children": [
+                        {
+                            "name": "disease_or_phenotypic_feature",
+                            "parent": "biological_entity",
+                            "children": [{"name": "Disease", "parent": "disease_or_phenotypic_feature"}],
+                        }
+                    ],
+                },
+                {
+                    "name": "molecular_entity",
+                    "parent": "NamedThing",
+                    "children": [{"name": "SmallMolecule", "parent": "molecular_entity"}],
+                },
+            ],
+        }
+    ]
+
+
 @pytest.mark.spark(
     help="This test relies on PYSPARK_PYTHON to be set appropriately, and sometimes does not work in VSCode"
 )
-def test_unify_nodes(spark, sample_nodes):
+def test_unify_nodes(spark, sample_nodes, sample_biolink_category_hierarchy):
     # Create two node datasets
     nodes1 = sample_nodes.filter(sample_nodes.id != "MONDO:0005148")
     nodes2 = sample_nodes.filter(sample_nodes.id != "CHEBI:119157")
 
     # Call the unify_nodes function
-    result = nodes.union_and_deduplicate_nodes(["nodes1", "nodes2"], nodes1=nodes1, nodes2=nodes2)
+    result = nodes.union_and_deduplicate_nodes(
+        ["nodes1", "nodes2"], sample_biolink_category_hierarchy, nodes1=nodes1, nodes2=nodes2
+    )
 
     # Check the result
     assert isinstance(result, DataFrame)
@@ -199,6 +243,23 @@ def test_unify_nodes(spark, sample_nodes):
     assert set(drug_node.all_categories) == {"biolink:Drug", "biolink:ChemicalSubstance", "biolink:SmallMolecule"}
     assert set(drug_node.publications) == {"PMID:12345678", "PMID:34567890"}
     assert set(drug_node.upstream_data_source) == {"source1", "source3"}
+
+
+@pytest.mark.spark(
+    help="This test relies on PYSPARK_PYTHON to be set appropriately, and sometimes does not work in VSCode"
+)
+def test_correctly_identified_categories(spark, sample_nodes, sample_biolink_category_hierarchy):
+    # Given: two node datasets
+    nodes1 = sample_nodes
+    nodes2 = sample_nodes.withColumn("category", F.lit("biolink:NamedThing"))
+
+    # When: unifying the two datasets, putting nodes2 first -> meaning within each group, "first()" grabs the NamedThing
+    result = nodes.union_and_deduplicate_nodes(
+        ["nodes2", "nodes1"], sample_biolink_category_hierarchy, nodes1=nodes1, nodes2=nodes2
+    )
+
+    # Then: the most specific category is correctly identified
+    assert result.filter(F.col("category") == "biolink:NamedThing").count() == 0
 
 
 @pytest.mark.spark(

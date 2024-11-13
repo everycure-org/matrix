@@ -84,6 +84,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 inputs={
                     "datasets_to_union": "params:integration.unification.datasets_to_union",
                     "rtx": "integration.int.rtx.nodes.norm",
+                    "biolink_categories_df": "integration.raw.biolink.categories",
                     "robokop": "integration.int.robokop.nodes.norm",
                     "medical_team": "ingestion.int.ec_medical_team.nodes",
                 },

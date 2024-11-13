@@ -20,7 +20,8 @@ from tenacity import (
 )
 from tqdm.asyncio import tqdm_asyncio
 
-from matrix.schemas.knowledge_graph import KGEdgeSchema, KGNodeSchema
+from matrix.pipelines.integration.filters import determine_most_specific_category
+from matrix.schemas.knowledge_graph import KGEdgeSchema, KGNodeSchema, cols_for_schema
 
 # TODO move these into config
 memory = Memory(location=".cache/nodenorm", verbose=0)
@@ -30,26 +31,38 @@ logger = logging.getLogger(__name__)
 @pa.check_output(KGEdgeSchema)
 def union_and_deduplicate_edges(datasets_to_union: List[str], biolink_predicates: Dict[str, Any], **edges) -> DataFrame:
     """Function to unify edges datasets."""
-    return _union_datasets(
-        datasets_to_union,
-        schema_group_by_id=KGEdgeSchema.group_edges_by_id,
-        **edges,
+    # fmt: off
+    return (
+        _union_datasets(datasets_to_union, **edges)
+        .transform(KGEdgeSchema.group_edges_by_id)
     )
+    # fmt: on
 
 
 @pa.check_output(KGNodeSchema)
-def union_and_deduplicate_nodes(datasets_to_union: List[str], **nodes) -> DataFrame:
+def union_and_deduplicate_nodes(
+    datasets_to_union: List[str], biolink_categories_df: pd.DataFrame, **nodes
+) -> DataFrame:
     """Function to unify nodes datasets."""
-    return _union_datasets(
-        datasets_to_union,
-        schema_group_by_id=KGNodeSchema.group_nodes_by_id,
-        **nodes,
+
+    # fmt: off
+    return (
+        _union_datasets(datasets_to_union, **nodes)
+
+        # first we group the dataset by id to deduplicate
+        .transform(KGNodeSchema.group_nodes_by_id)
+
+        # next we need to apply a number of transformations to the nodes to ensure grouping by id did not select wrong information
+        .transform(determine_most_specific_category, biolink_categories_df)
+
+        # finally we select the columns that we want to keep
+        .select(*cols_for_schema(KGNodeSchema))
     )
+    # fmt: on
 
 
 def _union_datasets(
     datasets_to_union: List[str],
-    schema_group_by_id: Callable[[DataFrame], DataFrame],
     **datasets: DataFrame,
 ) -> DataFrame:
     """
@@ -64,8 +77,7 @@ def _union_datasets(
         A unified and deduplicated DataFrame.
     """
     selected_dfs = [datasets[name] for name in datasets_to_union if name in datasets]
-    union = reduce(partial(DataFrame.unionByName, allowMissingColumns=True), selected_dfs)
-    return schema_group_by_id(union)
+    return reduce(partial(DataFrame.unionByName, allowMissingColumns=True), selected_dfs)
 
 
 def _apply_transformations(

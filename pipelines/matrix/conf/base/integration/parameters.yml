@@ -54,4 +54,4 @@ integration:
       filter_biolink_edges:
         object: matrix.pipelines.modelling.utils.partial_
         func:
-          object: matrix.pipelines.integration.filters.biolink_deduplicate
+          object: matrix.pipelines.integration.filters.biolink_deduplicate_edges
