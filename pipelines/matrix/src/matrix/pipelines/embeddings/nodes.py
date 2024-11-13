@@ -1,5 +1,4 @@
 import logging
-import asyncio
 from typing import Any, Dict, List
 
 import matplotlib.pyplot as plt
@@ -18,6 +17,7 @@ from refit.v1.core.inline_has_schema import has_schema
 from refit.v1.core.inline_primary_key import primary_key
 from refit.v1.core.unpack import unpack_params
 
+from tenacity import retry, wait_exponential, stop_after_attempt
 
 from .graph_algorithms import GDSGraphAlgorithm
 
@@ -116,11 +116,7 @@ def ingest_nodes(df: DataFrame) -> DataFrame:
     )
 
 
-def bucketize_nodes(
-    df: DataFrame,
-    attributes: str,
-    bucket_size: int = 100,
-):
+def bucketize_nodes(df: DataFrame, bucket_size: int, features: int):
     """Function to bucketize input dataframe.
 
     Args:
@@ -130,7 +126,7 @@ def bucketize_nodes(
     """
 
     # Retrieve number of elements
-    num_elements = df.limit(100000).count()
+    num_elements = df.limit(50000).count()
     num_buckets = (num_elements + bucket_size - 1) // bucket_size
 
     # Construct df to bucketize
@@ -146,7 +142,14 @@ def bucketize_nodes(
     return (
         df.withColumn("row_num", F.row_number().over(Window.orderBy("id")))
         .join(buckets, on=[(F.col("row_num") >= (F.col("min_range"))) & (F.col("row_num") < F.col("max_range"))])
-        .select("id", *attributes, "bucket")
+        # Concat input
+        .withColumn(
+            "input",
+            F.concat(*[F.coalesce(F.col(feature), F.lit("")) for feature in features]),
+        )
+        # Clip max. length
+        .withColumn("input", F.substring(F.col("input"), 1, 100))  # TODO: Update length
+        .select("id", "input", "bucket")
     )
 
 
@@ -168,7 +171,7 @@ def compute_embeddings(
     # the dataframe, therefore leading to only the latest shard
     # being processed n times.
     def _func(dataframe: pd.DataFrame):
-        return lambda: compute_df_embeddings(dataframe(), model, features)
+        return lambda: compute_df_embeddings_async(dataframe(), model, features)
 
     shards = {}
     for path, df in dfs.items():
@@ -183,21 +186,18 @@ def compute_embeddings(
     return shards
 
 
-def compute_df_embeddings(df: pd.DataFrame, embedding_model, features: List[str]) -> pd.DataFrame:
-    # Run the asynchronous function within a synchronous context
-    return asyncio.run(compute_df_embeddings_async(df, embedding_model, features))
-
-
+@retry(wait=wait_exponential(multiplier=1, min=2, max=10), stop=stop_after_attempt(5))
 async def compute_df_embeddings_async(df: pd.DataFrame, embedding_model, features: List[str]) -> pd.DataFrame:
-    # Concatinate input features
-    df["combined_text"] = df[features].apply(lambda row: " ".join(row.values.astype(str)), axis=1)
-
-    # Embed entities in batch mode
-    combined_texts = df["combined_text"].tolist()
-    df["embedding"] = await embedding_model.aembed_documents(combined_texts)
+    try:
+        # Embed entities in batch mode
+        combined_texts = df["input"].tolist()
+        df["embedding"] = await embedding_model.aembed_documents(combined_texts)
+    except Exception as e:
+        print(f"Exception occurred: {e}")
+        raise
 
     # Drop added column
-    df = df.drop(columns=["combined_text"])
+    df = df.drop(columns=["input"])
     return df
 
 
