@@ -20,7 +20,7 @@ def generate_argo_config(
     username: str,
     pipelines: Dict[str, Pipeline],
     package_name: str,
-    default_execution_resources: ArgoResourceConfig,
+    default_execution_resources: ArgoResourceConfig = ArgoResourceConfig(),
 ) -> str:
     loader = FileSystemLoader(searchpath=ARGO_TEMPLATES_DIR_PATH)
     template_env = Environment(loader=loader, trim_blocks=True, lstrip_blocks=True)
@@ -42,7 +42,7 @@ def generate_argo_config(
         namespace=namespace,
         username=username,
         run_name=run_name,
-        default_execution_resources=default_execution_resources,
+        default_execution_resources=default_execution_resources.model_dump(),
     )
 
     return output

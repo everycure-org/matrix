@@ -23,6 +23,8 @@ from matrix.cli_commands.submit import (
 )
 import subprocess
 
+from matrix.kedro4argo_node import ArgoResourceConfig
+
 
 @pytest.fixture
 def mock_run_subprocess():
@@ -262,7 +264,7 @@ def test_build_push_docker(mock_run_subprocess: None) -> None:
 
 @patch("matrix.cli_commands.submit.generate_argo_config")
 def test_build_argo_template(mock_generate_argo_config: None) -> None:
-    build_argo_template("test_run", "testuser", "test_namespace", {"test": MagicMock()})
+    build_argo_template("test_run", "testuser", "test_namespace", {"test": MagicMock()}, ArgoResourceConfig())
     mock_generate_argo_config.assert_called_once()
 
 

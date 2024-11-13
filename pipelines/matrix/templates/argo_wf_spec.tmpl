@@ -59,13 +59,13 @@ spec:
       {% endraw %}
       resources: # limit the resources
         requests:
-          memory: 64Gi
-          cpu: 4
-          nvidia.com/gpu: 0
+          memory: {{ default_execution_resources.memory_request }}
+          cpu: {{ default_execution_resources.cpu_request }}
+          nvidia.com/gpu: {{ default_execution_resources.num_gpus }}
         limits:
-          memory: 64Gi
-          cpu: 16
-          nvidia.com/gpu: 0
+          memory: {{ default_execution_resources.memory_limit }}
+          cpu: {{ default_execution_resources.cpu_limit }}
+          nvidia.com/gpu: {{ default_execution_resources.num_gpus }}
       env:
         - name: WORKFLOW_ID
           valueFrom:
