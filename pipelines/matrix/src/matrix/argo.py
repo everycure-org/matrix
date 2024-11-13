@@ -1,64 +1,36 @@
-"""Module with utilities to generate Argo workflow."""
-
 import re
 from pathlib import Path
-from typing import List, Optional, Any
+from typing import Any, Dict, List, Optional
 
-import click
 from jinja2 import Environment, FileSystemLoader
-
-from kedro.pipeline.node import Node
 from kedro.pipeline import Pipeline
-from kedro.framework.project import pipelines
-from kedro.framework.startup import bootstrap_project
+from kedro.pipeline.node import Node
 
-TEMPLATE_FILE = "argo_wf_spec.tmpl"
-RENDERED_FILE = "argo-workflow-template.yml"
-SEARCH_PATH = Path("templates")
+ARGO_TEMPLATE_FILE = "argo_wf_spec.tmpl"
+ARGO_TEMPLATES_DIR_PATH = Path(__file__).parent.parent.parent / "templates"
 
 
-@click.group()
-def cli() -> None:
-    """Main CLI entrypoint."""
-    ...
-
-
-@click.command()
-@click.argument("image", required=True)
-@click.argument("image_tag", required=False, default="latest")
-@click.argument("namespace", required=False, default="argo-workflows")
-def generate_argo_config(image: str, run_name: str, image_tag: str, namespace: str, username: str):
-    """Function to render Argo pipeline template.
-
-    Args:
-        image: image to use
-        run_name: name of the run
-        image_tag: image tag to use
-        namespace: the namespace in which to store the workflow
-        pipeline_name: name of pipeline to generate
-        env: execution environment
-        username: user to execute
-    """
-    _generate_argo_config(image, run_name, image_tag, namespace, username)
-
-
-def _generate_argo_config(image: str, run_name: str, image_tag: str, namespace: str, username: str):
-    loader = FileSystemLoader(searchpath=SEARCH_PATH)
+def generate_argo_config(
+    image: str,
+    run_name: str,
+    image_tag: str,
+    namespace: str,
+    username: str,
+    pipelines: Dict[str, Pipeline],
+    package_name: str,
+) -> str:
+    loader = FileSystemLoader(searchpath=ARGO_TEMPLATES_DIR_PATH)
     template_env = Environment(loader=loader, trim_blocks=True, lstrip_blocks=True)
-    template = template_env.get_template(TEMPLATE_FILE)
+    template = template_env.get_template(ARGO_TEMPLATE_FILE)
 
-    project_path = Path.cwd()
-    metadata = bootstrap_project(project_path)
-    package_name = metadata.package_name
-
-    pipes = {}
+    pipeline2dependencies = {}
     for name, pipeline in pipelines.items():
         # Fuse nodes in topological order to avoid constant recreation of Neo4j
-        pipes[name] = get_dependencies(fuse(pipeline))
+        pipeline2dependencies[name] = get_dependencies(fuse(pipeline))
 
     output = template.render(
         package_name=package_name,
-        pipes=pipes,
+        pipelines=pipeline2dependencies,
         image=image,
         image_tag=image_tag,
         namespace=namespace,
@@ -66,7 +38,7 @@ def _generate_argo_config(image: str, run_name: str, image_tag: str, namespace: 
         run_name=run_name,
     )
 
-    (SEARCH_PATH / RENDERED_FILE).write_text(output)
+    return output
 
 
 class FusedNode(Node):
@@ -85,7 +57,7 @@ class FusedNode(Node):
         """Function to add node to group."""
         self._nodes.append(node)
 
-    def add_parents(self, parents):
+    def add_parents(self, parents: List) -> None:
         """Function to set the parents of the group."""
         self._parents.update(set(parents))
 
@@ -132,6 +104,9 @@ class FusedNode(Node):
         """Retrieve name of fusedNode."""
         if self.is_fusable and len(self._nodes) > 1:
             return self.fuse_group
+        # TODO: Consider if this shouldn't raise an exception
+        elif len(self._nodes) == 0:
+            return "empty"
 
         # If not fusable, revert to name of node
         return self._nodes[0].name
@@ -267,22 +242,4 @@ def clean_name(name: str) -> str:
     Returns:
         Clean node name, according to Argo's requirements
     """
-    # return re.sub(r"[\W_]+", "-", name).strip("-")
-    # Keep track of seen names to handle duplicates
-    if not hasattr(clean_name, "_seen_names"):
-        clean_name._seen_names = {}
-
-    cleaned = re.sub(r"[\W_]+", "-", name).strip("-")
-
-    if cleaned in clean_name._seen_names:
-        clean_name._seen_names[cleaned] += 1
-        cleaned = f"{cleaned}-{clean_name._seen_names[cleaned]}"
-    else:
-        clean_name._seen_names[cleaned] = 0
-
-    return cleaned
-
-
-if __name__ == "__main__":
-    cli.add_command(generate_argo_config)
-    cli()
+    return re.sub(r"[\W_]+", "-", name).strip("-")
