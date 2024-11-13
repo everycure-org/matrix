@@ -105,6 +105,52 @@ def test_valid_resource_configuration(cpu_request, cpu_limit, memory_request, me
     assert config.num_gpus == 0
 
 
+@pytest.mark.parametrize(
+    "cpu_request, cpu_limit, memory_request, memory_limit",
+    [
+        (0.25, 1, 0.25, 1),  # Equal limits and requests
+        (1.0, 2.0, 0.25, 0.5),  # Limits higher than requests
+    ],
+)
+def test_fractional_resources_not_accepted(cpu_request, cpu_limit, memory_request, memory_limit):
+    """Test that fractional resources are not accepted."""
+    with pytest.raises(ValueError, match="Curretly fractional resource values are not accepted"):
+        ArgoResourceConfig(
+            cpu_request=cpu_request,
+            cpu_limit=cpu_limit,
+            memory_request=memory_request,
+            memory_limit=memory_limit,
+        )
+
+
+@pytest.mark.parametrize(
+    "values, expected",
+    [
+        (
+            {"cpu_request": 1, "cpu_limit": 2, "memory_request": 16, "memory_limit": 32, "num_gpus": 0},
+            {"cpu_request": 1, "cpu_limit": 2, "memory_request": "16Gi", "memory_limit": "32Gi", "num_gpus": 0},
+        ),
+        (
+            {"cpu_request": 2, "cpu_limit": 4, "memory_request": 32, "memory_limit": 64, "num_gpus": 0},
+            {"cpu_request": 2, "cpu_limit": 4, "memory_request": "32Gi", "memory_limit": "64Gi", "num_gpus": 0},
+        ),
+        (
+            {"cpu_request": 1, "cpu_limit": 16, "memory_request": 64, "memory_limit": 128, "num_gpus": 1},
+            {"cpu_request": 1, "cpu_limit": 16, "memory_request": "64Gi", "memory_limit": "128Gi", "num_gpus": 1},
+        ),
+    ],
+)
+def test_serialization(values, expected):
+    config = ArgoResourceConfig(
+        cpu_request=values["cpu_request"],
+        cpu_limit=values["cpu_limit"],
+        memory_request=values["memory_request"],
+        memory_limit=values["memory_limit"],
+        num_gpus=values["num_gpus"],
+    )
+    assert config.model_dump() == expected
+
+
 def get_parametrized_node(node_class: Node) -> Node:
     def dummy_func(x: int) -> int:
         return 2 * x
