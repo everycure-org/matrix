@@ -543,6 +543,7 @@ def test_get_pipeline2dependencies() -> None:
     ],
 )
 def test_argo_template_config_boilerplate(argo_default_resources: ArgoResourceConfig) -> None:
+    """Test the boilerplate configuration of the Argo template."""
     argo_config, pipelines = get_argo_config(argo_default_resources)
     spec = argo_config["spec"]
 
@@ -588,6 +589,7 @@ def test_argo_template_config_boilerplate(argo_default_resources: ArgoResourceCo
 
 
 def test_argo_template_config_pipelines() -> None:
+    """Test the pipeline configuration of the Argo template."""
     argo_default_resources = ArgoResourceConfig(
         num_gpus=0,
         cpu_request=4,
@@ -595,7 +597,7 @@ def test_argo_template_config_pipelines() -> None:
         memory_request=64,
         memory_limit=64,
     )
-    argo_config, pipelines = get_argo_config(argo_default_resources)
+    argo_config, actual_pipelines = get_argo_config(argo_default_resources)
     spec = argo_config["spec"]
 
     # Verify pipeline templates
@@ -608,7 +610,7 @@ def test_argo_template_config_pipelines() -> None:
     pipeline_one_template = next(t for t in templates if t["name"] == "pipeline_one")
     assert "dag" in pipeline_one_template
     # there should be two tasks in the pipeline
-    assert len(pipeline_one_template["dag"]["tasks"]) == len(pipelines["pipeline_one"].nodes)
+    assert len(pipeline_one_template["dag"]["tasks"]) == len(actual_pipelines["pipeline_one"].nodes)
     assert pipeline_one_template["dag"]["tasks"][0]["name"] == "simple-node-p1-1"
     assert pipeline_one_template["dag"]["tasks"][0]["template"] == "kedro"
     assert pipeline_one_template["dag"]["tasks"][1]["name"] == "simple-node-p1-2"
@@ -619,7 +621,7 @@ def test_argo_template_config_pipelines() -> None:
     assert "container" in pipeline_one_template["dag"]["tasks"][0]
     assert "resources" in pipeline_one_template["dag"]["tasks"][0]["container"]
     resources_p1_1 = pipeline_one_template["dag"]["tasks"][0]["container"]["resources"]
-    actual_resources_p1_1 = pipelines["pipeline_one"].nodes[0].argo_config.model_dump()
+    actual_resources_p1_1 = actual_pipelines["pipeline_one"].nodes[0].argo_config.model_dump()
     assert resources_p1_1["requests"]["memory"] == actual_resources_p1_1["memory_request"]
     assert resources_p1_1["requests"]["cpu"] == actual_resources_p1_1["cpu_request"]
     assert resources_p1_1["requests"]["nvidia.com/gpu"] == actual_resources_p1_1["num_gpus"]
@@ -635,6 +637,6 @@ def test_argo_template_config_pipelines() -> None:
     # Explicit resource identical to default hence no resources in task
     pipeline_two_template = next(t for t in templates if t["name"] == "pipeline_two")
     assert "dag" in pipeline_two_template
-    assert len(pipeline_two_template["dag"]["tasks"]) == len(pipelines["pipeline_two"].nodes)
+    assert len(pipeline_two_template["dag"]["tasks"]) == len(actual_pipelines["pipeline_two"].nodes)
     assert pipeline_two_template["dag"]["tasks"][0]["name"] == "simple-node-p2-1"
     assert pipeline_two_template["dag"]["tasks"][0]["template"] == "kedro"
