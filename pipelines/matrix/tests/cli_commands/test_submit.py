@@ -417,7 +417,7 @@ def test_run_subprocess_no_streaming_error(mock_popen: None) -> None:
 
 
 @pytest.mark.parametrize("pipeline_for_execution", ["__default__", "test_pipeline"])
-def test_internal_submit(
+def test_workflow_submission(
     mock_run_subprocess: None, mock_dependencies: None, temporary_directory: Path, pipeline_for_execution: str
 ) -> None:
     def dummy_func(*args):
