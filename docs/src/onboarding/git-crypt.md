@@ -104,14 +104,14 @@ gpg --full-generate-key
 
 Next run the following command
 
-```
+```bash
 # alternatively, you can pass in the ID of the key which looks like this 637334785B9F74A364C14FC5A1C5DB60575ED571
 gpg --armor --export used@email.com
 ```
 
 The command should return something like 
 
-```
+```asc
 -----BEGIN PGP PUBLIC KEY BLOCK-----
 
 mDMEZqysGBYJKwYBBAHaRw8BAQdAHc+eXOKkeeycxWcL5iVj68LjpRZEsTMIHr+g
@@ -123,23 +123,30 @@ KtNQIAEAvRQ6jqDyNl4iIaa9mv2qxEJF182ajO5Br6sgoAJv7wI=
 -----END PGP PUBLIC KEY BLOCK-----
 ```
 
-Copy the entire text (from --BEGIN PGP PUBLIC KEY BLOCK-- to --END PGP PUBLIC KEY BLOCK--)  and share it with the team leads (check the CODEOWNERS file or create a Issue/PR with the key)
+1. Copy the entire key 
+    - **including** `--BEGIN PGP PUBLIC KEY BLOCK--` 
+    - **and** `--END PGP PUBLIC KEY BLOCK--` 
+2. Create a PR with the key in the `.git-crypt/public_keys` folder, name the file like `your-github-username.asc`
+3. Tag one of the team leads to review the PR[^1]
 
-### Add the key to the repository
+??? question "What happens behind the scenes?"
 
-An existing team member needs to add the key to the repository. What they do is run the following command
+    An existing team member will to add the key to the repository. What they do is run the following command
+    
+    ```bash
+    sh import_gpg_key.sh
+    ```
+    
+    This will encrypt a shared secret key with your public key and store the encrypted key in
+    the repository. This will make you uniquely able to decrypt the file without sharing the
+    secret key itself with anyone else. The files are stored in `.git-crypt/keys/` for those curious. 
 
-```bash
-sh import_gpg_key.sh
-```
 
-This will encrypt a shared secret key with your public key and store the encrypted key in
-the repository. This will make you uniquely able to decrypt the file without sharing the
-secret key itself with anyone else. The files are stored in `.git-crypt/keys/` for those curious. 
+[As you wait, learn about kedro! :material-skip-next:](./kedro.md){ .md-button .md-button--primary }
 
 ### Unlocking the key once your key was added
 
-Once the public key was added to the repo, you can unlock the key by running
+Once the public key was added to the repo (i.e. the PR was merged and the team lead added the encrypted shared secret key), you can unlock the key by running
 
 ```bash
 git-crypt unlock
@@ -148,7 +155,9 @@ git-crypt unlock
 Re-enter the passphrase you used to create the public key to unlock. 
 
 You can lock the key by running 
-```git-crypt lock -a``` 
+```
+git-crypt lock -a
+``` 
 
 ## General setup
 
@@ -161,7 +170,13 @@ Most people should not need to decrypt the `default` key and can stick to the `H
 The CD system uses the `default` key to decrypt the secrets needed to deploy the
 infrastructure.
 
+
+---
+
 ## Additional reading
 
-- https://stackoverflow.com/questions/77187053/how-to-use-git-crypt-with-multiple-keys
-- https://github.com/AGWA/git-crypt
+- [Git Crypt Introduction](https://www.agwa.name/projects/git-crypt/)
+- [Git Crypt with multiple keys](https://stackoverflow.com/questions/77187053/how-to-use-git-crypt-with-multiple-keys)
+
+
+[^1]: The team lead will take your key and add an encrypted version of our shared secret key to the repository which only you can decrypt

@@ -5,7 +5,6 @@ from typing import Any, Dict, List
 import matplotlib.pyplot as plt
 from pyspark.sql import DataFrame, SparkSession
 import pandas as pd
-import requests
 import seaborn as sns
 from graphdatascience import GraphDataScience, QueryRunner
 from neo4j import Driver, GraphDatabase
@@ -18,7 +17,6 @@ from refit.v1.core.inject import inject_object
 from refit.v1.core.inline_has_schema import has_schema
 from refit.v1.core.inline_primary_key import primary_key
 from refit.v1.core.unpack import unpack_params
-from tenacity import retry, stop_after_attempt, wait_random_exponential
 
 
 from .graph_algorithms import GDSGraphAlgorithm
@@ -116,36 +114,6 @@ def ingest_nodes(df: DataFrame) -> DataFrame:
         .withColumn("array_property_keys", F.map_keys(F.col("array_properties")))
         .withColumn("array_property_values", F.map_values(F.col("array_properties")))
     )
-
-
-class RateLimitException(Exception):
-    """RateLimitException."""
-
-    pass
-
-
-@retry(
-    wait=wait_random_exponential(min=1, max=60),
-    stop=stop_after_attempt(10),
-)
-def batch(endpoint, model, api_key, batch):
-    """Function to resolve batch."""
-    if len(batch) == 0:
-        raise RuntimeError("Empty batch!")
-
-    headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
-    data = {"input": batch, "model": model}
-
-    response = requests.post(f"{endpoint}/embeddings", headers=headers, json=data)
-
-    if response.status_code == 200:
-        return [item["embedding"] for item in response.json()["data"]]
-    else:
-        if response.status_code in [429, 500]:
-            raise RateLimitException()
-
-        print("error", response.content, response.status_code)
-        raise RuntimeError()
 
 
 def bucketize_nodes(
@@ -354,12 +322,14 @@ def train_topological_embeddings(
     # Filter out treat/GT nodes from the graph
     subgraph_name = filtering.get("graphName")
     filter_args = filtering.pop("args")
+
     # Drop graph if exists
     if gds.graph.exists(subgraph_name).exists:
         subgraph = gds.graph.get(subgraph_name)
         gds.graph.drop(subgraph, False)
 
     subgraph, _ = gds.graph.filter(subgraph_name, graph, **filter_args)
+    gds.graph.drop(graph)
 
     # Validate whether the model exists
     model_name = estimator.get("modelName")
@@ -397,7 +367,7 @@ def write_topological_embeddings(
 ) -> Dict:
     """Write topological embeddings."""
     # Retrieve the graph
-    graph_name = projection.get("graphName")
+    graph_name = filtering.get("graphName")
     graph = gds.graph.get(graph_name)
 
     # Retrieve the model
