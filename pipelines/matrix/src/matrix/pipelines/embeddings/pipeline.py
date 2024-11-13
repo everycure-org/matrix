@@ -12,7 +12,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 func=nodes.bucketize_nodes,
                 inputs={
                     "df": "integration.prm.filtered_nodes",
-                    "attributes": "params:embeddings.node.features",
+                    "features": "params:embeddings.node.features",
                     "bucket_size": "params:embeddings.node.batch_size",
                 },
                 outputs="embeddings.feat.bucketized_nodes@spark",

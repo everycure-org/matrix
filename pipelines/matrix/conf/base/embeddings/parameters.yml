@@ -23,12 +23,13 @@ embeddings.ai_config:
   attribute: &_property embedding
 
 embeddings.node:
-  batch_size: 50
+  batch_size: 300
   features: ["category", "name"]
   model:
     object: langchain_openai.OpenAIEmbeddings
     model: text-embedding-3-small
     dimensions: 100
+    timeout: 10
 
 # Defines strategy used to reduce dimensions of the GenAI
 # generated node embeddings.

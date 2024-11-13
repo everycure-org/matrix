@@ -1,10 +1,11 @@
 import os
 import re
+import asyncio
 from tqdm import tqdm
 from copy import deepcopy
 from typing import Any, Optional
 
-from concurrent.futures import ThreadPoolExecutor, as_completed
+from concurrent.futures import ThreadPoolExecutor
 import google.api_core.exceptions as exceptions
 import numpy as np
 import pandas as pd
@@ -374,39 +375,60 @@ class RemoteSparkJDBCDataset(SparkJDBCDataset):
 
 
 class PartitionedTQDMDataset(PartitionedDataset):
-    def _save(self, data: dict[str, Any], max_workers: int = 10) -> None:
+    def _save(self, data: dict[str, Any], max_workers: int = 10, timeout: int = 10) -> None:
         if self._overwrite and self._filesystem.exists(self._normalized_path):
             self._filesystem.rm(self._normalized_path, recursive=True)
 
         # Helper function to process a single partition
-        def process_partition(partition_id, partition_data):
-            # Set up arguments and path
-            kwargs = deepcopy(self._dataset_config)
-            partition = self._partition_to_path(partition_id)
-            kwargs[self._filepath_arg] = self._join_protocol(partition)
-            dataset = self._dataset_type(**kwargs)  # type: ignore
+        async def process_partition(partition_id, partition_data):
+            try:
+                # Set up arguments and path
+                kwargs = deepcopy(self._dataset_config)
+                partition = self._partition_to_path(partition_id)
+                kwargs[self._filepath_arg] = self._join_protocol(partition)
+                dataset = self._dataset_type(**kwargs)  # type: ignore
 
-            # Evaluate partition data if it’s callable
-            if callable(partition_data):
-                partition_data = partition_data()  # noqa: PLW2901
+                # Evaluate partition data if it’s callable
+                if callable(partition_data):
+                    partition_data = await partition_data()  # noqa: PLW2901
 
-            # Save the partition data
-            dataset.save(partition_data)
+                # Save the partition data
+                # data = await partition_data
+                dataset.save(partition_data)
+            except Exception as e:
+                print(f"Error in process_partition with partition {partition_id}: {e}")
+                raise  # Re-raise to ensure it’s caught in the main thread
 
-        # Using ThreadPoolExecutor to process partitions concurrently
-        with ThreadPoolExecutor(max_workers=max_workers) as executor:
-            futures = {
-                executor.submit(process_partition, partition_id, partition_data): partition_id
-                for partition_id, partition_data in sorted(data.items())
-            }
+        # Define function to run asyncio tasks within a synchronous function
+        def run_async_tasks():
+            # Create an event loop and a thread pool executor for async execution
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
 
-            # Track progress with tqdm as threads complete
-            for future in tqdm(as_completed(futures), total=len(futures)):
-                partition_id = futures[future]
-                try:
-                    future.result()  # If any exception occurred, it will be raised here
-                except Exception as e:
-                    print(f"Error processing partition {partition_id}: {e}")
-                    # Optional: Implement retry logic here if desired
+            with ThreadPoolExecutor(max_workers=max_workers) as executor:
+                # Submit each partition processing task to the executor
+                tasks = [
+                    loop.run_in_executor(executor, lambda: asyncio.run(process_partition(partition_id, partition_data)))
+                    for partition_id, partition_data in sorted(data.items())
+                ]
 
+                # Track progress with tqdm as tasks complete
+                with tqdm(total=len(tasks), desc="Saving partitions") as progress_bar:
+                    for task in asyncio.as_completed(tasks):
+                        try:
+                            loop.run_until_complete(asyncio.wait_for(task, 10))  # Run each task in event loop
+                        except asyncio.TimeoutError:
+                            print(f"Timeout error: partition processing took longer than {timeout} seconds.")
+                        except Exception as e:
+                            print(f"Error processing partition in tqdm loop: {e}")
+                        finally:
+                            # Update the progress bar regardless of success or failure
+                            progress_bar.update(1)
+
+            print("closing loop")
+            loop.close()
+
+        run_async_tasks()
+
+        print("invalidating caches")
         self._invalidate_caches()
