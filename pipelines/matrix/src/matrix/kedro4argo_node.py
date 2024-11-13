@@ -35,10 +35,12 @@ class ArgoResourceConfig(BaseModel):
 
     @field_validator("cpu_request", "cpu_limit", "memory_request", "memory_limit")
     @classmethod
-    def validate_positive(cls, v: float) -> float:
-        """Validate that resource values are positive."""
+    def validate_integer(cls, v: float) -> float:
+        """Validate that resource values are positive integers."""
         if v <= 0:
             raise ValueError("Resource values must be positive")
+        if not v.is_integer():
+            raise ValueError("Currently fractional resource values are not accepted")
         return v
 
     @model_validator(mode="after")
