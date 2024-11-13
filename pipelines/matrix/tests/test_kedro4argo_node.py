@@ -114,7 +114,7 @@ def test_valid_resource_configuration(cpu_request, cpu_limit, memory_request, me
 )
 def test_fractional_resources_not_accepted(cpu_request, cpu_limit, memory_request, memory_limit):
     """Test that fractional resources are not accepted."""
-    with pytest.raises(ValueError, match="Curretly fractional resource values are not accepted"):
+    with pytest.raises(ValueError, match="Currently fractional resource values are not accepted"):
         ArgoResourceConfig(
             cpu_request=cpu_request,
             cpu_limit=cpu_limit,
