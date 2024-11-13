@@ -12,6 +12,19 @@ ARGO_TEMPLATE_FILE = "argo_wf_spec.tmpl"
 ARGO_TEMPLATES_DIR_PATH = Path(__file__).parent.parent.parent / "templates"
 
 
+def get_pipeline2dependencies(
+    pipelines: Dict[str, Pipeline], default_execution_resources: ArgoResourceConfig
+) -> Dict[str, List[Dict[str, Any]]]:
+    pipeline2dependencies = {}
+    for name, pipeline in pipelines.items():
+        # Fuse nodes in topological order to avoid constant recreation of Neo4j
+        # TODO: refactor this to use ArgoNode.
+        #   (1) FuseNode should be replaced by K8sNode OR new FusedPipeline object.
+        #   (2) Get Dependencies should be internal to ArgoNode, removing if from here.
+        pipeline2dependencies[name] = get_dependencies(fuse(pipeline), default_execution_resources)
+    return pipeline2dependencies
+
+
 def generate_argo_config(
     image: str,
     run_name: str,
@@ -26,13 +39,7 @@ def generate_argo_config(
     template_env = Environment(loader=loader, trim_blocks=True, lstrip_blocks=True)
     template = template_env.get_template(ARGO_TEMPLATE_FILE)
 
-    pipeline2dependencies = {}
-    for name, pipeline in pipelines.items():
-        # Fuse nodes in topological order to avoid constant recreation of Neo4j
-        # TODO: refactor this to use ArgoNode.
-        #   (1) FuseNode should be replaced by K8sNode OR new FusedPipeline object.
-        #   (2) Get Dependencies should be internal to ArgoNode, removing if from here.
-        pipeline2dependencies[name] = get_dependencies(fuse(pipeline), default_execution_resources)
+    pipeline2dependencies = get_pipeline2dependencies(pipelines, default_execution_resources)
 
     output = template.render(
         package_name=package_name,
