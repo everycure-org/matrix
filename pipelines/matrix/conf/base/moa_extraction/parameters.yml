@@ -10,7 +10,7 @@ moa_extraction:
   gdb_two_hop: 
     <<: *gdb
     database: analytics-two-hop
-  gdb_three_hop: 
+  gdb_three_hop:
     <<: *gdb
     database: analytics-three-hop
 
