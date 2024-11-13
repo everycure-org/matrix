@@ -19,8 +19,8 @@ class ArgoResourceConfig(BaseModel):
 
     Attributes:
         num_gpus (int): Number of GPUs requested for the container.
-        cpu_request (float): CPU cores requested for the container. Written in number of cores.
-        cpu_limit (float): Maximum CPU cores allowed for the container. Written in number of cores.
+        cpu_request (float): CPU cores requested for the container.
+        cpu_limit (float): Maximum CPU cores allowed for the container.
         memory_request (float): Memory requested for the container in GB.
         memory_limit (float): Maximum memory allowed for the container in GB.
     """
@@ -55,7 +55,7 @@ class ArgoResourceConfig(BaseModel):
         """Validate that CPU and memory limits and requests are not too high."""
         if self.cpu_limit > KUBERNETES_DEFAULT_LIMIT_CPU or self.memory_limit > KUBERNETES_DEFAULT_LIMIT_RAM:
             warnings.warn(
-                f"CPU (limit: {self.cpu_limit}, request: {self.cpu_request}) and memory (limit: {self.memory_limit}, request: {self.memory_request}) limits and requests are unrealistically high - are you sure they were set in Gb and not in Mi?"
+                f"CPU (limit: {self.cpu_limit}, request: {self.cpu_request}) and memory (limit: {self.memory_limit}, request: {self.memory_request}) limits and requests are unrealistically high - are you sure they were set in GB and not in Mi?"
             )
         return self
 
@@ -68,6 +68,13 @@ class ArgoResourceConfig(BaseModel):
         self.memory_limit = max(self.memory_limit, argo_config.memory_limit)
         self.memory_request = max(self.memory_request, argo_config.memory_request)
         self.num_gpus = max(self.num_gpus, argo_config.num_gpus)
+
+    def model_dump(self, **kwargs) -> dict:
+        """Customize JSON or dict export with Kubernetes-compatible formatting."""
+        data = super().model_dump(**kwargs)
+        data["memory_request"] = f"{int(self.memory_request)}Gi"
+        data["memory_limit"] = f"{int(self.memory_limit)}Gi"
+        return data
 
 
 class ArgoNode(Node):
