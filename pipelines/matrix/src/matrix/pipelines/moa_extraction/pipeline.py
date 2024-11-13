@@ -22,7 +22,7 @@ def _preprocessing_pipeline() -> Pipeline:
                 inputs=["integration.prm.filtered_nodes", "integration.prm.filtered_edges"],
                 outputs=["moa_extraction.feat.category_encoder", "moa_extraction.feat.relation_encoder"],
                 name="get_one_hot_encodings",
-                # tags="moa_extraction.preprocessing",
+                tags="moa_extraction.preprocessing",
             ),
         ],
     )
@@ -92,10 +92,10 @@ def _preprocessing_pipeline() -> Pipeline:
                     ),
                 ],
                 tags=[
-                    # "argowf.fuse",
+                    "argowf.fuse",
                     f"argowf.fuse-group.moa_extraction_{num_hops}_hop",
                     "argowf.template-neo4j",
-                    # "moa_extraction.preprocessing",
+                    "moa_extraction.preprocessing",
                 ],
             )
         )
@@ -122,7 +122,7 @@ def _training_pipeline() -> Pipeline:
                         },
                         outputs=f"moa_extraction.feat.{num_hops}_hop_enriched_paths",
                         name=f"generate_negative_paths_{num_hops}_hop",
-                        # tags="moa_extraction.negative_sampling",
+                        tags="moa_extraction.negative_sampling",
                     ),
                     node(
                         func=nodes.train_model_split,
@@ -150,10 +150,10 @@ def _training_pipeline() -> Pipeline:
                     ),
                 ],
                 tags=[
-                    # "argowf.fuse",
+                    "argowf.fuse",
                     f"argowf.fuse-group.moa_extraction_{num_hops}_hop",
                     "argowf.template-neo4j",
-                    # "moa_extraction.training",
+                    "moa_extraction.training",
                 ],
             )
         )
@@ -192,10 +192,10 @@ def _evaluation_pipeline() -> Pipeline:
                     ),
                 ],
                 tags=[
-                    # "argowf.fuse",
+                    "argowf.fuse",
                     f"argowf.fuse-group.moa_extraction_{num_hops}_hop",
                     "argowf.template-neo4j",
-                    # "moa_extraction.evaluation",
+                    "moa_extraction.evaluation",
                 ],
             )
         )
@@ -241,10 +241,10 @@ def _predictions_pipeline() -> Pipeline:
                     ),
                 ],
                 tags=[
-                    # "argowf.fuse",
+                    "argowf.fuse",
                     f"argowf.fuse-group.moa_extraction_{num_hops}_hop",
                     "argowf.template-neo4j",
-                    # "moa_extraction.predictions",
+                    "moa_extraction.predictions",
                 ],
             )
         )
