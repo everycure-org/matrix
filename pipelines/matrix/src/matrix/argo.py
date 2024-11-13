@@ -233,27 +233,35 @@ def get_dependencies(
 ) -> List[Dict[str, Any]]:
     """Function to yield node dependencies to render Argo template.
 
+    Resources are added to the task if they are different from the default.
+
     Args:
         fused_pipeline: fused pipeline
         default_execution_resources: default execution resources
     Return:
         Dictionary to render Argo template
     """
-    deps_dict = [
-        {
-            "name": clean_name(fuse.name),
-            "nodes": fuse.nodes,
-            "deps": [clean_name(val.name) for val in sorted(fuse._parents)],
-            "tags": fuse.tags,
-            "resources": fuse.argo_config.model_dump(),
-            **{
-                tag.split("-")[0][len("argowf.") :]: tag.split("-")[1]
-                for tag in fuse.tags
-                if tag.startswith("argowf.") and "-" in tag
-            },
-        }
-        for fuse in fused_pipeline
-    ]
+    deps_dict = []
+    for fuse in fused_pipeline:
+        resources = (
+            {"resources": fuse.argo_config.model_dump()}
+            if fuse.argo_config and fuse.argo_config != default_execution_resources
+            else {}
+        )
+        deps_dict.append(
+            {
+                "name": clean_name(fuse.name),
+                "nodes": fuse.nodes,
+                "deps": [clean_name(val.name) for val in sorted(fuse._parents)],
+                "tags": fuse.tags,
+                **{
+                    tag.split("-")[0][len("argowf.") :]: tag.split("-")[1]
+                    for tag in fuse.tags
+                    if tag.startswith("argowf.") and "-" in tag
+                },
+                **resources,
+            }
+        )
     return sorted(deps_dict, key=lambda d: d["name"])
 
 
