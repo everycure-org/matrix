@@ -1,0 +1,73 @@
+_sheets_inference: &_sheets_dataset
+  type: matrix.datasets.gcp.GoogleSheetsDataset
+  key: hehehehehe
+  service_file: conf/local/service-account.json
+
+`sharing.{model}.reporting.matrix_report_gcp`:
+  filepath: ${globals:paths.sharing}/${globals:run_name}_{model}.xlsx
+  type: pandas.ExcelDataset
+
+`sharing.{model}.reporting.matrix_metadata_sheets`:
+  <<: [*_sheets_dataset]
+  save_args:
+    #overwrite: True
+    sheet_name: "metadata"
+    write_columns: &_metadata_cols
+      - Key
+      - Value
+  load_args:
+    #overwrite: True
+    sheet_name: "metadata"
+    columns: *_metadata_cols
+
+`sharing.{model}.reporting.matrix_stats_sheets`:
+  <<: [*_sheets_dataset]
+  save_args:
+    sheet_name: "statistics"
+    write_columns: &_stats_cols
+      - stats_type
+      - value
+  load_args:
+    #overwrite: True
+    sheet_name: "statistics"
+    columns: *_stats_cols
+
+`sharing.{model}.reporting.matrix_legend_sheets`:
+  <<: [*_sheets_dataset]
+  save_args:
+    sheet_name: "legend"
+    write_columns: &_legend_cols
+      - Key
+      - Value
+  load_args:
+    sheet_name: "legend"
+    columns: *_legend_cols
+
+`sharing.{model}.reporting.matrix_report_sheets_stats`:
+  <<: [*_sheets_dataset]
+  save_args:
+    sheet_name: "matrix"
+    write_columns: *stats_cols
+  load_args:
+    sheet_name: "matrix"
+    columns: *stats_cols
+
+`sharing.{model}.reporting.matrix_report_sheets_filters`:
+  <<: [*_sheets_dataset]
+  save_args:
+    sheet_name: "matrix"
+    write_columns: *filter_cols
+  load_args:
+    #overwrite: True
+    sheet_name: "matrix"
+    columns: *filter_cols
+
+`sharing.{model}.reporting.matrix_report_sheets_pairs`:
+  <<: [*_sheets_dataset]
+  save_args:
+    sheet_name: "matrix"
+    write_columns: *_pair_cols
+  load_args:
+    #overwrite: True
+    sheet_name: "matrix"
+    columns: *_pair_cols

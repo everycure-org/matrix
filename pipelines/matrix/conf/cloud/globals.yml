@@ -24,3 +24,4 @@ paths:
   evaluation:         ${gcs_bucket}/kedro/data/releases/${versions.release}/runs/${run_name}/datasets/evaluation
   matrix_generation:  ${gcs_bucket}/kedro/data/releases/${versions.release}/runs/${run_name}/datasets/matrix_generation
   inference:          ${gcs_bucket}/kedro/data/releases/${versions.release}/runs/${run_name}/datasets/inference
+  sharing:            ${gcs_bucket}/medical_output/matrix_results

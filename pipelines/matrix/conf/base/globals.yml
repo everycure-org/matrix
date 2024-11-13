@@ -70,5 +70,6 @@ paths:
   evaluation:         data/releases/${versions.release}/runs/${run_name}/datasets/evaluation
   matrix_generation:  data/releases/${versions.release}/runs/${run_name}/datasets/matrix_generation
   inference:          data/releases/${versions.release}/runs/${run_name}/datasets/inference
- 
+  sharing:            medical_output/matrix_results
+
   tmp:                data/tmp

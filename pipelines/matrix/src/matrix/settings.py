@@ -62,10 +62,10 @@ CONFIG_LOADER_ARGS = {
 # https://getindata.com/blog/kedro-dynamic-pipelines/
 DYNAMIC_PIPELINES_MAPPING = {
     "modelling": [
-        {"model_name": "xg_baseline", "num_shards": 1, "run_inference": False},
-        {"model_name": "xg_ensemble", "num_shards": 3, "run_inference": True},
-        {"model_name": "rf", "num_shards": 1, "run_inference": False},
-        {"model_name": "xg_synth", "num_shards": 1, "run_inference": False},
+        {"model_name": "xg_baseline", "num_shards": 1, "run_inference": False, "share_result": False},
+        {"model_name": "xg_ensemble", "num_shards": 3, "run_inference": True, "share_result": True},
+        {"model_name": "rf", "num_shards": 1, "run_inference": False, "share_result": False},
+        {"model_name": "xg_synth", "num_shards": 1, "run_inference": False, "share_result": False},
     ],
     "evaluation": [
         {"evaluation_name": "simple_classification"},

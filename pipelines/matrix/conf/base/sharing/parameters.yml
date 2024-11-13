@@ -1,0 +1,34 @@
+sharing.matrix:
+  stats_cols: &stats_cols
+    - mean_top_per_disease
+    - median_top_per_disease
+    - mean_all_per_disease
+    - median_all_per_disease
+    - mean_top_per_drug
+    - median_top_per_drug
+    - mean_all_per_drug
+    - median_all_per_drug
+  filter_cols: &filter_cols
+    - master_filter
+    - is_steroid
+    - is_antimicrobial
+    - is_glucose_regulator	
+    - is_chemotherapy
+    - is_cancer
+    - is_pathogen_caused
+    - is_glucose_dysfunction
+    - tag_existing_treatment
+    - tag_QALY_lost
+    - is_known_positive
+    - is_known_negative
+  pair_cols: &pair_cols
+    - drug_id
+    - drug_name
+    - disease_id
+    - disease_name
+    - `treat score`
+    - pair_id
+    - kg_drug_id
+    - kg_drug_name
+    - kg_disease_id
+    - kg_disease_name
