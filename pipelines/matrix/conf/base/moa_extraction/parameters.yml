@@ -101,7 +101,7 @@ moa_extraction:
           object: matrix.pipelines.moa_extraction.models.SkorchWrapper
           module: TransformerBinaryClassifier
           optimizer: torch.optim.Adam
-          lr: 0.0001
+          optimizer__lr: 0.0001
           criterion: torch.nn.BCEWithLogitsLoss
           module__token_dim: 100
           module__num_heads: 4
