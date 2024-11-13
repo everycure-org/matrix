@@ -23,7 +23,6 @@ def create_pipeline(**kwargs) -> Pipeline:
                 func=nodes.compute_embeddings,
                 inputs={
                     "dfs": "embeddings.feat.bucketized_nodes@partitioned",
-                    "features": "params:embeddings.node.features",
                     "model": "params:embeddings.node.model",
                 },
                 outputs="embeddings.feat.graph.node_embeddings@partitioned",
