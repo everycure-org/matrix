@@ -26,20 +26,20 @@ class ArgoResourceConfig(BaseModel):
     """
 
     num_gpus: int = 0
-    cpu_request: float = KUBERNETES_DEFAULT_REQUEST_CPU
-    cpu_limit: float = KUBERNETES_DEFAULT_LIMIT_CPU
-    memory_request: float = KUBERNETES_DEFAULT_REQUEST_RAM
-    memory_limit: float = KUBERNETES_DEFAULT_LIMIT_RAM
+    cpu_request: int = KUBERNETES_DEFAULT_REQUEST_CPU
+    cpu_limit: int = KUBERNETES_DEFAULT_LIMIT_CPU
+    memory_request: int = KUBERNETES_DEFAULT_REQUEST_RAM
+    memory_limit: int = KUBERNETES_DEFAULT_LIMIT_RAM
 
     model_config = {"validate_assignment": True, "extra": "forbid"}
 
     @field_validator("cpu_request", "cpu_limit", "memory_request", "memory_limit")
     @classmethod
-    def validate_integer(cls, v: float) -> float:
+    def validate_integer(cls, v: int) -> int:
         """Validate that resource values are positive integers."""
         if v <= 0:
             raise ValueError("Resource values must be positive")
-        if not v.is_integer():
+        if not isinstance(v, int):
             raise ValueError("Currently fractional resource values are not accepted")
         return v
 
