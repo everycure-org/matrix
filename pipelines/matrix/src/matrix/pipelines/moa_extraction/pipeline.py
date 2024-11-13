@@ -19,13 +19,13 @@ num_hops_lst = [model["num_hops"] for model in moa_extraction_settings]
 def _preprocessing_pipeline() -> Pipeline:
     initial_nodes = pipeline(
         [
-            # node(
-            #     func=nodes.get_one_hot_encodings, # TODO rewrite node
-            #     inputs={"runner": "params:moa_extraction.gdb"},
-            #     outputs=["moa_extraction.feat.category_encoder", "moa_extraction.feat.relation_encoder"],
-            #     name="get_one_hot_encodings",
-            #     tags="moa_extraction.preprocessing",
-            # ),
+            node(
+                func=nodes.get_one_hot_encodings,
+                inputs=["integration.prm.filtered_nodes", "integration.prm.filtered_edges"],
+                outputs=["moa_extraction.feat.category_encoder", "moa_extraction.feat.relation_encoder"],
+                name="get_one_hot_encodings",
+                tags="moa_extraction.preprocessing",
+            ),
         ],
     )
     preprocessing_strands_lst = []
@@ -95,11 +95,11 @@ def _preprocessing_pipeline() -> Pipeline:
                         tags="moa_extraction.preprocessing",
                     ),
                 ],
-                # tags=[
-                #     "argowf.fuse",
-                #     f"argowf.fuse-group.moa_extraction_{num_hops}_hop",
-                #     "argowf.template-neo4j",
-                # ],
+                tags=[
+                    "argowf.fuse",
+                    f"argowf.fuse-group.moa_extraction_{num_hops}_hop",
+                    "argowf.template-neo4j",
+                ],
             )
         )
     return sum(

@@ -6,6 +6,9 @@ import json
 
 from tqdm import tqdm
 from typing import List, Tuple, Dict, Any, Optional
+
+from pyspark.sql import DataFrame
+
 from sklearn.model_selection import BaseCrossValidator
 from sklearn.base import BaseEstimator
 
@@ -110,30 +113,26 @@ def add_tags(
     return {"success": True}
 
 
-@inject_object()
-def get_one_hot_encodings(runner: GraphDB) -> Tuple[OneHotEncoder, OneHotEncoder]:
-    """Get the one-hot encodings for node categories and edge relations .
+def get_one_hot_encodings(
+    nodes: DataFrame,
+    edges: DataFrame,
+) -> Tuple[OneHotEncoder, OneHotEncoder]:
+    """Get the one-hot encodings for node categories and edge relations.
 
     Args:
-        runner: The GraphDB object representing the KG..
+        nodes: Nodes dataframe.
+        edges: Edges dataframe.
 
     Returns:
         A tuple of OneHotEncoder objects for node categories and edge relations.
     """
     # Get the node categories
-    result = runner.run("""
-        MATCH (n)
-        RETURN DISTINCT n.category AS category
-    """)
-    # Flatten because Neo4j result is a list of dicts of the form [{"category" : <category>}]
-    node_categories = [item["category"] for item in result]
+    node_categories = nodes.select("category").distinct().collect()
+    node_categories = [row.category for row in node_categories]
+
     # Get the edge relations
-    result = runner.run("""
-        MATCH ()-[r]-()
-        RETURN DISTINCT type(r) AS relation
-    """)
-    # Neo4j result is a list of dicts of the form [{"relation" : <relation>}]
-    edge_relations = [relation["relation"] for relation in result]
+    edge_relations = edges.select("predicate").distinct().collect()
+    edge_relations = [row.predicate for row in edge_relations]
 
     # Create the one-hot encoders
     category_encoder = OneHotEncoder(node_categories)
