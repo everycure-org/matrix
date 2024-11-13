@@ -1,3 +1,5 @@
+from typing import Dict
+from click import Tuple
 from kedro.pipeline.node import Node
 from kedro.pipeline import Pipeline
 import pytest
@@ -410,7 +412,7 @@ def test_clean_dependencies() -> None:
     assert cleaned == ["dataset_a", "dataset_b"]
 
 
-def get_argo_config(argo_default_resources: ArgoResourceConfig) -> dict:
+def get_argo_config(argo_default_resources: ArgoResourceConfig) -> Tuple[Dict, Dict[str, Pipeline]]:
     image_name = "us-central1-docker.pkg.dev/mtrx-hub-dev-3of/matrix-images/matrix"
     run_name = "test_run"
     image_tag = "test_tag"
@@ -424,6 +426,13 @@ def get_argo_config(argo_default_resources: ArgoResourceConfig) -> dict:
                     inputs=["dataset_a", "dataset_b"],
                     outputs="dataset_c",
                     name="simple_node_p1_1",
+                    argo_config=ArgoResourceConfig(
+                        num_gpus=0,
+                        cpu_request=4,
+                        cpu_limit=8,
+                        memory_request=16,
+                        memory_limit=32,
+                    ),
                 ),
                 ArgoNode(
                     func=dummy_func,
@@ -440,6 +449,13 @@ def get_argo_config(argo_default_resources: ArgoResourceConfig) -> dict:
                     inputs=["dataset_a"],
                     outputs="dataset_b",
                     name="simple_node_p2_1",
+                    argo_config=ArgoResourceConfig(
+                        num_gpus=1,
+                        cpu_request=4,
+                        cpu_limit=7,
+                        memory_request=16,
+                        memory_limit=32,
+                    ),
                 )
             ]
         ),
@@ -458,7 +474,7 @@ def get_argo_config(argo_default_resources: ArgoResourceConfig) -> dict:
 
     argo_config = yaml.safe_load(argo_config_yaml)
     assert isinstance(argo_config, dict), "Argo config should be a dictionary after YAML parsing"
-    return argo_config
+    return argo_config, pipelines
 
 
 @pytest.mark.parametrize(
