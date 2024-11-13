@@ -1,0 +1,2797 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+        <link rel="canonical" href="https://docs.app.everycure.org/pipeline/data/drug_disease_lists/">
+      
+      
+        <link rel="prev" href="../data_api/">
+      
+      
+        <link rel="next" href="../../../experiments/">
+      
+      
+      <link rel="icon" href="../../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.41">
+    
+    
+      
+        <title>Diseases List - EC Tech Docs</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.0253249f.min.css">
+      
+      
+
+  
+  
+  
+  
+  <style>:root{--md-annotation-icon:url('data:image/svg+xml;charset=utf-8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 13h-4v4h-2v-4H7v-2h4V7h2v4h4m-5-9A10 10 0 0 0 2 12a10 10 0 0 0 10 10 10 10 0 0 0 10-10A10 10 0 0 0 12 2"/></svg>');}</style>
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#diseases-list" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../../.." title="EC Tech Docs" class="md-header__button md-logo" aria-label="EC Tech Docs" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            EC Tech Docs
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Diseases List
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/everycure-org/matrix/" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.6.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../.." class="md-tabs__link">
+        
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../onboarding/" class="md-tabs__link">
+          
+  
+    
+  
+  Onboarding
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../../" class="md-tabs__link">
+          
+  
+    
+  
+  Pipeline
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../experiments/" class="md-tabs__link">
+          
+  
+    
+  
+  Experiments
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../releases/" class="md-tabs__link">
+          
+  
+    
+  
+  Releases
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../FAQ/" class="md-tabs__link">
+          
+  
+    
+  
+  FAQ
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../data_science/" class="md-tabs__link">
+          
+  
+    
+  
+  Data science
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../infrastructure/" class="md-tabs__link">
+          
+  
+    
+  
+  Infrastructure
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../.." title="EC Tech Docs" class="md-nav__button md-logo" aria-label="EC Tech Docs" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    EC Tech Docs
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/everycure-org/matrix/" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.6.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../.." class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Home
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
+        
+          
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../onboarding/" class="md-nav__link ">
+              
+  
+  <span class="md-ellipsis">
+    Onboarding
+  </span>
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_2" id="__nav_2_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            Onboarding
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../onboarding/installation/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Installation
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../onboarding/git-crypt/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Git-Crypt
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../onboarding/kedro/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Kedro 101
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../onboarding/local-setup/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Local setup
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../onboarding/kedro_extensions/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Kedro extensions
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../onboarding/pipeline/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Pipeline
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2_8" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_8" id="__nav_2_8_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Walkthroughs
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_8">
+            <span class="md-nav__icon md-icon"></span>
+            Walkthroughs
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../onboarding/walkthroughs/kedro_notebook_example/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Example Notebook for Kedro
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../onboarding/walkthroughs/walkthrough/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Walkthrough: New Data Source
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../onboarding/walkthroughs/walkthrough_data_catalog/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Walkthrough: Data Catalog
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2_9" >
+        
+          
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../onboarding/contribute/" class="md-nav__link ">
+              
+  
+  <span class="md-ellipsis">
+    Contribute
+  </span>
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_2_9" id="__nav_2_9_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_9_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_9">
+            <span class="md-nav__icon md-icon"></span>
+            Contribute
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../onboarding/contribute/documentation/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Documentation
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
+        
+          
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../" class="md-nav__link ">
+              
+  
+  <span class="md-ellipsis">
+    Pipeline
+  </span>
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_3" id="__nav_3_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            Pipeline
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../important_files/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Key files and folders
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../status/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Pipeline Status
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_4" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_3_4" id="__nav_3_4_label" tabindex="">
+            
+  
+  <span class="md-ellipsis">
+    Data
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_4_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3_4">
+            <span class="md-nav__icon md-icon"></span>
+            Data
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../data_api/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Data API
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    Diseases List
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  <span class="md-ellipsis">
+    Diseases List
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#maintainer-team" class="md-nav__link">
+    <span class="md-ellipsis">
+      Maintainer team
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#workflow-and-method-for-creating-the-matrix-disease-list" class="md-nav__link">
+    <span class="md-ellipsis">
+      Workflow and Method for creating the MATRIX disease list
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#default-filters-for-disease-list" class="md-nav__link">
+    <span class="md-ellipsis">
+      Default filters for Disease List
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Default filters for Disease List">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#leaf-filter" class="md-nav__link">
+    <span class="md-ellipsis">
+      Leaf Filter
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#orphanet-subtype-filter" class="md-nav__link">
+    <span class="md-ellipsis">
+      Orphanet Subtype Filter
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#orphanet-disorder-filter" class="md-nav__link">
+    <span class="md-ellipsis">
+      Orphanet Disorder Filter
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#clingen-filter" class="md-nav__link">
+    <span class="md-ellipsis">
+      ClinGen Filter
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#omim-filter" class="md-nav__link">
+    <span class="md-ellipsis">
+      OMIM Filter
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#icd10-cm-filter" class="md-nav__link">
+    <span class="md-ellipsis">
+      ICD10 CM Filter
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#omimps-filter" class="md-nav__link">
+    <span class="md-ellipsis">
+      OMIMPS Filter
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#omimps-descendant-filter" class="md-nav__link">
+    <span class="md-ellipsis">
+      OMIMPS descendant Filter
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#grouping-subset-filter" class="md-nav__link">
+    <span class="md-ellipsis">
+      Grouping subset Filter
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#grouping-subset-ancestor-filter" class="md-nav__link">
+    <span class="md-ellipsis">
+      Grouping Subset Ancestor Filter
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#leaf-direct-parent-filter" class="md-nav__link">
+    <span class="md-ellipsis">
+      Leaf Direct Parent Filter
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#subtype-subset-descendant-filter" class="md-nav__link">
+    <span class="md-ellipsis">
+      Subtype Subset Descendant Filter
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#limitations-of-the-filtering-approach-created-in-this-section" class="md-nav__link">
+    <span class="md-ellipsis">
+      Limitations of the filtering approach created in this section:
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4" >
+        
+          
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../experiments/" class="md-nav__link ">
+              
+  
+  <span class="md-ellipsis">
+    Experiments
+  </span>
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_4" id="__nav_4_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            Experiments
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_2" id="__nav_4_2_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    2024
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_2">
+            <span class="md-nav__icon md-icon"></span>
+            2024
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../experiments/2024/LLM_embedding_initial_benchmark_summary/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    First LLM Embedding Benchmark
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../experiments/2024/MOA_RL_approach_1_actor_initial/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Actor-Critic network for finding the shortest path on a KG
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../experiments/2024/MOA_RL_approach_2_actor_initial_pubmed/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Actor-Critic network for shortest path with PubMedBERT embeddings
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../experiments/2024/compare_models_26_aug/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Comparing first pipeline run results to KGML-xDTD embedding based results
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../experiments/2024/ll-240816-E2E_Embeddings_Comparison/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Comparison of Topological Embeddings Before First E2E Run.
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../experiments/2024/merging_rtx_robokop/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Merging RTX and Robokop
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../experiments/2024/neo4j_graphsage_optimization_troubleshooting/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Neo4j GraphSage Optimization - e2e run troubleshooting
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../experiments/2024/neo4j_node2vec_exec/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Node2Vec (GDS) in KGML-xDTD pipeline
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5" >
+        
+          
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../releases/" class="md-nav__link ">
+              
+  
+  <span class="md-ellipsis">
+    Releases
+  </span>
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_5" id="__nav_5_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            Releases
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_2" id="__nav_5_2_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Archive
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_2">
+            <span class="md-nav__icon md-icon"></span>
+            Archive
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+    
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../releases/archive/2024/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    2024
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_6" >
+        
+          
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../FAQ/" class="md-nav__link ">
+              
+  
+  <span class="md-ellipsis">
+    FAQ
+  </span>
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_6" id="__nav_6_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            FAQ
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../FAQ/common_errors/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Common Errors
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_7" >
+        
+          
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../data_science/" class="md-nav__link ">
+              
+  
+  <span class="md-ellipsis">
+    Data science
+  </span>
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_7" id="__nav_7_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            Data science
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../data_science/evaluation_deep_dive/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Deep dive: Evaluation pipeline
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../data_science/model_selection/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Model Selection and Cross-Validation Techniques
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_7_4" >
+        
+          
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../data_science/runbooks/" class="md-nav__link ">
+              
+  
+  <span class="md-ellipsis">
+    Runbooks
+  </span>
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_7_4" id="__nav_7_4_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_7_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7_4">
+            <span class="md-nav__icon md-icon"></span>
+            Runbooks
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../data_science/runbooks/01_inference/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Run Inference Pipeline
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../data_science/runbooks/03_matrix_enrichment/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Customizing Matrix Generation
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_8" >
+        
+          
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../infrastructure/" class="md-nav__link ">
+              
+  
+  <span class="md-ellipsis">
+    Infrastructure
+  </span>
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_8" id="__nav_8_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8">
+            <span class="md-nav__icon md-icon"></span>
+            Infrastructure
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../infrastructure/compute_cluster/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Kubernetes Cluster
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../infrastructure/gcp/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    GCP Foundations
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_8_4" >
+        
+          
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../infrastructure/runbooks/" class="md-nav__link ">
+              
+  
+  <span class="md-ellipsis">
+    Runbooks
+  </span>
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_8_4" id="__nav_8_4_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_8_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8_4">
+            <span class="md-nav__icon md-icon"></span>
+            Runbooks
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../infrastructure/runbooks/01_releases/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Create a Release
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../infrastructure/runbooks/02_debug_github_actions_worker/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Fix Github Actions worker
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../infrastructure/runbooks/03_run_pipeline_from_branch/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Running an experiment from a branch on the Every Cure Platform
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../infrastructure/argo_workflows_locally/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Running Argo Workflows locally [ in progress ]
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../infrastructure/glossary/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Glossary
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#maintainer-team" class="md-nav__link">
+    <span class="md-ellipsis">
+      Maintainer team
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#workflow-and-method-for-creating-the-matrix-disease-list" class="md-nav__link">
+    <span class="md-ellipsis">
+      Workflow and Method for creating the MATRIX disease list
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#default-filters-for-disease-list" class="md-nav__link">
+    <span class="md-ellipsis">
+      Default filters for Disease List
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Default filters for Disease List">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#leaf-filter" class="md-nav__link">
+    <span class="md-ellipsis">
+      Leaf Filter
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#orphanet-subtype-filter" class="md-nav__link">
+    <span class="md-ellipsis">
+      Orphanet Subtype Filter
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#orphanet-disorder-filter" class="md-nav__link">
+    <span class="md-ellipsis">
+      Orphanet Disorder Filter
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#clingen-filter" class="md-nav__link">
+    <span class="md-ellipsis">
+      ClinGen Filter
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#omim-filter" class="md-nav__link">
+    <span class="md-ellipsis">
+      OMIM Filter
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#icd10-cm-filter" class="md-nav__link">
+    <span class="md-ellipsis">
+      ICD10 CM Filter
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#omimps-filter" class="md-nav__link">
+    <span class="md-ellipsis">
+      OMIMPS Filter
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#omimps-descendant-filter" class="md-nav__link">
+    <span class="md-ellipsis">
+      OMIMPS descendant Filter
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#grouping-subset-filter" class="md-nav__link">
+    <span class="md-ellipsis">
+      Grouping subset Filter
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#grouping-subset-ancestor-filter" class="md-nav__link">
+    <span class="md-ellipsis">
+      Grouping Subset Ancestor Filter
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#leaf-direct-parent-filter" class="md-nav__link">
+    <span class="md-ellipsis">
+      Leaf Direct Parent Filter
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#subtype-subset-descendant-filter" class="md-nav__link">
+    <span class="md-ellipsis">
+      Subtype Subset Descendant Filter
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#limitations-of-the-filtering-approach-created-in-this-section" class="md-nav__link">
+    <span class="md-ellipsis">
+      Limitations of the filtering approach created in this section:
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+  
+    <a href="https://github.com/everycure-org/matrix/edit/main/docs/src/pipeline/data/drug_disease_lists.md" title="Edit this page" class="md-content__button md-icon">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20H6V4h7v5h5v3.1l2-2V8l-6-6H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4zm10.2-7c.1 0 .3.1.4.2l1.3 1.3c.2.2.2.6 0 .8l-1 1-2.1-2.1 1-1c.1-.1.2-.2.4-.2m0 3.9L14.1 23H12v-2.1l6.1-6.1z"/></svg>
+    </a>
+  
+  
+
+
+<h1 id="diseases-list">Diseases List</h1>
+<p>The goal of the MATRIX project is to develop strong candidate suggestions for drug repurposing (see <a href="https://everycure.org/every-cure-to-receive-48-3m-from-arpa-h-to-develop-ai-driven-platform-to-revolutionize-future-of-drug-development-and-repurposing/">here for a press release</a>).</p>
+<p>The MATRIX disease list is an effort to construct a list diseases that that can be targeted by drugs.
+Many disease terminologies contain diseases that are either disease groupings (such as "hereditary disease" or "cancer") which are too broad to be specifically considered to be targetable by drugs, or diseases that are so specific that they dont have any differentiable criteria relevant to their treatment procedures.
+The goal of the MATRIX disease list is, therefore, to separate these cases from "drug-targetable diseases".</p>
+<p>The list will be used for communication and navigation purposes</p>
+<h2 id="maintainer-team">Maintainer team</h2>
+<table>
+<thead>
+<tr>
+<th>Contributor</th>
+<th>Organisation</th>
+<th>ORCID</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="https://orcid.org/0000-0001-9114-8737">Melissa Haendel</a></td>
+<td>Monarch Initiative, Tislab, UNC</td>
+<td><a href="https://orcid.org/0000-0001-9114-8737">https://orcid.org/0000-0001-9114-8737</a></td>
+</tr>
+<tr>
+<td><a href="https://orcid.org/0000-0002-4142-7153">Sabrina Toro</a></td>
+<td>Monarch Initiative, Tislab, UNC</td>
+<td><a href="https://orcid.org/0000-0002-4142-7153">https://orcid.org/0000-0002-4142-7153</a></td>
+</tr>
+<tr>
+<td><a href="https://everycure.org/leadership-team/elliott-sharp/">Elliott Sharp</a></td>
+<td>Every Cure</td>
+<td><a href="https://orcid.org/0000-0003-2955-4640">https://orcid.org/0000-0003-2955-4640</a></td>
+</tr>
+<tr>
+<td><a href="https://orcid.org/0000-0002-7356-1779">Nico Matentzoglu</a></td>
+<td>Monarch Initiative, Independent Consultant</td>
+<td><a href="https://orcid.org/0000-0002-7356-1779">https://orcid.org/0000-0002-7356-1779</a></td>
+</tr>
+<tr>
+<td><a href="https://orcid.org/0000-0003-3311-7320">Kevin Schaper</a></td>
+<td>Monarch Initiative, Tislab, UNC</td>
+<td><a href="https://orcid.org/0000-0003-3311-7320">https://orcid.org/0000-0003-3311-7320</a></td>
+</tr>
+</tbody>
+</table>
+<h2 id="workflow-and-method-for-creating-the-matrix-disease-list">Workflow and Method for creating the MATRIX disease list</h2>
+<p>This document outlines the basic workflow behind the MATRIX disease list.</p>
+<ol>
+<li>The disease list corresponds to a subset of the <a href="https://github.com/monarch-initiative/mondo">Mondo disease ontology</a>, which itself can be considered "an ontology of terminologies", integrating other widely used terminologies such as <a href="https://omim.org/">OMIM</a>, <a href="https://github.com/NCI-Thesaurus/thesaurus-obo-edition">NCIT (for neoplasms)</a>, <a href="https://www.orpha.net/">Orphanet (for Rare Diseases)</a> and <a href="https://disease-ontology.org/">Disease Ontology</a>. It also includes mappings to resources such as <a href="https://www.ncbi.nlm.nih.gov/medgen">MedGen</a>, <a href="https://www.nlm.nih.gov/research/umls/index.html">UMLS</a> and many others.</li>
+<li>The list is being kept in sync with the development in Mondo, which includes the addition and removal of disease concepts, synonyms and mappings. This means that if a new disease is added to Mondo, it will be added to the disease list within the same week.</li>
+<li>The list works my seperating diagnosable, clinically actionable diseases from groupings and theoretical disease subtypes without differentiable diagnostic criteria. This separation works in three steps:<ol>
+<li>Creating a default designation based on <a href="#default-filters-for-disease-list">heuristics</a></li>
+<li>Manually curating ambiguous entries according to special prioritisation metrics (essential, we have scores that are indicators of diagnosable diseases, and we we review cases with very low scores)</li>
+<li>Keeping the evolving list open to crowd-curation and having the community provide feedback when they come across a missing or wrong entry</li>
+</ol>
+</li>
+<li><em>Basic workflow</em>:<ol>
+<li>Download the latest version of the Mondo disease ontology</li>
+<li>Extract all information from Mondo relevant to the disease list as a TSV file, including<ul>
+<li>disease concept metadata such as synonyms and definitions</li>
+<li>filter criteria such as "grouping" and "subtype" designations</li>
+</ul>
+</li>
+<li>Filter the TSV file according to the <a href="#default-filters-for-disease-list">currently agreed heuristics</a></li>
+<li>Submit the updated list for review by a member of the <a href="#maintainer-team">MATRIX disease list core team</a></li>
+<li>Merge and publish the disease list as a versioned artefact on Github in various formats, including TSV and XLSX.</li>
+</ol>
+</li>
+</ol>
+<h2 id="default-filters-for-disease-list">Default filters for Disease List</h2>
+<p>Here we outline and motivate the various filters we apply to construct the <em>diagnosable, clinically actionable diseases</em>.</p>
+<p>As described in our <a href="#workflow-and-method-for-creating-the-matrix-disease-list">workflow specification</a>, these filters serve as <em>heuristics</em> and are gradually overwritten by community and internal expert feedback.</p>
+<p><em>List of current heurstics</em> for the MATRIX disease list:</p>
+<ul>
+<li>INCLUDE all classes that have been designated for inclusion by subject matter experts on the MATRIX project</li>
+<li>INCLUDE all <a href="#leaf-filter">leaf classes</a></li>
+<li>INCLUDE all <a href="#filter-leaf">direct parents of leaf classes</a> IF<ul>
+<li>they <a href="#filter-omimps-descendant">correspond to descendants of OMIM Phenotypic Series (OMIMPS)</a></li>
+<li>they <a href="#filter-orphanet-subtypes">correspond to Orphanet Subtypes</a></li>
+</ul>
+</li>
+<li>INCLUDE all disease classes that <a href="#filter-orphanet-disorder">correspond to Orphanet Disorders</a></li>
+<li>INCLUDE all disease classes are <a href="#filter-icd10">mapped to ICD10 categories</a></li>
+<li>INCLUDE all disease classes are <a href="#filter-clingen">curated by ClinGen</a></li>
+<li>INCLUDE all disease classes are <a href="#filter-omim">correspond to OMIM diseases</a></li>
+<li>REMOVE all classes that have been designated for exclusion by subject matter experts on the MATRIX project</li>
+</ul>
+<p><a id="filter-leaf"></a></p>
+<h3 id="leaf-filter">Leaf Filter</h3>
+<h5 id="heuristic">Heuristic</h5>
+<ol>
+<li>If a disease has no ontological children, it is, by default, included in the list.</li>
+</ol>
+<h5 id="background">Background</h5>
+<p>"Leaf diseases", ie the most specific disease terms in the ontology, most often represent specific diagnosable diseases.
+For genetic diseases, these represents diseases caused by variation in a specific gene.</p>
+<p><a id="filter-orphanet-subtypes"></a></p>
+<h3 id="orphanet-subtype-filter">Orphanet Subtype Filter</h3>
+<h5 id="heuristic_1">Heuristic</h5>
+<ol>
+<li>If a disease term in Mondo corresponds to a subtype of a disorder according to <a href="https://www.orpha.net/">Orphanet</a>, it is, by default, included in the list.</li>
+</ol>
+<h5 id="background_1">Background</h5>
+<p>Orphanet organized their rare disorders as "group of disorders", "disorders", and "subtype of disorders".
+They define "subtype of disorders" as sub-forms of a disease based on distinct presentation, etiology, or histological aspect, <a href="https://www.orpha.net/pdfs/orphacom/cahiers/docs/GB/eproc_disease_inventory_R1_Nom_Dis_EP_04.pdf">see details here</a>.
+The Mondo disease terms representing diseases considered as "subtype of disorders" in Orphanet are annotated with the 'ordo_subtype_of_a_disorder' subset.
+These diseases are most often the most specific disease terms (most often "lead diseases").</p>
+<p><a id="filter-orphanet-disorder"></a></p>
+<h3 id="orphanet-disorder-filter">Orphanet Disorder Filter</h3>
+<h5 id="heuristic_2">Heuristic</h5>
+<ol>
+<li>If a disease term in Mondo corresponds to an Orphanet disorder, it is, by default, included in the list [CHECK!].</li>
+</ol>
+<h5 id="background_2">Background</h5>
+<p>Orphanet organized their rare disorders as "group of disorders", "disorders", and "subtype of disorders". They define "disorders" as entities including diseases, syndromes, anomalies and particular clinical situations. "Disorders" are clinically homogeneous entities described in at least two independent individuals, confirming that the clinical signs are not associated by fortuity. [REF]
+Orphanet conciders this level of classification as "diagnosable" disorder. 
+These diseases are most often the ontological parents of "disease subtypes"</p>
+<p><a id="filter-clingen"></a></p>
+<h3 id="clingen-filter">ClinGen Filter</h3>
+<h5 id="heuristic_3">Heuristic</h5>
+<ol>
+<li>If a disease is used by the Clinical Genome Resource (ClinGen), it is, by default, included in the list.</li>
+</ol>
+<h5 id="background_3">Background</h5>
+<p>The Clinical Genome Resource (ClinGen, https://clinicalgenome.org/) is a National Institutes of Health (NIH)-funded resource dedicated to building a central resource that defines the clinical relevance of genes and variants for use in precision medicine and research.</p>
+<p>We consider ClinGen diseases/disorders as diagnosable since they are reported in the database and all have directly associated variant information.
+ClinGen uses Mondo directly during curation, see for example <a href="https://search.clinicalgenome.org/kb/conditions/MONDO:0020119">https://search.clinicalgenome.org/kb/conditions/MONDO:0020119</a>.</p>
+<p><a id="filter-omim"></a></p>
+<h3 id="omim-filter">OMIM Filter</h3>
+<h5 id="heuristic_4">Heuristic</h5>
+<ol>
+<li>If a disease has an exact match to an OMIM identifier (ie disease entry), it is, by default, included in the list.</li>
+</ol>
+<h5 id="background_4">Background</h5>
+<p>The Online Mendelian Inheritance in Man (OMIM, https://www.omim.org/) catalogs human genes and genetic disorders and traits.
+All OMIM genetic disorders have direct, equivalent correspondences in Mondo.
+We consider OMIM diseases/disorders as diagnosable (since they are reported in the database).</p>
+<p><a id="filter-icd10"></a></p>
+<h3 id="icd10-cm-filter">ICD10 CM Filter</h3>
+<h5 id="heuristic_5">Heuristic</h5>
+<ol>
+<li>If a disease has an exact match to an ICD 10 category code, it is, by default, included in the list.</li>
+<li>If a disease has an exact match to an ICD 10 chapter or chapter header code, it is, by default, excluded from the list.</li>
+</ol>
+<h5 id="background_5">Background</h5>
+<p>There are a few different types of ICD-10 codes that can be roughly identified by their structure:</p>
+<ol>
+<li>Chapter codes (or block codes), for example <code>A00-B99</code> (Certain infectious and parasitic diseases). These codes can be recognised by containing a dash (<code>-</code>) character.</li>
+<li>Chapter headers (or chapter titles), for example <code>A00</code> (Cholera). These can be identified by neither containing a dash, nor a period (<code>.</code>) character.</li>
+<li>Category codes (or subcategory codes), for example: <code>A01.1</code> (Paratyphoid fever A). These can be recognized by containing a period (<code>.</code>) character.</li>
+</ol>
+<p>Usually, we can assume the following:</p>
+<ol>
+<li>The codes with dashes (chapter codes) represent broad categories of diseases.</li>
+<li>The codes with periods (category/subcategory codes) represent more specific diagnoses.</li>
+<li>The codes without dashes or periods (chapter headers) are usually the top-level categories within each chapter.</li>
+</ol>
+<p>In clinical and coding contexts, people often refer to the codes with periods as the "billable codes" or "billable ICD-10 codes" because these are typically the ones used for specific diagnoses in medical billing and record-keeping. Codes without a period (chapter headers) are generally not billable, and Codes with dashes (chapter codes/block codes) are never billable.</p>
+<p>However, it's important to note that not all codes with periods are billable. Some may require additional digits for specificity. The exact rules can vary slightly depending on the specific implementation of ICD-10 (such as ICD-10-CM in the United States), but generally, the most specific codes (usually those with periods) are the billable ones.</p>
+<p><a id="filter-omimps"></a></p>
+<h3 id="omimps-filter">OMIMPS Filter</h3>
+<h5 id="heuristic_6">Heuristic</h5>
+<ol>
+<li>If a disease has an exact match to an OMIMPS identifier, it is, by default, excluded from the list.</li>
+</ol>
+<h5 id="background_6">Background</h5>
+<p>OMIM Phenotypic Series (OMIMPS) group diseases based on similar phenotypes.
+OMIMPS most often refers to the general disease when the OMIM terms are gene-specific subtypes of the disease. For example, the OMIMPS <a href="https://www.omim.org/phenotypicSeries/PS276900">"Usher syndrome"</a> includes all subtypes of Usher syndrome.
+Sometimes, the OMIMPS group terms based on phenotype similarities, for example <a href="https://www.omim.org/phenotypicSeries/PS309510">"Intellectual developmental disorder, X-linked syndromic"</a>.
+By nature, Mondo terms representing OMIMPS entry are not actual diseases but group of diseases.</p>
+<p><a id="filter-omimps-descendant"></a></p>
+<h3 id="omimps-descendant-filter">OMIMPS descendant Filter</h3>
+<h5 id="heuristic_7">Heuristic</h5>
+<ol>
+<li>If a disease is a subclass of a disease that corresponds to an OMIM Phenotypic Series, it is, by default, included in the list.</li>
+</ol>
+<h5 id="background_7">Background</h5>
+<p>Since OMIMPS group diseases, we determined that ontological children of OMIMPS should be diseases that we would want to include.
+These would include terms corresponding to OMIM terms, and possibly other disease terms.</p>
+<p><a id="filter-grouping-subset"></a></p>
+<h3 id="grouping-subset-filter">Grouping subset Filter</h3>
+<h5 id="heuristic_8">Heuristic</h5>
+<ol>
+<li>If a disease term in Mondo corresponds to a <em>group of disorders</em> according to Orphanet (has a 'ordo_group_of_disorders' subset annotation), it is, by default, excluded in the list</li>
+<li>If a disease term in Mondo has a 'disease_grouping' subset annotation, it is, by default, excluded in the list</li>
+<li>If a disease term in Mondo has a 'harrisons_view' subset annotation, it is, by default, excluded in the list</li>
+<li>If a disease term in Mondo has a 'rare_grouping' subset annotation, it is, by default, excluded from the list</li>
+</ol>
+<h5 id="background_8">Background</h5>
+<p>By nature, Mondo terms in the following subsets are not actual diseases but group of diseases.
+- <em>'ordo_group_of_disorders' subset</em>: Orphanet organized their rare disorders as "group of disorders", "disorders", and "subtype of disorders". They define "group of disorders" as a collection of disease/clinical entities sharing a given characteristic. [REF]
+- <em>'disease_grouping' subset</em>: Terms in this subset have been manually curated and determined to be a grouping term.
+- <em>'harrisons_view' subset</em>: Mondo's high-level classification was created based on the Harrison’s Principle of Internal Medicine textbook. Terms representing this high-level classification are annotated with the 'harrisons_view' subset
+- <em>'rare_grouping' subset</em>: The ontological parent of rare diseases (see Mondo rare disease subset <a href="https://mondo.readthedocs.io/en/latest/editors-guide/rare-disease-subset/">here</a>)</p>
+<p><a id="filter-grouping-subset-ancestor"></a></p>
+<h3 id="grouping-subset-ancestor-filter">Grouping Subset Ancestor Filter</h3>
+<h5 id="heuristic_9">Heuristic</h5>
+<ol>
+<li>If a disease is an ontological parent of a disease that is a grouping term (as defined in the "Grouping Subset Filter" section), it is, by default, excluded from the list.</li>
+</ol>
+<h5 id="background_9">Background</h5>
+<p>Ontologically, a parent of a grouping class would itself be a grouping class.</p>
+<p><a id="filter-direct-parent"></a></p>
+<h3 id="leaf-direct-parent-filter">Leaf Direct Parent Filter</h3>
+<h5 id="heuristic_10">Heuristic</h5>
+<ol>
+<li>This filter indicates if a disease is a direct parent of a leaf term</li>
+<li>This filter is for information purposes and is not used to include/exclude terms from the list [NOT TRUE!].</li>
+</ol>
+<h5 id="background_10">Background</h5>
+<p>This filter exists for information purposes. We think that the majority of the "leaf direct parent" would also be in the "orphanet disorder" subset and in the "OMIM" subset, and therefore whould be included in the list.</p>
+<p><a id="filter-subtype-descendant"></a></p>
+<h3 id="subtype-subset-descendant-filter">Subtype Subset Descendant Filter</h3>
+<h5 id="heuristic_11">Heuristic</h5>
+<ol>
+<li>This filter indicates if a disease is an ontological child of a "subtype of disorders" term.</li>
+<li>This filter is for information purposes and is not used to include/exclude terms from the list.</li>
+</ol>
+<h5 id="background_11">Background</h5>
+<p>This filter exists for information purposes. We think that the majority of the "orphanet subtype of disorder" would be leaf terms as they are specific. However, if there is a term that is an ontological child of an "orphanet subtype of disorder", it might need to be be included in the list .</p>
+<h3 id="limitations-of-the-filtering-approach-created-in-this-section">Limitations of the filtering approach created in this section:</h3>
+<ul>
+<li>Mondo mappings to ICD10CM are currently incomplete, therefore the filter will result in false positives and false negatives.</li>
+</ul>
+
+
+
+
+
+
+
+  
+    
+  
+  
+    
+  
+
+
+  <aside class="md-source-file">
+    
+      
+  <span class="md-source-file__fact">
+    <span class="md-icon" title="Last update">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
+    </span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date">November 7, 2024</span>
+  </span>
+
+    
+    
+      
+  <span class="md-source-file__fact">
+    <span class="md-icon" title="Created">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M14.47 15.08 11 13V7h1.5v5.25l3.08 1.83c-.41.28-.79.62-1.11 1m-1.39 4.84c-.36.05-.71.08-1.08.08-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8c0 .37-.03.72-.08 1.08.69.1 1.33.32 1.92.64.1-.56.16-1.13.16-1.72 0-5.5-4.5-10-10-10S2 6.5 2 12s4.47 10 10 10c.59 0 1.16-.06 1.72-.16-.32-.59-.54-1.23-.64-1.92M18 15v3h-3v2h3v3h2v-3h3v-2h-3v-3z"/></svg>
+    </span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date">November 7, 2024</span>
+  </span>
+
+    
+    
+    
+  </aside>
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+  <script>var tabs=__md_get("__tabs");if(Array.isArray(tabs))e:for(var set of document.querySelectorAll(".tabbed-set")){var labels=set.querySelector(".tabbed-labels");for(var tab of tabs)for(var label of labels.getElementsByTagName("label"))if(label.innerText.trim()===tab){var input=document.getElementById(label.htmlFor);input.checked=!0;continue e}}</script>
+
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    <script id="__config" type="application/json">{"base": "../../..", "features": ["content.action.edit", "content.code.copy", "content.tabs.link", "navigation.expand", "navigation.indexes", "navigation.sections", "navigation.tabs", "navigation.path", "navigation.tracking", "toc.follow"], "search": "../../../assets/javascripts/workers/search.6ce7567c.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
+    
+    
+      <script src="../../../assets/javascripts/bundle.83f73b43.min.js"></script>
+      
+        <script src="../../../assets/js/mathjax.js"></script>
+      
+        <script src="https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js"></script>
+      
+    
+  </body>
+</html>

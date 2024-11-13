@@ -1,4 +1,5 @@
-from matrix.datasets.gcp import RemoteSparkJDBCDataset
+import pytest
+from matrix.datasets.gcp import RemoteSparkJDBCDataset, sanitize_bq_strings
 
 
 def test_remote_spark_dataset_split_path():
@@ -12,3 +13,18 @@ def test_remote_spark_dataset_split_path():
     assert protocol == "sqlite"
     assert fs_prefix == "gs://"
     assert blob_name == "bucket/path/to/file.csv"
+
+
+@pytest.mark.parametrize(
+    "identifier,expected",
+    [
+        # Correctly replace dash
+        ("bq-table", "bq_table"),
+        # Correctly replace dot
+        ("bq.table", "bq_table"),
+        # Correctly replace both
+        ("gcp-bq.table", "gcp_bq_table"),
+    ],
+)
+def test_sanitize_bq_strings(identifier, expected):
+    assert sanitize_bq_strings(identifier) == expected
