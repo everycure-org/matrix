@@ -371,7 +371,7 @@ def test_clean_dependencies() -> None:
     assert cleaned == ["dataset_a", "dataset_b"]
 
 
-def get_argo_config(num_gpus: int) -> dict:
+def get_argo_config(argo_default_resources: ArgoResourceConfig) -> dict:
     image_name = "us-central1-docker.pkg.dev/mtrx-hub-dev-3of/matrix-images/matrix"
     run_name = "test_run"
     image_tag = "test_tag"
@@ -414,7 +414,7 @@ def get_argo_config(num_gpus: int) -> dict:
         username=username,
         pipelines=pipelines,
         package_name="matrix",
-        default_execution_resources=ArgoResourceConfig(),
+        default_execution_resources=argo_default_resources,
     )
 
     argo_config = yaml.safe_load(argo_config_yaml)
