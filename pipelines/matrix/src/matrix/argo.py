@@ -266,6 +266,7 @@ def get_dependencies(
                     for tag in fuse.tags
                     if tag.startswith("argowf.") and "-" in tag
                 },
+                "use_gpus": True if fuse.argo_config and fuse.argo_config.num_gpus else False,
                 **resources,
             }
         )
