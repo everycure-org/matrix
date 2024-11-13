@@ -3,7 +3,7 @@ from matrix.pipelines.sample import nodes
 
 
 def create_pipeline(**kwargs) -> Pipeline:
-    """Create release pipeline."""
+    """Create sample pipeline."""
     return pipeline(
         [
             # Sample data
