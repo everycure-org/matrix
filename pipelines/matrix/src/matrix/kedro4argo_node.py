@@ -1,7 +1,7 @@
 from typing import Callable, Iterable, Union, Any
 import warnings
 from kedro.pipeline.node import Node
-from pydantic import BaseModel, field_serializer, field_validator, model_validator
+from pydantic import BaseModel, field_validator, model_validator
 
 # Values are in Gb
 KUBERNETES_DEFAULT_LIMIT_RAM = 64
@@ -19,43 +19,31 @@ class ArgoResourceConfig(BaseModel):
 
     Attributes:
         num_gpus (int): Number of GPUs requested for the container.
-        cpu_request (Union[float, str]): CPU cores requested for the container.
-        cpu_limit (Union[float, str]): Maximum CPU cores allowed for the container.
-        memory_request (Union[float, str]): Memory requested for the container in GB.
-        memory_limit (Union[float, str]): Maximum memory allowed for the container in GB.
+        cpu_request (float): CPU cores requested for the container. Written in number of cores.
+        cpu_limit (float): Maximum CPU cores allowed for the container. Written in number of cores.
+        memory_request (float): Memory requested for the container in GB.
+        memory_limit (float): Maximum memory allowed for the container in GB.
     """
 
     num_gpus: int = 0
-    cpu_request: Union[float, str] = KUBERNETES_DEFAULT_REQUEST_CPU
-    cpu_limit: Union[float, str] = KUBERNETES_DEFAULT_LIMIT_CPU
-    memory_request: Union[float, str] = KUBERNETES_DEFAULT_REQUEST_RAM
-    memory_limit: Union[float, str] = KUBERNETES_DEFAULT_LIMIT_RAM
+    cpu_request: float = KUBERNETES_DEFAULT_REQUEST_CPU
+    cpu_limit: float = KUBERNETES_DEFAULT_LIMIT_CPU
+    memory_request: float = KUBERNETES_DEFAULT_REQUEST_RAM
+    memory_limit: float = KUBERNETES_DEFAULT_LIMIT_RAM
 
     model_config = {"validate_assignment": True, "extra": "forbid"}
 
-    @field_validator("cpu_request", "cpu_limit", "memory_request", "memory_limit", mode="before")
-    def validate_and_convert_input(cls, v):
-        """Convert int, float, or string values into the proper format for Kubernetes."""
-        if isinstance(v, (int, float)):
-            return v
-        if isinstance(v, str):
-            if v.replace(".", "", 1).isdigit():  # If it's a numeric string, convert it to float
-                return float(v)
-            raise ValueError("Resource values must be numeric or convertible to float")
-        raise ValueError("Invalid type for resource value")
-
-    @field_serializer("cpu_request", "cpu_limit", "memory_request", "memory_limit", mode="wrap")
-    def format_for_kubernetes(cls, v, field):
-        """Format values for Kubernetes: CPU as float, memory as 'Gi' suffixed string."""
-        if field.name.startswith("cpu"):
-            return v  # CPU values are typically floats
-        elif field.name.startswith("memory"):
-            return f"{int(v)}Gi"  # Format memory values with 'Gi' suffix
+    @field_validator("cpu_request", "cpu_limit", "memory_request", "memory_limit")
+    @classmethod
+    def validate_positive(cls, v: float) -> float:
+        """Validate that resource values are positive."""
+        if v <= 0:
+            raise ValueError("Resource values must be positive")
         return v
 
     @model_validator(mode="after")
-    def validate_resource_constraints(self):
-        """Ensure limits are greater than or equal to requests."""
+    def validate_resource_constraints(self) -> "ArgoResourceConfig":
+        """Validate that limits are greater than or equal to requests."""
         if self.cpu_limit < self.cpu_request:
             raise ValueError("CPU limit must be greater than or equal to CPU request")
         if self.memory_limit < self.memory_request:
@@ -63,11 +51,11 @@ class ArgoResourceConfig(BaseModel):
         return self
 
     @model_validator(mode="after")
-    def validate_values_are_sane(self):
-        """Warn if CPU and memory limits and requests are unusually high."""
+    def validate_values_are_sane(self) -> "ArgoResourceConfig":
+        """Validate that CPU and memory limits and requests are not too high."""
         if self.cpu_limit > KUBERNETES_DEFAULT_LIMIT_CPU or self.memory_limit > KUBERNETES_DEFAULT_LIMIT_RAM:
             warnings.warn(
-                f"CPU (limit: {self.cpu_limit}, request: {self.cpu_request}) and memory (limit: {self.memory_limit}, request: {self.memory_request}) limits and requests are unrealistically high - are you sure they were set in Gi and not in Mi?"
+                f"CPU (limit: {self.cpu_limit}, request: {self.cpu_request}) and memory (limit: {self.memory_limit}, request: {self.memory_request}) limits and requests are unrealistically high - are you sure they were set in Gb and not in Mi?"
             )
         return self
 
