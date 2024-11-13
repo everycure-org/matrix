@@ -556,9 +556,10 @@ def test_argo_template_config(argo_default_resources: ArgoResourceConfig) -> Non
     assert pipeline_one_template["dag"]["tasks"][1]["template"] == "kedro"
 
     assert (
-        pipeline_one_template["dag"]["tasks"][0]["resources"]
+        pipeline_one_template["dag"]["tasks"][0]["container"]["resources"]
         == pipelines["pipeline_one"].nodes[0].argo_config.model_dump()
     )
+    assert "container" not in pipeline_one_template["dag"]["tasks"][1]
     assert "resources" not in pipeline_one_template["dag"]["tasks"][1]
 
     # Verify pipeline_two template
