@@ -222,6 +222,7 @@ def generate_negative_paths(
         negative_sampler_list: List of path generators for negative path samplers.
         runner: The GraphDB object representing the KG..
     """
+    # Add synthesised negative paths to the dataset
     for split in ["TRAIN", "TEST"]:
         for negative_sampler in negative_sampler_list:
             paths_split = KGPaths(df=paths.df[paths.df["split"] == split])
@@ -229,6 +230,19 @@ def generate_negative_paths(
             negative_paths.df["split"] = split
             negative_paths.df["y"] = 0
             paths.df = pd.concat([paths.df, negative_paths.df])
+
+    # Remove duplicate paths keeping maximum y value
+    # This ensures that ground truth positives do not appear as synthesised negatives
+    ignore_cols = ["split", "y"]
+    dedup_cols = [col for col in paths.df.columns if col not in ignore_cols]
+    paths.df = (
+        paths.df.sort_values("y", ascending=False)
+        .drop_duplicates(subset=dedup_cols, keep="first")
+        .reset_index(drop=True)
+    )
+
+    # Shuffle the paths
+    paths.df = paths.df.sample(frac=1).reset_index(drop=True)
 
     return paths.df
 
