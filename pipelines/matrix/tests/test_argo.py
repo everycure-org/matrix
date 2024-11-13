@@ -233,6 +233,8 @@ def test_get_dependencies_default_different_than_task(pipeline_where_first_node_
         "memory_request": "32Gi",
         "num_gpus": 1,
     }
+    assert "use_gpus" in deps[0]
+    assert deps[0]["use_gpus"]
 
 
 def test_get_dependencies_default_same_than_task(pipeline_where_first_node_is_input_for_second: Pipeline):
@@ -249,6 +251,7 @@ def test_get_dependencies_default_same_than_task(pipeline_where_first_node_is_in
     )
     assert deps[0]["tags"] == {"argowf.fuse", "argowf.fuse-group.dummy"}
     assert "resources" not in deps[0]
+    assert not deps[0].get("use_gpus", False)
 
 
 @pytest.mark.parametrize(
