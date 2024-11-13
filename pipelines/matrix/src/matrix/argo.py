@@ -267,7 +267,20 @@ def clean_name(name: str) -> str:
     Returns:
         Clean node name, according to Argo's requirements
     """
-    return re.sub(r"[\W_]+", "-", name).strip("-")
+    # return re.sub(r"[\W_]+", "-", name).strip("-")
+    # Keep track of seen names to handle duplicates
+    if not hasattr(clean_name, "_seen_names"):
+        clean_name._seen_names = {}
+
+    cleaned = re.sub(r"[\W_]+", "-", name).strip("-")
+
+    if cleaned in clean_name._seen_names:
+        clean_name._seen_names[cleaned] += 1
+        cleaned = f"{cleaned}-{clean_name._seen_names[cleaned]}"
+    else:
+        clean_name._seen_names[cleaned] = 0
+
+    return cleaned
 
 
 if __name__ == "__main__":
