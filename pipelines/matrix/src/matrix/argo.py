@@ -32,7 +32,7 @@ def generate_argo_config(
         # TODO: refactor this to use ArgoNode.
         #   (1) FuseNode should be replaced by K8sNode OR new FusedPipeline object.
         #   (2) Get Dependencies should be internal to ArgoNode, removing if from here.
-        pipeline2dependencies[name] = get_dependencies(fuse(pipeline))
+        pipeline2dependencies[name] = get_dependencies(fuse(pipeline), default_execution_resources)
 
     output = template.render(
         package_name=package_name,
@@ -228,11 +228,14 @@ def fuse(pipeline: Pipeline) -> List[FusedNode]:
     return fused
 
 
-def get_dependencies(fused_pipeline: List[FusedNode]):
+def get_dependencies(
+    fused_pipeline: List[FusedNode], default_execution_resources: ArgoResourceConfig
+) -> List[Dict[str, Any]]:
     """Function to yield node dependencies to render Argo template.
 
     Args:
         fused_pipeline: fused pipeline
+        default_execution_resources: default execution resources
     Return:
         Dictionary to render Argo template
     """
@@ -242,6 +245,7 @@ def get_dependencies(fused_pipeline: List[FusedNode]):
             "nodes": fuse.nodes,
             "deps": [clean_name(val.name) for val in sorted(fuse._parents)],
             "tags": fuse.tags,
+            "resources": fuse.argo_config.model_dump(),
             **{
                 tag.split("-")[0][len("argowf.") :]: tag.split("-")[1]
                 for tag in fuse.tags
