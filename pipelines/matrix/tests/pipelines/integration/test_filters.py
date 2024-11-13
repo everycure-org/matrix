@@ -104,7 +104,7 @@ def test_unnest(sample_predicates):
 
 def test_biolink_deduplicate(spark, sample_edges, sample_predicates):
     # When applying the biolink deduplicate
-    result = filters.biolink_deduplicate(sample_edges, sample_predicates)
+    result = filters.biolink_deduplicate_edges(sample_edges, sample_predicates)
     expected = spark.createDataFrame(
         [
             (

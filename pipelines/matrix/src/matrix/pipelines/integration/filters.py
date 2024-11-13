@@ -10,7 +10,7 @@ from pyspark.sql import DataFrame, Window
 logger = logging.getLogger(__name__)
 
 
-def biolink_deduplicate(edges_df: DataFrame, biolink_predicates: DataFrame):
+def biolink_deduplicate_edges(edges_df: DataFrame, biolink_predicates: DataFrame):
     """Function to deduplicate biolink edges.
 
     Knowledge graphs in biolink format may contain multiple edges between nodes. Where
@@ -30,15 +30,8 @@ def biolink_deduplicate(edges_df: DataFrame, biolink_predicates: DataFrame):
         Deduplicated dataframe
     """
 
-    spark = ps.sql.SparkSession.builder.getOrCreate()
-
-    # Load up biolink hierarchy
-    biolink_hierarchy = spark.createDataFrame(
-        unnest_biolink_hierarchy("predicate", biolink_predicates, prefix="biolink:")
-    )
-
     # Enrich edges with path to predicates in biolink hierarchy
-    edges_df = edges_df.join(biolink_hierarchy, on="predicate")
+    edges_df = edges_df.join(convert_biolink_hierarchy_json_to_df(biolink_predicates, "predicate"), on="predicate")
 
     # Compute self join
     res = (
@@ -62,22 +55,25 @@ def biolink_deduplicate(edges_df: DataFrame, biolink_predicates: DataFrame):
     return res
 
 
-def determine_most_specific_category(nodes: DataFrame, biolink_categories_df: pd.DataFrame) -> str:
+def convert_biolink_hierarchy_json_to_df(biolink_predicates, col_name: str):
+    spark = ps.sql.SparkSession.builder.getOrCreate()
+    biolink_hierarchy = spark.createDataFrame(unnest_biolink_hierarchy(col_name, biolink_predicates, prefix="biolink:"))
+
+    return biolink_hierarchy
+
+
+def determine_most_specific_category(nodes: DataFrame, biolink_categories_df: pd.DataFrame) -> DataFrame:
     """Function to retrieve most specific entry."""
 
-    spark = ps.sql.SparkSession.builder.getOrCreate()
-    labels_hierarchy = spark.createDataFrame(
-        unnest_biolink_hierarchy("label", biolink_categories_df, prefix="biolink:", convert_to_pascal_case=True)
-    )
+    labels_hierarchy = convert_biolink_hierarchy_json_to_df(biolink_categories_df, "category")
 
     nodes = (
-        nodes.withColumn("label", F.explode("all_categories"))
-        .join(labels_hierarchy, on="label", how="left")  # add path
+        nodes.withColumn("category", F.explode("all_categories"))
+        .join(labels_hierarchy, on="category", how="left")  # add path
         .withColumn("depth", F.array_size("parents"))
         .withColumn("row_num", F.row_number().over(Window.partitionBy("id").orderBy(F.col("depth").desc())))
         .filter(F.col("row_num") == 1)
         .drop("row_num")
-        .withColumn("category", F.col("label"))
     )
     return nodes
 
