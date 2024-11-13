@@ -8,6 +8,8 @@ Our codebase is structured around the `Makefile`. This allows for a quick and ea
 
 At the end of this section, we will show you how you can set up your entire local environment by using a single `make` command however prior to that, we will explain the set-up on a step-by-step basis.
 
+<!--
+TODO wrong place
 ### Environment Variables Setup
 
 To execute the pipeline directly on your local machine, you'll need to set up your environment variables. We use a two-file system:
@@ -18,7 +20,7 @@ To execute the pipeline directly on your local machine, you'll need to set up yo
 !!! tip
     Start by reviewing `.env.defaults` to understand available configuration options. In most cases, for local executions no overrides are needed. If you do want to override a variable, create the `.env` file and override the necessary variables.
 
-
+-->
 
 ### Virtual environment for python dependencies
 
@@ -27,25 +29,20 @@ To execute the codebase, you need to set up a virtual environment for the python
 ```bash
 make install
 ```
-This command wraps the following commands:
-```bash
-# Checking the pre-requisites installed
-@command -v docker >/dev/null 2>&1 || { echo "Error: docker is not installed." >&2; exit 1; }
-@command -v gcloud >/dev/null 2>&1 || { echo "Error: gcloud is not installed." >&2; exit 1; }
-@command -v python3 >/dev/null 2>&1 || { echo "Error: python3 is not installed." >&2; exit 1; }
-@command -v java >/dev/null 2>&1 || { echo "Error: java is not installed." >&2; exit 1; }
-@command -v uv >/dev/null 2>&1 || { echo "Error: uv is not installed." >&2; exit 1; }
-@echo "All prerequisites are installed."
 
-# Setting up a virtual environment and installing the dependencies
-if [ ! -d .venv ]; then uv venv -p 3.11; fi
-.venv/bin/python -m ensurepip --upgrade || true
-deactivate || true
-# activate freshly created venv
-(source .venv/bin/activate; \
-uv pip compile requirements.in --output-file requirements.txt; \
-uv pip install -r requirements.txt)
-```
+!!! question "What does this command do?"
+
+    This command wraps the following commands:
+
+    1. **Environment Setup**: Creates and configures your Python development environment with all necessary dependencies
+    2. **Code Validation**: Runs various unit tests to ensure your local setup is working correctly
+    3. **Spins up docker services**: Spins up several dependent services we need for the execution of the pipeline
+    4. **Integration Test**: Runs an end-to-end test of the pipeline using fabricated data to verify the pipeline is working as expected
+
+    This single command gets you from a fresh checkout to a fully functional local development environment. After it completes successfully, you'll be ready to start developing!
+    
+    We do encourage you to read through the `Makefile` to get a sense of how the codebase is structured.
+
 
 ### Pre-commit hooks
 We have pre-commit hooks installed to ensure code quality and consistency. To run the pre-commit hooks, you can run the following command:
@@ -53,15 +50,8 @@ We have pre-commit hooks installed to ensure code quality and consistency. To ru
 ```bash
 make precommit
 ```
-This command wraps the following commands (provided venv is active):
-```bash
-uv pip install pre-commit
-.venv/bin/pre-commit install --install-hooks
 
-# Fetch updates from remote and run pre-commit hooks against diff between main and current branch
-git fetch origin
-.venv/bin/pre-commit run -s origin/main -o HEAD
-```
+These hooks were also installed at the time you called `make` so whenever you try to push something to the repository, the hooks will run automatically. We ensure a minimum level of code quality this way.
 
 ### Fast tests
 To ensure that the codebase is working as expected, you can run the following command to execute the fast tests:
@@ -69,15 +59,14 @@ To ensure that the codebase is working as expected, you can run the following co
 ```bash
 make fast_test
 ```
-This command wraps the following commands (provided venv is active):
-```bash
-TESTMON_DATAFILE=/tmp/.testmondata .venv/bin/pytest --testmon -v tests/
-```
-Note that the first time you run this command, it might take a while to complete as it needs to download the testmon data file. However any other fast_test command will be faster as it will use the cached data file.
+
+Note that the first time you run this command, it might take a while to complete as it
+needs to run all tests. However any other fast_test command will be faster as it will use
+the cached data and only execute tests where the underlying code has changed.
 
 ### Docker compose for local execution
 
-Our codebase features code that allows for fully localized execution of the pipeline and
+Our codebase features code that allows for fully local execution of the pipeline and
 its' auxiliary services using `docker compose`. The deployment consists of two files that
 can be [merged](https://docs.docker.com/compose/multiple-compose-files/merge/) depending
 on the intended use, i.e.,
@@ -99,10 +88,6 @@ keeping the services running in the background.
 ```bash
 make compose_up
 ```
-This command wraps the following commands:
-```bash
-docker compose -f compose/docker-compose.yml up -d --wait --remove-orphans
-```
 
 To validate whether the setup is running, navigate to [localhost](http://localhost:7474/) in your browser, this will open the Neo4J dashboard. Use `neo4j` and `admin` as the username and password combination sign in. Please note that the Neo4J database would be empty at this stage.
 
@@ -120,12 +105,6 @@ This command wraps the following commands (provided venv is active and that you 
 This command will kick off our kedro pipeline in a test environment using a fabricated dataset. This is useful to ensure that the pipeline works as expected locally after you are finished with the local setup.
 
 ### Makefile setup
-
-Except for the `.env` setup, all the sections mentioned above can be set-up using a specific `make` command. You can also execute them all at once by running the default `make` command in `pipelines/matrix`:
-
-```bash
-make
-```
 
 Generally, the `Makefile` is a good place to refer to when you need to re-set your environment. Once the command runs successfully, you should be able to run the pipeline end-to-end locally!
 
@@ -196,3 +175,5 @@ kedro run --from-env cloud --nodes preprocessing_node_name
     ```dotenv
     MLFLOW_ENDPOINT=http://127.0.0.1:5002
     ```
+
+[Next up, our different environments in kedro :material-skip-next:](./environments_overview.md){ .md-button .md-button--primary }

@@ -105,26 +105,36 @@ def create_pipeline(**kwargs) -> Pipeline:
             ),
             # filter nodes given a set of filter stages
             node(
-                func=nodes.filer_unified_kg_nodes,
+                func=nodes.prefilter_unified_kg_nodes,
                 inputs=[
                     "integration.prm.unified_nodes",
                     "params:integration.filtering.node_filters",
                 ],
-                outputs="integration.prm.filtered_nodes",
-                name="filter_prm_knowledge_graph_nodes",
+                outputs="integration.prm.prefiltered_nodes",
+                name="prefilter_prm_knowledge_graph_nodes",
                 tags=["filtering"],
             ),
             # filter edges given a set of filter stages
             node(
                 func=nodes.filter_unified_kg_edges,
                 inputs=[
-                    "integration.prm.filtered_nodes",
+                    "integration.prm.prefiltered_nodes",
                     "integration.prm.unified_edges",
                     "integration.raw.biolink.predicates",
                     "params:integration.filtering.edge_filters",
                 ],
                 outputs="integration.prm.filtered_edges",
                 name="filter_prm_knowledge_graph_edges",
+                tags=["filtering"],
+            ),
+            node(
+                func=nodes.filter_nodes_without_edges,
+                inputs=[
+                    "integration.prm.prefiltered_nodes",
+                    "integration.prm.filtered_edges",
+                ],
+                outputs="integration.prm.filtered_nodes",
+                name="filter_prm_knowledge_graph_nodes",
                 tags=["filtering"],
             ),
         ]
