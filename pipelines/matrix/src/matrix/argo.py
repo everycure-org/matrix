@@ -19,6 +19,7 @@ def generate_argo_config(
     pipeline_name: str,
     pipeline: Pipeline,
     package_name: str,
+    release_folder_name: str,
 ) -> str:
     loader = FileSystemLoader(searchpath=ARGO_TEMPLATES_DIR_PATH)
     template_env = Environment(loader=loader, trim_blocks=True, lstrip_blocks=True)
@@ -35,6 +36,7 @@ def generate_argo_config(
         namespace=namespace,
         username=username,
         run_name=run_name,
+        release_folder_name=release_folder_name,
     )
 
     return output
