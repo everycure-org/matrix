@@ -2,14 +2,13 @@ moa_extraction:
   gdb:
     database: everycure-${globals:versions.release}
 
-  preprocessing_options:
-    add_tags:
-      drug_types:
-        - biolink:Drug
-      disease_types:
-        - biolink:Disease
-      batch_size: 500
-      verbose: False
+  tagging_options:
+    drug_types:
+      - biolink:Drug
+    disease_types:
+      - biolink:Disease
+    batch_size: 500
+    verbose: False
 
   path_mapping:
     mapper_two_hop: 
