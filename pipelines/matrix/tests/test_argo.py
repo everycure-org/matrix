@@ -3,7 +3,7 @@ from kedro.pipeline import Pipeline
 import pytest
 import yaml
 
-from matrix.argo import clean_name, fuse, FusedNode, generate_argo_config
+from matrix.argo import clean_name, fuse, FusedNode, generate_argo_config, get_dependencies
 from matrix.kedro4argo_node import ArgoResourceConfig, ArgoNode
 
 
@@ -167,8 +167,9 @@ def test_fusing_multiple_parents(node_class):
     ), "Fused node should have parents 'first_node', 'second_node' and 'third_node'"
 
 
-def test_simple_fusing_with_argo_nodes():
-    pipeline_where_first_node_is_input_for_second = Pipeline(
+@pytest.fixture()
+def pipeline_where_first_node_is_input_for_second():
+    return Pipeline(
         nodes=[
             ArgoNode(
                 func=dummy_fn,
@@ -200,6 +201,8 @@ def test_simple_fusing_with_argo_nodes():
         tags=["argowf.fuse", "argowf.fuse-group.dummy"],
     )
 
+
+def test_simple_fusing_with_argo_nodes(pipeline_where_first_node_is_input_for_second: Pipeline):
     fused = fuse(pipeline_where_first_node_is_input_for_second)
 
     assert len(fused) == 1
@@ -209,6 +212,26 @@ def test_simple_fusing_with_argo_nodes():
     assert fused[0].argo_config.memory_request == 32
     assert fused[0].argo_config.memory_limit == 64
     assert fused[0].argo_config.num_gpus == 1
+
+
+def test_get_dependencies(pipeline_where_first_node_is_input_for_second: Pipeline):
+    fused_pipeline = fuse(pipeline_where_first_node_is_input_for_second)
+    deps = get_dependencies(fused_pipeline)
+    assert len(deps) == 1
+    assert deps[0]["name"] == "dummy"
+    assert deps[0]["deps"] == []
+    assert (
+        deps[0]["nodes"]
+        == "dummy_fn([dataset_a;dataset_b]) -> [dataset_1@pandas],dummy_fn([dataset_1@spark]) -> [dataset_2]"
+    )
+    assert deps[0]["tags"] == {"argowf.fuse", "argowf.fuse-group.dummy"}
+    assert deps[0]["resources"] == {
+        "cpu_limit": 2,
+        "cpu_request": 2,
+        "memory_limit": "64Gi",
+        "memory_request": "32Gi",
+        "num_gpus": 1,
+    }
 
 
 @pytest.mark.parametrize(
