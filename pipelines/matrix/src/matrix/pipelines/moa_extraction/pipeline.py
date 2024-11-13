@@ -95,11 +95,11 @@ def _preprocessing_pipeline() -> Pipeline:
                         tags="moa_extraction.preprocessing",
                     ),
                 ],
-                tags=[
-                    "argowf.fuse",
-                    f"argowf.fuse-group.moa_extraction_{num_hops}_hop",
-                    "argowf.template-neo4j",
-                ],
+                # tags=[
+                #     "argowf.fuse",
+                #     f"argowf.fuse-group.moa_extraction_{num_hops}_hop",
+                #     "argowf.template-neo4j",
+                # ],
             )
         )
     return sum(
