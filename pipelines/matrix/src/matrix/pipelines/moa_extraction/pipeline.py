@@ -13,8 +13,6 @@ from matrix import settings
 moa_extraction_settings = settings.DYNAMIC_PIPELINES_MAPPING.get("moa_extraction")
 num_hops_lst = [model["num_hops"] for model in moa_extraction_settings]
 
-# TODO: cleanup tags
-
 
 def _preprocessing_pipeline() -> Pipeline:
     initial_nodes = pipeline(
@@ -38,14 +36,14 @@ def _preprocessing_pipeline() -> Pipeline:
                         inputs=["integration.prm.filtered_nodes"],
                         outputs=f"moa_extraction.input_nodes.{num_hops}_hop",
                         name=f"moa_extraction_ingest_neo4j_input_nodes_{num_hops}_hop",
-                        tags=["neo4j"],
+                        tags=["moa_extraction.create_neo4j_db"],
                     ),
                     node(
                         func=embeddings_nodes.ingest_edges,
                         inputs=[f"moa_extraction.input_nodes.{num_hops}_hop", "integration.prm.filtered_edges"],
                         outputs=f"moa_extraction.input_edges.{num_hops}_hop",
                         name=f"ingest_neo4j_input_edges_{num_hops}_hop",
-                        tags=["neo4j"],
+                        tags=["moa_extraction.create_neo4j_db"],
                     ),
                     node(
                         func=nodes.add_tags,
@@ -58,7 +56,7 @@ def _preprocessing_pipeline() -> Pipeline:
                             "edges": f"moa_extraction.input_edges.{num_hops}_hop",
                         },
                         outputs=f"moa_extraction.reporting.add_tags_{num_hops}_hop",
-                        tags=["moa_extraction.preprocessing", "moa_extraction.tagging"],
+                        tags=["moa_extraction.tagging"],
                         name=f"add_tags_{num_hops}_hop",
                     ),
                     node(
@@ -72,7 +70,6 @@ def _preprocessing_pipeline() -> Pipeline:
                         },
                         outputs=f"moa_extraction.int.{num_hops}_hop_indication_paths",
                         name=f"map_{num_hops}_hop",
-                        tags="moa_extraction.preprocessing",
                     ),
                     node(
                         func=nodes.report_mapping_success,
@@ -83,7 +80,6 @@ def _preprocessing_pipeline() -> Pipeline:
                         },
                         outputs=f"moa_extraction.reporting.{num_hops}_hop_mapping_success",
                         name=f"report_mapping_success_{num_hops}_hop",
-                        tags="moa_extraction.preprocessing",
                     ),
                     node(
                         func=nodes.make_splits,
@@ -93,13 +89,13 @@ def _preprocessing_pipeline() -> Pipeline:
                         },
                         outputs=f"moa_extraction.prm.{num_hops}_hop_splits",
                         name=f"make_splits_{num_hops}_hop",
-                        tags="moa_extraction.preprocessing",
                     ),
                 ],
                 tags=[
                     "argowf.fuse",
                     f"argowf.fuse-group.moa_extraction_{num_hops}_hop",
                     "argowf.template-neo4j",
+                    "moa_extraction.preprocessing",
                 ],
             )
         )
@@ -126,7 +122,7 @@ def _training_pipeline() -> Pipeline:
                         },
                         outputs=f"moa_extraction.feat.{num_hops}_hop_enriched_paths",
                         name=f"generate_negative_paths_{num_hops}_hop",
-                        tags=["moa_extraction.training", "moa_extraction.negative_sampling"],
+                        tags="moa_extraction.negative_sampling",
                     ),
                     node(
                         func=nodes.train_model_split,
@@ -139,7 +135,6 @@ def _training_pipeline() -> Pipeline:
                         },
                         outputs=f"moa_extraction.models.{num_hops}_hop_model_split",
                         name=f"train_{num_hops}_hop_model_split",
-                        tags="moa_extraction.training",
                     ),
                     node(
                         func=nodes.train_model,
@@ -152,9 +147,14 @@ def _training_pipeline() -> Pipeline:
                         },
                         outputs=f"moa_extraction.models.{num_hops}_hop_model",
                         name=f"train_{num_hops}_hop_model",
-                        tags="moa_extraction.training",
                     ),
-                ]
+                ],
+                tags=[
+                    "argowf.fuse",
+                    f"argowf.fuse-group.moa_extraction_{num_hops}_hop",
+                    "argowf.template-neo4j",
+                    "moa_extraction.training",
+                ],
             )
         )
     return sum(training_strands_lst)
@@ -179,7 +179,6 @@ def _evaluation_pipeline() -> Pipeline:
                         },
                         outputs=f"moa_extraction.model_output.{num_hops}_hop_evaluation_predictions",
                         name=f"evaluation.make_{num_hops}_hop_predictions",
-                        tags=["moa_extraction.evaluation"],
                     ),
                     node(
                         func=nodes.compute_evaluation_metrics,
@@ -190,9 +189,14 @@ def _evaluation_pipeline() -> Pipeline:
                         },
                         outputs=f"moa_extraction.reporting.{num_hops}_hop_metrics",
                         name=f"compute_{num_hops}_hop_metrics",
-                        tags=["moa_extraction.evaluation"],
                     ),
-                ]
+                ],
+                tags=[
+                    "argowf.fuse",
+                    f"argowf.fuse-group.moa_extraction_{num_hops}_hop",
+                    "argowf.template-neo4j",
+                    "moa_extraction.evaluation",
+                ],
             )
         )
     return sum(evaluation_strands_lst)
@@ -220,7 +224,6 @@ def _predictions_pipeline() -> Pipeline:
                         },
                         outputs=f"moa_extraction.model_output.{num_hops}_hop_output_predictions",
                         name=f"predictions.make_{num_hops}_hop_output_predictions",
-                        tags=["moa_extraction.predictions"],
                     ),
                     node(
                         func=nodes.generate_predictions_reports,
@@ -235,9 +238,14 @@ def _predictions_pipeline() -> Pipeline:
                             "moa_predictions_dfs": f"moa_extraction.model_output.{num_hops}_hop_predictions_sql",
                         },
                         name=f"generate_{num_hops}_hop_predictions_report",
-                        tags=["moa_extraction.predictions"],
                     ),
-                ]
+                ],
+                tags=[
+                    "argowf.fuse",
+                    f"argowf.fuse-group.moa_extraction_{num_hops}_hop",
+                    "argowf.template-neo4j",
+                    "moa_extraction.predictions",
+                ],
             )
         )
     return sum(predictions_strands_lst)
