@@ -57,13 +57,17 @@ modelling.raw.ground_truth.positives@pandas:
   save_args:
     sep: "\t"
 
-modelling.raw.ground_truth.positives@spark:
+modelling.raw.ground_truth.positives@spark: &_gt_pos_spark
   <<: [*_spark_csv, *_raw_ds]
   filepath: ${globals:paths.raw}/ground_truth/translator/${globals:data_sources.gt.version}/tp_pairs_conflated.tsv
   file_format: csv
   load_args:
     sep: "\t"
     header: true
+
+modelling.raw.ground_truth_in.positives@spark:
+  # NOTE: This catalog entry is a copy, to enable subsampling of the dataset by the sample pipeline
+  <<: *_gt_pos_spark
 
 modelling.raw.ground_truth.negatives@pandas:
   <<: [*_pandas_csv, *_raw_ds]
@@ -73,13 +77,17 @@ modelling.raw.ground_truth.negatives@pandas:
   save_args:
     sep: "\t"
 
-modelling.raw.ground_truth.negatives@spark:
+modelling.raw.ground_truth.negatives@spark: &_gt_neg_spark
   <<: [*_spark_csv, *_raw_ds]
   filepath: ${globals:paths.raw}/ground_truth/translator/${globals:data_sources.gt.version}/tn_pairs_conflated.tsv
   file_format: csv
   load_args:
     sep: "\t"
     header: true
+
+modelling.raw.ground_truth_in.negatives@spark:
+  # NOTE: This catalog entry is a copy, to enable subsampling of the dataset by the sample pipeline
+  <<: *_gt_neg_spark
 
 modelling.int.known_pairs@pandas:
   <<: [*_pandas_parquet, *_model_input_ds]

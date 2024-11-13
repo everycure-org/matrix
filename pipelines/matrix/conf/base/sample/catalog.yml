@@ -1,0 +1,14 @@
+integration.prm.filtered_edges:
+  filepath: ${globals:paths.raw}/samples/filtered_edges
+
+integration.prm.filtered_nodes:
+  filepath: ${globals:paths.raw}/samples/filtered_nodes
+
+embeddings.feat.nodes:
+  filepath: ${globals:paths.raw}/samples/feat_nodes
+
+modelling.raw.ground_truth.positives@spark:
+  filepath: ${globals:paths.raw}/samples/tp_pairs_conflated.tsv
+
+modelling.raw.ground_truth.negatives@spark:
+  filepath: ${globals:paths.raw}/samples/tn_pairs_conflated.tsv
