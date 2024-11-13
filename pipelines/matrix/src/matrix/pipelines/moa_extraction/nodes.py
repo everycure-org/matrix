@@ -95,6 +95,7 @@ def add_tags(
     disease_types: List[str],
     batch_size: int,
     verbose: bool,
+    edges: DataFrame,
     prefix: str = "_moa_extraction_",
 ) -> None:
     """Add tags to the Neo4j database.
@@ -106,6 +107,7 @@ def add_tags(
         batch_size: The batch size to use for the query.
         verbose: Whether to print the number of batches completed.
         prefix: The prefix to add to the tag.
+        edges: The edges dataframe. Dummy variable ensuring that the node is run after edges have been added to the KG.
     """
     _tag_edges_between_types(runner, drug_types, disease_types, "drug_disease", batch_size, verbose, prefix)
     _tag_edges_between_types(runner, drug_types, drug_types, "drug_drug", batch_size, verbose, prefix)

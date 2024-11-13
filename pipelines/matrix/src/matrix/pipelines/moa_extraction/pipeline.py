@@ -50,11 +50,12 @@ def _preprocessing_pipeline() -> Pipeline:
                     node(
                         func=nodes.add_tags,
                         inputs={
-                            "runner": "params:moa_extraction.gdb",
+                            "runner": f"params:moa_extraction.gdb_{num_hops}_hop",
                             "drug_types": "params:moa_extraction.tagging_options.drug_types",
                             "disease_types": "params:moa_extraction.tagging_options.disease_types",
                             "batch_size": "params:moa_extraction.tagging_options.batch_size",
                             "verbose": "params:moa_extraction.tagging_options.verbose",
+                            "edges": f"moa_extraction.input_edges.{num_hops}_hop",
                         },
                         outputs=f"moa_extraction.reporting.add_tags_{num_hops}_hop",
                         tags=["moa_extraction.preprocessing", "moa_extraction.tagging"],
@@ -63,7 +64,7 @@ def _preprocessing_pipeline() -> Pipeline:
                     node(
                         func=nodes.map_drug_mech_db,
                         inputs={
-                            "runner": "params:moa_extraction.gdb",
+                            "runner": f"params:moa_extraction.gdb_{num_hops}_hop",
                             "drug_mech_db": "moa_extraction.raw.drug_mech_db",
                             "mapper": f"params:moa_extraction.path_mapping.mapper_{num_hops}_hop",
                             "drugmechdb_entities": "moa_extraction.raw.drugmechdb_entities",
@@ -121,7 +122,7 @@ def _training_pipeline() -> Pipeline:
                         inputs={
                             "paths": f"moa_extraction.prm.{num_hops}_hop_splits",
                             "negative_sampler_list": f"params:moa_extraction.training.{num_hops}_hop.negative_samplers",
-                            "runner": "params:moa_extraction.gdb",
+                            "runner": f"params:moa_extraction.gdb_{num_hops}_hop",
                         },
                         outputs=f"moa_extraction.feat.{num_hops}_hop_enriched_paths",
                         name=f"generate_negative_paths_{num_hops}_hop",
@@ -169,7 +170,7 @@ def _evaluation_pipeline() -> Pipeline:
                         func=nodes.make_evaluation_predictions,
                         inputs={
                             "model": f"moa_extraction.models.{num_hops}_hop_model",
-                            "runner": "params:moa_extraction.gdb",
+                            "runner": f"params:moa_extraction.gdb_{num_hops}_hop",
                             "positive_paths": f"moa_extraction.prm.{num_hops}_hop_splits",
                             "path_generator": f"params:moa_extraction.evaluation.{num_hops}_hop.path_generator",
                             "path_embedding_strategy": "params:moa_extraction.path_embeddings.strategy",
@@ -207,7 +208,7 @@ def _predictions_pipeline() -> Pipeline:
                         func=nodes.make_output_predictions,
                         inputs={
                             "model": f"moa_extraction.models.{num_hops}_hop_model",
-                            "runner": "params:moa_extraction.gdb",
+                            "runner": f"params:moa_extraction.gdb_{num_hops}_hop",
                             "pairs": "moa_extraction.raw.pairs_for_moa_prediction",
                             "path_generator": f"params:moa_extraction.predictions.{num_hops}_hop.path_generator",
                             "path_embedding_strategy": "params:moa_extraction.path_embeddings.strategy",
