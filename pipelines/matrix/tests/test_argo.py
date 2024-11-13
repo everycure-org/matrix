@@ -414,7 +414,7 @@ def get_argo_config(num_gpus: int) -> dict:
         username=username,
         pipelines=pipelines,
         package_name="matrix",
-        num_gpus=num_gpus,
+        default_execution_resources=ArgoResourceConfig(),
     )
 
     argo_config = yaml.safe_load(argo_config_yaml)

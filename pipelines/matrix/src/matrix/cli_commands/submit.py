@@ -19,6 +19,7 @@ from rich.logging import RichHandler
 from rich.panel import Panel
 
 from matrix.argo import ARGO_TEMPLATES_DIR_PATH, generate_argo_config
+from matrix.kedro4argo_node import ArgoResourceConfig
 
 logging.basicConfig(
     level=logging.INFO,
@@ -300,6 +301,7 @@ def build_argo_template(run_name: str, username: str, namespace: str, pipelines:
         username=username,
         pipelines=pipelines,
         package_name=package_name,
+        default_execution_resources=ArgoResourceConfig(),
     )
 
 def save_argo_template(argo_template: str, run_name: str, template_directory: Path) -> str:
