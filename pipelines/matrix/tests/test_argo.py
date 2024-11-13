@@ -422,8 +422,33 @@ def get_argo_config(num_gpus: int) -> dict:
     return argo_config
 
 
-@pytest.mark.parametrize("argo_default_resources", [ArgoResourceConfig(), ArgoResourceConfig(num_gpus=1)])
-def test_generate_argo_config(argo_default_resources: ArgoResourceConfig) -> None:
+@pytest.mark.parametrize(
+    "argo_default_resources",
+    [
+        ArgoResourceConfig(
+            num_gpus=0,
+            cpu_request=4,
+            cpu_limit=16,
+            memory_request=64,
+            memory_limit=64,
+        ),
+        ArgoResourceConfig(
+            num_gpus=0,
+            cpu_request=8,
+            cpu_limit=12,
+            memory_request=128,
+            memory_limit=128,
+        ),
+        ArgoResourceConfig(
+            num_gpus=1,
+            cpu_request=16,
+            cpu_limit=16,
+            memory_request=64,
+            memory_limit=128,
+        ),
+    ],
+)
+def test_argo_template_config(argo_default_resources: ArgoResourceConfig) -> None:
     argo_config = get_argo_config(argo_default_resources)
     spec = argo_config["spec"]
 
@@ -450,14 +475,14 @@ def test_generate_argo_config(argo_default_resources: ArgoResourceConfig) -> Non
     resources = kedro_template["container"]["resources"]
 
     # Check requests
-    assert resources["requests"]["memory"] == "64Gi"
-    assert resources["requests"]["cpu"] == 4
-    assert resources["requests"]["nvidia.com/gpu"] == 0
+    assert resources["requests"]["memory"] == f"{int(argo_default_resources.memory_request)}Gi"
+    assert resources["requests"]["cpu"] == int(argo_default_resources.cpu_request)
+    assert resources["requests"]["nvidia.com/gpu"] == int(argo_default_resources.num_gpus)
 
     # Check limits
-    assert resources["limits"]["memory"] == "64Gi"
-    assert resources["limits"]["cpu"] == 16
-    assert resources["limits"]["nvidia.com/gpu"] == 0
+    assert resources["limits"]["memory"] == f"{int( argo_default_resources.memory_limit)}Gi"
+    assert resources["limits"]["cpu"] == int(argo_default_resources.cpu_limit)
+    assert resources["limits"]["nvidia.com/gpu"] == int(argo_default_resources.num_gpus)
 
     # Verify pipeline templates
     templates = spec["templates"]
