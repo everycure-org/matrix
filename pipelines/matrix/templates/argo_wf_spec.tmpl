@@ -225,6 +225,17 @@ spec:
               cpu: {{ task.resources.cpu_limit }}
               nvidia.com/gpu: {{ task.resources.num_gpus }}
         {% endif %}
+        {% if task.get('use_gpus', False) %}
+        affinity:
+          nodeAntiAffinity:
+            requiredDuringSchedulingIgnoredDuringExecution:
+          nodeSelectorTerms:
+            - matchExpressions:
+              - key: gpu_node
+                operator: In
+                values:
+                - "true"
+        {% endif %}
         {% if task.deps %}
         dependencies:
         {% for dep in task.deps %}
