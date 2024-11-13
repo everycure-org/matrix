@@ -41,11 +41,11 @@ def known_pairs_fixture() -> pd.DataFrame:
     """Fixture to yield a dummy known pairs dataset."""
     return pd.DataFrame(
         [
-            ["drug:drug_1", "disease:disease_1", 1],
-            ["drug:drug_2", "disease:disease_2", 1],
-            ["drug:drug_3", "disease:disease_2", 1],
+            ["drug:drug_1", "disease:disease_1", 1, [1, 0, 0, 0], [0, 0, 1, 0]],
+            ["drug:drug_2", "disease:disease_2", 1, [0, 1, 0, 0], [0, 0, 0, 1]],
+            ["drug:drug_3", "disease:disease_2", 1, [0, 2, 0, 0], [0, 0, 0, 2]],
         ],
-        columns=["source", "target", "y"],
+        columns=["source", "target", "y", "source_embedding", "target_embedding"],
     )
 
 
@@ -87,7 +87,6 @@ def test_replacement_drug_disease_pair_generator(
     )
 
     known_pairs_split = make_splits(
-        graph,
         known_pairs,
         splitter,
     )

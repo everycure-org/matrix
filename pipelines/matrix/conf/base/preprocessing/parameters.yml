@@ -1,4 +1,6 @@
-preprocessing.synonymizer_endpoint: http://localhost:8081
+preprocessing.translator:
+  normalizer: ${oc.env:NODENORM_ENDPOINT, https://nodenorm.transltr.io/1.5/get_normalized_nodes} #http://localhost:8081
+  name_resolver: https://name-resolution-sri-dev.apps.renci.org
 
 preprocessing.enrichment_tags:
   single_input:
