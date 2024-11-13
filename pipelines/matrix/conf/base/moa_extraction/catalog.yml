@@ -19,11 +19,11 @@ moa_extraction.raw.drugmechdb_entities:
 
 # Neo4j datasets
 
-"moa_extraction.input_nodes.two_hop":
+f"moa_extraction.input_nodes.{num_hops}_hop":
 # moa_extraction.input_nodes:
   type: matrix.datasets.neo4j.Neo4JSparkDataset
   # database: analytics 
-  database: analytics-two-hop
+  database: analytics-{num_hops}-hop
   url: ${globals:neo4j.host}
   credentials: neo4j_credentials
   save_args:
@@ -38,24 +38,24 @@ moa_extraction.raw.drugmechdb_entities:
       CALL apoc.create.setProperties(n, event.array_property_keys, event.array_property_values) YIELD node AS n3
       RETURN node
 
-"moa_extraction.input_nodes.three_hop":
-# moa_extraction.input_nodes:
-  type: matrix.datasets.neo4j.Neo4JSparkDataset
-  # database: analytics 
-  database: analytics-three-hop
-  url: ${globals:neo4j.host}
-  credentials: neo4j_credentials
-  save_args:
-    mode: overwrite
-    script: >
-      CREATE CONSTRAINT IF NOT EXISTS FOR (n:Entity) REQUIRE n.id IS UNIQUE;
-    query: > 
-      CREATE (n:Entity {id: event.id, kg_sources: event.kg_sources})
-      WITH event, n
-      CALL apoc.create.addLabels(n, [event.label]) YIELD node
-      CALL apoc.create.setProperties(n, event.property_keys, event.property_values) YIELD node AS n2
-      CALL apoc.create.setProperties(n, event.array_property_keys, event.array_property_values) YIELD node AS n3
-      RETURN node
+# "moa_extraction.input_nodes.three_hop":
+# # moa_extraction.input_nodes:
+#   type: matrix.datasets.neo4j.Neo4JSparkDataset
+#   # database: analytics 
+#   database: analytics-three-hop
+#   url: ${globals:neo4j.host}
+#   credentials: neo4j_credentials
+#   save_args:
+#     mode: overwrite
+#     script: >
+#       CREATE CONSTRAINT IF NOT EXISTS FOR (n:Entity) REQUIRE n.id IS UNIQUE;
+#     query: > 
+#       CREATE (n:Entity {id: event.id, kg_sources: event.kg_sources})
+#       WITH event, n
+#       CALL apoc.create.addLabels(n, [event.label]) YIELD node
+#       CALL apoc.create.setProperties(n, event.property_keys, event.property_values) YIELD node AS n2
+#       CALL apoc.create.setProperties(n, event.array_property_keys, event.array_property_values) YIELD node AS n3
+#       RETURN node
 
 # "moa_extraction.input_edges.{num_hops}_hop":
 #   type: matrix.datasets.neo4j.Neo4JSparkDataset
