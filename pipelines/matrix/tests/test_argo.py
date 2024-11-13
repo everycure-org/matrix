@@ -214,9 +214,9 @@ def test_simple_fusing_with_argo_nodes(pipeline_where_first_node_is_input_for_se
     assert fused[0].argo_config.num_gpus == 1
 
 
-def test_get_dependencies(pipeline_where_first_node_is_input_for_second: Pipeline):
+def test_get_dependencies_default_different_than_task(pipeline_where_first_node_is_input_for_second: Pipeline):
     fused_pipeline = fuse(pipeline_where_first_node_is_input_for_second)
-    deps = get_dependencies(fused_pipeline)
+    deps = get_dependencies(fused_pipeline, ArgoResourceConfig())
     assert len(deps) == 1
     assert deps[0]["name"] == "dummy"
     assert deps[0]["deps"] == []
@@ -232,6 +232,22 @@ def test_get_dependencies(pipeline_where_first_node_is_input_for_second: Pipelin
         "memory_request": "32Gi",
         "num_gpus": 1,
     }
+
+
+def test_get_dependencies_default_same_than_task(pipeline_where_first_node_is_input_for_second: Pipeline):
+    fused_pipeline = fuse(pipeline_where_first_node_is_input_for_second)
+    deps = get_dependencies(
+        fused_pipeline, ArgoResourceConfig(cpu_request=2, cpu_limit=2, memory_request=32, memory_limit=64, num_gpus=1)
+    )
+    assert len(deps) == 1
+    assert deps[0]["name"] == "dummy"
+    assert deps[0]["deps"] == []
+    assert (
+        deps[0]["nodes"]
+        == "dummy_fn([dataset_a;dataset_b]) -> [dataset_1@pandas],dummy_fn([dataset_1@spark]) -> [dataset_2]"
+    )
+    assert deps[0]["tags"] == {"argowf.fuse", "argowf.fuse-group.dummy"}
+    assert "resources" not in deps[0]
 
 
 @pytest.mark.parametrize(
