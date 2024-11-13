@@ -1,5 +1,3 @@
-"""Nodes for embeddings pipeline."""
-
 import logging
 from typing import Any, Dict, List
 
@@ -161,6 +159,7 @@ def compute_embeddings(
     api_key: str,
     batch_size: int,
     endpoint: str,
+    skip: bool,
     model: str,
 ):
     """Function to orchestrate embedding computation in Neo4j.
@@ -174,7 +173,12 @@ def compute_embeddings(
         attribute: attribute to add
         endpoint: endpoint to use
         model: model to use
+        skip: whether to skip the embedding computation
     """
+    if skip:
+        # FUTURE Currently a hack, should be refactored (see https://github.com/everycure-org/matrix/issues/647 )
+        return input.withColumn(attribute, F.lit([0.0] * 512))
+
     batch_udf = F.udf(lambda z: batch(endpoint, model, api_key, z), ArrayType(ArrayType(FloatType())))
 
     window = Window.orderBy(F.lit(1))
@@ -331,12 +335,14 @@ def train_topological_embeddings(
     # Filter out treat/GT nodes from the graph
     subgraph_name = filtering.get("graphName")
     filter_args = filtering.pop("args")
+
     # Drop graph if exists
     if gds.graph.exists(subgraph_name).exists:
         subgraph = gds.graph.get(subgraph_name)
         gds.graph.drop(subgraph, False)
 
     subgraph, _ = gds.graph.filter(subgraph_name, graph, **filter_args)
+    gds.graph.drop(graph)
 
     # Validate whether the model exists
     model_name = estimator.get("modelName")
@@ -374,7 +380,7 @@ def write_topological_embeddings(
 ) -> Dict:
     """Write topological embeddings."""
     # Retrieve the graph
-    graph_name = projection.get("graphName")
+    graph_name = filtering.get("graphName")
     graph = gds.graph.get(graph_name)
 
     # Retrieve the model

@@ -1,8 +1,16 @@
+from typing import Any, Dict
+
 import pytest
+from jsonpath_ng.parser import parse
 from matrix.pipelines.integration import nodes
 from matrix.schemas.knowledge_graph import KGEdgeSchema, KGNodeSchema
 from pyspark.sql import DataFrame
-from pyspark.sql.types import ArrayType, StringType, StructField, StructType
+from pyspark.sql.types import (
+    ArrayType,
+    StringType,
+    StructField,
+    StructType,
+)
 from pyspark.testing import assertDataFrameEqual
 
 
@@ -128,13 +136,58 @@ def sample_edges(spark):
     return spark.createDataFrame(data, schema)
 
 
+@pytest.fixture
+def sample_biolink_predicates():
+    return [
+        {
+            "name": "related_to",
+            "children": [
+                {"name": "disease_has_location", "parent": "related_to"},
+                {
+                    "name": "related_to_at_concept_level",
+                    "parent": "related_to",
+                    "children": [
+                        {"name": "broad_match", "parent": "related_to_at_concept_level"},
+                    ],
+                },
+            ],
+        }
+    ]
+
+
+@pytest.fixture
+def nodenorm_response() -> Dict[str, Any]:
+    return {
+        "CHEMBL.COMPOUND:CHEMBL1201836": {
+            "id": {
+                "identifier": "CHEBI:28887",
+                "label": "Ofatumumab",
+                "description": "An ether in which the oxygen atom is connected to two methyl groups.",
+            },
+            "equivalent_identifiers": [
+                {
+                    "identifier": "CHEBI:28887",
+                    "label": "dimethyl ether",
+                    "description": "An ether in which the oxygen atom is connected to two methyl groups.",
+                },
+                {"identifier": "UNII:AM13FS69BX", "label": "DIMETHYL ETHER"},
+            ],
+            "type": ["biolink:SmallMolecule", "biolink:MolecularEntity"],
+            "information_content": 92.8,
+        }
+    }
+
+
+@pytest.mark.spark(
+    help="This test relies on PYSPARK_PYTHON to be set appropriately, and sometimes does not work in VSCode"
+)
 def test_unify_nodes(spark, sample_nodes):
     # Create two node datasets
     nodes1 = sample_nodes.filter(sample_nodes.id != "MONDO:0005148")
     nodes2 = sample_nodes.filter(sample_nodes.id != "CHEBI:119157")
 
     # Call the unify_nodes function
-    result = nodes.union_nodes(["nodes1", "nodes2"], nodes1=nodes1, nodes2=nodes2)
+    result = nodes.union_and_deduplicate_nodes(["nodes1", "nodes2"], nodes1=nodes1, nodes2=nodes2)
 
     # Check the result
     assert isinstance(result, DataFrame)
@@ -148,13 +201,18 @@ def test_unify_nodes(spark, sample_nodes):
     assert set(drug_node.upstream_data_source) == {"source1", "source3"}
 
 
-def test_unify_edges(spark, sample_edges):
+@pytest.mark.spark(
+    help="This test relies on PYSPARK_PYTHON to be set appropriately, and sometimes does not work in VSCode"
+)
+def test_unify_edges(spark, sample_edges, sample_biolink_predicates):
     # Create two edge datasets
     edges1 = sample_edges.filter(sample_edges.subject != "CHEBI:120688")
     edges2 = sample_edges.filter(sample_edges.subject != "CHEBI:119157")
 
     # Call the unify_edges function
-    result = nodes.union_edges(["edges1", "edges2"], edges1=edges1, edges2=edges2)
+    result = nodes.union_and_deduplicate_edges(
+        ["edges1", "edges2"], sample_biolink_predicates, edges1=edges1, edges2=edges2
+    )
 
     # Check the result
     assert isinstance(result, DataFrame)
@@ -186,6 +244,9 @@ class MockResponse:
         return self
 
 
+@pytest.mark.spark(
+    help="This test relies on PYSPARK_PYTHON to be set appropriately, and sometimes does not work in VSCode"
+)
 def test_normalize_kg(spark, mocker):
     # Given
     sample_nodes = spark.createDataFrame(
@@ -263,4 +324,51 @@ def test_normalize_kg(spark, mocker):
     assertDataFrameEqual(mapping_df[expected_mapping.columns], expected_mapping)
 
 
-# NOTE: This function was partially generated using AI assistance.
+@pytest.mark.parametrize(
+    "attribute,expected",
+    [
+        (parse("$.id.identifier"), "CHEBI:28887"),
+        (parse("$.id.label"), "Ofatumumab"),
+        (parse("$.type[0]"), "biolink:SmallMolecule"),
+        (parse("$.type"), ["biolink:SmallMolecule", "biolink:MolecularEntity"]),
+        (parse("$.non.existing.attribute"), None),
+    ],
+)
+def test_extract_ids(nodenorm_response, attribute, expected):
+    # Given a nodenorm response
+
+    # When extracting an attribute
+    response = nodes._extract_ids(nodenorm_response, attribute)
+
+    # Then correct response returned
+    assert response["CHEMBL.COMPOUND:CHEMBL1201836"] == expected
+
+
+def test_extract_type_not_found():
+    # Given a nodenorm response
+    nodenorm_response = {
+        "CHEMBL.COMPOUND:CHEMBL1201836": {
+            "id": {
+                "identifier": "CHEBI:28887",
+                "label": "Ofatumumab",
+                "description": "An ether in which the oxygen atom is connected to two methyl groups.",
+            },
+            "equivalent_identifiers": [
+                {
+                    "identifier": "CHEBI:28887",
+                    "label": "dimethyl ether",
+                    "description": "An ether in which the oxygen atom is connected to two methyl groups.",
+                },
+                {"identifier": "UNII:AM13FS69BX", "label": "DIMETHYL ETHER"},
+            ],
+            # "type": None, #["biolink:SmallMolecule", "biolink:MolecularEntity"],
+            "information_content": 92.8,
+        }
+    }
+
+    # When extracting an attribute
+    json_parser = parse("$.type[0]")
+    response = nodes._extract_ids(nodenorm_response, json_parser)
+
+    # Then correct response returned
+    assert response["CHEMBL.COMPOUND:CHEMBL1201836"] is None

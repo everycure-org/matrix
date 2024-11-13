@@ -1,5 +1,3 @@
-"""Matrix generation pipeline."""
-
 from kedro.pipeline import Pipeline, node
 from kedro.pipeline.modular_pipeline import pipeline
 
@@ -22,17 +20,19 @@ def _create_matrix_generation_pipeline(model: str) -> Pipeline:
                     "params:evaluation.score_col_name",
                     "params:matrix_generation.matrix_generation_options.batch_by",
                 ],
-                outputs=f"matrix_generation.{model}.model_output.sorted_matrix_predictions",
+                outputs=f"matrix_generation.{model}.model_output.sorted_matrix_predictions@pandas",
                 name=f"make_{model}_predictions_and_sort",
             ),
             node(
                 func=nodes.generate_report,
                 inputs=[
-                    f"matrix_generation.{model}.model_output.sorted_matrix_predictions",
+                    f"matrix_generation.{model}.model_output.sorted_matrix_predictions@pandas",
                     "params:matrix_generation.matrix_generation_options.n_reporting",
                     "ingestion.raw.drug_list@pandas",
                     "ingestion.raw.disease_list@pandas",
                     "params:evaluation.score_col_name",
+                    "params:matrix_generation.matrix",
+                    "params:matrix_generation.run",
                 ],
                 outputs=f"matrix_generation.{model}.reporting.matrix_report",
                 name=f"generate_{model}_report",
@@ -79,15 +79,15 @@ def create_pipeline(**kwargs) -> Pipeline:
             ),
         ]
     )
-    pipes = [initial_nodes]
+    pipelines = [initial_nodes]
     models = settings.DYNAMIC_PIPELINES_MAPPING.get("modelling")
     model_names = [model["model_name"] for model in models]
     for model in model_names:
-        pipes.append(
+        pipelines.append(
             pipeline(
                 _create_matrix_generation_pipeline(model),
                 tags=model,
             )
         )
 
-    return sum(pipes)
+    return sum(pipelines)

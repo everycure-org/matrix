@@ -1,7 +1,3 @@
-"""Graph module.
-
-Module containing knowledge graph representation and utilities.
-"""
 import pandas as pd
 import logging
 
@@ -20,7 +16,7 @@ logger = logging.getLogger(__name__)
 class KnowledgeGraph:
     """Class to represent a knowledge graph.
 
-    NOTE: Provide handover point to Neo4J in the future.
+    FUTURE: We should aspire to remove this class
     """
 
     def __init__(self, nodes: pd.DataFrame) -> None:
@@ -39,7 +35,6 @@ class KnowledgeGraph:
 
     def get_embedding(self, node_id: str, default: Any = None):
         """Retrieves embedding for node with the ID.
-
         Args:
             node_id: Node ID.
             default: default value to return
@@ -73,6 +68,24 @@ class KnowledgeGraph:
             col_name: Name of column containing desired attribute
         """
         return self._nodes[self._nodes["id"] == node_id][col_name]
+
+
+class PandasParquetDataset(ParquetDataset):
+    def _load(self) -> KnowledgeGraph:
+        attempt = 0
+
+        # Retrying due to a very flaky error, causing GCS not retrieving
+        # parquet files on first try.
+        while attempt < 3:
+            try:
+                # Attempt reading the object
+                # https://github.com/everycure-org/matrix/issues/71
+                return super()._load()
+            except FileNotFoundError:
+                attempt += 1
+                logger.warning("Parquet file not found, retrying!")
+
+        raise DatasetError("Unable to find underlying Parquet file!")
 
 
 class KnowledgeGraphDataset(ParquetDataset):

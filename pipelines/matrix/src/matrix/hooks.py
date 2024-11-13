@@ -1,5 +1,3 @@
-"""Kedro project hooks."""
-
 from kedro.framework.hooks import hook_impl
 from pyspark import SparkConf
 import os
@@ -77,9 +75,13 @@ class MLFlowHooks:
         )
 
         if not runs:
-            with mlflow.start_run(run_name=run_name, experiment_id=experiment_id) as run:
-                mlflow.set_tag("created_by", "kedro")
-                return run.info.run_id
+            logger.info("creating run")
+            run = mlflow.start_run(run_name=run_name, experiment_id=experiment_id)
+            mlflow.set_tag("created_by", "kedro")
+            return run.info.run_id
+        else:
+            mlflow.start_run(run_id=runs[0].info.run_id)
+            logger.info("run already exists, re-using")
 
         return runs[0].info.run_id
 
