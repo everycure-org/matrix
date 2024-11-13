@@ -4,7 +4,7 @@ from kedro.pipeline import Pipeline
 import pytest
 import yaml
 
-from matrix.argo import clean_name, fuse, FusedNode, generate_argo_config, get_dependencies
+from matrix.argo import clean_name, fuse, FusedNode, generate_argo_config, get_dependencies, get_pipeline2dependencies
 from matrix.kedro4argo_node import ArgoResourceConfig, ArgoNode
 
 
@@ -476,31 +476,60 @@ def get_argo_config(argo_default_resources: ArgoResourceConfig) -> Tuple[Dict, D
     return argo_config, pipelines
 
 
+argo_default_resources_params = [
+    ArgoResourceConfig(
+        num_gpus=0,
+        cpu_request=4,
+        cpu_limit=16,
+        memory_request=64,
+        memory_limit=64,
+    ),
+    ArgoResourceConfig(
+        num_gpus=0,
+        cpu_request=8,
+        cpu_limit=12,
+        memory_request=128,
+        memory_limit=128,
+    ),
+    ArgoResourceConfig(
+        num_gpus=1,
+        cpu_request=16,
+        cpu_limit=16,
+        memory_request=64,
+        memory_limit=128,
+    ),
+]
+
+
 @pytest.mark.parametrize(
     "argo_default_resources",
-    [
-        ArgoResourceConfig(
-            num_gpus=0,
-            cpu_request=4,
-            cpu_limit=16,
-            memory_request=64,
-            memory_limit=64,
-        ),
-        ArgoResourceConfig(
-            num_gpus=0,
-            cpu_request=8,
-            cpu_limit=12,
-            memory_request=128,
-            memory_limit=128,
-        ),
-        ArgoResourceConfig(
-            num_gpus=1,
-            cpu_request=16,
-            cpu_limit=16,
-            memory_request=64,
-            memory_limit=128,
-        ),
-    ],
+    argo_default_resources_params,
+)
+def test_get_pipeline2dependencies(argo_default_resources: ArgoResourceConfig) -> None:
+    _, pipelines = get_argo_config(argo_default_resources)
+    pipeline2dependencies = get_pipeline2dependencies(pipelines, argo_default_resources)
+
+    assert len(pipeline2dependencies) == 2
+    assert len(pipeline2dependencies["pipeline_one"]) == 2
+    assert pipeline2dependencies["pipeline_one"][0]["name"] == "simple-node-p1-1"
+    assert pipeline2dependencies["pipeline_one"][1]["name"] == "simple-node-p1-2"
+    assert pipeline2dependencies["pipeline_one"][0]["deps"] == []
+    assert pipeline2dependencies["pipeline_one"][1]["deps"] == ["simple-node-p1-1"]
+    assert pipeline2dependencies["pipeline_one"][0]["nodes"] == "simple_node_p1_1"
+    assert pipeline2dependencies["pipeline_one"][1]["nodes"] == "simple_node_p1_2"
+    assert pipeline2dependencies["pipeline_one"][0]["tags"] == set()
+    assert pipeline2dependencies["pipeline_one"][1]["tags"] == set()
+
+    assert len(pipeline2dependencies["pipeline_two"]) == 1
+    assert pipeline2dependencies["pipeline_two"][0]["name"] == "simple-node-p2-1"
+    assert pipeline2dependencies["pipeline_two"][0]["deps"] == []
+    assert pipeline2dependencies["pipeline_two"][0]["nodes"] == "simple_node_p2_1"
+    assert pipeline2dependencies["pipeline_two"][0]["tags"] == set()
+
+
+@pytest.mark.parametrize(
+    "argo_default_resources",
+    argo_default_resources_params,
 )
 def test_argo_template_config(argo_default_resources: ArgoResourceConfig) -> None:
     argo_config, pipelines = get_argo_config(argo_default_resources)
