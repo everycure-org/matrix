@@ -476,36 +476,14 @@ def get_argo_config(argo_default_resources: ArgoResourceConfig) -> Tuple[Dict, D
     return argo_config, pipelines
 
 
-argo_default_resources_params = [
-    ArgoResourceConfig(
+def test_get_pipeline2dependencies() -> None:
+    argo_default_resources = ArgoResourceConfig(
         num_gpus=0,
         cpu_request=4,
         cpu_limit=16,
         memory_request=64,
         memory_limit=64,
-    ),
-    ArgoResourceConfig(
-        num_gpus=0,
-        cpu_request=8,
-        cpu_limit=12,
-        memory_request=128,
-        memory_limit=128,
-    ),
-    ArgoResourceConfig(
-        num_gpus=1,
-        cpu_request=16,
-        cpu_limit=16,
-        memory_request=64,
-        memory_limit=128,
-    ),
-]
-
-
-@pytest.mark.parametrize(
-    "argo_default_resources",
-    argo_default_resources_params,
-)
-def test_get_pipeline2dependencies(argo_default_resources: ArgoResourceConfig) -> None:
+    )
     _, pipelines = get_argo_config(argo_default_resources)
     pipeline2dependencies = get_pipeline2dependencies(pipelines, argo_default_resources)
 
@@ -520,13 +498,13 @@ def test_get_pipeline2dependencies(argo_default_resources: ArgoResourceConfig) -
     assert pipeline2dependencies["pipeline_one"][0]["tags"] == set()
     assert pipeline2dependencies["pipeline_one"][1]["tags"] == set()
     assert pipeline2dependencies["pipeline_one"][0]["resources"] == {
-        "cpu_limit": 8,
+        "cpu_limit": 7,
         "cpu_request": 4,
         "memory_limit": "32Gi",
         "memory_request": "16Gi",
         "num_gpus": 1,
     }
-    # no explicit resources defined for the second node
+    # no explicit resources defined for the second node, hence no resources key in the dict
     assert "resources" not in pipeline2dependencies["pipeline_one"][1]
 
     assert len(pipeline2dependencies["pipeline_two"]) == 1
@@ -534,18 +512,35 @@ def test_get_pipeline2dependencies(argo_default_resources: ArgoResourceConfig) -
     assert pipeline2dependencies["pipeline_two"][0]["deps"] == []
     assert pipeline2dependencies["pipeline_two"][0]["nodes"] == "simple_node_p2_1"
     assert pipeline2dependencies["pipeline_two"][0]["tags"] == set()
-    assert pipeline2dependencies["pipeline_two"][0]["resources"] == {
-        "cpu_limit": 7,
-        "cpu_request": 4,
-        "memory_limit": "64Gi",
-        "memory_request": "16Gi",
-        "num_gpus": 1,
-    }
+    # resources defined but identical to the default resources, hence no resources key in the dict
+    assert "resources" not in pipeline2dependencies["pipeline_two"][0]
 
 
 @pytest.mark.parametrize(
     "argo_default_resources",
-    argo_default_resources_params,
+    [
+        ArgoResourceConfig(
+            num_gpus=0,
+            cpu_request=4,
+            cpu_limit=16,
+            memory_request=64,
+            memory_limit=64,
+        ),
+        ArgoResourceConfig(
+            num_gpus=0,
+            cpu_request=8,
+            cpu_limit=12,
+            memory_request=128,
+            memory_limit=128,
+        ),
+        ArgoResourceConfig(
+            num_gpus=1,
+            cpu_request=16,
+            cpu_limit=16,
+            memory_request=64,
+            memory_limit=128,
+        ),
+    ],
 )
 def test_argo_template_config(argo_default_resources: ArgoResourceConfig) -> None:
     argo_config, pipelines = get_argo_config(argo_default_resources)
