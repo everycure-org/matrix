@@ -1,4 +1,4 @@
 sampling.configuration:
-  gt_fraction: 0.05
-  nodes_fraction: 0.01
-  edges_fraction: 1.0
+  gt_fraction: 0.05     # Fraction of GTs to sample
+  nodes_fraction: 0.01  # Fraction of nodes to sample
+  edges_fraction: 1.0   # Fraction of edges to sample between nodes in nodes sample
