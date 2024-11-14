@@ -6,3 +6,9 @@ integration:
         ngd_threshold: 1
   nodenorm:
     api_endpoint: ${oc.env:NODENORM_ENDPOINT, http://localhost:1080/1.5/get_normalized_nodes}
+
+  filtering:
+    node_filters:
+      filter_node_labels:
+        categories:
+          - biolink:Activity
