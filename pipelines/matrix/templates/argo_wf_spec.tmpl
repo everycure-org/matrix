@@ -227,14 +227,14 @@ spec:
         {% endif %}
         {% if task.get('use_gpus', False) %}
         affinity:
-          nodeAntiAffinity:
+          nodeAffinity:
             requiredDuringSchedulingIgnoredDuringExecution:
-          nodeSelectorTerms:
-            - matchExpressions:
-              - key: gpu_node
-                operator: In
-                values:
-                - "true"
+              nodeSelectorTerms:
+                - matchExpressions:
+                  - key: gpu_node
+                    operator: In
+                    values:
+                    - "true"
         {% endif %}
         {% if task.deps %}
         dependencies:
