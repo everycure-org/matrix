@@ -312,6 +312,7 @@ def build_argo_template(run_name: str, username: str, namespace: str, pipelines_
         namespace=namespace,
         username=username,
         pipelines=pipelines_for_workflow,
+        pipeline_for_execution=pipeline_for_execution,
         package_name=package_name,
         default_execution_resources=default_execution_resources,
     )
