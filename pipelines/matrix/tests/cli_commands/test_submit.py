@@ -4,7 +4,8 @@ import pytest
 from unittest.mock import patch, MagicMock
 import click
 from click.testing import CliRunner
-from kedro.pipeline import Pipeline, Node
+from kedro.pipeline import Pipeline
+from kedro.pipeline.node import Node
 import yaml
 from matrix.argo import ARGO_TEMPLATES_DIR_PATH
 from matrix.cli_commands.submit import (
