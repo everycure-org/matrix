@@ -87,7 +87,7 @@ def test_unnest(sample_predicates):
     # Given an input dictionary of hierarchical predicate definition
 
     # When calling the unnest function
-    result = filters.unnest_biolink_hierarchy("predicate", sample_predicates, parents=[])
+    result = filters.unnest_biolink_hierarchy("predicate", sample_predicates, convert_to_pascal_case=False, parents=[])
     expected = pd.DataFrame(
         [
             ["composed_primarily_of", ["related_to"]],
@@ -110,17 +110,17 @@ def test_biolink_deduplicate(spark, sample_edges, sample_predicates):
             (
                 "CHEBI:001",
                 "CHEBI:002",
-                "biolink:composed_primarily_of",
+                "biolink:ComposedPrimarilyOf",
             ),
             (
                 "CHEBI:001",
                 "CHEBI:002",
-                "biolink:related_to_at_concept_level",
+                "biolink:RelatedToAtConceptLevel",
             ),
             (
                 "CHEBI:002",
                 "CHEBI:003",
-                "biolink:related_to_at_concept_level",
+                "biolink:RelatedToAtConceptLevel",
             ),
         ],
         schema=StructType(

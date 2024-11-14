@@ -62,7 +62,7 @@ def convert_biolink_hierarchy_json_to_df(biolink_predicates, col_name: str):
             col_name,
             biolink_predicates,
             prefix="biolink:",
-            convert_to_pascal_case=True,
+            convert_to_pascal_case=False,
         )
     )
 
@@ -102,8 +102,8 @@ def remove_rows_containing_category(nodes: DataFrame, categories: List[str], col
 def unnest_biolink_hierarchy(
     scope: str,
     predicates: List[Dict[str, Any]],
+    convert_to_pascal_case: bool,
     parents: Optional[List[str]] = None,
-    convert_to_pascal_case: bool = False,
     prefix: str = "",
 ):
     """Function to unnest a biolink hierarchy.
@@ -112,9 +112,15 @@ def unnest_biolink_hierarchy(
     hierarchical deduplication, the JSON object is pre-processed into a flat pandas
     dataframe that adds the full path to each predicate.
 
+    NOTE: The biolink standard is a bit confusing.
+    Predicates are often written in snake_case while categories are written in PascalCase.
+    This function should thus be called with the right convert_to_pascal_case flag.
+
     Args:
         predicates: predicates to unnest
         parents: list of parents in hierarchy
+        convert_to_pascal_case: whether to convert the predicate name to pascal case
+        prefix: prefix to add to the predicate name
     Returns:
         Unnested dataframe
     """
