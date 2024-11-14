@@ -126,7 +126,7 @@ def bucketize_nodes(df: DataFrame, bucket_size: int, features: int):
     """
 
     # Retrieve number of elements
-    num_elements = df.limit(50000).count()
+    num_elements = df.limit(100000).count()
     num_buckets = (num_elements + bucket_size - 1) // bucket_size
 
     # Construct df to bucketize
@@ -169,8 +169,8 @@ def compute_embeddings(
     # NOTE: Inner function to avoid reference issues on unpacking
     # the dataframe, therefore leading to only the latest shard
     # being processed n times.
-    def _func(dataframe: pd.DataFrame):
-        return lambda: compute_df_embeddings_async(dataframe(), model)
+    def _func(dataframe: pd.DataFrame, bucket: int):
+        return lambda df=dataframe, b=bucket: compute_df_embeddings_async(df(), model, b)
 
     shards = {}
     for path, df in dfs.items():
@@ -180,13 +180,13 @@ def compute_embeddings(
 
         # Invoke function to compute embeddings
         shard_path = f"bucket={bucket}/shard"
-        shards[shard_path] = _func(df)
+        shards[shard_path] = _func(df, bucket)
 
     return shards
 
 
-@retry(wait=wait_exponential(multiplier=1, min=2, max=10), stop=stop_after_attempt(5))
-async def compute_df_embeddings_async(df: pd.DataFrame, embedding_model) -> pd.DataFrame:
+@retry(wait=wait_exponential(multiplier=1, min=2, max=10), stop=stop_after_attempt(3))
+async def compute_df_embeddings_async(df: pd.DataFrame, embedding_model, bucket) -> pd.DataFrame:
     try:
         # Embed entities in batch mode
         combined_texts = df["input"].tolist()

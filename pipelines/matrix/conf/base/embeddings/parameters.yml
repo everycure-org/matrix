@@ -23,7 +23,7 @@ embeddings.ai_config:
   attribute: &_property embedding
 
 embeddings.node:
-  batch_size: 300
+  batch_size: 500
   features: ["category", "name"]
   model:
     object: langchain_openai.OpenAIEmbeddings
