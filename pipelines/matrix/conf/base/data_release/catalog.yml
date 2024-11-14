@@ -33,13 +33,14 @@ data_release.prm.kg_edges:
       RETURN rel
 
 
-data_release.prm.kg_embeddings:
-  <<: [*_neo4j_ds]
-  save_args:
-    # NOTE: The `match:Entity` ensures that the index we created above is leveraged
-    # while inserting edges, thereby speeding up the process massively.
-    query: > 
-      MATCH (n:Entity {id: event.id})
-      WITH n, event
-      CALL apoc.create.setProperties(n, ['topological_embedding'], [event.topological_embedding]) YIELD node
-      RETURN node
+# This entity belongs to commented out option of data_release pipeline.
+# data_release.prm.kg_embeddings:
+#   <<: [*_neo4j_ds]
+#   save_args:
+#     # NOTE: The `match:Entity` ensures that the index we created above is leveraged
+#     # while inserting edges, thereby speeding up the process massively.
+#     query: > 
+#       MATCH (n:Entity {id: event.id})
+#       WITH n, event
+#       CALL apoc.create.setProperties(n, ['topological_embedding'], [event.topological_embedding]) YIELD node
+#       RETURN node

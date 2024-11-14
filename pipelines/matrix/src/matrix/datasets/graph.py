@@ -1,8 +1,3 @@
-"""Graph module.
-
-Module containing knowledge graph representation and utilities.
-"""
-
 import pandas as pd
 from typing import Any, List
 
