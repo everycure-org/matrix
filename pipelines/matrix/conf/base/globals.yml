@@ -20,7 +20,7 @@ gh_token: ${oc.env:GH_TOKEN, dummy}
 
 run_name: ${oc.env:RUN_NAME, default-run-name}
 versions:
-  release: v0.2.4-rc.1
+  release: local-release
 
 data_sources:
   rtx-kg2:
@@ -43,10 +43,6 @@ data_sources:
     version: 200891683
   ec-disease-list:
     version: latest # TODO: We should version
-  drugmechdb:
-    version: 24-oct-24
-  pairs_for_moa_prediction:
-    version: 24-oct-24
 
 # NOTE: MLflow does not like "new options" in the mlflow.yml
 # due to schema validation. Will make PR.
@@ -69,6 +65,5 @@ paths:
   evaluation:         data/releases/${versions.release}/runs/${run_name}/datasets/evaluation
   matrix_generation:  data/releases/${versions.release}/runs/${run_name}/datasets/matrix_generation
   inference:          data/releases/${versions.release}/runs/${run_name}/datasets/inference
-  moa_extraction:    data/releases/${versions.release}/runs/${run_name}/datasets/moa_extraction
 
   tmp:                data/tmp
