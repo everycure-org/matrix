@@ -1,6 +1,6 @@
 fabricator.rtx_kg2:
   nodes:
-    num_rows: 500
+    num_rows: 150
     columns:
       id:ID:
         type: generate_unique_id
@@ -10,24 +10,21 @@ fabricator.rtx_kg2:
         prefix: name_
       category:
         type: generate_values
-        sample_values: &all_categories
-          
-          # - biolink:NamedThing
-          #- biolink:BiologicalEntity
-          #- biolink:ChemicalSubstance
-          - biolink:Disease
+        sample_values:
           - biolink:Drug
-          #- biolink:Gene
-          #- biolink:SocioeconomicExposure
-          # - biolink:OrganismTaxon
-          #- biolink:Protein
-          # - biolink:SmallMolecule
+          - biolink:Disease
       all_names:string[]:
         type: faker
         provider: name
       all_categories:string[]:
         type: generate_values
-        sample_values: *all_categories
+        sample_values:
+          - biolink:Drug
+          - biolink:Disease
+          - biolink:Gene
+          - biolink:ChemicalSubstance
+          - biolink:Protein
+          - biolink:SmallMolecule
       iri:
         type: faker
         provider: url
@@ -137,7 +134,7 @@ fabricator.rtx_kg2:
 
   # NOTE: Fabricated drug and disease lists can contain nodes which are not in the drug and disease categories resp.
   drug_list:
-    num_rows: 500
+    num_rows: 20
     columns:
       curie: 
         type: row_apply
@@ -148,12 +145,6 @@ fabricator.rtx_kg2:
       name: 
         type: row_apply
         list_of_values: [nodes.id:ID, nodes.name]
-        row_func: "lambda *args: args[1]"
-        resize: True
-        seed: 6850
-      category:
-        type: row_apply
-        list_of_values: [nodes.id:ID, nodes.category]
         row_func: "lambda *args: args[1]"
         resize: True
         seed: 6850
@@ -197,7 +188,7 @@ fabricator.rtx_kg2:
           - AVAILABLE
       
   disease_list:
-    num_rows: 500
+    num_rows: 30
     columns:
       curie: 
         type: row_apply
@@ -211,12 +202,6 @@ fabricator.rtx_kg2:
         row_func: "lambda *args: args[1]"
         resize: True
         seed: 95690
-      category:
-        type: row_apply
-        list_of_values: [nodes.id:ID, nodes.category]
-        row_func: "lambda *args: args[1]"
-        resize: True
-        seed: 6850
       category_class: 
         type: row_apply
         list_of_values: [nodes.id:ID, nodes.name]
@@ -314,7 +299,17 @@ fabricator.robokop:
       category:LABEL:
         type: generate_random_arrays
         delimiter: "\x1F"
-        sample_values: *all_categories
+        sample_values:
+            - biolink:Entity
+            - biolink:ThingWithTaxon
+            - biolink:BiologicalEntity
+            - biolink:SequenceVariant
+            - biolink:NamedThing
+            - biolink:OntologyClass
+            - biolink:PhysicalEssence
+            - biolink:PhysicalEssenceOrOccurrent
+            - biolink:GenomicEntity
+            - biolink:OrganismTaxon
       description:string:
         type: faker
         provider: sentence
