@@ -67,11 +67,11 @@ def sample_nodes(spark):
         [
             (
                 "CHEBI:001",
-                ["biolink:RelatedTo", "biolink:ComposedPrimarilyOf"],
+                ["biolink:NamedThing", "biolink:Drug"],
             ),
             (
                 "CHEBI:002",
-                ["biolink:RelatedTo", "biolink:RelatedToAtConceptLevel", "biolink:BroadMatch"],
+                ["biolink:NamedThing", "biolink:ChemicalEntity"],
             ),
         ],
         schema=StructType(
@@ -142,11 +142,11 @@ def test_determine_most_specific_category(spark, sample_nodes, sample_predicates
         [
             (
                 "CHEBI:001",
-                "biolink:ComposedPrimarilyOf",
+                "biolink:Drug",
             ),
             (
                 "CHEBI:002",
-                "biolink:BroadMatch",
+                "biolink:ChemicalEntity",
             ),
         ],
         schema=StructType(
