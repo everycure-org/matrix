@@ -26,21 +26,12 @@ def _create_pairs(
     """
     is_enough_generated = False
 
-    # we filter down the drug_list and disease_list to only include the types we want
-    drug_list_filtered = drug_list[drug_list["category"].isin(drug_types)]
-    disease_list_filtered = disease_list[disease_list["category"].isin(disease_types)]
-
-    assert len(drug_list_filtered) < len(drug_list)
-    assert len(disease_list_filtered) < len(disease_list)
-
     attempt = 0
 
     while not is_enough_generated:
         # Sample random pairs (we sample twice the required amount in case duplicates are removed)
-        random_drugs = drug_list_filtered["curie"].sample(num * 4, replace=True, ignore_index=True, random_state=seed)
-        random_diseases = disease_list_filtered["curie"].sample(
-            num * 4, replace=True, ignore_index=True, random_state=2 * seed
-        )
+        random_drugs = drug_list["curie"].sample(num * 4, replace=True, ignore_index=True, random_state=seed)
+        random_diseases = disease_list["curie"].sample(num * 4, replace=True, ignore_index=True, random_state=2 * seed)
 
         df = pd.DataFrame(
             data=[[drug, disease] for drug, disease in zip(random_drugs, random_diseases)],
