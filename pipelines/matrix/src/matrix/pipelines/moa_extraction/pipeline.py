@@ -15,17 +15,6 @@ num_hops_lst = [model["num_hops"] for model in moa_extraction_settings]
 
 
 def _preprocessing_pipeline() -> Pipeline:
-    initial_nodes = pipeline(
-        [
-            # node(
-            #     func=nodes.get_one_hot_encodings,
-            #     inputs=["integration.prm.filtered_nodes", "integration.prm.filtered_edges"],
-            #     outputs=["moa_extraction.feat.category_encoder", "moa_extraction.feat.relation_encoder"],
-            #     name="get_one_hot_encodings",
-            #     tags="moa_extraction.preprocessing",
-            # ),
-        ],
-    )
     preprocessing_strands_lst = []
     for num_hops in num_hops_lst:
         preprocessing_strands_lst.append(
@@ -90,7 +79,7 @@ def _preprocessing_pipeline() -> Pipeline:
                             "drug_mech_db": "moa_extraction.raw.drug_mech_db",
                             "mapped_paths": f"moa_extraction.int.{num_hops}_hop_indication_paths",
                         },
-                        outputs=f"moa_extraction.reporting.{num_hops}_hop_mapping_success",
+                        outputs=f"report_{num_hops}_hop_mapping_success",
                         name=f"report_mapping_success_{num_hops}_hop",
                     ),
                     node(
@@ -113,7 +102,6 @@ def _preprocessing_pipeline() -> Pipeline:
         )
     return sum(
         [
-            initial_nodes,
             *preprocessing_strands_lst,
         ]
     )
@@ -233,7 +221,7 @@ def _predictions_pipeline() -> Pipeline:
                             "drug_col_name": "params:moa_extraction.predictions.drug_col_name",
                             "disease_col_name": "params:moa_extraction.predictions.disease_col_name",
                             "num_pairs_limit": "params:moa_extraction.predictions.num_pairs_limit",
-                            "metrics_dummy": f"moa_extraction.reporting.{num_hops}_hop_metrics",
+                            "metrics_dummy": f"moa_extraction.reporting.{num_hops}_hop_metrics",  # This ensures that predictions runs after evaluation so that the argo fuse algo works
                         },
                         outputs=f"moa_extraction.model_output.{num_hops}_hop_output_predictions",
                         name=f"predictions.make_{num_hops}_hop_output_predictions",
