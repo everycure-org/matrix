@@ -35,6 +35,11 @@ class LazySparkDataset(SparkDataset):
         SparkHooks._initialize_spark()
         return super()._load()
 
+    def _save(self, data: DataFrame) -> None:
+        data.persist()
+        data.show(5)
+        return super()._save(data)
+
 
 class SparkWithSchemaDataset(SparkDataset):
     """Dataset to load BigQuery data.

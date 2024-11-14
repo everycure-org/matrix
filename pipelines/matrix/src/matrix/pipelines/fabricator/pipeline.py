@@ -1,11 +1,18 @@
-import pandas as pd
+from typing import List
 
+import pandas as pd
+from data_fabricator.v0.nodes.fabrication import fabricate_datasets
 from kedro.pipeline import Pipeline, node, pipeline
 
-from data_fabricator.v0.nodes.fabrication import fabricate_datasets
 
-
-def _create_pairs(drug_list: pd.DataFrame, disease_list: pd.DataFrame, num: int = 50, seed: int = 42) -> pd.DataFrame:
+def _create_pairs(
+    drug_list: pd.DataFrame,
+    disease_list: pd.DataFrame,
+    drug_types: List[str],
+    disease_types: List[str],
+    num: int = 100,
+    seed: int = 42,
+) -> pd.DataFrame:
     """Create 2 sets of random drug-disease pairs. Ensures no duplicate pairs.
 
     Args:
@@ -18,10 +25,22 @@ def _create_pairs(drug_list: pd.DataFrame, disease_list: pd.DataFrame, num: int 
         Two dataframes, each containing 'num' unique drug-disease pairs.
     """
     is_enough_generated = False
+
+    # we filter down the drug_list and disease_list to only include the types we want
+    drug_list_filtered = drug_list[drug_list["category"].isin(drug_types)]
+    disease_list_filtered = disease_list[disease_list["category"].isin(disease_types)]
+
+    assert len(drug_list_filtered) < len(drug_list)
+    assert len(disease_list_filtered) < len(disease_list)
+
+    attempt = 0
+
     while not is_enough_generated:
         # Sample random pairs (we sample twice the required amount in case duplicates are removed)
-        random_drugs = drug_list["curie"].sample(num * 4, replace=True, ignore_index=True, random_state=seed)
-        random_diseases = disease_list["curie"].sample(num * 4, replace=True, ignore_index=True, random_state=2 * seed)
+        random_drugs = drug_list_filtered["curie"].sample(num * 4, replace=True, ignore_index=True, random_state=seed)
+        random_diseases = disease_list_filtered["curie"].sample(
+            num * 4, replace=True, ignore_index=True, random_state=2 * seed
+        )
 
         df = pd.DataFrame(
             data=[[drug, disease] for drug, disease in zip(random_drugs, random_diseases)],
@@ -32,9 +51,9 @@ def _create_pairs(drug_list: pd.DataFrame, disease_list: pd.DataFrame, num: int 
         df = df.drop_duplicates()
 
         # Check that we still have enough fabricated pairs
-        is_enough_generated = len(df) >= 2 * num
+        is_enough_generated = len(df) >= num or attempt > 100
+        attempt += 1
 
-    # split df in half and return two df
     return df[:num], df[num : 2 * num]
 
 
@@ -78,6 +97,8 @@ def create_pipeline(**kwargs) -> Pipeline:
                 inputs=[
                     "ingestion.raw.drug_list@pandas",
                     "ingestion.raw.disease_list@pandas",
+                    "params:modelling.drug_types",
+                    "params:modelling.disease_types",
                 ],
                 outputs=[
                     "modelling.raw.ground_truth.positives@pandas",

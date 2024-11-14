@@ -1,11 +1,10 @@
 import abc
-from tqdm import tqdm
-import pandas as pd
 import random
-
-from matrix.datasets.graph import KnowledgeGraph
-
 from typing import List, Set, Union
+
+import pandas as pd
+from matrix.datasets.graph import KnowledgeGraph
+from tqdm import tqdm
 
 
 class DrugDiseasePairGenerator(abc.ABC):
