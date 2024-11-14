@@ -44,6 +44,16 @@ def mock_dependencies():
         yield
 
 
+@pytest.fixture(scope="function")
+def mock_pipelines():
+    pipeline_dict = {
+        "__default__": MagicMock(),
+    }
+
+    with patch("matrix.cli_commands.submit.kedro_pipelines", new=pipeline_dict) as mock:
+        yield mock
+
+
 @pytest.fixture
 def mock_submit_internal():
     with patch("matrix.cli_commands.submit._submit") as mock:

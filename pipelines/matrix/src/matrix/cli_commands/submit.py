@@ -42,11 +42,11 @@ def cli():
 @click.option("--namespace", type=str, default="argo-workflows", help="Specify a custom namespace")
 @click.option("--run-name", type=str, default=None, help="Specify a custom run name, defaults to branch")
 @click.option("--pipeline", type=str, default="__default__", help="Specify which pipeline to execute")
-@click.option("--verbose", "-v", is_flag=True, default=True, help="Enable verbose output")
+@click.option("--verbose", "-v", is_flag=True, default=False, help="Enable verbose output")
 @click.option("--dry-run", "-d", is_flag=True, default=False, help="Does everything except submit the workflow")
 @click.option("--from-nodes", type=str, default="", help="Specify nodes to run from", callback=split_string)
 # fmt: on
-def submit(username: str, namespace: str, run_name: str, pipeline: str, from_nodes: List[str], verbose: bool, dry_run: bool):
+def submit(username: str, namespace: str, run_name: str, pipeline: str, verbose: bool, dry_run: bool, from_nodes: List[str]):
     """Submit the end-to-end workflow. """
     if verbose:
         log.setLevel(logging.DEBUG)
