@@ -100,3 +100,5 @@ In terms of our communication principles, we utilize threads within our discussi
 ### Calls & Digital Whiteboarding
 
 We use Slack and Zoom for our communication. Either huddles or Zoom calls. Ad hoc whiteboarding can be easily done with [excalidraw.com](http://excalidraw.com).
+
+[Proceed to the installation guide :material-skip-next:](./installation.md){ .md-button .md-button--primary }
