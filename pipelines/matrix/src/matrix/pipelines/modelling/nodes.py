@@ -12,6 +12,7 @@ from sklearn.base import BaseEstimator
 
 import matplotlib.pyplot as plt
 
+from functools import wraps
 from refit.v1.core.inject import inject_object
 from refit.v1.core.inline_has_schema import has_schema
 from refit.v1.core.inline_primary_key import primary_key
@@ -25,77 +26,117 @@ from .model import ModelWrapper
 plt.switch_backend("Agg")
 
 
+def no_nulls(columns: List[str]):
+    """Decorator to check columns for null values.
+
+    FUTURE: Move to pandera when we figure out how to push messages for breaking changes.
+
+    Args:
+        columns: list of columns to check
+    """
+
+    if isinstance(columns, str):
+        columns = [columns]
+
+    def decorator(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            # Proceed with the function if no null values are found
+            df = func(*args, **kwargs)
+
+            if not all(col_name in df.columns for col_name in columns):
+                raise ValueError(f"DataFrame is missing required columns: {', '.join(columns)}")
+
+            # Check if the specified column has any null values
+            null_rows_df = df.filter(" OR ".join([f"{col_name} IS NULL" for col_name in columns]))
+
+            # Check if the resulting DataFrame is empty
+            if not null_rows_df.isEmpty():
+                # Show rows with null values for debugging
+                null_rows_df.show()
+                raise ValueError(f"DataFrame contains null values in columns: {', '.join(columns)}")
+
+            return df
+
+        return wrapper
+
+    return decorator
+
+
+@has_schema(
+    schema={"y": "int"},
+    allow_subset=True,
+)
 @primary_key(primary_key=["source", "target"])
-def create_int_pairs(raw_tp: pd.DataFrame, raw_tn: pd.DataFrame):
+@no_nulls(columns=["source_embedding", "target_embedding"])
+def create_int_pairs(
+    nodes: DataFrame,
+    raw_tp: DataFrame,
+    raw_tn: DataFrame,
+):
     """Create intermediate pairs dataset.
 
     Args:
+        nodes: nodes dataframe
         raw_tp: Raw ground truth positive data.
         raw_tn: Raw ground truth negative data.
 
     Returns:
         Combined ground truth positive and negative data.
     """
-    raw_tp["y"] = 1
-    raw_tn["y"] = 0
 
-    # Concat
-    return pd.concat([raw_tp, raw_tn], axis="index").reset_index(drop=True)
+    return (
+        raw_tp.withColumn("y", f.lit(1))
+        .unionByName(raw_tn.withColumn("y", f.lit(0)))
+        .alias("pairs")
+        .join(nodes.withColumn("source", f.col("id")), how="left", on="source")
+        .withColumnRenamed("topological_embedding", "source_embedding")
+        .join(nodes.withColumn("target", f.col("id")), how="left", on="target")
+        .withColumnRenamed("topological_embedding", "target_embedding")
+        .select("pairs.*", "source_embedding", "target_embedding")
+    )
 
 
-def prefilter_nodes(nodes: DataFrame, drug_types: List[str], disease_types: List[str]) -> DataFrame:
-    """Filters nodes before passing on to modelling nodes.
+@has_schema(
+    schema={
+        "id": "string",
+        "is_drug": "boolean",
+        "is_disease": "boolean",
+    },
+    allow_subset=True,
+)
+@primary_key(primary_key=["id"])
+def prefilter_nodes(
+    nodes: DataFrame, gt_pos: pd.DataFrame, drug_types: List[str], disease_types: List[str]
+) -> DataFrame:
+    """Prefilter nodes for negative sampling.
 
     Args:
         nodes: the nodes dataframe to be filtered
+        gt_pos: dataframe with ground truth positives
         drug_types: list of drug types
         disease_types: list of disease types
     Returns:
         Filtered nodes dataframe
     """
-    return nodes.filter((f.col("category").isin(drug_types)) | (f.col("category").isin(disease_types)))
 
+    ground_truth_nodes = (
+        gt_pos.withColumn("id", f.col("source"))
+        .unionByName(gt_pos.withColumn("id", f.col("target")))
+        .select("id")
+        .distinct()
+        .withColumn("is_ground_pos", f.lit(True))
+    )
 
-@has_schema(
-    schema={
-        "is_drug": "bool",
-        "is_disease": "bool",
-        "is_ground_pos": "bool",
-        # "node_embedding": "object",
-        # "pca_embedding": "object",
-        "topological_embedding": "object",
-    },
-    allow_subset=True,
-)
-def create_feat_nodes(
-    raw_nodes: DataFrame,
-    known_pairs: DataFrame,
-    drug_types: List[str],
-    disease_types: List[str],
-) -> pd.DataFrame:
-    """Add features for nodes.
-
-    Args:
-        raw_nodes: Raw nodes data.
-        known_pairs: Ground truth data.
-        drug_types: List of drug types.
-        disease_types: List of disease types.
-
-    Returns:
-        Nodes enriched with features.
-    """
-    # FUTURE: Transcode as pandas instead?
-    pdf_nodes = raw_nodes.toPandas()
-
-    # Add drugs and diseases types flags
-    pdf_nodes["is_drug"] = pdf_nodes["category"].apply(lambda x: x in drug_types)
-    pdf_nodes["is_disease"] = pdf_nodes["category"].apply(lambda x: x in disease_types)
-
-    ground_pos = known_pairs[known_pairs["y"].eq(1)]
-    ground_pos_drug_ids = list(ground_pos["source"].unique())
-    ground_pos_disease_ids = list(ground_pos["target"].unique())
-    pdf_nodes["is_ground_pos"] = pdf_nodes["id"].isin(ground_pos_drug_ids + ground_pos_disease_ids)
-    return pdf_nodes
+    return (
+        nodes.alias("nodes")
+        .filter((f.col("category").isin(drug_types)) | (f.col("category").isin(disease_types)))
+        .select("id", "category", "topological_embedding")
+        .withColumn("is_drug", f.col("category").isin(drug_types))
+        .withColumn("is_disease", f.col("category").isin(disease_types))
+        .join(ground_truth_nodes, on="id", how="left")
+        .fillna({"is_ground_pos": False})
+    )
 
 
 def apply_splitter(data: DataFrame, splitter: BaseCrossValidator) -> pd.DataFrame:
@@ -132,7 +173,6 @@ def apply_splitter(data: DataFrame, splitter: BaseCrossValidator) -> pd.DataFram
 )
 @inject_object()
 def make_splits(
-    kg: KnowledgeGraph,
     data: DataFrame,
     splitter: BaseCrossValidator,
 ) -> pd.DataFrame:
@@ -146,9 +186,14 @@ def make_splits(
     Returns:
         Data with split information.
     """
-    # FUTURE: Improve by redoing in Spark
-    data["source_embedding"] = data["source"].apply(lambda s_id: kg._embeddings[s_id])
-    data["target_embedding"] = data["target"].apply(lambda t_id: kg._embeddings[t_id])
+    all_data_frames = []
+    for iteration, (train_index, test_index) in enumerate(splitter.split(data, data["y"])):
+        all_indices_in_this_fold = list(set(train_index).union(test_index))
+        fold_data = data.loc[all_indices_in_this_fold, :].copy()
+        fold_data.loc[:, "iteration"] = iteration
+        fold_data.loc[train_index, "split"] = "TRAIN"
+        fold_data.loc[test_index, "split"] = "TEST"
+        all_data_frames.append(fold_data)
 
     return apply_splitter(data, splitter)
 
