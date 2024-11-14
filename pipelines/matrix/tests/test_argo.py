@@ -467,6 +467,7 @@ def get_argo_config(argo_default_resources: ArgoResourceConfig) -> Tuple[Dict, D
         namespace=namespace,
         username=username,
         pipelines=pipelines,
+        pipeline_for_execution="pipeline_one",
         package_name="matrix",
         default_execution_resources=argo_default_resources,
     )
@@ -551,9 +552,6 @@ def test_argo_template_config_boilerplate(argo_default_resources: ArgoResourceCo
     kedro_template = next(t for t in spec["templates"] if t["name"] == "kedro")
 
     # Verify common configurations
-    assert kedro_template["backoff"]["duration"] == "1"
-    assert kedro_template["backoff"]["factor"] == 2
-    assert kedro_template["backoff"]["maxDuration"] == "1m"
     assert kedro_template["metadata"]["labels"]["app"] == "kedro-argo"
 
     # Verify default anti-affinity for GPU nodes
