@@ -139,14 +139,15 @@ def prefilter_nodes(
     )
 
 
-def apply_splitter(data: DataFrame, splitter: BaseCrossValidator) -> pd.DataFrame:
-    """Apply a splitter to a dataframe.
+def apply_splitter(data: pd.DataFrame, splitter: BaseCrossValidator) -> pd.DataFrame:
+    """Apply splitter to the data.
 
     Args:
         data: Data to split.
         splitter: sklearn splitter object (BaseCrossValidator or its subclasses).
+
     Returns:
-        Dataframe with additional columns.
+        Data with split information.
     """
     all_data_frames = []
     for iteration, (train_index, test_index) in enumerate(splitter.split(data, data["y"])):
@@ -176,25 +177,18 @@ def make_splits(
     data: DataFrame,
     splitter: BaseCrossValidator,
 ) -> pd.DataFrame:
-    """Function to split data and add columns containing the embeddings.
+    """Function that splits data.
+
+    Note: This node simply wraps the apply_splitter function, allowing us to use that
+    function in other parts of the code base while keeping the schema for the modelling Kedro node.
 
     Args:
-        kg: kg dataset with nodes
         data: Data to split.
         splitter: sklearn splitter object (BaseCrossValidator or its subclasses).
 
     Returns:
         Data with split information.
     """
-    all_data_frames = []
-    for iteration, (train_index, test_index) in enumerate(splitter.split(data, data["y"])):
-        all_indices_in_this_fold = list(set(train_index).union(test_index))
-        fold_data = data.loc[all_indices_in_this_fold, :].copy()
-        fold_data.loc[:, "iteration"] = iteration
-        fold_data.loc[train_index, "split"] = "TRAIN"
-        fold_data.loc[test_index, "split"] = "TEST"
-        all_data_frames.append(fold_data)
-
     return apply_splitter(data, splitter)
 
 
