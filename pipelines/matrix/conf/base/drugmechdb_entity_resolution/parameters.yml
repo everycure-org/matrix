@@ -1,2 +1,0 @@
-drugmechdb_entity_resolution:
-  synonymizer_endpoint: http://localhost:8081
