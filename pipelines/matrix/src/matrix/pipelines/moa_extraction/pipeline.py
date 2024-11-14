@@ -17,13 +17,13 @@ num_hops_lst = [model["num_hops"] for model in moa_extraction_settings]
 def _preprocessing_pipeline() -> Pipeline:
     initial_nodes = pipeline(
         [
-            node(
-                func=nodes.get_one_hot_encodings,
-                inputs=["integration.prm.filtered_nodes", "integration.prm.filtered_edges"],
-                outputs=["moa_extraction.feat.category_encoder", "moa_extraction.feat.relation_encoder"],
-                name="get_one_hot_encodings",
-                tags="moa_extraction.preprocessing",
-            ),
+            # node(
+            #     func=nodes.get_one_hot_encodings,
+            #     inputs=["integration.prm.filtered_nodes", "integration.prm.filtered_edges"],
+            #     outputs=["moa_extraction.feat.category_encoder", "moa_extraction.feat.relation_encoder"],
+            #     name="get_one_hot_encodings",
+            #     tags="moa_extraction.preprocessing",
+            # ),
         ],
     )
     preprocessing_strands_lst = []
@@ -53,11 +53,23 @@ def _preprocessing_pipeline() -> Pipeline:
                             "disease_types": "params:moa_extraction.tagging_options.disease_types",
                             "batch_size": "params:moa_extraction.tagging_options.batch_size",
                             "verbose": "params:moa_extraction.tagging_options.verbose",
-                            "edges": f"moa_extraction.input_edges.{num_hops}_hop",
+                            "edges_dummy": f"moa_extraction.input_edges.{num_hops}_hop",
                         },
                         outputs=f"moa_extraction.reporting.add_tags_{num_hops}_hop",
                         tags=["moa_extraction.tagging"],
                         name=f"add_tags_{num_hops}_hop",
+                    ),
+                    node(
+                        func=nodes.get_one_hot_encodings,
+                        inputs={
+                            "runner": f"params:moa_extraction.gdb_{num_hops}_hop",
+                            "edges_dummy": f"moa_extraction.input_edges.{num_hops}_hop",
+                        },
+                        outputs=[
+                            f"moa_extraction.feat.category_encoder_{num_hops}_hop",
+                            f"moa_extraction.feat.relation_encoder_{num_hops}_hop",
+                        ],
+                        name=f"get_one_hot_encodings_{num_hops}_hop",
                     ),
                     node(
                         func=nodes.map_drug_mech_db,

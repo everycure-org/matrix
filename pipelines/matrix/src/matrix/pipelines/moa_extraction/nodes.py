@@ -95,7 +95,7 @@ def add_tags(
     disease_types: List[str],
     batch_size: int,
     verbose: bool,
-    edges: DataFrame,
+    edges_dummy: DataFrame,
     prefix: str = "_moa_extraction_",
 ) -> None:
     """Add tags to the Neo4j database.
@@ -106,8 +106,8 @@ def add_tags(
         disease_types: List of KG node types representing diseases.
         batch_size: The batch size to use for the query.
         verbose: Whether to print the number of batches completed.
+        edges_dummy: Dummy variable ensuring that the node is run after edges have been added to the KG.
         prefix: The prefix to add to the tag.
-        edges: The edges dataframe. Dummy variable ensuring that the node is run after edges have been added to the KG.
     """
     _tag_edges_between_types(runner, drug_types, disease_types, "drug_disease", batch_size, verbose, prefix)
     _tag_edges_between_types(runner, drug_types, drug_types, "drug_drug", batch_size, verbose, prefix)
@@ -115,30 +115,66 @@ def add_tags(
     return {"success": True}
 
 
+# def get_one_hot_encodings(
+#     nodes: DataFrame,
+#     edges: DataFrame,
+# ) -> Tuple[OneHotEncoder, OneHotEncoder]:
+#     """Get the one-hot encodings for node categories and edge relations.
+
+#     Args:
+#         nodes: Nodes dataframe.
+#         edges: Edges dataframe.
+
+#     Returns:
+#         A tuple of OneHotEncoder objects for node categories and edge relations.
+#     """
+#     # Get the node categories
+#     node_categories = nodes.select("category").distinct().collect()
+#     node_categories = [row.category for row in node_categories]
+
+#     # Get the edge relations
+#     edge_relations = edges.select("predicate").distinct().collect()
+#     edge_relations = [row.predicate for row in edge_relations]
+
+#     # Create the one-hot encoders
+#     category_encoder = OneHotEncoder(node_categories)
+#     relation_encoder = OneHotEncoder(edge_relations)
+#     return category_encoder, relation_encoder
+
+
+@inject_object()
 def get_one_hot_encodings(
-    nodes: DataFrame,
-    edges: DataFrame,
+    runner: GraphDB,
+    edges_dummy: DataFrame,
 ) -> Tuple[OneHotEncoder, OneHotEncoder]:
     """Get the one-hot encodings for node categories and edge relations.
 
     Args:
-        nodes: Nodes dataframe.
-        edges: Edges dataframe.
+        runner: The GraphDB object representing the KG.
+        edges_dummy: Dummy variable ensuring that the node is run after edges have been added to the KG.
 
     Returns:
         A tuple of OneHotEncoder objects for node categories and edge relations.
     """
     # Get the node categories
-    node_categories = nodes.select("category").distinct().collect()
-    node_categories = [row.category for row in node_categories]
-
+    result = runner.run("""
+        MATCH (n)
+        RETURN DISTINCT n.category AS category
+    """)
+    # Flatten because Neo4j result is a list of dicts of the form [{"category" : <category>}]
+    node_categories = [item["category"] for item in result]
     # Get the edge relations
-    edge_relations = edges.select("predicate").distinct().collect()
-    edge_relations = [row.predicate for row in edge_relations]
+    result = runner.run("""
+        MATCH ()-[r]-()
+        RETURN DISTINCT type(r) AS relation
+    """)
+    # Neo4j result is a list of dicts of the form [{"relation" : <relation>}]
+    edge_relations = [relation["relation"] for relation in result]
 
     # Create the one-hot encoders
     category_encoder = OneHotEncoder(node_categories)
     relation_encoder = OneHotEncoder(edge_relations)
+
     return category_encoder, relation_encoder
 
 
