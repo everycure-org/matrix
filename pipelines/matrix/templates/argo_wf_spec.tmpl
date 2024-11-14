@@ -208,10 +208,11 @@ spec:
           value: "100G"
         - name: NEO4J_dbms_memory_heap_max__size
           value: "100G"
-  - name: {{ pipeline_name }}
+  {% for pipeline, tasks in pipelines.items() %}
+  - name: {{ pipeline }}
     dag:
       tasks:
-      {% for task in pipeline %}
+      {% for task in tasks %}
       - name: {{ task.name }}
         template: {{ task.get('template', 'kedro') }}
         {% if task.resources %}
@@ -245,6 +246,9 @@ spec:
         {% endif %}
         arguments:
           parameters:
+          - name: pipeline
+            value: {{ pipeline }}
           - name: kedro_nodes
             value: {{ task.nodes }}
       {% endfor %}
+  {% endfor %}
