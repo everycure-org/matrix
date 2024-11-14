@@ -217,15 +217,15 @@ spec:
         container:  
           resources: # limit the resources
             requests:
-              memory: {{ task.resources.memory_request }}
-              cpu: {{ task.resources.cpu_request }}
-              nvidia.com/gpu: {{ task.resources.num_gpus }}
+              memory: {{ task.get('resources', {}).get('memory_request', '64Gi') }}
+              cpu: {{ task.get('resources', {}).get('cpu_request', 4) }}
+              nvidia.com/gpu: {{ task.get('resources', {}).get('num_gpus', 0) }}
             limits:
-              memory: {{ task.resources.memory_limit }}
-              cpu: {{ task.resources.cpu_limit }}
-              nvidia.com/gpu: {{ task.resources.num_gpus }}
+              memory: {{ task.get('resources', {}).get('memory_limit', '64Gi') }}
+              cpu: {{ task.get('resources', {}).get('cpu_limit', 16) }}
+              nvidia.com/gpu: {{ task.get('resources', {}).get('num_gpus', 0) }}
         {% endif %}
-        {% if task.get('use_gpus', False) %}
+        {% if task.get('resources', {}).get('num_gpus', 0) > 0 %}
         affinity:
           nodeAffinity:
             requiredDuringSchedulingIgnoredDuringExecution:
