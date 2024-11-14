@@ -42,7 +42,10 @@ def no_nulls(columns: List[str]):
         @wraps(func)
         def wrapper(*args, **kwargs):
             # Proceed with the function if no null values are found
-            df = func(*args, **kwargs)
+            results = func(*args, **kwargs)
+
+            # If results is a tuple, assume first element is the DataFrame
+            df = results[0] if isinstance(results, tuple) else results
 
             if not all(col_name in df.columns for col_name in columns):
                 raise ValueError(f"DataFrame is missing required columns: {', '.join(columns)}")
@@ -63,32 +66,76 @@ def no_nulls(columns: List[str]):
     return decorator
 
 
+def filter_valid_pairs(
+    nodes: DataFrame,
+    raw_tp: DataFrame,
+    raw_tn: DataFrame,
+) -> Tuple[DataFrame, Dict[str, float]]:
+    """Filter pairs to only include nodes that exist in the nodes DataFrame.
+
+    Args:
+        nodes: nodes dataframe
+        raw_tp: Raw ground truth positive data
+        raw_tn: Raw ground truth negative data
+
+    Returns:
+        Tuple containing:
+        - DataFrame with combined filtered positive and negative pairs
+        - Dictionary with retention statistics
+    """
+    # Get valid nodes
+    valid_nodes = nodes.select("id").distinct()
+
+    # Filter pairs where both source and target exist in nodes
+    filtered_tp = (
+        raw_tp.join(valid_nodes.alias("source_nodes"), raw_tp.source == f.col("source_nodes.id"))
+        .join(valid_nodes.alias("target_nodes"), raw_tp.target == f.col("target_nodes.id"))
+        .select(raw_tp["*"])
+    )
+
+    filtered_tn = (
+        raw_tn.join(valid_nodes.alias("source_nodes"), raw_tn.source == f.col("source_nodes.id"))
+        .join(valid_nodes.alias("target_nodes"), raw_tn.target == f.col("target_nodes.id"))
+        .select(raw_tn["*"])
+    )
+
+    # Calculate retention percentages
+    tp_count = raw_tp.count()
+    tn_count = raw_tn.count()
+    filtered_tp_count = filtered_tp.count()
+    filtered_tn_count = filtered_tn.count()
+
+    retention_stats = {
+        "positive_pairs_retained_pct": (filtered_tp_count / tp_count * 100) if tp_count > 0 else 100.0,
+        "negative_pairs_retained_pct": (filtered_tn_count / tn_count * 100) if tn_count > 0 else 100.0,
+    }
+
+    # Combine filtered pairs
+    pairs_df = filtered_tp.withColumn("y", f.lit(1)).unionByName(filtered_tn.withColumn("y", f.lit(0)))
+
+    return {"pairs": pairs_df, "metrics": retention_stats}
+
+
 @has_schema(
     schema={"y": "int"},
     allow_subset=True,
 )
-@primary_key(primary_key=["source", "target"])
 @no_nulls(columns=["source_embedding", "target_embedding"])
-def create_int_pairs(
+def attach_embeddings(
+    pairs_df: DataFrame,
     nodes: DataFrame,
-    raw_tp: DataFrame,
-    raw_tn: DataFrame,
-):
-    """Create intermediate pairs dataset.
+) -> DataFrame:
+    """Attach node embeddings to the pairs DataFrame.
 
     Args:
-        nodes: nodes dataframe
-        raw_tp: Raw ground truth positive data.
-        raw_tn: Raw ground truth negative data.
+        pairs_df: DataFrame containing source-target pairs
+        nodes: nodes dataframe containing embeddings
 
     Returns:
-        Combined ground truth positive and negative data.
+        DataFrame with source and target embeddings attached
     """
-
     return (
-        raw_tp.withColumn("y", f.lit(1))
-        .unionByName(raw_tn.withColumn("y", f.lit(0)))
-        .alias("pairs")
+        pairs_df.alias("pairs")
         .join(nodes.withColumn("source", f.col("id")), how="left", on="source")
         .withColumnRenamed("topological_embedding", "source_embedding")
         .join(nodes.withColumn("target", f.col("id")), how="left", on="target")
