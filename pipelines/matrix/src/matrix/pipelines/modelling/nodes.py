@@ -42,10 +42,7 @@ def no_nulls(columns: List[str]):
         @wraps(func)
         def wrapper(*args, **kwargs):
             # Proceed with the function if no null values are found
-            results = func(*args, **kwargs)
-
-            # If results is a tuple, assume first element is the DataFrame
-            df = results[0] if isinstance(results, tuple) else results
+            df = func(*args, **kwargs)
 
             if not all(col_name in df.columns for col_name in columns):
                 raise ValueError(f"DataFrame is missing required columns: {', '.join(columns)}")
@@ -83,16 +80,15 @@ def filter_valid_pairs(
         - DataFrame with combined filtered positive and negative pairs
         - Dictionary with retention statistics
     """
-    # Get valid nodes
-    valid_nodes = nodes.select("id").distinct()
+    # Get list of nodes in the KG
+    valid_nodes = nodes.select("id").distinct().sample(False, seed=42, fraction=0.5)
 
-    # Filter pairs where both source and target exist in nodes
+    # Filter out pairs where both source and target exist in nodes
     filtered_tp = (
         raw_tp.join(valid_nodes.alias("source_nodes"), raw_tp.source == f.col("source_nodes.id"))
         .join(valid_nodes.alias("target_nodes"), raw_tp.target == f.col("target_nodes.id"))
         .select(raw_tp["*"])
     )
-
     filtered_tn = (
         raw_tn.join(valid_nodes.alias("source_nodes"), raw_tn.source == f.col("source_nodes.id"))
         .join(valid_nodes.alias("target_nodes"), raw_tn.target == f.col("target_nodes.id"))
@@ -100,14 +96,9 @@ def filter_valid_pairs(
     )
 
     # Calculate retention percentages
-    tp_count = raw_tp.count()
-    tn_count = raw_tn.count()
-    filtered_tp_count = filtered_tp.count()
-    filtered_tn_count = filtered_tn.count()
-
     retention_stats = {
-        "positive_pairs_retained_pct": (filtered_tp_count / tp_count * 100) if tp_count > 0 else 100.0,
-        "negative_pairs_retained_pct": (filtered_tn_count / tn_count * 100) if tn_count > 0 else 100.0,
+        "positive_pairs_retained_pct": ((filtered_tp.count() / raw_tp.count()) * 100) if raw_tp.count() > 0 else 100.0,
+        "negative_pairs_retained_pct": ((filtered_tn.count() / raw_tn.count()) * 100) if raw_tn.count() > 0 else 100.0,
     }
 
     # Combine filtered pairs
@@ -153,22 +144,20 @@ def attach_embeddings(
     allow_subset=True,
 )
 @primary_key(primary_key=["id"])
-def prefilter_nodes(
-    nodes: DataFrame, gt_pos: pd.DataFrame, drug_types: List[str], disease_types: List[str]
-) -> DataFrame:
+def prefilter_nodes(nodes: DataFrame, gt: pd.DataFrame, drug_types: List[str], disease_types: List[str]) -> DataFrame:
     """Prefilter nodes for negative sampling.
 
     Args:
         nodes: the nodes dataframe to be filtered
-        gt_pos: dataframe with ground truth positives
+        gt: dataframe with ground truth positives and negatives
         drug_types: list of drug types
         disease_types: list of disease types
     Returns:
         Filtered nodes dataframe
     """
-
+    gt_pos = gt.filter(f.col("y") == 1)
     ground_truth_nodes = (
-        gt_pos.withColumn("id", f.col("source"))
+        gt.withColumn("id", f.col("source"))
         .unionByName(gt_pos.withColumn("id", f.col("target")))
         .select("id")
         .distinct()

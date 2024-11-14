@@ -134,7 +134,7 @@ def create_pipeline(**kwargs) -> Pipeline:
             node(
                 func=nodes.filter_valid_pairs,
                 inputs=[
-                    "embeddings.feat.nodes",
+                    "integration.prm.filtered_nodes",
                     "modelling.raw.ground_truth.positives@spark",
                     "modelling.raw.ground_truth.negatives@spark",
                 ],
@@ -144,9 +144,8 @@ def create_pipeline(**kwargs) -> Pipeline:
             node(
                 func=nodes.attach_embeddings,
                 inputs=[
+                    "modelling.raw.known_pairs@spark",
                     "embeddings.feat.nodes",
-                    "modelling.raw.known_pairs@spark",  # ,
-                    # "modelling.raw.ground_truth.negatives@spark",
                 ],
                 outputs="modelling.int.known_pairs@spark",
                 name="create_int_known_pairs",
@@ -155,7 +154,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 func=nodes.prefilter_nodes,
                 inputs=[
                     "embeddings.feat.nodes",
-                    "modelling.raw.ground_truth.positives@spark",
+                    "modelling.raw.known_pairs@spark",
                     "params:modelling.drug_types",
                     "params:modelling.disease_types",
                 ],
