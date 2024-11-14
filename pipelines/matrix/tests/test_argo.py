@@ -251,7 +251,9 @@ def test_get_dependencies_default_same_than_task(pipeline_where_first_node_is_in
     )
     assert deps[0]["tags"] == {"argowf.fuse", "argowf.fuse-group.dummy"}
     assert "resources" not in deps[0]
-    assert not deps[0].get("use_gpus", False)
+
+    assert "use_gpus" in deps[0]
+    assert deps[0]["use_gpus"]
 
 
 @pytest.mark.parametrize(
@@ -666,7 +668,17 @@ def test_affinities_of_argo_template_config_pipelines() -> None:
     assert pipeline_one_template["dag"]["tasks"][0]["affinity"] == {
         "nodeAffinity": {
             "requiredDuringSchedulingIgnoredDuringExecution": {
-                "nodeSelectorTerms": [{"matchExpressions": [{"key": "gpu_node", "operator": "In", "values": ["true"]}]}]
+                "nodeSelectorTerms": [
+                    {
+                        "matchExpressions": [
+                            {
+                                "key": "gpu_node",
+                                "operator": "In",
+                                "values": ["true"],
+                            }
+                        ]
+                    }
+                ]
             }
         }
     }
