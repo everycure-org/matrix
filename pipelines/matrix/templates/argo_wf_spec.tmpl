@@ -33,11 +33,7 @@ spec:
   templates:
   - name: kedro
     affinity:
-      {% if use_gpus %}
-      nodeAffinity:
-      {% else %}
       nodeAntiAffinity:
-      {% endif %}
         requiredDuringSchedulingIgnoredDuringExecution:
           nodeSelectorTerms:
           - matchExpressions:
