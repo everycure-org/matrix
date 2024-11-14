@@ -32,6 +32,7 @@ def generate_argo_config(
     namespace: str,
     username: str,
     pipelines: Dict[str, Pipeline],
+    pipeline_for_execution: str,
     package_name: str,
     default_execution_resources: Optional[ArgoResourceConfig] = None,
 ) -> str:
@@ -47,6 +48,7 @@ def generate_argo_config(
     output = template.render(
         package_name=package_name,
         pipelines=pipeline2dependencies,
+        pipeline_for_execution=pipeline_for_execution,
         image=image,
         image_tag=image_tag,
         namespace=namespace,
