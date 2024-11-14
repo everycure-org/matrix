@@ -33,8 +33,11 @@ def generate_argo_config(
     username: str,
     pipelines: Dict[str, Pipeline],
     package_name: str,
-    default_execution_resources: ArgoResourceConfig = ArgoResourceConfig(),
+    default_execution_resources: Optional[ArgoResourceConfig] = None,
 ) -> str:
+    if default_execution_resources is None:
+        default_execution_resources = ArgoResourceConfig()
+
     loader = FileSystemLoader(searchpath=ARGO_TEMPLATES_DIR_PATH)
     template_env = Environment(loader=loader, trim_blocks=True, lstrip_blocks=True)
     template = template_env.get_template(ARGO_TEMPLATE_FILE)
