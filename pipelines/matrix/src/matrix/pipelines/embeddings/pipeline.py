@@ -1,4 +1,5 @@
-from kedro.pipeline import Pipeline, node, pipeline
+from kedro.pipeline import Pipeline, node
+from kedro.pipeline.modular_pipeline import pipeline
 
 from . import nodes
 
@@ -145,5 +146,23 @@ def create_pipeline(**kwargs) -> Pipeline:
                     "argowf.fuse-group.topological_pca",
                 ],
             ),
+        ],
+        namespace="embeddings",
+        inputs=[
+            "integration.prm.filtered_nodes",
+            "integration.prm.filtered_edges",
+        ],
+        outputs=[
+            "embeddings.feat.graph.node_embeddings",
+            "embeddings.feat.graph.pca_node_embeddings",
+            "embeddings.tmp.input_nodes",
+            "embeddings.tmp.input_edges",
+            "embeddings.feat.include_in_graphsage@yaml",
+            "embeddings.models.graphsage",
+            "embeddings.reporting.loss",
+            "embeddings.model_output.graphsage",
+            "embeddings.feat.nodes",
+            "embeddings.reporting.topological_pca",
+            "embeddings.reporting.topological_pca_plot",
         ],
     )

@@ -174,4 +174,39 @@ def create_pipeline(**kwargs) -> Pipeline:
             )
         )
 
-    return sum([create_model_input, *pipelines])
+    return pipeline(
+        [create_model_input, *pipelines],
+        namespace="modelling",
+        inputs=[
+            "embeddings.feat.nodes",
+            "modelling.raw.ground_truth.positives@spark",
+            "modelling.raw.ground_truth.negatives@spark",
+        ],
+        outputs=[
+            "modelling.int.known_pairs@spark",
+            "modelling.model_input.drugs_diseases_nodes@spark",
+            "modelling.model_input.splits",
+            "modelling.model_input.drugs_diseases_nodes@pandas",
+            # Model-specific outputs (for each model in DYNAMIC_PIPELINES_MAPPING)
+            *[
+                f"modelling.{model['model_name']}.model_input.transformers"
+                for model in settings.DYNAMIC_PIPELINES_MAPPING.get("modelling")
+            ],
+            *[
+                f"modelling.{model['model_name']}.models.model"
+                for model in settings.DYNAMIC_PIPELINES_MAPPING.get("modelling")
+            ],
+            *[
+                f"modelling.{model['model_name']}.model_input.transformed_splits"
+                for model in settings.DYNAMIC_PIPELINES_MAPPING.get("modelling")
+            ],
+            *[
+                f"modelling.{model['model_name']}.model_output.predictions"
+                for model in settings.DYNAMIC_PIPELINES_MAPPING.get("modelling")
+            ],
+            *[
+                f"modelling.{model['model_name']}.reporting.metrics"
+                for model in settings.DYNAMIC_PIPELINES_MAPPING.get("modelling")
+            ],
+        ],
+    )

@@ -1,4 +1,5 @@
-from kedro.pipeline import Pipeline, node, pipeline
+from kedro.pipeline import Pipeline, node
+from kedro.pipeline.modular_pipeline import pipeline
 
 from . import nodes
 from .robokop import transform_robo_edges, transform_robo_nodes
@@ -137,5 +138,24 @@ def create_pipeline(**kwargs) -> Pipeline:
                 name="filter_prm_knowledge_graph_nodes",
                 tags=["filtering"],
             ),
-        ]
+        ],
+        namespace="integration",
+        inputs=[
+            "ingestion.int.robokop.nodes",
+            "ingestion.int.robokop.edges",
+            "ingestion.int.rtx_kg2.nodes",
+            "ingestion.int.rtx_kg2.edges",
+            "ingestion.int.rtx_kg2.curie_to_pmids",
+            "integration.raw.biolink.categories",
+            "integration.raw.biolink.predicates",
+            "ingestion.int.ec_medical_team.nodes",
+            "ingestion.int.ec_medical_team.edges",
+        ],
+        outputs=[
+            "integration.prm.unified_nodes",
+            "integration.prm.unified_edges",
+            "integration.prm.prefiltered_nodes",
+            "integration.prm.filtered_edges",
+            "integration.prm.filtered_nodes",
+        ],
     )

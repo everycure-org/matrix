@@ -1,4 +1,6 @@
-from kedro.pipeline import Pipeline, node, pipeline
+from kedro.pipeline import Pipeline, node
+from kedro.pipeline.modular_pipeline import pipeline
+
 from matrix.pipelines.embeddings.nodes import ingest_edges, ingest_nodes
 
 
@@ -42,5 +44,16 @@ def create_pipeline(**kwargs) -> Pipeline:
             #     outputs="data_release.prm.kg_embeddings",
             # )
             # need nodes that bring the nodes/edges to BigQuery
-        ]
+        ],
+        namespace="data_release",
+        inputs=[
+            "integration.prm.filtered_nodes",
+            "integration.prm.filtered_edges",
+        ],
+        outputs=[
+            "data_release.prm.kg_nodes",
+            "data_release.prm.kg_edges",
+            "data_release.prm.bigquery_edges",
+            "data_release.prm.bigquery_nodes",
+        ],
     )

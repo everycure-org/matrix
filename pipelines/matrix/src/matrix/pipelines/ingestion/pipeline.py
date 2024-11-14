@@ -1,6 +1,6 @@
 import pyspark.sql.functions as F
-
-from kedro.pipeline import Pipeline, node, pipeline
+from kedro.pipeline import Pipeline, node
+from kedro.pipeline.modular_pipeline import pipeline
 
 
 def create_pipeline(**kwargs) -> Pipeline:
@@ -61,5 +61,24 @@ def create_pipeline(**kwargs) -> Pipeline:
                 name="ingest_robokop_edges",
                 tags=["robokop"],
             ),
-        ]
+        ],
+        namespace="ingestion",
+        inputs=[
+            "ingestion.raw.rtx_kg2.nodes@spark",
+            "ingestion.raw.rtx_kg2.edges@spark",
+            "ingestion.raw.rtx_kg2.curie_to_pmids@spark",
+            "ingestion.raw.ec_medical_team.nodes@spark",
+            "ingestion.raw.ec_medical_team.edges@spark",
+            "ingestion.raw.robokop.nodes@spark",
+            "ingestion.raw.robokop.edges@spark",
+        ],
+        outputs=[
+            "ingestion.int.rtx_kg2.nodes",
+            "ingestion.int.rtx_kg2.edges",
+            "ingestion.int.rtx_kg2.curie_to_pmids",
+            "ingestion.int.ec_medical_team.nodes",
+            "ingestion.int.ec_medical_team.edges",
+            "ingestion.int.robokop.nodes",
+            "ingestion.int.robokop.edges",
+        ],
     )
