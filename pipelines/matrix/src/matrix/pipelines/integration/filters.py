@@ -57,19 +57,35 @@ def biolink_deduplicate_edges(edges_df: DataFrame, biolink_predicates: DataFrame
 
 def convert_biolink_hierarchy_json_to_df(biolink_predicates, col_name: str):
     spark = ps.sql.SparkSession.builder.getOrCreate()
-    biolink_hierarchy = spark.createDataFrame(unnest_biolink_hierarchy(col_name, biolink_predicates, prefix="biolink:"))
+    biolink_hierarchy = spark.createDataFrame(
+        unnest_biolink_hierarchy(
+            col_name,
+            biolink_predicates,
+            prefix="biolink:",
+            convert_to_pascal_case=True,
+        )
+    )
 
     return biolink_hierarchy
 
 
 def determine_most_specific_category(nodes: DataFrame, biolink_categories_df: pd.DataFrame) -> DataFrame:
-    """Function to retrieve most specific entry."""
+    """Function to retrieve most specific entry for each node.
+
+    Example:
+    - node has all_categories [biolink:ChemicalEntity, biolink:NamedThing]
+    - then node will be assigned biolink:ChemicalEntity as most specific category
+
+    """
 
     labels_hierarchy = convert_biolink_hierarchy_json_to_df(biolink_categories_df, "category")
 
     nodes = (
         nodes.withColumn("category", F.explode("all_categories"))
-        .join(labels_hierarchy, on="category", how="left")  # add path
+        .join(labels_hierarchy, on="category", how="left")
+        # some categories are not found in the biolink hierarchy
+        # we deal with failed joins by setting their parents to [] == the depth as level 0 == chosen last
+        .withColumn("parents", f.coalesce("parents", f.lit(f.array())))
         .withColumn("depth", F.array_size("parents"))
         .withColumn("row_num", F.row_number().over(Window.partitionBy("id").orderBy(F.col("depth").desc())))
         .filter(F.col("row_num") == 1)
