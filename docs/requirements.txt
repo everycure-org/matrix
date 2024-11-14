@@ -8,6 +8,8 @@ mkdocs-table-reader-plugin
 mkdocs-blogging-plugin
 mkdocs-simple-hooks
 mkdocs-jupyter
+mkdocs-literate-nav
+mkdocs-gen-files
 openpyxl
 jupyter
 pyyaml

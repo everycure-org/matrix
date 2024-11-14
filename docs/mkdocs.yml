@@ -26,21 +26,31 @@ theme:
 
 plugins:
   - drawio
-  - mkdocs-jupyter
+  - mkdocstrings:
+      handlers:
+        python:
+          paths: [
+           "../pipelines/matrix/src"
+          ]
+          recursive: true
+  # - mkdocs-jupyter
   - awesome-pages
   - search
+  - gen-files:
+      scripts:
+        - scripts/gen_doc_stubs.py
   # - table-reader
   #- git-authors:
   #   exclude:
   #     - "releases/**"
 
-  - git-committers:
-      repository: everycure-org/matrix
-      branch: main
-      docs_path: docs/src/
-  - git-revision-date-localized:
-      enable_creation_date: true
-      fallback_to_build_date: true
+#  - git-committers:
+#      repository: everycure-org/matrix
+#      branch: main
+#      docs_path: docs/src/
+#  - git-revision-date-localized:
+#      enable_creation_date: true
+#      fallback_to_build_date: true
   # we use the blog plugin to generate the releases page
   - blog:
      blog_dir: releases
