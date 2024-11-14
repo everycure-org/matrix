@@ -13,6 +13,7 @@ fabricator.rtx_kg2:
         sample_values:
           - biolink:Drug
           - biolink:Disease
+          - biolink:SmallMolecule
       all_names:string[]:
         type: faker
         provider: name
@@ -310,6 +311,8 @@ fabricator.robokop:
             - biolink:PhysicalEssenceOrOccurrent
             - biolink:GenomicEntity
             - biolink:OrganismTaxon
+            - biolink:SmallMolecule
+            - biolink:Drug
       description:string:
         type: faker
         provider: sentence
