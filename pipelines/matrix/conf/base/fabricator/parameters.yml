@@ -1,6 +1,6 @@
 fabricator.rtx_kg2:
   nodes:
-    num_rows: 150
+    num_rows: 500
     columns:
       id:ID:
         type: generate_unique_id
@@ -11,22 +11,17 @@ fabricator.rtx_kg2:
       category:
         type: generate_values
         sample_values: &all_categories
+          
           # - biolink:NamedThing
-          - biolink:BiologicalEntity
-          - biolink:ChemicalSubstance
+          #- biolink:BiologicalEntity
+          #- biolink:ChemicalSubstance
           - biolink:Disease
           - biolink:Drug
-          - biolink:Entity
-          - biolink:Gene
-          - biolink:GenomicEntity
-          - biolink:OntologyClass
-          - biolink:OrganismTaxon
-          - biolink:PhysicalEssence
-          - biolink:PhysicalEssenceOrOccurrent
-          - biolink:Protein
-          - biolink:SequenceVariant
-          - biolink:SmallMolecule
-          - biolink:ThingWithTaxon
+          #- biolink:Gene
+          #- biolink:SocioeconomicExposure
+          # - biolink:OrganismTaxon
+          #- biolink:Protein
+          # - biolink:SmallMolecule
       all_names:string[]:
         type: faker
         provider: name
@@ -142,7 +137,7 @@ fabricator.rtx_kg2:
 
   # NOTE: Fabricated drug and disease lists can contain nodes which are not in the drug and disease categories resp.
   drug_list:
-    num_rows: 20
+    num_rows: 500
     columns:
       curie: 
         type: row_apply
@@ -153,6 +148,12 @@ fabricator.rtx_kg2:
       name: 
         type: row_apply
         list_of_values: [nodes.id:ID, nodes.name]
+        row_func: "lambda *args: args[1]"
+        resize: True
+        seed: 6850
+      category:
+        type: row_apply
+        list_of_values: [nodes.id:ID, nodes.category]
         row_func: "lambda *args: args[1]"
         resize: True
         seed: 6850
@@ -196,7 +197,7 @@ fabricator.rtx_kg2:
           - AVAILABLE
       
   disease_list:
-    num_rows: 30
+    num_rows: 500
     columns:
       curie: 
         type: row_apply
@@ -210,6 +211,12 @@ fabricator.rtx_kg2:
         row_func: "lambda *args: args[1]"
         resize: True
         seed: 95690
+      category:
+        type: row_apply
+        list_of_values: [nodes.id:ID, nodes.category]
+        row_func: "lambda *args: args[1]"
+        resize: True
+        seed: 6850
       category_class: 
         type: row_apply
         list_of_values: [nodes.id:ID, nodes.name]

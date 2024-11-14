@@ -146,6 +146,7 @@ def filter_nodes_without_edges(
     """
 
     # Construct list of edges
+    logger.info("Nodes before filtering: %s", nodes.count())
     edge_nodes = (
         edges.withColumn("id", F.col("subject"))
         .unionByName(edges.withColumn("id", F.col("object")))
@@ -153,7 +154,9 @@ def filter_nodes_without_edges(
         .distinct()
     )
 
-    return nodes.alias("nodes").join(edge_nodes, on="id").select("nodes.*")
+    nodes = nodes.alias("nodes").join(edge_nodes, on="id").select("nodes.*").persist()
+    logger.info("Nodes after filtering: %s", nodes.count())
+    return nodes
 
 
 @memory.cache

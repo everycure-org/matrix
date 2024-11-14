@@ -135,7 +135,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                     "integration.prm.filtered_edges",
                 ],
                 outputs="integration.prm.filtered_nodes",
-                name="filter_prm_knowledge_graph_nodes",
+                name="filter_nodes_without_edges",
                 tags=["filtering"],
             ),
         ]
