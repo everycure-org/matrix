@@ -300,7 +300,6 @@ jinja2==3.1.4
     #   jupyterlab-server
     #   mlflow
     #   nbconvert
-    #   torch
 jiter==0.7.0
     # via openai
 jmespath==1.0.1
@@ -313,6 +312,8 @@ json5==0.9.28
     # via jupyterlab-server
 jsonpatch==1.33
     # via langchain-core
+jsonpath-ng==1.7.0
+    # via -r requirements.in
 jsonpointer==3.0.0
     # via
     #   jsonpatch
@@ -374,7 +375,7 @@ kedro-datasets==4.1.0
     # via
     #   -r requirements.in
     #   kedro-mlflow
-kedro-mlflow @ git+https://github.com/pascalwhoop/kedro-mlflow@68e09e8e5ae4b162ff4ab5a793b5266254e91a0e#egg=kedro-mlflow
+kedro-mlflow==0.13.3
     # via -r requirements.in
 kedro-telemetry==0.6.1
     # via -r requirements.in
@@ -393,7 +394,7 @@ langchain-openai==0.2.6
     # via -r requirements.in
 langchain-text-splitters==0.3.2
     # via langchain
-langsmith==0.1.142
+langsmith==0.1.140
     # via
     #   langchain
     #   langchain-core
@@ -460,9 +461,7 @@ neo4j==5.26.0
 nest-asyncio==1.6.0
     # via ipykernel
 networkx==3.4.2
-    # via
-    #   kedro-viz
-    #   torch
+    # via kedro-viz
 notebook==7.0.7
     # via -r requirements.in
 notebook-shim==0.2.4
@@ -496,14 +495,14 @@ openai==1.54.3
     #   langchain-openai
 openpyxl==3.1.5
     # via -r requirements.in
-opentelemetry-api==1.28.1
+opentelemetry-api==1.28.0
     # via
     #   mlflow-skinny
     #   opentelemetry-sdk
     #   opentelemetry-semantic-conventions
-opentelemetry-sdk==1.28.1
+opentelemetry-sdk==1.28.0
     # via mlflow-skinny
-opentelemetry-semantic-conventions==0.49b1
+opentelemetry-semantic-conventions==0.49b0
     # via opentelemetry-sdk
 orjson==3.10.11
     # via
@@ -564,6 +563,8 @@ pluggy==1.5.0
     # via
     #   kedro
     #   pytest
+ply==3.11
+    # via jsonpath-ng
 pre-commit-hooks==5.0.0
     # via kedro
 prometheus-client==0.21.0
@@ -807,7 +808,7 @@ stack-data==0.6.3
     # via ipython
 starlette==0.41.2
     # via fastapi
-strawberry-graphql==0.248.1
+strawberry-graphql==0.248.0
     # via kedro-viz
 sympy==1.13.1
     # via torch
@@ -921,7 +922,7 @@ websocket-client==1.8.0
     # via jupyter-server
 websockets==14.0
     # via uvicorn
-werkzeug==3.1.3
+werkzeug==3.1.2
     # via flask
 widgetsnbextension==4.0.13
     # via ipywidgets

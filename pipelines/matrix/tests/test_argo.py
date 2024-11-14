@@ -1,26 +1,28 @@
+from typing import Dict, Tuple
 from kedro.pipeline.node import Node
 from kedro.pipeline import Pipeline
 import pytest
 import yaml
 
-from matrix.argo import clean_name, fuse, FusedNode, generate_argo_config
-from matrix.kedro4argo_node import ArgoNodeConfig, ArgoNode
+from matrix.argo import clean_name, fuse, FusedNode, generate_argo_config, get_dependencies, get_pipeline2dependencies
+from matrix.kedro4argo_node import ArgoResourceConfig, ArgoNode
 
 
 def dummy_fn(*args):
     return "dummy"
 
 
-def test_no_nodes_fused_when_no_fuse_options():
+@pytest.mark.parametrize("node_class", [Node, ArgoNode])
+def test_no_nodes_fused_when_no_fuse_options(node_class):
     pipeline_with_no_fusing_options = Pipeline(
         nodes=[
-            Node(
+            node_class(
                 func=dummy_fn,
                 inputs=["dataset_a", "dataset_b"],
                 outputs="dataset_c",
                 name="first",
             ),
-            Node(
+            node_class(
                 func=dummy_fn,
                 inputs=["dataset_1", "dataset_2"],  # inputs are different than outputs of previous node
                 outputs="dataset_3",
@@ -37,15 +39,16 @@ def test_no_nodes_fused_when_no_fuse_options():
     ), "No nodes should be fused when no fuse options are provided"
 
 
-def test_simple_fusing():
+@pytest.mark.parametrize("node_class", [Node, ArgoNode])
+def test_simple_fusing(node_class):
     pipeline_where_first_node_is_input_for_second = Pipeline(
         nodes=[
-            Node(
+            node_class(
                 func=dummy_fn,
                 inputs=["dataset_a", "dataset_b"],
                 outputs="dataset_1@pandas",
             ),
-            Node(
+            node_class(
                 func=dummy_fn,
                 inputs=[
                     "dataset_1@spark",
@@ -66,16 +69,17 @@ def test_simple_fusing():
     assert len(fused[0]._parents) == 0, "Fused node should have no parents"
 
 
-def test_no_multiple_parents_no_fusing():
+@pytest.mark.parametrize("node_class", [Node, ArgoNode])
+def test_no_multiple_parents_no_fusing(node_class):
     pipeline_one2many_fusing_possible = Pipeline(
         nodes=[
-            Node(
+            node_class(
                 func=dummy_fn,
                 inputs=["dataset_a", "dataset_b"],
                 outputs="dataset_1",
                 name="first_node",
             ),
-            Node(
+            node_class(
                 func=dummy_fn,
                 inputs=[
                     "dataset_c",
@@ -83,7 +87,7 @@ def test_no_multiple_parents_no_fusing():
                 outputs="dataset_2",
                 name="second_node",
             ),
-            Node(
+            node_class(
                 func=dummy_fn,
                 inputs=["dataset_1", "dataset_2"],
                 outputs="dataset_3",
@@ -100,16 +104,17 @@ def test_no_multiple_parents_no_fusing():
     ), "No fusing has been performed, as child node can be fused to different parents."
 
 
-def test_fusing_multiple_parents():
+@pytest.mark.parametrize("node_class", [Node, ArgoNode])
+def test_fusing_multiple_parents(node_class):
     pipeline_with_multiple_parents = Pipeline(
         nodes=[
-            Node(
+            node_class(
                 func=dummy_fn,
                 inputs=["dataset_a", "dataset_b"],
                 outputs=["dataset_1"],
                 name="first_node",
             ),
-            Node(
+            node_class(
                 func=dummy_fn,
                 inputs=[
                     "dataset_c",
@@ -117,13 +122,13 @@ def test_fusing_multiple_parents():
                 outputs="dataset_2",
                 name="second_node",
             ),
-            Node(
+            node_class(
                 func=dummy_fn,
                 inputs=None,
                 outputs="dataset_3",
                 name="third_node",
             ),
-            Node(
+            node_class(
                 func=dummy_fn,
                 inputs=[
                     "dataset_1",
@@ -132,13 +137,13 @@ def test_fusing_multiple_parents():
                 outputs="dataset_4",
                 name="child_node",
             ),
-            Node(
+            node_class(
                 func=dummy_fn,
                 inputs=["dataset_3", "dataset_4"],
                 outputs="dataset_5",
                 name="grandchild_node",
             ),
-            Node(
+            node_class(
                 func=dummy_fn,
                 inputs=["dataset_5"],
                 outputs="dataset_6",
@@ -163,14 +168,15 @@ def test_fusing_multiple_parents():
     ), "Fused node should have parents 'first_node', 'second_node' and 'third_node'"
 
 
-def test_simple_fusing_with_argo_config():
-    pipeline_where_first_node_is_input_for_second = Pipeline(
+@pytest.fixture()
+def pipeline_where_first_node_is_input_for_second():
+    return Pipeline(
         nodes=[
             ArgoNode(
                 func=dummy_fn,
                 inputs=["dataset_a", "dataset_b"],
                 outputs="dataset_1@pandas",
-                argo_config=ArgoNodeConfig(
+                argo_config=ArgoResourceConfig(
                     cpu_request=1,
                     cpu_limit=2,
                     memory_request=16,
@@ -184,7 +190,7 @@ def test_simple_fusing_with_argo_config():
                     "dataset_1@spark",
                 ],
                 outputs="dataset_2",
-                argo_config=ArgoNodeConfig(
+                argo_config=ArgoResourceConfig(
                     cpu_request=2,
                     cpu_limit=2,
                     memory_request=32,
@@ -196,8 +202,53 @@ def test_simple_fusing_with_argo_config():
         tags=["argowf.fuse", "argowf.fuse-group.dummy"],
     )
 
-    assert isinstance(pipeline_where_first_node_is_input_for_second.nodes[0], ArgoNode)
-    assert isinstance(pipeline_where_first_node_is_input_for_second.nodes[1], ArgoNode)
+
+def test_simple_fusing_with_argo_nodes(pipeline_where_first_node_is_input_for_second: Pipeline):
+    fused = fuse(pipeline_where_first_node_is_input_for_second)
+
+    assert len(fused) == 1
+
+    assert fused[0].argo_config.cpu_request == 2
+    assert fused[0].argo_config.cpu_limit == 2
+    assert fused[0].argo_config.memory_request == 32
+    assert fused[0].argo_config.memory_limit == 64
+    assert fused[0].argo_config.num_gpus == 1
+
+
+def test_get_dependencies_default_different_than_task(pipeline_where_first_node_is_input_for_second: Pipeline):
+    fused_pipeline = fuse(pipeline_where_first_node_is_input_for_second)
+    deps = get_dependencies(fused_pipeline, ArgoResourceConfig())
+    assert len(deps) == 1
+    assert deps[0]["name"] == "dummy"
+    assert deps[0]["deps"] == []
+    assert (
+        deps[0]["nodes"]
+        == "dummy_fn([dataset_a;dataset_b]) -> [dataset_1@pandas],dummy_fn([dataset_1@spark]) -> [dataset_2]"
+    )
+    assert deps[0]["tags"] == {"argowf.fuse", "argowf.fuse-group.dummy"}
+    assert deps[0]["resources"] == {
+        "cpu_limit": 2,
+        "cpu_request": 2,
+        "memory_limit": "64Gi",
+        "memory_request": "32Gi",
+        "num_gpus": 1,
+    }
+
+
+def test_get_dependencies_default_same_than_task(pipeline_where_first_node_is_input_for_second: Pipeline):
+    fused_pipeline = fuse(pipeline_where_first_node_is_input_for_second)
+    deps = get_dependencies(
+        fused_pipeline, ArgoResourceConfig(cpu_request=2, cpu_limit=2, memory_request=32, memory_limit=64, num_gpus=1)
+    )
+    assert len(deps) == 1
+    assert deps[0]["name"] == "dummy"
+    assert deps[0]["deps"] == []
+    assert (
+        deps[0]["nodes"]
+        == "dummy_fn([dataset_a;dataset_b]) -> [dataset_1@pandas],dummy_fn([dataset_1@spark]) -> [dataset_2]"
+    )
+    assert deps[0]["tags"] == {"argowf.fuse", "argowf.fuse-group.dummy"}
+    assert "resources" not in deps[0]
 
 
 @pytest.mark.parametrize(
@@ -360,30 +411,55 @@ def test_clean_dependencies() -> None:
     assert cleaned == ["dataset_a", "dataset_b"]
 
 
-@pytest.fixture(params=[True, False])
-def argo_config(request) -> dict:
+def get_argo_config(argo_default_resources: ArgoResourceConfig) -> Tuple[Dict, Dict[str, Pipeline]]:
     image_name = "us-central1-docker.pkg.dev/mtrx-hub-dev-3of/matrix-images/matrix"
     run_name = "test_run"
     image_tag = "test_tag"
     namespace = "test_namespace"
     username = "test_user"
     pipelines = {
-        "test_pipeline": Pipeline(
-            nodes=[Node(func=dummy_func, inputs=["dataset_a", "dataset_b"], outputs="dataset_c", name="simple_node")]
-        ),
-        "cloud_pipeline": Pipeline(
+        "pipeline_one": Pipeline(
             nodes=[
-                Node(
+                ArgoNode(
                     func=dummy_func,
-                    inputs=["dataset_a_cloud", "dataset_b_cloud"],
-                    outputs="dataset_c_cloud",
-                    name="simple_node_cloud",
+                    inputs=["dataset_a", "dataset_b"],
+                    outputs="dataset_c",
+                    name="simple_node_p1_1",
+                    argo_config=ArgoResourceConfig(
+                        num_gpus=1,
+                        cpu_request=4,
+                        cpu_limit=7,
+                        memory_request=16,
+                        memory_limit=32,
+                    ),
+                ),
+                ArgoNode(
+                    func=dummy_func,
+                    inputs="dataset_c",
+                    outputs="dataset_d",
+                    name="simple_node_p1_2",
+                ),
+            ]
+        ),
+        "pipeline_two": Pipeline(
+            nodes=[
+                ArgoNode(
+                    func=dummy_func,
+                    inputs=["dataset_a"],
+                    outputs="dataset_b",
+                    name="simple_node_p2_1",
+                    argo_config=ArgoResourceConfig(
+                        num_gpus=0,
+                        cpu_request=4,
+                        cpu_limit=16,
+                        memory_request=64,
+                        memory_limit=64,
+                    ),
                 )
             ]
         ),
     }
 
-    use_gpus = request.param
     argo_config_yaml = generate_argo_config(
         image=image_name,
         run_name=run_name,
@@ -391,22 +467,190 @@ def argo_config(request) -> dict:
         namespace=namespace,
         username=username,
         pipelines=pipelines,
+        pipeline_for_execution="pipeline_one",
         package_name="matrix",
-        use_gpus=use_gpus,
+        default_execution_resources=argo_default_resources,
     )
 
     argo_config = yaml.safe_load(argo_config_yaml)
     assert isinstance(argo_config, dict), "Argo config should be a dictionary after YAML parsing"
-    argo_config["_test_use_gpus"] = use_gpus
-    return argo_config
+    return argo_config, pipelines
 
 
-def test_generate_argo_config(argo_config: dict) -> None:
-    use_gpus = argo_config["_test_use_gpus"]
+def test_get_pipeline2dependencies() -> None:
+    argo_default_resources = ArgoResourceConfig(
+        num_gpus=0,
+        cpu_request=4,
+        cpu_limit=16,
+        memory_request=64,
+        memory_limit=64,
+    )
+    _, pipelines = get_argo_config(argo_default_resources)
+    pipeline2dependencies = get_pipeline2dependencies(pipelines, argo_default_resources)
+
+    assert len(pipeline2dependencies) == 2
+    assert len(pipeline2dependencies["pipeline_one"]) == 2
+    assert pipeline2dependencies["pipeline_one"][0]["name"] == "simple-node-p1-1"
+    assert pipeline2dependencies["pipeline_one"][1]["name"] == "simple-node-p1-2"
+    assert pipeline2dependencies["pipeline_one"][0]["deps"] == []
+    assert pipeline2dependencies["pipeline_one"][1]["deps"] == ["simple-node-p1-1"]
+    assert pipeline2dependencies["pipeline_one"][0]["nodes"] == "simple_node_p1_1"
+    assert pipeline2dependencies["pipeline_one"][1]["nodes"] == "simple_node_p1_2"
+    assert pipeline2dependencies["pipeline_one"][0]["tags"] == set()
+    assert pipeline2dependencies["pipeline_one"][1]["tags"] == set()
+    assert pipeline2dependencies["pipeline_one"][0]["resources"] == {
+        "cpu_limit": 7,
+        "cpu_request": 4,
+        "memory_limit": "32Gi",
+        "memory_request": "16Gi",
+        "num_gpus": 1,
+    }
+    # no explicit resources defined for the second node, hence no resources key in the dict
+    assert "resources" not in pipeline2dependencies["pipeline_one"][1]
+
+    assert len(pipeline2dependencies["pipeline_two"]) == 1
+    assert pipeline2dependencies["pipeline_two"][0]["name"] == "simple-node-p2-1"
+    assert pipeline2dependencies["pipeline_two"][0]["deps"] == []
+    assert pipeline2dependencies["pipeline_two"][0]["nodes"] == "simple_node_p2_1"
+    assert pipeline2dependencies["pipeline_two"][0]["tags"] == set()
+    # resources defined but identical to the default resources, hence no resources key in the dict
+    assert "resources" not in pipeline2dependencies["pipeline_two"][0]
+
+
+@pytest.mark.parametrize(
+    "argo_default_resources",
+    [
+        ArgoResourceConfig(
+            num_gpus=0,
+            cpu_request=4,
+            cpu_limit=16,
+            memory_request=64,
+            memory_limit=64,
+        ),
+        ArgoResourceConfig(
+            num_gpus=0,
+            cpu_request=8,
+            cpu_limit=12,
+            memory_request=128,
+            memory_limit=128,
+        ),
+        ArgoResourceConfig(
+            num_gpus=1,
+            cpu_request=16,
+            cpu_limit=16,
+            memory_request=64,
+            memory_limit=128,
+        ),
+    ],
+)
+def test_argo_template_config_boilerplate(argo_default_resources: ArgoResourceConfig) -> None:
+    """Test the boilerplate configuration of the Argo template."""
+    argo_config, pipelines = get_argo_config(argo_default_resources)
     spec = argo_config["spec"]
 
     # Verify kedro template
     kedro_template = next(t for t in spec["templates"] if t["name"] == "kedro")
+
+    # Verify common configurations
+    assert kedro_template["metadata"]["labels"]["app"] == "kedro-argo"
+
+    # Verify default anti-affinity for GPU nodes
+    assert "nodeAntiAffinity" in kedro_template["affinity"]
+    selector = kedro_template["affinity"]["nodeAntiAffinity"]["requiredDuringSchedulingIgnoredDuringExecution"][
+        "nodeSelectorTerms"
+    ][0]
+    match_expression = selector["matchExpressions"][0]
+    assert match_expression["key"] == "gpu_node"
+    assert match_expression["operator"] == "In"
+    assert match_expression["values"] == ["true"]
+
+    # Verify resources based on GPU configuration
+    resources = kedro_template["container"]["resources"]
+
+    config_as_dict = argo_default_resources.model_dump()
+
+    # Check requests
+    assert resources["requests"]["memory"] == config_as_dict["memory_request"]
+    assert resources["requests"]["cpu"] == config_as_dict["cpu_request"]
+    assert resources["requests"]["nvidia.com/gpu"] == config_as_dict["num_gpus"]
+
+    # Check limits
+    assert resources["limits"]["memory"] == config_as_dict["memory_limit"]
+    assert resources["limits"]["cpu"] == config_as_dict["cpu_limit"]
+    assert resources["limits"]["nvidia.com/gpu"] == config_as_dict["num_gpus"]
+
+    # Verify pipeline templates
+    templates = spec["templates"]
+    pipeline_names = [template["name"] for template in templates]
+    assert "pipeline_one" in pipeline_names
+    assert "pipeline_two" in pipeline_names
+
+
+def test_resources_of_argo_template_config_pipelines() -> None:
+    """Test the resources configuration of the Argo template."""
+    argo_default_resources = ArgoResourceConfig(
+        num_gpus=0,
+        cpu_request=4,
+        cpu_limit=16,
+        memory_request=64,
+        memory_limit=64,
+    )
+    argo_config, actual_pipelines = get_argo_config(argo_default_resources)
+    spec = argo_config["spec"]
+
+    # Verify pipeline templates
+    templates = spec["templates"]
+    pipeline_names = [template["name"] for template in templates]
+    assert "pipeline_one" in pipeline_names
+    assert "pipeline_two" in pipeline_names
+
+    # Verify pipeline_one template
+    pipeline_one_template = next(t for t in templates if t["name"] == "pipeline_one")
+    assert "dag" in pipeline_one_template
+    # there should be two tasks in the pipeline
+    assert len(pipeline_one_template["dag"]["tasks"]) == len(actual_pipelines["pipeline_one"].nodes)
+    assert pipeline_one_template["dag"]["tasks"][0]["name"] == "simple-node-p1-1"
+    assert pipeline_one_template["dag"]["tasks"][0]["template"] == "kedro"
+    assert pipeline_one_template["dag"]["tasks"][1]["name"] == "simple-node-p1-2"
+    assert pipeline_one_template["dag"]["tasks"][1]["template"] == "kedro"
+
+    # Verify resources for the first task
+    # Explicit resource different from default hence resources in task
+    assert "container" in pipeline_one_template["dag"]["tasks"][0]
+    assert "resources" in pipeline_one_template["dag"]["tasks"][0]["container"]
+    resources_p1_1 = pipeline_one_template["dag"]["tasks"][0]["container"]["resources"]
+    actual_resources_p1_1 = actual_pipelines["pipeline_one"].nodes[0].argo_config.model_dump()
+    assert resources_p1_1["requests"]["memory"] == actual_resources_p1_1["memory_request"]
+    assert resources_p1_1["requests"]["cpu"] == actual_resources_p1_1["cpu_request"]
+    assert resources_p1_1["requests"]["nvidia.com/gpu"] == actual_resources_p1_1["num_gpus"]
+    assert resources_p1_1["limits"]["memory"] == actual_resources_p1_1["memory_limit"]
+    assert resources_p1_1["limits"]["cpu"] == actual_resources_p1_1["cpu_limit"]
+    assert resources_p1_1["limits"]["nvidia.com/gpu"] == actual_resources_p1_1["num_gpus"]
+
+    # Verify resources for the second task
+    # no explicit resources defined for the second node, hence no resources in task
+    assert "container" not in pipeline_one_template["dag"]["tasks"][1]
+
+    # Verify pipeline_two template
+    # Explicit resource identical to default hence no resources in task
+    pipeline_two_template = next(t for t in templates if t["name"] == "pipeline_two")
+    assert "dag" in pipeline_two_template
+    assert len(pipeline_two_template["dag"]["tasks"]) == len(actual_pipelines["pipeline_two"].nodes)
+    assert pipeline_two_template["dag"]["tasks"][0]["name"] == "simple-node-p2-1"
+    assert pipeline_two_template["dag"]["tasks"][0]["template"] == "kedro"
+
+
+def test_affinities_of_argo_template_config_pipelines() -> None:
+    """Test the affinities configuration of the Argo template."""
+    argo_default_resources = ArgoResourceConfig(
+        num_gpus=0,
+        cpu_request=4,
+        cpu_limit=16,
+        memory_request=64,
+        memory_limit=64,
+    )
+    argo_config, actual_pipelines = get_argo_config(argo_default_resources)
+    spec = argo_config["spec"]
 
     # Verify common configurations
     assert kedro_template["backoff"]["duration"] == "1"
@@ -457,20 +701,32 @@ def test_generate_argo_config(argo_config: dict) -> None:
 
     # Verify pipeline templates
     templates = spec["templates"]
-    pipeline_names = [template["name"] for template in templates]
-    assert "test_pipeline" in pipeline_names
-    assert "cloud_pipeline" in pipeline_names
 
-    # Verify test_pipeline template
-    test_template = next(t for t in templates if t["name"] == "test_pipeline")
-    assert "dag" in test_template
-    assert len(test_template["dag"]["tasks"]) == 1
-    assert test_template["dag"]["tasks"][0]["name"] == "simple-node"
-    assert test_template["dag"]["tasks"][0]["template"] == "kedro"
+    # Verify pipeline_one template
+    pipeline_one_template = next(t for t in templates if t["name"] == "pipeline_one")
 
-    # Verify cloud_pipeline template
-    cloud_template = next(t for t in templates if t["name"] == "cloud_pipeline")
-    assert "dag" in cloud_template
-    assert len(cloud_template["dag"]["tasks"]) == 1
-    assert cloud_template["dag"]["tasks"][0]["name"] == "simple-node-cloud"
-    assert cloud_template["dag"]["tasks"][0]["template"] == "kedro"
+    # task one has GPU requests, hence has affinity for GPU nodes
+    assert pipeline_one_template["dag"]["tasks"][0]["affinity"] == {
+        "nodeAffinity": {
+            "requiredDuringSchedulingIgnoredDuringExecution": {
+                "nodeSelectorTerms": [
+                    {
+                        "matchExpressions": [
+                            {
+                                "key": "gpu_node",
+                                "operator": "In",
+                                "values": ["true"],
+                            }
+                        ]
+                    }
+                ]
+            }
+        }
+    }
+    # task two has no GPU requests, hence no affinity
+    assert "affinity" not in pipeline_one_template["dag"]["tasks"][1]
+
+    # Verify pipeline_two template
+    pipeline_two_template = next(t for t in templates if t["name"] == "pipeline_two")
+    # task one has no GPU requests, hence no affinity
+    assert "affinity" not in pipeline_two_template["dag"]["tasks"][0]

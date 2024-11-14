@@ -1,24 +1,24 @@
 import json
 import logging
-from pathlib import Path
 import re
 import secrets
 import subprocess
-import sys
 import time
-from typing import Dict, Optional
+import sys
+from pathlib import Path
+from typing import Dict, List, Optional
 
 import click
-from kedro.framework.startup import bootstrap_project
-from kedro.framework.cli.utils import CONTEXT_SETTINGS
+from kedro.framework.cli.utils import CONTEXT_SETTINGS, split_string
 from kedro.framework.project import pipelines as kedro_pipelines
+from kedro.framework.startup import bootstrap_project
 from kedro.pipeline import Pipeline
-
 from rich.console import Console
 from rich.logging import RichHandler
 from rich.panel import Panel
 
 from matrix.argo import ARGO_TEMPLATES_DIR_PATH, generate_argo_config
+from matrix.kedro4argo_node import ArgoResourceConfig
 
 logging.basicConfig(
     level=logging.INFO,
@@ -46,17 +46,31 @@ def cli():
 @click.option("--use-gpus", "-g", is_flag=True, default=False, help="Use GPUs in the workflow")
 @click.option("--verbose", "-v", is_flag=True, default=False, help="Enable verbose output")
 @click.option("--dry-run", "-d", is_flag=True, default=False, help="Does everything except submit the workflow")
+@click.option("--from-nodes", type=str, default="", help="Specify nodes to run from", callback=split_string)
 # fmt: on
-def submit(username: str, namespace: str, run_name: str, pipeline: str, use_gpus: bool, verbose: bool, dry_run: bool):
+def submit(username: str, namespace: str, run_name: str, pipeline: str, verbose: bool, dry_run: bool, from_nodes: List[str]):
     """Submit the end-to-end workflow. """
     if verbose:
         log.setLevel(logging.DEBUG)
 
-    run_name = get_run_name(run_name)
-    pipelines_to_submit = kedro_pipelines
+    if pipeline not in kedro_pipelines.keys():
+        raise ValueError("Pipeline requested for execution not found")
+    
+    if pipeline in ["fabricator", "test"]:
+        raise ValueError("Submitting test pipeline to Argo will result in overwriting source data")
+    
+    if from_nodes and pipeline not in ["kg_release"]:
+        # NOTE: This is due to how we version paths for modelling runs, needs further refinement
+        raise ValueError("The `from-nodes` flag only works for the `kg_release` pipeline")
+    
+    # As a temporary measure, we pass both pipeline for execution and list of pipelines. In the future, we will merge the two.
+    pipeline_obj = kedro_pipelines[pipeline]
+    if from_nodes:
+        pipeline_obj = pipeline_obj.from_nodes(*from_nodes)
+    pipelines_to_submit = {pipeline: pipeline_obj}
 
-    if pipeline not in pipelines_to_submit:
-        raise ValueError(f"Pipeline requested for execution {pipeline} not included in workflow!")
+    run_name = get_run_name(run_name)
+
 
     _submit(
         username=username,
@@ -76,9 +90,8 @@ def _submit(
         username: str, 
         namespace: str, 
         run_name: str, 
-        pipelines_for_workflow: Dict[str, Pipeline], 
-        pipeline_for_execution: str, 
-        use_gpus: bool,
+        pipelines_for_workflow: Dict[str, Pipeline],
+        pipeline_for_execution: str,
         verbose: bool, 
         dry_run: bool, 
         template_directory: Path,
@@ -101,8 +114,8 @@ def _submit(
         username (str): The username to use for the workflow.
         namespace (str): The namespace to use for the workflow.
         run_name (str): The name of the run.
-        pipelines_for_workflow (Dict[str, Pipeline]): The pipelines to run.
-        pipeline_for_execution (str): The pipeline to execute.
+        pipelines_for_workflow (Dict[str, Pipeline]): Pipelines to include in the workflow.
+        pipeline_for_execution (str): Pipeline to execute.
         verbose (bool): If True, enable verbose output.
         dry_run (bool): If True, do not submit the workflow.
         template_directory (Path): The directory containing the Argo template.
@@ -117,16 +130,16 @@ def _submit(
         console.print("[green]✓[/green] Dependencies checked")
 
         console.print("Building and pushing Docker image...")
-        build_push_docker(username, verbose=verbose)
+        build_push_docker(run_name, verbose=verbose)
         console.print("[green]✓[/green] Docker image built and pushed")
 
-        console.print(f"Building Argo template with pipelines {list(pipelines_for_workflow.keys())}...")
-        argo_template = build_argo_template(run_name, username, namespace, pipelines_for_workflow, use_gpus=use_gpus)
+        console.print("Building Argo template...")
+        argo_template = build_argo_template(run_name, username, namespace, pipelines_for_workflow, pipeline_for_execution)
         console.print("[green]✓[/green] Argo template built")
 
         console.print("Writing Argo template...")
         file_path = save_argo_template(argo_template, run_name, template_directory)
-        console.print(f"[green]✓[/green] Argo template written to {file_path}")
+        console.print("[green]✓[/green] Argo template written")
 
         console.print("Ensuring namespace...")
         ensure_namespace(namespace, verbose=verbose)
@@ -137,7 +150,7 @@ def _submit(
         console.print("[green]✓[/green] Argo template applied")
 
         if not dry_run:
-            console.print(f"Submitting workflow for pipeline: {pipeline_for_execution}...")
+            console.print("Submitting workflow for pipeline...")
             submit_workflow(run_name, namespace, pipeline_for_execution, verbose=verbose)
             console.print("[green]✓[/green] Workflow submitted")
 
@@ -288,8 +301,7 @@ def build_push_docker(username: str, verbose: bool):
     run_subprocess(f"make docker_push TAG={username}", stream_output=verbose)
 
 
-# TODO: After it is possible to configure resources on node level, remove the use_gpus flag.
-def build_argo_template(run_name: str, username: str, namespace: str, pipelines: Dict[str, Pipeline], use_gpus: bool = False) -> str:
+def build_argo_template(run_name: str, username: str, namespace: str, pipelines_for_workflow: Dict[str, Pipeline], pipeline_for_execution: str, default_execution_resources: Optional[ArgoResourceConfig] = None) -> str:
     """Build Argo workflow template."""
     image_name = "us-central1-docker.pkg.dev/mtrx-hub-dev-3of/matrix-images/matrix"
 
@@ -300,12 +312,13 @@ def build_argo_template(run_name: str, username: str, namespace: str, pipelines:
     return generate_argo_config(
         image=image_name,
         run_name=run_name,
-        image_tag=username,
+        image_tag=run_name,
         namespace=namespace,
         username=username,
-        pipelines=pipelines,
+        pipelines=pipelines_for_workflow,
+        pipeline_for_execution=pipeline_for_execution,
         package_name=package_name,
-        use_gpus=use_gpus,
+        default_execution_resources=default_execution_resources,
     )
 
 def save_argo_template(argo_template: str, run_name: str, template_directory: Path) -> str:
@@ -344,7 +357,7 @@ def submit_workflow(run_name: str, namespace: str, pipeline_for_execution: str, 
         f"--from wftmpl/{run_name}", # name of the template resource (created in previous step)
         f"-p run_name={run_name}",
         "-l submit-from-ui=false",
-        f"--entrypoint {pipeline_for_execution}", # entrypoint for the workflow. Pipeline to be triggered is chosen here.
+        f"--entrypoint {pipeline_for_execution}",
         "-o json"
     ])
     result = run_subprocess(submit_cmd, capture_output=True, stream_output=verbose)
