@@ -4,11 +4,19 @@ _spark_parquet_ds: &_spark_parquet
   save_args:
     mode: overwrite
 
+_spark_csv: &_spark_csv
+  type: spark.SparkDataset
+  file_format: csv
+  load_args:
+    header: True
+  save_args:
+    mode: overwrite
+
 _pandas_csv: &_pandas_csv
   type:  pandas.CSVDataset
 
 _pandas_parquet: &_pandas_parquet
-  type: pandas.ParquetDataset
+  type: matrix.datasets.graph.PandasParquetDataset
 
 _kg_dataset: &_kg_dataset
   type: matrix.datasets.graph.KnowledgeGraphDataset
@@ -20,6 +28,11 @@ _model_input_ds: &_model_input_ds
   metadata:
     kedro-viz:
       layer: model_input
+
+_raw_ds: &_raw_ds
+  metadata:
+    kedro-viz:
+      layer: raw
 
 _model_ds: &_model_ds
   metadata:
@@ -36,39 +49,53 @@ _model_output_ds: &_model_output_ds
     kedro-viz:
       layer: model_output
 
-modelling.raw.ground_truth.positives:
-  <<: [*_pandas_csv, *_model_input_ds]
-  filepath: ${globals:paths.raw}/ground_truth_data/tp_pairs.txt
+modelling.raw.ground_truth.positives@pandas:
+  <<: [*_pandas_csv, *_raw_ds]
+  filepath: ${globals:paths.raw}/ground_truth/translator/${globals:data_sources.gt.version}/tp_pairs_conflated.tsv
   load_args:
     sep: "\t"
   save_args:
     sep: "\t"
 
-modelling.raw.ground_truth.negatives:
-  <<: [*_pandas_csv, *_model_input_ds]
-  filepath: ${globals:paths.raw}/ground_truth_data/tn_pairs.txt
+modelling.raw.ground_truth.positives@spark:
+  <<: [*_spark_csv, *_raw_ds]
+  filepath: ${globals:paths.raw}/ground_truth/translator/${globals:data_sources.gt.version}/tp_pairs_conflated.tsv
+  file_format: csv
+  load_args:
+    sep: "\t"
+    header: true
+
+modelling.raw.ground_truth.negatives@pandas:
+  <<: [*_pandas_csv, *_raw_ds]
+  filepath: ${globals:paths.raw}/ground_truth/translator/${globals:data_sources.gt.version}/tn_pairs_conflated.tsv
   load_args:
     sep: "\t"
   save_args:
     sep: "\t"
 
-modelling.int.known_pairs:
+modelling.raw.ground_truth.negatives@spark:
+  <<: [*_spark_csv, *_raw_ds]
+  filepath: ${globals:paths.raw}/ground_truth/translator/${globals:data_sources.gt.version}/tn_pairs_conflated.tsv
+  file_format: csv
+  load_args:
+    sep: "\t"
+    header: true
+
+modelling.int.known_pairs@pandas:
   <<: [*_pandas_parquet, *_model_input_ds]
-  filepath: ${globals:paths.integration}/int/ground_truth
+  filepath: ${globals:paths.modelling}/ground_truth/translator/${globals:data_sources.gt.version}/ground_truth
+  
+modelling.int.known_pairs@spark:
+  <<: [*_spark_parquet, *_model_input_ds]
+  filepath: ${globals:paths.modelling}/ground_truth/translator/${globals:data_sources.gt.version}/ground_truth
 
-# filtered down further to drugs/diseases
 modelling.model_input.drugs_diseases_nodes@spark:
   <<: [*_spark_parquet, *_model_input_ds]
   filepath: ${globals:paths.modelling}/model_input/drugs_diseases_nodes/
 
-# commented out until https://github.com/fsspec/gcsfs/issues/632 is fixed
-# modelling.model_input.drugs_diseases_nodes@pandas:
-#   <<: *_pandas_parquet
-#   filepath: ${globals:paths.modelling}/drugs_diseases_nodes/
-
-modelling.feat.rtx_kg2:
+modelling.model_input.drugs_diseases_nodes@pandas:
   <<: [*_kg_dataset, *_model_input_ds]
-  filepath: ${globals:paths.modelling}/feat/rtx_kg2_nodes
+  filepath: ${globals:paths.modelling}/model_input/drugs_diseases_nodes/
 
 modelling.model_input.splits:
   <<: [*_pandas_parquet, *_model_input_ds]
