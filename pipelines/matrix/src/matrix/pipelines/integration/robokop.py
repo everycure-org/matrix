@@ -1,5 +1,3 @@
-"""transformation functions for robokop nodes and edges."""
-
 import pandas as pd
 import pandera.pyspark as pa
 import pyspark.sql.functions as F

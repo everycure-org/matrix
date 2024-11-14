@@ -1,5 +1,3 @@
-"""Module with nodes for modelling."""
-
 from typing import Any, Dict, List, Union, Tuple
 import pandas as pd
 import numpy as np
