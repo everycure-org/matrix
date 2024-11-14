@@ -43,7 +43,6 @@ def cli():
 @click.option("--namespace", type=str, default="argo-workflows", help="Specify a custom namespace")
 @click.option("--run-name", type=str, default=None, help="Specify a custom run name, defaults to branch")
 @click.option("--pipeline", type=str, default="__default__", help="Specify which pipeline to execute")
-@click.option("--use-gpus", "-g", is_flag=True, default=False, help="Use GPUs in the workflow")
 @click.option("--verbose", "-v", is_flag=True, default=False, help="Enable verbose output")
 @click.option("--dry-run", "-d", is_flag=True, default=False, help="Does everything except submit the workflow")
 @click.option("--from-nodes", type=str, default="", help="Specify nodes to run from", callback=split_string)
@@ -78,7 +77,6 @@ def submit(username: str, namespace: str, run_name: str, pipeline: str, verbose:
         run_name=run_name,
         pipelines_for_workflow=pipelines_to_submit,
         pipeline_for_execution=pipeline,
-        use_gpus=use_gpus,
         verbose=verbose,
         dry_run=dry_run,
         template_directory=ARGO_TEMPLATES_DIR_PATH,
