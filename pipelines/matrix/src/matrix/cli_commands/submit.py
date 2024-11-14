@@ -3,6 +3,7 @@ import logging
 import re
 import secrets
 import subprocess
+import time
 import sys
 from pathlib import Path
 from typing import Dict, List, Optional
@@ -134,7 +135,7 @@ def _submit(
         console.print("[green]✓[/green] Argo template built")
 
         console.print("Writing Argo template...")
-        file_path = save_argo_template(argo_template, template_directory)
+        file_path = save_argo_template(argo_template, run_name, template_directory)
         console.print("[green]✓[/green] Argo template written")
 
         console.print("Ensuring namespace...")
@@ -147,7 +148,7 @@ def _submit(
 
         if not dry_run:
             console.print("Submitting workflow for pipeline...")
-            submit_workflow(run_name, namespace, verbose=verbose)
+            submit_workflow(run_name, namespace, pipeline_for_execution, verbose=verbose)
             console.print("[green]✓[/green] Workflow submitted")
 
         console.print(Panel.fit(
@@ -317,8 +318,8 @@ def build_argo_template(run_name: str, username: str, namespace: str, pipelines_
         default_execution_resources=default_execution_resources,
     )
 
-def save_argo_template(argo_template: str, template_directory: Path) -> str:
-    file_path = template_directory / "argo-workflow-template.yml"
+def save_argo_template(argo_template: str, run_name: str, template_directory: Path) -> str:
+    file_path = template_directory / f"argo_template_{run_name}_{time.strftime('%Y%m%d_%H%M%S')}.yml"
     with open(file_path, "w") as f:
         f.write(argo_template)
     return str(file_path)
@@ -343,7 +344,7 @@ def apply_argo_template(namespace, file_path: Path, verbose: bool):
     )
 
 
-def submit_workflow(run_name: str, namespace: str, verbose: bool):
+def submit_workflow(run_name: str, namespace: str, pipeline_for_execution: str, verbose: bool):
     """Submit the Argo workflow and provide instructions for watching."""
 
     submit_cmd = " ".join([
@@ -353,6 +354,7 @@ def submit_workflow(run_name: str, namespace: str, verbose: bool):
         f"--from wftmpl/{run_name}", # name of the template resource (created in previous step)
         f"-p run_name={run_name}",
         "-l submit-from-ui=false",
+        f"--entrypoint {pipeline_for_execution}",
         "-o json"
     ])
     result = run_subprocess(submit_cmd, capture_output=True, stream_output=verbose)
