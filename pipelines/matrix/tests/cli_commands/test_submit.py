@@ -48,6 +48,9 @@ def mock_dependencies():
 def mock_pipelines():
     pipeline_dict = {
         "__default__": MagicMock(),
+        "mock_pipeline": MagicMock(),
+        "mock_pipeline2": MagicMock(),
+        "mock_pipeline3": MagicMock(),
     }
 
     with patch("matrix.cli_commands.submit.kedro_pipelines", new=pipeline_dict) as mock:
@@ -74,15 +77,15 @@ def mock_multiple_pipelines():
 
 def test_submit_simple(mock_submit_internal: None, mock_pipelines: None) -> None:
     runner = CliRunner()
-    result = runner.invoke(submit, ["--username", "testuser", "--run-name", "test-run"])
+    result = runner.invoke(submit, ["--username", "testuser", "--run-name", "test-run", "--pipeline", "mock_pipeline"])
     assert result.exit_code == 0
 
     mock_submit_internal.assert_called_once_with(
         username="testuser",
         namespace="argo-workflows",
         run_name="test-run",
-        pipelines_for_workflow=mock_pipelines,
-        pipeline_for_execution="__default__",
+        pipelines_for_workflow={"mock_pipeline": mock_pipelines["mock_pipeline"]},
+        pipeline_for_execution="mock_pipeline",
         verbose=False,
         dry_run=False,
         template_directory=ARGO_TEMPLATES_DIR_PATH,
@@ -99,7 +102,7 @@ def test_submit_namespace(mock_pipelines: None, mock_submit_internal: None):
         username="testuser",
         namespace="test_namespace",
         run_name="test-run",
-        pipelines_for_workflow=mock_pipelines,
+        pipelines_for_workflow={"__default__": mock_pipelines["__default__"]},
         pipeline_for_execution="__default__",
         verbose=False,
         dry_run=False,
@@ -127,7 +130,7 @@ def test_submit_pipelines(mock_multiple_pipelines: None, mock_submit_internal: N
         username="testuser",
         namespace="test_namespace",
         run_name="test-run",
-        pipelines_for_workflow=mock_multiple_pipelines,
+        pipelines_for_workflow={"mock_pipeline2": mock_multiple_pipelines["mock_pipeline2"]},
         pipeline_for_execution="mock_pipeline2",
         verbose=False,
         dry_run=False,
@@ -155,7 +158,7 @@ def test_submit_multiple_pipelines(mock_multiple_pipelines: None, mock_submit_in
         username="testuser",
         namespace="test_namespace",
         run_name="test-run",
-        pipelines_for_workflow=mock_multiple_pipelines,
+        pipelines_for_workflow={"mock_pipeline2": mock_multiple_pipelines["mock_pipeline2"]},
         pipeline_for_execution="mock_pipeline2",
         verbose=False,
         dry_run=False,
@@ -184,7 +187,7 @@ def test_submit_dry_run(mock_multiple_pipelines: None, mock_submit_internal: Non
         username="testuser",
         namespace="test_namespace",
         run_name="test-run",
-        pipelines_for_workflow=mock_multiple_pipelines,
+        pipelines_for_workflow={"mock_pipeline2": mock_multiple_pipelines["mock_pipeline2"]},
         pipeline_for_execution="mock_pipeline2",
         verbose=False,
         dry_run=True,
@@ -213,7 +216,7 @@ def test_submit_verbose(mock_multiple_pipelines: None, mock_submit_internal: Non
         username="testuser",
         namespace="test_namespace",
         run_name="test-run",
-        pipelines_for_workflow=mock_multiple_pipelines,
+        pipelines_for_workflow={"mock_pipeline3": mock_multiple_pipelines["mock_pipeline3"]},
         pipeline_for_execution="mock_pipeline3",
         verbose=True,
         dry_run=False,
@@ -243,7 +246,7 @@ def test_submit_dry_run_and_verbose(mock_multiple_pipelines: None, mock_submit_i
         username="testuser",
         namespace="test_namespace",
         run_name="test-run",
-        pipelines_for_workflow=mock_multiple_pipelines,
+        pipelines_for_workflow={"mock_pipeline2": mock_multiple_pipelines["mock_pipeline2"]},
         pipeline_for_execution="mock_pipeline2",
         verbose=True,
         dry_run=True,
@@ -502,4 +505,6 @@ def test_workflow_submission(
             "-o json",
         ]
     )
+
+    # E         Actual: run_subprocess('argo submit --name test-run -n test_namespace --from wftmpl/test-run -p run_name=test-run -l submit-from-ui=false --entrypoint=test_pipeline -o json', capture_output=True, stream_output=False)
     mock_run_subprocess.assert_called_with(submit_cmd, capture_output=True, stream_output=False)
