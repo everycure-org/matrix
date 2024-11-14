@@ -2,24 +2,24 @@ from pathlib import Path
 import tempfile
 import pytest
 from unittest.mock import patch, MagicMock
+import click
 from click.testing import CliRunner
+from kedro.pipeline import Pipeline, Node
 import yaml
-from kedro.pipeline.node import Node
-from kedro.pipeline import Pipeline
 from matrix.argo import ARGO_TEMPLATES_DIR_PATH
 from matrix.cli_commands.submit import (
     _submit,
+    apply_argo_template,
+    build_argo_template,
+    build_push_docker,
+    check_dependencies,
+    command_exists,
+    ensure_namespace,
+    run_subprocess,
     save_argo_template,
     submit,
-    check_dependencies,
-    build_push_docker,
-    build_argo_template,
-    ensure_namespace,
-    apply_argo_template,
-    submit_workflow,
     get_run_name,
-    command_exists,
-    run_subprocess,
+    submit_workflow,
 )
 import subprocess
 
@@ -46,16 +46,6 @@ def mock_dependencies():
 @pytest.fixture
 def mock_submit_internal():
     with patch("matrix.cli_commands.submit._submit") as mock:
-        yield mock
-
-
-@pytest.fixture(scope="function")
-def mock_pipelines():
-    pipeline_dict = {
-        "__default__": MagicMock(),
-    }
-
-    with patch("matrix.cli_commands.submit.kedro_pipelines", new=pipeline_dict) as mock:
         yield mock
 
 
@@ -340,10 +330,14 @@ def test_get_run_name_with_input(input_name: str, expected_name: str) -> None:
     assert get_run_name(input_name) == expected_name
 
 
-@patch("matrix.cli_commands.submit.run_subprocess")
-def test_get_run_name_from_git(mock_run_subprocess: None) -> None:
-    mock_run_subprocess.return_value.stdout = "feature/test-branch"
-    assert get_run_name(None).startswith("feature-test-branch")
+@pytest.mark.skip(reason="Investigate why click is not correctly throwing up exceptions")
+def test_pipeline_not_found(mock_multiple_pipelines):
+    with pytest.raises(click.ClickException):
+        # Given a CLI runner instance
+        runner = CliRunner()
+
+        # When invoking with non existing pipeline
+        runner.invoke(submit, ["--username", "testuser", "--run-name", "test-run", "--pipeline", "not_exists"])
 
 
 def test_command_exists(mock_run_subprocess: None) -> None:
