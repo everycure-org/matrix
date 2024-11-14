@@ -1,9 +1,8 @@
-from kedro.pipeline.node import Node
-from kedro.pipeline import Pipeline
 import pytest
 import yaml
-
-from matrix.argo import clean_name, fuse, FusedNode, generate_argo_config
+from kedro.pipeline import Pipeline
+from kedro.pipeline.node import Node
+from matrix.argo import FusedNode, clean_name, fuse, generate_argo_config
 
 
 def dummy_fn(*args):
@@ -349,6 +348,7 @@ def test_generate_argo_config() -> None:
         pipeline_name=pipeline_name,
         pipeline=pipeline,
         package_name="matrix",
+        release_folder_name="releases",
     )
 
     assert argo_config is not None
