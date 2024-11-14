@@ -374,16 +374,12 @@ class RemoteSparkJDBCDataset(SparkJDBCDataset):
 
 
 class PartitionedTQDMDataset(PartitionedDataset):
-    def _save(self, data: dict[str, Any], max_workers: int = 10, timeout: int = 10) -> None:
+    def _save(self, data: dict[str, Any], max_workers: int = 10, timeout: int = 20) -> None:
         if self._overwrite and self._filesystem.exists(self._normalized_path):
             self._filesystem.rm(self._normalized_path, recursive=True)
 
-        print(data.keys())
-
         # Helper function to process a single partition
         async def process_partition(sem, partition_id, partition_data):
-            print("partition", partition_id)
-
             async with sem:
                 try:
                     # Set up arguments and path
@@ -402,7 +398,7 @@ class PartitionedTQDMDataset(PartitionedDataset):
                     dataset.save(partition_data)
                 except Exception as e:
                     print(f"Error in process_partition with partition {partition_id}: {e}")
-                    raise  # Re-raise to ensure it's caught in the main thread
+                    raise
 
         # Define function to run asyncio tasks within a synchronous function
         def run_async_tasks():
@@ -424,6 +420,7 @@ class PartitionedTQDMDataset(PartitionedDataset):
                         try:
                             await asyncio.wait_for(task, timeout)
                         except asyncio.TimeoutError:
+                            # TODO: We should aspire to get rid of this, and ensure langchain times out correctly
                             print(f"Timeout error: partition processing took longer than {timeout} seconds.")
                         except Exception as e:
                             print(f"Error processing partition in tqdm loop: {e}")
