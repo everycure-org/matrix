@@ -482,6 +482,7 @@ def make_output_predictions(
     path_embedding_strategy: PathEmbeddingStrategy,
     category_encoder: OneHotEncoder,
     relation_encoder: OneHotEncoder,
+    metrics_dummy: Any,  # TODO: Remove or add to docstring
     drug_col_name: str = "source_id",
     disease_col_name: str = "target_id",
     num_pairs_limit: Optional[int] = None,

@@ -221,6 +221,7 @@ def _predictions_pipeline() -> Pipeline:
                             "drug_col_name": "params:moa_extraction.predictions.drug_col_name",
                             "disease_col_name": "params:moa_extraction.predictions.disease_col_name",
                             "num_pairs_limit": "params:moa_extraction.predictions.num_pairs_limit",
+                            "metrics_dummy": f"moa_extraction.reporting.{num_hops}_hop_metrics",
                         },
                         outputs=f"moa_extraction.model_output.{num_hops}_hop_output_predictions",
                         name=f"predictions.make_{num_hops}_hop_output_predictions",
