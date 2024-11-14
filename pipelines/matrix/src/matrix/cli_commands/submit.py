@@ -285,7 +285,7 @@ def build_push_docker(username: str, verbose: bool):
     run_subprocess(f"make docker_push TAG={username}", stream_output=verbose)
 
 
-def build_argo_template(run_name: str, username: str, namespace: str, pipelines: Dict[str, Pipeline], default_execution_resources: ArgoResourceConfig = ArgoResourceConfig()) -> str:
+def build_argo_template(run_name: str, username: str, namespace: str, pipelines: Dict[str, Pipeline], default_execution_resources: Optional[ArgoResourceConfig] = None) -> str:
     """Build Argo workflow template."""
     image_name = "us-central1-docker.pkg.dev/mtrx-hub-dev-3of/matrix-images/matrix"
 
