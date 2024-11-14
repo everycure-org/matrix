@@ -38,7 +38,7 @@ def sample_nodes(spark):
             "biolink:Drug",
             "Description1",
             ["CHEBI:119157"],
-            ["biolink:Drug", "biolink:ChemicalSubstance"],
+            ["biolink:Drug", "biolink:ChemicalEntity"],
             ["PMID:12345678"],
             ["Label1"],
             "http://example.com/1",
@@ -240,7 +240,7 @@ def test_unify_nodes(spark, sample_nodes, sample_biolink_category_hierarchy):
 
     # Check if the properties are combined correctly for the duplicated node
     drug_node = result.filter(result.id == "CHEBI:119157").collect()[0]
-    assert set(drug_node.all_categories) == {"biolink:Drug", "biolink:ChemicalSubstance", "biolink:SmallMolecule"}
+    assert set(drug_node.all_categories) == {"biolink:Drug", "biolink:ChemicalEntity", "biolink:SmallMolecule"}
     assert set(drug_node.publications) == {"PMID:12345678", "PMID:34567890"}
     assert set(drug_node.upstream_data_source) == {"source1", "source3"}
 

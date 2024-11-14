@@ -7,6 +7,7 @@ from pyspark.testing import assertDataFrameEqual
 
 @pytest.fixture
 def sample_predicates():
+    # These are explicitly using snake_case
     return [
         {
             "name": "related_to",
@@ -26,28 +27,27 @@ def sample_predicates():
 
 @pytest.fixture
 def sample_edges(spark):
-    # these are using snake_case as returned by the biolink API
     return spark.createDataFrame(
         [
             (
                 "CHEBI:001",
                 "CHEBI:002",
-                "biolink:related_to",
+                "biolink:RelatedTo",
             ),
             (
                 "CHEBI:001",
                 "CHEBI:002",
-                "biolink:composed_primarily_of",
+                "biolink:ComposedPrimarilyOf",
             ),
             (
                 "CHEBI:001",
                 "CHEBI:002",
-                "biolink:related_to_at_concept_level",
+                "biolink:RelatedToAtConceptLevel",
             ),
             (
                 "CHEBI:002",
                 "CHEBI:003",
-                "biolink:related_to_at_concept_level",
+                "biolink:RelatedToAtConceptLevel",
             ),
         ],
         schema=StructType(
