@@ -10,7 +10,7 @@ spec:
       run: {% raw %}'{{ workflow.parameters.run_name }}'
       {% endraw %}
       username: "{{ username }}"
-  entrypoint: "{{ pipeline_for_execution }}"
+  entrypoint: "{{ pipeline_for_execution | replace('_', '-') }}"
   arguments:
     parameters:
       - name: image
@@ -178,7 +178,7 @@ spec:
           value: "100G"
 
   {% for pipeline, tasks in pipelines.items() %}
-  - name: {{ pipeline }}
+  - name: {{ pipeline | replace('_', '-') }}
     dag:
       tasks:
       {% for task in tasks %}

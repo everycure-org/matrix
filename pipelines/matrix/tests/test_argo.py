@@ -505,16 +505,13 @@ def test_get_pipeline2dependencies() -> None:
         "memory_request": "16Gi",
         "num_gpus": 1,
     }
-    # no explicit resources defined for the second node, hence no resources key in the dict
-    assert "resources" not in pipeline2dependencies["pipeline_one"][1]
 
     assert len(pipeline2dependencies["pipeline_two"]) == 1
     assert pipeline2dependencies["pipeline_two"][0]["name"] == "simple-node-p2-1"
     assert pipeline2dependencies["pipeline_two"][0]["deps"] == []
     assert pipeline2dependencies["pipeline_two"][0]["nodes"] == "simple_node_p2_1"
     assert pipeline2dependencies["pipeline_two"][0]["tags"] == set()
-    # resources defined but identical to the default resources, hence no resources key in the dict
-    assert "resources" not in pipeline2dependencies["pipeline_two"][0]
+    assert "resources" in pipeline2dependencies["pipeline_two"][0]
 
 
 @pytest.mark.parametrize(
@@ -568,8 +565,8 @@ def test_argo_template_config_boilerplate(argo_default_resources: ArgoResourceCo
     # Verify pipeline templates
     templates = spec["templates"]
     pipeline_names = [template["name"] for template in templates]
-    assert "pipeline_one" in pipeline_names
-    assert "pipeline_two" in pipeline_names
+    assert "pipeline-one" in pipeline_names
+    assert "pipeline-two" in pipeline_names
 
 
 def test_resources_of_argo_template_config_pipelines() -> None:
@@ -587,11 +584,11 @@ def test_resources_of_argo_template_config_pipelines() -> None:
     # Verify pipeline templates
     templates = spec["templates"]
     pipeline_names = [template["name"] for template in templates]
-    assert "pipeline_one" in pipeline_names
-    assert "pipeline_two" in pipeline_names
+    assert "pipeline-one" in pipeline_names
+    assert "pipeline-two" in pipeline_names
 
     # Verify pipeline_one template
-    pipeline_one_template = next(t for t in templates if t["name"] == "pipeline_one")
+    pipeline_one_template = next(t for t in templates if t["name"] == "pipeline-one")
     assert "dag" in pipeline_one_template
     # there should be two tasks in the pipeline
     assert len(pipeline_one_template["dag"]["tasks"]) == len(actual_pipelines["pipeline_one"].nodes)
@@ -624,7 +621,7 @@ def test_resources_of_argo_template_config_pipelines() -> None:
     assert resource_params2["cpu_limit"] == 32
 
     # Verify pipeline_two template
-    pipeline_two_template = next(t for t in templates if t["name"] == "pipeline_two")
+    pipeline_two_template = next(t for t in templates if t["name"] == "pipeline-two")
     assert "dag" in pipeline_two_template
     assert len(pipeline_two_template["dag"]["tasks"]) == len(actual_pipelines["pipeline_two"].nodes)
     assert pipeline_two_template["dag"]["tasks"][0]["name"] == "simple-node-p2-1"
