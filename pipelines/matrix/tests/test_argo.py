@@ -660,19 +660,20 @@ def test_affinities_of_argo_template_config_pipelines() -> None:
     # task one has GPU requests, hence has affinity for GPU nodes
     assert pipeline_one_template["dag"]["tasks"][0]["affinity"] == {
         "nodeAffinity": {
-            "requiredDuringSchedulingIgnoredDuringExecution": {
-                "nodeSelectorTerms": [
-                    {
+            "preferredDuringSchedulingIgnoredDuringExecution": [
+                {
+                    "weight": 1,
+                    "preference": {
                         "matchExpressions": [
                             {
                                 "key": "gpu_node",
                                 "operator": "In",
-                                "values": ["true"],
+                                "values": ["false"],
                             }
                         ]
-                    }
-                ]
-            }
+                    },
+                }
+            ]
         }
     }
     # task two has no GPU requests, hence no affinity
