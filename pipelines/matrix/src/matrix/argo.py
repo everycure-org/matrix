@@ -266,7 +266,7 @@ def get_dependencies(
         resources = (
             {"resources": fuse.argo_config.model_dump()}
             if fuse.argo_config
-            else default_execution_resources.model_dump()
+            else {"resources": default_execution_resources.model_dump()}
         )
         deps_dict.append(
             {

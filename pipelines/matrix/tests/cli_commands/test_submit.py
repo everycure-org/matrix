@@ -472,8 +472,8 @@ def test_workflow_submission(
     assert len(pipeline_templates) == 2, "Expected two pipeline templates (test and cloud)"
 
     pipeline_names = [t["name"] for t in pipeline_templates]
-    assert "test_pipeline" in pipeline_names, "Expected 'test' pipeline to be present"
-    assert "__default__" in pipeline_names, "Expected 'cloud' pipeline to be present"
+    assert "test-pipeline" in pipeline_names, "Expected 'test' pipeline to be present"
+    assert "--default--" in pipeline_names, "Expected 'cloud' pipeline to be present"
 
     # Additional checks
     assert content["metadata"]["name"] == "test-run", "Expected 'test-run' as the workflow name"
@@ -485,7 +485,9 @@ def test_workflow_submission(
         assert len(tasks) > 0, f"Expected at least one task in the {pipeline['name']} pipeline"
 
     # Check that the specified pipeline_for_execution is present in the templates
-    assert pipeline_for_execution in pipeline_names, f"Expected '{pipeline_for_execution}' pipeline to be present"
+    assert (
+        pipeline_for_execution.replace("_", "-") in pipeline_names
+    ), f"Expected '{pipeline_for_execution}' pipeline to be present"
     # NOTE: This function was partially generated using AI assistance.
 
     submit_cmd = " ".join(

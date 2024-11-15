@@ -248,7 +248,7 @@ def test_get_dependencies_default_same_than_task(pipeline_where_first_node_is_in
         == "dummy_fn([dataset_a;dataset_b]) -> [dataset_1@pandas],dummy_fn([dataset_1@spark]) -> [dataset_2]"
     )
     assert deps[0]["tags"] == {"argowf.fuse", "argowf.fuse-group.dummy"}
-    assert "resources" not in deps[0]
+    assert "resources" in deps[0]
 
 
 @pytest.mark.parametrize(
@@ -615,10 +615,10 @@ def test_resources_of_argo_template_config_pipelines() -> None:
     # Verify default resource parameters for second task
     resource_params2 = {p["name"]: p["value"] for p in task2["arguments"]["parameters"]}
     assert resource_params2["num_gpus"] == 0
-    assert resource_params2["memory_request"] == "120Gi"
-    assert resource_params2["memory_limit"] == "120Gi"
-    assert resource_params2["cpu_request"] == 32
-    assert resource_params2["cpu_limit"] == 32
+    assert resource_params2["memory_request"] == f"{argo_default_resources.memory_request}Gi"
+    assert resource_params2["memory_limit"] == f"{argo_default_resources.memory_limit}Gi"
+    assert resource_params2["cpu_request"] == argo_default_resources.cpu_request
+    assert resource_params2["cpu_limit"] == argo_default_resources.cpu_limit
 
     # Verify pipeline_two template
     pipeline_two_template = next(t for t in templates if t["name"] == "pipeline-two")
