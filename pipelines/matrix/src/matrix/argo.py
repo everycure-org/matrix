@@ -59,7 +59,7 @@ def generate_argo_config(
         default_execution_resources=default_execution_resources.model_dump(),
     )
 
-    # Convert the rendered YAML string into a Python object
+    # Convert the rendered YAML string into a Python object to resolve anchor
     yaml_data = yaml.safe_load(output)
 
     # Optionally, dump the YAML data back to a string
