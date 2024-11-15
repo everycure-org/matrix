@@ -1,84 +1,82 @@
 """Nodes for the DrugMechDB entity resolution pipeline."""
 
 import pandas as pd
+import logging
+
 from typing import List
-from tqdm import tqdm
+from jsonpath_ng import parse
 
-from matrix.pipelines.preprocessing.nodes import resolve, normalize
+import pyspark as ps
+import pyspark.sql.functions as F
+from pyspark.sql.types import StringType
 
+from matrix.pipelines.preprocessing.nodes import resolve_name
+from matrix.pipelines.integration.nodes import batch_map_ids
 
-def _map_name_and_curie(name: str, curie: str, endpoint: str) -> str:
-    """Attempt to map an entity to the knowledge graph using either its name or curie.
-
-    Args:
-        name: The name of the node.
-        curie: The curie of the node.
-        endpoint: The endpoint of the synonymizer.
-
-    Returns:
-        The mapped curie. None if no mapping was found.
-    """
-    mapped_curie = normalize(curie, endpoint)
-    if not mapped_curie:
-        mapped_curie = normalize(name, endpoint)
-    if not mapped_curie:
-        mapped_curie = resolve(name, endpoint)
-
-    return mapped_curie
+logger = logging.getLogger(__name__)
 
 
-def _map_several_ids_and_names(name: str, id_lst: List[str], synonymizer_endpoint: str) -> str:
-    """Map a name and several IDs to the knowledge graph.
+def normalize_drugmechdb_entities(
+    drug_mech_db: List[dict],
+    api_endpoint: str,
+    name_resolver: str = "https://name-resolution-sri-dev.apps.renci.org",
+    timeout: int = 5,
+    json_path_expr: str = "$.id.identifier",
+    conflate: bool = True,
+    drug_chemical_conflate: bool = True,
+    batch_size: int = 100,
+    parallelism: int = 10,
+) -> pd.DataFrame:
+    """Normalize DrugMechDB entities with the translator.
 
     Args:
-        name: The name of the node.
-        id_lst: List of IDs for the node.
-        synonymizer_endpoint: The endpoint of the synonymizer.
-
-    Returns:
-        The mapped curie. None if no mapping was found.
+        drug_mech_db: List of DrugMechDB entries
+        api_endpoint: API endpoint of the translator normalization service
+        name_resolver: Name resolver endpoint
+        timeout: Timeout for the name resolver
+        json_path_expr: JSON path expression to extract the identifier from the API response
+        conflate: Whether to conflate drug and chemical entities
+        drug_chemical_conflate: Whether to conflate drug and chemical entities
+        batch_size: Batch size for the batch map
+        parallelism: Parallelism for the batch map
     """
-    id_lst = list(set(id_lst))  # Remove duplicates
-    id_lst = [id for id in id_lst if id]  # Filter out Nones
-    mapped_id = None
-    for id in id_lst:
-        mapped_id = _map_name_and_curie(name, id, synonymizer_endpoint)
-        if mapped_id:
-            break
-    return mapped_id
+    # Collect DrugMechDB IDs and names
+    entity_set = {(node["id"], node["name"]) for entry in drug_mech_db for node in entry["nodes"]}
+    spark = ps.sql.SparkSession.builder.getOrCreate()
+    nodes = spark.createDataFrame(entity_set, schema=["id", "name"])
+    nodes = nodes.repartition(parallelism)
 
+    # Try to normalise with name resolver
+    resolve_name_udf = F.udf(lambda x: resolve_name(x, name_resolver, timeout=timeout), returnType=StringType())
+    nodes = nodes.withColumn("resolved_curie", resolve_name_udf(F.col("name")))
 
-def normalize_drugmechdb_entities(drug_mech_db: List[dict], synonymizer_endpoint: str) -> pd.DataFrame:
-    """Normalize DrugMechDB entities.
+    # Use curie from name resolver if available
+    nodes = nodes.withColumn(
+        "resolved_curie", F.when(F.col("resolved_curie").isNotNull(), F.col("resolved_curie")).otherwise(F.col("id"))
+    )
+    nodes_df = nodes.toPandas()
 
-    For drug and diseases nodes, there may be multiple IDs so we try to normalize with all of them to improve probability of mapping.
+    # Normalise with Translator
+    logger.info("collecting node ids for normalization")
+    node_ids = nodes_df["resolved_curie"].to_list()
+    logger.info(f"collected {len(node_ids)} node ids for normalization. Performing normalization...")
+    node_id_map = batch_map_ids(
+        frozenset(node_ids),
+        api_endpoint,
+        parse(json_path_expr),
+        batch_size,
+        parallelism,
+        conflate,
+        drug_chemical_conflate,
+    )
+    success_map = {k: pd.notna(v) for k, v in node_id_map.items()}
+    node_id_map = {k: v for k, v in node_id_map.items() if success_map.get(v, False)}
+    nodes_df["resolved_curie"] = nodes_df["resolved_curie"].apply(lambda x: node_id_map.get(x, x))
+    nodes_df["normalization_success"] = nodes_df["resolved_curie"].apply(lambda x: success_map.get(x, False))
 
-    Args:
-        drug_mech_db: The DrugMechDB indication paths.
-        synonymizer_endpoint: The endpoint of the synonymizer.
-    """
-    df = pd.DataFrame(columns=["DrugMechDB_ID", "DrugMechDB_name", "mapped_ID"])
-    for entry in tqdm(drug_mech_db):
-        for node in entry["nodes"]:
-            mapped_id = None
-            if node["name"] == entry["graph"]["drug"]:
-                drugbank_id = entry["graph"]["drugbank"]
-                drug_mesh_id = entry["graph"]["drug_mesh"]
-                canonical_id = node["id"]
-                mapped_id = _map_several_ids_and_names(
-                    node["name"], [drugbank_id, drug_mesh_id, canonical_id], synonymizer_endpoint
-                )
-            elif node["name"] == entry["graph"]["disease"]:
-                disease_mesh_id = entry["graph"]["disease_mesh"]
-                canonical_id = node["id"]
-                mapped_id = _map_several_ids_and_names(
-                    node["name"], [disease_mesh_id, canonical_id], synonymizer_endpoint
-                )
-            else:
-                mapped_id = _map_name_and_curie(node["name"], node["id"], synonymizer_endpoint)
+    # Rename columns
+    nodes_df = nodes_df.rename(
+        columns={"resolved_curie": "mapped_ID", "name": "DrugMechDB_name", "id": "DrugMechDB_ID"}
+    )
 
-            new_row = {"DrugMechDB_ID": node["id"], "DrugMechDB_name": node["name"], "mapped_ID": mapped_id}
-            df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
-
-    df.drop_duplicates(inplace=True)
-    return df
+    return nodes_df

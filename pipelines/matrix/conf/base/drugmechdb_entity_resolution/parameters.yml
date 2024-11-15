@@ -1,2 +1,2 @@
 drugmechdb_entity_resolution:
-  synonymizer_endpoint: http://localhost:8081
+  timeout: 5 # (seconds) Time to wait for the name resolver to respond
