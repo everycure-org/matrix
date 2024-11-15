@@ -1,8 +1,9 @@
 from functools import partial
-from typing import Callable, Dict, List, Tuple
+from typing import Callable, Dict, List, Tuple, Optional
 
 import pandas as pd
 import requests
+from requests.exceptions import ReadTimeout
 from langchain.output_parsers import CommaSeparatedListOutputParser
 from langchain.prompts import ChatPromptTemplate
 from langchain.schema import HumanMessage, SystemMessage
@@ -12,26 +13,42 @@ from refit.v1.core.inline_has_schema import has_schema
 from refit.v1.core.inline_primary_key import primary_key
 from jsonpath_ng import parse
 
+import logging
 
-def resolve_name(curie: str, endpoint: str, att_to_get: str = "curie"):
+logger = logging.getLogger(__name__)
+
+
+def resolve_name(curie: str, endpoint: str, att_to_get: str = "curie", timeout: Optional[int] = None):
     """Function to retrieve the normalized identifier through the normalizer.
 
     Args:
         curie: curie of the node
         endpoint: endpoint of the synonymizer
         att_to_get: attribute to get from API
+        timeout: maximum time to wait for the API response
+
     Returns:
         Corresponding curie
     """
     if not curie or pd.isna(curie):
         return None
 
-    result = requests.get(f"{endpoint}/lookup?string={curie}&autocomplete=True&highlighting=False&offset=0&limit=1")
-    if len(result.json()) != 0:
-        # We take the first element as it has the highest confidence score
-        # TODO: Examine if that approach is valid
-        element = result.json()[0]
-        return element.get(att_to_get)
+    try:
+        result = requests.get(
+            f"{endpoint}/lookup?string={curie}&autocomplete=True&highlighting=False&offset=0&limit=1", timeout=timeout
+        )
+    except ReadTimeout:
+        return None
+
+    try:
+        if len(result.json()) != 0:
+            # We take the first element as it has the highest confidence score
+            # TODO: Examine if that approach is valid
+            element = result.json()[0]
+            return element.get(att_to_get)
+    except Exception as e:
+        logger.error(f"Error resolving name {curie}: {e}")
+        return None
 
     return None
 
@@ -90,6 +107,7 @@ def enrich_df(df: pd.DataFrame, endpoint: str, func: Callable, input_cols: str, 
         func: func to call
         input_cols: input cols, cols are coalesced to obtain single column
         target_col: target col
+
     Returns:
         dataframe enriched with Curie column
     """

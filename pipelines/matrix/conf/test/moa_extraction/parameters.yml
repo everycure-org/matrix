@@ -1,15 +1,18 @@
 moa_extraction:
-  gdb:
-    database: everycure-${globals:versions.release}
+  # Note: We need to use the same database name as is set in catalog.yml
+  gdb_two_hop: 
+    database: test-analytics-two-hop
+  gdb_three_hop: 
+    database: test-analytics-three-hop
 
-  preprocessing_options:
-    add_tags:
-      drug_types:
-        - biolink:Drug
-      disease_types:
-        - biolink:Disease
-      batch_size: 500
-      verbose: False
+
+  tagging_options:
+    drug_types:
+      - biolink:Drug
+    disease_types:
+      - biolink:Disease
+    batch_size: 500
+    verbose: False
 
   path_mapping:
     mapper_two_hop: 
@@ -37,8 +40,8 @@ moa_extraction:
         dimensions:
           - object: skopt.space.Integer
             name: max_epochs
-            low: 5
-            high: 6
+            low: 1
+            high: 2
           - object: skopt.space.Integer
             name: module__num_layers
             low: 1
@@ -54,8 +57,8 @@ moa_extraction:
         dimensions:
           - object: skopt.space.Integer
             name: max_epochs
-            low: 7
-            high: 8
+            low: 1
+            high: 2
           - object: skopt.space.Integer
             name: module__num_layers
             low: 1
