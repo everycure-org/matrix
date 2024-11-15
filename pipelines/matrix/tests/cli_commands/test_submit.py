@@ -498,7 +498,6 @@ def test_workflow_submission(
             "--from wftmpl/test-run",
             "-p run_name=test-run",
             "-l submit-from-ui=false",
-            f"--entrypoint {pipeline_for_execution}",
             "-o json",
         ]
     )
