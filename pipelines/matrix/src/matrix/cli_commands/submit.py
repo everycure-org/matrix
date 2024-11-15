@@ -3,7 +3,6 @@ import logging
 import re
 import secrets
 import subprocess
-import time
 import sys
 from pathlib import Path
 from typing import Dict, List, Optional
@@ -131,7 +130,7 @@ def _submit(
         console.print("[green]✓[/green] Argo template built")
 
         console.print("Writing Argo template...")
-        file_path = save_argo_template(argo_template, run_name, template_directory)
+        file_path = save_argo_template(argo_template, template_directory)
         console.print("[green]✓[/green] Argo template written")
 
         console.print("Linting Argo template...")
@@ -322,8 +321,8 @@ def build_argo_template(run_name: str, username: str, namespace: str, pipelines_
         default_execution_resources=default_execution_resources,
     )
 
-def save_argo_template(argo_template: str, run_name: str, template_directory: Path) -> str:
-    file_path = template_directory / f"argo_template_{run_name}_{time.strftime('%Y%m%d_%H%M%S')}.yml"
+def save_argo_template(argo_template: str, template_directory: Path) -> str:
+    file_path = template_directory / "argo-workflow-template.yml"
     with open(file_path, "w") as f:
         f.write(argo_template)
     return str(file_path)

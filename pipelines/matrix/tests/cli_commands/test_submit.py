@@ -292,9 +292,7 @@ def temporary_directory():
 
 def test_save_argo_template_creates_file(temporary_directory: Path) -> None:
     argo_template = "test template content"
-    run_name = "test_run"
-
-    result = save_argo_template(argo_template, run_name, temporary_directory)
+    result = save_argo_template(argo_template, temporary_directory)
 
     assert Path(result).exists()
     assert Path(result).is_file()
@@ -302,9 +300,8 @@ def test_save_argo_template_creates_file(temporary_directory: Path) -> None:
 
 def test_save_argo_template_content(temporary_directory: Path) -> None:
     argo_template = "test template content"
-    run_name = "test_run"
 
-    file_path = save_argo_template(argo_template, run_name, temporary_directory)
+    file_path = save_argo_template(argo_template, temporary_directory)
 
     with open(file_path, "r") as f:
         content = f.read()
@@ -314,9 +311,8 @@ def test_save_argo_template_content(temporary_directory: Path) -> None:
 
 def test_save_argo_template_returns_string(temporary_directory: Path) -> None:
     argo_template = "test template content"
-    run_name = "test_run"
 
-    result = save_argo_template(argo_template, run_name, temporary_directory)
+    result = save_argo_template(argo_template, temporary_directory)
 
     assert isinstance(result, str)
 
@@ -455,12 +451,11 @@ def test_workflow_submission(
         allow_interactions=False,
     )
 
-    yaml_files = list(temporary_directory.glob("argo_template_test-run_*.yml"))
+    yaml_files = list(temporary_directory.glob("argo-workflow-template.yml"))
     assert len(yaml_files) == 1, f"Expected 1 YAML file, found {len(yaml_files)}"
 
     yaml_file = yaml_files[0]
     assert yaml_file.is_file(), f"Expected {yaml_file} to be a file"
-    assert yaml_file.name.startswith("argo_template_test-run_"), f"Unexpected file name format: {yaml_file.name}"
     assert yaml_file.name.endswith(".yml"), f"File does not have .yml extension: {yaml_file.name}"
 
     # Read and parse the YAML file
