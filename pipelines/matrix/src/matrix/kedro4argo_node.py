@@ -12,6 +12,9 @@ KUBERNETES_DEFAULT_LIMIT_CPU = 16
 KUBERNETES_DEFAULT_REQUEST_CPU = 4
 
 
+# FUTURE: Introduce predefined S, M, L, XL resource sizes.
+
+
 class ArgoResourceConfig(BaseModel):
     """Configuration for Kubernetes execution.
 
