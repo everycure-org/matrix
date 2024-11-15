@@ -32,7 +32,6 @@ def create_pipeline(**kwargs) -> Pipeline:
             node(
                 func=nodes.reduce_dimension,
                 inputs={
-                    "nodes": "integration.prm.filtered_nodes",
                     "df": "embeddings.feat.graph.node_embeddings@spark",
                     "unpack": "params:embeddings.dimensionality_reduction",
                 },
@@ -118,7 +117,8 @@ def create_pipeline(**kwargs) -> Pipeline:
             node(
                 func=nodes.extract_node_embeddings,
                 inputs={
-                    "nodes": "embeddings.model_output.graphsage",
+                    "embeddings": "embeddings.model_output.graphsage",
+                    "nodes": "integration.prm.filtered_nodes",
                     "string_col": "params:embeddings.write_topological_col",
                 },
                 outputs="embeddings.feat.nodes",
