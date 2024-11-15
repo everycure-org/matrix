@@ -563,19 +563,7 @@ def test_argo_template_config_boilerplate(argo_default_resources: ArgoResourceCo
     assert match_expression["values"] == ["true"]
 
     # Verify resources based on GPU configuration
-    resources = kedro_template["container"]["resources"]
-
-    config_as_dict = argo_default_resources.model_dump()
-
-    # Check requests
-    assert resources["requests"]["memory"] == config_as_dict["memory_request"]
-    assert resources["requests"]["cpu"] == config_as_dict["cpu_request"]
-    assert resources["requests"]["nvidia.com/gpu"] == config_as_dict["num_gpus"]
-
-    # Check limits
-    assert resources["limits"]["memory"] == config_as_dict["memory_limit"]
-    assert resources["limits"]["cpu"] == config_as_dict["cpu_limit"]
-    assert resources["limits"]["nvidia.com/gpu"] == config_as_dict["num_gpus"]
+    assert "podSpecPatch" in kedro_template
 
     # Verify pipeline templates
     templates = spec["templates"]

@@ -83,7 +83,6 @@ def submit(username: str, namespace: str, run_name: str, pipeline: str, verbose:
     )
 
 
-# TODO: After it is possible to configure resources on node level, remove the use_gpus flag.
 def _submit(
         username: str, 
         namespace: str, 
