@@ -239,18 +239,6 @@ spec:
       {% for task in tasks %}
       - name: {{ task.name }}
         template: {{ task.get('template', 'kedro') }}
-        {% if task.resources %}
-        container:  
-          resources: # limit the resources
-            requests:
-              memory: {{ task.get('resources', {}).get('memory_request', '64Gi') }}
-              cpu: {{ task.get('resources', {}).get('cpu_request', 4) }}
-              nvidia.com/gpu: {{ task.get('resources', {}).get('num_gpus', 0) }}
-            limits:
-              memory: {{ task.get('resources', {}).get('memory_limit', '64Gi') }}
-              cpu: {{ task.get('resources', {}).get('cpu_limit', 16) }}
-              nvidia.com/gpu: {{ task.get('resources', {}).get('num_gpus', 0) }}
-        {% endif %}
         {% if task.deps %}
         dependencies:
         {% for dep in task.deps %}
