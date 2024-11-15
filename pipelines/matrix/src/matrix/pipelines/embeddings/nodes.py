@@ -134,7 +134,7 @@ def bucketize_nodes(df: DataFrame, bucket_size: int, features: int, max_input_le
     """
 
     # Retrieve number of elements
-    num_elements = df.limit(1000000).count()
+    num_elements = df.count()
     num_buckets = (num_elements + bucket_size - 1) // bucket_size
 
     # Construct df to bucketize
@@ -148,7 +148,7 @@ def bucketize_nodes(df: DataFrame, bucket_size: int, features: int, max_input_le
 
     # Order and bucketize elements
     return (
-        df.withColumn("row_num", F.row_number().over(Window.orderBy("id")))
+        df.withColumn("row_num", F.row_number().over(Window.orderBy("id")) - F.lit(1))
         .join(buckets, on=[(F.col("row_num") >= (F.col("min_range"))) & (F.col("row_num") < F.col("max_range"))])
         # Concat input
         .withColumn(
@@ -157,7 +157,7 @@ def bucketize_nodes(df: DataFrame, bucket_size: int, features: int, max_input_le
         )
         # Clip max. length
         .withColumn("input", F.substring(F.col("input"), 1, max_input_len))
-        .select("id", "input", "bucket")
+        .select("id", *features, "input", "bucket")
     )
 
 
@@ -210,8 +210,7 @@ async def compute_df_embeddings_async(df: pd.DataFrame, embedding_model) -> pd.D
 
 @unpack_params()
 @inject_object()
-@no_nulls(columns=["embedding", "pca_embedding"])
-def reduce_dimension(nodes: DataFrame, df: DataFrame, transformer, input: str, output: str, skip: bool):
+def reduce_dimension(df: DataFrame, transformer, input: str, output: str, skip: bool):
     """Function to apply dimensionality reduction.
 
     Function to apply dimensionality reduction conditionally, if skip is set to true
@@ -228,8 +227,6 @@ def reduce_dimension(nodes: DataFrame, df: DataFrame, transformer, input: str, o
         DataFrame: A DataFrame with either the reduced dimension embeddings or the original
                    embeddings, depending on the 'skip' parameter.
     """
-
-    df = df.join(nodes, on="id", how="right")
 
     if skip:
         return df.withColumn(output, F.col(input))
@@ -384,16 +381,22 @@ def write_topological_embeddings(
     return {"success": "true"}
 
 
-def extract_node_embeddings(nodes: DataFrame, string_col: str) -> DataFrame:
+@no_nulls(columns=["pca_embedding"])
+def extract_node_embeddings(embeddings: DataFrame, nodes: DataFrame, string_col: str) -> DataFrame:
     """Extract topological embeddings from Neo4j and write into BQ.
 
     Need a conditional statement due to Node2Vec writing topological embeddings as string. Raised issue in GDS client:
     https://github.com/neo4j/graph-data-science-client/issues/742#issuecomment-2324737372.
     """
-    if isinstance(nodes.schema[string_col].dataType, StringType):
-        # nodes = nodes.withColumn(string_col, string_to_float_list_udf(F.col(string_col)))
-        nodes - nodes.withColumn(string_col, F.from_json(F.col(string_col), T.ArrayType(T.IntegerType())))
-    return nodes
+
+    if isinstance(embeddings.schema[string_col].dataType, StringType):
+        embeddings = embeddings.withColumn(string_col, F.from_json(F.col(string_col), T.ArrayType(T.IntegerType())))
+
+    return (
+        nodes.alias("nodes")
+        .join(embeddings.alias("embeddings"), on="id", how="left")
+        .select("nodes.*", "embeddings.pca_embedding", "embeddings.topological_embedding")
+    )
 
 
 def visualise_pca(nodes: DataFrame, column_name: str):
