@@ -151,7 +151,7 @@ def _submit(
             console.print("[green]✓[/green] Argo template applied")
 
             console.print("Submitting workflow for pipeline...")
-            submit_workflow(run_name, namespace, pipeline_for_execution, verbose=verbose)
+            submit_workflow(run_name, namespace, verbose=verbose)
             console.print("[green]✓[/green] Workflow submitted")
 
             console.print(Panel.fit(
@@ -354,8 +354,7 @@ def apply_argo_template(namespace, file_path: Path, verbose: bool):
         stream_output=verbose,
     )
 
-
-def submit_workflow(run_name: str, namespace: str, pipeline_for_execution: str, verbose: bool):
+def submit_workflow(run_name: str, namespace: str, verbose: bool):
     """Submit the Argo workflow and provide instructions for watching."""
 
     submit_cmd = " ".join([
@@ -365,7 +364,6 @@ def submit_workflow(run_name: str, namespace: str, pipeline_for_execution: str, 
         f"--from wftmpl/{run_name}", # name of the template resource (created in previous step)
         f"-p run_name={run_name}",
         "-l submit-from-ui=false",
-        f"--entrypoint {pipeline_for_execution}",
         "-o json"
     ])
     result = run_subprocess(submit_cmd, capture_output=True, stream_output=verbose)
