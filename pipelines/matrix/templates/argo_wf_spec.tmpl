@@ -48,19 +48,24 @@ spec:
     inputs:
       parameters:
       - name: kedro_nodes
+      - name: num_gpus
+      - name: memory_limit
+      - name: memory_request
+      - name: cpu_limit
+      - name: cpu_request
     container:
       imagePullPolicy: Always
       image: {% raw %} "{{workflow.parameters.image}}:{{workflow.parameters.image_tag}}"        # {{workflow...}} etc. are placeholders within the template. These placeholders will be dynamically substituted with real values when the workflow is submitted, not during the kubectl apply command.
       {% endraw %}
       resources: # limit the resources
         requests:
-          memory: {{ default_execution_resources.memory_request }}
-          cpu: {{ default_execution_resources.cpu_request }}
-          nvidia.com/gpu: {{ default_execution_resources.num_gpus }}
+          memory: {{ inputs.parameters.memory_request }}
+          cpu: {{ inputs.parameters.cpu_request }}
+          nvidia.com/gpu: {{ inputs.parameters.num_gpus }}
         limits:
-          memory: {{ default_execution_resources.memory_limit }}
-          cpu: {{ default_execution_resources.cpu_limit }}
-          nvidia.com/gpu: {{ default_execution_resources.num_gpus }}
+          memory: {{ inputs.parameters.memory_limit }}
+          cpu: {{ inputs.parameters.cpu_limit }}
+          nvidia.com/gpu: {{ inputs.parameters.num_gpus }}
       env:
         - name: WORKFLOW_ID
           valueFrom:
