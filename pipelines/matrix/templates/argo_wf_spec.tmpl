@@ -50,13 +50,13 @@ spec:
       {% endraw %}
       resources: # limit the resources
         requests:
-          memory: {{ inputs.parameters.memory_request }}
-          cpu: {{ inputs.parameters.cpu_request }}
-          nvidia.com/gpu: {{ inputs.parameters.num_gpus }}
+          memory: "{{inputs.parameters.memory_request}}"
+          cpu: "{{ inputs.parameters.cpu_request }}"
+          nvidia.com/gpu: "{{ inputs.parameters.num_gpus }}"
         limits:
-          memory: {{ inputs.parameters.memory_limit }}
-          cpu: {{ inputs.parameters.cpu_limit }}
-          nvidia.com/gpu: {{ inputs.parameters.num_gpus }}
+          memory: "{{ inputs.parameters.memory_limit }}"
+          cpu: "{{ inputs.parameters.cpu_limit }}"
+          nvidia.com/gpu: "{{ inputs.parameters.num_gpus }}"
       env:
         - name: WORKFLOW_ID
           valueFrom:
