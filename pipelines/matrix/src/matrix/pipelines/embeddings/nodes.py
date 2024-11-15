@@ -227,7 +227,6 @@ def reduce_dimension(df: DataFrame, transformer, input: str, output: str, skip: 
         DataFrame: A DataFrame with either the reduced dimension embeddings or the original
                    embeddings, depending on the 'skip' parameter.
     """
-
     if skip:
         return df.withColumn(output, F.col(input))
 
@@ -381,7 +380,7 @@ def write_topological_embeddings(
     return {"success": "true"}
 
 
-@no_nulls(columns=["pca_embedding"])
+@no_nulls(columns=["pca_embedding", "topological_embedding"])
 def extract_node_embeddings(embeddings: DataFrame, nodes: DataFrame, string_col: str) -> DataFrame:
     """Extract topological embeddings from Neo4j and write into BQ.
 
@@ -390,7 +389,7 @@ def extract_node_embeddings(embeddings: DataFrame, nodes: DataFrame, string_col:
     """
 
     if isinstance(embeddings.schema[string_col].dataType, StringType):
-        embeddings = embeddings.withColumn(string_col, F.from_json(F.col(string_col), T.ArrayType(T.IntegerType())))
+        embeddings = embeddings.withColumn(string_col, F.from_json(F.col(string_col), T.ArrayType(T.DoubleType())))
 
     return (
         nodes.alias("nodes")
