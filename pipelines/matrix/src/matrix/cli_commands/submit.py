@@ -127,10 +127,6 @@ def _submit(
         check_dependencies(verbose=verbose)
         console.print("[green]✓[/green] Dependencies checked")
 
-        # console.print("Building and pushing Docker image...")
-        # build_push_docker(run_name, verbose=verbose)
-        # console.print("[green]✓[/green] Docker image built and pushed")
-
         console.print("Building Argo template...")
         argo_template = build_argo_template(run_name, username, namespace, pipelines_for_workflow, pipeline_for_execution)
         console.print("[green]✓[/green] Argo template built")
@@ -139,25 +135,29 @@ def _submit(
         file_path = save_argo_template(argo_template, run_name, template_directory)
         console.print("[green]✓[/green] Argo template written")
 
-        console.print("Ensuring namespace...")
-        ensure_namespace(namespace, verbose=verbose)
-        console.print("[green]✓[/green] Namespace ensured")
-
-        console.print("Applying Argo template...")
-        apply_argo_template(namespace, file_path, verbose=verbose)
-        console.print("[green]✓[/green] Argo template applied")
-
         if not dry_run:
+            console.print("Building and pushing Docker image...")
+            build_push_docker(run_name, verbose=verbose)
+            console.print("[green]✓[/green] Docker image built and pushed")
+
+            console.print("Ensuring namespace...")
+            ensure_namespace(namespace, verbose=verbose)
+            console.print("[green]✓[/green] Namespace ensured")
+
+            console.print("Applying Argo template...")
+            apply_argo_template(namespace, file_path, verbose=verbose)
+            console.print("[green]✓[/green] Argo template applied")
+
             console.print("Submitting workflow for pipeline...")
             submit_workflow(run_name, namespace, pipeline_for_execution, verbose=verbose)
             console.print("[green]✓[/green] Workflow submitted")
 
-        console.print(Panel.fit(
-            f"[bold green]Workflow {'prepared' if dry_run else 'submitted'} successfully![/bold green]\n"
-            f"Run Name: {run_name}\n"
-            f"Namespace: {namespace}",
-            title="Submission Summary"
-        ))
+            console.print(Panel.fit(
+                f"[bold green]Workflow {'prepared' if dry_run else 'submitted'} successfully![/bold green]\n"
+                f"Run Name: {run_name}\n"
+                f"Namespace: {namespace}",
+                title="Submission Summary"
+            ))
 
         if not dry_run and allow_interactions and click.confirm("Do you want to open the workflow in your browser?", default=False):
             workflow_url = f"https://argo.platform.dev.everycure.org/workflows/{namespace}/{run_name}"
