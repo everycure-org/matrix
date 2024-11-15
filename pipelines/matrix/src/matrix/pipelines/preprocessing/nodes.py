@@ -13,6 +13,10 @@ from refit.v1.core.inline_has_schema import has_schema
 from refit.v1.core.inline_primary_key import primary_key
 from jsonpath_ng import parse
 
+import logging
+
+logger = logging.getLogger(__name__)
+
 
 def resolve_name(curie: str, endpoint: str, att_to_get: str = "curie", timeout: Optional[int] = None):
     """Function to retrieve the normalized identifier through the normalizer.
@@ -36,11 +40,15 @@ def resolve_name(curie: str, endpoint: str, att_to_get: str = "curie", timeout: 
     except ReadTimeout:
         return None
 
-    if len(result.json()) != 0:
-        # We take the first element as it has the highest confidence score
-        # TODO: Examine if that approach is valid
-        element = result.json()[0]
-        return element.get(att_to_get)
+    try:
+        if len(result.json()) != 0:
+            # We take the first element as it has the highest confidence score
+            # TODO: Examine if that approach is valid
+            element = result.json()[0]
+            return element.get(att_to_get)
+    except Exception as e:
+        logger.error(f"Error resolving name {curie}: {e}")
+        return None
 
     return None
 
