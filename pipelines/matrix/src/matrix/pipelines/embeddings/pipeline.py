@@ -32,6 +32,7 @@ def create_pipeline(**kwargs) -> Pipeline:
             node(
                 func=nodes.reduce_dimension,
                 inputs={
+                    "nodes": "integration.prm.filtered_nodes",
                     "df": "embeddings.feat.graph.node_embeddings@spark",
                     "unpack": "params:embeddings.dimensionality_reduction",
                 },

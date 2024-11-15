@@ -2,16 +2,19 @@ import logging
 from typing import Any, Dict, List
 
 import matplotlib.pyplot as plt
-from pyspark.sql import DataFrame, SparkSession
 import pandas as pd
 import seaborn as sns
+
 from graphdatascience import GraphDataScience, QueryRunner
 from neo4j import Driver, GraphDatabase
-from pyspark.ml.functions import array_to_vector, vector_to_array
+
+import pyspark.sql.types as T
+from pyspark.sql import DataFrame, SparkSession
 from pyspark.sql import functions as F
 from pyspark.sql.types import StringType
 from pyspark.sql.window import Window
-import pyspark.sql.types as T
+from pyspark.ml.functions import array_to_vector, vector_to_array
+
 from refit.v1.core.inject import inject_object
 from refit.v1.core.inline_has_schema import has_schema
 from refit.v1.core.inline_primary_key import primary_key
@@ -20,6 +23,7 @@ from refit.v1.core.unpack import unpack_params
 from tenacity import retry, wait_exponential, stop_after_attempt
 
 from .graph_algorithms import GDSGraphAlgorithm
+from matrix.pipelines.modelling.nodes import no_nulls
 
 logger = logging.getLogger(__name__)
 
@@ -116,8 +120,12 @@ def ingest_nodes(df: DataFrame) -> DataFrame:
     )
 
 
-def bucketize_nodes(df: DataFrame, bucket_size: int, features: int):
+def bucketize_nodes(df: DataFrame, bucket_size: int, features: int, max_input_len: int = 100):
     """Function to bucketize input dataframe.
+
+    Function bucketizes the input dataframe in N buckets, each with `bucket_size`
+    elements. Moreover, it concatenates the `features` into a single column and limits the
+    length to `max_input_len`.
 
     Args:
         df: Dataframe to bucketize
@@ -148,7 +156,7 @@ def bucketize_nodes(df: DataFrame, bucket_size: int, features: int):
             F.concat(*[F.coalesce(F.col(feature), F.lit("")) for feature in features]),
         )
         # Clip max. length
-        .withColumn("input", F.substring(F.col("input"), 1, 100))  # TODO: Update length
+        .withColumn("input", F.substring(F.col("input"), 1, max_input_len))
         .select("id", "input", "bucket")
     )
 
@@ -169,8 +177,8 @@ def compute_embeddings(
     # NOTE: Inner function to avoid reference issues on unpacking
     # the dataframe, therefore leading to only the latest shard
     # being processed n times.
-    def _func(dataframe: pd.DataFrame, bucket: int):
-        return lambda df=dataframe, b=bucket: compute_df_embeddings_async(df(), model, b)
+    def _func(dataframe: pd.DataFrame):
+        return lambda df=dataframe: compute_df_embeddings_async(df(), model)
 
     shards = {}
     for path, df in dfs.items():
@@ -180,13 +188,13 @@ def compute_embeddings(
 
         # Invoke function to compute embeddings
         shard_path = f"bucket={bucket}/shard"
-        shards[shard_path] = _func(df, bucket)
+        shards[shard_path] = _func(df)
 
     return shards
 
 
 @retry(wait=wait_exponential(multiplier=1, min=2, max=10), stop=stop_after_attempt(3))
-async def compute_df_embeddings_async(df: pd.DataFrame, embedding_model, bucket) -> pd.DataFrame:
+async def compute_df_embeddings_async(df: pd.DataFrame, embedding_model) -> pd.DataFrame:
     try:
         # Embed entities in batch mode
         combined_texts = df["input"].tolist()
@@ -202,7 +210,8 @@ async def compute_df_embeddings_async(df: pd.DataFrame, embedding_model, bucket)
 
 @unpack_params()
 @inject_object()
-def reduce_dimension(df: DataFrame, transformer, input: str, output: str, skip: bool):
+@no_nulls(columns=["embedding", "pca_embedding"])
+def reduce_dimension(nodes: DataFrame, df: DataFrame, transformer, input: str, output: str, skip: bool):
     """Function to apply dimensionality reduction.
 
     Function to apply dimensionality reduction conditionally, if skip is set to true
@@ -220,7 +229,7 @@ def reduce_dimension(df: DataFrame, transformer, input: str, output: str, skip: 
                    embeddings, depending on the 'skip' parameter.
     """
 
-    breakpoint()
+    df = df.join(nodes, on="id", how="right")
 
     if skip:
         return df.withColumn(output, F.col(input))
