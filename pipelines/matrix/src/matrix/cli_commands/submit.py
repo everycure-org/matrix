@@ -127,9 +127,9 @@ def _submit(
         check_dependencies(verbose=verbose)
         console.print("[green]✓[/green] Dependencies checked")
 
-        console.print("Building and pushing Docker image...")
-        build_push_docker(run_name, verbose=verbose)
-        console.print("[green]✓[/green] Docker image built and pushed")
+        # console.print("Building and pushing Docker image...")
+        # build_push_docker(run_name, verbose=verbose)
+        # console.print("[green]✓[/green] Docker image built and pushed")
 
         console.print("Building Argo template...")
         argo_template = build_argo_template(run_name, username, namespace, pipelines_for_workflow, pipeline_for_execution)
