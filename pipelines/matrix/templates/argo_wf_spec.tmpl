@@ -32,15 +32,6 @@ spec:
         value: "cloud"
   templates:
   - name: kedro
-    affinity:
-      nodeAntiAffinity:
-        requiredDuringSchedulingIgnoredDuringExecution:
-          nodeSelectorTerms:
-          - matchExpressions:
-            - key: gpu_node
-              operator: In
-              values:
-              - "true"
     metadata:
       labels:
         {# Add label to have an ability to remove Kedro Pods easily #}
@@ -48,19 +39,33 @@ spec:
     inputs:
       parameters:
       - name: kedro_nodes
+      - name: num_gpus
+      - name: memory_limit
+      - name: memory_request
+      - name: cpu_limit
+      - name: cpu_request
+    podSpecPatch: |
+      containers:
+        - name: main
+          resources:
+            requests:
+              memory: {% raw %} "{{inputs.parameters.memory_request}}"
+              {% endraw %}
+              cpu: {% raw %} "{{inputs.parameters.cpu_request}}"
+              {% endraw %}
+              nvidia.com/gpu: {% raw %} "{{inputs.parameters.num_gpus}}"
+              {% endraw %}
+            limits:
+              memory: {% raw %} "{{inputs.parameters.memory_limit}}"
+              {% endraw %}
+              cpu: {% raw %} "{{inputs.parameters.cpu_limit}}"
+              {% endraw %}
+              nvidia.com/gpu: {% raw %} "{{inputs.parameters.num_gpus}}"
+              {% endraw %}
     container:
       imagePullPolicy: Always
       image: {% raw %} "{{workflow.parameters.image}}:{{workflow.parameters.image_tag}}"        # {{workflow...}} etc. are placeholders within the template. These placeholders will be dynamically substituted with real values when the workflow is submitted, not during the kubectl apply command.
       {% endraw %}
-      resources: # limit the resources
-        requests:
-          memory: {{ default_execution_resources.memory_request }}
-          cpu: {{ default_execution_resources.cpu_request }}
-          nvidia.com/gpu: {{ default_execution_resources.num_gpus }}
-        limits:
-          memory: {{ default_execution_resources.memory_limit }}
-          cpu: {{ default_execution_resources.cpu_limit }}
-          nvidia.com/gpu: {{ default_execution_resources.num_gpus }}
       env:
         - name: WORKFLOW_ID
           valueFrom:
@@ -236,17 +241,6 @@ spec:
               cpu: {{ task.get('resources', {}).get('cpu_limit', 16) }}
               nvidia.com/gpu: {{ task.get('resources', {}).get('num_gpus', 0) }}
         {% endif %}
-        {% if task.get('resources', {}).get('num_gpus', 0) > 0 %}
-        affinity:
-          nodeAffinity:
-            requiredDuringSchedulingIgnoredDuringExecution:
-              nodeSelectorTerms:
-                - matchExpressions:
-                  - key: gpu_node
-                    operator: In
-                    values:
-                    - "true"
-        {% endif %}
         {% if task.deps %}
         dependencies:
         {% for dep in task.deps %}
@@ -259,5 +253,16 @@ spec:
             value: {{ pipeline }}
           - name: kedro_nodes
             value: {{ task.nodes }}
+          - name: num_gpus
+            value: {{ task.get('resources', {}).get('num_gpus', 0) }}
+          - name: memory_request
+            value: {{ task.get('resources', {}).get('memory_request', '120Gi') }}
+          - name: memory_limit
+            value: {{ task.get('resources', {}).get('memory_limit', '120Gi') }}
+          - name: cpu_request
+            value: {{ task.get('resources', {}).get('cpu_request', 32) }}
+          - name: cpu_limit
+            value: {{ task.get('resources', {}).get('cpu_limit', 32) }}
+
       {% endfor %}
   {% endfor %}
