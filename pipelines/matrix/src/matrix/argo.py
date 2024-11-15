@@ -1,4 +1,5 @@
 import re
+import yaml
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -58,7 +59,13 @@ def generate_argo_config(
         default_execution_resources=default_execution_resources.model_dump(),
     )
 
-    return output
+    # Convert the rendered YAML string into a Python object
+    yaml_data = yaml.safe_load(output)
+
+    # Optionally, dump the YAML data back to a string
+    resolved_yaml = yaml.dump(yaml_data, sort_keys=False, default_flow_style=False)
+
+    return resolved_yaml
 
 
 class FusedNode(Node):
