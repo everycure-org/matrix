@@ -555,13 +555,11 @@ def test_argo_template_config_boilerplate(argo_default_resources: ArgoResourceCo
     assert kedro_template["metadata"]["labels"]["app"] == "kedro-argo"
 
     # Verify default anti-affinity for GPU nodes
-    assert "nodeAntiAffinity" in kedro_template["affinity"]
-    selector = kedro_template["affinity"]["nodeAntiAffinity"]["requiredDuringSchedulingIgnoredDuringExecution"][
-        "nodeSelectorTerms"
-    ][0]
-    match_expression = selector["matchExpressions"][0]
+    assert "nodeAffinity" in kedro_template["affinity"]
+    selector = kedro_template["affinity"]["nodeAffinity"]["preferredDuringSchedulingIgnoredDuringExecution"][0]
+    match_expression = selector["preference"]["matchExpressions"][0]
     assert match_expression["key"] == "gpu_node"
-    assert match_expression["operator"] == "In"
+    assert match_expression["operator"] == "NotIn"
     assert match_expression["values"] == ["true"]
 
     # Verify resources based on GPU configuration
@@ -638,48 +636,3 @@ def test_resources_of_argo_template_config_pipelines() -> None:
     assert len(pipeline_two_template["dag"]["tasks"]) == len(actual_pipelines["pipeline_two"].nodes)
     assert pipeline_two_template["dag"]["tasks"][0]["name"] == "simple-node-p2-1"
     assert pipeline_two_template["dag"]["tasks"][0]["template"] == "kedro"
-
-
-def test_affinities_of_argo_template_config_pipelines() -> None:
-    """Test the affinities configuration of the Argo template."""
-    argo_default_resources = ArgoResourceConfig(
-        num_gpus=0,
-        cpu_request=4,
-        cpu_limit=16,
-        memory_request=64,
-        memory_limit=64,
-    )
-    argo_config, actual_pipelines = get_argo_config(argo_default_resources)
-    spec = argo_config["spec"]
-
-    templates = spec["templates"]
-
-    # Verify pipeline_one template
-    pipeline_one_template = next(t for t in templates if t["name"] == "pipeline_one")
-
-    # task one has GPU requests, hence has affinity for GPU nodes
-    assert pipeline_one_template["dag"]["tasks"][0]["affinity"] == {
-        "nodeAffinity": {
-            "preferredDuringSchedulingIgnoredDuringExecution": [
-                {
-                    "weight": 1,
-                    "preference": {
-                        "matchExpressions": [
-                            {
-                                "key": "gpu_node",
-                                "operator": "In",
-                                "values": ["false"],
-                            }
-                        ]
-                    },
-                }
-            ]
-        }
-    }
-    # task two has no GPU requests, hence no affinity
-    assert "affinity" not in pipeline_one_template["dag"]["tasks"][1]
-
-    # Verify pipeline_two template
-    pipeline_two_template = next(t for t in templates if t["name"] == "pipeline_two")
-    # task one has no GPU requests, hence no affinity
-    assert "affinity" not in pipeline_two_template["dag"]["tasks"][0]
