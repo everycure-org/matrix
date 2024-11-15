@@ -32,6 +32,16 @@ spec:
         value: "cloud"
   templates:
   - name: kedro
+    affinity:
+      nodeAffinity:
+        preferredDuringSchedulingIgnoredDuringExecution:
+        - weight: 100
+          preference:
+            matchExpressions:
+            - key: gpu_node
+              operator: NotIn
+              values:
+              - "true"
     metadata:
       labels:
         {# Add label to have an ability to remove Kedro Pods easily #}
