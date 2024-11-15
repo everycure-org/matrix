@@ -28,35 +28,35 @@ def register_pipelines() -> Dict[str, Pipeline]:
         "ingestion": create_ingestion_pipeline(),
         "integration": create_integration_pipeline(),
         "embeddings": create_embeddings_pipeline(),
-        "data_release": create_data_release_pipeline(),
+        "data-release": create_data_release_pipeline(),
         "modelling": create_modelling_pipeline(),
-        "matrix_generation": create_matrix_pipeline(),
+        "matrix-generation": create_matrix_pipeline(),
         "evaluation": create_evaluation_pipeline(),
         "inference": create_inference_pipeline(),  # Run manually based on medical input
     }
 
     # Higher order pipelines
     # fmt: off
-    pipelines["kg_release"] = (
+    pipelines["kg-release"] = (
           pipelines["ingestion"]
         + pipelines["integration"]
         + pipelines["embeddings"]
-        + pipelines["data_release"] 
+        + pipelines["data-release"] 
     )
-    pipelines["modelling_run"] = (
+    pipelines["modelling-run"] = (
           pipelines["modelling"]
-        + pipelines["matrix_generation"]
+        + pipelines["matrix-generation"]
         + pipelines["evaluation"]
     )
-    pipelines["__default__"] = (
-          pipelines["kg_release"]
-        + pipelines["modelling_run"]
+    pipelines["default"] = (
+          pipelines["kg-release"]
+        + pipelines["modelling-run"]
     )
 
     # Test pipelines
     pipelines["test"] = (
           pipelines["fabricator"]
-        + pipelines["__default__"]
+        + pipelines["default"]
     )
     # fmt: on
 

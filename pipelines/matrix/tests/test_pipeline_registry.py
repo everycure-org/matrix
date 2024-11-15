@@ -16,9 +16,9 @@ def test_register_pipelines_returns_dict(pipelines: Dict[str, Pipeline]) -> None
 
 def test_all_pipeline_names_present(pipelines: Dict[str, Pipeline]) -> None:
     expected_pipelines = [
-        "kg_release",
+        "kg-release",
         "modelling",
-        "__default__",
+        "default",
     ]
     for pipeline_name in expected_pipelines:
         assert pipeline_name in pipelines
@@ -30,8 +30,8 @@ def test_all_pipelines_are_pipeline_objects(pipelines: Dict[str, Pipeline]) -> N
 
 
 def test_default_pipeline_composition(pipelines: Dict[str, Pipeline]) -> None:
-    default_pipeline = pipelines["__default__"]
-    release_pipeline = pipelines["data_release"]
+    default_pipeline = pipelines["default"]
+    release_pipeline = pipelines["data-release"]
     ingestion_pipeline = pipelines["ingestion"]
     preprocessing_pipeline = pipelines["preprocessing"]
 
