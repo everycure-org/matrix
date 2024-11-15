@@ -197,15 +197,15 @@ spec:
           - name: kedro_nodes
             value: {{ task.nodes }}
           - name: num_gpus
-            value: {{ task.get('resources', {}).get('num_gpus', 0) }}
+            value: {{ task.resources.num_gpus }}
           - name: memory_request
-            value: {{ task.get('resources', {}).get('memory_request', '120Gi') }}
+            value: {{ task.resources.memory_request }}
           - name: memory_limit
-            value: {{ task.get('resources', {}).get('memory_limit', '120Gi') }}
+            value: {{ task.resources.memory_limit }}
           - name: cpu_request
-            value: {{ task.get('resources', {}).get('cpu_request', 32) }}
+            value: {{ task.resources.cpu_request }}
           - name: cpu_limit
-            value: {{ task.get('resources', {}).get('cpu_limit', 32) }}
+            value: {{ task.resources.cpu_limit }}
 
       {% endfor %}
   {% endfor %}
