@@ -1,0 +1,2 @@
+drugmechdb_entity_resolution:
+  timeout: 5 # (seconds) Time to wait for the name resolver to respond
