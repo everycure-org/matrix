@@ -83,6 +83,7 @@ def submit(username: str, namespace: str, run_name: str, pipeline: str, verbose:
     )
 
 
+# TODO: After it is possible to configure resources on node level, remove the use_gpus flag.
 def _submit(
         username: str, 
         namespace: str, 
@@ -126,10 +127,6 @@ def _submit(
         check_dependencies(verbose=verbose)
         console.print("[green]✓[/green] Dependencies checked")
 
-        console.print("Building and pushing Docker image...")
-        build_push_docker(run_name, verbose=verbose)
-        console.print("[green]✓[/green] Docker image built and pushed")
-
         console.print("Building Argo template...")
         argo_template = build_argo_template(run_name, username, namespace, pipelines_for_workflow, pipeline_for_execution)
         console.print("[green]✓[/green] Argo template built")
@@ -138,25 +135,33 @@ def _submit(
         file_path = save_argo_template(argo_template, run_name, template_directory)
         console.print("[green]✓[/green] Argo template written")
 
-        console.print("Ensuring namespace...")
-        ensure_namespace(namespace, verbose=verbose)
-        console.print("[green]✓[/green] Namespace ensured")
-
-        console.print("Applying Argo template...")
-        apply_argo_template(namespace, file_path, verbose=verbose)
-        console.print("[green]✓[/green] Argo template applied")
+        console.print("Linting Argo template...")
+        argo_template_lint(file_path, verbose=verbose)
+        console.print("[green]✓[/green] Argo template valid")
 
         if not dry_run:
+            console.print("Building and pushing Docker image...")
+            build_push_docker(run_name, verbose=verbose)
+            console.print("[green]✓[/green] Docker image built and pushed")
+
+            console.print("Ensuring namespace...")
+            ensure_namespace(namespace, verbose=verbose)
+            console.print("[green]✓[/green] Namespace ensured")
+
+            console.print("Applying Argo template...")
+            apply_argo_template(namespace, file_path, verbose=verbose)
+            console.print("[green]✓[/green] Argo template applied")
+
             console.print("Submitting workflow for pipeline...")
             submit_workflow(run_name, namespace, pipeline_for_execution, verbose=verbose)
             console.print("[green]✓[/green] Workflow submitted")
 
-        console.print(Panel.fit(
-            f"[bold green]Workflow {'prepared' if dry_run else 'submitted'} successfully![/bold green]\n"
-            f"Run Name: {run_name}\n"
-            f"Namespace: {namespace}",
-            title="Submission Summary"
-        ))
+            console.print(Panel.fit(
+                f"[bold green]Workflow {'prepared' if dry_run else 'submitted'} successfully![/bold green]\n"
+                f"Run Name: {run_name}\n"
+                f"Namespace: {namespace}",
+                title="Submission Summary"
+            ))
 
         if not dry_run and allow_interactions and click.confirm("Do you want to open the workflow in your browser?", default=False):
             workflow_url = f"https://argo.platform.dev.everycure.org/workflows/{namespace}/{run_name}"
@@ -323,6 +328,14 @@ def save_argo_template(argo_template: str, run_name: str, template_directory: Pa
     with open(file_path, "w") as f:
         f.write(argo_template)
     return str(file_path)
+
+
+def argo_template_lint(file_path: str, verbose: bool) -> str:
+    run_subprocess(
+        f"argo template lint {file_path}",
+        check=True,
+        stream_output=verbose,
+    )
 
 def ensure_namespace(namespace, verbose: bool):
     """Create or verify Kubernetes namespace."""
