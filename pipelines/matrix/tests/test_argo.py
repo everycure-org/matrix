@@ -595,30 +595,35 @@ def test_resources_of_argo_template_config_pipelines() -> None:
     assert "dag" in pipeline_one_template
     # there should be two tasks in the pipeline
     assert len(pipeline_one_template["dag"]["tasks"]) == len(actual_pipelines["pipeline_one"].nodes)
-    assert pipeline_one_template["dag"]["tasks"][0]["name"] == "simple-node-p1-1"
-    assert pipeline_one_template["dag"]["tasks"][0]["template"] == "kedro"
-    assert pipeline_one_template["dag"]["tasks"][1]["name"] == "simple-node-p1-2"
-    assert pipeline_one_template["dag"]["tasks"][1]["template"] == "kedro"
 
-    # Verify resources for the first task
-    # Explicit resource different from default hence resources in task
-    assert "container" in pipeline_one_template["dag"]["tasks"][0]
-    assert "resources" in pipeline_one_template["dag"]["tasks"][0]["container"]
-    resources_p1_1 = pipeline_one_template["dag"]["tasks"][0]["container"]["resources"]
+    # Verify first task
+    task1 = pipeline_one_template["dag"]["tasks"][0]
+    assert task1["name"] == "simple-node-p1-1"
+    assert task1["template"] == "kedro"
+
+    # Verify resource parameters for first task
     actual_resources_p1_1 = actual_pipelines["pipeline_one"].nodes[0].argo_config.model_dump()
-    assert resources_p1_1["requests"]["memory"] == actual_resources_p1_1["memory_request"]
-    assert resources_p1_1["requests"]["cpu"] == actual_resources_p1_1["cpu_request"]
-    assert resources_p1_1["requests"]["nvidia.com/gpu"] == actual_resources_p1_1["num_gpus"]
-    assert resources_p1_1["limits"]["memory"] == actual_resources_p1_1["memory_limit"]
-    assert resources_p1_1["limits"]["cpu"] == actual_resources_p1_1["cpu_limit"]
-    assert resources_p1_1["limits"]["nvidia.com/gpu"] == actual_resources_p1_1["num_gpus"]
+    resource_params1 = {p["name"]: p["value"] for p in task1["arguments"]["parameters"]}
+    assert resource_params1["num_gpus"] == actual_resources_p1_1["num_gpus"]
+    assert resource_params1["memory_request"] == actual_resources_p1_1["memory_request"]
+    assert resource_params1["memory_limit"] == actual_resources_p1_1["memory_limit"]
+    assert resource_params1["cpu_request"] == actual_resources_p1_1["cpu_request"]
+    assert resource_params1["cpu_limit"] == actual_resources_p1_1["cpu_limit"]
 
-    # Verify resources for the second task
-    # no explicit resources defined for the second node, hence no resources in task
-    assert "container" not in pipeline_one_template["dag"]["tasks"][1]
+    # Verify second task
+    task2 = pipeline_one_template["dag"]["tasks"][1]
+    assert task2["name"] == "simple-node-p1-2"
+    assert task2["template"] == "kedro"
+
+    # Verify default resource parameters for second task
+    resource_params2 = {p["name"]: p["value"] for p in task2["arguments"]["parameters"]}
+    assert resource_params2["num_gpus"] == 0
+    assert resource_params2["memory_request"] == "120Gi"
+    assert resource_params2["memory_limit"] == "120Gi"
+    assert resource_params2["cpu_request"] == 32
+    assert resource_params2["cpu_limit"] == 32
 
     # Verify pipeline_two template
-    # Explicit resource identical to default hence no resources in task
     pipeline_two_template = next(t for t in templates if t["name"] == "pipeline_two")
     assert "dag" in pipeline_two_template
     assert len(pipeline_two_template["dag"]["tasks"]) == len(actual_pipelines["pipeline_two"].nodes)
