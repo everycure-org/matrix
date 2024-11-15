@@ -17,9 +17,6 @@ spec:
         value: "{{ image }}"
       - name: image_tag
         value: "{{ image_tag }}"
-      # - name: experiment
-      #  value: "Default"
-      # we use the image tag as the release version as a default
       - name: run_name
         value: "{{ image_tag }}"
       - name: neo4j_host
@@ -31,7 +28,8 @@ spec:
       - name: env
         value: "cloud"
   templates:
-  - name: kedro
+  - &_kedro_template
+    name: kedro
     affinity:
       nodeAffinity:
         preferredDuringSchedulingIgnoredDuringExecution:
@@ -72,7 +70,7 @@ spec:
               {% endraw %}
               nvidia.com/gpu: {% raw %} "{{inputs.parameters.num_gpus}}"
               {% endraw %}
-    container:
+    container: &_kedro_container
       imagePullPolicy: Always
       image: {% raw %} "{{workflow.parameters.image}}:{{workflow.parameters.image_tag}}"        # {{workflow...}} etc. are placeholders within the template. These placeholders will be dynamically substituted with real values when the workflow is submitted, not during the kubectl apply command.
       {% endraw %}
@@ -84,10 +82,6 @@ spec:
         - name: RUN_NAME
           value: {% raw %} "{{workflow.parameters.run_name}}" 
           {% endraw %}
-        #- name: EXPERIMENT
-        #  value: {% raw %} "{{workflow.parameters.experiment}}" 
-        #  {% endraw %}
-
         - name: NEO4J_HOST
           value: {% raw %} "{{workflow.parameters.neo4j_host}}" 
           {% endraw %}
@@ -125,60 +119,10 @@ spec:
       command: [kedro]
       args: ["run", "-p", "{{ pipeline_for_execution }}", "-e", {% raw %}"{{workflow.parameters.env}}"{% endraw %}, "-n", {% raw %}"{{inputs.parameters.kedro_nodes}}"{% endraw %}]
 
-  - name: neo4j
-    inputs:
-      parameters:
-      - name: kedro_nodes
+  - <<: *_kedro_template
+    name: neo4j
     container:
-      resources: # limit the resources
-        requests:
-          memory: 120Gi
-          cpu: 32
-        # limits:
-        #   memory: 120Gi
-        #   cpu: 32
-      env:
-        - name: WORKFLOW_ID
-          valueFrom:
-            fieldRef:
-              fieldPath: metadata.labels['workflows.argoproj.io/workflow']
-        - name: RUN_NAME
-          value: {% raw %} "{{workflow.parameters.run_name}}" 
-          {% endraw %}
-        # - name: EXPERIMENT
-        #  value: {% raw %} "{{workflow.parameters.experiment}}" 
-        #  {% endraw %}
-        
-        - name: MLFLOW_ENDPOINT
-          value: {% raw %} "{{workflow.parameters.mlflow_endpoint}}" 
-          {% endraw %}
-        - name: NEO4J_USER
-          value: "neo4j"
-        - name: NEO4J_PASSWORD
-          value: "admin"
-        - name: GCP_PROJECT_ID
-          valueFrom:
-            configMapKeyRef:
-              name: matrix-config
-              key: GCP_PROJECT_ID
-        - name: GCP_BUCKET
-          valueFrom:
-            configMapKeyRef:
-              name: matrix-config
-              key: GCP_BUCKET
-        - name: OPENAI_API_KEY
-          value: "foo"
-        - name: OPENAI_ENDPOINT
-          value: {% raw %} "{{workflow.parameters.openai_endpoint}}" 
-          {% endraw %}
-        - name: OPENAI_API_KEY
-          valueFrom:
-            secretKeyRef:
-              name: matrix-secrets
-              key: OPENAI_API_KEY
-      imagePullPolicy: Always
-      image: {% raw %} "{{workflow.parameters.image}}:{{workflow.parameters.image_tag}}" {% endraw %}
-
+      <<: *_kedro_container
       command: ["/bin/sh", "-c"]
       args:
         - |
@@ -232,6 +176,7 @@ spec:
           value: "100G"
         - name: NEO4J_dbms_memory_heap_max__size
           value: "100G"
+
   {% for pipeline, tasks in pipelines.items() %}
   - name: {{ pipeline }}
     dag:
