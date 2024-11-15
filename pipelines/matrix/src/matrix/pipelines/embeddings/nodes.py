@@ -126,7 +126,7 @@ def bucketize_nodes(df: DataFrame, bucket_size: int, features: int):
     """
 
     # Retrieve number of elements
-    num_elements = df.limit(100000).count()
+    num_elements = df.limit(1000000).count()
     num_buckets = (num_elements + bucket_size - 1) // bucket_size
 
     # Construct df to bucketize
