@@ -63,7 +63,7 @@ def generate_argo_config(
     yaml_data = yaml.safe_load(output)
 
     # Optionally, dump the YAML data back to a string
-    resolved_yaml = yaml.dump(yaml_data, sort_keys=False, default_flow_style=False)
+    resolved_yaml = yaml.dump(yaml_data, sort_keys=True, default_flow_style=False)
 
     return resolved_yaml
 
