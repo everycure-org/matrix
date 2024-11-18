@@ -1,17 +1,26 @@
-gdb: &gdb
-  object: matrix.pipelines.embeddings.nodes.GraphDB
-  endpoint: ${globals:neo4j.host}
-  auth:
-    -  ${globals:neo4j.user}
-    -  ${globals:neo4j.password}
+# gdb: &gdb
+#   object: matrix.pipelines.embeddings.nodes.GraphDB
+#   endpoint: ${globals:neo4j.host}
+#   auth:
+#     -  ${globals:neo4j.user}
+#     -  ${globals:neo4j.password}
 
 moa_extraction:
   # Note: We need to use the same database name as is set in catalog.yml
   gdb_two_hop: 
-    <<: *gdb
+    object: matrix.pipelines.embeddings.nodes.GraphDB
+    endpoint: ${globals:neo4j.host}
+    auth:
+      -  ${globals:neo4j.user}
+      -  ${globals:neo4j.password}
     database: analytics-two-hop
   gdb_three_hop:
-    <<: *gdb
+    # <<: *gdb
+    object: matrix.pipelines.embeddings.nodes.GraphDB
+    endpoint: ${globals:neo4j.host}
+    auth:
+      -  ${globals:neo4j.user}
+      -  ${globals:neo4j.password}
     database: analytics-three-hop
 
   tagging_options:
