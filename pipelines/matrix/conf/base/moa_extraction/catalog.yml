@@ -15,7 +15,7 @@ moa_extraction.raw.pairs_for_moa_prediction:
 
 moa_extraction.raw.drugmechdb_entities:
   type: pandas.ParquetDataset
-  filepath: ${globals:paths.raw}/moa_extraction/drugmechdb_entities/translator/drugmechdb_entities.parquet
+  filepath: ${globals:paths.raw}/moa_extraction/drugmechdb_entities/renci_translator/drugmechdb_entities.parquet # Replace renci_translator by arax_translator to use ARAX prenormalized entities instead
 
 # Neo4j databases
 
