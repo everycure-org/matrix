@@ -55,11 +55,11 @@ moa_extraction.raw.drugmechdb_entities:
   type: yaml.YAMLDataset
   filepath: ${globals:paths.moa_extraction}/reporting/add_tags_{num_hops}_hop.yml
 
-moa_extraction.feat.category_encoder_{num_hops}_hop:
+"moa_extraction.feat.category_encoder_{num_hops}_hop":
   type: pickle.PickleDataset
   filepath: ${globals:paths.moa_extraction}/feat/category_encoder_{num_hops}_hop.pickle
 
-moa_extraction.feat.relation_encoder_{num_hops}_hop:
+"moa_extraction.feat.relation_encoder_{num_hops}_hop":
   type: pickle.PickleDataset
   filepath: ${globals:paths.moa_extraction}/feat/relation_encoder_{num_hops}_hop.pickle
 
