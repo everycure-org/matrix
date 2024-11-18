@@ -8,7 +8,6 @@ moa_extraction:
       -  ${globals:neo4j.password}
     database: analytics-two-hop
   gdb_three_hop:
-    # <<: *gdb
     object: matrix.pipelines.embeddings.nodes.GraphDB
     endpoint: ${globals:neo4j.host}
     auth:
