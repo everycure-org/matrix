@@ -208,9 +208,9 @@ class ReplacementDrugDiseasePairGenerator(SingleLabelPairGenerator):
                     unknown_data.append(
                         [
                             drug,
-                            graph._embeddings[drug],
+                            graph.get_embedding(drug),
                             disease,
-                            graph._embeddings[disease],
+                            graph.get_embedding(disease),
                             y_label,
                         ]
                     )
