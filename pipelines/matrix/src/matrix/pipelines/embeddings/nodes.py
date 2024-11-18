@@ -120,7 +120,7 @@ def ingest_nodes(df: DataFrame) -> DataFrame:
     )
 
 
-def bucketize_nodes(df: DataFrame, bucket_size: int, features: int, max_input_len: int = 100):
+def bucketize_nodes(df: DataFrame, bucket_size: int, input_features: List[str], max_input_len: int = 100):
     """Function to bucketize input dataframe.
 
     Function bucketizes the input dataframe in N buckets, each with `bucket_size`
@@ -153,11 +153,11 @@ def bucketize_nodes(df: DataFrame, bucket_size: int, features: int, max_input_le
         # Concat input
         .withColumn(
             "input",
-            F.concat(*[F.coalesce(F.col(feature), F.lit("")) for feature in features]),
+            F.concat(*[F.coalesce(F.col(feature), F.lit("")) for feature in input_features]),
         )
         # Clip max. length
         .withColumn("input", F.substring(F.col("input"), 1, max_input_len))
-        .select("id", *features, "input", "bucket")
+        .select("id", *input_features, "input", "bucket")
     )
 
 
