@@ -13,12 +13,15 @@ title: Merged KG Dashboard
 select category, upstream_data_source, sum(count) as count 
 from bq.merged_kg_nodes
 group by all
+order by count desc
 limit ${inputs.node_category_limit.value}
 ```
 ```sql node_prefix_by_upstream_data_source
 select prefix, upstream_data_source, sum(count) as count
 from bq.merged_kg_nodes
 group by all
+having count > 0
+order by count desc
 limit ${inputs.node_prefix_limit.value}
 ```
 
@@ -36,10 +39,14 @@ select
     sum(count) as count
 from bq.merged_kg_edges
   where subject_prefix in ${inputs.subject_prefix.value}
+    and subject_category in ${inputs.subject_category.value}
     and object_prefix in ${inputs.object_prefix.value}
+    and object_category in ${inputs.object_category.value}
     and upstream_data_source in ${inputs.upstream_data_source.value}
     and predicate in ${inputs.predicate.value}
 group by all
+having count > 0
+order by count desc
 limit ${inputs.edge_limit.value}
 ```
 
@@ -56,9 +63,46 @@ limit ${inputs.edge_limit.value}
     and upstream_data_source in ${inputs.upstream_data_source.value}
     and predicate in ${inputs.predicate.value}
   group by all
+  having count > 0
   order by count desc
   limit ${inputs.edge_limit.value}  
 ```
+
+```sql edge_prefixes_by_primary_knowledge_source
+select 
+    subject_prefix || ' to ' || object_prefix as edge_type,
+    primary_knowledge_source,
+    sum(count) as count
+from bq.merged_kg_edges
+    where subject_prefix in ${inputs.subject_prefix.value}
+        and object_prefix in ${inputs.object_prefix.value}
+        and upstream_data_source in ${inputs.upstream_data_source.value}
+        and predicate in ${inputs.predicate.value}
+    group by all
+    having count > 0
+    order by count desc    
+    limit ${inputs.edge_limit.value}  
+```
+    
+
+```sql primary_knowledge_source_by_predicate
+select 
+    predicate,
+    primary_knowledge_source,
+    sum(count) as count
+from bq.merged_kg_edges
+  where subject_prefix in ${inputs.subject_prefix.value}
+    and object_prefix in ${inputs.object_prefix.value}
+    and upstream_data_source in ${inputs.upstream_data_source.value}
+    and predicate in ${inputs.predicate.value}
+  group by all
+  having count > 0
+  order by count desc  
+  limit ${inputs.edge_limit.value}  
+```
+
+
+
 
 <Tabs>
     <Tab label="Nodes">
@@ -104,6 +148,13 @@ limit ${inputs.edge_limit.value}
                     selectAllByDefault=true
                     />
             <Dropdown data={edges}
+                    name=subject_category
+                    value=subject_category
+                    title="Subject Category"
+                    multiple=true
+                    selectAllByDefault=true
+                    />        
+            <Dropdown data={edges}
                     name=predicate
                     value=predicate
                     title="Predicate"
@@ -117,6 +168,14 @@ limit ${inputs.edge_limit.value}
                     multiple=true
                     selectAllByDefault=true
                     />
+            <Dropdown data={edges}
+                    name=object_category
+                    value=object_category
+                    title="Object Category"
+                    multiple=true
+                    selectAllByDefault=true
+                    />
+
         </div>
         <div>
             <Dropdown data={edges}
@@ -157,6 +216,23 @@ limit ${inputs.edge_limit.value}
             title="Edge Types by Upstream Data Source"
         />
 
+        <BarChart 
+            data={primary_knowledge_source_by_predicate}
+            x=primary_knowledge_source
+            y=count
+            series=predicate
+            swapXY=true
+            title="Primary Knowledge Source by Predicate"
+        />
+
+        <BarChart 
+            data={edge_prefixes_by_primary_knowledge_source}
+            x=edge_type
+            y=count
+            series=primary_knowledge_source
+            swapXY=true
+            title="Edge Prefixes by Primary Knowledge Source"
+        />
     </Tab>
 </Tabs>
 
