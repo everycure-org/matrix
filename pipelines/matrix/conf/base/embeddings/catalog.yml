@@ -39,7 +39,7 @@ embeddings.feat.bucketized_nodes@spark:
 # NOTE: Loads each partition representing a dataframe into a
 # seperate DF reference file, for lazy loading by the Kedro node
 embeddings.feat.bucketized_nodes@partitioned:
-  type: matrix.datasets.gcp.PartitionedTQDMDataset
+  type: matrix.datasets.gcp.PartitionedAsyncParallelDataset
   path: ${globals:paths.embeddings}/feat/bucketized_nodes
   dataset: 
     <<: *_pandas_parquet
@@ -49,7 +49,7 @@ embeddings.feat.bucketized_nodes@partitioned:
 # NOTE: Represent a lazy loaded function to write each partition
 # representing bucket _with_ embedding
 embeddings.feat.graph.node_embeddings@partitioned:
-  type: matrix.datasets.gcp.PartitionedTQDMDataset
+  type: matrix.datasets.gcp.PartitionedAsyncParallelDataset
   overwrite: True # important otherwise not properly reset on rerun
   path: ${globals:paths.embeddings}/feat/tmp_nodes_with_embeddings
   dataset: 

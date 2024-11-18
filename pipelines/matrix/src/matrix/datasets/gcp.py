@@ -378,7 +378,7 @@ class PartitionedAsyncParallelDataset(PartitionedDataset):
     Custom implementation of the ParallelDataset that allows concurrent processing.
     """
 
-    def _save(self, data: dict[str, Any], max_workers: int = 10, timeout: int = 30) -> None:
+    def _save(self, data: dict[str, Any], max_workers: int = 10, timeout: int = 60) -> None:
         if self._overwrite and self._filesystem.exists(self._normalized_path):
             self._filesystem.rm(self._normalized_path, recursive=True)
 
@@ -423,21 +423,20 @@ class PartitionedAsyncParallelDataset(PartitionedDataset):
                     for task in asyncio.as_completed(tasks):
                         try:
                             await asyncio.wait_for(task, timeout)
-                        except asyncio.TimeoutError:
-                            # TODO: We should aspire to get rid of this, and ensure langchain times out correctly
+                        except asyncio.TimeoutError as e:
                             print(f"Timeout error: partition processing took longer than {timeout} seconds.")
+                            raise e
                         except Exception as e:
                             print(f"Error processing partition in tqdm loop: {e}")
+                            raise e
                         finally:
                             progress_bar.update(1)
 
                 # Run the monitoring coroutine
-                loop.run_until_complete(monitor_tasks())
-
-            print("closing loop")
-            loop.close()
+                try:
+                    loop.run_until_complete(monitor_tasks())
+                finally:
+                    loop.close()
 
         run_async_tasks()
-
-        print("invalidating caches")
         self._invalidate_caches()

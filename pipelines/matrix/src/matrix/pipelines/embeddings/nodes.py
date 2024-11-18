@@ -201,7 +201,7 @@ async def compute_df_embeddings_async(df: pd.DataFrame, embedding_model) -> pd.D
         df["embedding"] = await embedding_model.aembed_documents(combined_texts)
     except Exception as e:
         print(f"Exception occurred: {e}")
-        raise
+        raise e
 
     # Drop added column
     df = df.drop(columns=["text_to_embed"])
