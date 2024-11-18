@@ -373,7 +373,11 @@ class RemoteSparkJDBCDataset(SparkJDBCDataset):
         return protocol, fs_prefix, file_name
 
 
-class PartitionedTQDMDataset(PartitionedDataset):
+class PartitionedAsyncParallelDataset(PartitionedDataset):
+    """
+    Custom implementation of the ParallelDataset that allows concurrent processing.
+    """
+
     def _save(self, data: dict[str, Any], max_workers: int = 10, timeout: int = 30) -> None:
         if self._overwrite and self._filesystem.exists(self._normalized_path):
             self._filesystem.rm(self._normalized_path, recursive=True)

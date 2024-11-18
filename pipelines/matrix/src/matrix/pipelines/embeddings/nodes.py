@@ -120,10 +120,10 @@ def ingest_nodes(df: DataFrame) -> DataFrame:
     )
 
 
-def bucketize_nodes(df: DataFrame, bucket_size: int, input_features: List[str], max_input_len: int = 100):
+def bucketize_df(df: DataFrame, bucket_size: int, input_features: List[str], max_input_len: int):
     """Function to bucketize input dataframe.
 
-    Function bucketizes the input dataframe in N buckets, each with `bucket_size`
+    Function bucketizes the input dataframe in N buckets, each of size `bucket_size`
     elements. Moreover, it concatenates the `features` into a single column and limits the
     length to `max_input_len`.
 
@@ -152,12 +152,12 @@ def bucketize_nodes(df: DataFrame, bucket_size: int, input_features: List[str], 
         .join(buckets, on=[(F.col("row_num") >= (F.col("min_range"))) & (F.col("row_num") < F.col("max_range"))])
         # Concat input
         .withColumn(
-            "input",
+            "text_to_embed",
             F.concat(*[F.coalesce(F.col(feature), F.lit("")) for feature in input_features]),
         )
         # Clip max. length
-        .withColumn("input", F.substring(F.col("input"), 1, max_input_len))
-        .select("id", *input_features, "input", "bucket")
+        .withColumn("text_to_embed", F.substring(F.col("text_to_embed"), 1, max_input_len))
+        .select("id", *input_features, "text_to_embed", "bucket")
     )
 
 
@@ -183,7 +183,7 @@ def compute_embeddings(
     shards = {}
     for path, df in dfs.items():
         # Little bit hacky, but extracting batch from hive partitioning for input path
-        # FUTURE: Update dataset to pass this in
+        # As we know the input paths to this dataset are of the format /shard={num}
         bucket = path.split("/")[0].split("=")[1]
 
         # Invoke function to compute embeddings
@@ -197,14 +197,14 @@ def compute_embeddings(
 async def compute_df_embeddings_async(df: pd.DataFrame, embedding_model) -> pd.DataFrame:
     try:
         # Embed entities in batch mode
-        combined_texts = df["input"].tolist()
+        combined_texts = df["text_to_embed"].tolist()
         df["embedding"] = await embedding_model.aembed_documents(combined_texts)
     except Exception as e:
         print(f"Exception occurred: {e}")
         raise
 
     # Drop added column
-    df = df.drop(columns=["input"])
+    df = df.drop(columns=["text_to_embed"])
     return df
 
 
