@@ -14,8 +14,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 inputs={
                     "drug_mech_db": "moa_extraction.raw.drug_mech_db",
                     "api_endpoint": "params:integration.nodenorm.api_endpoint",
-                    "name_resolver": "params:preprocessing.translator.name_resolver",
-                    "timeout": "params:drugmechdb_entity_resolution.timeout",
+                    "prenormalize_func": "params:drugmechdb_entity_resolution.prenormalize_func",
                 },
                 outputs="moa_extraction.raw.drugmechdb_entities",
                 name="normalize_drugmechdb_entities",
