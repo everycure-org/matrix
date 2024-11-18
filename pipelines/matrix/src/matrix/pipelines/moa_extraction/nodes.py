@@ -242,6 +242,8 @@ def make_splits(
         Paths dataset with split information added.
     """
     df = paths_data.df
+    if df.empty:
+        raise ValueError("Paths dataframe is empty")
     df_splits = apply_splitter(df, splitter)
     return KGPaths(df=df_splits).df
 
