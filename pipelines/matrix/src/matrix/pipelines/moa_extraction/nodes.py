@@ -591,7 +591,33 @@ def _squash_directionality(paths: KGPaths, suffix: str = "*", score_col_name: st
     grouped = paths.df.groupby(node_cols, as_index=False)
     agg_dict = {col: lambda x: ",".join(x.unique()) for col in predicate_cols}
     agg_dict[score_col_name] = "max"
-    return grouped.agg(agg_dict).reset_index(drop=True)
+    squashed_paths = grouped.agg(agg_dict).reset_index(drop=True)
+
+    # Resort the paths according to the confidence score
+    squashed_paths = squashed_paths.sort_values(by=score_col_name, ascending=False).reset_index(drop=True)
+
+    return squashed_paths
+
+
+def _get_display_id(
+    original_id: str, pairs: pd.DataFrame, normalized_col: Optional[str], display_col: Optional[str]
+) -> str:
+    """Get the display ID for a given normalized ID.
+
+    Args:
+        original_id: The original ID to look up
+        pairs: DataFrame containing the normalized and display IDs
+        normalized_col: Column name containing normalized IDs
+        display_col: Column name containing display IDs
+
+    Returns:
+        The display ID if found, otherwise the original ID
+    """
+    if not all([normalized_col, display_col]):
+        return original_id
+
+    matching_pairs = pairs.loc[pairs[normalized_col] == original_id]
+    return matching_pairs[display_col].values[0] if len(matching_pairs) > 0 else original_id
 
 
 def generate_predictions_reports(
@@ -611,7 +637,7 @@ def generate_predictions_reports(
         include_edge_directions: Whether to include the edge directions in the report.
         num_paths_per_pair_limit: Optional cut-off for the number of paths per pair.
         pairs: Dataset of drug-disease pairs corresponding to the predictions.
-            This is used to get alternative drug and disease IDs for display (useful when KG used for MOA predictions doesn't match those used for treats score outputs).
+            This is used to get alternative drug and disease IDs for display (useful for consistency in sharing results).
         normalized_drug_col: The name of the column containing the normalized drug IDs.
         normalized_disease_col: The name of the column containing the normalized disease IDs.
         display_drug_col: The name of the column containing the alternative drug IDs.
@@ -643,15 +669,9 @@ def generate_predictions_reports(
         drug_id = predictions_df.iloc[0]["source_id"]
         disease_id = predictions_df.iloc[0]["target_id"]
 
-        # Optionally, get alternative drug and disease IDs for display purposes
-        if normalized_drug_col is not None and display_drug_col is not None:
-            drug_id_display = pairs.loc[pairs[normalized_drug_col] == drug_id][display_drug_col].values[0]
-        else:
-            drug_id_display = drug_id
-        if normalized_disease_col is not None and display_disease_col is not None:
-            disease_id_display = pairs.loc[pairs[normalized_disease_col] == disease_id][display_disease_col].values[0]
-        else:
-            disease_id_display = disease_id
+        # Get display IDs for drug and disease
+        drug_id_display = _get_display_id(drug_id, pairs, normalized_drug_col, display_drug_col)
+        disease_id_display = _get_display_id(disease_id, pairs, normalized_disease_col, display_disease_col)
 
         # Create the pair information dataframe
         pair_info = pd.DataFrame(
