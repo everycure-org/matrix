@@ -1,8 +1,4 @@
 spark.sql.execution.arrow.pyspark.enabled: true
-# only using this for ensure small partitions are not
-# coalesced for spark node embeddings, needs to be removed
-# after Ray redesign
-spark.sql.adaptive.coalescePartitions.enabled: false
 spark.scheduler.mode: FAIR
 spark.driver.memory: 30g
 # only using this due to 
