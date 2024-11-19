@@ -13,6 +13,7 @@ from matrix.pipelines.matrix_generation.pipeline import create_pipeline as creat
 from matrix.pipelines.modelling.pipeline import create_pipeline as create_modelling_pipeline
 from matrix.pipelines.preprocessing.pipeline import create_pipeline as create_preprocessing_pipeline
 from matrix.pipelines.bte.pipeline import create_pipeline as create_bte_pipeline
+from matrix.pipelines.ah_evaluation.pipeline import create_pipeline as create_ah_pipeline
 
 
 def register_pipelines() -> Dict[str, Pipeline]:
@@ -33,6 +34,7 @@ def register_pipelines() -> Dict[str, Pipeline]:
         "bte": create_bte_pipeline(),
         "modelling": create_modelling_pipeline(),
         "matrix_generation": create_matrix_pipeline(),
+        "ah": create_ah_pipeline(),
         "evaluation": create_evaluation_pipeline(),
         "inference": create_inference_pipeline(),  # Run manually based on medical input
     }

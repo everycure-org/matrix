@@ -1,0 +1,11 @@
+normalization:
+  MAX_RETRIES: 3
+  BATCH_SIZE: 4000
+  MAX_WORKERS: 100
+  NORMALIZATION_URL: ${oc.env:NODENORM_ENDPOINT, https://nodenorm.transltr.io/1.5/get_normalized_nodes}
+
+extraction:
+  MAX_RETRIES: 3
+  BATCH_SIZE: 4000
+  MAX_WORKERS: 100
+  API_URL: ${oc.env:ANNOTATOR_API_URL, https://annotator.ci.transltr.io/curie/}

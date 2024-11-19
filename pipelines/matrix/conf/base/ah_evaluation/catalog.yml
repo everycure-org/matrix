@@ -1,0 +1,74 @@
+_pandas_csv: &_pandas_csv
+  type: pandas.CSVDataset
+  save_args:
+    index: False
+
+_json_ds: &_json_ds
+  type: json.JSONDataset
+  save_args:
+    indent: 2
+
+_raw_ds: &_raw_ds
+  metadata:
+    kedro-viz:
+      layer: raw
+
+_intermediate_ds: &_intermediate_ds
+  metadata:
+    kedro-viz:
+      layer: intermediate
+
+_reporting_ds: &_reporting_ds
+  metadata:
+    kedro-viz:
+      layer: reporting
+
+input_df:
+  <<: [*_pandas_csv, *_raw_ds]
+  filepath: data/ah_eval/input/predictions.csv
+
+tsv_df:
+  <<: [*_pandas_csv, *_raw_ds]
+  filepath: data/ah_eval/input/matrix_indicationList.tsv
+  load_args:
+    sep: "\t"
+
+norm_cache:
+  <<: [*_json_ds, *_intermediate_ds]
+  filepath: data/ah_eval/cache/norm_cache.json
+
+updated_norm_cache:
+  <<: [*_json_ds, *_intermediate_ds]
+  filepath: data/ah_eval/cache/norm_cache.json
+
+failed_ids:
+  <<: [*_json_ds, *_intermediate_ds]
+  filepath: data/ah_eval/cache/failed_ids.json
+
+approval_cache:
+  <<: [*_json_ds, *_intermediate_ds]
+  filepath: data/ah_eval/cache/approval_cache.json
+
+updated_approval_cache:
+  <<: [*_json_ds, *_intermediate_ds]
+  filepath: data/ah_eval/cache/approval_cache.json
+
+officially_indicated_pairs:
+  <<: [*_json_ds, *_intermediate_ds]
+  filepath: data/ah_eval/cache/officially_indicated_pairs.json
+
+normalized_df:
+  <<: [*_pandas_csv, *_intermediate_ds]
+  filepath: data/ah_eval/output/annotated_data/normalized_predictions.csv
+
+indicated_df:
+  <<: [*_pandas_csv, *_intermediate_ds]
+  filepath: data/ah_eval/output/annotated_data/normalized_predictions_with_indicated_pair.csv
+
+approved_df:
+  <<: [*_pandas_csv, *_reporting_ds]
+  filepath: data/ah_eval/output/annotated_data/approved_normalized_predictions.csv
+
+statistics:
+  <<: [*_json_ds, *_reporting_ds]
+  filepath: data/ah_eval/output/statistics/statistics.json
