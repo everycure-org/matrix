@@ -52,9 +52,7 @@ def generate_trapi_query(curie: str) -> dict[str, Any]:
     }
 
 
-def generate_queries(
-    disease_list: pd.DataFrame, n_diseases_limit: int
-) -> Iterator[dict]:
+def generate_queries(disease_list: pd.DataFrame, n_diseases_limit: int) -> Iterator[dict]:
     """Generate TRAPI queries from the disease list.
 
     Args:
@@ -152,9 +150,7 @@ async def post_async_query(client: httpx.AsyncClient, url: str, payload: dict) -
 
 
 @retry(
-    retry=retry_if_exception_type(
-        (httpx.HTTPStatusError, httpx.RequestError, ValueError)
-    ),
+    retry=retry_if_exception_type((httpx.HTTPStatusError, httpx.RequestError, ValueError)),
     stop=stop_after_attempt(8),
     wait=wait_exponential(multiplier=4, max=60),
     reraise=True,
@@ -209,9 +205,7 @@ async def check_async_job_status(
             response.raise_for_status()
             response_json = response.json()
             status = response_json.get("status", "Unknown")
-            description = response_json.get(
-                "description", "No status description provided."
-            )
+            description = response_json.get("description", "No status description provided.")
 
             if status == "Completed" and response_json.get("response_url"):
                 return await fetch_final_results(client, response_json["response_url"])
@@ -225,16 +219,12 @@ async def check_async_job_status(
             logging.exception(f"Error while checking job status for {job_url}: {e}")
             await asyncio.sleep(job_check_sleep)
         except Exception as e:
-            logging.exception(
-                f"Unexpected error while checking job status for {job_url}: {e}"
-            )
+            logging.exception(f"Unexpected error while checking job status for {job_url}: {e}")
             await asyncio.sleep(job_check_sleep)
 
 
 @retry(
-    retry=retry_if_exception_type(
-        (httpx.HTTPError, asyncio.TimeoutError, ValueError, KeyError, Exception)
-    ),
+    retry=retry_if_exception_type((httpx.HTTPError, asyncio.TimeoutError, ValueError, KeyError, Exception)),
     stop=stop_after_attempt(5),
     wait=wait_exponential(multiplier=4, max=60),
     reraise=True,
@@ -271,9 +261,7 @@ async def process_query(
     index = query["index"]
 
     async with semaphore:
-        initial_response_data = await post_async_query(
-            client, async_query_url, query_dict
-        )
+        initial_response_data = await post_async_query(client, async_query_url, query_dict)
         if not initial_response_data.get("job_url"):
             raise ValueError("Invalid initial response structure.")
 
@@ -286,16 +274,10 @@ async def process_query(
             "Success",
         ]:
             final_response_data.update({"curie": curie, "index": index})
-            transformed_results = transform_result(
-                final_response_data, drug_set1, drug_set2, drug_mapping_dict
-            )
+            transformed_results = transform_result(final_response_data, drug_set1, drug_set2, drug_mapping_dict)
             return transformed_results
         else:
-            status = (
-                final_response_data.get("status", "Unknown")
-                if final_response_data
-                else "Unknown"
-            )
+            status = final_response_data.get("status", "Unknown") if final_response_data else "Unknown"
             raise Exception(f"Query failed with status: {status}")
 
 
