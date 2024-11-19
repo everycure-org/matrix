@@ -254,8 +254,8 @@ This environment set-up also allows to locally run the pipeline end-to-end with 
 
 **Caution:** The set-up is currently highly manual and should not be considered a long-term solution. 
 
-1. Run the `data_release` pipeline to generate a neo4j database containing the knowledge graph on your local machine. Make sure to add the `RELEASE_VERSION = <release version>` (with the release version being the version of the knowledge graph you want to use) to the `pipelines/matrix/.env` file.
-2. Additionally, ensure you have the following lines in `pipelines/matrix/.env`:
+1. Run the `data_release` pipeline to generate a neo4j database containing the desired knowledge graph on your local machine. Using a release version with a smaller KG is recommended, for instance, `v0.2.4-rtx-only`.
+2. Ensure you have the following lines in `pipelines/matrix/.env`:
     ```yaml
     # OpenAI configuration
     OPENAI_API_KEY=dummy
@@ -273,33 +273,34 @@ This environment set-up also allows to locally run the pipeline end-to-end with 
     This is to disable MLFlow tracking for the MOA extraction pipeline.
 4. Create a file `conf/local/moa_extraction/parameters.yml` and add the following lines:
     ```yaml
-    moa_extraction:
-      gdb:
-        database: <release version>
+   moa_extraction:
+  gdb_two_hop:
+    database: <neo4j database>
+  gdb_three_hop:
+    database: <neo4j database>
 
-      path_mapping:
-        mapper_two_hop: 
-          max_entries: 10 # Restrict number of datapoints in DrugMechDB
-        mapper_three_hop: 
-          max_entries: 10 # Restrict number of datapoints in DrugMechDB
+  path_mapping:
+    mapper_two_hop: 
+      max_entries: 10 # Restrict number of datapoints in DrugMechDB
+    mapper_three_hop: 
+      max_entries: 10 # Restrict number of datapoints in DrugMechDB
 
-      predictions:
-        num_pairs_limit: 10 # Restrict number of pairs in predictions
+  predictions:
+    num_pairs_limit: 10 # Restrict number of pairs in predictions
     ```
-5. Run the `moa_extraction` pipeline on your local machine using the command:
+    This truncates the input data and ensures that queries are run against the 
+    Here `<neo4j database>` is the database used in step 1.  
+5. Create a file `conf/local/globals.yml` and add the following lines:
+    ```yaml
+    paths:
+      integration: data/test/releases/test-release/datasets/integration
     ```
-    kedro run -p moa_extraction -e local --runner=ThreadRunner
+6. Run the `moa_extraction` pipeline on your local machine using the command:
     ```
+    kedro run -p moa_extraction -e local
+    ```
+> **Note 1**: Do not use `ThreadRunner` with this configuration. 
 
-To run the pipeline locally with full data, modify the `parameters.yml` file as follows:
-  ```yaml
-  moa_extraction:
-    gdb:
-      database: <release version>
+> **Note 2**: Please ensure that `<neo4j database>` is the same database used in step 1 and is not called `analytics_two_hop` or `analytics_three_hop`.
 
-    predictions:
-      num_pairs_limit: None 
-  ```
-  Note that this will take several hours to complete, with the majority of the time being spent on running sequential neo4j queries to extract paths in the path mapping, negative sampling, evaluation and prediction steps.
-
-  > **Future work**: We aim to implement a parallelised version of the path extraction in the future, which will run several queries simultaneously.
+  > **Future work**: We aim to implement a parallelised version of the path extraction steps of the pipeline in the future, which will run several queries simultaneously.
