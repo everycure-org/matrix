@@ -36,7 +36,6 @@ tenacity
 pytest-mock
 pytest-cov
 pandera
-bmt>=1.4.0 # biolink model toolkit
 rich
 ruff==0.6.8 # Matches pre-commit version
 # Temp. fix for the gcloud cli
