@@ -8,21 +8,29 @@ fabricator.rtx_kg2:
       name:
         type: generate_unique_id
         prefix: name_
+      all_names:string[]:
+        type: faker
+        provider: name
       category:
         type: generate_values
         sample_values:
           - biolink:Drug
           - biolink:Disease
-      all_names:string[]:
-        type: faker
-        provider: name
+          - biolink:Gene
+          - biolink:Protein
       # due to the intricacies of biolink, we simply assign the same categories here
       all_categories:string[]:
         type: row_apply
-        list_of_values: [category]
-        row_func: "lambda *args: [args[0]]"
+        list_of_values: [nodes.category]
+        row_func: matrix.pipelines.fabricator.generators.get_all_categories_for_category
+        row_func_kwargs:
+          delimiter: "\u01c2"
         resize: True
         seed: 590590
+      iri:
+        type: faker
+        provider: url
+
       description:
         type: generate_unique_id
         prefix: description_
@@ -132,9 +140,11 @@ fabricator.rtx_kg2:
     num_rows: 20
     columns:
       curie: 
-        type: row_apply
-        list_of_values: [nodes.id:ID, nodes.name]
-        row_func: "lambda *args: args[0]"
+        type: column_apply
+        list_of_values: [nodes.id:ID, nodes.category]
+        column_func: matrix.pipelines.fabricator.generators.filter_by_category
+        column_func_kwargs:
+          category: "biolink:Drug"
         resize: True
         seed: 6850
       name: 
@@ -186,9 +196,11 @@ fabricator.rtx_kg2:
     num_rows: 30
     columns:
       curie: 
-        type: row_apply
-        list_of_values: [nodes.id:ID, nodes.name]
-        row_func: "lambda *args: args[0]"
+        type: column_apply
+        list_of_values: [nodes.id:ID, nodes.category]
+        column_func: matrix.pipelines.fabricator.generators.filter_by_category
+        column_func_kwargs:
+          category: "biolink:Disease"
         resize: True
         seed: 95690
       name: 
@@ -298,6 +310,8 @@ fabricator.robokop:
             - biolink:Entity
             - biolink:ThingWithTaxon
             - biolink:BiologicalEntity
+            - biolink:Drug
+            - biolink:Disease
             - biolink:SequenceVariant
             - biolink:NamedThing
             - biolink:OntologyClass
