@@ -94,7 +94,7 @@ embeddings.tmp.input_edges:
     query: >
       MATCH (subject:Entity {id: event.subject}), (object:Entity {id: event.object})
       WITH subject, object, event
-      CALL apoc.create.relationship(subject, event.label, object) YIELD rel
+      CALL apoc.create.relationship(subject, event.label, {}, object) YIELD rel
       RETURN rel
 
 embeddings.feat.include_in_topological@yaml:
