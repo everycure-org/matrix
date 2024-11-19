@@ -121,6 +121,9 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: metadata.labels['workflows.argoproj.io/workflow']
+        - name: RELEASE_FOLDER_NAME
+          value: {% raw %} "{{workflow.parameters.release_folder_name}}" 
+          {% endraw %}
         - name: RUN_NAME
           value: {% raw %} "{{workflow.parameters.run_name}}" 
           {% endraw %}
