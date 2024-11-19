@@ -45,7 +45,7 @@ The following diagram illustrates the overall MOA extraction pipeline:
 
 Currently, there are two separate pipelines which must be run in sequence:
 
-1. **DrugMechDB entity resolution pipeline** This is run once locally. Uses a Node synonymizer to map all entities appearing in DrugMechDB to the KG. To run this pipeline on your local machine, writing to GCS storage, use the command: 
+1. **MOA entity resolution pipeline** This is run once locally. Uses a Node synonymizer to map all entities appearing in DrugMechDB to the KG. To run this pipeline on your local machine, writing to GCS storage, use the command: 
 ```
 kedro run -p moa_entity_resolution -e  cloud
 ```  
@@ -57,6 +57,7 @@ kedro submit --username <your name> --pipeline <moa_extraction>
 The main MOA extraction pipeline itself has four separate components. 
 
 1. **Preprocessing**:
+    - Generate neo4j databases for running queries in the rest of the pipeline.
     - Map paths in the DrugMechDB to the knowledge graph using the mapped DrugMechDB entities. Report the success rate.
     - Performs test/train split. 
     - Any other preprocessing task such as preparing one-hot encoders for the node categories and edge predicates. 
@@ -243,14 +244,12 @@ Here:
 > **Future work**: It may also be useful to investigate other sampling methods, for instance, swapping out intermediate nodes with random nodes, or randomly swapping edge predicates.
 
 
-## Local runs for a more accurate testing environment
+## Local runs for a more accurate testing environment (optional)
 
 While the `moa_extraction` pipeline works in the `test` environment with fabricated data, there is currently one drawback, namely that a mock path mapping strategy is utilised in place of the strategy utilised with full data.
 This is due to the complexity of generating a fabricated version of DrugMechDB which generates mapped paths on a fabricated KG. 
 
-For this reason, a local environment may be set up, which uses the full knowledge graph but a limited amount of input data. This pipeline will run in less than 5 minutes. 
-
-This environment set-up also allows to locally run the pipeline end-to-end with full data if desired. 
+For this reason, a local environment may be set up, which uses the full knowledge graph but a limited amount of input data. 
 
 **Caution:** The set-up is currently highly manual and should not be considered a long-term solution. 
 
@@ -288,19 +287,22 @@ This environment set-up also allows to locally run the pipeline end-to-end with 
   predictions:
     num_pairs_limit: 10 # Restrict number of pairs in predictions
     ```
-    This truncates the input data and ensures that queries are run against the 
-    Here `<neo4j database>` is the database used in step 1.  
+    This truncates the input data and ensures that queries are run against the database created in step 1.
+    Here `<neo4j database>` is the database created in step 1.  
 5. Create a file `conf/local/globals.yml` and add the following lines:
     ```yaml
     paths:
       integration: data/test/releases/test-release/datasets/integration
     ```
-6. Run the `moa_extraction` pipeline on your local machine using the command:
+    This ensures that pipeline will only generate new neo4j databases with fabricated data. 
+6. Run the test pipeline:
+  ```yaml
+  kedro run -p test -e test
+  ```
+7. You may then the `moa_extraction` pipeline on your local machine using the command:
     ```
     kedro run -p moa_extraction -e local
     ```
 > **Note 1**: Do not use `ThreadRunner` with this configuration. 
 
-> **Note 2**: Please ensure that `<neo4j database>` is the same database used in step 1 and is not called `analytics_two_hop` or `analytics_three_hop`.
-
-  > **Future work**: We aim to implement a parallelised version of the path extraction steps of the pipeline in the future, which will run several queries simultaneously.
+> **Note 2**: Please ensure that `<neo4j database>` is not called `analytics_two_hop` or `analytics_three_hop` as the pipeline will overwrite these databases with a fabricated KG.
