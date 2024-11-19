@@ -17,6 +17,7 @@ fabricator.rtx_kg2:
           - biolink:Drug
           - biolink:Disease
           - biolink:Gene
+          - biolink:ChemicalSubstance
           - biolink:Protein
       # due to the intricacies of biolink, we simply assign the same categories here
       all_categories:string[]:
