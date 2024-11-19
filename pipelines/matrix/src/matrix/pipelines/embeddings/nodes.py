@@ -192,7 +192,7 @@ def compute_embeddings(
     return shards
 
 
-@retry(wait=wait_exponential(multiplier=1, min=2, max=10), stop=stop_after_attempt(3))  # does retry work on async?
+@retry(wait=wait_exponential(multiplier=1, min=2, max=10), stop=stop_after_attempt(3))
 async def compute_df_embeddings_async(df: pd.DataFrame, embedding_model) -> pd.DataFrame:
     try:
         # Embed entities in batch mode
@@ -265,10 +265,10 @@ def ingest_edges(nodes, edges: DataFrame):
 
 
 @inject_object()
-def add_include_in_graphsage(df: DataFrame, gdb: GraphDB, drug_types: List[str], disease_types: List[str]) -> Dict:
+def add_include_in_topological(df: DataFrame, gdb: GraphDB, drug_types: List[str], disease_types: List[str]) -> Dict:
     """Function to add include_in_graphsage property.
 
-    Only edges between non drug-disease pairs are included in graphsage.
+    Only edges between non drug-disease pairs are included in topological algorithm.
     """
     with gdb.driver() as driver:
         driver.execute_query(
