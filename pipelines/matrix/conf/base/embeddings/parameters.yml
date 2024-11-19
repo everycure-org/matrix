@@ -22,14 +22,16 @@ embeddings.node:
     object: langchain_openai.OpenAIEmbeddings
     model: text-embedding-3-small
     openai_api_key: ${oc.env:OPENAI_API_KEY}
-    dimensions: 100
     timeout: 10
+    # FUTURE: Experiment with performing dimensionality reduction
+    # using OpenAI directly
+    # dimensions: 100 
 
 # Defines strategy used to reduce dimensions of the GenAI
 # generated node embeddings.
 # https://spark.apache.org/docs/latest/api/python/reference/api/pyspark.ml.feature.PCA.html
 embeddings.dimensionality_reduction:
-  skip: true # NOTE: Currently skipping PCA as performed by OpenAI directly
+  skip: true
   input: embedding
   output: &_pca_property 'pca_embedding'
   transformer:
