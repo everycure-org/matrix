@@ -70,9 +70,9 @@ spec:
               {% endraw %}
               nvidia.com/gpu: {% raw %} "{{inputs.parameters.num_gpus}}"
               {% endraw %}
-    container: &_kedro_container
+    container:
       imagePullPolicy: Always
-      image: {% raw %} "{{workflow.parameters.image}}:{{workflow.parameters.image_tag}}"        # {{workflow...}} etc. are placeholders within the template. These placeholders will be dynamically substituted with real values when the workflow is submitted, not during the kubectl apply command.
+      image: {% raw %} "{{workflow.parameters.image}}:{{workflow.parameters.image_tag}}"
       {% endraw %}
       env:
         - name: WORKFLOW_ID
@@ -122,7 +122,45 @@ spec:
   - <<: *_kedro_template
     name: neo4j
     container:
-      <<: *_kedro_container
+      imagePullPolicy: Always
+      image: {% raw %} "{{workflow.parameters.image}}:{{workflow.parameters.image_tag}}"
+      {% endraw %}
+      env:
+        - name: WORKFLOW_ID
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.labels['workflows.argoproj.io/workflow']
+        - name: RUN_NAME
+          value: {% raw %} "{{workflow.parameters.run_name}}" 
+          {% endraw %}
+        - name: NEO4J_HOST
+          value: "bolt://127.0.0.1:7687"
+        - name: MLFLOW_ENDPOINT
+          value: {% raw %} "{{workflow.parameters.mlflow_endpoint}}" 
+          {% endraw %}
+        - name: NEO4J_USER
+          value: "neo4j"
+        - name: NEO4J_PASSWORD
+          value: "admin"
+        - name: OPENAI_ENDPOINT
+          value: {% raw %} "{{workflow.parameters.openai_endpoint}}" 
+          {% endraw %}
+        - name: OPENAI_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: matrix-secrets
+              key: OPENAI_API_KEY
+        - name: GCP_PROJECT_ID
+          valueFrom:
+            configMapKeyRef:
+              name: matrix-config
+              key: GCP_PROJECT_ID
+        - name: GCP_BUCKET
+          valueFrom:
+            configMapKeyRef:
+              name: matrix-config
+              key: GCP_BUCKET
+
       command: ["/bin/sh", "-c"]
       args:
         - |
