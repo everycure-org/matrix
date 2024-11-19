@@ -81,7 +81,7 @@ def filter_valid_pairs(
         - Dictionary with retention statistics
     """
     # Get list of nodes in the KG
-    valid_nodes = nodes.select("id").distinct().sample(False, seed=42, fraction=0.5)
+    valid_nodes = nodes.select("id").distinct()
 
     # Filter out pairs where both source and target exist in nodes
     filtered_tp = (
