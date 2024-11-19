@@ -1,20 +1,19 @@
-"""Nodes for the DrugMechDB entity resolution pipeline."""
+"""Node for prenormalizing the DrugMechDB entities.
+
+That is performing the first round of normalization before applying the translator normalization service, so that we increase mapping success.
+"""
 
 import pandas as pd
 import logging
 
-from typing import List, Callable
-from jsonpath_ng import parse
 from tqdm import tqdm
+from typing import List
 
 import pyspark as ps
 import pyspark.sql.functions as F
 from pyspark.sql.types import StringType
 
 from matrix.pipelines.preprocessing.nodes import resolve_name, resolve, normalize
-from matrix.pipelines.integration.nodes import batch_map_ids
-
-from refit.v1.core.inject import inject_object
 
 logger = logging.getLogger(__name__)
 
@@ -136,57 +135,4 @@ def prenormalize_drugmechdb_entities_renci(
         "resolved_curie", F.when(F.col("resolved_curie").isNotNull(), F.col("resolved_curie")).otherwise(F.col("id"))
     )
     nodes_df = nodes.toPandas()
-    return nodes_df
-
-
-@inject_object()
-def normalize_drugmechdb_entities(
-    drug_mech_db: List[dict],
-    prenormalize_func: Callable,
-    api_endpoint: str,
-    json_path_expr: str = "$.id.identifier",
-    conflate: bool = True,
-    drug_chemical_conflate: bool = True,
-    batch_size: int = 100,
-    parallelism: int = 10,
-) -> pd.DataFrame:
-    """Normalize DrugMechDB entities with a combination of the RENCI name resolver and Translator node normalizer.
-
-    Args:
-        drug_mech_db: List of DrugMechDB entries
-        prenormalize_func: Function to prenormalize the DrugMechDB entities prior to sending through the Translator node normalizer service.
-            This must be a function that takes a list of DrugMechDB entries and returns a Pandas dataframe with columns "id", "name" and "resolved_curie".
-        api_endpoint: API endpoint of the translator normalization service
-        json_path_expr: JSON path expression to extract the identifier from the API response
-        conflate: Whether to conflate drug and chemical entities
-        drug_chemical_conflate: Whether to conflate drug and chemical entities
-        batch_size: Batch size for the batch map
-        parallelism: Number of parallel threads to use for the batch map
-    """
-    # Perform prenormalization
-    nodes_df = prenormalize_func(drug_mech_db)
-
-    # Normalize with Translator
-    logger.info("collecting node ids for normalization")
-    node_ids = nodes_df["resolved_curie"].to_list()
-    logger.info(f"collected {len(node_ids)} node ids for normalization. Performing normalization...")
-    node_id_map = batch_map_ids(
-        frozenset(node_ids),
-        api_endpoint,
-        parse(json_path_expr),
-        batch_size,
-        parallelism,
-        conflate,
-        drug_chemical_conflate,
-    )
-    is_na_map = {k: pd.notna(v) for k, v in node_id_map.items()}
-    node_id_map = {k: v for k, v in node_id_map.items() if is_na_map.get(k, False)}
-    nodes_df["resolved_curie"] = nodes_df["resolved_curie"].apply(lambda x: node_id_map.get(x, x))
-    nodes_df["normalization_success"] = nodes_df["resolved_curie"].apply(lambda x: is_na_map.get(x, True))
-
-    # Rename columns
-    nodes_df = nodes_df.rename(
-        columns={"resolved_curie": "mapped_ID", "name": "DrugMechDB_name", "id": "DrugMechDB_ID"}
-    )
-
     return nodes_df

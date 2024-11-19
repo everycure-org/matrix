@@ -47,7 +47,7 @@ Currently, there are two separate pipelines which must be run in sequence:
 
 1. **DrugMechDB entity resolution pipeline** This is run once locally. Uses a Node synonymizer to map all entities appearing in DrugMechDB to the KG. To run this pipeline on your local machine, writing to GCS storage, use the command: 
 ```
-kedro run -p drugmechdb_entity_resolution -e  cloud
+kedro run -p moa_entity_resolution -e  cloud
 ```  
 2. **Main MOA extraction pipeline** Performs all other functionality. To run this pipeline on the cluster, use the command: 
 ```

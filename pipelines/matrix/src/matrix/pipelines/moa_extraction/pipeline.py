@@ -213,13 +213,13 @@ def _predictions_pipeline() -> Pipeline:
                         inputs={
                             "model": f"moa_extraction.models.{num_hops}_hop_model",
                             "runner": f"params:moa_extraction.gdb_{num_hops}_hop",
-                            "pairs": "moa_extraction.raw.pairs_for_moa_prediction",
+                            "pairs": "moa_extraction.raw.pairs_for_moa_prediction_normalized",
                             "path_generator": f"params:moa_extraction.predictions.{num_hops}_hop.path_generator",
                             "path_embedding_strategy": "params:moa_extraction.path_embeddings.strategy",
                             "category_encoder": f"moa_extraction.feat.category_encoder_{num_hops}_hop",
                             "relation_encoder": f"moa_extraction.feat.relation_encoder_{num_hops}_hop",
-                            "drug_col_name": "params:moa_extraction.predictions.drug_col_name",
-                            "disease_col_name": "params:moa_extraction.predictions.disease_col_name",
+                            "normalized_drug_col": "params:moa_extraction.predictions.drug_col_name_predictions",
+                            "normalized_disease_col": "params:moa_extraction.predictions.disease_col_name_predictions",
                             "num_pairs_limit": "params:moa_extraction.predictions.num_pairs_limit",
                             "metrics_dummy": f"moa_extraction.reporting.{num_hops}_hop_metrics",  # This ensures that predictions runs after evaluation so that the argo fuse algo works
                         },
@@ -232,6 +232,11 @@ def _predictions_pipeline() -> Pipeline:
                             "predictions": f"moa_extraction.model_output.{num_hops}_hop_output_predictions",
                             "include_edge_directions": "params:moa_extraction.predictions.include_edge_directions",
                             "num_paths_per_pair_limit": "params:moa_extraction.predictions.num_paths_per_pair_limit",
+                            "pairs": "moa_extraction.raw.pairs_for_moa_prediction_normalized",
+                            "normalized_drug_col": "params:moa_extraction.predictions.drug_col_name_predictions",
+                            "normalized_disease_col": "params:moa_extraction.predictions.disease_col_name_predictions",
+                            "display_drug_col": "params:moa_extraction.predictions.drug_col_name_display",
+                            "display_disease_col": "params:moa_extraction.predictions.disease_col_name_display",
                         },
                         outputs={
                             "excel_reports": f"moa_extraction.reporting.{num_hops}_hop_predictions_report",

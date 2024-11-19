@@ -9,13 +9,17 @@ moa_extraction.raw.drug_mech_db:
   type: yaml.YAMLDataset
   filepath: ${globals:paths.raw}/moa_extraction/drugmechdb/${globals:data_sources.drugmechdb.version}/indication_paths.yaml
   
-moa_extraction.raw.pairs_for_moa_prediction:
+moa_entity_resolution.raw.pairs_for_moa_prediction:
   type: pandas.CSVDataset
   filepath: ${globals:paths.raw}/moa_extraction/input_pairs/${globals:data_sources.pairs_for_moa_prediction.version}/filtered_matrix_report_xg_ensemble_report_17_sept_2024.csv
 
+moa_extraction.raw.pairs_for_moa_prediction_normalized:
+  type: pandas.CSVDataset
+  filepath: ${globals:paths.raw}/moa_extraction/input_pairs/${globals:data_sources.pairs_for_moa_prediction.version}/translator/normalized_pairs.csv
+
 moa_extraction.raw.drugmechdb_entities:
   type: pandas.ParquetDataset
-  filepath: ${globals:paths.raw}/moa_extraction/drugmechdb_entities/renci_translator/drugmechdb_entities.parquet # Replace renci_translator by arax_translator to use ARAX prenormalized entities instead
+  filepath: ${globals:paths.raw}/moa_extraction/drugmechdb_entities/renci_translator/drugmechdb_entities.parquet # renci_translator : RENCI prenormalizer | arax_translator : ARAX prenormalizer
 
 # Neo4j databases
 

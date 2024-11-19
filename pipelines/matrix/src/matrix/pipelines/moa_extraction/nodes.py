@@ -520,9 +520,9 @@ def make_output_predictions(
     path_embedding_strategy: PathEmbeddingStrategy,
     category_encoder: OneHotEncoder,
     relation_encoder: OneHotEncoder,
-    metrics_dummy: Any,  # TODO: Remove or add to docstring
-    drug_col_name: str = "source_id",
-    disease_col_name: str = "target_id",
+    metrics_dummy: Any,
+    normalized_drug_col: str = "source_id",
+    normalized_disease_col: str = "target_id",
     num_pairs_limit: Optional[int] = None,
     score_col_name: str = "MOA_score",
 ) -> Dict[str, KGPaths]:
@@ -531,15 +531,16 @@ def make_output_predictions(
     Args:
         model: The model to make predictions with.
         runner: The GraphDB object representing the KG..
-        pairs: Dataset of drug-disease pairs. Expected columns: (source_id, target_id).
+        pairs: Dataset of drug-disease pairs.
         path_generator: Path generator outputting all paths of interest between a given drug-disease pair.
         path_embedding_strategy: Path embedding strategy.
         category_encoder: One-hot encoder for node categories.
         relation_encoder: One-hot encoder for edge relations.
-        drug_col_name: The name of the column containing the drug IDs.
-        disease_col_name: The name of the column containing the disease IDs.
+        normalized_drug_col: The name of the column containing the normalized drug IDs.
+        normalized_disease_col: The name of the column containing the normalized disease IDs.
         num_pairs_limit: Optional cut-off for the number of pairs. For testing purposes. Defaults to None.
         score_col_name: The name of the column to use for the confidence score.
+        metrics_dummy: Dummy object to ensure that the predictions run after the evaluation metrics.
 
     Returns:
         Dictionary of KGPaths objects, one for each pair.
@@ -547,7 +548,7 @@ def make_output_predictions(
     if type(num_pairs_limit) is str:
         num_pairs_limit = eval(num_pairs_limit)  # eval() to allow None type injection
     pairs = pairs.head(num_pairs_limit) if num_pairs_limit is not None else pairs
-    pairs = pairs.rename(columns={drug_col_name: "source_id", disease_col_name: "target_id"})
+    pairs = pairs.rename(columns={normalized_drug_col: "source_id", normalized_disease_col: "target_id"})
 
     return make_predictions(
         model=model,
@@ -597,7 +598,11 @@ def generate_predictions_reports(
     predictions: Dict[str, KGPaths],
     include_edge_directions: bool = True,
     num_paths_per_pair_limit: int = None,
-    score_col_name: str = "MOA_score",
+    pairs: pd.DataFrame = None,
+    normalized_drug_col: str = None,
+    normalized_disease_col: str = None,
+    display_drug_col: str = None,
+    display_disease_col: str = None,
 ) -> Dict[str, pd.DataFrame]:
     """Generates reports for MOA predictions.
 
@@ -605,6 +610,12 @@ def generate_predictions_reports(
         predictions: Dictionary of KGPaths objects, one for each pair.
         include_edge_directions: Whether to include the edge directions in the report.
         num_paths_per_pair_limit: Optional cut-off for the number of paths per pair.
+        pairs: Dataset of drug-disease pairs corresponding to the predictions.
+            This is used to get alternative drug and disease IDs for display (useful when KG used for MOA predictions doesn't match those used for treats score outputs).
+        normalized_drug_col: The name of the column containing the normalized drug IDs.
+        normalized_disease_col: The name of the column containing the normalized disease IDs.
+        display_drug_col: The name of the column containing the alternative drug IDs.
+        display_disease_col: The name of the column containing the alternative disease IDs.
 
     Returns:
         Dictionary of KGPaths objects, one for each pair.
@@ -628,12 +639,26 @@ def generate_predictions_reports(
         # Squash the directionality
         predictions_df = _squash_directionality(predictions)
 
+        # Get the drug and disease IDs in the predictions
+        drug_id = predictions_df.iloc[0]["source_id"]
+        disease_id = predictions_df.iloc[0]["target_id"]
+
+        # Optionally, get alternative drug and disease IDs for display purposes
+        if normalized_drug_col is not None and display_drug_col is not None:
+            drug_id_display = pairs.loc[pairs[normalized_drug_col] == drug_id][display_drug_col].values[0]
+        else:
+            drug_id_display = drug_id
+        if normalized_disease_col is not None and display_disease_col is not None:
+            disease_id_display = pairs.loc[pairs[normalized_disease_col] == disease_id][display_disease_col].values[0]
+        else:
+            disease_id_display = disease_id
+
         # Create the pair information dataframe
         pair_info = pd.DataFrame(
             {
-                "Drug ID": [predictions_df.iloc[0]["source_id"]],
+                "Drug ID": [drug_id_display],
                 "Drug Name": [predictions_df.iloc[0]["source_name"]],
-                "Disease ID": [predictions_df.iloc[0]["target_id"]],
+                "Disease ID": [disease_id_display],
                 "Disease Name": [predictions_df.iloc[0]["target_name"]],
                 "Total number of paths between pair": [N_paths],
             }
@@ -644,8 +669,8 @@ def generate_predictions_reports(
             predictions_df.head(num_paths_per_pair_limit) if num_paths_per_pair_limit is not None else predictions_df
         )
         cols = predictions_df.columns.to_list()
-        cols = [col for col in cols if "source" not in col]
-        cols = [col for col in cols if "target" not in col]
+        cols = [col for col in cols if "source" not in col]  # Remove source columns
+        cols = [col for col in cols if "target" not in col]  # Remove target columns
         predictions_df = predictions_df[cols]
 
         # Add the pair information and MOA predictions to a multiframe to be exported as Excel

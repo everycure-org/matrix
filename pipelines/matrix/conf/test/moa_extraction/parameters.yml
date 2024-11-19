@@ -66,5 +66,8 @@ moa_extraction:
 
   predictions:
     num_pairs_limit: 10 # For testing purposes only
-    drug_col_name: source
-    disease_col_name: target
+    drug_col_name_predictions: source
+    disease_col_name_predictions: target
+    drug_col_name_display: source
+    disease_col_name_display: target
+
