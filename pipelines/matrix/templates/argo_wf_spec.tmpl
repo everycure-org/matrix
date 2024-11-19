@@ -57,7 +57,6 @@ spec:
         - name: main
           resources:
             requests:
-              # ephemeral-storage: "2Gi" TODO: Check if needed
               memory: {% raw %} "{{inputs.parameters.memory_request}}"
               {% endraw %}
               cpu: {% raw %} "{{inputs.parameters.cpu_request}}"
@@ -73,6 +72,9 @@ spec:
               {% endraw %}
     container: &_kedro_container
       imagePullPolicy: Always
+      resources:
+        requests:
+          ephemeral-storage: "2Gi"
       image: {% raw %} "{{workflow.parameters.image}}:{{workflow.parameters.image_tag}}"        # {{workflow...}} etc. are placeholders within the template. These placeholders will be dynamically substituted with real values when the workflow is submitted, not during the kubectl apply command.
       {% endraw %}
       env:
