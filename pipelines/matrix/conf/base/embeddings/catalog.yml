@@ -97,19 +97,19 @@ embeddings.tmp.input_edges:
       CALL apoc.create.relationship(subject, event.label, {kg_sources: event.kg_sources}, object) YIELD rel
       RETURN rel
 
-embeddings.feat.include_in_graphsage@yaml:
-  filepath: ${globals:paths.embeddings}/feat/graphsage_filter_result.yml
+embeddings.feat.include_in_topological@yaml:
+  filepath: ${globals:paths.embeddings}/feat/topological_filter_result.yml
   type:  yaml.YAMLDataset
 
-embeddings.models.graphsage:
+embeddings.models.topological:
   # we do not actually do anything with this DS, thus it's a dummy
   # https://github.com/kedro-org/kedro/discussions/3758
-  filepath: ${globals:paths.embeddings}/models/graphsage_result.yml
+  filepath: ${globals:paths.embeddings}/models/topological_result.yml
   type:  yaml.YAMLDataset
 
 # NOTE: Dummy catalog entry to enforce Kedro dependency
 # between embedding and modelling pipeline.
-embeddings.model_output.graphsage:
+embeddings.model_output.topological:
   <<: *_neo4j_ds
   save_args:
     # Dummy Query that never gets written to because we use GDS to execute the write-back of graphsage

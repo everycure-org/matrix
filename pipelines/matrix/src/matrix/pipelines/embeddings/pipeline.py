@@ -69,15 +69,15 @@ def create_pipeline(**kwargs) -> Pipeline:
                 ],
             ),
             node(
-                func=nodes.add_include_in_graphsage,
+                func=nodes.add_include_in_topological,
                 inputs={
                     "df": "embeddings.tmp.input_edges",
                     "gdb": "params:embeddings.gdb",
                     "drug_types": "params:modelling.drug_types",
                     "disease_types": "params:modelling.disease_types",
                 },
-                outputs="embeddings.feat.include_in_graphsage@yaml",
-                name="filter_graphsage",
+                outputs="embeddings.feat.include_in_topological@yaml",
+                name="filter_topological",
                 tags=[
                     "argowf.fuse",
                     "argowf.fuse-group.topological_embeddings",
@@ -87,12 +87,12 @@ def create_pipeline(**kwargs) -> Pipeline:
             node(
                 func=nodes.train_topological_embeddings,
                 inputs={
-                    "df": "embeddings.feat.include_in_graphsage@yaml",
+                    "df": "embeddings.feat.include_in_topological@yaml",
                     "gds": "params:embeddings.gds",
                     "topological_estimator": "params:embeddings.topological_estimator",
                     "unpack": "params:embeddings.topological",
                 },
-                outputs=["embeddings.models.graphsage", "embeddings.reporting.loss"],
+                outputs=["embeddings.models.topological", "embeddings.reporting.loss"],
                 name="train_topological_embeddings",
                 tags=[
                     "argowf.fuse",
@@ -103,12 +103,12 @@ def create_pipeline(**kwargs) -> Pipeline:
             node(
                 func=nodes.write_topological_embeddings,
                 inputs={
-                    "model": "embeddings.models.graphsage",
+                    "model": "embeddings.models.topological",
                     "gds": "params:embeddings.gds",
                     "topological_estimator": "params:embeddings.topological_estimator",
                     "unpack": "params:embeddings.topological",
                 },
-                outputs="embeddings.model_output.graphsage",
+                outputs="embeddings.model_output.topological",
                 name="add_topological_embeddings",
                 tags=[
                     "argowf.fuse",
@@ -121,7 +121,7 @@ def create_pipeline(**kwargs) -> Pipeline:
             node(
                 func=nodes.extract_node_embeddings,
                 inputs={
-                    "embeddings": "embeddings.model_output.graphsage",
+                    "embeddings": "embeddings.model_output.topological",
                     "nodes": "integration.prm.filtered_nodes",
                     "string_col": "params:embeddings.write_topological_col",
                 },
