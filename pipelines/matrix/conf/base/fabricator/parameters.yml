@@ -16,18 +16,13 @@ fabricator.rtx_kg2:
       all_names:string[]:
         type: faker
         provider: name
+      # due to the intricacies of biolink, we simply assign the same categories here
       all_categories:string[]:
-        type: generate_values
-        sample_values:
-          - biolink:Drug
-          - biolink:Disease
-          - biolink:Gene
-          - biolink:ChemicalSubstance
-          - biolink:Protein
-          - biolink:SmallMolecule
-      iri:
-        type: faker
-        provider: url
+        type: row_apply
+        list_of_values: [category]
+        row_func: "lambda *args: [args[0]]"
+        resize: True
+        seed: 590590
       description:
         type: generate_unique_id
         prefix: description_
