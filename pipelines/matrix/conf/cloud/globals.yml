@@ -25,4 +25,5 @@ paths:
   matrix_generation:  ${gcs_bucket}/kedro/data/releases/${versions.release}/runs/${run_name}/datasets/matrix_generation
   inference:          ${gcs_bucket}/kedro/data/releases/${versions.release}/runs/${run_name}/datasets/inference
 
-  template:           /tmp
+  # NOTE: Ensure to use k8s emphemeral storage
+  tmp:           /tmp
