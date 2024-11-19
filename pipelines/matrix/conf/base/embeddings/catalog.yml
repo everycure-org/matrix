@@ -19,7 +19,9 @@ _spark_parquet_ds: &_spark_parquet
       layer: embeddings
 
 _pandas_parquet: &_pandas_parquet
-  type: pandas.ParquetDataset
+  type: matrix.datasets.graph.PandasParquetDataset
+  load_args:
+    as_type: str
       
 # -------------------------------------------------------------------------
 # Datasets

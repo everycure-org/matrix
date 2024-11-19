@@ -163,15 +163,14 @@ def bucketize_df(df: DataFrame, bucket_size: int, input_features: List[str], max
 
 @inject_object()
 def compute_embeddings(
-    dfs: Dict[str, DataFrame],
+    dfs: Dict[str, Any],
     model: Dict[str, Any],
 ):
     """Function to bucketize input data.
 
     Args:
-        df: input df
-        features: features to include to compute embeddings
-        config: configuration for the model
+        dfs: mapping of paths to df load functions
+        model: model to run
     """
 
     # NOTE: Inner function to avoid reference issues on unpacking
@@ -193,7 +192,7 @@ def compute_embeddings(
     return shards
 
 
-@retry(wait=wait_exponential(multiplier=1, min=2, max=10), stop=stop_after_attempt(3))
+@retry(wait=wait_exponential(multiplier=1, min=2, max=10), stop=stop_after_attempt(3))  # does retry work on async?
 async def compute_df_embeddings_async(df: pd.DataFrame, embedding_model) -> pd.DataFrame:
     try:
         # Embed entities in batch mode
@@ -389,6 +388,7 @@ def extract_node_embeddings(embeddings: DataFrame, nodes: DataFrame, string_col:
     """
 
     if isinstance(embeddings.schema[string_col].dataType, StringType):
+        print("converting embeddings to float")
         embeddings = embeddings.withColumn(string_col, F.from_json(F.col(string_col), T.ArrayType(T.DoubleType())))
 
     return (

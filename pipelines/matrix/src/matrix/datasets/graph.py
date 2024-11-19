@@ -71,6 +71,31 @@ class KnowledgeGraph:
 
 
 class PandasParquetDataset(ParquetDataset):
+    def __init__(  # noqa: PLR0913
+        self,
+        *,
+        filepath: str,
+        load_args: dict[str, Any] | None = None,
+        save_args: dict[str, Any] | None = None,
+        version: Version | None = None,
+        credentials: dict[str, Any] | None = None,
+        fs_args: dict[str, Any] | None = None,
+        metadata: dict[str, Any] | None = None,
+    ) -> None:
+        self._as_type = None
+        if load_args is not None:
+            self._as_type = load_args.pop("as_type", None)
+
+        super().__init__(
+            filepath=filepath,
+            load_args=load_args,
+            save_args=save_args,
+            version=version,
+            credentials=credentials,
+            fs_args=fs_args,
+            metadata=metadata,
+        )
+
     def _load(self) -> KnowledgeGraph:
         attempt = 0
 
@@ -80,7 +105,12 @@ class PandasParquetDataset(ParquetDataset):
             try:
                 # Attempt reading the object
                 # https://github.com/everycure-org/matrix/issues/71
-                return super()._load()
+                df = super()._load()
+
+                if self._as_type:
+                    return df.astype(self._as_type)
+
+                return df
             except FileNotFoundError:
                 attempt += 1
                 logger.warning("Parquet file not found, retrying!")
