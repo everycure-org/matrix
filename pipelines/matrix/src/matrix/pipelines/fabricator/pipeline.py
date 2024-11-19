@@ -53,6 +53,18 @@ def create_pipeline(**kwargs) -> Pipeline:
     return pipeline(
         [
             node(
+                func=generate_biolink_sample_kg,
+                inputs={
+                    "nodes_per_type": "params:fabricator.starter_kg.counts.nodes_count",
+                    "edge_count": "params:fabricator.starter_kg.counts.edges_count",
+                },
+                outputs={
+                    "nodes": "fabricator.starter_kg.nodes",
+                    "edges": "fabricator.starter_kg.edges",
+                },
+                name="generate_biolink_sample_kg",
+            ),
+            node(
                 func=fabricate_datasets,
                 inputs={"fabrication_params": "params:fabricator.rtx_kg2"},
                 outputs={
