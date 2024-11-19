@@ -18,6 +18,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 },
                 outputs="embeddings.feat.bucketized_nodes@spark",
                 name="bucketize_nodes",
+                tags=["argowf.fuse", "argowf.fuse-group.node_embeddings"],
             ),
             # Compute embeddings
             node(
@@ -28,6 +29,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 },
                 outputs="embeddings.feat.graph.node_embeddings@partitioned",
                 name="add_node_embeddings",
+                tags=["argowf.fuse", "argowf.fuse-group.node_embeddings"],
             ),
             # Reduce dimension
             node(
@@ -38,6 +40,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 },
                 outputs="embeddings.feat.graph.pca_node_embeddings",
                 name="apply_pca",
+                tags=["argowf.fuse", "argowf.fuse-group.node_embeddings"],
             ),
             # Load spark dataset into local neo instance
             node(
