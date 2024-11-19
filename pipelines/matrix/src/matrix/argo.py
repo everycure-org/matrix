@@ -1,13 +1,29 @@
 import re
 from pathlib import Path
-from typing import Any, List, Optional
+from typing import Any, Dict, List, Optional
 
+import yaml
 from jinja2 import Environment, FileSystemLoader
 from kedro.pipeline import Pipeline
 from kedro.pipeline.node import Node
 
+from matrix.kedro4argo_node import ArgoNode, ArgoResourceConfig
+
 ARGO_TEMPLATE_FILE = "argo_wf_spec.tmpl"
 ARGO_TEMPLATES_DIR_PATH = Path(__file__).parent.parent.parent / "templates"
+
+
+def get_pipeline2dependencies(
+    pipelines: Dict[str, Pipeline], default_execution_resources: ArgoResourceConfig
+) -> Dict[str, List[Dict[str, Any]]]:
+    pipeline2dependencies = {}
+    for name, pipeline in pipelines.items():
+        # Fuse nodes in topological order to avoid constant recreation of Neo4j
+        # TODO: refactor this to use ArgoNode.
+        #   (1) FuseNode should be replaced by K8sNode OR new FusedPipeline object.
+        #   (2) Get Dependencies should be internal to ArgoNode, removing if from here.
+        pipeline2dependencies[name] = get_dependencies(fuse(pipeline), default_execution_resources)
+    return pipeline2dependencies
 
 
 def generate_argo_config(
@@ -16,30 +32,42 @@ def generate_argo_config(
     image_tag: str,
     namespace: str,
     username: str,
-    pipeline_name: str,
-    pipeline: Pipeline,
+    pipelines: Dict[str, Pipeline],
+    pipeline_for_execution: str,
     package_name: str,
     release_folder_name: str,
+    default_execution_resources: Optional[ArgoResourceConfig] = None,
 ) -> str:
+    if default_execution_resources is None:
+        default_execution_resources = ArgoResourceConfig()
+
     loader = FileSystemLoader(searchpath=ARGO_TEMPLATES_DIR_PATH)
     template_env = Environment(loader=loader, trim_blocks=True, lstrip_blocks=True)
     template = template_env.get_template(ARGO_TEMPLATE_FILE)
 
-    pipeline_dependencies = get_dependencies(fuse(pipeline))
+    pipeline2dependencies = get_pipeline2dependencies(pipelines, default_execution_resources)
 
+    # TODO: After it is possible to configure resources on node level, remove the use_gpus flag.
     output = template.render(
         package_name=package_name,
-        pipeline_name=pipeline_name,
-        pipeline=pipeline_dependencies,
+        pipelines=pipeline2dependencies,
+        pipeline_for_execution=pipeline_for_execution,
         image=image,
         image_tag=image_tag,
         namespace=namespace,
         username=username,
         run_name=run_name,
         release_folder_name=release_folder_name,
+        default_execution_resources=default_execution_resources.model_dump(),
     )
 
-    return output
+    # Load the rendered YAML into a Python object
+    yaml_data = yaml.safe_load(output)
+
+    # Dump the final YAML without anchors
+    final_yaml = yaml.dump(yaml_data, sort_keys=False, default_flow_style=False)
+
+    return final_yaml
 
 
 class FusedNode(Node):
@@ -53,15 +81,21 @@ class FusedNode(Node):
         self._parents = set()
         self._inputs = []
         self.depth = depth
+        self.argo_config = None
 
     def add_node(self, node):
         """Function to add node to group."""
         self._nodes.append(node)
+        if isinstance(node, ArgoNode) and self.argo_config is None:
+            self.argo_config = node.argo_config
+        elif isinstance(node, ArgoNode):
+            self.argo_config.fuse_config(node.argo_config)
 
     def add_parents(self, parents: List) -> None:
         """Function to set the parents of the group."""
         self._parents.update(set(parents))
 
+    # TODO: This is not used. Delete during refactoring.
     def fuses_with(self, node) -> bool:
         """Function verify fusability."""
         # If not is not fusable, abort
@@ -195,6 +229,11 @@ def fuse(pipeline: Pipeline) -> List[FusedNode]:
             # as an independent node to the result, which implies it will be executed
             # using it's own Argo node unless a downstream node will be fused to it.
             else:
+                if isinstance(target_node, ArgoNode):
+                    argo_config = target_node.argo_config
+                else:
+                    argo_config = None
+
                 fused_node = FusedNode(depth)
                 fused_node.add_node(target_node)
                 fused_node.add_parents(
@@ -205,33 +244,46 @@ def fuse(pipeline: Pipeline) -> List[FusedNode]:
                         & set(FusedNode.clean_dependencies(fs.outputs))
                     ]
                 )
+                fused_node.argo_config = argo_config
                 fused.append(fused_node)
 
     return fused
 
 
-def get_dependencies(fused_pipeline: List[FusedNode]):
+def get_dependencies(
+    fused_pipeline: List[FusedNode], default_execution_resources: ArgoResourceConfig
+) -> List[Dict[str, Any]]:
     """Function to yield node dependencies to render Argo template.
+
+    Resources are added to the task if they are different from the default.
 
     Args:
         fused_pipeline: fused pipeline
+        default_execution_resources: default execution resources
     Return:
         Dictionary to render Argo template
     """
-    deps_dict = [
-        {
-            "name": clean_name(fuse.name),
-            "nodes": fuse.nodes,
-            "deps": [clean_name(val.name) for val in sorted(fuse._parents)],
-            "tags": fuse.tags,
-            **{
-                tag.split("-")[0][len("argowf.") :]: tag.split("-")[1]
-                for tag in fuse.tags
-                if tag.startswith("argowf.") and "-" in tag
-            },
-        }
-        for fuse in fused_pipeline
-    ]
+    deps_dict = []
+    for fuse in fused_pipeline:
+        resources = (
+            {"resources": fuse.argo_config.model_dump()}
+            if fuse.argo_config
+            else {"resources": default_execution_resources.model_dump()}
+        )
+        deps_dict.append(
+            {
+                "name": clean_name(fuse.name),
+                "nodes": fuse.nodes,
+                "deps": [clean_name(val.name) for val in sorted(fuse._parents)],
+                "tags": fuse.tags,
+                **{
+                    tag.split("-")[0][len("argowf.") :]: tag.split("-")[1]
+                    for tag in fuse.tags
+                    if tag.startswith("argowf.") and "-" in tag
+                },
+                **resources,
+            }
+        )
     return sorted(deps_dict, key=lambda d: d["name"])
 
 
