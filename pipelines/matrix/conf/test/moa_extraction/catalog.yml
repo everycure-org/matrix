@@ -1,6 +1,6 @@
-moa_extraction.raw.pairs_for_moa_prediction:
+moa_extraction.raw.pairs_for_moa_prediction: # Use fabricated ground truth for testing MOA predictions
   type: pandas.CSVDataset
-  filepath: ${globals:paths.raw}/ground_truth_data/tp_pairs.txt # Use fabricated ground truth for testing MOA predictions
+  filepath: ${globals:paths.raw}/ground_truth/translator/${globals:data_sources.gt.version}/tp_pairs_conflated.tsv 
   load_args:
     sep: "\t"
 
