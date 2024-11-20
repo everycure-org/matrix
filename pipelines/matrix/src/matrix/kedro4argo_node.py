@@ -1,4 +1,4 @@
-from typing import Callable, Iterable, Union, Any
+from typing import Callable, Iterable, Union, Any, Optional
 import warnings
 from kedro.pipeline.node import Node
 from pydantic import BaseModel, field_validator, model_validator
@@ -84,7 +84,9 @@ class ArgoResourceConfig(BaseModel):
 
 class ArgoNode(Node):
     # TODO: Merge this with former FuseNode
-    def __init__(self, *args, argo_config: ArgoResourceConfig = ArgoResourceConfig(), **kwargs):  # TODO: Fix asign
+    def __init__(self, *args, argo_config: Optional[ArgoResourceConfig] = None, **kwargs):
+        if argo_config is None:
+            argo_config = ArgoResourceConfig()
         self._argo_config = argo_config
         super().__init__(*args, **kwargs)
 

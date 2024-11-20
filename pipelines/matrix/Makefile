@@ -100,3 +100,37 @@ clean:
 	rm -rf .pytest_cache .venv
 	rm -rf $(uv cache dir) ~/.cache/pre-commit
 	docker volume prune -f
+
+diagnostics:
+	echo "Collecting system diagnostics..."
+	echo "1. Operating System:"
+	-uname -a
+	echo "\n2. System Information:"
+	-python -c "import platform; print(platform.uname())"
+	echo "\n3. Python Version:"
+	-python3 --version || echo "Python is not installed."
+	echo "\n4. Installed Python Packages:"
+	-pip freeze || echo "pip is not installed or no packages found."
+	echo "\n5. Environment Variables (related to Python):"
+	-printenv | grep PYTHON || echo "No Python-related environment variables found."
+	echo "\n6. Memory & CPU Usage:"
+	-python -c "import psutil; print(psutil.virtual_memory(), psutil.cpu_percent())" || echo "psutil is not installed."
+	echo "\n7. Check Virtual Environment (if applicable):"
+	-which python || echo "Python is not in PATH."
+	echo "\n8. Docker Version:"
+	-docker --version || echo "Docker is not installed."
+	echo "\n9. Docker Disk Usage:"
+	-docker system df || echo "Docker is not installed or not running."
+	echo "\n10. Docker Memory and CPU Usage:"
+	-docker stats --no-stream || echo "Docker is not installed or not running."
+	echo "\n11. GCloud Version:"
+	-gcloud --version || echo "GCloud is not installed."
+	echo "\n12. Java Version:"
+	-java -version || echo "Java is not installed."
+	echo "\n13. UV Version:"
+	-uv --version || echo "UV is not installed."
+	echo "\n14. Disk Space:"
+	-df -h
+	echo "\nDiagnostics complete."
+
+# NOTE: This Makefile target was partially generated using AI assistance.
