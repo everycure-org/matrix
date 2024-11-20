@@ -5,7 +5,7 @@ import secrets
 import subprocess
 import sys
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import List, Optional
 
 import click
 from kedro.framework.cli.utils import CONTEXT_SETTINGS, split_string
@@ -42,7 +42,7 @@ def cli():
 @click.option("--namespace", type=str, default="argo-workflows", help="Specify a custom namespace")
 @click.option("--run-name", type=str, default=None, help="Specify a custom run name, defaults to branch")
 @click.option("--pipeline", type=str, default="__default__", help="Specify which pipeline to execute")
-@click.option("--verbose", "-v", is_flag=True, default=False, help="Enable verbose output")
+@click.option("--verbose", "-v", is_flag=True, default=True, help="Enable verbose output")
 @click.option("--dry-run", "-d", is_flag=True, default=False, help="Does everything except submit the workflow")
 @click.option("--from-nodes", type=str, default="", help="Specify nodes to run from", callback=split_string)
 @click.option("--is-test", is_flag=True, default=False, help="Submit to test folder")
@@ -66,17 +66,16 @@ def submit(username: str, namespace: str, run_name: str, pipeline: str, verbose:
     pipeline_obj = kedro_pipelines[pipeline]
     if from_nodes:
         pipeline_obj = pipeline_obj.from_nodes(*from_nodes)
-    pipelines_to_submit = {pipeline: pipeline_obj}
 
     run_name = get_run_name(run_name)
+    pipeline_obj.name = pipeline
 
 
     _submit(
         username=username,
         namespace=namespace,
         run_name=run_name,
-        pipelines_for_workflow=pipelines_to_submit,
-        pipeline_for_execution=pipeline,
+        pipeline_obj=pipeline_obj,
         verbose=verbose,
         dry_run=dry_run,
         template_directory=ARGO_TEMPLATES_DIR_PATH,
@@ -88,8 +87,7 @@ def _submit(
         username: str, 
         namespace: str, 
         run_name: str, 
-        pipelines_for_workflow: Dict[str, Pipeline],
-        pipeline_for_execution: str,
+        pipeline_obj: Pipeline,
         verbose: bool, 
         dry_run: bool, 
         template_directory: Path,
@@ -113,8 +111,7 @@ def _submit(
         username (str): The username to use for the workflow.
         namespace (str): The namespace to use for the workflow.
         run_name (str): The name of the run.
-        pipelines_for_workflow (Dict[str, Pipeline]): Pipelines to include in the workflow.
-        pipeline_for_execution (str): Pipeline to execute.
+        pipeline_obj (Pipeline): Pipeline to execute.
         verbose (bool): If True, enable verbose output.
         dry_run (bool): If True, do not submit the workflow.
         template_directory (Path): The directory containing the Argo template.
@@ -130,7 +127,7 @@ def _submit(
         console.print("[green]✓[/green] Dependencies checked")
 
         console.print("Building Argo template...")
-        argo_template = build_argo_template(run_name, username, namespace, pipelines_for_workflow, pipeline_for_execution, is_test=is_test, )
+        argo_template = build_argo_template(run_name, username, namespace, pipeline_obj, is_test=is_test, )
         console.print("[green]✓[/green] Argo template built")
 
         console.print("Writing Argo template...")
@@ -305,7 +302,7 @@ def build_push_docker(username: str, verbose: bool):
     run_subprocess(f"make docker_push TAG={username}", stream_output=verbose)
 
 
-def build_argo_template(run_name: str, username: str, namespace: str, pipelines_for_workflow: Dict[str, Pipeline], pipeline_for_execution: str, is_test: bool, default_execution_resources: Optional[ArgoResourceConfig] = None) -> str:
+def build_argo_template(run_name: str, username: str, namespace: str, pipeline_obj: Pipeline, is_test: bool, default_execution_resources: Optional[ArgoResourceConfig] = None) -> str:
     """Build Argo workflow template."""
     image_name = "us-central1-docker.pkg.dev/mtrx-hub-dev-3of/matrix-images/matrix"
 
@@ -326,8 +323,7 @@ def build_argo_template(run_name: str, username: str, namespace: str, pipelines_
         username=username,
         package_name=package_name,
         release_folder_name=release_folder_name,
-        pipelines=pipelines_for_workflow,
-        pipeline_for_execution=pipeline_for_execution,
+        pipeline=pipeline_obj,
         default_execution_resources=default_execution_resources,
     )
 

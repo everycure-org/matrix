@@ -1,12 +1,14 @@
-from pathlib import Path
+import subprocess
 import tempfile
-import pytest
-from unittest.mock import patch, MagicMock
+from pathlib import Path
+from unittest.mock import MagicMock, patch
+
 import click
+import pytest
+import yaml
 from click.testing import CliRunner
 from kedro.pipeline import Pipeline
 from kedro.pipeline.node import Node
-import yaml
 from matrix.argo import ARGO_TEMPLATES_DIR_PATH
 from matrix.cli_commands.submit import (
     _submit,
@@ -16,14 +18,12 @@ from matrix.cli_commands.submit import (
     check_dependencies,
     command_exists,
     ensure_namespace,
+    get_run_name,
     run_subprocess,
     save_argo_template,
     submit,
-    get_run_name,
     submit_workflow,
 )
-import subprocess
-
 from matrix.kedro4argo_node import ArgoResourceConfig
 
 
@@ -444,7 +444,7 @@ def test_workflow_submission(
                 ]
             ),
         },
-        pipeline_for_execution=pipeline_for_execution,
+        pipeline_obj=pipeline_for_execution,
         verbose=False,
         dry_run=False,
         template_directory=temporary_directory,
