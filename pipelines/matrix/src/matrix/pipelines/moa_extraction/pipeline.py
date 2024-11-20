@@ -13,8 +13,6 @@ from matrix import settings
 moa_extraction_settings = settings.DYNAMIC_PIPELINES_MAPPING.get("moa_extraction")
 num_hops_lst = [model["num_hops"] for model in moa_extraction_settings]
 
-num_hops_lst = [num_hops_lst[0]]
-
 
 def _preprocessing_pipeline() -> Pipeline:
     preprocessing_strands_lst = []
@@ -147,6 +145,7 @@ def _training_pipeline() -> Pipeline:
                             "path_embedding_strategy": "params:moa_extraction.path_embeddings.strategy",
                             "category_encoder": f"moa_extraction.feat.category_encoder_{num_hops}_hop",
                             "relation_encoder": f"moa_extraction.feat.relation_encoder_{num_hops}_hop",
+                            "model_split_dummy": f"moa_extraction.models.{num_hops}_hop_model_split",
                         },
                         outputs=f"moa_extraction.models.{num_hops}_hop_model",
                         name=f"train_{num_hops}_hop_model",
