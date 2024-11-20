@@ -72,6 +72,23 @@ spec:
               {% endraw %}
               nvidia.com/gpu: {% raw %} "{{inputs.parameters.num_gpus}}"
               {% endraw %}
+        # repeating the above because yaml ankers don't work easily inside of podSpecPatch'es
+        - name: neo4j
+          resources:
+            requests:
+              memory: {% raw %} "{{inputs.parameters.memory_request}}"
+              {% endraw %}
+              cpu: {% raw %} "{{inputs.parameters.cpu_request}}"
+              {% endraw %}
+              nvidia.com/gpu: {% raw %} "{{inputs.parameters.num_gpus}}"
+              {% endraw %}
+            limits:
+              memory: {% raw %} "{{inputs.parameters.memory_limit}}"
+              {% endraw %}
+              cpu: {% raw %} "{{inputs.parameters.cpu_limit}}"
+              {% endraw %}
+              nvidia.com/gpu: {% raw %} "{{inputs.parameters.num_gpus}}"
+              {% endraw %}
     container: &_kedro_container
       imagePullPolicy: Always
       image: {% raw %} "{{workflow.parameters.image}}:{{workflow.parameters.image_tag}}"        # {{workflow...}} etc. are placeholders within the template. These placeholders will be dynamically substituted with real values when the workflow is submitted, not during the kubectl apply command.
