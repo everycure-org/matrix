@@ -348,7 +348,7 @@ kedro-datasets==4.1.0
     # via
     #   -r requirements.in
     #   kedro-mlflow
-kedro-mlflow @ git+https://github.com/pascalwhoop/kedro-mlflow@68e09e8e5ae4b162ff4ab5a793b5266254e91a0e#egg=kedro-mlflow
+kedro-mlflow==0.13.3
     # via -r requirements.in
 kedro-telemetry==0.6.1
     # via -r requirements.in

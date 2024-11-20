@@ -39,21 +39,21 @@ def create_pipeline(**kwargs) -> Pipeline:
                 name="write_ec_medical_team_edges",
                 tags=["ec_medical_team"],
             ),
-            # robokop
-            node(
-                func=lambda x: x,
-                inputs=["ingestion.raw.robokop.nodes@spark"],
-                outputs="ingestion.int.robokop.nodes",
-                name="ingest_robokop_nodes",
-                tags=["robokop"],
-            ),
-            node(
-                # FUTURE: Update selection
-                func=lambda x: x,
-                inputs=["ingestion.raw.robokop.edges@spark"],
-                outputs="ingestion.int.robokop.edges",
-                name="ingest_robokop_edges",
-                tags=["robokop"],
-            ),
+            # # robokop
+            # node(
+            #     func=lambda x: x,
+            #     inputs=["ingestion.raw.robokop.nodes@spark"],
+            #     outputs="ingestion.int.robokop.nodes",
+            #     name="ingest_robokop_nodes",
+            #     tags=["robokop"],
+            # ),
+            # node(
+            #     # FUTURE: Update selection
+            #     func=lambda x: x,
+            #     inputs=["ingestion.raw.robokop.edges@spark"],
+            #     outputs="ingestion.int.robokop.edges",
+            #     name="ingest_robokop_edges",
+            #     tags=["robokop"],
+            # ),
         ]
     )
