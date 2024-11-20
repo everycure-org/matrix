@@ -1,5 +1,5 @@
 from kedro.pipeline import Pipeline, node, pipeline
-from kedro4argo_node import ArgoNode, ArgoResourceConfig
+from matrix.kedro4argo_node import ArgoNode, ArgoResourceConfig
 
 from . import nodes
 
