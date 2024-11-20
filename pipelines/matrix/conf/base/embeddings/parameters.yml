@@ -21,11 +21,6 @@ embeddings.node_encoder:
   # embeddings call is roughly 8500 tokens, approx (100 * 500) / 6.
   object: matrix.pipelines.embeddings.encoders.PubmedBERTEncoder #OpenAIEncoder
   dimensions: 100
-  # encoder:
-  #   object: langchain_openai.OpenAIEmbeddings
-  #   model: text-embedding-3-small
-  #   timeout: 10
-  #   dimensions: 100
   # FUTURE: Experiment with performing dimensionality reduction
   # using OpenAI directly
   # dimensions: 100 
