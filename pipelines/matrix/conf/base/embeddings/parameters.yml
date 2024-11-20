@@ -24,8 +24,9 @@ embeddings.node:
     openai_api_key: ${oc.env:OPENAI_API_KEY}
     timeout: 10
     # FUTURE: Experiment with performing dimensionality reduction
-    # using OpenAI directly
-    # dimensions: 100 
+    # using OpenAI directly, enabling this heavily speeds up the process
+    # of ingesting nodes.
+    # dimensions: 100
 
 # Defines strategy used to reduce dimensions of the GenAI
 # generated node embeddings.
