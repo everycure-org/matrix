@@ -135,7 +135,6 @@ def bucketize_df(df: DataFrame, bucket_size: int, input_features: List[str], max
     """
 
     # Retrieve number of elements
-    df = df.sample(0.01)
     num_elements = df.count()
     num_buckets = (num_elements + bucket_size - 1) // bucket_size
 

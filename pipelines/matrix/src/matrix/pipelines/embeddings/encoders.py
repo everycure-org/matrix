@@ -129,7 +129,6 @@ class PubmedBERTEncoder(AttributeEncoder):
         """
         df = df.copy()
         feat_list = df["text_to_embed"].tolist()
-        print(len(feat_list))
         inputs = self.tokenizer(
             feat_list,
             padding=True,
@@ -139,7 +138,6 @@ class PubmedBERTEncoder(AttributeEncoder):
         )
         with torch.no_grad():
             embeddings = self.model(**inputs, output_hidden_states=True, return_dict=True).pooler_output.cpu().numpy()
-        print(len(embeddings))
         df["embedding"] = list(embeddings)
         df = df.drop(columns=["text_to_embed"])
         return df
