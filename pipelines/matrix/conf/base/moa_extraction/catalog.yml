@@ -67,7 +67,7 @@ moa_extraction.raw.drugmechdb_entities:
   <<: *_kg_paths_dataset
   filepath: ${globals:paths.moa_extraction}/int/{num_hops}_hop_indication_paths.parquet
 
-moa_extraction.reporting.{num_hops}_hop_mapping_success:
+"moa_extraction.reporting.{num_hops}_hop_mapping_success@yaml":
   filepath: ${globals:paths.moa_extraction}/reporting/{num_hops}_hop_mapping_success
   type:  yaml.YAMLDataset
 
@@ -94,7 +94,7 @@ moa_extraction.reporting.{num_hops}_hop_mapping_success:
   load_args:
     engine: pyarrow
 
-"moa_extraction.reporting.{num_hops}_hop_metrics":
+"moa_extraction.reporting.{num_hops}_hop_metrics@yaml":
   filepath: ${globals:paths.moa_extraction}/reporting/{num_hops}_hop_metrics
   type:  yaml.YAMLDataset
 

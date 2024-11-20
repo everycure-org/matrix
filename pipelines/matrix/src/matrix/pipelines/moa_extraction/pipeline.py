@@ -81,7 +81,7 @@ def _preprocessing_pipeline() -> Pipeline:
                             "drug_mech_db": "moa_extraction.raw.drug_mech_db",
                             "mapped_paths": f"moa_extraction.int.{num_hops}_hop_indication_paths",
                         },
-                        outputs=f"moa_extraction.reporting.{num_hops}_hop_mapping_success",
+                        outputs=f"moa_extraction.reporting.{num_hops}_hop_mapping_success@yaml",
                         name=f"report_mapping_success_{num_hops}_hop",
                     ),
                     node(
@@ -89,7 +89,7 @@ def _preprocessing_pipeline() -> Pipeline:
                         inputs={
                             "paths_data": f"moa_extraction.int.{num_hops}_hop_indication_paths",
                             "splitter": f"params:moa_extraction.splits.splitter_{num_hops}_hop",
-                            "mapping_report_dummy": f"moa_extraction.reporting.{num_hops}_hop_mapping_success",
+                            "mapping_report_dummy": f"moa_extraction.reporting.{num_hops}_hop_mapping_success@yaml",
                         },
                         outputs=f"moa_extraction.prm.{num_hops}_hop_splits",
                         name=f"make_splits_{num_hops}_hop",
@@ -191,7 +191,7 @@ def _evaluation_pipeline() -> Pipeline:
                             "predictions": f"moa_extraction.model_output.{num_hops}_hop_evaluation_predictions",
                             "k_lst": f"params:moa_extraction.evaluation.{num_hops}_hop.k_lst",
                         },
-                        outputs=f"moa_extraction.reporting.{num_hops}_hop_metrics",
+                        outputs=f"moa_extraction.reporting.{num_hops}_hop_metrics@yaml",
                         name=f"compute_{num_hops}_hop_metrics",
                     ),
                 ],
@@ -225,7 +225,7 @@ def _predictions_pipeline() -> Pipeline:
                             "normalized_drug_col": "params:moa_extraction.predictions.drug_col_name_predictions",
                             "normalized_disease_col": "params:moa_extraction.predictions.disease_col_name_predictions",
                             "num_pairs_limit": "params:moa_extraction.predictions.num_pairs_limit",
-                            "metrics_dummy": f"moa_extraction.reporting.{num_hops}_hop_metrics",  # This ensures that predictions runs after evaluation so that the argo fuse algo works
+                            "metrics_dummy": f"moa_extraction.reporting.{num_hops}_hop_metrics@yaml",  # This ensures that predictions runs after evaluation so that the argo fuse algo works
                         },
                         outputs=f"moa_extraction.model_output.{num_hops}_hop_output_predictions",
                         name=f"predictions.make_{num_hops}_hop_output_predictions",
