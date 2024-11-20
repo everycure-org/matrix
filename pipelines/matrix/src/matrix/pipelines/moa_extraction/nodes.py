@@ -229,7 +229,7 @@ def make_splits(
     splitter: BaseCrossValidator,
     mapping_report_dummy: dict,
 ) -> pd.DataFrame:
-    """Function to split a paths dataset with
+    """Function to split a paths dataset.
 
     Args:
         paths_data: Knowledge graphs paths dataset.

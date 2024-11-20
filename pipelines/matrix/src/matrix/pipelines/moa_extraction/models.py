@@ -29,7 +29,9 @@ class SkorchWrapper(skorch.NeuralNetClassifier):
 
 
 class TransformerBinaryClassifier(nn.Module):
-    def __init__(self, token_dim: int, num_heads: int, num_layers: int, dropout: float = 0.1) -> None:
+    def __init__(
+        self, token_dim: int, num_heads: int, num_layers: int, dropout: float = 0.1, input_dim: int = 1
+    ) -> None:
         """Initialise the TransformerBinaryClassifier.
 
         Args:
@@ -39,7 +41,10 @@ class TransformerBinaryClassifier(nn.Module):
             dropout: The dropout probability.
         """
         super(TransformerBinaryClassifier, self).__init__()
-        self.linear = nn.LazyLinear(token_dim)
+        # Use Linear if input_dim provided, else LazyLinear
+        self.linear = nn.Linear(input_dim, token_dim) if input_dim is not None else nn.LazyLinear(token_dim)
+        # Log the input dimension once known
+        self.input_dim = input_dim
         self.transformer_encoder = nn.TransformerEncoder(
             nn.TransformerEncoderLayer(token_dim, num_heads, dropout=dropout), num_layers
         )
