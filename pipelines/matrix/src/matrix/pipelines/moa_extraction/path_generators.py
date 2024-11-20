@@ -7,7 +7,6 @@ import abc
 
 from matrix.datasets.paths import KGPaths
 from matrix.pipelines.moa_extraction.neo4j_query_clauses import (
-    generate_return_clause,
     generate_match_clause,
     generate_edge_omission_where_clause,
 )
@@ -59,7 +58,7 @@ class AllPathsWithRules(PathGenerator):
         where_clause = generate_edge_omission_where_clause(
             edge_omission_rules=self.edge_omission_rules, num_hops=self.num_hops
         )
-        return_clause = generate_return_clause(limit=self.num_limit)
+        return_clause = KGPaths.generate_return_clause(limit=self.num_limit)
         query = f"""
         MATCH path = (start: %{{id:'{drug}'}}){match_clause}(end: %{{id:'{disease}'}})
         WHERE {where_clause}
