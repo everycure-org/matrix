@@ -23,6 +23,7 @@ from refit.v1.core.unpack import unpack_params
 from tenacity import retry, wait_exponential, stop_after_attempt
 
 from .graph_algorithms import GDSGraphAlgorithm
+from .encoders import AttributeEncoder
 from matrix.pipelines.modelling.nodes import no_nulls
 
 logger = logging.getLogger(__name__)
@@ -134,6 +135,7 @@ def bucketize_df(df: DataFrame, bucket_size: int, input_features: List[str], max
     """
 
     # Retrieve number of elements
+    df = df.sample(0.01)
     num_elements = df.count()
     num_buckets = (num_elements + bucket_size - 1) // bucket_size
 
@@ -164,20 +166,20 @@ def bucketize_df(df: DataFrame, bucket_size: int, input_features: List[str], max
 @inject_object()
 def compute_embeddings(
     dfs: Dict[str, Any],
-    model: Dict[str, Any],
+    encoder: AttributeEncoder,
 ):
     """Function to bucketize input data.
 
     Args:
         dfs: mapping of paths to df load functions
-        model: model to run
+        encoder: encoder to run
     """
 
     # NOTE: Inner function to avoid reference issues on unpacking
     # the dataframe, therefore leading to only the latest shard
     # being processed n times.
     def _func(dataframe: pd.DataFrame):
-        return lambda df=dataframe: compute_df_embeddings_async(df(), model)
+        return lambda df=dataframe: encoder.encode(df())  # compute_df_embeddings_async(df(), model)
 
     shards = {}
     for path, df in dfs.items():

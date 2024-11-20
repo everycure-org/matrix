@@ -9,23 +9,25 @@ embeddings.gdb:
     -  ${globals:neo4j.password}
 
 # Configuration for node embeddings
-embeddings.node:
-  # Following configuration ensures that OpenAI requests are
-  # batches in batches of 500 input elements, where each input
-  # element is clipped at 100 characters. Max. token limit for 
-  # embeddings call is roughly 8500 tokens, approx (100 * 500) / 6.
+embeddings.node_buckets:
   batch_size: 500
   max_input_len: 100
   input_features: ["category", "name"]
 
-  model:
+embeddings.node_encoder:
+  # Following configuration ensures that OpenAI requests are
+  # batches in batches of 500 input elements, where each input
+  # element is clipped at 100 characters. Max. token limit for 
+  # embeddings call is roughly 8500 tokens, approx (100 * 500) / 6.
+  object: matrix.pipelines.embeddings.encoders.OpenAIEncoder
+  encoder:
     object: langchain_openai.OpenAIEmbeddings
     model: text-embedding-3-small
-    openai_api_key: ${oc.env:OPENAI_API_KEY}
     timeout: 10
-    # FUTURE: Experiment with performing dimensionality reduction
-    # using OpenAI directly
-    # dimensions: 100 
+    dimensions: 100
+  # FUTURE: Experiment with performing dimensionality reduction
+  # using OpenAI directly
+  # dimensions: 100 
 
 # Defines strategy used to reduce dimensions of the GenAI
 # generated node embeddings.
