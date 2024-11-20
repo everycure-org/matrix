@@ -32,8 +32,7 @@ def generate_argo_config(
     image_tag: str,
     namespace: str,
     username: str,
-    pipelines: Dict[str, Pipeline],
-    pipeline_for_execution: str,
+    pipeline: Pipeline,
     package_name: str,
     release_folder_name: str,
     default_execution_resources: Optional[ArgoResourceConfig] = None,
@@ -45,13 +44,13 @@ def generate_argo_config(
     template_env = Environment(loader=loader, trim_blocks=True, lstrip_blocks=True)
     template = template_env.get_template(ARGO_TEMPLATE_FILE)
 
-    pipeline2dependencies = get_pipeline2dependencies(pipelines, default_execution_resources)
+    pipeline2dependencies = get_pipeline2dependencies({"pipeline": pipeline}, default_execution_resources)
 
     # TODO: After it is possible to configure resources on node level, remove the use_gpus flag.
     output = template.render(
         package_name=package_name,
         pipelines=pipeline2dependencies,
-        pipeline_for_execution=pipeline_for_execution,
+        pipeline_name=pipeline.name,
         image=image,
         image_tag=image_tag,
         namespace=namespace,
