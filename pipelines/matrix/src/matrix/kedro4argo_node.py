@@ -84,7 +84,7 @@ class ArgoResourceConfig(BaseModel):
 
 class ArgoNode(Node):
     # TODO: Merge this with former FuseNode
-    def __init__(self, *args, argo_config: Optional[ArgoResourceConfig], **kwargs):
+    def __init__(self, *args, argo_config: Optional[ArgoResourceConfig] = None, **kwargs):
         if argo_config is None:
             argo_config = ArgoResourceConfig()
         self._argo_config = argo_config
