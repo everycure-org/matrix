@@ -3,6 +3,7 @@
 import pandas as pd
 import numpy as np
 import json
+import logging
 
 from tqdm import tqdm
 from typing import List, Tuple, Dict, Any, Optional
@@ -20,6 +21,8 @@ from .path_generators import PathGenerator
 from matrix.pipelines.embeddings.nodes import GraphDB
 from matrix.datasets.paths import KGPaths
 from matrix.pipelines.modelling.nodes import apply_splitter
+
+logger = logging.getLogger(__name__)
 
 
 def _tag_edges_between_types(
@@ -61,12 +64,12 @@ def _tag_edges_between_types(
             if updated < batch_size:
                 break
             if verbose:
-                print(f"{int(total_updated/batch_size)} batches completed.")
+                logger.info(f"{int(total_updated/batch_size)} batches completed.")
         return total_updated
 
     # Reset the tag for all edges
     if verbose:
-        print(f"Resetting tag {tag} for all edges. Batch size: {batch_size}...")
+        logger.info(f"Resetting tag {tag} for all edges. Batch size: {batch_size}...")
     update_relationships_in_batches(f"""
         MATCH ()-[r]-()
         WHERE r.{prefix}{tag} IS NULL OR r.{prefix}{tag} = true
@@ -78,7 +81,7 @@ def _tag_edges_between_types(
     for type_1 in types_for_first_node:
         for type_2 in types_for_second_node:
             if verbose:
-                print(f"Setting tags for {type_1} to {type_2}...")
+                logger.info(f"Setting tags for {type_1} to {type_2}...")
             update_relationships_in_batches(f"""
                 MATCH (n1: {type_1})-[r]-(n2: {type_2})
                 WHERE r.{prefix}{tag} = false
