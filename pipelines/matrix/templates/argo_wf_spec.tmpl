@@ -28,7 +28,8 @@ spec:
       - name: env
         value: "cloud"
   templates:
-  - name: kedro
+  - &_kedro_template
+    name: kedro
     affinity:
       nodeAffinity:
         preferredDuringSchedulingIgnoredDuringExecution:
@@ -69,7 +70,7 @@ spec:
               {% endraw %}
               nvidia.com/gpu: {% raw %} "{{inputs.parameters.num_gpus}}"
               {% endraw %}
-    container:
+    container: &_kedro_container
       imagePullPolicy: Always
       image: {% raw %} "{{workflow.parameters.image}}:{{workflow.parameters.image_tag}}"
       {% endraw %}
