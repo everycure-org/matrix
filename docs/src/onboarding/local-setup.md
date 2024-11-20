@@ -67,14 +67,14 @@ the cached data and only execute tests where the underlying code has changed.
 ### Docker compose for local execution
 
 Our codebase features code that allows for fully local execution of the pipeline and
-its' auxiliary services using `docker compose`. The deployment consists of two files that
+its auxiliary services using `docker compose`. The deployment consists of two files that
 can be [merged](https://docs.docker.com/compose/multiple-compose-files/merge/) depending
 on the intended use, i.e.,
 
 1. The base `docker compose` file defines the runtime services, i.e.,
     - Neo4J graph database
     - [MLFlow](https://www.mlflow.org/docs/latest/index.html) instance
-    - [Mockserver](https://www.mock-server.com/) implementing a OpenAI compatible GenAI API
+    - [Mockserver](https://www.mock-server.com/) implementing an OpenAI compatible GenAI API
         - This allows for running the full pipeline e2e without a provider token
 2. The `docker-compose.ci` file adds in the pipeline container for integration testing
     - This file is used by our CI/CD setup and can be ignored for local development.
@@ -128,7 +128,8 @@ Generally, the `Makefile` is a good place to refer to when you need to re-set yo
     Make compose_down # ensures that there is no docker-compose down running 
     Make integration_test # executes an local kedro pipeline run in a test environment
     ```
-    We encourage you to examine the `Makefile` to get a sense of how the codebase is structured - note that not all commands are part of the default make command. Some useful command which are not part of the default make command are:
+    We encourage you to examine the `Makefile` to get a sense of how the codebase is structured - note that not all commands are part of the default make command. Some useful commands which are not part of the default make command are:
+
     - `Make full_test` which executes all unit tests within the codebase
     - `Make clean` which cleans various cache locations - useful when you're running into cache related issues or when you want to start fresh
     - `Make wipe_neo` which wipes the neo4j database - useful for development purposes
@@ -138,7 +139,7 @@ Generally, the `Makefile` is a good place to refer to when you need to re-set yo
 
 ### Plugging into cloud outputs
 
-As you might have noticed, local setup is mainly focusing on the local execution of the pipeline with the fabricated data. However, we also run our full pipeline on production data in the `cloud` environment. Our pipeline is orchestrated using Argo Workflows, and may take several hours to complete. Given our current test process, that solely executes end-to-end tests on synthetic data, it is possible that the pipeline runs into an error due to a node handling data edge cases succesfully.
+As you might have noticed, local setup is mainly focusing on the local execution of the pipeline with the fabricated data. However, we also run our full pipeline on production data in the `cloud` environment. Our pipeline is orchestrated using Argo Workflows, and may take several hours to complete. Given our current test process, that solely executes end-to-end tests on synthetic data, it is possible that the pipeline runs into an error due to a node handling data edge cases unsuccesfully.
 
 Troubleshooting such issues is tedious, and validating a fix requires the entire pipeline to be re-executed. This is where the `--from-env` flag comes in.
 
@@ -155,7 +156,7 @@ In order to run against the `cloud` environment it's important to set the `RUN_N
 The following command can be used to re-run the node locally, while consuming data from `cloud`:
 
 ```bash
-# NOTE: You can specify multiple nodes to rerun, using a comma-seperated list
+# NOTE: You can specify multiple nodes to rerun, using a comma-separated list
 kedro run --from-env cloud --nodes preprocessing_node_name
 ```
 
