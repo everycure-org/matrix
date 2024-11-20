@@ -13,6 +13,8 @@ from matrix import settings
 moa_extraction_settings = settings.DYNAMIC_PIPELINES_MAPPING.get("moa_extraction")
 num_hops_lst = [model["num_hops"] for model in moa_extraction_settings]
 
+num_hops_lst = [num_hops_lst[0]]
+
 
 def _preprocessing_pipeline() -> Pipeline:
     preprocessing_strands_lst = []
@@ -52,7 +54,7 @@ def _preprocessing_pipeline() -> Pipeline:
                         func=nodes.get_one_hot_encodings,
                         inputs={
                             "runner": f"params:moa_extraction.gdb_{num_hops}_hop",
-                            "edges_dummy": f"moa_extraction.input_edges.{num_hops}_hop",
+                            "tags_dummy": f"moa_extraction.reporting.add_tags_{num_hops}_hop",
                         },
                         outputs=[
                             f"moa_extraction.feat.category_encoder_{num_hops}_hop",
@@ -67,7 +69,7 @@ def _preprocessing_pipeline() -> Pipeline:
                             "drug_mech_db": "moa_extraction.raw.drug_mech_db",
                             "mapper": f"params:moa_extraction.path_mapping.mapper_{num_hops}_hop",
                             "drugmechdb_entities": "moa_extraction.raw.drugmechdb_entities",
-                            "add_tags_dummy": f"moa_extraction.reporting.add_tags_{num_hops}_hop",
+                            "one_hot_encodings_dummy": f"moa_extraction.feat.category_encoder_{num_hops}_hop",
                         },
                         outputs=f"moa_extraction.int.{num_hops}_hop_indication_paths",
                         name=f"map_{num_hops}_hop",
@@ -79,7 +81,7 @@ def _preprocessing_pipeline() -> Pipeline:
                             "drug_mech_db": "moa_extraction.raw.drug_mech_db",
                             "mapped_paths": f"moa_extraction.int.{num_hops}_hop_indication_paths",
                         },
-                        outputs=f"report_{num_hops}_hop_mapping_success",
+                        outputs=f"moa_extraction.reporting.{num_hops}_hop_mapping_success",
                         name=f"report_mapping_success_{num_hops}_hop",
                     ),
                     node(
@@ -87,6 +89,7 @@ def _preprocessing_pipeline() -> Pipeline:
                         inputs={
                             "paths_data": f"moa_extraction.int.{num_hops}_hop_indication_paths",
                             "splitter": f"params:moa_extraction.splits.splitter_{num_hops}_hop",
+                            "mapping_report_dummy": f"moa_extraction.reporting.{num_hops}_hop_mapping_success",
                         },
                         outputs=f"moa_extraction.prm.{num_hops}_hop_splits",
                         name=f"make_splits_{num_hops}_hop",
