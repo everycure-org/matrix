@@ -58,7 +58,7 @@ def submit(username: str, namespace: str, run_name: str, pipeline: str, verbose:
     if pipeline in ["fabricator", "test"]:
         raise ValueError("Submitting test pipeline to Argo will result in overwriting source data")
     
-    if from_nodes and pipeline not in ["kg_release"]:
+    if from_nodes and pipeline not in ["kg_release", "data_engineering"]:
         # NOTE: This is due to how we version paths for modelling runs, needs further refinement
         raise ValueError("The `from-nodes` flag only works for the `kg_release` pipeline")
     
@@ -396,12 +396,14 @@ def get_run_name(run_name: Optional[str]) -> str:
     Returns:
         str: The final run name to be used for the workflow.
     """
-    if run_name:
-        return re.sub(r"[^a-zA-Z0-9-]", "-", run_name).rstrip("-")
-    
-    run_name = run_subprocess(
-        "git rev-parse --abbrev-ref HEAD", capture_output=True, stream_output=False
-    ).stdout.strip()
+    # If no run_name is provided, use the current Git branch name
+    if not run_name:
+        run_name = run_subprocess(
+            "git rev-parse --abbrev-ref HEAD", capture_output=True, stream_output=False
+        ).stdout.strip()
+
+    # Add a random suffix to the run_name
     random_sfx = str.lower(secrets.token_hex(4))
-    unsanitized_name = f"{run_name}-{random_sfx}"
-    return re.sub(r"[^a-zA-Z0-9-]", "-", unsanitized_name).rstrip("-")
+    unsanitized_name = f"{run_name}-{random_sfx}".rstrip("-")
+    sanitized_name = re.sub(r"[^a-zA-Z0-9-]", "-", unsanitized_name)
+    return sanitized_name
