@@ -17,14 +17,14 @@ moa_extraction:
 
   tagging_options:
     drug_types:
-      - Drug
-      - SmallMolecule
-      - ChemicalEntity
+      - biolink:Drug
+      - biolink:SmallMolecule
+      - biolink:ChemicalEntity
     disease_types:
-      - Disease
-      - PhenotypicFeature
-      - BehavioralFeature
-      - DiseaseOrPhenotypicFeature
+      - biolink:Disease
+      - biolink:PhenotypicFeature
+      - biolink:BehavioralFeature
+      - biolink:DiseaseOrPhenotypicFeature
     batch_size: 1000000
     verbose: True
   

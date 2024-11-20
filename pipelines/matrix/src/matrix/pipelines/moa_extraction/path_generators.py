@@ -95,7 +95,9 @@ class ReplacementPathSampler(PathGenerator):
         self.random_state = random_state
 
     def run(self, paths: KGPaths, runner: GraphDB) -> KGPaths:
-        """Sample negative paths given a set of positive paths.
+        """Sample random paths given a set of reference positive paths.
+
+        self.num_replacement_paths random paths are sampled for each reference path, between the same source and target nodes.
 
         FUTURE: Create a subclass where this method is parallelised.
 
