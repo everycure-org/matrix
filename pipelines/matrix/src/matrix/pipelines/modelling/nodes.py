@@ -165,6 +165,7 @@ def make_splits(
     Returns:
         Data with split information.
     """
+    # Split data into folds
     all_data_frames = []
     for iteration, (train_index, test_index) in enumerate(splitter.split(data, data["y"])):
         all_indices_in_this_fold = list(set(train_index).union(test_index))
@@ -174,15 +175,13 @@ def make_splits(
         fold_data.loc[test_index, "split"] = "TEST"
         all_data_frames.append(fold_data)
 
-    # return pd.concat(all_data_frames, axis="index", ignore_index=True)
+    # Add full data
+    full_data = data.copy()
+    full_data.loc[:, "iteration"] = len(all_data_frames)
+    full_data.loc[:, "split"] = "TRAIN"
+    all_data_frames.append(full_data)
+
     return tuple(all_data_frames)
-
-
-# def separate_splits(
-#     splits: pd.DataFrame,
-#     fold: int,
-# ) -> pd.DataFrame:
-#     return splits.loc[splits["iteration"].eq(fold), :]
 
 
 @has_schema(
@@ -424,6 +423,11 @@ def check_model_performance(
     """
     report = {}
 
+    # Return None for each metric if there is no test data
+    if not data["split"].eq("TEST").any():
+        return {name: None for name in metrics.keys()}
+
+    # Compute evaluation metrics and add to report
     for name, func in metrics.items():
         for split in ["TEST", "TRAIN"]:
             split_index = data["split"].eq(split)

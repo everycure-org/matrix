@@ -4,6 +4,9 @@ from matrix import settings
 
 from . import nodes
 
+# TODO: add full data model
+# TODO: add consolidation
+
 
 def _create_model_shard_pipeline(model: str, shard: int, fold: int) -> Pipeline:
     return pipeline(
@@ -129,6 +132,7 @@ def create_pipeline(**kwargs) -> Pipeline:
     """Create modelling pipeline."""
     parameters = kwargs.get("parameters", {})
     n_splits = parameters.get("modelling", {}).get("splitter", {}).get("n_splits", 3)
+    folds_lst = [fold for fold in range(n_splits)] + ["full"]
 
     create_model_input = pipeline(
         [
@@ -160,7 +164,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                     "modelling.int.known_pairs@pandas",
                     "params:modelling.splitter",
                 ],
-                outputs=[f"modelling.model_input.splits_fold_{fold}" for fold in range(n_splits)],
+                outputs=[f"modelling.model_input.splits_fold_{fold}" for fold in folds_lst],
                 name="create_splits",
             ),
         ],
@@ -168,7 +172,7 @@ def create_pipeline(**kwargs) -> Pipeline:
     )
 
     pipelines = []
-    for fold in range(n_splits):
+    for fold in folds_lst:
         for model in settings.DYNAMIC_PIPELINES_MAPPING.get("modelling"):
             pipelines.append(
                 pipeline(
