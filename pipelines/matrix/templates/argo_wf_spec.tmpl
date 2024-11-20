@@ -87,7 +87,7 @@ spec:
           {% endraw %}
         - name: MLFLOW_ENDPOINT
           value: {% raw %} "{{workflow.parameters.mlflow_endpoint}}" 
-        {% endraw %}
+          {% endraw %}
         - name: NEO4J_USER
           valueFrom:
             secretKeyRef:
