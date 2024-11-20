@@ -148,6 +148,7 @@ def compute_embeddings(
     features: List[str],
     attribute: str,
     api_key: str,
+    skip: bool,
     batch_size: int,
     endpoint: str,
     model: str,
@@ -159,11 +160,14 @@ def compute_embeddings(
         gdb: graph database instance
         features: features to include to compute embeddings
         api_key: api key to use
+        skip: whether to skip the embedding computation
         batch_size: batch size
         attribute: attribute to add
         endpoint: endpoint to use
         model: model to use
     """
+    if skip:
+        return input.withColumn(attribute, F.lit([0.0] * 512))
     batch_udf = F.udf(lambda z: batch(endpoint, model, api_key, z), ArrayType(ArrayType(FloatType())))
 
     window = Window.orderBy(F.lit(1))
