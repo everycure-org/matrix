@@ -3,6 +3,10 @@ from kedro.pipeline import Pipeline, node, pipeline
 from . import nodes
 
 
+def select(df):
+    return df.select("id", "name", "category", "pca_embedding")
+
+
 def create_pipeline(**kwargs) -> Pipeline:
     """Create embeddings pipeline."""
     return pipeline(
@@ -33,7 +37,7 @@ def create_pipeline(**kwargs) -> Pipeline:
             ),
             # Reduce dimension
             node(
-                func=nodes.reduce_dimension,
+                func=nodes.reduce_embeddings_dimension,
                 inputs={
                     "df": "embeddings.feat.graph.node_embeddings@spark",
                     "unpack": "params:embeddings.dimensionality_reduction",
@@ -44,7 +48,7 @@ def create_pipeline(**kwargs) -> Pipeline:
             ),
             # Load spark dataset into local neo instance
             node(
-                func=lambda x: x.select("id", "name", "category", "pca_embedding"),
+                func=select,
                 inputs=["embeddings.feat.graph.pca_node_embeddings"],
                 outputs="embeddings.tmp.input_nodes",
                 name="ingest_neo4j_input_nodes",

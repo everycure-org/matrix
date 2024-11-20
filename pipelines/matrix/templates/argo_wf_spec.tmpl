@@ -28,8 +28,7 @@ spec:
       - name: env
         value: "cloud"
   templates:
-  - &_kedro_template
-    name: kedro
+  - name: kedro
     affinity:
       nodeAffinity:
         preferredDuringSchedulingIgnoredDuringExecution:
@@ -119,9 +118,15 @@ spec:
       command: [kedro]
       args: ["run", "-p", "{{ pipeline_for_execution }}", "-e", {% raw %}"{{workflow.parameters.env}}"{% endraw %}, "-n", {% raw %}"{{inputs.parameters.kedro_nodes}}"{% endraw %}]
 
-  - <<: *_kedro_template
-    name: neo4j
-    podSpecPatch: null
+  - name: neo4j
+    inputs:
+      parameters:
+      - name: kedro_nodes
+      - name: num_gpus
+      - name: memory_limit
+      - name: memory_request
+      - name: cpu_limit
+      - name: cpu_request
     container:
       imagePullPolicy: Always
       image: {% raw %} "{{workflow.parameters.image}}:{{workflow.parameters.image_tag}}"

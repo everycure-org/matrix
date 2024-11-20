@@ -3,6 +3,7 @@ from typing import Any, Dict, List
 
 import matplotlib.pyplot as plt
 import pandas as pd
+import numpy as np
 import seaborn as sns
 
 from graphdatascience import GraphDataScience, QueryRunner
@@ -198,6 +199,9 @@ async def compute_df_embeddings_async(df: pd.DataFrame, embedding_model) -> pd.D
         # Embed entities in batch mode
         combined_texts = df["text_to_embed"].tolist()
         df["embedding"] = await embedding_model.aembed_documents(combined_texts)
+
+        # Ensure floats
+        df["embedding"] = df["embedding"].apply(lambda emb: np.array(emb, dtype=np.float32))
     except Exception as e:
         print(f"Exception occurred: {e}")
         raise e
@@ -205,6 +209,17 @@ async def compute_df_embeddings_async(df: pd.DataFrame, embedding_model) -> pd.D
     # Drop added column
     df = df.drop(columns=["text_to_embed"])
     return df
+
+
+@has_schema(
+    schema={
+        "embedding": "array<float>",
+        "pca_embedding": "array<float>",
+    }
+)
+@unpack_params()
+def reduce_embeddings_dimension(df: DataFrame, transformer, input: str, output: str, skip: bool):
+    return reduce_dimension(df, transformer, input, output, skip)
 
 
 @unpack_params()
@@ -227,10 +242,10 @@ def reduce_dimension(df: DataFrame, transformer, input: str, output: str, skip: 
                    embeddings, depending on the 'skip' parameter.
     """
     if skip:
-        return df.withColumn(output, F.col(input))
+        return df.withColumn(output, F.col(input).cast("array<float>"))
 
     # Convert into correct type
-    df = df.withColumn("features", array_to_vector(input))
+    df = df.withColumn("features", array_to_vector(F.col(input).cast("array<float>")))
 
     # Link
     transformer.setInputCol("features")
@@ -240,6 +255,7 @@ def reduce_dimension(df: DataFrame, transformer, input: str, output: str, skip: 
         transformer.fit(df)
         .transform(df)
         .withColumn(output, vector_to_array("pca_features"))
+        .withColumn(output, F.col(output).cast("array<float>"))
         .drop("pca_features", "features")
     )
 
