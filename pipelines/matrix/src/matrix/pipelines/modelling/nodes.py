@@ -139,17 +139,17 @@ def prefilter_nodes(
     )
 
 
-@has_schema(
-    schema={
-        "source": "object",
-        "source_embedding": "object",
-        "target": "object",
-        "target_embedding": "object",
-        "iteration": "numeric",
-        "split": "object",
-    },
-    allow_subset=True,
-)
+# @has_schema(
+#     schema={
+#         "source": "object",
+#         "source_embedding": "object",
+#         "target": "object",
+#         "target_embedding": "object",
+#         "iteration": "numeric",
+#         "split": "object",
+#     },
+#     allow_subset=True,
+# )
 @inject_object()
 def make_splits(
     data: DataFrame,
@@ -174,7 +174,15 @@ def make_splits(
         fold_data.loc[test_index, "split"] = "TEST"
         all_data_frames.append(fold_data)
 
-    return pd.concat(all_data_frames, axis="index", ignore_index=True)
+    # return pd.concat(all_data_frames, axis="index", ignore_index=True)
+    return tuple(all_data_frames)
+
+
+# def separate_splits(
+#     splits: pd.DataFrame,
+#     fold: int,
+# ) -> pd.DataFrame:
+#     return splits.loc[splits["iteration"].eq(fold), :]
 
 
 @has_schema(

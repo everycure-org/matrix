@@ -97,56 +97,56 @@ modelling.model_input.drugs_diseases_nodes@pandas:
   <<: [*_kg_dataset, *_model_input_ds]
   filepath: ${globals:paths.modelling}/model_input/drugs_diseases_nodes/
 
-modelling.model_input.splits:
+"modelling.model_input.splits_fold_{fold}":
   <<: [*_pandas_parquet, *_model_input_ds]
-  filepath: ${globals:paths.modelling}/model_input/splits
+  filepath: ${globals:paths.modelling}/model_input/splits_fold_{fold}
 
-"modelling.{model}.model_input.transformers":
+"modelling.{model}.model_input.transformers_fold_{fold}":
   <<: *_model_input_ds
   type: pickle.PickleDataset
-  filepath: ${globals:paths.modelling}/model_input/{model}/transformers.pickle
+  filepath: ${globals:paths.modelling}/model_input/{model}/transformers_fold_{fold}.pickle
 
-"modelling.{model}.model_input.transformed_splits":
+"modelling.{model}.model_input.transformed_splits_fold_{fold}":
   <<: [*_pandas_parquet, *_model_output_ds]
-  filepath: ${globals:paths.modelling}/model_input/{model}/transformed_splits
+  filepath: ${globals:paths.modelling}/model_input/{model}/transformed_splits_fold_{fold}
   
-"modelling.{model}.{shard}.model_input.enriched_splits":
+"modelling.{model}.{shard}.model_input.enriched_splits_fold_{fold}":
   <<: [*_pandas_parquet, *_model_input_ds]
-  filepath: ${globals:paths.modelling}/model_input/{model}/{shard}/enriched_splits
+  filepath: ${globals:paths.modelling}/model_input/{model}/{shard}/enriched_splits_fold_{fold}
 
-"modelling.{model}.{shard}.model_input.transformed_splits":
+"modelling.{model}.{shard}.model_input.transformed_splits_fold_{fold}":
   <<: [*_pandas_parquet, *_model_input_ds]
-  filepath: ${globals:paths.modelling}/model_input/{model}/{shard}/transformed_splits
+  filepath: ${globals:paths.modelling}/model_input/{model}/{shard}/transformed_splits_fold_{fold}
 
-"modelling.{model}.{shard}.models.model_params":
+"modelling.{model}.{shard}.models.model_params_fold_{fold}":
   <<: *_model_ds
   type: yaml.YAMLDataset
-  filepath: ${globals:paths.modelling}/models/{model}/{shard}/model_params.yml
+  filepath: ${globals:paths.modelling}/models/{model}/{shard}/model_params_fold_{fold}.yml
 
-"modelling.{model}.{shard}.models.model":
+"modelling.{model}.{shard}.models.model_fold_{fold}":
   <<: *_model_ds
   type: pickle.PickleDataset
-  filepath: ${globals:paths.modelling}/models/{model}/{shard}/model.pickle
+  filepath: ${globals:paths.modelling}/models/{model}/{shard}/model_fold_{fold}.pickle
 
-"modelling.{model}.model_output.predictions":
+"modelling.{model}.model_output.predictions_fold_{fold}":
   <<: [*_pandas_parquet, *_model_output_ds]
-  filepath: ${globals:paths.modelling}/model_output/{model}/predictions
+  filepath: ${globals:paths.modelling}/model_output/{model}/predictions_fold_{fold}
 
 # NOTE: Saving an artifact, saving both locally and in MLFlow
 # https://kedro-mlflow.readthedocs.io/en/stable/source/04_experimentation_tracking/03_version_datasets.html#how-to-version-data-in-a-kedro-project
-"modelling.{model}.{shard}.reporting.tuning_convergence_plot":
+"modelling.{model}.{shard}.reporting.tuning_convergence_plot_fold_{fold}":
   <<: *_reporting_ds
   type: matplotlib.MatplotlibWriter
-  filepath: ${globals:paths.tmp}/reporting/{model}/{shard}/convergence_plot.png
+  filepath: ${globals:paths.tmp}/reporting/{model}/{shard}/convergence_plot_fold_{fold}.png
 
 # NOTE: Tracking a model, other serialization formats possible.
 # https://kedro-mlflow.readthedocs.io/en/stable/source/04_experimentation_tracking/04_version_models.html#how-to-track-models-using-mlflow-in-kedro-project
-"modelling.{model}.models.model":
+"modelling.{model}.models.model_fold_{fold}":
   <<: *_model_ds
   type: pickle.PickleDataset
-  filepath: ${globals:paths.modelling}/models/{model}/model.pickle
+  filepath: ${globals:paths.modelling}/models/{model}/model_fold_{fold}.pickle
 
-"modelling.{model}.reporting.metrics":
+"modelling.{model}.reporting.metrics_fold_{fold}":
   <<: *_reporting_ds
-  filepath: ${globals:paths.modelling}/reporting/{model}/sanity_metrics.yml
+  filepath: ${globals:paths.modelling}/reporting/{model}/sanity_metrics_fold_{fold}.yml
   type:  yaml.YAMLDataset
