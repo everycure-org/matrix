@@ -24,8 +24,8 @@ from matrix.pipelines.modelling.nodes import apply_splitter
 
 def _tag_edges_between_types(
     runner: GraphDB,
-    type_1_lst: List[str],
-    type_2_lst: List[str],
+    types_for_first_node: List[str],
+    types_for_second_node: List[str],
     tag: str,
     batch_size: int,
     verbose: bool,
@@ -39,8 +39,8 @@ def _tag_edges_between_types(
 
     Args:
         runner: The GraphDB object representing the KG..
-        type_1_lst: List of types for the first node.
-        type_2_lst: List of types for the second node.
+        types_for_first_node: List of types for the first node.
+        types_for_second_node: List of types for the second node.
         tag: The tag to add.
         batch_size: The batch size to use for the query.
         verbose: Whether to print the number of batches completed.
@@ -75,8 +75,8 @@ def _tag_edges_between_types(
         RETURN count(r) AS count
     """)
     # Set the tag for the specific edges
-    for type_1 in type_1_lst:
-        for type_2 in type_2_lst:
+    for type_1 in types_for_first_node:
+        for type_2 in types_for_second_node:
             if verbose:
                 print(f"Setting tags for {type_1} to {type_2}...")
             update_relationships_in_batches(f"""
