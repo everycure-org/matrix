@@ -1,5 +1,7 @@
 """
 MOA extraction pipeline.
+
+Note: Several dummy variables are used to ensure that the pipeline runs in linear order for each num_hops. This is so that the argo workflow can be fused correctly.
 """
 
 from kedro.pipeline import Pipeline, node
