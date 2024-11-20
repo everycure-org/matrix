@@ -166,10 +166,6 @@ spec:
       # Neo4j enterprise sidecar
       - name: neo4j
         image: neo4j:5.21.0-enterprise
-        resources: # limit the resources
-          requests:
-            memory: 120Gi
-            cpu: 32
         volumeMounts:
           - name: gds-key
             mountPath: /licences
