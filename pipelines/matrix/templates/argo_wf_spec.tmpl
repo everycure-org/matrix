@@ -74,7 +74,7 @@ spec:
       imagePullPolicy: Always
       image: {% raw %} "{{workflow.parameters.image}}:{{workflow.parameters.image_tag}}"
       {% endraw %}
-      env: &_kedro_env
+      env:
         - name: WORKFLOW_ID
           valueFrom:
             fieldRef:
