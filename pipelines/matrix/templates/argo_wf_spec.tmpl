@@ -121,6 +121,7 @@ spec:
 
   - <<: *_kedro_template
     name: neo4j
+    podSpecPatch: null
     container:
       imagePullPolicy: Always
       image: {% raw %} "{{workflow.parameters.image}}:{{workflow.parameters.image_tag}}"        # {{workflow...}} etc. are placeholders within the template. These placeholders will be dynamically substituted with real values when the workflow is submitted, not during the kubectl apply command.
@@ -148,6 +149,10 @@ spec:
       # Neo4j enterprise sidecar
       - name: neo4j
         image: neo4j:5.21.0-enterprise
+        resources: # limit the resources
+          requests:
+            memory: 120Gi
+            cpu: 32
         volumeMounts:
           - name: gds-key
             mountPath: /licences
