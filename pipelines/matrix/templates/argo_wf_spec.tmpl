@@ -121,12 +121,29 @@ spec:
 
   - <<: *_kedro_template
     name: neo4j
+    podSpecPatch: |
+      containers:
+        - name: neo4j
+          resources:
+            requests:
+              memory: {% raw %} "{{inputs.parameters.memory_request}}"
+              {% endraw %}
+              cpu: {% raw %} "{{inputs.parameters.cpu_request}}"
+              {% endraw %}
+              nvidia.com/gpu: {% raw %} "{{inputs.parameters.num_gpus}}"
+              {% endraw %}
+            limits:
+              memory: {% raw %} "{{inputs.parameters.memory_limit}}"
+              {% endraw %}
+              cpu: {% raw %} "{{inputs.parameters.cpu_limit}}"
+              {% endraw %}
+              nvidia.com/gpu: {% raw %} "{{inputs.parameters.num_gpus}}"
+              {% endraw %}
     container:
       imagePullPolicy: Always
       image: {% raw %} "{{workflow.parameters.image}}:{{workflow.parameters.image_tag}}"
       {% endraw %}
-      env:
-        <<: *_kedro_env
+      env: *_kedro_env
       command: ["/bin/sh", "-c"]
       args:
         - |
