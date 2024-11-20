@@ -1,4 +1,5 @@
 from kedro.pipeline import Pipeline, node, pipeline
+from kedro4argo_node import ArgoNode, ArgoResourceConfig
 
 from . import nodes
 
@@ -40,7 +41,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                     "argowf.template-neo4j",
                 ],
             ),
-            node(
+            ArgoNode(
                 func=nodes.ingest_edges,
                 inputs=[
                     "embeddings.tmp.input_nodes",
@@ -53,6 +54,13 @@ def create_pipeline(**kwargs) -> Pipeline:
                     "argowf.fuse-group.topological_embeddings",
                     "argowf.template-neo4j",
                 ],
+                # FUTURE: Ensure we define "packages" for resources
+                argo_config=ArgoResourceConfig(
+                    cpu_request=32,
+                    cpu_limit=32,
+                    memory_limit=120,
+                    memory_request=120,
+                ),
             ),
             node(
                 func=nodes.add_include_in_graphsage,
