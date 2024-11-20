@@ -74,7 +74,7 @@ spec:
       imagePullPolicy: Always
       image: {% raw %} "{{workflow.parameters.image}}:{{workflow.parameters.image_tag}}"
       {% endraw %}
-      env:
+      env: &_kedro_env
         - name: WORKFLOW_ID
           valueFrom:
             fieldRef:
@@ -126,41 +126,7 @@ spec:
       image: {% raw %} "{{workflow.parameters.image}}:{{workflow.parameters.image_tag}}"
       {% endraw %}
       env:
-        - name: WORKFLOW_ID
-          valueFrom:
-            fieldRef:
-              fieldPath: metadata.labels['workflows.argoproj.io/workflow']
-        - name: RUN_NAME
-          value: {% raw %} "{{workflow.parameters.run_name}}" 
-          {% endraw %}
-        - name: NEO4J_HOST
-          value: "bolt://127.0.0.1:7687"
-        - name: MLFLOW_ENDPOINT
-          value: {% raw %} "{{workflow.parameters.mlflow_endpoint}}" 
-          {% endraw %}
-        - name: NEO4J_USER
-          value: "neo4j"
-        - name: NEO4J_PASSWORD
-          value: "admin"
-        - name: OPENAI_ENDPOINT
-          value: {% raw %} "{{workflow.parameters.openai_endpoint}}" 
-          {% endraw %}
-        - name: OPENAI_API_KEY
-          valueFrom:
-            secretKeyRef:
-              name: matrix-secrets
-              key: OPENAI_API_KEY
-        - name: GCP_PROJECT_ID
-          valueFrom:
-            configMapKeyRef:
-              name: matrix-config
-              key: GCP_PROJECT_ID
-        - name: GCP_BUCKET
-          valueFrom:
-            configMapKeyRef:
-              name: matrix-config
-              key: GCP_BUCKET
-
+        <<: *_kedro_env
       command: ["/bin/sh", "-c"]
       args:
         - |
@@ -170,7 +136,7 @@ spec:
               sleep 5
             done
             echo "Neo4j is ready. Starting main application..."
-            kedro run -p {{ pipeline_for_execution }} -e {% raw %}"{{workflow.parameters.env}}"{% endraw %} -n {% raw %}"{{inputs.parameters.kedro_nodes}}"{% endraw %}
+            NEO4J_HOST="bolt://127.0.0.1:7687" kedro run -p {{ pipeline_for_execution }} -e {% raw %}"{{workflow.parameters.env}}"{% endraw %} -n {% raw %}"{{inputs.parameters.kedro_nodes}}"{% endraw %}
     
     volumes:
       - name: gds-key
@@ -189,7 +155,10 @@ spec:
             readOnly: true
         env:
         - name: NEO4J_AUTH
-          value: "neo4j/admin"
+          valueFrom:
+            secretKeyRef:
+              name: matrix-secrets
+              key: NEO4J_AUTH
         - name: NEO4J_gds_enterprise_license__file
           value: "/licences/gds-key"
         - name: NEO4J_apoc_export_file_enabled
