@@ -220,10 +220,6 @@ def report_mapping_success(
     report["proportion_pairs_with_mapped_paths"] = (
         len(mapped_paths.get_unique_pairs()) / len(drug_mech_db) if len(drug_mech_db) > 0 else 0
     )
-    report["entities_in_drugmechdb"] = len(drugmechdb_entities)
-    report["proportion_entities_mapped"] = (
-        sum(~drugmechdb_entities["mapped_ID"].isna()) / len(drugmechdb_entities) if len(drugmechdb_entities) > 0 else 0
-    )
     return json.loads(json.dumps(report, default=float))
 
 
