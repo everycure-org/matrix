@@ -1,7 +1,15 @@
-"moa_extraction.reporting.{num_hops}_hop_metrics":
+"moa_extraction.reporting.{num_hops}_hop_metrics@mlflow":
   type: matrix.datasets.mlflow.MlflowMetricsDataset
   key_prefix: "moa_extraction.{num_hops}_hop"
 
-moa_extraction.reporting.{num_hops}_hop_mapping_success:
+"moa_extraction.reporting.{num_hops}_hop_metrics@yaml":
+  filepath: ${globals:paths.moa_extraction}/reporting/{num_hops}_hop_metrics
+  type:  yaml.YAMLDataset
+
+"moa_extraction.reporting.{num_hops}_hop_mapping_success@mlflow":
   type: matrix.datasets.mlflow.MlflowMetricsDataset
   key_prefix: "moa_extraction.{num_hops}_hop"
+
+"moa_extraction.reporting.{num_hops}_hop_mapping_success@yaml":
+  filepath: ${globals:paths.moa_extraction}/reporting/{num_hops}_hop_mapping_success
+  type:  yaml.YAMLDataset
