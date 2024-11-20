@@ -115,33 +115,6 @@ def add_tags(
     return {"success": True}
 
 
-# def get_one_hot_encodings(
-#     nodes: DataFrame,
-#     edges: DataFrame,
-# ) -> Tuple[OneHotEncoder, OneHotEncoder]:
-#     """Get the one-hot encodings for node categories and edge relations.
-
-#     Args:
-#         nodes: Nodes dataframe.
-#         edges: Edges dataframe.
-
-#     Returns:
-#         A tuple of OneHotEncoder objects for node categories and edge relations.
-#     """
-#     # Get the node categories
-#     node_categories = nodes.select("category").distinct().collect()
-#     node_categories = [row.category for row in node_categories]
-
-#     # Get the edge relations
-#     edge_relations = edges.select("predicate").distinct().collect()
-#     edge_relations = [row.predicate for row in edge_relations]
-
-#     # Create the one-hot encoders
-#     category_encoder = OneHotEncoder(node_categories)
-#     relation_encoder = OneHotEncoder(edge_relations)
-#     return category_encoder, relation_encoder
-
-
 @inject_object()
 def get_one_hot_encodings(
     runner: GraphDB,
