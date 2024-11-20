@@ -54,7 +54,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                     "argowf.fuse-group.topological_embeddings",
                     "argowf.template-neo4j",
                 ],
-                # FUTURE: Ensure we define "packages" for resources
+                # FUTURE: Ensure we define "packages / tshirt size standard configurations" for resources
                 argo_config=ArgoResourceConfig(
                     cpu_request=32,
                     cpu_limit=32,
