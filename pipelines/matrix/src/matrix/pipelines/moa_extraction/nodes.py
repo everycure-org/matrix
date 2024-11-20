@@ -145,13 +145,13 @@ def add_tags(
 @inject_object()
 def get_one_hot_encodings(
     runner: GraphDB,
-    edges_dummy: DataFrame,
+    tags_dummy: DataFrame,
 ) -> Tuple[OneHotEncoder, OneHotEncoder]:
     """Get the one-hot encodings for node categories and edge relations.
 
     Args:
         runner: The GraphDB object representing the KG.
-        edges_dummy: Dummy variable ensuring that the node is run after edges have been added to the KG.
+        tags_dummy: Dummy variable ensuring pipeline is run in linear order.
 
     Returns:
         A tuple of OneHotEncoder objects for node categories and edge relations.
@@ -184,7 +184,7 @@ def map_drug_mech_db(
     drug_mech_db: List[dict],
     mapper: PathMapper,
     drugmechdb_entities: pd.DataFrame,
-    add_tags_dummy: dict,
+    one_hot_encodings_dummy: dict,
 ) -> KGPaths:
     """Map the DrugMechDB indication paths to 2 and 3-hop paths in the graph.
 
@@ -193,7 +193,7 @@ def map_drug_mech_db(
         drug_mech_db: The DrugMechDB indication paths.
         mapper: Strategy for mapping paths to the graph.
         drugmechdb_entities: The normalized DrugMechDB entities.
-        add_tags_dummy: Dummy variable ensuring that the node is run after tags have been added to the KG.
+        one_hot_encodings_dummy: Dummy variable ensuring pipeline is run in linear order.
     """
     paths = mapper.run(runner, drug_mech_db, drugmechdb_entities)
     return paths.df
@@ -231,12 +231,14 @@ def report_mapping_success(
 def make_splits(
     paths_data: KGPaths,
     splitter: BaseCrossValidator,
+    mapping_report_dummy: dict,
 ) -> pd.DataFrame:
     """Function to split a paths dataset with
 
     Args:
         paths_data: Knowledge graphs paths dataset.
         splitter: sklearn splitter object used to create train/test splits.
+        mapping_report_dummy: Dummy variable ensuring pipeline is run in linear order.
 
     Returns:
         Paths dataset with split information added.
