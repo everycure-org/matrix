@@ -89,11 +89,11 @@ spec:
               {% endraw %}
               nvidia.com/gpu: {% raw %} "{{inputs.parameters.num_gpus}}"
               {% endraw %}
-    container: &_kedro_container
+    container:
       imagePullPolicy: Always
-      image: {% raw %} "{{workflow.parameters.image}}:{{workflow.parameters.image_tag}}"        # {{workflow...}} etc. are placeholders within the template. These placeholders will be dynamically substituted with real values when the workflow is submitted, not during the kubectl apply command.
+      image: {% raw %} "{{workflow.parameters.image}}:{{workflow.parameters.image_tag}}"
       {% endraw %}
-      env:
+      env: &_kedro_env
         - name: WORKFLOW_ID
           valueFrom:
             fieldRef:
@@ -147,8 +147,12 @@ spec:
 
   - <<: *_kedro_template
     name: neo4j
+    podSpecPatch: null
     container:
-      <<: *_kedro_container
+      imagePullPolicy: Always
+      image: {% raw %} "{{workflow.parameters.image}}:{{workflow.parameters.image_tag}}"        # {{workflow...}} etc. are placeholders within the template. These placeholders will be dynamically substituted with real values when the workflow is submitted, not during the kubectl apply command.
+      {% endraw %}
+      env: *_kedro_env
       command: ["/bin/sh", "-c"]
       args:
         - |
@@ -158,7 +162,7 @@ spec:
               sleep 5
             done
             echo "Neo4j is ready. Starting main application..."
-            kedro run -p {{ pipeline_name }} -e {% raw %}"{{workflow.parameters.env}}"{% endraw %} -n {% raw %}"{{inputs.parameters.kedro_nodes}}"{% endraw %}
+            NEO4J_HOST="bolt://127.0.0.1:7687" kedro run -p {{ pipeline_for_execution }} -e {% raw %}"{{workflow.parameters.env}}"{% endraw %} -n {% raw %}"{{inputs.parameters.kedro_nodes}}"{% endraw %}
     
     volumes:
       - name: gds-key
@@ -171,13 +175,20 @@ spec:
       # Neo4j enterprise sidecar
       - name: neo4j
         image: neo4j:5.21.0-enterprise
+        resources: # limit the resources
+          requests:
+            memory: 120Gi
+            cpu: 32
         volumeMounts:
           - name: gds-key
             mountPath: /licences
             readOnly: true
         env:
         - name: NEO4J_AUTH
-          value: "neo4j/admin"
+          valueFrom:
+            secretKeyRef:
+              name: matrix-secrets
+              key: NEO4J_AUTH
         - name: NEO4J_gds_enterprise_license__file
           value: "/licences/gds-key"
         - name: NEO4J_apoc_export_file_enabled
