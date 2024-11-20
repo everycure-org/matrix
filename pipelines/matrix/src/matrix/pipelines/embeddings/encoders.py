@@ -1,8 +1,11 @@
+# NOTE: This file was partially generated using AI assistance.
 from abc import ABC, abstractmethod
 from typing import Optional
 import pandas as pd
 from tenacity import retry, wait_exponential, stop_after_attempt
 import numpy as np
+from transformers import AutoTokenizer, AutoModel
+import torch
 
 
 class AttributeEncoder(ABC):
@@ -71,14 +74,14 @@ class OpenAIEncoder(AttributeEncoder):
 class RandomizedEncoder(AttributeEncoder):
     """Encoder class for generating random embeddings."""
 
-    def __init__(self, output_dim: int = 512, random_seed: Optional[int] = None):
+    def __init__(self, dimensions: int = 512, random_seed: Optional[int] = None):
         """Initialize Randomized encoder.
 
         Args:
-            output_dim: Dimension of the output embeddings
+            dimensions: Dimension of the output embeddings
             random_seed: Random seed for reproducibility
         """
-        super().__init__(output_dim, random_seed)
+        super().__init__(dimensions, random_seed)
         if random_seed is not None:
             np.random.seed(random_seed)
 
@@ -94,5 +97,49 @@ class RandomizedEncoder(AttributeEncoder):
         df = df.copy()
         # Generate random embeddings
         df["embedding"] = [np.random.rand(self._embedding_dim) for _ in range(len(df))]
+        df = df.drop(columns=["text_to_embed"])
+        return df
+
+
+class PubmedBERTEncoder(AttributeEncoder):
+    """Encoder class for PubmedBERT embeddings."""
+
+    def __init__(self, dimensions: int = 768, random_seed: Optional[int] = None):
+        """Initialize PubmedBERT encoder.
+
+        Args:
+            dimensions: Dimension of the output embeddings
+            random_seed: Random seed for reproducibility
+        """
+        super().__init__(dimensions, random_seed)
+        if random_seed is not None:
+            np.random.seed(random_seed)
+
+        self.tokenizer = AutoTokenizer.from_pretrained("microsoft/BiomedNLP-PubMedBERT-base-uncased-abstract-fulltext")
+        self.model = AutoModel.from_pretrained("microsoft/BiomedNLP-PubMedBERT-base-uncased-abstract-fulltext")
+
+    async def encode(self, df: pd.DataFrame) -> pd.DataFrame:
+        """Generate PubmedBERT embeddings for the input dataframe.
+
+        Args:
+            df: Input dataframe containing 'text_to_embed' column
+
+        Returns:
+            DataFrame with new 'embedding' column and 'text_to_embed' removed
+        """
+        df = df.copy()
+        feat_list = df["text_to_embed"].tolist()
+        print(len(feat_list))
+        inputs = self.tokenizer(
+            feat_list,
+            padding=True,
+            truncation=True,
+            return_tensors="pt",
+            max_length=512,
+        )
+        with torch.no_grad():
+            embeddings = self.model(**inputs, output_hidden_states=True, return_dict=True).pooler_output.cpu().numpy()
+        print(len(embeddings))
+        df["embedding"] = list(embeddings)
         df = df.drop(columns=["text_to_embed"])
         return df
