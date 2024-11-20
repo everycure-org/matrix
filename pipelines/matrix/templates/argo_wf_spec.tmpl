@@ -121,41 +121,15 @@ spec:
 
   - <<: *_kedro_template
     name: neo4j
-    podSpecPatch: |
-      containers:
-        - name: main
-          resources:
-            requests:
-              memory: {% raw %} "{{inputs.parameters.memory_request}}"
-              {% endraw %}
-              cpu: {% raw %} "{{inputs.parameters.cpu_request}}"
-              {% endraw %}
-              nvidia.com/gpu: {% raw %} "{{inputs.parameters.num_gpus}}"
-              {% endraw %}
-            limits:
-              memory: {% raw %} "{{inputs.parameters.memory_limit}}"
-              {% endraw %}
-              cpu: {% raw %} "{{inputs.parameters.cpu_limit}}"
-              {% endraw %}
-              nvidia.com/gpu: {% raw %} "{{inputs.parameters.num_gpus}}"
-              {% endraw %}
-        - name: neo4j
-          resources:
-            requests:
-              memory: {% raw %} "{{inputs.parameters.memory_request}}"
-              {% endraw %}
-              cpu: {% raw %} "{{inputs.parameters.cpu_request}}"
-              {% endraw %}
-              nvidia.com/gpu: {% raw %} "{{inputs.parameters.num_gpus}}"
-              {% endraw %}
-            limits:
-              memory: {% raw %} "{{inputs.parameters.memory_limit}}"
-              {% endraw %}
-              cpu: {% raw %} "{{inputs.parameters.cpu_limit}}"
-              {% endraw %}
-              nvidia.com/gpu: {% raw %} "{{inputs.parameters.num_gpus}}"
-              {% endraw %}
+    podSpecPatch: null
     container:
+      resources: # limit the resources
+        requests:
+          memory: 120Gi
+          cpu: 32
+        # limits:
+        #   memory: 120Gi
+        #   cpu: 32
       imagePullPolicy: Always
       image: {% raw %} "{{workflow.parameters.image}}:{{workflow.parameters.image_tag}}"
       {% endraw %}
