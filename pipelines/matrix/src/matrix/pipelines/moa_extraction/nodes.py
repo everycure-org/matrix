@@ -291,7 +291,6 @@ def train_model(
     path_embedding_strategy: PathEmbeddingStrategy,
     category_encoder: OneHotEncoder,
     relation_encoder: OneHotEncoder,
-    model_split_dummy: BaseEstimator,
 ) -> BaseEstimator:
     """Train the model on the entire paths dataset provided.
 
@@ -301,7 +300,6 @@ def train_model(
         path_embedding_strategy: Path embedding strategy.
         category_encoder: One-hot encoder for node categories.
         relation_encoder: One-hot encoder for edge relations.
-        model_split_dummy: Dummy variable ensuring pipeline is run in linear order.
     """
     X = path_embedding_strategy.run(paths, category_encoder, relation_encoder).astype(np.float32)
     y = paths.df["y"].to_numpy().astype(np.float32).reshape(-1, 1)
@@ -317,6 +315,7 @@ def train_model_split(
     path_embedding_strategy: PathEmbeddingStrategy,
     category_encoder: OneHotEncoder,
     relation_encoder: OneHotEncoder,
+    model_dummy: BaseEstimator,
 ) -> BaseEstimator:
     """Train the model on the training portion of the paths dataset only.
 
@@ -326,6 +325,7 @@ def train_model_split(
         path_embedding_strategy: Path embedding strategy.
         category_encoder: One-hot encoder for node categories.
         relation_encoder: One-hot encoder for edge relations.
+        model_dummy: Dummy variable ensuring pipeline is run in linear order.
     """
     paths_train = KGPaths(df=paths.df[paths.df["split"] == "TRAIN"])
     return train_model(tuner, paths_train, path_embedding_strategy, category_encoder, relation_encoder)
