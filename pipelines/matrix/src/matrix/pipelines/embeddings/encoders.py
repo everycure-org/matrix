@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from typing import Optional
 import pandas as pd
 from tenacity import retry, wait_exponential, stop_after_attempt
-# NOTE: This file was partially generated using AI assistance.
+import numpy as np
 
 
 class AttributeEncoder(ABC):
@@ -66,3 +66,33 @@ class OpenAIEncoder(AttributeEncoder):
         except Exception as e:
             print(f"Exception occurred: {e}")
             raise e
+
+
+class RandomizedEncoder(AttributeEncoder):
+    """Encoder class for generating random embeddings."""
+
+    def __init__(self, output_dim: int = 512, random_seed: Optional[int] = None):
+        """Initialize Randomized encoder.
+
+        Args:
+            output_dim: Dimension of the output embeddings
+            random_seed: Random seed for reproducibility
+        """
+        super().__init__(output_dim, random_seed)
+        if random_seed is not None:
+            np.random.seed(random_seed)
+
+    async def encode(self, df: pd.DataFrame) -> pd.DataFrame:
+        """Generate random embeddings for the input dataframe.
+
+        Args:
+            df: Input dataframe containing 'text_to_embed' column
+
+        Returns:
+            DataFrame with new 'embedding' column and 'text_to_embed' removed
+        """
+        df = df.copy()
+        # Generate random embeddings
+        df["embedding"] = [np.random.rand(self._embedding_dim) for _ in range(len(df))]
+        df = df.drop(columns=["text_to_embed"])
+        return df
