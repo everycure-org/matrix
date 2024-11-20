@@ -128,18 +128,6 @@ def _training_pipeline() -> Pipeline:
                         tags="moa_extraction.negative_sampling",
                     ),
                     node(
-                        func=nodes.train_model_split,
-                        inputs={
-                            "tuner": f"params:moa_extraction.training.{num_hops}_hop.tuner",
-                            "paths": f"moa_extraction.feat.{num_hops}_hop_enriched_paths",
-                            "path_embedding_strategy": "params:moa_extraction.path_embeddings.strategy",
-                            "category_encoder": f"moa_extraction.feat.category_encoder_{num_hops}_hop",
-                            "relation_encoder": f"moa_extraction.feat.relation_encoder_{num_hops}_hop",
-                        },
-                        outputs=f"moa_extraction.models.{num_hops}_hop_model_split",
-                        name=f"train_{num_hops}_hop_model_split",
-                    ),
-                    node(
                         func=nodes.train_model,
                         inputs={
                             "tuner": f"params:moa_extraction.training.{num_hops}_hop.tuner",
@@ -147,10 +135,22 @@ def _training_pipeline() -> Pipeline:
                             "path_embedding_strategy": "params:moa_extraction.path_embeddings.strategy",
                             "category_encoder": f"moa_extraction.feat.category_encoder_{num_hops}_hop",
                             "relation_encoder": f"moa_extraction.feat.relation_encoder_{num_hops}_hop",
-                            "model_split_dummy": f"moa_extraction.models.{num_hops}_hop_model_split",
                         },
                         outputs=f"moa_extraction.models.{num_hops}_hop_model",
                         name=f"train_{num_hops}_hop_model",
+                    ),
+                    node(
+                        func=nodes.train_model_split,
+                        inputs={
+                            "tuner": f"params:moa_extraction.training.{num_hops}_hop.tuner",
+                            "paths": f"moa_extraction.feat.{num_hops}_hop_enriched_paths",
+                            "path_embedding_strategy": "params:moa_extraction.path_embeddings.strategy",
+                            "category_encoder": f"moa_extraction.feat.category_encoder_{num_hops}_hop",
+                            "relation_encoder": f"moa_extraction.feat.relation_encoder_{num_hops}_hop",
+                            "model_dummy": f"moa_extraction.models.{num_hops}_hop_model",
+                        },
+                        outputs=f"moa_extraction.models.{num_hops}_hop_model_split",
+                        name=f"train_{num_hops}_hop_model_split",
                     ),
                 ],
                 tags=[
