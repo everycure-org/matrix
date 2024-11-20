@@ -70,7 +70,7 @@ spec:
               {% endraw %}
               nvidia.com/gpu: {% raw %} "{{inputs.parameters.num_gpus}}"
               {% endraw %}
-    container:
+    container: &_kedro_container
       imagePullPolicy: Always
       image: {% raw %} "{{workflow.parameters.image}}:{{workflow.parameters.image_tag}}"
       {% endraw %}
@@ -139,11 +139,8 @@ spec:
               {% endraw %}
               nvidia.com/gpu: {% raw %} "{{inputs.parameters.num_gpus}}"
               {% endraw %}
-    container:
-      imagePullPolicy: Always
-      image: {% raw %} "{{workflow.parameters.image}}:{{workflow.parameters.image_tag}}"        # {{workflow...}} etc. are placeholders within the template. These placeholders will be dynamically substituted with real values when the workflow is submitted, not during the kubectl apply command.
-      {% endraw %}
-      env: *_kedro_env
+    container: 
+      <<: *_kedro_container
       command: ["/bin/sh", "-c"]
       args:
         - |
