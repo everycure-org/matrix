@@ -8,11 +8,19 @@ Our codebase is structured around the `Makefile`. This allows for a quick and ea
 
 At the end of this section, we will show you how you can set up your entire local environment by using a single `make` command however prior to that, we will explain the set-up on a step-by-step basis.
 
-### `.env` file for local credentials
+<!--
+TODO wrong place
+### Environment Variables Setup
 
-To execute the pipeline directly on your local machine, you'll first need to create a `.env` file in the root of the matrix pipeline. Get started by renaming the `.env.tmpl` file to `.env`.
+To execute the pipeline directly on your local machine, you'll need to set up your environment variables. We use a two-file system:
 
-Note that the pipeline will not run fully without credentials for the dependent services (at the moment only OpenAI). Reach out to the team through Slack if you need a credential. 
+1. `.env.defaults` - Contains shared default values and is version controlled. This file includes all available configuration options with default values and documentation.
+2. `.env` - Contains your local overrides and credentials (gitignored)
+
+!!! tip
+    Start by reviewing `.env.defaults` to understand available configuration options. In most cases, for local executions no overrides are needed. If you do want to override a variable, create the `.env` file and override the necessary variables.
+
+-->
 
 ### Virtual environment for python dependencies
 
@@ -21,25 +29,20 @@ To execute the codebase, you need to set up a virtual environment for the python
 ```bash
 make install
 ```
-This command wraps the following commands:
-```bash
-# Checking the pre-requisites installed
-@command -v docker >/dev/null 2>&1 || { echo "Error: docker is not installed." >&2; exit 1; }
-@command -v gcloud >/dev/null 2>&1 || { echo "Error: gcloud is not installed." >&2; exit 1; }
-@command -v python3 >/dev/null 2>&1 || { echo "Error: python3 is not installed." >&2; exit 1; }
-@command -v java >/dev/null 2>&1 || { echo "Error: java is not installed." >&2; exit 1; }
-@command -v uv >/dev/null 2>&1 || { echo "Error: uv is not installed." >&2; exit 1; }
-@echo "All prerequisites are installed."
 
-# Setting up a virtual environment and installing the dependencies
-if [ ! -d .venv ]; then uv venv -p 3.11; fi
-.venv/bin/python -m ensurepip --upgrade || true
-deactivate || true
-# activate freshly created venv
-(source .venv/bin/activate; \
-uv pip compile requirements.in --output-file requirements.txt; \
-uv pip install -r requirements.txt)
-```
+!!! question "What does this command do?"
+
+    This command wraps the following commands:
+
+    1. **Environment Setup**: Creates and configures your Python development environment with all necessary dependencies
+    2. **Code Validation**: Runs various unit tests to ensure your local setup is working correctly
+    3. **Spins up docker services**: Spins up several dependent services we need for the execution of the pipeline
+    4. **Integration Test**: Runs an end-to-end test of the pipeline using fabricated data to verify the pipeline is working as expected
+
+    This single command gets you from a fresh checkout to a fully functional local development environment. After it completes successfully, you'll be ready to start developing!
+    
+    We do encourage you to read through the `Makefile` to get a sense of how the codebase is structured.
+
 
 ### Pre-commit hooks
 We have pre-commit hooks installed to ensure code quality and consistency. To run the pre-commit hooks, you can run the following command:
@@ -47,15 +50,8 @@ We have pre-commit hooks installed to ensure code quality and consistency. To ru
 ```bash
 make precommit
 ```
-This command wraps the following commands (provided venv is active):
-```bash
-uv pip install pre-commit
-.venv/bin/pre-commit install --install-hooks
 
-# Fetch updates from remote and run pre-commit hooks against diff between main and current branch
-git fetch origin
-.venv/bin/pre-commit run -s origin/main -o HEAD
-```
+These hooks were also installed at the time you called `make` so whenever you try to push something to the repository, the hooks will run automatically. We ensure a minimum level of code quality this way.
 
 ### Fast tests
 To ensure that the codebase is working as expected, you can run the following command to execute the fast tests:
@@ -63,23 +59,22 @@ To ensure that the codebase is working as expected, you can run the following co
 ```bash
 make fast_test
 ```
-This command wraps the following commands (provided venv is active):
-```bash
-TESTMON_DATAFILE=/tmp/.testmondata .venv/bin/pytest --testmon -v tests/
-```
-Note that the first time you run this command, it might take a while to complete as it needs to download the testmon data file. However any other fast_test command will be faster as it will use the cached data file.
+
+Note that the first time you run this command, it might take a while to complete as it
+needs to run all tests. However any other fast_test command will be faster as it will use
+the cached data and only execute tests where the underlying code has changed.
 
 ### Docker compose for local execution
 
-Our codebase features code that allows for fully localized execution of the pipeline and
-its' auxiliary services using `docker compose`. The deployment consists of two files that
+Our codebase features code that allows for fully local execution of the pipeline and
+its auxiliary services using `docker compose`. The deployment consists of two files that
 can be [merged](https://docs.docker.com/compose/multiple-compose-files/merge/) depending
 on the intended use, i.e.,
 
 1. The base `docker compose` file defines the runtime services, i.e.,
     - Neo4J graph database
     - [MLFlow](https://www.mlflow.org/docs/latest/index.html) instance
-    - [Mockserver](https://www.mock-server.com/) implementing a OpenAI compatible GenAI API
+    - [Mockserver](https://www.mock-server.com/) implementing an OpenAI compatible GenAI API
         - This allows for running the full pipeline e2e without a provider token
 2. The `docker-compose.ci` file adds in the pipeline container for integration testing
     - This file is used by our CI/CD setup and can be ignored for local development.
@@ -92,10 +87,6 @@ keeping the services running in the background.
 
 ```bash
 make compose_up
-```
-This command wraps the following commands:
-```bash
-docker compose -f compose/docker-compose.yml up -d --wait --remove-orphans
 ```
 
 To validate whether the setup is running, navigate to [localhost](http://localhost:7474/) in your browser, this will open the Neo4J dashboard. Use `neo4j` and `admin` as the username and password combination sign in. Please note that the Neo4J database would be empty at this stage.
@@ -114,12 +105,6 @@ This command wraps the following commands (provided venv is active and that you 
 This command will kick off our kedro pipeline in a test environment using a fabricated dataset. This is useful to ensure that the pipeline works as expected locally after you are finished with the local setup.
 
 ### Makefile setup
-
-Except for the `.env` setup, all the sections mentioned above can be set-up using a specific `make` command. You can also execute them all at once by running the default `make` command in `pipelines/matrix`:
-
-```bash
-make
-```
 
 Generally, the `Makefile` is a good place to refer to when you need to re-set your environment. Once the command runs successfully, you should be able to run the pipeline end-to-end locally!
 
@@ -143,7 +128,8 @@ Generally, the `Makefile` is a good place to refer to when you need to re-set yo
     Make compose_down # ensures that there is no docker-compose down running 
     Make integration_test # executes an local kedro pipeline run in a test environment
     ```
-    We encourage you to examine the `Makefile` to get a sense of how the codebase is structured - note that not all commands are part of the default make command. Some useful command which are not part of the default make command are:
+    We encourage you to examine the `Makefile` to get a sense of how the codebase is structured - note that not all commands are part of the default make command. Some useful commands which are not part of the default make command are:
+
     - `Make full_test` which executes all unit tests within the codebase
     - `Make clean` which cleans various cache locations - useful when you're running into cache related issues or when you want to start fresh
     - `Make wipe_neo` which wipes the neo4j database - useful for development purposes
@@ -153,7 +139,7 @@ Generally, the `Makefile` is a good place to refer to when you need to re-set yo
 
 ### Plugging into cloud outputs
 
-As you might have noticed, local setup is mainly focusing on the local execution of the pipeline with the fabricated data. However, we also run our full pipeline on production data in the `cloud` environment. Our pipeline is orchestrated using Argo Workflows, and may take several hours to complete. Given our current test process, that solely executes end-to-end tests on synthetic data, it is possible that the pipeline runs into an error due to a node handling data edge cases succesfully.
+As you might have noticed, local setup is mainly focusing on the local execution of the pipeline with the fabricated data. However, we also run our full pipeline on production data in the `cloud` environment. Our pipeline is orchestrated using Argo Workflows, and may take several hours to complete. Given our current test process, that solely executes end-to-end tests on synthetic data, it is possible that the pipeline runs into an error due to a node handling data edge cases unsuccesfully.
 
 Troubleshooting such issues is tedious, and validating a fix requires the entire pipeline to be re-executed. This is where the `--from-env` flag comes in.
 
@@ -170,7 +156,7 @@ In order to run against the `cloud` environment it's important to set the `RUN_N
 The following command can be used to re-run the node locally, while consuming data from `cloud`:
 
 ```bash
-# NOTE: You can specify multiple nodes to rerun, using a comma-seperated list
+# NOTE: You can specify multiple nodes to rerun, using a comma-separated list
 kedro run --from-env cloud --nodes preprocessing_node_name
 ```
 
@@ -190,3 +176,5 @@ kedro run --from-env cloud --nodes preprocessing_node_name
     ```dotenv
     MLFLOW_ENDPOINT=http://127.0.0.1:5002
     ```
+
+[Next up, our different environments in kedro :material-skip-next:](./environments_overview.md){ .md-button .md-button--primary }

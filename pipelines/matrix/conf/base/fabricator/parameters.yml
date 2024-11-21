@@ -79,9 +79,18 @@ fabricator.rtx_kg2:
           - biolink:affects
           - biolink:subclass_of
           - biolink:is_nearby_variant_of
-      primary_knowledge_source:
-        type: faker
-        provider: name
+      knowledge_source:string[]:
+        type: generate_random_arrays
+        delimiter: "\u001f"
+        sample_values:
+          - infores:semmeddb
+          - infores:gtex
+          - infores:ubergraph
+          - infores:snpeff
+      # For version 2.10
+      # primary_knowledge_source:
+      #   type: faker
+      #   provider: name
       publications:string[]:
         type: generate_random_arrays
         delimiter: "\u01c2"

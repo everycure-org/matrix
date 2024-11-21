@@ -67,15 +67,13 @@ def determine_most_specific_category(nodes: DataFrame, biolink_categories_df: pd
 
     spark = ps.sql.SparkSession.builder.getOrCreate()
     labels_hierarchy = spark.createDataFrame(
-        unnest_biolink_hierarchy(
-            "label", biolink_categories_df, prefix="biolink:"
-        )  # pascal_case=True really confusing!
+        unnest_biolink_hierarchy("label", biolink_categories_df, prefix="biolink:", convert_to_pascal_case=True)
     )
 
     nodes = (
         nodes.withColumn("label", F.explode("all_categories"))
         .join(labels_hierarchy, on="label", how="left")  # add path
-        .withColumn("depth", F.size("parents"))
+        .withColumn("depth", F.array_size("parents"))
         .withColumn("row_num", F.row_number().over(Window.partitionBy("id").orderBy(F.col("depth").desc())))
         .filter(F.col("row_num") == 1)
         .drop("row_num")
@@ -93,7 +91,7 @@ def unnest_biolink_hierarchy(
     scope: str,
     predicates: List[Dict[str, Any]],
     parents: Optional[List[str]] = None,
-    pascal_case: bool = False,
+    convert_to_pascal_case: bool = False,
     prefix: str = "",
 ):
     """Function to unnest a biolink hierarchy.
@@ -115,8 +113,8 @@ def unnest_biolink_hierarchy(
     slices = []
     for predicate in predicates:
         name = predicate.get("name")
-        if pascal_case:
-            name = _pascal_case(name)
+        if convert_to_pascal_case:
+            name = to_pascal_case(name)
 
         # add prefix if provided
         name = f"{prefix}{name}"
@@ -125,7 +123,11 @@ def unnest_biolink_hierarchy(
         if children := predicate.get("children"):
             slices.append(
                 unnest_biolink_hierarchy(
-                    scope, children, parents=[*parents, name], pascal_case=pascal_case, prefix=prefix
+                    scope,
+                    children,
+                    parents=[*parents, name],
+                    convert_to_pascal_case=convert_to_pascal_case,
+                    prefix=prefix,
                 )
             )
 
@@ -134,7 +136,8 @@ def unnest_biolink_hierarchy(
     return pd.concat(slices, ignore_index=True)
 
 
-def _pascal_case(s: str) -> str:
+def to_pascal_case(s: str) -> str:
+    # PascalCase is a writing style (like camelCase) where the first letter of each word is capitalized
     words = s.split("_")
     for i, word in enumerate(words):
         words[i] = word[0].upper() + word[1:]

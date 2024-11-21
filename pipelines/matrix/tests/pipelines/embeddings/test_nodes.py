@@ -38,7 +38,7 @@ def test_compute_embeddings(spark, df, mocker):
     _ = mocker.patch("matrix.pipelines.embeddings.nodes.batch", side_effect=mock_batch)
 
     # Given an input dataframe to compute embeddings for
-    result = compute_embeddings(df, ["id"], "embedding", "dummy", 2, "dummy_endpoint", "model").orderBy("id")
+    result = compute_embeddings(df, ["id"], "embedding", "dummy", 2, "dummy_endpoint", False, "model").orderBy("id")
     expected = spark.createDataFrame(
         [
             (1, [1.0], "Alice"),
