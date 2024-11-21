@@ -1,5 +1,3 @@
-from typing import List
-
 import pandas as pd
 from data_fabricator.v0.nodes.fabrication import fabricate_datasets
 from kedro.pipeline import Pipeline, node, pipeline
@@ -8,8 +6,6 @@ from kedro.pipeline import Pipeline, node, pipeline
 def _create_pairs(
     drug_list: pd.DataFrame,
     disease_list: pd.DataFrame,
-    drug_types: List[str],
-    disease_types: List[str],
     num: int = 100,
     seed: int = 42,
 ) -> pd.DataFrame:
@@ -88,8 +84,6 @@ def create_pipeline(**kwargs) -> Pipeline:
                 inputs=[
                     "ingestion.raw.drug_list@pandas",
                     "ingestion.raw.disease_list@pandas",
-                    "params:modelling.drug_types",
-                    "params:modelling.disease_types",
                 ],
                 outputs=[
                     "modelling.raw.ground_truth.positives@pandas",
