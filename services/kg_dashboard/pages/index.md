@@ -12,7 +12,6 @@ Dashboard pages on the left side of the screen are for exploring the data in the
   from bq.merged_kg_edges
   group by all
   order by count desc
-  limit 50
 ```
 
 <SankeyDiagram data={edges_for_sankey} 
@@ -21,8 +20,12 @@ Dashboard pages on the left side of the screen are for exploring the data in the
   valueCol='count'
   linkLabels='full'
   linkColor='gradient'
-  title='Top 50 associations in the Matrix KG by subject category + object category count'
+  title='Associations in the Matrix KG by subject category + object category count'
+  chartAreaHeight={1400}
 />
 
-<a href="/node/prefix/MONDO">Mondo Dashboard</a>
-<a href="/node/category/Disease">Disease Dashboard</a>
+Example parameterized dashboards:
+ - <a href="/node/prefix/MONDO">Mondo Dashboard</a> 
+ - <a href="/node/category/Disease">Disease Dashboard</a> 
+
+To see additional node breakdowns by category or prefix, check out the <a href="/node/explore">Node Explore</a> page.
