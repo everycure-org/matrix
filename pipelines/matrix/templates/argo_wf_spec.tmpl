@@ -196,7 +196,7 @@ spec:
         - name: NEO4J_dbms_memory_heap_initial__size
           value: "100G"
         - name: NEO4J_dbms_memory_heap_max__size
-          value: "100G"
+          value: "256G" # TODO: How do we pass this in w/o Gi
 
   {% for pipeline, tasks in pipelines.items() %}
   - name: {{ pipeline | replace('_', '-') }}
