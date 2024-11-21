@@ -1,0 +1,28 @@
+
+_pandas_csv: &_pandas_csv
+  type:  pandas.CSVDataset
+
+_model_input_ds: &_model_input_ds
+  metadata:
+    kedro-viz:
+      layer: model_input
+
+modelling.reporting.gt_present:
+  type: matrix.datasets.mlflow.MlflowMetricsDataset
+  key_prefix: "gt_present"
+
+modelling.raw.ground_truth.positives:
+  <<: [*_pandas_csv, *_model_input_ds]
+  filepath: ${globals:paths.raw}/ground_truth_data/tp_pairs.txt
+  load_args:
+    sep: "\t"
+  save_args: 
+    sep: "\t"
+
+modelling.raw.ground_truth.negatives:
+  <<: [*_pandas_csv, *_model_input_ds]
+  filepath: ${globals:paths.raw}/ground_truth_data/tn_pairs.txt
+  load_args:
+    sep: "\t"
+  save_args: 
+    sep: "\t"

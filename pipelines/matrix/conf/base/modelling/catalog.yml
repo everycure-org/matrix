@@ -38,6 +38,7 @@ _model_output_ds: &_model_output_ds
 
 modelling.raw.ground_truth.positives:
   <<: [*_pandas_csv, *_model_input_ds]
+  # Temporary fix as it seems like prev location got overwritten with only a subset of data
   filepath: gs://mtrx-us-central1-hub-dev-storage/ground_truth_data/tp_pairs.txt #${globals:paths.raw}/ground_truth_data/tp_pairs.txt
   load_args:
     sep: "\t"
@@ -46,6 +47,7 @@ modelling.raw.ground_truth.positives:
 
 modelling.raw.ground_truth.negatives:
   <<: [*_pandas_csv, *_model_input_ds]
+  # Temporary fix as it seems like prev location got overwritten with only a subset of data
   filepath: gs://mtrx-us-central1-hub-dev-storage/ground_truth_data/tn_pairs.txt #${globals:paths.raw}/ground_truth_data/tn_pairs.txt
   load_args:
     sep: "\t"
