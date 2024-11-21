@@ -103,7 +103,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                     "argowf.template-neo4j",
                 ],
             ),
-            # extracts the nodes from neo4j and writes them to BigQuery
+            # extracts the nodes from neo4j
             node(
                 func=nodes.extract_node_embeddings,
                 inputs={
