@@ -160,7 +160,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 name="create_splits",
             ),
         ],
-        tags=[model["model_name"] for model in settings.DYNAMIC_PIPELINES_MAPPING.get("modelling")],
+        tags=[model for model in model_names_lst],
     )
 
     # Compute metrics on all folds but not model trained on full data
@@ -175,6 +175,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 },
                 outputs=f"modelling.{model}.reporting.metrics_fold_{fold}",
                 name=f"check_{model}_model_performance_fold_{fold}",
+                tags=[f"{model}", "argowf.fuse", f"argowf.fuse-group.{model}.fold-{fold}"],
             )
             for fold in range(n_splits)
             for model in model_names_lst
@@ -194,6 +195,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 inputs=_give_aggregation_node_input(model),
                 outputs=f"modelling.{model}.reporting.metrics_aggregated",
                 name=f"aggregate_{model}_model_performance_checks",
+                tags=[f"{model}"],
             )
             for model in model_names_lst
         ]
