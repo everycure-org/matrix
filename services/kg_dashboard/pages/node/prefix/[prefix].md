@@ -29,6 +29,19 @@ limit 50
   order by count desc
 ```  
 
+```sql edge_counts_by_primary_knowledge_source
+  select
+      primary_knowledge_source,
+      upstream_data_source,
+      sum(count) as count
+  from bq.merged_kg_edges
+  where subject_prefix = '${params.prefix}'
+    or object_prefix = '${params.prefix}'
+  group by all
+  having count > 0
+  order by count desc
+```
+
 <BarChart 
     data={node_categories_by_upstream_data_source}
     x=category
@@ -45,3 +58,12 @@ limit 50
     split=upstream_data_source
     swapXY=true
     />
+
+<BarChart
+    data={edge_counts_by_primary_knowledge_source}
+    x=primary_knowledge_source
+    y=count
+    split=upstream_data_source
+    title="Edge Counts by Primary Knowledge Source"
+    swapXY=true
+/>
