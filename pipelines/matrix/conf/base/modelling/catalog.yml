@@ -150,3 +150,8 @@ modelling.model_input.drugs_diseases_nodes@pandas:
   <<: *_reporting_ds
   filepath: ${globals:paths.modelling}/reporting/{model}/sanity_metrics_fold_{fold}.yml
   type:  yaml.YAMLDataset
+
+"modelling.{model}.reporting.metrics_aggregated":
+  <<: *_reporting_ds
+  filepath: ${globals:paths.modelling}/reporting/{model}/sanity_metrics_aggregated.yml
+  type:  yaml.YAMLDataset

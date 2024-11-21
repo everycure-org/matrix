@@ -19,6 +19,11 @@ modelling.splitter:
   test_size: 0.1
   random_state: ${globals:random_state}
 
+# Aggregation function for cross-validation
+modelling.agg_func: np.mean
+
+
+
 # -------------------------------
 # Base options
 _model_options:

@@ -111,16 +111,6 @@ def _create_model_pipeline(model: str, num_shards: int, fold: int) -> Pipeline:
                         outputs=f"modelling.{model}.model_output.predictions_fold_{fold}",
                         name=f"get_{model}_model_predictions_fold_{fold}",
                     ),
-                    node(
-                        func=nodes.check_model_performance,
-                        inputs={
-                            "data": f"modelling.{model}.model_output.predictions_fold_{fold}",
-                            "metrics": f"params:modelling.{model}.model_options.metrics",
-                            "target_col_name": f"params:modelling.{model}.model_options.model_tuning_args.target_col_name",
-                        },
-                        outputs=f"modelling.{model}.reporting.metrics_fold_{fold}",
-                        name=f"check_{model}_model_performance_fold_{fold}",
-                    ),
                 ],
                 tags=["argowf.fuse", f"argowf.fuse-group.{model}.fold-{fold}"],
             ),
@@ -133,6 +123,8 @@ def create_pipeline(**kwargs) -> Pipeline:
     parameters = kwargs.get("parameters", {})
     n_splits = parameters.get("modelling", {}).get("splitter", {}).get("n_splits", 3)
     folds_lst = [fold for fold in range(n_splits)] + ["full"]
+    models_lst = settings.DYNAMIC_PIPELINES_MAPPING.get("modelling")
+    model_names_lst = [model["model_name"] for model in models_lst]
 
     create_model_input = pipeline(
         [
@@ -171,14 +163,49 @@ def create_pipeline(**kwargs) -> Pipeline:
         tags=[model["model_name"] for model in settings.DYNAMIC_PIPELINES_MAPPING.get("modelling")],
     )
 
+    # Compute metrics on all folds but not model trained on full data
+    check_performance = pipeline(
+        [
+            node(
+                func=nodes.check_model_performance,
+                inputs={
+                    "data": f"modelling.{model}.model_output.predictions_fold_{fold}",
+                    "metrics": f"params:modelling.{model}.model_options.metrics",
+                    "target_col_name": f"params:modelling.{model}.model_options.model_tuning_args.target_col_name",
+                },
+                outputs=f"modelling.{model}.reporting.metrics_fold_{fold}",
+                name=f"check_{model}_model_performance_fold_{fold}",
+            )
+            for fold in range(n_splits)
+            for model in model_names_lst
+        ]
+    )
+
+    # Prepare inputs with all folds for aggregation node
+    def _give_aggregation_node_input(model):
+        return ["params:modelling.agg_func"] + [
+            f"modelling.{model}.reporting.metrics_fold_{fold}" for fold in range(n_splits)
+        ]
+
+    aggregate_metrics = pipeline(
+        [
+            node(
+                func=nodes.aggregate_metrics,
+                inputs=_give_aggregation_node_input(model),
+                outputs=f"modelling.{model}.reporting.metrics_aggregated",
+                name=f"aggregate_{model}_model_performance_checks",
+            )
+            for model in model_names_lst
+        ]
+    )
+
     pipelines = []
     for fold in folds_lst:
-        for model in settings.DYNAMIC_PIPELINES_MAPPING.get("modelling"):
+        for model in models_lst:
             pipelines.append(
                 pipeline(
                     _create_model_pipeline(model=model["model_name"], num_shards=model["num_shards"], fold=fold),
                     tags=[model["model_name"], "not-shared"],
                 )
             )
-
-    return sum([create_model_input, *pipelines])
+    return sum([create_model_input, *pipelines, check_performance, aggregate_metrics])
