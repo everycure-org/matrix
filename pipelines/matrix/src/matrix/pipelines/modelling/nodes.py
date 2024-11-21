@@ -165,6 +165,7 @@ def make_splits(
     Returns:
         Data with split information.
     """
+
     # Split data into folds
     all_data_frames = []
     for iteration, (train_index, test_index) in enumerate(splitter.split(data, data["y"])):

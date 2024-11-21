@@ -25,11 +25,11 @@ matrix_generation.prm.matrix_pairs:
   <<: *_pandas_parquet
   filepath: ${globals:paths.matrix_generation}/prm/matrix_pairs
 
-"matrix_generation.{model}.model_output.sorted_matrix_predictions@pandas":
+"matrix_generation.{model}.model_output.sorted_matrix_predictions_fold_{fold}@pandas":
   <<: *_pandas_parquet
-  filepath: ${globals:paths.matrix_generation}/model_output/{model}/matrix_predictions
+  filepath: ${globals:paths.matrix_generation}/model_output/{model}/matrix_predictions_fold_{fold}
 
-"matrix_generation.{model}.reporting.matrix_report":
-  filepath: ${globals:paths.matrix_generation}/{model}/matrix_report_${globals:run_name}.xlsx
+"matrix_generation.{model}.reporting.matrix_report_fold_{fold}":
+  filepath: ${globals:paths.matrix_generation}/{model}/matrix_report_fold_{fold}_${globals:run_name}.xlsx
   type: pandas.ExcelDataset
   

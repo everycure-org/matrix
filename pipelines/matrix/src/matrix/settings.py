@@ -61,6 +61,7 @@ CONFIG_LOADER_ARGS = {
 
 # https://getindata.com/blog/kedro-dynamic-pipelines/
 DYNAMIC_PIPELINES_MAPPING = {
+    "cross_validation": {"n_splits": 3},
     "modelling": [
         {"model_name": "xg_baseline", "num_shards": 1, "run_inference": True},
         # {"model_name": "xg_ensemble", "num_shards": 3, "run_inference": True},

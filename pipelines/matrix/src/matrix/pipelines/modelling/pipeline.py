@@ -4,9 +4,6 @@ from matrix import settings
 
 from . import nodes
 
-# TODO: add full data model
-# TODO: add consolidation
-
 
 def _create_model_shard_pipeline(model: str, shard: int, fold: int) -> Pipeline:
     return pipeline(
@@ -120,8 +117,9 @@ def _create_model_pipeline(model: str, num_shards: int, fold: int) -> Pipeline:
 
 def create_pipeline(**kwargs) -> Pipeline:
     """Create modelling pipeline."""
-    parameters = kwargs.get("parameters", {})
-    n_splits = parameters.get("modelling", {}).get("splitter", {}).get("n_splits", 3)
+    cross_validation_settings = settings.DYNAMIC_PIPELINES_MAPPING.get("cross_validation")
+    n_splits = cross_validation_settings.get("n_splits")
+
     folds_lst = [fold for fold in range(n_splits)] + ["full"]
     models_lst = settings.DYNAMIC_PIPELINES_MAPPING.get("modelling")
     model_names_lst = [model["model_name"] for model in models_lst]
