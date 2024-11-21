@@ -1,21 +1,21 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: hello-world-deployment
+  name: moa-viewer-deployment
   labels:
-    app: hello-world
+    app: moa-viewer
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: hello-world
+      app: moa-viewer
   template:
     metadata:
       labels:
-        app: hello-world
+        app: moa-viewer
     spec:
       containers:
-      - name: hello-world
+      - name: moa-viewer
         image: nginx:alpine # Lightweight NGINX image as "Hello World" container
         ports:
         - containerPort: 80
