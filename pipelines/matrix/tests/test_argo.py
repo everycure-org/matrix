@@ -4,7 +4,7 @@ import pytest
 import yaml
 from kedro.pipeline import Pipeline
 from kedro.pipeline.node import Node
-from matrix.argo import FusedNode, clean_name, fuse, generate_argo_config, get_dependencies, get_pipeline2dependencies
+from matrix.argo import FusedNode, clean_name, fuse, generate_argo_config, get_dependencies
 from matrix.kedro4argo_node import ArgoNode, ArgoResourceConfig
 
 
@@ -456,36 +456,6 @@ def get_argo_config(argo_default_resources: ArgoResourceConfig) -> Tuple[Dict, D
     argo_config = yaml.safe_load(argo_config_yaml)
     assert isinstance(argo_config, dict), "Argo config should be a dictionary after YAML parsing"
     return argo_config, {"pipeline_one": pipeline_obj}
-
-
-def test_get_pipeline2dependencies() -> None:
-    argo_default_resources = ArgoResourceConfig(
-        num_gpus=0,
-        cpu_request=4,
-        cpu_limit=16,
-        memory_request=64,
-        memory_limit=64,
-    )
-    _, pipelines = get_argo_config(argo_default_resources)
-    pipeline2dependencies = get_pipeline2dependencies(pipelines, argo_default_resources)
-
-    assert len(pipeline2dependencies) == 1
-    assert len(pipeline2dependencies["pipeline_one"]) == 2
-    assert pipeline2dependencies["pipeline_one"][0]["name"] == "simple-node-p1-1"
-    assert pipeline2dependencies["pipeline_one"][1]["name"] == "simple-node-p1-2"
-    assert pipeline2dependencies["pipeline_one"][0]["deps"] == []
-    assert pipeline2dependencies["pipeline_one"][1]["deps"] == ["simple-node-p1-1"]
-    assert pipeline2dependencies["pipeline_one"][0]["nodes"] == "simple_node_p1_1"
-    assert pipeline2dependencies["pipeline_one"][1]["nodes"] == "simple_node_p1_2"
-    assert pipeline2dependencies["pipeline_one"][0]["tags"] == set()
-    assert pipeline2dependencies["pipeline_one"][1]["tags"] == set()
-    assert pipeline2dependencies["pipeline_one"][0]["resources"] == {
-        "cpu_limit": 7,
-        "cpu_request": 4,
-        "memory_limit": "32Gi",
-        "memory_request": "16Gi",
-        "num_gpus": 1,
-    }
 
 
 @pytest.mark.parametrize(
