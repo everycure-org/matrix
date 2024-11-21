@@ -25,3 +25,4 @@ Dashboard pages on the left side of the screen are for exploring the data in the
 />
 
 <a href="/node/prefix/MONDO">Mondo Dashboard</a>
+<a href="/node/category/Disease">Disease Dashboard</a>
