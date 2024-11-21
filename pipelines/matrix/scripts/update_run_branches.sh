@@ -79,7 +79,7 @@ submit_workflows() {
           -p openai_endpoint=https://api.openai.com/v1 \
           -p env=cloud \
           -l submit-from-ui=true \
-          --entrypoint __default__
+          --entrypoint default
     done
 }
 

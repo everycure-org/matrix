@@ -62,7 +62,7 @@ class KedroSessionWithFromCatalog(KedroSession):
             namespace: The namespace of the nodes that is being run.
 
         Raises:
-            ValueError: If the named or `__default__` pipeline is not
+            ValueError: If the named or `default` pipeline is not
                 defined by `register_pipelines`.
             Exception: Any uncaught exception during the run will be re-raised
                 after being passed to ``on_pipeline_error`` hook.
@@ -89,7 +89,7 @@ class KedroSessionWithFromCatalog(KedroSession):
         extra_params = self.store.get("extra_params") or {}
         context = self.load_context()
 
-        name = pipeline_name or "__default__"
+        name = pipeline_name or "default"
 
         try:
             pipeline = pipelines[name]

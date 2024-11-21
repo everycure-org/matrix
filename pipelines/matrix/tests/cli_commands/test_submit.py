@@ -47,7 +47,7 @@ def mock_dependencies():
 @pytest.fixture(scope="function")
 def mock_pipelines():
     pipeline_dict = {
-        "__default__": MagicMock(),
+        "default": MagicMock(),
         "mock_pipeline": MagicMock(),
         "mock_pipeline2": MagicMock(),
         "mock_pipeline3": MagicMock(),
@@ -102,8 +102,8 @@ def test_submit_namespace(mock_pipelines: None, mock_submit_internal: None):
         username="testuser",
         namespace="test_namespace",
         run_name="test-run",
-        pipelines_for_workflow={"__default__": mock_pipelines["__default__"]},
-        pipeline_for_execution="__default__",
+        pipelines_for_workflow={"default": mock_pipelines["default"]},
+        pipeline_for_execution="default",
         verbose=False,
         dry_run=False,
         template_directory=ARGO_TEMPLATES_DIR_PATH,
@@ -420,7 +420,7 @@ def test_run_subprocess_no_streaming_error(mock_popen: None) -> None:
         assert "error" in exc_info.value.stderr
 
 
-@pytest.mark.parametrize("pipeline_for_execution", ["__default__", "test_pipeline"])
+@pytest.mark.parametrize("pipeline_for_execution", ["default", "test_pipeline"])
 def test_workflow_submission(
     mock_run_subprocess: None, mock_dependencies: None, temporary_directory: Path, pipeline_for_execution: str
 ) -> None:
@@ -438,7 +438,7 @@ def test_workflow_submission(
                     Node(func=dummy_func, inputs=["dataset_a", "dataset_b"], outputs="dataset_c", name="simple_node")
                 ]
             ),
-            "__default__": Pipeline(
+            "default": Pipeline(
                 nodes=[
                     Node(func=dummy_func, inputs=["dataset_a", "dataset_b"], outputs="dataset_c", name="simple_node")
                 ]

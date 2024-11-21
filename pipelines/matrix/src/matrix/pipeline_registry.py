@@ -48,7 +48,7 @@ def register_pipelines() -> Dict[str, Pipeline]:
         + pipelines["matrix_generation"]
         + pipelines["evaluation"]
     )
-    pipelines["__default__"] = (
+    pipelines["default"] = (
           pipelines["kg_release"]
         + pipelines["modelling_run"]
     )
@@ -56,7 +56,7 @@ def register_pipelines() -> Dict[str, Pipeline]:
     # Test pipelines
     pipelines["test"] = (
           pipelines["fabricator"]
-        + pipelines["__default__"]
+        + pipelines["default"]
     )
     # fmt: on
 
