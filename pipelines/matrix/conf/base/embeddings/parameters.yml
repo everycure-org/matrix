@@ -20,7 +20,7 @@ embeddings.node_encoder:
   # element is clipped at 100 characters. Max. token limit for 
   # embeddings call is roughly 8500 tokens, approx (100 * 500) / 6.
   object: matrix.pipelines.embeddings.encoders.PubmedBERTEncoder #OpenAIEncoder
-  dimensions: 100
+  dimensions: 768
   # FUTURE: Experiment with performing dimensionality reduction
   # using OpenAI directly
   # dimensions: 100 
