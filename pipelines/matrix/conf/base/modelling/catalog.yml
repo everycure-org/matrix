@@ -38,7 +38,7 @@ _model_output_ds: &_model_output_ds
 
 modelling.raw.ground_truth.positives:
   <<: [*_pandas_csv, *_model_input_ds]
-  filepath: ${globals:paths.raw}/ground_truth_data/tp_pairs.txt
+  filepath: gs://mtrx-us-central1-hub-dev-storage/ground_truth_data/tp_pairs.txt #${globals:paths.raw}/ground_truth_data/tp_pairs.txt
   load_args:
     sep: "\t"
   save_args: 
@@ -46,7 +46,7 @@ modelling.raw.ground_truth.positives:
 
 modelling.raw.ground_truth.negatives:
   <<: [*_pandas_csv, *_model_input_ds]
-  filepath: ${globals:paths.raw}/ground_truth_data/tn_pairs.txt
+  filepath: gs://mtrx-us-central1-hub-dev-storage/ground_truth_data/tn_pairs.txt #${globals:paths.raw}/ground_truth_data/tn_pairs.txt
   load_args:
     sep: "\t"
   save_args: 
