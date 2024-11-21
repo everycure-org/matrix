@@ -244,8 +244,8 @@ def _predictions_pipeline() -> Pipeline:
                         },
                         outputs={
                             "excel_reports": f"moa_extraction.reporting.{num_hops}_hop_predictions_report",
-                            "pair_info_dfs": f"moa_extraction.model_output.{num_hops}_hop_pair_info_sql",
-                            "moa_predictions_dfs": f"moa_extraction.model_output.{num_hops}_hop_predictions_sql",
+                            "pair_info_dfs": f"moa_extraction.reporting.{num_hops}_hop_pair_info_sql",
+                            "moa_predictions_dfs": f"moa_extraction.reporting.{num_hops}_hop_predictions_sql",
                         },
                         name=f"generate_{num_hops}_hop_predictions_report",
                     ),

@@ -622,9 +622,9 @@ def generate_predictions_reports(
     Returns:
         Dictionary of KGPaths objects, one for each pair.
     """
-    # Dictionary of Excel report
+    # Dictionary of dataframes for individual pairs
     reports = dict()
-    # Combined dataframes for SQL insertion
+    # Combined dataframes
     pair_info_dfs = []
     moa_predictions_dfs = []
 
