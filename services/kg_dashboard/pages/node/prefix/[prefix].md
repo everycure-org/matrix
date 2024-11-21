@@ -42,6 +42,7 @@ limit 50
   order by count desc
 ```
 
+{#if node_categories_by_upstream_data_source.length !== 0}
 <BarChart 
     data={node_categories_by_upstream_data_source}
     x=category
@@ -50,7 +51,9 @@ limit 50
     swapXY=true    
     title="Node Categories by Upstream Data Source"
 />
+{/if}
 
+{#if edge_types_by_upstream_data_source.length !== 0}
 <BarChart
     data={edge_types_by_upstream_data_source}
     x=edge_type
@@ -58,7 +61,9 @@ limit 50
     split=upstream_data_source
     swapXY=true
     />
+{/if}
 
+{#if edge_counts_by_primary_knowledge_source.length !== 0}
 <BarChart
     data={edge_counts_by_primary_knowledge_source}
     x=primary_knowledge_source
@@ -67,3 +72,4 @@ limit 50
     title="Edge Counts by Primary Knowledge Source"
     swapXY=true
 />
+{/if}
