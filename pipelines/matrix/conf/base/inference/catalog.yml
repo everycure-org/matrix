@@ -43,10 +43,6 @@ inference.int.request_type:
   type: yaml.YAMLDataset
   filepath: ${globals:paths.tmp}/infer_type.yml
 
-inference.model_input.drug_disease_pairs:
-  <<: [*_pandas_parquet]
-  filepath: ${globals:paths.tmp}/model_input/drug_disease_pairs
-
 inference.int.drug_list@pandas:
   <<: *_pandas_parquet
   filepath: ${globals:paths.tmp}/int/drug_list_infer
@@ -64,8 +60,8 @@ inference.int.disease_list@spark:
   filepath: ${globals:paths.tmp}/int/disease_list_infer
 
 
-# NOTE: Sheet is created for ech model
-"inference.{model}.model_output.predictions":
+# NOTE: Sheet is created for each model
+"inference.{model}.model_output.predictions@pandas":
   <<: *_pandas_parquet
   filepath: ${globals:paths.tmp}/model_output/{model}/predictions
 

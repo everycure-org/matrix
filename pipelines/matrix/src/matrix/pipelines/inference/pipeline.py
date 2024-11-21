@@ -1,7 +1,7 @@
 from matrix import settings
 from kedro.pipeline import Pipeline, node, pipeline
 from . import nodes as nd
-from ..matrix_generation import pipeline as mgp
+from ..matrix_generation.pipeline import create_pipeline as matrix_generation_pipeline
 
 
 def _create_resolution_pipeline() -> Pipeline:
@@ -28,7 +28,7 @@ def _create_resolution_pipeline() -> Pipeline:
 
 def _create_inference_pipeline(model_excl: str, model_incl: str) -> Pipeline:
     """Matrix generation pipeline adjusted for running inference with models of choice."""
-    mg_pipeline = mgp.create_pipeline()
+    mg_pipeline = matrix_generation_pipeline()
     inference_nodes = pipeline(
         [node for node in mg_pipeline.nodes if not any(model in node.name for model in model_excl)]
     )
@@ -49,7 +49,7 @@ def _create_inference_pipeline(model_excl: str, model_incl: str) -> Pipeline:
                     "ingestion.raw.disease_list@pandas": "inference.int.disease_list@pandas",
                 },
                 outputs={
-                    f"matrix_generation.{model}.model_output.sorted_matrix_predictions": f"inference.{model}.model_output.predictions",
+                    f"matrix_generation.{model}.model_output.sorted_matrix_predictions@pandas": f"inference.{model}.model_output.predictions@pandas",
                     f"matrix_generation.{model}.reporting.matrix_report": f"inference.{model}.reporting.report",
                     "matrix_generation.prm.matrix_pairs": "inference.prm.matrix_pairs",
                     "matrix_generation.feat.nodes_kg_ds": "inference.feat.nodes_kg_ds",
@@ -67,7 +67,7 @@ def _create_reporting_pipeline(model: str) -> Pipeline:
             node(
                 func=nd.visualise_treat_scores,
                 inputs={
-                    "scores": f"inference.{model}.model_output.predictions",
+                    "scores": f"inference.{model}.model_output.predictions@pandas",
                     "infer_type": "inference.int.request_type",
                     "col_name": "params:inference.score_col_name",
                 },

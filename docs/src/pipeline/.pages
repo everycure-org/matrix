@@ -1,5 +1,6 @@
 nav:
     - index.md
     - important_files.md
+    - local-development.md
     - status.md
     - data

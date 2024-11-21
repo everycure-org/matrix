@@ -11,6 +11,12 @@ neo4j: # the name of the helm dependency
     resources:
       cpu: "2" # takes almost full advantage of e2-standard-32 instance
       memory: "8Gi" # takes almost full advantage of e2-standard-32 instance
+  # configuration for neo4j services
+  services:
+    neo4j:
+      spec:
+        type: ClusterIP
+  # configuration of volumes for neo4j
   volumes:
     data:
       mode: "dynamic"
