@@ -10,16 +10,13 @@ spec:
       run: {% raw %}'{{ workflow.parameters.run_name }}'
       {% endraw %}
       username: "{{ username }}"
-  entrypoint: __default__
+  entrypoint: "{{ pipeline_for_execution | replace('_', '-') }}"
   arguments:
     parameters:
       - name: image
         value: "{{ image }}"
       - name: image_tag
         value: "{{ image_tag }}"
-      # - name: experiment
-      #  value: "Default"
-      # we use the image tag as the release version as a default
       - name: run_name
         value: "{{ image_tag }}"
       - name: neo4j_host
@@ -31,18 +28,16 @@ spec:
       - name: env
         value: "cloud"
   templates:
-  - name: kedro
-    backoff:
-      duration: "1"      # Must be a string. Default unit is seconds. Could also be a Duration, e.g.: "2m", "6h", "1d"
-      factor: 2
-      maxDuration: "1m"  # Must be a string. Default unit is seconds. Could also be a Duration, e.g.: "2m", "6h", "1d"
+  - &_kedro_template
+    name: kedro
     affinity:
-      nodeAntiAffinity:
-        requiredDuringSchedulingIgnoredDuringExecution:
-          nodeSelectorTerms:
-          - matchExpressions:
+      nodeAffinity:
+        preferredDuringSchedulingIgnoredDuringExecution:
+        - weight: 100
+          preference:
+            matchExpressions:
             - key: gpu_node
-              operator: In
+              operator: NotIn
               values:
               - "true"
     metadata:
@@ -52,18 +47,33 @@ spec:
     inputs:
       parameters:
       - name: kedro_nodes
-      - name: pipeline
-    container:
+      - name: num_gpus
+      - name: memory_limit
+      - name: memory_request
+      - name: cpu_limit
+      - name: cpu_request
+    podSpecPatch: |
+      containers:
+        - name: main
+          resources:
+            requests:
+              memory: {% raw %} "{{inputs.parameters.memory_request}}"
+              {% endraw %}
+              cpu: {% raw %} "{{inputs.parameters.cpu_request}}"
+              {% endraw %}
+              nvidia.com/gpu: {% raw %} "{{inputs.parameters.num_gpus}}"
+              {% endraw %}
+            limits:
+              memory: {% raw %} "{{inputs.parameters.memory_limit}}"
+              {% endraw %}
+              cpu: {% raw %} "{{inputs.parameters.cpu_limit}}"
+              {% endraw %}
+              nvidia.com/gpu: {% raw %} "{{inputs.parameters.num_gpus}}"
+              {% endraw %}
+    container: &_kedro_container
       imagePullPolicy: Always
-      image: {% raw %} "{{workflow.parameters.image}}:{{workflow.parameters.image_tag}}"        # {{workflow...}} etc. are placeholders within the template. These placeholders will be dynamically substituted with real values when the workflow is submitted, not during the kubectl apply command.
+      image: {% raw %} "{{workflow.parameters.image}}:{{workflow.parameters.image_tag}}"
       {% endraw %}
-      resources: # limit the resources
-        requests:
-          memory: 64Gi
-          cpu: 4
-        limits:
-          memory: 64Gi
-          cpu: 16
       env:
         - name: WORKFLOW_ID
           valueFrom:
@@ -72,10 +82,6 @@ spec:
         - name: RUN_NAME
           value: {% raw %} "{{workflow.parameters.run_name}}" 
           {% endraw %}
-        #- name: EXPERIMENT
-        #  value: {% raw %} "{{workflow.parameters.experiment}}" 
-        #  {% endraw %}
-
         - name: NEO4J_HOST
           value: {% raw %} "{{workflow.parameters.neo4j_host}}" 
           {% endraw %}
@@ -111,81 +117,64 @@ spec:
               name: matrix-config
               key: GCP_BUCKET
       command: [kedro]
-      args: ["run", "-p", {% raw %}"{{inputs.parameters.pipeline}}"{% endraw %}, "-e", {% raw %}"{{workflow.parameters.env}}"{% endraw %}, "-n", {% raw %}"{{inputs.parameters.kedro_nodes}}"{% endraw %}]
+      args: ["run", "-p", "{{ pipeline_for_execution }}", "-e", {% raw %}"{{workflow.parameters.env}}"{% endraw %}, "-n", {% raw %}"{{inputs.parameters.kedro_nodes}}"{% endraw %}]
 
-  - name: neo4j
-    inputs:
-      parameters:
-      - name: kedro_nodes
-      - name: pipeline
-    container:
-      resources: # limit the resources
-        requests:
-          memory: 120Gi
-          cpu: 4
-        limits:
-          memory: 120Gi
-          cpu: 16
-      env:
-        - name: WORKFLOW_ID
-          valueFrom:
-            fieldRef:
-              fieldPath: metadata.labels['workflows.argoproj.io/workflow']
-        - name: RUN_NAME
-          value: {% raw %} "{{workflow.parameters.run_name}}" 
-          {% endraw %}
-        # - name: EXPERIMENT
-        #  value: {% raw %} "{{workflow.parameters.experiment}}" 
-        #  {% endraw %}
-        
-        - name: MLFLOW_ENDPOINT
-          value: {% raw %} "{{workflow.parameters.mlflow_endpoint}}" 
-          {% endraw %}
-        - name: NEO4J_USER
-          value: "neo4j"
-        - name: NEO4J_PASSWORD
-          value: "admin"
-        - name: GCP_PROJECT_ID
-          valueFrom:
-            configMapKeyRef:
-              name: matrix-config
-              key: GCP_PROJECT_ID
-        - name: GCP_BUCKET
-          valueFrom:
-            configMapKeyRef:
-              name: matrix-config
-              key: GCP_BUCKET
-        - name: OPENAI_API_KEY
-          value: "foo"
-        - name: OPENAI_ENDPOINT
-          value: {% raw %} "{{workflow.parameters.openai_endpoint}}" 
-          {% endraw %}
-        - name: OPENAI_API_KEY
-          valueFrom:
-            secretKeyRef:
-              name: matrix-secrets
-              key: OPENAI_API_KEY
-      imagePullPolicy: Always
-      image: {% raw %} "{{workflow.parameters.image}}:{{workflow.parameters.image_tag}}" {% endraw %}
-      
+  - <<: *_kedro_template
+    name: neo4j
+    podSpecPatch: |
+      containers:
+        - name: neo4j
+          resources:
+            requests:
+              memory: {% raw %} "{{inputs.parameters.memory_request}}"
+              {% endraw %}
+              cpu: {% raw %} "{{inputs.parameters.cpu_request}}"
+              {% endraw %}
+              nvidia.com/gpu: {% raw %} "{{inputs.parameters.num_gpus}}"
+              {% endraw %}
+            limits:
+              memory: {% raw %} "{{inputs.parameters.memory_limit}}"
+              {% endraw %}
+              cpu: {% raw %} "{{inputs.parameters.cpu_limit}}"
+              {% endraw %}
+              nvidia.com/gpu: {% raw %} "{{inputs.parameters.num_gpus}}"
+              {% endraw %}
+    container: 
+      <<: *_kedro_container
       command: ["/bin/sh", "-c"]
       args:
         - |
-          echo "Waiting for Neo4j to be ready..."
-          until curl -s http://localhost:7474/ready; do
-            echo "Waiting..."
-            sleep 5
-          done
-          echo "Neo4j is ready. Starting main application..."
-          kedro run -p {% raw %}"{{inputs.parameters.pipeline}}"{% endraw %} -e {% raw %}"{{workflow.parameters.env}}"{% endraw %} -n {% raw %}"{{inputs.parameters.kedro_nodes}}"{% endraw %}
+            echo "Waiting for Neo4j to be ready..."
+            until curl -s http://localhost:7474/ready; do
+              echo "Waiting..."
+              sleep 5
+            done
+            echo "Neo4j is ready. Starting main application..."
+            NEO4J_HOST="bolt://127.0.0.1:7687" kedro run -p {{ pipeline_for_execution }} -e {% raw %}"{{workflow.parameters.env}}"{% endraw %} -n {% raw %}"{{inputs.parameters.kedro_nodes}}"{% endraw %}
     
+    volumes:
+      - name: gds-key
+        secret:
+          secretName: gds-secret
+          items:
+            - key: gds_key
+              path: gds-key
     sidecars:
       # Neo4j enterprise sidecar
       - name: neo4j
         image: neo4j:5.21.0-enterprise
+        volumeMounts:
+          - name: gds-key
+            mountPath: /licences
+            readOnly: true
         env:
         - name: NEO4J_AUTH
-          value: "neo4j/admin"
+          valueFrom:
+            secretKeyRef:
+              name: matrix-secrets
+              key: NEO4J_AUTH
+        - name: NEO4J_gds_enterprise_license__file
+          value: "/licences/gds-key"
         - name: NEO4J_apoc_export_file_enabled
           value: "true"
         - name: NEO4J_apoc_import_file_enabled
@@ -204,8 +193,13 @@ spec:
           value: "OFF"
         - name: NEO4J_ACCEPT_LICENSE_AGREEMENT
           value: "yes"
+        - name: NEO4J_dbms_memory_heap_initial__size
+          value: "100G"
+        - name: NEO4J_dbms_memory_heap_max__size
+          value: "100G"
+
   {% for pipeline, tasks in pipelines.items() %}
-  - name: {{ pipeline }}
+  - name: {{ pipeline | replace('_', '-') }}
     dag:
       tasks:
       {% for task in tasks %}
@@ -223,5 +217,16 @@ spec:
             value: {{ pipeline }}
           - name: kedro_nodes
             value: {{ task.nodes }}
+          - name: num_gpus
+            value: {{ task.resources.num_gpus }}
+          - name: memory_request
+            value: {{ task.resources.memory_request }}
+          - name: memory_limit
+            value: {{ task.resources.memory_limit }}
+          - name: cpu_request
+            value: {{ task.resources.cpu_request }}
+          - name: cpu_limit
+            value: {{ task.resources.cpu_limit }}
+
       {% endfor %}
   {% endfor %}

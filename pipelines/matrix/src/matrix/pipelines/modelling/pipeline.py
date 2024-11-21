@@ -1,5 +1,4 @@
-from kedro.pipeline import Pipeline, node
-from kedro.pipeline.modular_pipeline import pipeline
+from kedro.pipeline import Pipeline, node, pipeline
 
 from matrix import settings
 
@@ -12,7 +11,7 @@ def _create_model_shard_pipeline(model: str, shard: int) -> Pipeline:
             node(
                 func=nodes.create_model_input_nodes,
                 inputs=[
-                    "modelling.feat.rtx_kg2",
+                    "modelling.model_input.drugs_diseases_nodes@pandas",
                     "modelling.model_input.splits",
                     f"params:modelling.{model}.model_options.generator",
                 ],
@@ -134,16 +133,18 @@ def create_pipeline(**kwargs) -> Pipeline:
             node(
                 func=nodes.create_int_pairs,
                 inputs=[
-                    "modelling.raw.ground_truth.positives",
-                    "modelling.raw.ground_truth.negatives",
+                    "embeddings.feat.nodes",
+                    "modelling.raw.ground_truth.positives@spark",
+                    "modelling.raw.ground_truth.negatives@spark",
                 ],
-                outputs="modelling.int.known_pairs",
+                outputs="modelling.int.known_pairs@spark",
                 name="create_int_known_pairs",
             ),
             node(
                 func=nodes.prefilter_nodes,
                 inputs=[
                     "embeddings.feat.nodes",
+                    "modelling.raw.ground_truth.positives@spark",
                     "params:modelling.drug_types",
                     "params:modelling.disease_types",
                 ],
@@ -151,21 +152,9 @@ def create_pipeline(**kwargs) -> Pipeline:
                 name="prefilter_nodes",
             ),
             node(
-                func=nodes.create_feat_nodes,
-                inputs=[
-                    "modelling.model_input.drugs_diseases_nodes@spark",
-                    "modelling.int.known_pairs",
-                    "params:modelling.drug_types",
-                    "params:modelling.disease_types",
-                ],
-                outputs="modelling.feat.rtx_kg2",
-                name="create_feat_nodes",
-            ),
-            node(
                 func=nodes.make_splits,
                 inputs=[
-                    "modelling.feat.rtx_kg2",
-                    "modelling.int.known_pairs",
+                    "modelling.int.known_pairs@pandas",
                     "params:modelling.splitter",
                 ],
                 outputs="modelling.model_input.splits",
