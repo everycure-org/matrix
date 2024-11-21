@@ -29,7 +29,7 @@ metadata:
 spec:
   type: NodePort
   ports:
-    - protocol: tcp
+    - protocol: TCP
       port: 80
       targetPort: 80
   selector:
