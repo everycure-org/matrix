@@ -74,8 +74,8 @@ def create_pipeline(**kwargs) -> Pipeline:
                 ],
                 # FUTURE: Ensure we define "packages / tshirt size standard configurations" for resources
                 argo_config=ArgoResourceConfig(
-                    cpu_request=64,
-                    cpu_limit=64,
+                    cpu_request=48,
+                    cpu_limit=48,
                     memory_limit=192,
                     memory_request=120,
                 ),
