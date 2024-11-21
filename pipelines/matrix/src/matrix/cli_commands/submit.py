@@ -41,7 +41,7 @@ def cli():
 @click.option("--username", type=str, required=True, help="Specify the username to use")
 @click.option("--namespace", type=str, default="argo-workflows", help="Specify a custom namespace")
 @click.option("--run-name", type=str, default=None, help="Specify a custom run name, defaults to branch")
-@click.option("--pipeline", type=str, default="__default__", help="Specify which pipeline to execute")
+@click.option("--pipeline", type=str, default="default", help="Specify which pipeline to execute")
 @click.option("--verbose", "-v", is_flag=True, default=False, help="Enable verbose output")
 @click.option("--dry-run", "-d", is_flag=True, default=False, help="Does everything except submit the workflow")
 @click.option("--from-nodes", type=str, default="", help="Specify nodes to run from", callback=split_string)
@@ -100,7 +100,7 @@ def _submit(
     The original logic of this function was:
     1. Create & Apply (push to k8s) Argo template, containing the entire pipeline registry. This part of the function makes use of pipelines_for_workflow, which will be included in the template.
     2. When submitting the workflow, via `__entrypoint__`, a pipeline for execution is selected. 
-        It defaults to `__default__`, but can be configured via pipeline_for_execution.
+        It defaults to `default`, but can be configured via pipeline_for_execution.
 
     In the future, we expect plan not to have any template at all, but go straight from Kedro to Argo Workflow.
     

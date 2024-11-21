@@ -180,5 +180,5 @@ argo logs -n argo @latest
 To submit a workflow template for local execution:
 
 ```bash
-argo submit --name test-run -n argo --from wftmpl/test-run -p run_name=test-run -l submit-from-ui=false --entrypoint __default__
+argo submit --name test-run -n argo --from wftmpl/test-run -p run_name=test-run -l submit-from-ui=false --entrypoint default
 ```

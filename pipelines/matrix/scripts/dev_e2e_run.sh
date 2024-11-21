@@ -67,7 +67,7 @@ submit_workflow() {
     JOB_NAME=$(argo submit -n $NAMESPACE --from wftmpl/matrix \
       -p run_name=$(get_experiment_name) \
       -l submit-from-ui=false \
-      --entrypoint __default__ \
+      --entrypoint default \
       -o json \
       | jq -r '.metadata.name')
     
