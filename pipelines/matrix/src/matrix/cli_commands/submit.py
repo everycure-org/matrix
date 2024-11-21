@@ -58,7 +58,7 @@ def submit(username: str, namespace: str, run_name: str, pipeline: str, verbose:
     if pipeline in ["fabricator", "test"]:
         raise ValueError("Submitting test pipeline to Argo will result in overwriting source data")
     
-    if from_nodes and pipeline not in ["kg_release", "data_engineering"]:
+    if from_nodes and pipeline not in ["kg_release", "data_engineering", "embeddings"]:
         # NOTE: This is due to how we version paths for modelling runs, needs further refinement
         raise ValueError("The `from-nodes` flag only works for the `kg_release` pipeline")
     

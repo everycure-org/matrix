@@ -72,28 +72,11 @@ spec:
               {% endraw %}
               nvidia.com/gpu: {% raw %} "{{inputs.parameters.num_gpus}}"
               {% endraw %}
-        # repeating the above because yaml ankers don't work easily inside of podSpecPatch'es
-        - name: neo4j
-          resources:
-            requests:
-              memory: {% raw %} "{{inputs.parameters.memory_request}}"
-              {% endraw %}
-              cpu: {% raw %} "{{inputs.parameters.cpu_request}}"
-              {% endraw %}
-              nvidia.com/gpu: {% raw %} "{{inputs.parameters.num_gpus}}"
-              {% endraw %}
-            limits:
-              memory: {% raw %} "{{inputs.parameters.memory_limit}}"
-              {% endraw %}
-              cpu: {% raw %} "{{inputs.parameters.cpu_limit}}"
-              {% endraw %}
-              nvidia.com/gpu: {% raw %} "{{inputs.parameters.num_gpus}}"
-              {% endraw %}
-    container:
+    container: &_kedro_container
       imagePullPolicy: Always
       image: {% raw %} "{{workflow.parameters.image}}:{{workflow.parameters.image_tag}}"
       {% endraw %}
-      env: &_kedro_env
+      env:
         - name: WORKFLOW_ID
           valueFrom:
             fieldRef:
@@ -147,12 +130,26 @@ spec:
 
   - <<: *_kedro_template
     name: neo4j
-    podSpecPatch: null
-    container:
-      imagePullPolicy: Always
-      image: {% raw %} "{{workflow.parameters.image}}:{{workflow.parameters.image_tag}}"        # {{workflow...}} etc. are placeholders within the template. These placeholders will be dynamically substituted with real values when the workflow is submitted, not during the kubectl apply command.
-      {% endraw %}
-      env: *_kedro_env
+    podSpecPatch: |
+      containers:
+        - name: neo4j
+          resources:
+            requests:
+              memory: {% raw %} "{{inputs.parameters.memory_request}}"
+              {% endraw %}
+              cpu: {% raw %} "{{inputs.parameters.cpu_request}}"
+              {% endraw %}
+              nvidia.com/gpu: {% raw %} "{{inputs.parameters.num_gpus}}"
+              {% endraw %}
+            limits:
+              memory: {% raw %} "{{inputs.parameters.memory_limit}}"
+              {% endraw %}
+              cpu: {% raw %} "{{inputs.parameters.cpu_limit}}"
+              {% endraw %}
+              nvidia.com/gpu: {% raw %} "{{inputs.parameters.num_gpus}}"
+              {% endraw %}
+    container: 
+      <<: *_kedro_container
       command: ["/bin/sh", "-c"]
       args:
         - |
@@ -175,10 +172,6 @@ spec:
       # Neo4j enterprise sidecar
       - name: neo4j
         image: neo4j:5.21.0-enterprise
-        resources: # limit the resources
-          requests:
-            memory: 120Gi
-            cpu: 32
         volumeMounts:
           - name: gds-key
             mountPath: /licences
