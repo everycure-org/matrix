@@ -473,7 +473,7 @@ def test_workflow_submission(
 
     pipeline_names = [t["name"] for t in pipeline_templates]
     assert "test-pipeline" in pipeline_names, "Expected 'test' pipeline to be present"
-    assert "--default--" in pipeline_names, "Expected 'cloud' pipeline to be present"
+    assert "default" in pipeline_names, "Expected 'cloud' pipeline to be present"
 
     # Additional checks
     assert content["metadata"]["name"] == "test-run", "Expected 'test-run' as the workflow name"
