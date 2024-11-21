@@ -60,7 +60,7 @@ def _create_model_shard_pipeline(model: str, shard: int) -> Pipeline:
                 outputs=f"modelling.{model}.{shard}.models.model",
                 name=f"train_{model}_{shard}_model",
                 argo_config=ArgoResourceConfig(
-                    num_gpus=0,
+                    num_gpus=1,
                 ),
             ),
         ],
@@ -83,7 +83,7 @@ def _create_model_pipeline(model: str, num_shards: int) -> Pipeline:
                         name=f"fit_{model}_transformers",
                         tags=model,
                         argo_config=ArgoResourceConfig(
-                            num_gpus=0,
+                            num_gpus=1,
                         ),
                     )
                 ]
