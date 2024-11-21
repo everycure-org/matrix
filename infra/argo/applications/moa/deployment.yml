@@ -19,3 +19,18 @@ spec:
         image: nginx:alpine # Lightweight NGINX image as "Hello World" container
         ports:
         - containerPort: 80
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: moa-viewer-service
+  labels:
+    app: moa-viewer
+spec:
+  type: NodePort
+  ports:
+    - protocol: tcp
+      port: 80
+      targetPort: 80
+  selector:
+    app:  moa-viewer
