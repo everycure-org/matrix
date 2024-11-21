@@ -24,3 +24,4 @@ Dashboard pages on the left side of the screen are for exploring the data in the
   title='Top 50 associations in the Matrix KG by subject category + object category count'
 />
 
+<a href="/node/prefix/MONDO">Mondo Dashboard</a>
