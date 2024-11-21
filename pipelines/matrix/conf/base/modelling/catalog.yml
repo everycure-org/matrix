@@ -83,7 +83,7 @@ modelling.raw.ground_truth.negatives@spark:
 
 modelling.int.known_pairs@pandas:
   <<: [*_pandas_parquet, *_model_input_ds]
-  filepath: ${globals:paths.modelling}/ground_truth/translator/${globals:data_sources.gt.version}/ground_truth
+  filepath: ${globals:paths.modelling}/ground_truth/translator/${globals:data_sources.gt.version}/ground_truth_embeddings
 
 modelling.raw.known_pairs@spark:
   <<: [*_spark_parquet, *_model_input_ds]
