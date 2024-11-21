@@ -1,10 +1,7 @@
 run_name: ${oc.env:RUN_NAME}
 
 versions:
-  release: ${oc.env:RELEASE_VERSION, v0.2.4-rc.2}
-  
-gcs_bucket: gs://${oc.env:GCP_BUCKET}
-gcp_project: ${oc.env:GCP_PROJECT_ID}
+  release: ${oc.env:RELEASE_VERSION, v0.2.4-rtx-only}
 
 release_folder_name: ${oc.env:RELEASE_FOLDER_NAME, releases}
 # NOTE if you're submitting to the cloud, 
