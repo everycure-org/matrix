@@ -27,7 +27,7 @@ metadata:
   labels:
     app: moa-viewer
 spec:
-  type: NodePort
+  type: ClusterIP
   ports:
     - protocol: TCP
       port: 80
