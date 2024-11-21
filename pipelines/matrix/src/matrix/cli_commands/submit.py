@@ -58,9 +58,9 @@ def submit(username: str, namespace: str, run_name: str, pipeline: str, verbose:
     if pipeline in ["fabricator", "test"]:
         raise ValueError("Submitting test pipeline to Argo will result in overwriting source data")
     
-    if from_nodes and pipeline not in ["kg_release", "data_engineering", "embeddings"]:
-        # NOTE: This is due to how we version paths for modelling runs, needs further refinement
-        raise ValueError("The `from-nodes` flag only works for the `kg_release` pipeline")
+    if from_nodes:
+        if not click.confirm("Using 'from-nodes' is highly experimental and may break due to MLFlow issues with tracking the right run. Are you sure you want to continue?", default=False):
+            raise click.Abort()
     
     # As a temporary measure, we pass both pipeline for execution and list of pipelines. In the future, we will merge the two.
     pipeline_obj = kedro_pipelines[pipeline]
