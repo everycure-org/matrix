@@ -46,7 +46,7 @@ def _create_model_shard_pipeline(model: str, shard: int) -> Pipeline:
                 ],
                 name=f"tune_model_{model}_{shard}_parameters",
                 argo_config=ArgoResourceConfig(
-                    num_gpus=0,
+                    num_gpus=1,
                 ),
             ),
             argo_node(
@@ -103,6 +103,9 @@ def _create_model_pipeline(model: str, num_shards: int) -> Pipeline:
                         outputs=f"modelling.{model}.models.model",
                         name=f"create_{model}_model",
                         tags=model,
+                        argo_config=ArgoResourceConfig(
+                            num_gpus=1,
+                        ),
                     ),
                     argo_node(
                         func=nodes.apply_transformers,
@@ -123,6 +126,9 @@ def _create_model_pipeline(model: str, num_shards: int) -> Pipeline:
                         },
                         outputs=f"modelling.{model}.model_output.predictions",
                         name=f"get_{model}_model_predictions",
+                        argo_config=ArgoResourceConfig(
+                            num_gpus=1,
+                        ),
                     ),
                     argo_node(
                         func=nodes.check_model_performance,
