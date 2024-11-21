@@ -13,6 +13,17 @@ ARGO_TEMPLATE_FILE = "argo_wf_spec.tmpl"
 ARGO_TEMPLATES_DIR_PATH = Path(__file__).parent.parent.parent / "templates"
 
 
+def normalize_pipeline2dependencies(
+    pipeline2dependencies: Dict[str, List[Dict[str, Any]]],
+) -> Dict[str, List[Dict[str, Any]]]:
+    output = {}
+    for p_name, p_deps in pipeline2dependencies.items():
+        # remove - and _ from start and end of p_name
+        p_name = p_name.strip("-_")
+        output[p_name] = p_deps
+    return output
+
+
 def get_pipeline2dependencies(
     pipelines: Dict[str, Pipeline], default_execution_resources: ArgoResourceConfig
 ) -> Dict[str, List[Dict[str, Any]]]:
@@ -45,6 +56,8 @@ def generate_argo_config(
     template = template_env.get_template(ARGO_TEMPLATE_FILE)
 
     pipeline2dependencies = get_pipeline2dependencies(pipelines, default_execution_resources)
+
+    pipeline2dependencies = normalize_pipeline2dependencies(pipeline2dependencies)
 
     # TODO: After it is possible to configure resources on node level, remove the use_gpus flag.
     output = template.render(
