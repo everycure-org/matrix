@@ -52,6 +52,7 @@ integration:
           - biolink:Treatment
           # If you add anything here make sure the fabricator is not generating it, else we remove it
     edge_filters:
+      # FUTURE: Ensure the semmed filter is moved here instead
       filter_biolink_edges:
         object: matrix.pipelines.modelling.utils.partial_
         func:

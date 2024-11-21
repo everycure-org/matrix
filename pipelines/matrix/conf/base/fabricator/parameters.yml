@@ -19,7 +19,7 @@ fabricator.rtx_kg2:
           - biolink:Gene
           - biolink:ChemicalSubstance
           - biolink:Protein
-      # due to the intricacies of biolink, we simply assign the same categories here
+      # NOTE: This ensures the full path from root to child is added in the categories column
       all_categories:string[]:
         type: row_apply
         list_of_values: [nodes.category]
