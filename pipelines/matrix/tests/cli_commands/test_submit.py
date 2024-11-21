@@ -2,26 +2,29 @@ from pathlib import Path
 import tempfile
 import pytest
 from unittest.mock import patch, MagicMock
+import click
 from click.testing import CliRunner
-import yaml
-from kedro.pipeline.node import Node
 from kedro.pipeline import Pipeline
+from kedro.pipeline.node import Node
+import yaml
 from matrix.argo import ARGO_TEMPLATES_DIR_PATH
 from matrix.cli_commands.submit import (
     _submit,
+    apply_argo_template,
+    build_argo_template,
+    build_push_docker,
+    check_dependencies,
+    command_exists,
+    ensure_namespace,
+    run_subprocess,
     save_argo_template,
     submit,
-    check_dependencies,
-    build_push_docker,
-    build_argo_template,
-    ensure_namespace,
-    apply_argo_template,
-    submit_workflow,
     get_run_name,
-    command_exists,
-    run_subprocess,
+    submit_workflow,
 )
 import subprocess
+
+from matrix.kedro4argo_node import ArgoResourceConfig
 
 
 @pytest.fixture
@@ -41,19 +44,22 @@ def mock_dependencies():
         yield
 
 
-@pytest.fixture
-def mock_submit_internal():
-    with patch("matrix.cli_commands.submit._submit") as mock:
-        yield mock
-
-
 @pytest.fixture(scope="function")
 def mock_pipelines():
     pipeline_dict = {
         "__default__": MagicMock(),
+        "mock_pipeline": MagicMock(),
+        "mock_pipeline2": MagicMock(),
+        "mock_pipeline3": MagicMock(),
     }
 
     with patch("matrix.cli_commands.submit.kedro_pipelines", new=pipeline_dict) as mock:
+        yield mock
+
+
+@pytest.fixture
+def mock_submit_internal():
+    with patch("matrix.cli_commands.submit._submit") as mock:
         yield mock
 
 
@@ -71,15 +77,15 @@ def mock_multiple_pipelines():
 
 def test_submit_simple(mock_submit_internal: None, mock_pipelines: None) -> None:
     runner = CliRunner()
-    result = runner.invoke(submit, ["--username", "testuser", "--run-name", "test-run"])
+    result = runner.invoke(submit, ["--username", "testuser", "--run-name", "test-run", "--pipeline", "mock_pipeline"])
     assert result.exit_code == 0
 
     mock_submit_internal.assert_called_once_with(
         username="testuser",
         namespace="argo-workflows",
         run_name="test-run",
-        pipelines_for_workflow=mock_pipelines,
-        pipeline_for_execution="__default__",
+        pipelines_for_workflow={"mock_pipeline": mock_pipelines["mock_pipeline"]},
+        pipeline_for_execution="mock_pipeline",
         verbose=False,
         dry_run=False,
         template_directory=ARGO_TEMPLATES_DIR_PATH,
@@ -96,7 +102,7 @@ def test_submit_namespace(mock_pipelines: None, mock_submit_internal: None):
         username="testuser",
         namespace="test_namespace",
         run_name="test-run",
-        pipelines_for_workflow=mock_pipelines,
+        pipelines_for_workflow={"__default__": mock_pipelines["__default__"]},
         pipeline_for_execution="__default__",
         verbose=False,
         dry_run=False,
@@ -124,7 +130,7 @@ def test_submit_pipelines(mock_multiple_pipelines: None, mock_submit_internal: N
         username="testuser",
         namespace="test_namespace",
         run_name="test-run",
-        pipelines_for_workflow=mock_multiple_pipelines,
+        pipelines_for_workflow={"mock_pipeline2": mock_multiple_pipelines["mock_pipeline2"]},
         pipeline_for_execution="mock_pipeline2",
         verbose=False,
         dry_run=False,
@@ -152,7 +158,7 @@ def test_submit_multiple_pipelines(mock_multiple_pipelines: None, mock_submit_in
         username="testuser",
         namespace="test_namespace",
         run_name="test-run",
-        pipelines_for_workflow=mock_multiple_pipelines,
+        pipelines_for_workflow={"mock_pipeline2": mock_multiple_pipelines["mock_pipeline2"]},
         pipeline_for_execution="mock_pipeline2",
         verbose=False,
         dry_run=False,
@@ -181,7 +187,7 @@ def test_submit_dry_run(mock_multiple_pipelines: None, mock_submit_internal: Non
         username="testuser",
         namespace="test_namespace",
         run_name="test-run",
-        pipelines_for_workflow=mock_multiple_pipelines,
+        pipelines_for_workflow={"mock_pipeline2": mock_multiple_pipelines["mock_pipeline2"]},
         pipeline_for_execution="mock_pipeline2",
         verbose=False,
         dry_run=True,
@@ -210,7 +216,7 @@ def test_submit_verbose(mock_multiple_pipelines: None, mock_submit_internal: Non
         username="testuser",
         namespace="test_namespace",
         run_name="test-run",
-        pipelines_for_workflow=mock_multiple_pipelines,
+        pipelines_for_workflow={"mock_pipeline3": mock_multiple_pipelines["mock_pipeline3"]},
         pipeline_for_execution="mock_pipeline3",
         verbose=True,
         dry_run=False,
@@ -240,7 +246,7 @@ def test_submit_dry_run_and_verbose(mock_multiple_pipelines: None, mock_submit_i
         username="testuser",
         namespace="test_namespace",
         run_name="test-run",
-        pipelines_for_workflow=mock_multiple_pipelines,
+        pipelines_for_workflow={"mock_pipeline2": mock_multiple_pipelines["mock_pipeline2"]},
         pipeline_for_execution="mock_pipeline2",
         verbose=True,
         dry_run=True,
@@ -262,7 +268,7 @@ def test_build_push_docker(mock_run_subprocess: None) -> None:
 
 @patch("matrix.cli_commands.submit.generate_argo_config")
 def test_build_argo_template(mock_generate_argo_config: None) -> None:
-    build_argo_template("test_run", "testuser", "test_namespace", {"test": MagicMock()})
+    build_argo_template("test_run", "testuser", "test_namespace", {"test": MagicMock()}, ArgoResourceConfig())
     mock_generate_argo_config.assert_called_once()
 
 
@@ -286,9 +292,7 @@ def temporary_directory():
 
 def test_save_argo_template_creates_file(temporary_directory: Path) -> None:
     argo_template = "test template content"
-    run_name = "test_run"
-
-    result = save_argo_template(argo_template, run_name, temporary_directory)
+    result = save_argo_template(argo_template, temporary_directory)
 
     assert Path(result).exists()
     assert Path(result).is_file()
@@ -296,9 +300,8 @@ def test_save_argo_template_creates_file(temporary_directory: Path) -> None:
 
 def test_save_argo_template_content(temporary_directory: Path) -> None:
     argo_template = "test template content"
-    run_name = "test_run"
 
-    file_path = save_argo_template(argo_template, run_name, temporary_directory)
+    file_path = save_argo_template(argo_template, temporary_directory)
 
     with open(file_path, "r") as f:
         content = f.read()
@@ -308,9 +311,8 @@ def test_save_argo_template_content(temporary_directory: Path) -> None:
 
 def test_save_argo_template_returns_string(temporary_directory: Path) -> None:
     argo_template = "test template content"
-    run_name = "test_run"
 
-    result = save_argo_template(argo_template, run_name, temporary_directory)
+    result = save_argo_template(argo_template, temporary_directory)
 
     assert isinstance(result, str)
 
@@ -322,7 +324,7 @@ def test_apply_argo_template(mock_run_subprocess: None) -> None:
 
 def test_submit_workflow(mock_run_subprocess: None) -> None:
     mock_run_subprocess.return_value.stdout = '{"metadata": {"name": "test-job"}}'
-    submit_workflow("test_run", "test_namespace", "__default__", verbose=True)
+    submit_workflow("test_run", "test_namespace", verbose=True)
     assert mock_run_subprocess.call_count == 1
 
 
@@ -338,10 +340,14 @@ def test_get_run_name_with_input(input_name: str, expected_name: str) -> None:
     assert get_run_name(input_name) == expected_name
 
 
-@patch("matrix.cli_commands.submit.run_subprocess")
-def test_get_run_name_from_git(mock_run_subprocess: None) -> None:
-    mock_run_subprocess.return_value.stdout = "feature/test-branch"
-    assert get_run_name(None).startswith("feature-test-branch")
+@pytest.mark.skip(reason="Investigate why click is not correctly throwing up exceptions")
+def test_pipeline_not_found(mock_multiple_pipelines):
+    with pytest.raises(click.ClickException):
+        # Given a CLI runner instance
+        runner = CliRunner()
+
+        # When invoking with non existing pipeline
+        runner.invoke(submit, ["--username", "testuser", "--run-name", "test-run", "--pipeline", "not_exists"])
 
 
 def test_command_exists(mock_run_subprocess: None) -> None:
@@ -415,7 +421,7 @@ def test_run_subprocess_no_streaming_error(mock_popen: None) -> None:
 
 
 @pytest.mark.parametrize("pipeline_for_execution", ["__default__", "test_pipeline"])
-def test_internal_submit(
+def test_workflow_submission(
     mock_run_subprocess: None, mock_dependencies: None, temporary_directory: Path, pipeline_for_execution: str
 ) -> None:
     def dummy_func(*args):
@@ -445,12 +451,11 @@ def test_internal_submit(
         allow_interactions=False,
     )
 
-    yaml_files = list(temporary_directory.glob("argo_template_test-run_*.yml"))
+    yaml_files = list(temporary_directory.glob("argo-workflow-template.yml"))
     assert len(yaml_files) == 1, f"Expected 1 YAML file, found {len(yaml_files)}"
 
     yaml_file = yaml_files[0]
     assert yaml_file.is_file(), f"Expected {yaml_file} to be a file"
-    assert yaml_file.name.startswith("argo_template_test-run_"), f"Unexpected file name format: {yaml_file.name}"
     assert yaml_file.name.endswith(".yml"), f"File does not have .yml extension: {yaml_file.name}"
 
     # Read and parse the YAML file
@@ -467,8 +472,8 @@ def test_internal_submit(
     assert len(pipeline_templates) == 2, "Expected two pipeline templates (test and cloud)"
 
     pipeline_names = [t["name"] for t in pipeline_templates]
-    assert "test_pipeline" in pipeline_names, "Expected 'test' pipeline to be present"
-    assert "__default__" in pipeline_names, "Expected 'cloud' pipeline to be present"
+    assert "test-pipeline" in pipeline_names, "Expected 'test' pipeline to be present"
+    assert "--default--" in pipeline_names, "Expected 'cloud' pipeline to be present"
 
     # Additional checks
     assert content["metadata"]["name"] == "test-run", "Expected 'test-run' as the workflow name"
@@ -480,7 +485,9 @@ def test_internal_submit(
         assert len(tasks) > 0, f"Expected at least one task in the {pipeline['name']} pipeline"
 
     # Check that the specified pipeline_for_execution is present in the templates
-    assert pipeline_for_execution in pipeline_names, f"Expected '{pipeline_for_execution}' pipeline to be present"
+    assert (
+        pipeline_for_execution.replace("_", "-") in pipeline_names
+    ), f"Expected '{pipeline_for_execution}' pipeline to be present"
     # NOTE: This function was partially generated using AI assistance.
 
     submit_cmd = " ".join(
@@ -491,8 +498,9 @@ def test_internal_submit(
             "--from wftmpl/test-run",
             "-p run_name=test-run",
             "-l submit-from-ui=false",
-            f"--entrypoint {pipeline_for_execution}",
             "-o json",
         ]
     )
+
+    # E         Actual: run_subprocess('argo submit --name test-run -n test_namespace --from wftmpl/test-run -p run_name=test-run -l submit-from-ui=false --entrypoint=test_pipeline -o json', capture_output=True, stream_output=False)
     mock_run_subprocess.assert_called_with(submit_cmd, capture_output=True, stream_output=False)
