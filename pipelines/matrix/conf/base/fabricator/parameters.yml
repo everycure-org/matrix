@@ -23,7 +23,7 @@ fabricator.rtx_kg2:
       all_categories:string[]:
         type: row_apply
         list_of_values: [nodes.category]
-        row_func: matrix.pipelines.fabricator.generators.get_all_categories_for_category
+        row_func: matrix.pipelines.fabricator.generators.get_ancestors_for_category_delimited
         row_func_kwargs:
           delimiter: "\u01c2"
         resize: True

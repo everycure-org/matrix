@@ -87,9 +87,6 @@ spec:
         - name: RELEASE_FOLDER_NAME
           value: {% raw %} "{{workflow.parameters.release_folder_name}}" 
           {% endraw %}
-        #- name: EXPERIMENT
-        #  value: {% raw %} "{{workflow.parameters.experiment}}" 
-        #  {% endraw %}
 
         - name: NEO4J_HOST
           value: {% raw %} "{{workflow.parameters.neo4j_host}}" 

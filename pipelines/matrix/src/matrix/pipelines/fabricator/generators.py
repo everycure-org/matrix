@@ -1,6 +1,6 @@
 import random
 import uuid
-from typing import List
+from typing import List, Tuple
 
 import pandas as pd
 from bmt import toolkit
@@ -14,41 +14,40 @@ def filter_by_category(ids: List[str], categories: List[str], category: str, **k
     return drugs
 
 
-def get_all_categories_for_category(category: str, delimiter: str):
+def get_ancestors_for_category_delimited(category: str, delimiter: str) -> str:
     output = delimiter.join(tk.get_ancestors(category, formatted=True))
     return output
 
 
-def generate_random_biolink_entities(num_rows: int, **kwargs):
+def generate_random_biolink_entities(num_rows: int, **kwargs) -> List[str]:
     """Generate a list of random biolink entities."""
     return [generate_random_biolink_entity(**kwargs) for _ in range(num_rows)]
 
 
-def generate_random_biolink_entity(**kwargs):
+def generate_random_biolink_entity(**kwargs) -> str:
     """Generate a random biolink entity."""
     return random.choice(tk.get_all_entities(formatted=True, **kwargs))
 
 
-def generate_random_biolink_entities_list(num_rows: int, **kwargs):
+def generate_random_biolink_entities_list(num_rows: int, **kwargs) -> List[List[str]]:
     """Generate a list of random biolink entities."""
     e = generate_random_biolink_entities(num_rows, **kwargs)
     return [tk.get_ancestors(e, formatted=True, **kwargs) for e in e]
 
 
-# def get_random_biolink_predicate(num_rows: int, subject_category: str, object_category: str):
-def get_random_biolink_predicates(subject_categories: List[str], object_categories: List[str]):
+def get_random_biolink_predicates(subject_categories: List[str], object_categories: List[str]) -> str:
     """Given a subject and object category, get a random predicate that is valid."""
     pairs = list(zip(subject_categories, object_categories))
     return [random.choice(get_valid_predicates(s, o)) for s, o in pairs]
 
 
-def get_valid_predicates(subject_category: str, object_category: str):
+def get_valid_predicates(subject_category: str, object_category: str) -> list[str]:
     subject_candidates = tk.get_all_predicates_with_class_domain(subject_category, formatted=True, check_ancestors=True)
     object_candidates = tk.get_all_predicates_with_class_range(object_category, formatted=True, check_ancestors=True)
     return list(set(subject_candidates).intersection(set(object_candidates)))
 
 
-def create_subject_predicate_object_mapping():
+def create_subject_predicate_object_mapping() -> pd.DataFrame:
     # create subject -> predicate mapping
     subject_mapping = pd.DataFrame({"subj_category": tk.get_all_entities(formatted=True)})
     subject_mapping["predicate"] = subject_mapping.apply(
@@ -69,7 +68,7 @@ def create_subject_predicate_object_mapping():
     return subject_predicate_object
 
 
-def generate_biolink_sample_kg(nodes_per_type: int, edge_count: int):
+def generate_biolink_sample_kg(nodes_per_type: int, edge_count: int) -> Tuple[pd.DataFrame]:
     """
     Generates an initial knowledge graph with a given number of nodes per type and edges.
     We use this to generate various biolink compatible KGs
