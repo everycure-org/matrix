@@ -4,9 +4,8 @@ versions:
   release: ${oc.env:RELEASE_VERSION, v0.2.4-rtx-only}
 
 release_folder_name: ${oc.env:RELEASE_FOLDER_NAME, releases}
-# NOTE if you're submitting to the cloud, 
+
 root_dir: ${gcs_bucket}/kedro/data/${release_folder_name}/${versions.release}
-# root_dir: ${gcs_bucket}/kedro/data/tests/${versions.release}
 
 # NOTE: MLflow does not like "new options" in the mlflow.yml
 # due to schema validation.
