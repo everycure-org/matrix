@@ -27,13 +27,14 @@ def sample_predicates():
 
 @pytest.fixture
 def sample_biolink_categories():
+    # as returned from biolink-api
     return [
         {
             "name": "NamedThing",
             "parent": None,
             "children": [
-                {"name": "ChemicalEntity", "parent": "NamedThing"},
-                {"name": "Drug", "parent": "NamedThing"},
+                {"name": "chemical_entity"},
+                {"name": "drug"},
             ],
         }
     ]
