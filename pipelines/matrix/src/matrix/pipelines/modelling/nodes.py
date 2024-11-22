@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Union, Tuple, Callable
+from typing import Any, Dict, List, Union, Tuple
 import pandas as pd
 import numpy as np
 import json
@@ -446,15 +446,14 @@ def check_model_performance(
     return json.loads(json.dumps(report, default=float))
 
 
-def aggregate_metrics(agg_func: Callable = np.mean, *metrics) -> Dict:
+def aggregate_metrics(aggregation_functions: List[Dict], *metrics) -> Dict:
     """
     Aggregate metrics for the separate folds into a single set of metrics.
 
     Args:
-        agg_func: Function to use for the aggregation.
+        aggregation_functions: List of dictionaries containing the name and object of the aggregation function.
         metrics: Dictionaries of metrics for all folds.
     """
-    agg_func = eval(agg_func)
 
     # Extract list of metrics for each fold and check consistency
     metric_names_lst_all_folds = [list(report.keys()) for report in metrics]
@@ -463,8 +462,11 @@ def aggregate_metrics(agg_func: Callable = np.mean, *metrics) -> Dict:
         raise ValueError("Inconsistent metrics across folds. Each fold should have the same set of metrics.")
 
     # Perform aggregation
-    aggregated_metrics = {
-        metric_name: agg_func([report[metric_name] for report in metrics]) for metric_name in metric_names_lst
-    }
+    aggregated_metrics = dict()
+    for agg_func in aggregation_functions:
+        agg_func_obj = eval(agg_func["object"])
+        aggregated_metrics[agg_func["name"]] = {
+            metric_name: agg_func_obj([report[metric_name] for report in metrics]) for metric_name in metric_names_lst
+        }
 
     return aggregated_metrics

@@ -72,7 +72,7 @@ def create_pipeline(**kwargs) -> Pipeline:
         # Aggregation step
         def _give_aggregation_node_input(model):
             """Prepare aggregation node inputs, including reports for all folds"""
-            return ["params:modelling.agg_func"] + [
+            return ["params:modelling.aggregation_functions"] + [
                 f"evaluation.{model}.{evaluation}.reporting.result_fold_{fold}" for fold in range(n_splits)
             ]
 
