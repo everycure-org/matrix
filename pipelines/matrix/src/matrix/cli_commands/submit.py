@@ -41,7 +41,7 @@ def cli():
 @click.option("--username", type=str, required=True, help="Specify the username to use")
 @click.option("--namespace", type=str, default="argo-workflows", help="Specify a custom namespace")
 @click.option("--run-name", type=str, default=None, help="Specify a custom run name, defaults to branch")
-@click.option("--release-name", type=str, required=True, help="Specify a custom release name, defaults to release version")
+@click.option("--release-name", type=str, required=True, help="Specify a custom release name")
 @click.option("--pipeline", type=str, default="__default__", help="Specify which pipeline to execute")
 @click.option("--verbose", "-v", is_flag=True, default=True, help="Enable verbose output")
 @click.option("--dry-run", "-d", is_flag=True, default=False, help="Does everything except submit the workflow")
