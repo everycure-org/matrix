@@ -96,7 +96,6 @@ def create_pipeline(**kwargs) -> Pipeline:
                 func=nodes.union_and_deduplicate_edges,
                 inputs={
                     "datasets_to_union": "params:integration.unification.datasets_to_union",
-                    "biolink_predicates": "integration.raw.biolink.predicates",
                     "rtx": "integration.int.rtx.edges.norm",
                     "robokop": "integration.int.robokop.edges.norm",
                     "medical_team": "ingestion.int.ec_medical_team.edges",
