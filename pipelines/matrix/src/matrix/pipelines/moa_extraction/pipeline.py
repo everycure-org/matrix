@@ -16,9 +16,6 @@ moa_extraction_settings = settings.DYNAMIC_PIPELINES_MAPPING.get("moa_extraction
 num_hops_lst = [model["num_hops"] for model in moa_extraction_settings]
 
 
-num_hops_lst = [num_hops_lst[0]]  # TODO Remove
-
-
 def _preprocessing_pipeline() -> Pipeline:
     preprocessing_strands_lst = []
     for num_hops in num_hops_lst:
