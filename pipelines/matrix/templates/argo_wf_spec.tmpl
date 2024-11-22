@@ -85,8 +85,7 @@ spec:
           value: {% raw %} "{{workflow.parameters.run_name}}" 
           {% endraw %}
         - name: RELEASE_NAME
-          value: {% raw %} "{{workflow.parameters.release_name}}" 
-          {% endraw %}
+          value: "{{release_name}}" 
         - name: RELEASE_FOLDER_NAME
           value: {% raw %} "{{workflow.parameters.release_folder_name}}" 
           {% endraw %}
