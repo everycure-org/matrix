@@ -31,7 +31,10 @@ def biolink_deduplicate_edges(edges_df: DataFrame, biolink_predicates: DataFrame
     """
 
     # Enrich edges with path to predicates in biolink hierarchy
-    edges_df = edges_df.join(convert_biolink_hierarchy_json_to_df(biolink_predicates, "predicate"), on="predicate")
+    edges_df = edges_df.join(
+        convert_biolink_hierarchy_json_to_df(biolink_predicates, "predicate", convert_to_pascal_case=False),
+        on="predicate",
+    )
 
     # Compute self join
     res = (
@@ -55,14 +58,14 @@ def biolink_deduplicate_edges(edges_df: DataFrame, biolink_predicates: DataFrame
     return res
 
 
-def convert_biolink_hierarchy_json_to_df(biolink_predicates, col_name: str):
+def convert_biolink_hierarchy_json_to_df(biolink_predicates, col_name: str, convert_to_pascal_case: bool):
     spark = ps.sql.SparkSession.builder.getOrCreate()
     biolink_hierarchy = spark.createDataFrame(
         unnest_biolink_hierarchy(
             col_name,
             biolink_predicates,
             prefix="biolink:",
-            convert_to_pascal_case=False,
+            convert_to_pascal_case=convert_to_pascal_case,
         )
     )
 
@@ -78,7 +81,9 @@ def determine_most_specific_category(nodes: DataFrame, biolink_categories_df: pd
 
     """
 
-    labels_hierarchy = convert_biolink_hierarchy_json_to_df(biolink_categories_df, "category")
+    labels_hierarchy = convert_biolink_hierarchy_json_to_df(
+        biolink_categories_df, "category", convert_to_pascal_case=True
+    )
 
     nodes = (
         nodes.withColumn("category", F.explode("all_categories"))
