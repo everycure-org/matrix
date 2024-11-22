@@ -32,5 +32,8 @@ class MatrixCliSettings(BaseSettings):
         "kedro/data/01_raw",
     ]
 
+    gpg_public_key_path: str = ".git-crypt/public_keys/"
+    gpg_key_path: str = ".git-crypt/keys/"
+
 
 settings = MatrixCliSettings()

@@ -1,7 +1,7 @@
 import functools
 import subprocess
 from pathlib import Path
-from typing import TYPE_CHECKING, List
+from typing import TYPE_CHECKING, List, Union
 
 import typer
 from matrix_cli.components.cache import memory
@@ -64,9 +64,14 @@ def get_markdown_contents(folder_path: Path | str) -> str:
     return all_content
 
 
-def run_command(command: List[str], cwd: str = None) -> str:
+def run_command(command: Union[str, List[str]], cwd: str = None, check=True, log_before: bool = False) -> str:
+    if isinstance(command, str):
+        # ensures we have an array but allow user to pass in string (for f-string style submission)
+        command = str.split(" ")
+    if log_before:
+        console.print(" ".join(command))
     try:
-        result = subprocess.run(command, check=True, capture_output=True, text=True, cwd=cwd)
+        result = subprocess.run(command, check=check, capture_output=True, text=True, cwd=cwd)
         return result.stdout.strip()
     except subprocess.CalledProcessError as e:
         typer.echo(f"Error running command {' '.join(command)}: {e.stderr}", err=True)
