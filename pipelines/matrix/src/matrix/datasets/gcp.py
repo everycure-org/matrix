@@ -74,7 +74,7 @@ class SparkWithSchemaDataset(SparkDataset):
         )
 
 
-class BigQueryTableDataset(SparkDataset):
+class SparkDatasetWithBQExternalTable(LazySparkDataset):
     """Implementation fo a BigQueryTableDataset.
 
     The class delegates dataset save and load invocations to the native SparkDataset
@@ -134,7 +134,6 @@ class BigQueryTableDataset(SparkDataset):
         )
 
     def _load(self) -> Any:
-        SparkHooks._initialize_spark()
         return super()._load()
 
     def _save(self, data: DataFrame) -> None:
