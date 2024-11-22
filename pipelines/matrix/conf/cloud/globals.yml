@@ -7,6 +7,9 @@ release_folder_name: ${oc.env:RELEASE_FOLDER_NAME, releases}
 
 root_dir: ${gcs_bucket}/kedro/data/${release_folder_name}/${versions.release}
 
+gcs_bucket: gs://${oc.env:GCP_BUCKET}
+gcp_project: ${oc.env:GCP_PROJECT_ID}
+
 # NOTE: MLflow does not like "new options" in the mlflow.yml
 # due to schema validation.
 mlflow_artifact_root: ${gcs_bucket}/runs/${run_name}/mlflow
