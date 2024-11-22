@@ -259,7 +259,7 @@ def test_workflow_submission(
         username="testuser",
         namespace="test_namespace",
         run_name="test-run",
-        release_name="test_release",
+        release_version="test_release",
         pipeline_obj=pipeline_obj,
         verbose=True,
         dry_run=False,
