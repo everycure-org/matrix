@@ -142,7 +142,7 @@ class BigQueryTableDataset(SparkDataset):
         super()._save(data)
 
         # Ensure dataset exists
-        self._create_dataset()
+        self._create_dataset(exists_ok=True)
 
         # Create external table
         external_config = bigquery.ExternalConfig(self._format.upper())
