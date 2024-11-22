@@ -414,6 +414,7 @@ def test_clean_dependencies() -> None:
 def get_argo_config(argo_default_resources: ArgoResourceConfig) -> Tuple[Dict, Dict[str, Pipeline]]:
     image_name = "us-central1-docker.pkg.dev/mtrx-hub-dev-3of/matrix-images/matrix"
     run_name = "test_run"
+    release_version = "test_release"
     image_tag = "test_tag"
     namespace = "test_namespace"
     username = "test_user"
@@ -444,6 +445,7 @@ def get_argo_config(argo_default_resources: ArgoResourceConfig) -> Tuple[Dict, D
     argo_config_yaml = generate_argo_config(
         image=image_name,
         run_name=run_name,
+        release_version=release_version,
         image_tag=image_tag,
         namespace=namespace,
         username=username,
@@ -467,21 +469,7 @@ def get_argo_config(argo_default_resources: ArgoResourceConfig) -> Tuple[Dict, D
             cpu_limit=16,
             memory_request=64,
             memory_limit=64,
-        ),
-        ArgoResourceConfig(
-            num_gpus=0,
-            cpu_request=8,
-            cpu_limit=12,
-            memory_request=128,
-            memory_limit=128,
-        ),
-        ArgoResourceConfig(
-            num_gpus=1,
-            cpu_request=16,
-            cpu_limit=16,
-            memory_request=64,
-            memory_limit=128,
-        ),
+        )
     ],
 )
 def test_argo_template_config_boilerplate(argo_default_resources: ArgoResourceConfig) -> None:

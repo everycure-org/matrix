@@ -41,13 +41,14 @@ def cli():
 @click.option("--username", type=str, required=True, help="Specify the username to use")
 @click.option("--namespace", type=str, default="argo-workflows", help="Specify a custom namespace")
 @click.option("--run-name", type=str, default=None, help="Specify a custom run name, defaults to branch")
+@click.option("--release-version", type=str, required=True, help="Specify a custom release name")
 @click.option("--pipeline", type=str, default="__default__", help="Specify which pipeline to execute")
 @click.option("--verbose", "-v", is_flag=True, default=True, help="Enable verbose output")
 @click.option("--dry-run", "-d", is_flag=True, default=False, help="Does everything except submit the workflow")
 @click.option("--from-nodes", type=str, default="", help="Specify nodes to run from", callback=split_string)
 @click.option("--is-test", is_flag=True, default=False, help="Submit to test folder")
 # fmt: on
-def submit(username: str, namespace: str, run_name: str, pipeline: str, verbose: bool, dry_run: bool, from_nodes: List[str], is_test: bool):
+def submit(username: str, namespace: str, run_name: str, release_version: str, pipeline: str, verbose: bool, dry_run: bool, from_nodes: List[str], is_test: bool):
     """Submit the end-to-end workflow. """
     if verbose:
         log.setLevel(logging.DEBUG)
@@ -75,6 +76,7 @@ def submit(username: str, namespace: str, run_name: str, pipeline: str, verbose:
         username=username,
         namespace=namespace,
         run_name=run_name,
+        release_version=release_version,
         pipeline_obj=pipeline_obj,
         verbose=verbose,
         dry_run=dry_run,
@@ -87,6 +89,7 @@ def _submit(
         username: str, 
         namespace: str, 
         run_name: str, 
+        release_version: str,
         pipeline_obj: Pipeline,
         verbose: bool, 
         dry_run: bool, 
@@ -127,7 +130,7 @@ def _submit(
         console.print("[green]✓[/green] Dependencies checked")
 
         console.print("Building Argo template...")
-        argo_template = build_argo_template(run_name, username, namespace, pipeline_obj, is_test=is_test, )
+        argo_template = build_argo_template(run_name, release_version, username, namespace, pipeline_obj, is_test=is_test, )
         console.print("[green]✓[/green] Argo template built")
 
         console.print("Writing Argo template...")
@@ -302,7 +305,7 @@ def build_push_docker(username: str, verbose: bool):
     run_subprocess(f"make docker_push TAG={username}", stream_output=verbose)
 
 
-def build_argo_template(run_name: str, username: str, namespace: str, pipeline_obj: Pipeline, is_test: bool, default_execution_resources: Optional[ArgoResourceConfig] = None) -> str:
+def build_argo_template(run_name: str, release_version: str, username: str, namespace: str, pipeline_obj: Pipeline, is_test: bool, default_execution_resources: Optional[ArgoResourceConfig] = None) -> str:
     """Build Argo workflow template."""
     image_name = "us-central1-docker.pkg.dev/mtrx-hub-dev-3of/matrix-images/matrix"
 
@@ -318,6 +321,7 @@ def build_argo_template(run_name: str, username: str, namespace: str, pipeline_o
     return generate_argo_config(
         image=image_name,
         run_name=run_name,
+        release_version=release_version,
         image_tag=run_name,
         namespace=namespace,
         username=username,
