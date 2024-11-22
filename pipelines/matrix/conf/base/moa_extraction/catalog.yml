@@ -110,14 +110,14 @@ moa_extraction.raw.drugmechdb_entities:
   path: ${globals:paths.moa_extraction}/reporting/{num_hops}_hop_predictions_report
   dataset: pandas.ExcelDataset
 
-"moa_extraction.reporting.{num_hops}_hop_pair_info_sql":
+"moa_extraction.reporting.{num_hops}_hop_pair_info_all":
   type: pandas.ParquetDataset
-  filepath: ${globals:paths.moa_extraction}/model_output/{num_hops}_hop_pair_info.parquet
+  filepath: ${globals:paths.moa_extraction}/reporting/{num_hops}_hop_pair_info_all.parquet
   save_args:
     index: false
 
-"moa_extraction.reporting.{num_hops}_hop_predictions_sql":
+"moa_extraction.reporting.{num_hops}_hop_predictions_all":
   type: pandas.ParquetDataset
-  filepath: ${globals:paths.moa_extraction}/model_output/{num_hops}_hop_predictions.parquet
+  filepath: ${globals:paths.moa_extraction}/reporting/{num_hops}_hop_predictions_all.parquet
   save_args:
     index: false
