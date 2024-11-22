@@ -145,7 +145,7 @@ class SparkDatasetWithBQExternalTable(LazySparkDataset):
         super()._save(data)
 
         # Ensure dataset exists
-        self._create_dataset(exists_ok=True)
+        self._create_dataset()
 
         # Create external table, referencing the dataset in object storage
         external_config = bigquery.ExternalConfig(self._format.upper())
