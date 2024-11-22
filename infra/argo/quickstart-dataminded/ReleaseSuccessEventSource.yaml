@@ -1,0 +1,18 @@
+apiVersion: argoproj.io/v1alpha1
+kind: EventSource
+metadata:
+  name: buildnewrelease-status
+  namespace: argo-events
+spec:
+  service:
+    ports:
+      - port: 12000
+  eventBusName: default
+  k8s:
+    buildnewrelease:
+      namespace: argo  # Replace with the namespace of your workflows if different
+      eventTypes:
+        - "WorkflowSucceeded"
+      filter:
+        labels:
+          app: build-new-release
