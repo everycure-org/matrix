@@ -1,6 +1,6 @@
 run_name: ${oc.env:RUN_NAME}
 
-gcs_bucket: gs://${oc.env:GCP_BUCKET}
+gcs_bucket: gs://${oc.env:GCP_BUCKET}/archive
 gcp_project: ${oc.env:GCP_PROJECT_ID}
 
 # NOTE: MLflow does not like "new options" in the mlflow.yml
