@@ -44,6 +44,7 @@ from bq.merged_kg_edges
     and object_category in ${inputs.object_category.value}
     and upstream_data_source in ${inputs.upstream_data_source.value}
     and predicate in ${inputs.predicate.value}
+    and primary_knowledge_source in ${inputs.primary_knowledge_source.value}
 group by all
 having count > 0
 order by count desc
@@ -60,8 +61,11 @@ limit ${inputs.edge_limit.value}
   from bq.merged_kg_edges
   where subject_prefix in ${inputs.subject_prefix.value}
     and object_prefix in ${inputs.object_prefix.value}
+    and subject_category in ${inputs.subject_category.value}
+    and object_category in ${inputs.object_category.value}
     and upstream_data_source in ${inputs.upstream_data_source.value}
     and predicate in ${inputs.predicate.value}
+    and primary_knowledge_source in ${inputs.primary_knowledge_source.value}
   group by all
   having count > 0
   order by count desc
@@ -78,6 +82,7 @@ from bq.merged_kg_edges
         and object_prefix in ${inputs.object_prefix.value}
         and upstream_data_source in ${inputs.upstream_data_source.value}
         and predicate in ${inputs.predicate.value}
+        and primary_knowledge_source in ${inputs.primary_knowledge_source.value}
     group by all
     having count > 0
     order by count desc    
@@ -93,6 +98,8 @@ select
 from bq.merged_kg_edges
   where subject_prefix in ${inputs.subject_prefix.value}
     and object_prefix in ${inputs.object_prefix.value}
+    and subject_category in ${inputs.subject_category.value}
+    and object_category in ${inputs.object_category.value}
     and upstream_data_source in ${inputs.upstream_data_source.value}
     and predicate in ${inputs.predicate.value}
   group by all
@@ -172,6 +179,13 @@ from bq.merged_kg_edges
                     name=object_category
                     value=object_category
                     title="Object Category"
+                    multiple=true
+                    selectAllByDefault=true
+                    />
+            <Dropdown data={edges}
+                    name=primary_knowledge_source
+                    value=primary_knowledge_source
+                    title="Primary Knowledge Source"
                     multiple=true
                     selectAllByDefault=true
                     />
