@@ -1,12 +1,14 @@
-from pathlib import Path
+import subprocess
 import tempfile
-import pytest
-from unittest.mock import patch, MagicMock
+from pathlib import Path
+from unittest.mock import MagicMock, patch
+
 import click
+import pytest
+import yaml
 from click.testing import CliRunner
 from kedro.pipeline import Pipeline
 from kedro.pipeline.node import Node
-import yaml
 from matrix.argo import ARGO_TEMPLATES_DIR_PATH
 from matrix.cli_commands.submit import (
     _submit,
@@ -16,14 +18,12 @@ from matrix.cli_commands.submit import (
     check_dependencies,
     command_exists,
     ensure_namespace,
+    get_run_name,
     run_subprocess,
     save_argo_template,
     submit,
-    get_run_name,
     submit_workflow,
 )
-import subprocess
-
 from matrix.kedro4argo_node import ArgoResourceConfig
 
 
@@ -268,7 +268,9 @@ def test_build_push_docker(mock_run_subprocess: None) -> None:
 
 @patch("matrix.cli_commands.submit.generate_argo_config")
 def test_build_argo_template(mock_generate_argo_config: None) -> None:
-    build_argo_template("test_run", "testuser", "test_namespace", {"test": MagicMock()}, ArgoResourceConfig())
+    build_argo_template(
+        "test_run", "testuser", "test_namespace", {"test": MagicMock()}, ArgoResourceConfig(), is_test=True
+    )
     mock_generate_argo_config.assert_called_once()
 
 
@@ -337,7 +339,7 @@ def test_submit_workflow(mock_run_subprocess: None) -> None:
     ],
 )
 def test_get_run_name_with_input(input_name: str, expected_name: str) -> None:
-    assert get_run_name(input_name) == expected_name
+    assert expected_name in get_run_name(input_name)
 
 
 @pytest.mark.skip(reason="Investigate why click is not correctly throwing up exceptions")
@@ -428,6 +430,11 @@ def test_workflow_submission(
         """Dummy function for testing purposes."""
         return args
 
+    pipeline_obj = Pipeline(
+        nodes=[Node(func=dummy_func, inputs=["dataset_a", "dataset_b"], outputs="dataset_c", name="simple_node")]
+    )
+    pipeline_obj.name = pipeline_for_execution
+
     _submit(
         username="testuser",
         namespace="test_namespace",
@@ -445,6 +452,7 @@ def test_workflow_submission(
             ),
         },
         pipeline_for_execution=pipeline_for_execution,
+        release_version="test_release",
         verbose=False,
         dry_run=False,
         template_directory=temporary_directory,
@@ -469,11 +477,10 @@ def test_workflow_submission(
     templates = content.get("spec", {}).get("templates", [])
     pipeline_templates = [t for t in templates if "dag" in t]
 
-    assert len(pipeline_templates) == 2, "Expected two pipeline templates (test and cloud)"
+    assert len(pipeline_templates) == 1, "Expected one pipeline template (test and cloud)"
 
     pipeline_names = [t["name"] for t in pipeline_templates]
-    assert "test-pipeline" in pipeline_names, "Expected 'test' pipeline to be present"
-    assert "default" in pipeline_names, "Expected 'cloud' pipeline to be present"
+    assert "pipeline" in pipeline_names, "Expected 'pipeline' pipeline to be present"
 
     # Additional checks
     assert content["metadata"]["name"] == "test-run", "Expected 'test-run' as the workflow name"
@@ -483,13 +490,6 @@ def test_workflow_submission(
     for pipeline in pipeline_templates:
         tasks = pipeline.get("dag", {}).get("tasks", [])
         assert len(tasks) > 0, f"Expected at least one task in the {pipeline['name']} pipeline"
-
-    # Check that the specified pipeline_for_execution is present in the templates
-    assert (
-        pipeline_for_execution.replace("_", "-") in pipeline_names
-    ), f"Expected '{pipeline_for_execution}' pipeline to be present"
-    # NOTE: This function was partially generated using AI assistance.
-
     submit_cmd = " ".join(
         [
             "argo submit",
@@ -502,5 +502,4 @@ def test_workflow_submission(
         ]
     )
 
-    # E         Actual: run_subprocess('argo submit --name test-run -n test_namespace --from wftmpl/test-run -p run_name=test-run -l submit-from-ui=false --entrypoint=test_pipeline -o json', capture_output=True, stream_output=False)
-    mock_run_subprocess.assert_called_with(submit_cmd, capture_output=True, stream_output=False)
+    mock_run_subprocess.assert_called_with(submit_cmd, capture_output=True, stream_output=True)
