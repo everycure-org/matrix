@@ -1,4 +1,5 @@
 import os
+import logging
 import re
 from copy import deepcopy
 from typing import Any, Optional
@@ -19,6 +20,8 @@ from matrix.hooks import SparkHooks
 from pygsheets import Spreadsheet, Worksheet
 from pyspark.sql import DataFrame
 from refit.v1.core.inject import _parse_for_objects
+
+logger = logging.getLogger(__name__)
 
 
 class LazySparkDataset(SparkDataset):
@@ -75,10 +78,10 @@ class SparkWithSchemaDataset(SparkDataset):
 
 
 class SparkDatasetWithBQExternalTable(LazySparkDataset):
-    """Implementation fo a BigQueryTableDataset.
+    """Spark Dataset that produces a BigQuery external table as a side output.
 
-    The class delegates dataset save and load invocations to the native SparkDataset
-    and registers the dataset into BigQuery through External Data Configuration.
+    The class delegates dataset save and load invocations to the native SparkDataset, and registers the
+    dataset into BigQuery through External Data Configuration. This means that the dataset is visible in BQ, but we do not incur unnecessary costs for BQ IO.
     """
 
     def __init__(  # noqa: PLR0913
@@ -101,6 +104,7 @@ class SparkDatasetWithBQExternalTable(LazySparkDataset):
 
         Args:
             project_id: project identifier.
+            filepath: filepath to write to
             dataset: Name of the BigQuery dataset.
             table: name of the table.
             identifier: unique identfier of the table.
@@ -143,11 +147,11 @@ class SparkDatasetWithBQExternalTable(LazySparkDataset):
         # Ensure dataset exists
         self._create_dataset(exists_ok=True)
 
-        # Create external table
+        # Create external table, referencing the dataset in object storage
         external_config = bigquery.ExternalConfig(self._format.upper())
         external_config.source_uris = [f"{self._path}/*.{self._format}"]
 
-        # Register the external table
+        # Register the external table within BigQuery
         table = bigquery.Table(f"{self._dataset_id}.{self._table}")
         table.labels = self._labels
         table.external_data_configuration = external_config
@@ -156,15 +160,15 @@ class SparkDatasetWithBQExternalTable(LazySparkDataset):
     def _create_dataset(self) -> str:
         try:
             self._client.get_dataset(self._dataset_id)
-            print(f"Dataset {self._dataset_id} already exists")
+            logger.info(f"Dataset {self._dataset_id} already exists")
         except exceptions.NotFound:
-            print(f"Dataset {self._dataset_id} is not found, will attempt creating it now.")
+            logger.info(f"Dataset {self._dataset_id} is not found, will attempt creating it now.")
 
             # Dataset doesn't exist, so let's create it
             dataset = bigquery.Dataset(self._dataset_id)
 
             dataset = self._client.create_dataset(dataset, timeout=30)
-            print(f"Created dataset {self._project_id}.{dataset.dataset_id}")
+            logger.info(f"Created dataset {self._project_id}.{dataset.dataset_id}")
 
     @staticmethod
     def _sanitize_name(name: str) -> str:
