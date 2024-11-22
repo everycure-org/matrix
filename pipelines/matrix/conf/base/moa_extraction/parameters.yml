@@ -33,7 +33,6 @@ moa_extraction:
       object: matrix.pipelines.moa_extraction.path_mapping.SetwisePathMapper
       num_hops: 2
       unidirectional: false
-      max_entries: 10 # TODO Remove
     mapper_three_hop: 
       object: matrix.pipelines.moa_extraction.path_mapping.SetwisePathMapper
       num_hops: 3
@@ -171,7 +170,7 @@ moa_extraction:
 
 
   predictions:
-    num_pairs_limit: 10 # TODO Revert to None
+    num_pairs_limit: None
     num_paths_per_pair_limit: 1000
     include_edge_directions: true
     drug_col_name_predictions: drug_id_normalized
