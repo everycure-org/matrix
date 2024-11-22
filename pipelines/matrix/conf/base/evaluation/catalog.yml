@@ -18,5 +18,5 @@ _pandas_parquet: &_pandas_parquet
   type:  yaml.YAMLDataset
 
 "evaluation.{model}.{evaluation}.reporting.result_aggregated":
-  filepath: ${globals:paths.evaluation}/reporting/{model}/{evaluation}/result_fold_{fold}.yml
+  filepath: ${globals:paths.evaluation}/reporting/{model}/{evaluation}/result_aggregated.yml
   type:  yaml.YAMLDataset

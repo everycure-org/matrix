@@ -28,6 +28,7 @@ def check_no_train(data: pd.DataFrame, known_pairs: pd.DataFrame) -> None:
     train_pairs_set = set(zip(train_pairs["source"], train_pairs["target"]))
     data_pairs_set = set(zip(data["source"], data["target"]))
     overlapping_pairs = data_pairs_set.intersection(train_pairs_set)
+
     if overlapping_pairs:
         raise ValueError(f"Found {len(overlapping_pairs)} pairs in test set that also appear in training set.")
 

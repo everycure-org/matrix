@@ -12,7 +12,7 @@ def _create_matrix_generation_pipeline(model: str, fold: int) -> Pipeline:
                 func=nodes.make_predictions_and_sort,
                 inputs=[
                     "matrix_generation.feat.nodes_kg_ds",
-                    "matrix_generation.prm.matrix_pairs",
+                    f"matrix_generation.prm.matrix_pairs_fold_{fold}",
                     f"modelling.{model}.model_input.transformers_fold_{fold}",
                     f"modelling.{model}.models.model_fold_{fold}",
                     f"params:modelling.{model}.model_options.model_tuning_args.features",
