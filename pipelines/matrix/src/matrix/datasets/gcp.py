@@ -170,7 +170,7 @@ class BigQueryTableDataset(SparkDataset):
 
     @staticmethod
     def _sanitize_name(name: str) -> str:
-        """Function to sanitise BigQuery table or dataset identifiers.
+        """Function to sanitize BigQuery table or dataset identifiers.
 
         Args:
             name: str
