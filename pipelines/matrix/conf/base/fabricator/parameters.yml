@@ -19,10 +19,10 @@ fabricator.rtx_kg2:
           - biolink:Gene
           - biolink:ChemicalSubstance
           - biolink:Protein
-      # NOTE: This ensures the full path from root to child is added in the categories column
       all_categories:string[]:
         type: row_apply
         list_of_values: [nodes.category]
+        # NOTE: This ensures the full path from root to child is added in the categories column
         row_func: matrix.pipelines.fabricator.generators.get_ancestors_for_category_delimited
         row_func_kwargs:
           delimiter: "\u01c2"
