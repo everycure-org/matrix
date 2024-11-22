@@ -163,7 +163,6 @@ class BigQueryTableDataset(SparkDataset):
 
             # Dataset doesn't exist, so let's create it
             dataset = bigquery.Dataset(self._dataset_id)
-            # dataset.location = "US"  # Specify the location, e.g., "US" or "EU"
 
             dataset = self._client.create_dataset(dataset, timeout=30)
             print(f"Created dataset {self._project_id}.{dataset.dataset_id}")
