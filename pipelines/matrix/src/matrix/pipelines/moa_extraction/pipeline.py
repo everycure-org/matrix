@@ -173,7 +173,7 @@ def _evaluation_pipeline() -> Pipeline:
                     node(
                         func=nodes.make_evaluation_predictions,
                         inputs={
-                            "model": f"moa_extraction.models.{num_hops}_hop_model",
+                            "model": f"moa_extraction.models.{num_hops}_hop_model_split",
                             "runner": f"params:moa_extraction.gdb_{num_hops}_hop",
                             "positive_paths": f"moa_extraction.prm.{num_hops}_hop_splits",
                             "path_generator": f"params:moa_extraction.evaluation.{num_hops}_hop.path_generator",
