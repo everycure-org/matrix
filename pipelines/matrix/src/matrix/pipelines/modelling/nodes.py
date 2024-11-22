@@ -167,14 +167,14 @@ def prefilter_nodes(
     )
 
     df = (
-        nodes.alias("nodes")
-        # .filter((f.col("category").isin(drug_types)) | (f.col("category").isin(disease_types)))
-        .select("id", "topological_embedding", "category")
-        # TODO: The integrated data product _should_ contain these nodes
-        .join(full_nodes.select("id", "all_categories"), on="id", how="left")
-        # TODO: Verify below does not have any undesired side effects
+        nodes.join(full_nodes.select("id", "all_categories"), on="id", how="left")
         .withColumn("is_drug", f.arrays_overlap(f.col("all_categories"), f.lit(drug_types)))
         .withColumn("is_disease", f.arrays_overlap(f.col("all_categories"), f.lit(disease_types)))
+        .filter((f.col("is_disease")) | (f.col("is_drug")))
+        # .filter((f.col("category").isin(drug_types)) | (f.col("category").isin(disease_types)))
+        .select("id", "topological_embedding", "is_drug", "is_disease")
+        # TODO: The integrated data product _should_ contain these nodes
+        # TODO: Verify below does not have any undesired side effects
         .join(ground_truth_nodes, on="id", how="left")
         .fillna({"is_ground_pos": False})
     )
