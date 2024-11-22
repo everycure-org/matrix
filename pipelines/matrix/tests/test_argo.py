@@ -1,11 +1,11 @@
 from typing import Dict, Tuple
-from kedro.pipeline.node import Node
-from kedro.pipeline import Pipeline
+
 import pytest
 import yaml
-
-from matrix.argo import clean_name, fuse, FusedNode, generate_argo_config, get_dependencies, get_pipeline2dependencies
-from matrix.kedro4argo_node import ArgoResourceConfig, ArgoNode
+from kedro.pipeline import Pipeline
+from kedro.pipeline.node import Node
+from matrix.argo import FusedNode, clean_name, fuse, generate_argo_config, get_dependencies
+from matrix.kedro4argo_node import ArgoNode, ArgoResourceConfig
 
 
 def dummy_fn(*args):
@@ -417,101 +417,45 @@ def get_argo_config(argo_default_resources: ArgoResourceConfig) -> Tuple[Dict, D
     image_tag = "test_tag"
     namespace = "test_namespace"
     username = "test_user"
-    pipelines = {
-        "pipeline_one": Pipeline(
-            nodes=[
-                ArgoNode(
-                    func=dummy_func,
-                    inputs=["dataset_a", "dataset_b"],
-                    outputs="dataset_c",
-                    name="simple_node_p1_1",
-                    argo_config=ArgoResourceConfig(
-                        num_gpus=1,
-                        cpu_request=4,
-                        cpu_limit=7,
-                        memory_request=16,
-                        memory_limit=32,
-                    ),
+    pipeline_obj = Pipeline(
+        nodes=[
+            ArgoNode(
+                func=dummy_func,
+                inputs=["dataset_a", "dataset_b"],
+                outputs="dataset_c",
+                name="simple_node_p1_1",
+                argo_config=ArgoResourceConfig(
+                    num_gpus=1,
+                    cpu_request=4,
+                    cpu_limit=7,
+                    memory_request=16,
+                    memory_limit=32,
                 ),
-                ArgoNode(
-                    func=dummy_func,
-                    inputs="dataset_c",
-                    outputs="dataset_d",
-                    name="simple_node_p1_2",
-                ),
-            ]
-        ),
-        "pipeline_two": Pipeline(
-            nodes=[
-                ArgoNode(
-                    func=dummy_func,
-                    inputs=["dataset_a"],
-                    outputs="dataset_b",
-                    name="simple_node_p2_1",
-                    argo_config=ArgoResourceConfig(
-                        num_gpus=0,
-                        cpu_request=4,
-                        cpu_limit=16,
-                        memory_request=64,
-                        memory_limit=64,
-                    ),
-                )
-            ]
-        ),
-    }
-
+            ),
+            ArgoNode(
+                func=dummy_func,
+                inputs="dataset_c",
+                outputs="dataset_d",
+                name="simple_node_p1_2",
+            ),
+        ]
+    )
+    pipeline_obj.name = "pipeline_one"
     argo_config_yaml = generate_argo_config(
         image=image_name,
         run_name=run_name,
         image_tag=image_tag,
         namespace=namespace,
         username=username,
-        pipelines=pipelines,
-        pipeline_for_execution="pipeline_one",
+        pipeline=pipeline_obj,
         package_name="matrix",
+        release_folder_name="releases",
         default_execution_resources=argo_default_resources,
     )
 
     argo_config = yaml.safe_load(argo_config_yaml)
     assert isinstance(argo_config, dict), "Argo config should be a dictionary after YAML parsing"
-    return argo_config, pipelines
-
-
-def test_get_pipeline2dependencies() -> None:
-    argo_default_resources = ArgoResourceConfig(
-        num_gpus=0,
-        cpu_request=4,
-        cpu_limit=16,
-        memory_request=64,
-        memory_limit=64,
-    )
-    _, pipelines = get_argo_config(argo_default_resources)
-    pipeline2dependencies = get_pipeline2dependencies(pipelines, argo_default_resources)
-
-    assert len(pipeline2dependencies) == 2
-    assert len(pipeline2dependencies["pipeline_one"]) == 2
-    assert pipeline2dependencies["pipeline_one"][0]["name"] == "simple-node-p1-1"
-    assert pipeline2dependencies["pipeline_one"][1]["name"] == "simple-node-p1-2"
-    assert pipeline2dependencies["pipeline_one"][0]["deps"] == []
-    assert pipeline2dependencies["pipeline_one"][1]["deps"] == ["simple-node-p1-1"]
-    assert pipeline2dependencies["pipeline_one"][0]["nodes"] == "simple_node_p1_1"
-    assert pipeline2dependencies["pipeline_one"][1]["nodes"] == "simple_node_p1_2"
-    assert pipeline2dependencies["pipeline_one"][0]["tags"] == set()
-    assert pipeline2dependencies["pipeline_one"][1]["tags"] == set()
-    assert pipeline2dependencies["pipeline_one"][0]["resources"] == {
-        "cpu_limit": 7,
-        "cpu_request": 4,
-        "memory_limit": "32Gi",
-        "memory_request": "16Gi",
-        "num_gpus": 1,
-    }
-
-    assert len(pipeline2dependencies["pipeline_two"]) == 1
-    assert pipeline2dependencies["pipeline_two"][0]["name"] == "simple-node-p2-1"
-    assert pipeline2dependencies["pipeline_two"][0]["deps"] == []
-    assert pipeline2dependencies["pipeline_two"][0]["nodes"] == "simple_node_p2_1"
-    assert pipeline2dependencies["pipeline_two"][0]["tags"] == set()
-    assert "resources" in pipeline2dependencies["pipeline_two"][0]
+    return argo_config, {"pipeline_one": pipeline_obj}
 
 
 @pytest.mark.parametrize(
@@ -565,8 +509,8 @@ def test_argo_template_config_boilerplate(argo_default_resources: ArgoResourceCo
     # Verify pipeline templates
     templates = spec["templates"]
     pipeline_names = [template["name"] for template in templates]
-    assert "pipeline-one" in pipeline_names
-    assert "pipeline-two" in pipeline_names
+    # assert that the template contains our 3 expected templates
+    assert ["kedro", "neo4j", "pipeline"] == pipeline_names
 
 
 def test_resources_of_argo_template_config_pipelines() -> None:
@@ -584,11 +528,11 @@ def test_resources_of_argo_template_config_pipelines() -> None:
     # Verify pipeline templates
     templates = spec["templates"]
     pipeline_names = [template["name"] for template in templates]
-    assert "pipeline-one" in pipeline_names
-    assert "pipeline-two" in pipeline_names
+    assert ["kedro", "neo4j", "pipeline"] == pipeline_names
 
     # Verify pipeline_one template
-    pipeline_one_template = next(t for t in templates if t["name"] == "pipeline-one")
+
+    pipeline_one_template = [t for t in templates if t["name"] == "pipeline"][0]
     assert "dag" in pipeline_one_template
     # there should be two tasks in the pipeline
     assert len(pipeline_one_template["dag"]["tasks"]) == len(actual_pipelines["pipeline_one"].nodes)
@@ -619,10 +563,3 @@ def test_resources_of_argo_template_config_pipelines() -> None:
     assert resource_params2["memory_limit"] == f"{argo_default_resources.memory_limit}Gi"
     assert resource_params2["cpu_request"] == argo_default_resources.cpu_request
     assert resource_params2["cpu_limit"] == argo_default_resources.cpu_limit
-
-    # Verify pipeline_two template
-    pipeline_two_template = next(t for t in templates if t["name"] == "pipeline-two")
-    assert "dag" in pipeline_two_template
-    assert len(pipeline_two_template["dag"]["tasks"]) == len(actual_pipelines["pipeline_two"].nodes)
-    assert pipeline_two_template["dag"]["tasks"][0]["name"] == "simple-node-p2-1"
-    assert pipeline_two_template["dag"]["tasks"][0]["template"] == "kedro"

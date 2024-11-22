@@ -7,6 +7,7 @@ from pyspark.testing import assertDataFrameEqual
 
 @pytest.fixture
 def sample_predicates():
+    # These are explicitly using snake_case
     return [
         {
             "name": "related_to",
@@ -25,8 +26,21 @@ def sample_predicates():
 
 
 @pytest.fixture
+def sample_biolink_categories():
+    return [
+        {
+            "name": "NamedThing",
+            "parent": None,
+            "children": [
+                {"name": "ChemicalEntity", "parent": "NamedThing"},
+                {"name": "Drug", "parent": "NamedThing"},
+            ],
+        }
+    ]
+
+
+@pytest.fixture
 def sample_edges(spark):
-    # these are using snake_case as returned by the biolink API
     return spark.createDataFrame(
         [
             (
@@ -67,11 +81,11 @@ def sample_nodes(spark):
         [
             (
                 "CHEBI:001",
-                ["biolink:RelatedTo", "biolink:ComposedPrimarilyOf"],
+                ["biolink:NamedThing", "biolink:Drug"],
             ),
             (
                 "CHEBI:002",
-                ["biolink:RelatedTo", "biolink:RelatedToAtConceptLevel", "biolink:BroadMatch"],
+                ["biolink:NamedThing", "biolink:ChemicalEntity"],
             ),
         ],
         schema=StructType(
@@ -87,7 +101,7 @@ def test_unnest(sample_predicates):
     # Given an input dictionary of hierarchical predicate definition
 
     # When calling the unnest function
-    result = filters.unnest_biolink_hierarchy("predicate", sample_predicates, parents=[])
+    result = filters.unnest_biolink_hierarchy("predicate", sample_predicates, convert_to_pascal_case=False, parents=[])
     expected = pd.DataFrame(
         [
             ["composed_primarily_of", ["related_to"]],
@@ -104,7 +118,7 @@ def test_unnest(sample_predicates):
 
 def test_biolink_deduplicate(spark, sample_edges, sample_predicates):
     # When applying the biolink deduplicate
-    result = filters.biolink_deduplicate(sample_edges, sample_predicates)
+    result = filters.biolink_deduplicate_edges(sample_edges, sample_predicates)
     expected = spark.createDataFrame(
         [
             (
@@ -135,18 +149,18 @@ def test_biolink_deduplicate(spark, sample_edges, sample_predicates):
     assertDataFrameEqual(result.select(*expected.columns), expected)
 
 
-def test_determine_most_specific_category(spark, sample_nodes, sample_predicates):
+def test_determine_most_specific_category(spark, sample_nodes, sample_biolink_categories):
     # When applying the biolink deduplicate
-    result = filters.determine_most_specific_category(sample_nodes, sample_predicates)
+    result = filters.determine_most_specific_category(sample_nodes, sample_biolink_categories)
     expected = spark.createDataFrame(
         [
             (
                 "CHEBI:001",
-                "biolink:ComposedPrimarilyOf",
+                "biolink:Drug",
             ),
             (
                 "CHEBI:002",
-                "biolink:BroadMatch",
+                "biolink:ChemicalEntity",
             ),
         ],
         schema=StructType(
