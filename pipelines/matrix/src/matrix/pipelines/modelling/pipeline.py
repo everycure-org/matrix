@@ -180,8 +180,9 @@ def create_pipeline(**kwargs) -> Pipeline:
         ]
     )
 
-    # Prepare inputs with all folds for aggregation node
+    # Aggregation step
     def _give_aggregation_node_input(model):
+        """Prepare aggregation node inputs, including reports for all folds"""
         return ["params:modelling.agg_func"] + [
             f"modelling.{model}.reporting.metrics_fold_{fold}" for fold in range(n_splits)
         ]

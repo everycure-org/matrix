@@ -19,6 +19,7 @@ from refit.v1.core.inline_primary_key import primary_key
 from refit.v1.core.unpack import unpack_params
 from refit.v1.core.make_list_regexable import make_list_regexable
 
+from matrix import settings
 from matrix.datasets.graph import KnowledgeGraph
 from matrix.datasets.pair_generator import SingleLabelPairGenerator
 from .model import ModelWrapper
@@ -165,6 +166,10 @@ def make_splits(
     Returns:
         Data with split information.
     """
+    # Set number of splits
+    cross_validation_settings = settings.DYNAMIC_PIPELINES_MAPPING.get("cross_validation")
+    n_splits = cross_validation_settings.get("n_splits")
+    splitter.n_splits = n_splits
 
     # Split data into folds
     all_data_frames = []

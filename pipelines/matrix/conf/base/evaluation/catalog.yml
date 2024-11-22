@@ -9,10 +9,14 @@ _pandas_parquet: &_pandas_parquet
 # Datasets
 # -------------------------------------------------------------------------
 
-"evaluation.{model}.{evaluation}.model_output.pairs":
+"evaluation.{model}.{evaluation}.model_output.pairs_fold_{fold}":
   <<: *_pandas_parquet
-  filepath: ${globals:paths.evaluation}/model_output/{model}/{evaluation}/pairs/model_output
+  filepath: ${globals:paths.evaluation}/model_output/{model}/{evaluation}/pairs/model_output_fold_{fold}.parquet
 
-"evaluation.{model}.{evaluation}.model_output.result":
-  filepath: ${globals:paths.evaluation}/model_output/{model}/{evaluation}/result.yml
+"evaluation.{model}.{evaluation}.reporting.result_fold_{fold}":
+  filepath: ${globals:paths.evaluation}/reporting/{model}/{evaluation}/result_fold_{fold}.yml
+  type:  yaml.YAMLDataset
+
+"evaluation.{model}.{evaluation}.reporting.result_aggregated":
+  filepath: ${globals:paths.evaluation}/reporting/{model}/{evaluation}/result_fold_{fold}.yml
   type:  yaml.YAMLDataset
