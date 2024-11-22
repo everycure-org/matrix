@@ -31,7 +31,6 @@ def transform_rtxkg2_nodes(nodes_df: DataFrame) -> DataFrame:
         .withColumn("upstream_data_source",              f.array(f.lit("rtxkg2")))
         .withColumn("labels",                            f.split(f.col(":LABEL"), RTX_SEPARATOR))
         .withColumn("all_categories",                    f.split(f.col("all_categories:string[]"), RTX_SEPARATOR))
-        .withColumn("all_categories",                    f.array_distinct(f.concat("labels", "all_categories")))
         .withColumn("equivalent_identifiers",            f.split(f.col("equivalent_curies:string[]"), RTX_SEPARATOR))
         .withColumn("publications",                      f.split(f.col("publications:string[]"), RTX_SEPARATOR))
         .withColumn("international_resource_identifier", f.col("iri"))
