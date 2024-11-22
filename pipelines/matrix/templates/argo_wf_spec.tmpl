@@ -84,8 +84,8 @@ spec:
         - name: RUN_NAME
           value: {% raw %} "{{workflow.parameters.run_name}}" 
           {% endraw %}
-        - name: RELEASE_NAME
-          value: "{{release_name}}" 
+        - name: RELEASE_VERSION
+          value: "{{release_version}}" 
         - name: RELEASE_FOLDER_NAME
           value: {% raw %} "{{workflow.parameters.release_folder_name}}" 
           {% endraw %}
