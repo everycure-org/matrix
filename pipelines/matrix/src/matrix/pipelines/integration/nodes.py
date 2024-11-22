@@ -29,7 +29,7 @@ logger = logging.getLogger(__name__)
 
 
 @pa.check_output(KGEdgeSchema)
-def union_and_deduplicate_edges(datasets_to_union: List[str], biolink_predicates: Dict[str, Any], **edges) -> DataFrame:
+def union_and_deduplicate_edges(datasets_to_union: List[str], **edges) -> DataFrame:
     """Function to unify edges datasets."""
     # fmt: off
     return (
