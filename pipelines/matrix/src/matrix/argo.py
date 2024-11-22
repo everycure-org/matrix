@@ -16,6 +16,7 @@ ARGO_TEMPLATES_DIR_PATH = Path(__file__).parent.parent.parent / "templates"
 def generate_argo_config(
     image: str,
     run_name: str,
+    release_version: str,
     image_tag: str,
     namespace: str,
     username: str,
@@ -42,6 +43,7 @@ def generate_argo_config(
         namespace=namespace,
         username=username,
         run_name=run_name,
+        release_version=release_version,
         release_folder_name=release_folder_name,
         default_execution_resources=default_execution_resources.model_dump(),
     )
