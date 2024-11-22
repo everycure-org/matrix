@@ -58,6 +58,9 @@ def register_pipelines() -> Dict[str, Pipeline]:
           pipelines["fabricator"]
         + pipelines["__default__"]
     )
+    pipelines["ekc_test"] = (
+          pipelines["ingestion"]
+    )
     # fmt: on
 
     return pipelines

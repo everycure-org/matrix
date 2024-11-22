@@ -47,7 +47,7 @@ def metrics(
 
     print(f"Number of nodes that failed normalization: {edges_count - norm_edges_count}")
 
-    nodes_with_prefix = nodes.withColumn("prefix", split(col("id:ID"), ":")[0])
+    nodes_with_prefix = nodes.withColumn("prefix", split(col("id"), ":")[0])
     prefix_counts = nodes_with_prefix.groupBy("prefix").count()
 
     print(f"Types of nodes: {prefix_counts}")
