@@ -144,7 +144,9 @@ def attach_embeddings(
     allow_subset=True,
 )
 @primary_key(primary_key=["id"])
-def prefilter_nodes(nodes: DataFrame, gt: pd.DataFrame, drug_types: List[str], disease_types: List[str]) -> DataFrame:
+def prefilter_nodes(
+    full_nodes: DataFrame, nodes: DataFrame, gt: DataFrame, drug_types: List[str], disease_types: List[str]
+) -> DataFrame:
     """Prefilter nodes for negative sampling.
 
     Args:
@@ -164,15 +166,20 @@ def prefilter_nodes(nodes: DataFrame, gt: pd.DataFrame, drug_types: List[str], d
         .withColumn("is_ground_pos", f.lit(True))
     )
 
-    return (
+    df = (
         nodes.alias("nodes")
-        .filter((f.col("category").isin(drug_types)) | (f.col("category").isin(disease_types)))
-        .select("id", "category", "topological_embedding")
-        .withColumn("is_drug", f.col("category").isin(drug_types))
-        .withColumn("is_disease", f.col("category").isin(disease_types))
+        # .filter((f.col("category").isin(drug_types)) | (f.col("category").isin(disease_types)))
+        .select("id", "topological_embedding", "category")
+        # TODO: The integrated data product _should_ contain these nodes
+        .join(full_nodes.select("id", "all_categories"), on="id", how="left")
+        # TODO: Verify below does not have any undesired side effects
+        .withColumn("is_drug", f.arrays_overlap(f.col("all_categories"), f.lit(drug_types)))
+        .withColumn("is_disease", f.arrays_overlap(f.col("all_categories"), f.lit(disease_types)))
         .join(ground_truth_nodes, on="id", how="left")
         .fillna({"is_ground_pos": False})
     )
+
+    return df
 
 
 @has_schema(
