@@ -265,15 +265,13 @@ def test_correctly_identified_categories(spark, sample_nodes, sample_biolink_cat
 @pytest.mark.spark(
     help="This test relies on PYSPARK_PYTHON to be set appropriately, and sometimes does not work in VSCode"
 )
-def test_unify_edges(spark, sample_edges, sample_biolink_predicates):
+def test_unify_edges(spark, sample_edges):
     # Create two edge datasets
     edges1 = sample_edges.filter(sample_edges.subject != "CHEBI:120688")
     edges2 = sample_edges.filter(sample_edges.subject != "CHEBI:119157")
 
     # Call the unify_edges function
-    result = nodes.union_and_deduplicate_edges(
-        ["edges1", "edges2"], sample_biolink_predicates, edges1=edges1, edges2=edges2
-    )
+    result = nodes.union_and_deduplicate_edges(["edges1", "edges2"], edges1=edges1, edges2=edges2)
 
     # Check the result
     assert isinstance(result, DataFrame)
