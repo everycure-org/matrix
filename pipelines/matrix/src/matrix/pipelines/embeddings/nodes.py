@@ -3,6 +3,7 @@ from typing import Any, Dict, List
 
 import matplotlib.pyplot as plt
 import pandas as pd
+import numpy as np
 import requests
 import seaborn as sns
 from graphdatascience import GraphDataScience, QueryRunner
@@ -24,6 +25,8 @@ from tenacity import (
 )
 
 from .graph_algorithms import GDSGraphAlgorithm
+
+from pecanpy import pecanpy 
 
 logger = logging.getLogger(__name__)
 
@@ -388,6 +391,27 @@ def write_topological_embeddings(
     topological_estimator.predict_write(gds=gds, model_name=model_name, graph=graph, write_property=write_property)
     return {"success": "true"}
 
+def obtain_node2vec_pecanpy_embeddings():
+    ##PARAMS
+    num_walks= 10
+    walk_length=80
+    feature_dim= 512
+    p=1
+    q=1
+    g = pecanpy.SparseOTF(p=p, q=q, workers=4, verbose=True)    
+    print('graph precomposition done')
+    
+    edge_list_path = "mtrx-us-central1-hub-dev-storage/kedro/data/releases/test-release/datasets/integration/prm/filtered/edges/edgelist.edg"
+    g.read_edg(edge_list_path)
+    print('edgelist read successfully')
+    g.preprocess_transition_probs()
+    print('graph preprocessing done')
+    
+    node_list = np.array(g.nodes).reshape(-1, 1)
+    emd = g.embed(dim = feature_dim, num_walks= num_walks, walk_length= walk_length)
+    id2feat = np.hstack([node_list, emd])
+    columns = ['node_id'] + [f'feat{i+1}' for i in range(emd.shape[1])]
+    return pd.DataFrame(id2feat, columns=columns)
 
 def string_to_float_list(s: str) -> List[float]:
     """UDF to transform str into list. Fix for Node2Vec array being written as string."""
