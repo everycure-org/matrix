@@ -137,5 +137,11 @@ def create_pipeline(**kwargs) -> Pipeline:
                 name="filter_nodes_without_edges",
                 tags=["filtering"],
             ),
+            node (
+                func = nodes.generate_filtered_edge_edgelist,
+                inputs = ["integration.prm.filtered_edges"],
+                outputs = "integration.prm.edge_list",
+                name = "generate_filtered_edgelist"
+            )    
         ]
     )

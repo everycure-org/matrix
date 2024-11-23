@@ -358,3 +358,9 @@ def _extract_ids(response: Dict[str, Any], json_parser: parse):
             ids[key] = None
 
     return ids
+
+
+##combining edge parquet batch files into one .edg file for pecanpy input. pecanpy is a super efficient node2vec implementation
+def generate_filtered_edge_edgelist(edges: DataFrame):
+    edges = edges[['subject', 'object']]
+    return edges

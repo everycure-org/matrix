@@ -111,6 +111,12 @@ def create_pipeline(**kwargs) -> Pipeline:
                     "argowf.template-neo4j",
                 ],
             ),
+            node(
+                func= nodes.obtain_node2vec_pecanpy_embeddings,
+                inputs =None,
+                outputs = "embeddings.model_output.pecanpy_node2vec",
+                name = "obtain_node2vec_pecanpy_embeddings"
+            ),
             # extracts the nodes from neo4j
             node(
                 func=nodes.extract_node_embeddings,

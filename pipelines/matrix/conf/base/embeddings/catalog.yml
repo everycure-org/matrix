@@ -97,3 +97,7 @@ embeddings.reporting.topological_pca:
 embeddings.reporting.topological_pca_plot:
   type: kedro_datasets.matplotlib.MatplotlibWriter
   filepath: ${globals:paths.embeddings}/reporting/pca_plot.png
+
+embeddings.model_output.pecanpy_node2vec:
+  <<: *_spark_parquet
+  filepath: ${globals:paths.embeddings}/feat/pecanpy_node2vec_embeddings.parquet 
