@@ -1,0 +1,16 @@
+name: distribute-release-dummy
+
+on:
+  repository_dispatch:
+    types: distribute-release
+
+jobs:
+  build:
+    name: Distribute the release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Sleep for 5 seconds
+        run: sleep 5s
+        shell: bash
+      - name: echo-success
+        run: echo "Release distributed successfully"
