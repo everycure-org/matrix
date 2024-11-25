@@ -1,7 +1,7 @@
 from kedro.pipeline import Pipeline, pipeline
 
 from matrix import settings
-from matrix.kedro4argo_node import argo_node
+from matrix.kedro4argo_node import ArgoResourceConfig, argo_node
 
 from . import nodes
 
@@ -39,6 +39,9 @@ def _create_model_shard_pipeline(model: str, shard: int) -> Pipeline:
                     f"modelling.{model}.{shard}.reporting.tuning_convergence_plot",
                 ],
                 name=f"tune_model_{model}_{shard}_parameters",
+                argo_config=ArgoResourceConfig(
+                    num_gpus=1,
+                ),
             ),
             argo_node(
                 func=nodes.train_model,
@@ -50,6 +53,9 @@ def _create_model_shard_pipeline(model: str, shard: int) -> Pipeline:
                 ],
                 outputs=f"modelling.{model}.{shard}.models.model",
                 name=f"train_{model}_{shard}_model",
+                argo_config=ArgoResourceConfig(
+                    num_gpus=1,
+                ),
             ),
         ],
         tags=["argowf.fuse", f"argowf.fuse-group.{model}.shard-{shard}"],
@@ -70,6 +76,9 @@ def _create_model_pipeline(model: str, num_shards: int) -> Pipeline:
                         outputs=f"modelling.{model}.model_input.transformers",
                         name=f"fit_{model}_transformers",
                         tags=model,
+                        argo_config=ArgoResourceConfig(
+                            num_gpus=1,
+                        ),
                     )
                 ]
             ),
@@ -88,6 +97,9 @@ def _create_model_pipeline(model: str, num_shards: int) -> Pipeline:
                         outputs=f"modelling.{model}.models.model",
                         name=f"create_{model}_model",
                         tags=model,
+                        argo_config=ArgoResourceConfig(
+                            num_gpus=1,
+                        ),
                     ),
                     argo_node(
                         func=nodes.apply_transformers,
@@ -108,6 +120,9 @@ def _create_model_pipeline(model: str, num_shards: int) -> Pipeline:
                         },
                         outputs=f"modelling.{model}.model_output.predictions",
                         name=f"get_{model}_model_predictions",
+                        argo_config=ArgoResourceConfig(
+                            num_gpus=1,
+                        ),
                     ),
                     argo_node(
                         func=nodes.check_model_performance,
