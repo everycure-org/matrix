@@ -38,7 +38,7 @@ spec:
                              -H "Authorization: token $(GITHUB_TOKEN)" \
                              --request POST \
                              --data '{"event_type": "distribute-release", "client_payload": { "text": "sth"}}' \
-                             https://api.github.com/repos/emil-k/wildhorses/dispatches
+                             https://api.github.com/repos/everycure-org/matrix/dispatches
                     env:
                       - name: GITHUB_TOKEN
                         valueFrom:
