@@ -20,7 +20,6 @@ from tenacity import (
 )
 from tqdm.asyncio import tqdm_asyncio
 
-from matrix.pipelines.integration.filters import determine_most_specific_category
 from matrix.schemas.knowledge_graph import KGEdgeSchema, KGNodeSchema, cols_for_schema
 
 # TODO move these into config
@@ -29,31 +28,29 @@ logger = logging.getLogger(__name__)
 
 
 @pa.check_output(KGEdgeSchema)
-def union_and_deduplicate_edges(datasets_to_union: List[str], **edges) -> DataFrame:
+def union_and_deduplicate_edges(*edges) -> DataFrame:
     """Function to unify edges datasets."""
     # fmt: off
     return (
-        _union_datasets(datasets_to_union, **edges)
+        _union_datasets(*edges)
         .transform(KGEdgeSchema.group_edges_by_id)
     )
     # fmt: on
 
 
 @pa.check_output(KGNodeSchema)
-def union_and_deduplicate_nodes(
-    datasets_to_union: List[str], biolink_categories_df: pd.DataFrame, **nodes
-) -> DataFrame:
+def union_and_deduplicate_nodes(*nodes) -> DataFrame:
     """Function to unify nodes datasets."""
 
     # fmt: off
     return (
-        _union_datasets(datasets_to_union, **nodes)
+        _union_datasets(*nodes)
 
         # first we group the dataset by id to deduplicate
         .transform(KGNodeSchema.group_nodes_by_id)
 
         # next we need to apply a number of transformations to the nodes to ensure grouping by id did not select wrong information
-        .transform(determine_most_specific_category, biolink_categories_df)
+        #.transform(determine_most_specific_category, biolink_categories_df) TODO: Do we still want this?
 
         # finally we select the columns that we want to keep
         .select(*cols_for_schema(KGNodeSchema))
@@ -62,8 +59,7 @@ def union_and_deduplicate_nodes(
 
 
 def _union_datasets(
-    datasets_to_union: List[str],
-    **datasets: DataFrame,
+    *datasets: DataFrame,
 ) -> DataFrame:
     """
     Helper function to unify datasets and deduplicate them.
@@ -76,8 +72,7 @@ def _union_datasets(
     Returns:
         A unified and deduplicated DataFrame.
     """
-    selected_dfs = [datasets[name] for name in datasets_to_union if name in datasets]
-    return reduce(partial(DataFrame.unionByName, allowMissingColumns=True), selected_dfs)
+    return reduce(partial(DataFrame.unionByName, allowMissingColumns=True), datasets)
 
 
 def _apply_transformations(

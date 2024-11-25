@@ -76,6 +76,17 @@ DYNAMIC_PIPELINES_MAPPING = {
         {"evaluation_name": "disease_specific_trials"},
         {"evaluation_name": "full_matrix_trials"},
     ],
+    "integration": [
+        {"name": "rtx_kg2", "normalize": True},
+        # {
+        #     "name": "robokop",
+        #     "normalize": True
+        # },
+        # {
+        #     "name": "ec-medical",
+        #     "normalize": True
+        # }
+    ],
 }
 
 # Class that manages Kedro's library components.
