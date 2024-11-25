@@ -1,4 +1,4 @@
-from kedro.pipeline import Pipeline, node, pipeline
+from kedro.pipeline import Pipeline, pipeline
 from matrix.kedro4argo_node import ArgoNode, ArgoResourceConfig
 
 from . import nodes
@@ -9,7 +9,7 @@ def create_pipeline(**kwargs) -> Pipeline:
     return pipeline(
         [
             # Compute node embeddings
-            node(
+            ArgoNode(
                 func=nodes.compute_embeddings,
                 inputs={
                     "input": "integration.prm.filtered_nodes",
@@ -20,7 +20,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 name="add_node_embeddings",
             ),
             # Reduce dimension
-            node(
+            ArgoNode(
                 func=nodes.reduce_dimension,
                 inputs={
                     "df": "embeddings.feat.graph.node_embeddings",
@@ -30,7 +30,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 name="apply_pca",
             ),
             # Load spark dataset into local neo instance
-            node(
+            ArgoNode(
                 func=lambda x: x.select("id", "name", "category", "pca_embedding"),
                 inputs=["embeddings.feat.graph.pca_node_embeddings"],
                 outputs="embeddings.tmp.input_nodes",
@@ -62,7 +62,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                     memory_request=120,
                 ),
             ),
-            node(
+            ArgoNode(
                 func=nodes.add_include_in_graphsage,
                 inputs={
                     "df": "embeddings.tmp.input_edges",
@@ -78,7 +78,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                     "argowf.template-neo4j",
                 ],
             ),
-            node(
+            ArgoNode(
                 func=nodes.train_topological_embeddings,
                 inputs={
                     "df": "embeddings.feat.include_in_graphsage@yaml",
@@ -94,7 +94,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                     "argowf.template-neo4j",
                 ],
             ),
-            node(
+            ArgoNode(
                 func=nodes.write_topological_embeddings,
                 inputs={
                     "model": "embeddings.models.graphsage",
@@ -112,7 +112,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 ],
             ),
             # extracts the nodes from neo4j
-            node(
+            ArgoNode(
                 func=nodes.extract_node_embeddings,
                 inputs={
                     "nodes": "embeddings.model_output.graphsage",
@@ -127,7 +127,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 ],
             ),
             # Create PCA plot
-            node(
+            ArgoNode(
                 func=nodes.reduce_dimension,
                 inputs={
                     "df": "embeddings.feat.nodes",
@@ -140,7 +140,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                     "argowf.fuse-group.topological_pca",
                 ],
             ),
-            node(
+            ArgoNode(
                 func=nodes.visualise_pca,
                 inputs={
                     "nodes": "embeddings.reporting.topological_pca",

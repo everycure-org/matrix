@@ -1,4 +1,4 @@
-from kedro.pipeline import Pipeline, pipeline, node
+from kedro.pipeline import Pipeline, pipeline
 from matrix.kedro4argo_node import ArgoResourceConfig, argo_node
 
 from . import nodes
@@ -162,7 +162,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 tags=["inference-input"],
                 argo_config=preprocessing_argo_node_config,
             ),
-            node(
+            argo_node(
                 func=nodes.clean_gt_data,
                 inputs={
                     "pos_df": "preprocessing.raw.ground_truth.positives",
