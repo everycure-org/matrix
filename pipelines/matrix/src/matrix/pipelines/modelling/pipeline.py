@@ -174,6 +174,7 @@ def create_pipeline(**kwargs) -> Pipeline:
             argo_node(
                 func=nodes.prefilter_nodes,
                 inputs=[
+                    "integration.prm.filtered_nodes",
                     "embeddings.feat.nodes",
                     "modelling.raw.known_pairs@spark",
                     "params:modelling.drug_types",
