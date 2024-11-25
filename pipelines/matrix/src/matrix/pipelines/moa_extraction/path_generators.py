@@ -60,6 +60,7 @@ class AllPathsWithRules(PathGenerator):
         )
         return_clause = KGPaths.generate_return_clause(limit=self.num_limit)
         query = f"""
+        CYPHER runtime=parallel
         MATCH path = (start: %{{id:'{drug}'}}){match_clause}(end: %{{id:'{disease}'}})
         WHERE {where_clause}
         {return_clause}
