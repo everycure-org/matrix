@@ -1,9 +1,9 @@
 import functools
+import shlex
 import subprocess
 from pathlib import Path
 from typing import TYPE_CHECKING, List, Union
 
-import typer
 from matrix_cli.components.cache import memory
 from rich.console import Console
 from tenacity import retry, stop_after_attempt, wait_exponential
@@ -67,12 +67,17 @@ def get_markdown_contents(folder_path: Path | str) -> str:
 def run_command(command: Union[str, List[str]], cwd: str = None, check=True, log_before: bool = False) -> str:
     if isinstance(command, str):
         # ensures we have an array but allow user to pass in string (for f-string style submission)
-        command = str.split(" ")
+        command = shlex.split(command)
     if log_before:
         console.print(" ".join(command))
+
+    if len(command) == 0:
+        console.print("Command is empty... Exiting")
+        exit(1)
+
     try:
         result = subprocess.run(command, check=check, capture_output=True, text=True, cwd=cwd)
         return result.stdout.strip()
-    except subprocess.CalledProcessError as e:
-        typer.echo(f"Error running command {' '.join(command)}: {e.stderr}", err=True)
+    except subprocess.CalledProcessError:
+        # typer.echo(f"Error running command {' '.join(command)}: {e.stderr}", err=True)
         raise

@@ -1,6 +1,7 @@
 #!/bin/bash
 
 FILE_PATH=$1
+echo "importing file $FILE_PATH"
 # read the file
 publicKey=$(cat $FILE_PATH)
 

@@ -40,29 +40,42 @@ def rotate_pk(user_email: str, key_name: str = typer.Argument(default="default")
     run_command(["bash", "-c", path, user_key_id, key_name], log_before=True)
 
 
+@secrets.command(name="list")
+def list(key_name: str = typer.Argument(default="default")):
+    """Lists the names/Emails of the users that have access to the given key"""
+    # first we ensure all keys are imported
+    import_all_keys_into_keychain()
+    # then we list the users
+    list_user_ids_with_access(key_name)
+
+
 def wipe_key_for_user_to_remove(key_name: str, user_key_id: str):
     path = Path(get_git_root()) / settings.gpg_key_path / key_name / "0" / f"{user_key_id}.gpg"
     if path.exists():
-        run_command(f"rm -rf {path}")
+        run_command(f"rm -rf {path}", check=False)
     else:
-        console.print(f"[bold red] Key not found for {user_key_id}, skipping")
-        exit(1)
+        console.print(f"[bold yellow] Key not found for {user_key_id}, skipping")
 
 
 def ensure_all_keys_imported(key_name: str):
     # ensures all keys present in the target_key directory are in our gpg keychain
-    keys = run_command(f"ls {get_git_root() / settings.gpg_key_path / key_name / '0'}")
+    path = str(Path(get_git_root()) / settings.gpg_key_path / key_name / "0")
+    keys = run_command(f"ls {path}", check=False, log_before=True)
     key_ids = [key.split(".")[0] for key in keys.split("\n")]  # crop away .gpg
 
+    keys_missing = []
     for key in key_ids:
         console.print(f"[bold green] Checking if {key} is in the keychain")
         # this crashes if the key is not in the keychain
         try:
             run_command(["gpg", "--list-keys", key])
         except Exception:
-            console.print(f"[bold red] Key {key} not found in keychain, make sure you have imported it")
-            console.print("you have imported it first. We cannot proceed without this")
-            exit(1)
+            keys_missing.append(key)
+
+    if len(keys_missing) > 0:
+        console.print(f"[bold red] {len(keys_missing)} not found in keychain, make sure you have imported them")
+        console.print("\n".join([f"- {k}" for k in keys_missing]))
+        exit(1)
 
 
 def get_gpg_key_id(user_email: str):
@@ -96,7 +109,37 @@ def import_all_keys_into_keychain():
         # import each into gpg and add add ultimate trust
         abs_file_path = file.absolute()
         path = Path(get_git_root()) / "apps" / "matrix-cli" / "tools" / "import-pub-key-full-trust.sh"
-        run_command(["bash", "-c", f"{path} {abs_file_path}"])
+        run_command([path, abs_file_path])
         console.print(f"Ensured {file} is in the keychain with full trust")
 
     console.print("[bold green] All keys imported")
+
+
+def list_user_ids_with_access(key_name: str):
+    # lists the user IDs with access to the given key
+    base_path = Path(get_git_root()) / settings.gpg_key_path / key_name / "0"
+    console.print(f"[bold green] Listing user IDs with access to {key_name} in path {base_path}")
+    # NOTE: This function was partially generated using AI assistance.
+    # Get list of files in directory
+    files = [f.stem for f in base_path.glob("*")]
+    console.print
+
+    # Call gpg --list-keys for each file
+    for user_id in files:
+        try:
+            username = get_username_for_id(user_id)
+            if username is None:
+                console.print(f"[bold red]: Could not find UID for {user_id}")
+            else:
+                console.print(f"- {username}")
+        except Exception:
+            console.print(f"[bold red]Warning: Could not find key for {user_id}")
+
+
+def get_username_for_id(user_id: str):
+    result = run_command(["gpg", "--list-keys", "--with-colons", user_id], check=False)
+    uid_row = next((row for row in result.split("\n") if "uid" in row), None)
+    if uid_row is None:
+        return None
+    else:
+        return uid_row.split(":")[9]
