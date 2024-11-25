@@ -71,7 +71,7 @@ def filter_valid_pairs(
     """Filter pairs to only include nodes that exist in the nodes DataFrame.
 
     Args:
-        nodes: nodes dataframe
+        nodes: Nodes dataframe
         raw_tp: Raw ground truth positive data
         raw_tn: Raw ground truth negative data
 
@@ -97,8 +97,8 @@ def filter_valid_pairs(
 
     # Calculate retention percentages
     retention_stats = {
-        "positive_pairs_retained_pct": ((filtered_tp.count() / raw_tp.count()) * 100) if raw_tp.count() > 0 else 100.0,
-        "negative_pairs_retained_pct": ((filtered_tn.count() / raw_tn.count()) * 100) if raw_tn.count() > 0 else 100.0,
+        "positive_pairs_retained_pct": (filtered_tp.count() / raw_tp.count()) if raw_tp.count() > 0 else 1.0,
+        "negative_pairs_retained_pct": (filtered_tn.count() / raw_tn.count()) if raw_tn.count() > 0 else 1.0,
     }
 
     # Combine filtered pairs
@@ -144,7 +144,9 @@ def attach_embeddings(
     allow_subset=True,
 )
 @primary_key(primary_key=["id"])
-def prefilter_nodes(nodes: DataFrame, gt: pd.DataFrame, drug_types: List[str], disease_types: List[str]) -> DataFrame:
+def prefilter_nodes(
+    full_nodes: DataFrame, nodes: DataFrame, gt: DataFrame, drug_types: List[str], disease_types: List[str]
+) -> DataFrame:
     """Prefilter nodes for negative sampling.
 
     Args:
@@ -164,15 +166,20 @@ def prefilter_nodes(nodes: DataFrame, gt: pd.DataFrame, drug_types: List[str], d
         .withColumn("is_ground_pos", f.lit(True))
     )
 
-    return (
-        nodes.alias("nodes")
-        .filter((f.col("category").isin(drug_types)) | (f.col("category").isin(disease_types)))
-        .select("id", "category", "topological_embedding")
-        .withColumn("is_drug", f.col("category").isin(drug_types))
-        .withColumn("is_disease", f.col("category").isin(disease_types))
+    df = (
+        nodes.join(full_nodes.select("id", "all_categories"), on="id", how="left")
+        .withColumn("is_drug", f.arrays_overlap(f.col("all_categories"), f.lit(drug_types)))
+        .withColumn("is_disease", f.arrays_overlap(f.col("all_categories"), f.lit(disease_types)))
+        .filter((f.col("is_disease")) | (f.col("is_drug")))
+        # .filter((f.col("category").isin(drug_types)) | (f.col("category").isin(disease_types)))
+        .select("id", "topological_embedding", "is_drug", "is_disease")
+        # TODO: The integrated data product _should_ contain these nodes
+        # TODO: Verify below does not have any undesired side effects
         .join(ground_truth_nodes, on="id", how="left")
         .fillna({"is_ground_pos": False})
     )
+
+    return df
 
 
 @has_schema(
