@@ -1,5 +1,6 @@
-from kedro.pipeline import Pipeline, node
 from kedro.pipeline.modular_pipeline import pipeline
+from kedro.pipeline import Pipeline, node
+from matrix.kedro4argo_node import ArgoNode, ArgoResourceConfig
 
 from . import nodes
 
@@ -41,7 +42,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                     "argowf.template-neo4j",
                 ],
             ),
-            node(
+            ArgoNode(
                 func=nodes.ingest_edges,
                 inputs=[
                     "embeddings.tmp.input_nodes",
@@ -54,6 +55,13 @@ def create_pipeline(**kwargs) -> Pipeline:
                     "argowf.fuse-group.topological_embeddings",
                     "argowf.template-neo4j",
                 ],
+                # FUTURE: Ensure we define "packages / tshirt size standard configurations" for resources
+                argo_config=ArgoResourceConfig(
+                    cpu_request=32,
+                    cpu_limit=32,
+                    memory_limit=120,
+                    memory_request=120,
+                ),
             ),
             node(
                 func=nodes.add_include_in_graphsage,
@@ -104,7 +112,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                     "argowf.template-neo4j",
                 ],
             ),
-            # extracts the nodes from neo4j and writes them to BigQuery
+            # extracts the nodes from neo4j
             node(
                 func=nodes.extract_node_embeddings,
                 inputs={

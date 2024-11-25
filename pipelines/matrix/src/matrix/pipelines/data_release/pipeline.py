@@ -22,21 +22,6 @@ def create_pipeline(**kwargs) -> Pipeline:
                 name="ingest_kg_edges",
                 tags=["neo4j"],
             ),
-            # write to BigQuery
-            node(
-                func=lambda x: x,
-                inputs=["integration.prm.filtered_edges"],
-                outputs="data_release.prm.bigquery_edges",
-                name="write_edges_to_bigquery",
-                tags=["bigquery"],
-            ),
-            node(
-                func=lambda x: x,
-                inputs=["integration.prm.filtered_nodes"],
-                outputs="data_release.prm.bigquery_nodes",
-                name="write_nodes_to_bigquery",
-                tags=["bigquery"],
-            ),
             # NOTE: Enable if you want embeddings
             # node(
             #     func=lambda _, x: x,

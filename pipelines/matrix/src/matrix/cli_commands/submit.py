@@ -17,6 +17,7 @@ from rich.logging import RichHandler
 from rich.panel import Panel
 
 from matrix.argo import ARGO_TEMPLATES_DIR_PATH, generate_argo_config
+from matrix.kedro4argo_node import ArgoResourceConfig
 
 logging.basicConfig(
     level=logging.INFO,
@@ -40,12 +41,14 @@ def cli():
 @click.option("--username", type=str, required=True, help="Specify the username to use")
 @click.option("--namespace", type=str, default="argo-workflows", help="Specify a custom namespace")
 @click.option("--run-name", type=str, default=None, help="Specify a custom run name, defaults to branch")
-@click.option("--pipeline", default="__default__", type=str, required=True, help="Specify which pipeline to execute")
+@click.option("--release-version", type=str, required=True, help="Specify a custom release name")
+@click.option("--pipeline", type=str, default="__default__", help="Specify which pipeline to execute")
 @click.option("--verbose", "-v", is_flag=True, default=True, help="Enable verbose output")
 @click.option("--dry-run", "-d", is_flag=True, default=False, help="Does everything except submit the workflow")
 @click.option("--from-nodes", type=str, default="", help="Specify nodes to run from", callback=split_string)
+@click.option("--is-test", is_flag=True, default=False, help="Submit to test folder")
 # fmt: on
-def submit(username: str, namespace: str, run_name: str, pipeline: str, from_nodes: List[str], verbose: bool, dry_run: bool):
+def submit(username: str, namespace: str, run_name: str, release_version: str, pipeline: str, verbose: bool, dry_run: bool, from_nodes: List[str], is_test: bool):
     """Submit the end-to-end workflow. """
     if verbose:
         log.setLevel(logging.DEBUG)
@@ -56,25 +59,29 @@ def submit(username: str, namespace: str, run_name: str, pipeline: str, from_nod
     if pipeline in ["fabricator", "test"]:
         raise ValueError("Submitting test pipeline to Argo will result in overwriting source data")
     
-    if from_nodes and pipeline not in ["kg_release"]:
-        # NOTE: This is due to how we version paths for modelling runs, needs further refinement
-        raise ValueError("The `from-nodes` flag only works for the `kg_release` pipeline")
+    if from_nodes:
+        if not click.confirm("Using 'from-nodes' is highly experimental and may break due to MLFlow issues with tracking the right run. Are you sure you want to continue?", default=False):
+            raise click.Abort()
     
+    # As a temporary measure, we pass both pipeline for execution and list of pipelines. In the future, we will merge the two.
     pipeline_obj = kedro_pipelines[pipeline]
     if from_nodes:
         pipeline_obj = pipeline_obj.from_nodes(*from_nodes)
 
     run_name = get_run_name(run_name)
+    pipeline_obj.name = pipeline
+
 
     _submit(
         username=username,
         namespace=namespace,
         run_name=run_name,
-        pipeline_name=pipeline,
-        pipeline=pipeline_obj,
+        release_version=release_version,
+        pipeline_obj=pipeline_obj,
         verbose=verbose,
         dry_run=dry_run,
         template_directory=ARGO_TEMPLATES_DIR_PATH,
+        is_test=is_test,
     )
 
 
@@ -82,12 +89,13 @@ def _submit(
         username: str, 
         namespace: str, 
         run_name: str, 
-        pipeline_name: str,
-        pipeline: Pipeline,
+        release_version: str,
+        pipeline_obj: Pipeline,
         verbose: bool, 
         dry_run: bool, 
         template_directory: Path,
         allow_interactions: bool = True,
+        is_test: bool = False,
     ) -> None:
     """Submit the end-to-end workflow.
 
@@ -106,12 +114,12 @@ def _submit(
         username (str): The username to use for the workflow.
         namespace (str): The namespace to use for the workflow.
         run_name (str): The name of the run.
-        pipeline name (str): Pipeline name.
-        pipeline (Pipeline): Pipeline object.
+        pipeline_obj (Pipeline): Pipeline to execute.
         verbose (bool): If True, enable verbose output.
         dry_run (bool): If True, do not submit the workflow.
         template_directory (Path): The directory containing the Argo template.
         allow_interactions (bool): If True, allow prompts for confirmation
+        is_test (bool): If True, submit to test folder, not release folder
     """
     
     try:
@@ -121,37 +129,41 @@ def _submit(
         check_dependencies(verbose=verbose)
         console.print("[green]✓[/green] Dependencies checked")
 
-        console.print("Building and pushing Docker image...")
-        build_push_docker(run_name, verbose=verbose)
-        console.print("[green]✓[/green] Docker image built and pushed")
-
         console.print("Building Argo template...")
-        argo_template = build_argo_template(run_name, username, namespace, pipeline_name, pipeline)
+        argo_template = build_argo_template(run_name, release_version, username, namespace, pipeline_obj, is_test=is_test, )
         console.print("[green]✓[/green] Argo template built")
 
         console.print("Writing Argo template...")
         file_path = save_argo_template(argo_template, template_directory)
         console.print("[green]✓[/green] Argo template written")
 
-        console.print("Ensuring namespace...")
-        ensure_namespace(namespace, verbose=verbose)
-        console.print("[green]✓[/green] Namespace ensured")
-
-        console.print("Applying Argo template...")
-        apply_argo_template(namespace, file_path, verbose=verbose)
-        console.print("[green]✓[/green] Argo template applied")
+        console.print("Linting Argo template...")
+        argo_template_lint(file_path, verbose=verbose)
+        console.print("[green]✓[/green] Argo template valid")
 
         if not dry_run:
+            console.print("Building and pushing Docker image...")
+            build_push_docker(run_name, verbose=verbose)
+            console.print("[green]✓[/green] Docker image built and pushed")
+
+            console.print("Ensuring namespace...")
+            ensure_namespace(namespace, verbose=verbose)
+            console.print("[green]✓[/green] Namespace ensured")
+
+            console.print("Applying Argo template...")
+            apply_argo_template(namespace, file_path, verbose=verbose)
+            console.print("[green]✓[/green] Argo template applied")
+
             console.print("Submitting workflow for pipeline...")
             submit_workflow(run_name, namespace, verbose=verbose)
             console.print("[green]✓[/green] Workflow submitted")
 
-        console.print(Panel.fit(
-            f"[bold green]Workflow {'prepared' if dry_run else 'submitted'} successfully![/bold green]\n"
-            f"Run Name: {run_name}\n"
-            f"Namespace: {namespace}",
-            title="Submission Summary"
-        ))
+            console.print(Panel.fit(
+                f"[bold green]Workflow {'prepared' if dry_run else 'submitted'} successfully![/bold green]\n"
+                f"Run Name: {run_name}\n"
+                f"Namespace: {namespace}",
+                title="Submission Summary"
+            ))
 
         if not dry_run and allow_interactions and click.confirm("Do you want to open the workflow in your browser?", default=False):
             workflow_url = f"https://argo.platform.dev.everycure.org/workflows/{namespace}/{run_name}"
@@ -293,7 +305,7 @@ def build_push_docker(username: str, verbose: bool):
     run_subprocess(f"make docker_push TAG={username}", stream_output=verbose)
 
 
-def build_argo_template(run_name: str, username: str, namespace: str, pipeline_name: str, pipeline: Pipeline) -> str:
+def build_argo_template(run_name: str, release_version: str, username: str, namespace: str, pipeline_obj: Pipeline, is_test: bool, default_execution_resources: Optional[ArgoResourceConfig] = None) -> str:
     """Build Argo workflow template."""
     image_name = "us-central1-docker.pkg.dev/mtrx-hub-dev-3of/matrix-images/matrix"
 
@@ -301,15 +313,22 @@ def build_argo_template(run_name: str, username: str, namespace: str, pipeline_n
     metadata = bootstrap_project(matrix_root)
     package_name = metadata.package_name
 
+    if is_test:
+        release_folder_name = "tests"
+    else:
+        release_folder_name = "releases"
+
     return generate_argo_config(
         image=image_name,
         run_name=run_name,
+        release_version=release_version,
         image_tag=run_name,
         namespace=namespace,
         username=username,
-        pipeline_name=pipeline_name,
-        pipeline=pipeline,
-        package_name=package_name
+        package_name=package_name,
+        release_folder_name=release_folder_name,
+        pipeline=pipeline_obj,
+        default_execution_resources=default_execution_resources,
     )
 
 def save_argo_template(argo_template: str, template_directory: Path) -> str:
@@ -317,6 +336,14 @@ def save_argo_template(argo_template: str, template_directory: Path) -> str:
     with open(file_path, "w") as f:
         f.write(argo_template)
     return str(file_path)
+
+
+def argo_template_lint(file_path: str, verbose: bool) -> str:
+    run_subprocess(
+        f"argo template lint {file_path}",
+        check=True,
+        stream_output=verbose,
+    )
 
 def ensure_namespace(namespace, verbose: bool):
     """Create or verify Kubernetes namespace."""
@@ -336,7 +363,6 @@ def apply_argo_template(namespace, file_path: Path, verbose: bool):
         check=True,
         stream_output=verbose,
     )
-
 
 def submit_workflow(run_name: str, namespace: str, verbose: bool):
     """Submit the Argo workflow and provide instructions for watching."""
@@ -374,12 +400,14 @@ def get_run_name(run_name: Optional[str]) -> str:
     Returns:
         str: The final run name to be used for the workflow.
     """
-    if run_name:
-        return re.sub(r"[^a-zA-Z0-9-]", "-", run_name).rstrip("-")
-    
-    run_name = run_subprocess(
-        "git rev-parse --abbrev-ref HEAD", capture_output=True, stream_output=False
-    ).stdout.strip()
+    # If no run_name is provided, use the current Git branch name
+    if not run_name:
+        run_name = run_subprocess(
+            "git rev-parse --abbrev-ref HEAD", capture_output=True, stream_output=False
+        ).stdout.strip()
+
+    # Add a random suffix to the run_name
     random_sfx = str.lower(secrets.token_hex(4))
-    unsanitized_name = f"{run_name}-{random_sfx}"
-    return re.sub(r"[^a-zA-Z0-9-]", "-", unsanitized_name).rstrip("-")
+    unsanitized_name = f"{run_name}-{random_sfx}".rstrip("-")
+    sanitized_name = re.sub(r"[^a-zA-Z0-9-]", "-", unsanitized_name)
+    return sanitized_name
