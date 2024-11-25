@@ -4,6 +4,8 @@ https://docs.dev.everycure.org/infrastructure/argo_workflows_locally/
 https://kind.sigs.k8s.io/docs/user/quick-start  
 https://argoproj.github.io/argo-events/installation/  
 
+
+![Workflow Diagram](dummy-argo-flow-diagram.png)
 ```
 kind get clusters  
 kind create cluster --name kind-4  
