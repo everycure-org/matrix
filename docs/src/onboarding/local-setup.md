@@ -112,10 +112,6 @@ Generally, the `Makefile` is a good place to refer to when you need to re-set yo
     If you're experiencing any problems running the `MakeFile`, please refer to our [Common Errors FAQ](../FAQ/common_errors.md) for troubleshooting guidance. This resource contains solutions to frequently encountered issues and may help resolve your problem quickly.
 
 
-!!! tip
-
-    If you are running on an ARM machine (e.g., MacBooks with Apple Silicon), you might not get the best performance. In this case call `make TARGET_PLATFORM=linux/arm64` instead which will build the image for your specific architecture.
-
 ??? note "Understanding and troubleshooting your `make` run"
     ### Understanding the `make` command
     As mentioned in the video, our pipeline is evolving quickly. Running `make` is a simple and quick way to check if everything works locally as it is composed of several different stages which get executed one after another. When `make` gets executed, what is happening under the hood is that the following seven 'make' "subcommands" get executed:
