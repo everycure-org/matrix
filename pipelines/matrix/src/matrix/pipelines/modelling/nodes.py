@@ -71,7 +71,7 @@ def filter_valid_pairs(
     """Filter pairs to only include nodes that exist in the nodes DataFrame.
 
     Args:
-        nodes: nodes dataframe
+        nodes: Nodes dataframe
         raw_tp: Raw ground truth positive data
         raw_tn: Raw ground truth negative data
 
@@ -97,8 +97,8 @@ def filter_valid_pairs(
 
     # Calculate retention percentages
     retention_stats = {
-        "positive_pairs_retained_pct": ((filtered_tp.count() / raw_tp.count()) * 100) if raw_tp.count() > 0 else 100.0,
-        "negative_pairs_retained_pct": ((filtered_tn.count() / raw_tn.count()) * 100) if raw_tn.count() > 0 else 100.0,
+        "positive_pairs_retained_pct": (filtered_tp.count() / raw_tp.count()) if raw_tp.count() > 0 else 1.0,
+        "negative_pairs_retained_pct": (filtered_tn.count() / raw_tn.count()) if raw_tn.count() > 0 else 1.0,
     }
 
     # Combine filtered pairs
