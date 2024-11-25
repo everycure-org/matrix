@@ -68,6 +68,7 @@ spec:
 ```
 
 This HTTPRoute resource:
+
 - Associates with a Gateway named "external-http"
 - Routes traffic for the hostname "whoami-test.platform.dev.everycure.org"
 - Directs traffic to the "whoami" service on port 80
@@ -86,14 +87,18 @@ Our setup leverages these concepts to provide a flexible and powerful routing so
 - **Using Gateway for Ingress**: [https://gateway-api.sigs.k8s.io/guides/](https://gateway-api.sigs.k8s.io/guides/)
 - **External DNS & Gateway**: [https://kubernetes-sigs.github.io/external-dns/v0.13.1/tutorials/gateway-api/](https://kubernetes-sigs.github.io/external-dns/v0.13.1/tutorials/gateway-api/)
 - **Cert Manager Configuration**:
+
   - **ACME**: [https://cert-manager.io/docs/configuration/acme/](https://cert-manager.io/docs/configuration/acme/)
   - **Cert Manager and Gateway**: [https://cert-manager.io/docs/usage/gateway/](https://cert-manager.io/docs/usage/gateway/)
+
 - **Gateway API on GKE**:
+
   - **How it Works**: [https://cloud.google.com/kubernetes-engine/docs/concepts/gateway-api](https://cloud.google.com/kubernetes-engine/docs/concepts/gateway-api)
   - **Securing with IAP**: [https://cloud.google.com/kubernetes-engine/docs/how-to/secure-gateway](https://cloud.google.com/kubernetes-engine/docs/how-to/secure-gateway)
 
 [^1]: https://gateway-api.sigs.k8s.io/
 [^2]: https://gateway-api.sigs.k8s.io/guides/
+
 ## Using the cluster for Spark processing
 
 !!! warning
@@ -101,7 +106,6 @@ Our setup leverages these concepts to provide a flexible and powerful routing so
     not yet implemented, volunteers welcome
 
 ## Using the cluster for ray processing
-
 
 !!! warning
 
@@ -114,6 +118,7 @@ We will provide `roles/container.developer` and `roles/iap.tunnelResourceAccesso
 ## Cluster Configuration
 
 ### Cluster Setup
+
 The shared Kubernetes cluster is hosted in the hub project. Key configuration details include:
 
 - **Region**: `us-central1` (by default)
@@ -122,7 +127,9 @@ The shared Kubernetes cluster is hosted in the hub project. Key configuration de
 - **GPU nodes**: Currently not enabled but planning to add these as scale to 0 autoscaling group
 
 ### Networking
+
 Networking between the hub and spoke projects leverages a shared VPC:
+
 - **VPC Name**: `matrix-hub-dev-nw`
 - **Subnets**: one per region, e.g. EU and US
 - **Firewall Rules**: Configured to allow necessary communication between the hub and spoke projects as well as outgoing HTTPs and incoming SSH via GCP IdP
