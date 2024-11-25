@@ -459,3 +459,7 @@ If no project is listed, then it can be set by running:
 ```
 gcloud config set project mtrx-hub-dev-3of
 ```
+### Issue with kedro run -e test -p test after updating git pull.
+```filter_by_category() missing 1 required positional argument: 'categories```
+
+This has something to do with cache files. To avoid this issue clean  make using "make clean". Then "make install", activate ev using "source .venv/bin/activate" and followed documentation file (make precommit, make compose_up, make fast_test, make full_test, make integration and kedro run -e test -p test). 
