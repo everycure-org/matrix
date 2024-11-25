@@ -1,4 +1,6 @@
-from kedro.pipeline import Pipeline, node, pipeline
+from kedro.pipeline import Pipeline, pipeline
+
+from matrix.kedro4argo_node import argo_node
 
 from . import nodes
 from .robokop import transform_robo_edges, transform_robo_nodes
@@ -9,28 +11,28 @@ def create_pipeline(**kwargs) -> Pipeline:
     """Create integration pipeline."""
     return pipeline(
         [
-            node(
+            argo_node(
                 func=transform_robo_nodes,
                 inputs=["ingestion.int.robokop.nodes", "integration.raw.biolink.categories"],
                 outputs="integration.int.robokop.nodes",
                 name="transform_robokop_nodes",
                 tags=["standardize"],
             ),
-            node(
+            argo_node(
                 func=transform_robo_edges,
                 inputs=["ingestion.int.robokop.edges"],
                 outputs="integration.int.robokop.edges",
                 name="transform_robokop_edges",
                 tags=["standardize"],
             ),
-            node(
+            argo_node(
                 func=transform_rtxkg2_nodes,
                 inputs="ingestion.int.rtx_kg2.nodes",
                 outputs="integration.int.rtx.nodes",
                 name="transform_rtx_nodes",
                 tags=["standardize"],
             ),
-            node(
+            argo_node(
                 func=transform_rtxkg2_edges,
                 inputs=[
                     "ingestion.int.rtx_kg2.edges",
@@ -42,7 +44,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 tags=["standardize"],
             ),
             # Normalize the KG IDs
-            node(
+            argo_node(
                 func=nodes.normalize_kg,
                 inputs={
                     "nodes": "integration.int.rtx.nodes",
@@ -61,7 +63,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 name="normalize_rtx_kg",
                 tags=["standardize"],
             ),
-            node(
+            argo_node(
                 func=nodes.normalize_kg,
                 inputs={
                     "nodes": "integration.int.robokop.nodes",
@@ -79,7 +81,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 ],
                 name="normalize_robokop_kg",
             ),
-            node(
+            argo_node(
                 func=nodes.union_and_deduplicate_nodes,
                 inputs={
                     "datasets_to_union": "params:integration.unification.datasets_to_union",
@@ -92,7 +94,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 name="create_prm_unified_nodes",
             ),
             # union edges
-            node(
+            argo_node(
                 func=nodes.union_and_deduplicate_edges,
                 inputs={
                     "datasets_to_union": "params:integration.unification.datasets_to_union",
@@ -104,7 +106,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 name="create_prm_unified_edges",
             ),
             # filter nodes given a set of filter stages
-            node(
+            argo_node(
                 func=nodes.prefilter_unified_kg_nodes,
                 inputs=[
                     "integration.prm.unified_nodes",
@@ -115,7 +117,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 tags=["filtering"],
             ),
             # filter edges given a set of filter stages
-            node(
+            argo_node(
                 func=nodes.filter_unified_kg_edges,
                 inputs=[
                     "integration.prm.prefiltered_nodes",
@@ -127,7 +129,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 name="filter_prm_knowledge_graph_edges",
                 tags=["filtering"],
             ),
-            node(
+            argo_node(
                 func=nodes.filter_nodes_without_edges,
                 inputs=[
                     "integration.prm.prefiltered_nodes",
