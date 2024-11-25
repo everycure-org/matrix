@@ -1,19 +1,20 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Workflow
 metadata:
-  name: hello-world2
+  generateName: build-data-release-
   namespace: argo
   labels:
     workflows.argoproj.io/archive-strategy: "false"
+    app: build-data-release
   annotations:
     workflows.argoproj.io/description: |
-      This is a simple hello world example.
+      Builds a new data release.
 spec:
-  serviceAccountName: argo-workflows
+  serviceAccountName: argo-cluster-service-account
   entrypoint: hello-world
   templates:
   - name: hello-world
     container:
       image: busybox
       command: [echo]
-      args: ["hello world PROD"]
+      args: ["release build successfully"]

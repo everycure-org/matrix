@@ -1,0 +1,48 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Sensor
+metadata:
+  name: build-data-release-sensor
+  namespace: argo-events
+spec:
+  template:
+    serviceAccountName: argo-events-cluster-service-account
+  dependencies:
+    - name: test-dep
+      eventSourceName: build-data-release-eventsource
+      eventName: data-release-success
+  triggers:
+    - template:
+        name: argo-workflow
+        k8s:
+          operation: create
+          source:
+            resource:
+              apiVersion: argoproj.io/v1alpha1
+              kind: Workflow
+              metadata:
+                namespace: argo
+                generateName: distribute-data-release-
+                labels:
+                  app: distribute-data-release
+              spec:
+                serviceAccountName: argo-cluster-service-account
+                entrypoint: trigger-curl
+                templates:
+                - name: trigger-curl
+                  container:
+                    image: curlimages/curl:latest # Use a lightweight curl image
+                    command: ["sh", "-c"]
+                    args:
+                      - >
+                        curl -H "Accept: application/vnd.github.everest-preview+json" \
+                             -H "Authorization: token $(GITHUB_TOKEN)" \
+                             --request POST \
+                             --data '{"event_type": "distribute-release", "client_payload": { "text": "sth"}}' \
+                             https://api.github.com/repos/emil-k/wildhorses/dispatches
+                    env:
+                      - name: GITHUB_TOKEN
+                        valueFrom:
+                          secretKeyRef:
+                            name: github-token-secret
+                            key: github-token
+
