@@ -1,24 +1,20 @@
-integration:
-  preprocessing:
-    rtx:
-      semmed_filters:
-        publication_threshold: 10
-        ngd_threshold: 0.6
-        limit_pmids: 50_000_000 # essentially unlimited, but allows for local clipping if local run is desired
+integration:  
+  sources:
+    rtx_kg2:
+      transformer:
+        object: matrix.pipelines.integration.rtxkg2.RTXTransformer
 
-  nodenorm:
-    # api_endpoint: https://nodenormalization-sri.renci.org/get_normalized_nodes
-    api_endpoint: ${oc.env:NODENORM_ENDPOINT, https://nodenorm.transltr.io/1.5/get_normalized_nodes}
-    conflate: true
-    drug_chemical_conflate: true
-    batch_size: 1000
-    parallelism: 120
+    robokop: 
+      transformer:
+        object: matrix.pipelines.integration.robokop.RobokopTransformer
 
-  unification:
-    datasets_to_union:
-      - rtx
-      - medical_team
-      # - robokop
+  # TODO: Improve specifying bucket size
+  batch_size: 1000
+  
+  normalizer:
+    object: matrix.pipelines.integration.pipeline.NodeNormNormalizer
+    conflate: True
+    drug_chemical_conflate: True
 
   filtering:
     node_filters:
@@ -51,8 +47,15 @@ integration:
           - biolink:Publication
           - biolink:Treatment
           # If you add anything here make sure the fabricator is not generating it, else we remove it
+    
     edge_filters:
       # FUTURE: Ensure the semmed filter is moved here instead
+      # preprocessing:
+      #   rtx:
+      #     semmed_filters:
+      #       publication_threshold: 10
+      #       ngd_threshold: 0.6
+      #       limit_pmids: 50_000_000 # essentially unlimited, but allows for local clipping if local run is desired
       filter_biolink_edges:
         object: matrix.pipelines.modelling.utils.partial_
         func:

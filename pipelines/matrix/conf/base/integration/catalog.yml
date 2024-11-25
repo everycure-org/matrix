@@ -38,9 +38,32 @@ integration.int.{source}.nodes:
   <<: [*_spark_parquet, *_layer_int]
   filepath: ${globals:paths.integration}/int/{source}/nodes
 
-integration.int.{source}.edges:
+integration.int.{source}.bucketized_nodes@spark:
   <<: [*_spark_parquet, *_layer_int]
-  filepath: ${globals:paths.integration}/int/{source}/edges
+  filepath: ${globals:paths.integration}/int/{source}/bucketized_nodes
+  save_args:
+    mode: overwrite
+    partitionBy:
+      - bucket
+
+integration.int.{source}.bucketized_nodes@partitioned:
+  type: matrix.datasets.gcp.PartitionedAsyncParallelDataset
+  path: ${globals:paths.integration}/int/{source}/bucketized_nodes
+  dataset: 
+    <<: *_pandas_parquet
+  filename_suffix: ".parquet"
+
+integration.int.{source}.normalized_nodes@partitioned:
+  type: matrix.datasets.gcp.PartitionedAsyncParallelDataset
+  overwrite: True # important otherwise not properly reset on rerun
+  path: ${globals:paths.tmp}/int/{source}/normalized_nodes
+  dataset: 
+    <<: *_pandas_parquet
+  filename_suffix: ".parquet"
+
+integration.int.{source}.normalized_nodes@spark:
+  <<: *_spark_parquet
+  filepath: ${globals:paths.tmp}/int/{source}/normalized_nodes
 
 # Normalized KGs
 integration.int.{source}.nodes.norm:

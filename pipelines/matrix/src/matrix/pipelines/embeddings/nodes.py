@@ -134,6 +134,21 @@ def bucketize_df(df: DataFrame, bucket_size: int, input_features: List[str], max
         bucket_size: size of the buckets
     """
 
+    # Order and bucketize elements
+    return (
+        df.transform(_bucketize, bucket_size=bucket_size)
+        # Concat input
+        .withColumn(
+            "text_to_embed",
+            F.concat(*[F.coalesce(F.col(feature), F.lit("")) for feature in input_features]),
+        )
+        # Clip max. length
+        .withColumn("text_to_embed", F.substring(F.col("text_to_embed"), 1, max_input_len))
+        .select("id", *input_features, "text_to_embed", "bucket")
+    )
+
+
+def _bucketize(df: DataFrame, bucket_size: int):
     # Retrieve number of elements
     num_elements = df.count()
     num_buckets = (num_elements + bucket_size - 1) // bucket_size
@@ -147,18 +162,8 @@ def bucketize_df(df: DataFrame, bucket_size: int, input_features: List[str], max
         schema=["bucket", "min_range", "max_range"],
     )
 
-    # Order and bucketize elements
-    return (
-        df.withColumn("row_num", F.row_number().over(Window.orderBy("id")) - F.lit(1))
-        .join(buckets, on=[(F.col("row_num") >= (F.col("min_range"))) & (F.col("row_num") < F.col("max_range"))])
-        # Concat input
-        .withColumn(
-            "text_to_embed",
-            F.concat(*[F.coalesce(F.col(feature), F.lit("")) for feature in input_features]),
-        )
-        # Clip max. length
-        .withColumn("text_to_embed", F.substring(F.col("text_to_embed"), 1, max_input_len))
-        .select("id", *input_features, "text_to_embed", "bucket")
+    return df.withColumn("row_num", F.row_number().over(Window.orderBy("id")) - F.lit(1)).join(
+        buckets, on=[(F.col("row_num") >= (F.col("min_range"))) & (F.col("row_num") < F.col("max_range"))]
     )
 
 
