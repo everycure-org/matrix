@@ -10,7 +10,7 @@ from pyspark.sql import DataFrame, Window
 logger = logging.getLogger(__name__)
 
 
-def biolink_deduplicate(edges_df: DataFrame, biolink_predicates: DataFrame):
+def biolink_deduplicate_edges(edges_df: DataFrame, biolink_predicates: DataFrame):
     """Function to deduplicate biolink edges.
 
     Knowledge graphs in biolink format may contain multiple edges between nodes. Where
@@ -30,15 +30,11 @@ def biolink_deduplicate(edges_df: DataFrame, biolink_predicates: DataFrame):
         Deduplicated dataframe
     """
 
-    spark = ps.sql.SparkSession.builder.getOrCreate()
-
-    # Load up biolink hierarchy
-    biolink_hierarchy = spark.createDataFrame(
-        unnest_biolink_hierarchy("predicate", biolink_predicates, prefix="biolink:")
-    )
-
     # Enrich edges with path to predicates in biolink hierarchy
-    edges_df = edges_df.join(biolink_hierarchy, on="predicate")
+    edges_df = edges_df.join(
+        convert_biolink_hierarchy_json_to_df(biolink_predicates, "predicate", convert_to_pascal_case=False),
+        on="predicate",
+    )
 
     # Compute self join
     res = (
@@ -62,22 +58,43 @@ def biolink_deduplicate(edges_df: DataFrame, biolink_predicates: DataFrame):
     return res
 
 
-def determine_most_specific_category(nodes: DataFrame, biolink_categories_df: pd.DataFrame) -> str:
-    """Function to retrieve most specific entry."""
-
+def convert_biolink_hierarchy_json_to_df(biolink_predicates, col_name: str, convert_to_pascal_case: bool):
     spark = ps.sql.SparkSession.builder.getOrCreate()
-    labels_hierarchy = spark.createDataFrame(
-        unnest_biolink_hierarchy("label", biolink_categories_df, prefix="biolink:", convert_to_pascal_case=True)
+    biolink_hierarchy = spark.createDataFrame(
+        unnest_biolink_hierarchy(
+            col_name,
+            biolink_predicates,
+            prefix="biolink:",
+            convert_to_pascal_case=convert_to_pascal_case,
+        )
+    )
+
+    return biolink_hierarchy
+
+
+def determine_most_specific_category(nodes: DataFrame, biolink_categories_df: pd.DataFrame) -> DataFrame:
+    """Function to retrieve most specific entry for each node.
+
+    Example:
+    - node has all_categories [biolink:ChemicalEntity, biolink:NamedThing]
+    - then node will be assigned biolink:ChemicalEntity as most specific category
+
+    """
+
+    labels_hierarchy = convert_biolink_hierarchy_json_to_df(
+        biolink_categories_df, "category", convert_to_pascal_case=True
     )
 
     nodes = (
-        nodes.withColumn("label", F.explode("all_categories"))
-        .join(labels_hierarchy, on="label", how="left")  # add path
+        nodes.withColumn("category", F.explode("all_categories"))
+        .join(labels_hierarchy, on="category", how="left")
+        # some categories are not found in the biolink hierarchy
+        # we deal with failed joins by setting their parents to [] == the depth as level 0 == chosen last
+        .withColumn("parents", f.coalesce("parents", f.lit(f.array())))
         .withColumn("depth", F.array_size("parents"))
         .withColumn("row_num", F.row_number().over(Window.partitionBy("id").orderBy(F.col("depth").desc())))
         .filter(F.col("row_num") == 1)
         .drop("row_num")
-        .withColumn("category", F.col("label"))
     )
     return nodes
 
@@ -90,8 +107,8 @@ def remove_rows_containing_category(nodes: DataFrame, categories: List[str], col
 def unnest_biolink_hierarchy(
     scope: str,
     predicates: List[Dict[str, Any]],
+    convert_to_pascal_case: bool,
     parents: Optional[List[str]] = None,
-    convert_to_pascal_case: bool = False,
     prefix: str = "",
 ):
     """Function to unnest a biolink hierarchy.
@@ -100,9 +117,15 @@ def unnest_biolink_hierarchy(
     hierarchical deduplication, the JSON object is pre-processed into a flat pandas
     dataframe that adds the full path to each predicate.
 
+    NOTE: The biolink standard is a bit confusing.
+    Predicates are often written in snake_case while categories are written in PascalCase.
+    This function should thus be called with the right convert_to_pascal_case flag.
+
     Args:
         predicates: predicates to unnest
         parents: list of parents in hierarchy
+        convert_to_pascal_case: whether to convert the predicate name to pascal case
+        prefix: prefix to add to the predicate name
     Returns:
         Unnested dataframe
     """
