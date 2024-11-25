@@ -1,4 +1,4 @@
-# Dummy Workflow Argo
+# Skeleton Workflow Argo
 
 https://docs.dev.everycure.org/infrastructure/argo_workflows_locally/  
 https://kind.sigs.k8s.io/docs/user/quick-start  
