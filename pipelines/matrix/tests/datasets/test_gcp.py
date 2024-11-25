@@ -1,5 +1,5 @@
 import pytest
-from matrix.datasets.gcp import RemoteSparkJDBCDataset, sanitize_bq_strings
+from matrix.datasets.gcp import RemoteSparkJDBCDataset, SparkDatasetWithBQExternalTable
 
 
 def test_remote_spark_dataset_split_path():
@@ -27,4 +27,4 @@ def test_remote_spark_dataset_split_path():
     ],
 )
 def test_sanitize_bq_strings(identifier, expected):
-    assert sanitize_bq_strings(identifier) == expected
+    assert SparkDatasetWithBQExternalTable._sanitize_name(identifier) == expected
