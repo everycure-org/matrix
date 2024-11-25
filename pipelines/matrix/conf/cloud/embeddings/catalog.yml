@@ -11,7 +11,7 @@ _bigquery_ds: &_bigquery_ds
 embeddings.feat.nodes:
   <<: *_bigquery_ds
   filepath: ${globals:paths.embeddings}/feat/nodes_with_embeddings
-  table: topological_embeddings
+  table: nodes_with_embeddings
 
 embeddings.reporting.topological_pca:
   <<: *_bigquery_ds

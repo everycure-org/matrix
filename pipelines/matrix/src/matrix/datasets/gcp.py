@@ -137,9 +137,6 @@ class SparkDatasetWithBQExternalTable(LazySparkDataset):
             **kwargs,
         )
 
-    def _load(self) -> Any:
-        return super()._load()
-
     def _save(self, data: DataFrame) -> None:
         # Invoke saving of the underlying spark dataset
         super()._save(data)
