@@ -1,4 +1,4 @@
-name: distribute-release-dummy
+name: distribute-release-job
 
 on:
   repository_dispatch:
