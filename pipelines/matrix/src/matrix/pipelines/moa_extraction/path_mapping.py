@@ -147,7 +147,8 @@ class SetwisePathMapper(PathMapper):
         match_clause = generate_match_clause(self.num_hops, self.unidirectional)
         where_clause = generate_node_condition_where_clause(self.num_hops, mapped_int_ids)
         return_clause = KGPaths.generate_return_clause()
-        query = f"""MATCH path=(n:%{{id:'{drug_mapped}'}}){match_clause}(m:%{{id:'{disease_mapped}'}})
+        query = f"""CYPHER runtime=parallel
+                    MATCH path=(n:%{{id:'{drug_mapped}'}}){match_clause}(m:%{{id:'{disease_mapped}'}})
                     WHERE {where_clause}
                     {return_clause}"""
 
@@ -201,8 +202,9 @@ class TestPathMapper(PathMapper):
         """
         match_clause = generate_match_clause(self.num_hops, self.unidirectional)
         return_clause = KGPaths.generate_return_clause(limit=self.num_limit)
-        query = f"""MATCH path=(n){match_clause}(m)
-                    {return_clause}"""
+        query = f"""CYPHER runtime=parallel
+                MATCH path=(n){match_clause}(m)
+                {return_clause}"""
         result = runner.run(query)
 
         if result is not None:
