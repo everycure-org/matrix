@@ -99,5 +99,5 @@ embeddings.reporting.topological_pca_plot:
   filepath: ${globals:paths.embeddings}/reporting/pca_plot.png
 
 embeddings.model_output.pecanpy_node2vec:
-  <<: *_spark_parquet
-  filepath: ${globals:paths.embeddings}/feat/pecanpy_node2vec_embeddings.parquet 
+  type: kedro_datasets.pandas.ParquetDataset
+  filepath: ${globals:paths.embeddings}/feat/pecanpy_node2vec_embeddings.parquet
