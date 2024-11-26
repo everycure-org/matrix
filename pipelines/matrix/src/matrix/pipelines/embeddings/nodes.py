@@ -9,7 +9,7 @@ import seaborn as sns
 from graphdatascience import GraphDataScience, QueryRunner
 from neo4j import Driver, GraphDatabase
 from pyspark.ml.functions import array_to_vector, vector_to_array
-from pyspark.sql import DataFrame, SparkSession
+from pyspark.sql import DataFrame
 from pyspark.sql import functions as F
 from pyspark.sql.functions import udf
 from pyspark.sql.types import ArrayType, FloatType, StringType
@@ -413,9 +413,7 @@ def obtain_node2vec_pecanpy_embeddings():
     id2feat = np.hstack([node_list, emd])
     columns = ["node_id"] + [f"feat{i+1}" for i in range(emd.shape[1])]
     pandas_df = pd.DataFrame(id2feat, columns=columns)
-    spark = SparkSession.builder.getOrCreate()
-    spark_df = spark.createDataFrame(pandas_df)
-    return spark_df
+    return pandas_df
 
 
 def string_to_float_list(s: str) -> List[float]:
