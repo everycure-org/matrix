@@ -11,19 +11,19 @@ def _create_evaluation_pipeline(model: str, evaluation: str, fold: str) -> Pipel
             node(
                 func=nodes.generate_test_dataset,
                 inputs=[
-                    f"matrix_generation.{model}.model_output.sorted_matrix_predictions_fold_{fold}@pandas",
+                    f"matrix_generation.{model}.fold_{fold}.model_output.sorted_matrix_predictions@pandas",
                     f"params:evaluation.{evaluation}.evaluation_options.generator",
                 ],
-                outputs=f"evaluation.{model}.{evaluation}.model_output.pairs_fold_{fold}",
+                outputs=f"evaluation.{model}.fold_{fold}.{evaluation}.model_output.pairs",
                 name=f"create_{model}_{evaluation}_evaluation_pairs_fold_{fold}",
             ),
             node(
                 func=nodes.evaluate_test_predictions,
                 inputs=[
-                    f"evaluation.{model}.{evaluation}.model_output.pairs_fold_{fold}",
+                    f"evaluation.{model}.fold_{fold}.{evaluation}.model_output.pairs",
                     f"params:evaluation.{evaluation}.evaluation_options.evaluation",
                 ],
-                outputs=f"evaluation.{model}.{evaluation}.reporting.result_fold_{fold}",
+                outputs=f"evaluation.{model}.fold_{fold}.{evaluation}.reporting.result",
                 name=f"create_{model}_{evaluation}_evaluation_fold_{fold}",
             ),
         ],
@@ -50,8 +50,8 @@ def create_pipeline(**kwargs) -> Pipeline:
                         node(
                             func=nodes.perform_matrix_checks,
                             inputs=[
-                                f"matrix_generation.{model}.model_output.sorted_matrix_predictions_fold_{fold}@pandas",
-                                f"modelling.model_input.splits_fold_{fold}",
+                                f"matrix_generation.{model}.fold_{fold}.model_output.sorted_matrix_predictions@pandas",
+                                f"modelling.model_input.fold_{fold}.splits",
                                 "params:evaluation.score_col_name",
                             ],
                             outputs=None,
@@ -73,7 +73,7 @@ def create_pipeline(**kwargs) -> Pipeline:
         def _give_aggregation_node_input(model):
             """Prepare aggregation node inputs, including reports for all folds"""
             return ["params:modelling.aggregation_functions"] + [
-                f"evaluation.{model}.{evaluation}.reporting.result_fold_{fold}" for fold in range(n_splits)
+                f"evaluation.{model}.fold_{fold}.{evaluation}.reporting.result" for fold in range(n_splits)
             ]
 
         for evaluation in evaluation_names:

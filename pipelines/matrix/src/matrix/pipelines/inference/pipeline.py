@@ -61,9 +61,9 @@ def _create_inference_pipeline(model_excl: str, model_incl: str) -> Pipeline:
                     "ingestion.raw.disease_list@pandas": "inference.int.disease_list@pandas",
                 },
                 outputs={
-                    f"matrix_generation.{model}.model_output.sorted_matrix_predictions_fold_full@pandas": f"inference.{model}.model_output.predictions@pandas",
-                    f"matrix_generation.{model}.reporting.matrix_report_fold_full": f"inference.{model}.reporting.report",
-                    "matrix_generation.prm.matrix_pairs_fold_full": "inference.prm.matrix_pairs",
+                    f"matrix_generation.{model}.fold_full.model_output.sorted_matrix_predictions@pandas": f"inference.{model}.model_output.predictions@pandas",
+                    f"matrix_generation.{model}.fold_full.reporting.matrix_report": f"inference.{model}.reporting.report",
+                    "matrix_generation.prm.fold_full.matrix_pairs": "inference.prm.matrix_pairs",
                     "matrix_generation.feat.nodes_kg_ds": "inference.feat.nodes_kg_ds",
                     "matrix_generation.feat.nodes@spark": "inference.feat.nodes@spark",
                 },

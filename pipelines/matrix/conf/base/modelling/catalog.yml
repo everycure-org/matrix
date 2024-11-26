@@ -97,59 +97,59 @@ modelling.model_input.drugs_diseases_nodes@pandas:
   <<: [*_kg_dataset, *_model_input_ds]
   filepath: ${globals:paths.modelling}/model_input/drugs_diseases_nodes/
 
-"modelling.model_input.splits_fold_{fold}":
+"modelling.model_input.fold_{fold}.splits":
   <<: [*_pandas_parquet, *_model_input_ds]
-  filepath: ${globals:paths.modelling}/model_input/splits_fold_{fold}
+  filepath: ${globals:paths.modelling}/model_input/fold_{fold}/splits
 
-"modelling.{model}.model_input.transformers_fold_{fold}":
+"modelling.{model}.fold_{fold}.model_input.transformers":
   <<: *_model_input_ds
   type: pickle.PickleDataset
-  filepath: ${globals:paths.modelling}/model_input/{model}/transformers_fold_{fold}.pickle
+  filepath: ${globals:paths.modelling}/model_input/{model}/fold_{fold}/transformers.pickle
 
-"modelling.{model}.model_input.transformed_splits_fold_{fold}":
+"modelling.{model}.fold_{fold}.model_input.transformed_splits":
   <<: [*_pandas_parquet, *_model_output_ds]
-  filepath: ${globals:paths.modelling}/model_input/{model}/transformed_splits_fold_{fold}
-  
-"modelling.{model}.{shard}.model_input.enriched_splits_fold_{fold}":
-  <<: [*_pandas_parquet, *_model_input_ds]
-  filepath: ${globals:paths.modelling}/model_input/{model}/{shard}/enriched_splits_fold_{fold}
+  filepath: ${globals:paths.modelling}/model_input/{model}/fold_{fold}/transformed_splits
 
-"modelling.{model}.{shard}.model_input.transformed_splits_fold_{fold}":
+"modelling.{model}.{shard}.fold_{fold}.model_input.enriched_splits":
   <<: [*_pandas_parquet, *_model_input_ds]
-  filepath: ${globals:paths.modelling}/model_input/{model}/{shard}/transformed_splits_fold_{fold}
+  filepath: ${globals:paths.modelling}/model_input/{model}/{shard}/fold_{fold}/enriched_splits
 
-"modelling.{model}.{shard}.models.model_params_fold_{fold}":
+"modelling.{model}.{shard}.fold_{fold}.model_input.transformed_splits":
+  <<: [*_pandas_parquet, *_model_input_ds]
+  filepath: ${globals:paths.modelling}/model_input/{model}/{shard}/fold_{fold}/transformed_splits
+
+"modelling.{model}.{shard}.fold_{fold}.models.model_params":
   <<: *_model_ds
   type: yaml.YAMLDataset
-  filepath: ${globals:paths.modelling}/models/{model}/{shard}/model_params_fold_{fold}.yml
+  filepath: ${globals:paths.modelling}/models/{model}/{shard}/fold_{fold}/model_params.yml
 
-"modelling.{model}.{shard}.models.model_fold_{fold}":
+"modelling.{model}.{shard}.fold_{fold}.models.model":
   <<: *_model_ds
   type: pickle.PickleDataset
-  filepath: ${globals:paths.modelling}/models/{model}/{shard}/model_fold_{fold}.pickle
+  filepath: ${globals:paths.modelling}/models/{model}/{shard}/fold_{fold}/model.pickle
 
-"modelling.{model}.model_output.predictions_fold_{fold}":
+"modelling.{model}.fold_{fold}.model_output.predictions":
   <<: [*_pandas_parquet, *_model_output_ds]
-  filepath: ${globals:paths.modelling}/model_output/{model}/predictions_fold_{fold}
-
+  filepath: ${globals:paths.modelling}/model_output/{model}/fold_{fold}/predictions
+  
 # NOTE: Saving an artifact, saving both locally and in MLFlow
 # https://kedro-mlflow.readthedocs.io/en/stable/source/04_experimentation_tracking/03_version_datasets.html#how-to-version-data-in-a-kedro-project
-"modelling.{model}.{shard}.reporting.tuning_convergence_plot_fold_{fold}":
+"modelling.{model}.{shard}.fold_{fold}.reporting.tuning_convergence_plot":
   <<: *_reporting_ds
   type: matplotlib.MatplotlibWriter
-  filepath: ${globals:paths.tmp}/reporting/{model}/{shard}/convergence_plot_fold_{fold}.png
+  filepath: ${globals:paths.tmp}/reporting/{model}/{shard}/fold_{fold}/convergence_plot.png
 
 # NOTE: Tracking a model, other serialization formats possible.
 # https://kedro-mlflow.readthedocs.io/en/stable/source/04_experimentation_tracking/04_version_models.html#how-to-track-models-using-mlflow-in-kedro-project
-"modelling.{model}.models.model_fold_{fold}":
+"modelling.{model}.fold_{fold}.models.model":
   <<: *_model_ds
   type: pickle.PickleDataset
-  filepath: ${globals:paths.modelling}/models/{model}/model_fold_{fold}.pickle
+  filepath: ${globals:paths.modelling}/models/{model}/fold_{fold}/model.pickle
 
-"modelling.{model}.reporting.metrics_fold_{fold}":
+"modelling.{model}.fold_{fold}.reporting.metrics":
   <<: *_reporting_ds
-  filepath: ${globals:paths.modelling}/reporting/{model}/sanity_metrics_fold_{fold}.yml
-  type:  yaml.YAMLDataset
+  filepath: ${globals:paths.modelling}/reporting/{model}/fold_{fold}/sanity_metrics.yml
+  type: yaml.YAMLDataset
 
 "modelling.{model}.reporting.metrics_aggregated":
   <<: *_reporting_ds

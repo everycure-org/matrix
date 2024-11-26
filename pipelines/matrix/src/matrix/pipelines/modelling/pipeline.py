@@ -12,42 +12,42 @@ def _create_model_shard_pipeline(model: str, shard: int, fold: int) -> Pipeline:
                 func=nodes.create_model_input_nodes,
                 inputs=[
                     "modelling.model_input.drugs_diseases_nodes@pandas",
-                    f"modelling.model_input.splits_fold_{fold}",
+                    f"modelling.model_input.fold_{fold}.splits",
                     f"params:modelling.{model}.model_options.generator",
                 ],
-                outputs=f"modelling.{model}.{shard}.model_input.enriched_splits_fold_{fold}",
+                outputs=f"modelling.{model}.{shard}.fold_{fold}.model_input.enriched_splits",
                 name=f"enrich_{model}_{shard}_splits_fold_{fold}",
             ),
             node(
                 func=nodes.apply_transformers,
                 inputs=[
-                    f"modelling.{model}.{shard}.model_input.enriched_splits_fold_{fold}",
-                    f"modelling.{model}.model_input.transformers_fold_{fold}",
+                    f"modelling.{model}.{shard}.fold_{fold}.model_input.enriched_splits",
+                    f"modelling.{model}.fold_{fold}.model_input.transformers",
                 ],
-                outputs=f"modelling.{model}.{shard}.model_input.transformed_splits_fold_{fold}",
+                outputs=f"modelling.{model}.{shard}.fold_{fold}.model_input.transformed_splits",
                 name=f"transform_{model}_{shard}_data_fold_{fold}",
             ),
             node(
                 func=nodes.tune_parameters,
                 inputs={
-                    "data": f"modelling.{model}.{shard}.model_input.transformed_splits_fold_{fold}",
+                    "data": f"modelling.{model}.{shard}.fold_{fold}.model_input.transformed_splits",
                     "unpack": f"params:modelling.{model}.model_options.model_tuning_args",
                 },
                 outputs=[
-                    f"modelling.{model}.{shard}.models.model_params_fold_{fold}",
-                    f"modelling.{model}.{shard}.reporting.tuning_convergence_plot_fold_{fold}",
+                    f"modelling.{model}.{shard}.fold_{fold}.models.model_params",
+                    f"modelling.{model}.{shard}.fold_{fold}.reporting.tuning_convergence_plot",
                 ],
                 name=f"tune_model_{model}_{shard}_parameters_fold_{fold}",
             ),
             node(
                 func=nodes.train_model,
                 inputs=[
-                    f"modelling.{model}.{shard}.model_input.transformed_splits_fold_{fold}",
-                    f"modelling.{model}.{shard}.models.model_params_fold_{fold}",
+                    f"modelling.{model}.{shard}.fold_{fold}.model_input.transformed_splits",
+                    f"modelling.{model}.{shard}.fold_{fold}.models.model_params",
                     f"params:modelling.{model}.model_options.model_tuning_args.features",
                     f"params:modelling.{model}.model_options.model_tuning_args.target_col_name",
                 ],
-                outputs=f"modelling.{model}.{shard}.models.model_fold_{fold}",
+                outputs=f"modelling.{model}.{shard}.fold_{fold}.models.model",
                 name=f"train_{model}_{shard}_model_fold_{fold}",
             ),
         ],
@@ -63,10 +63,10 @@ def _create_model_pipeline(model: str, num_shards: int, fold: int) -> Pipeline:
                     node(
                         func=nodes.fit_transformers,
                         inputs=[
-                            f"modelling.model_input.splits_fold_{fold}",
+                            f"modelling.model_input.fold_{fold}.splits",
                             f"params:modelling.{model}.model_options.transformers",
                         ],
-                        outputs=f"modelling.{model}.model_input.transformers_fold_{fold}",
+                        outputs=f"modelling.{model}.fold_{fold}.model_input.transformers",
                         name=f"fit_{model}_transformers_fold_{fold}",
                         tags=model,
                     )
@@ -83,29 +83,29 @@ def _create_model_pipeline(model: str, num_shards: int, fold: int) -> Pipeline:
                 [
                     node(
                         func=nodes.create_model,
-                        inputs=[f"modelling.{model}.{shard}.models.model_fold_{fold}" for shard in range(num_shards)],
-                        outputs=f"modelling.{model}.models.model_fold_{fold}",
+                        inputs=[f"modelling.{model}.{shard}.fold_{fold}.models.model" for shard in range(num_shards)],
+                        outputs=f"modelling.{model}.fold_{fold}.models.model",
                         name=f"create_{model}_model_fold_{fold}",
                         tags=model,
                     ),
                     node(
                         func=nodes.apply_transformers,
                         inputs=[
-                            f"modelling.model_input.splits_fold_{fold}",
-                            f"modelling.{model}.model_input.transformers_fold_{fold}",
+                            f"modelling.model_input.fold_{fold}.splits",
+                            f"modelling.{model}.fold_{fold}.model_input.transformers",
                         ],
-                        outputs=f"modelling.{model}.model_input.transformed_splits_fold_{fold}",
+                        outputs=f"modelling.{model}.fold_{fold}.model_input.transformed_splits",
                         name=f"transform_{model}_data_fold_{fold}",
                     ),
                     node(
                         func=nodes.get_model_predictions,
                         inputs={
-                            "data": f"modelling.{model}.model_input.transformed_splits_fold_{fold}",
-                            "model": f"modelling.{model}.models.model_fold_{fold}",
+                            "data": f"modelling.{model}.fold_{fold}.model_input.transformed_splits",
+                            "model": f"modelling.{model}.fold_{fold}.models.model",
                             "features": f"params:modelling.{model}.model_options.model_tuning_args.features",
                             "target_col_name": f"params:modelling.{model}.model_options.model_tuning_args.target_col_name",
                         },
-                        outputs=f"modelling.{model}.model_output.predictions_fold_{fold}",
+                        outputs=f"modelling.{model}.fold_{fold}.model_output.predictions",
                         name=f"get_{model}_model_predictions_fold_{fold}",
                     ),
                 ],
@@ -154,7 +154,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                     "modelling.int.known_pairs@pandas",
                     "params:modelling.splitter",
                 ],
-                outputs=[f"modelling.model_input.splits_fold_{fold}" for fold in folds_lst],
+                outputs=[f"modelling.model_input.fold_{fold}.splits" for fold in folds_lst],
                 name="create_splits",
             ),
         ],
@@ -167,11 +167,11 @@ def create_pipeline(**kwargs) -> Pipeline:
             node(
                 func=nodes.check_model_performance,
                 inputs={
-                    "data": f"modelling.{model}.model_output.predictions_fold_{fold}",
+                    "data": f"modelling.{model}.fold_{fold}.model_output.predictions",
                     "metrics": f"params:modelling.{model}.model_options.metrics",
                     "target_col_name": f"params:modelling.{model}.model_options.model_tuning_args.target_col_name",
                 },
-                outputs=f"modelling.{model}.reporting.metrics_fold_{fold}",
+                outputs=f"modelling.{model}.fold_{fold}.reporting.metrics",
                 name=f"check_{model}_model_performance_fold_{fold}",
                 tags=[f"{model}", "argowf.fuse", f"argowf.fuse-group.{model}.fold-{fold}"],
             )
@@ -184,7 +184,7 @@ def create_pipeline(**kwargs) -> Pipeline:
     def _give_aggregation_node_input(model):
         """Prepare aggregation node inputs, including reports for all folds"""
         return ["params:modelling.aggregation_functions"] + [
-            f"modelling.{model}.reporting.metrics_fold_{fold}" for fold in range(n_splits)
+            f"modelling.{model}.fold_{fold}.reporting.metrics" for fold in range(n_splits)
         ]
 
     aggregate_metrics = pipeline(
