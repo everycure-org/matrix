@@ -359,11 +359,11 @@ class RemoteSparkJDBCDataset(SparkJDBCDataset):
         blob = bucket.blob(self._blob_name)
 
         if not os.path.exists(self._blob_name):
-            print("downloading file to local")
+            logger.info("downloading file to local")
             os.makedirs(self._blob_name.rsplit("/", maxsplit=1)[0], exist_ok=True)
             blob.download_to_filename(self._blob_name)
         else:
-            print("file present skipping")
+            logger.info("file present skipping")
 
         return super()._load()
 
@@ -415,7 +415,7 @@ class PartitionedAsyncParallelDataset(PartitionedDataset):
                     # Save the partition data
                     dataset.save(partition_data)
                 except Exception as e:
-                    print(f"Error in process_partition with partition {partition_id}: {e}")
+                    logger.error(f"Error in process_partition with partition {partition_id}: {e}")
                     raise
 
         # Define function to run asyncio tasks within a synchronous function
@@ -438,10 +438,10 @@ class PartitionedAsyncParallelDataset(PartitionedDataset):
                         try:
                             await asyncio.wait_for(task, timeout)
                         except asyncio.TimeoutError as e:
-                            print(f"Timeout error: partition processing took longer than {timeout} seconds.")
+                            logger.error(f"Timeout error: partition processing took longer than {timeout} seconds.")
                             raise e
                         except Exception as e:
-                            print(f"Error processing partition in tqdm loop: {e}")
+                            logger.error(f"Error processing partition in tqdm loop: {e}")
                             raise e
                         finally:
                             progress_bar.update(1)
