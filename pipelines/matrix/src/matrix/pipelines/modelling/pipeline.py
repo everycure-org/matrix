@@ -134,8 +134,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 func=nodes.filter_valid_pairs,
                 inputs=[
                     "integration.prm.filtered_nodes",
-                    "modelling.raw.ground_truth.positives@spark",
-                    "modelling.raw.ground_truth.negatives@spark",
+                    "ingestion.raw.ground_truth.combined@spark",
                 ],
                 outputs={"pairs": "modelling.raw.known_pairs@spark", "metrics": "modelling.reporting.gt_present"},
                 name="filter_valid_pairs",

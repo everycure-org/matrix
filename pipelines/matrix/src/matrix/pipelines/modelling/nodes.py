@@ -65,15 +65,13 @@ def no_nulls(columns: List[str]):
 
 def filter_valid_pairs(
     nodes: DataFrame,
-    raw_tp: DataFrame,
-    raw_tn: DataFrame,
+    raw_gt: DataFrame,
 ) -> Tuple[DataFrame, Dict[str, float]]:
     """Filter pairs to only include nodes that exist in the nodes DataFrame.
 
     Args:
         nodes: Nodes dataframe
-        raw_tp: Raw ground truth positive data
-        raw_tn: Raw ground truth negative data
+        raw_gt: Raw ground truth dataframe
 
     Returns:
         Tuple containing:
@@ -82,6 +80,10 @@ def filter_valid_pairs(
     """
     # Get list of nodes in the KG
     valid_nodes = nodes.select("id").distinct()
+
+    # Split raw_gt into positive and negative pairs
+    raw_tp = raw_gt.filter(f.col("y") == 1)
+    raw_tn = raw_gt.filter(f.col("y") == 0)
 
     # Filter out pairs where both source and target exist in nodes
     filtered_tp = (
