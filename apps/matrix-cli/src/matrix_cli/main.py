@@ -9,6 +9,7 @@ from matrix_cli.commands.secrets import secrets
 app = typer.Typer(
     help="CLI tools for managing GitHub and releases",
     no_args_is_help=True,
+    rich_markup_mode="markdown",
 )
 
 # Add subcommands
@@ -38,7 +39,6 @@ app.add_typer(
 app.add_typer(
     secrets,
     name="secrets",
-    help="Secret-related utility commands",
 )
 
 if __name__ == "__main__":

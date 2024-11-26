@@ -7,14 +7,26 @@ import typer
 from matrix_cli.components.settings import settings
 from matrix_cli.components.utils import console, get_git_root, run_command
 
-secrets = typer.Typer(help="A set of utility commands for managing secrets", no_args_is_help=True)
+secrets = typer.Typer(help="Git-crypt Secrets Management Utility", no_args_is_help=True)
 
 
 @secrets.command(name="rotate-pk")
 def rotate_pk(user_email: str, key_name: str = typer.Argument(default="default")):
-    # this function rotates out the PK used by the repository
-    # this a potentially destructive operation so we act with prudence here and prompt the user for confirmation before executing
-    # However we leverage an existing community shell script here so we don't have to implement the logic ourselves
+    """Rotate out a user's access to encrypted secrets by rotating the GPG key.
+
+    This function rotates out the public key used by the repository for a specific user,
+    effectively removing their access to encrypted secrets. This is a potentially destructive
+    operation that requires confirmation before executing.
+
+    Security Features:
+
+    * Prevents key rotation on main branch to enforce change control
+    * Requires explicit confirmation for destructive operations
+    * Validates all required keys are present before rotation
+    * Automatic rollback of changes if errors occur during rotation
+    * Enforces single key per user policy
+
+    """
     user_key_id = get_gpg_key_id(user_email)
 
     # check we're not on main, this should always happen on a branch
@@ -24,7 +36,8 @@ def rotate_pk(user_email: str, key_name: str = typer.Argument(default="default")
 
     # wipe the key for the user to remove
     console.print("Making sure the user will not be added again by wiping their key")
-    wipe_key_for_user_to_remove(key_name, user_key_id, user_email)
+    with GitCommitContext(f"gitcrypt: remove key for user {user_email}"):
+        wipe_key_for_user_to_remove(key_name, user_key_id, user_email)
     # any public key we have gets imported first
     console.print("Ensuring any public key is imported")
     import_all_keys_into_keychain()
@@ -45,18 +58,30 @@ def rotate_pk(user_email: str, key_name: str = typer.Argument(default="default")
     if run_command(["git", "status", "--porcelain"]):
         console.print("[bold red] There are uncommitted changes, please commit them first")
         exit(1)
-    perform_actual_rotation(user_key_id, key_name)
+
+    with GitCommitContext(f"gitcrypt: rotate private key for remaining users for key {key_name}"):
+        perform_actual_rotation(user_key_id, key_name)
 
 
 def perform_actual_rotation(user_key_id: str, key_name: str):
-    remove_user_script = Path(get_git_root()) / "apps" / "matrix-cli" / "tools/remove-gpg-user.sh"
-    try:
-        run_command([remove_user_script, user_key_id, key_name], log_before=True)
-    except CalledProcessError as ex:
-        console.print(ex.stdout)
-        console.print(ex.stderr)
-        console.print("[bold red] Failed to remove user, exiting")
-        exit(1)
+    # 1. get all users that will remain access
+    users_to_remain_access = get_user_ids_for_key(key_name)
+
+    # 2. remove the PK and all files for that PK
+    console.print(f"[bold green] Removing PK and all files for {key_name}")
+    path = Path(get_git_root()) / ".git" / "git-crypt" / "keys" / key_name
+    run_command(f"rm -rf {path}")
+    path = Path(get_git_root()) / settings.gpg_key_path / key_name
+    run_command(f"rm -rf {path}")
+
+    # 3. create new PK
+    console.print(f"[bold green] Creating new PK for {key_name}")
+    run_command(f"git-crypt init -k {key_name}")
+
+    # 4. add all users that will remain access
+    console.print(f"[bold green] Adding all users that will remain access to {key_name}")
+    for user_id in users_to_remain_access:
+        run_command(f"git-crypt add-gpg-user --trusted -k {key_name} -n {user_id}")
 
 
 @secrets.command(name="list")
@@ -95,7 +120,7 @@ def sync_pks(key_name: str = typer.Argument(help="The key to sync the users for"
 
 @secrets.command(name="import-key")
 def import_key(file_path: str = typer.Argument(help="The path to the key to import")):
-    # imports a key into the keychain
+    """Imports a key into the keychain, ensuring ownertrust is set"""
     try:
         path = Path(file_path).expanduser()
         stdout, stderr = run_command(f"gpg --import '{path}'", include_stderr=True)
@@ -228,3 +253,41 @@ def get_username_for_id(user_id: str):
         return None
     else:
         return uid_row.split(":")[9]
+
+
+class GitCommitContext:
+    """A context manager that commits changes on exit and rolls back on error.
+
+    This context manager helps manage Git commits by automatically committing changes when
+    exiting the context block successfully, or rolling back changes if an error occurs.
+
+    Usage:
+        with GitCommitContext("feat: add new feature") as ctx:
+            # Make changes to files
+            # If an error occurs, changes will be rolled back
+            # If successful, changes will be committed with the message
+
+    Args:
+        commit_message (str): The commit message to use when committing changes
+    """
+
+    def __init__(self, commit_message: str):
+        self.commit_message = commit_message
+        self.initial_sha = None
+
+    def __enter__(self):
+        # Store the current commit SHA to enable rollback
+        self.initial_sha = run_command(["git", "rev-parse", "HEAD"]).strip()
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if exc_type is not None:
+            # An error occurred, roll back changes
+            run_command(["git", "reset", "--hard", self.initial_sha])
+            return False
+
+        # No error, commit changes
+        console.print(f"[bold green] Committing changes with message: {self.commit_message}")
+        run_command(["git", "add", "."], cwd=get_git_root())
+        run_command(["git", "commit", "-m", self.commit_message])
+        return True
