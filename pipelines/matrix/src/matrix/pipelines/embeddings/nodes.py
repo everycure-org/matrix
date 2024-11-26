@@ -9,7 +9,7 @@ import seaborn as sns
 from graphdatascience import GraphDataScience, QueryRunner
 from neo4j import Driver, GraphDatabase
 from pyspark.ml.functions import array_to_vector, vector_to_array
-from pyspark.sql import DataFrame
+from pyspark.sql import DataFrame, SparkSession
 from pyspark.sql import functions as F
 from pyspark.sql.functions import udf
 from pyspark.sql.types import ArrayType, FloatType, StringType
@@ -26,7 +26,7 @@ from tenacity import (
 
 from .graph_algorithms import GDSGraphAlgorithm
 
-from pecanpy import pecanpy 
+from pecanpy import pecanpy
 
 logger = logging.getLogger(__name__)
 
@@ -391,27 +391,32 @@ def write_topological_embeddings(
     topological_estimator.predict_write(gds=gds, model_name=model_name, graph=graph, write_property=write_property)
     return {"success": "true"}
 
+
 def obtain_node2vec_pecanpy_embeddings():
     ##PARAMS
-    num_walks= 10
-    walk_length=80
-    feature_dim= 512
-    p=1
-    q=1
-    g = pecanpy.SparseOTF(p=p, q=q, workers=4, verbose=True)    
-    print('graph precomposition done')
-    
-    edge_list_path = "mtrx-us-central1-hub-dev-storage/kedro/data/releases/test-release/datasets/integration/prm/filtered/edges/edgelist.edg"
-    g.read_edg(edge_list_path)
-    print('edgelist read successfully')
+    num_walks = 10
+    walk_length = 80
+    feature_dim = 512
+    p = 1
+    q = 1
+    g = pecanpy.SparseOTF(p=p, q=q, workers=4, verbose=True)
+    print("graph precomposition done")
+
+    edge_list_path = "/home/jupyter/matrix/pipelines/matrix/data/releases/local-release/datasets/integration/prm/filtered/edges/edgelist.edg"  ###currently have this path pointing to my local edgelist file that i created as a test run. need to point it to the google cloud bucket once we merge to the main branch.
+    g.read_edg(edge_list_path, weighted=False, directed=False)
+    print("edgelist read successfully")
     g.preprocess_transition_probs()
-    print('graph preprocessing done')
-    
+    print("graph preprocessing done")
+
     node_list = np.array(g.nodes).reshape(-1, 1)
-    emd = g.embed(dim = feature_dim, num_walks= num_walks, walk_length= walk_length)
+    emd = g.embed(dim=feature_dim, num_walks=num_walks, walk_length=walk_length)
     id2feat = np.hstack([node_list, emd])
-    columns = ['node_id'] + [f'feat{i+1}' for i in range(emd.shape[1])]
-    return pd.DataFrame(id2feat, columns=columns)
+    columns = ["node_id"] + [f"feat{i+1}" for i in range(emd.shape[1])]
+    pandas_df = pd.DataFrame(id2feat, columns=columns)
+    spark = SparkSession.builder.getOrCreate()
+    spark_df = spark.createDataFrame(pandas_df)
+    return spark_df
+
 
 def string_to_float_list(s: str) -> List[float]:
     """UDF to transform str into list. Fix for Node2Vec array being written as string."""
