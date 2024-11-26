@@ -25,7 +25,7 @@ moa_extraction:
       - "`biolink:PhenotypicFeature`"
       - "`biolink:BehavioralFeature`"
       - "`biolink:DiseaseOrPhenotypicFeature`"
-    batch_size: 1000000
+    batch_size: 10000
     verbose: True
   
   path_mapping:
