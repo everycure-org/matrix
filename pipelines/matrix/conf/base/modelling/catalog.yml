@@ -83,11 +83,15 @@ modelling.raw.ground_truth.negatives@spark:
 
 modelling.int.known_pairs@pandas:
   <<: [*_pandas_parquet, *_model_input_ds]
-  filepath: ${globals:paths.modelling}/ground_truth/translator/${globals:data_sources.gt.version}/ground_truth
-  
+  filepath: ${globals:paths.modelling}/ground_truth/translator/${globals:data_sources.gt.version}/ground_truth_embeddings
+
+modelling.raw.known_pairs@spark:
+  <<: [*_spark_parquet, *_model_input_ds]
+  filepath: ${globals:paths.modelling}/ground_truth/translator/${globals:data_sources.gt.version}/ground_truth_pairs
+
 modelling.int.known_pairs@spark:
   <<: [*_spark_parquet, *_model_input_ds]
-  filepath: ${globals:paths.modelling}/ground_truth/translator/${globals:data_sources.gt.version}/ground_truth
+  filepath: ${globals:paths.modelling}/ground_truth/translator/${globals:data_sources.gt.version}/ground_truth_embeddings
 
 modelling.model_input.drugs_diseases_nodes@spark:
   <<: [*_spark_parquet, *_model_input_ds]
@@ -149,4 +153,8 @@ modelling.model_input.splits:
 "modelling.{model}.reporting.metrics":
   <<: *_reporting_ds
   filepath: ${globals:paths.modelling}/reporting/{model}/sanity_metrics.yml
+  type:  yaml.YAMLDataset
+
+modelling.reporting.gt_present:
+  filepath: ${globals:paths.modelling}/reporting/gt_present_metrics.yml
   type:  yaml.YAMLDataset

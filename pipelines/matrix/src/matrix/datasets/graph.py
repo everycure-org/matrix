@@ -41,11 +41,7 @@ class KnowledgeGraph:
         Returns:
             Embedding or None if not found
         """
-        res = self._embeddings.get(node_id, default)
-        if res is default:
-            logger.warning(f"Embedding for node with id '{node_id}' not found!")
-
-        return res
+        return self._embeddings[node_id]
 
     def flags_to_ids(self, flags: List[str]) -> List[str]:
         """Helper function for extracting nodes from flag columns.
