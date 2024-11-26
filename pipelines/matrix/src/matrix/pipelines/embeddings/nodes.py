@@ -282,7 +282,7 @@ def ingest_edges(nodes, edges: DataFrame):
 
 @inject_object()
 def add_include_in_topological(df: DataFrame, gdb: GraphDB, drug_types: List[str], disease_types: List[str]) -> Dict:
-    """Function to add include_in_graphsage property.
+    """Function to add include_in_topological property.
 
     Only edges between non drug-disease pairs are included in topological algorithm.
     """
