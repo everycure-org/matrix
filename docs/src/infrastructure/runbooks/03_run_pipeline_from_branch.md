@@ -1,7 +1,6 @@
 ---
 title: Running an experiment from a branch on the Every Cure Platform
 ---
-<!-- NOTE: This file was partially generated using AI assistance.  -->
 # Running an experiment from a branch on the Every Cure Platform
 
 This guide explains how to run an experiment from a specific branch using the Every Cure Platform's pipeline submission tool.
@@ -36,6 +35,23 @@ Use the `--help` flag to see all available options:
 ```bash
 kedro submit --help
 ```
+
+### Submitting to the tests folder
+
+To submit a pipeline run to the tests folder instead of the releases folder, use the `--is-test` flag:
+
+```bash
+kedro submit --username <your-name> --is-test
+```
+
+This will store all pipeline outputs under `gs://<bucket>/kedro/data/tests/<version>` instead of the default releases folder. This is useful for:
+- Testing pipeline changes without affecting production data
+- Running experimental workflows
+- Validating changes before promoting to the releases folder
+
+!!! tip
+    This should mostly be used for testing data releases, not for experiments. Experiments
+    are meant to be nested within the releases folder.
 
 ## Monitoring Your Workflow
 

@@ -36,3 +36,8 @@ _reporting_ds: &_reporting_ds
 "modelling.{model}.{shard}.fold_{fold}.reporting.metrics_aggregated":
   type: matrix.datasets.mlflow.MlflowMetricsDataset
   key_prefix: "{model}"
+
+modelling.reporting.gt_present:
+  type: matrix.datasets.mlflow.MlflowMetricsDataset
+  key_prefix: "gt_present"
+

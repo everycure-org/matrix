@@ -64,32 +64,70 @@ def no_nulls(columns: List[str]):
     return decorator
 
 
+def filter_valid_pairs(
+    nodes: DataFrame,
+    raw_tp: DataFrame,
+    raw_tn: DataFrame,
+) -> Tuple[DataFrame, Dict[str, float]]:
+    """Filter pairs to only include nodes that exist in the nodes DataFrame.
+
+    Args:
+        nodes: Nodes dataframe
+        raw_tp: Raw ground truth positive data
+        raw_tn: Raw ground truth negative data
+
+    Returns:
+        Tuple containing:
+        - DataFrame with combined filtered positive and negative pairs
+        - Dictionary with retention statistics
+    """
+    # Get list of nodes in the KG
+    valid_nodes = nodes.select("id").distinct()
+
+    # Filter out pairs where both source and target exist in nodes
+    filtered_tp = (
+        raw_tp.join(valid_nodes.alias("source_nodes"), raw_tp.source == f.col("source_nodes.id"))
+        .join(valid_nodes.alias("target_nodes"), raw_tp.target == f.col("target_nodes.id"))
+        .select(raw_tp["*"])
+    )
+    filtered_tn = (
+        raw_tn.join(valid_nodes.alias("source_nodes"), raw_tn.source == f.col("source_nodes.id"))
+        .join(valid_nodes.alias("target_nodes"), raw_tn.target == f.col("target_nodes.id"))
+        .select(raw_tn["*"])
+    )
+
+    # Calculate retention percentages
+    retention_stats = {
+        "positive_pairs_retained_pct": (filtered_tp.count() / raw_tp.count()) if raw_tp.count() > 0 else 1.0,
+        "negative_pairs_retained_pct": (filtered_tn.count() / raw_tn.count()) if raw_tn.count() > 0 else 1.0,
+    }
+
+    # Combine filtered pairs
+    pairs_df = filtered_tp.withColumn("y", f.lit(1)).unionByName(filtered_tn.withColumn("y", f.lit(0)))
+
+    return {"pairs": pairs_df, "metrics": retention_stats}
+
+
 @has_schema(
     schema={"y": "int"},
     allow_subset=True,
 )
-@primary_key(primary_key=["source", "target"])
 @no_nulls(columns=["source_embedding", "target_embedding"])
-def create_int_pairs(
+def attach_embeddings(
+    pairs_df: DataFrame,
     nodes: DataFrame,
-    raw_tp: DataFrame,
-    raw_tn: DataFrame,
-):
-    """Create intermediate pairs dataset.
+) -> DataFrame:
+    """Attach node embeddings to the pairs DataFrame.
 
     Args:
-        nodes: nodes dataframe
-        raw_tp: Raw ground truth positive data.
-        raw_tn: Raw ground truth negative data.
+        pairs_df: DataFrame containing source-target pairs
+        nodes: nodes dataframe containing embeddings
 
     Returns:
-        Combined ground truth positive and negative data.
+        DataFrame with source and target embeddings attached
     """
-
     return (
-        raw_tp.withColumn("y", f.lit(1))
-        .unionByName(raw_tn.withColumn("y", f.lit(0)))
-        .alias("pairs")
+        pairs_df.alias("pairs")
         .join(nodes.withColumn("source", f.col("id")), how="left", on="source")
         .withColumnRenamed("topological_embedding", "source_embedding")
         .join(nodes.withColumn("target", f.col("id")), how="left", on="target")
@@ -108,36 +146,41 @@ def create_int_pairs(
 )
 @primary_key(primary_key=["id"])
 def prefilter_nodes(
-    nodes: DataFrame, gt_pos: pd.DataFrame, drug_types: List[str], disease_types: List[str]
+    full_nodes: DataFrame, nodes: DataFrame, gt: DataFrame, drug_types: List[str], disease_types: List[str]
 ) -> DataFrame:
     """Prefilter nodes for negative sampling.
 
     Args:
         nodes: the nodes dataframe to be filtered
-        gt_pos: dataframe with ground truth positives
+        gt: dataframe with ground truth positives and negatives
         drug_types: list of drug types
         disease_types: list of disease types
     Returns:
         Filtered nodes dataframe
     """
-
+    gt_pos = gt.filter(f.col("y") == 1)
     ground_truth_nodes = (
-        gt_pos.withColumn("id", f.col("source"))
+        gt.withColumn("id", f.col("source"))
         .unionByName(gt_pos.withColumn("id", f.col("target")))
         .select("id")
         .distinct()
         .withColumn("is_ground_pos", f.lit(True))
     )
 
-    return (
-        nodes.alias("nodes")
-        .filter((f.col("category").isin(drug_types)) | (f.col("category").isin(disease_types)))
-        .select("id", "category", "topological_embedding")
-        .withColumn("is_drug", f.col("category").isin(drug_types))
-        .withColumn("is_disease", f.col("category").isin(disease_types))
+    df = (
+        nodes.join(full_nodes.select("id", "all_categories"), on="id", how="left")
+        .withColumn("is_drug", f.arrays_overlap(f.col("all_categories"), f.lit(drug_types)))
+        .withColumn("is_disease", f.arrays_overlap(f.col("all_categories"), f.lit(disease_types)))
+        .filter((f.col("is_disease")) | (f.col("is_drug")))
+        # .filter((f.col("category").isin(drug_types)) | (f.col("category").isin(disease_types)))
+        .select("id", "topological_embedding", "is_drug", "is_disease")
+        # TODO: The integrated data product _should_ contain these nodes
+        # TODO: Verify below does not have any undesired side effects
         .join(ground_truth_nodes, on="id", how="left")
         .fillna({"is_ground_pos": False})
     )
+
+    return df
 
 
 # @has_schema(
