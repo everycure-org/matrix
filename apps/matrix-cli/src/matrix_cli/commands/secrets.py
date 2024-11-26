@@ -21,6 +21,9 @@ def rotate_pk(user_email: str, key_name: str = typer.Argument(default="default")
         console.print("[bold red] You are on the main branch, please create a branch first")
         exit(1)
 
+    # ensure the user has manually removed the public key for the user to remove
+    # TODO
+
     # wipe the key for the user to remove
     console.print("Making sure the user will not be added again by wiping their key")
     wipe_key_for_user_to_remove(key_name, user_key_id)
