@@ -60,6 +60,7 @@ paths:
   raw:                ${source_gcs_bucket}/kedro/data/01_raw
   kg_raw:             ${gcs_bucket}/data/01_RAW
   ingestion:          data/ingestion
+  qc:                 data/qc
 
   # Release-based
   integration:        data/releases/${versions.release}/datasets/integration
