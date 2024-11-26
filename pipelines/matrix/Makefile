@@ -98,7 +98,7 @@ clean:
 	@echo "cleaning various cache locations to ensure clean installation is possible"
 	@echo "this may be necessary e.g. when updating one of our local packages"
 	rm -rf .pytest_cache .venv
-	rm -rf $(uv cache dir) ~/.cache/pre-commit
+	uv cache clean
 	docker volume prune -f
 
 diagnostics:
