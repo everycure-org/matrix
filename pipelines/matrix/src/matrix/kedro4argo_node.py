@@ -58,9 +58,13 @@ class ArgoResourceConfig(BaseModel):
     @model_validator(mode="after")
     def validate_values_are_sane(self) -> "ArgoResourceConfig":
         """Validate that CPU and memory limits and requests are not too high."""
-        if self.cpu_limit > KUBERNETES_DEFAULT_LIMIT_CPU or self.memory_limit > KUBERNETES_DEFAULT_LIMIT_RAM:
+        if self.cpu_limit > KUBERNETES_DEFAULT_LIMIT_CPU:
             warnings.warn(
-                f"CPU (limit: {self.cpu_limit}, request: {self.cpu_request}) and memory (limit: {self.memory_limit}, request: {self.memory_request}) limits and requests are unrealistically high - are you sure they were set in GB and not in Mi?"
+                f"Some of the CPU settings (limit: {self.cpu_limit}, request: {self.cpu_request}) seem quite high - are you sure they are set in cores?"
+            )
+        if self.memory_limit > KUBERNETES_DEFAULT_LIMIT_RAM:
+            warnings.warn(
+                f"Some of the memory settings (limit: {self.memory_limit}, request: {self.memory_request}) are unrealistically high - are you sure they were set in GB and not in Mi?"
             )
         return self
 
