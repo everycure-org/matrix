@@ -6,7 +6,7 @@ aiofiles==24.1.0
     # via kedro-viz
 aiohappyeyeballs==2.4.3
     # via aiohttp
-aiohttp==3.11.6
+aiohttp==3.11.7
     # via
     #   aiobotocore
     #   gcsfs
@@ -22,14 +22,13 @@ annotated-types==0.7.0
     # via pydantic
 antlr4-python3-runtime==4.9.3
     # via omegaconf
-anyio==3.7.1
+anyio==4.6.2.post1
     # via
     #   httpx
     #   jupyter-server
     #   openai
     #   starlette
     #   watchfiles
-    #   watchgod
 appdirs==1.4.4
     # via kedro-telemetry
 appnope==0.1.4
@@ -114,7 +113,7 @@ contourpy==1.3.1
     # via matplotlib
 cookiecutter==2.6.0
     # via kedro
-coverage==7.6.7
+coverage==7.6.8
     # via
     #   pytest-cov
     #   pytest-testmon
@@ -126,7 +125,7 @@ cycler==0.12.1
     # via matplotlib
 databricks-sdk==0.38.0
     # via mlflow-skinny
-debugpy==1.8.8
+debugpy==1.8.9
     # via ipykernel
 decorator==5.1.1
     # via
@@ -161,6 +160,10 @@ fastapi==0.115.5
     # via kedro-viz
 fastjsonschema==2.20.0
     # via nbformat
+filelock==3.16.1
+    # via
+    #   huggingface-hub
+    #   transformers
 flask==3.1.0
     # via mlflow
 fonttools==4.55.0
@@ -174,6 +177,7 @@ frozenlist==1.5.0
 fsspec==2024.3.1
     # via
     #   gcsfs
+    #   huggingface-hub
     #   kedro
     #   kedro-viz
     #   s3fs
@@ -272,6 +276,10 @@ httpx==0.27.2
     #   jupyterlab
     #   langsmith
     #   openai
+huggingface-hub==0.26.2
+    # via
+    #   tokenizers
+    #   transformers
 idna==3.10
     # via
     #   anyio
@@ -396,14 +404,16 @@ kedro-datasets==4.1.0
 kedro-mlflow==0.13.3
     # via -r requirements.in
 kedro-telemetry==0.6.1
-    # via -r requirements.in
-kedro-viz==10.0.0
+    # via
+    #   -r requirements.in
+    #   kedro-viz
+kedro-viz==10.1.0
     # via -r requirements.in
 kiwisolver==1.4.7
     # via matplotlib
-langchain==0.3.7
+langchain==0.3.8
     # via -r requirements.in
-langchain-core==0.3.19
+langchain-core==0.3.21
     # via
     #   langchain
     #   langchain-openai
@@ -412,7 +422,7 @@ langchain-openai==0.2.9
     # via -r requirements.in
 langchain-text-splitters==0.3.2
     # via langchain
-langsmith==0.1.144
+langsmith==0.1.146
     # via
     #   langchain
     #   langchain-core
@@ -502,12 +512,13 @@ numpy==1.23.5
     #   scipy
     #   seaborn
     #   termplotlib
+    #   transformers
     #   xgboost
 oauthlib==3.2.2
     # via requests-oauthlib
 omegaconf==2.3.0
     # via kedro
-openai==1.55.0
+openai==1.55.1
     # via
     #   -r requirements.in
     #   langchain-openai
@@ -522,7 +533,7 @@ opentelemetry-sdk==1.28.2
     # via mlflow-skinny
 opentelemetry-semantic-conventions==0.49b2
     # via opentelemetry-sdk
-orjson==3.10.11
+orjson==3.10.12
     # via
     #   kedro-viz
     #   langsmith
@@ -534,6 +545,7 @@ packaging==24.2
     #   deprecation
     #   google-cloud-bigquery
     #   gunicorn
+    #   huggingface-hub
     #   ipykernel
     #   jupyter-server
     #   jupyterlab
@@ -549,6 +561,7 @@ packaging==24.2
     #   pytest
     #   pytoolconfig
     #   scikit-optimize
+    #   transformers
 pandas==1.5.3
     # via
     #   brix-data-fabricator
@@ -568,6 +581,8 @@ parse==1.20.2
     # via kedro
 parso==0.8.4
     # via jedi
+pathspec==0.12.1
+    # via kedro-viz
 pexpect==4.9.0
     # via ipython
 pillow==11.0.0
@@ -636,7 +651,7 @@ pyasn1-modules==0.4.1
     # via google-auth
 pycparser==2.22
     # via cffi
-pydantic==2.10.0
+pydantic==2.10.1
     # via
     #   curies
     #   fastapi
@@ -648,7 +663,7 @@ pydantic==2.10.0
     #   linkml-runtime
     #   openai
     #   pandera
-pydantic-core==2.27.0
+pydantic-core==2.27.1
     # via pydantic
 pygments==2.18.0
     # via
@@ -714,6 +729,7 @@ pytz==2024.2
 pyyaml==6.0.2
     # via
     #   cookiecutter
+    #   huggingface-hub
     #   json-flattener
     #   jupyter-events
     #   kedro
@@ -725,6 +741,7 @@ pyyaml==6.0.2
     #   prefixcommons
     #   prefixmaps
     #   pyaml
+    #   transformers
     #   uvicorn
 pyzmq==26.2.0
     # via
@@ -741,7 +758,9 @@ referencing==0.35.1
     #   jsonschema-specifications
     #   jupyter-events
 regex==2024.11.6
-    # via tiktoken
+    # via
+    #   tiktoken
+    #   transformers
 requests==2.32.3
     # via
     #   cookiecutter
@@ -753,6 +772,7 @@ requests==2.32.3
     #   google-cloud-storage
     #   graphdatascience
     #   hdfs
+    #   huggingface-hub
     #   jupyterlab-server
     #   kedro-telemetry
     #   langchain
@@ -763,6 +783,7 @@ requests==2.32.3
     #   requests-oauthlib
     #   requests-toolbelt
     #   tiktoken
+    #   transformers
 requests-oauthlib==2.0.0
     # via google-auth-oauthlib
 requests-toolbelt==1.0.0
@@ -797,6 +818,8 @@ ruff==0.6.8
     # via -r requirements.in
 s3fs==2024.3.1
     # via -r requirements.in
+safetensors==0.4.5
+    # via transformers
 scikit-learn==1.4.0
     # via
     #   -r requirements.in
@@ -851,7 +874,7 @@ stack-data==0.6.3
     # via ipython
 starlette==0.41.3
     # via fastapi
-strawberry-graphql==0.251.0
+strawberry-graphql==0.253.0
     # via kedro-viz
 stringcase==1.2.0
     # via bmt
@@ -879,9 +902,11 @@ tiktoken==0.8.0
     # via langchain-openai
 tinycss2==1.4.0
     # via nbconvert
+tokenizers==0.20.3
+    # via transformers
 toml==0.10.2
     # via kedro
-tornado==6.4.1
+tornado==6.4.2
     # via
     #   ipykernel
     #   jupyter-client
@@ -889,10 +914,12 @@ tornado==6.4.1
     #   jupyterlab
     #   notebook
     #   terminado
-tqdm==4.67.0
+tqdm==4.67.1
     # via
     #   graphdatascience
+    #   huggingface-hub
     #   openai
+    #   transformers
 traitlets==5.14.3
     # via
     #   comm
@@ -908,6 +935,8 @@ traitlets==5.14.3
     #   nbclient
     #   nbconvert
     #   nbformat
+transformers==4.46.3
+    # via -r requirements.in
 typeguard==4.4.1
     # via pandera
 typer==0.13.1
@@ -920,6 +949,7 @@ typing-extensions==4.12.2
     #   fastapi
     #   graphdatascience
     #   graphene
+    #   huggingface-hub
     #   ipython
     #   langchain-core
     #   openai
@@ -946,10 +976,10 @@ uvicorn==0.32.1
     # via kedro-viz
 uvloop==0.21.0
     # via uvicorn
-watchfiles==0.24.0
-    # via uvicorn
-watchgod==0.8.2
-    # via kedro-viz
+watchfiles==1.0.0
+    # via
+    #   kedro-viz
+    #   uvicorn
 wcwidth==0.2.13
     # via prompt-toolkit
 webcolors==24.11.1
@@ -966,12 +996,12 @@ werkzeug==3.1.3
     # via flask
 widgetsnbextension==4.0.13
     # via ipywidgets
-wrapt==1.16.0
+wrapt==1.17.0
     # via
     #   aiobotocore
     #   deprecated
     #   pandera
-xgboost==2.1.2
+xgboost==2.1.3
     # via -r requirements.in
 yarl==1.18.0
     # via aiohttp
