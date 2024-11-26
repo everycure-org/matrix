@@ -33,7 +33,6 @@ def generate_argo_config(
     template = template_env.get_template(ARGO_TEMPLATE_FILE)
     pipeline_tasks = get_dependencies(fuse(pipeline), default_execution_resources)
 
-    # TODO: After it is possible to configure resources on node level, remove the use_gpus flag.
     output = template.render(
         package_name=package_name,
         pipeline_tasks=pipeline_tasks,
