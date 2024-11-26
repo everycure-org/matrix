@@ -33,3 +33,7 @@ services/synonymizer/assets/
 **/__pycache__/
 infra/**/Chart.lock
 **/.ipynb_checkpoints/
+
+
+# embed_norm
+apps/embed_norm/cached_datasets/
