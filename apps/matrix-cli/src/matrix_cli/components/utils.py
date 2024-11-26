@@ -2,7 +2,7 @@ import functools
 import shlex
 import subprocess
 from pathlib import Path
-from typing import TYPE_CHECKING, List, Union
+from typing import TYPE_CHECKING, List, Tuple, Union
 
 from matrix_cli.components.cache import memory
 from rich.console import Console
@@ -64,7 +64,13 @@ def get_markdown_contents(folder_path: Path | str) -> str:
     return all_content
 
 
-def run_command(command: Union[str, List[str]], cwd: str = None, check=True, log_before: bool = False) -> str:
+def run_command(
+    command: Union[str, List[str]],
+    cwd: str = None,
+    check=True,
+    log_before: bool = False,
+    include_stderr: bool = False,
+) -> Union[str, Tuple[str, str]]:
     if isinstance(command, str):
         # ensures we have an array but allow user to pass in string (for f-string style submission)
         command = shlex.split(command)
@@ -75,9 +81,8 @@ def run_command(command: Union[str, List[str]], cwd: str = None, check=True, log
         console.print("Command is empty... Exiting")
         exit(1)
 
-    try:
-        result = subprocess.run(command, check=check, capture_output=True, text=True, cwd=cwd)
+    result = subprocess.run(command, check=check, capture_output=True, text=True, cwd=cwd)
+    if include_stderr:
+        return result.stdout.strip(), result.stderr.strip()
+    else:
         return result.stdout.strip()
-    except subprocess.CalledProcessError:
-        # typer.echo(f"Error running command {' '.join(command)}: {e.stderr}", err=True)
-        raise
