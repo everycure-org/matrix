@@ -1,6 +1,7 @@
 #!/bin/bash
 #
 # Script to remove GPG key from git-crypt
+# original located at: https://gist.github.com/glogiotatidis/e0ab45ed5575a9d7973390dace0552b0
 #
 # It will re-initialize git-crypt for the repository and re-add all keys except
 # the one requested for removal.
@@ -21,7 +22,7 @@
 # Based on https://github.com/AGWA/git-crypt/issues/47#issuecomment-212734882
 #
 #
-set -e
+set -xe
 
 if [ -z "$1" ]
 then
@@ -65,7 +66,7 @@ rm -f "$CURRENT_DIR/.git-crypt/keys/$KEY_NAME/0/$1.gpg"
 # Re-initialize git crypt
 git crypt init
 
-# Add existing users, except the
+# Add existing users, except the person we removed
 for keyfilename in `ls $CURRENT_DIR/.git-crypt/keys/$KEY_NAME/0/*gpg`; do
     basename=`basename $keyfilename`
     key=${basename%.*}
@@ -77,7 +78,7 @@ done
 
 cd $CURRENT_DIR
 for i in `awk '{print $2}' ${TMPDIR}/${BASENAME}/encrypted-files`; do
-    cp -rp --parents $i $TMPDIR/$BASENAME;
+    rsync -R $i $TMPDIR/$BASENAME;
 done
 cd $TMPDIR/$BASENAME
 for i in `awk '{print $2}' encrypted-files`; do
