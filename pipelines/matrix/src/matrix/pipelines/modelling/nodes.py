@@ -183,17 +183,6 @@ def prefilter_nodes(
     return df
 
 
-# @has_schema(
-#     schema={
-#         "source": "object",
-#         "source_embedding": "object",
-#         "target": "object",
-#         "target_embedding": "object",
-#         "iteration": "numeric",
-#         "split": "object",
-#     },
-#     allow_subset=True,
-# )
 @inject_object()
 def make_splits(
     data: DataFrame,
