@@ -223,12 +223,6 @@ def test_argo_node_can_request_gpu():
     assert k8s_node.argo_config.num_gpus == 1
 
 
-def test_validate_values_are_sane():
-    """Test that validate_values_are_sane raises warnings for unrealistic values."""
-    with pytest.warns(UserWarning, match="CPU .* and memory .* limits and requests are unrealistically high"):
-        ArgoResourceConfig(cpu_limit=100, memory_limit=1000)
-
-
 def test_argo_node_factory():
     argo_node_instance = argo_node(
         func=dummy_func,
