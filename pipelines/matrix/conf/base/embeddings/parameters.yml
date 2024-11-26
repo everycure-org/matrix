@@ -111,7 +111,7 @@ embeddings.topological:
 embeddings.topological_estimator:
   object: matrix.pipelines.embeddings.graph_algorithms.GDSGraphSage
   concurrency: 4
-  iterations: 10 # TODO: Revert
+  iterations: 100
   sample_sizes: [25, 10]
   tolerance: 1e-8
   embedding_dim: 512
