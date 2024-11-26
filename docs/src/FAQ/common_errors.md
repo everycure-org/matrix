@@ -462,4 +462,4 @@ gcloud config set project mtrx-hub-dev-3of
 ### Issue with kedro run -e test -p test after updating git pull.
 ```filter_by_category() missing 1 required positional argument: 'categories```
 
-This has something to do with cache files. To avoid this issue clean  make using "make clean". Then "make install", activate ev using "source .venv/bin/activate" and followed documentation file (make precommit, make compose_up, make fast_test, make full_test, make integration and kedro run -e test -p test). 
+This is due to our local libraries (e.g. `data_fabricator`) being cached in the uv cache and thus not being installed to the latest version when running `make install`. Cleaning the uv cache solves this issue which you can do via `make clean` and then run a fresh `make install`.
