@@ -151,20 +151,21 @@ preprocessing.raw.ground_truth.combined:
   load_args:
     sep: "\t"
 
-preprocessing.raw.ground_truth.positives:
-  <<: [*_layer_raw]
-  type: pandas.CSVDataset
-  filepath: ${globals:paths.kg_raw}/ground_truth/ec/${globals:data_sources.gt.version}/tp_pairs.txt
-  load_args:
-    sep: "\t"
-  save_args:
-    sep: "\t"
+# Comment out as unneeded at the moment
+# preprocessing.raw.ground_truth.positives:
+#   <<: [*_layer_raw]
+#   type: pandas.CSVDataset
+#   filepath: ${globals:paths.kg_raw}/ground_truth/ec/${globals:data_sources.gt.version}/tp_pairs.txt
+#   load_args:
+#     sep: "\t"
+#   save_args:
+#     sep: "\t"
 
-preprocessing.raw.ground_truth.negatives:
-  <<: [*_layer_raw]
-  type: pandas.CSVDataset
-  filepath: ${globals:paths.kg_raw}/ground_truth/ec/${globals:data_sources.gt.version}/tn_pairs.txt
-  load_args:
-    sep: "\t"
-  save_args:
-    sep: "\t"
+# preprocessing.raw.ground_truth.negatives:
+#   <<: [*_layer_raw]
+#   type: pandas.CSVDataset
+#   filepath: ${globals:paths.kg_raw}/ground_truth/ec/${globals:data_sources.gt.version}/tn_pairs.txt
+#   load_args:
+#     sep: "\t"
+#   save_args:
+#     sep: "\t"
