@@ -56,15 +56,15 @@ def test_invalid_resource_constraints(cpu_request, cpu_limit, memory_request, me
 
 
 @pytest.mark.parametrize(
-    "cpu_limit, memory_limit",
+    "cpu_limit, memory_limit, msg",
     [
-        (100, 1000),
-        (200, 2000),
+        (3 * KUBERNETES_DEFAULT_LIMIT_CPU, 2 * KUBERNETES_DEFAULT_LIMIT_RAM, "Some of the CPU settings*"),
+        (KUBERNETES_DEFAULT_LIMIT_CPU, 3 * KUBERNETES_DEFAULT_LIMIT_RAM, "Some of the memory settings*"),
     ],
 )
-def test_high_resource_values_warning(cpu_limit, memory_limit):
+def test_high_resource_values_warning(cpu_limit, memory_limit, msg):
     """Test that unrealistically high resource values trigger a warning."""
-    with pytest.warns(UserWarning, match="CPU .* and memory .* limits and requests are unrealistically high"):
+    with pytest.warns(UserWarning, match=msg):
         ArgoResourceConfig(
             cpu_limit=cpu_limit,
             memory_limit=memory_limit,
