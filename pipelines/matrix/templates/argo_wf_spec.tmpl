@@ -63,8 +63,10 @@ spec:
               {% endraw %}
               cpu: {% raw %} "{{inputs.parameters.cpu_request}}"
               {% endraw %}
+              {{- if ne inputs.parameters.num_gpus "0" }}
               nvidia.com/gpu: {% raw %} "{{inputs.parameters.num_gpus}}"
               {% endraw %}
+              {{- end }}
             limits:
               memory: {% raw %} "{{inputs.parameters.memory_limit}}"
               {% endraw %}
@@ -72,6 +74,7 @@ spec:
               {% endraw %}
               nvidia.com/gpu: {% raw %} "{{inputs.parameters.num_gpus}}"
               {% endraw %}
+              {{- end }}
     container: &_kedro_container
       imagePullPolicy: Always
       image: {% raw %} "{{workflow.parameters.image}}:{{workflow.parameters.image_tag}}"
