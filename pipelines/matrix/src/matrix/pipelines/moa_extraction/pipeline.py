@@ -7,7 +7,9 @@ Note: Several dummy variables are used to ensure that the pipeline runs in linea
 from kedro.pipeline import Pipeline, node
 from kedro.pipeline.modular_pipeline import pipeline
 
+
 import matrix.pipelines.embeddings.nodes as embeddings_nodes
+from matrix.kedro4argo_node import ArgoNode, ArgoResourceConfig
 
 from . import nodes
 from matrix import settings
@@ -22,12 +24,18 @@ def _preprocessing_pipeline() -> Pipeline:
         preprocessing_strands_lst.append(
             pipeline(
                 [
-                    node(
+                    ArgoNode(
                         func=embeddings_nodes.ingest_nodes,
                         inputs=["integration.prm.filtered_nodes"],
                         outputs=f"moa_extraction.input_nodes.{num_hops}_hop",
                         name=f"moa_extraction_ingest_neo4j_input_nodes_{num_hops}_hop",
                         tags=["moa_extraction.create_neo4j_db"],
+                        argo_config=ArgoResourceConfig(
+                            cpu_request=48,
+                            cpu_limit=48,
+                            memory_limit=192,
+                            memory_request=120,
+                        ),
                     ),
                     node(
                         func=embeddings_nodes.ingest_edges,
