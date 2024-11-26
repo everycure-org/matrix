@@ -4,8 +4,8 @@ from kedro.pipeline.node import Node
 from pydantic import BaseModel, field_validator, model_validator
 
 # Values are in Gb
-KUBERNETES_DEFAULT_LIMIT_RAM = 64
-KUBERNETES_DEFAULT_REQUEST_RAM = 64
+KUBERNETES_DEFAULT_LIMIT_RAM = 58
+KUBERNETES_DEFAULT_REQUEST_RAM = 58
 
 # Values are in number of cores
 KUBERNETES_DEFAULT_LIMIT_CPU = 16
