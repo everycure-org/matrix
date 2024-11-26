@@ -22,12 +22,9 @@ def rotate_pk(user_email: str, key_name: str = typer.Argument(default="default")
         console.print("[bold red] You are on the main branch, please create a branch first")
         exit(1)
 
-    # ensure the user has manually removed the public key for the user to remove
-    # TODO
-
     # wipe the key for the user to remove
     console.print("Making sure the user will not be added again by wiping their key")
-    wipe_key_for_user_to_remove(key_name, user_key_id)
+    wipe_key_for_user_to_remove(key_name, user_key_id, user_email)
     # any public key we have gets imported first
     console.print("Ensuring any public key is imported")
     import_all_keys_into_keychain()
@@ -41,8 +38,18 @@ def rotate_pk(user_email: str, key_name: str = typer.Argument(default="default")
         console.print("[bold red] Aborting")
         exit(1)
 
+    perform_actual_rotation(user_key_id, key_name)
+
+
+def perform_actual_rotation(user_key_id: str, key_name: str):
     remove_user_script = Path(get_git_root()) / "apps" / "matrix-cli" / "tools/remove-gpg-user.sh"
-    run_command(["bash", "-c", remove_user_script, user_key_id, key_name], log_before=True)
+    try:
+        run_command([remove_user_script, user_key_id, key_name], log_before=True)
+    except CalledProcessError as ex:
+        console.print(ex.stdout)
+        console.print(ex.stderr)
+        console.print("[bold red] Failed to remove user, exiting")
+        exit(1)
 
 
 @secrets.command(name="list")
@@ -105,12 +112,24 @@ def import_key(file_path: str = typer.Argument(help="The path to the key to impo
         run_command(f"echo {fingerprint}:6: | gpg --import-ownertrust")
 
 
-def wipe_key_for_user_to_remove(key_name: str, user_key_id: str):
+def wipe_key_for_user_to_remove(key_name: str, user_key_id: str, user_email: str):
     path = Path(get_git_root()) / settings.gpg_key_path / key_name / "0" / f"{user_key_id}.gpg"
+    console.print(f"[bold green] Wiping key for {user_key_id} in path {path}")
     if path.exists():
         run_command(f"rm -rf {path}", check=False)
     else:
         console.print(f"[bold yellow] Key not found for {user_key_id}, skipping")
+
+    # next deleting the users .asc file
+    filename = Path(get_git_root()) / settings.gpg_public_key_path / f"{user_email}.asc"
+    if filename.exists():
+        run_command(f"rm -rf {filename}", check=False)
+    else:
+        if not typer.confirm(
+            "The public key for the user to remove was not found, please remove it manually, Then hit y to continue"
+        ):
+            console.print("User did not confirm, aborting")
+            exit(1)
 
 
 def ensure_all_keys_imported(key_name: str):
