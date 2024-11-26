@@ -31,8 +31,8 @@ def _preprocessing_pipeline() -> Pipeline:
                         name=f"moa_extraction_ingest_neo4j_input_nodes_{num_hops}_hop",
                         tags=["moa_extraction.create_neo4j_db"],
                         argo_config=ArgoResourceConfig(
-                            cpu_request=48,
-                            cpu_limit=48,
+                            cpu_request=8,
+                            cpu_limit=8,
                             memory_limit=192,
                             memory_request=120,
                         ),
