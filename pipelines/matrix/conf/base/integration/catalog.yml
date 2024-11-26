@@ -83,7 +83,7 @@ integration.prm.filtered_nodes:
 
 integration.prm.edge_list:
   type: pandas.CSVDataset
-  filepath: ${globals:paths.integration}/prm/filtered/edges/edgelist.edg
+  filepath: ${globals:paths.integration}/prm/filtered/edgelist/edgelist.edg
   save_args:
     index: false
     header: false
