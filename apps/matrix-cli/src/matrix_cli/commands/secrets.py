@@ -34,10 +34,17 @@ def rotate_pk(user_email: str, key_name: str = typer.Argument(default="default")
 
     console.print(f"[bold green] Rotating out GPG, removing access for {user_email}")
     console.print("[bold red] This is a fairly destructive operation, please ensure you have backups")
-    if not typer.confirm("Are you sure you want to continue?"):
+    if not typer.confirm(
+        "A number of changes have been made to the repository, please confirm these by committing and then continue"
+    ):
         console.print("[bold red] Aborting")
         exit(1)
 
+    # check no changes are staged
+    # Check for any uncommitted changes (both staged and unstaged)
+    if run_command(["git", "status", "--porcelain"]):
+        console.print("[bold red] There are uncommitted changes, please commit them first")
+        exit(1)
     perform_actual_rotation(user_key_id, key_name)
 
 
