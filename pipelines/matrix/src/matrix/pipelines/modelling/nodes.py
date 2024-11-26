@@ -167,7 +167,8 @@ def prefilter_nodes(
     )
 
     df = (
-        nodes.join(full_nodes.select("id", "all_categories"), on="id", how="left")
+        nodes
+        # .join(full_nodes.select("id", "all_categories"), on="id", how="left")
         .withColumn("is_drug", f.arrays_overlap(f.col("all_categories"), f.lit(drug_types)))
         .withColumn("is_disease", f.arrays_overlap(f.col("all_categories"), f.lit(disease_types)))
         .filter((f.col("is_disease")) | (f.col("is_drug")))
