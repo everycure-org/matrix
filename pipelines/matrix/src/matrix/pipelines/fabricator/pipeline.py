@@ -41,7 +41,11 @@ def _create_pairs(
         is_enough_generated = len(df) >= num or attempt > 100
         attempt += 1
 
-    return df[:num], df[num : 2 * num]
+    tp_df = df[:num]
+    tp_df["y"] = 1
+    tn_df = df[num : 2 * num]
+    tn_df["y"] = 0
+    return pd.concat([tp_df, tn_df], ignore_index=True)
 
 
 def create_pipeline(**kwargs) -> Pipeline:
@@ -85,10 +89,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                     "ingestion.raw.drug_list@pandas",
                     "ingestion.raw.disease_list@pandas",
                 ],
-                outputs=[
-                    "modelling.raw.ground_truth.positives@pandas",
-                    "modelling.raw.ground_truth.negatives@pandas",
-                ],
+                outputs="ingestion.raw.ground_truth.combined@pandas",
                 name="create_gn_pairs",
             ),
         ]
