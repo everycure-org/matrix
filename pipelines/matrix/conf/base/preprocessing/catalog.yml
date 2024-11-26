@@ -140,10 +140,21 @@ preprocessing.raw.infer_sheet:
       - Disease_ID
       - Name
 
+preprocessing.raw.ground_truth.combined:
+  <<: [*_layer_raw]
+  type: pandas.CSVDataset
+  # NOTE: This is currently being downloaded through the assets as the repository is private.
+  filepath: https://api.github.com/repos/everycure-org/matrix-indication-list/releases/assets/${globals:data_sources.gt.version}
+  fs_args:
+    Accept: application/octet-stream
+    Authorization: token ${globals:gh_token}
+  load_args:
+    sep: "\t"
+
 preprocessing.raw.ground_truth.positives:
   <<: [*_layer_raw]
   type: pandas.CSVDataset
-  filepath: ${globals:paths.kg_raw}/ground_truth/kg2/${globals:data_sources.gt.version}/tp_pairs.txt
+  filepath: ${globals:paths.kg_raw}/ground_truth/ec/${globals:data_sources.gt.version}/tp_pairs.txt
   load_args:
     sep: "\t"
   save_args:
@@ -152,7 +163,7 @@ preprocessing.raw.ground_truth.positives:
 preprocessing.raw.ground_truth.negatives:
   <<: [*_layer_raw]
   type: pandas.CSVDataset
-  filepath: ${globals:paths.kg_raw}/ground_truth/kg2/${globals:data_sources.gt.version}/tn_pairs.txt
+  filepath: ${globals:paths.kg_raw}/ground_truth/ec/${globals:data_sources.gt.version}/tn_pairs.txt
   load_args:
     sep: "\t"
   save_args:

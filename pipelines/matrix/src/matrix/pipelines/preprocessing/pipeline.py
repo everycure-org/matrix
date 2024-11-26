@@ -1,4 +1,4 @@
-from kedro.pipeline import Pipeline, pipeline, node
+from kedro.pipeline import Pipeline, pipeline
 from matrix.kedro4argo_node import ArgoResourceConfig, argo_node
 
 from . import nodes
@@ -162,20 +162,28 @@ def create_pipeline(**kwargs) -> Pipeline:
                 tags=["inference-input"],
                 argo_config=preprocessing_argo_node_config,
             ),
-            node(
+            argo_node(
                 func=nodes.clean_gt_data,
                 inputs={
-                    "pos_df": "preprocessing.raw.ground_truth.positives",
-                    "neg_df": "preprocessing.raw.ground_truth.negatives",
+                    "gt_df": "preprocessing.raw.ground_truth.combined",
                     "endpoint": "params:preprocessing.translator.normalizer",
                     "conflate": "params:integration.nodenorm.conflate",
                     "drug_chemical_conflate": "params:integration.nodenorm.drug_chemical_conflate",
                     "batch_size": "params:integration.nodenorm.batch_size",
                     "parallelism": "params:integration.nodenorm.parallelism",
                 },
-                outputs=["modelling.raw.ground_truth.positives@pandas", "modelling.raw.ground_truth.negatives@pandas"],
+                outputs="ingestion.raw.ground_truth.combined@pandas",
                 name="resolve_gt",
                 tags=["ground-truth"],
+                argo_config=preprocessing_argo_node_config,
+            ),
+            argo_node(
+                func=lambda x: x,
+                inputs="ingestion.raw.ground_truth.combined@pandas",
+                outputs="ingestion.reporting.combined_gt",
+                name="write_ground_truth_to_gsheets",
+                tags=["ground-truth"],
+                argo_config=preprocessing_argo_node_config,
             ),
         ]
     )

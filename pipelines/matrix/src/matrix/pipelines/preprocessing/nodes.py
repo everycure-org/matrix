@@ -577,19 +577,21 @@ def clean_input_sheet(
 
 
 def clean_gt_data(
-    pos_df: pd.DataFrame,
-    neg_df: pd.DataFrame,
     endpoint: str,
     conflate: bool,
     drug_chemical_conflate: bool,
     batch_size: int,
     parallelism: int,
+    pos_df: pd.DataFrame = None,
+    neg_df: pd.DataFrame = None,
+    gt_df: pd.DataFrame = None,
 ) -> Tuple[pd.DataFrame, pd.DataFrame]:
     """Clean ground truth data.
 
     Args:
         pos_df: positive ground truth data.
         neg_df: negative ground truth data.
+        gt_df: ground truth data.
         endpoint: endpoint of the synonymizer.
         conflate: whether to conflate
         drug_chemical_conflate: whether to conflate drug and chemical
@@ -598,12 +600,13 @@ def clean_gt_data(
     Returns:
         Cleaned ground truth data.
     """
-    # Synonymize source and target IDs for both positive and negative ground truth data
-    for df in [pos_df, neg_df]:
-        for col in ["source", "target"]:
+    if gt_df is not None:
+        print(gt_df.shape)
+        # Synonymize source and target IDs for ground truth data
+        for col, target in [("drug ID", "source"), ("disease ID", "target")]:
             json_parser = parse("$.id.identifier")
             node_id_map = batch_map_ids(
-                frozenset(df[col]),
+                frozenset(gt_df[col]),
                 api_endpoint=endpoint,
                 batch_size=batch_size,
                 parallelism=parallelism,
@@ -611,11 +614,36 @@ def clean_gt_data(
                 drug_chemical_conflate=drug_chemical_conflate,
                 json_parser=json_parser,
             )
-            df[col] = df[col].map(node_id_map)
-
-    return pos_df.dropna(subset=["source", "target"]).drop_duplicates(), neg_df.dropna(
-        subset=["source", "target"]
-    ).drop_duplicates()
+            gt_df[target] = gt_df[col].map(node_id_map)
+        assert ((gt_df["indication"]).astype(int) != (gt_df["contraindication"]).astype(int)).all()
+        gt_df["y"] = (gt_df["indication"]).astype(int)
+        df = gt_df
+        print(df.dropna().shape)
+        print(df.dropna().drop_duplicates().shape)
+    elif pos_df is not None and neg_df is not None:
+        # Synonymize source and target IDs for both positive and negative ground truth data
+        list_dfs = []
+        for df in [neg_df, pos_df]:
+            i = 0
+            for col in ["source", "target"]:
+                json_parser = parse("$.id.identifier")
+                node_id_map = batch_map_ids(
+                    frozenset(df[col]),
+                    api_endpoint=endpoint,
+                    batch_size=batch_size,
+                    parallelism=parallelism,
+                    conflate=conflate,
+                    drug_chemical_conflate=drug_chemical_conflate,
+                    json_parser=json_parser,
+                )
+                df[col] = df[col].map(node_id_map)
+                df["y"] = i
+            list_dfs.append(df)
+            i = i + 1
+        df = pd.concat(list_dfs)
+    else:
+        raise ValueError("Either gt_df, pos_df or neg_df must be provided")
+    return df.drop_duplicates(subset=["source", "target"])
 
 
 # FUTURE: Remove the functions once we have tags embedded in the disease list

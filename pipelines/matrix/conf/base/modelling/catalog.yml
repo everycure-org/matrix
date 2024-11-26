@@ -49,37 +49,6 @@ _model_output_ds: &_model_output_ds
     kedro-viz:
       layer: model_output
 
-modelling.raw.ground_truth.positives@pandas:
-  <<: [*_pandas_csv, *_raw_ds]
-  filepath: ${globals:paths.raw}/ground_truth/translator/${globals:data_sources.gt.version}/tp_pairs_conflated.tsv
-  load_args:
-    sep: "\t"
-  save_args:
-    sep: "\t"
-
-modelling.raw.ground_truth.positives@spark:
-  <<: [*_spark_csv, *_raw_ds]
-  filepath: ${globals:paths.raw}/ground_truth/translator/${globals:data_sources.gt.version}/tp_pairs_conflated.tsv
-  file_format: csv
-  load_args:
-    sep: "\t"
-    header: true
-
-modelling.raw.ground_truth.negatives@pandas:
-  <<: [*_pandas_csv, *_raw_ds]
-  filepath: ${globals:paths.raw}/ground_truth/translator/${globals:data_sources.gt.version}/tn_pairs_conflated.tsv
-  load_args:
-    sep: "\t"
-  save_args:
-    sep: "\t"
-
-modelling.raw.ground_truth.negatives@spark:
-  <<: [*_spark_csv, *_raw_ds]
-  filepath: ${globals:paths.raw}/ground_truth/translator/${globals:data_sources.gt.version}/tn_pairs_conflated.tsv
-  file_format: csv
-  load_args:
-    sep: "\t"
-    header: true
 
 modelling.int.known_pairs@pandas:
   <<: [*_pandas_parquet, *_model_input_ds]
