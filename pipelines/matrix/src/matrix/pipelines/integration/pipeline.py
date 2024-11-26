@@ -104,6 +104,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 inputs={
                     "datasets_to_union": "params:integration.unification.datasets_to_union",
                     "rtx": "integration.int.rtx.nodes.norm",
+                    "biolink_categories_df": "integration.raw.biolink.categories",
                     "robokop": "integration.int.robokop.nodes.norm",
                     "medical_team": "ingestion.int.ec_medical_team.nodes",
                 },
@@ -115,7 +116,6 @@ def create_pipeline(**kwargs) -> Pipeline:
                 func=nodes.union_and_deduplicate_edges,
                 inputs={
                     "datasets_to_union": "params:integration.unification.datasets_to_union",
-                    "biolink_predicates": "integration.raw.biolink.predicates",
                     "rtx": "integration.int.rtx.edges.norm",
                     "robokop": "integration.int.robokop.edges.norm",
                     "medical_team": "ingestion.int.ec_medical_team.edges",
@@ -154,7 +154,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                     "integration.prm.filtered_edges",
                 ],
                 outputs="integration.prm.filtered_nodes",
-                name="filter_prm_knowledge_graph_nodes",
+                name="filter_nodes_without_edges",
                 tags=["filtering"],
             ),
         ]
