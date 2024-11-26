@@ -1,4 +1,5 @@
 from pathlib import Path
+from subprocess import CalledProcessError
 
 import typer
 
@@ -13,7 +14,6 @@ def rotate_pk(user_email: str, key_name: str = typer.Argument(default="default")
     # this function rotates out the PK used by the repository
     # this a potentially destructive operation so we act with prudence here and prompt the user for confirmation before executing
     # However we leverage an existing community shell script here so we don't have to implement the logic ourselves
-    path = Path(get_git_root()) / "apps" / "matrix-cli" / "tools/remove-gpg-user.sh"
     user_key_id = get_gpg_key_id(user_email)
 
     # check we're not on main, this should always happen on a branch
@@ -37,7 +37,8 @@ def rotate_pk(user_email: str, key_name: str = typer.Argument(default="default")
         console.print("[bold red] Aborting")
         exit(1)
 
-    run_command(["bash", "-c", path, user_key_id, key_name], log_before=True)
+    remove_user_script = Path(get_git_root()) / "apps" / "matrix-cli" / "tools/remove-gpg-user.sh"
+    run_command(["bash", "-c", remove_user_script, user_key_id, key_name], log_before=True)
 
 
 @secrets.command(name="list")
@@ -48,8 +49,32 @@ def list(key_name: str = typer.Argument(default="default")):
     # then we list the users
     list_user_ids_with_access(key_name)
 
-@secrets.command
-def import_key(file_path: typer.Argument(de))
+
+@secrets.command(name="import-key")
+def import_key(file_path: str = typer.Argument(help="The path to the key to import")):
+    # imports a key into the keychain
+    try:
+        path = Path(file_path).expanduser()
+        stdout, stderr = run_command(f"gpg --import '{path}'", include_stderr=True)
+        console.print(stdout)
+        console.print(stderr)
+    except CalledProcessError as ex:
+        console.print(ex.stdout)
+        console.print(ex.stderr)
+        console.print("[bold red] Failed to import key")
+        exit(1)
+
+    console.print("[bold green] Key imported")
+    console.print("[bold green] Ensuring ownertrust")
+
+    # getting all fingerprints from file
+    stdout = run_command(f"gpg --with-colons --import-options show-only --import '{path}'")
+    fingerprints = [row.split(":")[9] for row in stdout.split("\n") if "fpr" in row]
+
+    for fingerprint in fingerprints:
+        console.print(f"[bold green] Ensuring ownertrust for {fingerprint}")
+        run_command(f"echo {fingerprint}:6: | gpg --import-ownertrust")
+
 
 def wipe_key_for_user_to_remove(key_name: str, user_key_id: str):
     path = Path(get_git_root()) / settings.gpg_key_path / key_name / "0" / f"{user_key_id}.gpg"
