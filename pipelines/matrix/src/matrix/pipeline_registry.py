@@ -8,6 +8,7 @@ from matrix.pipelines.evaluation.pipeline import create_pipeline as create_evalu
 from matrix.pipelines.fabricator.pipeline import create_pipeline as create_fabricator_pipeline
 from matrix.pipelines.inference.pipeline import create_pipeline as create_inference_pipeline
 from matrix.pipelines.ingestion.pipeline import create_pipeline as create_ingestion_pipeline
+from matrix.pipelines.quality_control.pipeline import create_pipeline as create_qc_pipeline
 from matrix.pipelines.integration.pipeline import create_pipeline as create_integration_pipeline
 from matrix.pipelines.matrix_generation.pipeline import create_pipeline as create_matrix_pipeline
 from matrix.pipelines.modelling.pipeline import create_pipeline as create_modelling_pipeline
@@ -27,6 +28,7 @@ def register_pipelines() -> Dict[str, Pipeline]:
         "fabricator": create_fabricator_pipeline(),
         "ingestion": create_ingestion_pipeline(),
         "integration": create_integration_pipeline(),
+        "quality_control": create_qc_pipeline(),
         "embeddings": create_embeddings_pipeline(),
         "data_release": create_data_release_pipeline(),
         "modelling": create_modelling_pipeline(),
@@ -63,6 +65,8 @@ def register_pipelines() -> Dict[str, Pipeline]:
     )
     pipelines["ekc_test"] = (
           pipelines["ingestion"]
+        + pipelines["integration"]
+        + pipelines["quality_control"]
     )
     # fmt: on
 

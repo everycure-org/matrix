@@ -79,26 +79,6 @@ def create_pipeline(**kwargs) -> Pipeline:
                 ],
                 name="normalize_robokop_kg",
             ),
-            #################
-            # TODO ADD 1st QC step here.
-            #  this is just for robokop right now. I want to do all sources. Does this have to be run on
-            #  separate nodes per source?
-            #  if so, how do I collect data run on several nodes into one csv/tsv file
-            #  I want to write out data to csv/tsv file so Kevin can read in to evidence.dev where should the csv
-            #  file be stored?
-            # Write out information for evidence.dev here
-            # node(
-            #    func=qc.metrics,
-            #    inputs={
-            #        "nodes": "integration.int.robokop.nodes",
-            #        "edges": "integration.int.robokop.edges",
-            #        "norm_nodes": "integration.int.robokop.nodes.norm",
-            #        "norm_edges": "integration.int.robokop.edges.norm",
-            #    },
-            #    outputs="integration.int.qc.results",
-            #    name="qc_check1",
-            # ),
-            #################
             node(
                 func=nodes.union_and_deduplicate_nodes,
                 inputs={

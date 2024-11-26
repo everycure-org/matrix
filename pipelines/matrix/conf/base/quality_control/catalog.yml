@@ -1,0 +1,37 @@
+_pandas_csv: &_pandas_csv
+  type:  pandas.CSVDataset
+
+_drug_disease_sheets_dataset: &_drug_disease_sheets_dataset
+  type: matrix.datasets.gcp.GoogleSheetsDataset
+  key: 1NUBiI_RTNEDyGX2sovXd5qjRmkvwiusQdkxEPC0lar4
+  service_file: conf/local/service-account.json
+
+_spark_parquet_ds: &_spark_parquet
+  type: matrix.datasets.gcp.LazySparkDataset
+  file_format: parquet
+  save_args:
+    mode: overwrite
+
+_spark_csv: &_spark_csv
+  type: spark.SparkDataset
+  file_format: csv
+  load_args:
+    header: True
+  save_args:
+    mode: overwrite
+
+_layer_raw: &_layer_raw
+  metadata:
+    kedro-viz:
+      layer: raw
+
+_layer_int: &_layer_int
+  metadata:
+    kedro-viz:
+      layer: integration
+
+# QC Results
+qc.int.{source}.qc_results:
+  <<: [*_spark_parquet, *_layer_int]
+  filepath: ${globals:paths.qc}/int/{source}/qc_results
+
