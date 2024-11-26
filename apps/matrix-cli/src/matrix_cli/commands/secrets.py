@@ -1,3 +1,4 @@
+import re
 from pathlib import Path
 from subprocess import CalledProcessError
 
@@ -51,6 +52,31 @@ def list(key_name: str = typer.Argument(default="default")):
     import_all_keys_into_keychain()
     # then we list the users
     list_user_ids_with_access(key_name)
+
+
+@secrets.command(name="sync-pks")
+def sync_pks(key_name: str = typer.Argument(help="The key to sync the users for")):
+    """Synchronizes the public keys of the users with the keys in the repository.
+
+    This command will iterate over all users that have access to the given key and ensure their public keys are present in the repository.
+    """
+    user_ids = get_user_ids_for_key(key_name)
+
+    # usernames are somename <email@domain.com>, we care only about the email
+    email_regex = r"<(.+@.+)>"
+
+    for user_id in user_ids:
+        # get the email for the user
+        username_string = get_username_for_id(user_id)
+        try:
+            email = re.search(email_regex, username_string).group(1)
+        except Exception:
+            console.print(f"[bold red] Could not find email for {user_id}")
+            continue
+        filename = Path(get_git_root()) / settings.gpg_public_key_path / f"{email}.asc"
+        # export the key of the user to a .asc file in the target_key directory
+        console.print(f"[bold green] Exporting key for {email} to {filename}")
+        run_command(["gpg", "--export", "--armor", "--output", str(filename), email], log_before=True)
 
 
 @secrets.command(name="import-key")
@@ -147,12 +173,7 @@ def import_all_keys_into_keychain():
 
 def list_user_ids_with_access(key_name: str):
     # lists the user IDs with access to the given key
-    base_path = Path(get_git_root()) / settings.gpg_key_path / key_name / "0"
-    console.print(f"[bold green] Listing user IDs with access to {key_name} in path {base_path}")
-    # NOTE: This function was partially generated using AI assistance.
-    # Get list of files in directory
-    files = [f.stem for f in base_path.glob("*")]
-    console.print
+    files = get_user_ids_for_key(key_name)
 
     # Call gpg --list-keys for each file
     for user_id in files:
@@ -164,6 +185,14 @@ def list_user_ids_with_access(key_name: str):
                 console.print(f"- {username}")
         except Exception:
             console.print(f"[bold red]Warning: Could not find key for {user_id}")
+
+
+def get_user_ids_for_key(key_name):
+    base_path = Path(get_git_root()) / settings.gpg_key_path / key_name / "0"
+    console.print(f"[bold green] Listing user IDs with access to {key_name} in path {base_path}")
+    # Get list of files in directory
+    files = [f.stem for f in base_path.glob("*")]
+    return files
 
 
 def get_username_for_id(user_id: str):
