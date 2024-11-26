@@ -1,6 +1,11 @@
 from kedro.pipeline import Pipeline, node, pipeline
+from matrix.kedro4argo_node import ArgoNode, ArgoResourceConfig
 
 from . import nodes
+
+
+def select(df):
+    return df.select("id", "name", "category", "pca_embedding")
 
 
 def create_pipeline(**kwargs) -> Pipeline:
@@ -33,7 +38,7 @@ def create_pipeline(**kwargs) -> Pipeline:
             ),
             # Reduce dimension
             node(
-                func=nodes.reduce_dimension,
+                func=nodes.reduce_embeddings_dimension,
                 inputs={
                     "df": "embeddings.feat.graph.node_embeddings@spark",
                     "unpack": "params:embeddings.dimensionality_reduction",
@@ -44,7 +49,7 @@ def create_pipeline(**kwargs) -> Pipeline:
             ),
             # Load spark dataset into local neo instance
             node(
-                func=lambda x: x.select("id", "name", "category", "pca_embedding"),
+                func=select,
                 inputs=["embeddings.feat.graph.pca_node_embeddings"],
                 outputs="embeddings.tmp.input_nodes",
                 name="ingest_neo4j_input_nodes",
@@ -54,7 +59,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                     "argowf.template-neo4j",
                 ],
             ),
-            node(
+            ArgoNode(
                 func=nodes.ingest_edges,
                 inputs=[
                     "embeddings.tmp.input_nodes",
@@ -67,6 +72,13 @@ def create_pipeline(**kwargs) -> Pipeline:
                     "argowf.fuse-group.topological_embeddings",
                     "argowf.template-neo4j",
                 ],
+                # FUTURE: Ensure we define "packages / tshirt size standard configurations" for resources
+                argo_config=ArgoResourceConfig(
+                    cpu_request=48,
+                    cpu_limit=48,
+                    memory_limit=192,
+                    memory_request=120,
+                ),
             ),
             node(
                 func=nodes.add_include_in_topological,
@@ -117,7 +129,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                     "argowf.template-neo4j",
                 ],
             ),
-            # extracts the nodes from neo4j and writes them to BigQuery
+            # extracts the nodes from neo4j
             node(
                 func=nodes.extract_node_embeddings,
                 inputs={

@@ -18,7 +18,7 @@ integration:
     datasets_to_union:
       - rtx
       - medical_team
-      - robokop
+      # - robokop
 
   filtering:
     node_filters:
@@ -50,8 +50,10 @@ integration:
           - biolink:Procedure
           - biolink:Publication
           - biolink:Treatment
+          # If you add anything here make sure the fabricator is not generating it, else we remove it
     edge_filters:
+      # FUTURE: Ensure the semmed filter is moved here instead
       filter_biolink_edges:
         object: matrix.pipelines.modelling.utils.partial_
         func:
-          object: matrix.pipelines.integration.filters.biolink_deduplicate
+          object: matrix.pipelines.integration.filters.biolink_deduplicate_edges

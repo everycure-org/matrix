@@ -1,4 +1,5 @@
 import os
+import logging
 import re
 import asyncio
 from tqdm import tqdm
@@ -20,12 +21,10 @@ from kedro_datasets.spark import SparkDataset, SparkJDBCDataset
 from kedro_datasets.spark.spark_dataset import _get_spark, _split_filepath, _strip_dbfs_prefix
 from matrix.hooks import SparkHooks
 from pygsheets import Spreadsheet, Worksheet
-from pyspark.sql import DataFrame, SparkSession
+from pyspark.sql import DataFrame
 from refit.v1.core.inject import _parse_for_objects
 
-
-def sanitize_bq_strings(identifier: str) -> str:
-    return re.sub(r"[^a-zA-Z0-9_]", "_", str(identifier))
+logger = logging.getLogger(__name__)
 
 
 class LazySparkDataset(SparkDataset):
@@ -81,24 +80,22 @@ class SparkWithSchemaDataset(SparkDataset):
         )
 
 
-class BigQueryTableDataset(SparkDataset):
-    """Dataset to load and save data from BigQuery.
+class SparkDatasetWithBQExternalTable(LazySparkDataset):
+    """Spark Dataset that produces a BigQuery external table as a side output.
 
-    Kedro dataset to load and write data from BigQuery. This is essentially a wrapper
-    for the [BigQuery Spark Connector](https://github.com/GoogleCloudDataproc/spark-bigquery-connector)
+    The class delegates dataset save and load invocations to the native SparkDataset, and registers the
+    dataset into BigQuery through External Data Configuration. This means that the dataset is visible in BQ, but we do not incur unnecessary costs for BQ IO.
     """
-
-    # parquet does not support arrays (our embeddings)
-    # https://github.com/GoogleCloudDataproc/spark-bigquery-connector/issues/101
-    DEFAULT_SAVE_ARGS = {"intermediateFormat": "orc"}
 
     def __init__(  # noqa: PLR0913
         self,
         *,
+        filepath: str,
         project_id: str,
         dataset: str,
         table: str,
-        identifier: str = None,
+        file_format: str,
+        identifier: Optional[str] = None,
         load_args: dict[str, Any] = None,
         save_args: dict[str, Any] = None,
         version: Version = None,
@@ -110,9 +107,11 @@ class BigQueryTableDataset(SparkDataset):
 
         Args:
             project_id: project identifier.
+            filepath: filepath to write to
             dataset: Name of the BigQuery dataset.
             table: name of the table.
             identifier: unique identfier of the table.
+            file_format: file format to use
             load_args: Arguments to pass to the load method.
             save_args: Arguments to pass to the save
             version: Version of the dataset.
@@ -121,12 +120,18 @@ class BigQueryTableDataset(SparkDataset):
             kwargs: Keyword Args passed to parent.
         """
         self._project_id = project_id
-        self._dataset = sanitize_bq_strings(dataset)
+        self._path = filepath
+        self._format = file_format
+        self._labels = save_args.pop("labels", {})
 
-        self._table = sanitize_bq_strings("_".join([table, identifier] if identifier else [table]))
+        self._table = self._sanitize_name("_".join(el for el in [table, identifier] if el is not None))
+        self._dataset_id = f"{self._project_id}.{self._sanitize_name(dataset)}"
+
+        self._client = bigquery.Client(project=self._project_id)
 
         super().__init__(
-            filepath="filepath",
+            filepath=filepath,
+            file_format=file_format,
             save_args=save_args,
             load_args=load_args,
             credentials=credentials,
@@ -135,37 +140,46 @@ class BigQueryTableDataset(SparkDataset):
             **kwargs,
         )
 
-    def _load(self) -> Any:
-        # DEBT potentially a better way would be to globally overwrite the getOrCreate() call in the spark library and link back to SparkSession
-        SparkHooks._initialize_spark()
-        spark_session = SparkSession.builder.getOrCreate()
-
-        return spark_session.read.format("bigquery").load(f"{self._project_id}.{self._dataset}.{self._table}")
-
     def _save(self, data: DataFrame) -> None:
-        bq_client = bigquery.Client(project=self._project_id)
-        dataset_id = f"{self._project_id}.{self._dataset}"
+        # Invoke saving of the underlying spark dataset
+        super()._save(data)
 
-        # Check if the dataset exists
+        # Ensure dataset exists
+        self._create_dataset()
+
+        # Create external table, referencing the dataset in object storage
+        external_config = bigquery.ExternalConfig(self._format.upper())
+        external_config.source_uris = [f"{self._path}/*.{self._format}"]
+
+        # Register the external table within BigQuery
+        table = bigquery.Table(f"{self._dataset_id}.{self._table}")
+        table.labels = self._labels
+        table.external_data_configuration = external_config
+        table = self._client.create_table(table, exists_ok=False)
+
+    def _create_dataset(self) -> str:
         try:
-            bq_client.get_dataset(dataset_id)
-            print(f"Dataset {dataset_id} already exists")
+            self._client.get_dataset(self._dataset_id)
+            logger.info(f"Dataset {self._dataset_id} already exists")
         except exceptions.NotFound:
-            print(f"Dataset {dataset_id} is not found, will attempt creating it now.")
+            logger.info(f"Dataset {self._dataset_id} is not found, will attempt creating it now.")
 
             # Dataset doesn't exist, so let's create it
-            dataset = bigquery.Dataset(dataset_id)
-            # dataset.location = "US"  # Specify the location, e.g., "US" or "EU"
+            dataset = bigquery.Dataset(self._dataset_id)
 
-            dataset = bq_client.create_dataset(dataset, timeout=30)
-            print(f"Created dataset {self._project_id}.{dataset.dataset_id}")
+            dataset = self._client.create_dataset(dataset, timeout=30)
+            logger.info(f"Created dataset {self._project_id}.{dataset.dataset_id}")
 
-        (
-            data.write.format("bigquery")
-            .options(**self._save_args)
-            .mode("overwrite")
-            .save(f"{self._project_id}.{self._dataset}.{self._table}")
-        )
+    @staticmethod
+    def _sanitize_name(name: str) -> str:
+        """Function to sanitize BigQuery table or dataset identifiers.
+
+        Args:
+            name: str
+        Returns:
+            Sanitized name
+        """
+        return re.sub(r"[^a-zA-Z0-9_]", "_", str(name))
 
 
 class GoogleSheetsDataset(AbstractVersionedDataset[pd.DataFrame, pd.DataFrame]):
@@ -345,11 +359,11 @@ class RemoteSparkJDBCDataset(SparkJDBCDataset):
         blob = bucket.blob(self._blob_name)
 
         if not os.path.exists(self._blob_name):
-            print("downloading file to local")
+            logger.info("downloading file to local")
             os.makedirs(self._blob_name.rsplit("/", maxsplit=1)[0], exist_ok=True)
             blob.download_to_filename(self._blob_name)
         else:
-            print("file present skipping")
+            logger.info("file present skipping")
 
         return super()._load()
 
@@ -401,7 +415,7 @@ class PartitionedAsyncParallelDataset(PartitionedDataset):
                     # Save the partition data
                     dataset.save(partition_data)
                 except Exception as e:
-                    print(f"Error in process_partition with partition {partition_id}: {e}")
+                    logger.error(f"Error in process_partition with partition {partition_id}: {e}")
                     raise
 
         # Define function to run asyncio tasks within a synchronous function
@@ -424,10 +438,10 @@ class PartitionedAsyncParallelDataset(PartitionedDataset):
                         try:
                             await asyncio.wait_for(task, timeout)
                         except asyncio.TimeoutError as e:
-                            print(f"Timeout error: partition processing took longer than {timeout} seconds.")
+                            logger.error(f"Timeout error: partition processing took longer than {timeout} seconds.")
                             raise e
                         except Exception as e:
-                            print(f"Error processing partition in tqdm loop: {e}")
+                            logger.error(f"Error processing partition in tqdm loop: {e}")
                             raise e
                         finally:
                             progress_bar.update(1)
