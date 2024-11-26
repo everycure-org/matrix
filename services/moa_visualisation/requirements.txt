@@ -1,0 +1,4 @@
+streamlit>=1.39.0
+pandas>=2.2.3
+streamlit-flow-component>=0.6.0
+sqlalchemy>=2.0.36
