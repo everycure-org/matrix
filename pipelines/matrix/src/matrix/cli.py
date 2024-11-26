@@ -1,6 +1,7 @@
 import click
 from kedro.framework.cli.utils import CONTEXT_SETTINGS, KedroCliError
 
+from matrix.cli_commands.extract import extract
 from matrix.cli_commands.run import run
 from matrix.cli_commands.submit import submit
 
@@ -11,7 +12,7 @@ def cli():
 
 
 cli.add_command(submit)
-
+cli.add_command(extract)
 cli.add_command(run)
 
 if __name__ == "__main__":
