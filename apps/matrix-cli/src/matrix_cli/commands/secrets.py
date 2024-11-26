@@ -48,6 +48,8 @@ def list(key_name: str = typer.Argument(default="default")):
     # then we list the users
     list_user_ids_with_access(key_name)
 
+@secrets.command
+def import_key(file_path: typer.Argument(de))
 
 def wipe_key_for_user_to_remove(key_name: str, user_key_id: str):
     path = Path(get_git_root()) / settings.gpg_key_path / key_name / "0" / f"{user_key_id}.gpg"
