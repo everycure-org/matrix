@@ -74,12 +74,16 @@ def run_command(
     if isinstance(command, str):
         # ensures we have an array but allow user to pass in string (for f-string style submission)
         command = shlex.split(command)
-    if log_before:
-        console.print(" ".join(command))
 
     if len(command) == 0:
         console.print("Command is empty... Exiting")
         exit(1)
+
+    # enforcing everything is a string, sometimes we use posixpaths
+    command = [str(item) for item in command]
+
+    if log_before:
+        console.print(" ".join(command))
 
     result = subprocess.run(command, check=check, capture_output=True, text=True, cwd=cwd)
     if include_stderr:
