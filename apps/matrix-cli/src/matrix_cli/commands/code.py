@@ -10,8 +10,6 @@ from matrix_cli.components.utils import console, get_git_root, get_markdown_cont
 
 app = typer.Typer(help="Code-related utility commands", no_args_is_help=True)
 
-# use git diff patterns here
-
 
 @app.command()
 def catchup(
@@ -19,29 +17,7 @@ def catchup(
         ..., help="Git reference (SHA, tag, branch) to diff from, or time expression (e.g., '2 weeks ago')"
     ),
     until: str = typer.Option("origin/main", help="Git reference to diff to (default: origin/main)"),
-    model: str = typer.Option(settings.base_model, help="Model to use for release article generation"),
-    disable_rendering: bool = typer.Option(False, help="Disable rendering of the code diff"),
-):
-    """Show code changes since a specific git reference or timeframe."""
-    try:
-        diff = get_code_diff(since, until)
-    except Exception as e:
-        console.print(f"[bold red]Error: {str(e)}")
-        raise typer.Exit(1)
-
-    if not disable_rendering:
-        rprint(Markdown(diff))
-    else:
-        console.print(diff)
-
-
-@app.command(name="ai-catchup")
-def ai_catchup(
-    since: str = typer.Argument(
-        ..., help="Git reference (SHA, tag, branch) to diff from, or time expression (e.g., '2 weeks ago')"
-    ),
-    until: str = typer.Option("origin/main", help="Git reference to diff to (default: origin/main)"),
-    model: str = typer.Option(settings.base_model, help="Model to use for release article generation"),
+    model: str = typer.Option(settings.base_model, help="Language Model to use"),
     disable_rendering: bool = typer.Option(False, help="Disable rendering of the summary"),
 ):
     """Uses AI to summarize code changes since a specific git reference or timeframe."""
@@ -56,7 +32,7 @@ def ai_catchup(
 @app.command()
 def pr_summary(
     pr_number: int,
-    model: str = typer.Option(settings.base_model, help="Model to use for PR summary generation"),
+    model: str = typer.Option(settings.base_model, help="Language Model to use"),
     question: str = typer.Option(None, help="Question to ask about the PR"),
     disable_rendering: bool = typer.Option(False, help="Disable rendering of the summary"),
 ):
@@ -64,10 +40,10 @@ def pr_summary(
 
     console.print(f"[green]Fetching PR #{pr_number} details...")
 
-    # Use existing utility to fetch PR details
-    pr_info = fetch_pr_detail_nocache(pr_number)
-    if not pr_info:
-        console.print(f"[bold red]Error: Could not fetch PR #{pr_number}")
+    try:
+        pr_info = fetch_pr_detail_nocache(pr_number)
+    except Exception as e:
+        console.print(f"[bold red]Error: Could not fetch PR #{pr_number}: {e}")
         raise typer.Exit(1)
 
     prompt = f"""Please provide a comprehensive summary of this Pull Request.

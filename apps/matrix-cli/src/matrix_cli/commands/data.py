@@ -1,54 +1,55 @@
 import os
 import subprocess
 from pathlib import Path
+from typing import Dict
 
 import typer
 
 from matrix_cli.components.settings import settings
 from matrix_cli.components.utils import console
 
-data_app = typer.Typer(help="Data-related utility commands", no_args_is_help=True)
-raw_app = typer.Typer(help="Raw data-related utility commands", no_args_is_help=True)
-
-data_app.add_typer(
-    raw_app,
-    name="raw",
-    help="Raw data-related utility commands",
+data_app = typer.Typer(
+    help="Data-related utility commands, inspired by the kaggle dataset download CLI", no_args_is_help=True
 )
 
 
-@raw_app.command()
-def pull(
+@data_app.command()
+def download(
+    data_type: str = typer.Argument(..., default="raw", help="Data type to pull"),
     target_dir: str = typer.Argument(..., help="Target directory to pull raw data to"),
     dry_run: bool = typer.Option(False, help="Dry run the synchronization"),
 ):
     """Pull raw data down to the local machine."""
     # prep paths
-    raw_path = Path(target_dir) / "data/01_RAW"
-    kedro_raw_path = Path(target_dir) / "kedro/data/01_raw"
+    data_paths = _get_data_path(data_type, target_dir)
 
-    # check that we're in the pipeline root directory, else give warning
+    _check_if_in_root_else_give_warning()
+
+    try:
+        for gcs_uri, local_dir in data_paths.items():
+            os.makedirs(local_dir, exist_ok=True)
+            sync_gcs_to_local(gcs_uri, local_dir, dry_run)
+    except Exception as e:
+        console.print(f"[bold red]Error: {e}")
+        raise typer.Exit(1)
+
+
+def _check_if_in_root_else_give_warning():
     if not (Path.cwd() / "conf").exists():
         console.print(
             "[bold yellow]Warning: You are not in the pipeline root directory. This command is intended to be run from the pipeline root directory. Are you sure you want to continue?"
         )
         typer.confirm("Continue?", abort=True)
 
-    try:
-        os.makedirs(raw_path, exist_ok=True)
-        os.makedirs(kedro_raw_path, exist_ok=True)
-    except Exception as e:
-        console.print(f"[bold red]Error: {e}")
-        raise typer.Exit(1)
 
-    gs_raw_uri = f"{settings.gcs_base_uri}/data/01_RAW"
-    gs_kedro_raw_uri = f"{settings.gcs_base_uri}/kedro/data/01_raw"
+def _get_data_path(data_type: str, target_dir: str) -> Dict[str, Path]:
+    # currently only support raw
+    if data_type == "raw":
+        paths = settings.raw_paths
+        return {f"{settings.gcs_base_uri}/{path}": Path(target_dir) / path for path in paths}
 
-    # trigger downloads
-    console.print(f"[bold green]Synchronizing raw data from {gs_raw_uri} to {raw_path}")
-    sync_gcs_to_local(gs_raw_uri, raw_path, dry_run)
-    console.print(f"[bold green]Synchronizing raw data from {gs_kedro_raw_uri} to {kedro_raw_path}")
-    sync_gcs_to_local(gs_kedro_raw_uri, kedro_raw_path, dry_run)
+    # finally
+    raise ValueError(f"Unsupported data type: {data_type}")
 
 
 def sync_gcs_to_local(gcs_uri, local_dir, dry_run=False):
