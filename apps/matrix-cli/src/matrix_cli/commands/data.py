@@ -15,7 +15,7 @@ data_app = typer.Typer(
 
 @data_app.command()
 def download(
-    data_type: str = typer.Argument(..., default="raw", help="Data type to pull"),
+    data_type: str = typer.Argument(default="raw", help="Data type to pull"),
     target_dir: str = typer.Argument(..., help="Target directory to pull raw data to"),
     dry_run: bool = typer.Option(False, help="Dry run the synchronization"),
 ):
