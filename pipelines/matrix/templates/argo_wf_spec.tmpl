@@ -124,6 +124,9 @@ spec:
             configMapKeyRef:
               name: matrix-config
               key: GCP_BUCKET
+        - name: NUM_CPU
+          value: {% raw %} '{{workflow.parameters.cpu_limit}}'
+          {% endraw %}
       command: [kedro]
       args: ["run", "-p", "{{ pipeline_name }}", "-e", {% raw %}"{{workflow.parameters.env}}"{% endraw %}, "-n", {% raw %}"{{inputs.parameters.kedro_nodes}}"{% endraw %}]
 
@@ -204,7 +207,7 @@ spec:
         - name: NEO4J_dbms_memory_heap_initial__size
           value: "100G"
         - name: NEO4J_dbms_memory_heap_max__size
-          value: "100G"
+          value: "120G" # TODO: How do we pass this in w/o Gi
 
   - name: pipeline
     dag:
