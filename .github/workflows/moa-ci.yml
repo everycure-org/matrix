@@ -51,7 +51,7 @@ jobs:
     # if: needs.paths_filter.outputs.changed == 'true' && (github.event.pull_request.draft == false || github.ref == 'refs/heads/main')
     defaults:
       run:
-        working-directory: ./services/moa-visualizer/
+        working-directory: ./services/moa-visualizer
     steps:
       - uses: actions/checkout@v4
         with: 
