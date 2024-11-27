@@ -24,7 +24,7 @@ spec:
         volumeMounts:
         - name: shared-data
           mountPath: /data
-        env: &_env
+        env:
           # TODO: We can update the following env variable to
           # allow viewer leverages a new dataset
           - name: DATA_INPUT_PATH
