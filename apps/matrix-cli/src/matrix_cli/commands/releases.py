@@ -31,8 +31,6 @@ app = typer.Typer(
     help="Manage releases and release notes",
     no_args_is_help=True,
 )
-WORKERS = 8
-MODEL = "gpt-4o-mini"
 
 
 @app.command(name="article")

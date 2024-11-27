@@ -1,11 +1,12 @@
 #!/usr/bin/python
 # requires typer, tqdm, requests
-import typer
-import sys
-from tqdm import tqdm
 import subprocess
+import sys
 
-app = typer.Typer()
+import typer
+from tqdm import tqdm
+
+app = typer.Typer(help="GitHub user management commands", no_args_is_help=True)
 
 GITHUB_API_URL = "https://api.github.com"
 
