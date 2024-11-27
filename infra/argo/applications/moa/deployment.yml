@@ -40,7 +40,8 @@ spec:
         ports:
         - containerPort: 8501
         env:
-          <<: *_env
+          - name: MOA_DB_PATH
+            value: "/data/moa_extraction.db"
         volumeMounts:
         - name: shared-data
           mountPath: /data
