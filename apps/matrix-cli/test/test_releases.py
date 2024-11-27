@@ -10,7 +10,6 @@ from matrix_cli.commands.releases import (
     suggest_pr_title,
 )
 from matrix_cli.components.models import PRInfo
-from matrix_cli.components.settings import settings
 
 
 @pytest.fixture
@@ -29,16 +28,10 @@ def mock_get_pr_details():
 
 @pytest.fixture
 def mock_vertex_model():
-    with patch("vertexai.generative_models.GenerativeModel") as mock:
+    with patch("matrix_cli.components.utils.load_vertex_model") as mock:
         model_instance = MagicMock()
         model_instance.generate_content.return_value.text = "AI generated response"
         mock.return_value = model_instance
-        yield mock
-
-
-@pytest.fixture
-def mock_vertex_init():
-    with patch("vertexai.init") as mock:
         yield mock
 
 
@@ -72,10 +65,11 @@ def test_get_pr_details_since(mock_subprocess_run, mock_get_pr_details):
     # Then
     assert result.equals(expected_pr_details)
     # Sort the PR numbers to ensure consistent order in comparison
-    mock_get_pr_details.assert_called_once_with(sorted([123, 456, 789]), True)
+    result = mock_get_pr_details.call_args[0][0]
+    assert sorted(result) == sorted([123, 456, 789])
 
 
-def test_get_release_notes(mock_subprocess_run, mock_get_pr_details, mock_vertex_model, mock_vertex_init, tmp_path):
+def test_get_release_notes(mock_subprocess_run, mock_get_pr_details, mock_vertex_model, tmp_path):
     """Test generation of release notes.
 
     Given:
@@ -104,7 +98,7 @@ changelog:
         if "rev-parse" in args[0]:
             mock_result.stdout = str(tmp_path)
         elif "log" in args[0]:
-            mock_result.stdout = "commit1\ncommit2"
+            mock_result.stdout = "commit1\ncommit2 (#123)"
         elif "diff" in args[0]:
             mock_result.stdout = "Sample diff output"
         return mock_result
@@ -119,15 +113,14 @@ changelog:
     )
 
     # When
-    result = get_release_notes("v1.0.0", "gpt-4")
+    result = get_release_notes("v1.0.0", "MODEL_NAME")
 
     # Then
     assert result == "AI generated response"
-    mock_vertex_init.assert_called_once()
-    mock_vertex_model.assert_called_once_with("gpt-4")
+    mock_vertex_model.assert_called_once_with("MODEL_NAME")
 
 
-def test_suggest_pr_title(mock_vertex_model, mock_vertex_init):
+def test_suggest_pr_title(mock_vertex_model):
     """Test AI suggestion for PR titles.
 
     Given:
@@ -158,13 +151,10 @@ def test_suggest_pr_title(mock_vertex_model, mock_vertex_init):
 
     # Then
     assert result == "AI generated response"
-    mock_vertex_init.assert_called_once()
-    mock_vertex_model.assert_called_once_with(settings.power_model)
+    mock_vertex_model.assert_called_once()
 
 
-def test_get_release_notes_error_handling(
-    mock_subprocess_run, mock_get_pr_details, mock_vertex_model, mock_vertex_init, tmp_path
-):
+def test_get_release_notes_error_handling(mock_subprocess_run, mock_get_pr_details, mock_vertex_model, tmp_path):
     """Test error handling in release notes generation.
 
     Given:

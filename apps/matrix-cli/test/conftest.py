@@ -2,6 +2,7 @@ from pathlib import Path
 from unittest.mock import MagicMock
 
 import pytest
+from matrix_cli.components.cache import memory
 
 
 @pytest.fixture
@@ -37,3 +38,10 @@ def mock_rprint(monkeypatch):
     mock_print = MagicMock()
     monkeypatch.setattr("matrix_cli.commands.code.rprint", mock_print)
     return mock_print
+
+
+# ensures we always have a fresh joblib cache
+@pytest.fixture(scope="function", autouse=True)
+def mock_joblib_cache():
+    """Mock joblib cache."""
+    memory.clear()
