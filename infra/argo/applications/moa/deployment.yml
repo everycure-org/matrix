@@ -28,10 +28,10 @@ spec:
           # TODO: We can update the following env variable to
           # allow viewer leverages a new dataset
           - name: DATA_INPUT_PATH
-            value: "gs://silc-storage/moa_vis/"
+            value: "gs://mtrx-us-central1-hub-dev-storage/moa"
           # TODO: We should have data in matrix-hub instead
           - name: GCP_PROJECT
-            value: "project-silc"
+            value: "mtrx-hub-dev-3of"
       containers:
       - name: moa-viewer
         image: us-central1-docker.pkg.dev/mtrx-hub-dev-3of/matrix-images/moa_visualizer:laurens
