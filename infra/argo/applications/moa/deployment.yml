@@ -24,7 +24,7 @@ spec:
         volumeMounts:
         - name: shared-data
           mountPath: /data
-        env:
+        env: &_env
           # TODO: We can update the following env variable to
           # allow viewer leverages a new dataset
           - name: DATA_INPUT_PATH
@@ -39,6 +39,8 @@ spec:
         image: us-central1-docker.pkg.dev/mtrx-hub-dev-3of/matrix-images/moa_visualizer:laurens
         ports:
         - containerPort: 8501
+        env:
+          <<: *_env
         volumeMounts:
         - name: shared-data
           mountPath: /data
