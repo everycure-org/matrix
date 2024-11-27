@@ -16,7 +16,7 @@ def catchup(
     since: str = typer.Argument(
         ..., help="Git reference (SHA, tag, branch) to diff from, or time expression (e.g., '2 weeks ago')"
     ),
-    until: str = typer.Option("origin/main", help="Git reference to diff to (default: origin/main)"),
+    until: str = typer.Option(default="origin/main", help="Git reference to diff to (default: origin/main)"),
     model: str = typer.Option(settings.base_model, help="Language Model to use"),
     disable_rendering: bool = typer.Option(False, help="Disable rendering of the summary"),
 ):
