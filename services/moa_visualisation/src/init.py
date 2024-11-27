@@ -3,15 +3,13 @@ import sqlite3
 import os
 from google.cloud import storage
 
-DATA_INPUT_PATH = "gs://silc-storage/moa_vis/"
-MOA_DB_PATH = "data/moa_extraction.db"
+DATA_INPUT_PATH = os.environ.get("DATA_INPUT_PATH", "gs://silc-storage/moa_vis/")
+MOA_DB_PATH = os.environ.get("MOA_DB_PATH", "data/moa_extraction.db")
+GCP_PROJECT = os.environ.get("GCP_PROJECT", "project-silc")
 
 
 def main():
-    os.environ["DATA_INPUT_PATH"] = DATA_INPUT_PATH
-    os.environ["MOA_DB_PATH"] = MOA_DB_PATH
-
-    client = storage.Client()  # define project here - where is this from
+    client = storage.Client(project=GCP_PROJECT)  # define project here - where is this from
     blobs = client.list_blobs(DATA_INPUT_PATH)
     for blob in blobs:
         # Read from GS
