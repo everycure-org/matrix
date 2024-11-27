@@ -204,7 +204,6 @@ def prepare_release(
     typer.echo("- Modify 'new_title' column to change PR titles")
     typer.echo("- Modify 'new_labels' column to change PR labels (comma-separated)")
 
-    # Open the file automatically
     open_file_in_desktop_application(output_file)
 
     # Wait for user to edit the Excel file
