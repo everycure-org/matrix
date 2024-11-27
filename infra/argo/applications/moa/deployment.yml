@@ -32,6 +32,8 @@ spec:
           # TODO: We should have data in matrix-hub instead
           - name: GCP_PROJECT
             value: "mtrx-hub-dev-3of"
+          - name: MOA_DB_PATH
+            value: "/data/moa_extraction.db"
       containers:
       - name: moa-viewer
         image: us-central1-docker.pkg.dev/mtrx-hub-dev-3of/matrix-images/moa_visualizer:laurens
