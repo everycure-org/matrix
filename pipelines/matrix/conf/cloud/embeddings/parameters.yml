@@ -1,2 +1,3 @@
 embeddings.topological_estimator:
+    # NOTE: Grabs num CPUs from env
     concurrency: ${oc.env:NUM_CPU}
