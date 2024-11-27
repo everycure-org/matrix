@@ -1,5 +1,5 @@
 TARGET_PLATFORM ?= linux/amd64
-dev_docker_image = us-central1-docker.pkg.dev/mtrx-hub-dev-3of/matrix-images/matrix
+dev_docker_image = us-central1-docker.pkg.dev/mtrx-hub-dev-3of/matrix-images/moa-visualizer
 GIT_SHA ?= $(shell git rev-parse --short HEAD)
 
 docker_build:

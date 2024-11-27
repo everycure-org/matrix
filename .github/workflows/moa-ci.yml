@@ -42,7 +42,7 @@ jobs:
         with:
           filters: |
             src:
-              - services/moa_visualisation/**
+              - services/moa-visualizer/**
               - .github/workflows/moa-ci.yml
 
   ci:
