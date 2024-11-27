@@ -131,3 +131,10 @@ embeddings.topological_pca:
   transformer:
     object: pyspark.ml.feature.PCA
     k: 2
+
+embeddings.topological.pecanpy_node2vec:
+  num_walks: 10
+  walk_length: 10
+  feature_dim: 50
+  p: 1
+  q: 1

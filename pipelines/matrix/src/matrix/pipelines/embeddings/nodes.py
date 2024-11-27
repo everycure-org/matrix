@@ -392,13 +392,8 @@ def write_topological_embeddings(
     return {"success": "true"}
 
 
-def obtain_node2vec_pecanpy_embeddings():
+def obtain_node2vec_pecanpy_embeddings(num_walks, walk_length, feature_dim, p, q):
     ##PARAMS
-    num_walks = 10
-    walk_length = 10
-    feature_dim = 50
-    p = 1
-    q = 1
     g = pecanpy.SparseOTF(p=p, q=q, workers=4, verbose=True)
     print("graph precomposition done")
 

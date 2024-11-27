@@ -113,7 +113,7 @@ def create_pipeline(**kwargs) -> Pipeline:
             ),
             node(
                 func= nodes.obtain_node2vec_pecanpy_embeddings,
-                inputs =None,
+                inputs ={"unpack": "params:embeddings.topological.pecanpy_node2vec"},
                 outputs = "embeddings.model_output.pecanpy_node2vec",
                 name = "obtain_node2vec_pecanpy_embeddings"
             ),
