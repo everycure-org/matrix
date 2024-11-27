@@ -18,6 +18,7 @@ module "project_iam_bindings" {
     "roles/artifactregistry.writer"   = local.tech_team_group
     "roles/storage.objectCreator"     = local.tech_team_group
     "roles/container.clusterAdmin"    = local.tech_team_group
+    "roles/container.developer"       = local.tech_team_group
     "roles/viewer"                    = local.matrix_viewers_group
     "roles/bigquery.jobUser"          = local.matrix_viewers_group
     "roles/bigquery.dataViewer"       = local.matrix_viewers_group
