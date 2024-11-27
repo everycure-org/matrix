@@ -5,7 +5,7 @@ https://kind.sigs.k8s.io/docs/user/quick-start
 https://argoproj.github.io/argo-events/installation/  
 
 
-![Workflow Diagram](dummy-argo-flow-diagram.png)
+![Workflow Diagram](../assets/img/argo-data-release-flow-diagram.png)
 ```
 kind get clusters  
 kind create cluster --name kind-4  
