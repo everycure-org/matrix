@@ -3,9 +3,7 @@ import sqlite3
 import os
 from google.cloud import storage
 
-DATA_INPUT_PATH = os.environ.get("DATA_INPUT_PATH", "gs://silc-storage/moa_vis/")
-MOA_DB_PATH = os.environ.get("MOA_DB_PATH", "data/moa_extraction.db")
-GCP_PROJECT = os.environ.get("GCP_PROJECT", "project-silc")
+from utils import GCP_PROJECT, DATA_INPUT_PATH, MOA_DB_PATH
 
 
 def main():

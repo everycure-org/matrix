@@ -1,4 +1,4 @@
-# import os
+import os
 
 # ROOT_DIR = os.path.abspath(os.path.dirname(__file__))
 # MOA_DB_PATH = f"{ROOT_DIR}/../data/moa_extraction.db"
@@ -12,6 +12,10 @@
 #     'biolink:Disease': '#B3EBF2',
 #     'biolink:Protein': '#FF964F',
 # }
+
+DATA_INPUT_PATH = os.environ.get("DATA_INPUT_PATH", "gs://silc-storage/moa_vis/")
+MOA_DB_PATH = os.environ.get("MOA_DB_PATH", "data/moa_extraction.db")
+GCP_PROJECT = os.environ.get("GCP_PROJECT", "project-silc")
 
 # Ontologies and their URLs
 ONT_URLS = {

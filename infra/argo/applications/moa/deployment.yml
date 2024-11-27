@@ -14,11 +14,24 @@ spec:
       labels:
         app: moa-viewer
     spec:
+      volumes:
+        - name: shared-data
+          emptyDir: {}  # EmptyDir is a temporary volume that is created for the Pod's lifetime
+      initContainers: # Init container section
+      - name: init-moa-viewer
+        image: busybox:latest # Lightweight image for simple tasks
+        command: ["sh", "-c", "echo 'Initializing...'; sleep 5"] # Example task
+        volumeMounts:
+        - name: shared-data
+          mountPath: /data
       containers:
       - name: moa-viewer
         image: nginx:alpine # Lightweight NGINX image as "Hello World" container
         ports:
         - containerPort: 80
+        volumeMounts:
+        - name: shared-data
+          mountPath: /data
 ---
 apiVersion: v1
 kind: Service
