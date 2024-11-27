@@ -1,0 +1,81 @@
+name: MoA CI pipline
+
+on:
+    pull_request:
+      # Sequence of patterns matched against refs/heads
+      branches:
+        - main
+        - develop
+      types:
+        - opened
+        - reopened
+        - synchronize
+        - ready_for_review
+  
+    push:
+    #   branches:
+    #     - main
+
+
+jobs:
+  # leveraging a paths-filter approach to be able to make this run required for all PRs while still
+  # not blocking merging with "Expected" for those runs that have a paths filter
+  # FUTURE eventually github will likely fix this
+  # https://github.com/orgs/community/discussions/26698
+  paths_filter:
+    if: github.event.pull_request.draft == false || github.ref == 'refs/heads/main'
+    runs-on: 'ubuntu-latest'
+    permissions: 
+      pull-requests: read
+      contents: 'read'
+    outputs: 
+      changed: ${{ steps.changes.outputs.src }}
+    steps:
+      - name: 'Checkout'
+        uses: actions/checkout@v4
+        with: 
+          sparse-checkout: |
+            pipelines/
+            .github/
+      - uses: dorny/paths-filter@v3
+        id: changes
+        with:
+          filters: |
+            src:
+              - services/moa_visualisation/**
+              - .github/workflows/moa-ci.yml
+
+  ci:
+    runs-on:  'self-hosted'
+    needs: [paths_filter]
+    if: needs.paths_filter.outputs.changed == 'true' && (github.event.pull_request.draft == false || github.ref == 'refs/heads/main')
+
+    defaults:
+      run:
+        working-directory: ./pipelines/matrix
+    steps:
+      - uses: actions/checkout@v4
+        with: 
+          sparse-checkout: |
+            pipelines/matrix/
+      # Authenticate with Google Cloud
+      - uses: 'google-github-actions/auth@v2'
+        with:
+          project_id: ${{vars.project_id}}
+          workload_identity_provider: ${{vars.workload_identity_provider}}
+          service_account: ${{vars.service_account}}
+
+      # Set up Google Cloud SDK
+      - name: "Set up Cloud SDK"
+        uses: "google-github-actions/setup-gcloud@v1"
+
+      # Configure Docker to use Google Container Registry
+      - name: "Docker auth"
+        run: |-
+          gcloud auth configure-docker ${{ vars.region }}-docker.pkg.dev --quiet
+
+      # On every PR
+      - run: make docker_build TAG=${{ github.sha }}
+
+      # TODO: Split to other step
+      - run: make docker_push TAG=${{ github.sha }}
