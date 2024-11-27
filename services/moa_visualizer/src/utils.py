@@ -31,7 +31,7 @@ def get_pair_info_from_db(moa_db_path: str = MOA_DB_PATH, path_number: str = "al
         raise ValueError("path_number must be 'all', 'two_hop' or 'three_hop'")
 
     query = f"""SELECT pair_id, "Drug Name", "Disease Name" FROM 
-    moa_extraction_pair_info_{path_number}"""
+    {path_number}_pair_info_all"""
 
     df = pd.read_sql_query(query, f"sqlite:///{moa_db_path}")
     df = df.rename(columns={"Drug Name": "drug_name", "Disease Name": "disease_name"})
@@ -49,7 +49,7 @@ def list_available_pairs_df(input_path: str = MOA_DB_PATH, path_number: str = "t
 def get_moa_predictions_from_db(input_path: str, pair_id: str, path_number: str) -> pd.DataFrame:
     if path_number not in ["two_hop", "three_hop"]:
         raise ValueError("path_number must be 'two_hop' or 'three_hop'")
-    query = f"""SELECT * FROM moa_extraction_predictions_{path_number} 
+    query = f"""SELECT * FROM {path_number}_pair_info_all 
     WHERE pair_id = '{pair_id}' ORDER BY MOA_score DESC"""
     df = pd.read_sql_query(query, f"sqlite:///{input_path}")
     return df
