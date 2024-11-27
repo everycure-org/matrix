@@ -1,4 +1,3 @@
-# NOTE: This script was partially generated using AI assistance.
 
 import json
 import os
@@ -37,7 +36,7 @@ app = typer.Typer(
 def write_release_article(
     since: str = typer.Argument(..., help="Git reference (SHA, tag, branch) to diff from"),
     output_file: str = typer.Option(None, help="File to write the release article to"),
-    model: str = typer.Option(settings.power_model, help="Model to use for release article generation"),
+    model: str = typer.Option(settings.power_model, help="Language model to use"),
     disable_rendering: bool = typer.Option(False, help="Disable rendering of the release article"),
 ):
     """Write a release article for a given git reference."""
