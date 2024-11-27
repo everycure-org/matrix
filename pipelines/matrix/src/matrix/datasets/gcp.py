@@ -1,6 +1,8 @@
 import os
 import logging
 import re
+import asyncio
+from tqdm import tqdm
 from copy import deepcopy
 from typing import Any, Optional
 
@@ -14,6 +16,7 @@ from kedro.io.core import (
     DatasetError,
     Version,
 )
+from kedro_datasets.partitions import PartitionedDataset
 from kedro_datasets.spark import SparkDataset, SparkJDBCDataset
 from kedro_datasets.spark.spark_dataset import _get_spark, _split_filepath, _strip_dbfs_prefix
 from matrix.hooks import SparkHooks
@@ -356,11 +359,11 @@ class RemoteSparkJDBCDataset(SparkJDBCDataset):
         blob = bucket.blob(self._blob_name)
 
         if not os.path.exists(self._blob_name):
-            print("downloading file to local")
+            logger.info("downloading file to local")
             os.makedirs(self._blob_name.rsplit("/", maxsplit=1)[0], exist_ok=True)
             blob.download_to_filename(self._blob_name)
         else:
-            print("file present skipping")
+            logger.info("file present skipping")
 
         return super()._load()
 
@@ -382,3 +385,72 @@ class RemoteSparkJDBCDataset(SparkJDBCDataset):
         fs_prefix, file_name = _split_filepath(file_name)
 
         return protocol, fs_prefix, file_name
+
+
+class PartitionedAsyncParallelDataset(PartitionedDataset):
+    """
+    Custom implementation of the ParallelDataset that allows concurrent processing.
+    """
+
+    def _save(self, data: dict[str, Any], max_workers: int = 10, timeout: int = 60) -> None:
+        if self._overwrite and self._filesystem.exists(self._normalized_path):
+            self._filesystem.rm(self._normalized_path, recursive=True)
+
+        # Helper function to process a single partition
+        async def process_partition(sem, partition_id, partition_data):
+            async with sem:
+                try:
+                    # Set up arguments and path
+                    kwargs = deepcopy(self._dataset_config)
+                    partition = self._partition_to_path(partition_id)
+                    kwargs[self._filepath_arg] = self._join_protocol(partition)
+                    dataset = self._dataset_type(**kwargs)  # type: ignore
+
+                    # Evaluate partition data if it's callable
+                    if callable(partition_data):
+                        partition_data = await partition_data()  # noqa: PLW2901
+                    else:
+                        raise RuntimeError("not callable")
+
+                    # Save the partition data
+                    dataset.save(partition_data)
+                except Exception as e:
+                    logger.error(f"Error in process_partition with partition {partition_id}: {e}")
+                    raise
+
+        # Define function to run asyncio tasks within a synchronous function
+        def run_async_tasks():
+            # Create an event loop and a thread pool executor for async execution
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            sem = asyncio.Semaphore(max_workers)
+
+            tasks = [
+                loop.create_task(process_partition(sem, partition_id, partition_data))
+                for partition_id, partition_data in sorted(data.items())
+            ]
+
+            # Track progress with tqdm as tasks complete
+            with tqdm(total=len(tasks), desc="Saving partitions") as progress_bar:
+
+                async def monitor_tasks():
+                    for task in asyncio.as_completed(tasks):
+                        try:
+                            await asyncio.wait_for(task, timeout)
+                        except asyncio.TimeoutError as e:
+                            logger.error(f"Timeout error: partition processing took longer than {timeout} seconds.")
+                            raise e
+                        except Exception as e:
+                            logger.error(f"Error processing partition in tqdm loop: {e}")
+                            raise e
+                        finally:
+                            progress_bar.update(1)
+
+                # Run the monitoring coroutine
+                try:
+                    loop.run_until_complete(monitor_tasks())
+                finally:
+                    loop.close()
+
+        run_async_tasks()
+        self._invalidate_caches()

@@ -1,8 +1,9 @@
 import re
+import copy
+import yaml
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-import yaml
 from jinja2 import Environment, FileSystemLoader
 from kedro.pipeline import Pipeline
 from kedro.pipeline.node import Node
@@ -49,7 +50,7 @@ def generate_argo_config(
     )
 
     # Load the rendered YAML into a Python object
-    yaml_data = yaml.safe_load(output)
+    yaml_data = copy.deepcopy(yaml.safe_load(output))
 
     # Dump the final YAML without anchors
     final_yaml = yaml.dump(yaml_data, sort_keys=False, default_flow_style=False)

@@ -1,26 +1,24 @@
-from typing import Any, Dict, List, Union, Tuple
-import pandas as pd
-import numpy as np
 import json
-import pyspark.sql.functions as f
-
-from pyspark.sql import DataFrame
-
-from sklearn.model_selection import BaseCrossValidator
-from sklearn.impute._base import _BaseImputer
-from sklearn.base import BaseEstimator
+from functools import wraps
+from typing import Any, Dict, List, Tuple, Union
 
 import matplotlib.pyplot as plt
-
-from functools import wraps
+import numpy as np
+import pandas as pd
+import pyspark.sql.functions as f
+from pyspark.sql import DataFrame
 from refit.v1.core.inject import inject_object
 from refit.v1.core.inline_has_schema import has_schema
 from refit.v1.core.inline_primary_key import primary_key
-from refit.v1.core.unpack import unpack_params
 from refit.v1.core.make_list_regexable import make_list_regexable
+from refit.v1.core.unpack import unpack_params
+from sklearn.base import BaseEstimator
+from sklearn.impute._base import _BaseImputer
+from sklearn.model_selection import BaseCrossValidator
 
 from matrix.datasets.graph import KnowledgeGraph
 from matrix.datasets.pair_generator import SingleLabelPairGenerator
+
 from .model import ModelWrapper
 
 plt.switch_backend("Agg")
@@ -167,11 +165,9 @@ def prefilter_nodes(
     )
 
     df = (
-        nodes.join(full_nodes.select("id", "all_categories"), on="id", how="left")
-        .withColumn("is_drug", f.arrays_overlap(f.col("all_categories"), f.lit(drug_types)))
+        nodes.withColumn("is_drug", f.arrays_overlap(f.col("all_categories"), f.lit(drug_types)))
         .withColumn("is_disease", f.arrays_overlap(f.col("all_categories"), f.lit(disease_types)))
         .filter((f.col("is_disease")) | (f.col("is_drug")))
-        # .filter((f.col("category").isin(drug_types)) | (f.col("category").isin(disease_types)))
         .select("id", "topological_embedding", "is_drug", "is_disease")
         # TODO: The integrated data product _should_ contain these nodes
         # TODO: Verify below does not have any undesired side effects
