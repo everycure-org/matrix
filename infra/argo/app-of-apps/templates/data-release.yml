@@ -2,7 +2,7 @@ apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
   name: data-release
-  namespace: data-release
+  namespace: argocd
 spec:
   destination:
     namespace: data-release
