@@ -1,9 +1,5 @@
 import os
 
-# ROOT_DIR = os.path.abspath(os.path.dirname(__file__))
-# MOA_DB_PATH = f"{ROOT_DIR}/../data/moa_extraction.db"
-# MOA_INFO_IMG = f"{ROOT_DIR}/../assets/path_inference.svg"
-
 # TODO
 # Start a colour map for biolink classes
 # Pastel colours
