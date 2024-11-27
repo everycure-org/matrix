@@ -16,17 +16,25 @@ spec:
     spec:
       volumes:
         - name: shared-data
-          emptyDir: {}  # EmptyDir is a temporary volume that is created for the Pod's lifetime
-      initContainers: # Init container section
+          emptyDir: {}
+      initContainers:
       - name: init-moa-viewer
-        image: busybox:latest # Lightweight image for simple tasks
-        command: ["sh", "-c", "echo 'Initializing...'; sleep 5"] # Example task
+        image: busybox:latest # TODO: Set to MoA container
+        command: ["sh", "-c", "echo 'Initializing...'; sleep 5"] # TODO: Invoke init.py
         volumeMounts:
         - name: shared-data
           mountPath: /data
+        env:
+          # TODO: We can update the following env variable to
+          # allow viewer leverages a new dataset
+          - name: DATA_INPUT_PATH
+            value: "gs://silc-storage/moa_vis/"
+          # TODO: We should have data in matrix-hub instead
+          - name: GCP_PROJECT
+            value: "project-silc"
       containers:
       - name: moa-viewer
-        image: nginx:alpine # Lightweight NGINX image as "Hello World" container
+        image: nginx:alpine # TODO: Set to MoA container
         ports:
         - containerPort: 80
         volumeMounts:
