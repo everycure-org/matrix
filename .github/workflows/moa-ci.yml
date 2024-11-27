@@ -51,24 +51,24 @@ jobs:
     # if: needs.paths_filter.outputs.changed == 'true' && (github.event.pull_request.draft == false || github.ref == 'refs/heads/main')
     defaults:
       run:
-        working-directory: ./pipelines/matrix
+        working-directory: ./services/moa-visualizer/
     steps:
       - uses: actions/checkout@v4
         with: 
           sparse-checkout: |
-            pipelines/matrix/
+            services/moa-visualizer/
 
       - run: make docker_build TAG=${{ github.sha }}
 
   push_image:
         needs: [ci]
         if: github.ref == 'refs/heads/main'
-        runs-on: 'self-hosted'
+        runs-on: 'self-hosted' # TODO: Should we run on self hosted one?
         environment: dev
         permissions: write-all
         defaults:
           run:
-            working-directory: ./pipelines/matrix
+            working-directory: ./services/moa-visualizer/
     
         steps:
           - uses: 'google-github-actions/auth@v2'
