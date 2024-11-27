@@ -75,6 +75,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 outputs="moa.int.paths@partitioned",
                 name="generate_paths",
             ),
+            # TODO: Setup Spark to process paths
             # node(
             #     func=print_,
             #     inputs=["moa.int.paths@spark"],
