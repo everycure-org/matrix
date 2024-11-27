@@ -1,3 +1,5 @@
+# embedding_utils.py
+
 import os
 import json
 import logging
@@ -18,6 +20,7 @@ import aiohttp
 from tqdm.auto import tqdm
 from kedro.framework.session import KedroSession
 import curategpt
+
 
 MAX_RETRIES = 3
 BATCH_SIZE = 100
@@ -86,7 +89,6 @@ def get_openai_embedding(texts):
             time.sleep(2**retries)
         except openai.APIStatusError as e:
             logging.error(f"Invalid request error: {e}")
-            # Return None since retrying won't help
             return None
         except Exception as e:
             logging.error(f"Unexpected error: {e}")
@@ -210,6 +212,7 @@ def process_model(
     cache_suffix="",
     use_combinations=False,
     combine_fields=False,
+    dataset_type="negative",
 ):
     embeddings_dict = {}
     labels_dict = {}
@@ -219,19 +222,12 @@ def process_model(
         model, tokenizer = load_model_and_tokenizer(model_info)
 
     for category_name, df in tqdm(
-        datasets.items(), desc=f"Processing model {model_name}", total=len(datasets), leave=False
+        datasets.items(), desc=f"Processing model {model_name} ({dataset_type})", total=len(datasets), leave=False
     ):
         if df.empty:
             logging.warning(f"The DataFrame for category '{category_name}' is empty. Skipping.")
             continue
 
-        # Prepare texts using vectorized operations
-
-        # TODO: handle text representation function in notebook
-        # if text_representation_func is None:
-        #     texts = df.apply(get_text_representation, axis=1).tolist()
-        # else:
-        #     texts = df.apply(text_representation_func, axis=1).tolist()
         if use_ontogpt:
             base_texts = df.apply(lambda row: get_text_representation(row, text_fields, False), axis=1)
             enhanced_info = base_texts.apply(curategpt.extract)
@@ -239,20 +235,28 @@ def process_model(
         elif use_combinations:
             # Handle combinations
             # This may require additional handling to vectorize
-            pass
+            all_texts = []
+            for row in df.itertuples(index=False):
+                texts = get_text_representation(row, text_fields, combine_fields=True)
+                all_texts.extend(texts)
         else:
             all_texts = df.apply(lambda row: get_text_representation(row, text_fields, False), axis=1)
 
-        if all_texts.empty:
+        if isinstance(all_texts, pd.Series):
+            all_texts = all_texts.tolist()
+        elif not isinstance(all_texts, list):
+            all_texts = list(all_texts)
+
+        if not all_texts:
             logging.warning(f"No texts to process for category '{category_name}'. Skipping.")
             continue
 
         # Compute embeddings
         if model_info["type"] == "hf":
-            embeddings = compute_embeddings_hf(model, tokenizer, all_texts.tolist())
+            embeddings = compute_embeddings_hf(model, tokenizer, all_texts)
             embeddings_dict[category_name] = embeddings
         elif model_info["type"] == "openai":
-            embeddings = get_openai_embeddings_in_batches(all_texts.tolist())
+            embeddings = get_openai_embeddings_in_batches(all_texts)
             embeddings_dict[category_name] = embeddings
 
         # Generate labels
@@ -278,6 +282,7 @@ def process_model(
             seed,
             cache_suffix,
             use_combinations,
+            dataset_type,
         )
 
     if model_info["type"] == "hf":
@@ -297,38 +302,34 @@ def cache_results(
     seed,
     cache_suffix,
     use_combinations,
+    dataset_type,
 ):
     combinations_suffix = "_combinations" if use_combinations else ""
-    # Ensure the cache directory exists
+    dataset_type_suffix = f"_{dataset_type}"
     os.makedirs(cache_dir, exist_ok=True)
 
-    # Construct file paths
     cache_file = os.path.join(
         cache_dir,
-        f"{dataset_name}_embeddings_{category_name}_{model_name}{combinations_suffix}_seed_{seed}{cache_suffix}.pkl",
+        f"{dataset_name}{dataset_type_suffix}_embeddings_{category_name}_{model_name}{combinations_suffix}_seed_{seed}{cache_suffix}.pkl",
     )
     labels_file = os.path.join(
         cache_dir,
-        f"{dataset_name}_labels_{category_name}_{model_name}{combinations_suffix}_seed_{seed}{cache_suffix}.pkl",
+        f"{dataset_name}{dataset_type_suffix}_labels_{category_name}_{model_name}{combinations_suffix}_seed_{seed}{cache_suffix}.pkl",
     )
     sim_file = os.path.join(
         cache_dir,
-        f"{dataset_name}_cosine_similarities_{category_name}_{model_name}{combinations_suffix}_seed_{seed}{cache_suffix}.pkl",
+        f"{dataset_name}{dataset_type_suffix}_cosine_similarities_{category_name}_{model_name}{combinations_suffix}_seed_{seed}{cache_suffix}.pkl",
     )
 
-    # Cache embeddings
     with open(cache_file, "wb") as f:
         pickle.dump(embeddings_dict[category_name], f)
-    # Cache labels
     with open(labels_file, "wb") as f:
         pickle.dump(labels_dict[category_name], f)
-    # Cache similarities
     with open(sim_file, "wb") as f:
         pickle.dump(similarities_dict[category_name], f)
 
 
-# Helper function to get OpenAI embeddings in batches
-def get_openai_embeddings_in_batches(texts, batch_size=20):  # Adjusted batch size
+def get_openai_embeddings_in_batches(texts, batch_size=20):
     embeddings = []
     for i in tqdm(range(0, len(texts), batch_size), desc="Computing OpenAI embeddings", leave=False):
         batch_texts = texts[i : i + batch_size]
@@ -346,7 +347,8 @@ def get_openai_embeddings_in_batches(texts, batch_size=20):  # Adjusted batch si
 
 def process_models(
     model_names,
-    datasets,
+    positive_datasets,
+    negative_datasets,
     cache_dir,
     seed,
     text_fields=None,
@@ -358,47 +360,41 @@ def process_models(
     combine_fields=False,
 ):
     embeddings_dict_all_models = {}
-    # labels_dict_all_models = {}
-    # similarities_dict_all_models = {}
-    # Process models to minimize loading/unloading
-    # First, process OpenAI models (no loading required)
-    openai_models = [name for name in model_names if embedding_models_info[name]["type"] == "openai"]
-    for model_name in openai_models:
-        model_info = embedding_models_info[model_name]
-        _, embeddings_dict = process_model(
-            model_name=model_name,
-            model_info=model_info,
-            datasets=datasets,
-            cache_dir=cache_dir,
-            seed=seed,
-            text_fields=text_fields,
-            label_generation_func=label_generation_func,
-            dataset_name=dataset_name,
-            use_ontogpt=use_ontogpt,
-            cache_suffix=cache_suffix,
-            use_combinations=use_combinations,
-            combine_fields=combine_fields,
-        )
-        embeddings_dict_all_models[model_name] = embeddings_dict
-    # Then process HF models, loading and unloading each model
-    hf_models = [name for name in model_names if embedding_models_info[name]["type"] == "hf"]
-    for model_name in hf_models:
-        model_info = embedding_models_info[model_name]
-        _, embeddings_dict = process_model(
-            model_name=model_name,
-            model_info=model_info,
-            datasets=datasets,
-            cache_dir=cache_dir,
-            seed=seed,
-            text_fields=text_fields,
-            label_generation_func=label_generation_func,
-            dataset_name=dataset_name,
-            use_ontogpt=use_ontogpt,
-            cache_suffix=cache_suffix,
-            use_combinations=use_combinations,
-            combine_fields=combine_fields,
-        )
-        embeddings_dict_all_models[model_name] = embeddings_dict
+    for model_name in tqdm(model_names, desc="Processing models", leave=False):
+        model_info = embedding_models_info.get(model_name)
+        if not model_info:
+            logging.warning(f"Model '{model_name}' not found in embedding_models_info. Skipping.")
+            continue
+
+        if model_info["type"] == "openai":
+            datasets_to_process = [
+                ("positive", positive_datasets),
+                ("negative", negative_datasets),
+            ]
+        else:
+            datasets_to_process = [
+                ("positive", positive_datasets),
+                ("negative", negative_datasets),
+            ]
+
+        for dataset_type, datasets in datasets_to_process:
+            model_key = f"{model_name}_{dataset_type}"
+            _, embeddings_dict = process_model(
+                model_name=model_name,
+                model_info=model_info,
+                datasets=datasets,
+                cache_dir=cache_dir,
+                seed=seed,
+                text_fields=text_fields,
+                label_generation_func=label_generation_func,
+                dataset_name=dataset_name,
+                use_ontogpt=use_ontogpt,
+                cache_suffix=cache_suffix,
+                use_combinations=use_combinations,
+                combine_fields=combine_fields,
+                dataset_type=dataset_type,
+            )
+            embeddings_dict_all_models[model_key] = embeddings_dict
     return embeddings_dict_all_models
 
 
@@ -451,7 +447,6 @@ async def normalize_node(session, url, payload):
 
 
 async def batch_normalize_curies_async(category_curies, normalized_data, failed_ids):
-    # Flatten all curies into a single list
     all_curies = [curie for curies in category_curies.values() for curie in curies]
     total_batches = (len(all_curies) + BATCH_SIZE - 1) // BATCH_SIZE
 
@@ -468,7 +463,6 @@ async def batch_normalize_curies_async(category_curies, normalized_data, failed_
 
         responses = await asyncio.gather(*tasks)
 
-    # Process all responses
     for response in tqdm(responses, desc="Processing normalization responses", leave=False):
         if response:
             for key, value in response.items():
@@ -496,20 +490,16 @@ def create_equivalent_items_dfs(positive_datasets, normalized_data):
         desc="Creating equivalent items DataFrames",
         leave=False,
     ):
-        # Prepare ids_to_normalize per row
         df["ids_to_normalize"] = df.apply(
             lambda row: list(set([row["id:ID"]] + parse_list_string(row.get("equivalent_curies:string[]", [])))), axis=1
         )
 
-        # Explode the DataFrame to have one id per row
         df_exploded = df.explode("ids_to_normalize").reset_index(drop=True)
         df_exploded.rename(columns={"ids_to_normalize": "id_to_normalize"}, inplace=True)
 
-        # Create a DataFrame for all unique ids_to_normalize
         unique_ids = df_exploded["id_to_normalize"].unique()
         equivalents_list = []
 
-        # Map ids to their normalized equivalents
         for id_value in unique_ids:
             if id_value in normalized_data:
                 equivalents = normalized_data[id_value]
@@ -523,7 +513,6 @@ def create_equivalent_items_dfs(positive_datasets, normalized_data):
                         }
                     )
             else:
-                # Get corresponding rows in df_exploded
                 rows_with_id = df_exploded[df_exploded["id_to_normalize"] == id_value]
                 for _, row in rows_with_id.iterrows():
                     equivalents_list.append(
@@ -538,7 +527,6 @@ def create_equivalent_items_dfs(positive_datasets, normalized_data):
         equivalents_df = pd.DataFrame(equivalents_list)
         equivalents_df = equivalents_df.drop_duplicates(subset=["label"])
 
-        # Merge back with df_exploded
         merged_df = df_exploded.merge(equivalents_df, on="id_to_normalize", how="left")
         merged_df["id:ID"] = merged_df["identifier"]
         merged_df["name"] = merged_df["label"]
@@ -585,7 +573,7 @@ def load_datasets(
             cache_dir, f"{dataset_name}_sampled_df_positives_{category}_seed_{seed1}{cache_suffix}.csv"
         )
         negative_csv_filename = os.path.join(
-            cache_dir, f"{dataset_name}_sampled_df_{category}_seed_{seed2}{cache_suffix}.csv"
+            cache_dir, f"{dataset_name}_sampled_df_negatives_{category}_seed_{seed2}{cache_suffix}.csv"
         )
         if not (os.path.exists(positive_csv_filename) and os.path.exists(negative_csv_filename)):
             need_to_load_df = True
@@ -602,7 +590,7 @@ def load_datasets(
             cache_dir, f"{dataset_name}_sampled_df_positives_{category}_seed_{seed1}{cache_suffix}.csv"
         )
         negative_csv_filename = os.path.join(
-            cache_dir, f"{dataset_name}_sampled_df_{category}_seed_{seed2}{cache_suffix}.csv"
+            cache_dir, f"{dataset_name}_sampled_df_negatives_{category}_seed_{seed2}{cache_suffix}.csv"
         )
         if os.path.exists(positive_csv_filename) and os.path.exists(negative_csv_filename):
             positive_df = pd.read_csv(positive_csv_filename)
@@ -624,23 +612,33 @@ def load_datasets(
             negative_df = remaining_df.sample(n=negative_n_actual, random_state=seed2)
             positive_df.to_csv(positive_csv_filename, index=False)
             negative_df.to_csv(negative_csv_filename, index=False)
-        datasets[category] = negative_df.reset_index(drop=True)
         positive_datasets[category] = positive_df.reset_index(drop=True)
+        datasets[category] = negative_df.reset_index(drop=True)
     return positive_datasets, datasets
 
 
 def load_embeddings_and_labels(
-    cache_dir, dataset_name, model_name, categories, seed, use_combinations=False, cache_suffix=""
+    cache_dir,
+    dataset_name,
+    model_name,
+    categories,
+    seed,
+    use_combinations=False,
+    cache_suffix="",
+    dataset_type="negative",
 ):
     embeddings_dict = {}
     labels_dict = {}
     suffix = "_combinations" if use_combinations else ""
+    dataset_type_suffix = f"_{dataset_type}"
     for category_name in categories:
         cache_file = os.path.join(
-            cache_dir, f"{dataset_name}_embeddings_{category_name}_{model_name}{suffix}_seed_{seed}{cache_suffix}.pkl"
+            cache_dir,
+            f"{dataset_name}{dataset_type_suffix}_embeddings_{category_name}_{model_name}{suffix}_seed_{seed}{cache_suffix}.pkl",
         )
         labels_file = os.path.join(
-            cache_dir, f"{dataset_name}_labels_{category_name}_{model_name}{suffix}_seed_{seed}{cache_suffix}.pkl"
+            cache_dir,
+            f"{dataset_name}{dataset_type_suffix}_labels_{category_name}_{model_name}{suffix}_seed_{seed}{cache_suffix}.pkl",
         )
         embeddings = load_cached_data(cache_file)
         labels = load_cached_data(labels_file)
