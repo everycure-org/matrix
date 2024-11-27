@@ -12,6 +12,7 @@ class MatrixCliSettings(BaseSettings):
     power_model: str = "gemini-1.5-pro-002"
     workers: int = 8
     gcs_base_uri: str = "gs://mtrx-us-central1-hub-dev-storage"
+    cli_base_path: str = "apps/matrix-cli"
     inclusion_patterns: list[str] = [
         "*.md",
         "*.py",
