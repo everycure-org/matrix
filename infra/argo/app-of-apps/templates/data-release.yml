@@ -1,19 +1,19 @@
-apiVersion: argoproj.io/v1alpha1
-kind: Application
-metadata:
-  name: data-release
-  namespace: argocd
-spec:
-  destination:
-    namespace: data-release
-    server: {{ .Values.spec.destination.server }}
-  project: default
-  source:
-    path: {{ .Values.spec.source.repoPath }}/data-release
-    repoURL: {{ .Values.spec.source.repoURL }}
-    targetRevision: argo-quickstart-dataminded # {{ .Values.spec.source.devTargetRevision }}
-  syncPolicy:
-    syncOptions:     # Sync options which modifies sync behavior
-    - CreateNamespace=true # Namespace Auto-Creation ensures that namespace specified as the application destination exists in the destination cluster.
-    automated:
-      prune: true
+# apiVersion: argoproj.io/v1alpha1
+# kind: Application
+# metadata:
+#   name: data-release
+#   namespace: argocd
+# spec:
+#   destination:
+#     namespace: data-release
+#     server: {{ .Values.spec.destination.server }}
+#   project: default
+#   source:
+#     path: {{ .Values.spec.source.repoPath }}/data-release
+#     repoURL: {{ .Values.spec.source.repoURL }}
+#     targetRevision: argo-quickstart-dataminded # {{ .Values.spec.source.devTargetRevision }}
+#   syncPolicy:
+#     syncOptions:     # Sync options which modifies sync behavior
+#     - CreateNamespace=true # Namespace Auto-Creation ensures that namespace specified as the application destination exists in the destination cluster.
+#     automated:
+#       prune: true
