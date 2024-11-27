@@ -3,7 +3,7 @@ from kedro.pipeline import pipeline, Pipeline
 from kedro.pipeline.node import Node, node
 import pytest
 
-from matrix.kedro4argo_node import ArgoResourceConfig, ArgoNode, argo_node
+from matrix.kedro4argo_node import KUBERNETES_DEFAULT_NUM_GPUS, ArgoResourceConfig, ArgoNode, argo_node
 
 from matrix.kedro4argo_node import (
     KUBERNETES_DEFAULT_LIMIT_CPU,
@@ -233,7 +233,7 @@ def test_argo_node_factory():
     assert argo_node_instance.argo_config.cpu_limit == KUBERNETES_DEFAULT_LIMIT_CPU
     assert argo_node_instance.argo_config.memory_request == KUBERNETES_DEFAULT_REQUEST_RAM
     assert argo_node_instance.argo_config.memory_limit == KUBERNETES_DEFAULT_LIMIT_RAM
-    assert argo_node_instance.argo_config.num_gpus == 0
+    assert argo_node_instance.argo_config.num_gpus == KUBERNETES_DEFAULT_NUM_GPUS
 
     kedro_node = node(func=dummy_func, inputs=["int_number_ds_in"], outputs=["int_number_ds_out"])
     assert argo_node_instance.func == kedro_node.func

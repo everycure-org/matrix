@@ -5,7 +5,10 @@ import yaml
 from kedro.pipeline import Pipeline
 from kedro.pipeline.node import Node
 from matrix.argo import FusedNode, clean_name, fuse, generate_argo_config, get_dependencies
-from matrix.kedro4argo_node import ArgoNode, ArgoResourceConfig
+from matrix.kedro4argo_node import (
+    ArgoNode,
+    ArgoResourceConfig,
+)
 
 
 def dummy_fn(*args):
