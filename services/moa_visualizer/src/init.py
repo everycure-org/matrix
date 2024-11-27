@@ -3,7 +3,7 @@ import sqlite3
 import os
 from google.cloud import storage
 
-from utils import GCP_PROJECT, DATA_INPUT_PATH, MOA_DB_PATH
+from config import GCP_PROJECT, DATA_INPUT_PATH, MOA_DB_PATH
 
 
 def main():
