@@ -62,7 +62,7 @@ jobs:
 
   push_image:
       needs: [ci]
-      if: github.ref == 'refs/heads/main'
+      # if: github.ref == 'refs/heads/main'
       runs-on: 'self-hosted' # TODO: Should we run on self hosted one?
       environment: dev
       permissions: write-all
