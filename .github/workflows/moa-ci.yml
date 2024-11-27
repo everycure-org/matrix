@@ -51,7 +51,7 @@ jobs:
     # if: needs.paths_filter.outputs.changed == 'true' && (github.event.pull_request.draft == false || github.ref == 'refs/heads/main')
     defaults:
       run:
-        working-directory: ./services/moa-visualizer
+        working-directory: services/moa-visualizer
     steps:
       - uses: actions/checkout@v4
         with: 
@@ -61,27 +61,27 @@ jobs:
       - run: make docker_build TAG=${{ github.sha }}
 
   push_image:
-        needs: [ci]
-        if: github.ref == 'refs/heads/main'
-        runs-on: 'self-hosted' # TODO: Should we run on self hosted one?
-        environment: dev
-        permissions: write-all
-        defaults:
-          run:
-            working-directory: ./services/moa-visualizer/
-    
-        steps:
-          - uses: 'google-github-actions/auth@v2'
-            with:
-              project_id: ${{vars.project_id}}
-              workload_identity_provider: ${{vars.workload_identity_provider}}
-              service_account: ${{vars.service_account}}
-    
-          - name: "Set up Cloud SDK"
-            uses: "google-github-actions/setup-gcloud@v1"
-    
-          - name: "Docker auth"
-            run: |-
-              gcloud auth configure-docker ${{ vars.region }}-docker.pkg.dev --quiet
-    
-          - run: make docker_push TAG=${{ github.sha }}
+      needs: [ci]
+      if: github.ref == 'refs/heads/main'
+      runs-on: 'self-hosted' # TODO: Should we run on self hosted one?
+      environment: dev
+      permissions: write-all
+      defaults:
+        run:
+          working-directory: services/moa-visualizer/
+  
+      steps:
+        - uses: 'google-github-actions/auth@v2'
+          with:
+            project_id: ${{vars.project_id}}
+            workload_identity_provider: ${{vars.workload_identity_provider}}
+            service_account: ${{vars.service_account}}
+  
+        - name: "Set up Cloud SDK"
+          uses: "google-github-actions/setup-gcloud@v1"
+  
+        - name: "Docker auth"
+          run: |-
+            gcloud auth configure-docker ${{ vars.region }}-docker.pkg.dev --quiet
+  
+        - run: make docker_push TAG=${{ github.sha }}
