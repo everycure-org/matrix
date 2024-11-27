@@ -1,27 +1,13 @@
-"""Fabricator pipeline."""
-
 from matrix import settings
 from kedro.pipeline import Pipeline, node, pipeline
 from . import nodes as nd
-from ..matrix_generation import pipeline as mgp
+from ..matrix_generation.pipeline import create_pipeline as matrix_generation_pipeline
 
 
 def _create_resolution_pipeline() -> Pipeline:
     """Resolution pipeline for filtering out the input."""
     return pipeline(
         [
-            node(
-                func=lambda x: x,
-                inputs="ingestion.raw.drug_list@pandas",
-                outputs="inference.raw.drug_list",
-                name="ingest_drug_list",
-            ),
-            node(
-                func=lambda x: x,
-                inputs="ingestion.raw.disease_list@pandas",
-                outputs="inference.raw.disease_list",
-                name="ingest_disease_list",
-            ),
             node(
                 func=nd.resolve_input_sheet,
                 inputs={
@@ -42,7 +28,7 @@ def _create_resolution_pipeline() -> Pipeline:
 
 def _create_inference_pipeline(model_excl: str, model_incl: str) -> Pipeline:
     """Matrix generation pipeline adjusted for running inference with models of choice."""
-    mg_pipeline = mgp.create_pipeline()
+    mg_pipeline = matrix_generation_pipeline()
     inference_nodes = pipeline(
         [node for node in mg_pipeline.nodes if not any(model in node.name for model in model_excl)]
     )

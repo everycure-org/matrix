@@ -1,4 +1,3 @@
-
 variable "gitops_repo_url" {
 
 }
