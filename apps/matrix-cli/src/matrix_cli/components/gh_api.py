@@ -5,7 +5,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import TYPE_CHECKING, List
 
 import typer
-from matrix_cli.components.git import fetch_pr_detail, fetch_pr_detail_nocache
+from matrix_cli.components.git import fetch_pr_detail
 from matrix_cli.components.settings import settings
 from matrix_cli.components.utils import console, run_command
 from tqdm.rich import tqdm
@@ -14,24 +14,20 @@ if TYPE_CHECKING:
     from pandas import pd
 
 
-def get_pr_details(pr_numbers: List[int], use_cache: bool = True) -> "pd.DataFrame":
+def get_pr_details(pr_numbers: List[int]) -> "pd.DataFrame":
     """
     Retrieves PR details from GitHub using thread pool.
 
     Args:
         pr_numbers (List[int]): The list of PR numbers.
-        use_cache (bool): Whether to use cached PR details.
 
     Returns:
         pd.DataFrame: A DataFrame containing PR details.
     """
-    fetch_func = fetch_pr_detail if use_cache else fetch_pr_detail_nocache
-
     # Use number of CPUs or limit to 8 threads to avoid overwhelming the system
-
     with ThreadPoolExecutor(max_workers=settings.workers) as executor:
         # Submit all PR fetch tasks
-        future_to_pr = {executor.submit(fetch_func, pr_num): pr_num for pr_num in pr_numbers}
+        future_to_pr = {executor.submit(fetch_pr_detail, pr_num): pr_num for pr_num in pr_numbers}
 
         # Process completed tasks with progress bar
         results = []
@@ -57,7 +53,6 @@ def update_prs(df: "pd.DataFrame"):
         if row["title"] != row["new_title"]:
             try:
                 run_command(["gh", "pr", "edit", str(pr_number), "--title", row["new_title"]])
-                typer.echo(f"\nUpdated title for PR #{pr_number}")
             except subprocess.CalledProcessError:
                 typer.echo(f"\nFailed to update title for PR #{pr_number}", err=True)
 

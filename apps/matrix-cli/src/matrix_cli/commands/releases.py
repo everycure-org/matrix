@@ -1,4 +1,3 @@
-
 import json
 import os
 import platform
@@ -21,7 +20,14 @@ from matrix_cli.components.gh_api import get_pr_details, update_prs
 from matrix_cli.components.git import get_code_diff
 from matrix_cli.components.models import PRInfo
 from matrix_cli.components.settings import settings
-from matrix_cli.components.utils import console, get_git_root, get_markdown_contents, invoke_model, run_command
+from matrix_cli.components.utils import (
+    console,
+    get_git_root,
+    get_markdown_contents,
+    invoke_model,
+    run_command,
+    select_previous_release,
+)
 
 if TYPE_CHECKING:
     from pandas import pd
@@ -32,14 +38,20 @@ app = typer.Typer(
 )
 
 
+@app.command()
+def test():
+    print(select_previous_release())
+
+
 @app.command(name="article")
 def write_release_article(
-    since: str = typer.Argument(..., help="Git reference (SHA, tag, branch) to diff from"),
     output_file: str = typer.Option(None, help="File to write the release article to"),
     model: str = typer.Option(settings.power_model, help="Language model to use"),
     disable_rendering: bool = typer.Option(False, help="Disable rendering of the release article"),
 ):
     """Write a release article for a given git reference."""
+
+    since = select_previous_release()
 
     console.print("[green]Collecting release notes...")
     notes = get_release_notes(since, model=model)
@@ -94,11 +106,12 @@ Please focus on the following topics in the release article:
 
 @app.command(name="release-notes")
 def release_notes(
-    since: str = typer.Argument(..., help="Git reference (SHA, tag, branch) to summarize from"),
     model: str = typer.Option(settings.base_model, help="Model to use for summarization"),
     output_file: str = typer.Option(None, help="File to write the release notes to"),
 ):
     """Generate an AI summary of code changes since a specific git reference."""
+
+    since = select_previous_release()
 
     try:
         console.print("Generating release notes...")
@@ -171,7 +184,6 @@ def get_previous_articles() -> list[str]:
 
 @app.command("pr-titles")
 def prepare_release(
-    previous_tag: str,
     output_file: str = None,
     no_cache: bool = typer.Option(False, "--no-cache", help="Disable caching of PR details"),
     skip_ai: bool = typer.Option(False, "--skip-ai", help="Skip AI title suggestions"),
@@ -185,12 +197,16 @@ def prepare_release(
         no_cache (bool): If True, bypass the cache when fetching PR details.
         skip_ai (bool): If True, skip AI title suggestions.
     """
-    typer.echo(f"Collecting PRs since {previous_tag}...")
+    previous_release = select_previous_release()
+    typer.echo(f"Collecting PRs since {previous_release}...")
+
+    if no_cache:
+        memory.clear()
 
     if not output_file:
         output_file = tempfile.mktemp(suffix=".xlsx")
 
-    pr_details_df = get_pr_details_since(previous_tag, use_cache=not no_cache)
+    pr_details_df = get_pr_details_since(previous_release)
 
     if not skip_ai:
         pr_details_df = enhance_pr_titles(pr_details_df)
@@ -216,6 +232,8 @@ def prepare_release(
 
 def _read_modified_excel_file(output_file: str) -> "pd.DataFrame":
     try:
+        import pandas as pd
+
         return pd.read_excel(
             output_file,
             dtype={
@@ -236,13 +254,13 @@ def _read_modified_excel_file(output_file: str) -> "pd.DataFrame":
         raise typer.Exit(1)
 
 
-def get_pr_details_since(previous_tag: str, use_cache: bool = True) -> List[PRInfo]:
+def get_pr_details_since(previous_tag: str) -> List[PRInfo]:
     commit_messages = get_commit_logs(previous_tag)
     pr_numbers = extract_pr_numbers(commit_messages)
     if not pr_numbers:
         typer.echo("No PRs found since the previous tag.")
         raise typer.Exit(1)
-    return get_pr_details(pr_numbers, use_cache)
+    return get_pr_details(pr_numbers)
 
 
 def get_commit_logs(previous_tag: str) -> List[str]:
@@ -365,7 +383,14 @@ def load_corrections() -> str:
     """
     Loads the corrections for bad PR titles.
     """
-    corrections_path = Path(__file__).parent / "prompts" / "ai_title_suggestion_corrections.yaml"
+    corrections_path = (
+        Path(get_git_root())
+        / settings.cli_base_path
+        / "src"
+        / "matrix_cli"
+        / "prompts"
+        / "ai_title_suggestion_corrections.yaml"
+    )
     return corrections_path.read_text()
 
 
@@ -438,6 +463,8 @@ def write_excel(df: "pd.DataFrame", filename: str):
     df = df[columns]
 
     # Add column descriptions
+    import pandas as pd
+
     writer = pd.ExcelWriter(filename, engine="openpyxl")
     df.to_excel(writer, index=False, sheet_name="PRs")
 
