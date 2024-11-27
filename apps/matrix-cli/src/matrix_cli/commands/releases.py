@@ -38,16 +38,11 @@ app = typer.Typer(
 )
 
 
-@app.command()
-def test():
-    print(select_previous_release())
-
-
 @app.command(name="article")
 def write_release_article(
     output_file: str = typer.Option(None, help="File to write the release article to"),
     model: str = typer.Option(settings.power_model, help="Language model to use"),
-    disable_rendering: bool = typer.Option(False, help="Disable rendering of the release article"),
+    disable_rendering: bool = typer.Option(True, help="Disable rendering of the release article"),
 ):
     """Write a release article for a given git reference."""
 
