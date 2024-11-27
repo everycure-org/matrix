@@ -189,17 +189,13 @@ def prepare_release(
     typer.echo(f"Collecting PRs since {previous_tag}...")
 
     if not output_file:
-        # use temporary directory
         output_file = tempfile.mktemp(suffix=".xlsx")
 
-    # Get commit logs and extract PR numbers
     pr_details_df = get_pr_details_since(previous_tag, use_cache=not no_cache)
 
-    # Get AI suggestions for titles if not skipped
     if not skip_ai:
         pr_details_df = enhance_pr_titles(pr_details_df)
 
-    # Export to Excel
     write_excel(pr_details_df, output_file)
 
     typer.echo(f"\nPR details exported to '{output_file}'.")
@@ -216,9 +212,13 @@ def prepare_release(
         typer.echo("Operation cancelled.")
         raise typer.Exit()
 
-    # Read the modified Excel file
+    updated_df = _read_modified_excel_file(output_file)
+    update_prs(updated_df)
+
+
+def _read_modified_excel_file(output_file: str) -> "pd.DataFrame":
     try:
-        updated_df = pd.read_excel(
+        return pd.read_excel(
             output_file,
             dtype={
                 "number": "str",
@@ -232,7 +232,6 @@ def prepare_release(
             },
             keep_default_na=False,  # This prevents empty cells from becoming NaN
         )
-        update_prs(updated_df)
         typer.echo("\nAll PR updates completed!")
     except Exception as e:
         typer.echo(f"Error processing Excel file: {e}", err=True)
