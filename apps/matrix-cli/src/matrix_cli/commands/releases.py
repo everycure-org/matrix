@@ -38,6 +38,11 @@ app = typer.Typer(
 )
 
 
+@app.command()
+def test():
+    print(select_previous_release())
+
+
 @app.command(name="article")
 def write_release_article(
     output_file: str = typer.Option(None, help="File to write the release article to"),
