@@ -76,7 +76,11 @@ def perform_actual_rotation(user_key_id: str, key_name: str):
 
     # 3. create new PK
     console.print(f"[bold green] Creating new PK for {key_name}")
-    run_command(f"git-crypt init -k {key_name}")
+    # small hack to allow for default key to be used without specifying it
+    if key_name == "default":
+        run_command("git-crypt init")
+    else:
+        run_command(f"git-crypt init -k {key_name}")
 
     # 4. add all users that will remain access
     console.print(f"[bold green] Adding all users that will remain access to {key_name}")
