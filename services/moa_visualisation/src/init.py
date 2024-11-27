@@ -12,7 +12,7 @@ def main():
     os.environ["MOA_DB_PATH"] = MOA_DB_PATH
 
     client = storage.Client()  # define project here - where is this from
-    blobs = client.list_blobs(DATA_INPUT_PATH, suffix="all.parquet")
+    blobs = client.list_blobs(DATA_INPUT_PATH)
     for blob in blobs:
         # Read from GS
         df = pd.read_parquet(blob.path)
