@@ -37,3 +37,4 @@ infra/**/Chart.lock
 
 # embed_norm
 apps/embed_norm/cached_datasets/
+apps/embed_norm/old_tests/
