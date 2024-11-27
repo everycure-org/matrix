@@ -9,7 +9,7 @@ import os
 #     'biolink:Protein': '#FF964F',
 # }
 
-DATA_INPUT_PATH = os.environ.get("DATA_INPUT_PATH", "gs://silc-storage/moa_vis/")
+DATA_INPUT_PATH = os.environ.get("DATA_INPUT_PATH", "gs://silc-storage/moa_vis")
 MOA_DB_PATH = os.environ.get("MOA_DB_PATH", "data/moa_extraction.db")
 GCP_PROJECT = os.environ.get("GCP_PROJECT", "project-silc")
 
