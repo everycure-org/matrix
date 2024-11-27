@@ -49,7 +49,7 @@ def list_available_pairs_df(input_path: str = MOA_DB_PATH, path_number: str = "t
 def get_moa_predictions_from_db(input_path: str, pair_id: str, path_number: str) -> pd.DataFrame:
     if path_number not in ["two_hop", "three_hop"]:
         raise ValueError("path_number must be 'two_hop' or 'three_hop'")
-    query = f"""SELECT * FROM {path_number}_pair_info_all 
+    query = f"""SELECT * FROM {path_number}_predictions_all 
     WHERE pair_id = '{pair_id}' ORDER BY MOA_score DESC"""
     df = pd.read_sql_query(query, f"sqlite:///{input_path}")
     return df
