@@ -4,7 +4,7 @@ import typer
 from rich import print as rprint
 from rich.markdown import Markdown
 
-from matrix_cli.components.git import fetch_pr_detail_nocache, get_code_diff
+from matrix_cli.components.git import fetch_pr_detail, get_code_diff
 from matrix_cli.components.settings import settings
 from matrix_cli.components.utils import console, get_git_root, get_markdown_contents, invoke_model
 
@@ -41,7 +41,7 @@ def pr_summary(
     console.print(f"[green]Fetching PR #{pr_number} details...")
 
     try:
-        pr_info = fetch_pr_detail_nocache(pr_number)
+        pr_info = fetch_pr_detail(pr_number)
     except Exception as e:
         console.print(f"[bold red]Error: Could not fetch PR #{pr_number}: {e}")
         raise typer.Exit(1)

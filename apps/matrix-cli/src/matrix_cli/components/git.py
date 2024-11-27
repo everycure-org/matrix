@@ -13,9 +13,10 @@ from matrix_cli.components.settings import settings
 from matrix_cli.components.utils import get_git_root, run_command
 
 
-def fetch_pr_detail_nocache(pr_number: int) -> PRInfo:
+@memory.cache
+def fetch_pr_detail(pr_number: int) -> PRInfo:
     """
-    Non-cached version of fetch_pr_detail.
+    Fetches PR details including merge commit.
     """
     # Fetch PR details including merge commit
     command = ["gh", "pr", "view", str(pr_number), "--json", "number,title,labels,url,mergeCommit,headRefName"]
@@ -26,7 +27,7 @@ def fetch_pr_detail_nocache(pr_number: int) -> PRInfo:
     diff = ""
     if merge_commit := pr_info.get("mergeCommit") and pr_info["mergeCommit"].get("oid"):
         try:
-            diff = get_code_diff(merge_commit, None)
+            diff = get_code_from_commit(merge_commit)
         except subprocess.CalledProcessError:
             typer.echo(f"\nWarning: Could not fetch diff for PR #{pr_number}", err=True)
     else:
@@ -38,20 +39,6 @@ def fetch_pr_detail_nocache(pr_number: int) -> PRInfo:
                 typer.echo(f"\nWarning: Could not fetch diff for PR #{pr_number}", err=True)
 
     return PRInfo.from_github_response(pr_info, diff)
-
-
-@memory.cache
-def fetch_pr_detail(pr_number: int) -> Optional[PRInfo]:
-    """
-    Fetches details for a single PR.
-
-    Args:
-        pr_number (int): PR number to fetch
-
-    Returns:
-        Dict: PR details or None if failed
-    """
-    return fetch_pr_detail_nocache(pr_number)
 
 
 def parse_diff_input(since: str, until: str) -> Tuple[str, str]:
@@ -108,3 +95,10 @@ def get_code_diff(
     # allow also single ref which gets the diff just for that commit
     diff_ref = f"{from_ref}..{to_ref}" if to_ref is not None else from_ref
     return run_command(["git", "diff", diff_ref, "--", *file_patterns], cwd=git_root)
+
+
+def get_code_from_commit(commit: str, file_patterns: List[str] = settings.inclusion_patterns) -> Optional[str]:
+    git_root = get_git_root()
+    command = ["git", "diff", f"{commit}^!", "--", *file_patterns]
+    print(command)
+    return run_command(command, cwd=git_root)

@@ -3,6 +3,7 @@ import subprocess
 from pathlib import Path
 from typing import TYPE_CHECKING, List
 
+import questionary
 import typer
 from matrix_cli.components.cache import memory
 from rich.console import Console
@@ -71,3 +72,16 @@ def run_command(command: List[str], cwd: str = None) -> str:
     except subprocess.CalledProcessError as e:
         typer.echo(f"Error running command {' '.join(command)}: {e.stderr}", err=True)
         raise
+
+
+def select_previous_release():
+    """Prompts the user to select an existing release from the list of releases."""
+    console.print("[green]What was the last release that we should use as a starting point?")
+    return questionary.select(
+        "Select existing release from the list below:",
+        choices=get_releases(),
+    ).ask()
+
+
+def get_releases():
+    return run_command(["git", "tag"], cwd=get_git_root()).split("\n")
