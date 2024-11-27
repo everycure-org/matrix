@@ -1,4 +1,5 @@
 import warnings
+from typing import List
 
 from pydantic_settings import BaseSettings
 from tqdm import TqdmExperimentalWarning
@@ -25,6 +26,10 @@ class MatrixCliSettings(BaseSettings):
         "*.hcl",
         "*.git",
         ":!**/matrix/packages/*",
+    ]
+    raw_paths: List[str] = [
+        "data/01_RAW",
+        "kedro/data/01_raw",
     ]
 
 

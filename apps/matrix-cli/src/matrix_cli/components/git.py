@@ -13,35 +13,31 @@ from matrix_cli.components.settings import settings
 from matrix_cli.components.utils import get_git_root, run_command
 
 
-def fetch_pr_detail_nocache(pr_number: int) -> Optional[PRInfo]:
+def fetch_pr_detail_nocache(pr_number: int) -> PRInfo:
     """
     Non-cached version of fetch_pr_detail.
     """
-    try:
-        # Fetch PR details including merge commit
-        command = ["gh", "pr", "view", str(pr_number), "--json", "number,title,labels,url,mergeCommit,headRefName"]
-        pr_json = run_command(command)
-        pr_info = json.loads(pr_json)
+    # Fetch PR details including merge commit
+    command = ["gh", "pr", "view", str(pr_number), "--json", "number,title,labels,url,mergeCommit,headRefName"]
+    pr_json = run_command(command)
+    pr_info = json.loads(pr_json)
 
-        # Fetch diff if merge commit exists
-        diff = ""
-        if merge_commit := pr_info.get("mergeCommit") and pr_info["mergeCommit"].get("oid"):
+    # Fetch diff if merge commit exists
+    diff = ""
+    if merge_commit := pr_info.get("mergeCommit") and pr_info["mergeCommit"].get("oid"):
+        try:
+            diff = get_code_diff(merge_commit, None)
+        except subprocess.CalledProcessError:
+            typer.echo(f"\nWarning: Could not fetch diff for PR #{pr_number}", err=True)
+    else:
+        # If no merge commit, use the head ref name to fetch the diff
+        if head_ref_name := pr_info.get("headRefName"):
             try:
-                diff = get_code_diff(merge_commit, None)
+                diff = get_code_diff("origin/main", head_ref_name)
             except subprocess.CalledProcessError:
                 typer.echo(f"\nWarning: Could not fetch diff for PR #{pr_number}", err=True)
-        else:
-            # If no merge commit, use the head ref name to fetch the diff
-            if head_ref_name := pr_info.get("headRefName"):
-                try:
-                    diff = get_code_diff("origin/main", head_ref_name)
-                except subprocess.CalledProcessError:
-                    typer.echo(f"\nWarning: Could not fetch diff for PR #{pr_number}", err=True)
 
-        return PRInfo.from_github_response(pr_info, diff)
-    except subprocess.CalledProcessError:
-        typer.echo(f"\nWarning: Could not fetch PR #{pr_number}", err=True)
-        return None
+    return PRInfo.from_github_response(pr_info, diff)
 
 
 @memory.cache

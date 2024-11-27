@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, List
 import typer
 from matrix_cli.components.git import fetch_pr_detail, fetch_pr_detail_nocache
 from matrix_cli.components.settings import settings
-from matrix_cli.components.utils import run_command
+from matrix_cli.components.utils import console, run_command
 from tqdm.rich import tqdm
 
 if TYPE_CHECKING:
@@ -36,7 +36,10 @@ def get_pr_details(pr_numbers: List[int], use_cache: bool = True) -> "pd.DataFra
         # Process completed tasks with progress bar
         results = []
         for future in tqdm(as_completed(future_to_pr), total=len(pr_numbers), desc="Fetching PR details", unit="PR"):
+            exception = future.exception()
             pr_info = future.result()
+            if exception:
+                console.print(f"[bold red]Error fetching PR details for PR #{future_to_pr[future]}: {exception}")
             if pr_info:
                 results.append(pr_info.to_dict())
 
