@@ -124,6 +124,9 @@ spec:
             configMapKeyRef:
               name: matrix-config
               key: GCP_BUCKET
+        - name: NUM_CPU
+          value: {% raw %} '{{workflow.parameters.cpu_limit}}'
+          {% endraw %}
       command: [kedro]
       args: ["run", "-p", "{{ pipeline_name }}", "-e", {% raw %}"{{workflow.parameters.env}}"{% endraw %}, "-n", {% raw %}"{{inputs.parameters.kedro_nodes}}"{% endraw %}]
 
