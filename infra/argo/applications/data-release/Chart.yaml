@@ -5,8 +5,8 @@ type: application
 version: 0.1.0
 appVersion: "1.0.0"
 
-dependencies:
-- name: argo-events
-  # Can i install it in a namespace different from the parent application's namespace?
-  version: 1.9.2
-  repository: https://argoproj.github.io/argo-helm
+# dependencies:
+# - name: argo-events
+#   # Can i install it in a namespace different from the parent application's namespace?
+#   version: 1.9.2
+#   repository: https://argoproj.github.io/argo-helm
