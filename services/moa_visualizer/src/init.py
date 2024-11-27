@@ -7,7 +7,7 @@ from utils import GCP_PROJECT, DATA_INPUT_PATH, MOA_DB_PATH
 
 
 def main():
-    client = storage.Client(project=GCP_PROJECT)  # define project here - where is this from
+    client = storage.Client(project=GCP_PROJECT)
     blobs = client.list_blobs(DATA_INPUT_PATH)
     for blob in blobs:
         # Read from GS
