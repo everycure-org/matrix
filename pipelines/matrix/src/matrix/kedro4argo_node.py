@@ -145,3 +145,6 @@ def argo_node(
         confirms=confirms,
         namespace=namespace,
     )
+
+
+ARGO_GPU_NODE_MEDIUM = ArgoResourceConfig(num_gpus=1)
