@@ -93,7 +93,7 @@ def ingest_nodes(df: DataFrame) -> DataFrame:
     """
     return (
         df.select("id", "name", "category", "description", "upstream_data_source")
-        .withColumn("label", F.col("category"))
+        .withColumn("labels", F.col("category"))
         # add string properties here
         .withColumn(
             "properties",
@@ -158,7 +158,6 @@ def bucketize_df(df: DataFrame, bucket_size: int, input_features: List[str], max
         )
         # Clip max. length
         .withColumn("text_to_embed", F.substring(F.col("text_to_embed"), 1, max_input_len))
-        .select("id", *input_features, "text_to_embed", "bucket")
     )
 
 
@@ -217,6 +216,7 @@ async def compute_df_embeddings_async(df: pd.DataFrame, embedding_model) -> pd.D
         "pca_embedding": "array<float>",
     }
 )
+@no_nulls(columns=["embedding", "pca_embedding"])
 @unpack_params()
 def reduce_embeddings_dimension(df: DataFrame, transformer, input: str, output: str, skip: bool):
     return reduce_dimension(df, transformer, input, output, skip)
@@ -287,12 +287,14 @@ def add_include_in_topological(df: DataFrame, gdb: GraphDB, drug_types: List[str
     Only edges between non drug-disease pairs are included in topological algorithm.
     """
     with gdb.driver() as driver:
+        # TODO: Verify this correctly crashes the node
+
         driver.execute_query(
             """
             MATCH (n)-[r]-(m)
             WHERE 
-                n.category IN $drug_types 
-                AND m.category IN $disease_types
+                ANY(item IN $drug_types WHERE item IN n.all_categories) AND
+                ANY(item IN $disease_types WHERE item IN m.all_categories)
             SET r.include_in_graphsage = 0
             """,
             database_=gdb._database,
@@ -396,6 +398,7 @@ def write_topological_embeddings(
 
 
 @no_nulls(columns=["pca_embedding", "topological_embedding"])
+@primary_key(primary_key=["id"])
 def extract_node_embeddings(embeddings: DataFrame, nodes: DataFrame, string_col: str) -> DataFrame:
     """Extract topological embeddings from Neo4j and write into BQ.
 
@@ -432,13 +435,3 @@ def visualise_pca(nodes: DataFrame, column_name: str):
     plt.tight_layout(rect=[0, 0, 0.85, 1])
 
     return fig
-
-
-def extract_nodes_edges(nodes: DataFrame, edges: DataFrame) -> tuple[DataFrame, DataFrame]:
-    """Simple node/edge extractor function.
-
-    Args:
-        nodes: the nodes from the KG
-        edges: the edges from the KG
-    """
-    return {"enriched_nodes": nodes, "enriched_edges": edges}
