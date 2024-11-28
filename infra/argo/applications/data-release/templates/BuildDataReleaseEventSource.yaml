@@ -8,7 +8,7 @@
      serviceAccountName: data-release-service-account # assign a service account with `get`, `list` and `watch` permissions on the resource being watched.
    resource:
      data-release-success:
-       namespace: argo # namespace to listen events within
+       namespace: data-release # namespace to listen events within
        group: argoproj.io
        version: v1alpha1
        resource: workflows
