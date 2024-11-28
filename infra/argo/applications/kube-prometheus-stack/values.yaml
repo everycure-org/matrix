@@ -14,7 +14,7 @@ kube-prometheus-stack:
         - name: argo-workflows-controller
           selector:
             matchLabels:
-              app: argo-workflows-workflow-controller
+              app.kubernetes.io/name: argo-workflows-workflow-controller
           namespaceSelector:
             matchNames:
               - argo-workflows  
