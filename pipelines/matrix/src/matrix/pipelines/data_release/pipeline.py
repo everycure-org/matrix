@@ -1,4 +1,5 @@
-from kedro.pipeline import Pipeline, node, pipeline
+from kedro.pipeline import Pipeline, pipeline, node
+
 from matrix.pipelines.embeddings.nodes import ingest_edges, ingest_nodes
 
 
