@@ -44,12 +44,12 @@ def generate_paths(ground_truth: pd.DataFrame):
         # TODO: Should we group by source and use single query per source? or does that make it unbalanced?
 
         # NOTE: Setting quick limit
-        if index == 1000:
+        if index == 50:
             break
 
         # Render query
         query = f"""
-            MATCH p=(drug:Entity {{id: '{row['source']}'}})-[*2..2]->(disease:Entity {{id: '{row['target']}'}}) 
+            MATCH p=(drug:Entity {{id: '{row['source']}'}})-[*2..3]->(disease:Entity {{id: '{row['target']}'}}) 
             WITH [node IN nodes(p) | node.id] as nodes, [node in nodes(p) | labels(node)[1]] as labels, [rel in relationships(p) | type(rel)] as rels 
             RETURN nodes, labels, rels"""
 
