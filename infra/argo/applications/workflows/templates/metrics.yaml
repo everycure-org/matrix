@@ -14,15 +14,3 @@ spec:
     targetPort: 9090
   selector:
       app: argo-workflows-workflow-controller
----
-apiVersion: monitoring.coreos.com/v1
-kind: ServiceMonitor
-metadata:
-  name: argo-workflows
-  namespace: argo-workflows
-spec:
-  endpoints:
-  - port: metrics
-  selector:
-    matchLabels:
-      app: argo-workflows-workflow-controller

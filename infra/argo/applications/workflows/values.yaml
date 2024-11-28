@@ -3,8 +3,6 @@ argo-workflows:
   server: 
     extraArgs:
       - --auth-mode=server
-    metrics:
-      enabled: true
 
   artifactRepository:
     archiveLogs: true
@@ -13,5 +11,5 @@ argo-workflows:
       keyFormat: "{{ \"{{workflow.namespace}}/{{workflow.name}}/{{pod.name}}\" }}"
   
   controller:
-    metrics:
+    metricsConfig:
       enabled: true
