@@ -14,6 +14,7 @@ module "project_iam_bindings" {
   mode = "additive"
 
   bindings = {
+    "roles/bigquery.studioAdmin"      = local.tech_team_group
     "roles/notebooks.developer"       = local.tech_team_group
     "roles/ml.admin"                  = local.tech_team_group
     "roles/aiplatform.admin"          = local.tech_team_group
