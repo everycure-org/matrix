@@ -9,7 +9,11 @@ embeddings.gdb:
     -  ${globals:neo4j.password}
 
 # Configuration for node embeddings
-embeddings.node_buckets:
+embeddings.node:
+  # Following configuration ensures that OpenAI requests are
+  # batches in batches of 500 input elements, where each input
+  # element is clipped at 100 characters. Max. token limit for 
+  # embeddings call is roughly 8500 tokens, approx (100 * 500) / 6.
   batch_size: 500
   max_input_len: 100
   input_features: ["category", "name"]
