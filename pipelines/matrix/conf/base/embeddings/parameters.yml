@@ -1,13 +1,3 @@
-# Neo4J graph database configuration. Used to orchestrate
-# queries into Neo4j.
-embeddings.gdb:
-  object: matrix.pipelines.embeddings.nodes.GraphDB
-  endpoint: ${globals:neo4j.host}
-  database: analytics
-  auth:
-    -  ${globals:neo4j.user}
-    -  ${globals:neo4j.password}
-
 # Configuration for node embeddings
 embeddings.node:
   # Following configuration ensures that OpenAI requests are
@@ -71,20 +61,6 @@ embeddings.topological:
         label: 'Entity'
         properties: *_pca_property
     relationshipProjection: '*'
-    configuration:
-      relationshipProperties: 
-        include_in_graphsage:
-          property: include_in_graphsage
-          defaultValue: 1
-  
-  # Configuration to apply filtering on projected GDS 
-  # graph, ensuring various edges are removed
-  # prior to model training.
-  filtering:
-    graphName: filtered_embeddings 
-    args:
-      node_filter: '*'
-      relationship_filter: r.include_in_graphsage = 1.0
   
   # Name of the model in Neo4j
   estimator:

@@ -43,6 +43,17 @@ def create_pipeline(**kwargs) -> Pipeline:
                 name="apply_pca",
                 tags=["argowf.fuse", "argowf.fuse-group.node_embeddings"],
             ),
+            node(
+                func=nodes.filter_edges_for_topological_embeddings,
+                inputs=[
+                    "embeddings.feat.graph.pca_node_embeddings",
+                    "integration.prm.filtered_edges",
+                    "params:modelling.drug_types",
+                    "params:modelling.disease_types",
+                ],
+                outputs="embeddings.feat.graph.edges_for_topological",
+                name="filter_edges_for_topological",
+            ),
             # Load spark dataset into local neo instance
             node(
                 func=lambda x: x,
@@ -59,7 +70,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 func=nodes.ingest_edges,
                 inputs=[
                     "embeddings.tmp.input_nodes",
-                    "integration.prm.filtered_edges",
+                    "embeddings.feat.graph.edges_for_topological",
                 ],
                 outputs="embeddings.tmp.input_edges",
                 name="ingest_neo4j_input_edges",
@@ -77,25 +88,9 @@ def create_pipeline(**kwargs) -> Pipeline:
                 ),
             ),
             node(
-                func=nodes.add_include_in_topological,
-                inputs={
-                    "df": "embeddings.tmp.input_edges",
-                    "gdb": "params:embeddings.gdb",
-                    "drug_types": "params:modelling.drug_types",
-                    "disease_types": "params:modelling.disease_types",
-                },
-                outputs="embeddings.feat.include_in_topological@yaml",
-                name="filter_topological",
-                tags=[
-                    "argowf.fuse",
-                    "argowf.fuse-group.topological_embeddings",
-                    "argowf.template-neo4j",
-                ],
-            ),
-            node(
                 func=nodes.train_topological_embeddings,
                 inputs={
-                    "df": "embeddings.feat.include_in_topological@yaml",
+                    "df": "embeddings.tmp.input_edges",
                     "gds": "params:embeddings.gds",
                     "topological_estimator": "params:embeddings.topological_estimator",
                     "unpack": "params:embeddings.topological",
