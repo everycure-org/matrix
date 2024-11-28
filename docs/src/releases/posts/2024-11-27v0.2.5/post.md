@@ -1,17 +1,15 @@
 ---
 draft: false 
-date: 2024-11-01
+date: 2024-11-28
 categories:
   - Release
 authors:
   - lvijnck
-  - kushal2051
   - emil-k
   - matwasilewski
   - oliverw1
   - pascalwhoop
   - piotrkan
-
 
 ---
 
@@ -20,61 +18,120 @@ authors:
 This release of the Matrix Platform focuses on improving developer experience and enhancing data integration and pipeline control.  We introduce a new command-line interface (CLI), integrate the ROBOKOP
 knowledge graph, and provide more granular control over pipeline execution.
 
+<!-- more -->
+
 ## How to get access to the data published in this release
 
-### Kedro CLI
+### Using the CLI
 
-TLDR
-`kedro ipython --env cloud`
+The quickest way to explore the data is using IPython:
 
+```bash
+kedro ipython --env cloud
+```
 
-### In a Jupyter Notebook
-TODO
+This will start an IPython session with the following variables automatically loaded:
+- `context`: The Kedro project context
+- `catalog`: The data catalog containing all datasets
+- `parameters`: Project parameters
+
+You can then load any dataset using:
+
+```python
+df = catalog.load("dataset_name")
+```
+
+### Using Jupyter Notebook
+
+To explore the data in a Jupyter notebook:
+
+```bash 
+kedro jupyter lab --env cloud
+```
+
+This will start a Jupyter server with the Kedro context loaded. The same variables (`context`, `catalog`, `parameters`) will be available in your notebook.
+
+![](./attachments/lab.png)
+
+To reload the Kedro context at any time in your notebook (e.g. after changing configurations), use:
+
+```python
+%reload_kedro
+```
+
+#### Specifying a Different Release
+
+By default, the data access will use the release specified in `conf/cloud/globals.yml`, to use a different release:
+
+1. Update the `RELEASE_NAME` in `.env`:
+
+```
+RELEASE_NAME=v0.2.5-rtx-only #to use a release that only includes RTX data
+```
+
+!!! tip: 
+    If you want to get a list of all current releases, while we are working on a more centralized solution you can run either `git tag` to see a list (data available starting from `v0.2.5`) or by running
+    ```
+    gsutil ls gs://mtrx-us-central1-hub-dev-storage/kedro/data/releases/
+    ```
+
+    which lists the folder containing all release runs. Note that not every folder will contain all data today, but we are working towards making sure they will always contain a complete release.
+
+2. Reload your kedro context for the changes to take effect
 
 ### Via BigQuery
-TODO
+
+Simply navigate to the [BigQuery console](https://console.cloud.google.com/bigquery?inv=1&invt=Abitqg&project=mtrx-hub-dev-3of&ws=!1m4!1m3!3m2!1smtrx-hub-dev-3of!2srelease_v0_2_5_rc1)
+and select the release you want to explore.
 
 ### When developing a new kedro node 
 
-TODO
+We would recommend building a clean python function in a notebook which consumes the
+datasets of interest (e.g. `integration.prm.filtered_nodes`). When you are happy with the
+function, you can copy it into the right place in the pipeline (various `nodes.py` files in `pipelines/matrix/src/matrix/pipelines/`) and wire it up with the rest of the pipeline using the syntax shown in various `pipeline.py` files.
 
-<!-- more -->
 
 For a complete list of changes, please refer to the [GitHub release notes](https://github.com/everycure-org/matrix/releases/tag/v0.2.5).
 
-## Key Enhancements 🚀
+## Other Enhancements 🚀
 
-### 1. Matrix CLI ⌨️
-
-A new command-line interface, `matrix-cli`, streamlines various project tasks. The CLI offers a centralized interface for managing GitHub users and teams, generating release notes with AI assistance, and
-summarizing code changes. This simplifies common workflows and improves developer productivity.
-
-### 2. ROBOKOP Knowledge Graph Integration 🌐
+### 1. ROBOKOP Knowledge Graph Integration 🌐
 
 The platform now integrates the ROBOKOP knowledge graph, significantly expanding the scope and depth of our knowledge base. This integration enhances data coverage and provides richer context for drug
 repurposing analysis, potentially leading to more accurate and comprehensive predictions.
 
-### 3. Translator-Based Synonymization Enhancements 🔄
+### 2. Translator-Based Synonymization Enhancements 🔄
 
 The synonymization system, now powered by the [Translator project](https://nodenorm.test.transltr.io/docs#/translator), has undergone significant enhancements. These improvements ensure greater consistency and scalability in mapping drug and disease synonyms,
 improving the overall quality and reliability of data integration by more accurately finding identifier equivalences.
 
-### 4. GPU Support ⚡️
+### 3. GPU Support ⚡️
 
 The platform now leverages GPUs on the cluster, accelerating computationally intensive tasks.  Additionally, the integration of Neo4j Enterprise license keys unlocks advanced features and performance
 optimizations for graph database operations. These infrastructure upgrades significantly improve the platform's efficiency and scalability.  See issue #622 for more details.
 
-### 5. Enhanced `kedro submit` Command  ⚙️
+### 5. Matrix CLI ⌨️
+
+A new command-line interface, `matrix-cli`, streamlines various project tasks. The CLI offers a centralized interface for managing GitHub users and teams, generating release notes with AI assistance, and
+summarizing code changes. This simplifies common workflows and improves developer productivity.
+
+<script src="https://asciinema.org/a/lM3Ht0cIVZ0RTJ1utsA89MgGf.js" id="asciicast-lM3Ht0cIVZ0RTJ1utsA89MgGf" async="true"></script>
+
+!!! tip:
+    This CLI is very early in development, and we would love to hear from you if you have any feature requests or feedback.
+    Try it by switching to `apps/matrix-cli`, and running `uv run matrix`
+
+### 6. Enhanced `kedro submit` Command  ⚙️
 
 The `kedro submit` command has been significantly enhanced, providing developers with more fine-grained control over pipeline execution. It now supports running pipelines from specific nodes and submitting
 to different buckets (test/release), enabling greater flexibility in development, testing, and deployment workflows. See issues #605 and #611 for more details.
 
-### 6. Kedro Catalog Cleanup 🧹
+### 7. Kedro Catalog Cleanup 🧹
 
 Addressing technical debt, this release includes fixes for missing and unused entries in the Kedro catalog (issue #600).  This cleanup improves pipeline reliability and maintainability.  Further improvements
 to the catalog include fixes related to cloud globals (issue #694) and more robust handling of node category selection during integration (issue #654).
 
-### 7. Enhanced Developer Experience 🧰
+### 8. Enhanced Developer Experience 🧰
 
 Several improvements streamline the developer experience:
 
@@ -104,3 +161,11 @@ We have progressed the following workstreams:
 
 We are continuously working to improve the Matrix Platform. Our next steps include further enhancements to the data release pipeline for fully automated releases, ongoing integration of new knowledge graphs,
 exploring self-hosted LLMs for embedding generation, and preparing for open-sourcing the repository.
+
+## How to access the data using Kedro
+
+### Using IPython
+
+The quickest way to explore the data is using IPython:
+```bash
+ke
