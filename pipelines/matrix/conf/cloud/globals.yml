@@ -1,7 +1,7 @@
 run_name: ${oc.env:RUN_NAME}
 
 versions:
-  release: ${oc.env:RELEASE_VERSION,v0.2.4-rc.2}
+  release: ${oc.env:RELEASE_VERSION,v0.2.5-rtx.n2v-long-covid-run}
 
 release_folder_name: ${oc.env:RELEASE_FOLDER_NAME, releases}
 
@@ -28,3 +28,6 @@ paths:
   evaluation:         ${root_dir}/datasets/evaluation
   matrix_generation:  ${root_dir}/datasets/matrix_generation
   inference:          ${root_dir}/datasets/inference
+
+  # Tmp. directory using k8s emph. storage
+  tmp:           /tmp
