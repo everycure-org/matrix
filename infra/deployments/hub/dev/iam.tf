@@ -15,7 +15,7 @@ module "project_iam_bindings" {
 
   bindings = {
     "roles/bigquery.studioAdmin"      = local.tech_team_group
-    "roles/notebooks.developer"       = local.tech_team_group
+    "roles/notebooks.admin"           = local.tech_team_group
     "roles/ml.admin"                  = local.tech_team_group
     "roles/aiplatform.admin"          = local.tech_team_group
     "roles/artifactregistry.writer"   = local.tech_team_group
