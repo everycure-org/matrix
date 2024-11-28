@@ -1,0 +1,36 @@
+kind: HTTPRoute
+apiVersion: gateway.networking.k8s.io/v1beta1
+metadata:
+  name: grafana-route
+  namespace: observability
+spec:
+  parentRefs:
+  - kind: Gateway
+    sectionName: https
+    namespace: gateway
+    name: external-http
+  hostnames:
+  - "grafana.platform.dev.everycure.org"
+  rules:
+  - backendRefs:
+    - name: grafana
+      port: 80
+
+---
+kind: HTTPRoute
+apiVersion: gateway.networking.k8s.io/v1beta1
+metadata:
+  name: prometheus-route
+  namespace: observability
+spec:
+  parentRefs:
+  - kind: Gateway
+    sectionName: https
+    namespace: gateway
+    name: external-http
+  hostnames:
+  - "prometheus.platform.dev.everycure.org"
+  rules:
+  - backendRefs:
+    - name: prometheus
+      port: 80
