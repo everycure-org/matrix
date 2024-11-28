@@ -179,7 +179,7 @@ def compute_embeddings(
     # the dataframe, therefore leading to only the latest shard
     # being processed n times.
     def _func(dataframe: pd.DataFrame):
-        return lambda df=dataframe: encoder.encode(df())  # compute_df_embeddings_async(df(), model)
+        return lambda df=dataframe: encoder.encode(df())
 
     shards = {}
     for path, df in dfs.items():

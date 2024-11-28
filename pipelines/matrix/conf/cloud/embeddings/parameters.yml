@@ -1,3 +1,3 @@
 embeddings.topological_estimator:
-    # FUTURE workflow should set number of cores as env variable and we pick up here. `nproc`
-    concurrency: 48
+    # NOTE: Grabs num CPUs from env, this is supplied by Argo
+    concurrency: ${oc.env:NUM_CPU, 16}
