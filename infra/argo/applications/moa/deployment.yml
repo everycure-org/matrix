@@ -36,7 +36,7 @@ spec:
             value: "/data/moa_extraction.db"
       containers:
       - name: moa-viewer
-        image: us-central1-docker.pkg.dev/mtrx-hub-dev-3of/matrix-images/moa_visualizer:laurens
+        image: us-central1-docker.pkg.dev/mtrx-hub-dev-3of/matrix-images/moa_visualizer:mvp
         ports:
         - containerPort: 8501
         env:
