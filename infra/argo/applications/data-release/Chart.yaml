@@ -7,7 +7,6 @@ appVersion: "1.0.0"
 
 dependencies:
 - name: argo-events
-  version: 2.4.7
+  version: 2.4.1
   repository: https://argoproj.github.io/argo-helm
-  namespaceOverride: data-release
 
