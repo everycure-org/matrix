@@ -66,6 +66,8 @@ def no_nulls(columns: List[str]):
 def filter_valid_pairs(
     nodes: DataFrame,
     raw_gt: DataFrame,
+    drug_categories: List[str],
+    disease_categories: List[str],
 ) -> Tuple[DataFrame, Dict[str, float]]:
     """Filter pairs to only include nodes that exist in the nodes DataFrame.
 
@@ -78,14 +80,17 @@ def filter_valid_pairs(
         - DataFrame with combined filtered positive and negative pairs
         - Dictionary with retention statistics
     """
+    categories = drug_categories + disease_categories
+    print(categories)
     # Get list of nodes in the KG
     valid_nodes = nodes.select("id").distinct()
+    valid_nodes_with_categories = nodes.filter(f.col("category").isin(categories)).select("id")
 
     # Split raw_gt into positive and negative pairs
     raw_tp = raw_gt.filter(f.col("y") == 1)
     raw_tn = raw_gt.filter(f.col("y") == 0)
 
-    # Filter out pairs where both source and target exist in nodes
+    # Filter out pairs where both source and target do not exist in nodes
     filtered_tp = (
         raw_tp.join(valid_nodes.alias("source_nodes"), raw_tp.source == f.col("source_nodes.id"))
         .join(valid_nodes.alias("target_nodes"), raw_tp.target == f.col("target_nodes.id"))
@@ -96,15 +101,57 @@ def filter_valid_pairs(
         .join(valid_nodes.alias("target_nodes"), raw_tn.target == f.col("target_nodes.id"))
         .select(raw_tn["*"])
     )
+    # Filter out pairs where category of source or target is incorrect
+    filtered_tp_categories = (
+        raw_tp.join(valid_nodes_with_categories.alias("source_nodes"), raw_tp.source == f.col("source_nodes.id"))
+        .join(valid_nodes_with_categories.alias("target_nodes"), raw_tp.target == f.col("target_nodes.id"))
+        .select(raw_tp["*"])
+    )
+    filtered_tn_categories = (
+        raw_tn.join(valid_nodes_with_categories.alias("source_nodes"), raw_tn.source == f.col("source_nodes.id"))
+        .join(valid_nodes_with_categories.alias("target_nodes"), raw_tn.target == f.col("target_nodes.id"))
+        .select(raw_tn["*"])
+    )
+    # Filter out pairs where category of source or target is incorrect AND source and target do not exist in nodes
+    final_filtered_tp_categories = (
+        filtered_tp_categories.join(
+            valid_nodes_with_categories.alias("source_nodes"), filtered_tp_categories.source == f.col("source_nodes.id")
+        )
+        .join(
+            valid_nodes_with_categories.alias("target_nodes"), filtered_tp_categories.target == f.col("target_nodes.id")
+        )
+        .select(filtered_tp_categories["*"])
+    )
+    final_filtered_tn_categories = (
+        filtered_tn.join(
+            valid_nodes_with_categories.alias("source_nodes"), filtered_tn.source == f.col("source_nodes.id")
+        )
+        .join(valid_nodes_with_categories.alias("target_nodes"), filtered_tn.target == f.col("target_nodes.id"))
+        .select(filtered_tn["*"])
+    )
 
     # Calculate retention percentages
     retention_stats = {
-        "positive_pairs_retained_pct": (filtered_tp.count() / raw_tp.count()) if raw_tp.count() > 0 else 1.0,
-        "negative_pairs_retained_pct": (filtered_tn.count() / raw_tn.count()) if raw_tn.count() > 0 else 1.0,
+        "positive_pairs_retained_in_kg_pct": (filtered_tp.count() / raw_tp.count()) if raw_tp.count() > 0 else 1.0,
+        "negative_pairs_retained_in_kg_pct": (filtered_tn.count() / raw_tn.count()) if raw_tn.count() > 0 else 1.0,
+        "positive_pairs_retained_in_categories_pct": (filtered_tp_categories.count() / raw_tp.count())
+        if raw_tp.count() > 0
+        else 1.0,
+        "negative_pairs_retained_in_categories_pct": (filtered_tn_categories.count() / raw_tn.count())
+        if raw_tn.count() > 0
+        else 1.0,
+        "positive_pairs_retained_final_pct": (final_filtered_tp_categories.count() / raw_tp.count())
+        if raw_tp.count() > 0
+        else 1.0,
+        "negative_pairs_retained_final_pct": (final_filtered_tn_categories.count() / raw_tn.count())
+        if raw_tn.count() > 0
+        else 1.0,
     }
 
     # Combine filtered pairs
-    pairs_df = filtered_tp.withColumn("y", f.lit(1)).unionByName(filtered_tn.withColumn("y", f.lit(0)))
+    pairs_df = final_filtered_tp_categories.withColumn("y", f.lit(1)).unionByName(
+        final_filtered_tn_categories.withColumn("y", f.lit(0))
+    )
 
     return {"pairs": pairs_df, "metrics": retention_stats}
 
