@@ -1,5 +1,5 @@
 kube-prometheus-stack:
-  prometheus:
+  prometheuxs:
     prometheusSpec:
       additionalServiceMonitors:
         - name: argo-workflows
