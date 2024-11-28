@@ -19,13 +19,13 @@ embeddings.node:
     # FUTURE: Experiment with performing dimensionality reduction
     # using OpenAI directly, enabling this heavily speeds up the process
     # of ingesting nodes.
-    dimensions: 100
+    dimensions: 200
 
 # Defines strategy used to reduce dimensions of the GenAI
 # generated node embeddings.
 # https://spark.apache.org/docs/latest/api/python/reference/api/pyspark.ml.feature.PCA.html
 embeddings.dimensionality_reduction:
-  skip: true
+  skip: false
   input: embedding
   output: &_pca_property 'pca_embedding'
   transformer:
