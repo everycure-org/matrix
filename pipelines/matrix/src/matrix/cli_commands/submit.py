@@ -42,7 +42,7 @@ def cli():
 @click.option("--namespace", type=str, default="argo-workflows", help="Specify a custom namespace")
 @click.option("--run-name", type=str, default=None, help="Specify a custom run name, defaults to branch")
 @click.option("--release-version", type=str, required=True, help="Specify a custom release name")
-@click.option("--pipeline", type=str, default="__default__", help="Specify which pipeline to execute")
+@click.option("--pipeline", type=str, default="modelling_run", help="Specify which pipeline to execute")
 @click.option("--verbose", "-v", is_flag=True, default=True, help="Enable verbose output")
 @click.option("--dry-run", "-d", is_flag=True, default=False, help="Does everything except submit the workflow")
 @click.option("--from-nodes", type=str, default="", help="Specify nodes to run from", callback=split_string)
@@ -74,6 +74,7 @@ def submit(username: str, namespace: str, run_name: str, release_version: str, p
     pipeline_obj.name = pipeline
 
 
+    summarize_submission(run_name, namespace, pipeline, is_test, release_version)
     _submit(
         username=username,
         namespace=namespace,
@@ -178,6 +179,22 @@ def _submit(
         sys.exit(1)
 
 
+def summarize_submission(run_name: str, namespace: str, pipeline: str, is_test: bool, release_version: str):
+    console.print(Panel.fit(
+        f"[bold green]About to submit workflow:[/bold green]\n"
+        f"Run Name: {run_name}\n"
+        f"Namespace: {namespace}\n"
+        f"Pipeline: {pipeline}\n"
+        f"Writing to test folder: {is_test}\n"
+        f"Data Release Version: {release_version}\n",
+        title="Submission Summary"
+    ))
+    console.print("Reminder: A data release should only be submitted once and not overwritten.\n"
+                  "If you need to make changes, please make this part of the next release.\n"
+                  "Experiments (modelling pipeline) are nested under the release and can be overwritten.\n\n")
+
+    if not click.confirm("Are you sure you want to submit the workflow?", default=False):
+        raise click.Abort()
         
 
 def run_subprocess(
