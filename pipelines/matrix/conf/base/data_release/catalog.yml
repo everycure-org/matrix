@@ -6,7 +6,6 @@ _neo4j_ds: &_neo4j_ds
   save_args:
     mode: "overwrite"
 
-
 data_release.prm.kg_nodes:
   <<: *_neo4j_ds
   save_args:
@@ -32,7 +31,6 @@ data_release.prm.kg_edges:
       CALL apoc.create.relationship(subject, event.label, {kg_sources: event.kg_sources}, object) YIELD rel
       RETURN rel
 
-
 # This entity belongs to commented out option of data_release pipeline.
 # data_release.prm.kg_embeddings:
 #   <<: [*_neo4j_ds]
@@ -44,3 +42,19 @@ data_release.prm.kg_edges:
 #       WITH n, event
 #       CALL apoc.create.setProperties(n, ['topological_embedding'], [event.topological_embedding]) YIELD node
 #       RETURN node
+
+_spark_kgx_ds: &_spark_kgx_ds
+  type: matrix.datasets.gcp.LazySparkDataset
+  file_format: csv
+  save_args:
+    mode: overwrite
+    sep: '\t'
+    header: True
+
+data_release.prm.kgx_nodes:
+  <<: *_spark_kgx_ds
+  filepath: ${globals:paths.kgx}/nodes.tsv
+
+data_release.prm.kgx_edges:
+  <<: *_spark_kgx_ds
+  filepath: ${globals:paths.kgx}/edges.tsv
