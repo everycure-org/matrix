@@ -14,11 +14,15 @@ module "project_iam_bindings" {
   mode = "additive"
 
   bindings = {
-
+    "roles/notebooks.developer"       = local.tech_team_group
+    "roles/ml.admin"                  = local.tech_team_group
+    "roles/aiplatform.admin"          = local.tech_team_group
     "roles/artifactregistry.writer"   = local.tech_team_group
     "roles/storage.objectCreator"     = local.tech_team_group
+    "roles/storage.objectUser"        = local.tech_team_group
     "roles/container.clusterAdmin"    = local.tech_team_group
     "roles/container.developer"       = local.tech_team_group
+    "roles/compute.admin"             = local.tech_team_group
     "roles/viewer"                    = local.matrix_viewers_group
     "roles/bigquery.jobUser"          = local.matrix_viewers_group
     "roles/bigquery.dataViewer"       = local.matrix_viewers_group
