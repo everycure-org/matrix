@@ -28,7 +28,7 @@ spec:
           # TODO: We can update the following env variable to
           # allow viewer leverages a new dataset
           - name: DATA_INPUT_PATH
-            value: "mtrx-us-central1-hub-dev-storage/kedro/data/releases/v0.2.5-rtx-only/runs/feature-moa-extraction-4472893d/datasets/moa_extraction/reporting"
+            value: "gs://mtrx-us-central1-hub-dev-storage/kedro/data/releases/v0.2.5-rtx-only/runs/feature-moa-extraction-4472893d/datasets/moa_extraction/reporting"
           # TODO: We should have data in matrix-hub instead
           - name: GCP_PROJECT
             value: "mtrx-hub-dev-3of"
