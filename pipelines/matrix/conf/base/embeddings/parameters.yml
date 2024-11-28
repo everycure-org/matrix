@@ -23,9 +23,9 @@ embeddings.node_encoder:
   encoder:
     object: langchain_openai.OpenAIEmbeddings
     model: text-embedding-3-small
-`     timeout: 10
+    timeout: 10
 
-# Defines strategy used to reduce dimensions of the GenAI
+# Defines strategy usπd to reduce dimensions of the GenAI
 # generated node embeddings.
 # https://spark.apache.org/docs/latest/api/python/reference/api/pyspark.ml.feature.PCA.html
 embeddings.dimensionality_reduction:
