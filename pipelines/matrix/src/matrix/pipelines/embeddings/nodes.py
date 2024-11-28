@@ -262,6 +262,46 @@ def reduce_dimension(df: DataFrame, transformer, input: str, output: str, skip: 
     return res
 
 
+def filter_edges_for_topological_embeddings(
+    nodes: DataFrame, edges: DataFrame, drug_types: List[str], disease_types: List[str]
+):
+    """Function to filter edges for topological embeddings process.
+
+    The function removes edges connecting drug and disease nodes to avoid data leakage.
+
+    Args:
+        nodes: nodes dataframe
+        edges: edges dataframe
+        drug_types: drug types
+        disease_types: list of disease types
+    Returns:
+        Dataframe with filtered edges
+    """
+
+    def _create_mapping(column: str):
+        return nodes.alias(column).withColumn(column, F.col("id")).select(column, "all_categories")
+
+    df = (
+        edges.alias("edges")
+        .join(_create_mapping("subject"), how="left", on="subject")
+        .join(_create_mapping("object"), how="left", on="object")
+        # FUTURE: Improve with proper feature engineering engine
+        .withColumn("subject_is_drug", F.arrays_overlap(F.col("subject.all_categories"), F.lit(drug_types)))
+        .withColumn("subject_is_disease", F.arrays_overlap(F.col("subject.all_categories"), F.lit(disease_types)))
+        .withColumn("object_is_drug", F.arrays_overlap(F.col("object.all_categories"), F.lit(drug_types)))
+        .withColumn("object_is_disease", F.arrays_overlap(F.col("object.all_categories"), F.lit(disease_types)))
+        .withColumn(
+            "is_drug_disease_edge",
+            (F.col("subject_is_drug") & F.col("object_is_disease"))
+            | (F.col("subject_is_disease") & F.col("object_is_drug")),
+        )
+        .filter(~F.col("is_drug_disease_edge"))
+        .select("edges.*")
+    )
+
+    return df
+
+
 def ingest_edges(nodes, edges: DataFrame):
     """Function to construct Neo4J edges."""
     return (
@@ -312,7 +352,6 @@ def train_topological_embeddings(
     gds: GraphDataScience,
     topological_estimator: GDSGraphAlgorithm,
     projection: Any,
-    filtering: Any,
     estimator: Any,
     write_property: str,
 ) -> Dict:
@@ -340,18 +379,6 @@ def train_topological_embeddings(
     config = projection.pop("configuration", {})
     graph, _ = gds.graph.project(*projection.values(), **config)
 
-    # Filter out treat/GT nodes from the graph
-    subgraph_name = filtering.get("graphName")
-    filter_args = filtering.pop("args")
-
-    # Drop graph if exists
-    if gds.graph.exists(subgraph_name).exists:
-        subgraph = gds.graph.get(subgraph_name)
-        gds.graph.drop(subgraph, False)
-
-    subgraph, _ = gds.graph.filter(subgraph_name, graph, **filter_args)
-    gds.graph.drop(graph)
-
     # Validate whether the model exists
     model_name = estimator.get("modelName")
     if gds.model.exists(model_name).exists:
@@ -359,7 +386,7 @@ def train_topological_embeddings(
         gds.model.drop(model)
 
     # Initialize the model
-    topological_estimator.run(gds=gds, model_name=model_name, graph=subgraph, write_property=write_property)
+    topological_estimator.run(gds=gds, model_name=model_name, graph=graph, write_property=write_property)
     losses = topological_estimator.return_loss()
 
     # Plot convergence
@@ -383,12 +410,11 @@ def write_topological_embeddings(
     topological_estimator: GDSGraphAlgorithm,
     projection: Any,
     estimator: Any,
-    filtering: Any,
     write_property: str,
 ) -> Dict:
     """Write topological embeddings."""
     # Retrieve the graph
-    graph_name = filtering.get("graphName")
+    graph_name = projection.get("graphName")
     graph = gds.graph.get(graph_name)
 
     # Retrieve the model
