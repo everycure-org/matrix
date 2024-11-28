@@ -1,9 +1,3 @@
-moa_extraction.raw.pairs_for_moa_prediction_normalized: # Use fabricated ground truth for testing MOA predictions
-  type: pandas.CSVDataset
-  filepath: ${globals:paths.raw}/ground_truth/translator/${globals:data_sources.gt.version}/tp_pairs_conflated.tsv 
-  load_args:
-    sep: "\t"
-
 # Neo4j databases with different names for testing
 
 "moa_extraction.input_nodes.{num_hops}_hop":
