@@ -3,6 +3,8 @@ argo-workflows:
   server: 
     extraArgs:
       - --auth-mode=server
+    metrics:
+      enabled: true
 
   artifactRepository:
     archiveLogs: true

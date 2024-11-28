@@ -1,1 +1,24 @@
-kube-prometheus-stack: {}
+kube-prometheus-stack:
+  prometheus:
+    prometheusSpec:
+      additionalServiceMonitors:
+        - name: argo-workflows
+          selector:
+            matchLabels:
+              app.kubernetes.io/name: argo-workflows-server
+          namespaceSelector:
+            matchNames:
+              - argo-workflows  # adjust this to your argo-workflows namespace
+          endpoints:
+            - port: metrics
+              path: /metrics
+        - name: argo-workflows-controller
+          selector:
+            matchLabels:
+              app: argo-workflows-workflow-controller
+          namespaceSelector:
+            matchNames:
+              - argo-workflows  # adjust this to your argo-workflows namespace
+          endpoints:
+            - port: metrics
+              path: /metrics
