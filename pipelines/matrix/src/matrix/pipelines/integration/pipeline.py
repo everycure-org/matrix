@@ -3,6 +3,7 @@ from kedro.pipeline import Pipeline, node, pipeline
 from . import nodes
 from .robokop import transform_robo_edges, transform_robo_nodes
 from .rtxkg2 import transform_rtxkg2_edges, transform_rtxkg2_nodes
+from .custom import transform_ec_medical_team_nodes, transform_ec_medical_team_edges
 
 
 def create_pipeline(**kwargs) -> Pipeline:
@@ -39,6 +40,20 @@ def create_pipeline(**kwargs) -> Pipeline:
                 ],
                 outputs="integration.int.rtx.edges",
                 name="transform_rtx_edges",
+                tags=["standardize"],
+            ),
+            node(
+                func=transform_ec_medical_team_nodes,
+                inputs=["ingestion.int.ec_medical_team.nodes", "integration.raw.biolink.categories"],
+                outputs="integration.int.ec_medical_team.nodes",
+                name="transform_ec_medical_team_nodes",
+                tags=["standardize"],
+            ),
+            node(
+                func=transform_ec_medical_team_edges,
+                inputs="ingestion.int.ec_medical_team.edges",
+                outputs="integration.int.ec_medical_team.edges",
+                name="transform_ec_medical_team_edges",
                 tags=["standardize"],
             ),
             # Normalize the KG IDs
@@ -86,7 +101,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                     "rtx": "integration.int.rtx.nodes.norm",
                     "biolink_categories_df": "integration.raw.biolink.categories",
                     "robokop": "integration.int.robokop.nodes.norm",
-                    "medical_team": "ingestion.int.ec_medical_team.nodes",
+                    "medical_team": "integration.int.ec_medical_team.nodes",
                 },
                 outputs="integration.prm.unified_nodes",
                 name="create_prm_unified_nodes",
@@ -98,7 +113,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                     "datasets_to_union": "params:integration.unification.datasets_to_union",
                     "rtx": "integration.int.rtx.edges.norm",
                     "robokop": "integration.int.robokop.edges.norm",
-                    "medical_team": "ingestion.int.ec_medical_team.edges",
+                    "medical_team": "integration.int.ec_medical_team.edges",
                 },
                 outputs="integration.prm.unified_edges",
                 name="create_prm_unified_edges",
