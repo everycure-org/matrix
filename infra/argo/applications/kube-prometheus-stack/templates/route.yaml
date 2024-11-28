@@ -13,7 +13,7 @@ spec:
   - "grafana.platform.dev.everycure.org"
   rules:
   - backendRefs:
-    - name: grafana
+    - name: kube-prometheus-stack-grafana
       port: 80
 
 ---
@@ -32,5 +32,5 @@ spec:
   - "prometheus.platform.dev.everycure.org"
   rules:
   - backendRefs:
-    - name: prometheus
-      port: 80
+    - name: kube-prometheus-stack-prometheus
+      port: 9090
