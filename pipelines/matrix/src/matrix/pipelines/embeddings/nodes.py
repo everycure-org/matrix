@@ -320,31 +320,6 @@ def ingest_edges(nodes, edges: DataFrame):
     )
 
 
-@inject_object()
-def add_include_in_topological(df: DataFrame, gdb: GraphDB, drug_types: List[str], disease_types: List[str]) -> Dict:
-    """Function to add include_in_topological property.
-
-    Only edges between non drug-disease pairs are included in topological algorithm.
-    """
-    with gdb.driver() as driver:
-        # TODO: Verify this correctly crashes the node
-
-        driver.execute_query(
-            """
-            MATCH (n)-[r]-(m)
-            WHERE 
-                ANY(item IN $drug_types WHERE item IN n.all_categories) AND
-                ANY(item IN $disease_types WHERE item IN m.all_categories)
-            SET r.include_in_graphsage = 0
-            """,
-            database_=gdb._database,
-            drug_types=drug_types,
-            disease_types=disease_types,
-        )
-
-    return {"success": "true"}
-
-
 @unpack_params()
 @inject_object()
 def train_topological_embeddings(
@@ -425,7 +400,7 @@ def write_topological_embeddings(
 
 @no_nulls(columns=["pca_embedding", "topological_embedding"])
 @primary_key(primary_key=["id"])  # TODO: Should we do PK check here?
-def extract_node_embeddings(embeddings: DataFrame, nodes: DataFrame, string_col: str) -> DataFrame:
+def extract_topological_embeddings(embeddings: DataFrame, nodes: DataFrame, string_col: str) -> DataFrame:
     """Extract topological embeddings from Neo4j and write into BQ.
 
     Need a conditional statement due to Node2Vec writing topological embeddings as string. Raised issue in GDS client:
