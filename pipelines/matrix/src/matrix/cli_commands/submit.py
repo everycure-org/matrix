@@ -71,7 +71,10 @@ def submit(username: str, namespace: str, run_name: str, release_version: str, p
     run_name = get_run_name(run_name)
     pipeline_obj.name = pipeline
 
+    if not click.confirm("Are you sure you want to submit the workflow?", default=False):
+        raise click.Abort()
 
+    summarize_submission(run_name, namespace, pipeline, is_test, release_version)
     _submit(
         username=username,
         namespace=namespace,
@@ -176,6 +179,19 @@ def _submit(
         sys.exit(1)
 
 
+def summarize_submission(run_name: str, namespace: str, pipeline: str, is_test: bool, release_version: str):
+    console.print(Panel.fit(
+        f"[bold green]About to submit workflow:[/bold green]\n"
+        f"Run Name: {run_name}\n"
+        f"Namespace: {namespace}\n"
+        f"Pipeline: {pipeline}\n"
+        f"Writing to test folder: {is_test}\n"
+        f"Data Release Version: {release_version}\n",
+        title="Submission Summary"
+    ))
+    console.print("Reminder: A data release should only be submitted once and not overwritten.\n"
+                  "If you need to make changes, please make this part of the next release.\n"
+                  "Experiments (modelling pipeline) are nested under the release and can be overwritten.\n\n")
         
 
 def run_subprocess(
