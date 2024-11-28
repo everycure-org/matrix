@@ -71,8 +71,6 @@ def submit(username: str, namespace: str, run_name: str, release_version: str, p
     run_name = get_run_name(run_name)
     pipeline_obj.name = pipeline
 
-    if not click.confirm("Are you sure you want to submit the workflow?", default=False):
-        raise click.Abort()
 
     summarize_submission(run_name, namespace, pipeline, is_test, release_version)
     _submit(
@@ -192,6 +190,9 @@ def summarize_submission(run_name: str, namespace: str, pipeline: str, is_test: 
     console.print("Reminder: A data release should only be submitted once and not overwritten.\n"
                   "If you need to make changes, please make this part of the next release.\n"
                   "Experiments (modelling pipeline) are nested under the release and can be overwritten.\n\n")
+
+    if not click.confirm("Are you sure you want to submit the workflow?", default=False):
+        raise click.Abort()
         
 
 def run_subprocess(
