@@ -122,7 +122,7 @@ def create_pipeline(**kwargs) -> Pipeline:
             ),
             # extracts the nodes from neo4j
             node(
-                func=nodes.extract_node_embeddings,
+                func=nodes.extract_topological_embeddings,
                 inputs={
                     "embeddings": "embeddings.model_output.topological",
                     "nodes": "integration.prm.filtered_nodes",
