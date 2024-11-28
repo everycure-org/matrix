@@ -242,7 +242,10 @@ def filter_edges_for_topological_embeddings(
 ):
     """Function to filter edges for topological embeddings process.
 
-    The function removes edges connecting drug and disease nodes to avoid data leakage.
+    The function removes edges connecting drug and disease nodes to avoid data leakage. Currently
+    uses the `all_categories` to remove drug-disease edges.
+
+    FUTURE: Ensure edges from ground truth dataset are explicitly removed.
 
     Args:
         nodes: nodes dataframe
