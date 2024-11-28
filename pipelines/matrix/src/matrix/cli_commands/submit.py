@@ -70,7 +70,7 @@ def submit(username: str, namespace: str, run_name: str, release_version: str, p
 
     if not run_name:
         run_name = get_run_name(run_name)
-        
+
     pipeline_obj.name = pipeline
 
 
@@ -360,8 +360,10 @@ def apply_argo_template(namespace, file_path: Path, verbose: bool):
     
     `kubectl apply -f <file_path> -n <namespace>` will make the template available as a resource (but will not create any other resources, and will not trigger the workshop).
     """
+    cmd = f"kubectl apply -f {file_path} -n {namespace}"
+    console.print(f"Running apply command: [blue]{cmd}[/blue]")
     run_subprocess(
-        f"kubectl apply -f {file_path} -n {namespace}",
+        cmd,
         check=True,
         stream_output=verbose,
     )
@@ -369,7 +371,7 @@ def apply_argo_template(namespace, file_path: Path, verbose: bool):
 def submit_workflow(run_name: str, namespace: str, verbose: bool):
     """Submit the Argo workflow and provide instructions for watching."""
 
-    submit_cmd = " ".join([
+    cmd = " ".join([
         "argo submit",
         f"--name {run_name}",
         f"-n {namespace}",
@@ -378,7 +380,8 @@ def submit_workflow(run_name: str, namespace: str, verbose: bool):
         "-l submit-from-ui=false",
         "-o json"
     ])
-    result = run_subprocess(submit_cmd, capture_output=True, stream_output=verbose)
+    console.print(f"Running submit command: [blue]{cmd}[/blue]")
+    result = run_subprocess(cmd, capture_output=True, stream_output=verbose)
     job_name = json.loads(result.stdout).get("metadata", {}).get("name")
 
     if not job_name:
