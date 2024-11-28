@@ -19,7 +19,7 @@ spec:
           emptyDir: {}
       initContainers:
       - name: init-moa-viewer
-        image: us-central1-docker.pkg.dev/mtrx-hub-dev-3of/matrix-images/moa_visualizer:danrhodes # TODO: Setup versioning
+        image: us-central1-docker.pkg.dev/mtrx-hub-dev-3of/matrix-images/moa_visualizer:laurens # TODO: Setup versioning
         command: ["python", "src/init.py"]
         volumeMounts:
         - name: shared-data
@@ -36,7 +36,7 @@ spec:
             value: "/data/moa_extraction.db"
       containers:
       - name: moa-viewer
-        image: us-central1-docker.pkg.dev/mtrx-hub-dev-3of/matrix-images/moa_visualizer:mvp
+        image: us-central1-docker.pkg.dev/mtrx-hub-dev-3of/matrix-images/moa_visualizer:danrhodes
         ports:
         - containerPort: 8501
         env:
