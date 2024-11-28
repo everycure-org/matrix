@@ -68,7 +68,7 @@ def ingest_nodes(df: DataFrame) -> DataFrame:
     """
     return (
         df.select("id", "name", "category", "description", "upstream_data_source")
-        .withColumn("labels", F.col("category"))
+        .withColumn("label", F.col("category"))
         # add string properties here
         .withColumn(
             "properties",
