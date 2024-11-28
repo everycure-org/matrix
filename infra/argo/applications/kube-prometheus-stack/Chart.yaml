@@ -1,5 +1,5 @@
 apiVersion: v2
-name: Kube-Prometheus-Stack
+name: kube-prometheus-stack
 description: Prometheus and Grafana deployment
 type: application
 version: 0.1.0
