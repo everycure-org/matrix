@@ -51,8 +51,6 @@ data_sources:
     version: *_rtx_kg_version # NOTE: This is the version of the GT dataset which was developed for rtx-kg2 as a part of KGML-xDTD pipeline
   drugmechdb:
     version: v2.0.1
-  pairs_for_moa_prediction:
-    version: 24-oct-24
 
 
 # NOTE: MLflow does not like "new options" in the mlflow.yml
