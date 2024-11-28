@@ -1,3 +1,0 @@
-moa_entity_resolution.raw.pairs_for_moa_prediction:
-  type: pandas.CSVDataset
-  filepath: ${globals:paths.raw}/moa_entity_resolution/input_pairs/${globals:data_sources.pairs_for_moa_prediction.version}/filtered_matrix_report_xg_ensemble_report_17_sept_2024.csv
