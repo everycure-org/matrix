@@ -19,11 +19,11 @@ embeddings.node_encoder:
   # batches in batches of 500 input elements, where each input
   # element is clipped at 100 characters. Max. token limit for 
   # embeddings call is roughly 8500 tokens, approx (100 * 500) / 6.
-  object: matrix.pipelines.embeddings.encoders.PubmedBERTEncoder #OpenAIEncoder
-  dimensions: 768
-  # FUTURE: Experiment with performing dimensionality reduction
-  # using OpenAI directly
-  # dimensions: 100 
+  object: matrix.pipelines.embeddings.encoders.OpenAIEncoder
+  encoder:
+    object: langchain_openai.OpenAIEmbeddings
+    model: text-embedding-3-small
+    timeout: 10
 
 # Defines strategy used to reduce dimensions of the GenAI
 # generated node embeddings.
