@@ -1,8 +1,8 @@
 import re
+import yaml
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-import yaml
 from jinja2 import Environment, FileSystemLoader
 from kedro.pipeline import Pipeline
 from kedro.pipeline.node import Node
