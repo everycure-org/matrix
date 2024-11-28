@@ -1,4 +1,4 @@
-"""Preprocessing pipeline."""
+"""MOA entity resolution pipeline."""
 
 from kedro.pipeline import Pipeline, node, pipeline
 
