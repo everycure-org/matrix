@@ -38,22 +38,59 @@ def test_make_splits(sample_data, mocker):
     result = make_splits(sample_data, splitter)
 
     # Then we get 3 dataframes (2 splits + 1 full dataset)
-    assert len(result) == 3
+    print("\n=== Test Data Distribution Analysis ===")
 
-    # The first fold has more train data than test data
+    # The first fold
     fold0 = result[0]
+    train_count_0 = len(fold0[fold0["split"] == "TRAIN"])
+    test_count_0 = len(fold0[fold0["split"] == "TEST"])
+    print("\nFold 0:")
+    print(f"Train samples: {train_count_0}")
+    print(f"Test samples: {test_count_0}")
+
+    # The second fold
+    fold1 = result[1]
+    train_count_1 = len(fold1[fold1["split"] == "TRAIN"])
+    test_count_1 = len(fold1[fold1["split"] == "TEST"])
+    print("\nFold 1:")
+    print(f"Train samples: {train_count_1}")
+    print(f"Test samples: {test_count_1}")
+
+    # The full dataset
+    full_data = result[2]
+    print("\nFull Dataset:")
+    print(f"Total samples: {len(full_data)}")
+
+    # Test set analysis
+    test_indices_fold0 = set(fold0[fold0["split"] == "TEST"].index)
+    test_indices_fold1 = set(fold1[fold1["split"] == "TEST"].index)
+
+    print("\n=== Test Set Analysis ===")
+    print(f"Test indices in fold 0: {sorted(test_indices_fold0)}")
+    print(f"Test indices in fold 1: {sorted(test_indices_fold1)}")
+
+    intersection = test_indices_fold0.intersection(test_indices_fold1)
+    print(f"\nOverlap between test sets: {intersection}")
+
+    all_test_indices = test_indices_fold0.union(test_indices_fold1)
+    print(f"Combined test indices: {sorted(all_test_indices)}")
+    print(f"Total unique test samples: {len(all_test_indices)}")
+
+    # Run the original assertions
+    assert len(result) == 3
     assert len(fold0[fold0["split"] == "TRAIN"]) == 10
     assert len(fold0[fold0["split"] == "TEST"]) == 15
     assert all(fold0["iteration"] == 0)
 
-    # The second fold has more train data than test data
-    fold1 = result[1]
     assert len(fold1[fold1["split"] == "TRAIN"]) == 15
     assert len(fold1[fold1["split"] == "TEST"]) == 10
     assert all(fold1["iteration"] == 1)
 
-    # The full dataset is all train data
-    full_data = result[2]
     assert len(full_data) == 25
     assert all(full_data["split"] == "TRAIN")
     assert all(full_data["iteration"] == 2)
+
+    # Test set independence assertions
+    assert len(test_indices_fold0.intersection(test_indices_fold1)) == 0
+    assert len(all_test_indices) == len(sample_data)
+    assert all_test_indices == set(range(len(sample_data)))
