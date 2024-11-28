@@ -64,6 +64,7 @@ class OpenAIEncoder(AttributeEncoder):
             combined_texts = df["text_to_embed"].tolist()
             df = df.copy()
             df["embedding"] = await self._client.aembed_documents(combined_texts)
+            df["embedding"] = df["embedding"].astype(np.float32)
             df = df.drop(columns=["text_to_embed"])
             return df
         except Exception as e:
