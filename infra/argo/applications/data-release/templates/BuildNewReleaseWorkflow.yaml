@@ -8,7 +8,7 @@ metadata:
     app: build-data-release
   annotations:
     workflows.argoproj.io/description: |
-      Builds a new data release.
+      Builds a new data release...
 spec:
   serviceAccountName: data-release-service-account
   entrypoint: hello-world
