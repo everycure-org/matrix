@@ -1,20 +1,20 @@
-# apiVersion: argoproj.io/v1alpha1
-# kind: Workflow
-# metadata:
-#   generateName: build-data-release-
-#   namespace: argo
-#   labels:
-#     workflows.argoproj.io/archive-strategy: "false"
-#     app: build-data-release
-#   annotations:
-#     workflows.argoproj.io/description: |
-#       Builds a new data release.
-# spec:
-#   serviceAccountName: argo-cluster-service-account
-#   entrypoint: hello-world
-#   templates:
-#   - name: hello-world
-#     container:
-#       image: busybox
-#       command: [echo]
-#       args: ["release build successfully"]
+ apiVersion: argoproj.io/v1alpha1
+ kind: Workflow
+ metadata:
+   generateName: build-data-release-
+   namespace: data-release
+   labels:
+     workflows.argoproj.io/archive-strategy: "false"
+     app: build-data-release
+   annotations:
+     workflows.argoproj.io/description: |
+       Builds a new data release.
+ spec:
+   serviceAccountName: data-release-service-account
+   entrypoint: hello-world
+   templates:
+   - name: hello-world
+     container:
+       image: busybox
+       command: [echo]
+       args: ["release build successfully"]
