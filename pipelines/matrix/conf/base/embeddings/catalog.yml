@@ -81,6 +81,7 @@ embeddings.tmp.input_nodes:
     mode: overwrite
     script: >
       CREATE CONSTRAINT IF NOT EXISTS FOR (n:Entity) REQUIRE n.id IS UNIQUE;
+    # TODO: Re-add label here
     query: > 
       CREATE (n:Entity {id: event.id, pca_embedding: event.pca_embedding, all_categories: event.all_categories})
       RETURN n
