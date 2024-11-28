@@ -6,6 +6,11 @@ from kedro.pipeline import Pipeline
 from kedro.pipeline.node import Node
 from matrix.argo import FusedNode, clean_name, fuse, generate_argo_config, get_dependencies
 from matrix.kedro4argo_node import (
+    KUBERNETES_DEFAULT_LIMIT_CPU,
+    KUBERNETES_DEFAULT_LIMIT_RAM,
+    KUBERNETES_DEFAULT_NUM_GPUS,
+    KUBERNETES_DEFAULT_REQUEST_CPU,
+    KUBERNETES_DEFAULT_REQUEST_RAM,
     ArgoNode,
     ArgoResourceConfig,
 )
@@ -517,11 +522,11 @@ def test_argo_template_config_boilerplate(argo_default_resources: ArgoResourceCo
 def test_resources_of_argo_template_config_pipelines() -> None:
     """Test the resources configuration of the Argo template."""
     argo_default_resources = ArgoResourceConfig(
-        num_gpus=0,
-        cpu_request=4,
-        cpu_limit=16,
-        memory_request=58,
-        memory_limit=58,
+        num_gpus=KUBERNETES_DEFAULT_NUM_GPUS,
+        cpu_request=KUBERNETES_DEFAULT_REQUEST_CPU,
+        cpu_limit=KUBERNETES_DEFAULT_LIMIT_CPU,
+        memory_request=KUBERNETES_DEFAULT_REQUEST_RAM,
+        memory_limit=KUBERNETES_DEFAULT_LIMIT_RAM,
     )
     argo_config, actual_pipelines = get_argo_config(argo_default_resources)
     spec = argo_config["spec"]
