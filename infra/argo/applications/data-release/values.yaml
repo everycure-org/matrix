@@ -1,2 +1,3 @@
 argo-events:
+  installNamespace: true
   namespace: data-release
