@@ -27,7 +27,7 @@ def _create_evaluation_pipeline(model: str, evaluation: str, fold: str) -> Pipel
                 name=f"create_{model}_{evaluation}_evaluation_fold_{fold}",
             ),
         ],
-        tags=["argowf.fuse", f"argowf.fuse-group.{model}.{evaluation}"],
+        tags=["argowf.fuse", f"argowf.fuse-group.{model}.{evaluation}.fold_{fold}"],
     )
 
 
