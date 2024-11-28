@@ -1,3 +1,4 @@
-argo-events:
-  namespaceOverride: "data-release"
+namespace: data-release
+#argo-events:
+#  namespaceOverride: "data-release"
 
