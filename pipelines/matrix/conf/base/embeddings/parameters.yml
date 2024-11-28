@@ -16,7 +16,7 @@ embeddings.node:
   # embeddings call is roughly 8500 tokens, approx (100 * 500) / 6.
   batch_size: 500
   max_input_len: 100
-  input_features: ["category", "name"]
+  input_features: ["category", "name"] # TODO: Discuss, were using "category" for node embeddings, not _all_ categories?
 
   model:
     object: langchain_openai.OpenAIEmbeddings
