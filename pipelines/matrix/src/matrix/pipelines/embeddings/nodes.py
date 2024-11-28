@@ -374,7 +374,7 @@ def write_topological_embeddings(
 
 
 @no_nulls(columns=["pca_embedding", "topological_embedding"])
-@primary_key(primary_key=["id"])  # TODO: Should we do PK check here?
+@primary_key(primary_key=["id"])
 def extract_topological_embeddings(embeddings: DataFrame, nodes: DataFrame, string_col: str) -> DataFrame:
     """Extract topological embeddings from Neo4j and write into BQ.
 
