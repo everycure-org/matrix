@@ -27,7 +27,7 @@ def transform_ec_medical_team_nodes(nodes_df: DataFrame, biolink_categories_df: 
         .withColumn("labels",                            f.array(f.col("name")))
         .withColumn("all_categories",                    f.array(f.col("category")))
         .withColumn("equivalent_identifiers",            f.array(f.col("id")))
-        .withColumn("publications",                      f.lit(None).cast(T.ArrayType(T.StringType())))
+        .withColumn("publications",                      f.array(f.lit('medical team')))
         .withColumn("international_resource_identifier", f.col("id"))
         .transform(determine_most_specific_category, biolink_categories_df)
         .select(*cols_for_schema(KGNodeSchema))
@@ -52,7 +52,7 @@ def transform_ec_medical_team_edges(edges_df: DataFrame) -> DataFrame:
         .withColumn("knowledge_level",               f.lit(None).cast(T.StringType()))
         .withColumn("aggregator_knowledge_source",   f.array(f.col("knowledge_source")))
         .withColumn("primary_knowledge_source",      f.lit('medical team').cast(T.StringType()))#col("knowledge_source"))
-        .withColumn("publications",                  f.lit(None).cast(T.ArrayType(T.StringType())))
+        .withColumn("publications",                  f.array(f.lit('medical team')))
         .withColumn("subject_aspect_qualifier",      f.lit(None).cast(T.StringType())) #not present
         .withColumn("subject_direction_qualifier",   f.lit(None).cast(T.StringType())) #not present
         .withColumn("object_aspect_qualifier",       f.lit(None).cast(T.StringType())) #not present
