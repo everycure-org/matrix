@@ -247,7 +247,7 @@ def filter_edges_for_topological_embeddings(
     Args:
         nodes: nodes dataframe
         edges: edges dataframe
-        drug_types: drug types
+        drug_types: list of drug types
         disease_types: list of disease types
     Returns:
         Dataframe with filtered edges
