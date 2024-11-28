@@ -68,7 +68,9 @@ def submit(username: str, namespace: str, run_name: str, release_version: str, p
     if from_nodes:
         pipeline_obj = pipeline_obj.from_nodes(*from_nodes)
 
-    run_name = get_run_name(run_name)
+    if not run_name:
+        run_name = get_run_name(run_name)
+        
     pipeline_obj.name = pipeline
 
 
