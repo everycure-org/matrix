@@ -6,8 +6,7 @@ import pandas as pd
 import numpy as np
 import seaborn as sns
 
-from graphdatascience import GraphDataScience, QueryRunner
-from neo4j import Driver, GraphDatabase
+from graphdatascience import GraphDataScience
 
 import pyspark.sql.types as T
 from pyspark.sql import DataFrame, SparkSession
@@ -29,30 +28,6 @@ from matrix.pipelines.modelling.nodes import no_nulls
 logger = logging.getLogger(__name__)
 
 
-class GraphDB:
-    """Adaptor class to allow injecting the GraphDB object.
-
-    This is due to a drawback where refit cannot inject a tuple into
-    the constructor of an object.
-    """
-
-    def __init__(
-        self,
-        *,
-        endpoint: str | Driver | QueryRunner,
-        auth: F.Tuple[str] | None = None,
-        database: str | None = None,
-    ):
-        """Create `GraphDB` instance."""
-        self._endpoint = endpoint
-        self._auth = tuple(auth)
-        self._database = database
-
-    def driver(self):
-        """Return the driver object."""
-        return GraphDatabase.driver(self._endpoint, auth=self._auth)
-
-
 class GraphDS(GraphDataScience):
     """Adaptor class to allow injecting the GDS object.
 
@@ -63,7 +38,7 @@ class GraphDS(GraphDataScience):
     def __init__(
         self,
         *,
-        endpoint: str | Driver | QueryRunner,
+        endpoint: str,
         auth: F.Tuple[str] | None = None,
         database: str | None = None,
     ):
