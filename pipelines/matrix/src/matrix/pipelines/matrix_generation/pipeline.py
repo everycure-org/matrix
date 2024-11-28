@@ -1,7 +1,7 @@
 from kedro.pipeline import Pipeline, pipeline
 
 from matrix import settings
-from matrix.kedro4argo_node import argo_node
+from matrix.kedro4argo_node import ARGO_GPU_NODE_MEDIUM, argo_node
 
 from . import nodes
 
@@ -22,6 +22,7 @@ def _create_matrix_generation_pipeline(model: str) -> Pipeline:
                 ],
                 outputs=f"matrix_generation.{model}.model_output.sorted_matrix_predictions@pandas",
                 name=f"make_{model}_predictions_and_sort",
+                argo_config=ARGO_GPU_NODE_MEDIUM,
             ),
             argo_node(
                 func=nodes.generate_report,
