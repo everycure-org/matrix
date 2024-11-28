@@ -15,7 +15,7 @@ authors:
 
 ---
 
-# `v0.2.5`: First stable integrated KG release, improving ROBOKOP inetgration, first version of Matrix CLI, and enhancing pipeline control
+# `v0.2.5`: First stable integrated KG release, improving ROBOKOP integration, first version of Matrix CLI, and enhancing pipeline control
 
 This release of the Matrix Platform focuses on improving developer experience and enhancing data integration and pipeline control.  We introduce a new command-line interface (CLI), integrate the ROBOKOP
 knowledge graph, and provide more granular control over pipeline execution.
@@ -56,10 +56,10 @@ repurposing analysis, potentially leading to more accurate and comprehensive pre
 
 ### 3. Translator-Based Synonymization Enhancements 🔄
 
-The synonymization system, now powered by the Translator project, has undergone significant enhancements. These improvements ensure greater consistency and scalability in mapping drug and disease synonyms,
-improving the overall quality and reliability of data integration.
+The synonymization system, now powered by the [Translator project](https://nodenorm.test.transltr.io/docs#/translator), has undergone significant enhancements. These improvements ensure greater consistency and scalability in mapping drug and disease synonyms,
+improving the overall quality and reliability of data integration by more accurately finding identifier equivalences.
 
-### 4. GPU Support and Neo4j Enterprise License ⚡️
+### 4. GPU Support ⚡️
 
 The platform now leverages GPUs on the cluster, accelerating computationally intensive tasks.  Additionally, the integration of Neo4j Enterprise license keys unlocks advanced features and performance
 optimizations for graph database operations. These infrastructure upgrades significantly improve the platform's efficiency and scalability.  See issue #622 for more details.
@@ -86,6 +86,18 @@ the Neo4j template (issue #684).
 - **ArgoNode Wrapper:**  The introduction of the ArgoNode wrapper (issue #626) allows for greater customization of task execution and resource allocation within Argo Workflows.
 - **Partitioned Dataset Embeddings:**  Implementation of efficient embedding computation using PartitionedDataset, batch processing, and LangChain integration (issue #642) improves performance for
 large-scale embedding generation.
+
+### 8. Ongoing Modelling Workstreams
+
+We have progressed the following workstreams: 
+
+ - Successfully completed a first run of our supervised mechanism of action algorithm. This should provide greater transparency into our model predictions ([#510](https://github.com/everycure-org/matrix/pull/510). We are also building an MVP for visualizing these MoA paths. 
+ -  We have developed a first version of adding timestamps to the edges, and now have ~27% timestamped. This should enable us to execute more robust time-split-validation experiments in the future. ([#588](https://github.com/everycure-org/matrix/issues/588))
+ - Work to compare performance of existing models with TxGNN has made significant progress and our first experimental runs are now complete. Ongoing work will compare this method with our baseline KGML-xDTD approach. ([#586](https://github.com/everycure-org/matrix/issues/586))
+- We now have the ability to perform multiple folds of cross validation in the modeling and evaluation suite. This should enable us to better estimate stability and confidence in our model predictions ([#587](https://github.com/everycure-org/matrix/issues/587))
+- We have implemented the ability to run a full comparison of treat scores using various embedding models, such as Node2Vec, PubmedBERT, and OpenAI ([#301](https://github.com/everycure-org/matrix/issues/301).
+
+
 
 
 ## Next Steps 🔮
