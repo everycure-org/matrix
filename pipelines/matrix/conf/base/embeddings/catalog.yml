@@ -20,6 +20,15 @@ _spark_parquet_ds: &_spark_parquet
 
 _pandas_parquet: &_pandas_parquet
   type: matrix.datasets.graph.PandasParquetDataset
+  save_args:
+    engine: pyarrow
+    dtype_backend: pyarrow
+  # This is due to pandas mess
+  load_args:
+    # as_types:
+    #   publications: array<string>
+    engine: pyarrow
+    dtype_backend: pyarrow
       
 # -------------------------------------------------------------------------
 # Datasets
