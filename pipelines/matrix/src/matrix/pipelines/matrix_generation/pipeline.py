@@ -45,7 +45,7 @@ def create_pipeline(**kwargs) -> Pipeline:
     # Load cross-validation information
     cross_validation_settings = settings.DYNAMIC_PIPELINES_MAPPING.get("cross_validation")
     n_splits = cross_validation_settings.get("n_splits")
-    folds_lst = [fold for fold in range(n_splits)] + ["full"]
+    folds_lst = list(range(n_splits)) + ["full"]
 
     # Initial nodes computing matrix pairs and flags
     initial_nodes = [

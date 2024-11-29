@@ -31,7 +31,7 @@ def _create_inference_pipeline(model_excl: str, model_incl: str) -> Pipeline:
     mg_pipeline = matrix_generation_pipeline()
     cross_validation_settings = settings.DYNAMIC_PIPELINES_MAPPING.get("cross_validation")
     n_splits = cross_validation_settings.get("n_splits")
-    folds_lst = [fold for fold in range(n_splits)]
+    folds_lst = list(range(n_splits))
     inference_nodes = pipeline(
         [
             node
