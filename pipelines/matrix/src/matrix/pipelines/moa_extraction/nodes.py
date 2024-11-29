@@ -14,7 +14,7 @@ from refit.v1.core.inject import inject_object
 
 from .path_embeddings import OneHotEncoder
 from .path_mapping import PathMapper
-from matrix.pipelines.embeddings.nodes import GraphDB
+from matrix.pipelines.moa_extraction.utils import GraphDB
 from matrix.datasets.paths import KGPaths
 from matrix.pipelines.modelling.nodes import apply_splitter
 

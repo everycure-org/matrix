@@ -10,7 +10,7 @@ from matrix.pipelines.moa_extraction.neo4j_query_clauses import (
     generate_match_clause,
     generate_edge_omission_where_clause,
 )
-from matrix.pipelines.embeddings.nodes import GraphDB
+from matrix.pipelines.moa_extraction.utils import GraphDB
 
 
 class PathGenerator(abc.ABC):
