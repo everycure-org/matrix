@@ -109,7 +109,12 @@ repurposing analysis, it is not enforced as the default.
 In December, we plan to integrate SPOKE as a third knowledge graph for testing the
 hypothesis that more integrated information leads to better predictions.
 
-To read only a specific knowledge graph from our combined data, you can filter the nodes &
+To read only a specific knowledge graph from our combined data, you can filter the nodes such as in the below example:
+
+```python
+nodes = catalog.load("integration.prm.filtered_nodes")
+nodes = nodes.filter(f.col("upstream_knowledge_graph").isin(["RTXKG2", "ROBOKOP"]))
+```
 
 ### 2. Translator-Based Synonymization Enhancements 🔄
 
