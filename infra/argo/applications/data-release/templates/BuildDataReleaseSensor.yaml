@@ -35,7 +35,7 @@ spec:
                     args:
                       - >
                         curl -H "Accept: application/vnd.github.everest-preview+json" \
-                             -H "Authorization: token $(GITHUB_TOKEN)" \
+                             -H "Authorization: token $GITHUB_TOKEN" \
                              --request POST \
                              --data '{"event_type": "distribute-release", "client_payload": { "text": "sth"}}' \
                              https://api.github.com/repos/everycure-org/matrix/dispatches
@@ -43,6 +43,6 @@ spec:
                       - name: GITHUB_TOKEN
                         valueFrom:
                           secretKeyRef:
-                            name: github-password
-                            key: gh_creds
+                            name: gh-password
+                            key: GH_CREDS
 
