@@ -5,11 +5,13 @@ categories:
   - Release
 authors:
   - lvijnck
-  - emil-k
   - matwasilewski
   - oliverw1
+  - emil-k
   - pascalwhoop
   - piotrkan
+  - chempsEC
+  - leelancashire
 
 ---
 
@@ -21,6 +23,9 @@ knowledge graph, and provide more granular control over pipeline execution.
 <!-- more -->
 
 ## How to get access to the data published in this release
+
+!!! info
+    All the below commands assume you are checking out the `main` branch of the Matrix repository. To make sure you get a specific release, you can either check out the specific release tag or set the `RELEASE_NAME` environment variable to the release you want to use. When checking out the tag, you also get the codebase from that release. When you set the `RELEASE_NAME` environment variable, you get the data from the release, but the codebase of your current branch.
 
 ### Using the CLI
 
@@ -108,7 +113,7 @@ improving the overall quality and reliability of data integration by more accura
 ### 3. GPU Support ⚡️
 
 The platform now leverages GPUs on the cluster, accelerating computationally intensive tasks.  Additionally, the integration of Neo4j Enterprise license keys unlocks advanced features and performance
-optimizations for graph database operations. These infrastructure upgrades significantly improve the platform's efficiency and scalability.  See issue #622 for more details.
+optimizations for graph database operations. These infrastructure upgrades significantly improve the platform's efficiency and scalability.  See issue [#622](https://github.com/everycure-org/matrix/issues/#622) for more details.
 
 ### 5. Matrix CLI ⌨️
 
@@ -124,24 +129,24 @@ summarizing code changes. This simplifies common workflows and improves develope
 ### 6. Enhanced `kedro submit` Command  ⚙️
 
 The `kedro submit` command has been significantly enhanced, providing developers with more fine-grained control over pipeline execution. It now supports running pipelines from specific nodes and submitting
-to different buckets (test/release), enabling greater flexibility in development, testing, and deployment workflows. See issues #605 and #611 for more details.
+to different buckets (test/release), enabling greater flexibility in development, testing, and deployment workflows. See issues [#605](https://github.com/everycure-org/matrix/issues/#605) and [#611](https://github.com/everycure-org/matrix/issues/#611) for more details.
 
 ### 7. Kedro Catalog Cleanup 🧹
 
-Addressing technical debt, this release includes fixes for missing and unused entries in the Kedro catalog (issue #600).  This cleanup improves pipeline reliability and maintainability.  Further improvements
-to the catalog include fixes related to cloud globals (issue #694) and more robust handling of node category selection during integration (issue #654).
+Addressing technical debt, this release includes fixes for missing and unused entries in the Kedro catalog (issue [#600](https://github.com/everycure-org/matrix/issues/#600)).  This cleanup improves pipeline reliability and maintainability.  Further improvements
+to the catalog include fixes related to cloud globals (issue [#694](https://github.com/everycure-org/matrix/issues/#694)) and more robust handling of node category selection during integration (issue [#654](https://github.com/everycure-org/matrix/issues/#654)).
 
 ### 8. Enhanced Developer Experience 🧰
 
 Several improvements streamline the developer experience:
 
-- **Argo Workflow Submission Enhancements:** Improved Argo workflow submission (issue #565) simplifies pipeline orchestration and execution.
-- **BigQuery Integration Enhancements:**  Improvements to BigQuery integration through GCS filesystem datasets and external table registration (issue #563) streamline data loading and access.
-- **Developer Namespaces:**  Introduction of developer namespaces (issue #605) improves resource isolation and facilitates parallel development efforts.  This is accompanied by a fix to a critical issue in
-the Neo4j template (issue #684).
-- **BTE-TRAPI & Redis Integration:** The BTE-TRAPI deployment now integrates Redis for enhanced performance and caching (issue #605).
-- **ArgoNode Wrapper:**  The introduction of the ArgoNode wrapper (issue #626) allows for greater customization of task execution and resource allocation within Argo Workflows.
-- **Partitioned Dataset Embeddings:**  Implementation of efficient embedding computation using PartitionedDataset, batch processing, and LangChain integration (issue #642) improves performance for
+- **Argo Workflow Submission Enhancements:** Improved Argo workflow submission (issue [#565](https://github.com/everycure-org/matrix/issues/#565)) simplifies pipeline orchestration and execution.
+- **BigQuery Integration Enhancements:**  Improvements to BigQuery integration through GCS filesystem datasets and external table registration (issue [#563](https://github.com/everycure-org/matrix/issues/#563)) streamline data loading and access.
+- **Developer Namespaces:**  Introduction of developer namespaces (issue [#605](https://github.com/everycure-org/matrix/issues/#605)) improves resource isolation and facilitates parallel development efforts.  This is accompanied by a fix to a critical issue in
+the Neo4j template (issue [#684](https://github.com/everycure-org/matrix/issues/#684)).
+- **BTE-TRAPI & Redis Integration:** The BTE-TRAPI deployment now integrates Redis for enhanced performance and caching (issue [#605](https://github.com/everycure-org/matrix/issues/#605)).
+- **ArgoNode Wrapper:**  The introduction of the ArgoNode wrapper (issue [#626](https://github.com/everycure-org/matrix/issues/#626)) allows for greater customization of task execution and resource allocation within Argo Workflows.
+- **Partitioned Dataset Embeddings:**  Implementation of efficient embedding computation using PartitionedDataset, batch processing, and LangChain integration (issue [#642](https://github.com/everycure-org/matrix/issues/#642)) improves performance for
 large-scale embedding generation.
 
 ### 8. Ongoing Modelling Workstreams

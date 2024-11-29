@@ -18,7 +18,7 @@ integration:
     datasets_to_union:
       - rtx
       - medical_team
-      # - robokop
+      - robokop
 
   filtering:
     node_filters:
