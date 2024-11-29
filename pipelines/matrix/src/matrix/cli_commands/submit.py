@@ -321,7 +321,28 @@ def check_dependencies(verbose: bool):
 
 def build_push_docker(username: str, verbose: bool):
     """Build and push Docker image."""
-    run_subprocess(f"make docker_push TAG={username}", stream_output=verbose)
+    process = subprocess.Popen(
+        f"make docker_push TAG={username}",
+        shell=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+        bufsize=1,
+        universal_newlines=True,
+    )
+
+    step_pattern = re.compile(r'#\d+ \[build\s+\d+/\d+\].*')
+    
+    for line in process.stdout:
+        if step_pattern.match(line):
+            console.print(f"[blue]{line.strip()}[/blue]")
+        elif verbose:
+            sys.stdout.write(line)
+
+    returncode = process.wait()
+    if returncode != 0:
+        raise subprocess.CalledProcessError(returncode, f"make docker_push TAG={username}")
+
 
 
 def build_argo_template(run_name: str, release_version: str, username: str, namespace: str, pipeline_obj: Pipeline, is_test: bool, default_execution_resources: Optional[ArgoResourceConfig] = None) -> str:
