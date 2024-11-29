@@ -49,6 +49,11 @@ _model_output_ds: &_model_output_ds
     kedro-viz:
       layer: model_output
 
+
+gpu_validation:
+  type:  pandas.CSVDataset
+  filepath: ${globals:paths.modelling}/gpu_validation_dataset.csv
+
 modelling.raw.ground_truth.positives@pandas:
   <<: [*_pandas_csv, *_raw_ds]
   filepath: ${globals:paths.raw}/ground_truth/translator/${globals:data_sources.gt.version}/tp_pairs_conflated.tsv
