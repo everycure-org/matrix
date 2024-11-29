@@ -7,7 +7,7 @@ import torch
 from matrix.kedro4argo_node import ArgoNode, ArgoResourceConfig
 
 
-def check_gpu_availability():
+def check_gpu_availability() -> pd.DataFrame:
     if torch.cuda.is_available():
         return pd.DataFrame({"gpu": ["available"]})
     else:
@@ -75,7 +75,7 @@ def check_gpu_availability():
     else:
         result_dict["cuda_device"] = ["CPU"]
 
-    return pd.DataFrame(result_dict)
+    return result_dict
 
 
 def create_pipeline(**kwargs) -> Pipeline:
