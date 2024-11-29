@@ -112,8 +112,11 @@ hypothesis that more integrated information leads to better predictions.
 To read only a specific knowledge graph from our combined data, you can filter the nodes such as in the below example:
 
 ```python
+from pyspark.sql import functions as f
 nodes = catalog.load("integration.prm.filtered_nodes")
-nodes = nodes.filter(f.col("upstream_knowledge_graph").isin(["RTXKG2", "ROBOKOP"]))
+nodes.show()
+# note this loads data from the cloud which may take a while depending on your internet connection
+nodes.filter(f.array_contains("upstream_data_source", "RTXKG2")).show()
 ```
 
 ### 2. Translator-Based Synonymization Enhancements 🔄
@@ -169,19 +172,3 @@ We have progressed the following workstreams:
  - Work to compare performance of existing models with TxGNN has made significant progress and our first experimental runs are now complete. Ongoing work will compare this method with our baseline KGML-xDTD approach. ([#586](https://github.com/everycure-org/matrix/issues/586))
 - We now have the ability to perform multiple folds of cross validation in the modeling and evaluation suite. This should enable us to better estimate stability and confidence in our model predictions ([#587](https://github.com/everycure-org/matrix/issues/587))
 - We have implemented the ability to run a full comparison of treat scores using various embedding models, such as Node2Vec, PubmedBERT, and OpenAI ([#301](https://github.com/everycure-org/matrix/issues/301).
-
-
-
-
-## Next Steps 🔮
-
-We are continuously working to improve the Matrix Platform. Our next steps include further enhancements to the data release pipeline for fully automated releases, ongoing integration of new knowledge graphs,
-exploring self-hosted LLMs for embedding generation, and preparing for open-sourcing the repository.
-
-## How to access the data using Kedro
-
-### Using IPython
-
-The quickest way to explore the data is using IPython:
-```bash
-ke
