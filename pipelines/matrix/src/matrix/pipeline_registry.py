@@ -41,10 +41,13 @@ def register_pipelines() -> Dict[str, Pipeline]:
 
     # Higher order pipelines
     # fmt: off
-    pipelines["kg_release"] = (
+    pipelines["data_engineering"] = (
           pipelines["ingestion"]
         + pipelines["integration"]
         + pipelines["embeddings"]
+    )
+    pipelines["kg_release"] = (
+        pipelines["data_engineering"]
         + pipelines["data_release"] 
     )
     pipelines["modelling_run"] = (

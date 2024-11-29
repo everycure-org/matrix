@@ -2,6 +2,7 @@ import pandas as pd
 import logging
 
 from kedro_datasets.pandas import ParquetDataset
+from kedro.io.core import Version
 
 from typing import Any, List
 from kedro.io.core import (
@@ -41,11 +42,7 @@ class KnowledgeGraph:
         Returns:
             Embedding or None if not found
         """
-        res = self._embeddings.get(node_id, default)
-        if res is default:
-            logger.warning(f"Embedding for node with id '{node_id}' not found!")
-
-        return res
+        return self._embeddings[node_id]
 
     def flags_to_ids(self, flags: List[str]) -> List[str]:
         """Helper function for extracting nodes from flag columns.
@@ -71,6 +68,31 @@ class KnowledgeGraph:
 
 
 class PandasParquetDataset(ParquetDataset):
+    def __init__(  # noqa: PLR0913
+        self,
+        *,
+        filepath: str,
+        load_args: dict[str, Any] | None = None,
+        save_args: dict[str, Any] | None = None,
+        version: Version | None = None,
+        credentials: dict[str, Any] | None = None,
+        fs_args: dict[str, Any] | None = None,
+        metadata: dict[str, Any] | None = None,
+    ) -> None:
+        self._as_type = None
+        if load_args is not None:
+            self._as_type = load_args.pop("as_type", None)
+
+        super().__init__(
+            filepath=filepath,
+            load_args=load_args,
+            save_args=save_args,
+            version=version,
+            credentials=credentials,
+            fs_args=fs_args,
+            metadata=metadata,
+        )
+
     def _load(self) -> KnowledgeGraph:
         attempt = 0
 
@@ -80,7 +102,12 @@ class PandasParquetDataset(ParquetDataset):
             try:
                 # Attempt reading the object
                 # https://github.com/everycure-org/matrix/issues/71
-                return super()._load()
+                df = super()._load()
+
+                if self._as_type:
+                    return df.astype(self._as_type)
+
+                return df
             except FileNotFoundError:
                 attempt += 1
                 logger.warning("Parquet file not found, retrying!")
