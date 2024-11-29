@@ -40,7 +40,7 @@ class LangChainEncoder(AttributeEncoder):
     def __init__(
         self,
         encoder: OpenAIEmbeddings,
-        dimensions: int = 512,
+        dimensions: int,
         random_seed: Optional[int] = None,
         timeout: int = 10,
     ):
@@ -80,7 +80,7 @@ class LangChainEncoder(AttributeEncoder):
 class RandomizedEncoder(AttributeEncoder):
     """Encoder class for generating random embeddings."""
 
-    def __init__(self, dimensions: int = 512, random_seed: Optional[int] = None):
+    def __init__(self, dimensions: int, random_seed: Optional[int] = None):
         """Initialize Randomized encoder.
 
         Args:
@@ -110,7 +110,7 @@ class RandomizedEncoder(AttributeEncoder):
 class PubmedBERTEncoder(AttributeEncoder):
     """Encoder class for PubmedBERT embeddings."""
 
-    def __init__(self, dimensions: int = 768, random_seed: Optional[int] = None):
+    def __init__(self, dimensions: int, random_seed: Optional[int] = None):
         """Initialize PubmedBERT encoder.
 
         Args:

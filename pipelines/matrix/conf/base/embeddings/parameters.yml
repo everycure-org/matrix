@@ -19,6 +19,7 @@ embeddings.node:
   input_features: ["category", "name"]
   encoder:
     object: matrix.pipelines.embeddings.encoders.LangChainEncoder
+    dimensions: 512
     encoder:
       object: langchain_openai.OpenAIEmbeddings
       model: text-embedding-3-small
