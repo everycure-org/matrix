@@ -1,0 +1,25 @@
+apiVersion: argoproj.io/v1alpha1
+kind: EventSource
+metadata:
+  name: build-data-release-eventsource
+  namespace: data-release
+spec:
+  template:
+    serviceAccountName: data-release-service-account # assign a service account with `get`, `list` and `watch` permissions on the resource being watched.
+  resource:
+    data-release-success:
+      namespace: data-release # namespace to listen events within
+      group: argoproj.io
+      version: v1alpha1
+      resource: workflows
+      eventTypes:
+        - ADD # ADD, DELETE, UPDATE
+      filter:
+        afterStart: true
+        labels:
+          - key: app
+            operation: "=="
+            value: build-data-release
+          - key: workflows.argoproj.io/completed
+            operation: ==
+            value: "true"
