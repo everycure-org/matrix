@@ -1,48 +1,48 @@
-#apiVersion: argoproj.io/v1alpha1
-#kind: Sensor
-#metadata:
-#  name: build-data-release-sensor
-#  namespace: data-release
-#spec:
-#  template:
-#    serviceAccountName: data-release-service-account
-#  dependencies:
-#    - name: test-dep
-#      eventSourceName: build-data-release-eventsource
-#      eventName: data-release-success
-#  triggers:
-#    - template:
-#        name: argo-workflow
-#        k8s:
-#          operation: create
-#          source:
-#            resource:
-#              apiVersion: argoproj.io/v1alpha1
-#              kind: Workflow
-#              metadata:
-#                namespace: data-release
-#                generateName: distribute-data-release-
-#                labels:
-#                  app: distribute-data-release
-#              spec:
-#                serviceAccountName: data-release-service-account
-#                entrypoint: trigger-curl
-#                templates:
-#                - name: trigger-curl
-#                  container:
-#                    image: curlimages/curl:latest # Use a lightweight curl image
-#                    command: ["sh", "-c"]
-#                    args:
-#                      - >
-#                        curl -H "Accept: application/vnd.github.everest-preview+json" \
-#                             -H "Authorization: token $(GITHUB_TOKEN)" \
-#                             --request POST \
-#                             --data '{"event_type": "distribute-release", "client_payload": { "text": "sth"}}' \
-#                             https://api.github.com/repos/everycure-org/matrix/dispatches
-#                    env:
-#                      - name: GITHUB_TOKEN
-#                        valueFrom:
-#                          secretKeyRef:
-#                            name: github-password
-#                            key: gh_creds
-#
+apiVersion: argoproj.io/v1alpha1
+kind: Sensor
+metadata:
+  name: build-data-release-sensor
+  namespace: data-release
+spec:
+  template:
+    serviceAccountName: data-release-service-account
+  dependencies:
+    - name: test-dep
+      eventSourceName: build-data-release-eventsource
+      eventName: data-release-success
+  triggers:
+    - template:
+        name: argo-workflow
+        k8s:
+          operation: create
+          source:
+            resource:
+              apiVersion: argoproj.io/v1alpha1
+              kind: Workflow
+              metadata:
+                namespace: data-release
+                generateName: distribute-data-release-
+                labels:
+                  app: distribute-data-release
+              spec:
+                serviceAccountName: data-release-service-account
+                entrypoint: trigger-curl
+                templates:
+                - name: trigger-curl
+                  container:
+                    image: curlimages/curl:latest # Use a lightweight curl image
+                    command: ["sh", "-c"]
+                    args:
+                      - >
+                        curl -H "Accept: application/vnd.github.everest-preview+json" \
+                             -H "Authorization: token $(GITHUB_TOKEN)" \
+                             --request POST \
+                             --data '{"event_type": "distribute-release", "client_payload": { "text": "sth"}}' \
+                             https://api.github.com/repos/everycure-org/matrix/dispatches
+                    env:
+                      - name: GITHUB_TOKEN
+                        valueFrom:
+                          secretKeyRef:
+                            name: github-password
+                            key: gh_creds
+
