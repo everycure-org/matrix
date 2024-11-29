@@ -176,7 +176,6 @@ async def compute_df_embeddings_async(df: pd.DataFrame, embedding_model) -> pd.D
 
         # Ensure floats
         df["embedding"] = df["embedding"].apply(lambda emb: np.array(emb, dtype=np.float32))
-        df["publications"] = df["publications"].apply(lambda emb: np.array(emb, dtype=np.string))
     except Exception as e:
         print(f"Exception occurred: {e}")
         raise e

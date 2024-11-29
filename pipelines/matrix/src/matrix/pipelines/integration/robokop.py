@@ -38,7 +38,7 @@ def transform_robo_nodes(nodes_df: DataFrame, biolink_categories_df: pd.DataFram
         .withColumn("all_categories",                    F.split(F.col("category:LABEL"), ROBOKOP_SEPARATOR))
         .withColumn("equivalent_identifiers",            F.split(F.col("equivalent_identifiers:string[]"), ROBOKOP_SEPARATOR))
         .withColumn("labels",                            F.array(F.col("all_categories")))
-        .withColumn("publications",                      F.array(F.lit(None)))
+        .withColumn("publications",                      F.array(F.lit(None)).cast(T.ArrayType(T.StringType())))
         .withColumn("international_resource_identifier", F.lit(None))
         .withColumnRenamed("id:ID", "id")
         .withColumnRenamed("name:string", "name")
