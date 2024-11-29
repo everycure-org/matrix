@@ -12,6 +12,7 @@ from matrix.pipelines.integration.pipeline import create_pipeline as create_inte
 from matrix.pipelines.matrix_generation.pipeline import create_pipeline as create_matrix_pipeline
 from matrix.pipelines.modelling.pipeline import create_pipeline as create_modelling_pipeline
 from matrix.pipelines.preprocessing.pipeline import create_pipeline as create_preprocessing_pipeline
+from matrix.pipelines.gpu_validate.pipeline import create_pipeline as create_gpu_validate_pipeline
 
 
 def register_pipelines() -> Dict[str, Pipeline]:
@@ -62,5 +63,7 @@ def register_pipelines() -> Dict[str, Pipeline]:
         + pipelines["__default__"]
     )
     # fmt: on
+
+    pipelines["gpu_validation"] = create_gpu_validate_pipeline()
 
     return pipelines
