@@ -392,7 +392,7 @@ class PartitionedAsyncParallelDataset(PartitionedDataset):
     Custom implementation of the ParallelDataset that allows concurrent processing.
     """
 
-    def _save(self, data: dict[str, Any], max_workers: int = 10, timeout: int = 60) -> None:
+    def _save(self, data: dict[str, Any], max_workers: int = 1, timeout: int = 60) -> None:
         if self._overwrite and self._filesystem.exists(self._normalized_path):
             self._filesystem.rm(self._normalized_path, recursive=True)
 
