@@ -39,7 +39,7 @@ class LangChainEncoder(AttributeEncoder):
 
     def __init__(
         self,
-        encoder_model: OpenAIEmbeddings,
+        encoder: OpenAIEmbeddings,
         dimensions: int = 512,
         random_seed: Optional[int] = None,
         timeout: int = 10,
@@ -53,7 +53,7 @@ class LangChainEncoder(AttributeEncoder):
             timeout: Timeout for OpenAI API requests
         """
         super().__init__(dimensions, random_seed)
-        self._client = encoder_model
+        self._client = encoder
 
     @retry(wait=wait_exponential(multiplier=1, min=2, max=10), stop=stop_after_attempt(3))
     async def encode(self, df: pd.DataFrame) -> pd.DataFrame:

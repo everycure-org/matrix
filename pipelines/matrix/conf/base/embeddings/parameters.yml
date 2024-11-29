@@ -19,7 +19,7 @@ embeddings.node:
   input_features: ["category", "name"]
   encoder:
     object: matrix.pipelines.embeddings.encoders.LangChainEncoder
-    encoder_model:
+    encoder:
       object: langchain_openai.OpenAIEmbeddings
       model: text-embedding-3-small
       timeout: 10
