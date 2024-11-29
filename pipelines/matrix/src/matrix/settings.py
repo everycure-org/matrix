@@ -64,7 +64,7 @@ CONFIG_LOADER_ARGS = {
 DYNAMIC_PIPELINES_MAPPING = {
     "integration": [
         {"name": "rtx_kg2"},
-        {"name": "robokop"},
+        #{"name": "robokop"},
         {"name": "ec_medical_team"},
     ],
     "modelling": [
