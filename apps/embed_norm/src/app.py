@@ -10,13 +10,20 @@ from sklearn.manifold import TSNE
 import umap.umap_ as umap
 from sklearn.cluster import KMeans
 import re
+import subprocess
+import glob
+import scipy.linalg
 
 app = Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
 
-cache_dir = "../cached_datasets"
+# Get root_path using git
+root_path = subprocess.check_output(["git", "rev-parse", "--show-toplevel"]).decode().strip()
+
+# Set cache_dir similar to notebook
+cache_dir = os.path.join(root_path, "apps", "embed_norm", "cached_datasets")
 
 
-def reduce_dimensions(embeddings, method="umap", **kwargs):
+def reduce_dimensions(embeddings, method="tsne", **kwargs):
     if method == "umap":
         return reduce_dimensions_umap(embeddings, **kwargs)
     elif method == "pca":
@@ -37,53 +44,22 @@ def get_available_options():
     datasets = set()
     models = set()
     categories = set()
-    embedding_types = set()
-    sample_types = set()
-    seeds = set()
-    embedding_pattern = re.compile(r"^(.+?)_embeddings_(.+?)_(.+?)(_combinations)?_seed_(\d+)(.+?)?\.pkl$")
+    embedding_pattern = re.compile(
+        r"^(.+?)(_positive|_negative)?_embeddings_(.+?)_(.+?)(_combinations)?_seed_\d+.*\.pkl$"
+    )
 
-    for root, dirs, files in os.walk(cache_dir):
+    for root, dirs, files in os.walk(os.path.join(cache_dir, "embeddings")):
         for filename in files:
             match = embedding_pattern.match(filename)
             if match:
-                # Extract groups from the regex match
-                dataset_name, category_name, model_name, comb_flag, seed, cache_suffix = match.groups()
-
-                # Determine the embedding type based on comb_flag
-                embedding_type = "Combination" if comb_flag == "_combinations" else "Standard"
-
-                # Extract sample_type using another regex search
-                sample_type_match = re.search(r"_sample_(.+)", cache_suffix or "")
-                sample_type = sample_type_match.group(1) if sample_type_match else "unknown"
-
-                # Add the extracted information to respective sets
+                dataset_name, sample_type_suffix, category_name, model_name, comb_flag = match.groups()[:5]
                 datasets.add(dataset_name)
                 models.add(model_name)
                 categories.add(category_name)
-                embedding_types.add(embedding_type)
-                sample_types.add(sample_type)
-                seeds.add(seed)
-
-    # for filename in os.listdir(cache_dir):
-    #     match = embedding_pattern.match(filename)
-    #     if match:
-    #         dataset_name, category_name, model_name, comb_flag, seed, cache_suffix = match.groups()
-    #         embedding_type = "Combination" if comb_flag == "_combinations" else "Standard"
-    #         sample_type_match = re.search(r"_sample_(.+)", cache_suffix or "")
-    #         sample_type = sample_type_match.group(1) if sample_type_match else "unknown"
-    #         datasets.add(dataset_name)
-    #         models.add(model_name)
-    #         categories.add(category_name)
-    #         embedding_types.add(embedding_type)
-    #         sample_types.add(sample_type)
-    #         seeds.add(seed)
     return {
         "datasets": sorted(datasets),
         "models": sorted(models),
         "categories": sorted(categories),
-        "embedding_types": sorted(embedding_types),
-        "sample_types": sorted(sample_types),
-        "seeds": sorted(seeds),
     }
 
 
@@ -146,46 +122,6 @@ app.layout = dbc.Container(
             [
                 dbc.Col(
                     [
-                        dbc.Label("Embedding Type"),
-                        dcc.Dropdown(
-                            id="embedding-type",
-                            options=[{"label": name, "value": name} for name in options["embedding_types"]],
-                            value="Standard",
-                            clearable=False,
-                        ),
-                    ],
-                    width=4,
-                ),
-                dbc.Col(
-                    [
-                        dbc.Label("Sample Type"),
-                        dcc.Dropdown(
-                            id="sample-type",
-                            options=[{"label": name, "value": name} for name in options["sample_types"]],
-                            value=options["sample_types"][0] if options["sample_types"] else None,
-                            clearable=False,
-                        ),
-                    ],
-                    width=4,
-                ),
-                dbc.Col(
-                    [
-                        dbc.Label("Seed"),
-                        dcc.Dropdown(
-                            id="seed",
-                            options=[{"label": name, "value": name} for name in options["seeds"]],
-                            value=options["seeds"][0] if options["seeds"] else None,
-                            clearable=False,
-                        ),
-                    ],
-                    width=4,
-                ),
-            ]
-        ),
-        dbc.Row(
-            [
-                dbc.Col(
-                    [
                         dbc.Label("Dimensionality Reduction Method"),
                         dcc.Dropdown(
                             id="dim-reduction-method",
@@ -194,7 +130,7 @@ app.layout = dbc.Container(
                                 {"label": "PCA", "value": "pca"},
                                 {"label": "t-SNE", "value": "tsne"},
                             ],
-                            value="umap",
+                            value="tsne",
                             clearable=False,
                         ),
                     ],
@@ -254,7 +190,7 @@ app.layout = dbc.Container(
                                     min=5,
                                     max=50,
                                     step=1,
-                                    value=30,
+                                    value=50,
                                     marks={i: str(i) for i in range(5, 51, 5)},
                                 ),
                             ],
@@ -321,7 +257,7 @@ app.layout = dbc.Container(
                             min=0.0,
                             max=1.0,
                             step=0.01,
-                            value=0.8,
+                            value=0.92,
                             marks={i / 10: str(i / 10) for i in range(0, 11)},
                         ),
                     ],
@@ -372,42 +308,58 @@ def toggle_num_clusters(enable_clustering):
         Input("category", "value"),
         Input("dataset", "value"),
         Input("embedding-method", "value"),
-        Input("embedding-type", "value"),
-        Input("sample-type", "value"),
-        Input("seed", "value"),
     ],
 )
-def reload_embeddings(category_name, dataset_name, embedding_method, embedding_type, sample_type, seed):
-    embeddings_file = os.path.join(
-        cache_dir,
-        "embeddings/",
-        f"{dataset_name}_embeddings_{category_name}_{embedding_method}{'_combinations' if embedding_type == 'Combination' else ''}_seed_{seed}_sample_{sample_type}.pkl",
-    )
-    labels_file = os.path.join(
-        cache_dir,
-        "embeddings/",
-        f"{dataset_name}_labels_{category_name}_{embedding_method}{'_combinations' if embedding_type == 'Combination' else ''}_seed_{seed}_sample_{sample_type}.pkl",
-    )
-    sim_file = os.path.join(
-        cache_dir,
-        "embeddings/",
-        f"{dataset_name}_cosine_similarities_{category_name}_{embedding_method}{'_combinations' if embedding_type == 'Combination' else ''}_seed_{seed}_sample_{sample_type}.pkl",
-    )
+def reload_embeddings(category_name, dataset_name, embedding_method):
+    embeddings = []
+    labels = []
+    sample_types = []
+    similarities = []
 
-    if not os.path.exists(embeddings_file) or not os.path.exists(labels_file) or not os.path.exists(sim_file):
+    for sample_type in ["_positive", "_negative"]:
+        embeddings_pattern = os.path.join(
+            cache_dir,
+            "embeddings",
+            f"{dataset_name}{sample_type}_embeddings_{category_name}_{embedding_method}_seed_*.pkl",
+        )
+        labels_pattern = os.path.join(
+            cache_dir,
+            "embeddings",
+            f"{dataset_name}{sample_type}_labels_{category_name}_{embedding_method}_seed_*.pkl",
+        )
+        sim_pattern = os.path.join(
+            cache_dir,
+            "embeddings",
+            f"{dataset_name}{sample_type}_cosine_similarities_{category_name}_{embedding_method}_seed_*.pkl",
+        )
+
+        embedding_files = glob.glob(embeddings_pattern)
+        label_files = glob.glob(labels_pattern)
+        sim_files = glob.glob(sim_pattern)
+
+        for emb_file, lbl_file, sim_file in zip(embedding_files, label_files, sim_files):
+            with open(emb_file, "rb") as f:
+                emb = pickle.load(f)
+            with open(lbl_file, "rb") as f:
+                lbl = pickle.load(f)
+            with open(sim_file, "rb") as f:
+                sim = pickle.load(f)
+            embeddings.append(emb)
+            labels.extend(lbl)
+            sample_type_str = "Positive" if sample_type == "_positive" else "Negative"
+            sample_types.extend([sample_type_str] * len(lbl))
+            similarities.append(sim)
+
+    if not embeddings:
         return {}
 
-    with open(embeddings_file, "rb") as f:
-        embeddings = pickle.load(f)
-    with open(labels_file, "rb") as f:
-        labels = pickle.load(f)
-    with open(sim_file, "rb") as f:
-        similarities = pickle.load(f)
+    embeddings = np.vstack(embeddings)
+    similarities = scipy.linalg.block_diag(*similarities)
 
     data_store = {
         "embeddings": embeddings.tolist(),
         "labels": labels,
-        "sample_type": sample_type,
+        "sample_type": sample_types,
         "similarities": similarities.tolist(),
     }
     return data_store
@@ -444,7 +396,7 @@ def update_plot(
 
     embeddings = np.array(embedding_data_store["embeddings"])
     labels = embedding_data_store["labels"]
-    sample_type = embedding_data_store["sample_type"]
+    sample_types = embedding_data_store["sample_type"]
     similarities = np.array(embedding_data_store["similarities"])
 
     cache_key = (dim_reduction_method, n_neighbors, min_dist, perplexity)
@@ -462,7 +414,7 @@ def update_plot(
         reduced_embeddings_cache[cache_key] = embeddings_2d
 
     df_plot = pd.DataFrame(
-        {"x": embeddings_2d[:, 0], "y": embeddings_2d[:, 1], "label": labels, "Sample Type": sample_type}
+        {"x": embeddings_2d[:, 0], "y": embeddings_2d[:, 1], "label": labels, "Sample Type": sample_types}
     )
 
     if enable_clustering:

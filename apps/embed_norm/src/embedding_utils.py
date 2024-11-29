@@ -18,9 +18,9 @@ from sklearn.metrics.pairwise import cosine_similarity
 import asyncio
 import aiohttp
 from tqdm.auto import tqdm
-from kedro.framework.session import KedroSession
 import curategpt
-
+import tiktoken
+from pyspark.sql import DataFrame as SparkDataFrame
 
 MAX_RETRIES = 3
 BATCH_SIZE = 100
@@ -28,10 +28,16 @@ NORM_URL = "https://nodenorm.transltr.io/1.5/get_normalized_nodes"
 API_URL = "https://annotator.ci.transltr.io/curie/"
 missing_data_rows_dict = {}
 
+MAX_TOKENS_PER_TEXT = 8191
+MAX_TOKENS_PER_REQUEST = 8000
+TOKENIZER_NAME = "text-embedding-3-large"
+
 
 def parse_list_string(s):
     if isinstance(s, list):
         return s
+    elif isinstance(s, (np.ndarray, pd.Series)):
+        return s.tolist()
     elif isinstance(s, str):
         s = s.strip()
         if not s:
@@ -48,16 +54,26 @@ def parse_list_string(s):
         return []
 
 
+def is_missing_value(value):
+    if isinstance(value, (list, np.ndarray, pd.Series)):
+        return pd.isnull(value).all() or all(not str(v).strip() for v in value)
+    else:
+        return pd.isnull(value) or not str(value).strip()
+
+
 def get_text_representation(row, text_fields=None, combine_fields=False):
     if text_fields is None:
         text_fields = ["all_names:string[]", "all_categories:string[]"]
     global missing_data_rows_dict
     fields = [row.get(field, "") for field in text_fields]
-    missing_fields = [field for field, value in zip(text_fields, fields) if pd.isnull(value) or not str(value).strip()]
+
+    missing_fields = [field for field, value in zip(text_fields, fields) if is_missing_value(value)]
+
     for missing_field in missing_fields:
         if missing_field not in missing_data_rows_dict:
             missing_data_rows_dict[missing_field] = []
         missing_data_rows_dict[missing_field].append(row)
+
     if combine_fields:
         parsed_lists = [parse_list_string(field_value) for field_value in fields]
         from itertools import product
@@ -73,21 +89,53 @@ def get_text_representation(row, text_fields=None, combine_fields=False):
         text_representation = " ".join(text_values).strip()
         if not text_representation:
             logging.warning(f"Empty text representation for row with index {row.name}")
+        # Truncate text based on token count
+        encoding = tiktoken.encoding_for_model(TOKENIZER_NAME)
+        tokens = encoding.encode(text_representation)
+        if len(tokens) > MAX_TOKENS_PER_TEXT:
+            truncated_tokens = tokens[:MAX_TOKENS_PER_TEXT]
+            text_representation = encoding.decode(truncated_tokens)
+            logging.warning(f"Text too long, truncated to {MAX_TOKENS_PER_TEXT} tokens for row {row.name}")
         return text_representation
+
+
+def batch_texts_by_token_limit(texts, max_tokens_per_request=MAX_TOKENS_PER_REQUEST, model_name=TOKENIZER_NAME):
+    encoding = tiktoken.encoding_for_model(model_name)
+    batches = []
+    current_batch = []
+    current_tokens = 0
+    for text in texts:
+        tokens = encoding.encode(text)
+        num_tokens = len(tokens)
+        if num_tokens > MAX_TOKENS_PER_TEXT:
+            logging.warning(f"Text exceeds max tokens per text ({MAX_TOKENS_PER_TEXT}), truncating.")
+            tokens = tokens[:MAX_TOKENS_PER_TEXT]
+            text = encoding.decode(tokens)
+            num_tokens = MAX_TOKENS_PER_TEXT
+        if current_tokens + num_tokens > max_tokens_per_request:
+            if current_batch:
+                batches.append(current_batch)
+                current_batch = []
+                current_tokens = 0
+        current_batch.append(text)
+        current_tokens += num_tokens
+    if current_batch:
+        batches.append(current_batch)
+    return batches
 
 
 def get_openai_embedding(texts):
     retries = 0
     while retries < MAX_RETRIES:
         try:
-            response = openai.embeddings.create(input=texts, model="text-embedding-3-large")
+            response = openai.embeddings.create(input=texts, model=TOKENIZER_NAME)
             embeddings = [item["embedding"] for item in response.model_dump()["data"]]
             return np.array(embeddings)
-        except openai.RateLimitError as e:
+        except openai.error.RateLimitError as e:
             retries += 1
             logging.error(f"Rate limit error: {e}. Retrying {retries}/{MAX_RETRIES}")
             time.sleep(2**retries)
-        except openai.APIStatusError as e:
+        except openai.error.InvalidRequestError as e:
             logging.error(f"Invalid request error: {e}")
             return None
         except Exception as e:
@@ -96,6 +144,22 @@ def get_openai_embedding(texts):
             time.sleep(2**retries)
     logging.error("Max retries exceeded for get_openai_embedding")
     return None
+
+
+def get_openai_embeddings_in_batches(texts):
+    embeddings = []
+    batches = batch_texts_by_token_limit(texts)
+    for i, batch_texts in enumerate(tqdm(batches, desc="Computing OpenAI embeddings", leave=False)):
+        batch_embeddings = get_openai_embedding(batch_texts)
+        if batch_embeddings is not None:
+            embeddings.append(batch_embeddings)
+        else:
+            logging.warning(f"Skipping batch {i} due to errors")
+    if embeddings:
+        return np.vstack(embeddings)
+    else:
+        logging.error("No embeddings were computed.")
+        return np.array([])
 
 
 def reduce_dimensions(embeddings, method="umap", **kwargs):
@@ -198,99 +262,6 @@ def load_cached_data(file_path):
         return None
 
 
-def process_model(
-    model_name,
-    model_info,
-    datasets,
-    cache_dir,
-    seed,
-    text_fields=None,
-    text_representation_func=None,
-    label_generation_func=None,
-    dataset_name="default",
-    use_ontogpt=False,
-    cache_suffix="",
-    use_combinations=False,
-    combine_fields=False,
-    dataset_type="negative",
-):
-    embeddings_dict = {}
-    labels_dict = {}
-    similarities_dict = {}
-
-    if model_info["type"] == "hf":
-        model, tokenizer = load_model_and_tokenizer(model_info)
-
-    for category_name, df in tqdm(
-        datasets.items(), desc=f"Processing model {model_name} ({dataset_type})", total=len(datasets), leave=False
-    ):
-        if df.empty:
-            logging.warning(f"The DataFrame for category '{category_name}' is empty. Skipping.")
-            continue
-
-        if use_ontogpt:
-            base_texts = df.apply(lambda row: get_text_representation(row, text_fields, False), axis=1)
-            enhanced_info = base_texts.apply(curategpt.extract)
-            all_texts = (base_texts + " " + enhanced_info).str.strip()
-        elif use_combinations:
-            # Handle combinations
-            # This may require additional handling to vectorize
-            all_texts = []
-            for row in df.itertuples(index=False):
-                texts = get_text_representation(row, text_fields, combine_fields=True)
-                all_texts.extend(texts)
-        else:
-            all_texts = df.apply(lambda row: get_text_representation(row, text_fields, False), axis=1)
-
-        if isinstance(all_texts, pd.Series):
-            all_texts = all_texts.tolist()
-        elif not isinstance(all_texts, list):
-            all_texts = list(all_texts)
-
-        if not all_texts:
-            logging.warning(f"No texts to process for category '{category_name}'. Skipping.")
-            continue
-
-        # Compute embeddings
-        if model_info["type"] == "hf":
-            embeddings = compute_embeddings_hf(model, tokenizer, all_texts)
-            embeddings_dict[category_name] = embeddings
-        elif model_info["type"] == "openai":
-            embeddings = get_openai_embeddings_in_batches(all_texts)
-            embeddings_dict[category_name] = embeddings
-
-        # Generate labels
-        if label_generation_func is None:
-            labels = [f"Row {idx}: {text}" for idx, text in enumerate(all_texts)]
-        else:
-            labels = df.apply(label_generation_func, axis=1).tolist()
-        labels_dict[category_name] = labels
-
-        # Compute similarities
-        similarities = cosine_similarity(embeddings)
-        similarities_dict[category_name] = similarities
-
-        # Cache results
-        cache_results(
-            category_name,
-            model_name,
-            embeddings_dict,
-            labels_dict,
-            similarities_dict,
-            cache_dir,
-            dataset_name,
-            seed,
-            cache_suffix,
-            use_combinations,
-            dataset_type,
-        )
-
-    if model_info["type"] == "hf":
-        unload_model_and_tokenizer(model, tokenizer)
-
-    return model_name, embeddings_dict
-
-
 def cache_results(
     category_name,
     model_name,
@@ -329,20 +300,91 @@ def cache_results(
         pickle.dump(similarities_dict[category_name], f)
 
 
-def get_openai_embeddings_in_batches(texts, batch_size=20):
-    embeddings = []
-    for i in tqdm(range(0, len(texts), batch_size), desc="Computing OpenAI embeddings", leave=False):
-        batch_texts = texts[i : i + batch_size]
-        batch_embeddings = get_openai_embedding(batch_texts)
-        if batch_embeddings is not None:
-            embeddings.append(batch_embeddings)
+def process_model(
+    model_name,
+    model_info,
+    datasets,
+    cache_dir,
+    seed,
+    text_fields=None,
+    text_representation_func=None,
+    label_generation_func=None,
+    dataset_name="default",
+    use_ontogpt=False,
+    cache_suffix="",
+    use_combinations=False,
+    combine_fields=False,
+    dataset_type="negative",
+):
+    embeddings_dict = {}
+    labels_dict = {}
+    similarities_dict = {}
+
+    if model_info["type"] == "hf":
+        model, tokenizer = load_model_and_tokenizer(model_info)
+
+    for category_name, df in tqdm(
+        datasets.items(), desc=f"Processing model {model_name} ({dataset_type})", total=len(datasets), leave=False
+    ):
+        if df.empty:
+            logging.warning(f"The DataFrame for category '{category_name}' is empty. Skipping.")
+            continue
+
+        if use_ontogpt:
+            base_texts = df.apply(lambda row: get_text_representation(row, text_fields, False), axis=1)
+            enhanced_info = base_texts.apply(curategpt.extract)
+            all_texts = (base_texts + " " + enhanced_info).str.strip()
+        elif use_combinations:
+            all_texts = []
+            for _, row in df.iterrows():
+                texts = get_text_representation(row, text_fields, combine_fields=True)
+                all_texts.extend(texts)
         else:
-            logging.warning(f"Skipping batch {i}-{i+batch_size} due to errors")
-    if embeddings:
-        return np.vstack(embeddings)
-    else:
-        logging.error("No embeddings were computed.")
-        return np.array([])
+            all_texts = df.apply(lambda row: get_text_representation(row, text_fields, False), axis=1)
+
+        if isinstance(all_texts, pd.Series):
+            all_texts = all_texts.tolist()
+        elif not isinstance(all_texts, list):
+            all_texts = list(all_texts)
+
+        if not all_texts:
+            logging.warning(f"No texts to process for category '{category_name}'. Skipping.")
+            continue
+
+        if model_info["type"] == "hf":
+            embeddings = compute_embeddings_hf(model, tokenizer, all_texts)
+            embeddings_dict[category_name] = embeddings
+        elif model_info["type"] == "openai":
+            embeddings = get_openai_embeddings_in_batches(all_texts)
+            embeddings_dict[category_name] = embeddings
+
+        if label_generation_func is None:
+            labels = [f"Row {idx}: {text}" for idx, text in enumerate(all_texts)]
+        else:
+            labels = df.apply(label_generation_func, axis=1).tolist()
+        labels_dict[category_name] = labels
+
+        similarities = cosine_similarity(embeddings)
+        similarities_dict[category_name] = similarities
+
+        cache_results(
+            category_name,
+            model_name,
+            embeddings_dict,
+            labels_dict,
+            similarities_dict,
+            cache_dir,
+            dataset_name,
+            seed,
+            cache_suffix,
+            use_combinations,
+            dataset_type,
+        )
+
+    if model_info["type"] == "hf":
+        unload_model_and_tokenizer(model, tokenizer)
+
+    return model_name, embeddings_dict
 
 
 def process_models(
@@ -366,16 +408,10 @@ def process_models(
             logging.warning(f"Model '{model_name}' not found in embedding_models_info. Skipping.")
             continue
 
-        if model_info["type"] == "openai":
-            datasets_to_process = [
-                ("positive", positive_datasets),
-                ("negative", negative_datasets),
-            ]
-        else:
-            datasets_to_process = [
-                ("positive", positive_datasets),
-                ("negative", negative_datasets),
-            ]
+        datasets_to_process = [
+            ("positive", positive_datasets),
+            ("negative", negative_datasets),
+        ]
 
         for dataset_type, datasets in datasets_to_process:
             model_key = f"{model_name}_{dataset_type}"
@@ -537,31 +573,24 @@ def create_equivalent_items_dfs(positive_datasets, normalized_data):
     return equivalent_dfs
 
 
-def load_categories(cache_dir, dataset_name, nodes_dataset_name):
-    categories_file = os.path.join(cache_dir, f"{dataset_name}_categories.pkl")
-    categories = load_cached_data(categories_file)
-    if categories is None:
-        with KedroSession.create() as session:
-            context = session.load_context()
-            catalog = context.catalog
-            df = catalog.load(nodes_dataset_name)
-        unique_categories = df["category"].unique().tolist()
-        categories = unique_categories + ["All Categories"]
-        cache_data(categories, categories_file)
-    return categories
-
-
 def load_datasets(
+    nodes_df,
     cache_dir,
     dataset_name,
-    nodes_dataset_name,
-    edges_dataset_name,
-    categories,
-    seed1,
-    seed2,
+    pos_seed,
+    neg_seed,
     total_sample_size=1000,
     positive_ratio=0.3,
 ):
+    categories_file = os.path.join(cache_dir, f"{dataset_name}_categories.pkl")
+    categories = load_cached_data(categories_file)
+    if categories is None:
+        if isinstance(nodes_df, SparkDataFrame):
+            nodes_df = nodes_df.toPandas()
+        unique_categories = nodes_df["category"].unique().tolist()
+        categories = unique_categories + ["All Categories"]
+        cache_data(categories, categories_file)
+
     datasets = {}
     positive_datasets = {}
     need_to_load_df = False
@@ -570,51 +599,46 @@ def load_datasets(
     cache_suffix = f"_pos_{positive_n}_neg_{negative_n}"
     for category in categories:
         positive_csv_filename = os.path.join(
-            cache_dir, f"{dataset_name}_sampled_df_positives_{category}_seed_{seed1}{cache_suffix}.csv"
+            cache_dir, f"{dataset_name}_sampled_df_positives_{category}_seed_{pos_seed}{cache_suffix}.csv"
         )
         negative_csv_filename = os.path.join(
-            cache_dir, f"{dataset_name}_sampled_df_negatives_{category}_seed_{seed2}{cache_suffix}.csv"
+            cache_dir, f"{dataset_name}_sampled_df_negatives_{category}_seed_{neg_seed}{cache_suffix}.csv"
         )
         if not (os.path.exists(positive_csv_filename) and os.path.exists(negative_csv_filename)):
             need_to_load_df = True
             break
     if need_to_load_df:
-        with KedroSession.create() as session:
-            context = session.load_context()
-            catalog = context.catalog
-            nodes_df = catalog.load(nodes_dataset_name)
+        if isinstance(nodes_df, SparkDataFrame):
+            nodes_df = nodes_df.toPandas()
     else:
         nodes_df = None
     for category in tqdm(categories, desc="Processing categories", leave=False):
         positive_csv_filename = os.path.join(
-            cache_dir, f"{dataset_name}_sampled_df_positives_{category}_seed_{seed1}{cache_suffix}.csv"
+            cache_dir, f"{dataset_name}_sampled_df_positives_{category}_seed_{pos_seed}{cache_suffix}.csv"
         )
         negative_csv_filename = os.path.join(
-            cache_dir, f"{dataset_name}_sampled_df_negatives_{category}_seed_{seed2}{cache_suffix}.csv"
+            cache_dir, f"{dataset_name}_sampled_df_negatives_{category}_seed_{neg_seed}{cache_suffix}.csv"
         )
         if os.path.exists(positive_csv_filename) and os.path.exists(negative_csv_filename):
             positive_df = pd.read_csv(positive_csv_filename)
             negative_df = pd.read_csv(negative_csv_filename)
         else:
             if nodes_df is None:
-                with KedroSession.create() as session:
-                    context = session.load_context()
-                    catalog = context.catalog
-                    nodes_df = catalog.load(nodes_dataset_name)
+                raise ValueError("nodes_df is None but data needs to be loaded.")
             if category == "All Categories":
                 category_df = nodes_df.copy()
             else:
                 category_df = nodes_df[nodes_df["category"] == category].copy()
             positive_n_actual = min(positive_n, len(category_df))
-            positive_df = category_df.sample(n=positive_n_actual, random_state=seed1)
+            positive_df = category_df.sample(n=positive_n_actual, random_state=pos_seed)
             remaining_df = category_df.drop(positive_df.index)
             negative_n_actual = min(negative_n, len(remaining_df))
-            negative_df = remaining_df.sample(n=negative_n_actual, random_state=seed2)
+            negative_df = remaining_df.sample(n=negative_n_actual, random_state=neg_seed)
             positive_df.to_csv(positive_csv_filename, index=False)
             negative_df.to_csv(negative_csv_filename, index=False)
         positive_datasets[category] = positive_df.reset_index(drop=True)
         datasets[category] = negative_df.reset_index(drop=True)
-    return positive_datasets, datasets
+    return categories, positive_datasets, datasets
 
 
 def load_embeddings_and_labels(
