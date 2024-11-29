@@ -459,3 +459,7 @@ If no project is listed, then it can be set by running:
 ```
 gcloud config set project mtrx-hub-dev-3of
 ```
+### Issue with kedro run -e test -p test after updating git pull.
+```filter_by_category() missing 1 required positional argument: 'categories```
+
+This is due to our local libraries (e.g. `data_fabricator`) being cached in the uv cache and thus not being installed to the latest version when running `make install`. Cleaning the uv cache solves this issue which you can do via `make clean` and then run a fresh `make install`.
