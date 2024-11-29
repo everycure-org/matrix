@@ -225,12 +225,24 @@ def run_subprocess(
         )
 
         stdout, stderr = [], []
-        for line in process.stdout:
-            sys.stdout.write(line)
-            stdout.append(line)
-        for line in process.stderr:
-            sys.stderr.write(line)
-            stderr.append(line)
+        
+        while True:
+            stdout_line = process.stdout.readline() if process.stdout else ''
+            stderr_line = process.stderr.readline() if process.stderr else ''
+            
+            if stdout_line:
+                sys.stdout.write(stdout_line)
+                sys.stdout.flush()  # Ensure output is displayed immediately
+                stdout.append(stdout_line)
+                
+            if stderr_line:
+                sys.stderr.write(stderr_line)
+                sys.stderr.flush()  # Ensure output is displayed immediately
+                stderr.append(stderr_line)
+                
+            # Break if process has finished and both streams are empty
+            if process.poll() is not None and not stdout_line and not stderr_line:
+                break
 
         returncode = process.wait()
         if check and returncode != 0:
