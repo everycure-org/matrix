@@ -46,4 +46,5 @@ langchain-openai
 langchain
 openpyxl
 jsonpath-ng
+torch
 bmt # biolink model toolkit
