@@ -25,6 +25,11 @@ def load_environment_variables():
 load_environment_variables()
 
 
+# Define a custom resolver
+def cast_to_int(val: str) -> int:
+    return int(val)
+
+
 def merge_dicts(dict1: Dict, dict2: Dict) -> Dict:
     """Recursively merge two dictionaries.
 
