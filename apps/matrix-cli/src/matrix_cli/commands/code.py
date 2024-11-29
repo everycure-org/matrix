@@ -6,7 +6,7 @@ from rich.markdown import Markdown
 
 from matrix_cli.components.git import fetch_pr_detail_nocache, get_code_diff
 from matrix_cli.components.settings import settings
-from matrix_cli.components.utils import console, get_git_root, get_markdown_contents, invoke_model
+from matrix_cli.components.utils import console, get_git_root, get_markdown_contents, invoke_model, run_command
 
 app = typer.Typer(help="Code-related utility commands", no_args_is_help=True)
 
@@ -39,6 +39,9 @@ def pr_summary(
     """Generate an AI summary of a specific PR, including code changes and context."""
 
     console.print(f"[green]Fetching PR #{pr_number} details...")
+
+    console.print("[green]Fetching latest PR details...")
+    run_command(["git", "fetch"])
 
     try:
         pr_info = fetch_pr_detail_nocache(pr_number)

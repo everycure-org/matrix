@@ -33,7 +33,7 @@ def fetch_pr_detail_nocache(pr_number: int) -> PRInfo:
         # If no merge commit, use the head ref name to fetch the diff
         if head_ref_name := pr_info.get("headRefName"):
             try:
-                diff = get_code_diff("origin/main", head_ref_name)
+                diff = get_symmetric_diff(f"origin/main...origin/{head_ref_name}")
             except subprocess.CalledProcessError:
                 typer.echo(f"\nWarning: Could not fetch diff for PR #{pr_number}", err=True)
 
@@ -108,3 +108,16 @@ def get_code_diff(
     # allow also single ref which gets the diff just for that commit
     diff_ref = f"{from_ref}..{to_ref}" if to_ref is not None else from_ref
     return run_command(["git", "diff", diff_ref, "--", *file_patterns], cwd=git_root)
+
+
+def get_symmetric_diff(diff_string: str, file_patterns: List[str] = settings.inclusion_patterns) -> Optional[str]:
+    git_root = get_git_root()
+    command = ["git", "diff", f"{diff_string}", "--", *file_patterns]
+    return run_command(command, cwd=git_root)
+
+
+def get_code_from_commit(commit: str, file_patterns: List[str] = settings.inclusion_patterns) -> Optional[str]:
+    git_root = get_git_root()
+    command = ["git", "diff", f"{commit}^!", "--", *file_patterns]
+    print(command)
+    return run_command(command, cwd=git_root)
