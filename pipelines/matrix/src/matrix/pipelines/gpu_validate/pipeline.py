@@ -2,7 +2,6 @@ import logging
 import time
 from typing import Any, Dict
 from kedro.pipeline import Pipeline, pipeline
-import pandas as pd
 import torch
 
 from matrix.kedro4argo_node import ArgoNode, ArgoResourceConfig
@@ -10,7 +9,7 @@ from matrix.kedro4argo_node import ArgoNode, ArgoResourceConfig
 
 def check_gpu_availability() -> Dict[str, Any]:
     if torch.cuda.is_available():
-        return pd.DataFrame({"gpu": ["available"]})
+        logging.info("GPU available")
     else:
         raise ValueError("No GPU available")
 
