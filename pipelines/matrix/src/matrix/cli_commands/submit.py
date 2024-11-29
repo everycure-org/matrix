@@ -215,6 +215,9 @@ def run_subprocess(
 
         returncode = process.wait()
         if check and returncode != 0:
+            console.print(f"Error executing command: {cmd}")
+            console.print(f"stdout: {stdout}")
+            console.print(f"stderr: {stderr}")
             raise subprocess.CalledProcessError(
                 returncode, cmd, "".join(stdout), "".join(stderr)
             )
