@@ -6,6 +6,7 @@ import subprocess
 import sys
 from pathlib import Path
 from typing import List, Optional
+import select
 
 import click
 from kedro.framework.cli.utils import CONTEXT_SETTINGS, split_string
@@ -227,21 +228,35 @@ def run_subprocess(
         stdout, stderr = [], []
         
         while True:
-            stdout_line = process.stdout.readline() if process.stdout else ''
-            stderr_line = process.stderr.readline() if process.stderr else ''
+            reads = [stream for stream in (process.stdout, process.stderr) if stream]
+            if not reads:
+                break
+                
+            readable, _, _ = select.select(reads, [], [], 0.1)  # 100ms timeout
             
-            if stdout_line:
-                sys.stdout.write(stdout_line)
-                sys.stdout.flush()  # Ensure output is displayed immediately
-                stdout.append(stdout_line)
-                
-            if stderr_line:
-                sys.stderr.write(stderr_line)
-                sys.stderr.flush()  # Ensure output is displayed immediately
-                stderr.append(stderr_line)
-                
-            # Break if process has finished and both streams are empty
-            if process.poll() is not None and not stdout_line and not stderr_line:
+            for stream in readable:
+                line = stream.readline()
+                if not line:  # EOF
+                    stream.close()
+                    continue
+                    
+                if stream == process.stdout:
+                    sys.stdout.write(line)
+                    sys.stdout.flush()
+                    stdout.append(line)
+                else:
+                    sys.stderr.write(line)
+                    sys.stderr.flush()
+                    stderr.append(line)
+            
+            # Check if process has finished
+            if process.poll() is not None:
+                # Read any remaining output
+                remaining_stdout, remaining_stderr = process.communicate()
+                if remaining_stdout:
+                    stdout.append(remaining_stdout)
+                if remaining_stderr:
+                    stderr.append(remaining_stderr)
                 break
 
         returncode = process.wait()
@@ -266,7 +281,6 @@ def run_subprocess(
             if e.stderr:
                 console.print(f"stderr: {e.stderr}")
             raise
-
 
 def command_exists(command: str) -> bool:
     """Check if a command exists in the system."""
