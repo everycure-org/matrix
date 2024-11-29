@@ -80,12 +80,13 @@ class LangChainEncoder(AttributeEncoder):
 class RandomizedEncoder(AttributeEncoder):
     """Encoder class for generating random embeddings."""
 
-    def __init__(self, dimensions: int, random_seed: Optional[int] = None):
+    def __init__(self, dimensions: int, random_seed: Optional[int] = None, encoder: Optional[AttributeEncoder] = None):
         """Initialize Randomized encoder.
 
         Args:
             dimensions: Dimension of the output embeddings
             random_seed: Random seed for reproducibility
+            encoder: Encoder to use for embedding generation (dummy)
         """
         super().__init__(dimensions, random_seed)
         if random_seed is not None:
@@ -110,12 +111,13 @@ class RandomizedEncoder(AttributeEncoder):
 class PubmedBERTEncoder(AttributeEncoder):
     """Encoder class for PubmedBERT embeddings."""
 
-    def __init__(self, dimensions: int, random_seed: Optional[int] = None):
+    def __init__(self, dimensions: int, random_seed: Optional[int] = None, encoder: Optional[AttributeEncoder] = None):
         """Initialize PubmedBERT encoder.
 
         Args:
             dimensions: Dimension of the output embeddings
             random_seed: Random seed for reproducibility
+            encoder: Encoder to use for embedding generation (dummy)
         """
         super().__init__(dimensions, random_seed)
         if random_seed is not None:
