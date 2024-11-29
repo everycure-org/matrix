@@ -14,7 +14,7 @@ from matrix.pipelines.moa_extraction.neo4j_query_clauses import (
     generate_match_clause,
     generate_node_condition_where_clause,
 )
-from matrix.pipelines.embeddings.nodes import GraphDB
+from matrix.pipelines.moa_extraction.utils import GraphDB
 from matrix.pipelines.preprocessing.nodes import resolve, normalize
 
 logger = logging.getLogger(__name__)
