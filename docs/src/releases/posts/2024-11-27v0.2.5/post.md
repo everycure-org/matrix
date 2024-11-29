@@ -95,15 +95,21 @@ We would recommend building a clean python function in a notebook which consumes
 datasets of interest (e.g. `integration.prm.filtered_nodes`). When you are happy with the
 function, you can copy it into the right place in the pipeline (various `nodes.py` files in `pipelines/matrix/src/matrix/pipelines/`) and wire it up with the rest of the pipeline using the syntax shown in various `pipeline.py` files.
 
-
-For a complete list of changes, please refer to the [GitHub release notes](https://github.com/everycure-org/matrix/releases/tag/v0.2.5).
-
 ## Other Enhancements 🚀
 
 ### 1. ROBOKOP Knowledge Graph Integration 🌐
 
-The platform now integrates the ROBOKOP knowledge graph, significantly expanding the scope and depth of our knowledge base. This integration enhances data coverage and provides richer context for drug
-repurposing analysis, potentially leading to more accurate and comprehensive predictions.
+The platform now supports instantiating an integrated version of RTX-KG2 and ROBOKOP as
+the knowledge graph on which models can be run. This integration will undergo quality
+validation ahead of planned data experiments to test whether a combined knowledge graph
+improves performance compared to using individual knowledge graphs. While the integration
+provides optionality for richer context and potentially more comprehensive drug
+repurposing analysis, it is not enforced as the default. 
+
+In December, we plan to integrate SPOKE as a third knowledge graph for testing the
+hypothesis that more integrated information leads to better predictions.
+
+To read only a specific knowledge graph from our combined data, you can filter the nodes &
 
 ### 2. Translator-Based Synonymization Enhancements 🔄
 
