@@ -32,7 +32,7 @@ def transform_rtxkg2_nodes(nodes_df: DataFrame) -> DataFrame:
         .withColumn("labels",                            f.split(f.col(":LABEL"), RTX_SEPARATOR))
         .withColumn("all_categories",                    f.split(f.col("all_categories:string[]"), RTX_SEPARATOR))
         .withColumn("equivalent_identifiers",            f.split(f.col("equivalent_curies:string[]"), RTX_SEPARATOR))
-        .withColumn("publications",                      f.split(f.col("publications:string[]"), RTX_SEPARATOR))
+        .withColumn("publications",                      f.split(f.col("publications:string[]"), RTX_SEPARATOR).cast(T.ArrayType(T.StringType())))
         .withColumn("international_resource_identifier", f.col("iri"))
         .withColumnRenamed("id:ID", "id")
         .select(*cols_for_schema(KGNodeSchema))

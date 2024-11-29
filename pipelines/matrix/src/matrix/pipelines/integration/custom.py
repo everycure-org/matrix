@@ -27,7 +27,7 @@ def transform_ec_medical_team_nodes(nodes_df: DataFrame, biolink_categories_df: 
         .withColumn("labels",                            f.array(f.col("name")))
         .withColumn("all_categories",                    f.array(f.col("category")))
         .withColumn("equivalent_identifiers",            f.array(f.col("id")))
-        .withColumn("publications",                      f.array(f.lit('medical team')))
+        .withColumn("publications",                      f.array(f.lit('medical team')).cast(T.ArrayType(T.StringType())))
         .withColumn("international_resource_identifier", f.col("id"))
         .transform(determine_most_specific_category, biolink_categories_df)
         .select(*cols_for_schema(KGNodeSchema))
