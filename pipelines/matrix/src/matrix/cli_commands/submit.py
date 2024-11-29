@@ -226,18 +226,31 @@ def run_subprocess(
         )
 
         stdout, stderr = [], []
+        out_stream = process.stdout
+        err_stream = process.stderr
         
-        while True:
-            reads = [stream for stream in (process.stdout, process.stderr) if stream]
+        while out_stream or err_stream:
+            reads = []
+            if out_stream and not out_stream.closed:
+                reads.append(out_stream)
+            if err_stream and not err_stream.closed:
+                reads.append(err_stream)
+                
             if not reads:
                 break
                 
-            readable, _, _ = select.select(reads, [], [], 0.1)  # 100ms timeout
+            try:
+                readable, _, _ = select.select(reads, [], [], 0.1)  # 100ms timeout
+            except ValueError:  # Handle closed files
+                break
             
             for stream in readable:
                 line = stream.readline()
                 if not line:  # EOF
-                    stream.close()
+                    if stream == out_stream:
+                        out_stream = None
+                    elif stream == err_stream:
+                        err_stream = None
                     continue
                     
                 if stream == process.stdout:
@@ -248,16 +261,13 @@ def run_subprocess(
                     sys.stderr.write(line)
                     sys.stderr.flush()
                     stderr.append(line)
-            
-            # Check if process has finished
-            if process.poll() is not None:
-                # Read any remaining output
-                remaining_stdout, remaining_stderr = process.communicate()
-                if remaining_stdout:
-                    stdout.append(remaining_stdout)
-                if remaining_stderr:
-                    stderr.append(remaining_stderr)
-                break
+
+        # Ensure we get any remaining output
+        remaining_stdout, remaining_stderr = process.communicate()
+        if remaining_stdout:
+            stdout.append(remaining_stdout)
+        if remaining_stderr:
+            stderr.append(remaining_stderr)
 
         returncode = process.wait()
         if check and returncode != 0:
@@ -269,6 +279,7 @@ def run_subprocess(
             cmd, returncode, "".join(stdout), "".join(stderr)
         )
     else:
+
         try:
             return subprocess.run(
                 cmd, check=check, capture_output=capture_output, text=True, shell=shell
