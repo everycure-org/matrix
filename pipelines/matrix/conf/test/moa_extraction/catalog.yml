@@ -11,6 +11,7 @@
       CREATE CONSTRAINT IF NOT EXISTS FOR (n:Entity) REQUIRE n.id IS UNIQUE;
     query: > 
       CREATE (n:Entity {{id: event.id, kg_sources: event.kg_sources}})
+      WITH event, n
       CALL apoc.create.addLabels(n, [event.label]) YIELD node
       CALL apoc.create.setProperties(n, event.property_keys, event.property_values) YIELD node AS n2
       CALL apoc.create.setProperties(n, event.array_property_keys, event.array_property_values) YIELD node AS n3
