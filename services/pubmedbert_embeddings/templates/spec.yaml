@@ -22,11 +22,11 @@ spec:
         - containerPort: 8000
         resources:
           requests:
-            cpu: "4"
-            memory: "2Gi"
+            cpu: "500m"
+            memory: "1Gi"
           limits:
             cpu: "4"
-            memory: "8Gi"
+            memory: "4Gi"
 ---
 apiVersion: policy/v1
 kind: PodDisruptionBudget
