@@ -18,8 +18,6 @@ locals {
     }
   ]
 
-  # TODO: consider adding spot nodes
-
   standard_node_pools = [for size in [4, 8, 16, 32, 48, 64] : {
     name               = "n2-standard-${size}-nodes"
     machine_type       = "n2-standard-${size}"
