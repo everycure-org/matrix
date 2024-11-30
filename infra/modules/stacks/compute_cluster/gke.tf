@@ -100,18 +100,19 @@ module "gke" {
   ip_range_services   = var.svc_ip_range
   http_load_balancing = true
   # necessary for https://cloud.google.com/kubernetes-engine/docs/concepts/gateway-api#shared_gateway_per_cluster
-  gateway_api_channel        = "CHANNEL_STANDARD"
-  network_policy             = false
-  master_ipv4_cidr_block     = "172.16.0.0/28"
-  horizontal_pod_autoscaling = true
-  filestore_csi_driver       = true
-  dns_cache                  = false
-  remove_default_node_pool   = true
-  enable_private_nodes       = true
-  enable_private_endpoint    = false # FUTURE: switch this to true
-  create_service_account     = true
-  service_account_name       = "sa-k8s-node"
-  node_metadata              = "UNSPECIFIED"
+  gateway_api_channel             = "CHANNEL_STANDARD"
+  network_policy                  = false
+  master_ipv4_cidr_block          = "172.16.0.0/28"
+  horizontal_pod_autoscaling      = true
+  filestore_csi_driver            = true
+  dns_cache                       = false
+  remove_default_node_pool        = true
+  enable_private_nodes            = true
+  enable_private_endpoint         = false # FUTURE: switch this to true
+  enable_vertical_pod_autoscaling = true
+  create_service_account          = true
+  service_account_name            = "sa-k8s-node"
+  node_metadata                   = "UNSPECIFIED"
 
   # FUTURE: Refine node pools
   node_pools = local.node_pools_combined
