@@ -1,5 +1,14 @@
 kube-prometheus-stack:
   prometheus:
+    prometheusSpec:
+      storageSpec:
+        volumeClaimTemplate:
+          spec:
+            storageClassName: standard
+            accessModes: ["ReadWriteOnce"]
+            resources:
+              requests:
+                storage: 25Gi
       additionalServiceMonitors:
         - name: argo-workflows
           selector:
