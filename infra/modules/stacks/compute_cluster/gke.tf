@@ -3,36 +3,9 @@ data "google_client_config" "default" {
 
 locals {
   default_node_locations = "us-central1-a,us-central1-c"
-  base_node_pool = [
-    {
-      name            = "default-node-pool"
-      machine_type    = "e2-medium"
-      node_locations  = local.default_node_locations
-      min_count       = 1
-      max_count       = 10
-      local_ssd_count = 0
-      spot            = false
-      disk_size_gb    = 100
-      disk_type       = "pd-ssd"
-      image_type      = "COS_CONTAINERD"
-      enable_gcfs     = false
-      enable_gvnic    = false
-      logging_variant = "DEFAULT"
-      auto_repair     = true
-      auto_upgrade    = true
-      # service_account    = module.k8s_sa.email
-      preemptible        = false
-      initial_node_count = 3
-      # accelerator_count           = 1
-      # accelerator_type            = "nvidia-l4"
-      # gpu_driver_version          = "LATEST"
-      # gpu_sharing_strategy        = "TIME_SHARING"
-      # max_shared_clients_per_gpu = 2
-    },
-  ]
-  cpu_node_pools = [for size in [8, 16, 32] : {
-    name               = "e2-standard-${size}-nodes"
-    machine_type       = "e2-standard-${size}"
+  mem_node_pools = [for size in [8, 16] : {
+    name               = "e2-highmem-${size}-nodes"
+    machine_type       = "e2-highmem-${size}"
     node_locations     = local.default_node_locations
     min_count          = 0
     max_count          = 20
@@ -47,7 +20,7 @@ locals {
 
   # TODO: consider adding spot nodes
 
-  mem_node_pools = [for size in [4, 8, 16, 32, 48, 64] : {
+  standard_node_pools = [for size in [4, 8, 16, 32, 48, 64] : {
     name               = "n2-standard-${size}-nodes"
     machine_type       = "n2-standard-${size}"
     node_locations     = local.default_node_locations
@@ -79,7 +52,7 @@ locals {
     },
   ]
 
-  node_pools_combined = concat(local.base_node_pool, local.cpu_node_pools, local.mem_node_pools, local.gpu_node_pools)
+  node_pools_combined = concat(local.standard_node_pools, local.mem_node_pools, local.gpu_node_pools)
 }
 
 # docs here https://registry.terraform.io/modules/terraform-google-modules/kubernetes-engine/google/latest/submodules/private-cluster
