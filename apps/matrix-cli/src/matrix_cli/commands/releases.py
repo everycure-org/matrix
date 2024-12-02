@@ -1,5 +1,4 @@
 import json
-import os
 import platform
 import re
 import subprocess
@@ -174,10 +173,7 @@ def get_release_notes(since: str, model: str) -> str:
 
 
 def get_release_template() -> str:
-    git_root = get_git_root()
-    release_template_path = os.path.join(git_root, ".github", "release.yml")
-    with open(release_template_path, "r") as f:
-        return f.read()
+    return Path(get_git_root(), ".github", "release.yml").read_text()
 
 
 def get_previous_articles() -> list[str]:
