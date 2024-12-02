@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Sensor
 metadata:
-  name: build-data-release-sensor
+  name: build-data-release-sensor-post-release
   namespace: data-release
 spec:
   template:
