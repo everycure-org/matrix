@@ -358,3 +358,37 @@ def _extract_ids(response: Dict[str, Any], json_parser: parse):
             ids[key] = None
 
     return ids
+
+
+def add_gt_category(
+    nodes: DataFrame, known_pairs: DataFrame, drug_list: DataFrame, disease_list: DataFrame
+) -> DataFrame:
+    """Adds ground truth categories to nodes based on their presence in known pairs and biolink categories.
+
+    Args:
+        nodes: DataFrame containing nodes with their categories.
+        known_pairs: DataFrame containing known drug-disease pairs.
+        drug_list: DataFrame containing additional drug IDs.
+        disease_list: DataFrame containing additional disease IDs.
+
+    Returns:
+        DataFrame with updated categories if needed.
+    """
+    known_sources = [row["source"] for row in known_pairs.select("source").distinct().collect()]
+    known_targets = [row["target"] for row in known_pairs.select("target").distinct().collect()]
+    drug_ids = [row["curie"] for row in drug_list.select("curie").distinct().collect()]
+    disease_ids = [row["curie"] for row in disease_list.select("curie").distinct().collect()]
+    return nodes.withColumn(
+        "all_categories",
+        F.when(
+            (F.col("id").isin(known_sources) | F.col("id").isin(drug_ids))
+            & ~F.array_contains(F.col("all_categories"), "biolink:Drug"),
+            F.array_union(F.col("all_categories"), F.array(F.lit("biolink:Drug"))),
+        )
+        .when(
+            (F.col("id").isin(known_targets) | F.col("id").isin(disease_ids))
+            & ~F.array_contains(F.col("all_categories"), "biolink:Disease"),
+            F.array_union(F.col("all_categories"), F.array(F.lit("biolink:Disease"))),
+        )
+        .otherwise(F.col("all_categories")),
+    )

@@ -148,9 +148,20 @@ def create_pipeline(**kwargs) -> Pipeline:
                     "integration.prm.prefiltered_nodes",
                     "integration.prm.filtered_edges",
                 ],
-                outputs="integration.prm.filtered_nodes",
+                outputs="integration.prm.filtered_nodes_no_gt",
                 name="filter_nodes_without_edges",
                 tags=["filtering"],
+            ),
+            node(
+                func=nodes.add_gt_category,
+                inputs=[
+                    "integration.prm.filtered_nodes_no_gt",
+                    "modelling.raw.known_pairs@spark",
+                    "ingestion.raw.drug_list@spark",
+                    "ingestion.raw.disease_list@spark",
+                ],
+                outputs="integration.prm.filtered_nodes",
+                name="label_gt_nodes",
             ),
         ]
     )
