@@ -52,7 +52,7 @@ class MedicalTransformer(GraphTransformer):
             edges_df
             .withColumn("knowledge_level",               f.lit(None).cast(T.StringType()))
             .withColumn("aggregator_knowledge_source",   f.array(f.col("knowledge_source")))
-            .withColumn("primary_knowledge_source",      f.lit('medical team').cast(T.StringType()))#col("knowledge_source"))
+            .withColumn("primary_knowledge_source",      f.lit('medical team').cast(T.StringType()))
             .withColumn("publications",                  f.array(f.lit('medical team')))
             .withColumn("subject_aspect_qualifier",      f.lit(None).cast(T.StringType())) #not present
             .withColumn("subject_direction_qualifier",   f.lit(None).cast(T.StringType())) #not present
