@@ -8,6 +8,6 @@ jobs:
     name: Distribute the release
     runs-on: ubuntu-latest
     steps:
-    - name: Dump GitHub context
+    - name: Dump GitHub event
       run: |
         echo "${{ toJson(github.event) }}"
