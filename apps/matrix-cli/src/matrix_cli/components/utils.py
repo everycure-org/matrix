@@ -8,6 +8,7 @@ import typer
 from matrix_cli.components.cache import memory
 from rich.console import Console
 from tenacity import retry, stop_after_attempt, wait_exponential
+from packaging.version import Version
 
 console = Console()
 
@@ -81,6 +82,14 @@ def select_previous_release():
         "Select existing release from the list below:",
         choices=get_releases(),
     ).ask()
+
+
+def get_the_latest_release():
+    # Sort releases by version using semantic versioning
+    releases = get_releases()
+    sorted_releases = sorted(releases, key=lambda r: Version(r.lstrip("v")), reverse=True)
+    latest_release = sorted_releases[0]  # Latest release after sorting
+    return latest_release
 
 
 def get_releases():

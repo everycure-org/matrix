@@ -27,6 +27,7 @@ from matrix_cli.components.utils import (
     invoke_model,
     run_command,
     select_previous_release,
+    get_the_latest_release,
 )
 
 if TYPE_CHECKING:
@@ -111,11 +112,14 @@ def release_notes(
 ):
     """Generate an AI summary of code changes since a specific git reference."""
 
-    since = select_previous_release()
+    # since = select_previous_release()
+    latest_release = get_the_latest_release()
+    console.print(f"The latest release version: {latest_release}")
 
     try:
         console.print("Generating release notes...")
-        response = get_release_notes(since, model)
+        # response = get_release_notes(since, model)
+        response = get_release_notes(latest_release, model)
 
         if output_file:
             with open(output_file, "w") as f:
