@@ -1,0 +1,47 @@
+name: Create Pull Request to Verify AI Summary of Release Notes
+
+on:
+  push:
+    branches:
+      - 'feat/trigger-release-from-gh-action'  # TODO: replace by manual trigger and repository_dispatch
+  workflow_dispatch:
+
+jobs:
+  create_release_notes_draft:
+    runs-on: ubuntu-latest
+    name: Create Draft of the Release Notes
+    permissions:
+      contents: 'read'
+
+    steps:
+      - name: 'Checkout'
+        uses: actions/checkout@main
+
+      - name: Setup Matrix CLI
+        run: |
+          pip install uv
+          uv sync
+
+      - uses: 'google-github-actions/auth@v2'
+        #if: github.ref == 'refs/heads/main'
+        with:
+          project_id: ${{env.project_id}}
+          workload_identity_provider: ${{env.workload_identity_provider}}
+          service_account: ${{env.service_account}}
+
+#      - name: Create Release Notes
+#        run: |
+#          uv run matrix releases release-notes --output-file XXX
+#          uv run matrix releases article  --output-file XXX --no-disable-rendering
+#          git add OUTPUT-FILE && git commit -m "added release note draft" && git push
+#
+#      - name: Create Pull Request
+#        run: gh pr create \
+#          --title "Release/vXXX" \
+#          --base main \
+#          --body "Adds the release article and associated notes" \
+#          --draft \
+#          --dry-run \
+#          --label Release
+
+

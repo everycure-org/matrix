@@ -1,0 +1,13 @@
+name: Release
+on:
+  workflow_dispatch:
+
+jobs:
+#   2nd workflow (gets triggered once PR is approved)
+#   0. figure out tag from most recent folder in docs/src/releases/posts
+#   1. gh release create <TAG FROM ABOVE> -F docs/src/releases/posts/.../post.md (edited)
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@main
