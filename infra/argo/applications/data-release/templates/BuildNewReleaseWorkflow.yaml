@@ -6,6 +6,7 @@ metadata:
   labels:
     workflows.argoproj.io/archive-strategy: "false"
     app: build-data-release
+    release_version: 5555
   annotations:
     workflows.argoproj.io/description: |
       Builds a new data release...
