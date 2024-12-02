@@ -1,4 +1,5 @@
 import json
+import os
 import platform
 import re
 import subprocess
@@ -48,10 +49,13 @@ def write_release_article(
     output_file: str = typer.Option(None, help="File to write the release article to"),
     model: str = typer.Option(settings.power_model, help="Language model to use"),
     disable_rendering: bool = typer.Option(True, help="Disable rendering of the release article"),
+    latest_release: bool = typer.Option(True, help="If starting with the latest release or not"),
 ):
     """Write a release article for a given git reference."""
-
-    since = select_previous_release()
+    if not latest_release:
+        since = select_previous_release()
+    else:
+        since = get_the_latest_release()
 
     console.print("[green]Collecting release notes...")
     notes = get_release_notes(since, model=model)
@@ -108,21 +112,18 @@ Please focus on the following topics in the release article:
 def release_notes(
     model: str = typer.Option(settings.base_model, help="Model to use for summarization"),
     output_file: str = typer.Option(None, help="File to write the release notes to"),
-    latest_release: bool = typer.Option(True, help="If not start with the latest release"),
+    latest_release: bool = typer.Option(True, help="If starting with the latest release or not"),
 ):
     """Generate an AI summary of code changes since a specific git reference."""
     if not latest_release:
         since = select_previous_release()
     else:
-        latest_release = get_the_latest_release()
+        since = get_the_latest_release()
         console.print(f"The latest release version: {latest_release}")
 
     try:
         console.print("Generating release notes...")
-        if not latest_release:
-            response = get_release_notes(since, model)
-        else:
-            response = get_release_notes(latest_release, model)
+        response = get_release_notes(since, model)
 
         if output_file:
             with open(output_file, "w") as f:
@@ -177,7 +178,10 @@ def get_release_notes(since: str, model: str) -> str:
 
 
 def get_release_template() -> str:
-    return Path(get_git_root(), ".github", "release.yml").read_text()
+    git_root = get_git_root()
+    release_template_path = os.path.join(git_root, ".github", "release.yml")
+    with open(release_template_path, "r") as f:
+        return f.read()
 
 
 def get_previous_articles() -> list[str]:
