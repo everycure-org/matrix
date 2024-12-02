@@ -124,7 +124,7 @@ def release_notes(
             print(Markdown(response))
 
     except Exception as e:
-        console.print(f"[bold red]Error: {str(e)}", err=True)
+        console.print(f"[bold red]Error: {str(e)}")
         raise typer.Exit(1)
 
 
