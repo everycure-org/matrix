@@ -8,8 +8,6 @@ jobs:
     name: Distribute the release
     runs-on: ubuntu-latest
     steps:
-      - name: Sleep for 3 seconds
-        run: sleep 3s
-        shell: bash
-      - name: echo-success
-        run: echo "Release distributed successfully"
+    - name: Dump GitHub event
+      run: |
+        echo "${{ toJson(github.event) }}"
