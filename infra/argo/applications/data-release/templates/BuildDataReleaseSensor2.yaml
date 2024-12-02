@@ -21,7 +21,7 @@ spec:
               kind: Workflow
               metadata:
                 namespace: data-release
-                generateName: distribute-data-release-payload2-
+                generateName: distribute-data-release-echo
                 labels:
                   app: distribute-data-release
               spec:
