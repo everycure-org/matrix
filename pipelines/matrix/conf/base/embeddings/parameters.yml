@@ -21,7 +21,7 @@ embeddings.node:
 # Defines strategy used to reduce dimensions of the node embeddings
 # https://spark.apache.org/docs/latest/api/python/reference/api/pyspark.ml.feature.PCA.html
 embeddings.dimensionality_reduction:
-  skip: true
+  skip: false
   input: embedding
   output: &_pca_property 'pca_embedding'
   transformer:
