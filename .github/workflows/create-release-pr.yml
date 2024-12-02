@@ -5,6 +5,11 @@ on:
     branches:
       - 'feat/trigger-release-from-gh-action'  # TODO: replace by manual trigger and repository_dispatch
   workflow_dispatch:
+    inputs:
+      release:
+        required: true
+        description: Name of the release, like "v1.2.3"
+        type: string
 
 jobs:
   create_release_notes_draft:
@@ -12,6 +17,10 @@ jobs:
     name: Create Draft of the Release Notes
     permissions:
       contents: 'read'
+    env:
+      #release_note: docs/src/releases/posts/XXX/release_notes.md
+      #release_article: docs/src/releases/posts/XXX/post.md
+      releases_dir: docs/src/releases/posts
 
     steps:
       - name: 'Checkout'
@@ -19,7 +28,9 @@ jobs:
 
       - name: Setup Matrix CLI
         run: |
+          pwd
           pip install uv
+          pushd apps/matrix-cli
           uv sync
 
       - uses: 'google-github-actions/auth@v2'
@@ -29,8 +40,17 @@ jobs:
           workload_identity_provider: ${{env.workload_identity_provider}}
           service_account: ${{env.service_account}}
 
-#      - name: Create Release Notes
-#        run: |
+      - name: Create Release Notes
+        run: |
+          pwd        
+          if [[ "${{ github.event_name == 'workflow_dispatch' }}" == "true" ]]; then
+            release="${{ inputs.release }}"
+          else
+            release="v0.2.6alpha"
+          fi
+          echo "$releases_dir"
+          echo "$release"
+#          echo "release=${release}" >> ${GITHUB_ENV}
 #          uv run matrix releases release-notes --output-file XXX
 #          uv run matrix releases article  --output-file XXX --no-disable-rendering
 #          git add OUTPUT-FILE && git commit -m "added release note draft" && git push
@@ -43,5 +63,6 @@ jobs:
 #          --draft \
 #          --dry-run \
 #          --label Release
-
-
+#
+#
+#
