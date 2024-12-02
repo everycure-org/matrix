@@ -26,7 +26,7 @@ spec:
                   app: distribute-data-release
               spec:
                 serviceAccountName: data-release-service-account
-                entrypoint: whalesay
+                entrypoint: echo-message
                 arguments:
                   parameters:
                     - name: release_version
@@ -38,8 +38,8 @@ spec:
                       - name: release_version
                   container:
                     container:
-                      image: docker/whalesay:latest
-                      command: [ cowsay ]
+                      image: busybox
+                      command: [sh, -c]
                       # https://github.com/argoproj/argo-workflows/discussions/6067
                       args: ["{{`{{inputs.parameters.release_version}}`}}"]
           parameters:
