@@ -40,7 +40,7 @@ spec:
                     container:
                       image: docker/whalesay:latest
                       command: [ cowsay ]
-                      args: [ "{{inputs.parameters.message}}" ]
+                      args: ["{{`{{inputs.parameters.message}}`}}"]
                     env:
                       - name: GITHUB_TOKEN
                         valueFrom:
