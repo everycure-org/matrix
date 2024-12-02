@@ -37,10 +37,10 @@ spec:
                     parameters:
                       - name: release_version
                   container:
-                    image: curlimages/curl:latest # Use a lightweight curl image
-                    command: ["sh", "-c"]
-                    args:
-                      - "echo Release version: {{inputs.parameters.release_version}}"
+                    container:
+                      image: docker/whalesay:latest
+                      command: [ cowsay ]
+                      args: [ "{{inputs.parameters.message}}" ]
                     env:
                       - name: GITHUB_TOKEN
                         valueFrom:
