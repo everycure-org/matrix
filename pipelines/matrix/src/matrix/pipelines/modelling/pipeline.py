@@ -133,7 +133,7 @@ def create_pipeline(**kwargs) -> Pipeline:
             node(
                 func=nodes.filter_valid_pairs,
                 inputs=[
-                    "integration.prm.filtered_nodes",
+                    "integration.prm.filtered_nodes_no_gt",
                     "ingestion.raw.ground_truth.combined@spark",
                     "params:modelling.drug_types",
                     "params:modelling.disease_types",
