@@ -41,14 +41,7 @@ spec:
                       image: docker/whalesay:latest
                       command: [ cowsay ]
                       # https://github.com/argoproj/argo-workflows/discussions/6067
-                      args: ["{{`{{inputs.parameters.message}}`}}"]
-                    env:
-                      - name: GITHUB_TOKEN
-                        valueFrom:
-                          secretKeyRef:
-                            name: gh-password
-                            key: GH_CREDS
-
+                      args: ["{{`{{inputs.parameters.release_version}}`}}"]
           parameters:
             - src:
                 dependencyName: test-dep
