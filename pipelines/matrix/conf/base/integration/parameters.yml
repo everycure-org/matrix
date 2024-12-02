@@ -4,6 +4,7 @@ integration:
     rtx_kg2:
       transformer:
         object: matrix.pipelines.integration.rtxkg2.RTXTransformer
+    # NOTE: Currently disabling robokop integration
     # robokop: 
     #   transformer:
     #     object: matrix.pipelines.integration.robokop.RobokopTransformer
