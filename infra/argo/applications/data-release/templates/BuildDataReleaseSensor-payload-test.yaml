@@ -21,7 +21,7 @@ spec:
               kind: Workflow
               metadata:
                 namespace: data-release
-                generateName: distribute-data-release-
+                generateName: distribute-data-release-payload-
                 labels:
                   app: distribute-data-release
               spec:
@@ -40,6 +40,7 @@ spec:
                     container:
                       image: docker/whalesay:latest
                       command: [ cowsay ]
+                      # https://github.com/argoproj/argo-workflows/discussions/6067
                       args: ["{{`{{inputs.parameters.message}}`}}"]
                     env:
                       - name: GITHUB_TOKEN
