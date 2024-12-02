@@ -108,17 +108,21 @@ Please focus on the following topics in the release article:
 def release_notes(
     model: str = typer.Option(settings.base_model, help="Model to use for summarization"),
     output_file: str = typer.Option(None, help="File to write the release notes to"),
+    latest_release: bool = typer.Option(True, help="If not start with the latest release"),
 ):
     """Generate an AI summary of code changes since a specific git reference."""
-
-    # since = select_previous_release()
-    latest_release = get_the_latest_release()
-    console.print(f"The latest release version: {latest_release}")
+    if not latest_release:
+        since = select_previous_release()
+    else:
+        latest_release = get_the_latest_release()
+        console.print(f"The latest release version: {latest_release}")
 
     try:
         console.print("Generating release notes...")
-        # response = get_release_notes(since, model)
-        response = get_release_notes(latest_release, model)
+        if not latest_release:
+            response = get_release_notes(since, model)
+        else:
+            response = get_release_notes(latest_release, model)
 
         if output_file:
             with open(output_file, "w") as f:
