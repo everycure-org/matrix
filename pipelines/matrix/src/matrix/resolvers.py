@@ -26,8 +26,8 @@ load_environment_variables()
 
 
 def cast_to_int(val: str) -> int:
-    "Convert input value into integer.
-    
+    """Convert input value into integer.
+
     Args:
        val: value to convert
     Returns:
