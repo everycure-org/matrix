@@ -41,7 +41,7 @@ spec:
                     command: ["sh", "-c"]
                     args:
                       - >
-                        echo "{{inputs.parameters.release_version}}"
+                        echo "{{`{{inputs.parameters.message}}`}}"
                     env:
                       - name: GITHUB_TOKEN
                         valueFrom:
