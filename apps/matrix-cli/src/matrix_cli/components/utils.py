@@ -43,7 +43,7 @@ def invoke_model(prompt: str, model: str, generation_config: "GenerationConfig" 
 
 
 def get_markdown_contents(folder_path: Path | str) -> str:
-    """Recursively reads and concatenates markdown files from a directory.
+    """Iteratively reads and concatenates markdown files from a directory.
 
     Args:
         folder_path (Path | str): Path to the directory containing markdown files.
@@ -54,16 +54,13 @@ def get_markdown_contents(folder_path: Path | str) -> str:
     folder_path = Path(folder_path)  # Convert to Path if string
     if not folder_path.exists():
         return ""
-
-    all_content = ""
+    line = "=" * 100
+    all_content = [line]
     for file in folder_path.glob("**/*.md"):
-        with open(file, "r", encoding="utf-8") as f:
-            all_content += "=" * 100 + "\n"
-            all_content += f"{file.relative_to(folder_path)}\n"
-            all_content += f.read() + "\n\n"
-            all_content += "=" * 100 + "\n"
-
-    return all_content
+        all_content.append(str(file.relative_to(folder_path)))
+        all_content.append(file.read_text(encoding="utf-8"))
+        all_content.append("\n" + line)
+    return "\n".join(all_content)
 
 
 def run_command(command: List[str], cwd: str = None) -> str:
