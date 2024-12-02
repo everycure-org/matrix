@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Sensor
 metadata:
-  name: build-data-release-sensor-payload-test
+  name: build-data-release-sensor
   namespace: data-release
 spec:
   template:
@@ -21,27 +21,38 @@ spec:
               kind: Workflow
               metadata:
                 namespace: data-release
-                generateName: distribute-data-release-payload-
+                generateName: distribute-data-release-post-with-release
                 labels:
                   app: distribute-data-release
               spec:
                 serviceAccountName: data-release-service-account
-                entrypoint: echo-message
+                entrypoint: trigger-curl
                 arguments:
                   parameters:
                     - name: release_version
                       value: hello
                 templates:
-                - name: echo-message
+                - name: trigger-curl
                   inputs:
                     parameters:
                       - name: release_version
                   container:
-                    container:
-                      image: busybox
-                      command: [sh, -c]
-                      # https://github.com/argoproj/argo-workflows/discussions/6067
-                      args: ["{{`{{inputs.parameters.release_version}}`}}"]
+                    image: curlimages/curl:latest # Use a lightweight curl image
+                    command: ["sh", "-c"]
+                    args:
+                      - >
+                        curl -H "Accept: application/vnd.github.everest-preview+json" \
+                             -H "Authorization: token $GITHUB_TOKEN" \
+                             --request POST \
+                             --data '{"event_type": "distribute-release", "client_payload": { "release_version": "{{`{{inputs.parameters.release_version}}`}}"}}' \
+                             https://api.github.com/repos/everycure-org/matrix/dispatches
+                    env:
+                      - name: GITHUB_TOKEN
+                        valueFrom:
+                          secretKeyRef:
+                            name: gh-password
+                            key: GH_CREDS
+
           parameters:
             - src:
                 dependencyName: test-dep
