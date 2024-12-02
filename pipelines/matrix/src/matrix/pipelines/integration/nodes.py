@@ -33,7 +33,7 @@ def union_and_deduplicate_edges(*edges) -> DataFrame:
     """Function to unify edges datasets."""
     # fmt: off
     return (
-        _union_datasets(*edges, *edges)
+        _union_datasets(*edges)
         .transform(KGEdgeSchema.group_edges_by_id)
     )
     # fmt: on
