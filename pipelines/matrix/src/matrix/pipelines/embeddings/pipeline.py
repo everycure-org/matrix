@@ -5,7 +5,7 @@ from . import nodes
 
 
 def select(df: DataFrame):
-    df = df.drop(columns=["publications", "descriptions"])
+    df = df.drop(columns=["publications", "description"])
     return df
 
 
