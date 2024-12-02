@@ -4,9 +4,9 @@ integration:
     rtx_kg2:
       transformer:
         object: matrix.pipelines.integration.rtxkg2.RTXTransformer
-    robokop: 
-      transformer:
-        object: matrix.pipelines.integration.robokop.RobokopTransformer
+    # robokop: 
+    #   transformer:
+    #     object: matrix.pipelines.integration.robokop.RobokopTransformer
     ec_medical_team: 
       transformer:
         object: matrix.pipelines.integration.medical.MedicalTransformer
