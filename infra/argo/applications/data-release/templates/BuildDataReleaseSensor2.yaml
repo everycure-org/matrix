@@ -27,6 +27,10 @@ spec:
               spec:
                 serviceAccountName: data-release-service-account
                 entrypoint: trigger-curl
+                arguments:
+                  parameters:
+                    - name: release_version
+                      value: hello
                 templates:
                 - name: trigger-curl
                   container:
