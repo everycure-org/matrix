@@ -1,7 +1,12 @@
 from kedro.pipeline import Pipeline, node, pipeline
 from matrix.kedro4argo_node import ArgoNode, ArgoResourceConfig
-
+from pyspark.sql import DataFrame
 from . import nodes
+
+
+def select(df: DataFrame):
+    df = df.drop(columns=["publications", "descriptions"])
+    return df
 
 
 def create_pipeline(**kwargs) -> Pipeline:
@@ -56,7 +61,7 @@ def create_pipeline(**kwargs) -> Pipeline:
             ),
             # Load spark dataset into local neo instance
             node(
-                func=lambda x: x,
+                func=select,
                 inputs=["embeddings.feat.graph.pca_node_embeddings"],
                 outputs="embeddings.tmp.input_nodes",
                 name="ingest_neo4j_input_nodes",
