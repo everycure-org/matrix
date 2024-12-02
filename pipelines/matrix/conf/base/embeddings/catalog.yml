@@ -24,14 +24,7 @@ _pandas_parquet: &_pandas_parquet
     engine: pyarrow
   load_args:
     engine: pyarrow
-    as_type: 
-      # FUTURE: The pandas to spark transcoding seems to not like
-      # elements that are "null". We're currently solving this by
-      # ensuring pandas reads these elements as string. Further
-      # investigation is required on why this is happening.
-      publications: str
-      equivalent_identifiers: str
-      international_resource_identifier: str
+    as_type: str
       
 # -------------------------------------------------------------------------
 # Datasets
