@@ -33,11 +33,14 @@ spec:
                       value: hello
                 templates:
                 - name: trigger-curl
+                  inputs:
+                    parameters:
+                      - name: release_version
                   container:
                     image: curlimages/curl:latest # Use a lightweight curl image
                     command: ["sh", "-c"]
                     args:
-                      - "echo Release version: {{workflow.parameters.release_version}}"
+                      - "echo Release version: {{inputs.parameters.release_version}}"
                     env:
                       - name: GITHUB_TOKEN
                         valueFrom:
