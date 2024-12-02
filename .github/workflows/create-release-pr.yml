@@ -22,6 +22,7 @@ jobs:
     name: Create Draft of the Release Notes
     permissions:
       contents: 'read'
+      id-token: 'write'
     env:
       #release_note: docs/src/releases/posts/XXX/release_notes.md
       #release_article: docs/src/releases/posts/XXX/post.md
