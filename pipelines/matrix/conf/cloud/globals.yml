@@ -22,6 +22,7 @@ paths:
   ingestion:          ${root_dir}/datasets/ingestion
   integration:        ${root_dir}/datasets/integration
   embeddings:         ${root_dir}/datasets/embeddings
+  release:            ${root_dir}/datasets/release
 
   # Run-based
   modelling:          ${root_dir}/datasets/modelling
