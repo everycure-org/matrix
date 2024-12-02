@@ -37,7 +37,7 @@ spec:
                     image: curlimages/curl:latest # Use a lightweight curl image
                     command: ["sh", "-c"]
                     args:
-                      - "echo Release version: {{inputs.parameters.release_version}}"
+                      - "echo Release version: {{workflow.parameters.release_version}}"
                     env:
                       - name: GITHUB_TOKEN
                         valueFrom:
