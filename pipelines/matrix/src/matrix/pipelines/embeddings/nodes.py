@@ -123,7 +123,7 @@ def bucketize_df(df: DataFrame, bucket_size: int, input_features: List[str], max
 
 
 def _bucketize(df: DataFrame, bucket_size: int) -> pd.DataFrame:
-    """Functino to bucketize df in given number of buckets.
+    """Function to bucketize df in given number of buckets.
 
     Args:
         df: dataframe to bucketize
