@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Sensor
 metadata:
-  name: build-data-release-sensor-payload-test
+  name: build-data-release-sensor-payloadtest-2
   namespace: data-release
 spec:
   template:
@@ -21,27 +21,27 @@ spec:
               kind: Workflow
               metadata:
                 namespace: data-release
-                generateName: distribute-data-release-payload-
+                generateName: distribute-data-release-payload2-
                 labels:
                   app: distribute-data-release
               spec:
                 serviceAccountName: data-release-service-account
-                entrypoint: echo-message
-                arguments:
-                  parameters:
-                    - name: release_version
-                      value: hello
+                entrypoint: trigger-curl
                 templates:
-                - name: echo-message
-                  inputs:
-                    parameters:
-                      - name: release_version
+                - name: trigger-curl
                   container:
-                    container:
-                      image: busybox
-                      command: [sh, -c]
-                      # https://github.com/argoproj/argo-workflows/discussions/6067
-                      args: ["{{`{{inputs.parameters.release_version}}`}}"]
+                    image: curlimages/curl:latest # Use a lightweight curl image
+                    command: ["sh", "-c"]
+                    args:
+                      - >
+                        echo "hi"
+                    env:
+                      - name: GITHUB_TOKEN
+                        valueFrom:
+                          secretKeyRef:
+                            name: gh-password
+                            key: GH_CREDS
+
           parameters:
             - src:
                 dependencyName: test-dep
