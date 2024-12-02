@@ -6,6 +6,7 @@ jobs:
 #   2nd workflow (gets triggered once PR is approved)
 #   0. figure out tag from most recent folder in docs/src/releases/posts
 #   1. gh release create <TAG FROM ABOVE> -F docs/src/releases/posts/.../post.md (edited)
+#   2. How do we automate writing the article? Slack notifications?
   deploy:
     runs-on: ubuntu-latest
     steps:
