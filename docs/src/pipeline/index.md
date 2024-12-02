@@ -73,8 +73,7 @@ There are 4 main steps in the integration pipeline:
 
 #### Normalizing data from sources
 
-Our pipeline aims to streamline the process of normalization and integration though a `transformer`. This is an interface that
-the should be implemented for the source to be integrated succesfully. 
+Our pipeline aims to streamline the process of normalization and integration though a `transformer`. This is an interface that should be implemented for the source to be integrated succesfully. 
 
 ```pyton
 class GraphTransformer(ABC):
