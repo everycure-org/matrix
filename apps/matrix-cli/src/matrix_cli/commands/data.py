@@ -55,7 +55,7 @@ def _get_data_path(data_type: str, target_dir: str) -> Dict[str, Path]:
 def sync_gcs_to_local(gcs_uri, local_dir, dry_run=False):
     command = ["gsutil", "-m", "rsync", "-r", gcs_uri, local_dir]
     if dry_run:
-        console.print(f"[bold yellow]Dry run: \n{' '.join([str(x) for x in command])}")
+        console.print(f"[bold yellow]Dry run: \n{' '.join(map(str, command))}")
     else:
         result = subprocess.run(command, capture_output=True, text=True)
         if result.returncode == 0:
