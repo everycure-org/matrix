@@ -45,7 +45,7 @@ def union_and_deduplicate_nodes(biolink_categories_df: pd.DataFrame, *nodes) -> 
 
     # fmt: off
     return (
-        _union_datasets(*nodes, *nodes)
+        _union_datasets(*nodes)
 
         # first we group the dataset by id to deduplicate
         .transform(KGNodeSchema.group_nodes_by_id)
