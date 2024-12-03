@@ -14,7 +14,7 @@ spec:
   rules:
   - backendRefs:
     - name: kube-prometheus-stack-grafana
-      port: 3000
+      port: 80
 
 ---
 kind: HTTPRoute
