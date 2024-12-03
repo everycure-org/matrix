@@ -171,7 +171,22 @@ def create_pipeline(**kwargs) -> Pipeline:
         tags=[model for model in model_names_lst],
     )
 
-    # Compute metrics on all folds but not model trained on full data
+    # Combine predictions for all folds
+    combine_predictions = pipeline(
+        [
+            node(
+                func=nodes.combine_data,
+                inputs=[f"modelling.{model}.fold_{fold}.model_output.predictions" for fold in range(n_splits)],
+                outputs=f"modelling.{model}.fold_combined.model_output.predictions",
+                name=f"combine_{model}_folds",
+                tags=[f"{model}"],
+            )
+            for model in model_names_lst
+        ]
+    )
+
+    # Compute metrics on all folds excluding full training data
+
     check_performance = pipeline(
         [
             node(
@@ -183,9 +198,9 @@ def create_pipeline(**kwargs) -> Pipeline:
                 },
                 outputs=f"modelling.{model}.fold_{fold}.reporting.metrics",
                 name=f"check_{model}_model_performance_fold_{fold}",
-                tags=[f"{model}", "argowf.fuse", f"argowf.fuse-group.{model}.fold-{fold}"],
+                tags=[f"{model}"],
             )
-            for fold in range(n_splits)
+            for fold in list(range(n_splits)) + ["combined"]
             for model in model_names_lst
         ]
     )
@@ -219,4 +234,4 @@ def create_pipeline(**kwargs) -> Pipeline:
                     tags=[model["model_name"], "not-shared"],
                 )
             )
-    return sum([create_model_input, *pipelines, check_performance, aggregate_metrics])
+    return sum([create_model_input, *pipelines, combine_predictions, check_performance, aggregate_metrics])

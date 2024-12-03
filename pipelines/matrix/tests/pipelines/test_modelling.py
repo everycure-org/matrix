@@ -80,15 +80,12 @@ def test_make_splits(sample_data, mocker):
     assert len(result) == 3
     assert len(fold0[fold0["split"] == "TRAIN"]) == 10
     assert len(fold0[fold0["split"] == "TEST"]) == 15
-    assert all(fold0["iteration"] == 0)
 
     assert len(fold1[fold1["split"] == "TRAIN"]) == 15
     assert len(fold1[fold1["split"] == "TEST"]) == 10
-    assert all(fold1["iteration"] == 1)
 
     assert len(full_data) == 25
     assert all(full_data["split"] == "TRAIN")
-    assert all(full_data["iteration"] == 2)
 
     # Test set independence assertions
     assert len(test_indices_fold0.intersection(test_indices_fold1)) == 0

@@ -203,17 +203,15 @@ def make_splits(
 
     # Split data into folds
     all_data_frames = []
-    for iteration, (train_index, test_index) in enumerate(splitter.split(data, data["y"])):
+    for _, (train_index, test_index) in enumerate(splitter.split(data, data["y"])):
         all_indices_in_this_fold = list(set(train_index).union(test_index))
         fold_data = data.loc[all_indices_in_this_fold, :].copy()
-        fold_data.loc[:, "iteration"] = iteration
         fold_data.loc[train_index, "split"] = "TRAIN"
         fold_data.loc[test_index, "split"] = "TEST"
         all_data_frames.append(fold_data)
 
-    # Add full data
+    # Add "training data only" fold
     full_data = data.copy()
-    full_data.loc[:, "iteration"] = len(all_data_frames)
     full_data.loc[:, "split"] = "TRAIN"
     all_data_frames.append(full_data)
 
@@ -226,7 +224,6 @@ def make_splits(
         "source_embedding": "object",
         "target": "object",
         "target_embedding": "object",
-        "iteration": "numeric",
         "split": "object",
     },
     allow_subset=True,
@@ -434,6 +431,15 @@ def get_model_predictions(
     """
     data[target_col_name + prediction_suffix] = model.predict(data[features].values)
     return data
+
+
+def combine_data(*predictions_all_folds: pd.DataFrame) -> pd.DataFrame:
+    """Returns combined dataframe containing predictions from all folds.
+
+    Args:
+        data_all_folds: Dataframes containing model predictions for all folds.
+    """
+    return pd.concat(predictions_all_folds)
 
 
 @inject_object()
