@@ -1,5 +1,5 @@
 # NOTE: This file was partially generated using AI assistance.
-apiVersion: gateway.networking.k8s.io/v1beta1
+apiVersion: gateway.networking.k8s.io/v1
 kind: HealthCheckPolicy
 metadata:
   name: prometheus-health-check
@@ -14,7 +14,7 @@ spec:
       httpHealthCheck:
         path: /healthz
 ---
-apiVersion: gateway.networking.k8s.io/v1beta1
+apiVersion: gateway.networking.k8s.io/v1 
 kind: HealthCheckPolicy
 metadata:
   name: grafana-health-check
