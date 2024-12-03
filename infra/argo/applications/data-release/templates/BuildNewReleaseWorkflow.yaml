@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Workflow
 metadata:
-  name: build-data-release
+  name: build-data-release6
   namespace: data-release
   labels:
     workflows.argoproj.io/archive-strategy: "false"
