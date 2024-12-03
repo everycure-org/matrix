@@ -92,62 +92,6 @@ def ingest_nodes(df: DataFrame) -> DataFrame:
     )
 
 
-# def bucketize_df(df: DataFrame, bucket_size: int, input_features: List[str], max_input_len: int):
-#     """Function to bucketize input dataframe.
-
-#     Function bucketizes the input dataframe in N buckets, each of size `bucket_size`
-#     elements. Moreover, it concatenates the `features` into a single column and limits the
-#     length to `max_input_len`.
-
-#     Args:
-#         df: Dataframe to bucketize
-#         attributes: to keep
-#         bucket_size: size of the buckets
-#     """
-
-#     # Order and bucketize elements
-#     return (
-#         df.transform(_bucketize, bucket_size=bucket_size)
-#         .withColumn(
-#             "text_to_embed",
-#             F.concat(*[F.coalesce(F.col(feature), F.lit("")) for feature in input_features]),
-#         )
-#         .withColumn("text_to_embed", F.substring(F.col("text_to_embed"), 1, max_input_len))
-#         .select("id", "text_to_embed", "bucket")
-#     )
-
-
-# @inject_object()
-# def compute_embeddings(
-#     dfs: Dict[str, Any],
-#     encoder: AttributeEncoder,
-# ):
-#     """Function to bucketize input data.
-
-#     Args:
-#         dfs: mapping of paths to df load functions
-#         encoder: encoder to run
-#     """
-
-#     # NOTE: Inner function to avoid reference issues on unpacking
-#     # the dataframe, therefore leading to only the latest shard
-#     # being processed n times.
-#     def _func(dataframe: pd.DataFrame):
-#         return lambda df=dataframe: encoder.encode(df())
-
-#     shards = {}
-#     for path, df in dfs.items():
-#         # Little bit hacky, but extracting batch from hive partitioning for input path
-#         # As we know the input paths to this dataset are of the format /shard={num}
-#         bucket = path.split("/")[0].split("=")[1]
-
-#         # Invoke function to compute embeddings
-#         shard_path = f"bucket={bucket}/shard"
-#         shards[shard_path] = _func(df)
-
-#     return shards
-
-
 @has_schema(
     schema={
         "embedding": "array<float>",
