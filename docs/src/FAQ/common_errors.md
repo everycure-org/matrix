@@ -350,6 +350,25 @@ Failed to establish a new connection: [Errno 61] Connection refused'))
 ```
 This error is due to kedro trying to send API requests to your MLFlow container which hasn't been set up. You can set the MLFlow container from your Docker Desktop application or by running `make compose_up` from your terminal. This should set up a healthy docker container to which kedro can send API requests. 
 
+
+
+## The RAW data files appear much smaller than expected
+
+
+The issue arises as people have write permission to the RAW folder
+and may accidentally run the fabricator pipeline in the cloud environment. This leads to
+the pipeline writing the fabricator output to the raw datasets and because the cloud
+environment is selected, the data is not stored in the cloud bucket. However, the full
+raw data resides here, so the pipeline overwrites it. 
+
+**Solution**: 
+- Guardrails have been put in place to avoid this from happening again.
+- If it still occurs, please notify the team. Our guardrails should prevent this from happening again.
+
+!!! info
+    This error should be resolved but in case it still occurs, please create a new issue
+    and tag Every Cure devs. 
+
 ### Orphan container error when running docker
 ```
 Error response from daemon: Conflict. The container name “/mockserver” is already in use by container “a2381853d58b482a3c4b82e17dbb25173e5af75903e98e7cb3481318f6abc7f1". You have to remove (or rename) that container to be able to reuse that name.
