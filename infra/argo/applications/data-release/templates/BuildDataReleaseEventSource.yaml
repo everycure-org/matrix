@@ -20,6 +20,6 @@ spec:
           - key: app
             operation: "=="
             value: build-data-release
-          - key: workflows.argoproj.io/completed
+          - key: workflows.argoproj.io/phase
             operation: ==
-            value: "true"
+            value: "Succeeded"
