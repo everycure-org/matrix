@@ -1,6 +1,6 @@
 import pandas as pd
 
-from typing import Dict, Any
+from typing import Dict, Any, List, Optional
 from pyspark.sql import DataFrame, SparkSession
 from pyspark.sql.window import Window
 from pyspark.sql import functions as F
@@ -30,7 +30,7 @@ def _transform(dfs: Dict[str, Any], transformer, **transformer_kwargs):
     return shards
 
 
-def _bucketize(df: DataFrame, bucket_size: int, columns: str) -> pd.DataFrame:
+def _bucketize(df: DataFrame, bucket_size: int, columns: Optional[List[str]] = None) -> pd.DataFrame:
     """Function to bucketize df in given number of buckets.
 
     Args:
@@ -39,6 +39,9 @@ def _bucketize(df: DataFrame, bucket_size: int, columns: str) -> pd.DataFrame:
     Returns:
         Dataframe augmented with `bucket` column
     """
+
+    if columns is None:
+        columns = []
 
     # Retrieve number of elements
     num_elements = df.count()
@@ -61,7 +64,13 @@ def _bucketize(df: DataFrame, bucket_size: int, columns: str) -> pd.DataFrame:
 
 
 def create_pipeline(
-    source: str, df: str, output: str, bucket_size: str, transformer: str, columns: str, **transformer_kwargs
+    source: str,
+    df: str,
+    output: str,
+    bucket_size: str,
+    transformer: str,
+    columns: List[str] = None,
+    **transformer_kwargs,
 ) -> Pipeline:
     """Pipeline to transform dataframe."""
     return pipeline(
@@ -69,9 +78,9 @@ def create_pipeline(
             node(
                 func=_bucketize,
                 inputs={
-                    "df": df,
-                    "bucket_size": bucket_size,
-                    "columns": columns,
+                    key: value
+                    for key, value in {"df": df, "bucket_size": bucket_size, "columns": columns}.items()
+                    if value is not None
                 },
                 outputs=f"batch.int.{source}.input_bucketized@spark",
                 name=f"bucketize_{source}_input",
@@ -87,8 +96,8 @@ def create_pipeline(
                 name=f"transform_{source}_input",
             ),
             node(
-                func=lambda x, y: x.join(y, on="id", how="left"),
-                inputs=[f"batch.int.{source}.input_transformed@spark", df],
+                func=lambda x: x,
+                inputs=[f"batch.int.{source}.input_transformed@spark"],
                 outputs=output,
                 name=f"extract_{source}_input",
             ),
