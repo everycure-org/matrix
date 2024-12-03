@@ -14,17 +14,23 @@ module "project_iam_bindings" {
   mode = "additive"
 
   bindings = {
-
-    "roles/artifactregistry.writer"   = local.tech_team_group
-    "roles/storage.objectCreator"     = local.tech_team_group
-    "roles/container.clusterAdmin"    = local.tech_team_group
-    "roles/container.developer"       = local.tech_team_group
-    "roles/viewer"                    = local.matrix_viewers_group
-    "roles/bigquery.jobUser"          = local.matrix_viewers_group
-    "roles/bigquery.dataViewer"       = local.matrix_viewers_group
-    "roles/bigquery.studioUser"       = local.matrix_viewers_group
-    "roles/bigquery.user"             = local.matrix_viewers_group
-    "roles/iap.httpsResourceAccessor" = local.matrix_viewers_group
+    "roles/bigquery.studioAdmin"          = local.tech_team_group
+    "roles/notebooks.admin"               = local.tech_team_group
+    "roles/ml.admin"                      = local.tech_team_group
+    "roles/aiplatform.admin"              = local.tech_team_group
+    "roles/artifactregistry.writer"       = local.tech_team_group
+    "roles/storage.objectCreator"         = local.tech_team_group
+    "roles/storage.objectUser"            = local.tech_team_group
+    "roles/container.clusterAdmin"        = local.tech_team_group
+    "roles/container.developer"           = local.tech_team_group
+    "roles/compute.admin"                 = local.tech_team_group
+    "roles/iam.workloadIdentityPoolAdmin" = local.tech_team_group
+    "roles/viewer"                        = local.matrix_viewers_group
+    "roles/bigquery.jobUser"              = local.matrix_viewers_group
+    "roles/bigquery.dataViewer"           = local.matrix_viewers_group
+    "roles/bigquery.studioUser"           = local.matrix_viewers_group
+    "roles/bigquery.user"                 = local.matrix_viewers_group
+    "roles/iap.httpsResourceAccessor"     = local.matrix_viewers_group
 
     "roles/compute.networkUser" = [local.matrix_all_group]
   }
