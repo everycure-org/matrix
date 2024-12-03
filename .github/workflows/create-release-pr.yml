@@ -30,6 +30,7 @@ jobs:
 
       - name: Setup Matrix CLI
         run: |
+          git tag --list --sort=-v:refname
           pwd
           pip install uv
           pushd apps/matrix-cli
