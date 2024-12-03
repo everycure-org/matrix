@@ -17,3 +17,28 @@ spec:
   - backendRefs:
     - name: argo-argocd-server
       port: 80
+  
+---
+apiVersion: networking.gke.io/v1
+kind: HealthCheckPolicy
+metadata:
+  name: argocd-health-check
+spec:
+  default:
+    checkIntervalSec: 10
+    timeoutSec: 5
+    healthyThreshold: 1
+    unhealthyThreshold: 2
+    logConfig:
+      enabled: true
+    config:
+      type: HTTP
+      httpHealthCheck:
+        portSpecification: USE_FIXED_PORT
+        port: 80
+        requestPath: /healthz
+        proxyHeader: NONE
+  targetRef:
+    group: ""
+    kind: Service
+    name: argo-argocd-server
