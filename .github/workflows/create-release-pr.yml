@@ -58,6 +58,7 @@ jobs:
           echo "$release"
           echo "${GITHUB_ENV}"
           echo "release=${release}" >> "${GITHUB_ENV}"
+          ls "${GITHUB_WORKSPACE}"
           echo "${GITHUB_WORKSPACE}/docs/src/releases/posts"
           mkdir -p "${release}"
           echo "${release}/notes.md"
