@@ -3,7 +3,7 @@ locals {
 
   matrix_viewers_group = [local.matrix_all_group, "group:matrix-viewers@everycure.org"]
   tech_team_group      = ["group:techteam@everycure.org", "group:ext.tech.dataminded@everycure.org"]
-
+  github_actions_rw_service_account = "sa-github-actions-rw@mtrx-hub-dev-3of.iam.gserviceaccount.com"
 }
 
 module "project_iam_bindings" {
@@ -18,6 +18,7 @@ module "project_iam_bindings" {
     "roles/notebooks.admin"               = local.tech_team_group
     "roles/ml.admin"                      = local.tech_team_group
     "roles/aiplatform.admin"              = local.tech_team_group
+    "roles/aiplatform.user"               = local.github_actions_rw_service_account
     "roles/artifactregistry.writer"       = local.tech_team_group
     "roles/storage.objectCreator"         = local.tech_team_group
     "roles/storage.objectUser"            = local.tech_team_group
