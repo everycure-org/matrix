@@ -3,7 +3,7 @@ locals {
 
   matrix_viewers_group              = [local.matrix_all_group, "group:matrix-viewers@everycure.org"]
   tech_team_group                   = ["group:techteam@everycure.org", "group:ext.tech.dataminded@everycure.org"]
-  github_actions_rw_service_account = "sa-github-actions-rw@mtrx-hub-dev-3of.iam.gserviceaccount.com"
+  github_actions_rw_service_account = ["sa-github-actions-rw@mtrx-hub-dev-3of.iam.gserviceaccount.com"]
 }
 
 module "project_iam_bindings" {
