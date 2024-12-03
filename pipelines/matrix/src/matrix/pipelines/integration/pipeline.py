@@ -1,4 +1,5 @@
 from kedro.pipeline import Pipeline, node, pipeline
+from matrix.pipelines.batch import pipeline as batch_pipeline
 
 from . import nodes
 
@@ -48,21 +49,23 @@ def _create_integration_pipeline(source: str) -> Pipeline:
                 tags=["standardize"],
             ),
             # FUTURE: Extract normalizer technique
+            batch_pipeline.create_pipeline(
+                source=f"source_{source}",
+                df=f"integration.int.{source}.nodes",
+                output=f"integration.int.{source}.nodes.nodes_norm_mapping",
+                bucket_size="params:integration.normalization.batch_size",
+                transformer="params:integration.normalization.normalizer",
+            ),
             node(
                 func=nodes.normalize_kg,
                 inputs={
+                    "mapping_df": f"integration.int.{source}.nodes.nodes_norm_mapping",
                     "nodes": f"integration.int.{source}.nodes",
                     "edges": f"integration.int.{source}.edges",
-                    "api_endpoint": "params:integration.nodenorm.api_endpoint",
-                    "conflate": "params:integration.nodenorm.conflate",
-                    "drug_chemical_conflate": "params:integration.nodenorm.drug_chemical_conflate",
-                    "batch_size": "params:integration.nodenorm.batch_size",
-                    "parallelism": "params:integration.nodenorm.parallelism",
                 },
                 outputs=[
                     f"integration.int.{source}.nodes.norm",
                     f"integration.int.{source}.edges.norm",
-                    f"integration.int.{source}.nodes_norm_mapping",
                 ],
                 name=f"normalize_{source}_kg",
             ),

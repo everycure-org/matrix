@@ -11,7 +11,7 @@ from matrix.pipelines.ingestion.pipeline import create_pipeline as create_ingest
 from matrix.pipelines.integration.pipeline import create_pipeline as create_integration_pipeline
 from matrix.pipelines.matrix_generation.pipeline import create_pipeline as create_matrix_pipeline
 from matrix.pipelines.modelling.pipeline import create_pipeline as create_modelling_pipeline
-from matrix.pipelines.preprocessing.pipeline import create_pipeline as create_preprocessing_pipeline
+# from matrix.pipelines.preprocessing.pipeline import create_pipeline as create_preprocessing_pipeline
 
 
 def register_pipelines() -> Dict[str, Pipeline]:
@@ -23,7 +23,7 @@ def register_pipelines() -> Dict[str, Pipeline]:
     # Define pipeline combinations
     pipelines = {
         # Individual pipelines
-        "preprocessing": create_preprocessing_pipeline(),  # Run manually for clinical trials and medical KG artifacts
+        # "preprocessing": create_preprocessing_pipeline(),  # Run manually for clinical trials and medical KG artifacts
         "fabricator": create_fabricator_pipeline(),
         "ingestion": create_ingestion_pipeline(),
         "integration": create_integration_pipeline(),
