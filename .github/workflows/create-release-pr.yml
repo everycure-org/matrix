@@ -55,6 +55,7 @@ jobs:
           else
             release="v0.2.6-alpha"
           fi
+          uv run gcloud config list
           echo "$release"
           echo "${GITHUB_ENV}"
           echo "release=${release}" >> "${GITHUB_ENV}"
