@@ -60,7 +60,7 @@ paths:
   # Release-based
   integration:        data/releases/${versions.release}/datasets/integration
   embeddings:         data/releases/${versions.release}/datasets/embeddings
-  kgx:                data/releases/${versions.release}/datasets/kgx
+  release:                data/releases/${versions.release}/datasets/release
 
   # Run-based
   modelling:          data/releases/${versions.release}/runs/${run_name}/datasets/modelling
