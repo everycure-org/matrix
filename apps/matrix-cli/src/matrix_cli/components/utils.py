@@ -36,14 +36,6 @@ def get_git_root() -> str:
 def invoke_model(prompt: str, model: str, generation_config: "GenerationConfig" = None) -> str:
     model_object = load_vertex_model(model)
     console.print(f"[bold green] Calling Gemini with a prompt of length: {len(prompt)} characters")
-
-    from google.auth.transport.requests import Request
-    from google.auth import credentials
-
-    if credentials.expired and credentials.refresh_token:
-        console.print("refeshing credentials")
-        credentials.refresh(Request())
-
     response = model_object.generate_content(prompt, generation_config=generation_config).text
     console.print(f"[bold green] Response received. Total length: {len(response)} characters")
     return response
