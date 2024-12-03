@@ -23,10 +23,6 @@ jobs:
     permissions:
       contents: 'read'
       id-token: 'write'
-    env:
-      #release_note: docs/src/releases/posts/XXX/release_notes.md
-      #release_article: docs/src/releases/posts/XXX/post.md
-      releases_dir: docs/src/releases/posts
 
     steps:
       - name: 'Checkout'
@@ -56,12 +52,13 @@ jobs:
             release="v0.2.6-alpha"
           fi
           echo "$release"
-#          echo "release=${release}" >> ${GITHUB_ENV}
-#          mkdir -p "${release}"
-#          uv run matrix releases release-notes --output-file ${release}/notes.md
-#          uv run matrix releases article --output-file ${release}/post.md --no-disable-rendering
+          echo "${GITHUB_ENV}"
+          echo "release=${release}" >> "${GITHUB_ENV}"
+          mkdir -p "${release}"
+          uv run matrix releases release-notes --output-file "${release}/notes.md"
+          uv run matrix releases article --output-file "${release}/post.md" --no-disable-rendering
 #          git add ${release} && git commit -m "added release notes & article draft" && git push
-#
+
 #      - name: Create Pull Request
 #        run: gh pr create \
 #          --title "Release/${env.release}" \
@@ -70,6 +67,5 @@ jobs:
 #          --draft \
 #          --dry-run \
 #          --label Release
-#
-#
-#
+
+
