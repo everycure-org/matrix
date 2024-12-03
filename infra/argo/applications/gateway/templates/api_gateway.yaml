@@ -26,21 +26,37 @@ spec:
     protocol: HTTP
     port: 80
 ---
----
 # HTTP redirect to HTTPS
-apiVersion: gateway.networking.k8s.io/v1
+# apiVersion: gateway.networking.k8s.io/v1
+# kind: HTTPRoute
+# metadata:
+#   name: http-redirect-to-https-api
+# spec:
+#   parentRefs:
+#   - name: api-gateway
+#     sectionName: http
+#   hostnames:
+#   - "*.api.dev.everycure.org"
+#   rules:
+#   - filters:
+#     - type: RequestRedirect
+#       requestRedirect:
+#         scheme: https
+#         statusCode: 301
+
+---
+apiVersion: v1
 kind: HTTPRoute
+apiVersion: gateway.networking.k8s.io/v1
 metadata:
-  name: http-redirect-to-https-api
+  name: redirect
+  namespace: gateway-infra
 spec:
   parentRefs:
-  - name: api-gateway
+    name: external-http
     sectionName: http
-  hostnames:
-  - "*.api.dev.everycure.org"
   rules:
   - filters:
     - type: RequestRedirect
       requestRedirect:
         scheme: https
-        statusCode: 301
