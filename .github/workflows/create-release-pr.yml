@@ -58,6 +58,7 @@ jobs:
           echo "$release"
           echo "${GITHUB_ENV}"
           echo "release=${release}" >> "${GITHUB_ENV}"
+          echo "${GITHUB_WORKSPACE}/docs/src/releases/posts"
           mkdir -p "${release}"
           echo "${release}/notes.md"
           uv run matrix releases release-notes --headless --output-file "${release}/notes.md"
