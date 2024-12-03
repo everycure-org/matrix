@@ -81,7 +81,9 @@ def ask_for_release():
 
 
 def get_latest_release():
-    return get_releases()[0]
+    releases = get_releases()
+    print(releases)
+    return releases[0]
 
 
 def get_releases():

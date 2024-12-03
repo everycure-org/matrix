@@ -268,7 +268,6 @@ def get_pr_details_since(previous_tag: str) -> List[PRInfo]:
 
 
 def get_commit_logs(previous_tag: str) -> List[str]:
-    print(f"{previous_tag=}")
     command = ["git", "log", f"{previous_tag}..origin/main", "--oneline"]
     return run_command(command).split("\n")
 
