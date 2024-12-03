@@ -81,13 +81,10 @@ def ask_for_release():
 
 
 def get_latest_release():
-    releases = get_releases()
-    print(releases)
-    return releases[0]
+    return get_releases()[0]
 
 
 def get_releases():
     # Sort releases by version using semantic versioning
-    print(get_git_root())
-    print(Path.cwd())
+    # Remark: repo should be fully checked out for this to work!
     return run_command(["git", "tag", "--list", "--sort=-v:refname"], cwd=get_git_root()).split("\n")

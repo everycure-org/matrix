@@ -32,12 +32,9 @@ jobs:
           fetch-depth: 0
 
       - name: Setup Matrix CLI
+        working-directory: apps/matrix-cli
         run: |
-          git tag --list --sort=-v:refname
-          git log v0.2.2..origin/main --oneline
-          pwd
           pip install uv
-          pushd apps/matrix-cli
           uv sync
 
       - uses: 'google-github-actions/auth@v2'
@@ -48,7 +45,9 @@ jobs:
           service_account: ${{env.service_account}}
 
       - name: Create Release Notes
-        working-directory: apps/matrix-cli  #docs/src/releases/posts
+        working-directory: apps/matrix-cli
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           if [[ "${{ github.event_name == 'workflow_dispatch' }}" == "true" ]]; then
             release="${{ inputs.release }}"
