@@ -48,7 +48,6 @@ def _create_integration_pipeline(source: str) -> Pipeline:
                 name=f"transform_{source}_edges",
                 tags=["standardize"],
             ),
-            # FUTURE: Extract normalizer technique
             batch_pipeline.create_pipeline(
                 source=f"source_{source}",
                 df=f"integration.int.{source}.nodes",
