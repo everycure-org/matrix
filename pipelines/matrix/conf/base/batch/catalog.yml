@@ -19,30 +19,29 @@ _pandas_parquet: &_pandas_parquet
 # Datasets
 # -------------------------------------------------------------------------
 
-batch.int.input_bucketized@spark:
+batch.int.{source}.input_bucketized@spark:
   <<: *_spark_parquet
-  filepath: ${globals:paths.tmp}/bucketized
+  filepath: ${globals:paths.tmp}/batch/{source}/bucketized
   save_args:
     mode: overwrite
     partitionBy:
       - bucket
 
-batch.int.input_bucketized@partitioned:
+batch.int.{source}.input_bucketized@partitioned:
   type: matrix.datasets.gcp.PartitionedAsyncParallelDataset
-  path: ${globals:paths.tmp}/bucketized
+  path: ${globals:paths.tmp}/batch/{source}/bucketized
   dataset: 
     <<: *_pandas_parquet
   filename_suffix: ".parquet"
 
-batch.int.input_transformed@partitioned:
+batch.int.{source}.input_transformed@partitioned:
   type: matrix.datasets.gcp.PartitionedAsyncParallelDataset
   overwrite: True
-  path: ${globals:paths.tmp}/transformed
+  path: ${globals:paths.tmp}/batch/{source}/transformed
   dataset: 
     <<: *_pandas_parquet
   filename_suffix: ".parquet"
 
-
-batch.int.input_transformed@spark:
+batch.int.{source}.input_transformed@spark:
   <<: *_spark_parquet
-  filepath: ${globals:paths.tmp}/transformed
+  filepath: ${globals:paths.tmp}/batch/{source}/transformed
