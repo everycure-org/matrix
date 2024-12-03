@@ -2,6 +2,13 @@ from abc import ABC, abstractmethod
 from typing import Dict, Any
 from jsonpath_ng import parse
 
+from tenacity import (
+    retry,
+    retry_if_exception_type,
+    wait_exponential,
+)
+
+import asyncio
 import aiohttp
 import logging
 
@@ -27,8 +34,13 @@ class NCATSNodeNormalizer(Normalizer):
         self._conflate = conflate
         self._drug_chemical_conflate = drug_chemical_conflate
         self._description = description
-        self._json_parser = parse("$.id.identifier")  # TODO: Update
+        self._json_parser = parse("$.id.identifier")  # FUTURE: Ensure we can update
 
+    @retry(
+        wait=wait_exponential(min=1, max=30),
+        retry=retry_if_exception_type((aiohttp.ClientError, asyncio.TimeoutError)),
+        before_sleep=print,
+    )
     async def apply(self, df: pd.DataFrame, **kwargs):
         curies = df["id"].tolist()
         request_json = {
