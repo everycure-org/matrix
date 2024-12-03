@@ -32,7 +32,7 @@ kube-prometheus-stack:
               path: /metrics
       service:
         annotations:
-          cloud.google.com/backend-config: '{"default": "prometheus-backend-config"}'
+          cloud.google.com/neg: '{"ingress": true}'
   grafana:
     sidecar:
       dashboards:
@@ -44,6 +44,6 @@ kube-prometheus-stack:
       searchNamespace: ALL
       provider:
         foldersFromFilesStructure: true
-      service:
-        annotations:
-          cloud.google.com/backend-config: '{"default": "grafana-backend-config"}'
+    service:
+      annotations:
+        cloud.google.com/neg: '{"ingress": true}'

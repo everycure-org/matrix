@@ -1,28 +1,30 @@
 # NOTE: This file was partially generated using AI assistance.
-apiVersion: cloud.google.com/v1
-kind: BackendConfig
+apiVersion: gateway.networking.k8s.io/v1beta1
+kind: HealthCheckPolicy
 metadata:
-  name: prometheus-backend-config
+  name: prometheus-health-check
 spec:
-  healthCheck:
-    requestPath: /healthz
-    port: 9090
-    type: HTTP
-    checkIntervalSec: 10
-    timeoutSec: 1
-    healthyThreshold: 1
-    unhealthyThreshold: 3
+  targetRef:
+    group: ""
+    kind: Service
+    name: prometheus-operated
+  config:
+    - port: 9090
+      type: HTTP
+      httpHealthCheck:
+        path: /healthz
 ---
-apiVersion: cloud.google.com/v1
-kind: BackendConfig
+apiVersion: gateway.networking.k8s.io/v1beta1
+kind: HealthCheckPolicy
 metadata:
-  name: grafana-backend-config
+  name: grafana-health-check
 spec:
-  healthCheck:
-    requestPath: /api/health
-    port: 3000
-    type: HTTP
-    checkIntervalSec: 10
-    timeoutSec: 1
-    healthyThreshold: 1
-    unhealthyThreshold: 3 
+  targetRef:
+    group: ""
+    kind: Service
+    name: kube-prometheus-stack-grafana
+  config:
+    - port: 3000
+      type: HTTP
+      httpHealthCheck:
+        path: /api/health 
