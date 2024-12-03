@@ -15,7 +15,7 @@ spec:
       httpHealthCheck:
         portSpecification: USE_FIXED_PORT
         port: 9090
-        requestPath: /healthy
+        requestPath: /healthz
         proxyHeader: NONE
   targetRef:
     group: ""
