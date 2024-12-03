@@ -57,7 +57,7 @@ jobs:
           fi
           echo "Service Account: ${{env.service_account}}"
           uv run gcloud config list
-          uv run gcloud login ${{env.service_account}}
+          uv run gcloud auth login ${{env.service_account}}
           uv run gcloud auth list
           echo "$release"
           echo "${GITHUB_ENV}"
