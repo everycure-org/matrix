@@ -55,15 +55,6 @@ jobs:
           else
             release="v0.2.6-alpha"
           fi
-          echo "Service Account: ${{env.service_account}}"
-          echo "Checking active credentials..."
-          echo "GOOGLE_APPLICATION_CREDENTIALS: $GOOGLE_APPLICATION_CREDENTIALS"
-          echo "Checking config list"
-          uv run gcloud config list
-          echo "Activating service account..."
-          uv run gcloud auth activate-service-account --key-file="${GOOGLE_APPLICATION_CREDENTIALS}"
-          echo "Checking auth list"
-          uv run gcloud auth list
           echo "$release"
           echo "${GITHUB_ENV}"
           echo "release=${release}" >> "${GITHUB_ENV}"
