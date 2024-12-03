@@ -55,6 +55,7 @@ jobs:
           else
             release="v0.2.6-alpha"
           fi
+          echo "Service Account: ${{env.service_account}}"
           uv run gcloud config list
           uv run gcloud auth list
           echo "$release"
