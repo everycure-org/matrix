@@ -33,22 +33,6 @@ kube-prometheus-stack:
       service:
         annotations:
           cloud.google.com/backend-config: '{"default": "prometheus-backend-config"}'
-      
-      # Add BackendConfig as an additional resource
-      additionalResources:
-        - apiVersion: cloud.google.com/v1
-          kind: BackendConfig
-          metadata:
-            name: prometheus-backend-config
-          spec:
-            healthCheck:
-              requestPath: /healthz
-              port: 9090
-              type: HTTP
-              checkIntervalSec: 10
-              timeoutSec: 1
-              healthyThreshold: 1
-              unhealthyThreshold: 3
   grafana:
     sidecar:
       dashboards:
@@ -63,19 +47,3 @@ kube-prometheus-stack:
       service:
         annotations:
           cloud.google.com/backend-config: '{"default": "grafana-backend-config"}'
-      
-      # Add BackendConfig as an additional resource
-      additionalResources:
-        - apiVersion: cloud.google.com/v1
-          kind: BackendConfig
-          metadata:
-            name: grafana-backend-config
-          spec:
-            healthCheck:
-              requestPath: /api/health
-              port: 3000
-              type: HTTP
-              checkIntervalSec: 10
-              timeoutSec: 1
-              healthyThreshold: 1
-              unhealthyThreshold: 3
