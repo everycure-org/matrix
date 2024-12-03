@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Optional
+from typing import Optional, List
 import pandas as pd
 from tenacity import retry, wait_exponential, stop_after_attempt
 import numpy as np
@@ -22,7 +22,7 @@ class AttributeEncoder(ABC):
         self._random_seed = random_seed
 
     @abstractmethod
-    async def encode(self, df: pd.DataFrame) -> pd.DataFrame:
+    async def apply(self, df: pd.DataFrame, **kwargs) -> pd.DataFrame:
         """Encode text from dataframe into embeddings.
 
         Args:
@@ -56,7 +56,7 @@ class LangChainEncoder(AttributeEncoder):
         self._client = encoder
 
     @retry(wait=wait_exponential(multiplier=1, min=2, max=10), stop=stop_after_attempt(3))
-    async def encode(self, df: pd.DataFrame) -> pd.DataFrame:
+    async def apply(self, df: pd.DataFrame, input_features: List[str], max_input_len: int) -> pd.DataFrame:
         """Encode text from dataframe using OpenAI embeddings.
 
         Args:
@@ -65,12 +65,16 @@ class LangChainEncoder(AttributeEncoder):
         Returns:
             DataFrame with new 'embedding' column and 'text_to_embed' removed
         """
+
+        # TODO: Add in max input len
+
         try:
+            df["text_to_embed"] = df[input_features].apply(lambda row: "".join(row), axis=1)
             combined_texts = df["text_to_embed"].tolist()
-            df = df.copy()
+            df = df.copy()  # TODO: Why copy?
             df["embedding"] = await self._client.aembed_documents(combined_texts)
             df["embedding"] = df["embedding"].apply(lambda x: np.array(x, dtype=np.float32))
-            df = df.drop(columns=["text_to_embed"])
+            df = df.drop(columns=["text_to_embed", *input_features])
             return df
         except Exception as e:
             print(f"Exception occurred: {e}")
