@@ -53,7 +53,7 @@ jobs:
           if [[ "${{ github.event_name == 'workflow_dispatch' }}" == "true" ]]; then
             release="${{ inputs.release }}"
           else
-            release="v0.2.6alpha"
+            release="v0.2.6-alpha"
           fi
           echo "$release"
 #          echo "release=${release}" >> ${GITHUB_ENV}

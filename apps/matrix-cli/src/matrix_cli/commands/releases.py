@@ -25,8 +25,8 @@ from matrix_cli.components.utils import (
     get_markdown_contents,
     invoke_model,
     run_command,
-    select_previous_release,
-    get_the_latest_release,
+    ask_for_release,
+    get_latest_release,
 )
 
 if TYPE_CHECKING:
@@ -40,7 +40,7 @@ app = typer.Typer(
 
 @app.command()
 def test():
-    print(select_previous_release())
+    print(ask_for_release())
 
 
 @app.command(name="article")
@@ -48,13 +48,12 @@ def write_release_article(
     output_file: str = typer.Option(None, help="File to write the release article to"),
     model: str = typer.Option(settings.power_model, help="Language model to use"),
     disable_rendering: bool = typer.Option(True, help="Disable rendering of the release article"),
-    latest_release: bool = typer.Option(True, help="If starting with the latest release or not"),
+    headless: bool = typer.Option(
+        False, help="Don't ask interactive questions. The most recent release will be automatically used."
+    ),
 ):
     """Write a release article for a given git reference."""
-    if not latest_release:
-        since = select_previous_release()
-    else:
-        since = get_the_latest_release()
+    since = select_release(headless)
 
     console.print("[green]Collecting release notes...")
     notes = get_release_notes(since, model=model)
@@ -111,14 +110,12 @@ Please focus on the following topics in the release article:
 def release_notes(
     model: str = typer.Option(settings.base_model, help="Model to use for summarization"),
     output_file: str = typer.Option(None, help="File to write the release notes to"),
-    latest_release: bool = typer.Option(True, help="If starting with the latest release or not"),
+    headless: bool = typer.Option(
+        False, help="Don't ask interactive questions. The most recent release will be automatically used."
+    ),
 ):
     """Generate an AI summary of code changes since a specific git reference."""
-    if not latest_release:
-        since = select_previous_release()
-    else:
-        since = get_the_latest_release()
-        console.print(f"The latest release version: {latest_release}")
+    since = select_release(headless)
 
     try:
         console.print("Generating release notes...")
@@ -201,7 +198,7 @@ def prepare_release(
         no_cache (bool): If True, bypass the cache when fetching PR details.
         skip_ai (bool): If True, skip AI title suggestions.
     """
-    previous_release = select_previous_release()
+    previous_release = ask_for_release()
     typer.echo(f"Collecting PRs since {previous_release}...")
 
     if no_cache:
@@ -479,6 +476,12 @@ def write_excel(df: "pd.DataFrame", filename: str):
         worksheet.column_dimensions[chr(65 + idx)].width = min(max_length + 2, 100)
 
     writer.close()
+
+
+def select_release(headless: bool) -> str:
+    if headless:
+        return get_latest_release()
+    return ask_for_release()
 
 
 if __name__ == "__main__":

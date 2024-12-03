@@ -8,7 +8,6 @@ import typer
 from matrix_cli.components.cache import memory
 from rich.console import Console
 from tenacity import retry, stop_after_attempt, wait_exponential
-from packaging.version import Version
 
 console = Console()
 
@@ -72,7 +71,7 @@ def run_command(command: List[str], cwd: str = None) -> str:
         raise
 
 
-def select_previous_release():
+def ask_for_release():
     """Prompts the user to select an existing release from the list of releases."""
     console.print("[green]What was the last release that we should use as a starting point?")
     return questionary.select(
@@ -81,13 +80,10 @@ def select_previous_release():
     ).ask()
 
 
-def get_the_latest_release():
-    # Sort releases by version using semantic versioning
-    releases = get_releases()
-    sorted_releases = sorted(releases, key=lambda r: Version(r.lstrip("v")), reverse=True)
-    latest_release = sorted_releases[0]  # Latest release after sorting
-    return latest_release
+def get_latest_release():
+    return get_releases()[0]
 
 
 def get_releases():
-    return run_command(["git", "tag"], cwd=get_git_root()).split("\n")
+    # Sort releases by version using semantic versioning
+    return run_command(["git", "tag", "--list", "--sort=-v:refname"], cwd=get_git_root()).split("\n")
