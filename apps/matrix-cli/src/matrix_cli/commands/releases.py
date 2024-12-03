@@ -188,17 +188,20 @@ def prepare_release(
     output_file: str = None,
     no_cache: bool = typer.Option(False, "--no-cache", help="Disable caching of PR details"),
     skip_ai: bool = typer.Option(False, "--skip-ai", help="Skip AI title suggestions"),
+    headless: bool = typer.Option(
+        False, help="Don't ask interactive questions. The most recent release will be automatically used."
+    ),
 ):
     """
     Prepares release notes by processing PRs merged since the given tag.
 
     Args:
-        previous_tag (str): The previous release git tag.
         output_file (str): The name of the Excel file to create/update.
         no_cache (bool): If True, bypass the cache when fetching PR details.
         skip_ai (bool): If True, skip AI title suggestions.
+        headless (bool): Don't ask interactive questions. Most recent tag will be used.
     """
-    previous_release = ask_for_release()
+    previous_release = select_release(headless)
     typer.echo(f"Collecting PRs since {previous_release}...")
 
     if no_cache:
@@ -265,6 +268,7 @@ def get_pr_details_since(previous_tag: str) -> List[PRInfo]:
 
 
 def get_commit_logs(previous_tag: str) -> List[str]:
+    print(f"{previous_tag=}")
     command = ["git", "log", f"{previous_tag}..origin/main", "--oneline"]
     return run_command(command).split("\n")
 
