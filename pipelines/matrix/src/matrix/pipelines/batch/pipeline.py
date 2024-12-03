@@ -92,5 +92,6 @@ def create_pipeline(
                 outputs=output,
                 name=f"extract_{source}_input",
             ),
-        ]
+        ],
+        tags=["argowf.fuse", f"argowf.fuse-group.{source}"],
     )
