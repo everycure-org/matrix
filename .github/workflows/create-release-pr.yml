@@ -27,10 +27,13 @@ jobs:
     steps:
       - name: 'Checkout'
         uses: actions/checkout@main
+        with: 
+          fetch-tags: true
 
       - name: Setup Matrix CLI
         run: |
           git tag --list --sort=-v:refname
+          git log v0.2.2..origin/main --oneline
           pwd
           pip install uv
           pushd apps/matrix-cli
