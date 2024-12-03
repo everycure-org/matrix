@@ -1,0 +1,48 @@
+_spark_parquet_ds: &_spark_parquet
+  type: matrix.datasets.gcp.LazySparkDataset
+  file_format: parquet
+  save_args:
+    mode: overwrite
+  metadata:
+    kedro-viz:
+      layer: embeddings
+
+_pandas_parquet: &_pandas_parquet
+  type: matrix.datasets.graph.PandasParquetDataset
+  save_args:
+    engine: pyarrow
+  load_args:
+    engine: pyarrow
+    as_type: str
+      
+# -------------------------------------------------------------------------
+# Datasets
+# -------------------------------------------------------------------------
+
+batch.int.input_bucketized@spark:
+  <<: *_spark_parquet
+  filepath: ${globals:paths.tmp}/bucketized
+  save_args:
+    mode: overwrite
+    partitionBy:
+      - bucket
+
+batch.int.input_bucketized@partitioned:
+  type: matrix.datasets.gcp.PartitionedAsyncParallelDataset
+  path: ${globals:paths.tmp}/bucketized
+  dataset: 
+    <<: *_pandas_parquet
+  filename_suffix: ".parquet"
+
+batch.int.input_transformed@partitioned:
+  type: matrix.datasets.gcp.PartitionedAsyncParallelDataset
+  overwrite: True
+  path: ${globals:paths.tmp}/transformed
+  dataset: 
+    <<: *_pandas_parquet
+  filename_suffix: ".parquet"
+
+
+batch.int.input_transformed@spark:
+  <<: *_spark_parquet
+  filepath: ${globals:paths.tmp}/transformed
