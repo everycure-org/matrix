@@ -43,9 +43,8 @@ jobs:
           service_account: ${{env.service_account}}
 
       - name: Create Release Notes
-        working-directory: docs/src/releases/posts
+        working-directory: apps/matrix-cli  #docs/src/releases/posts
         run: |
-          pwd        
           if [[ "${{ github.event_name == 'workflow_dispatch' }}" == "true" ]]; then
             release="${{ inputs.release }}"
           else
@@ -55,8 +54,11 @@ jobs:
           echo "${GITHUB_ENV}"
           echo "release=${release}" >> "${GITHUB_ENV}"
           mkdir -p "${release}"
-          uv run matrix releases release-notes --output-file "${release}/notes.md"
-          uv run matrix releases article --output-file "${release}/post.md" --no-disable-rendering
+          uv run matrix releases release-notes --headless --output-file "${release}/notes.md"
+          uv run matrix releases article --headless --output-file "${release}/post.md" --no-disable-rendering
+          mv "${release}" "${GITHUB_WORKSPACE}/docs/src/releases/posts"
+          ls "${GITHUB_WORKSPACE}/docs/src/releases/posts"
+          ls !$
 #          git add ${release} && git commit -m "added release notes & article draft" && git push
 
 #      - name: Create Pull Request
