@@ -7,6 +7,8 @@ import pyspark.sql.types as T
 from pyspark.sql import DataFrame
 from refit.v1.core.inline_primary_key import primary_key
 
+from .transformer import GraphTransformer
+
 from matrix.schemas.knowledge_graph import KGEdgeSchema, KGNodeSchema, cols_for_schema
 
 logger = logging.getLogger(__name__)
@@ -15,57 +17,59 @@ logger = logging.getLogger(__name__)
 RTX_SEPARATOR = "\u01c2"
 
 
-@pa.check_output(KGNodeSchema)
-def transform_rtxkg2_nodes(nodes_df: DataFrame) -> DataFrame:
-    """Transform RTX KG2 nodes to our target schema.
+class RTXTransformer(GraphTransformer):
+    @pa.check_output(KGNodeSchema)
+    def transform_nodes(self, nodes_df: DataFrame, **kwargs) -> DataFrame:
+        """Transform RTX KG2 nodes to our target schema.
 
-    Args:
-        nodes_df: Nodes DataFrame.
+        Args:
+            nodes_df: Nodes DataFrame.
 
-    Returns:
-        Transformed DataFrame.
-    """
-    # fmt: off
-    return (
-        nodes_df
-        .withColumn("upstream_data_source",              f.array(f.lit("rtxkg2")))
-        .withColumn("labels",                            f.split(f.col(":LABEL"), RTX_SEPARATOR))
-        .withColumn("all_categories",                    f.split(f.col("all_categories:string[]"), RTX_SEPARATOR))
-        .withColumn("equivalent_identifiers",            f.split(f.col("equivalent_curies:string[]"), RTX_SEPARATOR))
-        .withColumn("publications",                      f.split(f.col("publications:string[]"), RTX_SEPARATOR))
-        .withColumn("international_resource_identifier", f.col("iri"))
-        .withColumnRenamed("id:ID", "id")
-        .select(*cols_for_schema(KGNodeSchema))
-    )
-    # fmt: on
+        Returns:
+            Transformed DataFrame.
+        """
+        # fmt: off
+        return (
+            nodes_df
+            .withColumn("upstream_data_source",              f.array(f.lit("rtxkg2")))
+            .withColumn("labels",                            f.split(f.col(":LABEL"), RTX_SEPARATOR))
+            .withColumn("all_categories",                    f.split(f.col("all_categories:string[]"), RTX_SEPARATOR))
+            .withColumn("equivalent_identifiers",            f.split(f.col("equivalent_curies:string[]"), RTX_SEPARATOR))
+            .withColumn("publications",                      f.split(f.col("publications:string[]"), RTX_SEPARATOR).cast(T.ArrayType(T.StringType())))
+            .withColumn("international_resource_identifier", f.col("iri"))
+            .withColumnRenamed("id:ID", "id")
+            .select(*cols_for_schema(KGNodeSchema))
+        )
+        # fmt: on
 
+    @pa.check_output(KGEdgeSchema)
+    def transform_edges(
+        self, edges_df: DataFrame, curie_to_pmids: DataFrame, semmed_filters: Dict[str, str], **kwargs
+    ) -> DataFrame:
+        """Transform RTX KG2 edges to our target schema.
 
-@pa.check_output(KGEdgeSchema)
-def transform_rtxkg2_edges(edges_df: DataFrame, curie_to_pmids: DataFrame, semmed_filters: Dict[str, str]) -> DataFrame:
-    """Transform RTX KG2 edges to our target schema.
+        Args:
+            edges_df: Edges DataFrame.
+            pubmed_mapping: pubmed mapping
+        Returns:
+            Transformed DataFrame.
+        """
 
-    Args:
-        edges_df: Edges DataFrame.
-        pubmed_mapping: pubmed mapping
-    Returns:
-        Transformed DataFrame.
-    """
-
-    # fmt: off
-    return (
-        edges_df
-        .withColumn("upstream_data_source",          f.array(f.lit("rtxkg2")))
-        .withColumn("knowledge_level",               f.lit(None).cast(T.StringType()))
-        .withColumn("aggregator_knowledge_source",   f.split(f.col("knowledge_source:string[]"), RTX_SEPARATOR)) # RTX KG2 2.10 does not exist
-        .withColumn("primary_knowledge_source",      f.col("aggregator_knowledge_source").getItem(0)) # RTX KG2 2.10 `primary_knowledge_source``
-        .withColumn("publications",                  f.split(f.col("publications:string[]"), RTX_SEPARATOR))
-        .withColumn("subject_aspect_qualifier",      f.lit(None).cast(T.StringType())) #not present in RTX KG2 at this time
-        .withColumn("subject_direction_qualifier",   f.lit(None).cast(T.StringType())) #not present in RTX KG2 at this time
-        .withColumn("object_aspect_qualifier",       f.lit(None).cast(T.StringType())) #not present in RTX KG2 at this time
-        .withColumn("object_direction_qualifier",    f.lit(None).cast(T.StringType())) #not present in RTX KG2 at this time
-        .select(*cols_for_schema(KGEdgeSchema))
-    ).transform(filter_semmed, curie_to_pmids, **semmed_filters)
-    # fmt: on
+        # fmt: off
+        return (
+            edges_df
+            .withColumn("upstream_data_source",          f.array(f.lit("rtxkg2")))
+            .withColumn("knowledge_level",               f.lit(None).cast(T.StringType()))
+            .withColumn("aggregator_knowledge_source",   f.split(f.col("knowledge_source:string[]"), RTX_SEPARATOR)) # RTX KG2 2.10 does not exist
+            .withColumn("primary_knowledge_source",      f.col("aggregator_knowledge_source").getItem(0)) # RTX KG2 2.10 `primary_knowledge_source``
+            .withColumn("publications",                  f.split(f.col("publications:string[]"), RTX_SEPARATOR))
+            .withColumn("subject_aspect_qualifier",      f.lit(None).cast(T.StringType())) #not present in RTX KG2 at this time
+            .withColumn("subject_direction_qualifier",   f.lit(None).cast(T.StringType())) #not present in RTX KG2 at this time
+            .withColumn("object_aspect_qualifier",       f.lit(None).cast(T.StringType())) #not present in RTX KG2 at this time
+            .withColumn("object_direction_qualifier",    f.lit(None).cast(T.StringType())) #not present in RTX KG2 at this time
+            .select(*cols_for_schema(KGEdgeSchema))
+        ).transform(filter_semmed, curie_to_pmids, **semmed_filters)
+        # fmt: on
 
 
 @primary_key(df="curie_to_pmids", primary_key=["curie"])
