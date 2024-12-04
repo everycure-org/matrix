@@ -34,6 +34,15 @@ def create_pipeline(**kwargs) -> Pipeline:
                 name="create_prm_ec_medical_team_nodes",
                 tags=["ec-medical-kg"],
             ),
+            node(
+                func=nodes.create_prm_edges,
+                inputs=[
+                    "preprocessing.int.edges",
+                ],
+                outputs="ingestion.raw.ec_medical_team.edges@pandas",
+                name="create_prm_ec_medical_team_edges",
+                tags=["ec-medical-kg"],
+            ),
             # # Normalize nodes
             # node(
             #     func=nodes.create_int_nodes,
@@ -58,15 +67,6 @@ def create_pipeline(**kwargs) -> Pipeline:
             #     ],
             #     outputs="preprocessing.int.edges",
             #     name="create_int_ec_medical_team_edges",
-            #     tags=["ec-medical-kg"],
-            # ),
-            # node(
-            #     func=nodes.create_prm_edges,
-            #     inputs=[
-            #         "preprocessing.int.edges",
-            #     ],
-            #     outputs="ingestion.raw.ec_medical_team.edges@pandas",
-            #     name="create_prm_ec_medical_team_edges",
             #     tags=["ec-medical-kg"],
             # ),
             # node(

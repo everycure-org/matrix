@@ -106,213 +106,26 @@ def create_prm_nodes(prm_nodes: pd.DataFrame) -> pd.DataFrame:
     return res
 
 
-# def resolve_name(curie: str, endpoint: str, att_to_get: str = "curie"):
-#     """Function to retrieve the normalized identifier through the normalizer.
+@has_schema(
+    schema={
+        "subject": "object",
+        "predicate": "object",
+        "object": "object",
+        "knowledge_source": "object",
+    },
+    allow_subset=True,
+)
+@primary_key(primary_key=["subject", "predicate", "object"])
+def create_prm_edges(int_edges: pd.DataFrame) -> pd.DataFrame:
+    """Function to create a primary edges dataset by filtering and renaming columns."""
+    res = int_edges.rename(columns={"SourceId": "subject", "TargetId": "object", "Label": "predicate"}).dropna(
+        subset=["subject", "object"]
+    )
 
-#     Args:
-#         curie: curie of the node
-#         endpoint: endpoint of the synonymizer
-#         att_to_get: attribute to get from API
-#     Returns:
-#         Corresponding curie
-#     """
-#     if not curie or pd.isna(curie):
-#         return None
+    res["predicate"] = "biolink:" + res["predicate"]
+    res["knowledge_source"] = "ec:medical"
 
-#     result = requests.get(f"{endpoint}/lookup?string={curie}&autocomplete=True&highlighting=False&offset=0&limit=1")
-#     if len(result.json()) != 0:
-#         # We take the first element as it has the highest confidence score
-#         # TODO: Examine if that approach is valid
-#         element = result.json()[0]
-#         return element.get(att_to_get)
-
-#     return None
-
-
-# def normalize(curie: str, endpoint: str, att_to_get: str = "identifier"):
-#     """Function to retrieve the normalized identifier through the normalizer.
-
-#     Args:
-#         curie: curie of the node
-#         endpoint: endpoint of the synonymizer
-#         att_to_get: attribute to get from API
-#     Returns:
-#         Corresponding curie
-#     """
-#     if not curie or pd.isna(curie):
-#         return None
-#     result = requests.get(f"{endpoint}/normalize", json={"name": curie})
-#     element = result.json().get(curie)
-#     if element:
-#         return element.get("id", {}).get(att_to_get)
-
-#     return None
-
-
-# def resolve(name: str, endpoint: str, att_to_get: str = "preferred_curie") -> str:
-#     """Function to retrieve curie through the synonymizer.
-
-#     Args:
-#         name: name of the node
-#         endpoint: endpoint of the synonymizer
-#         att_to_get: attribute to get from API
-#     Returns:
-#         Corresponding curie
-#     """
-#     result = requests.get(f"{endpoint}/synonymize", json={"name": name})
-#     element = result.json().get(name)
-#     if element:
-#         return element.get(att_to_get, None)
-
-#     return None
-
-# def enrich_df(df: pd.DataFrame, endpoint: str, func: Callable, input_cols: str, target_col: str) -> pd.DataFrame:
-#     """Function to resolve nodes of the nodes input dataset.
-
-#     Args:
-#         df: nodes dataframe
-#         endpoint: endpoint of the synonymizer
-#         func: func to call
-#         input_cols: input cols, cols are coalesced to obtain single column
-#         target_col: target col
-#     Returns:
-#         dataframe enriched with Curie column
-#     """
-#     # Coalesce input cols
-#     col = coalesce(*[df[col] for col in input_cols])
-
-#     # Apply enrich function and replace nans by empty space
-#     df[target_col] = col.apply(partial(func, endpoint=endpoint))
-
-#     return df
-
-
-# @has_schema(
-#     schema={
-#         "ID": "numeric",
-#         "name": "object",
-#         "curie": "object",
-#         "normalized_curie": "object",
-#     },
-#     allow_subset=True,
-# )
-# @primary_key(primary_key=["ID"])
-# def create_int_nodes(
-#     nodes: pd.DataFrame,
-#     name_resolver: str,
-#     endpoint: str,
-#     conflate: bool,
-#     drug_chemical_conflate: bool,
-#     batch_size: int,
-#     parallelism: int,
-# ) -> pd.DataFrame:
-#     """Function to create a intermediate nodes dataset by filtering and renaming columns."""
-#     # Enrich curie with node synonymizer
-#     resolved = enrich_df(nodes, name_resolver, resolve_name, input_cols=["name"], target_col="curie")
-
-#     # Normalize curie, by taking corrected currie or curie
-#     json_parser = parse("$.id.identifier")
-#     normalized_id_map = batch_map_ids(
-#         frozenset(resolved["curie"].fillna("")),
-#         api_endpoint=endpoint,
-#         json_parser=json_parser,
-#         batch_size=batch_size,
-#         parallelism=parallelism,
-#         conflate=conflate,
-#         drug_chemical_conflate=drug_chemical_conflate,
-#     )
-#     resolved["normalized_curie"] = resolved["curie"].map(normalized_id_map)
-
-#     # If new id is specified, we use the new id as a new KG identifier should be introduced
-#     resolved["normalized_curie"] = coalesce(resolved["new_id"], resolved["normalized_curie"])
-
-#     return resolved
-
-
-# @has_schema(
-#     schema={
-#         "SourceId": "object",
-#         "TargetId": "object",
-#     },
-#     allow_subset=True,
-# )
-# def create_int_edges(int_nodes: pd.DataFrame, int_edges: pd.DataFrame) -> pd.DataFrame:
-#     """Function to create int edges dataset.
-
-#     Function ensures edges dataset link curies in the KG.
-#     """
-#     # Remove all nodes that could not be resolved, as we wont include
-#     # any edges between those.
-#     index = int_nodes[int_nodes["normalized_curie"].notna()]
-
-#     res = (
-#         int_edges.merge(
-#             index.rename(columns={"normalized_curie": "SourceId"}),
-#             left_on="Source",
-#             right_on="ID",
-#             how="left",
-#         )
-#         .drop(columns="ID")
-#         .merge(
-#             index.rename(columns={"normalized_curie": "TargetId"}),
-#             left_on="Target",
-#             right_on="ID",
-#             how="left",
-#         )
-#         .drop(columns="ID")
-#     )
-
-#     res["Included"] = res.apply(lambda row: not (pd.isna(row["SourceId"]) or pd.isna(row["TargetId"])), axis=1)
-
-#     return res
-
-
-# @has_schema(
-#     schema={
-#         "category": "object",
-#         "id": "object",
-#         "name": "object",
-#         "description": "object",
-#     },
-#     allow_subset=True,
-# )
-# @primary_key(primary_key=["id"])
-# def create_prm_nodes(prm_nodes: pd.DataFrame) -> pd.DataFrame:
-#     """Function to create a primary nodes that contains only new nodes introduced by the source."""
-#     # `new_id` signals that the node should be added to the KG as a new id
-#     # we drop the original ID from the spreadsheat, and leverage the new_id as the final id
-#     # in the dataframe. We only retain nodes where the new_id is set
-#     res = (
-#         prm_nodes[prm_nodes["normalized_curie"].notna()]
-#         .drop(columns="ID")
-#         .rename(columns={"normalized_curie": "id"})
-#         .drop_duplicates("id")
-#     )
-#     res["category"] = "biolink:" + prm_nodes["entity label"]
-#     return res
-
-
-# @has_schema(
-#     schema={
-#         "subject": "object",
-#         "predicate": "object",
-#         "object": "object",
-#         "knowledge_source": "object",
-#     },
-#     allow_subset=True,
-# )
-# @primary_key(primary_key=["subject", "predicate", "object"])
-# def create_prm_edges(int_edges: pd.DataFrame) -> pd.DataFrame:
-#     """Function to create a primary edges dataset by filtering and renaming columns."""
-#     # Replace empty strings with nan
-#     res = int_edges.rename(columns={"SourceId": "subject", "TargetId": "object", "Label": "predicate"}).dropna(
-#         subset=["subject", "object"]
-#     )
-
-#     res["predicate"] = "biolink:" + res["predicate"]
-#     res["knowledge_source"] = "ec:medical"
-
-#     return res
+    return res
 
 
 # @has_schema(
