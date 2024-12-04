@@ -63,5 +63,21 @@ def create_pipeline(**kwargs) -> Pipeline:
                 name="ingest_robokop_edges",
                 tags=["robokop"],
             ),
+            # spoke
+            argo_node(
+                func=lambda x: x,
+                inputs=["ingestion.raw.spoke.nodes@spark"],
+                outputs="ingestion.int.spoke.nodes",
+                name="ingest_spoke_nodes",
+                tags=["spoke"],
+            ),
+            argo_node(
+                # FUTURE: Update selection
+                func=lambda x: x,
+                inputs=["ingestion.raw.spoke.edges@spark"],
+                outputs="ingestion.int.spoke.edges",
+                name="ingest_spoke_edges",
+                tags=["spoke"],
+            ),
         ]
     )
