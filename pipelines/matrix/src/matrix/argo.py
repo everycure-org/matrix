@@ -9,6 +9,8 @@ from kedro.pipeline import Pipeline
 from kedro.pipeline.node import Node
 
 from matrix.kedro4argo_node import ArgoNode, ArgoResourceConfig
+from utils import get_git_sha, is_git_dirty
+
 
 ARGO_TEMPLATE_FILE = "argo_wf_spec.tmpl"
 ARGO_TEMPLATES_DIR_PATH = Path(__file__).parent.parent.parent / "templates"
@@ -33,6 +35,8 @@ def generate_argo_config(
     template_env = Environment(loader=loader, trim_blocks=True, lstrip_blocks=True)
     template = template_env.get_template(ARGO_TEMPLATE_FILE)
     pipeline_tasks = get_dependencies(fuse(pipeline), default_execution_resources)
+    git_sha = get_git_sha()
+    is_dirty = is_git_dirty()
 
     # TODO: After it is possible to configure resources on node level, remove the use_gpus flag.
     output = template.render(
@@ -46,6 +50,8 @@ def generate_argo_config(
         run_name=run_name,
         release_version=release_version,
         release_folder_name=release_folder_name,
+        git_sha=git_sha,
+        is_dirty=is_dirty,
         default_execution_resources=default_execution_resources.model_dump(),
     )
 
