@@ -310,7 +310,7 @@ ingestion.raw.spoke.nodes@pandas:
 ingestion.raw.spoke.edges@spark:
   <<: *_layer_raw
   type: matrix.datasets.gcp.LazySparkDataset
-  filepath: ${globals:paths.kg_raw}/KGs/robokop-kg/${globals:data_sources.spoke.version}/edges.tsv
+  filepath: ${globals:paths.kg_raw}/KGs/spoke/${globals:data_sources.spoke.version}/edges.tsv
   file_format: csv
   load_args:
     sep: "\t"
