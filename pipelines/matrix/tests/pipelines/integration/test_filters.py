@@ -1,14 +1,13 @@
 import pandas as pd
 import pytest
-
 from matrix.pipelines.integration import filters
-
-from pyspark.testing import assertDataFrameEqual
 from pyspark.sql.types import ArrayType, StringType, StructField, StructType
+from pyspark.testing import assertDataFrameEqual
 
 
 @pytest.fixture
 def sample_predicates():
+    # These are explicitly using snake_case
     return [
         {
             "name": "related_to",
@@ -21,6 +20,21 @@ def sample_predicates():
                         {"name": "broad_match", "parent": "related_to_at_concept_level"},
                     ],
                 },
+            ],
+        }
+    ]
+
+
+@pytest.fixture
+def sample_biolink_categories():
+    # as returned from biolink-api
+    return [
+        {
+            "name": "NamedThing",
+            "parent": None,
+            "children": [
+                {"name": "chemical_entity"},
+                {"name": "drug"},
             ],
         }
     ]
@@ -63,15 +77,16 @@ def sample_edges(spark):
 
 @pytest.fixture
 def sample_nodes(spark):
+    # Note these are explicitly using PascalCase
     return spark.createDataFrame(
         [
             (
                 "CHEBI:001",
-                ["biolink:related_to", "biolink:composed_primarily_of"],
+                ["biolink:NamedThing", "biolink:Drug"],
             ),
             (
                 "CHEBI:002",
-                ["biolink:related_to", "biolink:related_to_at_concept_level", "biolink:broad_match"],
+                ["biolink:NamedThing", "biolink:ChemicalEntity"],
             ),
         ],
         schema=StructType(
@@ -87,7 +102,7 @@ def test_unnest(sample_predicates):
     # Given an input dictionary of hierarchical predicate definition
 
     # When calling the unnest function
-    result = filters.unnest_biolink_hierarchy("predicate", sample_predicates, parents=[])
+    result = filters.unnest_biolink_hierarchy("predicate", sample_predicates, convert_to_pascal_case=False, parents=[])
     expected = pd.DataFrame(
         [
             ["composed_primarily_of", ["related_to"]],
@@ -104,7 +119,7 @@ def test_unnest(sample_predicates):
 
 def test_biolink_deduplicate(spark, sample_edges, sample_predicates):
     # When applying the biolink deduplicate
-    result = filters.biolink_deduplicate(sample_edges, sample_predicates)
+    result = filters.biolink_deduplicate_edges(sample_edges, sample_predicates)
     expected = spark.createDataFrame(
         [
             (
@@ -135,18 +150,18 @@ def test_biolink_deduplicate(spark, sample_edges, sample_predicates):
     assertDataFrameEqual(result.select(*expected.columns), expected)
 
 
-def test_determine_most_specific_category(spark, sample_nodes, sample_predicates):
+def test_determine_most_specific_category(spark, sample_nodes, sample_biolink_categories):
     # When applying the biolink deduplicate
-    result = filters.determine_most_specific_category(sample_nodes, sample_predicates)
+    result = filters.determine_most_specific_category(sample_nodes, sample_biolink_categories)
     expected = spark.createDataFrame(
         [
             (
                 "CHEBI:001",
-                "biolink:composed_primarily_of",
+                "biolink:Drug",
             ),
             (
                 "CHEBI:002",
-                "biolink:broad_match",
+                "biolink:ChemicalEntity",
             ),
         ],
         schema=StructType(
@@ -158,3 +173,12 @@ def test_determine_most_specific_category(spark, sample_nodes, sample_predicates
     )
 
     assertDataFrameEqual(result.select(*expected.columns), expected)
+
+
+def test_pascal_case():
+    assert filters.to_pascal_case("related_to") == "RelatedTo"
+    assert filters.to_pascal_case("related_to_at_concept_level") == "RelatedToAtConceptLevel"
+    assert filters.to_pascal_case("composed_primarily_of") == "ComposedPrimarilyOf"
+    assert filters.to_pascal_case("broad_match") == "BroadMatch"
+    assert filters.to_pascal_case("named_thing") == "NamedThing"
+    assert filters.to_pascal_case("entity") == "Entity"

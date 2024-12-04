@@ -1,0 +1,3 @@
+embeddings.topological_estimator:
+    # NOTE: Grabs num CPUs from env, this is supplied by Argo
+    concurrency: ${oc.int:${oc.env:NUM_CPU, 16}}

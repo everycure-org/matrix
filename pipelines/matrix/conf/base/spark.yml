@@ -1,10 +1,9 @@
 spark.sql.execution.arrow.pyspark.enabled: true
-spark.sql.adaptive.coalescePartitions.enabled: false # NOTE: Do not coalesce partitions
 spark.scheduler.mode: FAIR
 spark.driver.memory: 30g
 # only using this due to 
 # https://github.com/fsspec/gcsfs/issues/632
-spark.driver.maxResultSize: 8g
+spark.driver.maxResultSize: 12g
 
 # FUTURE: Use Maven based dependency when fixed
 # https://github.com/GoogleCloudDataproc/hadoop-connectors/issues/1233#issuecomment-2262873434

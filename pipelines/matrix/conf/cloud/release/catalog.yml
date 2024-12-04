@@ -1,25 +1,14 @@
 _bigquery_ds: &_bigquery_ds
-  type: matrix.datasets.gcp.BigQueryTableDataset
+  type: matrix.datasets.gcp.SparkDatasetWithBQExternalTable
   project_id: ${oc.env:GCP_PROJECT_ID}
-
-# -------------------------------------------------------------------------
-# Datasets
-# -------------------------------------------------------------------------
-
-# overwriting the base catalog to use the bigquery datasets
-data_release.prm.bigquery_nodes:
-  <<: *_bigquery_ds
   dataset: release_${globals:versions.release}
-  table: nodes
-  save_args: 
-    temporaryGcsBucket: ${globals:gcs_bucket}
-    bigQueryTableLabel.kg: everycure
-    bigQueryTableLabel.git_sha: ${globals:git_sha}
+  file_format: parquet
+  save_args:
+    mode: overwrite
+    labels:
+      git_sha: ${globals:git_sha}
 
-data_release.prm.bigquery_edges:
+data_release.feat.nodes_with_embeddings:
   <<: *_bigquery_ds
-  dataset: release_${globals:versions.release}
-  table: edges
-  save_args: 
-    temporaryGcsBucket: ${globals:gcs_bucket}
-    bigQueryTableLabel.kg: everycure
+  filepath: ${globals:paths.release}/feat/nodes_with_embeddings
+  table: nodes_with_embeddings
