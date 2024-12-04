@@ -2,9 +2,9 @@ name: Release
 on:
   push:
     branches:
-      - 'feat/trigger-release-from-gh-action'  # TODO: replace by manual trigger and repository_dispatch
-  # pull_request_review:
-  #   types: [submitted]
+      - 'feat/trigger-release-from-gh-action' 
+  pull_request_review:
+    types: [submitted]
 
 jobs:
 #   2nd workflow (gets triggered once PR is approved)
@@ -12,14 +12,14 @@ jobs:
 #   1. gh release create <TAG FROM ABOVE> -F docs/src/releases/posts/.../post.md (edited)
 #   2. How do we automate writing the article? Slack notifications?
 
-  # approved:
-  #   if: github.event.review.state == 'approved'
-  #   runs-on: ubuntu-latest
-  #   name: PR approval
+  approved:
+    if: github.event.review.state == 'approved' && contains(github.event.pull_request.labels.*.name, 'Release')
+    runs-on: ubuntu-latest
+    name: PR approval
 
-  #   steps:
-  #     - name: "check the PR state"
-  #       run: echo "The release PR was approved"
+    steps:
+      - name: "check the PR state"
+        run: echo "The release PR was approved"
 
   create_release:
     # needs: [approved]
@@ -35,3 +35,4 @@ jobs:
         working-directory: docs/src/releases/posts
         run: |
           ls
+          
