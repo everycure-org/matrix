@@ -10,6 +10,8 @@ spec:
       run: {% raw %}'{{ workflow.parameters.run_name }}'
       {% endraw %}
       username: "{{ username }}"
+      pipeline_name: "{{ pipeline_name }}"
+      release_version: "{{ release_version }}"
   entrypoint: "pipeline"
   arguments:
     parameters:
