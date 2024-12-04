@@ -1,8 +1,10 @@
+# app.py
+# source "$(find "$(git rev-parse --show-toplevel)" -type f -name 'activate' -path '*/bin/activate' | head -n 1)"
+
 import os
-import pickle
-import pandas as pd
+import polars as pl
 import numpy as np
-import plotly.express as px
+import plotly.graph_objects as go
 from dash import Dash, dcc, html, Input, Output
 import dash_bootstrap_components as dbc
 from sklearn.decomposition import PCA
@@ -13,6 +15,10 @@ import re
 import subprocess
 import glob
 import scipy.linalg
+import multiprocessing as mp
+import joblib
+import dash_table
+import pandas as pd
 
 app = Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
 
@@ -74,7 +80,7 @@ app.layout = dbc.Container(
                         html.H1("Node Embedding Visualization"),
                         html.P("Visualize embeddings from different models and datasets."),
                     ],
-                    width=16,
+                    width=12,
                 )
             ]
         ),
@@ -256,12 +262,30 @@ app.layout = dbc.Container(
                             id="cosine-threshold",
                             min=0.0,
                             max=1.0,
-                            step=0.01,
-                            value=0.92,
+                            step=0.001,
+                            value=0.96,
                             marks={i / 10: str(i / 10) for i in range(0, 11)},
                         ),
                     ],
-                    width=4,
+                    width=12,
+                ),
+            ]
+        ),
+        dbc.Row(
+            [
+                dbc.Col(
+                    [
+                        dbc.Label("Number of Top Matches"),
+                        dcc.Slider(
+                            id="num-top-matches",
+                            min=1,
+                            max=50,
+                            step=1,
+                            value=10,
+                            marks={i: str(i) for i in range(1, 51, 5)},
+                        ),
+                    ],
+                    width=12,
                 ),
             ]
         ),
@@ -271,6 +295,50 @@ app.layout = dbc.Container(
                     [dcc.Loading(id="loading-embedding-plot", type="default", children=dcc.Graph(id="embedding-plot"))],
                     width=12,
                 )
+            ]
+        ),
+        dbc.Row(
+            [
+                dbc.Col(
+                    [
+                        html.H2("Top Positive Matches"),
+                        dash_table.DataTable(
+                            id="positive-matches-table",
+                            columns=[
+                                {"name": "Label1", "id": "Label1"},
+                                {"name": "Label2", "id": "Label2"},
+                                {
+                                    "name": "Cosine Similarity",
+                                    "id": "Cosine Similarity",
+                                    "type": "numeric",
+                                    "format": {"specifier": ".4f"},
+                                },
+                            ],
+                            data=[],
+                        ),
+                    ],
+                    width=6,
+                ),
+                dbc.Col(
+                    [
+                        html.H2("Top Negative Matches"),
+                        dash_table.DataTable(
+                            id="negative-matches-table",
+                            columns=[
+                                {"name": "Label1", "id": "Label1"},
+                                {"name": "Label2", "id": "Label2"},
+                                {
+                                    "name": "Cosine Similarity",
+                                    "id": "Cosine Similarity",
+                                    "type": "numeric",
+                                    "format": {"specifier": ".4f"},
+                                },
+                            ],
+                            data=[],
+                        ),
+                    ],
+                    width=6,
+                ),
             ]
         ),
         dcc.Store(id="embedding-data-store"),
@@ -302,6 +370,15 @@ def toggle_num_clusters(enable_clustering):
     return not bool(enable_clustering)
 
 
+def load_seed_data(args):
+    emb_file, lbl_file, sim_file, sample_type = args
+    emb = joblib.load(emb_file)
+    lbl = joblib.load(lbl_file)
+    sim = joblib.load(sim_file)
+    sample_type_str = "Positive" if sample_type == "_positive" else "Negative"
+    return emb, lbl, sample_type_str, sim
+
+
 @app.callback(
     Output("embedding-data-store", "data"),
     [
@@ -316,6 +393,7 @@ def reload_embeddings(category_name, dataset_name, embedding_method):
     sample_types = []
     similarities = []
 
+    args_list = []
     for sample_type in ["_positive", "_negative"]:
         embeddings_pattern = os.path.join(
             cache_dir,
@@ -337,21 +415,33 @@ def reload_embeddings(category_name, dataset_name, embedding_method):
         label_files = glob.glob(labels_pattern)
         sim_files = glob.glob(sim_pattern)
 
-        for emb_file, lbl_file, sim_file in zip(embedding_files, label_files, sim_files):
-            with open(emb_file, "rb") as f:
-                emb = pickle.load(f)
-            with open(lbl_file, "rb") as f:
-                lbl = pickle.load(f)
-            with open(sim_file, "rb") as f:
-                sim = pickle.load(f)
-            embeddings.append(emb)
-            labels.extend(lbl)
-            sample_type_str = "Positive" if sample_type == "_positive" else "Negative"
-            sample_types.extend([sample_type_str] * len(lbl))
-            similarities.append(sim)
+        def extract_seed(file_path):
+            match = re.search(r"seed_(\d+)", file_path)
+            return match.group(1) if match else None
 
-    if not embeddings:
+        embedding_files_dict = {extract_seed(f): f for f in embedding_files}
+        label_files_dict = {extract_seed(f): f for f in label_files}
+        sim_files_dict = {extract_seed(f): f for f in sim_files}
+
+        common_seeds = set(embedding_files_dict.keys()) & set(label_files_dict.keys()) & set(sim_files_dict.keys())
+
+        for seed in common_seeds:
+            emb_file = embedding_files_dict[seed]
+            lbl_file = label_files_dict[seed]
+            sim_file = sim_files_dict[seed]
+            args_list.append((emb_file, lbl_file, sim_file, sample_type))
+
+    if not args_list:
         return {}
+
+    with mp.Pool(processes=mp.cpu_count()) as pool:
+        results = pool.map(load_seed_data, args_list)
+
+    for emb, lbl, sample_type_str, sim in results:
+        embeddings.append(emb)
+        labels.extend(lbl)
+        sample_types.extend([sample_type_str] * len(lbl))
+        similarities.append(sim)
 
     embeddings = np.vstack(embeddings)
     similarities = scipy.linalg.block_diag(*similarities)
@@ -413,43 +503,160 @@ def update_plot(
             embeddings_2d = embeddings
         reduced_embeddings_cache[cache_key] = embeddings_2d
 
-    df_plot = pd.DataFrame(
-        {"x": embeddings_2d[:, 0], "y": embeddings_2d[:, 1], "label": labels, "Sample Type": sample_types}
+    df_plot = pl.DataFrame(
+        {
+            "x": embeddings_2d[:, 0],
+            "y": embeddings_2d[:, 1],
+            "label": labels,
+            "Sample Type": sample_types,
+        }
     )
 
     if enable_clustering:
         kmeans = KMeans(n_clusters=num_clusters, random_state=42)
-        df_plot["cluster"] = kmeans.fit_predict(embeddings_2d)
+        clusters = kmeans.fit_predict(embeddings_2d)
+        df_plot = df_plot.with_column(pl.Series("cluster", clusters))
         color = "cluster"
     else:
         color = "Sample Type"
 
-    fig = px.scatter(
-        df_plot, x="x", y="y", hover_data=None, custom_data=["label"], color=color, labels={"x": "", "y": ""}
-    )
-    fig.update_traces(hovertemplate="%{customdata[0]}", marker=dict(size=point_size))
-    fig.update_layout(
-        title="Embeddings Visualization",
-        hovermode="closest",
-        hoverlabel=dict(align="left", font_size=12, bgcolor="rgba(255, 255, 255, 0.2)"),
-        plot_bgcolor="rgba(0,0,0,0)",
-        xaxis=dict(showgrid=False),
-        yaxis=dict(showgrid=False),
+    df_plot_pd = df_plot.to_pandas()
+
+    if color == "cluster":
+        color_values = df_plot_pd["cluster"].tolist()
+        marker_color = color_values
+        marker_colorscale = "Viridis"
+        colorbar = dict(title="Cluster")
+        # showlegend = False
+    else:
+        color_map = {"Positive": "blue", "Negative": "red"}
+        marker_color = df_plot_pd["Sample Type"].map(color_map).fillna("gray").tolist()
+        marker_colorscale = None
+        colorbar = None
+        # showlegend = True
+
+    scatter = go.Scattergl(
+        x=df_plot_pd["x"],
+        y=df_plot_pd["y"],
+        mode="markers",
+        marker=dict(
+            size=point_size,
+            color=marker_color,
+            colorscale=marker_colorscale,
+            showscale=bool(marker_colorscale),
+            colorbar=colorbar,
+            line=dict(width=0),
+            opacity=0.8,
+        ),
+        text=df_plot_pd["label"],
+        hovertemplate="%{text}",
+        customdata=df_plot_pd["label"],
     )
 
+    fig = go.Figure(data=[scatter])
+
+    # Add lines for similarities
     indices = np.where(similarities >= cosine_threshold)
     x0 = embeddings_2d[indices[0], 0]
     y0 = embeddings_2d[indices[0], 1]
     x1 = embeddings_2d[indices[1], 0]
     y1 = embeddings_2d[indices[1], 1]
-    lines = []
+    lines_x = []
+    lines_y = []
     for xi0, yi0, xi1, yi1 in zip(x0, y0, x1, y1):
         if xi0 == xi1 and yi0 == yi1:
             continue
-        lines.append(dict(type="line", x0=xi0, y0=yi0, x1=xi1, y1=yi1, line=dict(color="gray", width=0.5)))
-    fig.update_layout(shapes=lines)
+        lines_x.extend([xi0, xi1, None])
+        lines_y.extend([yi0, yi1, None])
+
+    fig.add_trace(
+        go.Scattergl(
+            x=lines_x,
+            y=lines_y,
+            mode="lines",
+            line=dict(color="gray", width=0.5),
+            hoverinfo="none",
+            showlegend=False,
+        )
+    )
+
+    fig.update_layout(
+        title="Embeddings Visualization",
+        hovermode="closest",
+        hoverlabel=dict(align="left", font_size=12, bgcolor="rgba(255, 255, 255, 0.8)"),
+        plot_bgcolor="rgba(0,0,0,0)",
+        xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
+        yaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
+        margin=dict(l=0, r=0, t=40, b=0),
+    )
 
     return fig
+
+
+@app.callback(
+    [
+        Output("positive-matches-table", "data"),
+        Output("negative-matches-table", "data"),
+    ],
+    [
+        Input("embedding-data-store", "data"),
+        Input("cosine-threshold", "value"),
+        Input("num-top-matches", "value"),
+    ],
+)
+def update_tables(embedding_data_store, cosine_threshold, num_top_matches):
+    if not embedding_data_store:
+        return [], []
+
+    similarities = np.array(embedding_data_store["similarities"])
+    labels = embedding_data_store["labels"]
+    sample_types = embedding_data_store["sample_type"]
+
+    n_samples = similarities.shape[0]
+    upper_tri_indices = np.triu_indices(n_samples, k=1)  # Exclude diagonal
+
+    sim_upper = similarities[upper_tri_indices]
+
+    mask = sim_upper >= cosine_threshold
+
+    i_indices = upper_tri_indices[0][mask]
+    j_indices = upper_tri_indices[1][mask]
+
+    labels_i = np.array(labels)[i_indices]
+    labels_j = np.array(labels)[j_indices]
+    sample_types_i = np.array(sample_types)[i_indices]
+    sample_types_j = np.array(sample_types)[j_indices]
+    similarities_selected = sim_upper[mask]
+
+    positive_mask = np.logical_and(sample_types_i == "Positive", sample_types_j == "Positive")
+    negative_mask = np.logical_and(sample_types_i == "Negative", sample_types_j == "Negative")
+
+    positive_matches = pd.DataFrame(
+        {
+            "Label1": labels_i[positive_mask],
+            "Label2": labels_j[positive_mask],
+            "Cosine Similarity": similarities_selected[positive_mask],
+        }
+    )
+
+    negative_matches = pd.DataFrame(
+        {
+            "Label1": labels_i[negative_mask],
+            "Label2": labels_j[negative_mask],
+            "Cosine Similarity": similarities_selected[negative_mask],
+        }
+    )
+
+    # Sort and select top N matches
+    N = num_top_matches
+    positive_matches = positive_matches.sort_values(by="Cosine Similarity", ascending=False).head(N)
+    negative_matches = negative_matches.sort_values(by="Cosine Similarity", ascending=False).head(N)
+
+    # Convert to dictionaries for Dash DataTable
+    positive_matches_dict = positive_matches.to_dict("records")
+    negative_matches_dict = negative_matches.to_dict("records")
+
+    return positive_matches_dict, negative_matches_dict
 
 
 if __name__ == "__main__":
