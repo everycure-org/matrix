@@ -17,6 +17,20 @@ locals {
     spot               = false
     }
   ]
+  n2d_node_pools = [for size in [32, 48, 64] : {
+    name               = "n2d-highmem-${size}-nodes"
+    machine_type       = "n2d-highmem-${size}"
+    node_locations     = local.default_node_locations
+    min_count          = 0
+    max_count          = 5
+    local_ssd_count    = 0
+    disk_size_gb       = 400
+    enable_gcfs        = true
+    enable_gvnic       = true
+    initial_node_count = 0
+    }
+  ]
+
 
   standard_node_pools = [for size in [4, 8, 16, 32, 48, 64] : {
     name               = "n2-standard-${size}-nodes"
@@ -50,7 +64,7 @@ locals {
     },
   ]
 
-  node_pools_combined = concat(local.standard_node_pools, local.mem_node_pools, local.gpu_node_pools)
+  node_pools_combined = concat(local.standard_node_pools, local.mem_node_pools, local.gpu_node_pools, local.n2d_node_pools)
 }
 
 # docs here https://registry.terraform.io/modules/terraform-google-modules/kubernetes-engine/google/latest/submodules/private-cluster
