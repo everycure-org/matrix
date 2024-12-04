@@ -74,5 +74,3 @@ jobs:
 #          --draft \
 #          --dry-run \
 #          --label Release
-
-
