@@ -8,6 +8,7 @@ import typer
 from matrix_cli.components.cache import memory
 from rich.console import Console
 from tenacity import retry, stop_after_attempt, wait_exponential
+import traceback
 
 console = Console()
 
@@ -34,11 +35,25 @@ def get_git_root() -> str:
 @memory.cache()
 @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=4, max=120))
 def invoke_model(prompt: str, model: str, generation_config: "GenerationConfig" = None) -> str:
-    model_object = load_vertex_model(model)
-    console.print(f"[bold green] Calling Gemini with a prompt of length: {len(prompt)} characters")
-    response = model_object.generate_content(prompt, generation_config=generation_config).text
-    console.print(f"[bold green] Response received. Total length: {len(response)} characters")
-    return response
+    # model_object = load_vertex_model(model)
+    # console.print(f"[bold green] Calling Gemini with a prompt of length: {len(prompt)} characters")
+    # response = model_object.generate_content(prompt, generation_config=generation_config).text
+    # console.print(f"[bold green] Response received. Total length: {len(response)} characters")
+    # return response
+    try:
+        model_object = load_vertex_model(model)
+        console.print(f"[bold green] Calling Gemini with a prompt of length: {len(prompt)} characters")
+        response = model_object.generate_content(prompt, generation_config=generation_config).text
+        console.print(f"[bold green] Response received. Total length: {len(response)} characters")
+        return response
+    except Exception as e:
+        # Capture the traceback as a string
+        error_message = traceback.format_exc()
+        # Print the error to the console
+        console.print(f"[bold red]Error in invoke_model: {e}")
+        console.print(f"[bold red]{error_message}")
+        # Re-raise the exception
+        raise
 
 
 def get_markdown_contents(folder_path: Path | str) -> str:
