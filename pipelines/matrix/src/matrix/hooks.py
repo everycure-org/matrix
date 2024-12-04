@@ -1,22 +1,20 @@
-from kedro.framework.hooks import hook_impl
-from pyspark import SparkConf
-import os
-from pyspark.sql import SparkSession
-from kedro.pipeline.node import Node
-from datetime import datetime
-from typing import Any, Optional, Dict
-import pandas as pd
-import termplotlib as tpl
-from omegaconf import OmegaConf
 import logging
+import os
+from datetime import datetime
+from typing import Any, Dict, Optional
 
 import mlflow
-from mlflow.exceptions import RestException
-
+import pandas as pd
+import termplotlib as tpl
 from kedro.framework.context import KedroContext
+from kedro.framework.hooks import hook_impl
 from kedro.io.data_catalog import DataCatalog
+from kedro.pipeline.node import Node
 from kedro_datasets.spark import SparkDataset
-
+from mlflow.exceptions import RestException
+from omegaconf import OmegaConf
+from pyspark import SparkConf
+from pyspark.sql import SparkSession
 
 logger = logging.getLogger(__name__)
 
@@ -75,9 +73,13 @@ class MLFlowHooks:
         )
 
         if not runs:
-            with mlflow.start_run(run_name=run_name, experiment_id=experiment_id) as run:
-                mlflow.set_tag("created_by", "kedro")
-                return run.info.run_id
+            logger.info("creating run")
+            run = mlflow.start_run(run_name=run_name, experiment_id=experiment_id)
+            mlflow.set_tag("created_by", "kedro")
+            return run.info.run_id
+        else:
+            mlflow.start_run(run_id=runs[0].info.run_id, nested=True)
+            logger.info("run already exists, re-using")
 
         return runs[0].info.run_id
 

@@ -1,11 +1,14 @@
 import pandas as pd
-
+from data_fabricator.v0.nodes.fabrication import fabricate_datasets
 from kedro.pipeline import Pipeline, node, pipeline
 
-from data_fabricator.v0.nodes.fabrication import fabricate_datasets
 
-
-def _create_pairs(drug_list: pd.DataFrame, disease_list: pd.DataFrame, num: int = 50, seed: int = 42) -> pd.DataFrame:
+def _create_pairs(
+    drug_list: pd.DataFrame,
+    disease_list: pd.DataFrame,
+    num: int = 100,
+    seed: int = 42,
+) -> pd.DataFrame:
     """Create 2 sets of random drug-disease pairs. Ensures no duplicate pairs.
 
     Args:
@@ -18,6 +21,9 @@ def _create_pairs(drug_list: pd.DataFrame, disease_list: pd.DataFrame, num: int 
         Two dataframes, each containing 'num' unique drug-disease pairs.
     """
     is_enough_generated = False
+
+    attempt = 0
+
     while not is_enough_generated:
         # Sample random pairs (we sample twice the required amount in case duplicates are removed)
         random_drugs = drug_list["curie"].sample(num * 4, replace=True, ignore_index=True, random_state=seed)
@@ -32,9 +38,9 @@ def _create_pairs(drug_list: pd.DataFrame, disease_list: pd.DataFrame, num: int 
         df = df.drop_duplicates()
 
         # Check that we still have enough fabricated pairs
-        is_enough_generated = len(df) >= 2 * num
+        is_enough_generated = len(df) >= num or attempt > 100
+        attempt += 1
 
-    # split df in half and return two df
     return df[:num], df[num : 2 * num]
 
 
@@ -80,8 +86,8 @@ def create_pipeline(**kwargs) -> Pipeline:
                     "ingestion.raw.disease_list@pandas",
                 ],
                 outputs=[
-                    "modelling.raw.ground_truth.positives",
-                    "modelling.raw.ground_truth.negatives",
+                    "modelling.raw.ground_truth.positives@pandas",
+                    "modelling.raw.ground_truth.negatives@pandas",
                 ],
                 name="create_gn_pairs",
             ),

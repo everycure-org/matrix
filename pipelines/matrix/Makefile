@@ -5,22 +5,19 @@ export PYSPARK_PYTHON = .venv/bin/python
 export UV_PYTHON = .venv/bin/python
 export TQDM_DISABLE ?= 1
 TARGET_PLATFORM ?= linux/amd64
+PREREQUISITES := docker gcloud python3 java uv
 
 # ensures all make targets run in one shell (rather than line by line in new shell)
 .ONESHELL: 
-
 
 default: install fast_test compose_down integration_test
 	echo "done!"
 
 prerequisites:
-	@command -v docker >/dev/null 2>&1 || { echo "Error: docker is not installed." >&2; exit 1; }
-	@command -v gcloud >/dev/null 2>&1 || { echo "Error: gcloud is not installed." >&2; exit 1; }
-	@command -v python3 >/dev/null 2>&1 || { echo "Error: python3 is not installed." >&2; exit 1; }
-	@command -v java >/dev/null 2>&1 || { echo "Error: java is not installed." >&2; exit 1; }
-	@command -v uv >/dev/null 2>&1 || { echo "Error: uv is not installed." >&2; exit 1; }
-	@echo "All prerequisites are installed."
-
+	$(info Checking if prerequisites are installed...)
+	$(foreach exec,$(PREREQUISITES),\
+        $(if $(shell command -v $(exec) 2>/dev/null),,$(error "$(exec) is not installed.")))
+	$(info All prerequisites are installed.)
 
 venv: prerequisites
 	if [ ! -d .venv ]; then uv venv -p 3.11; fi
@@ -29,10 +26,9 @@ venv: prerequisites
 install: venv precommit-hooks
 	uv pip install -r requirements.txt #force it to install in our venv
 
-
 precommit: precommit-hooks
 	git fetch origin
-	uv run pre-commit run -s origin/main -o HEAD
+	uv run pre-commit run --from-ref origin/main --to-ref HEAD
 
 precommit-hooks:
 	uv pip install pre-commit 
@@ -97,6 +93,45 @@ licenses_container: docker_build
 clean:
 	@echo "cleaning various cache locations to ensure clean installation is possible"
 	@echo "this may be necessary e.g. when updating one of our local packages"
+	uv run pre-commit clean
 	rm -rf .pytest_cache .venv
-	rm -rf $(uv cache dir) ~/.cache/pre-commit
+	uv cache clean
 	docker volume prune -f
+
+diagnostics:
+	echo "Collecting system diagnostics..."
+	echo "Operating System:"
+	-uname -a
+	echo "\nDocker Version:"
+	-docker --version || echo "Docker is not installed."
+	echo "\nDocker Disk Usage:"
+	-docker system df || echo "Docker is not installed or not running."
+	echo "\nDocker Memory and CPU Usage:"
+	-docker stats --no-stream || echo "Docker is not installed or not running."
+	echo "\nGCloud Version:"
+	-gcloud --version || echo "GCloud is not installed."
+	echo "\nJava Version:"
+	-java -version || echo "Java is not installed."
+	echo "\nUV Version:"
+	-uv --version || echo "UV is not installed."
+	echo "\nCheck Virtual Environment (if applicable):"
+	-uv run which python || echo "Python is not in PATH."
+	echo "\nPython Version:"
+	-uv run python3 --version || echo "Python is not installed."
+	echo "\nSystem Information:"
+	-uv run python -c "import platform; print(platform.uname())"
+	echo "\nInstalled Python Packages:"
+	-uv run pip freeze || echo "pip is not installed or no packages found."
+	echo "\nEnvironment Variables (related to Python):"
+	-uv run printenv | grep PYTHON || echo "No Python-related environment variables found."
+	echo "\nMemory & CPU Usage:"
+	-uv run python -c "import psutil; print(psutil.virtual_memory(), psutil.cpu_percent())" || echo "psutil is not installed."
+	echo "\nJAVA_HOME"
+	-printenv JAVA_HOME
+	echo "\nSPARK_HOME"
+	-printenv SPARK_HOME
+	echo "\nDisk Space:"
+	-df -h
+	echo "\nDiagnostics complete."
+
+# NOTE: This Makefile target was partially generated using AI assistance.
