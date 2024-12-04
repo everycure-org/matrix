@@ -1,25 +1,25 @@
-name: Release
-on:
-  push:
-    branches:
-      - 'feat/trigger-release-from-gh-action' 
-  pull_request_review:
-    types: [submitted]
-
-jobs:
 #   2nd workflow (gets triggered once PR is approved)
 #   0. figure out tag from most recent folder in docs/src/releases/posts
 #   1. gh release create <TAG FROM ABOVE> -F docs/src/releases/posts/.../post.md (edited)
 #   2. How do we automate writing the article? Slack notifications?
 
-  approved:
-    if: github.event.review.state == 'approved' && contains(github.event.pull_request.labels.*.name, 'Release')
-    runs-on: ubuntu-latest
-    name: PR approval
+name: Release
+on:
+  push:
+    branches:
+      - 'feat/trigger-release-from-gh-action' 
+  # pull_request_review:
+  #   types: [submitted]
 
-    steps:
-      - name: "check the PR state"
-        run: echo "The release PR was approved"
+jobs:
+  # approved:
+  #   if: github.event.review.state == 'approved' && contains(github.event.pull_request.labels.*.name, 'Release')
+  #   runs-on: ubuntu-latest
+  #   name: PR approval
+
+  #   steps:
+  #     - name: "Check the PR state"
+  #       run: echo "The release PR was approved"
 
   create_release:
     # needs: [approved]
@@ -31,8 +31,13 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Fetch latest tag
-        id: fetch_tag
-        working-directory: docs/src/releases/posts
         run: |
-          ls
-          
+          LATEST_TAG=$(git tag --list --sort="v:refname" | tail -n 1)
+          echo "LATEST_TAG=${LATEST_TAG}" >> "$GITHUB_ENV"
+
+      # - name: Create GitHub release
+      #   run: |
+      #     echo "Creating release"
+      #     gh release create "${{ env.LATEST_TAG }}" \
+      #     -F docs/src/releases/posts/"${{ env.LATEST_TAG }}"/post.md \
+      #     -t "Release ${{ env.LATEST_TAG }}"
