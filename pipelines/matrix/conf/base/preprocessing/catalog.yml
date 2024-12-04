@@ -38,32 +38,32 @@ _sheets_dataset: &_sheets_dataset
 preprocessing.raw.nodes:
   <<: [*_layer_raw, *_medical_kg_sheets_dataset]
   load_args:
-    sheet_name: Nodes
-    columns: ["ID", "name", "entity label", "new_id", "curie", "corrected_curie", "normalized_curie", "description"]
+    sheet_name: new_nodes
+    columns: ["ID", "name", "entity label", "new_id", "curie", "description"]
 
 preprocessing.int.nodes:
   <<: [*_layer_int, *_medical_kg_sheets_dataset]
   save_args:
-    sheet_name: Nodes
-    write_columns: ["curie", "normalized_curie"]
+    sheet_name: new_nodes
+    write_columns: ["curie"]
 
   load_args:
-    sheet_name: Nodes
-    columns: ["ID", "name", "entity label", "new_id", "normalized_curie", "description"]
+    sheet_name: new_nodes
+    columns: ["ID", "name", "entity label", "new_id", "curie", "description"]
 
 preprocessing.raw.edges:
   <<: [*_layer_raw, *_medical_kg_sheets_dataset]
   load_args:
-    sheet_name: Edges
+    sheet_name: new_edges
     columns: ["Source", "Target", "Label"]
 
 preprocessing.int.edges:
   <<: [*_layer_prm, *_medical_kg_sheets_dataset]
   save_args:
-    sheet_name: Edges
+    sheet_name: new_edges
     write_columns: ["SourceId", "TargetId", "Included"]
   load_args:
-    sheet_name: Edges
+    sheet_name: new_edges
     columns: ["SourceId", "TargetId", "Label"]
 
 preprocessing.raw.clinical_trials_data:
