@@ -29,11 +29,13 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-tags: true
+          fetch-depth: 0
 
       - name: Fetch latest tag
         run: |
           LATEST_TAG=$(git tag --list --sort="v:refname" | tail -n 1)
-          git tag --list --sort="v:refname" | tail -n 1
           echo "LATEST_TAG=${LATEST_TAG}" >> "$GITHUB_ENV"
           echo "Latest tag is ${LATEST_TAG}"
 
