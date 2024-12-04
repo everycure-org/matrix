@@ -6,10 +6,6 @@ neo4j:
   user: ${oc.env:NEO4J_USER,neo4j}
   password: ${oc.env:NEO4J_PASSWORD,admin}
 
-openai:
-  endpoint: ${oc.env:OPENAI_ENDPOINT, https://api.openai.com/v1}
-  api_key: ${oc.env:OPENAI_API_KEY}
-
 # points at our central GCS_BUCKET where we store our ground truth data
 # Note: Overwrite with WG project ID & bucket if you want to write to a different project's BigQuery
 gcs_bucket: gs://${oc.env:GCP_BUCKET, mtrx-us-central1-hub-dev-storage}
@@ -24,13 +20,13 @@ versions:
 
 data_sources:
   rtx-kg2:
-    version: v2.10.0
+    version: &_rtx_kg_version v2.7.3 #when bumping to 2.10, we should stop to limit PMID for the semmed filtering
   robokop:
     version: c5ec1f282158182f
 # Dataset with node and edge proposals by the
 # EveryCure medical team.
   ec-medical-team:
-    version: 20241016
+    version: 20241031
   # Cleaned clinical trial data from the
   # EveryCure medical team.
   clinical-trial-data:
@@ -42,8 +38,13 @@ data_sources:
     # curl -X GET -H "Content-Type: application/json" -H "Authorization: token PAT" -H "Accept: application/vnd.github.v3.raw" https://api.github.com/repos/everycure-org/matrix-drug-list/releases | jq ".[0].assets | map(select(.name == \"drugList.tsv\"))[0] | .id"
     version: 200891683
   ec-disease-list:
-    version: latest # TODO: We should version
-
+    # NOTE: This is currently the artifact id, as the GitHub API only
+    # allows for downloading an artifact by its id. Get the artifact id
+    # of the latest release as follows:
+    # curl -X GET -H "Content-Type: application/json" -H "Authorization: token PAT" -H "Accept: application/vnd.github.v3.raw" https://api.github.com/repos/everycure-org/matrix-disease-list/releases | jq ".[0].assets | map(select(.name == \"matrix-disease-list.tsv\"))[0] | .id"
+    version: 197752375
+  gt:
+    version: *_rtx_kg_version # NOTE: This is the version of the GT dataset which was developed for rtx-kg2 as a part of KGML-xDTD pipeline
 # NOTE: MLflow does not like "new options" in the mlflow.yml
 # due to schema validation. Will make PR.
 mlflow_artifact_root: null
@@ -59,11 +60,12 @@ paths:
   # Release-based
   integration:        data/releases/${versions.release}/datasets/integration
   embeddings:         data/releases/${versions.release}/datasets/embeddings
+  release:            data/releases/${versions.release}/datasets/release
 
   # Run-based
   modelling:          data/releases/${versions.release}/runs/${run_name}/datasets/modelling
   evaluation:         data/releases/${versions.release}/runs/${run_name}/datasets/evaluation
   matrix_generation:  data/releases/${versions.release}/runs/${run_name}/datasets/matrix_generation
   inference:          data/releases/${versions.release}/runs/${run_name}/datasets/inference
-
+ 
   tmp:                data/tmp
