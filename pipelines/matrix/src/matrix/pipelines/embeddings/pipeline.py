@@ -51,7 +51,7 @@ def create_pipeline(**kwargs) -> Pipeline:
             node(
                 func=nodes.filter_edges_for_topological_embeddings,
                 inputs=[
-                    "embeddings.feat.graph.pca_node_embeddings",
+                    "integration.prm.filtered_nodes",
                     "integration.prm.filtered_edges",
                     "params:modelling.drug_types",
                     "params:modelling.disease_types",
@@ -61,7 +61,9 @@ def create_pipeline(**kwargs) -> Pipeline:
             ),
             # Load spark dataset into local neo instance
             node(
-                func=select,
+                # NOTE: We are only selecting these two categories due to OOM neo4j instance error
+                # which occurs when we select all cols
+                func=lambda x: x.select("id", "pca_embedding"),
                 inputs=["embeddings.feat.graph.pca_node_embeddings"],
                 outputs="embeddings.tmp.input_nodes",
                 name="ingest_neo4j_input_nodes",
