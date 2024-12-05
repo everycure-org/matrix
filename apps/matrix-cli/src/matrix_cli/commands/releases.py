@@ -3,6 +3,7 @@ import platform
 import re
 import subprocess
 import tempfile
+import os
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 from typing import TYPE_CHECKING, List
@@ -51,12 +52,23 @@ def write_release_article(
     headless: bool = typer.Option(
         False, help="Don't ask interactive questions. The most recent release will be automatically used."
     ),
+    notes_file: str = typer.Option(None, help="File containing release notes"),
 ):
     """Write a release article for a given git reference."""
     since = select_release(headless)
 
-    console.print("[green]Collecting release notes...")
-    notes = get_release_notes(since, model=model)
+    if notes_file:
+        if os.path.exists(notes_file):
+            console.print("[green]Loading release notes")
+            with open(notes_file, "r") as f:
+                notes = f.read()
+                console.print("[green]Release notes loaded")
+        else:
+            console.print("[red]Error: Notes file not found.")
+            raise FileNotFoundError(f"Notes file '{notes_file}' does not exist.")
+    else:
+        console.print("[green]Collecting release notes...")
+        notes = get_release_notes(since, model=model)
 
     console.print("[green]Collecting previous articles...")
     previous_articles = get_previous_articles()
