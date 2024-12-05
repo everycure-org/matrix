@@ -288,22 +288,30 @@ ingestion.int.robokop.edges:
 # Drugmech
 # -------------------------------------------------------------------------  
 
-ingestion.raw.drugmech.paths@spark:
+ingestion.pre.drugmech.paths@spark:
   <<: *_layer_raw
   type: matrix.datasets.gcp.LazySparkDataset
-  filepath: drugmech/paths.tsv
+  filepath: ${globals:paths.ingestion}/pre/drugmech/paths.tsv
   file_format: csv
   load_args:
     sep: "\t"
     header: true
     index: false
 
-ingestion.raw.drugmech.paths@pandas:
+ingestion.pre.drugmech.paths@pandas:
   <<: [*_pandas_csv, *_layer_raw]
-  filepath: drugmech/paths.tsv
+  filepath: ${globals:paths.ingestion}/pre/drugmech/paths.tsv
   save_args:
     sep: "\t"
     header: true
     index: false
   load_args:
     sep: "\t"
+
+ingestion.int.drugmech.nodes@spark:
+  <<: [*_spark_parquet, *_layer_int]
+  filepath: ${globals:paths.ingestion}/int/drugmech/nodes
+
+ingestion.int.drugmech.edges@spark:
+  <<: [*_spark_parquet, *_layer_int]
+  filepath: ${globals:paths.ingestion}/int/drugmech/edges
