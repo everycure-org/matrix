@@ -1,0 +1,19 @@
+modelling.mayas_logistic_regression:
+    _overrides:
+
+      model_tuning_args:
+        tuner:
+          object: matrix.pipelines.modelling.tuning.NopTuner
+          estimator:
+            object: sklearn.linear_model.LogisticRegression
+            random_state: ${globals:random_state}
+            max_iter: 1000
+            device: cpu # TODO: Add cuda
+        features: # Features use regex, source_0, source_1, .., target_0, target_1
+          - source_+
+          - target_+
+        target_col_name: y
+          
+    # NOTE: This leverages the custom `merge` resolver to override
+    # the base options with the override block above.
+    model_options: ${merge:${.._model_options},${._overrides}}
