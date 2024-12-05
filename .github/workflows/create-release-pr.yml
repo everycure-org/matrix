@@ -52,13 +52,11 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           if [[ "${{ github.event_name == 'workflow_dispatch' }}" == "true" ]]; then
-            release="${{ inputs.release }}"
+            release=$(echo '${{ toJson(github.event) }}' | jq '.client_payload.release_version')
+            # release="${{ inputs.release }}"
           else
             release="v0.2.6-alpha"
           fi
-          gcloud auth list
-          gcloud config list
-          gcloud auth application-default print-access-token
           echo "$release"
           echo "${GITHUB_ENV}"
           echo "release=${release}" >> "${GITHUB_ENV}"
