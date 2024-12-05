@@ -129,6 +129,8 @@ def filter_unified_kg_edges(
     new_edges_count = edges.count()
     logger.info(f"Number of edges after filtering: {new_edges_count}, cut out {edges_count - new_edges_count} edges")
 
+    breakpoint()
+
     return _apply_transformations(edges, transformations, biolink_predicates=biolink_predicates)
 
 
