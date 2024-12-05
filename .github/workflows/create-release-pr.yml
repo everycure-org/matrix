@@ -52,6 +52,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          gcloud config list account --format "value(core.account)"
           if [[ "${{ github.event_name == 'workflow_dispatch' }}" == "true" ]]; then
             release=$(echo '${{ toJson(github.event) }}' | jq '.client_payload.release_version')
             # release="${{ inputs.release }}"
