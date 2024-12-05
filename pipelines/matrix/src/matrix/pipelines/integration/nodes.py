@@ -1,6 +1,5 @@
 import asyncio
 import logging
-from itertools import chain
 from functools import partial, reduce
 from typing import Any, Callable, Dict, List, Tuple
 
@@ -61,7 +60,7 @@ def union_and_deduplicate_nodes(biolink_categories_df: pd.DataFrame, *nodes) -> 
 
 
 def append_datasets(*datasets):
-    return list(chain(*datasets))
+    return [item for ds in datasets for item in ds]
 
 
 def _union_datasets(

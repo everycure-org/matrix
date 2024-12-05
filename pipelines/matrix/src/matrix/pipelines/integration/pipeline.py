@@ -90,7 +90,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 node(
                     func=nodes.append_datasets,
                     inputs=[
-                        "integration.raw.biolink.categories",
+                        "integration.raw.biolink.predicates",
                         "integration.raw.biolink.associations",
                         "integration.raw.biolink.qualifiers",
                     ],
