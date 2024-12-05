@@ -41,11 +41,11 @@ def known_pairs_fixture() -> pd.DataFrame:
     """Fixture to yield a dummy known pairs dataset."""
     return pd.DataFrame(
         [
-            ["drug:drug_1", "disease:disease_1", 1],
-            ["drug:drug_2", "disease:disease_2", 1],
-            ["drug:drug_3", "disease:disease_2", 1],
+            ["drug:drug_1", "disease:disease_1", 1, [1, 0, 0, 0], [0, 0, 1, 0]],
+            ["drug:drug_2", "disease:disease_2", 1, [0, 1, 0, 0], [0, 0, 0, 1]],
+            ["drug:drug_3", "disease:disease_2", 1, [0, 2, 0, 0], [0, 0, 0, 2]],
         ],
-        columns=["source", "target", "y"],
+        columns=["source", "target", "y", "source_embedding", "target_embedding"],
     )
 
 
@@ -87,7 +87,6 @@ def test_replacement_drug_disease_pair_generator(
     )
 
     known_pairs_split = make_splits(
-        graph,
         known_pairs,
         splitter,
     )
@@ -191,7 +190,7 @@ def test_full_matrix_positives(matrix):
     generated_data = generator.generate(matrix)
     # Then generated data:
     #   - contains only positive pairs
-    #   - has correct 'y', 'rank', and 'quantile_rank' columns
+    #   - has correct 'y', 'rank', and 'non_pos_quantile_rank' columns
     #   - maintains the original order of the matrix
     expected_positives = matrix[matrix["is_positive_1"] | matrix["is_positive_2"]]
     expected_removed = matrix[matrix["is_negative_1"]]
@@ -200,8 +199,12 @@ def test_full_matrix_positives(matrix):
     assert (generated_data["y"] == 1).all()
     assert list(generated_data["source"]) == list(expected_positives["source"])
     assert list(generated_data["target"]) == list(expected_positives["target"])
-    assert {"y", "rank", "quantile_rank"}.issubset(set(generated_data.columns))
+    assert {"y", "rank", "non_pos_rank", "non_pos_quantile_rank"}.issubset(set(generated_data.columns))
     assert generated_data["treat_score"].is_monotonic_decreasing
-    assert (generated_data["quantile_rank"].between(0, 1)).all()
-    # Check that the rank is computed against non-positive non-removed pairs
-    assert generated_data["rank"].between(1, len(matrix) - len(expected_removed) - len(expected_positives) + 1).all()
+    assert (generated_data["non_pos_quantile_rank"].between(0, 1)).all()
+    # Check that the non_pos_rank is computed against non-positive non-removed pairs
+    assert (
+        generated_data["non_pos_rank"]
+        .between(1, len(matrix) - len(expected_removed) - len(expected_positives) + 1)
+        .all()
+    )

@@ -19,14 +19,6 @@ hide:
 
     ---
 
-    Find useful links to EveryCure resources.
-
-    [:octicons-arrow-right-24: Resources](./links/index.md)
-
--   :simple-googlecloud:{ .lg .middle } __Understand the Infrastructure__
-
-    ---
-
     Want to dive deeper into how the infrastructure is provided? Check out our infrastructure documentation!
 
     [:octicons-arrow-right-24: Infrastructure](./infrastructure/index.md)
@@ -45,7 +37,7 @@ hide:
 
     To find documentation specific to the MATRIX project, check this link!
 
-    [:octicons-arrow-right-24: MATRIX](./matrix/index.md)
+    [:octicons-arrow-right-24: MATRIX](./pipeline/index.md)
 
 -   :material-matrix:{ .lg .middle } __Experiment Log__
 
@@ -61,10 +53,40 @@ hide:
 
     This documentation lives through all our contributions. See how to improve it.
 
-    [:octicons-arrow-right-24: Docs Contribution](./contribute/documentation.md)
+    [:octicons-arrow-right-24: Docs Contribution](./onboarding/contribute/documentation.md)
 
 </div>
 
+
+## Useful Links to our resources
+
+Below is a curated list of useful links to various EveryCure resources and tools.
+
+## Infrastructure
+
+- **[EveryCure GCP Dashboard](https://console.cloud.google.com/home/dashboard)**
+- **[EveryCure GCP Vertex AI](https://console.cloud.google.com/vertex-ai)**
+- **[EveryCure GCP BigQuery](https://console.cloud.google.com/bigquery)**
+- **[EveryCure GKE Cluster Dashboard](https://console.cloud.google.com/kubernetes/clusters/details/us-central1/compute-cluster/details?project=mtrx-hub-dev-3of)** – Kubernetes Engine Cluster management for the Matrix platform.
+
+## Tools & Platforms
+
+- **[GitHub Actions](https://github.com/everycure-org/matrix/actions)** – Continuous integration and delivery pipelines.
+- **[ArgoCD](https://argo.platform.dev.everycure.org/workflows/)** – Manage and deploy Kubernetes applications.
+- **[MLFlow](https://mlflow.platform.dev.everycure.org/)** – Experiment tracking and model management for machine learning projects.
+
+## Repositories & Issue Tracking
+
+- **[Matrix Repository](https://github.com/everycure-org/matrix)** – Core project repository for EveryCure's Matrix platform.
+- **[Matrix Issues](https://github.com/everycure-org/matrix/issues)** – Current issues and backlog for the Matrix project.
+- **[Good First Issues Board](https://github.com/everycure-org/matrix/labels/good%20first%20issue)** – Ideal starting issues for new contributors.
+
+
+## Resources - learning
+- **[What is GitOps?](https://www.youtube.com/watch?v=f5EpcWp0THw)**
+- **[ArgoCD Tutorial](https://www.youtube.com/watch?v=MeU5_k9ssrs)**
+- **[Awesome Argo - Argo resources collection](https://github.com/akuity/awesome-argo)**
+- **[Demystifying Argo Workflows: An Architectural Deep Dive](https://www.youtube.com/watch?v=FBRMURQYbgw)**
 
 <!--
 Our technology stack below (1):
@@ -84,3 +106,4 @@ Our shared end to end vision of the pipeline is visualised below:
 ![](./assets/img/mtrx_arch.drawio)
 
 -->
+

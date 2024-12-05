@@ -1,4 +1,26 @@
 integration:
+
+  sources:
+    rtx_kg2:
+      transformer:
+        object: matrix.pipelines.integration.rtxkg2.RTXTransformer
+    # NOTE: Currently disabling robokop integration
+    # robokop: 
+    #   transformer:
+    #     object: matrix.pipelines.integration.robokop.RobokopTransformer
+    ec_medical_team: 
+      transformer:
+        object: matrix.pipelines.integration.medical.MedicalTransformer
+
+  # FUTURE: Ensure we can move this to filters down here
+  preprocessing:
+    rtx:
+      semmed_filters:
+        publication_threshold: 10
+        ngd_threshold: 0.6
+        limit_pmids: 50_000_000 # essentially unlimited, but allows for local clipping if local run is desired
+
+  # FUTURE: Implement strategy to ensure this can be injected in the future
   nodenorm:
     # api_endpoint: https://nodenormalization-sri.renci.org/get_normalized_nodes
     api_endpoint: ${oc.env:NODENORM_ENDPOINT, https://nodenorm.transltr.io/1.5/get_normalized_nodes}
@@ -7,8 +29,40 @@ integration:
     batch_size: 1000
     parallelism: 120
 
-  unification:
-    datasets_to_union:
-      - rtx
-      - medical_team
-      # - robokop # TODO comment out until we have managed to scale the downstream pipeline to 150M edges and 25M nodes
+  filtering:
+    node_filters:
+      filter_node_labels:
+        object: matrix.pipelines.modelling.utils.partial_
+        func:
+          object: matrix.pipelines.integration.filters.remove_rows_containing_category
+        column: category
+        categories:
+        # TODO: We should likely not remove these before our data release stage but afterwards in the modelling pipeline (if the model so desires)
+          - biolink:Activity
+          - biolink:Agent
+          - biolink:ClinicalIntervention
+          - biolink:Cohort
+          - biolink:Device
+          - biolink:EnvironmentalFeature
+          - biolink:EnvironmentalProcess
+          - biolink:Event
+          - biolink:GeographicLocation
+          - biolink:IndividualOrganism
+          - biolink:InformationContentEntity
+          - biolink:InformationResource
+          - biolink:LifeStage
+          - biolink:MaterialSample
+          - biolink:NamedThing
+          - biolink:Phenomenon
+          - biolink:PhysicalEntity
+          - biolink:PopulationOfIndividualOrganisms
+          - biolink:Procedure
+          - biolink:Publication
+          - biolink:Treatment
+          # If you add anything here make sure the fabricator is not generating it, else we remove it
+    edge_filters:
+      # FUTURE: Ensure the semmed filter is moved here instead
+      filter_biolink_edges:
+        object: matrix.pipelines.modelling.utils.partial_
+        func:
+          object: matrix.pipelines.integration.filters.biolink_deduplicate_edges

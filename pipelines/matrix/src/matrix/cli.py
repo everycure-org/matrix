@@ -1,23 +1,18 @@
-"""Command line interface for Matrix project."""
-
 import click
-from kedro.framework.cli.utils import KedroCliError
+from kedro.framework.cli.utils import CONTEXT_SETTINGS, KedroCliError
 
 from matrix.cli_commands.extract import extract
 from matrix.cli_commands.run import run
 from matrix.cli_commands.submit import submit
 
-from kedro.framework.cli.utils import CONTEXT_SETTINGS
-
 
 @click.group(context_settings=CONTEXT_SETTINGS, name=__file__)
 def cli():
-    """Matrix CLI tools."""
     pass
 
 
-# Add the submit command
 cli.add_command(submit)
+
 # Add the run command
 cli.add_command(run)
 # Add the extract command

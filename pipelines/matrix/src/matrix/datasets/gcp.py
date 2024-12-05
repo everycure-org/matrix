@@ -1,6 +1,8 @@
-"""Module with GCP datasets for Kedro."""
-
+import os
+import logging
 import re
+import asyncio
+from tqdm import tqdm
 from copy import deepcopy
 from typing import Any, Optional
 
@@ -8,18 +10,21 @@ import google.api_core.exceptions as exceptions
 import numpy as np
 import pandas as pd
 import pygsheets
-from google.cloud import bigquery
+from google.cloud import bigquery, storage
 from kedro.io.core import (
     AbstractVersionedDataset,
     DatasetError,
     Version,
 )
-from kedro_datasets.spark import SparkDataset
-from kedro_datasets.spark.spark_dataset import _get_spark, _strip_dbfs_prefix
+from kedro_datasets.partitions import PartitionedDataset
+from kedro_datasets.spark import SparkDataset, SparkJDBCDataset
+from kedro_datasets.spark.spark_dataset import _get_spark, _split_filepath, _strip_dbfs_prefix
 from matrix.hooks import SparkHooks
 from pygsheets import Spreadsheet, Worksheet
-from pyspark.sql import DataFrame, SparkSession
+from pyspark.sql import DataFrame
 from refit.v1.core.inject import _parse_for_objects
+
+logger = logging.getLogger(__name__)
 
 
 class LazySparkDataset(SparkDataset):
@@ -75,24 +80,22 @@ class SparkWithSchemaDataset(SparkDataset):
         )
 
 
-class BigQueryTableDataset(SparkDataset):
-    """Dataset to load and save data from BigQuery.
+class SparkDatasetWithBQExternalTable(LazySparkDataset):
+    """Spark Dataset that produces a BigQuery external table as a side output.
 
-    Kedro dataset to load and write data from BigQuery. This is essentially a wrapper
-    for the [BigQuery Spark Connector](https://github.com/GoogleCloudDataproc/spark-bigquery-connector)
+    The class delegates dataset save and load invocations to the native SparkDataset, and registers the
+    dataset into BigQuery through External Data Configuration. This means that the dataset is visible in BQ, but we do not incur unnecessary costs for BQ IO.
     """
-
-    # parquet does not support arrays (our embeddings)
-    # https://github.com/GoogleCloudDataproc/spark-bigquery-connector/issues/101
-    DEFAULT_SAVE_ARGS = {"intermediateFormat": "orc"}
 
     def __init__(  # noqa: PLR0913
         self,
         *,
+        filepath: str,
         project_id: str,
         dataset: str,
         table: str,
-        identifier: str,
+        file_format: str,
+        identifier: Optional[str] = None,
         load_args: dict[str, Any] = None,
         save_args: dict[str, Any] = None,
         version: Version = None,
@@ -100,13 +103,15 @@ class BigQueryTableDataset(SparkDataset):
         metadata: dict[str, Any] = None,
         **kwargs,
     ) -> None:
-        """Creates a new instance of ``Neo4JDataset``.
+        """Creates a new instance of ``BigQueryTableDataset``.
 
         Args:
             project_id: project identifier.
+            filepath: filepath to write to
             dataset: Name of the BigQuery dataset.
             table: name of the table.
             identifier: unique identfier of the table.
+            file_format: file format to use
             load_args: Arguments to pass to the load method.
             save_args: Arguments to pass to the save
             version: Version of the dataset.
@@ -115,13 +120,18 @@ class BigQueryTableDataset(SparkDataset):
             kwargs: Keyword Args passed to parent.
         """
         self._project_id = project_id
-        self._dataset = dataset
+        self._path = filepath
+        self._format = file_format
+        self._labels = save_args.pop("labels", {})
 
-        identifier = re.sub(r"[^a-zA-Z0-9_-]", "_", str(identifier))
-        self._table = f"{table}_{identifier}"
+        self._table = self._sanitize_name("_".join(el for el in [table, identifier] if el is not None))
+        self._dataset_id = f"{self._project_id}.{self._sanitize_name(dataset)}"
+
+        self._client = bigquery.Client(project=self._project_id)
 
         super().__init__(
-            filepath="filepath",
+            filepath=filepath,
+            file_format=file_format,
             save_args=save_args,
             load_args=load_args,
             credentials=credentials,
@@ -130,37 +140,46 @@ class BigQueryTableDataset(SparkDataset):
             **kwargs,
         )
 
-    def _load(self) -> Any:
-        # DEBT potentially a better way would be to globally overwrite the getOrCreate() call in the spark library and link back to SparkSession
-        SparkHooks._initialize_spark()
-        spark_session = SparkSession.builder.getOrCreate()
-
-        return spark_session.read.format("bigquery").load(f"{self._project_id}.{self._dataset}.{self._table}")
-
     def _save(self, data: DataFrame) -> None:
-        bq_client = bigquery.Client()
-        dataset_id = f"{self._project_id}.{self._dataset}"
+        # Invoke saving of the underlying spark dataset
+        super()._save(data)
 
-        # Check if the dataset exists
+        # Ensure dataset exists
+        self._create_dataset()
+
+        # Create external table, referencing the dataset in object storage
+        external_config = bigquery.ExternalConfig(self._format.upper())
+        external_config.source_uris = [f"{self._path}/*.{self._format}"]
+
+        # Register the external table within BigQuery
+        table = bigquery.Table(f"{self._dataset_id}.{self._table}")
+        table.labels = self._labels
+        table.external_data_configuration = external_config
+        table = self._client.create_table(table, exists_ok=True)
+
+    def _create_dataset(self) -> str:
         try:
-            bq_client.get_dataset(dataset_id)
-            print(f"Dataset {dataset_id} already exists")
+            self._client.get_dataset(self._dataset_id)
+            logger.info(f"Dataset {self._dataset_id} already exists")
         except exceptions.NotFound:
-            print(f"Dataset {dataset_id} is not found, will attempt creating it now.")
+            logger.info(f"Dataset {self._dataset_id} is not found, will attempt creating it now.")
 
             # Dataset doesn't exist, so let's create it
-            dataset = bigquery.Dataset(dataset_id)
-            # dataset.location = "US"  # Specify the location, e.g., "US" or "EU"
+            dataset = bigquery.Dataset(self._dataset_id)
 
-            dataset = bq_client.create_dataset(dataset, timeout=30)
-            print(f"Created dataset {self._project_id}.{dataset.dataset_id}")
+            dataset = self._client.create_dataset(dataset, timeout=30)
+            logger.info(f"Created dataset {self._project_id}.{dataset.dataset_id}")
 
-        (
-            data.write.format("bigquery")
-            .options(**self._save_args)
-            .mode("overwrite")
-            .save(f"{self._project_id}.{self._dataset}.{self._table}")
-        )
+    @staticmethod
+    def _sanitize_name(name: str) -> str:
+        """Function to sanitize BigQuery table or dataset identifiers.
+
+        Args:
+            name: str
+        Returns:
+            Sanitized name
+        """
+        return re.sub(r"[^a-zA-Z0-9_]", "_", str(name))
 
 
 class GoogleSheetsDataset(AbstractVersionedDataset[pd.DataFrame, pd.DataFrame]):
@@ -281,3 +300,157 @@ class GoogleSheetsDataset(AbstractVersionedDataset[pd.DataFrame, pd.DataFrame]):
 
     def _exists(self) -> bool:
         return False
+
+
+class RemoteSparkJDBCDataset(SparkJDBCDataset):
+    """Dataset to allow connection to remote JDBC dataset.
+
+    The JDBC dataset is restricted in the sense that it only allows urls from local. This
+    dataset provides an adaptor to reference to datasets in google cloud storage. The dataset works
+    by downloading the file into local, providing a local cache.
+
+    NOTE: Only works for datasets in Google Cloud Storage
+    """
+
+    def __init__(  # noqa: PLR0913
+        self,
+        *,
+        project: str,
+        table: str,
+        url: str,
+        load_args: dict[str, Any] | None = None,
+        save_args: dict[str, Any] | None = None,
+        credentials: dict[str, Any] | None = None,
+        metadata: dict[str, Any] | None = None,
+    ) -> None:
+        """Creates a new instance of ``RemoteSparkJDBCDataset``."""
+        self._client = None
+        self._project = project
+
+        protocol, fs_prefix, blob_name = self.split_remote_jdbc_path(url)
+
+        if fs_prefix != "gs://":
+            raise DatasetError("RemoteSparkJDBCDataset currently supports GCS only")
+
+        self._bucket, self._blob_name = blob_name.split("/", maxsplit=1)
+
+        super().__init__(
+            table=table,
+            url=f"jdbc:{protocol}:{self._blob_name}",
+            load_args=load_args,
+            save_args=save_args,
+            credentials=credentials,
+            metadata=metadata,
+        )
+
+    def _get_client(self):
+        """Lazily initialize the GCS client when needed.
+
+        NOTE: This is a workaround to avoid the GCS client being initialized on every run.
+        as it would require an authenticated environment even for unit tests.
+        """
+        if self._client is None:
+            self._client = storage.Client(self._project)
+        return self._client
+
+    def _load(self) -> Any:
+        SparkHooks._initialize_spark()
+        bucket = self._get_client().bucket(self._bucket)
+        blob = bucket.blob(self._blob_name)
+
+        if not os.path.exists(self._blob_name):
+            logger.info("downloading file to local")
+            os.makedirs(self._blob_name.rsplit("/", maxsplit=1)[0], exist_ok=True)
+            blob.download_to_filename(self._blob_name)
+        else:
+            logger.info("file present skipping")
+
+        return super()._load()
+
+    def _save(self, df: DataFrame) -> Any:
+        raise DatasetError("Save function for RemoteJDBCDataset not implemented!")
+
+    @staticmethod
+    def split_remote_jdbc_path(url: str):
+        """Function to split jdbc path into components.
+
+        Args:
+            url: URL
+            fs_prefix: filesystem prefix
+        Returns:
+            protocol: jdbc protocol
+            fs_prefix: filesystem prefix
+        """
+        protocol, file_name = url.split(":", maxsplit=1)
+        fs_prefix, file_name = _split_filepath(file_name)
+
+        return protocol, fs_prefix, file_name
+
+
+class PartitionedAsyncParallelDataset(PartitionedDataset):
+    """
+    Custom implementation of the ParallelDataset that allows concurrent processing.
+    """
+
+    def _save(self, data: dict[str, Any], max_workers: int = 10, timeout: int = 60) -> None:
+        if self._overwrite and self._filesystem.exists(self._normalized_path):
+            self._filesystem.rm(self._normalized_path, recursive=True)
+
+        # Helper function to process a single partition
+        async def process_partition(sem, partition_id, partition_data):
+            async with sem:
+                try:
+                    # Set up arguments and path
+                    kwargs = deepcopy(self._dataset_config)
+                    partition = self._partition_to_path(partition_id)
+                    kwargs[self._filepath_arg] = self._join_protocol(partition)
+                    dataset = self._dataset_type(**kwargs)  # type: ignore
+
+                    # Evaluate partition data if it's callable
+                    if callable(partition_data):
+                        partition_data = await partition_data()  # noqa: PLW2901
+                    else:
+                        raise RuntimeError("not callable")
+
+                    # Save the partition data
+                    dataset.save(partition_data)
+                except Exception as e:
+                    logger.error(f"Error in process_partition with partition {partition_id}: {e}")
+                    raise
+
+        # Define function to run asyncio tasks within a synchronous function
+        def run_async_tasks():
+            # Create an event loop and a thread pool executor for async execution
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            sem = asyncio.Semaphore(max_workers)
+
+            tasks = [
+                loop.create_task(process_partition(sem, partition_id, partition_data))
+                for partition_id, partition_data in sorted(data.items())
+            ]
+
+            # Track progress with tqdm as tasks complete
+            with tqdm(total=len(tasks), desc="Saving partitions") as progress_bar:
+
+                async def monitor_tasks():
+                    for task in asyncio.as_completed(tasks):
+                        try:
+                            await asyncio.wait_for(task, timeout)
+                        except asyncio.TimeoutError as e:
+                            logger.error(f"Timeout error: partition processing took longer than {timeout} seconds.")
+                            raise e
+                        except Exception as e:
+                            logger.error(f"Error processing partition in tqdm loop: {e}")
+                            raise e
+                        finally:
+                            progress_bar.update(1)
+
+                # Run the monitoring coroutine
+                try:
+                    loop.run_until_complete(monitor_tasks())
+                finally:
+                    loop.close()
+
+        run_async_tasks()
+        self._invalidate_caches()

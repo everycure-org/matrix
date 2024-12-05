@@ -1,7 +1,4 @@
-"""Modelling pipeline."""
-
-from kedro.pipeline import Pipeline, node
-from kedro.pipeline.modular_pipeline import pipeline
+from kedro.pipeline import Pipeline, node, pipeline
 
 from matrix import settings
 
@@ -14,7 +11,7 @@ def _create_model_shard_pipeline(model: str, shard: int) -> Pipeline:
             node(
                 func=nodes.create_model_input_nodes,
                 inputs=[
-                    "modelling.feat.rtx_kg2",
+                    "modelling.model_input.drugs_diseases_nodes@pandas",
                     "modelling.model_input.splits",
                     f"params:modelling.{model}.model_options.generator",
                 ],
@@ -134,18 +131,30 @@ def create_pipeline(**kwargs) -> Pipeline:
         [
             # Construct ground_truth
             node(
-                func=nodes.create_int_pairs,
+                func=nodes.filter_valid_pairs,
                 inputs=[
-                    "modelling.raw.ground_truth.positives",
-                    "modelling.raw.ground_truth.negatives",
+                    "integration.prm.filtered_nodes",
+                    "modelling.raw.ground_truth.positives@spark",
+                    "modelling.raw.ground_truth.negatives@spark",
                 ],
-                outputs="modelling.int.known_pairs",
+                outputs={"pairs": "modelling.raw.known_pairs@spark", "metrics": "modelling.reporting.gt_present"},
+                name="filter_valid_pairs",
+            ),
+            node(
+                func=nodes.attach_embeddings,
+                inputs=[
+                    "modelling.raw.known_pairs@spark",
+                    "embeddings.feat.nodes",
+                ],
+                outputs="modelling.int.known_pairs@spark",
                 name="create_int_known_pairs",
             ),
             node(
                 func=nodes.prefilter_nodes,
                 inputs=[
+                    "integration.prm.filtered_nodes",
                     "embeddings.feat.nodes",
+                    "modelling.raw.known_pairs@spark",
                     "params:modelling.drug_types",
                     "params:modelling.disease_types",
                 ],
@@ -153,21 +162,9 @@ def create_pipeline(**kwargs) -> Pipeline:
                 name="prefilter_nodes",
             ),
             node(
-                func=nodes.create_feat_nodes,
-                inputs=[
-                    "modelling.model_input.drugs_diseases_nodes@spark",
-                    "modelling.int.known_pairs",
-                    "params:modelling.drug_types",
-                    "params:modelling.disease_types",
-                ],
-                outputs="modelling.feat.rtx_kg2",
-                name="create_feat_nodes",
-            ),
-            node(
                 func=nodes.make_splits,
                 inputs=[
-                    "modelling.feat.rtx_kg2",
-                    "modelling.int.known_pairs",
+                    "modelling.int.known_pairs@pandas",
                     "params:modelling.splitter",
                 ],
                 outputs="modelling.model_input.splits",
@@ -177,13 +174,13 @@ def create_pipeline(**kwargs) -> Pipeline:
         tags=[model["model_name"] for model in settings.DYNAMIC_PIPELINES_MAPPING.get("modelling")],
     )
 
-    pipes = []
+    pipelines = []
     for model in settings.DYNAMIC_PIPELINES_MAPPING.get("modelling"):
-        pipes.append(
+        pipelines.append(
             pipeline(
                 _create_model_pipeline(model=model["model_name"], num_shards=model["num_shards"]),
                 tags=[model["model_name"], "not-shared"],
             )
         )
 
-    return sum([create_model_input, *pipes])
+    return sum([create_model_input, *pipelines])
