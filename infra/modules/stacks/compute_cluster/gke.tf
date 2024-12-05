@@ -24,6 +24,7 @@ locals {
     min_count          = 0
     max_count          = 5
     local_ssd_count    = 0
+    disk_type          = "pd-ssd"
     disk_size_gb       = 400
     enable_gcfs        = true
     enable_gvnic       = true
@@ -39,6 +40,7 @@ locals {
     min_count          = 0
     max_count          = 20
     local_ssd_count    = 0
+    disk_type          = size > 32 ? "pd-ssd" : "pd-standard"
     disk_size_gb       = 200
     enable_gcfs        = true
     enable_gvnic       = true
