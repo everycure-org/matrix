@@ -104,7 +104,7 @@ preprocessing.int.mapped_clinical_trials_data:
 preprocessing.raw.disease_list: 
   <<: [*_layer_raw]
   type: pandas.CSVDataset
-  filepath: https://github.com/everycure-org/matrix-disease-list/releases/${globals:data_sources.ec-disease-list.version}/download/matrix-disease-list.tsv
+  filepath: https://api.github.com/repos/everycure-org/matrix-disease-list/releases/assets/${globals:data_sources.ec-disease-list.version}
   load_args:
     sep: "\t"
 
@@ -119,6 +119,17 @@ preprocessing.raw.drug_list:
   load_args:
     sep: "\t"
 
+preprocessing.raw.enriched_disease_list:
+  <<: [*_layer_raw]
+  type: pandas.CSVDataset
+  filepath: ${globals:paths.tmp}/disease_list/${globals:data_sources.ec-disease-list.version}/enriched_disease_list.tsv
+  save_args:
+    sep: "\t"
+    header: true
+    index: false
+  load_args:
+    sep: "\t"
+
 preprocessing.raw.infer_sheet:
   <<: [*_layer_raw, *_sheets_dataset]
   load_args:
@@ -128,3 +139,21 @@ preprocessing.raw.infer_sheet:
       - Drug_ID
       - Disease_ID
       - Name
+
+preprocessing.raw.ground_truth.positives:
+  <<: [*_layer_raw]
+  type: pandas.CSVDataset
+  filepath: ${globals:paths.kg_raw}/ground_truth/kg2/${globals:data_sources.gt.version}/tp_pairs.txt
+  load_args:
+    sep: "\t"
+  save_args:
+    sep: "\t"
+
+preprocessing.raw.ground_truth.negatives:
+  <<: [*_layer_raw]
+  type: pandas.CSVDataset
+  filepath: ${globals:paths.kg_raw}/ground_truth/kg2/${globals:data_sources.gt.version}/tn_pairs.txt
+  load_args:
+    sep: "\t"
+  save_args:
+    sep: "\t"

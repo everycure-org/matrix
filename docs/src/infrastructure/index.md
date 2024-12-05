@@ -12,7 +12,7 @@ Building a system that processes a lot of data and predicts scores is actually f
 
 But we believe in a few axioms that we hope get us where we need to go:
 
-**1) Applying the scientific method** leads to new insights that get us closer to our goal. This means reproducible, data-driven analytics of peer-reviewed work, driven by hypotheses about how we can improve things, which are proven through experiments. Therefore, the scientific method is encoded directly into our Git flow.
+**1) Applying the scientific method** leads to new insights that get us closer to our goal. This means reproducible analytics of peer-reviewed work, driven by hypotheses about how we can improve things, which are proven through experiments. Therefore, the scientific method is encoded directly into our Git flow.
 
 ![](../assets/img/infra_intro/scientific_method.excalidraw.svg)
 
@@ -20,7 +20,7 @@ But we believe in a few axioms that we hope get us where we need to go:
 
 ![](../assets/img/infra_intro/speed.excalidraw.svg)
 
-**3) Closing the feedback loop** leads to a self-learning system. As we predict scores, we implicitly encode hypotheses in the predictions. These hypotheses can be validated through various ways, and the insights feed back into our models, improving the next iteration. This may be anything from in-silico drug-ligand interactions to off-label compassionate use deployment for individual patients by their treating physicians.
+**3) Closing the feedback loop** leads to a self-learning system. As we predict scores, we implicitly encode hypotheses in the predictions. These hypotheses can be validated through various ways, and the insights fed back into our models, improving the next iteration. This may be anything from in-silico drug-ligand interactions to off-label compassionate use deployment for individual patients by their treating physicians.
 
 ![](../assets/img/infra_intro/learning_loop.excalidraw.svg)
 
@@ -45,7 +45,7 @@ The below sketch visualizes our main technology components and shows what sits "
 
 ![](../assets/img/infra_intro/under_the_surface.excalidraw.svg)
 
-The **pipeline itself is completely independent of the systems on which it is executed**. It can run on a MacBook, in a Docker container, in a `docker compose` setup, or deployed as a distributed pipeline via `kubectl`. This separation of concern allows us to run the entire pipeline in a variety of ways:
+The **pipeline itself is completely independent of the systems on which it is executed**. It can run on a MacBook, in a Docker container, in a `docker compose` setup, or deployed as a distributed pipeline via `kubectl`. This separation of concerns allows us to run the entire pipeline in a variety of ways:
 
 * End-to-end within 3 minutes with *fabricated data* as part of our CI pipeline, ensuring integrity of our main branch with `kedro run --env test -p test`
     
@@ -108,7 +108,7 @@ embeddings.feat.edges:
 embeddings.feat.edges:
   type: matrix.datasets.gcp.LazySparkDataset
   file_format: parquet
-  filepath: ${globals:paths.feat}/edges
+  filepath: ${globals:paths.matrix_generation}/edges
 ```
 
 Most of our data is stored on GCS. We leverage BigQuery for what we consider to be
@@ -159,7 +159,7 @@ Below is a screenshot of our favorite Kubernetes management tool `k9s` ([GitHub]
 
 #### Artifact Registry
 
-To deploy our code onto our cluster, we need to *package it into images.* We leverage GitHub Actions to build and ship our code to the *Artifact Registry* which is simply a place where we store all our images.
+To deploy our code onto our cluster, we need to *package it into [OCI images](https://opencontainers.org/)*. We leverage GitHub Actions to build and ship our code to the *Artifact Registry* which is simply a place where we store all our images.
 
 At this stage we have our code built, tested, packaged and an API (Kubernetes) defined on how to execute it. All we need now is raw compute and storage. This is where Google Cloud comes in.
 
@@ -193,6 +193,7 @@ Vertex AI is GCP's machine learning platform that we leverage in two ways:
 1. **Development Workbenches**: We utilize Vertex AI's cloud-based development environments for our data scientists and machine learning engineers. These workbenches provide a flexible, scalable platform for experimentation and development, allowing our team to work with large datasets and complex models without being constrained by local hardware limitations.
 
 2. **API Consumption**: Vertex AI offers a suite of pre-trained models and APIs that we can potentially integrate into our pipeline. This includes services for:
+
    - Natural Language Processing (NLP) tasks such as entity extraction, which could be valuable for processing medical literature and identifying key concepts.
    - Large Language Models (LLMs) that can assist in various text-based tasks, from summarization to question-answering, potentially enhancing our ability to extract insights from unstructured medical data.
 
@@ -206,6 +207,7 @@ GitHub Actions plays a crucial role in our CI/CD pipeline, automating various as
 * **Documentation Deployment**: Handles the deployment of our documentation.
 * **Release Management**: [Ongoing work] Creates releases of our codebase, allowing us to regularly communicate key changes to our developers and stakeholders.
 * **Automated Pipeline Execution**: [Next up] We will automatically execute a pipeline run for each release, storing named and versioned results in MLflow, BigQuery, and our Neo4J instance. This automation will enhance our ability to track and compare results across different versions of our pipeline.
+
 ### Terraform/Terragrunt
 
 Terraform and Terragrunt are essential tools in our Infrastructure as Code (IaC) strategy:

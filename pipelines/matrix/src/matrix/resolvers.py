@@ -1,12 +1,42 @@
-"""Custom resolvers for Kedro project."""
-
 import os
-from typing import Dict, Optional
 from copy import deepcopy
+from pathlib import Path
+from typing import Dict, Optional
 
-from dotenv import load_dotenv
+from dotenv import find_dotenv, load_dotenv
 
-load_dotenv()
+
+def load_environment_variables():
+    """Load environment variables from .env.defaults and .env files.
+
+    .env.defaults is loaded first, then .env overwrites any existing values.
+    """
+    defaults_path = Path(".env.defaults")
+    if defaults_path.exists():
+        load_dotenv(dotenv_path=defaults_path, override=False)
+
+    env_path = find_dotenv(usecwd=True)
+    if env_path:
+        load_dotenv(dotenv_path=env_path, override=True)
+
+
+# This ensures that environment variables are loaded at module import and thus
+# before the pipeline is run or any data is loaded.
+load_environment_variables()
+
+
+def cast_to_int(val: str) -> int:
+    """Convert input value into integer.
+
+    This resolver should be used to ensure values extracted from the environment
+    are correctly casted to the expected type.
+
+    Args:
+       val: value to convert
+    Returns:
+       Value casted to integer
+    """
+    return int(val)
 
 
 def merge_dicts(dict1: Dict, dict2: Dict) -> Dict:

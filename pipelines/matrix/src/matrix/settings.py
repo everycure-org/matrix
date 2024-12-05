@@ -1,5 +1,4 @@
 """Project settings.
-
 There is no need to edit this file unless you want to change values
 from the Kedro defaults. For further information, including these default values, see
 https://docs.kedro.org/en/stable/kedro_project_setup/settings.html.
@@ -14,7 +13,7 @@ from kedro_mlflow.framework.hooks import MlflowHook
 
 import matrix.hooks as matrix_hooks
 
-from .resolvers import env, merge_dicts
+from .resolvers import env, merge_dicts, cast_to_int
 
 # Hooks are executed in a Last-In-First-Out (LIFO) order.
 HOOKS = (
@@ -37,9 +36,6 @@ SESSION_STORE_CLASS = SQLiteStore
 SESSION_STORE_ARGS = {"path": str(Path(__file__).parents[2])}
 
 # Directory that holds configuration.
-# CONF_SOURCE = "conf"
-
-
 CONFIG_LOADER_CLASS = OmegaConfigLoader
 # Keyword arguments to pass to the `CONFIG_LOADER_CLASS` constructor.
 CONFIG_LOADER_ARGS = {
@@ -60,11 +56,17 @@ CONFIG_LOADER_ARGS = {
     "custom_resolvers": {
         "merge": merge_dicts,
         "oc.env": env,
+        "oc.int": cast_to_int,
     },
 }
 
 # https://getindata.com/blog/kedro-dynamic-pipelines/
 DYNAMIC_PIPELINES_MAPPING = {
+    "integration": [
+        {"name": "rtx_kg2"},
+        # {"name": "robokop"},
+        {"name": "ec_medical_team", "normalize": False},
+    ],
     "modelling": [
         {"model_name": "xg_baseline", "num_shards": 1, "run_inference": False},
         {"model_name": "xg_ensemble", "num_shards": 3, "run_inference": True},

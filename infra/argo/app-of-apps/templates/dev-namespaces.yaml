@@ -1,0 +1,19 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: dev-namespaces
+  namespace: argocd
+spec:
+  destination:
+    namespace: default
+    server: {{ .Values.spec.destination.server }}
+  project: default
+  source:
+    path: {{ .Values.spec.source.repoPath }}/dev-namespaces
+    repoURL: {{ .Values.spec.source.repoURL }}
+    targetRevision: {{ .Values.spec.source.targetRevision }}
+  syncPolicy:
+    syncOptions:     # Sync options which modifies sync behavior
+    - CreateNamespace=true # Namespace Auto-Creation ensures that namespace specified as the application destination exists in the destination cluster.
+    automated: 
+      prune: true

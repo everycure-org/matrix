@@ -1,7 +1,4 @@
-"""Evaluation pipeline."""
-
-from kedro.pipeline import Pipeline, node
-from kedro.pipeline.modular_pipeline import pipeline
+from kedro.pipeline import Pipeline, node, pipeline
 from matrix import settings
 
 from . import nodes
@@ -13,7 +10,7 @@ def _create_evaluation_pipeline(model: str, evaluation: str) -> Pipeline:
             node(
                 func=nodes.generate_test_dataset,
                 inputs=[
-                    f"matrix_generation.{model}.model_output.sorted_matrix_predictions",
+                    f"matrix_generation.{model}.model_output.sorted_matrix_predictions@pandas",
                     f"params:evaluation.{evaluation}.evaluation_options.generator",
                 ],
                 outputs=f"evaluation.{model}.{evaluation}.model_output.pairs",
@@ -25,7 +22,7 @@ def _create_evaluation_pipeline(model: str, evaluation: str) -> Pipeline:
                     f"evaluation.{model}.{evaluation}.model_output.pairs",
                     f"params:evaluation.{evaluation}.evaluation_options.evaluation",
                 ],
-                outputs=f"evaluation.{model}.{evaluation}.reporting.evaluation",
+                outputs=f"evaluation.{model}.{evaluation}.model_output.result",
                 name=f"create_{model}_{evaluation}_evaluation",
             ),
         ],
@@ -35,17 +32,17 @@ def _create_evaluation_pipeline(model: str, evaluation: str) -> Pipeline:
 
 def create_pipeline(**kwargs) -> Pipeline:
     """Create evaluation pipeline."""
-    pipes = []
+    pipelines = []
     models = settings.DYNAMIC_PIPELINES_MAPPING.get("modelling")
     model_names = [model["model_name"] for model in models]
     for model in model_names:
-        pipes.append(
+        pipelines.append(
             pipeline(
                 [
                     node(
                         func=nodes.perform_matrix_checks,
                         inputs=[
-                            f"matrix_generation.{model}.model_output.sorted_matrix_predictions",
+                            f"matrix_generation.{model}.model_output.sorted_matrix_predictions@pandas",
                             "modelling.model_input.splits",
                             "params:evaluation.score_col_name",
                         ],
@@ -57,11 +54,11 @@ def create_pipeline(**kwargs) -> Pipeline:
             )
         )
         for evaluation in settings.DYNAMIC_PIPELINES_MAPPING.get("evaluation"):
-            pipes.append(
+            pipelines.append(
                 pipeline(
                     _create_evaluation_pipeline(model, evaluation["evaluation_name"]),
                     tags=model,
                 )
             )
 
-    return sum(pipes)
+    return sum(pipelines)

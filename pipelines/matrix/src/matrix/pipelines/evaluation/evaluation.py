@@ -1,5 +1,3 @@
-"""Module containing classes for evaluation."""
-
 import pandas as pd
 import numpy as np
 import abc
@@ -188,7 +186,7 @@ class FullMatrixRanking(Evaluation):
             data: Dataset of drug-disease pairs along with a "rank column".
         """
         ranks_arr = data["rank"].to_numpy()
-        quantiles_arr = data["quantile_rank"].to_numpy()
+        quantiles_arr = data["non_pos_quantile_rank"].to_numpy()
         report = {}
 
         # Compute average of rank functions and add to report
