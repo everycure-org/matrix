@@ -62,7 +62,7 @@ def write_release_article(
             console.print("[green]Loading release notes")
             with open(notes_file, "r") as f:
                 notes = f.read()
-                console.print("[green]Release notes loaded")
+                console.print(f"[green]Release notes loaded. Total length: {len(notes)} characters")
         else:
             console.print("[red]Error: Notes file not found.")
             raise FileNotFoundError(f"Notes file '{notes_file}' does not exist.")
