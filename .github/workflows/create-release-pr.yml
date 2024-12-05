@@ -38,12 +38,19 @@ jobs:
           pip install uv
           uv sync
 
-      - uses: 'google-github-actions/auth@v2'
+      - name: Authenticate with Google Cloud
+        uses: 'google-github-actions/auth@v2'
         # if: github.ref == 'refs/heads/main'
         with:
           project_id: ${{env.project_id}}
           workload_identity_provider: ${{env.workload_identity_provider}}
           service_account: ${{env.service_account}}
+      
+      # - name: Set up Google Cloud SDK
+      #   uses: google-github-actions/setup-gcloud@v1
+      #   with:
+      #     project: ${{env.project_id}}
+      #     service_account_key: ${{secrets.GCP_SA_KEY}}
 
       - name: Create Release Notes
         working-directory: apps/matrix-cli
@@ -55,6 +62,7 @@ jobs:
           else
             release="v0.2.6-alpha"
           fi
+          gcloud config list
           echo "$release"
           echo "${GITHUB_ENV}"
           echo "release=${release}" >> "${GITHUB_ENV}"
