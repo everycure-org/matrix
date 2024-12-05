@@ -54,6 +54,7 @@ mlflow_url: https://mlflow.platform.dev.everycure.org/
 paths:
   # Upstream-source versioned
   raw:                ${source_gcs_bucket}/kedro/data/01_raw
+  raw_wg2dev:         gs://mtrx-us-central1-wg2-modeling-dev-storage/kedro/data/01_raw
   kg_raw:             ${gcs_bucket}/data/01_RAW
   ingestion:          data/ingestion
 
