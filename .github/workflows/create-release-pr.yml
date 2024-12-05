@@ -64,11 +64,11 @@ jobs:
           echo "release=${release}" >> "${GITHUB_ENV}"
           mkdir -p "${release}"
           uv run matrix releases release-notes --headless --output-file "${release}/notes.md"
-          uv run matrix releases article --headless --output-file "${release}/post.md" --no-disable-rendering
+          # uv run matrix releases article --headless --output-file "${release}/post.md" --no-disable-rendering
           mv "${release}" "${GITHUB_WORKSPACE}/docs/src/releases/posts"
           ls "${GITHUB_WORKSPACE}/docs/src/releases/posts"
-          ls !$
-#          git add ${release} && git commit -m "added release notes & article draft" && git push
+          # ls !$
+        #  git add ${release} && git commit -m "added release notes & article draft" && git push
 
 #      - name: Create Pull Request
 #        run: gh pr create \
@@ -78,3 +78,5 @@ jobs:
 #          --draft \
 #          --dry-run \
 #          --label Release
+      # - name: Create git tag
+      #   run: git tag -a "${release}" -m "Release version ${release}"
