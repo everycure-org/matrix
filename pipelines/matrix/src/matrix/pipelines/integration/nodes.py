@@ -1,5 +1,6 @@
 import asyncio
 import logging
+from itertools import chain
 from functools import partial, reduce
 from typing import Any, Callable, Dict, List, Tuple
 
@@ -57,6 +58,10 @@ def union_and_deduplicate_nodes(biolink_categories_df: pd.DataFrame, *nodes) -> 
         .select(*cols_for_schema(KGNodeSchema))
     )
     # fmt: on
+
+
+def append_datasets(*datasets):
+    return list(chain(*datasets))
 
 
 def _union_datasets(
