@@ -35,6 +35,7 @@ jobs:
       - name: Setup Matrix CLI
         working-directory: apps/matrix-cli
         run: |
+          gcloud config list account --format "value(core.account)"  # for debugging
           pip install uv
           uv sync
 
