@@ -63,9 +63,10 @@ CONFIG_LOADER_ARGS = {
 # https://getindata.com/blog/kedro-dynamic-pipelines/
 DYNAMIC_PIPELINES_MAPPING = {
     "integration": [
-        {"name": "rtx_kg2"},
+        {"name": "rtx_kg2", "integrate": True},
         # {"name": "robokop"},
-        {"name": "ec_medical_team", "normalize": False},
+        {"name": "ec_medical_team", "integrate": True},
+        {"name": "drugmech", "integrate": False},
     ],
     "modelling": [
         {"model_name": "xg_baseline", "num_shards": 1, "run_inference": False},

@@ -6,6 +6,7 @@ from kedro.pipeline import Pipeline, node, pipeline
 
 import networkx as nx
 
+
 def _create_pairs(
     drug_list: pd.DataFrame,
     disease_list: pd.DataFrame,
@@ -47,45 +48,36 @@ def _create_pairs(
     return df[:num], df[num : 2 * num]
 
 
-
-def expand_paths(
-    node: str, 
-    graph: nx.DiGraph, 
-    length: int, 
-    path: List[str]
-):
+def expand_paths(node: str, graph: nx.DiGraph, length: int, path: List[str]):
     """Function to expand paths from given node."""
     if length == 0:
         return [*path, node]
-    
+
     # Expand children
     return [
-        expand_paths(successor, graph, length - 1,[*path, node]) 
-        for successor in frozenset(graph.successors(node))
+        expand_paths(successor, graph, length - 1, [*path, node]) for successor in frozenset(graph.successors(node))
     ]
 
 
-def generate_random_paths(
-    edges: pd.DataFrame, 
-    depth: int = 2, 
-    seed: int = 42
-):
+def generate_random_paths(edges: pd.DataFrame, depth: int = 2, seed: int = 42):
     """Function to generate dataframe with random paths."""
     # Initialize a GraphX instance
     graph = nx.DiGraph()
     for _, row in edges.iterrows():
-        graph.add_edge(row['subject'], row['object'])
+        graph.add_edge(row["subject"], row["object"])
 
     # Generate paths
     nodes = set(edges["subject"].sample(1, replace=True, ignore_index=True, random_state=seed).tolist())
     paths = []
 
     # Expand path
-    for node in nodes: 
-        for expand_path in expand_paths(node, graph, depth, []):
-           paths.extend(expand_path)
+    for el in nodes:
+        for expand_path in expand_paths(el, graph, depth, []):
+            paths.extend(expand_path)
 
-    return pd.DataFrame({"path": paths})
+    df = pd.DataFrame({"path": paths})
+    df["index"] = df.index
+    return df
 
 
 def create_pipeline(**kwargs) -> Pipeline:
@@ -140,8 +132,8 @@ def create_pipeline(**kwargs) -> Pipeline:
                 inputs=[
                     "ingestion.raw.rtx_kg2.edges@pandas",
                 ],
-                outputs="ingestion.raw.drugmech.paths@pandas",
-                name="generate_drugmech_paths"
-            )
+                outputs="ingestion.pre.drugmech.paths@pandas",
+                name="generate_drugmech_paths",
+            ),
         ]
     )
