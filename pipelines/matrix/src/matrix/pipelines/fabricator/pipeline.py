@@ -1,7 +1,10 @@
+from typing import List
+
 import pandas as pd
 from data_fabricator.v0.nodes.fabrication import fabricate_datasets
 from kedro.pipeline import Pipeline, node, pipeline
 
+import networkx as nx
 
 def _create_pairs(
     drug_list: pd.DataFrame,
@@ -42,6 +45,47 @@ def _create_pairs(
         attempt += 1
 
     return df[:num], df[num : 2 * num]
+
+
+
+def expand_paths(
+    node: str, 
+    graph: nx.DiGraph, 
+    length: int, 
+    path: List[str]
+):
+    """Function to expand paths from given node."""
+    if length == 0:
+        return [*path, node]
+    
+    # Expand children
+    return [
+        expand_paths(successor, graph, length - 1,[*path, node]) 
+        for successor in frozenset(graph.successors(node))
+    ]
+
+
+def generate_random_paths(
+    edges: pd.DataFrame, 
+    depth: int = 2, 
+    seed: int = 42
+):
+    """Function to generate dataframe with random paths."""
+    # Initialize a GraphX instance
+    graph = nx.DiGraph()
+    for _, row in edges.iterrows():
+        graph.add_edge(row['subject'], row['object'])
+
+    # Generate paths
+    nodes = set(edges["subject"].sample(1, replace=True, ignore_index=True, random_state=seed).tolist())
+    paths = []
+
+    # Expand path
+    for node in nodes: 
+        for expand_path in expand_paths(node, graph, depth, []):
+           paths.extend(expand_path)
+
+    return pd.DataFrame({"path": paths})
 
 
 def create_pipeline(**kwargs) -> Pipeline:
@@ -91,5 +135,13 @@ def create_pipeline(**kwargs) -> Pipeline:
                 ],
                 name="create_gn_pairs",
             ),
+            node(
+                func=generate_random_paths,
+                inputs=[
+                    "ingestion.raw.rtx_kg2.edges@pandas",
+                ],
+                outputs="ingestion.raw.drugmech.paths@pandas",
+                name="generate_drugmech_paths"
+            )
         ]
     )
