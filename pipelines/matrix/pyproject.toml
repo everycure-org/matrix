@@ -28,9 +28,6 @@ name = "matrix"
 requires-python = ">=3.11"
 readme = "README.md"
 dynamic = [ "version"]
-dependencies = [
-    "seaborn>=0.13.2",
-]
 
 [project.scripts]
 matrix = "matrix.__main__:main"
