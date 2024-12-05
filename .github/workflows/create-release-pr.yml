@@ -58,6 +58,7 @@ jobs:
           fi
           gcloud auth list
           gcloud config list
+          gcloud auth application-default print-access-token
           echo "$release"
           echo "${GITHUB_ENV}"
           echo "release=${release}" >> "${GITHUB_ENV}"
