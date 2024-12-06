@@ -43,7 +43,10 @@ jobs:
           ref: "${{env.gitref}}"
 
       - name: Tag the commit from which the data release was triggered
-        run: git tag --annotate --message '' -- "${{env.release}}"
+        run: |
+          git config --global user.email "releasebot@everycure.org"
+          git config --global user.name "All of us at Every Cure"
+          git tag --annotate --message '' -- "${{env.release}}"
 
       - name: Setup Matrix CLI
         working-directory: apps/matrix-cli
