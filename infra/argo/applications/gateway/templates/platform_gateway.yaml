@@ -62,8 +62,6 @@ spec:
   parentRefs:
   - name: external-http
     sectionName: http
-  hostnames:
-  - "*.platform.dev.everycure.org"
   rules:
   - filters:
     - type: RequestRedirect
