@@ -128,7 +128,7 @@ nodes.filter(f.array_contains("upstream_data_source", "RTXKG2")).show()
 ### GPU Support ⚡️
 
 The platform now leverages GPUs on the cluster, accelerating computationally intensive tasks.  Additionally, the integration of Neo4j Enterprise license keys unlocks advanced features and performance
-optimizations for graph database operations. These infrastructure upgrades significantly improve the platform's efficiency and scalability.  See issue [#622](https://github.com/everycure-org/matrix/issues/#622) for more details.
+optimizations for graph database operations. These infrastructure upgrades significantly improve the platform's efficiency and scalability.  See issue [#622](https://github.com/everycure-org/matrix/issues/622) for more details.
 
 ### Matrix CLI ⌨️
 
@@ -137,32 +137,31 @@ summarizing code changes. This simplifies common workflows and improves develope
 
 <script src="https://asciinema.org/a/lM3Ht0cIVZ0RTJ1utsA89MgGf.js" id="asciicast-lM3Ht0cIVZ0RTJ1utsA89MgGf" async="true"></script>
 
-!!! tip:
+!!! tip
     This CLI is very early in development, and we would love to hear from you if you have any feature requests or feedback.
     Try it by switching to `apps/matrix-cli`, and running `uv run matrix`
 
 ### Enhanced `kedro submit` Command  ⚙️
 
 The `kedro submit` command has been significantly enhanced, providing developers with more fine-grained control over pipeline execution. It now supports running pipelines from specific nodes and submitting
-to different folders (test/release), enabling greater flexibility in development, testing, and deployment workflows. See issues [#605](https://github.com/everycure-org/matrix/issues/#605) and [#611](https://github.com/everycure-org/matrix/issues/#611) for more details.
+to different folders (test/release), enabling greater flexibility in development, testing, and deployment workflows. See issues [#605](https://github.com/everycure-org/matrix/issues/605) and [#611](https://github.com/everycure-org/matrix/issues/611) for more details.
 
 ### Kedro Catalog Cleanup 🧹
 
-- Addressing technical debt, this release includes fixes for missing and unused entries in the Kedro catalog (issue [#600](https://github.com/everycure-org/matrix/issues/#600)).  -  Further improvements to the catalog include fixes related to cloud globals (issue [#694](https://github.com/everycure-org/matrix/issues/#694)) and more robust handling of node category selection during integration (issue [#654](https://github.com/everycure-org/matrix/issues/#654)).
+- Addressing technical debt, this release includes fixes for missing and unused entries in the Kedro catalog (issue [#600](https://github.com/everycure-org/matrix/issues/600)).  
+- More robust handling of node category selection during integration (issue [#654](https://github.com/everycure-org/matrix/issues/654)).
 - We also moved a variety of older datasets and files from the cloud bucket to an `archive` folder, simplifying the folder structure in our cloud bucket. However, we expect most people will no longer need to think about direct file access as we mature our data catalog & bigquery release strategy.
 
 ### Enhanced Developer Experience 🧰
 
 Several improvements streamline the developer experience:
 
-- **Argo Workflow Submission Enhancements:** Improved Argo workflow submission (issue [#565](https://github.com/everycure-org/matrix/issues/#565)) simplifies pipeline orchestration and execution.
-- **BigQuery Integration Enhancements:**  Improvements to BigQuery integration through GCS filesystem datasets and external table registration (issue [#563](https://github.com/everycure-org/matrix/issues/#563)) streamline data loading and access.
-- **Developer Namespaces:**  Introduction of developer namespaces (issue [#605](https://github.com/everycure-org/matrix/issues/#605)) improves resource isolation and facilitates parallel development efforts.  This is accompanied by a fix to a critical issue in
-the Neo4j template (issue [#684](https://github.com/everycure-org/matrix/issues/#684)).
-- **BTE-TRAPI & Redis Integration:** The BTE-TRAPI deployment is running & integrates Redis for enhanced performance and caching (issue [#605](https://github.com/everycure-org/matrix/issues/#605)).
-- **ArgoNode Wrapper:**  The introduction of the ArgoNode wrapper (issue [#626](https://github.com/everycure-org/matrix/issues/#626)) allows for greater customization of task execution and resource allocation within Argo Workflows.
-- **Partitioned Dataset Embeddings:**  Implementation of efficient embedding computation using PartitionedDataset, batch processing, and LangChain integration (issue [#642](https://github.com/everycure-org/matrix/issues/#642)) improves performance for
-large-scale embedding generation.
+- **Argo Workflow Submission Enhancements:** Improved Argo workflow submission (issue [#565](https://github.com/everycure-org/matrix/issues/565)) simplifies pipeline orchestration and execution.
+- **BigQuery Integration Enhancements:**  Improvements to BigQuery integration through GCS filesystem datasets and external table registration (issue [#563](https://github.com/everycure-org/matrix/issues/563)) streamline data loading and access.
+- **Developer Namespaces:**  Introduction of developer namespaces (issue [#605](https://github.com/everycure-org/matrix/issues/605)) improves resource isolation and facilitates parallel development efforts. If you need a workspace to test something, please send us a PR adding yourself to `infra/argo/applications/dev-namespaces/values.yaml`.
+- **BTE-TRAPI & Redis Integration:** (issue [#605](https://github.com/everycure-org/matrix/issues/605)).
+- **ArgoNode Wrapper:**  The introduction of the ArgoNode wrapper (issue [#626](https://github.com/everycure-org/matrix/issues/626)) allows for defining GPU, CPU and RAM requirements for nodes.
+- **Partitioned Dataset Embeddings:**  Implementation of efficient embedding computation using PartitionedDataset, batch processing, and LangChain integration (issue [#642](https://github.com/everycure-org/matrix/issues/642)) improves performance for large-scale embedding generation.
 
 ### Ongoing Modelling Workstreams
 
@@ -173,5 +172,9 @@ We have progressed the following workstreams:
  - Work to compare performance of existing models with TxGNN has made significant progress and our first experimental runs are now complete. Ongoing work will compare this method with our baseline KGML-xDTD approach. ([#586](https://github.com/everycure-org/matrix/issues/586))
 - We now have the ability to perform multiple folds of cross validation in the modeling and evaluation suite. This should enable us to better estimate stability and confidence in our model predictions ([#587](https://github.com/everycure-org/matrix/issues/587))
 - We have implemented the ability to run a full comparison of treat scores using various embedding models, such as Node2Vec, PubmedBERT, and OpenAI ([#301](https://github.com/everycure-org/matrix/issues/301).
+
+## Next Steps 🔮
+
+The best way to see what is on our agenda is to check our [sprint board](https://github.com/orgs/everycure-org/projects/2/views/6).
 
 [^1]: Note RTX KG2 upgrade to 2.10 has already been tested and will be part of our next data release. We want to create this release to enable people to run tests also with the older version and compare results to existing model results on the older version.
