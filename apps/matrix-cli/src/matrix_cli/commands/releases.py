@@ -105,7 +105,7 @@ def write_release_article(
 Please focus on the following topics in the release article:
 {focus_direction}
         """
-    time.sleep(120)
+    time.sleep(100)
     response = invoke_model(prompt, model=model)
 
     if output_file:
@@ -139,6 +139,7 @@ def release_notes(
         if output_file:
             with open(output_file, "w") as f:
                 f.write(response)
+            console.print(f"Release notes written to: {output_file}")
         else:
             print(Markdown(response))
 
