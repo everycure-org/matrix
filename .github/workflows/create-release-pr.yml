@@ -70,7 +70,7 @@ jobs:
         working-directory: apps/matrix-cli
         env:
           GH_TOKEN: ${{ github.token }}
-          POSTS_DIR: ${GITHUB_WORKSPACE}/docs/src/releases/posts
+          POSTS_DIR: ./docs/src/releases/posts
         run: |
           gcloud config list account --format "value(core.account)"
           
@@ -92,9 +92,9 @@ jobs:
           mv "${{env.release}}" "${GITHUB_WORKSPACE}/docs/src/releases/posts"
           ls "${GITHUB_WORKSPACE}/docs/src/releases/posts"
           echo "${POSTS_DIR}"
-          ls "${POSTS_DIR}"
           git add "${GITHUB_WORKSPACE}/docs/src/releases/posts/{{env.release}}" # && git commit -m "added release notes & article draft" && git push
           git status
+          ls "${GITHUB_WORKSPACE}/${POSTS_DIR}"
           ls !$
 
 #      - name: Create Pull Request
