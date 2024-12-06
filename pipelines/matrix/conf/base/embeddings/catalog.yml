@@ -20,7 +20,10 @@ _spark_parquet_ds: &_spark_parquet
 
 _pandas_parquet: &_pandas_parquet
   type: matrix.datasets.graph.PandasParquetDataset
+  save_args:
+    engine: pyarrow
   load_args:
+    engine: pyarrow
     as_type: str
       
 # -------------------------------------------------------------------------
@@ -67,6 +70,10 @@ embeddings.feat.graph.node_embeddings@spark:
 embeddings.feat.graph.pca_node_embeddings:
   <<: *_spark_parquet
   filepath: ${globals:paths.embeddings}/feat/tmp_nodes_with_pca_embeddings
+
+embeddings.feat.graph.edges_for_topological:
+  <<: *_spark_parquet
+  filepath: ${globals:paths.embeddings}/feat/edges_for_topological
   
 # NOTE: Needs renaming
 embeddings.tmp.input_nodes:
@@ -80,7 +87,7 @@ embeddings.tmp.input_nodes:
     script: >
       CREATE CONSTRAINT IF NOT EXISTS FOR (n:Entity) REQUIRE n.id IS UNIQUE;
     query: > 
-      CREATE (n:Entity {id: event.id, pca_embedding: event.pca_embedding, category: event.category})
+      CREATE (n:Entity {id: event.id, pca_embedding: event.pca_embedding})
       WITH event, n
       CALL apoc.create.addLabels(n, event.labels) YIELD node
       RETURN node
@@ -96,10 +103,6 @@ embeddings.tmp.input_edges:
       WITH subject, object, event
       CALL apoc.create.relationship(subject, event.label, {}, object) YIELD rel
       RETURN rel
-
-embeddings.feat.include_in_topological@yaml:
-  filepath: ${globals:paths.embeddings}/feat/topological_filter_result.yml
-  type:  yaml.YAMLDataset
 
 embeddings.models.topological:
   # we do not actually do anything with this DS, thus it's a dummy

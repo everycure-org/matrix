@@ -1,143 +1,151 @@
 from kedro.pipeline import Pipeline, pipeline
 
-from matrix.kedro4argo_node import argo_node
 
 from . import nodes
-from .robokop import transform_robo_edges, transform_robo_nodes
-from .rtxkg2 import transform_rtxkg2_edges, transform_rtxkg2_nodes
+
+from matrix import settings
+
+from pyspark.sql import DataFrame
+from refit.v1.core.inject import inject_object
+
+
+@inject_object()
+def transform_nodes(transformer, nodes_df: DataFrame, **kwargs):
+    return transformer.transform_nodes(nodes_df=nodes_df, **kwargs)
+
+
+@inject_object()
+def transform_edges(transformer, edges_df: DataFrame, **kwargs):
+    return transformer.transform_edges(edges_df=edges_df, **kwargs)
+
+
+def _create_integration_pipeline(source: str) -> Pipeline:
+    return pipeline(
+        [
+            node(
+                func=transform_nodes,
+                inputs={
+                    "transformer": f"params:integration.sources.{source}.transformer",
+                    "nodes_df": f"ingestion.int.{source}.nodes",
+                    "biolink_categories_df": "integration.raw.biolink.categories",
+                },
+                outputs=f"integration.int.{source}.nodes",
+                name=f"transform_{source}_nodes",
+                tags=["standardize"],
+            ),
+            node(
+                func=transform_edges,
+                inputs={
+                    "transformer": f"params:integration.sources.{source}.transformer",
+                    "edges_df": f"ingestion.int.{source}.edges",
+                    # NOTE: The datasets below are currently only picked up by RTX
+                    # the goal is to ensure that semmed filtering occurs for all
+                    # graphs in the future.
+                    "curie_to_pmids": "ingestion.int.rtx_kg2.curie_to_pmids",
+                    "semmed_filters": "params:integration.preprocessing.rtx.semmed_filters",
+                },
+                outputs=f"integration.int.{source}.edges",
+                name=f"transform_{source}_edges",
+                tags=["standardize"],
+            ),
+            # FUTURE: Extract normalizer technique
+            node(
+                func=nodes.normalize_kg,
+                inputs={
+                    "nodes": f"integration.int.{source}.nodes",
+                    "edges": f"integration.int.{source}.edges",
+                    "api_endpoint": "params:integration.nodenorm.api_endpoint",
+                    "conflate": "params:integration.nodenorm.conflate",
+                    "drug_chemical_conflate": "params:integration.nodenorm.drug_chemical_conflate",
+                    "batch_size": "params:integration.nodenorm.batch_size",
+                    "parallelism": "params:integration.nodenorm.parallelism",
+                },
+                outputs=[
+                    f"integration.int.{source}.nodes.norm",
+                    f"integration.int.{source}.edges.norm",
+                    f"integration.int.{source}.nodes_norm_mapping",
+                ],
+                name=f"normalize_{source}_kg",
+            ),
+        ]
+    )
 
 
 def create_pipeline(**kwargs) -> Pipeline:
     """Create integration pipeline."""
-    return pipeline(
-        [
-            argo_node(
-                func=transform_robo_nodes,
-                inputs=["ingestion.int.robokop.nodes", "integration.raw.biolink.categories"],
-                outputs="integration.int.robokop.nodes",
-                name="transform_robokop_nodes",
-                tags=["standardize"],
-            ),
-            argo_node(
-                func=transform_robo_edges,
-                inputs=["ingestion.int.robokop.edges"],
-                outputs="integration.int.robokop.edges",
-                name="transform_robokop_edges",
-                tags=["standardize"],
-            ),
-            argo_node(
-                func=transform_rtxkg2_nodes,
-                inputs="ingestion.int.rtx_kg2.nodes",
-                outputs="integration.int.rtx.nodes",
-                name="transform_rtx_nodes",
-                tags=["standardize"],
-            ),
-            argo_node(
-                func=transform_rtxkg2_edges,
-                inputs=[
-                    "ingestion.int.rtx_kg2.edges",
-                    "ingestion.int.rtx_kg2.curie_to_pmids",
-                    "params:integration.preprocessing.rtx.semmed_filters",
-                ],
-                outputs="integration.int.rtx.edges",
-                name="transform_rtx_edges",
-                tags=["standardize"],
-            ),
-            # Normalize the KG IDs
-            argo_node(
-                func=nodes.normalize_kg,
-                inputs={
-                    "nodes": "integration.int.rtx.nodes",
-                    "edges": "integration.int.rtx.edges",
-                    "api_endpoint": "params:integration.nodenorm.api_endpoint",
-                    "conflate": "params:integration.nodenorm.conflate",
-                    "drug_chemical_conflate": "params:integration.nodenorm.drug_chemical_conflate",
-                    "batch_size": "params:integration.nodenorm.batch_size",
-                    "parallelism": "params:integration.nodenorm.parallelism",
-                },
-                outputs=[
-                    "integration.int.rtx.nodes.norm",
-                    "integration.int.rtx.edges.norm",
-                    "integration.int.rtx.nodes_norm_mapping",
-                ],
-                name="normalize_rtx_kg",
-                tags=["standardize"],
-            ),
-            argo_node(
-                func=nodes.normalize_kg,
-                inputs={
-                    "nodes": "integration.int.robokop.nodes",
-                    "edges": "integration.int.robokop.edges",
-                    "api_endpoint": "params:integration.nodenorm.api_endpoint",
-                    "conflate": "params:integration.nodenorm.conflate",
-                    "drug_chemical_conflate": "params:integration.nodenorm.drug_chemical_conflate",
-                    "batch_size": "params:integration.nodenorm.batch_size",
-                    "parallelism": "params:integration.nodenorm.parallelism",
-                },
-                outputs=[
-                    "integration.int.robokop.nodes.norm",
-                    "integration.int.robokop.edges.norm",
-                    "integration.int.robokop.nodes_norm_mapping",
-                ],
-                name="normalize_robokop_kg",
-            ),
-            argo_node(
-                func=nodes.union_and_deduplicate_nodes,
-                inputs={
-                    "datasets_to_union": "params:integration.unification.datasets_to_union",
-                    "rtx": "integration.int.rtx.nodes.norm",
-                    "biolink_categories_df": "integration.raw.biolink.categories",
-                    "robokop": "integration.int.robokop.nodes.norm",
-                    "medical_team": "ingestion.int.ec_medical_team.nodes",
-                },
-                outputs="integration.prm.unified_nodes",
-                name="create_prm_unified_nodes",
-            ),
-            # union edges
-            argo_node(
-                func=nodes.union_and_deduplicate_edges,
-                inputs={
-                    "datasets_to_union": "params:integration.unification.datasets_to_union",
-                    "rtx": "integration.int.rtx.edges.norm",
-                    "robokop": "integration.int.robokop.edges.norm",
-                    "medical_team": "ingestion.int.ec_medical_team.edges",
-                },
-                outputs="integration.prm.unified_edges",
-                name="create_prm_unified_edges",
-            ),
-            # filter nodes given a set of filter stages
-            argo_node(
-                func=nodes.prefilter_unified_kg_nodes,
-                inputs=[
-                    "integration.prm.unified_nodes",
-                    "params:integration.filtering.node_filters",
-                ],
-                outputs="integration.prm.prefiltered_nodes",
-                name="prefilter_prm_knowledge_graph_nodes",
-                tags=["filtering"],
-            ),
-            # filter edges given a set of filter stages
-            argo_node(
-                func=nodes.filter_unified_kg_edges,
-                inputs=[
-                    "integration.prm.prefiltered_nodes",
-                    "integration.prm.unified_edges",
-                    "integration.raw.biolink.predicates",
-                    "params:integration.filtering.edge_filters",
-                ],
-                outputs="integration.prm.filtered_edges",
-                name="filter_prm_knowledge_graph_edges",
-                tags=["filtering"],
-            ),
-            argo_node(
-                func=nodes.filter_nodes_without_edges,
-                inputs=[
-                    "integration.prm.prefiltered_nodes",
-                    "integration.prm.filtered_edges",
-                ],
-                outputs="integration.prm.filtered_nodes",
-                name="filter_nodes_without_edges",
-                tags=["filtering"],
-            ),
-        ]
+
+    # Create pipeline per source
+    pipelines = []
+    for source in settings.DYNAMIC_PIPELINES_MAPPING.get("integration"):
+        pipelines.append(
+            pipeline(
+                _create_integration_pipeline(source=source["name"]),
+                tags=[source["name"]],
+            )
+        )
+
+    # Add integration pipeline
+    pipelines.append(
+        pipeline(
+            [
+                node(
+                    func=nodes.union_and_deduplicate_nodes,
+                    inputs=[
+                        "integration.raw.biolink.categories",
+                        *[
+                            f'integration.int.{source["name"]}.nodes.norm'
+                            for source in settings.DYNAMIC_PIPELINES_MAPPING.get("integration")
+                        ],
+                    ],
+                    outputs="integration.prm.unified_nodes",
+                    name="create_prm_unified_nodes",
+                ),
+                # union edges
+                node(
+                    func=nodes.union_and_deduplicate_edges,
+                    inputs=[
+                        f'integration.int.{source["name"]}.edges.norm'
+                        for source in settings.DYNAMIC_PIPELINES_MAPPING.get("integration")
+                    ],
+                    outputs="integration.prm.unified_edges",
+                    name="create_prm_unified_edges",
+                ),
+                # filter nodes given a set of filter stages
+                node(
+                    func=nodes.prefilter_unified_kg_nodes,
+                    inputs=[
+                        "integration.prm.unified_nodes",
+                        "params:integration.filtering.node_filters",
+                    ],
+                    outputs="integration.prm.prefiltered_nodes",
+                    name="prefilter_prm_knowledge_graph_nodes",
+                    tags=["filtering"],
+                ),
+                # filter edges given a set of filter stages
+                node(
+                    func=nodes.filter_unified_kg_edges,
+                    inputs=[
+                        "integration.prm.prefiltered_nodes",
+                        "integration.prm.unified_edges",
+                        "integration.raw.biolink.predicates",
+                        "params:integration.filtering.edge_filters",
+                    ],
+                    outputs="integration.prm.filtered_edges",
+                    name="filter_prm_knowledge_graph_edges",
+                    tags=["filtering"],
+                ),
+                node(
+                    func=nodes.filter_nodes_without_edges,
+                    inputs=[
+                        "integration.prm.prefiltered_nodes",
+                        "integration.prm.filtered_edges",
+                    ],
+                    outputs="integration.prm.filtered_nodes",
+                    name="filter_nodes_without_edges",
+                    tags=["filtering"],
+                ),
+            ]
+        )
     )
+
+    return sum(pipelines)
