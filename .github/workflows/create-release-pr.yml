@@ -37,7 +37,7 @@ jobs:
             gitref=$(echo '${{ toJson(github.event) }}' | jq '.client_payload.git_fingerprint')
           else
             release="v0.x.y"
-            gitref=main
+            gitref=${{github.ref_name}}
           fi
           echo "release=${release}" >> "$GITHUB_ENV"
           echo "gitref=${gitref}" >> "$GITHUB_ENV"

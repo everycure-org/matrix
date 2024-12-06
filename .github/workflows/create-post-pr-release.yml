@@ -7,7 +7,7 @@ name: Release
 on:
   push:
     branches:
-      - 'feat/trigger-release-from-gh-action'
+      - 'feat/trigger-release-from-gh-action-lkfnsdklfnqsdnf'
       
   # pull_request_review:
   #   types: [submitted]
