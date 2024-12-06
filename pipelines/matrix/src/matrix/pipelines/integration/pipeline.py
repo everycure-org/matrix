@@ -147,7 +147,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                     func=nodes.add_gt_category,
                     inputs=[
                         "integration.prm.filtered_nodes_no_gt",
-                        "modelling.raw.known_pairs@spark",
+                        "ingestion.raw.ground_truth.combined@spark",
                         "ingestion.raw.drug_list@spark",
                         "ingestion.raw.disease_list@spark",
                     ],
