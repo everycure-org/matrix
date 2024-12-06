@@ -43,10 +43,11 @@ jobs:
           echo "gitref=${gitref}" >> "$GITHUB_ENV"
 
       - name: 'Checkout'
-        uses: actions/checkout@${{env.gitref}}
+        uses: actions/checkout@main
         with:
           fetch-tags: true
           fetch-depth: 0  # full depth needed so we can pass the AI all logs since the last release.
+          ref: "${{env.gitref}}"
 
       - name: Tag the commit from which the data release was triggered
         run: git tag "${{env.release}}"
