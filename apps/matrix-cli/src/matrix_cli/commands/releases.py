@@ -14,6 +14,8 @@ from rich import print
 from rich.markdown import Markdown
 from tqdm.rich import tqdm
 
+import time
+
 from matrix_cli.commands.code import get_ai_code_summary
 from matrix_cli.components.cache import memory
 from matrix_cli.components.gh_api import get_pr_details, update_prs
@@ -53,6 +55,7 @@ def write_release_article(
         False, help="Don't ask interactive questions. The most recent release will be automatically used."
     ),
     notes_file: str = typer.Option(None, help="File containing release notes"),
+    focus_direction: str = typer.Option(None, help="Focus direction for the release article"),
 ):
     """Write a release article for a given git reference."""
     since = select_release(headless)
@@ -78,9 +81,9 @@ def write_release_article(
 
     # prompt user to give guidance on what to focus on in the release article
     console.print(Markdown(notes))
-    focus_direction = console.input(
-        "[bold green]Please provide guidance on what to focus on in the release article. Note 'Enter' will end the prompt: "
-    )
+    # focus_direction = console.input(
+    #     "[bold green]Please provide guidance on what to focus on in the release article. Note 'Enter' will end the prompt: "
+    # )
 
     prompt = f"""
 # Please write a release article based on the following release notes and git diff:
@@ -102,7 +105,7 @@ def write_release_article(
 Please focus on the following topics in the release article:
 {focus_direction}
         """
-
+    time.sleep(300)
     response = invoke_model(prompt, model=model)
 
     if output_file:

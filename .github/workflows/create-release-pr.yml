@@ -66,8 +66,8 @@ jobs:
           uv run matrix releases release-notes --headless --output-file "${release}/notes.md"
           # sleep because it exceeds the limit
           # https://cloud.google.com/vertex-ai/generative-ai/docs/quotas
-          echo "Sleep for 10mins"
-          sleep 600
+          echo "Sleep for 5mins"
+          sleep 300
           echo "Done sleeping"
           uv run matrix releases article --headless --output-file "${release}/post.md" --no-disable-rendering --notes-file "${release}/notes.md"
           mv "${release}" "${GITHUB_WORKSPACE}/docs/src/releases/posts"
