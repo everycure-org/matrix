@@ -3,16 +3,10 @@ name: Create Pull Request to Verify AI Summary of Release Notes
 on:
   push:
     branches:
-      - 'feat/trigger-release-from-gh-action'  # TODO: replace by manual trigger and repository_dispatch
+      - 'feat/trigger-release-from-gh-action'
+      - 'debug/release*'
   repository_dispatch:
     types: distribute-release
-#        required: true
-#        description: Name of the release, like "v1.2.3"
-#        type: string
-#      git_fingerprint:
-#        required: true
-#        description: The Git reference (typically commit SHA) from which the data release workflow was triggered.
-#        type: string
 
 env:
   project_id: 'mtrx-hub-dev-3of'
@@ -31,18 +25,17 @@ jobs:
     steps:
       - name: store variables
         run: |
-          
           if [[ "${{ github.event_name == 'repository_dispatch' }}" == "true" ]]; then
             release=$(echo '${{ toJson(github.event) }}' | jq '.client_payload.release_version')
             gitref=$(echo '${{ toJson(github.event) }}' | jq '.client_payload.git_fingerprint')
           else
-            release="v0.x.y"
+            release="debug-dont-release"
             gitref=${{github.ref_name}}
           fi
           echo "release=${release}" >> "$GITHUB_ENV"
           echo "gitref=${gitref}" >> "$GITHUB_ENV"
 
-      - name: 'Checkout'
+      - name: Checkout
         uses: actions/checkout@main
         with:
           fetch-tags: true
@@ -50,12 +43,12 @@ jobs:
           ref: "${{env.gitref}}"
 
       - name: Tag the commit from which the data release was triggered
-        run: git tag "${{env.release}}"
+        run: git tag --annotate --message '' -- "${{env.release}}"
 
       - name: Setup Matrix CLI
         working-directory: apps/matrix-cli
         run: |
-          gcloud config list account --format "value(core.account)"  # for debugging
+          # gcloud config list account --format "value(core.account)"  # for debugging: empty on the runner
           pip install uv
           uv sync
 
@@ -77,31 +70,28 @@ jobs:
           mkdir -p "${{env.release}}"
           echo "foo" > "${{env.release}}/notes.md"
           echo "foobar" > "${{env.release}}/post.md"
-          #  uv run matrix releases release-notes --headless --output-file "${{env.release}}/notes.md"
-          #  # sleep because it exceeds the limit
-          #  # https://cloud.google.com/vertex-ai/generative-ai/docs/quotas
-          #  # TODO: debug
-          #  echo "Sleep for 100s"
-          #  sleep 100
-          #  echo "Done sleeping"
-          #  uv run matrix releases article \
-          #    --headless \
-          #    --output-file "${{env.release}}/post.md" \
-          #    --no-disable-rendering \
-          #    --notes-file "${{env.release}}/notes.md"
-          mv "${{env.release}}" "${GITHUB_WORKSPACE}/docs/src/releases/posts"
-          ls "${GITHUB_WORKSPACE}/docs/src/releases/posts"
-          echo "${POSTS_DIR}"
-          git add "${GITHUB_WORKSPACE}/docs/src/releases/posts/${{env.release}}" # && git commit -m "added release notes & article draft" && git push
-          git status
-          ls "${GITHUB_WORKSPACE}/${POSTS_DIR}"
-          ls !$
+          # uv run matrix releases release-notes --headless --output-file "${{env.release}}/notes.md"
+          # # sleep because it exceeds the limit
+          # # https://cloud.google.com/vertex-ai/generative-ai/docs/quotas
+          # # TODO: debug
+          # echo "Sleep for 100s"
+          # sleep 100
+          # echo "Done sleeping"
+          # uv run matrix releases article \
+          #   --headless \
+          #   --output-file "${{env.release}}/post.md" \
+          #   --no-disable-rendering \
+          #   --notes-file "${{env.release}}/notes.md"
+          mv "${{env.release}}" "${GITHUB_WORKSPACE}/${POSTS_DIR}"
+          git add "${GITHUB_WORKSPACE}/${POSTS_DIR}/${{env.release}}" && \
+          git commit -m "added release notes & article draft" && \
+          git push --follow-tags
 
-#      - name: Create Pull Request
-#        run: gh pr create \
-#          --title "Release/${env.release}" \
-#          --base main \
-#          --body "Adds the release article and associated notes" \
-#          --draft \
-#          --dry-run \
-#          --label Release
+      - name: Create Pull Request
+        run: gh pr create \
+          --title "Release/${{env.release}}" \
+          --base main \
+          --body "Adds the release article and associated notes" \
+          --draft \
+          --dry-run \
+          --label Release
