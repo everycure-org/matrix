@@ -1,4 +1,18 @@
 integration:
+
+  sources:
+    rtx_kg2:
+      transformer:
+        object: matrix.pipelines.integration.rtxkg2.RTXTransformer
+    # NOTE: Currently disabling robokop integration
+    # robokop: 
+    #   transformer:
+    #     object: matrix.pipelines.integration.robokop.RobokopTransformer
+    ec_medical_team: 
+      transformer:
+        object: matrix.pipelines.integration.medical.MedicalTransformer
+
+  # FUTURE: Ensure we can move this to filters down here
   preprocessing:
     rtx:
       semmed_filters:
@@ -6,6 +20,7 @@ integration:
         ngd_threshold: 0.6
         limit_pmids: 50_000_000 # essentially unlimited, but allows for local clipping if local run is desired
 
+  # FUTURE: Implement strategy to ensure this can be injected in the future
   nodenorm:
     # api_endpoint: https://nodenormalization-sri.renci.org/get_normalized_nodes
     api_endpoint: ${oc.env:NODENORM_ENDPOINT, https://nodenorm.transltr.io/1.5/get_normalized_nodes}
@@ -13,12 +28,6 @@ integration:
     drug_chemical_conflate: true
     batch_size: 1000
     parallelism: 120
-
-  unification:
-    datasets_to_union:
-      - rtx
-      - medical_team
-      # - robokop
 
   filtering:
     node_filters:

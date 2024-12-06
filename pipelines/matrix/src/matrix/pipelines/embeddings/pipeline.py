@@ -4,10 +4,6 @@ from matrix.kedro4argo_node import ArgoNode, ArgoResourceConfig
 from . import nodes
 
 
-def select(df):
-    return df.select("id", "name", "category", "pca_embedding")
-
-
 def create_pipeline(**kwargs) -> Pipeline:
     """Create embeddings pipeline."""
     return pipeline(
@@ -30,7 +26,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 func=nodes.compute_embeddings,
                 inputs={
                     "dfs": "embeddings.feat.bucketized_nodes@partitioned",
-                    "model": "params:embeddings.node.model",
+                    "encoder": "params:embeddings.node.encoder",
                 },
                 outputs="embeddings.feat.graph.node_embeddings@partitioned",
                 name="add_node_embeddings",
@@ -47,9 +43,22 @@ def create_pipeline(**kwargs) -> Pipeline:
                 name="apply_pca",
                 tags=["argowf.fuse", "argowf.fuse-group.node_embeddings"],
             ),
+            ArgoNode(
+                func=nodes.filter_edges_for_topological_embeddings,
+                inputs=[
+                    "integration.prm.filtered_nodes",
+                    "integration.prm.filtered_edges",
+                    "params:modelling.drug_types",
+                    "params:modelling.disease_types",
+                ],
+                outputs="embeddings.feat.graph.edges_for_topological",
+                name="filter_edges_for_topological",
+            ),
             # Load spark dataset into local neo instance
             ArgoNode(
-                func=select,
+                # NOTE: We are only selecting these two categories due to OOM neo4j instance error
+                # which occurs when we select all cols
+                func=lambda x: x.select("id", "pca_embedding"),
                 inputs=["embeddings.feat.graph.pca_node_embeddings"],
                 outputs="embeddings.tmp.input_nodes",
                 name="ingest_neo4j_input_nodes",
@@ -63,7 +72,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 func=nodes.ingest_edges,
                 inputs=[
                     "embeddings.tmp.input_nodes",
-                    "integration.prm.filtered_edges",
+                    "embeddings.feat.graph.edges_for_topological",
                 ],
                 outputs="embeddings.tmp.input_edges",
                 name="ingest_neo4j_input_edges",
@@ -99,7 +108,7 @@ def create_pipeline(**kwargs) -> Pipeline:
             ArgoNode(
                 func=nodes.train_topological_embeddings,
                 inputs={
-                    "df": "embeddings.feat.include_in_topological@yaml",
+                    "df": "embeddings.tmp.input_edges",
                     "gds": "params:embeddings.gds",
                     "topological_estimator": "params:embeddings.topological_estimator",
                     "unpack": "params:embeddings.topological",
@@ -131,7 +140,7 @@ def create_pipeline(**kwargs) -> Pipeline:
             ),
             # extracts the nodes from neo4j
             ArgoNode(
-                func=nodes.extract_node_embeddings,
+                func=nodes.extract_topological_embeddings,
                 inputs={
                     "embeddings": "embeddings.model_output.topological",
                     "nodes": "integration.prm.filtered_nodes",
