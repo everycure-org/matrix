@@ -34,18 +34,6 @@ integration.raw.biolink.categories:
   type: kedro_datasets.json.JSONDataset
   filepath: https://biolink.github.io/biolink-model/categories.json
 
-integration.raw.biolink.associations:
-  type: kedro_datasets.json.JSONDataset
-  filepath: https://biolink.github.io/biolink-model/associations.json
-
-integration.raw.biolink.qualifiers:
-  type: kedro_datasets.json.JSONDataset
-  filepath: https://biolink.github.io/biolink-model/qualifiers.json
-
-integration.int.biolink.predicates:
-  type: kedro_datasets.json.JSONDataset
-  filepath: ${globals:paths.integration}/int/biolink_predicates.json
-
 integration.int.{source}.nodes:
   <<: [*_spark_parquet, *_layer_int]
   filepath: ${globals:paths.integration}/int/{source}/nodes
