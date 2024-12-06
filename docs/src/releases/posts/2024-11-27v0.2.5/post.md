@@ -4,11 +4,11 @@ date: 2024-11-28
 categories:
   - Release
 authors:
+  - pascalwhoop
   - lvijnck
   - matwasilewski
   - oliverw1
   - emil-k
-  - pascalwhoop
   - piotrkan
   - chempsEC
   - leelancashire
@@ -18,7 +18,7 @@ authors:
 # `v0.2.5`: First stable integrated KG release, improving ROBOKOP integration, first version of Matrix CLI, and enhancing pipeline control
 
 This release of the Matrix Platform focuses on improving developer experience and enhancing data integration and pipeline control.  We introduce a new command-line interface (CLI), integrate the ROBOKOP
-knowledge graph, and provide more granular control over pipeline execution.
+knowledge graph with RTX-KG2 (v2.7.3)[^1], and provide more granular control over pipeline execution.
 
 <!-- more -->
 
@@ -27,7 +27,7 @@ knowledge graph, and provide more granular control over pipeline execution.
 !!! info
     All the below commands assume you are checking out the `main` branch of the Matrix repository. To make sure you get a specific release, you can either check out the specific release tag or set the `RELEASE_NAME` environment variable to the release you want to use. When checking out the tag, you also get the codebase from that release. When you set the `RELEASE_NAME` environment variable, you get the data from the release, but the codebase of your current branch.
 
-### Using the CLI
+### Using the CLI or via Jupyter Notebooks
 
 The quickest way to explore the data is using IPython:
 
@@ -46,7 +46,9 @@ You can then load any dataset using:
 df = catalog.load("dataset_name")
 ```
 
-### Using Jupyter Notebook
+For more details on how to use this, please refer to the [Kedro documentation](https://kedro.org/community/tutorials/kedro-ipython).
+
+#### Using Jupyter Notebook
 
 To explore the data in a Jupyter notebook:
 
@@ -64,25 +66,29 @@ To reload the Kedro context at any time in your notebook (e.g. after changing co
 %reload_kedro
 ```
 
+!!! tip
+    We recommend checking the official [Kedro documentation](https://docs.kedro.org/en/stable/notebooks_and_ipython/kedro_and_notebooks.html#loading-the-project-with-kedro-jupyter-notebook) on this feature for more details.
+
 #### Specifying a Different Release
 
 By default, the data access will use the release specified in `conf/cloud/globals.yml`, to use a different release:
 
-1. Update the `RELEASE_NAME` in `.env`:
+Update the `RELEASE_NAME` in `.env`:
 
 ```
 RELEASE_NAME=v0.2.5-rtx-only #to use a release that only includes RTX data
 ```
 
-!!! tip: 
-    If you want to get a list of all current releases, while we are working on a more centralized solution you can run either `git tag` to see a list (data available starting from `v0.2.5`) or by running
+!!! tip 
+    If you want to get a list of all current releases, while we are working on a more centralized solution, you can run either `git tag` to see a list (data available starting from `v0.2.5`) or by running
     ```
     gsutil ls gs://mtrx-us-central1-hub-dev-storage/kedro/data/releases/
     ```
 
     which lists the folder containing all release runs. Note that not every folder will contain all data today, but we are working towards making sure they will always contain a complete release.
 
-2. Reload your kedro context for the changes to take effect
+
+Reload your kedro context for the changes to take effect
 
 ### Via BigQuery
 
@@ -167,3 +173,5 @@ We have progressed the following workstreams:
  - Work to compare performance of existing models with TxGNN has made significant progress and our first experimental runs are now complete. Ongoing work will compare this method with our baseline KGML-xDTD approach. ([#586](https://github.com/everycure-org/matrix/issues/586))
 - We now have the ability to perform multiple folds of cross validation in the modeling and evaluation suite. This should enable us to better estimate stability and confidence in our model predictions ([#587](https://github.com/everycure-org/matrix/issues/587))
 - We have implemented the ability to run a full comparison of treat scores using various embedding models, such as Node2Vec, PubmedBERT, and OpenAI ([#301](https://github.com/everycure-org/matrix/issues/301).
+
+[^1]: Note RTX KG2 upgrade to 2.10 has already been tested and will be part of our next data release. We want to create this release to enable people to run tests also with the older version and compare results to existing model results on the older version.
