@@ -1,17 +1,17 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: argo-workflows
+  name: moa
   namespace: argocd
 spec:
   destination:
-    namespace: argo-workflows
+    namespace: moa
     server: {{ .Values.spec.destination.server }}
   project: default
   source:
-    path: {{ .Values.spec.source.repoPath }}/workflows
+    path: {{ .Values.spec.source.repoPath }}/moa
     repoURL: {{ .Values.spec.source.repoURL }}
-    targetRevision: feat/prom-graf-stack
+    targetRevision: feat/add-moa-vis # {{ .Values.spec.source.targetRevision }}
   syncPolicy:
     syncOptions:     # Sync options which modifies sync behavior
     - CreateNamespace=true # Namespace Auto-Creation ensures that namespace specified as the application destination exists in the destination cluster.

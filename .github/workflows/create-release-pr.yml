@@ -1,0 +1,82 @@
+name: Create Pull Request to Verify AI Summary of Release Notes
+
+on:
+  push:
+    branches:
+      - 'feat/trigger-release-from-gh-action'  # TODO: replace by manual trigger and repository_dispatch
+  repository_dispatch:
+    types: distribute-release
+
+env:
+  project_id: 'mtrx-hub-dev-3of'
+  workload_identity_provider: 'projects/938607797672/locations/global/workloadIdentityPools/matrix-pool-rw/providers/matrix-gh-provider-rw'
+  service_account: 'sa-github-actions-rw@mtrx-hub-dev-3of.iam.gserviceaccount.com'
+
+jobs:
+  create_release_notes_draft:
+    runs-on: ubuntu-latest
+    name: Create Draft of the Release Notes
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+      pull-requests: 'read'
+
+    steps:
+      - name: 'Checkout'
+        uses: actions/checkout@main
+        with: 
+          fetch-tags: true
+          fetch-depth: 0
+
+      - name: Setup Matrix CLI
+        working-directory: apps/matrix-cli
+        run: |
+          gcloud config list account --format "value(core.account)"  # for debugging
+          pip install uv
+          uv sync
+
+      - name: Authenticate with Google Cloud
+        uses: 'google-github-actions/auth@v2'
+        # if: github.ref == 'refs/heads/main'
+        with:
+          project_id: ${{env.project_id}}
+          workload_identity_provider: ${{env.workload_identity_provider}}
+          service_account: ${{env.service_account}}
+
+      - name: Create Release Notes
+        working-directory: apps/matrix-cli
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gcloud config list account --format "value(core.account)"
+          if [[ "${{ github.event_name == 'repository_dispatch' }}" == "true" ]]; then
+            release=$(echo '${{ toJson(github.event) }}' | jq '.client_payload.release_version')
+          else
+            release="v0.2.6-alpha"
+          fi
+          echo "$release"
+          echo "${GITHUB_ENV}"
+          echo "release=${release}" >> "${GITHUB_ENV}"
+          mkdir -p "${release}"
+          uv run matrix releases release-notes --headless --output-file "${release}/notes.md"
+          # sleep because it exceeds the limit
+          # https://cloud.google.com/vertex-ai/generative-ai/docs/quotas
+          # echo "Sleep for 1mins"
+          # sleep 60
+          # echo "Done sleeping"
+          uv run matrix releases article --headless --output-file "${release}/post.md" --no-disable-rendering --notes-file "${release}/notes.md"
+          mv "${release}" "${GITHUB_WORKSPACE}/docs/src/releases/posts"
+          ls "${GITHUB_WORKSPACE}/docs/src/releases/posts"
+          ls !$
+        #  git add ${release} && git commit -m "added release notes & article draft" && git push
+
+#      - name: Create Pull Request
+#        run: gh pr create \
+#          --title "Release/${env.release}" \
+#          --base main \
+#          --body "Adds the release article and associated notes" \
+#          --draft \
+#          --dry-run \
+#          --label Release
+      # - name: Create git tag
+      #   run: git tag -a "${release}" -m "Release version ${release}"
