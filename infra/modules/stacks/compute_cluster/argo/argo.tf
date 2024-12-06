@@ -53,7 +53,9 @@ resource "helm_release" "argo" {
         "nginx.ingress.kubernetes.io/ssl-passthrough" : "true",
       },
       # disables ssl for argocd server since we do SSL termination at the gateway
-      "configs.params.server.insecure" : true
+      "configs.params" : {
+        "server.insecure" : true
+      }
     })
   ]
 }
