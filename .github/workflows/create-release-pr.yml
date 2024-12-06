@@ -92,7 +92,7 @@ jobs:
           mv "${{env.release}}" "${GITHUB_WORKSPACE}/docs/src/releases/posts"
           ls "${GITHUB_WORKSPACE}/docs/src/releases/posts"
           echo "${POSTS_DIR}"
-          git add "${GITHUB_WORKSPACE}/docs/src/releases/posts/{{env.release}}" # && git commit -m "added release notes & article draft" && git push
+          git add "${GITHUB_WORKSPACE}/docs/src/releases/posts/${{env.release}}" # && git commit -m "added release notes & article draft" && git push
           git status
           ls "${GITHUB_WORKSPACE}/${POSTS_DIR}"
           ls !$
