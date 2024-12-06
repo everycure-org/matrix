@@ -70,25 +70,30 @@ jobs:
         working-directory: apps/matrix-cli
         env:
           GH_TOKEN: ${{ github.token }}
+          POSTS_DIR: ${GITHUB_WORKSPACE}/docs/src/releases/posts
         run: |
           gcloud config list account --format "value(core.account)"
           
           mkdir -p "${{env.release}}"
-          uv run matrix releases release-notes --headless --output-file "${{env.release}}/notes.md"
-          # sleep because it exceeds the limit
-          # https://cloud.google.com/vertex-ai/generative-ai/docs/quotas
-          # TODO: debug
-          echo "Sleep for 100s"
-          sleep 100
-          echo "Done sleeping"
-          uv run matrix releases article \
-            --headless \
-            --output-file "${{env.release}}/post.md" \
-            --no-disable-rendering \
-            --notes-file "${{env.release}}/notes.md"
+          echo "foo" > "${{env.release}}/notes.md"
+          echo "foobar" > "${{env.release}}/post.md"
+          #  uv run matrix releases release-notes --headless --output-file "${{env.release}}/notes.md"
+          #  # sleep because it exceeds the limit
+          #  # https://cloud.google.com/vertex-ai/generative-ai/docs/quotas
+          #  # TODO: debug
+          #  echo "Sleep for 100s"
+          #  sleep 100
+          #  echo "Done sleeping"
+          #  uv run matrix releases article \
+          #    --headless \
+          #    --output-file "${{env.release}}/post.md" \
+          #    --no-disable-rendering \
+          #    --notes-file "${{env.release}}/notes.md"
           mv "${{env.release}}" "${GITHUB_WORKSPACE}/docs/src/releases/posts"
           ls "${GITHUB_WORKSPACE}/docs/src/releases/posts"
-          git add ${{env.release}} # && git commit -m "added release notes & article draft" && git push
+          echo "${POSTS_DIR}"
+          ls "${POSTS_DIR}"
+          git add "${GITHUB_WORKSPACE}/docs/src/releases/posts/{{env.release}}" # && git commit -m "added release notes & article draft" && git push
           git status
           ls !$
 
