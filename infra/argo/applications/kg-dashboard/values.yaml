@@ -1,0 +1,40 @@
+replicaCount: 1
+
+image:
+  # TODO: Once the image is getting automatically pushed, this should 
+  # TODO: change to us-central1-docker.pkg.dev/mtrx-hub-dev-3of/matrix-images/kg-dashboard
+  repository: kschaper/matrix-kg-dashboard
+  pullPolicy: IfNotPresent
+  tag: latest
+
+env:
+  - name: SENTRY_ENABLED
+    value: "false"
+
+serviceAccount:
+  create: true
+  automount: true
+  annotations: {}
+  name: ""
+
+service:
+  type: NodePort
+  port: 3000
+  nodePort: 31800
+
+ingress:
+  enabled: false
+
+resources:
+  limits:
+    cpu: "4"
+    memory: "12Gi"
+  requests:
+    cpu: "4"
+    memory: "12Gi"
+
+redis:
+  enabled: true
+  resources:
+    requests:
+      memory: "2Gi"

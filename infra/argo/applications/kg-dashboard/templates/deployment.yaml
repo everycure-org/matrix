@@ -1,0 +1,33 @@
+# infra/argo/applications/kg-dashboard/templates/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kg-dashboard
+  labels:
+    app: kg-dashboard
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: kg-dashboard
+  template:
+    metadata:
+      labels:
+        app: kg-dashboard
+    spec:
+      containers:
+      - name: kg-dashboard
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        env:
+        {{- range .Values.env }}
+          - name: {{ .name }}
+            value: {{ .value | quote }}
+        {{- end }}
+        resources:
+          limits:
+            cpu: {{ .Values.resources.limits.cpu }}
+            memory: {{ .Values.resources.limits.memory }}
+          requests:
+            cpu: {{ .Values.resources.requests.cpu }}
+            memory: {{ .Values.resources.requests.memory }}

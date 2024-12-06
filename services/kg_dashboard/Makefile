@@ -1,5 +1,8 @@
 # Define the image name
-IMAGE_NAME = matrix-kg-dashboard
+IMAGE_NAME = kg-dashboard
+REPO_NAME = matrix-images
+PROJECT_ID = $(shell gcloud config get-value project)
+
 
 .PHONY: build run clean
 
@@ -10,6 +13,11 @@ build:
 # Run the Docker container
 run: build
 	docker run -d -p 80:80 $(IMAGE_NAME)
+
+# Command to push the Docker container to gcloud artifact registry
+push:
+	docker tag $(IMAGE_NAME) gcr.io/$(PROJECT_ID)/$(REPO_NAME)/$(IMAGE_NAME)
+	docker push gcr.io/$(PROJECT_ID)/$(REPO_NAME)/$(IMAGE_NAME)
 
 # Clean up Docker resources
 clean:
