@@ -54,7 +54,8 @@ resource "helm_release" "argo" {
       },
       # disables ssl for argocd server since we do SSL termination at the gateway
       "configs.params" : {
-        "server.insecure" : true
+        "server.insecure" : true,
+        "server.basehref" : "/"
       }
     })
   ]
