@@ -59,10 +59,6 @@ def union_and_deduplicate_nodes(biolink_categories_df: pd.DataFrame, *nodes) -> 
     # fmt: on
 
 
-def append_datasets(*datasets):
-    return [item for ds in datasets for item in ds]
-
-
 def _union_datasets(
     *datasets: DataFrame,
 ) -> DataFrame:
