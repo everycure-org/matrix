@@ -32,6 +32,9 @@ jobs:
           fetch-tags: true
           fetch-depth: 0
 
+      # - name: Create git tag
+      #   run: git tag -a "${release}" -m "Release version ${release}"
+
       - name: Setup Matrix CLI
         working-directory: apps/matrix-cli
         run: |
@@ -66,8 +69,8 @@ jobs:
           uv run matrix releases release-notes --headless --output-file "${release}/notes.md"
           # sleep because it exceeds the limit
           # https://cloud.google.com/vertex-ai/generative-ai/docs/quotas
-          echo "Sleep for 5mins"
-          sleep 300
+          echo "Sleep for 2mins"
+          sleep 120
           echo "Done sleeping"
           uv run matrix releases article --headless --output-file "${release}/post.md" --no-disable-rendering --notes-file "${release}/notes.md"
           mv "${release}" "${GITHUB_WORKSPACE}/docs/src/releases/posts"
@@ -83,5 +86,3 @@ jobs:
 #          --draft \
 #          --dry-run \
 #          --label Release
-      # - name: Create git tag
-      #   run: git tag -a "${release}" -m "Release version ${release}"

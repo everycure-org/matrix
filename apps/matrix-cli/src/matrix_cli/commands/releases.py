@@ -105,7 +105,7 @@ def write_release_article(
 Please focus on the following topics in the release article:
 {focus_direction}
         """
-    time.sleep(300)
+    time.sleep(120)
     response = invoke_model(prompt, model=model)
 
     if output_file:
