@@ -52,7 +52,9 @@ def setup_environment(utils_path: Path, root_subdir: str = "pipelines/matrix"):
 
 def configure_logging():
     logging.basicConfig(
-        level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s", handlers=[logging.StreamHandler(sys.stdout)]
+        level=logging.DEBUG,
+        format="%(asctime)s %(levelname)s %(message)s",
+        handlers=[logging.StreamHandler(sys.stdout)],
     )
     logging.info("Logging is configured.")
 
@@ -182,7 +184,6 @@ class DataLoader:
 
             positive_df = self.cache_manager.get_or_compute(positive_cache_path, compute_positive_dataset)
             negative_df = self.cache_manager.get_or_compute(negative_cache_path, compute_negative_dataset)
-
             positive_datasets[category] = positive_df
             negative_datasets[category] = negative_df
         return categories, positive_datasets, negative_datasets, nodes_df
@@ -239,6 +240,7 @@ def parse_list_string(s):
                     pass
         return [s]
     else:
+        logging.warning(f"Unexpected type in parse_list_string: {type(s)}")
         return []
 
 
@@ -251,11 +253,20 @@ def is_missing_value(value):
 
 def get_text_representation(row, text_fields=None, combine_fields=False):
     if text_fields is None:
-        text_fields = ["name", "category", "labels", "all_categories"]
-    if "llm_enhanced_text" in row and pd.notnull(row["llm_enhanced_text"]):
+        text_fields = ["name", "category", "all_categories"]
+    if "llm_enhanced_text" in row and not is_missing_value(row["llm_enhanced_text"]):
         text_fields = ["llm_enhanced_text"]
     global missing_data_rows_dict
-    fields = [row.get(field, "") for field in text_fields]
+    fields = []
+    for tfield in text_fields:
+        value = row.get(tfield, "")
+        try:
+            if is_missing_value(value):
+                value = ""
+        except Exception as e:
+            logging.error(f"Error with value '{value}' in field '{tfield}': {e}")
+            raise
+        fields.append(value)
     missing_fields = [field for field, value in zip(text_fields, fields) if is_missing_value(value)]
     for missing_field in missing_fields:
         if missing_field not in missing_data_rows_dict:
@@ -321,49 +332,52 @@ def create_equivalent_items_dfs(positive_datasets, normalized_data):
             equivalent_dfs[category] = df
             continue
         df["ids_to_normalize"] = df.apply(
-            lambda row: list(set([row["id"]] + parse_list_string(row.get("equivalent_identifiers", [])))), axis=1
+            lambda row: list(
+                set([str(row["id"])] + [str(x) for x in parse_list_string(row.get("equivalent_identifiers", []))])
+            ),
+            axis=1,
         )
         df_exploded = df.explode("ids_to_normalize").reset_index(drop=True)
         df_exploded.rename(columns={"ids_to_normalize": "id_to_normalize"}, inplace=True)
-        unique_ids = df_exploded["id_to_normalize"].unique()
+
         equivalents_list = []
-        for id_value in unique_ids:
+        for idx, row in df_exploded.iterrows():
+            id_value = row["id_to_normalize"]
             if id_value in normalized_data:
                 equivalents = normalized_data[id_value]
                 for eq in equivalents:
-                    equivalents_list.append(
-                        {
-                            "id_to_normalize": id_value,
-                            "identifier": eq["identifier"],
-                            "label": eq["label"],
-                            "category_list": eq.get("types", []),
-                        }
-                    )
+                    new_row = row.copy()
+                    new_row["id"] = eq["id"]
+                    new_row["name"] = eq["name"]
+                    new_row["all_categories"] = eq.get("types", [])
+                    equivalents_list.append(new_row)
             else:
-                rows_with_id = df_exploded[df_exploded["id_to_normalize"] == id_value]
-                for _, row in rows_with_id.iterrows():
-                    equivalents_list.append(
-                        {
-                            "id_to_normalize": id_value,
-                            "identifier": id_value,
-                            "label": row.get("name", ""),
-                            "category_list": parse_list_string(row.get("category", "")),
-                        }
-                    )
-        equivalents_df = pd.DataFrame(equivalents_list)
-        equivalents_df = equivalents_df.drop_duplicates(subset=["label"])
-        merged_df = df_exploded.merge(equivalents_df, on="id_to_normalize", how="left")
-        merged_df.rename(columns={"id_to_normalize": "ids_to_normalize"}, inplace=True)
-        columns_to_select = df.columns
-        for col in columns_to_select:
-            if col in merged_df.columns:
-                if merged_df[col].apply(lambda x: isinstance(x, (list, dict, set, np.ndarray))).any():
-                    merged_df[col] = merged_df[col].apply(lambda x: str(x) if not isinstance(x, str) else x)
-            else:
-                logging.warning(f"Column '{col}' not found in merged_df. Skipping this column.")
-        equivalent_df = merged_df[columns_to_select].drop_duplicates()
+                equivalents_list.append(row)
+
+        equivalent_df = pd.DataFrame(equivalents_list)
+
+        for col in equivalent_df.columns:
+            if equivalent_df[col].apply(lambda x: isinstance(x, (list, dict, set, np.ndarray))).any():
+                equivalent_df[col] = equivalent_df[col].apply(safe_json_dumps)
+
+        equivalent_df = equivalent_df.drop_duplicates()
         equivalent_dfs[category] = equivalent_df
     return equivalent_dfs
+
+
+def safe_json_dumps(x):
+    if isinstance(x, str):
+        return x
+    elif isinstance(x, np.ndarray):
+        x = x.tolist()
+    elif isinstance(x, (list, dict, set)):
+        pass
+    else:
+        x = str(x)
+    try:
+        return json.dumps(x)
+    except TypeError:
+        return str(x)
 
 
 class Normalizer:
@@ -426,7 +440,7 @@ class Normalizer:
                         else:
                             types = []
                         normalized_equivalents = [
-                            {"identifier": eq.get("identifier"), "label": eq.get("label", ""), "types": types}
+                            {"id": eq.get("identifier"), "name": eq.get("label", ""), "types": types}
                             for eq in equivalents
                             if eq.get("identifier")
                         ]
@@ -586,6 +600,11 @@ class EmbeddingGenerator:
                 / "embeddings"
                 / f"{dataset_name}{dataset_type_suffix}_cosine_similarities_{category_name}_{model_name}{combinations_suffix}_seed_{seed}{cache_suffix}.pkl"
             )
+            ids_file = (
+                self.cache_manager.cache_dir
+                / "embeddings"
+                / f"{dataset_name}{dataset_type_suffix}_ids_{category_name}_{model_name}{combinations_suffix}_seed_{seed}{cache_suffix}.pkl"
+            )
 
             def compute_embeddings():
                 all_texts = df.apply(lambda row: get_text_representation(row, text_fields, False), axis=1).tolist()
@@ -623,6 +642,11 @@ class EmbeddingGenerator:
             labels = self.cache_manager.get_or_compute(labels_file, compute_labels)
             labels_dict[category_name] = labels
 
+            def compute_ids():
+                return df["id"].tolist()
+
+            self.cache_manager.get_or_compute(ids_file, compute_ids)
+
             def compute_similarities():
                 similarities = cosine_similarity(embeddings)
                 return similarities
@@ -638,7 +662,7 @@ class EmbeddingGenerator:
         model_names: List[str],
         positive_datasets: Dict[str, pd.DataFrame],
         negative_datasets: Dict[str, pd.DataFrame],
-        seed: int,
+        seeds: Dict[str, int],
         text_fields: List[str] = None,
         label_generation_func=None,
         dataset_name: str = "default",
@@ -659,11 +683,12 @@ class EmbeddingGenerator:
             ]
             for dataset_type, datasets in datasets_to_process:
                 model_key = f"{model_name}_{dataset_type}"
+                dataset_seed = seeds[dataset_type]
                 _, embeddings_dict = self.process_model(
                     model_name=model_name,
                     model_info=model_info,
                     datasets=datasets,
-                    seed=seed,
+                    seed=dataset_seed,
                     text_fields=text_fields,
                     label_generation_func=label_generation_func,
                     dataset_name=dataset_name,
@@ -689,7 +714,7 @@ class LLMEnhancer:
         while retries < self.MAX_RETRIES:
             try:
                 response = await self.client.chat.completions.create(
-                    messages=[{"role": "user", "content": prompt}], model="gpt-4o", temperature=0.7
+                    messages=[{"role": "user", "content": prompt}], model="gpt-4o"
                 )
                 return response.choices[0].message.content.strip()
             except openai.RateLimitError as e:
@@ -756,7 +781,7 @@ def set_up_variables(root_path: Path) -> Config:
     nodes_dataset_name = "integration.int.rtx.nodes"
     edges_dataset_name = "integration.int.rtx.edges"
     categories = ["All Categories"]
-    model_names = ["OpenAI", "PubMedBERT", "SapBERT", "BlueBERT", "BioBERT"]
+    model_names = ["OpenAI", "PubMedBERT", "BioBERT", "BlueBERT", "SapBERT"]
     openai_api_key = os.getenv("OPENAI_API_KEY")
     if not openai_api_key:
         logging.error("OPENAI_API_KEY environment variable is not set.")
@@ -782,7 +807,7 @@ def set_up_variables(root_path: Path) -> Config:
         positive_n=positive_n,
         negative_n=negative_n,
         cache_suffix=cache_suffix,
-        use_llm_enhancement=False,  # Set to True to enable LLM enhancement
+        use_llm_enhancement=False,
     )
     logging.info("Configuration variables are set.")
     return config
@@ -798,6 +823,7 @@ def load_data(
             context = session.load_context()
             catalog = context.catalog
             nodes_df = catalog.load(config.nodes_dataset_name)
+            logging.warning(f"nodes_df columns: {nodes_df.columns}")
         if isinstance(nodes_df, SparkDataFrame):
             nodes_df = nodes_df.toPandas()
         data_loader = DataLoader(cache_manager, config)
@@ -825,13 +851,13 @@ def generate_embeddings(
     if config.use_llm_enhancement:
         text_fields = ["llm_enhanced_text"]
     else:
-        text_fields = ["name", "category", "labels", "all_categories"]
+        text_fields = ["name", "category", "all_categories"]
     embedding_generator = EmbeddingGenerator(config, cache_manager)
     embeddings_dict_all_models = embedding_generator.process_models(
         model_names=config.model_names,
         positive_datasets=positive_datasets,
         negative_datasets=negative_datasets,
-        seed=config.neg_seed,
+        seeds={"positive": config.pos_seed, "negative": config.neg_seed},
         text_fields=text_fields,
         label_generation_func=None,
         dataset_name=config.dataset_name,

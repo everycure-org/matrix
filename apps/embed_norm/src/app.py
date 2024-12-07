@@ -11,6 +11,7 @@ from sklearn.decomposition import PCA
 from sklearn.manifold import TSNE
 import umap.umap_ as umap
 from sklearn.cluster import KMeans
+from sklearn.metrics.pairwise import cosine_similarity
 import re
 import subprocess
 import glob
@@ -22,10 +23,7 @@ import pandas as pd
 
 app = Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
 
-# Get root_path using git
 root_path = subprocess.check_output(["git", "rev-parse", "--show-toplevel"]).decode().strip()
-
-# Set cache_dir similar to notebook
 cache_dir = os.path.join(root_path, "apps", "embed_norm", "cached_datasets")
 
 
@@ -53,7 +51,6 @@ def get_available_options():
     embedding_pattern = re.compile(
         r"^(.+?)(_positive|_negative)?_embeddings_(.+?)_(.+?)(_combinations)?_seed_\d+.*\.pkl$"
     )
-
     for root, dirs, files in os.walk(os.path.join(cache_dir, "embeddings")):
         for filename in files:
             match = embedding_pattern.match(filename)
@@ -305,8 +302,8 @@ app.layout = dbc.Container(
                         dash_table.DataTable(
                             id="positive-matches-table",
                             columns=[
-                                {"name": "Label1", "id": "Label1"},
-                                {"name": "Label2", "id": "Label2"},
+                                {"name": "ID1", "id": "ID1"},
+                                {"name": "ID2", "id": "ID2"},
                                 {
                                     "name": "Cosine Similarity",
                                     "id": "Cosine Similarity",
@@ -325,8 +322,8 @@ app.layout = dbc.Container(
                         dash_table.DataTable(
                             id="negative-matches-table",
                             columns=[
-                                {"name": "Label1", "id": "Label1"},
-                                {"name": "Label2", "id": "Label2"},
+                                {"name": "ID1", "id": "ID1"},
+                                {"name": "ID2", "id": "ID2"},
                                 {
                                     "name": "Cosine Similarity",
                                     "id": "Cosine Similarity",
@@ -371,12 +368,13 @@ def toggle_num_clusters(enable_clustering):
 
 
 def load_seed_data(args):
-    emb_file, lbl_file, sim_file, sample_type = args
+    emb_file, lbl_file, ids_file, sim_file, sample_type = args
     emb = joblib.load(emb_file)
     lbl = joblib.load(lbl_file)
+    ids = joblib.load(ids_file)
     sim = joblib.load(sim_file)
     sample_type_str = "Positive" if sample_type == "_positive" else "Negative"
-    return emb, lbl, sample_type_str, sim
+    return emb, lbl, ids, sample_type_str, sim
 
 
 @app.callback(
@@ -390,9 +388,9 @@ def load_seed_data(args):
 def reload_embeddings(category_name, dataset_name, embedding_method):
     embeddings = []
     labels = []
+    ids_list = []
     sample_types = []
     similarities = []
-
     args_list = []
     for sample_type in ["_positive", "_negative"]:
         embeddings_pattern = os.path.join(
@@ -405,14 +403,19 @@ def reload_embeddings(category_name, dataset_name, embedding_method):
             "embeddings",
             f"{dataset_name}{sample_type}_labels_{category_name}_{embedding_method}_seed_*.pkl",
         )
+        ids_pattern = os.path.join(
+            cache_dir,
+            "embeddings",
+            f"{dataset_name}{sample_type}_ids_{category_name}_{embedding_method}_seed_*.pkl",
+        )
         sim_pattern = os.path.join(
             cache_dir,
             "embeddings",
             f"{dataset_name}{sample_type}_cosine_similarities_{category_name}_{embedding_method}_seed_*.pkl",
         )
-
         embedding_files = glob.glob(embeddings_pattern)
         label_files = glob.glob(labels_pattern)
+        ids_files = glob.glob(ids_pattern)
         sim_files = glob.glob(sim_pattern)
 
         def extract_seed(file_path):
@@ -421,34 +424,36 @@ def reload_embeddings(category_name, dataset_name, embedding_method):
 
         embedding_files_dict = {extract_seed(f): f for f in embedding_files}
         label_files_dict = {extract_seed(f): f for f in label_files}
+        ids_files_dict = {extract_seed(f): f for f in ids_files}
         sim_files_dict = {extract_seed(f): f for f in sim_files}
-
-        common_seeds = set(embedding_files_dict.keys()) & set(label_files_dict.keys()) & set(sim_files_dict.keys())
-
+        common_seeds = (
+            set(embedding_files_dict.keys())
+            & set(label_files_dict.keys())
+            & set(ids_files_dict.keys())
+            & set(sim_files_dict.keys())
+        )
         for seed in common_seeds:
             emb_file = embedding_files_dict[seed]
             lbl_file = label_files_dict[seed]
+            ids_file = ids_files_dict[seed]
             sim_file = sim_files_dict[seed]
-            args_list.append((emb_file, lbl_file, sim_file, sample_type))
-
+            args_list.append((emb_file, lbl_file, ids_file, sim_file, sample_type))
     if not args_list:
         return {}
-
     with mp.Pool(processes=mp.cpu_count()) as pool:
         results = pool.map(load_seed_data, args_list)
-
-    for emb, lbl, sample_type_str, sim in results:
+    for emb, lbl, ids, sample_type_str, sim in results:
         embeddings.append(emb)
         labels.extend(lbl)
+        ids_list.extend(ids)
         sample_types.extend([sample_type_str] * len(lbl))
         similarities.append(sim)
-
     embeddings = np.vstack(embeddings)
     similarities = scipy.linalg.block_diag(*similarities)
-
     data_store = {
         "embeddings": embeddings.tolist(),
         "labels": labels,
+        "ids": ids_list,
         "sample_type": sample_types,
         "similarities": similarities.tolist(),
     }
@@ -483,12 +488,10 @@ def update_plot(
 ):
     if not embedding_data_store:
         return {}
-
     embeddings = np.array(embedding_data_store["embeddings"])
     labels = embedding_data_store["labels"]
     sample_types = embedding_data_store["sample_type"]
     similarities = np.array(embedding_data_store["similarities"])
-
     cache_key = (dim_reduction_method, n_neighbors, min_dist, perplexity)
     if cache_key in reduced_embeddings_cache:
         embeddings_2d = reduced_embeddings_cache[cache_key]
@@ -502,7 +505,6 @@ def update_plot(
         else:
             embeddings_2d = embeddings
         reduced_embeddings_cache[cache_key] = embeddings_2d
-
     df_plot = pl.DataFrame(
         {
             "x": embeddings_2d[:, 0],
@@ -511,7 +513,6 @@ def update_plot(
             "Sample Type": sample_types,
         }
     )
-
     if enable_clustering:
         kmeans = KMeans(n_clusters=num_clusters, random_state=42)
         clusters = kmeans.fit_predict(embeddings_2d)
@@ -519,22 +520,17 @@ def update_plot(
         color = "cluster"
     else:
         color = "Sample Type"
-
     df_plot_pd = df_plot.to_pandas()
-
     if color == "cluster":
         color_values = df_plot_pd["cluster"].tolist()
         marker_color = color_values
         marker_colorscale = "Viridis"
         colorbar = dict(title="Cluster")
-        # showlegend = False
     else:
         color_map = {"Positive": "blue", "Negative": "red"}
         marker_color = df_plot_pd["Sample Type"].map(color_map).fillna("gray").tolist()
         marker_colorscale = None
         colorbar = None
-        # showlegend = True
-
     scatter = go.Scattergl(
         x=df_plot_pd["x"],
         y=df_plot_pd["y"],
@@ -552,10 +548,7 @@ def update_plot(
         hovertemplate="%{text}",
         customdata=df_plot_pd["label"],
     )
-
     fig = go.Figure(data=[scatter])
-
-    # Add lines for similarities
     indices = np.where(similarities >= cosine_threshold)
     x0 = embeddings_2d[indices[0], 0]
     y0 = embeddings_2d[indices[0], 1]
@@ -568,7 +561,6 @@ def update_plot(
             continue
         lines_x.extend([xi0, xi1, None])
         lines_y.extend([yi0, yi1, None])
-
     fig.add_trace(
         go.Scattergl(
             x=lines_x,
@@ -579,7 +571,6 @@ def update_plot(
             showlegend=False,
         )
     )
-
     fig.update_layout(
         title="Embeddings Visualization",
         hovermode="closest",
@@ -589,7 +580,6 @@ def update_plot(
         yaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
         margin=dict(l=0, r=0, t=40, b=0),
     )
-
     return fig
 
 
@@ -607,55 +597,48 @@ def update_plot(
 def update_tables(embedding_data_store, cosine_threshold, num_top_matches):
     if not embedding_data_store:
         return [], []
-
-    similarities = np.array(embedding_data_store["similarities"])
-    labels = embedding_data_store["labels"]
+    embeddings = np.array(embedding_data_store["embeddings"])
+    ids = embedding_data_store["ids"]
     sample_types = embedding_data_store["sample_type"]
-
-    n_samples = similarities.shape[0]
-    upper_tri_indices = np.triu_indices(n_samples, k=1)  # Exclude diagonal
-
-    sim_upper = similarities[upper_tri_indices]
-
-    mask = sim_upper >= cosine_threshold
-
-    i_indices = upper_tri_indices[0][mask]
-    j_indices = upper_tri_indices[1][mask]
-
-    labels_i = np.array(labels)[i_indices]
-    labels_j = np.array(labels)[j_indices]
-    sample_types_i = np.array(sample_types)[i_indices]
-    sample_types_j = np.array(sample_types)[j_indices]
-    similarities_selected = sim_upper[mask]
-
-    positive_mask = np.logical_and(sample_types_i == "Positive", sample_types_j == "Positive")
-    negative_mask = np.logical_and(sample_types_i == "Negative", sample_types_j == "Negative")
-
+    positive_indices = [i for i, st in enumerate(sample_types) if st == "Positive"]
+    negative_indices = [i for i, st in enumerate(sample_types) if st == "Negative"]
+    positive_embeddings = embeddings[positive_indices]
+    positive_ids = [ids[i] for i in positive_indices]
+    negative_embeddings = embeddings[negative_indices]
+    negative_ids = [ids[i] for i in negative_indices]
+    positive_similarities = cosine_similarity(positive_embeddings)
+    pos_upper_tri_indices = np.triu_indices(len(positive_embeddings), k=1)
+    pos_sim_values = positive_similarities[pos_upper_tri_indices]
+    pos_mask = pos_sim_values >= cosine_threshold
+    pos_i_indices = pos_upper_tri_indices[0][pos_mask]
+    pos_j_indices = pos_upper_tri_indices[1][pos_mask]
+    pos_similarities_selected = pos_sim_values[pos_mask]
     positive_matches = pd.DataFrame(
         {
-            "Label1": labels_i[positive_mask],
-            "Label2": labels_j[positive_mask],
-            "Cosine Similarity": similarities_selected[positive_mask],
+            "ID1": [positive_ids[i] for i in pos_i_indices],
+            "ID2": [positive_ids[j] for j in pos_j_indices],
+            "Cosine Similarity": pos_similarities_selected,
         }
     )
-
+    negative_similarities = cosine_similarity(negative_embeddings)
+    neg_upper_tri_indices = np.triu_indices(len(negative_embeddings), k=1)
+    neg_sim_values = negative_similarities[neg_upper_tri_indices]
+    neg_mask = neg_sim_values >= cosine_threshold
+    neg_i_indices = neg_upper_tri_indices[0][neg_mask]
+    neg_j_indices = neg_upper_tri_indices[1][neg_mask]
+    neg_similarities_selected = neg_sim_values[neg_mask]
     negative_matches = pd.DataFrame(
         {
-            "Label1": labels_i[negative_mask],
-            "Label2": labels_j[negative_mask],
-            "Cosine Similarity": similarities_selected[negative_mask],
+            "ID1": [negative_ids[i] for i in neg_i_indices],
+            "ID2": [negative_ids[j] for j in neg_j_indices],
+            "Cosine Similarity": neg_similarities_selected,
         }
     )
-
-    # Sort and select top N matches
     N = num_top_matches
     positive_matches = positive_matches.sort_values(by="Cosine Similarity", ascending=False).head(N)
     negative_matches = negative_matches.sort_values(by="Cosine Similarity", ascending=False).head(N)
-
-    # Convert to dictionaries for Dash DataTable
     positive_matches_dict = positive_matches.to_dict("records")
     negative_matches_dict = negative_matches.to_dict("records")
-
     return positive_matches_dict, negative_matches_dict
 
 
