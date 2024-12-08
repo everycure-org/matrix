@@ -53,8 +53,8 @@ _spark_kgx_ds: &_spark_kgx_ds
 
 data_release.prm.kgx_nodes:
   <<: *_spark_kgx_ds
-  filepath: ${globals:paths.kgx}/nodes.tsv
+  filepath: ${globals:paths.release}/kgx/nodes.tsv
 
 data_release.prm.kgx_edges:
   <<: *_spark_kgx_ds
-  filepath: ${globals:paths.kgx}/edges.tsv
+  filepath: ${globals:paths.release}/kgx/edges.tsv
