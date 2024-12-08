@@ -113,7 +113,8 @@ def test_unnest(sample_predicates):
             ["broad_match", ["related_to", "related_to_at_concept_level"]],
             ["related_to_at_concept_level", ["related_to"]],
             ["related_to", []],
-            ["chemical_to_chemical_association", ["association"]]["association", []],
+            ["chemical_to_chemical_association", ["association"]],
+            ["association", []],
         ],
         columns=["predicate", "parents"],
     )
