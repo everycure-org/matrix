@@ -1,23 +1,3 @@
-_bigquery_ds: &_bigquery_ds
-  type: matrix.datasets.gcp.SparkDatasetWithBQExternalTable
-  project_id: ${oc.env:GCP_PROJECT_ID}
-  dataset: release_${globals:versions.release}
-  file_format: parquet
-  save_args:
-    mode: overwrite
-    labels:
-      git_sha: ${globals:git_sha}
-
-embeddings.feat.nodes:
-  <<: *_bigquery_ds
-  filepath: ${globals:paths.embeddings}/feat/nodes_with_embeddings
-  table: nodes_with_embeddings
-
-embeddings.reporting.topological_pca:
-  <<: *_bigquery_ds
-  filepath: ${globals:paths.embeddings}/reporting/topological_pca
-  table: pca_embeddings
-
 embeddings.reporting.loss:
   type: kedro_mlflow.io.artifacts.MlflowArtifactDataset
   artifact_path: topological

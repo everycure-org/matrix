@@ -6,8 +6,7 @@ import pandas as pd
 import numpy as np
 import seaborn as sns
 
-from graphdatascience import GraphDataScience, QueryRunner
-from neo4j import Driver, GraphDatabase
+from graphdatascience import GraphDataScience
 
 import pyspark.sql.types as T
 from pyspark.sql import DataFrame, SparkSession
@@ -24,33 +23,10 @@ from refit.v1.core.unpack import unpack_params
 from tenacity import retry, wait_exponential, stop_after_attempt
 
 from .graph_algorithms import GDSGraphAlgorithm
+from .encoders import AttributeEncoder
 from matrix.pipelines.modelling.nodes import no_nulls
 
 logger = logging.getLogger(__name__)
-
-
-class GraphDB:
-    """Adaptor class to allow injecting the GraphDB object.
-
-    This is due to a drawback where refit cannot inject a tuple into
-    the constructor of an object.
-    """
-
-    def __init__(
-        self,
-        *,
-        endpoint: str | Driver | QueryRunner,
-        auth: F.Tuple[str] | None = None,
-        database: str | None = None,
-    ):
-        """Create `GraphDB` instance."""
-        self._endpoint = endpoint
-        self._auth = tuple(auth)
-        self._database = database
-
-    def driver(self):
-        """Return the driver object."""
-        return GraphDatabase.driver(self._endpoint, auth=self._auth)
 
 
 class GraphDS(GraphDataScience):
@@ -63,7 +39,7 @@ class GraphDS(GraphDataScience):
     def __init__(
         self,
         *,
-        endpoint: str | Driver | QueryRunner,
+        endpoint: str,
         auth: F.Tuple[str] | None = None,
         database: str | None = None,
     ):
@@ -134,6 +110,28 @@ def bucketize_df(df: DataFrame, bucket_size: int, input_features: List[str], max
         bucket_size: size of the buckets
     """
 
+    # Order and bucketize elements
+    return (
+        df.transform(_bucketize, bucket_size=bucket_size)
+        .withColumn(
+            "text_to_embed",
+            F.concat(*[F.coalesce(F.col(feature), F.lit("")) for feature in input_features]),
+        )
+        .withColumn("text_to_embed", F.substring(F.col("text_to_embed"), 1, max_input_len))
+        .select("id", "text_to_embed", "bucket")
+    )
+
+
+def _bucketize(df: DataFrame, bucket_size: int) -> pd.DataFrame:
+    """Function to bucketize df in given number of buckets.
+
+    Args:
+        df: dataframe to bucketize
+        bucket_size: size of the buckets
+    Returns:
+        Dataframe augmented with `bucket` column
+    """
+
     # Retrieve number of elements
     num_elements = df.count()
     num_buckets = (num_elements + bucket_size - 1) // bucket_size
@@ -147,38 +145,28 @@ def bucketize_df(df: DataFrame, bucket_size: int, input_features: List[str], max
         schema=["bucket", "min_range", "max_range"],
     )
 
-    # Order and bucketize elements
-    return (
-        df.withColumn("row_num", F.row_number().over(Window.orderBy("id")) - F.lit(1))
-        .join(buckets, on=[(F.col("row_num") >= (F.col("min_range"))) & (F.col("row_num") < F.col("max_range"))])
-        # Concat input
-        .withColumn(
-            "text_to_embed",
-            F.concat(*[F.coalesce(F.col(feature), F.lit("")) for feature in input_features]),
-        )
-        # Clip max. length
-        .withColumn("text_to_embed", F.substring(F.col("text_to_embed"), 1, max_input_len))
-        .select("id", *input_features, "text_to_embed", "bucket")
+    return df.withColumn("row_num", F.row_number().over(Window.orderBy("id")) - F.lit(1)).join(
+        buckets, on=[(F.col("row_num") >= (F.col("min_range"))) & (F.col("row_num") < F.col("max_range"))]
     )
 
 
 @inject_object()
 def compute_embeddings(
     dfs: Dict[str, Any],
-    model: Dict[str, Any],
+    encoder: AttributeEncoder,
 ):
     """Function to bucketize input data.
 
     Args:
         dfs: mapping of paths to df load functions
-        model: model to run
+        encoder: encoder to run
     """
 
     # NOTE: Inner function to avoid reference issues on unpacking
     # the dataframe, therefore leading to only the latest shard
     # being processed n times.
     def _func(dataframe: pd.DataFrame):
-        return lambda df=dataframe: compute_df_embeddings_async(df(), model)
+        return lambda df=dataframe: encoder.encode(df())
 
     shards = {}
     for path, df in dfs.items():
@@ -217,6 +205,7 @@ async def compute_df_embeddings_async(df: pd.DataFrame, embedding_model) -> pd.D
         "pca_embedding": "array<float>",
     }
 )
+@no_nulls(columns=["embedding", "pca_embedding"])
 @unpack_params()
 def reduce_embeddings_dimension(df: DataFrame, transformer, input: str, output: str, skip: bool):
     return reduce_dimension(df, transformer, input, output, skip)
@@ -262,6 +251,49 @@ def reduce_dimension(df: DataFrame, transformer, input: str, output: str, skip: 
     return res
 
 
+def filter_edges_for_topological_embeddings(
+    nodes: DataFrame, edges: DataFrame, drug_types: List[str], disease_types: List[str]
+):
+    """Function to filter edges for topological embeddings process.
+
+    The function removes edges connecting drug and disease nodes to avoid data leakage. Currently
+    uses the `all_categories` to remove drug-disease edges.
+
+    FUTURE: Ensure edges from ground truth dataset are explicitly removed.
+
+    Args:
+        nodes: nodes dataframe
+        edges: edges dataframe
+        drug_types: list of drug types
+        disease_types: list of disease types
+    Returns:
+        Dataframe with filtered edges
+    """
+
+    def _create_mapping(column: str):
+        return nodes.alias(column).withColumn(column, F.col("id")).select(column, "all_categories")
+
+    df = (
+        edges.alias("edges")
+        .join(_create_mapping("subject"), how="left", on="subject")
+        .join(_create_mapping("object"), how="left", on="object")
+        # FUTURE: Improve with proper feature engineering engine
+        .withColumn("subject_is_drug", F.arrays_overlap(F.col("subject.all_categories"), F.lit(drug_types)))
+        .withColumn("subject_is_disease", F.arrays_overlap(F.col("subject.all_categories"), F.lit(disease_types)))
+        .withColumn("object_is_drug", F.arrays_overlap(F.col("object.all_categories"), F.lit(drug_types)))
+        .withColumn("object_is_disease", F.arrays_overlap(F.col("object.all_categories"), F.lit(disease_types)))
+        .withColumn(
+            "is_drug_disease_edge",
+            (F.col("subject_is_drug") & F.col("object_is_disease"))
+            | (F.col("subject_is_disease") & F.col("object_is_drug")),
+        )
+        .filter(~F.col("is_drug_disease_edge"))
+        .select("edges.*")
+    )
+
+    return df
+
+
 def ingest_edges(nodes, edges: DataFrame):
     """Function to construct Neo4J edges."""
     return (
@@ -280,29 +312,6 @@ def ingest_edges(nodes, edges: DataFrame):
     )
 
 
-@inject_object()
-def add_include_in_topological(df: DataFrame, gdb: GraphDB, drug_types: List[str], disease_types: List[str]) -> Dict:
-    """Function to add include_in_topological property.
-
-    Only edges between non drug-disease pairs are included in topological algorithm.
-    """
-    with gdb.driver() as driver:
-        driver.execute_query(
-            """
-            MATCH (n)-[r]-(m)
-            WHERE 
-                n.category IN $drug_types 
-                AND m.category IN $disease_types
-            SET r.include_in_graphsage = 0
-            """,
-            database_=gdb._database,
-            drug_types=drug_types,
-            disease_types=disease_types,
-        )
-
-    return {"success": "true"}
-
-
 @unpack_params()
 @inject_object()
 def train_topological_embeddings(
@@ -310,7 +319,6 @@ def train_topological_embeddings(
     gds: GraphDataScience,
     topological_estimator: GDSGraphAlgorithm,
     projection: Any,
-    filtering: Any,
     estimator: Any,
     write_property: str,
 ) -> Dict:
@@ -338,18 +346,6 @@ def train_topological_embeddings(
     config = projection.pop("configuration", {})
     graph, _ = gds.graph.project(*projection.values(), **config)
 
-    # Filter out treat/GT nodes from the graph
-    subgraph_name = filtering.get("graphName")
-    filter_args = filtering.pop("args")
-
-    # Drop graph if exists
-    if gds.graph.exists(subgraph_name).exists:
-        subgraph = gds.graph.get(subgraph_name)
-        gds.graph.drop(subgraph, False)
-
-    subgraph, _ = gds.graph.filter(subgraph_name, graph, **filter_args)
-    gds.graph.drop(graph)
-
     # Validate whether the model exists
     model_name = estimator.get("modelName")
     if gds.model.exists(model_name).exists:
@@ -357,7 +353,7 @@ def train_topological_embeddings(
         gds.model.drop(model)
 
     # Initialize the model
-    topological_estimator.run(gds=gds, model_name=model_name, graph=subgraph, write_property=write_property)
+    topological_estimator.run(gds=gds, model_name=model_name, graph=graph, write_property=write_property)
     losses = topological_estimator.return_loss()
 
     # Plot convergence
@@ -381,12 +377,11 @@ def write_topological_embeddings(
     topological_estimator: GDSGraphAlgorithm,
     projection: Any,
     estimator: Any,
-    filtering: Any,
     write_property: str,
 ) -> Dict:
     """Write topological embeddings."""
     # Retrieve the graph
-    graph_name = filtering.get("graphName")
+    graph_name = projection.get("graphName")
     graph = gds.graph.get(graph_name)
 
     # Retrieve the model
@@ -396,7 +391,8 @@ def write_topological_embeddings(
 
 
 @no_nulls(columns=["pca_embedding", "topological_embedding"])
-def extract_node_embeddings(embeddings: DataFrame, nodes: DataFrame, string_col: str) -> DataFrame:
+@primary_key(primary_key=["id"])
+def extract_topological_embeddings(embeddings: DataFrame, nodes: DataFrame, string_col: str) -> DataFrame:
     """Extract topological embeddings from Neo4j and write into BQ.
 
     Need a conditional statement due to Node2Vec writing topological embeddings as string. Raised issue in GDS client:
@@ -432,13 +428,3 @@ def visualise_pca(nodes: DataFrame, column_name: str):
     plt.tight_layout(rect=[0, 0, 0.85, 1])
 
     return fig
-
-
-def extract_nodes_edges(nodes: DataFrame, edges: DataFrame) -> tuple[DataFrame, DataFrame]:
-    """Simple node/edge extractor function.
-
-    Args:
-        nodes: the nodes from the KG
-        edges: the edges from the KG
-    """
-    return {"enriched_nodes": nodes, "enriched_edges": edges}
