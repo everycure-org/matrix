@@ -23,6 +23,8 @@ data_sources:
     version: &_rtx_kg_version v2.7.3 #when bumping to 2.10, we should stop to limit PMID for the semmed filtering
   robokop:
     version: c5ec1f282158182f
+  spoke:
+    version: v5
 # Dataset with node and edge proposals by the
 # EveryCure medical team.
   ec-medical-team:
