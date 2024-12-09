@@ -130,39 +130,31 @@ def _submit(
 
         check_dependencies(verbose=verbose)
 
-        console.print("Building Argo template...")
         argo_template = build_argo_template(run_name, release_version, username, namespace, pipeline_obj, is_test=is_test, )
-        console.print("[green]✓[/green] Argo template built")
 
-        console.print("Writing Argo template...")
         file_path = save_argo_template(argo_template, template_directory)
-        console.print("[green]✓[/green] Argo template written")
 
-        console.print("Linting Argo template...")
         argo_template_lint(file_path, verbose=verbose)
-        console.print("[green]✓[/green] Argo template valid")
 
-        if not dry_run:
-            build_push_docker(run_name, verbose=verbose)
+        if dry_run:
+            return
+        
+        build_push_docker(run_name, verbose=verbose)
 
-            ensure_namespace(namespace, verbose=verbose)
+        ensure_namespace(namespace, verbose=verbose)
 
-            console.print("Applying Argo template...")
-            apply_argo_template(namespace, file_path, verbose=verbose)
-            console.print("[green]✓[/green] Argo template applied")
+        apply_argo_template(namespace, file_path, verbose=verbose)
 
-            console.print("Submitting workflow for pipeline...")
-            submit_workflow(run_name, namespace, verbose=verbose)
-            console.print("[green]✓[/green] Workflow submitted")
+        submit_workflow(run_name, namespace, verbose=verbose)
 
-            console.print(Panel.fit(
-                f"[bold green]Workflow {'prepared' if dry_run else 'submitted'} successfully![/bold green]\n"
-                f"Run Name: {run_name}\n"
-                f"Namespace: {namespace}",
-                title="Submission Summary"
-            ))
+        console.print(Panel.fit(
+            f"[bold green]Workflow {'prepared' if dry_run else 'submitted'} successfully![/bold green]\n"
+            f"Run Name: {run_name}\n"
+            f"Namespace: {namespace}",
+            title="Submission Summary"
+        ))
 
-        if not dry_run and allow_interactions and click.confirm("Do you want to open the workflow in your browser?", default=False):
+        if allow_interactions and click.confirm("Do you want to open the workflow in your browser?", default=False):
             workflow_url = f"https://argo.platform.dev.everycure.org/workflows/{namespace}/{run_name}"
             click.launch(workflow_url)
             console.print(f"[blue]Opened workflow in browser: {workflow_url}[/blue]")
@@ -346,7 +338,8 @@ def build_argo_template(run_name: str, release_version: str, username: str, name
     else:
         release_folder_name = "releases"
 
-    return generate_argo_config(
+    console.print("Building Argo template...")
+    generated_template = generate_argo_config(
         image=image_name,
         run_name=run_name,
         release_version=release_version,
@@ -358,20 +351,27 @@ def build_argo_template(run_name: str, release_version: str, username: str, name
         pipeline=pipeline_obj,
         default_execution_resources=default_execution_resources,
     )
+    console.print("[green]✓[/green] Argo template built")
+
+    return generated_template
 
 def save_argo_template(argo_template: str, template_directory: Path) -> str:
+    console.print("Writing Argo template...")
     file_path = template_directory / "argo-workflow-template.yml"
     with open(file_path, "w") as f:
         f.write(argo_template)
+    console.print(f"[green]✓[/green] Argo template saved to {file_path}")
     return str(file_path)
 
 
 def argo_template_lint(file_path: str, verbose: bool) -> str:
+    console.print("Linting Argo template...")
     run_subprocess(
         f"argo template lint {file_path}",
         check=True,
         stream_output=verbose,
     )
+    console.print("[green]✓[/green] Argo template linted")
 
 def ensure_namespace(namespace, verbose: bool):
     """Create or verify Kubernetes namespace."""
@@ -388,6 +388,8 @@ def apply_argo_template(namespace, file_path: Path, verbose: bool):
     
     `kubectl apply -f <file_path> -n <namespace>` will make the template available as a resource (but will not create any other resources, and will not trigger the workshop).
     """
+    console.print("Applying Argo template...")
+
     cmd = f"kubectl apply -f {file_path} -n {namespace}"
     console.print(f"Running apply command: [blue]{cmd}[/blue]")
     run_subprocess(
@@ -395,9 +397,11 @@ def apply_argo_template(namespace, file_path: Path, verbose: bool):
         check=True,
         stream_output=verbose,
     )
+    console.print("[green]✓[/green] Argo template applied")
 
 def submit_workflow(run_name: str, namespace: str, verbose: bool):
     """Submit the Argo workflow and provide instructions for watching."""
+    console.print("Submitting workflow for pipeline...")
 
     cmd = " ".join([
         "argo submit",
@@ -420,6 +424,7 @@ def submit_workflow(run_name: str, namespace: str, verbose: bool):
     console.print(f"argo watch -n {namespace} {job_name}")
     console.print("\nTo view the workflow in the Argo UI, run:")
     console.print(f"argo get -n {namespace} {job_name}")
+    console.print("[green]✓[/green] Workflow submitted")
 
 def get_run_name(run_name: Optional[str]) -> str:
     """Get the experiment name based on input or Git branch.
