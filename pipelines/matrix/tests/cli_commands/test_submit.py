@@ -181,23 +181,62 @@ def test_command_exists(mock_run_subprocess: None) -> None:
 
 
 @pytest.fixture
+def mock_process():
+    process_mock = MagicMock()
+
+    process_mock.stdout = MagicMock()
+    process_mock.stdout.closed = False
+    process_mock.stdout.__iter__.return_value = iter(["output line 1\n", "output line 2\n"])
+
+    process_mock.stderr = MagicMock()
+    process_mock.stderr.closed = False
+    process_mock.stderr.__iter__.return_value = iter([""])
+
+    process_mock.wait.return_value = 0
+    return process_mock
+
+
+@pytest.fixture
 def mock_popen():
     with patch("subprocess.Popen") as mock:
         yield mock
 
 
-@pytest.fixture
-def mock_process():
+def test_run_subprocess_error(mock_popen: None) -> None:
+    # Mock command execution with error
     process_mock = MagicMock()
-    process_mock.stdout = iter(["output line 1\n", "output line 2\n"])
-    process_mock.stderr = iter([""])
-    process_mock.wait.return_value = 0
-    return process_mock
+
+    process_mock.stdout = MagicMock()
+    process_mock.stdout.closed = False
+    process_mock.stdout.__iter__.return_value = iter([])
+
+    process_mock.stderr = MagicMock()
+    process_mock.stderr.closed = False
+    process_mock.stderr.__iter__.return_value = iter(["error message\n"])
+
+    process_mock.wait.return_value = 1
+    mock_popen.return_value = process_mock
+
+    with pytest.raises(subprocess.CalledProcessError) as exc_info:
+        run_subprocess("invalid_command", stream_output=True)
+
+    assert exc_info.value.returncode == 1
+    assert exc_info.value.stdout == ""
+    assert "error message" in exc_info.value.stderr
 
 
 def test_run_subprocess_streaming(mock_popen, mock_process) -> None:
     mock_popen.return_value = mock_process
     result = run_subprocess('echo "test"', stream_output=True)
+
+    assert result.returncode == 0
+    assert result.stdout == "output line 1\noutput line 2\n"
+    assert result.stderr == ""
+
+
+def test_run_subprocess_no_streaming_2(mock_popen, mock_process) -> None:
+    mock_popen.return_value = mock_process
+    result = run_subprocess('echo "test"', stream_output=False)
 
     assert result.returncode == 0
     assert result.stdout == "output line 1\noutput line 2\n"
@@ -298,4 +337,4 @@ def test_workflow_submission(
         ]
     )
 
-    mock_run_subprocess.assert_called_with(submit_cmd, capture_output=True, stream_output=True)
+    mock_run_subprocess.assert_called_with(submit_cmd, stream_output=True)
