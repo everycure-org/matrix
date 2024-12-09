@@ -157,8 +157,8 @@ def get_release_notes(since: str, model: str) -> str:
     diff_output = get_code_diff(since)
 
     release_yaml = yaml.load(release_template, Loader=yaml.FullLoader)
-    categories = [c["title"] for c in release_yaml["changelog"]["categories"]]
-    categories_md = "\n - ".join([f"## {c}" for c in categories])
+    categories = (c["title"] for c in release_yaml["changelog"]["categories"])
+    categories_md = "\n - ".join((f"## {c}" for c in categories))
 
     prompt = f"""Please provide a concise summary of the following code changes. 
     Focus on creating the content for the following release template following its categories:
