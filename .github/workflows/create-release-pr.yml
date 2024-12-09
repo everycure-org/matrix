@@ -25,6 +25,7 @@ jobs:
     steps:
       - name: store variables
         run: |
+          echo '${{ toJson(github.event) }}' | jq '.'
           if [[ "${{ github.event_name == 'repository_dispatch' }}" == "true" ]]; then
             release=$(echo '${{ toJson(github.event) }}' | jq '.client_payload.release_version')
             gitref=$(echo '${{ toJson(github.event) }}' | jq '.client_payload.git_fingerprint')
