@@ -440,7 +440,7 @@ def get_run_name(run_name: Optional[str]) -> str:
     # If no run_name is provided, use the current Git branch name
     if not run_name:
         run_name = run_subprocess(
-            "git rev-parse --abbrev-ref HEAD", stream_output=False
+            "git rev-parse --abbrev-ref HEAD", stream_output=True
         ).stdout.strip()
 
     # Add a random suffix to the run_name
