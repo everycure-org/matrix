@@ -367,10 +367,6 @@ def argo_template_lint(file_path: str, verbose: bool) -> str:
 
 def ensure_namespace(namespace, verbose: bool):
     """Create or verify Kubernetes namespace."""
-    """Apply the Argo workflow template, making it available in the cluster.
-    
-    `kubectl apply -f <file_path> -n <namespace>` will make the template available as a resource (but will not create any other resources, and will not trigger the workshop).
-    """
     result = run_subprocess(f"kubectl get namespace {namespace}", check=False)
     if result.returncode != 0:
         console.print(f"Namespace {namespace} does not exist. Creating it...")
@@ -378,6 +374,10 @@ def ensure_namespace(namespace, verbose: bool):
 
 
 def apply_argo_template(namespace, file_path: Path, verbose: bool):
+    """Apply the Argo workflow template, making it available in the cluster.
+
+    `kubectl apply -f <file_path> -n <namespace>` will make the template available as a resource (but will not create any other resources, and will not trigger the workshop).
+    """
     run_subprocess(
         f"kubectl apply -f {file_path} -n {namespace}",
         check=True,
@@ -451,5 +451,4 @@ def abort_if_unmet_git_requirements():
 
     if errors:
         error_list = "\n".join(errors)
-        raise ValueError(f"Submission failed due to the following issues:\n\n{error_list}")
-        print("Submission failed due to the following issues:")
+        raise RuntimeError(f"Submission failed due to the following issues:\n\n{error_list}")
