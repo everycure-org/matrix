@@ -1,33 +1,26 @@
-#   2nd workflow (gets triggered once PR is approved)
-#   0. figure out tag from most recent folder in docs/src/releases/posts
-#   1. gh release create <TAG FROM ABOVE> -F docs/src/releases/posts/.../post.md (edited)
-#   2. How do we automate writing the article? Slack notifications?
-
 name: Release
 on:
-  push:
-    branches:
-      - 'feat/trigger-release-from-gh-action'
-      
   pull_request:
     types: [closed]
 
 jobs:
-  # approved:
-  #   if: github.event.pull_request.merged == true && contains(github.event.pull_request.labels.*.name, 'Release')
-  #   runs-on: ubuntu-latest
-  #   name: PR approval
-  #   permissions:
-  #     pull-requests: 'read'
+  approved:
+    if: github.event.pull_request.merged == true && contains(github.event.pull_request.labels.*.name, 'Release')
+    runs-on: ubuntu-latest
+    name: PR approval
+    permissions:
+      pull-requests: 'read'
 
-  #   steps:
-  #     - name: "Check the PR state"
-  #       run: echo "The release PR was approved"
+    steps:
+      - name: "Check the PR state"
+        run: echo "The release PR is approved and merged"
 
   create_release:
-    # needs: [approved]
+    needs: [approved]
     runs-on: ubuntu-latest
     name: Create release
+    permissions:
+      contents: 'write'
 
     steps:
       - name: Checkout
@@ -45,12 +38,11 @@ jobs:
 
       - name: Create GitHub release
         env:
-          latest_tag: ${{ env.latest_tag }}
+            GH_TOKEN: ${{ github.token }}
         run: |
-          echo "Latest tag is $latest_tag"
-          # echo "Creating release"
-          # gh release create "${{ env.latest_tag }}" \
-          #   -F "${{ github.workspace }}/docs/src/releases/posts/${{ env.latest_tag }}/notes.md" \
-          #   -t "${{ env.latest_tag }}" \
-          #   --draft \
-          #   --latest
+          echo "Creating release"
+          gh release create "${{ env.latest_tag }}" \
+            -F "${GITHUB_WORKSPACE}/docs/src/releases/posts/${{ env.latest_tag }}/notes.md" \
+            -t "${{ env.latest_tag }}" \
+            --draft \
+            --latest
