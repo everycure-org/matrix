@@ -45,7 +45,7 @@ jobs:
 
       - name: Create GitHub release
         env:
-          latest_tag: ${{ steps.fetch_latest_tag.outputs.latest_tag }}
+          latest_tag: ${{ env.latest_tag }}
         run: |
           echo "Latest tag is $latest_tag"
           # echo "Creating release"
