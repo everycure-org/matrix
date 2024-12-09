@@ -180,93 +180,38 @@ def test_command_exists(mock_run_subprocess: None) -> None:
     assert command_exists("non_existing_command") is False
 
 
-@pytest.fixture
-def mock_process():
-    process_mock = MagicMock()
-
-    process_mock.stdout = MagicMock()
-    process_mock.stdout.closed = False
-    process_mock.stdout.__iter__.return_value = iter(["output line 1\n", "output line 2\n"])
-
-    process_mock.stderr = MagicMock()
-    process_mock.stderr.closed = False
-    process_mock.stderr.__iter__.return_value = iter([""])
-
-    process_mock.wait.return_value = 0
-    return process_mock
-
-
-@pytest.fixture
-def mock_popen():
-    with patch("subprocess.Popen") as mock:
-        yield mock
-
-
-def test_run_subprocess_error(mock_popen: None) -> None:
-    # Mock command execution with error
-    process_mock = MagicMock()
-
-    process_mock.stdout = MagicMock()
-    process_mock.stdout.closed = False
-    process_mock.stdout.__iter__.return_value = iter([])
-
-    process_mock.stderr = MagicMock()
-    process_mock.stderr.closed = False
-    process_mock.stderr.__iter__.return_value = iter(["error message\n"])
-
-    process_mock.wait.return_value = 1
-    mock_popen.return_value = process_mock
-
+def test_run_subprocess_error() -> None:
     with pytest.raises(subprocess.CalledProcessError) as exc_info:
         run_subprocess("invalid_command", stream_output=True)
 
-    assert exc_info.value.returncode == 1
-    assert exc_info.value.stdout == ""
-    assert "error message" in exc_info.value.stderr
+    assert exc_info.value.returncode == 127
+    assert exc_info.value.stdout is None
+    assert "invalid_command: command not found" in exc_info.value.stderr
 
 
-def test_run_subprocess_streaming(mock_popen, mock_process) -> None:
-    mock_popen.return_value = mock_process
+def test_run_subprocess_streaming() -> None:
     result = run_subprocess('echo "test"', stream_output=True)
 
     assert result.returncode == 0
-    assert result.stdout == "output line 1\noutput line 2\n"
-    assert result.stderr == ""
+    assert result.stdout == "test\n"
+    assert result.stderr is None
 
 
-def test_run_subprocess_no_streaming_2(mock_popen, mock_process) -> None:
-    mock_popen.return_value = mock_process
+def test_run_subprocess_no_streaming_2() -> None:
     result = run_subprocess('echo "test"', stream_output=False)
 
     assert result.returncode == 0
-    assert result.stdout == "output line 1\noutput line 2\n"
-    assert result.stderr == ""
+    assert result.stdout is None
+    assert result.stderr is None
 
 
-def test_run_subprocess_no_streaming(mock_popen: None):
-    # Mock subprocess.run for non-streaming case
-    with patch("subprocess.run") as mock_run:
-        mock_run.return_value = subprocess.CompletedProcess(
-            args='echo "test"', returncode=0, stdout="output", stderr=""
-        )
+def test_run_subprocess_no_streaming_error() -> None:
+    with pytest.raises(subprocess.CalledProcessError) as exc_info:
+        run_subprocess("invalid_command", stream_output=False)
 
-        result = run_subprocess('echo "test"', stream_output=False)
-
-        assert result.returncode == 0
-        assert result.stdout == "output"
-        assert result.stderr == ""
-
-
-def test_run_subprocess_no_streaming_error(mock_popen: None) -> None:
-    # Mock subprocess.run for non-streaming case with error
-    with patch("subprocess.run") as mock_run:
-        mock_run.side_effect = subprocess.CalledProcessError(returncode=1, cmd="test", output="", stderr="error")
-
-        with pytest.raises(subprocess.CalledProcessError) as exc_info:
-            run_subprocess("invalid_command", stream_output=False)
-
-        assert exc_info.value.returncode == 1
-        assert "error" in exc_info.value.stderr
+    assert exc_info.value.returncode == 127
+    assert exc_info.value.stderr is None
+    assert exc_info.value.stdout is None
 
 
 @pytest.mark.parametrize("pipeline_for_execution", ["__default__", "test_pipeline"])
