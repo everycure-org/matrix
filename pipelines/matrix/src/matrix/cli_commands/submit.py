@@ -145,13 +145,9 @@ def _submit(
         console.print("[green]✓[/green] Argo template valid")
 
         if not dry_run:
-            console.print("Building and pushing Docker image...")
             build_push_docker(run_name, verbose=verbose)
-            console.print("[green]✓[/green] Docker image built and pushed")
 
-            console.print("Ensuring namespace...")
             ensure_namespace(namespace, verbose=verbose)
-            console.print("[green]✓[/green] Namespace ensured")
 
             console.print("Applying Argo template...")
             apply_argo_template(namespace, file_path, verbose=verbose)
@@ -314,7 +310,8 @@ def check_dependencies(verbose: bool):
     except subprocess.CalledProcessError:
         console.print("Authenticating kubectl...")
         run_subprocess(
-            f"gcloud container clusters get-credentials {cluster} --project {project} --region {region}"
+            f"gcloud container clusters get-credentials {cluster} --project {project} --region {region}",
+            stream_output=verbose,
         )
 
     # Verify kubectl
@@ -328,7 +325,9 @@ def check_dependencies(verbose: bool):
 
 def build_push_docker(username: str, verbose: bool):
     """Build and push Docker image."""
+    console.print("Building Docker image...")
     run_subprocess(f"make docker_push TAG={username}", stream_output=verbose)
+    console.print("[green]✓[/green] Docker image built and pushed")
 
 
 def build_argo_template(run_name: str, release_version: str, username: str, namespace: str, pipeline_obj: Pipeline, is_test: bool, default_execution_resources: Optional[ArgoResourceConfig] = None) -> str:
@@ -373,7 +372,9 @@ def argo_template_lint(file_path: str, verbose: bool) -> str:
 
 def ensure_namespace(namespace, verbose: bool):
     """Create or verify Kubernetes namespace."""
+    console.print("Ensuring Kubernetes namespace...")
     result = run_subprocess(f"kubectl get namespace {namespace}", check=False)
+    console.print("[green]✓[/green] Namespace ensured")
     if result.returncode != 0:
         console.print(f"Namespace {namespace} does not exist. Creating it...")
         run_subprocess(f"kubectl create namespace {namespace}", check=True, stream_output=verbose)
