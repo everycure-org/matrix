@@ -137,8 +137,7 @@ def release_notes(
         response = get_release_notes(since, model)
 
         if output_file:
-            with open(output_file, "w") as f:
-                f.write(response)
+            Path(output_file).write_text(response)
             console.print(f"Release notes written to: {output_file}")
         else:
             print(Markdown(response))
