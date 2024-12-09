@@ -186,7 +186,7 @@ def get_release_template() -> str:
     return Path(get_git_root(), ".github", "release.yml").read_text()
 
 
-def get_previous_articles() -> list[str]:
+def get_previous_articles() -> str:
     git_root = get_git_root()
     release_notes_path = Path(git_root) / "docs" / "src" / "releases" / "posts"
     return get_markdown_contents(release_notes_path)
