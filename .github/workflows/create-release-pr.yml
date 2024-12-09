@@ -18,7 +18,7 @@ jobs:
     runs-on: ubuntu-latest
     name: Create Draft of the Release Notes
     permissions:
-      contents: 'read'
+      contents: 'write'
       id-token: 'write'
       pull-requests: 'write'
 
@@ -91,16 +91,16 @@ jobs:
           git commit -m "added release notes & article draft" && \
           git push --follow-tags
 
-      - name: Create Pull Request
-        uses: peter-evans/create-pull-request@v7
-        with:
-          token: ${{ github.token }}
-          title: "Release/${{env.release}}"
-          body: "Adds the release article and associated notes"
-          labels: "Release"
-          draft: true
-          branch: "release/${{env.release}}"
-          base: "main"
+#      - name: Create Pull Request
+#        uses: peter-evans/create-pull-request@v7
+#        with:
+#          token: ${{ github.token }}
+#          title: "Release/${{env.release}}"
+#          body: "Adds the release article and associated notes"
+#          labels: "Release"
+#          draft: true
+#          branch: "release/${{env.release}}"
+#          base: "main"
 
       - name: Create Pull Request
         env:
