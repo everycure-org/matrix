@@ -273,6 +273,8 @@ def filter_edges_for_topological_embeddings(
     def _create_mapping(column: str):
         return nodes.alias(column).withColumn(column, F.col("id")).select(column, "all_categories")
 
+    # Hard-coded category types to keep
+    to_keep = ["biolink:DiseaseOrPhenotypicFeature", "biolink:ChemicalEntity"]
     df = (
         edges.alias("edges")
         .join(_create_mapping("subject"), how="left", on="subject")
@@ -287,6 +289,10 @@ def filter_edges_for_topological_embeddings(
             (F.col("subject_is_drug") & F.col("object_is_disease"))
             | (F.col("subject_is_disease") & F.col("object_is_drug")),
         )
+        .withColumn("subject_to_keep", F.arrays_overlap(F.col("subject.all_categories"), F.lit(to_keep)))
+        .withColumn("object_to_keep", F.arrays_overlap(F.col("object.all_categories"), F.lit(to_keep)))
+        .withColumn("truncated_KG", (F.col("subject_to_keep")) & (F.col("object_to_keep")))
+        .filter(F.col("truncated_KG"))
         .filter(~F.col("is_drug_disease_edge"))
         .select("edges.*")
     )
