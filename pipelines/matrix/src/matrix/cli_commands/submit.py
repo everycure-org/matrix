@@ -63,7 +63,6 @@ def submit(username: str, namespace: str, run_name: str, release_version: str, p
         if not click.confirm("Using 'from-nodes' is highly experimental and may break due to MLFlow issues with tracking the right run. Are you sure you want to continue?", default=False):
             raise click.Abort()
     
-    # As a temporary measure, we pass both pipeline for execution and list of pipelines. In the future, we will merge the two.
     pipeline_obj = kedro_pipelines[pipeline]
     if from_nodes:
         pipeline_obj = pipeline_obj.from_nodes(*from_nodes)
