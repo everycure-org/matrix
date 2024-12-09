@@ -1,5 +1,4 @@
-from kedro.pipeline import Pipeline, pipeline, node
-
+from kedro.pipeline import Pipeline, node, pipeline
 from matrix.pipelines.embeddings.nodes import ingest_edges, ingest_nodes
 
 
@@ -7,13 +6,6 @@ def create_pipeline(**kwargs) -> Pipeline:
     """Create release pipeline."""
     return pipeline(
         [
-            # FUTURE: we will move to feature tables here instead
-            node(
-                func=lambda x: x,
-                inputs=["embeddings.feat.nodes"],
-                outputs="data_release.feat.nodes_with_embeddings",
-                name="ingest_nodes_with_embeddings",
-            ),
             # release to bigquery
             node(
                 func=lambda x: x,

@@ -175,7 +175,7 @@ We have progressed the following workstreams:
 
 ## Next Steps 🔮
 
-We are currently working on a new releases page where we will collect all releases and their key parameters. We will also explore data catalog tooling to make this more accessible. For now, please check the [overview](../../releases_history.md) page for a first version.
+We are currently working on a new releases page where we will collect all releases and their key parameters. We will also explore data catalog tooling to make this more accessible. For now, please check the [overview](../../release_history.md) page for a first version.
 
 
 [^1]: Note RTX KG2 upgrade to 2.10 has already been tested and will be part of our next data release. We want to create this release to enable people to run tests also with the older version and compare results to existing model results on the older version.
