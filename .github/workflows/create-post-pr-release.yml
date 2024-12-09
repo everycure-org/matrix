@@ -7,16 +7,18 @@ name: Release
 on:
   push:
     branches:
-      - 'feat/trigger-release-from-gh-action-lkfnsdklfnqsdnf'
+      - 'feat/trigger-release-from-gh-action'
       
-  # pull_request_review:
-  #   types: [submitted]
+  pull_request:
+    types: [closed]
 
 jobs:
   # approved:
-  #   if: github.event.review.state == 'approved' && contains(github.event.pull_request.labels.*.name, 'Release')
+  #   if: github.event.pull_request.merged == true && contains(github.event.pull_request.labels.*.name, 'Release')
   #   runs-on: ubuntu-latest
   #   name: PR approval
+  #   permissions:
+  #     pull-requests: 'read'
 
   #   steps:
   #     - name: "Check the PR state"
@@ -41,13 +43,14 @@ jobs:
           echo "LATEST_TAG=${LATEST_TAG}" >> "$GITHUB_ENV"
           echo "Latest tag is ${LATEST_TAG}"
 
-      # - name: Create GitHub release
-      #   env:
-      #     LATEST_TAG: ${{ steps.fetch_latest_tag.outputs.LATEST_TAG }}
-      #   run: |
-      #     echo "Creating release"
-      #     gh release create "${{ env.LATEST_TAG }}" \
-      #       -F "${{ github.workspace }}/docs/src/releases/posts/${{ env.LATEST_TAG }}/notes.md" \
-      #       -t "${{ env.LATEST_TAG }}" \
-      #       --draft \
-      #       --latest
+      - name: Create GitHub release
+        env:
+          LATEST_TAG: ${{ steps.fetch_latest_tag.outputs.LATEST_TAG }}
+        run: |
+          echo "Latest tag is ${LATEST_TAG}"
+          # echo "Creating release"
+          # gh release create "${{ env.LATEST_TAG }}" \
+          #   -F "${{ github.workspace }}/docs/src/releases/posts/${{ env.LATEST_TAG }}/notes.md" \
+          #   -t "${{ env.LATEST_TAG }}" \
+          #   --draft \
+          #   --latest
