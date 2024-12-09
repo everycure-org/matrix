@@ -2,7 +2,6 @@ import json
 import logging
 import re
 import secrets
-import select
 import subprocess
 import sys
 from pathlib import Path
@@ -201,98 +200,69 @@ def summarize_submission(run_name: str, namespace: str, pipeline: str, is_test: 
 def run_subprocess(
     cmd: str,
     check: bool = True,
-    capture_output: bool = True,
     shell: bool = True,
     stream_output: bool = True,
 ) -> subprocess.CompletedProcess:
     """Run a subprocess command and handle errors.
 
-    :param cmd: Command string to execute
-    :param check: If True, raise CalledProcessError on non-zero exit status
-    :param capture_output: If True, capture stdout and stderr
-    :param shell: If True, execute the command through the shell
-    :param stream_output: If True, stream output to stdout and stderr
-    :return: CompletedProcess instance
+    Args:
+        cmd: Command string to execute
+        check: If True, raise CalledProcessError on non-zero exit status
+        shell: If True, execute the command through the shell
+        stream_output: If True, capture and stream output to stdout/stderr.
+                      If False, send output directly to system stdout/stderr.
+    Returns:
+        CompletedProcess instance with stdout/stderr (if stream_output=True)
     """
+    process = subprocess.Popen(
+        cmd,
+        shell=shell,
+        stdout=subprocess.PIPE if stream_output else None,
+        stderr=subprocess.PIPE if stream_output else None,
+        text=True,
+        bufsize=1,
+    )
+
+    stdout, stderr = [], []
+    
     if stream_output:
-        process = subprocess.Popen(
-            cmd,
-            shell=shell,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True,
-            bufsize=1,
-            universal_newlines=True,
-        )
-
-        stdout, stderr = [], []
-        out_stream = process.stdout
-        err_stream = process.stderr
-        
-        while out_stream or err_stream:
-            reads = []
-            if out_stream and not out_stream.closed:
-                reads.append(out_stream)
-            if err_stream and not err_stream.closed:
-                reads.append(err_stream)
-                
-            if not reads:
-                break
-                
-            try:
-                readable, _, _ = select.select(reads, [], [], 0.1)  # 100ms timeout
-            except ValueError:  # Handle closed files
-                break
+        while True:
+            out_line = process.stdout.readline() if process.stdout else ''
+            err_line = process.stderr.readline() if process.stderr else ''
             
-            for stream in readable:
-                line = stream.readline()
-                if not line:  # EOF
-                    if stream == out_stream:
-                        out_stream = None
-                    elif stream == err_stream:
-                        err_stream = None
-                    continue
-                    
-                if stream == process.stdout:
-                    sys.stdout.write(line)
-                    sys.stdout.flush()
-                    stdout.append(line)
-                else:
-                    sys.stderr.write(line)
-                    sys.stderr.flush()
-                    stderr.append(line)
-
-        # Ensure we get any remaining output
-        remaining_stdout, remaining_stderr = process.communicate()
-        if remaining_stdout:
-            stdout.append(remaining_stdout)
-        if remaining_stderr:
-            stderr.append(remaining_stderr)
-
-        returncode = process.wait()
-        if check and returncode != 0:
-            raise subprocess.CalledProcessError(
-                returncode, cmd, "".join(stdout), "".join(stderr)
-            )
-
-        return subprocess.CompletedProcess(
-            cmd, returncode, "".join(stdout), "".join(stderr)
-        )
+            if not out_line and not err_line and process.poll() is not None:
+                break
+                
+            if out_line:
+                sys.stdout.write(out_line)
+                sys.stdout.flush()
+                stdout.append(out_line)
+            if err_line:
+                sys.stderr.write(err_line)
+                sys.stderr.flush()
+                stderr.append(err_line)
+        
+        # Get any remaining output
+        out, err = process.communicate()
+        if out:
+            stdout.append(out)
+        if err:
+            stderr.append(err)
     else:
+        process.wait()
 
-        try:
-            return subprocess.run(
-                cmd, check=check, capture_output=capture_output, text=True, shell=shell
-            )
-        except subprocess.CalledProcessError as e:
-            console.print(f"Error executing command: {cmd}")
-            console.print(f"Exit code: {e.returncode}")
-            if e.stdout:
-                console.print(f"stdout: {e.stdout}")
-            if e.stderr:
-                console.print(f"stderr: {e.stderr}")
-            raise
+    if check and process.returncode != 0:
+        raise subprocess.CalledProcessError(
+            process.returncode, cmd, 
+            ''.join(stdout) if stdout else None,
+            ''.join(stderr) if stderr else None
+        )
 
+    return subprocess.CompletedProcess(
+        cmd, process.returncode,
+        ''.join(stdout) if stdout else None,
+        ''.join(stderr) if stderr else None
+    )
 
 def command_exists(command: str) -> bool:
     """Check if a command exists in the system."""
@@ -322,7 +292,6 @@ def check_dependencies(verbose: bool):
     active_account = (
         run_subprocess(
             "gcloud auth list --filter=status:ACTIVE --format=value'(ACCOUNT)'",
-            capture_output=True,
             stream_output=verbose,
         )
         .stdout.strip()
@@ -340,7 +309,7 @@ def check_dependencies(verbose: bool):
 
     # Check if kubectl is already authenticated
     try:
-        run_subprocess("kubectl get nodes", capture_output=True, stream_output=verbose)
+        run_subprocess("kubectl get nodes", stream_output=verbose)
         console.print("kubectl is already authenticated.")
     except subprocess.CalledProcessError:
         console.print("Authenticating kubectl...")
@@ -350,7 +319,7 @@ def check_dependencies(verbose: bool):
 
     # Verify kubectl
     try:
-        run_subprocess("kubectl get ns", capture_output=True, stream_output=verbose)
+        run_subprocess("kubectl get ns", stream_output=verbose)
     except subprocess.CalledProcessError:
         raise EnvironmentError(
             "kubectl is not working. Please check your configuration."
@@ -436,7 +405,7 @@ def submit_workflow(run_name: str, namespace: str, verbose: bool):
         "-o json"
     ])
     console.print(f"Running submit command: [blue]{cmd}[/blue]")
-    result = run_subprocess(cmd, capture_output=True, stream_output=verbose)
+    result = run_subprocess(cmd, stream_output=verbose)
     job_name = json.loads(result.stdout).get("metadata", {}).get("name")
 
     if not job_name:
@@ -463,7 +432,7 @@ def get_run_name(run_name: Optional[str]) -> str:
     # If no run_name is provided, use the current Git branch name
     if not run_name:
         run_name = run_subprocess(
-            "git rev-parse --abbrev-ref HEAD", capture_output=True, stream_output=False
+            "git rev-parse --abbrev-ref HEAD", stream_output=False
         ).stdout.strip()
 
     # Add a random suffix to the run_name
