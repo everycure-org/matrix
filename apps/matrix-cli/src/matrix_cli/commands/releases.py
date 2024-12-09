@@ -3,7 +3,6 @@ import platform
 import re
 import subprocess
 import tempfile
-import os
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 from typing import TYPE_CHECKING, List
@@ -61,14 +60,9 @@ def write_release_article(
     since = select_release(headless)
 
     if notes_file:
-        if os.path.exists(notes_file):
-            console.print("[green]Loading release notes")
-            with open(notes_file, "r") as f:
-                notes = f.read()
-                console.print(f"[green]Release notes loaded. Total length: {len(notes)} characters")
-        else:
-            console.print("[red]Error: Notes file not found.")
-            raise FileNotFoundError(f"Notes file '{notes_file}' does not exist.")
+        console.print("[green]Loading release notes")
+        notes = Path(notes_file).read_text()
+        console.print(f"[green]Release notes loaded. Total length: {len(notes)} characters")
     else:
         console.print("[green]Collecting release notes...")
         notes = get_release_notes(since, model=model)
