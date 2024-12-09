@@ -105,7 +105,8 @@ jobs:
       - name: Create Pull Request
         env:
           GITHUB_TOKEN: ${{ github.token }}
-        run: gh pr create \
+        run: |
+          gh pr create \
           --title "Release/${{env.release}}" \
           --base main \
           --body "Adds the release article and associated notes" \
