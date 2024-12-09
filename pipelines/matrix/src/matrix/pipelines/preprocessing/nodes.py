@@ -24,9 +24,10 @@ def resolve(name: str, endpoint: str, att_to_get: str = "preferred_curie") -> st
     Returns:
         Corresponding curie
     """
-    result = requests.get(f"{endpoint}/synonymize", json={"name": name})
+    result = requests.get(f"{endpoint}/synonymize", json={"names": [name]})
     element = result.json().get(name)
     if element:
+        print(element.get(att_to_get, None))
         return element.get(att_to_get, None)
 
     return None
@@ -44,7 +45,7 @@ def normalize(curie: str, endpoint: str, att_to_get: str = "identifier"):
     """
     if not curie or pd.isna(curie):
         return None
-    result = requests.get(f"{endpoint}/normalize", json={"name": curie})
+    result = requests.get(f"{endpoint}/normalize", json={"names": [curie]})
     element = result.json().get(curie)
     if element:
         return element.get("id", {}).get(att_to_get)
@@ -163,18 +164,18 @@ def create_prm_nodes(prm_nodes: pd.DataFrame) -> pd.DataFrame:
     # `new_id` signals that the node should be added to the KG as a new id
     # we drop the original ID from the spreadsheat, and leverage the new_id as the final id
     # in the dataframe. We only retain nodes where the new_id is set
-    res = prm_nodes[prm_nodes["new_id"].notna()].drop(columns="ID").rename(columns={"new_id": "id"})
+    res = prm_nodes[prm_nodes["normalized_curie"].notna()].drop(columns="ID").rename(columns={"normalized_curie": "id"})
 
     res["category"] = "biolink:" + prm_nodes["entity label"]
 
-    return res
+    return res.drop_duplicates(["id"])
 
 
 @has_schema(
     schema={
         "subject": "object",
         "predicate": "object",
-        "object": "object",
+        # "object": "object",
         "knowledge_source": "object",
     },
     allow_subset=True,
