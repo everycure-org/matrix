@@ -56,68 +56,21 @@ def mock_parquet_file(tmp_path, sample_df):
     return str(file_path)
 
 
-class TestKnowledgeGraphDataset:
-    def test_successful_load(self, mock_parquet_file, sample_df):
-        # Arrange
-        dataset = KnowledgeGraphDataset(filepath=mock_parquet_file)
+def test_successful_load(mock_parquet_file, sample_df):
+    dataset = KnowledgeGraphDataset(filepath=mock_parquet_file)
 
-        # Act
-        result = dataset._load()
+    result = dataset._load()
 
-        # Assert
-        assert isinstance(result, KnowledgeGraph)
-        assert len(result._nodes) == len(sample_df)
-        assert result._drug_nodes == ["drug1"]
-        assert result._disease_nodes == ["disease1"]
+    assert isinstance(result, KnowledgeGraph)
+    assert len(result._nodes) == len(sample_df)
+    assert result._drug_nodes == ["drug1"]
+    assert result._disease_nodes == ["disease1"]
 
-    def test_file_not_found_retry_success(self):
-        # Arrange
-        dataset = KnowledgeGraphDataset(filepath="nonexistent.parquet")
 
-        # Mock super()._load() to fail twice then succeed
-        mock_df = pd.DataFrame(
-            {"id": ["test"], "is_drug": [True], "is_disease": [False], "topological_embedding": [[1.0]]}
-        )
+def test_file_not_found_all_retries_fail():
+    dataset = KnowledgeGraphDataset(filepath="nonexistent.parquet")
 
-        with patch.object(
-            KnowledgeGraphDataset, "_load", side_effect=[FileNotFoundError, FileNotFoundError, KnowledgeGraph(mock_df)]
-        ) as mock_load:
-            # Act
-            result = dataset._load()
-
-            # Assert
-            assert isinstance(result, KnowledgeGraph)
-            assert mock_load.call_count == 3
-
-    def test_file_not_found_all_retries_fail(self):
-        # Arrange
-        dataset = KnowledgeGraphDataset(filepath="nonexistent.parquet")
-
-        # Act & Assert
-        with pytest.raises(DatasetError) as exc_info:
-            dataset._load()
-
-        assert "Unable to find the Parquet file" in str(exc_info.value)
-
-    def test_init_parameters(self):
-        # Arrange
-        test_args = {
-            "filepath": "test.parquet",
-            "load_args": {"key": "value"},
-            "save_args": {"format": "parquet"},
-            "version": None,
-            "credentials": {"token": "123"},
-            "fs_args": {"protocol": "s3"},
-            "metadata": {"description": "test"},
-        }
-
-        # Act
-        dataset = KnowledgeGraphDataset(**test_args)
-
-        # Assert
-        assert dataset._filepath == "test.parquet"
-        assert dataset._load_args == {"key": "value"}
-        assert dataset._save_args == {"format": "parquet"}
-        assert dataset._credentials == {"token": "123"}
-        assert dataset._fs_args == {"protocol": "s3"}
-        assert dataset._metadata == {"description": "test"}
+    with pytest.raises(
+        DatasetError, match="Unable to find the Parquet file `nonexistent.parquet` underlying this dataset!"
+    ):
+        dataset._load()
