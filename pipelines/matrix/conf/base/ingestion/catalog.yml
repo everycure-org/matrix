@@ -101,11 +101,11 @@ ingestion.int.rtx_kg2.curie_to_pmids:
 # -------------------------------------------------------------------------  
 ingestion.raw.ec_medical_team.nodes@pandas:
   <<: [*_layer_raw, *_pandas_csv]
-  filepath: ${globals:paths.raw}/ec_medical_team/20240823/nodes.csv
+  filepath: ${globals:paths.raw}/ec_medical_team/20241016/nodes.csv
 
 ingestion.raw.ec_medical_team.nodes@spark:
   <<: [*_spark_csv, *_layer_raw]
-  filepath: ${globals:paths.raw}/ec_medical_team/20240823/nodes.csv
+  filepath: ${globals:paths.raw}/ec_medical_team/20241016/nodes.csv
   save_args:
     mode: overwrite
     header: True
@@ -114,11 +114,11 @@ ingestion.raw.ec_medical_team.nodes@spark:
 
 ingestion.raw.ec_medical_team.edges@pandas:
   <<: [ *_layer_int, *_pandas_csv]
-  filepath: ${globals:paths.raw}/ec_medical_team/20240823/edges.csv
+  filepath: ${globals:paths.raw}/ec_medical_team/20241016/edges.csv
 
 ingestion.raw.ec_medical_team.edges@spark:
   <<: [*_spark_csv, *_layer_int]
-  filepath: ${globals:paths.raw}/ec_medical_team/20240823/edges.csv
+  filepath: ${globals:paths.raw}/ec_medical_team/20241016/edges.csv
   save_args:
     mode: overwrite
     header: True
@@ -131,11 +131,11 @@ ingestion.raw.clinical_trials_data:
 
 ingestion.int.ec_medical_team.nodes:
   <<: [*_spark_parquet, *_layer_int]
-  filepath: ${globals:paths.ingestion}/int/ec_medical_team/20240823/nodes
+  filepath: ${globals:paths.ingestion}/int/ec_medical_team/20241016/nodes
 
 ingestion.int.ec_medical_team.edges:
   <<: [*_spark_parquet, *_layer_int]
-  filepath: ${globals:paths.ingestion}/int/ec_medical_team/20240823/edges
+  filepath: ${globals:paths.ingestion}/int/ec_medical_team/20241016/edges
 
 
 # -------------------------------------------------------------------------
