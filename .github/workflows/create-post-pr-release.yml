@@ -39,18 +39,18 @@ jobs:
       - name: Fetch latest tag
         id: fetch_latest_tag
         run: |
-          LATEST_TAG=$(git tag --list --sort="v:refname" | tail -n 1)
-          echo "LATEST_TAG=${LATEST_TAG}" >> "$GITHUB_ENV"
-          echo "Latest tag is ${LATEST_TAG}"
+          latest_tag=$(git tag --list --sort="v:refname" | tail -n 1)
+          echo "latest_tag=${latest_tag}" >> "$GITHUB_ENV"
+          echo "Latest tag is ${latest_tag}"
 
       - name: Create GitHub release
         env:
-          LATEST_TAG: ${{ steps.fetch_latest_tag.outputs.LATEST_TAG }}
+          latest_tag: ${{ steps.fetch_latest_tag.outputs.latest_tag }}
         run: |
-          echo "Latest tag is ${LATEST_TAG}"
+          echo "Latest tag is $latest_tag"
           # echo "Creating release"
-          # gh release create "${{ env.LATEST_TAG }}" \
-          #   -F "${{ github.workspace }}/docs/src/releases/posts/${{ env.LATEST_TAG }}/notes.md" \
-          #   -t "${{ env.LATEST_TAG }}" \
+          # gh release create "${{ env.latest_tag }}" \
+          #   -F "${{ github.workspace }}/docs/src/releases/posts/${{ env.latest_tag }}/notes.md" \
+          #   -t "${{ env.latest_tag }}" \
           #   --draft \
           #   --latest
