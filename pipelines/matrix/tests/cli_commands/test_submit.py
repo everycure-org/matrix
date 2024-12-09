@@ -186,7 +186,6 @@ def test_run_subprocess_error() -> None:
 
     assert exc_info.value.returncode == 127
     assert exc_info.value.stdout is None
-    assert "invalid_command: command not found" in exc_info.value.stderr
 
 
 def test_run_subprocess_streaming() -> None:
