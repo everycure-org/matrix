@@ -101,11 +101,11 @@ ingestion.int.rtx_kg2.curie_to_pmids:
 # -------------------------------------------------------------------------  
 ingestion.raw.ec_medical_team.nodes@pandas:
   <<: [*_layer_raw, *_pandas_csv]
-  filepath: ${globals:paths.raw}/ec_medical_team/translator/${globals:data_sources.ec-medical-team.version}/nodes_conflated.csv
+  filepath: ${globals:paths.raw}/ec_medical_team/20240823/${globals:data_sources.ec-medical-team.version}/nodes.csv
 
 ingestion.raw.ec_medical_team.nodes@spark:
   <<: [*_spark_csv, *_layer_raw]
-  filepath: ${globals:paths.raw}/ec_medical_team/translator/${globals:data_sources.ec-medical-team.version}/nodes_conflated.csv
+  filepath: ${globals:paths.raw}/ec_medical_team/20240823/${globals:data_sources.ec-medical-team.version}/nodes.csv
   save_args:
     mode: overwrite
     header: True
@@ -114,11 +114,11 @@ ingestion.raw.ec_medical_team.nodes@spark:
 
 ingestion.raw.ec_medical_team.edges@pandas:
   <<: [ *_layer_int, *_pandas_csv]
-  filepath: ${globals:paths.raw}/ec_medical_team/translator/${globals:data_sources.ec-medical-team.version}/edges_conflated.csv
+  filepath: ${globals:paths.raw}/ec_medical_team/20240823/${globals:data_sources.ec-medical-team.version}/edges.csv
 
 ingestion.raw.ec_medical_team.edges@spark:
   <<: [*_spark_csv, *_layer_int]
-  filepath: ${globals:paths.raw}/ec_medical_team/translator/${globals:data_sources.ec-medical-team.version}/edges_conflated.csv
+  filepath: ${globals:paths.raw}/ec_medical_team/20240823/${globals:data_sources.ec-medical-team.version}/edges.csv
   save_args:
     mode: overwrite
     header: True
@@ -131,11 +131,11 @@ ingestion.raw.clinical_trials_data:
 
 ingestion.int.ec_medical_team.nodes:
   <<: [*_spark_parquet, *_layer_int]
-  filepath: ${globals:paths.ingestion}/int/ec_medical_team/translator/${globals:data_sources.ec-medical-team.version}/nodes_conflated
+  filepath: ${globals:paths.ingestion}/int/ec_medical_team/20240823/${globals:data_sources.ec-medical-team.version}/nodes
 
 ingestion.int.ec_medical_team.edges:
   <<: [*_spark_parquet, *_layer_int]
-  filepath: ${globals:paths.ingestion}/int/ec_medical_team/translator/${globals:data_sources.ec-medical-team.version}/edges_conflated
+  filepath: ${globals:paths.ingestion}/int/ec_medical_team/20240823/${globals:data_sources.ec-medical-team.version}/edges
 
 
 # -------------------------------------------------------------------------

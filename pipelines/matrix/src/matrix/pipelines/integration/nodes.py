@@ -179,15 +179,8 @@ def batch_map_ids(
     Returns:
         Dict[str, str]: A dictionary of the form {id: normalized_id}.
     """
-    results = asyncio.run(
-        async_batch_map_ids(ids, api_endpoint, json_parser, batch_size, parallelism, conflate, drug_chemical_conflate)
-    )
-
-    logger.info(f"mapped {len(results)} ids")
-    empty_results = [id for id in ids if not results.get(id)]
-    logger.warning(f"Endpoint did not return results for {len(empty_results)}")
-    # ensuring we return a result for every input id, even if it's None
-    return {id: results.get(id) for id in ids}
+    # Modified this function to see if normalization has an effect on SILC subgraph
+    return {id: id for id in ids}
 
 
 async def async_batch_map_ids(
