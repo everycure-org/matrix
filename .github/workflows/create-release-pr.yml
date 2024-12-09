@@ -35,6 +35,7 @@ jobs:
           fi
           echo "release=${release}" >> "$GITHUB_ENV"
           echo "gitref=${gitref}" >> "$GITHUB_ENV"
+          echo "${gitref} -> ${release}"
 
       - name: Checkout
         uses: actions/checkout@main
@@ -47,6 +48,7 @@ jobs:
         run: |
           git config --global user.email "releasebot@everycure.org"
           git config --global user.name "All of us at Every Cure"
+          # Create an annotated tag, so that we can push it easily with the files using `follow-tags`.
           git tag --annotate --message '' -- "${{env.release}}"
 
       - name: Setup Matrix CLI
@@ -92,6 +94,8 @@ jobs:
           git push --follow-tags
 
       - name: Create Pull Request
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
         run: gh pr create \
           --title "Release/${{env.release}}" \
           --base main \
