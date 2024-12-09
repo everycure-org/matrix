@@ -21,7 +21,7 @@ This issue template provides a structured, technical onboarding checklist for ne
   - [ ] Setup [Git-Crypt](https://docs.dev.everycure.org/onboarding/git-crypt/#additional-reading) and share GPG public key in the issue
   - [ ] Validate `git-crypt unlock` successfull after key was added by codeowner
   - [ ] Read up on [Kedro](https://docs.dev.everycure.org/onboarding/kedro/)
-  - [ ] Read up on [pipeline stages](https://docs.dev.everycure.org/onboarding/pipeline/)
+  - [ ] Read up on [pipeline stages](https://docs.dev.everycure.org/pipeline/)
   - [ ] Launched [local setup](https://docs.dev.everycure.org/onboarding/local-setup/) and run test pipeline till completion
 
 
