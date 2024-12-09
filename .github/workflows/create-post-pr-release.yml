@@ -5,7 +5,9 @@ on:
 
 jobs:
   approved:
-    if: github.event.pull_request.merged == true && contains(github.event.pull_request.labels.*.name, 'Release')
+    if: |
+      github.event.pull_request.merged == true &&
+      contains(github.event.pull_request.labels.*.name, 'Release')
     runs-on: ubuntu-latest
     name: PR approval
     permissions:
@@ -39,10 +41,11 @@ jobs:
       - name: Create GitHub release
         env:
             GH_TOKEN: ${{ github.token }}
+            POSTS_DIR: ./docs/src/releases/posts
         run: |
           echo "Creating release"
           gh release create "${{ env.latest_tag }}" \
-            -F "${GITHUB_WORKSPACE}/docs/src/releases/posts/${{ env.latest_tag }}/notes.md" \
+            -F "${GITHUB_WORKSPACE}/${POSTS_DIR}/${{ env.latest_tag }}/notes.md" \
             -t "${{ env.latest_tag }}" \
             --draft \
             --latest
