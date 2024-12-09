@@ -90,22 +90,6 @@ def create_pipeline(**kwargs) -> Pipeline:
                 ),
             ),
             ArgoNode(
-                func=nodes.add_include_in_topological,
-                inputs={
-                    "df": "embeddings.tmp.input_edges",
-                    "gdb": "params:embeddings.gdb",
-                    "drug_types": "params:modelling.drug_types",
-                    "disease_types": "params:modelling.disease_types",
-                },
-                outputs="embeddings.feat.include_in_topological@yaml",
-                name="filter_topological",
-                tags=[
-                    "argowf.fuse",
-                    "argowf.fuse-group.topological_embeddings",
-                    "argowf.template-neo4j",
-                ],
-            ),
-            ArgoNode(
                 func=nodes.train_topological_embeddings,
                 inputs={
                     "df": "embeddings.tmp.input_edges",

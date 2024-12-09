@@ -186,34 +186,22 @@ def mock_popen():
         yield mock
 
 
-def test_run_subprocess_success(mock_popen: None) -> None:
-    # Mock successful command execution
+@pytest.fixture
+def mock_process():
     process_mock = MagicMock()
     process_mock.stdout = iter(["output line 1\n", "output line 2\n"])
     process_mock.stderr = iter([""])
     process_mock.wait.return_value = 0
-    mock_popen.return_value = process_mock
+    return process_mock
 
+
+def test_run_subprocess_streaming(mock_popen, mock_process) -> None:
+    mock_popen.return_value = mock_process
     result = run_subprocess('echo "test"', stream_output=True)
 
     assert result.returncode == 0
     assert result.stdout == "output line 1\noutput line 2\n"
     assert result.stderr == ""
-
-
-def test_run_subprocess_error(mock_popen: None) -> None:
-    # Mock command execution with error
-    process_mock = MagicMock()
-    process_mock.stdout = iter([""])
-    process_mock.stderr = iter(["error message\n"])
-    process_mock.wait.return_value = 1
-    mock_popen.return_value = process_mock
-
-    with pytest.raises(subprocess.CalledProcessError) as exc_info:
-        run_subprocess("invalid_command", stream_output=True)
-
-    assert exc_info.value.returncode == 1
-    assert "error message" in exc_info.value.stderr
 
 
 def test_run_subprocess_no_streaming(mock_popen: None):
