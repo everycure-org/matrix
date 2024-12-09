@@ -128,9 +128,7 @@ def _submit(
     try:
         console.rule("[bold blue]Submitting Workflow")
 
-        console.print("Checking dependencies...")
         check_dependencies(verbose=verbose)
-        console.print("[green]✓[/green] Dependencies checked")
 
         console.print("Building Argo template...")
         argo_template = build_argo_template(run_name, release_version, username, namespace, pipeline_obj, is_test=is_test, )
@@ -276,7 +274,9 @@ def check_dependencies(verbose: bool):
 
     Raises:
         EnvironmentError: If gcloud is not installed or kubectl cannot be configured.
-    """
+    """    
+    console.print("Checking dependencies...")
+
     if not command_exists("gcloud"):
         raise EnvironmentError("gcloud is not installed. Please install it first.")
 
@@ -306,14 +306,15 @@ def check_dependencies(verbose: bool):
     # Check if kubectl is already authenticated
     try:
         run_subprocess("kubectl get nodes", stream_output=verbose)
-        console.print("kubectl is already authenticated.")
+        console.print("[green]✓[/green] kubectl authenticated")
     except subprocess.CalledProcessError:
         console.print("Authenticating kubectl...")
         run_subprocess(
             f"gcloud container clusters get-credentials {cluster} --project {project} --region {region}",
             stream_output=verbose,
         )
-
+        console.print("[green]✓[/green] kubectl authenticated")
+    
     # Verify kubectl
     try:
         run_subprocess("kubectl get ns", stream_output=verbose)
@@ -321,6 +322,8 @@ def check_dependencies(verbose: bool):
         raise EnvironmentError(
             "kubectl is not working. Please check your configuration."
         )
+    console.print("[green]✓[/green] Dependencies checked")
+
 
 
 def build_push_docker(username: str, verbose: bool):
