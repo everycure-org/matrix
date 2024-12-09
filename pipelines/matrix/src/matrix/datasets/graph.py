@@ -153,6 +153,6 @@ class KnowledgeGraphDataset(ParquetDataset):
                 return KnowledgeGraph(super()._load())
             except FileNotFoundError:
                 attempt += 1
-                logger.warning(f"Parquet file `{self.filepath}` not found, retrying!")
+                logger.warning(f"Parquet file `{self._filepath}` not found, retrying!")
 
-        raise DatasetError(f"Unable to find the Parquet file `{self.filepath}` underlying this dataset!")
+        raise DatasetError(f"Unable to find the Parquet file `{self._filepath}` underlying this dataset!")
