@@ -3,6 +3,7 @@ from kedro.pipeline import Pipeline, pipeline, node
 from matrix.pipelines.embeddings.nodes import ingest_edges, ingest_nodes
 from matrix.pipelines.data_release.nodes import filtered_edges_to_kgx, filtered_nodes_to_kgx
 
+
 def create_pipeline(**kwargs) -> Pipeline:
     """Create release pipeline."""
     return pipeline(
