@@ -13,8 +13,6 @@ from rich import print
 from rich.markdown import Markdown
 from tqdm.rich import tqdm
 
-import time
-
 from matrix_cli.commands.code import get_ai_code_summary
 from matrix_cli.components.cache import memory
 from matrix_cli.components.gh_api import get_pr_details, update_prs
@@ -50,11 +48,8 @@ def write_release_article(
     output_file: str = typer.Option(None, help="File to write the release article to"),
     model: str = typer.Option(settings.power_model, help="Language model to use"),
     disable_rendering: bool = typer.Option(True, help="Disable rendering of the release article"),
-    headless: bool = typer.Option(
-        False, help="Don't ask interactive questions. The most recent release will be automatically used."
-    ),
+    headless: bool = typer.Option(False, help="Don't ask interactive questions."),
     notes_file: str = typer.Option(None, help="File containing release notes"),
-    focus_direction: str = typer.Option(None, help="Focus direction for the release article"),
 ):
     """Write a release article for a given git reference."""
     since = select_release(headless)
@@ -75,9 +70,6 @@ def write_release_article(
 
     # prompt user to give guidance on what to focus on in the release article
     console.print(Markdown(notes))
-    # focus_direction = console.input(
-    #     "[bold green]Please provide guidance on what to focus on in the release article. Note 'Enter' will end the prompt: "
-    # )
 
     prompt = f"""
 # Please write a release article based on the following release notes and git diff:
@@ -95,16 +87,22 @@ def write_release_article(
 - Focus on technical accuracy
 - Ensure a high signal-to-noise ratio for technical readers
 
+        """
+
+    if not headless:
+        focus_direction = console.input(
+            "[bold green]Please provide guidance on what to focus on in the release article. Note 'Enter' will end the prompt: "
+        )
+        prompt += f"""
 ## Focus of the article:
+        
 Please focus on the following topics in the release article:
 {focus_direction}
         """
-    time.sleep(100)
     response = invoke_model(prompt, model=model)
 
     if output_file:
-        with open(output_file, "w") as f:
-            f.write(response)
+        Path(output_file).write_text(response)
         console.print(f"Release article written to: {output_file}")
     elif not disable_rendering:
         console.print("[bold green]Generated release article:")
