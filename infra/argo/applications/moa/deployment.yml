@@ -35,7 +35,7 @@ spec:
           - name: MOA_DB_PATH
             value: "/data/moa_extraction.db"
           - name: MOA_INFO_IMG
-            value: "/assets/moa_info.png"
+            value: "/assets/moa_info.svg"
       containers:
       - name: moa-viewer
         image: us-central1-docker.pkg.dev/mtrx-hub-dev-3of/matrix-images/moa_visualizer:danrhodes
