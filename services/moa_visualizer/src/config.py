@@ -15,6 +15,7 @@ DATA_INPUT_PATH = os.environ.get(
 )
 MOA_DB_PATH = os.environ.get("MOA_DB_PATH", "data/moa_extraction.db")
 GCP_PROJECT = os.environ.get("GCP_PROJECT", "project-silc")
+MOA_INFO_IMG = os.environ.get("MOA_INFO_IMG", "assets/moa_info.png")
 
 # Ontologies and their URLs
 ONT_URLS = {

@@ -9,7 +9,7 @@ from utils import (
     display_table,
     parse_hop_parameter,
 )
-from config import MOA_INFO_TEXT, MOA_DB_PATH  # MOA_INFO_IMG
+from config import MOA_INFO_TEXT, MOA_DB_PATH
 
 
 def set_wide_space_default():
@@ -43,7 +43,14 @@ with st.sidebar:
     available_pairs_df = list_available_pairs_df(path_number=hop_selector_parsed)
 
     if search_input != "":
-        available_pairs_df = available_pairs_df[available_pairs_df["pair_id"].str.contains(search_input)]
+        if "|" in search_input:
+            available_pairs_df = available_pairs_df[
+                available_pairs_df["pair_id"].str.contains(search_input, regex=False)
+            ]
+        else:
+            available_pairs_df = available_pairs_df[
+                available_pairs_df["pair_id"].str.contains(f"({search_input}\||{search_input}$)", regex=True)
+            ]
 
     all_pairs = st.checkbox("Show all pairs", value=False)
     if all_pairs or search_input != "":
