@@ -382,11 +382,11 @@ def submit_workflow(run_name: str, namespace: str, verbose: bool):
     submit_cmd = " ".join([
         "argo submit",
         f"--name {run_name}",
-        f"-n {namespace}",
+        f"--namespace {namespace}",
         f"--from wftmpl/{run_name}", # name of the template resource (created in previous step)
-        f"-p run_name={run_name}",
-        "-l submit-from-ui=false",
-        "-o json"
+        f"--parameter run_name={run_name}",
+        "--labels submit-from-ui=false",
+        "--output json"
     ])
     result = run_subprocess(submit_cmd, capture_output=True, stream_output=verbose)
     job_name = json.loads(result.stdout).get("metadata", {}).get("name")
