@@ -325,7 +325,7 @@ def build_push_docker(tag: str, verbose: bool):
 
 def build_argo_template(run_name: str, release_version: Optional[str], username: str, namespace: str, pipeline_obj: Pipeline, default_execution_resources: Optional[ArgoResourceConfig] = None) -> str:
     """Build Argo workflow template."""
-    matrix_root = Path(__file__).parent.parent.parent.parent
+    matrix_root = Path(__file__).parents[3]
     metadata = bootstrap_project(matrix_root)
     package_name = metadata.package_name
 
