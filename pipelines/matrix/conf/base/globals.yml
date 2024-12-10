@@ -24,7 +24,7 @@ data_sources:
   robokop:
     version: c5ec1f282158182f
   spoke:
-    version: v5
+    version: V5
 # Dataset with node and edge proposals by the
 # EveryCure medical team.
   ec-medical-team:
