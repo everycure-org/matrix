@@ -346,8 +346,7 @@ def build_argo_template(run_name: str, release_version: Optional[str], username:
 
 def save_argo_template(argo_template: str, template_directory: Path) -> str:
     file_path = template_directory / "argo-workflow-template.yml"
-    with open(file_path, "w") as f:
-        f.write(argo_template)
+    file_path.write_text(argo_template)
     return str(file_path)
 
 
