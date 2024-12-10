@@ -163,7 +163,7 @@ def _submit(
             console.print("[green]✓[/green] Workflow submitted")
 
             console.print(Panel.fit(
-                f"[bold green]Workflow {'prepared' if dry_run else 'submitted'} successfully![/bold green]\n"
+                f"[bold green]Workflow submitted successfully![/bold green]\n"
                 f"Run Name: {run_name}\n"
                 f"Namespace: {namespace}",
                 title="Submission Summary"
