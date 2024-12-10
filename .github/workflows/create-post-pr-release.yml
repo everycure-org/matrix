@@ -45,7 +45,6 @@ jobs:
         run: |
           echo "Creating release"
           gh release create "${{ env.latest_tag }}" \
-            -F "${GITHUB_WORKSPACE}/${POSTS_DIR}/${{ env.latest_tag }}/notes.md" \
-            -t "${{ env.latest_tag }}" \
-            --draft \
+            --notes-file "${GITHUB_WORKSPACE}/${POSTS_DIR}/${{ env.latest_tag }}/notes.md" \
+            --title "${{ env.latest_tag }}" \
             --latest
