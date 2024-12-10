@@ -51,6 +51,9 @@ jobs:
     steps:
       - name: 'Checkout'
         uses: actions/checkout@v4
+        with:
+          # required to get full history of docs and thus creation date of files
+          fetch-depth: 0
       - uses: dorny/paths-filter@v3
         id: changes
         with:
