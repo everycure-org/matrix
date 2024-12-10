@@ -737,7 +737,7 @@ def main():
     nodes_dataset_name = "integration.int.rtx.nodes"
     edges_dataset_name = "integration.int.rtx.edges"
     categories = ["All Categories"]
-    model_names = ["OpenAI"]
+    model_names = ["OpenAI", "PubMedBERT", "SapBERT", "BlueBERT", "BioBERT"]
     openai_api_key = os.getenv("OPENAI_API_KEY")
     if not openai_api_key:
         sys.exit(1)
