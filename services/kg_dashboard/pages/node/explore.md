@@ -1,5 +1,5 @@
 --
-Title: Explore Graph Nodes
+Explore Graph Nodes
 --
 
 ```sql nodes_by_category

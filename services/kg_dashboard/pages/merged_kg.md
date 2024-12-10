@@ -88,7 +88,6 @@ from bq.merged_kg_edges
     order by count desc    
     limit ${inputs.edge_limit.value}  
 ```
-    
 
 ```sql primary_knowledge_source_by_predicate
 select 
@@ -160,7 +159,8 @@ from bq.merged_kg_edges
                     title="Subject Category"
                     multiple=true
                     selectAllByDefault=true
-                    />        
+                    />
+            <br/>
             <Dropdown data={edges}
                     name=predicate
                     value=predicate
@@ -168,6 +168,7 @@ from bq.merged_kg_edges
                     multiple=true
                     selectAllByDefault=true
                     />
+            <br/>
             <Dropdown data={edges}
                     name=object_prefix
                     value=object_prefix
@@ -182,6 +183,7 @@ from bq.merged_kg_edges
                     multiple=true
                     selectAllByDefault=true
                     />
+            <br/>
             <Dropdown data={edges}
                     name=primary_knowledge_source
                     value=primary_knowledge_source
