@@ -41,14 +41,14 @@ def cli():
 @click.option("--username", type=str, required=True, help="Specify the username to use")
 @click.option("--namespace", type=str, default="argo-workflows", help="Specify a custom namespace")
 @click.option("--run-name", type=str, default=None, help="Specify a custom run name, defaults to branch")
-@click.option("--release-version", type=str, required=True, help="Specify a custom release name")
+@click.option("--release", type=str, default=None, required=False, help="Specify a custom release name")
 @click.option("--pipeline", "-p", type=str, default="modelling_run", help="Specify which pipeline to execute")
 @click.option("--verbose", "-v", is_flag=True, default=True, help="Enable verbose output")
 @click.option("--dry-run", "-d", is_flag=True, default=False, help="Does everything except submit the workflow")
 @click.option("--from-nodes", type=str, default="", help="Specify nodes to run from", callback=split_string)
 @click.option("--is-test", is_flag=True, default=False, help="Submit to test folder")
 # fmt: on
-def submit(username: str, namespace: str, run_name: str, release_version: str, pipeline: str, verbose: bool, dry_run: bool, from_nodes: List[str], is_test: bool):
+def submit(username: str, namespace: str, run_name: Optional[str], release: Optional[str], pipeline: str, verbose: bool, dry_run: bool, from_nodes: List[str], is_test: bool):
     """Submit the end-to-end workflow. """
     if verbose:
         log.setLevel(logging.DEBUG)
@@ -56,13 +56,16 @@ def submit(username: str, namespace: str, run_name: str, release_version: str, p
     if pipeline not in kedro_pipelines.keys():
         raise ValueError("Pipeline requested for execution not found")
     
-    if pipeline in ["fabricator", "test"]:
+    if pipeline in {"fabricator", "test"}:
         raise ValueError("Submitting test pipeline to Argo will result in overwriting source data")
     
     if from_nodes:
         if not click.confirm("Using 'from-nodes' is highly experimental and may break due to MLFlow issues with tracking the right run. Are you sure you want to continue?", default=False):
             raise click.Abort()
-    
+
+    if release and release_exists(release):
+        raise ValueError("The specified release already exists. You do not want to overwrite it.")
+
     # As a temporary measure, we pass both pipeline for execution and list of pipelines. In the future, we will merge the two.
     pipeline_obj = kedro_pipelines[pipeline]
     if from_nodes:
@@ -72,12 +75,12 @@ def submit(username: str, namespace: str, run_name: str, release_version: str, p
     pipeline_obj.name = pipeline
 
 
-    summarize_submission(run_name, namespace, pipeline, is_test, release_version)
+    summarize_submission(run_name, namespace, pipeline, is_test, release_version=release)
     _submit(
         username=username,
         namespace=namespace,
         run_name=run_name,
-        release_version=release_version,
+        release_version=release,
         pipeline_obj=pipeline_obj,
         verbose=verbose,
         dry_run=dry_run,
@@ -90,7 +93,7 @@ def _submit(
         username: str, 
         namespace: str, 
         run_name: str, 
-        release_version: str,
+        release_version: Optional[str],
         pipeline_obj: Pipeline,
         verbose: bool, 
         dry_run: bool, 
@@ -177,7 +180,7 @@ def _submit(
         sys.exit(1)
 
 
-def summarize_submission(run_name: str, namespace: str, pipeline: str, is_test: bool, release_version: str):
+def summarize_submission(run_name: str, namespace: str, pipeline: str, is_test: bool, release_version: Optional[str]):
     console.print(Panel.fit(
         f"[bold green]About to submit workflow:[/bold green]\n"
         f"Run Name: {run_name}\n"
@@ -201,6 +204,7 @@ def run_subprocess(
     capture_output: bool = True,
     shell: bool = True,
     stream_output: bool = True,
+    cwd: Optional[str] = None,
 ) -> subprocess.CompletedProcess:
     """Run a subprocess command and handle errors.
 
@@ -209,6 +213,7 @@ def run_subprocess(
     :param capture_output: If True, capture stdout and stderr
     :param shell: If True, execute the command through the shell
     :param stream_output: If True, stream output to stdout and stderr
+    :param cwd: If provided, change the working directory for the execution of this command
     :return: CompletedProcess instance
     """
     if stream_output:
@@ -220,6 +225,7 @@ def run_subprocess(
             text=True,
             bufsize=1,
             universal_newlines=True,
+            cwd=cwd,
         )
 
         stdout, stderr = [], []
@@ -245,7 +251,7 @@ def run_subprocess(
     else:
         try:
             return subprocess.run(
-                cmd, check=check, capture_output=capture_output, text=True, shell=shell
+                cmd, check=check, capture_output=capture_output, text=True, shell=shell, cwd=cwd
             )
         except subprocess.CalledProcessError as e:
             console.print(f"Error executing command: {cmd}")
@@ -325,7 +331,7 @@ def build_push_docker(username: str, verbose: bool):
     run_subprocess(f"make docker_push TAG={username}", stream_output=verbose)
 
 
-def build_argo_template(run_name: str, release_version: str, username: str, namespace: str, pipeline_obj: Pipeline, is_test: bool, default_execution_resources: Optional[ArgoResourceConfig] = None) -> str:
+def build_argo_template(run_name: str, release_version: Optional[str], username: str, namespace: str, pipeline_obj: Pipeline, is_test: bool, default_execution_resources: Optional[ArgoResourceConfig] = None) -> str:
     """Build Argo workflow template."""
     image_name = "us-central1-docker.pkg.dev/mtrx-hub-dev-3of/matrix-images/matrix"
 
@@ -431,3 +437,10 @@ def get_run_name(run_name: Optional[str]) -> str:
     unsanitized_name = f"{run_name}-{random_sfx}".rstrip("-")
     sanitized_name = re.sub(r"[^a-zA-Z0-9-]", "-", unsanitized_name)
     return sanitized_name
+
+def release_exists(name: str) -> bool:
+    assert '.' in name, f"{name} doesn't look like a version number"
+    remote_tags = run_subprocess(cmd="git ls-remote --tags --quiet", stream_output=False,
+                                 cwd=Path(__file__).parent.absolute() # git cmd won't work well when outside of a git repo
+                                 ).stdout
+    return name in remote_tags

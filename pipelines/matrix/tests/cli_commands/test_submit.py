@@ -1,7 +1,8 @@
+import os
 import subprocess
 import tempfile
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, patch, _patch
 
 import click
 import pytest
@@ -23,6 +24,7 @@ from matrix.cli_commands.submit import (
     submit,
     submit_workflow,
 )
+from matrix.cli_commands import submit as mot_submit
 from matrix.kedro4argo_node import ArgoResourceConfig
 
 
@@ -311,3 +313,19 @@ def test_workflow_submission(
     )
 
     mock_run_subprocess.assert_called_with(submit_cmd, capture_output=True, stream_output=True)
+
+
+def test_release_exists(mock_run_subprocess: _patch):
+    mock_run_subprocess.return_value.stdout = "8d5eb6af9af52eb31134ac1ec346c4e7a695c228        refs/tags/v0.2"
+    assert mot_submit.release_exists("v1.0.0") is False
+    assert mot_submit.release_exists("v0.2") is True
+
+
+def test_release_exists_bad_input():
+    with pytest.raises(AssertionError):
+        mot_submit.release_exists("version")
+
+
+def test_release_exists_from_non_git_folder():
+    os.chdir(tempfile.gettempdir())
+    assert mot_submit.release_exists("v1.nonexisting") is False

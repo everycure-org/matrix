@@ -4,6 +4,7 @@ gcsfs==2024.3.1
 hdfs==2.7.3
 ipython>=8.10
 jupyterlab>=3.0
+Jinja2>=2.9
 kedro-datasets>=3.0
 google-cloud-bigquery
 kedro-telemetry>=0.3.1
