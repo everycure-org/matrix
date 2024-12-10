@@ -3,7 +3,6 @@ locals {
 
   matrix_viewers_group = [local.matrix_all_group, "group:matrix-viewers@everycure.org"]
   tech_team_group      = ["group:techteam@everycure.org", "group:ext.tech.dataminded@everycure.org"]
-  everycure_group      = ["group:techteam@everycure.org"]
 }
 
 module "project_iam_bindings" {
@@ -16,8 +15,8 @@ module "project_iam_bindings" {
   bindings = {
     "roles/bigquery.studioAdmin"           = local.tech_team_group
     "roles/notebooks.admin"                = local.tech_team_group
-    "roles/ml.admin"                       = local.everycure_group
-    "roles/aiplatform.admin"               = local.everycure_group
+    "roles/ml.admin"                       = local.tech_team_group
+    "roles/aiplatform.admin"               = local.tech_team_group
     "roles/ml.developer"                   = local.tech_team_group
     "roles/artifactregistry.writer"        = local.tech_team_group
     "roles/storage.objectCreator"          = local.tech_team_group
