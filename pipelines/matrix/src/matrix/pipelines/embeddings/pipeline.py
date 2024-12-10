@@ -113,7 +113,7 @@ def create_pipeline(**kwargs) -> Pipeline:
             ),
             node(
                 func= nodes.obtain_node2vec_pecanpy_embeddings,
-                inputs ={"params:embeddings.topological.pecanpy_node2vec.num_walks", "params:embeddings.topological.pecanpy_node2vec.walk_length", "params:embeddings.topological.pecanpy_node2vec.feature_dim", "embeddings.topological.pecanpy_node2vec.p", "embeddings.topological.pecanpy_node2vec.q"},
+                inputs =["params:embeddings.topological.pecanpy_node2vec.num_walks", "params:embeddings.topological.pecanpy_node2vec.walk_length", "params:embeddings.topological.pecanpy_node2vec.feature_dim", "embeddings.topological.pecanpy_node2vec.p", "embeddings.topological.pecanpy_node2vec.q"],
                 outputs = "embeddings.model_output.pecanpy_node2vec",
                 name = "obtain_node2vec_pecanpy_embeddings"
             ),
