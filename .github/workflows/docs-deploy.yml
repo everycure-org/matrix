@@ -65,31 +65,51 @@ jobs:
     permissions:
       contents: 'read'
       id-token: 'write'
+      pull-requests: 'write'
 
     steps:
       - name: 'Checkout'
         uses: actions/checkout@main
+      
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11' 
-      # build Docs
+
       - name: Build Docs
         env:
           MKDOCS_GIT_COMMITTERS_APIKEY: ${{ secrets.GITHUB_TOKEN }}
         run: |
           pip install uv
-          make build #builds the static files in site/
+          make build
 
       - uses: 'google-github-actions/auth@v2'
-        if: github.ref == 'refs/heads/main'
         with:
           project_id: ${{env.project_id}}
           workload_identity_provider: ${{env.workload_identity_provider}}
           service_account: ${{env.service_account}}
       
-      # https://github.com/google-github-actions/deploy-appengine
-      - id: 'deploy'
+      # Deploy for PRs - no traffic routing
+      - id: 'deploy-preview'
+        if: github.event_name == 'pull_request'
+        uses: 'google-github-actions/deploy-appengine@v2'
+        with:
+          working_directory: docs/
+          promote: false
+          version: pr-${{ github.event.pull_request.number }}
+
+      # Comment on PR with preview URL
+      - uses: mshick/add-pr-comment@v2
+        if: github.event_name == 'pull_request'
+        with:
+          message: |
+            📚 Documentation preview deployment is ready!
+            
+            Preview URL: ${{ steps.deploy-preview.outputs.version_url }}
+      
+      # Deploy for main branch - with traffic routing
+      - id: 'deploy-main'
         if: github.ref == 'refs/heads/main'
         uses: 'google-github-actions/deploy-appengine@v2'
         with:
-          working_directory: docs/ #ignores above setting
+          working_directory: docs/
+          promote: true
