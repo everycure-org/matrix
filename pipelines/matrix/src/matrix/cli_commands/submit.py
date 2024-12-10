@@ -149,7 +149,7 @@ def _submit(
             return
 
         console.print("Building and pushing Docker image...")
-        build_push_docker(run_name, verbose=verbose)
+        build_push_docker(tag=run_name, verbose=verbose)
         console.print("[green]✓[/green] Docker image built and pushed")
 
         console.print("Ensuring namespace...")
@@ -323,9 +323,9 @@ def check_dependencies(verbose: bool):
         )
 
 
-def build_push_docker(username: str, verbose: bool):
+def build_push_docker(tag: str, verbose: bool):
     """Build and push Docker image."""
-    run_subprocess(f"make docker_push TAG={username}", stream_output=verbose)
+    run_subprocess(f"make docker_push TAG={tag}", stream_output=verbose)
 
 
 def build_argo_template(run_name: str, release_version: Optional[str], username: str, namespace: str, pipeline_obj: Pipeline, is_test: bool, default_execution_resources: Optional[ArgoResourceConfig] = None) -> str:
