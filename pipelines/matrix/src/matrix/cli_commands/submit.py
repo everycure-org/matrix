@@ -430,8 +430,8 @@ def get_run_name(run_name: Optional[str]) -> str:
         ).stdout.strip()
 
     # Add a random suffix to the run_name
-    random_sfx = str.lower(secrets.token_hex(4))
-    unsanitized_name = f"{run_name}-{random_sfx}".rstrip("-")
+    random_sfx = secrets.token_hex(4).lower()
+    unsanitized_name = f"{run_name}-{random_sfx}"
     sanitized_name = re.sub(r"[^a-zA-Z0-9-]", "-", unsanitized_name)
     return sanitized_name
 
