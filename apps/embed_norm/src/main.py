@@ -16,77 +16,18 @@ import joblib
 from dotenv import load_dotenv
 import openai
 from openai import AsyncOpenAI
-from tqdm.auto import tqdm
-from sklearn.metrics.pairwise import cosine_similarity
 import torch
 from transformers import AutoTokenizer, AutoModel
 from pyspark.sql import DataFrame as SparkDataFrame
-from kedro.framework.project import configure_project
 from kedro.framework.session import KedroSession
+from kedro.framework.project import configure_project
 import json
 import ast
-from itertools import product
 import tiktoken
 import gc
 
-missing_data_rows_dict = {}
-
-
-def setup_environment(utils_path: Path, root_subdir: str = "pipelines/matrix"):
-    if str(utils_path) not in sys.path:
-        sys.path.append(str(utils_path))
-        logging.info(f"Added '{utils_path}' to sys.path.")
-    try:
-        root_path = Path(subprocess.check_output(["git", "rev-parse", "--show-toplevel"]).decode().strip())
-        target_path = root_path / root_subdir
-        os.chdir(target_path)
-        load_dotenv(dotenv_path=target_path / ".env")
-        logging.info(f"Changed working directory to '{target_path}'.")
-    except subprocess.CalledProcessError:
-        logging.error("Failed to get the root path using git. Ensure you're inside a git repository.")
-        sys.exit(1)
-    except Exception as e:
-        logging.error(f"Unexpected error during environment setup: {e}")
-        sys.exit(1)
-
-
-def configure_logging():
-    logging.basicConfig(
-        level=logging.DEBUG,
-        format="%(asctime)s %(levelname)s %(message)s",
-        handlers=[logging.StreamHandler(sys.stdout)],
-    )
-    logging.info("Logging is configured.")
-
-
-class CacheManager:
-    def __init__(self, cache_dir: Path):
-        self.cache_dir = cache_dir
-        self.cache_dir.mkdir(parents=True, exist_ok=True)
-
-    def cache_data(self, data: Any, file_path: Path):
-        file_path.parent.mkdir(parents=True, exist_ok=True)
-        joblib.dump(data, file_path)
-        logging.info(f"Data cached at {file_path}")
-
-    def load_cached_data(self, file_path: Path):
-        if file_path.exists():
-            data = joblib.load(file_path)
-            logging.info(f"Loaded cached data from {file_path}")
-            return data
-        else:
-            logging.info(f"No cache found at {file_path}")
-            return None
-
-    def get_or_compute(self, cache_path: Union[str, Path], compute_func: Callable, *args, **kwargs):
-        cache_path = Path(cache_path)
-        result = self.load_cached_data(cache_path)
-        if result is not None:
-            return result
-        else:
-            result = compute_func(*args, **kwargs)
-            self.cache_data(result, cache_path)
-            return result
+from tqdm import tqdm
+from tqdm.asyncio import tqdm_asyncio
 
 
 @dataclass
@@ -104,7 +45,7 @@ class Config:
     positive_n: int
     negative_n: int
     cache_suffix: str
-    embedding_models_info: dict = field(
+    embedding_models_info: Dict[str, Dict[str, Any]] = field(
         default_factory=lambda: {
             "OpenAI": {
                 "type": "openai",
@@ -131,7 +72,6 @@ class Config:
             },
         }
     )
-    use_llm_enhancement: bool = False
     llm_prompt_template: str = (
         "What biological entity does this information represent? "
         "Please be descriptive in such a way that an embedding of the text "
@@ -139,257 +79,139 @@ class Config:
     )
 
 
+class Environment:
+    @staticmethod
+    def setup_environment(utils_path: Path, root_subdir: str = "pipelines/matrix"):
+        if str(utils_path) not in sys.path:
+            sys.path.append(str(utils_path))
+        try:
+            root_path = Path(subprocess.check_output(["git", "rev-parse", "--show-toplevel"]).decode().strip())
+            target_path = root_path / root_subdir
+            os.chdir(target_path)
+            load_dotenv(dotenv_path=target_path / ".env")
+        except subprocess.CalledProcessError:
+            sys.exit(1)
+        except Exception:
+            sys.exit(1)
+
+    @staticmethod
+    def configure_logging():
+        logging.basicConfig(
+            level=logging.INFO,
+            format="%(asctime)s %(levelname)s %(message)s",
+            handlers=[logging.StreamHandler(sys.stdout)],
+        )
+        logging.info("Logging is configured.")
+
+
+class CacheManager:
+    def __init__(self, cache_dir: Path):
+        self.cache_dir = cache_dir
+        self.cache_dir.mkdir(parents=True, exist_ok=True)
+
+    def cache_data(self, data: Any, file_path: Path):
+        file_path.parent.mkdir(parents=True, exist_ok=True)
+        joblib.dump(data, file_path)
+        logging.info(f"Data cached at {file_path}")
+
+    def load_cached_data(self, file_path: Path):
+        if file_path.exists():
+            try:
+                data = joblib.load(file_path)
+                logging.info(f"Loaded cached data from {file_path}")
+                return data
+            except Exception as e:
+                logging.error(f"Failed to load cache from {file_path}: {e}")
+                return None
+        else:
+            logging.info(f"No cache found at {file_path}")
+            return None
+
+    def get_or_compute(self, cache_path: Union[str, Path], compute_func: Callable, *args, **kwargs):
+        cache_path = Path(cache_path)
+        result = self.load_cached_data(cache_path)
+        if result is not None:
+            return result
+        else:
+            result = compute_func(*args, **kwargs)
+            self.cache_data(result, cache_path)
+            return result
+
+
 class DataLoader:
-    def __init__(self, cache_manager: CacheManager, config: Config):
+    def __init__(self, cache_manager: CacheManager, config: Config, normalizer: "Normalizer"):
         self.cache_manager = cache_manager
         self.config = config
+        self.normalizer = normalizer
 
     def load_datasets(
-        self, nodes_df
+        self, nodes_df: pd.DataFrame
     ) -> Tuple[List[str], Dict[str, pd.DataFrame], Dict[str, pd.DataFrame], pd.DataFrame]:
-        if isinstance(nodes_df, SparkDataFrame):
-            nodes_df = nodes_df.toPandas()
-        categories_cache_path = self.cache_manager.cache_dir / "datasets" / f"{self.config.dataset_name}_categories.pkl"
-        categories = self.cache_manager.get_or_compute(categories_cache_path, self._compute_categories, nodes_df)
+        categories = self.get_categories(nodes_df)
         positive_datasets = {}
         negative_datasets = {}
-        for category in categories:
-            llm_suffix = "_llm" if self.config.use_llm_enhancement else ""
-            positive_cache_path = (
-                self.cache_manager.cache_dir
-                / "datasets"
-                / f"{self.config.dataset_name}_sampled_df_positives_{category}_seed_{self.config.pos_seed}{self.config.cache_suffix}{llm_suffix}.pkl"
-            )
-            negative_cache_path = (
-                self.cache_manager.cache_dir
-                / "datasets"
-                / f"{self.config.dataset_name}_sampled_df_negatives_{category}_seed_{self.config.neg_seed}{self.config.cache_suffix}{llm_suffix}.pkl"
-            )
-
-            def compute_positive_dataset():
-                df = self._sample_positive_dataset(nodes_df, category)
-                normalizer = Normalizer(self.cache_manager.cache_dir)
-                df = normalizer.augment_positive_df(df)
-                if self.config.use_llm_enhancement:
-                    llm_enhancer = LLMEnhancer(self.config, self.cache_manager)
-                    df = llm_enhancer.augment_dataframe(df)
-                return df
-
-            def compute_negative_dataset():
-                df = self._sample_negative_dataset(nodes_df, category)
-                if self.config.use_llm_enhancement:
-                    llm_enhancer = LLMEnhancer(self.config, self.cache_manager)
-                    df = llm_enhancer.augment_dataframe(df)
-                return df
-
-            positive_df = self.cache_manager.get_or_compute(positive_cache_path, compute_positive_dataset)
-            negative_df = self.cache_manager.get_or_compute(negative_cache_path, compute_negative_dataset)
+        for category in tqdm(categories, desc="Processing categories"):
+            positive_df = self.sample_positive_dataset(nodes_df, category)
+            positive_df = self.normalizer.augment_positive_df(positive_df)
+            negative_df = self.sample_negative_dataset(nodes_df, category)
             positive_datasets[category] = positive_df
             negative_datasets[category] = negative_df
         return categories, positive_datasets, negative_datasets, nodes_df
 
-    def _compute_categories(self, nodes_df: pd.DataFrame) -> List[str]:
-        if isinstance(nodes_df, SparkDataFrame):
-            nodes_df = nodes_df.toPandas()
+    def get_categories(self, nodes_df: pd.DataFrame) -> List[str]:
         categories = nodes_df["category"].unique().tolist()
         categories.append("All Categories")
         return categories
 
-    def _sample_positive_dataset(self, nodes_df: pd.DataFrame, category: str) -> pd.DataFrame:
-        if isinstance(nodes_df, SparkDataFrame):
-            nodes_df = nodes_df.toPandas()
+    def sample_positive_dataset(self, nodes_df: pd.DataFrame, category: str) -> pd.DataFrame:
         if category == "All Categories":
             category_df = nodes_df.copy()
         else:
             category_df = nodes_df[nodes_df["category"] == category]
-        positive_df = category_df.sample(
-            n=min(self.config.positive_n, len(category_df)), random_state=self.config.pos_seed
-        )
-        return positive_df
+        return category_df.sample(
+            n=min(self.config.positive_n, len(category_df)),
+            random_state=self.config.pos_seed,
+        ).reset_index(drop=True)
 
-    def _sample_negative_dataset(self, nodes_df: pd.DataFrame, category: str) -> pd.DataFrame:
-        if isinstance(nodes_df, SparkDataFrame):
-            nodes_df = nodes_df.toPandas()
+    def sample_negative_dataset(self, nodes_df: pd.DataFrame, category: str) -> pd.DataFrame:
         if category == "All Categories":
             negative_df = nodes_df.copy()
         else:
-            negative_df = nodes_df[nodes_df["category"] == category]
-        negative_df = negative_df.sample(
-            n=min(self.config.negative_n, len(negative_df)), random_state=self.config.neg_seed
-        )
-        return negative_df
-
-
-def parse_list_string(s):
-    if isinstance(s, list):
-        return s
-    elif isinstance(s, (np.ndarray, pd.Series)):
-        return s.tolist()
-    elif isinstance(s, str):
-        s = s.strip()
-        if not s or s == "[]":
-            return []
-        if s.startswith("[") and s.endswith("]"):
-            s_json = s.replace("'", '"')
-            try:
-                return json.loads(s_json)
-            except json.JSONDecodeError:
-                try:
-                    return ast.literal_eval(s)
-                except (ValueError, SyntaxError):
-                    pass
-        return [s]
-    else:
-        logging.warning(f"Unexpected type in parse_list_string: {type(s)}")
-        return []
-
-
-def is_missing_value(value):
-    if isinstance(value, (list, np.ndarray, pd.Series)):
-        return pd.isnull(value).all() or all(not str(v).strip() for v in value)
-    else:
-        return pd.isnull(value) or not str(value).strip()
-
-
-def get_text_representation(row, text_fields=None, combine_fields=False):
-    if text_fields is None:
-        text_fields = ["name", "category", "all_categories"]
-    if "llm_enhanced_text" in row and not is_missing_value(row["llm_enhanced_text"]):
-        text_fields = ["llm_enhanced_text"]
-    global missing_data_rows_dict
-    fields = []
-    for tfield in text_fields:
-        value = row.get(tfield, "")
-        try:
-            if is_missing_value(value):
-                value = ""
-        except Exception as e:
-            logging.error(f"Error with value '{value}' in field '{tfield}': {e}")
-            raise
-        fields.append(value)
-    missing_fields = [field for field, value in zip(text_fields, fields) if is_missing_value(value)]
-    for missing_field in missing_fields:
-        if missing_field not in missing_data_rows_dict:
-            missing_data_rows_dict[missing_field] = []
-        missing_data_rows_dict[missing_field].append(row)
-    if combine_fields:
-        parsed_lists = [parse_list_string(field_value) for field_value in fields]
-        combinations = list(product(*parsed_lists))
-        text_representations = [" ".join(combination).strip() for combination in combinations]
-        return text_representations
-    else:
-        text_values = []
-        for field_value in fields:
-            parsed_list = parse_list_string(field_value)
-            text_values.extend(parsed_list)
-        text_representation = " ".join(text_values).strip()
-        if not text_representation:
-            logging.warning(f"Empty text representation for row with index {row.name}")
-        return text_representation
-
-
-def batch_texts_by_token_limit(texts, max_tokens_per_request=8191, model_name="text-embedding-3-small"):
-    encoding = tiktoken.get_encoding("cl100k_base")
-    batches = []
-    current_batch = []
-    current_tokens = 0
-    for text in texts:
-        tokens = encoding.encode(text)
-        num_tokens = len(tokens)
-        if num_tokens > 8191:
-            logging.warning("Text exceeds max tokens per text (8191), truncating.")
-            tokens = tokens[:8191]
-            text = encoding.decode(tokens)
-            num_tokens = 8191
-        if current_tokens + num_tokens > max_tokens_per_request:
-            if current_batch:
-                batches.append(current_batch)
-                current_batch = []
-                current_tokens = 0
-        current_batch.append(text)
-        current_tokens += num_tokens
-    if current_batch:
-        batches.append(current_batch)
-    return batches
-
-
-def create_equivalent_items_dfs(positive_datasets, normalized_data):
-    equivalent_dfs = {}
-    for category, df in tqdm(
-        positive_datasets.items(),
-        total=len(positive_datasets),
-        desc="Creating equivalent items DataFrames",
-        leave=False,
-    ):
-        if df.empty:
-            logging.warning(f"The DataFrame for category '{category}' is empty. Skipping.")
-            equivalent_dfs[category] = df
-            continue
-        if "id" not in df.columns:
-            logging.error(
-                f"The 'id' column is missing in DataFrame for category '{category}'. Columns: {df.columns.tolist()}"
-            )
-            equivalent_dfs[category] = df
-            continue
-        df["ids_to_normalize"] = df.apply(
-            lambda row: list(
-                set([str(row["id"])] + [str(x) for x in parse_list_string(row.get("equivalent_identifiers", []))])
-            ),
-            axis=1,
-        )
-        df_exploded = df.explode("ids_to_normalize").reset_index(drop=True)
-        df_exploded.rename(columns={"ids_to_normalize": "id_to_normalize"}, inplace=True)
-
-        equivalents_list = []
-        for idx, row in df_exploded.iterrows():
-            id_value = row["id_to_normalize"]
-            if id_value in normalized_data:
-                equivalents = normalized_data[id_value]
-                for eq in equivalents:
-                    new_row = row.copy()
-                    new_row["id"] = eq["id"]
-                    new_row["name"] = eq["name"]
-                    new_row["all_categories"] = eq.get("types", [])
-                    equivalents_list.append(new_row)
-            else:
-                equivalents_list.append(row)
-
-        equivalent_df = pd.DataFrame(equivalents_list)
-
-        for col in equivalent_df.columns:
-            if equivalent_df[col].apply(lambda x: isinstance(x, (list, dict, set, np.ndarray))).any():
-                equivalent_df[col] = equivalent_df[col].apply(safe_json_dumps)
-
-        equivalent_df = equivalent_df.drop_duplicates()
-        equivalent_dfs[category] = equivalent_df
-    return equivalent_dfs
-
-
-def safe_json_dumps(x):
-    if isinstance(x, str):
-        return x
-    elif isinstance(x, np.ndarray):
-        x = x.tolist()
-    elif isinstance(x, (list, dict, set)):
-        pass
-    else:
-        x = str(x)
-    try:
-        return json.dumps(x)
-    except TypeError:
-        return str(x)
+            negative_df = nodes_df[nodes_df["category"] != category]
+        return negative_df.sample(
+            n=min(self.config.negative_n, len(negative_df)),
+            random_state=self.config.neg_seed,
+        ).reset_index(drop=True)
 
 
 class Normalizer:
     def __init__(self, cache_dir: Path):
         self.cache_dir = cache_dir
+        self.cache_file = self.cache_dir / "normalized_data.pkl"
         self.MAX_RETRIES = 3
         self.BATCH_SIZE = 100
         self.NORM_URL = "https://nodenorm.transltr.io/1.5/get_normalized_nodes"
-        self.normalized_data = {}
+        self.normalized_data = self.load_normalized_cache()
         self.failed_ids = set()
 
-    async def normalize_node(self, session, url, payload):
+    def load_normalized_cache(self) -> Dict[str, Any]:
+        if self.cache_file.exists():
+            try:
+                return joblib.load(self.cache_file)
+            except Exception:
+                return {}
+        else:
+            return {}
+
+    def save_normalized_cache(self):
+        try:
+            joblib.dump(self.normalized_data, self.cache_file)
+        except Exception:
+            pass
+
+    async def normalize_node(
+        self, session: aiohttp.ClientSession, url: str, payload: Dict[str, Any]
+    ) -> Optional[Dict[str, Any]]:
         retries = 0
         while retries < self.MAX_RETRIES:
             try:
@@ -406,7 +228,9 @@ class Normalizer:
 
     async def batch_normalize_curies_async(self, category_curies: Dict[str, List[str]]):
         all_curies = [curie for curies in category_curies.values() for curie in curies]
-        total_batches = (len(all_curies) + self.BATCH_SIZE - 1) // self.BATCH_SIZE
+        curies_to_normalize = [curie for curie in all_curies if curie not in self.normalized_data]
+        if not curies_to_normalize:
+            return
         semaphore = asyncio.Semaphore(10)
 
         async def sem_normalize(session, url, payload):
@@ -416,17 +240,17 @@ class Normalizer:
         conn = aiohttp.TCPConnector(limit=10)
         async with aiohttp.ClientSession(connector=conn) as session:
             tasks = []
-            with tqdm(total=total_batches, desc="Normalizing nodes", leave=False) as pbar:
-                for i in range(0, len(all_curies), self.BATCH_SIZE):
-                    batch = all_curies[i : i + self.BATCH_SIZE]
-                    payload = {"curies": batch, "conflate": False, "expand_all": True}
-                    task = asyncio.ensure_future(sem_normalize(session, self.NORM_URL, payload))
-                    tasks.append(task)
-                    pbar.update(1)
-            responses = await asyncio.gather(*tasks, return_exceptions=True)
-        for response in tqdm(responses, desc="Processing normalization responses", leave=False):
+            for i in range(0, len(curies_to_normalize), self.BATCH_SIZE):
+                batch = curies_to_normalize[i : i + self.BATCH_SIZE]
+                payload = {"curies": batch, "conflate": False, "expand_all": True}
+                task = asyncio.ensure_future(sem_normalize(session, self.NORM_URL, payload))
+                tasks.append(task)
+            responses = []
+            for future in tqdm_asyncio.as_completed(tasks, desc="Normalizing nodes", total=len(tasks)):
+                response = await future
+                responses.append(response)
+        for response in responses:
             if isinstance(response, Exception):
-                logging.error(f"Normalization request resulted in an exception: {response}")
                 continue
             if response:
                 for key, value in response.items():
@@ -440,7 +264,11 @@ class Normalizer:
                         else:
                             types = []
                         normalized_equivalents = [
-                            {"id": eq.get("identifier"), "name": eq.get("label", ""), "types": types}
+                            {
+                                "id": eq.get("identifier"),
+                                "name": eq.get("label", ""),
+                                "types": types,
+                            }
                             for eq in equivalents
                             if eq.get("identifier")
                         ]
@@ -450,16 +278,89 @@ class Normalizer:
                             self.failed_ids.add(key)
                     else:
                         self.failed_ids.add(key)
+        self.save_normalized_cache()
 
     def augment_positive_df(self, positive_df: pd.DataFrame) -> pd.DataFrame:
         if positive_df.empty:
-            logging.warning("Positive DataFrame is empty. Skipping augmentation.")
             return positive_df
         category_curies = {"positive": positive_df["id"].tolist()}
         asyncio.run(self.batch_normalize_curies_async(category_curies))
-        equivalent_dfs = create_equivalent_items_dfs({"positive": positive_df}, self.normalized_data)
+        equivalent_dfs = self.create_equivalent_items_dfs({"positive": positive_df}, self.normalized_data)
         augmented_positive_df = equivalent_dfs["positive"]
         return augmented_positive_df
+
+    @staticmethod
+    def create_equivalent_items_dfs(
+        positive_datasets: Dict[str, pd.DataFrame],
+        normalized_data: Dict[str, List[Dict[str, Any]]],
+    ) -> Dict[str, pd.DataFrame]:
+        equivalent_dfs = {}
+        for category, df in positive_datasets.items():
+            if df.empty:
+                equivalent_dfs[category] = df
+                continue
+            if "id" not in df.columns:
+                equivalent_dfs[category] = df
+                continue
+            df["ids_to_normalize"] = df.apply(
+                lambda row: list(
+                    set(
+                        [str(row["id"])]
+                        + [str(x) for x in Normalizer.parse_list_string(row.get("equivalent_identifiers", []))]
+                    )
+                ),
+                axis=1,
+            )
+            df_exploded = df.explode("ids_to_normalize").reset_index(drop=True)
+            df_exploded.rename(columns={"ids_to_normalize": "id_to_normalize"}, inplace=True)
+
+            equivalents_list = []
+            exploded_records = df_exploded.to_dict(orient="records")
+            for row in exploded_records:
+                id_value = row["id_to_normalize"]
+                if id_value in normalized_data:
+                    equivalents = normalized_data[id_value]
+                    for eq in equivalents:
+                        new_row = row.copy()
+                        new_row["id"] = eq["id"]
+                        new_row["name"] = eq["name"]
+                        new_row["all_categories"] = eq.get("types", [])
+                        equivalents_list.append(new_row)
+                else:
+                    equivalents_list.append(row)
+
+            equivalent_df = pd.DataFrame(equivalents_list)
+
+            for col in equivalent_df.columns:
+                if equivalent_df[col].apply(lambda x: isinstance(x, (list, dict, set, np.ndarray))).any():
+                    equivalent_df[col] = equivalent_df[col].apply(safe_json_dumps)
+
+            equivalent_df = equivalent_df.drop_duplicates()
+            equivalent_dfs[category] = equivalent_df
+        return equivalent_dfs
+
+    @staticmethod
+    def parse_list_string(s: Any) -> List[str]:
+        if isinstance(s, list):
+            return s
+        elif isinstance(s, (np.ndarray, pd.Series)):
+            return s.tolist()
+        elif isinstance(s, str):
+            s = s.strip()
+            if not s or s == "[]":
+                return []
+            if s.startswith("[") and s.endswith("]"):
+                s_json = s.replace("'", '"')
+                try:
+                    return json.loads(s_json)
+                except json.JSONDecodeError:
+                    try:
+                        return ast.literal_eval(s)
+                    except (ValueError, SyntaxError):
+                        pass
+            return [s]
+        else:
+            return []
 
 
 class EmbeddingGenerator:
@@ -471,11 +372,11 @@ class EmbeddingGenerator:
         self.BATCH_SIZE = 100
         self.MAX_TOKENS_PER_TEXT = 8191
         self.MAX_TOKENS_PER_REQUEST = 8191
-        self.TOKENIZER_NAME = "text-embedding-3-small"
+        self.TOKENIZER_NAME = "text-embedding-ada-002"
         self.TOKENIZER_ENCODING = "cl100k_base"
         self.client = AsyncOpenAI()
 
-    def load_model_and_tokenizer(self, model_info):
+    def load_model_and_tokenizer(self, model_info: Dict[str, Any]) -> Tuple[AutoModel, AutoTokenizer]:
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         tokenizer = AutoTokenizer.from_pretrained(model_info["tokenizer_name"])
         model = AutoModel.from_pretrained(model_info["model_name"])
@@ -483,24 +384,36 @@ class EmbeddingGenerator:
         model.eval()
         return model, tokenizer
 
-    def unload_model_and_tokenizer(self, model, tokenizer):
+    def unload_model_and_tokenizer(self, model: AutoModel, tokenizer: AutoTokenizer):
         del model
         del tokenizer
         gc.collect()
         if torch.cuda.is_available():
             torch.cuda.empty_cache()
 
-    def compute_embeddings_hf(self, model, tokenizer, texts, batch_size=16, max_length=512):
+    def compute_embeddings_hf(
+        self,
+        model: AutoModel,
+        tokenizer: AutoTokenizer,
+        texts: List[str],
+        batch_size: int = 16,
+        max_length: int = 512,
+    ) -> np.ndarray:
         if not texts:
-            logging.warning("No texts provided for embedding computation.")
             return np.array([])
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         embeddings = []
         dataset = list(zip(texts))
         dataloader = torch.utils.data.DataLoader(dataset, batch_size=batch_size)
-        for batch in tqdm(dataloader, desc="Computing embeddings", leave=False):
+        for batch in tqdm(dataloader, desc="Computing embeddings"):
             batch_texts = batch[0]
-            inputs = tokenizer(batch_texts, return_tensors="pt", truncation=True, padding=True, max_length=max_length)
+            inputs = tokenizer(
+                batch_texts,
+                return_tensors="pt",
+                truncation=True,
+                padding=True,
+                max_length=max_length,
+            )
             inputs = {k: v.to(device) for k, v in inputs.items()}
             with torch.no_grad():
                 outputs = model(**inputs)
@@ -509,53 +422,75 @@ class EmbeddingGenerator:
         if embeddings:
             embeddings = np.vstack(embeddings)
         else:
-            logging.warning("No embeddings were computed.")
             embeddings = np.array([])
         return embeddings
 
     async def get_openai_embedding_async(self, texts: List[str]) -> Optional[np.ndarray]:
+        if not texts or all(not text.strip() for text in texts):
+            logging.warning("Empty or whitespace-only texts provided to OpenAI embeddings.")
+            return np.array([])
         retries = 0
         while retries < self.MAX_RETRIES:
             try:
                 response = await self.client.embeddings.create(input=texts, model=self.TOKENIZER_NAME)
                 embeddings = [item["embedding"] for item in response.model_dump()["data"]]
                 return np.array(embeddings)
-            except openai.RateLimitError as e:
+            except openai.RateLimitError:
                 retries += 1
-                logging.warning(f"Rate limit error: {e}. Retrying {retries}/{self.MAX_RETRIES} after delay.")
                 await asyncio.sleep(2**retries)
-            except openai.APIError as e:
-                logging.error(f"Invalid request: {e}. Skipping batch.")
+            except openai.APIError:
                 return None
-            except openai.APIConnectionError as e:
+            except openai.APIConnectionError:
                 retries += 1
-                logging.error(f"Server could not be reached: {e}. Retrying {retries}/{self.MAX_RETRIES}.")
                 await asyncio.sleep(2**retries)
-            except Exception as e:
+            except Exception:
                 retries += 1
-                logging.error(f"Unexpected error: {e}. Retrying {retries}/{self.MAX_RETRIES}.")
                 await asyncio.sleep(2**retries)
-        logging.error("Max retries exceeded for get_openai_embedding_async.")
         return None
 
     async def get_openai_embeddings_in_batches_async(self, texts: List[str]) -> np.ndarray:
         embeddings = []
-        batches = batch_texts_by_token_limit(texts, self.MAX_TOKENS_PER_REQUEST, self.TOKENIZER_NAME)
-        tasks = [self.get_openai_embedding_async(batch) for batch in batches]
-        results = await asyncio.gather(*tasks, return_exceptions=True)
-        for i, result in enumerate(results):
-            if isinstance(result, Exception):
-                logging.warning(f"Batch {i} resulted in an exception: {result}. Skipping.")
-                continue
-            if result is not None:
+        batches = self.batch_texts_by_token_limit(texts, self.MAX_TOKENS_PER_REQUEST, self.TOKENIZER_NAME)
+        for batch in tqdm(batches, desc="Getting embeddings from OpenAI"):
+            result = await self.get_openai_embedding_async(batch)
+            if result is not None and result.size > 0:
                 embeddings.append(result)
+            else:
+                logging.warning("No embeddings returned for a batch.")
         if embeddings:
             return np.vstack(embeddings)
-        logging.error("No embeddings were computed.")
         return np.array([])
 
-    def get_openai_embeddings_in_batches(self, texts):
+    def get_openai_embeddings_in_batches(self, texts: List[str]) -> np.ndarray:
         return asyncio.run(self.get_openai_embeddings_in_batches_async(texts))
+
+    @staticmethod
+    def batch_texts_by_token_limit(
+        texts: List[str],
+        max_tokens_per_request: int = 8191,
+        model_name: str = "text-embedding-ada-002",
+    ) -> List[List[str]]:
+        encoding = tiktoken.get_encoding("cl100k_base")
+        batches = []
+        current_batch = []
+        current_tokens = 0
+        for text in texts:
+            tokens = encoding.encode(text)
+            num_tokens = len(tokens)
+            if num_tokens > 8191:
+                tokens = tokens[:8191]
+                text = encoding.decode(tokens)
+                num_tokens = 8191
+            if current_tokens + num_tokens > max_tokens_per_request:
+                if current_batch:
+                    batches.append(current_batch)
+                    current_batch = []
+                    current_tokens = 0
+            current_batch.append(text)
+            current_tokens += num_tokens
+        if current_batch:
+            batches.append(current_batch)
+        return batches
 
     def process_model(
         self,
@@ -563,99 +498,99 @@ class EmbeddingGenerator:
         model_info: Dict[str, Any],
         datasets: Dict[str, pd.DataFrame],
         seed: int,
-        text_fields: List[str] = None,
-        label_generation_func=None,
+        text_fields: List[str],
         dataset_name: str = "default",
-        use_ontogpt: bool = False,
         cache_suffix: str = "",
-        use_combinations: bool = False,
-        combine_fields: bool = False,
         dataset_type: str = "negative",
     ) -> Tuple[str, Dict[str, np.ndarray]]:
         embeddings_dict = {}
-        labels_dict = {}
-        similarities_dict = {}
-        combinations_suffix = "_combinations" if use_combinations else ""
-        dataset_type_suffix = f"_{dataset_type}"
         if model_info["type"] == "hf":
             model, tokenizer = self.load_model_and_tokenizer(model_info)
-        for category_name, df in tqdm(
-            datasets.items(), desc=f"Processing model {model_name} ({dataset_type})", total=len(datasets), leave=False
-        ):
+        for category_name, df in datasets.items():
             if df.empty:
-                logging.warning(f"The DataFrame for category '{category_name}' is empty. Skipping.")
                 continue
+            dataset_type_suffix = f"_{dataset_type}"
             cache_file = (
                 self.cache_manager.cache_dir
                 / "embeddings"
-                / f"{dataset_name}{dataset_type_suffix}_embeddings_{category_name}_{model_name}{combinations_suffix}_seed_{seed}{cache_suffix}.pkl"
-            )
-            labels_file = (
-                self.cache_manager.cache_dir
-                / "embeddings"
-                / f"{dataset_name}{dataset_type_suffix}_labels_{category_name}_{model_name}{combinations_suffix}_seed_{seed}{cache_suffix}.pkl"
-            )
-            sim_file = (
-                self.cache_manager.cache_dir
-                / "embeddings"
-                / f"{dataset_name}{dataset_type_suffix}_cosine_similarities_{category_name}_{model_name}{combinations_suffix}_seed_{seed}{cache_suffix}.pkl"
+                / f"{dataset_name}{dataset_type_suffix}_embeddings_{category_name}_{model_name}_seed_{seed}{cache_suffix}.pkl"
             )
             ids_file = (
                 self.cache_manager.cache_dir
                 / "embeddings"
-                / f"{dataset_name}{dataset_type_suffix}_ids_{category_name}_{model_name}{combinations_suffix}_seed_{seed}{cache_suffix}.pkl"
+                / f"{dataset_name}{dataset_type_suffix}_ids_{category_name}_{model_name}_seed_{seed}{cache_suffix}.pkl"
             )
 
-            def compute_embeddings():
-                all_texts = df.apply(lambda row: get_text_representation(row, text_fields, False), axis=1).tolist()
-                if not all_texts:
-                    logging.warning(f"No texts to process for category '{category_name}'. Skipping.")
-                    return np.array([])
-                if model_info["type"] == "hf":
-                    embeddings = self.compute_embeddings_hf(model, tokenizer, all_texts)
-                elif model_info["type"] == "openai":
-                    embeddings = self.get_openai_embeddings_in_batches(all_texts)
-                else:
-                    embeddings = np.array([])
-                return embeddings
-
-            embeddings = self.cache_manager.get_or_compute(cache_file, compute_embeddings)
-            if embeddings.size == 0:
-                logging.warning(
-                    f"No embeddings computed for category '{category_name}'. Skipping similarity computation."
-                )
+            all_texts = [self.get_text_representation(row, text_fields) for _, row in df.iterrows()]
+            if not all_texts:
                 continue
-            embeddings_dict[category_name] = embeddings
-
-            def compute_labels():
-                if label_generation_func is None:
-                    labels = [
-                        f"Row {idx}: {text}"
-                        for idx, text in enumerate(
-                            df.apply(lambda row: get_text_representation(row, text_fields, False), axis=1).tolist()
+            embeddings = []
+            batch_size = 32
+            num_batches = (len(all_texts) + batch_size - 1) // batch_size
+            expected_dimension = None
+            for i in range(num_batches):
+                batch_texts = all_texts[i * batch_size : (i + 1) * batch_size]
+                batch_cache_file = cache_file.parent / f"{cache_file.stem}_batch_{i}{cache_file.suffix}"
+                batch_embeddings = self.cache_manager.load_cached_data(batch_cache_file)
+                if batch_embeddings is None:
+                    if model_info["type"] == "hf":
+                        batch_embeddings = self.compute_embeddings_hf(model, tokenizer, batch_texts)
+                    elif model_info["type"] == "openai":
+                        batch_embeddings = self.get_openai_embeddings_in_batches(batch_texts)
+                    else:
+                        batch_embeddings = np.array([])
+                    self.cache_manager.cache_data(batch_embeddings, batch_cache_file)
+                if batch_embeddings is not None and batch_embeddings.size > 0:
+                    if expected_dimension is None:
+                        expected_dimension = batch_embeddings.shape[1]
+                    elif batch_embeddings.shape[1] != expected_dimension:
+                        logging.error(
+                            f"Embedding dimension mismatch in batch {i} for model '{model_name}' and category '{category_name}'. Expected dimension: {expected_dimension}, but got: {batch_embeddings.shape[1]}"
                         )
-                    ]
+                        continue
+                    embeddings.append(batch_embeddings)
                 else:
-                    labels = df.apply(label_generation_func, axis=1).tolist()
-                return labels
-
-            labels = self.cache_manager.get_or_compute(labels_file, compute_labels)
-            labels_dict[category_name] = labels
+                    logging.warning(f"No embeddings generated for batch {i} in category '{category_name}'.")
+            if embeddings:
+                embeddings = np.vstack(embeddings)
+            else:
+                embeddings = np.array([])
+            embeddings_dict[category_name] = embeddings
 
             def compute_ids():
                 return df["id"].tolist()
 
             self.cache_manager.get_or_compute(ids_file, compute_ids)
 
-            def compute_similarities():
-                similarities = cosine_similarity(embeddings)
-                return similarities
-
-            similarities = self.cache_manager.get_or_compute(sim_file, compute_similarities)
-            similarities_dict[category_name] = similarities
         if model_info["type"] == "hf":
             self.unload_model_and_tokenizer(model, tokenizer)
         return model_name, embeddings_dict
+
+    def get_text_representation(self, row: pd.Series, text_fields: List[str]) -> str:
+        fields = []
+        for tfield in text_fields:
+            value = row.get(tfield, "")
+            if EmbeddingGenerator.is_missing_value(value):
+                value = ""
+            fields.append(value)
+        text_values = []
+        for field_value in fields:
+            parsed_list = EmbeddingGenerator.parse_list_string(field_value)
+            text_values.extend(parsed_list)
+        text_values = [text for text in text_values if text.strip()]
+        text_representation = " ".join(text_values).strip()
+        return text_representation if text_representation else " "
+
+    @staticmethod
+    def is_missing_value(value: Any) -> bool:
+        if isinstance(value, (list, np.ndarray, pd.Series)):
+            return pd.isnull(value).all() or all(not str(v).strip() for v in value)
+        else:
+            return pd.isnull(value) or not str(value).strip()
+
+    @staticmethod
+    def parse_list_string(s: Any) -> List[str]:
+        return Normalizer.parse_list_string(s)
 
     def process_models(
         self,
@@ -663,19 +598,14 @@ class EmbeddingGenerator:
         positive_datasets: Dict[str, pd.DataFrame],
         negative_datasets: Dict[str, pd.DataFrame],
         seeds: Dict[str, int],
-        text_fields: List[str] = None,
-        label_generation_func=None,
+        text_fields: List[str],
         dataset_name: str = "default",
-        use_ontogpt: bool = False,
         cache_suffix: str = "",
-        use_combinations: bool = False,
-        combine_fields: bool = False,
     ) -> Dict[str, Dict[str, np.ndarray]]:
         embeddings_dict_all_models = {}
-        for model_name in tqdm(model_names, desc="Processing models", leave=False):
+        for model_name in tqdm(model_names, desc="Processing models"):
             model_info = self.embedding_models_info.get(model_name)
             if not model_info:
-                logging.warning(f"Model '{model_name}' not found in embedding_models_info. Skipping.")
                 continue
             datasets_to_process = [
                 ("positive", positive_datasets),
@@ -690,109 +620,135 @@ class EmbeddingGenerator:
                     datasets=datasets,
                     seed=dataset_seed,
                     text_fields=text_fields,
-                    label_generation_func=label_generation_func,
                     dataset_name=dataset_name,
-                    use_ontogpt=use_ontogpt,
                     cache_suffix=cache_suffix,
-                    use_combinations=use_combinations,
-                    combine_fields=combine_fields,
                     dataset_type=dataset_type,
                 )
                 embeddings_dict_all_models[model_key] = embeddings_dict
         return embeddings_dict_all_models
 
 
-class LLMEnhancer:
-    def __init__(self, config: Config, cache_manager: CacheManager):
+class Pipeline:
+    def __init__(
+        self,
+        config: Config,
+        cache_manager: CacheManager,
+        package_name: str,
+        project_path: Path,
+    ):
         self.config = config
         self.cache_manager = cache_manager
-        self.client = AsyncOpenAI()
-        self.MAX_RETRIES = 3
+        self.package_name = package_name
+        self.project_path = project_path
+        self.catalog = None
+        self.normalizer = Normalizer(cache_dir=cache_manager.cache_dir)
+        self.data_loader = DataLoader(cache_manager=cache_manager, config=config, normalizer=self.normalizer)
+        self.embedding_generator = EmbeddingGenerator(config=config, cache_manager=cache_manager)
 
-    async def enhance_row(self, session, prompt: str) -> str:
-        retries = 0
-        while retries < self.MAX_RETRIES:
+    def _load_nodes(self) -> pd.DataFrame:
+        try:
+            configure_project(self.package_name)
+            with KedroSession.create() as session:
+                context = session.load_context()
+                catalog = context.catalog
+                self.catalog = catalog
+                nodes_df = catalog.load(self.config.nodes_dataset_name)
+                if isinstance(nodes_df, SparkDataFrame):
+                    nodes_df = nodes_df.toPandas()
+                return nodes_df
+        except Exception:
+            sys.exit(1)
+
+    def load_data(
+        self,
+    ) -> Tuple[List[str], Dict[str, pd.DataFrame], Dict[str, pd.DataFrame], pd.DataFrame]:
+        nodes_cache_file = self.cache_manager.cache_dir / "datasets" / f"nodes_df{self.config.cache_suffix}.pkl"
+        nodes_df = self.cache_manager.get_or_compute(nodes_cache_file, self._load_nodes)
+
+        edges_cache_file = self.cache_manager.cache_dir / "datasets" / f"edges_df{self.config.cache_suffix}.pkl"
+
+        def load_edges():
             try:
-                response = await self.client.chat.completions.create(
-                    messages=[{"role": "user", "content": prompt}], model="gpt-4o"
+                edges_df = self.catalog.load(self.config.edges_dataset_name)
+                if isinstance(edges_df, SparkDataFrame):
+                    edges_df = edges_df.toPandas()
+                if edges_df.empty:
+                    pass
+                return edges_df
+            except Exception:
+                raise
+
+        edges_df = self.cache_manager.get_or_compute(edges_cache_file, load_edges)
+
+        categories, positive_datasets, negative_datasets, _ = self.data_loader.load_datasets(nodes_df=nodes_df)
+
+        for dataset_type, datasets in [("positive", positive_datasets), ("negative", negative_datasets)]:
+            for category, df in datasets.items():
+                sampled_node_ids = set(df["id"].tolist())
+                filtered_edges_df = edges_df[
+                    edges_df["subject"].isin(sampled_node_ids) | edges_df["object"].isin(sampled_node_ids)
+                ]
+                edges_cache_file = (
+                    self.cache_manager.cache_dir
+                    / "datasets"
+                    / f"edges_df_{dataset_type}_{category}{self.config.cache_suffix}.pkl"
                 )
-                return response.choices[0].message.content.strip()
-            except openai.RateLimitError as e:
-                retries += 1
-                logging.warning(f"Rate limit error: {e}. Retrying {retries}/{self.MAX_RETRIES} after delay.")
-                await asyncio.sleep(2**retries)
-            except openai.OpenAIError as e:
-                retries += 1
-                logging.error(f"OpenAI error: {e}. Retrying {retries}/{self.MAX_RETRIES}.")
-                await asyncio.sleep(2**retries)
-            except Exception as e:
-                retries += 1
-                logging.error(f"Unexpected error: {e}. Retrying {retries}/{self.MAX_RETRIES}.")
-                await asyncio.sleep(2**retries)
-        logging.error("Max retries exceeded for enhance_row.")
-        return ""
+                filtered_edges_df.to_pickle(edges_cache_file)
 
-    async def augment_dataframe_async(self, df: pd.DataFrame) -> pd.DataFrame:
-        prompts = []
-        for idx, row in df.iterrows():
-            row_data = row.to_dict()
-            row_data_str = json.dumps(row_data, default=str)
-            prompt = self.config.llm_prompt_template.format(row_data=row_data_str)
-            prompts.append((idx, prompt))
-        semaphore = asyncio.Semaphore(5)
+        nodes_df.to_pickle(self.cache_manager.cache_dir / f"nodes_df{self.config.cache_suffix}.pkl")
+        edges_df.to_pickle(self.cache_manager.cache_dir / f"edges_df{self.config.cache_suffix}.pkl")
+        for category, df in positive_datasets.items():
+            df.to_pickle(self.cache_manager.cache_dir / f"positive_df_{category}{self.config.cache_suffix}.pkl")
+        for category, df in negative_datasets.items():
+            df.to_pickle(self.cache_manager.cache_dir / f"negative_df_{category}{self.config.cache_suffix}.pkl")
 
-        async def sem_enhance(session, idx, prompt):
-            async with semaphore:
-                result = await self.enhance_row(session, prompt)
-                return idx, result
-
-        conn = aiohttp.TCPConnector(limit=5)
-        async with aiohttp.ClientSession(connector=conn) as session:
-            tasks = []
-            for idx, prompt in prompts:
-                task = asyncio.ensure_future(sem_enhance(session, idx, prompt))
-                tasks.append(task)
-            results = await asyncio.gather(*tasks, return_exceptions=True)
-        enhanced_texts = {}
-        for result in results:
-            if isinstance(result, Exception):
-                logging.error(f"Error during LLM augmentation: {result}")
-                continue
-            idx, enhanced_text = result
-            enhanced_texts[idx] = enhanced_text
-        df["llm_enhanced_text"] = df.index.map(enhanced_texts)
-        return df
-
-    def augment_dataframe(self, df: pd.DataFrame) -> pd.DataFrame:
-        return asyncio.run(self.augment_dataframe_async(df))
+        return categories, positive_datasets, negative_datasets, nodes_df
 
 
-def set_up_variables(root_path: Path) -> Config:
-    cache_dir = root_path / "apps" / "embed_norm" / "cached_datasets"
+def safe_json_dumps(x: Any) -> str:
+    if isinstance(x, np.ndarray):
+        x = x.tolist()
+    if isinstance(x, (list, dict, set)):
+        try:
+            return json.dumps(x)
+        except TypeError:
+            return str(x)
+    return json.dumps(x)
+
+
+def main():
+    Environment.configure_logging()
+    utils_path = Path(__file__).parent.resolve()
+    Environment.setup_environment(utils_path=utils_path)
+
+    project_path = Path.cwd().parents[1]
+    package_name = "matrix"
+
+    cache_dir = project_path / "apps" / "embed_norm" / "cached_datasets"
     cache_dir.mkdir(parents=True, exist_ok=True)
-    logging.info(f"Cache directory set at '{cache_dir}'.")
+    print(cache_dir)
     for subdir in ["embeddings", "datasets"]:
         subdir_path = cache_dir / subdir
         subdir_path.mkdir(parents=True, exist_ok=True)
-        logging.info(f"Subdirectory '{subdir}' created at '{subdir_path}'.")
+
     pos_seed = 54321
     neg_seed = 67890
     dataset_name = "rtx_kg2.int"
     nodes_dataset_name = "integration.int.rtx.nodes"
     edges_dataset_name = "integration.int.rtx.edges"
     categories = ["All Categories"]
-    model_names = ["OpenAI", "PubMedBERT", "BioBERT", "BlueBERT", "SapBERT"]
+    model_names = ["OpenAI"]
     openai_api_key = os.getenv("OPENAI_API_KEY")
     if not openai_api_key:
-        logging.error("OPENAI_API_KEY environment variable is not set.")
         sys.exit(1)
     openai.api_key = openai_api_key
-    logging.info("OpenAI API key is set.")
+
     total_sample_size = 1000
     positive_ratio = 0.2
     positive_n = int(total_sample_size * positive_ratio)
     negative_n = total_sample_size - positive_n
     cache_suffix = f"_pos_{positive_n}_neg_{negative_n}"
+
     config = Config(
         cache_dir=cache_dir,
         pos_seed=pos_seed,
@@ -807,78 +763,32 @@ def set_up_variables(root_path: Path) -> Config:
         positive_n=positive_n,
         negative_n=negative_n,
         cache_suffix=cache_suffix,
-        use_llm_enhancement=False,
     )
-    logging.info("Configuration variables are set.")
-    return config
 
+    cache_manager = CacheManager(cache_dir=cache_dir)
 
-def load_data(
-    config: Config, cache_manager: CacheManager
-) -> Tuple[List[str], Dict[str, pd.DataFrame], Dict[str, pd.DataFrame], pd.DataFrame]:
-    configure_project("matrix")
-    logging.info("Kedro project 'matrix' configured.")
-    try:
-        with KedroSession.create() as session:
-            context = session.load_context()
-            catalog = context.catalog
-            nodes_df = catalog.load(config.nodes_dataset_name)
-            logging.warning(f"nodes_df columns: {nodes_df.columns}")
-        if isinstance(nodes_df, SparkDataFrame):
-            nodes_df = nodes_df.toPandas()
-        data_loader = DataLoader(cache_manager, config)
-        categories, positive_datasets, negative_datasets, nodes_df = data_loader.load_datasets(nodes_df=nodes_df)
-        logging.info("Datasets and categories loaded successfully.")
-        return categories, positive_datasets, negative_datasets, nodes_df
-    except Exception as e:
-        logging.error(f"Failed to load datasets using Kedro: {e}")
-        sys.exit(1)
+    pipeline = Pipeline(
+        config=config,
+        cache_manager=cache_manager,
+        package_name=package_name,
+        project_path=project_path,
+    )
 
+    categories, positive_datasets, negative_datasets, nodes_df = pipeline.load_data()
 
-def label_func(row: pd.Series) -> str:
-    idx = row.name
-    text = row.get("text", "")
-    return f"Row {idx}: {text}"
-
-
-def generate_embeddings(
-    config: Config,
-    cache_manager: CacheManager,
-    nodes_df: pd.DataFrame,
-    negative_datasets: Dict[str, pd.DataFrame],
-    positive_datasets: Dict[str, pd.DataFrame],
-):
-    if config.use_llm_enhancement:
-        text_fields = ["llm_enhanced_text"]
-    else:
-        text_fields = ["name", "category", "all_categories"]
-    embedding_generator = EmbeddingGenerator(config, cache_manager)
-    embeddings_dict_all_models = embedding_generator.process_models(
+    seeds = {"positive": config.pos_seed, "negative": config.neg_seed}
+    text_fields = ["name", "description"]
+    pipeline.embedding_generator.process_models(
         model_names=config.model_names,
         positive_datasets=positive_datasets,
         negative_datasets=negative_datasets,
-        seeds={"positive": config.pos_seed, "negative": config.neg_seed},
+        seeds=seeds,
         text_fields=text_fields,
-        label_generation_func=None,
         dataset_name=config.dataset_name,
-        use_ontogpt=False,
         cache_suffix=config.cache_suffix,
-        use_combinations=False,
-        combine_fields=False,
     )
-    logging.info("Embeddings for models processed successfully using process_models().")
-    return embeddings_dict_all_models
 
-
-def main():
-    configure_logging()
-    utils_path = Path(__file__).parent.resolve()
-    setup_environment(utils_path=utils_path)
-    root_path = Path.cwd().parents[1]
-    config = set_up_variables(root_path=root_path)
-    cache_manager = CacheManager(config.cache_dir)
-    _, positive_datasets, negative_datasets, nodes_df = load_data(config, cache_manager)
-    generate_embeddings(config, cache_manager, nodes_df, negative_datasets, positive_datasets)
+    logging.info("Pipeline execution completed successfully.")
 
 
 if __name__ == "__main__":
