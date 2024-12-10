@@ -175,8 +175,7 @@ def _submit(
             console.print(f"[blue]Opened workflow in browser: {workflow_url}[/blue]")
     except Exception as e:
         console.print(f"[bold red]Error during submission:[/bold red] {str(e)}")
-        if verbose:
-            console.print_exception()
+        console.print_exception()
         sys.exit(1)
 
 
