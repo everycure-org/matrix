@@ -47,9 +47,8 @@ def cli():
 @click.option("--verbose", "-v", is_flag=True, default=True, help="Enable verbose output")
 @click.option("--dry-run", "-d", is_flag=True, default=False, help="Does everything except submit the workflow")
 @click.option("--from-nodes", type=str, default="", help="Specify nodes to run from", callback=split_string)
-@click.option("--is-test", is_flag=True, default=False, help="Submit to test folder")
 # fmt: on
-def submit(username: str, namespace: str, run_name: Optional[str], release: Optional[str], pipeline: str, verbose: bool, dry_run: bool, from_nodes: List[str], is_test: bool):
+def submit(username: str, namespace: str, run_name: Optional[str], release: Optional[str], pipeline: str, verbose: bool, dry_run: bool, from_nodes: List[str]):
     """Submit the end-to-end workflow. """
     if verbose:
         log.setLevel(logging.DEBUG)
@@ -75,7 +74,7 @@ def submit(username: str, namespace: str, run_name: Optional[str], release: Opti
     run_name = get_run_name(run_name)
     pipeline_obj.name = pipeline
 
-    summarize_submission(run_name, namespace, pipeline, is_test, release_version=release)
+    summarize_submission(run_name, namespace, pipeline, release_version=release)
     _submit(
         username=username,
         namespace=namespace,
@@ -85,7 +84,6 @@ def submit(username: str, namespace: str, run_name: Optional[str], release: Opti
         verbose=verbose,
         dry_run=dry_run,
         template_directory=ARGO_TEMPLATES_DIR_PATH,
-        is_test=is_test,
     )
 
 
@@ -99,7 +97,6 @@ def _submit(
         dry_run: bool, 
         template_directory: Path,
         allow_interactions: bool = True,
-        is_test: bool = False,
     ) -> None:
     """Submit the end-to-end workflow.
 
@@ -123,7 +120,6 @@ def _submit(
         dry_run (bool): If True, do not submit the workflow.
         template_directory (Path): The directory containing the Argo template.
         allow_interactions (bool): If True, allow prompts for confirmation
-        is_test (bool): If True, submit to test folder, not release folder
     """
     
     try:
@@ -134,7 +130,7 @@ def _submit(
         console.print("[green]✓[/green] Dependencies checked")
 
         console.print("Building Argo template...")
-        argo_template = build_argo_template(run_name, release_version, username, namespace, pipeline_obj, is_test=is_test, )
+        argo_template = build_argo_template(run_name, release_version, username, namespace, pipeline_obj)
         console.print("[green]✓[/green] Argo template built")
 
         console.print("Writing Argo template...")
@@ -182,17 +178,16 @@ def _submit(
         sys.exit(1)
 
 
-def summarize_submission(run_name: str, namespace: str, pipeline: str, is_test: bool, release_version: Optional[str]):
-    console.print(Panel.fit(
-        f"[bold green]About to submit workflow:[/bold green]\n"
-        f"Run Name: {run_name}\n"
-        f"Namespace: {namespace}\n"
-        f"Pipeline: {pipeline}\n"
-        f"Writing to test folder: {is_test}\n"
-        f"Data Release Version: {release_version}\n",
-        title="Submission Summary"
-    ))
-    console.print("Reminder: A data release should only be submitted once and not overwritten.\n"
+def summarize_submission(run_name: str, namespace: str, pipeline: str, release_version: Optional[str]):
+    summary = (
+        "[bold green]About to submit workflow:[/bold green]",
+        f"Run Name: {run_name}"
+        f"Namespace: {namespace}"
+        f"Pipeline: {pipeline}"
+        f"Data Release Version: {release_version}" if release_version else "Output to tests: true",
+    )
+    console.print(Panel.fit("\n".join(summary), title="Submission Summary"))
+    console.print("\nReminder: A data release should only be submitted once and not overwritten.\n"
                   "If you need to make changes, please make this part of the next release.\n"
                   "Experiments (modelling pipeline) are nested under the release and can be overwritten.\n\n")
 
@@ -328,7 +323,7 @@ def build_push_docker(tag: str, verbose: bool):
     run_subprocess(f"make docker_push TAG={tag}", stream_output=verbose)
 
 
-def build_argo_template(run_name: str, release_version: Optional[str], username: str, namespace: str, pipeline_obj: Pipeline, is_test: bool, default_execution_resources: Optional[ArgoResourceConfig] = None) -> str:
+def build_argo_template(run_name: str, release_version: Optional[str], username: str, namespace: str, pipeline_obj: Pipeline, default_execution_resources: Optional[ArgoResourceConfig] = None) -> str:
     """Build Argo workflow template."""
     image_name = "us-central1-docker.pkg.dev/mtrx-hub-dev-3of/matrix-images/matrix"
 
@@ -336,10 +331,7 @@ def build_argo_template(run_name: str, release_version: Optional[str], username:
     metadata = bootstrap_project(matrix_root)
     package_name = metadata.package_name
 
-    if is_test:
-        release_folder_name = "tests"
-    else:
-        release_folder_name = "releases"
+    release_folder_name = "releases" if release_version else "tests"
 
     return generate_argo_config(
         image=image_name,
@@ -410,6 +402,7 @@ def submit_workflow(run_name: str, namespace: str, verbose: bool):
     console.print(f"argo watch -n {namespace} {job_name}")
     console.print("\nTo view the workflow in the Argo UI, run:")
     console.print(f"argo get -n {namespace} {job_name}")
+
 
 def get_run_name(run_name: Optional[str]) -> str:
     """Get the experiment name based on input or Git branch.
