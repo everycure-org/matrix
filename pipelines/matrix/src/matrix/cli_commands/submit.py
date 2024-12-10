@@ -18,6 +18,7 @@ from rich.panel import Panel
 
 from matrix.argo import ARGO_TEMPLATES_DIR_PATH, generate_argo_config
 from matrix.kedro4argo_node import ArgoResourceConfig
+from matrix import config
 
 logging.basicConfig(
     level=logging.INFO,
@@ -73,7 +74,6 @@ def submit(username: str, namespace: str, run_name: Optional[str], release: Opti
 
     run_name = get_run_name(run_name)
     pipeline_obj.name = pipeline
-
 
     summarize_submission(run_name, namespace, pipeline, is_test, release_version=release)
     _submit(
@@ -304,11 +304,6 @@ def check_dependencies(verbose: bool):
         console.print("Authenticating gcloud...")
         run_subprocess("gcloud auth login", stream_output=verbose)
 
-    # Configure kubectl
-    project = "mtrx-hub-dev-3of"
-    region = "us-central1"
-    cluster = "compute-cluster"
-
     # Check if kubectl is already authenticated
     try:
         run_subprocess("kubectl get nodes", capture_output=True, stream_output=verbose)
@@ -316,7 +311,7 @@ def check_dependencies(verbose: bool):
     except subprocess.CalledProcessError:
         console.print("Authenticating kubectl...")
         run_subprocess(
-            f"gcloud container clusters get-credentials {cluster} --project {project} --region {region}"
+            f"gcloud container clusters get-credentials {config.cluster} --project {config.project} --region {config.region}"
         )
 
     # Verify kubectl
