@@ -6,6 +6,7 @@ from kedro.pipeline import Pipeline
 from kedro.pipeline.node import Node
 from matrix.argo import FusedNode, clean_name, fuse, generate_argo_config, get_dependencies
 from matrix.kedro4argo_node import ArgoNode, ArgoResourceConfig
+from matrix import config
 
 
 def dummy_fn(*args):
@@ -412,7 +413,6 @@ def test_clean_dependencies() -> None:
 
 
 def get_argo_config(argo_default_resources: ArgoResourceConfig) -> Tuple[Dict, Dict[str, Pipeline]]:
-    image_name = "us-central1-docker.pkg.dev/mtrx-hub-dev-3of/matrix-images/matrix"
     run_name = "test_run"
     release_version = "test_release"
     image_tag = "test_tag"
@@ -443,7 +443,7 @@ def get_argo_config(argo_default_resources: ArgoResourceConfig) -> Tuple[Dict, D
     )
     pipeline_obj.name = "pipeline_one"
     argo_config_yaml = generate_argo_config(
-        image=image_name,
+        image=config.image_name,
         run_name=run_name,
         release_version=release_version,
         image_tag=image_tag,

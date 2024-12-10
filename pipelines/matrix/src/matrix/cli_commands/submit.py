@@ -325,8 +325,6 @@ def build_push_docker(tag: str, verbose: bool):
 
 def build_argo_template(run_name: str, release_version: Optional[str], username: str, namespace: str, pipeline_obj: Pipeline, default_execution_resources: Optional[ArgoResourceConfig] = None) -> str:
     """Build Argo workflow template."""
-    image_name = "us-central1-docker.pkg.dev/mtrx-hub-dev-3of/matrix-images/matrix"
-
     matrix_root = Path(__file__).parent.parent.parent.parent
     metadata = bootstrap_project(matrix_root)
     package_name = metadata.package_name
@@ -334,7 +332,7 @@ def build_argo_template(run_name: str, release_version: Optional[str], username:
     release_folder_name = "releases" if release_version else "tests"
 
     return generate_argo_config(
-        image=image_name,
+        image=config.image_name,
         run_name=run_name,
         release_version=release_version,
         image_tag=run_name,
