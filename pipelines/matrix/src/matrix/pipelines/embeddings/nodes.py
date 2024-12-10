@@ -393,15 +393,15 @@ def write_topological_embeddings(
 
 
 def obtain_node2vec_pecanpy_embeddings(num_walks, walk_length, feature_dim, p, q):
-    ##PARAMS
+    
     g = pecanpy.SparseOTF(p=p, q=q, workers=4, verbose=True)
-    print("graph precomposition done")
+    logger.info("Graph precomposition done")
 
     edge_list_path = "/home/jupyter/matrix/pipelines/matrix/data/releases/local-release/datasets/integration/prm/filtered/edgelist/edgelist.edg"  ###currently have this path pointing to my local edgelist file that i created as a test run. need to point it to the google cloud bucket once we merge to the main branch.
     g.read_edg(edge_list_path, weighted=False, directed=False)
-    print("edgelist read successfully")
+    logger.info("Edgelist read successfully")
     g.preprocess_transition_probs()
-    print("graph preprocessing done")
+    logger.info("graph preprocessing done")
 
     node_list = np.array(g.nodes).reshape(-1, 1)
     emd = g.embed(dim=feature_dim, num_walks=num_walks, walk_length=walk_length)
