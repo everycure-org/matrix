@@ -30,6 +30,25 @@ def catchup(
 
 
 @app.command()
+def branch_summary(model: str = typer.Option(settings.base_model, help="Language Model to use")):
+    """Generate an AI summary of the current branch."""
+    summary = get_ai_code_summary("origin/main", "HEAD", model)
+    rprint(Markdown(summary))
+
+
+@app.command()
+def pr_draft(model: str = typer.Option(settings.base_model, help="Language Model to use")):
+    """Generate an AI draft for a PR."""
+    summary = get_ai_code_summary("origin/main", "HEAD", model)
+    prompt = f"""
+    Please prepare a PR description based on the following summary:
+    {summary}
+    """
+    response = invoke_model(prompt, model=model)
+    console.print(response)
+
+
+@app.command()
 def pr_summary(
     pr_number: int,
     model: str = typer.Option(settings.base_model, help="Language Model to use"),
