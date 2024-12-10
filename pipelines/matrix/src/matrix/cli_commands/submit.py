@@ -145,34 +145,37 @@ def _submit(
         argo_template_lint(file_path, verbose=verbose)
         console.print("[green]✓[/green] Argo template valid")
 
-        if not dry_run:
-            console.print("Building and pushing Docker image...")
-            build_push_docker(run_name, verbose=verbose)
-            console.print("[green]✓[/green] Docker image built and pushed")
+        if dry_run:
+            return
 
-            console.print("Ensuring namespace...")
-            ensure_namespace(namespace, verbose=verbose)
-            console.print("[green]✓[/green] Namespace ensured")
+        console.print("Building and pushing Docker image...")
+        build_push_docker(run_name, verbose=verbose)
+        console.print("[green]✓[/green] Docker image built and pushed")
 
-            console.print("Applying Argo template...")
-            apply_argo_template(namespace, file_path, verbose=verbose)
-            console.print("[green]✓[/green] Argo template applied")
+        console.print("Ensuring namespace...")
+        ensure_namespace(namespace, verbose=verbose)
+        console.print("[green]✓[/green] Namespace ensured")
 
-            console.print("Submitting workflow for pipeline...")
-            submit_workflow(run_name, namespace, verbose=verbose)
-            console.print("[green]✓[/green] Workflow submitted")
+        console.print("Applying Argo template...")
+        apply_argo_template(namespace, file_path, verbose=verbose)
+        console.print("[green]✓[/green] Argo template applied")
 
-            console.print(Panel.fit(
-                f"[bold green]Workflow submitted successfully![/bold green]\n"
-                f"Run Name: {run_name}\n"
-                f"Namespace: {namespace}",
-                title="Submission Summary"
-            ))
+        console.print("Submitting workflow for pipeline...")
+        submit_workflow(run_name, namespace, verbose=verbose)
+        console.print("[green]✓[/green] Workflow submitted")
 
-        if not dry_run and allow_interactions and click.confirm("Do you want to open the workflow in your browser?", default=False):
+        console.print(Panel.fit(
+            f"[bold green]Workflow submitted successfully![/bold green]\n"
+            f"Run Name: {run_name}\n"
+            f"Namespace: {namespace}",
+            title="Submission Summary"
+        ))
+
+        if allow_interactions and click.confirm("Do you want to open the workflow in your browser?", default=False):
             workflow_url = f"https://argo.platform.dev.everycure.org/workflows/{namespace}/{run_name}"
             click.launch(workflow_url)
             console.print(f"[blue]Opened workflow in browser: {workflow_url}[/blue]")
+
     except Exception as e:
         console.print(f"[bold red]Error during submission:[/bold red] {str(e)}")
         console.print_exception()
