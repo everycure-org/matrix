@@ -1,0 +1,3 @@
+#argo-events:
+#  namespaceOverride: data-release
+

@@ -4,4 +4,5 @@ spec:
   source:
     repoURL: https://github.com/everycure-org/matrix.git
     targetRevision: infra
+    devTargetRevision: data-release-quickstart
     repoPath: infra/argo/applications/

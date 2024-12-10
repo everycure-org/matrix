@@ -1,20 +1,19 @@
-# TODO: How can we ensure only .y*ml files are picked up?
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: argo-workflows
-  namespace: argocd
+  name: data-release
+  namespace: data-release
 spec:
   destination:
-    namespace: argo-workflows
+    namespace: data-release
     server: {{ .Values.spec.destination.server }}
   project: default
   source:
-    path: {{ .Values.spec.source.repoPath }}/workflows
+    path: {{ .Values.spec.source.repoPath }}/data-release
     repoURL: {{ .Values.spec.source.repoURL }}
-    targetRevision: {{ .Values.spec.source.targetRevision }}
+    targetRevision: {{ .Values.spec.source.devTargetRevision }}
   syncPolicy:
     syncOptions:     # Sync options which modifies sync behavior
     - CreateNamespace=true # Namespace Auto-Creation ensures that namespace specified as the application destination exists in the destination cluster.
-    automated: 
+    automated:
       prune: true
