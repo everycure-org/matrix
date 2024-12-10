@@ -26,7 +26,8 @@ theme:
 
 plugins:
   - drawio
-  - mkdocs-jupyter
+  - mkdocs-jupyter:
+      custom_mathjax_url: "/assets/js/mathjax.js"
   - awesome-pages
   - search
   - table-reader
@@ -79,6 +80,7 @@ markdown_extensions:
 
 extra_javascript:
   - assets/js/mathjax.js
+  - assets/js/
   - https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js
   - https://unpkg.com/tablesort@5.3.0/dist/tablesort.min.js
   - assets/js/tablesort.js
