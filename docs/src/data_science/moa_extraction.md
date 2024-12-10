@@ -39,6 +39,8 @@ The training process is illustrated by the following diagram:
 
 ## Implementation
 
+> The MOA extraction pipeline is currently only available on the branch `feature/moa-extraction`.
+
 The following diagram illustrates the overall MOA extraction pipeline:
 
 ![MOA pipeline overview](../assets/img/MOA_extraction/MOA_pipeline_overview.svg)
