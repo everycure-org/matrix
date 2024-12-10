@@ -53,9 +53,6 @@ def submit(username: str, namespace: str, run_name: Optional[str], release: Opti
     if verbose:
         log.setLevel(logging.DEBUG)
 
-    if pipeline not in kedro_pipelines.keys():
-        raise ValueError("Pipeline requested for execution not found")
-    
     if pipeline in {"fabricator", "test"}:
         raise ValueError("Submitting test pipeline to Argo will result in overwriting source data")
     
@@ -66,8 +63,11 @@ def submit(username: str, namespace: str, run_name: Optional[str], release: Opti
     if release and release_exists(release):
         raise ValueError("The specified release already exists. You do not want to overwrite it.")
 
+    try:
+        pipeline_obj = kedro_pipelines[pipeline]
+    except KeyError:
+        raise ValueError("Pipeline requested for execution not found")
     # As a temporary measure, we pass both pipeline for execution and list of pipelines. In the future, we will merge the two.
-    pipeline_obj = kedro_pipelines[pipeline]
     if from_nodes:
         pipeline_obj = pipeline_obj.from_nodes(*from_nodes)
 
