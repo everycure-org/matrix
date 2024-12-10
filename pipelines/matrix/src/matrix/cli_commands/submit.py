@@ -5,7 +5,7 @@ import secrets
 import subprocess
 import sys
 from pathlib import Path
-from typing import List, Optional
+from typing import List, Optional, Union
 
 import click
 from kedro.framework.cli.utils import CONTEXT_SETTINGS, split_string
@@ -376,7 +376,7 @@ def ensure_namespace(namespace, verbose: bool):
         run_subprocess(f"kubectl create namespace {namespace}", check=True, stream_output=verbose)
 
 
-def apply_argo_template(namespace, file_path: Path, verbose: bool):
+def apply_argo_template(namespace, file_path: Union[Path, str], verbose: bool):
     """Apply the Argo workflow template, making it available in the cluster.
     
     `kubectl apply -f <file_path> -n <namespace>` will make the template available as a resource (but will not create any other resources, and will not trigger the workshop).
