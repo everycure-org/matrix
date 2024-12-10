@@ -13,7 +13,7 @@ from kedro_mlflow.framework.hooks import MlflowHook
 
 import matrix.hooks as matrix_hooks
 
-from .resolvers import env, merge_dicts, cast_to_int
+from .resolvers import cast_to_int, env, merge_dicts
 
 # Hooks are executed in a Last-In-First-Out (LIFO) order.
 HOOKS = (
@@ -65,7 +65,7 @@ DYNAMIC_PIPELINES_MAPPING = {
     "integration": [
         {"name": "rtx_kg2"},
         {"name": "spoke"},
-        # {"name": "robokop"},
+        {"name": "robokop"},
         {"name": "ec_medical_team", "normalize": False},
     ],
     "modelling": [
