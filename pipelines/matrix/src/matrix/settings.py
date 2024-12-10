@@ -14,7 +14,7 @@ from kedro_mlflow.framework.hooks import MlflowHook
 import matrix.hooks as matrix_hooks
 from matrix.utils.hook_utilities import determine_hooks_to_execute
 
-from .resolvers import env, merge_dicts
+from .resolvers import cast_to_int, env, merge_dicts
 
 hooks = {
     "node_timer": matrix_hooks.NodeTimerHooks(),
@@ -59,11 +59,17 @@ CONFIG_LOADER_ARGS = {
     "custom_resolvers": {
         "merge": merge_dicts,
         "oc.env": env,
+        "oc.int": cast_to_int,
     },
 }
 
 # https://getindata.com/blog/kedro-dynamic-pipelines/
 DYNAMIC_PIPELINES_MAPPING = {
+    "integration": [
+        {"name": "rtx_kg2"},
+        {"name": "robokop"},
+        {"name": "ec_medical_team", "normalize": False},
+    ],
     "modelling": [
         {"model_name": "xg_baseline", "num_shards": 1, "run_inference": False},
         {"model_name": "xg_ensemble", "num_shards": 3, "run_inference": True},
