@@ -9,7 +9,7 @@ from utils import (
     display_table,
     parse_hop_parameter,
 )
-from config import MOA_INFO_TEXT, MOA_DB_PATH
+from config import MOA_INFO_TEXT, MOA_DB_PATH, MOA_INFO_IMG
 
 
 def set_wide_space_default():
@@ -60,7 +60,7 @@ with st.sidebar:
 
 with st.expander("What is the MoA prediction pipeline?"):
     st.markdown(MOA_INFO_TEXT)
-    # st.image(MOA_INFO_IMG)
+    st.image(MOA_INFO_IMG)
 
 if "selected_pair_index_df" in locals():
     if len(selected_pair_index_df.selection.rows) > 0:
