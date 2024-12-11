@@ -30,9 +30,9 @@ class SpokeTransformer(GraphTransformer):
             nodes_df
             .withColumn("upstream_data_source",              F.array(F.lit("spoke")))
             .withColumn("all_categories",                    F.split(F.col("category"), SEPARATOR))
-            .withColumn("equivalent_identifiers",            F.split(F.col("equivalent_identifiers"), SEPARATOR))
-            .withColumn("labels",                            F.array(F.col("all_categories")))
-            .withColumn("publications",                      F.lit(None).cast(T.ArrayType(T.StringType())))
+            .withColumn("equivalent_identifiers",            F.lit(None))
+            .withColumn("labels",                            F.lit(None))
+            .withColumn("publications",                      F.lit(None))
             .withColumn("international_resource_identifier", F.lit(None))
             # getting most specific category
             .transform(determine_most_specific_category, biolink_categories_df)
