@@ -9,11 +9,11 @@ neo4j: # the name of the helm dependency
     name: neo4j
     resources:
       requests:
-        cpu: "1"
+        cpu: "2"
         memory: "8Gi"
-      #limits:
-      #  cpu: "2"
-      #  memory: "12Gi"
+      limits:
+        cpu: "16"
+        memory: "16Gi"
   # configuration for neo4j services
   # FUTURE do not expose as IP
   services:
