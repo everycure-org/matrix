@@ -145,9 +145,17 @@ def filter_nodes_without_edges(
     return nodes
 
 
-def normalize_kg(
+def _format_mapping_df(mapping_df: ps.sql.DataFrame):
+    return (
+        mapping_df.drop("bucket")
+        .withColumn("normalization_success", F.col("normalized_id").isNotNull())
+        # avoids nulls in id column, if we couldn't resolve IDs, we keep original
+        .withColumn("normalized_id", F.coalesce(F.col("normalized_id"), F.col("id")))
+    )
+
+
+def normalize_edges(
     mapping_df: ps.sql.DataFrame,
-    nodes: ps.sql.DataFrame,
     edges: ps.sql.DataFrame,
 ) -> ps.sql.DataFrame:
     """Function normalizes a KG using external API endpoint.
@@ -155,21 +163,8 @@ def normalize_kg(
     This function takes the nodes and edges frames for a KG and leverages
     an external API to map the nodes to their normalized IDs.
     It returns the datasets with normalized IDs.
-
     """
-    mapping_df = (
-        mapping_df.drop("bucket")
-        .withColumn("normalization_success", F.col("normalized_id").isNotNull())
-        # avoids nulls in id column, if we couldn't resolve IDs, we keep original
-        .withColumn("normalized_id", F.coalesce(F.col("normalized_id"), F.col("id")))
-    )
-
-    # add normalized_id to nodes
-    nodes = (
-        nodes.join(mapping_df, on="id", how="left")
-        .withColumnsRenamed({"id": "original_id"})
-        .withColumnsRenamed({"normalized_id": "id"})
-    )
+    mapping_df = _format_mapping_df(mapping_df)
 
     # edges are bit more complex, we need to map both the subject and object
     edges = edges.join(
@@ -198,4 +193,25 @@ def normalize_kg(
         {"subject_normalized": "subject", "object_normalized": "object"}
     )
 
-    return nodes, edges  # mapping_df
+    return edges
+
+
+def normalize_nodes(
+    mapping_df: ps.sql.DataFrame,
+    nodes: ps.sql.DataFrame,
+) -> ps.sql.DataFrame:
+    """Function normalizes a KG using external API endpoint.
+
+    This function takes the nodes and edges frames for a KG and leverages
+    an external API to map the nodes to their normalized IDs.
+    It returns the datasets with normalized IDs.
+
+    """
+    mapping_df = _format_mapping_df(mapping_df)
+
+    # add normalized_id to nodes
+    return (
+        nodes.join(mapping_df, on="id", how="left")
+        .withColumnsRenamed({"id": "original_id"})
+        .withColumnsRenamed({"normalized_id": "id"})
+    )
