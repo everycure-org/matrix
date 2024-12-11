@@ -1,6 +1,7 @@
-from kedro.pipeline import Pipeline, node, pipeline
+from kedro.pipeline import Pipeline, pipeline
 
 from matrix import settings
+from matrix.kedro4argo_node import ARGO_GPU_NODE_MEDIUM, argo_node
 
 from . import nodes
 
@@ -8,7 +9,7 @@ from . import nodes
 def _create_matrix_generation_pipeline(model: str) -> Pipeline:
     return pipeline(
         [
-            node(
+            argo_node(
                 func=nodes.make_predictions_and_sort,
                 inputs=[
                     "matrix_generation.feat.nodes_kg_ds",
@@ -21,8 +22,9 @@ def _create_matrix_generation_pipeline(model: str) -> Pipeline:
                 ],
                 outputs=f"matrix_generation.{model}.model_output.sorted_matrix_predictions@pandas",
                 name=f"make_{model}_predictions_and_sort",
+                argo_config=ARGO_GPU_NODE_MEDIUM,
             ),
-            node(
+            argo_node(
                 func=nodes.generate_report,
                 inputs=[
                     f"matrix_generation.{model}.model_output.sorted_matrix_predictions@pandas",
@@ -44,7 +46,7 @@ def create_pipeline(**kwargs) -> Pipeline:
     """Create matrix generation pipeline."""
     initial_nodes = pipeline(
         [
-            node(
+            argo_node(
                 func=nodes.enrich_embeddings,
                 inputs=[
                     "embeddings.feat.nodes",
@@ -56,7 +58,7 @@ def create_pipeline(**kwargs) -> Pipeline:
             ),
             # Hacky fix to save parquet file via pandas rather than spark
             # related to https://github.com/everycure-org/matrix/issues/71
-            node(
+            argo_node(
                 func=nodes.spark_to_pd,
                 inputs=[
                     "matrix_generation.feat.nodes@spark",
@@ -64,7 +66,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 outputs="matrix_generation.feat.nodes_kg_ds",
                 name="transform_parquet_library",
             ),
-            node(
+            argo_node(
                 func=nodes.generate_pairs,
                 inputs=[
                     "ingestion.raw.drug_list@pandas",
