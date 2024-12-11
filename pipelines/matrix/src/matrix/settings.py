@@ -67,8 +67,8 @@ DYNAMIC_PIPELINES_MAPPING = {
         # {"name": "robokop"},
         {"name": "ec_medical_team", "integrate_in_kg": True},
         {"name": "ec_clinic_trail_data", "integrate_in_kg": False},
-        {"name": "ec_drug_list", "normalize_edges": False, "integrate_in_kg": False},
-        {"name": "ec_disease_list", "normalize_edges": False, "integrate_in_kg": False},
+        # {"name": "ec_drug_list", "normalize_edges": False, "integrate_in_kg": False},
+        # {"name": "ec_disease_list", "normalize_edges": False, "integrate_in_kg": False},
     ],
     "modelling": [
         {"model_name": "xg_baseline", "num_shards": 1, "run_inference": False},
