@@ -1,14 +1,18 @@
-from typing import Callable, Iterable, Union, Any, Optional
 import warnings
+from typing import Any, Callable, Iterable, Optional, Union
+
 from kedro.pipeline.node import Node
 from pydantic import BaseModel, field_validator, model_validator
 
 # Values are in Gb
-KUBERNETES_DEFAULT_LIMIT_RAM = 64
-KUBERNETES_DEFAULT_REQUEST_RAM = 64
+KUBERNETES_DEFAULT_LIMIT_RAM = 52
+KUBERNETES_DEFAULT_REQUEST_RAM = 52
+
+# Values are in number of GPUs
+KUBERNETES_DEFAULT_NUM_GPUS = 0
 
 # Values are in number of cores
-KUBERNETES_DEFAULT_LIMIT_CPU = 16
+KUBERNETES_DEFAULT_LIMIT_CPU = 14
 KUBERNETES_DEFAULT_REQUEST_CPU = 4
 
 
@@ -28,7 +32,7 @@ class ArgoResourceConfig(BaseModel):
         memory_limit (float): Maximum memory allowed for the container in GB.
     """
 
-    num_gpus: int = 0
+    num_gpus: int = KUBERNETES_DEFAULT_NUM_GPUS
     cpu_request: int = KUBERNETES_DEFAULT_REQUEST_CPU
     cpu_limit: int = KUBERNETES_DEFAULT_LIMIT_CPU
     memory_request: int = KUBERNETES_DEFAULT_REQUEST_RAM
@@ -58,9 +62,13 @@ class ArgoResourceConfig(BaseModel):
     @model_validator(mode="after")
     def validate_values_are_sane(self) -> "ArgoResourceConfig":
         """Validate that CPU and memory limits and requests are not too high."""
-        if self.cpu_limit > KUBERNETES_DEFAULT_LIMIT_CPU or self.memory_limit > KUBERNETES_DEFAULT_LIMIT_RAM:
+        if self.cpu_limit > 2 * KUBERNETES_DEFAULT_LIMIT_CPU:
             warnings.warn(
-                f"CPU (limit: {self.cpu_limit}, request: {self.cpu_request}) and memory (limit: {self.memory_limit}, request: {self.memory_request}) limits and requests are unrealistically high - are you sure they were set in GB and not in Mi?"
+                f"Some of the CPU settings (limit: {self.cpu_limit}, request: {self.cpu_request}) seem quite high - are you sure they are set in cores?"
+            )
+        if self.memory_limit > 2 * KUBERNETES_DEFAULT_LIMIT_RAM:
+            warnings.warn(
+                f"Some of the memory settings (limit: {self.memory_limit}, request: {self.memory_request}) are unrealistically high - are you sure they were set in GB and not in Mi?"
             )
         return self
 
@@ -118,13 +126,16 @@ def argo_node(
     func: Callable,
     inputs: str | list[str] | dict[str, str] | None,
     outputs: str | list[str] | dict[str, str] | None,
-    argo_config: ArgoResourceConfig = ArgoResourceConfig(),
+    argo_config: Optional[ArgoResourceConfig] = None,
     *,
     name: str | None = None,
     tags: str | Iterable[str] | None = None,
     confirms: str | list[str] | None = None,
     namespace: str | None = None,
 ):
+    if argo_config is None:
+        argo_config = ArgoResourceConfig()
+
     return ArgoNode(
         func,
         inputs,
@@ -135,3 +146,6 @@ def argo_node(
         confirms=confirms,
         namespace=namespace,
     )
+
+
+ARGO_GPU_NODE_MEDIUM = ArgoResourceConfig(num_gpus=1)
