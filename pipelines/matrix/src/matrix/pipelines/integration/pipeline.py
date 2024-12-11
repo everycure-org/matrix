@@ -104,8 +104,8 @@ def create_pipeline(**kwargs) -> Pipeline:
                 _create_integration_pipeline(
                     source=source["name"],
                     normalize_edges=source.get("normalize_edges", True),
-                    tags=[source["name"]],
-                )
+                ),
+                tags=[source["name"]],
             )
         )
 
