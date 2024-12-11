@@ -27,6 +27,7 @@ class MedicalTransformer(GraphTransformer):
             nodes_df
             .withColumn("id",                                f.col("normalized_curie"))
             .withColumn("upstream_data_source",              f.array(f.lit("ec_medical")))
+            .withColumn("category",                            f.col("label"))
             .withColumn("labels",                            f.array(f.col("label"))) # TODO: Fix entity labels for medical?
             .withColumn("all_categories",                    f.array(f.col("label")))
             .withColumn("equivalent_identifiers",            f.array(f.col("id")))
@@ -59,7 +60,7 @@ class MedicalTransformer(GraphTransformer):
             .withColumn("predicate",                     f.col("Label")) # TODO fix
             .withColumn("upstream_data_source",          f.array(f.lit("ec_medical")))
             .withColumn("knowledge_level",               f.lit(None).cast(T.StringType()))
-            .withColumn("aggregator_knowledge_source",   f.array(f.col("knowledge_source")))
+            .withColumn("aggregator_knowledge_source",   f.array(f.lit('medical team')))
             .withColumn("primary_knowledge_source",      f.lit('medical team').cast(T.StringType()))
             .withColumn("publications",                  f.array(f.lit('medical team')))
             .withColumn("subject_aspect_qualifier",      f.lit(None).cast(T.StringType())) #not present
