@@ -477,7 +477,7 @@ fabricator.ec_medical_kg:
         type: faker
         provider: sentence
 
-      category:
+      label:
         type: generate_values
         sample_values:
           - biolink:Drug

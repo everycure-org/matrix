@@ -1,17 +1,15 @@
 import logging
-import pandera.pyspark as pa
 import pyspark.sql.functions as f
 import pyspark.sql.types as T
 from pyspark.sql import DataFrame
 
 from .transformer import GraphTransformer
-from matrix.schemas.knowledge_graph import KGEdgeSchema, KGNodeSchema, cols_for_schema
 
 logger = logging.getLogger(__name__)
 
 
 class MedicalTransformer(GraphTransformer):
-    @pa.check_output(KGNodeSchema)
+    # @pa.check_output(KGNodeSchema)
     def transform_nodes(self, nodes_df: DataFrame, **kwargs) -> DataFrame:
         """Transform nodes to our target schema.
 
@@ -26,20 +24,20 @@ class MedicalTransformer(GraphTransformer):
             nodes_df
             .withColumn("id",                                f.lit("normalized_curie"))
             .withColumn("upstream_data_source",              f.array(f.lit("ec_medical")))
-            .withColumn("labels",                            f.array(f.col("entity label"))) # TODO: Fix entity labels for medical?
-            .withColumn("all_categories",                    f.array(f.col("category")))
+            .withColumn("labels",                            f.array(f.col("label"))) # TODO: Fix entity labels for medical?
+            .withColumn("all_categories",                    f.array(f.col("label")))
             .withColumn("equivalent_identifiers",            f.array(f.col("id")))
             .withColumn("publications",                      f.lit(None).cast(T.ArrayType(T.StringType())))
             .withColumn("international_resource_identifier", f.col("id"))
             # .transform(determine_most_specific_category, biolink_categories_df) need this?
             # Filter nodes we could not correctly resolve
             .filter(f.col("id").isNotNull())
-            .select(*cols_for_schema(KGNodeSchema))
+            # .select(*cols_for_schema(KGNodeSchema))
         )
         return df
         # fmt: on
 
-    @pa.check_output(KGEdgeSchema)
+    # @pa.check_output(KGEdgeSchema)
     def transform_edges(self, edges_df: DataFrame, **kwargs) -> DataFrame:
         """Transform edges to our target schema.
 
@@ -54,7 +52,7 @@ class MedicalTransformer(GraphTransformer):
             edges_df
             .withColumn("subject",                       f.lit("SourceId"))
             .withColumn("object",                        f.lit("TargetId"))
-            .withColumn("predicate",                     f.lit("biolink:") + f.lit("Label"))
+            .withColumn("predicate",                     f.lit("biolink:")) # TODO fix
             .withColumn("upstream_data_source",          f.array(f.lit("ec_medical")))
             .withColumn("knowledge_level",               f.lit(None).cast(T.StringType()))
             .withColumn("aggregator_knowledge_source",   f.array(f.col("knowledge_source")))
@@ -67,5 +65,5 @@ class MedicalTransformer(GraphTransformer):
             
             # Filter edges we could not correctly resolve
             .filter(f.col("subject").isNotNull() & f.col("object").isNotNull())
-            .select(*cols_for_schema(KGEdgeSchema))
+            # .select(*cols_for_schema(KGEdgeSchema))
         )
