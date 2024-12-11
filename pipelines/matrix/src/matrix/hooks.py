@@ -255,3 +255,35 @@ class NodeTimerHooks:
             self.node_times[name]["end"] = datetime.now()
         else:
             raise Exception("there should be a node starting timer")
+
+
+class InfoHooks:
+    _kedro_context: Optional[KedroContext] = None
+
+    @classmethod
+    def set_context(cls, context: KedroContext) -> None:
+        """Utility class method that stores context in class as singleton."""
+        cls._kedro_context = context
+
+    @hook_impl
+    def after_context_created(self, context: KedroContext) -> None:
+        """Remember context for later export from a node hook."""
+        logger.info("Remembering context for context export later")
+        InfoHooks.set_context(context)
+
+    @hook_impl
+    def after_node_run(self, node) -> None:
+        """For nodes without inputs, we remember the start here."""
+        context = InfoHooks._kedro_context
+        if node.name != "dummy":  # ingest_kg_edges - last node of data release pipeline:
+            global_config = context.config_loader["globals"]
+            params = context.config_loader["parameters"]
+
+            release_version = global_config["versions"]["release"]
+            data_sources = global_config["data_sources"]
+            catalog_list = context.catalog.list()
+            datasets = context.catalog.datasets
+
+            encoder = params["embeddings.node"]["encoder"]["encoder"]["model"]
+            topo = params["embeddings.topological_estimator"]["object"]
+            return topo, encoder, datasets, catalog_list, data_sources, release_version
