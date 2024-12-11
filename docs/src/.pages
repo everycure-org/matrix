@@ -2,8 +2,8 @@ nav:
     - index.md
     - onboarding
     - pipeline
-    - experiments
-    - releases
-    - FAQ
     - data_science
     - infrastructure
+    - releases
+    - experiments
+    - FAQ

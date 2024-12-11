@@ -1,7 +1,7 @@
-from kedro.pipeline import Pipeline, node
-from kedro.pipeline.modular_pipeline import pipeline
+from kedro.pipeline import Pipeline, pipeline
 
 from matrix import settings
+from matrix.kedro4argo_node import ARGO_GPU_NODE_MEDIUM, argo_node
 
 from . import nodes
 
@@ -9,17 +9,17 @@ from . import nodes
 def _create_model_shard_pipeline(model: str, shard: int) -> Pipeline:
     return pipeline(
         [
-            node(
+            argo_node(
                 func=nodes.create_model_input_nodes,
                 inputs=[
-                    "modelling.feat.rtx_kg2",
+                    "modelling.model_input.drugs_diseases_nodes@pandas",
                     "modelling.model_input.splits",
                     f"params:modelling.{model}.model_options.generator",
                 ],
                 outputs=f"modelling.{model}.{shard}.model_input.enriched_splits",
                 name=f"enrich_{model}_{shard}_splits",
             ),
-            node(
+            argo_node(
                 func=nodes.apply_transformers,
                 inputs=[
                     f"modelling.{model}.{shard}.model_input.enriched_splits",
@@ -28,7 +28,7 @@ def _create_model_shard_pipeline(model: str, shard: int) -> Pipeline:
                 outputs=f"modelling.{model}.{shard}.model_input.transformed_splits",
                 name=f"transform_{model}_{shard}_data",
             ),
-            node(
+            argo_node(
                 func=nodes.tune_parameters,
                 inputs={
                     "data": f"modelling.{model}.{shard}.model_input.transformed_splits",
@@ -39,8 +39,9 @@ def _create_model_shard_pipeline(model: str, shard: int) -> Pipeline:
                     f"modelling.{model}.{shard}.reporting.tuning_convergence_plot",
                 ],
                 name=f"tune_model_{model}_{shard}_parameters",
+                argo_config=ARGO_GPU_NODE_MEDIUM,
             ),
-            node(
+            argo_node(
                 func=nodes.train_model,
                 inputs=[
                     f"modelling.{model}.{shard}.model_input.transformed_splits",
@@ -50,6 +51,7 @@ def _create_model_shard_pipeline(model: str, shard: int) -> Pipeline:
                 ],
                 outputs=f"modelling.{model}.{shard}.models.model",
                 name=f"train_{model}_{shard}_model",
+                argo_config=ARGO_GPU_NODE_MEDIUM,
             ),
         ],
         tags=["argowf.fuse", f"argowf.fuse-group.{model}.shard-{shard}"],
@@ -61,7 +63,7 @@ def _create_model_pipeline(model: str, num_shards: int) -> Pipeline:
         [
             pipeline(
                 [
-                    node(
+                    argo_node(
                         func=nodes.fit_transformers,
                         inputs=[
                             "modelling.model_input.splits",
@@ -70,6 +72,7 @@ def _create_model_pipeline(model: str, num_shards: int) -> Pipeline:
                         outputs=f"modelling.{model}.model_input.transformers",
                         name=f"fit_{model}_transformers",
                         tags=model,
+                        argo_config=ARGO_GPU_NODE_MEDIUM,
                     )
                 ]
             ),
@@ -82,14 +85,15 @@ def _create_model_pipeline(model: str, num_shards: int) -> Pipeline:
             ],
             pipeline(
                 [
-                    node(
+                    argo_node(
                         func=nodes.create_model,
                         inputs=[f"modelling.{model}.{shard}.models.model" for shard in range(num_shards)],
                         outputs=f"modelling.{model}.models.model",
                         name=f"create_{model}_model",
                         tags=model,
+                        argo_config=ARGO_GPU_NODE_MEDIUM,
                     ),
-                    node(
+                    argo_node(
                         func=nodes.apply_transformers,
                         inputs=[
                             "modelling.model_input.splits",
@@ -98,7 +102,7 @@ def _create_model_pipeline(model: str, num_shards: int) -> Pipeline:
                         outputs=f"modelling.{model}.model_input.transformed_splits",
                         name=f"transform_{model}_data",
                     ),
-                    node(
+                    argo_node(
                         func=nodes.get_model_predictions,
                         inputs={
                             "data": f"modelling.{model}.model_input.transformed_splits",
@@ -108,8 +112,9 @@ def _create_model_pipeline(model: str, num_shards: int) -> Pipeline:
                         },
                         outputs=f"modelling.{model}.model_output.predictions",
                         name=f"get_{model}_model_predictions",
+                        argo_config=ARGO_GPU_NODE_MEDIUM,
                     ),
-                    node(
+                    argo_node(
                         func=nodes.check_model_performance,
                         inputs={
                             "data": f"modelling.{model}.model_output.predictions",
@@ -131,41 +136,41 @@ def create_pipeline(**kwargs) -> Pipeline:
     create_model_input = pipeline(
         [
             # Construct ground_truth
-            node(
-                func=nodes.create_int_pairs,
+            argo_node(
+                func=nodes.filter_valid_pairs,
                 inputs=[
-                    "modelling.raw.ground_truth.positives",
-                    "modelling.raw.ground_truth.negatives",
+                    "integration.prm.filtered_nodes",
+                    "modelling.raw.ground_truth.positives@spark",
+                    "modelling.raw.ground_truth.negatives@spark",
                 ],
-                outputs="modelling.int.known_pairs",
+                outputs={"pairs": "modelling.raw.known_pairs@spark", "metrics": "modelling.reporting.gt_present"},
+                name="filter_valid_pairs",
+            ),
+            argo_node(
+                func=nodes.attach_embeddings,
+                inputs=[
+                    "modelling.raw.known_pairs@spark",
+                    "embeddings.feat.nodes",
+                ],
+                outputs="modelling.int.known_pairs@spark",
                 name="create_int_known_pairs",
             ),
-            node(
+            argo_node(
                 func=nodes.prefilter_nodes,
                 inputs=[
+                    "integration.prm.filtered_nodes",
                     "embeddings.feat.nodes",
+                    "modelling.raw.known_pairs@spark",
                     "params:modelling.drug_types",
                     "params:modelling.disease_types",
                 ],
                 outputs="modelling.model_input.drugs_diseases_nodes@spark",
                 name="prefilter_nodes",
             ),
-            node(
-                func=nodes.create_feat_nodes,
-                inputs=[
-                    "modelling.model_input.drugs_diseases_nodes@spark",
-                    "modelling.int.known_pairs",
-                    "params:modelling.drug_types",
-                    "params:modelling.disease_types",
-                ],
-                outputs="modelling.feat.rtx_kg2",
-                name="create_feat_nodes",
-            ),
-            node(
+            argo_node(
                 func=nodes.make_splits,
                 inputs=[
-                    "modelling.feat.rtx_kg2",
-                    "modelling.int.known_pairs",
+                    "modelling.int.known_pairs@pandas",
                     "params:modelling.splitter",
                 ],
                 outputs="modelling.model_input.splits",

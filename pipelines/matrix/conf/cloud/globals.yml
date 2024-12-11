@@ -1,28 +1,35 @@
 run_name: ${oc.env:RUN_NAME}
 
 versions:
-  release: v0.2.3
-  
+  release: ${oc.env:RELEASE_VERSION,v0.2.5.1-rtx.node2vec}
+
+release_folder_name: ${oc.env:RELEASE_FOLDER_NAME, releases}
+
+release_dir: ${gcs_bucket}/kedro/data/${release_folder_name}/${versions.release}
+run_dir: ${release_dir}/runs/${run_name}
+
 gcs_bucket: gs://${oc.env:GCP_BUCKET}
 gcp_project: ${oc.env:GCP_PROJECT_ID}
 
 # NOTE: MLflow does not like "new options" in the mlflow.yml
 # due to schema validation.
-mlflow_artifact_root: ${gcs_bucket}/runs/${run_name}/mlflow
+mlflow_artifact_root: ${run_dir}/mlflow
 
 paths:
-  raw:                gs://mtrx-us-central1-hub-dev-storage/kedro/data/01_raw
+  raw:                ${gcs_bucket}/kedro/data/01_raw
   kg_raw:             ${gcs_bucket}/data/01_RAW
-  ingestion:          ${gcs_bucket}/kedro/data/ingestion
 
   # Release-based
-  integration:        ${gcs_bucket}/kedro/data/releases/${versions.release}/datasets/integration
-  embeddings:         ${gcs_bucket}/kedro/data/releases/${versions.release}/datasets/embeddings
+  ingestion:          ${release_dir}/datasets/ingestion
+  integration:        ${release_dir}/datasets/integration
+  embeddings:         ${release_dir}/datasets/embeddings
+  release:            ${release_dir}/datasets/release
 
   # Run-based
-  modelling:          ${gcs_bucket}/kedro/data/releases/${versions.release}/runs/${run_name}/datasets/modelling
-  evaluation:         ${gcs_bucket}/kedro/data/releases/${versions.release}/runs/${run_name}/datasets/evaluation
-  matrix_generation:  ${gcs_bucket}/kedro/data/releases/${versions.release}/runs/${run_name}/datasets/matrix_generation
-  inference:          ${gcs_bucket}/kedro/data/releases/${versions.release}/runs/${run_name}/datasets/inference
+  modelling:          ${run_dir}/datasets/modelling
+  evaluation:         ${run_dir}/datasets/evaluation
+  matrix_generation:  ${run_dir}/datasets/matrix_generation
+  inference:          ${run_dir}/datasets/inference
 
-  tmp:                ${gcs_bucket}/kedro/data/tmp
+  # Tmp. directory using k8s emph. storage
+  tmp:           /tmp

@@ -436,10 +436,12 @@ IndexError: tuple index out of range
 ```
 This error is most likely due to data fabricator version being outdated after the most recent updates to main. A simple solution is to clean your current venv, re-create and re-install the venv with needed dependencies:
 ```
+uv cache clean # if you use pip or other library management tool, you should clean cache of that
 deactivate # ensure no venv is active
 make clean
 make
 ```
+
 However we noted that error persists if you have miniconda3 or conda installed on your system. Note that conda and uv (which is a preferred package management system) are very incompatible and using both might lead to errors. Therefore, if you run the command above and still get the IndexError, please make sure you have no miniconda installed. If you do have miniconda on your system, you might need to remove it or ensure it's completely separated. Once it's removed, you should re-do re-create the matrix repo and re-install venv as mentioned above
 
 
@@ -457,3 +459,7 @@ If no project is listed, then it can be set by running:
 ```
 gcloud config set project mtrx-hub-dev-3of
 ```
+### Issue with kedro run -e test -p test after updating git pull.
+```filter_by_category() missing 1 required positional argument: 'categories```
+
+This is due to our local libraries (e.g. `data_fabricator`) being cached in the uv cache and thus not being installed to the latest version when running `make install`. Cleaning the uv cache solves this issue which you can do via `make clean` and then run a fresh `make install`.

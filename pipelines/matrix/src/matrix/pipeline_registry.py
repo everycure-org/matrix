@@ -37,11 +37,15 @@ def register_pipelines() -> Dict[str, Pipeline]:
 
     # Higher order pipelines
     # fmt: off
-    pipelines["kg_release"] = (
+    pipelines["data_engineering"] = (
           pipelines["ingestion"]
         + pipelines["integration"]
+        + pipelines["embeddings"]
+    )
+    pipelines["kg_release"] = (
+        pipelines["data_engineering"]
         + pipelines["data_release"] 
-    )  # + embeddings, #TODO currently excluded
+    )
     pipelines["modelling_run"] = (
           pipelines["modelling"]
         + pipelines["matrix_generation"]
@@ -49,7 +53,6 @@ def register_pipelines() -> Dict[str, Pipeline]:
     )
     pipelines["__default__"] = (
           pipelines["kg_release"]
-        + pipelines["embeddings"] # TODO move this back to the kg_release once embedding works well
         + pipelines["modelling_run"]
     )
 

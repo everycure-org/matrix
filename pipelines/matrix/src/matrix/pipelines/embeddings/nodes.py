@@ -3,53 +3,30 @@ from typing import Any, Dict, List
 
 import matplotlib.pyplot as plt
 import pandas as pd
-import requests
+import numpy as np
 import seaborn as sns
-from graphdatascience import GraphDataScience, QueryRunner
-from neo4j import Driver, GraphDatabase
-from pyspark.ml.functions import array_to_vector, vector_to_array
-from pyspark.sql import DataFrame
+
+from graphdatascience import GraphDataScience
+
+import pyspark.sql.types as T
+from pyspark.sql import DataFrame, SparkSession
 from pyspark.sql import functions as F
-from pyspark.sql.functions import udf
-from pyspark.sql.types import ArrayType, FloatType, StringType
+from pyspark.sql.types import StringType
 from pyspark.sql.window import Window
+from pyspark.ml.functions import array_to_vector, vector_to_array
+
 from refit.v1.core.inject import inject_object
 from refit.v1.core.inline_has_schema import has_schema
 from refit.v1.core.inline_primary_key import primary_key
 from refit.v1.core.unpack import unpack_params
-from tenacity import (
-    retry,
-    stop_after_attempt,
-    wait_random_exponential,
-)
+
+from tenacity import retry, wait_exponential, stop_after_attempt
 
 from .graph_algorithms import GDSGraphAlgorithm
+from .encoders import AttributeEncoder
+from matrix.pipelines.modelling.nodes import no_nulls
 
 logger = logging.getLogger(__name__)
-
-
-class GraphDB:
-    """Adaptor class to allow injecting the GraphDB object.
-
-    This is due to a drawback where refit cannot inject a tuple into
-    the constructor of an object.
-    """
-
-    def __init__(
-        self,
-        *,
-        endpoint: str | Driver | QueryRunner,
-        auth: F.Tuple[str] | None = None,
-        database: str | None = None,
-    ):
-        """Create `GraphDB` instance."""
-        self._endpoint = endpoint
-        self._auth = tuple(auth)
-        self._database = database
-
-    def driver(self):
-        """Return the driver object."""
-        return GraphDatabase.driver(self._endpoint, auth=self._auth)
 
 
 class GraphDS(GraphDataScience):
@@ -62,7 +39,7 @@ class GraphDS(GraphDataScience):
     def __init__(
         self,
         *,
-        endpoint: str | Driver | QueryRunner,
+        endpoint: str,
         auth: F.Tuple[str] | None = None,
         database: str | None = None,
     ):
@@ -120,95 +97,118 @@ def ingest_nodes(df: DataFrame) -> DataFrame:
     )
 
 
-class RateLimitException(Exception):
-    """RateLimitException."""
+def bucketize_df(df: DataFrame, bucket_size: int, input_features: List[str], max_input_len: int):
+    """Function to bucketize input dataframe.
 
-    pass
-
-
-@retry(
-    wait=wait_random_exponential(min=1, max=60),
-    stop=stop_after_attempt(10),
-)
-def batch(endpoint, model, api_key, batch):
-    """Function to resolve batch."""
-    if len(batch) == 0:
-        raise RuntimeError("Empty batch!")
-
-    headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
-    data = {"input": batch, "model": model}
-
-    response = requests.post(f"{endpoint}/embeddings", headers=headers, json=data)
-
-    if response.status_code == 200:
-        return [item["embedding"] for item in response.json()["data"]]
-    else:
-        if response.status_code in [429, 500]:
-            raise RateLimitException()
-
-        print("error", response.content, response.status_code)
-        raise RuntimeError()
-
-
-@unpack_params()
-@inject_object()
-def compute_embeddings(
-    input: DataFrame,
-    features: List[str],
-    attribute: str,
-    api_key: str,
-    batch_size: int,
-    endpoint: str,
-    model: str,
-):
-    """Function to orchestrate embedding computation in Neo4j.
+    Function bucketizes the input dataframe in N buckets, each of size `bucket_size`
+    elements. Moreover, it concatenates the `features` into a single column and limits the
+    length to `max_input_len`.
 
     Args:
-        input: input df
-        gdb: graph database instance
-        features: features to include to compute embeddings
-        api_key: api key to use
-        batch_size: batch size
-        attribute: attribute to add
-        endpoint: endpoint to use
-        model: model to use
+        df: Dataframe to bucketize
+        attributes: to keep
+        bucket_size: size of the buckets
     """
-    batch_udf = F.udf(lambda z: batch(endpoint, model, api_key, z), ArrayType(ArrayType(FloatType())))
 
-    window = Window.orderBy(F.lit(1))
-
-    res = (
-        input.withColumn("row_num", F.row_number().over(window))
-        .repartition(128)
-        .withColumn("batch", F.floor((F.col("row_num") - 1) / batch_size))
-        # NOTE: There is quite a lot of nodes without name and description, thereby resulting
-        # in embeddings of the empty string.
+    # Order and bucketize elements
+    return (
+        df.transform(_bucketize, bucket_size=bucket_size)
         .withColumn(
-            "input",
-            F.concat(*[F.coalesce(F.col(feature), F.lit("")) for feature in features]),
+            "text_to_embed",
+            F.concat(*[F.coalesce(F.col(feature), F.lit("")) for feature in input_features]),
         )
-        .withColumn("input", F.substring(F.col("input"), 1, 512))  # TODO: Extract param
-        .groupBy("batch")
-        .agg(
-            F.collect_list("id").alias("id"),
-            F.collect_list("input").alias("input"),
-        )
-        .repartition(128)
-        # .withColumn("num_ids", F.size(F.col("id")))
-        # .withColumn("num_input", F.size(F.col("input")))
-        # .withColumn("validated",  F.when(F.col("num_ids") == F.col("num_input"), True).otherwise(False))
-        .withColumn(attribute, batch_udf(F.col("input")))
-        .withColumn("_conc", F.arrays_zip(F.col("id"), F.col(attribute)))
-        .withColumn("exploded", F.explode(F.col("_conc")))
-        .select(
-            F.col("exploded.id").alias("id"),
-            F.col(f"exploded.{attribute}").alias(attribute),
-        )
-        .repartition(128)
-        .join(input, on="id")
+        .withColumn("text_to_embed", F.substring(F.col("text_to_embed"), 1, max_input_len))
+        .select("id", "text_to_embed", "bucket")
     )
 
-    return res
+
+def _bucketize(df: DataFrame, bucket_size: int) -> pd.DataFrame:
+    """Function to bucketize df in given number of buckets.
+
+    Args:
+        df: dataframe to bucketize
+        bucket_size: size of the buckets
+    Returns:
+        Dataframe augmented with `bucket` column
+    """
+
+    # Retrieve number of elements
+    num_elements = df.count()
+    num_buckets = (num_elements + bucket_size - 1) // bucket_size
+
+    # Construct df to bucketize
+    spark_session: SparkSession = SparkSession.builder.getOrCreate()
+
+    # Bucketize df
+    buckets = spark_session.createDataFrame(
+        data=[(bucket, bucket * bucket_size, (bucket + 1) * bucket_size) for bucket in range(num_buckets)],
+        schema=["bucket", "min_range", "max_range"],
+    )
+
+    return df.withColumn("row_num", F.row_number().over(Window.orderBy("id")) - F.lit(1)).join(
+        buckets, on=[(F.col("row_num") >= (F.col("min_range"))) & (F.col("row_num") < F.col("max_range"))]
+    )
+
+
+@inject_object()
+def compute_embeddings(
+    dfs: Dict[str, Any],
+    encoder: AttributeEncoder,
+):
+    """Function to bucketize input data.
+
+    Args:
+        dfs: mapping of paths to df load functions
+        encoder: encoder to run
+    """
+
+    # NOTE: Inner function to avoid reference issues on unpacking
+    # the dataframe, therefore leading to only the latest shard
+    # being processed n times.
+    def _func(dataframe: pd.DataFrame):
+        return lambda df=dataframe: encoder.encode(df())
+
+    shards = {}
+    for path, df in dfs.items():
+        # Little bit hacky, but extracting batch from hive partitioning for input path
+        # As we know the input paths to this dataset are of the format /shard={num}
+        bucket = path.split("/")[0].split("=")[1]
+
+        # Invoke function to compute embeddings
+        shard_path = f"bucket={bucket}/shard"
+        shards[shard_path] = _func(df)
+
+    return shards
+
+
+@retry(wait=wait_exponential(multiplier=1, min=2, max=10), stop=stop_after_attempt(3))
+async def compute_df_embeddings_async(df: pd.DataFrame, embedding_model) -> pd.DataFrame:
+    try:
+        # Embed entities in batch mode
+        combined_texts = df["text_to_embed"].tolist()
+        df["embedding"] = await embedding_model.aembed_documents(combined_texts)
+
+        # Ensure floats
+        df["embedding"] = df["embedding"].apply(lambda emb: np.array(emb, dtype=np.float32))
+    except Exception as e:
+        print(f"Exception occurred: {e}")
+        raise e
+
+    # Drop added column
+    df = df.drop(columns=["text_to_embed"])
+    return df
+
+
+@has_schema(
+    schema={
+        "embedding": "array<float>",
+        "pca_embedding": "array<float>",
+    }
+)
+@no_nulls(columns=["embedding", "pca_embedding"])
+@unpack_params()
+def reduce_embeddings_dimension(df: DataFrame, transformer, input: str, output: str, skip: bool):
+    return reduce_dimension(df, transformer, input, output, skip)
 
 
 @unpack_params()
@@ -231,10 +231,10 @@ def reduce_dimension(df: DataFrame, transformer, input: str, output: str, skip: 
                    embeddings, depending on the 'skip' parameter.
     """
     if skip:
-        return df.withColumn(output, F.col(input))
+        return df.withColumn(output, F.col(input).cast("array<float>"))
 
     # Convert into correct type
-    df = df.withColumn("features", array_to_vector(input))
+    df = df.withColumn("features", array_to_vector(F.col(input).cast("array<float>")))
 
     # Link
     transformer.setInputCol("features")
@@ -244,10 +244,54 @@ def reduce_dimension(df: DataFrame, transformer, input: str, output: str, skip: 
         transformer.fit(df)
         .transform(df)
         .withColumn(output, vector_to_array("pca_features"))
+        .withColumn(output, F.col(output).cast("array<float>"))
         .drop("pca_features", "features")
     )
 
     return res
+
+
+def filter_edges_for_topological_embeddings(
+    nodes: DataFrame, edges: DataFrame, drug_types: List[str], disease_types: List[str]
+):
+    """Function to filter edges for topological embeddings process.
+
+    The function removes edges connecting drug and disease nodes to avoid data leakage. Currently
+    uses the `all_categories` to remove drug-disease edges.
+
+    FUTURE: Ensure edges from ground truth dataset are explicitly removed.
+
+    Args:
+        nodes: nodes dataframe
+        edges: edges dataframe
+        drug_types: list of drug types
+        disease_types: list of disease types
+    Returns:
+        Dataframe with filtered edges
+    """
+
+    def _create_mapping(column: str):
+        return nodes.alias(column).withColumn(column, F.col("id")).select(column, "all_categories")
+
+    df = (
+        edges.alias("edges")
+        .join(_create_mapping("subject"), how="left", on="subject")
+        .join(_create_mapping("object"), how="left", on="object")
+        # FUTURE: Improve with proper feature engineering engine
+        .withColumn("subject_is_drug", F.arrays_overlap(F.col("subject.all_categories"), F.lit(drug_types)))
+        .withColumn("subject_is_disease", F.arrays_overlap(F.col("subject.all_categories"), F.lit(disease_types)))
+        .withColumn("object_is_drug", F.arrays_overlap(F.col("object.all_categories"), F.lit(drug_types)))
+        .withColumn("object_is_disease", F.arrays_overlap(F.col("object.all_categories"), F.lit(disease_types)))
+        .withColumn(
+            "is_drug_disease_edge",
+            (F.col("subject_is_drug") & F.col("object_is_disease"))
+            | (F.col("subject_is_disease") & F.col("object_is_drug")),
+        )
+        .filter(~F.col("is_drug_disease_edge"))
+        .select("edges.*")
+    )
+
+    return df
 
 
 def ingest_edges(nodes, edges: DataFrame):
@@ -268,29 +312,6 @@ def ingest_edges(nodes, edges: DataFrame):
     )
 
 
-@inject_object()
-def add_include_in_graphsage(df: DataFrame, gdb: GraphDB, drug_types: List[str], disease_types: List[str]) -> Dict:
-    """Function to add include_in_graphsage property.
-
-    Only edges between non drug-disease pairs are included in graphsage.
-    """
-    with gdb.driver() as driver:
-        driver.execute_query(
-            """
-            MATCH (n)-[r]-(m)
-            WHERE 
-                n.category IN $drug_types 
-                AND m.category IN $disease_types
-            SET r.include_in_graphsage = 0
-            """,
-            database_=gdb._database,
-            drug_types=drug_types,
-            disease_types=disease_types,
-        )
-
-    return {"success": "true"}
-
-
 @unpack_params()
 @inject_object()
 def train_topological_embeddings(
@@ -298,7 +319,6 @@ def train_topological_embeddings(
     gds: GraphDataScience,
     topological_estimator: GDSGraphAlgorithm,
     projection: Any,
-    filtering: Any,
     estimator: Any,
     write_property: str,
 ) -> Dict:
@@ -326,16 +346,6 @@ def train_topological_embeddings(
     config = projection.pop("configuration", {})
     graph, _ = gds.graph.project(*projection.values(), **config)
 
-    # Filter out treat/GT nodes from the graph
-    subgraph_name = filtering.get("graphName")
-    filter_args = filtering.pop("args")
-    # Drop graph if exists
-    if gds.graph.exists(subgraph_name).exists:
-        subgraph = gds.graph.get(subgraph_name)
-        gds.graph.drop(subgraph, False)
-
-    subgraph, _ = gds.graph.filter(subgraph_name, graph, **filter_args)
-
     # Validate whether the model exists
     model_name = estimator.get("modelName")
     if gds.model.exists(model_name).exists:
@@ -343,7 +353,7 @@ def train_topological_embeddings(
         gds.model.drop(model)
 
     # Initialize the model
-    topological_estimator.run(gds=gds, model_name=model_name, graph=subgraph, write_property=write_property)
+    topological_estimator.run(gds=gds, model_name=model_name, graph=graph, write_property=write_property)
     losses = topological_estimator.return_loss()
 
     # Plot convergence
@@ -367,7 +377,6 @@ def write_topological_embeddings(
     topological_estimator: GDSGraphAlgorithm,
     projection: Any,
     estimator: Any,
-    filtering: Any,
     write_property: str,
 ) -> Dict:
     """Write topological embeddings."""
@@ -381,23 +390,24 @@ def write_topological_embeddings(
     return {"success": "true"}
 
 
-def string_to_float_list(s: str) -> List[float]:
-    """UDF to transform str into list. Fix for Node2Vec array being written as string."""
-    if s is not None:
-        return [float(x) for x in s.strip()[1:-1].split(",")]
-    return []
-
-
-def extract_node_embeddings(nodes: DataFrame, string_col: str) -> DataFrame:
+@no_nulls(columns=["pca_embedding", "topological_embedding"])
+@primary_key(primary_key=["id"])
+def extract_topological_embeddings(embeddings: DataFrame, nodes: DataFrame, string_col: str) -> DataFrame:
     """Extract topological embeddings from Neo4j and write into BQ.
 
     Need a conditional statement due to Node2Vec writing topological embeddings as string. Raised issue in GDS client:
     https://github.com/neo4j/graph-data-science-client/issues/742#issuecomment-2324737372.
     """
-    if isinstance(nodes.schema[string_col].dataType, StringType):
-        string_to_float_list_udf = udf(string_to_float_list, ArrayType(FloatType()))
-        nodes = nodes.withColumn(string_col, string_to_float_list_udf(F.col(string_col)))
-    return nodes
+
+    if isinstance(embeddings.schema[string_col].dataType, StringType):
+        print("converting embeddings to float")
+        embeddings = embeddings.withColumn(string_col, F.from_json(F.col(string_col), T.ArrayType(T.DoubleType())))
+
+    return (
+        nodes.alias("nodes")
+        .join(embeddings.alias("embeddings"), on="id", how="left")
+        .select("nodes.*", "embeddings.pca_embedding", "embeddings.topological_embedding")
+    )
 
 
 def visualise_pca(nodes: DataFrame, column_name: str):
@@ -418,13 +428,3 @@ def visualise_pca(nodes: DataFrame, column_name: str):
     plt.tight_layout(rect=[0, 0, 0.85, 1])
 
     return fig
-
-
-def extract_nodes_edges(nodes: DataFrame, edges: DataFrame) -> tuple[DataFrame, DataFrame]:
-    """Simple node/edge extractor function.
-
-    Args:
-        nodes: the nodes from the KG
-        edges: the edges from the KG
-    """
-    return {"enriched_nodes": nodes, "enriched_edges": edges}
