@@ -1,22 +1,42 @@
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  name: neo4j-bolt-ingress
-  namespace: neo4j
-  annotations:
-    external-dns.alpha.kubernetes.io/hostname: neo4j-bolt.dev.everycure.org
-    nginx.ingress.kubernetes.io/ssl-passthrough: "true"
-    # Specify that this is a TCP proxy
-    nginx.ingress.kubernetes.io/tcp-services-configmap: "neo4j/tcp-services"
-spec:
-  ingressClassName: nginx
-  rules:
-  - host: "bolt.neo4j.dev.everycure.org"
+# NOTE: This file was partially generated using AI assistance.
+
 ---
+# TCP Services ConfigMap for bolt protocol
 apiVersion: v1
 kind: ConfigMap
 metadata:
   name: tcp-services
   namespace: neo4j
 data:
-  "7687": "neo4j/neo4j-lb-neo4j:7687"  # Format is "port: namespace/service:port"
+  "7687": "neo4j/neo4j-lb-neo4j:7687"  # Format is "namespace/service:port"
+
+---
+# HTTP/HTTPS Ingress
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: neo4j-ingress
+  namespace: neo4j
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    external-dns.alpha.kubernetes.io/hostname: "neo4j.dev.everycure.org"
+    nginx.ingress.kubernetes.io/ssl-passthrough: "true"
+    nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
+    nginx.ingress.kubernetes.io/tcp-services-configmap: "neo4j/tcp-services"
+spec:
+  ingressClassName: nginx
+  tls:
+  - hosts:
+    - "neo4j.dev.everycure.org"
+    secretName: neo4j-tls-secret
+  rules:
+  - host: "neo4j.dev.everycure.org"
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: neo4j-lb-neo4j
+            port:
+              number: 7474
