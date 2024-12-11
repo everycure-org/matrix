@@ -43,6 +43,21 @@ neo4j: # the name of the helm dependency
           port: 7687
           targetPort: 7687
           name: bolt
+  ssl:
+    bolt:
+      privateKey:
+        secretName: neo4j-tls
+        subPath: tls.key
+      publicCertificate:
+        secretName: neo4j-tls
+        subPath: tls.crt
+    https:
+      privateKey:
+        secretName: neo4j-tls
+        subPath: tls.key
+      publicCertificate:
+        secretName: neo4j-tls
+        subPath: tls.crt
   # configuration of volumes for neo4j
   volumes:
     data:
@@ -73,7 +88,17 @@ neo4j: # the name of the helm dependency
     server.default_advertised_address: "neo4j.dev.everycure.org"
     server.bolt.advertised_address: "neo4j.dev.everycure.org:7687"
 
-
+    # Enable SSL/TLS
+    dbms.ssl.policy.bolt.enabled: "true"
+    dbms.ssl.policy.https.enabled: "true"
+    
+    # Configure client certificate authentication (optional)
+    dbms.ssl.policy.bolt.client_auth: "NONE"
+    dbms.ssl.policy.https.client_auth: "NONE"
+    
+    # Base directory for SSL/TLS certificates
+    dbms.ssl.policy.bolt.base_directory: "/ssl/bolt"
+    dbms.ssl.policy.https.base_directory: "/ssl/https"
 
   apoc_config:
     apoc.import.file.enabled: "true"
