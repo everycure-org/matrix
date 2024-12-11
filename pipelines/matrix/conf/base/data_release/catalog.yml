@@ -42,19 +42,3 @@ data_release.prm.kg_edges:
 #       WITH n, event
 #       CALL apoc.create.setProperties(n, ['topological_embedding'], [event.topological_embedding]) YIELD node
 #       RETURN node
-
-_spark_kgx_ds: &_spark_kgx_ds
-  type: matrix.datasets.gcp.LazySparkDataset
-  file_format: csv
-  save_args:
-    mode: overwrite
-    sep: '\t'
-    header: True
-
-data_release.prm.kgx_nodes:
-  <<: *_spark_kgx_ds
-  filepath: ${globals:paths.release}/kgx/nodes.tsv
-
-data_release.prm.kgx_edges:
-  <<: *_spark_kgx_ds
-  filepath: ${globals:paths.release}/kgx/edges.tsv
