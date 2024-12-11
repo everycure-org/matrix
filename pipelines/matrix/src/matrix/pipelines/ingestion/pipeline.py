@@ -1,5 +1,5 @@
 import pyspark.sql.functions as F
-from kedro.pipeline import Pipeline, pipeline
+from kedro.pipeline import Pipeline, pipeline, node
 from matrix.kedro4argo_node import (
     argo_node,
 )
@@ -64,14 +64,14 @@ def create_pipeline(**kwargs) -> Pipeline:
                 tags=["robokop"],
             ),
             # spoke
-            argo_node(
+            node(
                 func=lambda x: x,
                 inputs=["ingestion.raw.spoke.nodes@spark"],
                 outputs="ingestion.int.spoke.nodes",
                 name="ingest_spoke_nodes",
                 tags=["spoke"],
             ),
-            argo_node(
+            node(
                 # FUTURE: Update selection
                 func=lambda x: x,
                 inputs=["ingestion.raw.spoke.edges@spark"],
