@@ -1,12 +1,14 @@
+import os
+from pathlib import Path
 from typing import Dict, Tuple
 
 import pytest
 import yaml
+from dotenv import load_dotenv
 from kedro.pipeline import Pipeline
 from kedro.pipeline.node import Node
 from matrix.argo import FusedNode, clean_name, fuse, generate_argo_config, get_dependencies
 from matrix.kedro4argo_node import ArgoNode, ArgoResourceConfig
-from matrix import config
 
 
 def dummy_fn(*args):
@@ -442,8 +444,9 @@ def get_argo_config(argo_default_resources: ArgoResourceConfig) -> Tuple[Dict, D
         ]
     )
     pipeline_obj.name = "pipeline_one"
+    load_dotenv(Path(__file__).parents[1] / ".env.defaults")
     argo_config_yaml = generate_argo_config(
-        image=config.image_name,
+        image=os.environ["MATRIX_IMAGE"],
         run_name=run_name,
         release_version=release_version,
         image_tag=image_tag,

@@ -1,5 +1,6 @@
 import json
 import logging
+import os
 import re
 import secrets
 import subprocess
@@ -18,7 +19,6 @@ from rich.panel import Panel
 
 from matrix.argo import ARGO_TEMPLATES_DIR_PATH, generate_argo_config
 from matrix.kedro4argo_node import ArgoResourceConfig
-from matrix import config
 
 logging.basicConfig(
     level=logging.INFO,
@@ -312,7 +312,7 @@ def check_dependencies(verbose: bool):
     except subprocess.CalledProcessError:
         console.print("Authenticating kubectl...")
         run_subprocess(
-            f"gcloud container clusters get-credentials {config.cluster} --project {config.project} --region {config.region}"
+            f"gcloud container clusters get-credentials {os.environ['GCP_CLUSTER_NAME']} --project {os.environ['GCP_PROJECT_ID']} --region {os.environ['GCP_MAIN_REGION']}"
         )
 
     # Verify kubectl
@@ -338,7 +338,7 @@ def build_argo_template(run_name: str, username: str, namespace: str, pipeline_o
     release_folder_name = "releases" if release_version else "tests"
 
     return generate_argo_config(
-        image=config.image_name,
+        image=os.environ["MATRIX_IMAGE"],
         run_name=run_name,
         release_version=release_version,
         image_tag=run_name,
@@ -349,6 +349,7 @@ def build_argo_template(run_name: str, username: str, namespace: str, pipeline_o
         pipeline=pipeline_obj,
         default_execution_resources=default_execution_resources,
     )
+
 
 def save_argo_template(argo_template: str, template_directory: Path) -> str:
     file_path = template_directory / "argo-workflow-template.yml"
