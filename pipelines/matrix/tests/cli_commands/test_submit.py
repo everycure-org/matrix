@@ -304,11 +304,11 @@ def test_workflow_submission(
         [
             "argo submit",
             "--name test-run",
-            "-n test_namespace",
+            "--namespace test_namespace",
             "--from wftmpl/test-run",
-            "-p run_name=test-run",
-            "-l submit-from-ui=false",
-            "-o json",
+            "--parameter run_name=test-run",
+            "--labels submit-from-ui=false",
+            "--output json",
         ]
     )
 
