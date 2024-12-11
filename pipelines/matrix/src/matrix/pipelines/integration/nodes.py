@@ -21,6 +21,7 @@ logger = logging.getLogger(__name__)
 @pa.check_output(KGEdgeSchema)
 def union_and_deduplicate_edges(*edges) -> DataFrame:
     """Function to unify edges datasets."""
+
     # fmt: off
     return (
         _union_datasets(*edges)
