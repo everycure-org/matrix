@@ -108,3 +108,13 @@ embeddings.topological_pca:
   transformer:
     object: pyspark.ml.feature.PCA
     k: 2
+
+
+# Define subject/object category to keep and to remove
+# Default: empty list so it directly pass the integration.prm.filtered_edges to next kedro node
+embeddings.category_to_keep:
+#    - biolink:ChemicalEntity
+#    - biolink:DiseaseOrPhenotypicFeature
+
+embeddings.property_to_remove:
+    - ["primary_knowledge_source", "infores:intact"]
