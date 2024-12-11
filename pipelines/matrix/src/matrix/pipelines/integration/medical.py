@@ -26,6 +26,7 @@ class MedicalTransformer(GraphTransformer):
         # fmt: off
         df = (
             nodes_df
+            .withColumn("upstream_data_source",              f.array(f.lit("ec_medical")))
             .withColumn("labels",                            f.array(f.col("name")))
             .withColumn("all_categories",                    f.array(f.col("category")))
             .withColumn("equivalent_identifiers",            f.array(f.col("id")))
@@ -50,6 +51,7 @@ class MedicalTransformer(GraphTransformer):
         # fmt: off
         return (
             edges_df
+            .withColumn("upstream_data_source",          f.array(f.lit("ec_medical")))
             .withColumn("knowledge_level",               f.lit(None).cast(T.StringType()))
             .withColumn("aggregator_knowledge_source",   f.array(f.col("knowledge_source")))
             .withColumn("primary_knowledge_source",      f.lit('medical team').cast(T.StringType()))
