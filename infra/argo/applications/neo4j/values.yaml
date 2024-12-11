@@ -28,12 +28,12 @@ neo4j: # the name of the helm dependency
         ports:
           http:
             enabled: true
-            port: 7474
+            port: 80
             targetPort: 7474
             name: http
           https:
             enabled: true
-            port: 7473
+            port: 443
             targetPort: 7473
             name: https
           bolt:
