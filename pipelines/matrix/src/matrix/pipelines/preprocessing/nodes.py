@@ -13,16 +13,17 @@ def coalesce(s: pd.Series, *series: List[pd.Series]):
     return s
 
 
-def resolve_name(name: str, cols_to_get: List[str]):
+def resolve_name(name: str, cols_to_get: List[str]) -> dict:
     """Function to retrieve the normalized identifier through the normalizer.
 
     Args:
-        curie: curie of the node
-        endpoint: endpoint of the synonymizer
-        att_to_get: attribute to get from API
+        name: name of the node to be resolved
+        cols_to_get: attribute to get from API
     Returns:
-        Corresponding curie
+        Name and corresponding curie
     """
+    # TODO: Extend to allow retrieving multiple attributes
+    # Plan is for this to return a dict with attributes as keys and then we modify process_medical_nodes to handle this
     if not name or pd.isna(name):
         return None
 
@@ -31,8 +32,8 @@ def resolve_name(name: str, cols_to_get: List[str]):
     )
     if len(result.json()) != 0:
         element = result.json()[0]
-        # TODO: Extend to allow retrieving multiple attributes
-        return element.get("curie")
+        print({col: element.get(col) for col in cols_to_get})
+        return {col: element.get(col) for col in cols_to_get}
 
     return None
 
@@ -41,9 +42,9 @@ def resolve_name(name: str, cols_to_get: List[str]):
     schema={"ID": "numeric", "name": "object", "curie": "object", "description": "object"},
 )
 @primary_key(primary_key=["ID"])
-def process_medical_nodes(df: pd.DataFrame) -> pd.DataFrame:
+def process_medical_nodes(df: pd.DataFrame, cols_to_get: List[str]) -> pd.DataFrame:
     # Normalize the name
-    df["curie"] = df["name"].apply(resolve_name)
+    df["curie"] = df["name"].apply(resolve_name, cols_to_get=cols_to_get)
 
     # Coalesce id and new id to allow adding "new" nodes
     df["curie"] = coalesce(df["new_id"], df["curie"])
