@@ -11,6 +11,9 @@ integration:
     ec_medical_team: 
       transformer:
         object: matrix.pipelines.integration.medical.MedicalTransformer
+    ec_clinical_trails: 
+      transformer:
+        object: matrix.pipelines.integration.medical.ClinicalTrailsTransformer
 
   # FUTURE: Ensure we can move this to filters down here
   preprocessing:

@@ -71,7 +71,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                     "ingestion.raw.disease_list@pandas",
                     "matrix_generation.feat.nodes_kg_ds",
                     "modelling.model_input.splits",
-                    "ingestion.raw.clinical_trials_data",
+                    "integration.int.ec_clinical_trails.edges",
                 ],
                 outputs="matrix_generation.prm.matrix_pairs",
                 name="generate_matrix_pairs",
