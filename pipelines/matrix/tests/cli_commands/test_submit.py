@@ -1,4 +1,4 @@
-import os
+from contextlib import chdir
 import subprocess
 import tempfile
 from pathlib import Path
@@ -331,5 +331,5 @@ def test_release_exists_bad_input():
 
 
 def test_release_exists_from_non_git_folder():
-    os.chdir(tempfile.gettempdir())
-    assert mot_submit.release_exists("v1.nonexisting") is False
+    with chdir(tempfile.gettempdir()):
+        assert mot_submit.release_exists("v1.nonexisting") is False
