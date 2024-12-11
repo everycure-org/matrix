@@ -22,7 +22,7 @@ def transform_edges(transformer, edges_df: DataFrame, **kwargs):
 def _create_integration_pipeline(source: str, normalize_edges: bool = True) -> Pipeline:
     pipelines = []
 
-    pipelines.appened(
+    pipelines.append(
         pipeline(
             [
                 node(
