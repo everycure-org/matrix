@@ -92,6 +92,8 @@ def _create_integration_pipeline(source: str, normalize_edges: bool = True) -> P
             )
         )
 
+    return sum(pipelines)
+
 
 def create_pipeline(**kwargs) -> Pipeline:
     """Create integration pipeline."""
