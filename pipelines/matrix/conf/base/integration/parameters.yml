@@ -5,9 +5,9 @@ integration:
       transformer:
         object: matrix.pipelines.integration.rtxkg2.RTXTransformer
     # NOTE: Currently disabling robokop integration
-    # robokop: 
-    #   transformer:
-    #     object: matrix.pipelines.integration.robokop.RobokopTransformer
+    robokop: 
+      transformer:
+        object: matrix.pipelines.integration.robokop.RobokopTransformer
     ec_medical_team: 
       transformer:
         object: matrix.pipelines.integration.medical.MedicalTransformer

@@ -1,3 +1,4 @@
+import logging
 from typing import Any, Dict, List, Union, Tuple
 import pandas as pd
 import numpy as np
@@ -22,6 +23,8 @@ from refit.v1.core.make_list_regexable import make_list_regexable
 from matrix.datasets.graph import KnowledgeGraph
 from matrix.datasets.pair_generator import SingleLabelPairGenerator
 from .model import ModelWrapper
+
+logger = logging.getLogger(__name__)
 
 plt.switch_backend("Agg")
 
@@ -442,7 +445,10 @@ def train_model(
     X_train = data.loc[mask, features]
     y_train = data.loc[mask, target_col_name]
 
-    return estimator.fit(X_train.values, y_train.values)
+    logger.info(f"Starting model: {estimator} training...")
+    estimator_fit = estimator.fit(X_train.values, y_train.values)
+    logger.info("Model training completed...")
+    return estimator_fit
 
 
 def create_model(*estimators) -> ModelWrapper:
