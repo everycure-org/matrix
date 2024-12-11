@@ -25,24 +25,6 @@ def create_pipeline(**kwargs) -> Pipeline:
                 name="create_int_ec_medical_team_edges",
                 tags=["ec-medical-kg"],
             ),
-            node(
-                func=nodes.create_prm_nodes,
-                inputs=[
-                    "preprocessing.int.nodes",
-                ],
-                outputs="ingestion.raw.ec_medical_team.nodes@pandas",
-                name="create_prm_ec_medical_team_nodes",
-                tags=["ec-medical-kg"],
-            ),
-            node(
-                func=nodes.create_prm_edges,
-                inputs=[
-                    "preprocessing.int.edges",
-                ],
-                outputs="ingestion.raw.ec_medical_team.edges@pandas",
-                name="create_prm_ec_medical_team_edges",
-                tags=["ec-medical-kg"],
-            ),
             # TODO: Parse dataframe, add source/target curie using name normalizer and
             # in ingestion logic, extract nodes df back from edges
             # # NOTE: Take raw clinical trial data and map the "name" to "curie" using the synonymizer

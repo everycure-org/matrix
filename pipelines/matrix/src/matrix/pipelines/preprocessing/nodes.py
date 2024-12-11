@@ -87,52 +87,52 @@ def create_int_edges(int_nodes: pd.DataFrame, int_edges: pd.DataFrame) -> pd.Dat
     return res
 
 
-@has_schema(
-    schema={
-        "category": "object",
-        "id": "object",
-        "name": "object",
-        "description": "object",
-    },
-    allow_subset=True,
-)
-@primary_key(primary_key=["id"])
-def create_prm_nodes(prm_nodes: pd.DataFrame) -> pd.DataFrame:
-    """Function to create a primary nodes that contains only new nodes introduced by the source."""
+# @has_schema(
+#     schema={
+#         "category": "object",
+#         "id": "object",
+#         "name": "object",
+#         "description": "object",
+#     },
+#     allow_subset=True,
+# )
+# @primary_key(primary_key=["id"])
+# def create_prm_nodes(prm_nodes: pd.DataFrame) -> pd.DataFrame:
+#     """Function to create a primary nodes that contains only new nodes introduced by the source."""
 
-    # TODO: Use Tansformers instead for renaming
+#     # TODO: Use Tansformers instead for renaming
 
-    # `new_id` signals that the node should be added to the KG as a new id
-    # we drop the original ID from the spreadsheat, and leverage the new_id as the final id
-    # in the dataframe. We only retain nodes where the new_id is set
-    res = prm_nodes[prm_nodes["curie"].notna()].drop(columns="ID").rename(columns={"curie": "id"}).drop_duplicates("id")
-    res["category"] = "biolink:" + prm_nodes["entity label"]
-    return res
+#     # `new_id` signals that the node should be added to the KG as a new id
+#     # we drop the original ID from the spreadsheat, and leverage the new_id as the final id
+#     # in the dataframe. We only retain nodes where the new_id is set
+#     res = prm_nodes[prm_nodes["curie"].notna()].drop(columns="ID").rename(columns={"curie": "id"}).drop_duplicates("id")
+#     res["category"] = "biolink:" + prm_nodes["entity label"]
+#     return res
 
 
-@has_schema(
-    schema={
-        "subject": "object",
-        "predicate": "object",
-        "object": "object",
-        "knowledge_source": "object",
-    },
-    allow_subset=True,
-)
-@primary_key(primary_key=["subject", "predicate", "object"])
-def create_prm_edges(int_edges: pd.DataFrame) -> pd.DataFrame:
-    """Function to create a primary edges dataset by filtering and renaming columns."""
+# @has_schema(
+#     schema={
+#         "subject": "object",
+#         "predicate": "object",
+#         "object": "object",
+#         "knowledge_source": "object",
+#     },
+#     allow_subset=True,
+# )
+# @primary_key(primary_key=["subject", "predicate", "object"])
+# def create_prm_edges(int_edges: pd.DataFrame) -> pd.DataFrame:
+#     """Function to create a primary edges dataset by filtering and renaming columns."""
 
-    # TODO: Use Tansformers instead for renaming
+#     # TODO: Use Tansformers instead for renaming
 
-    res = int_edges.rename(columns={"SourceId": "subject", "TargetId": "object", "Label": "predicate"}).dropna(
-        subset=["subject", "object"]
-    )
+#     res = int_edges.rename(columns={"SourceId": "subject", "TargetId": "object", "Label": "predicate"}).dropna(
+#         subset=["subject", "object"]
+#     )
 
-    res["predicate"] = "biolink:" + res["predicate"]
-    res["knowledge_source"] = "ec:medical"
+#     res["predicate"] = "biolink:" + res["predicate"]
+#     res["knowledge_source"] = "ec:medical"
 
-    return res
+#     return res
 
 
 # @has_schema(

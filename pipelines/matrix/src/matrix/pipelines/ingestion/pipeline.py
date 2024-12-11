@@ -1,67 +1,28 @@
-import pyspark.sql.functions as F
-from kedro.pipeline import Pipeline, pipeline
-from matrix.kedro4argo_node import (
-    argo_node,
-)
+from kedro.pipeline import Pipeline, pipeline, node
+
+from matrix import settings
 
 
 def create_pipeline(**kwargs) -> Pipeline:
     """Create ingestion pipeline."""
-    # FUTURE: Use dynamic pipeline for this good first issue
-    return pipeline(
-        [
-            # rtx-kg2
-            argo_node(
-                func=lambda x: x,
-                inputs=["ingestion.raw.rtx_kg2.nodes@spark"],
-                outputs="ingestion.int.rtx_kg2.nodes",
-                name="write_rtx_kg2_nodes",
-                tags=["rtx_kg2"],
-            ),
-            argo_node(
-                func=lambda x: x,
-                inputs=["ingestion.raw.rtx_kg2.edges@spark"],
-                outputs="ingestion.int.rtx_kg2.edges",
-                name="write_rtx_kg2_edges",
-                tags=["rtx_kg2"],
-            ),
-            argo_node(
-                func=lambda x: x,
-                inputs=["ingestion.raw.rtx_kg2.curie_to_pmids@spark"],
-                outputs="ingestion.int.rtx_kg2.curie_to_pmids",
-                name="write_rtx_kg2_curie_to_pmids",
-                tags=["rtx_kg2"],
-            ),
-            # ec-medical-team
-            argo_node(
-                func=lambda x: x.withColumn("upstream_data_source", F.array(F.lit("ec_medical_team"))),
-                inputs=["ingestion.raw.ec_medical_team.nodes@spark"],
-                outputs="ingestion.int.ec_medical_team.nodes",
-                name="write_ec_medical_team_nodes",
-                tags=["ec_medical_team"],
-            ),
-            argo_node(
-                func=lambda x: x.withColumn("upstream_data_source", F.array(F.lit("ec_medical_team"))),
-                inputs=["ingestion.raw.ec_medical_team.edges@spark"],
-                outputs="ingestion.int.ec_medical_team.edges",
-                name="write_ec_medical_team_edges",
-                tags=["ec_medical_team"],
-            ),
-            # robokop
-            argo_node(
-                func=lambda x: x,
-                inputs=["ingestion.raw.robokop.nodes@spark"],
-                outputs="ingestion.int.robokop.nodes",
-                name="ingest_robokop_nodes",
-                tags=["robokop"],
-            ),
-            argo_node(
-                # FUTURE: Update selection
-                func=lambda x: x,
-                inputs=["ingestion.raw.robokop.edges@spark"],
-                outputs="ingestion.int.robokop.edges",
-                name="ingest_robokop_edges",
-                tags=["robokop"],
-            ),
-        ]
-    )
+    # Create pipeline per source
+    pipelines = []
+
+    # Add ingestion pipeline for each source
+    for source in settings.DYNAMIC_PIPELINES_MAPPING.get("integration"):
+        for component in ["nodes", "edges"]:
+            pipelines.append(
+                pipeline(
+                    [
+                        node(
+                            func=lambda x: x,
+                            inputs=[f'ingestion.raw.{source["name"]}.{component}@spark'],
+                            outputs=f'ingestion.int.{source["name"]}.{component}',
+                            name=f'write_{source["name"]}_{component}',
+                            tags=[f'{source["name"]}'],
+                        )
+                    ]
+                )
+            )
+
+    return sum(pipelines)
