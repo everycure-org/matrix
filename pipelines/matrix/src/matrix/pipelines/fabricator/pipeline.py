@@ -80,6 +80,15 @@ def create_pipeline(**kwargs) -> Pipeline:
                 name="fabricate_robokop_datasets",
             ),
             node(
+                func=fabricate_datasets,
+                inputs={"fabrication_params": "params:fabricator.spoke"},
+                outputs={
+                    "nodes": "ingestion.raw.spoke.nodes@pandas",
+                    "edges": "ingestion.raw.spoke.edges@pandas",
+                },
+                name="fabricate_spoke_datasets",
+            ),
+            node(
                 func=_create_pairs,
                 inputs=[
                     "ingestion.raw.drug_list@pandas",
