@@ -54,8 +54,12 @@ class SpokeTransformer(GraphTransformer):
         return (
             edges_df
             .withColumn("upstream_data_source",                     F.array(F.lit("spoke")))
-            .withColumn("publications",                             F.split(F.col("publications"), SEPARATOR))
-            .withColumn("aggregator_knowledge_source",              F.split(F.col("aggregator_knowledge_source"), SEPARATOR))
+            .withColumn("publications",                             F.lit(None))
+            .withColumn("knowledge_level",                          F.lit(None))
+            .withColumn("primary_knowledge_source",                 F.lit(None))
+            .withColumn("aggregator_knowledge_source",              F.lit(None))
+            .withColumn("object_aspect_qualifier",                  F.lit(None))
+            .withColumn("object_direction_qualifier",               F.lit(None))
             .withColumn("subject_aspect_qualifier",                 F.lit(None).cast(T.StringType()))
             .withColumn("subject_direction_qualifier",              F.lit(None).cast(T.StringType()))
             # final selection of columns
