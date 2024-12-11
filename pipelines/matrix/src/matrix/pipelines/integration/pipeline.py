@@ -64,9 +64,7 @@ def _create_integration_pipeline(source: str, normalize_edges: bool = True) -> P
                         "mapping_df": f"integration.int.{source}.nodes.nodes_norm_mapping",
                         "nodes": f"integration.int.{source}.nodes",
                     },
-                    outputs=[
-                        f"integration.int.{source}.nodes.norm",
-                    ],
+                    outputs=f"integration.int.{source}.nodes.norm",
                     name=f"normalize_{source}_nodes",
                 ),
             ]
@@ -83,9 +81,7 @@ def _create_integration_pipeline(source: str, normalize_edges: bool = True) -> P
                             "mapping_df": f"integration.int.{source}.nodes.nodes_norm_mapping",
                             "edges": f"integration.int.{source}.edges",
                         },
-                        outputs=[
-                            f"integration.int.{source}.edges.norm",
-                        ],
+                        outputs=f"integration.int.{source}.edges.norm",
                         name=f"normalize_{source}_edges",
                     ),
                 ]
