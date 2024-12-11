@@ -19,13 +19,28 @@ neo4j: # the name of the helm dependency
   # FUTURE do not expose as IP
   services:
     neo4j:
+      enabled: true
+      annotations:
+        external-dns.alpha.kubernetes.io/hostname: "neo4j.dev.everycure.org"
+        external-dns.alpha.kubernetes.io/ttl: "300"
       spec:
-        type: ClusterIP
-      # ports:
-      #   http:
-      #     enabled: false
-      #   https:
-      #     enabled: false
+        type: LoadBalancer
+        ports:
+          http:
+            enabled: true
+            port: 7474
+            targetPort: 7474
+            name: http
+          https:
+            enabled: true
+            port: 7473
+            targetPort: 7473
+            name: https
+          bolt:
+            enabled: true
+            port: 7687
+            targetPort: 7687
+            name: bolt
   # configuration of volumes for neo4j
   volumes:
     data:
@@ -53,8 +68,8 @@ neo4j: # the name of the helm dependency
     dbms.security.procedures.whitelist: "gds.*, apoc.*"
     dbms.security.allow_csv_import_from_file_urls: "true"
     # server.directories.import: /var/lib/neo4j/import
-    server.default_advertised_address: "neo4j.platform.dev.everycure.org"
-    server.bolt.advertised_address: ":443"
+    server.default_advertised_address: "neo4j.dev.everycure.org"
+    server.bolt.advertised_address: "neo4j.dev.everycure.org:7687"
 
 
 
