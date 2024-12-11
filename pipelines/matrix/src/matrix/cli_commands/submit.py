@@ -190,7 +190,7 @@ def run_subprocess(
     check: bool = True,
     shell: bool = True,
     stream_output: bool = True,
-    cwd: Optional[str] = None,
+    cwd: Optional[str | Path] = None,
 ) -> subprocess.CompletedProcess:
     """Run a subprocess command and handle errors.
 
@@ -448,9 +448,12 @@ def get_run_name(run_name: Optional[str]) -> str:
     sanitized_name = re.sub(r"[^a-zA-Z0-9-]", "-", unsanitized_name)
     return sanitized_name
 
+
 def release_exists(name: str) -> bool:
     assert '.' in name, f"{name} doesn't look like a version number"
-    remote_tags = run_subprocess(cmd="git ls-remote --tags --quiet", stream_output=False,
-                                 cwd=Path(__file__).parent.absolute() # git cmd won't work well when outside of a git repo
-                                 ).stdout
+    remote_tags = run_subprocess(
+        cmd="git ls-remote --tags --quiet",
+        stream_output=True,
+        cwd=Path(__file__).parent.absolute() # git cmd won't work well when outside of a git repo
+    ).stdout
     return name in remote_tags
