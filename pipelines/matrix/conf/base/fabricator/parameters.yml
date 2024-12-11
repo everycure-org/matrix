@@ -533,7 +533,7 @@ fabricator.spoke:
       # column that contains random values from the nodes table defined above.
       subject:
         type: row_apply
-        list_of_values: [ nodes.id:ID ]
+        list_of_values: [ nodes.id ]
         row_func: "lambda *args: args[0]"
         resize: True
         seed: 590590
@@ -547,7 +547,7 @@ fabricator.spoke:
           - biolink:is_nearby_variant_of
       object:
         type: row_apply
-        list_of_values: [ nodes.id:ID ]
+        list_of_values: [ nodes.id ]
         row_func: "lambda *args: args[0]"
         resize: True
         seed: 49494
