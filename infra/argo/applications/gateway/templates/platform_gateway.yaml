@@ -21,6 +21,13 @@ spec:
       certificateRefs:
         - name: gateway-cert
           kind: Secret
+  - name: http
+    hostname: "*.platform.dev.everycure.org"
+    protocol: HTTP
+    port: 80
+    allowedRoutes:
+      namespaces:
+        from: All
 ---
 # HTTP redirect to HTTPS
 apiVersion: gateway.networking.k8s.io/v1
@@ -31,8 +38,6 @@ spec:
   parentRefs:
   - name: external-http
     sectionName: http
-  hostnames:
-  - "*.platform.dev.everycure.org"
   rules:
   - filters:
     - type: RequestRedirect

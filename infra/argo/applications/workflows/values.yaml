@@ -9,3 +9,7 @@ argo-workflows:
     gcs:
       bucket: mtrx-us-central1-hub-dev-storage
       keyFormat: "{{ \"{{workflow.namespace}}/{{workflow.name}}/{{pod.name}}\" }}"
+  
+  controller:
+    metrics:
+      enabled: true
