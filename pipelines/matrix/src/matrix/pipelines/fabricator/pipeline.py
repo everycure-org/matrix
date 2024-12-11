@@ -54,26 +54,26 @@ def create_pipeline(**kwargs) -> Pipeline:
                 outputs={
                     "nodes": "ingestion.raw.rtx_kg2.nodes@pandas",
                     "edges": "ingestion.raw.rtx_kg2.edges@pandas",
-                    "clinical_trials_nodes": "ingestion.raw.ec_clinical_trails.nodes@pandas",
-                    "clinical_trials_edges": "ingestion.raw.ec_clinical_trails.edges@pandas",
+                    # "clinical_trials_nodes": "ingestion.raw.ec_clinical_trails.nodes@pandas",
+                    # "clinical_trials_edges": "ingestion.raw.ec_clinical_trails.edges@pandas",
                     "disease_list": "ingestion.raw.disease_list@pandas",
                     "drug_list": "ingestion.raw.drug_list@pandas",
                     "pubmed_ids_mapping": "ingestion.raw.rtx_kg2.curie_to_pmids@pandas",
                 },
                 name="fabricate_kg2_datasets",
             ),
-            # node(
-            #     func=fabricate_datasets,
-            #     inputs={
-            #         "fabrication_params": "params:fabricator.clinical_trails",
-            #         "nodes": "ingestion.raw.rtx_kg2.nodes@pandas",
-            #     },
-            #     outputs={
-            #         "nodes": "ingestion.raw.ec_clinical_trails.nodes@pandas",
-            #        #  "edges": "ingestion.raw.ec_clinical_trails.edges@pandas",
-            #     },
-            #     name="fabricate_clinical_trails_datasets",
-            # ),
+            node(
+                func=fabricate_datasets,
+                inputs={
+                    "fabrication_params": "params:fabricator.clinical_trails",
+                    "nodes": "ingestion.raw.rtx_kg2.nodes@pandas",
+                },
+                outputs={
+                    "nodes": "ingestion.raw.ec_clinical_trails.nodes@pandas",
+                    "edges": "ingestion.raw.ec_clinical_trails.edges@pandas",
+                },
+                name="fabricate_clinical_trails_datasets",
+            ),
             node(
                 func=fabricate_datasets,
                 inputs={"fabrication_params": "params:fabricator.ec_medical_kg"},

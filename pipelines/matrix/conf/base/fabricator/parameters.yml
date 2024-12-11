@@ -252,9 +252,8 @@ fabricator.rtx_kg2:
           - HIGH
           - MODERATE
         
-
-# fabricator.clinical_trails:
-  clinical_trials_nodes:
+fabricator.clinical_trails:
+  nodes:
     num_rows: 30
     columns:
       curie:
@@ -270,30 +269,30 @@ fabricator.rtx_kg2:
         resize: True
         seed: 40599
 
-  clinical_trials_edges:
+  edges:
     num_rows: 50
     columns:
       drug_kg_curie:
         type: row_apply
-        list_of_values: [clinical_trials_nodes:curie, clinical_trials_nodes:name]
+        list_of_values: [nodes:curie, nodes:name]
         row_func: "lambda *args: args[0]"
         resize: True
         seed: 40599
       drug_name:
         type: row_apply
-        list_of_values: [clinical_trials_nodes.curie, clinical_trials_nodes.name]
+        list_of_values: [nodes.curie, nodes.name]
         row_func: "lambda *args: args[1]"
         resize: True
         seed: 40599
       disease_kg_curie:
         type: row_apply
-        list_of_values: [clinical_trials_nodes.curie, clinical_trials_nodes.name]
+        list_of_values: [nodes.curie, nodes.name]
         row_func: "lambda *args: args[0]"
         resize: True
         seed: 30599
       disease_name:
         type: row_apply
-        list_of_values: [clinical_trials_nodes.curie, clinical_trials_nodes.name]
+        list_of_values: [nodes.curie, nodes.name]
         row_func: "lambda *args: args[1]"
         resize: True
         seed: 30599
