@@ -493,3 +493,61 @@ fabricator.ec_medical_kg:
       knowledge_source:
         type: faker
         provider: name
+
+fabricator.spoke:
+  # spoke nodes definition
+  nodes:
+    num_rows: 150
+    columns:
+      id:
+        type: generate_unique_id
+        prefix: "ROBO:"
+      name:
+        type: generate_unique_id
+        prefix: "rs"
+      category:
+        type: generate_random_arrays
+        delimiter: "\x1F"
+        sample_values:
+          - biolink:Entity
+          - biolink:ThingWithTaxon
+          - biolink:BiologicalEntity
+          - biolink:Drug
+          - biolink:Disease
+          - biolink:SequenceVariant
+          - biolink:NamedThing
+          - biolink:OntologyClass
+          - biolink:PhysicalEssence
+          - biolink:PhysicalEssenceOrOccurrent
+          - biolink:GenomicEntity
+          - biolink:OrganismTaxon
+      description:
+        type: faker
+        provider: sentence
+
+  # spoke edges definition
+  edges:
+    num_rows: 500
+    columns:
+      # NOTE: This is a rather complex syntax, but is results in a "subject"
+      # column that contains random values from the nodes table defined above.
+      subject:
+        type: row_apply
+        list_of_values: [ nodes.id:ID ]
+        row_func: "lambda *args: args[0]"
+        resize: True
+        seed: 590590
+      predicate:
+        type: generate_values
+        sample_values:
+          - biolink:treats
+          - biolink:interacts_with
+          - biolink:affects
+          - biolink:subclass_of
+          - biolink:is_nearby_variant_of
+      object:
+        type: row_apply
+        list_of_values: [ nodes.id:ID ]
+        row_func: "lambda *args: args[0]"
+        resize: True
+        seed: 49494
