@@ -13,7 +13,7 @@ def coalesce(s: pd.Series, *series: List[pd.Series]):
     return s
 
 
-def resolve_name(name: str):
+def resolve_name(name: str, cols_to_get: List[str]):
     """Function to retrieve the normalized identifier through the normalizer.
 
     Args:
@@ -31,6 +31,7 @@ def resolve_name(name: str):
     )
     if len(result.json()) != 0:
         element = result.json()[0]
+        # TODO: Extend to allow retrieving multiple attributes
         return element.get("curie")
 
     return None

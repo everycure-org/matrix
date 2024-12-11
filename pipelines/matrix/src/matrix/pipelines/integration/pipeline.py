@@ -101,7 +101,7 @@ def create_pipeline(**kwargs) -> Pipeline:
     for source in settings.DYNAMIC_PIPELINES_MAPPING.get("integration"):
         pipelines.append(
             pipeline(
-                _create_integration_pipeline(source=source["name"]),
+                _create_integration_pipeline(source=source["name"], normalize_edges=source["normalize_edges"]),
                 tags=[source["name"]],
             )
         )
@@ -117,7 +117,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                         *[
                             f'integration.int.{source["name"]}.nodes.norm'
                             for source in settings.DYNAMIC_PIPELINES_MAPPING.get("integration")
-                            if source["integrate_in_kg"]
+                            if source.get("integrate_in_kg", True) and source.get("normalize_edges", True)
                         ],
                     ],
                     outputs="integration.prm.unified_nodes",
@@ -129,7 +129,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                     inputs=[
                         f'integration.int.{source["name"]}.edges.norm'
                         for source in settings.DYNAMIC_PIPELINES_MAPPING.get("integration")
-                        if source["integrate_in_kg"]
+                        if source.get("integrate_in_kg", True) and source.get("normalize_edges", True)
                     ],
                     outputs="integration.prm.unified_edges",
                     name="create_prm_unified_edges",
