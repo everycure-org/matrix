@@ -99,19 +99,16 @@ def ingest_nodes(df: DataFrame) -> DataFrame:
 
 def bucketize_df(df: DataFrame, bucket_size: int, input_features: List[str], max_input_len: int):
     """Function to bucketize input dataframe.
-
     Function bucketizes the input dataframe in N buckets, each of size `bucket_size`
     elements. Moreover, it concatenates the `features` into a single column and limits the
     length to `max_input_len`.
-
     Args:
         df: Dataframe to bucketize
         attributes: to keep
         bucket_size: size of the buckets
     """
-
     # Order and bucketize elements
-    return (
+    result = (
         df.transform(_bucketize, bucket_size=bucket_size)
         .withColumn(
             "text_to_embed",
@@ -120,6 +117,11 @@ def bucketize_df(df: DataFrame, bucket_size: int, input_features: List[str], max
         .withColumn("text_to_embed", F.substring(F.col("text_to_embed"), 1, max_input_len))
         .select("id", "text_to_embed", "bucket")
     )
+    result.agg(F.approx_percentile(F.length("text_to_embed"), (0.10, 0.25, 0.5, 0.75, 0.9))).show()
+    import sys
+
+    sys.exit(1)
+    return result
 
 
 def _bucketize(df: DataFrame, bucket_size: int) -> pd.DataFrame:
