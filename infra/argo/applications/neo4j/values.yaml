@@ -26,11 +26,13 @@ neo4j: # the name of the helm dependency
       spec:
         type: LoadBalancer
         ports:
+          # exposing via standard http port
           http:
             enabled: true
             port: 80
             targetPort: 7474
             name: http
+          # exposing via standard https port
           https:
             enabled: true
             port: 443
