@@ -1,15 +1,18 @@
 import logging
+import pandera.pyspark as pa
 import pyspark.sql.functions as f
 import pyspark.sql.types as T
 from pyspark.sql import DataFrame
 
 from .transformer import GraphTransformer
 
+from matrix.schemas.knowledge_graph import KGEdgeSchema, KGNodeSchema, cols_for_schema
+
 logger = logging.getLogger(__name__)
 
 
 class MedicalTransformer(GraphTransformer):
-    # @pa.check_output(KGNodeSchema)
+    @pa.check_output(KGNodeSchema)
     def transform_nodes(self, nodes_df: DataFrame, **kwargs) -> DataFrame:
         """Transform nodes to our target schema.
 
@@ -32,13 +35,13 @@ class MedicalTransformer(GraphTransformer):
             # .transform(determine_most_specific_category, biolink_categories_df) need this?
             # Filter nodes we could not correctly resolve
             .filter(f.col("id").isNotNull())
-            # .select(*cols_for_schema(KGNodeSchema))
+            .select(*cols_for_schema(KGNodeSchema))
         )
 
         return df
         # fmt: on
 
-    # @pa.check_output(KGEdgeSchema)
+    @pa.check_output(KGEdgeSchema)
     def transform_edges(self, edges_df: DataFrame, **kwargs) -> DataFrame:
         """Transform edges to our target schema.
 
@@ -53,7 +56,7 @@ class MedicalTransformer(GraphTransformer):
             edges_df
             .withColumn("subject",                       f.col("SourceId"))
             .withColumn("object",                        f.col("TargetId"))
-            .withColumn("predicate",                     f.lit("biolink:")) # TODO fix
+            .withColumn("predicate",                     f.col("Label")) # TODO fix
             .withColumn("upstream_data_source",          f.array(f.lit("ec_medical")))
             .withColumn("knowledge_level",               f.lit(None).cast(T.StringType()))
             .withColumn("aggregator_knowledge_source",   f.array(f.col("knowledge_source")))
@@ -66,7 +69,7 @@ class MedicalTransformer(GraphTransformer):
             
             # Filter edges we could not correctly resolve
             .filter(f.col("subject").isNotNull() & f.col("object").isNotNull())
-            # .select(*cols_for_schema(KGEdgeSchema))
+            .select(*cols_for_schema(KGEdgeSchema))
         )
 
         return edges
