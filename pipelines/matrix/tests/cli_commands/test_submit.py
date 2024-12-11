@@ -91,7 +91,11 @@ def test_build_push_docker(mock_run_subprocess: None) -> None:
 @patch("matrix.cli_commands.submit.generate_argo_config")
 def test_build_argo_template(mock_generate_argo_config: None) -> None:
     build_argo_template(
-        "test_run", "testuser", "test_namespace", {"test": MagicMock()}, ArgoResourceConfig(), is_test=True
+        run_name="test_run",
+        username="testuser",
+        namespace="test_namespace",
+        pipeline_obj={"test": MagicMock()},
+        default_execution_resources=ArgoResourceConfig(),
     )
     mock_generate_argo_config.assert_called_once()
 

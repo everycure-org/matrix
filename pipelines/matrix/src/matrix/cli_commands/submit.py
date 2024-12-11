@@ -130,7 +130,13 @@ def _submit(
         console.print("[green]✓[/green] Dependencies checked")
 
         console.print("Building Argo template...")
-        argo_template = build_argo_template(run_name, release_version, username, namespace, pipeline_obj)
+        argo_template = build_argo_template(
+            run_name=run_name,
+            release_version=release_version,
+            username=username,
+            namespace=namespace,
+            pipeline_obj=pipeline_obj
+        )
         console.print("[green]✓[/green] Argo template built")
 
         console.print("Writing Argo template...")
@@ -323,7 +329,7 @@ def build_push_docker(tag: str, verbose: bool):
     run_subprocess(f"make docker_push TAG={tag}", stream_output=verbose)
 
 
-def build_argo_template(run_name: str, release_version: Optional[str], username: str, namespace: str, pipeline_obj: Pipeline, default_execution_resources: Optional[ArgoResourceConfig] = None) -> str:
+def build_argo_template(run_name: str, username: str, namespace: str, pipeline_obj: Pipeline, release_version: Optional[str]=None, default_execution_resources: Optional[ArgoResourceConfig] = None) -> str:
     """Build Argo workflow template."""
     matrix_root = Path(__file__).parents[3]
     metadata = bootstrap_project(matrix_root)
