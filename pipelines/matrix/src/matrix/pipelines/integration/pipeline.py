@@ -144,7 +144,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                     name="filter_nodes_without_edges",
                     tags=["filtering"],
                 ),
-                node(
+                argo_node(
                     func=nodes.add_gt_category,
                     inputs=[
                         "integration.prm.filtered_nodes_no_gt",

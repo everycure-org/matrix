@@ -150,7 +150,9 @@ def create_pipeline(**kwargs) -> Pipeline:
             argo_node(
                 func=nodes.clean_gt_data,
                 inputs={
-                    "gt_df": "preprocessing.raw.ground_truth.combined",
+                    # "gt_df": "preprocessing.raw.ground_truth.combined",
+                    "pos_df": "preprocessing.raw.ground_truth.positives",
+                    "neg_df": "preprocessing.raw.ground_truth.negatives",
                     "endpoint": "params:preprocessing.translator.normalizer",
                     "conflate": "params:integration.nodenorm.conflate",
                     "drug_chemical_conflate": "params:integration.nodenorm.drug_chemical_conflate",
@@ -161,7 +163,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 name="resolve_gt",
                 tags=["ground-truth"],
             ),
-            node(
+            argo_node(
                 func=lambda x: x,
                 inputs="ingestion.raw.ground_truth.combined@pandas",
                 outputs="ingestion.reporting.combined_gt",
