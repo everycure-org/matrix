@@ -89,6 +89,7 @@ neo4j: # the name of the helm dependency
     server.bolt.advertised_address: "neo4j.dev.everycure.org:7687"
 
     # Enable SSL/TLS
+    dbms.connector.https.address: 0.0.0.0:7473
     dbms.ssl.policy.bolt.enabled: "true"
     dbms.ssl.policy.https.enabled: "true"
     
