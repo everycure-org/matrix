@@ -22,7 +22,7 @@ class MedicalTransformer(GraphTransformer):
         # fmt: off
         df = (
             nodes_df
-            .withColumn("id",                                f.lit("normalized_curie"))
+            .withColumn("id",                                f.col("normalized_curie"))
             .withColumn("upstream_data_source",              f.array(f.lit("ec_medical")))
             .withColumn("labels",                            f.array(f.col("label"))) # TODO: Fix entity labels for medical?
             .withColumn("all_categories",                    f.array(f.col("label")))
@@ -34,6 +34,7 @@ class MedicalTransformer(GraphTransformer):
             .filter(f.col("id").isNotNull())
             # .select(*cols_for_schema(KGNodeSchema))
         )
+
         return df
         # fmt: on
 
@@ -48,10 +49,10 @@ class MedicalTransformer(GraphTransformer):
             Transformed DataFrame.
         """
         # fmt: off
-        return (
+        edges = (
             edges_df
-            .withColumn("subject",                       f.lit("SourceId"))
-            .withColumn("object",                        f.lit("TargetId"))
+            .withColumn("subject",                       f.col("SourceId"))
+            .withColumn("object",                        f.col("TargetId"))
             .withColumn("predicate",                     f.lit("biolink:")) # TODO fix
             .withColumn("upstream_data_source",          f.array(f.lit("ec_medical")))
             .withColumn("knowledge_level",               f.lit(None).cast(T.StringType()))
@@ -67,3 +68,5 @@ class MedicalTransformer(GraphTransformer):
             .filter(f.col("subject").isNotNull() & f.col("object").isNotNull())
             # .select(*cols_for_schema(KGEdgeSchema))
         )
+
+        return edges

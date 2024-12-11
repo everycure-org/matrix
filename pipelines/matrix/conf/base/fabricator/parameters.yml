@@ -465,7 +465,7 @@ fabricator.ec_medical_kg:
   nodes:
     num_rows: 10
     columns:
-      id: 
+      normalized_curie: 
         type: generate_unique_id
         prefix: ec_medical_node_
     
@@ -486,16 +486,16 @@ fabricator.ec_medical_kg:
   edges:
     num_rows: 50
     columns:
-      subject:
+      SourceId:
         type: row_apply
-        list_of_values: [nodes.id]
+        list_of_values: [nodes.normalized_curie]
         row_func: "lambda *args: args[0]"
         resize: True
         seed: 340590
       
-      object:
+      TargetId:
         type: row_apply
-        list_of_values: [nodes.id]
+        list_of_values: [nodes.normalized_curie]
         row_func: "lambda *args: args[0]"
         resize: True
         seed: 57000
