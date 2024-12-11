@@ -11,7 +11,7 @@ def create_pipeline(**kwargs) -> Pipeline:
         [
             node(
                 func=nodes.process_medical_nodes,
-                inputs=["preprocessing.raw.nodes"],
+                inputs=["preprocessing.raw.nodes", "params:preprocessing.name_resolution.cols_to_get"],
                 outputs="preprocessing.int.nodes",
                 name="normalize_ec_medical_team_nodes",
             ),
