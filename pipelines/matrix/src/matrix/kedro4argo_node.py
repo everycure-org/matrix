@@ -1,5 +1,6 @@
-from typing import Callable, Iterable, Union, Any, Optional
 import warnings
+from typing import Any, Callable, Iterable, Optional, Union
+
 from kedro.pipeline.node import Node
 from pydantic import BaseModel, field_validator, model_validator
 
