@@ -25,24 +25,24 @@ neo4j: # the name of the helm dependency
         external-dns.alpha.kubernetes.io/ttl: "300"
       spec:
         type: LoadBalancer
-        ports:
-          # exposing via standard http port
-          http:
-            enabled: true
-            port: 80
-            targetPort: 7474
-            name: http
-          # exposing via standard https port
-          https:
-            enabled: true
-            port: 443
-            targetPort: 7473
-            name: https
-          bolt:
-            enabled: true
-            port: 7687
-            targetPort: 7687
-            name: bolt
+      ports:
+        # exposing via standard http port
+        http:
+          enabled: true
+          port: 80
+          targetPort: 7474
+          name: http
+        # exposing via standard https port
+        https:
+          enabled: true
+          port: 443
+          targetPort: 7473
+          name: https
+        bolt:
+          enabled: true
+          port: 7687
+          targetPort: 7687
+          name: bolt
   # configuration of volumes for neo4j
   volumes:
     data:
