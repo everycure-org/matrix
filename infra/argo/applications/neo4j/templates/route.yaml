@@ -1,21 +1,21 @@
-kind: HTTPRoute
-apiVersion: gateway.networking.k8s.io/v1beta1
-metadata:
-  name: neo4j-route
-  namespace: neo4j
-spec:
-  parentRefs:
-  - kind: Gateway
-    sectionName: https
-    namespace: gateway
-    name: external-http
-  hostnames:
-  - "neo4j.platform.dev.everycure.org"
-  rules:
-  - backendRefs:
-    - name: neo4j-reverseproxy-service
-      port: 80
-
+# kind: HTTPRoute
+# apiVersion: gateway.networking.k8s.io/v1beta1
+# metadata:
+#   name: neo4j-route
+#   namespace: neo4j
+# spec:
+#   parentRefs:
+#   - kind: Gateway
+#     sectionName: https
+#     namespace: gateway
+#     name: external-http
+#   hostnames:
+#   - "neo4j.platform.dev.everycure.org"
+#   rules:
+#   - backendRefs:
+#     - name: neo4j-reverseproxy-service
+#       port: 80
+# 
 # TODO this does not work, we cannot expose anything but 80 and 443 through the Gateway.
 # We also couldn't make it work that the UI tries connecting to 443. It always tried going to Bolt at
 # 7687

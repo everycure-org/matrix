@@ -11,7 +11,7 @@ metadata:
 spec:
   ingressClassName: nginx
   rules:
-  - host: "neo4j-bolt.dev.everycure.org"
+  - host: "bolt.neo4j.dev.everycure.org"
 ---
 apiVersion: v1
 kind: ConfigMap
