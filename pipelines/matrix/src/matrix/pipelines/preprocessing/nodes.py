@@ -98,6 +98,9 @@ def create_int_edges(int_nodes: pd.DataFrame, int_edges: pd.DataFrame) -> pd.Dat
 @primary_key(primary_key=["id"])
 def create_prm_nodes(prm_nodes: pd.DataFrame) -> pd.DataFrame:
     """Function to create a primary nodes that contains only new nodes introduced by the source."""
+
+    # TODO: Use Tansformers instead for renaming
+
     # `new_id` signals that the node should be added to the KG as a new id
     # we drop the original ID from the spreadsheat, and leverage the new_id as the final id
     # in the dataframe. We only retain nodes where the new_id is set
@@ -118,6 +121,9 @@ def create_prm_nodes(prm_nodes: pd.DataFrame) -> pd.DataFrame:
 @primary_key(primary_key=["subject", "predicate", "object"])
 def create_prm_edges(int_edges: pd.DataFrame) -> pd.DataFrame:
     """Function to create a primary edges dataset by filtering and renaming columns."""
+
+    # TODO: Use Tansformers instead for renaming
+
     res = int_edges.rename(columns={"SourceId": "subject", "TargetId": "object", "Label": "predicate"}).dropna(
         subset=["subject", "object"]
     )

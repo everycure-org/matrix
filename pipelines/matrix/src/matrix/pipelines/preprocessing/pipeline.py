@@ -43,41 +43,6 @@ def create_pipeline(**kwargs) -> Pipeline:
                 name="create_prm_ec_medical_team_edges",
                 tags=["ec-medical-kg"],
             ),
-            # # Normalize nodes
-            # node(
-            #     func=nodes.create_int_nodes,
-            #     inputs={
-            #         "nodes": "preprocessing.raw.nodes",
-            #         "name_resolver": "params:preprocessing.translator.name_resolver",
-            #         "endpoint": "params:preprocessing.translator.normalizer",
-            #         "conflate": "params:integration.nodenorm.conflate",
-            #         "drug_chemical_conflate": "params:integration.nodenorm.drug_chemical_conflate",
-            #         "batch_size": "params:integration.nodenorm.batch_size",
-            #         "parallelism": "params:integration.nodenorm.parallelism",
-            #     },
-            #     outputs="preprocessing.int.nodes",
-            #     name="normalize_ec_medical_team_nodes",
-            #     tags=["ec-medical-kg"],
-            # ),
-            # node(
-            #     func=nodes.create_int_edges,
-            #     inputs=[
-            #         "preprocessing.int.nodes",
-            #         "preprocessing.raw.edges",
-            #     ],
-            #     outputs="preprocessing.int.edges",
-            #     name="create_int_ec_medical_team_edges",
-            #     tags=["ec-medical-kg"],
-            # ),
-            # node(
-            #     func=nodes.create_prm_nodes,
-            #     inputs=[
-            #         "preprocessing.int.nodes",
-            #     ],
-            #     outputs="ingestion.raw.ec_medical_team.nodes@pandas",
-            #     name="create_prm_ec_medical_team_nodes",
-            #     tags=["ec-medical-kg"],
-            # ),
             # # NOTE: Take raw clinical trial data and map the "name" to "curie" using the synonymizer
             # node(
             #     func=nodes.map_name_to_curie,
