@@ -251,6 +251,54 @@ def reduce_dimension(df: DataFrame, transformer, input: str, output: str, skip: 
     return res
 
 
+def extract_subgraph(nodes: DataFrame, edges: DataFrame, to_keep: List[str], to_remove: List[str]):
+    """Function to extract edges from the full KG before filtering drug-disease edges from filter_edges_for_topological_embeddings.
+
+    The function trims KG by keeping edges within selected node categories and removing edges by selected edge properties. Currently
+    uses the `all_categories` to keep edges matches categories in to_keep list.
+    The goal is to have a truncated and focused subgraph to be trained in topological embeddings
+
+    FUTURE: Could define subject categories-to-keep and object categories-to-keep separately.
+
+    Args:
+        nodes: nodes dataframe
+        edges: edges dataframe
+        to_keep: list of node categories
+        to_remove: list of edge properties
+    Returns:
+        Dataframe of truncated KG
+    """
+
+    def _create_mapping(column: str):
+        return nodes.alias(column).withColumn(column, F.col("id")).select(column, "all_categories")
+
+    if not to_keep and not to_remove:
+        return edges
+
+    else:
+        df = (
+            edges.alias("edges")
+            .join(_create_mapping("subject"), how="left", on="subject")
+            .join(_create_mapping("object"), how="left", on="object")
+        )
+
+        if to_keep:
+            df = (
+                df.withColumn("subject_to_keep", F.arrays_overlap(F.col("subject.all_categories"), F.lit(to_keep)))
+                .withColumn("object_to_keep", F.arrays_overlap(F.col("object.all_categories"), F.lit(to_keep)))
+                .withColumn("truncated_KG", (F.col("subject_to_keep")) & (F.col("object_to_keep")))
+                .filter(F.col("truncated_KG"))
+            )
+
+        elif to_remove:
+            for edge_column, identifiers in to_remove:
+                df = df.withColumn(
+                    "be_removed", F.arrays_overlap(F.col(f"edges.{edge_column}"), F.lit(identifiers))
+                ).filter(~F.col("be_removed"))
+
+        return df.select("edges.*")
+
+
 def filter_edges_for_topological_embeddings(
     nodes: DataFrame, edges: DataFrame, drug_types: List[str], disease_types: List[str]
 ):
@@ -273,8 +321,6 @@ def filter_edges_for_topological_embeddings(
     def _create_mapping(column: str):
         return nodes.alias(column).withColumn(column, F.col("id")).select(column, "all_categories")
 
-    # Hard-coded category types to keep
-    to_keep = ["biolink:DiseaseOrPhenotypicFeature", "biolink:ChemicalEntity"]
     df = (
         edges.alias("edges")
         .join(_create_mapping("subject"), how="left", on="subject")
@@ -289,10 +335,6 @@ def filter_edges_for_topological_embeddings(
             (F.col("subject_is_drug") & F.col("object_is_disease"))
             | (F.col("subject_is_disease") & F.col("object_is_drug")),
         )
-        .withColumn("subject_to_keep", F.arrays_overlap(F.col("subject.all_categories"), F.lit(to_keep)))
-        .withColumn("object_to_keep", F.arrays_overlap(F.col("object.all_categories"), F.lit(to_keep)))
-        .withColumn("truncated_KG", (F.col("subject_to_keep")) & (F.col("object_to_keep")))
-        .filter(F.col("truncated_KG"))
         .filter(~F.col("is_drug_disease_edge"))
         .select("edges.*")
     )

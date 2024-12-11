@@ -74,6 +74,10 @@ embeddings.feat.graph.pca_node_embeddings:
 embeddings.feat.graph.edges_for_topological:
   <<: *_spark_parquet
   filepath: ${globals:paths.embeddings}/feat/edges_for_topological
+
+embeddings.feat.graph.extracted_edges:
+  <<: *_spark_parquet
+  filepath: ${globals:paths.embeddings}/feat/extracted_edges
   
 # NOTE: Needs renaming
 embeddings.tmp.input_nodes:
