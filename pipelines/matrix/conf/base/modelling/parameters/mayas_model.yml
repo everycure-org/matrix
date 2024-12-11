@@ -5,7 +5,8 @@ modelling.mayas_logistic_regression:
         tuner:
           object: matrix.pipelines.modelling.tuning.NopTuner
           estimator:
-            object: sklearn.linear_model.LogisticRegression
+            # object: sklearn.linear_model.LogisticRegression
+            object: matrix.pipelines.modelling.models.SumSoftmaxClassifier  
             random_state: ${globals:random_state}
             max_iter: 1000
         features: # Features use regex, source_0, source_1, .., target_0, target_1
