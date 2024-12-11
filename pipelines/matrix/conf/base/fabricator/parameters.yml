@@ -500,12 +500,8 @@ fabricator.ec_medical_kg:
         resize: True
         seed: 57000
       
-      predicate:
+      Label:
         type: generate_values
         sample_values:
           - biolink:treats
           - biolink:interacts_with
-      
-      knowledge_source:
-        type: faker
-        provider: name
