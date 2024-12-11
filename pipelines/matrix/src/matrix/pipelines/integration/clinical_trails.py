@@ -1,17 +1,16 @@
 import logging
-import pandera.pyspark as pa
 import pyspark.sql.functions as f
 import pyspark.sql.types as T
 from pyspark.sql import DataFrame
 
 from .transformer import GraphTransformer
-from matrix.schemas.knowledge_graph import KGEdgeSchema, KGNodeSchema, cols_for_schema
+from matrix.schemas.knowledge_graph import KGNodeSchema, cols_for_schema
 
 logger = logging.getLogger(__name__)
 
 
-class MedicalTransformer(GraphTransformer):
-    @pa.check_output(KGNodeSchema)
+class ClinicalTrailsTransformer(GraphTransformer):
+    # @pa.check_output(KGNodeSchema)
     def transform_nodes(self, nodes_df: DataFrame, **kwargs) -> DataFrame:
         """Transform nodes to our target schema.
 
@@ -39,7 +38,7 @@ class MedicalTransformer(GraphTransformer):
         return df
         # fmt: on
 
-    @pa.check_output(KGEdgeSchema)
+    # @pa.check_output(KGEdgeSchema)
     def transform_edges(self, edges_df: DataFrame, **kwargs) -> DataFrame:
         """Transform edges to our target schema.
 
@@ -52,20 +51,6 @@ class MedicalTransformer(GraphTransformer):
         # fmt: off
         return (
             edges_df
-            .withColumn("subject",                       f.lit("SourceId"))
-            .withColumn("object",                        f.lit("TargetId"))
-            .withColumn("predicate",                     f.lit("biolink:") + f.lit("Label"))
-            .withColumn("upstream_data_source",          f.array(f.lit("ec_medical")))
-            .withColumn("knowledge_level",               f.lit(None).cast(T.StringType()))
-            .withColumn("aggregator_knowledge_source",   f.array(f.col("knowledge_source")))
-            .withColumn("primary_knowledge_source",      f.lit('medical team').cast(T.StringType()))
-            .withColumn("publications",                  f.array(f.lit('medical team')))
-            .withColumn("subject_aspect_qualifier",      f.lit(None).cast(T.StringType())) #not present
-            .withColumn("subject_direction_qualifier",   f.lit(None).cast(T.StringType())) #not present
-            .withColumn("object_aspect_qualifier",       f.lit(None).cast(T.StringType())) #not present
-            .withColumn("object_direction_qualifier",    f.lit(None).cast(T.StringType())) #not present
-            
-            # Filter edges we could not correctly resolve
-            .filter(f.col("subject").isNotNull() & f.col("object").isNotNull())
-            .select(*cols_for_schema(KGEdgeSchema))
+            .withColumn("subject",                       f.lit("drug_kg_curie"))
+            .withColumn("object",                        f.lit("disease_kg_curie"))
         )

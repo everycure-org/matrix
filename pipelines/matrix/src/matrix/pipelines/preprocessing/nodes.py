@@ -58,7 +58,7 @@ def process_medical_nodes(df: pd.DataFrame) -> pd.DataFrame:
     },
     allow_subset=True,
 )
-def create_int_edges(int_nodes: pd.DataFrame, int_edges: pd.DataFrame) -> pd.DataFrame:
+def process_medical_edges(int_nodes: pd.DataFrame, int_edges: pd.DataFrame) -> pd.DataFrame:
     """Function to create int edges dataset.
 
     Function ensures edges dataset link curies in the KG.
@@ -87,221 +87,109 @@ def create_int_edges(int_nodes: pd.DataFrame, int_edges: pd.DataFrame) -> pd.Dat
     return res
 
 
-# @has_schema(
-#     schema={
-#         "category": "object",
-#         "id": "object",
-#         "name": "object",
-#         "description": "object",
-#     },
-#     allow_subset=True,
-# )
-# @primary_key(primary_key=["id"])
-# def create_prm_nodes(prm_nodes: pd.DataFrame) -> pd.DataFrame:
-#     """Function to create a primary nodes that contains only new nodes introduced by the source."""
+@has_schema(
+    schema={
+        "clinical_trial_id": "object",
+        "reason_for_rejection": "object",
+        "drug_name": "object",
+        "disease_name": "object",
+        "significantly_better": "numeric",
+        "non_significantly_better": "numeric",
+        "non_significantly_worse": "numeric",
+        "significantly_worse": "numeric",
+    },
+    allow_subset=True,
+    df="df",
+)
+def add_source_and_target_to_clinical_trails(
+    df: pd.DataFrame,
+    drug_types: List[str],
+    disease_types: List[str],
+) -> pd.DataFrame:
+    # Normalize the name
+    df["drug_kg_curie"] = df["drug_name"].apply(resolve_name)
+    df["disease_kg_curie"] = df["disease_name"].apply(resolve_name)
 
-#     # TODO: Use Tansformers instead for renaming
+    # needed?
+    # df["label_included"] = (df["drug_kg_label"].isin(drug_types)) & (df["disease_kg_label"].isin(disease_types))
 
-#     # `new_id` signals that the node should be added to the KG as a new id
-#     # we drop the original ID from the spreadsheat, and leverage the new_id as the final id
-#     # in the dataframe. We only retain nodes where the new_id is set
-#     res = prm_nodes[prm_nodes["curie"].notna()].drop(columns="ID").rename(columns={"curie": "id"}).drop_duplicates("id")
-#     res["category"] = "biolink:" + prm_nodes["entity label"]
-#     return res
+    # check conflict
+    df["conflict"] = (
+        df.groupby(["drug_kg_curie", "disease_kg_curie"])[
+            [
+                "significantly_better",
+                "non_significantly_better",
+                "non_significantly_worse",
+                "significantly_worse",
+            ]
+        ]
+        .transform(lambda x: x.nunique() > 1)
+        .any(axis=1)
+    )
 
-
-# @has_schema(
-#     schema={
-#         "subject": "object",
-#         "predicate": "object",
-#         "object": "object",
-#         "knowledge_source": "object",
-#     },
-#     allow_subset=True,
-# )
-# @primary_key(primary_key=["subject", "predicate", "object"])
-# def create_prm_edges(int_edges: pd.DataFrame) -> pd.DataFrame:
-#     """Function to create a primary edges dataset by filtering and renaming columns."""
-
-#     # TODO: Use Tansformers instead for renaming
-
-#     res = int_edges.rename(columns={"SourceId": "subject", "TargetId": "object", "Label": "predicate"}).dropna(
-#         subset=["subject", "object"]
-#     )
-
-#     res["predicate"] = "biolink:" + res["predicate"]
-#     res["knowledge_source"] = "ec:medical"
-
-#     return res
+    return df
 
 
-# @has_schema(
-#     schema={
-#         "clinical_trial_id": "object",
-#         "reason_for_rejection": "object",
-#         "drug_name": "object",
-#         "disease_name": "object",
-#         "significantly_better": "numeric",
-#         "non_significantly_better": "numeric",
-#         "non_significantly_worse": "numeric",
-#         "significantly_worse": "numeric",
-#     },
-#     allow_subset=True,
-#     df="df",
-# )
-# def map_name_to_curie(
-#     df: pd.DataFrame,
-#     name_resolver: str,
-#     endpoint: str,
-#     drug_types: List[str],
-#     disease_types: List[str],
-#     conflate: bool,
-#     drug_chemical_conflate: bool,
-#     batch_size: int,
-#     parallelism: int,
-# ) -> pd.DataFrame:
-#     """Map drug name to curie.
+@has_schema(
+    schema={
+        "clinical_trial_id": "object",
+        "reason_for_rejection": "object",
+        "drug_name": "object",
+        "disease_name": "object",
+        "drug_kg_curie": "object",
+        "disease_kg_curie": "object",
+        "conflict": "object",
+        "significantly_better": "numeric",
+        "non_significantly_better": "numeric",
+        "non_significantly_worse": "numeric",
+        "significantly_worse": "numeric",
+    },
+    allow_subset=True,
+    df="df",
+)
+@primary_key(
+    primary_key=[
+        "clinical_trial_id",
+        "drug_kg_curie",
+        "disease_kg_curie",
+    ]
+)
+def clean_clinical_trial_data(df: pd.DataFrame) -> pd.DataFrame:
+    """Clean clinical trails data.
 
-#     Function to map drug name or disease name in raw clinical trail dataset to curie using the synonymizer.
-#     And check after mapping, if the mapped curies are the same in different rows, we check whether their the
-#     clinical performance is the same. If not, we label them as "True" in the "conflict" column, otherwise "False".
+    Function to clean the mapped clinical trial dataset for use in time-split evaluation metrics.
 
-#     Args:
-#         df: raw clinical trial dataset from medical team
-#         name_resolver: endpoint of the synonymizer
-#         endpoint: endpoint of the normalizer
-#         drug_types: list of drug types
-#         disease_types: list of disease types
-#         conflate: whether to conflate
-#         drug_chemical_conflate: whether to conflate drug and chemical
-#         batch_size: batch size
-#         parallelism: parallelism
-#     Returns:
-#         dataframe with two additional columns: "Mapped Drug Curie" and "Mapped Drug Disease"
-#     """
-#     # Map the drug name to the corresponding rtx-kg2 curie ids which we can then use by translator normalizer
-#     df["drug_kg_curie"] = df["drug_name"].apply(lambda x: resolve_name(x, endpoint=name_resolver))
-#     df["disease_kg_curie"] = df["disease_name"].apply(lambda x: resolve_name(x, endpoint=name_resolver))
+    Args:
+        df: raw clinical trial dataset added with mapped drug and disease curies
+    Returns:
+        Cleaned clinical trial data.
+    """
+    # Remove rows with conflicts
+    df = df[df["conflict"].eq("FALSE")].reset_index(drop=True)
+    # Make sure to consider only rows with relevant labels, otherwise
+    # downtstream modelling will fail
+    df = df[df["label_included"].eq("TRUE")].reset_index(drop=True)
+    # remove rows with reason for rejection
+    df = df[df["reason_for_rejection"].isna()].reset_index(drop=True)
+    # Define columns to check
+    columns_to_check = [
+        "drug_kg_curie",
+        "disease_kg_curie",
+        "significantly_better",
+        "non_significantly_better",
+        "non_significantly_worse",
+        "significantly_worse",
+    ]
 
-#     # Map the disease name to the corresponding curie ids
-#     attributes = [
-#         ("$.id.identifier", "drug_kg_curie"),
-#         ("$.type[0]", "drug_kg_label"),
-#     ]
+    # Remove rows with missing values in cols
+    df = df.dropna(subset=columns_to_check).reset_index(drop=True)
+    # drop columns
+    edges = df.drop(columns=["reason_for_rejection", "conflict"]).reset_index(drop=True)
 
-#     for expr, target in attributes:
-#         json_parser = parse(expr)
-#         node_id_map = batch_map_ids(
-#             frozenset(df["drug_kg_curie"].fillna("none")),
-#             api_endpoint=endpoint,
-#             batch_size=batch_size,
-#             parallelism=parallelism,
-#             conflate=conflate,
-#             drug_chemical_conflate=drug_chemical_conflate,
-#             json_parser=json_parser,
-#         )
-#         df[target] = df["drug_kg_curie"].map(node_id_map)
+    # extract nodes
+    values = pd.Series(pd.concat([edges["drug_kg_curie"], edges["disease_kg_curie"]]).unique())
 
-#     attributes = [
-#         ("$.id.identifier", "disease_kg_curie"),
-#         ("$.type[0]", "disease_kg_label"),
-#     ]
-
-#     for expr, target in attributes:
-#         json_parser = parse(expr)
-#         node_id_map = batch_map_ids(
-#             frozenset(df["disease_kg_curie"].fillna("none")),
-#             api_endpoint=endpoint,
-#             batch_size=batch_size,
-#             parallelism=parallelism,
-#             conflate=conflate,
-#             drug_chemical_conflate=drug_chemical_conflate,
-#             json_parser=json_parser,
-#         )
-#         df[target] = df["disease_kg_curie"].map(node_id_map)
-
-#     # Validate correct labels
-#     # NOTE: This is a temp. solution that ensures clinical trails data
-#     # only passes on data as containend by our pre-filtering in the modelling pipeline
-#     # we aim to refine our evaluation approach as part of a new PR after which
-#     # this can be removed.
-#     # https://github.com/everycure-org/matrix/issues/313
-
-#     df["label_included"] = (df["drug_kg_label"].isin(drug_types)) & (df["disease_kg_label"].isin(disease_types))
-
-#     # check conflict
-#     df["conflict"] = (
-#         df.groupby(["drug_kg_curie", "disease_kg_curie"])[
-#             [
-#                 "significantly_better",
-#                 "non_significantly_better",
-#                 "non_significantly_worse",
-#                 "significantly_worse",
-#             ]
-#         ]
-#         .transform(lambda x: x.nunique() > 1)
-#         .any(axis=1)
-#     )
-
-#     return df
-
-
-# @has_schema(
-#     schema={
-#         "clinical_trial_id": "object",
-#         "reason_for_rejection": "object",
-#         "drug_name": "object",
-#         "disease_name": "object",
-#         "drug_kg_curie": "object",
-#         "disease_kg_curie": "object",
-#         "conflict": "object",
-#         "significantly_better": "numeric",
-#         "non_significantly_better": "numeric",
-#         "non_significantly_worse": "numeric",
-#         "significantly_worse": "numeric",
-#     },
-#     allow_subset=True,
-#     df="df",
-# )
-# @primary_key(
-#     primary_key=[
-#         "clinical_trial_id",
-#         "drug_kg_curie",
-#         "disease_kg_curie",
-#     ]
-# )
-# def clean_clinical_trial_data(df: pd.DataFrame) -> pd.DataFrame:
-#     """Clean clinical trails data.
-
-#     Function to clean the mapped clinical trial dataset for use in time-split evaluation metrics.
-
-#     Args:
-#         df: raw clinical trial dataset added with mapped drug and disease curies
-#     Returns:
-#         Cleaned clinical trial data.
-#     """
-#     # Remove rows with conflicts
-#     df = df[df["conflict"].eq("FALSE")].reset_index(drop=True)
-#     # Make sure to consider only rows with relevant labels, otherwise
-#     # downtstream modelling will fail
-#     df = df[df["label_included"].eq("TRUE")].reset_index(drop=True)
-#     # remove rows with reason for rejection
-#     df = df[df["reason_for_rejection"].isna()].reset_index(drop=True)
-#     # Define columns to check
-#     columns_to_check = [
-#         "drug_kg_curie",
-#         "disease_kg_curie",
-#         "significantly_better",
-#         "non_significantly_better",
-#         "non_significantly_worse",
-#         "significantly_worse",
-#     ]
-
-#     # Remove rows with missing values in cols
-#     df = df.dropna(subset=columns_to_check).reset_index(drop=True)
-#     # drop columns
-#     df = df.drop(columns=["reason_for_rejection", "conflict"]).reset_index(drop=True)
-#     return df
+    return values.to_frame(name="id"), edges
 
 
 # @has_schema(

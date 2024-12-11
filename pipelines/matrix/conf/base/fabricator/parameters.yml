@@ -253,30 +253,47 @@ fabricator.rtx_kg2:
           - MODERATE
         
 
-  clinical_trials:
+# fabricator.clinical_trails:
+  clinical_trials_nodes:
+    num_rows: 30
+    columns:
+      curie:
+        type: row_apply
+        list_of_values: [ nodes.id:ID ]
+        row_func: "lambda *args: args[0]"
+        resize: True
+        seed: 590590
+      name:
+        type: row_apply
+        list_of_values: [ nodes:name ]
+        row_func: "lambda *args: args[0]"
+        resize: True
+        seed: 40599
+
+  clinical_trials_edges:
     num_rows: 50
     columns:
       drug_kg_curie:
         type: row_apply
-        list_of_values: [drug_list.curie, drug_list.name]
+        list_of_values: [clinical_trials_nodes:curie, clinical_trials_nodes:name]
         row_func: "lambda *args: args[0]"
         resize: True
         seed: 40599
       drug_name:
         type: row_apply
-        list_of_values: [drug_list.curie, drug_list.name]
+        list_of_values: [clinical_trials_nodes.curie, clinical_trials_nodes.name]
         row_func: "lambda *args: args[1]"
         resize: True
         seed: 40599
       disease_kg_curie:
         type: row_apply
-        list_of_values: [disease_list.curie, disease_list.name]
+        list_of_values: [clinical_trials_nodes.curie, clinical_trials_nodes.name]
         row_func: "lambda *args: args[0]"
         resize: True
         seed: 30599
       disease_name:
         type: row_apply
-        list_of_values: [disease_list.curie, disease_list.name]
+        list_of_values: [clinical_trials_nodes.curie, clinical_trials_nodes.name]
         row_func: "lambda *args: args[1]"
         resize: True
         seed: 30599

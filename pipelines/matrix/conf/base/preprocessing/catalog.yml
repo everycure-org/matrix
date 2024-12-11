@@ -69,7 +69,7 @@ preprocessing.int.edges:
 preprocessing.raw.clinical_trials_data:
   <<: *_medical_clinical_trials_sheet_dataset
   load_args:
-    sheet_name: clinical_trial_DD_pairs
+    sheet_name: new_clinical_trial_DD_pairs
     columns:
       - "clinical_trial_id"
       - "reason_for_rejection"
@@ -83,10 +83,10 @@ preprocessing.raw.clinical_trials_data:
 preprocessing.int.mapped_clinical_trials_data:
   <<: *_medical_clinical_trials_sheet_dataset
   save_args:
-    sheet_name: clinical_trial_DD_pairs
+    sheet_name: new_clinical_trial_DD_pairs
     write_columns: ["drug_kg_curie", "disease_kg_curie", "conflict", "drug_kg_label", "disease_kg_label", "label_included"]
   load_args:
-    sheet_name: clinical_trial_DD_pairs
+    sheet_name: new_clinical_trial_DD_pairs
     columns:
       - "clinical_trial_id"
       - "reason_for_rejection"

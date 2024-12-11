@@ -16,7 +16,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 name="normalize_ec_medical_team_nodes",
             ),
             node(
-                func=nodes.create_int_edges,
+                func=nodes.process_medical_edges,
                 inputs=[
                     "preprocessing.int.nodes",
                     "preprocessing.raw.edges",
@@ -27,34 +27,31 @@ def create_pipeline(**kwargs) -> Pipeline:
             ),
             # TODO: Parse dataframe, add source/target curie using name normalizer and
             # in ingestion logic, extract nodes df back from edges
-            # # NOTE: Take raw clinical trial data and map the "name" to "curie" using the synonymizer
-            # node(
-            #     func=nodes.map_name_to_curie,
-            #     inputs={
-            #         "df": "preprocessing.raw.clinical_trials_data",
-            #         "name_resolver": "params:preprocessing.translator.name_resolver",
-            #         "endpoint": "params:preprocessing.translator.normalizer",
-            #         "drug_types": "params:modelling.drug_types",
-            #         "disease_types": "params:modelling.disease_types",
-            #         "conflate": "params:integration.nodenorm.conflate",
-            #         "drug_chemical_conflate": "params:integration.nodenorm.drug_chemical_conflate",
-            #         "batch_size": "params:integration.nodenorm.batch_size",
-            #         "parallelism": "params:integration.nodenorm.parallelism",
-            #     },
-            #     outputs="preprocessing.int.mapped_clinical_trials_data",
-            #     name="mapped_clinical_trials_data",
-            #     tags=["ec-clinical-trials-data"],
-            # ),
-            # # NOTE: Clean up the clinical trial data and write it to the GCS bucket
-            # node(
-            #     func=nodes.clean_clinical_trial_data,
-            #     inputs=[
-            #         "preprocessing.int.mapped_clinical_trials_data",
-            #     ],
-            #     outputs="ingestion.raw.clinical_trials_data",
-            #     name="clean_clinical_trial_data",
-            #     tags=["ec-clinical-trials-data"],
-            # ),
+            # NOTE: Take raw clinical trial data and map the "name" to "curie" using the synonymizer
+            node(
+                func=nodes.add_source_and_target_to_clinical_trails,
+                inputs={
+                    "df": "preprocessing.raw.clinical_trials_data",
+                    "drug_types": "params:modelling.drug_types",
+                    "disease_types": "params:modelling.disease_types",
+                },
+                outputs="preprocessing.int.mapped_clinical_trials_data",
+                name="mapped_clinical_trials_data",
+                tags=["ec-clinical-trials-data"],
+            ),
+            # NOTE: Clean up the clinical trial data and write it to the GCS bucket
+            node(
+                func=nodes.clean_clinical_trial_data,
+                inputs=[
+                    "preprocessing.int.mapped_clinical_trials_data",
+                ],
+                outputs=[
+                    "ingestion.raw.ec_clinical_trails.nodes@pandas",
+                    "ingestion.raw.ec_clinical_trails.edges@pandas",
+                ],
+                name="clean_clinical_trial_data",
+                tags=["ec-clinical-trials-data"],
+            ),
             # node(
             #     func=nodes.clean_drug_list,
             #     inputs={
