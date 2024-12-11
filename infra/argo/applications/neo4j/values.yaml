@@ -43,6 +43,10 @@ neo4j: # the name of the helm dependency
           port: 7687
           targetPort: 7687
           name: bolt
+  # enables prometheus service monitor
+  serviceMonitor:
+    enabled: false
+  # configuration of ssl certificates for neo4j
   ssl:
     bolt:
       privateKey:
@@ -52,6 +56,13 @@ neo4j: # the name of the helm dependency
         secretName: neo4j-tls
         subPath: tls.crt
     https:
+      privateKey:
+        secretName: neo4j-tls
+        subPath: tls.key
+      publicCertificate:
+        secretName: neo4j-tls
+        subPath: tls.crt
+    cluster:
       privateKey:
         secretName: neo4j-tls
         subPath: tls.key
@@ -89,17 +100,18 @@ neo4j: # the name of the helm dependency
     server.bolt.advertised_address: "neo4j.dev.everycure.org:7687"
 
     # Enable SSL/TLS
-    dbms.connector.https.address: 0.0.0.0:7473
-    dbms.ssl.policy.bolt.enabled: "true"
-    dbms.ssl.policy.https.enabled: "true"
+    # https://neo4j.com/developer/kb/how-do-i-enable-remote-https-access-with-neo4j-30x/
+    # dbms.connector.https.address: 0.0.0.0:7473
+    # dbms.ssl.policy.bolt.enabled: "true"
+    # dbms.ssl.policy.https.enabled: "true"
     
     # Configure client certificate authentication (optional)
-    dbms.ssl.policy.bolt.client_auth: "NONE"
-    dbms.ssl.policy.https.client_auth: "NONE"
+    # dbms.ssl.policy.bolt.client_auth: "NONE"
+    # dbms.ssl.policy.https.client_auth: "NONE"
     
     # Base directory for SSL/TLS certificates
-    dbms.ssl.policy.bolt.base_directory: "/ssl/bolt"
-    dbms.ssl.policy.https.base_directory: "/ssl/https"
+    # dbms.ssl.policy.bolt.base_directory: "/ssl/bolt"
+    # dbms.ssl.policy.https.base_directory: "/ssl/https"
 
   apoc_config:
     apoc.import.file.enabled: "true"
