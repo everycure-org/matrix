@@ -4,7 +4,6 @@ import pyspark.sql.types as T
 from pyspark.sql import DataFrame
 
 from .transformer import GraphTransformer
-from matrix.schemas.knowledge_graph import KGNodeSchema, cols_for_schema
 
 logger = logging.getLogger(__name__)
 
@@ -26,14 +25,14 @@ class ClinicalTrailsTransformer(GraphTransformer):
             .withColumn("id",                                f.lit("normalized_curie"))
             .withColumn("upstream_data_source",              f.array(f.lit("ec_medical")))
             .withColumn("labels",                            f.array(f.col("entity label"))) # TODO: Fix entity labels for medical?
-            .withColumn("all_categories",                    f.array(f.col("category")))
+            .withColumn("all_categories",                    f.array(f.lit("biolink:"))) # TODO fix
             .withColumn("equivalent_identifiers",            f.array(f.col("id")))
             .withColumn("publications",                      f.lit(None).cast(T.ArrayType(T.StringType())))
             .withColumn("international_resource_identifier", f.col("id"))
             # .transform(determine_most_specific_category, biolink_categories_df) need this?
             # Filter nodes we could not correctly resolve
             .filter(f.col("id").isNotNull())
-            .select(*cols_for_schema(KGNodeSchema))
+            # .select(*cols_for_schema(KGNodeSchema))
         )
         return df
         # fmt: on
