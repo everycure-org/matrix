@@ -66,7 +66,7 @@ DYNAMIC_PIPELINES_MAPPING = {
         {"name": "rtx_kg2"},
         {"name": "spoke"},
         {"name": "robokop"},
-        {"name": "ec_medical_team", "normalize": False},
+        {"name": "ec_medical_team"},
     ],
     "modelling": [
         {"model_name": "xg_baseline", "num_shards": 1, "run_inference": False},
