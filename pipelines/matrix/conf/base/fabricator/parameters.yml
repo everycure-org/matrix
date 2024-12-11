@@ -501,7 +501,7 @@ fabricator.spoke:
     columns:
       id:
         type: generate_unique_id
-        prefix: "ROBO:"
+        prefix: "SPK:"
       name:
         type: generate_unique_id
         prefix: "rs"
