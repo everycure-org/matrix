@@ -111,6 +111,7 @@ neo4j: # the name of the helm dependency
     # Configure client certificate authentication (optional)
     # dbms.ssl.policy.bolt.client_auth: "NONE"
     # dbms.ssl.policy.https.client_auth: "NONE"
+    dbms.ssl.policy.client_auth: "NONE"
     
     # Base directory for SSL/TLS certificates
     # dbms.ssl.policy.bolt.base_directory: "/ssl/bolt"
