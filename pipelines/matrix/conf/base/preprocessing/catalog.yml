@@ -18,7 +18,7 @@ _pandas_csv: &_pandas_csv
 
 _medical_kg_sheets_dataset: &_medical_kg_sheets_dataset
   type: matrix.datasets.gcp.GoogleSheetsDataset
-  key: 1LMtOmA10t7a3lcKeTP7zmptOPIcCBIPFVJt9J7jZ2bQ
+  key: 1NJxCzjuXBfXy0aRq-BDQt5DcNGoSMTLwO5wWy-W78M8
   service_file: conf/local/service-account.json
 
 _medical_clinical_trials_sheet_dataset: &_medical_clinical_trials_sheet_dataset

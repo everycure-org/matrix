@@ -101,11 +101,11 @@ ingestion.int.rtx_kg2.curie_to_pmids:
 # -------------------------------------------------------------------------  
 ingestion.raw.ec_medical_team.nodes@pandas:
   <<: [*_layer_raw, *_pandas_csv]
-  filepath: ${globals:paths.raw}/ec_medical_team/arax/20241016/nodes.csv
+  filepath: ${globals:paths.raw}/ec_medical_team/arax/20241016/nodes_old.csv
 
 ingestion.raw.ec_medical_team.nodes@spark:
   <<: [*_spark_csv, *_layer_raw]
-  filepath: ${globals:paths.raw}/ec_medical_team/arax/20241016/nodes.csv
+  filepath: ${globals:paths.raw}/ec_medical_team/arax/20241016/nodes_old.csv
   save_args:
     mode: overwrite
     header: True
@@ -114,11 +114,11 @@ ingestion.raw.ec_medical_team.nodes@spark:
 
 ingestion.raw.ec_medical_team.edges@pandas:
   <<: [ *_layer_int, *_pandas_csv]
-  filepath: ${globals:paths.raw}/ec_medical_team/arax/20241016/edges.csv
+  filepath: ${globals:paths.raw}/ec_medical_team/arax/20241016/edges_old.csv
 
 ingestion.raw.ec_medical_team.edges@spark:
   <<: [*_spark_csv, *_layer_int]
-  filepath: ${globals:paths.raw}/ec_medical_team/arax/20241016/edges.csv
+  filepath: ${globals:paths.raw}/ec_medical_team/arax/20241016/edges_old.csv
   save_args:
     mode: overwrite
     header: True
