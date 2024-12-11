@@ -1,0 +1,34 @@
+# NOTE: This file was partially generated using AI assistance.
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: neo4j-certificate
+  namespace: neo4j
+spec:
+  # Secret that will store the certificate
+  secretName: neo4j-tls
+  
+  # Certificate validity duration
+  duration: 2160h # 90 days
+  renewBefore: 360h # 15 days
+  
+  # Private key configuration
+  privateKey:
+    algorithm: RSA
+    size: 2048
+    rotationPolicy: Always  # Recommended for security best practices
+  
+  # The domain(s) to issue the certificate for
+  dnsNames:
+    - neo4j.dev.everycure.org
+  
+  # Usage configuration
+  usages:
+    - server auth
+    - client auth
+  
+  # Reference to the Issuer/ClusterIssuer that will issue the certificate
+  issuerRef:
+    name: letsencrypt-prod  # You'll need to create this issuer
+    kind: ClusterIssuer
+    group: cert-manager.io
