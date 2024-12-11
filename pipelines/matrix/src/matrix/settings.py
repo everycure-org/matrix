@@ -13,7 +13,7 @@ from kedro_mlflow.framework.hooks import MlflowHook
 
 import matrix.hooks as matrix_hooks
 
-from .resolvers import cast_to_int, env, merge_dicts
+from .resolvers import env, merge_dicts
 
 # Hooks are executed in a Last-In-First-Out (LIFO) order.
 HOOKS = (
@@ -56,7 +56,7 @@ CONFIG_LOADER_ARGS = {
     "custom_resolvers": {
         "merge": merge_dicts,
         "oc.env": env,
-        "oc.int": cast_to_int,
+        "oc.int": int,
     },
 }
 

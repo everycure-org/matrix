@@ -25,20 +25,6 @@ def load_environment_variables():
 load_environment_variables()
 
 
-def cast_to_int(val: str) -> int:
-    """Convert input value into integer.
-
-    This resolver should be used to ensure values extracted from the environment
-    are correctly casted to the expected type.
-
-    Args:
-       val: value to convert
-    Returns:
-       Value casted to integer
-    """
-    return int(val)
-
-
 def merge_dicts(dict1: Dict, dict2: Dict) -> Dict:
     """Recursively merge two dictionaries.
 
