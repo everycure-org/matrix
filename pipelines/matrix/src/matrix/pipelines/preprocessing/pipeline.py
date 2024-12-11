@@ -43,6 +43,8 @@ def create_pipeline(**kwargs) -> Pipeline:
                 name="create_prm_ec_medical_team_edges",
                 tags=["ec-medical-kg"],
             ),
+            # TODO: Parse dataframe, add source/target curie using name normalizer and
+            # in ingestion logic, extract nodes df back from edges
             # # NOTE: Take raw clinical trial data and map the "name" to "curie" using the synonymizer
             # node(
             #     func=nodes.map_name_to_curie,
