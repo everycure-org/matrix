@@ -75,7 +75,7 @@ def _create_integration_pipeline(source: str, normalize_edges: bool = True) -> P
 
     if normalize_edges:
         pipelines.append(
-            pipelines(
+            pipeline(
                 [
                     node(
                         func=nodes.normalize_edges,
