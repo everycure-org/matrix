@@ -85,7 +85,7 @@ estimator:
 # inject_object() recorgnizes configuration in the above format,
 # and ensures that the decorated function receives the instantiated 
 # objects.
-from refit.v1.core.inject import inject_object
+from matrix.core import inject_object
 
 @inject_object()
 def train_model(

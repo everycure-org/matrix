@@ -54,7 +54,7 @@ from typing import List
 import pandas as pd
 from sklearn.base import BaseEstimator
 
-from refit.v1.core.inject import inject_object
+from matrix.core import inject_object
 
 
 @inject_object()
@@ -108,7 +108,7 @@ import pandas as pd
 from sklearn.impute import KNNImputer, SimpleImputer
 from sklearn.impute._base import _BaseImputer
 
-from refit.v1.core.inject import inject_object
+from matrix.core import inject_object
 
 
 @inject_object()
