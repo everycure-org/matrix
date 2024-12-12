@@ -1,9 +1,10 @@
 import logging
-from typing import Any, Dict, List, Union, Tuple
+from typing import Any, Callable, Dict, List, Union, Tuple
 import pandas as pd
 import numpy as np
 import json
 import pyspark.sql.functions as f
+import pyspark.sql.functions as F
 
 from pyspark.sql import DataFrame
 
@@ -88,13 +89,13 @@ def filter_valid_pairs(
 
     # Filter out pairs where both source and target exist in nodes
     filtered_tp = (
-        raw_tp.join(valid_nodes.alias("source_nodes"), raw_tp.source == f.col("source_nodes.id"))
-        .join(valid_nodes.alias("target_nodes"), raw_tp.target == f.col("target_nodes.id"))
+        raw_tp.join(valid_nodes.alias("source_nodes"), raw_tp.source == F.col("source_nodes.id"))
+        .join(valid_nodes.alias("target_nodes"), raw_tp.target == F.col("target_nodes.id"))
         .select(raw_tp["*"])
     )
     filtered_tn = (
-        raw_tn.join(valid_nodes.alias("source_nodes"), raw_tn.source == f.col("source_nodes.id"))
-        .join(valid_nodes.alias("target_nodes"), raw_tn.target == f.col("target_nodes.id"))
+        raw_tn.join(valid_nodes.alias("source_nodes"), raw_tn.source == F.col("source_nodes.id"))
+        .join(valid_nodes.alias("target_nodes"), raw_tn.target == F.col("target_nodes.id"))
         .select(raw_tn["*"])
     )
 
@@ -108,6 +109,58 @@ def filter_valid_pairs(
     pairs_df = filtered_tp.withColumn("y", f.lit(1)).unionByName(filtered_tn.withColumn("y", f.lit(0)))
 
     return {"pairs": pairs_df, "metrics": retention_stats}
+
+
+def _apply_transformations(
+    df: DataFrame, transformations: List[Tuple[Callable, Dict[str, Any]]], **kwargs
+) -> DataFrame:
+    logger.info(f"Filtering dataframe with {len(transformations)} transformations")
+    last_count = df.count()
+    logger.info(f"Number of rows before filtering: {last_count}")
+    for name, transformation in transformations.items():
+        logger.info(f"Applying transformation: {name}")
+        df = df.transform(transformation, **kwargs)
+        new_count = df.count()
+        logger.info(f"Number of rows after transformation: {new_count}, cut out {last_count - new_count} rows")
+        last_count = new_count
+
+    return df
+
+
+@inject_object()
+def prefilter_unified_kg_nodes(
+    nodes: DataFrame,
+    transformations: List[Tuple[Callable, Dict[str, Any]]],
+) -> DataFrame:
+    return _apply_transformations(nodes, transformations)
+
+
+@inject_object()
+def filter_unified_kg_edges(
+    nodes: DataFrame,
+    edges: DataFrame,
+    biolink_predicates: Dict[str, Any],
+    transformations: List[Tuple[Callable, Dict[str, Any]]],
+) -> DataFrame:
+    """Function to filter the knowledge graph edges.
+
+    We first apply a series for filter transformations, and then deduplicate the edges based on the nodes that we dropped.
+    No edge can exist without its nodes.
+    """
+
+    # filter down edges to only include those that are present in the filtered nodes
+    edges_count = edges.count()
+    logger.info(f"Number of edges before filtering: {edges_count}")
+    edges = (
+        edges.alias("edges")
+        .join(nodes.alias("subject"), on=F.col("edges.subject") == F.col("subject.id"), how="inner")
+        .join(nodes.alias("object"), on=F.col("edges.object") == F.col("object.id"), how="inner")
+        .select("edges.*")
+    )
+    new_edges_count = edges.count()
+    logger.info(f"Number of edges after filtering: {new_edges_count}, cut out {edges_count - new_edges_count} edges")
+
+    return _apply_transformations(edges, transformations, biolink_predicates=biolink_predicates)
 
 
 @has_schema(
@@ -130,9 +183,9 @@ def attach_embeddings(
     """
     return (
         pairs_df.alias("pairs")
-        .join(nodes.withColumn("source", f.col("id")), how="left", on="source")
+        .join(nodes.withColumn("source", F.col("id")), how="left", on="source")
         .withColumnRenamed("topological_embedding", "source_embedding")
-        .join(nodes.withColumn("target", f.col("id")), how="left", on="target")
+        .join(nodes.withColumn("target", F.col("id")), how="left", on="target")
         .withColumnRenamed("topological_embedding", "target_embedding")
         .select("pairs.*", "source_embedding", "target_embedding")
     )
@@ -160,19 +213,19 @@ def filter_for_drug_disease_nodes(
     Returns:
         Filtered nodes dataframe
     """
-    gt_pos = gt.filter(f.col("y") == 1)
+    gt_pos = gt.filter(F.col("y") == 1)
     ground_truth_nodes = (
-        gt.withColumn("id", f.col("source"))
-        .unionByName(gt_pos.withColumn("id", f.col("target")))
+        gt.withColumn("id", F.col("source"))
+        .unionByName(gt_pos.withColumn("id", F.col("target")))
         .select("id")
         .distinct()
         .withColumn("is_ground_pos", f.lit(True))
     )
 
     df = (
-        nodes.withColumn("is_drug", f.arrays_overlap(f.col("all_categories"), f.lit(drug_types)))
-        .withColumn("is_disease", f.arrays_overlap(f.col("all_categories"), f.lit(disease_types)))
-        .filter((f.col("is_disease")) | (f.col("is_drug")))
+        nodes.withColumn("is_drug", f.arrays_overlap(F.col("all_categories"), f.lit(drug_types)))
+        .withColumn("is_disease", f.arrays_overlap(F.col("all_categories"), f.lit(disease_types)))
+        .filter((F.col("is_disease")) | (F.col("is_drug")))
         .select("id", "topological_embedding", "is_drug", "is_disease")
         # TODO: The integrated data product _should_ contain these nodes
         # TODO: Verify below does not have any undesired side effects
