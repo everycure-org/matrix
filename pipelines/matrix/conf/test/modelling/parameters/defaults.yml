@@ -1,0 +1,6 @@
+filtering:
+  node_filters:
+    filter_node_labels:
+      categories:
+        # we are explicitly setting a category here that we are not generating in the fabricator
+        - biolink:Activity
