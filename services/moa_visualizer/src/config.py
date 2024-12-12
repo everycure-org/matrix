@@ -51,6 +51,7 @@ class DisplayColumns(BaseSettings):
     n_nodes: int = Field(default=0, description="Number of nodes")
 
     drug_name: str = Field("Drug", description="Display name for drug column")
+    pair_id: str = Field("Pair ID", description="Pair UID")
     disease_name: str = Field("Disease", description="Display name for disease column")
     MOA_score: str = Field("MoA Score", description="Display name for MOA score")
     feedback: str = Field("Feedback", description="Display name for feedback column")
@@ -59,7 +60,12 @@ class DisplayColumns(BaseSettings):
     disease_id: str = Field("Disease Curie", description="Display name for disease ID")
     node_columns: Dict[int, NodeColumns] = Field(
         default_factory=lambda: {
-            i: NodeColumns(predicates=f"Edge {i}", id=f"Node {i} ID", name=f"Node {i} Name", type=f"Node {i} Type")
+            i: NodeColumns(
+                predicates=f"Edge {i}",
+                id=f"Node {i} ID",
+                name=f"Node {i} Name",
+                type=f"Node {i} Type",
+            )
             for i in range(1, 4)  # TODO dynamic number of nodes, or just set
             # max number of nodes in config
         },
@@ -77,9 +83,18 @@ class DisplayColumns(BaseSettings):
 
     @property
     def basic_fields(self) -> list[str]:
-        """Get the basic fields that are common between display names and keys,
-        Ignores nodes as these are variable."""
-        return ["drug_name", "disease_name", "MOA_score", "feedback", "drug_disease_pair_id", "drug_id", "disease_id"]
+        """List of fields that we want to display,
+        Ignores nodes + edges as these are variable."""
+        return [
+            "drug_name",
+            "disease_name",
+            "MOA_score",
+            "pair_id",
+            "feedback",
+            "drug_disease_pair_id",
+            "drug_id",
+            "disease_id",
+        ]
 
     def get_all_columns(self) -> list[str]:
         """Get all column display names in order."""
@@ -93,9 +108,13 @@ class DisplayColumns(BaseSettings):
 
     def get_all_keys(self) -> list[str]:
         """Get all field names including node column fields."""
-        node_fields = [
-            f"node_columns_{i}_{field}" for i in range(1, 4) for field in ["predicates", "id", "name", "type"]
-        ]
+        node_fields = []
+        for i in range(1, 4):
+            for field in ["predicates", "id", "name", "type"]:
+                if field == "predicates":
+                    node_fields.append(f"predicates_{i}")
+                else:
+                    node_fields.append(f"intermediate_{field}_{i}")
         return self.basic_fields + node_fields
 
 
@@ -137,6 +156,11 @@ process is illustrated by the following diagram:
         env_file = ".env"
         case_sensitive = True
         validate_assignment = True
+
+
+def set_wide_space_default():
+    """Set the default layout for the Streamlit app."""
+    st.set_page_config(layout="wide")
 
 
 @st.cache_resource

@@ -76,7 +76,7 @@ def select_last_edge(edges: str) -> str:
 
 def build_external_urls(id_string: str) -> str:
     # Maybe make a dict of ontologies and their URLs for constants
-    for ont, url in ont_urls.items():
+    for ont, url in ont_urls.model_fields.items():
         if ont in id_string:
             # Maybe a better way is to regex out the last bit of the string and keep that only
             if ont == "UniProtKB":

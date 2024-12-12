@@ -9,14 +9,9 @@ from utils import (
     display_table,
     parse_hop_parameter,
 )
-from config import settings
+from config import settings, set_wide_space_default
 
-
-# def set_wide_space_default():
-#     st.set_page_config(layout="wide")
-
-# set_wide_space_default()
-
+set_wide_space_default()
 
 with st.sidebar:
     col1, col2 = st.columns(
