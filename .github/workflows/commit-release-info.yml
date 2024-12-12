@@ -1,4 +1,4 @@
-name: Commit Release Info
+name: Commit Release Info 2
 
 on:
   push:
