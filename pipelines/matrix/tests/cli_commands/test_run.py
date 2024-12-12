@@ -170,7 +170,7 @@ def test_run_basic():
         from_nodes=[],
         from_inputs=[],
         to_outputs=[],
-        load_versions=[],
+        load_versions={},
         tags=[],
         without_tags=[],
         conf_source=None,
@@ -205,7 +205,7 @@ def test_run_with_fabricator_env_error():
                 from_nodes=[],
                 from_inputs=[],
                 to_outputs=[],
-                load_versions=[],
+                load_versions={},
                 tags=[],
                 without_tags=[],
                 conf_source=None,
@@ -229,7 +229,7 @@ def mock_config():
         from_nodes=[],
         from_inputs=[],
         to_outputs=[],
-        load_versions=[],
+        load_versions={},
         tags=[],
         without_tags=[],
         conf_source="",
@@ -271,7 +271,24 @@ def test_extract_config_with_from_env(mock_settings, mock_config, mock_session):
     )
 
 
-def test_extract_config_without_from_env(mock_config, mock_session):
-    mock_config.from_env = None
+def test_extract_config_without_from_env(mock_session):
+    mock_config = RunConfig(
+        pipeline_obj=Mock(),
+        pipeline_name="test_pipeline",
+        env="test",
+        runner="SequentialRunner",
+        is_async=False,
+        node_names=[],
+        to_nodes=[],
+        from_nodes=[],
+        from_inputs=[],
+        to_outputs=[],
+        load_versions={},
+        tags=[],
+        without_tags=[],
+        conf_source="",
+        params={},
+        from_env=None,
+    )
     result = _extract_config(mock_config, mock_session)
     assert result is None

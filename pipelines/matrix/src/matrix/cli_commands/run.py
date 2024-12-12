@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional, Set
+from typing import Any, Dict, List, Optional, Set, NamedTuple
 
 import click
 from kedro.framework.cli.project import (
@@ -34,45 +34,23 @@ from kedro.utils import load_obj
 from matrix.session import KedroSessionWithFromCatalog
 
 
-class RunConfig:
-    """Class to represent the run configuration."""
-
-    def __init__(
-        self,
-        pipeline_obj: Pipeline,
-        pipeline_name: str,
-        env: str,
-        runner: str,
-        is_async: bool,
-        node_names: List[str],
-        to_nodes: List[str],
-        from_nodes: List[str],
-        from_inputs: List[str],
-        to_outputs: List[str],
-        load_versions: List[str],
-        tags: List[str],
-        without_tags: List[str],
-        conf_source: str,
-        params: Dict[str, Any],
-        from_env: str,
-    ):
-        """Construct new instance of `RunConfig`."""
-        self.pipeline_obj = pipeline_obj
-        self.pipeline_name = pipeline_name
-        self.env = env
-        self.runner = runner
-        self.is_async = is_async
-        self.node_names = node_names
-        self.to_nodes = to_nodes
-        self.from_nodes = from_nodes
-        self.from_inputs = from_inputs
-        self.to_outputs = to_outputs
-        self.load_versions = load_versions
-        self.tags = tags
-        self.without_tags = without_tags
-        self.conf_source = conf_source
-        self.params = params
-        self.from_env = from_env
+class RunConfig(NamedTuple):
+    pipeline_obj: Optional[Pipeline]
+    pipeline_name: str
+    env: str
+    runner: str
+    is_async: bool
+    node_names: List[str]
+    to_nodes: List[str]
+    from_nodes: List[str]
+    from_inputs: List[str]
+    to_outputs: List[str]
+    load_versions: List[str]
+    tags: List[str]
+    without_tags: List[str]
+    conf_source: Optional[str]
+    params: Dict[str, Any]
+    from_env: Optional[str]
 
 
 # fmt: off
