@@ -307,16 +307,14 @@ def apply_transformers(
     Returns:
         Transformed data.
     """
-    # Iterate transformers
     for _, transformer in transformers.items():
-        # Apply transformer
         features = transformer["features"]
         features_selected = data[features]
 
         transformed = pd.DataFrame(
             transformer["transformer"].transform(features_selected),
             index=features_selected.index,
-            columns=transformer["transformer"].get_feature_names_out(features_selected),
+            columns=transformer["transformer"].get_feature_names_out(),
         )
 
         # Overwrite columns
