@@ -44,25 +44,24 @@ def create_pipeline(**kwargs) -> Pipeline:
                 tags=["argowf.fuse", "argowf.fuse-group.node_embeddings"],
             ),
             # extract subgraph to downsize KG
-            node(
-                func=nodes.extract_subgraph,
-                inputs=[
-                    "integration.prm.filtered_nodes",
-                    "integration.prm.filtered_edges",
-                    "params:embeddings.category_to_keep",
-                    "params:embeddings.property_to_remove",
-                ],
-                outputs="embeddings.feat.graph.extracted_edges",
-                name="extract_subgraph",
-            ),
+            # node(
+            #     func=nodes.extract_subgraph,
+            #     inputs=[
+            #         "integration.prm.filtered_nodes",
+            #         "integration.prm.filtered_edges",
+            #         "params:embeddings.category_to_keep",
+            #         "params:embeddings.property_to_remove",
+            #     ],
+            #     outputs="embeddings.feat.graph.extracted_edges",
+            #     name="extract_subgraph",
+            # ),
             # Removes edges connecting drug and disease nodes to avoid data leakage
             node(
                 func=nodes.filter_edges_for_topological_embeddings,
                 inputs=[
                     "integration.prm.filtered_nodes",
-                    "embeddings.feat.graph.extracted_edges",
-                    "params:modelling.drug_types",
-                    "params:modelling.disease_types",
+                    "integration.prm.filtered_edges",
+                    "params:embeddings.topological.edge_filtering",
                 ],
                 outputs="embeddings.feat.graph.edges_for_topological",
                 name="filter_edges_for_topological",
