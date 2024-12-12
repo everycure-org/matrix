@@ -17,6 +17,7 @@ from omegaconf import OmegaConf
 from pyspark import SparkConf
 from pyspark.sql import SparkSession
 from google.cloud import storage
+from google.cloud.storage.bucket import Bucket
 
 logger = logging.getLogger(__name__)
 
@@ -261,6 +262,8 @@ class NodeTimerHooks:
 
 class ReleaseInfoHooks:
     _kedro_context: Optional[KedroContext] = None
+    _globals: Optional[dict] = None
+    _params: Optional[dict] = None
 
     @classmethod
     def set_context(cls, context: KedroContext) -> None:
@@ -276,29 +279,26 @@ class ReleaseInfoHooks:
         ReleaseInfoHooks.set_context(context)
 
     @staticmethod
-    def extract_release_info():
-        global_config = ReleaseInfoHooks._kedro_context.config_loader["globals"]
-        params = ReleaseInfoHooks._kedro_context.config_loader["parameters"]
+    def extract_release_info() -> dict:
         info = {
-            "robokop_version": global_config["data_sources"]["robokop"]["version"],
-            "rtx-kg2_version": global_config["data_sources"]["rtx-kg2"]["version"],
-            "ec-medical-team": global_config["data_sources"]["ec-medical-team"]["version"],
-            "topological_estimator": params["embeddings.topological_estimator"]["object"],
-            "topological_encoder": params["embeddings.node"]["encoder"]["encoder"]["model"],
+            "robokop_version": ReleaseInfoHooks._globals["data_sources"]["robokop"]["version"],
+            "rtx-kg2_version": ReleaseInfoHooks._globals["data_sources"]["rtx-kg2"]["version"],
+            "ec-medical-team": ReleaseInfoHooks._globals["data_sources"]["ec-medical-team"]["version"],
+            "topological_estimator": ReleaseInfoHooks._params["embeddings.topological_estimator"]["object"],
+            "topological_encoder": ReleaseInfoHooks._params["embeddings.node"]["encoder"]["encoder"]["model"],
         }
-
         return info
 
     @staticmethod
-    def get_bucket():
-        project_name = ReleaseInfoHooks._kedro_context.config_loader["globals"]["gcp_project"]
-        bucket_name = ReleaseInfoHooks._kedro_context.config_loader["globals"]["gcs_bucket"]
+    def get_bucket() -> Bucket:
+        project_name = ReleaseInfoHooks._globals["gcp_project"]
+        bucket_name = ReleaseInfoHooks._globals["gcs_bucket"]
         client = storage.Client(project_name)
-        bucket = client.bucket(bucket_name)
+        bucket = client.bucket(bucket_name.replace("gs://", ""))
         return bucket
 
     @staticmethod
-    def build_blobpath():
+    def build_blobpath() -> str:
         release_dir = ReleaseInfoHooks._globals["release_dir"]
         blob_path = release_dir.replace("gs://", "").split("/", 1)[1]
         release_version = ReleaseInfoHooks._globals["versions"]["release"]
@@ -306,15 +306,15 @@ class ReleaseInfoHooks:
         return full_blob_path
 
     @staticmethod
-    def upload_to_storage(release_info):
+    def upload_to_storage(release_info: str) -> None:
         bucket = ReleaseInfoHooks.get_bucket()
         blobpath = ReleaseInfoHooks.build_blobpath()
         blob = bucket.blob(blobpath)
         blob.upload_from_string(data=json.dumps(release_info), content_type="application/json")
 
     @hook_impl
-    def before_node_run(self, node) -> None:
-        """For nodes without inputs, we remember the start here."""
-        if node.name != "dummy":  # ingest_kg_edges - last node of data release pipeline:
+    def after_node_run(self, node: Node) -> None:
+        """Runs after the last node of the data_release pipeline"""
+        if node.name == "ingest_kg_edges":
             release_info = self.extract_release_info()
             self.upload_to_storage(release_info)
