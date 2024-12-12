@@ -142,7 +142,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                     "integration.prm.unified_nodes",
                     "params:modelling.filtering.node_filters",
                 ],
-                outputs="integration.prm.prefiltered_nodes",
+                outputs="modelling.prm.prefiltered_nodes",
                 name="prefilter_prm_knowledge_graph_nodes",
                 tags=["modelling"],
             ),
@@ -150,22 +150,22 @@ def create_pipeline(**kwargs) -> Pipeline:
             argo_node(
                 func=nodes.filter_unified_kg_edges,
                 inputs=[
-                    "integration.prm.prefiltered_nodes",
+                    "modelling.prm.prefiltered_nodes",
                     "integration.prm.unified_edges",
                     "integration.raw.biolink.predicates",
                     "params:modelling.filtering.edge_filters",
                 ],
-                outputs="integration.prm.filtered_edges",
+                outputs="modelling.prm.filtered_edges",
                 name="filter_prm_knowledge_graph_edges",
                 tags=["modelling"],
             ),
             argo_node(
                 func=nodes.filter_nodes_without_edges,
                 inputs=[
-                    "integration.prm.prefiltered_nodes",
-                    "integration.prm.filtered_edges",
+                    "modelling.prm.prefiltered_nodes",
+                    "modelling.prm.filtered_edges",
                 ],
-                outputs="integration.prm.filtered_nodes",
+                outputs="modelling.prm.filtered_nodes",
                 name="filter_nodes_without_edges",
                 tags=["modelling"],
             ),
@@ -178,7 +178,7 @@ def create_pipeline(**kwargs) -> Pipeline:
             argo_node(
                 func=nodes.filter_valid_pairs,
                 inputs=[
-                    "integration.prm.filtered_nodes",
+                    "modelling.prm.filtered_nodes",
                     "modelling.raw.ground_truth.positives@spark",
                     "modelling.raw.ground_truth.negatives@spark",
                 ],
@@ -197,7 +197,7 @@ def create_pipeline(**kwargs) -> Pipeline:
             argo_node(
                 func=nodes.filter_for_drug_disease_nodes,
                 inputs=[
-                    "integration.prm.filtered_nodes",
+                    "modelling.prm.filtered_nodes",
                     "embeddings.feat.nodes",
                     "modelling.raw.known_pairs@spark",
                     "params:modelling.drug_types",
