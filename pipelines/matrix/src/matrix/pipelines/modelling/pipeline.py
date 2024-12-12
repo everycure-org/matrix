@@ -195,7 +195,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 name="create_int_known_pairs",
             ),
             argo_node(
-                func=nodes.prefilter_nodes,
+                func=nodes.filter_for_drug_disease_nodes,
                 inputs=[
                     "integration.prm.filtered_nodes",
                     "embeddings.feat.nodes",

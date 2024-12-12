@@ -147,7 +147,7 @@ def attach_embeddings(
     allow_subset=True,
 )
 @primary_key(primary_key=["id"])
-def prefilter_nodes(
+def filter_for_drug_disease_nodes(
     full_nodes: DataFrame, nodes: DataFrame, gt: DataFrame, drug_types: List[str], disease_types: List[str]
 ) -> DataFrame:
     """Prefilter nodes for negative sampling.
