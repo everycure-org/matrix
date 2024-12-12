@@ -9,7 +9,7 @@ import pandas as pd
 from pyspark.sql import DataFrame
 import pyspark.sql.functions as F
 
-from refit.v1.core.inject import inject_object
+from matrix.core import inject_object
 from refit.v1.core.inline_has_schema import has_schema
 from refit.v1.core.make_list_regexable import _extract_elements_in_list
 

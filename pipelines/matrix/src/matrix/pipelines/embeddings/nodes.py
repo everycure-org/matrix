@@ -15,12 +15,13 @@ from pyspark.sql.types import StringType
 from pyspark.sql.window import Window
 from pyspark.ml.functions import array_to_vector, vector_to_array
 
-from refit.v1.core.inject import inject_object
 from refit.v1.core.inline_has_schema import has_schema
 from refit.v1.core.inline_primary_key import primary_key
 from refit.v1.core.unpack import unpack_params
 
 from tenacity import retry, wait_exponential, stop_after_attempt
+
+from matrix.core import inject_object
 
 from .graph_algorithms import GDSGraphAlgorithm
 from .encoders import AttributeEncoder

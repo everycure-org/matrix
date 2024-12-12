@@ -14,7 +14,7 @@ from sklearn.base import BaseEstimator
 import matplotlib.pyplot as plt
 
 from functools import wraps
-from refit.v1.core.inject import inject_object
+from matrix.core import inject_object
 from refit.v1.core.inline_has_schema import has_schema
 from refit.v1.core.inline_primary_key import primary_key
 from refit.v1.core.unpack import unpack_params

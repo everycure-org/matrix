@@ -7,7 +7,7 @@ from langchain.output_parsers import CommaSeparatedListOutputParser
 from langchain.prompts import ChatPromptTemplate
 from langchain.schema import HumanMessage, SystemMessage
 from matrix.pipelines.integration.nodes import batch_map_ids
-from refit.v1.core.inject import inject_object
+from matrix.core import inject_object
 from refit.v1.core.inline_has_schema import has_schema
 from refit.v1.core.inline_primary_key import primary_key
 from jsonpath_ng import parse
