@@ -159,7 +159,6 @@ def _get_feed_dict(params: Dict) -> dict[str, Any]:
     """Get parameters and return the feed dictionary."""
     feed_dict = {"parameters": params}
 
-    @staticmethod
     def _add_param_to_feed_dict(param_name: str, param_value: Any) -> None:
         """Add param to feed dict.
 
