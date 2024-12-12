@@ -34,7 +34,7 @@ Develop Layer acts as an intermediate staging area between feature and main.
    feature/* -> develop -> main   ```
    - Feature branches are created from `develop`
    - Features are merged back into `develop`
-   - Only fully tested, stable code moves from `develop` to `main`
+   - Only fully tested, stable code moves from `develop` to `main`. If the PR is relatively large as many features were collected overtime, we can write a descriptive overview of the PR which will help us tracking.
 
 ### Working with Develop Branch
 
