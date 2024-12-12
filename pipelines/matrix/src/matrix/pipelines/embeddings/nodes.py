@@ -28,6 +28,49 @@ from matrix.pipelines.modelling.nodes import no_nulls
 
 logger = logging.getLogger(__name__)
 
+# def _human_readable_time(elapsed: float):
+#     mins, secs = divmod(elapsed, 60)
+#     hours, mins = divmod(mins, 60)
+
+#     if hours > 0:
+#         message = f"{int(hours)}h{int(mins):02}m{int(secs):02}s"
+#     elif mins > 0:
+#         message = f"{int(mins)}m{int(secs):02}s"
+#     elif secs >= 1:
+#         message = f"{secs:.2f}s"
+#     else:
+#         message = f"{secs * 1000.0:.0f}ms"
+
+#     return message
+
+# def _func_full_name(func: Callable):
+#     if not getattr(func, "__module__", None):
+#         return getattr(func, "__qualname__", repr(func))
+#     return f"{func.__module__}.{func.__qualname__}"
+
+# def log_time(func: Callable) -> Callable:
+#     def wrapper(*args, **kwargs):
+#         start_time = time.time()
+#         result = func(*args, **kwargs)
+#         elapsed_time = time.time() - start_time
+#         logger.info(
+#             "Running %r took %s [%.3fs]",
+#             _func_full_name(func),
+#             _human_readable_time(elapsed_time),
+#             elapsed_time,
+#         )
+#         return result
+#     return wrapper
+
+# def log_time(func):
+#     def wrapper(*args, **kwargs):
+#         start_time = time.time()
+#         result = func(*args, **kwargs)
+#         elapsed_time = time.time() - start_time
+#         logger.info(f"Function `{func.__name__}` executed in {elapsed_time:.4f} seconds.")
+#         return result
+#     return wrapper
+
 
 class GraphDS(GraphDataScience):
     """Adaptor class to allow injecting the GDS object.
@@ -97,6 +140,7 @@ def ingest_nodes(df: DataFrame) -> DataFrame:
     )
 
 
+# @log_time
 def bucketize_df(df: DataFrame, bucket_size: int, input_features: List[str], max_input_len: int):
     """Function to bucketize input dataframe.
     Function bucketizes the input dataframe in N buckets, each of size `bucket_size`
@@ -117,7 +161,6 @@ def bucketize_df(df: DataFrame, bucket_size: int, input_features: List[str], max
         .withColumn("text_to_embed", F.substring(F.col("text_to_embed"), 1, max_input_len))
         .select("id", "text_to_embed", "bucket")
     )
-    result.agg(F.approx_percentile(F.length("text_to_embed"), (0.10, 0.25, 0.5, 0.75, 0.9))).show()
     import sys
 
     sys.exit(1)
@@ -152,6 +195,7 @@ def _bucketize(df: DataFrame, bucket_size: int) -> pd.DataFrame:
     )
 
 
+# @log_time
 @inject_object()
 def compute_embeddings(
     dfs: Dict[str, Any],
@@ -207,12 +251,14 @@ async def compute_df_embeddings_async(df: pd.DataFrame, embedding_model) -> pd.D
         "pca_embedding": "array<float>",
     }
 )
+# @log_time
 @no_nulls(columns=["embedding", "pca_embedding"])
 @unpack_params()
 def reduce_embeddings_dimension(df: DataFrame, transformer, input: str, output: str, skip: bool):
     return reduce_dimension(df, transformer, input, output, skip)
 
 
+# @log_time
 @unpack_params()
 @inject_object()
 def reduce_dimension(df: DataFrame, transformer, input: str, output: str, skip: bool):
@@ -253,6 +299,7 @@ def reduce_dimension(df: DataFrame, transformer, input: str, output: str, skip: 
     return res
 
 
+# @log_time
 def filter_edges_for_topological_embeddings(
     nodes: DataFrame, edges: DataFrame, drug_types: List[str], disease_types: List[str]
 ):
@@ -296,6 +343,7 @@ def filter_edges_for_topological_embeddings(
     return df
 
 
+# @log_time
 def ingest_edges(nodes, edges: DataFrame):
     """Function to construct Neo4J edges."""
     return (
@@ -314,6 +362,7 @@ def ingest_edges(nodes, edges: DataFrame):
     )
 
 
+# @log_time
 @unpack_params()
 @inject_object()
 def train_topological_embeddings(
@@ -371,6 +420,7 @@ def train_topological_embeddings(
     return {"success": "true"}, convergence
 
 
+# @log_time
 @inject_object()
 @unpack_params()
 def write_topological_embeddings(
@@ -392,6 +442,7 @@ def write_topological_embeddings(
     return {"success": "true"}
 
 
+# @log_time
 @no_nulls(columns=["pca_embedding", "topological_embedding"])
 @primary_key(primary_key=["id"])
 def extract_topological_embeddings(embeddings: DataFrame, nodes: DataFrame, string_col: str) -> DataFrame:
@@ -412,6 +463,7 @@ def extract_topological_embeddings(embeddings: DataFrame, nodes: DataFrame, stri
     )
 
 
+# @log_time
 def visualise_pca(nodes: DataFrame, column_name: str):
     """Write topological embeddings."""
     nodes = nodes.select(column_name, "category").toPandas()
