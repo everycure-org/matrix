@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional, Set, NamedTuple
+from typing import Any, Dict, List, Optional, Set, NamedTuple, Iterable, Collection
 
 import click
 from kedro.framework.cli.project import (
@@ -108,22 +108,20 @@ def _run(config: RunConfig, kedro_session: KedroSessionWithFromCatalog) -> None:
     # fmt: on
 
     runner = load_obj(config.runner or "SequentialRunner", "kedro.runner")
-    tags = tuple(config.tags)
-    node_names = tuple(config.node_names)
-    
+
     with kedro_session.create(
         env=config.env, conf_source=config.conf_source, extra_params=config.params
     ) as session:
         # introduced to filter out tags that should not be run
         node_names = _filter_nodes_missing_tag(
-            tuple(config.without_tags), config.pipeline_obj, node_names
+            without_tags=config.without_tags, pipeline_obj=config.pipeline_obj, node_names=config.node_names
         )
 
         from_catalog = _extract_config(config, session)
 
         session.run(
             from_catalog=from_catalog,
-            tags=tags,
+            tags=config.tags,
             runner=runner(is_async=config.is_async),
             node_names=node_names,
             from_nodes=config.from_nodes,
@@ -188,11 +186,11 @@ def _get_feed_dict(params: Dict) -> dict[str, Any]:
 
 
 def _filter_nodes_missing_tag(
-    without_tags: List[str], pipeline_obj: Pipeline, node_names: List[str]
+    without_tags: Iterable[str], pipeline_obj: Pipeline, node_names: Collection[str]
 ) -> List[str]:
     """Filter out nodes that have tags that should not be run and their downstream nodes."""
     if not without_tags:
-        return node_names
+        return list(node_names)
 
     without_tags: Set[str] = set(without_tags)
 
