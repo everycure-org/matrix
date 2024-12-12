@@ -42,20 +42,20 @@ class RTXTransformer(GraphTransformer):
         )
         # SILC Fix 
         chemical_ids = ['OMIM:MTHU008082', 'UMLS:C0311400', 'EFO:0004501', 
-                    'LOINC:LP14446-6', 'OMIM:MTHU000104', 'LP89782-4']
+                    'LOINC:LP14446-6', 'OMIM:MTHU000104', 'LOINC:LP89782-4']
 
         # Add ChemicalEntity category for specific IDs
         df = df.withColumn(
             "all_categories",
             f.when(
                 f.col("id").isin(chemical_ids),
-                f.array_union(f.col("all_categories"), f.array(f.lit("biolink:BiologicalEntity")))
+                f.array_union(f.col("all_categories"), f.array(f.lit("biolink:Case")))
             ).otherwise(f.col("all_categories"))
         ).withColumn(
             "category",
             f.when(
                 f.col("id").isin(chemical_ids),
-                f.lit("biolink:BiologicalEntity")
+                f.lit("biolink:Case")
             ).otherwise(f.col("category"))
         )
         return df
