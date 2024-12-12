@@ -3,6 +3,31 @@ _reporting_ds: &_reporting_ds
     kedro-viz:
       layer: reporting
 
+_bigquery_ds: &_bigquery_ds
+  type: matrix.datasets.gcp.SparkDatasetWithBQExternalTable
+  project_id: ${oc.env:GCP_PROJECT_ID}
+  dataset: release_${globals:versions.release}
+  file_format: parquet
+  save_args:
+    mode: overwrite
+    labels:
+      git_sha: ${globals:git_sha}
+
+# -------------------------------------------------------------------------
+# Datasets
+# -------------------------------------------------------------------------
+
+# overwriting the base catalog to use the bigquery datasets
+modelling.model_input.filtered_nodes:
+  <<: *_bigquery_ds
+  filepath: ${globals:paths.integration}/prm/filtered/nodes
+  table: nodes
+
+modelling.model_input.filtered_edges:
+  <<: *_bigquery_ds
+  filepath: ${globals:paths.integration}/prm/filtered/edges
+  table: edges
+
 # NOTE: Saving an artifact, saving both locally and in MLFlow
 # https://kedro-mlflow.readthedocs.io/en/stable/source/04_experimentation_tracking/03_version_datasets.html#how-to-version-data-in-a-kedro-project
 "modelling.{model}.{shard}.reporting.tuning_convergence_plot":
