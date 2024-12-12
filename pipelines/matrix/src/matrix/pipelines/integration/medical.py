@@ -34,6 +34,24 @@ class MedicalTransformer(GraphTransformer):
             .transform(determine_most_specific_category, biolink_categories_df)
             .select(*cols_for_schema(KGNodeSchema))
         )
+        # List of IDs that need to have all_categories modified be manually added as they have category which gets filtered out
+        chemical_ids = ['OMIM:MTHU008082', 'UMLS:C0311400', 'EFO:0004501', 
+                    'LOINC:LP14446-6', 'OMIM:MTHU000104', 'LP89782-4']
+
+        # Add ChemicalEntity category for specific IDs
+        df = df.withColumn(
+            "all_categories",
+            f.when(
+                f.col("id").isin(chemical_ids),
+                f.array_union(f.col("all_categories"), f.array(f.lit("biolink:BiologicalEntity")))
+            ).otherwise(f.col("all_categories"))
+        ).withColumn(
+            "category",
+            f.when(
+                f.col("id").isin(chemical_ids),
+                f.lit("biolink:BiologicalEntity")
+            ).otherwise(f.col("category"))
+        )
         return df
         # fmt: on
 
