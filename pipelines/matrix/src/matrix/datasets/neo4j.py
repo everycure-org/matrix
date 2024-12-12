@@ -10,7 +10,7 @@ from kedro_datasets.spark import SparkDataset
 
 import logging
 
-from refit.v1.core.inject import _parse_for_objects
+from matrix.core import _parse_for_objects
 
 logger = logging.Logger(__name__)
 
