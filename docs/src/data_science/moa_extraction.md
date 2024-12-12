@@ -84,7 +84,7 @@ The DrugMechDB database consists of a knowledge graph for each drug-disease indi
 
 <!-- ![DrugMechDB entry](../assets/img/MOA_extraction/drugmechdb_entry.png) -->
 
-<img src="../assets/img/MOA_extraction/drugmechdb_entry.png" alt="DrugMechDB entry" width="1000"/>
+![DrugMechDB entry](../assets/img/MOA_extraction/drugmechdb_entry.png)
 
 The database takes the form of a yaml file with the following structure for each entry
 ```yaml
