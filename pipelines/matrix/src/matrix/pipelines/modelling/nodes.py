@@ -314,7 +314,7 @@ def apply_transformers(
         transformed = pd.DataFrame(
             transformer["transformer"].transform(features_selected),
             index=features_selected.index,
-            columns=transformer["transformer"].get_feature_names_out(),
+            columns=transformer["transformer"].get_feature_names_out(features_selected.columns),
         )
 
         # Overwrite columns
