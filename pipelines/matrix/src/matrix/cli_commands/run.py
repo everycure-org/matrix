@@ -199,7 +199,7 @@ def _filter_nodes_missing_tag(
 
     def should_keep_node(node):
         """Remove node if node has all without_tags tags."""
-        if without_tags.intersection(node.tags) == without_tags:
+        if node.tags.issuperset(without_tags):
             return False
         else:
             return True
