@@ -65,23 +65,6 @@ integration.prm.unified_nodes:
   <<: [*_spark_parquet, *_layer_prm]
   filepath: ${globals:paths.integration}/prm/unified/nodes
 
-# filtered KGs
-modelling.prm.filtered_edges:
-  <<: [*_spark_parquet, *_layer_prm]
-  filepath: ${globals:paths.integration}/prm/filtered/edges
-
-# FUTURE more elegant: Apply all node filters, then all edge filters, then a "cleanup" final step that removes
-# 1. all edges where nodes were deleted
-# 2. all nodes that have not one edge connected anymore
-modelling.prm.prefiltered_nodes:
-  <<: [*_spark_parquet, *_layer_prm]
-  filepath: ${globals:paths.integration}/prm/prefiltered/nodes
-
-modelling.prm.filtered_nodes:
-  <<: [*_spark_parquet, *_layer_prm]
-  filepath: ${globals:paths.integration}/prm/filtered/nodes
-
-
 integration.int.ec_medical_team.nodes:
   <<: [*_spark_parquet, *_layer_int]
   filepath: ${globals:paths.integration}/int/ec_medical_team/nodes
