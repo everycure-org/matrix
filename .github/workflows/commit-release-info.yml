@@ -3,7 +3,7 @@ name: Commit Release Info 2
 on:
   push:
     branches:
-      - 'feat/trigger-commit-release-info'
+      - 'feat/commit-release-info'
 
 env:
   project_id: 'mtrx-hub-dev-3of'
