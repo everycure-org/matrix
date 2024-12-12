@@ -3,12 +3,12 @@ import sqlite3
 import os
 from google.cloud import storage
 
-from config import GCP_PROJECT, DATA_INPUT_PATH, MOA_DB_PATH
+from config import settings
 
 
 def main():
-    bucket, path = extract(DATA_INPUT_PATH)
-    bucket = storage.Client(project=GCP_PROJECT).bucket(bucket)
+    bucket, path = extract(settings.data_input_path)
+    bucket = storage.Client(project=settings.gcp_project).bucket(bucket)
     blobs = bucket.list_blobs(match_glob=f"{path}/*.parquet")
 
     for blob in blobs:
@@ -17,7 +17,7 @@ def main():
         df = pd.read_parquet(f"gs://{bucket.name}/{blob.name}")
 
         # Write to SQLite DB
-        with sqlite3.connect(MOA_DB_PATH) as conn:
+        with sqlite3.connect(settings.moa_db_path) as conn:
             # Extract table name from blob path
             table_name = os.path.splitext(os.path.basename(blob.name))[0]
             df.to_sql(table_name, conn, if_exists="replace", index=False)

@@ -169,6 +169,6 @@ def initialise_settings():
 
 
 configs = initialise_settings()
-settings = configs["settings"]
+settings: Settings = configs["settings"]
 ont_urls = configs["ont_urls"]
 display_cols = configs["display_cols"]

@@ -6,7 +6,7 @@ metadata:
     app: moa-viewer
 spec:
   replicas: 1
-  revisionHistoryLimit: 1
+  revisionHistoryLimit: 0
   selector:
     matchLabels:
       app: moa-viewer
