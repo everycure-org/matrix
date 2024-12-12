@@ -1,0 +1,27 @@
+name: Create Pull Request to Verify AI Summary of Release Notes
+
+on:
+  push:
+    branches:
+      - 'feat/trigger-commit-release-info'
+
+env:
+  project_id: 'mtrx-hub-dev-3of'
+  workload_identity_provider: 'projects/938607797672/locations/global/workloadIdentityPools/matrix-pool-rw/providers/matrix-gh-provider-rw'
+  service_account: 'sa-github-actions-rw@mtrx-hub-dev-3of.iam.gserviceaccount.com'
+
+jobs:
+  create_release_notes_draft:
+    runs-on: ubuntu-latest
+    name: Create Draft of the Release Notes
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+      pull-requests: 'read'
+
+    steps:
+      - name: 'Checkout'
+        uses: actions/checkout@main
+        with: 
+          fetch-tags: true
+          fetch-depth: 0
