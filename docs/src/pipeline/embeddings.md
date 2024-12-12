@@ -318,7 +318,7 @@ def create_pipeline(**kwargs) -> Pipeline:
             node(
                 func=nodes.bucketize_df,
                 inputs={
-                    "df": "modelling.prm.filtered_nodes",
+                    "df": "modelling.model_input.filtered_nodes",
                     "input_features": "params:embeddings.node.input_features",
                     "bucket_size": "params:embeddings.node.batch_size",
                     "max_input_len": "params:embeddings.node.max_input_len",

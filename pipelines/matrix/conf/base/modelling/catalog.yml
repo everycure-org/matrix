@@ -102,20 +102,20 @@ modelling.model_input.drugs_diseases_nodes@pandas:
   filepath: ${globals:paths.modelling}/model_input/drugs_diseases_nodes/
 
 # filtered KGs
-modelling.prm.filtered_edges:
-  <<: [*_spark_parquet, *_layer_prm]
-  filepath: ${globals:paths.modelling}/prm/filtered/edges
+modelling.model_input.filtered_edges:
+  <<: [*_spark_parquet, *_model_input_ds]
+  filepath: ${globals:paths.modelling}/model_input/filtered/edges
 
 # FUTURE more elegant: Apply all node filters, then all edge filters, then a "cleanup" final step that removes
 # 1. all edges where nodes were deleted
 # 2. all nodes that have not one edge connected anymore
-modelling.prm.prefiltered_nodes:
-  <<: [*_spark_parquet, *_layer_prm]
-  filepath: ${globals:paths.modelling}/prm/prefiltered/nodes
+modelling.model_input.prefiltered_nodes:
+  <<: [*_spark_parquet, *_model_input_ds]
+  filepath: ${globals:paths.modelling}/model_input/prefiltered/nodes
 
-modelling.prm.filtered_nodes:
-  <<: [*_spark_parquet, *_layer_prm]
-  filepath: ${globals:paths.modelling}/prm/filtered/nodes
+modelling.model_input.filtered_nodes:
+  <<: [*_spark_parquet, *_model_input_ds]
+  filepath: ${globals:paths.modelling}/model_input/filtered/nodes
 
 modelling.model_input.splits:
   <<: [*_pandas_parquet, *_model_input_ds]
