@@ -4,7 +4,6 @@ import click
 from kedro.framework.cli.project import (
     ASYNC_ARG_HELP,
     CONF_SOURCE_HELP,
-    CONFIG_FILE_HELP,
     FROM_INPUTS_HELP,
     FROM_NODES_HELP,
     LOAD_VERSION_HELP,
@@ -18,7 +17,6 @@ from kedro.framework.cli.project import (
     project_group,
 )
 from kedro.framework.cli.utils import (
-    _config_file_callback,
     _split_load_versions,
     _split_params,
     env_option,
@@ -67,11 +65,11 @@ class RunConfig(NamedTuple):
 @click.option( "--without-tags",  "-wt", type=str, help="used to filter out nodes with tags that should not be run. All dependent downstream nodes are also removed. Note nodes need to have _all_ tags to be removed.", callback=split_string, default=[],)
 @click.option( "--load-versions", "-lv", type=str, multiple=True, help=LOAD_VERSION_HELP, callback=_split_load_versions,)
 @click.option("--pipeline",       "-p", required=True, default="__default__", type=str, help=PIPELINE_ARG_HELP)
-@click.option( "--config",        "-c", type=click.Path(exists=True, dir_okay=False, resolve_path=True), help=CONFIG_FILE_HELP, callback=_config_file_callback,)
 @click.option( "--conf-source",   type=click.Path(exists=True, file_okay=False, resolve_path=True), help=CONF_SOURCE_HELP,)
 @click.option( "--params",        type=click.UNPROCESSED, default="", help=PARAMS_ARG_HELP, callback=_split_params,)
 @click.option( "--from-env",      type=str, default=None, help="Custom env to read from, if specified will read from the `--from-env` and write to the `--env`",)
-def run(tags, without_tags, env, runner, is_async, node_names, to_nodes, from_nodes, from_inputs, to_outputs, load_versions, pipeline, config, conf_source, params, from_env,):
+# fmt: on
+def run(tags: list[str], without_tags: list[str], env:str, runner: str, is_async: bool, node_names: list[str], to_nodes: list[str], from_nodes: list[str], from_inputs: list[str], to_outputs: list[str], load_versions: list[str], pipeline: str, conf_source: str, params: dict[str, Any], from_env: Optional[str]=None):
     """Run the pipeline."""
     pipeline_name = pipeline
     pipeline_obj = pipelines[pipeline_name]
@@ -95,9 +93,7 @@ def run(tags, without_tags, env, runner, is_async, node_names, to_nodes, from_no
         from_env=from_env,
     )
 
-    _run(
-        config, KedroSessionWithFromCatalog
-    )
+    _run(config, KedroSessionWithFromCatalog)
 
 
 def _run(config: RunConfig, kedro_session: KedroSessionWithFromCatalog) -> None:
@@ -105,7 +101,6 @@ def _run(config: RunConfig, kedro_session: KedroSessionWithFromCatalog) -> None:
         raise RuntimeError(
             "Running the fabricator in the base environment might overwrite production data! Use the test env `-e test` instead."
         )
-    # fmt: on
 
     runner = load_obj(config.runner or "SequentialRunner", "kedro.runner")
 
