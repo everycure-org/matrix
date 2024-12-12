@@ -52,8 +52,7 @@ def test_get_feed_dict(params, expected_output):
 def test_filter_nodes_no_without_tags():
     """Test when there are no tags to filter (without_tags is empty)."""
     without_tags = []
-    pipeline = "test_pipeline"
-    node_names = ["node1", "node2", "node3"]
+    node_names = {"node1", "node2", "node3"}
 
     pipeline = MagicMock()
     pipeline.nodes = [MagicMock(name="node1"), MagicMock(name="node2"), MagicMock(name="node3")]
@@ -67,7 +66,7 @@ def test_filter_nodes_all_without_tags():
     """Test when all nodes have the tag to be filtered."""
     without_tags = ["tag1"]
     pipeline = MagicMock()
-    node_names = ["node1", "node2"]
+    node_names = {"node1", "node2"}
 
     node1 = MagicMock()
     node1.name = "node1"
@@ -87,7 +86,7 @@ def test_filter_nodes_some_without_tags():
     """Test when only some nodes have the tag to be filtered."""
     without_tags = ["tag1"]
     pipeline = MagicMock()
-    node_names = ["node1", "node2", "node3"]
+    node_names = {"node1", "node2", "node3"}
 
     node1 = MagicMock()
     node1.name = "node1"
@@ -105,7 +104,7 @@ def test_filter_nodes_some_without_tags():
 
     result = _filter_nodes_missing_tag(without_tags, pipeline, node_names)
 
-    assert result == ["node2"]
+    assert result == {"node2"}
 
 
 def test_filter_nodes_downstream_removal():
@@ -133,7 +132,7 @@ def test_filter_nodes_downstream_removal():
     result = _filter_nodes_missing_tag(without_tags, pipeline, node_names)
 
     # node1 is removed due to the tag and node2 is its downstream, so it should also be removed
-    assert result == ["node3"]
+    assert result == {"node3"}
 
 
 def test_filter_nodes_empty_node_names():
@@ -155,7 +154,7 @@ def test_filter_nodes_empty_node_names():
     result = _filter_nodes_missing_tag(without_tags, pipeline, node_names)
 
     # node1 is removed due to the tag
-    assert result == ["node2"]
+    assert result == {"node2"}
 
 
 def test_run_basic():

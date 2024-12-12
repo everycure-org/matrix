@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional, Set, NamedTuple, Iterable, Collection
+from typing import Any, Dict, List, Optional, Set, NamedTuple, Collection
 
 import click
 from kedro.framework.cli.project import (
@@ -187,16 +187,16 @@ def _get_feed_dict(params: Dict) -> dict[str, Any]:
 
 
 def _filter_nodes_missing_tag(
-    without_tags: Iterable[str], pipeline_obj: Pipeline, node_names: Collection[str]
-) -> List[str]:
+    without_tags: Collection[str], pipeline_obj: Pipeline, node_names: Collection[str]
+) -> set[str]:
     """Filter out nodes that have tags that should not be run and their downstream nodes."""
     if not without_tags:
-        return list(node_names)
+        return set(node_names)
 
     without_tags: Set[str] = set(without_tags)
 
-    if len(node_names) == 0:
-        node_names = [node.name for node in pipeline_obj.nodes]
+    if not node_names:
+        node_names = {node.name for node in pipeline_obj.nodes}
 
     # Step 1: Identify nodes to remove
     nodes_to_remove = set(
@@ -215,7 +215,7 @@ def _filter_nodes_missing_tag(
 
     # Step 4: Handle edge case: If we remove all nodes, we should inform the user
     # and then exit
-    if len(filtered_nodes) == 0:
+    if not filtered_nodes:
         print("All nodes removed. Exiting.")
         exit(0)
 
