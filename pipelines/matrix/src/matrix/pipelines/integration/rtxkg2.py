@@ -29,7 +29,7 @@ class RTXTransformer(GraphTransformer):
             Transformed DataFrame.
         """
         # fmt: off
-        return (
+        df = (
             nodes_df
             .withColumn("upstream_data_source",              f.array(f.lit("rtxkg2")))
             .withColumn("labels",                            f.split(f.col(":LABEL"), RTX_SEPARATOR))
@@ -40,6 +40,25 @@ class RTXTransformer(GraphTransformer):
             .withColumnRenamed("id:ID", "id")
             .select(*cols_for_schema(KGNodeSchema))
         )
+        # SILC Fix 
+        chemical_ids = ['OMIM:MTHU008082', 'UMLS:C0311400', 'EFO:0004501', 
+                    'LOINC:LP14446-6', 'OMIM:MTHU000104', 'LP89782-4']
+
+        # Add ChemicalEntity category for specific IDs
+        df = df.withColumn(
+            "all_categories",
+            f.when(
+                f.col("id").isin(chemical_ids),
+                f.array_union(f.col("all_categories"), f.array(f.lit("biolink:BiologicalEntity")))
+            ).otherwise(f.col("all_categories"))
+        ).withColumn(
+            "category",
+            f.when(
+                f.col("id").isin(chemical_ids),
+                f.lit("biolink:BiologicalEntity")
+            ).otherwise(f.col("category"))
+        )
+        return df
         # fmt: on
 
     @pa.check_output(KGEdgeSchema)
