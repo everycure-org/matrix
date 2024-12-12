@@ -626,8 +626,8 @@ def clean_gt_data(
     elif pos_df is not None and neg_df is not None:
         # Synonymize source and target IDs for both positive and negative ground truth data
         list_dfs = []
-        for df in [neg_df, pos_df]:
-            i = 0
+        for i, df in enumerate([neg_df, pos_df]):  # i will be 0 for neg_df, 1 for pos_df
+            df = df.copy()  # Create a copy to avoid modifying original
             for col in ["source", "target"]:
                 json_parser = parse("$.id.identifier")
                 node_id_map = batch_map_ids(
@@ -640,12 +640,12 @@ def clean_gt_data(
                     json_parser=json_parser,
                 )
                 df[col] = df[col].map(node_id_map)
-                df["y"] = i
+            df["y"] = i  # Assign label outside the inner loop
             list_dfs.append(df)
-            i = i + 1
         df = pd.concat(list_dfs)
     else:
         raise ValueError("Either gt_df, pos_df or neg_df must be provided")
+
     return df.drop_duplicates(subset=["source", "target"])
 
 
