@@ -199,10 +199,7 @@ def _filter_nodes_missing_tag(
 
     def should_keep_node(node):
         """Remove node if node has all without_tags tags."""
-        if node.tags.issuperset(without_tags):
-            return False
-        else:
-            return True
+        return not node.tags.issuperset(without_tags)
 
     # Step 1: Identify nodes to remove
     nodes_to_remove = set(
