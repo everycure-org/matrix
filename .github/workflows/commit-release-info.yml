@@ -1,4 +1,4 @@
-name: Create Pull Request to Verify AI Summary of Release Notes
+name: Commit Release Info
 
 on:
   push:
