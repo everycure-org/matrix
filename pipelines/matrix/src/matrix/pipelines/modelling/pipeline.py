@@ -133,6 +133,45 @@ def _create_model_pipeline(model: str, num_shards: int) -> Pipeline:
 
 def create_pipeline(**kwargs) -> Pipeline:
     """Create modelling pipeline."""
+    create_filtered_kgs = pipeline(
+        [
+            # filter nodes given a set of filter stages
+            argo_node(
+                func=nodes.prefilter_unified_kg_nodes,
+                inputs=[
+                    "integration.prm.unified_nodes",
+                    "params:modelling.filtering.node_filters",
+                ],
+                outputs="integration.prm.prefiltered_nodes",
+                name="prefilter_prm_knowledge_graph_nodes",
+                tags=["modelling"],
+            ),
+            # filter edges given a set of filter stages
+            argo_node(
+                func=nodes.filter_unified_kg_edges,
+                inputs=[
+                    "integration.prm.prefiltered_nodes",
+                    "integration.prm.unified_edges",
+                    "integration.raw.biolink.predicates",
+                    "params:modelling.filtering.edge_filters",
+                ],
+                outputs="integration.prm.filtered_edges",
+                name="filter_prm_knowledge_graph_edges",
+                tags=["modelling"],
+            ),
+            argo_node(
+                func=nodes.filter_nodes_without_edges,
+                inputs=[
+                    "integration.prm.prefiltered_nodes",
+                    "integration.prm.filtered_edges",
+                ],
+                outputs="integration.prm.filtered_nodes",
+                name="filter_nodes_without_edges",
+                tags=["modelling"],
+            ),
+        ]
+    )
+
     create_model_input = pipeline(
         [
             # Construct ground_truth
@@ -189,4 +228,4 @@ def create_pipeline(**kwargs) -> Pipeline:
             )
         )
 
-    return sum([create_model_input, *pipelines])
+    return sum([create_filtered_kgs, create_model_input, *pipelines])
