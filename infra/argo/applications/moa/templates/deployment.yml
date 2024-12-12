@@ -18,7 +18,7 @@ spec:
         - name: shared-data
           emptyDir: {}
       initContainers:
-      - name: init-moa-viewer"
+      - name: init-moa-viewer
         image: "{{ .Values.app.registry }}:{{ .Files.Get "files/version" }}"
         volumeMounts:
         - name: shared-data
