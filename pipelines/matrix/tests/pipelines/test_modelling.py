@@ -1,4 +1,3 @@
-import time
 import pytest
 import pandas as pd
 import numpy as np
@@ -9,7 +8,7 @@ from matrix.pipelines.modelling.nodes import apply_transformers
 
 def test_apply_transformers():
     # Create sample input data with parametrized size
-    n_rows = 5000000
+    n_rows = 100000
 
     data = pd.DataFrame(
         {
@@ -69,17 +68,15 @@ def test_apply_transformers():
     }
 
     # Apply transformers
-    t0 = time.time()
     result = apply_transformers(data, transformers)
-    t1 = time.time()
-    with open("time.txt", "a") as f:
-        f.write(f"Time taken: {t1 - t0} seconds\n")
 
     # Assertions
     assert isinstance(result, pd.DataFrame)
     assert "non_transform_col" in result.columns
     assert "feature1" in result.columns
     assert "feature2" in result.columns
+    assert result.shape == data.shape
+    assert result.columns.tolist() == data.columns.tolist()
 
     # Check if transformations were applied correctly
     expected_feature1 = scaler6.transform(data[["feature1"]])
