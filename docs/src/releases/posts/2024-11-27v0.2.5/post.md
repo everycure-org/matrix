@@ -98,7 +98,7 @@ and select the release you want to explore.
 ### When developing a new kedro node 
 
 We would recommend building a clean python function in a notebook which consumes the
-datasets of interest (e.g. `modelling.prm.filtered_nodes`). When you are happy with the
+datasets of interest (e.g. `modelling.model_input.filtered_nodes`). When you are happy with the
 function, you can copy it into the right place in the pipeline (various `nodes.py` files in `pipelines/matrix/src/matrix/pipelines/`) and wire it up with the rest of the pipeline using the syntax shown in various `pipeline.py` files.
 
 ## Other Enhancements 🚀
@@ -119,7 +119,7 @@ To read only a specific knowledge graph from our combined data, you can filter t
 
 ```python
 from pyspark.sql import functions as f
-nodes = catalog.load("modelling.prm.filtered_nodes")
+nodes = catalog.load("modelling.model_input.filtered_nodes")
 nodes.show()
 # note this loads data from the cloud which may take a while depending on your internet connection
 nodes.filter(f.array_contains("upstream_data_source", "RTXKG2")).show()

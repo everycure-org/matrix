@@ -10,13 +10,13 @@ def create_pipeline(**kwargs) -> Pipeline:
             # release to bigquery
             ArgoNode(
                 func=lambda x: x,
-                inputs=["modelling.prm.filtered_edges"],
+                inputs=["modelling.model_input.filtered_edges"],
                 outputs="data_release.prm.bigquery_edges",
                 name="release_edges_to_bigquery",
             ),
             ArgoNode(
                 func=lambda x: x,
-                inputs=["modelling.prm.filtered_nodes"],
+                inputs=["modelling.model_input.filtered_nodes"],
                 outputs="data_release.prm.bigquery_nodes",
                 name="release_nodes_to_bigquery",
             ),
@@ -29,14 +29,14 @@ def create_pipeline(**kwargs) -> Pipeline:
             ),
             ArgoNode(
                 func=ingest_nodes,
-                inputs=["modelling.prm.filtered_nodes"],
+                inputs=["modelling.model_input.filtered_nodes"],
                 outputs="data_release.prm.kg_nodes",
                 name="ingest_kg_nodes",
                 tags=["neo4j"],
             ),
             ArgoNode(
                 func=ingest_edges,
-                inputs=["data_release.prm.kg_nodes", "modelling.prm.filtered_edges"],
+                inputs=["data_release.prm.kg_nodes", "modelling.model_input.filtered_edges"],
                 outputs="data_release.prm.kg_edges",
                 name="ingest_kg_edges",
                 tags=["neo4j"],
