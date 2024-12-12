@@ -32,6 +32,16 @@ class HasNotFlagsFilter(Filter):
         return df.filter(" AND ".join([f"{flag} IS FALSE" for flag in self._flags]))
 
 
+class HasFlagsFilter(Filter):
+    """Class to represent filtering based on flags."""
+
+    def __init__(self, flags: List[str]) -> None:
+        self._flags = flags
+
+    def apply(self, df: DataFrame) -> DataFrame:
+        return df.filter(" AND ".join([f"{flag} IS TRUE" for flag in self._flags]))
+
+
 class Flag(Transform, abc.ABC):
     """Base class to represent flags."""
 

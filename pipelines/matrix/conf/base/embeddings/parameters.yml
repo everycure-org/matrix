@@ -8,6 +8,12 @@ embeddings.disease_types: &_disease_types
   - biolink:BehavioralFeature
   - biolink:DiseaseOrPhenotypicFeature
 
+# Define subject/object category to keep and to remove
+# Default: empty list so it directly pass the integration.prm.filtered_edges to next kedro node
+embeddings.category_to_keep: &_category_to_keep
+  - biolink:ChemicalEntity
+  - biolink:DiseaseOrPhenotypicFeature
+
 # Configuration for node embeddings
 embeddings.node:
   # Following configuration ensures that OpenAI requests are
@@ -60,6 +66,11 @@ embeddings.topological.edge_filtering:
     flag: subject_is_disease
     column: subject.all_categories
     values: *_disease_types
+    ## Additional flag for experiment
+  - object: matrix.pipelines.embeddings.features.ColumnValuesOverlapWithFlag
+    flag: subject_to_keep
+    column: subject.all_categories
+    values: *_category_to_keep
 
   # Object flags
   - object:  matrix.pipelines.embeddings.features.ColumnValuesOverlapWithFlag
@@ -70,6 +81,11 @@ embeddings.topological.edge_filtering:
     flag: object_is_disease
     column: object.all_categories
     values: *_disease_types
+    ## Additional flag for experiment
+  - object: matrix.pipelines.embeddings.features.ColumnValuesOverlapWithFlag
+    flag: object_to_keep
+    column: object.all_categories
+    values: *_category_to_keep
 
   # General flags
   - object:  matrix.pipelines.embeddings.features.HasFlags
@@ -81,11 +97,18 @@ embeddings.topological.edge_filtering:
   - object: matrix.pipelines.embeddings.features.HasAnyFlag
     flag: remove_from_topological_embeddings
     flags: ["is_drug_disease_edge", "is_disease_drug_edge"]
-
+    ## Additional flag for experiment
+  - object: matrix.pipelines.embeddings.features.HasFlags
+    flag: is_to_keep_edge
+    flags: ["subject_to_keep", "object_to_keep"]
+  
+      
   # Filtering
   - object: matrix.pipelines.embeddings.features.HasNotFlagsFilter
     flags: ["remove_from_topological_embeddings"]
-
+  ## Additional flag for experiment
+  - object: matrix.pipelines.embeddings.features.HasFlagsFilter
+    flags: ["is_to_keep_edge"]
   
 # Defines strategy used to compute topological embeddings,
 # all nodes and relationships in our KG are projected, along with
@@ -159,11 +182,3 @@ embeddings.topological_pca:
     k: 2
 
 
-# Define subject/object category to keep and to remove
-# Default: empty list so it directly pass the integration.prm.filtered_edges to next kedro node
-embeddings.category_to_keep:
-#    - biolink:ChemicalEntity
-#    - biolink:DiseaseOrPhenotypicFeature
-
-embeddings.property_to_remove:
-    - ["primary_knowledge_source", "infores:intact"]
