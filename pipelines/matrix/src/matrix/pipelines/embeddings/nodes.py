@@ -26,6 +26,8 @@ from .graph_algorithms import GDSGraphAlgorithm
 from .encoders import AttributeEncoder
 from matrix.pipelines.modelling.nodes import no_nulls
 
+from .features import apply_transforms, Transform
+
 logger = logging.getLogger(__name__)
 
 
@@ -251,57 +253,56 @@ def reduce_dimension(df: DataFrame, transformer, input: str, output: str, skip: 
     return res
 
 
-def extract_subgraph(nodes: DataFrame, edges: DataFrame, to_keep: List[str], to_remove: List[str]):
-    """Function to extract edges from the full KG before filtering drug-disease edges from filter_edges_for_topological_embeddings.
+# def extract_subgraph(nodes: DataFrame, edges: DataFrame, to_keep: List[str], to_remove: List[str]):
+#     """Function to extract edges from the full KG before filtering drug-disease edges from filter_edges_for_topological_embeddings.
 
-    The function trims KG by keeping edges within selected node categories and removing edges by selected edge properties. Currently
-    uses the `all_categories` to keep edges matches categories in to_keep list.
-    The goal is to have a truncated and focused subgraph to be trained in topological embeddings
+#     The function trims KG by keeping edges within selected node categories and removing edges by selected edge properties. Currently
+#     uses the `all_categories` to keep edges matches categories in to_keep list.
+#     The goal is to have a truncated and focused subgraph to be trained in topological embeddings
 
-    FUTURE: Could define subject categories-to-keep and object categories-to-keep separately.
+#     FUTURE: Could define subject categories-to-keep and object categories-to-keep separately.
 
-    Args:
-        nodes: nodes dataframe
-        edges: edges dataframe
-        to_keep: list of node categories
-        to_remove: list of edge properties
-    Returns:
-        Dataframe of truncated KG
-    """
+#     Args:
+#         nodes: nodes dataframe
+#         edges: edges dataframe
+#         to_keep: list of node categories
+#         to_remove: list of edge properties
+#     Returns:
+#         Dataframe of truncated KG
+#     """
 
-    def _create_mapping(column: str):
-        return nodes.alias(column).withColumn(column, F.col("id")).select(column, "all_categories")
+#     def _create_mapping(column: str):
+#         return nodes.alias(column).withColumn(column, F.col("id")).select(column, "all_categories")
 
-    if not to_keep and not to_remove:
-        return edges
+#     if not to_keep and not to_remove:
+#         return edges
 
-    else:
-        df = (
-            edges.alias("edges")
-            .join(_create_mapping("subject"), how="left", on="subject")
-            .join(_create_mapping("object"), how="left", on="object")
-        )
+#     else:
+#         df = (
+#             edges.alias("edges")
+#             .join(_create_mapping("subject"), how="left", on="subject")
+#             .join(_create_mapping("object"), how="left", on="object")
+#         )
 
-        if to_keep:
-            df = (
-                df.withColumn("subject_to_keep", F.arrays_overlap(F.col("subject.all_categories"), F.lit(to_keep)))
-                .withColumn("object_to_keep", F.arrays_overlap(F.col("object.all_categories"), F.lit(to_keep)))
-                .withColumn("truncated_KG", (F.col("subject_to_keep")) & (F.col("object_to_keep")))
-                .filter(F.col("truncated_KG"))
-            )
+#         if to_keep:
+#             df = (
+#                 df.withColumn("subject_to_keep", F.arrays_overlap(F.col("subject.all_categories"), F.lit(to_keep)))
+#                 .withColumn("object_to_keep", F.arrays_overlap(F.col("object.all_categories"), F.lit(to_keep)))
+#                 .withColumn("truncated_KG", (F.col("subject_to_keep")) & (F.col("object_to_keep")))
+#                 .filter(F.col("truncated_KG"))
+#             )
 
-        elif to_remove:
-            for edge_column, identifiers in to_remove:
-                df = df.withColumn(
-                    "be_removed", F.arrays_overlap(F.col(f"edges.{edge_column}"), F.lit(identifiers))
-                ).filter(~F.col("be_removed"))
+#         elif to_remove:
+#             for edge_column, identifiers in to_remove:
+#                 df = df.withColumn(
+#                     "be_removed", F.arrays_overlap(F.col(f"edges.{edge_column}"), F.lit(identifiers))
+#                 ).filter(~F.col("be_removed"))
 
-        return df.select("edges.*")
+#         return df.select("edges.*")
 
 
-def filter_edges_for_topological_embeddings(
-    nodes: DataFrame, edges: DataFrame, drug_types: List[str], disease_types: List[str]
-):
+@inject_object()
+def filter_edges_for_topological_embeddings(nodes: DataFrame, edges: DataFrame, transformations: List[Transform]):
     """Function to filter edges for topological embeddings process.
 
     The function removes edges connecting drug and disease nodes to avoid data leakage. Currently
@@ -312,8 +313,7 @@ def filter_edges_for_topological_embeddings(
     Args:
         nodes: nodes dataframe
         edges: edges dataframe
-        drug_types: list of drug types
-        disease_types: list of disease types
+        transformations: to apply
     Returns:
         Dataframe with filtered edges
     """
@@ -325,17 +325,7 @@ def filter_edges_for_topological_embeddings(
         edges.alias("edges")
         .join(_create_mapping("subject"), how="left", on="subject")
         .join(_create_mapping("object"), how="left", on="object")
-        # FUTURE: Improve with proper feature engineering engine
-        .withColumn("subject_is_drug", F.arrays_overlap(F.col("subject.all_categories"), F.lit(drug_types)))
-        .withColumn("subject_is_disease", F.arrays_overlap(F.col("subject.all_categories"), F.lit(disease_types)))
-        .withColumn("object_is_drug", F.arrays_overlap(F.col("object.all_categories"), F.lit(drug_types)))
-        .withColumn("object_is_disease", F.arrays_overlap(F.col("object.all_categories"), F.lit(disease_types)))
-        .withColumn(
-            "is_drug_disease_edge",
-            (F.col("subject_is_drug") & F.col("object_is_disease"))
-            | (F.col("subject_is_disease") & F.col("object_is_drug")),
-        )
-        .filter(~F.col("is_drug_disease_edge"))
+        .transform(apply_transforms, transformations)
         .select("edges.*")
     )
 

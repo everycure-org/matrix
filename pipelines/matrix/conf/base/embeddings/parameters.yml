@@ -1,3 +1,13 @@
+embeddings.drug_types: &_drug_types
+  - biolink:Drug
+  - biolink:SmallMolecule
+
+embeddings.disease_types: &_disease_types
+  - biolink:Disease
+  - biolink:PhenotypicFeature
+  - biolink:BehavioralFeature
+  - biolink:DiseaseOrPhenotypicFeature
+
 # Configuration for node embeddings
 embeddings.node:
   # Following configuration ensures that OpenAI requests are
@@ -38,6 +48,45 @@ embeddings.gds:
     -  ${globals:neo4j.user}
     -  ${globals:neo4j.password}
 
+
+# FUTURE: Move flagging elsewhere so we can expose them to modelling too
+embeddings.topological.edge_filtering:
+  # Subject flag
+  - object:  matrix.pipelines.embeddings.features.ColumnValuesOverlapWithFlag
+    flag: subject_is_drug
+    column: subject.all_categories
+    values: *_drug_types
+  - object:  matrix.pipelines.embeddings.features.ColumnValuesOverlapWithFlag
+    flag: subject_is_disease
+    column: subject.all_categories
+    values: *_disease_types
+
+  # Object flags
+  - object:  matrix.pipelines.embeddings.features.ColumnValuesOverlapWithFlag
+    flag: object_is_drug
+    column: object.all_categories
+    values: *_drug_types
+  - object:  matrix.pipelines.embeddings.features.ColumnValuesOverlapWithFlag
+    flag: object_is_disease
+    column: object.all_categories
+    values: *_disease_types
+
+  # General flags
+  - object:  matrix.pipelines.embeddings.features.HasFlags
+    flag: is_drug_disease_edge
+    flags: ["subject_is_drug", "object_is_disease"]
+  - object:  matrix.pipelines.embeddings.features.HasFlags
+    flag: is_disease_drug_edge
+    flags: ["subject_is_disease", "object_is_drug"]
+  - object: matrix.pipelines.embeddings.features.HasAnyFlag
+    flag: remove_from_topological_embeddings
+    flags: ["is_drug_disease_edge", "is_disease_drug_edge"]
+
+  # Filtering
+  - object: matrix.pipelines.embeddings.features.HasNotFlagsFilter
+    flags: ["remove_from_topological_embeddings"]
+
+  
 # Defines strategy used to compute topological embeddings,
 # all nodes and relationships in our KG are projected, along with
 # the PCA feature. The graphSage algorithm is hereafter applied
