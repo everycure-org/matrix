@@ -26,7 +26,10 @@ theme:
 
 plugins:
   - drawio
-  - mkdocs-jupyter
+  - mkdocs-jupyter:
+      #enables mathjax for jupyter notebooks as described here https://github.com/squidfunk/mkdocs-material/discussions/7134
+      custom_mathjax_url: "https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/latest.js?config=TeX-AMS_CHTML-full,Safe"
+
   - awesome-pages
   - search
   - table-reader
@@ -39,15 +42,21 @@ plugins:
       branch: main
       docs_path: docs/src/
   - git-revision-date-localized:
+      type: date
+      enabled: !ENV [CI, false]
       enable_creation_date: true
-      fallback_to_build_date: true
+      fallback_to_build_date: false
   # we use the blog plugin to generate the releases page
   - blog:
      blog_dir: releases
      categories: false
       
 
- 
+extra:
+  # https://squidfunk.github.io/mkdocs-material/setup/setting-up-site-analytics/
+  analytics:
+    provider: google
+    property: G-VRGCXV2WMV
 
 markdown_extensions:
   - pymdownx.superfences:
