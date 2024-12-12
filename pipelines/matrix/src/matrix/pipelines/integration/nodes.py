@@ -75,33 +75,6 @@ def _union_datasets(
     return reduce(partial(DataFrame.unionByName, allowMissingColumns=True), datasets)
 
 
-def filter_nodes_without_edges(
-    nodes: DataFrame,
-    edges: DataFrame,
-) -> DataFrame:
-    """Function to filter nodes without edges.
-
-    Args:
-        nodes: nodes df
-        edges: edge df
-    Returns"
-        Final dataframe of nodes with edges
-    """
-
-    # Construct list of edges
-    logger.info("Nodes before filtering: %s", nodes.count())
-    edge_nodes = (
-        edges.withColumn("id", F.col("subject"))
-        .unionByName(edges.withColumn("id", F.col("object")))
-        .select("id")
-        .distinct()
-    )
-
-    nodes = nodes.alias("nodes").join(edge_nodes, on="id").select("nodes.*").persist()
-    logger.info("Nodes after filtering: %s", nodes.count())
-    return nodes
-
-
 @memory.cache
 def batch_map_ids(
     ids: frozenset[str],
