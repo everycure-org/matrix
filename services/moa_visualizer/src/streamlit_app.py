@@ -85,7 +85,7 @@ if "selected_pair_index_df" in locals():
                 # 'protein_url': st.column_config.LinkColumn(
                 #     display_text=r"https://www.uniprot.org/uniprotkb/(.*?)/entry"
                 # ),
-                "Feedback": st.column_config.SelectboxColumn(help="Does this MoA make sense?", options=["Yes", "No"])
+                # "Feedback": st.column_config.SelectboxColumn(help="Does this MoA make sense?", options=["Yes", "No"])
             },
         )
         if "curr_state" not in st.session_state:

@@ -163,7 +163,6 @@ def set_wide_space_default():
     st.set_page_config(layout="wide")
 
 
-@st.cache_resource
 def initialise_settings():
     """Initialize and cache settings for the Streamlit app."""
     return {"settings": Settings(), "ont_urls": OntologyUrls(), "display_cols": DisplayColumns()}
