@@ -1,62 +1,61 @@
-modelling.drug_types:
-  - biolink:Drug
-  - biolink:SmallMolecule
+modelling:
+  drug_types:
+    - biolink:Drug
+    - biolink:SmallMolecule
 
-modelling.disease_types:
-  - biolink:Disease
-  - biolink:PhenotypicFeature
-  - biolink:BehavioralFeature
-  - biolink:DiseaseOrPhenotypicFeature
+  disease_types:
+    - biolink:Disease
+    - biolink:PhenotypicFeature
+    - biolink:BehavioralFeature
+    - biolink:DiseaseOrPhenotypicFeature
 
+  splitter:
 
-modelling.splitter:
+    # Defines strategy for cross validation. Can be a function from sklearn.model_selection
+    # or our custom DrugStratifiedSplit
+    # object: matrix.pipelines.modelling.model_selection.DrugStratifiedSplit
+    object: sklearn.model_selection.StratifiedShuffleSplit
+    n_splits: 1 
+    test_size: 0.1
+    random_state: ${globals:random_state}
 
-  # Defines strategy for cross validation. Can be a function from sklearn.model_selection
-  # or our custom DrugStratifiedSplit
-  # object: matrix.pipelines.modelling.model_selection.DrugStratifiedSplit
-  object: sklearn.model_selection.StratifiedShuffleSplit
-  n_splits: 1 
-  test_size: 0.1
-  random_state: ${globals:random_state}
-
-
-filtering:
-  node_filters:
-    filter_node_labels:
-      object: matrix.pipelines.modelling.utils.partial_
-      func:
-        object: matrix.pipelines.integration.filters.remove_rows_containing_category
-      column: category
-      categories:
-      # TODO: We should likely not remove these before our data release stage but afterwards in the modelling pipeline (if the model so desires)
-        - biolink:Activity
-        - biolink:Agent
-        - biolink:ClinicalIntervention
-        - biolink:Cohort
-        - biolink:Device
-        - biolink:EnvironmentalFeature
-        - biolink:EnvironmentalProcess
-        - biolink:Event
-        - biolink:GeographicLocation
-        - biolink:IndividualOrganism
-        - biolink:InformationContentEntity
-        - biolink:InformationResource
-        - biolink:LifeStage
-        - biolink:MaterialSample
-        - biolink:NamedThing
-        - biolink:Phenomenon
-        - biolink:PhysicalEntity
-        - biolink:PopulationOfIndividualOrganisms
-        - biolink:Procedure
-        - biolink:Publication
-        - biolink:Treatment
-        # If you add anything here make sure the fabricator is not generating it, else we remove it
-  edge_filters:
-    # FUTURE: Ensure the semmed filter is moved here instead
-    filter_biolink_edges:
-      object: matrix.pipelines.modelling.utils.partial_
-      func:
-        object: matrix.pipelines.integration.filters.biolink_deduplicate_edges
+  filtering:
+    node_filters:
+      filter_node_labels:
+        object: matrix.pipelines.modelling.utils.partial_
+        func:
+          object: matrix.pipelines.integration.filters.remove_rows_containing_category
+        column: category
+        categories:
+        # TODO: We should likely not remove these before our data release stage but afterwards in the modelling pipeline (if the model so desires)
+          - biolink:Activity
+          - biolink:Agent
+          - biolink:ClinicalIntervention
+          - biolink:Cohort
+          - biolink:Device
+          - biolink:EnvironmentalFeature
+          - biolink:EnvironmentalProcess
+          - biolink:Event
+          - biolink:GeographicLocation
+          - biolink:IndividualOrganism
+          - biolink:InformationContentEntity
+          - biolink:InformationResource
+          - biolink:LifeStage
+          - biolink:MaterialSample
+          - biolink:NamedThing
+          - biolink:Phenomenon
+          - biolink:PhysicalEntity
+          - biolink:PopulationOfIndividualOrganisms
+          - biolink:Procedure
+          - biolink:Publication
+          - biolink:Treatment
+          # If you add anything here make sure the fabricator is not generating it, else we remove it
+    edge_filters:
+      # FUTURE: Ensure the semmed filter is moved here instead
+      filter_biolink_edges:
+        object: matrix.pipelines.modelling.utils.partial_
+        func:
+          object: matrix.pipelines.integration.filters.biolink_deduplicate_edges
         
 # -------------------------------
 # Base options
