@@ -19,17 +19,13 @@ spec:
           emptyDir: {}
       initContainers:
       - name: init-moa-viewer
-        image: us-central1-docker.pkg.dev/mtrx-hub-dev-3of/matrix-images/moa_visualizer:danrhodes # TODO: Setup versioning
-        command: ["python", "src/init.py"]
+        image: us-central1-docker.pkg.dev/mtrx-hub-dev-3of/matrix-images/moa_visualizer:{{ .Files.Get "version" }}
         volumeMounts:
         - name: shared-data
           mountPath: /data
         env:
-          # TODO: We can update the following env variable to
-          # allow viewer leverages a new dataset
           - name: DATA_INPUT_PATH
-            value: "gs://mtrx-us-central1-hub-dev-storage/kedro/data/releases/v0.2.5-rtx-only/runs/feature-moa-extraction-4472893d/datasets/moa_extraction/reporting"
-          # TODO: We should have data in matrix-hub instead
+            value: {{ .Values.app.config.data_path }}
           - name: GCP_PROJECT
             value: "mtrx-hub-dev-3of"
           - name: MOA_DB_PATH
@@ -38,7 +34,7 @@ spec:
             value: "/assets/moa_info.svg"
       containers:
       - name: moa-viewer
-        image: us-central1-docker.pkg.dev/mtrx-hub-dev-3of/matrix-images/moa_visualizer:danrhodes
+        image:  {{ .Values.app.image }}
         ports:
         - containerPort: 8501
         env:

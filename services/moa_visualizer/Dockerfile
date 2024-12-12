@@ -10,8 +10,6 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 COPY src/ ./src/
 COPY assets/ ./assets/
-# We should not copy data
-# COPY data/ ./data/
 
 ENV PYTHONPATH=/app
 
