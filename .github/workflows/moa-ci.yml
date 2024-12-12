@@ -13,8 +13,8 @@ on:
         - ready_for_review
   
     push:
-    #   branches:
-    #     - main
+      # branches:
+      #   - main
 
 
 jobs:
@@ -62,7 +62,7 @@ jobs:
 
   push_image:
       needs: [ci]
-      # if: github.ref == 'refs/heads/main'
+      if: github.ref == 'refs/heads/main'
       runs-on: 'self-hosted' # TODO: Should we run on self hosted one?
       environment: dev
       permissions: write-all
@@ -84,4 +84,4 @@ jobs:
           run: |-
             gcloud auth configure-docker ${{ vars.region }}-docker.pkg.dev --quiet
   
-        - run: make docker_push TAG=${{ github.sha }}
+        - run: make docker_push
