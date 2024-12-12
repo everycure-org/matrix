@@ -132,6 +132,7 @@ def _run(config: RunConfig, kedro_session: KedroSessionWithFromCatalog) -> None:
             pipeline_name=config.pipeline_name,
         )
 
+
 def _extract_config(config: RunConfig, session: KedroSessionWithFromCatalog) -> Optional[DataCatalog]:
     from_catalog: Optional[DataCatalog] = None
     if config.from_env:
@@ -210,7 +211,7 @@ def _filter_nodes_missing_tag(
     nodes_to_remove.update(ds_nodes_names)
 
     # Step 3: Filter the node_names
-    filtered_nodes = [node for node in node_names if node not in nodes_to_remove]
+    filtered_nodes = set(node_names).difference(nodes_to_remove)
 
     # Step 4: Handle edge case: If we remove all nodes, we should inform the user
     # and then exit
