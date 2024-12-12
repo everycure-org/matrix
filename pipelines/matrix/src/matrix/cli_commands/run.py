@@ -45,7 +45,7 @@ class RunConfig(NamedTuple):
     from_nodes: List[str]
     from_inputs: List[str]
     to_outputs: List[str]
-    load_versions: List[str]
+    load_versions: dict[str, str]
     tags: List[str]
     without_tags: List[str]
     conf_source: Optional[str]
