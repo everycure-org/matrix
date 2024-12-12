@@ -121,7 +121,7 @@ class Settings(BaseSettings):
     """Main configuration settings."""
 
     data_input_path: str = Field(
-        default="gsmtrx-us-central1-hub-dev-storage/kedro/data/releases/v0.2.5-rtx-only/runs/feature-moa-extraction-4472893d/datasets/moa_extraction/reporting",
+        default="gs://mtrx-us-central1-hub-dev-storage/kedro/data/releases/v0.2.5-rtx-only/runs/feature-moa-extraction-4472893d/datasets/moa_extraction/reporting",
         env="DATA_INPUT_PATH",
         description="Path to input data directory",
     )
