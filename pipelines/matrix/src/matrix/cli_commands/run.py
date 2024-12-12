@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional, Set
+from typing import Any, Dict, List, Optional, Set, NamedTuple, Collection
 
 import click
 from kedro.framework.cli.project import (
@@ -34,45 +34,23 @@ from kedro.utils import load_obj
 from matrix.session import KedroSessionWithFromCatalog
 
 
-class RunConfig:
-    """Class to represent the run configuration."""
-
-    def __init__(
-        self,
-        pipeline_obj: Pipeline,
-        pipeline_name: str,
-        env: str,
-        runner: str,
-        is_async: bool,
-        node_names: List[str],
-        to_nodes: List[str],
-        from_nodes: List[str],
-        from_inputs: List[str],
-        to_outputs: List[str],
-        load_versions: List[str],
-        tags: List[str],
-        without_tags: List[str],
-        conf_source: str,
-        params: Dict[str, Any],
-        from_env: str,
-    ):
-        """Construct new instance of `RunConfig`."""
-        self.pipeline_obj = pipeline_obj
-        self.pipeline_name = pipeline_name
-        self.env = env
-        self.runner = runner
-        self.is_async = is_async
-        self.node_names = node_names
-        self.to_nodes = to_nodes
-        self.from_nodes = from_nodes
-        self.from_inputs = from_inputs
-        self.to_outputs = to_outputs
-        self.load_versions = load_versions
-        self.tags = tags
-        self.without_tags = without_tags
-        self.conf_source = conf_source
-        self.params = params
-        self.from_env = from_env
+class RunConfig(NamedTuple):
+    pipeline_obj: Optional[Pipeline]
+    pipeline_name: str
+    env: str
+    runner: str
+    is_async: bool
+    node_names: List[str]
+    to_nodes: List[str]
+    from_nodes: List[str]
+    from_inputs: List[str]
+    to_outputs: List[str]
+    load_versions: dict[str, str]
+    tags: List[str]
+    without_tags: List[str]
+    conf_source: Optional[str]
+    params: Dict[str, Any]
+    from_env: Optional[str]
 
 
 # fmt: off
@@ -130,22 +108,20 @@ def _run(config: RunConfig, kedro_session: KedroSessionWithFromCatalog) -> None:
     # fmt: on
 
     runner = load_obj(config.runner or "SequentialRunner", "kedro.runner")
-    tags = tuple(config.tags)
-    node_names = tuple(config.node_names)
-    
+
     with kedro_session.create(
         env=config.env, conf_source=config.conf_source, extra_params=config.params
     ) as session:
         # introduced to filter out tags that should not be run
         node_names = _filter_nodes_missing_tag(
-            tuple(config.without_tags), config.pipeline_obj, node_names
+            without_tags=config.without_tags, pipeline_obj=config.pipeline_obj, node_names=config.node_names
         )
 
         from_catalog = _extract_config(config, session)
 
         session.run(
             from_catalog=from_catalog,
-            tags=tags,
+            tags=config.tags,
             runner=runner(is_async=config.is_async),
             node_names=node_names,
             from_nodes=config.from_nodes,
@@ -155,6 +131,7 @@ def _run(config: RunConfig, kedro_session: KedroSessionWithFromCatalog) -> None:
             load_versions=config.load_versions,
             pipeline_name=config.pipeline_name,
         )
+
 
 def _extract_config(config: RunConfig, session: KedroSessionWithFromCatalog) -> Optional[DataCatalog]:
     from_catalog: Optional[DataCatalog] = None
@@ -182,7 +159,6 @@ def _get_feed_dict(params: Dict) -> dict[str, Any]:
     """Get parameters and return the feed dictionary."""
     feed_dict = {"parameters": params}
 
-    @staticmethod
     def _add_param_to_feed_dict(param_name: str, param_value: Any) -> None:
         """Add param to feed dict.
 
@@ -210,42 +186,34 @@ def _get_feed_dict(params: Dict) -> dict[str, Any]:
 
 
 def _filter_nodes_missing_tag(
-    without_tags: List[str], pipeline_obj: Pipeline, node_names: List[str]
-) -> List[str]:
+    without_tags: Collection[str], pipeline_obj: Pipeline, node_names: Collection[str]
+) -> set[str]:
     """Filter out nodes that have tags that should not be run and their downstream nodes."""
     if not without_tags:
-        return node_names
+        return set(node_names)
 
     without_tags: Set[str] = set(without_tags)
 
-    if len(node_names) == 0:
-        node_names = [node.name for node in pipeline_obj.nodes]
-
-    def should_keep_node(node):
-        """Remove node if node has all without_tags tags."""
-        if without_tags.intersection(node.tags) == without_tags:
-            return False
-        else:
-            return True
+    if not node_names:
+        node_names = {node.name for node in pipeline_obj.nodes}
 
     # Step 1: Identify nodes to remove
     nodes_to_remove = set(
-        node.name for node in pipeline_obj.nodes if not should_keep_node(node)
+        node.name for node in pipeline_obj.nodes if node.tags.issuperset(without_tags)
     )
 
     # Step 2: Identify and add downstream nodes
-    downstream_nodes = set()
-    downstream_nodes = pipeline_obj.from_nodes(*list(nodes_to_remove)).nodes
+    downstream_nodes = pipeline_obj.from_nodes(*nodes_to_remove).nodes
     ds_nodes_names = [node.name for node in downstream_nodes]
 
     nodes_to_remove.update(ds_nodes_names)
 
     # Step 3: Filter the node_names
-    filtered_nodes = [node for node in node_names if node not in nodes_to_remove]
+    filtered_nodes = set(node_names).difference(nodes_to_remove)
 
     # Step 4: Handle edge case: If we remove all nodes, we should inform the user
     # and then exit
-    if len(filtered_nodes) == 0:
+    if not filtered_nodes:
         print("All nodes removed. Exiting.")
         exit(0)
 
