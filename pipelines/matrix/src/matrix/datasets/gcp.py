@@ -22,7 +22,7 @@ from kedro_datasets.spark.spark_dataset import _get_spark, _split_filepath, _str
 from matrix.hooks import SparkHooks
 from pygsheets import Spreadsheet, Worksheet
 from pyspark.sql import DataFrame
-from refit.v1.core.inject import _parse_for_objects
+from matrix.core import _parse_for_objects
 
 logger = logging.getLogger(__name__)
 
