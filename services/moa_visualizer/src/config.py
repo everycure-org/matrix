@@ -126,7 +126,7 @@ class Settings(BaseSettings):
         description="Path to input data directory",
     )
     moa_db_path: str = Field(
-        default="data/moa_extraction.db", env="MOA_DB_PATH", description="Path to MOA database file"
+        default="/data/moa_extraction.db", env="MOA_DB_PATH", description="Path to MOA database file"
     )
     gcp_project: str = Field(default="project-silc", env="GCP_PROJECT", description="GCP project identifier")
     moa_info_img: str = Field(default="assets/moa_info.svg", env="MOA_INFO_IMG", description="Path to MOA info image")
