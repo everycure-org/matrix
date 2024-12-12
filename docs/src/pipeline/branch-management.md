@@ -20,7 +20,7 @@ In order to achieve a stable main, we need to add an additional layer which will
 ## Introducing Develop layer
 _Note this is one of many branch management approaches we can take but I think its the most appropriate. See here for example [overivew](https://medium.com/@sreekanth.thummala/choosing-the-right-git-branching-strategy-a-comparative-analysis-f5e635443423)_
 
-![alt text](image-2.png)
+![alt text](assets/comparison.png)
 
 Develop Layer acts as an intermediate staging area between feature and main.
 ### Core Concepts
@@ -55,10 +55,9 @@ Develop Layer acts as an intermediate staging area between feature and main.
      - No known issues
 
 ### Triage in the develop layer
-![alt text](image-3.png)
 
 While we should aim to have a single develop branch which we essentially treat as our waiting room for 'main', we don't need to keep it static and in some cases, it might make sense to make a separate branch (e.g. develop/main and develop/spoke) when large changes take place. For instance in the following image
-![Triage in develop](image-4.png)
+![Triage in develop](assets/spoke-triage-branch.png)
 Here, most features have been merged to `develop/main` branch which is now our priority branch - it is waiting to be merged into main once e2e completes and brief code review has been conducted. 
 
 However in the meantime, some other developers fully integrated SPOKE e2e (incl modelling and some extra features MATRIX doesnt have yet) which are quite conflicting with features in `develop/main`. IN such case, it might make sense to create a temporary `develop/spoke` which will be a priority #2 branch. To merge `develop/spoke` into main, we need to wait for `develop/main` to be merged into main, fix potential conflicts, and then can kick off e2e run on develop/spoke. 
@@ -67,7 +66,7 @@ This might seem redundant/allowing for potential bottlenecks however if we chang
 
 Consider another example:
 
-![alt text](image-5.png)
+![alt text](assets/moa-triage-branch.png)
 
 Implementation of MOA into main has taken a long time. One way to streamline the process is ot create a develop/moa branch and rather than doing all development on this branch, create series of smaller PRs which are then merged into develop/moa. As this might conflict with other developers, it is not worth to do the same type of 'grouping' in develop/main
 
