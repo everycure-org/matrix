@@ -204,8 +204,7 @@ def _filter_nodes_missing_tag(
     )
 
     # Step 2: Identify and add downstream nodes
-    downstream_nodes = set()
-    downstream_nodes = pipeline_obj.from_nodes(*list(nodes_to_remove)).nodes
+    downstream_nodes = pipeline_obj.from_nodes(*nodes_to_remove).nodes
     ds_nodes_names = [node.name for node in downstream_nodes]
 
     nodes_to_remove.update(ds_nodes_names)
