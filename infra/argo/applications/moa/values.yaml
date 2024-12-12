@@ -3,5 +3,4 @@ app:
   config:
     data_path: gs://mtrx-us-central1-hub-dev-storage/kedro/data/releases/v0.2.5-rtx-only/runs/feature-moa-extraction-4472893d/datasets/moa_extraction/reporting
 
-
-# ln -s ../../../../services/moa_visualizer/version files/version
+# ln -s  ../../../../../services/moa_visualizer/version version

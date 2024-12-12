@@ -19,7 +19,7 @@ spec:
           emptyDir: {}
       initContainers:
       - name: init-moa-viewer
-        image: us-central1-docker.pkg.dev/mtrx-hub-dev-3of/matrix-images/moa_visualizer:{{ .Files.Get "version" }}
+        image: "us-central1-docker.pkg.dev/mtrx-hub-dev-3of/matrix-images/moa_visualizer:{{ .Files.Get \"version\" }}"
         volumeMounts:
         - name: shared-data
           mountPath: /data
