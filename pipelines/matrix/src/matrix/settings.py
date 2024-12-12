@@ -21,7 +21,7 @@ HOOKS = (
     MlflowHook(),
     matrix_hooks.MLFlowHooks(),
     matrix_hooks.SparkHooks(),
-    matrix_hooks.InfoHooks(),
+    matrix_hooks.ReleaseInfoHooks(),
 )
 
 # Installed plugins for which to disable hook auto-registration.
