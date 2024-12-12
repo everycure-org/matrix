@@ -13,23 +13,25 @@ _kg_dataset: &_kg_dataset
     engine: pyarrow
     use_nullable_dtypes: True
 
-matrix_generation.feat.nodes@spark:
-  <<: *_spark_parquet
-  filepath: ${globals:paths.matrix_generation}/feat/matrix_nodes_spark
+matrix_generation:
 
-matrix_generation.feat.nodes_kg_ds:
-  <<: *_kg_dataset
-  filepath: ${globals:paths.matrix_generation}/feat/matrix_nodes_kg
+  feat.nodes@spark:
+    <<: *_spark_parquet
+    filepath: ${globals:paths.matrix_generation}/feat/matrix_nodes_spark
 
-matrix_generation.prm.matrix_pairs:
-  <<: *_pandas_parquet
-  filepath: ${globals:paths.matrix_generation}/prm/matrix_pairs
+  feat.nodes_kg_ds:
+    <<: *_kg_dataset
+    filepath: ${globals:paths.matrix_generation}/feat/matrix_nodes_kg
 
-"matrix_generation.{model}.model_output.sorted_matrix_predictions@pandas":
-  <<: *_pandas_parquet
-  filepath: ${globals:paths.matrix_generation}/model_output/{model}/matrix_predictions
+  prm.matrix_pairs:
+    <<: *_pandas_parquet
+    filepath: ${globals:paths.matrix_generation}/prm/matrix_pairs
 
-"matrix_generation.{model}.reporting.matrix_report":
-  filepath: ${globals:paths.matrix_generation}/{model}/matrix_report_${globals:run_name}.xlsx
-  type: pandas.ExcelDataset
-  
+  "{model}.model_output.sorted_matrix_predictions@pandas":
+    <<: *_pandas_parquet
+    filepath: ${globals:paths.matrix_generation}/model_output/{model}/matrix_predictions
+
+  "{model}.reporting.matrix_report":
+    filepath: ${globals:paths.matrix_generation}/{model}/matrix_report_${globals:run_name}.xlsx
+    type: pandas.ExcelDataset
+    

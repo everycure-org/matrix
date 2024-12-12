@@ -1,110 +1,111 @@
-# Configuration for node embeddings
-embeddings.node:
-  # Following configuration ensures that OpenAI requests are
-  # batches in batches of 500 input elements, where each input
-  # element is clipped at 100 characters. Max. token limit for 
-  # embeddings call is roughly 8500 tokens, approx (100 * 500) / 6.
-  batch_size: 500
-  max_input_len: 100
+embeddings:
+  # Configuration for node embeddings
+  node:
+    # Following configuration ensures that OpenAI requests are
+    # batches in batches of 500 input elements, where each input
+    # element is clipped at 100 characters. Max. token limit for 
+    # embeddings call is roughly 8500 tokens, approx (100 * 500) / 6.
+    batch_size: 500
+    max_input_len: 100
 
-  # NOTE: We currently only using the "most relevant" category
-  # to compute the attribute embedding.
-  input_features: ["category", "name"]
-  encoder:
-    object: matrix.pipelines.embeddings.encoders.LangChainEncoder
-    dimensions: 512
+    # NOTE: We currently only using the "most relevant" category
+    # to compute the attribute embedding.
+    input_features: ["category", "name"]
     encoder:
-      object: langchain_openai.OpenAIEmbeddings
-      model: text-embedding-3-small
-      timeout: 10
+      object: matrix.pipelines.embeddings.encoders.LangChainEncoder
+      dimensions: 512
+      encoder:
+        object: langchain_openai.OpenAIEmbeddings
+        model: text-embedding-3-small
+        timeout: 10
 
-# Defines strategy used to reduce dimensions of the node embeddings
-# https://spark.apache.org/docs/latest/api/python/reference/api/pyspark.ml.feature.PCA.html
-embeddings.dimensionality_reduction:
-  skip: false
-  input: embedding
-  output: &_pca_property 'pca_embedding'
-  transformer:
-    object: pyspark.ml.feature.PCA
-    k: 100
+  # Defines strategy used to reduce dimensions of the node embeddings
+  # https://spark.apache.org/docs/latest/api/python/reference/api/pyspark.ml.feature.PCA.html
+  dimensionality_reduction:
+    skip: false
+    input: embedding
+    output: &_pca_property 'pca_embedding'
+    transformer:
+      object: pyspark.ml.feature.PCA
+      k: 100
 
-# FUTURE: This is a highly temp. solution that serves as PoC of leveraging Neo4J's
-# AI functionality. If works as expected, we'll do a refinement step to clean this up.
-embeddings.gds:
-  object: matrix.pipelines.embeddings.nodes.GraphDS
-  endpoint: ${globals:neo4j.host}
-  database: analytics
-  auth:
-    -  ${globals:neo4j.user}
-    -  ${globals:neo4j.password}
+  # FUTURE: This is a highly temp. solution that serves as PoC of leveraging Neo4J's
+  # AI functionality. If works as expected, we'll do a refinement step to clean this up.
+  gds:
+    object: matrix.pipelines.embeddings.nodes.GraphDS
+    endpoint: ${globals:neo4j.host}
+    database: analytics
+    auth:
+      -  ${globals:neo4j.user}
+      -  ${globals:neo4j.password}
 
-# Defines strategy used to compute topological embeddings,
-# all nodes and relationships in our KG are projected, along with
-# the PCA feature. The graphSage algorithm is hereafter applied
-# and the result is written back to the KG.
-# 
-# Sources:
-#   - https://neo4j.com/docs/graph-data-science/current/management-ops/graph-creation/graph-project/
-#   - https://neo4j.com/docs/graph-data-science-client/current/graph-object/
-#   - https://neo4j.com/docs/graph-data-science-client/current/model-object/
-#   - https://neo4j.com/docs/graph-data-science-client/current/algorithms/ 
-# 
-embeddings.topological:
-  # Configuration to perform Neo4J graph
-  # projection into GDS library for algorithm
-  # execution.
-  projection:
-    graphName: embeddings
-    nodeProjection:
-      Entity:
-        label: 'Entity'
-        properties: *_pca_property
-    relationshipProjection: '*'
-  
-  # Name of the model in Neo4j
-  estimator:
-    modelName: topological_embeddings
-  
-  write_property: &_topological_property 'topological_embedding'
+  # Defines strategy used to compute topological embeddings,
+  # all nodes and relationships in our KG are projected, along with
+  # the PCA feature. The graphSage algorithm is hereafter applied
+  # and the result is written back to the KG.
+  # 
+  # Sources:
+  #   - https://neo4j.com/docs/graph-data-science/current/management-ops/graph-creation/graph-project/
+  #   - https://neo4j.com/docs/graph-data-science-client/current/graph-object/
+  #   - https://neo4j.com/docs/graph-data-science-client/current/model-object/
+  #   - https://neo4j.com/docs/graph-data-science-client/current/algorithms/ 
+  # 
+  topological:
+    # Configuration to perform Neo4J graph
+    # projection into GDS library for algorithm
+    # execution.
+    projection:
+      graphName: embeddings
+      nodeProjection:
+        Entity:
+          label: 'Entity'
+          properties: *_pca_property
+      relationshipProjection: '*'
+    
+    # Name of the model in Neo4j
+    estimator:
+      modelName: topological_embeddings
+    
+    write_property: &_topological_property 'topological_embedding'
 
-# uncomment for node2vec
-embeddings.topological_estimator:
-  object: matrix.pipelines.embeddings.graph_algorithms.GDSNode2Vec 
-  concurrency: 4
-  embedding_dim: 512
-  random_seed: 42
-  iterations: 10
-  in_out_factor: 1
-  return_factor: 1
-  initial_learning_rate: 0.025
-  min_learning_rate: 0.000025
-  negative_sampling_rate: 5
-  walk_length: 30
-  walks_per_node: 10
-  window_size: 100
+  # uncomment for node2vec
+  topological_estimator:
+    object: matrix.pipelines.embeddings.graph_algorithms.GDSNode2Vec 
+    concurrency: 4
+    embedding_dim: 512
+    random_seed: 42
+    iterations: 10
+    in_out_factor: 1
+    return_factor: 1
+    initial_learning_rate: 0.025
+    min_learning_rate: 0.000025
+    negative_sampling_rate: 5
+    walk_length: 30
+    walks_per_node: 10
+    window_size: 100
 
-# embeddings.topological_estimator:
-#   object: matrix.pipelines.embeddings.graph_algorithms.GDSGraphSage
-#   concurrency: 4
-#   iterations: 100
-#   sample_sizes: [25, 10]
-#   tolerance: 1e-8
-#   embedding_dim: 512
-#   batch_size: 5000
-#   epochs: 10
-#   search_depth: 100
-#   learning_rate: 0.01
-#   activation_function: ReLu
-#   random_seed: 42
-#   feature_properties: [*_pca_property]
-#   # negative_sampling_weight: 20
+  # topological_estimator:
+  #   object: matrix.pipelines.embeddings.graph_algorithms.GDSGraphSage
+  #   concurrency: 4
+  #   iterations: 100
+  #   sample_sizes: [25, 10]
+  #   tolerance: 1e-8
+  #   embedding_dim: 512
+  #   batch_size: 5000
+  #   epochs: 10
+  #   search_depth: 100
+  #   learning_rate: 0.01
+  #   activation_function: ReLu
+  #   random_seed: 42
+  #   feature_properties: [*_pca_property]
+  #   # negative_sampling_weight: 20
 
-embeddings.write_topological_col: *_topological_property
+  write_topological_col: *_topological_property
 
-embeddings.topological_pca:
-  skip: false # Set to true to skip PCA
-  input: *_topological_property
-  output: 'pca_embedding'
-  transformer:
-    object: pyspark.ml.feature.PCA
-    k: 2
+  topological_pca:
+    skip: false # Set to true to skip PCA
+    input: *_topological_property
+    output: 'pca_embedding'
+    transformer:
+      object: pyspark.ml.feature.PCA
+      k: 2

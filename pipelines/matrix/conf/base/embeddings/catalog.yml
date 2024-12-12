@@ -30,111 +30,112 @@ _pandas_parquet: &_pandas_parquet
 # Datasets
 # -------------------------------------------------------------------------
 
+embeddings:
 
-# Dataframe with bucketized nodes
-# NOTE: Goal is to create a partition per "bucket" of the DataFrame
-embeddings.feat.bucketized_nodes@spark:
-  <<: *_spark_parquet
-  filepath: ${globals:paths.tmp}/feat/bucketized_nodes
-  save_args:
-    mode: overwrite
-    partitionBy:
-      - bucket
+  # Dataframe with bucketized nodes
+  # NOTE: Goal is to create a partition per "bucket" of the DataFrame
+  feat.bucketized_nodes@spark:
+    <<: *_spark_parquet
+    filepath: ${globals:paths.tmp}/feat/bucketized_nodes
+    save_args:
+      mode: overwrite
+      partitionBy:
+        - bucket
 
-# NOTE: Loads each partition representing a dataframe into a
-# seperate DF reference file, for lazy loading by the Kedro node
-embeddings.feat.bucketized_nodes@partitioned:
-  type: matrix.datasets.gcp.PartitionedAsyncParallelDataset
-  path: ${globals:paths.tmp}/feat/bucketized_nodes
-  dataset: 
-    <<: *_pandas_parquet
-  filename_suffix: ".parquet"
+  # NOTE: Loads each partition representing a dataframe into a
+  # seperate DF reference file, for lazy loading by the Kedro node
+  feat.bucketized_nodes@partitioned:
+    type: matrix.datasets.gcp.PartitionedAsyncParallelDataset
+    path: ${globals:paths.tmp}/feat/bucketized_nodes
+    dataset: 
+      <<: *_pandas_parquet
+    filename_suffix: ".parquet"
 
 
-# NOTE: Represent a lazy loaded function to write each partition
-# representing bucket _with_ embedding
-embeddings.feat.graph.node_embeddings@partitioned:
-  type: matrix.datasets.gcp.PartitionedAsyncParallelDataset
-  overwrite: True # important otherwise not properly reset on rerun
-  path: ${globals:paths.tmp}/feat/tmp_nodes_with_embeddings
-  dataset: 
-    <<: *_pandas_parquet
-  filename_suffix: ".parquet"
+  # NOTE: Represent a lazy loaded function to write each partition
+  # representing bucket _with_ embedding
+  feat.graph.node_embeddings@partitioned:
+    type: matrix.datasets.gcp.PartitionedAsyncParallelDataset
+    overwrite: True # important otherwise not properly reset on rerun
+    path: ${globals:paths.tmp}/feat/tmp_nodes_with_embeddings
+    dataset: 
+      <<: *_pandas_parquet
+    filename_suffix: ".parquet"
 
-# NOTE: Loads the full partitioned dataframe, i.e., all buckets
-# in single Spark dataframe for downstream processing
-embeddings.feat.graph.node_embeddings@spark:
-  <<: *_spark_parquet
-  filepath: ${globals:paths.tmp}/feat/tmp_nodes_with_embeddings
+  # NOTE: Loads the full partitioned dataframe, i.e., all buckets
+  # in single Spark dataframe for downstream processing
+  feat.graph.node_embeddings@spark:
+    <<: *_spark_parquet
+    filepath: ${globals:paths.tmp}/feat/tmp_nodes_with_embeddings
 
-embeddings.feat.graph.pca_node_embeddings:
-  <<: *_spark_parquet
-  filepath: ${globals:paths.embeddings}/feat/tmp_nodes_with_pca_embeddings
+  feat.graph.pca_node_embeddings:
+    <<: *_spark_parquet
+    filepath: ${globals:paths.embeddings}/feat/tmp_nodes_with_pca_embeddings
 
-embeddings.feat.graph.edges_for_topological:
-  <<: *_spark_parquet
-  filepath: ${globals:paths.embeddings}/feat/edges_for_topological
-  
-# NOTE: Needs renaming
-embeddings.tmp.input_nodes:
-  <<: [*_neo4j_ds]
-  save_args:
-    # NOTE: Neo4j nodes can have multiple labels. We're adding _all_ nodes in a global
-    # `entity` label on which we generate a unique constraint. This has the side-effect
-    # that an index is created which allows for quick edge inserts down the line.
-    # https://neo4j.com/docs/cypher-manual/current/constraints/
-    mode: overwrite
-    script: >
-      CREATE CONSTRAINT IF NOT EXISTS FOR (n:Entity) REQUIRE n.id IS UNIQUE;
-    query: > 
-      CREATE (n:Entity {id: event.id, pca_embedding: event.pca_embedding})
-      WITH event, n
-      CALL apoc.create.addLabels(n, event.labels) YIELD node
-      RETURN node
+  feat.graph.edges_for_topological:
+    <<: *_spark_parquet
+    filepath: ${globals:paths.embeddings}/feat/edges_for_topological
+    
+  # NOTE: Needs renaming
+  tmp.input_nodes:
+    <<: [*_neo4j_ds]
+    save_args:
+      # NOTE: Neo4j nodes can have multiple labels. We're adding _all_ nodes in a global
+      # `entity` label on which we generate a unique constraint. This has the side-effect
+      # that an index is created which allows for quick edge inserts down the line.
+      # https://neo4j.com/docs/cypher-manual/current/constraints/
+      mode: overwrite
+      script: >
+        CREATE CONSTRAINT IF NOT EXISTS FOR (n:Entity) REQUIRE n.id IS UNIQUE;
+      query: > 
+        CREATE (n:Entity {id: event.id, pca_embedding: event.pca_embedding})
+        WITH event, n
+        CALL apoc.create.addLabels(n, event.labels) YIELD node
+        RETURN node
 
-# NOTE: Needs renaming
-embeddings.tmp.input_edges:
-  <<: [*_neo4j_ds]
-  save_args:
-    # NOTE: The `match:Entity` ensures that the index we created above is leveraged
-    # while inserting edges, thereby speeding up the process massively.
-    query: >
-      MATCH (subject:Entity {id: event.subject}), (object:Entity {id: event.object})
-      WITH subject, object, event
-      CALL apoc.create.relationship(subject, event.label, {}, object) YIELD rel
-      RETURN rel
+  # NOTE: Needs renaming
+  tmp.input_edges:
+    <<: [*_neo4j_ds]
+    save_args:
+      # NOTE: The `match:Entity` ensures that the index we created above is leveraged
+      # while inserting edges, thereby speeding up the process massively.
+      query: >
+        MATCH (subject:Entity {id: event.subject}), (object:Entity {id: event.object})
+        WITH subject, object, event
+        CALL apoc.create.relationship(subject, event.label, {}, object) YIELD rel
+        RETURN rel
 
-embeddings.models.topological:
-  # we do not actually do anything with this DS, thus it's a dummy
-  # https://github.com/kedro-org/kedro/discussions/3758
-  filepath: ${globals:paths.embeddings}/models/topological_result.yml
-  type:  yaml.YAMLDataset
+  models.topological:
+    # we do not actually do anything with this DS, thus it's a dummy
+    # https://github.com/kedro-org/kedro/discussions/3758
+    filepath: ${globals:paths.embeddings}/models/topological_result.yml
+    type:  yaml.YAMLDataset
 
-# NOTE: Dummy catalog entry to enforce Kedro dependency
-# between embedding and modelling pipeline.
-embeddings.model_output.topological:
-  <<: *_neo4j_ds
-  save_args:
-    # Dummy Query that never gets written to because we use GDS to execute the write-back of graphsage
-    persist: false
-  load_args:
-    # NOTE: Using the `query` reader option highly impacts performance, hence resorting to `labels`.
-    # https://neo4j.com/docs/spark/current/read/options/
-    partitions: 16 # Should increase parallelism
-    labels: ":Entity" # avoids query which drastically increases performance
+  # NOTE: Dummy catalog entry to enforce Kedro dependency
+  # between embedding and modelling pipeline.
+  model_output.topological:
+    <<: *_neo4j_ds
+    save_args:
+      # Dummy Query that never gets written to because we use GDS to execute the write-back of graphsage
+      persist: false
+    load_args:
+      # NOTE: Using the `query` reader option highly impacts performance, hence resorting to `labels`.
+      # https://neo4j.com/docs/spark/current/read/options/
+      partitions: 16 # Should increase parallelism
+      labels: ":Entity" # avoids query which drastically increases performance
 
-embeddings.feat.nodes:
-  <<: *_spark_parquet
-  filepath: ${globals:paths.embeddings}/feat/nodes_with_embeddings
+  feat.nodes:
+    <<: *_spark_parquet
+    filepath: ${globals:paths.embeddings}/feat/nodes_with_embeddings
 
-embeddings.reporting.loss:
-  type: kedro_datasets.matplotlib.MatplotlibWriter
-  filepath: ${globals:paths.embeddings}/reporting/convergence_plot.png
+  reporting.loss:
+    type: kedro_datasets.matplotlib.MatplotlibWriter
+    filepath: ${globals:paths.embeddings}/reporting/convergence_plot.png
 
-embeddings.reporting.topological_pca:
-  <<: *_spark_parquet
-  filepath: ${globals:paths.embeddings}/reporting/topological_pca
+  reporting.topological_pca:
+    <<: *_spark_parquet
+    filepath: ${globals:paths.embeddings}/reporting/topological_pca
 
-embeddings.reporting.topological_pca_plot:
-  type: kedro_datasets.matplotlib.MatplotlibWriter
-  filepath: ${globals:paths.embeddings}/reporting/pca_plot.png
+  reporting.topological_pca_plot:
+    type: kedro_datasets.matplotlib.MatplotlibWriter
+    filepath: ${globals:paths.embeddings}/reporting/pca_plot.png

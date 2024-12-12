@@ -49,112 +49,113 @@ _model_output_ds: &_model_output_ds
     kedro-viz:
       layer: model_output
 
-modelling.raw.ground_truth.positives@pandas:
-  <<: [*_pandas_csv, *_raw_ds]
-  filepath: ${globals:paths.raw}/ground_truth/translator/${globals:data_sources.gt.version}/tp_pairs_conflated.tsv
-  load_args:
-    sep: "\t"
-  save_args:
-    sep: "\t"
+modelling:
+  raw.ground_truth.positives@pandas:
+    <<: [*_pandas_csv, *_raw_ds]
+    filepath: ${globals:paths.raw}/ground_truth/translator/${globals:data_sources.gt.version}/tp_pairs_conflated.tsv
+    load_args:
+      sep: "\t"
+    save_args:
+      sep: "\t"
 
-modelling.raw.ground_truth.positives@spark:
-  <<: [*_spark_csv, *_raw_ds]
-  filepath: ${globals:paths.raw}/ground_truth/translator/${globals:data_sources.gt.version}/tp_pairs_conflated.tsv
-  file_format: csv
-  load_args:
-    sep: "\t"
-    header: true
+  raw.ground_truth.positives@spark:
+    <<: [*_spark_csv, *_raw_ds]
+    filepath: ${globals:paths.raw}/ground_truth/translator/${globals:data_sources.gt.version}/tp_pairs_conflated.tsv
+    file_format: csv
+    load_args:
+      sep: "\t"
+      header: true
 
-modelling.raw.ground_truth.negatives@pandas:
-  <<: [*_pandas_csv, *_raw_ds]
-  filepath: ${globals:paths.raw}/ground_truth/translator/${globals:data_sources.gt.version}/tn_pairs_conflated.tsv
-  load_args:
-    sep: "\t"
-  save_args:
-    sep: "\t"
+  raw.ground_truth.negatives@pandas:
+    <<: [*_pandas_csv, *_raw_ds]
+    filepath: ${globals:paths.raw}/ground_truth/translator/${globals:data_sources.gt.version}/tn_pairs_conflated.tsv
+    load_args:
+      sep: "\t"
+    save_args:
+      sep: "\t"
 
-modelling.raw.ground_truth.negatives@spark:
-  <<: [*_spark_csv, *_raw_ds]
-  filepath: ${globals:paths.raw}/ground_truth/translator/${globals:data_sources.gt.version}/tn_pairs_conflated.tsv
-  file_format: csv
-  load_args:
-    sep: "\t"
-    header: true
+  raw.ground_truth.negatives@spark:
+    <<: [*_spark_csv, *_raw_ds]
+    filepath: ${globals:paths.raw}/ground_truth/translator/${globals:data_sources.gt.version}/tn_pairs_conflated.tsv
+    file_format: csv
+    load_args:
+      sep: "\t"
+      header: true
 
-modelling.int.known_pairs@pandas:
-  <<: [*_pandas_parquet, *_model_input_ds]
-  filepath: ${globals:paths.modelling}/ground_truth/translator/${globals:data_sources.gt.version}/ground_truth_embeddings
+  int.known_pairs@pandas:
+    <<: [*_pandas_parquet, *_model_input_ds]
+    filepath: ${globals:paths.modelling}/ground_truth/translator/${globals:data_sources.gt.version}/ground_truth_embeddings
 
-modelling.raw.known_pairs@spark:
-  <<: [*_spark_parquet, *_model_input_ds]
-  filepath: ${globals:paths.modelling}/ground_truth/translator/${globals:data_sources.gt.version}/ground_truth_pairs
+  raw.known_pairs@spark:
+    <<: [*_spark_parquet, *_model_input_ds]
+    filepath: ${globals:paths.modelling}/ground_truth/translator/${globals:data_sources.gt.version}/ground_truth_pairs
 
-modelling.int.known_pairs@spark:
-  <<: [*_spark_parquet, *_model_input_ds]
-  filepath: ${globals:paths.modelling}/ground_truth/translator/${globals:data_sources.gt.version}/ground_truth_embeddings
+  int.known_pairs@spark:
+    <<: [*_spark_parquet, *_model_input_ds]
+    filepath: ${globals:paths.modelling}/ground_truth/translator/${globals:data_sources.gt.version}/ground_truth_embeddings
 
-modelling.model_input.drugs_diseases_nodes@spark:
-  <<: [*_spark_parquet, *_model_input_ds]
-  filepath: ${globals:paths.modelling}/model_input/drugs_diseases_nodes/
+  model_input.drugs_diseases_nodes@spark:
+    <<: [*_spark_parquet, *_model_input_ds]
+    filepath: ${globals:paths.modelling}/model_input/drugs_diseases_nodes/
 
-modelling.model_input.drugs_diseases_nodes@pandas:
-  <<: [*_kg_dataset, *_model_input_ds]
-  filepath: ${globals:paths.modelling}/model_input/drugs_diseases_nodes/
+  model_input.drugs_diseases_nodes@pandas:
+    <<: [*_kg_dataset, *_model_input_ds]
+    filepath: ${globals:paths.modelling}/model_input/drugs_diseases_nodes/
 
-modelling.model_input.splits:
-  <<: [*_pandas_parquet, *_model_input_ds]
-  filepath: ${globals:paths.modelling}/model_input/splits
+  model_input.splits:
+    <<: [*_pandas_parquet, *_model_input_ds]
+    filepath: ${globals:paths.modelling}/model_input/splits
 
-"modelling.{model}.model_input.transformers":
-  <<: *_model_input_ds
-  type: pickle.PickleDataset
-  filepath: ${globals:paths.modelling}/model_input/{model}/transformers.pickle
+  "{model}.model_input.transformers":
+    <<: *_model_input_ds
+    type: pickle.PickleDataset
+    filepath: ${globals:paths.modelling}/model_input/{model}/transformers.pickle
 
-"modelling.{model}.model_input.transformed_splits":
-  <<: [*_pandas_parquet, *_model_output_ds]
-  filepath: ${globals:paths.modelling}/model_input/{model}/transformed_splits
-  
-"modelling.{model}.{shard}.model_input.enriched_splits":
-  <<: [*_pandas_parquet, *_model_input_ds]
-  filepath: ${globals:paths.modelling}/model_input/{model}/{shard}/enriched_splits
+  "{model}.model_input.transformed_splits":
+    <<: [*_pandas_parquet, *_model_output_ds]
+    filepath: ${globals:paths.modelling}/model_input/{model}/transformed_splits
+    
+  "{model}.{shard}.model_input.enriched_splits":
+    <<: [*_pandas_parquet, *_model_input_ds]
+    filepath: ${globals:paths.modelling}/model_input/{model}/{shard}/enriched_splits
 
-"modelling.{model}.{shard}.model_input.transformed_splits":
-  <<: [*_pandas_parquet, *_model_input_ds]
-  filepath: ${globals:paths.modelling}/model_input/{model}/{shard}/transformed_splits
+  "{model}.{shard}.model_input.transformed_splits":
+    <<: [*_pandas_parquet, *_model_input_ds]
+    filepath: ${globals:paths.modelling}/model_input/{model}/{shard}/transformed_splits
 
-"modelling.{model}.{shard}.models.model_params":
-  <<: *_model_ds
-  type: yaml.YAMLDataset
-  filepath: ${globals:paths.modelling}/models/{model}/{shard}/model_params.yml
+  "{model}.{shard}.models.model_params":
+    <<: *_model_ds
+    type: yaml.YAMLDataset
+    filepath: ${globals:paths.modelling}/models/{model}/{shard}/model_params.yml
 
-"modelling.{model}.{shard}.models.model":
-  <<: *_model_ds
-  type: pickle.PickleDataset
-  filepath: ${globals:paths.modelling}/models/{model}/{shard}/model.pickle
+  "{model}.{shard}.models.model":
+    <<: *_model_ds
+    type: pickle.PickleDataset
+    filepath: ${globals:paths.modelling}/models/{model}/{shard}/model.pickle
 
-"modelling.{model}.model_output.predictions":
-  <<: [*_pandas_parquet, *_model_output_ds]
-  filepath: ${globals:paths.modelling}/model_output/{model}/predictions
+  "{model}.model_output.predictions":
+    <<: [*_pandas_parquet, *_model_output_ds]
+    filepath: ${globals:paths.modelling}/model_output/{model}/predictions
 
-# NOTE: Saving an artifact, saving both locally and in MLFlow
-# https://kedro-mlflow.readthedocs.io/en/stable/source/04_experimentation_tracking/03_version_datasets.html#how-to-version-data-in-a-kedro-project
-"modelling.{model}.{shard}.reporting.tuning_convergence_plot":
-  <<: *_reporting_ds
-  type: matplotlib.MatplotlibWriter
-  filepath: ${globals:paths.tmp}/reporting/{model}/{shard}/convergence_plot.png
+  # NOTE: Saving an artifact, saving both locally and in MLFlow
+  # https://kedro-mlflow.readthedocs.io/en/stable/source/04_experimentation_tracking/03_version_datasets.html#how-to-version-data-in-a-kedro-project
+  "{model}.{shard}.reporting.tuning_convergence_plot":
+    <<: *_reporting_ds
+    type: matplotlib.MatplotlibWriter
+    filepath: ${globals:paths.tmp}/reporting/{model}/{shard}/convergence_plot.png
 
-# NOTE: Tracking a model, other serialization formats possible.
-# https://kedro-mlflow.readthedocs.io/en/stable/source/04_experimentation_tracking/04_version_models.html#how-to-track-models-using-mlflow-in-kedro-project
-"modelling.{model}.models.model":
-  <<: *_model_ds
-  type: pickle.PickleDataset
-  filepath: ${globals:paths.modelling}/models/{model}/model.pickle
+  # NOTE: Tracking a model, other serialization formats possible.
+  # https://kedro-mlflow.readthedocs.io/en/stable/source/04_experimentation_tracking/04_version_models.html#how-to-track-models-using-mlflow-in-kedro-project
+  "{model}.models.model":
+    <<: *_model_ds
+    type: pickle.PickleDataset
+    filepath: ${globals:paths.modelling}/models/{model}/model.pickle
 
-"modelling.{model}.reporting.metrics":
-  <<: *_reporting_ds
-  filepath: ${globals:paths.modelling}/reporting/{model}/sanity_metrics.yml
-  type:  yaml.YAMLDataset
+  "{model}.reporting.metrics":
+    <<: *_reporting_ds
+    filepath: ${globals:paths.modelling}/reporting/{model}/sanity_metrics.yml
+    type:  yaml.YAMLDataset
 
-modelling.reporting.gt_present:
-  filepath: ${globals:paths.modelling}/reporting/gt_present_metrics.yml
-  type:  yaml.YAMLDataset
+  reporting.gt_present:
+    filepath: ${globals:paths.modelling}/reporting/gt_present_metrics.yml
+    type:  yaml.YAMLDataset

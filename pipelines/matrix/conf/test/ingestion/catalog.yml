@@ -13,10 +13,11 @@ _spark_csv: &_spark_csv
     header: True
 
 
-ingestion.raw.rtx_kg2.curie_to_pmids@pandas:
-  <<: [*_pandas_csv, *_layer_raw]
-  filepath: ${globals:paths.raw}/integration/raw/curie_to_pmids.csv
+ingestion:
+  raw.rtx_kg2.curie_to_pmids@pandas:
+    <<: [*_pandas_csv, *_layer_raw]
+    filepath: ${globals:paths.raw}/integration/raw/curie_to_pmids.csv
 
-ingestion.raw.rtx_kg2.curie_to_pmids@spark:
-  <<: [*_spark_csv, *_layer_raw]
-  filepath: ${globals:paths.raw}/integration/raw/curie_to_pmids.csv
+  raw.rtx_kg2.curie_to_pmids@spark:
+    <<: [*_spark_csv, *_layer_raw]
+    filepath: ${globals:paths.raw}/integration/raw/curie_to_pmids.csv

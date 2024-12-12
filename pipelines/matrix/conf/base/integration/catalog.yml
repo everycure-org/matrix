@@ -26,66 +26,67 @@ _layer_prm: &_layer_prm
 # NOTE: We're plugging into the live source as we expect this to change rather,
 # moreover, we consider it highly unlikely that paths would suddently change
 # across biolink versions.
-integration.raw.biolink.predicates:
-  type: kedro_datasets.json.JSONDataset
-  filepath: https://biolink.github.io/biolink-model/predicates.json
+integration:
+  raw.biolink.predicates:
+    type: kedro_datasets.json.JSONDataset
+    filepath: https://biolink.github.io/biolink-model/predicates.json
 
-integration.raw.biolink.categories:
-  type: kedro_datasets.json.JSONDataset
-  filepath: https://biolink.github.io/biolink-model/categories.json
+  raw.biolink.categories:
+    type: kedro_datasets.json.JSONDataset
+    filepath: https://biolink.github.io/biolink-model/categories.json
 
-integration.int.{source}.nodes:
-  <<: [*_spark_parquet, *_layer_int]
-  filepath: ${globals:paths.integration}/int/{source}/nodes
+  int.{source}.nodes:
+    <<: [*_spark_parquet, *_layer_int]
+    filepath: ${globals:paths.integration}/int/{source}/nodes
 
-integration.int.{source}.edges:
-  <<: [*_spark_parquet, *_layer_int]
-  filepath: ${globals:paths.integration}/int/{source}/edges
+  int.{source}.edges:
+    <<: [*_spark_parquet, *_layer_int]
+    filepath: ${globals:paths.integration}/int/{source}/edges
 
-# Normalized KGs
-integration.int.{source}.nodes.norm:
-  <<: [*_spark_parquet, *_layer_int]
-  filepath: ${globals:paths.integration}/int/{source}/nodes.norm
+  # Normalized KGs
+  int.{source}.nodes.norm:
+    <<: [*_spark_parquet, *_layer_int]
+    filepath: ${globals:paths.integration}/int/{source}/nodes.norm
 
-integration.int.{source}.edges.norm:
-  <<: [*_spark_parquet, *_layer_int]
-  filepath: ${globals:paths.integration}/int/{source}/edges.norm
+  int.{source}.edges.norm:
+    <<: [*_spark_parquet, *_layer_int]
+    filepath: ${globals:paths.integration}/int/{source}/edges.norm
 
-# mapping tables 
-integration.int.{source}.nodes_norm_mapping:
-  <<: [*_spark_parquet, *_layer_int]
-  filepath: ${globals:paths.integration}/int/{source}/nodes_norm_mapping
+  # mapping tables 
+  int.{source}.nodes_norm_mapping:
+    <<: [*_spark_parquet, *_layer_int]
+    filepath: ${globals:paths.integration}/int/{source}/nodes_norm_mapping
 
-# Unified KGs
-integration.prm.unified_edges:
-  <<: [*_spark_parquet, *_layer_prm]
-  filepath: ${globals:paths.integration}/prm/unified/edges
+  # Unified KGs
+  prm.unified_edges:
+    <<: [*_spark_parquet, *_layer_prm]
+    filepath: ${globals:paths.integration}/prm/unified/edges
 
-integration.prm.unified_nodes:
-  <<: [*_spark_parquet, *_layer_prm]
-  filepath: ${globals:paths.integration}/prm/unified/nodes
+  prm.unified_nodes:
+    <<: [*_spark_parquet, *_layer_prm]
+    filepath: ${globals:paths.integration}/prm/unified/nodes
 
-# filtered KGs
-integration.prm.filtered_edges:
-  <<: [*_spark_parquet, *_layer_prm]
-  filepath: ${globals:paths.integration}/prm/filtered/edges
+  # filtered KGs
+  prm.filtered_edges:
+    <<: [*_spark_parquet, *_layer_prm]
+    filepath: ${globals:paths.integration}/prm/filtered/edges
 
-# FUTURE more elegant: Apply all node filters, then all edge filters, then a "cleanup" final step that removes
-# 1. all edges where nodes were deleted
-# 2. all nodes that have not one edge connected anymore
-integration.prm.prefiltered_nodes:
-  <<: [*_spark_parquet, *_layer_prm]
-  filepath: ${globals:paths.integration}/prm/prefiltered/nodes
+  # FUTURE more elegant: Apply all node filters, then all edge filters, then a "cleanup" final step that removes
+  # 1. all edges where nodes were deleted
+  # 2. all nodes that have not one edge connected anymore
+  prm.prefiltered_nodes:
+    <<: [*_spark_parquet, *_layer_prm]
+    filepath: ${globals:paths.integration}/prm/prefiltered/nodes
 
-integration.prm.filtered_nodes:
-  <<: [*_spark_parquet, *_layer_prm]
-  filepath: ${globals:paths.integration}/prm/filtered/nodes
+  prm.filtered_nodes:
+    <<: [*_spark_parquet, *_layer_prm]
+    filepath: ${globals:paths.integration}/prm/filtered/nodes
 
 
-integration.int.ec_medical_team.nodes:
-  <<: [*_spark_parquet, *_layer_int]
-  filepath: ${globals:paths.integration}/int/ec_medical_team/nodes
+  int.ec_medical_team.nodes:
+    <<: [*_spark_parquet, *_layer_int]
+    filepath: ${globals:paths.integration}/int/ec_medical_team/nodes
 
-integration.int.ec_medical_team.edges:
-  <<: [*_spark_parquet, *_layer_int]
-  filepath: ${globals:paths.integration}/int/ec_medical_team/edges
+  int.ec_medical_team.edges:
+    <<: [*_spark_parquet, *_layer_int]
+    filepath: ${globals:paths.integration}/int/ec_medical_team/edges
