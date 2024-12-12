@@ -182,7 +182,7 @@ ingestion.raw.drug_list@spark:
 ingestion.raw.ground_truth.combined@pandas:
   <<: [*_layer_raw]
   type: pandas.CSVDataset
-  filepath: ${globals:paths.raw}/ground_truth/arax/${globals:data_sources.gt.version}/gt_pairs_conflated.tsv
+  filepath: ${globals:paths.raw}/ground_truth/translator/${globals:data_sources.gt.version}/gt_pairs_conflated.tsv
   load_args:
     header: true
     sep: "\t"
@@ -193,7 +193,7 @@ ingestion.raw.ground_truth.combined@pandas:
 
 ingestion.raw.ground_truth.combined@spark:
   <<: [*_layer_raw, *_spark_csv]
-  filepath: ${globals:paths.raw}/ground_truth/arax/${globals:data_sources.gt.version}/gt_pairs_conflated.tsv
+  filepath: ${globals:paths.raw}/ground_truth/translator/${globals:data_sources.gt.version}/gt_pairs_conflated.tsv
   load_args:
     sep: "\t"
     header: true
