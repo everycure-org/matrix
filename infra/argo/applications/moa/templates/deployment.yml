@@ -20,6 +20,7 @@ spec:
       initContainers:
       - name: init-moa-viewer
         image: "{{ .Values.app.registry }}:{{ .Files.Get "files/version" }}"
+        command: ["python", "src/init.py"]
         volumeMounts:
         - name: shared-data
           mountPath: /data
