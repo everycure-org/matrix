@@ -3,7 +3,6 @@ from typing import Any, Callable, Dict, List, Union, Tuple
 import pandas as pd
 import numpy as np
 import json
-import pyspark.sql.functions as f
 import pyspark.sql.functions as F
 
 from pyspark.sql import DataFrame
@@ -106,7 +105,7 @@ def filter_valid_pairs(
     }
 
     # Combine filtered pairs
-    pairs_df = filtered_tp.withColumn("y", f.lit(1)).unionByName(filtered_tn.withColumn("y", f.lit(0)))
+    pairs_df = filtered_tp.withColumn("y", F.lit(1)).unionByName(filtered_tn.withColumn("y", F.lit(0)))
 
     return {"pairs": pairs_df, "metrics": retention_stats}
 
@@ -161,6 +160,33 @@ def filter_unified_kg_edges(
     logger.info(f"Number of edges after filtering: {new_edges_count}, cut out {edges_count - new_edges_count} edges")
 
     return _apply_transformations(edges, transformations, biolink_predicates=biolink_predicates)
+
+
+def filter_nodes_without_edges(
+    nodes: DataFrame,
+    edges: DataFrame,
+) -> DataFrame:
+    """Function to filter nodes without edges.
+
+    Args:
+        nodes: nodes df
+        edges: edge df
+    Returns"
+        Final dataframe of nodes with edges
+    """
+
+    # Construct list of edges
+    logger.info("Nodes before filtering: %s", nodes.count())
+    edge_nodes = (
+        edges.withColumn("id", F.col("subject"))
+        .unionByName(edges.withColumn("id", F.col("object")))
+        .select("id")
+        .distinct()
+    )
+
+    nodes = nodes.alias("nodes").join(edge_nodes, on="id").select("nodes.*").persist()
+    logger.info("Nodes after filtering: %s", nodes.count())
+    return nodes
 
 
 @has_schema(
@@ -219,12 +245,12 @@ def filter_for_drug_disease_nodes(
         .unionByName(gt_pos.withColumn("id", F.col("target")))
         .select("id")
         .distinct()
-        .withColumn("is_ground_pos", f.lit(True))
+        .withColumn("is_ground_pos", F.lit(True))
     )
 
     df = (
-        nodes.withColumn("is_drug", f.arrays_overlap(F.col("all_categories"), f.lit(drug_types)))
-        .withColumn("is_disease", f.arrays_overlap(F.col("all_categories"), f.lit(disease_types)))
+        nodes.withColumn("is_drug", F.arrays_overlap(F.col("all_categories"), F.lit(drug_types)))
+        .withColumn("is_disease", F.arrays_overlap(F.col("all_categories"), F.lit(disease_types)))
         .filter((F.col("is_disease")) | (F.col("is_drug")))
         .select("id", "topological_embedding", "is_drug", "is_disease")
         # TODO: The integrated data product _should_ contain these nodes
