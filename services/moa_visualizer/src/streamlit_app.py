@@ -9,14 +9,14 @@ from utils import (
     display_table,
     parse_hop_parameter,
 )
-from config import MOA_INFO_TEXT, MOA_DB_PATH, MOA_INFO_IMG
+from config import settings
 
 
-def set_wide_space_default():
-    st.set_page_config(layout="wide")
+# def set_wide_space_default():
+#     st.set_page_config(layout="wide")
 
+# set_wide_space_default()
 
-set_wide_space_default()
 
 with st.sidebar:
     col1, col2 = st.columns(
@@ -59,8 +59,8 @@ with st.sidebar:
         )
 
 with st.expander("What is the MoA prediction pipeline?"):
-    st.markdown(MOA_INFO_TEXT)
-    st.image(MOA_INFO_IMG)
+    st.markdown(settings.moa_info_text)
+    st.image(settings.moa_info_img.as_posix())
 
 if "selected_pair_index_df" in locals():
     if len(selected_pair_index_df.selection.rows) > 0:
@@ -73,7 +73,7 @@ if "selected_pair_index_df" in locals():
 
         # Get MoA predictions
         moa_prediction_df = get_moa_predictions_from_db(
-            input_path=MOA_DB_PATH, pair_id=selected_pair_id, path_number=hop_selector_parsed
+            input_path=settings.moa_db_path, pair_id=selected_pair_id, path_number=hop_selector_parsed
         )
 
         moa_prediction_df["protein_url"] = moa_prediction_df["intermediate_id_1"].apply(build_external_urls)

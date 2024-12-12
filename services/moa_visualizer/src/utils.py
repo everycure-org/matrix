@@ -4,7 +4,7 @@ from streamlit_flow import streamlit_flow
 from streamlit_flow.elements import StreamlitFlowNode, StreamlitFlowEdge
 from streamlit_flow.state import StreamlitFlowState
 import streamlit as st
-from config import ONT_URLS, DISPLAY_COLS, MOA_DB_PATH
+from config import settings, ont_urls, display_cols
 
 # TODO
 # - Clean up table formatting
@@ -13,7 +13,7 @@ from config import ONT_URLS, DISPLAY_COLS, MOA_DB_PATH
 # - Make a class to handle data build
 
 
-def get_pair_info_from_db(moa_db_path: str = MOA_DB_PATH, path_number: str = "all") -> pd.DataFrame:
+def get_pair_info_from_db(moa_db_path: str = settings.moa_db_path, path_number: str = "all") -> pd.DataFrame:
     """
     Reads the MOA database from a SQLite database file
 
@@ -39,7 +39,7 @@ def get_pair_info_from_db(moa_db_path: str = MOA_DB_PATH, path_number: str = "al
 
 
 @st.cache_data
-def list_available_pairs_df(input_path: str = MOA_DB_PATH, path_number: str = "two-hop") -> pd.DataFrame:
+def list_available_pairs_df(input_path: str = settings.moa_db_path, path_number: str = "two-hop") -> pd.DataFrame:
     df = get_pair_info_from_db(moa_db_path=input_path, path_number=path_number)
     df["drug_name"] = df["drug_name"].str.capitalize()
     df["disease_name"] = df["disease_name"].str.capitalize()
@@ -76,7 +76,7 @@ def select_last_edge(edges: str) -> str:
 
 def build_external_urls(id_string: str) -> str:
     # Maybe make a dict of ontologies and their URLs for constants
-    for ont, url in ONT_URLS.items():
+    for ont, url in ont_urls.items():
         if ont in id_string:
             # Maybe a better way is to regex out the last bit of the string and keep that only
             if ont == "UniProtKB":
@@ -92,8 +92,9 @@ def display_table(df: pd.DataFrame) -> pd.DataFrame:
     Displays a table with cleaner column names by reordering and subsetting
     to only include columns that exist in DISPLAY_COLS
     """
-    cols_to_keep = [col for col in DISPLAY_COLS.keys() if col in df.columns]
-    return df[cols_to_keep].rename(columns=DISPLAY_COLS)
+    rename_cols = dict(zip(display_cols.all_keys, display_cols.all_columns))
+    cols_to_keep = [col for col in display_cols.all_keys if col in df.columns]
+    return df[cols_to_keep].rename(columns=rename_cols)
 
 
 class FlowDiagram:
