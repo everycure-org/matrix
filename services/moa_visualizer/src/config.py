@@ -1,7 +1,6 @@
 from typing import Dict
 from pydantic_settings import BaseSettings
 from pydantic import Field, HttpUrl
-from pathlib import Path
 import streamlit as st
 # from enum import Enum
 
@@ -121,16 +120,16 @@ class DisplayColumns(BaseSettings):
 class Settings(BaseSettings):
     """Main configuration settings."""
 
-    data_input_path: Path = Field(
+    data_input_path: str = Field(
         default="mtrx-us-central1-hub-dev-storage/kedro/data/releases/v0.2.5-rtx-only/runs/feature-moa-extraction-4472893d/datasets/moa_extraction/reporting",
         env="DATA_INPUT_PATH",
         description="Path to input data directory",
     )
-    moa_db_path: Path = Field(
+    moa_db_path: str = Field(
         default="data/moa_extraction.db", env="MOA_DB_PATH", description="Path to MOA database file"
     )
     gcp_project: str = Field(default="project-silc", env="GCP_PROJECT", description="GCP project identifier")
-    moa_info_img: Path = Field(default="assets/moa_info.svg", env="MOA_INFO_IMG", description="Path to MOA info image")
+    moa_info_img: str = Field(default="assets/moa_info.svg", env="MOA_INFO_IMG", description="Path to MOA info image")
     moa_info_text: str = Field(
         default="""
 Mechanism of action (MOA) prediction models aim to predict the biological 
