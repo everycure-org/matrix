@@ -307,7 +307,7 @@ def apply_transformers(
     Returns:
         Transformed data.
     """
-    for _, transformer in transformers.items():
+    for transformer in transformers.values():
         features = transformer["features"]
         features_selected = data[features]
 
