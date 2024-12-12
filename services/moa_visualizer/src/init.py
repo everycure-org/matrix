@@ -7,6 +7,7 @@ from config import settings
 
 
 def main():
+    print(settings)
     bucket, path = extract(settings.data_input_path)
     bucket = storage.Client(project=settings.gcp_project).bucket(bucket)
     blobs = bucket.list_blobs(match_glob=f"{path}/*.parquet")

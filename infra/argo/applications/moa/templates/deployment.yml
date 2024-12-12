@@ -21,6 +21,7 @@ spec:
       initContainers:
       - name: init-moa-viewer
         image: "{{ .Values.app.registry }}:{{ .Files.Get "files/version" }}"
+        imagePullPolicy: Always
         command: ["python", "src/init.py"]
         volumeMounts:
         - name: shared-data
@@ -37,6 +38,7 @@ spec:
       containers:
       - name: moa-viewer
         image: "{{ .Values.app.registry }}:{{ .Files.Get "files/version" }}"
+        imagePullPolicy: Always
         ports:
         - containerPort: 8501
         env:
