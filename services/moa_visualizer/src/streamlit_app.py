@@ -55,7 +55,7 @@ with st.sidebar:
 
 with st.expander("What is the MoA prediction pipeline?"):
     st.markdown(settings.moa_info_text)
-    st.image(settings.moa_info_img.as_posix())
+    st.image(settings.moa_info_img)
 
 if "selected_pair_index_df" in locals():
     if len(selected_pair_index_df.selection.rows) > 0:
