@@ -12,7 +12,7 @@ def create_pipeline(**kwargs) -> Pipeline:
             ArgoNode(
                 func=nodes.bucketize_df,
                 inputs={
-                    "df": "integration.prm.filtered_nodes",
+                    "df": "modelling.prm.filtered_nodes",
                     "input_features": "params:embeddings.node.input_features",
                     "bucket_size": "params:embeddings.node.batch_size",
                     "max_input_len": "params:embeddings.node.max_input_len",
@@ -46,8 +46,8 @@ def create_pipeline(**kwargs) -> Pipeline:
             ArgoNode(
                 func=nodes.filter_edges_for_topological_embeddings,
                 inputs=[
-                    "integration.prm.filtered_nodes",
-                    "integration.prm.filtered_edges",
+                    "modelling.prm.filtered_nodes",
+                    "modelling.prm.filtered_edges",
                     "params:modelling.drug_types",
                     "params:modelling.disease_types",
                 ],
@@ -127,7 +127,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 func=nodes.extract_topological_embeddings,
                 inputs={
                     "embeddings": "embeddings.model_output.topological",
-                    "nodes": "integration.prm.filtered_nodes",
+                    "nodes": "modelling.prm.filtered_nodes",
                     "string_col": "params:embeddings.write_topological_col",
                 },
                 outputs="embeddings.feat.nodes",

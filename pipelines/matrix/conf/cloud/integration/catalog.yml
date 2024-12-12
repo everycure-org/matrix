@@ -13,12 +13,12 @@ _bigquery_ds: &_bigquery_ds
 # -------------------------------------------------------------------------
 
 # overwriting the base catalog to use the bigquery datasets
-integration.prm.filtered_nodes:
+modelling.prm.filtered_nodes:
   <<: *_bigquery_ds
   filepath: ${globals:paths.integration}/prm/filtered/nodes
   table: nodes
 
-integration.prm.filtered_edges:
+modelling.prm.filtered_edges:
   <<: *_bigquery_ds
   filepath: ${globals:paths.integration}/prm/filtered/edges
   table: edges
