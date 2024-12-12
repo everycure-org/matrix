@@ -115,7 +115,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                     func=nodes.prefilter_unified_kg_nodes,
                     inputs=[
                         "integration.prm.unified_nodes",
-                        "params:integration.filtering.node_filters",
+                        "params:modelling.filtering.node_filters",
                     ],
                     outputs="integration.prm.prefiltered_nodes",
                     name="prefilter_prm_knowledge_graph_nodes",
@@ -128,7 +128,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                         "integration.prm.prefiltered_nodes",
                         "integration.prm.unified_edges",
                         "integration.raw.biolink.predicates",
-                        "params:integration.filtering.edge_filters",
+                        "params:modelling.filtering.edge_filters",
                     ],
                     outputs="integration.prm.filtered_edges",
                     name="filter_prm_knowledge_graph_edges",
