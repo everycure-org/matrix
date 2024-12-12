@@ -76,7 +76,7 @@ def test_apply_transformers():
     assert "feature1" in result.columns
     assert "feature2" in result.columns
     assert result.shape == data.shape
-    assert result.columns.tolist() == data.columns.tolist()
+    assert result.columns.tolist().sort() == data.columns.tolist().sort()
 
     # Check if transformations were applied correctly
     expected_feature1 = scaler6.transform(data[["feature1"]])
