@@ -41,7 +41,7 @@ class RTXTransformer(GraphTransformer):
             .select(*cols_for_schema(KGNodeSchema))
         )
         # SILC Fix 
-        chemical_ids = ['OMIM:MTHU008082', 'UMLS:C0311400', 'EFO:0004501', 
+        chemical_ids = ['OMIM:MTHU008082', 'UMLS:C0311400', 'EFO:0004501', 'EFO:0004541',
                     'LOINC:LP14446-6', 'OMIM:MTHU000104', 'LOINC:LP89782-4']
 
         # Add ChemicalEntity category for specific IDs
