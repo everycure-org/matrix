@@ -197,13 +197,9 @@ def _filter_nodes_missing_tag(
     if len(node_names) == 0:
         node_names = [node.name for node in pipeline_obj.nodes]
 
-    def should_keep_node(node):
-        """Remove node if node has all without_tags tags."""
-        return not node.tags.issuperset(without_tags)
-
     # Step 1: Identify nodes to remove
     nodes_to_remove = set(
-        node.name for node in pipeline_obj.nodes if not should_keep_node(node)
+        node.name for node in pipeline_obj.nodes if node.tags.issuperset(without_tags)
     )
 
     # Step 2: Identify and add downstream nodes
