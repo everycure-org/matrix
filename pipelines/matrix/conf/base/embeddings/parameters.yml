@@ -21,7 +21,7 @@ embeddings.node:
 # Defines strategy used to reduce dimensions of the node embeddings
 # https://spark.apache.org/docs/latest/api/python/reference/api/pyspark.ml.feature.PCA.html
 embeddings.dimensionality_reduction:
-  skip: false
+  skip: true
   input: embedding
   output: &_pca_property 'pca_embedding'
   transformer:
@@ -117,4 +117,4 @@ embeddings.category_to_keep:
 #    - biolink:DiseaseOrPhenotypicFeature
 
 embeddings.property_to_remove:
-    - ["primary_knowledge_source", "infores:intact"]
+#    - ["primary_knowledge_source", "infores:intact"]
