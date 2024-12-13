@@ -8,6 +8,20 @@ def _create_resolution_pipeline() -> Pipeline:
     """Resolution pipeline for filtering out the input."""
     return pipeline(
         [
+            # node(
+            #     func=nodes.clean_input_sheet,
+            #     inputs={
+            #         "input_df": "preprocessing.raw.infer_sheet",
+            #         "endpoint": "params:preprocessing.translator.normalizer",
+            #         "conflate": "params:integration.nodenorm.conflate",
+            #         "drug_chemical_conflate": "params:integration.nodenorm.drug_chemical_conflate",
+            #         "batch_size": "params:integration.nodenorm.batch_size",
+            #         "parallelism": "params:integration.nodenorm.parallelism",
+            #     },
+            #     outputs="inference.raw.normalized_inputs",
+            #     name="clean_input_sheet",
+            #     tags=["inference-input"],
+            # ),
             node(
                 func=nd.resolve_input_sheet,
                 inputs={
