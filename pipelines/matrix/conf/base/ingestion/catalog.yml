@@ -269,6 +269,55 @@ ingestion.reporting.drug_list:
     columns: *_gsheet_drug_columns
 
 # -------------------------------------------------------------------------
+# Ground truth
+# -------------------------------------------------------------------------  
+
+ingestion.raw.ground_truth.nodes@pandas:
+  <<: [*_layer_raw]
+  type: pandas.CSVDataset
+  filepath: ${globals:paths.raw}/ground_truth/translator/${globals:data_sources.ec-disease-list.version}/gt.tsv
+  save_args:
+    sep: "\t"
+    header: true
+    index: false
+  load_args:
+    sep: "\t"
+
+ingestion.raw.ground_truth.nodes@spark:
+  <<: [*_layer_raw, *_spark_csv]
+  filepath: ${globals:paths.raw}/ground_truth/translator/${globals:data_sources.ec-disease-list.version}/gt.tsv
+  load_args:
+    sep: "\t"
+    header: true
+    index: false
+
+ingestion.int.ground_truth.nodes:
+  <<: [*_spark_parquet, *_layer_int]
+  filepath: ${globals:paths.ingestion}/ground_truth/translator/${globals:data_sources.ec-disease-list.version}/gt.tsv
+
+ingestion.reporting.ground_truth:
+  <<: [*_drug_disease_sheets_dataset]
+  save_args:
+    overwrite: True
+    sheet_name: gt_translator_${globals:data_sources.gt.version}
+    write_columns: &_gsheet_gt_columns
+      - active ingredients
+      - drug ID
+      - drug label
+      - disease name
+      - disease ID
+      - disease label
+      - indication
+      - contraindication
+      - drug|disease
+      - y
+      - source
+      - target
+  load_args:
+    sheet_name: gt_translator_${globals:data_sources.gt.version}
+    columns: *_gsheet_gt_columns
+
+# -------------------------------------------------------------------------
 # Robokop
 # -------------------------------------------------------------------------  
 ingestion.raw.robokop.nodes@spark:
