@@ -1,4 +1,7 @@
 # %%
+# -------------------------------------------------------------------------------------------------
+# SETUP
+# -------------------------------------------------------------------------------------------------
 # shut up mlflow
 import mlflow
 try:    
@@ -43,6 +46,9 @@ gt = catalog.load("modelling.raw.ground_truth.positives@spark")
 print(f"gt count: {gt.count()}")
 print(f"edges count: {edges.count()}")
 # %%
+# -------------------------------------------------------------------------------------------------
+# CORE LOGIC
+# -------------------------------------------------------------------------------------------------
 def get_undirected_graph(df):
     return df.withColumnsRenamed({
         "subject": "o",
@@ -59,7 +65,6 @@ edges_un = get_undirected_graph(edges).select("subject", "object")
 # 2. start building the 2 hop paths starting from the source
 
 def join_next_hop(df, edges_df, hop, reverse=False):
-    # NOTE: This function was partially generated using AI assistance.
     diff = -1 if reverse else 1
     # log some join information
     edges = edges_df.withColumnsRenamed({
@@ -88,6 +93,9 @@ def meet_in_the_middle(df, edges_df, hops):
     # # join the two sides
     return left.join(right, on=f"node_{half}", how="inner")
 
+# -------------------------------------------------------------------------------------------------
+# BENCHMARKING
+# -------------------------------------------------------------------------------------------------
 def benchmark_runtime_for_pair_counts(gt, edges_un, hops, pair_count: int):
     gt = gt.limit(pair_count)
     start = time.time()
@@ -101,41 +109,4 @@ import time
 for i in range(1000, 15000, 3000):
     #benchmark_runtime_for_pair_counts(gt, edges_un, hops=2, pair_count=i)
     benchmark_runtime_for_pair_counts(gt, edges_un, hops=4, pair_count=i)
-# %%
-
-(gt
- .withColumn("node_0", gt.source)
- .transform(join_next_hop, edges_un, 1)
- .transform(join_next_hop, edges_un, 2)
-).count()
-
-# %%
-(gt
- .withColumn("node_4", gt.target)
- .transform(join_next_hop, edges_un, 3, reverse=True)
- .transform(join_next_hop, edges_un, 2, reverse=True)
-).count()
-
-
-
-# %%
-gt.show()
-
-# %%
-edges.filter(f.col("subject") == "CHEBI:26675").show()
-# %%
-edges.join(gt, on=f.col("subject") == f.col("source"), how="inner").count()
-
-# s_0 = tp_df.select('source_index').withColumnRenamed('source_index', 'node_0')
-# s_1 = s_0.join(e.withColumnsRenamed({'src': 'node_0', 'dst': 'node_1'}), how='left', on='node_0')
-# s_2 = s_1.join(e.withColumnsRenamed({'src': 'node_1', 'dst': 'node_2'}), how='left', on='node_1')
-
-# %%
-list(range(10, 1, -1))
-# %%
-2//2
-# %%
-list(range(1,1))
-# %%
-8//2
 # %%
