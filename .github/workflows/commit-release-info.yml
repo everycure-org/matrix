@@ -36,7 +36,7 @@ jobs:
           workload_identity_provider: ${{env.workload_identity_provider}}
           service_account: ${{env.service_account}}
 
-      - name: Testing cmd
+      - name: Download info file
         working-directory: docs/src/releases
         env:
           RELEASE_DIR: 'gs://mtrx-us-central1-hub-dev-storage/kedro/data/tests'
@@ -55,3 +55,12 @@ jobs:
           gcloud storage cp $BLOB_PATH $FILENAME
           cat $FILENAME
           
+      - name: Commit info file
+        working-directory: docs/src/releases/info
+        env:
+          RELEASE: 'v0.2.5-alpha9'
+        run: |
+          FILENAME="${RELEASE}_info.json"
+          git add "${FILENAME}" && \
+          git commit -m "added release info json" && \
+          git push --follow-tags
