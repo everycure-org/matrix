@@ -124,7 +124,7 @@ embeddings_schema = DataFrameSchema(
 
 
 class EmbeddingsWithPairsSchema(DataFrameModel):
-    y: T.IntType() = Field()  # type: ignore
+    y: T.IntegerType() = Field()  # type: ignore
     source_embedding: T.ArrayType(T.DoubleType()) = Field(no_nulls=True)  # type: ignore
     target_embedding: T.ArrayType(T.DoubleType()) = Field(no_nulls=True)  # type: ignore
 
