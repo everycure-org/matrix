@@ -74,31 +74,16 @@ def create_pipeline(**kwargs) -> Pipeline:
             #     outputs="ingestion.reporting.drug_list",
             #     name="write_drug_list_to_gsheets",
             # ),
-            # # FUTURE: Remove this node once we have a new disease list with tags
-            # node(
-            #     func=nodes.enrich_disease_list,
-            #     inputs=[
-            #         "preprocessing.raw.disease_list",
-            #         "params:preprocessing.enrichment_tags",
-            #     ],
-            #     outputs="preprocessing.raw.enriched_disease_list",
-            #     name="enrich_disease_list",
-            #     tags=["disease-list"],
-            # ),
-            # node(
-            #     func=nodes.clean_disease_list,
-            #     inputs={
-            #         "disease_df": "preprocessing.raw.enriched_disease_list",
-            #         "endpoint": "params:preprocessing.translator.normalizer",
-            #         "conflate": "params:integration.nodenorm.conflate",
-            #         "drug_chemical_conflate": "params:integration.nodenorm.drug_chemical_conflate",
-            #         "batch_size": "params:integration.nodenorm.batch_size",
-            #         "parallelism": "params:integration.nodenorm.parallelism",
-            #     },
-            #     outputs="ingestion.raw.disease_list@pandas",
-            #     name="resolve_disease_list",
-            #     tags=["disease-list"],
-            # ),
+            node(
+                func=nodes.enrich_disease_list,
+                inputs=[
+                    "preprocessing.raw.disease_list",
+                    "params:preprocessing.enrichment_tags",
+                ],
+                outputs="ingestion.raw.disease_list@pandas",
+                name="enrich_disease_list",
+                tags=["disease-list"],
+            ),
             # node(
             #     func=lambda x: x,
             #     inputs="ingestion.raw.disease_list@pandas",

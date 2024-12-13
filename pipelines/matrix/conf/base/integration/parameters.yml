@@ -17,6 +17,9 @@ integration:
     drug_list: 
       transformer:
         object: matrix.pipelines.integration.drugs.DrugsTransformer
+    disease_list: 
+      transformer:
+        object: matrix.pipelines.integration.diseases.DiseasesTransformer
 
   # FUTURE: Ensure we can move this to filters down here
   preprocessing:
