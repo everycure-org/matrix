@@ -122,6 +122,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                     func=nodes.consolidate_evaluation_reports,
                     inputs={**collect_fold_specific_reports, **collect_aggregated_reports},
                     outputs="evaluation.reporting.master_report",
+                    name="consolidate_evaluation_reports",
                 )
             ]
         )
