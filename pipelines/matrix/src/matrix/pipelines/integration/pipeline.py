@@ -36,21 +36,6 @@ def _create_integration_pipeline(source: str, normalize_edges: bool = True) -> P
                     name=f"transform_{source}_nodes",
                     tags=["standardize"],
                 ),
-                node(
-                    func=transform_edges,
-                    inputs={
-                        "transformer": f"params:integration.sources.{source}.transformer",
-                        "edges_df": f"ingestion.int.{source}.edges",
-                        # NOTE: The datasets below are currently only picked up by RTX
-                        # the goal is to ensure that semmed filtering occurs for all
-                        # graphs in the future.
-                        "curie_to_pmids": "ingestion.int.rtx_kg2.curie_to_pmids",
-                        "semmed_filters": "params:integration.preprocessing.rtx.semmed_filters",
-                    },
-                    outputs=f"integration.int.{source}.edges",
-                    name=f"transform_{source}_edges",
-                    tags=["standardize"],
-                ),
                 batch_pipeline.create_pipeline(
                     source=f"source_{source}",
                     df=f"integration.int.{source}.nodes",
@@ -75,6 +60,21 @@ def _create_integration_pipeline(source: str, normalize_edges: bool = True) -> P
         pipelines.append(
             pipeline(
                 [
+                    node(
+                        func=transform_edges,
+                        inputs={
+                            "transformer": f"params:integration.sources.{source}.transformer",
+                            "edges_df": f"ingestion.int.{source}.edges",
+                            # NOTE: The datasets below are currently only picked up by RTX
+                            # the goal is to ensure that semmed filtering occurs for all
+                            # graphs in the future.
+                            "curie_to_pmids": "ingestion.int.rtx_kg2.curie_to_pmids",
+                            "semmed_filters": "params:integration.preprocessing.rtx.semmed_filters",
+                        },
+                        outputs=f"integration.int.{source}.edges",
+                        name=f"transform_{source}_edges",
+                        tags=["standardize"],
+                    ),
                     node(
                         func=nodes.normalize_edges,
                         inputs={
