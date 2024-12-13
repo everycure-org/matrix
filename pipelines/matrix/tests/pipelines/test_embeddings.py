@@ -1,10 +1,11 @@
 import pytest
 
 from matrix.pipelines.embeddings.nodes import ingest_nodes
+from pyspark.sql import SparkSession, DataFrame
 
 
 @pytest.fixture
-def sample_input_df(spark):
+def sample_input_df(spark: SparkSession) -> DataFrame:
     data = [
         {
             "id": "1",
@@ -24,7 +25,7 @@ def sample_input_df(spark):
     return spark.createDataFrame(data)
 
 
-def test_ingest_nodes_basic(sample_input_df):
+def test_ingest_nodes_basic(sample_input_df: DataFrame) -> None:
     """Test basic functionality of ingest_nodes."""
     result = ingest_nodes(sample_input_df)
 
@@ -46,7 +47,7 @@ def test_ingest_nodes_basic(sample_input_df):
     assert result_pd.iloc[0]["array_property_values"][0] == ["source1", "source2"]
 
 
-def test_ingest_nodes_null_values(spark):
+def test_ingest_nodes_null_values(spark: SparkSession) -> None:
     """Test handling of null values."""
     data = [
         {
@@ -67,7 +68,7 @@ def test_ingest_nodes_null_values(spark):
     assert result_pd.iloc[0]["property_values"][0] is None  # name should be null
 
 
-def test_ingest_nodes_empty_df(spark):
+def test_ingest_nodes_empty_df(spark: SparkSession) -> None:
     """Test handling of empty dataframe."""
     empty_df = spark.createDataFrame(
         [], "id string, name string, category string, description string, upstream_data_source array<string>"
