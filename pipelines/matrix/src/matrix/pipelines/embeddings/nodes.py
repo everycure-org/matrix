@@ -9,11 +9,12 @@ import seaborn as sns
 
 from graphdatascience import GraphDataScience
 
+from pandera.pyspark import DataFrameModel
+from pandera.pyspark import Field
 import pandera
+
 import pyspark
 import pyspark.sql.types as T
-
-from pandera.pyspark import DataFrameModel
 
 from pyspark.sql import functions as F
 from pyspark.sql.window import Window
@@ -50,12 +51,12 @@ class GraphDS(GraphDataScience):
 
 
 class IngestedNodesSchema(DataFrameModel):
-    id: T.StringType() = pandera.pyspark.Field()  # type: ignore
-    label: T.StringType() = pandera.pyspark.Field()  # type: ignore
-    name: T.StringType() = pandera.pyspark.Field()  # type: ignore
-    property_keys: T.ArrayType(T.StringType()) = pandera.pyspark.Field()  # type: ignore
-    property_values: T.ArrayType(T.StringType()) = pandera.pyspark.Field()  # type: ignore
-    upstream_data_source: T.ArrayType(T.StringType()) = pandera.pyspark.Field()  # type: ignore
+    id: T.StringType() = Field()  # type: ignore
+    label: T.StringType() = Field()  # type: ignore
+    name: T.StringType() = Field()  # type: ignore
+    property_keys: T.ArrayType(T.StringType()) = Field()  # type: ignore
+    property_values: T.ArrayType(T.StringType()) = Field()  # type: ignore
+    upstream_data_source: T.ArrayType(T.StringType()) = Field()  # type: ignore
 
 
 @pandera.check_output(IngestedNodesSchema)
@@ -199,17 +200,15 @@ async def compute_df_embeddings_async(df: pd.DataFrame, embedding_model) -> pd.D
     return df
 
 
-# TODO: Switch this to pandera.pyspark
-embedding_schema = pandera.DataFrameSchema(
-    {
-        "embedding": pandera.Column(object, nullable=False),  # array type
-        "pca_embedding": pandera.Column(object, nullable=False),  # array type
-    },
-    strict=True,
-)
+class EmbeddingSchema(DataFrameModel):
+    embedding: T.ArrayType(T.FloatType()) = Field()  # type: ignore
+    pca_embedding: T.ArrayType(T.FloatType()) = Field()  # type: ignore
+
+    class Config:
+        strict = True
 
 
-@pandera.check_output(embedding_schema)
+@pandera.check_output(EmbeddingSchema)
 @unpack_params()
 def reduce_embeddings_dimension(
     df: pyspark.sql.DataFrame, transformer, input: str, output: str, skip: bool
