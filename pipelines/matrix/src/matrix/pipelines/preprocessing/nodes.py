@@ -206,51 +206,6 @@ def clean_clinical_trial_data(df: pd.DataFrame) -> pd.DataFrame:
 
 
 # @has_schema(
-#     schema={"single_ID": "object", "curie": "object", "name": "object"},
-#     allow_subset=True,
-# )
-# # @primary_key(primary_key=["single_ID"]) #TODO: re-introduce once the drug list is ready
-# def clean_drug_list(
-#     drug_df: pd.DataFrame,
-#     endpoint: str,
-#     conflate: bool,
-#     drug_chemical_conflate: bool,
-#     batch_size: int,
-#     parallelism: int,
-# ) -> pd.DataFrame:
-#     """Synonymize the drug list and filter out NaNs.
-
-#     Args:
-#         drug_df: disease list in a dataframe format.
-#         endpoint: endpoint of the synonymizer.
-#         conflate: whether to conflate
-#         drug_chemical_conflate: whether to conflate drug and chemical
-#         batch_size: batch size
-#         parallelism: parallelism
-#     Returns:
-#         dataframe with synonymized drug IDs in normalized_curie column.
-#     """
-#     attributes = [
-#         ("$.id.identifier", "curie"),
-#         ("$.id.label", "name"),
-#         ("$.type[0]", "category"),
-#     ]
-#     for expr, target in attributes:
-#         json_parser = parse(expr)
-#         node_id_map = batch_map_ids(
-#             frozenset(drug_df["single_ID"]),
-#             api_endpoint=endpoint,
-#             batch_size=batch_size,
-#             parallelism=parallelism,
-#             conflate=conflate,
-#             drug_chemical_conflate=drug_chemical_conflate,
-#             json_parser=json_parser,
-#         )
-#         drug_df[target] = drug_df["single_ID"].map(node_id_map)
-#     return drug_df.dropna(subset=["curie"])
-
-
-# @has_schema(
 #     schema={
 #         "category_class": "object",
 #         "label": "object",
