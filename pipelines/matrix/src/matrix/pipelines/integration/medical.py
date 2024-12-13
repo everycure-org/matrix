@@ -30,8 +30,9 @@ class MedicalTransformer(GraphTransformer):
         df = (
             nodes_df
             .withColumn("id",                                f.col("normalized_curie"))
+            .withColumn("name",                              f.col("label"))
             .withColumn("upstream_data_source",              f.array(f.lit("ec_medical")))
-            .withColumn("category",                          f.lit(None)) # FUTURE: Let's get rid of the category
+            .withColumn("category",                          f.lit("category")) # FUTURE: Let's get rid of the category
             .withColumn("labels",                            f.array(f.col("types")))
             .withColumn("all_categories",                    f.array(f.col("types")))
             .withColumn("equivalent_identifiers",            f.array(f.col("id")))

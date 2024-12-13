@@ -8,7 +8,7 @@ from .transformer import GraphTransformer
 logger = logging.getLogger(__name__)
 
 
-class ClinicalTrailsTransformer(GraphTransformer):
+class ClinicalTrialsTransformer(GraphTransformer):
     # @pa.check_output(KGNodeSchema)
     def transform_nodes(self, nodes_df: DataFrame, **kwargs) -> DataFrame:
         """Transform nodes to our target schema.
