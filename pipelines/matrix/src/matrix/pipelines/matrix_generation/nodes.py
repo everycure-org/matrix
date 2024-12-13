@@ -1,5 +1,5 @@
 import logging
-from pandera import Column, DataFrameSchema, check_io
+from pandera import Column, DataFrameSchema, check_output
 from tqdm import tqdm
 from typing import List, Dict, Union, Tuple
 
@@ -94,45 +94,22 @@ def spark_to_pd(nodes: DataFrame) -> pd.DataFrame:
     return nodes.toPandas()
 
 
-drugs_schema = DataFrameSchema(
+trial_schema = DataFrameSchema(
     {
-        "curie": Column(str),
-        "name": Column(str),
-        "description": Column(str),
-    },
-    strict=False,
-)
-diseases_schema = DataFrameSchema(
-    {
-        "curie": Column(str),
-        "name": Column(str),
-        "description": Column(str),
-    },
-    strict=False,
-)
-known_pairs_schema = DataFrameSchema(
-    {
-        "source": Column(str),
-        "target": Column(str),
-        "y": Column(int),
+        "source": Column(object),
+        "target": Column(object),
+        "is_known_positive": Column(bool),
+        "is_known_negative": Column(bool),
+        "trial_sig_better": Column(bool),
+        "trial_non_sig_better": Column(bool),
+        "trial_sig_worse": Column(bool),
+        "trial_non_sig_worse": Column(bool),
     },
     strict=False,
 )
 
 
-# "is_known_positive": Column(bool),
-# "is_known_negative": Column(bool),
-# "trial_sig_better": Column(bool),
-# "trial_non_sig_better": Column(bool),
-# "trial_sig_worse": Column(bool),
-# "trial_non_sig_worse": Column(bool),
-
-
-@check_io(
-    drugs=drugs_schema,
-    diseases=diseases_schema,
-    known_pairs=known_pairs_schema,
-)
+@check_output(trial_schema)
 @inject_object()
 def generate_pairs(
     drugs: pd.DataFrame,
