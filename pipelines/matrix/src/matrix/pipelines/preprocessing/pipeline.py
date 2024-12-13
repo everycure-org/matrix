@@ -14,6 +14,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 inputs=["preprocessing.raw.nodes", "params:preprocessing.name_resolution.cols_to_get"],
                 outputs="preprocessing.int.nodes",
                 name="normalize_ec_medical_team_nodes",
+                tags=["ec-medical-kg"],
             ),
             node(
                 func=nodes.process_medical_edges,
@@ -25,6 +26,16 @@ def create_pipeline(**kwargs) -> Pipeline:
                 name="create_int_ec_medical_team_edges",
                 tags=["ec-medical-kg"],
             ),
+            node(
+                func=lambda x, y: [x, y],
+                inputs=[
+                    "preprocessing.int.nodes",
+                    "preprocessing.int.edges",
+                ],
+                outputs=["ingestion.raw.ec_medical_team.nodes@pandas", "ingestion.raw.ec_medical_team.edges@pandas"],
+                name="produce_medical_kg",
+                tags=["ec-medical-kg"],
+            ),
             # TODO: Parse dataframe, add source/target curie using name normalizer and
             # in ingestion logic, extract nodes df back from edges
             # NOTE: Take raw clinical trial data and map the "name" to "curie" using the synonymizer
@@ -32,8 +43,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 func=nodes.add_source_and_target_to_clinical_trails,
                 inputs={
                     "df": "preprocessing.raw.clinical_trials_data",
-                    "drug_types": "params:modelling.drug_types",
-                    "disease_types": "params:modelling.disease_types",
+                    "cols_to_get": "params:preprocessing.name_resolution.cols_to_get",
                 },
                 outputs="preprocessing.int.mapped_clinical_trials_data",
                 name="mapped_clinical_trials_data",
@@ -44,6 +54,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 func=nodes.clean_clinical_trial_data,
                 inputs=[
                     "preprocessing.int.mapped_clinical_trials_data",
+                    "params:preprocessing.name_resolution.cols_to_get",
                 ],
                 outputs=[
                     "ingestion.raw.ec_clinical_trails.nodes@pandas",

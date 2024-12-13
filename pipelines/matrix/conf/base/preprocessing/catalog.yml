@@ -39,17 +39,17 @@ preprocessing.raw.nodes:
   <<: [*_layer_raw, *_medical_kg_sheets_dataset]
   load_args:
     sheet_name: new_nodes
-    columns: ["ID", "name", "entity label", "new_id", "curie", "description"]
+    columns: ["ID", "name", "category", "new_id", "description"]
 
 preprocessing.int.nodes:
   <<: [*_layer_int, *_medical_kg_sheets_dataset]
   save_args:
     sheet_name: new_nodes
-    write_columns: ["curie"]
+    write_columns: ["curie", "normalized_curie", "label", "types"]
 
   load_args:
     sheet_name: new_nodes
-    columns: ["ID", "name", "entity label", "new_id", "curie", "description"]
+    columns: ["ID", "category", "normalized_curie", "label", "types", "description"]
 
 preprocessing.raw.edges:
   <<: [*_layer_raw, *_medical_kg_sheets_dataset]
@@ -84,7 +84,7 @@ preprocessing.int.mapped_clinical_trials_data:
   <<: *_medical_clinical_trials_sheet_dataset
   save_args:
     sheet_name: new_clinical_trial_DD_pairs
-    write_columns: ["drug_kg_curie", "disease_kg_curie", "conflict", "drug_kg_label", "disease_kg_label", "label_included"]
+    write_columns: ["drug_curie", "disease_curie", "conflict"]
   load_args:
     sheet_name: new_clinical_trial_DD_pairs
     columns:
@@ -96,10 +96,8 @@ preprocessing.int.mapped_clinical_trials_data:
       - "non_significantly_better"
       - "non_significantly_worse"
       - "significantly_worse"
-      - "drug_kg_curie"
-      - "disease_kg_curie"
-      - "conflict"
-      - "label_included"
+      - "drug_curie"
+      - "disease_curie"
 
 preprocessing.raw.disease_list: 
   <<: [*_layer_raw]

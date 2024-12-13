@@ -13,7 +13,7 @@ integration:
         object: matrix.pipelines.integration.medical.MedicalTransformer
     ec_clinical_trails: 
       transformer:
-        object: matrix.pipelines.integration.clinical_trails.ClinicalTrailsTransformer
+        object: matrix.pipelines.integration.clinical_trails.ClinicalTrialsTransformer
 
   # FUTURE: Ensure we can move this to filters down here
   preprocessing:

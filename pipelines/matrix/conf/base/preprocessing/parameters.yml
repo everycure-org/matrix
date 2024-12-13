@@ -4,8 +4,9 @@ preprocessing.translator:
 
 preprocessing.name_resolution.cols_to_get:
   - curie
-  - name
-  - synonyms
+  - label
+  - types
+  # - synonyms
 
 preprocessing.enrichment_tags:
   single_input:

@@ -23,7 +23,7 @@ class ClinicalTrailsTransformer(GraphTransformer):
         df = (
             nodes_df
             .withColumn("id",                                f.lit("normalized_curie"))
-            .withColumn("upstream_data_source",              f.array(f.lit("ec_medical")))
+            .withColumn("upstream_data_source",              f.array(f.lit("ec_clinical_trails")))
             .withColumn("labels",                            f.array(f.lit("entity label"))) # TODO: Fix entity labels for medical?
             .withColumn("all_categories",                    f.array(f.lit("biolink:"))) # TODO fix
             .withColumn("equivalent_identifiers",            f.array(f.col("id")))
