@@ -51,4 +51,4 @@ jobs:
           echo "workspace is: $GITHUB_WORKSPACE"
           gcloud config list account
           gcloud storage cp gs://mtrx-us-central1-hub-dev-storage/kedro/data/tests/v0.2.5-alpha9/v0.2.5-alpha9_info.json ./file.json
-
+          cat ./file.json
