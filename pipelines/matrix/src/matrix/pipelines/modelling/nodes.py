@@ -3,7 +3,7 @@ from typing import Any, Dict, List, Union, Tuple
 import pandas as pd
 import numpy as np
 import json
-from pandera import Column, DataFrameSchema, check_input
+from pandera import Column, DataFrameSchema, check_input, check_output
 import pyspark.sql.functions as f
 
 from pyspark.sql import DataFrame
@@ -186,18 +186,18 @@ def prefilter_nodes(
 
 splits_schema = DataFrameSchema(
     {
-        "source": Column(object),
+        "source": Column(str),
         "source_embedding": Column(object),
-        "target": Column(object),
+        "target": Column(str),
         "target_embedding": Column(object),
-        "iteration": Column(float),  # numeric type
-        "split": Column(object),
+        "iteration": Column(int),
+        "split": Column(str),
     },
     strict=False,
 )
 
 
-@check_input(splits_schema)
+@check_output(splits_schema)
 @inject_object()
 def make_splits(
     data: DataFrame,
@@ -222,7 +222,8 @@ def make_splits(
         fold_data.loc[test_index, "split"] = "TEST"
         all_data_frames.append(fold_data)
 
-    return pd.concat(all_data_frames, axis="index", ignore_index=True)
+    x = pd.concat(all_data_frames, axis="index", ignore_index=True)
+    return x
 
 
 splits_schema = DataFrameSchema(
