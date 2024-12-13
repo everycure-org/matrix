@@ -2,7 +2,8 @@ from functools import partial
 from typing import Callable, Dict, List, Tuple
 
 import pandas as pd
-from pandera import Column, DataFrameSchema, check_input
+from pandera import Column, DataFrameSchema
+import pandera
 import requests
 from langchain.output_parsers import CommaSeparatedListOutputParser
 from langchain.prompts import ChatPromptTemplate
@@ -112,7 +113,7 @@ int_nodes_schema = DataFrameSchema(
 )
 
 
-@check_input(int_nodes_schema)
+@pandera.check_output(int_nodes_schema)
 def create_int_nodes(
     nodes: pd.DataFrame,
     name_resolver: str,
@@ -145,10 +146,12 @@ def create_int_nodes(
     return resolved
 
 
-int_edges_schema = DataFrameSchema({"SourceId": Column(object), "TargetId": Column(object)}, strict=False)
+int_edges_schema = DataFrameSchema(
+    {"SourceId": Column(str, nullable=True), "TargetId": Column(str, nullable=True)}, strict=False
+)
 
 
-@check_input(int_edges_schema)
+@pandera.check_output(int_edges_schema)
 def create_int_edges(int_nodes: pd.DataFrame, int_edges: pd.DataFrame) -> pd.DataFrame:
     """Function to create int edges dataset.
 
@@ -187,7 +190,7 @@ prm_nodes_schema = DataFrameSchema(
 )
 
 
-@check_input(prm_nodes_schema)
+@pandera.check_output(prm_nodes_schema)
 def create_prm_nodes(prm_nodes: pd.DataFrame) -> pd.DataFrame:
     """Function to create a primary nodes that contains only new nodes introduced by the source."""
     # `new_id` signals that the node should be added to the KG as a new id
@@ -215,7 +218,7 @@ prm_edges_schema = DataFrameSchema(
 )
 
 
-@check_input(prm_edges_schema)
+@pandera.check_output(prm_edges_schema)
 def create_prm_edges(int_edges: pd.DataFrame) -> pd.DataFrame:
     """Function to create a primary edges dataset by filtering and renaming columns."""
     # Replace empty strings with nan
@@ -244,7 +247,7 @@ clinical_trials_schema = DataFrameSchema(
 )
 
 
-@check_input(clinical_trials_schema)
+@pandera.check_output(clinical_trials_schema)
 def map_name_to_curie(
     df: pd.DataFrame,
     name_resolver: str,
@@ -361,7 +364,7 @@ clean_trials_schema = DataFrameSchema(
 )
 
 
-@check_input(clean_trials_schema)
+@pandera.check_output(clean_trials_schema)
 def clean_clinical_trial_data(df: pd.DataFrame) -> pd.DataFrame:
     """Clean clinical trails data.
 
@@ -402,7 +405,7 @@ drug_list_schema = DataFrameSchema(
 # TODO: Add unique=["single_ID"] once drug list is ready
 
 
-@check_input(drug_list_schema)
+@pandera.check_output(drug_list_schema)
 def clean_drug_list(
     drug_df: pd.DataFrame,
     endpoint: str,
@@ -459,7 +462,7 @@ disease_list_schema = DataFrameSchema(
 )
 
 
-@check_input(disease_list_schema)
+@pandera.check_output(disease_list_schema)
 def clean_disease_list(
     disease_df: pd.DataFrame,
     endpoint: str,
@@ -515,7 +518,7 @@ input_sheet_schema = DataFrameSchema(
 )
 
 
-@check_input(input_sheet_schema)
+@pandera.check_output(input_sheet_schema)
 def clean_input_sheet(
     input_df: pd.DataFrame,
     endpoint: str,
