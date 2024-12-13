@@ -53,12 +53,7 @@ class GraphDS(GraphDataScience):
 # Replace the node_schema definition
 node_schema = pa.DataFrameSchema(
     {
-        "id": pa.Column(pa.String, nullable=False),
-        "name": pa.Column(pa.String, nullable=False),
-        "label": pa.Column(pa.String, nullable=False),
-        "property_keys": pa.Column(pa.String, nullable=False),  # For array type
-        "property_values": pa.Column(pa.String, nullable=False),  # For array type
-        "upstream_data_source": pa.Column(pa.String, nullable=False),  # For array type
+        "id": pa.Column(str, nullable=False),
     },
     unique=["id"],
     strict=False,
