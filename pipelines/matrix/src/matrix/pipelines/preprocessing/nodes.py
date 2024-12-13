@@ -4,6 +4,7 @@ import pandas as pd
 import requests
 from refit.v1.core.inline_has_schema import has_schema
 from refit.v1.core.inline_primary_key import primary_key
+from tenacity import retry, wait_exponential, stop_after_attempt
 
 
 def coalesce(s: pd.Series, *series: List[pd.Series]):
@@ -13,6 +14,7 @@ def coalesce(s: pd.Series, *series: List[pd.Series]):
     return s
 
 
+@retry(wait=wait_exponential(multiplier=1, min=2, max=10), stop=stop_after_attempt(3))
 def resolve_name(name: str, cols_to_get: List[str]) -> dict:
     """Function to retrieve the normalized identifier through the normalizer.
 
@@ -35,7 +37,7 @@ def resolve_name(name: str, cols_to_get: List[str]) -> dict:
         print({col: element.get(col) for col in cols_to_get})
         return {col: element.get(col) for col in cols_to_get}
 
-    return None
+    return {}
 
 
 @has_schema(
@@ -44,10 +46,14 @@ def resolve_name(name: str, cols_to_get: List[str]) -> dict:
 @primary_key(primary_key=["ID"])
 def process_medical_nodes(df: pd.DataFrame, cols_to_get: List[str]) -> pd.DataFrame:
     # Normalize the name
-    df["curie"] = df["name"].apply(resolve_name, cols_to_get=cols_to_get)
+    enriched_data = df["name"].apply(resolve_name, cols_to_get=cols_to_get)
+
+    # Extract into df
+    enriched_df = pd.DataFrame(enriched_data.tolist(), columns=cols_to_get)
+    df = pd.concat([df, enriched_df], axis=1)
 
     # Coalesce id and new id to allow adding "new" nodes
-    df["curie"] = coalesce(df["new_id"], df["curie"])
+    df["normalized_curie"] = coalesce(df["new_id"], df["curie"])
 
     return df
 
@@ -64,18 +70,18 @@ def process_medical_edges(int_nodes: pd.DataFrame, int_edges: pd.DataFrame) -> p
 
     Function ensures edges dataset link curies in the KG.
     """
-    index = int_nodes[int_nodes["curie"].notna()]
+    index = int_nodes[int_nodes["normalized_curie"].notna()]
 
     res = (
         int_edges.merge(
-            index.rename(columns={"curie": "SourceId"}),
+            index.rename(columns={"normalized_curie": "SourceId"}),
             left_on="Source",
             right_on="ID",
             how="left",
         )
         .drop(columns="ID")
         .merge(
-            index.rename(columns={"curie": "TargetId"}),
+            index.rename(columns={"normalized_curie": "TargetId"}),
             left_on="Target",
             right_on="ID",
             how="left",
@@ -102,21 +108,19 @@ def process_medical_edges(int_nodes: pd.DataFrame, int_edges: pd.DataFrame) -> p
     allow_subset=True,
     df="df",
 )
-def add_source_and_target_to_clinical_trails(
-    df: pd.DataFrame,
-    drug_types: List[str],
-    disease_types: List[str],
-) -> pd.DataFrame:
+def add_source_and_target_to_clinical_trails(df: pd.DataFrame, cols_to_get: List[str]) -> pd.DataFrame:
     # Normalize the name
-    df["drug_kg_curie"] = df["drug_name"].apply(resolve_name)
-    df["disease_kg_curie"] = df["disease_name"].apply(resolve_name)
+    drug_data = df["drug_name"].apply(resolve_name, cols_to_get=cols_to_get)
+    disease_data = df["disease_name"].apply(resolve_name, cols_to_get=cols_to_get)
 
-    # needed?
-    # df["label_included"] = (df["drug_kg_label"].isin(drug_types)) & (df["disease_kg_label"].isin(disease_types))
+    drug_df = pd.DataFrame(drug_data.tolist(), columns=[f"drug_{col}" for col in cols_to_get])
+    disease_df = pd.DataFrame(disease_data.tolist(), columns=[f"disease_{col}" for col in cols_to_get])
+
+    df = pd.concat([df, drug_df, disease_df], axis=1)
 
     # check conflict
     df["conflict"] = (
-        df.groupby(["drug_kg_curie", "disease_kg_curie"])[
+        df.groupby(["drug_curie", "disease_curie"])[
             [
                 "significantly_better",
                 "non_significantly_better",
@@ -127,6 +131,8 @@ def add_source_and_target_to_clinical_trails(
         .transform(lambda x: x.nunique() > 1)
         .any(axis=1)
     )
+
+    breakpoint()
 
     return df
 
@@ -155,7 +161,7 @@ def add_source_and_target_to_clinical_trails(
         "disease_kg_curie",
     ]
 )
-def clean_clinical_trial_data(df: pd.DataFrame) -> pd.DataFrame:
+def clean_clinical_trial_data(df: pd.DataFrame, cols_to_get: List[str]) -> pd.DataFrame:
     """Clean clinical trails data.
 
     Function to clean the mapped clinical trial dataset for use in time-split evaluation metrics.
@@ -184,13 +190,16 @@ def clean_clinical_trial_data(df: pd.DataFrame) -> pd.DataFrame:
 
     # Remove rows with missing values in cols
     df = df.dropna(subset=columns_to_check).reset_index(drop=True)
-    # drop columns
     edges = df.drop(columns=["reason_for_rejection", "conflict"]).reset_index(drop=True)
 
     # extract nodes
-    values = pd.Series(pd.concat([edges["drug_kg_curie"], edges["disease_kg_curie"]]).unique())
+    drugs = df.rename(columns={col: f"drug_{col}" for col in cols_to_get})[cols_to_get]
+    diseases = df.rename(columns={col: f"disease_{col}" for col in cols_to_get})[cols_to_get]
 
-    return values.to_frame(name="id"), edges
+    # Concatenate drugs and diseases
+    consolidated = pd.concat([drugs, diseases], ignore_index=True)
+
+    return consolidated
 
 
 # @has_schema(

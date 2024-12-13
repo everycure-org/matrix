@@ -22,14 +22,18 @@ class MedicalTransformer(GraphTransformer):
         Returns:
             Transformed DataFrame.
         """
+
+        # FUTURE: Small issue remains on descriptions? Where to get these from? Can we get first non null value
+        # in integration layer?
+
         # fmt: off
         df = (
             nodes_df
             .withColumn("id",                                f.col("normalized_curie"))
             .withColumn("upstream_data_source",              f.array(f.lit("ec_medical")))
-            .withColumn("category",                            f.col("label"))
-            .withColumn("labels",                            f.array(f.col("label"))) # TODO: Fix entity labels for medical?
-            .withColumn("all_categories",                    f.array(f.col("label")))
+            .withColumn("category",                          f.lit(None)) # FUTURE: Let's get rid of the category
+            .withColumn("labels",                            f.array(f.col("types")))
+            .withColumn("all_categories",                    f.array(f.col("types")))
             .withColumn("equivalent_identifiers",            f.array(f.col("id")))
             .withColumn("publications",                      f.lit(None).cast(T.ArrayType(T.StringType())))
             .withColumn("international_resource_identifier", f.col("id"))
