@@ -3,6 +3,7 @@ from typing import Any, Dict, List, Union, Tuple
 import pandas as pd
 import numpy as np
 import json
+from pandera import Column, DataFrameSchema, check_input
 import pyspark.sql.functions as f
 
 from pyspark.sql import DataFrame
@@ -15,8 +16,6 @@ import matplotlib.pyplot as plt
 
 from functools import wraps
 from matrix.inject import inject_object
-from refit.v1.core.inline_has_schema import has_schema
-from refit.v1.core.inline_primary_key import primary_key
 from refit.v1.core.unpack import unpack_params
 from refit.v1.core.make_list_regexable import make_list_regexable
 
@@ -110,11 +109,17 @@ def filter_valid_pairs(
     return {"pairs": pairs_df, "metrics": retention_stats}
 
 
-@has_schema(
-    schema={"y": "int"},
-    allow_subset=True,
+embeddings_schema = DataFrameSchema(
+    {
+        "y": Column(int),
+        "source_embedding": Column(object, nullable=False),
+        "target_embedding": Column(object, nullable=False),
+    },
+    strict=False,
 )
-@no_nulls(columns=["source_embedding", "target_embedding"])
+
+
+@check_input(embeddings_schema)
 def attach_embeddings(
     pairs_df: DataFrame,
     nodes: DataFrame,
@@ -138,15 +143,12 @@ def attach_embeddings(
     )
 
 
-@has_schema(
-    schema={
-        "id": "string",
-        "is_drug": "boolean",
-        "is_disease": "boolean",
-    },
-    allow_subset=True,
+node_schema = DataFrameSchema(
+    {"id": Column(str), "is_drug": Column(bool), "is_disease": Column(bool)}, strict=False, unique=["id"]
 )
-@primary_key(primary_key=["id"])
+
+
+@check_input(node_schema)
 def prefilter_nodes(
     full_nodes: DataFrame, nodes: DataFrame, gt: DataFrame, drug_types: List[str], disease_types: List[str]
 ) -> DataFrame:
@@ -183,17 +185,20 @@ def prefilter_nodes(
     return df
 
 
-@has_schema(
-    schema={
-        "source": "object",
-        "source_embedding": "object",
-        "target": "object",
-        "target_embedding": "object",
-        "iteration": "numeric",
-        "split": "object",
+splits_schema = DataFrameSchema(
+    {
+        "source": Column(object),
+        "source_embedding": Column(object),
+        "target": Column(object),
+        "target_embedding": Column(object),
+        "iteration": Column(float),  # numeric type
+        "split": Column(object),
     },
-    allow_subset=True,
+    strict=False,
 )
+
+
+@check_input(splits_schema)
 @inject_object()
 def make_splits(
     data: DataFrame,
@@ -221,17 +226,20 @@ def make_splits(
     return pd.concat(all_data_frames, axis="index", ignore_index=True)
 
 
-@has_schema(
-    schema={
-        "source": "object",
-        "source_embedding": "object",
-        "target": "object",
-        "target_embedding": "object",
-        "iteration": "numeric",
-        "split": "object",
+splits_schema = DataFrameSchema(
+    {
+        "source": Column(object),
+        "source_embedding": Column(object),
+        "target": Column(object),
+        "target_embedding": Column(object),
+        "iteration": Column(float),  # numeric type
+        "split": Column(object),
     },
-    allow_subset=True,
+    strict=False,
 )
+
+
+@check_input(splits_schema)
 @inject_object()
 def create_model_input_nodes(
     graph: KnowledgeGraph,

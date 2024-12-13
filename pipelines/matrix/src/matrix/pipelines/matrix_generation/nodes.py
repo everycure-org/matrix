@@ -1,4 +1,5 @@
 import logging
+from pandera import Column, DataFrameSchema, check_input
 from tqdm import tqdm
 from typing import List, Dict, Union, Tuple
 
@@ -10,7 +11,6 @@ from pyspark.sql import DataFrame
 import pyspark.sql.functions as F
 
 from matrix.inject import inject_object
-from refit.v1.core.inline_has_schema import has_schema
 from refit.v1.core.make_list_regexable import _extract_elements_in_list
 
 from matrix.datasets.graph import KnowledgeGraph
@@ -94,19 +94,22 @@ def spark_to_pd(nodes: DataFrame) -> pd.DataFrame:
     return nodes.toPandas()
 
 
-@has_schema(
-    schema={
-        "source": "object",
-        "target": "object",
-        "is_known_positive": "bool",
-        "is_known_negative": "bool",
-        "trial_sig_better": "bool",
-        "trial_non_sig_better": "bool",
-        "trial_sig_worse": "bool",
-        "trial_non_sig_worse": "bool",
+trial_schema = DataFrameSchema(
+    {
+        "source": Column(object),
+        "target": Column(object),
+        "is_known_positive": Column(bool),
+        "is_known_negative": Column(bool),
+        "trial_sig_better": Column(bool),
+        "trial_non_sig_better": Column(bool),
+        "trial_sig_worse": Column(bool),
+        "trial_non_sig_worse": Column(bool),
     },
-    allow_subset=True,
+    strict=False,
 )
+
+
+@check_input(trial_schema)
 @inject_object()
 def generate_pairs(
     drugs: pd.DataFrame,

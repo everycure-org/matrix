@@ -4,6 +4,7 @@ from typing import Any, Dict, List
 import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
+from pandera import Column, DataFrameSchema, check_input
 import seaborn as sns
 
 from graphdatascience import GraphDataScience
@@ -15,8 +16,6 @@ from pyspark.sql.types import StringType
 from pyspark.sql.window import Window
 from pyspark.ml.functions import array_to_vector, vector_to_array
 
-from refit.v1.core.inline_has_schema import has_schema
-from refit.v1.core.inline_primary_key import primary_key
 from refit.v1.core.unpack import unpack_params
 
 from tenacity import retry, wait_exponential, stop_after_attempt
@@ -25,7 +24,6 @@ from matrix.inject import inject_object
 
 from .graph_algorithms import GDSGraphAlgorithm
 from .encoders import AttributeEncoder
-from matrix.pipelines.modelling.nodes import no_nulls
 
 logger = logging.getLogger(__name__)
 
@@ -50,18 +48,21 @@ class GraphDS(GraphDataScience):
         self.set_database(database)
 
 
-@has_schema(
-    schema={
-        "label": "string",
-        "id": "string",
-        "name": "string",
-        "property_keys": "array<string>",
-        "property_values": "array<string>",
-        "upstream_data_source": "array<string>",
+node_schema = DataFrameSchema(
+    {
+        "label": Column(str),
+        "id": Column(str),
+        "name": Column(str),
+        "property_keys": Column(object),  # array type
+        "property_values": Column(object),  # array type
+        "upstream_data_source": Column(object),  # array type
     },
-    allow_subset=True,
+    strict=False,
+    unique=["id"],
 )
-@primary_key(primary_key=["id"])
+
+
+@check_input(node_schema)
 def ingest_nodes(df: DataFrame) -> DataFrame:
     """Function to create Neo4J nodes.
 
@@ -200,13 +201,16 @@ async def compute_df_embeddings_async(df: pd.DataFrame, embedding_model) -> pd.D
     return df
 
 
-@has_schema(
-    schema={
-        "embedding": "array<float>",
-        "pca_embedding": "array<float>",
-    }
+embedding_schema = DataFrameSchema(
+    {
+        "embedding": Column(object, nullable=False),  # array type
+        "pca_embedding": Column(object, nullable=False),  # array type
+    },
+    strict=True,
 )
-@no_nulls(columns=["embedding", "pca_embedding"])
+
+
+@check_input(embedding_schema)
 @unpack_params()
 def reduce_embeddings_dimension(df: DataFrame, transformer, input: str, output: str, skip: bool):
     return reduce_dimension(df, transformer, input, output, skip)
@@ -391,8 +395,18 @@ def write_topological_embeddings(
     return {"success": "true"}
 
 
-@no_nulls(columns=["pca_embedding", "topological_embedding"])
-@primary_key(primary_key=["id"])
+embeddings_schema = DataFrameSchema(
+    {
+        "pca_embedding": Column(object, nullable=False),
+        "topological_embedding": Column(object, nullable=False),
+        "id": Column(object),
+    },
+    strict=True,
+    unique=["id"],
+)
+
+
+@check_input(embeddings_schema)
 def extract_topological_embeddings(embeddings: DataFrame, nodes: DataFrame, string_col: str) -> DataFrame:
     """Extract topological embeddings from Neo4j and write into BQ.
 

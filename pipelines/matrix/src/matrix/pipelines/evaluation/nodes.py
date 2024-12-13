@@ -3,9 +3,9 @@ from typing import Any
 
 
 import pandas as pd
+from pandera import Column, DataFrameSchema, check_input
 
 from matrix.inject import inject_object
-from refit.v1.core.inline_has_schema import has_schema
 
 from matrix import settings
 from matrix.datasets.pair_generator import DrugDiseasePairGenerator
@@ -64,14 +64,10 @@ def perform_matrix_checks(matrix: pd.DataFrame, known_pairs: pd.DataFrame, score
     check_ordered(matrix, score_col_name)
 
 
-@has_schema(
-    schema={
-        "source": "object",
-        "target": "object",
-        "y": "int",
-    },
-    allow_subset=True,
-)
+edges_schema = DataFrameSchema({"source": Column(object), "target": Column(object), "y": Column(int)}, strict=False)
+
+
+@check_input(edges_schema)
 @inject_object()
 def generate_test_dataset(
     matrix: pd.DataFrame,
