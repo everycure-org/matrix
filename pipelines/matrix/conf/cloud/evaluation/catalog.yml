@@ -1,7 +1,3 @@
-"evaluation.{model}.fold_{fold}.{evaluation}.reporting.result@mlflow":
-  type: matrix.datasets.mlflow.MlflowMetricsDataset
-  key_prefix: "{model}.fold_{fold}.{evaluation}"
-
-"evaluation.{model}.{evaluation}.reporting.result_aggregated@mlflow":
+"evaluation.{model}.{evaluation}.reporting.result_aggregated_reduced":
   type: matrix.datasets.mlflow.MlflowMetricsDataset
   key_prefix: "{model}.{evaluation}"

@@ -505,4 +505,4 @@ def aggregate_metrics(aggregation_functions: List[Dict], *metrics) -> Dict:
             metric_name: agg_func_obj([report[metric_name] for report in metrics]) for metric_name in metric_names_lst
         }
 
-    return aggregated_metrics
+    return json.loads(json.dumps(aggregated_metrics, default=float))

@@ -7,7 +7,6 @@ import pandas as pd
 from refit.v1.core.inject import inject_object
 from refit.v1.core.inline_has_schema import has_schema
 
-from matrix import settings
 from matrix.datasets.pair_generator import DrugDiseasePairGenerator
 
 from matrix.pipelines.evaluation.evaluation import Evaluation
@@ -107,7 +106,27 @@ def evaluate_test_predictions(data: pd.DataFrame, evaluation: Evaluation) -> Any
     return evaluation.evaluate(data)
 
 
-def consolidate_evaluation_reports(*reports) -> dict:
+def reduce_aggregated_results(aggregated_results: dict, aggregation_function_names: list) -> dict:
+    """Reduce the aggregated results to a simpler format for MLFlow readout.
+
+    Args:
+        aggregated_results: Aggregated results to reduce.
+        aggregation_function_names: Names of aggregation functions to report.
+
+    Returns:
+        Reduced aggregated results.
+    """
+    reduced_report = {
+        aggregation_name
+        + "_"
+        + metric_name: metric_value  # concatenate aggregation name and metric name (e.g. mean_mrr)
+        for aggregation_name in aggregation_function_names
+        for metric_name, metric_value in aggregated_results[aggregation_name].items()
+    }
+    return json.loads(json.dumps(reduced_report, default=float))
+
+
+def consolidate_evaluation_reports(**reports) -> dict:
     """Function to consolidate evaluation reports into master report.
 
     Args:
@@ -116,10 +135,48 @@ def consolidate_evaluation_reports(*reports) -> dict:
     Returns:
         Dictionary representing consolidated report.
     """
-    reports_lst = [*reports]
-    master_report = dict()
-    for idx_1, model in enumerate(settings.DYNAMIC_PIPELINES_MAPPING.get("modelling")):
-        master_report[model["model_name"]] = dict()
-        for idx_2, evaluation in enumerate(settings.DYNAMIC_PIPELINES_MAPPING.get("evaluation")):
-            master_report[model["model_name"]][evaluation["evaluation_name"]] = reports_lst[idx_1 + idx_2]
+
+    def add_report(master_report, model, evaluation, type, report):
+        """Add a metrics to the master report, appending the evaluation type to the metric name.
+
+        Args:
+            master_report: Master report to add to.
+            model: Model name.
+            evaluation: Evaluation name.
+            type: Type of report (e.g. mean, fold_1,...).
+            report: Report to add.
+        """
+        # Add key for model if not present
+        if model not in master_report:
+            master_report[model] = {}
+
+        for metric, value in report.items():
+            # Add evaluation type suffix to the metric name
+            full_metric_name = evaluation + "_" + metric
+
+            # Add keys for metrics name and type if not present
+            if full_metric_name not in master_report[model]:
+                master_report[model][full_metric_name] = {}
+            if type not in master_report[model][full_metric_name]:
+                master_report[model][full_metric_name][type] = {}
+
+            # Add value to the metric name and type
+            master_report[model][full_metric_name][type] = value
+
+        return master_report
+
+    master_report = {}
+    for report_name, report in reports.items():
+        model, evaluation, fold_or_aggregated = report_name.split(".")
+
+        # In the case of aggregated results, add the results for each aggregation function
+        if fold_or_aggregated == "aggregated":
+            for aggregation, report in report.items():
+                master_report = add_report(master_report, model, evaluation, aggregation, report)
+
+        # In the case of a fold result, add the results directly for the fold
+        else:
+            fold = fold_or_aggregated
+            master_report = add_report(master_report, model, evaluation, fold, report)
+
     return json.loads(json.dumps(master_report, default=float))

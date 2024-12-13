@@ -23,7 +23,7 @@ def _create_evaluation_pipeline(model: str, evaluation: str, fold: str) -> Pipel
                     f"evaluation.{model}.fold_{fold}.{evaluation}.model_output.pairs",
                     f"params:evaluation.{evaluation}.evaluation_options.evaluation",
                 ],
-                outputs=f"evaluation.{model}.fold_{fold}.{evaluation}.reporting.result@yaml",
+                outputs=f"evaluation.{model}.fold_{fold}.{evaluation}.reporting.result",
                 name=f"create_{model}_{evaluation}_evaluation_fold_{fold}",
             ),
         ],
@@ -73,7 +73,7 @@ def create_pipeline(**kwargs) -> Pipeline:
         def _give_aggregation_node_input(model):
             """Prepare aggregation node inputs, including reports for all folds"""
             return ["params:modelling.aggregation_functions"] + [
-                f"evaluation.{model}.fold_{fold}.{evaluation}.reporting.result@yaml" for fold in range(n_splits)
+                f"evaluation.{model}.fold_{fold}.{evaluation}.reporting.result" for fold in range(n_splits)
             ]
 
         for evaluation in evaluation_names:
@@ -83,12 +83,48 @@ def create_pipeline(**kwargs) -> Pipeline:
                         node(
                             func=modelling_nodes.aggregate_metrics,
                             inputs=_give_aggregation_node_input(model),
-                            outputs=f"evaluation.{model}.{evaluation}.reporting.result_aggregated@yaml",
+                            outputs=f"evaluation.{model}.{evaluation}.reporting.result_aggregated",
                             name=f"aggregate_{model}_{evaluation}_evaluation_results",
                             tags=[model, evaluation],
-                        )
+                        ),
+                        # Reduce the aggregate results for simpler readout in MLFlow (e.g. only report mean)
+                        node(
+                            func=nodes.reduce_aggregated_results,
+                            inputs=[
+                                f"evaluation.{model}.{evaluation}.reporting.result_aggregated",
+                                "params:evaluation.reported_aggregations",
+                            ],
+                            outputs=f"evaluation.{model}.{evaluation}.reporting.result_aggregated_reduced",
+                            name=f"reduce_aggregated_{model}_{evaluation}_evaluation_results",
+                            tags=[model, evaluation],
+                        ),
                     ]
                 )
             )
+
+    collect_fold_specific_reports = {
+        model + "." + evaluation + ".fold_" + str(fold): f"evaluation.{model}.fold_{fold}.{evaluation}.reporting.result"
+        for model in model_names
+        for evaluation in evaluation_names
+        for fold in folds_lst
+    }
+
+    collect_aggregated_reports = {
+        model + "." + evaluation + ".aggregated": f"evaluation.{model}.{evaluation}.reporting.result_aggregated"
+        for model in model_names
+        for evaluation in evaluation_names
+    }
+
+    pipelines.append(
+        pipeline(
+            [
+                node(
+                    func=nodes.consolidate_evaluation_reports,
+                    inputs={**collect_fold_specific_reports, **collect_aggregated_reports},
+                    outputs="evaluation.reporting.master_report",
+                )
+            ]
+        )
+    )
 
     return sum(pipelines)
