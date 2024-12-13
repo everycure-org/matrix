@@ -209,7 +209,7 @@ embedding_schema = pandera.DataFrameSchema(
 )
 
 
-@pandera.check_input(embedding_schema)
+@pandera.check_output(embedding_schema)
 @unpack_params()
 def reduce_embeddings_dimension(
     df: pyspark.sql.DataFrame, transformer, input: str, output: str, skip: bool
