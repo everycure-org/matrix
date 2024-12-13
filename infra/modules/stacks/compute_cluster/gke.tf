@@ -32,7 +32,6 @@ locals {
     }
   ]
 
-
   standard_node_pools = [for size in [4, 8, 16, 32, 48, 64] : {
     name               = "n2-standard-${size}-nodes"
     machine_type       = "n2-standard-${size}"
@@ -65,7 +64,6 @@ locals {
       gpu_driver_version = "LATEST"
     },
   ]
-
   node_pools_combined = concat(local.standard_node_pools, local.mem_node_pools, local.gpu_node_pools, local.n2d_node_pools)
 }
 
@@ -104,7 +102,6 @@ module "gke" {
   # FUTURE: Refine node pools
   node_pools = local.node_pools_combined
 
-  # Mark GPU nodes
   node_pools_labels = {
     for pool in local.node_pools_combined : pool.name => {
       gpu_node = can(pool.accelerator_count) ? "true" : "false"
