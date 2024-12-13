@@ -28,12 +28,6 @@ jobs:
           fetch-tags: true
           fetch-depth: 0
 
-      - name: Setup Matrix CLI
-        working-directory: apps/matrix-cli
-        run: |
-          gcloud config list account --format "value(core.account)"  # for debugging
-          pip install uv
-          uv sync
       - name: Authenticate with Google Cloud v
         uses: 'google-github-actions/auth@v2'
         # if: github.ref == 'refs/heads/main'
@@ -41,3 +35,11 @@ jobs:
           project_id: ${{env.project_id}}
           workload_identity_provider: ${{env.workload_identity_provider}}
           service_account: ${{env.service_account}}
+
+      - name: Testing cmd
+        working-directory: apps/matrix-cli
+        run: |
+          echo "File downloaded to $(pwd)"
+          echo "workspace is: $(GITHUB_WORKSPACE)"
+          
+          gsutil cp gs://mtrx-us-central1-hub-dev-storage/kedro/data/tests/v0.2.5-alpha9/v0.2.5-alpha9_info.json ./file.json
