@@ -2,14 +2,13 @@ from functools import partial
 from typing import Callable, Dict, List, Tuple
 
 import pandas as pd
+from pandera import Column, DataFrameSchema, check_input
 import requests
 from langchain.output_parsers import CommaSeparatedListOutputParser
 from langchain.prompts import ChatPromptTemplate
 from langchain.schema import HumanMessage, SystemMessage
 from matrix.pipelines.integration.nodes import batch_map_ids
 from matrix.inject import inject_object
-from refit.v1.core.inline_has_schema import has_schema
-from refit.v1.core.inline_primary_key import primary_key
 from jsonpath_ng import parse
 
 
@@ -102,16 +101,18 @@ def enrich_df(df: pd.DataFrame, endpoint: str, func: Callable, input_cols: str, 
     return df
 
 
-@has_schema(
-    schema={
-        "ID": "numeric",
-        "name": "object",
-        "curie": "object",
-        "normalized_curie": "object",
+int_nodes_schema = DataFrameSchema(
+    {
+        "ID": Column(float),  # using float since "numeric" in pandas can be either int or float
+        "name": Column(object),
+        "curie": Column(object),
+        "normalized_curie": Column(object),
     },
-    allow_subset=True,
+    strict=False,
 )
-@primary_key(primary_key=["ID"])
+
+
+@check_input(int_nodes_schema)
 def create_int_nodes(
     nodes: pd.DataFrame,
     name_resolver: str,
@@ -144,13 +145,10 @@ def create_int_nodes(
     return resolved
 
 
-@has_schema(
-    schema={
-        "SourceId": "object",
-        "TargetId": "object",
-    },
-    allow_subset=True,
-)
+int_edges_schema = DataFrameSchema({"SourceId": Column(object), "TargetId": Column(object)}, strict=False)
+
+
+@check_input(int_edges_schema)
 def create_int_edges(int_nodes: pd.DataFrame, int_edges: pd.DataFrame) -> pd.DataFrame:
     """Function to create int edges dataset.
 
@@ -182,16 +180,14 @@ def create_int_edges(int_nodes: pd.DataFrame, int_edges: pd.DataFrame) -> pd.Dat
     return res
 
 
-@has_schema(
-    schema={
-        "category": "object",
-        "id": "object",
-        "name": "object",
-        "description": "object",
-    },
-    allow_subset=True,
+prm_nodes_schema = DataFrameSchema(
+    {"category": Column(object), "id": Column(object), "name": Column(object), "description": Column(object)},
+    strict=False,
+    unique=["id"],  # This replaces the @primary_key decorator
 )
-@primary_key(primary_key=["id"])
+
+
+@check_input(prm_nodes_schema)
 def create_prm_nodes(prm_nodes: pd.DataFrame) -> pd.DataFrame:
     """Function to create a primary nodes that contains only new nodes introduced by the source."""
     # `new_id` signals that the node should be added to the KG as a new id
@@ -207,16 +203,19 @@ def create_prm_nodes(prm_nodes: pd.DataFrame) -> pd.DataFrame:
     return res
 
 
-@has_schema(
-    schema={
-        "subject": "object",
-        "predicate": "object",
-        "object": "object",
-        "knowledge_source": "object",
+prm_edges_schema = DataFrameSchema(
+    {
+        "subject": Column(object),
+        "predicate": Column(object),
+        "object": Column(object),
+        "knowledge_source": Column(object),
     },
-    allow_subset=True,
+    strict=False,
+    unique=["subject", "predicate", "object"],  # This replaces the @primary_key decorator
 )
-@primary_key(primary_key=["subject", "predicate", "object"])
+
+
+@check_input(prm_edges_schema)
 def create_prm_edges(int_edges: pd.DataFrame) -> pd.DataFrame:
     """Function to create a primary edges dataset by filtering and renaming columns."""
     # Replace empty strings with nan
@@ -230,20 +229,22 @@ def create_prm_edges(int_edges: pd.DataFrame) -> pd.DataFrame:
     return res
 
 
-@has_schema(
-    schema={
-        "clinical_trial_id": "object",
-        "reason_for_rejection": "object",
-        "drug_name": "object",
-        "disease_name": "object",
-        "significantly_better": "numeric",
-        "non_significantly_better": "numeric",
-        "non_significantly_worse": "numeric",
-        "significantly_worse": "numeric",
+clinical_trials_schema = DataFrameSchema(
+    {
+        "clinical_trial_id": Column(object),
+        "reason_for_rejection": Column(object),
+        "drug_name": Column(object),
+        "disease_name": Column(object),
+        "significantly_better": Column(float),
+        "non_significantly_better": Column(float),
+        "non_significantly_worse": Column(float),
+        "significantly_worse": Column(float),
     },
-    allow_subset=True,
-    df="df",
+    strict=False,
 )
+
+
+@check_input(clinical_trials_schema)
 def map_name_to_curie(
     df: pd.DataFrame,
     name_resolver: str,
@@ -341,30 +342,26 @@ def map_name_to_curie(
     return df
 
 
-@has_schema(
-    schema={
-        "clinical_trial_id": "object",
-        "reason_for_rejection": "object",
-        "drug_name": "object",
-        "disease_name": "object",
-        "drug_kg_curie": "object",
-        "disease_kg_curie": "object",
-        "conflict": "object",
-        "significantly_better": "numeric",
-        "non_significantly_better": "numeric",
-        "non_significantly_worse": "numeric",
-        "significantly_worse": "numeric",
+clean_trials_schema = DataFrameSchema(
+    {
+        "clinical_trial_id": Column(object),
+        "reason_for_rejection": Column(object),
+        "drug_name": Column(object),
+        "disease_name": Column(object),
+        "drug_kg_curie": Column(object),
+        "disease_kg_curie": Column(object),
+        "conflict": Column(object),
+        "significantly_better": Column(float),
+        "non_significantly_better": Column(float),
+        "non_significantly_worse": Column(float),
+        "significantly_worse": Column(float),
     },
-    allow_subset=True,
-    df="df",
+    strict=False,
+    unique=["clinical_trial_id", "drug_kg_curie", "disease_kg_curie"],
 )
-@primary_key(
-    primary_key=[
-        "clinical_trial_id",
-        "drug_kg_curie",
-        "disease_kg_curie",
-    ]
-)
+
+
+@check_input(clean_trials_schema)
 def clean_clinical_trial_data(df: pd.DataFrame) -> pd.DataFrame:
     """Clean clinical trails data.
 
@@ -399,11 +396,13 @@ def clean_clinical_trial_data(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-@has_schema(
-    schema={"single_ID": "object", "curie": "object", "name": "object"},
-    allow_subset=True,
+drug_list_schema = DataFrameSchema(
+    {"single_ID": Column(object), "curie": Column(object), "name": Column(object)}, strict=False
 )
-# @primary_key(primary_key=["single_ID"]) #TODO: re-introduce once the drug list is ready
+# TODO: Add unique=["single_ID"] once drug list is ready
+
+
+@check_input(drug_list_schema)
 def clean_drug_list(
     drug_df: pd.DataFrame,
     endpoint: str,
@@ -444,20 +443,23 @@ def clean_drug_list(
     return drug_df.dropna(subset=["curie"])
 
 
-@has_schema(
-    schema={
-        "category_class": "object",
-        "label": "object",
-        "definition": "object",
-        "synonyms": "object",
-        "subsets": "object",
-        "crossreferences": "object",
-        "curie": "object",
-        "name": "object",
+disease_list_schema = DataFrameSchema(
+    {
+        "category_class": Column(object),
+        "label": Column(object),
+        "definition": Column(object),
+        "synonyms": Column(object),
+        "subsets": Column(object),
+        "crossreferences": Column(object),
+        "curie": Column(object),
+        "name": Column(object),
     },
-    allow_subset=True,
+    strict=False,
+    unique=["category_class", "curie"],
 )
-@primary_key(primary_key=["category_class", "curie"])
+
+
+@check_input(disease_list_schema)
 def clean_disease_list(
     disease_df: pd.DataFrame,
     endpoint: str,
@@ -499,18 +501,21 @@ def clean_disease_list(
     return disease_df.dropna(subset=["curie"]).fillna("")
 
 
-@has_schema(
+input_sheet_schema = DataFrameSchema(
     {
-        "timestamp": "object",
-        "drug_id": "object",
-        "disease_id": "object",
-        "norm_drug_id": "object",
-        "norm_disease_id": "object",
-        "norm_drug_name": "object",
-        "norm_disease_name": "object",
+        "timestamp": Column(object),
+        "drug_id": Column(object),
+        "disease_id": Column(object),
+        "norm_drug_id": Column(object),
+        "norm_disease_id": Column(object),
+        "norm_drug_name": Column(object),
+        "norm_disease_name": Column(object),
     },
-    allow_subset=True,
+    strict=False,
 )
+
+
+@check_input(input_sheet_schema)
 def clean_input_sheet(
     input_df: pd.DataFrame,
     endpoint: str,
