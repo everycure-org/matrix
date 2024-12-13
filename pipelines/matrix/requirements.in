@@ -35,7 +35,7 @@ pytest-testmon
 tenacity
 pytest-mock
 pytest-cov
-pandera
+pandera>=0.21.1
 rich
 ruff==0.6.8 # Matches pre-commit version
 # Temp. fix for the gcloud cli
