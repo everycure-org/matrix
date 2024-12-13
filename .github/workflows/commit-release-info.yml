@@ -37,7 +37,7 @@ jobs:
           service_account: ${{env.service_account}}
 
       - name: Testing cmd
-        working-directory: docs/src/releases
+        working-directory: docs/src/tests
         env:
           RELEASE_DIR: 'gs://mtrx-us-central1-hub-dev-storage/kedro/data/releases'
           RELEASE: 'v0.2.5-alpha9'
