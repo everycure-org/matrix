@@ -22,13 +22,15 @@ _Note this is one of many branch management approaches we can take but I think i
 
 ![alt text](assets/comparison.png)
 
-Develop Layer acts as an intermediate staging area between feature and main.
+Develop Layer acts as an intermediate staging area between feature and main. You can think about it also as a 'release' branch 
+
+
 ### Core Concepts
 
 1. **Two-Tier Branch Structure**
-   - `main`: Production-ready, stable code
-   - `develop`: Integration branch for feature testing
-   - Feature branches: Individual development work
+   - `main`: Production-ready, stable code. This branch will run in the production project/environment.
+   - `develop`: Integration branch for feature testing. This branch will be running in the development project/environment.
+   - Feature branches: Individual development work. These branches will be merged into develop branch.
 
 2. **Branch Flow**   ```
    feature/* -> develop -> main   ```
@@ -84,7 +86,7 @@ Implementation of MOA into main has taken a long time. One way to streamline the
 ## FAQ 
 
 _My feature is related to a sprint goal. Will it get completed only once it's merged to main?_
-* It depends on your goal. If the goNo; once your feature is in develop, it means it has been peer-reviewed and is If your Once your feature is merged with develop, 
+* A feature is considered complete when it is merged into `develop` and passes all necessary reviews and tests. The move to `main` is a deployment step rather than a completion milestone.
 
-_The develop/branch will get large?_
-* In some cases the develop branch will get inevitably large however all faetures going into develop/branch will need to meet the same requirements and same code review as the features need right now.
+_Won't the develop branch get too large?_
+* While the develop branch may accumulate multiple features, all code changes must still meet the same rigorous requirements and code review standards as they do now. Regular merges to main will help keep the branch manageable.
