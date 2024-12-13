@@ -1,7 +1,7 @@
 run_name: ${oc.env:RUN_NAME}
 
 versions:
-  release: ${oc.env:RELEASE_VERSION,v0.2.5.1-rtx.node2vec}
+  release: ${oc.env:RELEASE_VERSION,v0.2.5}
 
 release_folder_name: ${oc.env:RELEASE_FOLDER_NAME, releases}
 
