@@ -61,20 +61,13 @@ def create_pipeline(**kwargs) -> Pipeline:
                 name="clean_clinical_trial_data",
                 tags=["ec-clinical-trials-data"],
             ),
-            # node(
-            #     func=nodes.clean_drug_list,
-            #     inputs={
-            #         "drug_df": "preprocessing.raw.drug_list",
-            #         "endpoint": "params:preprocessing.translator.normalizer",
-            #         "conflate": "params:integration.nodenorm.conflate",
-            #         "drug_chemical_conflate": "params:integration.nodenorm.drug_chemical_conflate",
-            #         "batch_size": "params:integration.nodenorm.batch_size",
-            #         "parallelism": "params:integration.nodenorm.parallelism",
-            #     },
-            #     outputs="ingestion.raw.drug_list@pandas",
-            #     name="resolve_drug_list",
-            #     tags=["drug-list"],
-            # ),
+            node(
+                func=lambda x: x,
+                inputs=["preprocessing.raw.drug_list"],
+                outputs="ingestion.raw.drug_list.nodes@pandas",
+                name="resolve_drug_list",
+                tags=["drug-list"],
+            ),
             # node(
             #     func=lambda x: x,
             #     inputs="ingestion.raw.drug_list@pandas",

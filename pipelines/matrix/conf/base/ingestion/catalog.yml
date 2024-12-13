@@ -187,7 +187,7 @@ ingestion.raw.disease_list@spark:
     header: true
     index: false
 
-ingestion.raw.drug_list@pandas:
+ingestion.raw.drug_list.nodes@pandas:
   <<: [*_layer_raw]
   type: pandas.CSVDataset
   filepath: ${globals:paths.raw}/drug_list/translator/${globals:data_sources.ec-drug-list.version}/drug_list_conflated.tsv
@@ -198,13 +198,17 @@ ingestion.raw.drug_list@pandas:
   load_args:
     sep: "\t"
 
-ingestion.raw.drug_list@spark:
+ingestion.raw.drug_list.nodes@spark:
   <<: [*_layer_raw, *_spark_csv]
   filepath: ${globals:paths.raw}/drug_list/translator/${globals:data_sources.ec-drug-list.version}/drug_list_conflated.tsv
   load_args:
     sep: "\t"
     header: true
     index: false
+
+ingestion.int.drug_list.nodes:
+  <<: [*_spark_parquet, *_layer_int]
+  filepath: ${globals:paths.ingestion}/drug_list/translator/${globals:data_sources.ec-drug-list.version}/drug_list_conflated.tsv
 
 ingestion.reporting.disease_list:
   <<: [*_drug_disease_sheets_dataset]
