@@ -39,12 +39,10 @@ jobs:
       - name: Configure gcloud to use the authenticated service account
         run: |
           # Check if authentication is working
+          echo "running: gcloud auth list"
           gcloud auth list
+          echo "running: gcloud config list account"
           gcloud config list account
-          
-          # Ensure that the correct account is set
-          #gcloud config set account ${{env.service_account}}
-          gcloud auth login
 
       - name: Testing cmd
         working-directory: apps/matrix-cli
