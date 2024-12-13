@@ -57,10 +57,10 @@ def _create_inference_pipeline(model_excl: str, model_incl: str) -> Pipeline:
                     "params:matrix_generation.matrix_generation_options.n_reporting": "params:inference.matrix_generation_options.n_reporting",
                 },
                 inputs={
-                    "ingestion.raw.drug_list@spark": "inference.int.drug_list@spark",
-                    "ingestion.raw.disease_list@spark": "inference.int.disease_list@spark",
-                    "ingestion.raw.drug_list@pandas": "inference.int.drug_list@pandas",
-                    "ingestion.raw.disease_list@pandas": "inference.int.disease_list@pandas",
+                    "ingestion.raw.drug_list.nodes@spark": "inference.int.drug_list@spark",
+                    "ingestion.raw.disease_list.nodes@spark": "inference.int.disease_list@spark",
+                    "ingestion.raw.drug_list.nodes@pandas": "inference.int.drug_list@pandas",
+                    "ingestion.raw.disease_list.nodes@pandas": "inference.int.disease_list@pandas",
                 },
                 outputs={
                     f"matrix_generation.{model}.model_output.sorted_matrix_predictions@pandas": f"inference.{model}.model_output.predictions@pandas",

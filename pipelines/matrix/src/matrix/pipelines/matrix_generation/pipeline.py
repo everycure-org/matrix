@@ -27,8 +27,8 @@ def _create_matrix_generation_pipeline(model: str) -> Pipeline:
                 inputs=[
                     f"matrix_generation.{model}.model_output.sorted_matrix_predictions@pandas",
                     "params:matrix_generation.matrix_generation_options.n_reporting",
-                    "ingestion.raw.drug_list@pandas",
-                    "ingestion.raw.disease_list@pandas",
+                    "ingestion.raw.drug_list.nodes@pandas",
+                    "ingestion.raw.disease_list.nodes@pandas",
                     "params:evaluation.score_col_name",
                     "params:matrix_generation.matrix",
                     "params:matrix_generation.run",
@@ -48,8 +48,8 @@ def create_pipeline(**kwargs) -> Pipeline:
                 func=nodes.enrich_embeddings,
                 inputs=[
                     "embeddings.feat.nodes",
-                    "ingestion.raw.drug_list@spark",
-                    "ingestion.raw.disease_list@spark",
+                    "ingestion.raw.drug_list.nodes@spark",
+                    "ingestion.raw.disease_list.nodes@spark",
                 ],
                 outputs="matrix_generation.feat.nodes@spark",
                 name="enrich_matrix_embeddings",
@@ -67,8 +67,8 @@ def create_pipeline(**kwargs) -> Pipeline:
             node(
                 func=nodes.generate_pairs,
                 inputs=[
-                    "ingestion.raw.drug_list@pandas",
-                    "ingestion.raw.disease_list@pandas",
+                    "ingestion.raw.drug_list.nodes@pandas",
+                    "ingestion.raw.disease_list.nodes@pandas",
                     "matrix_generation.feat.nodes_kg_ds",
                     "modelling.model_input.splits",
                     "integration.int.ec_clinical_trails.edges",
