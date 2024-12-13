@@ -3,8 +3,13 @@ from typing import Any, Dict, List, Union, Tuple
 import pandas as pd
 import numpy as np
 import json
-from pandera import Column, DataFrameSchema, check_input, check_output
-import pyspark.sql.functions as f
+from pandera import Column, DataFrameModel, DataFrameSchema, check_input, check_output
+import pandera
+import pyspark
+from pyspark.sql import functions as F
+import pyspark.sql.types as T
+from pandera.pyspark import Field
+
 
 from pyspark.sql import DataFrame
 
@@ -86,13 +91,13 @@ def filter_valid_pairs(
 
     # Filter out pairs where both source and target exist in nodes
     filtered_tp = (
-        raw_tp.join(valid_nodes.alias("source_nodes"), raw_tp.source == f.col("source_nodes.id"))
-        .join(valid_nodes.alias("target_nodes"), raw_tp.target == f.col("target_nodes.id"))
+        raw_tp.join(valid_nodes.alias("source_nodes"), raw_tp.source == F.col("source_nodes.id"))
+        .join(valid_nodes.alias("target_nodes"), raw_tp.target == F.col("target_nodes.id"))
         .select(raw_tp["*"])
     )
     filtered_tn = (
-        raw_tn.join(valid_nodes.alias("source_nodes"), raw_tn.source == f.col("source_nodes.id"))
-        .join(valid_nodes.alias("target_nodes"), raw_tn.target == f.col("target_nodes.id"))
+        raw_tn.join(valid_nodes.alias("source_nodes"), raw_tn.source == F.col("source_nodes.id"))
+        .join(valid_nodes.alias("target_nodes"), raw_tn.target == F.col("target_nodes.id"))
         .select(raw_tn["*"])
     )
 
@@ -103,7 +108,7 @@ def filter_valid_pairs(
     }
 
     # Combine filtered pairs
-    pairs_df = filtered_tp.withColumn("y", f.lit(1)).unionByName(filtered_tn.withColumn("y", f.lit(0)))
+    pairs_df = filtered_tp.withColumn("y", F.lit(1)).unionByName(filtered_tn.withColumn("y", F.lit(0)))
 
     return {"pairs": pairs_df, "metrics": retention_stats}
 
@@ -118,11 +123,20 @@ embeddings_schema = DataFrameSchema(
 )
 
 
-@check_input(embeddings_schema)
+class EmbeddingsWithPairsSchema(DataFrameModel):
+    y: T.IntType() = Field()  # type: ignore
+    source_embedding: T.ArrayType(T.DoubleType()) = Field(no_nulls=True)  # type: ignore
+    target_embedding: T.ArrayType(T.DoubleType()) = Field(no_nulls=True)  # type: ignore
+
+    class Config:
+        strict = False
+
+
+@pandera.check_output(EmbeddingsWithPairsSchema)
 def attach_embeddings(
-    pairs_df: DataFrame,
-    nodes: DataFrame,
-) -> DataFrame:
+    pairs_df: pyspark.sql.DataFrame,
+    nodes: pyspark.sql.DataFrame,
+) -> pyspark.sql.DataFrame:
     """Attach node embeddings to the pairs DataFrame.
 
     Args:
@@ -134,9 +148,9 @@ def attach_embeddings(
     """
     return (
         pairs_df.alias("pairs")
-        .join(nodes.withColumn("source", f.col("id")), how="left", on="source")
+        .join(nodes.withColumn("source", F.col("id")), how="left", on="source")
         .withColumnRenamed("topological_embedding", "source_embedding")
-        .join(nodes.withColumn("target", f.col("id")), how="left", on="target")
+        .join(nodes.withColumn("target", F.col("id")), how="left", on="target")
         .withColumnRenamed("topological_embedding", "target_embedding")
         .select("pairs.*", "source_embedding", "target_embedding")
     )
@@ -161,19 +175,19 @@ def prefilter_nodes(
     Returns:
         Filtered nodes dataframe
     """
-    gt_pos = gt.filter(f.col("y") == 1)
+    gt_pos = gt.filter(F.col("y") == 1)
     ground_truth_nodes = (
-        gt.withColumn("id", f.col("source"))
-        .unionByName(gt_pos.withColumn("id", f.col("target")))
+        gt.withColumn("id", F.col("source"))
+        .unionByName(gt_pos.withColumn("id", F.col("target")))
         .select("id")
         .distinct()
-        .withColumn("is_ground_pos", f.lit(True))
+        .withColumn("is_ground_pos", F.lit(True))
     )
 
     df = (
-        nodes.withColumn("is_drug", f.arrays_overlap(f.col("all_categories"), f.lit(drug_types)))
-        .withColumn("is_disease", f.arrays_overlap(f.col("all_categories"), f.lit(disease_types)))
-        .filter((f.col("is_disease")) | (f.col("is_drug")))
+        nodes.withColumn("is_drug", F.arrays_overlap(F.col("all_categories"), F.lit(drug_types)))
+        .withColumn("is_disease", F.arrays_overlap(F.col("all_categories"), F.lit(disease_types)))
+        .filter((F.col("is_disease")) | (F.col("is_drug")))
         .select("id", "topological_embedding", "is_drug", "is_disease")
         # TODO: The integrated data product _should_ contain these nodes
         # TODO: Verify below does not have any undesired side effects
