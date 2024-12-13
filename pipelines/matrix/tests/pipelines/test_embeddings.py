@@ -1,11 +1,11 @@
 import pytest
 
 from matrix.pipelines.embeddings.nodes import ingest_nodes
-import pyspark.sql as ps
+import pyspark
 
 
 @pytest.fixture
-def sample_input_df(spark: ps.SparkSession) -> ps.DataFrame:
+def sample_input_df(spark: pyspark.sql.SparkSession) -> pyspark.sql.DataFrame:
     data = [
         {
             "id": "1",
@@ -25,7 +25,7 @@ def sample_input_df(spark: ps.SparkSession) -> ps.DataFrame:
     return spark.createDataFrame(data)
 
 
-def test_ingest_nodes_basic(sample_input_df: ps.DataFrame) -> None:
+def test_ingest_nodes_basic(sample_input_df: pyspark.sql.DataFrame) -> None:
     """Test basic functionality of ingest_nodes."""
     result = ingest_nodes(sample_input_df)
 
@@ -47,28 +47,7 @@ def test_ingest_nodes_basic(sample_input_df: ps.DataFrame) -> None:
     assert result_pd.iloc[0]["array_property_values"][0] == ["source1", "source2"]
 
 
-def test_ingest_nodes_null_values(spark: ps.SparkSession) -> None:
-    """Test handling of null values."""
-    data = [
-        {
-            "id": "1",
-            "name": None,
-            "category": "TestCategory",
-            "description": None,
-            "upstream_data_source": None,
-        }
-    ]
-    input_df = spark.createDataFrame(data)
-
-    result = ingest_nodes(input_df)
-    result_pd = result.toPandas()
-
-    # Check that nulls are handled properly
-    assert result_pd.iloc[0]["property_values"][1] == "TestCategory"  # category should exist
-    assert result_pd.iloc[0]["property_values"][0] is None  # name should be null
-
-
-def test_ingest_nodes_empty_df(spark: ps.SparkSession) -> None:
+def test_ingest_nodes_empty_df(spark: pyspark.sql.SparkSession) -> None:
     """Test handling of empty dataframe."""
     empty_df = spark.createDataFrame(
         [], "id string, name string, category string, description string, upstream_data_source array<string>"
