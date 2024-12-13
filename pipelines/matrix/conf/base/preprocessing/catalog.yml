@@ -98,6 +98,7 @@ preprocessing.int.mapped_clinical_trials_data:
       - "significantly_worse"
       - "drug_curie"
       - "disease_curie"
+      - "conflict"
 
 preprocessing.raw.disease_list: 
   <<: [*_layer_raw]

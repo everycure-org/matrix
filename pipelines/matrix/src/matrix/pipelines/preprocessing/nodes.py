@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 
 import pandas as pd
 import requests
@@ -24,10 +24,11 @@ def resolve_name(name: str, cols_to_get: List[str]) -> dict:
     Returns:
         Name and corresponding curie
     """
-    # TODO: Extend to allow retrieving multiple attributes
-    # Plan is for this to return a dict with attributes as keys and then we modify process_medical_nodes to handle this
+
+
+    
     if not name or pd.isna(name):
-        return None
+        return {}
 
     result = requests.get(
         f"https://name-resolution-sri-dev.apps.renci.org/lookup?string={name}&autocomplete=True&highlighting=False&offset=0&limit=1"
@@ -44,12 +45,12 @@ def resolve_name(name: str, cols_to_get: List[str]) -> dict:
     schema={"ID": "numeric", "name": "object", "curie": "object", "description": "object"},
 )
 @primary_key(primary_key=["ID"])
-def process_medical_nodes(df: pd.DataFrame, cols_to_get: List[str]) -> pd.DataFrame:
+def process_medical_nodes(df: pd.DataFrame) -> pd.DataFrame:
     # Normalize the name
-    enriched_data = df["name"].apply(resolve_name, cols_to_get=cols_to_get)
+    enriched_data = df["name"].apply(resolve_name, cols_to_get=["curie", "label", "types"])
 
     # Extract into df
-    enriched_df = pd.DataFrame(enriched_data.tolist(), columns=cols_to_get)
+    enriched_df = pd.DataFrame(enriched_data.tolist())
     df = pd.concat([df, enriched_df], axis=1)
 
     # Coalesce id and new id to allow adding "new" nodes
@@ -104,64 +105,63 @@ def process_medical_edges(int_nodes: pd.DataFrame, int_edges: pd.DataFrame) -> p
         "non_significantly_better": "numeric",
         "non_significantly_worse": "numeric",
         "significantly_worse": "numeric",
+        "conflict": "bool",
     },
     allow_subset=True,
-    df="df",
 )
-def add_source_and_target_to_clinical_trails(df: pd.DataFrame, cols_to_get: List[str]) -> pd.DataFrame:
+def add_source_and_target_to_clinical_trails(df: pd.DataFrame) -> pd.DataFrame:
+
+    df = df.head(5)
+
     # Normalize the name
-    drug_data = df["drug_name"].apply(resolve_name, cols_to_get=cols_to_get)
-    disease_data = df["disease_name"].apply(resolve_name, cols_to_get=cols_to_get)
+    drug_data = df["drug_name"].apply(resolve_name, cols_to_get=["curie"])
+    disease_data = df["disease_name"].apply(resolve_name, cols_to_get=["curie"])
 
-    drug_df = pd.DataFrame(drug_data.tolist(), columns=[f"drug_{col}" for col in cols_to_get])
-    disease_df = pd.DataFrame(disease_data.tolist(), columns=[f"disease_{col}" for col in cols_to_get])
-
+    # Concat dfs
+    drug_df = pd.DataFrame(drug_data.tolist()).rename(columns={"curie": "drug_curie"})
+    disease_df = pd.DataFrame(disease_data.tolist()).rename(columns={"curie": "disease_curie"})
     df = pd.concat([df, drug_df, disease_df], axis=1)
 
-    # check conflict
-    df["conflict"] = (
-        df.groupby(["drug_curie", "disease_curie"])[
-            [
-                "significantly_better",
-                "non_significantly_better",
-                "non_significantly_worse",
-                "significantly_worse",
-            ]
-        ]
-        .transform(lambda x: x.nunique() > 1)
-        .any(axis=1)
-    )
+    # Check values
+    cols = [
+        "significantly_better",
+        "non_significantly_better",
+        "non_significantly_worse",
+        "significantly_worse",
+    ]
 
-    breakpoint()
+    # check conflict
+    df["conflict"] = df.groupby(["drug_curie", "disease_curie"])[cols].transform(lambda x: x.nunique() > 1).any(axis=1)
 
     return df
 
 
-@has_schema(
-    schema={
-        "clinical_trial_id": "object",
-        "reason_for_rejection": "object",
-        "drug_name": "object",
-        "disease_name": "object",
-        "drug_kg_curie": "object",
-        "disease_kg_curie": "object",
-        "conflict": "object",
-        "significantly_better": "numeric",
-        "non_significantly_better": "numeric",
-        "non_significantly_worse": "numeric",
-        "significantly_worse": "numeric",
-    },
-    allow_subset=True,
-    df="df",
-)
+# NOTE: What's wrong with this?
+# @has_schema(
+#     schema={
+#         "clinical_trial_id": "object",
+#         "reason_for_rejection": "object",
+#         "drug_name": "object",
+#         "disease_name": "object",
+#         "drug_curie": "object",
+#         "disease_curie": "object",
+#         "conflict": "object",
+#         "significantly_better": "numeric",
+#         "non_significantly_better": "numeric",
+#         "non_significantly_worse": "numeric",
+#         "significantly_worse": "numeric",
+#     },
+#     allow_subset=True,
+#     output=1
+# )
 @primary_key(
     primary_key=[
         "clinical_trial_id",
-        "drug_kg_curie",
-        "disease_kg_curie",
+        "drug_curie",
+        "disease_curie",
     ]
 )
-def clean_clinical_trial_data(df: pd.DataFrame, cols_to_get: List[str]) -> pd.DataFrame:
+def clean_clinical_trial_data(df: pd.DataFrame) -> pd.DataFrame:
     """Clean clinical trails data.
 
     Function to clean the mapped clinical trial dataset for use in time-split evaluation metrics.
@@ -173,15 +173,14 @@ def clean_clinical_trial_data(df: pd.DataFrame, cols_to_get: List[str]) -> pd.Da
     """
     # Remove rows with conflicts
     df = df[df["conflict"].eq("FALSE")].reset_index(drop=True)
-    # Make sure to consider only rows with relevant labels, otherwise
-    # downtstream modelling will fail
-    df = df[df["label_included"].eq("TRUE")].reset_index(drop=True)
+
     # remove rows with reason for rejection
     df = df[df["reason_for_rejection"].isna()].reset_index(drop=True)
+   
     # Define columns to check
     columns_to_check = [
-        "drug_kg_curie",
-        "disease_kg_curie",
+        "drug_curie",
+        "disease_curie",
         "significantly_better",
         "non_significantly_better",
         "non_significantly_worse",
@@ -193,13 +192,11 @@ def clean_clinical_trial_data(df: pd.DataFrame, cols_to_get: List[str]) -> pd.Da
     edges = df.drop(columns=["reason_for_rejection", "conflict"]).reset_index(drop=True)
 
     # extract nodes
-    drugs = df.rename(columns={col: f"drug_{col}" for col in cols_to_get})[cols_to_get]
-    diseases = df.rename(columns={col: f"disease_{col}" for col in cols_to_get})[cols_to_get]
+    drugs = df.rename(columns={f"drug_curie": "curie", "drug_name": "name"})[["curie", "name"]]
+    diseases = df.rename(columns={f"disease_curie": "curie", "disease_name": "name"})[["curie", "name"]]
+    nodes = pd.concat([drugs, diseases], ignore_index=True)
 
-    # Concatenate drugs and diseases
-    consolidated = pd.concat([drugs, diseases], ignore_index=True)
-
-    return consolidated
+    return nodes, edges
 
 
 # @has_schema(
