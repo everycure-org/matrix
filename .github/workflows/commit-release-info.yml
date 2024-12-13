@@ -3,7 +3,9 @@ name: Commit Release Info
 on:
   push:
     branches:
-      - 'feat/commit-release-info'
+      - 'feat/commit-release-info'  # TODO: replace by manual trigger and repository_dispatch
+  repository_dispatch:
+    types: distribute-release
 
 env:
   project_id: 'mtrx-hub-dev-3of'
@@ -11,9 +13,9 @@ env:
   service_account: 'sa-github-actions-rw@mtrx-hub-dev-3of.iam.gserviceaccount.com'
 
 jobs:
-  fetch_file_from_gcloud:
+  create_release_notes_draft:
     runs-on: ubuntu-latest
-    name: Fetch json from gcloud
+    name: Create Draft of the Release Notes
     permissions:
       contents: 'read'
       id-token: 'write'
@@ -26,6 +28,12 @@ jobs:
           fetch-tags: true
           fetch-depth: 0
 
+      - name: Setup Matrix CLI
+        working-directory: apps/matrix-cli
+        run: |
+          gcloud config list account --format "value(core.account)"  # for debugging
+          pip install uv
+          uv sync
       - name: Authenticate with Google Cloud
         uses: 'google-github-actions/auth@v2'
         # if: github.ref == 'refs/heads/main'
@@ -33,8 +41,3 @@ jobs:
           project_id: ${{env.project_id}}
           workload_identity_provider: ${{env.workload_identity_provider}}
           service_account: ${{env.service_account}}
-
-      - name: Logging
-        run: |
-          echo $GITHUB_WORKSPACE
-
