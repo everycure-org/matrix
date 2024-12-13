@@ -4,7 +4,7 @@ from typing import Any, Dict, List
 import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
-from pandera import Column, DataFrameSchema, check_input
+from pandera import Column, DataFrameSchema, check_input, check_output
 import pandera.pyspark as psa
 import seaborn as sns
 
@@ -61,7 +61,7 @@ node_schema = DataFrameSchema(
 )
 
 
-@check_input(node_schema)
+@check_output(node_schema)
 def ingest_nodes(df: DataFrame) -> DataFrame:
     """Function to create Neo4J nodes.
 
