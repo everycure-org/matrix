@@ -2,6 +2,10 @@ import pytest
 
 from matrix.pipelines.embeddings.nodes import ingest_nodes
 import pyspark
+from pyspark.ml.feature import PCA
+
+from matrix.pipelines.embeddings.nodes import reduce_embeddings_dimension
+import numpy as np
 
 
 @pytest.fixture
@@ -55,3 +59,73 @@ def test_ingest_nodes_empty_df(spark: pyspark.sql.SparkSession) -> None:
 
     result = ingest_nodes(empty_df)
     assert result.count() == 0
+
+
+@pytest.fixture
+def sample_embeddings_df(spark: pyspark.sql.SparkSession) -> pyspark.sql.DataFrame:
+    """Create a sample dataframe with embeddings."""
+    data = [(1, [1.0, 2.0, 3.0, 4.0]), (2, [2.0, 3.0, 4.0, 5.0]), (3, [3.0, 4.0, 5.0, 6.0])]
+    return spark.createDataFrame(data, ["id", "embedding"])
+
+
+@pytest.fixture
+def pca_transformer() -> PCA:
+    """Create a PCA transformer."""
+    return PCA(k=2)  # Reduce to 2 dimensions
+
+
+def test_reduce_embeddings_dimension_with_transformation(
+    sample_embeddings_df: pyspark.sql.DataFrame, pca_transformer: PCA
+) -> None:
+    """Test dimensionality reduction when skip=False."""
+    # Arrange
+    params = {"transformer": pca_transformer, "input": "embedding", "output": "pca_embedding", "skip": False}
+
+    # Act
+    result_df = reduce_embeddings_dimension(sample_embeddings_df, **params)
+
+    # Assert
+    # Check schema
+    assert "pca_embedding" in result_df.columns
+
+    # Check output dimensions
+    result_rows = result_df.collect()
+    assert len(result_rows) == 3  # Same number of rows
+    assert len(result_rows[0]["pca_embedding"]) == 2  # Reduced to 2 dimensions
+
+    # Check data type
+    assert result_df.schema["pca_embedding"].dataType.typeName() == "array"
+    assert result_df.schema["pca_embedding"].dataType.elementType.typeName() == "float"
+
+
+def test_reduce_embeddings_dimension_skip(sample_embeddings_df, pca_transformer):
+    """Test when skip=True, should return original embeddings."""
+    # Arrange
+    params = {"transformer": pca_transformer, "input": "embedding", "output": "pca_embedding", "skip": True}
+
+    # Act
+    result_df = reduce_embeddings_dimension(sample_embeddings_df, **params)
+
+    # Assert
+    # Check schema
+    assert "pca_embedding" in result_df.columns
+
+    # Check dimensions remain unchanged
+    result_rows = result_df.collect()
+    assert len(result_rows) == 3
+    assert len(result_rows[0]["pca_embedding"]) == 4  # Original dimension
+
+    # Check values are preserved
+    original_values = sample_embeddings_df.collect()
+    for orig, result in zip(original_values, result_rows):
+        assert np.array_equal(orig["embedding"], result["pca_embedding"])
+
+
+def test_reduce_embeddings_dimension_invalid_input(sample_embeddings_df, pca_transformer):
+    """Test with invalid input column name."""
+    # Arrange
+    params = {"transformer": pca_transformer, "input": "nonexistent_column", "output": "pca_embedding", "skip": False}
+
+    # Act & Assert
+    with pytest.raises(Exception):  # Should raise an exception for invalid column
+        reduce_embeddings_dimension(sample_embeddings_df, **params)
