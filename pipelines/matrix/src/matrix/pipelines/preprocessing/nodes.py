@@ -202,16 +202,21 @@ def create_prm_nodes(prm_nodes: pd.DataFrame) -> pd.DataFrame:
         .rename(columns={"normalized_curie": "id"})
         .drop_duplicates("id")
     )
-    res["category"] = "biolink:" + prm_nodes["entity label"]
+    if len(res) > 0:
+        res["category"] = "biolink:" + prm_nodes["entity label"]
+    else:
+        # Create empty DataFrame with required schema
+        res = pd.DataFrame(columns=["category", "id", "name", "description"])
+
     return res
 
 
 prm_edges_schema = DataFrameSchema(
     {
-        "subject": Column(object),
-        "predicate": Column(object),
-        "object": Column(object),
-        "knowledge_source": Column(object),
+        "subject": Column(str),
+        "predicate": Column(str),
+        "object": Column(str),
+        "knowledge_source": Column(str),
     },
     strict=False,
     unique=["subject", "predicate", "object"],  # This replaces the @primary_key decorator
