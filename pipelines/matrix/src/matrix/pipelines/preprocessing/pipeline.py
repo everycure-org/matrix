@@ -62,34 +62,28 @@ def create_pipeline(**kwargs) -> Pipeline:
                 tags=["ec-clinical-trials-data"],
             ),
             node(
-                func=lambda x: x,
+                func=lambda x: [x, x],
                 inputs=["preprocessing.raw.drug_list"],
-                outputs="ingestion.raw.drug_list.nodes@pandas",
-                name="resolve_drug_list",
+                outputs=["ingestion.raw.drug_list.nodes@pandas", "ingestion.reporting.drug_list"],
+                name="write_drug_list",
                 tags=["drug-list"],
             ),
-            # node(
-            #     func=lambda x: x,
-            #     inputs="ingestion.raw.drug_list@pandas",
-            #     outputs="ingestion.reporting.drug_list",
-            #     name="write_drug_list_to_gsheets",
-            # ),
             node(
                 func=nodes.enrich_disease_list,
                 inputs=[
                     "preprocessing.raw.disease_list",
                     "params:preprocessing.enrichment_tags",
                 ],
-                outputs="ingestion.raw.disease_list@pandas",
+                outputs="ingestion.raw.disease_list.nodes@pandas",
                 name="enrich_disease_list",
                 tags=["disease-list"],
             ),
-            # node(
-            #     func=lambda x: x,
-            #     inputs="ingestion.raw.disease_list@pandas",
-            #     outputs="ingestion.reporting.disease_list",
-            #     name="write_disease_list_to_gsheets",
-            # ),
+            node(
+                func=lambda x: x,
+                inputs="ingestion.raw.disease_list.nodes@pandas",
+                outputs="ingestion.reporting.disease_list",
+                name="write_disease_list_to_gsheets",
+            ),
             # node(
             #     func=nodes.clean_input_sheet,
             #     inputs={
