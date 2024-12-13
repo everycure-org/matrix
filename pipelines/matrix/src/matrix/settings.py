@@ -69,6 +69,7 @@ DYNAMIC_PIPELINES_MAPPING = {
         # {"name": "ec_clinical_trails", "integrate_in_kg": False},
         {"name": "drug_list", "normalize_edges": False, "integrate_in_kg": False},
         {"name": "disease_list", "normalize_edges": False, "integrate_in_kg": False},
+        # {"name": "ground_truth", "normalize_edges": False, "integrate_in_kg": False},
         # {"name": "ec_disease_list", "normalize_edges": False, "integrate_in_kg": False},
     ],
     "modelling": [
