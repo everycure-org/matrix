@@ -207,6 +207,7 @@ class EmbeddingSchema(DataFrameModel):
 
     class Config:
         strict = True
+        unique = ["id"]
 
 
 @pandera.check_output(EmbeddingSchema)
@@ -398,18 +399,7 @@ def write_topological_embeddings(
     return {"success": "true"}
 
 
-embeddings_schema = pandera.DataFrameSchema(
-    {
-        "pca_embedding": pandera.Column(object, nullable=False),
-        "topological_embedding": pandera.Column(object, nullable=False),
-        "id": pandera.Column(object),
-    },
-    strict=True,
-    unique_column_names=["id"],
-)
-
-
-@pandera.check_input(embeddings_schema)
+@pandera.check_output(EmbeddingSchema)
 def extract_topological_embeddings(
     embeddings: pyspark.sql.DataFrame, nodes: pyspark.sql.DataFrame, string_col: str
 ) -> pyspark.sql.DataFrame:
