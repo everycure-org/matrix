@@ -1,7 +1,8 @@
 import pandas as pd
 import pytest
 import pandera
-from matrix.pipelines.preprocessing.nodes import create_int_edges, create_prm_nodes
+from matrix.pipelines.preprocessing.nodes import create_int_edges, create_prm_edges, create_prm_nodes
+from pandas.testing import assert_frame_equal
 
 
 @pytest.fixture
@@ -158,3 +159,72 @@ def test_create_prm_nodes_empty_input():
     # Assert
     assert len(result) == 0
     assert list(result.columns) == ["category", "id", "name", "description"]
+
+
+def test_create_prm_edges():
+    # Arrange
+    input_df = pd.DataFrame(
+        {
+            "SourceId": pd.Series(["source1", "source2", None, "source4"], dtype="str"),
+            "TargetId": pd.Series(["target1", "target2", "target3", None], dtype="str"),
+            "Label": pd.Series(["treats", "affects", "related_to", "treats"], dtype="str"),
+            "ExtraCol": pd.Series(["extra1", "extra2", "extra3", "extra4"], dtype="str"),
+        }
+    )
+
+    expected_df = pd.DataFrame(
+        {
+            "subject": pd.Series(["source1", "source2"], dtype="str"),
+            "object": pd.Series(["target1", "target2"], dtype="str"),
+            "predicate": pd.Series(["biolink:treats", "biolink:affects"], dtype="str"),
+            "knowledge_source": pd.Series(["ec:medical", "ec:medical"], dtype="str"),
+            "ExtraCol": pd.Series(["extra1", "extra2"], dtype="str"),
+        }
+    )
+
+    # Act
+    result_df = create_prm_edges(input_df)
+
+    # Assert
+    assert_frame_equal(result_df.sort_index(axis=1), expected_df.sort_index(axis=1), check_dtype=False)
+
+
+def test_create_prm_edges_empty_input():
+    # Arrange
+    input_df = pd.DataFrame(
+        {
+            "SourceId": pd.Series([], dtype="str"),
+            "TargetId": pd.Series([], dtype="str"),
+            "Label": pd.Series([], dtype="str"),
+        }
+    )
+
+    expected_df = pd.DataFrame(
+        {
+            "subject": pd.Series([], dtype="str"),
+            "object": pd.Series([], dtype="str"),
+            "predicate": pd.Series([], dtype="str"),
+            "knowledge_source": pd.Series([], dtype="str"),
+        }
+    )
+
+    # Act
+    result_df = create_prm_edges(input_df)
+
+    # Assert
+    assert_frame_equal(result_df.sort_index(axis=1), expected_df.sort_index(axis=1), check_dtype=False)
+
+
+def test_create_prm_edges_schema_validation():
+    # Arrange
+    input_df = pd.DataFrame(
+        {
+            "SourceId": ["source1"],
+            "TargetId": ["target1"],
+            # Missing Label column should raise SchemaError
+        }
+    )
+
+    # Act & Assert
+    with pytest.raises(Exception):  # pandera will raise SchemaError
+        create_prm_edges(input_df)
