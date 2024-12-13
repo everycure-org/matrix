@@ -8,7 +8,6 @@ import numpy as np
 import pandera as pa
 import pyspark.sql as ps
 
-from pandera.dtypes import String
 
 import seaborn as sns
 
@@ -52,14 +51,14 @@ class GraphDS(GraphDataScience):
 
 
 # Replace the node_schema definition
-node_schema = psa.DataFrameSchema(
+node_schema = pa.DataFrameSchema(
     {
-        "id": Column(String, nullable=False),
-        "name": Column(String, nullable=False),
-        "label": Column(String, nullable=False),
-        "property_keys": Column(String, nullable=False),  # For array type
-        "property_values": Column(String, nullable=False),  # For array type
-        "upstream_data_source": Column(String, nullable=False),  # For array type
+        "id": pa.Column(pa.String, nullable=False),
+        "name": pa.Column(pa.String, nullable=False),
+        "label": pa.Column(pa.String, nullable=False),
+        "property_keys": pa.Column(pa.String, nullable=False),  # For array type
+        "property_values": pa.Column(pa.String, nullable=False),  # For array type
+        "upstream_data_source": pa.Column(pa.String, nullable=False),  # For array type
     },
     unique=["id"],
     strict=False,
@@ -206,10 +205,10 @@ async def compute_df_embeddings_async(df: pd.DataFrame, embedding_model) -> pd.D
     return df
 
 
-embedding_schema = DataFrameSchema(
+embedding_schema = pa.DataFrameSchema(
     {
-        "embedding": Column(object, nullable=False),  # array type
-        "pca_embedding": Column(object, nullable=False),  # array type
+        "embedding": pa.Column(object, nullable=False),  # array type
+        "pca_embedding": pa.Column(object, nullable=False),  # array type
     },
     strict=True,
 )
@@ -400,11 +399,11 @@ def write_topological_embeddings(
     return {"success": "true"}
 
 
-embeddings_schema = psa.DataFrameSchema(
+embeddings_schema = pa.DataFrameSchema(
     {
-        "pca_embedding": Column(object, nullable=False),
-        "topological_embedding": Column(object, nullable=False),
-        "id": Column(object),
+        "pca_embedding": pa.Column(object, nullable=False),
+        "topological_embedding": pa.Column(object, nullable=False),
+        "id": pa.Column(object),
     },
     strict=True,
     unique_column_names=["id"],
@@ -419,7 +418,7 @@ def extract_topological_embeddings(embeddings: ps.DataFrame, nodes: ps.DataFrame
     https://github.com/neo4j/graph-data-science-client/issues/742#issuecomment-2324737372.
     """
 
-    if isinstance(embeddings.schema[string_col].dataType, StringType):
+    if isinstance(embeddings.schema[string_col].dataType, ps.StringType):
         print("converting embeddings to float")
         embeddings = embeddings.withColumn(string_col, F.from_json(F.col(string_col), T.ArrayType(T.DoubleType())))
 
