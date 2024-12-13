@@ -34,7 +34,7 @@ jobs:
           gcloud config list account --format "value(core.account)"  # for debugging
           pip install uv
           uv sync
-      - name: Authenticate with Google Cloud
+      - name: Authenticate with Google Cloud v
         uses: 'google-github-actions/auth@v2'
         # if: github.ref == 'refs/heads/main'
         with:
