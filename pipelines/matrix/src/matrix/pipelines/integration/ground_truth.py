@@ -7,7 +7,7 @@ from .transformer import GraphTransformer
 logger = logging.getLogger(__name__)
 
 
-class DrugsTransformer(GraphTransformer):
+class GroundTruthTransformer(GraphTransformer):
     # @pa.check_output(KGNodeSchema)
     def transform_nodes(self, nodes_df: DataFrame, **kwargs) -> DataFrame:
         """Transform nodes to our target schema.
@@ -21,10 +21,9 @@ class DrugsTransformer(GraphTransformer):
         # fmt: off
         df = (
             nodes_df
-            .withColumn("id",                                f.col("single_ID"))
-            .withColumn("name",                              f.col("ID_Label"))
-            .withColumn("category",                          f.lit("dummy"))
-            # TODO: Add other cols here
+            .withColumn("id",                                f.col("category_class"))
+            .withColumn("name",                              f.col("label"))
+            .withColumn("category",                          f.lit("none"))
         )
         return df
         # fmt: on
