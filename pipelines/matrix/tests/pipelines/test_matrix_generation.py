@@ -123,7 +123,13 @@ def test_generate_pairs(sample_drugs, sample_diseases, sample_graph, sample_know
     """Test the generate_pairs function."""
     # Given drug list, disease list and ground truth pairs
     # When generating the matrix dataset
-    result = generate_pairs(sample_drugs, sample_diseases, sample_graph, sample_known_pairs, sample_clinical_trials)
+    result = generate_pairs(
+        drugs=sample_drugs,
+        diseases=sample_diseases,
+        graph=sample_graph,
+        known_pairs=sample_known_pairs,
+        clinical_trials=sample_clinical_trials,
+    )
 
     # Then the output is of the correct format and shape
     assert isinstance(result, pd.DataFrame)

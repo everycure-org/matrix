@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
 from pandera import Column, DataFrameSchema, check_input
+import pandera.pyspark as psa
 import seaborn as sns
 
 from graphdatascience import GraphDataScience
@@ -393,14 +394,14 @@ def write_topological_embeddings(
     return {"success": "true"}
 
 
-embeddings_schema = DataFrameSchema(
+embeddings_schema = psa.DataFrameSchema(
     {
         "pca_embedding": Column(object, nullable=False),
         "topological_embedding": Column(object, nullable=False),
         "id": Column(object),
     },
     strict=True,
-    unique=["id"],
+    unique_column_names=["id"],
 )
 
 
