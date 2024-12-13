@@ -61,6 +61,10 @@ jobs:
           RELEASE: 'v0.2.5-alpha9'
         run: |
           FILENAME="${RELEASE}_info.json"
+          
+          git config --global user.email "releasebot@everycure.org"
+          git config --global user.name "All of us at Every Cure"
+          
           git add "${FILENAME}" && \
           git commit -m "added release info json" && \
           git push --follow-tags
