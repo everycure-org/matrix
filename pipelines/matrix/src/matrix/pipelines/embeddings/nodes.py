@@ -49,16 +49,16 @@ class GraphDS(GraphDataScience):
         self.set_database(database)
 
 
-class PanderaSchema(DataFrameModel):
-    id: T.StringType() = pandera.Field()  # type: ignore
-    label: T.StringType() = pandera.Field()  # type: ignore
-    name: T.StringType() = pandera.Field()  # type: ignore
-    property_keys: T.ArrayType(T.StringType()) = pandera.Field()  # type: ignore
-    property_values: T.ArrayType(T.StringType()) = pandera.Field()  # type: ignore
-    upstream_data_source: T.ArrayType(T.StringType()) = pandera.Field()  # type: ignore
+class IngestedNodesSchema(DataFrameModel):
+    id: T.StringType() = pandera.pyspark.Field()  # type: ignore
+    label: T.StringType() = pandera.pyspark.Field()  # type: ignore
+    name: T.StringType() = pandera.pyspark.Field()  # type: ignore
+    property_keys: T.ArrayType(T.StringType()) = pandera.pyspark.Field()  # type: ignore
+    property_values: T.ArrayType(T.StringType()) = pandera.pyspark.Field()  # type: ignore
+    upstream_data_source: T.ArrayType(T.StringType()) = pandera.pyspark.Field()  # type: ignore
 
 
-@pandera.check_output(PanderaSchema)
+@pandera.check_output(IngestedNodesSchema)
 def ingest_nodes(df: pyspark.sql.DataFrame) -> pyspark.sql.DataFrame:
     """Function to create Neo4J nodes.
 
