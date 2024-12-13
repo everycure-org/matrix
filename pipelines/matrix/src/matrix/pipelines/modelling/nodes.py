@@ -3,15 +3,13 @@ from typing import Any, Dict, List, Union, Tuple
 import pandas as pd
 import numpy as np
 import json
-from pandera import Column, DataFrameModel, DataFrameSchema, check_input, check_output
+from pandera import Column, DataFrameModel, DataFrameSchema
 import pandera
 import pyspark
 from pyspark.sql import functions as F
 import pyspark.sql.types as T
 from pandera.pyspark import Field
 
-
-from pyspark.sql import DataFrame
 
 from sklearn.model_selection import BaseCrossValidator
 from sklearn.impute._base import _BaseImputer
@@ -70,10 +68,10 @@ def no_nulls(columns: List[str]):
 
 
 def filter_valid_pairs(
-    nodes: DataFrame,
-    raw_tp: DataFrame,
-    raw_tn: DataFrame,
-) -> Tuple[DataFrame, Dict[str, float]]:
+    nodes: pyspark.sql.DataFrame,
+    raw_tp: pyspark.sql.DataFrame,
+    raw_tn: pyspark.sql.DataFrame,
+) -> Tuple[pyspark.sql.DataFrame, Dict[str, float]]:
     """Filter pairs to only include nodes that exist in the nodes DataFrame.
 
     Args:
@@ -161,10 +159,14 @@ node_schema = DataFrameSchema(
 )
 
 
-@check_input(node_schema)
+@pandera.check_output(node_schema)
 def prefilter_nodes(
-    full_nodes: DataFrame, nodes: DataFrame, gt: DataFrame, drug_types: List[str], disease_types: List[str]
-) -> DataFrame:
+    full_nodes: pyspark.sql.DataFrame,
+    nodes: pyspark.sql.DataFrame,
+    gt: pyspark.sql.DataFrame,
+    drug_types: List[str],
+    disease_types: List[str],
+) -> pyspark.sql.DataFrame:
     """Prefilter nodes for negative sampling.
 
     Args:
@@ -211,10 +213,10 @@ splits_schema = DataFrameSchema(
 )
 
 
-@check_output(splits_schema)
+@pandera.check_output(splits_schema)
 @inject_object()
 def make_splits(
-    data: DataFrame,
+    data: pyspark.sql.DataFrame,
     splitter: BaseCrossValidator,
 ) -> pd.DataFrame:
     """Function to split data.
@@ -253,7 +255,7 @@ splits_schema = DataFrameSchema(
 )
 
 
-@check_input(splits_schema)
+@pandera.check_output(splits_schema)
 @inject_object()
 def create_model_input_nodes(
     graph: KnowledgeGraph,
