@@ -64,8 +64,12 @@ def test_ingest_nodes_empty_df(spark: pyspark.sql.SparkSession) -> None:
 @pytest.fixture
 def sample_embeddings_df(spark: pyspark.sql.SparkSession) -> pyspark.sql.DataFrame:
     """Create a sample dataframe with embeddings."""
-    data = [(1, [1.0, 2.0, 3.0, 4.0]), (2, [2.0, 3.0, 4.0, 5.0]), (3, [3.0, 4.0, 5.0, 6.0])]
-    return spark.createDataFrame(data, ["id", "embedding"])
+    data = [
+        {"id": "1", "embedding": [1.0, 2.0, 3.0, 4.0]},
+        {"id": "2", "embedding": [2.0, 3.0, 4.0, 5.0]},
+        {"id": "3", "embedding": [3.0, 4.0, 5.0, 6.0]},
+    ]
+    return spark.createDataFrame(data)
 
 
 @pytest.fixture

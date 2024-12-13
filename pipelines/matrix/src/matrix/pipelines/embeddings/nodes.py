@@ -201,12 +201,12 @@ async def compute_df_embeddings_async(df: pd.DataFrame, embedding_model) -> pd.D
 
 
 class EmbeddingSchema(DataFrameModel):
-    id: T.LongType() = Field()  # type: ignore
+    id: T.StringType() = Field()  # type: ignore
     embedding: T.ArrayType(T.DoubleType()) = Field()  # type: ignore
     pca_embedding: T.ArrayType(T.FloatType()) = Field()  # type: ignore
 
     class Config:
-        strict = True
+        strict = False
         unique = ["id"]
 
 
