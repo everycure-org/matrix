@@ -106,6 +106,30 @@ We advise managing your Python installation using [`pyenv`](https://github.com/p
     
     After following these steps, you should have pyenv installed and ready to use on your WSL environment.
 
+
+Once `pyenv` is installed, you can install the latest version of Python 3.11 using the command:
+
+```bash
+pyenv install 3.11
+```
+
+After `pyenv` installs Python, you can check that your global Python version is indeed 3.11:
+
+```bash
+pyenv global
+# should print 3.11
+```
+
+You can also try running `python` from the command line to check that your global Python version is indeed some version of 3.11 (3.11.11 is the latest version of Python 3.11 as of December 12, 2024).
+
+```bash
+python
+# the first line printed by the Python interpreter should say something like
+# Python 3.11.11 (main, Dec 12 2024, 13:48:23) [Clang 16.0.0 (clang-1600.0.26.6)]
+# The exact details of the message might differ---the main thing is that you are running
+# Python 3.11.<something>, as opposed to another version of Python, such as 3.9, 3.12, or 3.13.
+```
+
 ### Virtual environment
 
 We leverage [`uv`](https://github.com/astral-sh/uv) to manage/install our Python
@@ -121,6 +145,14 @@ Install as follows, then create a virtual env in the `matrix/pipelines/matrix` d
     Don't forget to link your uv installation using the instructions prompted after the downloaded.
 
 === "MacOS"
+
+    If you have installed Python 3.11 using `pyenv`, as recommended above, you just need to install `uv`:
+
+    ```bash
+    brew install uv
+    ```
+
+    If, however, you prefer to install Python 3.11 using Homebrew, you need to install both `uv` and Python:
 
     ```bash
     brew install uv python@3.11
