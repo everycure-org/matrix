@@ -29,7 +29,7 @@ class RTXTransformer(GraphTransformer):
             Transformed DataFrame.
         """
         # fmt: off
-        return (
+        df =(
             nodes_df
             .withColumn("upstream_data_source",              f.array(f.lit("rtxkg2")))
             .withColumn("labels",                            f.split(f.col(":LABEL"), RTX_SEPARATOR))
@@ -40,6 +40,24 @@ class RTXTransformer(GraphTransformer):
             .withColumnRenamed("id:ID", "id")
             .select(*cols_for_schema(KGNodeSchema))
         )
+        # Some SILC nodes will get filtered out as they are assigned NamedThing category
+        # We need to manually change the category so that they are not filtered out
+        chemical_ids = ['OMIM:MTHU008082', 'UMLS:C0311400', 'EFO:0004501',
+                    'LOINC:LP14446-6', 'OMIM:MTHU000104', 'LOINC:LP89782-4']
+        df = df.withColumn(
+            "all_categories",
+            f.when(
+                f.col("id").isin(chemical_ids),
+                f.array_union(f.col("all_categories"), f.array(f.lit("biolink:Case")))
+            ).otherwise(f.col("all_categories"))
+        ).withColumn(
+            "category",
+            f.when(
+                f.col("id").isin(chemical_ids),
+                f.lit("biolink:Case")
+            ).otherwise(f.col("category"))
+        )
+        return df
         # fmt: on
 
     @pa.check_output(KGEdgeSchema)
