@@ -39,7 +39,7 @@ jobs:
       - name: Testing cmd
         working-directory: docs/src/releases
         env:
-          RELEASE_DIR: 'gs://mtrx-us-central1-hub-dev-storage/kedro/data/releases/'
+          RELEASE_DIR: 'gs://mtrx-us-central1-hub-dev-storage/kedro/data/releases'
           RELEASE: 'v0.2.5-alpha9'
         run: |
           echo "workspace is: $GITHUB_WORKSPACE"
