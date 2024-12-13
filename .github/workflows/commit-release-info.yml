@@ -20,6 +20,11 @@ jobs:
       pull-requests: 'read'
 
     steps:
+      - name: 'Checkout'
+        uses: actions/checkout@main
+        with:
+          ref: 'feat/commit-release-info'
+
       - name: Authenticate with Google Cloud
         uses: 'google-github-actions/auth@v2'
         # if: github.ref == 'refs/heads/main'
@@ -28,10 +33,7 @@ jobs:
           workload_identity_provider: ${{env.workload_identity_provider}}
           service_account: ${{env.service_account}}
 
-      - name: 'Checkout'
-        uses: actions/checkout@main
-        with:
-          ref: 'feat/commit-release-info'
+
 
       - name: Logging
         run: |
