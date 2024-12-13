@@ -16,7 +16,7 @@ integration:
         object: matrix.pipelines.integration.clinical_trails.ClinicalTrialsTransformer
     drug_list: 
       transformer:
-        object: matrix.pipelines.integration.drugs.DrugTransformer
+        object: matrix.pipelines.integration.drugs.DrugsTransformer
 
   # FUTURE: Ensure we can move this to filters down here
   preprocessing:
