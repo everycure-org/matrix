@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import List
 
 import pandas as pd
 import requests
@@ -25,8 +25,6 @@ def resolve_name(name: str, cols_to_get: List[str]) -> dict:
         Name and corresponding curie
     """
 
-
-    
     if not name or pd.isna(name):
         return {}
 
@@ -110,8 +108,7 @@ def process_medical_edges(int_nodes: pd.DataFrame, int_edges: pd.DataFrame) -> p
     allow_subset=True,
 )
 def add_source_and_target_to_clinical_trails(df: pd.DataFrame) -> pd.DataFrame:
-
-    df = df.head(5)
+    df = df.head(10)
 
     # Normalize the name
     drug_data = df["drug_name"].apply(resolve_name, cols_to_get=["curie"])
@@ -136,30 +133,39 @@ def add_source_and_target_to_clinical_trails(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-# NOTE: What's wrong with this?
-# @has_schema(
-#     schema={
-#         "clinical_trial_id": "object",
-#         "reason_for_rejection": "object",
-#         "drug_name": "object",
-#         "disease_name": "object",
-#         "drug_curie": "object",
-#         "disease_curie": "object",
-#         "conflict": "object",
-#         "significantly_better": "numeric",
-#         "non_significantly_better": "numeric",
-#         "non_significantly_worse": "numeric",
-#         "significantly_worse": "numeric",
-#     },
-#     allow_subset=True,
-#     output=1
-# )
+@has_schema(
+    schema={
+        "curie": "object",
+        "name": "object",
+    },
+    allow_subset=True,
+    output=0,
+    df=None,
+)
+@has_schema(
+    schema={
+        "clinical_trial_id": "object",
+        "drug_name": "object",
+        "disease_name": "object",
+        "drug_curie": "object",
+        "disease_curie": "object",
+        "significantly_better": "numeric",
+        "non_significantly_better": "numeric",
+        "non_significantly_worse": "numeric",
+        "significantly_worse": "numeric",
+    },
+    allow_subset=True,
+    output=1,
+    df=None,
+)
 @primary_key(
     primary_key=[
         "clinical_trial_id",
         "drug_curie",
         "disease_curie",
-    ]
+    ],
+    output=1,
+    df=None,
 )
 def clean_clinical_trial_data(df: pd.DataFrame) -> pd.DataFrame:
     """Clean clinical trails data.
@@ -176,7 +182,7 @@ def clean_clinical_trial_data(df: pd.DataFrame) -> pd.DataFrame:
 
     # remove rows with reason for rejection
     df = df[df["reason_for_rejection"].isna()].reset_index(drop=True)
-   
+
     # Define columns to check
     columns_to_check = [
         "drug_curie",
@@ -192,11 +198,11 @@ def clean_clinical_trial_data(df: pd.DataFrame) -> pd.DataFrame:
     edges = df.drop(columns=["reason_for_rejection", "conflict"]).reset_index(drop=True)
 
     # extract nodes
-    drugs = df.rename(columns={f"drug_curie": "curie", "drug_name": "name"})[["curie", "name"]]
-    diseases = df.rename(columns={f"disease_curie": "curie", "disease_name": "name"})[["curie", "name"]]
+    drugs = df.rename(columns={"drug_curie": "curie", "drug_name": "name"})[["curie", "name"]]
+    diseases = df.rename(columns={"disease_curie": "curie", "disease_name": "name"})[["curie", "name"]]
     nodes = pd.concat([drugs, diseases], ignore_index=True)
 
-    return nodes, edges
+    return [nodes, edges]
 
 
 # @has_schema(
