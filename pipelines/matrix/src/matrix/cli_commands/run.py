@@ -123,6 +123,7 @@ def run(tags, without_tags, env, runner, is_async, node_names, to_nodes, from_no
 
 
 def _run(config: RunConfig, kedro_session: KedroSessionWithFromCatalog) -> None:
+    
     if config.pipeline_name in ["test", "fabricator"] and config.env in [None, "base"]:
         raise RuntimeError(
             "Running the fabricator in the base environment might overwrite production data! Use the test env `-e test` instead."

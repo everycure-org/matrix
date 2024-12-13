@@ -125,6 +125,20 @@ ingestion.raw.ec_medical_team.edges@spark:
   load_args:
     header: True
 
+
+ingestion.int.ec_medical_team.nodes:
+  <<: [*_spark_parquet, *_layer_int]
+  filepath: ${globals:paths.ingestion}/int/ec_medical_team/translator/${globals:data_sources.ec-medical-team.version}/nodes_conflated
+
+ingestion.int.ec_medical_team.edges:
+  <<: [*_spark_parquet, *_layer_int]
+  filepath: ${globals:paths.ingestion}/int/ec_medical_team/translator/${globals:data_sources.ec-medical-team.version}/edges_conflated
+
+
+# -------------------------------------------------------------------------
+# EveryCure Clinical trails
+# ------------------------------------------------------------------------- 
+
 ingestion.raw.ec_clinical_trails.nodes@pandas:
   <<: [*_layer_int, *_pandas_csv]
   filepath: ${globals:paths.raw}/clinical_trials_data/translator/${globals:data_sources.clinical-trial-data.version}/nodes.tsv
@@ -141,13 +155,14 @@ ingestion.raw.ec_clinical_trails.edges@spark:
   <<: [*_layer_int, *_spark_csv]
   filepath: ${globals:paths.raw}/clinical_trials_data/translator/${globals:data_sources.clinical-trial-data.version}/edges.tsv
 
-ingestion.int.ec_medical_team.nodes:
+ingestion.int.ec_clinical_trails.nodes:
   <<: [*_spark_parquet, *_layer_int]
-  filepath: ${globals:paths.ingestion}/int/ec_medical_team/translator/${globals:data_sources.ec-medical-team.version}/nodes_conflated
+  filepath: ${globals:paths.ingestion}/int/clinical_trials_data/translator/${globals:data_sources.ec-medical-team.version}/nodes_conflated
 
-ingestion.int.ec_medical_team.edges:
+ingestion.int.ec_clinical_trails.edges:
   <<: [*_spark_parquet, *_layer_int]
-  filepath: ${globals:paths.ingestion}/int/ec_medical_team/translator/${globals:data_sources.ec-medical-team.version}/edges_conflated
+  filepath: ${globals:paths.ingestion}/int/clinical_trials_data/translator/${globals:data_sources.ec-medical-team.version}/edges_conflated
+
 
 
 # -------------------------------------------------------------------------
