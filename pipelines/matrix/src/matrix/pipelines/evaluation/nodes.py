@@ -4,7 +4,7 @@ from typing import Any
 
 import pandas as pd
 
-from matrix.core import inject_object
+from matrix.inject import inject_object
 from refit.v1.core.inline_has_schema import has_schema
 
 from matrix import settings

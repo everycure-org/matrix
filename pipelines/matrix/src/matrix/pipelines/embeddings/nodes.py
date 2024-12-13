@@ -21,7 +21,7 @@ from refit.v1.core.unpack import unpack_params
 
 from tenacity import retry, wait_exponential, stop_after_attempt
 
-from matrix.core import inject_object
+from matrix.inject import inject_object
 
 from .graph_algorithms import GDSGraphAlgorithm
 from .encoders import AttributeEncoder

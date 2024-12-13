@@ -8,7 +8,7 @@ from sklearn.impute import SimpleImputer
 from sklearn.model_selection import GridSearchCV
 from sklearn.preprocessing import MinMaxScaler
 
-from matrix.core import _inject_object, _parse_for_objects, inject_object
+from matrix.inject import _inject_object, _parse_for_objects, inject_object
 
 
 def dummy_func(x):
@@ -64,7 +64,7 @@ def nested_params(dummy_pd_df):
         "int": 0,
         "float": 1.1,
         "z": {
-            "object": "tests.test_core.dummy_func",
+            "object": "tests.test_inject.dummy_func",
             "x": {
                 "object": "sklearn.impute.SimpleImputer",
                 "strategy": "constant",
@@ -76,26 +76,26 @@ def nested_params(dummy_pd_df):
             "feature_range": (0, 2),
         },
         "plain_func": {
-            "object": "tests.test_core.dummy_func",
+            "object": "tests.test_inject.dummy_func",
         },
         "inception": {
-            "object": "tests.test_core.dummy_func",
-            "x": {"object": "tests.test_core.dummy_func"},
+            "object": "tests.test_inject.dummy_func",
+            "x": {"object": "tests.test_inject.dummy_func"},
         },
         "list_of_objs": [
-            {"object": "tests.test_core.dummy_func"},
-            {"object": "tests.test_core.dummy_func"},
+            {"object": "tests.test_inject.dummy_func"},
+            {"object": "tests.test_inject.dummy_func"},
             {
-                "object": "tests.test_core.dummy_func",
+                "object": "tests.test_inject.dummy_func",
                 "x": {
-                    "object": "tests.test_core.dummy_func",
+                    "object": "tests.test_inject.dummy_func",
                 },
             },
         ],
         "list_of_objs_nested": [
             {
                 "my_func": {
-                    "object": "tests.test_core.dummy_func",
+                    "object": "tests.test_inject.dummy_func",
                 }
             }
         ],
@@ -122,8 +122,8 @@ def another_param():
 @pytest.fixture
 def flat_params():
     flat_params = [
-        {"object": "tests.test_core.dummy_func"},
-        {"object": "tests.test_core.dummy_func"},
+        {"object": "tests.test_inject.dummy_func"},
+        {"object": "tests.test_inject.dummy_func"},
     ]
     return flat_params
 
@@ -177,22 +177,22 @@ def test_numbers_as_keys(number_as_keys):
 
 
 def test_invalid_keyword_in_parse_for_objects():
-    invalid_param = {"object_invalid": "tests.test_core.dummy_func"}
+    invalid_param = {"object_invalid": "tests.test_inject.dummy_func"}
     result = _parse_for_objects(invalid_param)
     assert isinstance(result["object_invalid"], str)  # it should not load object
 
 
 def test_instantiate_function_without_input():
     instantiate_param = {
-        "object": "tests.test_core.dummy_func_without_input",
+        "object": "tests.test_inject.dummy_func_without_input",
         "instantiate": True,
     }
     no_instantiate_param = {
-        "object": "tests.test_core.dummy_func_without_input",
+        "object": "tests.test_inject.dummy_func_without_input",
         "instantiate": False,
     }
     default_param = {
-        "object": "tests.test_core.dummy_func_without_input",
+        "object": "tests.test_inject.dummy_func_without_input",
     }
 
     result1 = _parse_for_objects(instantiate_param)
@@ -206,20 +206,20 @@ def test_instantiate_function_without_input():
 
 def test_instantiate_function_with_input():
     instantiate_param = {
-        "object": "tests.test_core.dummy_func",
+        "object": "tests.test_inject.dummy_func",
         "x": 1,
         "instantiate": True,
     }
     no_instantiate_param = {
-        "object": "tests.test_core.dummy_func",
+        "object": "tests.test_inject.dummy_func",
         "instantiate": False,
     }
     default_param = {
-        "object": "tests.test_core.dummy_func",
+        "object": "tests.test_inject.dummy_func",
         "x": 1,
     }
     default_param_with_tuple = {
-        "object": "tests.test_core.dummy_func",
+        "object": "tests.test_inject.dummy_func",
         "x": (1, 2, 3),
     }
 
@@ -321,7 +321,7 @@ def test_flat_params_in_inject_object(flat_params):
 
 
 def test_invalid_keyword_in_inject_object():
-    invalid_param = {"object_invalid": "tests.test_core.dummy_func"}
+    invalid_param = {"object_invalid": "tests.test_inject.dummy_func"}
     new_args, new_kwargs = _inject_object(**invalid_param)
     assert not new_args
     assert isinstance(new_kwargs["object_invalid"], str)  # it should not load objects
