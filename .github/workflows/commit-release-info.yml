@@ -43,7 +43,8 @@ jobs:
           gcloud config list account
           
           # Ensure that the correct account is set
-          gcloud config set account ${{env.service_account}}
+          #gcloud config set account ${{env.service_account}}
+          gcloud auth login
 
       - name: Testing cmd
         working-directory: apps/matrix-cli
@@ -52,4 +53,4 @@ jobs:
           echo "workspace is: $GITHUB_WORKSPACE"
           gcloud config list account
           gsutil cp gs://mtrx-us-central1-hub-dev-storage/kedro/data/tests/v0.2.5-alpha9/v0.2.5-alpha9_info.json ./file.json
-          gcloud auth login
+
