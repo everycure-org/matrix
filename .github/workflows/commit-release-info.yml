@@ -40,7 +40,7 @@ jobs:
         working-directory: docs/src/releases
         env:
           RELEASE_DIR: 'gs://mtrx-us-central1-hub-dev-storage/kedro/data/releases/'
-          RELEASE: 'v0.2.5-alpha9_info'
+          RELEASE: 'v0.2.5-alpha9'
         run: |
           echo "workspace is: $GITHUB_WORKSPACE"
           mkdir -p info && cd info
@@ -49,7 +49,7 @@ jobs:
           FILENAME="${RELEASE}_info.json"
           echo $FILENAME
           
-          BLOB_PATH="${RELEASE_DIR}/{RELEASE}/{RELEASE}_info.json"
+          BLOB_PATH="${RELEASE_DIR}/{$RELEASE}/{$FILENAME}"
           echo $BLOB_PATH
 
           gcloud storage cp $BLOB_PATH $FILENAME
