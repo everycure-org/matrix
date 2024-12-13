@@ -1,4 +1,4 @@
-name: Commit Release Info 2
+name: Commit Release Info
 
 on:
   push:
@@ -11,17 +11,29 @@ env:
   service_account: 'sa-github-actions-rw@mtrx-hub-dev-3of.iam.gserviceaccount.com'
 
 jobs:
-  create_release_notes_draft:
+  fetch_file_from_gcloud:
     runs-on: ubuntu-latest
-    name: Create Draft of the Release Notes
+    name: Fetch json from gcloud
     permissions:
       contents: 'read'
       id-token: 'write'
       pull-requests: 'read'
 
     steps:
+      - name: Authenticate with Google Cloud
+        uses: 'google-github-actions/auth@v2'
+        # if: github.ref == 'refs/heads/main'
+        with:
+          project_id: ${{env.project_id}}
+          workload_identity_provider: ${{env.workload_identity_provider}}
+          service_account: ${{env.service_account}}
+
       - name: 'Checkout'
         uses: actions/checkout@main
-        with: 
-          fetch-tags: true
-          fetch-depth: 0
+        with:
+          ref: 'feat/commit-release-info'
+
+      - name: Logging
+        run: |
+          echo $GITHUB_WORKSPACE
+
