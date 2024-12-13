@@ -2,12 +2,6 @@ preprocessing.translator:
   normalizer: ${oc.env:NODENORM_ENDPOINT, https://nodenorm.transltr.io/1.5/get_normalized_nodes} #http://localhost:8081
   name_resolver: https://name-resolution-sri-dev.apps.renci.org
 
-preprocessing.name_resolution.cols_to_get:
-  - curie
-  - label
-  - types
-  # - synonyms
-
 preprocessing.enrichment_tags:
   single_input:
     pathogen:

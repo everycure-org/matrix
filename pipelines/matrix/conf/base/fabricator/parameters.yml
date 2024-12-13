@@ -272,7 +272,7 @@ fabricator.clinical_trails:
   edges:
     num_rows: 50
     columns:
-      drug_kg_curie:
+      drug_curie:
         type: row_apply
         list_of_values: [nodes:curie, nodes:name]
         row_func: "lambda *args: args[0]"
@@ -284,7 +284,7 @@ fabricator.clinical_trails:
         row_func: "lambda *args: args[1]"
         resize: True
         seed: 40599
-      disease_kg_curie:
+      disease_curie:
         type: row_apply
         list_of_values: [nodes.curie, nodes.name]
         row_func: "lambda *args: args[0]"
@@ -469,7 +469,7 @@ fabricator.ec_medical_kg:
         type: generate_unique_id
         prefix: ec_medical_node_
     
-      name:
+      label:
         type: faker
         provider: name
 
@@ -477,11 +477,23 @@ fabricator.ec_medical_kg:
         type: faker
         provider: sentence
 
-      label:
-        type: generate_values
-        sample_values:
-          - biolink:Drug
-          - biolink:Disease
+      type:
+          type: generate_values
+          sample_values:
+            - biolink:Drug
+            - biolink:Disease
+            - biolink:Gene
+            - biolink:ChemicalSubstance
+            - biolink:Protein
+      types:
+          type: row_apply
+          list_of_values: [nodes.category]
+          # NOTE: This ensures the full path from root to child is added in the categories column
+          row_func: matrix.pipelines.fabricator.generators.get_ancestors_for_category_delimited
+          row_func_kwargs:
+            delimiter: "\u01c2"
+          resize: True
+          seed: 590590
 
   edges:
     num_rows: 50
