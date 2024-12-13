@@ -49,7 +49,7 @@ jobs:
           FILENAME="${RELEASE}_info.json"
           echo $FILENAME
           
-          BLOB_PATH="${RELEASE_DIR}/{$RELEASE}/{$FILENAME}"
+          BLOB_PATH="${RELEASE_DIR}/${RELEASE}/${FILENAME}"
           echo $BLOB_PATH
 
           gcloud storage cp $BLOB_PATH $FILENAME
