@@ -16,11 +16,9 @@ from pyspark.sql.types import StringType
 from pyspark.sql.window import Window
 from pyspark.ml.functions import array_to_vector, vector_to_array
 
-from refit.v1.core.unpack import unpack_params
-
 from tenacity import retry, wait_exponential, stop_after_attempt
 
-from matrix.inject import inject_object
+from matrix.inject import inject_object, unpack_params
 
 from .graph_algorithms import GDSGraphAlgorithm
 from .encoders import AttributeEncoder
