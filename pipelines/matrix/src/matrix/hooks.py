@@ -18,6 +18,7 @@ from pyspark import SparkConf
 from pyspark.sql import SparkSession
 from google.cloud import storage
 from google.cloud.storage.bucket import Bucket
+from matrix.pipelines.data_release.pipeline import last_node as last_data_release_node
 
 logger = logging.getLogger(__name__)
 
@@ -315,6 +316,6 @@ class ReleaseInfoHooks:
     @hook_impl
     def after_node_run(self, node: Node) -> None:
         """Runs after the last node of the data_release pipeline"""
-        if node.name == "ingest_kg_edges":
+        if node.name == last_data_release_node.name:
             release_info = self.extract_release_info()
             self.upload_to_storage(release_info)
