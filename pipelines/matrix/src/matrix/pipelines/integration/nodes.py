@@ -12,7 +12,7 @@ from joblib import Memory
 from jsonpath_ng import parse
 from more_itertools import chunked
 from pyspark.sql import DataFrame
-from matrix.core import inject_object
+from matrix.inject import inject_object
 from tenacity import (
     retry,
     retry_if_exception_type,

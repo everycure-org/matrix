@@ -6,7 +6,7 @@ from . import nodes
 from matrix import settings
 
 from pyspark.sql import DataFrame
-from matrix.core import inject_object
+from matrix.inject import inject_object
 
 
 @inject_object()
