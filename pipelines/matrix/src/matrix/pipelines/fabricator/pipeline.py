@@ -32,8 +32,8 @@ def _create_pairs(
         )
 
         df = pd.DataFrame(
-            data=[[drug, disease] for drug, disease in zip(random_drugs, random_diseases)],
-            columns=["source", "target"],
+            data=[[drug, disease, f"{drug}|{disease}"] for drug, disease in zip(random_drugs, random_diseases)],
+            columns=["drug", "disease", "drug|disease"],
         )
 
         # Remove duplicate pairs
@@ -42,8 +42,13 @@ def _create_pairs(
         # Check that we still have enough fabricated pairs
         is_enough_generated = len(df) >= num or attempt > 100
         attempt += 1
-
-    return df[:num], df[num : 2 * num]
+    tp_df = df[:num]
+    tp_df["indication"] = True
+    tp_df["contraindication"] = False
+    tn_df = df[num : 2 * num]
+    tn_df["indication"] = False
+    tn_df["contraindication"] = True
+    return pd.concat([tp_df, tn_df], ignore_index=True)
 
 
 def create_pipeline(**kwargs) -> Pipeline:
@@ -98,10 +103,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                     "ingestion.raw.drug_list.nodes@pandas",
                     "ingestion.raw.disease_list.nodes@pandas",
                 ],
-                outputs=[
-                    "modelling.raw.ground_truth.positives@pandas",
-                    "modelling.raw.ground_truth.negatives@pandas",
-                ],
+                outputs="ingestion.raw.ground_truth.nodes@pandas",
                 name="create_gn_pairs",
             ),
         ]
