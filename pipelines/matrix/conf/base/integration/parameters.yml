@@ -20,6 +20,9 @@ integration:
     disease_list: 
       transformer:
         object: matrix.pipelines.integration.diseases.DiseasesTransformer
+    ground_truth: 
+      transformer:
+        object: matrix.pipelines.integration.ground_truth.GroundTruthTransformer
 
   # FUTURE: Ensure we can move this to filters down here
   preprocessing:
