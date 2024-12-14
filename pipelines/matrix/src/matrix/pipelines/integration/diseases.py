@@ -24,7 +24,6 @@ class DiseasesTransformer(GraphTransformer):
             .withColumn("id",                                f.col("category_class"))
             .withColumn("name",                              f.col("label"))
             .withColumn("category",                          f.lit("none"))
-            # TODO: Add other cols here
         )
         return df
         # fmt: on

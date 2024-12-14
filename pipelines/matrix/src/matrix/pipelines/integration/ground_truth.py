@@ -21,10 +21,13 @@ class GroundTruthTransformer(GraphTransformer):
         # fmt: off
         df = (
             nodes_df
-            .withColumn("id",                                f.col("category_class"))
-            .withColumn("name",                              f.col("label"))
-            .withColumn("category",                          f.lit("none"))
+            .withColumn("target", f.col("disease"))
+            .withColumn("source", f.col("drug"))
+            .withColumn("y",
+                       f.when(f.col("indication").cast('boolean'), 1)
+                       .when(f.col("contraindication").cast('boolean'), 0))
         )
+        df.printSchema()
         return df
         # fmt: on
 

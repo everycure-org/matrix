@@ -24,7 +24,6 @@ class DrugsTransformer(GraphTransformer):
             .withColumn("id",                                f.col("single_ID"))
             .withColumn("name",                              f.col("ID_Label"))
             .withColumn("category",                          f.lit("dummy"))
-            # TODO: Add other cols here
         )
         return df
         # fmt: on
