@@ -140,20 +140,6 @@ fabricator.rtx_kg2:
   drug_list:
     num_rows: 20
     columns:
-      curie: 
-        type: column_apply
-        list_of_values: [nodes.id:ID, nodes.category]
-        column_func: matrix.pipelines.fabricator.generators.filter_by_category
-        column_func_kwargs:
-          category: "biolink:Drug"
-        resize: True
-        seed: 6850
-      name: 
-        type: row_apply
-        list_of_values: [nodes.id:ID, nodes.name]
-        row_func: "lambda *args: args[1]"
-        resize: True
-        seed: 6850
       single_ID: 
         type: row_apply
         list_of_values: [nodes.id:ID, nodes.name]
@@ -196,20 +182,6 @@ fabricator.rtx_kg2:
   disease_list:
     num_rows: 30
     columns:
-      curie: 
-        type: column_apply
-        list_of_values: [nodes.id:ID, nodes.category]
-        column_func: matrix.pipelines.fabricator.generators.filter_by_category
-        column_func_kwargs:
-          category: "biolink:Disease"
-        resize: True
-        seed: 95690
-      name: 
-        type: row_apply
-        list_of_values: [nodes.id:ID, nodes.name]
-        row_func: "lambda *args: args[1]"
-        resize: True
-        seed: 95690
       category_class: 
         type: row_apply
         list_of_values: [nodes.id:ID, nodes.name]
