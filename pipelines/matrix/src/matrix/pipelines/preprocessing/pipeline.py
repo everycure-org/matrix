@@ -88,6 +88,16 @@ def create_pipeline(**kwargs) -> Pipeline:
                 outputs="ingestion.reporting.disease_list",
                 name="write_disease_list_to_gsheets",
             ),
+            node(
+                func=nodes.create_gt,
+                inputs={
+                    "pos_df": "preprocessing.raw.ground_truth.positives",
+                    "neg_df": "preprocessing.raw.ground_truth.negatives",
+                },
+                outputs="ingestion.raw.ground_truth.nodes@pandas",
+                name="create_gt_dataframe",
+                tags=["ground-truth"],
+            ),
             # node(
             #     func=nodes.clean_input_sheet,
             #     inputs={
