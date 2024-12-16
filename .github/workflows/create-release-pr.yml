@@ -62,6 +62,20 @@ jobs:
           workload_identity_provider: ${{env.workload_identity_provider}}
           service_account: ${{env.service_account}}
 
+      - name: Download & commit release info file
+        working-directory: docs/src/releases
+        env:
+          RELEASE_DIR_GCS: 'gs://mtrx-us-central1-hub-dev-storage/kedro/data/tests'
+          FILENAME: ${{env.release}}_info.json
+          RELEASE_INFO_DIR_GH: ${{ github.workspace }}/docs/src/releases
+        run: |
+          mkdir -p info && cd info
+          BLOB_PATH="${RELEASE_DIR_GCS}/${{env.release}}/${FILENAME}"
+          gcloud storage cp $BLOB_PATH $FILENAME
+          
+          git add "${RELEASE_INFO_DIR_GH}/info/${FILENAME}" && \
+          git commit -m "added release info json" && \
+          git push --follow-tags
       - name: Create Release Notes
         working-directory: apps/matrix-cli
         env:
