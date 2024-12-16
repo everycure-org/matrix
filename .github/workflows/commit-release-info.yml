@@ -3,7 +3,7 @@ name: Commit Release Info - expand
 on:
   push:
     branches:
-      - 'feat/expand-trigger-release-from-gh-action'
+      - 'feat/expanded-trigger-release-from-gh-action'
   repository_dispatch:
     types: distribute-release
 
