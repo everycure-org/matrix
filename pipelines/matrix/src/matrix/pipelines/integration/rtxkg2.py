@@ -75,9 +75,9 @@ class CurieToPMIDsSchema(pandera.DataFrameModel):
     """Schema for a curie to pmids mapping."""
 
     # fmt: off
-    curie:                                T.StringType()            = pandera.pyspark.Field(unique=True, nullable=False) # type: ignore
-    pmids:                              T.ArrayType(T.IntegerType())            = pandera.pyspark.Field(nullable=True) # type: ignore #TODO should this be nullable?
-    num_pmids:                          T.IntegerType()            = pandera.pyspark.Field(nullable=True) # type: ignore
+    curie:          T.StringType()                  = pandera.pyspark.Field(unique=True, nullable=False)  # type: ignore
+    pmids:          T.ArrayType(T.IntegerType())    = pandera.pyspark.Field(nullable=True)  # type: ignore
+    num_pmids:      T.IntegerType()                 = pandera.pyspark.Field(nullable=True)  # type: ignore
     # fmt: on
 
     class Config:
