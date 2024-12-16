@@ -31,7 +31,7 @@ spec:
       type: HTTP
       httpHealthCheck:
         portSpecification: USE_FIXED_PORT
-        port: 80
+        port: 8080
         requestPath: /health
         proxyHeader: NONE
   targetRef:
