@@ -33,8 +33,6 @@ def get_pair_info_from_db(moa_db_path: str, path_number: str = "all") -> pd.Data
     query = f"""SELECT pair_id, "Drug Name", "Disease Name" FROM 
     {path_number}_pair_info_all"""
 
-    breakpoint()
-
     df = pd.read_sql_query(query, f"sqlite:///{moa_db_path}")
     df = df.rename(columns={"Drug Name": "drug_name", "Disease Name": "disease_name"})
     return df
