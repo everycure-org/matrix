@@ -21,7 +21,7 @@ import streamlit as st
 #     }
 
 
-class OntologyUrls(BaseSettings):
+class OntologyUrls:
     """URLs for different ontologies."""
 
     MONDO: HttpUrl = Field("http://purl.obolibrary.org/obo/", description="MONDO ontology base URL")
@@ -32,7 +32,7 @@ class OntologyUrls(BaseSettings):
         frozen = True
 
 
-class NodeColumns(BaseSettings):
+class NodeColumns:
     """Configuration for individual pathway node columns."""
 
     predicates: str
@@ -41,14 +41,13 @@ class NodeColumns(BaseSettings):
     type: str
 
 
-class DisplayColumns(BaseSettings):
+class DisplayColumns:
     """Configuration for display columns."""
 
     # Note this was generated using AI assistance
     all_columns: list[str] = Field(default_factory=list, description="All column display names in order")
     all_keys: list[str] = Field(default_factory=list, description="All field names including node columns")
     n_nodes: int = Field(default=0, description="Number of nodes")
-
     drug_name: str = Field("Drug", description="Display name for drug column")
     pair_id: str = Field("Pair ID", description="Pair UID")
     disease_name: str = Field("Disease", description="Display name for disease column")
@@ -120,16 +119,11 @@ class DisplayColumns(BaseSettings):
 class Settings(BaseSettings):
     """Main configuration settings."""
 
-    data_input_path: str = Field(
-        default="gs://mtrx-us-central1-hub-dev-storage/kedro/data/releases/v0.2.5-rtx-only/runs/feature-moa-extraction-4472893d/datasets/moa_extraction/reporting",
-        env="DATA_INPUT_PATH",
-        description="Path to input data directory",
-    )
-    moa_db_path: str = Field(
-        default="/data/moa_extraction.db", env="MOA_DB_PATH", description="Path to MOA database file"
-    )
-    gcp_project: str = Field(default="project-silc", env="GCP_PROJECT", description="GCP project identifier")
-    moa_info_img: str = Field(default="assets/moa_info.svg", env="MOA_INFO_IMG", description="Path to MOA info image")
+    data_input_path: str
+    moa_db_path: str
+    gcp_project: str
+    moa_info_img: str
+
     moa_info_text: str = Field(
         default="""
 Mechanism of action (MOA) prediction models aim to predict the biological 
