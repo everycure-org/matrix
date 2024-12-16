@@ -67,6 +67,8 @@ def filter_valid_pairs(
     nodes: DataFrame,
     raw_tp: DataFrame,
     raw_tn: DataFrame,
+    drug_categories: List[str],
+    disease_categories: List[str],
 ) -> Tuple[DataFrame, Dict[str, float]]:
     """Filter pairs to only include nodes that exist in the nodes DataFrame.
 
@@ -74,14 +76,17 @@ def filter_valid_pairs(
         nodes: Nodes dataframe
         raw_tp: Raw ground truth positive data
         raw_tn: Raw ground truth negative data
+        drug_categories: List of drug categories
+        disease_categories: List of disease categories
 
     Returns:
         Tuple containing:
         - DataFrame with combined filtered positive and negative pairs
         - Dictionary with retention statistics
     """
-    # Get list of nodes in the KG
-    valid_nodes = nodes.select("id").distinct()
+    categories = drug_categories + disease_categories
+    # Get list of nodes in the KG for which categories are in the list
+    valid_nodes = nodes.filter(f.col("all_categories").isin(categories)).select("id").distinct()
 
     # Filter out pairs where both source and target exist in nodes
     filtered_tp = (

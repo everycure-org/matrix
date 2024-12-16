@@ -136,6 +136,8 @@ def create_pipeline(**kwargs) -> Pipeline:
                     "integration.prm.filtered_nodes",
                     "modelling.raw.ground_truth.positives@spark",
                     "modelling.raw.ground_truth.negatives@spark",
+                    "params:modelling.drug_types",
+                    "params:modelling.disease_types",
                 ],
                 outputs={"pairs": "modelling.raw.known_pairs@spark", "metrics": "modelling.reporting.gt_present"},
                 name="filter_valid_pairs",
