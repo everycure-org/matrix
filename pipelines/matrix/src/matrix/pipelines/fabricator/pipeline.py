@@ -81,7 +81,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 },
                 name="fabricate_robokop_datasets",
             ),
-            argo_node(
+            node(
                 func=fabricate_datasets,
                 inputs={"fabrication_params": "params:fabricator.spoke"},
                 outputs={
