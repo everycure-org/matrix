@@ -1,7 +1,7 @@
 import logging
 from typing import Dict
 
-import pandera.pyspark as pa
+import pandera
 import pyspark.sql.functions as f
 import pyspark.sql.types as T
 from pyspark.sql import DataFrame
@@ -18,7 +18,7 @@ RTX_SEPARATOR = "\u01c2"
 
 
 class RTXTransformer(GraphTransformer):
-    @pa.check_output(KGNodeSchema)
+    @pandera.pyspark.check_output(KGNodeSchema)
     def transform_nodes(self, nodes_df: DataFrame, **kwargs) -> DataFrame:
         """Transform RTX KG2 nodes to our target schema.
 
@@ -42,7 +42,7 @@ class RTXTransformer(GraphTransformer):
         )
         # fmt: on
 
-    @pa.check_output(KGEdgeSchema)
+    @pandera.pyspark.check_output(KGEdgeSchema)
     def transform_edges(
         self, edges_df: DataFrame, curie_to_pmids: DataFrame, semmed_filters: Dict[str, str], **kwargs
     ) -> DataFrame:
