@@ -86,7 +86,15 @@ def filter_valid_pairs(
     """
     categories = drug_categories + disease_categories
     # Get list of nodes in the KG for which categories are in the list
-    valid_nodes = nodes.filter(f.col("all_categories").isin(categories)).select("id").distinct()
+    valid_nodes = (
+        nodes.filter(
+            f.array_contains(f.col("all_categories"), categories[0])
+            if len(categories) == 1
+            else f.arrays_overlap(f.col("all_categories"), f.array([f.lit(x) for x in categories]))
+        )
+        .select("id")
+        .distinct()
+    )
 
     # Filter out pairs where both source and target exist in nodes
     filtered_tp = (
