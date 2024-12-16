@@ -14,3 +14,27 @@ spec:
   - backendRefs:
     - name: kube-ops-view
       port: 80
+---
+apiVersion: networking.gke.io/v1
+kind: HealthCheckPolicy
+metadata:
+  name: kube-ops-view-health-check
+spec:
+  default:
+    checkIntervalSec: 10
+    timeoutSec: 5
+    healthyThreshold: 1
+    unhealthyThreshold: 2
+    logConfig:
+      enabled: true
+    config:
+      type: HTTP
+      httpHealthCheck:
+        portSpecification: USE_FIXED_PORT
+        port: 80
+        requestPath: /health
+        proxyHeader: NONE
+  targetRef:
+    group: ""
+    kind: Service
+    name: kube-ops-view
