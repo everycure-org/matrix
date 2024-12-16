@@ -202,8 +202,8 @@ async def compute_df_embeddings_async(df: pd.DataFrame, embedding_model) -> pd.D
 
 class EmbeddingSchema(DataFrameModel):
     id: T.StringType() = Field(nullable=False)  # type: ignore
-    embedding: T.ArrayType(T.FloatType()) = Field(nullable=False)  # type: ignore
-    pca_embedding: T.ArrayType(T.FloatType()) = Field(nullable=False)  # type: ignore
+    embedding: T.ArrayType(T.FloatType(), False)  # type: ignore
+    pca_embedding: T.ArrayType(T.FloatType(), True)  # type: ignore
 
     class Config:
         strict = False
