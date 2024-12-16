@@ -201,9 +201,9 @@ async def compute_df_embeddings_async(df: pd.DataFrame, embedding_model) -> pd.D
 
 
 class EmbeddingSchema(DataFrameModel):
-    id: T.StringType() = Field()  # type: ignore
-    embedding: T.ArrayType(T.DoubleType()) = Field()  # type: ignore
-    pca_embedding: T.ArrayType(T.FloatType()) = Field()  # type: ignore
+    id: T.StringType() = Field(nullable=False)  # type: ignore
+    embedding: T.ArrayType(T.FloatType()) = Field(nullable=False)  # type: ignore
+    pca_embedding: T.ArrayType(T.FloatType()) = Field(nullable=False)  # type: ignore
 
     class Config:
         strict = False
@@ -215,7 +215,8 @@ class EmbeddingSchema(DataFrameModel):
 def reduce_embeddings_dimension(
     df: pyspark.sql.DataFrame, transformer, input: str, output: str, skip: bool
 ) -> pyspark.sql.DataFrame:
-    return reduce_dimension(df, transformer, input, output, skip)
+    x = reduce_dimension(df, transformer, input, output, skip)
+    return x
 
 
 @unpack_params()
@@ -409,7 +410,7 @@ def extract_topological_embeddings(
     https://github.com/neo4j/graph-data-science-client/issues/742#issuecomment-2324737372.
     """
 
-    if isinstance(embeddings.schema[string_col].dataType, pyspark.sql.StringType):
+    if isinstance(embeddings.schema[string_col].dataType, T.StringType):
         print("converting embeddings to float")
         embeddings = embeddings.withColumn(string_col, F.from_json(F.col(string_col), T.ArrayType(T.DoubleType())))
 
