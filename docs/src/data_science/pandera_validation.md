@@ -139,3 +139,5 @@ schema = pandera.DataFrameSchema({
 For more examples, see:
 - `pipelines/matrix/packages/refit/src/refit/tests/v1/test_validator.py`
 - `pipelines/matrix/tests/pipelines/test_preprocessing.py` 
+
+# TODO: Add considerations for uniqueness constraints in Pandera's distributed (SQL) PySpark DataFrames.
