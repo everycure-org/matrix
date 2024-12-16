@@ -6,4 +6,4 @@ resources:
   - service.yaml
   - redis-deployment.yaml
   - redis-service.yaml
-  - ingress.yaml
+  # - ingress.yaml
