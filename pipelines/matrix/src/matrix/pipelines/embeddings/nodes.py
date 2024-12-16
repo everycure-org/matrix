@@ -33,7 +33,7 @@ logger = logging.getLogger(__name__)
 class GraphDS(GraphDataScience):
     """Adaptor class to allow injecting the GDS object.
 
-    This is due to a drawback where refit cannot inject a tuple into
+    This is due to a drawback where our functions cannot inject a tuple into
     the constructor of an object.
     """
 
