@@ -1,0 +1,1 @@
+{"robokop_version": "c5ec1f282158182f", "rtx-kg2_version": "v2.7.3", "ec-medical-team": 20241031, "topological_estimator": "matrix.pipelines.embeddings.graph_algorithms.GDSGraphSage", "topological_encoder": "text-embedding-3-small"}
