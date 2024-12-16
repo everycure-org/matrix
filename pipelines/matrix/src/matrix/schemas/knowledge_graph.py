@@ -1,10 +1,11 @@
 from typing import List
 
-import pandera.pyspark as pa
+import pandera
 import pyspark.sql.functions as F
+import pyspark.sql.types as T
+
 from pandera.pyspark import DataFrameModel
 from pyspark.sql import DataFrame
-from pyspark.sql.types import ArrayType, StringType
 
 
 def cols_for_schema(schema_obj: DataFrameModel) -> List[str]:
@@ -21,19 +22,19 @@ class KGEdgeSchema(DataFrameModel):
     """Schema for a knowledge graph edges as exposed by the Data API."""
 
     # fmt: off
-    subject:                     StringType()            = pa.Field(nullable = False)
-    predicate:                   StringType()            = pa.Field(nullable = False)
-    object:                      StringType()            = pa.Field(nullable = False)
-    knowledge_level:             StringType()            = pa.Field(nullable = True)
-    primary_knowledge_source:    StringType()            = pa.Field(nullable = True)
-    aggregator_knowledge_source: ArrayType(StringType()) = pa.Field(nullable = True)
-    publications:                ArrayType(StringType()) = pa.Field(nullable = True)
-    subject_aspect_qualifier:    StringType()            = pa.Field(nullable = True)
-    subject_direction_qualifier: StringType()            = pa.Field(nullable = True)
-    object_aspect_qualifier:     StringType()            = pa.Field(nullable = True)
-    object_direction_qualifier:  StringType()            = pa.Field(nullable = True)
+    subject:                     T.StringType()            = pandera.pyspark.Field(nullable = False) # type: ignore
+    predicate:                   T.StringType()            = pandera.pyspark.Field(nullable = False) # type: ignore
+    object:                      T.StringType()            = pandera.pyspark.Field(nullable = False) # type: ignore
+    knowledge_level:             T.StringType()            = pandera.pyspark.Field(nullable = True) # type: ignore
+    primary_knowledge_source:    T.StringType()            = pandera.pyspark.Field(nullable = True) # type: ignore
+    aggregator_knowledge_source: T.ArrayType(T.StringType()) = pandera.pyspark.Field(nullable = True) # type: ignore
+    publications:                T.ArrayType(T.StringType()) = pandera.pyspark.Field(nullable = True) # type: ignore
+    subject_aspect_qualifier:    T.StringType()            = pandera.pyspark.Field(nullable = True) # type: ignore
+    subject_direction_qualifier: T.StringType()            = pandera.pyspark.Field(nullable = True) # type: ignore
+    object_aspect_qualifier:     T.StringType()            = pandera.pyspark.Field(nullable = True) # type: ignore
+    object_direction_qualifier:  T.StringType()            = pandera.pyspark.Field(nullable = True) # type: ignore
     # We manually set this for every KG we ingest
-    upstream_data_source:          ArrayType(StringType()) = pa.Field(nullable = False)
+    upstream_data_source:          T.ArrayType(T.StringType()) = pandera.pyspark.Field(nullable = False) # type: ignore
     # fmt: on
 
     class Config:  # noqa: D106
@@ -64,17 +65,17 @@ class KGNodeSchema(DataFrameModel):
     """Schema for a knowledge graph nodes as exposed by the Data API."""
 
     # fmt: off
-    id:                                StringType()            = pa.Field(nullable=False)
-    name:                              StringType()            = pa.Field(nullable=True) #TODO should this be nullable?
-    category:                          StringType()            = pa.Field(nullable=False)
-    description:                       StringType()            = pa.Field(nullable=True)
-    equivalent_identifiers:            ArrayType(StringType()) = pa.Field(nullable=True)
-    all_categories:                    ArrayType(StringType()) = pa.Field(nullable=True)
-    publications:                      ArrayType(StringType()) = pa.Field(nullable=True)
-    labels:                            ArrayType(StringType()) = pa.Field(nullable=True)
-    international_resource_identifier: StringType()            = pa.Field(nullable=True)
+    id:                                T.StringType()            = pandera.pyspark.Field(nullable=False) # type: ignore
+    name:                              T.StringType()            = pandera.pyspark.Field(nullable=True) # type: ignore #TODO should this be nullable?
+    category:                          T.StringType()            = pandera.pyspark.Field(nullable=False) # type: ignore
+    description:                       T.StringType()            = pandera.pyspark.Field(nullable=True) # type: ignore
+    equivalent_identifiers:            T.ArrayType(T.StringType()) = pandera.pyspark.Field(nullable=True) # type: ignore
+    all_categories:                    T.ArrayType(T.StringType()) = pandera.pyspark.Field(nullable=True) # type: ignore
+    publications:                      T.ArrayType(T.StringType()) = pandera.pyspark.Field(nullable=True) # type: ignore
+    labels:                            T.ArrayType(T.StringType()) = pandera.pyspark.Field(nullable=True) # type: ignore
+    international_resource_identifier: T.StringType()            = pandera.pyspark.Field(nullable=True) # type: ignore
     # We manually set this for every KG we ingest
-    upstream_data_source:                ArrayType(StringType()) = pa.Field(nullable=False)
+    upstream_data_source:                T.ArrayType(T.StringType()) = pandera.pyspark.Field(nullable=False) # type: ignore
     #upstream_kg_node_ids:                MapType(StringType(), StringType()) = pa.Field(nullable=True)
     # fmt: on
 

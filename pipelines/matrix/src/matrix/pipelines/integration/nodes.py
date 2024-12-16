@@ -5,7 +5,7 @@ from typing import Any, Callable, Dict, List, Tuple
 
 import aiohttp
 import pandas as pd
-import pandera.pyspark as pa
+import pandera
 import pyspark as ps
 import pyspark.sql.functions as F
 from joblib import Memory
@@ -28,7 +28,7 @@ memory = Memory(location=".cache/nodenorm", verbose=0)
 logger = logging.getLogger(__name__)
 
 
-@pa.check_output(KGEdgeSchema)
+@pandera.pyspark.check_output(KGEdgeSchema)
 def union_and_deduplicate_edges(*edges) -> DataFrame:
     """Function to unify edges datasets."""
     # fmt: off
@@ -39,7 +39,7 @@ def union_and_deduplicate_edges(*edges) -> DataFrame:
     # fmt: on
 
 
-@pa.check_output(KGNodeSchema)
+@pandera.pyspark.check_output(KGNodeSchema)
 def union_and_deduplicate_nodes(biolink_categories_df: pd.DataFrame, *nodes) -> DataFrame:
     """Function to unify nodes datasets."""
 
