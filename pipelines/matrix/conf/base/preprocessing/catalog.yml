@@ -104,6 +104,9 @@ preprocessing.raw.disease_list:
   <<: [*_layer_raw]
   type: pandas.CSVDataset
   filepath: https://api.github.com/repos/everycure-org/matrix-disease-list/releases/assets/${globals:data_sources.ec-disease-list.version}
+  fs_args:
+    Accept: application/octet-stream
+    Authorization: token ${globals:gh_token}
   load_args:
     sep: "\t"
 

@@ -1,5 +1,8 @@
 from kedro.pipeline import Pipeline, pipeline, node
 
+
+from .tagging import generate_tags
+
 from . import nodes
 
 
@@ -69,10 +72,11 @@ def create_pipeline(**kwargs) -> Pipeline:
                 tags=["drug-list"],
             ),
             node(
-                func=nodes.enrich_disease_list,
+                func=generate_tags,
                 inputs=[
                     "preprocessing.raw.disease_list",
-                    "params:preprocessing.enrichment_tags",
+                    "params:preprocessing.enrichment.model",
+                    "params:preprocessing.enrichment.tags",
                 ],
                 outputs="ingestion.raw.disease_list.nodes@pandas",
                 name="enrich_disease_list",
