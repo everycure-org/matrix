@@ -73,9 +73,9 @@ jobs:
           BLOB_PATH="${RELEASE_DIR_GCS}/${{env.release}}/${FILENAME}"
           gcloud storage cp $BLOB_PATH $FILENAME
           
-          git add "${RELEASE_INFO_DIR_GH}/info/${FILENAME}" && \
+          git add "${FILENAME}" && \
           git commit -m "added release info json" && \
-          git push --follow-tags
+          git push
       - name: Create Release Notes
         working-directory: apps/matrix-cli
         env:
