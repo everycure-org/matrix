@@ -59,10 +59,8 @@ class Tag:
 
     async def process_row(self, sem: asyncio.Semaphore, model: BaseChatModel, row: Dict):
         async with sem:
-            # @Piotr ever noticed the interpolation being a little messed up?
-            prompt = ChatPromptTemplate.from_messages([HumanMessage(content=self._prompt)])
-            formatted_prompt = prompt.format_messages(**row)
-            response = model.invoke(formatted_prompt)
+            prompt = ChatPromptTemplate.from_messages([HumanMessage(content=self._prompt.format(**row))])
+            response = await model.ainvoke(prompt.format_messages())
             return ", ".join(self._output_parser.parse(response.content))
 
 
