@@ -41,7 +41,7 @@ jobs:
           echo "release=v0.2.5-alpha9" >> "$GITHUB_ENV"
 
       - name: Download info file
-        working-directory: docs/src/tests
+        working-directory: docs/src/releases
         env:
           RELEASE_DIR: 'gs://mtrx-us-central1-hub-dev-storage/kedro/data/releases'
           FILENAME: ${{env.release}}_info.json
@@ -57,16 +57,3 @@ jobs:
           gcloud storage cp $BLOB_PATH $FILENAME
           cat $FILENAME
 
-      - name: Commit info file
-        working-directory: docs/src/releases/info
-        env:
-          RELEASE: 'v0.2.5-alpha9'
-        run: |
-          FILENAME="${RELEASE}_info.json"
-          
-          git config --global user.email "releasebot@everycure.org"
-          git config --global user.name "All of us at Every Cure"
-          
-          git add "${FILENAME}" && \
-          git commit -m "added release info json" && \
-          git push --follow-tags
