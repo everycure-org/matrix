@@ -1,6 +1,5 @@
-from typing import Dict
 from pydantic_settings import BaseSettings
-from pydantic import Field, HttpUrl
+from pydantic import Field, HttpUrl, BaseModel
 import streamlit as st
 # from enum import Enum
 
@@ -21,7 +20,7 @@ import streamlit as st
 #     }
 
 
-class OntologyUrls:
+class OntologyUrls(BaseModel):
     """URLs for different ontologies."""
 
     MONDO: HttpUrl = Field("http://purl.obolibrary.org/obo/", description="MONDO ontology base URL")
@@ -32,16 +31,19 @@ class OntologyUrls:
         frozen = True
 
 
-class NodeColumns:
+class NodeColumns(BaseModel):
     """Configuration for individual pathway node columns."""
 
     predicates: str
     id: str
     name: str
     type: str
+    model_config = {
+        "extra": "allow",
+    }
 
 
-class DisplayColumns:
+class DisplayColumns(BaseModel):
     """Configuration for display columns."""
 
     # Note this was generated using AI assistance
@@ -56,28 +58,16 @@ class DisplayColumns:
     drug_disease_pair_id: str = Field("Drug-Disease Pair ID", description="Display name for drug-disease pair ID")
     drug_id: str = Field("Drug Curie", description="Display name for drug ID")
     disease_id: str = Field("Disease Curie", description="Display name for disease ID")
-    node_columns: Dict[int, NodeColumns] = Field(
-        default_factory=lambda: {
-            i: NodeColumns(
-                predicates=f"Edge {i}",
-                id=f"Node {i} ID",
-                name=f"Node {i} Name",
-                type=f"Node {i} Type",
-            )
-            for i in range(1, 4)  # TODO dynamic number of nodes, or just set
-            # max number of nodes in config
-        },
-        description="Mapping of node number to column names",
-    )
+    node_columns: list[NodeColumns] = Field(default_factory=list, description="Node columns")
 
-    # def __init__(self, *args, **kwargs):
-    #     super().__init__(*args, **kwargs)
-    #     updated_values = {
-    #         "all_columns": self.get_all_columns(),
-    #         "all_keys": self.get_all_keys(),
-    #         "n_nodes": len(self.node_columns),
-    #     }
-    #     object.__setattr__(self, "__dict__", {**self.__dict__, **updated_values})
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        updated_values = {
+            "all_columns": self.get_all_columns(),
+            "all_keys": self.get_all_keys(),
+            "n_nodes": len(self.node_fields),
+        }
+        object.__setattr__(self, "__dict__", {**self.__dict__, **updated_values})
 
     @property
     def basic_fields(self) -> list[str]:
@@ -94,14 +84,26 @@ class DisplayColumns:
             "disease_id",
         ]
 
+    @property
+    def node_fields(self) -> list[NodeColumns]:
+        """Get the node columns."""
+        node_fields = []
+        for i in range(1, 4):
+            node_fields.append(
+                NodeColumns(
+                    predicates=f"Edge {i}",
+                    id=f"Node {i} ID",
+                    name=f"Node {i} Name",
+                    type=f"Node {i} Type",
+                )
+            )
+        return node_fields
+
     def get_all_columns(self) -> list[str]:
         """Get all column display names in order."""
-        # breakpoint()
         basic_display_fields = [getattr(self, field) for field in self.basic_fields]
 
-        node_fields = [
-            field for node in self.node_columns.values() for field in [node.predicates, node.id, node.name, node.type]
-        ]
+        node_fields = [field for node in self.node_fields for field in [node.predicates, node.id, node.name, node.type]]
 
         return basic_display_fields + node_fields
 
