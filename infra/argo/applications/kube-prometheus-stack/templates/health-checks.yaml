@@ -20,7 +20,7 @@ spec:
   targetRef:
     group: ""
     kind: Service
-    name: prometheus-operated
+    name: kube-prometheus-stack-prometheus
 ---
 apiVersion: networking.gke.io/v1
 kind: HealthCheckPolicy
