@@ -15,7 +15,6 @@
 Just the way you remember it.
 """
 
-from inspect import getfullargspec
 from typing import Mapping
 
 from boltons.funcutils import wraps

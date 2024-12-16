@@ -8,7 +8,15 @@ from sklearn.impute import SimpleImputer
 from sklearn.model_selection import GridSearchCV
 from sklearn.preprocessing import MinMaxScaler
 
-from matrix.inject import _inject_object, _parse_for_objects, inject_object
+from pyspark.sql.types import (
+    FloatType,
+    IntegerType,
+    StringType,
+    StructField,
+    StructType,
+)
+
+from matrix.inject import _inject_object, _parse_for_objects, inject_object, make_list_regexable
 
 
 def dummy_func(x):
@@ -345,3 +353,265 @@ def test_inject(dummy_pd_df):
     assert isinstance(imputer, SimpleImputer)
 
     assert df["new"].tolist() == [2]
+
+
+@pytest.fixture
+def pandas_df():
+    """Sample pandas dataframe with all dtypes."""
+    data = [
+        {
+            "float_col": 1.0,
+            "int_col": 1,
+            "string_col": "foo",
+        },
+        {
+            "float_col": 1.0,
+            "int_col": 2,
+            "string_col": "blabla",
+        },
+        {
+            "float_col": 1.0,
+            "int_col": 3,
+            "string_col": None,
+        },
+    ]
+    df = pd.DataFrame(data)
+
+    return df
+
+
+def test_make_list_regexable_with_pandas(pandas_df):
+    @make_list_regexable(
+        source_df="df",
+        make_regexable="params_keep_cols",
+    )
+    def accept_regexable_list(df, params_keep_cols, enable_regex):
+        result_df = df[params_keep_cols]
+        return result_df
+
+    # Pass arguments positionally instead of as keywords
+    result_df = accept_regexable_list(
+        pandas_df,
+        [".*col"],
+        True,
+    )
+
+    assert len(result_df.columns) == len(pandas_df.columns)
+
+
+def test_make_list_regexable_with_explicit_names_pandas(pandas_df):
+    @make_list_regexable(
+        source_df="df",
+        make_regexable="params_keep_cols",
+    )
+    def accept_regexable_list(df, params_keep_cols, enable_regex):
+        result_df = df[params_keep_cols]
+        return result_df
+
+    result_df = accept_regexable_list(
+        pandas_df,  # df
+        ["int_col", "float_col", "string_col"],  # params_keep_cols
+        True,  # enable_regex
+    )
+    assert len(result_df.columns) == len(pandas_df.columns)
+
+
+def test_make_list_regexable_with_combination_pandas(pandas_df):
+    @make_list_regexable(
+        source_df="df",
+        make_regexable="params_keep_cols",
+    )
+    def accept_regexable_list(df, params_keep_cols, enable_regex):
+        result_df = df[params_keep_cols]
+        return result_df
+
+    result_df = accept_regexable_list(
+        pandas_df,
+        ["int_.*", "float_col", "string_col"],
+        True,
+    )
+    assert len(result_df.columns) == len(pandas_df.columns)
+
+
+@pytest.fixture
+def spark_df(spark):
+    """Sample spark dataframe with all dtypes."""
+    schema = StructType(
+        [
+            StructField("int_col", IntegerType(), True),
+            StructField("float_col", FloatType(), True),
+            StructField("string_col", StringType(), True),
+        ]
+    )
+
+    data = [
+        (
+            1,
+            2.0,
+            "awesome string",
+        ),
+        (
+            2,
+            2.0,
+            None,
+        ),
+        (
+            3,
+            2.0,
+            "hello world",
+        ),
+    ]
+
+    return spark.createDataFrame(data, schema)
+
+
+def test_make_list_regexable_spark(spark_df):
+    @make_list_regexable(
+        source_df="df",
+        make_regexable="params_keep_cols",
+    )
+    def accept_regexable_list(df, params_keep_cols, enable_regex):
+        result_df = df.select(*params_keep_cols)
+        return result_df
+
+    result_df = accept_regexable_list(
+        spark_df,
+        [".*col"],
+        True,
+    )
+    assert len(result_df.columns) == len(spark_df.columns)
+
+
+def test_make_list_regexable_with_explicit_names_spark(spark_df):
+    @make_list_regexable(
+        source_df="df",
+        make_regexable="params_keep_cols",
+    )
+    def accept_regexable_list(df, params_keep_cols, enable_regex):
+        result_df = df.select(*params_keep_cols)
+        return result_df
+
+    result_df = accept_regexable_list(
+        spark_df,
+        ["int_col", "float_col", "string_col"],
+        True,
+    )
+    assert len(result_df.columns) == len(spark_df.columns)
+
+
+def test_make_list_regexable_with_combination_spark(spark_df):
+    @make_list_regexable(
+        source_df="df",
+        make_regexable="params_keep_cols",
+    )
+    def accept_regexable_list(df, params_keep_cols, enable_regex):
+        result_df = df.select(*params_keep_cols)
+        return result_df
+
+    result_df = accept_regexable_list(
+        spark_df,
+        ["int_.*", "float_col", "string_col"],
+        True,
+    )
+    assert len(result_df.columns) == len(spark_df.columns)
+
+
+def test_raise_exc_default_pandas(pandas_df):
+    @make_list_regexable(
+        source_df="df",
+        make_regexable="params_keep_cols",
+    )
+    def accept_regexable_list(df, params_keep_cols, enable_regex):
+        result_df = df[params_keep_cols]
+        return result_df
+
+    result_df = accept_regexable_list(pandas_df, ["ftr1_.*"], True)
+    assert len(result_df.columns) == 0
+
+
+def test_raise_exc_enabled_pandas(pandas_df):
+    @make_list_regexable(
+        source_df="df",
+        make_regexable="params_keep_cols",
+        raise_exc=True,
+    )
+    def accept_regexable_list(df, params_keep_cols, enable_regex):
+        result_df = df[params_keep_cols]
+        return result_df
+
+    with pytest.raises(
+        ValueError,
+        match="The following regex did not return a result: ftr1_.*.",
+    ):
+        accept_regexable_list(pandas_df, ["ftr1_.*"], True)
+
+
+def test_make_list_regexable_accept_args_pandas(pandas_df):
+    @make_list_regexable(
+        source_df="df",
+        make_regexable="params_keep_cols",
+    )
+    def accept_regexable_list(df, params_keep_cols, enable_regex):
+        result_df = df[params_keep_cols]
+        return result_df
+
+    result_df = accept_regexable_list(pandas_df, [".*col"], True)
+    assert len(result_df.columns) == len(pandas_df.columns)
+
+
+def test_make_list_regexable_not_present_pandas(pandas_df):
+    @make_list_regexable(
+        source_df="df",
+        make_regexable="params_keep_cols",
+    )
+    def accept_regexable_list(df, enable_regex):
+        result_df = df
+        return result_df
+
+    result_df = accept_regexable_list(pandas_df, True)
+    assert len(result_df.columns) == len(pandas_df.columns)
+
+
+def test_make_list_regexable_empty_pandas(pandas_df):
+    @make_list_regexable(
+        source_df="df",
+        make_regexable="params_keep_cols",
+    )
+    def accept_regexable_list(df, params_keep_cols, enable_regex):
+        result_df = df
+        return result_df
+
+    result_df = accept_regexable_list(pandas_df, [], True)
+    assert len(result_df.columns) == len(pandas_df.columns)
+
+
+def test_make_list_regexable_source_df_not_present_pandas(pandas_df):
+    @make_list_regexable(
+        source_df="df",
+        make_regexable="params_keep_cols",
+    )
+    def accept_regexable_list(params_keep_cols, enable_regex):
+        params_keep_cols = params_keep_cols
+        return params_keep_cols
+
+    with pytest.raises(
+        ValueError,
+        match="Please provide source dataframe",
+    ):
+        accept_regexable_list(["col.*"], True)
+
+
+def test_make_list_regexable_with_wrong_input_type_pandas(pandas_df):
+    @make_list_regexable(
+        source_df="df",
+        make_regexable="params_keep_cols",
+    )
+    def accept_regexable_list(df, params_keep_cols, enable_regex):
+        result_df = df[params_keep_cols]
+        return result_df
+
+    with pytest.raises(
+        TypeError,
+        match="'int' object is not iterable",
+    ):
+        accept_regexable_list(pandas_df, 7, True)

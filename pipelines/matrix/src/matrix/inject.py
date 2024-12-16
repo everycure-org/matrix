@@ -1,12 +1,18 @@
 import functools
 import importlib
 from copy import deepcopy
+from inspect import getfullargspec
+import logging
+import re
 from types import BuiltinFunctionType, FunctionType
 from typing import Any, Dict, List, Tuple
 
 OBJECT_KW = "object"
 INSTANTIATE_KW = "instantiate"
 UNPACK_KW = "unpack"
+ENABLE_REGEXABLE_KWARG = "enable_regex"
+
+logger = logging.getLogger(__file__)
 
 
 def _load_obj(obj_path: str, default_obj_path: str = None) -> Any:
@@ -201,3 +207,86 @@ def unpack_params():  # pylint: disable=missing-return-type-doc
         return wrapper
 
     return decorate
+
+
+def _extract_elements_in_list(
+    full_list_of_columns: List[str],
+    list_of_regexes: List[str],
+    raise_exc,
+) -> List[str]:
+    """Use regex to extract elements in a list."""
+    results = []
+    for regex in list_of_regexes:
+        matches = list(filter(re.compile(regex).match, full_list_of_columns))
+        if matches:
+            for match in matches:
+                if match not in results:
+                    logger.info("The regex %s matched %s.", regex, match)
+                    results.append(  # helps keep relative ordering as defined in YAML
+                        match
+                    )
+        else:
+            if raise_exc:
+                raise ValueError(f"The following regex did not return a result: {regex}.")
+            logger.warning("The following regex did not return a result: %s", regex)
+    return results
+
+
+def make_list_regexable(
+    source_df: str = None,
+    make_regexable: str = None,
+    raise_exc: bool = False,
+):
+    """Allow processing of regex in input list.
+
+    Args:
+        source_df: Name of the dataframe containing actual list columns names.
+        make_regexable: Name of list with regexes.
+        raise_exc: Whether to raise an exception or just log the warning.
+           Defaults to False.
+
+    Returns:
+        A wrapper function
+    """
+
+    def _decorate(func):
+        @functools.wraps(func)
+        def _wrapper(
+            *args,
+            source_df=source_df,
+            make_regexable=make_regexable,
+            raise_exc=raise_exc,
+            **kwargs,
+        ):
+            argspec = getfullargspec(func)
+
+            enable_regex_index = argspec.args.index(ENABLE_REGEXABLE_KWARG)
+
+            enable_regex = args[enable_regex_index]
+            if enable_regex:
+                if source_df not in argspec.args:
+                    raise ValueError("Please provide source dataframe.")
+
+                if (make_regexable is not None) and (make_regexable in argspec.args):
+                    df_index = argspec.args.index(source_df)
+                    list_index = argspec.args.index(make_regexable)
+
+                    df = args[df_index]
+                    make_regexable_list = args[list_index]
+
+                    if make_regexable_list is not None:
+                        df_columns = df.columns
+                        new_columns = _extract_elements_in_list(
+                            full_list_of_columns=df_columns,
+                            list_of_regexes=make_regexable_list,
+                            raise_exc=raise_exc,
+                        )
+                        args = [(new_columns if i == list_index else arg) for (i, arg) in enumerate(args)]
+
+            result_df = func(*args, **kwargs)
+
+            return result_df
+
+        return _wrapper
+
+    return _decorate
