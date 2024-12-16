@@ -1,5 +1,6 @@
 import logging
-from pandera import Column, DataFrameSchema, check_output
+import pandera
+from pandera import Column, DataFrameSchema
 from tqdm import tqdm
 from typing import List, Dict, Union, Tuple
 
@@ -109,7 +110,7 @@ trial_schema = DataFrameSchema(
 )
 
 
-@check_output(trial_schema)
+@pandera.check_output(trial_schema)
 @inject_object()
 def generate_pairs(
     drugs: pd.DataFrame,
