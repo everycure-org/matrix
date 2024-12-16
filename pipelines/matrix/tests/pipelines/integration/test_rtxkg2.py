@@ -78,7 +78,7 @@ def test_filter_semmed_ngd_threshold(edges_df, curie_to_pmids):
         edges_df=edges_df,
         curie_to_pmids=curie_to_pmids,
         publication_threshold=1,
-        ngd_threshold=0.8,
+        ngd_threshold=0.9,
         limit_pmids=5,
     )
 
