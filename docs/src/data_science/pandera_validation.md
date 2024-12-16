@@ -2,19 +2,45 @@
 
 Pandera is a powerful data validation library that we use extensively in our codebase for both pandas and PySpark DataFrames. This guide explains how to use Pandera validators effectively in our project.
 
+## Import Conventions
+
+In our codebase, we follow strict import conventions for clarity and maintainability:
+
+```python
+# Preferred imports
+import pandera  # not 'as pa'
+import pandera.pyspark  # not 'as py'
+
+# Not recommended
+import pandera as pa  # avoid abbreviations
+import pandera.pyspark as py  # avoid abbreviations
+```
+
+We avoid using abbreviations like `pa` or `py` as they can cause confusion, especially when working with multiple DataFrame types and validation approaches.
+
+## DataFrame Types and Validation
+
+Our codebase works with several types of DataFrames, each requiring different validation approaches:
+
+1. **Pandas DataFrames**: Local in-memory DataFrames, best for smaller datasets and complex validations. Supports the full range of Pandera validations including statistical checks and complex data type validations.
+
+2. **PySpark DataFrames**: Distributed DataFrames that can handle large-scale data. Uses Spark's native type system and offers more limited validation capabilities but better performance. Note that PySpark DataFrame validations are executed on the driver node.
+
+3. **Spark SQL DataFrames**: When working directly with Spark SQL, schema validation is typically handled through Spark's native schema definitions rather than Pandera. For these cases, consider using Spark's built-in schema validation or transforming to a PySpark DataFrame first.
+
 ## Class-Based Schema Definition
 
 We prefer using class-based schema definitions for better code organization and type hints. Here's how to define and use them:
 
 ```python
-import pandera as pa
+import pandera
 from pandera.typing import Series
 
-class UserSchema(pa.SchemaModel):
-    id: Series[int] = pa.Field(nullable=False, unique=True)
-    name: Series[str] = pa.Field(nullable=False)
-    age: Series[int] = pa.Field(ge=0, lt=150)
-    email: Series[str] = pa.Field(str_matches=r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$")
+class UserSchema(pandera.SchemaModel):
+    id: Series[int] = pandera.Field(nullable=False, unique=True)
+    name: Series[str] = pandera.Field(nullable=False)
+    age: Series[int] = pandera.Field(ge=0, lt=150)
+    email: Series[str] = pandera.Field(str_matches=r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$")
 
     class Config:
         strict = True
@@ -27,26 +53,26 @@ Our codebase supports both Pandas and PySpark DataFrame validation, but there ar
 
 ### Pandas Validation
 ```python
-import pandera as pa
+import pandera
 
 # Define schema for pandas
-schema = pa.DataFrameSchema({
-    "float_col": pa.Column(float, pa.Check.ge(10.0)),
-    "int_col": pa.Column(str),
-    "string_col": pa.Column(str, nullable=False)
+schema = pandera.DataFrameSchema({
+    "float_col": pandera.Column(float, pandera.Check.ge(10.0)),
+    "int_col": pandera.Column(str),
+    "string_col": pandera.Column(str, nullable=False)
 })
 ```
 
 ### PySpark Validation
 ```python
-import pandera.pyspark as py
+import pandera.pyspark
 import pyspark.sql.types as T
 
 # Define schema for PySpark
-schema = py.DataFrameSchema({
-    "int_col": py.Column(T.IntegerType()),
-    "float_col": py.Column(T.FloatType(), py.Check.ge(10.0)),
-    "string_col": py.Column(T.StringType())
+schema = pandera.pyspark.DataFrameSchema({
+    "int_col": pandera.pyspark.Column(T.IntegerType()),
+    "float_col": pandera.pyspark.Column(T.FloatType(), pandera.pyspark.Check.ge(10.0)),
+    "string_col": pandera.pyspark.Column(T.StringType())
 })
 ```
 
@@ -60,11 +86,11 @@ Key differences:
 
 ### Composite Primary Keys
 ```python
-schema = pa.DataFrameSchema(
+schema = pandera.DataFrameSchema(
     {
-        "id1": pa.Column(int, nullable=False),  # composite primary key
-        "id2": pa.Column(str, nullable=False),  # composite primary key
-        "name": pa.Column(str, nullable=True),
+        "id1": pandera.Column(int, nullable=False),  # composite primary key
+        "id2": pandera.Column(str, nullable=False),  # composite primary key
+        "name": pandera.Column(str, nullable=True),
     },
     unique=["id1", "id2"]  # checks joint uniqueness
 )
@@ -72,13 +98,13 @@ schema = pa.DataFrameSchema(
 
 ### Multiple Validations
 ```python
-schema = pa.DataFrameSchema({
-    "string_col": pa.Column(
+schema = pandera.DataFrameSchema({
+    "string_col": pandera.Column(
         str,
         [
-            pa.Check.str_matches(r"^[A-Z]"),
-            pa.Check.isin(["Asia", "Africa", "Europe"]),
-            pa.Check(lambda x: len(x) < 20),
+            pandera.Check.str_matches(r"^[A-Z]"),
+            pandera.Check.isin(["Asia", "Africa", "Europe"]),
+            pandera.Check(lambda x: len(x) < 20),
         ],
     )
 })
@@ -86,8 +112,8 @@ schema = pa.DataFrameSchema({
 
 ### Regex Pattern Matching
 ```python
-schema = pa.DataFrameSchema({
-    ".*_col": pa.Column(nullable=False, regex=True)  # matches any column ending with '_col'
+schema = pandera.DataFrameSchema({
+    ".*_col": pandera.Column(nullable=False, regex=True)  # matches any column ending with '_col'
 })
 ```
 
@@ -98,6 +124,8 @@ schema = pa.DataFrameSchema({
 3. Use composite keys when dealing with multi-column uniqueness
 4. Consider performance implications when validating large PySpark DataFrames
 5. Add schema validation tests for critical data pipelines
+6. Use full import names (`pandera`, not `pa`) for clarity
+7. Consider DataFrame type when choosing validation approach
 
 For more examples, see:
 - `pipelines/matrix/packages/refit/src/refit/tests/v1/test_validator.py`
