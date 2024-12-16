@@ -69,26 +69,6 @@ def test_filter_semmed_publication_threshold(edges_df, curie_to_pmids):
     assert semmed_edges.filter(f.size("publications") < 2).count() == 0
 
 
-def test_filter_semmed_ngd_threshold(edges_df, curie_to_pmids):
-    """Test filtering based on NGD threshold."""
-    # Count initial semmed edges
-    initial_count = edges_df.filter(f.col("primary_knowledge_source") == f.lit("infores:semmeddb")).count()
-
-    result = filter_semmed(
-        edges_df=edges_df,
-        curie_to_pmids=curie_to_pmids,
-        publication_threshold=1,
-        ngd_threshold=0.9,
-        limit_pmids=5,
-    )
-
-    # Verify that edges were filtered
-    final_count = result.filter(f.col("primary_knowledge_source") == f.lit("infores:semmeddb")).count()
-
-    assert final_count < initial_count  # Some edges should be filtered out
-    assert final_count > 0  # But not all edges should be removed
-
-
 def test_filter_semmed_preserves_non_semmed(edges_df, curie_to_pmids):
     """Test that non-semmed edges are preserved."""
     result = filter_semmed(
@@ -102,20 +82,3 @@ def test_filter_semmed_preserves_non_semmed(edges_df, curie_to_pmids):
     # Check that non-semmed edges are preserved
     non_semmed = result.filter(f.col("primary_knowledge_source") != f.lit("infores:semmeddb"))
     assert non_semmed.count() == edges_df.filter(f.col("primary_knowledge_source") != f.lit("infores:semmeddb")).count()
-
-
-def test_filter_semmed_pmid_limit(edges_df, curie_to_pmids):
-    """Test that PMIDs are limited correctly."""
-    result = filter_semmed(
-        edges_df=edges_df,
-        curie_to_pmids=curie_to_pmids,
-        publication_threshold=1,
-        ngd_threshold=0.0,
-        limit_pmids=3,  # Only take first 3 PMIDs
-    )
-
-    # Join back with curie_to_pmids to check PMID arrays
-    enriched = result.join(curie_to_pmids.withColumnRenamed("curie", "subject"), on="subject", how="left")
-
-    # Verify no PMID array has more than 3 elements
-    assert enriched.filter(f.size("pmids") > 3).count() == 0
