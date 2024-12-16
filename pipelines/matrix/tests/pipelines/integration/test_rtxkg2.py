@@ -2,6 +2,7 @@ import pytest
 import pyspark.sql.functions as f
 from pyspark.sql.types import ArrayType, StringType, StructField, StructType
 from matrix.pipelines.integration.rtxkg2 import filter_semmed
+import pandera
 
 
 @pytest.fixture
@@ -44,7 +45,7 @@ def test_filter_semmed_primary_key_validation(edges_df, curie_to_pmids, spark):
     duplicate_df = spark.createDataFrame(duplicate_data, curie_to_pmids.schema)
     invalid_curie_to_pmids = curie_to_pmids.union(duplicate_df)
 
-    with pytest.raises(TypeError, match=r"Primary key.*has duplicate values"):
+    with pytest.raises(pandera.errors.SchemaError, match=r"Duplicated rows.*were found for columns \['curie'\]"):
         filter_semmed(
             edges_df=edges_df,
             curie_to_pmids=invalid_curie_to_pmids,
