@@ -1,0 +1,95 @@
+from typing import List, Dict
+
+import logging
+import asyncio
+import tqdm.asyncio
+
+import pandas as pd
+
+from langchain.output_parsers import CommaSeparatedListOutputParser
+from langchain.prompts import ChatPromptTemplate
+from langchain.schema import HumanMessage
+from langchain.chat_models.base import BaseChatModel
+
+from refit.v1.core.inject import inject_object
+
+logger = logging.getLogger(__name__)
+
+
+class Tag:
+    def __init__(self, output_col: str, prompt: str) -> None:
+        self._output_col = output_col
+        self._prompt = prompt
+        self._output_parser = CommaSeparatedListOutputParser()
+
+    def generate(
+        self,
+        loop: asyncio.BaseEventLoop,
+        df: pd.DataFrame,
+        model: BaseChatModel,
+        max_workers: int = 10,
+        timeout: int = 20,
+    ):
+        sem = asyncio.Semaphore(max_workers)
+        tasks = [loop.create_task(self.process_row(sem, model, row.to_dict())) for _, row in sorted(df.iterrows())]
+
+        # Track progress with tqdm as tasks complete
+        results = []
+        with tqdm.asyncio.tqdm(total=len(tasks), desc="Enriching elements") as progress_bar:
+
+            async def monitor_tasks():
+                for task in asyncio.as_completed(tasks):
+                    try:
+                        result = await asyncio.wait_for(task, timeout)
+                        results.append(result)
+                    except asyncio.TimeoutError as e:
+                        logger.error(f"Timeout error: partition processing took longer than {timeout} seconds.")
+                        raise e
+                    except Exception as e:
+                        logger.error(f"Error processing partition in tqdm loop: {e}")
+                        raise e
+                    finally:
+                        progress_bar.update(1)
+
+            # Run the monitoring coroutine
+            loop.run_until_complete(monitor_tasks())
+
+        df[self._output_col] = results
+        return df
+
+    async def process_row(self, sem: asyncio.Semaphore, model: BaseChatModel, row: Dict):
+        async with sem:
+            # @Piotr ever noticed the interpolation being a little messed up?
+            prompt = ChatPromptTemplate.from_messages([HumanMessage(content=self._prompt)])
+            formatted_prompt = prompt.format_messages(**row)
+            response = model.invoke(formatted_prompt)
+            return ", ".join(self._output_parser.parse(response.content))
+
+
+@inject_object()
+def generate_tags(df: pd.DataFrame, model: BaseChatModel, tags: List[Tag]) -> List:
+    """Temporary function to generate tags based on provided prompts and params through OpenAI API call.
+
+    This function is temporary and will be removed once we have tags embedded in the disease list.
+
+    Args:
+        df: DataFrame - input dataframe
+        model: BaseChatModel - model to apply
+        tags: List[Tag] - List of tags to generate
+    Returns
+        Enriched df
+    """
+
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+
+    df = df.head(10)
+
+    try:
+        for tag in tags:
+            df = tag.generate(loop, df, model)
+    finally:
+        loop.close()
+
+    print(df)
+    return df
