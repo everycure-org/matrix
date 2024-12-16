@@ -1,4 +1,5 @@
 import logging
+import re
 import pandera
 from pandera import Column, DataFrameSchema
 from tqdm import tqdm
@@ -12,7 +13,6 @@ from pyspark.sql import DataFrame
 import pyspark.sql.functions as F
 
 from matrix.inject import inject_object
-from refit.v1.core.make_list_regexable import _extract_elements_in_list
 
 from matrix.datasets.graph import KnowledgeGraph
 
@@ -224,7 +224,7 @@ def make_batch_predictions(
         transformed = apply_transformers(batch, transformers)
 
         # Extract features
-        batch_features = _extract_elements_in_list(transformed.columns, features, raise_exc=True)
+        batch_features = _extract_elements_in_list(transformed.columns, features)
 
         # Generate model probability scores
         batch[score_col_name] = model.predict_proba(transformed[batch_features].values)[:, 1]
@@ -583,3 +583,18 @@ def generate_report(
         "legend": legends,
         "matrix": top_pairs,
     }
+
+
+def _extract_elements_in_list(
+    full_list_of_columns: List[str],
+    list_of_regexes: List[str],
+) -> List[str]:
+    results = {}  # use dictionary rather than set to keep relative ordering as defined in YAML
+    for regex in list_of_regexes:
+        matches = list(filter(re.compile(regex).match, full_list_of_columns))
+        if matches:
+            for match in matches:
+                results[match] = True  # helps keep relative ordering as defined in YAML
+        else:
+            raise ValueError(f"The following regex did not return a result: {regex}.")
+    return list(results.keys())
