@@ -1,4 +1,11 @@
-* @lvijnck @matwasilewski
-pipelines/matrix @lvijnck @pascalwhoop @alexeistepa @piotrkan @leelancashire
-docs @piotrkan @alexeistepa @leelancashire @oliverw1 @emil-k @siyan-luo
-infra @lvijnck @pascalwhoop @oliverw1 @siyan-luo @emil-k
+# person based 
+* @everycure-org/matrix-all/core-maintainers
+
+docs @everycure-org/matrix-all/core-maintainers @everycure-org/matrix-all/code-reviewers
+
+# our team based round-robin assignments
+pipelines/matrix/ @everycure-org/matrix-all/core-maintainers @everycure-org/matrix-all/code-reviewers
+infra/ @everycure-org/matrix-all/infra
+
+# we invite sub-teams to create their own team under the matrix-all team at https://github.com/orgs/everycure-org/teams and 
+# add themselves here to a specific path that they want to be responsible for
