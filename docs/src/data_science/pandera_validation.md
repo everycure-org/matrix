@@ -22,6 +22,8 @@ We avoid using abbreviations like `pa` or `py` as they can cause confusion, espe
 
 Our codebase works with several types of DataFrames, each requiring different validation approaches:
 
+# TODO: Differentiate use cases between two different types of PySpark DataFrames, and provide examples + justification from our codebase..
+
 1. **Pandas DataFrames**: Local in-memory DataFrames, best for smaller datasets and complex validations. Supports the full range of Pandera validations including statistical checks and complex data type validations.
 
 2. **PySpark DataFrames**: Distributed DataFrames that can handle large-scale data. Uses Spark's native type system and offers more limited validation capabilities but better performance. Note that PySpark DataFrame validations are executed on the driver node.
@@ -31,6 +33,8 @@ Our codebase works with several types of DataFrames, each requiring different va
 ## Class-Based Schema Definition
 
 We prefer using class-based schema definitions for better code organization and type hints. Here's how to define and use them:
+
+# TODO: Replace this with an actual example from our codebase.
 
 ```python
 import pandera
@@ -52,6 +56,8 @@ class UserSchema(pandera.SchemaModel):
 Our codebase supports both Pandas and PySpark DataFrame validation, but there are important differences:
 
 ### Pandas Validation
+
+# TODO: Replace this with an actual example from our codebase.
 ```python
 import pandera
 
@@ -64,6 +70,9 @@ schema = pandera.DataFrameSchema({
 ```
 
 ### PySpark Validation
+
+# TODO: Replace this with an actual example from our codebase.
+
 ```python
 import pandera.pyspark
 import pyspark.sql.types as T
