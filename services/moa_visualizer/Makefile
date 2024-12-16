@@ -10,3 +10,4 @@ docker_build:
 docker_push: docker_build
 	docker push $(dev_docker_image):${TAG}
 
+# TODO: Setup make data, make run

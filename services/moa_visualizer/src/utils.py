@@ -4,7 +4,7 @@ from streamlit_flow import streamlit_flow
 from streamlit_flow.elements import StreamlitFlowNode, StreamlitFlowEdge
 from streamlit_flow.state import StreamlitFlowState
 import streamlit as st
-from config import settings, ont_urls, display_cols
+from config import ont_urls, display_cols
 
 # TODO
 # - Clean up table formatting
@@ -13,7 +13,7 @@ from config import settings, ont_urls, display_cols
 # - Make a class to handle data build
 
 
-def get_pair_info_from_db(moa_db_path: str = settings.moa_db_path, path_number: str = "all") -> pd.DataFrame:
+def get_pair_info_from_db(moa_db_path: str, path_number: str = "all") -> pd.DataFrame:
     """
     Reads the MOA database from a SQLite database file
 
@@ -33,13 +33,15 @@ def get_pair_info_from_db(moa_db_path: str = settings.moa_db_path, path_number: 
     query = f"""SELECT pair_id, "Drug Name", "Disease Name" FROM 
     {path_number}_pair_info_all"""
 
+    breakpoint()
+
     df = pd.read_sql_query(query, f"sqlite:///{moa_db_path}")
     df = df.rename(columns={"Drug Name": "drug_name", "Disease Name": "disease_name"})
     return df
 
 
 @st.cache_data
-def list_available_pairs_df(input_path: str = settings.moa_db_path, path_number: str = "two-hop") -> pd.DataFrame:
+def list_available_pairs_df(input_path: str, path_number: str = "two-hop") -> pd.DataFrame:
     df = get_pair_info_from_db(moa_db_path=input_path, path_number=path_number)
     df["drug_name"] = df["drug_name"].str.capitalize()
     df["disease_name"] = df["disease_name"].str.capitalize()

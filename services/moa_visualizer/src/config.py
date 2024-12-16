@@ -70,14 +70,14 @@ class DisplayColumns:
         description="Mapping of node number to column names",
     )
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        updated_values = {
-            "all_columns": self.get_all_columns(),
-            "all_keys": self.get_all_keys(),
-            "n_nodes": len(self.node_columns),
-        }
-        object.__setattr__(self, "__dict__", {**self.__dict__, **updated_values})
+    # def __init__(self, *args, **kwargs):
+    #     super().__init__(*args, **kwargs)
+    #     updated_values = {
+    #         "all_columns": self.get_all_columns(),
+    #         "all_keys": self.get_all_keys(),
+    #         "n_nodes": len(self.node_columns),
+    #     }
+    #     object.__setattr__(self, "__dict__", {**self.__dict__, **updated_values})
 
     @property
     def basic_fields(self) -> list[str]:
@@ -96,6 +96,7 @@ class DisplayColumns:
 
     def get_all_columns(self) -> list[str]:
         """Get all column display names in order."""
+        # breakpoint()
         basic_display_fields = [getattr(self, field) for field in self.basic_fields]
 
         node_fields = [

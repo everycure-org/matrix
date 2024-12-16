@@ -35,7 +35,7 @@ with st.sidebar:
             st.write("Viewing 3-hop paths")
         hop_selector_parsed = parse_hop_parameter(hop_selector)
 
-    available_pairs_df = list_available_pairs_df(path_number=hop_selector_parsed)
+    available_pairs_df = list_available_pairs_df(settings.MOA_DB_PATH, path_number=hop_selector_parsed)
 
     if search_input != "":
         if "|" in search_input:
