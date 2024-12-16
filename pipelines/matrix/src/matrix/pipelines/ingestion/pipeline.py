@@ -72,7 +72,6 @@ def create_pipeline(**kwargs) -> Pipeline:
                 tags=["spoke"],
             ),
             node(
-                # FUTURE: Update selection
                 func=lambda x: x,
                 inputs=["ingestion.raw.spoke.edges@spark"],
                 outputs="ingestion.int.spoke.edges",
