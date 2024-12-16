@@ -1,4 +1,4 @@
-from kedro.pipeline import Pipeline, pipeline
+from kedro.pipeline import Pipeline, pipeline, node
 from matrix.kedro4argo_node import ArgoNode
 from matrix.pipelines.embeddings.nodes import ingest_edges, ingest_nodes
 from matrix.pipelines.data_release.nodes import filtered_edges_to_kgx, filtered_nodes_to_kgx
