@@ -46,7 +46,7 @@ jobs:
           RELEASE_DIR: 'gs://mtrx-us-central1-hub-dev-storage/kedro/data/releases'
           FILENAME: ${{env.release}}_info.json
         run: |
-          echo "workspace is : $GITHUB_WORKSPACE"
+          echo "workspace is  : $GITHUB_WORKSPACE"
           mkdir -p info && cd info
           
           echo $FILENAME
