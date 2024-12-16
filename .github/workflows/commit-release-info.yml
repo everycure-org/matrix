@@ -57,7 +57,7 @@ jobs:
           gcloud storage cp $BLOB_PATH $FILENAME
           cat $FILENAME
           
-          full="${GITHUB_WORKSPACE}/${RELEASE_INFO_DIR}/${FILENAME}"
-          
-          echo $full
+          FULL="${GITHUB_WORKSPACE}/${RELEASE_INFO_DIR}/${FILENAME}"
+          echo $FULL
+          echo "this"
 
