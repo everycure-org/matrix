@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 
 class MedicalTransformer(GraphTransformer):
-    @pandera.pyspark.check_output(KGNodeSchema)
+    @pandera.check_output(KGNodeSchema)
     def transform_nodes(self, nodes_df: DataFrame, biolink_categories_df: pd.DataFrame, **kwargs) -> DataFrame:
         """Transform nodes to our target schema.
 
@@ -37,7 +37,7 @@ class MedicalTransformer(GraphTransformer):
         return df
         # fmt: on
 
-    @pandera.pyspark.check_output(KGEdgeSchema)
+    @pandera.check_output(KGEdgeSchema)
     def transform_edges(self, edges_df: DataFrame, **kwargs) -> DataFrame:
         """Transform edges to our target schema.
 

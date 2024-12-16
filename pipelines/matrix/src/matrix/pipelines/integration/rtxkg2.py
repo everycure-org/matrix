@@ -17,7 +17,7 @@ RTX_SEPARATOR = "\u01c2"
 
 
 class RTXTransformer(GraphTransformer):
-    @pandera.pyspark.check_output(KGNodeSchema)
+    @pandera.check_output(KGNodeSchema)
     def transform_nodes(self, nodes_df: DataFrame, **kwargs) -> DataFrame:
         """Transform RTX KG2 nodes to our target schema.
 
@@ -41,7 +41,7 @@ class RTXTransformer(GraphTransformer):
         )
         # fmt: on
 
-    @pandera.pyspark.check_output(KGEdgeSchema)
+    @pandera.check_output(KGEdgeSchema)
     def transform_edges(
         self, edges_df: DataFrame, curie_to_pmids: DataFrame, semmed_filters: Dict[str, str], **kwargs
     ) -> DataFrame:
@@ -72,17 +72,17 @@ class RTXTransformer(GraphTransformer):
 
 
 # Define schema for curie_to_pmids DataFrame
-CurieToPMIDsSchema = pandera.pyspark.DataFrameSchema(
+CurieToPMIDsSchema = pandera.DataFrameSchema(
     {
-        "curie": pandera.Column(T.StringType(), nullable=False),  # primary key
-        "pmids": pandera.Column(T.ArrayType(T.IntegerType()), nullable=True),  # array type column
-        "num_pmids": pandera.Column(T.IntegerType(), nullable=True),
+        "curie": pandera.pyspark.Field(T.StringType(), nullable=False),  # primary key
+        "pmids": pandera.pyspark.Field(T.ArrayType(T.IntegerType()), nullable=True),  # array type column
+        "num_pmids": pandera.pyspark.Field(T.IntegerType(), nullable=True),
     },
     unique=["curie"],  # enforce uniqueness constraint
 )
 
 
-@pandera.pyspark.check_output(CurieToPMIDsSchema)
+@pandera.check_output(CurieToPMIDsSchema)
 def filter_semmed(
     edges_df: DataFrame,
     curie_to_pmids: DataFrame,
