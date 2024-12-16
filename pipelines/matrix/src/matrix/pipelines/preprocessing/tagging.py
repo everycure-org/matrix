@@ -81,13 +81,10 @@ def generate_tags(df: pd.DataFrame, model: BaseChatModel, tags: List[Tag]) -> Li
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
 
-    df = df.head(10)
-
     try:
         for tag in tags:
             df = tag.generate(loop, df, model)
     finally:
         loop.close()
 
-    print(df)
     return df
