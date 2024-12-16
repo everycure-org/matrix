@@ -18,7 +18,6 @@ from pyspark import SparkConf
 from pyspark.sql import SparkSession
 from google.cloud import storage
 from google.cloud.storage.bucket import Bucket
-from matrix.pipelines.data_release.pipeline import last_node as last_data_release_node
 
 logger = logging.getLogger(__name__)
 
@@ -280,13 +279,38 @@ class ReleaseInfoHooks:
         ReleaseInfoHooks.set_context(context)
 
     @staticmethod
+    def build_bigquery_link() -> str:
+        version = ReleaseInfoHooks._globals["versions"]["release"]
+        version = "release_" + version.replace(".", "_")
+        tmpl = f"https://console.cloud.google.com/bigquery?project=mtrx-hub-dev-3of&ws=!1m5!1m4!4m3!1smtrx-hub-dev-3of!2smtrx-hub-dev-3of!3s{version}"
+        return tmpl
+
+    @staticmethod
+    def build_code_link() -> str:
+        version = ReleaseInfoHooks._globals["versions"]["release"]
+        tmpl = f"https://github.com/everycure-org/matrix/tree/{version}"
+        return tmpl
+
+    @staticmethod
+    def build_mlflow_link() -> str:
+        run_id = ReleaseInfoHooks._kedro_context.mlflow.tracking.run.id
+        experiment_name = ReleaseInfoHooks._kedro_context.mlflow.tracking.experiment.name
+        experiment_id = mlflow.get_experiment_by_name(experiment_name).experiment_id
+        tmpl = f"https://mlflow.platform.dev.everycure.org/#/experiments/{experiment_id}/runs/{run_id}"
+        return tmpl
+
+    @staticmethod
     def extract_release_info() -> dict:
         info = {
+            "release_version": ReleaseInfoHooks._globals["versions"]["release"],
             "robokop_version": ReleaseInfoHooks._globals["data_sources"]["robokop"]["version"],
             "rtx-kg2_version": ReleaseInfoHooks._globals["data_sources"]["rtx-kg2"]["version"],
             "ec-medical-team": ReleaseInfoHooks._globals["data_sources"]["ec-medical-team"]["version"],
             "topological_estimator": ReleaseInfoHooks._params["embeddings.topological_estimator"]["object"],
             "topological_encoder": ReleaseInfoHooks._params["embeddings.node"]["encoder"]["encoder"]["model"],
+            "bigquery_link": ReleaseInfoHooks.build_bigquery_link(),
+            "mlflow_link": ReleaseInfoHooks.build_mlflow_link(),
+            "code_link": ReleaseInfoHooks.build_code_link(),
         }
         return info
 
@@ -313,9 +337,16 @@ class ReleaseInfoHooks:
         blob = bucket.blob(blobpath)
         blob.upload_from_string(data=json.dumps(release_info), content_type="application/json")
 
+    # @hook_impl
+    # def after_node_run(self, node: Node) -> None:
+    #     """Runs after the last node of the data_release pipeline"""
+    #     if node.name == last_data_release_node.name:
+    #         release_info = self.extract_release_info()
+    #         self.upload_to_storage(release_info)
+
     @hook_impl
-    def after_node_run(self, node: Node) -> None:
+    def before_node_run(self, node: Node) -> None:
         """Runs after the last node of the data_release pipeline"""
-        if node.name == last_data_release_node.name:
-            release_info = self.extract_release_info()
-            self.upload_to_storage(release_info)
+
+        release_info = self.extract_release_info()
+        self.upload_to_storage(release_info)
