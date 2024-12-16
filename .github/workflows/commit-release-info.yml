@@ -63,4 +63,8 @@ jobs:
           echo "workspace: "
           echo $GITHUB_WORKSPACE
           echo ${{ github.workspace }}
+          
+          git add "${RELEASE_INFO_DIR_GH}/info/${FILENAME}" && \
+          git commit -m "added release info json" && \
+          git push --follow-tags
 
