@@ -38,7 +38,7 @@ jobs:
 
       - name: store variables
         run: |
-          echo "release=v123" >> "$GITHUB_ENV"
+          echo "release=v0.2.5-alpha9" >> "$GITHUB_ENV"
 
       - name: Download info file
         working-directory: docs/src/releases
