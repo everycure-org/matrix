@@ -71,11 +71,11 @@ class RTXTransformer(GraphTransformer):
         # fmt: on
 
 
-class CurieToPMIDsSchema(pandera.DataFrameModel):
+class CurieToPMIDsSchema(pandera.pyspark.DataFrameModel):
     """Schema for a curie to pmids mapping."""
 
     # fmt: off
-    curie:          T.StringType()                  = pandera.pyspark.Field(unique=True, nullable=False)  # type: ignore
+    curie:          T.StringType()                  = pandera.pyspark.Field(nullable=False)  # type: ignore
     pmids:          T.ArrayType(T.IntegerType())    = pandera.pyspark.Field(nullable=True)  # type: ignore
     num_pmids:      T.IntegerType()                 = pandera.pyspark.Field(nullable=True)  # type: ignore
     # fmt: on
