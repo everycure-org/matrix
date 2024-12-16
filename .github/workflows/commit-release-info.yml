@@ -41,7 +41,7 @@ jobs:
           echo "release=v0.2.5-alpha9" >> "$GITHUB_ENV"
 
       - name: Download info file
-        working-directory: docs/src/releases
+        working-directory: docs/src/tests
         env:
           RELEASE_DIR: 'gs://mtrx-us-central1-hub-dev-storage/kedro/data/releases'
           FILENAME: ${{env.release}}_info.json
