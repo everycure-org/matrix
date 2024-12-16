@@ -4,14 +4,12 @@ from matrix.pipelines.embeddings.nodes import ingest_edges, ingest_nodes
 
 # Last node is made explicit because there's a kedro hook after_node_run
 # being triggered after the completion of the last node of this pipeline.
-last_node = (
-    ArgoNode(
-        func=ingest_edges,
-        inputs=["data_release.prm.kg_nodes", "integration.prm.filtered_edges"],
-        outputs="data_release.prm.kg_edges",
-        name="ingest_kg_edges",
-        tags=["neo4j"],
-    ),
+last_node = ArgoNode(
+    func=ingest_edges,
+    inputs=["data_release.prm.kg_nodes", "integration.prm.filtered_edges"],
+    outputs="data_release.prm.kg_edges",
+    name="ingest_kg_edges",
+    tags=["neo4j"],
 )
 
 
