@@ -18,7 +18,7 @@ jobs:
         with:
           # Stale settings
           days-before-stale: 90
-          days-before-close: 90
+          days-before-close: 28
           # we give people 2 weeks to respond to stale PRs before closing them
           days-before-pr-close: 14
           days-before-pr-stale: 14
@@ -28,7 +28,7 @@ jobs:
             This issue has been automatically marked as stale because it has had no activity in the last 90 days.
             
             If this issue is still relevant, please leave a comment to keep it open.
-            Otherwise, it will be closed in 90 days if no further activity occurs.
+            Otherwise, it will be closed in 28 days if no further activity occurs.
           stale-issue-label: 'stale'
           
           # Stale PR settings
