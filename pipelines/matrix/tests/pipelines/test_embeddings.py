@@ -3,6 +3,7 @@ import pytest
 from matrix.pipelines.embeddings.nodes import ingest_nodes
 import pyspark
 from pyspark.ml.feature import PCA
+from pyspark.sql.types import StructType, StructField, StringType, ArrayType, FloatType
 
 from matrix.pipelines.embeddings.nodes import reduce_embeddings_dimension
 import numpy as np
@@ -64,12 +65,16 @@ def test_ingest_nodes_empty_df(spark: pyspark.sql.SparkSession) -> None:
 @pytest.fixture
 def sample_embeddings_df(spark: pyspark.sql.SparkSession) -> pyspark.sql.DataFrame:
     """Create a sample dataframe with embeddings."""
+    schema = StructType(
+        [StructField("id", StringType(), False), StructField("embedding", ArrayType(FloatType(), False), False)]
+    )
+
     data = [
         {"id": "1", "embedding": [1.0, 2.0, 3.0, 4.0]},
         {"id": "2", "embedding": [2.0, 3.0, 4.0, 5.0]},
         {"id": "3", "embedding": [3.0, 4.0, 5.0, 6.0]},
     ]
-    return spark.createDataFrame(data)
+    return spark.createDataFrame(data, schema)
 
 
 @pytest.fixture
