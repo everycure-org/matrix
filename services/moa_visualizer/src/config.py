@@ -119,11 +119,12 @@ class DisplayColumns:
 class Settings(BaseSettings):
     """Main configuration settings."""
 
-    data_input_path: str
-    moa_db_path: str
-    gcp_project: str
-    moa_info_img: str
+    DATA_INPUT_PATH: str
+    MOA_DB_PATH: str
+    GCP_PROJECT: str
 
+    # TODO: Move elsewhere
+    moa_info_img: str = Field("assets/moa_info.svg")
     moa_info_text: str = Field(
         default="""
 Mechanism of action (MOA) prediction models aim to predict the biological 
@@ -156,12 +157,6 @@ def set_wide_space_default():
     st.set_page_config(layout="wide")
 
 
-def initialise_settings():
-    """Initialize and cache settings for the Streamlit app."""
-    return {"settings": Settings(), "ont_urls": OntologyUrls(), "display_cols": DisplayColumns()}
-
-
-configs = initialise_settings()
-settings: Settings = configs["settings"]
-ont_urls = configs["ont_urls"]
-display_cols = configs["display_cols"]
+settings: Settings = Settings()
+ont_urls = OntologyUrls()
+display_cols = DisplayColumns()

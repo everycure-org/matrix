@@ -68,7 +68,7 @@ if "selected_pair_index_df" in locals():
 
         # Get MoA predictions
         moa_prediction_df = get_moa_predictions_from_db(
-            input_path=settings.moa_db_path, pair_id=selected_pair_id, path_number=hop_selector_parsed
+            input_path=settings.MOA_DB_PATH, pair_id=selected_pair_id, path_number=hop_selector_parsed
         )
 
         moa_prediction_df["protein_url"] = moa_prediction_df["intermediate_id_1"].apply(build_external_urls)

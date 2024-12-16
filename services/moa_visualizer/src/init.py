@@ -8,8 +8,8 @@ from config import settings
 
 def main():
     # print(settings)
-    bucket, path = extract(settings.data_input_path)
-    bucket = storage.Client(project=settings.gcp_project).bucket(bucket)
+    bucket, path = extract(settings.DATA_INPUT_PATH)
+    bucket = storage.Client(project=settings.GCP_PROJECT).bucket(bucket)
     blobs = bucket.list_blobs(match_glob=f"{path}/*.parquet")
 
     for blob in blobs:
@@ -18,7 +18,7 @@ def main():
         df = pd.read_parquet(f"gs://{bucket.name}/{blob.name}")
 
         # Write to SQLite DB
-        with sqlite3.connect(settings.moa_db_path) as conn:
+        with sqlite3.connect(settings.MOA_DB_PATH) as conn:
             # Extract table name from blob path
             table_name = os.path.splitext(os.path.basename(blob.name))[0]
             df.to_sql(table_name, conn, if_exists="replace", index=False)
