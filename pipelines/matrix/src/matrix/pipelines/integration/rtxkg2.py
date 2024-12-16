@@ -2,6 +2,8 @@ import logging
 from typing import Dict
 
 import pandera
+from pandera.pyspark import DataFrameModel, Field
+
 import pyspark.sql.functions as F
 import pyspark.sql.types as T
 from pyspark.sql import DataFrame
@@ -71,21 +73,19 @@ class RTXTransformer(GraphTransformer):
         # fmt: on
 
 
-class CurieToPMIDsSchema(pandera.pyspark.DataFrameModel):
+class CurieToPMIDsSchema(DataFrameModel):
     """Schema for a curie to pmids mapping."""
 
     # fmt: off
-    curie:          T.StringType()                  = pandera.pyspark.Field(nullable=False)  # type: ignore
-    pmids:          T.ArrayType(T.IntegerType())    = pandera.pyspark.Field(nullable=True)  # type: ignore
-    num_pmids:      T.IntegerType()                 = pandera.pyspark.Field(nullable=True)  # type: ignore
+    curie:          T.StringType()                  = Field(nullable=False)  # type: ignore
     # fmt: on
 
     class Config:
-        coerce = True
-        strict = True
+        strict = False
+        unique = ["curie"]
 
 
-@pandera.check_output(CurieToPMIDsSchema)
+@pandera.check_input(CurieToPMIDsSchema, obj_getter="curie_to_pmids")
 def filter_semmed(
     edges_df: DataFrame,
     curie_to_pmids: DataFrame,
