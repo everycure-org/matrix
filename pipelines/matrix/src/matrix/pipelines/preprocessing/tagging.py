@@ -17,6 +17,8 @@ logger = logging.getLogger(__name__)
 
 
 class Tag:
+    """Utility function to help with tag generation."""
+
     def __init__(self, output_col: str, prompt: str) -> None:
         self._output_col = output_col
         self._prompt = prompt
@@ -30,8 +32,20 @@ class Tag:
         max_workers: int = 10,
         timeout: int = 20,
     ):
+        """
+        Function to generate tags.
+
+        Function generates tags for each row in the input dataframe in parallel.
+
+        Args:
+            loop: event loop to run on
+            df: input dataframe
+            model: model to apply
+            max_workers: max workers to use
+            timeout: max timeout for call
+        """
         sem = asyncio.Semaphore(max_workers)
-        tasks = [loop.create_task(self.process_row(sem, model, row.to_dict())) for _, row in sorted(df.iterrows())]
+        tasks = [loop.create_task(self._process_row(sem, model, row.to_dict())) for _, row in sorted(df.iterrows())]
 
         # Track progress with tqdm as tasks complete
         results = []
@@ -57,7 +71,7 @@ class Tag:
         df[self._output_col] = results
         return df
 
-    async def process_row(self, sem: asyncio.Semaphore, model: BaseChatModel, row: Dict):
+    async def _process_row(self, sem: asyncio.Semaphore, model: BaseChatModel, row: Dict):
         async with sem:
             prompt = ChatPromptTemplate.from_messages([HumanMessage(content=self._prompt.format(**row))])
             response = await model.ainvoke(prompt.format_messages())
@@ -66,9 +80,7 @@ class Tag:
 
 @inject_object()
 def generate_tags(df: pd.DataFrame, model: BaseChatModel, tags: List[Tag]) -> List:
-    """Temporary function to generate tags based on provided prompts and params through OpenAI API call.
-
-    This function is temporary and will be removed once we have tags embedded in the disease list.
+    """Function to generate tags based on provided prompts and params through LLM
 
     Args:
         df: DataFrame - input dataframe
