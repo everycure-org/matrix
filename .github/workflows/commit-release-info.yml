@@ -43,7 +43,7 @@ jobs:
       - name: Download info file
         working-directory: docs/src/releases
         env:
-          RELEASE_DIR: 'gs://mtrx-us-central1-hub-dev-storage/kedro/data/releases'
+          RELEASE_DIR: 'gs://mtrx-us-central1-hub-dev-storage/kedro/data/tests'
           FILENAME: ${{env.release}}_info.json
         run: |
           echo "workspace is  : $GITHUB_WORKSPACE"
