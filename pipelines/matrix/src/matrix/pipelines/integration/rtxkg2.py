@@ -71,15 +71,18 @@ class RTXTransformer(GraphTransformer):
         # fmt: on
 
 
-# Define schema for curie_to_pmids DataFrame
-CurieToPMIDsSchema = pandera.DataFrameSchema(
-    {
-        "curie": pandera.pyspark.Field(T.StringType(), nullable=False),  # primary key
-        "pmids": pandera.pyspark.Field(T.ArrayType(T.IntegerType()), nullable=True),  # array type column
-        "num_pmids": pandera.pyspark.Field(T.IntegerType(), nullable=True),
-    },
-    unique=["curie"],  # enforce uniqueness constraint
-)
+class CurieToPMIDsSchema(pandera.DataFrameModel):
+    """Schema for a curie to pmids mapping."""
+
+    # fmt: off
+    curie:                                T.StringType()            = pandera.pyspark.Field(unique=True, nullable=False) # type: ignore
+    pmids:                              T.ArrayType(T.IntegerType())            = pandera.pyspark.Field(nullable=True) # type: ignore #TODO should this be nullable?
+    num_pmids:                          T.IntegerType()            = pandera.pyspark.Field(nullable=True) # type: ignore
+    # fmt: on
+
+    class Config:
+        coerce = True
+        strict = True
 
 
 @pandera.check_output(CurieToPMIDsSchema)
