@@ -64,6 +64,9 @@ jobs:
           echo $GITHUB_WORKSPACE
           echo ${{ github.workspace }}
           
+          git config --global user.email "releasebot@everycure.org"
+          git config --global user.name "All of us at Every Cure"
+          
           git add "${RELEASE_INFO_DIR_GH}/info/${FILENAME}" && \
           git commit -m "added release info json" && \
           git push --follow-tags
