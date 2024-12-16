@@ -30,9 +30,9 @@ kube-prometheus-stack:
           endpoints:
             - port: metrics
               path: /metrics
-      service:
-        annotations:
-          cloud.google.com/neg: '{"ingress": true}'
+#       service:
+#         annotations:
+#           cloud.google.com/neg: '{"ingress": true}'
   grafana:
     sidecar:
       dashboards:
@@ -44,6 +44,6 @@ kube-prometheus-stack:
       searchNamespace: ALL
       provider:
         foldersFromFilesStructure: true
-    service:
-      annotations:
-        cloud.google.com/neg: '{"ingress": true}'
+#    service:
+#      annotations:
+#        cloud.google.com/neg: '{"ingress": true}'
