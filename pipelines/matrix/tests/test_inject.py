@@ -294,12 +294,12 @@ def test_exclude_kwargs_as_dict_key(nested_params):
 def test_exclude_kwargs_as_params(another_param):
     _, new_kwargs = _inject_object(**another_param, exclude_kwargs=["cv", "estimator"])
 
-    # test estimator key still is in refit syntax
+    # test estimator key still is in inject syntax
     tuner_object = new_kwargs["tuner"]
     assert hasattr(tuner_object, "estimator")
     assert "object" in tuner_object.estimator.keys()
 
-    # test cv key still is in refit syntax
+    # test cv key still is in inject syntax
     assert hasattr(tuner_object, "cv")
     assert "object" in tuner_object.cv.keys()
 
