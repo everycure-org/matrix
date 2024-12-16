@@ -1,5 +1,4 @@
 import logging
-import re
 import pandera
 from pandera import Column, DataFrameSchema
 from tqdm import tqdm
@@ -12,7 +11,7 @@ import pandas as pd
 from pyspark.sql import DataFrame
 import pyspark.sql.functions as F
 
-from matrix.inject import inject_object
+from matrix.inject import inject_object, _extract_elements_in_list
 
 from matrix.datasets.graph import KnowledgeGraph
 
@@ -583,18 +582,3 @@ def generate_report(
         "legend": legends,
         "matrix": top_pairs,
     }
-
-
-def _extract_elements_in_list(
-    full_list_of_columns: List[str],
-    list_of_regexes: List[str],
-) -> List[str]:
-    results = {}  # use dictionary rather than set to keep relative ordering as defined in YAML
-    for regex in list_of_regexes:
-        matches = list(filter(re.compile(regex).match, full_list_of_columns))
-        if matches:
-            for match in matches:
-                results[match] = True  # helps keep relative ordering as defined in YAML
-        else:
-            raise ValueError(f"The following regex did not return a result: {regex}.")
-    return list(results.keys())

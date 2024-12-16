@@ -12,7 +12,7 @@ from matrix.pipelines.matrix_generation.nodes import (
 )
 from matrix.pipelines.modelling.transformers import FlatArrayTransformer
 from matrix.datasets.graph import KnowledgeGraph
-from matrix.pipelines.matrix_generation.nodes import _extract_elements_in_list
+from matrix.inject import _extract_elements_in_list
 
 
 @pytest.fixture
