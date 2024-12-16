@@ -28,7 +28,7 @@ memory = Memory(location=".cache/nodenorm", verbose=0)
 logger = logging.getLogger(__name__)
 
 
-@pandera.pyspark.check_output(KGEdgeSchema)
+@pandera.check_output(KGEdgeSchema)
 def union_and_deduplicate_edges(*edges) -> DataFrame:
     """Function to unify edges datasets."""
     # fmt: off
@@ -39,7 +39,7 @@ def union_and_deduplicate_edges(*edges) -> DataFrame:
     # fmt: on
 
 
-@pandera.pyspark.check_output(KGNodeSchema)
+@pandera.check_output(KGNodeSchema)
 def union_and_deduplicate_nodes(biolink_categories_df: pd.DataFrame, *nodes) -> DataFrame:
     """Function to unify nodes datasets."""
 

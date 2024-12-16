@@ -20,7 +20,7 @@ ROBOKOP_SEPARATOR = "\x1f"
 
 
 class RobokopTransformer(GraphTransformer):
-    @pandera.pyspark.check_output(KGNodeSchema)
+    @pandera.check_output(KGNodeSchema)
     def transform_nodes(self, nodes_df: DataFrame, biolink_categories_df: pd.DataFrame, **kwargs) -> DataFrame:
         """Transform Robokop nodes to our target schema.
 
@@ -49,7 +49,7 @@ class RobokopTransformer(GraphTransformer):
         )
         # fmt: on
 
-    @pandera.pyspark.check_output(KGEdgeSchema)
+    @pandera.check_output(KGEdgeSchema)
     def transform_edges(self, edges_df: DataFrame, **kwargs) -> DataFrame:
         """Transform Robokop edges to our target schema.
 
