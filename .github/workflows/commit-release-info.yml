@@ -60,5 +60,6 @@ jobs:
           
           FULL="${RELEASE_INFO_DIR_GH}/info/${FILENAME}"
           echo $FULL
-          echo "this "
+          echo "workspace: "
+          echo $GITHUB_WORKSPACE
 
