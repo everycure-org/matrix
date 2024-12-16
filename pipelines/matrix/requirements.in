@@ -1,5 +1,4 @@
 ./packages/data_fabricator
-./packages/refit 
 gcsfs==2024.3.1
 hdfs==2.7.3
 ipython>=8.10

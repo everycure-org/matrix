@@ -137,7 +137,6 @@ schema = pandera.DataFrameSchema({
 7. Consider DataFrame type when choosing validation approach
 
 For more examples, see:
-- `pipelines/matrix/packages/refit/src/refit/tests/v1/test_validator.py`
-- `pipelines/matrix/tests/pipelines/test_preprocessing.py` 
+# TODO: Add examples from our codebase.
 
 # TODO: Add considerations for uniqueness constraints in Pandera's distributed (SQL) PySpark DataFrames.

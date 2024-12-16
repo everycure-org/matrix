@@ -18,8 +18,7 @@ from sklearn.base import BaseEstimator
 import matplotlib.pyplot as plt
 
 from functools import wraps
-from matrix.inject import inject_object, unpack_params
-from refit.v1.core.make_list_regexable import make_list_regexable
+from matrix.inject import inject_object, make_list_regexable, unpack_params
 
 from matrix.datasets.graph import KnowledgeGraph
 from matrix.datasets.pair_generator import SingleLabelPairGenerator

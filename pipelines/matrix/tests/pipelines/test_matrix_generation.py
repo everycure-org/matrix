@@ -396,7 +396,7 @@ def test_exact_match():
     """Test exact string matching."""
     columns = ["column1", "column2", "column3"]
     regexes = ["column1"]
-    result = _extract_elements_in_list(columns, regexes)
+    result = _extract_elements_in_list(columns, regexes, True)
     assert result == ["column1"]
 
 
@@ -404,7 +404,7 @@ def test_pattern_match():
     """Test regex pattern matching."""
     columns = ["column1", "column2", "test_column"]
     regexes = ["column\\d"]
-    result = _extract_elements_in_list(columns, regexes)
+    result = _extract_elements_in_list(columns, regexes, True)
     assert result == ["column1", "column2"]
 
 
@@ -412,7 +412,7 @@ def test_multiple_patterns():
     """Test multiple regex patterns."""
     columns = ["column1", "column2", "test1", "test2"]
     regexes = ["column\\d", "test\\d"]
-    result = _extract_elements_in_list(columns, regexes)
+    result = _extract_elements_in_list(columns, regexes, True)
     assert result == ["column1", "column2", "test1", "test2"]
 
 
@@ -421,7 +421,7 @@ def test_no_match_with_raise():
     columns = ["column1", "column2"]
     regexes = ["nonexistent"]
     with pytest.raises(ValueError) as exc_info:
-        _extract_elements_in_list(columns, regexes)
+        _extract_elements_in_list(columns, regexes, True)
     assert "did not return a result" in str(exc_info.value)
 
 
@@ -429,16 +429,16 @@ def test_duplicate_matches():
     """Test that duplicate matches are only included once."""
     columns = ["column1", "column2"]
     regexes = ["column\\d", "column1"]
-    result = _extract_elements_in_list(columns, regexes)
+    result = _extract_elements_in_list(columns, regexes, True)
     assert result == ["column1", "column2"]
 
 
 def test_empty_inputs():
     """Test behavior with empty inputs."""
-    assert _extract_elements_in_list([], []) == []
-    assert _extract_elements_in_list(["column1"], []) == []
+    assert _extract_elements_in_list([], [], True) == []
+    assert _extract_elements_in_list(["column1"], [], True) == []
     with pytest.raises(ValueError) as exc_info:
-        _extract_elements_in_list([], ["column"])
+        _extract_elements_in_list([], ["column"], True)
     assert "did not return a result" in str(exc_info.value)
 
 
@@ -446,7 +446,7 @@ def test_order_preservation():
     """Test that the order of matches follows the regex order."""
     columns = ["z_column", "a_column", "b_column"]
     regexes = ["b_.*", "a_.*", "z_.*"]
-    result = _extract_elements_in_list(columns, regexes)
+    result = _extract_elements_in_list(columns, regexes, True)
     assert result == ["b_column", "a_column", "z_column"]
 
 
@@ -455,12 +455,12 @@ def test_invalid_regex():
     columns = ["column1", "column2"]
     regexes = ["[invalid"]
     with pytest.raises(re.error):
-        _extract_elements_in_list(columns, regexes)
+        _extract_elements_in_list(columns, regexes, True)
 
 
 def test_special_characters():
     """Test matching with special characters in column names."""
     columns = ["column$1", "column#2", "column@3"]
     regexes = ["column[$#@]\\d"]
-    result = _extract_elements_in_list(columns, regexes)
+    result = _extract_elements_in_list(columns, regexes, True)
     assert result == ["column$1", "column#2", "column@3"]

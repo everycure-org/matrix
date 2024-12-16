@@ -223,7 +223,7 @@ def make_batch_predictions(
         transformed = apply_transformers(batch, transformers)
 
         # Extract features
-        batch_features = _extract_elements_in_list(transformed.columns, features)
+        batch_features = _extract_elements_in_list(transformed.columns, features, True)
 
         # Generate model probability scores
         batch[score_col_name] = model.predict_proba(transformed[batch_features].values)[:, 1]
