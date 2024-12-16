@@ -67,6 +67,7 @@ DYNAMIC_PIPELINES_MAPPING = {
         {"model_name": "rf", "num_shards": 1, "run_inference": False},
         {"model_name": "xg_synth", "num_shards": 1, "run_inference": False},
         {"model_name": "mayas_logistic_regression", "num_shards": 1, "run_inference": False},
+        {"model_name": "mayas_softmax", "num_shards": 1, "run_inference": False},
     ],
     "evaluation": [
         {"evaluation_name": "simple_classification"},
