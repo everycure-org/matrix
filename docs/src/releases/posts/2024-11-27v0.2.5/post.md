@@ -79,14 +79,13 @@ Update the `RELEASE_NAME` in `.env`:
 RELEASE_NAME=v0.2.5-rtx-only #to use a release that only includes RTX data
 ```
 
-!!! tip 
+!!! tip
     If you want to get a list of all current releases, while we are working on a more centralized solution, you can run either `git tag` to see a list (data available starting from `v0.2.5`) or by running
     ```
     gsutil ls gs://mtrx-us-central1-hub-dev-storage/kedro/data/releases/
     ```
 
     which lists the folder containing all release runs. Note that not every folder will contain all data today, but we are working towards making sure they will always contain a complete release.
-
 
 Reload your kedro context for the changes to take effect
 
@@ -147,7 +146,7 @@ to different folders (test/release), enabling greater flexibility in development
 
 ### Kedro Catalog Cleanup 🧹
 
-- Addressing technical debt, this release includes fixes for missing and unused entries in the Kedro catalog (issue [#600](https://github.com/everycure-org/matrix/issues/600)).  
+- Addressing technical debt, this release includes fixes for missing and unused entries in the Kedro catalog (issue [#600](https://github.com/everycure-org/matrix/issues/600)).
 - More robust handling of node category selection during integration (issue [#654](https://github.com/everycure-org/matrix/issues/654)).
 - We also moved a variety of older datasets and files from the cloud bucket to an `archive` folder, simplifying the folder structure in our cloud bucket. However, we expect most people will no longer need to think about direct file access as we mature our data catalog & bigquery release strategy.
 

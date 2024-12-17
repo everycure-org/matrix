@@ -62,14 +62,12 @@ def submit(username: str, namespace: str, run_name: str, release_version: str, p
     if from_nodes:
         if not click.confirm("Using 'from-nodes' is highly experimental and may break due to MLFlow issues with tracking the right run. Are you sure you want to continue?", default=False):
             raise click.Abort()
-    
+
     pipeline_obj = kedro_pipelines[pipeline]
     if from_nodes:
         pipeline_obj = pipeline_obj.from_nodes(*from_nodes)
 
-    if not run_name:
-        run_name = get_run_name(run_name)
-
+    run_name = get_run_name(run_name)
     pipeline_obj.name = pipeline
 
 
@@ -137,7 +135,7 @@ def _submit(
 
         if dry_run:
             return
-        
+
         build_push_docker(run_name, verbose=verbose)
 
         ensure_namespace(namespace, verbose=verbose)
@@ -209,15 +207,15 @@ def run_subprocess(
     )
 
     stdout, stderr = [], []
-    
+
     if stream_output:
         while True:
             out_line = process.stdout.readline() if process.stdout else ''
             err_line = process.stderr.readline() if process.stderr else ''
-            
+
             if not out_line and not err_line and process.poll() is not None:
                 break
-                
+
             if out_line:
                 sys.stdout.write(out_line)
                 sys.stdout.flush()
@@ -226,7 +224,7 @@ def run_subprocess(
                 sys.stderr.write(err_line)
                 sys.stderr.flush()
                 stderr.append(err_line)
-        
+
         # Get any remaining output
         out, err = process.communicate()
         if out:
@@ -238,7 +236,7 @@ def run_subprocess(
 
     if check and process.returncode != 0:
         raise subprocess.CalledProcessError(
-            process.returncode, cmd, 
+            process.returncode, cmd,
             ''.join(stdout) if stdout else None,
             ''.join(stderr) if stderr else None
         )
@@ -265,7 +263,7 @@ def check_dependencies(verbose: bool):
 
     Raises:
         EnvironmentError: If gcloud is not installed or kubectl cannot be configured.
-    """    
+    """
     console.print("Checking dependencies...")
 
     if not command_exists("gcloud"):
@@ -305,7 +303,7 @@ def check_dependencies(verbose: bool):
             stream_output=verbose,
         )
         console.print("[green]✓[/green] kubectl authenticated")
-    
+
     # Verify kubectl
     try:
         run_subprocess("kubectl get ns", stream_output=verbose)
