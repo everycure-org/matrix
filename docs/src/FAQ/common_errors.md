@@ -350,6 +350,25 @@ Failed to establish a new connection: [Errno 61] Connection refused'))
 ```
 This error is due to kedro trying to send API requests to your MLFlow container which hasn't been set up. You can set the MLFlow container from your Docker Desktop application or by running `make compose_up` from your terminal. This should set up a healthy docker container to which kedro can send API requests. 
 
+
+
+## The RAW data files appear much smaller than expected
+
+
+The issue arises as people have write permission to the RAW folder
+and may accidentally run the fabricator pipeline in the cloud environment. This leads to
+the pipeline writing the fabricator output to the raw datasets and because the cloud
+environment is selected, the data is not stored in the cloud bucket. However, the full
+raw data resides here, so the pipeline overwrites it. 
+
+**Solution**: 
+- Guardrails have been put in place to avoid this from happening again.
+- If it still occurs, please notify the team. Our guardrails should prevent this from happening again.
+
+!!! info
+    This error should be resolved but in case it still occurs, please create a new issue
+    and tag Every Cure devs. 
+
 ### Orphan container error when running docker
 ```
 Error response from daemon: Conflict. The container name “/mockserver” is already in use by container “a2381853d58b482a3c4b82e17dbb25173e5af75903e98e7cb3481318f6abc7f1". You have to remove (or rename) that container to be able to reuse that name.
@@ -436,10 +455,12 @@ IndexError: tuple index out of range
 ```
 This error is most likely due to data fabricator version being outdated after the most recent updates to main. A simple solution is to clean your current venv, re-create and re-install the venv with needed dependencies:
 ```
+uv cache clean # if you use pip or other library management tool, you should clean cache of that
 deactivate # ensure no venv is active
 make clean
 make
 ```
+
 However we noted that error persists if you have miniconda3 or conda installed on your system. Note that conda and uv (which is a preferred package management system) are very incompatible and using both might lead to errors. Therefore, if you run the command above and still get the IndexError, please make sure you have no miniconda installed. If you do have miniconda on your system, you might need to remove it or ensure it's completely separated. Once it's removed, you should re-do re-create the matrix repo and re-install venv as mentioned above
 
 
@@ -454,6 +475,19 @@ After setting up installing the gcloud SDK, make sure that a default project is 
 gcloud config list
 ```
 If no project is listed, then it can be set by running:
+
 ```
 gcloud config set project mtrx-hub-dev-3of
 ```
+
+### Issue with kedro run -e test -p test after updating git pull.
+
+```
+filter_by_category() missing 1 required positional argument: 'categories
+```
+
+This is due to our local libraries (e.g. `data_fabricator`) being cached in the uv cache
+and thus not being installed to the latest version when running `make install`. Cleaning
+the uv cache solves this issue which you can do via `make clean` and then run a fresh
+`make install`.
+

@@ -8,15 +8,10 @@ fabricator.rtx_kg2:
       name:
         type: generate_unique_id
         prefix: name_
-      category:
-        type: generate_values
-        sample_values:
-          - biolink:Drug
-          - biolink:Disease
       all_names:string[]:
         type: faker
         provider: name
-      all_categories:string[]:
+      category:
         type: generate_values
         sample_values:
           - biolink:Drug
@@ -24,10 +19,19 @@ fabricator.rtx_kg2:
           - biolink:Gene
           - biolink:ChemicalSubstance
           - biolink:Protein
-          - biolink:SmallMolecule
+      all_categories:string[]:
+        type: row_apply
+        list_of_values: [nodes.category]
+        # NOTE: This ensures the full path from root to child is added in the categories column
+        row_func: matrix.pipelines.fabricator.generators.get_ancestors_for_category_delimited
+        row_func_kwargs:
+          delimiter: "\u01c2"
+        resize: True
+        seed: 590590
       iri:
         type: faker
         provider: url
+
       description:
         type: generate_unique_id
         prefix: description_
@@ -79,9 +83,19 @@ fabricator.rtx_kg2:
           - biolink:affects
           - biolink:subclass_of
           - biolink:is_nearby_variant_of
-      primary_knowledge_source:
-        type: faker
-        provider: name
+          - biolink:ChemicalToChemicalDerivationAssociation
+      knowledge_source:string[]:
+        type: generate_random_arrays
+        delimiter: "\u001f"
+        sample_values:
+          - infores:semmeddb
+          - infores:gtex
+          - infores:ubergraph
+          - infores:snpeff
+      # For version 2.10
+      # primary_knowledge_source:
+      #   type: faker
+      #   provider: name
       publications:string[]:
         type: generate_random_arrays
         delimiter: "\u01c2"
@@ -128,9 +142,11 @@ fabricator.rtx_kg2:
     num_rows: 20
     columns:
       curie: 
-        type: row_apply
-        list_of_values: [nodes.id:ID, nodes.name]
-        row_func: "lambda *args: args[0]"
+        type: column_apply
+        list_of_values: [nodes.id:ID, nodes.category]
+        column_func: matrix.pipelines.fabricator.generators.filter_by_category
+        column_func_kwargs:
+          category: "biolink:Drug"
         resize: True
         seed: 6850
       name: 
@@ -182,9 +198,11 @@ fabricator.rtx_kg2:
     num_rows: 30
     columns:
       curie: 
-        type: row_apply
-        list_of_values: [nodes.id:ID, nodes.name]
-        row_func: "lambda *args: args[0]"
+        type: column_apply
+        list_of_values: [nodes.id:ID, nodes.category]
+        column_func: matrix.pipelines.fabricator.generators.filter_by_category
+        column_func_kwargs:
+          category: "biolink:Disease"
         resize: True
         seed: 95690
       name: 
@@ -294,6 +312,8 @@ fabricator.robokop:
             - biolink:Entity
             - biolink:ThingWithTaxon
             - biolink:BiologicalEntity
+            - biolink:Drug
+            - biolink:Disease
             - biolink:SequenceVariant
             - biolink:NamedThing
             - biolink:OntologyClass

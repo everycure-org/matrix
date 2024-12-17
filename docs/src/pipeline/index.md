@@ -67,7 +67,62 @@ There are 4 main steps in the integration pipeline:
 3. **Union & Deduplicate**: Brings all KGs together and deduplicates nodes and edges
 4. **Filtering**: Applies a series of filtering steps to remove nodes and edges based on custom "business logic"
 
+
 ![](../assets/img/kg_integration_approach.excalidraw.svg)
+
+
+#### Normalizing data from sources
+
+Our pipeline aims to streamline the process of normalization and integration though a `transformer`. This is an interface that should be implemented for the source to be integrated succesfully. 
+
+```pyton
+class GraphTransformer(ABC):
+    @abstractmethod
+    def transform_nodes(self, nodes_df: DataFrame, **kwargs) -> DataFrame:
+      """
+      Function to transform nodes into the common format.
+
+      Args:
+        nodes_df: dataframe with nodes
+      Returns:
+        Nodes in standarized format
+      """
+      ...
+
+    @abstractmethod
+    def transform_edges(self, edges_df: DataFrame, **kwargs) -> DataFrame:
+      """
+      Function to transform edges into the common format.
+
+      Args:
+        edges_df: dataframe with edges
+      Returns:
+        Edges in standarized format
+      """
+      ...
+```
+
+Once implemented, register the transformer into the `parameters` of the integration pipeline.
+
+```yaml
+# Params 
+integration:
+  sources:
+    <source>:
+      transformer:
+        object: matrix.pipelines.integration.<source>.<source>Transformer
+```
+
+Last but not least, finish up by registering the normalizer into `settings.py`. This last step ensures that our dynamic pipeline is updated to setup pipelining for your source.
+
+```python
+DYNAMIC_PIPELINES_MAPPING = {
+    "integration": [
+        {"name": "<souce>"},
+        ...
+    ]
+}
+```
 
 ### Embeddings
 
@@ -124,42 +179,8 @@ You can find the sheet [here](https://docs.google.com/spreadsheets/d/1CioSCCQxUd
 
 ### Release
 
-Our release pipeline currently builds the final integrated Neo4J data product for consumption. We do not execute this as part of the default pipeline run but with a separate `-p release` execution as we do not want to release every pipeline data output.
+Our release pipeline currently builds the final integrated Neo4J data product for consumption. We do not execute this as part of the default pipeline run but with a separate `-p data_release` execution as we do not want to release every pipeline data output.
 
 !!! info
-    If you wish to populate your local Neo4J instance with the output data for a release, populate the `RUN_NAME` in your `.env` file and run `kedro run -p release --from-env cloud -t neo4j`.
-
-
-## Automated Release Pipeline (CI / CD)
-
-### Testing
-
-We leverage Github Actions to test and build the pipeline. For testing, we leverage a mix
-of unit and integration tests. The integration tests leverage a set of fabricated
-datasets to test the end-to-end pipeline without the need to access real data. 
-
-Check the `.github/workflows/matrix-ci.yml` folder for details on how we test our pipeline.
-
-### Building executables
-
-We execute our pipeline on Kubernetes. For this we build container images with github
-actions and push them to the artifact registry of GCP. See the Github actions pipeline
-for how this is implemented. 
-
-### License handling
-
-To make sure we do not use any software that gets us into trouble later on, we have
-`trivy` scan for licenses of software we use. However, we don't yet have this implemented
-in our CI. This will have to be added to our release pipeline when we build it. For now,
-the Makefile in our `matrix` pipeline holds the command to scan for licenses.
-
-### Secrets files
-
-As mentioned in the [GCP Foundations](../infrastructure/gcp.md) page, we use
-`git-crypt`. Because the CI doesn't have a public-private GPG key to share with us, we
-exported the symmetric key and added it to github actions' secrets. 
-
-```
-git-crypt export-key /tmp/key && cat /tmp/key | base64 && rm /tmp/key
-```
+    If you wish to populate your local Neo4J instance with the output data for a release, populate the `RUN_NAME` in your `.env` file and run `kedro run -p data_release --from-env cloud -t neo4j`.
 

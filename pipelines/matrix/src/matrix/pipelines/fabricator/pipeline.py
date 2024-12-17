@@ -1,11 +1,16 @@
 import pandas as pd
-
-from kedro.pipeline import Pipeline, node, pipeline
-
 from data_fabricator.v0.nodes.fabrication import fabricate_datasets
+from kedro.pipeline import Pipeline, pipeline
+
+from matrix.kedro4argo_node import argo_node
 
 
-def _create_pairs(drug_list: pd.DataFrame, disease_list: pd.DataFrame, num: int = 50, seed: int = 42) -> pd.DataFrame:
+def _create_pairs(
+    drug_list: pd.DataFrame,
+    disease_list: pd.DataFrame,
+    num: int = 100,
+    seed: int = 42,
+) -> pd.DataFrame:
     """Create 2 sets of random drug-disease pairs. Ensures no duplicate pairs.
 
     Args:
@@ -18,6 +23,9 @@ def _create_pairs(drug_list: pd.DataFrame, disease_list: pd.DataFrame, num: int 
         Two dataframes, each containing 'num' unique drug-disease pairs.
     """
     is_enough_generated = False
+
+    attempt = 0
+
     while not is_enough_generated:
         # Sample random pairs (we sample twice the required amount in case duplicates are removed)
         random_drugs = drug_list["curie"].sample(num * 4, replace=True, ignore_index=True, random_state=seed)
@@ -32,9 +40,9 @@ def _create_pairs(drug_list: pd.DataFrame, disease_list: pd.DataFrame, num: int 
         df = df.drop_duplicates()
 
         # Check that we still have enough fabricated pairs
-        is_enough_generated = len(df) >= 2 * num
+        is_enough_generated = len(df) >= num or attempt > 100
+        attempt += 1
 
-    # split df in half and return two df
     return df[:num], df[num : 2 * num]
 
 
@@ -42,7 +50,7 @@ def create_pipeline(**kwargs) -> Pipeline:
     """Create fabricator pipeline."""
     return pipeline(
         [
-            node(
+            argo_node(
                 func=fabricate_datasets,
                 inputs={"fabrication_params": "params:fabricator.rtx_kg2"},
                 outputs={
@@ -55,7 +63,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 },
                 name="fabricate_kg2_datasets",
             ),
-            node(
+            argo_node(
                 func=fabricate_datasets,
                 inputs={"fabrication_params": "params:fabricator.ec_medical_kg"},
                 outputs={
@@ -64,7 +72,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 },
                 name="fabricate_ec_medical_datasets",
             ),
-            node(
+            argo_node(
                 func=fabricate_datasets,
                 inputs={"fabrication_params": "params:fabricator.robokop"},
                 outputs={
@@ -73,15 +81,15 @@ def create_pipeline(**kwargs) -> Pipeline:
                 },
                 name="fabricate_robokop_datasets",
             ),
-            node(
+            argo_node(
                 func=_create_pairs,
                 inputs=[
                     "ingestion.raw.drug_list@pandas",
                     "ingestion.raw.disease_list@pandas",
                 ],
                 outputs=[
-                    "modelling.raw.ground_truth.positives",
-                    "modelling.raw.ground_truth.negatives",
+                    "modelling.raw.ground_truth.positives@pandas",
+                    "modelling.raw.ground_truth.negatives@pandas",
                 ],
                 name="create_gn_pairs",
             ),

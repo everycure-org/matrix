@@ -1,21 +1,24 @@
-from kedro.framework.hooks import hook_impl
-from pyspark import SparkConf
-import os
-from pyspark.sql import SparkSession
-from kedro.pipeline.node import Node
-from datetime import datetime
-from typing import Any, Optional, Dict
-import pandas as pd
-import termplotlib as tpl
-from omegaconf import OmegaConf
 import logging
+import json
+import os
+from datetime import datetime
+from typing import Any, Dict, Optional
 
 import mlflow
-from mlflow.exceptions import RestException
-
+import pandas as pd
+import termplotlib as tpl
 from kedro.framework.context import KedroContext
+from kedro.framework.hooks import hook_impl
 from kedro.io.data_catalog import DataCatalog
+from kedro.pipeline.node import Node
 from kedro_datasets.spark import SparkDataset
+from mlflow.exceptions import RestException
+from omegaconf import OmegaConf
+from pyspark import SparkConf
+from pyspark.sql import SparkSession
+from google.cloud import storage
+from google.cloud.storage.bucket import Bucket
+from matrix.pipelines.data_release.pipeline import last_node as last_data_release_node
 
 
 logger = logging.getLogger(__name__)
@@ -75,9 +78,13 @@ class MLFlowHooks:
         )
 
         if not runs:
-            with mlflow.start_run(run_name=run_name, experiment_id=experiment_id) as run:
-                mlflow.set_tag("created_by", "kedro")
-                return run.info.run_id
+            logger.info("creating run")
+            run = mlflow.start_run(run_name=run_name, experiment_id=experiment_id)
+            mlflow.set_tag("created_by", "kedro")
+            return run.info.run_id
+        else:
+            mlflow.start_run(run_id=runs[0].info.run_id, nested=True)
+            logger.info("run already exists, re-using")
 
         return runs[0].info.run_id
 
@@ -140,7 +147,7 @@ class SparkHooks:
                     k: v for k, v in parameters.items() if not k.startswith("spark.hadoop.google.cloud.auth.service")
                 }
             else:
-                logger.info(f"Executing for enviornment: {cls._kedro_context.env}")
+                logger.info(f"Executing for environment: {cls._kedro_context.env}")
                 logger.info(f'With ARGO_POD_UID set to: {os.environ.get("ARGO_NODE_ID", "")}')
                 logger.info("Thus determined not to be in k8s cluster and executing with service-account.json file")
 
@@ -253,3 +260,92 @@ class NodeTimerHooks:
             self.node_times[name]["end"] = datetime.now()
         else:
             raise Exception("there should be a node starting timer")
+
+
+class ReleaseInfoHooks:
+    _kedro_context: Optional[KedroContext] = None
+    _globals: Optional[dict] = None
+    _params: Optional[dict] = None
+
+    @classmethod
+    def set_context(cls, context: KedroContext) -> None:
+        """Utility class method that stores context in class as singleton."""
+        cls._kedro_context = context
+        cls._globals = context.config_loader["globals"]
+        cls._params = context.config_loader["parameters"]
+
+    @hook_impl
+    def after_context_created(self, context: KedroContext) -> None:
+        """Remember context for later export from a node hook."""
+        logger.info("Remembering context for context export later")
+        ReleaseInfoHooks.set_context(context)
+
+    @staticmethod
+    def build_bigquery_link() -> str:
+        version = ReleaseInfoHooks._globals["versions"]["release"]
+        version = "release_" + version.replace(".", "_")
+        tmpl = f"https://console.cloud.google.com/bigquery?project=mtrx-hub-dev-3of&ws=!1m5!1m4!4m3!1smtrx-hub-dev-3of!2smtrx-hub-dev-3of!3s{version}"
+        return tmpl
+
+    @staticmethod
+    def build_code_link() -> str:
+        version = ReleaseInfoHooks._globals["versions"]["release"]
+        tmpl = f"https://github.com/everycure-org/matrix/tree/{version}"
+        return tmpl
+
+    @staticmethod
+    def build_mlflow_link() -> str:
+        run_id = ReleaseInfoHooks._kedro_context.mlflow.tracking.run.id
+        experiment_name = ReleaseInfoHooks._kedro_context.mlflow.tracking.experiment.name
+        experiment_id = mlflow.get_experiment_by_name(experiment_name).experiment_id
+        tmpl = f"https://mlflow.platform.dev.everycure.org/#/experiments/{experiment_id}/runs/{run_id}"
+        return tmpl
+
+    @staticmethod
+    def extract_release_info() -> dict[str, str]:
+        info = {
+            "release_version": ReleaseInfoHooks._globals["versions"]["release"],
+            "robokop_version": ReleaseInfoHooks._globals["data_sources"]["robokop"]["version"],
+            "rtx-kg2_version": ReleaseInfoHooks._globals["data_sources"]["rtx-kg2"]["version"],
+            "ec-medical-team": ReleaseInfoHooks._globals["data_sources"]["ec-medical-team"]["version"],
+            "topological_estimator": ReleaseInfoHooks._params["embeddings.topological_estimator"]["object"],
+            "topological_encoder": ReleaseInfoHooks._params["embeddings.node"]["encoder"]["encoder"]["model"],
+            "bigquery_link": ReleaseInfoHooks.build_bigquery_link(),
+            "mlflow_link": ReleaseInfoHooks.build_mlflow_link(),
+            "code_link": ReleaseInfoHooks.build_code_link(),
+        }
+        return info
+
+    @staticmethod
+    def get_bucket() -> Bucket:
+        project_name = ReleaseInfoHooks._globals["gcp_project"]
+        bucket_name = ReleaseInfoHooks._globals["gcs_bucket"]
+        client = storage.Client(project_name)
+        bucket = client.bucket(bucket_name.replace("gs://", ""))
+        return bucket
+
+    @staticmethod
+    def build_blobpath() -> str:
+        release_dir = ReleaseInfoHooks._globals["release_dir"]
+        blob_path = release_dir.replace("gs://", "").split("/", 1)[1]
+        release_version = ReleaseInfoHooks._globals["versions"]["release"]
+        full_blob_path = os.path.join(blob_path, f"{release_version}_info.json")
+        return full_blob_path
+
+    @staticmethod
+    def upload_to_storage(release_info: dict[str, str]) -> None:
+        bucket = ReleaseInfoHooks.get_bucket()
+        blobpath = ReleaseInfoHooks.build_blobpath()
+        blob = bucket.blob(blobpath)
+        blob.upload_from_string(data=json.dumps(release_info), content_type="application/json")
+
+    @hook_impl
+    def after_node_run(self, node: Node) -> None:
+        """Runs after the last node of the data_release pipeline"""
+        # We chose to add this using the `after_node_run` hook, rather than
+        # `after_pipeline_run`, because one does not know a priori which
+        # pipelines the (last) data release node is part of. With an
+        # `after_node_run`, you can limit your filters easily.
+        if node.name == last_data_release_node.name:
+            release_info = self.extract_release_info()
+            self.upload_to_storage(release_info)

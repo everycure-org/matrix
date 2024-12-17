@@ -5,7 +5,6 @@ services:
     # note this works only on MacOS devices (or other ARM chipsets), check
     # `docker-compose.test.yml` for the override
     image: neo4j:5.21.0-enterprise
-    # platform: ${DOCKER_PLATFORM:-linux/arm64}
     restart: unless-stopped
     ports:
       - 7474:7474
@@ -22,11 +21,17 @@ services:
       - NEO4J_dbms_security_procedures_unrestricted=gds.*, apoc.*
       - NEO4J_db_logs_query_enabled=OFF
       - NEO4J_ACCEPT_LICENSE_AGREEMENT=yes
+      # License file can be activated using the following env variable
+      # https://neo4j.com/docs/graph-data-science/current/installation/installation-enterprise-edition
+      # - NEO4J_gds_enterprise_license__file=/licenses/gds
     volumes:
       - ./neo4j_data/data:/data
       - ./neo4j_data/logs:/logs
       - ./neo4j_data/import:/var/lib/neo4j/import
       - ./neo4j_data/plugins:/plugins
+      # Neo4J licences should be mounted in the license directory
+      # https://community.neo4j.com/t/unable-to-setup-neo4j-gds-licence-through-docker/71242
+      # - ./licenses:/licenses
     healthcheck:
       test: wget http://localhost:7474 || exit 1
       interval: 10s
@@ -49,8 +54,7 @@ services:
   # MockServer instance that is used to mock a openai embeddings endpoint as well a synonimizer API.
   # This is used for local development and integration testing
   mockserver:
-    image: mockserver/mockserver
-    # platform: ${DOCKER_PLATFORM:-linux/arm64}
+    image: mockserver/mockserver:mockserver-5.15.0
     container_name: mockserver
     restart: unless-stopped
     user: root

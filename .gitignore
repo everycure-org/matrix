@@ -33,3 +33,10 @@ services/synonymizer/assets/
 **/__pycache__/
 infra/**/Chart.lock
 **/.ipynb_checkpoints/
+
+**/.joblib/**
+
+# Ignore generated credentials from google-github-actions/auth
+gha-creds-*.json
+
+pipelines/matrix/src/matrix/pipelines/matrix_generation/matrix.code-workspace

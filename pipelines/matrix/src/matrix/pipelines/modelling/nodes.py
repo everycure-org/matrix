@@ -1,3 +1,4 @@
+import logging
 from typing import Any, Dict, List, Union, Tuple
 import pandas as pd
 import numpy as np
@@ -12,6 +13,7 @@ from sklearn.base import BaseEstimator
 
 import matplotlib.pyplot as plt
 
+from functools import wraps
 from refit.v1.core.inject import inject_object
 from refit.v1.core.inline_has_schema import has_schema
 from refit.v1.core.inline_primary_key import primary_key
@@ -22,80 +24,163 @@ from matrix.datasets.graph import KnowledgeGraph
 from matrix.datasets.pair_generator import SingleLabelPairGenerator
 from .model import ModelWrapper
 
+logger = logging.getLogger(__name__)
+
 plt.switch_backend("Agg")
 
 
-@primary_key(primary_key=["source", "target"])
-def create_int_pairs(raw_tp: pd.DataFrame, raw_tn: pd.DataFrame):
-    """Create intermediate pairs dataset.
+def no_nulls(columns: List[str]):
+    """Decorator to check columns for null values.
+
+    FUTURE: Move to pandera when we figure out how to push messages for breaking changes.
 
     Args:
-        raw_tp: Raw ground truth positive data.
-        raw_tn: Raw ground truth negative data.
+        columns: list of columns to check
+    """
+
+    if isinstance(columns, str):
+        columns = [columns]
+
+    def decorator(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            # Proceed with the function if no null values are found
+            df = func(*args, **kwargs)
+
+            if not all(col_name in df.columns for col_name in columns):
+                raise ValueError(f"DataFrame is missing required columns: {', '.join(columns)}")
+
+            # Check if the specified column has any null values
+            null_rows_df = df.filter(" OR ".join([f"{col_name} IS NULL" for col_name in columns]))
+
+            # Check if the resulting DataFrame is empty
+            if not null_rows_df.isEmpty():
+                # Show rows with null values for debugging
+                null_rows_df.show()
+                raise ValueError(f"DataFrame contains null values in columns: {', '.join(columns)}")
+
+            return df
+
+        return wrapper
+
+    return decorator
+
+
+def filter_valid_pairs(
+    nodes: DataFrame,
+    raw_tp: DataFrame,
+    raw_tn: DataFrame,
+) -> Tuple[DataFrame, Dict[str, float]]:
+    """Filter pairs to only include nodes that exist in the nodes DataFrame.
+
+    Args:
+        nodes: Nodes dataframe
+        raw_tp: Raw ground truth positive data
+        raw_tn: Raw ground truth negative data
 
     Returns:
-        Combined ground truth positive and negative data.
+        Tuple containing:
+        - DataFrame with combined filtered positive and negative pairs
+        - Dictionary with retention statistics
     """
-    raw_tp["y"] = 1
-    raw_tn["y"] = 0
+    # Get list of nodes in the KG
+    valid_nodes = nodes.select("id").distinct()
 
-    # Concat
-    return pd.concat([raw_tp, raw_tn], axis="index").reset_index(drop=True)
+    # Filter out pairs where both source and target exist in nodes
+    filtered_tp = (
+        raw_tp.join(valid_nodes.alias("source_nodes"), raw_tp.source == f.col("source_nodes.id"))
+        .join(valid_nodes.alias("target_nodes"), raw_tp.target == f.col("target_nodes.id"))
+        .select(raw_tp["*"])
+    )
+    filtered_tn = (
+        raw_tn.join(valid_nodes.alias("source_nodes"), raw_tn.source == f.col("source_nodes.id"))
+        .join(valid_nodes.alias("target_nodes"), raw_tn.target == f.col("target_nodes.id"))
+        .select(raw_tn["*"])
+    )
+
+    # Calculate retention percentages
+    retention_stats = {
+        "positive_pairs_retained_pct": (filtered_tp.count() / raw_tp.count()) if raw_tp.count() > 0 else 1.0,
+        "negative_pairs_retained_pct": (filtered_tn.count() / raw_tn.count()) if raw_tn.count() > 0 else 1.0,
+    }
+
+    # Combine filtered pairs
+    pairs_df = filtered_tp.withColumn("y", f.lit(1)).unionByName(filtered_tn.withColumn("y", f.lit(0)))
+
+    return {"pairs": pairs_df, "metrics": retention_stats}
 
 
-def prefilter_nodes(nodes: DataFrame, drug_types: List[str], disease_types: List[str]) -> DataFrame:
-    """Filters nodes before passing on to modelling nodes.
+@has_schema(
+    schema={"y": "int"},
+    allow_subset=True,
+)
+@no_nulls(columns=["source_embedding", "target_embedding"])
+def attach_embeddings(
+    pairs_df: DataFrame,
+    nodes: DataFrame,
+) -> DataFrame:
+    """Attach node embeddings to the pairs DataFrame.
+
+    Args:
+        pairs_df: DataFrame containing source-target pairs
+        nodes: nodes dataframe containing embeddings
+
+    Returns:
+        DataFrame with source and target embeddings attached
+    """
+    return (
+        pairs_df.alias("pairs")
+        .join(nodes.withColumn("source", f.col("id")), how="left", on="source")
+        .withColumnRenamed("topological_embedding", "source_embedding")
+        .join(nodes.withColumn("target", f.col("id")), how="left", on="target")
+        .withColumnRenamed("topological_embedding", "target_embedding")
+        .select("pairs.*", "source_embedding", "target_embedding")
+    )
+
+
+@has_schema(
+    schema={
+        "id": "string",
+        "is_drug": "boolean",
+        "is_disease": "boolean",
+    },
+    allow_subset=True,
+)
+@primary_key(primary_key=["id"])
+def prefilter_nodes(
+    full_nodes: DataFrame, nodes: DataFrame, gt: DataFrame, drug_types: List[str], disease_types: List[str]
+) -> DataFrame:
+    """Prefilter nodes for negative sampling.
 
     Args:
         nodes: the nodes dataframe to be filtered
+        gt: dataframe with ground truth positives and negatives
         drug_types: list of drug types
         disease_types: list of disease types
     Returns:
         Filtered nodes dataframe
     """
-    return nodes.filter((f.col("category").isin(drug_types)) | (f.col("category").isin(disease_types)))
+    gt_pos = gt.filter(f.col("y") == 1)
+    ground_truth_nodes = (
+        gt.withColumn("id", f.col("source"))
+        .unionByName(gt_pos.withColumn("id", f.col("target")))
+        .select("id")
+        .distinct()
+        .withColumn("is_ground_pos", f.lit(True))
+    )
 
+    df = (
+        nodes.withColumn("is_drug", f.arrays_overlap(f.col("all_categories"), f.lit(drug_types)))
+        .withColumn("is_disease", f.arrays_overlap(f.col("all_categories"), f.lit(disease_types)))
+        .filter((f.col("is_disease")) | (f.col("is_drug")))
+        .select("id", "topological_embedding", "is_drug", "is_disease")
+        # TODO: The integrated data product _should_ contain these nodes
+        # TODO: Verify below does not have any undesired side effects
+        .join(ground_truth_nodes, on="id", how="left")
+        .fillna({"is_ground_pos": False})
+    )
 
-@has_schema(
-    schema={
-        "is_drug": "bool",
-        "is_disease": "bool",
-        "is_ground_pos": "bool",
-        # "node_embedding": "object",
-        # "pca_embedding": "object",
-        "topological_embedding": "object",
-    },
-    allow_subset=True,
-)
-def create_feat_nodes(
-    raw_nodes: DataFrame,
-    known_pairs: DataFrame,
-    drug_types: List[str],
-    disease_types: List[str],
-) -> pd.DataFrame:
-    """Add features for nodes.
-
-    Args:
-        raw_nodes: Raw nodes data.
-        known_pairs: Ground truth data.
-        drug_types: List of drug types.
-        disease_types: List of disease types.
-
-    Returns:
-        Nodes enriched with features.
-    """
-    # FUTURE: Transcode as pandas instead?
-    pdf_nodes = raw_nodes.toPandas()
-
-    # Add drugs and diseases types flags
-    pdf_nodes["is_drug"] = pdf_nodes["category"].apply(lambda x: x in drug_types)
-    pdf_nodes["is_disease"] = pdf_nodes["category"].apply(lambda x: x in disease_types)
-
-    ground_pos = known_pairs[known_pairs["y"].eq(1)]
-    ground_pos_drug_ids = list(ground_pos["source"].unique())
-    ground_pos_disease_ids = list(ground_pos["target"].unique())
-    pdf_nodes["is_ground_pos"] = pdf_nodes["id"].isin(ground_pos_drug_ids + ground_pos_disease_ids)
-    return pdf_nodes
+    return df
 
 
 @has_schema(
@@ -111,7 +196,6 @@ def create_feat_nodes(
 )
 @inject_object()
 def make_splits(
-    kg: KnowledgeGraph,
     data: DataFrame,
     splitter: BaseCrossValidator,
 ) -> pd.DataFrame:
@@ -125,9 +209,6 @@ def make_splits(
     Returns:
         Data with split information.
     """
-    # FUTURE: Improve by redoing in Spark
-    data["source_embedding"] = data["source"].apply(lambda s_id: kg._embeddings[s_id])
-    data["target_embedding"] = data["target"].apply(lambda t_id: kg._embeddings[t_id])
     all_data_frames = []
     for iteration, (train_index, test_index) in enumerate(splitter.split(data, data["y"])):
         all_indices_in_this_fold = list(set(train_index).union(test_index))
@@ -315,7 +396,10 @@ def train_model(
     X_train = data.loc[mask, features]
     y_train = data.loc[mask, target_col_name]
 
-    return estimator.fit(X_train.values, y_train.values)
+    logger.info(f"Starting model: {estimator} training...")
+    estimator_fit = estimator.fit(X_train.values, y_train.values)
+    logger.info("Model training completed...")
+    return estimator_fit
 
 
 def create_model(*estimators) -> ModelWrapper:
