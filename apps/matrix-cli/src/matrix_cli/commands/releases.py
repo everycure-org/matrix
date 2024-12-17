@@ -1,5 +1,4 @@
 import json
-import os
 import platform
 import re
 import subprocess
@@ -26,7 +25,8 @@ from matrix_cli.components.utils import (
     get_markdown_contents,
     invoke_model,
     run_command,
-    select_previous_release,
+    ask_for_release,
+    get_latest_release,
 )
 
 if TYPE_CHECKING:
@@ -40,7 +40,7 @@ app = typer.Typer(
 
 @app.command()
 def test():
-    print(select_previous_release())
+    print(ask_for_release())
 
 
 @app.command(name="article")
@@ -48,13 +48,19 @@ def write_release_article(
     output_file: str = typer.Option(None, help="File to write the release article to"),
     model: str = typer.Option(settings.power_model, help="Language model to use"),
     disable_rendering: bool = typer.Option(True, help="Disable rendering of the release article"),
+    headless: bool = typer.Option(False, help="Don't ask interactive questions."),
+    notes_file: str = typer.Option(None, help="File containing release notes"),
 ):
     """Write a release article for a given git reference."""
+    since = select_release(headless)
 
-    since = select_previous_release()
-
-    console.print("[green]Collecting release notes...")
-    notes = get_release_notes(since, model=model)
+    if notes_file:
+        console.print("[green]Loading release notes")
+        notes = Path(notes_file).read_text()
+        console.print(f"[green]Release notes loaded. Total length: {len(notes)} characters")
+    else:
+        console.print("[green]Collecting release notes...")
+        notes = get_release_notes(since, model=model)
 
     console.print("[green]Collecting previous articles...")
     previous_articles = get_previous_articles()
@@ -64,9 +70,6 @@ def write_release_article(
 
     # prompt user to give guidance on what to focus on in the release article
     console.print(Markdown(notes))
-    focus_direction = console.input(
-        "[bold green]Please provide guidance on what to focus on in the release article. Note 'Enter' will end the prompt: "
-    )
 
     prompt = f"""
 # Please write a release article based on the following release notes and git diff:
@@ -84,16 +87,22 @@ def write_release_article(
 - Focus on technical accuracy
 - Ensure a high signal-to-noise ratio for technical readers
 
+        """
+
+    if not headless:
+        focus_direction = console.input(
+            "[bold green]Please provide guidance on what to focus on in the release article. Note 'Enter' will end the prompt: "
+        )
+        prompt += f"""
 ## Focus of the article:
+        
 Please focus on the following topics in the release article:
 {focus_direction}
         """
-
     response = invoke_model(prompt, model=model)
 
     if output_file:
-        with open(output_file, "w") as f:
-            f.write(response)
+        Path(output_file).write_text(response)
         console.print(f"Release article written to: {output_file}")
     elif not disable_rendering:
         console.print("[bold green]Generated release article:")
@@ -108,23 +117,25 @@ Please focus on the following topics in the release article:
 def release_notes(
     model: str = typer.Option(settings.base_model, help="Model to use for summarization"),
     output_file: str = typer.Option(None, help="File to write the release notes to"),
+    headless: bool = typer.Option(
+        False, help="Don't ask interactive questions. The most recent release will be automatically used."
+    ),
 ):
     """Generate an AI summary of code changes since a specific git reference."""
-
-    since = select_previous_release()
+    since = select_release(headless)
 
     try:
         console.print("Generating release notes...")
         response = get_release_notes(since, model)
 
         if output_file:
-            with open(output_file, "w") as f:
-                f.write(response)
+            Path(output_file).write_text(response)
+            console.print(f"Release notes written to: {output_file}")
         else:
             print(Markdown(response))
 
     except Exception as e:
-        console.print(f"[bold red]Error: {str(e)}", err=True)
+        console.print(f"[bold red]Error: {str(e)}")
         raise typer.Exit(1)
 
 
@@ -137,8 +148,8 @@ def get_release_notes(since: str, model: str) -> str:
     diff_output = get_code_diff(since)
 
     release_yaml = yaml.load(release_template, Loader=yaml.FullLoader)
-    categories = [c["title"] for c in release_yaml["changelog"]["categories"]]
-    categories_md = "\n - ".join([f"## {c}" for c in categories])
+    categories = (c["title"] for c in release_yaml["changelog"]["categories"])
+    categories_md = "\n - ".join((f"## {c}" for c in categories))
 
     prompt = f"""Please provide a concise summary of the following code changes. 
     Focus on creating the content for the following release template following its categories:
@@ -170,13 +181,10 @@ def get_release_notes(since: str, model: str) -> str:
 
 
 def get_release_template() -> str:
-    git_root = get_git_root()
-    release_template_path = os.path.join(git_root, ".github", "release.yml")
-    with open(release_template_path, "r") as f:
-        return f.read()
+    return Path(get_git_root(), ".github", "release.yml").read_text()
 
 
-def get_previous_articles() -> list[str]:
+def get_previous_articles() -> str:
     git_root = get_git_root()
     release_notes_path = Path(git_root) / "docs" / "src" / "releases" / "posts"
     return get_markdown_contents(release_notes_path)
@@ -187,17 +195,20 @@ def prepare_release(
     output_file: str = None,
     no_cache: bool = typer.Option(False, "--no-cache", help="Disable caching of PR details"),
     skip_ai: bool = typer.Option(False, "--skip-ai", help="Skip AI title suggestions"),
+    headless: bool = typer.Option(
+        False, help="Don't ask interactive questions. The most recent release will be automatically used."
+    ),
 ):
     """
     Prepares release notes by processing PRs merged since the given tag.
 
     Args:
-        previous_tag (str): The previous release git tag.
         output_file (str): The name of the Excel file to create/update.
         no_cache (bool): If True, bypass the cache when fetching PR details.
         skip_ai (bool): If True, skip AI title suggestions.
+        headless (bool): Don't ask interactive questions. Most recent tag will be used.
     """
-    previous_release = select_previous_release()
+    previous_release = select_release(headless)
     typer.echo(f"Collecting PRs since {previous_release}...")
 
     if no_cache:
@@ -475,6 +486,12 @@ def write_excel(df: "pd.DataFrame", filename: str):
         worksheet.column_dimensions[chr(65 + idx)].width = min(max_length + 2, 100)
 
     writer.close()
+
+
+def select_release(headless: bool) -> str:
+    if headless:
+        return get_latest_release()
+    return ask_for_release()
 
 
 if __name__ == "__main__":

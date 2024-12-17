@@ -1,0 +1,50 @@
+name: Release
+on:
+  pull_request:
+    types: [closed]
+
+jobs:
+  approved:
+    if: |
+      github.event.pull_request.merged == true &&
+      contains(github.event.pull_request.labels.*.name, 'Release')
+    runs-on: ubuntu-latest
+    name: PR approval
+    permissions:
+      pull-requests: 'read'
+
+    steps:
+      - name: "Check the PR state"
+        run: echo "The release PR is approved and merged"
+
+  create_release:
+    needs: [approved]
+    runs-on: ubuntu-latest
+    name: Create release
+    permissions:
+      contents: 'write'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-tags: true
+          fetch-depth: 0
+
+      - name: Fetch latest tag
+        id: fetch_latest_tag
+        run: |
+          latest_tag=$(git tag --list --sort="v:refname" | tail -n 1)
+          echo "latest_tag=${latest_tag}" >> "$GITHUB_ENV"
+          echo "Latest tag is ${latest_tag}"
+
+      - name: Create GitHub release
+        env:
+            GH_TOKEN: ${{ github.token }}
+            POSTS_DIR: docs/src/releases/posts
+        run: |
+          echo "Creating release"
+          gh release create "${{ env.latest_tag }}" \
+            --notes-file "${GITHUB_WORKSPACE}/${POSTS_DIR}/${{ env.latest_tag }}/notes.md" \
+            --title "${{ env.latest_tag }}" \
+            --latest
