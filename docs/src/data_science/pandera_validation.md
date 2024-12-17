@@ -18,13 +18,90 @@ import pandera.pyspark as py  # avoid abbreviations
 
 We avoid using abbreviations like `pa` or `py` as they can cause confusion, especially when working with multiple DataFrame types and validation approaches.
 
-## DataFrame Types and Validation
+`pyspark.sql.DataFrame` and `pyspark.DataFrame` are effectively the same class, and `pyspark.sql.DataFrame` is the preferred class to use.
 
-`pyspark.sql.DataFrame` and `pyspark.DataFrame` are effectively the same class.
+## DataFrame Types and Validation
 
 Our codebase works with several types of DataFrames, each requiring different validation approaches:
 
-# TODO: Differentiate use cases between two different types of PySpark DataFrames, and provide examples + justification from our codebase.
+
+1. **Pandas DataFrames**: Local in-memory DataFrames, best for smaller datasets and complex validations. Supports the full range of Pandera validations including statistical checks and complex data type validations.
+
+Example of a Pandas DataFrame validation:
+
+- `DataFrameModel` is the the generic Pandera schema parent class.
+- `Column` is the the generic Pandera class.
+- `T` is the native Pandas type system.
+
+
+```python
+import pandas as pd
+from pandera import Column, DataFrameSchema
+import pandera
+
+trial_schema = DataFrameSchema(
+    {
+        "source": Column(object),
+        "target": Column(object),
+        "is_known_positive": Column(bool),
+        "is_known_negative": Column(bool),
+        "trial_sig_better": Column(bool),
+        "trial_non_sig_better": Column(bool),
+        "trial_sig_worse": Column(bool),
+        "trial_non_sig_worse": Column(bool),
+    },
+    strict=False,
+)
+
+
+@pandera.check_output(trial_schema)
+@inject_object()
+def generate_pairs(
+    drugs: pd.DataFrame,
+    diseases: pd.DataFrame,
+    graph: KnowledgeGraph,
+    known_pairs: pd.DataFrame,
+    clinical_trials: pd.DataFrame,
+) -> pd.DataFrame:
+
+```
+
+2. **PySpark DataFrames**: Distributed DataFrames that can handle large-scale data. Uses Spark's native type system and offers more limited validation capabilities but better performance. Importantly, the validation is executed on the driver node - see the rest of the doc for more details.
+
+Example of a PySpark DataFrame validation:
+
+- `DataFrameModel` is the PySpark-specific.
+- `Field` is the PySpark-specific implementation of the Pandera `Field` class.
+- `T` is the native PySpark type system.
+
+Importantly, this uses different classes (even though they have the same name) as the Pandas validation.
+
+```python
+from pandera.pyspark import DataFrameModel
+import pyspark.sql.types as T
+from pandera.pyspark import Field
+import pandera
+import pyspark
+from pyspark.sql import functions as F
+
+class EmbeddingSchema(DataFrameModel):
+    id: T.StringType() = Field(nullable=False)  # type: ignore
+    embedding: T.ArrayType(T.FloatType(), False)  # type: ignore
+    pca_embedding: T.ArrayType(T.FloatType(), True)  # type: ignore
+
+    class Config:
+        strict = False
+        unique = ["id"]
+
+
+@pandera.check_output(EmbeddingSchema)
+@unpack_params()
+def reduce_embeddings_dimension(
+    df: pyspark.sql.DataFrame, transformer, input: str, output: str, skip: bool
+) -> pyspark.sql.DataFrame:
+    x = reduce_dimension(df, transformer, input, output, skip)
+    return x
+```
 
 
 Subsequent questions:
@@ -69,108 +146,13 @@ Subsequent questions:
 
 
 
-
-1. **Pandas DataFrames**: Local in-memory DataFrames, best for smaller datasets and complex validations. Supports the full range of Pandera validations including statistical checks and complex data type validations.
-
-2. **PySpark DataFrames**: Distributed DataFrames that can handle large-scale data. Uses Spark's native type system and offers more limited validation capabilities but better performance. Importantly, t
-
-TODO: Verify that PySpark DataFrame validations are executed on the driver node.
-
-## Class-Based Schema Definition
-
-We prefer using class-based API over the object-based API for better code organization and type hints. Here's how to define and use them:
-
-# TODO: Replace this with an actual example from our codebase.
-
-```python
-import pandera
-from pandera.typing import Series
-
-class UserSchema(pandera.SchemaModel):
-    id: Series[int] = pandera.Field(nullable=False, unique=True)
-    name: Series[str] = pandera.Field(nullable=False)
-    age: Series[int] = pandera.Field(ge=0, lt=150)
-    email: Series[str] = pandera.Field(str_matches=r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$")
-
-    class Config:
-        strict = True
-        coerce = True
-```
-
 ## Pandas vs PySpark Validation
 
 Our codebase supports both Pandas and PySpark DataFrame validation, but there are important differences:
 
-### Pandas Validation
-
-# TODO: Replace this with an actual example from our codebase.
-```python
-import pandera
-
-# Define schema for pandas
-schema = pandera.DataFrameSchema({
-    "float_col": pandera.Column(float, pandera.Check.ge(10.0)),
-    "int_col": pandera.Column(str),
-    "string_col": pandera.Column(str, nullable=False)
-})
-```
-
-### PySpark Validation
-
-# TODO: Replace this with an actual example from our codebase.
-
-```python
-import pandera.pyspark
-import pyspark.sql.types as T
-
-# Define schema for PySpark
-schema = pandera.pyspark.DataFrameSchema({
-    "int_col": pandera.pyspark.Column(T.IntegerType()),
-    "float_col": pandera.pyspark.Column(T.FloatType(), pandera.pyspark.Check.ge(10.0)),
-    "string_col": pandera.pyspark.Column(T.StringType())
-})
-```
-
 Key differences:
 - PySpark uses native Spark types (e.g., `T.IntegerType()`)
 - Pandas uses Python types (e.g., `int`, `str`)
-- PySpark validation is generally less flexible but more performant
-- Pandas validation offers more complex checks and statistical validations
-
-## Examples from Our Codebase
-
-### Composite Primary Keys
-```python
-schema = pandera.DataFrameSchema(
-    {
-        "id1": pandera.Column(int, nullable=False),  # composite primary key
-        "id2": pandera.Column(str, nullable=False),  # composite primary key
-        "name": pandera.Column(str, nullable=True),
-    },
-    unique=["id1", "id2"]  # checks joint uniqueness
-)
-```
-
-### Multiple Validations
-```python
-schema = pandera.DataFrameSchema({
-    "string_col": pandera.Column(
-        str,
-        [
-            pandera.Check.str_matches(r"^[A-Z]"),
-            pandera.Check.isin(["Asia", "Africa", "Europe"]),
-            pandera.Check(lambda x: len(x) < 20),
-        ],
-    )
-})
-```
-
-### Regex Pattern Matching
-```python
-schema = pandera.DataFrameSchema({
-    ".*_col": pandera.Column(nullable=False, regex=True)  # matches any column ending with '_col'
-})
-```
 
 ## Best Practices
 
