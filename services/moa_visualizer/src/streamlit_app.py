@@ -18,7 +18,7 @@ with st.sidebar:
         [0.6, 0.4],
         gap="small",
     )
-    st.write(f"app version: {settings.IMAGE_VERSION}")
+
     st.title("Available pairs")
     st.write(
         "Select the pair you would like to view from the list of", " available pairs, or search using the search bar"
@@ -50,10 +50,12 @@ with st.sidebar:
 
     all_pairs = st.checkbox("Show all pairs", value=False)
     if all_pairs or search_input != "":
+        st.warning("Please deselect a pair before selecting a new pair.")
         selected_pair_index_df = st.dataframe(
             display_table(available_pairs_df), selection_mode="single-row", on_select="rerun", hide_index=True
         )
-
+    st.divider()
+    st.write(f"App version: {settings.IMAGE_VERSION}")
 with st.expander("What is the MoA prediction pipeline?"):
     st.markdown(settings.moa_info_text)
     st.image(settings.moa_info_img)

@@ -1,23 +1,6 @@
 from pydantic_settings import BaseSettings
 from pydantic import Field, HttpUrl, BaseModel
 import streamlit as st
-# from enum import Enum
-
-
-# class BiolinkClass(str, Enum):
-#     """Enumeration of supported biolink classes."""
-#     SMALL_MOLECULE = "small_molecule"
-#     DISEASE = "disease"
-#     PROTEIN = "protein"
-
-
-# class ColourMap(BaseSettings):
-#     """Pastel colours for biolink classes."""
-#     colour_map: Dict[BiolinkClass, str] = {
-#         BiolinkClass.SMALL_MOLECULE: '#77DD77',
-#         BiolinkClass.DISEASE: '#B3EBF2',
-#         BiolinkClass.PROTEIN: '#FF964F',
-#     }
 
 
 class OntologyUrls(BaseModel):
