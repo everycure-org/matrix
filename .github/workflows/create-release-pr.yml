@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - 'debug/release*'
-      - 'feat/trigger-release-from-gh-action'  # TODO: replace by manual trigger and repository_dispatch
   repository_dispatch:
     types: distribute-release
 
