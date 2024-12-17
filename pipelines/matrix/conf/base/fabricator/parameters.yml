@@ -83,6 +83,7 @@ fabricator.rtx_kg2:
           - biolink:affects
           - biolink:subclass_of
           - biolink:is_nearby_variant_of
+          - biolink:ChemicalToChemicalDerivationAssociation
       knowledge_source:string[]:
         type: generate_random_arrays
         delimiter: "\u001f"

@@ -21,7 +21,7 @@ modelling.xg_ensemble:
             n_jobs: 16
             random_state: ${globals:random_state}
             tree_method: hist
-            device: cpu # TODO: Add cuda
+            device: cuda
           n_calls: 20
           dimensions:
             - object: skopt.space.Real

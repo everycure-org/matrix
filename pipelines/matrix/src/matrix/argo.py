@@ -1,5 +1,4 @@
 import re
-import copy
 import yaml
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -37,8 +36,7 @@ def generate_argo_config(
     pipeline_tasks = get_dependencies(fuse(pipeline), default_execution_resources)
     git_sha = get_git_sha()
 
-    # TODO: After it is possible to configure resources on node level, remove the use_gpus flag.
-    output = template.render(
+    rendered_template = template.render(
         package_name=package_name,
         pipeline_tasks=pipeline_tasks,
         pipeline_name=pipeline.name,
@@ -52,14 +50,10 @@ def generate_argo_config(
         git_sha=git_sha,
         default_execution_resources=default_execution_resources.model_dump(),
     )
+    yaml_data = yaml.safe_load(rendered_template)
+    yaml_without_anchors = yaml.dump(yaml_data, sort_keys=False, default_flow_style=False)
 
-    # Load the rendered YAML into a Python object
-    yaml_data = copy.deepcopy(yaml.safe_load(output))
-
-    # Dump the final YAML without anchors
-    final_yaml = yaml.dump(yaml_data, sort_keys=False, default_flow_style=False)
-
-    return final_yaml
+    return yaml_without_anchors
 
 
 class FusedNode(Node):
