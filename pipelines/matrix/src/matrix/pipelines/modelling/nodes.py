@@ -203,7 +203,7 @@ def make_splits(
 
     # Split data into folds
     all_data_frames = []
-    for _, (train_index, test_index) in enumerate(splitter.split(data, data["y"])):
+    for train_index, test_index in splitter.split(data, data["y"]):
         all_indices_in_this_fold = list(set(train_index).union(test_index))
         fold_data = data.loc[all_indices_in_this_fold, :].copy()
         fold_data.loc[train_index, "split"] = "TRAIN"
