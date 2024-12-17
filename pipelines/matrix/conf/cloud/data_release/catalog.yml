@@ -22,3 +22,7 @@ data_release.prm.bigquery_nodes:
   <<: *_bigquery_ds
   filepath: ${globals:paths.release}/prm/bigquery_nodes
   table: nodes
+
+data_release.dummy:
+  type: yaml.YAMLDataset
+  filepath: ${globals:paths.tmp}/foo.yaml
