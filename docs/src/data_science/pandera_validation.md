@@ -104,55 +104,26 @@ def reduce_embeddings_dimension(
 ```
 
 
-Subsequent questions:
-> - The output of schema.validate will produce a dataframe in pyspark SQL even in case of errors during validation. Instead of raising the error, the errors are collected and can be accessed via the dataframe.pandera.errors attribute as shown in this example. This design decision is based on the expectation that most use cases for pyspark SQL dataframes means entails a production ETL setting. In these settings, pandera prioritizes completing the production load and saving the data quality issues for downstream rectification.
-> - There is no support for lambda based vectorized checks since in spark lambda checks needs UDFs, which is inefficient. However pyspark sql does support custom checks via the register_check_method() decorator.
-> - Unlike the pandera pandas schemas, the default behaviour of the pyspark SQL version for errors is lazy=True, i.e. all the errors would be collected instead of raising at first error instance.
-> - In defining the type annotation, there is limited support for default python data types such as int, str, etc. When using the pandera.pyspark API, using pyspark.sql.types based datatypes such as StringType, IntegerType, etc. is highly recommended.
-
-
-
-# TODO: Integrate this part of documentation
-
-> Granular Control of Pandera’s Execution
-> new in 0.16.0
-> By default, error reports are generated for both schema and data level validation. Adding support for pysqark SQL also comes with more granular control over the execution of Pandera’s validation flow.
-> 
-> This is achieved by introducing configurable settings using environment variables that allow you to control execution at three different levels:
->
->SCHEMA_ONLY: perform schema validations only. It checks that data conforms to the schema definition, but does not perform any data-level validations on dataframe.
->
->DATA_ONLY: perform data-level validations only. It validates that data conforms to the defined checks, but does not validate the schema.
->
->SCHEMA_AND_DATA: (default) perform both schema and data level validations. It runs most exhaustive validation and could be compute intensive.
->
->You can override default behaviour by setting an environment variable from terminal before running the pandera process as:
->
->export PANDERA_VALIDATION_DEPTH=SCHEMA_ONLY
-
-# TODO: Add section about validation disabling 
-
-> Switching Validation On and Off
-> new in 0.16.0
-> 
-> It’s very common in production to enable or disable certain services to save computing resources. We thought about it and thus introduced a switch to enable or disable pandera in production.
-> 
-> You can override default behaviour by setting an environment variable from terminal before running the pandera process as follow:
-> 
-> export PANDERA_VALIDATION_ENABLED=False
-> This will be picked up by pandera to disable all validations in the application.
-> 
-> By default, validations are enabled and depth is set to SCHEMA_AND_DATA which can be changed to SCHEMA_ONLY or DATA_ONLY as required by the use case.
-
-
-
 ## Pandas vs PySpark Validation
 
-Our codebase supports both Pandas and PySpark DataFrame validation, but there are important differences:
+Validating PySpark with Pandera documentation: https://pandera.readthedocs.io/en/stable/pyspark_sql.html
+
+Our codebase supports both Pandas and PySpark DataFrame validation, but unfortunately those do not use the same validators.
+
+Usually, when running into issues with validating Spark DataFrames, it is worth investigating whether Spark (rather than Pandas) types are being used.
+
 
 Key differences:
 - PySpark uses native Spark types (e.g., `T.IntegerType()`)
 - Pandas uses Python types (e.g., `int`, `str`)
+- Because of distributed nature of Spark, the validation is executed on the driver node which might lead to issues with large datasets. We haven't tested this yet, but it might be worth considering running the validation only against the schema of of the PySpark DataFrame.
+
+From the [Pandera documentation](https://pandera.readthedocs.io/en/stable/pyspark_sql.html#what-s-different):
+
+> The output of schema.validate will produce a dataframe in pyspark SQL even in case of errors during validation. Instead of raising the error, the errors are collected and can be accessed via the dataframe.pandera.errors attribute as shown in this example. This design decision is based on the expectation that most use cases for pyspark SQL dataframes means entails a production ETL setting. In these settings, pandera prioritizes completing the production load and saving the data quality issues for downstream rectification.
+>  Unlike the pandera pandas schemas, the default behaviour of the pyspark SQL version for errors is lazy=True, i.e. all the errors would be collected instead of raising at first error instance.
+> In defining the type annotation, there is limited support for default python data types such as int, str, etc. When using the pandera.pyspark API, using pyspark.sql.types based datatypes such as StringType, IntegerType, etc. is highly recommended.
+
 
 ## Best Practices
 
@@ -163,8 +134,3 @@ Key differences:
 5. Add schema validation tests for critical data pipelines
 6. Use full import names (`pandera`, not `pa`) for clarity
 7. Consider DataFrame type when choosing validation approach
-
-For more examples, see:
-# TODO: Add examples from our codebase.
-
-# TODO: Add considerations for uniqueness constraints in Pandera's distributed (SQL) PySpark DataFrames.
