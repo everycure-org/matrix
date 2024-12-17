@@ -147,6 +147,7 @@ class GDSNode2Vec(GDSGraphAlgorithm):
         """
         attr = gds.node2vec.write(
             G=graph,
+            concurrency=self._concurrency,
             writeProperty=write_property,
             walkLength=self._walk_length,
             walksPerNode=self._walks_per_node,

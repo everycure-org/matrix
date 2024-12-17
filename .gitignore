@@ -33,3 +33,7 @@ services/synonymizer/assets/
 **/__pycache__/
 infra/**/Chart.lock
 **/.ipynb_checkpoints/
+
+**/.joblib/**
+
+pipelines/matrix/src/matrix/pipelines/matrix_generation/matrix.code-workspace
