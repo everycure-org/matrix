@@ -21,7 +21,7 @@ from kedro_datasets.spark import SparkDataset, SparkJDBCDataset
 from kedro_datasets.spark.spark_dataset import _get_spark, _split_filepath, _strip_dbfs_prefix
 from matrix.hooks import SparkHooks
 from pygsheets import Spreadsheet, Worksheet
-from pyspark.sql import DataFrame
+import pyspark
 from matrix.inject import _parse_for_objects
 
 logger = logging.getLogger(__name__)
@@ -70,7 +70,7 @@ class SparkWithSchemaDataset(SparkDataset):
             metadata=metadata,
         )
 
-    def _load(self) -> DataFrame:
+    def _load(self) -> pyspark.sql.DataFrame:
         SparkHooks._initialize_spark()
         load_path = _strip_dbfs_prefix(self._fs_prefix + str(self._get_load_path()))
         read_obj = _get_spark().read
@@ -140,7 +140,7 @@ class SparkDatasetWithBQExternalTable(LazySparkDataset):
             **kwargs,
         )
 
-    def _save(self, data: DataFrame) -> None:
+    def _save(self, data: pyspark.sql.DataFrame) -> None:
         # Invoke saving of the underlying spark dataset
         super()._save(data)
 
@@ -367,7 +367,7 @@ class RemoteSparkJDBCDataset(SparkJDBCDataset):
 
         return super()._load()
 
-    def _save(self, df: DataFrame) -> Any:
+    def _save(self, df: pyspark.sql.DataFrame) -> Any:
         raise DatasetError("Save function for RemoteJDBCDataset not implemented!")
 
     @staticmethod

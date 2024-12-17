@@ -3,7 +3,8 @@ from typing import Any
 from copy import deepcopy
 
 from neo4j import GraphDatabase
-from pyspark.sql import DataFrame, SparkSession
+from pyspark.sql import SparkSession
+import pyspark
 
 from kedro.io.core import Version
 from kedro_datasets.spark import SparkDataset
@@ -151,7 +152,7 @@ class Neo4JSparkDataset(SparkDataset):
 
         return load_obj.load()
 
-    def _save(self, data: DataFrame) -> None:
+    def _save(self, data: pyspark.sql.DataFrame) -> None:
         try:
             if self._save_args.get("persist") is False:
                 # skip persistence

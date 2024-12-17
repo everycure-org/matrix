@@ -4,18 +4,18 @@ from matrix.kedro4argo_node import argo_node
 from . import nodes
 
 from matrix import settings
+import pyspark
 
-from pyspark.sql import DataFrame
 from matrix.inject import inject_object
 
 
 @inject_object()
-def transform_nodes(transformer, nodes_df: DataFrame, **kwargs):
+def transform_nodes(transformer, nodes_df: pyspark.sql.DataFrame, **kwargs):
     return transformer.transform_nodes(nodes_df=nodes_df, **kwargs)
 
 
 @inject_object()
-def transform_edges(transformer, edges_df: DataFrame, **kwargs):
+def transform_edges(transformer, edges_df: pyspark.sql.DataFrame, **kwargs):
     return transformer.transform_edges(edges_df=edges_df, **kwargs)
 
 

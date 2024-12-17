@@ -4,9 +4,9 @@ from typing import Dict
 import pandera
 from pandera.pyspark import DataFrameModel, Field
 
+import pyspark
 import pyspark.sql.functions as F
 import pyspark.sql.types as T
-from pyspark.sql import DataFrame
 
 from .transformer import GraphTransformer
 
@@ -20,7 +20,7 @@ RTX_SEPARATOR = "\u01c2"
 
 class RTXTransformer(GraphTransformer):
     @pandera.check_output(KGNodeSchema)
-    def transform_nodes(self, nodes_df: DataFrame, **kwargs) -> DataFrame:
+    def transform_nodes(self, nodes_df: pyspark.sql.DataFrame, **kwargs) -> pyspark.sql.DataFrame:
         """Transform RTX KG2 nodes to our target schema.
 
         Args:
@@ -45,8 +45,12 @@ class RTXTransformer(GraphTransformer):
 
     @pandera.check_output(KGEdgeSchema)
     def transform_edges(
-        self, edges_df: DataFrame, curie_to_pmids: DataFrame, semmed_filters: Dict[str, str], **kwargs
-    ) -> DataFrame:
+        self,
+        edges_df: pyspark.sql.DataFrame,
+        curie_to_pmids: pyspark.sql.DataFrame,
+        semmed_filters: Dict[str, str],
+        **kwargs,
+    ) -> pyspark.sql.DataFrame:
         """Transform RTX KG2 edges to our target schema.
 
         Args:
@@ -87,12 +91,12 @@ class CurieToPMIDsSchema(DataFrameModel):
 
 @pandera.check_input(CurieToPMIDsSchema, obj_getter="curie_to_pmids")
 def filter_semmed(
-    edges_df: DataFrame,
-    curie_to_pmids: DataFrame,
+    edges_df: pyspark.sql.DataFrame,
+    curie_to_pmids: pyspark.sql.DataFrame,
     publication_threshold: int,
     ngd_threshold: float,
     limit_pmids: int,
-) -> DataFrame:
+) -> pyspark.sql.DataFrame:
     """Function to filter semmed edges.
 
     Function that performs additional cleaning on RTX edges obtained by SemMedDB. This
@@ -151,7 +155,7 @@ def filter_semmed(
     return edges_filtered
 
 
-def compute_ngd(df: DataFrame, num_pairs: int = 3.7e7 * 20) -> DataFrame:
+def compute_ngd(df: pyspark.sql.DataFrame, num_pairs: int = 3.7e7 * 20) -> pyspark.sql.DataFrame:
     """
     PySpark transformation to compute Normalized Google Distance (NGD).
 
