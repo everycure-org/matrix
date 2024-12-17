@@ -2,7 +2,8 @@ from functools import partial
 from typing import Callable, Dict, List, Tuple
 
 import pandas as pd
-from pandera import Column, DataFrameModel, Field
+from pandera.typing import Series
+from pandera import DataFrameModel, Field
 import pandera
 import requests
 from langchain.output_parsers import CommaSeparatedListOutputParser
@@ -103,10 +104,10 @@ def enrich_df(df: pd.DataFrame, endpoint: str, func: Callable, input_cols: str, 
 
 
 class IntNodesSchema(DataFrameModel):
-    ID: Column(float) = Field(nullable=False)  # type: ignore
-    name: Column(object) = Field()  # type: ignore
-    curie: Column(object) = Field()  # type: ignore
-    normalized_curie: Column(object) = Field()  # type: ignore
+    ID: Series[float] = Field(nullable=False)  # type: ignore
+    name: Series[object]  # type: ignore
+    curie: Series[object]  # type: ignore
+    normalized_curie: Series[object]  # type: ignore
 
     class Config:
         strict = False
@@ -146,8 +147,8 @@ def create_int_nodes(
 
 
 class IntEdgesSchema(DataFrameModel):
-    SourceId: Column(str) = Field(nullable=True)  # type: ignore
-    TargetId: Column(str) = Field(nullable=True)  # type: ignore
+    SourceId: Series[str] = Field(nullable=True)  # type: ignore
+    TargetId: Series[str] = Field(nullable=True)  # type: ignore
 
     class Config:
         strict = False
@@ -186,10 +187,10 @@ def create_int_edges(int_nodes: pd.DataFrame, int_edges: pd.DataFrame) -> pd.Dat
 
 
 class PrmNodesSchema(DataFrameModel):
-    category: Column(object) = Field()  # type: ignore
-    id: Column(object) = Field(unique=True)  # type: ignore
-    name: Column(object) = Field()  # type: ignore
-    description: Column(object) = Field()  # type: ignore
+    category: Series[object]  # type: ignore
+    id: Series[object] = Field(unique=True)  # type: ignore
+    name: Series[object]  # type: ignore
+    description: Series[object]  # type: ignore
 
     class Config:
         strict = False
@@ -217,10 +218,10 @@ def create_prm_nodes(prm_nodes: pd.DataFrame) -> pd.DataFrame:
 
 
 class PrmEdgesSchema(DataFrameModel):
-    subject: Column(str) = Field(nullable=True)  # type: ignore
-    predicate: Column(str) = Field(nullable=True)  # type: ignore
-    object: Column(str) = Field(nullable=True)  # type: ignore
-    knowledge_source: Column(str) = Field(nullable=True)  # type: ignore
+    subject: Series[str] = Field(nullable=True)  # type: ignore
+    predicate: Series[str] = Field(nullable=True)  # type: ignore
+    object: Series[str] = Field(nullable=True)  # type: ignore
+    knowledge_source: Series[str] = Field(nullable=True)  # type: ignore
 
     class Config:
         strict = False
@@ -242,17 +243,17 @@ def create_prm_edges(int_edges: pd.DataFrame) -> pd.DataFrame:
 
 
 class ClinicalTrialsSchema(DataFrameModel):
-    clinical_trial_id: Column(object)  # type: ignore
-    reason_for_rejection: Column(object)  # type: ignore
-    drug_name: Column(object)  # type: ignore
-    disease_name: Column(object)  # type: ignore
-    drug_kg_curie: Column(object)  # type: ignore
-    disease_kg_curie: Column(object)  # type: ignore
-    conflict: Column(object)  # type: ignore
-    significantly_better: Column(float)  # type: ignore
-    non_significantly_better: Column(float)  # type: ignore
-    non_significantly_worse: Column(float)  # type: ignore
-    significantly_worse: Column(float)  # type: ignore
+    clinical_trial_id: Series[object]  # type: ignore
+    reason_for_rejection: Series[object]  # type: ignore
+    drug_name: Series[object]  # type: ignore
+    disease_name: Series[object]  # type: ignore
+    drug_kg_curie: Series[object]  # type: ignore
+    disease_kg_curie: Series[object]  # type: ignore
+    conflict: Series[object]  # type: ignore
+    significantly_better: Series[float]  # type: ignore
+    non_significantly_better: Series[float]  # type: ignore
+    non_significantly_worse: Series[float]  # type: ignore
+    significantly_worse: Series[float]  # type: ignore
 
     class Config:
         strict = False
@@ -357,17 +358,17 @@ def map_name_to_curie(
 
 
 class CleanTrialsSchema(DataFrameModel):
-    clinical_trial_id: Column(object)  # type: ignore
-    reason_for_rejection: Column(object)  # type: ignore
-    drug_name: Column(object)  # type: ignore
-    disease_name: Column(object)  # type: ignore
-    drug_kg_curie: Column(object)  # type: ignore
-    disease_kg_curie: Column(object)  # type: ignore
-    conflict: Column(object)  # type: ignore
-    significantly_better: Column(float)  # type: ignore
-    non_significantly_better: Column(float)  # type: ignore
-    non_significantly_worse: Column(float)  # type: ignore
-    significantly_worse: Column(float)  # type: ignore
+    clinical_trial_id: Series[object]  # type: ignore
+    reason_for_rejection: Series[object]  # type: ignore
+    drug_name: Series[object]  # type: ignore
+    disease_name: Series[object]  # type: ignore
+    drug_kg_curie: Series[object]  # type: ignore
+    disease_kg_curie: Series[object]  # type: ignore
+    conflict: Series[object]  # type: ignore
+    significantly_better: Series[float]  # type: ignore
+    non_significantly_better: Series[float]  # type: ignore
+    non_significantly_worse: Series[float]  # type: ignore
+    significantly_worse: Series[float]  # type: ignore
 
     class Config:
         strict = False
@@ -410,9 +411,9 @@ def clean_clinical_trial_data(df: pd.DataFrame) -> pd.DataFrame:
 
 
 class DrugListSchema(DataFrameModel):
-    single_ID: Column(object) = Field(nullable=True)  # type: ignore
-    curie: Column(object) = Field(nullable=True)  # type: ignore
-    name: Column(object) = Field(nullable=True)  # type: ignore
+    single_ID: Series[object] = Field(nullable=True)  # type: ignore
+    curie: Series[object] = Field(nullable=True)  # type: ignore
+    name: Series[object] = Field(nullable=True)  # type: ignore
 
     class Config:
         strict = False
@@ -461,14 +462,14 @@ def clean_drug_list(
 
 
 class DiseaseListSchema(DataFrameModel):
-    category_class: Column(object)  # type: ignore
-    label: Column(object)  # type: ignore
-    definition: Column(object)  # type: ignore
-    synonyms: Column(object)  # type: ignore
-    subsets: Column(object)  # type: ignore
-    crossreferences: Column(object)  # type: ignore
-    curie: Column(object)  # type: ignore
-    name: Column(object)  # type: ignore
+    category_class: Series[object]  # type: ignore
+    label: Series[object]  # type: ignore
+    definition: Series[object]  # type: ignore
+    synonyms: Series[object]  # type: ignore
+    subsets: Series[object]  # type: ignore
+    crossreferences: Series[object]  # type: ignore
+    curie: Series[object]  # type: ignore
+    name: Series[object]  # type: ignore
 
     class Config:
         strict = False
@@ -518,13 +519,13 @@ def clean_disease_list(
 
 
 class InputSheetSchema(DataFrameModel):
-    timestamp: Column(object)  # type: ignore
-    drug_id: Column(object)  # type: ignore
-    disease_id: Column(object)  # type: ignore
-    norm_drug_id: Column(object)  # type: ignore
-    norm_disease_id: Column(object)  # type: ignore
-    norm_drug_name: Column(object)  # type: ignore
-    norm_disease_name: Column(object)  # type: ignore
+    timestamp: Series[object]  # type: ignore
+    drug_id: Series[object]  # type: ignore
+    disease_id: Series[object]  # type: ignore
+    norm_drug_id: Series[object]  # type: ignore
+    norm_disease_id: Series[object]  # type: ignore
+    norm_drug_name: Series[object]  # type: ignore
+    norm_disease_name: Series[object]  # type: ignore
 
     class Config:
         strict = False
