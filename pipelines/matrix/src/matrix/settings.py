@@ -21,6 +21,7 @@ hooks = {
     "mlflow": MlflowHook(),
     "mlflow_kedro": matrix_hooks.MLFlowHooks(),
     "spark": matrix_hooks.SparkHooks(),
+    "release": matrix_hooks.ReleaseInfoHooks(),
 }
 
 # Hooks are executed in a Last-In-First-Out (LIFO) order.
