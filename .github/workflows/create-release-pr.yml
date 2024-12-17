@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - 'debug/release*'
+      - 'feat/trigger-release-from-gh-action'  # TODO: replace by manual trigger and repository_dispatch
   repository_dispatch:
     types: distribute-release
 
@@ -39,7 +40,7 @@ jobs:
         with:
           fetch-tags: true
           fetch-depth: 0  # full depth needed so we can pass the AI all logs since the last release.
-          ref: "${{env.gitref}}"
+          ref: "${{env.gitref}}"  # check out the commit from which the release was triggered
 
       - name: Tag the commit from which the data release was triggered
         run: |
@@ -51,7 +52,6 @@ jobs:
       - name: Setup Matrix CLI
         working-directory: apps/matrix-cli
         run: |
-          # gcloud config list account --format "value(core.account)"  # for debugging: empty on the runner
           pip install uv
           uv sync
 
@@ -71,7 +71,7 @@ jobs:
         run: |
           mkdir -p info && cd info
           BLOB_PATH="${RELEASE_DIR_GCS}/${{env.release}}/${FILENAME}"
-          gcloud storage cp $BLOB_PATH $FILENAME
+          gcloud storage cp "$BLOB_PATH" "$FILENAME"
           
           git add "${FILENAME}" && \
           git commit -m "added release info json" && \

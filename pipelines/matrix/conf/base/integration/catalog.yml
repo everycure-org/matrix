@@ -80,3 +80,12 @@ integration.prm.prefiltered_nodes:
 integration.prm.filtered_nodes:
   <<: [*_spark_parquet, *_layer_prm]
   filepath: ${globals:paths.integration}/prm/filtered/nodes
+
+
+integration.int.ec_medical_team.nodes:
+  <<: [*_spark_parquet, *_layer_int]
+  filepath: ${globals:paths.integration}/int/ec_medical_team/nodes
+
+integration.int.ec_medical_team.edges:
+  <<: [*_spark_parquet, *_layer_int]
+  filepath: ${globals:paths.integration}/int/ec_medical_team/edges

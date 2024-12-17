@@ -1,11 +1,19 @@
-from typing import Dict, Tuple
+from typing import Dict, List, Tuple
 
 import pytest
 import yaml
 from kedro.pipeline import Pipeline
 from kedro.pipeline.node import Node
 from matrix.argo import FusedNode, clean_name, fuse, generate_argo_config, get_dependencies
-from matrix.kedro4argo_node import ArgoNode, ArgoResourceConfig
+from matrix.kedro4argo_node import (
+    KUBERNETES_DEFAULT_LIMIT_CPU,
+    KUBERNETES_DEFAULT_LIMIT_RAM,
+    KUBERNETES_DEFAULT_NUM_GPUS,
+    KUBERNETES_DEFAULT_REQUEST_CPU,
+    KUBERNETES_DEFAULT_REQUEST_RAM,
+    ArgoNode,
+    ArgoResourceConfig,
+)
 
 
 def dummy_fn(*args):
@@ -169,45 +177,46 @@ def test_fusing_multiple_parents(node_class):
 
 
 @pytest.fixture()
-def pipeline_where_first_node_is_input_for_second():
-    return Pipeline(
-        nodes=[
-            ArgoNode(
-                func=dummy_fn,
-                inputs=["dataset_a", "dataset_b"],
-                outputs="dataset_1@pandas",
-                argo_config=ArgoResourceConfig(
-                    cpu_request=1,
-                    cpu_limit=2,
-                    memory_request=16,
-                    memory_limit=32,
-                    num_gpus=1,
-                ),
+def nodes_where_first_is_input_for_second():
+    nodes = [
+        ArgoNode(
+            func=dummy_fn,
+            inputs=["dataset_a", "dataset_b"],
+            outputs="dataset_1@pandas",
+            argo_config=ArgoResourceConfig(
+                cpu_request=1,
+                cpu_limit=2,
+                memory_request=16,
+                memory_limit=32,
+                num_gpus=1,
             ),
-            ArgoNode(
-                func=dummy_fn,
-                inputs=[
-                    "dataset_1@spark",
-                ],
-                outputs="dataset_2",
-                argo_config=ArgoResourceConfig(
-                    cpu_request=2,
-                    cpu_limit=2,
-                    memory_request=32,
-                    memory_limit=64,
-                    num_gpus=0,
-                ),
+        ),
+        ArgoNode(
+            func=dummy_fn,
+            inputs=[
+                "dataset_1@spark",
+            ],
+            outputs="dataset_2",
+            argo_config=ArgoResourceConfig(
+                cpu_request=2,
+                cpu_limit=2,
+                memory_request=32,
+                memory_limit=64,
+                num_gpus=0,
             ),
-        ],
+        ),
+    ]
+    return nodes
+
+
+def test_simple_fusing_with_argo_nodes(nodes_where_first_is_input_for_second: List[ArgoNode]):
+    pipeline = Pipeline(
+        nodes=nodes_where_first_is_input_for_second,
         tags=["argowf.fuse", "argowf.fuse-group.dummy"],
     )
-
-
-def test_simple_fusing_with_argo_nodes(pipeline_where_first_node_is_input_for_second: Pipeline):
-    fused = fuse(pipeline_where_first_node_is_input_for_second)
+    fused = fuse(pipeline)
 
     assert len(fused) == 1
-
     assert fused[0].argo_config.cpu_request == 2
     assert fused[0].argo_config.cpu_limit == 2
     assert fused[0].argo_config.memory_request == 32
@@ -215,8 +224,13 @@ def test_simple_fusing_with_argo_nodes(pipeline_where_first_node_is_input_for_se
     assert fused[0].argo_config.num_gpus == 1
 
 
-def test_get_dependencies_default_different_than_task(pipeline_where_first_node_is_input_for_second: Pipeline):
-    fused_pipeline = fuse(pipeline_where_first_node_is_input_for_second)
+def test_get_dependencies_default_different_than_task(nodes_where_first_is_input_for_second: List[ArgoNode]):
+    pipeline = Pipeline(
+        nodes=nodes_where_first_is_input_for_second,
+        tags=["argowf.fuse", "argowf.fuse-group.dummy"],
+    )
+
+    fused_pipeline = fuse(pipeline)
     deps = get_dependencies(fused_pipeline, ArgoResourceConfig())
     assert len(deps) == 1
     assert deps[0]["name"] == "dummy"
@@ -235,8 +249,12 @@ def test_get_dependencies_default_different_than_task(pipeline_where_first_node_
     }
 
 
-def test_get_dependencies_default_same_than_task(pipeline_where_first_node_is_input_for_second: Pipeline):
-    fused_pipeline = fuse(pipeline_where_first_node_is_input_for_second)
+def test_get_dependencies_default_same_than_task(nodes_where_first_is_input_for_second: List[ArgoNode]):
+    pipeline = Pipeline(
+        nodes=nodes_where_first_is_input_for_second,
+        tags=["argowf.fuse", "argowf.fuse-group.dummy"],
+    )
+    fused_pipeline = fuse(pipeline)
     deps = get_dependencies(
         fused_pipeline, ArgoResourceConfig(cpu_request=2, cpu_limit=2, memory_request=32, memory_limit=64, num_gpus=1)
     )
@@ -504,11 +522,11 @@ def test_argo_template_config_boilerplate(argo_default_resources: ArgoResourceCo
 def test_resources_of_argo_template_config_pipelines() -> None:
     """Test the resources configuration of the Argo template."""
     argo_default_resources = ArgoResourceConfig(
-        num_gpus=0,
-        cpu_request=4,
-        cpu_limit=16,
-        memory_request=64,
-        memory_limit=64,
+        num_gpus=KUBERNETES_DEFAULT_NUM_GPUS,
+        cpu_request=KUBERNETES_DEFAULT_REQUEST_CPU,
+        cpu_limit=KUBERNETES_DEFAULT_LIMIT_CPU,
+        memory_request=KUBERNETES_DEFAULT_REQUEST_RAM,
+        memory_limit=KUBERNETES_DEFAULT_LIMIT_RAM,
     )
     argo_config, actual_pipelines = get_argo_config(argo_default_resources)
     spec = argo_config["spec"]

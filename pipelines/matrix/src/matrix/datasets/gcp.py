@@ -155,7 +155,7 @@ class SparkDatasetWithBQExternalTable(LazySparkDataset):
         table = bigquery.Table(f"{self._dataset_id}.{self._table}")
         table.labels = self._labels
         table.external_data_configuration = external_config
-        table = self._client.create_table(table, exists_ok=False)
+        table = self._client.create_table(table, exists_ok=True)
 
     def _create_dataset(self) -> str:
         try:

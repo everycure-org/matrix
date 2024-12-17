@@ -197,10 +197,13 @@ def create_prm_nodes(prm_nodes: pd.DataFrame) -> pd.DataFrame:
     # `new_id` signals that the node should be added to the KG as a new id
     # we drop the original ID from the spreadsheat, and leverage the new_id as the final id
     # in the dataframe. We only retain nodes where the new_id is set
-    res = prm_nodes[prm_nodes["new_id"].notna()].drop(columns="ID").rename(columns={"new_id": "id"})
-
+    res = (
+        prm_nodes[prm_nodes["normalized_curie"].notna()]
+        .drop(columns="ID")
+        .rename(columns={"normalized_curie": "id"})
+        .drop_duplicates("id")
+    )
     res["category"] = "biolink:" + prm_nodes["entity label"]
-
     return res
 
 

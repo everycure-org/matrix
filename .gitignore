@@ -38,3 +38,5 @@ infra/**/Chart.lock
 
 # Ignore generated credentials from google-github-actions/auth
 gha-creds-*.json
+
+pipelines/matrix/src/matrix/pipelines/matrix_generation/matrix.code-workspace
