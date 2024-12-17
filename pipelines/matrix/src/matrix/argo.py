@@ -9,7 +9,7 @@ from kedro.pipeline import Pipeline
 from kedro.pipeline.node import Node
 
 from matrix.kedro4argo_node import ArgoNode, ArgoResourceConfig
-from matrix.utils import get_git_sha
+from matrix.git_utils import get_git_sha
 
 
 ARGO_TEMPLATE_FILE = "argo_wf_spec.tmpl"
