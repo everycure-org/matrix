@@ -43,14 +43,14 @@ def cli():
 @click.option("--run-name", type=str, default=None, help="Specify a custom run name, defaults to branch")
 @click.option("--release-version", type=str, required=True, help="Specify a custom release name")
 @click.option("--pipeline", "-p", type=str, default="modelling_run", help="Specify which pipeline to execute")
-@click.option("--verbose", "-v", is_flag=True, default=True, help="Enable verbose output")
+@click.option("--quiet", "-q", is_flag=True, default=False, help="Disable verbose output")
 @click.option("--dry-run", "-d", is_flag=True, default=False, help="Does everything except submit the workflow")
 @click.option("--from-nodes", type=str, default="", help="Specify nodes to run from", callback=split_string)
 @click.option("--is-test", is_flag=True, default=False, help="Submit to test folder")
 # fmt: on
-def submit(username: str, namespace: str, run_name: str, release_version: str, pipeline: str, verbose: bool, dry_run: bool, from_nodes: List[str], is_test: bool):
+def submit(username: str, namespace: str, run_name: str, release_version: str, pipeline: str, quiet: bool, dry_run: bool, from_nodes: List[str], is_test: bool):
     """Submit the end-to-end workflow. """
-    if verbose:
+    if not quiet:
         log.setLevel(logging.DEBUG)
 
     if pipeline not in kedro_pipelines.keys():
@@ -80,7 +80,7 @@ def submit(username: str, namespace: str, run_name: str, release_version: str, p
         run_name=run_name,
         release_version=release_version,
         pipeline_obj=pipeline_obj,
-        verbose=verbose,
+        verbose=not quiet,
         dry_run=dry_run,
         template_directory=ARGO_TEMPLATES_DIR_PATH,
         is_test=is_test,
@@ -93,7 +93,7 @@ def _submit(
         run_name: str, 
         release_version: str,
         pipeline_obj: Pipeline,
-        verbose: bool, 
+        verbose: bool,
         dry_run: bool, 
         template_directory: Path,
         allow_interactions: bool = True,
