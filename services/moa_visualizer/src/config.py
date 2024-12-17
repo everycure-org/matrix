@@ -125,6 +125,7 @@ class Settings(BaseSettings):
     DATA_INPUT_PATH: str
     MOA_DB_PATH: str
     GCP_PROJECT: str
+    IMAGE_VERSION: str
 
     # TODO: Move elsewhere
     moa_info_img: str = Field("assets/moa_info.svg")
@@ -150,7 +151,6 @@ process is illustrated by the following diagram:
     )
 
     class Config:
-        env_file = ".env"
         case_sensitive = True
         validate_assignment = True
 

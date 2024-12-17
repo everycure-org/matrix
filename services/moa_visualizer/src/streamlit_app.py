@@ -18,6 +18,7 @@ with st.sidebar:
         [0.6, 0.4],
         gap="small",
     )
+    st.write(f"app version: {settings.IMAGE_VERSION}")
     st.title("Available pairs")
     st.write(
         "Select the pair you would like to view from the list of", " available pairs, or search using the search bar"

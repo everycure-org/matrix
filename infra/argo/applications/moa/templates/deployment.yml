@@ -44,6 +44,8 @@ spec:
         env:
           - name: MOA_DB_PATH
             value: "/data/moa_extraction.db"
+          - name: IMAGE_VERSION
+            value: "{{ .Files.Get "files/version" }}"
         volumeMounts:
         - name: shared-data
           mountPath: /data
