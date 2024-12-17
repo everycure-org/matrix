@@ -13,8 +13,8 @@ on:
         - ready_for_review
   
     push:
-      # branches:
-      #   - main
+      branches:
+        - main
 
 
 jobs:
@@ -48,7 +48,7 @@ jobs:
   ci:
     runs-on:  'self-hosted'
     needs: [paths_filter]
-    # if: needs.paths_filter.outputs.changed == 'true' && (github.event.pull_request.draft == false || github.ref == 'refs/heads/main')
+    if: needs.paths_filter.outputs.changed == 'true' && (github.event.pull_request.draft == false || github.ref == 'refs/heads/main')
     defaults:
       run:
         working-directory: ./services/moa_visualizer
@@ -63,7 +63,7 @@ jobs:
   push_image:
       needs: [ci]
       if: github.ref == 'refs/heads/main'
-      runs-on: 'self-hosted' # TODO: Should we run on self hosted one?
+      runs-on: 'self-hosted'
       environment: dev
       permissions: write-all
       defaults:
