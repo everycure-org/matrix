@@ -7,14 +7,18 @@ MOA predictions for a given drug-disease pair.
 
 ### Set up your env and install dependencies
 ```bash
-pip install -r requirements.txt
+uv pip install -r requirements.txt
 ```
 
-### Check config
-Check config.py to make sure the paths are correct.
+### Check makefile
+Check the makefile to make sure the paths are correct for your local env.
 
 ### Run the app
-Assumes you are in the root directory (moa_vis).
 ```bash
-streamlit run src/streamlit_app.py
+# Pull data from GCS and build local db  
+make data
+# Run the app
+make run
 ```
+
+Bump the version in the 'version' file when merging.

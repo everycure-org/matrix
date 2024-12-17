@@ -6,12 +6,6 @@ from streamlit_flow.state import StreamlitFlowState
 import streamlit as st
 from config import ont_urls, display_cols
 
-# TODO
-# - Clean up table formatting
-# - Add some hyperlinks to entities (e.g. link to UniProt)
-# - Probably some interactive elements to the graphs
-# - Make a class to handle data build
-
 
 def get_pair_info_from_db(moa_db_path: str, path_number: str = "all") -> pd.DataFrame:
     """

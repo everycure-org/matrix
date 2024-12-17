@@ -10,10 +10,16 @@ on:
         - reopened
         - synchronize
         - ready_for_review
+      paths: 
+        - services/moa_visualizer/**
+        - .github/workflows/moa-ci.yml
   
     push:
       branches:
         - infra
+      paths: 
+        - services/moa_visualizer/**
+        - .github/workflows/moa-ci.yml
 
 
 jobs:
