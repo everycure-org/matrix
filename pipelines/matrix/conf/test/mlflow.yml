@@ -1,3 +1,0 @@
-tracking:
-  disable_tracking:
-    pipelines: ["fabricator", "test", "modelling"]
