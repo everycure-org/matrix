@@ -57,7 +57,7 @@ jobs:
           sparse-checkout: |
             services/moa_visualizer/
 
-      - run: make docker_build TAG=${{ github.sha }}
+      - run: make docker_build
 
   push_image:
       needs: [ci]
