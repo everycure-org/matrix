@@ -58,3 +58,7 @@ data_release.prm.kgx_nodes:
 data_release.prm.kgx_edges:
   <<: *_spark_kgx_ds
   filepath: ${globals:paths.release}/kgx/edges.tsv
+
+data_release.dummy:
+  type: yaml.YAMLDataset
+  filepath: ${globals:paths.tmp}/foo.yaml
