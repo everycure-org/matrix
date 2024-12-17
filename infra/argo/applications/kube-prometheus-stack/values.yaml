@@ -4,11 +4,13 @@ kube-prometheus-stack:
       storageSpec:
         volumeClaimTemplate:
           spec:
+            # by default prometheus uses a local storage, which is not persistent
             storageClassName: standard
             accessModes: ["ReadWriteOnce"]
             resources:
               requests:
                 storage: 25Gi
+      # add service monitors for argo-workflows which thus also get collected by prometheus
       additionalServiceMonitors:
         - name: argo-workflows
           selector:
