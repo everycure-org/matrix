@@ -2,7 +2,7 @@ from functools import partial
 from typing import Callable, Dict, List, Tuple
 
 import pandas as pd
-from pandera import Column, DataFrameSchema
+from pandera import Column, DataFrameModel, DataFrameSchema, Field
 import pandera
 import requests
 from langchain.output_parsers import CommaSeparatedListOutputParser
@@ -102,18 +102,17 @@ def enrich_df(df: pd.DataFrame, endpoint: str, func: Callable, input_cols: str, 
     return df
 
 
-int_nodes_schema = DataFrameSchema(
-    {
-        "ID": Column(float),  # using float since "numeric" in pandas can be either int or float
-        "name": Column(object),
-        "curie": Column(object),
-        "normalized_curie": Column(object),
-    },
-    strict=False,
-)
+class IntNodesSchema(DataFrameModel):
+    ID: Column(float) = Field(nullable=False)  # type: ignore
+    name: Column(object) = Field()  # type: ignore
+    curie: Column(object) = Field()  # type: ignore
+    normalized_curie: Column(object) = Field()  # type: ignore
+
+    class Config:
+        strict = False
 
 
-@pandera.check_output(int_nodes_schema)
+@pandera.check_output(IntNodesSchema)
 def create_int_nodes(
     nodes: pd.DataFrame,
     name_resolver: str,
