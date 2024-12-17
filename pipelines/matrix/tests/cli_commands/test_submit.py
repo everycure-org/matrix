@@ -281,4 +281,4 @@ def test_workflow_submission(
         ]
     )
 
-    mock_run_subprocess.assert_called_with(submit_cmd, stream_output=True)
+    mock_run_subprocess.assert_called_with(submit_cmd)
