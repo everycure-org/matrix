@@ -302,7 +302,7 @@ class ReleaseInfoHooks:
         return tmpl
 
     @staticmethod
-    def extract_release_info() -> dict:
+    def extract_release_info() -> dict[str, str]:
         info = {
             "release_version": ReleaseInfoHooks._globals["versions"]["release"],
             "robokop_version": ReleaseInfoHooks._globals["data_sources"]["robokop"]["version"],
@@ -333,7 +333,7 @@ class ReleaseInfoHooks:
         return full_blob_path
 
     @staticmethod
-    def upload_to_storage(release_info: str) -> None:
+    def upload_to_storage(release_info: dict[str, str]) -> None:
         bucket = ReleaseInfoHooks.get_bucket()
         blobpath = ReleaseInfoHooks.build_blobpath()
         blob = bucket.blob(blobpath)
@@ -342,6 +342,10 @@ class ReleaseInfoHooks:
     @hook_impl
     def after_node_run(self, node: Node) -> None:
         """Runs after the last node of the data_release pipeline"""
+        # We chose to add this using the `after_node_run` hook, rather than
+        # `after_pipeline_run`, because one does not know a priori which
+        # pipelines the (last) data release node is part of. With an
+        # `after_node_run`, you can limit your filters easily.
         if node.name == last_data_release_node.name:
             release_info = self.extract_release_info()
             self.upload_to_storage(release_info)
