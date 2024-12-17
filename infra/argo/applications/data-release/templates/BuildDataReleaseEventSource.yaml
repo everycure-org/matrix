@@ -17,9 +17,9 @@ spec:
       filter:
         afterStart: true
         labels:
-          - key: app
-            operation: "=="
-            value: build-data-release
+          - key: pipeline_name
+            operation: "in"
+            value: ["data_release", "kg_release"]
           - key: workflows.argoproj.io/phase
             operation: ==
             value: "Succeeded"

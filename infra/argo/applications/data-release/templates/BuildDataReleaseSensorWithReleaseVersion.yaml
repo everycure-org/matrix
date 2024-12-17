@@ -7,7 +7,7 @@ spec:
   template:
     serviceAccountName: data-release-service-account
   dependencies:
-    - name: test-dep
+    - name: dependency_release_version
       eventSourceName: build-data-release-eventsource
       eventName: data-release-success
   triggers:
@@ -31,10 +31,13 @@ spec:
                   parameters:
                     - name: release_version
                       value: hello
+                    - name: git_sha
+                      value: hello
                 templates:
                 - name: trigger-curl
                   inputs:
                     parameters:
+                      - name: git_sha
                       - name: release_version
                   container:
                     image: curlimages/curl:latest # Use a lightweight curl image
@@ -44,7 +47,13 @@ spec:
                         curl -H "Accept: application/vnd.github.everest-preview+json" \
                              -H "Authorization: token $GITHUB_TOKEN" \
                              --request POST \
-                             --data '{"event_type": "distribute-release", "client_payload": { "release_version": "{{`{{inputs.parameters.release_version}}`}}"}}' \
+                             --data '{\
+                               "event_type": "distribute-release",\
+                               "client_payload": {
+                                 "release_version": "{{`{{inputs.parameters.release_version}}`}}", \
+                                 "git_fingerprint": "{{`{{inputs.parameters.git_sha}}`}}" \
+                               } \
+                             }' \
                              https://api.github.com/repos/everycure-org/matrix/dispatches
                     env:
                       - name: GITHUB_TOKEN
@@ -55,6 +64,10 @@ spec:
 
           parameters:
             - src:
-                dependencyName: test-dep
+                dependencyName: dependency_release_version
                 dataKey: body.metadata.labels.release_version
               dest: spec.arguments.parameters.0.value
+            - src:
+                dependencyName: dependency_release_version
+                dataKey: body.metadata.labels.git_sha
+              dest: spec.arguments.parameters.1.value
