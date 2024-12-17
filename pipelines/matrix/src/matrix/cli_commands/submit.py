@@ -54,7 +54,8 @@ def submit(username: str, namespace: str, run_name: str, release_version: str, p
     if verbose:
         log.setLevel(logging.DEBUG)
 
-    abort_if_unmet_git_requirements()
+    # TODO: re-enable after it's clear this is only a data-release submission (i.e. the release version is present, see also #797.
+    #  abort_if_unmet_git_requirements()
 
     if pipeline not in kedro_pipelines.keys():
         raise ValueError("Pipeline requested for execution not found")
