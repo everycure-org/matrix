@@ -1,6 +1,6 @@
 import logging
 import pandera
-from pandera import DataFrameSchema
+from pandera import DataFrameModel
 from tqdm import tqdm
 from typing import List, Dict, Union, Tuple
 
@@ -94,7 +94,7 @@ def spark_to_pd(nodes: pyspark.sql.DataFrame) -> pd.DataFrame:
     return nodes.toPandas()
 
 
-class TrialSchema(DataFrameSchema):
+class TrialSchema(DataFrameModel):
     source: Series[object]
     target: Series[object]
     is_known_positive: Series[bool]

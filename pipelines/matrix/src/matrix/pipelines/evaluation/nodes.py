@@ -3,8 +3,9 @@ from typing import Any
 
 
 import pandas as pd
-from pandera import Column, DataFrameSchema
+from pandera import DataFrameModel
 import pandera
+from pandera.typing import Series
 
 from matrix.inject import inject_object
 
@@ -65,10 +66,16 @@ def perform_matrix_checks(matrix: pd.DataFrame, known_pairs: pd.DataFrame, score
     check_ordered(matrix, score_col_name)
 
 
-edges_schema = DataFrameSchema({"source": Column(object), "target": Column(object), "y": Column(int)}, strict=False)
+class EdgesSchema(DataFrameModel):
+    source: Series[object]
+    target: Series[object]
+    y: Series[int]
+
+    class Config:
+        strict = False
 
 
-@pandera.check_output(edges_schema)
+@pandera.check_output(EdgesSchema)
 @inject_object()
 def generate_test_dataset(
     matrix: pd.DataFrame,

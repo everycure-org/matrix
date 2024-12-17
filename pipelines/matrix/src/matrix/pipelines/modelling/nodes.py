@@ -3,7 +3,8 @@ from typing import Any, Dict, List, Union, Tuple
 import pandas as pd
 import numpy as np
 import json
-from pandera import Column, DataFrameModel, DataFrameSchema
+from pandera.typing import Series
+from pandera import DataFrameModel
 import pandera
 import pyspark
 from pyspark.sql import functions as F
@@ -110,16 +111,6 @@ def filter_valid_pairs(
     return {"pairs": pairs_df, "metrics": retention_stats}
 
 
-embeddings_schema = DataFrameSchema(
-    {
-        "y": Column(int),
-        "source_embedding": Column(object, nullable=False),
-        "target_embedding": Column(object, nullable=False),
-    },
-    strict=False,
-)
-
-
 class EmbeddingsWithPairsSchema(DataFrameModel):
     y: T.IntegerType() = Field()  # type: ignore
     source_embedding: T.ArrayType(T.FloatType()) = Field(nullable=False)  # type: ignore
@@ -153,12 +144,17 @@ def attach_embeddings(
     )
 
 
-node_schema = DataFrameSchema(
-    {"id": Column(str), "is_drug": Column(bool), "is_disease": Column(bool)}, strict=False, unique=["id"]
-)
+class NodeSchema(DataFrameModel):
+    id: Series[str]
+    is_drug: Series[bool]
+    is_disease: Series[bool]
+
+    class Config:
+        strict = False
+        unique = ["id"]
 
 
-@pandera.check_output(node_schema)
+@pandera.check_output(NodeSchema)
 def prefilter_nodes(
     full_nodes: pyspark.sql.DataFrame,
     nodes: pyspark.sql.DataFrame,
@@ -199,20 +195,19 @@ def prefilter_nodes(
     return df
 
 
-splits_schema = DataFrameSchema(
-    {
-        "source": Column(str),
-        "source_embedding": Column(object),
-        "target": Column(str),
-        "target_embedding": Column(object),
-        "iteration": Column(int),
-        "split": Column(str),
-    },
-    strict=False,
-)
+class SplitsSchema(DataFrameModel):
+    source: Series[str]
+    source_embedding: Series[object]
+    target: Series[str]
+    target_embedding: Series[object]
+    iteration: Series[int]
+    split: Series[str]
+
+    class Config:
+        strict = False
 
 
-@pandera.check_output(splits_schema)
+@pandera.check_output(SplitsSchema)
 @inject_object()
 def make_splits(
     data: pyspark.sql.DataFrame,
@@ -241,20 +236,19 @@ def make_splits(
     return x
 
 
-splits_schema = DataFrameSchema(
-    {
-        "source": Column(object),
-        "source_embedding": Column(object),
-        "target": Column(object),
-        "target_embedding": Column(object),
-        "iteration": Column(float),  # numeric type
-        "split": Column(object),
-    },
-    strict=False,
-)
+class ModelSplitsSchema(DataFrameModel):
+    source: Series[object]
+    source_embedding: Series[object]
+    target: Series[object]
+    target_embedding: Series[object]
+    iteration: Series[float]  # numeric type
+    split: Series[object]
+
+    class Config:
+        strict = False
 
 
-@pandera.check_output(splits_schema)
+@pandera.check_output(ModelSplitsSchema)
 @inject_object()
 def create_model_input_nodes(
     graph: KnowledgeGraph,
