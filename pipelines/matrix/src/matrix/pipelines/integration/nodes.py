@@ -6,12 +6,11 @@ from typing import Any, Callable, Dict, List, Tuple
 import aiohttp
 import pandas as pd
 import pandera
-import pyspark as ps
+import pyspark
 import pyspark.sql.functions as F
 from joblib import Memory
 from jsonpath_ng import parse
 from more_itertools import chunked
-from pyspark.sql import DataFrame
 from matrix.inject import inject_object
 from tenacity import (
     retry,
@@ -29,7 +28,7 @@ logger = logging.getLogger(__name__)
 
 
 @pandera.check_output(KGEdgeSchema)
-def union_and_deduplicate_edges(*edges) -> DataFrame:
+def union_and_deduplicate_edges(*edges) -> pyspark.sql.DataFrame:
     """Function to unify edges datasets."""
     # fmt: off
     return (
@@ -40,7 +39,7 @@ def union_and_deduplicate_edges(*edges) -> DataFrame:
 
 
 @pandera.check_output(KGNodeSchema)
-def union_and_deduplicate_nodes(biolink_categories_df: pd.DataFrame, *nodes) -> DataFrame:
+def union_and_deduplicate_nodes(biolink_categories_df: pd.DataFrame, *nodes) -> pyspark.sql.DataFrame:
     """Function to unify nodes datasets."""
 
     # fmt: off
@@ -60,8 +59,8 @@ def union_and_deduplicate_nodes(biolink_categories_df: pd.DataFrame, *nodes) -> 
 
 
 def _union_datasets(
-    *datasets: DataFrame,
-) -> DataFrame:
+    *datasets: pyspark.sql.DataFrame,
+) -> pyspark.sql.DataFrame:
     """
     Helper function to unify datasets and deduplicate them.
 
@@ -73,12 +72,12 @@ def _union_datasets(
     Returns:
         A unified and deduplicated DataFrame.
     """
-    return reduce(partial(DataFrame.unionByName, allowMissingColumns=True), datasets)
+    return reduce(partial(pyspark.sql.DataFrame.unionByName, allowMissingColumns=True), datasets)
 
 
 def _apply_transformations(
-    df: DataFrame, transformations: List[Tuple[Callable, Dict[str, Any]]], **kwargs
-) -> DataFrame:
+    df: pyspark.sql.DataFrame, transformations: List[Tuple[Callable, Dict[str, Any]]], **kwargs
+) -> pyspark.sql.DataFrame:
     logger.info(f"Filtering dataframe with {len(transformations)} transformations")
     last_count = df.count()
     logger.info(f"Number of rows before filtering: {last_count}")
@@ -94,19 +93,19 @@ def _apply_transformations(
 
 @inject_object()
 def prefilter_unified_kg_nodes(
-    nodes: DataFrame,
+    nodes: pyspark.sql.DataFrame,
     transformations: List[Tuple[Callable, Dict[str, Any]]],
-) -> DataFrame:
+) -> pyspark.sql.DataFrame:
     return _apply_transformations(nodes, transformations)
 
 
 @inject_object()
 def filter_unified_kg_edges(
-    nodes: DataFrame,
-    edges: DataFrame,
+    nodes: pyspark.sql.DataFrame,
+    edges: pyspark.sql.DataFrame,
     biolink_predicates: Dict[str, Any],
     transformations: List[Tuple[Callable, Dict[str, Any]]],
-) -> DataFrame:
+) -> pyspark.sql.DataFrame:
     """Function to filter the knowledge graph edges.
 
     We first apply a series for filter transformations, and then deduplicate the edges based on the nodes that we dropped.
@@ -129,9 +128,9 @@ def filter_unified_kg_edges(
 
 
 def filter_nodes_without_edges(
-    nodes: DataFrame,
-    edges: DataFrame,
-) -> DataFrame:
+    nodes: pyspark.sql.DataFrame,
+    edges: pyspark.sql.DataFrame,
+) -> pyspark.sql.DataFrame:
     """Function to filter nodes without edges.
 
     Args:
@@ -224,15 +223,15 @@ async def process_batch(
 
 
 def normalize_kg(
-    nodes: ps.sql.DataFrame,
-    edges: ps.sql.DataFrame,
+    nodes: pyspark.sql.DataFrame,
+    edges: pyspark.sql.DataFrame,
     api_endpoint: str,
     json_path_expr: str = "$.id.identifier",
     conflate: bool = True,
     drug_chemical_conflate: bool = True,
     batch_size: int = 100,
     parallelism: int = 10,
-) -> ps.sql.DataFrame:
+) -> pyspark.sql.DataFrame:
     """Function normalizes a KG using external API endpoint.
 
     This function takes the nodes and edges frames for a KG and leverages
@@ -250,7 +249,7 @@ def normalize_kg(
 
     # convert dict back to a dataframe to parallelize the mapping
     node_id_map_df = pd.DataFrame(list(node_id_map.items()), columns=["id", "normalized_id"])
-    spark = ps.sql.SparkSession.builder.getOrCreate()
+    spark = pyspark.sql.SparkSession.builder.getOrCreate()
     mapping_df = (
         spark.createDataFrame(node_id_map_df)
         .withColumn("normalization_success", F.col("normalized_id").isNotNull())

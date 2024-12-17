@@ -2,15 +2,15 @@ import logging
 from typing import Any, Dict, List, Optional
 
 import pandas as pd
-import pyspark as ps
+import pyspark
 import pyspark.sql.functions as F
 import pyspark.sql.functions as f
-from pyspark.sql import DataFrame, Window
+from pyspark.sql import Window
 
 logger = logging.getLogger(__name__)
 
 
-def biolink_deduplicate_edges(edges_df: DataFrame, biolink_predicates: DataFrame):
+def biolink_deduplicate_edges(edges_df: pyspark.sql.DataFrame, biolink_predicates: pyspark.sql.DataFrame):
     """Function to deduplicate biolink edges.
 
     Knowledge graphs in biolink format may contain multiple edges between nodes. Where
@@ -59,7 +59,7 @@ def biolink_deduplicate_edges(edges_df: DataFrame, biolink_predicates: DataFrame
 
 
 def convert_biolink_hierarchy_json_to_df(biolink_predicates, col_name: str, convert_to_pascal_case: bool):
-    spark = ps.sql.SparkSession.builder.getOrCreate()
+    spark = pyspark.sql.SparkSession.builder.getOrCreate()
     biolink_hierarchy = spark.createDataFrame(
         unnest_biolink_hierarchy(
             col_name,
@@ -72,7 +72,9 @@ def convert_biolink_hierarchy_json_to_df(biolink_predicates, col_name: str, conv
     return biolink_hierarchy
 
 
-def determine_most_specific_category(nodes: DataFrame, biolink_categories_df: pd.DataFrame) -> DataFrame:
+def determine_most_specific_category(
+    nodes: pyspark.sql.DataFrame, biolink_categories_df: pd.DataFrame
+) -> pyspark.sql.DataFrame:
     """Function to retrieve most specific entry for each node.
 
     Example:
@@ -99,7 +101,9 @@ def determine_most_specific_category(nodes: DataFrame, biolink_categories_df: pd
     return nodes
 
 
-def remove_rows_containing_category(nodes: DataFrame, categories: List[str], column: str, **kwargs) -> DataFrame:
+def remove_rows_containing_category(
+    nodes: pyspark.sql.DataFrame, categories: List[str], column: str, **kwargs
+) -> pyspark.sql.DataFrame:
     """Function to remove rows containing a category."""
     return nodes.filter(~F.col(column).isin(categories))
 

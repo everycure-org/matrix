@@ -1,11 +1,11 @@
 from abc import ABC, abstractmethod
 
-from pyspark.sql import DataFrame
+import pyspark
 
 
 class GraphTransformer(ABC):
     @abstractmethod
-    def transform_nodes(self, nodes_df: DataFrame, **kwargs) -> DataFrame:
+    def transform_nodes(self, nodes_df: pyspark.sql.DataFrame, **kwargs) -> pyspark.sql.DataFrame:
         """
         Function to transform nodes into the common format.
 
@@ -17,7 +17,7 @@ class GraphTransformer(ABC):
         ...
 
     @abstractmethod
-    def transform_edges(self, edges_df: DataFrame, **kwargs) -> DataFrame:
+    def transform_edges(self, edges_df: pyspark.sql.DataFrame, **kwargs) -> pyspark.sql.DataFrame:
         """
         Function to transform edges into the common format.
 

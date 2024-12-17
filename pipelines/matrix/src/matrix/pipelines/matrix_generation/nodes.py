@@ -7,8 +7,7 @@ from typing import List, Dict, Union, Tuple
 from sklearn.impute._base import _BaseImputer
 
 import pandas as pd
-
-from pyspark.sql import DataFrame
+import pyspark
 import pyspark.sql.functions as F
 
 from matrix.inject import inject_object, _extract_elements_in_list
@@ -24,10 +23,10 @@ logger = logging.getLogger(__name__)
 
 
 def enrich_embeddings(
-    nodes: DataFrame,
-    drugs: DataFrame,
-    diseases: DataFrame,
-) -> DataFrame:
+    nodes: pyspark.sql.DataFrame,
+    drugs: pyspark.sql.DataFrame,
+    diseases: pyspark.sql.DataFrame,
+) -> pyspark.sql.DataFrame:
     """Function to enrich drug and disease list with embeddings.
 
     Args:
@@ -82,7 +81,7 @@ def _add_flag_columns(matrix: pd.DataFrame, known_pairs: pd.DataFrame, clinical_
     return matrix
 
 
-def spark_to_pd(nodes: DataFrame) -> pd.DataFrame:
+def spark_to_pd(nodes: pyspark.sql.DataFrame) -> pd.DataFrame:
     """Temporary function to transform spark parquet to pandas parquet.
 
     Related to https://github.com/everycure-org/matrix/issues/71.

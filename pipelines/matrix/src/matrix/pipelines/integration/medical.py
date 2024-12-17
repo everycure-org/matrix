@@ -1,9 +1,9 @@
 import logging
 import pandas as pd
 import pandera
+import pyspark
 import pyspark.sql.functions as f
 import pyspark.sql.types as T
-from pyspark.sql import DataFrame
 
 from .transformer import GraphTransformer
 from matrix.schemas.knowledge_graph import KGEdgeSchema, KGNodeSchema, cols_for_schema
@@ -14,7 +14,9 @@ logger = logging.getLogger(__name__)
 
 class MedicalTransformer(GraphTransformer):
     @pandera.check_output(KGNodeSchema)
-    def transform_nodes(self, nodes_df: DataFrame, biolink_categories_df: pd.DataFrame, **kwargs) -> DataFrame:
+    def transform_nodes(
+        self, nodes_df: pyspark.sql.DataFrame, biolink_categories_df: pd.DataFrame, **kwargs
+    ) -> pyspark.sql.DataFrame:
         """Transform nodes to our target schema.
 
         Args:
@@ -38,7 +40,7 @@ class MedicalTransformer(GraphTransformer):
         # fmt: on
 
     @pandera.check_output(KGEdgeSchema)
-    def transform_edges(self, edges_df: DataFrame, **kwargs) -> DataFrame:
+    def transform_edges(self, edges_df: pyspark.sql.DataFrame, **kwargs) -> pyspark.sql.DataFrame:
         """Transform edges to our target schema.
 
         Args:
