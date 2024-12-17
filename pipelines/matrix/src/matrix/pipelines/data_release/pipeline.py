@@ -1,5 +1,6 @@
 from kedro.pipeline import Pipeline, pipeline
 from matrix.kedro4argo_node import ArgoNode
+from matrix.pipelines.data_release.nodes import filtered_edges_to_kgx, filtered_nodes_to_kgx
 from matrix.pipelines.embeddings.nodes import ingest_edges, ingest_nodes
 
 
@@ -40,6 +41,20 @@ def create_pipeline(**kwargs) -> Pipeline:
                 outputs="data_release.prm.kg_edges",
                 name="ingest_kg_edges",
                 tags=["neo4j"],
+            ),
+            ArgoNode(
+                func=filtered_edges_to_kgx,
+                inputs=["integration.prm.filtered_edges"],
+                outputs="data_release.prm.kgx_edges",
+                name="write_edges_to_kgx",
+                tags=["kgx"],
+            ),
+            ArgoNode(
+                func=filtered_nodes_to_kgx,
+                inputs=["integration.prm.filtered_nodes"],
+                outputs="data_release.prm.kgx_nodes",
+                name="write_nodes_to_kgx",
+                tags=["kgx"],
             ),
             # NOTE: Enable if you want embeddings
             # ArgoNode(
