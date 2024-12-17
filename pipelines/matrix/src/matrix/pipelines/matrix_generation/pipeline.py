@@ -1,6 +1,7 @@
-from kedro.pipeline import Pipeline, node, pipeline
+from kedro.pipeline import Pipeline, pipeline
 
 from matrix import settings
+from matrix.kedro4argo_node import ARGO_GPU_NODE_MEDIUM, argo_node
 
 from . import nodes
 
@@ -8,7 +9,7 @@ from . import nodes
 def _create_matrix_generation_pipeline(model: str, fold: int) -> Pipeline:
     return pipeline(
         [
-            node(
+            argo_node(
                 func=nodes.make_predictions_and_sort,
                 inputs=[
                     "matrix_generation.feat.nodes_kg_ds",
@@ -21,8 +22,9 @@ def _create_matrix_generation_pipeline(model: str, fold: int) -> Pipeline:
                 ],
                 outputs=f"matrix_generation.{model}.fold_{fold}.model_output.sorted_matrix_predictions@pandas",
                 name=f"make_{model}_predictions_and_sort_fold_{fold}",
+                argo_config=ARGO_GPU_NODE_MEDIUM,
             ),
-            node(
+            argo_node(
                 func=nodes.generate_report,
                 inputs=[
                     f"matrix_generation.{model}.fold_{fold}.model_output.sorted_matrix_predictions@pandas",
@@ -49,7 +51,7 @@ def create_pipeline(**kwargs) -> Pipeline:
 
     # Initial nodes computing matrix pairs and flags
     initial_nodes = [
-        node(
+        argo_node(
             func=nodes.enrich_embeddings,
             inputs=[
                 "embeddings.feat.nodes",
@@ -61,7 +63,7 @@ def create_pipeline(**kwargs) -> Pipeline:
         ),
         # Hacky fix to save parquet file via pandas rather than spark
         # related to https://github.com/everycure-org/matrix/issues/71
-        node(
+        argo_node(
             func=nodes.spark_to_pd,
             inputs=[
                 "matrix_generation.feat.nodes@spark",
@@ -72,7 +74,7 @@ def create_pipeline(**kwargs) -> Pipeline:
     ]
     initial_nodes.extend(
         [
-            node(
+            argo_node(
                 func=nodes.generate_pairs,
                 inputs=[
                     "ingestion.raw.drug_list@pandas",
