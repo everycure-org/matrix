@@ -18,7 +18,6 @@ from pyspark import SparkConf
 from pyspark.sql import SparkSession
 from google.cloud import storage
 from google.cloud.storage.bucket import Bucket
-from matrix.pipelines.data_release.pipeline import last_node as last_data_release_node
 
 logger = logging.getLogger(__name__)
 
@@ -49,7 +48,9 @@ class MLFlowHooks:
         # NOTE: This piece of code ensures that every MLFlow experiment
         # is created by our Kedro pipeline with the right artifact root.
         mlflow.set_tracking_uri(cfg.server.mlflow_tracking_uri)
+        print(f"tracking uri: {cfg.server.mlflow_tracking_uri}")
         experiment_id = self._create_experiment(cfg.tracking.experiment.name, globs.mlflow_artifact_root)
+        OmegaConf.update(cfg, "tracking.experiment.id", experiment_id)
 
         if cfg.tracking.run.name:
             run_id = self._create_run(cfg.tracking.run.name, experiment_id)
@@ -313,9 +314,15 @@ class ReleaseInfoHooks:
         blob = bucket.blob(blobpath)
         blob.upload_from_string(data=json.dumps(release_info), content_type="application/json")
 
+    # @hook_impl
+    # def after_node_run(self, node: Node) -> None:
+    #     """Runs after the last node of the data_release pipeline"""
+    #     if node.name == last_data_release_node.name:
+    #         release_info = self.extract_release_info()
+    #         self.upload_to_storage(release_info)
+
     @hook_impl
-    def after_node_run(self, node: Node) -> None:
+    def before_node_run(self, node: Node) -> None:
         """Runs after the last node of the data_release pipeline"""
-        if node.name == last_data_release_node.name:
-            release_info = self.extract_release_info()
-            self.upload_to_storage(release_info)
+        release_info = self.extract_release_info()
+        self.upload_to_storage(release_info)
