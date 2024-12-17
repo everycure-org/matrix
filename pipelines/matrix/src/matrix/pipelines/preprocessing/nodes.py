@@ -2,7 +2,7 @@ from functools import partial
 from typing import Callable, Dict, List, Tuple
 
 import pandas as pd
-from pandera import Column, DataFrameModel, DataFrameSchema, Field
+from pandera import Column, DataFrameModel, Field
 import pandera
 import requests
 from langchain.output_parsers import CommaSeparatedListOutputParser
@@ -145,12 +145,15 @@ def create_int_nodes(
     return resolved
 
 
-int_edges_schema = DataFrameSchema(
-    {"SourceId": Column(str, nullable=True), "TargetId": Column(str, nullable=True)}, strict=False
-)
+class IntEdgesSchema(DataFrameModel):
+    SourceId: Column(str) = Field(nullable=True)  # type: ignore
+    TargetId: Column(str) = Field(nullable=True)  # type: ignore
+
+    class Config:
+        strict = False
 
 
-@pandera.check_output(int_edges_schema)
+@pandera.check_output(IntEdgesSchema)
 def create_int_edges(int_nodes: pd.DataFrame, int_edges: pd.DataFrame) -> pd.DataFrame:
     """Function to create int edges dataset.
 
@@ -182,14 +185,17 @@ def create_int_edges(int_nodes: pd.DataFrame, int_edges: pd.DataFrame) -> pd.Dat
     return res
 
 
-prm_nodes_schema = DataFrameSchema(
-    {"category": Column(object), "id": Column(object), "name": Column(object), "description": Column(object)},
-    strict=False,
-    unique=["id"],  # This replaces the @primary_key decorator
-)
+class PrmNodesSchema(DataFrameModel):
+    category: Column(object) = Field()  # type: ignore
+    id: Column(object) = Field(unique=True)  # type: ignore
+    name: Column(object) = Field()  # type: ignore
+    description: Column(object) = Field()  # type: ignore
+
+    class Config:
+        strict = False
 
 
-@pandera.check_output(prm_nodes_schema)
+@pandera.check_output(PrmNodesSchema)
 def create_prm_nodes(prm_nodes: pd.DataFrame) -> pd.DataFrame:
     """Function to create a primary nodes that contains only new nodes introduced by the source."""
     # `new_id` signals that the node should be added to the KG as a new id
@@ -210,19 +216,18 @@ def create_prm_nodes(prm_nodes: pd.DataFrame) -> pd.DataFrame:
     return res
 
 
-prm_edges_schema = DataFrameSchema(
-    {
-        "subject": Column(str),
-        "predicate": Column(str),
-        "object": Column(str),
-        "knowledge_source": Column(str),
-    },
-    strict=False,
-    unique=["subject", "predicate", "object"],  # This replaces the @primary_key decorator
-)
+class PrmEdgesSchema(DataFrameModel):
+    subject: Column(str) = Field(nullable=True)  # type: ignore
+    predicate: Column(str) = Field(nullable=True)  # type: ignore
+    object: Column(str) = Field(nullable=True)  # type: ignore
+    knowledge_source: Column(str) = Field(nullable=True)  # type: ignore
+
+    class Config:
+        strict = False
+        unique = ["subject", "predicate", "object"]  # Composite uniqueness constraint
 
 
-@pandera.check_output(prm_edges_schema)
+@pandera.check_output(PrmEdgesSchema)
 def create_prm_edges(int_edges: pd.DataFrame) -> pd.DataFrame:
     """Function to create a primary edges dataset by filtering and renaming columns."""
     # Replace empty strings with nan
@@ -236,22 +241,24 @@ def create_prm_edges(int_edges: pd.DataFrame) -> pd.DataFrame:
     return res
 
 
-clinical_trials_schema = DataFrameSchema(
-    {
-        "clinical_trial_id": Column(object),
-        "reason_for_rejection": Column(object),
-        "drug_name": Column(object),
-        "disease_name": Column(object),
-        "significantly_better": Column(float),
-        "non_significantly_better": Column(float),
-        "non_significantly_worse": Column(float),
-        "significantly_worse": Column(float),
-    },
-    strict=False,
-)
+class ClinicalTrialsSchema(DataFrameModel):
+    clinical_trial_id: Column(object)  # type: ignore
+    reason_for_rejection: Column(object)  # type: ignore
+    drug_name: Column(object)  # type: ignore
+    disease_name: Column(object)  # type: ignore
+    drug_kg_curie: Column(object)  # type: ignore
+    disease_kg_curie: Column(object)  # type: ignore
+    conflict: Column(object)  # type: ignore
+    significantly_better: Column(float)  # type: ignore
+    non_significantly_better: Column(float)  # type: ignore
+    non_significantly_worse: Column(float)  # type: ignore
+    significantly_worse: Column(float)  # type: ignore
+
+    class Config:
+        strict = False
 
 
-@pandera.check_output(clinical_trials_schema)
+@pandera.check_output(ClinicalTrialsSchema)
 def map_name_to_curie(
     df: pd.DataFrame,
     name_resolver: str,
@@ -349,26 +356,25 @@ def map_name_to_curie(
     return df
 
 
-clean_trials_schema = DataFrameSchema(
-    {
-        "clinical_trial_id": Column(object),
-        "reason_for_rejection": Column(object),
-        "drug_name": Column(object),
-        "disease_name": Column(object),
-        "drug_kg_curie": Column(object),
-        "disease_kg_curie": Column(object),
-        "conflict": Column(object),
-        "significantly_better": Column(float),
-        "non_significantly_better": Column(float),
-        "non_significantly_worse": Column(float),
-        "significantly_worse": Column(float),
-    },
-    strict=False,
-    unique=["clinical_trial_id", "drug_kg_curie", "disease_kg_curie"],
-)
+class CleanTrialsSchema(DataFrameModel):
+    clinical_trial_id: Column(object)  # type: ignore
+    reason_for_rejection: Column(object)  # type: ignore
+    drug_name: Column(object)  # type: ignore
+    disease_name: Column(object)  # type: ignore
+    drug_kg_curie: Column(object)  # type: ignore
+    disease_kg_curie: Column(object)  # type: ignore
+    conflict: Column(object)  # type: ignore
+    significantly_better: Column(float)  # type: ignore
+    non_significantly_better: Column(float)  # type: ignore
+    non_significantly_worse: Column(float)  # type: ignore
+    significantly_worse: Column(float)  # type: ignore
+
+    class Config:
+        strict = False
+        unique = ["clinical_trial_id", "drug_kg_curie", "disease_kg_curie"]
 
 
-@pandera.check_output(clean_trials_schema)
+@pandera.check_output(CleanTrialsSchema)
 def clean_clinical_trial_data(df: pd.DataFrame) -> pd.DataFrame:
     """Clean clinical trails data.
 
@@ -403,13 +409,17 @@ def clean_clinical_trial_data(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-drug_list_schema = DataFrameSchema(
-    {"single_ID": Column(object), "curie": Column(object), "name": Column(object)}, strict=False
-)
-# TODO: Add unique=["single_ID"] once drug list is ready
+class DrugListSchema(DataFrameModel):
+    single_ID: Column(object) = Field(nullable=True)  # type: ignore
+    curie: Column(object) = Field(nullable=True)  # type: ignore
+    name: Column(object) = Field(nullable=True)  # type: ignore
+
+    class Config:
+        strict = False
+        # TODO: Add unique=["single_ID"] once drug list is ready
 
 
-@pandera.check_output(drug_list_schema)
+@pandera.check_output(DrugListSchema)
 def clean_drug_list(
     drug_df: pd.DataFrame,
     endpoint: str,
@@ -450,23 +460,22 @@ def clean_drug_list(
     return drug_df.dropna(subset=["curie"])
 
 
-disease_list_schema = DataFrameSchema(
-    {
-        "category_class": Column(object),
-        "label": Column(object),
-        "definition": Column(object),
-        "synonyms": Column(object),
-        "subsets": Column(object),
-        "crossreferences": Column(object),
-        "curie": Column(object),
-        "name": Column(object),
-    },
-    strict=False,
-    unique=["category_class", "curie"],
-)
+class DiseaseListSchema(DataFrameModel):
+    category_class: Column(object)  # type: ignore
+    label: Column(object)  # type: ignore
+    definition: Column(object)  # type: ignore
+    synonyms: Column(object)  # type: ignore
+    subsets: Column(object)  # type: ignore
+    crossreferences: Column(object)  # type: ignore
+    curie: Column(object)  # type: ignore
+    name: Column(object)  # type: ignore
+
+    class Config:
+        strict = False
+        unique = ["category_class", "curie"]
 
 
-@pandera.check_output(disease_list_schema)
+@pandera.check_output(DiseaseListSchema)
 def clean_disease_list(
     disease_df: pd.DataFrame,
     endpoint: str,
@@ -508,21 +517,20 @@ def clean_disease_list(
     return disease_df.dropna(subset=["curie"]).fillna("")
 
 
-input_sheet_schema = DataFrameSchema(
-    {
-        "timestamp": Column(object),
-        "drug_id": Column(object),
-        "disease_id": Column(object),
-        "norm_drug_id": Column(object),
-        "norm_disease_id": Column(object),
-        "norm_drug_name": Column(object),
-        "norm_disease_name": Column(object),
-    },
-    strict=False,
-)
+class InputSheetSchema(DataFrameModel):
+    timestamp: Column(object)  # type: ignore
+    drug_id: Column(object)  # type: ignore
+    disease_id: Column(object)  # type: ignore
+    norm_drug_id: Column(object)  # type: ignore
+    norm_disease_id: Column(object)  # type: ignore
+    norm_drug_name: Column(object)  # type: ignore
+    norm_disease_name: Column(object)  # type: ignore
+
+    class Config:
+        strict = False
 
 
-@pandera.check_output(input_sheet_schema)
+@pandera.check_output(InputSheetSchema)
 def clean_input_sheet(
     input_df: pd.DataFrame,
     endpoint: str,
