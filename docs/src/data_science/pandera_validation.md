@@ -30,31 +30,30 @@ Our codebase works with several types of DataFrames, each requiring different va
 Example of a Pandas DataFrame validation:
 
 - `DataFrameModel` is the the generic Pandera schema parent class.
-- `Column` is the the generic Pandera class.
-- `T` is the native Pandas type system.
+- `Series` is a `pandera.typing` class.
 
 
 ```python
 import pandas as pd
 from pandera import Column, DataFrameSchema
+from pandera.typing import Series
 import pandera
 
-trial_schema = DataFrameSchema(
-    {
-        "source": Column(object),
-        "target": Column(object),
-        "is_known_positive": Column(bool),
-        "is_known_negative": Column(bool),
-        "trial_sig_better": Column(bool),
-        "trial_non_sig_better": Column(bool),
-        "trial_sig_worse": Column(bool),
-        "trial_non_sig_worse": Column(bool),
-    },
-    strict=False,
-)
 
+class TrialSchema(DataFrameSchema):
+    source: Series[object]
+    target: Series[object]
+    is_known_positive: Series[bool]
+    is_known_negative: Series[bool]
+    trial_sig_better: Series[bool]
+    trial_non_sig_better: Series[bool]
+    trial_sig_worse: Series[bool]
+    trial_non_sig_worse: Series[bool]
 
-@pandera.check_output(trial_schema)
+    class Config:
+        strict = False
+
+@pandera.check_output(TrialSchema)
 @inject_object()
 def generate_pairs(
     drugs: pd.DataFrame,

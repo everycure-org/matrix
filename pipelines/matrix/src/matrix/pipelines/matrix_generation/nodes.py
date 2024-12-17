@@ -1,6 +1,6 @@
 import logging
 import pandera
-from pandera import Column, DataFrameSchema
+from pandera import DataFrameSchema
 from tqdm import tqdm
 from typing import List, Dict, Union, Tuple
 
@@ -9,6 +9,7 @@ from sklearn.impute._base import _BaseImputer
 import pandas as pd
 import pyspark
 import pyspark.sql.functions as F
+from pandera.typing import Series
 
 from matrix.inject import inject_object, _extract_elements_in_list
 
@@ -93,22 +94,21 @@ def spark_to_pd(nodes: pyspark.sql.DataFrame) -> pd.DataFrame:
     return nodes.toPandas()
 
 
-trial_schema = DataFrameSchema(
-    {
-        "source": Column(object),
-        "target": Column(object),
-        "is_known_positive": Column(bool),
-        "is_known_negative": Column(bool),
-        "trial_sig_better": Column(bool),
-        "trial_non_sig_better": Column(bool),
-        "trial_sig_worse": Column(bool),
-        "trial_non_sig_worse": Column(bool),
-    },
-    strict=False,
-)
+class TrialSchema(DataFrameSchema):
+    source: Series[object]
+    target: Series[object]
+    is_known_positive: Series[bool]
+    is_known_negative: Series[bool]
+    trial_sig_better: Series[bool]
+    trial_non_sig_better: Series[bool]
+    trial_sig_worse: Series[bool]
+    trial_non_sig_worse: Series[bool]
+
+    class Config:
+        strict = False
 
 
-@pandera.check_output(trial_schema)
+@pandera.check_output(TrialSchema)
 @inject_object()
 def generate_pairs(
     drugs: pd.DataFrame,
