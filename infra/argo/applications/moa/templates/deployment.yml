@@ -35,6 +35,8 @@ spec:
             value: "/data/moa_extraction.db"
           - name: MOA_INFO_IMG
             value: "/assets/moa_info.svg"
+          - name: IMAGE_VERSION
+            value: "{{ .Files.Get "files/version" }}"
       containers:
       - name: moa-viewer
         image: "{{ .Values.app.registry }}:{{ .Files.Get "files/version" }}"
@@ -42,8 +44,14 @@ spec:
         ports:
         - containerPort: 8501
         env:
+          - name: DATA_INPUT_PATH
+            value: {{ .Values.app.config.data_path }}
+          - name: GCP_PROJECT
+            value: "mtrx-hub-dev-3of"
           - name: MOA_DB_PATH
             value: "/data/moa_extraction.db"
+          - name: MOA_INFO_IMG
+            value: "/assets/moa_info.svg"
           - name: IMAGE_VERSION
             value: "{{ .Files.Get "files/version" }}"
         volumeMounts:
