@@ -65,7 +65,7 @@ jobs:
       - name: Download & commit release info file
         working-directory: docs/src/releases
         env:
-          RELEASE_DIR_GCS: 'gs://mtrx-us-central1-hub-dev-storage/kedro/data/tests'
+          RELEASE_DIR_GCS: 'gs://mtrx-us-central1-hub-dev-storage/kedro/data/releases'
           FILENAME: ${{env.release}}_info.json
           RELEASE_INFO_DIR_GH: ${{ github.workspace }}/docs/src/releases
         run: |
@@ -80,7 +80,7 @@ jobs:
         working-directory: apps/matrix-cli
         env:
           GH_TOKEN: ${{ github.token }}
-          POSTS_DIR: ./docs/src/releases/posts
+          POSTS_DIR: docs/src/releases/posts
         run: |
           gcloud config list account --format "value(core.account)"
           

@@ -1,74 +1,82 @@
-# Skeleton Workflow Argo
+# Data versioning workflow
 
-https://docs.dev.everycure.org/infrastructure/argo_workflows_locally/  
+It's a tale of 2 orchestrators: Argo Workflow, to monitor tasks running on k8s,
+and GitHub Actions, to act on the repository where this code is hosted.
+
+## Current implementation
+
+```mermaid
+sequenceDiagram
+	actor eng as Engineer
+	box rgb(40,100,50, .5) ns:argo-workflows
+	participant ws as Workflows Server
+	end
+    eng->>ws: kedro submit --pipeline data_release
+    create participant dr as Data Release
+  box rgb(40,50,100, .5) ns:data-release
+		participant es as Event Source
+		participant eb as Event Bus
+		participant esen as Event Sensor
+	end
+
+    ws->>dr: start workflow
+    dr->>+dr: launch pods running kedro nodes
+    destroy dr
+		es-xdr: 👀 Detect done (filter)!
+    es->>eb: FWD 📨!
+    esen->>eb: “filter”
+	  note right of esen: trigger an action
+```
+
+```mermaid
+sequenceDiagram
+	participant es as Event Sensor
+
+
+	create participant curl as Pod running "Curl"
+	es ->> curl: Come alive
+	actor emp as Employee
+	actor emp2 as Employee2
+	participant gh as GitHub
+	curl ->> gh: HTTP POST to dispatch<br />{"release": "v0.1.2", "fingerprint": "00fe900d"}
+	create participant gha as GitHub Actions
+	gh->>gha: delegate
+	gha->>gha: git checkout <fingerprint>
+	gha->>gha: git tag <release>
+	gha->>gha: setup matrix cli
+	gha->>gha: gcloud auth
+	gha->>gha: generate release notes & article
+	gha->>gha: add, commit & push notes, article & tag
+	gha->>gh: create PR (label: Release)
+
+	gh ->> emp: request review
+	emp ->> gh: comments & modifies
+	emp2 ->> gh: approves PR
+	create participant gha2 as GitHub Actions'
+	gh ->> gha2: notifies PR done
+	gha2 ->> gha2: git checkout
+	gha2 ->> gh: create release using AI post
+```
+
+The above combination makes the Git lineage end result look like:
+
+```mermaid
+    gitGraph
+       commit
+       commit
+       commit id: "kedro submit" tag: "v1.0.0"
+       commit id: "add release notes and article"
+
+```
+
+## Future work
+
+A data quality check can be implemented as a required pipeline after
+data-release or as an optional one in kedro (branching off), but required for
+the release process (e.g. sensor→DQ→sensor→curl).
+
+## References
+
+https://docs.dev.everycure.org/infrastructure/argo_workflows_locally/
 https://kind.sigs.k8s.io/docs/user/quick-start  
 https://argoproj.github.io/argo-events/installation/  
-
-
-![Workflow Diagram](../assets/img/argo-data-release-flow-diagram.png)
-```
-kind get clusters  
-kind create cluster --name kind-4  
-kubectl config current-context  
-
-kubectl create namespace argo  
-kubectl apply -n argo -f https://raw.githubusercontent.com/argoproj/argo-workflows/refs/heads/main/manifests/quick-start-minimal.yaml  
-
-kubectl create namespace argo-events  
-kubectl apply -f https://raw.githubusercontent.com/argoproj/argo-events/stable/manifests/install.yaml  
-kubectl apply -f https://raw.githubusercontent.com/argoproj/argo-events/stable/manifests/install-validating-webhook.yaml  
-kubectl apply -n argo-events -f https://raw.githubusercontent.com/argoproj/argo-events/stable/examples/eventbus/native.yaml  
-
-kubectl -n argo port-forward service/argo-server 2746:2746  
-
-kubectl create -f ArgoEventsClusterServiceAccount.yaml  
-```
-
-You cannot use a Service Account (even the one with a cluster role attached to it) created in one namespace, from another namespace.  
-
-Example:  
-I created a service account with a cluster role attached to it in the namespace argo-events. I want to use it in a workflow that lives in the namespace argo. It throws this error:  
-
-```
-
-error in entry template execution: pods "build-data-release-hmm67" is forbidden: error looking up service account argo/argo-events-cluster-service-account: serviceaccount "argo-events-cluster-service-account" not found  
-```
-
-This means we need to create two service accounts in each namespace.  
-```
-
-kubectl create -f ArgoClusterServiceAccount.yaml  
-kubectl create -f BuildDataReleaseEventSource.yaml  
-kubectl create -f BuildDataReleaseSensor.yaml  
-```
-
-Evensources and sensors will spin up their own pods. They must be created in the same namespace as the eventbus (argo-events). Make sure the pods are running and healthy:  
-```
-
-kubectl get pods -n argo-events  
-```
-
-If not, inspect the logs:  
-
-```
-kubectl logs build-data-release-eventsource-eventsource-5s9dd-5dd77679dc6wdb -n argo-events  
-```
-
-Generate the GitHub token as a secret. Must be base64 encoded:  
-
-```
-echo -n "your_token" | base64  
-```
-
-Add it to the below file and create it:  
-
-```
-kubectl create -f GithubTokenSecret.yaml  
-```
-
-Trigger the initial workflow and watch the chain of events:  
-```
-
-kubectl create -f BuildNewReleaseWorkflow.yaml  
-```
-
