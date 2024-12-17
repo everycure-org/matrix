@@ -18,6 +18,8 @@ from pyspark import SparkConf
 from pyspark.sql import SparkSession
 from google.cloud import storage
 from google.cloud.storage.bucket import Bucket
+from matrix.pipelines.data_release.pipeline import last_node as last_data_release_node
+
 
 logger = logging.getLogger(__name__)
 
@@ -337,16 +339,9 @@ class ReleaseInfoHooks:
         blob = bucket.blob(blobpath)
         blob.upload_from_string(data=json.dumps(release_info), content_type="application/json")
 
-    # @hook_impl
-    # def after_node_run(self, node: Node) -> None:
-    #     """Runs after the last node of the data_release pipeline"""
-    #     if node.name == last_data_release_node.name:
-    #         release_info = self.extract_release_info()
-    #         self.upload_to_storage(release_info)
-
     @hook_impl
-    def before_node_run(self, node: Node) -> None:
+    def after_node_run(self, node: Node) -> None:
         """Runs after the last node of the data_release pipeline"""
-
-        release_info = self.extract_release_info()
-        self.upload_to_storage(release_info)
+        if node.name == last_data_release_node.name:
+            release_info = self.extract_release_info()
+            self.upload_to_storage(release_info)
