@@ -3,6 +3,8 @@ kind: Sensor
 metadata:
   name: build-data-release-sensor-post-release
   namespace: data-release
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
 spec:
   template:
     serviceAccountName: data-release-service-account
