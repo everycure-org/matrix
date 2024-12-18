@@ -7,10 +7,10 @@ import re
 from types import BuiltinFunctionType, FunctionType
 from typing import Any, Dict, List, Tuple
 
-OBJECT_KW = "_object"
-INSTANTIATE_KW = "_instantiate"
-UNPACK_KW = "_unpack"
-ENABLE_REGEXABLE_KWARG = "_enable_regex"
+OBJECT_KW = "object"
+INSTANTIATE_KW = "instantiate"
+UNPACK_KW = "unpack"
+ENABLE_REGEXABLE_KWARG = "enable_regex"
 
 logger = logging.getLogger(__file__)
 
