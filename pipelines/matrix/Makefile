@@ -62,7 +62,12 @@ docker_build:
 docker_push: docker_build
 	docker push $(dev_docker_image):${TAG}
 
-compose_up:
+certificate:
+	@echo "Generating test SSL certificate for Neo4J."
+	openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout compose/certs/bolt/private.key -out compose/certs/bolt/public.crt -config compose/certs/openssl.cnf
+	cat compose/certs/bolt/private.key compose/certs/bolt/public.crt > compose/certs/bolt/private_and_public.pem
+
+compose_up: certificate
 	docker compose -f compose/docker-compose.yml up -d --wait --remove-orphans
 	
 compose_down:
