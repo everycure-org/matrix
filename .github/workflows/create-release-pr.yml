@@ -41,12 +41,20 @@ jobs:
           fetch-tags: true
           fetch-depth: 0  # full depth needed so we can pass the AI all logs since the last release.
 
-      - name: Tag the commit from which the data release was triggered
+      - name: Configure Git
         run: |
           git config --global user.email "releasebot@everycure.org"
           git config --global user.name "All of us at Every Cure"
+          git config --global push.autosetupremote true
+
+      - name: Tag the commit from which the data release was triggered
+        run: |
           # Create an annotated tag, so that we can push it easily with the files using `follow-tags`.
           git tag --annotate --message '' -- "${{env.release}}" "${{env.gitref}}"
+
+      - name: Branch off
+        # To comply with the protected-branch policy
+        run: git switch -c release/${{env.release}}
 
       - name: Setup Matrix CLI
         working-directory: apps/matrix-cli
