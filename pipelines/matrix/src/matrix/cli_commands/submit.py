@@ -43,14 +43,14 @@ def cli():
 @click.option("--run-name", type=str, default=None, help="Specify a custom run name, defaults to branch")
 @click.option("--release-version", type=str, required=True, help="Specify a custom release name")
 @click.option("--pipeline", "-p", type=str, default="modelling_run", help="Specify which pipeline to execute")
-@click.option("--verbose", "-v", is_flag=True, default=True, help="Enable verbose output")
+@click.option("--quiet", "-q", is_flag=True, default=False, help="Disable verbose output")
 @click.option("--dry-run", "-d", is_flag=True, default=False, help="Does everything except submit the workflow")
 @click.option("--from-nodes", type=str, default="", help="Specify nodes to run from", callback=split_string)
 @click.option("--is-test", is_flag=True, default=False, help="Submit to test folder")
 # fmt: on
-def submit(username: str, namespace: str, run_name: str, release_version: str, pipeline: str, verbose: bool, dry_run: bool, from_nodes: List[str], is_test: bool):
+def submit(username: str, namespace: str, run_name: str, release_version: str, pipeline: str, quiet: bool, dry_run: bool, from_nodes: List[str], is_test: bool):
     """Submit the end-to-end workflow. """
-    if verbose:
+    if not quiet:
         log.setLevel(logging.DEBUG)
 
     if pipeline not in kedro_pipelines.keys():
@@ -62,14 +62,12 @@ def submit(username: str, namespace: str, run_name: str, release_version: str, p
     if from_nodes:
         if not click.confirm("Using 'from-nodes' is highly experimental and may break due to MLFlow issues with tracking the right run. Are you sure you want to continue?", default=False):
             raise click.Abort()
-    
+
     pipeline_obj = kedro_pipelines[pipeline]
     if from_nodes:
         pipeline_obj = pipeline_obj.from_nodes(*from_nodes)
 
-    if not run_name:
-        run_name = get_run_name(run_name)
-
+    run_name = get_run_name(run_name)
     pipeline_obj.name = pipeline
 
 
@@ -80,7 +78,7 @@ def submit(username: str, namespace: str, run_name: str, release_version: str, p
         run_name=run_name,
         release_version=release_version,
         pipeline_obj=pipeline_obj,
-        verbose=verbose,
+        verbose=not quiet,
         dry_run=dry_run,
         template_directory=ARGO_TEMPLATES_DIR_PATH,
         is_test=is_test,
@@ -93,7 +91,7 @@ def _submit(
         run_name: str, 
         release_version: str,
         pipeline_obj: Pipeline,
-        verbose: bool, 
+        verbose: bool,
         dry_run: bool, 
         template_directory: Path,
         allow_interactions: bool = True,
@@ -137,7 +135,7 @@ def _submit(
 
         if dry_run:
             return
-        
+
         build_push_docker(run_name, verbose=verbose)
 
         ensure_namespace(namespace, verbose=verbose)
@@ -209,15 +207,15 @@ def run_subprocess(
     )
 
     stdout, stderr = [], []
-    
+
     if stream_output:
         while True:
             out_line = process.stdout.readline() if process.stdout else ''
             err_line = process.stderr.readline() if process.stderr else ''
-            
+
             if not out_line and not err_line and process.poll() is not None:
                 break
-                
+
             if out_line:
                 sys.stdout.write(out_line)
                 sys.stdout.flush()
@@ -226,7 +224,7 @@ def run_subprocess(
                 sys.stderr.write(err_line)
                 sys.stderr.flush()
                 stderr.append(err_line)
-        
+
         # Get any remaining output
         out, err = process.communicate()
         if out:
@@ -238,7 +236,7 @@ def run_subprocess(
 
     if check and process.returncode != 0:
         raise subprocess.CalledProcessError(
-            process.returncode, cmd, 
+            process.returncode, cmd,
             ''.join(stdout) if stdout else None,
             ''.join(stderr) if stderr else None
         )
@@ -265,7 +263,7 @@ def check_dependencies(verbose: bool):
 
     Raises:
         EnvironmentError: If gcloud is not installed or kubectl cannot be configured.
-    """    
+    """
     console.print("Checking dependencies...")
 
     if not command_exists("gcloud"):
@@ -279,7 +277,6 @@ def check_dependencies(verbose: bool):
     active_account = (
         run_subprocess(
             "gcloud auth list --filter=status:ACTIVE --format=value'(ACCOUNT)'",
-            stream_output=verbose,
         )
         .stdout.strip()
         .split("\n")[0]
@@ -305,7 +302,7 @@ def check_dependencies(verbose: bool):
             stream_output=verbose,
         )
         console.print("[green]✓[/green] kubectl authenticated")
-    
+
     # Verify kubectl
     try:
         run_subprocess("kubectl get ns", stream_output=verbose)
@@ -412,7 +409,7 @@ def submit_workflow(run_name: str, namespace: str, verbose: bool):
         "-o json"
     ])
     console.print(f"Running submit command: [blue]{cmd}[/blue]")
-    result = run_subprocess(cmd, stream_output=verbose)
+    result = run_subprocess(cmd)
     job_name = json.loads(result.stdout).get("metadata", {}).get("name")
 
     if not job_name:
