@@ -1,12 +1,9 @@
-import logging
 from typing import Collection, Type
 
 from pyspark.sql import DataFrame
 from pyspark.sql.functions import array_join
 
 from matrix.schemas.knowledge_graph import cols_for_schema, KGNodeSchema, KGEdgeSchema, DataFrameModel
-
-logger = logging.getLogger(__name__)
 
 SEPARATOR = "\x1f"
 
