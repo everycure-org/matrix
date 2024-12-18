@@ -112,7 +112,7 @@ def generate_pairs(
     diseases: DataFrame,
     graph: KnowledgeGraph,
     known_pairs: pd.DataFrame,
-    clinical_trials: pd.DataFrame,
+    clinical_trials: DataFrame,
 ) -> pd.DataFrame:
     """Function to generate matrix dataset.
 
@@ -573,7 +573,6 @@ def generate_report(
         Dataframe with the top pairs and additional information for the drugs and diseases.
     """
     # TODO: Remove this transcoding and move to data catalog
-    print(type(drugs), type(diseases))
     drugs = drugs.toPandas()
     diseases = diseases.toPandas()
 

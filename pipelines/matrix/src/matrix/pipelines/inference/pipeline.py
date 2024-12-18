@@ -8,6 +8,7 @@ def _create_resolution_pipeline() -> Pipeline:
     """Resolution pipeline for filtering out the input."""
     return pipeline(
         [
+            # TODO: Remove implement this node /modification of it thats consistent with integration/batch
             # node(
             #     func=nodes.clean_input_sheet,
             #     inputs={
