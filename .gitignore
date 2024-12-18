@@ -40,3 +40,7 @@ apps/embed_norm/cached_datasets/
 apps/embed_norm/old_tests/
 **/.joblib/**
 
+# Ignore generated credentials from google-github-actions/auth
+gha-creds-*.json
+
+pipelines/matrix/src/matrix/pipelines/matrix_generation/matrix.code-workspace
