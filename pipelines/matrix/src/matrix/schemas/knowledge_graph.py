@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Type
 
 import pandera.pyspark as pa
 from pandera.pyspark import Field
@@ -8,7 +8,7 @@ import pyspark.sql.types as T
 from pyspark.sql import DataFrame
 
 
-def cols_for_schema(schema_obj: pa.DataFrameModel) -> List[str]:
+def cols_for_schema(schema_obj: Type[pa.DataFrameModel]) -> List[str]:
     """Convenience function that returns the columns of a schema.
 
     The function returns all the columns of the passed model. This is convenient for
