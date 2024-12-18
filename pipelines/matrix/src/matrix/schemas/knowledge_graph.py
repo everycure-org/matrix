@@ -1,14 +1,14 @@
 from typing import List
 
-import pandera
+import pandera.pyspark as pa
 from pandera.pyspark import Field
 import pyspark.sql.functions as F
 import pyspark.sql.types as T
 
-import pyspark
+from pyspark.sql import DataFrame
 
 
-def cols_for_schema(schema_obj: pandera.pyspark.DataFrameModel) -> List[str]:
+def cols_for_schema(schema_obj: pa.DataFrameModel) -> List[str]:
     """Convenience function that returns the columns of a schema.
 
     The function returns all the columns of the passed model. This is convenient for
@@ -18,7 +18,7 @@ def cols_for_schema(schema_obj: pandera.pyspark.DataFrameModel) -> List[str]:
     return list(schema_obj.to_schema().columns.keys())
 
 
-class KGEdgeSchema(pandera.pyspark.DataFrameModel):
+class KGEdgeSchema(pa.DataFrameModel):
     """Schema for a knowledge graph edges as exposed by the Data API."""
 
     # fmt: off
@@ -42,7 +42,7 @@ class KGEdgeSchema(pandera.pyspark.DataFrameModel):
         strict = False
 
     @classmethod
-    def group_edges_by_id(cls, concatenated_edges_df: pyspark.sql.DataFrame) -> pyspark.sql.DataFrame:
+    def group_edges_by_id(cls, concatenated_edges_df: DataFrame) -> DataFrame:
         return (
             concatenated_edges_df.groupBy(["subject", "predicate", "object"])
             .agg(
@@ -61,7 +61,7 @@ class KGEdgeSchema(pandera.pyspark.DataFrameModel):
         )
 
 
-class KGNodeSchema(pandera.pyspark.DataFrameModel):
+class KGNodeSchema(pa.DataFrameModel):
     """Schema for a knowledge graph nodes as exposed by the Data API."""
 
     # fmt: off
@@ -84,7 +84,7 @@ class KGNodeSchema(pandera.pyspark.DataFrameModel):
         strict = True
 
     @classmethod
-    def group_nodes_by_id(cls, nodes_df: pyspark.sql.DataFrame) -> pyspark.sql.DataFrame:
+    def group_nodes_by_id(cls, nodes_df: DataFrame) -> DataFrame:
         """Utility function to group nodes by id.
 
         This should be used after the IDs are normalized so we can combine node properties from
