@@ -1,5 +1,5 @@
 # app.py
-# source "$(find "$(git rev-parse --show-toplevel)" -type f -name 'activate' -path '*/bin/activate' | head -n 1)"
+# cd embed_norm/apps/embed_norm/src && source "$(find "$(git rev-parse --show-toplevel)" -type f -name 'activate' -path '*/bin/activate' | head -n 1)"
 
 import os
 import polars as pl

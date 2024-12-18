@@ -1,4 +1,6 @@
 import json
+import re
+import sys
 import numpy as np
 import nmslib
 from sklearn.metrics import roc_auc_score, average_precision_score, precision_score, f1_score
@@ -7,7 +9,6 @@ from pathlib import Path
 from tqdm.auto import tqdm
 from multiprocessing import Pool
 import multiprocessing
-import pickle
 from main import Config, CacheManager, Environment
 
 
@@ -33,6 +34,19 @@ def load_embeddings(config, cache_manager, model_name: str, dataset_type: str, c
     embeddings = cache_manager.load_cached_data(embeddings_file)
     ids = cache_manager.load_cached_data(ids_file)
     return embeddings, ids
+
+
+def extract_categories_from_filenames(config):
+    embeddings_dir = config.cache_dir / "embeddings"
+    pattern = re.compile(rf"{re.escape(config.dataset_name)}_(positive|negative)_embeddings_(.*?)_.*\.pkl")
+    categories = set()
+    for filename in embeddings_dir.glob(f"{config.dataset_name}_*_embeddings_*_*.pkl"):
+        match = pattern.match(filename.name)
+        if match:
+            # dataset_type = match.group(1)
+            category = match.group(2)
+            categories.add(category)
+    return list(categories)
 
 
 def analyze_pair_with_sklearn(args):
@@ -146,8 +160,8 @@ def analyze_pair_worker(args):
     scores = []
 
     # Initialize NMSLIB index
+    # index = nmslib.init(method="brute-force", space="cosinesimil")
     index = nmslib.init(method="hnsw", space="cosinesimil")
-    # index = nmslib.init(method='hnsw', space='cosinesimil')
     index.addDataPointBatch(all_embeddings)
     index.createIndex({"post": 2}, print_progress=False)  # Adjust 'post' parameter if needed
 
@@ -280,16 +294,18 @@ def main():
     dataset_name = "rtx_kg2.int"
     nodes_dataset_name = "integration.int.rtx.nodes"
     edges_dataset_name = "integration.int.rtx.edges"
-    categories_file = f"{dataset_name}_categories.pkl"
-    with open(cache_dir / "datasets" / categories_file, "rb") as f:
-        categories = pickle.load(f)
-    model_names = ["OpenAI", "PubMedBERT", "BioBERT", "BlueBERT", "SapBERT"]
+
+    # Ensure cache_suffix matches what is used in main.py
     total_sample_size = 1000
     positive_ratio = 0.2
     positive_n = int(total_sample_size * positive_ratio)
     negative_n = total_sample_size - positive_n
     cache_suffix = f"_pos_{positive_n}_neg_{negative_n}"
 
+    # Initialize the cache manager
+    cache_manager = CacheManager(cache_dir)
+
+    # Initialize config with an empty categories list
     config = Config(
         cache_dir=cache_dir,
         pos_seed=pos_seed,
@@ -297,8 +313,8 @@ def main():
         dataset_name=dataset_name,
         nodes_dataset_name=nodes_dataset_name,
         edges_dataset_name=edges_dataset_name,
-        categories=categories,
-        model_names=model_names,
+        categories=[],  # Will be set after extracting categories
+        model_names=["OpenAI", "PubMedBERT", "BioBERT", "BlueBERT", "SapBERT"],
         total_sample_size=total_sample_size,
         positive_ratio=positive_ratio,
         positive_n=positive_n,
@@ -306,7 +322,15 @@ def main():
         cache_suffix=cache_suffix,
     )
 
-    cache_manager = CacheManager(config.cache_dir)
+    # Extract categories based on existing embeddings files
+    categories = extract_categories_from_filenames(config)
+    if not categories:
+        print("No categories found in embeddings directory.")
+        sys.exit(1)
+    config.categories = categories
+
+    # print(f"Categories extracted: {categories}")
+
     analyzer = EmbeddingAnalyzer(config, cache_manager)
     analyzer.analyze()
     metrics_output_dir = config.cache_dir / "analysis"

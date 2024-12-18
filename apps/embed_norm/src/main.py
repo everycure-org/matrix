@@ -695,12 +695,23 @@ class Pipeline:
                 )
                 filtered_edges_df.to_pickle(edges_cache_file)
 
-        nodes_df.to_pickle(self.cache_manager.cache_dir / f"nodes_df{self.config.cache_suffix}.pkl")
-        edges_df.to_pickle(self.cache_manager.cache_dir / f"edges_df{self.config.cache_suffix}.pkl")
+        # Save nodes_df to datasets subdirectory
+        nodes_df.to_pickle(self.cache_manager.cache_dir / "datasets" / f"nodes_df{self.config.cache_suffix}.pkl")
+
+        # Save edges_df to datasets subdirectory
+        edges_df.to_pickle(self.cache_manager.cache_dir / "datasets" / f"edges_df{self.config.cache_suffix}.pkl")
+
+        # Save positive datasets to datasets subdirectory
         for category, df in positive_datasets.items():
-            df.to_pickle(self.cache_manager.cache_dir / f"positive_df_{category}{self.config.cache_suffix}.pkl")
+            df.to_pickle(
+                self.cache_manager.cache_dir / "datasets" / f"positive_df_{category}{self.config.cache_suffix}.pkl"
+            )
+
+        # Save negative datasets to datasets subdirectory
         for category, df in negative_datasets.items():
-            df.to_pickle(self.cache_manager.cache_dir / f"negative_df_{category}{self.config.cache_suffix}.pkl")
+            df.to_pickle(
+                self.cache_manager.cache_dir / "datasets" / f"negative_df_{category}{self.config.cache_suffix}.pkl"
+            )
 
         return categories, positive_datasets, negative_datasets, nodes_df
 
