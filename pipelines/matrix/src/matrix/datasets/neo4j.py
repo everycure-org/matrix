@@ -2,7 +2,7 @@ import time
 from typing import Any
 from copy import deepcopy
 
-from neo4j import GraphDatabase
+from neo4j import GraphDatabase, TRUST_ALL_CERTIFICATES
 from pyspark.sql import DataFrame, SparkSession
 
 from kedro.io.core import Version
@@ -24,6 +24,7 @@ class Neo4JSparkDataset(SparkDataset):
 
     DEFAULT_LOAD_ARGS: dict[str, Any] = {}
     DEFAULT_SAVE_ARGS: dict[str, Any] = {}
+    DEFAULT_ARGS: dict[str, Any] = {"encryption.enabled": "true", "encryption.trust.strategy": "TRUST_ALL_CERTIFICATES"}
 
     def __init__(  # noqa: PLR0913
         self,
@@ -118,7 +119,9 @@ class Neo4JSparkDataset(SparkDataset):
             credentials.get("authentication.basic.username"),
             credentials.get("authentication.basic.password"),
         )
-        with GraphDatabase.driver(url, auth=creds, database="system") as driver:
+        with GraphDatabase.driver(
+            url, auth=creds, database="system", encrypted=True, trust=TRUST_ALL_CERTIFICATES
+        ) as driver:
             if overwrite:
                 driver.execute_query(f"CREATE OR REPLACE DATABASE `{database}`")
                 # TODO: Some strange race condition going on here
@@ -142,6 +145,7 @@ class Neo4JSparkDataset(SparkDataset):
             spark_session.read.format("org.neo4j.spark.DataSource")
             .option("database", self._database)
             .option("url", self._url)
+            .options(**self.DEFAULT_ARGS)
             .options(**self._credentials)
             .options(**self._load_args)
         )
@@ -161,10 +165,13 @@ class Neo4JSparkDataset(SparkDataset):
                 overwrite = self._save_args.pop("mode", "append") == "overwrite"
                 self._create_db(self._url, self._database, overwrite, self._credentials)
 
+                # breakpoint()
+
                 # Write dataset
                 (
                     data.write.format("org.neo4j.spark.DataSource")
                     .option("database", self._database)
+                    .options(**self.DEFAULT_ARGS)
                     .option("url", self._url)
                     .options(**self._credentials)
                     .options(**self._save_args)
