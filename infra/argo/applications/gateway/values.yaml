@@ -4,7 +4,6 @@ external-dns:
     name: google
   extraArgs:
     - --source=gateway-httproute
-    - --source=ingress
   rbac:
     additionalPermissions:
       - apiGroups: ["gateway.networking.k8s.io"]
