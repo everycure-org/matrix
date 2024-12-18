@@ -66,3 +66,8 @@ integration:
         object: matrix.pipelines.modelling.utils.partial_
         func:
           object: matrix.pipelines.integration.filters.biolink_deduplicate_edges
+    knowledge_source_filters:
+      column: primary_knowledge_source
+      categories:
+        - infores:atc-codes-umls
+      

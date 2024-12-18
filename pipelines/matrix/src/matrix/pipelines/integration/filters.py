@@ -99,9 +99,9 @@ def determine_most_specific_category(nodes: DataFrame, biolink_categories_df: pd
     return nodes
 
 
-def remove_rows_containing_category(nodes: DataFrame, categories: List[str], column: str, **kwargs) -> DataFrame:
+def remove_rows_containing_category(edges: DataFrame, categories: List[str], column: str, **kwargs) -> DataFrame:
     """Function to remove rows containing a category."""
-    return nodes.filter(~F.col(column).isin(categories))
+    return edges.filter(~F.col(column).isin(categories))
 
 
 def unnest_biolink_hierarchy(
