@@ -1,6 +1,6 @@
 import logging
 
-import pyspark
+from pyspark.sql import DataFrame
 from pyspark.sql import functions as F
 
 from matrix.schemas.knowledge_graph import cols_for_schema, KGNodeSchema, KGEdgeSchema
@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 SEPARATOR = "\x1f"
 
 
-def filtered_edges_to_kgx(df: pyspark.sql.DataFrame) -> pyspark.sql.DataFrame:
+def filtered_edges_to_kgx(df: DataFrame) -> DataFrame:
     """Function to create KGX formatted edges.
 
     Args:
@@ -24,7 +24,7 @@ def filtered_edges_to_kgx(df: pyspark.sql.DataFrame) -> pyspark.sql.DataFrame:
     )
 
 
-def filtered_nodes_to_kgx(df: pyspark.sql.DataFrame) -> pyspark.sql.DataFrame:
+def filtered_nodes_to_kgx(df: DataFrame) -> DataFrame:
     """Function to create KGX formatted nodes.
 
     Args:

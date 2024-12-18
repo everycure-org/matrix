@@ -13,8 +13,8 @@ from pandera.pyspark import DataFrameModel
 from pandera.pyspark import Field
 import pandera
 
-import pyspark
 import pyspark.sql.types as T
+from pyspark.sql import DataFrame, SparkSession
 
 from pyspark.sql import functions as F
 from pyspark.sql.window import Window
@@ -60,7 +60,7 @@ class IngestedNodesSchema(DataFrameModel):
 
 
 @pandera.check_output(IngestedNodesSchema)
-def ingest_nodes(df: pyspark.sql.DataFrame) -> pyspark.sql.DataFrame:
+def ingest_nodes(df: DataFrame) -> DataFrame:
     """Function to create Neo4J nodes.
 
     Args:
@@ -96,9 +96,7 @@ def ingest_nodes(df: pyspark.sql.DataFrame) -> pyspark.sql.DataFrame:
     )
 
 
-def bucketize_df(
-    df: pyspark.sql.DataFrame, bucket_size: int, input_features: List[str], max_input_len: int
-) -> pyspark.sql.DataFrame:
+def bucketize_df(df: DataFrame, bucket_size: int, input_features: List[str], max_input_len: int) -> DataFrame:
     """Function to bucketize input dataframe.
 
     Function bucketizes the input dataframe in N buckets, each of size `bucket_size`
@@ -123,7 +121,7 @@ def bucketize_df(
     )
 
 
-def _bucketize(df: pyspark.sql.DataFrame, bucket_size: int) -> pyspark.sql.DataFrame:
+def _bucketize(df: DataFrame, bucket_size: int) -> DataFrame:
     """Function to bucketize df in given number of buckets.
 
     Args:
@@ -138,7 +136,7 @@ def _bucketize(df: pyspark.sql.DataFrame, bucket_size: int) -> pyspark.sql.DataF
     num_buckets = (num_elements + bucket_size - 1) // bucket_size
 
     # Construct df to bucketize
-    spark_session: pyspark.sql.SparkSession = pyspark.sql.SparkSession.builder.getOrCreate()
+    spark_session: SparkSession = SparkSession.builder.getOrCreate()
 
     # Bucketize df
     buckets = spark_session.createDataFrame(
@@ -212,18 +210,14 @@ class EmbeddingSchema(DataFrameModel):
 
 @pandera.check_output(EmbeddingSchema)
 @unpack_params()
-def reduce_embeddings_dimension(
-    df: pyspark.sql.DataFrame, transformer, input: str, output: str, skip: bool
-) -> pyspark.sql.DataFrame:
+def reduce_embeddings_dimension(df: DataFrame, transformer, input: str, output: str, skip: bool) -> DataFrame:
     x = reduce_dimension(df, transformer, input, output, skip)
     return x
 
 
 @unpack_params()
 @inject_object()
-def reduce_dimension(
-    df: pyspark.sql.DataFrame, transformer, input: str, output: str, skip: bool
-) -> pyspark.sql.DataFrame:
+def reduce_dimension(df: DataFrame, transformer, input: str, output: str, skip: bool) -> DataFrame:
     """Function to apply dimensionality reduction.
 
     Function to apply dimensionality reduction conditionally, if skip is set to true
@@ -262,8 +256,8 @@ def reduce_dimension(
 
 
 def filter_edges_for_topological_embeddings(
-    nodes: pyspark.sql.DataFrame, edges: pyspark.sql.DataFrame, drug_types: List[str], disease_types: List[str]
-) -> pyspark.sql.DataFrame:
+    nodes: DataFrame, edges: DataFrame, drug_types: List[str], disease_types: List[str]
+) -> DataFrame:
     """Function to filter edges for topological embeddings process.
 
     The function removes edges connecting drug and disease nodes to avoid data leakage. Currently
@@ -304,7 +298,7 @@ def filter_edges_for_topological_embeddings(
     return df
 
 
-def ingest_edges(nodes: pyspark.sql.DataFrame, edges: pyspark.sql.DataFrame) -> pyspark.sql.DataFrame:
+def ingest_edges(nodes: DataFrame, edges: DataFrame) -> DataFrame:
     """Function to construct Neo4J edges."""
     return (
         edges.select(
@@ -325,7 +319,7 @@ def ingest_edges(nodes: pyspark.sql.DataFrame, edges: pyspark.sql.DataFrame) -> 
 @unpack_params()
 @inject_object()
 def train_topological_embeddings(
-    df: pyspark.sql.DataFrame,
+    df: DataFrame,
     gds: GraphDataScience,
     topological_estimator: GDSGraphAlgorithm,
     projection: Any,
@@ -382,7 +376,7 @@ def train_topological_embeddings(
 @inject_object()
 @unpack_params()
 def write_topological_embeddings(
-    model: pyspark.sql.DataFrame,
+    model: DataFrame,
     gds: GraphDataScience,
     topological_estimator: GDSGraphAlgorithm,
     projection: Any,
@@ -401,9 +395,7 @@ def write_topological_embeddings(
 
 
 @pandera.check_output(EmbeddingSchema)
-def extract_topological_embeddings(
-    embeddings: pyspark.sql.DataFrame, nodes: pyspark.sql.DataFrame, string_col: str
-) -> pyspark.sql.DataFrame:
+def extract_topological_embeddings(embeddings: DataFrame, nodes: DataFrame, string_col: str) -> DataFrame:
     """Extract topological embeddings from Neo4j and write into BQ.
 
     Need a conditional statement due to Node2Vec writing topological embeddings as string. Raised issue in GDS client:
@@ -421,7 +413,7 @@ def extract_topological_embeddings(
     )
 
 
-def visualise_pca(nodes: pyspark.sql.DataFrame, column_name: str) -> plt.Figure:
+def visualise_pca(nodes: DataFrame, column_name: str) -> plt.Figure:
     """Write topological embeddings."""
     nodes = nodes.select(column_name, "category").toPandas()
     nodes[["pca_0", "pca_1"]] = pd.DataFrame(nodes[column_name].tolist(), index=nodes.index)
