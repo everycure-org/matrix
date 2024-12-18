@@ -8,14 +8,14 @@ from matrix.schemas.knowledge_graph import cols_for_schema, KGNodeSchema, KGEdge
 SEPARATOR = "\x1f"
 
 
-def batch_array_join(df: DataFrame, cols: Collection[str], sep: str = SEPARATOR) -> DataFrame:
+def join_array_columns(df: DataFrame, cols: Collection[str], sep: str = SEPARATOR) -> DataFrame:
     for c in cols:
         df = df.withColumn(c, array_join(c, delimiter=sep))
     return df
 
 
 def create_kgx_format(df: DataFrame, cols: Collection[str], model: Type[DataFrameModel]):
-    return batch_array_join(df, cols=cols).select(*cols_for_schema(model))
+    return join_array_columns(df, cols=cols).select(*cols_for_schema(model))
 
 
 def filtered_edges_to_kgx(df: DataFrame) -> DataFrame:
