@@ -23,7 +23,7 @@ class DrugsTransformer(GraphTransformer):
             nodes_df
             .withColumn("id",                                f.col("single_ID"))
             .withColumn("name",                              f.col("ID_Label"))
-            .withColumn("category",                          f.lit("dummy"))
+            .withColumn("category",                          f.lit("biolink:Drug"))
         )
         return df
         # fmt: on
