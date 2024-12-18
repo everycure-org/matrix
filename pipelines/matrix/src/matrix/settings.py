@@ -12,16 +12,20 @@ from kedro.config import OmegaConfigLoader  # noqa: E402
 from kedro_mlflow.framework.hooks import MlflowHook
 
 import matrix.hooks as matrix_hooks
+from matrix.utils.hook_utilities import determine_hooks_to_execute
 
-from .resolvers import env, merge_dicts
+from .resolvers import cast_to_int, env, merge_dicts
+
+hooks = {
+    "node_timer": matrix_hooks.NodeTimerHooks(),
+    "mlflow": MlflowHook(),
+    "mlflow_kedro": matrix_hooks.MLFlowHooks(),
+    "spark": matrix_hooks.SparkHooks(),
+    "release": matrix_hooks.ReleaseInfoHooks(),
+}
 
 # Hooks are executed in a Last-In-First-Out (LIFO) order.
-HOOKS = (
-    matrix_hooks.NodeTimerHooks(),
-    MlflowHook(),
-    matrix_hooks.MLFlowHooks(),
-    matrix_hooks.SparkHooks(),
-)
+HOOKS = determine_hooks_to_execute(hooks)
 
 # Installed plugins for which to disable hook auto-registration.
 DISABLE_HOOKS_FOR_PLUGINS = ("kedro-mlflow",)
@@ -56,11 +60,18 @@ CONFIG_LOADER_ARGS = {
     "custom_resolvers": {
         "merge": merge_dicts,
         "oc.env": env,
+        "oc.int": cast_to_int,
     },
 }
 
 # https://getindata.com/blog/kedro-dynamic-pipelines/
 DYNAMIC_PIPELINES_MAPPING = {
+    "integration": [
+        {"name": "rtx_kg2"},
+        # {"name": "spoke"},
+        {"name": "robokop"},
+        {"name": "ec_medical_team"},
+    ],
     "modelling": [
         {"model_name": "xg_baseline", "num_shards": 1, "run_inference": False},
         {"model_name": "xg_ensemble", "num_shards": 3, "run_inference": True},

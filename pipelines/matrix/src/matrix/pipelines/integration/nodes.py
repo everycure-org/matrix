@@ -29,25 +29,23 @@ logger = logging.getLogger(__name__)
 
 
 @pa.check_output(KGEdgeSchema)
-def union_and_deduplicate_edges(datasets_to_union: List[str], **edges) -> DataFrame:
+def union_and_deduplicate_edges(*edges) -> DataFrame:
     """Function to unify edges datasets."""
     # fmt: off
     return (
-        _union_datasets(datasets_to_union, **edges)
+        _union_datasets(*edges)
         .transform(KGEdgeSchema.group_edges_by_id)
     )
     # fmt: on
 
 
 @pa.check_output(KGNodeSchema)
-def union_and_deduplicate_nodes(
-    datasets_to_union: List[str], biolink_categories_df: pd.DataFrame, **nodes
-) -> DataFrame:
+def union_and_deduplicate_nodes(biolink_categories_df: pd.DataFrame, *nodes) -> DataFrame:
     """Function to unify nodes datasets."""
 
     # fmt: off
     return (
-        _union_datasets(datasets_to_union, **nodes)
+        _union_datasets(*nodes)
 
         # first we group the dataset by id to deduplicate
         .transform(KGNodeSchema.group_nodes_by_id)
@@ -62,8 +60,7 @@ def union_and_deduplicate_nodes(
 
 
 def _union_datasets(
-    datasets_to_union: List[str],
-    **datasets: DataFrame,
+    *datasets: DataFrame,
 ) -> DataFrame:
     """
     Helper function to unify datasets and deduplicate them.
@@ -76,8 +73,7 @@ def _union_datasets(
     Returns:
         A unified and deduplicated DataFrame.
     """
-    selected_dfs = [datasets[name] for name in datasets_to_union if name in datasets]
-    return reduce(partial(DataFrame.unionByName, allowMissingColumns=True), selected_dfs)
+    return reduce(partial(DataFrame.unionByName, allowMissingColumns=True), datasets)
 
 
 def _apply_transformations(
@@ -246,7 +242,7 @@ def normalize_kg(
     """
     json_parser = parse(json_path_expr)
     logger.info("collecting node ids for normalization")
-    node_ids = nodes.select("id").orderBy("id").toPandas()["id"].to_list()
+    node_ids = nodes.select("id").rdd.flatMap(lambda x: x).collect()
     logger.info(f"collected {len(node_ids)} node ids for normalization. Performing normalization...")
     node_id_map = batch_map_ids(
         frozenset(node_ids), api_endpoint, json_parser, batch_size, parallelism, conflate, drug_chemical_conflate

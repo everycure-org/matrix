@@ -48,3 +48,5 @@ langchain
 openpyxl
 jsonpath-ng
 bmt # biolink model toolkit
+transformers
+torch

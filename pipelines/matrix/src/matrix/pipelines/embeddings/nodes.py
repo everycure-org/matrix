@@ -23,6 +23,7 @@ from refit.v1.core.unpack import unpack_params
 from tenacity import retry, wait_exponential, stop_after_attempt
 
 from .graph_algorithms import GDSGraphAlgorithm
+from .encoders import AttributeEncoder
 from matrix.pipelines.modelling.nodes import no_nulls
 
 logger = logging.getLogger(__name__)
@@ -109,6 +110,28 @@ def bucketize_df(df: DataFrame, bucket_size: int, input_features: List[str], max
         bucket_size: size of the buckets
     """
 
+    # Order and bucketize elements
+    return (
+        df.transform(_bucketize, bucket_size=bucket_size)
+        .withColumn(
+            "text_to_embed",
+            F.concat(*[F.coalesce(F.col(feature), F.lit("")) for feature in input_features]),
+        )
+        .withColumn("text_to_embed", F.substring(F.col("text_to_embed"), 1, max_input_len))
+        .select("id", "text_to_embed", "bucket")
+    )
+
+
+def _bucketize(df: DataFrame, bucket_size: int) -> pd.DataFrame:
+    """Function to bucketize df in given number of buckets.
+
+    Args:
+        df: dataframe to bucketize
+        bucket_size: size of the buckets
+    Returns:
+        Dataframe augmented with `bucket` column
+    """
+
     # Retrieve number of elements
     num_elements = df.count()
     num_buckets = (num_elements + bucket_size - 1) // bucket_size
@@ -122,37 +145,28 @@ def bucketize_df(df: DataFrame, bucket_size: int, input_features: List[str], max
         schema=["bucket", "min_range", "max_range"],
     )
 
-    # Order and bucketize elements
-    return (
-        df.withColumn("row_num", F.row_number().over(Window.orderBy("id")) - F.lit(1))
-        .join(buckets, on=[(F.col("row_num") >= (F.col("min_range"))) & (F.col("row_num") < F.col("max_range"))])
-        # Concat input
-        .withColumn(
-            "text_to_embed",
-            F.concat(*[F.coalesce(F.col(feature), F.lit("")) for feature in input_features]),
-        )
-        # Clip max. length
-        .withColumn("text_to_embed", F.substring(F.col("text_to_embed"), 1, max_input_len))
+    return df.withColumn("row_num", F.row_number().over(Window.orderBy("id")) - F.lit(1)).join(
+        buckets, on=[(F.col("row_num") >= (F.col("min_range"))) & (F.col("row_num") < F.col("max_range"))]
     )
 
 
 @inject_object()
 def compute_embeddings(
     dfs: Dict[str, Any],
-    model: Dict[str, Any],
+    encoder: AttributeEncoder,
 ):
     """Function to bucketize input data.
 
     Args:
         dfs: mapping of paths to df load functions
-        model: model to run
+        encoder: encoder to run
     """
 
     # NOTE: Inner function to avoid reference issues on unpacking
     # the dataframe, therefore leading to only the latest shard
     # being processed n times.
     def _func(dataframe: pd.DataFrame):
-        return lambda df=dataframe: compute_df_embeddings_async(df(), model)
+        return lambda df=dataframe: encoder.encode(df())
 
     shards = {}
     for path, df in dfs.items():
