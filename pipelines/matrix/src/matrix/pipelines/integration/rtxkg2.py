@@ -80,9 +80,7 @@ class RTXTransformer(GraphTransformer):
 class CurieToPMIDsSchema(DataFrameModel):
     """Schema for a curie to pmids mapping."""
 
-    # fmt: off
-    curie:          T.StringType()                  = Field(nullable=False)  # type: ignore
-    # fmt: on
+    curie: T.StringType() = Field(nullable=False)  # type: ignore
 
     class Config:
         strict = False
