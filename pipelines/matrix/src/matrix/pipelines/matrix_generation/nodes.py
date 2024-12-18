@@ -38,7 +38,6 @@ def enrich_embeddings(
     return (
         drugs.withColumn("is_drug", F.lit(True))
         .unionByName(diseases.withColumn("is_disease", F.lit(True)), allowMissingColumns=True)
-        .withColumnRenamed("curie", "id")
         .join(nodes, on="id", how="inner")
         .select("is_drug", "is_disease", "id", "topological_embedding")
         .withColumn("is_drug", F.coalesce(F.col("is_drug"), F.lit(False)))
@@ -109,8 +108,8 @@ def spark_to_pd(nodes: DataFrame) -> pd.DataFrame:
 )
 @inject_object()
 def generate_pairs(
-    drugs: pd.DataFrame,
-    diseases: pd.DataFrame,
+    drugs: DataFrame,
+    diseases: DataFrame,
     graph: KnowledgeGraph,
     known_pairs: pd.DataFrame,
     clinical_trials: pd.DataFrame,
@@ -129,9 +128,15 @@ def generate_pairs(
     Returns:
         Pairs dataframe containing all combinations of drugs and diseases that do not lie in the training set.
     """
+    # Transcode to pandas
+    # TODO: Remove this transcoding and move to data catalog
+    drugs = drugs.toPandas()
+    diseases = diseases.toPandas()
+    clinical_trials = clinical_trials.toPandas()
+
     # Collect list of drugs and diseases
-    drugs_lst = drugs["curie"].tolist()
-    diseases_lst = diseases["curie"].tolist()
+    drugs_lst = drugs["single_ID"].tolist()
+    diseases_lst = diseases["category_class"].tolist()
 
     # Remove duplicates
     drugs_lst = list(set(drugs_lst))
@@ -332,18 +337,17 @@ def _process_top_pairs(
         pd.DataFrame: Processed DataFrame containing the top pairs with additional information.
     """
     top_pairs = data.head(n_reporting).copy()
-
     # Generate mapping dictionaries
     drug_mappings = {
-        "kg_name": {row["curie"]: row["name"] for _, row in drugs.iterrows()},
-        "list_id": {row["curie"]: row["single_ID"] for _, row in drugs.iterrows()},
-        "list_name": {row["curie"]: row["ID_Label"] for _, row in drugs.iterrows()},
+        "kg_name": {row["single_ID"]: row["name"] for _, row in drugs.iterrows()},
+        "list_id": {row["single_ID"]: row["single_ID"] for _, row in drugs.iterrows()},
+        "list_name": {row["single_ID"]: row["ID_Label"] for _, row in drugs.iterrows()},
     }
 
     disease_mappings = {
-        "kg_name": {row["curie"]: row["name"] for _, row in diseases.iterrows()},
-        "list_id": {row["curie"]: row["category_class"] for _, row in diseases.iterrows()},
-        "list_name": {row["curie"]: row["label"] for _, row in diseases.iterrows()},
+        "kg_name": {row["category_class"]: row["name"] for _, row in diseases.iterrows()},
+        "list_id": {row["category_class"]: row["category_class"] for _, row in diseases.iterrows()},
+        "list_name": {row["category_class"]: row["label"] for _, row in diseases.iterrows()},
     }
 
     # Add additional information
@@ -479,12 +483,15 @@ def _add_tags(
         pd.DataFrame: DataFrame with added tag columns.
     """
     # Add tag columns for drugs and diseasesto the top pairs DataFrame
-    for set, set_id, df in [("drugs", "kg_drug_id", drugs), ("diseases", "kg_disease_id", diseases)]:
+    for set, set_id, df, df_id in [
+        ("drugs", "kg_drug_id", drugs, "single_ID"),
+        ("diseases", "kg_disease_id", diseases, "category_class"),
+    ]:
         for tag_name, _ in matrix_params.get(set, {}).items():
             if tag_name not in df.columns:
                 logger.warning(f"Tag column '{tag_name}' not found in {set} DataFrame. Skipping.")
             else:
-                tag_mapping = dict(zip(df["curie"], df[tag_name]))
+                tag_mapping = dict(zip(df[df_id], df[tag_name]))
                 # Add the tag to top_pairs
                 top_pairs[tag_name] = top_pairs[set_id].map(tag_mapping)
 
@@ -565,6 +572,12 @@ def generate_report(
     Returns:
         Dataframe with the top pairs and additional information for the drugs and diseases.
     """
+    # TODO: Remove this transcoding and move to data catalog
+    print(type(drugs), type(diseases))
+    drugs = drugs.toPandas()
+    diseases = diseases.toPandas()
+
+    # Add tags and process top pairs
     stats = matrix_params.get("stats_col_names")
     tags = matrix_params.get("tags")
     top_pairs = _process_top_pairs(data, n_reporting, drugs, diseases, score_col_name)
