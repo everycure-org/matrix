@@ -67,6 +67,36 @@ def ingest_nodes(df: DataFrame) -> DataFrame:
     Args:
         df: Nodes dataframe
     """
+    prop_keys = ("name", "category", "description")
+    alternative = (
+        df.select("id", "name", "category", "description", "upstream_data_source")
+        .withColumn("label", F.col("category"))
+        # add string properties here
+        .withColumn(
+            "properties",
+            F.create_map(
+                F.lit("name"),
+                F.col("name"),
+                F.lit("category"),
+                F.col("category"),
+                F.lit("description"),
+                F.col("description"),
+            ),
+        )
+        .withColumn("property_keys", F.array(*map(F.lit, prop_keys)))
+        .withColumn("property_values", F.array(*prop_keys))
+        # add array properties here
+        .withColumn(
+            "array_properties",
+            F.create_map(
+                F.lit("upstream_data_source"),
+                F.col("upstream_data_source"),
+            ),
+        )
+        .withColumn("array_property_keys", F.array(F.lit("upstream_data_source")))
+        .withColumn("array_property_values", F.array(F.col("upstream_data_source")))
+    )
+    return alternative
     return (
         df.select("id", "name", "category", "description", "upstream_data_source")
         .withColumn("label", F.col("category"))
@@ -304,6 +334,8 @@ def ingest_edges(nodes, edges: DataFrame):
             "upstream_data_source",
         )
         .withColumn("label", F.split(F.col("predicate"), ":", limit=2).getItem(1))
+        # Alt 1: F.substring_index("label", ":", -1). Assumes only one colon present.
+        # Alt 2: regexp_replace("label", "^[^:]+:", "")
         # we repartition to 1 partition here to avoid deadlocks in the edges insertion of neo4j.
         # FUTURE potentially we should repartition in the future to avoid deadlocks. However
         # with edges, this is harder to do than with nodes (as they are distinct but edges have 2 nodes)
