@@ -37,16 +37,16 @@ jobs:
       - name: Checkout
         uses: actions/checkout@main
         with:
+          # note that repo dispatch will checkout main
           fetch-tags: true
           fetch-depth: 0  # full depth needed so we can pass the AI all logs since the last release.
-          ref: "${{env.gitref}}"  # check out the commit from which the release was triggered
 
       - name: Tag the commit from which the data release was triggered
         run: |
           git config --global user.email "releasebot@everycure.org"
           git config --global user.name "All of us at Every Cure"
           # Create an annotated tag, so that we can push it easily with the files using `follow-tags`.
-          git tag --annotate --message '' -- "${{env.release}}"
+          git tag --annotate --message '' -- "${{env.release}}" "${{env.gitref}}"
 
       - name: Setup Matrix CLI
         working-directory: apps/matrix-cli
@@ -66,7 +66,6 @@ jobs:
         env:
           RELEASE_DIR_GCS: 'gs://mtrx-us-central1-hub-dev-storage/kedro/data/releases'
           FILENAME: ${{env.release}}_info.json
-          RELEASE_INFO_DIR_GH: ${{ github.workspace }}/docs/src/releases
         run: |
           mkdir -p info && cd info
           BLOB_PATH="${RELEASE_DIR_GCS}/${{env.release}}/${FILENAME}"
@@ -75,6 +74,7 @@ jobs:
           git add "${FILENAME}" && \
           git commit -m "added release info json" && \
           git push
+
       - name: Create Release Notes
         working-directory: apps/matrix-cli
         env:
