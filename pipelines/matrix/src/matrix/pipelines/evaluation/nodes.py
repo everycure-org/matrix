@@ -127,7 +127,7 @@ def reduce_aggregated_results(aggregated_results: dict, aggregation_function_nam
 
 
 def consolidate_evaluation_reports(**reports) -> dict:
-    """Function to consolidate evaluation reports into master report.
+    """Function to consolidate evaluation reports for all models, evaluation types and folds/aggregations into a master report.
 
     Args:
         reports: tuples of (name, report) pairs.
