@@ -20,8 +20,8 @@ spec:
         afterStart: true
         labels:
           - key: pipeline_name
-            operation: "in"
-            value: ["data_release", "kg_release"]
+            operation: ==
+            value: "data_release"
           - key: workflows.argoproj.io/phase
             operation: ==
             value: "Succeeded"
