@@ -131,34 +131,5 @@ def create_pipeline(**kwargs) -> Pipeline:
                 name="produce_ground_truth_kg",
                 tags=["ground-truth"],
             ),
-            # node(
-            #     func=nodes.clean_input_sheet,
-            #     inputs={
-            #         "input_df": "preprocessing.raw.infer_sheet",
-            #         "endpoint": "params:preprocessing.translator.normalizer",
-            #         "conflate": "params:integration.nodenorm.conflate",
-            #         "drug_chemical_conflate": "params:integration.nodenorm.drug_chemical_conflate",
-            #         "batch_size": "params:integration.nodenorm.batch_size",
-            #         "parallelism": "params:integration.nodenorm.parallelism",
-            #     },
-            #     outputs="inference.raw.normalized_inputs",
-            #     name="clean_input_sheet",
-            #     tags=["inference-input"],
-            # ),
-            # node(
-            #     func=nodes.clean_gt_data,
-            #     inputs={
-            #         "pos_df": "preprocessing.raw.ground_truth.positives",
-            #         "neg_df": "preprocessing.raw.ground_truth.negatives",
-            #         "endpoint": "params:preprocessing.translator.normalizer",
-            #         "conflate": "params:integration.nodenorm.conflate",
-            #         "drug_chemical_conflate": "params:integration.nodenorm.drug_chemical_conflate",
-            #         "batch_size": "params:integration.nodenorm.batch_size",
-            #         "parallelism": "params:integration.nodenorm.parallelism",
-            #     },
-            #     outputs=["modelling.raw.ground_truth.positives@pandas", "modelling.raw.ground_truth.negatives@pandas"],
-            #     name="resolve_gt",
-            #     tags=["ground-truth"],
-            # ),
         ]
     )

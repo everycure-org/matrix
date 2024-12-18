@@ -11,7 +11,7 @@ _kg_dataset: &_kg_dataset
   type: matrix.datasets.graph.KnowledgeGraphDataset
   load_args:
     engine: pyarrow
-    use_nullable_dtypes: False
+    use_nullable_dtypes: True
 
 matrix_generation.feat.nodes@spark:
   <<: *_spark_parquet
