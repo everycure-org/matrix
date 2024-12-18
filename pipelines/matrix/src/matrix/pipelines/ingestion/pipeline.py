@@ -1,8 +1,7 @@
-import pyspark.sql.functions as F
+from pyspark.sql import DataFrame
+from pyspark.sql.functions import array, lit
 from kedro.pipeline import Pipeline, pipeline, node
-from matrix.kedro4argo_node import (
-    argo_node,
-)
+from matrix.kedro4argo_node import argo_node
 
 
 def create_pipeline(**kwargs) -> Pipeline:
@@ -34,14 +33,14 @@ def create_pipeline(**kwargs) -> Pipeline:
             ),
             # ec-medical-team
             argo_node(
-                func=lambda x: x.withColumn("upstream_data_source", F.array(F.lit("ec_medical_team"))),
+                func=add_ec_medical_team_as_upstream_data_source,
                 inputs=["ingestion.raw.ec_medical_team.nodes@spark"],
                 outputs="ingestion.int.ec_medical_team.nodes",
                 name="write_ec_medical_team_nodes",
                 tags=["ec_medical_team"],
             ),
             argo_node(
-                func=lambda x: x.withColumn("upstream_data_source", F.array(F.lit("ec_medical_team"))),
+                func=add_ec_medical_team_as_upstream_data_source,
                 inputs=["ingestion.raw.ec_medical_team.edges@spark"],
                 outputs="ingestion.int.ec_medical_team.edges",
                 name="write_ec_medical_team_edges",
@@ -80,3 +79,7 @@ def create_pipeline(**kwargs) -> Pipeline:
             ),
         ]
     )
+
+
+def add_ec_medical_team_as_upstream_data_source(df: DataFrame) -> DataFrame:
+    return df.withColumn("upstream_data_source", array(lit("ec_medical_team")))
