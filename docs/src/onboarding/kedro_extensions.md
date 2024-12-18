@@ -1,4 +1,3 @@
-
 This page provides an overview of a few advanced Kedro features and customizations we've implemented in our project.
 
 ## Dataset transcoding
@@ -142,6 +141,44 @@ The above visualisation comes from [kedro viz](https://github.com/kedro-org/kedr
 
 [^1]: Kedro allows for fine-grained control over pipeline execution, through the [kedro run](https://docs.kedro.org/en/stable/nodes_and_pipelines/run_a_pipeline.html) command.
 
+## Disabling hooks through environment variables
+
+Kedro hooks are powerful tools that allow us to execute code before and after various pipeline events. However, during local development or debugging, you might want to disable certain hooks (like MLflow logging) without modifying the code. We've implemented a flexible mechanism to disable hooks using environment variables.
+
+### How it works
+
+1. Hooks are defined in `settings.py` as a dictionary:
+```python
+hooks = {
+    "node_timer": matrix_hooks.NodeTimerHooks(),
+    "mlflow": MlflowHook(),
+    "mlflow_kedro": matrix_hooks.MLFlowHooks(),
+    "spark": matrix_hooks.SparkHooks(),
+}
+```
+
+2. The `determine_hooks_to_execute()` utility function checks for environment variables that start with `KEDRO_HOOKS_DISABLE_` followed by the uppercase hook name. If such an environment variable exists, the corresponding hook is disabled.
+
+### Usage examples
+
+To disable specific hooks, set the corresponding environment variable before running your Kedro pipeline, e.g. in the [`.env` file](./local-setup.md):
+
+```bash
+# Disable multiple hooks
+KEDRO_HOOKS_DISABLE_MLFLOW=1
+KEDRO_HOOKS_DISABLE_NODE_TIMER=1
+
+# Run your pipeline
+kedro run
+```
+
+This is particularly useful when:
+- Running locally without needing MLflow tracking
+- Reducing overhead during development
+- Running the pipeline in environments where certain services are unavailable (e.g. Google Colabs)
+
+!!! note
+    The value of the environment variable doesn't matter - its mere presence is enough to disable the hook. You can use any value like `1`, `true`, or even an empty string.
 
 ## End of the tutorial
 

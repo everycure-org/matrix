@@ -52,7 +52,7 @@ def register_pipelines() -> Dict[str, Pipeline]:
         + pipelines["evaluation"]
     )
     pipelines["__default__"] = (
-          pipelines["kg_release"]
+          pipelines["data_engineering"]
         + pipelines["modelling_run"]
     )
 
