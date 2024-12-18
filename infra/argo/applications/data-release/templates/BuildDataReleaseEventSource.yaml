@@ -3,6 +3,8 @@ kind: EventSource
 metadata:
   name: build-data-release-eventsource
   namespace: data-release
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
 spec:
   template:
     serviceAccountName: data-release-service-account # assign a service account with `get`, `list` and `watch` permissions on the resource being watched.
