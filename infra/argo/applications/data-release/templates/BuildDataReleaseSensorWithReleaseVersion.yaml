@@ -51,7 +51,7 @@ spec:
                              --request POST \
                              --data '{\
                                "event_type": "distribute-release",\
-                               "client_payload": {
+                               "client_payload": { \
                                  "release_version": "{{`{{inputs.parameters.release_version}}`}}", \
                                  "git_fingerprint": "{{`{{inputs.parameters.git_sha}}`}}" \
                                } \
