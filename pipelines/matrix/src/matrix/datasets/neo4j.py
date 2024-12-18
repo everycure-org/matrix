@@ -165,8 +165,6 @@ class Neo4JSparkDataset(SparkDataset):
                 overwrite = self._save_args.pop("mode", "append") == "overwrite"
                 self._create_db(self._url, self._database, overwrite, self._credentials)
 
-                # breakpoint()
-
                 # Write dataset
                 (
                     data.write.format("org.neo4j.spark.DataSource")
