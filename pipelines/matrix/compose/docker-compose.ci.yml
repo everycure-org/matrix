@@ -52,6 +52,18 @@ services:
         condition: service_healthy
       mlflow: 
         condition: service_healthy
+  mlflow:
+    container_name: mlflow
+    build:  "services/mlflow"
+    ports:
+      - "5001:5000"
+    command: mlflow server --host 0.0.0.0 --serve-artifacts
+    healthcheck:
+      test: wget http://localhost:5000/health || exit 1
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
 volumes:
   neo4j_logs:
   neo4j_import:

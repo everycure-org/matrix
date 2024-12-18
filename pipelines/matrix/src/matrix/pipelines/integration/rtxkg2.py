@@ -142,8 +142,8 @@ def filter_semmed(
         .withColumn("num_publications", F.size(F.col("publications")))
         # fmt: off
         .filter(
-            # Retain only semmed edges more than 10 publications or ndg score above 0.6
-            (F.col("num_publications") >= F.lit(publication_threshold)) & (F.col("ngd") > F.lit(ngd_threshold))
+            # Retain only semmed edges more than 10 publications or ndg score below/equal 0.6
+            (F.col("num_publications") >= F.lit(publication_threshold)) & (F.col("ngd") <= F.lit(ngd_threshold))
         )
         # fmt: on
         .select("edges.*")
