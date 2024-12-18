@@ -1,13 +1,21 @@
-import logging
+from typing import Collection, Type
 
 from pyspark.sql import DataFrame
-from pyspark.sql import functions as F
+from pyspark.sql.functions import array_join
 
-from matrix.schemas.knowledge_graph import cols_for_schema, KGNodeSchema, KGEdgeSchema
-
-logger = logging.getLogger(__name__)
+from matrix.schemas.knowledge_graph import cols_for_schema, KGNodeSchema, KGEdgeSchema, DataFrameModel
 
 SEPARATOR = "\x1f"
+
+
+def join_array_columns(df: DataFrame, cols: Collection[str], sep: str = SEPARATOR) -> DataFrame:
+    for c in cols:
+        df = df.withColumn(c, array_join(c, delimiter=sep))
+    return df
+
+
+def create_kgx_format(df: DataFrame, cols: Collection[str], model: Type[DataFrameModel]):
+    return join_array_columns(df, cols=cols).select(*cols_for_schema(model))
 
 
 def filtered_edges_to_kgx(df: DataFrame) -> DataFrame:
@@ -16,11 +24,10 @@ def filtered_edges_to_kgx(df: DataFrame) -> DataFrame:
     Args:
         df: Edges dataframe
     """
-    return (
-        df.withColumn("upstream_data_source", F.array_join(F.col("upstream_data_source"), SEPARATOR))
-        .withColumn("aggregator_knowledge_source", F.array_join(F.col("aggregator_knowledge_source"), SEPARATOR))
-        .withColumn("publications", F.array_join(F.col("publications"), SEPARATOR))
-        .select(*cols_for_schema(KGEdgeSchema))
+    return create_kgx_format(
+        df,
+        cols=("upstream_data_source", "aggregator_knowledge_source", "publications"),
+        model=KGEdgeSchema,
     )
 
 
@@ -30,11 +37,8 @@ def filtered_nodes_to_kgx(df: DataFrame) -> DataFrame:
     Args:
         df: Nodes dataframe
     """
-    return (
-        df.withColumn("equivalent_identifiers", F.array_join(F.col("equivalent_identifiers"), SEPARATOR))
-        .withColumn("all_categories", F.array_join(F.col("all_categories"), SEPARATOR))
-        .withColumn("publications", F.array_join(F.col("publications"), SEPARATOR))
-        .withColumn("labels", F.array_join(F.col("labels"), SEPARATOR))
-        .withColumn("upstream_data_source", F.array_join(F.col("upstream_data_source"), SEPARATOR))
-        .select(*cols_for_schema(KGNodeSchema))
+    return create_kgx_format(
+        df,
+        cols=("equivalent_identifiers", "all_categories", "publications", "labels", "upstream_data_source"),
+        model=KGNodeSchema,
     )
