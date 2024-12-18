@@ -33,7 +33,7 @@ def _create_pairs(
 
         df = pd.DataFrame(
             data=[[drug, disease, f"{drug}|{disease}"] for drug, disease in zip(random_drugs, random_diseases)],
-            columns=["drug", "disease", "drug|disease"],
+            columns=["subject", "object", "drug|disease"],
         )
 
         # Remove duplicate pairs
@@ -48,7 +48,10 @@ def _create_pairs(
     tn_df = df[num : 2 * num]
     tn_df["indication"] = False
     tn_df["contraindication"] = True
-    return pd.concat([tp_df, tn_df], ignore_index=True)
+    edges = pd.concat([tp_df, tn_df], ignore_index=True)
+    id_list = set(edges.subject) | set(edges.object)
+    nodes = pd.DataFrame(id_list, columns=["id"])
+    return nodes, edges
 
 
 def create_pipeline(**kwargs) -> Pipeline:
@@ -103,7 +106,10 @@ def create_pipeline(**kwargs) -> Pipeline:
                     "ingestion.raw.drug_list.nodes@pandas",
                     "ingestion.raw.disease_list.nodes@pandas",
                 ],
-                outputs="ingestion.raw.ground_truth.nodes@pandas",
+                outputs=[
+                    "ingestion.raw.ground_truth.nodes@pandas",
+                    "ingestion.raw.ground_truth.edges@pandas",
+                ],
                 name="create_gn_pairs",
             ),
         ]
