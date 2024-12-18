@@ -167,7 +167,7 @@ def consolidate_evaluation_reports(**reports) -> dict:
 
     master_report = {}
     for report_name, report in reports.items():
-        # Parse the report name key created in pipeline.py
+        # Parse the report name key created in evaluation/pipeline.py
         model, evaluation, fold_or_aggregated = report_name.split(".")
 
         # In the case of aggregated results, add the results for each aggregation function
