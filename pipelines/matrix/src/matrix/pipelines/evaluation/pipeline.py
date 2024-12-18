@@ -103,13 +103,13 @@ def create_pipeline(**kwargs) -> Pipeline:
                 )
             )
 
+    # Generate dictionaries of inputs for the consolidation node
     collect_fold_specific_reports = {
         model + "." + evaluation + ".fold_" + str(fold): f"evaluation.{model}.fold_{fold}.{evaluation}.reporting.result"
         for model in model_names
         for evaluation in evaluation_names
         for fold in folds_lst
     }
-
     collect_aggregated_reports = {
         model + "." + evaluation + ".aggregated": f"evaluation.{model}.{evaluation}.reporting.result_aggregated"
         for model in model_names

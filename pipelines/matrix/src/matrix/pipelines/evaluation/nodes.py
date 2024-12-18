@@ -136,7 +136,7 @@ def consolidate_evaluation_reports(**reports) -> dict:
         Dictionary representing consolidated report.
     """
 
-    def add_report(master_report, model, evaluation, type, report):
+    def add_report(master_report: dict, model: str, evaluation: str, type: str, report: dict) -> dict:
         """Add a metrics to the master report, appending the evaluation type to the metric name.
 
         Args:
@@ -167,6 +167,7 @@ def consolidate_evaluation_reports(**reports) -> dict:
 
     master_report = {}
     for report_name, report in reports.items():
+        # Parse the report name key created in pipeline.py
         model, evaluation, fold_or_aggregated = report_name.split(".")
 
         # In the case of aggregated results, add the results for each aggregation function
