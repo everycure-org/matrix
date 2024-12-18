@@ -159,3 +159,30 @@ preprocessing.raw.ground_truth.negatives:
     sep: "\t"
   save_args:
     sep: "\t"
+
+preprocessing.int.ground_truth.combined:
+  <<: [*_layer_raw]
+  type: pandas.CSVDataset
+  filepath: ${globals:paths.kg_raw}/ground_truth/kg2/${globals:data_sources.gt.version}/gt_pairs.txt
+  load_args:
+    sep: "\t"
+  save_args:
+    sep: "\t"
+
+preprocessing.int.ground_truth.nodes@pandas:
+  <<: [*_layer_raw]
+  type: pandas.CSVDataset
+  filepath: ${globals:paths.tmp}/ground_truth/kg2/${globals:data_sources.gt.version}/nodes.tsv
+  load_args:
+    sep: "\t"
+  save_args:
+    sep: "\t"
+
+preprocessing.int.ground_truth.edges@pandas:
+  <<: [*_layer_raw]
+  type: pandas.CSVDataset
+  filepath: ${globals:paths.tmp}/ground_truth/kg2/${globals:data_sources.gt.version}/edges.tsv
+  load_args:
+    sep: "\t"
+  save_args:
+    sep: "\t"

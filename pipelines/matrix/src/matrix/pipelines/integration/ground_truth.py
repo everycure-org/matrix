@@ -19,18 +19,16 @@ class GroundTruthTransformer(GraphTransformer):
             Transformed DataFrame.
         """
         # fmt: off
-        df = (
-            nodes_df
-            .withColumn("target", f.col("disease"))
-            .withColumn("source", f.col("drug"))
-            .withColumn("y",
-                       f.when(f.col("indication").cast('boolean'), 1)
-                       .when(f.col("contraindication").cast('boolean'), 0))
-        )
-        df.printSchema()
-        return df
+        return nodes_df
         # fmt: on
 
     # @pa.check_output(KGEdgeSchema)
     def transform_edges(self, edges_df: DataFrame, **kwargs) -> DataFrame:
-        raise NotImplementedError("Not implemented!")
+        df = (
+            edges_df.withColumn("disease", f.col("object"))
+            .withColumn("drug", f.col("subject"))
+            .withColumn(
+                "y", f.when(f.col("indication").cast("boolean"), 1).when(f.col("contraindication").cast("boolean"), 0)
+            )
+        )
+        return df

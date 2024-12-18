@@ -5,6 +5,7 @@ import requests
 from refit.v1.core.inline_has_schema import has_schema
 from refit.v1.core.inline_primary_key import primary_key
 from tenacity import retry, wait_exponential, stop_after_attempt
+from typing import Tuple
 
 
 def coalesce(s: pd.Series, *series: List[pd.Series]):
@@ -108,8 +109,6 @@ def process_medical_edges(int_nodes: pd.DataFrame, int_edges: pd.DataFrame) -> p
     allow_subset=True,
 )
 def add_source_and_target_to_clinical_trails(df: pd.DataFrame) -> pd.DataFrame:
-    df = df.head(10)
-
     # Normalize the name
     drug_data = df["drug_name"].apply(resolve_name, cols_to_get=["curie"])
     disease_data = df["disease_name"].apply(resolve_name, cols_to_get=["curie"])
@@ -213,11 +212,19 @@ def clean_clinical_trial_data(df: pd.DataFrame) -> pd.DataFrame:
 def create_gt(pos_df: pd.DataFrame, neg_df: pd.DataFrame) -> pd.DataFrame:
     """Converts the KGML-xDTD true positives and true negative dataframes into a singular dataframe compatible with EC format."""
     pos_df["indication"], pos_df["contraindication"] = True, False
+    pos_df["y"] = 1
     neg_df["indication"], neg_df["contraindication"] = False, True
+    neg_df["y"] = 0
     gt_df = pd.concat([pos_df, neg_df], axis=0)
     gt_df["drug|disease"] = gt_df["source"] + "|" + gt_df["target"]
-    gt_df.rename({"source": "drug", "target": "disease"}, axis=1, inplace=True)
     return gt_df
+
+
+def create_gt_nodes_edges(edges: pd.DataFrame) -> Tuple[pd.DataFrame, pd.DataFrame]:
+    id_list = set(edges.source) | set(edges.target)
+    nodes = pd.DataFrame(id_list, columns=["id"])
+    edges.rename({"source": "subject", "target": "object"}, axis=1, inplace=True)
+    return nodes, edges
 
 
 # def clean_gt_data(

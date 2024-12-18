@@ -12,6 +12,9 @@ def create_pipeline(**kwargs) -> Pipeline:
     """Create integration pipeline."""
     return pipeline(
         [
+            # -------------------------------------------------------------------------
+            # EC Medical Team ingestion and enrichment
+            # -------------------------------------------------------------------------
             node(
                 func=nodes.process_medical_nodes,
                 inputs=["preprocessing.raw.nodes"],
@@ -42,6 +45,9 @@ def create_pipeline(**kwargs) -> Pipeline:
             # TODO: Parse dataframe, add source/target curie using name normalizer and
             # in ingestion logic, extract nodes df back from edges
             # NOTE: Take raw clinical trial data and map the "name" to "curie" using the synonymizer
+            # -------------------------------------------------------------------------
+            # EC Clinical Trials ingestion and enrichment
+            # -------------------------------------------------------------------------
             node(
                 func=nodes.add_source_and_target_to_clinical_trails,
                 inputs={
@@ -64,6 +70,9 @@ def create_pipeline(**kwargs) -> Pipeline:
                 name="clean_clinical_trial_data",
                 tags=["ec-clinical-trials-data"],
             ),
+            # -------------------------------------------------------------------------
+            # Drug List ingestion
+            # -------------------------------------------------------------------------
             node(
                 func=lambda x: [x, x],
                 inputs=["preprocessing.raw.drug_list"],
@@ -71,6 +80,9 @@ def create_pipeline(**kwargs) -> Pipeline:
                 name="write_drug_list",
                 tags=["drug-list"],
             ),
+            # -------------------------------------------------------------------------
+            # Disease List ingestion and enrichment
+            # -------------------------------------------------------------------------
             node(
                 func=generate_tags,
                 inputs=[
@@ -87,15 +99,36 @@ def create_pipeline(**kwargs) -> Pipeline:
                 inputs="ingestion.raw.disease_list.nodes@pandas",
                 outputs="ingestion.reporting.disease_list",
                 name="write_disease_list_to_gsheets",
+                tags=["disease-list"],
             ),
+            # -------------------------------------------------------------------------
+            # Ground Truth ingestion and preprocessing
+            # -------------------------------------------------------------------------
             node(
                 func=nodes.create_gt,
                 inputs={
                     "pos_df": "preprocessing.raw.ground_truth.positives",
                     "neg_df": "preprocessing.raw.ground_truth.negatives",
                 },
-                outputs="ingestion.raw.ground_truth.nodes@pandas",
+                outputs="preprocessing.int.ground_truth.combined",
                 name="create_gt_dataframe",
+                tags=["ground-truth"],
+            ),
+            node(
+                func=nodes.create_gt_nodes_edges,
+                inputs="preprocessing.int.ground_truth.combined",
+                outputs=["preprocessing.int.ground_truth.nodes@pandas", "preprocessing.int.ground_truth.edges@pandas"],
+                name="create_nodes_and_edges",
+                tags=["ground-truth"],
+            ),
+            node(
+                func=lambda x, y: [x, y],
+                inputs=[
+                    "preprocessing.int.ground_truth.nodes@pandas",
+                    "preprocessing.int.ground_truth.edges@pandas",
+                ],
+                outputs=["ingestion.raw.ground_truth.nodes@pandas", "ingestion.raw.ground_truth.edges@pandas"],
+                name="produce_ground_truth_kg",
                 tags=["ground-truth"],
             ),
             # node(
