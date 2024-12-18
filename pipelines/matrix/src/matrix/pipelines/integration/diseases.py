@@ -23,7 +23,7 @@ class DiseasesTransformer(GraphTransformer):
             nodes_df
             .withColumn("id",                                f.col("category_class"))
             .withColumn("name",                              f.col("label"))
-            .withColumn("category",                          f.lit("none"))
+            .withColumn("category",                          f.lit("biolink:Disease"))
         )
         return df
         # fmt: on
