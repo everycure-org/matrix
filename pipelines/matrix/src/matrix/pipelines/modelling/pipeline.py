@@ -239,27 +239,29 @@ def create_pipeline(**kwargs) -> Pipeline:
 
     FUTURE: Try cleanup step where folds are passed in using partials, to ensure
     we can keep a single dataframe of fold information.
+
+    Pipeline is created dynamically, based on the following dimentions:
+        - Models, i.e., type of model, e.g. random forst
+        - Folds, i.e., number of folds to train/evaluation
+        - Shards, i.e., defined for ensemble models, non-ensemble models have shards = 1
     """
 
-    pipelines = []
-
-    # Unpack variables
-    cross_validation_settings = settings.DYNAMIC_PIPELINES_MAPPING.get("cross_validation")
-    n_splits = cross_validation_settings.get("n_splits")
+    # Unpack Folds
+    n_splits = settings.DYNAMIC_PIPELINES_MAPPING.get("cross_validation").get("n_splits")
     folds_lst = list(range(n_splits)) + ["full"]
+
+    # Unpack models
     models_lst = settings.DYNAMIC_PIPELINES_MAPPING.get("modelling")
     model_names_lst = [model["model_name"] for model in models_lst]
 
     # Add shared nodes
+    pipelines = []
     pipelines.append(create_shared_pipeline(model_names_lst, folds_lst))
 
     # Generate pipeline for each model
     for model in models_lst:
-        # Extract model name
-        model_name = model["model_name"]
-
-        # Generate pipeline for model
-        pipelines.append(create_model_pipeline(model_name, model["num_shards"], folds_lst, n_splits))
+        # Generate pipeline for the model
+        pipelines.append(create_model_pipeline(model["model_name"], model["num_shards"], folds_lst, n_splits))
 
         # Now aggregate the metrics for the model
         pipelines.append(
@@ -269,11 +271,14 @@ def create_pipeline(**kwargs) -> Pipeline:
                         func=nodes.aggregate_metrics,
                         inputs=[
                             "params:modelling.aggregation_functions",
-                            *[f"modelling.{model_name}.fold_{fold}.reporting.metrics" for fold in range(n_splits)],
+                            *[
+                                f"modelling.{model['model_name']}.fold_{fold}.reporting.metrics"
+                                for fold in range(n_splits)
+                            ],
                         ],
-                        outputs=f"modelling.{model_name}.reporting.metrics_aggregated",
-                        name=f"aggregate_{model_name}_model_performance_checks",
-                        tags=[f"{model_name}"],
+                        outputs=f"modelling.{model['model_name']}.reporting.metrics_aggregated",
+                        name=f"aggregate_{model['model_name']}_model_performance_checks",
+                        tags=[f"{model['model_name']}"],
                     )
                 ]
             )
