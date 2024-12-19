@@ -238,21 +238,14 @@ def test_workflow_submission(
         allow_interactions=False,
     )
 
-    yaml_files = list(temporary_directory.glob("argo-workflow-template.yml"))
-    assert len(yaml_files) == 1, f"Expected 1 YAML file, found {len(yaml_files)}"
-
-    yaml_file = yaml_files[0]
+    yaml_file = temporary_directory / "argo-workflow-template.yml"
     assert yaml_file.is_file(), f"Expected {yaml_file} to be a file"
-    assert yaml_file.name.endswith(".yml"), f"File does not have .yml extension: {yaml_file.name}"
 
-    # Read and parse the YAML file
     with open(yaml_file, "r") as f:
         content = yaml.safe_load(f)
 
-    # Check if the content is a dictionary
     assert isinstance(content, dict), "Parsed YAML content should be a dictionary"
 
-    # Check for the presence of two pipelines in the templates
     templates = content.get("spec", {}).get("templates", [])
     pipeline_templates = [t for t in templates if "dag" in t]
 
@@ -281,4 +274,4 @@ def test_workflow_submission(
         ]
     )
 
-    mock_run_subprocess.assert_called_with(submit_cmd, stream_output=True)
+    mock_run_subprocess.assert_called_with(submit_cmd)

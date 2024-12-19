@@ -86,8 +86,7 @@ If you encounter any issues during the submission process:
 
 1. Check the error messages in the console output.
 2. Ensure all prerequisites are met and properly configured.
-3. Use the `--verbose` flag for more detailed output.
-4. If the issue persists, contact the platform support team with the error details and your run configuration.
+3. If the issue persists, contact the platform support team with the error details and your run configuration.
 
 Remember to update your [onboarding issue](https://github.com/everycure-org/matrix/issues/new?assignees=&labels=onboarding&projects=&template=onboarding.md&title=%3Cfirstname%3E+%3Clastname%3E) if you encounter any problems or have suggestions for improving this process.
 ```

@@ -1,3 +1,4 @@
+# TODO: How can we ensure only .y*ml files are picked up?
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:

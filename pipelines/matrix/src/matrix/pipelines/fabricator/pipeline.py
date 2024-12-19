@@ -1,6 +1,6 @@
 import pandas as pd
 from data_fabricator.v0.nodes.fabrication import fabricate_datasets
-from kedro.pipeline import Pipeline, pipeline
+from kedro.pipeline import Pipeline, pipeline, node
 
 from matrix.kedro4argo_node import argo_node
 
@@ -80,6 +80,15 @@ def create_pipeline(**kwargs) -> Pipeline:
                     "edges": "ingestion.raw.robokop.edges@pandas",
                 },
                 name="fabricate_robokop_datasets",
+            ),
+            node(
+                func=fabricate_datasets,
+                inputs={"fabrication_params": "params:fabricator.spoke"},
+                outputs={
+                    "nodes": "ingestion.raw.spoke.nodes@pandas",
+                    "edges": "ingestion.raw.spoke.edges@pandas",
+                },
+                name="fabricate_spoke_datasets",
             ),
             argo_node(
                 func=_create_pairs,
