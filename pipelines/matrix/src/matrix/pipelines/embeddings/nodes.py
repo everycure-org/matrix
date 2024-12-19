@@ -6,7 +6,7 @@ import pandas as pd
 import numpy as np
 import seaborn as sns
 
-from neo4j import TRUST_ALL_CERTIFICATES
+from neo4j import GraphDatabase, TRUST_ALL_CERTIFICATES
 from graphdatascience import GraphDataScience
 
 import pyspark.sql.types as T
@@ -45,8 +45,8 @@ class GraphDS(GraphDataScience):
         database: str | None = None,
     ):
         """Create `GraphDS` instance."""
-        super().__init__(endpoint, auth=tuple(auth), database=database, encrypted=True, trust=TRUST_ALL_CERTIFICATES)
-
+        driver = GraphDatabase.driver(endpoint, auth=tuple(auth), encrypted=True, trust=TRUST_ALL_CERTIFICATES)
+        super().__init__(driver)
         self.set_database(database)
 
 
