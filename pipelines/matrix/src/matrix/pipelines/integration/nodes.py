@@ -244,6 +244,7 @@ def normalize_kg(
     logger.info("collecting node ids for normalization")
     node_ids = nodes.select("id").rdd.flatMap(lambda x: x).collect()
     logger.info(f"collected {len(node_ids)} node ids for normalization. Performing normalization...")
+
     node_id_map = batch_map_ids(
         frozenset(node_ids), api_endpoint, json_parser, batch_size, parallelism, conflate, drug_chemical_conflate
     )
