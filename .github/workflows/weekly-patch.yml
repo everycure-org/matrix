@@ -7,11 +7,6 @@ on:
 #   schedule:
 #     - cron:
 
-env:
-  project_id: 'mtrx-hub-dev-3of'
-  workload_identity_provider: 'projects/938607797672/locations/global/workloadIdentityPools/matrix-pool-rw/providers/matrix-gh-provider-rw'
-  service_account: 'sa-github-actions-rw@mtrx-hub-dev-3of.iam.gserviceaccount.com'
-
 jobs:
   submit_data_release_weekly:
     runs-on: ubuntu-latest
@@ -58,9 +53,9 @@ jobs:
           with open(os.getenv('GITHUB_ENV'), 'a') as env_file:
             env_file.write(f'release_version=v{new_version}\n')
           "
-          echo "New version is '${{ env.new_version }}'"
+          echo "New version is '${{ env.release_version }}'"
 
-      - name: Set up kedro project dependencies and semver
+      - name: Set up kedro project dependencies
         working-directory: pipelines/matrix
         run: |
           pip install -r requirements.txt
@@ -84,7 +79,7 @@ jobs:
       #     --username GH-Actions-bot \
       #     --namespace argo-workflows \
       #     --run-name weekly-data-release \
-      #     --release-version "${{ env.new_version }}" \
+      #     --release-version "${{ env.release_version }}" \
       #     --pipeline data_release \
       #     --is-test # remove this flag to run the pipeline in production
 
