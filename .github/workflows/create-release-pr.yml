@@ -70,7 +70,7 @@ jobs:
           service_account: ${{env.service_account}}
 
       - name: Download & commit release info file
-        working-directory: docs/src/releases
+        working-directory: docs/src/releases/changelog_files
         env:
           RELEASE_DIR_GCS: 'gs://mtrx-us-central1-hub-dev-storage/kedro/data/releases'
           FILENAME: ${{env.release}}_info.json
