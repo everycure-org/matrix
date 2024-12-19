@@ -66,7 +66,7 @@ def test_ingest_nodes_empty_df(spark: pyspark.sql.SparkSession) -> None:
 def sample_embeddings_df(spark: pyspark.sql.SparkSession) -> pyspark.sql.DataFrame:
     """Create a sample dataframe with embeddings."""
     schema = StructType(
-        [StructField("id", StringType(), False), StructField("embedding", ArrayType(FloatType(), False), False)]
+        [StructField("id", StringType(), False), StructField("embedding", ArrayType(FloatType(), True), False)]
     )
 
     data = [
