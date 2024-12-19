@@ -185,24 +185,64 @@ def prefilter_nodes(
 
 
 @inject_object()
+def make_folds(
+    data: DataFrame,
+    splitter: BaseCrossValidator,
+) -> Tuple[pd.DataFrame]:
+    """Function to generate folds for modelling.
+
+    NOTE: This currently loads the `n_splits` from the settings, as this
+    pipeline is generated dynamically to allow parallelization.
+
+         _______
+       .-       -.
+      /           \
+     |,  .-.  .-.  ,|
+     | )(_o/  \o_)( |
+     |/     /\     \|
+     (_     ^^     _)
+      \__|IIIIII|__/
+       | \IIIIII/ |
+       \          /
+        `--------`
+
+    Args:
+        data: dataframe
+        splitter: splitter
+    Returns:
+        Tuple of dataframes with data for each fold, dfs 1-k are 
+        dfs with data for folds, df k+1 is training data only.
+    """
+
+    # Set number of splits
+    cross_validation_settings = settings.DYNAMIC_PIPELINES_MAPPING.get("cross_validation")
+    n_splits = cross_validation_settings.get("n_splits")
+    splitter.n_splits = n_splits
+    all_data_frames = make_splits(data, splitter)
+
+    # Add "training data only" fold
+    full_data = data.copy()
+    full_data.loc[:, "split"] = "TRAIN"
+    return all_data_frames + full_data
+
+
+@inject_object()
 def make_splits(
     data: DataFrame,
     splitter: BaseCrossValidator,
-) -> pd.DataFrame:
+) -> Tuple[pd.DataFrame]:
     """Function to split data.
+
+    FUTURE: Update to produce single DF only, where we add a column identifying the fold.
 
     Args:
         kg: kg dataset with nodes
         data: Data to split.
         splitter: sklearn splitter object (BaseCrossValidator or its subclasses).
-
+        n_splits: number of splits
     Returns:
-        Data with split information.
+        Tuple of dataframes for each fold.
     """
-    # Set number of splits
-    cross_validation_settings = settings.DYNAMIC_PIPELINES_MAPPING.get("cross_validation")
-    n_splits = cross_validation_settings.get("n_splits")
-    splitter.n_splits = n_splits
 
     # Split data into folds
     all_data_frames = []
@@ -212,11 +252,6 @@ def make_splits(
         fold_data.loc[train_index, "split"] = "TRAIN"
         fold_data.loc[test_index, "split"] = "TEST"
         all_data_frames.append(fold_data)
-
-    # Add "training data only" fold
-    full_data = data.copy()
-    full_data.loc[:, "split"] = "TRAIN"
-    all_data_frames.append(full_data)
 
     return tuple(all_data_frames)
 

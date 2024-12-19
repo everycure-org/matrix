@@ -1,3 +1,5 @@
+from typing import List
+
 from kedro.pipeline import Pipeline, pipeline
 
 from matrix import settings
@@ -7,6 +9,7 @@ from . import nodes
 
 
 def _create_model_shard_pipeline(model: str, shard: int, fold: int) -> Pipeline:
+    """Create pipeline with nodes for a single model, single fold and single shard."""
     return pipeline(
         [
             argo_node(
@@ -58,7 +61,8 @@ def _create_model_shard_pipeline(model: str, shard: int, fold: int) -> Pipeline:
     )
 
 
-def _create_model_pipeline(model: str, num_shards: int, fold: int) -> Pipeline:
+def _create_fold_pipeline(model: str, num_shards: int, fold: int) -> Pipeline:
+    """Create pipeline with nodes for a single model and single fold."""
     return sum(
         [
             pipeline(
@@ -132,16 +136,78 @@ def _create_model_pipeline(model: str, num_shards: int, fold: int) -> Pipeline:
     )
 
 
-def create_pipeline(**kwargs) -> Pipeline:
-    """Create modelling pipeline."""
-    cross_validation_settings = settings.DYNAMIC_PIPELINES_MAPPING.get("cross_validation")
-    n_splits = cross_validation_settings.get("n_splits")
+def create_model_pipeline(model: str, num_shards: int, folds_lst: List[str], n_splits: int) -> Pipeline:
+    """Create pipeline for a single model.
 
-    folds_lst = list(range(n_splits)) + ["full"]
-    models_lst = settings.DYNAMIC_PIPELINES_MAPPING.get("modelling")
-    model_names_lst = [model["model_name"] for model in models_lst]
+    Args:
+        model: model to to create
+        num_shards: number of shard to generate
+        folds_lst: number of dolds
+        n_splits: number of splits
+    Returns:
+        Pipelines with model nodes
+    """
+    pipelines = []
 
-    create_model_input = pipeline(
+    # Generate pipeline to predict folds
+    for fold in folds_lst:
+        pipelines.append(
+            pipeline(
+                _create_fold_pipeline(model=model["model_name"], num_shards=num_shards, fold=fold),
+                tags=[model["model_name"], "not-shared"],
+            )
+        )
+
+    # Gather all test set predictions from the different folds for the
+    # model, and combine all the predictions.
+    pipelines.append(
+        pipeline(
+            [
+                argo_node(
+                    func=nodes.combine_data,
+                    inputs=[f"modelling.{model}.fold_{fold}.model_output.predictions" for fold in range(n_splits)],
+                    outputs=f"modelling.{model}.fold_combined.model_output.predictions",
+                    name=f"combine_{model}_folds",
+                    tags=[f"{model}"],
+                )
+            ]
+        )
+    )
+
+    # Now check the performance on the combines folds
+    for fold in folds_lst + ["combined"]:
+        pipelines.append(
+            pipeline(
+                [
+                    argo_node(
+                        func=nodes.check_model_performance,
+                        inputs={
+                            "data": f"modelling.{model}.fold_{fold}.model_output.predictions",
+                            "metrics": f"params:modelling.{model}.model_options.metrics",
+                            "target_col_name": f"params:modelling.{model}.model_options.model_tuning_args.target_col_name",
+                        },
+                        outputs=f"modelling.{model}.fold_{fold}.reporting.metrics",
+                        name=f"check_{model}_model_performance_fold_{fold}",
+                        tags=[f"{model}"],
+                    )
+                ]
+            )
+        )
+
+
+def create_shared_pipeline(models_lst: List[str], folds_lst: List[str]) -> Pipeline:
+    """Function to create pipeline of shared nodes.
+
+    NOTE: The model and folds lists are added to tag the
+    nodes for single pipeline execution.
+
+    Args:
+        models_lst: list of models to generate
+        folds_list: list of folds
+    Returns:
+        Returns
+    """
+    return pipeline(
         [
             # Construct ground_truth
             argo_node(
@@ -176,7 +242,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 name="prefilter_nodes",
             ),
             argo_node(
-                func=nodes.make_splits,
+                func=nodes.make_folds,
                 inputs=[
                     "modelling.int.known_pairs@pandas",
                     "params:modelling.splitter",
@@ -185,70 +251,51 @@ def create_pipeline(**kwargs) -> Pipeline:
                 name="create_splits",
             ),
         ],
-        tags=[model for model in model_names_lst],
+        tags=[model for model in models_lst],
     )
 
-    # Combine predictions for all folds
-    combine_predictions = pipeline(
-        [
-            argo_node(
-                func=nodes.combine_data,
-                inputs=[f"modelling.{model}.fold_{fold}.model_output.predictions" for fold in range(n_splits)],
-                outputs=f"modelling.{model}.fold_combined.model_output.predictions",
-                name=f"combine_{model}_folds",
-                tags=[f"{model}"],
-            )
-            for model in model_names_lst
-        ]
-    )
 
-    # Compute metrics on all folds excluding full training data
+def create_pipeline(**kwargs) -> Pipeline:
+    """Create modelling pipeline.
 
-    check_performance = pipeline(
-        [
-            argo_node(
-                func=nodes.check_model_performance,
-                inputs={
-                    "data": f"modelling.{model}.fold_{fold}.model_output.predictions",
-                    "metrics": f"params:modelling.{model}.model_options.metrics",
-                    "target_col_name": f"params:modelling.{model}.model_options.model_tuning_args.target_col_name",
-                },
-                outputs=f"modelling.{model}.fold_{fold}.reporting.metrics",
-                name=f"check_{model}_model_performance_fold_{fold}",
-                tags=[f"{model}"],
-            )
-            for fold in list(range(n_splits)) + ["combined"]
-            for model in model_names_lst
-        ]
-    )
-
-    # Aggregation step
-    def _give_aggregation_node_input(model):
-        """Prepare aggregation node inputs, including reports for all folds"""
-        return ["params:modelling.aggregation_functions"] + [
-            f"modelling.{model}.fold_{fold}.reporting.metrics" for fold in range(n_splits)
-        ]
-
-    aggregate_metrics = pipeline(
-        [
-            argo_node(
-                func=nodes.aggregate_metrics,
-                inputs=_give_aggregation_node_input(model),
-                outputs=f"modelling.{model}.reporting.metrics_aggregated",
-                name=f"aggregate_{model}_model_performance_checks",
-                tags=[f"{model}"],
-            )
-            for model in model_names_lst
-        ]
-    )
+    FUTURE: Try cleanup step where folds are passed in using partials, to ensure
+    we can keep a single dataframe of fold information.
+    """
 
     pipelines = []
-    for fold in folds_lst:
-        for model in models_lst:
-            pipelines.append(
-                pipeline(
-                    _create_model_pipeline(model=model["model_name"], num_shards=model["num_shards"], fold=fold),
-                    tags=[model["model_name"], "not-shared"],
-                )
+
+    # Unpack variables
+    cross_validation_settings = settings.DYNAMIC_PIPELINES_MAPPING.get("cross_validation")
+    n_splits = cross_validation_settings.get("n_splits")
+    folds_lst = list(range(n_splits)) + ["full"]
+    models_lst = settings.DYNAMIC_PIPELINES_MAPPING.get("modelling")
+    model_names_lst = [model["model_name"] for model in models_lst]
+
+    # Add shared nodes
+    pipelines.append(create_shared_pipeline(model_names_lst, folds_lst))
+
+    # Generate pipeline for each model
+    pipelines = []
+    for model in models_lst:
+        # Generate pipeline for model
+        create_model_pipeline(model, models_lst["num_shards"], folds_lst, n_splits)
+
+        # Now aggregate the metrics for the model
+        pipelines.append(
+            pipeline(
+                [
+                    argo_node(
+                        func=nodes.aggregate_metrics,
+                        inputs=[
+                            "params:modelling.aggregation_functions",
+                            *[f"modelling.{model}.fold_{fold}.reporting.metrics" for fold in range(n_splits)],
+                        ],
+                        outputs=f"modelling.{model}.reporting.metrics_aggregated",
+                        name=f"aggregate_{model}_model_performance_checks",
+                        tags=[f"{model}"],
+                    )
+                ]
             )
-    return sum([create_model_input, *pipelines, combine_predictions, check_performance, aggregate_metrics])
+        )
+
+    return sum(pipelines)

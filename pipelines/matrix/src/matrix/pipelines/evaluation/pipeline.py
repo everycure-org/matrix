@@ -32,12 +32,17 @@ def _create_evaluation_pipeline(model: str, evaluation: str, fold: str) -> Pipel
     )
 
 
+def create_fold_pipeline(fold: str) -> Pipeline:
+    return
+
+
 def create_pipeline(**kwargs) -> Pipeline:
     """Create evaluation pipeline."""
     models = settings.DYNAMIC_PIPELINES_MAPPING.get("modelling")
     model_names = [model["model_name"] for model in models]
     n_splits = settings.DYNAMIC_PIPELINES_MAPPING.get("cross_validation").get("n_splits")
     folds_lst = list(range(n_splits))
+
     evaluation_names = [
         evaluation["evaluation_name"] for evaluation in settings.DYNAMIC_PIPELINES_MAPPING.get("evaluation")
     ]
