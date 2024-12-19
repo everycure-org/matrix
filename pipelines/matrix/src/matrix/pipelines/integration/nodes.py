@@ -107,7 +107,7 @@ def filter_unified_kg_edges(
     biolink_predicates: Dict[str, Any],
     transformations: List[Tuple[Callable, Dict[str, Any]]],
     column: str,
-    categories: List[str]
+    categories: List[str],
 ) -> DataFrame:
     """Function to filter the knowledge graph edges.
 
@@ -120,7 +120,10 @@ def filter_unified_kg_edges(
     logger.info(f"Number of edges before filtering: {edges_count}")
 
     edges = remove_rows_containing_category(edges, categories, column)
-    edges=(
+    edges_count = edges.count()
+    logger.info(f"Number of edges after removing primary knowledge sources: {edges_count}")
+    
+    edges = (
         edges.alias("edges")
         .join(nodes.alias("subject"), on=F.col("edges.subject") == F.col("subject.id"), how="inner")
         .join(nodes.alias("object"), on=F.col("edges.object") == F.col("object.id"), how="inner")
