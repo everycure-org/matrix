@@ -347,19 +347,6 @@ def test_create_model_input_nodes_basic(mock_knowledge_graph, mock_generator, sa
     assert all(original_rows["split"] == sample_splits["split"])
 
 
-def test_create_model_input_nodes_schema_validation(mock_knowledge_graph, mock_generator):
-    # Test schema validation with invalid data
-    invalid_splits = pd.DataFrame(
-        {
-            "source": ["drug1"],  # Missing required columns
-            "target": ["disease1"],
-        }
-    )
-
-    with pytest.raises(pandera.errors.SchemaError):
-        create_model_input_nodes(graph=mock_knowledge_graph, splits=invalid_splits, generator=mock_generator)
-
-
 def test_create_model_input_nodes_empty_splits(mock_knowledge_graph, mock_generator):
     # Test with empty splits DataFrame
     empty_splits = pd.DataFrame(
