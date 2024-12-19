@@ -200,7 +200,7 @@ async def compute_df_embeddings_async(df: pd.DataFrame, embedding_model) -> pd.D
 
 class EmbeddingSchema(DataFrameModel):
     id: T.StringType() = Field(nullable=False)  # type: ignore
-    embedding: T.ArrayType(T.FloatType(), False)  # type: ignore
+    embedding: T.ArrayType(T.FloatType(), True)  # type: ignore
     pca_embedding: T.ArrayType(T.FloatType(), True)  # type: ignore
 
     class Config:
@@ -211,8 +211,7 @@ class EmbeddingSchema(DataFrameModel):
 @pandera.check_output(EmbeddingSchema)
 @unpack_params()
 def reduce_embeddings_dimension(df: DataFrame, transformer, input: str, output: str, skip: bool) -> DataFrame:
-    x = reduce_dimension(df, transformer, input, output, skip)
-    return x
+    return reduce_dimension(df, transformer, input, output, skip)
 
 
 @unpack_params()
@@ -249,6 +248,7 @@ def reduce_dimension(df: DataFrame, transformer, input: str, output: str, skip: 
         .transform(df)
         .withColumn(output, vector_to_array("pca_features"))
         .withColumn(output, F.col(output).cast("array<float>"))
+        .withColumn("pca_embedding", F.col(output))
         .drop("pca_features", "features")
     )
 
@@ -394,7 +394,17 @@ def write_topological_embeddings(
     return {"success": "true"}
 
 
-@pandera.check_output(EmbeddingSchema)
+class ExtractedTopologicalEmbeddingSchema(DataFrameModel):
+    id: T.StringType() = Field(nullable=False)  # type: ignore
+    topological_embedding: T.ArrayType(T.FloatType(), True) = Field(nullable=True)  # type: ignore
+    pca_embedding: T.ArrayType(T.FloatType(), True) = Field(nullable=True)  # type: ignore
+
+    class Config:
+        strict = False
+        unique = ["id"]
+
+
+@pandera.check_output(ExtractedTopologicalEmbeddingSchema)
 def extract_topological_embeddings(embeddings: DataFrame, nodes: DataFrame, string_col: str) -> DataFrame:
     """Extract topological embeddings from Neo4j and write into BQ.
 
@@ -404,13 +414,16 @@ def extract_topological_embeddings(embeddings: DataFrame, nodes: DataFrame, stri
 
     if isinstance(embeddings.schema[string_col].dataType, T.StringType):
         print("converting embeddings to float")
-        embeddings = embeddings.withColumn(string_col, F.from_json(F.col(string_col), T.ArrayType(T.DoubleType())))
+        embeddings = embeddings.withColumn(string_col, F.from_json(F.col(string_col), T.ArrayType(T.FloatType())))
 
-    return (
+    x = (
         nodes.alias("nodes")
         .join(embeddings.alias("embeddings"), on="id", how="left")
         .select("nodes.*", "embeddings.pca_embedding", "embeddings.topological_embedding")
+        .withColumn("pca_embedding", F.col("pca_embedding").cast("array<float>"))
+        .withColumn("topological_embedding", F.col("topological_embedding").cast("array<float>"))
     )
+    return x
 
 
 def visualise_pca(nodes: DataFrame, column_name: str) -> plt.Figure:
