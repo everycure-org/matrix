@@ -64,7 +64,7 @@ docker_push: docker_build
 
 certificate:
 	@echo "Generating test SSL certificate for Neo4J."
-	openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout compose/certs/bolt/private.key -out compose/certs/bolt/public.crt -config compose/certs/openssl.cnf
+	openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout compose/certs/bolt/private.key -out compose/certs/bolt/public.crt -config compose/certs/openssl.cnf > /dev/null 2>&1
 	cat compose/certs/bolt/private.key compose/certs/bolt/public.crt > compose/certs/bolt/private_and_public.pem
 
 compose_up: certificate
