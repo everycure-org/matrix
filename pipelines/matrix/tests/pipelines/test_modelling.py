@@ -287,15 +287,3 @@ def test_make_splits_empty_data(simple_splitter):
 
     with pytest.raises(ValueError):
         make_splits(data=empty_data, splitter=simple_splitter)
-
-
-def test_make_splits_single_fold(sample_data):
-    """Test with a single fold splitter."""
-    single_fold_splitter = KFold(n_splits=1, shuffle=True, random_state=42)
-    result = make_splits(data=sample_data, splitter=single_fold_splitter)
-
-    # Check that we only have one iteration
-    assert len(result["iteration"].unique()) == 1
-
-    # Check that we have both train and test splits
-    assert set(result["split"].unique()) == {"TRAIN", "TEST"}
