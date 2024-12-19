@@ -53,6 +53,9 @@ jobs:
           with open(os.getenv('GITHUB_ENV'), 'a') as env_file:
             env_file.write(f'release_version=v{new_version}\n')
           "
+          
+      - name: Print release version
+        run: |
           cat "$GITHUB_ENV"
           echo "New release version is '${{ env.release_version }}'"
 
