@@ -122,6 +122,18 @@ def _create_fold_pipeline(model: str, num_shards: int, fold: Union[str, int]) ->
                         outputs=f"modelling.{model}.fold_{fold}.model_input.transformed_splits",
                         name=f"transform_{model}_data_fold_{fold}",
                     ),
+                    argo_node(
+                        func=nodes.get_model_predictions,
+                        inputs={
+                            "data": f"modelling.{model}.fold_{fold}.model_input.transformed_splits",
+                            "model": f"modelling.{model}.fold_{fold}.models.model",
+                            "features": f"params:modelling.{model}.model_options.model_tuning_args.features",
+                            "target_col_name": f"params:modelling.{model}.model_options.model_tuning_args.target_col_name",
+                        },
+                        outputs=f"modelling.{model}.fold_{fold}.model_output.predictions",
+                        name=f"get_{model}_model_predictions_fold_{fold}",
+                        argo_config=ARGO_GPU_NODE_MEDIUM,
+                    ),
                 ],
                 tags=["argowf.fuse", f"argowf.fuse-group.{model}.fold-{fold}"],
             ),
