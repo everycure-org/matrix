@@ -119,7 +119,6 @@ class EmbeddingsWithPairsSchema(DataFrameModel):
         strict = False
 
 
-# TODO: Add unit test
 @pandera.check_output(EmbeddingsWithPairsSchema)
 def attach_embeddings(
     pairs_df: DataFrame,
