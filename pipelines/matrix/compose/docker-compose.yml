@@ -39,8 +39,8 @@ services:
       - ./neo4j_data/data:/data
       - ./neo4j_data/logs:/logs
       - ./neo4j_data/import:/var/lib/neo4j/import
-      - ./neo4j_data/plugins:/plugins
-      - ./certs:/var/lib/neo4j/certificates
+      - ./certs/bolt/private_and_public.pem:/var/lib/neo4j/certificates/bolt/private_and_public.pem
+      - ./certs/bolt/public.crt:/var/lib/neo4j/certificates/bolt/public.crt
       # Neo4J licences should be mounted in the license directory
       # https://community.neo4j.com/t/unable-to-setup-neo4j-gds-licence-through-docker/71242
       # - ./licenses:/licenses
