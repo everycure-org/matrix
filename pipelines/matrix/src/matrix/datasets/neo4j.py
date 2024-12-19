@@ -23,6 +23,15 @@ class GraphDBDriver:
     """
 
     def driver(self, endpoint: str, auth: tuple, database: str):
+        """Instantiate driver
+
+        Args:
+            endpoint: str
+            auth: tuple
+            database: str
+        Return:
+            Instantiates Neo4J GDB driver with correct encryption options.
+        """
         if "+s" in endpoint:
             return GraphDatabase.driver(
                 endpoint.replace("+s", ""),
