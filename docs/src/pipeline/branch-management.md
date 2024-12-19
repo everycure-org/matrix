@@ -21,7 +21,7 @@ In order to achieve a stable main, we need to add an additional layer which will
 
 ## Introducing Develop layer
 _Note this is one of many branch management approaches we can take but I think its the most appropriate. See here for example [overivew](https://medium.com/@sreekanth.thummala/choosing-the-right-git-branching-strategy-a-comparative-analysis-f5e635443423)_
-_Note v2: I called the layer 'develop' as that's what I am used to but we can decide on a different name -eg release?_
+_Note v2: I called the layer 'develop' as that's what I am used to but we can decide on a different name -eg release? ANother good approach would be to have both release and develop branches but our product is not mature enough yet for that in my opinion. See an example here https://www.atlassian.com/git/tutorials/comparing-workflows/gitflow-workflow_
 
 ![alt text](assets/comparison.png)
 
