@@ -1,4 +1,3 @@
-
 dev_namespaces:
   users:
     pascal@everycure.org: dev-pascal
@@ -13,3 +12,13 @@ dev_namespaces:
     oliver.willekens@dataminded.com: dev-oliver
   
     Pascal.Brokmeier@gmail.com: dev-pascal-test
+  
+argo:
+  namespace: argo-workflows
+  rbac:
+    users:
+      # add new people here that should be able to submit workflows
+      #- Pascal.Brokmeier@gmail.com
+      #- pascal@everycure.org
+    groups:
+      - matrix-all@everycure.org
