@@ -5,7 +5,7 @@ from pyspark.sql import DataFrame
 import numpy as np
 import json
 from pandera.typing import Series
-from pandera import DataFrameModel
+from pandera.pyspark import DataFrameModel
 import pandera
 from pyspark.sql import functions as f
 import pyspark.sql.types as T
@@ -119,6 +119,7 @@ class EmbeddingsWithPairsSchema(DataFrameModel):
         strict = False
 
 
+# TODO: Add unit test
 @pandera.check_output(EmbeddingsWithPairsSchema)
 def attach_embeddings(
     pairs_df: DataFrame,
@@ -144,9 +145,9 @@ def attach_embeddings(
 
 
 class NodeSchema(DataFrameModel):
-    id: Series[str]
-    is_drug: Series[bool]
-    is_disease: Series[bool]
+    id: T.StringType() = Field(nullable=False)  # type: ignore
+    is_drug: T.BooleanType() = Field(nullable=False)  # type: ignore
+    is_disease: T.BooleanType() = Field(nullable=False)  # type: ignore
 
     class Config:
         strict = False
