@@ -170,6 +170,8 @@ def make_batch_predictions(
     model: ModelWrapper,
     features: List[str],
     score_col_name: str,
+    not_treat_score_col_name: str,
+    unknown_score_col_name: str,
     batch_by: str = "target",
 ) -> pd.DataFrame:
     """Generate probability scores for drug-disease dataset.
@@ -223,8 +225,10 @@ def make_batch_predictions(
         batch_features = _extract_elements_in_list(transformed.columns, features, raise_exc=True)
 
         # Generate model probability scores
-        batch[score_col_name] = model.predict_proba(transformed[batch_features].values)[:, 1]
-
+        preds = model.predict_proba(transformed[batch_features].values)
+        batch["not_treat_score"] = preds[:, 0]
+        batch[score_col_name] = preds[:, 1]
+        batch["unknown_score"] = preds[:, 2]
         # Drop embedding columns
         batch = batch.drop(columns=["source_embedding", "target_embedding"])
         return batch
@@ -250,6 +254,8 @@ def make_predictions_and_sort(
     model: ModelWrapper,
     features: List[str],
     score_col_name: str,
+    not_treat_score_col_name: str,
+    unknown_score_col_name: str,
     batch_by: str,
 ) -> pd.DataFrame:
     """Generate and sort probability scores for a drug-disease dataset.
@@ -263,26 +269,37 @@ def make_predictions_and_sort(
         model: Model making the predictions.
         features: List of features, may be regex specified.
         score_col_name: Probability score column name.
+        not_treat_score_col_name: Probability score column name for not treat.
+        unknown_score_col_name: Probability score column name for unknown.
         batch_by: Column to use for batching (e.g., "target" or "source").
 
     Returns:
         Pairs dataset sorted by an additional column containing the probability scores.
     """
     # Generate scores
-    data = make_batch_predictions(graph, data, transformers, model, features, score_col_name, batch_by=batch_by)
+    data = make_batch_predictions(
+        graph,
+        data,
+        transformers,
+        model,
+        features,
+        score_col_name,
+        not_treat_score_col_name,
+        unknown_score_col_name,
+        batch_by=batch_by,
+    )
 
     # Sort by the probability score
     sorted_data = data.sort_values(by=score_col_name, ascending=False)
     return sorted_data
 
 
-def generate_summary_metadata(matrix_parameters: Dict, score_col_name: str) -> pd.DataFrame:
+def generate_summary_metadata(matrix_parameters: Dict) -> pd.DataFrame:
     """
     Generate metadata for the output matrix.
 
     Args:
         matrix_parameters (Dict): Dictionary containing matrix parameters.
-        score_col_name (str): Name of the score column.
 
     Returns:
         pd.DataFrame: DataFrame containing summary metadata.
@@ -523,7 +540,7 @@ def generate_metadata(
             meta_dict[key] = value
 
     # Generate legends column and filter out based on
-    legends_df = generate_summary_metadata(matrix_params, score_col_name)
+    legends_df = generate_summary_metadata(matrix_params)
     legends_df = legends_df.loc[legends_df["Key"].isin(matrix_report.columns.values)]
 
     # Generate metadata df

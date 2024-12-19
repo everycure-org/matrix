@@ -1,6 +1,8 @@
 # Name of column representing main probability score of the model 
 # Column name for main probability score
 evaluation.score_col_name: &score-col "treat score"
+evaluation.not_treat_score_col_name: "not treat score"
+evaluation.unknown_score_col_name: "unknown score"
 
 # Threshold-based classification metrics for ground truth data
 evaluation.simple_classification:

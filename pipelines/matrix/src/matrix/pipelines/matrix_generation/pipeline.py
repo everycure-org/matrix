@@ -18,6 +18,8 @@ def _create_matrix_generation_pipeline(model: str) -> Pipeline:
                     f"modelling.{model}.models.model",
                     f"params:modelling.{model}.model_options.model_tuning_args.features",
                     "params:evaluation.score_col_name",
+                    "params:evaluation.not_treat_score_col_name",
+                    "params:evaluation.unknown_score_col_name",
                     "params:matrix_generation.matrix_generation_options.batch_by",
                 ],
                 outputs=f"matrix_generation.{model}.model_output.sorted_matrix_predictions@pandas",
