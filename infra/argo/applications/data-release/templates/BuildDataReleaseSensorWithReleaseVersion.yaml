@@ -49,13 +49,7 @@ spec:
                         curl -H "Accept: application/vnd.github.everest-preview+json" \
                              -H "Authorization: token $GITHUB_TOKEN" \
                              --request POST \
-                             --data '{\
-                               "event_type": "distribute-release",\
-                               "client_payload": { \
-                                 "release_version": "{{`{{inputs.parameters.release_version}}`}}", \
-                                 "git_fingerprint": "{{`{{inputs.parameters.git_sha}}`}}" \
-                               } \
-                             }' \
+                             --data '{ "event_type": "distribute-release", "client_payload": { "release_version": "{{`{{inputs.parameters.release_version}}`}}", "git_fingerprint": "{{`{{inputs.parameters.git_sha}}`}}" } }' \
                              https://api.github.com/repos/everycure-org/matrix/dispatches
                     env:
                       - name: GITHUB_TOKEN
