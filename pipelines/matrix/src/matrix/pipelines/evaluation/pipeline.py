@@ -1,6 +1,7 @@
 from typing import List, Union
 
 from kedro.pipeline import Pipeline, pipeline
+
 from matrix import settings
 from matrix.pipelines.modelling import nodes as modelling_nodes
 from matrix.kedro4argo_node import argo_node
