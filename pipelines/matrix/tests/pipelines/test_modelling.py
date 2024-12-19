@@ -1,13 +1,17 @@
 import numpy as np
 import pytest
 import pandera
+import pandas as pd
+
+from sklearn.model_selection import KFold
+
 from pyspark.sql import SparkSession
 from pyspark.sql.types import StructType, StructField, StringType, ArrayType, IntegerType, FloatType
 from pyspark.sql import functions as F
 from pyspark.sql import DataFrame
 
 from matrix.pipelines.modelling.nodes import prefilter_nodes
-
+from matrix.pipelines.modelling.nodes import make_splits
 from matrix.pipelines.modelling.nodes import attach_embeddings
 
 
@@ -202,3 +206,96 @@ def test_attach_embeddings_schema_validation(spark: SparkSession, sample_pairs_d
 
     with pytest.raises(pandera.errors.SchemaError):
         attach_embeddings(sample_pairs_df, invalid_nodes_df)
+
+
+@pytest.fixture
+def sample_data():
+    """Create sample data for testing."""
+    return pd.DataFrame(
+        {
+            "source": ["A", "B", "C", "D", "E", "F"],
+            "source_embedding": [np.array([1, 2])] * 6,
+            "target": ["X", "Y", "Z", "W", "V", "U"],
+            "target_embedding": [np.array([3, 4])] * 6,
+            "y": [1, 0, 1, 0, 1, 0],
+        }
+    )
+
+
+@pytest.fixture
+def simple_splitter():
+    """Create a simple K-fold splitter."""
+    return KFold(n_splits=2, shuffle=True, random_state=42)
+
+
+def test_make_splits_basic_functionality(sample_data, simple_splitter):
+    """Test basic functionality of make_splits."""
+    result = make_splits(data=sample_data, splitter=simple_splitter)
+
+    # Check that all required columns are present
+    required_columns = ["source", "source_embedding", "target", "target_embedding", "iteration", "split"]
+    assert all(col in result.columns for col in required_columns)
+
+    # Check that we have the same number of rows as input
+    assert len(result) == len(sample_data) * 2  # 2 iterations
+
+    # Check that splits are properly labeled
+    assert set(result["split"].unique()) == {"TRAIN", "TEST"}
+
+    # Check iterations
+    assert set(result["iteration"].unique()) == {0, 1}
+
+
+def test_make_splits_data_integrity(sample_data, simple_splitter):
+    """Test that data values are preserved after splitting."""
+    result = make_splits(data=sample_data, splitter=simple_splitter)
+
+    # Check that original values are preserved
+    assert set(result["source"].unique()) == set(sample_data["source"].unique())
+    assert set(result["target"].unique()) == set(sample_data["target"].unique())
+
+
+def test_make_splits_schema_validation(sample_data, simple_splitter):
+    """Test schema validation with invalid data."""
+    # Create invalid data missing required columns
+    invalid_data = sample_data.drop(columns=["source_embedding"])
+
+    with pytest.raises(pandera.errors.SchemaError):
+        make_splits(data=invalid_data, splitter=simple_splitter)
+
+
+def test_make_splits_train_test_distribution(sample_data, simple_splitter):
+    """Test that each fold has both train and test data."""
+    result = make_splits(data=sample_data, splitter=simple_splitter)
+
+    for iteration in result["iteration"].unique():
+        iteration_data = result[result["iteration"] == iteration]
+
+        # Check that both train and test splits exist
+        assert "TRAIN" in iteration_data["split"].values
+        assert "TEST" in iteration_data["split"].values
+
+        # Check that splits are mutually exclusive
+        train_indices = set(iteration_data[iteration_data["split"] == "TRAIN"].index)
+        test_indices = set(iteration_data[iteration_data["split"] == "TEST"].index)
+        assert len(train_indices.intersection(test_indices)) == 0
+
+
+def test_make_splits_empty_data(simple_splitter):
+    """Test behavior with empty input data."""
+    empty_data = pd.DataFrame(columns=["source", "source_embedding", "target", "target_embedding", "y"])
+
+    with pytest.raises(ValueError):
+        make_splits(data=empty_data, splitter=simple_splitter)
+
+
+def test_make_splits_single_fold(sample_data):
+    """Test with a single fold splitter."""
+    single_fold_splitter = KFold(n_splits=1, shuffle=True, random_state=42)
+    result = make_splits(data=sample_data, splitter=single_fold_splitter)
+
+    # Check that we only have one iteration
+    assert len(result["iteration"].unique()) == 1
+
+    # Check that we have both train and test splits
+    assert set(result["split"].unique()) == {"TRAIN", "TEST"}
