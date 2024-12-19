@@ -5,7 +5,8 @@ from pyspark.sql import DataFrame
 import numpy as np
 import json
 from pandera.typing import Series
-from pandera.pyspark import DataFrameModel
+from pandera.pyspark import DataFrameModel as PysparkDataFrameModel
+from pandera import DataFrameModel as PandasDataFrameModel
 import pandera
 from pyspark.sql import functions as f
 import pyspark.sql.types as T
@@ -110,7 +111,7 @@ def filter_valid_pairs(
     return {"pairs": pairs_df, "metrics": retention_stats}
 
 
-class EmbeddingsWithPairsSchema(DataFrameModel):
+class EmbeddingsWithPairsSchema(PysparkDataFrameModel):
     y: T.IntegerType() = Field()  # type: ignore
     source_embedding: T.ArrayType(T.FloatType()) = Field(nullable=False)  # type: ignore
     target_embedding: T.ArrayType(T.FloatType()) = Field(nullable=False)  # type: ignore
@@ -143,7 +144,7 @@ def attach_embeddings(
     )
 
 
-class NodeSchema(DataFrameModel):
+class NodeSchema(PysparkDataFrameModel):
     id: T.StringType() = Field(nullable=False)  # type: ignore
     is_drug: T.BooleanType() = Field(nullable=False)  # type: ignore
     is_disease: T.BooleanType() = Field(nullable=False)  # type: ignore
@@ -194,7 +195,7 @@ def prefilter_nodes(
     return df
 
 
-class SplitsSchema(DataFrameModel):
+class SplitsSchema(PandasDataFrameModel):
     source: Series[str]
     source_embedding: Series[object]
     target: Series[str]
@@ -235,7 +236,7 @@ def make_splits(
     return x
 
 
-class ModelSplitsSchema(DataFrameModel):
+class ModelSplitsSchema(PandasDataFrameModel):
     source: Series[object]
     source_embedding: Series[object]
     target: Series[object]
