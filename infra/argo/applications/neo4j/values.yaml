@@ -9,23 +9,65 @@ neo4j: # the name of the helm dependency
     name: neo4j
     resources:
       requests:
-        cpu: "1"
+        cpu: "2"
         memory: "8Gi"
-      #limits:
-      #  cpu: "2"
-      #  memory: "12Gi"
+      limits:
+        cpu: "16"
+        memory: "16Gi"
   # configuration for neo4j services
   # FUTURE do not expose as IP
   services:
     neo4j:
+      enabled: true
+      annotations:
+        external-dns.alpha.kubernetes.io/hostname: "neo4j.dev.everycure.org"
+        external-dns.alpha.kubernetes.io/ttl: "300"
       spec:
         type: LoadBalancer
       ports:
+        # exposing via standard http port
         http:
-          enabled: false
+          enabled: true
+          port: 80
+          targetPort: 7474
+          name: http
+        # exposing via standard https port
         https:
-          enabled: false
-
+          enabled: true
+          port: 443
+          targetPort: 7473
+          name: https
+        bolt:
+          enabled: true
+          port: 7687
+          targetPort: 7687
+          name: bolt
+  # enables prometheus service monitor
+  serviceMonitor:
+    enabled: false
+  # configuration of ssl certificates for neo4j
+  ssl:
+    bolt:
+      privateKey:
+        secretName: neo4j-tls
+        subPath: tls.key
+      publicCertificate:
+        secretName: neo4j-tls
+        subPath: tls.crt
+    https:
+      privateKey:
+        secretName: neo4j-tls
+        subPath: tls.key
+      publicCertificate:
+        secretName: neo4j-tls
+        subPath: tls.crt
+    cluster:
+      privateKey:
+        secretName: neo4j-tls
+        subPath: tls.key
+      publicCertificate:
+        secretName: neo4j-tls
+        subPath: tls.crt
   # configuration of volumes for neo4j
   volumes:
     data:
@@ -40,19 +82,49 @@ neo4j: # the name of the helm dependency
         # https://neo4j.com/docs/operations-manual/current/kubernetes/persistent-volumes/#persistent-volumes-types
         requests:
           storage: 1500Gi
-
+    licenses:
+      mode: volume
+      disableSubPathExpr: true
+      volume:
+        secret:
+          secretName: neo4j-licenses
+          items:
+            - key: bloom.license
+              path: bloom.license
   # FUTURE add env variables here to enable plugins for neo4j
   # https://neo4j.com/docs/operations-manual/current/kubernetes/plugins/
   env:
-    NEO4J_PLUGINS: '["apoc", "graph-data-science", "apoc-extended"]'
+    NEO4J_PLUGINS: '["apoc", "graph-data-science", "apoc-extended", "bloom"]'
   config:
     # NOTE: This block supports all the configuration options from the config file
     # https://neo4j.com/docs/operations-manual/current/kubernetes/configuration/#_config
     # https://neo4j.com/docs/operations-manual/current/configuration/configuration-settings/
-    dbms.security.procedures.unrestricted: "gds.*, apoc.*"
+    dbms.security.procedures.unrestricted: "gds.*, apoc.*, bloom.*"
+    dbms.security.procedures.allowlist: "apoc.load*, bloom.*"
     dbms.security.procedures.whitelist: "gds.*, apoc.*"
     dbms.security.allow_csv_import_from_file_urls: "true"
     # server.directories.import: /var/lib/neo4j/import
+    server.default_advertised_address: "neo4j.dev.everycure.org"
+    server.bolt.advertised_address: "neo4j.dev.everycure.org:7687"
+
+    # Enable SSL/TLS
+    # https://neo4j.com/developer/kb/how-do-i-enable-remote-https-access-with-neo4j-30x/
+    # dbms.connector.https.address: 0.0.0.0:7473
+    # dbms.ssl.policy.bolt.enabled: "true"
+    # dbms.ssl.policy.https.enabled: "true"
+    
+    # Configure client certificate authentication (optional)
+    # dbms.ssl.policy.bolt.client_auth: "NONE"
+    # dbms.ssl.policy.https.client_auth: "NONE"
+    dbms.ssl.policy.client_auth: "NONE"
+    
+    # Base directory for SSL/TLS certificates
+    # dbms.ssl.policy.bolt.base_directory: "/ssl/bolt"
+    # dbms.ssl.policy.https.base_directory: "/ssl/https"
+
+    server.unmanaged_extension_classes: "com.neo4j.bloom.server=/bloom,semantics.extension=/rdf"
+    dbms.security.http_auth_allowlist: "/,/browser.*,/bloom.*"
+    dbms.bloom.license_file: "/licenses/bloom.license"
 
   apoc_config:
     apoc.import.file.enabled: "true"

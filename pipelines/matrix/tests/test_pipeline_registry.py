@@ -34,8 +34,8 @@ def test_default_pipeline_composition(pipelines: Dict[str, Pipeline]) -> None:
     ingestion_pipeline = pipelines["ingestion"]
     preprocessing_pipeline = pipelines["preprocessing"]
 
-    # assert default  does do release
-    assert len(set(default_pipeline.nodes).intersection(set(release_pipeline.nodes))) != 0
+    # assert default does not do release
+    assert len(set(default_pipeline.nodes).intersection(set(release_pipeline.nodes))) == 0
     # assert default does do ingestion
     assert len(set(default_pipeline.nodes).intersection(set(ingestion_pipeline.nodes))) != 0
     # assert preprocessing does not occur in default
