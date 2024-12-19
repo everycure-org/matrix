@@ -49,21 +49,6 @@ def check_ordered(
         raise ValueError(f"The '{score_col_name}' column is not monotonically descending.")
 
 
-def perform_matrix_checks(matrix: pd.DataFrame, known_pairs: pd.DataFrame, score_col_name: str) -> None:
-    """Perform various checks on the evaluation dataset.
-
-    Args:
-        matrix: DataFrame containing a sorted matrix pairs dataset with probability scores, ranks and quantile ranks.
-        known_pairs: DataFrame with known drug-disease pairs.
-        score_col_name: Name of the column containing the treat scores.
-
-    Raises:
-        ValueError: If any of the checks fail.
-    """
-    check_no_train(matrix, known_pairs)
-    check_ordered(matrix, score_col_name)
-
-
 @has_schema(
     schema={
         "source": "object",
@@ -74,8 +59,7 @@ def perform_matrix_checks(matrix: pd.DataFrame, known_pairs: pd.DataFrame, score
 )
 @inject_object()
 def generate_test_dataset(
-    matrix: pd.DataFrame,
-    generator: DrugDiseasePairGenerator,
+    matrix: pd.DataFrame, generator: DrugDiseasePairGenerator, known_pairs: pd.DataFrame, score_col_name: str
 ) -> pd.DataFrame:
     """Function to generate test dataset.
 
@@ -89,6 +73,13 @@ def generate_test_dataset(
     Returns:
         Pairs dataframe
     """
+
+    # Perform checks
+    # NOTE: We're currently repeat it for each fold, should
+    # we consider moving to matrix outputs?
+    check_no_train(matrix, known_pairs)
+    check_ordered(matrix, score_col_name)
+
     return generator.generate(matrix)
 
 

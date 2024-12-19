@@ -9,7 +9,15 @@ from . import nodes
 
 
 def _create_model_shard_pipeline(model: str, shard: int, fold: int) -> Pipeline:
-    """Create pipeline with nodes for a single model, single fold and single shard."""
+    """Create pipeline for single model, fold and shard.
+
+    Args:
+        model: model name
+        shard: shard
+        fold: fold to generate
+    Returns:
+        Pipeline with nodes for given model and fold
+    """
     return pipeline(
         [
             argo_node(
@@ -62,7 +70,15 @@ def _create_model_shard_pipeline(model: str, shard: int, fold: int) -> Pipeline:
 
 
 def _create_fold_pipeline(model: str, num_shards: int, fold: int) -> Pipeline:
-    """Create pipeline with nodes for a single model and single fold."""
+    """Create pipeline for single model and fold.
+
+    Args:
+        model: model name
+        num_shards: number of shards to generate
+        fold: fold to generate
+    Returns:
+        Pipeline with nodes for given model and fold
+    """
     return sum(
         [
             pipeline(
@@ -122,7 +138,7 @@ def create_model_pipeline(model: str, num_shards: int, folds_lst: List[str], n_s
         folds_lst: lists of folds (e.g. [0, 1, 2, 3, "full"] if n_splits=3)
         n_splits: number of splits
     Returns:
-        Pipelines with model nodes
+        Pipeline with model nodes
     """
     pipelines = []
 
@@ -184,7 +200,7 @@ def create_shared_pipeline(models_lst: List[str], folds_lst: List[str]) -> Pipel
         models_lst: list of models to generate
         folds_list: list of folds
     Returns:
-        Returns
+        Pipeline with shared nodes across models
     """
     return pipeline(
         [
