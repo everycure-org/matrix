@@ -1,5 +1,6 @@
 from kedro.pipeline import Pipeline, pipeline
 from matrix.kedro4argo_node import ArgoNode
+from matrix.pipelines.data_release import last_node_name
 from matrix.pipelines.data_release.nodes import filtered_edges_to_kgx, filtered_nodes_to_kgx
 from matrix.pipelines.embeddings.nodes import ingest_edges, ingest_nodes
 
@@ -12,7 +13,8 @@ from matrix.pipelines.embeddings.nodes import ingest_edges, ingest_nodes
 last_node = ArgoNode(
     func=lambda x, y, z: True,
     inputs=["data_release.prm.kg_edges", "data_release.prm.kgx_edges", "data_release.prm.kgx_nodes"],
-    name="sentinel_all_data_release_done",
+    outputs="data_release.dummy",
+    name=last_node_name,
 )
 
 
