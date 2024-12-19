@@ -1,14 +1,12 @@
 import json
 from typing import Any
 
-
 import pandas as pd
 
 from refit.v1.core.inject import inject_object
 from refit.v1.core.inline_has_schema import has_schema
 
 from matrix.datasets.pair_generator import DrugDiseasePairGenerator
-
 from matrix.pipelines.evaluation.evaluation import Evaluation
 
 
