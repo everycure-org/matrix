@@ -114,4 +114,5 @@ jobs:
           --base main \
           --body "Adds the release article and associated notes" \
           --draft \
-          --label Release
+          --label Release \
+          --label hide-from-release
