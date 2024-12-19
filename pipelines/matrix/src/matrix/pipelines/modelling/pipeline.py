@@ -171,6 +171,8 @@ def create_model_pipeline(model: str, num_shards: int, folds_lst: List[str], n_s
             )
         )
 
+    return sum(pipelines)
+
 
 def create_shared_pipeline(models_lst: List[str], folds_lst: List[str]) -> Pipeline:
     """Function to create pipeline of shared nodes.
@@ -252,11 +254,12 @@ def create_pipeline(**kwargs) -> Pipeline:
     pipelines.append(create_shared_pipeline(model_names_lst, folds_lst))
 
     # Generate pipeline for each model
-    pipelines = []
     for model in models_lst:
+        # Extract model name
         model_name = model["model_name"]
+
         # Generate pipeline for model
-        create_model_pipeline(model_name, model["num_shards"], folds_lst, n_splits)
+        pipelines.append(create_model_pipeline(model_name, model["num_shards"], folds_lst, n_splits))
 
         # Now aggregate the metrics for the model
         pipelines.append(
