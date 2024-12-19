@@ -13,7 +13,7 @@ env:
   service_account: 'sa-github-actions-rw@mtrx-hub-dev-3of.iam.gserviceaccount.com'
 
 jobs:
-  create_release_notes_draft:
+  submit_data_release_weekly:
     runs-on: ubuntu-latest
     name: Create Draft of the Release Notes
     permissions:
@@ -37,14 +37,16 @@ jobs:
           echo "latest_tag=${latest_tag}" >> "$GITHUB_ENV"
           echo "Latest tag is ${latest_tag}"
 
-      - name: Set up kedro project dependencies and semver
-        working-directory: pipelines/matrix
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+
+      - name: Install semver
         run: |
-          pip install -r requirements.txt
           pip install semver
 
       - name: Increment patch version
-        working-directory: pipelines/matrix
         run: |
           python -c "
           import os
@@ -57,6 +59,11 @@ jobs:
             env_file.write(f'release_version=v{new_version}\n')
           "
           echo "New version is '${{ env.new_version }}'"
+
+      - name: Set up kedro project dependencies and semver
+        working-directory: pipelines/matrix
+        run: |
+          pip install -r requirements.txt
 
       #     # remove the 'v' prefix
       #     clean_tag="${{ env.latest_tag }}#v"
