@@ -185,6 +185,8 @@ def test_make_batch_predictions(
         model=mock_model,
         features=["source_+", "target_+"],
         score_col_name="score",
+        not_treat_score_col_name="not_treat_score",
+        unknown_score_col_name="unknown_score",
         batch_by="target",
     )
 
@@ -211,6 +213,8 @@ def test_make_predictions_and_sort(
         model=mock_model,
         features=["source_+", "target_+"],
         score_col_name="score",
+        not_treat_score_col_name="not_treat_score",
+        unknown_score_col_name="unknown_score",
         batch_by="target",
     )
 
