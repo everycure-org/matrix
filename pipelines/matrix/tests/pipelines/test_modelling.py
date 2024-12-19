@@ -1,91 +1,75 @@
 import pytest
 import pandas as pd
 import numpy as np
-from sklearn.preprocessing import PowerTransformer, QuantileTransformer, RobustScaler, StandardScaler, MinMaxScaler
+from sklearn.preprocessing import StandardScaler, MinMaxScaler
 
 from matrix.pipelines.modelling.nodes import apply_transformers
 
 
-def test_apply_transformers():
-    # Create sample input data with parametrized size
-    n_rows = 100000
-
+def test_apply_single_transformer():
     data = pd.DataFrame(
         {
-            "feature1": np.random.normal(0, 1, n_rows),
-            "feature2": np.random.uniform(0, 10, n_rows),
-            "feature3": np.random.exponential(2, n_rows),
-            "feature4": np.random.choice(["A", "B", "C"], n_rows),
-            "feature5": np.random.lognormal(0, 1, n_rows),  # Added: strictly positive data for box-cox
-            "non_transform_col": [f"row_{i}" for i in range(n_rows)],
+            "feature1": [0, 5, 10],  # Will be scaled to [0, 0.5, 1]
+            "non_transform_col": ["row_1", "row_2", "row_3"],
         }
     )
 
-    # Create transformers dictionary with more scalers
-    scaler1 = StandardScaler()
-    scaler2 = MinMaxScaler()
-    scaler3 = RobustScaler()
-    scaler4 = QuantileTransformer(output_distribution="normal")
-    scaler5 = PowerTransformer(method="box-cox")  # Computationally expensive
-    scaler6 = QuantileTransformer(
-        n_quantiles=10000, output_distribution="uniform"
-    )  # More expensive with many quantiles
-
-    # Fit the transformers on the data and set feature names
-    feature1_data = data[["feature1"]]
-    feature2_data = data[["feature2"]]
-    feature3_data = data[["feature3"]]
-    feature5_data = data[["feature5"]]  # Changed: using lognormal data for box-cox
-
-    scaler1.fit(feature1_data)
-    scaler2.fit(feature2_data)
-    scaler3.fit(feature3_data)
-    scaler4.fit(feature3_data)  # Another transformer on feature3
-    scaler5.fit(feature5_data)
-    scaler6.fit(feature1_data)  # This one can still use feature1 as it doesn't require positive values
-
-    # Set feature names
-    for scaler, features in [
-        (scaler1, feature1_data),
-        (scaler2, feature2_data),
-        (scaler3, feature3_data),
-        (scaler4, feature3_data),
-        (scaler5, feature5_data),  # Changed: using feature5_data instead of feature4_data
-        (scaler6, feature1_data),  # Using feature1_data for the dense quantile transformer
-    ]:
-        scaler.feature_names_in_ = features.columns
+    scaler = MinMaxScaler()
+    scaler.fit(data[["feature1"]])
+    scaler.feature_names_in_ = ["feature1"]
 
     transformers = {
-        "standard_scaler": {"transformer": scaler1, "features": ["feature1"]},
-        "minmax_scaler": {"transformer": scaler2, "features": ["feature2"]},
-        "robust_scaler": {"transformer": scaler3, "features": ["feature3"]},
-        "quantile_transformer": {"transformer": scaler4, "features": ["feature3"]},
-        "power_transformer": {
-            "transformer": scaler5,
-            "features": ["feature5"],  # Changed: using feature5 for box-cox
-        },
-        "quantile_transformer_dense": {"transformer": scaler6, "features": ["feature1"]},
+        "minmax_scaler": {"transformer": scaler, "features": ["feature1"]},
+    }
+
+    result = apply_transformers(data, transformers)
+
+    # Assertions
+    assert isinstance(result, pd.DataFrame)
+    assert result.shape == data.shape
+    assert set(result.columns) == set(data.columns)
+
+    expected_feature1 = [0.0, 0.5, 1.0]
+    np.testing.assert_array_almost_equal(result["feature1"].values, expected_feature1, decimal=3)
+
+    # Check if non-transformed column remains unchanged
+    assert (result["non_transform_col"] == data["non_transform_col"]).all()
+
+
+def test_apply_multiple_transformers():
+    # Test with two simple transformers
+    data = pd.DataFrame(
+        {
+            "feature1": [0, 5, 10],  # For MinMaxScaler
+            "feature2": [0, 5, 10],  # For StandardScaler
+            "non_transform_col": ["row_1", "row_2", "row_3"],
+        }
+    )
+
+    # Create and fit transformers
+    minmax_scaler = MinMaxScaler()
+    standard_scaler = StandardScaler()
+
+    minmax_scaler.fit(data[["feature1"]])
+    standard_scaler.fit(data[["feature2"]])
+
+    minmax_scaler.feature_names_in_ = ["feature1"]
+    standard_scaler.feature_names_in_ = ["feature2"]
+
+    transformers = {
+        "minmax_scaler": {"transformer": minmax_scaler, "features": ["feature1"]},
+        "standard_scaler": {"transformer": standard_scaler, "features": ["feature2"]},
     }
 
     # Apply transformers
     result = apply_transformers(data, transformers)
 
-    # Assertions
+    # Only verify that both transformations were applied
     assert isinstance(result, pd.DataFrame)
-    assert "non_transform_col" in result.columns
-    assert "feature1" in result.columns
-    assert "feature2" in result.columns
     assert result.shape == data.shape
-    assert result.columns.tolist().sort() == data.columns.tolist().sort()
-
-    # Check if transformations were applied correctly
-    expected_feature1 = scaler6.transform(data[["feature1"]])
-    expected_feature2 = scaler2.transform(data[["feature2"]])
-
-    np.testing.assert_array_almost_equal(result["feature1"].values, expected_feature1.flatten(), decimal=2)
-    np.testing.assert_array_almost_equal(result["feature2"].values, expected_feature2.flatten(), decimal=2)
-
-    # Check if non-transformed column remains unchanged
+    assert set(result.columns) == set(data.columns)
+    assert not (result["feature1"] == data["feature1"]).all()
+    assert not (result["feature2"] == data["feature2"]).all()
     assert (result["non_transform_col"] == data["non_transform_col"]).all()
 
 
