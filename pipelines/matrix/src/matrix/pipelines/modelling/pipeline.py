@@ -118,17 +118,6 @@ def _create_fold_pipeline(model: str, num_shards: int, fold: int) -> Pipeline:
                         name=f"get_{model}_model_predictions_fold_{fold}",
                         argo_config=ARGO_GPU_NODE_MEDIUM,
                     ),
-                    argo_node(
-                        func=nodes.check_model_performance,
-                        inputs={
-                            "data": f"modelling.{model}.fold_{fold}.model_output.predictions",
-                            "metrics": f"params:modelling.{model}.model_options.metrics",
-                            "target_col_name": f"params:modelling.{model}.model_options.model_tuning_args.target_col_name",
-                        },
-                        outputs=f"modelling.{model}.fold_{fold}.reporting.metrics",
-                        name=f"check_{model}_model_performance_fold_{fold}",
-                        tags=[f"{model}"],
-                    ),
                 ],
                 tags=["argowf.fuse", f"argowf.fuse-group.{model}.fold-{fold}"],
             ),
@@ -278,7 +267,7 @@ def create_pipeline(**kwargs) -> Pipeline:
     pipelines = []
     for model in models_lst:
         # Generate pipeline for model
-        create_model_pipeline(model, models_lst["num_shards"], folds_lst, n_splits)
+        create_model_pipeline(model, model["num_shards"], folds_lst, n_splits)
 
         # Now aggregate the metrics for the model
         pipelines.append(
