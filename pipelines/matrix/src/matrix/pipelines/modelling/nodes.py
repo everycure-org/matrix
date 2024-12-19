@@ -10,7 +10,8 @@ from pandera import DataFrameModel as PandasDataFrameModel
 import pandera
 from pyspark.sql import functions as f
 import pyspark.sql.types as T
-from pandera.pyspark import Field
+from pandera.pyspark import Field as PysparkField
+from pandera import Field as PandasField
 
 
 from sklearn.model_selection import BaseCrossValidator
@@ -112,9 +113,9 @@ def filter_valid_pairs(
 
 
 class EmbeddingsWithPairsSchema(PysparkDataFrameModel):
-    y: T.IntegerType() = Field()  # type: ignore
-    source_embedding: T.ArrayType(T.FloatType()) = Field(nullable=False)  # type: ignore
-    target_embedding: T.ArrayType(T.FloatType()) = Field(nullable=False)  # type: ignore
+    y: T.IntegerType() = PysparkField()  # type: ignore
+    source_embedding: T.ArrayType(T.FloatType()) = PysparkField(nullable=False)  # type: ignore
+    target_embedding: T.ArrayType(T.FloatType()) = PysparkField(nullable=False)  # type: ignore
 
     class Config:
         strict = False
@@ -145,9 +146,9 @@ def attach_embeddings(
 
 
 class NodeSchema(PysparkDataFrameModel):
-    id: T.StringType() = Field(nullable=False)  # type: ignore
-    is_drug: T.BooleanType() = Field(nullable=False)  # type: ignore
-    is_disease: T.BooleanType() = Field(nullable=False)  # type: ignore
+    id: T.StringType() = PysparkField(nullable=False)  # type: ignore
+    is_drug: T.BooleanType() = PysparkField(nullable=False)  # type: ignore
+    is_disease: T.BooleanType() = PysparkField(nullable=False)  # type: ignore
 
     class Config:
         strict = False
@@ -237,12 +238,12 @@ def make_splits(
 
 
 class ModelSplitsSchema(PandasDataFrameModel):
-    source: Series[object]
-    source_embedding: Series[object]
-    target: Series[object]
-    target_embedding: Series[object]
-    iteration: Series[float]  # numeric type
-    split: Series[object]
+    source: Series[object] = PandasField(nullable=True)
+    source_embedding: Series[object] = PandasField(nullable=True)
+    target: Series[object] = PandasField(nullable=True)
+    target_embedding: Series[object] = PandasField(nullable=True)
+    iteration: Series[float] = PandasField(nullable=True)  # numeric type
+    split: Series[object] = PandasField(nullable=True)
 
     class Config:
         strict = False
