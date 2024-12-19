@@ -12,6 +12,7 @@ from matrix.pipelines.embeddings.nodes import ingest_edges, ingest_nodes
 last_node = ArgoNode(
     func=lambda x, y, z: True,
     inputs=["data_release.prm.kg_edges", "data_release.prm.kgx_edges", "data_release.prm.kgx_nodes"],
+    outputs=None,
     name="sentinel_all_data_release_done",
 )
 
