@@ -223,7 +223,7 @@ def make_folds(
     # Add "training data only" fold
     full_data = data.copy()
     full_data.loc[:, "split"] = "TRAIN"
-    return all_data_frames + full_data
+    return all_data_frames + tuple([full_data])
 
 
 @inject_object()

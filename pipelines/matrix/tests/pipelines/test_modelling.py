@@ -1,6 +1,6 @@
 import pandas as pd
 import pytest
-from matrix.pipelines.modelling.nodes import make_splits
+from matrix.pipelines.modelling.nodes import make_folds
 
 
 @pytest.fixture
@@ -14,7 +14,7 @@ def sample_data():
     )
 
 
-def test_make_splits(sample_data, mocker):
+def test_make_folds(sample_data, mocker):
     # Mock the settings
     mock_settings = {"DYNAMIC_PIPELINES_MAPPING": {"cross_validation": {"n_splits": 2}}}
     mocker.patch("matrix.settings", mock_settings)
@@ -35,7 +35,7 @@ def test_make_splits(sample_data, mocker):
     splitter = MockSplitter()
 
     # When we make splits
-    result = make_splits(sample_data, splitter)
+    result = make_folds(sample_data, splitter)
 
     # Then we get 3 dataframes (2 splits + 1 full dataset)
     print("\n=== Test Data Distribution Analysis ===")
