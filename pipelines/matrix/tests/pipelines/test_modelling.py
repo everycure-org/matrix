@@ -5,6 +5,10 @@ import pandas as pd
 
 from sklearn.model_selection import KFold
 
+from sklearn.model_selection import GridSearchCV
+from sklearn.linear_model import LogisticRegression
+import matplotlib.pyplot as plt
+
 from unittest.mock import Mock
 
 from pyspark.sql import SparkSession
@@ -18,6 +22,7 @@ from matrix.datasets.pair_generator import SingleLabelPairGenerator
 from matrix.pipelines.modelling.nodes import prefilter_nodes
 from matrix.pipelines.modelling.nodes import make_splits
 from matrix.pipelines.modelling.nodes import attach_embeddings
+from matrix.pipelines.modelling.nodes import tune_parameters
 
 
 @pytest.fixture(scope="module")
@@ -372,3 +377,107 @@ def test_create_model_input_nodes_generator_empty(mock_knowledge_graph, sample_s
     # Check that only original splits are present
     assert len(result) == len(sample_splits)
     assert all(result["split"] == sample_splits["split"])
+
+
+@pytest.fixture
+def tune_data():
+    """Create sample DataFrame for testing."""
+    np.random.seed(42)
+    n_samples = 100
+
+    data = pd.DataFrame(
+        {
+            "feature1": np.random.randn(n_samples),
+            "feature2": np.random.randn(n_samples),
+            "feature_extra": np.random.randn(n_samples),
+            "target": np.random.randint(0, 2, n_samples),
+            "split": ["TRAIN"] * 80 + ["TEST"] * 20,
+        }
+    )
+    return data
+
+
+@pytest.fixture
+def grid_search_tuner():
+    """Create a GridSearchCV tuner."""
+    param_grid = {"C": [0.1, 1.0], "max_iter": [100, 200]}
+    return GridSearchCV(LogisticRegression(), param_grid, cv=3, scoring="accuracy")
+
+
+def test_tune_parameters_basic(tune_data: pd.DataFrame, grid_search_tuner: GridSearchCV):
+    """Test basic parameter tuning functionality."""
+    result, plot = tune_parameters(
+        data=tune_data,
+        tuner=grid_search_tuner,
+        features=["feature1", "feature2"],
+        target_col_name="target",
+        enable_regex=False,
+    )
+
+    # Check return value structure
+    assert isinstance(result, dict)
+    assert "object" in result
+    assert result["object"] == "sklearn.linear_model.LogisticRegression"
+    assert "C" in result
+    assert "max_iter" in result
+
+    # Check plot
+    assert isinstance(plot, plt.Figure)
+
+
+def test_tune_parameters_regex_features(tune_data: pd.DataFrame, grid_search_tuner: GridSearchCV) -> None:
+    """Test regex feature selection."""
+    result, _ = tune_parameters(
+        data=tune_data, tuner=grid_search_tuner, features=["feature.*"], target_col_name="target", enable_regex=True
+    )
+
+    # Should have used all three features matching 'feature.*'
+    mask = tune_data["split"] == "TRAIN"
+    expected_feature_count = 3
+    assert len(tune_data.loc[mask, "feature.*"].columns) == expected_feature_count
+
+
+def test_tune_parameters_train_test_split(tune_data: pd.DataFrame, grid_search_tuner: GridSearchCV) -> None:
+    """Test proper handling of train/test splits."""
+    mock_tuner = Mock()
+    mock_tuner._estimator = LogisticRegression()
+    mock_tuner.best_params_ = {"C": 1.0, "max_iter": 100}
+
+    result, _ = tune_parameters(
+        data=tune_data, tuner=mock_tuner, features=["feature1", "feature2"], target_col_name="target"
+    )
+
+    # Verify only training data was used
+    train_mask = tune_data["split"] == "TRAIN"
+    expected_train_samples = len(tune_data[train_mask])
+
+    # Check that fit was called with correct number of samples
+    args, _ = mock_tuner.fit.call_args
+    assert len(args[0]) == expected_train_samples
+
+
+def test_tune_parameters_invalid_features(tune_data: pd.DataFrame, grid_search_tuner: GridSearchCV) -> None:
+    """Test handling of invalid feature names."""
+    with pytest.raises(KeyError):
+        tune_parameters(
+            data=tune_data, tuner=grid_search_tuner, features=["nonexistent_feature"], target_col_name="target"
+        )
+
+
+def test_tune_parameters_convergence_plot(tune_data: pd.DataFrame) -> None:
+    """Test convergence plot generation with custom tuner."""
+
+    class CustomTuner:
+        def __init__(self):
+            self._estimator = LogisticRegression()
+            self.best_params_ = {"C": 1.0}
+            self.convergence_plot = plt.figure()
+
+        def fit(self, X, y):
+            return self
+
+    custom_tuner = CustomTuner()
+    _, plot = tune_parameters(data=tune_data, tuner=custom_tuner, features=["feature1"], target_col_name="target")
+
+    assert isinstance(plot, plt.Figure)
+    assert plot == custom_tuner.convergence_plot
