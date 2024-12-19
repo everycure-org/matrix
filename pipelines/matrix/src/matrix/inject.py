@@ -238,13 +238,11 @@ def make_list_regexable(
     raise_exc: bool = False,
 ):
     """Allow processing of regex in input list.
-
     Args:
         source_df: Name of the dataframe containing actual list columns names.
         make_regexable: Name of list with regexes.
         raise_exc: Whether to raise an exception or just log the warning.
            Defaults to False.
-
     Returns:
         A wrapper function
     """
