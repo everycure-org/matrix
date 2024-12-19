@@ -1,3 +1,5 @@
+from typing import List, Union
+
 from kedro.pipeline import Pipeline, pipeline
 from matrix import settings
 from matrix.pipelines.modelling import nodes as modelling_nodes
@@ -6,7 +8,7 @@ from matrix.kedro4argo_node import argo_node
 from . import nodes
 
 
-def _create_evaluation_fold_pipeline(model: str, evaluation: str, fold: str) -> Pipeline:
+def _create_evaluation_fold_pipeline(model: str, evaluation: str, fold: Union[str, int]) -> Pipeline:
     """Create pipeline for single model, evaluation and fold.
 
     Args:
@@ -43,7 +45,9 @@ def _create_evaluation_fold_pipeline(model: str, evaluation: str, fold: str) -> 
     )
 
 
-def create_model_pipeline(model: str, evaluation_names: str, folds_lst: str, n_splits: int) -> Pipeline:
+def create_model_pipeline(
+    model: str, evaluation_names: str, folds_lst: List[Union[str, int]], n_splits: int
+) -> Pipeline:
     """Create pipeline to evaluate a single model.
 
     Args:
@@ -106,7 +110,7 @@ def create_model_pipeline(model: str, evaluation_names: str, folds_lst: str, n_s
 def create_pipeline(**kwargs) -> Pipeline:
     """Create evaluation pipeline.
 
-    Pipeline is created dynamically, based on the following dimentions:
+    Pipeline is created dynamically, based on the following dimensions:
         - Models, i.e., type of model, e.g. random forst
         - Folds, i.e., number of folds to train/evaluation
         - Evaluations, i.e., type evaluation suite to run
@@ -127,7 +131,7 @@ def create_pipeline(**kwargs) -> Pipeline:
     # Generate pipelines for each model
     pipelines = []
     for model in model_names:
-        pipelines.appened(create_model_pipeline(model, evaluation_names, folds_lst, n_splits))
+        pipelines.append(create_model_pipeline(model, evaluation_names, folds_lst, n_splits))
 
     # Consolidate metrics across models and folds
     pipelines.append(

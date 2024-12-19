@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Union
 
 from kedro.pipeline import Pipeline, pipeline
 
@@ -8,7 +8,7 @@ from matrix.kedro4argo_node import ARGO_GPU_NODE_MEDIUM, argo_node
 from . import nodes
 
 
-def _create_model_shard_pipeline(model: str, shard: int, fold: int) -> Pipeline:
+def _create_model_shard_pipeline(model: str, shard: int, fold: Union[str, int]) -> Pipeline:
     """Create pipeline for single model, fold and shard.
 
     Args:
@@ -69,7 +69,7 @@ def _create_model_shard_pipeline(model: str, shard: int, fold: int) -> Pipeline:
     )
 
 
-def _create_fold_pipeline(model: str, num_shards: int, fold: int) -> Pipeline:
+def _create_fold_pipeline(model: str, num_shards: int, fold: Union[str, int]) -> Pipeline:
     """Create pipeline for single model and fold.
 
     Args:
@@ -129,7 +129,7 @@ def _create_fold_pipeline(model: str, num_shards: int, fold: int) -> Pipeline:
     )
 
 
-def create_model_pipeline(model: str, num_shards: int, folds_lst: List[str], n_splits: int) -> Pipeline:
+def create_model_pipeline(model: str, num_shards: int, folds_lst: List[Union[str, int]], n_splits: int) -> Pipeline:
     """Create pipeline for a single model.
 
     Args:
@@ -190,7 +190,7 @@ def create_model_pipeline(model: str, num_shards: int, folds_lst: List[str], n_s
     return sum(pipelines)
 
 
-def create_shared_pipeline(models_lst: List[str], folds_lst: List[str]) -> Pipeline:
+def create_shared_pipeline(models_lst: List[str], folds_lst: List[Union[str, int]]) -> Pipeline:
     """Function to create pipeline of shared nodes.
 
     NOTE: The model and folds lists are added to tag the
