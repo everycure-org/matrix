@@ -1,3 +1,8 @@
 "evaluation.{model}.{evaluation}.model_output.result":
   type: matrix.datasets.mlflow.MlflowMetricsDataset
   key_prefix: "{model}.{evaluation}"
+
+"evaluation.{model_1}.{model_2}.{evaluation}.model_output.result":
+  filepath: ${globals:paths.evaluation}/model_output/{model_1}/{model_2}/{evaluation}/result.yml
+  type: matrix.datasets.mlflow.MlflowMetricsDataset
+  key_prefix: "{model_1}.{model_2}.{evaluation}"

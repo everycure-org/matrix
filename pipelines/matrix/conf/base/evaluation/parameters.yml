@@ -156,3 +156,6 @@ evaluation.full_matrix_trials:
       quantile_func_lst: 
         - object: matrix.pipelines.evaluation.named_metric_functions.AUROC
 
+evaluation.stability_metrics:
+  evaluation_options:
+    stability: 1000

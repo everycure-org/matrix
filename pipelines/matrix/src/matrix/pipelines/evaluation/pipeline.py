@@ -31,6 +31,24 @@ def _create_evaluation_pipeline(model: str, evaluation: str) -> Pipeline:
     )
 
 
+def _create_stability_pipeline(model_1: str, model_2: str, evaluation: str) -> Pipeline:
+    return pipeline(
+        [
+            argo_node(
+                func=nodes.evaluate_stability_predictions,
+                inputs=[
+                    f"matrix_generation.{model_1}.model_output.sorted_matrix_predictions@pandas",
+                    f"matrix_generation.{model_2}.model_output.sorted_matrix_predictions@pandas",
+                    f"params:evaluation.{evaluation}.evaluation_options.stability",
+                ],
+                outputs=f"evaluation.{model_1}.{model_2}.{evaluation}.model_output.result",
+                name=f"calculate_{model_1}_{model_2}_{evaluation}",
+            ),
+        ],
+        tags=["stability-metrics"],
+    )
+
+
 def create_pipeline(**kwargs) -> Pipeline:
     """Create evaluation pipeline."""
     pipelines = []
@@ -61,5 +79,13 @@ def create_pipeline(**kwargs) -> Pipeline:
                     tags=model,
                 )
             )
+        for stability in settings.DYNAMIC_PIPELINES_MAPPING.get("stability"):
+            for model_to_compare in model_names:
+                pipelines.append(
+                    pipeline(
+                        _create_stability_pipeline(model, model_to_compare, stability["stability_name"]),
+                        tags=model,
+                    )
+                )
 
     return sum(pipelines)
