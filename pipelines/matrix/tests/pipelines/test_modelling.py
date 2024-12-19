@@ -5,11 +5,16 @@ import pandas as pd
 
 from sklearn.model_selection import KFold
 
+from unittest.mock import Mock
+
 from pyspark.sql import SparkSession
 from pyspark.sql.types import StructType, StructField, StringType, ArrayType, IntegerType, FloatType
 from pyspark.sql import functions as F
 from pyspark.sql import DataFrame
 
+from matrix.pipelines.modelling.nodes import create_model_input_nodes
+from matrix.datasets.graph import KnowledgeGraph
+from matrix.datasets.pair_generator import SingleLabelPairGenerator
 from matrix.pipelines.modelling.nodes import prefilter_nodes
 from matrix.pipelines.modelling.nodes import make_splits
 from matrix.pipelines.modelling.nodes import attach_embeddings
@@ -287,3 +292,96 @@ def test_make_splits_empty_data(simple_splitter):
 
     with pytest.raises(ValueError):
         make_splits(data=empty_data, splitter=simple_splitter)
+
+
+@pytest.fixture
+def mock_knowledge_graph():
+    return Mock(spec=KnowledgeGraph)
+
+
+@pytest.fixture
+def mock_generator():
+    generator = Mock(spec=SingleLabelPairGenerator)
+    # Configure mock to return valid data matching schema
+    generator.generate.return_value = pd.DataFrame(
+        {
+            "source": ["drug1", "drug2"],
+            "source_embedding": [np.array([0.1, 0.2]), np.array([0.3, 0.4])],
+            "target": ["disease1", "disease2"],
+            "target_embedding": [np.array([0.5, 0.6]), np.array([0.7, 0.8])],
+            "iteration": [0.0, 0.0],
+        }
+    )
+    return generator
+
+
+@pytest.fixture
+def sample_splits():
+    return pd.DataFrame(
+        {
+            "source": ["drug3", "drug4"],
+            "source_embedding": [np.array([0.9, 1.0]), np.array([1.1, 1.2])],
+            "target": ["disease3", "disease4"],
+            "target_embedding": [np.array([1.3, 1.4]), np.array([1.5, 1.6])],
+            "iteration": [1.0, 1.0],
+            "split": ["TEST", "TRAIN"],
+        }
+    )
+
+
+def test_create_model_input_nodes_basic(mock_knowledge_graph, mock_generator, sample_splits):
+    result = create_model_input_nodes(graph=mock_knowledge_graph, splits=sample_splits, generator=mock_generator)
+
+    # Check that generator was called with correct arguments
+    mock_generator.generate.assert_called_once_with(mock_knowledge_graph, sample_splits)
+
+    # Check that result has correct number of rows (original + generated)
+    assert len(result) == len(sample_splits) + len(mock_generator.generate.return_value)
+
+    # Check that generated rows have 'TRAIN' split
+    generated_rows = result.iloc[len(sample_splits) :]
+    assert all(generated_rows["split"] == "TRAIN")
+
+    # Check that original splits are preserved
+    original_rows = result.iloc[: len(sample_splits)]
+    assert all(original_rows["split"] == sample_splits["split"])
+
+
+def test_create_model_input_nodes_schema_validation(mock_knowledge_graph, mock_generator):
+    # Test schema validation with invalid data
+    invalid_splits = pd.DataFrame(
+        {
+            "source": ["drug1"],  # Missing required columns
+            "target": ["disease1"],
+        }
+    )
+
+    with pytest.raises(pandera.errors.SchemaError):
+        create_model_input_nodes(graph=mock_knowledge_graph, splits=invalid_splits, generator=mock_generator)
+
+
+def test_create_model_input_nodes_empty_splits(mock_knowledge_graph, mock_generator):
+    # Test with empty splits DataFrame
+    empty_splits = pd.DataFrame(
+        {"source": [], "source_embedding": [], "target": [], "target_embedding": [], "iteration": [], "split": []}
+    )
+
+    result = create_model_input_nodes(graph=mock_knowledge_graph, splits=empty_splits, generator=mock_generator)
+
+    # Check that only generated data is present
+    assert len(result) == len(mock_generator.generate.return_value)
+    assert all(result["split"] == "TRAIN")
+
+
+def test_create_model_input_nodes_generator_empty(mock_knowledge_graph, sample_splits):
+    # Test with generator that returns empty DataFrame
+    empty_generator = Mock(spec=SingleLabelPairGenerator)
+    empty_generator.generate.return_value = pd.DataFrame(
+        {"source": [], "source_embedding": [], "target": [], "target_embedding": [], "iteration": []}
+    )
+
+    result = create_model_input_nodes(graph=mock_knowledge_graph, splits=sample_splits, generator=empty_generator)
+
+    # Check that only original splits are present
+    assert len(result) == len(sample_splits)
+    assert all(result["split"] == sample_splits["split"])
