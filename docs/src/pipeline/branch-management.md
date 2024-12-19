@@ -17,6 +17,8 @@ This is important because:
 
 In order to achieve a stable main, we need to add an additional layer which will protect a main 
 
+![img](https://wac-cdn.atlassian.com/dam/jcr:34c86360-8dea-4be4-92f7-6597d4d5bfae/02%20Feature%20branches.svg?cdnVersion=2480)
+
 ## Introducing Develop layer
 _Note this is one of many branch management approaches we can take but I think its the most appropriate. See here for example [overivew](https://medium.com/@sreekanth.thummala/choosing-the-right-git-branching-strategy-a-comparative-analysis-f5e635443423)_
 _Note v2: I called the layer 'develop' as that's what I am used to but we can decide on a different name -eg release?_
