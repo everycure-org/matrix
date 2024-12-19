@@ -1,11 +1,11 @@
-name: Create Pull Request to Verify AI Summary of Release Notes
+name: Automate kedro sumbit release run periodically
 
 on:
   push:
     branches:
       - 'debug/release*'
-  repository_dispatch:
-    types: distribute-release
+#   schedule:
+#     - cron:
 
 env:
   project_id: 'mtrx-hub-dev-3of'
@@ -22,17 +22,6 @@ jobs:
       pull-requests: 'write'
 
     steps:
-      - name: store variables
-        run: |
-          if [[ "${{ github.event_name == 'repository_dispatch' }}" == "true" ]]; then
-            release=$(echo '${{ toJson(github.event) }}' | jq -r '.client_payload.release_version')
-            gitref=$(echo '${{ toJson(github.event) }}' | jq -r '.client_payload.git_fingerprint')
-          else
-            release="debug-dont-release"
-            gitref=${{github.ref_name}}
-          fi
-          echo "release=${release}" >> "$GITHUB_ENV"
-          echo "gitref=${gitref}" >> "$GITHUB_ENV"
 
       - name: Checkout
         uses: actions/checkout@main
@@ -40,6 +29,28 @@ jobs:
           # note that repo dispatch will checkout main
           fetch-tags: true
           fetch-depth: 0  # full depth needed so we can pass the AI all logs since the last release.
+      
+      - name: Fetch latest tag
+        id: fetch_latest_tag
+        run: |
+          latest_tag=$(git tag --list --sort="v:refname" | tail -n 1)
+          echo "latest_tag=${latest_tag}" >> "$GITHUB_ENV"
+          echo "Latest tag is ${latest_tag}"
+
+      - name: Increment patch version
+        id: increment_patch
+        run: |
+          # remove the 'v' prefix
+          clean_tag="${{ env.latest_tag }}#v"
+          # remove the '-*' suffix
+          base_tag="${clean_tag%%-*}"
+          IFS='.' read -r major minor patch <<< "$base_tag"
+          # default to 0 if the patch version is not present
+          patch=${patch:-0}
+          patch=$((patch + 1))
+          release_version="v${major}.${minor}.${patch}"
+          echo "release_version=${release_version}" >> "$GITHUB_ENV"
+          echo "New release version is ${release_version}"
 
       - name: Configure Git
         run: |
@@ -54,7 +65,7 @@ jobs:
 
       - name: Branch off
         # To comply with the protected-branch policy
-        run: git switch -c release/${{env.release}} ${{env.gitref}}
+        run: git switch -c release/${{env.release}}
 
       - name: Setup Matrix CLI
         working-directory: apps/matrix-cli

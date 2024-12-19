@@ -48,6 +48,7 @@ def cli():
 @click.option("--dry-run", "-d", is_flag=True, default=False, help="Does everything except submit the workflow")
 @click.option("--from-nodes", type=str, default="", help="Specify nodes to run from", callback=split_string)
 @click.option("--is-test", is_flag=True, default=False, help="Submit to test folder")
+
 # fmt: on
 def submit(username: str, namespace: str, run_name: str, release_version: str, pipeline: str, quiet: bool, dry_run: bool, from_nodes: List[str], is_test: bool):
     """Submit the end-to-end workflow. """
