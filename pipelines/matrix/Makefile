@@ -47,7 +47,7 @@ format:
 	uv run ruff check . --fix
 
 # executes E2E integration test fully in docker. 
-docker_test: docker_build
+docker_test: certificate docker_build
 	IMG="$(dev_docker_image)" docker compose -f compose/docker-compose.yml \
 		-f compose/docker-compose.ci.yml \
 		up \
