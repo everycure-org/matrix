@@ -304,15 +304,17 @@ class ReleaseInfoHooks:
     @staticmethod
     def extract_release_info() -> dict[str, str]:
         info = {
-            "release_version": ReleaseInfoHooks._globals["versions"]["release"],
-            "robokop_version": ReleaseInfoHooks._globals["data_sources"]["robokop"]["version"],
-            "rtx-kg2_version": ReleaseInfoHooks._globals["data_sources"]["rtx-kg2"]["version"],
-            "ec-medical-team": ReleaseInfoHooks._globals["data_sources"]["ec-medical-team"]["version"],
-            "topological_estimator": ReleaseInfoHooks._params["embeddings.topological_estimator"]["object"],
-            "topological_encoder": ReleaseInfoHooks._params["embeddings.node"]["encoder"]["encoder"]["model"],
-            "bigquery_link": ReleaseInfoHooks.build_bigquery_link(),
-            "mlflow_link": ReleaseInfoHooks.build_mlflow_link(),
-            "code_link": ReleaseInfoHooks.build_code_link(),
+            "Release Name": ReleaseInfoHooks._globals["versions"]["release"],
+            "Robokop Version": ReleaseInfoHooks._globals["data_sources"]["robokop"]["version"],
+            "RTX-KG2 Version": ReleaseInfoHooks._globals["data_sources"]["rtx-kg2"]["version"],
+            "EC Medical Team Version": ReleaseInfoHooks._globals["data_sources"]["ec-medical-team"]["version"],
+            "Topological Estimator": ReleaseInfoHooks._params["embeddings.topological_estimator"]["object"],
+            "Embeddings Encoder": ReleaseInfoHooks._params["embeddings.node"]["encoder"]["encoder"]["model"],
+            "BigQuery Link": ReleaseInfoHooks.build_bigquery_link(),
+            "MLFlow Link": ReleaseInfoHooks.build_mlflow_link(),
+            "Code Link": ReleaseInfoHooks.build_code_link(),
+            "Neo4j Link": "coming soon!",
+            "NodeNorm Endpoint": "[Link](https://nodenorm.transltr.io/1.5/get_normalized_nodes)",
         }
         return info
 
