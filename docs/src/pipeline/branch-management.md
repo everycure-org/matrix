@@ -19,6 +19,7 @@ In order to achieve a stable main, we need to add an additional layer which will
 
 ## Introducing Develop layer
 _Note this is one of many branch management approaches we can take but I think its the most appropriate. See here for example [overivew](https://medium.com/@sreekanth.thummala/choosing-the-right-git-branching-strategy-a-comparative-analysis-f5e635443423)_
+_Note v2: I called the layer 'develop' as that's what I am used to but we can decide on a different name -eg release?_
 
 ![alt text](assets/comparison.png)
 
@@ -54,7 +55,7 @@ Develop Layer acts as an intermediate staging area between feature and main. You
    - `develop` to `main` moves happen only after:
      - Successful E2E testing
      - Code review approval
-     - No known issues
+     - No known issues and there is clear benefit in merging it into main.
 
 ### Triage in the develop layer
 
@@ -82,6 +83,7 @@ Implementation of MOA into main has taken a long time. One way to streamline the
 * Our main will get updated less frequently (time-to-production increase)
 * Additional overhead for PR reviews 
 * Number of PRs will increase 
+* Maintaining develop-> main PRs 
 
 ## FAQ 
 
@@ -90,3 +92,9 @@ _My feature is related to a sprint goal. Will it get completed only once it's me
 
 _Won't the develop branch get too large?_
 * While the develop branch may accumulate multiple features, all code changes must still meet the same rigorous requirements and code review standards as they do now. Regular merges to main will help keep the branch manageable.
+
+_There is a bug/methodological error in main, what do I do?_
+* Hotfixes or documentation fixes can go directly into main as they dont directly affect our app. If fix is not urgent though, it should go to develop
+
+_How to decide if I should create a separate develop branch?_
+* In general, you shouldn't do it unless it's an absolute necessity which has become a bottleneck for you or others. You should only create a new develop branch if your changes are a breaking change that's very incompatible with current develop branch and might affect other features. 
