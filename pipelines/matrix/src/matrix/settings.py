@@ -87,6 +87,9 @@ DYNAMIC_PIPELINES_MAPPING = {
         {"evaluation_name": "disease_specific_trials"},
         {"evaluation_name": "full_matrix_trials"},
     ],
+    "stability": [
+        {"stability_name": "stability_metrics"},
+    ],
 }
 
 # Class that manages Kedro's library components.

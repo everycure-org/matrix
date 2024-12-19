@@ -122,3 +122,18 @@ def consolidate_evaluation_reports(*reports) -> dict:
         for idx_2, evaluation in enumerate(settings.DYNAMIC_PIPELINES_MAPPING.get("evaluation")):
             master_report[model["model_name"]][evaluation["evaluation_name"]] = reports_lst[idx_1 + idx_2]
     return json.loads(json.dumps(master_report, default=float))
+
+
+def evaluate_stability_predictions(matrix_1: pd.DataFrame, matrix_2: pd.DataFrame, evaluation: Evaluation) -> Any:
+    """Function to apply stabilityevaluation.
+
+    Args:
+        matrix_1: full matrix coming from one model
+        matrix_2: full matrix coming from another model to compare against
+        evaluation: stabilitymetric to evaluate.
+
+    Returns:
+        Evaluation report
+    """
+    # evaluation.evaluate(data)
+    return {"commonality_at_1000": 0.5, "commonality_at_10000": 0.5, "commonality_at_100000": 0.5}
