@@ -50,15 +50,17 @@ jobs:
           latest_tag = os.getenv('latest_tag', 'v0.0.0').lstrip('v')
           version = semver.Version.parse(latest_tag)
           new_version = version.bump_patch()
+          print(new_version)
           with open(os.getenv('GITHUB_ENV'), 'a') as env_file:
             env_file.write(f'release_version=v{new_version}\n')
           "
+          cat "$GITHUB_ENV"
           echo "New version is '${{ env.release_version }}'"
-
-      - name: Set up kedro project dependencies
-        working-directory: pipelines/matrix
-        run: |
-          pip install -r requirements.txt
+          
+      # - name: Set up kedro project dependencies
+      #   working-directory: pipelines/matrix
+      #   run: |
+      #     pip install -r requirements.txt
 
       #     # remove the 'v' prefix
       #     clean_tag="${{ env.latest_tag }}#v"
