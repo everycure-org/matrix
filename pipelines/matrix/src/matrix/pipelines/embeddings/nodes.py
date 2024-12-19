@@ -6,7 +6,6 @@ import pandas as pd
 import numpy as np
 import seaborn as sns
 
-from neo4j import GraphDatabase, TRUST_ALL_CERTIFICATES
 from graphdatascience import GraphDataScience
 
 import pyspark.sql.types as T
@@ -28,26 +27,6 @@ from .encoders import AttributeEncoder
 from matrix.pipelines.modelling.nodes import no_nulls
 
 logger = logging.getLogger(__name__)
-
-
-class GraphDS(GraphDataScience):
-    """Adaptor class to allow injecting the GDS object.
-
-    This is due to a drawback where refit cannot inject a tuple into
-    the constructor of an object.
-    """
-
-    def __init__(
-        self,
-        *,
-        endpoint: str,
-        auth: F.Tuple[str] | None = None,
-        database: str | None = None,
-    ):
-        """Create `GraphDS` instance."""
-        driver = GraphDatabase.driver(endpoint, auth=tuple(auth), encrypted=True, trust=TRUST_ALL_CERTIFICATES)
-        super().__init__(driver)
-        self.set_database(database)
 
 
 @has_schema(
