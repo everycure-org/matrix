@@ -9,7 +9,14 @@ output_path_robokop_integration: data/qc/int/robokop/robokop_integration_metrics
 quality_control:
   ingestion:
     # Count values in category column
-    - object: matrix.pipelines.quality_control.quality_control.CountColumnValuesQualityControl
+    category_value_count:
+      object: matrix.pipelines.quality_control.quality_control.CountColumnValuesQualityControl
       column: category
 
+  integration:
     # TODO: Register other suites here
+    normalization_count_fail:
+      object: matrix.pipelines.quality_control.quality_control.CountColumnValuesQualityControl
+      column: id
+      expr: split(id, ':')[0]
+      filter_expr: normalization_success = False
