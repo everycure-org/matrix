@@ -47,6 +47,12 @@ jobs:
           git config --global user.name "All of us at Every Cure"
           git config --global push.autosetupremote true
 
+      - name: Fetch latest tag
+        run: |
+          latest_tag=$(git tag --list --sort="v:refname" | tail -n 1)
+          echo "latest_tag=${latest_tag}" >> "$GITHUB_ENV"
+          echo "Latest tag is ${latest_tag}"
+
       - name: Tag the commit from which the data release was triggered
         run: |
           # Create an annotated tag, so that we can push it easily with the files using `follow-tags`.
@@ -83,11 +89,42 @@ jobs:
           git commit -m "added release info json" && \
           git push
 
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+
+      - name: Install semver
+        run: 
+          pip install semver
+
+      - name: Detect bump type
+        run: |
+          python -c "
+          import os
+          import semver
+
+          latest_tag = os.getenv('latest_tag', 'v0.0.0').lstrip('v')
+          version = semver.Version.parse(latest_tag)
+          minor_bump = version.bump_minor()
+          patch_bump = version.bump_patch()
+          if os.getenv('release') == minor_bump:
+            bump_type = 'minor'
+          elif os.getenv('release') == patch_bump:
+            bump_type = 'patch'
+          else:
+            bump_type = 'major'
+          with open(os.getenv('GITHUB_ENV'), 'a') as env_file:
+            env_file.write(f'bump_type={bump_version}\n')
+          "
+
+
       - name: Create Release Notes
         working-directory: apps/matrix-cli
         env:
           GH_TOKEN: ${{ github.token }}
           POSTS_DIR: docs/src/releases/posts
+        if: env.bump_type != 'patch'
         run: |
           gcloud config list account --format "value(core.account)"
           
@@ -112,7 +149,7 @@ jobs:
           gh pr create \
           --title "Release/${{env.release}}" \
           --base main \
-          --body "Adds the release article and associated notes" \
+          --body "Adds release information. For minor and major bump,the release article and associated notes are generated" \
           --draft \
           --label Release \
           --label hide-from-release
