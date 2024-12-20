@@ -75,7 +75,6 @@ jobs:
           RELEASE_DIR_GCS: 'gs://mtrx-us-central1-hub-dev-storage/kedro/data/releases'
           FILENAME: ${{env.release}}_info.json
         run: |
-          mkdir -p info && cd info
           BLOB_PATH="${RELEASE_DIR_GCS}/${{env.release}}/${FILENAME}"
           gcloud storage cp "$BLOB_PATH" "$FILENAME"
           
