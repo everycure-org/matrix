@@ -64,15 +64,14 @@ jobs:
         env:
           FILENAME: releases_aggregated.yaml
         run: |
+          git add "${FILENAME}"
           
-          if [ -f "${FILENAME}" ]; then
-            # Check if the file has been modified
-            if ! git diff --exit-code --quiet "${FILENAME}"; then
-              git add "${FILENAME}"
-              git commit -m "Update ${FILENAME}"
-              git push
-            else
-              echo "No changes to commit for ${FILENAME}, skipping."
-            fi
+          if git diff --cached --exit-code; then
+            echo "No changes to $FILENAME. Skipping commit."
+          else
+            echo "Changes detected in $FILENAME. Committing..."
+            git commit -m "Add or update $FILENAME"
+            git push
           fi
+          
 
