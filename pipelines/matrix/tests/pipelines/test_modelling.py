@@ -467,9 +467,11 @@ def test_tune_parameters_regex_features(tune_data: pd.DataFrame, grid_search_tun
     )
 
     # Should have used all three features matching 'feature.*'
-    mask = tune_data["split"] == "TRAIN"
     expected_feature_count = 3
-    assert len(tune_data.loc[mask, "feature.*"].columns) == expected_feature_count
+    mask = tune_data["split"] == "TRAIN"
+    train_data = tune_data[mask]
+    feature_cols = train_data.filter(regex="feature.*").columns
+    assert len(feature_cols) == expected_feature_count
 
 
 def test_tune_parameters_train_test_split(tune_data: pd.DataFrame, grid_search_tuner: GridSearchCV) -> None:
