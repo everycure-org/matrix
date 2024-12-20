@@ -253,7 +253,7 @@ def make_predictions_and_sort(
     transformers: Dict[str, Dict[str, Union[_BaseImputer, List[str]]]],
     model: ModelWrapper,
     features: List[str],
-    score_col_name: str,
+    treat_score_col_name: str,
     not_treat_score_col_name: str,
     unknown_score_col_name: str,
     batch_by: str,
@@ -268,7 +268,7 @@ def make_predictions_and_sort(
         transformers: Dictionary of trained transformers.
         model: Model making the predictions.
         features: List of features, may be regex specified.
-        score_col_name: Probability score column name.
+        treat_score_col_name: Probability score column name.
         not_treat_score_col_name: Probability score column name for not treat.
         unknown_score_col_name: Probability score column name for unknown.
         batch_by: Column to use for batching (e.g., "target" or "source").
@@ -283,14 +283,14 @@ def make_predictions_and_sort(
         transformers,
         model,
         features,
-        score_col_name,
+        treat_score_col_name,
         not_treat_score_col_name,
         unknown_score_col_name,
         batch_by=batch_by,
     )
 
     # Sort by the probability score
-    sorted_data = data.sort_values(by=score_col_name, ascending=False)
+    sorted_data = data.sort_values(by=treat_score_col_name, ascending=False)
     return sorted_data
 
 
@@ -578,7 +578,6 @@ def generate_report(
         score_col_name: Probability score column name.
         matrix_params: Dictionary containing matrix metadata and other meters.
         run_metadata: Dictionary containing run metadata.
-        score_col_name: Probability score column name.
     Returns:
         Dataframe with the top pairs and additional information for the drugs and diseases.
     """
