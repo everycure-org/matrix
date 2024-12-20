@@ -86,6 +86,7 @@ def submit(username: str, namespace: str, run_name: str, release_version: str, p
         verbose=not quiet,
         dry_run=dry_run,
         template_directory=ARGO_TEMPLATES_DIR_PATH,
+        allow_interactions=not headless,
         is_test=is_test,
     )
 
