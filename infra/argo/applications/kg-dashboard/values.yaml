@@ -35,6 +35,7 @@ resources:
 
 redis:
   enabled: true
+  replicaCount: 0
   resources:
     requests:
       memory: "1Gi"
