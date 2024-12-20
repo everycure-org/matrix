@@ -18,9 +18,8 @@ serviceAccount:
   name: ""
 
 service:
-  type: NodePort
+  type: ClusterIP
   port: 3000
-  nodePort: 31800
 
 ingress:
   enabled: false

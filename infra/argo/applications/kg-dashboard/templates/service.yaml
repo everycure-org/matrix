@@ -9,6 +9,5 @@ spec:
   ports:
     - port: {{ .Values.service.port }}
       targetPort: 3000
-      nodePort: {{ .Values.service.nodePort }}
   selector:
     app: kg-dashboard
