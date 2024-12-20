@@ -48,8 +48,8 @@ jobs:
       - name: Setup docs app
         working-directory: docs
         run: |
-          pip install uv
-          uv sync
+          uv venv -p 3.11
+          uv pip install -r requirements.txt
 
       - name: Generate aggregate yaml
         working-directory: docs/scripts
