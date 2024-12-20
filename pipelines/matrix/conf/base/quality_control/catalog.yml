@@ -1,11 +1,6 @@
 _pandas_csv: &_pandas_csv
   type:  pandas.CSVDataset
 
-_drug_disease_sheets_dataset: &_drug_disease_sheets_dataset
-  type: matrix.datasets.gcp.GoogleSheetsDataset
-  key: 1NUBiI_RTNEDyGX2sovXd5qjRmkvwiusQdkxEPC0lar4
-  service_file: conf/local/service-account.json
-
 _spark_parquet_ds: &_spark_parquet
   type: matrix.datasets.gcp.LazySparkDataset
   file_format: parquet
@@ -31,7 +26,22 @@ _layer_int: &_layer_int
       layer: integration
 
 # QC Results
-qc.int.{source}.qc_results:
-  <<: [*_spark_parquet, *_layer_int]
-  filepath: ${globals:paths.qc}/int/{source}/qc_results
+#qc.int.{source}.qc_results:
+#  <<: [*_spark_parquet, *_layer_int]
+#  filepath: ${globals:paths.qc}/int/{source}/qc_results
 
+qc.int.robokop.qc_results_ingestion:
+  <<: [*_spark_parquet, *_layer_int]
+  filepath: ${globals:paths.qc}/int/{source}/qc_results/{source}_ingestion_metrics.parquet
+
+qc.int.rtx_kg2.qc_results_ingestion:
+  <<: [*_spark_parquet, *_layer_int]
+  filepath: ${globals:paths.qc}/int/{source}/qc_results/{source}_ingestion_metrics.parquet
+
+qc.int.robokop.qc_results_integration:
+  <<: [*_spark_parquet, *_layer_int]
+  filepath: ${globals:paths.qc}/int/{source}/qc_results/{source}_integration_metrics.parquet
+
+qc.int.rtx_kg2.qc_results_integration:
+  <<: [*_spark_parquet, *_layer_int]
+  filepath: ${globals:paths.qc}/int/{source}/qc_results/{source}_integration_metrics.parquet
