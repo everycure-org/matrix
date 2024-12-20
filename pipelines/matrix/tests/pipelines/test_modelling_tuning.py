@@ -18,12 +18,12 @@ class DummyEstimator(BaseEstimator):
 def test_nop_tuner_init():
     estimator = DummyEstimator()
     tuner = NopTuner(estimator)
-    assert tuner._estimator == estimator
+    assert tuner.estimator == estimator
 
 
 def test_nop_tuner_init_with_kwargs():
     tuner = NopTuner(DummyEstimator(), param1=42, param2="custom")
-    assert isinstance(tuner._estimator, DummyEstimator)
+    assert isinstance(tuner.estimator, DummyEstimator)
 
 
 def test_nop_tuner_fit():
@@ -50,3 +50,9 @@ def test_nop_tuner_fit_with_params():
 
     assert fitted_estimator == estimator
     assert tuner.best_params_ == {"param1": 1, "param2": "test"}
+
+
+def test_nop_tuner_repr() -> None:
+    estimator = DummyEstimator()
+    tuner = NopTuner(estimator)
+    assert repr(tuner) == "NopTuner(estimator=DummyEstimator())"
