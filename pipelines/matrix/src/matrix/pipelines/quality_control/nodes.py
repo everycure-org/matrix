@@ -2,7 +2,7 @@ import os
 import shutil
 import pyspark as ps
 import pandas as pd
-from typing import List
+from typing import Dict
 import pyspark.sql.functions as F
 from pyspark.sql import DataFrame, SparkSession
 
@@ -30,7 +30,7 @@ Implement tracking for following metrics:
 
 
 @inject_object()
-def run_quality_control(df: DataFrame, controls: List[QaulityControl]) -> DataFrame:
+def run_quality_control(df: DataFrame, controls: Dict[str, QaulityControl]) -> DataFrame:
     """Function to run given quality controls on input dataframe."""
 
     # Initialise spark
@@ -43,16 +43,18 @@ def run_quality_control(df: DataFrame, controls: List[QaulityControl]) -> DataFr
             [
                 T.StructField("metric", T.StringType(), True),
                 T.StructField("value", T.IntegerType(), True),  # TODO: Refine type
+                T.StructField("scope", T.StringType(), True),
             ]
         ),
     )
 
     # Run each control suite on the given dataframe and union
     # the results together
-    # TODO: Namespace the metric to add the QualityControl name as a prefix?
-    for control in controls:
-        result = result.union(control.run(df))
+    for scope, control in controls.items():
+        result = result.unionByName(control.run(df).withColumn("scope", F.lit(scope)))
 
+    # Concat scope and metric
+    result = result.withColumn("fq_metric", F.concat(F.col("scope"), F.lit("."), F.col("metric")))
     return result
 
 
@@ -88,7 +90,8 @@ def count_success_fail(norm_map: ps.sql.DataFrame) -> dict:
 def group_by_prefix(norm_map: ps.sql.DataFrame, success: bool) -> list:
     """Group normalized nodes by prefix and success."""
     grouped = (
-        norm_map.filter(F.col("normalization_success") == success)
+        norm_map
+        # .filter(F.col("normalization_success") == success)
         .withColumn("prefix", F.split(F.col("normalized_id"), ":")[0])
         .groupBy("prefix")
         .count()

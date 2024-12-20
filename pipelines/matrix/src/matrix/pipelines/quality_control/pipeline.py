@@ -12,14 +12,24 @@ def create_pipeline(**kwargs) -> Pipeline:
         pipelines.append(
             pipeline(
                 [
+                    # node(
+                    #     func=nodes.run_quality_control,
+                    #     inputs={
+                    #         "df": f"ingestion.int.{source['name']}.nodes",
+                    #         "controls": "params:quality_control.ingestion",
+                    #     },
+                    #     outputs=f"quality_control.{source['name']}.prm.ingestion_metrics",
+                    #     name=f"{source['name']}_ingestion_metrics",
+                    #     tags=["qc"],
+                    # ),
                     node(
                         func=nodes.run_quality_control,
                         inputs={
-                            "df": f"ingestion.int.{source['name']}.nodes",
-                            "controls": "params:quality_control.ingestion",
+                            "df": f"integration.int.{source['name']}.nodes_norm_mapping",
+                            "controls": "params:quality_control.integration",
                         },
-                        outputs=f"quality_control.{source['name']}.prm.ingestion_metrics",
-                        name=f"rtx_{source['name']}_ingestion_metrics",
+                        outputs=f"quality_control.{source['name']}.prm.integration_metrics",
+                        name=f"{source['name']}_integration_metrics",
                         tags=["qc"],
                     )
                 ],
