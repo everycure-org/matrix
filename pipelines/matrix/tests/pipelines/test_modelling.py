@@ -15,6 +15,7 @@ from pyspark.sql import SparkSession
 from pyspark.sql.types import StructType, StructField, StringType, ArrayType, IntegerType, FloatType
 from pyspark.sql import functions as F
 from pyspark.sql import DataFrame
+from xgboost import XGBClassifier
 
 from matrix.pipelines.modelling.nodes import create_model_input_nodes
 from matrix.datasets.graph import KnowledgeGraph
@@ -23,6 +24,7 @@ from matrix.pipelines.modelling.nodes import prefilter_nodes
 from matrix.pipelines.modelling.nodes import make_splits
 from matrix.pipelines.modelling.nodes import attach_embeddings
 from matrix.pipelines.modelling.nodes import tune_parameters
+from matrix.pipelines.modelling.tuning import NopTuner
 
 
 @pytest.fixture(scope="module")
@@ -404,11 +406,34 @@ def grid_search_tuner():
     return GridSearchCV(LogisticRegression(), param_grid, cv=3, scoring="accuracy")
 
 
-def test_tune_parameters_basic(tune_data: pd.DataFrame, grid_search_tuner: GridSearchCV):
-    """Test basic parameter tuning functionality."""
+@pytest.mark.parametrize(
+    "tuner_config",
+    [
+        {
+            "tuner_factory": lambda: NopTuner(
+                XGBClassifier(n_estimators=100, learning_rate=0.1, max_depth=3, random_state=42)
+            ),
+            "expected_object": "xgboost.sklearn.XGBClassifier",
+            "expected_params": {"n_estimators": 100, "learning_rate": 0.1, "max_depth": 3, "random_state": 42},
+            "plot_required": False,
+        },
+        {
+            "tuner_factory": lambda: GridSearchCV(
+                LogisticRegression(), {"C": [0.1, 1.0], "max_iter": [100, 200]}, cv=3, scoring="accuracy"
+            ),
+            "expected_object": "sklearn.linear_model.LogisticRegression",
+            "expected_params": {"C", "max_iter"},
+            "plot_required": True,
+        },
+    ],
+)
+def test_tune_parameters(tune_data: pd.DataFrame, tuner_config: dict):
+    """Test parameter tuning functionality with different tuners."""
+    tuner = tuner_config["tuner_factory"]()
+
     result, plot = tune_parameters(
         data=tune_data,
-        tuner=grid_search_tuner,
+        tuner=tuner,
         features=["feature1", "feature2"],
         target_col_name="target",
         enable_regex=False,
@@ -417,12 +442,23 @@ def test_tune_parameters_basic(tune_data: pd.DataFrame, grid_search_tuner: GridS
     # Check return value structure
     assert isinstance(result, dict)
     assert "object" in result
-    assert result["object"] == "sklearn.linear_model.LogisticRegression"
-    assert "C" in result
-    assert "max_iter" in result
+    assert result["object"] == tuner_config["expected_object"]
 
-    # Check plot
-    assert isinstance(plot, plt.Figure)
+    # Check parameters
+    if isinstance(tuner_config["expected_params"], dict):
+        # For exact parameter matching (NopTuner case)
+        for param, value in tuner_config["expected_params"].items():
+            assert result[param] == value
+    else:
+        # For parameter presence checking (GridSearchCV case)
+        for param in tuner_config["expected_params"]:
+            assert param in result
+
+    # Check plot expectations
+    if tuner_config["plot_required"]:
+        assert isinstance(plot, plt.Figure)
+    else:
+        assert plot is None or isinstance(plot, plt.Figure)
 
 
 def test_tune_parameters_regex_features(tune_data: pd.DataFrame, grid_search_tuner: GridSearchCV) -> None:
