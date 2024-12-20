@@ -376,10 +376,15 @@ def tune_parameters(
     # Fit tuner
     tuner.fit(X_train.values, y_train.values)
 
+    # Estimators that inherit from BaseEstimator have an '_estimator' attribute, but sklearn ones have an 'estimator' attribute
+    estimator = getattr(tuner, "_estimator", None) or getattr(tuner, "estimator", None)
+    if estimator is None:
+        raise ValueError("Tuner must have either '_estimator' or 'estimator' attribute")
+
     return json.loads(
         json.dumps(
             {
-                "object": f"{type(tuner._estimator).__module__}.{type(tuner._estimator).__name__}",
+                "object": f"{type(estimator).__module__}.{type(estimator).__name__}",
                 **tuner.best_params_,
             },
             default=int,
