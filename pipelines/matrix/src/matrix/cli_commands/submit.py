@@ -18,6 +18,7 @@ from rich.panel import Panel
 
 from matrix.argo import ARGO_TEMPLATES_DIR_PATH, generate_argo_config
 from matrix.kedro4argo_node import ArgoResourceConfig
+from matrix.git_utils import get_current_git_branch, has_dirty_git
 
 logging.basicConfig(
     level=logging.INFO,
@@ -52,6 +53,9 @@ def submit(username: str, namespace: str, run_name: str, release_version: str, p
     """Submit the end-to-end workflow. """
     if not quiet:
         log.setLevel(logging.DEBUG)
+
+    # TODO: re-enable after it's clear this is only a data-release submission (i.e. the release version is present, see also #797.
+    #  abort_if_unmet_git_requirements()
 
     if pipeline not in kedro_pipelines.keys():
         raise ValueError("Pipeline requested for execution not found")
@@ -381,7 +385,7 @@ def ensure_namespace(namespace, verbose: bool):
 
 def apply_argo_template(namespace, file_path: Path, verbose: bool):
     """Apply the Argo workflow template, making it available in the cluster.
-    
+
     `kubectl apply -f <file_path> -n <namespace>` will make the template available as a resource (but will not create any other resources, and will not trigger the workshop).
     """
     console.print("Applying Argo template...")
@@ -445,3 +449,24 @@ def get_run_name(run_name: Optional[str]) -> str:
     unsanitized_name = f"{run_name}-{random_sfx}".rstrip("-")
     sanitized_name = re.sub(r"[^a-zA-Z0-9-]", "-", unsanitized_name)
     return sanitized_name
+
+def abort_if_unmet_git_requirements():
+    """
+    Validates the current Git repository:
+    1. The current Git branch must be either 'main' or 'master'.
+    2. The Git repository must be clean (no uncommitted changes or untracked files).
+
+    Raises:
+        ValueError
+    """
+    errors = []
+
+    if get_current_git_branch() not in ("main", "master"):
+        errors.append("Invalid branch (must be 'main' or 'master').")
+
+    if has_dirty_git():
+        errors.append("Repository has uncommitted changes or untracked files.")
+
+    if errors:
+        error_list = "\n".join(errors)
+        raise RuntimeError(f"Submission failed due to the following issues:\n\n{error_list}")
