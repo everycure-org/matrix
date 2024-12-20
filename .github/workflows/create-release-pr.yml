@@ -79,7 +79,6 @@ jobs:
           BLOB_PATH="${RELEASE_DIR_GCS}/${{env.release}}/${FILENAME}"
           gcloud storage cp "$BLOB_PATH" "$FILENAME"
           
-          git pull
           git add "${FILENAME}" && \
           git commit -m "added release info json" && \
           git push
