@@ -355,7 +355,6 @@ def test_create_model_input_nodes_basic(mock_knowledge_graph, mock_generator, sa
 
 
 def test_create_model_input_nodes_empty_splits(mock_knowledge_graph, mock_generator):
-    # Test with empty splits DataFrame
     empty_splits = pd.DataFrame(
         {"source": [], "source_embedding": [], "target": [], "target_embedding": [], "iteration": [], "split": []}
     )
@@ -421,7 +420,7 @@ def grid_search_tuner():
             "tuner_factory": lambda: GridSearchCV(
                 LogisticRegression(), {"C": [0.1, 1.0], "max_iter": [100, 200]}, cv=3, scoring="accuracy"
             ),
-            "expected_object": "sklearn.linear_model.LogisticRegression",
+            "expected_object": "sklearn.linear_model._logistic.LogisticRegression",
             "expected_params": {"C", "max_iter"},
             "plot_required": True,
         },
