@@ -7,7 +7,8 @@ jobs:
   approved:
     if: |
       github.event.pull_request.merged == true &&
-      contains(github.event.pull_request.labels.*.name, 'Release')
+      contains(github.event.pull_request.labels.*.name, 'Release') &&
+      contains(github.event.pull_request.labels.*.name, 'hide-from-release')
     runs-on: ubuntu-latest
     name: PR approval
     permissions:
