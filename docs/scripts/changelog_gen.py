@@ -77,8 +77,10 @@ def main() -> None:
     """Extracts json files from the changelog_files directory, aggregates them and saves as one yaml file"""
     changelog_abs_path = locate_releases_path()
     files = list_json_files(changelog_abs_path)
+
     if not files:
         raise ValueError(f"No json files found in {changelog_abs_path}")
+
     filtered_files = filter_json_files(files)
     loaded_files = load_files(filtered_files, changelog_abs_path)
     sorted_files = sort_files_on_semver(loaded_files)
