@@ -1,0 +1,68 @@
+name: Create YAML Release
+
+on:
+  push:
+    branches:
+      - 'feat/render-release-info-docs'
+
+env:
+  project_id: 'mtrx-hub-dev-3of'
+  workload_identity_provider: 'projects/938607797672/locations/global/workloadIdentityPools/matrix-pool-rw/providers/matrix-gh-provider-rw'
+  service_account: 'sa-github-actions-rw@mtrx-hub-dev-3of.iam.gserviceaccount.com'
+
+jobs:
+  create_release_notes_draft:
+    runs-on: ubuntu-latest
+    name: Create Draft of the Release Notes
+    permissions:
+      contents: 'write'
+      id-token: 'write'
+      pull-requests: 'write'
+
+    steps:
+      - name: store variables
+        run: |
+          if [[ "${{ github.event_name == 'repository_dispatch' }}" == "true" ]]; then
+            release=$(echo '${{ toJson(github.event) }}' | jq -r '.client_payload.release_version')
+            gitref=$(echo '${{ toJson(github.event) }}' | jq -r '.client_payload.git_fingerprint')
+          else
+            release="debug-dont-release"
+            gitref=${{github.ref_name}}
+          fi
+          echo "release=${release}" >> "$GITHUB_ENV"
+          echo "gitref=${gitref}" >> "$GITHUB_ENV"
+
+      - name: Checkout
+        uses: actions/checkout@main
+        with:
+          # note that repo dispatch will checkout main
+          fetch-tags: true
+          fetch-depth: 0  # full depth needed so we can pass the AI all logs since the last release.
+
+      - name: Configure Git
+        run: |
+          git config --global user.email "releasebot@everycure.org"
+          git config --global user.name "All of us at Every Cure"
+          git config --global push.autosetupremote true
+
+      - name: Setup docs app
+        working-directory: docs
+        run: |
+          pip install uv
+          uv sync
+
+      - name: Generate aggregate yaml
+        working-directory: docs/scripts
+        run: |
+          uv run changelo_gen.py
+          
+
+      - name: Commit YAML release info file
+        working-directory: docs/src/releases/changelog_files
+        env:
+          FILENAME: releases_aggregated.yaml
+        run: |
+          
+          git add "${FILENAME}" && \
+          git commit -m "added release info YAML" && \
+          git push

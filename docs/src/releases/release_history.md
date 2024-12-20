@@ -5,7 +5,7 @@ hide:
 ---
 
 # Release History
-{{ read_yaml('src/releases/releases_all.yaml')  }}
+{{ read_yaml('src/releases/changelog_files/releases_aggregated.yaml')  }}
 
 <!--
 | Release Name | Robokop Version | RTX-KG2 Version | EC Medical Team Version | NodeNorm Endpoint | Embeddings Encoder | Topological Estimator | MLFlow Link | Code Link | BigQuery Link | Neo4j Link |
