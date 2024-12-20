@@ -11,8 +11,9 @@ env:
   service_account: 'sa-github-actions-rw@mtrx-hub-dev-3of.iam.gserviceaccount.com'
 
 jobs:
-  create_release_notes_draft:
+  parse_yaml:
     runs-on: ubuntu-latest
+    if: ${{ github.actor != 'github-actions[bot]' && github.event_name != 'push' || github.event.pusher.name != 'github-actions[bot]' }}
     name: Create Draft of the Release Notes
     permissions:
       contents: 'write'
