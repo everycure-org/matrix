@@ -82,7 +82,7 @@ jobs:
 
       - name: Submit the kedro pipeline
         working-directory: pipelines/matrix
-        run:
+        run: |
           echo "Submit the kedro pipeline"
           kedro submit \
             --username GH-Actions-bot \
