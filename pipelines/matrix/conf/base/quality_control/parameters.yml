@@ -4,3 +4,12 @@ output_path_rtx_kg2_ingestion: data/qc/int/rtx_kg2/rtx_kg2_ingestion_metrics.par
 output_path_robokop_ingestion: data/qc/int/robokop/robokop_ingestion_metrics.parquet
 output_path_rtx_kg2_integration: data/qc/int/rtx_kg2/rtx_kg2_integration_metrics.parquet
 output_path_robokop_integration: data/qc/int/robokop/robokop_integration_metrics.parquet
+
+
+quality_control:
+  ingestion:
+    # Count values in category column
+    - object: matrix.pipelines.quality_control.quality_control.CountColumnValuesQualityControl
+      column: category
+
+    # TODO: Register other suites here
