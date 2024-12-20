@@ -66,6 +66,9 @@ CONFIG_LOADER_ARGS = {
 
 # https://getindata.com/blog/kedro-dynamic-pipelines/
 DYNAMIC_PIPELINES_MAPPING = {
+    "cross_validation": {
+        "n_splits": 3,
+    },
     "integration": [
         {"name": "rtx_kg2"},
         # {"name": "spoke"},
