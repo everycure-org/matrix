@@ -28,7 +28,7 @@ jobs:
             release=$(echo '${{ toJson(github.event) }}' | jq -r '.client_payload.release_version')
             gitref=$(echo '${{ toJson(github.event) }}' | jq -r '.client_payload.git_fingerprint')
           else
-            release="v0.2.4"
+            release="debug-dont-release"
             gitref=${{github.ref_name}}
           fi
           echo "release=${release}" >> "$GITHUB_ENV"
