@@ -48,6 +48,7 @@ jobs:
       - name: Setup docs app
         working-directory: docs
         run: |
+          pip install uv
           uv venv -p 3.11
           uv pip install -r requirements.txt
 
