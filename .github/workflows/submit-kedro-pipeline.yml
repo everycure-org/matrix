@@ -1,0 +1,95 @@
+name: Automate kedro sumbit release run periodically
+
+on:
+  push:
+    branches:
+      - 'gh-actions-weekly-submit'
+  # schedule:
+  #   - cron: '30 9 * * 1' # 9:30 AM every Monday
+  #   - cron: '30 9 1 * *' # 9:30 AM on the first of every month
+
+jobs:
+  submit_data_release_periodically:
+    runs-on: ubuntu-latest
+    name: Submit the Kedro Pipeline Periodically
+    permissions:
+      contents: 'write'
+      id-token: 'write'
+      pull-requests: 'write'
+
+    steps:
+
+      - name: Checkout
+        uses: actions/checkout@main
+        with:
+          # note that repo dispatch will checkout main
+          fetch-tags: true
+          fetch-depth: 0  # full depth needed so we can pass the AI all logs since the last release.
+      
+      - name: Fetch latest tag
+        id: fetch_latest_tag
+        run: |
+          latest_tag=$(git tag --list --sort="v:refname" | tail -n 1)
+          echo "latest_tag=${latest_tag}" >> "$GITHUB_ENV"
+          echo "Latest tag is ${latest_tag}"
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+
+      - name: Install semver
+        run: 
+          pip install semver
+
+      - name: Increment patch version
+        # if : github.event.schedule == '30 9 * * 1' # weekly bump
+        run: |
+          python -c "
+          import os
+          import semver
+
+          latest_tag = os.getenv('latest_tag', 'v0.0.0').lstrip('v')
+          version = semver.Version.parse(latest_tag)
+          new_version = version.bump_patch()
+          with open(os.getenv('GITHUB_ENV'), 'a') as env_file:
+            env_file.write(f'release_version=v{new_version}\n')
+          "
+
+      # - name: Increment minor version
+      #   if : github.event.schedule == '30 9 1 * *' # monthly bump
+      #   run: |
+      #     python -c "
+      #     import os
+      #     import semver
+
+      #     latest_tag = os.getenv('latest_tag', 'v0.0.0').lstrip('v')
+      #     version = semver.Version.parse(latest_tag)
+      #     new_version = version.bump_minor()
+      #     with open(os.getenv('GITHUB_ENV'), 'a') as env_file:
+      #       env_file.write(f'release_version=v{new_version}\n')
+      #     "
+
+      - name: Print release version
+        run: |
+          cat "$GITHUB_ENV"
+          echo "New release version is '${{ env.release_version }}'"
+
+      - name: Set up kedro project dependencies
+        working-directory: pipelines/matrix
+        run: |
+          pip install -r requirements.txt
+
+      - name: Submit the kedro pipeline
+        working-directory: pipelines/matrix
+        run: |
+          echo "Submit the kedro pipeline"
+          kedro submit \
+            --username GH-Actions-bot \
+            --namespace argo-workflows \
+            --run-name auto-kg-release \
+            --release-version "${{ env.release_version }}" \
+            --pipeline kg_release \
+            --headless \
+            --is-test # remove this flag to run the pipeline in production
+
