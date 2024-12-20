@@ -64,7 +64,7 @@ def sort_files_on_semver(files: list[str]) -> list[str]:
 def dump_to_yaml(
     files: list[dict],
 ) -> str:
-    yaml_data = yaml.dump(files, default_flow_style=False)
+    yaml_data = yaml.dump(files, default_flow_style=False, sort_keys=False)
     return yaml_data
 
 
