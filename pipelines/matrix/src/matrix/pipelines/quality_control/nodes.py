@@ -2,8 +2,14 @@ import os
 import shutil
 import pyspark as ps
 import pandas as pd
+from typing import List
 import pyspark.sql.functions as F
-from pyspark.sql import DataFrame
+from pyspark.sql import DataFrame, SparkSession
+
+from refit.v1.core.inject import inject_object
+from pyspark.sql import types as T
+
+from .quality_control import QaulityControl
 
 """
 Sprint Goal
@@ -21,6 +27,37 @@ Implement tracking for following metrics:
 [ ] Identify unconnected nodes and nodes removed post-normalization
 
 """
+
+
+@inject_object()
+def run_quality_control(df: DataFrame, controls: List[QaulityControl]) -> DataFrame:
+    """Function to run given quality controls on input dataframe."""
+
+    # Initialise spark
+    spark = SparkSession.builder.getOrCreate()
+
+    # Create an empty DataFrame with the schema
+    result: DataFrame = spark.createDataFrame(
+        [],
+        schema=T.StructType(
+            [
+                T.StructField("metric", T.StringType(), True),
+                T.StructField("value", T.IntegerType(), True),  # TODO: Refine type
+            ]
+        ),
+    )
+
+    # Run each control suite on the given dataframe and union
+    # the results together
+    # TODO: Namespace the metric to add the QualityControl name as a prefix?
+    for control in controls:
+        result = result.union(control.run(df))
+
+    return result
+
+
+# TODO: Break functions below into logical suites to allow resuability
+# TODO: Ensure catalog is _ALWAYS_ used, no reading/writing directly
 
 
 def write_single_parquet(df: DataFrame, output_path: str) -> None:

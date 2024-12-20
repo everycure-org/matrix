@@ -30,18 +30,23 @@ _layer_int: &_layer_int
 #  <<: [*_spark_parquet, *_layer_int]
 #  filepath: ${globals:paths.qc}/int/{source}/qc_results
 
-qc.int.robokop.qc_results_ingestion:
+quality_control.{source}.prm.ingestion_metrics:
   <<: [*_spark_parquet, *_layer_int]
-  filepath: ${globals:paths.qc}/int/{source}/qc_results/{source}_ingestion_metrics.parquet
+  filepath: ${globals:paths.qc}/int/{source}/qc_results
 
-qc.int.rtx_kg2.qc_results_ingestion:
-  <<: [*_spark_parquet, *_layer_int]
-  filepath: ${globals:paths.qc}/int/{source}/qc_results/{source}_ingestion_metrics.parquet
+# qc.int.robokop.qc_results_ingestion:
+#   <<: [*_spark_parquet, *_layer_int]
+#   filepath: ${globals:paths.qc}/int/{source}/qc_results/{source}_ingestion_metrics.parquet
 
-qc.int.robokop.qc_results_integration:
-  <<: [*_spark_parquet, *_layer_int]
-  filepath: ${globals:paths.qc}/int/{source}/qc_results/{source}_integration_metrics.parquet
+# qc.int.rtx_kg2.qc_results_ingestion:
+#   <<: [*_spark_parquet, *_layer_int]
+#   filepath: ${globals:paths.qc}/int/{source}/qc_results/{source}_ingestion_metrics.parquet
 
-qc.int.rtx_kg2.qc_results_integration:
-  <<: [*_spark_parquet, *_layer_int]
-  filepath: ${globals:paths.qc}/int/{source}/qc_results/{source}_integration_metrics.parquet
+# qc.int.robokop.qc_results_integration:
+#   <<: [*_spark_parquet, *_layer_int]
+#   filepath: ${globals:paths.qc}/int/{source}/qc_results/{source}_integration_metrics.parquet
+
+# qc.int.rtx_kg2.qc_results_integration:
+#   <<: [*_spark_parquet, *_layer_int]
+#   filepath: ${globals:paths.qc}/int/{source}/qc_results/{source}_integration_metrics.parquet
+
