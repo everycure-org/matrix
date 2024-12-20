@@ -4,6 +4,10 @@ evaluation.treat_score_col_name: &score-col "treat score"
 evaluation.not_treat_score_col_name: "not treat score"
 evaluation.unknown_score_col_name: "unknown score"
 
+# Aggregations to report in MLFlow (list of names in modelling.aggregation_functions)
+evaluation.reported_aggregations:
+  - mean
+
 # Threshold-based classification metrics for ground truth data
 evaluation.simple_classification:
   evaluation_options:
