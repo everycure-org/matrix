@@ -109,9 +109,9 @@ jobs:
           version = semver.Version.parse(latest_tag)
           minor_bump = version.bump_minor()
           patch_bump = version.bump_patch()
-          if os.getenv('release') == minor_bump:
+          if os.getenv('release', 'v0.0.0').lstrip('v') == str(minor_bump):
             bump_type = 'minor'
-          elif os.getenv('release') == patch_bump:
+          elif os.getenv('release', 'v0.0.0').lstrip('v') == str(patch_bump):
             bump_type = 'patch'
           else:
             bump_type = 'major'
