@@ -116,7 +116,7 @@ jobs:
           else:
             bump_type = 'major'
           with open(os.getenv('GITHUB_ENV'), 'a') as env_file:
-            env_file.write(f'bump_type={bump_version}\n')
+            env_file.write(f'bump_type={bump_type}\n')
           "
       
       - name: Print env variables
