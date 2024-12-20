@@ -83,11 +83,12 @@ jobs:
       - name: Submit the kedro pipeline
         working-directory: pipelines/matrix
         run:
+          echo "Submit the kedro pipeline"
           kedro submit \
-          --username GH-Actions-bot \
-          --namespace argo-workflows \
-          --run-name weekly-data-release \
-          --release-version "${{ env.release_version }}" \
-          --pipeline data_release \
-          --is-test # remove this flag to run the pipeline in production
+            --username GH-Actions-bot \
+            --namespace argo-workflows \
+            --run-name weekly-data-release \
+            --release-version "${{ env.release_version }}" \
+            --pipeline data_release \
+            --is-test # remove this flag to run the pipeline in production
 
