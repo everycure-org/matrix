@@ -3,7 +3,7 @@ name: Create Pull Request to Verify AI Summary of Release Notes
 on:
   push:
     branches:
-      - 'feat/trigger-release-from-gh-action'  # TODO: replace by manual trigger and repository_dispatch
+      - 'debug/release*'
   repository_dispatch:
     types: distribute-release
 
@@ -17,66 +17,102 @@ jobs:
     runs-on: ubuntu-latest
     name: Create Draft of the Release Notes
     permissions:
-      contents: 'read'
+      contents: 'write'
       id-token: 'write'
-      pull-requests: 'read'
+      pull-requests: 'write'
 
     steps:
-      - name: 'Checkout'
+      - name: store variables
+        run: |
+          if [[ "${{ github.event_name == 'repository_dispatch' }}" == "true" ]]; then
+            release=$(echo '${{ toJson(github.event) }}' | jq -r '.client_payload.release_version')
+            gitref=$(echo '${{ toJson(github.event) }}' | jq -r '.client_payload.git_fingerprint')
+          else
+            release="debug-dont-release"
+            gitref=${{github.ref_name}}
+          fi
+          echo "release=${release}" >> "$GITHUB_ENV"
+          echo "gitref=${gitref}" >> "$GITHUB_ENV"
+
+      - name: Checkout
         uses: actions/checkout@main
-        with: 
+        with:
+          # note that repo dispatch will checkout main
           fetch-tags: true
-          fetch-depth: 0
+          fetch-depth: 0  # full depth needed so we can pass the AI all logs since the last release.
+
+      - name: Configure Git
+        run: |
+          git config --global user.email "releasebot@everycure.org"
+          git config --global user.name "All of us at Every Cure"
+          git config --global push.autosetupremote true
+
+      - name: Tag the commit from which the data release was triggered
+        run: |
+          # Create an annotated tag, so that we can push it easily with the files using `follow-tags`.
+          git tag --annotate --message '' -- "${{env.release}}" "${{env.gitref}}"
+
+      - name: Branch off
+        # To comply with the protected-branch policy
+        run: git switch -c release/${{env.release}}
 
       - name: Setup Matrix CLI
         working-directory: apps/matrix-cli
         run: |
-          gcloud config list account --format "value(core.account)"  # for debugging
           pip install uv
           uv sync
 
       - name: Authenticate with Google Cloud
         uses: 'google-github-actions/auth@v2'
-        # if: github.ref == 'refs/heads/main'
         with:
           project_id: ${{env.project_id}}
           workload_identity_provider: ${{env.workload_identity_provider}}
           service_account: ${{env.service_account}}
 
+      - name: Download & commit release info file
+        working-directory: docs/src/releases
+        env:
+          RELEASE_DIR_GCS: 'gs://mtrx-us-central1-hub-dev-storage/kedro/data/releases'
+          FILENAME: ${{env.release}}_info.json
+        run: |
+          mkdir -p info && cd info
+          BLOB_PATH="${RELEASE_DIR_GCS}/${{env.release}}/${FILENAME}"
+          gcloud storage cp "$BLOB_PATH" "$FILENAME"
+          
+          git add "${FILENAME}" && \
+          git commit -m "added release info json" && \
+          git push
+
       - name: Create Release Notes
         working-directory: apps/matrix-cli
         env:
           GH_TOKEN: ${{ github.token }}
+          POSTS_DIR: docs/src/releases/posts
         run: |
           gcloud config list account --format "value(core.account)"
-          if [[ "${{ github.event_name == 'repository_dispatch' }}" == "true" ]]; then
-            release=$(echo '${{ toJson(github.event) }}' | jq '.client_payload.release_version')
-          else
-            release="v0.2.6-alpha"
-          fi
-          echo "$release"
-          echo "${GITHUB_ENV}"
-          echo "release=${release}" >> "${GITHUB_ENV}"
-          mkdir -p "${release}"
-          uv run matrix releases release-notes --headless --output-file "${release}/notes.md"
-          # sleep because it exceeds the limit
+          
+          mkdir -p "${{env.release}}"
+          uv run matrix releases release-notes --headless --output-file "${{env.release}}/notes.md"
+          # If these fail, you may have crossed the quotas. See 
           # https://cloud.google.com/vertex-ai/generative-ai/docs/quotas
-          # echo "Sleep for 1mins"
-          # sleep 60
-          # echo "Done sleeping"
-          uv run matrix releases article --headless --output-file "${release}/post.md" --no-disable-rendering --notes-file "${release}/notes.md"
-          mv "${release}" "${GITHUB_WORKSPACE}/docs/src/releases/posts"
-          ls "${GITHUB_WORKSPACE}/docs/src/releases/posts"
-          ls !$
-        #  git add ${release} && git commit -m "added release notes & article draft" && git push
+          uv run matrix releases article \
+            --headless \
+            --output-file "${{env.release}}/post.md" \
+            --no-disable-rendering \
+            --notes-file "${{env.release}}/notes.md"
+          mv "${{env.release}}" "${GITHUB_WORKSPACE}/${POSTS_DIR}"
+          git add "${GITHUB_WORKSPACE}/${POSTS_DIR}/${{env.release}}" && \
+          git commit -m "added release notes & article draft" && \
+          git push --follow-tags
 
-#      - name: Create Pull Request
-#        run: gh pr create \
-#          --title "Release/${env.release}" \
-#          --base main \
-#          --body "Adds the release article and associated notes" \
-#          --draft \
-#          --dry-run \
-#          --label Release
-      # - name: Create git tag
-      #   run: git tag -a "${release}" -m "Release version ${release}"
+      - name: Create Pull Request
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          gh pr create \
+          --title "Release/${{env.release}}" \
+          --base main \
+          --body "Adds the release article and associated notes" \
+          --draft \
+          --label Release \
+          --label hide-from-release

@@ -1,4 +1,5 @@
 # smoketest that checks the CLI is set up correctly
+import pytest
 from typing import List, Union
 
 from matrix_cli.main import app
@@ -7,12 +8,9 @@ from typer.testing import CliRunner
 runner = CliRunner()
 
 
-def test_app():
-    command_works("code")
-    command_works("data")
-    command_works(["data", "download"])
-    command_works("gh-users")
-    command_works("releases")
+@pytest.mark.parametrize("subcommand", ["code", "data", ["data", "download"], "gh-users", "releases"])
+def test_app(subcommand: Union[str, List[str]]):
+    command_works(subcommand)
 
 
 def command_works(command: Union[str, List[str]]):

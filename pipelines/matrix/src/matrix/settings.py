@@ -21,6 +21,7 @@ hooks = {
     "mlflow": MlflowHook(),
     "mlflow_kedro": matrix_hooks.MLFlowHooks(),
     "spark": matrix_hooks.SparkHooks(),
+    "release": matrix_hooks.ReleaseInfoHooks(),
 }
 
 # Hooks are executed in a Last-In-First-Out (LIFO) order.
@@ -70,8 +71,9 @@ DYNAMIC_PIPELINES_MAPPING = {
     },
     "integration": [
         {"name": "rtx_kg2"},
+        # {"name": "spoke"},
         {"name": "robokop"},
-        {"name": "ec_medical_team", "normalize": False},
+        {"name": "ec_medical_team"},
     ],
     "modelling": [
         {"model_name": "xg_baseline", "num_shards": 1, "run_inference": False},
