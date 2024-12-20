@@ -45,7 +45,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                         inputs=[
                             f"matrix_generation.{model}.model_output.sorted_matrix_predictions@pandas",
                             "modelling.model_input.splits",
-                            "params:evaluation.score_col_name",
+                            "params:evaluation.treat_score_col_name",
                         ],
                         outputs=None,
                         name=f"perform_{model}_matrix_checks",

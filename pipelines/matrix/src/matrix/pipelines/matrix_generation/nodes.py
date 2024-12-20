@@ -169,7 +169,7 @@ def make_batch_predictions(
     transformers: Dict[str, Dict[str, Union[_BaseImputer, List[str]]]],
     model: ModelWrapper,
     features: List[str],
-    score_col_name: str,
+    treat_score_col_name: str,
     not_treat_score_col_name: str,
     unknown_score_col_name: str,
     batch_by: str = "target",
@@ -226,9 +226,9 @@ def make_batch_predictions(
 
         # Generate model probability scores
         preds = model.predict_proba(transformed[batch_features].values)
-        batch["not_treat_score"] = preds[:, 0]
-        batch[score_col_name] = preds[:, 1]
-        batch["unknown_score"] = preds[:, 2]
+        batch[not_treat_score_col_name] = preds[:, 0]
+        batch[treat_score_col_name] = preds[:, 1]
+        batch[unknown_score_col_name] = preds[:, 2]
         # Drop embedding columns
         batch = batch.drop(columns=["source_embedding", "target_embedding"])
         return batch
