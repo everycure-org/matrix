@@ -48,9 +48,9 @@ def cli():
 @click.option("--dry-run", "-d", is_flag=True, default=False, help="Does everything except submit the workflow")
 @click.option("--from-nodes", type=str, default="", help="Specify nodes to run from", callback=split_string)
 @click.option("--is-test", is_flag=True, default=False, help="Submit to test folder")
-
+@click.option("--headless", is_flag=True, default=False, help="Skip confirmation prompt")
 # fmt: on
-def submit(username: str, namespace: str, run_name: str, release_version: str, pipeline: str, quiet: bool, dry_run: bool, from_nodes: List[str], is_test: bool):
+def submit(username: str, namespace: str, run_name: str, release_version: str, pipeline: str, quiet: bool, dry_run: bool, from_nodes: List[str], is_test: bool, headless:bool):
     """Submit the end-to-end workflow. """
     if not quiet:
         log.setLevel(logging.DEBUG)
@@ -76,7 +76,7 @@ def submit(username: str, namespace: str, run_name: str, release_version: str, p
     pipeline_obj.name = pipeline
 
 
-    summarize_submission(run_name, namespace, pipeline, is_test, release_version)
+    summarize_submission(run_name, namespace, pipeline, is_test, release_version, headless)
     _submit(
         username=username,
         namespace=namespace,
@@ -167,7 +167,7 @@ def _submit(
         sys.exit(1)
 
 
-def summarize_submission(run_name: str, namespace: str, pipeline: str, is_test: bool, release_version: str):
+def summarize_submission(run_name: str, namespace: str, pipeline: str, is_test: bool, release_version: str, headless:bool):
     console.print(Panel.fit(
         f"[bold green]About to submit workflow:[/bold green]\n"
         f"Run Name: {run_name}\n"
@@ -180,9 +180,10 @@ def summarize_submission(run_name: str, namespace: str, pipeline: str, is_test: 
     console.print("Reminder: A data release should only be submitted once and not overwritten.\n"
                   "If you need to make changes, please make this part of the next release.\n"
                   "Experiments (modelling pipeline) are nested under the release and can be overwritten.\n\n")
-
-    if not click.confirm("Are you sure you want to submit the workflow?", default=False):
-        raise click.Abort()
+    
+    if not headless:
+        if not click.confirm("Are you sure you want to submit the workflow?", default=False):
+            raise click.Abort()
         
 
 def run_subprocess(
