@@ -3,7 +3,7 @@
   "RTX-KG2 Version": "v2.7.3",
   "EC Medical Team Version": 20241031,
   "Topological Estimator": "matrix.pipelines.embeddings.graph_algorithms.GDSGraphSage",
-  "Embeddings Encoder": "Embeddings Encoder",
+  "Embeddings Encoder": "text-embedding-3-small",
   "BigQuery Link": "https://console.cloud.google.com/bigquery?project=mtrx-hub-dev-3of&ws=!1m5!1m4!4m3!1smtrx-hub-dev-3of!2smtrx-hub-dev-3of!3srelease_v0_2_5-infolinks-test",
   "MLFlow Link": "https://mlflow.platform.dev.everycure.org/#/experiments/7613/runs/22072ee8f13d4d02833e35e26bffb6fe",
   "Code Link": "https://github.com/everycure-org/matrix/tree/v0.2.5-infolinks-test",
