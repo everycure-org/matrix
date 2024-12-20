@@ -1,7 +1,9 @@
-from kedro.pipeline import Pipeline, pipeline
+from kedro.pipeline import Pipeline, pipeline, node
 from matrix.kedro4argo_node import ArgoNode, ArgoResourceConfig
 
 from . import nodes
+from . import psev
+from . import to_graph
 
 
 def create_pipeline(**kwargs) -> Pipeline:
@@ -164,6 +166,32 @@ def create_pipeline(**kwargs) -> Pipeline:
                     "argowf.fuse",
                     "argowf.fuse-group.topological_pca",
                 ],
+            ),
+            # converting graph to ensmallen/grape
+            node(
+                func=to_graph.convert_parquet_to_ensmallen,
+                inputs={
+                    "nodes_df": "integration.prm.filtered_nodes",
+                    "edges_df": "integration.prm.filtered_edges",
+                },
+                outputs="embeddings.spoke_graph",
+            ),
+            # creating dummy weights for the psevs
+            node(
+                func=psev.generate_psev_weights,
+                inputs="integration.prm.filtered_nodes",
+                outputs="embeddings.psev_weights",
+                name="generate_psev_weights",
+            ),
+            # estimating psevs on the graph
+            node(
+                func=psev.estimate_psev,
+                inputs={
+                    "G": "embeddings.spoke_graph",
+                    "node_weights": "embeddings.psev_weights",
+                    "unpack": "params:embeddings.psev",
+                },
+                outputs="embeddings.psev",
             ),
         ],
     )

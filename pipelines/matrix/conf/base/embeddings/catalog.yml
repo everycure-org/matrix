@@ -138,3 +138,18 @@ embeddings.reporting.topological_pca:
 embeddings.reporting.topological_pca_plot:
   type: kedro_datasets.matplotlib.MatplotlibWriter
   filepath: ${globals:paths.embeddings}/reporting/pca_plot.png
+
+
+# graph backed by pyspark on disk
+embeddings.spoke_graph:
+  type: matrix.datasets.ensmallen.GraphDatasetArrow
+  filepath: ${globals:paths.embeddings}/feat/spoke_graph
+
+# from the EHRs
+embeddings.psev_weights:
+  type: matrix.datasets.anndata.AnnDataset
+  filepath: ${globals:paths.embeddings}/feat/psev_weights.h5ad
+
+embeddings.psev:
+  type: matrix.datasets.anndata.AnnDataset
+  filepath: ${globals:paths.embeddings}/feat/psev.h5ad
