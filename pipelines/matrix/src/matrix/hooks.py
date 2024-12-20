@@ -18,7 +18,7 @@ from pyspark import SparkConf
 from pyspark.sql import SparkSession
 from google.cloud import storage
 from google.cloud.storage.bucket import Bucket
-# from matrix.pipelines.data_release.pipeline import last_node as last_data_release_node
+from matrix.pipelines.data_release import last_node_name as last_data_release_node_name
 
 
 logger = logging.getLogger(__name__)
@@ -339,14 +339,16 @@ class ReleaseInfoHooks:
         blob = bucket.blob(blobpath)
         blob.upload_from_string(data=json.dumps(release_info), content_type="application/json")
 
-    # NOTE: Disable due to circular import
-    # @hook_impl
-    # def after_node_run(self, node: Node) -> None:
-    #     """Runs after the last node of the data_release pipeline"""
-    #     # We chose to add this using the `after_node_run` hook, rather than
-    #     # `after_pipeline_run`, because one does not know a priori which
-    #     # pipelines the (last) data release node is part of. With an
-    #     # `after_node_run`, you can limit your filters easily.
-    #     if node.name == last_data_release_node.name:
-    #         release_info = self.extract_release_info()
-    #         self.upload_to_storage(release_info)
+    @hook_impl
+    def after_node_run(self, node: Node) -> None:
+        """Runs after the last node of the data_release pipeline"""
+        # We chose to add this using the `after_node_run` hook, rather than
+        # `after_pipeline_run`, because one does not know a priori which
+        # pipelines the (last) data release node is part of. With an
+        # `after_node_run`, you can limit your filters easily.
+        if node.name == last_data_release_node_name:
+            release_info = self.extract_release_info()
+            try:
+                self.upload_to_storage(release_info)
+            except KeyError:
+                logger.warning("Could not upload release info after running Kedro node.", exc_info=True)
