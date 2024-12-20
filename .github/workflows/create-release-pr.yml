@@ -120,7 +120,6 @@ jobs:
             bump_type = 'major'
           else:
             bump_type = 'invalid'
-            print("Not a bump version")
             sys.exit(1)
 
           with open(os.getenv('GITHUB_ENV'), 'a') as env_file:
