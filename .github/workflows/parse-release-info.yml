@@ -64,10 +64,12 @@ jobs:
         env:
           FILENAME: releases_aggregated.yaml
         run: |
-          if git diff --exit-code --quiet "${FILENAME}"; then
-            echo "No changes to commit for ${FILENAME}"
-          else
-            git add "${FILENAME}" && \
-            git commit -m "added release info YAML" && \
-            git push
-          fi
+          
+          if [ -f "${FILENAME}" ]; then
+            if git diff --exit-code --quiet "${FILENAME}"; then
+              echo "No changes to commit for ${FILENAME}, skipping."
+            else
+              git add "${FILENAME}"
+              git commit -m ""added release info YAML ${FILENAME}"
+              git push
+            fi
