@@ -348,7 +348,7 @@ def apply_transformers(
 
 @unpack_params()
 @inject_object()
-@make_list_regexable(source_df="data", make_regexable="features")
+@make_list_regexable(source_df="data", make_regexable_column="features")
 def tune_parameters(
     data: pd.DataFrame,
     tuner: Any,
@@ -376,10 +376,9 @@ def tune_parameters(
     # Fit tuner
     tuner.fit(X_train.values, y_train.values)
 
-    # Estimators that inherit from BaseEstimator have an '_estimator' attribute, but sklearn ones have an 'estimator' attribute
-    estimator = getattr(tuner, "_estimator", None) or getattr(tuner, "estimator", None)
+    estimator = getattr(tuner, "estimator", None)
     if estimator is None:
-        raise ValueError("Tuner must have either '_estimator' or 'estimator' attribute")
+        raise ValueError("Tuner must have 'estimator' attribute")
 
     return json.loads(
         json.dumps(
@@ -394,7 +393,7 @@ def tune_parameters(
 
 @unpack_params()
 @inject_object()
-@make_list_regexable(source_df="data", make_regexable="features")
+@make_list_regexable(source_df="data", make_regexable_column="features")
 def train_model(
     data: pd.DataFrame,
     estimator: BaseEstimator,
@@ -437,7 +436,7 @@ def create_model(*estimators) -> ModelWrapper:
 
 
 @inject_object()
-@make_list_regexable(source_df="data", make_regexable="features")
+@make_list_regexable(source_df="data", make_regexable_column="features")
 def get_model_predictions(
     data: pd.DataFrame,
     model: ModelWrapper,

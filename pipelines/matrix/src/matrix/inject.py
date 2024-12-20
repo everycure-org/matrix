@@ -234,7 +234,7 @@ def _extract_elements_in_list(
 
 def make_list_regexable(
     source_df: str = None,
-    make_regexable: str = None,
+    make_regexable_column: str = None,
     raise_exc: bool = False,
 ):
     """Allow processing of regex in input list.
@@ -252,7 +252,7 @@ def make_list_regexable(
         def _wrapper(
             *args,
             source_df=source_df,
-            make_regexable=make_regexable,
+            make_regexable_column=make_regexable_column,
             raise_exc=raise_exc,
             **kwargs,
         ):
@@ -272,10 +272,12 @@ def make_list_regexable(
                 if source_df not in all_args:
                     raise ValueError("Please provide source dataframe.")
 
-                if (make_regexable is not None) and (make_regexable in all_args):
+                if (make_regexable_column is not None) and (make_regexable_column in all_args):
                     df = kwargs.get(source_df) if source_df in kwargs else args[all_args.index(source_df)]
                     make_regexable_list = (
-                        kwargs.get(make_regexable) if make_regexable in kwargs else args[all_args.index(make_regexable)]
+                        kwargs.get(make_regexable_column)
+                        if make_regexable_column in kwargs
+                        else args[all_args.index(make_regexable_column)]
                     )
 
                     if make_regexable_list is not None:
@@ -285,11 +287,11 @@ def make_list_regexable(
                             list_of_regexes=make_regexable_list,
                             raise_exc=raise_exc,
                         )
-                        if make_regexable in kwargs:
-                            kwargs[make_regexable] = new_columns
+                        if make_regexable_column in kwargs:
+                            kwargs[make_regexable_column] = new_columns
                         else:
                             args = [
-                                (new_columns if i == all_args.index(make_regexable) else arg)
+                                (new_columns if i == all_args.index(make_regexable_column) else arg)
                                 for (i, arg) in enumerate(args)
                             ]
 
