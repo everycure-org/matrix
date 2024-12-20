@@ -30,11 +30,11 @@ resources:
     cpu: "4"
     memory: "12Gi"
   requests:
-    cpu: "4"
-    memory: "12Gi"
+    cpu: "1"
+    memory: "2Gi"
 
 redis:
   enabled: true
   resources:
     requests:
-      memory: "2Gi"
+      memory: "1Gi"
