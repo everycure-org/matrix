@@ -4,11 +4,12 @@ on:
   push:
     branches:
       - 'gh-actions-weekly-submit'
-#   schedule:
-#     - cron:
+  # schedule:
+  #   - cron: '30 9 * * 1' # 9:30 AM every Monday
+  #   - cron: '30 9 1 * *' # 9:30 AM on the first of every month
 
 jobs:
-  submit_data_release_weekly:
+  submit_data_release_periodically:
     runs-on: ubuntu-latest
     name: Create Draft of the Release Notes
     permissions:
@@ -41,7 +42,22 @@ jobs:
         run: |
           pip install semver
 
-      - name: Increment patch version
+      # - name: Increment patch version
+      #   if : github.event.schedule == '30 9 * * 1' # weekly bump
+      #   run: |
+      #     python -c "
+      #     import os
+      #     import semver
+
+      #     latest_tag = os.getenv('latest_tag', 'v0.0.0').lstrip('v')
+      #     version = semver.Version.parse(latest_tag)
+      #     new_version = version.bump_patch()
+      #     with open(os.getenv('GITHUB_ENV'), 'a') as env_file:
+      #       env_file.write(f'release_version=v{new_version}\n')
+      #     "
+
+      - name: Increment minor version
+        # if : github.event.schedule == '30 9 1 * *' # monthly bump
         run: |
           python -c "
           import os
@@ -49,11 +65,11 @@ jobs:
 
           latest_tag = os.getenv('latest_tag', 'v0.0.0').lstrip('v')
           version = semver.Version.parse(latest_tag)
-          new_version = version.bump_patch()
+          new_version = version.bump_minor()
           with open(os.getenv('GITHUB_ENV'), 'a') as env_file:
             env_file.write(f'release_version=v{new_version}\n')
           "
-          
+
       - name: Print release version
         run: |
           cat "$GITHUB_ENV"
