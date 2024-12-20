@@ -390,7 +390,9 @@ def tune_data():
         {
             "feature1": np.random.randn(n_samples),
             "feature2": np.random.randn(n_samples),
-            "feature_extra": np.random.randn(n_samples),
+            "feature_3": np.random.randn(n_samples),
+            "feature_4": np.random.randn(n_samples),
+            "feature5_extra": np.random.randn(n_samples),
             "target": np.random.randint(0, 2, n_samples),
             "split": ["TRAIN"] * 80 + ["TEST"] * 20,
         }
@@ -466,12 +468,26 @@ def test_tune_parameters_regex_features(tune_data: pd.DataFrame, grid_search_tun
         data=tune_data, tuner=grid_search_tuner, features=["feature.*"], target_col_name="target", enable_regex=True
     )
 
-    # Should have used all three features matching 'feature.*'
-    expected_feature_count = 3
     mask = tune_data["split"] == "TRAIN"
     train_data = tune_data[mask]
     feature_cols = train_data.filter(regex="feature.*").columns
-    assert len(feature_cols) == expected_feature_count
+    # Should have used all three features matching 'feature.*'
+    assert len(feature_cols) == 3
+
+
+def test_tune_parameters_regex_features_other_convention(
+    tune_data: pd.DataFrame, grid_search_tuner: GridSearchCV
+) -> None:
+    """Test regex feature selection."""
+    result, _ = tune_parameters(
+        data=tune_data, tuner=grid_search_tuner, features=["feature_+"], target_col_name="target", enable_regex=True
+    )
+
+    mask = tune_data["split"] == "TRAIN"
+    train_data = tune_data[mask]
+    feature_cols = train_data.filter(regex="feature_+").columns
+    # Should have used all three features matching 'feature_+'
+    assert len(feature_cols) == 2
 
 
 def test_tune_parameters_train_test_split(tune_data: pd.DataFrame, grid_search_tuner: GridSearchCV) -> None:
@@ -506,7 +522,7 @@ def test_tune_parameters_convergence_plot(tune_data: pd.DataFrame) -> None:
 
     class CustomTuner:
         def __init__(self):
-            self._estimator = LogisticRegression()
+            self.estimator = LogisticRegression()
             self.best_params_ = {"C": 1.0}
             self.convergence_plot = plt.figure()
 
