@@ -66,10 +66,13 @@ jobs:
         run: |
           
           if [ -f "${FILENAME}" ]; then
-            if git diff --exit-code --quiet "${FILENAME}"; then
-              echo "No changes to commit for ${FILENAME}, skipping."
-            else
+            # Check if the file has been modified
+            if ! git diff --exit-code --quiet "${FILENAME}"; then
               git add "${FILENAME}"
-              git commit -m ""added release info YAML ${FILENAME}"
+              git commit -m "Update ${FILENAME}"
               git push
+            else
+              echo "No changes to commit for ${FILENAME}, skipping."
             fi
+          fi
+
