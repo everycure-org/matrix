@@ -39,7 +39,7 @@ jobs:
           python-version: "3.11"
 
       - name: Install semver
-        run: |
+        run: 
           pip install semver
 
       - name: Increment patch version
@@ -90,5 +90,6 @@ jobs:
             --run-name weekly-data-release \
             --release-version "${{ env.release_version }}" \
             --pipeline data_release \
+            --headless \
             --is-test # remove this flag to run the pipeline in production
 
