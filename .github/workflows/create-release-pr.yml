@@ -110,6 +110,7 @@ jobs:
         run: |
           uv venv -p 3.11
           uv pip install -r requirements.txt
+          cd scripts
           uv run changelog_gen.py
 
       - name: Commit YAML release info file
