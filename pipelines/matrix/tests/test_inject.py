@@ -747,22 +747,18 @@ def dummy_function(df, columns, enable_regex=False):
     return df, columns
 
 
-@pytest.mark.parametrize("enable_as_kwarg", [True, False])
-def test_make_list_regexable_with_kwargs(enable_as_kwarg, dummy_pd_df):
-    """
-    This test verifies that make_list_regexable correctly handles arguments
-    whether they are passed as kwargs or positional args.
-    """
+@pytest.mark.parametrize("arg_style", ["all_positional", "all_kwargs", "mixed"])
+def test_make_list_regexable_with_varied_args(arg_style, dummy_pd_df):
     df = pd.DataFrame({"some_col": [1], "other_col": [2]})
     columns = ["^some_.*"]
     expected_result = (df, ["some_col"])
 
-    if enable_as_kwarg:
-        # enable_regex is passed as a kwarg
-        result = dummy_function(df=df, columns=columns, enable_regex=True)
-    else:
-        # enable_regex is passed as a positional arg
+    if arg_style == "all_positional":
         result = dummy_function(df, columns, True)
+    elif arg_style == "all_kwargs":
+        result = dummy_function(df=df, columns=columns, enable_regex=True)
+    elif arg_style == "mixed":
+        result = dummy_function(df, columns=columns, enable_regex=True)
 
     assert isinstance(result, tuple), "Function should return a tuple of (df, columns)"
     result_df, result_cols = result
