@@ -55,7 +55,7 @@ jobs:
       - name: Generate aggregate yaml
         working-directory: docs/scripts
         run: |
-          uv run changelo_gen.py
+          uv run changelog_gen.py
           
 
       - name: Commit YAML release info file
