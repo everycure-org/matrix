@@ -15,6 +15,18 @@ def list_json_files() -> list:
     return json_files
 
 
+def format_values(loaded_files):
+    link_tmpl = "[Link]({value})"
+    code_tmpl = "`{value}`"
+    for file in loaded_files:
+        for key, value in file.items():
+            if key.lower().endswith("link"):
+                file[key] = link_tmpl.format(value=value)
+            elif key.lower().endswith(("encoder", "estimator")):
+                file[key] = code_tmpl.format(value=value)
+    return loaded_files
+
+
 def filter_json_files(files: list) -> list:
     """Filters a list of filenames and retains files with .json extension"""
     filtered_files = [file for file in files if file.endswith(".json")]
@@ -29,6 +41,12 @@ def load_files(filepaths: list[str]) -> list[dict]:
             data = json.load(file)
             all_data.append(data)
     return all_data
+
+
+def create_semver_sortkey(filename: str) -> list:
+    version_str = filename.lstrip("v").split("-")[0]
+    sort_key = [int(u) for u in version_str.split(".")]
+    return sort_key
 
 
 def dump_to_yaml(files: list[dict]) -> str:
@@ -48,7 +66,9 @@ def main() -> None:
         raise ValueError(f"No json files found in {os.getcwd()}")
     filtered_files = filter_json_files(files)
     loaded_files = load_files(filtered_files)
-    yaml_aggr = dump_to_yaml(loaded_files)
+    sorted_files = sorted(loaded_files, key=create_semver_sortkey)
+    formatted_files = format_values(sorted_files)
+    yaml_aggr = dump_to_yaml(formatted_files)
     save_yaml(yaml_aggr)
 
 
