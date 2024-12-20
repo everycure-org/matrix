@@ -257,20 +257,26 @@ def make_list_regexable(
             **kwargs,
         ):
             argspec = getfullargspec(func)
+            all_args = argspec.args + argspec.kwonlyargs
 
-            enable_regex_index = argspec.args.index(ENABLE_REGEXABLE_KWARG)
+            # Determine if ENABLE_REGEXABLE_KWARG is in args or kwargs
+            if ENABLE_REGEXABLE_KWARG in all_args:
+                enable_regex_index = all_args.index(ENABLE_REGEXABLE_KWARG)
+                enable_regex = (
+                    args[enable_regex_index] if enable_regex_index < len(args) else kwargs.get(ENABLE_REGEXABLE_KWARG)
+                )
+            else:
+                enable_regex = kwargs.get(ENABLE_REGEXABLE_KWARG)
 
-            enable_regex = args[enable_regex_index]
             if enable_regex:
-                if source_df not in argspec.args:
+                if source_df not in all_args:
                     raise ValueError("Please provide source dataframe.")
 
-                if (make_regexable is not None) and (make_regexable in argspec.args):
-                    df_index = argspec.args.index(source_df)
-                    list_index = argspec.args.index(make_regexable)
-
-                    df = args[df_index]
-                    make_regexable_list = args[list_index]
+                if (make_regexable is not None) and (make_regexable in all_args):
+                    df = kwargs.get(source_df) if source_df in kwargs else args[all_args.index(source_df)]
+                    make_regexable_list = (
+                        kwargs.get(make_regexable) if make_regexable in kwargs else args[all_args.index(make_regexable)]
+                    )
 
                     if make_regexable_list is not None:
                         df_columns = df.columns
@@ -279,7 +285,13 @@ def make_list_regexable(
                             list_of_regexes=make_regexable_list,
                             raise_exc=raise_exc,
                         )
-                        args = [(new_columns if i == list_index else arg) for (i, arg) in enumerate(args)]
+                        if make_regexable in kwargs:
+                            kwargs[make_regexable] = new_columns
+                        else:
+                            args = [
+                                (new_columns if i == all_args.index(make_regexable) else arg)
+                                for (i, arg) in enumerate(args)
+                            ]
 
             result_df = func(*args, **kwargs)
 
