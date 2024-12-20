@@ -52,21 +52,11 @@ jobs:
           uv venv -p 3.11
           uv pip install -r requirements.txt
 
-
-      - name: Debug paths
-        working-directory: docs/src/releases/changelog_files
-        run: |
-          echo $pwd
-          echo pwd
-
       - name: Generate aggregate yaml
         working-directory: docs/scripts
         run: |
-          echo $pwd
-          echo pwd
           uv run changelog_gen.py
           
-
 
       - name: Commit YAML release info file
         working-directory: docs/src/releases/changelog_files
