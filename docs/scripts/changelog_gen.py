@@ -12,7 +12,7 @@ def locate_releases_path() -> Path:
     return changelog_path
 
 
-def list_json_files(changelog_abs_path: str) -> list:
+def list_json_files(changelog_abs_path: Path) -> list:
     """
     Returns a list of files with extension .json in the changelog files dir.
     """
@@ -40,7 +40,7 @@ def filter_json_files(files: list) -> list:
     return filtered_files
 
 
-def load_files(filepaths: list[str], changelog_abs_path: str) -> list[dict]:
+def load_files(filepaths: list[str], changelog_abs_path: Path) -> list[dict]:
     """Loads a list of json files present in the changelog_files dir"""
     all_data = []
     for filepath in filepaths:
@@ -56,6 +56,11 @@ def create_semver_sortkey(filename: str) -> list[int]:
     return sort_key
 
 
+def sort_files_on_semver(files: list[str]) -> list[str]:
+    sorted_list = sorted(files, key=lambda x: create_semver_sortkey(x["Release Name"]))
+    return sorted_list
+
+
 def dump_to_yaml(
     files: list[dict],
 ) -> str:
@@ -63,7 +68,7 @@ def dump_to_yaml(
     return yaml_data
 
 
-def save_yaml(yaml_data: str, changelog_abs_path: str) -> None:
+def save_yaml(yaml_data: str, changelog_abs_path: Path) -> None:
     with open(os.path.join(changelog_abs_path, "releases_aggregated.yaml"), "w") as file:
         file.write(yaml_data)
 
@@ -76,7 +81,7 @@ def main() -> None:
         raise ValueError(f"No json files found in {changelog_abs_path}")
     filtered_files = filter_json_files(files)
     loaded_files = load_files(filtered_files, changelog_abs_path)
-    sorted_files = sorted(loaded_files, key=lambda x: create_semver_sortkey(x["Release Name"]))
+    sorted_files = sort_files_on_semver(loaded_files)
     formatted_files = format_values(sorted_files)
     yaml_aggr = dump_to_yaml(formatted_files)
     save_yaml(yaml_aggr, changelog_abs_path)
