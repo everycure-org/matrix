@@ -269,7 +269,7 @@ def create_pipeline(**kwargs) -> Pipeline:
     we can keep a single dataframe of fold information.
 
     Pipeline is created dynamically, based on the following dimentions:
-        - Models, i.e., type of model, e.g. random forst
+        - Models, i.e., type of model, e.g. random forest
         - Folds, i.e., number of folds to train/evaluation
         - Shards, i.e., defined for ensemble models, non-ensemble models have shards = 1
     """
