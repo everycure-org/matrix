@@ -42,22 +42,8 @@ jobs:
         run: |
           pip install semver
 
-      # - name: Increment patch version
-      #   if : github.event.schedule == '30 9 * * 1' # weekly bump
-      #   run: |
-      #     python -c "
-      #     import os
-      #     import semver
-
-      #     latest_tag = os.getenv('latest_tag', 'v0.0.0').lstrip('v')
-      #     version = semver.Version.parse(latest_tag)
-      #     new_version = version.bump_patch()
-      #     with open(os.getenv('GITHUB_ENV'), 'a') as env_file:
-      #       env_file.write(f'release_version=v{new_version}\n')
-      #     "
-
-      - name: Increment minor version
-        # if : github.event.schedule == '30 9 1 * *' # monthly bump
+      - name: Increment patch version
+        # if : github.event.schedule == '30 9 * * 1' # weekly bump
         run: |
           python -c "
           import os
@@ -65,41 +51,43 @@ jobs:
 
           latest_tag = os.getenv('latest_tag', 'v0.0.0').lstrip('v')
           version = semver.Version.parse(latest_tag)
-          new_version = version.bump_minor()
+          new_version = version.bump_patch()
           with open(os.getenv('GITHUB_ENV'), 'a') as env_file:
             env_file.write(f'release_version=v{new_version}\n')
           "
+
+      # - name: Increment minor version
+      #   if : github.event.schedule == '30 9 1 * *' # monthly bump
+      #   run: |
+      #     python -c "
+      #     import os
+      #     import semver
+
+      #     latest_tag = os.getenv('latest_tag', 'v0.0.0').lstrip('v')
+      #     version = semver.Version.parse(latest_tag)
+      #     new_version = version.bump_minor()
+      #     with open(os.getenv('GITHUB_ENV'), 'a') as env_file:
+      #       env_file.write(f'release_version=v{new_version}\n')
+      #     "
 
       - name: Print release version
         run: |
           cat "$GITHUB_ENV"
           echo "New release version is '${{ env.release_version }}'"
 
-      # - name: Set up kedro project dependencies
-      #   working-directory: pipelines/matrix
-      #   run: |
-      #     pip install -r requirements.txt
+      - name: Set up kedro project dependencies
+        working-directory: pipelines/matrix
+        run: |
+          pip install -r requirements.txt
 
-      #     # remove the 'v' prefix
-      #     clean_tag="${{ env.latest_tag }}#v"
-      #     # remove the '-*' suffix
-      #     base_tag="${clean_tag%%-*}"
-      #     IFS='.' read -r major minor patch <<< "$base_tag"
-      #     # default to 0 if the patch version is not present
-      #     patch=${patch:-0}
-      #     patch=$((patch + 1))
-      #     release_version="v${major}.${minor}.${patch}"
-      #     echo "release_version=${release_version}" >> "$GITHUB_ENV"
-      #     echo "New release version is ${release_version}"
-
-      # - name: Submit the kedro pipeline
-      #   working-directory: pipelines/matrix
-      #   run:
-      #     kedro submit \
-      #     --username GH-Actions-bot \
-      #     --namespace argo-workflows \
-      #     --run-name weekly-data-release \
-      #     --release-version "${{ env.release_version }}" \
-      #     --pipeline data_release \
-      #     --is-test # remove this flag to run the pipeline in production
+      - name: Submit the kedro pipeline
+        working-directory: pipelines/matrix
+        run:
+          kedro submit \
+          --username GH-Actions-bot \
+          --namespace argo-workflows \
+          --run-name weekly-data-release \
+          --release-version "${{ env.release_version }}" \
+          --pipeline data_release \
+          --is-test # remove this flag to run the pipeline in production
 
