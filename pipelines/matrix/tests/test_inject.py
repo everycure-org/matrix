@@ -735,3 +735,36 @@ def test_unpack_params_true_decorator():
 def test_unpack_params_false_decorator():
     with pytest.raises(KeyError, match="c1"):
         my_func({"x": {"c1": 1}})
+
+
+@make_list_regexable(source_df="df", make_regexable="columns")
+def dummy_function(df, columns, enable_regex=False):
+    """
+    A simple function to test the make_list_regexable decorator when passing arguments as kwargs.
+    In theory, if make_list_regexable handled kwargs the same as positional args, this function
+    should accept enable_regex, df, and columns as kwargs without issue.
+    """
+    return df, columns
+
+
+@pytest.mark.parametrize("enable_as_kwarg", [True, False])
+def test_make_list_regexable_with_kwargs(enable_as_kwarg, dummy_pd_df):
+    """
+    This test verifies that make_list_regexable correctly handles arguments
+    whether they are passed as kwargs or positional args.
+    """
+    df = pd.DataFrame({"some_col": [1], "other_col": [2]})
+    columns = ["^some_.*"]
+    expected_result = (df, ["some_col"])
+
+    if enable_as_kwarg:
+        # enable_regex is passed as a kwarg
+        result = dummy_function(df=df, columns=columns, enable_regex=True)
+    else:
+        # enable_regex is passed as a positional arg
+        result = dummy_function(df, columns, True)
+
+    assert isinstance(result, tuple), "Function should return a tuple of (df, columns)"
+    result_df, result_cols = result
+    pd.testing.assert_frame_equal(result_df, expected_result[0])
+    assert result_cols == expected_result[1]
