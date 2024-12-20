@@ -88,6 +88,4 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    current_dir = Path(__file__).resolve().parent
-    changelog_dir = current_dir.parent / "src" / "releases" / "changelog_files"
     main()
