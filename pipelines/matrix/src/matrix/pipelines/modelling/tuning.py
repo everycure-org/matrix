@@ -71,7 +71,7 @@ class GaussianSearch(BaseEstimator, MetaEstimatorMixin):
             splitter: Splitter to use for cross-validation.
             n_calls: Number of calls to the objective function.
         """
-        self._estimator = estimator
+        self.estimator = estimator
         self._dimensions = dimensions
         self._scoring = scoring
         self._splitter = splitter

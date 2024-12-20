@@ -391,7 +391,7 @@ def pandas_df():
 def test_make_list_regexable_with_pandas(pandas_df):
     @make_list_regexable(
         source_df="df",
-        make_regexable="params_keep_cols",
+        make_regexable_column="params_keep_cols",
     )
     def accept_regexable_list(df, params_keep_cols, enable_regex):
         result_df = df[params_keep_cols]
@@ -410,7 +410,7 @@ def test_make_list_regexable_with_pandas(pandas_df):
 def test_make_list_regexable_with_explicit_names_pandas(pandas_df):
     @make_list_regexable(
         source_df="df",
-        make_regexable="params_keep_cols",
+        make_regexable_column="params_keep_cols",
     )
     def accept_regexable_list(df, params_keep_cols, enable_regex):
         result_df = df[params_keep_cols]
@@ -427,7 +427,7 @@ def test_make_list_regexable_with_explicit_names_pandas(pandas_df):
 def test_make_list_regexable_with_combination_pandas(pandas_df):
     @make_list_regexable(
         source_df="df",
-        make_regexable="params_keep_cols",
+        make_regexable_column="params_keep_cols",
     )
     def accept_regexable_list(df, params_keep_cols, enable_regex):
         result_df = df[params_keep_cols]
@@ -476,7 +476,7 @@ def spark_df(spark):
 def test_make_list_regexable_spark(spark_df):
     @make_list_regexable(
         source_df="df",
-        make_regexable="params_keep_cols",
+        make_regexable_column="params_keep_cols",
     )
     def accept_regexable_list(df, params_keep_cols, enable_regex):
         result_df = df.select(*params_keep_cols)
@@ -493,7 +493,7 @@ def test_make_list_regexable_spark(spark_df):
 def test_make_list_regexable_with_explicit_names_spark(spark_df):
     @make_list_regexable(
         source_df="df",
-        make_regexable="params_keep_cols",
+        make_regexable_column="params_keep_cols",
     )
     def accept_regexable_list(df, params_keep_cols, enable_regex):
         result_df = df.select(*params_keep_cols)
@@ -510,7 +510,7 @@ def test_make_list_regexable_with_explicit_names_spark(spark_df):
 def test_make_list_regexable_with_combination_spark(spark_df):
     @make_list_regexable(
         source_df="df",
-        make_regexable="params_keep_cols",
+        make_regexable_column="params_keep_cols",
     )
     def accept_regexable_list(df, params_keep_cols, enable_regex):
         result_df = df.select(*params_keep_cols)
@@ -527,7 +527,7 @@ def test_make_list_regexable_with_combination_spark(spark_df):
 def test_raise_exc_default_pandas(pandas_df):
     @make_list_regexable(
         source_df="df",
-        make_regexable="params_keep_cols",
+        make_regexable_column="params_keep_cols",
     )
     def accept_regexable_list(df, params_keep_cols, enable_regex):
         result_df = df[params_keep_cols]
@@ -540,7 +540,7 @@ def test_raise_exc_default_pandas(pandas_df):
 def test_raise_exc_enabled_pandas(pandas_df):
     @make_list_regexable(
         source_df="df",
-        make_regexable="params_keep_cols",
+        make_regexable_column="params_keep_cols",
         raise_exc=True,
     )
     def accept_regexable_list(df, params_keep_cols, enable_regex):
@@ -557,7 +557,7 @@ def test_raise_exc_enabled_pandas(pandas_df):
 def test_make_list_regexable_accept_args_pandas(pandas_df):
     @make_list_regexable(
         source_df="df",
-        make_regexable="params_keep_cols",
+        make_regexable_column="params_keep_cols",
     )
     def accept_regexable_list(df, params_keep_cols, enable_regex):
         result_df = df[params_keep_cols]
@@ -570,7 +570,7 @@ def test_make_list_regexable_accept_args_pandas(pandas_df):
 def test_make_list_regexable_not_present_pandas(pandas_df):
     @make_list_regexable(
         source_df="df",
-        make_regexable="params_keep_cols",
+        make_regexable_column="params_keep_cols",
     )
     def accept_regexable_list(df, enable_regex):
         result_df = df
@@ -583,7 +583,7 @@ def test_make_list_regexable_not_present_pandas(pandas_df):
 def test_make_list_regexable_empty_pandas(pandas_df):
     @make_list_regexable(
         source_df="df",
-        make_regexable="params_keep_cols",
+        make_regexable_column="params_keep_cols",
     )
     def accept_regexable_list(df, params_keep_cols, enable_regex):
         result_df = df
@@ -596,7 +596,7 @@ def test_make_list_regexable_empty_pandas(pandas_df):
 def test_make_list_regexable_source_df_not_present_pandas(pandas_df):
     @make_list_regexable(
         source_df="df",
-        make_regexable="params_keep_cols",
+        make_regexable_column="params_keep_cols",
     )
     def accept_regexable_list(params_keep_cols, enable_regex):
         params_keep_cols = params_keep_cols
@@ -612,7 +612,7 @@ def test_make_list_regexable_source_df_not_present_pandas(pandas_df):
 def test_make_list_regexable_with_wrong_input_type_pandas(pandas_df):
     @make_list_regexable(
         source_df="df",
-        make_regexable="params_keep_cols",
+        make_regexable_column="params_keep_cols",
     )
     def accept_regexable_list(df, params_keep_cols, enable_regex):
         result_df = df[params_keep_cols]
@@ -737,7 +737,7 @@ def test_unpack_params_false_decorator():
         my_func({"x": {"c1": 1}})
 
 
-@make_list_regexable(source_df="df", make_regexable="columns")
+@make_list_regexable(source_df="df", make_regexable_column="columns")
 def dummy_function(df, columns, enable_regex=False):
     """
     A simple function to test the make_list_regexable decorator when passing arguments as kwargs.
