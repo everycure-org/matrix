@@ -8,6 +8,11 @@ on:
   #   - cron: '30 9 * * 1' # 9:30 AM every Monday
   #   - cron: '30 9 1 * *' # 9:30 AM on the first of every month
 
+env:
+  project_id: 'mtrx-hub-dev-3of'
+  workload_identity_provider: 'projects/938607797672/locations/global/workloadIdentityPools/matrix-pool-rw/providers/matrix-gh-provider-rw'
+  service_account: 'sa-github-actions-rw@mtrx-hub-dev-3of.iam.gserviceaccount.com'
+
 jobs:
   submit_data_release_periodically:
     runs-on: ubuntu-latest
@@ -74,6 +79,13 @@ jobs:
         run: |
           cat "$GITHUB_ENV"
           echo "New release version is '${{ env.release_version }}'"
+          
+      - name: Authenticate with Google Cloud
+        uses: 'google-github-actions/auth@v2'
+        with:
+          project_id: ${{env.project_id}}
+          workload_identity_provider: ${{env.workload_identity_provider}}
+          service_account: ${{env.service_account}}
 
       - name: Set up kedro project dependencies
         working-directory: pipelines/matrix
