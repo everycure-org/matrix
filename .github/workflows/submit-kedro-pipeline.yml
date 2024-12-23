@@ -52,16 +52,18 @@ jobs:
       - name: Increment patch version
         # if : github.event.schedule == '30 9 * * 1' # weekly bump
         run: |
-          python -c "
-          import os
-          import semver
+          # python -c "
+          # import os
+          # import semver
 
-          latest_tag = os.getenv('latest_tag', 'v0.0.0').lstrip('v')
-          version = semver.Version.parse(latest_tag)
-          new_version = version.bump_patch()
-          with open(os.getenv('GITHUB_ENV'), 'a') as env_file:
-            env_file.write(f'release_version=v{new_version}\n')
-          "
+          # latest_tag = os.getenv('latest_tag', 'v0.0.0').lstrip('v')
+          # version = semver.Version.parse(latest_tag)
+          # new_version = version.bump_patch()
+          # with open(os.getenv('GITHUB_ENV'), 'a') as env_file:
+          #   env_file.write(f'release_version=v{new_version}\n')
+          # "
+          cd ..
+          python run scripts/patch_bump.py
 
       # - name: Increment minor version
       #   if : github.event.schedule == '30 9 1 * *' # monthly bump
@@ -82,35 +84,36 @@ jobs:
           cat "$GITHUB_ENV"
           echo "New release version is '${{ env.release_version }}'"
 
-      - name: Authenticate with Google Cloud
-        uses: 'google-github-actions/auth@v2'
-        with:
-          project_id: ${{env.project_id}}
-          workload_identity_provider: ${{env.workload_identity_provider}}
-          service_account: ${{env.service_account}}
+      # - name: Authenticate with Google Cloud
+      #   uses: 'google-github-actions/auth@v2'
+      #   with:
+      #     project_id: ${{env.project_id}}
+      #     workload_identity_provider: ${{env.workload_identity_provider}}
+      #     service_account: ${{env.service_account}}
 
-      - uses: simenandre/setup-gke-gcloud-auth-plugin@v1
+      # - uses: simenandre/setup-gke-gcloud-auth-plugin@v1
 
-      - uses: google-github-actions/get-gke-credentials@v1
-        with:
-          cluster_name: ${{env.cluster}}
-          location: ${{env.region}}
+      # - uses: google-github-actions/get-gke-credentials@v1
+      #   with:
+      #     cluster_name: ${{env.cluster}}
+      #     location: ${{env.region}}
 
-      - name: Check gcl
-        run: |
-          which gcloud  
-          gcloud config list
+      # - name: Check gcl
+      #   run: |
+      #     which gcloud  
+      #     gcloud config list
 
-      - name: Authenticate kubectl
-        run: |
-          gcloud container clusters get-credentials ${{env.cluster}} \
-            --project ${{env.project_id}} \
-            --region ${{env.region}} 
+      # - name: Authenticate kubectl
+      #   run: |
+      #     gcloud container clusters get-credentials ${{env.cluster}} \
+      #       --project ${{env.project_id}} \
+      #       --region ${{env.region}} 
 
-      - name: Check kubectl
-        run: |
-          kubectl get nodes
-          kubectl get ns
+      # - name: Check kubectl
+      #   run: |
+      #     kubectl get nodes
+      #     kubectl get ns
+
       # - name: Set up kedro project dependencies
       #   working-directory: pipelines/matrix
       #   run: |
@@ -125,7 +128,8 @@ jobs:
       #       --namespace argo-workflows \
       #       --run-name auto-kg-release \
       #       --release-version "${{ env.release_version }}" \
-      #       --pipeline kg_release \
+      #       --pipeline ingestion \
       #       --headless \
-      #       --is-test # remove this flag to run the pipeline in production
+      #       --is-test \
+      #       --run-from-gh
 
