@@ -89,12 +89,19 @@ jobs:
           workload_identity_provider: ${{env.workload_identity_provider}}
           service_account: ${{env.service_account}}
 
+      - uses: simenandre/setup-gke-gcloud-auth-plugin@v1
+
+      - uses: google-github-actions/get-gke-credentials@v1
+        with:
+          cluster_name: ${{env.cluster}}
+          location: ${{env.region}}
+
       - name: Check gcl
         run: |
           which gcloud  
           gcloud config list
 
-      - name: Authenticate with K8s
+      - name: Authenticate kubectl
         run: |
           gcloud container clusters get-credentials ${{env.cluster}} \
             --project ${{env.project_id}} \
