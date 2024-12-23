@@ -102,10 +102,26 @@ jobs:
           chmod +x argo-linux-amd64
           sudo mv argo-linux-amd64 /usr/local/bin/argo
           argo version
+      
+      - name: Install requirements
+        working-directory: pipelines/matrix
+        run: 
           pip install -r requirements.txt
+      
+      - name: Install docker-compose
+        working-directory: pipelines/matrix
+        run: 
           pip install docker docker-compose
+      
+      - name: Install java
+        working-directory: pipelines/matrix
+        run: |
           pip install openjdk@11
           pip link --overwrite openjdk@11
+      
+      - name: Run make
+        working-directory: pipelines/matrix
+        run:
           make
 
       - name: Submit the kedro pipeline
@@ -121,4 +137,3 @@ jobs:
             --is-test \
             --headless \
             --run-from-gh
-
