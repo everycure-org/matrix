@@ -97,7 +97,6 @@ jobs:
       - name: Set up kedro project dependencies
         working-directory: pipelines/matrix
         run: |
-          pip install -r requirements.txt
           curl -sLO https://github.com/argoproj/argo-workflows/releases/latest/download/argo-linux-amd64.gz
           gunzip argo-linux-amd64.gz
           chmod +x argo-linux-amd64
@@ -106,6 +105,8 @@ jobs:
           pip install docker docker-compose
           pip install openjdk@11
           pip link --overwrite openjdk@11
+          make
+          pip install -r requirements.txt
 
       - name: Submit the kedro pipeline
         working-directory: pipelines/matrix
