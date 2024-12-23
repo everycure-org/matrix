@@ -135,8 +135,7 @@ def _submit(
     try:
         console.rule("[bold blue]Submitting Workflow")
 
-        if not run_from_gh:
-            check_dependencies(verbose=verbose)
+        check_dependencies(verbose=verbose, run_from_gh=run_from_gh)
 
         argo_template = build_argo_template(run_name, release_version, username, namespace, pipeline_obj, is_test=is_test, )
 
@@ -264,7 +263,7 @@ def command_exists(command: str) -> bool:
     return run_subprocess(f"which {command}", check=False).returncode == 0
 
 
-def check_dependencies(verbose: bool):
+def check_dependencies(verbose: bool, run_from_gh: bool):
     """Check and set up gcloud and kubectl dependencies.
 
     This function verifies that gcloud and kubectl are installed and properly configured.
@@ -286,17 +285,17 @@ def check_dependencies(verbose: bool):
         run_subprocess("gcloud components install kubectl")
 
     # Authenticate gcloud
-    active_account = (
-        run_subprocess(
-            "gcloud auth list --filter=status:ACTIVE --format=value'(ACCOUNT)'",
+    if not run_from_gh:
+        active_account = (
+            run_subprocess(
+                "gcloud auth list --filter=status:ACTIVE --format=value'(ACCOUNT)'",
+            )
+            .stdout.strip()
+            .split("\n")[0]
         )
-        .stdout.strip()
-        .split("\n")[0]
-    )
-
-    if not active_account:
-        console.print("Authenticating gcloud...")
-        run_subprocess("gcloud auth login", stream_output=verbose)
+        if not active_account:
+            console.print("Authenticating gcloud...")
+            run_subprocess("gcloud auth login", stream_output=verbose)
 
     # Configure kubectl
     project = "mtrx-hub-dev-3of"
