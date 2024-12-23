@@ -22,25 +22,24 @@ class QaulityControl(abc.ABC):
         ...
 
 
-class CountColumnValuesQualityControl(QaulityControl):
+class CountValuesQualityControl(QaulityControl):
+    def run(self, df: ps.DataFrame) -> ps.DataFrame:
+        return df.count()
+
+
+class CountColumnValuesAggregatedQualityControl(QaulityControl):
     """Quality control suite to compute value counts."""
 
     # FUTURE: Split into 2 quality control classes, 1 with column and one with expr?
-    def __init__(self, column: str, expr: str, filter_expr: str) -> None:
+    def __init__(self, expr: str, filter_expr: str) -> None:
         """
         Initialize the CountColumn values quality control.
 
         Args:
-            column: (str) Column to perform counts on
-            expr: (str) If specified, output of expression will be used to count on
+            expr: (str) expression to apply before grouping
             filter_expr: (str) If specified, filter expression is executed _before_ counts
         """
-        if expr:
-            self._expr = F.expr(expr)
-        else:
-            # If no expression specified, we fallaback to the input column
-            self._expr = F.col(column)
-
+        self._expr = F.expr(expr)
         self._filter_expr = filter_expr
 
     def run(self, df: ps.DataFrame) -> ps.DataFrame:

@@ -11,12 +11,11 @@ quality_control:
     # Count values in category column
     category_value_count:
       object: matrix.pipelines.quality_control.quality_control.CountColumnValuesQualityControl
-      column: category
+      expr: category
 
   integration:
     # TODO: Register other suites here
     normalization_count_fail:
       object: matrix.pipelines.quality_control.quality_control.CountColumnValuesQualityControl
-      column: id
-      expr: split(id, ':')[0]
+      expr: id #split(id, ':')[0]
       filter_expr: normalization_success = False
