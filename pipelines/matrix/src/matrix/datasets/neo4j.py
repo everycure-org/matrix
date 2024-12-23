@@ -1,9 +1,9 @@
 import time
 import logging
-from typing import Any, Dict, Tuple
+from typing import Any, Tuple
 from copy import deepcopy
 
-from neo4j import GraphDatabase, TRUST_ALL_CERTIFICATES
+from neo4j import GraphDatabase
 from graphdatascience import GraphDataScience
 from pyspark.sql import DataFrame, SparkSession
 
@@ -13,36 +13,6 @@ from kedro_datasets.spark import SparkDataset
 from refit.v1.core.inject import _parse_for_objects
 
 logger = logging.Logger(__name__)
-
-
-class GraphDBDriver:
-    """Custom GDB Driver
-
-    Driver that alows for differentiating between encrypted and non-encrypted traffic, as
-    this is not supported ouf of the box through the default driver.
-    """
-
-    def driver(self, endpoint: str, auth: tuple, database: str):
-        """Instantiate driver
-
-        Args:
-            endpoint: str
-            auth: tuple
-            database: str
-        Return:
-            Instantiates Neo4J GDB driver with correct encryption options.
-        """
-        if "+s" in endpoint:
-            return GraphDatabase.driver(
-                endpoint.replace("+s", ""),
-                auth=tuple(auth),
-                trust=TRUST_ALL_CERTIFICATES,
-                encrypted=True,
-                database=database,
-            )
-
-        else:
-            return GraphDatabase.driver(endpoint, auth=tuple(auth), database=database)
 
 
 class GraphDS(GraphDataScience):
@@ -60,7 +30,7 @@ class GraphDS(GraphDataScience):
         database: str | None = None,
     ):
         """Create `GraphDS` instance."""
-        driver = GraphDBDriver().driver(endpoint, auth=tuple(auth), database=database)
+        driver = GraphDatabase.driver(endpoint, auth=tuple(auth), database=database)
         super().__init__(driver)
 
 
@@ -73,10 +43,6 @@ class Neo4JSparkDataset(SparkDataset):
 
     DEFAULT_LOAD_ARGS: dict[str, Any] = {}
     DEFAULT_SAVE_ARGS: dict[str, Any] = {}
-    DEFAULT_SSL_ARGS: dict[str, Any] = {
-        "encryption.enabled": "true",
-        "encryption.trust.strategy": "TRUST_ALL_CERTIFICATES",
-    }
 
     def __init__(  # noqa: PLR0913
         self,
@@ -143,12 +109,7 @@ class Neo4JSparkDataset(SparkDataset):
 
         self._load_args = deepcopy(load_args) or {}
         self._df_schema = self._load_args.pop("schema", None)
-
-        # NOTE: It's not possible to set certificates with the bolt+s
-        # protocol with the Neo4J driver. Hence were traslating this ourselves.
-        self._fq_url = url
-        self._ssl_enabled = True if "+s" in url else False
-        self._url = url.replace("+s", "")
+        self._url = url
 
         super().__init__(
             filepath="filepath",
@@ -177,7 +138,7 @@ class Neo4JSparkDataset(SparkDataset):
             credentials.get("authentication.basic.password"),
         )
 
-        with GraphDBDriver().driver(
+        with GraphDatabase.driver(
             url,
             auth=creds,
             database="system",
@@ -198,12 +159,6 @@ class Neo4JSparkDataset(SparkDataset):
         dbs = [record["name"] for record in result[0] if record["name"] != "system"]
         return dbs
 
-    def get_ssl_config(self) -> Dict[str, Any]:
-        if self._ssl_enabled:
-            return self.DEFAULT_SSL_ARGS
-
-        return {}
-
     def _load(self) -> Any:
         spark_session = SparkSession.builder.getOrCreate()
 
@@ -211,7 +166,6 @@ class Neo4JSparkDataset(SparkDataset):
             spark_session.read.format("org.neo4j.spark.DataSource")
             .option("database", self._database)
             .option("url", self._url)
-            .options(**self.get_ssl_config())
             .options(**self._credentials)
             .options(**self._load_args)
         )
@@ -229,14 +183,13 @@ class Neo4JSparkDataset(SparkDataset):
             else:
                 # Create database
                 overwrite = self._save_args.pop("mode", "append") == "overwrite"
-                self._create_db(self._fq_url, self._database, overwrite, self._credentials)
+                self._create_db(self._url, self._database, overwrite, self._credentials)
 
                 # Write dataset
                 (
                     data.write.format("org.neo4j.spark.DataSource")
                     .option("database", self._database)
                     .option("url", self._url)
-                    .options(**self.get_ssl_config())
                     .options(**self._credentials)
                     .options(**self._save_args)
                     .save(**{"mode": "overwrite"})
