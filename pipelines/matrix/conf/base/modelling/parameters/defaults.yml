@@ -10,7 +10,6 @@ modelling.disease_types:
 
 
 modelling.splitter:
-
   # Defines strategy for cross validation. Can be a function from sklearn.model_selection
   # or our custom DrugStratifiedSplit
   # object: matrix.pipelines.modelling.model_selection.DrugStratifiedSplit
@@ -18,6 +17,7 @@ modelling.splitter:
   object: sklearn.model_selection.StratifiedShuffleSplit
   test_size: 0.1
   random_state: ${globals:random_state}
+  n_splits: ${setting:cross_validation.n_splits}
 
 # Aggregation functions for cross-validation
 modelling.aggregation_functions:

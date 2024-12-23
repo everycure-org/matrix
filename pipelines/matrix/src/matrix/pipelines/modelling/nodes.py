@@ -1,5 +1,5 @@
 import logging
-from typing import Any, Dict, List, Union, Tuple
+from typing import Any, Dict, List, Union, Tuple, Optional
 import pandas as pd
 import numpy as np
 import json
@@ -20,7 +20,6 @@ from refit.v1.core.inline_primary_key import primary_key
 from refit.v1.core.unpack import unpack_params
 from refit.v1.core.make_list_regexable import make_list_regexable
 
-from matrix import settings
 from matrix.datasets.graph import KnowledgeGraph
 from matrix.datasets.pair_generator import SingleLabelPairGenerator
 from .model import ModelWrapper
@@ -184,56 +183,13 @@ def prefilter_nodes(
     return df
 
 
-@inject_object()
-def make_folds(
-    data: DataFrame,
-    splitter: BaseCrossValidator,
-) -> Tuple[pd.DataFrame]:
-    """Function to generate folds for modelling.
-
-    NOTE: This currently loads the `n_splits` from the settings, as this
-    pipeline is generated dynamically to allow parallelization.
-
-         _______
-       .-       -.
-      /           \
-     |,  .-.  .-.  ,|
-     | )(_o/  \o_)( |
-     |/     /\     \|
-     (_     ^^     _)
-      \__|IIIIII|__/
-       | \IIIIII/ |
-       \          /
-        `--------`
-
-    Args:
-        data: dataframe
-        splitter: splitter
-    Returns:
-        Tuple of dataframes with data for each fold, dfs 1-k are 
-        dfs with data for folds, df k+1 is training data only.
-    """
-
-    # Set number of splits
-    cross_validation_settings = settings.DYNAMIC_PIPELINES_MAPPING.get("cross_validation")
-    n_splits = cross_validation_settings.get("n_splits")
-    splitter.n_splits = n_splits
-    all_data_frames = make_splits(data, splitter)
-
-    # Add "training data only" fold
-    full_data = data.copy()
-    full_data.loc[:, "split"] = "TRAIN"
-    return all_data_frames + tuple([full_data])
-
-
+@has_schema({"split": "object", "fold": "numeric"}, allow_subset=True)
 @inject_object()
 def make_splits(
     data: DataFrame,
     splitter: BaseCrossValidator,
-) -> Tuple[pd.DataFrame]:
+) -> pd.DataFrame:
     """Function to split data.
-
-    FUTURE: Update to produce single DF only, where we add a column identifying the fold.
 
     Args:
         kg: kg dataset with nodes
@@ -253,7 +209,52 @@ def make_splits(
         fold_data.loc[test_index, "split"] = "TEST"
         all_data_frames.append(fold_data)
 
-    return tuple(all_data_frames)
+    return pd.concat([df.assign(fold=i) for i, df in enumerate(all_data_frames)], ignore_index=True)
+
+
+# TODO: Maybe a little too complex to have in a decorator?
+def filter_fold(df_name: str):
+    """
+    Decorator to filter a DataFrame by fold index.
+
+    Args:
+        df_name (str): The name of the parameter that holds the DataFrame.
+    """
+
+    def decorator(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            # Retrieve the DataFrame from kwargs
+            dataframe = kwargs.get(df_name)
+            if dataframe is None:
+                raise ValueError(f"The DataFrame '{df_name}' was not provided in kwargs.")
+
+            # Ensure the DataFrame has a 'fold' column
+            if "fold" not in dataframe.columns:
+                raise ValueError("The DataFrame must have a 'fold' column.")
+
+            # Retrieve fold_idx and num_folds
+            fold = kwargs.get("fold")
+            num_folds = kwargs.get("num_folds")
+            if fold is None or num_folds is None:
+                logger.warn("No fold information specified, returning full dataframe.")
+                return func(*args, **kwargs)
+
+            # Regular fields subset the data according to folds
+            if fold < num_folds:
+                filtered_df = dataframe[dataframe["fold"] == fold]
+                kwargs[df_name] = filtered_df  # Update DataFrame in kwargs
+            else:
+                # Fold k contains full training data
+                filtered_df = dataframe[dataframe["split"] == "TRAIN"]
+                kwargs[df_name] = filtered_df
+
+            # Call the original function
+            return func(*args, **kwargs)
+
+        return wrapper
+
+    return decorator
 
 
 @has_schema(
@@ -267,10 +268,9 @@ def make_splits(
     allow_subset=True,
 )
 @inject_object()
+@filter_fold(df_name="splits")
 def create_model_input_nodes(
-    graph: KnowledgeGraph,
-    splits: pd.DataFrame,
-    generator: SingleLabelPairGenerator,
+    graph: KnowledgeGraph, splits: pd.DataFrame, generator: SingleLabelPairGenerator, fold: int, num_folds: int
 ) -> pd.DataFrame:
     """Function to enrich the splits with drug-disease pairs.
 
@@ -282,10 +282,12 @@ def create_model_input_nodes(
         graph: Knowledge graph.
         splits: Data splits.
         generator: SingleLabelPairGenerator instance.
-
+        fold: fold to process
+        num_folds: number of folds
     Returns:
         Data with enriched splits.
     """
+
     generated = generator.generate(graph, splits)
     generated["split"] = "TRAIN"
 
@@ -293,9 +295,12 @@ def create_model_input_nodes(
 
 
 @inject_object()
+@filter_fold(df_name="data")
 def fit_transformers(
     data: pd.DataFrame,
     transformers: Dict[str, Dict[str, Union[_BaseImputer, List[str]]]],
+    fold: int,
+    num_folds: int,
     target_col_name: str = None,
 ) -> pd.DataFrame:
     """Function fit transformers to the data.
@@ -328,9 +333,12 @@ def fit_transformers(
 
 
 @inject_object()
+@filter_fold(df_name="data")
 def apply_transformers(
     data: pd.DataFrame,
     transformers: Dict[str, Dict[str, Union[_BaseImputer, List[str]]]],
+    fold: Optional[int] = None,
+    num_folds: Optional[int] = None,
 ) -> pd.DataFrame:
     """Function apply fitted transformers to the data.
 
