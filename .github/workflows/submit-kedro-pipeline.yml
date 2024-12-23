@@ -103,6 +103,9 @@ jobs:
           chmod +x argo-linux-amd64
           sudo mv argo-linux-amd64 /usr/local/bin/argo
           argo version
+          pip install docker docker-compose
+          pip install openjdk@11
+          pip link --overwrite openjdk@11
 
       - name: Submit the kedro pipeline
         working-directory: pipelines/matrix
