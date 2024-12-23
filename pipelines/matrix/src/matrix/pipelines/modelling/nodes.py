@@ -354,7 +354,6 @@ def tune_parameters(
     tuner: Any,
     features: List[str],
     target_col_name: str,
-    enable_regex: str = True,
 ) -> Tuple[Dict,]:
     """Function to apply hyperparameter tuning.
 
@@ -363,7 +362,6 @@ def tune_parameters(
         tuner: Tuner object.
         features: List of features, may be regex specified.
         target_col_name: Target column name.
-        enable_regex: Enable regex for features.
 
     Returns:
         Refit compatible dictionary of best parameters.
@@ -399,7 +397,6 @@ def train_model(
     estimator: BaseEstimator,
     features: List[str],
     target_col_name: str,
-    enable_regex: bool = True,
 ) -> Dict:
     """Function to train model on the given data.
 
@@ -408,7 +405,6 @@ def train_model(
         estimator: sklearn compatible estimator.
         features: List of features, may be regex specified.
         target_col_name: Target column name.
-        enable_regex: Enable regex for features.
 
     Returns:
         Trained model.
@@ -443,7 +439,6 @@ def get_model_predictions(
     features: List[str],
     target_col_name: str,
     prediction_suffix: str = "_pred",
-    enable_regex: str = True,
 ) -> pd.DataFrame:
     """Function to run model class predictions on input data.
 
@@ -453,7 +448,6 @@ def get_model_predictions(
         features: List of features, may be regex specified.
         target_col_name: Target column name.
         prediction_suffix: Suffix to add to the prediction column, defaults to '_pred'.
-        enable_regex: Enable regex for features.
 
     Returns:
         Data with predictions.

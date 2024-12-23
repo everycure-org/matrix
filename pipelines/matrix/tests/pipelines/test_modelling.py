@@ -388,8 +388,8 @@ def tune_data():
 
     data = pd.DataFrame(
         {
-            "feature1": np.random.randn(n_samples),
-            "feature2": np.random.randn(n_samples),
+            "featureOne_1": np.random.randn(n_samples),
+            "featureOne_2": np.random.randn(n_samples),
             "feature_3": np.random.randn(n_samples),
             "feature_4": np.random.randn(n_samples),
             "feature5_extra": np.random.randn(n_samples),
@@ -435,9 +435,8 @@ def test_tune_parameters(tune_data: pd.DataFrame, tuner_config: dict):
     result, plot = tune_parameters(
         data=tune_data,
         tuner=tuner,
-        features=["feature1", "feature2"],
+        features=["featureOne_1", "featureOne_2"],
         target_col_name="target",
-        enable_regex=False,
     )
 
     # Check return value structure
@@ -465,14 +464,14 @@ def test_tune_parameters(tune_data: pd.DataFrame, tuner_config: dict):
 def test_tune_parameters_regex_features(tune_data: pd.DataFrame, grid_search_tuner: GridSearchCV) -> None:
     """Test regex feature selection."""
     result, _ = tune_parameters(
-        data=tune_data, tuner=grid_search_tuner, features=["feature.*"], target_col_name="target", enable_regex=True
+        data=tune_data, tuner=grid_search_tuner, features=["featureOne.*"], target_col_name="target"
     )
 
     mask = tune_data["split"] == "TRAIN"
     train_data = tune_data[mask]
-    feature_cols = train_data.filter(regex="feature.*").columns
-    # Should have used all three features matching 'feature.*'
-    assert len(feature_cols) == 3
+    feature_cols = train_data.filter(regex="featureOne.*").columns
+    # Should have used all three features matching 'featureOne.*'
+    assert len(feature_cols) == 2
 
 
 def test_tune_parameters_regex_features_other_convention(
@@ -480,7 +479,7 @@ def test_tune_parameters_regex_features_other_convention(
 ) -> None:
     """Test regex feature selection."""
     result, _ = tune_parameters(
-        data=tune_data, tuner=grid_search_tuner, features=["feature_+"], target_col_name="target", enable_regex=True
+        data=tune_data, tuner=grid_search_tuner, features=["feature_+"], target_col_name="target"
     )
 
     mask = tune_data["split"] == "TRAIN"
@@ -497,7 +496,7 @@ def test_tune_parameters_train_test_split(tune_data: pd.DataFrame, grid_search_t
     mock_tuner.best_params_ = {"C": 1.0, "max_iter": 100}
 
     result, _ = tune_parameters(
-        data=tune_data, tuner=mock_tuner, features=["feature1", "feature2"], target_col_name="target"
+        data=tune_data, tuner=mock_tuner, features=["featureOne_1", "featureOne_2"], target_col_name="target"
     )
 
     # Verify only training data was used
@@ -511,7 +510,7 @@ def test_tune_parameters_train_test_split(tune_data: pd.DataFrame, grid_search_t
 
 def test_tune_parameters_invalid_features(tune_data: pd.DataFrame, grid_search_tuner: GridSearchCV) -> None:
     """Test handling of invalid feature names."""
-    with pytest.raises(KeyError):
+    with pytest.raises(ValueError):
         tune_parameters(
             data=tune_data, tuner=grid_search_tuner, features=["nonexistent_feature"], target_col_name="target"
         )
@@ -530,7 +529,7 @@ def test_tune_parameters_convergence_plot(tune_data: pd.DataFrame) -> None:
             return self
 
     custom_tuner = CustomTuner()
-    _, plot = tune_parameters(data=tune_data, tuner=custom_tuner, features=["feature1"], target_col_name="target")
+    _, plot = tune_parameters(data=tune_data, tuner=custom_tuner, features=["featureOne_1"], target_col_name="target")
 
     assert isinstance(plot, plt.Figure)
     assert plot == custom_tuner.convergence_plot

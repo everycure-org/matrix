@@ -10,7 +10,6 @@ from typing import Any, Dict, List, Tuple
 OBJECT_KW = "object"
 INSTANTIATE_KW = "instantiate"
 UNPACK_KW = "unpack"
-ENABLE_REGEXABLE_KWARG = "enable_regex"
 
 logger = logging.getLogger(__file__)
 
@@ -259,41 +258,36 @@ def make_list_regexable(
             argspec = getfullargspec(func)
             all_args = argspec.args + argspec.kwonlyargs
 
-            # Determine if ENABLE_REGEXABLE_KWARG is in args or kwargs
-            if ENABLE_REGEXABLE_KWARG in all_args:
-                enable_regex_index = all_args.index(ENABLE_REGEXABLE_KWARG)
-                enable_regex = (
-                    args[enable_regex_index] if enable_regex_index < len(args) else kwargs.get(ENABLE_REGEXABLE_KWARG)
+            if source_df not in all_args:
+                raise ValueError("Please provide source dataframe.")
+
+            if (make_regexable_column is not None) and (make_regexable_column in all_args):
+                df = kwargs.get(source_df) if source_df in kwargs else args[all_args.index(source_df)]
+                make_regexable_list = (
+                    kwargs.get(make_regexable_column)
+                    if make_regexable_column in kwargs
+                    else args[all_args.index(make_regexable_column)]
                 )
-            else:
-                enable_regex = kwargs.get(ENABLE_REGEXABLE_KWARG)
 
-            if enable_regex:
-                if source_df not in all_args:
-                    raise ValueError("Please provide source dataframe.")
-
-                if (make_regexable_column is not None) and (make_regexable_column in all_args):
-                    df = kwargs.get(source_df) if source_df in kwargs else args[all_args.index(source_df)]
-                    make_regexable_list = (
-                        kwargs.get(make_regexable_column)
-                        if make_regexable_column in kwargs
-                        else args[all_args.index(make_regexable_column)]
+                if make_regexable_list is not None:
+                    df_columns = df.columns
+                    new_columns = _extract_elements_in_list(
+                        full_list_of_columns=df_columns,
+                        list_of_regexes=make_regexable_list,
+                        raise_exc=raise_exc,
                     )
-
-                    if make_regexable_list is not None:
-                        df_columns = df.columns
-                        new_columns = _extract_elements_in_list(
-                            full_list_of_columns=df_columns,
-                            list_of_regexes=make_regexable_list,
-                            raise_exc=raise_exc,
+                    if not new_columns:
+                        raise ValueError(
+                            f"No columns were selected using the provided regex patterns: {make_regexable_list} from available columns: {df_columns}"
                         )
-                        if make_regexable_column in kwargs:
-                            kwargs[make_regexable_column] = new_columns
-                        else:
-                            args = [
-                                (new_columns if i == all_args.index(make_regexable_column) else arg)
-                                for (i, arg) in enumerate(args)
-                            ]
+
+                    if make_regexable_column in kwargs:
+                        kwargs[make_regexable_column] = new_columns
+                    else:
+                        args = [
+                            (new_columns if i == all_args.index(make_regexable_column) else arg)
+                            for (i, arg) in enumerate(args)
+                        ]
 
             result_df = func(*args, **kwargs)
 
