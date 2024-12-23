@@ -121,6 +121,8 @@ diagnostics:
 	-uv --version || echo "UV is not installed."
 	echo "\nCheck Virtual Environment (if applicable):"
 	-uv run which python || echo "Python is not in PATH."
+	echo "\nKubectl permissions:"
+	-kubectl auth can-i --list
 	echo "\nPython Version:"
 	-uv run python3 --version || echo "Python is not installed."
 	echo "\nSystem Information:"
