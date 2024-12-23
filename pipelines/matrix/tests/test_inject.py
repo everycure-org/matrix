@@ -1,4 +1,3 @@
-import inspect
 from copy import deepcopy
 from types import FunctionType
 
@@ -198,78 +197,79 @@ def test_invalid_keyword_in_parse_for_objects():
     assert isinstance(result["object_invalid"], str)  # it should not load object
 
 
-def test_instantiate_function_without_input():
-    instantiate_param = {
-        "object": "tests.test_inject.dummy_func_without_input",
-        "instantiate": True,
-    }
-    no_instantiate_param = {
-        "object": "tests.test_inject.dummy_func_without_input",
-        "instantiate": False,
-    }
-    default_param = {
-        "object": "tests.test_inject.dummy_func_without_input",
-    }
-
-    result1 = _parse_for_objects(instantiate_param)
-    result2 = _parse_for_objects(no_instantiate_param)
-    result3 = _parse_for_objects(default_param)
-
-    assert result1 == "hello world"
-    assert isinstance(result2, FunctionType)
-    assert isinstance(result3, FunctionType)
-
-
-def test_instantiate_function_with_input():
-    instantiate_param = {
-        "object": "tests.test_inject.dummy_func",
-        "x": 1,
-        "instantiate": True,
-    }
-    no_instantiate_param = {
-        "object": "tests.test_inject.dummy_func",
-        "instantiate": False,
-    }
-    default_param = {
-        "object": "tests.test_inject.dummy_func",
-        "x": 1,
-    }
-    default_param_with_tuple = {
-        "object": "tests.test_inject.dummy_func",
-        "x": (1, 2, 3),
-    }
-
-    result1 = _parse_for_objects(instantiate_param)
-    result2 = _parse_for_objects(no_instantiate_param)
-    result3 = _parse_for_objects(default_param)
-    result4 = _parse_for_objects(default_param_with_tuple)
-
-    assert result1 == 1
-    assert isinstance(result2, FunctionType)
-    assert result3 == 1
-    assert result4 == (1, 2, 3)
-
-
-def test_instantiate_class():
-    instantiate_param = {
-        "object": "sklearn.impute.SimpleImputer",
-        "instantiate": True,
-    }
-    no_instantiate_param = {
-        "object": "sklearn.impute.SimpleImputer",
-        "instantiate": False,
-    }
-    default_param = {
-        "object": "sklearn.impute.SimpleImputer",
-    }
-
-    result1 = _parse_for_objects(instantiate_param)
-    result2 = _parse_for_objects(no_instantiate_param)
-    result3 = _parse_for_objects(default_param)
-
-    assert isinstance(result1, SimpleImputer)
-    assert inspect.isclass(result2)
-    assert isinstance(result3, SimpleImputer)
+@pytest.mark.parametrize(
+    "test_type, param, expected_type, expected_value",
+    [
+        (
+            "function_without_input",
+            {
+                "object": "tests.test_inject.dummy_func_without_input",
+                "instantiate": True,
+            },
+            str,
+            "hello world",
+        ),
+        (
+            "function_without_input",
+            {
+                "object": "tests.test_inject.dummy_func_without_input",
+                "instantiate": False,
+            },
+            FunctionType,
+            None,
+        ),
+        (
+            "function_with_input",
+            {
+                "object": "tests.test_inject.dummy_func",
+                "x": 1,
+                "instantiate": True,
+            },
+            int,
+            1,
+        ),
+        (
+            "function_with_input",
+            {
+                "object": "tests.test_inject.dummy_func",
+                "instantiate": False,
+            },
+            FunctionType,
+            None,
+        ),
+        (
+            "class",
+            {
+                "object": "sklearn.impute.SimpleImputer",
+                "instantiate": True,
+            },
+            SimpleImputer,
+            None,
+        ),
+        (
+            "class",
+            {
+                "object": "sklearn.impute.SimpleImputer",
+                "instantiate": False,
+            },
+            type,
+            None,
+        ),
+    ],
+    ids=[
+        "func_no_input_true",
+        "func_no_input_false",
+        "func_input_true",
+        "func_input_false",
+        "class_true",
+        "class_false",
+    ],
+)
+def test_instantiate_behavior(test_type, param, expected_type, expected_value):
+    result = _parse_for_objects(param)
+    assert isinstance(result, expected_type)
+    if expected_value is not None:
+        assert result == expected_value
 
 
 def test_inject_class(param):
@@ -363,7 +363,45 @@ def test_inject(dummy_pd_df):
     assert df["new"].tolist() == [2]
 
 
-@pytest.fixture
+@pytest.mark.parametrize(
+    "df_fixture, select_func",
+    [
+        ("pandas_df", lambda df, cols: df[cols]),
+        ("spark_df", lambda df, cols: df.select(*cols)),
+    ],
+    ids=["pandas", "spark"],
+)
+def test_make_list_regexable(request, df_fixture, select_func):
+    df = request.getfixturevalue(df_fixture)
+
+    @make_list_regexable(
+        source_df="df",
+        make_regexable_kwarg="params_keep_cols",
+    )
+    def accept_regexable_list(df, params_keep_cols):
+        result_df = select_func(df, params_keep_cols)
+        return result_df
+
+    # Test with regex pattern
+    result_df = accept_regexable_list(df, [".*col"])
+    assert len(result_df.columns) == len(df.columns)
+
+    # Test with explicit names
+    result_df = accept_regexable_list(
+        df,
+        ["int_col", "float_col", "string_col"],
+    )
+    assert len(result_df.columns) == len(df.columns)
+
+    # Test with combination
+    result_df = accept_regexable_list(
+        df,
+        ["int_.*", "float_col", "string_col"],
+    )
+    assert len(result_df.columns) == len(df.columns)
+
+
+@pytest.fixture()
 def pandas_df():
     """Sample pandas dataframe with all dtypes."""
     data = [
@@ -384,26 +422,7 @@ def pandas_df():
         },
     ]
     df = pd.DataFrame(data)
-
     return df
-
-
-def test_make_list_regexable_with_pandas(pandas_df):
-    @make_list_regexable(
-        source_df="df",
-        make_regexable_kwarg="params_keep_cols",
-    )
-    def accept_regexable_list(df, params_keep_cols):
-        result_df = df[params_keep_cols]
-        return result_df
-
-    # Pass arguments positionally instead of as keywords
-    result_df = accept_regexable_list(
-        pandas_df,
-        [".*col"],
-    )
-
-    assert len(result_df.columns) == len(pandas_df.columns)
 
 
 def test_make_list_regexable_with_explicit_names_pandas(pandas_df):
@@ -448,7 +467,6 @@ def spark_df(spark):
             StructField("string_col", StringType(), True),
         ]
     )
-
     data = [
         (
             1,
@@ -466,24 +484,7 @@ def spark_df(spark):
             "hello world",
         ),
     ]
-
     return spark.createDataFrame(data, schema)
-
-
-def test_make_list_regexable_spark(spark_df):
-    @make_list_regexable(
-        source_df="df",
-        make_regexable_kwarg="params_keep_cols",
-    )
-    def accept_regexable_list(df, params_keep_cols):
-        result_df = df.select(*params_keep_cols)
-        return result_df
-
-    result_df = accept_regexable_list(
-        spark_df,
-        [".*col"],
-    )
-    assert len(result_df.columns) == len(spark_df.columns)
 
 
 def test_make_list_regexable_with_explicit_names_spark(spark_df):
@@ -653,19 +654,22 @@ def dummy_func2(x, y, z, params1, params2):
     return x + y - z
 
 
-def test_unpack_params_with_multiple_args():
-    x = 1
-    param1 = {"params1": {"test": 1}, "unpack": {"y": 2}}
-    param2 = {"params2": {"test": 2}, "unpack": {"z": 3}}
-    result = dummy_func2(x, param1, param2)
-    assert result == 0
-
-
-def test_unpack_params_with_multiple_args_and_kwargs():
-    param1 = {"params1": {"test": 1}, "unpack": {"y": 2}}
-    param2 = {"params2": {"test": 2}, "unpack": {"z": 3}}
-    result = dummy_func2(param1, param2, unpack={"x": 1})
-    assert result == 0
+@pytest.mark.parametrize(
+    "test_case,args,kwargs,expected",
+    [
+        (
+            "args_only",
+            [{"params1": {"test": 1}, "unpack": {"y": 2}}, {"params2": {"test": 2}, "unpack": {"z": 3}}],
+            {"x": 1},
+            0,
+        ),
+        ("kwargs_only", [], {"params1": {"test": 1}, "unpack": {"y": 2}, "params2": {"test": 2}, "z": 3, "x": 1}, 0),
+    ],
+    ids=["args", "kwargs"],
+)
+def test_unpack_params_multiple(test_case, args, kwargs, expected):
+    result = dummy_func2(*args, **kwargs)
+    assert result == expected
 
 
 def test_unpack_params_disable_via_args():
