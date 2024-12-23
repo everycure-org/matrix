@@ -23,7 +23,7 @@ jobs:
     permissions:
       id-token: 'write'
       contents: 'read'
-      
+
     steps:
       - name: Checkout
         uses: actions/checkout@main
@@ -98,6 +98,7 @@ jobs:
   submit_data_release_periodically:
     runs-on: ubuntu-latest
     name: Submit the Kedro Pipeline Periodically
+    needs: [authentication_with_gcloud_and_k8s]
     permissions:
       contents: 'write'
       id-token: 'write'
@@ -114,25 +115,29 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Set up kedro project dependencies
-        working-directory: pipelines/matrix
+      - name: Print release version
         run: |
-          pip install -r requirements.txt
-          curl -sLO https://github.com/argoproj/argo-workflows/releases/latest/download/argo-linux-amd64.gz
-          gunzip argo-linux-amd64.gz
-          chmod +x argo-linux-amd64
-          sudo mv argo-linux-amd64 /usr/local/bin/argo
-          argo version
+          cat "$GITHUB_ENV"
+          echo "Release version is ${{ env.release_version }}"
+      # - name: Set up kedro project dependencies
+      #   working-directory: pipelines/matrix
+      #   run: |
+      #     pip install -r requirements.txt
+      #     curl -sLO https://github.com/argoproj/argo-workflows/releases/latest/download/argo-linux-amd64.gz
+      #     gunzip argo-linux-amd64.gz
+      #     chmod +x argo-linux-amd64
+      #     sudo mv argo-linux-amd64 /usr/local/bin/argo
+      #     argo version
 
-      - name: Submit the kedro pipeline
-        working-directory: pipelines/matrix
-        run: |
-          echo "Submit the kedro pipeline"
-          kedro submit \
-            --username GH-Actions-bot \
-            --namespace argo-workflows \
-            --run-name auto-kg-release \
-            --release-version "${{ env.release_version }}" \
-            --pipeline ingestion \
-            --is-test \
-            --run-from-gh
+      # - name: Submit the kedro pipeline
+      #   working-directory: pipelines/matrix
+      #   run: |
+      #     echo "Submit the kedro pipeline"
+      #     kedro submit \
+      #       --username GH-Actions-bot \
+      #       --namespace argo-workflows \
+      #       --run-name auto-kg-release \
+      #       --release-version "${{ env.release_version }}" \
+      #       --pipeline ingestion \
+      #       --is-test \
+      #       --run-from-gh
