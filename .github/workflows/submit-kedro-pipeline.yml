@@ -3,7 +3,7 @@ name: Automate kedro sumbit release run periodically
 on:
   push:
     branches:
-      - 'gh-actions-weekly-submit'
+      - 'gh-actions-weekly-submit-xyz'
   # schedule:
   #   - cron: '30 9 * * 1' # 9:30 AM every Monday
   #   - cron: '30 9 1 * *' # 9:30 AM on the first of every month
