@@ -90,7 +90,8 @@ jobs:
       - name: Check google auth list
         run: 
           gcloud auth list --filter=status:ACTIVE --format=value'(ACCOUNT)'
-
+          kubectl get nodes
+          kubetcl get ns
       # - name: Set up kedro project dependencies
       #   working-directory: pipelines/matrix
       #   run: |
