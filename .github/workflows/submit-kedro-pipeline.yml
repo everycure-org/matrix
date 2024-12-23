@@ -49,28 +49,22 @@ jobs:
       #   run: 
       #     pip install semver
 
-      - name: Increment patch version
-        working-directory: docs/scripts
-        # if : github.event.schedule == '30 9 * * 1' # weekly bump
+      # - name: Increment patch version
+      #   working-directory: docs/scripts
+      #   # if : github.event.schedule == '30 9 * * 1' # weekly bump
+      #   run: |
+      #     pip install uv
+      #     uv venv -p 3.11
+      #     uv pip install semver
+      #     uv run patch_bump.py
+
+      - name: Increment minor version
+        # if : github.event.schedule == '30 9 1 * *' # monthly bump
         run: |
           pip install uv
           uv venv -p 3.11
           uv pip install semver
-          uv run patch_bump.py
-
-      # - name: Increment minor version
-      #   if : github.event.schedule == '30 9 1 * *' # monthly bump
-      #   run: |
-      #     python -c "
-      #     import os
-      #     import semver
-
-      #     latest_tag = os.getenv('latest_tag', 'v0.0.0').lstrip('v')
-      #     version = semver.Version.parse(latest_tag)
-      #     new_version = version.bump_minor()
-      #     with open(os.getenv('GITHUB_ENV'), 'a') as env_file:
-      #       env_file.write(f'release_version=v{new_version}\n')
-      #     "
+          uv run minor_bump.py
 
       - name: Print release version
         run: |
