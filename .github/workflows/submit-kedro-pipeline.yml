@@ -12,6 +12,8 @@ env:
   project_id: 'mtrx-hub-dev-3of'
   workload_identity_provider: 'projects/938607797672/locations/global/workloadIdentityPools/matrix-pool-rw/providers/matrix-gh-provider-rw'
   service_account: 'sa-github-actions-rw@mtrx-hub-dev-3of.iam.gserviceaccount.com'
+  region: 'us-central1'
+  cluster: 'compute-cluster'
 
 jobs:
   submit_data_release_periodically:
@@ -92,9 +94,14 @@ jobs:
           which gcloud  
           gcloud config list
 
+      - name: Authenticate with K8s
+        run: |
+          gcloud container clusters get-credentials ${{env.cluster}} \
+            --project ${{env.project_id}} \
+            --region ${{env.region}} 
+
       - name: Check kubectl
         run: |
-          which kubectl
           kubectl get nodes
           kubetcl get ns
       # - name: Set up kedro project dependencies
