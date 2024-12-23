@@ -1,7 +1,8 @@
-from typing import List, Union
+from typing import Union
 
 from kedro.pipeline import Pipeline, pipeline
 
+from functools import partial
 from matrix import settings
 from matrix.kedro4argo_node import ARGO_GPU_NODE_MEDIUM, argo_node
 
@@ -21,21 +22,22 @@ def _create_model_shard_pipeline(model: str, shard: int, fold: Union[str, int]) 
     return pipeline(
         [
             argo_node(
-                func=nodes.create_model_input_nodes,
-                inputs=[
-                    "modelling.model_input.drugs_diseases_nodes@pandas",
-                    f"modelling.model_input.fold_{fold}.splits",
-                    f"params:modelling.{model}.model_options.generator",
-                ],
+                func=partial(nodes.create_model_input_nodes, fold=fold),
+                inputs={
+                    "graph": "modelling.model_input.drugs_diseases_nodes@pandas",
+                    "splits": "modelling.model_input.splits",
+                    "generator": f"params:modelling.{model}.model_options.generator",
+                    "num_folds": "params:modelling.splitter.n_splits",
+                },
                 outputs=f"modelling.{model}.{shard}.fold_{fold}.model_input.enriched_splits",
                 name=f"enrich_{model}_{shard}_splits_fold_{fold}",
             ),
             argo_node(
                 func=nodes.apply_transformers,
-                inputs=[
-                    f"modelling.{model}.{shard}.fold_{fold}.model_input.enriched_splits",
-                    f"modelling.{model}.fold_{fold}.model_input.transformers",
-                ],
+                inputs={
+                    "data": f"modelling.{model}.{shard}.fold_{fold}.model_input.enriched_splits",
+                    "transformers": f"modelling.{model}.fold_{fold}.model_input.transformers",
+                },
                 outputs=f"modelling.{model}.{shard}.fold_{fold}.model_input.transformed_splits",
                 name=f"transform_{model}_{shard}_data_fold_{fold}",
             ),
@@ -69,7 +71,7 @@ def _create_model_shard_pipeline(model: str, shard: int, fold: Union[str, int]) 
     )
 
 
-def _create_fold_pipeline(model: str, num_shards: int, fold: Union[str, int]) -> Pipeline:
+def _create_fold_pipeline(model: str, num_shards: int, fold: int) -> Pipeline:
     """Create pipeline for single model and fold.
 
     Args:
@@ -84,11 +86,13 @@ def _create_fold_pipeline(model: str, num_shards: int, fold: Union[str, int]) ->
             pipeline(
                 [
                     argo_node(
-                        func=nodes.fit_transformers,
-                        inputs=[
-                            f"modelling.model_input.fold_{fold}.splits",
-                            f"params:modelling.{model}.model_options.transformers",
-                        ],
+                        func=partial(nodes.fit_transformers, fold=fold),
+                        inputs={
+                            # TODO: Why does this use the splits and not the model input data?
+                            "data": "modelling.model_input.splits",
+                            "transformers": f"params:modelling.{model}.model_options.transformers",
+                            "num_folds": "params:modelling.splitter.n_splits",
+                        },
                         outputs=f"modelling.{model}.fold_{fold}.model_input.transformers",
                         name=f"fit_{model}_transformers_fold_{fold}",
                         tags=model,
@@ -114,11 +118,12 @@ def _create_fold_pipeline(model: str, num_shards: int, fold: Union[str, int]) ->
                         argo_config=ARGO_GPU_NODE_MEDIUM,
                     ),
                     argo_node(
-                        func=nodes.apply_transformers,
-                        inputs=[
-                            f"modelling.model_input.fold_{fold}.splits",
-                            f"modelling.{model}.fold_{fold}.model_input.transformers",
-                        ],
+                        func=partial(nodes.apply_transformers, fold=fold),
+                        inputs={
+                            "data": "modelling.model_input.splits",  # TODO: Does this have to be data of fold only?
+                            "transformers": f"modelling.{model}.fold_{fold}.model_input.transformers",  # TODO: Why no refitting?
+                            "num_folds": "params:modelling.splitter.n_splits",
+                        },
                         outputs=f"modelling.{model}.fold_{fold}.model_input.transformed_splits",
                         name=f"transform_{model}_data_fold_{fold}",
                     ),
@@ -141,13 +146,12 @@ def _create_fold_pipeline(model: str, num_shards: int, fold: Union[str, int]) ->
     )
 
 
-def create_model_pipeline(model: str, num_shards: int, folds_lst: List[Union[str, int]], n_splits: int) -> Pipeline:
+def create_model_pipeline(model: str, num_shards: int, n_splits: int) -> Pipeline:
     """Create pipeline for a single model.
 
     Args:
         model: model name
         num_shards: number of shard to generate
-        folds_lst: lists of folds (e.g. [0, 1, 2, 3, "full"] if n_splits=3)
         n_splits: number of splits
     Returns:
         Pipeline with model nodes
@@ -155,7 +159,7 @@ def create_model_pipeline(model: str, num_shards: int, folds_lst: List[Union[str
     pipelines = []
 
     # Generate pipeline to predict folds
-    for fold in folds_lst:
+    for fold in range(n_splits + 1):
         pipelines.append(
             pipeline(
                 _create_fold_pipeline(model=model, num_shards=num_shards, fold=fold),
@@ -165,22 +169,22 @@ def create_model_pipeline(model: str, num_shards: int, folds_lst: List[Union[str
 
     # Gather all test set predictions from the different folds for the
     # model, and combine all the predictions.
-    pipelines.append(
-        pipeline(
-            [
-                argo_node(
-                    func=nodes.combine_data,
-                    inputs=[f"modelling.{model}.fold_{fold}.model_output.predictions" for fold in range(n_splits)],
-                    outputs=f"modelling.{model}.fold_combined.model_output.predictions",
-                    name=f"combine_{model}_folds",
-                    tags=[f"{model}"],
-                )
-            ]
-        )
-    )
+    # pipelines.append(
+    #     pipeline(
+    #         [
+    #             argo_node(
+    #                 func=nodes.combine_data,
+    #                 inputs=[f"modelling.{model}.fold_{fold}.model_output.predictions" for fold in range(n_splits)],
+    #                 outputs=f"modelling.{model}.fold_combined.model_output.predictions",
+    #                 name=f"combine_{model}_folds",
+    #                 tags=[f"{model}"],
+    #             )
+    #         ]
+    #     )
+    # )
 
     # Now check the performance on the combines folds
-    for fold in folds_lst + ["combined"]:
+    for fold in range(n_splits):  # + ["combined"]
         pipelines.append(
             pipeline(
                 [
@@ -202,15 +206,12 @@ def create_model_pipeline(model: str, num_shards: int, folds_lst: List[Union[str
     return sum(pipelines)
 
 
-def create_shared_pipeline(models_lst: List[str], folds_lst: List[Union[str, int]]) -> Pipeline:
+def create_shared_pipeline() -> Pipeline:
     """Function to create pipeline of shared nodes.
 
     NOTE: The model and folds lists are added to tag the
     nodes for single pipeline execution.
 
-    Args:
-        models_lst: list of models to generate
-        folds_list: list of folds
     Returns:
         Pipeline with shared nodes across models
     """
@@ -249,16 +250,15 @@ def create_shared_pipeline(models_lst: List[str], folds_lst: List[Union[str, int
                 name="prefilter_nodes",
             ),
             argo_node(
-                func=nodes.make_folds,
+                func=nodes.make_splits,
                 inputs=[
                     "modelling.int.known_pairs@pandas",
                     "params:modelling.splitter",
                 ],
-                outputs=[f"modelling.model_input.fold_{fold}.splits" for fold in folds_lst],
+                outputs="modelling.model_input.splits",
                 name="create_splits",
             ),
         ],
-        tags=[model for model in models_lst],
     )
 
 
@@ -276,20 +276,19 @@ def create_pipeline(**kwargs) -> Pipeline:
 
     # Unpack Folds
     n_splits = settings.DYNAMIC_PIPELINES_MAPPING.get("cross_validation").get("n_splits")
-    folds_lst = list(range(n_splits)) + ["full"]
+    # folds_lst = list(range(n_splits)) + ["full"]
 
     # Unpack models
     models_lst = settings.DYNAMIC_PIPELINES_MAPPING.get("modelling")
-    model_names_lst = [model["model_name"] for model in models_lst]
 
     # Add shared nodes
     pipelines = []
-    pipelines.append(create_shared_pipeline(model_names_lst, folds_lst))
+    pipelines.append(pipeline(create_shared_pipeline(), tags=[model["model_name"] for model in models_lst]))
 
     # Generate pipeline for each model
     for model in models_lst:
         # Generate pipeline for the model
-        pipelines.append(create_model_pipeline(model["model_name"], model["num_shards"], folds_lst, n_splits))
+        pipelines.append(create_model_pipeline(model["model_name"], model["num_shards"], n_splits))
 
         # Now aggregate the metrics for the model
         pipelines.append(

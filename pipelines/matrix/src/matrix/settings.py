@@ -39,31 +39,6 @@ SESSION_STORE_CLASS = SQLiteStore
 # Keyword arguments to pass to the `SESSION_STORE_CLASS` constructor.
 SESSION_STORE_ARGS = {"path": str(Path(__file__).parents[2])}
 
-# Directory that holds configuration.
-CONFIG_LOADER_CLASS = OmegaConfigLoader
-# Keyword arguments to pass to the `CONFIG_LOADER_CLASS` constructor.
-CONFIG_LOADER_ARGS = {
-    "base_env": "base",
-    "default_run_env": "local",
-    "merge_strategy": {"parameters": "soft", "mlflow": "soft", "globals": "soft"},
-    "config_patterns": {
-        "spark": ["spark*", "spark*/**"],
-        "mlflow": ["mlflow*", "mlflow*/**"],
-        "globals": ["globals*", "globals*/**", "**/globals*"],
-        "parameters": [
-            "parameters*",
-            "parameters*/**",
-            "**/parameters*",
-            "**/parameters*/**",
-        ],
-    },
-    "custom_resolvers": {
-        "merge": merge_dicts,
-        "oc.env": env,
-        "oc.int": cast_to_int,
-    },
-}
-
 # https://getindata.com/blog/kedro-dynamic-pipelines/
 DYNAMIC_PIPELINES_MAPPING = {
     "cross_validation": {
@@ -90,6 +65,38 @@ DYNAMIC_PIPELINES_MAPPING = {
         {"evaluation_name": "disease_specific_trials"},
         {"evaluation_name": "full_matrix_trials"},
     ],
+}
+
+
+def _load_setting(path):
+    """Utility function to load a settings value from the data catalog."""
+    path = path.split(".")
+    obj = DYNAMIC_PIPELINES_MAPPING
+    for p in path:
+        obj = obj[p]
+
+    return obj
+
+
+# Directory that holds configuration.
+CONFIG_LOADER_CLASS = OmegaConfigLoader
+# Keyword arguments to pass to the `CONFIG_LOADER_CLASS` constructor.
+CONFIG_LOADER_ARGS = {
+    "base_env": "base",
+    "default_run_env": "local",
+    "merge_strategy": {"parameters": "soft", "mlflow": "soft", "globals": "soft"},
+    "config_patterns": {
+        "spark": ["spark*", "spark*/**"],
+        "mlflow": ["mlflow*", "mlflow*/**"],
+        "globals": ["globals*", "globals*/**", "**/globals*"],
+        "parameters": [
+            "parameters*",
+            "parameters*/**",
+            "**/parameters*",
+            "**/parameters*/**",
+        ],
+    },
+    "custom_resolvers": {"merge": merge_dicts, "oc.env": env, "oc.int": cast_to_int, "setting": _load_setting},
 }
 
 # Class that manages Kedro's library components.
