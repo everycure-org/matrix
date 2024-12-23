@@ -8,6 +8,7 @@ from sklearn.impute import SimpleImputer
 from sklearn.model_selection import GridSearchCV
 from sklearn.preprocessing import MinMaxScaler
 
+import pyspark.sql.functions as F
 from pyspark.sql.types import (
     FloatType,
     IntegerType,
@@ -16,7 +17,14 @@ from pyspark.sql.types import (
     StructType,
 )
 
-from matrix.inject import _inject_object, _parse_for_objects, inject_object, make_list_regexable
+from matrix.inject import (
+    _inject_object,
+    _parse_for_objects,
+    _unpack_params,
+    inject_object,
+    make_list_regexable,
+    unpack_params,
+)
 
 
 def dummy_func(x):
@@ -383,9 +391,9 @@ def pandas_df():
 def test_make_list_regexable_with_pandas(pandas_df):
     @make_list_regexable(
         source_df="df",
-        make_regexable="params_keep_cols",
+        make_regexable_column="params_keep_cols",
     )
-    def accept_regexable_list(df, params_keep_cols, enable_regex):
+    def accept_regexable_list(df, params_keep_cols):
         result_df = df[params_keep_cols]
         return result_df
 
@@ -393,7 +401,6 @@ def test_make_list_regexable_with_pandas(pandas_df):
     result_df = accept_regexable_list(
         pandas_df,
         [".*col"],
-        True,
     )
 
     assert len(result_df.columns) == len(pandas_df.columns)
@@ -402,16 +409,15 @@ def test_make_list_regexable_with_pandas(pandas_df):
 def test_make_list_regexable_with_explicit_names_pandas(pandas_df):
     @make_list_regexable(
         source_df="df",
-        make_regexable="params_keep_cols",
+        make_regexable_column="params_keep_cols",
     )
-    def accept_regexable_list(df, params_keep_cols, enable_regex):
+    def accept_regexable_list(df, params_keep_cols):
         result_df = df[params_keep_cols]
         return result_df
 
     result_df = accept_regexable_list(
         pandas_df,  # df
         ["int_col", "float_col", "string_col"],  # params_keep_cols
-        True,  # enable_regex
     )
     assert len(result_df.columns) == len(pandas_df.columns)
 
@@ -419,16 +425,15 @@ def test_make_list_regexable_with_explicit_names_pandas(pandas_df):
 def test_make_list_regexable_with_combination_pandas(pandas_df):
     @make_list_regexable(
         source_df="df",
-        make_regexable="params_keep_cols",
+        make_regexable_column="params_keep_cols",
     )
-    def accept_regexable_list(df, params_keep_cols, enable_regex):
+    def accept_regexable_list(df, params_keep_cols):
         result_df = df[params_keep_cols]
         return result_df
 
     result_df = accept_regexable_list(
         pandas_df,
         ["int_.*", "float_col", "string_col"],
-        True,
     )
     assert len(result_df.columns) == len(pandas_df.columns)
 
@@ -468,16 +473,15 @@ def spark_df(spark):
 def test_make_list_regexable_spark(spark_df):
     @make_list_regexable(
         source_df="df",
-        make_regexable="params_keep_cols",
+        make_regexable_column="params_keep_cols",
     )
-    def accept_regexable_list(df, params_keep_cols, enable_regex):
+    def accept_regexable_list(df, params_keep_cols):
         result_df = df.select(*params_keep_cols)
         return result_df
 
     result_df = accept_regexable_list(
         spark_df,
         [".*col"],
-        True,
     )
     assert len(result_df.columns) == len(spark_df.columns)
 
@@ -485,16 +489,15 @@ def test_make_list_regexable_spark(spark_df):
 def test_make_list_regexable_with_explicit_names_spark(spark_df):
     @make_list_regexable(
         source_df="df",
-        make_regexable="params_keep_cols",
+        make_regexable_column="params_keep_cols",
     )
-    def accept_regexable_list(df, params_keep_cols, enable_regex):
+    def accept_regexable_list(df, params_keep_cols):
         result_df = df.select(*params_keep_cols)
         return result_df
 
     result_df = accept_regexable_list(
         spark_df,
         ["int_col", "float_col", "string_col"],
-        True,
     )
     assert len(result_df.columns) == len(spark_df.columns)
 
@@ -502,16 +505,15 @@ def test_make_list_regexable_with_explicit_names_spark(spark_df):
 def test_make_list_regexable_with_combination_spark(spark_df):
     @make_list_regexable(
         source_df="df",
-        make_regexable="params_keep_cols",
+        make_regexable_column="params_keep_cols",
     )
-    def accept_regexable_list(df, params_keep_cols, enable_regex):
+    def accept_regexable_list(df, params_keep_cols):
         result_df = df.select(*params_keep_cols)
         return result_df
 
     result_df = accept_regexable_list(
         spark_df,
         ["int_.*", "float_col", "string_col"],
-        True,
     )
     assert len(result_df.columns) == len(spark_df.columns)
 
@@ -519,23 +521,23 @@ def test_make_list_regexable_with_combination_spark(spark_df):
 def test_raise_exc_default_pandas(pandas_df):
     @make_list_regexable(
         source_df="df",
-        make_regexable="params_keep_cols",
+        make_regexable_column="params_keep_cols",
     )
-    def accept_regexable_list(df, params_keep_cols, enable_regex):
+    def accept_regexable_list(df, params_keep_cols):
         result_df = df[params_keep_cols]
         return result_df
 
-    result_df = accept_regexable_list(pandas_df, ["ftr1_.*"], True)
-    assert len(result_df.columns) == 0
+    with pytest.raises(ValueError, match="No columns were selected using the provided regex patterns*"):
+        accept_regexable_list(pandas_df, ["notfloat.*"])
 
 
 def test_raise_exc_enabled_pandas(pandas_df):
     @make_list_regexable(
         source_df="df",
-        make_regexable="params_keep_cols",
+        make_regexable_column="params_keep_cols",
         raise_exc=True,
     )
-    def accept_regexable_list(df, params_keep_cols, enable_regex):
+    def accept_regexable_list(df, params_keep_cols):
         result_df = df[params_keep_cols]
         return result_df
 
@@ -543,54 +545,54 @@ def test_raise_exc_enabled_pandas(pandas_df):
         ValueError,
         match="The following regex did not return a result: ftr1_.*.",
     ):
-        accept_regexable_list(pandas_df, ["ftr1_.*"], True)
+        accept_regexable_list(pandas_df, ["ftr1_.*"])
 
 
 def test_make_list_regexable_accept_args_pandas(pandas_df):
     @make_list_regexable(
         source_df="df",
-        make_regexable="params_keep_cols",
+        make_regexable_column="params_keep_cols",
     )
-    def accept_regexable_list(df, params_keep_cols, enable_regex):
+    def accept_regexable_list(df, params_keep_cols):
         result_df = df[params_keep_cols]
         return result_df
 
-    result_df = accept_regexable_list(pandas_df, [".*col"], True)
+    result_df = accept_regexable_list(pandas_df, [".*col"])
     assert len(result_df.columns) == len(pandas_df.columns)
 
 
 def test_make_list_regexable_not_present_pandas(pandas_df):
     @make_list_regexable(
         source_df="df",
-        make_regexable="params_keep_cols",
+        make_regexable_column="params_keep_cols",
     )
-    def accept_regexable_list(df, enable_regex):
+    def accept_regexable_list(df):
         result_df = df
         return result_df
 
-    result_df = accept_regexable_list(pandas_df, True)
+    result_df = accept_regexable_list(pandas_df)
     assert len(result_df.columns) == len(pandas_df.columns)
 
 
 def test_make_list_regexable_empty_pandas(pandas_df):
     @make_list_regexable(
         source_df="df",
-        make_regexable="params_keep_cols",
+        make_regexable_column="params_keep_cols",
     )
-    def accept_regexable_list(df, params_keep_cols, enable_regex):
+    def accept_regexable_list(df, params_keep_cols):
         result_df = df
         return result_df
 
-    result_df = accept_regexable_list(pandas_df, [], True)
-    assert len(result_df.columns) == len(pandas_df.columns)
+    with pytest.raises(ValueError, match="No columns were selected using the provided regex patterns*"):
+        accept_regexable_list(pandas_df, [])
 
 
 def test_make_list_regexable_source_df_not_present_pandas(pandas_df):
     @make_list_regexable(
         source_df="df",
-        make_regexable="params_keep_cols",
+        make_regexable_column="params_keep_cols",
     )
-    def accept_regexable_list(params_keep_cols, enable_regex):
+    def accept_regexable_list(params_keep_cols):
         params_keep_cols = params_keep_cols
         return params_keep_cols
 
@@ -598,15 +600,15 @@ def test_make_list_regexable_source_df_not_present_pandas(pandas_df):
         ValueError,
         match="Please provide source dataframe",
     ):
-        accept_regexable_list(["col.*"], True)
+        accept_regexable_list(["col.*"])
 
 
 def test_make_list_regexable_with_wrong_input_type_pandas(pandas_df):
     @make_list_regexable(
         source_df="df",
-        make_regexable="params_keep_cols",
+        make_regexable_column="params_keep_cols",
     )
-    def accept_regexable_list(df, params_keep_cols, enable_regex):
+    def accept_regexable_list(df, params_keep_cols):
         result_df = df[params_keep_cols]
         return result_df
 
@@ -614,4 +616,145 @@ def test_make_list_regexable_with_wrong_input_type_pandas(pandas_df):
         TypeError,
         match="'int' object is not iterable",
     ):
-        accept_regexable_list(pandas_df, 7, True)
+        accept_regexable_list(pandas_df, 7)
+
+
+@unpack_params()
+def my_func(*args, **kwargs):
+    def test_func(x):
+        return x["c1"]
+
+    return test_func(*args, **kwargs)
+
+
+def test_unpack_params_with_kwargs():
+    result_arg, result_kwarg = _unpack_params(unpack={"c1": 1})
+
+    assert result_arg == []
+    assert result_kwarg == {"c1": 1}
+
+
+def test_unpack_params_with_args():
+    @unpack_params()
+    def dummy_func(x, y, z, params):
+        params["test"] == "test"
+        return x + y - z
+
+    x = 1
+    param = {"params": {"test": "test"}, "unpack": {"y": 1, "z": 2}}
+    result = dummy_func(x, param)
+    assert result == 0
+
+
+@unpack_params()
+def dummy_func2(x, y, z, params1, params2):
+    params1["test"] == 1
+    params2["test"] == 2
+    return x + y - z
+
+
+def test_unpack_params_with_multiple_args():
+    x = 1
+    param1 = {"params1": {"test": 1}, "unpack": {"y": 2}}
+    param2 = {"params2": {"test": 2}, "unpack": {"z": 3}}
+    result = dummy_func2(x, param1, param2)
+    assert result == 0
+
+
+def test_unpack_params_with_multiple_args_and_kwargs():
+    param1 = {"params1": {"test": 1}, "unpack": {"y": 2}}
+    param2 = {"params2": {"test": 2}, "unpack": {"z": 3}}
+    result = dummy_func2(param1, param2, unpack={"x": 1})
+    assert result == 0
+
+
+def test_unpack_params_disable_via_args():
+    result_arg, result_kwarg = _unpack_params({"c1": 1})
+
+    assert result_arg == [
+        {"c1": 1},
+    ]
+    assert result_kwarg == {}
+
+
+def test_unpack_params_disable_via_args2():
+    result_arg, result_kwarg = _unpack_params(**{"c1": 1})
+
+    assert result_arg == []
+    assert result_kwarg == {"c1": 1}
+
+
+def test_unpack_params_disable_via_kwargs():
+    result_arg, result_kwarg = _unpack_params(x={"c1": 1})
+
+    assert result_arg == []
+    assert result_kwarg == {"x": {"c1": 1}}
+
+
+def test_unpack_params_with_pd_df(dummy_pd_df):
+    result_arg, result_kwarg = _unpack_params(unpack={"df": dummy_pd_df, "x": 1})
+
+    def dummy_func(df, x):
+        df["new"] = df["c1"] + x
+        return df
+
+    result = dummy_func(*result_arg, **result_kwarg)
+    assert result["new"].tolist() == [2]
+
+
+@pytest.fixture
+def dummy_spark_df(spark):
+    """Dummy spark dataframe."""
+    dummy_pd_df = pd.DataFrame([{"c1": 1}])
+    dummy_spark_df = spark.createDataFrame(dummy_pd_df)
+    return dummy_spark_df
+
+
+def test_unpack_params_with_spark_df(dummy_spark_df):
+    result_arg, result_kwarg = _unpack_params(unpack={"df": dummy_spark_df, "x": 1})
+
+    def dummy_func(df, x):
+        df = df.withColumn("new", F.lit(x) + 1)
+        return df
+
+    result = dummy_func(*result_arg, **result_kwarg)
+    assert [x.asDict() for x in result.select("new").collect()] == [{"new": 2}]
+
+
+def test_unpack_params_true_decorator():
+    result = my_func(unpack={"x": {"c1": 1}})
+    assert result == 1
+
+
+def test_unpack_params_false_decorator():
+    with pytest.raises(KeyError, match="c1"):
+        my_func({"x": {"c1": 1}})
+
+
+@make_list_regexable(source_df="df", make_regexable_column="columns")
+def dummy_function(df, columns):
+    """
+    A simple function to test the make_list_regexable decorator when passing arguments as kwargs.
+    In theory, if make_list_regexable handled kwargs the same as positional args, this function
+    should accept df and columns as kwargs without issue.
+    """
+    return df, columns
+
+
+@pytest.mark.parametrize("arg_style", ["all_positional", "all_kwargs", "mixed"])
+def test_make_list_regexable_with_varied_args(arg_style, dummy_pd_df):
+    df = pd.DataFrame({"some_col": [1], "other_col": [2]})
+    columns = ["^some_.*"]
+    expected_result = (df, ["some_col"])
+
+    if arg_style == "all_positional":
+        result = dummy_function(df, columns)
+    elif arg_style == "all_kwargs":
+        result = dummy_function(df=df, columns=columns)
+    elif arg_style == "mixed":
+        result = dummy_function(df, columns=columns)
+
+    assert isinstance(result, tuple), "Function should return a tuple of (df, columns)"
+    result_df, result_cols = result
+    pd.testing.assert_frame_equal(result_df, expected_result[0])
+    assert result_cols == expected_result[1]

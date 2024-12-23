@@ -1,15 +1,17 @@
 import logging
 from typing import Any, Dict, List, Union, Tuple
 import pandas as pd
+from pyspark.sql import DataFrame
 import numpy as np
 import json
 from pandera.typing import Series
-from pandera import DataFrameModel
+from pandera.pyspark import DataFrameModel as PysparkDataFrameModel
+from pandera import DataFrameModel as PandasDataFrameModel
 import pandera
-import pyspark
-from pyspark.sql import functions as F
+from pyspark.sql import functions as f
 import pyspark.sql.types as T
-from pandera.pyspark import Field
+from pandera.pyspark import Field as PysparkField
+from pandera import Field as PandasField
 
 
 from sklearn.model_selection import BaseCrossValidator
@@ -68,10 +70,10 @@ def no_nulls(columns: List[str]):
 
 
 def filter_valid_pairs(
-    nodes: pyspark.sql.DataFrame,
-    raw_tp: pyspark.sql.DataFrame,
-    raw_tn: pyspark.sql.DataFrame,
-) -> Tuple[pyspark.sql.DataFrame, Dict[str, float]]:
+    nodes: DataFrame,
+    raw_tp: DataFrame,
+    raw_tn: DataFrame,
+) -> Tuple[DataFrame, Dict[str, float]]:
     """Filter pairs to only include nodes that exist in the nodes DataFrame.
 
     Args:
@@ -86,16 +88,15 @@ def filter_valid_pairs(
     """
     # Get list of nodes in the KG
     valid_nodes = nodes.select("id").distinct()
-
     # Filter out pairs where both source and target exist in nodes
     filtered_tp = (
-        raw_tp.join(valid_nodes.alias("source_nodes"), raw_tp.source == F.col("source_nodes.id"))
-        .join(valid_nodes.alias("target_nodes"), raw_tp.target == F.col("target_nodes.id"))
+        raw_tp.join(valid_nodes.alias("source_nodes"), raw_tp.source == f.col("source_nodes.id"))
+        .join(valid_nodes.alias("target_nodes"), raw_tp.target == f.col("target_nodes.id"))
         .select(raw_tp["*"])
     )
     filtered_tn = (
-        raw_tn.join(valid_nodes.alias("source_nodes"), raw_tn.source == F.col("source_nodes.id"))
-        .join(valid_nodes.alias("target_nodes"), raw_tn.target == F.col("target_nodes.id"))
+        raw_tn.join(valid_nodes.alias("source_nodes"), raw_tn.source == f.col("source_nodes.id"))
+        .join(valid_nodes.alias("target_nodes"), raw_tn.target == f.col("target_nodes.id"))
         .select(raw_tn["*"])
     )
 
@@ -106,15 +107,15 @@ def filter_valid_pairs(
     }
 
     # Combine filtered pairs
-    pairs_df = filtered_tp.withColumn("y", F.lit(1)).unionByName(filtered_tn.withColumn("y", F.lit(0)))
+    pairs_df = filtered_tp.withColumn("y", f.lit(1)).unionByName(filtered_tn.withColumn("y", f.lit(0)))
 
     return {"pairs": pairs_df, "metrics": retention_stats}
 
 
-class EmbeddingsWithPairsSchema(DataFrameModel):
-    y: T.IntegerType() = Field()  # type: ignore
-    source_embedding: T.ArrayType(T.FloatType()) = Field(nullable=False)  # type: ignore
-    target_embedding: T.ArrayType(T.FloatType()) = Field(nullable=False)  # type: ignore
+class EmbeddingsWithPairsSchema(PysparkDataFrameModel):
+    y: T.IntegerType() = PysparkField()  # type: ignore
+    source_embedding: T.ArrayType(T.FloatType()) = PysparkField(nullable=False)  # type: ignore
+    target_embedding: T.ArrayType(T.FloatType()) = PysparkField(nullable=False)  # type: ignore
 
     class Config:
         strict = False
@@ -122,9 +123,9 @@ class EmbeddingsWithPairsSchema(DataFrameModel):
 
 @pandera.check_output(EmbeddingsWithPairsSchema)
 def attach_embeddings(
-    pairs_df: pyspark.sql.DataFrame,
-    nodes: pyspark.sql.DataFrame,
-) -> pyspark.sql.DataFrame:
+    pairs_df: DataFrame,
+    nodes: DataFrame,
+) -> DataFrame:
     """Attach node embeddings to the pairs DataFrame.
 
     Args:
@@ -136,18 +137,18 @@ def attach_embeddings(
     """
     return (
         pairs_df.alias("pairs")
-        .join(nodes.withColumn("source", F.col("id")), how="left", on="source")
+        .join(nodes.withColumn("source", f.col("id")), how="left", on="source")
         .withColumnRenamed("topological_embedding", "source_embedding")
-        .join(nodes.withColumn("target", F.col("id")), how="left", on="target")
+        .join(nodes.withColumn("target", f.col("id")), how="left", on="target")
         .withColumnRenamed("topological_embedding", "target_embedding")
         .select("pairs.*", "source_embedding", "target_embedding")
     )
 
 
-class NodeSchema(DataFrameModel):
-    id: Series[str]
-    is_drug: Series[bool]
-    is_disease: Series[bool]
+class NodeSchema(PysparkDataFrameModel):
+    id: T.StringType() = PysparkField(nullable=False)  # type: ignore
+    is_drug: T.BooleanType() = PysparkField(nullable=False)  # type: ignore
+    is_disease: T.BooleanType() = PysparkField(nullable=False)  # type: ignore
 
     class Config:
         strict = False
@@ -156,12 +157,12 @@ class NodeSchema(DataFrameModel):
 
 @pandera.check_output(NodeSchema)
 def prefilter_nodes(
-    full_nodes: pyspark.sql.DataFrame,
-    nodes: pyspark.sql.DataFrame,
-    gt: pyspark.sql.DataFrame,
+    full_nodes: DataFrame,
+    nodes: DataFrame,
+    gt: DataFrame,
     drug_types: List[str],
     disease_types: List[str],
-) -> pyspark.sql.DataFrame:
+) -> DataFrame:
     """Prefilter nodes for negative sampling.
 
     Args:
@@ -172,19 +173,19 @@ def prefilter_nodes(
     Returns:
         Filtered nodes dataframe
     """
-    gt_pos = gt.filter(F.col("y") == 1)
+    gt_pos = gt.filter(f.col("y") == 1)
     ground_truth_nodes = (
-        gt.withColumn("id", F.col("source"))
-        .unionByName(gt_pos.withColumn("id", F.col("target")))
+        gt.withColumn("id", f.col("source"))
+        .unionByName(gt_pos.withColumn("id", f.col("target")))
         .select("id")
         .distinct()
-        .withColumn("is_ground_pos", F.lit(True))
+        .withColumn("is_ground_pos", f.lit(True))
     )
 
     df = (
-        nodes.withColumn("is_drug", F.arrays_overlap(F.col("all_categories"), F.lit(drug_types)))
-        .withColumn("is_disease", F.arrays_overlap(F.col("all_categories"), F.lit(disease_types)))
-        .filter((F.col("is_disease")) | (F.col("is_drug")))
+        nodes.withColumn("is_drug", f.arrays_overlap(f.col("all_categories"), f.lit(drug_types)))
+        .withColumn("is_disease", f.arrays_overlap(f.col("all_categories"), f.lit(disease_types)))
+        .filter((f.col("is_disease")) | (f.col("is_drug")))
         .select("id", "topological_embedding", "is_drug", "is_disease")
         # TODO: The integrated data product _should_ contain these nodes
         # TODO: Verify below does not have any undesired side effects
@@ -195,7 +196,7 @@ def prefilter_nodes(
     return df
 
 
-class SplitsSchema(DataFrameModel):
+class SplitsSchema(PandasDataFrameModel):
     source: Series[str]
     source_embedding: Series[object]
     target: Series[str]
@@ -210,7 +211,7 @@ class SplitsSchema(DataFrameModel):
 @pandera.check_output(SplitsSchema)
 @inject_object()
 def make_splits(
-    data: pyspark.sql.DataFrame,
+    data: DataFrame,
     splitter: BaseCrossValidator,
 ) -> pd.DataFrame:
     """Function to split data.
@@ -236,13 +237,13 @@ def make_splits(
     return x
 
 
-class ModelSplitsSchema(DataFrameModel):
-    source: Series[object]
-    source_embedding: Series[object]
-    target: Series[object]
-    target_embedding: Series[object]
-    iteration: Series[float]  # numeric type
-    split: Series[object]
+class ModelSplitsSchema(PandasDataFrameModel):
+    source: Series[object] = PandasField(nullable=True)
+    source_embedding: Series[object] = PandasField(nullable=True)
+    target: Series[object] = PandasField(nullable=True)
+    target_embedding: Series[object] = PandasField(nullable=True)
+    iteration: Series[float] = PandasField(nullable=True)  # numeric type
+    split: Series[object] = PandasField(nullable=True)
 
     class Config:
         strict = False
@@ -347,13 +348,12 @@ def apply_transformers(
 
 @unpack_params()
 @inject_object()
-@make_list_regexable(source_df="data", make_regexable="features")
+@make_list_regexable(source_df="data", make_regexable_column="features")
 def tune_parameters(
     data: pd.DataFrame,
     tuner: Any,
     features: List[str],
     target_col_name: str,
-    enable_regex: str = True,
 ) -> Tuple[Dict,]:
     """Function to apply hyperparameter tuning.
 
@@ -362,7 +362,6 @@ def tune_parameters(
         tuner: Tuner object.
         features: List of features, may be regex specified.
         target_col_name: Target column name.
-        enable_regex: Enable regex for features.
 
     Returns:
         Refit compatible dictionary of best parameters.
@@ -375,10 +374,14 @@ def tune_parameters(
     # Fit tuner
     tuner.fit(X_train.values, y_train.values)
 
+    estimator = getattr(tuner, "estimator", None)
+    if estimator is None:
+        raise ValueError("Tuner must have 'estimator' attribute")
+
     return json.loads(
         json.dumps(
             {
-                "object": f"{type(tuner._estimator).__module__}.{type(tuner._estimator).__name__}",
+                "object": f"{type(estimator).__module__}.{type(estimator).__name__}",
                 **tuner.best_params_,
             },
             default=int,
@@ -388,13 +391,12 @@ def tune_parameters(
 
 @unpack_params()
 @inject_object()
-@make_list_regexable(source_df="data", make_regexable="features")
+@make_list_regexable(source_df="data", make_regexable_column="features")
 def train_model(
     data: pd.DataFrame,
     estimator: BaseEstimator,
     features: List[str],
     target_col_name: str,
-    enable_regex: bool = True,
 ) -> Dict:
     """Function to train model on the given data.
 
@@ -403,7 +405,6 @@ def train_model(
         estimator: sklearn compatible estimator.
         features: List of features, may be regex specified.
         target_col_name: Target column name.
-        enable_regex: Enable regex for features.
 
     Returns:
         Trained model.
@@ -431,14 +432,13 @@ def create_model(*estimators) -> ModelWrapper:
 
 
 @inject_object()
-@make_list_regexable(source_df="data", make_regexable="features")
+@make_list_regexable(source_df="data", make_regexable_column="features")
 def get_model_predictions(
     data: pd.DataFrame,
     model: ModelWrapper,
     features: List[str],
     target_col_name: str,
     prediction_suffix: str = "_pred",
-    enable_regex: str = True,
 ) -> pd.DataFrame:
     """Function to run model class predictions on input data.
 
@@ -448,7 +448,6 @@ def get_model_predictions(
         features: List of features, may be regex specified.
         target_col_name: Target column name.
         prediction_suffix: Suffix to add to the prediction column, defaults to '_pred'.
-        enable_regex: Enable regex for features.
 
     Returns:
         Data with predictions.
