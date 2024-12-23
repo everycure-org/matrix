@@ -22,7 +22,8 @@ jobs:
     name: Bump the version
     permissions:
       id-token: 'write'
-    
+      contents: 'read'
+      
     steps:
       - name: Checkout
         uses: actions/checkout@main
@@ -59,6 +60,10 @@ jobs:
   authentication_with_gcloud_and_k8s:
     runs-on: ubuntu-latest
     name: Authenticate with Google Cloud and Kubernetes
+    permissions:
+      id-token: 'write'
+      contents: 'read'
+
     steps:
       - name: Authenticate with Google Cloud
         uses: 'google-github-actions/auth@v2'
