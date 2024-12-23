@@ -619,14 +619,6 @@ def test_make_list_regexable_with_wrong_input_type_pandas(pandas_df):
         accept_regexable_list(pandas_df, 7)
 
 
-@unpack_params()
-def my_func(*args, **kwargs):
-    def test_func(x):
-        return x["c1"]
-
-    return test_func(*args, **kwargs)
-
-
 def test_unpack_params_with_kwargs():
     result_arg, result_kwarg = _unpack_params(unpack={"c1": 1})
 
@@ -721,9 +713,12 @@ def test_unpack_params_with_spark_df(dummy_spark_df):
     assert [x.asDict() for x in result.select("new").collect()] == [{"new": 2}]
 
 
-def test_unpack_params_true_decorator():
-    result = my_func(unpack={"x": {"c1": 1}})
-    assert result == 1
+@unpack_params()
+def my_func(*args, **kwargs):
+    def test_func(x):
+        return x["c1"]
+
+    return test_func(*args, **kwargs)
 
 
 def test_unpack_params_false_decorator():

@@ -10,7 +10,6 @@ from pandera import DataFrameModel as PandasDataFrameModel
 import pandera
 from pyspark.sql import functions as f
 import pyspark.sql.types as T
-from pandera.pyspark import Field as PysparkField
 from pandera import Field as PandasField
 
 
@@ -113,9 +112,9 @@ def filter_valid_pairs(
 
 
 class EmbeddingsWithPairsSchema(PysparkDataFrameModel):
-    y: T.IntegerType() = PysparkField()  # type: ignore
-    source_embedding: T.ArrayType(T.FloatType()) = PysparkField(nullable=False)  # type: ignore
-    target_embedding: T.ArrayType(T.FloatType()) = PysparkField(nullable=False)  # type: ignore
+    y: T.IntegerType
+    source_embedding: T.ArrayType(T.FloatType())  # type: ignore
+    target_embedding: T.ArrayType(T.FloatType())  # type: ignore
 
     class Config:
         strict = False
@@ -146,9 +145,9 @@ def attach_embeddings(
 
 
 class NodeSchema(PysparkDataFrameModel):
-    id: T.StringType() = PysparkField(nullable=False)  # type: ignore
-    is_drug: T.BooleanType() = PysparkField(nullable=False)  # type: ignore
-    is_disease: T.BooleanType() = PysparkField(nullable=False)  # type: ignore
+    id: T.StringType
+    is_drug: T.BooleanType
+    is_disease: T.BooleanType
 
     class Config:
         strict = False

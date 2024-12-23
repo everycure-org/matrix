@@ -51,12 +51,12 @@ class GraphDS(GraphDataScience):
 
 
 class IngestedNodesSchema(DataFrameModel):
-    id: T.StringType() = Field()  # type: ignore
-    label: T.StringType() = Field()  # type: ignore
-    name: T.StringType() = Field()  # type: ignore
-    property_keys: T.ArrayType(T.StringType()) = Field()  # type: ignore
-    property_values: T.ArrayType(T.StringType()) = Field()  # type: ignore
-    upstream_data_source: T.ArrayType(T.StringType()) = Field()  # type: ignore
+    id: T.StringType
+    label: T.StringType
+    name: T.StringType
+    property_keys: T.ArrayType(T.StringType())  # type: ignore
+    property_values: T.ArrayType(T.StringType())  # type: ignore
+    upstream_data_source: T.ArrayType(T.StringType())  # type: ignore
 
 
 @pandera.check_output(IngestedNodesSchema)
@@ -199,7 +199,7 @@ async def compute_df_embeddings_async(df: pd.DataFrame, embedding_model) -> pd.D
 
 
 class EmbeddingSchema(DataFrameModel):
-    id: T.StringType() = Field(nullable=False)  # type: ignore
+    id: T.StringType
     embedding: T.ArrayType(T.FloatType(), True)  # type: ignore
     pca_embedding: T.ArrayType(T.FloatType(), True)  # type: ignore
 
@@ -395,7 +395,7 @@ def write_topological_embeddings(
 
 
 class ExtractedTopologicalEmbeddingSchema(DataFrameModel):
-    id: T.StringType() = Field(nullable=False)  # type: ignore
+    id: T.StringType
     topological_embedding: T.ArrayType(T.FloatType(), True) = Field(nullable=True)  # type: ignore
     pca_embedding: T.ArrayType(T.FloatType(), True) = Field(nullable=True)  # type: ignore
 
