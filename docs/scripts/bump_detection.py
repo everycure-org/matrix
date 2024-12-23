@@ -2,24 +2,30 @@ import os
 import semver
 import sys
 
-latest_tag = os.getenv("latest_tag", "v0.0.0").lstrip("v")
-tag_version = semver.Version.parse(latest_tag)
 
-release = os.getenv("release", "v0.0.0").lstrip("v")
-release_version = semver.Version.parse(release)
+def bump_type():
+    latest_tag = os.getenv("latest_tag", "v0.0.0").lstrip("v")
+    tag_version = semver.Version.parse(latest_tag)
 
-if int(tag_version.major) == int(release_version.major) and int(tag_version.minor) < int(release_version.minor):
-    bump_type = "minor"
-elif (
-    int(tag_version.major) == int(release_version.major)
-    and int(tag_version.minor) == int(release_version.minor)
-    and int(tag_version.patch) < int(release_version.patch)
-):
-    bump_type = "patch"
-elif int(tag_version.major) < int(release_version.major):
-    bump_type = "major"
-else:
-    sys.exit(1)
+    release = os.getenv("release", "v0.0.0").lstrip("v")
+    release_version = semver.Version.parse(release)
 
-with open(os.getenv("GITHUB_ENV"), "a") as env_file:
-    env_file.write(f"bump_type={bump_type}\n")
+    if int(tag_version.major) == int(release_version.major) and int(tag_version.minor) < int(release_version.minor):
+        bump_type = "minor"
+    elif (
+        int(tag_version.major) == int(release_version.major)
+        and int(tag_version.minor) == int(release_version.minor)
+        and int(tag_version.patch) < int(release_version.patch)
+    ):
+        bump_type = "patch"
+    elif int(tag_version.major) < int(release_version.major):
+        bump_type = "major"
+    else:
+        sys.exit(1)
+
+    with open(os.getenv("GITHUB_ENV"), "a") as env_file:
+        env_file.write(f"bump_type={bump_type}\n")
+
+
+if __name__ == "__main__":
+    bump_type()
