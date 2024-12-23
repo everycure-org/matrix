@@ -90,7 +90,7 @@ jobs:
       - name: Check gcl
         run: |
           which gcloud  
-          gcoud config list
+          gcloud config list
 
       - name: Check kubectl
         run: |
