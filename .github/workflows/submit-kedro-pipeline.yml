@@ -94,6 +94,11 @@ jobs:
           kubectl get nodes
           kubectl get ns
 
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
       - name: Set up kedro project dependencies
         working-directory: pipelines/matrix
         run: |
