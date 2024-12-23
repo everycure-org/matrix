@@ -2,7 +2,7 @@ random_state: 111
 
 neo4j:
   # these get overwritten in prod through the env variables, in base we default to 2nd param
-  host: ${oc.env:NEO4J_HOST,bolt+s://127.0.0.1:7687} # NOTE: Passing in bolt+s as our local Neo4J has SSL enabled
+  host: ${oc.env:NEO4J_HOST,bolt+ssc://127.0.0.1:7687} # NOTE: Passing in bolt+s as our local Neo4J has SSL enabled
   user: ${oc.env:NEO4J_USER,neo4j}
   password: ${oc.env:NEO4J_PASSWORD,admin}
 

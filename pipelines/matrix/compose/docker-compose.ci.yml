@@ -42,7 +42,7 @@ services:
     environment:
       TQDM_DISABLE: 1
       NODENORM_ENDPOINT: http://mockserver:1080/1.5/get_normalized_nodes
-      NEO4J_HOST: bolt+s://neo4j:7687 # NOTE: Passing in bolt+s as our local Neo4J has SSL enabled
+      NEO4J_HOST: bolt+ssc://neo4j:7687 # NOTE: Passing in bolt+s as our local Neo4J has SSL enabled
       NEO4J_USER: neo4j
       NEO4J_PASSWORD: admin
       OPENAI_ENDPOINT: http://mockserver:1080/v1
