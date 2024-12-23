@@ -2,6 +2,8 @@ apiVersion: argoproj.io/v1alpha1
 kind: EventBus
 metadata:
   name: default
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"  # Bringing the eventbus up *before* the sensor and the eventsource seems critical
 spec:
   nats:
     native:
