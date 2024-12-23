@@ -4,6 +4,7 @@ from matrix.pipelines.embeddings.nodes import ingest_nodes
 import pyspark
 from pyspark.ml.feature import PCA
 from pyspark.sql.types import StructType, StructField, StringType, ArrayType, FloatType, DoubleType
+from pyspark.testing import assertDataFrameEqual
 
 from matrix.pipelines.embeddings.nodes import reduce_embeddings_dimension
 import numpy as np
@@ -32,26 +33,32 @@ def sample_input_df(spark: pyspark.sql.SparkSession) -> pyspark.sql.DataFrame:
     return spark.createDataFrame(data)
 
 
-def test_ingest_nodes_basic(sample_input_df: pyspark.sql.DataFrame) -> None:
+def test_ingest_nodes_basic(spark: pyspark.sql.SparkSession, sample_input_df: pyspark.sql.DataFrame) -> None:
     """Test basic functionality of ingest_nodes."""
     result = ingest_nodes(sample_input_df)
 
-    # Check schema
-    assert "label" in result.columns
-    assert "property_keys" in result.columns
-    assert "property_values" in result.columns
-    assert "array_property_keys" in result.columns
-    assert "array_property_values" in result.columns
+    expected_data = [
+        {
+            "label": "TestCategory",
+            "property_keys": ["name", "category", "description"],
+            "property_values": ["Test Node", "TestCategory", "Test Description"],
+            "array_property_keys": ["upstream_data_source"],
+            "array_property_values": [["source1", "source2"]],
+        },
+        {
+            "label": "TestCategory2",
+            "property_keys": ["name", "category", "description"],
+            "property_values": ["Test Node 2", "TestCategory2", "Test Description 2"],
+            "array_property_keys": ["upstream_data_source"],
+            "array_property_values": [["source3"]],
+        },
+    ]
 
-    # Convert to pandas for easier assertions
-    result_pd = result.toPandas()
+    expected_df = spark.createDataFrame(expected_data)
 
-    # Check first row
-    assert result_pd.iloc[0]["label"] == "TestCategory"
-    assert set(result_pd.iloc[0]["property_keys"]) == {"name", "category", "description"}
-    assert result_pd.iloc[0]["property_values"][0] == "Test Node"
-    assert result_pd.iloc[0]["array_property_keys"] == ["upstream_data_source"]
-    assert result_pd.iloc[0]["array_property_values"][0] == ["source1", "source2"]
+    # Compare only the columns we care about
+    result_subset = result.select(*expected_df.columns)
+    assertDataFrameEqual(result_subset, expected_df)
 
 
 def test_ingest_nodes_empty_df(spark: pyspark.sql.SparkSession) -> None:
