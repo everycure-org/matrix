@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 # main.py
 
 import sys
@@ -5,7 +6,7 @@ import os
 import logging
 import subprocess
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Tuple, Union, Optional
+from typing import Any, Callable, Dict, List, Tuple, Union, Optional, Set
 from dataclasses import dataclass, field
 
 import pandas as pd
@@ -145,8 +146,8 @@ class DataLoader:
         self.normalizer = normalizer
 
     def load_datasets(
-        self, nodes_df: pd.DataFrame
-    ) -> Tuple[List[str], Dict[str, pd.DataFrame], Dict[str, pd.DataFrame], pd.DataFrame]:
+        self, nodes_df: pd.DataFrame, edges_df: pd.DataFrame
+    ) -> Tuple[List[str], Dict[str, pd.DataFrame], Dict[str, pd.DataFrame], pd.DataFrame, pd.DataFrame]:
         categories = self.get_categories(nodes_df)
         positive_datasets = {}
         negative_datasets = {}
@@ -156,7 +157,7 @@ class DataLoader:
             negative_df = self.sample_negative_dataset(nodes_df, category)
             positive_datasets[category] = positive_df
             negative_datasets[category] = negative_df
-        return categories, positive_datasets, negative_datasets, nodes_df
+        return categories, positive_datasets, negative_datasets, nodes_df, edges_df
 
     def get_categories(self, nodes_df: pd.DataFrame) -> List[str]:
         categories = nodes_df["category"].unique().tolist()
@@ -182,6 +183,32 @@ class DataLoader:
             n=min(self.config.negative_n, len(negative_df)),
             random_state=self.config.neg_seed,
         ).reset_index(drop=True)
+
+    def get_first_hop_info(
+        self, edges_df: pd.DataFrame, nodes_df: pd.DataFrame, sampled_node_ids: Set[str], seed: int
+    ) -> Tuple[pd.DataFrame, pd.DataFrame]:
+        connected_edges = edges_df[
+            (edges_df["subject"].isin(sampled_node_ids)) | (edges_df["object"].isin(sampled_node_ids))
+        ]
+        connected_node_ids = set(connected_edges["subject"].tolist() + connected_edges["object"].tolist())
+        connected_node_ids -= sampled_node_ids
+        connected_nodes_df = nodes_df[nodes_df["id"].isin(connected_node_ids)]
+        return connected_edges, connected_nodes_df
+
+    def sample_edges_per_node(
+        self, edges_df: pd.DataFrame, node_ids: List[str], sample_ratio: float, seed: int
+    ) -> pd.DataFrame:
+        hierarchical_predicates = ["is_a", "part_of"]
+        node_edges = edges_df[(edges_df["subject"].isin(node_ids)) | (edges_df["object"].isin(node_ids))]
+        hierarchical_edges = node_edges[node_edges["predicate"].isin(hierarchical_predicates)]
+        other_edges = node_edges[~node_edges["predicate"].isin(hierarchical_predicates)]
+        sampled_edges = (
+            other_edges.groupby("predicate", group_keys=False)
+            .apply(lambda x: x.sample(frac=sample_ratio, random_state=seed))
+            .reset_index(drop=True)
+        )
+        all_edges = pd.concat([sampled_edges, hierarchical_edges], ignore_index=True).drop_duplicates()
+        return all_edges
 
 
 class Normalizer:
@@ -497,6 +524,8 @@ class EmbeddingGenerator:
         model_name: str,
         model_info: Dict[str, Any],
         datasets: Dict[str, pd.DataFrame],
+        edges_df: pd.DataFrame,
+        nodes_df: pd.DataFrame,
         seed: int,
         text_fields: List[str],
         dataset_name: str = "default",
@@ -506,6 +535,9 @@ class EmbeddingGenerator:
         embeddings_dict = {}
         if model_info["type"] == "hf":
             model, tokenizer = self.load_model_and_tokenizer(model_info)
+        data_loader = DataLoader(
+            cache_manager=self.cache_manager, config=self.config, normalizer=Normalizer(self.config.cache_dir)
+        )
         for category_name, df in datasets.items():
             if df.empty:
                 continue
@@ -521,7 +553,21 @@ class EmbeddingGenerator:
                 / f"{dataset_name}{dataset_type_suffix}_ids_{category_name}_{model_name}_seed_{seed}{cache_suffix}.pkl"
             )
 
-            all_texts = [self.get_text_representation(row, text_fields) for _, row in df.iterrows()]
+            sampled_node_ids = set(df["id"].tolist())
+            first_hop_edges, connected_nodes_df = data_loader.get_first_hop_info(
+                edges_df, nodes_df, sampled_node_ids, seed
+            )
+            sampled_edges = data_loader.sample_edges_per_node(
+                first_hop_edges, df["id"].tolist(), sample_ratio=0.6, seed=seed
+            )
+
+            all_texts = []
+            for _, row in df.iterrows():
+                text_repr = self.get_text_representation(
+                    row, text_fields, sampled_edges, connected_nodes_df, sampled_node_ids
+                )
+                all_texts.append(text_repr)
+
             if not all_texts:
                 continue
             embeddings = []
@@ -566,20 +612,52 @@ class EmbeddingGenerator:
             self.unload_model_and_tokenizer(model, tokenizer)
         return model_name, embeddings_dict
 
-    def get_text_representation(self, row: pd.Series, text_fields: List[str]) -> str:
-        fields = []
-        for tfield in text_fields:
-            value = row.get(tfield, "")
-            if EmbeddingGenerator.is_missing_value(value):
-                value = ""
-            fields.append(value)
-        text_values = []
-        for field_value in fields:
-            parsed_list = EmbeddingGenerator.parse_list_string(field_value)
-            text_values.extend(parsed_list)
-        text_values = [text for text in text_values if text.strip()]
-        text_representation = " ".join(text_values).strip()
-        return text_representation if text_representation else " "
+    def get_text_representation(
+        self,
+        row: pd.Series,
+        text_fields: List[str],
+        sampled_edges_df: pd.DataFrame,
+        connected_nodes_df: pd.DataFrame,
+        sampled_node_ids: Set[str],
+    ) -> str:
+        subject_node = {
+            "categories": self.parse_list_string(row.get("category", [])),
+            "labels": self.parse_list_string(row.get("name", [])),
+        }
+        node_id = row["id"]
+        node_edges = sampled_edges_df[
+            (sampled_edges_df["subject"] == node_id) | (sampled_edges_df["object"] == node_id)
+        ]
+        edge_info_list = []
+        for _, edge_row in node_edges.iterrows():
+            predicate = edge_row["predicate"]
+            object_id = edge_row["object"] if edge_row["subject"] == node_id else edge_row["subject"]
+            if object_id in sampled_node_ids:
+                continue
+            object_node_row = connected_nodes_df[connected_nodes_df["id"] == object_id]
+            if object_node_row.empty:
+                continue
+            object_node = {
+                "categories": self.parse_list_string(object_node_row.iloc[0].get("category", [])),
+                "labels": self.parse_list_string(object_node_row.iloc[0].get("name", [])),
+            }
+            edge_info = {
+                "subject_node": subject_node,
+                "object_node": object_node,
+                "predicates": [predicate],
+                # Include additional edge-related data if available
+            }
+            edge_info_list.append(edge_info)
+        entity_representation = {
+            "entity_representation": {
+                "nodes": {
+                    "subject_node": subject_node,
+                },
+                "edges": edge_info_list,
+            }
+        }
+        text_representation = json.dumps(entity_representation)
+        return text_representation
 
     @staticmethod
     def is_missing_value(value: Any) -> bool:
@@ -597,6 +675,8 @@ class EmbeddingGenerator:
         model_names: List[str],
         positive_datasets: Dict[str, pd.DataFrame],
         negative_datasets: Dict[str, pd.DataFrame],
+        edges_df: pd.DataFrame,
+        nodes_df: pd.DataFrame,
         seeds: Dict[str, int],
         text_fields: List[str],
         dataset_name: str = "default",
@@ -618,6 +698,8 @@ class EmbeddingGenerator:
                     model_name=model_name,
                     model_info=model_info,
                     datasets=datasets,
+                    edges_df=edges_df,
+                    nodes_df=nodes_df,
                     seed=dataset_seed,
                     text_fields=text_fields,
                     dataset_name=dataset_name,
@@ -645,7 +727,7 @@ class Pipeline:
         self.data_loader = DataLoader(cache_manager=cache_manager, config=config, normalizer=self.normalizer)
         self.embedding_generator = EmbeddingGenerator(config=config, cache_manager=cache_manager)
 
-    def _load_nodes(self) -> pd.DataFrame:
+    def _load_nodes_edges(self) -> Tuple[pd.DataFrame, pd.DataFrame]:
         try:
             configure_project(self.package_name)
             with KedroSession.create() as session:
@@ -653,34 +735,29 @@ class Pipeline:
                 catalog = context.catalog
                 self.catalog = catalog
                 nodes_df = catalog.load(self.config.nodes_dataset_name)
+                edges_df = catalog.load(self.config.edges_dataset_name)
                 if isinstance(nodes_df, SparkDataFrame):
                     nodes_df = nodes_df.toPandas()
-                return nodes_df
+                if isinstance(edges_df, SparkDataFrame):
+                    edges_df = edges_df.toPandas()
+                return nodes_df, edges_df
         except Exception:
             sys.exit(1)
 
     def load_data(
         self,
-    ) -> Tuple[List[str], Dict[str, pd.DataFrame], Dict[str, pd.DataFrame], pd.DataFrame]:
-        nodes_cache_file = self.cache_manager.cache_dir / "datasets" / f"nodes_df{self.config.cache_suffix}.pkl"
-        nodes_df = self.cache_manager.get_or_compute(nodes_cache_file, self._load_nodes)
+    ) -> Tuple[List[str], Dict[str, pd.DataFrame], Dict[str, pd.DataFrame], pd.DataFrame, pd.DataFrame]:
+        nodes_edges_cache_file = (
+            self.cache_manager.cache_dir / "datasets" / f"nodes_edges_df{self.config.cache_suffix}.pkl"
+        )
 
-        edges_cache_file = self.cache_manager.cache_dir / "datasets" / f"edges_df{self.config.cache_suffix}.pkl"
+        def load_nodes_edges():
+            return self._load_nodes_edges()
 
-        def load_edges():
-            try:
-                edges_df = self.catalog.load(self.config.edges_dataset_name)
-                if isinstance(edges_df, SparkDataFrame):
-                    edges_df = edges_df.toPandas()
-                if edges_df.empty:
-                    pass
-                return edges_df
-            except Exception:
-                raise
-
-        edges_df = self.cache_manager.get_or_compute(edges_cache_file, load_edges)
-
-        categories, positive_datasets, negative_datasets, _ = self.data_loader.load_datasets(nodes_df=nodes_df)
+        nodes_df, edges_df = self.cache_manager.get_or_compute(nodes_edges_cache_file, load_nodes_edges)
+        categories, positive_datasets, negative_datasets, nodes_df, edges_df = self.data_loader.load_datasets(
+            nodes_df=nodes_df, edges_df=edges_df
+        )
 
         for dataset_type, datasets in [("positive", positive_datasets), ("negative", negative_datasets)]:
             for category, df in datasets.items():
@@ -695,25 +772,20 @@ class Pipeline:
                 )
                 filtered_edges_df.to_pickle(edges_cache_file)
 
-        # Save nodes_df to datasets subdirectory
         nodes_df.to_pickle(self.cache_manager.cache_dir / "datasets" / f"nodes_df{self.config.cache_suffix}.pkl")
-
-        # Save edges_df to datasets subdirectory
         edges_df.to_pickle(self.cache_manager.cache_dir / "datasets" / f"edges_df{self.config.cache_suffix}.pkl")
 
-        # Save positive datasets to datasets subdirectory
         for category, df in positive_datasets.items():
             df.to_pickle(
                 self.cache_manager.cache_dir / "datasets" / f"positive_df_{category}{self.config.cache_suffix}.pkl"
             )
 
-        # Save negative datasets to datasets subdirectory
         for category, df in negative_datasets.items():
             df.to_pickle(
                 self.cache_manager.cache_dir / "datasets" / f"negative_df_{category}{self.config.cache_suffix}.pkl"
             )
 
-        return categories, positive_datasets, negative_datasets, nodes_df
+        return categories, positive_datasets, negative_datasets, nodes_df, edges_df
 
 
 def safe_json_dumps(x: Any) -> str:
@@ -737,7 +809,6 @@ def main():
 
     cache_dir = project_path / "apps" / "embed_norm" / "cached_datasets"
     cache_dir.mkdir(parents=True, exist_ok=True)
-    print(cache_dir)
     for subdir in ["embeddings", "datasets"]:
         subdir_path = cache_dir / subdir
         subdir_path.mkdir(parents=True, exist_ok=True)
@@ -785,7 +856,7 @@ def main():
         project_path=project_path,
     )
 
-    categories, positive_datasets, negative_datasets, nodes_df = pipeline.load_data()
+    categories, positive_datasets, negative_datasets, nodes_df, edges_df = pipeline.load_data()
 
     seeds = {"positive": config.pos_seed, "negative": config.neg_seed}
     text_fields = ["name", "description"]
@@ -793,6 +864,8 @@ def main():
         model_names=config.model_names,
         positive_datasets=positive_datasets,
         negative_datasets=negative_datasets,
+        edges_df=edges_df,
+        nodes_df=nodes_df,
         seeds=seeds,
         text_fields=text_fields,
         dataset_name=config.dataset_name,
