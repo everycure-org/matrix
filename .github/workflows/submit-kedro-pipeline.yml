@@ -119,6 +119,7 @@ jobs:
         run: |
           cat "$GITHUB_ENV"
           echo "Release version is ${{ env.release_version }}"
+          echo "Latest tag is ${{ env.latest_tag }}"
       # - name: Set up kedro project dependencies
       #   working-directory: pipelines/matrix
       #   run: |
