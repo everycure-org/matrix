@@ -691,17 +691,6 @@ def test_unpack_params_disable_via_kwargs():
     assert result_kwarg == {"x": {"c1": 1}}
 
 
-def test_unpack_params_with_pd_df(dummy_pd_df):
-    result_arg, result_kwarg = _unpack_params(unpack={"df": dummy_pd_df, "x": 1})
-
-    def dummy_func(df, x):
-        df["new"] = df["c1"] + x
-        return df
-
-    result = dummy_func(*result_arg, **result_kwarg)
-    assert result["new"].tolist() == [2]
-
-
 @pytest.fixture
 def dummy_spark_df(spark):
     """Dummy spark dataframe."""
@@ -710,15 +699,27 @@ def dummy_spark_df(spark):
     return dummy_spark_df
 
 
-def test_unpack_params_with_spark_df(dummy_spark_df):
-    result_arg, result_kwarg = _unpack_params(unpack={"df": dummy_spark_df, "x": 1})
-
-    def dummy_func(df, x):
-        df = df.withColumn("new", F.lit(x) + 1)
-        return df
-
-    result = dummy_func(*result_arg, **result_kwarg)
-    assert [x.asDict() for x in result.select("new").collect()] == [{"new": 2}]
+@pytest.mark.parametrize(
+    "df_fixture,transform_func,expected",
+    [
+        (
+            "dummy_pd_df",
+            lambda df, x: df.assign(new=df["c1"] + x),
+            lambda result: result["new"].tolist() == [2],
+        ),
+        (
+            "dummy_spark_df",
+            lambda df, x: df.withColumn("new", F.lit(x) + 1),
+            lambda result: [x.asDict() for x in result.select("new").collect()] == [{"new": 2}],
+        ),
+    ],
+    ids=["pandas", "spark"],
+)
+def test_unpack_params_with_df(request, df_fixture, transform_func, expected):
+    df = request.getfixturevalue(df_fixture)
+    result_arg, result_kwarg = _unpack_params(unpack={"df": df, "x": 1})
+    result = transform_func(*result_arg, **result_kwarg)
+    assert expected(result)
 
 
 def test_unpack_params_true_decorator():
