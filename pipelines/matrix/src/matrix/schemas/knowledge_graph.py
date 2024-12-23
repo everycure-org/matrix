@@ -22,19 +22,19 @@ class KGEdgeSchema(pa.DataFrameModel):
     """Schema for a knowledge graph edges as exposed by the Data API."""
 
     # fmt: off
-    subject:                     T.StringType()            = Field(nullable = False) # type: ignore
-    predicate:                   T.StringType()            = Field(nullable = False) # type: ignore
-    object:                      T.StringType()            = Field(nullable = False) # type: ignore
-    knowledge_level:             T.StringType()            = Field(nullable = True) # type: ignore
-    primary_knowledge_source:    T.StringType()            = Field(nullable = True) # type: ignore
+    subject:                     T.StringType            = Field(nullable = False)
+    predicate:                   T.StringType            = Field(nullable = False)
+    object:                      T.StringType            = Field(nullable = False)
+    knowledge_level:             T.StringType            = Field(nullable = True)
+    primary_knowledge_source:    T.StringType            = Field(nullable = True)
     aggregator_knowledge_source: T.ArrayType(T.StringType()) = Field(nullable = True) # type: ignore
     publications:                T.ArrayType(T.StringType()) = Field(nullable = True) # type: ignore
-    subject_aspect_qualifier:    T.StringType()            = Field(nullable = True) # type: ignore
-    subject_direction_qualifier: T.StringType()            = Field(nullable = True) # type: ignore
-    object_aspect_qualifier:     T.StringType()            = Field(nullable = True) # type: ignore
-    object_direction_qualifier:  T.StringType()            = Field(nullable = True) # type: ignore
+    subject_aspect_qualifier:    T.StringType            = Field(nullable = True)
+    subject_direction_qualifier: T.StringType            = Field(nullable = True)
+    object_aspect_qualifier:     T.StringType            = Field(nullable = True)
+    object_direction_qualifier:  T.StringType            = Field(nullable = True)
     # We manually set this for every KG we ingest
-    upstream_data_source:          T.ArrayType(T.StringType()) = Field(nullable = False) # type: ignore
+    upstream_data_source:          T.ArrayType(T.StringType()) # type: ignore
     # fmt: on
 
     class Config:  # noqa: D106
@@ -65,15 +65,15 @@ class KGNodeSchema(pa.DataFrameModel):
     """Schema for a knowledge graph nodes as exposed by the Data API."""
 
     # fmt: off
-    id:                                T.StringType()            = Field(nullable=False) # type: ignore
-    name:                              T.StringType()            = Field(nullable=True) # type: ignore #TODO should this be nullable?
-    category:                          T.StringType()            = Field(nullable=False) # type: ignore
-    description:                       T.StringType()            = Field(nullable=True) # type: ignore
+    id:                                T.StringType            = Field(nullable=False)
+    name:                              T.StringType            = Field(nullable=True)
+    category:                          T.StringType            = Field(nullable=False)
+    description:                       T.StringType            = Field(nullable=True)
     equivalent_identifiers:            T.ArrayType(T.StringType()) = Field(nullable=True) # type: ignore
     all_categories:                    T.ArrayType(T.StringType()) = Field(nullable=True) # type: ignore
     publications:                      T.ArrayType(T.StringType()) = Field(nullable=True) # type: ignore
     labels:                            T.ArrayType(T.StringType()) = Field(nullable=True) # type: ignore
-    international_resource_identifier: T.StringType()            = Field(nullable=True) # type: ignore
+    international_resource_identifier: T.StringType            = Field(nullable=True)
     # We manually set this for every KG we ingest
     upstream_data_source:                T.ArrayType(T.StringType()) = Field(nullable=False) # type: ignore
     #upstream_kg_node_ids:                MapType(StringType(), StringType()) = pa.Field(nullable=True)

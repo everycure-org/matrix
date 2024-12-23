@@ -2,7 +2,7 @@ import logging
 from typing import Dict
 
 import pandera as pa
-from pandera.pyspark import DataFrameModel, Field
+from pandera.pyspark import DataFrameModel
 
 from pyspark.sql import DataFrame
 import pyspark.sql.functions as f
@@ -80,7 +80,7 @@ class RTXTransformer(GraphTransformer):
 class CurieToPMIDsSchema(DataFrameModel):
     """Schema for a curie to pmids mapping."""
 
-    curie: T.StringType() = Field(nullable=False)  # type: ignore
+    curie: T.StringType
 
     class Config:
         strict = False

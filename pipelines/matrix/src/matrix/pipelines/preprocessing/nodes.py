@@ -104,10 +104,10 @@ def enrich_df(df: pd.DataFrame, endpoint: str, func: Callable, input_cols: str, 
 
 
 class IntNodesSchema(DataFrameModel):
-    ID: Series[float] = Field(nullable=False)  # type: ignore
-    name: Series[object]  # type: ignore
-    curie: Series[object]  # type: ignore
-    normalized_curie: Series[object]  # type: ignore
+    ID: Series[float]
+    name: Series[object]
+    curie: Series[object]
+    normalized_curie: Series[object]
 
     class Config:
         strict = False
@@ -147,8 +147,8 @@ def create_int_nodes(
 
 
 class IntEdgesSchema(DataFrameModel):
-    SourceId: Series[str] = Field(nullable=True)  # type: ignore
-    TargetId: Series[str] = Field(nullable=True)  # type: ignore
+    SourceId: Series[str] = Field(nullable=True)
+    TargetId: Series[str] = Field(nullable=True)
 
     class Config:
         strict = False
@@ -187,10 +187,10 @@ def create_int_edges(int_nodes: pd.DataFrame, int_edges: pd.DataFrame) -> pd.Dat
 
 
 class PrmNodesSchema(DataFrameModel):
-    category: Series[object]  # type: ignore
-    id: Series[object] = Field(unique=True)  # type: ignore
-    name: Series[object]  # type: ignore
-    description: Series[object]  # type: ignore
+    category: Series[object]
+    id: Series[object] = Field(unique=True)
+    name: Series[object]
+    description: Series[object]
 
     class Config:
         strict = False
@@ -218,10 +218,10 @@ def create_prm_nodes(prm_nodes: pd.DataFrame) -> pd.DataFrame:
 
 
 class PrmEdgesSchema(DataFrameModel):
-    subject: Series[str] = Field(nullable=True)  # type: ignore
-    predicate: Series[str] = Field(nullable=True)  # type: ignore
-    object: Series[str] = Field(nullable=True)  # type: ignore
-    knowledge_source: Series[str] = Field(nullable=True)  # type: ignore
+    subject: Series[str] = Field(nullable=True)
+    predicate: Series[str] = Field(nullable=True)
+    object: Series[str] = Field(nullable=True)
+    knowledge_source: Series[str] = Field(nullable=True)
 
     class Config:
         strict = False
@@ -243,17 +243,17 @@ def create_prm_edges(int_edges: pd.DataFrame) -> pd.DataFrame:
 
 
 class ClinicalTrialsSchema(DataFrameModel):
-    clinical_trial_id: Series[object]  # type: ignore
-    reason_for_rejection: Series[object]  # type: ignore
-    drug_name: Series[object]  # type: ignore
-    disease_name: Series[object]  # type: ignore
-    drug_kg_curie: Series[object]  # type: ignore
-    disease_kg_curie: Series[object]  # type: ignore
-    conflict: Series[object]  # type: ignore
-    significantly_better: Series[float]  # type: ignore
-    non_significantly_better: Series[float]  # type: ignore
-    non_significantly_worse: Series[float]  # type: ignore
-    significantly_worse: Series[float]  # type: ignore
+    clinical_trial_id: Series[object]
+    reason_for_rejection: Series[object]
+    drug_name: Series[object]
+    disease_name: Series[object]
+    drug_kg_curie: Series[object]
+    disease_kg_curie: Series[object]
+    conflict: Series[object]
+    significantly_better: Series[float]
+    non_significantly_better: Series[float]
+    non_significantly_worse: Series[float]
+    significantly_worse: Series[float]
 
     class Config:
         strict = False
@@ -358,17 +358,17 @@ def map_name_to_curie(
 
 
 class CleanTrialsSchema(DataFrameModel):
-    clinical_trial_id: Series[object]  # type: ignore
-    reason_for_rejection: Series[object]  # type: ignore
-    drug_name: Series[object]  # type: ignore
-    disease_name: Series[object]  # type: ignore
-    drug_kg_curie: Series[object]  # type: ignore
-    disease_kg_curie: Series[object]  # type: ignore
-    conflict: Series[object]  # type: ignore
-    significantly_better: Series[float]  # type: ignore
-    non_significantly_better: Series[float]  # type: ignore
-    non_significantly_worse: Series[float]  # type: ignore
-    significantly_worse: Series[float]  # type: ignore
+    clinical_trial_id: Series[object]
+    reason_for_rejection: Series[object]
+    drug_name: Series[object]
+    disease_name: Series[object]
+    drug_kg_curie: Series[object]
+    disease_kg_curie: Series[object]
+    conflict: Series[object]
+    significantly_better: Series[float]
+    non_significantly_better: Series[float]
+    non_significantly_worse: Series[float]
+    significantly_worse: Series[float]
 
     class Config:
         strict = False
@@ -411,9 +411,9 @@ def clean_clinical_trial_data(df: pd.DataFrame) -> pd.DataFrame:
 
 
 class DrugListSchema(DataFrameModel):
-    single_ID: Series[object] = Field(nullable=True)  # type: ignore
-    curie: Series[object] = Field(nullable=True)  # type: ignore
-    name: Series[object] = Field(nullable=True)  # type: ignore
+    single_ID: Series[object] = Field(nullable=True)
+    curie: Series[object] = Field(nullable=True)
+    name: Series[object] = Field(nullable=True)
 
     class Config:
         strict = False
@@ -462,14 +462,14 @@ def clean_drug_list(
 
 
 class DiseaseListSchema(DataFrameModel):
-    category_class: Series[object]  # type: ignore
-    label: Series[object]  # type: ignore
-    definition: Series[object]  # type: ignore
-    synonyms: Series[object]  # type: ignore
-    subsets: Series[object]  # type: ignore
-    crossreferences: Series[object]  # type: ignore
-    curie: Series[object]  # type: ignore
-    name: Series[object]  # type: ignore
+    category_class: Series[object]
+    label: Series[object]
+    definition: Series[object]
+    synonyms: Series[object]
+    subsets: Series[object]
+    crossreferences: Series[object]
+    curie: Series[object]
+    name: Series[object]
 
     class Config:
         strict = False
@@ -519,13 +519,13 @@ def clean_disease_list(
 
 
 class InputSheetSchema(DataFrameModel):
-    timestamp: Series[object]  # type: ignore
-    drug_id: Series[object]  # type: ignore
-    disease_id: Series[object]  # type: ignore
-    norm_drug_id: Series[object]  # type: ignore
-    norm_disease_id: Series[object]  # type: ignore
-    norm_drug_name: Series[object]  # type: ignore
-    norm_disease_name: Series[object]  # type: ignore
+    timestamp: Series[object]
+    drug_id: Series[object]
+    disease_id: Series[object]
+    norm_drug_id: Series[object]
+    norm_disease_id: Series[object]
+    norm_drug_name: Series[object]
+    norm_disease_name: Series[object]
 
     class Config:
         strict = False

@@ -84,7 +84,7 @@ import pyspark
 from pyspark.sql import functions as F
 
 class EmbeddingSchema(DataFrameModel):
-    id: T.StringType() = Field(nullable=False)  # type: ignore
+    id: T.StringType = Field(nullable=False)
     embedding: T.ArrayType(T.FloatType(), False)  # type: ignore
     pca_embedding: T.ArrayType(T.FloatType(), True)  # type: ignore
 
