@@ -1,10 +1,7 @@
-# This shows how to do cross namespace referencing. This gets deployed in argocd namespace but references the 
-# gateway below through the namespace
 kind: HTTPRoute
 apiVersion: gateway.networking.k8s.io/v1beta1
 metadata:
-  name: argo-cd-route
-  namespace: argocd
+  name: kube-ops-view-route
 spec:
   parentRefs:
   - kind: Gateway
@@ -12,17 +9,16 @@ spec:
     namespace: gateway
     name: external-http
   hostnames:
-  - "argocd.platform.dev.everycure.org"
+  - "kube-ops-view.platform.dev.everycure.org"
   rules:
   - backendRefs:
-    - name: argo-argocd-server
+    - name: kube-ops-view
       port: 80
-  
 ---
 apiVersion: networking.gke.io/v1
 kind: HealthCheckPolicy
 metadata:
-  name: argocd-health-check
+  name: kube-ops-view-health-check
 spec:
   default:
     checkIntervalSec: 10
@@ -35,10 +31,10 @@ spec:
       type: HTTP
       httpHealthCheck:
         portSpecification: USE_FIXED_PORT
-        port: 80
-        requestPath: /healthz
+        port: 8080
+        requestPath: /health
         proxyHeader: NONE
   targetRef:
     group: ""
     kind: Service
-    name: argo-argocd-server
+    name: kube-ops-view
