@@ -115,4 +115,6 @@ jobs:
             --release-version "${{ env.release_version }}" \
             --pipeline ingestion \
             --is-test \
+            --headless \
             --run-from-gh
+
