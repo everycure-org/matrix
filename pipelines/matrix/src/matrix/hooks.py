@@ -1,6 +1,7 @@
 import logging
 import json
 import os
+import re
 from datetime import datetime
 from typing import Any, Dict, Optional
 
@@ -283,8 +284,14 @@ class ReleaseInfoHooks:
     @staticmethod
     def build_bigquery_link() -> str:
         version = ReleaseInfoHooks._globals["versions"]["release"]
-        version = "release_" + version.replace(".", "_")
-        tmpl = f"https://console.cloud.google.com/bigquery?project=mtrx-hub-dev-3of&ws=!1m5!1m4!4m3!1smtrx-hub-dev-3of!2smtrx-hub-dev-3of!3s{version}"
+        version_formatted = "release_" + re.sub(r"[.-]", "_", version)
+        tmpl = (
+            f"https://console.cloud.google.com/bigquery?"
+            f"project=mtrx-hub-dev-3of"
+            f"&ws=!1m4!1m3!3m2!1s"
+            f"mtrx-hub-dev-3of!2s"
+            f"{version_formatted}"
+        )
         return tmpl
 
     @staticmethod
