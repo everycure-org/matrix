@@ -301,12 +301,12 @@ def test_make_splits_empty_data(simple_splitter):
         make_splits(data=empty_data, splitter=simple_splitter)
 
 
-@pytest.fixture
+@pytest.fixture()
 def mock_knowledge_graph():
     return Mock(spec=KnowledgeGraph)
 
 
-@pytest.fixture
+@pytest.fixture()
 def mock_generator():
     generator = Mock(spec=SingleLabelPairGenerator)
     # Configure mock to return valid data matching schema
@@ -322,7 +322,7 @@ def mock_generator():
     return generator
 
 
-@pytest.fixture
+@pytest.fixture()
 def sample_splits():
     return pd.DataFrame(
         {
