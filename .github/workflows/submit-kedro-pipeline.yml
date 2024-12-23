@@ -16,15 +16,55 @@ env:
   cluster: 'compute-cluster'
 
 jobs:
-  
-  bump_version:
+
+  authentication_with_gcloud_and_k8s:
     runs-on: ubuntu-latest
-    name: Bump the version
+    name: Authenticate with Google Cloud and Kubernetes
     permissions:
       id-token: 'write'
       contents: 'read'
 
     steps:
+      - name: Authenticate with Google Cloud
+        uses: 'google-github-actions/auth@v2'
+        with:
+          project_id: ${{env.project_id}}
+          workload_identity_provider: ${{env.workload_identity_provider}}
+          service_account: ${{env.service_account}}
+
+      - uses: simenandre/setup-gke-gcloud-auth-plugin@v1
+
+      - uses: google-github-actions/get-gke-credentials@v1
+        with:
+          cluster_name: ${{env.cluster}}
+          location: ${{env.region}}
+
+      - name: Authenticate kubectl
+        run: |
+          gcloud container clusters get-credentials ${{env.cluster}} \
+            --project ${{env.project_id}} \
+            --region ${{env.region}} 
+
+  submit_data_release_periodically:
+    runs-on: ubuntu-latest
+    name: Submit the Kedro Pipeline Periodically
+    needs: [authentication_with_gcloud_and_k8s]
+    permissions:
+      contents: 'write'
+      id-token: 'write'
+      pull-requests: 'write'
+
+    steps:
+      - name: Check gcl
+        run: |
+          which gcloud  
+          gcloud config list
+
+      - name: Check kubectl
+        run: |
+          kubectl get nodes
+          kubectl get ns
+
       - name: Checkout
         uses: actions/checkout@main
         with:
@@ -57,54 +97,6 @@ jobs:
       #   run:
       #     uv run minor_bump.py
 
-  authentication_with_gcloud_and_k8s:
-    runs-on: ubuntu-latest
-    name: Authenticate with Google Cloud and Kubernetes
-    permissions:
-      id-token: 'write'
-      contents: 'read'
-
-    steps:
-      - name: Authenticate with Google Cloud
-        uses: 'google-github-actions/auth@v2'
-        with:
-          project_id: ${{env.project_id}}
-          workload_identity_provider: ${{env.workload_identity_provider}}
-          service_account: ${{env.service_account}}
-
-      - uses: simenandre/setup-gke-gcloud-auth-plugin@v1
-
-      - uses: google-github-actions/get-gke-credentials@v1
-        with:
-          cluster_name: ${{env.cluster}}
-          location: ${{env.region}}
-
-      - name: Check gcl
-        run: |
-          which gcloud  
-          gcloud config list
-
-      - name: Authenticate kubectl
-        run: |
-          gcloud container clusters get-credentials ${{env.cluster}} \
-            --project ${{env.project_id}} \
-            --region ${{env.region}} 
-
-      - name: Check kubectl
-        run: |
-          kubectl get nodes
-          kubectl get ns
-
-  submit_data_release_periodically:
-    runs-on: ubuntu-latest
-    name: Submit the Kedro Pipeline Periodically
-    needs: [authentication_with_gcloud_and_k8s]
-    permissions:
-      contents: 'write'
-      id-token: 'write'
-      pull-requests: 'write'
-
-    steps:
       - name: Checkout
         uses: actions/checkout@main
         with:
