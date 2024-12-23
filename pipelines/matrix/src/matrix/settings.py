@@ -21,7 +21,7 @@ hooks = {
     "mlflow": MlflowHook(),
     "mlflow_kedro": matrix_hooks.MLFlowHooks(),
     "spark": matrix_hooks.SparkHooks(),
-    "release_info_hooks": matrix_hooks.ReleaseInfoHooks(),
+    "release": matrix_hooks.ReleaseInfoHooks(),
 }
 
 # Hooks are executed in a Last-In-First-Out (LIFO) order.
@@ -66,10 +66,14 @@ CONFIG_LOADER_ARGS = {
 
 # https://getindata.com/blog/kedro-dynamic-pipelines/
 DYNAMIC_PIPELINES_MAPPING = {
+    "cross_validation": {
+        "n_splits": 3,
+    },
     "integration": [
         {"name": "rtx_kg2"},
+        # {"name": "spoke"},
         {"name": "robokop"},
-        {"name": "ec_medical_team", "normalize": False},
+        {"name": "ec_medical_team"},
     ],
     "modelling": [
         {"model_name": "xg_baseline", "num_shards": 1, "run_inference": False},
