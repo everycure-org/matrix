@@ -110,7 +110,7 @@ jobs:
       - name: Check kubectl
         run: |
           kubectl get nodes
-          kubetcl get ns
+          kubectl get ns
       # - name: Set up kedro project dependencies
       #   working-directory: pipelines/matrix
       #   run: |
