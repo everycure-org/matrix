@@ -53,6 +53,7 @@ jobs:
         working-directory: docs/scripts
         # if : github.event.schedule == '30 9 * * 1' # weekly bump
         run: |
+          pip install uv
           uv venv -p 3.11
           uv pip install semver
           uv run patch_bump.py
