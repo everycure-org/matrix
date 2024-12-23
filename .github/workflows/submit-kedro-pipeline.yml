@@ -17,14 +17,25 @@ env:
 
 jobs:
 
-  authentication_with_gcloud_and_k8s:
+ submit_data_release_periodically:
     runs-on: ubuntu-latest
-    name: Authenticate with Google Cloud and Kubernetes
+    name: Submit the Kedro Pipeline Periodically
     permissions:
+      contents: 'write'
       id-token: 'write'
-      contents: 'read'
+      pull-requests: 'write'
 
     steps:
+      - name: Checkout
+        uses: actions/checkout@main
+        with:
+          # note that repo dispatch will checkout main
+          fetch-tags: true
+          fetch-depth: 0  # full depth needed so we can pass the AI all logs since the last release.
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
       - name: Authenticate with Google Cloud
         uses: 'google-github-actions/auth@v2'
         with:
@@ -45,16 +56,6 @@ jobs:
             --project ${{env.project_id}} \
             --region ${{env.region}} 
 
-  submit_data_release_periodically:
-    runs-on: ubuntu-latest
-    name: Submit the Kedro Pipeline Periodically
-    needs: [authentication_with_gcloud_and_k8s]
-    permissions:
-      contents: 'write'
-      id-token: 'write'
-      pull-requests: 'write'
-
-    steps:
       - name: Check gcl
         run: |
           which gcloud  
@@ -65,12 +66,6 @@ jobs:
           kubectl get nodes
           kubectl get ns
 
-      - name: Checkout
-        uses: actions/checkout@main
-        with:
-          fetch-tags: true
-          fetch-depth: 0
-
       - name: Fetch latest tag
         id: fetch_latest_tag
         run: |
@@ -78,34 +73,26 @@ jobs:
           echo "latest_tag=${latest_tag}" >> "$GITHUB_ENV"
           echo "Latest tag is ${latest_tag}"
 
-      - name: Install dependencies
-        working-directory: docs/scripts
-        run: |
-          pip install uv
-          uv venv -p 3.11
-          uv pip install semver
+      # - name: Install dependencies
+      #   working-directory: docs/scripts
+      #   run: |
+      #     pip install uv
+      #     uv venv -p 3.11
+      #     uv pip install semver
 
       - name: Increment patch version
         # if : github.event.schedule == '30 9 * * 1' # weekly bump
         working-directory: docs/scripts
         run: 
-          uv run patch_bump.py
+          # uv run patch_bump.py
+          pip install semver
+          python patch_bump.py
 
       # - name: Increment minor version
         # if : github.event.schedule == '30 9 1 * *' # monthly bump
       #   working-directory: docs/scripts
       #   run:
       #     uv run minor_bump.py
-
-      - name: Checkout
-        uses: actions/checkout@main
-        with:
-          # note that repo dispatch will checkout main
-          fetch-tags: true
-          fetch-depth: 0  # full depth needed so we can pass the AI all logs since the last release.
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
 
       - name: Print release version
         run: |
