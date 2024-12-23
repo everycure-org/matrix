@@ -8,13 +8,7 @@ from sklearn.model_selection import GridSearchCV
 from sklearn.preprocessing import MinMaxScaler
 
 import pyspark.sql.functions as F
-from pyspark.sql.types import (
-    FloatType,
-    IntegerType,
-    StringType,
-    StructField,
-    StructType,
-)
+import pyspark.sql.types as T
 
 from matrix.inject import (
     _inject_object,
@@ -460,11 +454,11 @@ def test_make_list_regexable_with_combination_pandas(pandas_df):
 @pytest.fixture
 def spark_df(spark):
     """Sample spark dataframe with all dtypes."""
-    schema = StructType(
+    schema = T.StructType(
         [
-            StructField("int_col", IntegerType(), True),
-            StructField("float_col", FloatType(), True),
-            StructField("string_col", StringType(), True),
+            T.StructField("int_col", T.IntegerType(), True),
+            T.StructField("float_col", T.FloatType(), True),
+            T.StructField("string_col", T.StringType(), True),
         ]
     )
     data = [
