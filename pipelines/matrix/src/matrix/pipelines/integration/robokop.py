@@ -1,6 +1,6 @@
 import pandas as pd
-import pandera
-import pyspark
+import pandera.pyspark as pa
+from pyspark.sql import DataFrame
 import pyspark.sql.functions as F
 import pyspark.sql.types as T
 
@@ -20,10 +20,8 @@ ROBOKOP_SEPARATOR = "\x1f"
 
 
 class RobokopTransformer(GraphTransformer):
-    @pandera.check_output(KGNodeSchema)
-    def transform_nodes(
-        self, nodes_df: pyspark.sql.DataFrame, biolink_categories_df: pd.DataFrame, **kwargs
-    ) -> pyspark.sql.DataFrame:
+    @pa.check_output(KGNodeSchema)
+    def transform_nodes(self, nodes_df: DataFrame, biolink_categories_df: pd.DataFrame, **kwargs) -> DataFrame:
         """Transform Robokop nodes to our target schema.
 
         Args:
@@ -51,8 +49,8 @@ class RobokopTransformer(GraphTransformer):
         )
         # fmt: on
 
-    @pandera.check_output(KGEdgeSchema)
-    def transform_edges(self, edges_df: pyspark.sql.DataFrame, **kwargs) -> pyspark.sql.DataFrame:
+    @pa.check_output(KGEdgeSchema)
+    def transform_edges(self, edges_df: DataFrame, **kwargs) -> DataFrame:
         """Transform Robokop edges to our target schema.
 
         Args:

@@ -21,6 +21,7 @@ xgboost
 hdfs
 graphdatascience
 neo4j>=5.5.0
+numpy==1.23.5 # This was pinned during refit refactor; fabricator pipeline fails on 1.26.4
 python-cypher==0.20.1
 termplotlib
 seaborn

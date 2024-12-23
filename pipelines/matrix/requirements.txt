@@ -6,7 +6,7 @@ aiofiles==24.1.0
     # via kedro-viz
 aiohappyeyeballs==2.4.4
     # via aiohttp
-aiohttp==3.11.10
+aiohttp==3.11.11
     # via
     #   aiobotocore
     #   gcsfs
@@ -63,7 +63,7 @@ blinker==1.9.0
     # via flask
 bmt==1.4.4
     # via -r requirements.in
-botocore==1.35.36
+botocore==1.35.81
     # via aiobotocore
 ./packages/data_fabricator
     # via -r requirements.in
@@ -193,7 +193,7 @@ google-api-core==2.24.0
     #   google-cloud-bigquery
     #   google-cloud-core
     #   google-cloud-storage
-google-api-python-client==2.155.0
+google-api-python-client==2.156.0
     # via pygsheets
 google-auth==2.37.0
     # via
@@ -377,7 +377,7 @@ jupyter-server==2.14.2
     #   notebook-shim
 jupyter-server-terminals==0.5.3
     # via jupyter-server
-jupyterlab==4.3.3
+jupyterlab==4.3.4
     # via
     #   -r requirements.in
     #   notebook
@@ -410,18 +410,18 @@ kedro-viz==10.1.0
     # via -r requirements.in
 kiwisolver==1.4.7
     # via matplotlib
-langchain==0.3.12
+langchain==0.3.13
     # via -r requirements.in
-langchain-core==0.3.25
+langchain-core==0.3.27
     # via
     #   langchain
     #   langchain-openai
     #   langchain-text-splitters
-langchain-openai==0.2.12
+langchain-openai==0.2.13
     # via -r requirements.in
-langchain-text-splitters==0.3.3
+langchain-text-splitters==0.3.4
     # via langchain
-langsmith==0.2.3
+langsmith==0.2.4
     # via
     #   langchain
     #   langchain-core
@@ -474,7 +474,7 @@ multimethod==1.12
     #   pandera
 mypy-extensions==1.0.0
     # via typing-inspect
-nbclient==0.10.1
+nbclient==0.10.2
     # via nbconvert
 nbconvert==7.16.4
     # via jupyter-server
@@ -499,8 +499,9 @@ notebook-shim==0.2.4
     # via
     #   jupyterlab
     #   notebook
-numpy==1.26.4
+numpy==1.23.5
     # via
+    #   -r requirements.in
     #   contourpy
     #   graphdatascience
     #   langchain
@@ -650,7 +651,7 @@ pyasn1-modules==0.4.1
     # via google-auth
 pycparser==2.22
     # via cffi
-pydantic==2.10.3
+pydantic==2.10.4
     # via
     #   curies
     #   fastapi
@@ -662,7 +663,7 @@ pydantic==2.10.3
     #   linkml-runtime
     #   openai
     #   pandera
-pydantic-core==2.27.1
+pydantic-core==2.27.2
     # via pydantic
 pygments==2.18.0
     # via
