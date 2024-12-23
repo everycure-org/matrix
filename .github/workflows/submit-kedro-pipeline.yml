@@ -16,23 +16,20 @@ env:
   cluster: 'compute-cluster'
 
 jobs:
-  submit_data_release_periodically:
+  
+  bump_version:
     runs-on: ubuntu-latest
-    name: Submit the Kedro Pipeline Periodically
+    name: Bump the version
     permissions:
-      contents: 'write'
       id-token: 'write'
-      pull-requests: 'write'
-
+    
     steps:
-
       - name: Checkout
         uses: actions/checkout@main
         with:
-          # note that repo dispatch will checkout main
           fetch-tags: true
-          fetch-depth: 0  # full depth needed so we can pass the AI all logs since the last release.
-      
+          fetch-depth: 0
+
       - name: Fetch latest tag
         id: fetch_latest_tag
         run: |
@@ -48,22 +45,21 @@ jobs:
           uv pip install semver
 
       - name: Increment patch version
-        working-directory: docs/scripts
         # if : github.event.schedule == '30 9 * * 1' # weekly bump
+        working-directory: docs/scripts
         run: 
           uv run patch_bump.py
 
       # - name: Increment minor version
+        # if : github.event.schedule == '30 9 1 * *' # monthly bump
       #   working-directory: docs/scripts
-      #   # if : github.event.schedule == '30 9 1 * *' # monthly bump
       #   run:
       #     uv run minor_bump.py
 
-      - name: Print release version
-        run: |
-          cat "$GITHUB_ENV"
-          echo "New release version is '${{ env.release_version }}'"
-
+  authentication_with_gcloud_and_k8s:
+    runs-on: ubuntu-latest
+    name: Authenticate with Google Cloud and Kubernetes
+    steps:
       - name: Authenticate with Google Cloud
         uses: 'google-github-actions/auth@v2'
         with:
@@ -94,8 +90,22 @@ jobs:
           kubectl get nodes
           kubectl get ns
 
-      - name: Set up Python
-        uses: actions/setup-python@v4
+  submit_data_release_periodically:
+    runs-on: ubuntu-latest
+    name: Submit the Kedro Pipeline Periodically
+    permissions:
+      contents: 'write'
+      id-token: 'write'
+      pull-requests: 'write'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@main
+        with:
+          # note that repo dispatch will checkout main
+          fetch-tags: true
+          fetch-depth: 0  # full depth needed so we can pass the AI all logs since the last release.
+      - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
 
@@ -103,9 +113,6 @@ jobs:
         working-directory: pipelines/matrix
         run: |
           pip install -r requirements.txt
-
-      - name: Install argo CLI
-        run: |
           curl -sLO https://github.com/argoproj/argo-workflows/releases/latest/download/argo-linux-amd64.gz
           gunzip argo-linux-amd64.gz
           chmod +x argo-linux-amd64
@@ -122,7 +129,5 @@ jobs:
             --run-name auto-kg-release \
             --release-version "${{ env.release_version }}" \
             --pipeline ingestion \
-            --headless \
             --is-test \
             --run-from-gh
-
