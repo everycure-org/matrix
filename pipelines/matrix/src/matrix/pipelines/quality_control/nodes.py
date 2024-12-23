@@ -51,10 +51,13 @@ def run_quality_control(df: DataFrame, controls: Dict[str, QaulityControl]) -> D
     # Run each control suite on the given dataframe and union
     # the results together
     for scope, control in controls.items():
-        result = result.unionByName(control.run(df).withColumn("scope", F.lit(scope)))
+        result = result.unionByName(control.run(df).withColumn("scope", F.lit(scope)), allowMissingColumns=True)
 
     # Concat scope and metric
-    result = result.withColumn("fq_metric", F.concat(F.col("scope"), F.lit("."), F.col("metric")))
+    result = result.withColumn("fq_metric", F.concat(F.col("scope"), F.lit("."), F.col("metric"))).drop(
+        "scope", "metric"
+    )
+    breakpoint()
     return result
 
 

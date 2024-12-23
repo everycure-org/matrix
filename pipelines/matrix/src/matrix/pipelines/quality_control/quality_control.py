@@ -1,5 +1,6 @@
 import abc
 
+from typing import Optional
 
 import pyspark.sql as ps
 
@@ -23,20 +24,34 @@ class QaulityControl(abc.ABC):
 
 
 class CountValuesQualityControl(QaulityControl):
+    """Quality control suite to compute number of rows."""
+
     def run(self, df: ps.DataFrame) -> ps.DataFrame:
-        return df.count()
+        # Initialise spark
+        spark = ps.SparkSession.builder.getOrCreate()
+
+        return spark.createDataFrame(
+            [
+                (
+                    "count",
+                    df.count(),
+                )
+            ],
+            ["metric", "value"],
+        )
 
 
 class CountColumnValuesAggregatedQualityControl(QaulityControl):
     """Quality control suite to compute value counts."""
 
     # FUTURE: Split into 2 quality control classes, 1 with column and one with expr?
-    def __init__(self, expr: str, filter_expr: str) -> None:
+    def __init__(self, expr: str, filter_expr: Optional[str] = None) -> None:
         """
         Initialize the CountColumn values quality control.
 
         Args:
             expr: (str) expression to apply before grouping
+            aggregator: (Callable) aggregator to apply
             filter_expr: (str) If specified, filter expression is executed _before_ counts
         """
         self._expr = F.expr(expr)
