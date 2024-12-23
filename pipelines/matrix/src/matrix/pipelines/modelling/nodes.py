@@ -348,7 +348,7 @@ def apply_transformers(
 
 @unpack_params()
 @inject_object()
-@make_list_regexable(source_df="data", make_regexable_column="features")
+@make_list_regexable(source_df="data", make_regexable_kwarg="features")
 def tune_parameters(
     data: pd.DataFrame,
     tuner: Any,
@@ -391,7 +391,7 @@ def tune_parameters(
 
 @unpack_params()
 @inject_object()
-@make_list_regexable(source_df="data", make_regexable_column="features")
+@make_list_regexable(source_df="data", make_regexable_kwarg="features")
 def train_model(
     data: pd.DataFrame,
     estimator: BaseEstimator,
@@ -432,7 +432,7 @@ def create_model(*estimators) -> ModelWrapper:
 
 
 @inject_object()
-@make_list_regexable(source_df="data", make_regexable_column="features")
+@make_list_regexable(source_df="data", make_regexable_kwarg="features")
 def get_model_predictions(
     data: pd.DataFrame,
     model: ModelWrapper,
