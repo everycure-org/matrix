@@ -83,7 +83,7 @@ jobs:
       - name: Increment patch version
         # if : github.event.schedule == '30 9 * * 1' # weekly bump
         working-directory: docs/scripts
-        run: 
+        run: |
           # uv run patch_bump.py
           pip install semver
           python patch_bump.py
