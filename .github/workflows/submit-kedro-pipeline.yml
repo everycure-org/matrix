@@ -40,30 +40,22 @@ jobs:
           echo "latest_tag=${latest_tag}" >> "$GITHUB_ENV"
           echo "Latest tag is ${latest_tag}"
 
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: "3.11"
+      # - name: Set up Python
+      #   uses: actions/setup-python@v4
+      #   with:
+      #     python-version: "3.11"
 
-      - name: Install semver
-        run: 
-          pip install semver
+      # - name: Install semver
+      #   run: 
+      #     pip install semver
 
       - name: Increment patch version
+        working-directory: docs/scripts
         # if : github.event.schedule == '30 9 * * 1' # weekly bump
         run: |
-          # python -c "
-          # import os
-          # import semver
-
-          # latest_tag = os.getenv('latest_tag', 'v0.0.0').lstrip('v')
-          # version = semver.Version.parse(latest_tag)
-          # new_version = version.bump_patch()
-          # with open(os.getenv('GITHUB_ENV'), 'a') as env_file:
-          #   env_file.write(f'release_version=v{new_version}\n')
-          # "
-          cd ..
-          python run scripts/patch_bump.py
+          uv venv -p 3.11
+          uv pip install semver
+          uv run patch_bump.py
 
       # - name: Increment minor version
       #   if : github.event.schedule == '30 9 1 * *' # monthly bump

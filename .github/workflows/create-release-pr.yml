@@ -118,7 +118,6 @@ jobs:
           elif int(tag_version.major) < int(release_version.major):
             bump_type = 'major'
           else:
-            bump_type = 'invalid'
             sys.exit(1)
 
           with open(os.getenv('GITHUB_ENV'), 'a') as env_file:
