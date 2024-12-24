@@ -89,16 +89,13 @@ jobs:
           echo "latest_tag=${latest_tag}" >> "$GITHUB_ENV"
           echo "Latest tag is ${latest_tag}"
 
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: "3.11"
-
       - name: Detect bump type
-        working-directory: docs/scripts
+        working-directory: docs
         run: |
-          pip install semver
-          python bump_detection.py
+          uv venv -p 3.11
+          uv pip install -r requirements.txt
+          cd scripts
+          uv run bump_detection.py
 
       - name: Create Release Notes
         working-directory: apps/matrix-cli
@@ -123,6 +120,27 @@ jobs:
           git add "${GITHUB_WORKSPACE}/${POSTS_DIR}/${{env.release}}" && \
           git commit -m "added release notes & article draft" && \
           git push --follow-tags
+
+      - name: Setup docs venv & generate yaml
+        working-directory: docs/scripts
+        run:
+          uv run changelog_gen.py
+
+      - name: Commit YAML release info file
+        working-directory: docs/src/releases/changelog_files
+        env:
+          FILENAME: releases_aggregated.yaml
+        run: |
+          git add "${FILENAME}"
+          
+          # Otherwise this will error out if the generated file is identical to the one in repo
+          if git diff --cached --exit-code; then
+            echo "No changes to $FILENAME. Skipping commit."
+          else
+            echo "Changes detected in $FILENAME. Committing..."
+            git commit -m "Add or update $FILENAME"
+            git push
+          fi
 
       - name: Create Pull Request
         env:
