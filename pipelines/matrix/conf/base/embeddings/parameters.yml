@@ -31,7 +31,7 @@ embeddings.dimensionality_reduction:
 # FUTURE: This is a highly temp. solution that serves as PoC of leveraging Neo4J's
 # AI functionality. If works as expected, we'll do a refinement step to clean this up.
 embeddings.gds:
-  object: matrix.pipelines.embeddings.nodes.GraphDS
+  object: matrix.datasets.neo4j.GraphDS
   endpoint: ${globals:neo4j.host}
   database: analytics
   auth:

@@ -16,6 +16,8 @@ services:
       - neo4j_logs:/logs
       - neo4j_import:/var/lib/neo4j/import
       - neo4j_plugins:/plugins
+      - ./certs/bolt/private_and_public.pem:/var/lib/neo4j/certificates/bolt/private_and_public.pem
+      - ./certs/bolt/public.crt:/var/lib/neo4j/certificates/bolt/public.crt
 
   mockserver:
     environment:
@@ -40,7 +42,7 @@ services:
     environment:
       TQDM_DISABLE: 1
       NODENORM_ENDPOINT: http://mockserver:1080/1.5/get_normalized_nodes
-      NEO4J_HOST: bolt://neo4j:7687
+      NEO4J_HOST: bolt+ssc://neo4j:7687 # NOTE: Passing in bolt+s as our local Neo4J has SSL enabled
       NEO4J_USER: neo4j
       NEO4J_PASSWORD: admin
       OPENAI_ENDPOINT: http://mockserver:1080/v1

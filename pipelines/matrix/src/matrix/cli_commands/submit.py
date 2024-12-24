@@ -52,6 +52,7 @@ def cli():
 @click.option("--run-from-gh", is_flag=True, default=False, help="Run from GitHub Actions")
 # fmt: on
 def submit(username: str, namespace: str, run_name: str, release_version: str, pipeline: str, quiet: bool, dry_run: bool, from_nodes: List[str], is_test: bool, headless:bool, run_from_gh: bool):
+
     """Submit the end-to-end workflow. """
     if not quiet:
         log.setLevel(logging.DEBUG)
@@ -65,7 +66,7 @@ def submit(username: str, namespace: str, run_name: str, release_version: str, p
     if pipeline in ["fabricator", "test"]:
         raise ValueError("Submitting test pipeline to Argo will result in overwriting source data")
     
-    if from_nodes:
+    if not headless and from_nodes:
         if not click.confirm("Using 'from-nodes' is highly experimental and may break due to MLFlow issues with tracking the right run. Are you sure you want to continue?", default=False):
             raise click.Abort()
 
@@ -170,6 +171,7 @@ def _submit(
         if verbose:
             console.print_exception()
         sys.exit(1)
+
 
 
 def summarize_submission(run_name: str, namespace: str, pipeline: str, is_test: bool, release_version: str, headless:bool):
