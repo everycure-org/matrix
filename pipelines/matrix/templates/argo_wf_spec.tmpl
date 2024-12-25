@@ -23,7 +23,7 @@ spec:
       - name: run_name
         value: "{{ image_tag }}"
       - name: neo4j_host
-        value: "bolt://neo4j.neo4j.svc.cluster.local:7687"
+        value: "bolt+ssc://neo4j.neo4j.svc.cluster.local:7687"
       - name: mlflow_endpoint
         value: "http://mlflow-tracking.mlflow.svc.cluster.local:80"
       - name: openai_endpoint
