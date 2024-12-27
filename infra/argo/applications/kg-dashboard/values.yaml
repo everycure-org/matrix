@@ -29,8 +29,8 @@ resources:
     cpu: "4"
     memory: "12Gi"
   requests:
-    cpu: "1"
-    memory: "2Gi"
+    cpu: "0.2"
+    memory: "1Gi"
 
 redis:
   enabled: true
