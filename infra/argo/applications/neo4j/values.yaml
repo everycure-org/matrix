@@ -9,8 +9,8 @@ neo4j: # the name of the helm dependency
     name: neo4j
     resources:
       requests:
-        cpu: "0.5"
-        memory: "4Gi"
+        cpu: "2"
+        memory: "8Gi"
       limits:
         cpu: "16"
         memory: "16Gi"
