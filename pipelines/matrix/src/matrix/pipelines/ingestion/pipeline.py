@@ -58,12 +58,14 @@ def create_pipeline(**kwargs) -> Pipeline:
             ),
             # spoke
             node(
+                func=lambda x: x,
                 inputs=["ingestion.raw.spoke.nodes@spark"],
                 outputs="ingestion.int.spoke.nodes",
                 name="ingest_spoke_nodes",
                 tags=["spoke"],
             ),
             node(
+                func=lambda x: x,
                 inputs=["ingestion.raw.spoke.edges@spark"],
                 outputs="ingestion.int.spoke.edges",
                 name="ingest_spoke_edges",
