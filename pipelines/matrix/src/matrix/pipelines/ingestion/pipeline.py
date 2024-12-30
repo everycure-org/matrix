@@ -1,8 +1,6 @@
 import pyspark.sql.functions as F
 from kedro.pipeline import Pipeline, pipeline, node
-from matrix.kedro4argo_node import (
-    argo_node,
-)
+from matrix.kedro4argo_node import ArgoNode
 
 
 def create_pipeline(**kwargs) -> Pipeline:
@@ -11,36 +9,33 @@ def create_pipeline(**kwargs) -> Pipeline:
     return pipeline(
         [
             # rtx-kg2
-            argo_node(
-                func=lambda x: x,
+            ArgoNode(
                 inputs=["ingestion.raw.rtx_kg2.nodes@spark"],
                 outputs="ingestion.int.rtx_kg2.nodes",
                 name="write_rtx_kg2_nodes",
                 tags=["rtx_kg2"],
             ),
-            argo_node(
-                func=lambda x: x,
+            ArgoNode(
                 inputs=["ingestion.raw.rtx_kg2.edges@spark"],
                 outputs="ingestion.int.rtx_kg2.edges",
                 name="write_rtx_kg2_edges",
                 tags=["rtx_kg2"],
             ),
-            argo_node(
-                func=lambda x: x,
+            ArgoNode(
                 inputs=["ingestion.raw.rtx_kg2.curie_to_pmids@spark"],
                 outputs="ingestion.int.rtx_kg2.curie_to_pmids",
                 name="write_rtx_kg2_curie_to_pmids",
                 tags=["rtx_kg2"],
             ),
             # ec-medical-team
-            argo_node(
+            ArgoNode(
                 func=lambda x: x.withColumn("upstream_data_source", F.array(F.lit("ec_medical_team"))),
                 inputs=["ingestion.raw.ec_medical_team.nodes@spark"],
                 outputs="ingestion.int.ec_medical_team.nodes",
                 name="write_ec_medical_team_nodes",
                 tags=["ec_medical_team"],
             ),
-            argo_node(
+            ArgoNode(
                 func=lambda x: x.withColumn("upstream_data_source", F.array(F.lit("ec_medical_team"))),
                 inputs=["ingestion.raw.ec_medical_team.edges@spark"],
                 outputs="ingestion.int.ec_medical_team.edges",
@@ -48,16 +43,14 @@ def create_pipeline(**kwargs) -> Pipeline:
                 tags=["ec_medical_team"],
             ),
             # robokop
-            argo_node(
-                func=lambda x: x,
+            ArgoNode(
                 inputs=["ingestion.raw.robokop.nodes@spark"],
                 outputs="ingestion.int.robokop.nodes",
                 name="ingest_robokop_nodes",
                 tags=["robokop"],
             ),
-            argo_node(
+            ArgoNode(
                 # FUTURE: Update selection
-                func=lambda x: x,
                 inputs=["ingestion.raw.robokop.edges@spark"],
                 outputs="ingestion.int.robokop.edges",
                 name="ingest_robokop_edges",
@@ -65,14 +58,12 @@ def create_pipeline(**kwargs) -> Pipeline:
             ),
             # spoke
             node(
-                func=lambda x: x,
                 inputs=["ingestion.raw.spoke.nodes@spark"],
                 outputs="ingestion.int.spoke.nodes",
                 name="ingest_spoke_nodes",
                 tags=["spoke"],
             ),
             node(
-                func=lambda x: x,
                 inputs=["ingestion.raw.spoke.edges@spark"],
                 outputs="ingestion.int.spoke.edges",
                 name="ingest_spoke_edges",

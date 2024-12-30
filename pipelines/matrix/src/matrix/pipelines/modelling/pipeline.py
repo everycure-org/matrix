@@ -3,7 +3,7 @@ from typing import List, Union
 from kedro.pipeline import Pipeline, pipeline
 
 from matrix import settings
-from matrix.kedro4argo_node import ARGO_GPU_NODE_MEDIUM, argo_node
+from matrix.kedro4argo_node import ARGO_GPU_NODE_MEDIUM, ArgoNode
 
 from . import nodes
 
@@ -20,7 +20,7 @@ def _create_model_shard_pipeline(model: str, shard: int, fold: Union[str, int]) 
     """
     return pipeline(
         [
-            argo_node(
+            ArgoNode(
                 func=nodes.create_model_input_nodes,
                 inputs=[
                     "modelling.model_input.drugs_diseases_nodes@pandas",
@@ -30,7 +30,7 @@ def _create_model_shard_pipeline(model: str, shard: int, fold: Union[str, int]) 
                 outputs=f"modelling.{model}.{shard}.fold_{fold}.model_input.enriched_splits",
                 name=f"enrich_{model}_{shard}_splits_fold_{fold}",
             ),
-            argo_node(
+            ArgoNode(
                 func=nodes.apply_transformers,
                 inputs=[
                     f"modelling.{model}.{shard}.fold_{fold}.model_input.enriched_splits",
@@ -39,7 +39,7 @@ def _create_model_shard_pipeline(model: str, shard: int, fold: Union[str, int]) 
                 outputs=f"modelling.{model}.{shard}.fold_{fold}.model_input.transformed_splits",
                 name=f"transform_{model}_{shard}_data_fold_{fold}",
             ),
-            argo_node(
+            ArgoNode(
                 func=nodes.tune_parameters,
                 inputs={
                     "data": f"modelling.{model}.{shard}.fold_{fold}.model_input.transformed_splits",
@@ -52,7 +52,7 @@ def _create_model_shard_pipeline(model: str, shard: int, fold: Union[str, int]) 
                 name=f"tune_model_{model}_{shard}_parameters_fold_{fold}",
                 argo_config=ARGO_GPU_NODE_MEDIUM,
             ),
-            argo_node(
+            ArgoNode(
                 func=nodes.train_model,
                 inputs=[
                     f"modelling.{model}.{shard}.fold_{fold}.model_input.transformed_splits",
@@ -83,7 +83,7 @@ def _create_fold_pipeline(model: str, num_shards: int, fold: Union[str, int]) ->
         [
             pipeline(
                 [
-                    argo_node(
+                    ArgoNode(
                         func=nodes.fit_transformers,
                         inputs=[
                             f"modelling.model_input.fold_{fold}.splits",
@@ -105,7 +105,7 @@ def _create_fold_pipeline(model: str, num_shards: int, fold: Union[str, int]) ->
             ],
             pipeline(
                 [
-                    argo_node(
+                    ArgoNode(
                         func=nodes.create_model,
                         inputs=[f"modelling.{model}.{shard}.fold_{fold}.models.model" for shard in range(num_shards)],
                         outputs=f"modelling.{model}.fold_{fold}.models.model",
@@ -113,7 +113,7 @@ def _create_fold_pipeline(model: str, num_shards: int, fold: Union[str, int]) ->
                         tags=model,
                         argo_config=ARGO_GPU_NODE_MEDIUM,
                     ),
-                    argo_node(
+                    ArgoNode(
                         func=nodes.apply_transformers,
                         inputs=[
                             f"modelling.model_input.fold_{fold}.splits",
@@ -122,7 +122,7 @@ def _create_fold_pipeline(model: str, num_shards: int, fold: Union[str, int]) ->
                         outputs=f"modelling.{model}.fold_{fold}.model_input.transformed_splits",
                         name=f"transform_{model}_data_fold_{fold}",
                     ),
-                    argo_node(
+                    ArgoNode(
                         func=nodes.get_model_predictions,
                         inputs={
                             "data": f"modelling.{model}.fold_{fold}.model_input.transformed_splits",
@@ -168,7 +168,7 @@ def create_model_pipeline(model: str, num_shards: int, folds_lst: List[Union[str
     pipelines.append(
         pipeline(
             [
-                argo_node(
+                ArgoNode(
                     func=nodes.combine_data,
                     inputs=[f"modelling.{model}.fold_{fold}.model_output.predictions" for fold in range(n_splits)],
                     outputs=f"modelling.{model}.fold_combined.model_output.predictions",
@@ -184,7 +184,7 @@ def create_model_pipeline(model: str, num_shards: int, folds_lst: List[Union[str
         pipelines.append(
             pipeline(
                 [
-                    argo_node(
+                    ArgoNode(
                         func=nodes.check_model_performance,
                         inputs={
                             "data": f"modelling.{model}.fold_{fold}.model_output.predictions",
@@ -217,7 +217,7 @@ def create_shared_pipeline(models_lst: List[str], folds_lst: List[Union[str, int
     return pipeline(
         [
             # Construct ground_truth
-            argo_node(
+            ArgoNode(
                 func=nodes.filter_valid_pairs,
                 inputs=[
                     "integration.prm.filtered_nodes",
@@ -227,7 +227,7 @@ def create_shared_pipeline(models_lst: List[str], folds_lst: List[Union[str, int
                 outputs={"pairs": "modelling.raw.known_pairs@spark", "metrics": "modelling.reporting.gt_present"},
                 name="filter_valid_pairs",
             ),
-            argo_node(
+            ArgoNode(
                 func=nodes.attach_embeddings,
                 inputs=[
                     "modelling.raw.known_pairs@spark",
@@ -236,7 +236,7 @@ def create_shared_pipeline(models_lst: List[str], folds_lst: List[Union[str, int
                 outputs="modelling.int.known_pairs@spark",
                 name="create_int_known_pairs",
             ),
-            argo_node(
+            ArgoNode(
                 func=nodes.prefilter_nodes,
                 inputs=[
                     "integration.prm.filtered_nodes",
@@ -248,7 +248,7 @@ def create_shared_pipeline(models_lst: List[str], folds_lst: List[Union[str, int
                 outputs="modelling.model_input.drugs_diseases_nodes@spark",
                 name="prefilter_nodes",
             ),
-            argo_node(
+            ArgoNode(
                 func=nodes.make_folds,
                 inputs=[
                     "modelling.int.known_pairs@pandas",
@@ -295,7 +295,7 @@ def create_pipeline(**kwargs) -> Pipeline:
         pipelines.append(
             pipeline(
                 [
-                    argo_node(
+                    ArgoNode(
                         func=nodes.aggregate_metrics,
                         inputs=[
                             "params:modelling.aggregation_functions",

@@ -1,5 +1,5 @@
 import warnings
-from typing import Any, Callable, Iterable, Optional, Union
+from typing import Any, Callable, Optional, Union
 
 from kedro.pipeline.node import Node
 from pydantic import BaseModel, field_validator, model_validator
@@ -92,11 +92,20 @@ class ArgoResourceConfig(BaseModel):
 
 class ArgoNode(Node):
     # TODO: Merge this with former FuseNode
-    def __init__(self, *args, argo_config: Optional[ArgoResourceConfig] = None, **kwargs):
+    def __init__(
+        self, func: Optional[Callable] = None, *args, argo_config: Optional[ArgoResourceConfig] = None, **kwargs
+    ):
         if argo_config is None:
             argo_config = ArgoResourceConfig()
         self._argo_config = argo_config
-        super().__init__(*args, **kwargs)
+        if func is None:
+
+            def pass_through(x):  # ruff-format: Do not assign a `lambda` expression, use a `def`
+                return x
+
+            func = pass_through  # Pass-through function
+        self._func = func
+        super().__init__(func, *args, **kwargs)
 
     @property
     def argo_config(self) -> ArgoResourceConfig:
@@ -120,32 +129,6 @@ class ArgoNode(Node):
         }
         params.update(overwrite_params)
         return ArgoNode(**params)  # type: ignore[arg-type]
-
-
-def argo_node(
-    func: Callable,
-    inputs: str | list[str] | dict[str, str] | None,
-    outputs: str | list[str] | dict[str, str] | None,
-    argo_config: Optional[ArgoResourceConfig] = None,
-    *,
-    name: str | None = None,
-    tags: str | Iterable[str] | None = None,
-    confirms: str | list[str] | None = None,
-    namespace: str | None = None,
-):
-    if argo_config is None:
-        argo_config = ArgoResourceConfig()
-
-    return ArgoNode(
-        func,
-        inputs,
-        outputs,
-        argo_config=argo_config,
-        name=name,
-        tags=tags,
-        confirms=confirms,
-        namespace=namespace,
-    )
 
 
 ARGO_GPU_NODE_MEDIUM = ArgoResourceConfig(num_gpus=1)
