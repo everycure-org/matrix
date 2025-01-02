@@ -1,5 +1,7 @@
 from matrix import settings
-from kedro.pipeline import Pipeline, node, pipeline
+from kedro.pipeline import Pipeline, pipeline
+
+from matrix.kedro4argo_node import argo_node
 from . import nodes as nd
 from ..matrix_generation.pipeline import create_pipeline as matrix_generation_pipeline
 
@@ -8,7 +10,7 @@ def _create_resolution_pipeline() -> Pipeline:
     """Resolution pipeline for filtering out the input."""
     return pipeline(
         [
-            node(
+            argo_node(
                 func=nd.resolve_input_sheet,
                 inputs={
                     "input_sheet": "inference.raw.normalized_inputs",
@@ -29,8 +31,20 @@ def _create_resolution_pipeline() -> Pipeline:
 def _create_inference_pipeline(model_excl: str, model_incl: str) -> Pipeline:
     """Matrix generation pipeline adjusted for running inference with models of choice."""
     mg_pipeline = matrix_generation_pipeline()
+    cross_validation_settings = settings.DYNAMIC_PIPELINES_MAPPING.get("cross_validation")
+    n_splits = cross_validation_settings.get("n_splits")
+    folds_lst = list(range(n_splits))
     inference_nodes = pipeline(
-        [node for node in mg_pipeline.nodes if not any(model in node.name for model in model_excl)]
+        [
+            node
+            for node in mg_pipeline.nodes
+            if (
+                not any(model in node.name for model in model_excl)  # Remove nodes for models not included in inference
+                and not any(
+                    f"fold_{fold}" in node.name for fold in folds_lst
+                )  # Include only models trained on full ground truth data
+            )
+        ]
     )
     pipelines = []
     for model in model_incl:
@@ -49,9 +63,9 @@ def _create_inference_pipeline(model_excl: str, model_incl: str) -> Pipeline:
                     "ingestion.raw.disease_list@pandas": "inference.int.disease_list@pandas",
                 },
                 outputs={
-                    f"matrix_generation.{model}.model_output.sorted_matrix_predictions@pandas": f"inference.{model}.model_output.predictions@pandas",
-                    f"matrix_generation.{model}.reporting.matrix_report": f"inference.{model}.reporting.report",
-                    "matrix_generation.prm.matrix_pairs": "inference.prm.matrix_pairs",
+                    f"matrix_generation.{model}.fold_full.model_output.sorted_matrix_predictions@pandas": f"inference.{model}.model_output.predictions@pandas",
+                    f"matrix_generation.{model}.fold_full.reporting.matrix_report": f"inference.{model}.reporting.report",
+                    "matrix_generation.prm.fold_full.matrix_pairs": "inference.prm.matrix_pairs",
                     "matrix_generation.feat.nodes_kg_ds": "inference.feat.nodes_kg_ds",
                     "matrix_generation.feat.nodes@spark": "inference.feat.nodes@spark",
                 },
@@ -64,7 +78,7 @@ def _create_reporting_pipeline(model: str) -> Pipeline:
     """Reporting nodes of the inference pipeline for visualisation purposes."""
     return pipeline(
         [
-            node(
+            argo_node(
                 func=nd.visualise_treat_scores,
                 inputs={
                     "scores": f"inference.{model}.model_output.predictions@pandas",

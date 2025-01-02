@@ -89,7 +89,7 @@ def test_replacement_drug_disease_pair_generator(
     known_pairs_split = make_splits(
         known_pairs,
         splitter,
-    )
+    )[0]
 
     # When generating unknown pairs
     unknown = generator.generate(graph, known_pairs_split)

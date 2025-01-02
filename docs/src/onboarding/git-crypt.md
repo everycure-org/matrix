@@ -126,7 +126,7 @@ KtNQIAEAvRQ6jqDyNl4iIaa9mv2qxEJF182ajO5Br6sgoAJv7wI=
 1. Copy the entire key 
     - **including** `--BEGIN PGP PUBLIC KEY BLOCK--` 
     - **and** `--END PGP PUBLIC KEY BLOCK--` 
-2. Create a PR with the key in the `.git-crypt/public_keys` folder, name the file like `your-github-username.asc`
+2. Create a PR with the key in the `.git-crypt/keys/public_keys` folder, name the file like `your-github-username.asc`
 3. Tag one of the team leads to review the PR[^1]
 
 ??? question "What happens behind the scenes?"

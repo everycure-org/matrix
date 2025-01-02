@@ -109,9 +109,9 @@ class PandasParquetDataset(ParquetDataset):
                 return df
             except FileNotFoundError:
                 attempt += 1
-                logger.warning("Parquet file not found, retrying!")
+                logger.warning(f"Parquet file `{self._filepath}` not found, retrying!")
 
-        raise DatasetError("Unable to find underlying Parquet file!")
+        raise DatasetError(f"Unable to find the Parquet file `{self._filepath}` underlying this dataset!")
 
 
 class KnowledgeGraphDataset(ParquetDataset):
@@ -153,6 +153,6 @@ class KnowledgeGraphDataset(ParquetDataset):
                 return KnowledgeGraph(super()._load())
             except FileNotFoundError:
                 attempt += 1
-                logger.warning("Parquet file not found, retrying!")
+                logger.warning(f"Parquet file `{self._filepath}` not found, retrying!")
 
-        raise DatasetError("Unable to find underlying Parquet file!")
+        raise DatasetError(f"Unable to find the Parquet file `{self._filepath}` underlying this dataset!")
