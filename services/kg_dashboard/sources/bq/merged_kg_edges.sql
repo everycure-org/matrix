@@ -1,7 +1,7 @@
 SELECT SPLIT(subject, ':')[OFFSET(0)] AS subject_prefix,  
        subject_nodes.category AS subject_category,
        predicate, 
-       SPLIT(object, ':')[OFFSET(0)] AS object_prefix,
+|       SPLIT(object, ':')[OFFSET(0)] AS object_prefix,
        object_nodes.category AS object_category,   
        primary_knowledge_source,       
        ARRAY_TO_STRING(edges.upstream_data_source, ', ') AS upstream_data_source,
