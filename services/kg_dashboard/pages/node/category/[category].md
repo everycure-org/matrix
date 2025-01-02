@@ -14,12 +14,12 @@ limit 50
 ```
 
 
-```sql edge_types_by_upstream_data_source
+```sql edge_types_by_primary_knowledge_source
   select 
       replace(subject_category,'biolink:','') || ' ' ||
       replace(predicate,'biolink:','') || ' ' || 
       replace(object_category,'biolink:','') as edge_type,
-      upstream_data_source,
+      primary_knowledge_source,
       sum(count) as count
   from bq.merged_kg_edges
   where subject_category = 'biolink:${params.category}'
@@ -36,16 +36,17 @@ limit 50
     y=count
     series=upstream_data_source
     swapXY=true    
-    title="Node Prefixes by Upstream Data Source"
+    title="Node Prefixes by Primary Knowledge Source"
 />
 {/if}
 
-{#if edge_types_by_upstream_data_source.length !== 0}
+{#if edge_types_by_primary_knowledge_source.length !== 0}
 <BarChart
-    data={edge_types_by_upstream_data_source}
+    data={edge_types_by_primary_knowledge_source}
     x=edge_type
     y=count
-    split=upstream_data_source
+    series=primary_knowledge_source
     swapXY=true
+    title="Edge Types by Primary Knowledge Source"
     />
 {/if}
