@@ -81,6 +81,13 @@ integration.prm.filtered_nodes:
   <<: [*_spark_parquet, *_layer_prm]
   filepath: ${globals:paths.integration}/prm/filtered/nodes
 
+integration.prm.filtered_nodes_agg_count:
+  <<: [*_spark_parquet, *_layer_prm]
+  filepath: ${globals:paths.integration}/prm/filtered/nodes_agg_count
+
+integration.prm.filtered_edges_agg_count:
+  <<: [*_spark_parquet, *_layer_prm]
+  filepath: ${globals:paths.integration}/prm/filtered/edges_agg_count
 
 integration.int.ec_medical_team.nodes:
   <<: [*_spark_parquet, *_layer_int]
