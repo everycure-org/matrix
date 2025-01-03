@@ -10,15 +10,15 @@ def bump_type():
     release = os.getenv("release", "v0.0.0").lstrip("v")
     release_version = semver.Version.parse(release)
 
-    if int(tag_version.major) == int(release_version.major) and int(tag_version.minor) < int(release_version.minor):
+    if tag_version.major == release_version.major and tag_version.minor < release_version.minor:
         bump_type = "minor"
     elif (
-        int(tag_version.major) == int(release_version.major)
-        and int(tag_version.minor) == int(release_version.minor)
-        and int(tag_version.patch) < int(release_version.patch)
+        tag_version.major == release_version.major
+        and tag_version.minor == release_version.minor
+        and tag_version.patch < release_version.patch
     ):
         bump_type = "patch"
-    elif int(tag_version.major) < int(release_version.major):
+    elif tag_version.major < release_version.major:
         bump_type = "major"
     else:
         sys.exit(1)
