@@ -57,7 +57,7 @@ jobs:
   fetch_latest_tag:
     runs-on: ubuntu-latest
     name: Fetch latest tag
-    needs: checkout_code
+    needs: setup_env
     permissions:
       contents: 'write'
       id-token: 'write'
@@ -72,7 +72,7 @@ jobs:
   bump_version:
     runs-on: ubuntu-latest
     name: Increment version
-    needs: [checkout_code, fetch_latest_tag]
+    needs: fetch_latest_tag
     permissions:
       contents: 'write'
     steps:
@@ -93,7 +93,7 @@ jobs:
   setup_dependencies:
     runs-on: ubuntu-latest
     name: Set up dependencies
-    needs: [checkout_code, setup_env]
+    needs: bump_version
     steps:
       - name: Set up kedro project dependencies
         working-directory: pipelines/matrix
@@ -108,7 +108,7 @@ jobs:
   submit_kedro_pipeline:
     runs-on: ubuntu-latest
     name: Submit the kedro pipeline
-    needs: [bump_version, setup_dependencies]
+    needs: bump_version
     permissions:
       contents: 'write'
       id-token: 'write'
