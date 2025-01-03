@@ -3,7 +3,7 @@ name: Automate kedro sumbit release run periodically
 on:
   push:
     branches:
-      - 'gh-actions-weekly-submit'
+      - 'gh-actions-weekly-submit-xyz'
   # schedule:
   #   - cron: '30 9 * * 1' # 9:30 AM every Monday
   #   - cron: '30 9 1 * *' # 9:30 AM on the first of every month
@@ -17,65 +17,44 @@ env:
 
 jobs:
 
-  checkout_code:
+ submit_data_release_periodically:
     runs-on: ubuntu-latest
-    name: Checkout
+    name: Submit the Kedro Pipeline Periodically
     permissions:
       contents: 'write'
       id-token: 'write'
+      pull-requests: 'write'
+
     steps:
       - name: Checkout
         uses: actions/checkout@main
         with:
           fetch-tags: true
-          fetch-depth: 0 
-
-  setup_env:
-    runs-on: ubuntu-latest
-    name: Set up environment
-    needs: checkout_code
-    permissions:
-      contents: 'write'
-      id-token: 'write'
-    steps:
-      - name: Setup Python
-        uses: actions/setup-python@v5
+          fetch-depth: 0  # full depth needed so we can pass the AI all logs since the last release.
+      - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
+
       - name: Authenticate with Google Cloud
         uses: 'google-github-actions/auth@v2'
         with:
           project_id: ${{env.project_id}}
           workload_identity_provider: ${{env.workload_identity_provider}}
           service_account: ${{env.service_account}}
+
       - uses: google-github-actions/get-gke-credentials@v1
         with:
           cluster_name: ${{env.cluster}}
           location: ${{env.region}}
           project_id: ${{env.project_id}}
 
-  fetch_latest_tag:
-    runs-on: ubuntu-latest
-    name: Fetch latest tag
-    needs: setup_env
-    permissions:
-      contents: 'write'
-      id-token: 'write'
-    steps:
       - name: Fetch latest tag
         id: fetch_latest_tag
         run: |
           latest_tag=$(git tag --list --sort="v:refname" | tail -n 1)
           echo "latest_tag=${latest_tag}" >> "$GITHUB_ENV"
           echo "Latest tag is ${latest_tag}"
-  
-  bump_version:
-    runs-on: ubuntu-latest
-    name: Increment version
-    needs: fetch_latest_tag
-    permissions:
-      contents: 'write'
-    steps:
+
       - name: Increment patch version
         # if : github.event.schedule == '30 9 * * 1' # weekly bump
         working-directory: docs/scripts
@@ -83,18 +62,13 @@ jobs:
           pip install semver
           python patch_bump.py
 
-      # - name: Increment minor version
-      #   # if : github.event.schedule == '30 9 1 * *' # monthly bump
-      #   working-directory: docs/scripts
-      #   run:
-      #     pip install semver
-      #     python minor_bump.py
+      - name: Increment minor version
+        # if : github.event.schedule == '30 9 1 * *' # monthly bump
+        working-directory: docs/scripts
+        run:
+          pip install semver
+          python minor_bump.py
 
-  setup_dependencies:
-    runs-on: ubuntu-latest
-    name: Set up dependencies
-    needs: bump_version
-    steps:
       - name: Set up kedro project dependencies
         working-directory: pipelines/matrix
         run: |
@@ -104,15 +78,7 @@ jobs:
           sudo mv argo-linux-amd64 /usr/local/bin/argo
           argo version
           pip install -r requirements.txt
-
-  submit_kedro_pipeline:
-    runs-on: ubuntu-latest
-    name: Submit the kedro pipeline
-    needs: bump_version
-    permissions:
-      contents: 'write'
-      id-token: 'write'
-    steps:
+      
       - name: Submit the kedro pipeline
         working-directory: pipelines/matrix
         run: |
