@@ -155,6 +155,46 @@ def filter_nodes_without_edges(
     return nodes
 
 
+def generate_filtered_nodes_agg_count(
+    nodes: DataFrame,
+) -> DataFrame:
+    nodes_with_prefix = nodes.withColumn("prefix", F.split("id", ":")[0])
+
+    columns = ["category", "prefix", "upstream_data_source"]
+    nodes_agg_count = nodes_with_prefix.select(*columns).groupBy(*columns).count()
+    return nodes_agg_count
+
+
+def generate_filtered_edges_agg_count(
+    nodes: DataFrame,
+    edges: DataFrame,
+) -> DataFrame:
+    # this is duplicated from above, but also happens quickly and I'm not sure we need it stored
+    nodes_with_prefix = nodes.withColumn("prefix", F.split("id", ":")[0])
+    subject_nodes = nodes_with_prefix.alias("subject_nodes")
+    object_nodes = nodes_with_prefix.alias("object_nodes")
+
+    edges_agg_count = (
+        edges.withColumn("subject_prefix", F.split("subject", ":")[0])
+        .withColumn("object_prefix", F.split("object", ":")[0])
+        .join(
+            subject_nodes.select("id", "category").withColumnRenamed("category", "subject_category"),
+            edges.subject == subject_nodes.id,
+            "left",
+        )
+        .join(
+            object_nodes.select("id", "category").withColumnRenamed("category", "object_category"),
+            edges.object == object_nodes.id,
+            "left",
+        )
+        .select("subject_prefix", "object_prefix", "predicate", "subject_category", "object_category")
+        .groupBy("subject_prefix", "object_prefix", "predicate", "subject_category", "object_category")
+        .count()
+    )
+
+    return edges_agg_count
+
+
 @memory.cache
 def batch_map_ids(
     ids: frozenset[str],
