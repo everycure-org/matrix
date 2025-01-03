@@ -72,7 +72,7 @@ jobs:
   bump_version:
     runs-on: ubuntu-latest
     name: Increment version
-    needs: fetch_latest_tag
+    needs: [checkout_code, fetch_latest_tag]
     permissions:
       contents: 'write'
     steps:
@@ -93,7 +93,7 @@ jobs:
   setup_dependencies:
     runs-on: ubuntu-latest
     name: Set up dependencies
-    needs: setup_env
+    needs: [checkout_code, setup_env]
     steps:
       - name: Set up kedro project dependencies
         working-directory: pipelines/matrix
