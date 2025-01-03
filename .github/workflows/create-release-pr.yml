@@ -56,12 +56,6 @@ jobs:
         # To comply with the protected-branch policy
         run: git switch -c release/${{env.release}} ${{env.gitref}}
 
-      - name: Setup Matrix CLI
-        working-directory: apps/matrix-cli
-        run: |
-          pip install uv
-          uv sync
-
       - name: Authenticate with Google Cloud
         uses: 'google-github-actions/auth@v2'
         with:
@@ -92,11 +86,18 @@ jobs:
       - name: Detect bump type
         working-directory: docs
         run: |
+          pip install uv
           uv venv -p 3.11
           uv pip install -r requirements.txt
           cd scripts
           uv run bump_detection.py
 
+      - name: Setup Matrix CLI
+        working-directory: apps/matrix-cli
+        run: |
+          pip install uv
+          uv sync
+          
       - name: Create Release Notes
         working-directory: apps/matrix-cli
         env:
