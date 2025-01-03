@@ -144,6 +144,20 @@ def create_pipeline(**kwargs) -> Pipeline:
                     name="filter_nodes_without_edges",
                     tags=["filtering"],
                 ),
+                argo_node(
+                    func=nodes.generate_filtered_nodes_agg_count,
+                    inputs="integration.prm.filtered_nodes",
+                    outputs="integration.prm.filtered_nodes_agg_count",
+                    name="generate_filtered_nodes_agg_count",
+                    tags=["qc"],
+                ),
+                argo_node(
+                    func=nodes.generate_filtered_edges_agg_count,
+                    inputs=["integration.prm.filtered_nodes", "integration.prm.filtered_edges"],
+                    outputs="integration.prm.filtered_edges_agg_count",
+                    name="generate_filtered_edges_agg_count",
+                    tags=["qc"],
+                ),
             ]
         )
     )
