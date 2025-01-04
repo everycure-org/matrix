@@ -130,10 +130,8 @@ def evaluate_stability_predictions(matrix_1: pd.DataFrame, matrix_2: pd.DataFram
     Args:
         matrix_1: full matrix coming from one model
         matrix_2: full matrix coming from another model to compare against
-        evaluation: stabilitymetric to evaluate.
-
+        evaluation: stability metric to evaluate.
     Returns:
         Evaluation report
     """
-    # evaluation.evaluate(data)
-    return {"commonality_at_1000": 0.5, "commonality_at_10000": 0.5, "commonality_at_100000": 0.5}
+    return evaluation.evaluate(matrix_1, matrix_2)
