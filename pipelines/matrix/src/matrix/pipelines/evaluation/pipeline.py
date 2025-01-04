@@ -35,6 +35,16 @@ def _create_stability_pipeline(model_1: str, model_2: str, evaluation: str) -> P
     return pipeline(
         [
             argo_node(
+                func=nodes.generate_overlapping_dataset,
+                inputs=[
+                    f"matrix_generation.{model_1}.model_output.sorted_matrix_predictions@pandas",
+                    f"matrix_generation.{model_2}.model_output.sorted_matrix_predictions@pandas",
+                    f"params:evaluation.{evaluation}.evaluation_options.stability",
+                ],
+                outputs=f"evaluation.{model_1}.{model_2}.{evaluation}.model_output.pairs",
+                name=f"create_{model_1}_{model_2}_{evaluation}_evaluation_pairs",
+            ),
+            argo_node(
                 func=nodes.evaluate_stability_predictions,
                 inputs=[
                     f"matrix_generation.{model_1}.model_output.sorted_matrix_predictions@pandas",
@@ -87,5 +97,4 @@ def create_pipeline(**kwargs) -> Pipeline:
                         tags=model,
                     )
                 )
-
     return sum(pipelines)

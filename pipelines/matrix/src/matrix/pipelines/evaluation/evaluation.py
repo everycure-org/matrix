@@ -250,3 +250,21 @@ class RecallAtN(Evaluation):
             results[f"recall_at_{n}"] = recall
 
         return results
+
+
+class StabilityCommonalityAtN(Evaluation):
+    """A class representing Commonality at K metric to evaluate overlapping stability between two matrix outputs."""
+
+    pass
+
+
+class StabilityRankingMetrics(Evaluation):
+    """A class representing Ranking metrics evaluating ranking stability between two matrix outputs"""
+
+    pass
+
+
+class RankCommonalityMetrics(Evaluation):
+    """A class representing Rank-Commonality Score metric to evaluate stability between two matrix outputs."""
+
+    pass

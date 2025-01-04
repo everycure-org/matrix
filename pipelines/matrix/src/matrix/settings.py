@@ -88,7 +88,9 @@ DYNAMIC_PIPELINES_MAPPING = {
         {"evaluation_name": "full_matrix_trials"},
     ],
     "stability": [
-        {"stability_name": "stability_metrics"},
+        {"evaluation_name": "stability_overlap"},
+        {"evaluation_name": "stability_ranking"},
+        {"evaluation_name": "rank_commonality"},
     ],
 }
 

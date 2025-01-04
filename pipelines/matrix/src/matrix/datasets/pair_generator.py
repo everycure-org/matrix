@@ -368,3 +368,11 @@ class FullMatrixPositives(DrugDiseasePairGenerator):
         num_non_pos = len(matrix[~is_positive])
         positive_pairs["non_pos_quantile_rank"] = (positive_pairs["non_pos_rank"] - 1) / num_non_pos
         return positive_pairs
+
+
+class OnlyOverlappingPairs:
+    pass
+
+
+class NoGenerator:
+    pass

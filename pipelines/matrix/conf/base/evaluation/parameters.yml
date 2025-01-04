@@ -156,6 +156,50 @@ evaluation.full_matrix_trials:
       quantile_func_lst: 
         - object: matrix.pipelines.evaluation.named_metric_functions.AUROC
 
-evaluation.stability_metrics:
+evaluation.stability_overlap:
   evaluation_options:
-    stability: 1000
+    generator:
+      object:  matrix.datasets.pair_generator.NoGenerator
+    evaluation:
+      object: matrix.pipelines.evaluation.evaluation.CommonalityAtNMetrics 
+      rank_func_lst: 
+        - object:  matrix.pipelines.evaluation.named_metric_functions.CommonalityAtN 
+          n: 1000
+        - object:  matrix.pipelines.evaluation.named_metric_functions.CommonalityAtN
+          n: 10000
+        - object:  matrix.pipelines.evaluation.named_metric_functions.CommonalityAtN
+          n: 100000
+        - object:  matrix.pipelines.evaluation.named_metric_functions.CommonalityAtN
+          n: 1000000
+
+evaluation.stability_ranking:
+   evaluation_options:
+    generator:
+      object: matrix.datasets.pair_generator.OnlyOverlappingPairs
+    evaluation:
+      object: matrix.pipelines.evaluation.evaluation.StabilityRankingMetrics 
+      rank_func_lst: 
+        - object:  matrix.pipelines.evaluation.named_metric_functions.SpearmanAtN
+          n: 10000
+        - object:  matrix.pipelines.evaluation.named_metric_functions.SpearmanAtN
+          n: 100000
+        - object:  matrix.pipelines.evaluation.named_metric_functions.SpearmanAtN
+          n: 1000000
+        - object:  matrix.pipelines.evaluation.named_metric_functions.HypergeomAtN
+          n: 10000
+        - object:  matrix.pipelines.evaluation.named_metric_functions.HypergeomAtN
+          n: 100000
+        - object:  matrix.pipelines.evaluation.named_metric_functions.HypergeomAtN
+          n: 1000000
+
+evaluation.rank_commonality:
+   evaluation_options:
+    evaluation:
+      object: matrix.pipelines.evaluation.evaluation.RankCommonalityMetrics 
+      rank_func_lst: 
+        - object:  matrix.pipelines.evaluation.named_metric_functions.RCScore
+          n: 10000
+        - object:  matrix.pipelines.evaluation.named_metric_functions.RCScore
+          n: 100000
+        - object:  matrix.pipelines.evaluation.named_metric_functions.RCScore
+          n: 1000000
