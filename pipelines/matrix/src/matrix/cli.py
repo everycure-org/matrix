@@ -2,7 +2,7 @@ import click
 from kedro.framework.cli.utils import CONTEXT_SETTINGS, KedroCliError
 
 from matrix.cli_commands.run import run
-from matrix.cli_commands.submit import submit
+from matrix.cli_commands.submit import submit, authtest
 
 
 @click.group(context_settings=CONTEXT_SETTINGS, name=__file__)
@@ -11,6 +11,8 @@ def cli():
 
 
 cli.add_command(submit)
+# TODO clean up!
+cli.add_command(authtest)
 
 # Add the run command
 cli.add_command(run)

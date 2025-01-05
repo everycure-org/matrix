@@ -1,3 +1,4 @@
+import os
 import threading
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from queue import Queue
@@ -7,6 +8,7 @@ import click
 import requests
 from google.auth.transport import requests as google_requests
 from google.oauth2 import id_token
+from google.oauth2.credentials import Credentials
 from rich.console import Console
 
 console = Console()
@@ -16,11 +18,30 @@ CLIENT_ID = "938607797672-i7md7k1u3kv89e02b6d8ouo0mi9tscos.apps.googleuserconten
 CLIENT_SECRET = "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"
 AUTH_URI = "https://accounts.google.com/o/oauth2/auth"
 TOKEN_URI = "https://oauth2.googleapis.com/token"
-LOCAL_PATH = "data/.credentials/"
 SCOPE = ["openid", "email"]
+LOCAL_PATH = "data/.credentials/"
 
 # FastAPI app for callback handling
 result_queue = Queue()
+
+
+def get_iap_token() -> Credentials:
+    """Gets the IAP token, either by using existing credentials or by requesting a new one through a browser OAuth flow."""
+
+    # Try loading existing credentials
+    if os.path.exists(f"{LOCAL_PATH}/token.json"):
+        token_data = Credentials.from_authorized_user_file(f"{LOCAL_PATH}/token.json")
+        token_data.refresh(google_requests.Request())
+
+    # if not present, start oauth flow
+    else:
+        token_data = request_new_iap_token()
+        os.makedirs(LOCAL_PATH, exist_ok=True)
+        with open(f"{LOCAL_PATH}/token.json", "w") as f:
+            f.write(token_data.to_json())
+
+    # always: return
+    return token_data
 
 
 class OAuthCallbackHandler(BaseHTTPRequestHandler):
@@ -54,64 +75,37 @@ class OAuthCallbackHandler(BaseHTTPRequestHandler):
         self.wfile.write(response.encode())
 
 
-def start_callback_server() -> int:
+def start_callback_server(local_port: int) -> int:
     """Start temporary callback server and wait for first request.
 
     Returns:
         dict: The OAuth callback parameters
     """
 
-    def _run_callback_server(port):
-        server = HTTPServer(("", port), OAuthCallbackHandler)
+    def _run_callback_server():
+        server = HTTPServer(("", local_port), OAuthCallbackHandler)
         server.handle_request()  # Handle only one request
+        server.server_close()
 
-    for i in range(4000, 4010):
-        # try starting the server on up to 10 ports before giving up
-        try:
-            server_thread = threading.Thread(target=_run_callback_server, args=(i,))
-            # server_thread.daemon = True
-            server_thread.start()
-            print(f"Started server on port {i}")
-            return i
-        except Exception as e:
-            console.print(f"Failed to start server on port {i}: {e}")
-
-        raise Exception("Failed to start callback server")
+    server_thread = threading.Thread(target=_run_callback_server)
+    server_thread.start()
+    return local_port
 
 
-def get_iap_token() -> str:
-    """Gets the IAP token, either by using existing credentials or by requesting a new one through a browser OAuth flow."""
-    return request_new_iap_token()
+def perform_oauth_flow(local_port: int) -> dict:
+    """Construct the OAuth URL for user authentication.
 
-
-def request_new_iap_token() -> str:
-    """Get an Identity-Aware Proxy token through OAuth2 authentication flow.
-
-    See documentation from Google at
-    https://cloud.google.com/iap/docs/authentication-howto#authenticating_from_a_desktop_app
-
-
-    This function will:
-    1. Open a browser for user authentication
-    2. Start a local server to receive the callback
-    3. Exchange the auth code for tokens
-    4. Return the ID token for use with IAP-protected resources
+    Args:
+        port (int): The local server port for callback
 
     Returns:
-        str: The ID token for authenticating requests
-
-    Raises:
-        ValueError: If required tokens are not received in the authentication flow
+        str: The constructed OAuth URL
     """
-
-    # start the local server
-    port = start_callback_server()
-    # Start authentication flow
-    # Construct OAuth URL
+    successful_port = start_callback_server(local_port)
     auth_url = (
         f"{AUTH_URI}?"
         f"client_id={CLIENT_ID}&"
-        f"redirect_uri=http://localhost:{port}/hook&"
+        f"redirect_uri=http://localhost:{successful_port}/hook&"
         f"scope={' '.join(SCOPE)}&"
         f"response_type=code&"
         f"access_type=offline"
@@ -123,13 +117,25 @@ def request_new_iap_token() -> str:
 
     # Wait for callback
     result = result_queue.get()
-
     if "code" not in result:
         raise ValueError("Did not receive authorization code in response")
+    return result, successful_port
 
-    # Exchange authorization code for tokens
+
+def exchange_auth_code(auth_code: str, port: int) -> dict:
+    """Exchange authorization code for tokens.
+
+    Args:
+        auth_code (str): The authorization code from OAuth callback
+        port (int): The local server port used for callback
+    Returns:
+        dict: The token response data
+
+    Raises:
+        ValueError: If ID token is not present in response
+    """
     token_request = {
-        "code": result["code"],
+        "code": auth_code,
         "client_id": CLIENT_ID,
         "client_secret": CLIENT_SECRET,
         "redirect_uri": f"http://localhost:{port}/hook",
@@ -144,8 +150,76 @@ def request_new_iap_token() -> str:
     if "id_token" not in token_data:
         raise ValueError("Did not receive ID token in token response")
 
-    # Verify the ID token
-    id_info = id_token.verify_oauth2_token(token_data["id_token"], google_requests.Request(), CLIENT_ID)
+    return token_data
+
+
+def _verify_token(id_token_str: str) -> dict:
+    """Verify the ID token and get user info.
+
+    Args:
+        id_token_str (str): The ID token to verify
+
+    Returns:
+        dict: The verified token information
+    """
+    return id_token.verify_oauth2_token(id_token_str, google_requests.Request(), CLIENT_ID)
+
+
+def request_new_iap_token(local_port: int = 33333) -> Credentials:
+    """Get an Identity-Aware Proxy token through OAuth2 authentication flow.
+
+    See documentation from Google at
+    https://cloud.google.com/iap/docs/authentication-howto#authenticating_from_a_desktop_app
+
+    Returns:
+        dict: The token data including ID token for authenticating requests
+
+    Raises:
+        ValueError: If required tokens are not received in the authentication flow
+    """
+    # Start the local server
+
+    # Construct and launch OAuth URL
+    code_response, port = perform_oauth_flow(local_port)
+
+    # Exchange code for tokens
+    token_data = exchange_auth_code(code_response["code"], port)
+
+    # Verify token and log success
+    id_info = _verify_token(token_data["id_token"])
     console.print(f"Successfully authenticated as: {id_info['email']}")
 
-    return token_data["id_token"]
+    return Credentials(
+        token=token_data["access_token"],
+        refresh_token=token_data["refresh_token"],
+        id_token=token_data["id_token"],
+        token_uri=TOKEN_URI,
+        client_id=CLIENT_ID,
+        client_secret=CLIENT_SECRET,
+        scopes=SCOPE,
+    )
+
+
+def refresh_token(token_data: dict) -> dict:
+    """Refresh the OAuth2 tokens using the refresh token."""
+
+    params = {
+        "grant_type": "refresh_token",
+        "client_id": CLIENT_ID,
+        "client_secret": CLIENT_SECRET,
+        "refresh_token": token_data["refresh_token"],
+    }
+
+    console.print("Refreshing tokens...")
+    response = requests.post(TOKEN_URI, data=params)
+
+    if not response.ok:
+        raise ValueError(f"Token refresh failed: {response.status_code} - {response.text}")
+
+    new_token_data = response.json()
+
+    # Verify the new ID token
+    _verify_token(new_token_data["id_token"])
+    console.print("Successfully refreshed tokens")
+
+    return new_token_data
