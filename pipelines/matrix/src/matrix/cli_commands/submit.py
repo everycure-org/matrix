@@ -30,6 +30,7 @@ from matrix.git_utils import (
     has_unpushed_commits,
 )
 from matrix.kedro4argo_node import ArgoResourceConfig
+from matrix.utils.authentication import get_iap_token
 
 logging.basicConfig(
     level=logging.INFO,
@@ -46,6 +47,28 @@ console = Console()
 @click.group(context_settings=CONTEXT_SETTINGS, name=__file__)
 def cli():
     """Command line tools for manipulating a Kedro project."""
+
+
+@cli.command()
+def authtest():
+    """Test the authentication flow."""
+    token = get_iap_token()
+    # call mlflow to list experiments to test if it works with `id_token`
+    import os
+
+    import mlflow
+
+    # TODO needs ot be completed
+    # this command shows how to list experiments from MLFlow THROUGH the IAP.
+    # with this in hand, we can adapt the below submit flow to
+    # 1. before submitting check an experiment exists based on the branch name, if not create it
+    # 2. start a run in that experiment
+    # 3. submit the workflow with that run id set as an env variable (so all pods can access it)
+    # 4. avoid the current situation where we have a 1:1 mapping between experiments and runs
+    # (we currently created a new experiment for each run, which made the MLFLow UI very messy)
+    mlflow.set_tracking_uri("https://mlflow.platform.dev.everycure.org")
+    os.environ["MLFLOW_TRACKING_TOKEN"] = token.id_token
+    print(mlflow.search_experiments())
 
 
 # fmt: off
@@ -97,7 +120,7 @@ def submit(
     if from_nodes:
         pipeline_obj = pipeline_obj.from_nodes(*from_nodes)
 
-    run_name = get_run_name(run_name)
+    run_name = get_new_run_id_from_mlflow(run_name)
     pipeline_obj.name = pipeline
 
 
