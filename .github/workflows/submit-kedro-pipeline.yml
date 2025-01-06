@@ -18,7 +18,7 @@ env:
 jobs:
 
  submit_data_release_periodically:
-    runs-on: 'self-hosted'
+    runs-on: 'ubuntu-latest'
     name: Submit the Kedro Pipeline Periodically
     permissions:
       contents: 'write'
