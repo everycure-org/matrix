@@ -221,7 +221,7 @@ def create_shared_pipeline(models_lst: List[str], folds_lst: List[Union[str, int
                 func=nodes.filter_valid_pairs,
                 inputs=[
                     "integration.prm.filtered_nodes",
-                    "integration.int.ground_truth.edges",
+                    "integration.int.ground_truth.edges.norm",
                     "params:modelling.drug_types",
                     "params:modelling.disease_types",
                 ],
