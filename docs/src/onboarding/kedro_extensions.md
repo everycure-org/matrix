@@ -132,7 +132,7 @@ The dependency injection pattern is an excellent technique to clean configuratio
 
 Dynamic pipelines in Kedro allow us to do exactly this, it is a workaround that enables us to control the layout of the pipeline dynamically. We're doing that through the `settings.py` file. This file essentially provides a higher-order configuration mechanism, that can be used to create more complex pipelines.
 
-![](../assets/img/dynamic-pipeline-config.svg)
+![](../assets/img/dynamic_pipeline_config.excalidraw.svg)
 
 
 ### Example: Single pipeline to produce multiple models
