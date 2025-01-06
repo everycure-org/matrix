@@ -249,7 +249,7 @@ def create_shared_pipeline(models_lst: List[str], folds_lst: List[Union[str, int
                 name="prefilter_nodes",
             ),
             argo_node(
-                func=nodes.make_folds,
+                func=nodes.make_splits,
                 inputs=[
                     "modelling.int.known_pairs@pandas",
                     "params:modelling.splitter",

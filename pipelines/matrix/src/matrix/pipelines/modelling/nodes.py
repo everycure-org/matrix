@@ -183,45 +183,57 @@ def prefilter_nodes(
     return df
 
 
-@inject_object()
-def make_folds(
-    data: DataFrame,
-    splitter: BaseCrossValidator,
-) -> Tuple[pd.DataFrame]:
-    """Function to generate folds for modelling.
+# @inject_object()
+# def make_folds(
+#     data: DataFrame,
+#     splitter: BaseCrossValidator,
+# ) -> Tuple[pd.DataFrame]:
+#     """Function to generate folds for modelling.
 
-    NOTE: This currently loads the `n_splits` from the settings, as this
-    pipeline is generated dynamically to allow parallelization.
+#     NOTE: This currently loads the `n_splits` from the settings, as this
+#     pipeline is generated dynamically to allow parallelization.
 
-         _______
-       .-       -.
-      /           \
-     |,  .-.  .-.  ,|
-     | )(_o/  \o_)( |
-     |/     /\     \|
-     (_     ^^     _)
-      \__|IIIIII|__/
-       | \IIIIII/ |
-       \          /
-        `--------`
+#          _______
+#        .-       -.
+#       /           \
+#      |,  .-.  .-.  ,|
+#      | )(_o/  \o_)( |
+#      |/     /\     \|
+#      (_     ^^     _)
+#       \__|IIIIII|__/
+#        | \IIIIII/ |
+#        \          /
+#         `--------`
 
-    Args:
-        data: dataframe
-        splitter: splitter
-    Returns:
-        Tuple of dataframes with data for each fold, dfs 1-k are 
-        dfs with data for folds, df k+1 is training data only.
-    """
+#     Args:
+#         data: dataframe
+#         splitter: splitter
+#     Returns:
+#         Tuple of dataframes with data for each fold, dfs 1-k are
+#         dfs with data for folds, df k+1 is training data only.
+#     """
 
-    # Set number of splits
-    all_data_frames = make_splits(data, splitter)
+#     # Set number of splits
+#     all_data_frames = make_splits(data, splitter)
 
-    # Add "training data only" fold
-    full_data = data.copy()
-    full_data.loc[:, "split"] = "TRAIN"
-    return all_data_frames + tuple([full_data])
+#     # Add "training data only" fold
+#     full_data = data.copy()
+#     full_data.loc[:, "split"] = "TRAIN"
+#     return all_data_frames + tuple([full_data])
 
 
+@has_schema(
+    schema={
+        "source": "object",
+        "source_embedding": "object",
+        "target": "object",
+        "target_embedding": "object",
+        "y": "int",
+        "split": "object",
+        "fold": "int",
+    },
+    allow_subset=True,
+)
 @inject_object()
 def make_splits(
     data: DataFrame,
@@ -242,14 +254,15 @@ def make_splits(
 
     # Split data into folds
     all_data_frames = []
-    for train_index, test_index in splitter.split(data, data["y"]):
+    for fold, (train_index, test_index) in enumerate(splitter.split(data, data["y"])):
         all_indices_in_this_fold = list(set(train_index).union(test_index))
         fold_data = data.loc[all_indices_in_this_fold, :].copy()
         fold_data.loc[train_index, "split"] = "TRAIN"
         fold_data.loc[test_index, "split"] = "TEST"
+        fold_data.loc[:, "fold"] = fold
         all_data_frames.append(fold_data)
 
-    return tuple(all_data_frames)
+    return pd.concat(all_data_frames)
 
 
 @has_schema(

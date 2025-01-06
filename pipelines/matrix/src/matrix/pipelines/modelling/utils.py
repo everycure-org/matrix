@@ -1,3 +1,5 @@
+import pandas as pd
+
 from functools import partial
 
 
@@ -12,3 +14,12 @@ def partial_(func: callable, **kwargs):
         Partially applied function.
     """
     return partial(func, **kwargs)
+
+
+def get_func_with_full_splits(func: callable, fold: int):
+    def func_with_full_splits(data: pd.DataFrame, *args):
+        data = data.copy()
+        data_fold = data[data.split == fold]
+        return partial(func, split=data_fold)(*args)
+
+    return func_with_full_splits
