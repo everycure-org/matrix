@@ -3,7 +3,7 @@ name: Automate kedro sumbit release run periodically
 on:
   push:
     branches:
-      - 'gh-actions-weekly-submit-xyz'
+      - 'gh-actions-weekly-submit'
   # schedule:
   #   - cron: '30 9 * * 1' # 9:30 AM every Monday
   #   - cron: '30 9 1 * *' # 9:30 AM on the first of every month
@@ -18,7 +18,7 @@ env:
 jobs:
 
  submit_data_release_periodically:
-    runs-on: ubuntu-latest
+    runs-on: 'self-hosted'
     name: Submit the Kedro Pipeline Periodically
     permissions:
       contents: 'write'
