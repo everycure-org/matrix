@@ -340,13 +340,14 @@ class ReleaseInfoHooks:
         blob.upload_from_string(data=json.dumps(release_info), content_type="application/json")
 
     @hook_impl
-    def after_node_run(self, node: Node) -> None:
+    def before_node_run(self, node: Node) -> None:
         """Runs after the last node of the data_release pipeline"""
         # We chose to add this using the `after_node_run` hook, rather than
         # `after_pipeline_run`, because one does not know a priori which
         # pipelines the (last) data release node is part of. With an
         # `after_node_run`, you can limit your filters easily.
-        if node.name == last_data_release_node_name:
+        cloud_env = ReleaseInfoHooks._kedro_context.env == "cloud"
+        if cloud_env and node.name == last_data_release_node_name:
             release_info = self.extract_release_info()
             try:
                 self.upload_to_storage(release_info)
