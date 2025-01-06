@@ -35,6 +35,7 @@ def enrich_embeddings(
         drugs: List of drugs
         diseases: List of diseases
     """
+
     return (
         drugs.withColumn("is_drug", F.lit(True))
         .unionByName(diseases.withColumn("is_disease", F.lit(True)), allowMissingColumns=True)
