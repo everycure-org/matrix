@@ -141,13 +141,13 @@ fabricator.rtx_kg2:
   drug_list:
     num_rows: 20
     columns:
-      curie: 
+      single_ID: 
         type: row_apply
         list_of_values: [nodes.id:ID, nodes.name]
         row_func: "lambda *args: args[0]"
         resize: True
         seed: 6850
-      curie_label: 
+      ID_label: 
         type: row_apply
         list_of_values: [nodes.id:ID, nodes.name]
         row_func: "lambda *args: args[1]"
