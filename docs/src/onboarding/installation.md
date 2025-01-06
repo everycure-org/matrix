@@ -130,7 +130,7 @@ python
 # Python 3.11.<something>, as opposed to another version of Python, such as 3.9, 3.12, or 3.13.
 ```
 
-### Virtual environment
+### uv installation
 
 We leverage [`uv`](https://github.com/astral-sh/uv) to manage/install our Python
 requirements. Note that while many may be used to Conda, UV and Conda cannot be used in parallel. Using Conda is hence at your own risk.
@@ -156,23 +156,6 @@ Install as follows, then create a virtual env in the `matrix/pipelines/matrix` d
 
     ```bash
     brew install uv python@3.11
-    ```
-
-    Then, create the virtual environment and install the requirements.txt file:
-    
-    ```bash
-    # create virtual environment
-    uv venv
-    # activate virtual environment
-    source .venv/bin/activate
-    # Install the requirements.txt file that is in the matrix repository. First navigate to the repo
-    cd matrix/pipelines/matrix
-    # lists files that are hidden, you should see requirements.txt in line
-    ls -a
-    # installs the requirements in the activated uv virtual environment
-    uv pip install -r requirements.txt'
-    # deactivate the virtual environment
-    deactivate
     ```
 
 === "Windows (WSL)"
