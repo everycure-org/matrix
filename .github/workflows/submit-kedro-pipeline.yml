@@ -3,7 +3,7 @@ name: Automate kedro sumbit release run periodically
 on:
   push:
     branches:
-      - 'gh-actions-weekly-submit'
+      - 'gh-actions-weekly-submit-xyz'
   # schedule:
   #   - cron: '30 9 * * 1' # 9:30 AM every Monday
   #   - cron: '30 9 1 * *' # 9:30 AM on the first of every month
@@ -44,14 +44,14 @@ jobs:
           service_account: ${{env.service_account}}
           token_format: access_token
 
-      - name: Login to GAR
+      - name: Login to GAR # the docker image is pushed to Google Artifact Registry
         uses: docker/login-action@v3
         with:
           registry: ${{env.region}}-docker.pkg.dev
           username: oauth2accesstoken
           password: ${{ steps.auth.outputs.access_token }}
 
-      - uses: google-github-actions/get-gke-credentials@v1
+      - uses: google-github-actions/get-gke-credentials@v1 # configure authentication to a GKE cluster (configure kubectl)
         with:
           cluster_name: ${{env.cluster}}
           location: ${{env.region}}
@@ -87,12 +87,6 @@ jobs:
           sudo mv argo-linux-amd64 /usr/local/bin/argo
           argo version
           pip install -r requirements.txt
-      
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
 
       - name: Submit the kedro pipeline
         working-directory: pipelines/matrix
