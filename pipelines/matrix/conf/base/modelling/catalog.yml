@@ -101,9 +101,9 @@ modelling.model_input.drugs_diseases_nodes@pandas:
   <<: [*_kg_dataset, *_model_input_ds]
   filepath: ${globals:paths.modelling}/model_input/drugs_diseases_nodes/
 
-"modelling.model_input.fold_{fold}.splits":
+modelling.model_input.splits:
   <<: [*_pandas_parquet, *_model_input_ds]
-  filepath: ${globals:paths.modelling}/model_input/fold_{fold}/splits
+  filepath: ${globals:paths.modelling}/model_input/splits
 
 "modelling.{model}.fold_{fold}.model_input.transformers":
   <<: *_model_input_ds

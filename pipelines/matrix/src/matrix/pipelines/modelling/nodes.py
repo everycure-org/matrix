@@ -276,7 +276,7 @@ def make_splits(
     allow_subset=True,
 )
 @inject_object()
-def create_model_input_nodes(
+def create_model_input_nodes(  # TODO: modify to receive full splits + output full dataset
     graph: KnowledgeGraph,
     splits: pd.DataFrame,
     generator: SingleLabelPairGenerator,

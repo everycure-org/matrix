@@ -21,16 +21,6 @@ def _create_model_shard_pipeline(model: str, shard: int, fold: Union[str, int]) 
     return pipeline(
         [
             argo_node(
-                func=nodes.create_model_input_nodes,
-                inputs=[
-                    "modelling.model_input.drugs_diseases_nodes@pandas",
-                    f"modelling.model_input.fold_{fold}.splits",
-                    f"params:modelling.{model}.model_options.generator",
-                ],
-                outputs=f"modelling.{model}.{shard}.fold_{fold}.model_input.enriched_splits",
-                name=f"enrich_{model}_{shard}_splits_fold_{fold}",
-            ),
-            argo_node(
                 func=nodes.apply_transformers,
                 inputs=[
                     f"modelling.{model}.{shard}.fold_{fold}.model_input.enriched_splits",
@@ -154,6 +144,25 @@ def create_model_pipeline(model: str, num_shards: int, folds_lst: List[Union[str
     """
     pipelines = []
 
+    # Generate pipeline to enrich splits
+    for shard in range(num_shards):
+        pipelines.append(
+            pipeline(
+                [
+                    argo_node(
+                        func=nodes.create_model_input_nodes,
+                        inputs=[
+                            "modelling.model_input.drugs_diseases_nodes@pandas",
+                            "modelling.model_input.splits",
+                            f"params:modelling.{model}.model_options.generator",
+                        ],
+                        outputs=f"modelling.{model}.{shard}.model_input.enriched_splits",
+                        name=f"enrich_{model}_{shard}_splits_fold",
+                    )
+                ]
+            )
+        )
+
     # Generate pipeline to predict folds
     for fold in folds_lst:
         pipelines.append(
@@ -254,7 +263,7 @@ def create_shared_pipeline(models_lst: List[str], folds_lst: List[Union[str, int
                     "modelling.int.known_pairs@pandas",
                     "params:modelling.splitter",
                 ],
-                outputs=[f"modelling.model_input.fold_{fold}.splits" for fold in folds_lst],
+                outputs="modelling.model_input.splits",
                 name="create_splits",
             ),
         ],
