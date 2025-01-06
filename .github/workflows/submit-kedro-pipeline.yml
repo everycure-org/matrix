@@ -3,7 +3,7 @@ name: Automate kedro sumbit release run periodically
 on:
   push:
     branches:
-      - 'gh-actions-weekly-submit-xyz'
+      - 'gh-actions-weekly-submit'
   # schedule:
   #   - cron: '30 9 * * 1' # 9:30 AM every Monday
   #   - cron: '30 9 1 * *' # 9:30 AM on the first of every month
@@ -62,12 +62,12 @@ jobs:
           pip install semver
           python patch_bump.py
 
-      - name: Increment minor version
-        # if : github.event.schedule == '30 9 1 * *' # monthly bump
-        working-directory: docs/scripts
-        run:
-          pip install semver
-          python minor_bump.py
+      # - name: Increment minor version
+      #   # if : github.event.schedule == '30 9 1 * *' # monthly bump
+      #   working-directory: docs/scripts
+      #   run:
+      #     pip install semver
+      #     python minor_bump.py
 
       - name: Set up kedro project dependencies
         working-directory: pipelines/matrix
