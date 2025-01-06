@@ -17,8 +17,8 @@ env:
 
 jobs:
 
- submit_data_release_periodically:
-    runs-on: 'self-hosted'
+  submit_data_release_periodically:
+    runs-on: 'ubuntu-latest'
     name: Submit the Kedro Pipeline Periodically
     permissions:
       contents: 'write'
@@ -88,6 +88,10 @@ jobs:
           argo version
           pip install -r requirements.txt
 
+  submission:
+    runs-on: 'self-hosted'
+    needs: [submit_data_release_periodically]
+    steps:
       - name: Submit the kedro pipeline
         working-directory: pipelines/matrix
         run: |
