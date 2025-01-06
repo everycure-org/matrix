@@ -11,7 +11,6 @@ def create_pipeline(**kwargs) -> Pipeline:
 
     # Load model names
     models = settings.DYNAMIC_PIPELINES_MAPPING.get("modelling")
-    model_names = [model["model_name"] for model in models]
 
     # Load cross-validation information
     cross_validation_settings = settings.DYNAMIC_PIPELINES_MAPPING.get("cross_validation")
@@ -72,7 +71,7 @@ def create_pipeline(**kwargs) -> Pipeline:
         )
 
         # For each model, create pipeline to generate pairs
-        for model in model_names:
+        for model in models.keys():
             pipelines.append(
                 pipeline(
                     [
