@@ -138,9 +138,6 @@ requirements. Note that while many may be used to Conda, UV and Conda cannot be 
 
 Python 3.11 is currently **required** to build the matrix pipeline. If you attempt to use Python 3.12, you will likely encounter errors with the recently-removed `distutils` package (see the common errors document for how to solve this) 
 
-Install as follows, then create a virtual env in the `matrix/pipelines/matrix` directory in the repo and install the requirements `requirements.txt`:
-
-
 !!! warning
     Don't forget to link your uv installation using the instructions prompted after the downloaded.
 
