@@ -12,7 +12,7 @@ RUN apt-get update && \
     apt-get update && \
     apt-get install -y --no-install-recommends \
     python3.11 python3.11-venv python3.11-dev \
-    gcc curl g++ openjdk-11-jre-headless libomp-dev git && \
+    gcc curl g++ openjdk-17-jre-headless libomp-dev git && \
     ln -s /usr/bin/python3.11 /usr/bin/python && \
     curl -sS https://bootstrap.pypa.io/get-pip.py | python && \
     apt-get clean
