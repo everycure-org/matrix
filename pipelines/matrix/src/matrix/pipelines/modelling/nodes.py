@@ -166,7 +166,7 @@ def prefilter_nodes(
         .unionByName(gt_pos.withColumn("id", f.col("target")))
         .select("id")
         .distinct()
-        .withColumn("is_ground_pos", f.lit(True))
+        .withColumn("in_ground_pos", f.lit(True))
     )
 
     df = (
@@ -177,7 +177,7 @@ def prefilter_nodes(
         # TODO: The integrated data product _should_ contain these nodes
         # TODO: Verify below does not have any undesired side effects
         .join(ground_truth_nodes, on="id", how="left")
-        .fillna({"is_ground_pos": False})
+        .fillna({"in_ground_pos": False})
     )
 
     return df
