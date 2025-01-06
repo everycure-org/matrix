@@ -2,6 +2,10 @@
 # Column name for main probability score
 evaluation.score_col_name: &score-col "treat score"
 
+# Aggregations to report in MLFlow (list of names in modelling.aggregation_functions)
+evaluation.reported_aggregations:
+  - mean
+
 # Threshold-based classification metrics for ground truth data
 evaluation.simple_classification:
   evaluation_options:

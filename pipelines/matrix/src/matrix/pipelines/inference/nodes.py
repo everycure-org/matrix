@@ -1,4 +1,4 @@
-from typing import Dict
+from typing import Dict, Tuple
 
 # from matrix.pipelines.integration.nodes import batch_map_ids
 # from jsonpath_ng import parse
@@ -88,7 +88,7 @@ from . import visualisers
 
 def resolve_input_sheet(
     input_sheet: pd.DataFrame, drug_sheet: pd.DataFrame, disease_sheet: pd.DataFrame
-) -> (Dict, pd.DataFrame, pd.DataFrame):
+) -> Tuple[Dict, pd.DataFrame, pd.DataFrame]:
     """Run inference on disease or list of diseases and drug list, and write to google sheets.
 
     Args:

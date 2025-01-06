@@ -1,6 +1,8 @@
 import pandas as pd
 from data_fabricator.v0.nodes.fabrication import fabricate_datasets
-from kedro.pipeline import Pipeline, node, pipeline
+from kedro.pipeline import Pipeline, pipeline, node
+
+from matrix.kedro4argo_node import argo_node
 
 
 def _create_pairs(
@@ -58,7 +60,7 @@ def create_pipeline(**kwargs) -> Pipeline:
     """Create fabricator pipeline."""
     return pipeline(
         [
-            node(
+            argo_node(
                 func=fabricate_datasets,
                 inputs={"fabrication_params": "params:fabricator.rtx_kg2"},
                 outputs={
@@ -70,7 +72,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 },
                 name="fabricate_kg2_datasets",
             ),
-            node(
+            argo_node(
                 func=fabricate_datasets,
                 inputs={
                     "fabrication_params": "params:fabricator.clinical_trails",
@@ -91,7 +93,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 },
                 name="fabricate_ec_medical_datasets",
             ),
-            node(
+            argo_node(
                 func=fabricate_datasets,
                 inputs={"fabrication_params": "params:fabricator.robokop"},
                 outputs={
@@ -101,6 +103,15 @@ def create_pipeline(**kwargs) -> Pipeline:
                 name="fabricate_robokop_datasets",
             ),
             node(
+                func=fabricate_datasets,
+                inputs={"fabrication_params": "params:fabricator.spoke"},
+                outputs={
+                    "nodes": "ingestion.raw.spoke.nodes@pandas",
+                    "edges": "ingestion.raw.spoke.edges@pandas",
+                },
+                name="fabricate_spoke_datasets",
+            ),
+            argo_node(
                 func=_create_pairs,
                 inputs=[
                     "ingestion.raw.drug_list.nodes@pandas",
