@@ -22,15 +22,15 @@ modelling.splitter:
 # Aggregation functions for cross-validation
 modelling.aggregation_functions:
   - name: mean
-    object: np.mean
+    object: numpy.mean
   - name: std
-    object: np.std
+    object: numpy.std
   - name: median
-    object: np.median
+    object: numpy.median
   - name: min
-    object: np.min
+    object: numpy.min
   - name: max
-    object: np.max
+    object: numpy.max
 
 
 
