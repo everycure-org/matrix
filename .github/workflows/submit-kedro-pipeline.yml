@@ -18,7 +18,7 @@ env:
 jobs:
 
  submit_data_release_periodically:
-    runs-on: macos-latest-large
+    runs-on: 'ubuntu-latest-4-cores'
     name: Submit the Kedro Pipeline Periodically
     permissions:
       contents: 'write'
