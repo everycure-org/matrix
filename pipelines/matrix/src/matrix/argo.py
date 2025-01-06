@@ -27,6 +27,13 @@ def generate_argo_config(
     release_folder_name: str,
     default_execution_resources: Optional[ArgoResourceConfig] = None,
 ) -> str:
+    # TODO: MLflow Integration:
+    # Add the following parameters to this function:
+    # - experiment_id: str - MLflow experiment ID
+    # - run_id: str - MLflow run ID
+    # These need to be passed through to the template rendering below
+    # to populate the workflow parameters and environment variables
+
     if default_execution_resources is None:
         default_execution_resources = ArgoResourceConfig()
 
