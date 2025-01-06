@@ -16,7 +16,7 @@ def avoid_wiping_prod():
 
 def connect_to_neo4j():
     return GraphDatabase.driver(
-        "bolt://127.0.0.1:7687",
+        "bolt://localhost:7687",
         auth=("neo4j", "admin"),
     )
 
