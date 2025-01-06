@@ -1,7 +1,6 @@
 import logging
-from typing import Any, Dict, List, Union, Tuple
+from typing import Any, Callable, Dict, List, Union, Tuple
 import pandas as pd
-import numpy as np
 import json
 import pyspark.sql.functions as f
 
@@ -436,15 +435,17 @@ def train_model(
     return estimator_fit
 
 
-def create_model(*estimators) -> ModelWrapper:
+@inject_object()
+def create_model(agg_func: Callable, *estimators) -> ModelWrapper:
     """Function to create final model.
 
     Args:
+        agg_func: function to aggregate ensemble models' treat score
         estimators: list of fitted estimators
     Returns:
         ModelWrapper encapsulating estimators
     """
-    return ModelWrapper(estimators=estimators, agg_func=np.mean)
+    return ModelWrapper(estimators=estimators, agg_func=agg_func)
 
 
 @inject_object()

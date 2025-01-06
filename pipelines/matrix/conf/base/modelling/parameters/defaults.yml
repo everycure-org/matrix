@@ -90,3 +90,8 @@ _model_options:
       func:
         object: sklearn.metrics.f1_score
       average: macro
+
+  # Defines the aggregation function used by ensemble models
+  ensemble:
+    agg_func:
+      object: numpy.mean

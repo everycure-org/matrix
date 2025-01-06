@@ -107,7 +107,8 @@ def _create_fold_pipeline(model: str, num_shards: int, fold: Union[str, int]) ->
                 [
                     argo_node(
                         func=nodes.create_model,
-                        inputs=[f"modelling.{model}.{shard}.fold_{fold}.models.model" for shard in range(num_shards)],
+                        inputs=[f"params:modelling.{model}.model_options.ensemble.agg_func"]
+                        + [f"modelling.{model}.{shard}.fold_{fold}.models.model" for shard in range(num_shards)],
                         outputs=f"modelling.{model}.fold_{fold}.models.model",
                         name=f"create_{model}_model_fold_{fold}",
                         tags=model,
