@@ -1,6 +1,9 @@
+import numpy as np
 import pandas as pd
 import pytest
+from sklearn.base import BaseEstimator
 from matrix.pipelines.modelling.nodes import make_folds
+from matrix.pipelines.modelling.model import ModelWrapper
 
 
 @pytest.fixture
@@ -91,3 +94,25 @@ def test_make_folds(sample_data, mocker):
     assert len(test_indices_fold0.intersection(test_indices_fold1)) == 0
     assert len(all_test_indices) == len(sample_data)
     assert all_test_indices == set(range(len(sample_data)))
+
+
+def test_model_wrapper():
+    class MyEstimator(BaseEstimator):
+        def __init__(self, proba):
+            self.proba = proba
+            super().__init__()
+
+        def predict_proba(self, X):
+            return self.proba
+
+    my_estimators = [
+        MyEstimator(proba=[1, 2, 3]),
+        MyEstimator(proba=[2, 3, 5]),
+    ]
+
+    # given an instance of a model wrapper with median
+    model_mean = ModelWrapper(estimators=my_estimators, agg_func=np.mean)
+    # when invoking the predict_proba
+    proba_mean = model_mean.predict_proba([])
+    # then median computed correctly
+    assert np.all(proba_mean == [1.5, 2.5, 4.0])
