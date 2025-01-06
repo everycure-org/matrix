@@ -26,13 +26,16 @@ ingress:
 resources:
   limits:
     cpu: "4"
-    memory: "12Gi"
+    memory: "6Gi"
   requests:
-    cpu: "4"
-    memory: "12Gi"
+    cpu: "1"
+    memory: "3Gi"
 
 redis:
   enabled: true
   resources:
+    limits:
+      memory: "500Mi"
     requests:
-      memory: "2Gi"
+      cpu: "100m"
+      memory: "100Mi"

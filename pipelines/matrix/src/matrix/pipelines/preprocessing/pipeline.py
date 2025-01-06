@@ -1,4 +1,5 @@
 from kedro.pipeline import Pipeline, pipeline, node
+from matrix.kedro4argo_node import argo_node
 
 
 from .tagging import generate_tags
@@ -42,9 +43,6 @@ def create_pipeline(**kwargs) -> Pipeline:
                 name="produce_medical_kg",
                 tags=["ec-medical-kg"],
             ),
-            # TODO: Parse dataframe, add source/target curie using name normalizer and
-            # in ingestion logic, extract nodes df back from edges
-            # NOTE: Take raw clinical trial data and map the "name" to "curie" using the synonymizer
             # -------------------------------------------------------------------------
             # EC Clinical Trials ingestion and enrichment
             # -------------------------------------------------------------------------
@@ -58,7 +56,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 tags=["ec-clinical-trials-data"],
             ),
             # NOTE: Clean up the clinical trial data and write it to the GCS bucket
-            node(
+            argo_node(
                 func=nodes.clean_clinical_trial_data,
                 inputs=[
                     "preprocessing.int.mapped_clinical_trials_data",

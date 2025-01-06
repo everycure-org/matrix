@@ -27,6 +27,7 @@ repos:
           (?x)^(
             pipelines/matrix/packages|services/|
             docs/src/experiments/ |
+            docs/src/onboarding/ |
             services/synonymizer/api/modules/synonymize
           )
   - repo: https://github.com/antonbabenko/pre-commit-terraform
