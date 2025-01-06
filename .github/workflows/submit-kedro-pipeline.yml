@@ -33,7 +33,7 @@ jobs:
           fetch-depth: 0  # full depth needed so we can pass the AI all logs since the last release.
       - uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: '3.11.11'
 
       - name: Authenticate with Google Cloud
         id: auth
