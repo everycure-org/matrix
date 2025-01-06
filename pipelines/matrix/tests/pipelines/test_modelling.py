@@ -110,7 +110,7 @@ def test_model_wrapper():
         MyEstimator(proba=[2, 3, 5]),
     ]
 
-    # given an instance of a model wrapper with median
+    # given an instance of a model wrapper with mean
     model_mean = ModelWrapper(estimators=my_estimators, agg_func=np.mean)
     # when invoking the predict_proba
     proba_mean = model_mean.predict_proba([])
