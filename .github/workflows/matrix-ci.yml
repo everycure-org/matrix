@@ -19,6 +19,7 @@ on:
     branches:
       - main
       - develop
+      - infra
     # from https://github.com/reviewdog/action-eslint/issues/29#issuecomment-985939887
     types:
       - opened
