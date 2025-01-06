@@ -206,6 +206,7 @@ def test_parametrized_node():
 
 def test_argo_node_default_config():
     k8s_node = ArgoNode(
+        func=lambda x: x,
         inputs=["int_number_ds_in"],
         outputs=["int_number_ds_out"],
     )
@@ -214,6 +215,7 @@ def test_argo_node_default_config():
 
 def test_argo_node_can_request_gpu():
     k8s_node = ArgoNode(
+        func=lambda x: x,
         inputs=["int_number_ds_in"],
         outputs=["int_number_ds_out"],
         argo_config=ArgoResourceConfig(num_gpus=1),

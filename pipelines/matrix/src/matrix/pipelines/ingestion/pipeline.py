@@ -10,18 +10,21 @@ def create_pipeline(**kwargs) -> Pipeline:
         [
             # rtx-kg2
             ArgoNode(
+                func=lambda x: x,
                 inputs=["ingestion.raw.rtx_kg2.nodes@spark"],
                 outputs="ingestion.int.rtx_kg2.nodes",
                 name="write_rtx_kg2_nodes",
                 tags=["rtx_kg2"],
             ),
             ArgoNode(
+                func=lambda x: x,
                 inputs=["ingestion.raw.rtx_kg2.edges@spark"],
                 outputs="ingestion.int.rtx_kg2.edges",
                 name="write_rtx_kg2_edges",
                 tags=["rtx_kg2"],
             ),
             ArgoNode(
+                func=lambda x: x,
                 inputs=["ingestion.raw.rtx_kg2.curie_to_pmids@spark"],
                 outputs="ingestion.int.rtx_kg2.curie_to_pmids",
                 name="write_rtx_kg2_curie_to_pmids",
@@ -44,6 +47,7 @@ def create_pipeline(**kwargs) -> Pipeline:
             ),
             # robokop
             ArgoNode(
+                func=lambda x: x,
                 inputs=["ingestion.raw.robokop.nodes@spark"],
                 outputs="ingestion.int.robokop.nodes",
                 name="ingest_robokop_nodes",
@@ -51,6 +55,7 @@ def create_pipeline(**kwargs) -> Pipeline:
             ),
             ArgoNode(
                 # FUTURE: Update selection
+                func=lambda x: x,
                 inputs=["ingestion.raw.robokop.edges@spark"],
                 outputs="ingestion.int.robokop.edges",
                 name="ingest_robokop_edges",

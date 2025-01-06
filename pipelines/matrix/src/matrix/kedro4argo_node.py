@@ -1,5 +1,5 @@
 import warnings
-from typing import Any, Callable, Optional, Union
+from typing import Any, Optional, Union
 
 from kedro.pipeline.node import Node
 from pydantic import BaseModel, field_validator, model_validator
@@ -92,20 +92,11 @@ class ArgoResourceConfig(BaseModel):
 
 class ArgoNode(Node):
     # TODO: Merge this with former FuseNode
-    def __init__(
-        self, func: Optional[Callable] = None, *args, argo_config: Optional[ArgoResourceConfig] = None, **kwargs
-    ):
+    def __init__(self, *args, argo_config: Optional[ArgoResourceConfig] = None, **kwargs):
         if argo_config is None:
             argo_config = ArgoResourceConfig()
         self._argo_config = argo_config
-        if func is None:
-
-            def pass_through(x):  # ruff-format: Do not assign a `lambda` expression, use a `def`
-                return x
-
-            func = pass_through  # Pass-through function
-        self._func = func
-        super().__init__(func, *args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     @property
     def argo_config(self) -> ArgoResourceConfig:

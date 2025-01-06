@@ -97,6 +97,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 tags=["drug-list"],
             ),
             ArgoNode(
+                func=lambda x: x,
                 inputs="ingestion.raw.drug_list@pandas",
                 outputs="ingestion.reporting.drug_list",
                 name="write_drug_list_to_gsheets",
@@ -127,6 +128,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 tags=["disease-list"],
             ),
             ArgoNode(
+                func=lambda x: x,
                 inputs="ingestion.raw.disease_list@pandas",
                 outputs="ingestion.reporting.disease_list",
                 name="write_disease_list_to_gsheets",
