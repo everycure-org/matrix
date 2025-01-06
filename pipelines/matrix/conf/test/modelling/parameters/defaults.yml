@@ -1,2 +1,0 @@
-modelling.splitter:
-  n_splits: 4 # ${setting:cross_validation.n_splits}
