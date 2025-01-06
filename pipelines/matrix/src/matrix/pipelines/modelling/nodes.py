@@ -524,6 +524,7 @@ def check_model_performance(
     return json.loads(json.dumps(report, default=float))
 
 
+@inject_object()
 def aggregate_metrics(aggregation_functions: List[Dict], *metrics) -> Dict:
     """
     Aggregate metrics for the separate folds into a single set of metrics.
@@ -542,9 +543,8 @@ def aggregate_metrics(aggregation_functions: List[Dict], *metrics) -> Dict:
     # Perform aggregation
     aggregated_metrics = dict()
     for agg_func in aggregation_functions:
-        agg_func_obj = eval(agg_func["object"])
-        aggregated_metrics[agg_func["name"]] = {
-            metric_name: agg_func_obj([report[metric_name] for report in metrics]) for metric_name in metric_names_lst
+        aggregated_metrics[agg_func.__name__] = {
+            metric_name: agg_func([report[metric_name] for report in metrics]) for metric_name in metric_names_lst
         }
 
     return json.loads(json.dumps(aggregated_metrics, default=float))
