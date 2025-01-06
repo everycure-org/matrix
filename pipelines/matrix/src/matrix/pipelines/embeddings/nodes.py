@@ -29,26 +29,6 @@ from matrix.pipelines.modelling.nodes import no_nulls
 logger = logging.getLogger(__name__)
 
 
-class GraphDS(GraphDataScience):
-    """Adaptor class to allow injecting the GDS object.
-
-    This is due to a drawback where refit cannot inject a tuple into
-    the constructor of an object.
-    """
-
-    def __init__(
-        self,
-        *,
-        endpoint: str,
-        auth: F.Tuple[str] | None = None,
-        database: str | None = None,
-    ):
-        """Create `GraphDS` instance."""
-        super().__init__(endpoint, auth=tuple(auth), database=database)
-
-        self.set_database(database)
-
-
 @has_schema(
     schema={
         "label": "string",
