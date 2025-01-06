@@ -174,6 +174,17 @@ def generate_filtered_edges_agg_count(
     subject_nodes = nodes_with_prefix.alias("subject_nodes")
     object_nodes = nodes_with_prefix.alias("object_nodes")
 
+    columns = [
+        "subject_prefix",
+        "subject_category",
+        "predicate",
+        "object_prefix",
+        "object_category",
+        "primary_knowledge_source",
+        "aggregator_knowledge_source",
+        "upstream_data_source",
+    ]
+
     edges_agg_count = (
         edges.withColumn("subject_prefix", F.split("subject", ":")[0])
         .withColumn("object_prefix", F.split("object", ":")[0])
@@ -187,8 +198,8 @@ def generate_filtered_edges_agg_count(
             edges.object == object_nodes.id,
             "left",
         )
-        .select("subject_prefix", "object_prefix", "predicate", "subject_category", "object_category")
-        .groupBy("subject_prefix", "object_prefix", "predicate", "subject_category", "object_category")
+        .select(*columns)
+        .groupBy(*columns)
         .count()
     )
 
