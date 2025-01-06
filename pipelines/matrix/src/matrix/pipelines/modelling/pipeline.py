@@ -279,17 +279,16 @@ def create_pipeline(**kwargs) -> Pipeline:
     folds_lst = list(range(n_splits)) + ["full"]
 
     # Unpack models
-    models_lst = settings.DYNAMIC_PIPELINES_MAPPING.get("modelling")
-    model_names_lst = [model["model_name"] for model in models_lst]
+    models = settings.DYNAMIC_PIPELINES_MAPPING.get("modelling")
 
     # Add shared nodes
     pipelines = []
-    pipelines.append(create_shared_pipeline(model_names_lst, folds_lst))
+    pipelines.append(create_shared_pipeline(models.keys(), folds_lst))
 
     # Generate pipeline for each model
-    for model in models_lst:
+    for model_name, model_config in models.items():
         # Generate pipeline for the model
-        pipelines.append(create_model_pipeline(model["model_name"], model["num_shards"], folds_lst, n_splits))
+        pipelines.append(create_model_pipeline(model_name, model_config["num_shards"], folds_lst, n_splits))
 
         # Now aggregate the metrics for the model
         pipelines.append(
@@ -299,14 +298,11 @@ def create_pipeline(**kwargs) -> Pipeline:
                         func=nodes.aggregate_metrics,
                         inputs=[
                             "params:modelling.aggregation_functions",
-                            *[
-                                f"modelling.{model['model_name']}.fold_{fold}.reporting.metrics"
-                                for fold in range(n_splits)
-                            ],
+                            *[f"modelling.{model_name}.fold_{fold}.reporting.metrics" for fold in range(n_splits)],
                         ],
-                        outputs=f"modelling.{model['model_name']}.reporting.metrics_aggregated",
-                        name=f"aggregate_{model['model_name']}_model_performance_checks",
-                        tags=[f"{model['model_name']}"],
+                        outputs=f"modelling.{model_name}.reporting.metrics_aggregated",
+                        name=f"aggregate_{model_name}_model_performance_checks",
+                        tags=[f"{model_name}"],
                     )
                 ]
             )
