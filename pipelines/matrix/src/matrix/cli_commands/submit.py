@@ -76,6 +76,9 @@ def authtest():
 @click.option("--username", type=str, required=True, help="Specify the username to use")
 @click.option("--namespace", type=str, default="argo-workflows", help="Specify a custom namespace")
 @click.option("--run-name", type=str, default=None, help="Specify a custom run name, defaults to branch")
+# TODO: Replace run-name with experiment-name and add run-description prompt
+# @click.option("--experiment-name", type=str, default=None, help="Specify a custom experiment name, defaults to branch")
+# @click.option("--run-description", type=str, prompt="Run description", help="Description of this run (will show in MLflow UI)")
 @click.option("--release-version", type=str, required=True, help="Specify a custom release name")
 @click.option("--pipeline", "-p", type=str, default="modelling_run", help="Specify which pipeline to execute")
 @click.option("--quiet", "-q", is_flag=True, default=False, help="Disable verbose output")
@@ -527,7 +530,27 @@ def get_run_name(run_name: Optional[str]) -> str:
     Returns:
         str: The final run name to be used for the workflow.
     """
-    # If no run_name is provided, use the current Git branch name
+    # TODO: MLflow Integration Steps:
+    # 1. Configure MLflow with IAP authentication (see authtest() function above, then remove that one):
+    #    - Get IAP token using get_iap_token()
+    #    - Set MLflow tracking URI to https://mlflow.platform.dev.everycure.org
+    #    - Set MLFLOW_TRACKING_TOKEN env var with token.id_token
+    
+    # 2. Get/Create MLflow experiment:
+    #    - If no experiment_name provided, use Git branch name
+    #    - Sanitize experiment name (replace non-alphanumeric with dashes)
+    #    - Get experiment by name or create if doesn't exist
+    #    - Fall back to "Default" experiment if creation fails
+    
+    # 3. Create new run in the experiment:
+    #    - Use mlflow.start_run() with experiment_id
+    #    - Set run_description as run_name in MLflow
+    #    - Set environment variables for downstream:
+    #      * MLFLOW_EXPERIMENT_ID
+    #      * MLFLOW_RUN_ID
+    #    - Return the run_id for Argo workflow
+
+    # For now, just return the sanitized name as before
     if not run_name:
         run_name = run_subprocess(
             "git rev-parse --abbrev-ref HEAD", stream_output=True
