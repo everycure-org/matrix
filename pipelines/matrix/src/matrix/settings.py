@@ -50,10 +50,14 @@ DYNAMIC_PIPELINES_MAPPING = generate_dynamic_pipeline_mapping(
             # {"name": "spoke"},
             # {"name": "robokop"},
             {"name": "ec_medical_team", "integrate_in_kg": True},
-            {"name": "drug_list", "normalize_edges": False, "integrate_in_kg": False},
-            {"name": "disease_list", "normalize_edges": False, "integrate_in_kg": False},
-            {"name": "ground_truth", "normalize_edges": True, "integrate_in_kg": False},
-            {"name": "ec_clinical_trails", "normalize_edges": True, "integrate_in_kg": False},
+            {
+                "name": "drug_list",
+                "integrate_in_kg": False,
+                "nodes_only": True,
+            },
+            {"name": "disease_list", "integrate_in_kg": False, "nodes_only": True},
+            {"name": "ground_truth", "integrate_in_kg": False},
+            {"name": "ec_clinical_trails", "integrate_in_kg": False},
         ],
         "modelling": {
             "xg_baseline": {"num_shards": 1, "run_inference": False},
