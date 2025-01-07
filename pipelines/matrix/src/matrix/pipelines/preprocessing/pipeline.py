@@ -72,9 +72,9 @@ def create_pipeline(**kwargs) -> Pipeline:
             # Drug List ingestion
             # -------------------------------------------------------------------------
             node(
-                func=lambda x: [x, x],
+                func=lambda x: x,
                 inputs=["preprocessing.raw.drug_list"],
-                outputs=["ingestion.raw.drug_list.nodes@pandas", "ingestion.reporting.drug_list"],
+                outputs="ingestion.raw.drug_list.nodes@pandas",
                 name="write_drug_list",
                 tags=["drug-list"],
             ),
@@ -90,13 +90,6 @@ def create_pipeline(**kwargs) -> Pipeline:
                 ],
                 outputs="ingestion.raw.disease_list.nodes@pandas",
                 name="enrich_disease_list",
-                tags=["disease-list"],
-            ),
-            node(
-                func=lambda x: x,
-                inputs="ingestion.raw.disease_list.nodes@pandas",
-                outputs="ingestion.reporting.disease_list",
-                name="write_disease_list_to_gsheets",
                 tags=["disease-list"],
             ),
             # -------------------------------------------------------------------------
