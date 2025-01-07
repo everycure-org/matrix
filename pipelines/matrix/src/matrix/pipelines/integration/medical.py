@@ -22,10 +22,6 @@ class MedicalTransformer(GraphTransformer):
         Returns:
             Transformed DataFrame.
         """
-
-        # FUTURE: Small issue remains on descriptions? Where to get these from? Can we get first non null value
-        # in integration layer?
-
         # fmt: off
         df = (
             nodes_df
