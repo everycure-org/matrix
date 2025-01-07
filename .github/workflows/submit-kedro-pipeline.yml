@@ -124,8 +124,6 @@ jobs:
         working-directory: pipelines/matrix
         run: |
           echo "Submit the kedro pipeline"
-          make docker_pull TAG=auto-kg-release
-          df -h
           kedro submit \
             --username GH-Actions-bot \
             --namespace argo-workflows \
