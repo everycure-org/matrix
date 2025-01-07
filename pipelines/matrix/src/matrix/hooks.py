@@ -3,7 +3,7 @@ import json
 import os
 
 from datetime import datetime
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Union
 
 import mlflow
 import fsspec
@@ -18,9 +18,9 @@ from mlflow.exceptions import RestException
 from omegaconf import OmegaConf
 from pyspark import SparkConf
 from pyspark.sql import SparkSession
-from google.cloud import storage
-from google.cloud.storage.bucket import Bucket
-
+from gcsfs.core import GCSFileSystem
+from fsspec.implementations.local import LocalFileSystem
+from matrix.pipelines.data_release import last_node_name as last_data_release_node_name
 
 logger = logging.getLogger(__name__)
 
@@ -318,35 +318,15 @@ class ReleaseInfoHooks:
         return info
 
     @staticmethod
-    def get_bucket() -> Bucket:
-        project_name = ReleaseInfoHooks._globals["gcp_project"]
-        bucket_name = ReleaseInfoHooks._globals["gcs_bucket"]
-        client = storage.Client(project_name)
-        bucket = client.bucket(bucket_name.replace("gs://", ""))
-        return bucket
+    def get_filesystem() -> Union[GCSFileSystem, LocalFileSystem]:
+        if ReleaseInfoHooks._globals["fs_type"] == "gcs":
+            fs = fsspec.filesystem("gcs", project=ReleaseInfoHooks._globals["gcp_project"])
+        else:
+            fs = fsspec.filesystem("file")
+        return fs
 
     @staticmethod
-    def build_blobpath() -> str:
-        release_dir = ReleaseInfoHooks._globals["release_dir"]
-        blob_path = release_dir.replace("gs://", "").split("/", 1)[1]
-        release_version = ReleaseInfoHooks._globals["versions"]["release"]
-        full_blob_path = os.path.join(blob_path, f"{release_version}_info.json")
-        return full_blob_path
-
-    @staticmethod
-    def upload_to_storage(release_info: dict[str, str]) -> None:
-        bucket = ReleaseInfoHooks.get_bucket()
-        blobpath = ReleaseInfoHooks.build_blobpath()
-        blob = bucket.blob(blobpath)
-        blob.upload_from_string(data=json.dumps(release_info), content_type="application/json")
-
-    @staticmethod
-    def upload_to_storage2(release_info: dict[str, str]) -> None:
-        fs = (
-            fsspec.filesystem("file")
-            if ReleaseInfoHooks._kedro_context.env == "test"
-            else fsspec.filesystem("gcs", project="mtrx-hub-dev-3of")
-        )
+    def upload_to_storage(fs: Union[GCSFileSystem, LocalFileSystem], release_info: dict[str, str]) -> None:
         release_dir = ReleaseInfoHooks._globals["release_dir"]
         release_version = ReleaseInfoHooks._globals["versions"]["release"]
         full_blob_path = os.path.join(release_dir, f"{release_version}_info.json")
@@ -355,15 +335,16 @@ class ReleaseInfoHooks:
             f.write(json.dumps(release_info).encode("utf-8"))
 
     @hook_impl
-    def before_node_run(self, node: Node) -> None:
+    def after_node_run(self, node: Node) -> None:
         """Runs after the last node of the data_release pipeline"""
         # We chose to add this using the `after_node_run` hook, rather than
         # `after_pipeline_run`, because one does not know a priori which
         # pipelines the (last) data release node is part of. With an
         # `after_node_run`, you can limit your filters easily.
-        if True:  # node.name == last_data_release_node_name:
+        if node.name == last_data_release_node_name:
             release_info = self.extract_release_info()
+            fs = self.get_filesystem()
             try:
-                self.upload_to_storage2(release_info)
+                self.upload_to_storage(fs, release_info)
             except KeyError:
                 logger.warning("Could not upload release info after running Kedro node.", exc_info=True)
