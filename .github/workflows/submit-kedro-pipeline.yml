@@ -88,10 +88,10 @@ jobs:
           argo version
           pip install -r requirements.txt
 
-  submission:
-    runs-on: 'self-hosted'
-    needs: [submit_data_release_periodically]
-    steps:
+      - name: Docker build and push
+        run: |
+          make docker_push TAG=GH-Actions-bot
+
       - name: Submit the kedro pipeline
         working-directory: pipelines/matrix
         run: |
