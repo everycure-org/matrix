@@ -75,7 +75,7 @@ def create_pipeline(**kwargs) -> Pipeline:
             argo_node(
                 func=fabricate_datasets,
                 inputs={
-                    "fabrication_params": "params:fabricator.clinical_trails",
+                    "fabrication_params": "params:fabricator.clinical_trials",
                     "nodes": "ingestion.raw.rtx_kg2.nodes@pandas",
                 },
                 outputs={

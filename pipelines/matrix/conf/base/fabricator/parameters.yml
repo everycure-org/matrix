@@ -147,7 +147,7 @@ fabricator.rtx_kg2:
         row_func: "lambda *args: args[0]"
         resize: True
         seed: 6850
-      ID_label: 
+      ID_Label: 
         type: row_apply
         list_of_values: [nodes.id:ID, nodes.name]
         row_func: "lambda *args: args[1]"
@@ -225,29 +225,23 @@ fabricator.rtx_kg2:
           - HIGH
           - MODERATE
         
-fabricator.clinical_trails:
+fabricator.clinical_trials:
   nodes:
     num_rows: 30
     columns:
       curie:
-        type: row_apply
-        list_of_values: [ nodes.id:ID ]
-        row_func: "lambda *args: args[0]"
-        resize: True
-        seed: 590590
+        type: generate_unique_id
+        prefix: "RTX:"
       name:
-        type: row_apply
-        list_of_values: [ nodes:name ]
-        row_func: "lambda *args: args[0]"
-        resize: True
-        seed: 40599
+        type: generate_unique_id
+        prefix: name_
 
   edges:
     num_rows: 50
     columns:
       drug_curie:
         type: row_apply
-        list_of_values: [nodes:curie, nodes:name]
+        list_of_values: [nodes.curie, nodes.name]
         row_func: "lambda *args: args[0]"
         resize: True
         seed: 40599
