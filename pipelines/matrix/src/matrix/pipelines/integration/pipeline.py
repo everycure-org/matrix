@@ -19,7 +19,7 @@ def transform_edges(transformer, edges_df: DataFrame, **kwargs):
     return transformer.transform_edges(edges_df=edges_df, **kwargs)
 
 
-def _create_integration_pipeline(source: str, normalize_edges: bool = True) -> Pipeline:
+def _create_integration_pipeline(source: str, nodes_only: bool = False) -> Pipeline:
     pipelines = []
 
     pipelines.append(
@@ -56,7 +56,7 @@ def _create_integration_pipeline(source: str, normalize_edges: bool = True) -> P
         )
     )
 
-    if normalize_edges:
+    if not nodes_only:
         pipelines.append(
             pipeline(
                 [
@@ -99,9 +99,7 @@ def create_pipeline(**kwargs) -> Pipeline:
     for source in settings.DYNAMIC_PIPELINES_MAPPING.get("integration"):
         pipelines.append(
             pipeline(
-                _create_integration_pipeline(
-                    source=source["name"], normalize_edges=source.get("normalize_edges", True)
-                ),
+                _create_integration_pipeline(source=source["name"], normalize_edges=source.get("nodes_only", False)),
                 tags=[source["name"]],
             )
         )
@@ -117,7 +115,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                         *[
                             f'integration.int.{source["name"]}.nodes.norm'
                             for source in settings.DYNAMIC_PIPELINES_MAPPING.get("integration")
-                            if source.get("integrate_in_kg", True) and source.get("normalize_edges", True)
+                            if source.get("integrate_in_kg", True) and source.get("nodes_only", False)
                         ],
                     ],
                     outputs="integration.prm.unified_nodes",
@@ -129,7 +127,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                     inputs=[
                         f'integration.int.{source["name"]}.edges.norm'
                         for source in settings.DYNAMIC_PIPELINES_MAPPING.get("integration")
-                        if source.get("integrate_in_kg", True) and source.get("normalize_edges", True)
+                        if source.get("integrate_in_kg", True) and source.get("nodes_only", False)
                     ],
                     outputs="integration.prm.unified_edges",
                     name="create_prm_unified_edges",
