@@ -55,6 +55,9 @@ docker_test: certificate docker_build
 		--abort-on-container-exit \
 		--exit-code-from matrix-pipeline
 
+docker_pull:
+	docker pull $(dev_docker_image):${TAG}
+
 docker_build:
 	docker buildx build --progress=plain --build-arg GIT_SHA=${GIT_SHA} --platform $(TARGET_PLATFORM) -t $(dev_docker_image) --load ./
 	docker tag $(dev_docker_image) $(dev_docker_image):${TAG}

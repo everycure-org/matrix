@@ -78,30 +78,32 @@ jobs:
       #     pip install semver
       #     python minor_bump.py
 
-      - name: Set up kedro project dependencies
-        working-directory: pipelines/matrix
-        run: |
-          curl -sLO https://github.com/argoproj/argo-workflows/releases/latest/download/argo-linux-amd64.gz
-          gunzip argo-linux-amd64.gz
-          chmod +x argo-linux-amd64
-          sudo mv argo-linux-amd64 /usr/local/bin/argo
-          argo version
-          pip install -r requirements.txt
+      # - name: Set up kedro project dependencies
+      #   working-directory: pipelines/matrix
+      #   run: |
+      #     curl -sLO https://github.com/argoproj/argo-workflows/releases/latest/download/argo-linux-amd64.gz
+      #     gunzip argo-linux-amd64.gz
+      #     chmod +x argo-linux-amd64
+      #     sudo mv argo-linux-amd64 /usr/local/bin/argo
+      #     argo version
+      #     pip install -r requirements.txt
 
       - name: Docker build and push
+        working-directory: pipelines/matrix
         run: |
           make docker_push TAG=GH-Actions-bot
 
-      - name: Submit the kedro pipeline
-        working-directory: pipelines/matrix
-        run: |
-          echo "Submit the kedro pipeline"
-          kedro submit \
-            --username GH-Actions-bot \
-            --namespace argo-workflows \
-            --run-name auto-kg-release \
-            --release-version "${{ env.release_version }}" \
-            --pipeline ingestion \
-            --is-test \
-            --headless \
-            --run-from-gh
+      # - name: Submit the kedro pipeline
+      #   working-directory: pipelines/matrix
+      #   run: |
+      #     echo "Submit the kedro pipeline"
+      #     make docker_pull
+      #     kedro submit \
+      #       --username GH-Actions-bot \
+      #       --namespace argo-workflows \
+      #       --run-name auto-kg-release \
+      #       --release-version "${{ env.release_version }}" \
+      #       --pipeline ingestion \
+      #       --is-test \
+      #       --headless \
+      #       --run-from-gh
