@@ -77,7 +77,15 @@ jobs:
       #   run:
       #     pip install semver
       #     python minor_bump.py
-    
+
+      - name: Cache pip dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
       - name: Set up kedro project dependencies
         working-directory: pipelines/matrix
         run: |
@@ -97,11 +105,6 @@ jobs:
         run:
           docker system prune -a --volumes -f
 
-      - name: Maximize build disk space
-        uses: easimon/maximize-build-space@v1
-        with:
-          root-reserve-mb: 20000
-
       - name: Check disk space
         run: 
           df -h
@@ -109,6 +112,7 @@ jobs:
       - name: Docker build and push
         working-directory: pipelines/matrix
         run: |
+          make docker_pull TAG=GH-Actions-bot
           make docker_push TAG=GH-Actions-bot
 
       # - name: Submit the kedro pipeline
