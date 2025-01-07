@@ -31,71 +31,63 @@ jobs:
         with:
           fetch-tags: true
           fetch-depth: 0  # full depth needed so we can pass the AI all logs since the last release.
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
+      # - uses: actions/setup-python@v5
+      #   with:
+      #     python-version: '3.11'
 
-      - name: Authenticate with Google Cloud
-        id: auth
-        uses: 'google-github-actions/auth@v2'
-        with:
-          project_id: ${{env.project_id}}
-          workload_identity_provider: ${{env.workload_identity_provider}}
-          service_account: ${{env.service_account}}
-          token_format: access_token
+      # - name: Authenticate with Google Cloud
+      #   id: auth
+      #   uses: 'google-github-actions/auth@v2'
+      #   with:
+      #     project_id: ${{env.project_id}}
+      #     workload_identity_provider: ${{env.workload_identity_provider}}
+      #     service_account: ${{env.service_account}}
+      #     token_format: access_token
 
-      - uses: google-github-actions/get-gke-credentials@v1 # configure authentication to a GKE cluster (configure kubectl)
-        with:
-          cluster_name: ${{env.cluster}}
-          location: ${{env.region}}
-          project_id: ${{env.project_id}}
+      # - uses: google-github-actions/get-gke-credentials@v1 # configure authentication to a GKE cluster (configure kubectl)
+      #   with:
+      #     cluster_name: ${{env.cluster}}
+      #     location: ${{env.region}}
+      #     project_id: ${{env.project_id}}
 
-      - name: Login to GAR # the docker image is pushed to Google Artifact Registry
-        uses: docker/login-action@v3
-        with:
-          registry: ${{env.region}}-docker.pkg.dev
-          username: oauth2accesstoken
-          password: ${{ steps.auth.outputs.access_token }}
+      # - name: Login to GAR # the docker image is pushed to Google Artifact Registry
+      #   uses: docker/login-action@v3
+      #   with:
+      #     registry: ${{env.region}}-docker.pkg.dev
+      #     username: oauth2accesstoken
+      #     password: ${{ steps.auth.outputs.access_token }}
 
-      - name: Fetch latest tag
-        id: fetch_latest_tag
-        run: |
-          latest_tag=$(git tag --list --sort="v:refname" | tail -n 1)
-          echo "latest_tag=${latest_tag}" >> "$GITHUB_ENV"
-          echo "Latest tag is ${latest_tag}"
+      # - name: Fetch latest tag
+      #   id: fetch_latest_tag
+      #   run: |
+      #     latest_tag=$(git tag --list --sort="v:refname" | tail -n 1)
+      #     echo "latest_tag=${latest_tag}" >> "$GITHUB_ENV"
+      #     echo "Latest tag is ${latest_tag}"
 
-      - name: Increment patch version
-        # if : github.event.schedule == '30 9 * * 1' # weekly bump
-        working-directory: docs/scripts
-        run: |
-          pip install semver
-          python patch_bump.py
-
-      # - name: Increment minor version
-      #   # if : github.event.schedule == '30 9 1 * *' # monthly bump
+      # - name: Increment patch version
+      #   # if : github.event.schedule == '30 9 * * 1' # weekly bump
       #   working-directory: docs/scripts
-      #   run:
+      #   run: |
       #     pip install semver
-      #     python minor_bump.py
+      #     python patch_bump.py
 
-      - name: Cache pip dependencies
-        uses: actions/cache@v3
-        with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-
+      # # - name: Increment minor version
+      # #   # if : github.event.schedule == '30 9 1 * *' # monthly bump
+      # #   working-directory: docs/scripts
+      # #   run:
+      # #     pip install semver
+      # #     python minor_bump.py
 
-      - name: Set up kedro project dependencies
-        working-directory: pipelines/matrix
-        run: |
-          curl -sLO https://github.com/argoproj/argo-workflows/releases/latest/download/argo-linux-amd64.gz
-          gunzip argo-linux-amd64.gz
-          chmod +x argo-linux-amd64
-          sudo mv argo-linux-amd64 /usr/local/bin/argo
-          argo version
-          pip install -r requirements.txt
-          pip install uv
+      # - name: Set up kedro project dependencies
+      #   working-directory: pipelines/matrix
+      #   run: |
+      #     curl -sLO https://github.com/argoproj/argo-workflows/releases/latest/download/argo-linux-amd64.gz
+      #     gunzip argo-linux-amd64.gz
+      #     chmod +x argo-linux-amd64
+      #     sudo mv argo-linux-amd64 /usr/local/bin/argo
+      #     argo version
+      #     pip install -r requirements.txt
+      #     pip install uv
 
       - name: Check disk space
         run: 
@@ -109,11 +101,11 @@ jobs:
         run: 
           df -h
 
-      - name: Docker build and push
-        working-directory: pipelines/matrix
-        run: |
-          make docker_pull TAG=GH-Actions-bot
-          make docker_push TAG=GH-Actions-bot
+      # - name: Docker build and push
+      #   working-directory: pipelines/matrix
+      #   run: |
+      #     make docker_pull TAG=GH-Actions-bot
+      #     make docker_push TAG=GH-Actions-bot
 
       # - name: Submit the kedro pipeline
       #   working-directory: pipelines/matrix
