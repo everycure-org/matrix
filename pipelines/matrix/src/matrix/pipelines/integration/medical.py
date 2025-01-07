@@ -6,7 +6,7 @@ from pyspark.sql import DataFrame
 
 from .transformer import GraphTransformer
 
-from matrix.schemas.knowledge_graph import KGNodeSchema, cols_for_schema
+from matrix.schemas.knowledge_graph import KGNodeSchema, KGEdgeSchema, cols_for_schema
 
 logger = logging.getLogger(__name__)
 
@@ -43,7 +43,7 @@ class MedicalTransformer(GraphTransformer):
         return df
         # fmt: on
 
-    # c@pa.check_output(KGEdgeSchema)
+    @pa.check_output(KGEdgeSchema)
     def transform_edges(self, edges_df: DataFrame, **kwargs) -> DataFrame:
         """Transform edges to our target schema.
 
@@ -71,7 +71,7 @@ class MedicalTransformer(GraphTransformer):
             
             # Filter edges we could not correctly resolve
             .filter(f.col("subject").isNotNull() & f.col("object").isNotNull())
-            #.select(*cols_for_schema(KGEdgeSchema))
+            .select(*cols_for_schema(KGEdgeSchema))
         )
 
         return edges
