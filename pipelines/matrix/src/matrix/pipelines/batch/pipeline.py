@@ -98,7 +98,7 @@ def create_pipeline(
             ),
             node(
                 func=lambda x: x,
-                inputs=[f"batch.int.{source}.input_transformed@spark"],
+                inputs=[f"batch.int.{source}.{max_workers}.input_transformed@spark"],
                 outputs=output,
                 name=f"extract_{source}_input",
             ),
