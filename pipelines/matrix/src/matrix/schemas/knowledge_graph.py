@@ -47,12 +47,12 @@ class KGEdgeSchema(DataFrameModel):
             .agg(
                 F.flatten(F.collect_set("upstream_data_source")).alias("upstream_data_source"),
                 # TODO: we shouldn't just take the first one but collect these values from multiple upstream sources
-                F.first("knowledge_level").alias("knowledge_level"),
-                F.first("subject_aspect_qualifier").alias("subject_aspect_qualifier"),
-                F.first("subject_direction_qualifier").alias("subject_direction_qualifier"),
-                F.first("object_direction_qualifier").alias("object_direction_qualifier"),
-                F.first("object_aspect_qualifier").alias("object_aspect_qualifier"),
-                F.first("primary_knowledge_source").alias("primary_knowledge_source"),
+                F.first("knowledge_level", ignorenulls=True).alias("knowledge_level"),
+                F.first("subject_aspect_qualifier", ignorenulls=True).alias("subject_aspect_qualifier"),
+                F.first("subject_direction_qualifier", ignorenulls=True).alias("subject_direction_qualifier"),
+                F.first("object_direction_qualifier", ignorenulls=True).alias("object_direction_qualifier"),
+                F.first("object_aspect_qualifier", ignorenulls=True).alias("object_aspect_qualifier"),
+                F.first("primary_knowledge_source", ignorenulls=True).alias("primary_knowledge_source"),
                 F.flatten(F.collect_set("aggregator_knowledge_source")).alias("aggregator_knowledge_source"),
                 F.flatten(F.collect_set("publications")).alias("publications"),
             )
@@ -96,10 +96,10 @@ class KGNodeSchema(DataFrameModel):
         return (
             nodes_df.groupBy("id")
             .agg(
-                F.first("name").alias("name"),
-                F.first("category").alias("category"),
-                F.first("description").alias("description"),
-                F.first("international_resource_identifier").alias("international_resource_identifier"),
+                F.first("name", ignorenulls=True).alias("name"),
+                F.first("category", ignorenulls=True).alias("category"),
+                F.first("description", ignorenulls=True).alias("description"),
+                F.first("international_resource_identifier", ignorenulls=True).alias("international_resource_identifier"),
                 F.flatten(F.collect_set("equivalent_identifiers")).alias("equivalent_identifiers"),
                 F.flatten(F.collect_set("all_categories")).alias("all_categories"),
                 F.flatten(F.collect_set("labels")).alias("labels"),
