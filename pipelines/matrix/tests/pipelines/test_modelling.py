@@ -12,6 +12,8 @@ def sample_data():
         {
             "source": ["drug1", "drug1", "drug2", "drug2", "drug3"] * 5,
             "target": ["disease1", "disease2", "disease3", "disease4", "disease5"] * 5,
+            "source_embedding": [np.ones(1)] * 25,
+            "target_embedding": [np.ones(1)] * 25,
             "y": [1, 0, 1, 0, 1] * 5,
         }
     )
