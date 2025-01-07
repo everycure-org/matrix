@@ -70,6 +70,7 @@ def create_pipeline(
     bucket_size: str,
     transformer: str,
     columns: List[str] = None,
+    max_workers: int = 10,
     **transformer_kwargs,
 ) -> Pipeline:
     """Pipeline to transform dataframe."""
@@ -92,7 +93,7 @@ def create_pipeline(
                     "transformer": transformer,
                     **transformer_kwargs,
                 },
-                outputs=f"batch.int.{source}.input_transformed@partitioned",
+                outputs=f"batch.int.{source}.{max_workers}.input_transformed@partitioned",
                 name=f"transform_{source}_input",
             ),
             node(
