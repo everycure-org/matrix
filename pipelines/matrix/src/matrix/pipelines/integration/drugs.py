@@ -19,10 +19,11 @@ class DrugsTransformer(GraphTransformer):
             Transformed DataFrame.
         """
         # fmt: off
+        # TODO: change single id and id label to curie
         df = (
             nodes_df
-            .withColumn("id",                                f.col("single_ID"))
-            .withColumn("name",                              f.col("ID_Label"))
+            .withColumn("id",                                f.col("curie"))
+            .withColumn("name",                              f.col("curie_label"))
             .withColumn("category",                          f.lit("biolink:Drug"))
         )
         return df
