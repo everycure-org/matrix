@@ -416,6 +416,7 @@ class PartitionedAsyncParallelDataset(PartitionedDataset):
             filename_suffix=filename_suffix,
             credentials=credentials,
             load_args=load_args,
+            overwrite=overwrite,
             fs_args=fs_args,
         )
 
