@@ -35,7 +35,7 @@ integration:
         limit_pmids: 50_000_000 # essentially unlimited, but allows for local clipping if local run is desired
 
   normalization:
-    batch_size: 120 # Should we do more?
+    batch_size: 1000 # Should we do more?
     normalizer:
       object: matrix.pipelines.integration.normalizer.NCATSNodeNormalizer
       endpoint: ${oc.env:NODENORM_ENDPOINT, https://nodenorm.transltr.io/1.5/get_normalized_nodes}
