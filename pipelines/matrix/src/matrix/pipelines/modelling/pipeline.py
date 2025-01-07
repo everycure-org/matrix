@@ -200,8 +200,8 @@ def create_model_pipeline(model: str, num_shards: int, n_splits: int) -> Pipelin
                         "metrics": f"params:modelling.{model}.model_options.metrics",
                         "target_col_name": f"params:modelling.{model}.model_options.model_tuning_args.target_col_name",
                     },
-                    outputs=f"modelling.{model}.fold_{fold}.reporting.metrics",
-                    name=f"check_{model}_model_performance_fold_{fold}",
+                    outputs=f"modelling.{model}.reporting.metrics",
+                    name=f"check_{model}_model_performance",
                     tags=[f"{model}"],
                 )
             ]
@@ -293,25 +293,6 @@ def create_pipeline(**kwargs) -> Pipeline:
 
     # Generate pipeline for each model
     for model_name, model_config in models.items():
-        # Generate pipeline for the model
         pipelines.append(create_model_pipeline(model_name, model_config["num_shards"], n_splits))
-
-        # Now aggregate the metrics for the model
-        pipelines.append(
-            pipeline(
-                [
-                    argo_node(
-                        func=nodes.aggregate_metrics,
-                        inputs=[
-                            "params:modelling.aggregation_functions",
-                            *[f"modelling.{model_name}.fold_{fold}.reporting.metrics" for fold in range(n_splits)],
-                        ],
-                        outputs=f"modelling.{model_name}.reporting.metrics_aggregated",
-                        name=f"aggregate_{model_name}_model_performance_checks",
-                        tags=[f"{model_name}"],
-                    )
-                ]
-            )
-        )
 
     return sum(pipelines)

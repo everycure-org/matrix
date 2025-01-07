@@ -150,15 +150,10 @@ modelling.model_input.splits:
   type: pickle.PickleDataset
   filepath: ${globals:paths.modelling}/models/{model}/fold_{fold}/model.pickle
 
-"modelling.{model}.fold_{fold}.reporting.metrics":
+"modelling.{model}.reporting.metrics":
   <<: *_reporting_ds
-  filepath: ${globals:paths.modelling}/reporting/{model}/fold_{fold}/sanity_metrics.yml
+  filepath: ${globals:paths.modelling}/reporting/{model}/sanity_metrics.yml
   type: yaml.YAMLDataset
-
-"modelling.{model}.reporting.metrics_aggregated":
-  <<: *_reporting_ds
-  filepath: ${globals:paths.modelling}/reporting/{model}/sanity_metrics_aggregated.yml
-  type:  yaml.YAMLDataset
 
 modelling.reporting.gt_present:
   filepath: ${globals:paths.modelling}/reporting/gt_present_metrics.yml
