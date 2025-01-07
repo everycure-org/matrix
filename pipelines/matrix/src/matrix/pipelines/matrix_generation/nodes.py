@@ -109,10 +109,10 @@ def spark_to_pd(nodes: DataFrame) -> pd.DataFrame:
 )
 @inject_object()
 def generate_pairs(
+    data: pd.DataFrame,
     drugs: pd.DataFrame,
     diseases: pd.DataFrame,
     graph: KnowledgeGraph,
-    known_pairs: pd.DataFrame,
     clinical_trials: pd.DataFrame,
 ) -> pd.DataFrame:
     """Function to generate matrix dataset.
@@ -120,10 +120,10 @@ def generate_pairs(
     FUTURE: Consider rewriting operations in PySpark for speed
 
     Args:
+        data: Labelled ground truth drug-disease pairs dataset.
         drugs: Dataframe containing IDs for the list of drugs.
         diseases: Dataframe containing IDs for the list of diseases.
         graph: Object containing node embeddings.
-        known_pairs: Labelled ground truth drug-disease pairs dataset.
         clinical_trials: Pairs dataset representing outcomes of recent clinical trials.
 
     Returns:
@@ -152,13 +152,13 @@ def generate_pairs(
     matrix = pd.concat(matrix_slices, ignore_index=True)
 
     # Remove training set
-    train_pairs = known_pairs[~known_pairs["split"].eq("TEST")]
+    train_pairs = data[~data["split"].eq("TEST")]
     train_pairs_set = set(zip(train_pairs["source"], train_pairs["target"]))
     is_in_train = matrix.apply(lambda row: (row["source"], row["target"]) in train_pairs_set, axis=1)
     matrix = matrix[~is_in_train]
 
     # Add flag columns for known positives and negatives
-    matrix = _add_flag_columns(matrix, known_pairs, clinical_trials)
+    matrix = _add_flag_columns(matrix, data, clinical_trials)
 
     return matrix
 

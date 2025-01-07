@@ -25,12 +25,12 @@ def _create_evaluation_fold_pipeline(model: str, evaluation: str, fold: Union[st
         [
             argo_node(
                 func=partial_splits(nodes.generate_test_dataset, fold),
-                inputs=[
-                    f"matrix_generation.{model}.fold_{fold}.model_output.sorted_matrix_predictions@pandas",
-                    f"params:evaluation.{evaluation}.evaluation_options.generator",
-                    "modelling.model_input.splits",
-                    "params:evaluation.score_col_name",
-                ],
+                inputs={
+                    "data": "modelling.model_input.splits",
+                    "matrix": f"matrix_generation.{model}.fold_{fold}.model_output.sorted_matrix_predictions@pandas",
+                    "generator": f"params:evaluation.{evaluation}.evaluation_options.generator",
+                    "score_col_name": "params:evaluation.score_col_name",
+                },
                 outputs=f"evaluation.{model}.fold_{fold}.{evaluation}.model_output.pairs",
                 name=f"create_{model}_{evaluation}_evaluation_pairs_fold_{fold}",
             ),
@@ -116,7 +116,6 @@ def create_pipeline(**kwargs) -> Pipeline:
         - Folds, i.e., number of folds to train/evaluation
         - Evaluations, i.e., type evaluation suite to run
     """
-
     # Unpack models
     models = settings.DYNAMIC_PIPELINES_MAPPING.get("modelling")
 
@@ -124,7 +123,8 @@ def create_pipeline(**kwargs) -> Pipeline:
     n_splits = settings.DYNAMIC_PIPELINES_MAPPING.get("cross_validation").get("n_splits")
 
     # Unpack evaluation names
-    evaluation_names = list(settings.DYNAMIC_PIPELINES_MAPPING.get("evaluation").keys())
+    evaluations = settings.DYNAMIC_PIPELINES_MAPPING.get("evaluation")
+    evaluation_names = [ev["evaluation_name"] for ev in evaluations]
 
     # Generate pipelines for each model
     pipelines = []

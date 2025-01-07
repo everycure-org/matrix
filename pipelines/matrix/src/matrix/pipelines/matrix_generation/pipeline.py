@@ -57,13 +57,13 @@ def create_pipeline(**kwargs) -> Pipeline:
                 [
                     argo_node(
                         func=partial_splits(nodes.generate_pairs, fold),
-                        inputs=[
-                            "ingestion.raw.drug_list@pandas",
-                            "ingestion.raw.disease_list@pandas",
-                            "matrix_generation.feat.nodes_kg_ds",
-                            "modelling.model_input.splits",
-                            "ingestion.raw.clinical_trials_data",
-                        ],
+                        inputs={
+                            "data": "modelling.model_input.splits",
+                            "drugs": "ingestion.raw.drug_list@pandas",
+                            "diseases": "ingestion.raw.disease_list@pandas",
+                            "graph": "matrix_generation.feat.nodes_kg_ds",
+                            "clinical_trials": "ingestion.raw.clinical_trials_data",
+                        },
                         outputs=f"matrix_generation.prm.fold_{fold}.matrix_pairs",
                         name=f"generate_matrix_pairs_fold_{fold}",
                     )

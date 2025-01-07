@@ -23,10 +23,10 @@ def _create_model_shard_pipeline(model: str, shard: int, fold: Union[str, int]) 
         [
             argo_node(
                 func=partial_splits(nodes.apply_transformers, fold),
-                inputs=[
-                    f"modelling.{model}.{shard}.model_input.enriched_splits",
-                    f"modelling.{model}.fold_{fold}.model_input.transformers",
-                ],
+                inputs={
+                    "data": f"modelling.{model}.{shard}.model_input.enriched_splits",
+                    "transformers": f"modelling.{model}.fold_{fold}.model_input.transformers",
+                },
                 outputs=f"modelling.{model}.{shard}.fold_{fold}.model_input.transformed_splits",
                 name=f"transform_{model}_{shard}_data_fold_{fold}",
             ),
@@ -76,10 +76,10 @@ def _create_fold_pipeline(model: str, num_shards: int, fold: Union[str, int]) ->
                 [
                     argo_node(
                         func=partial_splits(nodes.fit_transformers, fold),
-                        inputs=[
-                            "modelling.model_input.splits",
-                            f"params:modelling.{model}.model_options.transformers",
-                        ],
+                        inputs={
+                            "data": "modelling.model_input.splits",
+                            "transformers": f"params:modelling.{model}.model_options.transformers",
+                        },
                         outputs=f"modelling.{model}.fold_{fold}.model_input.transformers",
                         name=f"fit_{model}_transformers_fold_{fold}",
                         tags=model,
@@ -107,10 +107,10 @@ def _create_fold_pipeline(model: str, num_shards: int, fold: Union[str, int]) ->
                     ),
                     argo_node(
                         func=partial_splits(nodes.apply_transformers, fold),
-                        inputs=[
-                            "modelling.model_input.splits",
-                            f"modelling.{model}.fold_{fold}.model_input.transformers",
-                        ],
+                        inputs={
+                            "data": "modelling.model_input.splits",
+                            "transformers": f"modelling.{model}.fold_{fold}.model_input.transformers",
+                        },
                         outputs=f"modelling.{model}.fold_{fold}.model_input.transformed_splits",
                         name=f"transform_{model}_data_fold_{fold}",
                     ),
