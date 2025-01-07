@@ -6,6 +6,7 @@ from pyspark.sql.window import Window
 from pyspark.sql import functions as F
 
 from kedro.pipeline import Pipeline, pipeline, node
+from matrix.kedro4argo_node import ArgoResourceConfig, ArgoNode
 
 from refit.v1.core.inject import inject_object
 
@@ -76,7 +77,7 @@ def create_pipeline(
     """Pipeline to transform dataframe."""
     return pipeline(
         [
-            node(
+            ArgoNode(
                 func=_bucketize,
                 inputs={
                     key: value
@@ -85,6 +86,12 @@ def create_pipeline(
                 },
                 outputs=f"batch.int.{source}.input_bucketized@spark",
                 name=f"bucketize_{source}_input",
+                argo_config=ArgoResourceConfig(
+                    cpu_request=48,
+                    cpu_limit=48,
+                    memory_limit=192,
+                    memory_request=120,
+                ),
             ),
             node(
                 func=_transform,
