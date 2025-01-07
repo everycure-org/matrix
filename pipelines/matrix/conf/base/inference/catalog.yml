@@ -1,25 +1,25 @@
-# _sheets_inference: &_sheets_dataset
-#   type: matrix.datasets.gcp.GoogleSheetsDataset
-#   key: 1CioSCCQxUdACn1NfWU9XRyC-9j_ERc2hmZzaDd8XgcQ
-#   service_file: conf/local/service-account.json
+_sheets_inference: &_sheets_dataset
+  type: matrix.datasets.gcp.GoogleSheetsDataset
+  key: 1CioSCCQxUdACn1NfWU9XRyC-9j_ERc2hmZzaDd8XgcQ
+  service_file: conf/local/service-account.json
 
-# _pandas_csv: &_pandas_csv
-#   type:  pandas.CSVDataset
+_pandas_csv: &_pandas_csv
+  type:  pandas.CSVDataset
 
-# _pandas_parquet: &_pandas_parquet
-#   type: pandas.ParquetDataset
+_pandas_parquet: &_pandas_parquet
+  type: pandas.ParquetDataset
 
-# _spark_parquet_ds: &_spark_parquet
-#   type: matrix.datasets.gcp.LazySparkDataset
-#   file_format: parquet
-#   save_args:
-#     mode: overwrite
+_spark_parquet_ds: &_spark_parquet
+  type: matrix.datasets.gcp.LazySparkDataset
+  file_format: parquet
+  save_args:
+    mode: overwrite
 
-# _kg_dataset: &_kg_dataset
-#   type: matrix.datasets.graph.KnowledgeGraphDataset
-#   load_args:
-#     engine: pyarrow
-#     use_nullable_dtypes: True
+_kg_dataset: &_kg_dataset
+  type: matrix.datasets.graph.KnowledgeGraphDataset
+  load_args:
+    engine: pyarrow
+    use_nullable_dtypes: True
 
 # inference.raw.normalized_inputs:
 #   <<: [*_sheets_dataset]
