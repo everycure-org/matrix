@@ -69,5 +69,7 @@ integration:
     knowledge_source_filters:
       column: primary_knowledge_source
       categories:
-        - infores:atc-codes-umls
+        - infores:text-mining-provider-targeted
+        - infores:monarchinitiative
+
       
