@@ -119,7 +119,6 @@ def create_pipeline(**kwargs) -> Pipeline:
 
     # Unpack params
     models = settings.DYNAMIC_PIPELINES_MAPPING.get("modelling")
-    model_names = [model["model_name"] for model in models]
 
     # Unpack folds
     n_splits = settings.DYNAMIC_PIPELINES_MAPPING.get("cross_validation").get("n_splits")
@@ -131,7 +130,7 @@ def create_pipeline(**kwargs) -> Pipeline:
 
     # Generate pipelines for each model
     pipelines = []
-    for model in model_names:
+    for model in models.keys():
         pipelines.append(create_model_pipeline(model, evaluation_names, folds_lst, n_splits))
 
     # Consolidate metrics across models and folds
@@ -144,14 +143,14 @@ def create_pipeline(**kwargs) -> Pipeline:
                         # Consolidate aggregated reports per model fold
                         **{
                             f"{model}.{evaluation}.fold_{fold}": f"evaluation.{model}.fold_{fold}.{evaluation}.reporting.result"
-                            for model in model_names
+                            for model in models.keys()
                             for evaluation in evaluation_names
                             for fold in folds_lst
                         },
                         # Consolidate aggregated reports per model
                         **{
                             f"{model}.{evaluation}.aggregated": f"evaluation.{model}.{evaluation}.reporting.result_aggregated"
-                            for model in model_names
+                            for model in models.keys()
                             for evaluation in evaluation_names
                         },
                     },

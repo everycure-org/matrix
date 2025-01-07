@@ -8,7 +8,7 @@ modelling.xg_ensemble:
         n_replacements: 2
         drug_flags:
           - is_drug
-          - is_ground_pos
+          - in_ground_pos
         disease_flags:
           - is_disease
 
