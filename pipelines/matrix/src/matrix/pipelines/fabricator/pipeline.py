@@ -28,7 +28,7 @@ def _create_pairs(
 
     while not is_enough_generated:
         # Sample random pairs (we sample twice the required amount in case duplicates are removed)
-        random_drugs = drug_list["single_ID"].sample(num * 4, replace=True, ignore_index=True, random_state=seed)
+        random_drugs = drug_list["curie"].sample(num * 4, replace=True, ignore_index=True, random_state=seed)
         random_diseases = disease_list["category_class"].sample(
             num * 4, replace=True, ignore_index=True, random_state=2 * seed
         )
@@ -76,7 +76,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 func=fabricate_datasets,
                 inputs={
                     "fabrication_params": "params:fabricator.clinical_trials",
-                    "nodes": "ingestion.raw.rtx_kg2.nodes@pandas",
+                    "rtx_nodes": "ingestion.raw.rtx_kg2.nodes@pandas",
                 },
                 outputs={
                     "nodes": "ingestion.raw.ec_clinical_trails.nodes@pandas",

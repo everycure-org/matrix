@@ -137,7 +137,7 @@ def generate_pairs(
     diseases = diseases.toPandas()
     clinical_trials = clinical_trials.toPandas()
     # Collect list of drugs and diseases
-    drugs_lst = drugs["single_ID"].tolist()
+    drugs_lst = drugs["curie"].tolist()
     diseases_lst = diseases["category_class"].tolist()
 
     # Remove duplicates
@@ -340,9 +340,9 @@ def _process_top_pairs(
     top_pairs = data.head(n_reporting).copy()
     # Generate mapping dictionaries
     drug_mappings = {
-        "kg_name": {row["single_ID"]: row["name"] for _, row in drugs.iterrows()},
-        "list_id": {row["single_ID"]: row["single_ID"] for _, row in drugs.iterrows()},
-        "list_name": {row["single_ID"]: row["ID_Label"] for _, row in drugs.iterrows()},
+        "kg_name": {row["curie"]: row["name"] for _, row in drugs.iterrows()},
+        "list_id": {row["curie"]: row["curie"] for _, row in drugs.iterrows()},
+        "list_name": {row["curie"]: row["curie_label"] for _, row in drugs.iterrows()},
     }
 
     disease_mappings = {
@@ -485,7 +485,7 @@ def _add_tags(
     """
     # Add tag columns for drugs and diseasesto the top pairs DataFrame
     for set, set_id, df, df_id in [
-        ("drugs", "kg_drug_id", drugs, "single_ID"),
+        ("drugs", "kg_drug_id", drugs, "curie"),
         ("diseases", "kg_disease_id", diseases, "category_class"),
     ]:
         for tag_name, _ in matrix_params.get(set, {}).items():
