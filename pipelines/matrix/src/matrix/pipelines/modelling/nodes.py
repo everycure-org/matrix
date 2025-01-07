@@ -1,7 +1,6 @@
 import logging
-from typing import Any, Dict, List, Union, Tuple
+from typing import Any, Callable, Dict, List, Union, Tuple
 import pandas as pd
-import numpy as np
 import json
 import pyspark.sql.functions as f
 
@@ -20,7 +19,6 @@ from refit.v1.core.inline_primary_key import primary_key
 from refit.v1.core.unpack import unpack_params
 from refit.v1.core.make_list_regexable import make_list_regexable
 
-from matrix import settings
 from matrix.datasets.graph import KnowledgeGraph
 from matrix.datasets.pair_generator import SingleLabelPairGenerator
 from .model import ModelWrapper
@@ -167,7 +165,7 @@ def prefilter_nodes(
         .unionByName(gt_pos.withColumn("id", f.col("target")))
         .select("id")
         .distinct()
-        .withColumn("is_ground_pos", f.lit(True))
+        .withColumn("in_ground_pos", f.lit(True))
     )
 
     df = (
@@ -178,7 +176,7 @@ def prefilter_nodes(
         # TODO: The integrated data product _should_ contain these nodes
         # TODO: Verify below does not have any undesired side effects
         .join(ground_truth_nodes, on="id", how="left")
-        .fillna({"is_ground_pos": False})
+        .fillna({"in_ground_pos": False})
     )
 
     return df
@@ -215,9 +213,6 @@ def make_folds(
     """
 
     # Set number of splits
-    cross_validation_settings = settings.DYNAMIC_PIPELINES_MAPPING.get("cross_validation")
-    n_splits = cross_validation_settings.get("n_splits")
-    splitter.n_splits = n_splits
     all_data_frames = make_splits(data, splitter)
 
     # Add "training data only" fold
@@ -436,15 +431,17 @@ def train_model(
     return estimator_fit
 
 
-def create_model(*estimators) -> ModelWrapper:
+@inject_object()
+def create_model(agg_func: Callable, *estimators) -> ModelWrapper:
     """Function to create final model.
 
     Args:
+        agg_func: function to aggregate ensemble models' treat score
         estimators: list of fitted estimators
     Returns:
         ModelWrapper encapsulating estimators
     """
-    return ModelWrapper(estimators=estimators, agg_func=np.mean)
+    return ModelWrapper(estimators=estimators, agg_func=agg_func)
 
 
 @inject_object()
@@ -523,6 +520,7 @@ def check_model_performance(
     return json.loads(json.dumps(report, default=float))
 
 
+@inject_object()
 def aggregate_metrics(aggregation_functions: List[Dict], *metrics) -> Dict:
     """
     Aggregate metrics for the separate folds into a single set of metrics.
@@ -541,9 +539,8 @@ def aggregate_metrics(aggregation_functions: List[Dict], *metrics) -> Dict:
     # Perform aggregation
     aggregated_metrics = dict()
     for agg_func in aggregation_functions:
-        agg_func_obj = eval(agg_func["object"])
-        aggregated_metrics[agg_func["name"]] = {
-            metric_name: agg_func_obj([report[metric_name] for report in metrics]) for metric_name in metric_names_lst
+        aggregated_metrics[agg_func.__name__] = {
+            metric_name: agg_func([report[metric_name] for report in metrics]) for metric_name in metric_names_lst
         }
 
     return json.loads(json.dumps(aggregated_metrics, default=float))

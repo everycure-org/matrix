@@ -100,8 +100,8 @@ def create_pipeline(**kwargs) -> Pipeline:
     """
     # Get models of interest for inference
     models = settings.DYNAMIC_PIPELINES_MAPPING.get("modelling")
-    model_names_excl = [model["model_name"] for model in models if not model["run_inference"]]
-    model_names_incl = [model["model_name"] for model in models if model["run_inference"]]
+    model_names_excl = [model for model, config in models.items() if not config["run_inference"]]
+    model_names_incl = [model for model, config in models.items() if config["run_inference"]]
 
     # Construct the full pipeline
     resolution_nodes = _create_resolution_pipeline()
