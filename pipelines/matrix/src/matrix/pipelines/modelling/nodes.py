@@ -9,7 +9,6 @@ from pandera import DataFrameModel as PandasDataFrameModel
 import pandera
 from pyspark.sql import functions as f
 import pyspark.sql.types as T
-from pandera import Field as PandasField
 
 
 from sklearn.model_selection import BaseCrossValidator
@@ -194,18 +193,19 @@ def prefilter_nodes(
     return df
 
 
-# @has_schema( # TODO: Add schema
-#     schema={
-#         "source": "object",
-#         "source_embedding": "object",
-#         "target": "object",
-#         "target_embedding": "object",
-#         "y": "int",
-#         "split": "object",
-#         "fold": "int",
-#     },
-#     allow_subset=True,
-# )
+class ModelSplitsSchema(PandasDataFrameModel):
+    source: Series[str]
+    source_embedding: Series[object]
+    target: Series[str]
+    target_embedding: Series[object]
+    split: Series[str]
+    fold: Series[int]
+
+    class Config:
+        strict = False
+
+
+@pandera.check_output(ModelSplitsSchema)
 @inject_object()
 def make_splits(
     data: DataFrame,
@@ -240,17 +240,6 @@ def make_splits(
     all_data_frames.append(full_fold_data)
 
     return pd.concat(all_data_frames)
-
-
-class ModelSplitsSchema(PandasDataFrameModel):  # TODO: Modify
-    source: Series[object] = PandasField(nullable=True)
-    source_embedding: Series[object] = PandasField(nullable=True)
-    target: Series[object] = PandasField(nullable=True)
-    target_embedding: Series[object] = PandasField(nullable=True)
-    split: Series[object] = PandasField(nullable=True)
-
-    class Config:
-        strict = False
 
 
 @pandera.check_output(ModelSplitsSchema)

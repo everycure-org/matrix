@@ -94,8 +94,8 @@ def spark_to_pd(nodes: DataFrame) -> pd.DataFrame:
 
 
 class TrialSchema(DataFrameModel):
-    source: Series[object]
-    target: Series[object]
+    source: Series[str]
+    target: Series[str]
     is_known_positive: Series[bool]
     is_known_negative: Series[bool]
     trial_sig_better: Series[bool]
