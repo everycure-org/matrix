@@ -240,15 +240,14 @@ def make_splits(
 ) -> Tuple[pd.DataFrame]:
     """Function to split data.
 
-    FUTURE: Update to produce single DF only, where we add a column identifying the fold.
-
     Args:
-        kg: kg dataset with nodes
         data: Data to split.
         splitter: sklearn splitter object (BaseCrossValidator or its subclasses).
-        n_splits: number of splits
+
     Returns:
-        Tuple of dataframes for each fold.
+        Dataframe with test-train split for all folds.
+        By convention, folds 0 to k-1 are the proper test train splits for k-fold cross-validation,
+        while fold k is the fold with full training data
     """
 
     # Split data into folds
@@ -261,6 +260,12 @@ def make_splits(
         fold_data.loc[:, "fold"] = fold
         all_data_frames.append(fold_data)
 
+    # Add fold for full training data
+    full_fold_data = data.copy()
+    full_fold_data["split"] = "TRAIN"
+    full_fold_data["fold"] = splitter.n_splits
+    all_data_frames.append(full_fold_data)
+
     return pd.concat(all_data_frames)
 
 
@@ -271,6 +276,7 @@ def make_splits(
         "target": "object",
         "target_embedding": "object",
         "split": "object",
+        "fold": "int",
     },
     allow_subset=True,
 )
@@ -294,10 +300,18 @@ def create_model_input_nodes(  # TODO: modify to receive full splits + output fu
     Returns:
         Data with enriched splits.
     """
-    generated = generator.generate(graph, splits)
-    generated["split"] = "TRAIN"
+    all_generated = []
 
-    return pd.concat([splits, generated], axis="index", ignore_index=True)
+    # Enrich splits for all folds
+    num_folds = splits["fold"].max() + 1
+    for fold in range(num_folds):
+        splits_fold = splits[splits["fold"] == fold]
+        generated = generator.generate(graph, splits_fold)
+        generated["split"] = "TRAIN"
+        generated["fold"] = fold
+        all_generated.append(generated)
+
+    return pd.concat([splits, *all_generated], axis="index", ignore_index=True)
 
 
 @inject_object()
@@ -504,6 +518,8 @@ def check_model_performance(
 
     NOTE: This function only provides a partial indication of model performance,
     primarily for checking that a model has been successfully trained.
+
+    FUTURE: Move to evaluation pipeline.
 
     Args:
         data: Data to evaluate.

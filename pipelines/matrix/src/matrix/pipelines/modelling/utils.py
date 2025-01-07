@@ -16,7 +16,7 @@ def partial_(func: callable, **kwargs):
     return partial(func, **kwargs)
 
 
-def get_func_with_full_splits(func: callable, fold: int):
+def partial_splits(func: callable, fold: int):
     def func_with_full_splits(data: pd.DataFrame, *args):
         data = data.copy()
         data_fold = data[data.split == fold]
