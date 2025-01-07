@@ -99,7 +99,7 @@ def create_pipeline(**kwargs) -> Pipeline:
     for source in settings.DYNAMIC_PIPELINES_MAPPING.get("integration"):
         pipelines.append(
             pipeline(
-                _create_integration_pipeline(source=source["name"], normalize_edges=source.get("nodes_only", False)),
+                _create_integration_pipeline(source=source["name"], nodes_only=source.get("nodes_only", False)),
                 tags=[source["name"]],
             )
         )
