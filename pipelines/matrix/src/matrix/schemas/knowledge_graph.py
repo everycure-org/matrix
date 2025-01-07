@@ -17,13 +17,19 @@ def cols_for_schema(schema_obj: Type[DataFrameModel]) -> List[str]:
     return list(schema_obj.to_schema().columns.keys())
 
 
-class KGEdgeSchema(DataFrameModel):
+class EdgeSchema(DataFrameModel):
+    # fmt: off
+    subject:                     StringType()            = pa.Field(nullable = False)
+    object:                      StringType()            = pa.Field(nullable = False)
+    # fmt: on
+
+
+class KGEdgeSchema(EdgeSchema):
     """Schema for a knowledge graph edges as exposed by the Data API."""
 
     # fmt: off
     subject:                     StringType()            = pa.Field(nullable = False)
     predicate:                   StringType()            = pa.Field(nullable = False)
-    object:                      StringType()            = pa.Field(nullable = False)
     knowledge_level:             StringType()            = pa.Field(nullable = True)
     primary_knowledge_source:    StringType()            = pa.Field(nullable = True)
     aggregator_knowledge_source: ArrayType(StringType()) = pa.Field(nullable = True)
@@ -58,6 +64,12 @@ class KGEdgeSchema(DataFrameModel):
             )
             .select(*cols_for_schema(KGEdgeSchema))
         )
+
+
+class NodeSchema(DataFrameModel):
+    # fmt: off
+    id:                                StringType()            = pa.Field(nullable=False)
+    # fmt: on
 
 
 class KGNodeSchema(DataFrameModel):

@@ -1,14 +1,17 @@
 import logging
 import pyspark.sql.functions as f
+import pandera.pyspark as pa
 from pyspark.sql import DataFrame
 
 from .transformer import GraphTransformer
+
+from matrix.schemas.knowledge_graph import NodeSchema
 
 logger = logging.getLogger(__name__)
 
 
 class DiseasesTransformer(GraphTransformer):
-    # @pa.check_output(KGNodeSchema)
+    @pa.check_output(NodeSchema)
     def transform_nodes(self, nodes_df: DataFrame, **kwargs) -> DataFrame:
         """Transform nodes to our target schema.
 
@@ -28,6 +31,5 @@ class DiseasesTransformer(GraphTransformer):
         return df
         # fmt: on
 
-    # @pa.check_output(KGEdgeSchema)
     def transform_edges(self, edges_df: DataFrame, **kwargs) -> DataFrame:
         raise NotImplementedError("Not implemented!")
