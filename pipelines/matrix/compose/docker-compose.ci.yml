@@ -50,6 +50,7 @@ services:
       OPENAI_API_KEY: sk-proj-abc
       SYNONYMIZER_ENDPOINT: http://node-synonymizer:8081
       KEDRO_DYNAMIC_PIPELINES_MAPPING_CROSS_VALIDATION_N_SPLITS: 1
+      KEDRO_DYNAMIC_PIPELINES_MAPPING_MODELLING_XG_ENSEMBLE_NUM_SHARDS: 1
     depends_on:
       neo4j:
         condition: service_healthy
