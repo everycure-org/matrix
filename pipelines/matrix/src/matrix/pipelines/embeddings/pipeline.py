@@ -13,7 +13,7 @@ def create_pipeline(**kwargs) -> Pipeline:
         [
             batch_pipeline.create_pipeline(
                 # Source to uniquely identify dataset
-                source="embeddings",
+                source="node_embeddings",
                 # Input and output datasets
                 df="integration.prm.filtered_nodes",
                 output="embeddings.feat.graph.node_embeddings@spark",
