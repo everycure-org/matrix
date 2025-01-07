@@ -36,7 +36,7 @@ batch.int.{source}.input_bucketized@partitioned:
 
 batch.int.{source}.{workers}.input_transformed@partitioned:
   type: matrix.datasets.gcp.PartitionedAsyncParallelDataset
-  overwrite: True
+  overwrite: True # NOTE: Very important to ensure every run clear out previous partitions
   max_workers: "{workers}"
   path: ${globals:paths.tmp}/batch/{source}/transformed
   dataset: 
