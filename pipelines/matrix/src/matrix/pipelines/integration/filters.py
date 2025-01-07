@@ -29,11 +29,11 @@ def biolink_deduplicate_edges(edges_df: DataFrame, biolink_predicates: DataFrame
     Returns:
         Deduplicated dataframe
     """
-
     # Enrich edges with path to predicates in biolink hierarchy
     edges_df = edges_df.join(
         convert_biolink_hierarchy_json_to_df(biolink_predicates, "predicate", convert_to_pascal_case=False),
         on="predicate",
+        how="left",
     )
 
     # Compute self join

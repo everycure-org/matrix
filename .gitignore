@@ -36,3 +36,4 @@ infra/**/Chart.lock
 
 **/.joblib/**
 
+pipelines/matrix/src/matrix/pipelines/matrix_generation/matrix.code-workspace
