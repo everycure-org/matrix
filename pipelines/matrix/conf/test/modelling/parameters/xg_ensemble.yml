@@ -8,7 +8,7 @@ modelling.xg_ensemble:
           random_state: ${globals:random_state}
           tree_method: hist
           n_jobs: 16
-          device: cpu # TODO: Add cuda
+          device: cuda
       features: # Features use regex, source_0, source_1, .., target_0, target_1
         - source_+
         - target_+

@@ -1,4 +1,5 @@
-from kedro.pipeline import Pipeline, node, pipeline
+from kedro.pipeline import Pipeline, pipeline
+from matrix.kedro4argo_node import argo_node
 
 from . import nodes
 
@@ -21,7 +22,7 @@ def transform_edges(transformer, edges_df: DataFrame, **kwargs):
 def _create_integration_pipeline(source: str) -> Pipeline:
     return pipeline(
         [
-            node(
+            argo_node(
                 func=transform_nodes,
                 inputs={
                     "transformer": f"params:integration.sources.{source}.transformer",
@@ -32,7 +33,7 @@ def _create_integration_pipeline(source: str) -> Pipeline:
                 name=f"transform_{source}_nodes",
                 tags=["standardize"],
             ),
-            node(
+            argo_node(
                 func=transform_edges,
                 inputs={
                     "transformer": f"params:integration.sources.{source}.transformer",
@@ -48,7 +49,7 @@ def _create_integration_pipeline(source: str) -> Pipeline:
                 tags=["standardize"],
             ),
             # FUTURE: Extract normalizer technique
-            node(
+            argo_node(
                 func=nodes.normalize_kg,
                 inputs={
                     "nodes": f"integration.int.{source}.nodes",
@@ -87,7 +88,7 @@ def create_pipeline(**kwargs) -> Pipeline:
     pipelines.append(
         pipeline(
             [
-                node(
+                argo_node(
                     func=nodes.union_and_deduplicate_nodes,
                     inputs=[
                         "integration.raw.biolink.categories",
@@ -100,7 +101,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                     name="create_prm_unified_nodes",
                 ),
                 # union edges
-                node(
+                argo_node(
                     func=nodes.union_and_deduplicate_edges,
                     inputs=[
                         f'integration.int.{source["name"]}.edges.norm'
@@ -110,7 +111,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                     name="create_prm_unified_edges",
                 ),
                 # filter nodes given a set of filter stages
-                node(
+                argo_node(
                     func=nodes.prefilter_unified_kg_nodes,
                     inputs=[
                         "integration.prm.unified_nodes",
@@ -121,7 +122,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                     tags=["filtering"],
                 ),
                 # filter edges given a set of filter stages
-                node(
+                argo_node(
                     func=nodes.filter_unified_kg_edges,
                     inputs=[
                         "integration.prm.prefiltered_nodes",
@@ -133,7 +134,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                     name="filter_prm_knowledge_graph_edges",
                     tags=["filtering"],
                 ),
-                node(
+                argo_node(
                     func=nodes.filter_nodes_without_edges,
                     inputs=[
                         "integration.prm.prefiltered_nodes",
