@@ -158,6 +158,23 @@ Install as follows, then create a virtual env in the `matrix/pipelines/matrix` d
     brew install uv python@3.11
     ```
 
+    Then, create the virtual environment and install the requirements.txt file:
+    
+    ```bash
+    # create virtual environment
+    uv venv
+    # activate virtual environment
+    source .venv/bin/activate
+    # Install the requirements.txt file that is in the matrix repository. First navigate to the repo
+    cd matrix/pipelines/matrix
+    # lists files that are hidden, you should see requirements.txt in line
+    ls -a
+    # installs the requirements in the activated uv virtual environment
+    uv pip install -r requirements.txt'
+    # deactivate the virtual environment
+    deactivate
+    ```
+
 === "Windows (WSL)"
 
     ```bash
@@ -240,24 +257,24 @@ Our pipeline uses [Spark](https://spark.apache.org/) for distributed computation
 === "MacOS"
 
     ```bash
-    brew install openjdk@11
-    brew link --overwrite openjdk@11 # makes the java version available in PATH
+    brew install openjdk@17
+    brew link --overwrite openjdk@17 # makes the java version available in PATH
     ```
 
 === "Windows (WSL)"
     
     ```bash
     # install jdk
-    sudo apt install openjdk-11-jdk
+    sudo apt install openjdk-17-jdk
     ```
 
 === "Linux"
 
     ```bash
-    # Java on Linux is complicated, check for your specific distro how to get JDK@11. 
+    # Java on Linux is complicated, check for your specific distro how to get JDK@17. 
 
     # On Arch/Manjaro
-    pacman -S jdk11-openjdk
+    pacman -S jdk17-openjdk
     ```
 
 ### gcloud SDK

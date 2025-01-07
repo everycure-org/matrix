@@ -35,7 +35,6 @@ def enrich_embeddings(
         drugs: List of drugs
         diseases: List of diseases
     """
-
     return (
         drugs.withColumn("is_drug", F.lit(True))
         .unionByName(diseases.withColumn("is_disease", F.lit(True)), allowMissingColumns=True)
@@ -60,7 +59,10 @@ def _add_flag_columns(matrix: pd.DataFrame, known_pairs: pd.DataFrame, clinical_
 
     def create_flag_column(pairs):
         pairs_set = set(zip(pairs["source"], pairs["target"]))
-        return matrix.apply(lambda row: (row["source"], row["target"]) in pairs_set, axis=1)
+        # Ensure the function returns a Series
+        result = matrix.apply(lambda row: (row["source"], row["target"]) in pairs_set, axis=1)
+
+        return result.astype(bool)
 
     # Flag known positives and negatives
     test_pairs = known_pairs[known_pairs["split"].eq("TEST")]
@@ -71,7 +73,7 @@ def _add_flag_columns(matrix: pd.DataFrame, known_pairs: pd.DataFrame, clinical_
     matrix["is_known_negative"] = create_flag_column(test_neg_pairs)
 
     # Flag clinical trials data
-    clinical_trials = clinical_trials.rename(columns={"drug_kg_curie": "source", "disease_kg_curie": "target"})
+    clinical_trials = clinical_trials.rename(columns={"drug_curie": "source", "disease_curie": "target"})
     matrix["trial_sig_better"] = create_flag_column(clinical_trials[clinical_trials["significantly_better"] == 1])
     matrix["trial_non_sig_better"] = create_flag_column(
         clinical_trials[clinical_trials["non_significantly_better"] == 1]
@@ -134,7 +136,6 @@ def generate_pairs(
     drugs = drugs.toPandas()
     diseases = diseases.toPandas()
     clinical_trials = clinical_trials.toPandas()
-
     # Collect list of drugs and diseases
     drugs_lst = drugs["single_ID"].tolist()
     diseases_lst = diseases["category_class"].tolist()
@@ -162,7 +163,6 @@ def generate_pairs(
     train_pairs_set = set(zip(train_pairs["source"], train_pairs["target"]))
     is_in_train = matrix.apply(lambda row: (row["source"], row["target"]) in train_pairs_set, axis=1)
     matrix = matrix[~is_in_train]
-
     # Add flag columns for known positives and negatives
     matrix = _add_flag_columns(matrix, known_pairs, clinical_trials)
 
