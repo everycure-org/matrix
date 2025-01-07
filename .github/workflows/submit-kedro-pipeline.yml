@@ -18,7 +18,8 @@ env:
 jobs:
 
   submit_data_release_periodically:
-    runs-on: ubuntu-22.04
+    runs-on: 
+      labels: gh-hosted-large
     name: Submit the Kedro Pipeline Periodically
     permissions:
       contents: 'write'
