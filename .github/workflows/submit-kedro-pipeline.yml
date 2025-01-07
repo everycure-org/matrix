@@ -104,6 +104,7 @@ jobs:
       - name: Docker build and push
         working-directory: pipelines/matrix
         run: |
+          make docker_pull TAG=GH-Actions-bot
           make docker_push TAG=GH-Actions-bot
 
       # - name: Submit the kedro pipeline
