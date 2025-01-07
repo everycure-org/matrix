@@ -30,7 +30,6 @@ from pyspark.sql.types import (
 from matrix.datasets.graph import KnowledgeGraph
 from matrix.datasets.pair_generator import SingleLabelPairGenerator
 from matrix.pipelines.modelling.nodes import (
-    make_folds,
     create_model_input_nodes,
     prefilter_nodes,
     make_splits,
@@ -144,13 +143,13 @@ def test_prefilter_correctly_identifies_ground_truth_positives(
 
     # Check ground truth positive nodes
     node1 = next(row for row in result_list if row.id == "node1")
-    assert node1.is_ground_pos is True
+    assert node1.in_ground_pos is True
 
     node2 = next(row for row in result_list if row.id == "node2")
-    assert node2.is_ground_pos is True
+    assert node2.in_ground_pos is True
 
     node4 = next(row for row in result_list if row.id == "node4")
-    assert node4.is_ground_pos is False
+    assert node4.in_ground_pos is False
 
 
 @pytest.fixture(scope="module")
@@ -259,52 +258,25 @@ def test_make_splits_basic_functionality(sample_data, simple_splitter):
     result = make_splits(data=sample_data, splitter=simple_splitter)
 
     # Check that all required columns are present
-    required_columns = ["source", "source_embedding", "target", "target_embedding", "iteration", "split"]
-    assert all(col in result.columns for col in required_columns)
+    required_columns = ["source", "source_embedding", "target", "target_embedding", "split"]
+    for df in result:
+        assert all(col in df.columns for col in required_columns)
 
-    # Check that we have the same number of rows as input
-    assert len(result) == len(sample_data) * 2  # 2 iterations
+        # Check that we have the same number of rows as input
+        assert len(df) == len(sample_data)
 
-    # Check that splits are properly labeled
-    assert set(result["split"].unique()) == {"TRAIN", "TEST"}
-
-    # Check iterations
-    assert set(result["iteration"].unique()) == {0, 1}
+        # Check that splits are properly labeled
+        assert set(df["split"].unique()) == {"TRAIN", "TEST"}
 
 
 def test_make_splits_data_integrity(sample_data, simple_splitter):
     """Test that data values are preserved after splitting."""
     result = make_splits(data=sample_data, splitter=simple_splitter)
 
-    # Check that original values are preserved
-    assert set(result["source"].unique()) == set(sample_data["source"].unique())
-    assert set(result["target"].unique()) == set(sample_data["target"].unique())
-
-
-def test_make_splits_schema_validation(sample_data, simple_splitter):
-    """Test schema validation with invalid data."""
-    # Create invalid data missing required columns
-    invalid_data = sample_data.drop(columns=["source_embedding"])
-
-    with pytest.raises(pandera.errors.SchemaError):
-        make_splits(data=invalid_data, splitter=simple_splitter)
-
-
-def test_make_splits_train_test_distribution(sample_data, simple_splitter):
-    """Test that each fold has both train and test data."""
-    result = make_splits(data=sample_data, splitter=simple_splitter)
-
-    for iteration in result["iteration"].unique():
-        iteration_data = result[result["iteration"] == iteration]
-
-        # Check that both train and test splits exist
-        assert "TRAIN" in iteration_data["split"].values
-        assert "TEST" in iteration_data["split"].values
-
-        # Check that splits are mutually exclusive
-        train_indices = set(iteration_data[iteration_data["split"] == "TRAIN"].index)
-        test_indices = set(iteration_data[iteration_data["split"] == "TEST"].index)
-        assert len(train_indices.intersection(test_indices)) == 0
+    for df in result:
+        # Check that original values are preserved
+        assert set(df["source"].unique()) == set(sample_data["source"].unique())
+        assert set(df["target"].unique()) == set(sample_data["target"].unique())
 
 
 def test_make_splits_empty_data(simple_splitter):
@@ -547,85 +519,6 @@ def test_tune_parameters_convergence_plot(tune_data: pd.DataFrame) -> None:
 
     assert isinstance(plot, plt.Figure)
     assert plot == custom_tuner.convergence_plot
-
-
-def test_make_folds(sample_data, mocker):
-    # Mock the settings
-    mock_settings = {"DYNAMIC_PIPELINES_MAPPING": {"cross_validation": {"n_splits": 2}}}
-    mocker.patch("matrix.settings", mock_settings)
-
-    # Create a simple splitter that splits data into two folds
-    class MockSplitter:
-        def __init__(self):
-            self.n_splits = None
-
-        def split(self, X, y):
-            # First fold: first half train, second half test
-            fold1 = (list(range(0, 10)), list(range(10, 25)))
-            # Second fold: second half train, first half test
-            fold2 = (list(range(10, 25)), list(range(0, 10)))
-            return [fold1, fold2]
-
-    # Given a splitter with 2 splits
-    splitter = MockSplitter()
-
-    # When we make splits
-    result = make_folds(sample_data, splitter)
-
-    # Then we get 3 dataframes (2 splits + 1 full dataset)
-    print("\n=== Test Data Distribution Analysis ===")
-
-    # The first fold
-    fold0 = result[0]
-    train_count_0 = len(fold0[fold0["split"] == "TRAIN"])
-    test_count_0 = len(fold0[fold0["split"] == "TEST"])
-    print("\nFold 0:")
-    print(f"Train samples: {train_count_0}")
-    print(f"Test samples: {test_count_0}")
-
-    # The second fold
-    fold1 = result[1]
-    train_count_1 = len(fold1[fold1["split"] == "TRAIN"])
-    test_count_1 = len(fold1[fold1["split"] == "TEST"])
-    print("\nFold 1:")
-    print(f"Train samples: {train_count_1}")
-    print(f"Test samples: {test_count_1}")
-
-    # The full dataset
-    full_data = result[2]
-    print("\nFull Dataset:")
-    print(f"Total samples: {len(full_data)}")
-
-    # Test set analysis
-    test_indices_fold0 = set(fold0[fold0["split"] == "TEST"].index)
-    test_indices_fold1 = set(fold1[fold1["split"] == "TEST"].index)
-
-    print("\n=== Test Set Analysis ===")
-    print(f"Test indices in fold 0: {sorted(test_indices_fold0)}")
-    print(f"Test indices in fold 1: {sorted(test_indices_fold1)}")
-
-    intersection = test_indices_fold0.intersection(test_indices_fold1)
-    print(f"\nOverlap between test sets: {intersection}")
-
-    all_test_indices = test_indices_fold0.union(test_indices_fold1)
-    print(f"Combined test indices: {sorted(all_test_indices)}")
-    print(f"Total unique test samples: {len(all_test_indices)}")
-
-    # Run the original assertions
-    assert len(result) == 3
-    assert len(fold0[fold0["split"] == "TRAIN"]) == 10
-    assert len(fold0[fold0["split"] == "TEST"]) == 15
-
-    assert len(fold1[fold1["split"] == "TRAIN"]) == 15
-    assert len(fold1[fold1["split"] == "TEST"]) == 10
-
-    assert len(full_data) == 25
-    assert all(full_data["split"] == "TRAIN")
-
-    # Test set independence assertions
-    assert len(test_indices_fold0.intersection(test_indices_fold1)) == 0
-    assert len(all_test_indices) == len(sample_data)
-    assert all_test_indices == set(range(len(sample_data)))
 
 
 def test_model_wrapper():

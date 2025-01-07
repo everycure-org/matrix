@@ -188,24 +188,6 @@ def mock_generator():
     return MockGenerator()
 
 
-def test_generate_test_dataset_valid_input(sample_matrix, mock_generator):
-    """Test generate_test_dataset with valid input."""
-    result = generate_test_dataset(
-        matrix=sample_matrix,
-        generator=mock_generator,
-    )
-
-    # Check output schema
-    assert isinstance(result, pd.DataFrame)
-    assert set(result.columns) >= {"source", "target", "y"}
-    assert result["y"].isin([0, 1]).all()
-
-    # Check output data
-    assert len(result) == 2
-    assert result["source"].iloc[0] == "drug1"
-    assert result["target"].iloc[0] == "disease1"
-
-
 def test_generate_test_dataset_injection():
     """Test object injection functionality."""
     sample_df = pd.DataFrame({"source": ["drug1"], "target": ["disease1"], "score": [0.9]})

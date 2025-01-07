@@ -233,19 +233,6 @@ def make_folds(
     return all_data_frames + tuple([full_data])
 
 
-class SplitsSchema(PandasDataFrameModel):
-    source: Series[str]
-    source_embedding: Series[object]
-    target: Series[str]
-    target_embedding: Series[object]
-    iteration: Series[int]
-    split: Series[str]
-
-    class Config:
-        strict = False
-
-
-@pandera.check_output(SplitsSchema)
 @inject_object()
 def make_splits(
     data: DataFrame,
@@ -273,8 +260,7 @@ def make_splits(
         fold_data.loc[test_index, "split"] = "TEST"
         all_data_frames.append(fold_data)
 
-    x = pd.concat(all_data_frames, axis="index", ignore_index=True)
-    return x
+    return tuple(all_data_frames)
 
 
 class ModelSplitsSchema(PandasDataFrameModel):
