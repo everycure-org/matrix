@@ -8,6 +8,17 @@ def create_pipeline(**kwargs) -> Pipeline:
     # Create pipeline per source
     nodes = []
 
+    # Add shared nodes
+    nodes.append(
+        node(
+            func=lambda x: x,
+            inputs=["ingestion.raw.rtx_kg2.curie_to_pmids@spark"],
+            outputs="ingestion.int.rtx_kg2.curie_to_pmids",
+            name="write_rtx_kg2_curie_to_pmids",
+            tags=["rtx_kg2"],
+        )
+    )
+
     # Add ingestion pipeline for each source
     for source in settings.DYNAMIC_PIPELINES_MAPPING.get("integration"):
         nodes.append(
@@ -20,7 +31,7 @@ def create_pipeline(**kwargs) -> Pipeline:
             )
         )
 
-        if source.get("normalize_edges", True):
+        if not source.get("nodes_only", True):
             nodes.append(
                 node(
                     func=lambda x: x,
