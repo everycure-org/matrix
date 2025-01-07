@@ -268,7 +268,6 @@ class ModelSplitsSchema(PandasDataFrameModel):
     source_embedding: Series[object] = PandasField(nullable=True)
     target: Series[object] = PandasField(nullable=True)
     target_embedding: Series[object] = PandasField(nullable=True)
-    iteration: Series[float] = PandasField(nullable=True)  # numeric type
     split: Series[object] = PandasField(nullable=True)
 
     class Config:
