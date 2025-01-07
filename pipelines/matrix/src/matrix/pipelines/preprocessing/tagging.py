@@ -29,7 +29,7 @@ class Tag:
         loop: asyncio.BaseEventLoop,
         df: pd.DataFrame,
         model: BaseChatModel,
-        max_workers: int = 10,
+        max_workers: int = 100,
         timeout: int = 20,
     ):
         """
