@@ -5,7 +5,7 @@ from matrix.kedro4argo_node import (
 )
 
 
-def create_pipeline2(**kwargs) -> Pipeline:
+def create_pipeline(**kwargs) -> Pipeline:
     """Create ingestion pipeline."""
     # FUTURE: Use dynamic pipeline for this good first issue
     return pipeline(
@@ -77,23 +77,6 @@ def create_pipeline2(**kwargs) -> Pipeline:
                 outputs="ingestion.int.spoke.edges",
                 name="ingest_spoke_edges",
                 tags=["spoke"],
-            ),
-        ]
-    )
-
-
-def create_pipeline(**kwargs) -> Pipeline:
-    """Create ingestion pipeline."""
-    # FUTURE: Use dynamic pipeline for this good first issue
-    return pipeline(
-        [
-            # rtx-kg2
-            argo_node(
-                func=lambda x: x,
-                inputs=["ingestion.raw.rtx_kg2.nodes@spark"],
-                outputs="ingestion.int.rtx_kg2.nodes",
-                name="write_rtx_kg2_nodes",
-                tags=["rtx_kg2"],
             ),
         ]
     )
