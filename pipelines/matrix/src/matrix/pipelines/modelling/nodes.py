@@ -239,7 +239,7 @@ def make_splits(
     full_fold_data["fold"] = splitter.n_splits
     all_data_frames.append(full_fold_data)
 
-    return pd.concat(all_data_frames)
+    return pd.concat(all_data_frames, ignore_index=True)
 
 
 @pandera.check_output(ModelSplitsSchema)

@@ -325,17 +325,20 @@ def sample_splits():
 
 
 def test_create_model_input_nodes_basic(mock_knowledge_graph, mock_generator, sample_data, simple_splitter):
+    # Get number of folds (test/train splits plus full training set)
+    n_folds = simple_splitter.get_n_splits() + 1
+
     # Given the output of make_splits
     mock_splits = make_splits(data=sample_data, splitter=simple_splitter)
 
     # When creating model input nodes
     result = create_model_input_nodes(graph=mock_knowledge_graph, splits=mock_splits, generator=mock_generator)
 
-    # Check that generator was called with correct arguments
-    mock_generator.generate.assert_called_once_with(mock_knowledge_graph, mock_splits)
+    # Check that generator was called the correct number of times (once per fold)
+    assert mock_generator.generate.call_count == n_folds
 
-    # Check that result has correct number of rows (original + generated)
-    assert len(result) == len(mock_splits) + len(mock_generator.generate.return_value)
+    # Check that result has correct number of rows (original + generated * number of folds)
+    assert len(result) == len(mock_splits) + len(mock_generator.generate.return_value) * n_folds
 
     # Check that generated rows have 'TRAIN' split
     generated_rows = result.iloc[len(mock_splits) :]
