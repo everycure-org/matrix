@@ -1,10 +1,12 @@
 import logging
 import json
 import os
+
 from datetime import datetime
 from typing import Any, Dict, Optional
 
 import mlflow
+import fsspec
 import pandas as pd
 import termplotlib as tpl
 from kedro.framework.context import KedroContext
@@ -16,10 +18,7 @@ from mlflow.exceptions import RestException
 from omegaconf import OmegaConf
 from pyspark import SparkConf
 from pyspark.sql import SparkSession
-from google.cloud import storage
-from google.cloud.storage.bucket import Bucket
 from matrix.pipelines.data_release import last_node_name as last_data_release_node_name
-
 
 logger = logging.getLogger(__name__)
 
@@ -317,27 +316,13 @@ class ReleaseInfoHooks:
         return info
 
     @staticmethod
-    def get_bucket() -> Bucket:
-        project_name = ReleaseInfoHooks._globals["gcp_project"]
-        bucket_name = ReleaseInfoHooks._globals["gcs_bucket"]
-        client = storage.Client(project_name)
-        bucket = client.bucket(bucket_name.replace("gs://", ""))
-        return bucket
-
-    @staticmethod
-    def build_blobpath() -> str:
-        release_dir = ReleaseInfoHooks._globals["release_dir"]
-        blob_path = release_dir.replace("gs://", "").split("/", 1)[1]
-        release_version = ReleaseInfoHooks._globals["versions"]["release"]
-        full_blob_path = os.path.join(blob_path, f"{release_version}_info.json")
-        return full_blob_path
-
-    @staticmethod
     def upload_to_storage(release_info: dict[str, str]) -> None:
-        bucket = ReleaseInfoHooks.get_bucket()
-        blobpath = ReleaseInfoHooks.build_blobpath()
-        blob = bucket.blob(blobpath)
-        blob.upload_from_string(data=json.dumps(release_info), content_type="application/json")
+        release_dir = ReleaseInfoHooks._globals["release_dir"]
+        release_version = ReleaseInfoHooks._globals["versions"]["release"]
+        full_blob_path = os.path.join(release_dir, f"{release_version}_info.json")
+
+        with fsspec.open(full_blob_path, "wb") as f:
+            f.write(json.dumps(release_info).encode("utf-8"))
 
     @hook_impl
     def after_node_run(self, node: Node) -> None:
