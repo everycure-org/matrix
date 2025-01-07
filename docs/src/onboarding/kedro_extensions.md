@@ -81,7 +81,7 @@ estimator:
 ```
 
 ```python
-# inject_object() recorgnizes configuration in the above format,
+# inject_object() recognizes configuration in the above format,
 # and ensures that the decorated function receives the instantiated 
 # objects.
 from refit.v1.core.inject import inject_object
