@@ -266,7 +266,6 @@ def make_folds(
         Tuple of dataframes with data for each fold, dfs 1-k are 
         dfs with data for folds, df k+1 is training data only.
     """
-
     # Set number of splits
     all_data_frames = make_splits(data, splitter)
 
