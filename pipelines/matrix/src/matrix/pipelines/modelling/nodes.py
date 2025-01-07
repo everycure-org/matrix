@@ -1,10 +1,16 @@
 import logging
 from typing import Any, Callable, Dict, List, Union, Tuple
 import pandas as pd
-import json
-import pyspark.sql.functions as f
-
 from pyspark.sql import DataFrame
+import json
+from pandera.typing import Series
+from pandera.pyspark import DataFrameModel as PysparkDataFrameModel
+from pandera import DataFrameModel as PandasDataFrameModel
+import pandera
+from pyspark.sql import functions as f
+import pyspark.sql.types as T
+from pandera import Field as PandasField
+
 
 from sklearn.model_selection import BaseCrossValidator
 from sklearn.impute._base import _BaseImputer
@@ -13,11 +19,7 @@ from sklearn.base import BaseEstimator
 import matplotlib.pyplot as plt
 
 from functools import wraps
-from refit.v1.core.inject import inject_object
-from refit.v1.core.inline_has_schema import has_schema
-from refit.v1.core.inline_primary_key import primary_key
-from refit.v1.core.unpack import unpack_params
-from refit.v1.core.make_list_regexable import make_list_regexable
+from matrix.inject import inject_object, make_list_regexable, unpack_params
 
 from matrix.datasets.graph import KnowledgeGraph
 from matrix.datasets.pair_generator import SingleLabelPairGenerator
@@ -84,7 +86,6 @@ def filter_valid_pairs(
     """
     # Get list of nodes in the KG
     valid_nodes = nodes.select("id").distinct()
-
     # Filter out pairs where both source and target exist in nodes
     filtered_tp = (
         raw_tp.join(valid_nodes.alias("source_nodes"), raw_tp.source == f.col("source_nodes.id"))
@@ -109,11 +110,16 @@ def filter_valid_pairs(
     return {"pairs": pairs_df, "metrics": retention_stats}
 
 
-@has_schema(
-    schema={"y": "int"},
-    allow_subset=True,
-)
-@no_nulls(columns=["source_embedding", "target_embedding"])
+class EmbeddingsWithPairsSchema(PysparkDataFrameModel):
+    y: T.IntegerType
+    source_embedding: T.ArrayType(T.FloatType())  # type: ignore
+    target_embedding: T.ArrayType(T.FloatType())  # type: ignore
+
+    class Config:
+        strict = False
+
+
+@pandera.check_output(EmbeddingsWithPairsSchema)
 def attach_embeddings(
     pairs_df: DataFrame,
     nodes: DataFrame,
@@ -137,17 +143,23 @@ def attach_embeddings(
     )
 
 
-@has_schema(
-    schema={
-        "id": "string",
-        "is_drug": "boolean",
-        "is_disease": "boolean",
-    },
-    allow_subset=True,
-)
-@primary_key(primary_key=["id"])
+class NodeSchema(PysparkDataFrameModel):
+    id: T.StringType
+    is_drug: T.BooleanType
+    is_disease: T.BooleanType
+
+    class Config:
+        strict = False
+        unique = ["id"]
+
+
+@pandera.check_output(NodeSchema)
 def prefilter_nodes(
-    full_nodes: DataFrame, nodes: DataFrame, gt: DataFrame, drug_types: List[str], disease_types: List[str]
+    full_nodes: DataFrame,
+    nodes: DataFrame,
+    gt: DataFrame,
+    drug_types: List[str],
+    disease_types: List[str],
 ) -> DataFrame:
     """Prefilter nodes for negative sampling.
 
@@ -251,16 +263,18 @@ def make_splits(
     return tuple(all_data_frames)
 
 
-@has_schema(
-    schema={
-        "source": "object",
-        "source_embedding": "object",
-        "target": "object",
-        "target_embedding": "object",
-        "split": "object",
-    },
-    allow_subset=True,
-)
+class ModelSplitsSchema(PandasDataFrameModel):
+    source: Series[object] = PandasField(nullable=True)
+    source_embedding: Series[object] = PandasField(nullable=True)
+    target: Series[object] = PandasField(nullable=True)
+    target_embedding: Series[object] = PandasField(nullable=True)
+    split: Series[object] = PandasField(nullable=True)
+
+    class Config:
+        strict = False
+
+
+@pandera.check_output(ModelSplitsSchema)
 @inject_object()
 def create_model_input_nodes(
     graph: KnowledgeGraph,
@@ -359,13 +373,12 @@ def apply_transformers(
 
 @unpack_params()
 @inject_object()
-@make_list_regexable(source_df="data", make_regexable="features")
+@make_list_regexable(source_df="data", make_regexable_kwarg="features")
 def tune_parameters(
     data: pd.DataFrame,
     tuner: Any,
     features: List[str],
     target_col_name: str,
-    enable_regex: str = True,
 ) -> Tuple[Dict,]:
     """Function to apply hyperparameter tuning.
 
@@ -374,7 +387,6 @@ def tune_parameters(
         tuner: Tuner object.
         features: List of features, may be regex specified.
         target_col_name: Target column name.
-        enable_regex: Enable regex for features.
 
     Returns:
         Refit compatible dictionary of best parameters.
@@ -387,10 +399,14 @@ def tune_parameters(
     # Fit tuner
     tuner.fit(X_train.values, y_train.values)
 
+    estimator = getattr(tuner, "estimator", None)
+    if estimator is None:
+        raise ValueError("Tuner must have 'estimator' attribute")
+
     return json.loads(
         json.dumps(
             {
-                "object": f"{type(tuner._estimator).__module__}.{type(tuner._estimator).__name__}",
+                "object": f"{type(estimator).__module__}.{type(estimator).__name__}",
                 **tuner.best_params_,
             },
             default=int,
@@ -400,13 +416,12 @@ def tune_parameters(
 
 @unpack_params()
 @inject_object()
-@make_list_regexable(source_df="data", make_regexable="features")
+@make_list_regexable(source_df="data", make_regexable_kwarg="features")
 def train_model(
     data: pd.DataFrame,
     estimator: BaseEstimator,
     features: List[str],
     target_col_name: str,
-    enable_regex: bool = True,
 ) -> Dict:
     """Function to train model on the given data.
 
@@ -415,7 +430,6 @@ def train_model(
         estimator: sklearn compatible estimator.
         features: List of features, may be regex specified.
         target_col_name: Target column name.
-        enable_regex: Enable regex for features.
 
     Returns:
         Trained model.
@@ -445,14 +459,13 @@ def create_model(agg_func: Callable, *estimators) -> ModelWrapper:
 
 
 @inject_object()
-@make_list_regexable(source_df="data", make_regexable="features")
+@make_list_regexable(source_df="data", make_regexable_kwarg="features")
 def get_model_predictions(
     data: pd.DataFrame,
     model: ModelWrapper,
     features: List[str],
     target_col_name: str,
     prediction_suffix: str = "_pred",
-    enable_regex: str = True,
 ) -> pd.DataFrame:
     """Function to run model class predictions on input data.
 
@@ -462,7 +475,6 @@ def get_model_predictions(
         features: List of features, may be regex specified.
         target_col_name: Target column name.
         prediction_suffix: Suffix to add to the prediction column, defaults to '_pred'.
-        enable_regex: Enable regex for features.
 
     Returns:
         Data with predictions.

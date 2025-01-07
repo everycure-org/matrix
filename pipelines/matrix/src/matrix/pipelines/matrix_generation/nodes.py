@@ -1,17 +1,16 @@
 import logging
+from pandera import DataFrameModel
+import pandera as pa
 from tqdm import tqdm
 from typing import List, Dict, Union, Tuple
-
+from pyspark.sql import DataFrame
 from sklearn.impute._base import _BaseImputer
 
 import pandas as pd
-
-from pyspark.sql import DataFrame
 import pyspark.sql.functions as F
+from pandera.typing import Series
 
-from refit.v1.core.inject import inject_object
-from refit.v1.core.inline_has_schema import has_schema
-from refit.v1.core.make_list_regexable import _extract_elements_in_list
+from matrix.inject import inject_object, _extract_elements_in_list
 
 from matrix.datasets.graph import KnowledgeGraph
 
@@ -94,19 +93,21 @@ def spark_to_pd(nodes: DataFrame) -> pd.DataFrame:
     return nodes.toPandas()
 
 
-@has_schema(
-    schema={
-        "source": "object",
-        "target": "object",
-        "is_known_positive": "bool",
-        "is_known_negative": "bool",
-        "trial_sig_better": "bool",
-        "trial_non_sig_better": "bool",
-        "trial_sig_worse": "bool",
-        "trial_non_sig_worse": "bool",
-    },
-    allow_subset=True,
-)
+class TrialSchema(DataFrameModel):
+    source: Series[object]
+    target: Series[object]
+    is_known_positive: Series[bool]
+    is_known_negative: Series[bool]
+    trial_sig_better: Series[bool]
+    trial_non_sig_better: Series[bool]
+    trial_sig_worse: Series[bool]
+    trial_non_sig_worse: Series[bool]
+
+    class Config:
+        strict = False
+
+
+@pa.check_output(TrialSchema)
 @inject_object()
 def generate_pairs(
     drugs: pd.DataFrame,
@@ -220,7 +221,7 @@ def make_batch_predictions(
         transformed = apply_transformers(batch, transformers)
 
         # Extract features
-        batch_features = _extract_elements_in_list(transformed.columns, features, raise_exc=True)
+        batch_features = _extract_elements_in_list(transformed.columns, features, True)
 
         # Generate model probability scores
         batch[score_col_name] = model.predict_proba(transformed[batch_features].values)[:, 1]
