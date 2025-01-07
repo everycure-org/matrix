@@ -32,7 +32,24 @@ jobs:
         with:
           fetch-tags: true
           fetch-depth: 0  # full depth needed so we can pass the AI all logs since the last release.
-      - uses: actions/setup-python@v5
+
+      - name: Remove unnecessary files
+        run: |
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /opt/ghc
+          sudo rm -rf "/usr/local/share/boost"
+          sudo rm -rf "$AGENT_TOOLSDIRECTORY"
+
+      - name: Clean up Docker
+        run:
+          docker system prune -a --volumes -f
+
+      - name: Check disk space
+        run: 
+          df -h
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
         with:
           python-version: '3.11'
 
@@ -78,21 +95,6 @@ jobs:
       #   run:
       #     pip install semver
       #     python minor_bump.py
-
-      - name: Remove unnecessary files
-        run: |
-          sudo rm -rf /usr/share/dotnet
-          sudo rm -rf /opt/ghc
-          sudo rm -rf "/usr/local/share/boost"
-          sudo rm -rf "$AGENT_TOOLSDIRECTORY"
-
-      - name: Clean up Docker
-        run:
-          docker system prune -a --volumes -f
-
-      - name: Check disk space
-        run: 
-          df -h
 
       - name: Set up kedro project dependencies
         working-directory: pipelines/matrix
