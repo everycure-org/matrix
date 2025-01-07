@@ -46,7 +46,7 @@ DYNAMIC_PIPELINES_MAPPING = generate_dynamic_pipeline_mapping(
             "n_splits": 3,
         },
         "integration": [
-            # {"name": "rtx_kg2", "integrate_in_kg": True},
+            {"name": "rtx_kg2", "integrate_in_kg": True},
             # {"name": "spoke"},
             # {"name": "robokop"},
             {"name": "ec_medical_team", "integrate_in_kg": True, "nodes_only": False},
