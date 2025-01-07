@@ -34,9 +34,10 @@ batch.int.{source}.input_bucketized@partitioned:
     <<: *_pandas_parquet
   filename_suffix: ".parquet"
 
-batch.int.{source}.input_transformed@partitioned:
+batch.int.{source}.{workers}.input_transformed@partitioned:
   type: matrix.datasets.gcp.PartitionedAsyncParallelDataset
   overwrite: True
+  max_workers: "{workers}"
   path: ${globals:paths.tmp}/batch/{source}/transformed
   dataset: 
     <<: *_pandas_parquet

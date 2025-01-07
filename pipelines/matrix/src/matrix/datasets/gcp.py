@@ -14,6 +14,7 @@ from google.cloud import bigquery, storage
 from kedro.io.core import (
     AbstractVersionedDataset,
     DatasetError,
+    AbstractDataset,
     Version,
 )
 from kedro_datasets.partitions import PartitionedDataset
@@ -392,7 +393,35 @@ class PartitionedAsyncParallelDataset(PartitionedDataset):
     Custom implementation of the ParallelDataset that allows concurrent processing.
     """
 
-    def _save(self, data: dict[str, Any], max_workers: int = 10, timeout: int = 60) -> None:
+    def __init__(  # noqa: PLR0913
+        self,
+        *,
+        path: str,
+        dataset: str | type[AbstractDataset] | dict[str, Any],
+        max_workers: int = 10,
+        filepath_arg: str = "filepath",
+        filename_suffix: str = "",
+        credentials: dict[str, Any] | None = None,
+        load_args: dict[str, Any] | None = None,
+        fs_args: dict[str, Any] | None = None,
+        overwrite: bool = False,
+        metadata: dict[str, Any] | None = None,
+    ) -> None:
+        self._max_workers = int(max_workers)
+
+        super().__init__(
+            path=path,
+            dataset=dataset,
+            filepath_arg=filepath_arg,
+            filename_suffix=filename_suffix,
+            credentials=credentials,
+            load_args=load_args,
+            fs_args=fs_args,
+        )
+
+    def _save(self, data: dict[str, Any], timeout: int = 60) -> None:
+        logger.info(f"saving with {self._max_workers} parallelism")
+
         if self._overwrite and self._filesystem.exists(self._normalized_path):
             self._filesystem.rm(self._normalized_path, recursive=True)
 
@@ -423,7 +452,7 @@ class PartitionedAsyncParallelDataset(PartitionedDataset):
             # Create an event loop and a thread pool executor for async execution
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
-            sem = asyncio.Semaphore(max_workers)
+            sem = asyncio.Semaphore(self._max_workers)
 
             tasks = [
                 loop.create_task(process_partition(sem, partition_id, partition_data))
