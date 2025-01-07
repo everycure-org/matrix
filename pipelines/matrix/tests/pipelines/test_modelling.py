@@ -1,29 +1,43 @@
-import numpy as np
-import pytest
-import pandera
-import pandas as pd
-
-from sklearn.model_selection import KFold
-
-from sklearn.model_selection import GridSearchCV
-from sklearn.linear_model import LogisticRegression
-import matplotlib.pyplot as plt
-
+# Standard library imports
 from unittest.mock import Mock
 
-from pyspark.sql import SparkSession
-from pyspark.sql.types import StructType, StructField, StringType, ArrayType, IntegerType, FloatType
-from pyspark.sql import functions as F
-from pyspark.sql import DataFrame
+# Third-party imports
+import numpy as np
+import pandas as pd
+import pytest
+import pandera
+import matplotlib.pyplot as plt
+
+# Machine learning imports
+from sklearn.base import BaseEstimator
+from sklearn.model_selection import KFold, GridSearchCV
+from sklearn.linear_model import LogisticRegression
 from xgboost import XGBClassifier
 
-from matrix.pipelines.modelling.nodes import create_model_input_nodes
+# PySpark imports
+from pyspark.sql import SparkSession, DataFrame
+from pyspark.sql import functions as F
+from pyspark.sql.types import (
+    StructType,
+    StructField,
+    StringType,
+    ArrayType,
+    IntegerType,
+    FloatType,
+)
+
+# Local imports
 from matrix.datasets.graph import KnowledgeGraph
 from matrix.datasets.pair_generator import SingleLabelPairGenerator
-from matrix.pipelines.modelling.nodes import prefilter_nodes
-from matrix.pipelines.modelling.nodes import make_splits
-from matrix.pipelines.modelling.nodes import attach_embeddings
-from matrix.pipelines.modelling.nodes import tune_parameters
+from matrix.pipelines.modelling.nodes import (
+    make_folds,
+    create_model_input_nodes,
+    prefilter_nodes,
+    make_splits,
+    attach_embeddings,
+    tune_parameters,
+)
+from matrix.pipelines.modelling.model import ModelWrapper
 from matrix.pipelines.modelling.tuning import NopTuner
 
 
@@ -533,3 +547,104 @@ def test_tune_parameters_convergence_plot(tune_data: pd.DataFrame) -> None:
 
     assert isinstance(plot, plt.Figure)
     assert plot == custom_tuner.convergence_plot
+
+
+def test_make_folds(sample_data, mocker):
+    # Mock the settings
+    mock_settings = {"DYNAMIC_PIPELINES_MAPPING": {"cross_validation": {"n_splits": 2}}}
+    mocker.patch("matrix.settings", mock_settings)
+
+    # Create a simple splitter that splits data into two folds
+    class MockSplitter:
+        def __init__(self):
+            self.n_splits = None
+
+        def split(self, X, y):
+            # First fold: first half train, second half test
+            fold1 = (list(range(0, 10)), list(range(10, 25)))
+            # Second fold: second half train, first half test
+            fold2 = (list(range(10, 25)), list(range(0, 10)))
+            return [fold1, fold2]
+
+    # Given a splitter with 2 splits
+    splitter = MockSplitter()
+
+    # When we make splits
+    result = make_folds(sample_data, splitter)
+
+    # Then we get 3 dataframes (2 splits + 1 full dataset)
+    print("\n=== Test Data Distribution Analysis ===")
+
+    # The first fold
+    fold0 = result[0]
+    train_count_0 = len(fold0[fold0["split"] == "TRAIN"])
+    test_count_0 = len(fold0[fold0["split"] == "TEST"])
+    print("\nFold 0:")
+    print(f"Train samples: {train_count_0}")
+    print(f"Test samples: {test_count_0}")
+
+    # The second fold
+    fold1 = result[1]
+    train_count_1 = len(fold1[fold1["split"] == "TRAIN"])
+    test_count_1 = len(fold1[fold1["split"] == "TEST"])
+    print("\nFold 1:")
+    print(f"Train samples: {train_count_1}")
+    print(f"Test samples: {test_count_1}")
+
+    # The full dataset
+    full_data = result[2]
+    print("\nFull Dataset:")
+    print(f"Total samples: {len(full_data)}")
+
+    # Test set analysis
+    test_indices_fold0 = set(fold0[fold0["split"] == "TEST"].index)
+    test_indices_fold1 = set(fold1[fold1["split"] == "TEST"].index)
+
+    print("\n=== Test Set Analysis ===")
+    print(f"Test indices in fold 0: {sorted(test_indices_fold0)}")
+    print(f"Test indices in fold 1: {sorted(test_indices_fold1)}")
+
+    intersection = test_indices_fold0.intersection(test_indices_fold1)
+    print(f"\nOverlap between test sets: {intersection}")
+
+    all_test_indices = test_indices_fold0.union(test_indices_fold1)
+    print(f"Combined test indices: {sorted(all_test_indices)}")
+    print(f"Total unique test samples: {len(all_test_indices)}")
+
+    # Run the original assertions
+    assert len(result) == 3
+    assert len(fold0[fold0["split"] == "TRAIN"]) == 10
+    assert len(fold0[fold0["split"] == "TEST"]) == 15
+
+    assert len(fold1[fold1["split"] == "TRAIN"]) == 15
+    assert len(fold1[fold1["split"] == "TEST"]) == 10
+
+    assert len(full_data) == 25
+    assert all(full_data["split"] == "TRAIN")
+
+    # Test set independence assertions
+    assert len(test_indices_fold0.intersection(test_indices_fold1)) == 0
+    assert len(all_test_indices) == len(sample_data)
+    assert all_test_indices == set(range(len(sample_data)))
+
+
+def test_model_wrapper():
+    class MyEstimator(BaseEstimator):
+        def __init__(self, proba):
+            self.proba = proba
+            super().__init__()
+
+        def predict_proba(self, X):
+            return self.proba
+
+    my_estimators = [
+        MyEstimator(proba=[1, 2, 3]),
+        MyEstimator(proba=[2, 3, 5]),
+    ]
+
+    # given an instance of a model wrapper with mean
+    model_mean = ModelWrapper(estimators=my_estimators, agg_func=np.mean)
+    # when invoking the predict_proba
+    proba_mean = model_mean.predict_proba([])
+    # then median computed correctly
+    assert np.all(proba_mean == [1.5, 2.5, 4.0])
