@@ -5,9 +5,8 @@ from kedro.pipeline import Pipeline, pipeline
 from matrix import settings
 from matrix.kedro4argo_node import ARGO_GPU_NODE_MEDIUM, argo_node
 
-from utils import partial_splits
-
 from . import nodes
+from .utils import partial_splits
 
 
 def _create_model_shard_pipeline(model: str, shard: int, fold: Union[str, int]) -> Pipeline:
@@ -282,12 +281,11 @@ def create_pipeline(**kwargs) -> Pipeline:
         - Folds, i.e., number of folds to train/evaluation
         - Shards, i.e., defined for ensemble models, non-ensemble models have shards = 1
     """
-
-    # Unpack Folds
-    n_splits = settings.DYNAMIC_PIPELINES_MAPPING.get("cross_validation").get("n_splits")
-
     # Unpack models
     models = settings.DYNAMIC_PIPELINES_MAPPING.get("modelling")
+
+    # Unpack number of splits
+    n_splits = settings.DYNAMIC_PIPELINES_MAPPING.get("cross_validation").get("n_splits")
 
     # Add shared nodes
     pipelines = []
