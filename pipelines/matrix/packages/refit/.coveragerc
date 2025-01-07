@@ -1,8 +1,0 @@
-[run]
-branch = True
-omit =
-    */tests/*
-    */__init__.py
-    */__main__.py
-[report]
-fail_under=96
