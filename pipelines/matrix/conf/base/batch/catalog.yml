@@ -43,6 +43,6 @@ batch.int.{source}.{workers}.input_transformed@partitioned:
     <<: *_pandas_parquet
   filename_suffix: ".parquet"
 
-batch.int.{source}.input_transformed@spark:
+batch.int.{source}.{workers}.input_transformed@spark:
   <<: *_spark_parquet
   filepath: ${globals:paths.tmp}/batch/{source}/transformed
