@@ -2,7 +2,6 @@ run_name: test-run
 versions:
   release: test-release
 
-fs_type: file
 release_dir: data/test/releases/${versions.release}
 
 openai:

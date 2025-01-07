@@ -4,7 +4,6 @@ versions:
   release: ${oc.env:RELEASE_VERSION,v0.2.5}
 
 release_folder_name: ${oc.env:RELEASE_FOLDER_NAME, releases}
-fs_type: gcs
 release_dir: ${gcs_bucket}/kedro/data/${release_folder_name}/${versions.release}
 run_dir: ${release_dir}/runs/${run_name}
 

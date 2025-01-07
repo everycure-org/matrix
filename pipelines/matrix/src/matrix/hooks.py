@@ -3,7 +3,7 @@ import json
 import os
 
 from datetime import datetime
-from typing import Any, Dict, Optional, Union
+from typing import Any, Dict, Optional
 
 import mlflow
 import fsspec
@@ -18,8 +18,6 @@ from mlflow.exceptions import RestException
 from omegaconf import OmegaConf
 from pyspark import SparkConf
 from pyspark.sql import SparkSession
-from gcsfs.core import GCSFileSystem
-from fsspec.implementations.local import LocalFileSystem
 from matrix.pipelines.data_release import last_node_name as last_data_release_node_name
 
 logger = logging.getLogger(__name__)
@@ -318,24 +316,16 @@ class ReleaseInfoHooks:
         return info
 
     @staticmethod
-    def get_filesystem() -> Union[GCSFileSystem, LocalFileSystem]:
-        if ReleaseInfoHooks._globals["fs_type"] == "gcs":
-            fs = fsspec.filesystem("gcs", project=ReleaseInfoHooks._globals["gcp_project"])
-        else:
-            fs = fsspec.filesystem("file")
-        return fs
-
-    @staticmethod
-    def upload_to_storage(fs: Union[GCSFileSystem, LocalFileSystem], release_info: dict[str, str]) -> None:
+    def upload_to_storage(release_info: dict[str, str]) -> None:
         release_dir = ReleaseInfoHooks._globals["release_dir"]
         release_version = ReleaseInfoHooks._globals["versions"]["release"]
         full_blob_path = os.path.join(release_dir, f"{release_version}_info.json")
 
-        with fs.open(full_blob_path, "wb") as f:
+        with fsspec.open(full_blob_path, "wb") as f:
             f.write(json.dumps(release_info).encode("utf-8"))
 
     @hook_impl
-    def after_node_run(self, node: Node) -> None:
+    def before_node_run(self, node: Node) -> None:
         """Runs after the last node of the data_release pipeline"""
         # We chose to add this using the `after_node_run` hook, rather than
         # `after_pipeline_run`, because one does not know a priori which
@@ -343,8 +333,7 @@ class ReleaseInfoHooks:
         # `after_node_run`, you can limit your filters easily.
         if node.name == last_data_release_node_name:
             release_info = self.extract_release_info()
-            fs = self.get_filesystem()
             try:
-                self.upload_to_storage(fs, release_info)
+                self.upload_to_storage(release_info)
             except KeyError:
                 logger.warning("Could not upload release info after running Kedro node.", exc_info=True)
