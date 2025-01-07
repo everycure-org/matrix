@@ -1,7 +1,6 @@
 import logging
-from typing import Any, Dict, List, Union, Tuple
+from typing import Any, Callable, Dict, List, Union, Tuple
 import pandas as pd
-import numpy as np
 import json
 import pyspark.sql.functions as f
 
@@ -166,7 +165,7 @@ def prefilter_nodes(
         .unionByName(gt_pos.withColumn("id", f.col("target")))
         .select("id")
         .distinct()
-        .withColumn("is_ground_pos", f.lit(True))
+        .withColumn("in_ground_pos", f.lit(True))
     )
 
     df = (
@@ -177,48 +176,79 @@ def prefilter_nodes(
         # TODO: The integrated data product _should_ contain these nodes
         # TODO: Verify below does not have any undesired side effects
         .join(ground_truth_nodes, on="id", how="left")
-        .fillna({"is_ground_pos": False})
+        .fillna({"in_ground_pos": False})
     )
 
     return df
 
 
-@has_schema(
-    schema={
-        "source": "object",
-        "source_embedding": "object",
-        "target": "object",
-        "target_embedding": "object",
-        "iteration": "numeric",
-        "split": "object",
-    },
-    allow_subset=True,
-)
+@inject_object()
+def make_folds(
+    data: DataFrame,
+    splitter: BaseCrossValidator,
+) -> Tuple[pd.DataFrame]:
+    """Function to generate folds for modelling.
+
+    NOTE: This currently loads the `n_splits` from the settings, as this
+    pipeline is generated dynamically to allow parallelization.
+
+         _______
+       .-       -.
+      /           \
+     |,  .-.  .-.  ,|
+     | )(_o/  \o_)( |
+     |/     /\     \|
+     (_     ^^     _)
+      \__|IIIIII|__/
+       | \IIIIII/ |
+       \          /
+        `--------`
+
+    Args:
+        data: dataframe
+        splitter: splitter
+    Returns:
+        Tuple of dataframes with data for each fold, dfs 1-k are 
+        dfs with data for folds, df k+1 is training data only.
+    """
+
+    # Set number of splits
+    all_data_frames = make_splits(data, splitter)
+
+    # Add "training data only" fold
+    full_data = data.copy()
+    full_data.loc[:, "split"] = "TRAIN"
+    return all_data_frames + tuple([full_data])
+
+
 @inject_object()
 def make_splits(
     data: DataFrame,
     splitter: BaseCrossValidator,
-) -> pd.DataFrame:
+) -> Tuple[pd.DataFrame]:
     """Function to split data.
+
+    FUTURE: Update to produce single DF only, where we add a column identifying the fold.
 
     Args:
         kg: kg dataset with nodes
         data: Data to split.
         splitter: sklearn splitter object (BaseCrossValidator or its subclasses).
-
+        n_splits: number of splits
     Returns:
-        Data with split information.
+        Tuple of dataframes for each fold.
     """
+
+    # Split data into folds
     all_data_frames = []
-    for iteration, (train_index, test_index) in enumerate(splitter.split(data, data["y"])):
+    for train_index, test_index in splitter.split(data, data["y"]):
         all_indices_in_this_fold = list(set(train_index).union(test_index))
         fold_data = data.loc[all_indices_in_this_fold, :].copy()
-        fold_data.loc[:, "iteration"] = iteration
         fold_data.loc[train_index, "split"] = "TRAIN"
         fold_data.loc[test_index, "split"] = "TEST"
         all_data_frames.append(fold_data)
 
-    return pd.concat(all_data_frames, axis="index", ignore_index=True)
+    return tuple(all_data_frames)
 
 
 @has_schema(
@@ -227,7 +257,6 @@ def make_splits(
         "source_embedding": "object",
         "target": "object",
         "target_embedding": "object",
-        "iteration": "numeric",
         "split": "object",
     },
     allow_subset=True,
@@ -402,15 +431,17 @@ def train_model(
     return estimator_fit
 
 
-def create_model(*estimators) -> ModelWrapper:
+@inject_object()
+def create_model(agg_func: Callable, *estimators) -> ModelWrapper:
     """Function to create final model.
 
     Args:
+        agg_func: function to aggregate ensemble models' treat score
         estimators: list of fitted estimators
     Returns:
         ModelWrapper encapsulating estimators
     """
-    return ModelWrapper(estimators=estimators, agg_func=np.mean)
+    return ModelWrapper(estimators=estimators, agg_func=agg_func)
 
 
 @inject_object()
@@ -440,6 +471,15 @@ def get_model_predictions(
     return data
 
 
+def combine_data(*predictions_all_folds: pd.DataFrame) -> pd.DataFrame:
+    """Returns combined dataframe containing predictions from all folds.
+
+    Args:
+        data_all_folds: Dataframes containing model predictions for all folds.
+    """
+    return pd.concat(predictions_all_folds)
+
+
 @inject_object()
 def check_model_performance(
     data: pd.DataFrame,
@@ -463,6 +503,11 @@ def check_model_performance(
     """
     report = {}
 
+    # Return None for each metric if there is no test data
+    if not data["split"].eq("TEST").any():
+        return {name: None for name in metrics.keys()}
+
+    # Compute evaluation metrics and add to report
     for name, func in metrics.items():
         for split in ["TEST", "TRAIN"]:
             split_index = data["split"].eq(split)
@@ -473,3 +518,29 @@ def check_model_performance(
             report[f"{split.lower()}_{name}"] = func(y_true, y_pred)
 
     return json.loads(json.dumps(report, default=float))
+
+
+@inject_object()
+def aggregate_metrics(aggregation_functions: List[Dict], *metrics) -> Dict:
+    """
+    Aggregate metrics for the separate folds into a single set of metrics.
+
+    Args:
+        aggregation_functions: List of dictionaries containing the name and object of the aggregation function.
+        metrics: Dictionaries of metrics for all folds.
+    """
+
+    # Extract list of metrics for each fold and check consistency
+    metric_names_lst_all_folds = [list(report.keys()) for report in metrics]
+    metric_names_lst = metric_names_lst_all_folds[0]
+    if not all(metric_names == metric_names_lst_all_folds[0] for metric_names in metric_names_lst_all_folds):
+        raise ValueError("Inconsistent metrics across folds. Each fold should have the same set of metrics.")
+
+    # Perform aggregation
+    aggregated_metrics = dict()
+    for agg_func in aggregation_functions:
+        aggregated_metrics[agg_func.__name__] = {
+            metric_name: agg_func([report[metric_name] for report in metrics]) for metric_name in metric_names_lst
+        }
+
+    return json.loads(json.dumps(aggregated_metrics, default=float))
