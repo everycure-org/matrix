@@ -237,24 +237,24 @@ Our pipeline uses [Spark](https://spark.apache.org/) for distributed computation
 === "MacOS"
 
     ```bash
-    brew install openjdk@11
-    brew link --overwrite openjdk@11 # makes the java version available in PATH
+    brew install openjdk@17
+    brew link --overwrite openjdk@17 # makes the java version available in PATH
     ```
 
 === "Windows (WSL)"
     
     ```bash
     # install jdk
-    sudo apt install openjdk-11-jdk
+    sudo apt install openjdk-17-jdk
     ```
 
 === "Linux"
 
     ```bash
-    # Java on Linux is complicated, check for your specific distro how to get JDK@11. 
+    # Java on Linux is complicated, check for your specific distro how to get JDK@17. 
 
     # On Arch/Manjaro
-    pacman -S jdk11-openjdk
+    pacman -S jdk17-openjdk
     ```
 
 ### gcloud SDK
