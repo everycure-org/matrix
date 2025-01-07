@@ -2,10 +2,9 @@ import logging
 from typing import Any, Dict, List, Optional
 
 import pandas as pd
-import pyspark as ps
 import pyspark.sql.functions as F
 import pyspark.sql.functions as f
-from pyspark.sql import DataFrame, Window
+from pyspark.sql import DataFrame, Window, SparkSession
 
 logger = logging.getLogger(__name__)
 
@@ -59,7 +58,7 @@ def biolink_deduplicate_edges(edges_df: DataFrame, biolink_predicates: DataFrame
 
 
 def convert_biolink_hierarchy_json_to_df(biolink_predicates, col_name: str, convert_to_pascal_case: bool):
-    spark = ps.sql.SparkSession.builder.getOrCreate()
+    spark = SparkSession.builder.getOrCreate()
     biolink_hierarchy = spark.createDataFrame(
         unnest_biolink_hierarchy(
             col_name,

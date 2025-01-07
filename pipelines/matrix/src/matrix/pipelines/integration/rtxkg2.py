@@ -1,11 +1,12 @@
 import logging
 from typing import Dict
 
-import pandera.pyspark as pa
+import pandera as pa
+from pandera.pyspark import DataFrameModel
+
+from pyspark.sql import DataFrame
 import pyspark.sql.functions as f
 import pyspark.sql.types as T
-from pyspark.sql import DataFrame
-from refit.v1.core.inline_primary_key import primary_key
 
 from .transformer import GraphTransformer
 
@@ -44,7 +45,11 @@ class RTXTransformer(GraphTransformer):
 
     @pa.check_output(KGEdgeSchema)
     def transform_edges(
-        self, edges_df: DataFrame, curie_to_pmids: DataFrame, semmed_filters: Dict[str, str], **kwargs
+        self,
+        edges_df: DataFrame,
+        curie_to_pmids: DataFrame,
+        semmed_filters: Dict[str, str],
+        **kwargs,
     ) -> DataFrame:
         """Transform RTX KG2 edges to our target schema.
 
@@ -72,7 +77,17 @@ class RTXTransformer(GraphTransformer):
         # fmt: on
 
 
-@primary_key(df="curie_to_pmids", primary_key=["curie"])
+class CurieToPMIDsSchema(DataFrameModel):
+    """Schema for a curie to pmids mapping."""
+
+    curie: T.StringType
+
+    class Config:
+        strict = False
+        unique = ["curie"]
+
+
+@pa.check_input(CurieToPMIDsSchema, obj_getter="curie_to_pmids")
 def filter_semmed(
     edges_df: DataFrame,
     curie_to_pmids: DataFrame,
