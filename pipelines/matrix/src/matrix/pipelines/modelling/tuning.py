@@ -28,7 +28,7 @@ class NopTuner(BaseEstimator, MetaEstimatorMixin):
             **kwargs: Convenience argument that allows to pass unused parameters
                 to the estimator.
         """
-        self._estimator = estimator
+        self.estimator = estimator
         super().__init__()
 
     def fit(self, X, y=None, **params):
@@ -42,9 +42,9 @@ class NopTuner(BaseEstimator, MetaEstimatorMixin):
         Returns:
             Fitted estimator.
         """
-        self.best_params_ = self._estimator.get_params()
+        self.best_params_ = self.estimator.get_params()
 
-        return self._estimator
+        return self.estimator
 
 
 class GaussianSearch(BaseEstimator, MetaEstimatorMixin):
@@ -71,7 +71,7 @@ class GaussianSearch(BaseEstimator, MetaEstimatorMixin):
             splitter: Splitter to use for cross-validation.
             n_calls: Number of calls to the objective function.
         """
-        self._estimator = estimator
+        self.estimator = estimator
         self._dimensions = dimensions
         self._scoring = scoring
         self._splitter = splitter
@@ -106,12 +106,12 @@ class GaussianSearch(BaseEstimator, MetaEstimatorMixin):
             Args:
                 **params: Parameters to set on the estimator.
             """
-            self._estimator.set_params(**params)
+            self.estimator.set_params(**params)
 
             scores = []
             for train, test in self._splitter.split(X, y):
-                self._estimator.fit(X[train], y[train])
-                y_pred = self._estimator.predict(X[test])
+                self.estimator.fit(X[train], y[train])
+                y_pred = self.estimator.predict(X[test])
                 scores.append(self._scoring(y_pred, y[test]))
 
             return 1.0 - np.average(scores)
@@ -122,4 +122,4 @@ class GaussianSearch(BaseEstimator, MetaEstimatorMixin):
 
         self.best_params_ = {param.name: val for param, val in zip(self._dimensions, result.x)}
 
-        return self._estimator.set_params(**params)
+        return self.estimator.set_params(**params)

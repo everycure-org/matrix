@@ -10,7 +10,8 @@ from pyspark.sql import DataFrame, SparkSession
 from kedro.io.core import Version
 from kedro_datasets.spark import SparkDataset
 
-from refit.v1.core.inject import _parse_for_objects
+
+from matrix.inject import _parse_for_objects
 
 logger = logging.Logger(__name__)
 
