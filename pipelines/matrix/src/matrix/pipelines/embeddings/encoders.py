@@ -65,13 +65,9 @@ class LangChainEncoder(AttributeEncoder):
         Returns:
             DataFrame with new 'embedding' column and 'text_to_embed' removed
         """
-
-        # TODO: Add in max input len
-
         try:
-            df["text_to_embed"] = df[input_features].apply(lambda row: "".join(row), axis=1)
+            df["text_to_embed"] = df[input_features].apply(lambda row: "".join(row)[0:max_input_len], axis=1)
             combined_texts = df["text_to_embed"].tolist()
-            df = df.copy()  # TODO: Why copy?
             df["embedding"] = await self._client.aembed_documents(combined_texts)
             df["embedding"] = df["embedding"].apply(lambda x: np.array(x, dtype=np.float32))
             df = df.drop(columns=["text_to_embed", *input_features])
