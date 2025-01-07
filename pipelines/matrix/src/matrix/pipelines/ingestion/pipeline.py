@@ -31,7 +31,7 @@ def create_pipeline(**kwargs) -> Pipeline:
             )
         )
 
-        if not source.get("nodes_only", True):
+        if not source.get("nodes_only", False):
             nodes.append(
                 node(
                     func=lambda x: x,
