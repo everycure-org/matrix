@@ -43,8 +43,8 @@ repos:
     # FUTURE: Enable for yaml checks
     # -   id: check-yaml
 
-  # # checks github actions files for errors
-  # - repo: https://github.com/rhysd/actionlint
-  #   rev: v1.7.1
-  #   hooks:
-  #     - id: actionlint
+  # checks github actions files for errors
+  - repo: https://github.com/rhysd/actionlint
+    rev: v1.7.1
+    hooks:
+      - id: actionlint
