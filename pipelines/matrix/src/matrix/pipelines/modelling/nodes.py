@@ -263,6 +263,9 @@ def create_model_input_nodes(
     Returns:
         Data with enriched splits.
     """
+    if splits.empty:
+        raise ValueError("Splits dataframe must be non-empty")
+
     all_generated = []
 
     # Enrich splits for all folds
