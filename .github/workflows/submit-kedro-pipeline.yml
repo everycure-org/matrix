@@ -97,10 +97,6 @@ jobs:
           sudo rm -rf "/usr/local/share/boost"
           sudo rm -rf "$AGENT_TOOLSDIRECTORY"
 
-      - name: Check disk space
-        run: 
-          df -h
-
       - name: Clean up Docker
         run:
           docker system prune -a --volumes -f
@@ -109,22 +105,22 @@ jobs:
         run: 
           df -h
 
-      - name: Docker build and push
-        working-directory: pipelines/matrix
-        run: |
-          make docker_push TAG=GH-Actions-bot
-
-      # - name: Submit the kedro pipeline
+      # - name: Docker build and push
       #   working-directory: pipelines/matrix
       #   run: |
-      #     echo "Submit the kedro pipeline"
-      #     make docker_pull TAG=GH-Actions-bot
-      #     kedro submit \
-      #       --username GH-Actions-bot \
-      #       --namespace argo-workflows \
-      #       --run-name auto-kg-release \
-      #       --release-version "${{ env.release_version }}" \
-      #       --pipeline ingestion \
-      #       --is-test \
-      #       --headless \
-      #       --run-from-gh
+      #     make docker_push TAG=GH-Actions-bot
+
+      - name: Submit the kedro pipeline
+        working-directory: pipelines/matrix
+        run: |
+          echo "Submit the kedro pipeline"
+          make docker_pull TAG=GH-Actions-bot
+          kedro submit \
+            --username GH-Actions-bot \
+            --namespace argo-workflows \
+            --run-name auto-kg-release \
+            --release-version "${{ env.release_version }}" \
+            --pipeline ingestion \
+            --is-test \
+            --headless \
+            --run-from-gh
