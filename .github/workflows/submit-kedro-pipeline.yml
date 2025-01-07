@@ -19,7 +19,7 @@ jobs:
 
   submit_data_release_periodically:
     runs-on: 
-      labels: self-hosted
+      labels: 'self-hosted'
     name: Submit the Kedro Pipeline Periodically
     permissions:
       contents: 'write'
