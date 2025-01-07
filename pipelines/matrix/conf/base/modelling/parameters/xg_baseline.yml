@@ -7,7 +7,7 @@ modelling.xg_baseline:
         n_unknown: 40000
         drug_flags:
           - is_drug
-          - is_ground_pos
+          - in_ground_pos
         disease_flags:
           - is_disease
 
