@@ -44,18 +44,18 @@ jobs:
           service_account: ${{env.service_account}}
           token_format: access_token
 
+      - uses: google-github-actions/get-gke-credentials@v1 # configure authentication to a GKE cluster (configure kubectl)
+        with:
+          cluster_name: ${{env.cluster}}
+          location: ${{env.region}}
+          project_id: ${{env.project_id}}
+
       - name: Login to GAR # the docker image is pushed to Google Artifact Registry
         uses: docker/login-action@v3
         with:
           registry: ${{env.region}}-docker.pkg.dev
           username: oauth2accesstoken
           password: ${{ steps.auth.outputs.access_token }}
-
-      - uses: google-github-actions/get-gke-credentials@v1 # configure authentication to a GKE cluster (configure kubectl)
-        with:
-          cluster_name: ${{env.cluster}}
-          location: ${{env.region}}
-          project_id: ${{env.project_id}}
 
       - name: Fetch latest tag
         id: fetch_latest_tag
@@ -92,10 +92,15 @@ jobs:
       - name: Check disk space
         run: 
           df -h
-      
+
       - name: Clean up Docker
         run:
           docker system prune -a --volumes -f
+
+      - name: Maximize build disk space
+        uses: easimon/maximize-build-space@v1
+        with:
+          root-reserve-mb: 20000
 
       - name: Check disk space
         run: 
@@ -104,7 +109,6 @@ jobs:
       - name: Docker build and push
         working-directory: pipelines/matrix
         run: |
-          make docker_pull TAG=GH-Actions-bot
           make docker_push TAG=GH-Actions-bot
 
       # - name: Submit the kedro pipeline
