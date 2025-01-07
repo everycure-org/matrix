@@ -81,7 +81,7 @@ on the intended use, i.e.,
 
 ![](../assets/img/docker-compose.drawio.svg)
 
-Run the following `Makefile` command in the `workflows/matrix` directory to bring up the services
+Run the following `Makefile` command in the `pipelines/matrix` directory to bring up the services
 which are required by the pipeline. This way, you can develop the pipeline locally while
 keeping the services running in the background.
 

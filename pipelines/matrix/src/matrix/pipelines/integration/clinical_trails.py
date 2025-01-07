@@ -48,9 +48,10 @@ class ClinicalTrialsTransformer(GraphTransformer):
             Transformed DataFrame.
         """
         # fmt: off
-        return (
+        df = (
             edges_df
-            .withColumn("subject",                       f.lit("drug_kg_curie"))
-            .withColumn("object",                        f.lit("disease_kg_curie"))
+            .withColumn("subject",                       f.col("drug_curie"))
+            .withColumn("object",                        f.col("disease_curie"))
             .filter((f.col("subject").isNotNull()) & (f.col("object").isNotNull()))
         )
+        return df

@@ -33,11 +33,11 @@ def create_pipeline(**kwargs) -> Pipeline:
             node(
                 func=nodes.generate_pairs,
                 inputs=[
-                    "integration.int.drug_list.nodes",
-                    "integration.int.disease_list.nodes",
+                    "integration.int.drug_list.nodes.norm",
+                    "integration.int.disease_list.nodes.norm",
                     "matrix_generation.feat.nodes_kg_ds",
                     "modelling.model_input.splits",
-                    "integration.int.ec_clinical_trails.edges",
+                    "integration.int.ec_clinical_trails.edges.norm",
                 ],
                 outputs="matrix_generation.prm.matrix_pairs",
                 name="generate_matrix_pairs",
@@ -46,7 +46,6 @@ def create_pipeline(**kwargs) -> Pipeline:
     )
     pipelines = [initial_nodes]
     models = settings.DYNAMIC_PIPELINES_MAPPING.get("modelling")
-    model_names = [model["model_name"] for model in models]
 
     # Load cross-validation information
     cross_validation_settings = settings.DYNAMIC_PIPELINES_MAPPING.get("cross_validation")
@@ -64,8 +63,8 @@ def create_pipeline(**kwargs) -> Pipeline:
                     func=nodes.enrich_embeddings,
                     inputs=[
                         "embeddings.feat.nodes",
-                        "ingestion.int.drug_list.nodes",
-                        "ingestion.int.disease_list.nodes",
+                        "integration.int.drug_list.nodes.norm",
+                        "integration.int.disease_list.nodes.norm",
                     ],
                     outputs="matrix_generation.feat.nodes@spark",
                     name="enrich_matrix_embeddings",
@@ -93,11 +92,11 @@ def create_pipeline(**kwargs) -> Pipeline:
                     argo_node(
                         func=nodes.generate_pairs,
                         inputs=[
-                            "ingestion.raw.drug_list.nodes@pandas",
-                            "ingestion.raw.disease_list.nodes@pandas",
+                            "integration.int.drug_list.nodes.norm",
+                            "integration.int.disease_list.nodes.norm",
                             "matrix_generation.feat.nodes_kg_ds",
                             f"modelling.model_input.fold_{fold}.splits",
-                            "ingestion.int.ec_clinical_trails.edges",
+                            "integration.int.ec_clinical_trails.edges.norm",
                         ],
                         outputs=f"matrix_generation.prm.fold_{fold}.matrix_pairs",
                         name=f"generate_matrix_pairs_fold_{fold}",
@@ -107,7 +106,7 @@ def create_pipeline(**kwargs) -> Pipeline:
         )
 
         # For each model, create pipeline to generate pairs
-        for model in model_names:
+        for model in models.keys():
             pipelines.append(
                 pipeline(
                     [
@@ -131,8 +130,8 @@ def create_pipeline(**kwargs) -> Pipeline:
                             inputs=[
                                 f"matrix_generation.{model}.fold_{fold}.model_output.sorted_matrix_predictions@pandas",
                                 "params:matrix_generation.matrix_generation_options.n_reporting",
-                                "ingestion.raw.drug_list.nodes@pandas",
-                                "ingestion.raw.disease_list.nodes@pandas",
+                                "integration.int.drug_list.nodes.norm",
+                                "integration.int.disease_list.nodes.norm",
                                 "params:evaluation.score_col_name",
                                 "params:matrix_generation.matrix",
                                 "params:matrix_generation.run",
