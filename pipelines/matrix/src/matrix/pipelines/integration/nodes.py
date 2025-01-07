@@ -5,14 +5,13 @@ from typing import Any, Callable, Dict, List, Tuple
 
 import aiohttp
 import pandas as pd
-import pandera.pyspark as pa
-import pyspark as ps
+import pandera
+from pyspark.sql import DataFrame, SparkSession
 import pyspark.sql.functions as F
 from joblib import Memory
 from jsonpath_ng import parse
 from more_itertools import chunked
-from pyspark.sql import DataFrame
-from refit.v1.core.inject import inject_object
+from matrix.inject import inject_object
 from tenacity import (
     retry,
     retry_if_exception_type,
@@ -28,7 +27,7 @@ memory = Memory(location=".cache/nodenorm", verbose=0)
 logger = logging.getLogger(__name__)
 
 
-@pa.check_output(KGEdgeSchema)
+@pandera.check_output(KGEdgeSchema)
 def union_and_deduplicate_edges(*edges) -> DataFrame:
     """Function to unify edges datasets."""
     # fmt: off
@@ -39,7 +38,7 @@ def union_and_deduplicate_edges(*edges) -> DataFrame:
     # fmt: on
 
 
-@pa.check_output(KGNodeSchema)
+@pandera.check_output(KGNodeSchema)
 def union_and_deduplicate_nodes(biolink_categories_df: pd.DataFrame, *nodes) -> DataFrame:
     """Function to unify nodes datasets."""
 
@@ -224,15 +223,15 @@ async def process_batch(
 
 
 def normalize_kg(
-    nodes: ps.sql.DataFrame,
-    edges: ps.sql.DataFrame,
+    nodes: DataFrame,
+    edges: DataFrame,
     api_endpoint: str,
     json_path_expr: str = "$.id.identifier",
     conflate: bool = True,
     drug_chemical_conflate: bool = True,
     batch_size: int = 100,
     parallelism: int = 10,
-) -> ps.sql.DataFrame:
+) -> DataFrame:
     """Function normalizes a KG using external API endpoint.
 
     This function takes the nodes and edges frames for a KG and leverages
@@ -250,7 +249,7 @@ def normalize_kg(
 
     # convert dict back to a dataframe to parallelize the mapping
     node_id_map_df = pd.DataFrame(list(node_id_map.items()), columns=["id", "normalized_id"])
-    spark = ps.sql.SparkSession.builder.getOrCreate()
+    spark = SparkSession.builder.getOrCreate()
     mapping_df = (
         spark.createDataFrame(node_id_map_df)
         .withColumn("normalization_success", F.col("normalized_id").isNotNull())
