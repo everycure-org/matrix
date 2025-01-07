@@ -19,7 +19,7 @@ jobs:
 
   submit_data_release_periodically:
     runs-on: 
-      labels: gh-hosted-large
+      labels: ubuntu-latest
     name: Submit the Kedro Pipeline Periodically
     permissions:
       contents: 'write'
@@ -109,7 +109,7 @@ jobs:
       #   working-directory: pipelines/matrix
       #   run: |
       #     make docker_push TAG=GH-Actions-bot
-      
+
       - name: Check disk space
         run: 
           df -h
