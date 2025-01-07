@@ -77,7 +77,7 @@ jobs:
       #   run:
       #     pip install semver
       #     python minor_bump.py
-
+    
       - name: Set up kedro project dependencies
         working-directory: pipelines/matrix
         run: |
@@ -87,6 +87,19 @@ jobs:
           sudo mv argo-linux-amd64 /usr/local/bin/argo
           argo version
           pip install -r requirements.txt
+          pip install uv
+
+      - name: Check disk space
+        run: 
+          df -h
+      
+      - name: Clean up Docker
+        run:
+          docker system prune -a --volumes -f
+
+      - name: Check disk space
+        run: 
+          df -h
 
       - name: Docker build and push
         working-directory: pipelines/matrix
@@ -97,7 +110,7 @@ jobs:
       #   working-directory: pipelines/matrix
       #   run: |
       #     echo "Submit the kedro pipeline"
-      #     make docker_pull
+      #     make docker_pull TAG=GH-Actions-bot
       #     kedro submit \
       #       --username GH-Actions-bot \
       #       --namespace argo-workflows \
