@@ -2,6 +2,7 @@ import pytest
 import pandas as pd
 import numpy as np
 from sklearn.metrics import accuracy_score, roc_auc_score
+from matrix.datasets.pair_generator import DrugDiseasePairGenerator
 from matrix.pipelines.evaluation.evaluation import (
     DiscreteMetrics,
     ContinuousMetrics,
@@ -16,6 +17,7 @@ from matrix.pipelines.evaluation.named_metric_functions import (
 )
 
 from matrix.pipelines.evaluation.named_metric_functions import RecallAtN as RecallAtN_
+from matrix.pipelines.evaluation.nodes import generate_test_dataset
 
 
 @pytest.fixture
@@ -161,3 +163,38 @@ def test_recall_at_n(sample_data):
 
     assert "recall_at_5" in result
     assert np.isclose(result["recall_at_5"], 1.0, atol=1e-6)  # All true positives included
+
+
+@pytest.fixture
+def sample_matrix():
+    """Sample matrix dataframe fixture."""
+    return pd.DataFrame(
+        {
+            "source": ["drug1", "drug2", "drug3"],
+            "target": ["disease1", "disease2", "disease3"],
+            "score": [0.9, 0.8, 0.7],
+        }
+    )
+
+
+@pytest.fixture
+def mock_generator():
+    """Mock generator that returns predefined test data."""
+
+    class MockGenerator(DrugDiseasePairGenerator):
+        def generate(self, matrix):
+            return pd.DataFrame({"source": ["drug1", "drug2"], "target": ["disease1", "disease2"], "y": [1, 0]})
+
+    return MockGenerator()
+
+
+def test_generate_test_dataset_injection():
+    """Test object injection functionality."""
+    sample_df = pd.DataFrame({"source": ["drug1"], "target": ["disease1"], "score": [0.9]})
+
+    # Test with string-based injection
+    with pytest.raises(Exception):
+        # Should fail because DrugDiseasePairGenerator is abstract
+        generate_test_dataset(
+            matrix=sample_df, generator={"object": "matrix.datasets.pair_generator.DrugDiseasePairGenerator"}
+        )

@@ -1,9 +1,10 @@
 from typing import Collection, Type
 
 from pyspark.sql import DataFrame
+import pandera
 from pyspark.sql.functions import array_join
 
-from matrix.schemas.knowledge_graph import cols_for_schema, KGNodeSchema, KGEdgeSchema, DataFrameModel
+from matrix.schemas.knowledge_graph import cols_for_schema, KGNodeSchema, KGEdgeSchema
 
 SEPARATOR = "\x1f"
 
@@ -14,7 +15,7 @@ def join_array_columns(df: DataFrame, cols: Collection[str], sep: str = SEPARATO
     return df
 
 
-def create_kgx_format(df: DataFrame, cols: Collection[str], model: Type[DataFrameModel]):
+def create_kgx_format(df: DataFrame, cols: Collection[str], model: Type[pandera.DataFrameModel]):
     return join_array_columns(df, cols=cols).select(*cols_for_schema(model))
 
 

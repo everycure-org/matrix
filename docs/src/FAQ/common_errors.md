@@ -115,57 +115,6 @@ java.lang.NullPointerException
 org.apache.spark.SparkException: Exception thrown in awaitResult:
 ```
 
-TODO
-
-## Failed batches in the embedding step
-
-
-```
-│ main   File "/usr/local/lib/python3.11/site-packages/kedro/runner/runner.py", line 117, in run                                                                                                                   │
-│ main     self._run(pipeline, catalog, hook_or_null_manager, session_id)  # type: ignore[arg-type]                                                                                                                │
-│ main     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^                                                                                                                                          │
-│ main   File "/usr/local/lib/python3.11/site-packages/kedro/runner/sequential_runner.py", line 75, in _run                                                                                                        │
-│ main     run_node(node, catalog, hook_manager, self._is_async, session_id)                                                                                                                                       │
-│ main   File "/usr/local/lib/python3.11/site-packages/kedro/runner/runner.py", line 413, in run_node                                                                                                              │
-│ main     node = _run_node_sequential(node, catalog, hook_manager, session_id)                                                                                                                                    │
-│ main            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^                                                                                                                                    │
-│ main   File "/usr/local/lib/python3.11/site-packages/kedro/runner/runner.py", line 506, in _run_node_sequential                                                                                                  │
-│ main     outputs = _call_node_run(                                                                                                                                                                               │
-│ main               ^^^^^^^^^^^^^^^                                                                                                                                                                               │
-│ main   File "/usr/local/lib/python3.11/site-packages/kedro/runner/runner.py", line 472, in _call_node_run                                                                                                        │
-│ main     raise exc                                                                                                                                                                                               │
-│ main   File "/usr/local/lib/python3.11/site-packages/kedro/runner/runner.py", line 462, in _call_node_run                                                                                                        │
-│ main     outputs = node.run(inputs)                                                                                                                                                                              │
-│ main               ^^^^^^^^^^^^^^^^                                                                                                                                                                              │
-│ main   File "/usr/local/lib/python3.11/site-packages/kedro/pipeline/node.py", line 392, in run                                                                                                                   │
-│ main     raise exc                                                                                                                                                                                               │
-│ main   File "/usr/local/lib/python3.11/site-packages/kedro/pipeline/node.py", line 380, in run                                                                                                                   │
-│ main     outputs = self._run_with_dict(inputs, self._inputs)                                                                                                                                                     │
-│ main               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^                                                                                                                                                     │
-│ main   File "/usr/local/lib/python3.11/site-packages/kedro/pipeline/node.py", line 437, in _run_with_dict                                                                                                        │
-│ main     return self._func(**kwargs)                                                                                                                                                                             │
-│ main            ^^^^^^^^^^^^^^^^^^^^                                                                                                                                                                             │
-│ main   File "/usr/local/lib/python3.11/site-packages/refit/v1/core/unpack.py", line 62, in wrapper                                                                                                               │
-│ main     result = func(*args, **kwargs)                                                                                                                                                                          │
-│ main              ^^^^^^^^^^^^^^^^^^^^^                                                                                                                                                                          │
-│ main   File "/usr/local/lib/python3.11/site-packages/refit/v1/core/inject.py", line 171, in wrapper                                                                                                              │
-│ main     result_df = func(*args, **kwargs)                                                                                                                                                                       │
-│ main                 ^^^^^^^^^^^^^^^^^^^^^                                                                                                                                                                       │
-│ main   File "/app/src/matrix/pipelines/embeddings/nodes.py", line 166, in compute_embeddings                                                                                                                     │
-│ main     raise RuntimeError("Failed batches in the embedding step")                                                                                                                                              │
-│ main RuntimeError: Failed batches in the embedding step                                                                                                                                                          │
-│ main time="2024-07-26T09:55:54.436Z" level=info msg="sub-process exited" argo=true error="<nil>"                                                                                                                 │
-│ main Error: exit status 1
-```
-
-This often means there is a `400` error from OpenAI or another backend issue. We throw this error ourselves explicitly to catch API errors.
-Unfortuantely one has to dig into the Debug Log of Neo4J to find out the exact issue
-
-1. connect to neo4j instance
-2. cd to `logs`
-3. tail / grep on `debug.log` and check what was logged by the DB
-
-
 ## MLFlow error about changing params when executing locally
 
 ```
