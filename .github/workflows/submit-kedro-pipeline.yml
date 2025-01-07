@@ -19,7 +19,7 @@ jobs:
 
   submit_data_release_periodically:
     runs-on: 
-      labels: 'self-hosted'
+      labels: ubuntu-24.04
     name: Submit the Kedro Pipeline Periodically
     permissions:
       contents: 'write'
@@ -35,10 +35,14 @@ jobs:
 
       - name: Remove unnecessary files
         run: |
+          sudo rm -rf /usr/local/.ghcup
+          sudo rm -rf /opt/hostedtoolcache/CodeQL
+          sudo rm -rf /usr/local/lib/android/sdk/ndk
           sudo rm -rf /usr/share/dotnet
           sudo rm -rf /opt/ghc
           sudo rm -rf "/usr/local/share/boost"
           sudo rm -rf "$AGENT_TOOLSDIRECTORY"
+          sudo apt-get clean
 
       - name: Clean up Docker
         run:
