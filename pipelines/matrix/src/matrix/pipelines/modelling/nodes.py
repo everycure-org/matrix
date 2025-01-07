@@ -182,45 +182,6 @@ def prefilter_nodes(
     return df
 
 
-# @inject_object()
-# def make_folds(
-#     data: DataFrame,
-#     splitter: BaseCrossValidator,
-# ) -> Tuple[pd.DataFrame]:
-#     """Function to generate folds for modelling.
-
-#     NOTE: This currently loads the `n_splits` from the settings, as this
-#     pipeline is generated dynamically to allow parallelization.
-
-#          _______
-#        .-       -.
-#       /           \
-#      |,  .-.  .-.  ,|
-#      | )(_o/  \o_)( |
-#      |/     /\     \|
-#      (_     ^^     _)
-#       \__|IIIIII|__/
-#        | \IIIIII/ |
-#        \          /
-#         `--------`
-
-#     Args:
-#         data: dataframe
-#         splitter: splitter
-#     Returns:
-#         Tuple of dataframes with data for each fold, dfs 1-k are
-#         dfs with data for folds, df k+1 is training data only.
-#     """
-
-#     # Set number of splits
-#     all_data_frames = make_splits(data, splitter)
-
-#     # Add "training data only" fold
-#     full_data = data.copy()
-#     full_data.loc[:, "split"] = "TRAIN"
-#     return all_data_frames + tuple([full_data])
-
-
 @has_schema(
     schema={
         "source": "object",

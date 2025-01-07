@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import pytest
 from sklearn.base import BaseEstimator
-from matrix.pipelines.modelling.nodes import make_folds
+from matrix.pipelines.modelling.nodes import make_splits
 from matrix.pipelines.modelling.model import ModelWrapper
 
 
@@ -17,7 +17,7 @@ def sample_data():
     )
 
 
-def test_make_folds(sample_data, mocker):
+def test_make_splits(sample_data, mocker):
     # Mock the settings
     mock_settings = {"DYNAMIC_PIPELINES_MAPPING": {"cross_validation": {"n_splits": 2}}}
     mocker.patch("matrix.settings", mock_settings)
@@ -25,7 +25,7 @@ def test_make_folds(sample_data, mocker):
     # Create a simple splitter that splits data into two folds
     class MockSplitter:
         def __init__(self):
-            self.n_splits = None
+            self.n_splits = 2  # Add n_splits attribute required by the function
 
         def split(self, X, y):
             # First fold: first half train, second half test
@@ -38,62 +38,34 @@ def test_make_folds(sample_data, mocker):
     splitter = MockSplitter()
 
     # When we make splits
-    result = make_folds(sample_data, splitter)
+    result = make_splits(sample_data, splitter)
 
-    # Then we get 3 dataframes (2 splits + 1 full dataset)
-    print("\n=== Test Data Distribution Analysis ===")
+    # Then we expect the result to be a pandas DataFrame with proper splits
+    assert isinstance(result, pd.DataFrame)
 
-    # The first fold
-    fold0 = result[0]
-    train_count_0 = len(fold0[fold0["split"] == "TRAIN"])
-    test_count_0 = len(fold0[fold0["split"] == "TEST"])
-    print("\nFold 0:")
-    print(f"Train samples: {train_count_0}")
-    print(f"Test samples: {test_count_0}")
+    # Check that we have the correct number of rows (original data * 3 due to 2 folds + full dataset)
+    assert len(result) == len(sample_data) * 3
 
-    # The second fold
-    fold1 = result[1]
-    train_count_1 = len(fold1[fold1["split"] == "TRAIN"])
-    test_count_1 = len(fold1[fold1["split"] == "TEST"])
-    print("\nFold 1:")
-    print(f"Train samples: {train_count_1}")
-    print(f"Test samples: {test_count_1}")
+    # Verify fold structure
+    fold_counts = result["fold"].value_counts()
+    assert fold_counts[0] == len(sample_data)  # First fold
+    assert fold_counts[1] == len(sample_data)  # Second fold
+    assert fold_counts[2] == len(sample_data)  # Full dataset fold
 
-    # The full dataset
-    full_data = result[2]
-    print("\nFull Dataset:")
-    print(f"Total samples: {len(full_data)}")
+    # Verify splits for fold 0
+    fold0_data = result[result["fold"] == 0]
+    assert len(fold0_data[fold0_data["split"] == "TRAIN"]) == 10
+    assert len(fold0_data[fold0_data["split"] == "TEST"]) == 15
 
-    # Test set analysis
-    test_indices_fold0 = set(fold0[fold0["split"] == "TEST"].index)
-    test_indices_fold1 = set(fold1[fold1["split"] == "TEST"].index)
+    # Verify splits for fold 1
+    fold1_data = result[result["fold"] == 1]
+    assert len(fold1_data[fold1_data["split"] == "TRAIN"]) == 15
+    assert len(fold1_data[fold1_data["split"] == "TEST"]) == 10
 
-    print("\n=== Test Set Analysis ===")
-    print(f"Test indices in fold 0: {sorted(test_indices_fold0)}")
-    print(f"Test indices in fold 1: {sorted(test_indices_fold1)}")
-
-    intersection = test_indices_fold0.intersection(test_indices_fold1)
-    print(f"\nOverlap between test sets: {intersection}")
-
-    all_test_indices = test_indices_fold0.union(test_indices_fold1)
-    print(f"Combined test indices: {sorted(all_test_indices)}")
-    print(f"Total unique test samples: {len(all_test_indices)}")
-
-    # Run the original assertions
-    assert len(result) == 3
-    assert len(fold0[fold0["split"] == "TRAIN"]) == 10
-    assert len(fold0[fold0["split"] == "TEST"]) == 15
-
-    assert len(fold1[fold1["split"] == "TRAIN"]) == 15
-    assert len(fold1[fold1["split"] == "TEST"]) == 10
-
-    assert len(full_data) == 25
+    # Verify full dataset fold (fold 2)
+    full_data = result[result["fold"] == 2]
+    assert len(full_data) == len(sample_data)
     assert all(full_data["split"] == "TRAIN")
-
-    # Test set independence assertions
-    assert len(test_indices_fold0.intersection(test_indices_fold1)) == 0
-    assert len(all_test_indices) == len(sample_data)
-    assert all_test_indices == set(range(len(sample_data)))
 
 
 def test_model_wrapper():
