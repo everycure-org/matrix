@@ -1,10 +1,12 @@
 import logging
 import json
 import os
+
 from datetime import datetime
 from typing import Any, Dict, Optional
 
 import mlflow
+import fsspec
 import pandas as pd
 import termplotlib as tpl
 from kedro.framework.context import KedroContext
@@ -338,6 +340,20 @@ class ReleaseInfoHooks:
         blob = bucket.blob(blobpath)
         blob.upload_from_string(data=json.dumps(release_info), content_type="application/json")
 
+    @staticmethod
+    def upload_to_storage2(release_info: dict[str, str]) -> None:
+        fs = (
+            fsspec.filesystem("file")
+            if ReleaseInfoHooks._kedro_context.env == "test"
+            else fsspec.filesystem("gcs", project="mtrx-hub-dev-3of")
+        )
+        release_dir = ReleaseInfoHooks._globals["release_dir"]
+        release_version = ReleaseInfoHooks._globals["versions"]["release"]
+        full_blob_path = os.path.join(release_dir, f"{release_version}_info.json")
+
+        with fs.open(full_blob_path, "wb") as f:
+            f.write(json.dumps(release_info).encode("utf-8"))
+
     @hook_impl
     def before_node_run(self, node: Node) -> None:
         """Runs after the last node of the data_release pipeline"""
@@ -348,6 +364,6 @@ class ReleaseInfoHooks:
         if True:  # node.name == last_data_release_node_name:
             release_info = self.extract_release_info()
             try:
-                self.upload_to_storage(release_info)
+                self.upload_to_storage2(release_info)
             except KeyError:
                 logger.warning("Could not upload release info after running Kedro node.", exc_info=True)
