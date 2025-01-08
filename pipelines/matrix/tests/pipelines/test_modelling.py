@@ -32,7 +32,7 @@ from matrix.datasets.pair_generator import SingleLabelPairGenerator
 from matrix.pipelines.modelling.nodes import (
     create_model_input_nodes,
     prefilter_nodes,
-    make_splits,
+    make_folds,
     attach_embeddings,
     tune_parameters,
 )
@@ -253,9 +253,9 @@ def simple_splitter():
     return KFold(n_splits=2, shuffle=True, random_state=42)
 
 
-def test_make_splits_basic_functionality(sample_data, simple_splitter):
-    """Test basic functionality of make_splits."""
-    result = make_splits(data=sample_data, splitter=simple_splitter)
+def test_make_folds_basic_functionality(sample_data, simple_splitter):
+    """Test basic functionality of make_folds."""
+    result = make_folds(data=sample_data, splitter=simple_splitter)
 
     # Check that all required columns are present
     required_columns = ["source", "source_embedding", "target", "target_embedding", "split", "fold"]
@@ -271,21 +271,21 @@ def test_make_splits_basic_functionality(sample_data, simple_splitter):
     assert set(result["fold"].unique()) == {0, 1, 2}
 
 
-def test_make_splits_data_integrity(sample_data, simple_splitter):
+def test_make_folds_data_integrity(sample_data, simple_splitter):
     """Test that data values are preserved after splitting."""
-    result = make_splits(data=sample_data, splitter=simple_splitter)
+    result = make_folds(data=sample_data, splitter=simple_splitter)
 
     # Check that original values are preserved
     assert set(result["source"].unique()) == set(sample_data["source"].unique())
     assert set(result["target"].unique()) == set(sample_data["target"].unique())
 
 
-def test_make_splits_empty_data(simple_splitter):
+def test_make_folds_empty_data(simple_splitter):
     """Test behavior with empty input data."""
     empty_data = pd.DataFrame(columns=["source", "source_embedding", "target", "target_embedding", "y"])
 
     with pytest.raises(ValueError):
-        make_splits(data=empty_data, splitter=simple_splitter)
+        make_folds(data=empty_data, splitter=simple_splitter)
 
 
 @pytest.fixture()
@@ -328,8 +328,8 @@ def test_create_model_input_nodes_basic(mock_knowledge_graph, mock_generator, sa
     # Get number of folds (test/train splits plus full training set)
     n_folds = simple_splitter.get_n_splits() + 1
 
-    # Given the output of make_splits
-    mock_splits = make_splits(data=sample_data, splitter=simple_splitter)
+    # Given the output of make_folds
+    mock_splits = make_folds(data=sample_data, splitter=simple_splitter)
 
     # When creating model input nodes
     result = create_model_input_nodes(graph=mock_knowledge_graph, splits=mock_splits, generator=mock_generator)

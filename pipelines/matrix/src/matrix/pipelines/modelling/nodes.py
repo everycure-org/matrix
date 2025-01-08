@@ -207,7 +207,7 @@ class ModelSplitsSchema(PandasDataFrameModel):
 
 @pandera.check_output(ModelSplitsSchema)
 @inject_object()
-def make_splits(
+def make_folds(
     data: DataFrame,
     splitter: BaseCrossValidator,
 ) -> Tuple[pd.DataFrame]:

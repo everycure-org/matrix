@@ -20,8 +20,7 @@ def partial_fold(func: callable, fold: int):
     NOTE: When applying this function in a Kedro node, the inputs must be explicitly stated as a dictionary, not a list.
 
     Args:
-        func: Function operating on a specific fold of the data.
-            Must take an argument "data", which is a dataframe with the column "split".
+        func: Function operating on a specific fold of the data as the first argument.
         fold: The fold number to filter the data on.
 
     Returns:
@@ -32,6 +31,6 @@ def partial_fold(func: callable, fold: int):
     def func_with_full_splits(data, *args, **kwargs):
         data = data.copy()
         data_fold = data[data["fold"] == fold]
-        return func(data=data_fold, *args, **kwargs)
+        return func(data_fold, *args, **kwargs)
 
     return func_with_full_splits
