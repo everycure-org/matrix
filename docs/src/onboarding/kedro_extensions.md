@@ -81,10 +81,10 @@ estimator:
 ```
 
 ```python
-# inject_object() recorgnizes configuration in the above format,
+# inject_object() recognizes configuration in the above format,
 # and ensures that the decorated function receives the instantiated 
 # objects.
-from refit.v1.core.inject import inject_object
+from matrix.core import inject_object
 
 @inject_object()
 def train_model(
@@ -125,14 +125,22 @@ The dependency injection pattern is an excellent technique to clean configuratio
 ## Dynamic pipelines
 
 !!! note 
-    This is an advanced topic, and can be skipped during the oboarding.
+    This is an advanced topic, and can be skipped during the onboarding.
 
 !!! tip 
-    Dynamic pipelining is a rather new concept in Kedro. We recommend checking out the [Dynamic Pipelines](https://getindata.com/blog/kedro-dynamic-pipelines/) blogpost. This pipelining strategy heavily relies on Kedro's [dataset factories](https://docs.kedro.org/en/stable/data/kedro_dataset_factories.html) feature.
+    Kedro pipelines are usually limited to static layouts. However, often you find yourself in a position where you want to instantiate the same pipeline _multiple times_. Dynamic pipelines are used to control the layout of the pipeline dynamically. We recommend checking out the [Dynamic Pipelines](https://getindata.com/blog/kedro-dynamic-pipelines/) blogpost. This pipelining strategy heavily relies on Kedro's [dataset factories](https://docs.kedro.org/en/stable/data/kedro_dataset_factories.html) feature.
+
+Dynamic pipelines in Kedro allow us to do exactly this, it is a workaround that enables us to control the layout of the pipeline dynamically. We're doing that through the `settings.py` file. This file essentially provides a higher-order configuration mechanism, that can be used to create more complex pipelines.
+
+![](../assets/img/dynamic_pipeline_config.excalidraw.svg)
+
+
+### Example: Single pipeline to produce multiple models
+
 
 Given the experimental nature of our project, we aim to produce different model flavours. For instance, a model with static hyper-parameters, a model that is hyper-parameter tuned, and an ensemble of hyper-parameter tuned models, etc.
 
-Dynamic pipelines in Kedro allow us to do exactly this. We're defining a single pipeline skeleton, which is instantiated multiple times, with different parameters. The power here lies in the fact that our compute infrastructure now executes all these nodes in isolation from each other, allowing us to train dozens of models in parallel without having to think about compute infrastructure. We simply execute the pipeline and compute instances get provisioned and removed dynamically as we need them, greatly reducing our compute operational and maintenance overhead. 
+We're defining a single pipeline skeleton, which is instantiated multiple times, with different parameters. The power here lies in the fact that our compute infrastructure now executes all these nodes in isolation from each other, allowing us to train dozens of models in parallel without having to think about compute infrastructure. We simply execute the pipeline and compute instances get provisioned and removed dynamically as we need them, greatly reducing our compute operational and maintenance overhead. 
 
 ![](../assets/img/dynamic_pipelines.gif)
 

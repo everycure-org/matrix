@@ -47,7 +47,7 @@ format:
 	uv run ruff check . --fix
 
 # executes E2E integration test fully in docker. 
-docker_test: docker_build
+docker_test: certificate docker_build
 	IMG="$(dev_docker_image)" docker compose -f compose/docker-compose.yml \
 		-f compose/docker-compose.ci.yml \
 		up \
@@ -62,7 +62,12 @@ docker_build:
 docker_push: docker_build
 	docker push $(dev_docker_image):${TAG}
 
-compose_up:
+certificate:
+	@echo "Generating test SSL certificate for Neo4J."
+	openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout compose/certs/bolt/private.key -out compose/certs/bolt/public.crt -config compose/certs/openssl.cnf > /dev/null 2>&1
+	cat compose/certs/bolt/private.key compose/certs/bolt/public.crt > compose/certs/bolt/private_and_public.pem
+
+compose_up: certificate
 	docker compose -f compose/docker-compose.yml up -d --wait --remove-orphans
 	
 compose_down:

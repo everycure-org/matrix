@@ -48,14 +48,15 @@ def cli():
 @click.option("--dry-run", "-d", is_flag=True, default=False, help="Does everything except submit the workflow")
 @click.option("--from-nodes", type=str, default="", help="Specify nodes to run from", callback=split_string)
 @click.option("--is-test", is_flag=True, default=False, help="Submit to test folder")
+@click.option("--headless", is_flag=True, default=False, help="Disable prompts for confirmation")
 # fmt: on
-def submit(username: str, namespace: str, run_name: str, release_version: str, pipeline: str, quiet: bool, dry_run: bool, from_nodes: List[str], is_test: bool):
+def submit(username: str, namespace: str, run_name: str, release_version: str, pipeline: str, quiet: bool, dry_run: bool, from_nodes: List[str], is_test: bool, headless:bool):
     """Submit the end-to-end workflow. """
     if not quiet:
         log.setLevel(logging.DEBUG)
 
-    # TODO: re-enable after it's clear this is only a data-release submission (i.e. the release version is present, see also #797.
-    #  abort_if_unmet_git_requirements()
+    if pipeline in ('data_release', 'kg_release'):
+        abort_if_unmet_git_requirements()
 
     if pipeline not in kedro_pipelines.keys():
         raise ValueError("Pipeline requested for execution not found")
@@ -63,7 +64,7 @@ def submit(username: str, namespace: str, run_name: str, release_version: str, p
     if pipeline in ["fabricator", "test"]:
         raise ValueError("Submitting test pipeline to Argo will result in overwriting source data")
     
-    if from_nodes:
+    if not headless and from_nodes:
         if not click.confirm("Using 'from-nodes' is highly experimental and may break due to MLFlow issues with tracking the right run. Are you sure you want to continue?", default=False):
             raise click.Abort()
 
@@ -75,7 +76,7 @@ def submit(username: str, namespace: str, run_name: str, release_version: str, p
     pipeline_obj.name = pipeline
 
 
-    summarize_submission(run_name, namespace, pipeline, is_test, release_version)
+    summarize_submission(run_name, namespace, pipeline, is_test, release_version, headless)
     _submit(
         username=username,
         namespace=namespace,
@@ -85,6 +86,7 @@ def submit(username: str, namespace: str, run_name: str, release_version: str, p
         verbose=not quiet,
         dry_run=dry_run,
         template_directory=ARGO_TEMPLATES_DIR_PATH,
+        allow_interactions=not headless,
         is_test=is_test,
     )
 
@@ -166,7 +168,7 @@ def _submit(
         sys.exit(1)
 
 
-def summarize_submission(run_name: str, namespace: str, pipeline: str, is_test: bool, release_version: str):
+def summarize_submission(run_name: str, namespace: str, pipeline: str, is_test: bool, release_version: str, headless: bool):
     console.print(Panel.fit(
         f"[bold green]About to submit workflow:[/bold green]\n"
         f"Run Name: {run_name}\n"
@@ -180,8 +182,9 @@ def summarize_submission(run_name: str, namespace: str, pipeline: str, is_test: 
                   "If you need to make changes, please make this part of the next release.\n"
                   "Experiments (modelling pipeline) are nested under the release and can be overwritten.\n\n")
 
-    if not click.confirm("Are you sure you want to submit the workflow?", default=False):
-        raise click.Abort()
+    if not headless:
+        if not click.confirm("Are you sure you want to submit the workflow?", default=False):
+            raise click.Abort()
         
 
 def run_subprocess(
@@ -461,8 +464,8 @@ def abort_if_unmet_git_requirements():
     """
     errors = []
 
-    if get_current_git_branch() not in ("main", "master"):
-        errors.append("Invalid branch (must be 'main' or 'master').")
+    if not get_current_git_branch().startswith('release'):
+        errors.append("Invalid branch name (must be a dedicated release branch starting with 'release'.")
 
     if has_dirty_git():
         errors.append("Repository has uncommitted changes or untracked files.")

@@ -1,9 +1,9 @@
 import logging
 import pandas as pd
 import pandera.pyspark as pa
+from pyspark.sql import DataFrame
 import pyspark.sql.functions as f
 import pyspark.sql.types as T
-from pyspark.sql import DataFrame
 
 from .transformer import GraphTransformer
 from matrix.schemas.knowledge_graph import KGEdgeSchema, KGNodeSchema, cols_for_schema
