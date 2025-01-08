@@ -1,46 +1,44 @@
-import pytest
-import pandas as pd
-import numpy as np
-from sklearn.preprocessing import StandardScaler, MinMaxScaler
-
-from matrix.pipelines.modelling.nodes import apply_transformers
-
 # Standard library imports
+import pytest
 from unittest.mock import Mock
 
 # Third-party imports
+import numpy as np
+import pandas as pd
 import pandera
 import matplotlib.pyplot as plt
 
 # Machine learning imports
 from sklearn.base import BaseEstimator
-from sklearn.model_selection import KFold, GridSearchCV
 from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import KFold, GridSearchCV
+from sklearn.preprocessing import StandardScaler, MinMaxScaler
 from xgboost import XGBClassifier
 
 # PySpark imports
 from pyspark.sql import SparkSession, DataFrame
 from pyspark.sql import functions as F
 from pyspark.sql.types import (
-    StructType,
-    StructField,
-    StringType,
     ArrayType,
-    IntegerType,
     FloatType,
+    IntegerType,
+    StringType,
+    StructField,
+    StructType,
 )
 
 # Local imports
 from matrix.datasets.graph import KnowledgeGraph
 from matrix.datasets.pair_generator import SingleLabelPairGenerator
+from matrix.pipelines.modelling.model import ModelWrapper
 from matrix.pipelines.modelling.nodes import (
-    create_model_input_nodes,
-    prefilter_nodes,
-    make_splits,
+    apply_transformers,
     attach_embeddings,
+    create_model_input_nodes,
+    make_splits,
+    prefilter_nodes,
     tune_parameters,
 )
-from matrix.pipelines.modelling.model import ModelWrapper
 from matrix.pipelines.modelling.tuning import NopTuner
 
 
