@@ -98,10 +98,33 @@ def determine_most_specific_category(nodes: DataFrame, biolink_categories_df: pd
     )
     return nodes
 
+def remove_rows_containing_category(
+    edges: DataFrame,
+    categories: List[str],
+    columns: List[str],
+    **kwargs
+) -> DataFrame:
+    """
+    Function to remove rows containing any of the given categories in
+    any of the listed columns.
+    """
+    # Build the combined condition: if a category appears in col1 OR col2 OR ...
+    # we want to filter out those rows.
+    condition = None
+    for col in columns:
+        col_condition = F.col(col).isin(categories)
+        condition = col_condition if condition is None else (condition | col_condition)
 
-def remove_rows_containing_category(edges: DataFrame, categories: List[str], column: str, **kwargs) -> DataFrame:
-    """Function to remove rows containing a category."""
-    return edges.filter(~F.col(column).isin(categories))
+    # If condition is None, it means columns was empty; in that edge case, we return edges as-is
+    if condition is None:
+        return edges
+
+    # Filter out rows where condition is True (i.e., rows containing categories)
+    return edges.filter(~condition)
+
+#def remove_rows_containing_category(edges: DataFrame, categories: List[str], column: str, **kwargs) -> DataFrame:
+   # """Function to remove rows containing a category."""
+   # return edges.filter(~F.col(column).isin(categories))
 
 
 def unnest_biolink_hierarchy(

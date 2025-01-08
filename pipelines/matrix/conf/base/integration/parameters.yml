@@ -67,9 +67,12 @@ integration:
         func:
           object: matrix.pipelines.integration.filters.biolink_deduplicate_edges
     knowledge_source_filters:
-      column: primary_knowledge_source
+      columns: 
+        - primary_knowledge_source 
+        - knowledge_level
       categories:
         - infores:text-mining-provider-targeted
         - infores:monarchinitiative
+        - None
 
       
