@@ -4,9 +4,9 @@ from matrix.pipelines.batch import pipeline as batch_pipeline
 from . import nodes
 
 from matrix import settings
-
 from pyspark.sql import DataFrame
-from refit.v1.core.inject import inject_object
+
+from matrix.inject import inject_object
 
 
 @inject_object()

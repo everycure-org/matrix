@@ -6,8 +6,6 @@ from matrix.pipelines.data_release.pipeline import create_pipeline as create_dat
 from matrix.pipelines.embeddings.pipeline import create_pipeline as create_embeddings_pipeline
 from matrix.pipelines.evaluation.pipeline import create_pipeline as create_evaluation_pipeline
 from matrix.pipelines.fabricator.pipeline import create_pipeline as create_fabricator_pipeline
-
-# from matrix.pipelines.inference.pipeline import create_pipeline as create_inference_pipeline
 from matrix.pipelines.ingestion.pipeline import create_pipeline as create_ingestion_pipeline
 from matrix.pipelines.integration.pipeline import create_pipeline as create_integration_pipeline
 from matrix.pipelines.matrix_generation.pipeline import create_pipeline as create_matrix_pipeline

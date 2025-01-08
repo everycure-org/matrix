@@ -3,12 +3,12 @@ from functools import partial, reduce
 from typing import Any, Callable, Dict, List, Tuple
 
 import pandas as pd
-import pandera.pyspark as pa
-import pyspark as ps
-import pyspark.sql.functions as F
-from joblib import Memory
+import pandera
 from pyspark.sql import DataFrame
-from refit.v1.core.inject import inject_object
+import pyspark.sql.functions as F
+import pyspark as ps
+from joblib import Memory
+from matrix.inject import inject_object
 
 from matrix.pipelines.integration.filters import determine_most_specific_category
 from matrix.schemas.knowledge_graph import KGEdgeSchema, KGNodeSchema, cols_for_schema
@@ -18,7 +18,7 @@ memory = Memory(location=".cache/nodenorm", verbose=0)
 logger = logging.getLogger(__name__)
 
 
-@pa.check_output(KGEdgeSchema)
+@pandera.check_output(KGEdgeSchema)
 def union_and_deduplicate_edges(*edges) -> DataFrame:
     """Function to unify edges datasets."""
 
@@ -30,7 +30,7 @@ def union_and_deduplicate_edges(*edges) -> DataFrame:
     # fmt: on
 
 
-@pa.check_output(KGNodeSchema)
+@pandera.check_output(KGNodeSchema)
 def union_and_deduplicate_nodes(biolink_categories_df: pd.DataFrame, *nodes) -> DataFrame:
     """Function to unify nodes datasets."""
 
