@@ -123,7 +123,7 @@ def create_pipeline(**kwargs) -> Pipeline:
 The dependency injection pattern is an excellent technique to clean configuration heavy code, and ensure maximum re-usability.
 
 
-## Requesting Kubernetes resources from Kedro Nodes
+## How to request resource availability for a node?
 
 We've implemented a mechanism to request Kubernetes resources directly from Kedro nodes. This is done through the `ArgoNode` wrapper, which is a wrapper around the `Node` class that allows us to request resources from the Argo workflow (HERE is the [source code](https://github.com/everycure-org/matrix/blob/main/pipelines/matrix/src/matrix/kedro4argo_node.py#L93)). 
 
