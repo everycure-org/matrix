@@ -18,6 +18,7 @@ from mlflow.exceptions import RestException
 from omegaconf import OmegaConf
 from pyspark import SparkConf
 from pyspark.sql import SparkSession
+from matrix.pipelines.data_release import last_node_name as last_data_release_node_name
 
 logger = logging.getLogger(__name__)
 
@@ -332,13 +333,13 @@ class ReleaseInfoHooks:
             f.write(json.dumps(release_info).encode("utf-8"))
 
     @hook_impl
-    def before_node_run(self, node: Node) -> None:
+    def after_node_run(self, node: Node) -> None:
         """Runs after the last node of the data_release pipeline"""
         # We chose to add this using the `after_node_run` hook, rather than
         # `after_pipeline_run`, because one does not know a priori which
         # pipelines the (last) data release node is part of. With an
         # `after_node_run`, you can limit your filters easily.
-        if node.name == "write_rtx_kg2_nodes":  # last_data_release_node_name:
+        if node.name == last_data_release_node_name:
             release_info = self.extract_release_info()
             try:
                 self.upload_to_storage(release_info)
