@@ -1,6 +1,5 @@
 import os
 import semver
-import sys
 
 
 def bump_type():
@@ -21,7 +20,9 @@ def bump_type():
     elif tag_version.major < release_version.major:
         bump_type = "major"
     else:
-        sys.exit(1)
+        raise ValueError(
+            f"Invalid bump type: the last version ({tag_version}) is not compatible with new release version ({release_version})."
+        )
 
     with open(os.getenv("GITHUB_ENV"), "a") as env_file:
         env_file.write(f"bump_type={bump_type}\n")

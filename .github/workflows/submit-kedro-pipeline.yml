@@ -3,7 +3,7 @@ name: Automate kedro submit release run periodically
 on:
   push:
     branches:
-      - 'gh-actions-weekly-submit'
+      - 'gh-actions-weekly-submit-xyz'
   schedule:
     - cron: '30 9 1 * 1' # At 09:30 on the 1st day of the month and on Monday.
 
@@ -105,9 +105,6 @@ jobs:
           pip install semver
           python bump_version.py
 
-      - name: Print verion
-        run: |
-          echo "release_version is ${release_version}"
       # - name: Set up kedro project dependencies
       #   working-directory: pipelines/matrix
       #   run: |

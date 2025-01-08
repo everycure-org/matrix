@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - 'debug/release*'
+      - 'gh-actions=weekly-submit'
   repository_dispatch:
     types: distribute-release
 
@@ -28,7 +29,8 @@ jobs:
             release=$(echo '${{ toJson(github.event) }}' | jq -r '.client_payload.release_version')
             gitref=$(echo '${{ toJson(github.event) }}' | jq -r '.client_payload.git_fingerprint')
           else
-            release="debug-dont-release"
+            # release="debug-dont-release"
+            release="v0.1.2"
             gitref=${{github.ref_name}}
           fi
           echo "release=${release}" >> "$GITHUB_ENV"
@@ -47,40 +49,41 @@ jobs:
           git config --global user.name "All of us at Every Cure"
           git config --global push.autosetupremote true
 
-      - name: Tag the commit from which the data release was triggered
-        run: |
-          # Create an annotated tag, so that we can push it easily with the files using `follow-tags`.
-          git tag --annotate --message '' -- "${{env.release}}" "${{env.gitref}}"
-
-      - name: Branch off
-        # To comply with the protected-branch policy
-        run: git switch -c release/${{env.release}} ${{env.gitref}}
-
-      - name: Authenticate with Google Cloud
-        uses: 'google-github-actions/auth@v2'
-        with:
-          project_id: ${{env.project_id}}
-          workload_identity_provider: ${{env.workload_identity_provider}}
-          service_account: ${{env.service_account}}
-
-      - name: Download & commit release info file
-        working-directory: docs/src/releases/changelog_files
-        env:
-          RELEASE_DIR_GCS: 'gs://mtrx-us-central1-hub-dev-storage/kedro/data/releases'
-          FILENAME: ${{env.release}}_info.json
-        run: |
-          BLOB_PATH="${RELEASE_DIR_GCS}/${{env.release}}/${FILENAME}"
-          gcloud storage cp "$BLOB_PATH" "$FILENAME"
-          
-          git add "${FILENAME}" && \
-          git commit -m "added release info json" && \
-          git push
-
       - name: Fetch latest tag
         run: |
           latest_tag=$(git tag --list --sort="v:refname" | tail -n 1)
           echo "latest_tag=${latest_tag}" >> "$GITHUB_ENV"
           echo "Latest tag is ${latest_tag}"
+
+      # - name: Tag the commit from which the data release was triggered
+      #   run: |
+      #     # Create an annotated tag, so that we can push it easily with the files using `follow-tags`.
+      #     git tag --annotate --message '' -- "${{env.release}}" "${{env.gitref}}" && \
+      #     git push --follow-tags
+
+      # - name: Branch off
+      #   # To comply with the protected-branch policy
+      #   run: git switch -c release/${{env.release}} ${{env.gitref}}
+
+      # - name: Authenticate with Google Cloud
+      #   uses: 'google-github-actions/auth@v2'
+      #   with:
+      #     project_id: ${{env.project_id}}
+      #     workload_identity_provider: ${{env.workload_identity_provider}}
+      #     service_account: ${{env.service_account}}
+
+      # - name: Download & commit release info file
+      #   working-directory: docs/src/releases/changelog_files
+      #   env:
+      #     RELEASE_DIR_GCS: 'gs://mtrx-us-central1-hub-dev-storage/kedro/data/releases'
+      #     FILENAME: ${{env.release}}_info.json
+      #   run: |
+      #     BLOB_PATH="${RELEASE_DIR_GCS}/${{env.release}}/${FILENAME}"
+      #     gcloud storage cp "$BLOB_PATH" "$FILENAME"
+          
+      #     git add "${FILENAME}" && \
+      #     git commit -m "added release info json" && \
+      #     git push
 
       - name: Detect bump type
         working-directory: docs
@@ -91,65 +94,64 @@ jobs:
           cd scripts
           uv run bump_detection.py
 
-      - name: Setup Matrix CLI
-        working-directory: apps/matrix-cli
-        run: |
-          pip install uv
-          uv sync
+      # - name: Setup Matrix CLI
+      #   working-directory: apps/matrix-cli
+      #   run: |
+      #     pip install uv
+      #     uv sync
           
-      - name: Create Release Notes
-        working-directory: apps/matrix-cli
-        env:
-          GH_TOKEN: ${{ github.token }}
-          POSTS_DIR: docs/src/releases/posts
-        # only create release notes for minor and major bumps
-        if: env.bump_type != 'patch'
-        run: |
-          gcloud config list account --format "value(core.account)"
+      # - name: Create Release Notes
+      #   working-directory: apps/matrix-cli
+      #   env:
+      #     GH_TOKEN: ${{ github.token }}
+      #     POSTS_DIR: docs/src/releases/posts
+      #   # only create release notes for minor and major bumps
+      #   if: env.bump_type != 'patch'
+      #   run: |
+      #     gcloud config list account --format "value(core.account)"
           
-          mkdir -p "${{env.release}}"
-          uv run matrix releases release-notes --headless --output-file "${{env.release}}/notes.md"
-          # If these fail, you may have crossed the quotas. See 
-          # https://cloud.google.com/vertex-ai/generative-ai/docs/quotas
-          uv run matrix releases article \
-            --headless \
-            --output-file "${{env.release}}/post.md" \
-            --no-disable-rendering \
-            --notes-file "${{env.release}}/notes.md"
-          mv "${{env.release}}" "${GITHUB_WORKSPACE}/${POSTS_DIR}"
-          git add "${GITHUB_WORKSPACE}/${POSTS_DIR}/${{env.release}}" && \
-          git commit -m "added release notes & article draft" && \
-          git push --follow-tags
+      #     mkdir -p "${{env.release}}"
+      #     uv run matrix releases release-notes --headless --output-file "${{env.release}}/notes.md"
+      #     # If these fail, you may have crossed the quotas. See 
+      #     # https://cloud.google.com/vertex-ai/generative-ai/docs/quotas
+      #     uv run matrix releases article \
+      #       --headless \
+      #       --output-file "${{env.release}}/post.md" \
+      #       --no-disable-rendering \
+      #       --notes-file "${{env.release}}/notes.md"
+      #     mv "${{env.release}}" "${GITHUB_WORKSPACE}/${POSTS_DIR}"
+      #     git add "${GITHUB_WORKSPACE}/${POSTS_DIR}/${{env.release}}" && \
+      #     git commit -m "added release notes & article draft" 
 
-      - name: Setup docs venv & generate yaml
-        working-directory: docs/scripts
-        run: |
-          uv run changelog_gen.py
+      # - name: Setup docs venv & generate yaml
+      #   working-directory: docs/scripts
+      #   run: |
+      #     uv run changelog_gen.py
 
-      - name: Commit YAML release info file
-        working-directory: docs/src/releases/changelog_files
-        env:
-          FILENAME: releases_aggregated.yaml
-        run: |
-          git add "${FILENAME}"
+      # - name: Commit YAML release info file
+      #   working-directory: docs/src/releases/changelog_files
+      #   env:
+      #     FILENAME: releases_aggregated.yaml
+      #   run: |
+      #     git add "${FILENAME}"
           
-          # Otherwise this will error out if the generated file is identical to the one in repo
-          if git diff --cached --exit-code; then
-            echo "No changes to $FILENAME. Skipping commit."
-          else
-            echo "Changes detected in $FILENAME. Committing..."
-            git commit -m "Add or update $FILENAME"
-            git push
-          fi
+      #     # Otherwise this will error out if the generated file is identical to the one in repo
+      #     if git diff --cached --exit-code; then
+      #       echo "No changes to $FILENAME. Skipping commit."
+      #     else
+      #       echo "Changes detected in $FILENAME. Committing..."
+      #       git commit -m "Add or update $FILENAME"
+      #       git push
+      #     fi
 
-      - name: Create Pull Request
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
-        run: |
-          gh pr create \
-          --title "Release/${{env.release}}" \
-          --base main \
-          --body "Adds release information. For minor and major bump,the release article and associated notes are generated" \
-          --draft \
-          --label Release \
-          --label hide-from-release
+      # - name: Create Pull Request
+      #   env:
+      #     GITHUB_TOKEN: ${{ github.token }}
+      #   run: |
+      #     gh pr create \
+      #     --title "Release/${{env.release}}" \
+      #     --base main \
+      #     --body "Adds release information. For minor and major bump,the release article and associated notes are generated" \
+      #     --draft \
+      #     --label Release \
+      #     --label hide-from-release
