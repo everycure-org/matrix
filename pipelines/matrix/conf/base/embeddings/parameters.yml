@@ -11,10 +11,10 @@ embeddings.node:
   # to compute the attribute embedding.
   input_features: ["name", "category"]
   encoder:
-    object: matrix.pipelines.embeddings.encoders.LangChainEncoder
+    _object: matrix.pipelines.embeddings.encoders.LangChainEncoder
     dimensions: 512
     encoder:
-      object: langchain_openai.OpenAIEmbeddings
+      _object: langchain_openai.OpenAIEmbeddings
       model: text-embedding-3-small
       timeout: 10
 
@@ -25,13 +25,13 @@ embeddings.dimensionality_reduction:
   input: embedding
   output: &_pca_property 'pca_embedding'
   transformer:
-    object: pyspark.ml.feature.PCA
+    _object: pyspark.ml.feature.PCA
     k: 100
 
 # FUTURE: This is a highly temp. solution that serves as PoC of leveraging Neo4J's
 # AI functionality. If works as expected, we'll do a refinement step to clean this up.
 embeddings.gds:
-  object: matrix.datasets.neo4j.GraphDS
+  _object: matrix.datasets.neo4j.GraphDS
   endpoint: ${globals:neo4j.host}
   database: analytics
   auth:
@@ -69,7 +69,7 @@ embeddings.topological:
 
 # uncomment for node2vec
 embeddings.topological_estimator:
-  object: matrix.pipelines.embeddings.graph_algorithms.GDSNode2Vec 
+  _object: matrix.pipelines.embeddings.graph_algorithms.GDSNode2Vec 
   concurrency: 4
   embedding_dim: 512
   random_seed: 42
@@ -84,7 +84,7 @@ embeddings.topological_estimator:
   window_size: 100
 
 # embeddings.topological_estimator:
-#   object: matrix.pipelines.embeddings.graph_algorithms.GDSGraphSage
+#   _object: matrix.pipelines.embeddings.graph_algorithms.GDSGraphSage
 #   concurrency: 4
 #   iterations: 100
 #   sample_sizes: [25, 10]
@@ -106,5 +106,5 @@ embeddings.topological_pca:
   input: *_topological_property
   output: 'pca_embedding'
   transformer:
-    object: pyspark.ml.feature.PCA
+    _object: pyspark.ml.feature.PCA
     k: 2

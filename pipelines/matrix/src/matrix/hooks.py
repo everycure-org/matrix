@@ -315,7 +315,7 @@ class ReleaseInfoHooks:
             "Robokop Version": ReleaseInfoHooks._globals["data_sources"]["robokop"]["version"],
             "RTX-KG2 Version": ReleaseInfoHooks._globals["data_sources"]["rtx-kg2"]["version"],
             "EC Medical Team Version": ReleaseInfoHooks._globals["data_sources"]["ec-medical-team"]["version"],
-            "Topological Estimator": ReleaseInfoHooks._params["embeddings.topological_estimator"]["object"],
+            "Topological Estimator": ReleaseInfoHooks._params["embeddings.topological_estimator"]["_object"],
             "Embeddings Encoder": ReleaseInfoHooks._params["embeddings.node"]["encoder"]["encoder"]["model"],
             "BigQuery Link": ReleaseInfoHooks.build_bigquery_link(),
             "MLFlow Link": ReleaseInfoHooks.build_mlflow_link(),

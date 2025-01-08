@@ -3,7 +3,7 @@ integration:
   sources:
     rtx_kg2:
       transformer:
-        object: matrix.pipelines.integration.rtxkg2.RTXTransformer
+        _object: matrix.pipelines.integration.rtxkg2.RTXTransformer
     # spoke:
     #   transformer:
     #     object: matrix.pipelines.integration.spoke.SpokeTransformer
@@ -25,7 +25,8 @@ integration:
     ground_truth: 
       transformer:
         object: matrix.pipelines.integration.ground_truth.GroundTruthTransformer
-
+    #     _object: matrix.pipelines.integration.spoke.SpokeTransformer
+    
   # FUTURE: Ensure we can move this to filters down here
   preprocessing:
     rtx:
@@ -46,9 +47,9 @@ integration:
   filtering:
     node_filters:
       filter_node_labels:
-        object: matrix.pipelines.modelling.utils.partial_
+        _object: matrix.pipelines.modelling.utils.partial_
         func:
-          object: matrix.pipelines.integration.filters.remove_rows_containing_category
+          _object: matrix.pipelines.integration.filters.remove_rows_containing_category
         column: category
         categories:
         # TODO: We should likely not remove these before our data release stage but afterwards in the modelling pipeline (if the model so desires)
@@ -77,6 +78,6 @@ integration:
     edge_filters:
       # FUTURE: Ensure the semmed filter is moved here instead
       filter_biolink_edges:
-        object: matrix.pipelines.modelling.utils.partial_
+        _object: matrix.pipelines.modelling.utils.partial_
         func:
-          object: matrix.pipelines.integration.filters.biolink_deduplicate_edges
+          _object: matrix.pipelines.integration.filters.biolink_deduplicate_edges
