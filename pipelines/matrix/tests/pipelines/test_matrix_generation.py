@@ -2,7 +2,6 @@ import pytest
 import pandas as pd
 import numpy as np
 from unittest.mock import Mock
-import re
 
 from matrix.pipelines.matrix_generation.nodes import (
     generate_pairs,
@@ -12,7 +11,6 @@ from matrix.pipelines.matrix_generation.nodes import (
 )
 from matrix.pipelines.modelling.transformers import FlatArrayTransformer
 from matrix.datasets.graph import KnowledgeGraph
-from matrix.inject import _extract_elements_in_list
 
 
 @pytest.fixture
@@ -20,7 +18,7 @@ def sample_drugs():
     """Fixture that provides sample drugs data for testing."""
     return pd.DataFrame(
         {
-            "curie": ["drug_1", "drug_2"],
+            "id": ["drug_1", "drug_2"],
             "name": ["Drug 1", "Drug 2"],
             "description": ["Description 1", "Description 2"],
         }
@@ -32,7 +30,7 @@ def sample_diseases():
     """Fixture that provides sample diseases data for testing."""
     return pd.DataFrame(
         {
-            "curie": ["disease_1", "disease_2"],
+            "id": ["disease_1", "disease_2"],
             "name": ["Disease 1", "Disease 2"],
             "description": ["Description A", "Description B"],
         }
@@ -238,7 +236,7 @@ def sample_data():
     """Fixture that provides sample data for testing matrix generation functions."""
     drugs = pd.DataFrame(
         {
-            "curie": ["drug_1", "drug_2", "drug_3", "drug_4"],
+            "id": ["drug_1", "drug_2", "drug_3", "drug_4"],
             "name": ["Drug 1", "Drug 2", "Drug 3", "Drug 4"],
             "is_steroid": [True, False, False, False],
         }
@@ -246,7 +244,7 @@ def sample_data():
 
     diseases = pd.DataFrame(
         {
-            "curie": ["disease_1", "disease_2", "disease_3", "disease_4"],
+            "id": ["disease_1", "disease_2", "disease_3", "disease_4"],
             "name": ["Disease 1", "Disease 2", "Disease 3", "Disease 4"],
             "is_cancer": [True, False, False, False],
         }
@@ -280,11 +278,11 @@ def test_generate_report(sample_data):
     drugs, diseases, known_pairs, _ = sample_data
 
     # Update the sample data to include the new required columns
-    drugs["single_ID"] = ["drug_id_1", "drug_id_2", "drug_id_3", "drug_id_4"]
-    drugs["ID_Label"] = ["Drug Label 1", "Drug Label 2", "Drug Label 3", "Drug Label 4"]
+    drugs["id"] = ["drug_id_1", "drug_id_2", "drug_id_3", "drug_id_4"]
+    drugs["name"] = ["Drug Label 1", "Drug Label 2", "Drug Label 3", "Drug Label 4"]
 
-    diseases["category_class"] = ["disease_class_1", "disease_class_2", "disease_class_3", "disease_class_4"]
-    diseases["label"] = ["Disease Label 1", "Disease Label 2", "Disease Label 3", "Disease Label 4"]
+    diseases["id"] = ["disease_class_1", "disease_class_2", "disease_class_3", "disease_class_4"]
+    diseases["name"] = ["Disease Label 1", "Disease Label 2", "Disease Label 3", "Disease Label 4"]
 
     data = pd.DataFrame(
         {
@@ -394,77 +392,3 @@ def test_generate_report(sample_data):
     assert result["mean_all_per_disease"].tolist() == pytest.approx([0.8, 0.4, 0.3])
     assert result["mean_top_per_drug"].tolist() == pytest.approx([0.8, 0.6, 0.4])
     assert result["mean_all_per_drug"].tolist() == pytest.approx([0.8, 0.4, 0.4])
-
-
-def test_exact_match():
-    """Test exact string matching."""
-    columns = ["column1", "column2", "column3"]
-    regexes = ["column1"]
-    result = _extract_elements_in_list(columns, regexes, True)
-    assert result == ["column1"]
-
-
-def test_pattern_match():
-    """Test regex pattern matching."""
-    columns = ["column1", "column2", "test_column"]
-    regexes = ["column\\d"]
-    result = _extract_elements_in_list(columns, regexes, True)
-    assert result == ["column1", "column2"]
-
-
-def test_multiple_patterns():
-    """Test multiple regex patterns."""
-    columns = ["column1", "column2", "test1", "test2"]
-    regexes = ["column\\d", "test\\d"]
-    result = _extract_elements_in_list(columns, regexes, True)
-    assert result == ["column1", "column2", "test1", "test2"]
-
-
-def test_no_match_with_raise():
-    """Test behavior when no match is found and raise_exc is True."""
-    columns = ["column1", "column2"]
-    regexes = ["nonexistent"]
-    with pytest.raises(ValueError) as exc_info:
-        _extract_elements_in_list(columns, regexes, True)
-    assert "did not return a result" in str(exc_info.value)
-
-
-def test_duplicate_matches():
-    """Test that duplicate matches are only included once."""
-    columns = ["column1", "column2"]
-    regexes = ["column\\d", "column1"]
-    result = _extract_elements_in_list(columns, regexes, True)
-    assert result == ["column1", "column2"]
-
-
-def test_empty_inputs():
-    """Test behavior with empty inputs."""
-    assert _extract_elements_in_list([], [], True) == []
-    assert _extract_elements_in_list(["column1"], [], True) == []
-    with pytest.raises(ValueError) as exc_info:
-        _extract_elements_in_list([], ["column"], True)
-    assert "did not return a result" in str(exc_info.value)
-
-
-def test_order_preservation():
-    """Test that the order of matches follows the regex order."""
-    columns = ["z_column", "a_column", "b_column"]
-    regexes = ["b_.*", "a_.*", "z_.*"]
-    result = _extract_elements_in_list(columns, regexes, True)
-    assert result == ["b_column", "a_column", "z_column"]
-
-
-def test_invalid_regex():
-    """Test behavior with invalid regex pattern."""
-    columns = ["column1", "column2"]
-    regexes = ["[invalid"]
-    with pytest.raises(re.error):
-        _extract_elements_in_list(columns, regexes, True)
-
-
-def test_special_characters():
-    """Test matching with special characters in column names."""
-    columns = ["column$1", "column#2", "column@3"]
-    regexes = ["column[$#@]\\d"]
-    result = _extract_elements_in_list(columns, regexes, True)
-    assert result == ["column$1", "column#2", "column@3"]

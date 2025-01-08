@@ -50,7 +50,7 @@ def _create_integration_pipeline(source: str, nodes_only: bool = False) -> Pipel
                         "mapping_df": f"integration.int.{source}.nodes.nodes_norm_mapping",
                         "nodes": f"integration.int.{source}.nodes",
                     },
-                    outputs=f"integration.int.{source}.nodes.norm",
+                    outputs=f"integration.int.{source}.nodes.norm@spark",
                     name=f"normalize_{source}_nodes",
                 ),
             ]
@@ -82,7 +82,7 @@ def _create_integration_pipeline(source: str, nodes_only: bool = False) -> Pipel
                             "mapping_df": f"integration.int.{source}.nodes.nodes_norm_mapping",
                             "edges": f"integration.int.{source}.edges",
                         },
-                        outputs=f"integration.int.{source}.edges.norm",
+                        outputs=f"integration.int.{source}.edges.norm@spark",
                         name=f"normalize_{source}_edges",
                     ),
                 ]
@@ -114,7 +114,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                     inputs=[
                         "integration.raw.biolink.categories",
                         *[
-                            f'integration.int.{source["name"]}.nodes.norm'
+                            f'integration.int.{source["name"]}.nodes.norm@spark'
                             for source in settings.DYNAMIC_PIPELINES_MAPPING.get("integration")
                             if source.get("integrate_in_kg", True) and not source.get("nodes_only", False)
                         ],
@@ -126,7 +126,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 node(
                     func=nodes.union_and_deduplicate_edges,
                     inputs=[
-                        f'integration.int.{source["name"]}.edges.norm'
+                        f'integration.int.{source["name"]}.edges.norm@spark'
                         for source in settings.DYNAMIC_PIPELINES_MAPPING.get("integration")
                         if source.get("integrate_in_kg", True) and not source.get("nodes_only", False)
                     ],

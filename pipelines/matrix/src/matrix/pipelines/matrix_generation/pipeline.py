@@ -1,4 +1,4 @@
-from kedro.pipeline import Pipeline, pipeline, node
+from kedro.pipeline import Pipeline, pipeline
 
 from matrix import settings
 from matrix.kedro4argo_node import ARGO_GPU_NODE_MEDIUM, argo_node
@@ -8,43 +8,7 @@ from . import nodes
 
 def create_pipeline(**kwargs) -> Pipeline:
     """Create matrix generation pipeline."""
-    initial_nodes = pipeline(
-        [
-            node(
-                func=nodes.enrich_embeddings,
-                inputs=[
-                    "embeddings.feat.nodes",
-                    "integration.int.drug_list.nodes.norm",
-                    "integration.int.disease_list.nodes.norm",
-                ],
-                outputs="matrix_generation.feat.nodes@spark",
-                name="enrich_matrix_embeddings",
-            ),
-            # Hacky fix to save parquet file via pandas rather than spark
-            # related to https://github.com/everycure-org/matrix/issues/71
-            node(
-                func=nodes.spark_to_pd,
-                inputs=[
-                    "matrix_generation.feat.nodes@spark",
-                ],
-                outputs="matrix_generation.feat.nodes_kg_ds",
-                name="transform_parquet_library",
-            ),
-            node(
-                func=nodes.generate_pairs,
-                inputs=[
-                    "integration.int.drug_list.nodes.norm",
-                    "integration.int.disease_list.nodes.norm",
-                    "matrix_generation.feat.nodes_kg_ds",
-                    "modelling.model_input.splits",
-                    "integration.int.ec_clinical_trails.edges.norm",
-                ],
-                outputs="matrix_generation.prm.matrix_pairs",
-                name="generate_matrix_pairs",
-            ),
-        ]
-    )
-    pipelines = [initial_nodes]
+
     models = settings.DYNAMIC_PIPELINES_MAPPING.get("modelling")
 
     # Load cross-validation information
@@ -63,21 +27,11 @@ def create_pipeline(**kwargs) -> Pipeline:
                     func=nodes.enrich_embeddings,
                     inputs=[
                         "embeddings.feat.nodes",
-                        "integration.int.drug_list.nodes.norm",
-                        "integration.int.disease_list.nodes.norm",
+                        "integration.int.drug_list.nodes.norm@spark",
+                        "integration.int.disease_list.nodes.norm@spark",
                     ],
                     outputs="matrix_generation.feat.nodes@spark",
                     name="enrich_matrix_embeddings",
-                ),
-                # Hacky fix to save parquet file via pandas rather than spark
-                # related to https://github.com/everycure-org/matrix/issues/71
-                argo_node(
-                    func=nodes.spark_to_pd,
-                    inputs=[
-                        "matrix_generation.feat.nodes@spark",
-                    ],
-                    outputs="matrix_generation.feat.nodes_kg_ds",
-                    name="transform_parquet_library",
                 ),
             ]
         )
@@ -92,11 +46,11 @@ def create_pipeline(**kwargs) -> Pipeline:
                     argo_node(
                         func=nodes.generate_pairs,
                         inputs=[
-                            "integration.int.drug_list.nodes.norm",
-                            "integration.int.disease_list.nodes.norm",
-                            "matrix_generation.feat.nodes_kg_ds",
+                            "integration.int.drug_list.nodes.norm@pandas",
+                            "integration.int.disease_list.nodes.norm@pandas",
+                            "matrix_generation.feat.nodes@kg",
                             f"modelling.model_input.fold_{fold}.splits",
-                            "integration.int.ec_clinical_trails.edges.norm",
+                            "integration.int.ec_clinical_trails.edges.norm@pandas",
                         ],
                         outputs=f"matrix_generation.prm.fold_{fold}.matrix_pairs",
                         name=f"generate_matrix_pairs_fold_{fold}",
@@ -113,7 +67,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                         argo_node(
                             func=nodes.make_predictions_and_sort,
                             inputs=[
-                                "matrix_generation.feat.nodes_kg_ds",
+                                "matrix_generation.feat.nodes@kg",
                                 f"matrix_generation.prm.fold_{fold}.matrix_pairs",
                                 f"modelling.{model}.fold_{fold}.model_input.transformers",
                                 f"modelling.{model}.fold_{fold}.models.model",
@@ -132,8 +86,8 @@ def create_pipeline(**kwargs) -> Pipeline:
                             inputs=[
                                 f"matrix_generation.{model}.fold_{fold}.model_output.sorted_matrix_predictions@pandas",
                                 "params:matrix_generation.matrix_generation_options.n_reporting",
-                                "integration.int.drug_list.nodes.norm",
-                                "integration.int.disease_list.nodes.norm",
+                                "integration.int.drug_list.nodes.norm@pandas",
+                                "integration.int.disease_list.nodes.norm@pandas",
                                 "params:matrix_generation.treat_score_col_name",
                                 "params:matrix_generation.matrix",
                                 "params:matrix_generation.run",
