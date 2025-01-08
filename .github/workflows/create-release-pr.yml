@@ -93,6 +93,10 @@ jobs:
           cd scripts
           uv run bump_detection.py
 
+      - name: Print bump type
+        run:
+          echo "Bump type is ${bump_type}"
+
       # - name: Setup Matrix CLI
       #   working-directory: apps/matrix-cli
       #   run: |
