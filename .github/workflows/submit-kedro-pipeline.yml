@@ -116,7 +116,6 @@ jobs:
             --namespace argo-workflows \
             --run-name auto-kg-release \
             --release-version "${{ env.release_version }}" \
-            --pipeline ingestion \
-            --is-test \
+            --pipeline kg_release \
             --headless \
             --run-from-gh
