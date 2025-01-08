@@ -7,7 +7,7 @@ import re
 from types import BuiltinFunctionType, FunctionType
 from typing import Any, Dict, List, Tuple
 
-OBJECT_KW = "object"
+OBJECT_KW = "_object"
 INSTANTIATE_KW = "instantiate"
 UNPACK_KW = "unpack"
 
