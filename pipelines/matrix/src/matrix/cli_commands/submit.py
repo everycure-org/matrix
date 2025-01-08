@@ -131,7 +131,7 @@ def _submit(
     try:
         console.rule("[bold blue]Submitting Workflow")
 
-        check_dependencies(verbose=False)
+        check_dependencies(verbose=verbose)
 
         argo_template = build_argo_template(run_name, release_version, username, namespace, pipeline_obj, is_test=is_test, )
 
@@ -416,7 +416,7 @@ def submit_workflow(run_name: str, namespace: str, verbose: bool):
         "-o json"
     ])
     console.print(f"Running submit command: [blue]{cmd}[/blue]")
-    result = run_subprocess(cmd, stream_output=False)
+    result = run_subprocess(cmd)
     job_name = json.loads(result.stdout).get("metadata", {}).get("name")
 
     if not job_name:
