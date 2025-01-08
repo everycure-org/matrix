@@ -55,8 +55,8 @@ def submit(username: str, namespace: str, run_name: str, release_version: str, p
     if not quiet:
         log.setLevel(logging.DEBUG)
 
-    # TODO: re-enable after it's clear this is only a data-release submission (i.e. the release version is present, see also #797.
-    #  abort_if_unmet_git_requirements()
+    if pipeline in ('data_release', 'kg_release'):
+        abort_if_unmet_git_requirements()
 
     if pipeline not in kedro_pipelines.keys():
         raise ValueError("Pipeline requested for execution not found")
@@ -464,8 +464,8 @@ def abort_if_unmet_git_requirements():
     """
     errors = []
 
-    if get_current_git_branch() not in ("main", "master"):
-        errors.append("Invalid branch (must be 'main' or 'master').")
+    if not get_current_git_branch().startswith('release'):
+        errors.append("Invalid branch name (must be a dedicated release branch starting with 'release'.")
 
     if has_dirty_git():
         errors.append("Repository has uncommitted changes or untracked files.")
