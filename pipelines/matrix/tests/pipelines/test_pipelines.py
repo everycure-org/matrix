@@ -185,6 +185,16 @@ def test_parameters_filepath_follows_conventions(conf_source, config_loader):
             # Extract pipeline name from filepath
             _, pipeline, _ = os.path.relpath(file, conf_source).split(os.sep, 2)
 
+            # Do not allow empty files
+            if entries is None:
+                failed_results.append(
+                    {
+                        "filepath": file,
+                        "description": "Empty parameters file.",
+                    }
+                )
+                continue
+
             # Validate each entry
             for entry, _ in entries.items():
                 # Ignore tmp. entries
