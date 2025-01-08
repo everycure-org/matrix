@@ -17,8 +17,8 @@ from rich.logging import RichHandler
 from rich.panel import Panel
 
 from matrix.argo import ARGO_TEMPLATES_DIR_PATH, generate_argo_config
-from matrix.kedro4argo_node import ArgoResourceConfig
 from matrix.git_utils import get_current_git_branch, has_dirty_git
+from matrix.kedro4argo_node import ArgoResourceConfig
 
 logging.basicConfig(
     level=logging.INFO,
