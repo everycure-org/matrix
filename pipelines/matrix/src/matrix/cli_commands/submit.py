@@ -416,7 +416,7 @@ def submit_workflow(run_name: str, namespace: str, verbose: bool):
         "-o json"
     ])
     console.print(f"Running submit command: [blue]{cmd}[/blue]")
-    result = run_subprocess(cmd)
+    result = run_subprocess(cmd, stream_output=False)
     job_name = json.loads(result.stdout).get("metadata", {}).get("name")
 
     if not job_name:
