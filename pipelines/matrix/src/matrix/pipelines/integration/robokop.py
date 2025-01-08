@@ -1,8 +1,8 @@
 import pandas as pd
 import pandera.pyspark as pa
+from pyspark.sql import DataFrame
 import pyspark.sql.functions as F
 import pyspark.sql.types as T
-from pyspark.sql import DataFrame
 
 from .transformer import GraphTransformer
 

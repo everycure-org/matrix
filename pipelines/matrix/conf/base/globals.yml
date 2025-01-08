@@ -2,7 +2,7 @@ random_state: 111
 
 neo4j:
   # these get overwritten in prod through the env variables, in base we default to 2nd param
-  host: ${oc.env:NEO4J_HOST,bolt://127.0.0.1:7687}
+  host: ${oc.env:NEO4J_HOST,bolt+ssc://127.0.0.1:7687} # NOTE: Passing in bolt+s as our local Neo4J has SSL enabled
   user: ${oc.env:NEO4J_USER,neo4j}
   password: ${oc.env:NEO4J_PASSWORD,admin}
 
@@ -23,6 +23,8 @@ data_sources:
     version: &_rtx_kg_version v2.7.3 #when bumping to 2.10, we should stop to limit PMID for the semmed filtering
   robokop:
     version: c5ec1f282158182f
+  spoke:
+    version: V5
 # Dataset with node and edge proposals by the
 # EveryCure medical team.
   ec-medical-team:

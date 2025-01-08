@@ -1,9 +1,12 @@
 import logging
+import json
 import os
+import re
 from datetime import datetime
 from typing import Any, Dict, Optional
 
 import mlflow
+import fsspec
 import pandas as pd
 import termplotlib as tpl
 from kedro.framework.context import KedroContext
@@ -15,6 +18,7 @@ from mlflow.exceptions import RestException
 from omegaconf import OmegaConf
 from pyspark import SparkConf
 from pyspark.sql import SparkSession
+from matrix.pipelines.data_release import last_node_name as last_data_release_node_name
 
 logger = logging.getLogger(__name__)
 
@@ -142,7 +146,7 @@ class SparkHooks:
                     k: v for k, v in parameters.items() if not k.startswith("spark.hadoop.google.cloud.auth.service")
                 }
             else:
-                logger.info(f"Executing for enviornment: {cls._kedro_context.env}")
+                logger.info(f"Executing for environment: {cls._kedro_context.env}")
                 logger.info(f'With ARGO_POD_UID set to: {os.environ.get("ARGO_NODE_ID", "")}')
                 logger.info("Thus determined not to be in k8s cluster and executing with service-account.json file")
 
@@ -255,3 +259,89 @@ class NodeTimerHooks:
             self.node_times[name]["end"] = datetime.now()
         else:
             raise Exception("there should be a node starting timer")
+
+
+class ReleaseInfoHooks:
+    _kedro_context: Optional[KedroContext] = None
+    _globals: Optional[dict] = None
+    _params: Optional[dict] = None
+
+    @classmethod
+    def set_context(cls, context: KedroContext) -> None:
+        """Utility class method that stores context in class as singleton."""
+        cls._kedro_context = context
+        cls._globals = context.config_loader["globals"]
+        cls._params = context.config_loader["parameters"]
+
+    @hook_impl
+    def after_context_created(self, context: KedroContext) -> None:
+        """Remember context for later export from a node hook."""
+        logger.info("Remembering context for context export later")
+        ReleaseInfoHooks.set_context(context)
+
+    @staticmethod
+    def build_bigquery_link() -> str:
+        version = ReleaseInfoHooks._globals["versions"]["release"]
+        version_formatted = "release_" + re.sub(r"[.-]", "_", version)
+        tmpl = (
+            f"https://console.cloud.google.com/bigquery?"
+            f"project={ReleaseInfoHooks._globals['gcp_project']}"
+            f"&ws=!1m4!1m3!3m2!1s"
+            f"mtrx-hub-dev-3of!2s"
+            f"{version_formatted}"
+        )
+        return tmpl
+
+    @staticmethod
+    def build_code_link() -> str:
+        version = ReleaseInfoHooks._globals["versions"]["release"]
+        tmpl = f"https://github.com/everycure-org/matrix/tree/{version}"
+        return tmpl
+
+    @staticmethod
+    def build_mlflow_link() -> str:
+        run_id = ReleaseInfoHooks._kedro_context.mlflow.tracking.run.id
+        experiment_name = ReleaseInfoHooks._kedro_context.mlflow.tracking.experiment.name
+        experiment_id = mlflow.get_experiment_by_name(experiment_name).experiment_id
+        tmpl = f"https://mlflow.platform.dev.everycure.org/#/experiments/{experiment_id}/runs/{run_id}"
+        return tmpl
+
+    @staticmethod
+    def extract_release_info() -> dict[str, str]:
+        info = {
+            "Release Name": ReleaseInfoHooks._globals["versions"]["release"],
+            "Robokop Version": ReleaseInfoHooks._globals["data_sources"]["robokop"]["version"],
+            "RTX-KG2 Version": ReleaseInfoHooks._globals["data_sources"]["rtx-kg2"]["version"],
+            "EC Medical Team Version": ReleaseInfoHooks._globals["data_sources"]["ec-medical-team"]["version"],
+            "Topological Estimator": ReleaseInfoHooks._params["embeddings.topological_estimator"]["object"],
+            "Embeddings Encoder": ReleaseInfoHooks._params["embeddings.node"]["encoder"]["encoder"]["model"],
+            "BigQuery Link": ReleaseInfoHooks.build_bigquery_link(),
+            "MLFlow Link": ReleaseInfoHooks.build_mlflow_link(),
+            "Code Link": ReleaseInfoHooks.build_code_link(),
+            "Neo4j Link": "coming soon!",
+            "NodeNorm Endpoint Link": "https://nodenorm.transltr.io/1.5/get_normalized_nodes",
+        }
+        return info
+
+    @staticmethod
+    def upload_to_storage(release_info: dict[str, str]) -> None:
+        release_dir = ReleaseInfoHooks._globals["release_dir"]
+        release_version = ReleaseInfoHooks._globals["versions"]["release"]
+        full_blob_path = os.path.join(release_dir, f"{release_version}_info.json")
+
+        with fsspec.open(full_blob_path, "wb") as f:
+            f.write(json.dumps(release_info).encode("utf-8"))
+
+    @hook_impl
+    def after_node_run(self, node: Node) -> None:
+        """Runs after the last node of the data_release pipeline"""
+        # We chose to add this using the `after_node_run` hook, rather than
+        # `after_pipeline_run`, because one does not know a priori which
+        # pipelines the (last) data release node is part of. With an
+        # `after_node_run`, you can limit your filters easily.
+        if node.name == last_data_release_node_name:
+            release_info = self.extract_release_info()
+            try:
+                self.upload_to_storage(release_info)
+            except KeyError:
+                logger.warning("Could not upload release info after running Kedro node.", exc_info=True)

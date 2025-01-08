@@ -1,3 +1,3 @@
-"evaluation.{model}.{evaluation}.model_output.result":
+"evaluation.{model}.{evaluation}.reporting.result_aggregated_reduced":
   type: matrix.datasets.mlflow.MlflowMetricsDataset
   key_prefix: "{model}.{evaluation}"

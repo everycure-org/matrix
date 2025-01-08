@@ -1,5 +1,4 @@
 ./packages/data_fabricator
-./packages/refit 
 gcsfs==2024.3.1
 hdfs==2.7.3
 ipython>=8.10
@@ -14,6 +13,7 @@ notebook
 pyarrow>=14.0.2 
 pyspark==3.5.1
 pytest
+seaborn
 s3fs
 scikit-learn==1.4.0
 scikit-optimize
@@ -21,6 +21,7 @@ xgboost
 hdfs
 graphdatascience
 neo4j>=5.5.0
+numpy==1.23.5 # This was pinned during refit refactor; fabricator pipeline fails on 1.26.4
 python-cypher==0.20.1
 termplotlib
 seaborn
@@ -35,7 +36,7 @@ pytest-testmon
 tenacity
 pytest-mock
 pytest-cov
-pandera
+pandera>=0.21.1
 rich
 ruff==0.6.8 # Matches pre-commit version
 # Temp. fix for the gcloud cli

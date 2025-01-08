@@ -1,4 +1,3 @@
-
 This page provides an overview of a few advanced Kedro features and customizations we've implemented in our project.
 
 ## Dataset transcoding
@@ -85,7 +84,7 @@ estimator:
 # inject_object() recorgnizes configuration in the above format,
 # and ensures that the decorated function receives the instantiated 
 # objects.
-from refit.v1.core.inject import inject_object
+from matrix.core import inject_object
 
 @inject_object()
 def train_model(
@@ -129,11 +128,19 @@ The dependency injection pattern is an excellent technique to clean configuratio
     This is an advanced topic, and can be skipped during the oboarding.
 
 !!! tip 
-    Dynamic pipelining is a rather new concept in Kedro. We recommend checking out the [Dynamic Pipelines](https://getindata.com/blog/kedro-dynamic-pipelines/) blogpost. This pipelining strategy heavily relies on Kedro's [dataset factories](https://docs.kedro.org/en/stable/data/kedro_dataset_factories.html) feature.
+    Kedro pipelines are usually limited to static layouts. However, often you find yourself in a position where you want to instaniate the same pipeline _multiple times_. Dynamic pipelines are used to control the layout of the pipeline dynamically. We recommend checking out the [Dynamic Pipelines](https://getindata.com/blog/kedro-dynamic-pipelines/) blogpost. This pipelining strategy heavily relies on Kedro's [dataset factories](https://docs.kedro.org/en/stable/data/kedro_dataset_factories.html) feature.
+
+Dynamic pipelines in Kedro allow us to do exactly this, it is a workaround that enables us to control the layout of the pipeline dynamically. We're doing that through the `settings.py` file. This file essentially provides a higher-order configuration mechanism, that can be used to create more complex pipelines.
+
+![](../assets/img/dynamic_pipeline_config.excalidraw.svg)
+
+
+### Example: Single pipeline to produce multiple models
+
 
 Given the experimental nature of our project, we aim to produce different model flavours. For instance, a model with static hyper-parameters, a model that is hyper-parameter tuned, and an ensemble of hyper-parameter tuned models, etc.
 
-Dynamic pipelines in Kedro allow us to do exactly this. We're defining a single pipeline skeleton, which is instantiated multiple times, with different parameters. The power here lies in the fact that our compute infrastructure now executes all these nodes in isolation from each other, allowing us to train dozens of models in parallel without having to think about compute infrastructure. We simply execute the pipeline and compute instances get provisioned and removed dynamically as we need them, greatly reducing our compute operational and maintenance overhead. 
+We're defining a single pipeline skeleton, which is instantiated multiple times, with different parameters. The power here lies in the fact that our compute infrastructure now executes all these nodes in isolation from each other, allowing us to train dozens of models in parallel without having to think about compute infrastructure. We simply execute the pipeline and compute instances get provisioned and removed dynamically as we need them, greatly reducing our compute operational and maintenance overhead. 
 
 ![](../assets/img/dynamic_pipelines.gif)
 
@@ -142,6 +149,44 @@ The above visualisation comes from [kedro viz](https://github.com/kedro-org/kedr
 
 [^1]: Kedro allows for fine-grained control over pipeline execution, through the [kedro run](https://docs.kedro.org/en/stable/nodes_and_pipelines/run_a_pipeline.html) command.
 
+## Disabling hooks through environment variables
+
+Kedro hooks are powerful tools that allow us to execute code before and after various pipeline events. However, during local development or debugging, you might want to disable certain hooks (like MLflow logging) without modifying the code. We've implemented a flexible mechanism to disable hooks using environment variables.
+
+### How it works
+
+1. Hooks are defined in `settings.py` as a dictionary:
+```python
+hooks = {
+    "node_timer": matrix_hooks.NodeTimerHooks(),
+    "mlflow": MlflowHook(),
+    "mlflow_kedro": matrix_hooks.MLFlowHooks(),
+    "spark": matrix_hooks.SparkHooks(),
+}
+```
+
+2. The `determine_hooks_to_execute()` utility function checks for environment variables that start with `KEDRO_HOOKS_DISABLE_` followed by the uppercase hook name. If such an environment variable exists, the corresponding hook is disabled.
+
+### Usage examples
+
+To disable specific hooks, set the corresponding environment variable before running your Kedro pipeline, e.g. in the [`.env` file](./local-setup.md):
+
+```bash
+# Disable multiple hooks
+KEDRO_HOOKS_DISABLE_MLFLOW=1
+KEDRO_HOOKS_DISABLE_NODE_TIMER=1
+
+# Run your pipeline
+kedro run
+```
+
+This is particularly useful when:
+- Running locally without needing MLflow tracking
+- Reducing overhead during development
+- Running the pipeline in environments where certain services are unavailable (e.g. Google Colabs)
+
+!!! note
+    The value of the environment variable doesn't matter - its mere presence is enough to disable the hook. You can use any value like `1`, `true`, or even an empty string.
 
 ## End of the tutorial
 
