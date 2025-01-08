@@ -83,18 +83,6 @@ def _add_flag_columns(matrix: pd.DataFrame, known_pairs: pd.DataFrame, clinical_
     return matrix
 
 
-def spark_to_pd(nodes: DataFrame) -> pd.DataFrame:
-    """Temporary function to transform spark parquet to pandas parquet.
-
-    Related to https://github.com/everycure-org/matrix/issues/71.
-    TODO: replace/remove the function once pyarrow error is fixed.
-
-    Args:
-        nodes: Dataframe with node embeddings
-    """
-    return nodes.toPandas()
-
-
 class TrialSchema(DataFrameModel):
     source: Series[object]
     target: Series[object]
@@ -112,11 +100,11 @@ class TrialSchema(DataFrameModel):
 @pa.check_output(TrialSchema)
 @inject_object()
 def generate_pairs(
-    drugs: DataFrame,
-    diseases: DataFrame,
+    drugs: pd.DataFrame,
+    diseases: pd.DataFrame,
     graph: KnowledgeGraph,
     known_pairs: pd.DataFrame,
-    clinical_trials: DataFrame,
+    clinical_trials: pd.DataFrame,
 ) -> pd.DataFrame:
     """Function to generate matrix dataset.
 
@@ -132,14 +120,9 @@ def generate_pairs(
     Returns:
         Pairs dataframe containing all combinations of drugs and diseases that do not lie in the training set.
     """
-    # Transcode to pandas
-    # TODO: Remove this transcoding and move to data catalog
-    drugs = drugs.toPandas()
-    diseases = diseases.toPandas()
-    clinical_trials = clinical_trials.toPandas()
     # Collect list of drugs and diseases
-    drugs_lst = drugs["curie"].tolist()
-    diseases_lst = diseases["category_class"].tolist()
+    drugs_lst = drugs["id"].tolist()
+    diseases_lst = diseases["id"].tolist()
 
     # Remove duplicates
     drugs_lst = list(set(drugs_lst))
@@ -358,15 +341,15 @@ def _process_top_pairs(
     top_pairs = data.head(n_reporting).copy()
     # Generate mapping dictionaries
     drug_mappings = {
-        "kg_name": {row["curie"]: row["name"] for _, row in drugs.iterrows()},
-        "list_id": {row["curie"]: row["curie"] for _, row in drugs.iterrows()},
-        "list_name": {row["curie"]: row["curie_label"] for _, row in drugs.iterrows()},
+        "kg_name": {row["id"]: row["name"] for _, row in drugs.iterrows()},
+        "list_id": {row["id"]: row["id"] for _, row in drugs.iterrows()},
+        "list_name": {row["id"]: row["name"] for _, row in drugs.iterrows()},
     }
 
     disease_mappings = {
-        "kg_name": {row["category_class"]: row["name"] for _, row in diseases.iterrows()},
-        "list_id": {row["category_class"]: row["category_class"] for _, row in diseases.iterrows()},
-        "list_name": {row["category_class"]: row["label"] for _, row in diseases.iterrows()},
+        "kg_name": {row["id"]: row["name"] for _, row in diseases.iterrows()},
+        "list_id": {row["id"]: row["id"] for _, row in diseases.iterrows()},
+        "list_name": {row["id"]: row["name"] for _, row in diseases.iterrows()},
     }
 
     # Add additional information
@@ -503,8 +486,8 @@ def _add_tags(
     """
     # Add tag columns for drugs and diseasesto the top pairs DataFrame
     for set, set_id, df, df_id in [
-        ("drugs", "kg_drug_id", drugs, "curie"),
-        ("diseases", "kg_disease_id", diseases, "category_class"),
+        ("drugs", "kg_drug_id", drugs, "id"),
+        ("diseases", "kg_disease_id", diseases, "id"),
     ]:
         for tag_name, _ in matrix_params.get(set, {}).items():
             if tag_name not in df.columns:
@@ -590,10 +573,6 @@ def generate_report(
     Returns:
         Dataframe with the top pairs and additional information for the drugs and diseases.
     """
-    # TODO: Remove this transcoding and move to data catalog
-    drugs = drugs.toPandas()
-    diseases = diseases.toPandas()
-
     # Add tags and process top pairs
     stats = matrix_params.get("stats_col_names")
     tags = matrix_params.get("tags")

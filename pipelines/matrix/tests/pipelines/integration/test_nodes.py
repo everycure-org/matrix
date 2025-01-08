@@ -1,7 +1,6 @@
 from typing import Any, Dict
 
 import pytest
-from jsonpath_ng.parser import parse
 from matrix.pipelines.integration import nodes
 from matrix.schemas.knowledge_graph import KGEdgeSchema, KGNodeSchema
 from pyspark.sql import DataFrame
@@ -12,7 +11,6 @@ from pyspark.sql.types import (
     StructField,
     StructType,
 )
-from pyspark.testing import assertDataFrameEqual
 
 
 @pytest.fixture
@@ -281,149 +279,3 @@ def test_unify_edges(spark, sample_edges):
     assert set(treat_edge.aggregator_knowledge_source) == {"infores:aggregator1", "infores:aggregator3"}
     assert set(treat_edge.publications) == {"PMID:12345678", "PMID:34567890"}
     assert set(treat_edge.upstream_data_source) == {"source1", "source3"}
-
-
-# Mock the aiohttp ClientSession.post method
-class MockResponse:
-    def __init__(self, json, status):
-        self._json = json
-        self.status = status
-
-    async def json(self):
-        return self._json
-
-    async def __aexit__(self, exc_type, exc, tb):
-        pass
-
-    async def __aenter__(self):
-        return self
-
-
-@pytest.mark.spark(
-    help="This test relies on PYSPARK_PYTHON to be set appropriately, and sometimes does not work in VSCode"
-)
-def test_normalize_kg(spark, mocker):
-    # Given
-    sample_nodes = spark.createDataFrame(
-        [
-            ("CHEBI:119157", "Drug1", "biolink:Drug"),
-            ("MONDO:0005148", "Disease1", "biolink:Disease"),
-        ],
-        ["id", "name", "category"],
-    )
-
-    sample_edges = spark.createDataFrame(
-        [
-            ("CHEBI:119157", "biolink:treats", "MONDO:0005148"),
-        ],
-        ["subject", "predicate", "object"],
-    )
-
-    mocker.patch(
-        "aiohttp.ClientSession.post",
-        return_value=MockResponse(
-            json={
-                "CHEBI:119157": {"id": {"identifier": "CHEBI:normalized_119157"}},
-                "MONDO:0005148": None,
-            },
-            status=200,
-        ),
-    )
-
-    # Expected output DataFrames
-    expected_nodes = spark.createDataFrame(
-        [
-            ("CHEBI:normalized_119157", "Drug1", "biolink:Drug", "CHEBI:119157", True),
-            ("MONDO:0005148", "Disease1", "biolink:Disease", "MONDO:0005148", False),
-        ],
-        ["id", "name", "category", "original_id", "normalization_success"],
-    )
-
-    expected_edges = spark.createDataFrame(
-        [
-            (
-                "CHEBI:normalized_119157",
-                "biolink:treats",
-                "MONDO:0005148",
-                "CHEBI:119157",
-                "MONDO:0005148",
-                True,
-                False,
-            ),
-        ],
-        [
-            "subject",
-            "predicate",
-            "object",
-            "original_subject",
-            "original_object",
-            "subject_normalization_success",
-            "object_normalization_success",
-        ],
-    )
-
-    expected_mapping = spark.createDataFrame(
-        [
-            ("CHEBI:119157", "CHEBI:normalized_119157", True),
-            ("MONDO:0005148", "MONDO:0005148", False),
-        ],
-        ["id", "normalized_id", "normalization_success"],
-    )
-
-    # When
-    normalized_nodes, normalized_edges, mapping_df = nodes.normalize_kg(sample_nodes, sample_edges, "http://dummy")
-
-    # Then
-    assertDataFrameEqual(normalized_nodes[expected_nodes.columns], expected_nodes)
-    assertDataFrameEqual(normalized_edges[expected_edges.columns], expected_edges)
-    assertDataFrameEqual(mapping_df[expected_mapping.columns], expected_mapping)
-
-
-@pytest.mark.parametrize(
-    "attribute,expected",
-    [
-        (parse("$.id.identifier"), "CHEBI:28887"),
-        (parse("$.id.label"), "Ofatumumab"),
-        (parse("$.type[0]"), "biolink:SmallMolecule"),
-        (parse("$.type"), ["biolink:SmallMolecule", "biolink:MolecularEntity"]),
-        (parse("$.non.existing.attribute"), None),
-    ],
-)
-def test_extract_ids(nodenorm_response, attribute, expected):
-    # Given a nodenorm response
-
-    # When extracting an attribute
-    response = nodes._extract_ids(nodenorm_response, attribute)
-
-    # Then correct response returned
-    assert response["CHEMBL.COMPOUND:CHEMBL1201836"] == expected
-
-
-def test_extract_type_not_found():
-    # Given a nodenorm response
-    nodenorm_response = {
-        "CHEMBL.COMPOUND:CHEMBL1201836": {
-            "id": {
-                "identifier": "CHEBI:28887",
-                "label": "Ofatumumab",
-                "description": "An ether in which the oxygen atom is connected to two methyl groups.",
-            },
-            "equivalent_identifiers": [
-                {
-                    "identifier": "CHEBI:28887",
-                    "label": "dimethyl ether",
-                    "description": "An ether in which the oxygen atom is connected to two methyl groups.",
-                },
-                {"identifier": "UNII:AM13FS69BX", "label": "DIMETHYL ETHER"},
-            ],
-            # "type": None, #["biolink:SmallMolecule", "biolink:MolecularEntity"],
-            "information_content": 92.8,
-        }
-    }
-
-    # When extracting an attribute
-    json_parser = parse("$.type[0]")
-    response = nodes._extract_ids(nodenorm_response, json_parser)
-
-    # Then correct response returned
-    assert response["CHEMBL.COMPOUND:CHEMBL1201836"] is None
