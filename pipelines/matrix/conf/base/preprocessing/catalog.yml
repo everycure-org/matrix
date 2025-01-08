@@ -121,27 +121,6 @@ preprocessing.raw.drug_list:
   load_args:
     sep: "\t"
 
-preprocessing.raw.enriched_disease_list:
-  <<: [*_layer_raw]
-  type: pandas.CSVDataset
-  filepath: ${globals:paths.tmp}/disease_list/${globals:data_sources.ec-disease-list.version}/enriched_disease_list.tsv
-  save_args:
-    sep: "\t"
-    header: true
-    index: false
-  load_args:
-    sep: "\t"
-
-preprocessing.raw.infer_sheet:
-  <<: [*_layer_raw, *_sheets_dataset]
-  load_args:
-    sheet_name: form
-    columns:
-      - Timestamp
-      - Drug_ID
-      - Disease_ID
-      - Name
-
 preprocessing.raw.ground_truth.positives:
   <<: [*_layer_raw]
   type: pandas.CSVDataset
