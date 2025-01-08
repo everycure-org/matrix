@@ -191,7 +191,7 @@ def run_subprocess(
     cmd: str,
     check: bool = True,
     shell: bool = True,
-    stream_output: bool = False,
+    stream_output: bool = True,
 ) -> subprocess.CompletedProcess:
     """Run a subprocess command and handle errors.
 
