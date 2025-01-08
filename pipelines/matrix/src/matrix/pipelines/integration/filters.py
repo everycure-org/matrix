@@ -4,12 +4,12 @@ from typing import Any, Dict, List, Optional
 import pandas as pd
 import pyspark.sql.functions as F
 import pyspark.sql.functions as f
-from pyspark.sql import DataFrame, Window, SparkSession
+import pyspark.sql as ps
 
 logger = logging.getLogger(__name__)
 
 
-def biolink_deduplicate_edges(edges_df: DataFrame, biolink_predicates: DataFrame):
+def biolink_deduplicate_edges(edges_df: ps.DataFrame, biolink_predicates: ps.DataFrame):
     """Function to deduplicate biolink edges.
 
     Knowledge graphs in biolink format may contain multiple edges between nodes. Where
@@ -58,7 +58,7 @@ def biolink_deduplicate_edges(edges_df: DataFrame, biolink_predicates: DataFrame
 
 
 def convert_biolink_hierarchy_json_to_df(biolink_predicates, col_name: str, convert_to_pascal_case: bool):
-    spark = SparkSession.builder.getOrCreate()
+    spark = ps.SparkSession.builder.getOrCreate()
     biolink_hierarchy = spark.createDataFrame(
         unnest_biolink_hierarchy(
             col_name,
@@ -71,7 +71,7 @@ def convert_biolink_hierarchy_json_to_df(biolink_predicates, col_name: str, conv
     return biolink_hierarchy
 
 
-def determine_most_specific_category(nodes: DataFrame, biolink_categories_df: pd.DataFrame) -> DataFrame:
+def determine_most_specific_category(nodes: ps.DataFrame, biolink_categories_df: pd.DataFrame) -> ps.DataFrame:
     """Function to retrieve most specific entry for each node.
 
     Example:
@@ -91,14 +91,14 @@ def determine_most_specific_category(nodes: DataFrame, biolink_categories_df: pd
         # we deal with failed joins by setting their parents to [] == the depth as level 0 == chosen last
         .withColumn("parents", f.coalesce("parents", f.lit(f.array())))
         .withColumn("depth", F.array_size("parents"))
-        .withColumn("row_num", F.row_number().over(Window.partitionBy("id").orderBy(F.col("depth").desc())))
+        .withColumn("row_num", F.row_number().over(ps.Window.partitionBy("id").orderBy(F.col("depth").desc())))
         .filter(F.col("row_num") == 1)
         .drop("row_num")
     )
     return nodes
 
 
-def remove_rows_containing_category(nodes: DataFrame, categories: List[str], column: str, **kwargs) -> DataFrame:
+def remove_rows_containing_category(nodes: ps.DataFrame, categories: List[str], column: str, **kwargs) -> ps.DataFrame:
     """Function to remove rows containing a category."""
     return nodes.filter(~F.col(column).isin(categories))
 

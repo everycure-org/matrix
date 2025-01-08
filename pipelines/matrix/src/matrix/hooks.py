@@ -17,7 +17,7 @@ from kedro_datasets.spark import SparkDataset
 from mlflow.exceptions import RestException
 from omegaconf import OmegaConf
 from pyspark import SparkConf
-from pyspark.sql import SparkSession
+import pyspark.sql as ps
 from matrix.pipelines.data_release import last_node_name as last_data_release_node_name
 
 logger = logging.getLogger(__name__)
@@ -112,7 +112,7 @@ class MLFlowHooks:
 class SparkHooks:
     """Spark project hook with lazy initialization and global session override."""
 
-    _spark_session: Optional[SparkSession] = None
+    _spark_session: Optional[ps.SparkSession] = None
     _already_initialized = False
     _kedro_context: Optional[KedroContext] = None
 
@@ -129,7 +129,7 @@ class SparkHooks:
         # if we have not initiated one, we initiate one
         if cls._spark_session is None:
             # Clear any existing default session, we take control!
-            sess = SparkSession.getActiveSession()
+            sess = ps.SparkSession.getActiveSession()
             if sess is not None:
                 logger.warning("we are killing spark to create a fresh one")
                 sess.stop()
@@ -155,7 +155,9 @@ class SparkHooks:
 
             # Create and set our configured session as the default
             cls._spark_session = (
-                SparkSession.builder.appName(cls._kedro_context.project_path.name).config(conf=spark_conf).getOrCreate()
+                ps.SparkSession.builder.appName(cls._kedro_context.project_path.name)
+                .config(conf=spark_conf)
+                .getOrCreate()
             )
         else:
             logger.debug("SparkSession already initialized")
