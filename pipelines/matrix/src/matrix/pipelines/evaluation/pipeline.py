@@ -24,9 +24,9 @@ def _create_evaluation_fold_pipeline(model: str, evaluation: str, fold: Union[st
     return pipeline(
         [
             argo_node(
-                func=partial_fold(nodes.generate_test_dataset, fold),
+                func=partial_fold(nodes.generate_test_dataset, fold, arg_name="known_pairs"),
                 inputs={
-                    "data": "modelling.model_input.splits",
+                    "known_pairs": "modelling.model_input.splits",
                     "matrix": f"matrix_generation.{model}.fold_{fold}.model_output.sorted_matrix_predictions@pandas",
                     "generator": f"params:evaluation.{evaluation}.evaluation_options.generator",
                     "score_col_name": "params:matrix_generation.treat_score_col_name",

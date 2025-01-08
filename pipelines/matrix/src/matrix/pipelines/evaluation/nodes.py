@@ -76,7 +76,7 @@ class EdgesSchema(DataFrameModel):
 @pandera.check_output(EdgesSchema)
 @inject_object()
 def generate_test_dataset(
-    data: pd.DataFrame, matrix: pd.DataFrame, generator: DrugDiseasePairGenerator, score_col_name: str
+    known_pairs: pd.DataFrame, matrix: pd.DataFrame, generator: DrugDiseasePairGenerator, score_col_name: str
 ) -> pd.DataFrame:
     """Function to generate test dataset.
 
@@ -84,7 +84,7 @@ def generate_test_dataset(
     pairs dataset.
 
     Args:
-        data: Dataframe containing known pairs with test/train split.
+        known_pairs: Dataframe containing known pairs with test/train split.
         matrix: Pairs dataframe representing the full matrix with treat scores.
         generator: Generator strategy.
         score_col_name: name of column containing treat scores
@@ -96,7 +96,7 @@ def generate_test_dataset(
     # Perform checks
     # NOTE: We're currently repeat it for each fold, should
     # we consider moving to matrix outputs?
-    check_no_train(matrix, data)
+    check_no_train(matrix, known_pairs)
     check_ordered(matrix, score_col_name)
 
     return generator.generate(matrix)
