@@ -29,7 +29,7 @@ def _create_evaluation_fold_pipeline(model: str, evaluation: str, fold: Union[st
                     "data": "modelling.model_input.splits",
                     "matrix": f"matrix_generation.{model}.fold_{fold}.model_output.sorted_matrix_predictions@pandas",
                     "generator": f"params:evaluation.{evaluation}.evaluation_options.generator",
-                    "score_col_name": "params:evaluation.score_col_name",
+                    "score_col_name": "params:matrix_generation.treat_score_col_name",
                 },
                 outputs=f"evaluation.{model}.fold_{fold}.{evaluation}.model_output.pairs",
                 name=f"create_{model}_{evaluation}_evaluation_pairs_fold_{fold}",

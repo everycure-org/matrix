@@ -53,7 +53,7 @@ def _create_inference_pipeline(model_excl: str, model_incl: str) -> Pipeline:
             pipeline(
                 [inference_nodes],
                 parameters={
-                    "params:evaluation.score_col_name": "params:inference.score_col_name",
+                    "params:evaluation.treat_score_col_name": "params:inference.score_col_name",
                     "params:matrix_generation.matrix_generation_options.batch_by": "params:inference.matrix_generation_options.batch_by",
                     "params:matrix_generation.matrix_generation_options.n_reporting": "params:inference.matrix_generation_options.n_reporting",
                 },
