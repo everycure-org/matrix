@@ -203,7 +203,7 @@ def create_model_pipeline(model: str, num_shards: int, folds_lst: List[Union[str
     return sum(pipelines)
 
 
-def create_shared_pipeline(models_lst: List[str], folds_lst: List[Union[str, int]]) -> Pipeline:
+def create_shared_pipeline(model_name: str, folds_lst: List[Union[str, int]]) -> Pipeline:
     """Function to create pipeline of shared nodes.
 
     NOTE: The model and folds lists are added to tag the
@@ -259,7 +259,7 @@ def create_shared_pipeline(models_lst: List[str], folds_lst: List[Union[str, int
                 name="create_splits",
             ),
         ],
-        tags=[model for model in models_lst],
+        tags=[model_name],
     )
 
 
@@ -279,34 +279,34 @@ def create_pipeline(**kwargs) -> Pipeline:
     n_splits = settings.DYNAMIC_PIPELINES_MAPPING.get("cross_validation").get("n_splits")
     folds_lst = list(range(n_splits)) + ["full"]
 
-    # Unpack models
-    models = settings.DYNAMIC_PIPELINES_MAPPING.get("modelling")
+    # Unpack model
+    model = settings.DYNAMIC_PIPELINES_MAPPING.get("model")
+    model_name = model["name"]
+    model_config = model["config"]
 
     # Add shared nodes
     pipelines = []
-    pipelines.append(create_shared_pipeline(models.keys(), folds_lst))
+    pipelines.append(create_shared_pipeline(model_name, folds_lst))
 
-    # Generate pipeline for each model
-    for model_name, model_config in models.items():
-        # Generate pipeline for the model
-        pipelines.append(create_model_pipeline(model_name, model_config["num_shards"], folds_lst, n_splits))
+    # Generate pipeline for the model
+    pipelines.append(create_model_pipeline(model_name, model_config["num_shards"], folds_lst, n_splits))
 
-        # Now aggregate the metrics for the model
-        pipelines.append(
-            pipeline(
-                [
-                    argo_node(
-                        func=nodes.aggregate_metrics,
-                        inputs=[
-                            "params:modelling.aggregation_functions",
-                            *[f"modelling.{model_name}.fold_{fold}.reporting.metrics" for fold in range(n_splits)],
-                        ],
-                        outputs=f"modelling.{model_name}.reporting.metrics_aggregated",
-                        name=f"aggregate_{model_name}_model_performance_checks",
-                        tags=[f"{model_name}"],
-                    )
-                ]
-            )
+    # Now aggregate the metrics for the model
+    pipelines.append(
+        pipeline(
+            [
+                argo_node(
+                    func=nodes.aggregate_metrics,
+                    inputs=[
+                        "params:modelling.aggregation_functions",
+                        *[f"modelling.{model_name}.fold_{fold}.reporting.metrics" for fold in range(n_splits)],
+                    ],
+                    outputs=f"modelling.{model_name}.reporting.metrics_aggregated",
+                    name=f"aggregate_{model_name}_model_performance_checks",
+                    tags=[f"{model_name}"],
+                )
+            ]
         )
+    )
 
     return sum(pipelines)

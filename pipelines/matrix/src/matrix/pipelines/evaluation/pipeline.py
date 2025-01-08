@@ -47,12 +47,12 @@ def _create_evaluation_fold_pipeline(model: str, evaluation: str, fold: Union[st
 
 
 def create_model_pipeline(
-    model: str, evaluation_names: str, folds_lst: List[Union[str, int]], n_splits: int
+    model_name: str, evaluation_names: str, folds_lst: List[Union[str, int]], n_splits: int
 ) -> Pipeline:
     """Create pipeline to evaluate a single model.
 
     Args:
-        model: model name
+        model_name: model name
         num_shards: number of shard to generate
         folds_lst: lists of folds (e.g. [0, 1, 2, 3, "full"] if n_splits=3)
         n_splits: number of splits
@@ -67,8 +67,8 @@ def create_model_pipeline(
         for evaluation in evaluation_names:
             pipelines.append(
                 pipeline(
-                    _create_evaluation_fold_pipeline(model, evaluation, fold),
-                    tags=[model, evaluation],
+                    _create_evaluation_fold_pipeline(model_name, evaluation, fold),
+                    tags=[model_name, evaluation],
                 )
             )
 
@@ -82,24 +82,24 @@ def create_model_pipeline(
                         inputs=[
                             "params:modelling.aggregation_functions",
                             *[
-                                f"evaluation.{model}.fold_{fold}.{evaluation}.reporting.result"
+                                f"evaluation.{model_name}.fold_{fold}.{evaluation}.reporting.result"
                                 for fold in range(n_splits)
                             ],
                         ],
-                        outputs=f"evaluation.{model}.{evaluation}.reporting.result_aggregated",
-                        name=f"aggregate_{model}_{evaluation}_evaluation_results",
-                        tags=[model, evaluation],
+                        outputs=f"evaluation.{model_name}.{evaluation}.reporting.result_aggregated",
+                        name=f"aggregate_{model_name}_{evaluation}_evaluation_results",
+                        tags=[model_name, evaluation],
                     ),
                     # Reduce the aggregate results for simpler readout in MLFlow (e.g. only report mean)
                     argo_node(
                         func=nodes.reduce_aggregated_results,
                         inputs=[
-                            f"evaluation.{model}.{evaluation}.reporting.result_aggregated",
+                            f"evaluation.{model_name}.{evaluation}.reporting.result_aggregated",
                             "params:evaluation.reported_aggregations",
                         ],
-                        outputs=f"evaluation.{model}.{evaluation}.reporting.result_aggregated_reduced",
-                        name=f"reduce_aggregated_{model}_{evaluation}_evaluation_results",
-                        tags=[model, evaluation],
+                        outputs=f"evaluation.{model_name}.{evaluation}.reporting.result_aggregated_reduced",
+                        name=f"reduce_aggregated_{model_name}_{evaluation}_evaluation_results",
+                        tags=[model_name, evaluation],
                     ),
                 ]
             )
@@ -118,7 +118,7 @@ def create_pipeline(**kwargs) -> Pipeline:
     """
 
     # Unpack params
-    models = settings.DYNAMIC_PIPELINES_MAPPING.get("modelling")
+    model_name = settings.DYNAMIC_PIPELINES_MAPPING.get("model")["name"]
 
     # Unpack folds
     n_splits = settings.DYNAMIC_PIPELINES_MAPPING.get("cross_validation").get("n_splits")
@@ -130,8 +130,7 @@ def create_pipeline(**kwargs) -> Pipeline:
 
     # Generate pipelines for each model
     pipelines = []
-    for model in models.keys():
-        pipelines.append(create_model_pipeline(model, evaluation_names, folds_lst, n_splits))
+    pipelines.append(create_model_pipeline(model_name, evaluation_names, folds_lst, n_splits))
 
     # Consolidate metrics across models and folds
     pipelines.append(
@@ -142,15 +141,13 @@ def create_pipeline(**kwargs) -> Pipeline:
                     inputs={
                         # Consolidate aggregated reports per model fold
                         **{
-                            f"{model}.{evaluation}.fold_{fold}": f"evaluation.{model}.fold_{fold}.{evaluation}.reporting.result"
-                            for model in models.keys()
+                            f"{model_name}.{evaluation}.fold_{fold}": f"evaluation.{model_name}.fold_{fold}.{evaluation}.reporting.result"
                             for evaluation in evaluation_names
                             for fold in folds_lst
                         },
                         # Consolidate aggregated reports per model
                         **{
-                            f"{model}.{evaluation}.aggregated": f"evaluation.{model}.{evaluation}.reporting.result_aggregated"
-                            for model in models.keys()
+                            f"{model_name}.{evaluation}.aggregated": f"evaluation.{model_name}.{evaluation}.reporting.result_aggregated"
                             for evaluation in evaluation_names
                         },
                     },
