@@ -292,15 +292,15 @@ ingestion.int.ground_truth.edges:
 #     header: true
 #     index: false
 
-# ingestion.raw.robokop.nodes@pandas:
-#   <<: [*_pandas_csv, *_layer_raw]
-#   filepath: ${globals:paths.kg_raw}/KGs/robokop-kg/${globals:data_sources.robokop.version}/nodes.orig.tsv
-#   save_args:
-#     sep: "\t"
-#     header: true
-#     index: false
-#   load_args:
-#     sep: "\t"
+ingestion.raw.robokop.nodes@pandas:
+  <<: [*_pandas_csv, *_layer_raw]
+  filepath: ${globals:paths.kg_raw}/KGs/robokop-kg/${globals:data_sources.robokop.version}/nodes.orig.tsv
+  save_args:
+    sep: "\t"
+    header: true
+    index: false
+  load_args:
+    sep: "\t"
 
 # ingestion.raw.robokop.edges@spark:
 #   <<: *_layer_raw
@@ -312,15 +312,15 @@ ingestion.int.ground_truth.edges:
 #     header: true
 #     index: false
 
-# ingestion.raw.robokop.edges@pandas:
-#   <<: [*_pandas_csv, *_layer_raw]
-#   filepath: ${globals:paths.kg_raw}/KGs/robokop-kg/${globals:data_sources.robokop.version}/edges.orig.tsv
-#   save_args:
-#     sep: "\t"
-#     header: true
-#     index: false
-#   load_args:
-#     sep: "\t"
+ingestion.raw.robokop.edges@pandas:
+  <<: [*_pandas_csv, *_layer_raw]
+  filepath: ${globals:paths.kg_raw}/KGs/robokop-kg/${globals:data_sources.robokop.version}/edges.orig.tsv
+  save_args:
+    sep: "\t"
+    header: true
+    index: false
+  load_args:
+    sep: "\t"
 
 # ingestion.int.robokop.nodes:
 #    <<: [*_spark_parquet, *_layer_int]
@@ -343,15 +343,15 @@ ingestion.int.ground_truth.edges:
 #     header: true
 #     index: false
 
-# ingestion.raw.spoke.nodes@pandas:
-#   <<: [*_pandas_csv, *_layer_raw]
-#   filepath: ${globals:paths.kg_raw}/KGs/spoke/${globals:data_sources.spoke.version}/nodes.tsv
-#   save_args:
-#     sep: "\t"
-#     header: true
-#     index: false
-#   load_args:
-#     sep: "\t"
+ingestion.raw.spoke.nodes@pandas:
+  <<: [*_pandas_csv, *_layer_raw]
+  filepath: ${globals:paths.kg_raw}/KGs/spoke/${globals:data_sources.spoke.version}/nodes.tsv
+  save_args:
+    sep: "\t"
+    header: true
+    index: false
+  load_args:
+    sep: "\t"
 
 # ingestion.raw.spoke.edges@spark:
 #   <<: *_layer_raw
@@ -363,15 +363,15 @@ ingestion.int.ground_truth.edges:
 #     header: true
 #     index: false
 
-# ingestion.raw.spoke.edges@pandas:
-#   <<: [*_pandas_csv, *_layer_raw]
-#   filepath: ${globals:paths.kg_raw}/KGs/spoke/${globals:data_sources.spoke.version}/edges.tsv
-#   save_args:
-#     sep: "\t"
-#     header: true
-#     index: false
-#   load_args:
-#     sep: "\t"
+ingestion.raw.spoke.edges@pandas:
+  <<: [*_pandas_csv, *_layer_raw]
+  filepath: ${globals:paths.kg_raw}/KGs/spoke/${globals:data_sources.spoke.version}/edges.tsv
+  save_args:
+    sep: "\t"
+    header: true
+    index: false
+  load_args:
+    sep: "\t"
 
 # ingestion.int.spoke.nodes:
 #   <<: [*_spark_parquet, *_layer_int]
