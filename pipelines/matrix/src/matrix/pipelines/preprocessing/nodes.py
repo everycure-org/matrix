@@ -2,14 +2,15 @@ from functools import partial
 from typing import Callable, Dict, List, Tuple
 
 import pandas as pd
+from pandera.typing import Series
+from pandera import DataFrameModel, Field
+import pandera
 import requests
 from langchain.output_parsers import CommaSeparatedListOutputParser
 from langchain.prompts import ChatPromptTemplate
 from langchain.schema import HumanMessage, SystemMessage
 from matrix.pipelines.integration.nodes import batch_map_ids
-from refit.v1.core.inject import inject_object
-from refit.v1.core.inline_has_schema import has_schema
-from refit.v1.core.inline_primary_key import primary_key
+from matrix.inject import inject_object
 from jsonpath_ng import parse
 
 
@@ -102,16 +103,17 @@ def enrich_df(df: pd.DataFrame, endpoint: str, func: Callable, input_cols: str, 
     return df
 
 
-@has_schema(
-    schema={
-        "ID": "numeric",
-        "name": "object",
-        "curie": "object",
-        "normalized_curie": "object",
-    },
-    allow_subset=True,
-)
-@primary_key(primary_key=["ID"])
+class IntNodesSchema(DataFrameModel):
+    ID: Series[float]
+    name: Series[object]
+    curie: Series[object]
+    normalized_curie: Series[object]
+
+    class Config:
+        strict = False
+
+
+@pandera.check_output(IntNodesSchema)
 def create_int_nodes(
     nodes: pd.DataFrame,
     name_resolver: str,
@@ -144,13 +146,15 @@ def create_int_nodes(
     return resolved
 
 
-@has_schema(
-    schema={
-        "SourceId": "object",
-        "TargetId": "object",
-    },
-    allow_subset=True,
-)
+class IntEdgesSchema(DataFrameModel):
+    SourceId: Series[str] = Field(nullable=True)
+    TargetId: Series[str] = Field(nullable=True)
+
+    class Config:
+        strict = False
+
+
+@pandera.check_output(IntEdgesSchema)
 def create_int_edges(int_nodes: pd.DataFrame, int_edges: pd.DataFrame) -> pd.DataFrame:
     """Function to create int edges dataset.
 
@@ -182,16 +186,17 @@ def create_int_edges(int_nodes: pd.DataFrame, int_edges: pd.DataFrame) -> pd.Dat
     return res
 
 
-@has_schema(
-    schema={
-        "category": "object",
-        "id": "object",
-        "name": "object",
-        "description": "object",
-    },
-    allow_subset=True,
-)
-@primary_key(primary_key=["id"])
+class PrmNodesSchema(DataFrameModel):
+    category: Series[object]
+    id: Series[object] = Field(unique=True)
+    name: Series[object]
+    description: Series[object]
+
+    class Config:
+        strict = False
+
+
+@pandera.check_output(PrmNodesSchema)
 def create_prm_nodes(prm_nodes: pd.DataFrame) -> pd.DataFrame:
     """Function to create a primary nodes that contains only new nodes introduced by the source."""
     # `new_id` signals that the node should be added to the KG as a new id
@@ -203,20 +208,27 @@ def create_prm_nodes(prm_nodes: pd.DataFrame) -> pd.DataFrame:
         .rename(columns={"normalized_curie": "id"})
         .drop_duplicates("id")
     )
-    res["category"] = "biolink:" + prm_nodes["entity label"]
+    if len(res) > 0:
+        res["category"] = "biolink:" + prm_nodes["entity label"]
+    else:
+        # Create empty DataFrame with required schema
+        res = pd.DataFrame(columns=["category", "id", "name", "description"])
+
     return res
 
 
-@has_schema(
-    schema={
-        "subject": "object",
-        "predicate": "object",
-        "object": "object",
-        "knowledge_source": "object",
-    },
-    allow_subset=True,
-)
-@primary_key(primary_key=["subject", "predicate", "object"])
+class PrmEdgesSchema(DataFrameModel):
+    subject: Series[str] = Field(nullable=True)
+    predicate: Series[str] = Field(nullable=True)
+    object: Series[str] = Field(nullable=True)
+    knowledge_source: Series[str] = Field(nullable=True)
+
+    class Config:
+        strict = False
+        unique = ["subject", "predicate", "object"]  # Composite uniqueness constraint
+
+
+@pandera.check_output(PrmEdgesSchema)
 def create_prm_edges(int_edges: pd.DataFrame) -> pd.DataFrame:
     """Function to create a primary edges dataset by filtering and renaming columns."""
     # Replace empty strings with nan
@@ -230,20 +242,24 @@ def create_prm_edges(int_edges: pd.DataFrame) -> pd.DataFrame:
     return res
 
 
-@has_schema(
-    schema={
-        "clinical_trial_id": "object",
-        "reason_for_rejection": "object",
-        "drug_name": "object",
-        "disease_name": "object",
-        "significantly_better": "numeric",
-        "non_significantly_better": "numeric",
-        "non_significantly_worse": "numeric",
-        "significantly_worse": "numeric",
-    },
-    allow_subset=True,
-    df="df",
-)
+class ClinicalTrialsSchema(DataFrameModel):
+    clinical_trial_id: Series[object]
+    reason_for_rejection: Series[object]
+    drug_name: Series[object]
+    disease_name: Series[object]
+    drug_kg_curie: Series[object]
+    disease_kg_curie: Series[object]
+    conflict: Series[object]
+    significantly_better: Series[float]
+    non_significantly_better: Series[float]
+    non_significantly_worse: Series[float]
+    significantly_worse: Series[float]
+
+    class Config:
+        strict = False
+
+
+@pandera.check_output(ClinicalTrialsSchema)
 def map_name_to_curie(
     df: pd.DataFrame,
     name_resolver: str,
@@ -341,30 +357,25 @@ def map_name_to_curie(
     return df
 
 
-@has_schema(
-    schema={
-        "clinical_trial_id": "object",
-        "reason_for_rejection": "object",
-        "drug_name": "object",
-        "disease_name": "object",
-        "drug_kg_curie": "object",
-        "disease_kg_curie": "object",
-        "conflict": "object",
-        "significantly_better": "numeric",
-        "non_significantly_better": "numeric",
-        "non_significantly_worse": "numeric",
-        "significantly_worse": "numeric",
-    },
-    allow_subset=True,
-    df="df",
-)
-@primary_key(
-    primary_key=[
-        "clinical_trial_id",
-        "drug_kg_curie",
-        "disease_kg_curie",
-    ]
-)
+class CleanTrialsSchema(DataFrameModel):
+    clinical_trial_id: Series[object]
+    reason_for_rejection: Series[object]
+    drug_name: Series[object]
+    disease_name: Series[object]
+    drug_kg_curie: Series[object]
+    disease_kg_curie: Series[object]
+    conflict: Series[object]
+    significantly_better: Series[float]
+    non_significantly_better: Series[float]
+    non_significantly_worse: Series[float]
+    significantly_worse: Series[float]
+
+    class Config:
+        strict = False
+        unique = ["clinical_trial_id", "drug_kg_curie", "disease_kg_curie"]
+
+
+@pandera.check_output(CleanTrialsSchema)
 def clean_clinical_trial_data(df: pd.DataFrame) -> pd.DataFrame:
     """Clean clinical trails data.
 
@@ -399,11 +410,17 @@ def clean_clinical_trial_data(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-@has_schema(
-    schema={"single_ID": "object", "curie": "object", "name": "object"},
-    allow_subset=True,
-)
-# @primary_key(primary_key=["single_ID"]) #TODO: re-introduce once the drug list is ready
+class DrugListSchema(DataFrameModel):
+    single_ID: Series[object] = Field(nullable=True)
+    curie: Series[object] = Field(nullable=True)
+    name: Series[object] = Field(nullable=True)
+
+    class Config:
+        strict = False
+        # TODO: Add unique=["single_ID"] once drug list is ready
+
+
+@pandera.check_output(DrugListSchema)
 def clean_drug_list(
     drug_df: pd.DataFrame,
     endpoint: str,
@@ -444,20 +461,22 @@ def clean_drug_list(
     return drug_df.dropna(subset=["curie"])
 
 
-@has_schema(
-    schema={
-        "category_class": "object",
-        "label": "object",
-        "definition": "object",
-        "synonyms": "object",
-        "subsets": "object",
-        "crossreferences": "object",
-        "curie": "object",
-        "name": "object",
-    },
-    allow_subset=True,
-)
-@primary_key(primary_key=["category_class", "curie"])
+class DiseaseListSchema(DataFrameModel):
+    category_class: Series[object]
+    label: Series[object]
+    definition: Series[object]
+    synonyms: Series[object]
+    subsets: Series[object]
+    crossreferences: Series[object]
+    curie: Series[object]
+    name: Series[object]
+
+    class Config:
+        strict = False
+        unique = ["category_class", "curie"]
+
+
+@pandera.check_output(DiseaseListSchema)
 def clean_disease_list(
     disease_df: pd.DataFrame,
     endpoint: str,
@@ -499,18 +518,20 @@ def clean_disease_list(
     return disease_df.dropna(subset=["curie"]).fillna("")
 
 
-@has_schema(
-    {
-        "timestamp": "object",
-        "drug_id": "object",
-        "disease_id": "object",
-        "norm_drug_id": "object",
-        "norm_disease_id": "object",
-        "norm_drug_name": "object",
-        "norm_disease_name": "object",
-    },
-    allow_subset=True,
-)
+class InputSheetSchema(DataFrameModel):
+    timestamp: Series[object]
+    drug_id: Series[object]
+    disease_id: Series[object]
+    norm_drug_id: Series[object]
+    norm_disease_id: Series[object]
+    norm_drug_name: Series[object]
+    norm_disease_name: Series[object]
+
+    class Config:
+        strict = False
+
+
+@pandera.check_output(InputSheetSchema)
 def clean_input_sheet(
     input_df: pd.DataFrame,
     endpoint: str,

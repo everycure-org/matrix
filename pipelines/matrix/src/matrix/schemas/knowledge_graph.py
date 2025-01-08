@@ -1,13 +1,14 @@
 from typing import List, Type
 
 import pandera.pyspark as pa
+from pandera.pyspark import Field
 import pyspark.sql.functions as F
-from pandera.pyspark import DataFrameModel
+import pyspark.sql.types as T
+
 from pyspark.sql import DataFrame
-from pyspark.sql.types import ArrayType, StringType
 
 
-def cols_for_schema(schema_obj: Type[DataFrameModel]) -> List[str]:
+def cols_for_schema(schema_obj: Type[pa.DataFrameModel]) -> List[str]:
     """Convenience function that returns the columns of a schema.
 
     The function returns all the columns of the passed model. This is convenient for
@@ -17,23 +18,23 @@ def cols_for_schema(schema_obj: Type[DataFrameModel]) -> List[str]:
     return list(schema_obj.to_schema().columns.keys())
 
 
-class KGEdgeSchema(DataFrameModel):
+class KGEdgeSchema(pa.DataFrameModel):
     """Schema for a knowledge graph edges as exposed by the Data API."""
 
     # fmt: off
-    subject:                     StringType()            = pa.Field(nullable = False)
-    predicate:                   StringType()            = pa.Field(nullable = False)
-    object:                      StringType()            = pa.Field(nullable = False)
-    knowledge_level:             StringType()            = pa.Field(nullable = True)
-    primary_knowledge_source:    StringType()            = pa.Field(nullable = True)
-    aggregator_knowledge_source: ArrayType(StringType()) = pa.Field(nullable = True)
-    publications:                ArrayType(StringType()) = pa.Field(nullable = True)
-    subject_aspect_qualifier:    StringType()            = pa.Field(nullable = True)
-    subject_direction_qualifier: StringType()            = pa.Field(nullable = True)
-    object_aspect_qualifier:     StringType()            = pa.Field(nullable = True)
-    object_direction_qualifier:  StringType()            = pa.Field(nullable = True)
+    subject:                     T.StringType            = Field(nullable = False)
+    predicate:                   T.StringType            = Field(nullable = False)
+    object:                      T.StringType            = Field(nullable = False)
+    knowledge_level:             T.StringType            = Field(nullable = True)
+    primary_knowledge_source:    T.StringType            = Field(nullable = True)
+    aggregator_knowledge_source: T.ArrayType(T.StringType()) = Field(nullable = True) # type: ignore
+    publications:                T.ArrayType(T.StringType()) = Field(nullable = True) # type: ignore
+    subject_aspect_qualifier:    T.StringType            = Field(nullable = True)
+    subject_direction_qualifier: T.StringType            = Field(nullable = True)
+    object_aspect_qualifier:     T.StringType            = Field(nullable = True)
+    object_direction_qualifier:  T.StringType            = Field(nullable = True)
     # We manually set this for every KG we ingest
-    upstream_data_source:          ArrayType(StringType()) = pa.Field(nullable = False)
+    upstream_data_source:          T.ArrayType(T.StringType()) # type: ignore
     # fmt: on
 
     class Config:  # noqa: D106
@@ -60,21 +61,21 @@ class KGEdgeSchema(DataFrameModel):
         )
 
 
-class KGNodeSchema(DataFrameModel):
+class KGNodeSchema(pa.DataFrameModel):
     """Schema for a knowledge graph nodes as exposed by the Data API."""
 
     # fmt: off
-    id:                                StringType()            = pa.Field(nullable=False)
-    name:                              StringType()            = pa.Field(nullable=True) #TODO should this be nullable?
-    category:                          StringType()            = pa.Field(nullable=False)
-    description:                       StringType()            = pa.Field(nullable=True)
-    equivalent_identifiers:            ArrayType(StringType()) = pa.Field(nullable=True)
-    all_categories:                    ArrayType(StringType()) = pa.Field(nullable=True)
-    publications:                      ArrayType(StringType()) = pa.Field(nullable=True)
-    labels:                            ArrayType(StringType()) = pa.Field(nullable=True)
-    international_resource_identifier: StringType()            = pa.Field(nullable=True)
+    id:                                T.StringType            = Field(nullable=False)
+    name:                              T.StringType            = Field(nullable=True)
+    category:                          T.StringType            = Field(nullable=False)
+    description:                       T.StringType            = Field(nullable=True)
+    equivalent_identifiers:            T.ArrayType(T.StringType()) = Field(nullable=True) # type: ignore
+    all_categories:                    T.ArrayType(T.StringType()) = Field(nullable=True) # type: ignore
+    publications:                      T.ArrayType(T.StringType()) = Field(nullable=True) # type: ignore
+    labels:                            T.ArrayType(T.StringType()) = Field(nullable=True) # type: ignore
+    international_resource_identifier: T.StringType            = Field(nullable=True)
     # We manually set this for every KG we ingest
-    upstream_data_source:                ArrayType(StringType()) = pa.Field(nullable=False)
+    upstream_data_source:                T.ArrayType(T.StringType()) = Field(nullable=False) # type: ignore
     #upstream_kg_node_ids:                MapType(StringType(), StringType()) = pa.Field(nullable=True)
     # fmt: on
 

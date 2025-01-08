@@ -130,16 +130,13 @@ python
 # Python 3.11.<something>, as opposed to another version of Python, such as 3.9, 3.12, or 3.13.
 ```
 
-### Virtual environment
+### uv installation
 
 We leverage [`uv`](https://github.com/astral-sh/uv) to manage/install our Python
 requirements. Note that while many may be used to Conda, UV and Conda cannot be used in parallel. Using Conda is hence at your own risk.
 
 
 Python 3.11 is currently **required** to build the matrix pipeline. If you attempt to use Python 3.12, you will likely encounter errors with the recently-removed `distutils` package (see the common errors document for how to solve this) 
-
-Install as follows, then create a virtual env in the `matrix/pipelines/matrix` directory in the repo and install the requirements `requirements.txt`:
-
 
 !!! warning
     Don't forget to link your uv installation using the instructions prompted after the downloaded.
@@ -240,24 +237,24 @@ Our pipeline uses [Spark](https://spark.apache.org/) for distributed computation
 === "MacOS"
 
     ```bash
-    brew install openjdk@11
-    brew link --overwrite openjdk@11 # makes the java version available in PATH
+    brew install openjdk@17
+    brew link --overwrite openjdk@17 # makes the java version available in PATH
     ```
 
 === "Windows (WSL)"
     
     ```bash
     # install jdk
-    sudo apt install openjdk-11-jdk
+    sudo apt install openjdk-17-jdk
     ```
 
 === "Linux"
 
     ```bash
-    # Java on Linux is complicated, check for your specific distro how to get JDK@11. 
+    # Java on Linux is complicated, check for your specific distro how to get JDK@17. 
 
     # On Arch/Manjaro
-    pacman -S jdk11-openjdk
+    pacman -S jdk17-openjdk
     ```
 
 ### gcloud SDK
