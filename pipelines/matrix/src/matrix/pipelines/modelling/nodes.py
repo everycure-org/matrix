@@ -1,7 +1,7 @@
 import logging
 from typing import Any, Callable, Dict, List, Union, Tuple
 import pandas as pd
-from pyspark.sql import DataFrame
+import pyspark.sql as ps
 import json
 from pandera.typing import Series
 from pandera.pyspark import DataFrameModel as PysparkDataFrameModel
@@ -68,11 +68,11 @@ def no_nulls(columns: List[str]):
 
 
 def filter_valid_pairs(
-    nodes: DataFrame,
-    edges_gt: DataFrame,
+    nodes: ps.DataFrame,
+    edges_gt: ps.DataFrame,
     drug_categories: List[str],
     disease_categories: List[str],
-) -> Tuple[DataFrame, Dict[str, float]]:
+) -> Tuple[ps.DataFrame, Dict[str, float]]:
     """Filter GT pairs to only include nodes that 1) exist in the nodes DataFrame, 2) have the correct category.
 
     Args:
@@ -178,9 +178,9 @@ class EmbeddingsWithPairsSchema(PysparkDataFrameModel):
 
 @pandera.check_output(EmbeddingsWithPairsSchema)
 def attach_embeddings(
-    pairs_df: DataFrame,
-    nodes: DataFrame,
-) -> DataFrame:
+    pairs_df: ps.DataFrame,
+    nodes: ps.DataFrame,
+) -> ps.DataFrame:
     """Attach node embeddings to the pairs DataFrame.
 
     Args:
@@ -212,12 +212,12 @@ class NodeSchema(PysparkDataFrameModel):
 
 @pandera.check_output(NodeSchema)
 def prefilter_nodes(
-    full_nodes: DataFrame,
-    nodes: DataFrame,
-    gt: DataFrame,
+    full_nodes: ps.DataFrame,
+    nodes: ps.DataFrame,
+    gt: ps.DataFrame,
     drug_types: List[str],
     disease_types: List[str],
-) -> DataFrame:
+) -> ps.DataFrame:
     """Prefilter nodes for negative sampling.
 
     Args:
@@ -252,7 +252,7 @@ def prefilter_nodes(
 
 @inject_object()
 def make_folds(
-    data: DataFrame,
+    data: ps.DataFrame,
     splitter: BaseCrossValidator,
 ) -> Tuple[pd.DataFrame]:
     """Function to generate folds for modelling.
@@ -290,7 +290,7 @@ def make_folds(
 
 @inject_object()
 def make_splits(
-    data: DataFrame,
+    data: ps.DataFrame,
     splitter: BaseCrossValidator,
 ) -> Tuple[pd.DataFrame]:
     """Function to split data.

@@ -4,9 +4,8 @@ from typing import Any, Callable, Dict, List, Tuple
 
 import pandas as pd
 import pandera
-from pyspark.sql import DataFrame
+import pyspark.sql as ps
 import pyspark.sql.functions as F
-import pyspark as ps
 from joblib import Memory
 from matrix.inject import inject_object
 
@@ -19,7 +18,7 @@ logger = logging.getLogger(__name__)
 
 
 @pandera.check_output(KGEdgeSchema)
-def union_and_deduplicate_edges(*edges) -> DataFrame:
+def union_and_deduplicate_edges(*edges) -> ps.DataFrame:
     """Function to unify edges datasets."""
 
     # fmt: off
@@ -31,7 +30,7 @@ def union_and_deduplicate_edges(*edges) -> DataFrame:
 
 
 @pandera.check_output(KGNodeSchema)
-def union_and_deduplicate_nodes(biolink_categories_df: pd.DataFrame, *nodes) -> DataFrame:
+def union_and_deduplicate_nodes(biolink_categories_df: pd.DataFrame, *nodes) -> ps.DataFrame:
     """Function to unify nodes datasets."""
 
     # fmt: off
@@ -51,8 +50,8 @@ def union_and_deduplicate_nodes(biolink_categories_df: pd.DataFrame, *nodes) -> 
 
 
 def _union_datasets(
-    *datasets: DataFrame,
-) -> DataFrame:
+    *datasets: ps.DataFrame,
+) -> ps.DataFrame:
     """
     Helper function to unify datasets and deduplicate them.
 
@@ -64,12 +63,12 @@ def _union_datasets(
     Returns:
         A unified and deduplicated DataFrame.
     """
-    return reduce(partial(DataFrame.unionByName, allowMissingColumns=True), datasets)
+    return reduce(partial(ps.DataFrame.unionByName, allowMissingColumns=True), datasets)
 
 
 def _apply_transformations(
-    df: DataFrame, transformations: List[Tuple[Callable, Dict[str, Any]]], **kwargs
-) -> DataFrame:
+    df: ps.DataFrame, transformations: List[Tuple[Callable, Dict[str, Any]]], **kwargs
+) -> ps.DataFrame:
     logger.info(f"Filtering dataframe with {len(transformations)} transformations")
     last_count = df.count()
     logger.info(f"Number of rows before filtering: {last_count}")
@@ -85,19 +84,19 @@ def _apply_transformations(
 
 @inject_object()
 def prefilter_unified_kg_nodes(
-    nodes: DataFrame,
+    nodes: ps.DataFrame,
     transformations: List[Tuple[Callable, Dict[str, Any]]],
-) -> DataFrame:
+) -> ps.DataFrame:
     return _apply_transformations(nodes, transformations)
 
 
 @inject_object()
 def filter_unified_kg_edges(
-    nodes: DataFrame,
-    edges: DataFrame,
+    nodes: ps.DataFrame,
+    edges: ps.DataFrame,
     biolink_predicates: Dict[str, Any],
     transformations: List[Tuple[Callable, Dict[str, Any]]],
-) -> DataFrame:
+) -> ps.DataFrame:
     """Function to filter the knowledge graph edges.
 
     We first apply a series for filter transformations, and then deduplicate the edges based on the nodes that we dropped.
@@ -120,9 +119,9 @@ def filter_unified_kg_edges(
 
 
 def filter_nodes_without_edges(
-    nodes: DataFrame,
-    edges: DataFrame,
-) -> DataFrame:
+    nodes: ps.DataFrame,
+    edges: ps.DataFrame,
+) -> ps.DataFrame:
     """Function to filter nodes without edges.
 
     Args:
@@ -146,7 +145,7 @@ def filter_nodes_without_edges(
     return nodes
 
 
-def _format_mapping_df(mapping_df: ps.sql.DataFrame):
+def _format_mapping_df(mapping_df: ps.DataFrame):
     return (
         mapping_df.drop("bucket")
         .withColumn("normalization_success", F.col("normalized_id").isNotNull())
@@ -156,9 +155,9 @@ def _format_mapping_df(mapping_df: ps.sql.DataFrame):
 
 
 def normalize_edges(
-    mapping_df: ps.sql.DataFrame,
-    edges: ps.sql.DataFrame,
-) -> ps.sql.DataFrame:
+    mapping_df: ps.DataFrame,
+    edges: ps.DataFrame,
+) -> ps.DataFrame:
     """Function normalizes a KG using external API endpoint.
 
     This function takes the nodes and edges frames for a KG and leverages
@@ -198,9 +197,9 @@ def normalize_edges(
 
 
 def normalize_nodes(
-    mapping_df: ps.sql.DataFrame,
-    nodes: ps.sql.DataFrame,
-) -> ps.sql.DataFrame:
+    mapping_df: ps.DataFrame,
+    nodes: ps.DataFrame,
+) -> ps.DataFrame:
     """Function normalizes a KG using external API endpoint.
 
     This function takes the nodes and edges frames for a KG and leverages
