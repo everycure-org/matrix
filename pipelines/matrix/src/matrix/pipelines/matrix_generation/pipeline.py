@@ -134,7 +134,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                                 "params:matrix_generation.matrix_generation_options.n_reporting",
                                 "integration.int.drug_list.nodes.norm",
                                 "integration.int.disease_list.nodes.norm",
-                                "params:evaluation.score_col_name",
+                                "params:matrix_generation.treat_score_col_name",
                                 "params:matrix_generation.matrix",
                                 "params:matrix_generation.run",
                             ],
