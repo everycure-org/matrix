@@ -278,11 +278,6 @@ def test_generate_report(sample_data):
     drugs, diseases, known_pairs, _ = sample_data
 
     # Update the sample data to include the new required columns
-    drugs["id"] = ["drug_id_1", "drug_id_2", "drug_id_3", "drug_id_4"]
-    drugs["name"] = ["Drug Label 1", "Drug Label 2", "Drug Label 3", "Drug Label 4"]
-
-    diseases["id"] = ["disease_class_1", "disease_class_2", "disease_class_3", "disease_class_4"]
-    diseases["name"] = ["Disease Label 1", "Disease Label 2", "Disease Label 3", "Disease Label 4"]
 
     data = pd.DataFrame(
         {
@@ -383,8 +378,8 @@ def test_generate_report(sample_data):
     }
     assert set(result.columns) == expected_columns
 
-    assert result["drug_name"].tolist() == ["Drug Label 1", "Drug Label 2", "Drug Label 3"]
-    assert result["disease_name"].tolist() == ["Disease Label 1", "Disease Label 2", "Disease Label 3"]
+    assert result["drug_name"].tolist() == ["Drug 1", "Drug 2", "Drug 3"]
+    assert result["disease_name"].tolist() == ["Disease 1", "Disease 2", "Disease 3"]
     assert result["kg_drug_name"].tolist() == ["Drug 1", "Drug 2", "Drug 3"]
     assert result["kg_disease_name"].tolist() == ["Disease 1", "Disease 2", "Disease 3"]
     assert result["probability"].tolist() == pytest.approx([0.8, 0.6, 0.4])
