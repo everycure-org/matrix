@@ -7,9 +7,9 @@ import re
 from types import BuiltinFunctionType, FunctionType
 from typing import Any, Dict, List, Tuple
 
-OBJECT_KW = "object"
-INSTANTIATE_KW = "instantiate"
-UNPACK_KW = "unpack"
+OBJECT_KW = "_object"
+INSTANTIATE_KW = "_instantiate"
+UNPACK_KW = "_unpack"
 
 logger = logging.getLogger(__file__)
 
