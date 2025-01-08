@@ -19,7 +19,7 @@ from sklearn.base import BaseEstimator
 import matplotlib.pyplot as plt
 
 from functools import wraps
-from matrix.inject import inject_object, make_list_regexable, unpack_params
+from matrix.inject import OBJECT_KW, inject_object, make_list_regexable, unpack_params
 
 from matrix.datasets.graph import KnowledgeGraph
 from matrix.datasets.pair_generator import SingleLabelPairGenerator
@@ -406,7 +406,7 @@ def tune_parameters(
     return json.loads(
         json.dumps(
             {
-                "object": f"{type(estimator).__module__}.{type(estimator).__name__}",
+                OBJECT_KW: f"{type(estimator).__module__}.{type(estimator).__name__}",
                 **tuner.best_params_,
             },
             default=int,
