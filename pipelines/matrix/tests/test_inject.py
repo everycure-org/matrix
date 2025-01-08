@@ -198,7 +198,7 @@ def test_invalid_keyword_in_parse_for_objects():
             "function_without_input",
             {
                 "_object": "tests.test_inject.dummy_func_without_input",
-                "_instantiate": True,
+                "instantiate": True,
             },
             str,
             "hello world",
@@ -207,7 +207,7 @@ def test_invalid_keyword_in_parse_for_objects():
             "function_without_input",
             {
                 "_object": "tests.test_inject.dummy_func_without_input",
-                "_instantiate": False,
+                "instantiate": False,
             },
             FunctionType,
             None,
@@ -217,7 +217,7 @@ def test_invalid_keyword_in_parse_for_objects():
             {
                 "_object": "tests.test_inject.dummy_func",
                 "x": 1,
-                "_instantiate": True,
+                "instantiate": True,
             },
             int,
             1,
@@ -226,7 +226,7 @@ def test_invalid_keyword_in_parse_for_objects():
             "function_with_input",
             {
                 "_object": "tests.test_inject.dummy_func",
-                "_instantiate": False,
+                "instantiate": False,
             },
             FunctionType,
             None,
@@ -235,7 +235,7 @@ def test_invalid_keyword_in_parse_for_objects():
             "class",
             {
                 "_object": "sklearn.impute.SimpleImputer",
-                "_instantiate": True,
+                "instantiate": True,
             },
             SimpleImputer,
             None,
@@ -244,7 +244,7 @@ def test_invalid_keyword_in_parse_for_objects():
             "class",
             {
                 "_object": "sklearn.impute.SimpleImputer",
-                "_instantiate": False,
+                "instantiate": False,
             },
             type,
             None,
@@ -623,7 +623,7 @@ def my_func(*args, **kwargs):
 
 
 def test_unpack_params_with_kwargs():
-    result_arg, result_kwarg = _unpack_params(_unpack={"c1": 1})
+    result_arg, result_kwarg = _unpack_params(unpack={"c1": 1})
 
     assert result_arg == []
     assert result_kwarg == {"c1": 1}
@@ -636,7 +636,7 @@ def test_unpack_params_with_args():
         return x + y - z
 
     x = 1
-    param = {"params": {"test": "test"}, "_unpack": {"y": 1, "z": 2}}
+    param = {"params": {"test": "test"}, "unpack": {"y": 1, "z": 2}}
     result = dummy_func(x, param)
     assert result == 0
 
@@ -653,11 +653,11 @@ def dummy_func2(x, y, z, params1, params2):
     [
         (
             "args_only",
-            [{"params1": {"test": 1}, "_unpack": {"y": 2}}, {"params2": {"test": 2}, "_unpack": {"z": 3}}],
+            [{"params1": {"test": 1}, "unpack": {"y": 2}}, {"params2": {"test": 2}, "unpack": {"z": 3}}],
             {"x": 1},
             0,
         ),
-        ("kwargs_only", [], {"params1": {"test": 1}, "_unpack": {"y": 2}, "params2": {"test": 2}, "z": 3, "x": 1}, 0),
+        ("kwargs_only", [], {"params1": {"test": 1}, "unpack": {"y": 2}, "params2": {"test": 2}, "z": 3, "x": 1}, 0),
     ],
     ids=["args", "kwargs"],
 )
@@ -715,13 +715,13 @@ def dummy_spark_df(spark):
 )
 def test_unpack_params_with_df(request, df_fixture, transform_func, expected):
     df = request.getfixturevalue(df_fixture)
-    result_arg, result_kwarg = _unpack_params(_unpack={"df": df, "x": 1})
+    result_arg, result_kwarg = _unpack_params(unpack={"df": df, "x": 1})
     result = transform_func(*result_arg, **result_kwarg)
     assert expected(result)
 
 
 def test_unpack_params_true_decorator():
-    result = my_func(_unpack={"x": {"c1": 1}})
+    result = my_func(unpack={"x": {"c1": 1}})
     assert result == 1
 
 

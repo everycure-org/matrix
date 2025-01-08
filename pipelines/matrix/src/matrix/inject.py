@@ -8,8 +8,8 @@ from types import BuiltinFunctionType, FunctionType
 from typing import Any, Dict, List, Tuple
 
 OBJECT_KW = "_object"
-INSTANTIATE_KW = "_instantiate"
-UNPACK_KW = "_unpack"
+INSTANTIATE_KW = "instantiate"
+UNPACK_KW = "unpack"
 
 logger = logging.getLogger(__file__)
 
