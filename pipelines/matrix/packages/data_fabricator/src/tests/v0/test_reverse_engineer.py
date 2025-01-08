@@ -4,9 +4,9 @@
 #
 # This material is intended solely for your internal use and may not be reproduced,
 # disclosed or distributed without McKinsey & Company's express prior written consent.
-# Except as otherwise stated, the Deliverables are provided ‘as is’, without any express
+# Except as otherwise stated, the Deliverables are provided 'as is', without any express
 # or implied warranty, and McKinsey shall not be obligated to maintain, support, host,
-# update, or correct the Deliverables. Client guarantees that McKinsey’s use of
+# update, or correct the Deliverables. Client guarantees that McKinsey's use of
 # information provided by Client as authorised herein will not violate any law
 # or contractual right of a third party. Client is responsible for the operation
 # and security of its operating environment. Client is responsible for performing final
@@ -29,7 +29,7 @@ import datetime
 import pandas as pd
 import pytest
 import yaml
-from pyspark.sql import SparkSession
+import pyspark.sql as ps
 from pyspark.sql.types import (
     ArrayType,
     DateType,
@@ -52,7 +52,7 @@ from data_fabricator.v0.core.reverse_engineer import (
 
 @pytest.fixture
 def spark():
-    return SparkSession.builder.getOrCreate()
+    return ps.SparkSession.builder.getOrCreate()
 
 
 @pytest.fixture
