@@ -259,7 +259,7 @@ def create_shared_pipeline(model_name: str, folds_lst: List[Union[str, int]]) ->
                 name="create_splits",
             ),
         ],
-        tags=[model_name],
+        tags=model_name,
     )
 
 
