@@ -11,6 +11,7 @@ from kedro.framework.hooks import _create_hook_manager
 from pyspark.sql import SparkSession
 from omegaconf.resolvers import oc
 from matrix.resolvers import merge_dicts
+from matrix.settings import _load_setting
 
 
 @pytest.fixture(scope="session")
@@ -45,7 +46,7 @@ def config_loader(conf_source: Path) -> OmegaConfigLoader:
                 "**/parameters*/**",
             ],
         },
-        custom_resolvers={"merge": merge_dicts, "oc.env": oc.env},
+        custom_resolvers={"merge": merge_dicts, "oc.env": oc.env, "setting": _load_setting},
     )
 
 

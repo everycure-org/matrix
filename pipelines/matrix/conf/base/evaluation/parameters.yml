@@ -1,7 +1,5 @@
 # Name of column representing main probability score of the model 
 # Column name for main probability score
-evaluation.score_col_name: &score-col "treat score"
-
 # Aggregations to report in MLFlow (list of names in modelling.aggregation_functions)
 evaluation.reported_aggregations:
   - mean
@@ -20,7 +18,7 @@ evaluation.simple_classification:
       metrics:
         - object: sklearn.metrics.accuracy_score
         - object: sklearn.metrics.f1_score
-      score_col_name: *score-col
+      score_col_name: &score-col "treat score"
       threshold: 0.5
 
 # Disease-specific ranking
