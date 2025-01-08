@@ -33,14 +33,6 @@ jobs:
           fetch-tags: true
           fetch-depth: 0  # full depth needed so we can pass the AI all logs since the last release.
 
-      - name: List Files in Workspace
-        run: |
-          ls -lh "$GITHUB_WORKSPACE"
-  
-      - name: List Temporary Files
-        run: |
-          ls -lh "$RUNNER_TEMP"
-
       # - name: Remove unnecessary files
       #   run: |
       #     sudo rm -rf /usr/local/.ghcup
@@ -56,9 +48,9 @@ jobs:
       #   run:
       #     docker system prune -a --volumes -f
 
-      # - name: Check disk space
-      #   run: 
-      #     df -h
+      - name: Check disk space
+        run: 
+          df -h
       
       # - name: Set up Python
       #   uses: actions/setup-python@v5
