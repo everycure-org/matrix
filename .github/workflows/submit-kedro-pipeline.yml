@@ -1,9 +1,11 @@
-name: Automate kedro sumbit release run periodically
+name: Automate kedro submit release run periodically
 
 on:
+  push:
+    branches:
+      - 'gh-actions-weekly-submit'
   schedule:
-    - cron: '30 9 * * 1' # 9:30 AM every Monday
-    - cron: '30 9 1 * *' # 9:30 AM on the first of every month
+    - cron: '30 9 1 * 1' # At 09:30 on the 1st day of the month and on Monday.
 
 env:
   project_id: 'mtrx-hub-dev-3of'
@@ -30,51 +32,54 @@ jobs:
           fetch-tags: true
           fetch-depth: 0  # full depth needed so we can pass the AI all logs since the last release.
 
-      - name: Remove unnecessary files
-        run: |
-          sudo rm -rf /usr/local/.ghcup
-          sudo rm -rf /opt/hostedtoolcache/CodeQL
-          sudo rm -rf /usr/local/lib/android/sdk/ndk
-          sudo rm -rf /usr/share/dotnet
-          sudo rm -rf /opt/ghc
-          sudo rm -rf "/usr/local/share/boost"
-          sudo rm -rf "$AGENT_TOOLSDIRECTORY"
-          sudo apt-get clean
+      # - name: Remove unnecessary files
+      #   # remove unnecessary files to free up disk space for building and pushing docker images
+      #   run: |
+      #     sudo rm -rf /usr/local/.ghcup
+      #     sudo rm -rf /opt/hostedtoolcache/CodeQL
+      #     sudo rm -rf /usr/local/lib/android/sdk/ndk
+      #     sudo rm -rf /usr/share/dotnet
+      #     sudo rm -rf /opt/ghc
+      #     sudo rm -rf "/usr/local/share/boost"
+      #     sudo rm -rf "$AGENT_TOOLSDIRECTORY"
+      #     sudo apt-get clean
 
-      - name: Clean up Docker
-        run:
-          docker system prune -a --volumes -f
+      # - name: Clean up Docker
+      #   run:
+      #     docker system prune -a --volumes -f
 
-      - name: Check disk space
-        run: 
-          df -h
+      # - name: Check disk space
+      #   run: 
+      #     df -h
       
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
 
-      - name: Authenticate with Google Cloud
-        id: auth
-        uses: 'google-github-actions/auth@v2'
-        with:
-          project_id: ${{env.project_id}}
-          workload_identity_provider: ${{env.workload_identity_provider}}
-          service_account: ${{env.service_account}}
-          token_format: access_token
+      # - name: Authenticate with Google Cloud
+      #   id: auth
+      #   uses: 'google-github-actions/auth@v2'
+      #   with:
+      #     project_id: ${{env.project_id}}
+      #     workload_identity_provider: ${{env.workload_identity_provider}}
+      #     service_account: ${{env.service_account}}
+      #     token_format: access_token
 
-      - uses: google-github-actions/get-gke-credentials@v1 # configure authentication to a GKE cluster (configure kubectl)
-        with:
-          cluster_name: ${{env.cluster}}
-          location: ${{env.region}}
-          project_id: ${{env.project_id}}
+      # - uses: google-github-actions/get-gke-credentials@v1 
+      # # configure authentication to a GKE cluster (configure kubectl)
+      #   with:
+      #     cluster_name: ${{env.cluster}}
+      #     location: ${{env.region}}
+      #     project_id: ${{env.project_id}}
 
-      - name: Login to GAR # the docker image is pushed to Google Artifact Registry
-        uses: docker/login-action@v3
-        with:
-          registry: ${{env.region}}-docker.pkg.dev
-          username: oauth2accesstoken
-          password: ${{ steps.auth.outputs.access_token }}
+      # - name: Login to Google Artifact Registry 
+      # # the docker image is pushed to Google Artifact Registry
+      #   uses: docker/login-action@v3
+      #   with:
+      #     registry: ${{env.region}}-docker.pkg.dev
+      #     username: oauth2accesstoken
+      #     password: ${{ steps.auth.outputs.access_token }}
 
       - name: Fetch latest tag
         id: fetch_latest_tag
@@ -83,39 +88,45 @@ jobs:
           echo "latest_tag=${latest_tag}" >> "$GITHUB_ENV"
           echo "Latest tag is ${latest_tag}"
 
-      - name: Increment patch version
-        if : github.event.schedule == '30 9 * * 1' # weekly bump
+      - name: Get bump type
+        run: |
+          # Check if today is the first day of the month
+          if [ "$(date +%d)" -eq 8 ]; then
+            bump_type="minor"
+            echo "bump_type=${bump_type}" >> "$GITHUB_ENV"
+          else
+            bump_type="patch"
+            echo "bump_type=${bump_type}" >> "$GITHUB_ENV"
+          fi
+
+      - name: Bump version
         working-directory: docs/scripts
         run: |
           pip install semver
-          python patch_bump.py
+          python bump_version.py
 
-      - name: Increment minor version
-        if : github.event.schedule == '30 9 1 * *' # monthly bump
-        working-directory: docs/scripts
-        run:
-          pip install semver
-          python minor_bump.py
-
-      - name: Set up kedro project dependencies
-        working-directory: pipelines/matrix
+      - name: Print verion
         run: |
-          curl -sLO https://github.com/argoproj/argo-workflows/releases/latest/download/argo-linux-amd64.gz
-          gunzip argo-linux-amd64.gz
-          chmod +x argo-linux-amd64
-          sudo mv argo-linux-amd64 /usr/local/bin/argo
-          argo version
-          pip install -r requirements.txt
+          echo "release_version is ${release_version}"
+      # - name: Set up kedro project dependencies
+      #   working-directory: pipelines/matrix
+      #   run: |
+      #     curl -sLO https://github.com/argoproj/argo-workflows/releases/latest/download/argo-linux-amd64.gz
+      #     gunzip argo-linux-amd64.gz
+      #     chmod +x argo-linux-amd64
+      #     sudo mv argo-linux-amd64 /usr/local/bin/argo
+      #     argo version
+      #     pip install -r requirements.txt
 
-      - name: Submit the kedro pipeline
-        working-directory: pipelines/matrix
-        run: |
-          echo "Submit the kedro pipeline"
-          kedro submit \
-            --username GH-Actions-bot \
-            --namespace argo-workflows \
-            --run-name auto-kg-release \
-            --release-version "${{ env.release_version }}" \
-            --pipeline kg_release \
-            --headless \
-            --run-from-gh
+      # - name: Submit the kedro pipeline
+      #   working-directory: pipelines/matrix
+      #   run: |
+      #     echo "Submit the kedro pipeline"
+      #     kedro submit \
+      #       --username GH-Actions-bot \
+      #       --namespace argo-workflows \
+      #       --run-name auto-kg-release \
+      #       --release-version "${{ env.release_version }}" \
+      #       --pipeline kg_release \
+      #       --headless \
+      #       --run-from-gh
