@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - 'debug/release*'
-      - 'gh-actions=weekly-submit'
+      - 'gh-actions-weekly-submit'
   repository_dispatch:
     types: distribute-release
 
