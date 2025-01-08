@@ -4,27 +4,28 @@ from typing import Any, Dict, List
 import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
+
 import seaborn as sns
 
 from graphdatascience import GraphDataScience
 
+from pandera.pyspark import DataFrameModel
+from pandera.pyspark import Field
+import pandera
+
 import pyspark.sql.types as T
 from pyspark.sql import DataFrame, SparkSession
+
 from pyspark.sql import functions as F
-from pyspark.sql.types import StringType
 from pyspark.sql.window import Window
 from pyspark.ml.functions import array_to_vector, vector_to_array
 
-from refit.v1.core.inject import inject_object
-from refit.v1.core.inline_has_schema import has_schema
-from refit.v1.core.inline_primary_key import primary_key
-from refit.v1.core.unpack import unpack_params
-
 from tenacity import retry, wait_exponential, stop_after_attempt
+
+from matrix.inject import inject_object, unpack_params
 
 from .graph_algorithms import GDSGraphAlgorithm
 from .encoders import AttributeEncoder
-from matrix.pipelines.modelling.nodes import no_nulls
 
 logger = logging.getLogger(__name__)
 
@@ -32,7 +33,7 @@ logger = logging.getLogger(__name__)
 class GraphDS(GraphDataScience):
     """Adaptor class to allow injecting the GDS object.
 
-    This is due to a drawback where refit cannot inject a tuple into
+    This is due to a drawback where our functions cannot inject a tuple into
     the constructor of an object.
     """
 
@@ -49,18 +50,16 @@ class GraphDS(GraphDataScience):
         self.set_database(database)
 
 
-@has_schema(
-    schema={
-        "label": "string",
-        "id": "string",
-        "name": "string",
-        "property_keys": "array<string>",
-        "property_values": "array<string>",
-        "upstream_data_source": "array<string>",
-    },
-    allow_subset=True,
-)
-@primary_key(primary_key=["id"])
+class IngestedNodesSchema(DataFrameModel):
+    id: T.StringType
+    label: T.StringType
+    name: T.StringType
+    property_keys: T.ArrayType(T.StringType())  # type: ignore
+    property_values: T.ArrayType(T.StringType())  # type: ignore
+    upstream_data_source: T.ArrayType(T.StringType())  # type: ignore
+
+
+@pandera.check_output(IngestedNodesSchema)
 def ingest_nodes(df: DataFrame) -> DataFrame:
     """Function to create Neo4J nodes.
 
@@ -97,7 +96,7 @@ def ingest_nodes(df: DataFrame) -> DataFrame:
     )
 
 
-def bucketize_df(df: DataFrame, bucket_size: int, input_features: List[str], max_input_len: int):
+def bucketize_df(df: DataFrame, bucket_size: int, input_features: List[str], max_input_len: int) -> DataFrame:
     """Function to bucketize input dataframe.
 
     Function bucketizes the input dataframe in N buckets, each of size `bucket_size`
@@ -122,7 +121,7 @@ def bucketize_df(df: DataFrame, bucket_size: int, input_features: List[str], max
     )
 
 
-def _bucketize(df: DataFrame, bucket_size: int) -> pd.DataFrame:
+def _bucketize(df: DataFrame, bucket_size: int) -> DataFrame:
     """Function to bucketize df in given number of buckets.
 
     Args:
@@ -154,7 +153,7 @@ def _bucketize(df: DataFrame, bucket_size: int) -> pd.DataFrame:
 def compute_embeddings(
     dfs: Dict[str, Any],
     encoder: AttributeEncoder,
-):
+) -> Dict[str, Any]:
     """Function to bucketize input data.
 
     Args:
@@ -199,21 +198,25 @@ async def compute_df_embeddings_async(df: pd.DataFrame, embedding_model) -> pd.D
     return df
 
 
-@has_schema(
-    schema={
-        "embedding": "array<float>",
-        "pca_embedding": "array<float>",
-    }
-)
-@no_nulls(columns=["embedding", "pca_embedding"])
+class EmbeddingSchema(DataFrameModel):
+    id: T.StringType
+    embedding: T.ArrayType(T.FloatType(), True)  # type: ignore
+    pca_embedding: T.ArrayType(T.FloatType(), True)  # type: ignore
+
+    class Config:
+        strict = False
+        unique = ["id"]
+
+
+@pandera.check_output(EmbeddingSchema)
 @unpack_params()
-def reduce_embeddings_dimension(df: DataFrame, transformer, input: str, output: str, skip: bool):
+def reduce_embeddings_dimension(df: DataFrame, transformer, input: str, output: str, skip: bool) -> DataFrame:
     return reduce_dimension(df, transformer, input, output, skip)
 
 
 @unpack_params()
 @inject_object()
-def reduce_dimension(df: DataFrame, transformer, input: str, output: str, skip: bool):
+def reduce_dimension(df: DataFrame, transformer, input: str, output: str, skip: bool) -> DataFrame:
     """Function to apply dimensionality reduction.
 
     Function to apply dimensionality reduction conditionally, if skip is set to true
@@ -245,6 +248,7 @@ def reduce_dimension(df: DataFrame, transformer, input: str, output: str, skip: 
         .transform(df)
         .withColumn(output, vector_to_array("pca_features"))
         .withColumn(output, F.col(output).cast("array<float>"))
+        .withColumn("pca_embedding", F.col(output))
         .drop("pca_features", "features")
     )
 
@@ -253,7 +257,7 @@ def reduce_dimension(df: DataFrame, transformer, input: str, output: str, skip: 
 
 def filter_edges_for_topological_embeddings(
     nodes: DataFrame, edges: DataFrame, drug_types: List[str], disease_types: List[str]
-):
+) -> DataFrame:
     """Function to filter edges for topological embeddings process.
 
     The function removes edges connecting drug and disease nodes to avoid data leakage. Currently
@@ -294,7 +298,7 @@ def filter_edges_for_topological_embeddings(
     return df
 
 
-def ingest_edges(nodes, edges: DataFrame):
+def ingest_edges(nodes: DataFrame, edges: DataFrame) -> DataFrame:
     """Function to construct Neo4J edges."""
     return (
         edges.select(
@@ -390,8 +394,17 @@ def write_topological_embeddings(
     return {"success": "true"}
 
 
-@no_nulls(columns=["pca_embedding", "topological_embedding"])
-@primary_key(primary_key=["id"])
+class ExtractedTopologicalEmbeddingSchema(DataFrameModel):
+    id: T.StringType
+    topological_embedding: T.ArrayType(T.FloatType(), True) = Field(nullable=True)  # type: ignore
+    pca_embedding: T.ArrayType(T.FloatType(), True) = Field(nullable=True)  # type: ignore
+
+    class Config:
+        strict = False
+        unique = ["id"]
+
+
+@pandera.check_output(ExtractedTopologicalEmbeddingSchema)
 def extract_topological_embeddings(embeddings: DataFrame, nodes: DataFrame, string_col: str) -> DataFrame:
     """Extract topological embeddings from Neo4j and write into BQ.
 
@@ -399,18 +412,21 @@ def extract_topological_embeddings(embeddings: DataFrame, nodes: DataFrame, stri
     https://github.com/neo4j/graph-data-science-client/issues/742#issuecomment-2324737372.
     """
 
-    if isinstance(embeddings.schema[string_col].dataType, StringType):
+    if isinstance(embeddings.schema[string_col].dataType, T.StringType):
         print("converting embeddings to float")
-        embeddings = embeddings.withColumn(string_col, F.from_json(F.col(string_col), T.ArrayType(T.DoubleType())))
+        embeddings = embeddings.withColumn(string_col, F.from_json(F.col(string_col), T.ArrayType(T.FloatType())))
 
-    return (
+    x = (
         nodes.alias("nodes")
         .join(embeddings.alias("embeddings"), on="id", how="left")
         .select("nodes.*", "embeddings.pca_embedding", "embeddings.topological_embedding")
+        .withColumn("pca_embedding", F.col("pca_embedding").cast("array<float>"))
+        .withColumn("topological_embedding", F.col("topological_embedding").cast("array<float>"))
     )
+    return x
 
 
-def visualise_pca(nodes: DataFrame, column_name: str):
+def visualise_pca(nodes: DataFrame, column_name: str) -> plt.Figure:
     """Write topological embeddings."""
     nodes = nodes.select(column_name, "category").toPandas()
     nodes[["pca_0", "pca_1"]] = pd.DataFrame(nodes[column_name].tolist(), index=nodes.index)

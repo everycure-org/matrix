@@ -99,6 +99,11 @@ jobs:
     steps:
       - name: 'Checkout'
         uses: actions/checkout@v4
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+           terraform_version: "^1.5.7"
+           terraform_wrapper: false
 
       - name: Check terragrunt HCL
         uses: gruntwork-io/terragrunt-action@v2
@@ -121,6 +126,11 @@ jobs:
     steps:
       - name: 'Checkout'
         uses: actions/checkout@v4
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+           terraform_version: "^1.5.7"
+           terraform_wrapper: false
       - name: Setup git-crypt
         id: git-crypt
         run: |
@@ -157,6 +167,11 @@ jobs:
       # FUTURE avoid duplicate boilerplate somehow on checkout/auth/crypt
       - name: 'Checkout'
         uses: actions/checkout@v4
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+           terraform_version: "^1.5.7"
+           terraform_wrapper: false
       - name: Setup git-crypt
         id: git-crypt
         run: |

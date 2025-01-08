@@ -11,7 +11,6 @@ def create_pipeline(**kwargs) -> Pipeline:
 
     # Load model names
     models = settings.DYNAMIC_PIPELINES_MAPPING.get("modelling")
-    model_names = [model["model_name"] for model in models]
 
     # Load cross-validation information
     cross_validation_settings = settings.DYNAMIC_PIPELINES_MAPPING.get("cross_validation")
@@ -72,7 +71,7 @@ def create_pipeline(**kwargs) -> Pipeline:
         )
 
         # For each model, create pipeline to generate pairs
-        for model in model_names:
+        for model in models.keys():
             pipelines.append(
                 pipeline(
                     [
@@ -84,7 +83,9 @@ def create_pipeline(**kwargs) -> Pipeline:
                                 f"modelling.{model}.fold_{fold}.model_input.transformers",
                                 f"modelling.{model}.fold_{fold}.models.model",
                                 f"params:modelling.{model}.model_options.model_tuning_args.features",
-                                "params:evaluation.score_col_name",
+                                "params:matrix_generation.treat_score_col_name",
+                                "params:matrix_generation.not_treat_score_col_name",
+                                "params:matrix_generation.unknown_score_col_name",
                                 "params:matrix_generation.matrix_generation_options.batch_by",
                             ],
                             outputs=f"matrix_generation.{model}.fold_{fold}.model_output.sorted_matrix_predictions@pandas",
@@ -98,7 +99,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                                 "params:matrix_generation.matrix_generation_options.n_reporting",
                                 "ingestion.raw.drug_list@pandas",
                                 "ingestion.raw.disease_list@pandas",
-                                "params:evaluation.score_col_name",
+                                "params:matrix_generation.treat_score_col_name",
                                 "params:matrix_generation.matrix",
                                 "params:matrix_generation.run",
                             ],
