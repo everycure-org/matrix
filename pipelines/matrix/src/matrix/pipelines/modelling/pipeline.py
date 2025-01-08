@@ -43,7 +43,7 @@ def _create_model_shard_pipeline(model: str, shard: int, fold: Union[str, int]) 
                 func=nodes.tune_parameters,
                 inputs={
                     "data": f"modelling.{model}.{shard}.fold_{fold}.model_input.transformed_splits",
-                    "unpack": f"params:modelling.{model}.model_options.model_tuning_args",
+                    "_unpack": f"params:modelling.{model}.model_options.model_tuning_args",
                 },
                 outputs=[
                     f"modelling.{model}.{shard}.fold_{fold}.models.model_params",
