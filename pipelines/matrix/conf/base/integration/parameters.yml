@@ -7,9 +7,9 @@ integration:
     # spoke:
     #   transformer:
     #     object: matrix.pipelines.integration.spoke.SpokeTransformer
-    robokop:
-      transformer:
-        object: matrix.pipelines.integration.robokop.RobokopTransformer
+    # robokop:
+    #   transformer:
+    #     object: matrix.pipelines.integration.robokop.RobokopTransformer
     ec_medical_team:
       transformer:
         object: matrix.pipelines.integration.medical.MedicalTransformer

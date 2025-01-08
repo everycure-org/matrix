@@ -30,37 +30,6 @@ _pandas_parquet: &_pandas_parquet
 # Datasets
 # -------------------------------------------------------------------------
 
-
-# Dataframe with bucketized nodes
-# NOTE: Goal is to create a partition per "bucket" of the DataFrame
-embeddings.feat.bucketized_nodes@spark:
-  <<: *_spark_parquet
-  filepath: ${globals:paths.tmp}/feat/bucketized_nodes
-  save_args:
-    mode: overwrite
-    partitionBy:
-      - bucket
-
-# NOTE: Loads each partition representing a dataframe into a
-# seperate DF reference file, for lazy loading by the Kedro node
-embeddings.feat.bucketized_nodes@partitioned:
-  type: matrix.datasets.gcp.PartitionedAsyncParallelDataset
-  path: ${globals:paths.tmp}/feat/bucketized_nodes
-  dataset: 
-    <<: *_pandas_parquet
-  filename_suffix: ".parquet"
-
-
-# NOTE: Represent a lazy loaded function to write each partition
-# representing bucket _with_ embedding
-embeddings.feat.graph.node_embeddings@partitioned:
-  type: matrix.datasets.gcp.PartitionedAsyncParallelDataset
-  overwrite: True # important otherwise not properly reset on rerun
-  path: ${globals:paths.tmp}/feat/tmp_nodes_with_embeddings
-  dataset: 
-    <<: *_pandas_parquet
-  filename_suffix: ".parquet"
-
 # NOTE: Loads the full partitioned dataframe, i.e., all buckets
 # in single Spark dataframe for downstream processing
 embeddings.feat.graph.node_embeddings@spark:
