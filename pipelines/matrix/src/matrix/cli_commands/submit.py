@@ -131,7 +131,7 @@ def _submit(
     try:
         console.rule("[bold blue]Submitting Workflow")
 
-        check_dependencies(verbose=verbose)
+        check_dependencies(verbose=False)
 
         argo_template = build_argo_template(run_name, release_version, username, namespace, pipeline_obj, is_test=is_test, )
 
