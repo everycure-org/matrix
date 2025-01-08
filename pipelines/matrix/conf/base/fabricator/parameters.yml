@@ -488,8 +488,8 @@ fabricator.ec_medical_kg:
       Label:
         type: generate_values
         sample_values:
-          - biolink:treats
-          - biolink:interacts_with
+          - treats
+          - interacts_with
       
       knowledge_source:
         type: faker
