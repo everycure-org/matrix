@@ -48,7 +48,9 @@ def _create_evaluation_fold_pipeline(model: str, evaluation: str, fold: Union[st
     )
 
 
-def create_model_pipeline(model_name: str, evaluation_names: List[str], n_cross_val_folds: int) -> Pipeline:
+def create_model_pipeline(
+    model_name: str, evaluation_names: str, n_cross_val_folds: int
+) -> Pipeline:
     """Create pipeline to evaluate a single model.
 
     Args:
@@ -83,9 +85,13 @@ def create_model_pipeline(model_name: str, evaluation_names: List[str], n_cross_
                             "params:modelling.aggregation_functions",
                             *[
                                 f"evaluation.{model_name}.fold_{fold}.{evaluation}.reporting.result"
+                                f"evaluation.{model_name}.fold_{fold}.{evaluation}.reporting.result"
                                 for fold in range(n_cross_val_folds)
                             ],
                         ],
+                        outputs=f"evaluation.{model_name}.{evaluation}.reporting.result_aggregated",
+                        name=f"aggregate_{model_name}_{evaluation}_evaluation_results",
+                        tags=[model_name, evaluation],
                         outputs=f"evaluation.{model_name}.{evaluation}.reporting.result_aggregated",
                         name=f"aggregate_{model_name}_{evaluation}_evaluation_results",
                         tags=[model_name, evaluation],
@@ -97,6 +103,9 @@ def create_model_pipeline(model_name: str, evaluation_names: List[str], n_cross_
                             f"evaluation.{model_name}.{evaluation}.reporting.result_aggregated",
                             "params:evaluation.reported_aggregations",
                         ],
+                        outputs=f"evaluation.{model_name}.{evaluation}.reporting.result_aggregated_reduced",
+                        name=f"reduce_aggregated_{model_name}_{evaluation}_evaluation_results",
+                        tags=[model_name, evaluation],
                         outputs=f"evaluation.{model_name}.{evaluation}.reporting.result_aggregated_reduced",
                         name=f"reduce_aggregated_{model_name}_{evaluation}_evaluation_results",
                         tags=[model_name, evaluation],
@@ -140,11 +149,13 @@ def create_pipeline(**kwargs) -> Pipeline:
                         # Consolidate aggregated reports per model fold
                         **{
                             f"{model_name}.{evaluation}.fold_{fold}": f"evaluation.{model_name}.fold_{fold}.{evaluation}.reporting.result"
+                            f"{model_name}.{evaluation}.fold_{fold}": f"evaluation.{model_name}.fold_{fold}.{evaluation}.reporting.result"
                             for evaluation in evaluation_names
                             for fold in range(n_cross_val_folds)
                         },
                         # Consolidate aggregated reports per model
                         **{
+                            f"{model_name}.{evaluation}.aggregated": f"evaluation.{model_name}.{evaluation}.reporting.result_aggregated"
                             f"{model_name}.{evaluation}.aggregated": f"evaluation.{model_name}.{evaluation}.reporting.result_aggregated"
                             for evaluation in evaluation_names
                         },
