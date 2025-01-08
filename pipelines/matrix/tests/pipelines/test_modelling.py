@@ -29,6 +29,7 @@ from pyspark.sql.types import (
 # Local imports
 from matrix.datasets.graph import KnowledgeGraph
 from matrix.datasets.pair_generator import SingleLabelPairGenerator
+from matrix.inject import OBJECT_KW
 from matrix.pipelines.modelling.nodes import (
     create_model_input_nodes,
     prefilter_nodes,
@@ -427,8 +428,8 @@ def test_tune_parameters(tune_data: pd.DataFrame, tuner_config: dict):
 
     # Check return value structure
     assert isinstance(result, dict)
-    assert "object" in result
-    assert result["object"] == tuner_config["expected_object"]
+    assert OBJECT_KW in result
+    assert result[OBJECT_KW] == tuner_config["expected_object"]
 
     # Check parameters
     if isinstance(tuner_config["expected_params"], dict):
