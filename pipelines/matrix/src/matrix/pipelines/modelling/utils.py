@@ -14,7 +14,7 @@ def partial_(func: callable, **kwargs):
     return partial(func, **kwargs)
 
 
-def partial_splits(func: callable, fold: int):
+def partial_fold(func: callable, fold: int):
     """Creates a partial function that takes a full dataset and operates on a specific fold.
 
     NOTE: When applying this function in a Kedro node, the inputs must be explicitly stated as a dictionary, not a list.

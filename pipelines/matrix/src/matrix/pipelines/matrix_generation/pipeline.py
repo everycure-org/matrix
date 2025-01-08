@@ -1,7 +1,7 @@
 from kedro.pipeline import Pipeline, pipeline
 
 from matrix import settings
-from matrix.pipelines.modelling.utils import partial_splits
+from matrix.pipelines.modelling.utils import partial_fold
 from matrix.kedro4argo_node import ARGO_GPU_NODE_MEDIUM, argo_node
 
 
@@ -16,7 +16,7 @@ def create_pipeline(**kwargs) -> Pipeline:
 
     # Load cross-validation information
     cross_validation_settings = settings.DYNAMIC_PIPELINES_MAPPING.get("cross_validation")
-    n_splits = cross_validation_settings.get("n_splits")
+    n_cross_val_folds = cross_validation_settings.get("n_splits")
 
     # Initial nodes computing matrix pairs and flags
     pipelines = []
@@ -50,13 +50,13 @@ def create_pipeline(**kwargs) -> Pipeline:
     )
 
     # Nodes generating scores for each fold and model
-    for fold in range(n_splits + 1):  # NOTE: final fold is full training data
+    for fold in range(n_cross_val_folds + 1):  # NOTE: final fold is full training data
         # For each fold, generate the pairs
         pipelines.append(
             pipeline(
                 [
                     argo_node(
-                        func=partial_splits(nodes.generate_pairs, fold),
+                        func=partial_fold(nodes.generate_pairs, fold),
                         inputs={
                             "data": "modelling.model_input.splits",
                             "drugs": "ingestion.raw.drug_list@pandas",
