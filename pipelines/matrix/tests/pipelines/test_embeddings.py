@@ -1,7 +1,7 @@
 import pytest
 
 from matrix.pipelines.embeddings.nodes import ingest_nodes
-import pyspark
+import pyspark.sql as ps
 from pyspark.ml.feature import PCA
 from pyspark.sql.types import StructType, StructField, StringType, ArrayType, FloatType, DoubleType
 from pyspark.testing import assertDataFrameEqual
@@ -13,7 +13,7 @@ from matrix.pipelines.embeddings.nodes import extract_topological_embeddings
 
 
 @pytest.fixture
-def sample_input_df(spark: pyspark.sql.SparkSession) -> pyspark.sql.DataFrame:
+def sample_input_df(spark: ps.SparkSession) -> ps.DataFrame:
     data = [
         {
             "id": "1",
@@ -33,7 +33,7 @@ def sample_input_df(spark: pyspark.sql.SparkSession) -> pyspark.sql.DataFrame:
     return spark.createDataFrame(data)
 
 
-def test_ingest_nodes_basic(spark: pyspark.sql.SparkSession, sample_input_df: pyspark.sql.DataFrame) -> None:
+def test_ingest_nodes_basic(spark: ps.SparkSession, sample_input_df: ps.DataFrame) -> None:
     """Test basic functionality of ingest_nodes."""
     result = ingest_nodes(sample_input_df)
 
@@ -61,7 +61,7 @@ def test_ingest_nodes_basic(spark: pyspark.sql.SparkSession, sample_input_df: py
     assertDataFrameEqual(result_subset, expected_df)
 
 
-def test_ingest_nodes_empty_df(spark: pyspark.sql.SparkSession) -> None:
+def test_ingest_nodes_empty_df(spark: ps.SparkSession) -> None:
     """Test handling of empty dataframe."""
     empty_df = spark.createDataFrame(
         [], "id string, name string, category string, description string, upstream_data_source array<string>"
@@ -72,7 +72,7 @@ def test_ingest_nodes_empty_df(spark: pyspark.sql.SparkSession) -> None:
 
 
 @pytest.fixture
-def sample_embeddings_df(spark: pyspark.sql.SparkSession) -> pyspark.sql.DataFrame:
+def sample_embeddings_df(spark: ps.SparkSession) -> ps.DataFrame:
     """Create a sample dataframe with embeddings."""
     schema = StructType(
         [StructField("id", StringType(), False), StructField("embedding", ArrayType(FloatType(), True), False)]
@@ -93,7 +93,7 @@ def pca_transformer() -> PCA:
 
 
 def test_reduce_embeddings_dimension_with_transformation(
-    sample_embeddings_df: pyspark.sql.DataFrame, pca_transformer: PCA
+    sample_embeddings_df: ps.DataFrame, pca_transformer: PCA
 ) -> None:
     """Test dimensionality reduction when skip=False."""
     # Arrange
@@ -116,7 +116,7 @@ def test_reduce_embeddings_dimension_with_transformation(
     assert result_df.schema["pca_embedding"].dataType.elementType.typeName() == "float"
 
 
-def test_reduce_embeddings_dimension_skip(sample_embeddings_df, pca_transformer):
+def test_reduce_embeddings_dimension_skip(sample_embeddings_df: ps.DataFrame, pca_transformer: PCA) -> None:
     """Test when skip=True, should return original embeddings."""
     # Arrange
     params = {"transformer": pca_transformer, "input": "embedding", "output": "pca_embedding", "skip": True}
@@ -139,7 +139,7 @@ def test_reduce_embeddings_dimension_skip(sample_embeddings_df, pca_transformer)
         assert np.array_equal(orig["embedding"], result["pca_embedding"])
 
 
-def test_reduce_embeddings_dimension_invalid_input(sample_embeddings_df, pca_transformer):
+def test_reduce_embeddings_dimension_invalid_input(sample_embeddings_df: ps.DataFrame, pca_transformer: PCA) -> None:
     """Test with invalid input column name."""
     # Arrange
     params = {"transformer": pca_transformer, "input": "nonexistent_column", "output": "pca_embedding", "skip": False}
