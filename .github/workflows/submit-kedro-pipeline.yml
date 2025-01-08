@@ -4,9 +4,9 @@ on:
   push:
     branches:
       - 'gh-actions-weekly-submit-xyz'
-  # schedule:
-  #   - cron: '30 9 * * 1' # 9:30 AM every Monday
-  #   - cron: '30 9 1 * *' # 9:30 AM on the first of every month
+  schedule:
+    - cron: '30 9 * * 1' # 9:30 AM every Monday
+    - cron: '30 9 1 * *' # 9:30 AM on the first of every month
 
 env:
   project_id: 'mtrx-hub-dev-3of'
@@ -87,14 +87,14 @@ jobs:
           echo "Latest tag is ${latest_tag}"
 
       - name: Increment patch version
-        # if : github.event.schedule == '30 9 * * 1' # weekly bump
+        if : github.event.schedule == '30 9 * * 1' # weekly bump
         working-directory: docs/scripts
         run: |
           pip install semver
           python patch_bump.py
 
       - name: Increment minor version
-        # if : github.event.schedule == '30 9 1 * *' # monthly bump
+        if : github.event.schedule == '30 9 1 * *' # monthly bump
         working-directory: docs/scripts
         run:
           pip install semver
