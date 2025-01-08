@@ -3,7 +3,7 @@ from typing import Any, Dict
 import pytest
 from matrix.pipelines.integration import nodes
 from matrix.schemas.knowledge_graph import KGEdgeSchema, KGNodeSchema
-from pyspark.sql import DataFrame
+import pyspark.sql as ps
 from pyspark.sql import functions as F
 from pyspark.sql.types import (
     ArrayType,
@@ -230,7 +230,7 @@ def test_unify_nodes(spark, sample_nodes, sample_biolink_category_hierarchy):
     result = nodes.union_and_deduplicate_nodes(sample_biolink_category_hierarchy, nodes1, nodes2)
 
     # Check the result
-    assert isinstance(result, DataFrame)
+    assert isinstance(result, ps.DataFrame)
     assert result.count() == 2  # Should have deduplicated
     assert set(result.columns) == set(KGNodeSchema.to_schema().columns)
 
@@ -268,7 +268,7 @@ def test_unify_edges(spark, sample_edges):
     result = nodes.union_and_deduplicate_edges(edges1, edges2)
 
     # Check the result
-    assert isinstance(result, DataFrame)
+    assert isinstance(result, ps.DataFrame)
     assert result.count() == 2  # Should have deduplicated
     assert set(result.columns) == set(KGEdgeSchema.to_schema().columns)
 

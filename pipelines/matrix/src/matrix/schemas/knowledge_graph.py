@@ -2,10 +2,9 @@ from typing import List, Type
 
 import pandera.pyspark as pa
 from pandera.pyspark import Field
+import pyspark.sql as ps
 import pyspark.sql.functions as F
 import pyspark.sql.types as T
-from pyspark.sql.types import StringType, ArrayType
-from pyspark.sql import DataFrame
 
 
 def cols_for_schema(schema_obj: Type[pa.DataFrameModel]) -> List[str]:
@@ -20,8 +19,8 @@ def cols_for_schema(schema_obj: Type[pa.DataFrameModel]) -> List[str]:
 
 class EdgeSchema(pa.DataFrameModel):
     # fmt: off
-    subject:                     StringType()            = pa.Field(nullable = False)
-    object:                      StringType()            = pa.Field(nullable = False)
+    subject:                     T.StringType()            = pa.Field(nullable = False)
+    object:                      T.StringType()            = pa.Field(nullable = False)
     # fmt: on
 
 
@@ -29,16 +28,16 @@ class KGEdgeSchema(EdgeSchema):
     """Schema for a knowledge graph edges as exposed by the Data API."""
 
     # fmt: off
-    subject:                     StringType()            = pa.Field(nullable = False)
-    predicate:                   StringType()            = pa.Field(nullable = False)
-    knowledge_level:             StringType()            = pa.Field(nullable = True)
-    primary_knowledge_source:    StringType()            = pa.Field(nullable = True)
-    aggregator_knowledge_source: ArrayType(StringType()) = pa.Field(nullable = True)
-    publications:                ArrayType(StringType()) = pa.Field(nullable = True)
-    subject_aspect_qualifier:    StringType()            = pa.Field(nullable = True)
-    subject_direction_qualifier: StringType()            = pa.Field(nullable = True)
-    object_aspect_qualifier:     StringType()            = pa.Field(nullable = True)
-    object_direction_qualifier:  StringType()            = pa.Field(nullable = True)
+    subject:                     T.StringType()            = pa.Field(nullable = False)
+    predicate:                   T.StringType()            = pa.Field(nullable = False)
+    knowledge_level:             T.StringType()            = pa.Field(nullable = True)
+    primary_knowledge_source:    T.StringType()            = pa.Field(nullable = True)
+    aggregator_knowledge_source: T.ArrayType(T.StringType()) = pa.Field(nullable = True)
+    publications:                T.ArrayType(T.StringType()) = pa.Field(nullable = True)
+    subject_aspect_qualifier:    T.StringType()            = pa.Field(nullable = True)
+    subject_direction_qualifier: T.StringType()            = pa.Field(nullable = True)
+    object_aspect_qualifier:     T.StringType()            = pa.Field(nullable = True)
+    object_direction_qualifier:  T.StringType()            = pa.Field(nullable = True)
     # We manually set this for every KG we ingest
     upstream_data_source:          T.ArrayType(T.StringType()) # type: ignore
     # fmt: on
@@ -48,7 +47,7 @@ class KGEdgeSchema(EdgeSchema):
         strict = False
 
     @classmethod
-    def group_edges_by_id(cls, concatenated_edges_df: DataFrame) -> DataFrame:
+    def group_edges_by_id(cls, concatenated_edges_df: ps.DataFrame) -> ps.DataFrame:
         return (
             concatenated_edges_df.groupBy(["subject", "predicate", "object"])
             .agg(
@@ -69,7 +68,7 @@ class KGEdgeSchema(EdgeSchema):
 
 class NodeSchema(pa.DataFrameModel):
     # fmt: off
-    id:                                StringType()            = pa.Field(nullable=False)
+    id:                                T.StringType()            = pa.Field(nullable=False)
     # fmt: on
 
 
@@ -96,7 +95,7 @@ class KGNodeSchema(pa.DataFrameModel):
         strict = True
 
     @classmethod
-    def group_nodes_by_id(cls, nodes_df: DataFrame) -> DataFrame:
+    def group_nodes_by_id(cls, nodes_df: ps.DataFrame) -> ps.DataFrame:
         """Utility function to group nodes by id.
 
         This should be used after the IDs are normalized so we can combine node properties from

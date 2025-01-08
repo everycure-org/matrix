@@ -4,7 +4,7 @@ from typing import Dict
 import pandera as pa
 from pandera.pyspark import DataFrameModel
 
-from pyspark.sql import DataFrame
+import pyspark.sql as ps
 import pyspark.sql.functions as f
 import pyspark.sql.types as T
 
@@ -20,7 +20,7 @@ RTX_SEPARATOR = "\u01c2"
 
 class RTXTransformer(GraphTransformer):
     @pa.check_output(KGNodeSchema)
-    def transform_nodes(self, nodes_df: DataFrame, **kwargs) -> DataFrame:
+    def transform_nodes(self, nodes_df: ps.DataFrame, **kwargs) -> ps.DataFrame:
         """Transform RTX KG2 nodes to our target schema.
 
         Args:
@@ -64,11 +64,11 @@ class RTXTransformer(GraphTransformer):
     @pa.check_output(KGEdgeSchema)
     def transform_edges(
         self,
-        edges_df: DataFrame,
-        curie_to_pmids: DataFrame,
+        edges_df: ps.DataFrame,
+        curie_to_pmids: ps.DataFrame,
         semmed_filters: Dict[str, str],
         **kwargs,
-    ) -> DataFrame:
+    ) -> ps.DataFrame:
         """Transform RTX KG2 edges to our target schema.
 
         Args:
@@ -107,12 +107,12 @@ class CurieToPMIDsSchema(DataFrameModel):
 
 @pa.check_input(CurieToPMIDsSchema, obj_getter="curie_to_pmids")
 def filter_semmed(
-    edges_df: DataFrame,
-    curie_to_pmids: DataFrame,
+    edges_df: ps.DataFrame,
+    curie_to_pmids: ps.DataFrame,
     publication_threshold: int,
     ngd_threshold: float,
     limit_pmids: int,
-) -> DataFrame:
+) -> ps.DataFrame:
     """Function to filter semmed edges.
 
     Function that performs additional cleaning on RTX edges obtained by SemMedDB. This
@@ -171,7 +171,7 @@ def filter_semmed(
     return edges_filtered
 
 
-def compute_ngd(df: DataFrame, num_pairs: int = 3.7e7 * 20) -> DataFrame:
+def compute_ngd(df: ps.DataFrame, num_pairs: int = 3.7e7 * 20) -> ps.DataFrame:
     """
     PySpark transformation to compute Normalized Google Distance (NGD).
 
