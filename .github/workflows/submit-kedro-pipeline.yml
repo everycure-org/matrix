@@ -1,9 +1,6 @@
 name: Automate kedro sumbit release run periodically
 
 on:
-  push:
-    branches:
-      - 'gh-actions-weekly-submit-xyz'
   schedule:
     - cron: '30 9 * * 1' # 9:30 AM every Monday
     - cron: '30 9 1 * *' # 9:30 AM on the first of every month
@@ -109,10 +106,6 @@ jobs:
           sudo mv argo-linux-amd64 /usr/local/bin/argo
           argo version
           pip install -r requirements.txt
-
-      - name: Check disk space
-        run: 
-          df -h
 
       - name: Submit the kedro pipeline
         working-directory: pipelines/matrix
