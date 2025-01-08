@@ -303,7 +303,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                     ],
                     outputs=f"modelling.{model_name}.reporting.metrics_aggregated",
                     name=f"aggregate_{model_name}_model_performance_checks",
-                    tags=[f"{model_name}"],
+                    tags=model_name,
                 )
             ]
         )
