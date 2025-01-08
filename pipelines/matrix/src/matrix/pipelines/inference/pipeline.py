@@ -57,19 +57,19 @@ def _create_inference_pipeline(model_name: str) -> Pipeline:
     return sum([*pipelines])
 
 
-def _create_reporting_pipeline(model: str) -> Pipeline:
+def _create_reporting_pipeline(model_name: str) -> Pipeline:
     """Reporting nodes of the inference pipeline for visualisation purposes."""
     return pipeline(
         [
             argo_node(
                 func=nd.visualise_treat_scores,
                 inputs={
-                    "scores": f"inference.{model}.model_output.predictions@pandas",
+                    "scores": f"inference.{model_name}.model_output.predictions@pandas",
                     "infer_type": "inference.int.request_type",
                     "col_name": "params:inference.score_col_name",
                 },
-                outputs=f"inference.{model}.reporting.visualisations",
-                name=f"visualise_inference_{model}",
+                outputs=f"inference.{model_name}.reporting.visualisations",
+                name=f"visualise_inference_{model_name}",
             )
         ]
     )
@@ -82,24 +82,16 @@ def create_pipeline(**kwargs) -> Pipeline:
     and dynamic nodes (i.e. nodes which are repeated for each model selected).
     """
     # Get models of interest for inference
-    model = settings.DYNAMIC_PIPELINES_MAPPING.get("model")
-    model_name = model["name"]
-    run_inference = model["config"]["run_inference"]
+    model_name = settings.DYNAMIC_PIPELINES_MAPPING.get("model")["name"]
 
     # Construct the full pipeline
-    resolution_nodes = _create_resolution_pipeline()
-    pipelines = [resolution_nodes]
-    if run_inference:
-        inference_nodes = _create_inference_pipeline(model_name)
-        pipelines.append(inference_nodes)
-
-    # Add reporting nodes for each model
-    if run_inference:
-        pipelines.append(
-            pipeline(
-                _create_reporting_pipeline(model),
-                tags=model,
-            )
-        )
+    pipelines = [
+        _create_resolution_pipeline(),
+        _create_inference_pipeline(model_name),
+        pipeline(
+            _create_reporting_pipeline(model_name),
+            tags=model_name,
+        ),
+    ]
 
     return sum([*pipelines])
