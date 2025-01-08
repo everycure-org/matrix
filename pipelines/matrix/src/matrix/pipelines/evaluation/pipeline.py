@@ -123,8 +123,7 @@ def create_pipeline(**kwargs) -> Pipeline:
     n_cross_val_folds = settings.DYNAMIC_PIPELINES_MAPPING.get("cross_validation").get("n_splits")
 
     # Unpack evaluation names
-    evaluations = settings.DYNAMIC_PIPELINES_MAPPING.get("evaluation")
-    evaluation_names = [ev["evaluation_name"] for ev in evaluations]
+    evaluation_names = [ev["evaluation_name"] for ev in settings.DYNAMIC_PIPELINES_MAPPING.get("evaluation")]
 
     # Generate pipelines for each model
     pipelines = []

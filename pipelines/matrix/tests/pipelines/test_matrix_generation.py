@@ -129,7 +129,7 @@ def test_generate_pairs(sample_drugs, sample_diseases, sample_graph, sample_know
         drugs=sample_drugs,
         diseases=sample_diseases,
         graph=sample_graph,
-        data=sample_known_pairs,
+        known_pairs=sample_known_pairs,
         clinical_trials=sample_clinical_trials,
     )
 
