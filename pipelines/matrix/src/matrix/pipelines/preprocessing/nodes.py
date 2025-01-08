@@ -41,17 +41,6 @@ def resolve_name(name: str, cols_to_get: List[str]) -> dict:
     return {}
 
 
-class IntNodesSchema(DataFrameModel):
-    ID: Series[float]
-    name: Series[object]
-    curie: Series[object]
-    normalized_curie: Series[object]
-
-    class Config:
-        strict = False
-
-
-@pandera.check_output(IntNodesSchema)
 def process_medical_nodes(df: pd.DataFrame) -> pd.DataFrame:
     # Normalize the name
     enriched_data = df["name"].apply(resolve_name, cols_to_get=["curie", "label", "types"])
