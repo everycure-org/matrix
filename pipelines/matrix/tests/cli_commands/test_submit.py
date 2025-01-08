@@ -77,13 +77,13 @@ def mock_multiple_pipelines():
 def test_check_dependencies(mock_run_subprocess: None) -> None:
     mock_run_subprocess.return_value.returncode = 0
     mock_run_subprocess.return_value.stdout = "active_account"
-    check_dependencies(verbose=True)
+    check_dependencies(verbose=True, run_from_gh=False)
     assert mock_run_subprocess.call_count > 0
 
 
 def test_build_push_docker(mock_run_subprocess: None) -> None:
     build_push_docker("testuser", verbose=True)
-    mock_run_subprocess.assert_called_once_with("make docker_push TAG=testuser", stream_output=True)
+    mock_run_subprocess.assert_called_once_with("make docker_push TAG=testuser", stream_output=False)
 
 
 @patch("matrix.cli_commands.submit.generate_argo_config")
