@@ -1,10 +1,12 @@
 import logging
 import json
 import os
+import re
 from datetime import datetime
 from typing import Any, Dict, Optional
 
 import mlflow
+import fsspec
 import pandas as pd
 import termplotlib as tpl
 from kedro.framework.context import KedroContext
@@ -16,10 +18,7 @@ from mlflow.exceptions import RestException
 from omegaconf import OmegaConf
 from pyspark import SparkConf
 from pyspark.sql import SparkSession
-from google.cloud import storage
-from google.cloud.storage.bucket import Bucket
 from matrix.pipelines.data_release import last_node_name as last_data_release_node_name
-
 
 logger = logging.getLogger(__name__)
 
@@ -283,8 +282,14 @@ class ReleaseInfoHooks:
     @staticmethod
     def build_bigquery_link() -> str:
         version = ReleaseInfoHooks._globals["versions"]["release"]
-        version = "release_" + version.replace(".", "_")
-        tmpl = f"https://console.cloud.google.com/bigquery?project=mtrx-hub-dev-3of&ws=!1m5!1m4!4m3!1smtrx-hub-dev-3of!2smtrx-hub-dev-3of!3s{version}"
+        version_formatted = "release_" + re.sub(r"[.-]", "_", version)
+        tmpl = (
+            f"https://console.cloud.google.com/bigquery?"
+            f"project={ReleaseInfoHooks._globals['gcp_project']}"
+            f"&ws=!1m4!1m3!3m2!1s"
+            f"mtrx-hub-dev-3of!2s"
+            f"{version_formatted}"
+        )
         return tmpl
 
     @staticmethod
@@ -304,40 +309,28 @@ class ReleaseInfoHooks:
     @staticmethod
     def extract_release_info() -> dict[str, str]:
         info = {
-            "release_version": ReleaseInfoHooks._globals["versions"]["release"],
-            "robokop_version": ReleaseInfoHooks._globals["data_sources"]["robokop"]["version"],
-            "rtx-kg2_version": ReleaseInfoHooks._globals["data_sources"]["rtx-kg2"]["version"],
-            "ec-medical-team": ReleaseInfoHooks._globals["data_sources"]["ec-medical-team"]["version"],
-            "topological_estimator": ReleaseInfoHooks._params["embeddings.topological_estimator"]["object"],
-            "topological_encoder": ReleaseInfoHooks._params["embeddings.node"]["encoder"]["encoder"]["model"],
-            "bigquery_link": ReleaseInfoHooks.build_bigquery_link(),
-            "mlflow_link": ReleaseInfoHooks.build_mlflow_link(),
-            "code_link": ReleaseInfoHooks.build_code_link(),
+            "Release Name": ReleaseInfoHooks._globals["versions"]["release"],
+            "Robokop Version": ReleaseInfoHooks._globals["data_sources"]["robokop"]["version"],
+            "RTX-KG2 Version": ReleaseInfoHooks._globals["data_sources"]["rtx-kg2"]["version"],
+            "EC Medical Team Version": ReleaseInfoHooks._globals["data_sources"]["ec-medical-team"]["version"],
+            "Topological Estimator": ReleaseInfoHooks._params["embeddings.topological_estimator"]["object"],
+            "Embeddings Encoder": ReleaseInfoHooks._params["embeddings.node"]["encoder"]["encoder"]["model"],
+            "BigQuery Link": ReleaseInfoHooks.build_bigquery_link(),
+            "MLFlow Link": ReleaseInfoHooks.build_mlflow_link(),
+            "Code Link": ReleaseInfoHooks.build_code_link(),
+            "Neo4j Link": "coming soon!",
+            "NodeNorm Endpoint Link": "https://nodenorm.transltr.io/1.5/get_normalized_nodes",
         }
         return info
 
     @staticmethod
-    def get_bucket() -> Bucket:
-        project_name = ReleaseInfoHooks._globals["gcp_project"]
-        bucket_name = ReleaseInfoHooks._globals["gcs_bucket"]
-        client = storage.Client(project_name)
-        bucket = client.bucket(bucket_name.replace("gs://", ""))
-        return bucket
-
-    @staticmethod
-    def build_blobpath() -> str:
-        release_dir = ReleaseInfoHooks._globals["release_dir"]
-        blob_path = release_dir.replace("gs://", "").split("/", 1)[1]
-        release_version = ReleaseInfoHooks._globals["versions"]["release"]
-        full_blob_path = os.path.join(blob_path, f"{release_version}_info.json")
-        return full_blob_path
-
-    @staticmethod
     def upload_to_storage(release_info: dict[str, str]) -> None:
-        bucket = ReleaseInfoHooks.get_bucket()
-        blobpath = ReleaseInfoHooks.build_blobpath()
-        blob = bucket.blob(blobpath)
-        blob.upload_from_string(data=json.dumps(release_info), content_type="application/json")
+        release_dir = ReleaseInfoHooks._globals["release_dir"]
+        release_version = ReleaseInfoHooks._globals["versions"]["release"]
+        full_blob_path = os.path.join(release_dir, f"{release_version}_info.json")
+
+        with fsspec.open(full_blob_path, "wb") as f:
+            f.write(json.dumps(release_info).encode("utf-8"))
 
     @hook_impl
     def after_node_run(self, node: Node) -> None:

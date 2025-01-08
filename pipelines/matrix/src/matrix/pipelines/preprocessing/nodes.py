@@ -1,9 +1,10 @@
 from typing import List
 
 import pandas as pd
+from pandera.typing import Series
+from pandera import DataFrameModel, Field
+import pandera
 import requests
-from refit.v1.core.inline_has_schema import has_schema
-from refit.v1.core.inline_primary_key import primary_key
 from tenacity import retry, wait_exponential, stop_after_attempt
 from typing import Tuple
 
@@ -40,10 +41,17 @@ def resolve_name(name: str, cols_to_get: List[str]) -> dict:
     return {}
 
 
-@has_schema(
-    schema={"ID": "numeric", "name": "object", "curie": "object", "description": "object"},
-)
-@primary_key(primary_key=["ID"])
+class IntNodesSchema(DataFrameModel):
+    ID: Series[float]
+    name: Series[object]
+    curie: Series[object]
+    normalized_curie: Series[object]
+
+    class Config:
+        strict = False
+
+
+@pandera.check_output(IntNodesSchema)
 def process_medical_nodes(df: pd.DataFrame) -> pd.DataFrame:
     # Normalize the name
     enriched_data = df["name"].apply(resolve_name, cols_to_get=["curie", "label", "types"])
@@ -58,13 +66,15 @@ def process_medical_nodes(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-@has_schema(
-    schema={
-        "SourceId": "object",
-        "TargetId": "object",
-    },
-    allow_subset=True,
-)
+class IntEdgesSchema(DataFrameModel):
+    SourceId: Series[str] = Field(nullable=True)
+    TargetId: Series[str] = Field(nullable=True)
+
+    class Config:
+        strict = False
+
+
+@pandera.check_output(IntEdgesSchema)
 def process_medical_edges(int_nodes: pd.DataFrame, int_edges: pd.DataFrame) -> pd.DataFrame:
     """Function to create int edges dataset.
 
@@ -94,25 +104,10 @@ def process_medical_edges(int_nodes: pd.DataFrame, int_edges: pd.DataFrame) -> p
     return res
 
 
-@has_schema(
-    schema={
-        "clinical_trial_id": "object",
-        "reason_for_rejection": "object",
-        "drug_name": "object",
-        "disease_name": "object",
-        "significantly_better": "numeric",
-        "non_significantly_better": "numeric",
-        "non_significantly_worse": "numeric",
-        "significantly_worse": "numeric",
-        "conflict": "bool",
-    },
-    allow_subset=True,
-)
 def add_source_and_target_to_clinical_trails(df: pd.DataFrame) -> pd.DataFrame:
     # Normalize the name
     drug_data = df["drug_name"].apply(resolve_name, cols_to_get=["curie"])
     disease_data = df["disease_name"].apply(resolve_name, cols_to_get=["curie"])
-
     # Concat dfs
     drug_df = pd.DataFrame(drug_data.tolist()).rename(columns={"curie": "drug_curie"})
     disease_df = pd.DataFrame(disease_data.tolist()).rename(columns={"curie": "disease_curie"})
@@ -132,40 +127,25 @@ def add_source_and_target_to_clinical_trails(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-@has_schema(
-    schema={
-        "curie": "object",
-        "name": "object",
-    },
-    allow_subset=True,
-    output=0,
-    df=None,
-)
-@has_schema(
-    schema={
-        "clinical_trial_id": "object",
-        "drug_name": "object",
-        "disease_name": "object",
-        "drug_curie": "object",
-        "disease_curie": "object",
-        "significantly_better": "numeric",
-        "non_significantly_better": "numeric",
-        "non_significantly_worse": "numeric",
-        "significantly_worse": "numeric",
-    },
-    allow_subset=True,
-    output=1,
-    df=None,
-)
-@primary_key(
-    primary_key=[
-        "clinical_trial_id",
-        "drug_curie",
-        "disease_curie",
-    ],
-    output=1,
-    df=None,
-)
+class CleanTrialsSchema(DataFrameModel):
+    clinical_trial_id: Series[object]
+    reason_for_rejection: Series[object]
+    drug_name: Series[object]
+    disease_name: Series[object]
+    drug_kg_curie: Series[object]
+    disease_kg_curie: Series[object]
+    conflict: Series[object]
+    significantly_better: Series[float]
+    non_significantly_better: Series[float]
+    non_significantly_worse: Series[float]
+    significantly_worse: Series[float]
+
+    class Config:
+        strict = False
+        unique = ["clinical_trial_id", "drug_kg_curie", "disease_kg_curie"]
+
+
+@pandera.check_output(CleanTrialsSchema)
 def clean_clinical_trial_data(df: pd.DataFrame) -> pd.DataFrame:
     """Clean clinical trails data.
 
@@ -225,45 +205,3 @@ def create_gt_nodes_edges(edges: pd.DataFrame) -> Tuple[pd.DataFrame, pd.DataFra
     nodes = pd.DataFrame(id_list, columns=["id"])
     edges.rename({"source": "subject", "target": "object"}, axis=1, inplace=True)
     return nodes, edges
-
-
-# def clean_gt_data(
-#     pos_df: pd.DataFrame,
-#     neg_df: pd.DataFrame,
-#     endpoint: str,
-#     conflate: bool,
-#     drug_chemical_conflate: bool,
-#     batch_size: int,
-#     parallelism: int,
-# ) -> Tuple[pd.DataFrame, pd.DataFrame]:
-#     """Clean ground truth data.
-
-#     Args:
-#         pos_df: positive ground truth data.
-#         neg_df: negative ground truth data.
-#         endpoint: endpoint of the synonymizer.
-#         conflate: whether to conflate
-#         drug_chemical_conflate: whether to conflate drug and chemical
-#         batch_size: batch size
-#         parallelism: parallelism
-#     Returns:
-#         Cleaned ground truth data.
-#     """
-#     # Synonymize source and target IDs for both positive and negative ground truth data
-#     for df in [pos_df, neg_df]:
-#         for col in ["source", "target"]:
-#             json_parser = parse("$.id.identifier")
-#             node_id_map = batch_map_ids(
-#                 frozenset(df[col]),
-#                 api_endpoint=endpoint,
-#                 batch_size=batch_size,
-#                 parallelism=parallelism,
-#                 conflate=conflate,
-#                 drug_chemical_conflate=drug_chemical_conflate,
-#                 json_parser=json_parser,
-#             )
-#             df[col] = df[col].map(node_id_map)
-
-#     return pos_df.dropna(subset=["source", "target"]).drop_duplicates(), neg_df.dropna(
-#         subset=["source", "target"]
-#     ).drop_duplicates()

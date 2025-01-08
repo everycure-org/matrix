@@ -1,17 +1,16 @@
 import logging
+from pandera import DataFrameModel
+import pandera as pa
 from tqdm import tqdm
 from typing import List, Dict, Union, Tuple
-
+from pyspark.sql import DataFrame
 from sklearn.impute._base import _BaseImputer
 
 import pandas as pd
-
-from pyspark.sql import DataFrame
 import pyspark.sql.functions as F
+from pandera.typing import Series
 
-from refit.v1.core.inject import inject_object
-from refit.v1.core.inline_has_schema import has_schema
-from refit.v1.core.make_list_regexable import _extract_elements_in_list
+from matrix.inject import inject_object, _extract_elements_in_list
 
 from matrix.datasets.graph import KnowledgeGraph
 
@@ -96,19 +95,21 @@ def spark_to_pd(nodes: DataFrame) -> pd.DataFrame:
     return nodes.toPandas()
 
 
-@has_schema(
-    schema={
-        "source": "object",
-        "target": "object",
-        "is_known_positive": "bool",
-        "is_known_negative": "bool",
-        "trial_sig_better": "bool",
-        "trial_non_sig_better": "bool",
-        "trial_sig_worse": "bool",
-        "trial_non_sig_worse": "bool",
-    },
-    allow_subset=True,
-)
+class TrialSchema(DataFrameModel):
+    source: Series[object]
+    target: Series[object]
+    is_known_positive: Series[bool]
+    is_known_negative: Series[bool]
+    trial_sig_better: Series[bool]
+    trial_non_sig_better: Series[bool]
+    trial_sig_worse: Series[bool]
+    trial_non_sig_worse: Series[bool]
+
+    class Config:
+        strict = False
+
+
+@pa.check_output(TrialSchema)
 @inject_object()
 def generate_pairs(
     drugs: DataFrame,
@@ -175,7 +176,9 @@ def make_batch_predictions(
     transformers: Dict[str, Dict[str, Union[_BaseImputer, List[str]]]],
     model: ModelWrapper,
     features: List[str],
-    score_col_name: str,
+    treat_score_col_name: str,
+    not_treat_score_col_name: str,
+    unknown_score_col_name: str,
     batch_by: str = "target",
 ) -> pd.DataFrame:
     """Generate probability scores for drug-disease dataset.
@@ -226,11 +229,13 @@ def make_batch_predictions(
         transformed = apply_transformers(batch, transformers)
 
         # Extract features
-        batch_features = _extract_elements_in_list(transformed.columns, features, raise_exc=True)
+        batch_features = _extract_elements_in_list(transformed.columns, features, True)
 
         # Generate model probability scores
-        batch[score_col_name] = model.predict_proba(transformed[batch_features].values)[:, 1]
-
+        preds = model.predict_proba(transformed[batch_features].values)
+        batch[not_treat_score_col_name] = preds[:, 0]
+        batch[treat_score_col_name] = preds[:, 1]
+        batch[unknown_score_col_name] = preds[:, 2]
         # Drop embedding columns
         batch = batch.drop(columns=["source_embedding", "target_embedding"])
         return batch
@@ -255,7 +260,9 @@ def make_predictions_and_sort(
     transformers: Dict[str, Dict[str, Union[_BaseImputer, List[str]]]],
     model: ModelWrapper,
     features: List[str],
-    score_col_name: str,
+    treat_score_col_name: str,
+    not_treat_score_col_name: str,
+    unknown_score_col_name: str,
     batch_by: str,
 ) -> pd.DataFrame:
     """Generate and sort probability scores for a drug-disease dataset.
@@ -268,27 +275,38 @@ def make_predictions_and_sort(
         transformers: Dictionary of trained transformers.
         model: Model making the predictions.
         features: List of features, may be regex specified.
-        score_col_name: Probability score column name.
+        treat_score_col_name: Probability score column name.
+        not_treat_score_col_name: Probability score column name for not treat.
+        unknown_score_col_name: Probability score column name for unknown.
         batch_by: Column to use for batching (e.g., "target" or "source").
 
     Returns:
         Pairs dataset sorted by an additional column containing the probability scores.
     """
     # Generate scores
-    data = make_batch_predictions(graph, data, transformers, model, features, score_col_name, batch_by=batch_by)
+    data = make_batch_predictions(
+        graph,
+        data,
+        transformers,
+        model,
+        features,
+        treat_score_col_name,
+        not_treat_score_col_name,
+        unknown_score_col_name,
+        batch_by=batch_by,
+    )
 
     # Sort by the probability score
-    sorted_data = data.sort_values(by=score_col_name, ascending=False)
+    sorted_data = data.sort_values(by=treat_score_col_name, ascending=False)
     return sorted_data
 
 
-def generate_summary_metadata(matrix_parameters: Dict, score_col_name: str) -> pd.DataFrame:
+def generate_summary_metadata(matrix_parameters: Dict) -> pd.DataFrame:
     """
     Generate metadata for the output matrix.
 
     Args:
         matrix_parameters (Dict): Dictionary containing matrix parameters.
-        score_col_name (str): Name of the score column.
 
     Returns:
         pd.DataFrame: DataFrame containing summary metadata.
@@ -531,7 +549,7 @@ def generate_metadata(
             meta_dict[key] = value
 
     # Generate legends column and filter out based on
-    legends_df = generate_summary_metadata(matrix_params, score_col_name)
+    legends_df = generate_summary_metadata(matrix_params)
     legends_df = legends_df.loc[legends_df["Key"].isin(matrix_report.columns.values)]
 
     # Generate metadata df
@@ -569,7 +587,6 @@ def generate_report(
         score_col_name: Probability score column name.
         matrix_params: Dictionary containing matrix metadata and other meters.
         run_metadata: Dictionary containing run metadata.
-        score_col_name: Probability score column name.
     Returns:
         Dataframe with the top pairs and additional information for the drugs and diseases.
     """
