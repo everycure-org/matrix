@@ -47,7 +47,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                     argo_node(
                         func=partial_fold(nodes.generate_pairs, fold, arg_name="known_pairs"),
                         inputs={
-                            "known_pairs": f"modelling.model_input.fold_{fold}.splits",
+                            "known_pairs": "modelling.model_input.splits",
                             "drugs": "integration.int.drug_list.nodes.norm@pandas",
                             "diseases": "integration.int.disease_list.nodes.norm@pandas",
                             "graph": "matrix_generation.feat.nodes@kg",
