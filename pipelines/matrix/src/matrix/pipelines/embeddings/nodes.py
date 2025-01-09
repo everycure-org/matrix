@@ -53,7 +53,7 @@ class GraphDS(GraphDataScience):
 class IngestedNodesSchema(DataFrameModel):
     id: T.StringType
     label: T.StringType
-    name: T.StringType
+    name: T.StringType = Field(nullable=True)
     property_keys: T.ArrayType(T.StringType())  # type: ignore
     property_values: T.ArrayType(T.StringType())  # type: ignore
     upstream_data_source: T.ArrayType(T.StringType())  # type: ignore
@@ -66,6 +66,7 @@ def ingest_nodes(df: DataFrame) -> DataFrame:
     Args:
         df: Nodes dataframe
     """
+
     return (
         df.select("id", "name", "category", "description", "upstream_data_source")
         .withColumn("label", F.col("category"))
