@@ -43,6 +43,15 @@ jobs:
           #     /opt/ghc \
           #     "/usr/local/share/boost" \
           #     "$AGENT_TOOLSDIRECTORY" && \
+          # sudo apt-get clean
+
+          sudo rm -rf \
+              /usr/local/.ghcup \
+              /usr/local/lib/android/sdk/ndk \
+              /usr/share/dotnet \
+              /opt/ghc \
+              "/usr/local/share/boost" \
+              "$AGENT_TOOLSDIRECTORY" && \
           sudo apt-get clean
 
       - name: Check disk space
