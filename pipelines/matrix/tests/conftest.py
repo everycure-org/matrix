@@ -10,7 +10,7 @@ from kedro.framework.hooks import _create_hook_manager
 
 import pyspark.sql as ps
 from omegaconf.resolvers import oc
-from matrix.resolvers import merge_dicts
+from matrix.resolvers import merge_dicts, cast_to_int
 from matrix.settings import _load_setting
 
 
@@ -33,7 +33,7 @@ def conf_source(matrix_root: Path) -> Path:
 def config_loader(conf_source: Path) -> OmegaConfigLoader:
     """Instantiate a config loader."""
     return OmegaConfigLoader(
-        env="base",
+        env="cloud",
         base_env="base",
         conf_source=conf_source,
         config_patterns={
@@ -46,7 +46,7 @@ def config_loader(conf_source: Path) -> OmegaConfigLoader:
                 "**/parameters*/**",
             ],
         },
-        custom_resolvers={"merge": merge_dicts, "oc.env": oc.env, "setting": _load_setting},
+        custom_resolvers={"merge": merge_dicts, "oc.env": oc.env, "setting": _load_setting, "oc.int": cast_to_int},
     )
 
 
@@ -54,7 +54,7 @@ def config_loader(conf_source: Path) -> OmegaConfigLoader:
 def kedro_context(config_loader: OmegaConfigLoader) -> KedroContext:
     """Instantiate a KedroContext."""
     return KedroContext(
-        env="base",
+        env="cloud",
         package_name="matrix",
         project_path=Path.cwd(),
         config_loader=config_loader,
