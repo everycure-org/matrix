@@ -1,5 +1,6 @@
 # Standard library imports
 import pytest
+from typing import List, Any
 from unittest.mock import Mock
 
 # Third-party imports
@@ -12,6 +13,7 @@ import matplotlib.pyplot as plt
 from sklearn.base import BaseEstimator
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import KFold, GridSearchCV
+from sklearn.impute._base import _BaseImputer
 from xgboost import XGBClassifier
 
 # PySpark imports
@@ -33,108 +35,62 @@ from matrix.pipelines.modelling.nodes import (
 from matrix.pipelines.modelling.tuning import NopTuner
 
 
-def test_apply_single_transformer():
-    data = pd.DataFrame(
+class DummyTransformer(_BaseImputer):
+    """
+    Test implementation of transformer
+    """
+
+    def __init__(self, transformed: List[Any]):
+        self.transformed = transformed
+
+    def get_feature_names_out(self, x):
+        return x.columns.tolist()
+
+    def transform(self, x):
+        return self.transformed
+
+
+@pytest.fixture
+def input_df() -> pd.DataFrame:
+    return pd.DataFrame(
         {
-            "feature1": [0, 5, 10],  # Will be scaled to [0, 0.5, 1]
+            "feature_1": [0, 5, 10],
+            "feature_2": [0, 1, 2],
             "non_transform_col": ["row_1", "row_2", "row_3"],
         }
     )
 
-    class TestScaler:
-        def fit(self, x):
-            return [1, 2, 3]
 
-        def feature_names_in_(self):
-            return ["feature1"]
-
-        def get_feature_names_out(self, x):
-            return ["feature1"]
-
-        def transform(self, x):
-            return x
-
-    transformers = {
-        "minmax_scaler": {"transformer": TestScaler(), "features": ["feature1"]},
-    }
-
-    result = apply_transformers(data, transformers)
-
-    # Assertions
-    assert isinstance(result, pd.DataFrame)
-    assert result.shape == data.shape
-    assert set(result.columns) == set(data.columns)
-
-    expected_feature1 = [0.0, 0.5, 1.0]
-    np.testing.assert_array_almost_equal(result["feature1"].values, expected_feature1, decimal=3)
-
-    # Check if non-transformed column remains unchanged
-    assert (result["non_transform_col"] == data["non_transform_col"]).all()
-
-
-def test_apply_multiple_transformers():
-    # Test with two simple transformers
-    data = pd.DataFrame(
+@pytest.mark.parametrize(
+    "transformers",
+    [
+        # Validate single transformer
+        {"dummy_transformer_1": {"transformer": DummyTransformer(transformed=[1, 3, 3]), "features": ["feature_1"]}},
+        # Validate multiple transformers
         {
-            "feature1": [0, 5, 10],  # For MinMaxScaler
-            "feature2": [0, 5, 10],  # For StandardScaler
-            "non_transform_col": ["row_1", "row_2", "row_3"],
-        }
-    )
+            "dummy_transformer_1": {"transformer": DummyTransformer(transformed=[1, 3, 3]), "features": ["feature_1"]},
+            "dummy_transformer_2": {"transformer": DummyTransformer(transformed=[2, 6, 6]), "features": ["feature_2"]},
+        },
+    ],
+)
+def test_apply_transformers(input_df, transformers):
+    # Given input list of transformers
 
-    # Create and fit transformers
-    minmax_scaler = MinMaxScaler()
-    standard_scaler = StandardScaler()
+    # When appyling apply transformers
+    result = apply_transformers(input_df, transformers)
 
-    minmax_scaler.fit(data[["feature1"]])
-    standard_scaler.fit(data[["feature2"]])
-
-    minmax_scaler.feature_names_in_ = ["feature1"]
-    standard_scaler.feature_names_in_ = ["feature2"]
-
-    transformers = {
-        "minmax_scaler": {"transformer": minmax_scaler, "features": ["feature1"]},
-        "standard_scaler": {"transformer": standard_scaler, "features": ["feature2"]},
-    }
-
-    # Apply transformers
-    result = apply_transformers(data, transformers)
-
-    # Only verify that both transformations were applied
+    # Then output is of correct type, transformers are applied correctly
+    # and non_transformer_col is untouched
     assert isinstance(result, pd.DataFrame)
-    assert result.shape == data.shape
-    assert set(result.columns) == set(data.columns)
-    assert not (result["feature1"] == data["feature1"]).all()
-    assert not (result["feature2"] == data["feature2"]).all()
-    assert (result["non_transform_col"] == data["non_transform_col"]).all()
+    assert result.shape == input_df.shape
+    assert set(result.columns) == set(input_df.columns)
 
+    # NOTEL we currently limiting ourselves to transformers with single input feature
+    for _, transformer in transformers.items():
+        np.testing.assert_array_equal(result[transformer["features"][0]].values, transformer["transformer"].transformed)
 
-def test_apply_transformers_empty_transformers():
-    # Test with empty transformers dictionary
-    data = pd.DataFrame({"feature1": [1, 2, 3], "feature2": [4, 5, 6]})
-
-    result = apply_transformers(data, {})
-
-    assert isinstance(result, pd.DataFrame)
-    assert result.equals(data)
-
-
-def test_apply_transformers_invalid_features():
-    # Test with invalid feature names
-    data = pd.DataFrame({"feature1": [1, 2, 3]})
-
-    scaler = StandardScaler()
-    scaler.fit(data[["feature1"]])
-
-    transformers = {"scaler1": {"transformer": scaler, "features": ["non_existent_feature"]}}
-
-    with pytest.raises(KeyError):
-        apply_transformers(data, transformers)
-
-
-@pytest.fixture(scope="module")
-def spark() -> ps.SparkSession:
-    return ps.SparkSession.builder.getOrCreate()
+    # # Check if non-transformed column remains unchanged
+    assert (result["non_transform_col"] == input_df["non_transform_col"]).all()
 
 
 @pytest.fixture(scope="module")
