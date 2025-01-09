@@ -5,6 +5,7 @@ exclude = [
     ]
 
 [lint]
+select = [I]
 ignore = []
 pydocstyle.convention = "google"
 fixable = ["ALL"]
