@@ -33,11 +33,6 @@ from matrix.pipelines.modelling.tuning import NopTuner
 
 
 @pytest.fixture(scope="module")
-def spark() -> ps.SparkSession:
-    return ps.SparkSession.builder.getOrCreate()
-
-
-@pytest.fixture(scope="module")
 def base_test_data(spark: ps.SparkSession) -> ps.DataFrame:
     # Create test data
     nodes_data = [
