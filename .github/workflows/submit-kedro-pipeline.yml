@@ -32,19 +32,20 @@ jobs:
           fetch-tags: true
           fetch-depth: 0  # full depth needed so we can pass the AI all logs since the last release.
 
-      - name: Remove unnecessary files
-        # debug: remove unnecessary files to free up disk space for building and pushing docker images
-        run: |
-          sudo rm -rf \
-              /usr/local/.ghcup \
-              /usr/local/lib/android/sdk/ndk \
-              "$AGENT_TOOLSDIRECTORY" && \
-          df -h
+      # - name: Remove unnecessary files
+      #   # debug: remove unnecessary files to free up disk space for building and pushing docker images
+      #   # ref: https://github.com/actions/runner-images/issues/2840
+      #   run: |
+      #     sudo rm -rf \
+      #         /usr/local/.ghcup \
+      #         /usr/local/lib/android/sdk/ndk \
+      #         "$AGENT_TOOLSDIRECTORY" && \
+      #     df -h
       
-      # - name: Set up Python
-      #   uses: actions/setup-python@v5
-      #   with:
-      #     python-version: '3.11'
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
 
       # - name: Authenticate with Google Cloud
       #   id: auth
@@ -80,7 +81,7 @@ jobs:
       # - name: Get bump type
       #   run: |
       #     # Check if today is the first day of the month
-      #     if [ "$(date +%d)" -eq 1 ]; then
+      #     if [ "$(date +%-d)" -eq 1 ]; then
       #       bump_type="minor"
       #       echo "bump_type=${bump_type}" >> "$GITHUB_ENV"
       #     else
@@ -93,6 +94,20 @@ jobs:
       #   run: |
       #     pip install semver
       #     python bump_version.py
+
+      - name: Increment version
+        working-directory: docs/scripts
+        run: |
+          pip install semver
+          # If it's the first of the month, it's a minor bump, even if it's Monday. On all other Mondays, it's a patch.
+          [[ $(date +%-d) -eq 1 ]] && BUMP_TYPE='minor' || BUMP_TYPE='patch'
+          echo "Bumping version with type: ${BUMP_TYPE}"
+          python bump_version.py --type="${BUMP_TYPE}"
+      
+      - name: Print release version
+        run:
+          echo "Release version is ${release_version}"
+      
 
       # - name: Set up kedro project dependencies
       #   working-directory: pipelines/matrix
