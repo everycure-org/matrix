@@ -1,10 +1,10 @@
 import os
+import sys
 import semver
 
 
-def bump_version(type: None):
+def bump_version(type: str):
     latest_tag = os.getenv("latest_tag", "v0.0.0").lstrip("v")
-    # bump_type = os.getenv("bump_type", "minor")
     version = semver.Version.parse(latest_tag)
 
     if type == "minor":
@@ -17,4 +17,8 @@ def bump_version(type: None):
 
 
 if __name__ == "__main__":
-    bump_version()
+    # Extract the type argument
+    arg = sys.argv[1]
+    # Parse the type
+    bump_type = arg.split("=", 1)[1]
+    bump_version(bump_type)
