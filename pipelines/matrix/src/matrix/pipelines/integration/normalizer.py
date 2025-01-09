@@ -27,7 +27,7 @@ class Normalizer(ABC):
 
 
 class NCATSNodeNormalizer(Normalizer):
-    """Class to represent nornalizer from translator."""
+    """Class to represent normalizer from translator."""
 
     def __init__(self, endpoint: str, conflate: bool, drug_chemical_conflate: bool, description: bool = False) -> None:
         self._endpoint = endpoint
