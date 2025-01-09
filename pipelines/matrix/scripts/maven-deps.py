@@ -1,6 +1,6 @@
 """Script to load maven dependencies."""
 
-from pyspark.sql import SparkSession
+import pyspark.sql as ps
 from pyspark import SparkConf
 
 import yaml
@@ -21,7 +21,7 @@ def main(*args, **kwargs):
     spark_conf = SparkConf().setAll(parameters.items())
 
     # Initialise the spark session
-    spark_session_conf = SparkSession.builder.appName("tmp").config(conf=spark_conf)
+    spark_session_conf = ps.SparkSession.builder.appName("tmp").config(conf=spark_conf)
     _spark_session = spark_session_conf.getOrCreate()
     _spark_session.sparkContext.setLogLevel("WARN")
 
