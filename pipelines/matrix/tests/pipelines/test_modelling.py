@@ -146,6 +146,7 @@ def sample_splits():
             "target": ["disease3", "disease4"],
             "target_embedding": [np.array([1.3, 1.4]), np.array([1.5, 1.6])],
             "iteration": [1.0, 1.0],
+            "fold": [0, 1],
             "split": ["TEST", "TRAIN"],
         }
     )
