@@ -7,25 +7,32 @@ import tqdm.asyncio
 import pandas as pd
 
 from langchain_core.output_parsers.transform import BaseTransformOutputParser
+from langchain.schema import BaseOutputParser
 from langchain.prompts import ChatPromptTemplate
 from langchain.schema import HumanMessage
 from langchain.chat_models.base import BaseChatModel
-from enum import Enum
 
 from matrix.inject import inject_object
 
 logger = logging.getLogger(__name__)
 
 
-class CategorizeAllowStrings(Enum):
-    VERY_HIGH = "VERY HIGH"
-    HIGH = "HIGH"
-    MEDIUM = "MEDIUM"
-    LOW = "LOW"
-    NONE = "NONE"
+class SetOutputParser(BaseOutputParser):
+    def __init__(self, allowed_outputs: List[str]):
+        """
+        Initialize the parser with a predefined set of allowed outputs.
+        """
+        self.allowed_outputs = set(allowed_outputs)
 
-    def __str__(self):
-        return self.value
+    def parse(self, text: str):
+        """
+        Parse the model output to ensure it's in the allowed set.
+        """
+        cleaned_text = text.strip()
+        if cleaned_text in self.allowed_outputs:
+            return cleaned_text
+        else:
+            raise ValueError(f"Output '{text}' is not in the allowed set: {self.allowed_outputs}")
 
 
 class Tag:
@@ -87,7 +94,7 @@ class Tag:
         async with sem:
             prompt = ChatPromptTemplate.from_messages([HumanMessage(content=self._prompt.format(**row))])
             response = await model.ainvoke(prompt.format_messages())
-            return str(self._output_parser.parse(response.content))
+            return self._output_parser.parse(response.content)
 
 
 @inject_object()
