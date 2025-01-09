@@ -52,7 +52,7 @@ DYNAMIC_PIPELINES_MAPPING = generate_dynamic_pipeline_mapping(
             {"name": "ec_medical_team"},
         ],
         "modelling": {
-            "model_name": "xg_baseline",  # model_namesuggestions: xg_baseline, xg_ensemble, rf, xg_synth
+            "model_name": "xg_baseline",  # model_name suggestions: xg_baseline, xg_ensemble, rf, xg_synth
             "model_config": {
                 "num_shards": 1,
             },
