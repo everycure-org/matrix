@@ -1,4 +1,4 @@
-from typing import List, Union
+from typing import Union
 
 from kedro.pipeline import Pipeline, pipeline
 
@@ -213,7 +213,7 @@ def create_model_pipeline(model: str, num_shards: int, n_cross_val_folds: int) -
     return sum(pipelines)
 
 
-def create_shared_pipeline(model_name: str, folds_lst: List[Union[str, int]]) -> Pipeline:
+def create_shared_pipeline(model_name: str) -> Pipeline:
     """Function to create pipeline of shared nodes.
 
     NOTE: The model list is added to tag the nodes for single pipeline execution.
@@ -289,31 +289,12 @@ def create_pipeline(**kwargs) -> Pipeline:
 
     # Unpack Folds
     n_cross_val_folds = settings.DYNAMIC_PIPELINES_MAPPING.get("cross_validation").get("n_cross_val_folds")
-    folds_lst = list(range(n_cross_val_folds)) + ["full"]
 
     # Add shared nodes
     pipelines = []
-    pipelines.append(create_shared_pipeline(model_name, folds_lst))
+    pipelines.append(create_shared_pipeline(model_name))
 
     # Generate pipeline for the model
     pipelines.append(create_model_pipeline(model_name, model_config["num_shards"], n_cross_val_folds))
-
-    # Now aggregate the metrics for the model
-    pipelines.append(
-        pipeline(
-            [
-                argo_node(
-                    func=nodes.aggregate_metrics,
-                    inputs=[
-                        "params:modelling.aggregation_functions",
-                        *[f"modelling.{model_name}.fold_{fold}.reporting.metrics" for fold in range(n_cross_val_folds)],
-                    ],
-                    outputs=f"modelling.{model_name}.reporting.metrics_aggregated",
-                    name=f"aggregate_{model_name}_model_performance_checks",
-                    tags=[f"{model_name}"],
-                )
-            ]
-        )
-    )
 
     return sum(pipelines)
