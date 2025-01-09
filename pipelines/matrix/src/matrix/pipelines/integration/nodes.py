@@ -11,7 +11,6 @@ import pyspark.sql.functions as F
 from joblib import Memory
 from jsonpath_ng import parse
 from more_itertools import chunked
-from matrix.inject import inject_object
 from tenacity import (
     retry,
     retry_if_exception_type,
@@ -19,8 +18,10 @@ from tenacity import (
 )
 from tqdm.asyncio import tqdm_asyncio
 
+from matrix.inject import inject_object
 from matrix.pipelines.integration.filters import determine_most_specific_category
 from matrix.schemas.knowledge_graph import KGEdgeSchema, KGNodeSchema, cols_for_schema
+from matrix.utils.metric_utilities import log_metric
 
 # TODO move these into config
 memory = Memory(location=".cache/nodenorm", verbose=0)
@@ -80,12 +81,14 @@ def _apply_transformations(
 ) -> ps.DataFrame:
     logger.info(f"Filtering dataframe with {len(transformations)} transformations")
     last_count = df.count()
-    logger.info(f"Number of rows before filtering: {last_count}")
+    log_metric(f"integration", f"Number of rows before filtering", last_count)
     for name, transformation in transformations.items():
         logger.info(f"Applying transformation: {name}")
         df = df.transform(transformation, **kwargs)
         new_count = df.count()
-        logger.info(f"Number of rows after transformation: {new_count}, cut out {last_count - new_count} rows")
+
+        log_metric(f"integration", f"Number of rows after transformation", new_count)
+        log_metric(f"integration", f"Number of rows removed after transformation", last_count - new_count)
         last_count = new_count
 
     return df
@@ -114,7 +117,8 @@ def filter_unified_kg_edges(
 
     # filter down edges to only include those that are present in the filtered nodes
     edges_count = edges.count()
-    logger.info(f"Number of edges before filtering: {edges_count}")
+
+    log_metric(f"integration", f"Number of edges before filtering", edges_count)
     edges = (
         edges.alias("edges")
         .join(nodes.alias("subject"), on=F.col("edges.subject") == F.col("subject.id"), how="inner")
