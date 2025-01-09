@@ -10,11 +10,11 @@ from matrix.kedro4argo_node import argo_node
 from . import nodes
 
 
-def _create_evaluation_fold_pipeline(model: str, evaluation: str, fold: Union[str, int]) -> Pipeline:
+def _create_evaluation_fold_pipeline(model_name: str, evaluation: str, fold: Union[str, int]) -> Pipeline:
     """Create pipeline for single model, evaluation and fold.
 
     Args:
-        model: model name
+        model_name: model name
         evaluation: name of evaluation suite to generate
         fold: fold to generate
 
@@ -27,24 +27,24 @@ def _create_evaluation_fold_pipeline(model: str, evaluation: str, fold: Union[st
                 func=partial_fold(nodes.generate_test_dataset, fold, arg_name="known_pairs"),
                 inputs={
                     "known_pairs": "modelling.model_input.splits",
-                    "matrix": f"matrix_generation.{model}.fold_{fold}.model_output.sorted_matrix_predictions@pandas",
+                    "matrix": f"matrix_generation.{model_name}.fold_{fold}.model_output.sorted_matrix_predictions@pandas",
                     "generator": f"params:evaluation.{evaluation}.evaluation_options.generator",
                     "score_col_name": "params:matrix_generation.treat_score_col_name",
                 },
-                outputs=f"evaluation.{model}.fold_{fold}.{evaluation}.model_output.pairs",
-                name=f"create_{model}_{evaluation}_evaluation_pairs_fold_{fold}",
+                outputs=f"evaluation.{model_name}.fold_{fold}.{evaluation}.model_output.pairs",
+                name=f"create_{model_name}_{evaluation}_evaluation_pairs_fold_{fold}",
             ),
             argo_node(
                 func=nodes.evaluate_test_predictions,
                 inputs=[
-                    f"evaluation.{model}.fold_{fold}.{evaluation}.model_output.pairs",
+                    f"evaluation.{model_name}.fold_{fold}.{evaluation}.model_output.pairs",
                     f"params:evaluation.{evaluation}.evaluation_options.evaluation",
                 ],
-                outputs=f"evaluation.{model}.fold_{fold}.{evaluation}.reporting.result",
-                name=f"create_{model}_{evaluation}_evaluation_fold_{fold}",
+                outputs=f"evaluation.{model_name}.fold_{fold}.{evaluation}.reporting.result",
+                name=f"create_{model_name}_{evaluation}_evaluation_fold_{fold}",
             ),
         ],
-        tags=["argowf.fuse", f"argowf.fuse-group.{model}.{evaluation}.fold_{fold}"],
+        tags=["argowf.fuse", f"argowf.fuse-group.{model_name}.{evaluation}.fold_{fold}"],
     )
 
 
