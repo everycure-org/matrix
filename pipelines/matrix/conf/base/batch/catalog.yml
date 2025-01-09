@@ -37,7 +37,7 @@ batch.int.{source}.input_bucketized@partitioned:
 batch.int.{source}.{workers}.input_transformed@partitioned:
   type: matrix.datasets.gcp.PartitionedAsyncParallelDataset
   overwrite: True # NOTE: Very important to ensure every run clear out previous partitions
-  max_workers: "{workers}"
+  max_workers: "{workers}" # Used to enable API parallelization (note that filepath is not affected by this))
   path: ${globals:paths.tmp}/batch/{source}/transformed
   dataset: 
     <<: *_pandas_parquet
