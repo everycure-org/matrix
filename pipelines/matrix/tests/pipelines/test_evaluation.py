@@ -65,6 +65,29 @@ def sample_positives():
     return data
 
 
+@pytest.fixture
+def sample_matrix():
+    """Sample matrix dataframe fixture."""
+    return pd.DataFrame(
+        {
+            "source": ["drug1", "drug2", "drug3"],
+            "target": ["disease1", "disease2", "disease3"],
+            "score": [0.9, 0.8, 0.7],
+        }
+    )
+
+
+@pytest.fixture
+def mock_generator():
+    """Mock generator that returns predefined test data."""
+
+    class MockGenerator(DrugDiseasePairGenerator):
+        def generate(self, matrix):
+            return pd.DataFrame({"source": ["drug1", "drug2"], "target": ["disease1", "disease2"], "y": [1, 0]})
+
+    return MockGenerator()
+
+
 def test_discrete_metrics(sample_data):
     """Test the DiscreteMetrics class using accuracy as the metric."""
     # Given standard and edge case datasets, and accuracy as the evaluation metric
@@ -163,29 +186,6 @@ def test_recall_at_n(sample_data):
 
     assert "recall_at_5" in result
     assert np.isclose(result["recall_at_5"], 1.0, atol=1e-6)  # All true positives included
-
-
-@pytest.fixture
-def sample_matrix():
-    """Sample matrix dataframe fixture."""
-    return pd.DataFrame(
-        {
-            "source": ["drug1", "drug2", "drug3"],
-            "target": ["disease1", "disease2", "disease3"],
-            "score": [0.9, 0.8, 0.7],
-        }
-    )
-
-
-@pytest.fixture
-def mock_generator():
-    """Mock generator that returns predefined test data."""
-
-    class MockGenerator(DrugDiseasePairGenerator):
-        def generate(self, matrix):
-            return pd.DataFrame({"source": ["drug1", "drug2"], "target": ["disease1", "disease2"], "y": [1, 0]})
-
-    return MockGenerator()
 
 
 def test_generate_test_dataset_injection():
