@@ -1,40 +1,81 @@
-dataset_name_rtx_kg2: RTX-KG2
-dataset_name_robokop: ROBOKOP
-output_path_rtx_kg2_ingestion: data/qc/int/rtx_kg2/rtx_kg2_ingestion_metrics.parquet
-output_path_robokop_ingestion: data/qc/int/robokop/robokop_ingestion_metrics.parquet
-output_path_rtx_kg2_integration: data/qc/int/rtx_kg2/rtx_kg2_integration_metrics.parquet
-output_path_robokop_integration: data/qc/int/robokop/robokop_integration_metrics.parquet
-
+#dataset_name_rtx_kg2: RTX-KG2
+#dataset_name_robokop: ROBOKOP
+#output_path_rtx_kg2_ingestion: data/qc/int/rtx_kg2/rtx_kg2_ingestion_metrics.parquet
+#output_path_robokop_ingestion: data/qc/int/robokop/robokop_ingestion_metrics.parquet
+#output_path_rtx_kg2_integration: data/qc/int/rtx_kg2/rtx_kg2_integration_metrics.parquet
+#output_path_robokop_integration: data/qc/int/robokop/robokop_integration_metrics.parquet
+#
 
 quality_control:
+  row_count_definition: &row_count
+      object: matrix.pipelines.quality_control.quality_control.CountValuesQualityControl
+
   ingestion_nodes:
-    # Count values in category column
-    category_value_count:
-      object: matrix.pipelines.quality_control.quality_control.CountColumnValuesAggregatedQualityControl
-      expr: "`category:LABEL`"
-    row_count:
-      object:  matrix.pipelines.quality_control.quality_control.CountValuesQualityControl
-    unique_prefix_count:
-      expr: &_prefix_expr split(id, ':')[0]
-      object: matrix.pipelines.quality_control.quality_control.CountColumnValuesAggregatedQualityControl
+    row_count: *row_count
 
   ingestion_edges:
-    # Count values in category column
-    row_count:
-      object:  matrix.pipelines.quality_control.quality_control.CountValuesQualityControl
+    row_count: *row_count
+
+  transformed_nodes:
+    row_count: *row_count
+
+  transformed_edges:
+    row_count: *row_count
+
+  normalized_nodes:
+    row_count: *row_count
+
+  normalized_edges:
+    row_count: *row_count
+
+  unified_nodes:
+    row_count: *row_count
+
+  unified_edges:
+   row_count: *row_count
+
+  filtered_nodes:
+    # the number of unconnected nodes is = unified_nodes - filtered_nodes
+    row_count: *row_count
+
+  filtered_edges:
+    row_count: *row_count
+
+# Do we need any of this anymore?
 #    TODO: Modify this for prefix counts
 #    unique_prefix_count:
 #      expr: &_prefix_expr split(id, ':')[0]
 #      object: matrix.pipelines.quality_control.quality_control.CountColumnValuesAggregatedQualityControl
 
-  integration:
-    # TODO: Register other suites here
-    ingested_nodes:
-      object: matrix.pipelines.quality_control.quality_control.CountValuesQualityControl
-    unique_prefix_count: 
-      expr: &_prefix_expr split(id, ':')[0]
-      object: matrix.pipelines.quality_control.quality_control.CountColumnValuesAggregatedQualityControl
-    normalization_count_fail:
-      object: matrix.pipelines.quality_control.quality_control.CountColumnValuesAggregatedQualityControl
-      expr: *_prefix_expr
-      filter_expr: normalization_success = False
+#  transformed_nodes:
+#    row_count:
+#      object: matrix.pipelines.quality_control.quality_control.CountValuesQualityControl
+#
+#  transformed_edges:
+#    row_count:
+#      object: matrix.pipelines.quality_control.quality_control.CountValuesQualityControl
+#
+#  normalized_nodes:
+#    row_count:
+#      object: matrix.pipelines.quality_control.quality_control.CountValuesQualityControl
+#
+#  unified_nodes:
+#    row_count:
+#      object: matrix.pipelines.quality_control.quality_control.CountValuesQualityControl
+#
+#  unified_edges:
+#    row_count:
+#      object: matrix.pipelines.quality_control.quality_control.CountValuesQualityControl
+#
+
+#  integration:
+#    # TODO: Register other suites here
+#    ingested_nodes:
+#      object: matrix.pipelines.quality_control.quality_control.CountValuesQualityControl
+#    unique_prefix_count:
+#      expr: &_prefix_expr split(id, ':')[0]
+#      object: matrix.pipelines.quality_control.quality_control.CountColumnValuesAggregatedQualityControl
+#    normalization_count_fail:
+#      object: matrix.pipelines.quality_control.quality_control.CountColumnValuesAggregatedQualityControl
+#      expr: *_prefix_expr
+#      filter_expr: normalization_success = False
