@@ -53,12 +53,12 @@ jobs:
           service_account: ${{env.service_account}}
           token_format: access_token
 
-      - uses: google-github-actions/get-gke-credentials@v1 
-      # configure authentication to a GKE cluster (configure kubectl)
-        with:
-          cluster_name: ${{env.cluster}}
-          location: ${{env.region}}
-          project_id: ${{env.project_id}}
+      # - uses: google-github-actions/get-gke-credentials@v1 
+      # # configure authentication to a GKE cluster (configure kubectl)
+      #   with:
+      #     cluster_name: ${{env.cluster}}
+      #     location: ${{env.region}}
+      #     project_id: ${{env.project_id}}
 
       - name: Login to Google Artifact Registry 
       # the docker image is pushed to Google Artifact Registry
