@@ -38,14 +38,12 @@ jobs:
           # sudo rm -rf \
           #     /usr/local/.ghcup \
           #     /usr/local/lib/android/sdk/ndk \
-          #     "/usr/local/share/boost" \
           #     "$AGENT_TOOLSDIRECTORY" && \
           # sudo apt-get clean
 
           sudo rm -rf \
               /usr/local/.ghcup \
-              /usr/local/lib/android/sdk/ndk \
-              "$AGENT_TOOLSDIRECTORY" && \
+              /usr/local/lib/android/sdk/ndk && \
           sudo apt-get clean
 
       - name: Check disk space
