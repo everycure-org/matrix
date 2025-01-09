@@ -12,6 +12,14 @@ repos:
             pipelines/matrix/packages|
             services/synonymizer/api/modules/synonymize
           )
+      # Run isort
+      - id: ruff
+        args: ["check", "--select", "I", "--fix"]
+        exclude: | 
+          (?x)^(
+            pipelines/matrix/packages|
+            services/synonymizer/api/modules/synonymize
+          )
       # Run the formatter.
       - id: ruff-format
         exclude: |
