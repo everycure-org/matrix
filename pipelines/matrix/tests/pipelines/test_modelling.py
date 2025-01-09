@@ -12,7 +12,6 @@ import matplotlib.pyplot as plt
 from sklearn.base import BaseEstimator
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import KFold, GridSearchCV
-from sklearn.preprocessing import StandardScaler, MinMaxScaler
 from xgboost import XGBClassifier
 
 # PySpark imports
@@ -42,12 +41,21 @@ def test_apply_single_transformer():
         }
     )
 
-    scaler = MinMaxScaler()
-    scaler.fit(data[["feature1"]])
-    scaler.feature_names_in_ = ["feature1"]
+    class TestScaler:
+        def fit(self, x):
+            return [1, 2, 3]
+
+        def feature_names_in_(self):
+            return ["feature1"]
+
+        def get_feature_names_out(self, x):
+            return ["feature1"]
+
+        def transform(self, x):
+            return x
 
     transformers = {
-        "minmax_scaler": {"transformer": scaler, "features": ["feature1"]},
+        "minmax_scaler": {"transformer": TestScaler(), "features": ["feature1"]},
     }
 
     result = apply_transformers(data, transformers)
