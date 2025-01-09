@@ -1,9 +1,6 @@
 name: Automate kedro submit release run periodically
 
 on:
-  push:
-    branches:
-      - gh-actions-weekly-submit
   schedule:
     - cron: '30 9 1 * 1' # At 09:30 on the 1st day of the month and on Monday.
 
@@ -56,12 +53,12 @@ jobs:
           service_account: ${{env.service_account}}
           token_format: access_token
 
-      # - uses: google-github-actions/get-gke-credentials@v1 
-      # # configure authentication to a GKE cluster (configure kubectl)
-      #   with:
-      #     cluster_name: ${{env.cluster}}
-      #     location: ${{env.region}}
-      #     project_id: ${{env.project_id}}
+      - uses: google-github-actions/get-gke-credentials@v1 
+      # configure authentication to a GKE cluster (configure kubectl)
+        with:
+          cluster_name: ${{env.cluster}}
+          location: ${{env.region}}
+          project_id: ${{env.project_id}}
 
       - name: Login to Google Artifact Registry 
       # the docker image is pushed to Google Artifact Registry
