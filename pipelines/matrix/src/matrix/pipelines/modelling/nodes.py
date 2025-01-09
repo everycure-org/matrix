@@ -76,7 +76,7 @@ def filter_valid_pairs(
 
     Args:
         nodes: Nodes dataframe
-        eges_gt: DataFrame with ground truth pairs
+        edges_gt: DataFrame with ground truth pairs
         drug_categories: List of drug categories to be filtered on
         disease_categories: List of disease categories to be filtered on
 
