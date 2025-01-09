@@ -194,8 +194,10 @@ def attach_embeddings(
         pairs_df.alias("pairs")
         .join(nodes.withColumn("source", f.col("id")), how="left", on="source")
         .withColumnRenamed("topological_embedding", "source_embedding")
+        .withColumn("source_embedding", f.col("source_embedding").cast(T.ArrayType(T.FloatType())))
         .join(nodes.withColumn("target", f.col("id")), how="left", on="target")
         .withColumnRenamed("topological_embedding", "target_embedding")
+        .withColumn("target_embedding", f.col("target_embedding").cast(T.ArrayType(T.FloatType())))
         .select("pairs.*", "source_embedding", "target_embedding")
     )
 
