@@ -8,7 +8,7 @@ from pyspark.sql import functions as F
 from pyspark.sql import types as T
 
 
-class QaulityControl(abc.ABC):
+class QualityControl(abc.ABC):
     """Base class for computing quality control metrics."""
 
     @abc.abstractmethod
@@ -23,7 +23,7 @@ class QaulityControl(abc.ABC):
         ...
 
 
-class CountValuesQualityControl(QaulityControl):
+class CountValuesQualityControl(QualityControl):
     """Quality control suite to compute number of rows."""
 
     def run(self, df: ps.DataFrame) -> ps.DataFrame:
@@ -41,7 +41,7 @@ class CountValuesQualityControl(QaulityControl):
         )
 
 
-class CountColumnValuesAggregatedQualityControl(QaulityControl):
+class CountColumnValuesAggregatedQualityControl(QualityControl):
     """Quality control suite to compute value counts."""
 
     # FUTURE: Split into 2 quality control classes, 1 with column and one with expr?
