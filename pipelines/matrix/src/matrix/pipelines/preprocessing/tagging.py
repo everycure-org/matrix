@@ -10,10 +10,22 @@ from langchain_core.output_parsers.transform import BaseTransformOutputParser
 from langchain.prompts import ChatPromptTemplate
 from langchain.schema import HumanMessage
 from langchain.chat_models.base import BaseChatModel
+from enum import Enum
 
 from matrix.inject import inject_object
 
 logger = logging.getLogger(__name__)
+
+
+class CategorizeAllowStrings(Enum):
+    VERY_HIGH = "VERY HIGH"
+    HIGH = "HIGH"
+    MEDIUM = "MEDIUM"
+    LOW = "LOW"
+    NONE = "NONE"
+
+    def __str__(self):
+        return self.value
 
 
 class Tag:
@@ -75,7 +87,7 @@ class Tag:
         async with sem:
             prompt = ChatPromptTemplate.from_messages([HumanMessage(content=self._prompt.format(**row))])
             response = await model.ainvoke(prompt.format_messages())
-            return self._output_parser.parse(response.content)
+            return str(self._output_parser.parse(response.content))
 
 
 @inject_object()
