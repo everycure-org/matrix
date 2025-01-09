@@ -35,19 +35,15 @@ jobs:
       - name: Remove unnecessary files
         # remove unnecessary files to free up disk space for building and pushing docker images
         run: |
-          sudo rm -rf \
-              /usr/local/.ghcup \
-              /opt/hostedtoolcache/CodeQL \
-              /usr/local/lib/android/sdk/ndk \
-              /usr/share/dotnet \
-              /opt/ghc \
-              "/usr/local/share/boost" \
-              "$AGENT_TOOLSDIRECTORY" && \
+          # sudo rm -rf \
+          #     /usr/local/.ghcup \
+          #     /opt/hostedtoolcache/CodeQL \
+          #     /usr/local/lib/android/sdk/ndk \
+          #     /usr/share/dotnet \
+          #     /opt/ghc \
+          #     "/usr/local/share/boost" \
+          #     "$AGENT_TOOLSDIRECTORY" && \
           sudo apt-get clean
-
-      - name: Clean up Docker
-        run:
-          docker system prune -a --volumes -f
 
       - name: Check disk space
         run: 
