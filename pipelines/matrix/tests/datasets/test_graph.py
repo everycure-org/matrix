@@ -10,7 +10,7 @@ from matrix.datasets.graph import KnowledgeGraphDataset, KnowledgeGraph
 def test_load_success():
     with patch("matrix.datasets.graph.ParquetDataset._load", return_value=MagicMock()) as mock_load:
         dataset = PandasParquetDataset(filepath="dummy_path")
-        result = dataset._load()
+        result = dataset.load()
 
         mock_load.assert_called_once()
         assert result is mock_load.return_value
@@ -19,7 +19,7 @@ def test_load_success():
 def test_load_with_as_type():
     with patch("matrix.datasets.graph.ParquetDataset._load", return_value=MagicMock()) as mock_load:
         dataset = PandasParquetDataset(filepath="dummy_path", load_args={"as_type": "float32"})
-        dataset._load()
+        dataset.load()
 
         mock_load.assert_called_once()
         assert dataset._as_type == "float32"
@@ -30,7 +30,7 @@ def test_load_file_not_found():
         dataset = PandasParquetDataset(filepath="dummy_path")
 
         with pytest.raises(DatasetError, match="Unable to find the Parquet file `dummy_path` underlying this dataset!"):
-            dataset._load()
+            dataset.load()
 
 
 @pytest.fixture
@@ -55,7 +55,7 @@ def mock_parquet_file(tmp_path, sample_df):
 def test_successful_load(mock_parquet_file, sample_df):
     dataset = KnowledgeGraphDataset(filepath=mock_parquet_file)
 
-    result = dataset._load()
+    result = dataset.load()
 
     assert isinstance(result, KnowledgeGraph)
     assert len(result._nodes) == len(sample_df)
@@ -69,4 +69,4 @@ def test_file_not_found_all_retries_fail():
     with pytest.raises(
         DatasetError, match="Unable to find the Parquet file `nonexistent.parquet` underlying this dataset!"
     ):
-        dataset._load()
+        dataset.load()

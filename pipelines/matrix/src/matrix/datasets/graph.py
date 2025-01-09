@@ -92,7 +92,7 @@ class PandasParquetDataset(ParquetDataset):
             metadata=metadata,
         )
 
-    def _load(self) -> KnowledgeGraph:
+    def load(self) -> KnowledgeGraph:
         attempt = 0
 
         # Retrying due to a very flaky error, causing GCS not retrieving
@@ -101,7 +101,7 @@ class PandasParquetDataset(ParquetDataset):
             try:
                 # Attempt reading the object
                 # https://github.com/everycure-org/matrix/issues/71
-                df = super()._load()
+                df = super().load()
 
                 if self._as_type:
                     return df.astype(self._as_type)
@@ -141,7 +141,7 @@ class KnowledgeGraphDataset(ParquetDataset):
             **kwargs,
         )
 
-    def _load(self) -> KnowledgeGraph:
+    def load(self) -> KnowledgeGraph:
         attempt = 0
 
         # Retrying due to a very flaky error, causing GCS not retrieving
@@ -150,7 +150,7 @@ class KnowledgeGraphDataset(ParquetDataset):
             try:
                 # Attempt reading the object
                 # https://github.com/everycure-org/matrix/issues/71
-                return KnowledgeGraph(super()._load())
+                return KnowledgeGraph(super().load())
             except FileNotFoundError:
                 attempt += 1
                 logger.warning(f"Parquet file `{self._filepath}` not found, retrying!")
