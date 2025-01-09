@@ -30,14 +30,13 @@ _layer_int: &_layer_int
 # RTX-KG2
 # -------------------------------------------------------------------------  
 
+ingestion.raw.rtx_kg2.curie_to_pmids@pandas:
+  <<: [*_pandas_csv, *_layer_raw]
+  filepath: ${globals:paths.raw}/integration/raw/curie_to_pmids.csv
+
 ingestion.raw.rtx_kg2.curie_to_pmids@spark:
-  type: matrix.datasets.gcp.RemoteSparkJDBCDataset
-  project: ${globals:gcp_project}
-  table: curie_to_pmids
-  url: sqlite:${globals:paths.kg_raw}/KGs/rtx_kg2/${globals:data_sources.rtx-kg2.version}/curie_to_pmids.sqlite
-  load_args:
-    properties:
-      driver: org.sqlite.JDBC
+  <<: [*_spark_csv, *_layer_raw]
+  filepath: ${globals:paths.raw}/integration/raw/curie_to_pmids.csv
 
 ingestion.raw.rtx_kg2.nodes@pandas:
   <<: [*_pandas_csv, *_layer_raw]
