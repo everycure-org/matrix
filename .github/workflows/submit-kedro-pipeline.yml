@@ -43,8 +43,8 @@ jobs:
 
           sudo rm -rf \
               /usr/local/.ghcup \
-              /usr/local/lib/android/sdk/ndk && \
-          sudo apt-get clean
+              /usr/local/lib/android/sdk/ndk \
+              "$AGENT_TOOLSDIRECTORY"
 
       - name: Check disk space
         run: 
