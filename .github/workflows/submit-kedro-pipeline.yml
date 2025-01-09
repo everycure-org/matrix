@@ -32,11 +32,6 @@ jobs:
           fetch-tags: true
           fetch-depth: 0  # full depth needed so we can pass the AI all logs since the last release.
 
-      - name: Inspect Large Directories
-        run: |
-          du -h / | sort -rh | head -n 20 && \
-          find /tmp -type f -size +10M -exec ls -lh {} \;
-
       - name: Remove unnecessary files
         # remove unnecessary files to free up disk space for building and pushing docker images
         run: |
