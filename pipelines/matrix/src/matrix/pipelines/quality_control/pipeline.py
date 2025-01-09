@@ -30,6 +30,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                             "controls": "params:quality_control.ingestion_edges",
                         },
                         outputs=f"quality_control.{source['name']}.prm.ingestion_metrics_edges",
+                        # TODO: Names have to be unique as well
                         name=f"{source['name']}_ingestion_metrics",
                         tags=["qc"],
                     ),
