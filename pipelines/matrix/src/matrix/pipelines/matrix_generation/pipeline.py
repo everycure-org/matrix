@@ -16,7 +16,7 @@ def create_pipeline(**kwargs) -> Pipeline:
 
     # Load cross-validation information
     cross_validation_settings = settings.DYNAMIC_PIPELINES_MAPPING.get("cross_validation")
-    n_cross_val_folds = cross_validation_settings.get("n_splits")
+    n_cross_val_folds = cross_validation_settings.get("n_cross_val_folds")
 
     # Initial nodes computing matrix pairs and flags
     pipelines = []
