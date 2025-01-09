@@ -30,10 +30,15 @@ def _create_resolution_pipeline() -> Pipeline:
 
 def _create_inference_pipeline(model_name: str) -> Pipeline:
     """Matrix generation pipeline adjusted for running inference with models of choice."""
+
+    # Unpack number of splits
+    n_cross_val_folds = settings.DYNAMIC_PIPELINES_MAPPING.get("cross_validation").get("n_cross_val_folds")
+
+    inference_nodes = matrix_generation_pipeline()
     pipelines = []
     pipelines.append(
         pipeline(
-            [matrix_generation_pipeline()],
+            [inference_nodes],
             parameters={
                 "params:evaluation.treat_score_col_name": "params:inference.score_col_name",
                 "params:matrix_generation.matrix_generation_options.batch_by": "params:inference.matrix_generation_options.batch_by",
@@ -46,9 +51,9 @@ def _create_inference_pipeline(model_name: str) -> Pipeline:
                 "ingestion.raw.disease_list@pandas": "inference.int.disease_list@pandas",
             },
             outputs={
-                f"matrix_generation.{model_name}.fold_full.model_output.sorted_matrix_predictions@pandas": f"inference.{model_name}.model_output.predictions@pandas",
-                f"matrix_generation.{model_name}.fold_full.reporting.matrix_report": f"inference.{model_name}.reporting.report",
-                "matrix_generation.prm.fold_full.matrix_pairs": "inference.prm.matrix_pairs",
+                f"matrix_generation.{model_name}.fold_{n_cross_val_folds}.model_output.sorted_matrix_predictions@pandas": f"inference.{model_name}.model_output.predictions@pandas",
+                f"matrix_generation.{model_name}.fold_{n_cross_val_folds}.reporting.matrix_report": f"inference.{model_name}.reporting.report",
+                f"matrix_generation.prm.fold_{n_cross_val_folds}.matrix_pairs": "inference.prm.matrix_pairs",
                 "matrix_generation.feat.nodes_kg_ds": "inference.feat.nodes_kg_ds",
                 "matrix_generation.feat.nodes@spark": "inference.feat.nodes@spark",
             },

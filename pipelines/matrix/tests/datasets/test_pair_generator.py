@@ -12,7 +12,7 @@ from matrix.datasets.pair_generator import (
     GroundTruthTestPairs,
     FullMatrixPositives,
 )
-from matrix.pipelines.modelling.nodes import make_splits
+from matrix.pipelines.modelling.nodes import make_folds
 
 
 ## Test negative sampling pair generators
@@ -86,10 +86,11 @@ def test_replacement_drug_disease_pair_generator(
         disease_flags=["is_disease"],
     )
 
-    known_pairs_split = make_splits(
+    known_pairs_split = make_folds(
         known_pairs,
         splitter,
-    )[0]
+    )
+    known_pairs_split = known_pairs_split[known_pairs_split["fold"] == 0]
 
     # When generating unknown pairs
     unknown = generator.generate(graph, known_pairs_split)
