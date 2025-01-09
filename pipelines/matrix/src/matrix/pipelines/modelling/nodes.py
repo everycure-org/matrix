@@ -9,7 +9,6 @@ from pandera import DataFrameModel as PandasDataFrameModel
 import pandera
 from pyspark.sql import functions as f
 import pyspark.sql.types as T
-from pandera import Field as PandasField
 
 
 from sklearn.model_selection import BaseCrossValidator
@@ -194,84 +193,53 @@ def prefilter_nodes(
     return df
 
 
+class ModelSplitsSchema(PandasDataFrameModel):
+    source: Series[str]
+    source_embedding: Series[object]
+    target: Series[str]
+    target_embedding: Series[object]
+    split: Series[str]
+    fold: Series[int]
+
+    class Config:
+        strict = False
+
+
+@pandera.check_output(ModelSplitsSchema)
 @inject_object()
 def make_folds(
     data: ps.DataFrame,
     splitter: BaseCrossValidator,
 ) -> Tuple[pd.DataFrame]:
-    """Function to generate folds for modelling.
-
-    NOTE: This currently loads the `n_splits` from the settings, as this
-    pipeline is generated dynamically to allow parallelization.
-
-         _______
-       .-       -.
-      /           \
-     |,  .-.  .-.  ,|
-     | )(_o/  \o_)( |
-     |/     /\     \|
-     (_     ^^     _)
-      \__|IIIIII|__/
-       | \IIIIII/ |
-       \          /
-        `--------`
-
-    Args:
-        data: dataframe
-        splitter: splitter
-    Returns:
-        Tuple of dataframes with data for each fold, dfs 1-k are 
-        dfs with data for folds, df k+1 is training data only.
-    """
-
-    # Set number of splits
-    all_data_frames = make_splits(data, splitter)
-
-    # Add "training data only" fold
-    full_data = data.copy()
-    full_data.loc[:, "split"] = "TRAIN"
-    return all_data_frames + tuple([full_data])
-
-
-@inject_object()
-def make_splits(
-    data: ps.DataFrame,
-    splitter: BaseCrossValidator,
-) -> Tuple[pd.DataFrame]:
     """Function to split data.
 
-    FUTURE: Update to produce single DF only, where we add a column identifying the fold.
-
     Args:
-        kg: kg dataset with nodes
         data: Data to split.
         splitter: sklearn splitter object (BaseCrossValidator or its subclasses).
-        n_splits: number of splits
+
     Returns:
-        Tuple of dataframes for each fold.
+        Dataframe with test-train split for all folds.
+        By convention, folds 0 to k-1 are the proper test train splits for k-fold cross-validation,
+        while fold k is the fold with full training data
     """
 
     # Split data into folds
     all_data_frames = []
-    for train_index, test_index in splitter.split(data, data["y"]):
+    for fold, (train_index, test_index) in enumerate(splitter.split(data, data["y"])):
         all_indices_in_this_fold = list(set(train_index).union(test_index))
         fold_data = data.loc[all_indices_in_this_fold, :].copy()
         fold_data.loc[train_index, "split"] = "TRAIN"
         fold_data.loc[test_index, "split"] = "TEST"
+        fold_data.loc[:, "fold"] = fold
         all_data_frames.append(fold_data)
 
-    return tuple(all_data_frames)
+    # Add fold for full training data
+    full_fold_data = data.copy()
+    full_fold_data["split"] = "TRAIN"
+    full_fold_data["fold"] = splitter.n_splits
+    all_data_frames.append(full_fold_data)
 
-
-class ModelSplitsSchema(PandasDataFrameModel):
-    source: Series[object] = PandasField(nullable=True)
-    source_embedding: Series[object] = PandasField(nullable=True)
-    target: Series[object] = PandasField(nullable=True)
-    target_embedding: Series[object] = PandasField(nullable=True)
-    split: Series[object] = PandasField(nullable=True)
-
-    class Config:
-        strict = False
+    return pd.concat(all_data_frames, ignore_index=True)
 
 
 @pandera.check_output(ModelSplitsSchema)
@@ -295,10 +263,21 @@ def create_model_input_nodes(
     Returns:
         Data with enriched splits.
     """
-    generated = generator.generate(graph, splits)
-    generated["split"] = "TRAIN"
+    if splits.empty:
+        raise ValueError("Splits dataframe must be non-empty")
 
-    return pd.concat([splits, generated], axis="index", ignore_index=True)
+    all_generated = []
+
+    # Enrich splits for all folds
+    num_folds = splits["fold"].max() + 1
+    for fold in range(num_folds):
+        splits_fold = splits[splits["fold"] == fold]
+        generated = generator.generate(graph, splits_fold)
+        generated["split"] = "TRAIN"
+        generated["fold"] = fold
+        all_generated.append(generated)
+
+    return pd.concat([splits, *all_generated], axis="index", ignore_index=True)
 
 
 @inject_object()
@@ -502,6 +481,8 @@ def check_model_performance(
 
     NOTE: This function only provides a partial indication of model performance,
     primarily for checking that a model has been successfully trained.
+
+    FUTURE: Move to evaluation pipeline.
 
     Args:
         data: Data to evaluate.

@@ -94,8 +94,8 @@ def spark_to_pd(nodes: ps.DataFrame) -> pd.DataFrame:
 
 
 class TrialSchema(DataFrameModel):
-    source: Series[object]
-    target: Series[object]
+    source: Series[str]
+    target: Series[str]
     is_known_positive: Series[bool]
     is_known_negative: Series[bool]
     trial_sig_better: Series[bool]
@@ -110,10 +110,10 @@ class TrialSchema(DataFrameModel):
 @pa.check_output(TrialSchema)
 @inject_object()
 def generate_pairs(
+    known_pairs: pd.DataFrame,
     drugs: pd.DataFrame,
     diseases: pd.DataFrame,
     graph: KnowledgeGraph,
-    known_pairs: pd.DataFrame,
     clinical_trials: pd.DataFrame,
 ) -> pd.DataFrame:
     """Function to generate matrix dataset.
@@ -121,10 +121,10 @@ def generate_pairs(
     FUTURE: Consider rewriting operations in PySpark for speed
 
     Args:
+        known_pairs: Labelled ground truth drug-disease pairs dataset.
         drugs: Dataframe containing IDs for the list of drugs.
         diseases: Dataframe containing IDs for the list of diseases.
         graph: Object containing node embeddings.
-        known_pairs: Labelled ground truth drug-disease pairs dataset.
         clinical_trials: Pairs dataset representing outcomes of recent clinical trials.
 
     Returns:
