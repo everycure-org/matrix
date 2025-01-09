@@ -214,7 +214,6 @@ def create_model_pipeline(model: str, num_shards: int, n_cross_val_folds: int) -
 
 
 def create_shared_pipeline(model_name: str, folds_lst: List[Union[str, int]]) -> Pipeline:
-def create_shared_pipeline(model_name: str, folds_lst: List[Union[str, int]]) -> Pipeline:
     """Function to create pipeline of shared nodes.
 
     NOTE: The model list is added to tag the nodes for single pipeline execution.
