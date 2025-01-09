@@ -32,20 +32,13 @@ jobs:
           fetch-tags: true
           fetch-depth: 0  # full depth needed so we can pass the AI all logs since the last release.
 
-      - name: Clean up Docker
-        run: |
-          docker system prune -a --volumes -f
-
       - name: Remove unnecessary files
-        # remove unnecessary files to free up disk space for building and pushing docker images
+        # debug: remove unnecessary files to free up disk space for building and pushing docker images
         run: |
           sudo rm -rf \
               /usr/local/.ghcup \
               /usr/local/lib/android/sdk/ndk \
-              "$AGENT_TOOLSDIRECTORY"
-
-      - name: Check disk space
-        run: 
+              "$AGENT_TOOLSDIRECTORY" && \
           df -h
       
       # - name: Set up Python
