@@ -11,8 +11,8 @@ preprocessing.enrichment:
       prompt: "Is {label} a disease usually caused by a pathogen such as bacteria, viruses, parasites, or fungi? Return TRUE or FALSE only"
       output_parser: &_boolean_parser
         _object: langchain.output_parsers.boolean.BooleanOutputParser
-        false_val: FALSE
-        true_val: TRUE
+        false_val: "FALSE"
+        true_val: "TRUE"
     - _object: matrix.pipelines.preprocessing.tagging.Tag  
       output_col: is_cancer
       prompt: "Is {label} a disease that is classified as a cancer? Return TRUE or FALSE only"
