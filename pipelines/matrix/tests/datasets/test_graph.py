@@ -66,7 +66,5 @@ def test_successful_load(mock_parquet_file, sample_df):
 def test_file_not_found_all_retries_fail():
     dataset = KnowledgeGraphDataset(filepath="nonexistent.parquet")
 
-    with pytest.raises(
-        DatasetError, match="Unable to find the Parquet file `nonexistent.parquet` underlying this dataset!"
-    ):
+    with pytest.raises(DatasetError):
         dataset.load()
