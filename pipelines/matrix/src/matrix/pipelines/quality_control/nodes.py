@@ -11,6 +11,7 @@ from pyspark.sql import types as T
 
 from .quality_control import QaulityControl
 
+
 """
 Sprint Goal
 Implement tracking for following metrics:
@@ -50,6 +51,8 @@ def run_quality_control(df: DataFrame, controls: Dict[str, QaulityControl]) -> D
 
     # Run each control suite on the given dataframe and union
     # the results together
+    # This work on a per-node level? What if we want to do this union after all the nodes are run?
+
     for scope, control in controls.items():
         result = result.unionByName(control.run(df).withColumn("scope", F.lit(scope)), allowMissingColumns=True)
 
@@ -57,7 +60,7 @@ def run_quality_control(df: DataFrame, controls: Dict[str, QaulityControl]) -> D
     result = result.withColumn("fq_metric", F.concat(F.col("scope"), F.lit("."), F.col("metric"))).drop(
         "scope", "metric"
     )
-    breakpoint()
+    # breakpoint()
     return result
 
 

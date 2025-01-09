@@ -12,13 +12,26 @@ def create_pipeline(**kwargs) -> Pipeline:
         pipelines.append(
             pipeline(
                 [
+                    # This node works on the nodes file, but we also need it for the edge file
+                    # We cannot use the same set of controls for edges because we do not need the category_value_count
                     node(
                         func=nodes.run_quality_control,
                         inputs={
                             "df": f"ingestion.int.{source['name']}.nodes",
-                            "controls": "params:quality_control.ingestion",
+                            "controls": "params:quality_control.ingestion_nodes",
                         },
-                        outputs=f"quality_control.{source['name']}.prm.ingestion_metrics",
+                        outputs=f"quality_control.{source['name']}.prm.ingestion_metrics_nodes",
+                        name=f"{source['name']}_ingestion_metrics",
+                        tags=["qc"],
+                    ),
+                    # Trying this out and need to confirm with Laurens
+                    node(
+                        func=nodes.run_quality_control,
+                        inputs={
+                            "df": f"ingestion.int.{source['name']}.edges",
+                            "controls": "params:quality_control.ingestion_edges",
+                        },
+                        outputs=f"quality_control.{source['name']}.prm.ingestion_metrics_edges",
                         name=f"{source['name']}_ingestion_metrics",
                         tags=["qc"],
                     ),
