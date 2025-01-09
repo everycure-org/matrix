@@ -8,7 +8,7 @@ from matrix.datasets.graph import KnowledgeGraphDataset, KnowledgeGraph
 
 
 def test_load_success():
-    with patch("matrix.datasets.graph.ParquetDataset._load", return_value=MagicMock()) as mock_load:
+    with patch("matrix.datasets.graph.ParquetDataset.load", return_value=MagicMock()) as mock_load:
         dataset = PandasParquetDataset(filepath="dummy_path")
         result = dataset.load()
 
@@ -17,7 +17,7 @@ def test_load_success():
 
 
 def test_load_with_as_type():
-    with patch("matrix.datasets.graph.ParquetDataset._load", return_value=MagicMock()) as mock_load:
+    with patch("matrix.datasets.graph.ParquetDataset.load", return_value=MagicMock()) as mock_load:
         dataset = PandasParquetDataset(filepath="dummy_path", load_args={"as_type": "float32"})
         dataset.load()
 
@@ -26,7 +26,7 @@ def test_load_with_as_type():
 
 
 def test_load_file_not_found():
-    with patch("matrix.datasets.graph.ParquetDataset._load", side_effect=FileNotFoundError):
+    with patch("matrix.datasets.graph.ParquetDataset.load", side_effect=FileNotFoundError):
         dataset = PandasParquetDataset(filepath="dummy_path")
 
         with pytest.raises(DatasetError, match="Unable to find the Parquet file `dummy_path` underlying this dataset!"):
