@@ -230,19 +230,15 @@ def make_batch_predictions(
         batch[not_treat_score_col_name] = preds[:, 0]
         batch[treat_score_col_name] = preds[:, 1]
         batch[unknown_score_col_name] = preds[:, 2]
-        # Drop embedding columns
         batch = batch.drop(columns=["source_embedding", "target_embedding"])
         return batch
 
-    # Group data by the specified prefix
     grouped = data.groupby(batch_by)
 
-    # Process data in batches
     result_parts = []
     for _, batch in tqdm(grouped):
         result_parts.append(process_batch(batch))
 
-    # Combine results
     results = pd.concat(result_parts, axis=0)
 
     return results
