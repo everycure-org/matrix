@@ -143,7 +143,7 @@ def _submit(
         if dry_run:
             return
 
-        build_push_docker(run_name, verbose=False)
+        build_push_docker(run_name, verbose=verbose)
 
         ensure_namespace(namespace, verbose=verbose)
 
@@ -217,8 +217,8 @@ def run_subprocess(
     stdout, stderr = [], []
 
     if stream_output:
+        reads = [process.stdout, process.stderr]
         while True:
-            reads = [process.stdout, process.stderr]
             ready_to_read, _, _ = select.select(reads, [], [], 1)
             stdout_done, stderr_done = False, False
 
@@ -241,7 +241,7 @@ def run_subprocess(
                     elif process.poll() is not None:
                         stderr_done = True
 
-            if process.poll() is not None and stdout_done and stderr_done:
+            if stdout_done and stderr_done:
                 break
 
         # Get any remaining output
