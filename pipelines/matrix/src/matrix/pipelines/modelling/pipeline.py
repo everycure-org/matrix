@@ -291,11 +291,6 @@ def create_pipeline(**kwargs) -> Pipeline:
     n_cross_val_folds = settings.DYNAMIC_PIPELINES_MAPPING.get("cross_validation").get("n_cross_val_folds")
     folds_lst = list(range(n_cross_val_folds)) + ["full"]
 
-    # Unpack model
-    model = settings.DYNAMIC_PIPELINES_MAPPING.get("modelling")
-    model_name = model["model_name"]
-    model_config = model["model_config"]
-
     # Add shared nodes
     pipelines = []
     pipelines.append(create_shared_pipeline(model_name, folds_lst))

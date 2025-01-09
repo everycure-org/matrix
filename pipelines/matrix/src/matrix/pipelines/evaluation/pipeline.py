@@ -82,8 +82,7 @@ def create_model_pipeline(model_name: str, evaluation_names: str, n_cross_val_fo
                         inputs=[
                             "params:modelling.aggregation_functions",
                             *[
-                                f"evaluation.{model_name}.fold_{fold}.{evaluation}.reporting.result"
-                                f"evaluation.{model_name}.fold_{fold}.{evaluation}.reporting.result"
+                                f"evaluation.{model}.fold_{fold}.{evaluation}.reporting.result"
                                 for fold in range(n_cross_val_folds)
                             ],
                         ],
