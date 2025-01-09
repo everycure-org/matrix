@@ -159,7 +159,7 @@ class Neo4JSparkDataset(SparkDataset):
         dbs = [record["name"] for record in result[0] if record["name"] != "system"]
         return dbs
 
-    def _load(self) -> ps.DataFrame:
+    def load(self) -> ps.DataFrame:
         spark_session = ps.SparkSession.builder.getOrCreate()
 
         load_obj = (
@@ -175,7 +175,7 @@ class Neo4JSparkDataset(SparkDataset):
 
         return load_obj.load()
 
-    def _save(self, data: ps.DataFrame) -> None:
+    def save(self, data: ps.DataFrame) -> None:
         try:
             if self._save_args.get("persist") is False:
                 # skip persistence

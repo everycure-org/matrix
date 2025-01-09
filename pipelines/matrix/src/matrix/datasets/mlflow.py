@@ -70,7 +70,7 @@ class MlflowMetricsDataset(MlflowAbstractMetricDataset):
     def run_id(self, run_id: str):
         self._run_id = run_id
 
-    def _load(self):
+    def load(self):
         raise NotImplementedError()
 
     def _exists(self) -> bool:
@@ -91,7 +91,7 @@ class MlflowMetricsDataset(MlflowAbstractMetricDataset):
             "run_id": self.run_id,
         }
 
-    def _save(self, data: Dict[str, Any]):
+    def save(self, data: Dict[str, Any]):
         if self._logging_activated:
             self._validate_run_id()
             run_id = (
