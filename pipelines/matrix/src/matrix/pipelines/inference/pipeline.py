@@ -29,7 +29,6 @@ def _create_resolution_pipeline() -> Pipeline:
 
 
 def _create_inference_pipeline(model_name: str) -> Pipeline:
-def _create_inference_pipeline(model_name: str) -> Pipeline:
     """Matrix generation pipeline adjusted for running inference with models of choice."""
 
     n_cross_val_folds = settings.DYNAMIC_PIPELINES_MAPPING.get("cross_validation").get("n_cross_val_folds")
