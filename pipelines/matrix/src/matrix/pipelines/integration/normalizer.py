@@ -67,7 +67,8 @@ class NCATSNodeNormalizer(Normalizer):
         return df
 
     @staticmethod
-    def _extract_ids(response: Dict[str, Any], json_parser: parse):
+    def _extract_ids(response: Dict[str, Any], json_parser: parse) -> Dict[str, Any]:
+        """Extract normalized IDs from the response using the json parser."""
         ids = {}
         for key, item in response.items():
             logger.debug(f"Response for key {key}: {response.get(key)}")  # Log the response for each key
