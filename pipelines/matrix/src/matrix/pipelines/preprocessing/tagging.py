@@ -6,7 +6,7 @@ import tqdm.asyncio
 
 import pandas as pd
 
-from langchain.output_parsers import CommaSeparatedListOutputParser
+from langchain_core.output_parsers.transform import BaseTransformOutputParser
 from langchain.prompts import ChatPromptTemplate
 from langchain.schema import HumanMessage
 from langchain.chat_models.base import BaseChatModel
@@ -19,10 +19,10 @@ logger = logging.getLogger(__name__)
 class Tag:
     """Utility function to help with tag generation."""
 
-    def __init__(self, output_col: str, prompt: str) -> None:
+    def __init__(self, output_col: str, prompt: str, output_parser: BaseTransformOutputParser) -> None:
         self._output_col = output_col
         self._prompt = prompt
-        self._output_parser = CommaSeparatedListOutputParser()
+        self._output_parser = output_parser
 
     def generate(
         self,
