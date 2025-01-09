@@ -3,14 +3,16 @@ integration:
   sources:
     rtx_kg2:
       transformer:
-        object: matrix.pipelines.integration.rtxkg2.RTXTransformer
-    # NOTE: Currently disabling robokop integration
-    robokop: 
+        _object: matrix.pipelines.integration.rtxkg2.RTXTransformer
+    # spoke:
+    #   transformer:
+    #     _object: matrix.pipelines.integration.spoke.SpokeTransformer
+    robokop:
       transformer:
-        object: matrix.pipelines.integration.robokop.RobokopTransformer
-    ec_medical_team: 
+        _object: matrix.pipelines.integration.robokop.RobokopTransformer
+    ec_medical_team:
       transformer:
-        object: matrix.pipelines.integration.medical.MedicalTransformer
+        _object: matrix.pipelines.integration.medical.MedicalTransformer
 
   # FUTURE: Ensure we can move this to filters down here
   preprocessing:
@@ -32,9 +34,9 @@ integration:
   filtering:
     node_filters:
       filter_node_labels:
-        object: matrix.pipelines.modelling.utils.partial_
+        _object: matrix.pipelines.modelling.utils.partial_
         func:
-          object: matrix.pipelines.integration.filters.remove_rows_containing_category
+          _object: matrix.pipelines.integration.filters.remove_rows_containing_category
         column: category
         categories:
         # TODO: We should likely not remove these before our data release stage but afterwards in the modelling pipeline (if the model so desires)
@@ -63,16 +65,6 @@ integration:
     edge_filters:
       # FUTURE: Ensure the semmed filter is moved here instead
       filter_biolink_edges:
-        object: matrix.pipelines.modelling.utils.partial_
+        _object: matrix.pipelines.modelling.utils.partial_
         func:
-          object: matrix.pipelines.integration.filters.biolink_deduplicate_edges
-    knowledge_source_filters:
-      columns: 
-        - primary_knowledge_source 
-        - knowledge_level
-      categories:
-        - infores:text-mining-provider-targeted
-        - infores:monarchinitiative
-        - None
-
-      
+          _object: matrix.pipelines.integration.filters.biolink_deduplicate_edges

@@ -5,14 +5,13 @@ from typing import Any, Callable, Dict, List, Tuple
 
 import aiohttp
 import pandas as pd
-import pandera.pyspark as pa
-import pyspark as ps
+import pandera
+import pyspark.sql as ps
 import pyspark.sql.functions as F
 from joblib import Memory
 from jsonpath_ng import parse
 from more_itertools import chunked
-from pyspark.sql import DataFrame
-from refit.v1.core.inject import inject_object
+from matrix.inject import inject_object
 from tenacity import (
     retry,
     retry_if_exception_type,
@@ -20,7 +19,7 @@ from tenacity import (
 )
 from tqdm.asyncio import tqdm_asyncio
 
-from matrix.pipelines.integration.filters import determine_most_specific_category, remove_rows_containing_category
+from matrix.pipelines.integration.filters import determine_most_specific_category
 from matrix.schemas.knowledge_graph import KGEdgeSchema, KGNodeSchema, cols_for_schema
 
 # TODO move these into config
@@ -28,8 +27,8 @@ memory = Memory(location=".cache/nodenorm", verbose=0)
 logger = logging.getLogger(__name__)
 
 
-@pa.check_output(KGEdgeSchema)
-def union_and_deduplicate_edges(*edges) -> DataFrame:
+@pandera.check_output(KGEdgeSchema)
+def union_and_deduplicate_edges(*edges) -> ps.DataFrame:
     """Function to unify edges datasets."""
     # fmt: off
     return (
@@ -39,8 +38,8 @@ def union_and_deduplicate_edges(*edges) -> DataFrame:
     # fmt: on
 
 
-@pa.check_output(KGNodeSchema)
-def union_and_deduplicate_nodes(biolink_categories_df: pd.DataFrame, *nodes) -> DataFrame:
+@pandera.check_output(KGNodeSchema)
+def union_and_deduplicate_nodes(biolink_categories_df: pd.DataFrame, *nodes) -> ps.DataFrame:
     """Function to unify nodes datasets."""
 
     # fmt: off
@@ -60,8 +59,8 @@ def union_and_deduplicate_nodes(biolink_categories_df: pd.DataFrame, *nodes) -> 
 
 
 def _union_datasets(
-    *datasets: DataFrame,
-) -> DataFrame:
+    *datasets: ps.DataFrame,
+) -> ps.DataFrame:
     """
     Helper function to unify datasets and deduplicate them.
 
@@ -73,12 +72,12 @@ def _union_datasets(
     Returns:
         A unified and deduplicated DataFrame.
     """
-    return reduce(partial(DataFrame.unionByName, allowMissingColumns=True), datasets)
+    return reduce(partial(ps.DataFrame.unionByName, allowMissingColumns=True), datasets)
 
 
 def _apply_transformations(
-    df: DataFrame, transformations: List[Tuple[Callable, Dict[str, Any]]], **kwargs
-) -> DataFrame:
+    df: ps.DataFrame, transformations: List[Tuple[Callable, Dict[str, Any]]], **kwargs
+) -> ps.DataFrame:
     logger.info(f"Filtering dataframe with {len(transformations)} transformations")
     last_count = df.count()
     logger.info(f"Number of rows before filtering: {last_count}")
@@ -94,21 +93,19 @@ def _apply_transformations(
 
 @inject_object()
 def prefilter_unified_kg_nodes(
-    nodes: DataFrame,
+    nodes: ps.DataFrame,
     transformations: List[Tuple[Callable, Dict[str, Any]]],
-) -> DataFrame:
+) -> ps.DataFrame:
     return _apply_transformations(nodes, transformations)
 
 
 @inject_object()
 def filter_unified_kg_edges(
-    nodes: DataFrame,
-    edges: DataFrame,
+    nodes: ps.DataFrame,
+    edges: ps.DataFrame,
     biolink_predicates: Dict[str, Any],
     transformations: List[Tuple[Callable, Dict[str, Any]]],
-    columns: List[str],
-    categories: List[str],
-) -> DataFrame:
+) -> ps.DataFrame:
     """Function to filter the knowledge graph edges.
 
     We first apply a series for filter transformations, and then deduplicate the edges based on the nodes that we dropped.
@@ -118,11 +115,6 @@ def filter_unified_kg_edges(
     # filter down edges to only include those that are present in the filtered nodes
     edges_count = edges.count()
     logger.info(f"Number of edges before filtering: {edges_count}")
-
-    edges = remove_rows_containing_category(edges, categories, columns)
-    edges_count = edges.count()
-    logger.info(f"Number of edges after removing primary knowledge sources: {edges_count}")
-    
     edges = (
         edges.alias("edges")
         .join(nodes.alias("subject"), on=F.col("edges.subject") == F.col("subject.id"), how="inner")
@@ -136,9 +128,9 @@ def filter_unified_kg_edges(
 
 
 def filter_nodes_without_edges(
-    nodes: DataFrame,
-    edges: DataFrame,
-) -> DataFrame:
+    nodes: ps.DataFrame,
+    edges: ps.DataFrame,
+) -> ps.DataFrame:
     """Function to filter nodes without edges.
 
     Args:
@@ -231,15 +223,15 @@ async def process_batch(
 
 
 def normalize_kg(
-    nodes: ps.sql.DataFrame,
-    edges: ps.sql.DataFrame,
+    nodes: ps.DataFrame,
+    edges: ps.DataFrame,
     api_endpoint: str,
     json_path_expr: str = "$.id.identifier",
     conflate: bool = True,
     drug_chemical_conflate: bool = True,
     batch_size: int = 100,
     parallelism: int = 10,
-) -> ps.sql.DataFrame:
+) -> ps.DataFrame:
     """Function normalizes a KG using external API endpoint.
 
     This function takes the nodes and edges frames for a KG and leverages
@@ -249,7 +241,7 @@ def normalize_kg(
     """
     json_parser = parse(json_path_expr)
     logger.info("collecting node ids for normalization")
-    node_ids = nodes.select("id").orderBy("id").toPandas()["id"].to_list()
+    node_ids = nodes.select("id").rdd.flatMap(lambda x: x).collect()
     logger.info(f"collected {len(node_ids)} node ids for normalization. Performing normalization...")
     node_id_map = batch_map_ids(
         frozenset(node_ids), api_endpoint, json_parser, batch_size, parallelism, conflate, drug_chemical_conflate
@@ -257,7 +249,7 @@ def normalize_kg(
 
     # convert dict back to a dataframe to parallelize the mapping
     node_id_map_df = pd.DataFrame(list(node_id_map.items()), columns=["id", "normalized_id"])
-    spark = ps.sql.SparkSession.builder.getOrCreate()
+    spark = ps.SparkSession.builder.getOrCreate()
     mapping_df = (
         spark.createDataFrame(node_id_map_df)
         .withColumn("normalization_success", F.col("normalized_id").isNotNull())

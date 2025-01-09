@@ -4,18 +4,18 @@ from matrix.kedro4argo_node import argo_node
 from . import nodes
 
 from matrix import settings
+import pyspark.sql as ps
 
-from pyspark.sql import DataFrame
-from refit.v1.core.inject import inject_object
+from matrix.inject import inject_object
 
 
 @inject_object()
-def transform_nodes(transformer, nodes_df: DataFrame, **kwargs):
+def transform_nodes(transformer, nodes_df: ps.DataFrame, **kwargs):
     return transformer.transform_nodes(nodes_df=nodes_df, **kwargs)
 
 
 @inject_object()
-def transform_edges(transformer, edges_df: DataFrame, **kwargs):
+def transform_edges(transformer, edges_df: ps.DataFrame, **kwargs):
     return transformer.transform_edges(edges_df=edges_df, **kwargs)
 
 
@@ -129,8 +129,6 @@ def create_pipeline(**kwargs) -> Pipeline:
                         "integration.prm.unified_edges",
                         "integration.raw.biolink.predicates",
                         "params:integration.filtering.edge_filters",
-                        "params:integration.filtering.knowledge_source_filters.columns",
-                        "params:integration.filtering.knowledge_source_filters.categories",
                     ],
                     outputs="integration.prm.filtered_edges",
                     name="filter_prm_knowledge_graph_edges",
