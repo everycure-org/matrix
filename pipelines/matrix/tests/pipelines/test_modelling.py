@@ -16,21 +16,13 @@ from sklearn.preprocessing import StandardScaler, MinMaxScaler
 from xgboost import XGBClassifier
 
 # PySpark imports
-from pyspark.sql import SparkSession, DataFrame
-from pyspark.sql import functions as F
-from pyspark.sql.types import (
-    ArrayType,
-    FloatType,
-    IntegerType,
-    StringType,
-    StructField,
-    StructType,
-)
+import pyspark.sql as ps
 
 # Local imports
 from matrix.datasets.graph import KnowledgeGraph
 from matrix.datasets.pair_generator import SingleLabelPairGenerator
 from matrix.pipelines.modelling.model import ModelWrapper
+from matrix.inject import OBJECT_KW
 from matrix.pipelines.modelling.nodes import (
     apply_transformers,
     attach_embeddings,
@@ -133,12 +125,12 @@ def test_apply_transformers_invalid_features():
 
 
 @pytest.fixture(scope="module")
-def spark() -> SparkSession:
-    return SparkSession.builder.getOrCreate()
+def spark() -> ps.SparkSession:
+    return ps.SparkSession.builder.getOrCreate()
 
 
 @pytest.fixture(scope="module")
-def base_test_data(spark: SparkSession) -> DataFrame:
+def base_test_data(spark: ps.SparkSession) -> ps.DataFrame:
     # Create test data
     nodes_data = [
         ("node1", ["drug_type1"], None),
@@ -146,30 +138,32 @@ def base_test_data(spark: SparkSession) -> DataFrame:
         ("node3", ["other_type"], None),
         ("node4", ["drug_type2", "other_type"], None),
     ]
-    nodes_schema = StructType(
+    nodes_schema = ps.types.StructType(
         [
-            StructField("id", StringType(), False),
-            StructField("all_categories", ArrayType(StringType()), True),
-            StructField("topological_embedding", ArrayType(StringType()), True),
+            ps.types.StructField("id", ps.types.StringType(), False),
+            ps.types.StructField("all_categories", ps.types.ArrayType(ps.types.StringType()), True),
+            ps.types.StructField("topological_embedding", ps.types.ArrayType(ps.types.StringType()), True),
         ]
     )
     return spark.createDataFrame(nodes_data, schema=nodes_schema)
 
 
 @pytest.fixture(scope="module")
-def ground_truth_data(spark: SparkSession) -> DataFrame:
+def ground_truth_data(spark: ps.SparkSession) -> ps.DataFrame:
     gt_data = [("node1", "node2", 1), ("node3", "node4", 0)]
-    gt_schema = StructType(
+    gt_schema = ps.types.StructType(
         [
-            StructField("source", StringType(), False),
-            StructField("target", StringType(), False),
-            StructField("y", IntegerType(), False),
+            ps.types.StructField("source", ps.types.StringType(), False),
+            ps.types.StructField("target", ps.types.StringType(), False),
+            ps.types.StructField("y", ps.types.IntegerType(), False),
         ]
     )
     return spark.createDataFrame(gt_data, schema=gt_schema)
 
 
-def test_prefilter_excludes_non_drug_disease_nodes(base_test_data: DataFrame, ground_truth_data: DataFrame) -> None:
+def test_prefilter_excludes_non_drug_disease_nodes(
+    base_test_data: ps.DataFrame, ground_truth_data: ps.DataFrame
+) -> None:
     result = prefilter_nodes(
         full_nodes=base_test_data,
         nodes=base_test_data,
@@ -183,7 +177,9 @@ def test_prefilter_excludes_non_drug_disease_nodes(base_test_data: DataFrame, gr
     assert not any(row.id == "node3" for row in result_list)
 
 
-def test_prefilter_correctly_identifies_drug_nodes(base_test_data: DataFrame, ground_truth_data: DataFrame) -> None:
+def test_prefilter_correctly_identifies_drug_nodes(
+    base_test_data: ps.DataFrame, ground_truth_data: ps.DataFrame
+) -> None:
     result = prefilter_nodes(
         full_nodes=base_test_data,
         nodes=base_test_data,
@@ -204,7 +200,9 @@ def test_prefilter_correctly_identifies_drug_nodes(base_test_data: DataFrame, gr
     assert node4.is_disease is False
 
 
-def test_prefilter_correctly_identifies_disease_nodes(base_test_data: DataFrame, ground_truth_data: DataFrame) -> None:
+def test_prefilter_correctly_identifies_disease_nodes(
+    base_test_data: ps.DataFrame, ground_truth_data: ps.DataFrame
+) -> None:
     result = prefilter_nodes(
         full_nodes=base_test_data,
         nodes=base_test_data,
@@ -221,7 +219,7 @@ def test_prefilter_correctly_identifies_disease_nodes(base_test_data: DataFrame,
 
 
 def test_prefilter_correctly_identifies_ground_truth_positives(
-    base_test_data: DataFrame, ground_truth_data: DataFrame
+    base_test_data: ps.DataFrame, ground_truth_data: ps.DataFrame
 ) -> None:
     result = prefilter_nodes(
         full_nodes=base_test_data,
@@ -245,20 +243,20 @@ def test_prefilter_correctly_identifies_ground_truth_positives(
 
 
 @pytest.fixture(scope="module")
-def sample_pairs_df(spark: SparkSession) -> DataFrame:
+def sample_pairs_df(spark: ps.SparkSession) -> ps.DataFrame:
     pairs_data = [("node1", "node2", 1), ("node3", "node4", 0), ("node5", "node6", 1)]
-    pairs_schema = StructType(
+    pairs_schema = ps.types.StructType(
         [
-            StructField("source", StringType(), False),
-            StructField("target", StringType(), False),
-            StructField("y", IntegerType(), False),
+            ps.types.StructField("source", ps.types.StringType(), False),
+            ps.types.StructField("target", ps.types.StringType(), False),
+            ps.types.StructField("y", ps.types.IntegerType(), False),
         ]
     )
     return spark.createDataFrame(pairs_data, schema=pairs_schema)
 
 
 @pytest.fixture(scope="module")
-def sample_nodes_df(spark: SparkSession) -> DataFrame:
+def sample_nodes_df(spark: ps.SparkSession) -> ps.DataFrame:
     nodes_data = [
         ("node1", [0.1, 0.2, 0.3]),
         ("node2", [0.4, 0.5, 0.6]),
@@ -267,13 +265,16 @@ def sample_nodes_df(spark: SparkSession) -> DataFrame:
         ("node5", [1.3, 1.4, 1.5]),
         ("node6", [1.6, 1.7, 1.8]),
     ]
-    nodes_schema = StructType(
-        [StructField("id", StringType(), False), StructField("topological_embedding", ArrayType(FloatType()), False)]
+    nodes_schema = ps.types.StructType(
+        [
+            ps.types.StructField("id", ps.types.StringType(), False),
+            ps.types.StructField("topological_embedding", ps.types.ArrayType(ps.types.FloatType()), False),
+        ]
     )
     return spark.createDataFrame(nodes_data, schema=nodes_schema)
 
 
-def test_attach_embeddings_successful(sample_pairs_df: DataFrame, sample_nodes_df: DataFrame) -> None:
+def test_attach_embeddings_successful(sample_pairs_df: ps.DataFrame, sample_nodes_df: ps.DataFrame) -> None:
     """Test successful attachment of embeddings to pairs."""
     result = attach_embeddings(sample_pairs_df, sample_nodes_df)
 
@@ -285,14 +286,14 @@ def test_attach_embeddings_successful(sample_pairs_df: DataFrame, sample_nodes_d
     # Check number of rows preserved
     assert result.count() == sample_pairs_df.count()
 
-    first_row = result.filter(F.col("source") == "node1").first()
+    first_row = result.filter(ps.functions.col("source") == "node1").first()
 
     assert np.allclose(first_row["source_embedding"], [0.1, 0.2, 0.3])
     assert np.allclose(first_row["target_embedding"], [0.4, 0.5, 0.6])
 
 
 def test_attach_embeddings_missing_nodes(
-    spark: SparkSession, sample_pairs_df: DataFrame, sample_nodes_df: DataFrame
+    spark: ps.SparkSession, sample_pairs_df: ps.DataFrame, sample_nodes_df: ps.DataFrame
 ) -> None:
     """Test handling of pairs with missing nodes."""
     # Add a pair with non-existent nodes
@@ -304,7 +305,7 @@ def test_attach_embeddings_missing_nodes(
 
 
 def test_attach_embeddings_empty_pairs(
-    spark: SparkSession, sample_pairs_df: DataFrame, sample_nodes_df: DataFrame
+    spark: ps.SparkSession, sample_pairs_df: ps.DataFrame, sample_nodes_df: ps.DataFrame
 ) -> None:
     """Test handling of empty pairs dataframe."""
     empty_pairs = spark.createDataFrame([], schema=sample_pairs_df.schema)
@@ -312,12 +313,15 @@ def test_attach_embeddings_empty_pairs(
     assert result.count() == 0
 
 
-def test_attach_embeddings_schema_validation(spark: SparkSession, sample_pairs_df: DataFrame) -> None:
+def test_attach_embeddings_schema_validation(spark: ps.SparkSession, sample_pairs_df: ps.DataFrame) -> None:
     """Test schema validation with invalid node embeddings."""
     # Create nodes with invalid embedding type (integers instead of floats)
     invalid_nodes_data = [("node1", [1, 2, 3]), ("node2", [4, 5, 6])]
-    invalid_nodes_schema = StructType(
-        [StructField("id", StringType(), False), StructField("topological_embedding", ArrayType(IntegerType()), False)]
+    invalid_nodes_schema = ps.types.StructType(
+        [
+            ps.types.StructField("id", ps.types.StringType(), False),
+            ps.types.StructField("topological_embedding", ps.types.ArrayType(ps.types.IntegerType()), False),
+        ]
     )
     invalid_nodes_df = spark.createDataFrame(invalid_nodes_data, schema=invalid_nodes_schema)
 
@@ -519,8 +523,8 @@ def test_tune_parameters(tune_data: pd.DataFrame, tuner_config: dict):
 
     # Check return value structure
     assert isinstance(result, dict)
-    assert "object" in result
-    assert result["object"] == tuner_config["expected_object"]
+    assert OBJECT_KW in result
+    assert result[OBJECT_KW] == tuner_config["expected_object"]
 
     # Check parameters
     if isinstance(tuner_config["expected_params"], dict):
