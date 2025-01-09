@@ -1,7 +1,7 @@
 import logging
 from typing import Any, Callable, Dict, List, Union, Tuple
 import pandas as pd
-from pyspark.sql import DataFrame
+import pyspark.sql as ps
 import json
 from pandera.typing import Series
 from pandera.pyspark import DataFrameModel as PysparkDataFrameModel
@@ -18,7 +18,7 @@ from sklearn.base import BaseEstimator
 import matplotlib.pyplot as plt
 
 from functools import wraps
-from matrix.inject import inject_object, make_list_regexable, unpack_params
+from matrix.inject import OBJECT_KW, inject_object, make_list_regexable, unpack_params
 
 from matrix.datasets.graph import KnowledgeGraph
 from matrix.datasets.pair_generator import SingleLabelPairGenerator
@@ -67,10 +67,10 @@ def no_nulls(columns: List[str]):
 
 
 def filter_valid_pairs(
-    nodes: DataFrame,
-    raw_tp: DataFrame,
-    raw_tn: DataFrame,
-) -> Tuple[DataFrame, Dict[str, float]]:
+    nodes: ps.DataFrame,
+    raw_tp: ps.DataFrame,
+    raw_tn: ps.DataFrame,
+) -> Tuple[ps.DataFrame, Dict[str, float]]:
     """Filter pairs to only include nodes that exist in the nodes DataFrame.
 
     Args:
@@ -120,9 +120,9 @@ class EmbeddingsWithPairsSchema(PysparkDataFrameModel):
 
 @pandera.check_output(EmbeddingsWithPairsSchema)
 def attach_embeddings(
-    pairs_df: DataFrame,
-    nodes: DataFrame,
-) -> DataFrame:
+    pairs_df: ps.DataFrame,
+    nodes: ps.DataFrame,
+) -> ps.DataFrame:
     """Attach node embeddings to the pairs DataFrame.
 
     Args:
@@ -154,12 +154,12 @@ class NodeSchema(PysparkDataFrameModel):
 
 @pandera.check_output(NodeSchema)
 def prefilter_nodes(
-    full_nodes: DataFrame,
-    nodes: DataFrame,
-    gt: DataFrame,
+    full_nodes: ps.DataFrame,
+    nodes: ps.DataFrame,
+    gt: ps.DataFrame,
     drug_types: List[str],
     disease_types: List[str],
-) -> DataFrame:
+) -> ps.DataFrame:
     """Prefilter nodes for negative sampling.
 
     Args:
@@ -208,7 +208,7 @@ class ModelSplitsSchema(PandasDataFrameModel):
 @pandera.check_output(ModelSplitsSchema)
 @inject_object()
 def make_folds(
-    data: DataFrame,
+    data: ps.DataFrame,
     splitter: BaseCrossValidator,
 ) -> Tuple[pd.DataFrame]:
     """Function to split data.
@@ -385,7 +385,7 @@ def tune_parameters(
     return json.loads(
         json.dumps(
             {
-                "object": f"{type(estimator).__module__}.{type(estimator).__name__}",
+                OBJECT_KW: f"{type(estimator).__module__}.{type(estimator).__name__}",
                 **tuner.best_params_,
             },
             default=int,

@@ -3,7 +3,7 @@ from pandera import DataFrameModel
 import pandera as pa
 from tqdm import tqdm
 from typing import List, Dict, Union, Tuple
-from pyspark.sql import DataFrame
+import pyspark.sql as ps
 from sklearn.impute._base import _BaseImputer
 
 import pandas as pd
@@ -23,10 +23,10 @@ logger = logging.getLogger(__name__)
 
 
 def enrich_embeddings(
-    nodes: DataFrame,
-    drugs: DataFrame,
-    diseases: DataFrame,
-) -> DataFrame:
+    nodes: ps.DataFrame,
+    drugs: ps.DataFrame,
+    diseases: ps.DataFrame,
+) -> ps.DataFrame:
     """Function to enrich drug and disease list with embeddings.
 
     Args:
@@ -81,7 +81,7 @@ def _add_flag_columns(matrix: pd.DataFrame, known_pairs: pd.DataFrame, clinical_
     return matrix
 
 
-def spark_to_pd(nodes: DataFrame) -> pd.DataFrame:
+def spark_to_pd(nodes: ps.DataFrame) -> pd.DataFrame:
     """Temporary function to transform spark parquet to pandas parquet.
 
     Related to https://github.com/everycure-org/matrix/issues/71.
