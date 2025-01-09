@@ -3,7 +3,7 @@ import sys
 import semver
 
 
-def bump_version(type: str):
+def bump_version(type: str) -> None:
     latest_tag = os.getenv("latest_tag", "v0.0.0").lstrip("v")
     version = semver.Version.parse(latest_tag)
 
@@ -17,7 +17,7 @@ def bump_version(type: str):
 
 
 if __name__ == "__main__":
-    # Extract the type argument
+    # Extract the type argument, which looks like "--type=**"
     arg = sys.argv[1]
     # Parse the type
     bump_type = arg.split("=", 1)[1]
