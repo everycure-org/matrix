@@ -75,7 +75,7 @@ class Tag:
         async with sem:
             prompt = ChatPromptTemplate.from_messages([HumanMessage(content=self._prompt.format(**row))])
             response = await model.ainvoke(prompt.format_messages())
-            return ", ".join(self._output_parser.parse(response.content))
+            return self._output_parser.parse(response.content)
 
 
 @inject_object()
