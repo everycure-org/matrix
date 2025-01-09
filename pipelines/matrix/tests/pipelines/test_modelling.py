@@ -24,7 +24,7 @@ from matrix.inject import OBJECT_KW
 from matrix.pipelines.modelling.nodes import (
     create_model_input_nodes,
     prefilter_nodes,
-    make_splits,
+    make_folds,
     attach_embeddings,
     tune_parameters,
 )
@@ -314,68 +314,64 @@ def test_attach_embeddings_schema_validation(spark: ps.SparkSession, sample_pair
         attach_embeddings(sample_pairs_df, invalid_nodes_df)
 
 
-def test_make_splits_basic_functionality(sample_data, simple_splitter):
-    """Test basic functionality of make_splits."""
-    result = make_splits(data=sample_data, splitter=simple_splitter)
+def test_make_folds_basic_functionality(sample_data, simple_splitter):
+    """Test basic functionality of make_folds."""
+    result = make_folds(data=sample_data, splitter=simple_splitter)
 
     # Check that all required columns are present
-    required_columns = ["source", "source_embedding", "target", "target_embedding", "split"]
-    for df in result:
-        assert all(col in df.columns for col in required_columns)
+    required_columns = ["source", "source_embedding", "target", "target_embedding", "split", "fold"]
+    assert all(col in result.columns for col in required_columns)
 
-        # Check that we have the same number of rows as input
-        assert len(df) == len(sample_data)
+    # Check that we have the same number of rows as input
+    assert len(result) == len(sample_data) * 3
 
-        # Check that splits are properly labeled
-        assert set(df["split"].unique()) == {"TRAIN", "TEST"}
+    # Check that splits are properly labeled
+    assert set(result["split"].unique()) == {"TRAIN", "TEST"}
+
+    # Check that the folds column has the correct range
+    assert set(result["fold"].unique()) == {0, 1, 2}
 
 
-def test_make_splits_data_integrity(sample_data, simple_splitter):
+def test_make_folds_data_integrity(sample_data, simple_splitter):
     """Test that data values are preserved after splitting."""
-    result = make_splits(data=sample_data, splitter=simple_splitter)
+    result = make_folds(data=sample_data, splitter=simple_splitter)
 
-    for df in result:
-        # Check that original values are preserved
-        assert set(df["source"].unique()) == set(sample_data["source"].unique())
-        assert set(df["target"].unique()) == set(sample_data["target"].unique())
+    # Check that original values are preserved
+    assert set(result["source"].unique()) == set(sample_data["source"].unique())
+    assert set(result["target"].unique()) == set(sample_data["target"].unique())
 
 
-def test_make_splits_empty_data(simple_splitter):
+def test_make_folds_empty_data(simple_splitter):
     """Test behavior with empty input data."""
     empty_data = pd.DataFrame(columns=["source", "source_embedding", "target", "target_embedding", "y"])
 
     with pytest.raises(ValueError):
-        make_splits(data=empty_data, splitter=simple_splitter)
+        make_folds(data=empty_data, splitter=simple_splitter)
 
 
-def test_create_model_input_nodes_basic(mock_knowledge_graph, mock_generator, sample_splits):
-    result = create_model_input_nodes(graph=mock_knowledge_graph, splits=sample_splits, generator=mock_generator)
+def test_create_model_input_nodes_basic(mock_knowledge_graph, mock_generator, sample_data, simple_splitter):
+    # Get number of folds (test/train splits plus full training set)
+    n_folds = simple_splitter.get_n_splits() + 1
 
-    # Check that generator was called with correct arguments
-    mock_generator.generate.assert_called_once_with(mock_knowledge_graph, sample_splits)
+    # Given the output of make_folds
+    mock_splits = make_folds(data=sample_data, splitter=simple_splitter)
 
-    # Check that result has correct number of rows (original + generated)
-    assert len(result) == len(sample_splits) + len(mock_generator.generate.return_value)
+    # When creating model input nodes
+    result = create_model_input_nodes(graph=mock_knowledge_graph, splits=mock_splits, generator=mock_generator)
+
+    # Check that generator was called the correct number of times (once per fold)
+    assert mock_generator.generate.call_count == n_folds
+
+    # Check that result has correct number of rows (original + generated * number of folds)
+    assert len(result) == len(mock_splits) + len(mock_generator.generate.return_value) * n_folds
 
     # Check that generated rows have 'TRAIN' split
-    generated_rows = result.iloc[len(sample_splits) :]
+    generated_rows = result.iloc[len(mock_splits) :]
     assert all(generated_rows["split"] == "TRAIN")
 
     # Check that original splits are preserved
-    original_rows = result.iloc[: len(sample_splits)]
-    assert all(original_rows["split"] == sample_splits["split"])
-
-
-def test_create_model_input_nodes_empty_splits(mock_knowledge_graph, mock_generator):
-    empty_splits = pd.DataFrame(
-        {"source": [], "source_embedding": [], "target": [], "target_embedding": [], "iteration": [], "split": []}
-    )
-
-    result = create_model_input_nodes(graph=mock_knowledge_graph, splits=empty_splits, generator=mock_generator)
-
-    # Check that only generated data is present
-    assert len(result) == len(mock_generator.generate.return_value)
-    assert all(result["split"] == "TRAIN")
+    original_rows = result.iloc[: len(mock_splits)]
+    assert all(original_rows["split"] == mock_splits["split"])
 
 
 def test_create_model_input_nodes_generator_empty(mock_knowledge_graph, sample_splits):
