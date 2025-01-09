@@ -31,9 +31,10 @@ def _create_resolution_pipeline() -> Pipeline:
 def _create_inference_pipeline(model_excl: str, model_incl: str) -> Pipeline:
     """Matrix generation pipeline adjusted for running inference with models of choice."""
     mg_pipeline = matrix_generation_pipeline()
-    cross_validation_settings = settings.DYNAMIC_PIPELINES_MAPPING.get("cross_validation")
-    n_splits = cross_validation_settings.get("n_splits")
-    folds_lst = list(range(n_splits))
+
+    # Unpack number of splits
+    n_cross_val_folds = settings.DYNAMIC_PIPELINES_MAPPING.get("cross_validation").get("n_cross_val_folds")
+
     inference_nodes = pipeline(
         [
             node
@@ -41,7 +42,7 @@ def _create_inference_pipeline(model_excl: str, model_incl: str) -> Pipeline:
             if (
                 not any(model in node.name for model in model_excl)  # Remove nodes for models not included in inference
                 and not any(
-                    f"fold_{fold}" in node.name for fold in folds_lst
+                    f"fold_{fold}" in node.name for fold in range(n_cross_val_folds)
                 )  # Include only models trained on full ground truth data
             )
         ]
@@ -63,9 +64,9 @@ def _create_inference_pipeline(model_excl: str, model_incl: str) -> Pipeline:
                     "ingestion.raw.disease_list@pandas": "inference.int.disease_list@pandas",
                 },
                 outputs={
-                    f"matrix_generation.{model}.fold_full.model_output.sorted_matrix_predictions@pandas": f"inference.{model}.model_output.predictions@pandas",
-                    f"matrix_generation.{model}.fold_full.reporting.matrix_report": f"inference.{model}.reporting.report",
-                    "matrix_generation.prm.fold_full.matrix_pairs": "inference.prm.matrix_pairs",
+                    f"matrix_generation.{model}.fold_{n_cross_val_folds}.model_output.sorted_matrix_predictions@pandas": f"inference.{model}.model_output.predictions@pandas",
+                    f"matrix_generation.{model}.fold_{n_cross_val_folds}.reporting.matrix_report": f"inference.{model}.reporting.report",
+                    f"matrix_generation.prm.fold_{n_cross_val_folds}.matrix_pairs": "inference.prm.matrix_pairs",
                     "matrix_generation.feat.nodes_kg_ds": "inference.feat.nodes_kg_ds",
                     "matrix_generation.feat.nodes@spark": "inference.feat.nodes@spark",
                 },
