@@ -1,9 +1,6 @@
 name: Automate kedro submit release run periodically
 
 on:
-  push:
-    branches:
-      - gh-actions-weekly-submit
   schedule:
     - cron: '30 9 1 * 1' # At 09:30 on the 1st day of the month and on Monday.
 
