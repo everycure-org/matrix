@@ -107,7 +107,7 @@ class PandasParquetDataset(ParquetDataset):
                     return df.astype(self._as_type)
 
                 return df
-            except FileNotFoundError:
+            except Exception:
                 attempt += 1
                 logger.warning(f"Parquet file `{self._filepath}` not found, retrying!")
 
@@ -151,7 +151,7 @@ class KnowledgeGraphDataset(ParquetDataset):
                 # Attempt reading the object
                 # https://github.com/everycure-org/matrix/issues/71
                 return KnowledgeGraph(super().load())
-            except FileNotFoundError:
+            except Exception:
                 attempt += 1
                 logger.warning(f"Parquet file `{self._filepath}` not found, retrying!")
 
