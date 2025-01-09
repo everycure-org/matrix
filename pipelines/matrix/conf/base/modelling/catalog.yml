@@ -53,9 +53,9 @@ modelling.model_input.drugs_diseases_nodes@pandas:
   <<: [*_kg_dataset, *_model_input_ds]
   filepath: ${globals:paths.modelling}/model_input/drugs_diseases_nodes/
 
-"modelling.model_input.fold_{fold}.splits":
+modelling.model_input.splits:
   <<: [*_pandas_parquet, *_model_input_ds]
-  filepath: ${globals:paths.modelling}/model_input/fold_{fold}/splits
+  filepath: ${globals:paths.modelling}/model_input/splits
 
 "modelling.{model}.fold_{fold}.model_input.transformers":
   <<: *_model_input_ds
@@ -66,9 +66,9 @@ modelling.model_input.drugs_diseases_nodes@pandas:
   <<: [*_pandas_parquet, *_model_output_ds]
   filepath: ${globals:paths.modelling}/model_input/{model}/fold_{fold}/transformed_splits
 
-"modelling.{model}.{shard}.fold_{fold}.model_input.enriched_splits":
+"modelling.{model}.{shard}.model_input.enriched_splits":
   <<: [*_pandas_parquet, *_model_input_ds]
-  filepath: ${globals:paths.modelling}/model_input/{model}/{shard}/fold_{fold}/enriched_splits
+  filepath: ${globals:paths.modelling}/model_input/{model}/{shard}/enriched_splits
 
 "modelling.{model}.{shard}.fold_{fold}.model_input.transformed_splits":
   <<: [*_pandas_parquet, *_model_input_ds]
@@ -102,15 +102,10 @@ modelling.model_input.drugs_diseases_nodes@pandas:
   type: pickle.PickleDataset
   filepath: ${globals:paths.modelling}/models/{model}/fold_{fold}/model.pickle
 
-"modelling.{model}.fold_{fold}.reporting.metrics":
+"modelling.{model}.reporting.metrics":
   <<: *_reporting_ds
-  filepath: ${globals:paths.modelling}/reporting/{model}/fold_{fold}/sanity_metrics.yml
+  filepath: ${globals:paths.modelling}/reporting/{model}/sanity_metrics.yml
   type: yaml.YAMLDataset
-
-"modelling.{model}.reporting.metrics_aggregated":
-  <<: *_reporting_ds
-  filepath: ${globals:paths.modelling}/reporting/{model}/sanity_metrics_aggregated.yml
-  type:  yaml.YAMLDataset
 
 modelling.reporting.gt_present:
   filepath: ${globals:paths.modelling}/reporting/gt_present_metrics.yml
