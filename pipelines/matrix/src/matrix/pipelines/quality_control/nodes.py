@@ -9,7 +9,7 @@ from pyspark.sql import DataFrame, SparkSession
 from refit.v1.core.inject import inject_object
 from pyspark.sql import types as T
 
-from .quality_control import QaulityControl
+from .quality_control import QualityControl
 
 
 """
@@ -31,7 +31,7 @@ Implement tracking for following metrics:
 
 
 @inject_object()
-def run_quality_control(df: DataFrame, controls: Dict[str, QaulityControl]) -> DataFrame:
+def run_quality_control(df: DataFrame, controls: Dict[str, QualityControl]) -> DataFrame:
     """Function to run given quality controls on input dataframe."""
 
     # Initialise spark
