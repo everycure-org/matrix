@@ -1,7 +1,9 @@
 from kedro.pipeline import Pipeline, pipeline
 
 from matrix import settings
+from matrix.pipelines.modelling.utils import partial_fold
 from matrix.kedro4argo_node import ARGO_GPU_NODE_MEDIUM, argo_node
+
 
 from . import nodes
 
@@ -11,12 +13,10 @@ def create_pipeline(**kwargs) -> Pipeline:
 
     # Load model names
     models = settings.DYNAMIC_PIPELINES_MAPPING.get("modelling")
-    model_names = [model["model_name"] for model in models]
 
     # Load cross-validation information
     cross_validation_settings = settings.DYNAMIC_PIPELINES_MAPPING.get("cross_validation")
-    n_splits = cross_validation_settings.get("n_splits")
-    folds_lst = list(range(n_splits)) + ["full"]
+    n_cross_val_folds = cross_validation_settings.get("n_cross_val_folds")
 
     # Initial nodes computing matrix pairs and flags
     pipelines = []
@@ -50,20 +50,20 @@ def create_pipeline(**kwargs) -> Pipeline:
     )
 
     # Nodes generating scores for each fold and model
-    for fold in folds_lst:
+    for fold in range(n_cross_val_folds + 1):  # NOTE: final fold is full training data
         # For each fold, generate the pairs
         pipelines.append(
             pipeline(
                 [
                     argo_node(
-                        func=nodes.generate_pairs,
-                        inputs=[
-                            "ingestion.raw.drug_list@pandas",
-                            "ingestion.raw.disease_list@pandas",
-                            "matrix_generation.feat.nodes_kg_ds",
-                            f"modelling.model_input.fold_{fold}.splits",
-                            "ingestion.raw.clinical_trials_data",
-                        ],
+                        func=partial_fold(nodes.generate_pairs, fold, arg_name="known_pairs"),
+                        inputs={
+                            "known_pairs": "modelling.model_input.splits",
+                            "drugs": "ingestion.raw.drug_list@pandas",
+                            "diseases": "ingestion.raw.disease_list@pandas",
+                            "graph": "matrix_generation.feat.nodes_kg_ds",
+                            "clinical_trials": "ingestion.raw.clinical_trials_data",
+                        },
                         outputs=f"matrix_generation.prm.fold_{fold}.matrix_pairs",
                         name=f"generate_matrix_pairs_fold_{fold}",
                     )
@@ -72,7 +72,7 @@ def create_pipeline(**kwargs) -> Pipeline:
         )
 
         # For each model, create pipeline to generate pairs
-        for model in model_names:
+        for model in models.keys():
             pipelines.append(
                 pipeline(
                     [
@@ -84,7 +84,9 @@ def create_pipeline(**kwargs) -> Pipeline:
                                 f"modelling.{model}.fold_{fold}.model_input.transformers",
                                 f"modelling.{model}.fold_{fold}.models.model",
                                 f"params:modelling.{model}.model_options.model_tuning_args.features",
-                                "params:evaluation.score_col_name",
+                                "params:matrix_generation.treat_score_col_name",
+                                "params:matrix_generation.not_treat_score_col_name",
+                                "params:matrix_generation.unknown_score_col_name",
                                 "params:matrix_generation.matrix_generation_options.batch_by",
                             ],
                             outputs=f"matrix_generation.{model}.fold_{fold}.model_output.sorted_matrix_predictions@pandas",
@@ -98,7 +100,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                                 "params:matrix_generation.matrix_generation_options.n_reporting",
                                 "ingestion.raw.drug_list@pandas",
                                 "ingestion.raw.disease_list@pandas",
-                                "params:evaluation.score_col_name",
+                                "params:matrix_generation.treat_score_col_name",
                                 "params:matrix_generation.matrix",
                                 "params:matrix_generation.run",
                             ],

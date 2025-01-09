@@ -12,7 +12,7 @@ from kedro.config import OmegaConfigLoader  # noqa: E402
 from kedro_mlflow.framework.hooks import MlflowHook
 
 import matrix.hooks as matrix_hooks
-from matrix.utils.hook_utilities import determine_hooks_to_execute
+from matrix.utils.hook_utilities import determine_hooks_to_execute, generate_dynamic_pipeline_mapping
 
 from .resolvers import cast_to_int, env, merge_dicts
 
@@ -39,6 +39,47 @@ SESSION_STORE_CLASS = SQLiteStore
 # Keyword arguments to pass to the `SESSION_STORE_CLASS` constructor.
 SESSION_STORE_ARGS = {"path": str(Path(__file__).parents[2])}
 
+# https://getindata.com/blog/kedro-dynamic-pipelines/
+DYNAMIC_PIPELINES_MAPPING = generate_dynamic_pipeline_mapping(
+    {
+        "cross_validation": {
+            "n_cross_val_folds": 3,
+        },
+        "integration": [
+            {"name": "rtx_kg2"},
+            # {"name": "spoke"},
+            {"name": "robokop"},
+            {"name": "ec_medical_team"},
+        ],
+        "modelling": {
+            "xg_baseline": {"num_shards": 1, "run_inference": False},
+            "xg_ensemble": {"num_shards": 3, "run_inference": True},
+            "rf": {"num_shards": 1, "run_inference": False},
+            "xg_synth": {"num_shards": 1, "run_inference": False},
+        },
+        "evaluation": [
+            {"evaluation_name": "simple_classification"},
+            {"evaluation_name": "disease_specific"},
+            {"evaluation_name": "full_matrix_negatives"},
+            {"evaluation_name": "full_matrix"},
+            {"evaluation_name": "simple_classification_trials"},
+            {"evaluation_name": "disease_specific_trials"},
+            {"evaluation_name": "full_matrix_trials"},
+        ],
+    }
+)
+
+
+def _load_setting(path):
+    """Utility function to load a settings value from the data catalog."""
+    path = path.split(".")
+    obj = DYNAMIC_PIPELINES_MAPPING
+    for p in path:
+        obj = obj[p]
+
+    return obj
+
+
 # Directory that holds configuration.
 CONFIG_LOADER_CLASS = OmegaConfigLoader
 # Keyword arguments to pass to the `CONFIG_LOADER_CLASS` constructor.
@@ -57,39 +98,7 @@ CONFIG_LOADER_ARGS = {
             "**/parameters*/**",
         ],
     },
-    "custom_resolvers": {
-        "merge": merge_dicts,
-        "oc.env": env,
-        "oc.int": cast_to_int,
-    },
-}
-
-# https://getindata.com/blog/kedro-dynamic-pipelines/
-DYNAMIC_PIPELINES_MAPPING = {
-    "cross_validation": {
-        "n_splits": 3,
-    },
-    "integration": [
-        {"name": "rtx_kg2"},
-        # {"name": "spoke"},
-        {"name": "robokop"},
-        {"name": "ec_medical_team"},
-    ],
-    "modelling": [
-        {"model_name": "xg_baseline", "num_shards": 1, "run_inference": False},
-        {"model_name": "xg_ensemble", "num_shards": 3, "run_inference": True},
-        {"model_name": "rf", "num_shards": 1, "run_inference": False},
-        {"model_name": "xg_synth", "num_shards": 1, "run_inference": False},
-    ],
-    "evaluation": [
-        {"evaluation_name": "simple_classification"},
-        {"evaluation_name": "disease_specific"},
-        {"evaluation_name": "full_matrix_negatives"},
-        {"evaluation_name": "full_matrix"},
-        {"evaluation_name": "simple_classification_trials"},
-        {"evaluation_name": "disease_specific_trials"},
-        {"evaluation_name": "full_matrix_trials"},
-    ],
+    "custom_resolvers": {"merge": merge_dicts, "oc.env": env, "oc.int": cast_to_int, "setting": _load_setting},
 }
 
 # Class that manages Kedro's library components.

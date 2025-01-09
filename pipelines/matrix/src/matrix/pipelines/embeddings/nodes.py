@@ -4,44 +4,59 @@ from typing import Any, Dict, List
 import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
+
 import seaborn as sns
 
 from graphdatascience import GraphDataScience
 
-import pyspark.sql.types as T
-from pyspark.sql import DataFrame, SparkSession
-from pyspark.sql import functions as F
-from pyspark.sql.types import StringType
-from pyspark.sql.window import Window
-from pyspark.ml.functions import array_to_vector, vector_to_array
+from pandera.pyspark import DataFrameModel
+from pandera.pyspark import Field
+import pandera
 
-from refit.v1.core.inject import inject_object
-from refit.v1.core.inline_has_schema import has_schema
-from refit.v1.core.inline_primary_key import primary_key
-from refit.v1.core.unpack import unpack_params
+import pyspark.sql as ps
+from pyspark.ml.functions import array_to_vector, vector_to_array
 
 from tenacity import retry, wait_exponential, stop_after_attempt
 
+from matrix.inject import inject_object, unpack_params
+
 from .graph_algorithms import GDSGraphAlgorithm
 from .encoders import AttributeEncoder
-from matrix.pipelines.modelling.nodes import no_nulls
 
 logger = logging.getLogger(__name__)
 
 
-@has_schema(
-    schema={
-        "label": "string",
-        "id": "string",
-        "name": "string",
-        "property_keys": "array<string>",
-        "property_values": "array<string>",
-        "upstream_data_source": "array<string>",
-    },
-    allow_subset=True,
-)
-@primary_key(primary_key=["id"])
-def ingest_nodes(df: DataFrame) -> DataFrame:
+class GraphDS(GraphDataScience):
+    """Adaptor class to allow injecting the GDS object.
+
+    This is due to a drawback where our functions cannot inject a tuple into
+    the constructor of an object.
+    """
+
+    def __init__(
+        self,
+        *,
+        endpoint: str,
+        auth: ps.functions.Tuple[str] | None = None,
+        database: str | None = None,
+    ):
+        """Create `GraphDS` instance."""
+        super().__init__(endpoint, auth=tuple(auth), database=database)
+
+        self.set_database(database)
+
+
+class IngestedNodesSchema(DataFrameModel):
+    id: ps.types.StringType
+    label: ps.types.StringType
+    name: ps.types.StringType
+    property_keys: ps.types.ArrayType(ps.types.StringType())  # type: ignore
+    property_values: ps.types.ArrayType(ps.types.StringType())  # type: ignore
+    upstream_data_source: ps.types.ArrayType(ps.types.StringType())  # type: ignore
+
+
+@pandera.check_output(IngestedNodesSchema)
+def ingest_nodes(df: ps.DataFrame) -> ps.DataFrame:
     """Function to create Neo4J nodes.
 
     Args:
@@ -49,35 +64,35 @@ def ingest_nodes(df: DataFrame) -> DataFrame:
     """
     return (
         df.select("id", "name", "category", "description", "upstream_data_source")
-        .withColumn("label", F.col("category"))
+        .withColumn("label", ps.functions.col("category"))
         # add string properties here
         .withColumn(
             "properties",
-            F.create_map(
-                F.lit("name"),
-                F.col("name"),
-                F.lit("category"),
-                F.col("category"),
-                F.lit("description"),
-                F.col("description"),
+            ps.functions.create_map(
+                ps.functions.lit("name"),
+                ps.functions.col("name"),
+                ps.functions.lit("category"),
+                ps.functions.col("category"),
+                ps.functions.lit("description"),
+                ps.functions.col("description"),
             ),
         )
-        .withColumn("property_keys", F.map_keys(F.col("properties")))
-        .withColumn("property_values", F.map_values(F.col("properties")))
+        .withColumn("property_keys", ps.functions.map_keys(ps.functions.col("properties")))
+        .withColumn("property_values", ps.functions.map_values(ps.functions.col("properties")))
         # add array properties here
         .withColumn(
             "array_properties",
-            F.create_map(
-                F.lit("upstream_data_source"),
-                F.col("upstream_data_source"),
+            ps.functions.create_map(
+                ps.functions.lit("upstream_data_source"),
+                ps.functions.col("upstream_data_source"),
             ),
         )
-        .withColumn("array_property_keys", F.map_keys(F.col("array_properties")))
-        .withColumn("array_property_values", F.map_values(F.col("array_properties")))
+        .withColumn("array_property_keys", ps.functions.map_keys(ps.functions.col("array_properties")))
+        .withColumn("array_property_values", ps.functions.map_values(ps.functions.col("array_properties")))
     )
 
 
-def bucketize_df(df: DataFrame, bucket_size: int, input_features: List[str], max_input_len: int):
+def bucketize_df(df: ps.DataFrame, bucket_size: int, input_features: List[str], max_input_len: int) -> ps.DataFrame:
     """Function to bucketize input dataframe.
 
     Function bucketizes the input dataframe in N buckets, each of size `bucket_size`
@@ -95,14 +110,16 @@ def bucketize_df(df: DataFrame, bucket_size: int, input_features: List[str], max
         df.transform(_bucketize, bucket_size=bucket_size)
         .withColumn(
             "text_to_embed",
-            F.concat(*[F.coalesce(F.col(feature), F.lit("")) for feature in input_features]),
+            ps.functions.concat(
+                *[ps.functions.coalesce(ps.functions.col(feature), ps.functions.lit("")) for feature in input_features]
+            ),
         )
-        .withColumn("text_to_embed", F.substring(F.col("text_to_embed"), 1, max_input_len))
+        .withColumn("text_to_embed", ps.functions.substring(ps.functions.col("text_to_embed"), 1, max_input_len))
         .select("id", "text_to_embed", "bucket")
     )
 
 
-def _bucketize(df: DataFrame, bucket_size: int) -> pd.DataFrame:
+def _bucketize(df: ps.DataFrame, bucket_size: int) -> ps.DataFrame:
     """Function to bucketize df in given number of buckets.
 
     Args:
@@ -117,7 +134,7 @@ def _bucketize(df: DataFrame, bucket_size: int) -> pd.DataFrame:
     num_buckets = (num_elements + bucket_size - 1) // bucket_size
 
     # Construct df to bucketize
-    spark_session: SparkSession = SparkSession.builder.getOrCreate()
+    spark_session: ps.SparkSession = ps.SparkSession.builder.getOrCreate()
 
     # Bucketize df
     buckets = spark_session.createDataFrame(
@@ -125,8 +142,14 @@ def _bucketize(df: DataFrame, bucket_size: int) -> pd.DataFrame:
         schema=["bucket", "min_range", "max_range"],
     )
 
-    return df.withColumn("row_num", F.row_number().over(Window.orderBy("id")) - F.lit(1)).join(
-        buckets, on=[(F.col("row_num") >= (F.col("min_range"))) & (F.col("row_num") < F.col("max_range"))]
+    return df.withColumn(
+        "row_num", ps.functions.row_number().over(ps.window.Window.orderBy("id")) - ps.functions.lit(1)
+    ).join(
+        buckets,
+        on=[
+            (ps.functions.col("row_num") >= (ps.functions.col("min_range")))
+            & (ps.functions.col("row_num") < ps.functions.col("max_range"))
+        ],
     )
 
 
@@ -134,7 +157,7 @@ def _bucketize(df: DataFrame, bucket_size: int) -> pd.DataFrame:
 def compute_embeddings(
     dfs: Dict[str, Any],
     encoder: AttributeEncoder,
-):
+) -> Dict[str, Any]:
     """Function to bucketize input data.
 
     Args:
@@ -179,21 +202,25 @@ async def compute_df_embeddings_async(df: pd.DataFrame, embedding_model) -> pd.D
     return df
 
 
-@has_schema(
-    schema={
-        "embedding": "array<float>",
-        "pca_embedding": "array<float>",
-    }
-)
-@no_nulls(columns=["embedding", "pca_embedding"])
+class EmbeddingSchema(DataFrameModel):
+    id: ps.types.StringType
+    embedding: ps.types.ArrayType(ps.types.FloatType(), True)  # type: ignore
+    pca_embedding: ps.types.ArrayType(ps.types.FloatType(), True)  # type: ignore
+
+    class Config:
+        strict = False
+        unique = ["id"]
+
+
+@pandera.check_output(EmbeddingSchema)
 @unpack_params()
-def reduce_embeddings_dimension(df: DataFrame, transformer, input: str, output: str, skip: bool):
+def reduce_embeddings_dimension(df: ps.DataFrame, transformer, input: str, output: str, skip: bool) -> ps.DataFrame:
     return reduce_dimension(df, transformer, input, output, skip)
 
 
 @unpack_params()
 @inject_object()
-def reduce_dimension(df: DataFrame, transformer, input: str, output: str, skip: bool):
+def reduce_dimension(df: ps.DataFrame, transformer, input: str, output: str, skip: bool) -> ps.DataFrame:
     """Function to apply dimensionality reduction.
 
     Function to apply dimensionality reduction conditionally, if skip is set to true
@@ -211,10 +238,10 @@ def reduce_dimension(df: DataFrame, transformer, input: str, output: str, skip: 
                    embeddings, depending on the 'skip' parameter.
     """
     if skip:
-        return df.withColumn(output, F.col(input).cast("array<float>"))
+        return df.withColumn(output, ps.functions.col(input).cast("array<float>"))
 
     # Convert into correct type
-    df = df.withColumn("features", array_to_vector(F.col(input).cast("array<float>")))
+    df = df.withColumn("features", array_to_vector(ps.functions.col(input).cast("array<float>")))
 
     # Link
     transformer.setInputCol("features")
@@ -224,7 +251,8 @@ def reduce_dimension(df: DataFrame, transformer, input: str, output: str, skip: 
         transformer.fit(df)
         .transform(df)
         .withColumn(output, vector_to_array("pca_features"))
-        .withColumn(output, F.col(output).cast("array<float>"))
+        .withColumn(output, ps.functions.col(output).cast("array<float>"))
+        .withColumn("pca_embedding", ps.functions.col(output))
         .drop("pca_features", "features")
     )
 
@@ -232,8 +260,8 @@ def reduce_dimension(df: DataFrame, transformer, input: str, output: str, skip: 
 
 
 def filter_edges_for_topological_embeddings(
-    nodes: DataFrame, edges: DataFrame, drug_types: List[str], disease_types: List[str]
-):
+    nodes: ps.DataFrame, edges: ps.DataFrame, drug_types: List[str], disease_types: List[str]
+) -> ps.DataFrame:
     """Function to filter edges for topological embeddings process.
 
     The function removes edges connecting drug and disease nodes to avoid data leakage. Currently
@@ -251,30 +279,42 @@ def filter_edges_for_topological_embeddings(
     """
 
     def _create_mapping(column: str):
-        return nodes.alias(column).withColumn(column, F.col("id")).select(column, "all_categories")
+        return nodes.alias(column).withColumn(column, ps.functions.col("id")).select(column, "all_categories")
 
     df = (
         edges.alias("edges")
         .join(_create_mapping("subject"), how="left", on="subject")
         .join(_create_mapping("object"), how="left", on="object")
         # FUTURE: Improve with proper feature engineering engine
-        .withColumn("subject_is_drug", F.arrays_overlap(F.col("subject.all_categories"), F.lit(drug_types)))
-        .withColumn("subject_is_disease", F.arrays_overlap(F.col("subject.all_categories"), F.lit(disease_types)))
-        .withColumn("object_is_drug", F.arrays_overlap(F.col("object.all_categories"), F.lit(drug_types)))
-        .withColumn("object_is_disease", F.arrays_overlap(F.col("object.all_categories"), F.lit(disease_types)))
+        .withColumn(
+            "subject_is_drug",
+            ps.functions.arrays_overlap(ps.functions.col("subject.all_categories"), ps.functions.lit(drug_types)),
+        )
+        .withColumn(
+            "subject_is_disease",
+            ps.functions.arrays_overlap(ps.functions.col("subject.all_categories"), ps.functions.lit(disease_types)),
+        )
+        .withColumn(
+            "object_is_drug",
+            ps.functions.arrays_overlap(ps.functions.col("object.all_categories"), ps.functions.lit(drug_types)),
+        )
+        .withColumn(
+            "object_is_disease",
+            ps.functions.arrays_overlap(ps.functions.col("object.all_categories"), ps.functions.lit(disease_types)),
+        )
         .withColumn(
             "is_drug_disease_edge",
-            (F.col("subject_is_drug") & F.col("object_is_disease"))
-            | (F.col("subject_is_disease") & F.col("object_is_drug")),
+            (ps.functions.col("subject_is_drug") & ps.functions.col("object_is_disease"))
+            | (ps.functions.col("subject_is_disease") & ps.functions.col("object_is_drug")),
         )
-        .filter(~F.col("is_drug_disease_edge"))
+        .filter(~ps.functions.col("is_drug_disease_edge"))
         .select("edges.*")
     )
 
     return df
 
 
-def ingest_edges(nodes, edges: DataFrame):
+def ingest_edges(nodes: ps.DataFrame, edges: ps.DataFrame) -> ps.DataFrame:
     """Function to construct Neo4J edges."""
     return (
         edges.select(
@@ -283,7 +323,7 @@ def ingest_edges(nodes, edges: DataFrame):
             "object",
             "upstream_data_source",
         )
-        .withColumn("label", F.split(F.col("predicate"), ":", limit=2).getItem(1))
+        .withColumn("label", ps.functions.split(ps.functions.col("predicate"), ":", limit=2).getItem(1))
         # we repartition to 1 partition here to avoid deadlocks in the edges insertion of neo4j.
         # FUTURE potentially we should repartition in the future to avoid deadlocks. However
         # with edges, this is harder to do than with nodes (as they are distinct but edges have 2 nodes)
@@ -295,7 +335,7 @@ def ingest_edges(nodes, edges: DataFrame):
 @unpack_params()
 @inject_object()
 def train_topological_embeddings(
-    df: DataFrame,
+    df: ps.DataFrame,
     gds: GraphDataScience,
     topological_estimator: GDSGraphAlgorithm,
     projection: Any,
@@ -352,7 +392,7 @@ def train_topological_embeddings(
 @inject_object()
 @unpack_params()
 def write_topological_embeddings(
-    model: DataFrame,
+    model: ps.DataFrame,
     gds: GraphDataScience,
     topological_estimator: GDSGraphAlgorithm,
     projection: Any,
@@ -370,27 +410,41 @@ def write_topological_embeddings(
     return {"success": "true"}
 
 
-@no_nulls(columns=["pca_embedding", "topological_embedding"])
-@primary_key(primary_key=["id"])
-def extract_topological_embeddings(embeddings: DataFrame, nodes: DataFrame, string_col: str) -> DataFrame:
+class ExtractedTopologicalEmbeddingSchema(DataFrameModel):
+    id: ps.types.StringType
+    topological_embedding: ps.types.ArrayType(ps.types.FloatType(), True) = Field(nullable=True)  # type: ignore
+    pca_embedding: ps.types.ArrayType(ps.types.FloatType(), True) = Field(nullable=True)  # type: ignore
+
+    class Config:
+        strict = False
+        unique = ["id"]
+
+
+@pandera.check_output(ExtractedTopologicalEmbeddingSchema)
+def extract_topological_embeddings(embeddings: ps.DataFrame, nodes: ps.DataFrame, string_col: str) -> ps.DataFrame:
     """Extract topological embeddings from Neo4j and write into BQ.
 
     Need a conditional statement due to Node2Vec writing topological embeddings as string. Raised issue in GDS client:
     https://github.com/neo4j/graph-data-science-client/issues/742#issuecomment-2324737372.
     """
 
-    if isinstance(embeddings.schema[string_col].dataType, StringType):
+    if isinstance(embeddings.schema[string_col].dataType, ps.types.StringType):
         print("converting embeddings to float")
-        embeddings = embeddings.withColumn(string_col, F.from_json(F.col(string_col), T.ArrayType(T.DoubleType())))
+        embeddings = embeddings.withColumn(
+            string_col, ps.functions.from_json(ps.functions.col(string_col), ps.types.ArrayType(ps.types.FloatType()))
+        )
 
-    return (
+    x = (
         nodes.alias("nodes")
         .join(embeddings.alias("embeddings"), on="id", how="left")
         .select("nodes.*", "embeddings.pca_embedding", "embeddings.topological_embedding")
+        .withColumn("pca_embedding", ps.functions.col("pca_embedding").cast("array<float>"))
+        .withColumn("topological_embedding", ps.functions.col("topological_embedding").cast("array<float>"))
     )
+    return x
 
 
-def visualise_pca(nodes: DataFrame, column_name: str):
+def visualise_pca(nodes: ps.DataFrame, column_name: str) -> plt.Figure:
     """Write topological embeddings."""
     nodes = nodes.select(column_name, "category").toPandas()
     nodes[["pca_0", "pca_1"]] = pd.DataFrame(nodes[column_name].tolist(), index=nodes.index)

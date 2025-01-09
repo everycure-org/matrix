@@ -13,24 +13,19 @@ modelling.splitter:
 
   # Defines strategy for cross validation. Can be a function from sklearn.model_selection
   # or our custom DrugStratifiedSplit
-  # object: matrix.pipelines.modelling.model_selection.DrugStratifiedSplit
-  # Note: n_splits must be adjusted in settings.py
-  object: sklearn.model_selection.StratifiedShuffleSplit
+  # _object: matrix.pipelines.modelling.model_selection.DrugStratifiedSplit
+  _object: sklearn.model_selection.StratifiedShuffleSplit
   test_size: 0.1
   random_state: ${globals:random_state}
+  n_splits: ${setting:cross_validation.n_cross_val_folds}
 
 # Aggregation functions for cross-validation
 modelling.aggregation_functions:
-  - name: mean
-    object: np.mean
-  - name: std
-    object: np.std
-  - name: median
-    object: np.median
-  - name: min
-    object: np.min
-  - name: max
-    object: np.max
+  - _object: numpy.mean
+  - _object: numpy.std
+  - _object: numpy.median
+  - _object: numpy.min
+  - _object: numpy.max
 
 
 
@@ -41,7 +36,7 @@ _model_options:
   # Defines strategy for generating drug-disease pairs. Should be a
   # class that implements the DrugDiseasePair generator interface.
   generator:
-    object: matrix.datasets.pair_generator.ReplacementDrugDiseasePairGenerator
+    _object: matrix.datasets.pair_generator.ReplacementDrugDiseasePairGenerator
     random_state: ${globals:random_state}
     y_label: 2
     n_replacements: 2
@@ -55,13 +50,13 @@ _model_options:
   transformers:
     flat_source_embedding:
       transformer: 
-        object: matrix.pipelines.modelling.transformers.FlatArrayTransformer
+        _object: matrix.pipelines.modelling.transformers.FlatArrayTransformer
         prefix: source_
       features:
         - source_embedding # becomes n columns, named source_0, source_1, etc
     flat_target_embedding:
       transformer: 
-        object: matrix.pipelines.modelling.transformers.FlatArrayTransformer
+        _object: matrix.pipelines.modelling.transformers.FlatArrayTransformer
         prefix: target_
       features:
         - target_embedding # becomes n columns, named target_0, target_1, etc
@@ -70,9 +65,9 @@ _model_options:
   # defined using a regex strategy.
   model_tuning_args:
     tuner:
-      object: matrix.pipelines.modelling.tuning.NopTuner
+      _object: matrix.pipelines.modelling.tuning.NopTuner
       estimator:
-        object: xgboost.XGBClassifier
+        _object: xgboost.XGBClassifier
         tree_method: hist
         max_depth: 10
         device: cuda
@@ -84,9 +79,14 @@ _model_options:
   # Define metrics to be used for check of performance 
   metrics:
     accuracy:
-      object: sklearn.metrics.accuracy_score
+      _object: sklearn.metrics.accuracy_score
     macro_f1:
-      object: matrix.pipelines.modelling.utils.partial_
+      _object: matrix.pipelines.modelling.utils.partial_
       func:
-        object: sklearn.metrics.f1_score
+        _object: sklearn.metrics.f1_score
       average: macro
+
+  # Defines the aggregation function used by ensemble models
+  ensemble:
+    agg_func:
+      _object: numpy.mean

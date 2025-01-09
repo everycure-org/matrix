@@ -4,3 +4,4 @@ nav:
     - local-development.md
     - ci.md
     - data
+    - pandera_validation.md

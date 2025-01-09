@@ -8,9 +8,10 @@ from kedro.framework.context import KedroContext
 from kedro.framework.project import settings
 from kedro.framework.hooks import _create_hook_manager
 
-from pyspark.sql import SparkSession
+import pyspark.sql as ps
 from omegaconf.resolvers import oc
 from matrix.resolvers import merge_dicts
+from matrix.settings import _load_setting
 
 
 @pytest.fixture(scope="session")
@@ -45,7 +46,7 @@ def config_loader(conf_source: Path) -> OmegaConfigLoader:
                 "**/parameters*/**",
             ],
         },
-        custom_resolvers={"merge": merge_dicts, "oc.env": oc.env},
+        custom_resolvers={"merge": merge_dicts, "oc.env": oc.env, "setting": _load_setting},
     )
 
 
@@ -62,10 +63,10 @@ def kedro_context(config_loader: OmegaConfigLoader) -> KedroContext:
 
 
 @pytest.fixture(scope="session")
-def spark() -> Generator[SparkSession, None, None]:
+def spark() -> Generator[ps.SparkSession, None, None]:
     """Instantiate the Spark session."""
     spark = (
-        SparkSession.builder.config("spark.sql.shuffle.partitions", 1)
+        ps.SparkSession.builder.config("spark.sql.shuffle.partitions", 1)
         .config("spark.executorEnv.PYTHONPATH", "src")
         .config("spark.driver.bindAddress", "127.0.0.1")
         .master("local")

@@ -2,9 +2,11 @@ import json
 from typing import Any
 
 import pandas as pd
+from pandera import DataFrameModel
+import pandera
+from pandera.typing import Series
 
-from refit.v1.core.inject import inject_object
-from refit.v1.core.inline_has_schema import has_schema
+from matrix.inject import inject_object
 
 from matrix.datasets.pair_generator import DrugDiseasePairGenerator
 from matrix.pipelines.evaluation.evaluation import Evaluation
@@ -47,17 +49,34 @@ def check_ordered(
         raise ValueError(f"The '{score_col_name}' column is not monotonically descending.")
 
 
-@has_schema(
-    schema={
-        "source": "object",
-        "target": "object",
-        "y": "int",
-    },
-    allow_subset=True,
-)
+def perform_matrix_checks(matrix: pd.DataFrame, known_pairs: pd.DataFrame, score_col_name: str) -> None:
+    """Perform various checks on the evaluation dataset.
+
+    Args:
+        matrix: DataFrame containing a sorted matrix pairs dataset with probability scores, ranks and quantile ranks.
+        known_pairs: DataFrame with known drug-disease pairs.
+        score_col_name: Name of the column containing the treat scores.
+
+    Raises:
+        ValueError: If any of the checks fail.
+    """
+    check_no_train(matrix, known_pairs)
+    check_ordered(matrix, score_col_name)
+
+
+class EdgesSchema(DataFrameModel):
+    source: Series[object]
+    target: Series[object]
+    y: Series[int]
+
+    class Config:
+        strict = False
+
+
+@pandera.check_output(EdgesSchema)
 @inject_object()
 def generate_test_dataset(
-    matrix: pd.DataFrame, generator: DrugDiseasePairGenerator, known_pairs: pd.DataFrame, score_col_name: str
+    known_pairs: pd.DataFrame, matrix: pd.DataFrame, generator: DrugDiseasePairGenerator, score_col_name: str
 ) -> pd.DataFrame:
     """Function to generate test dataset.
 
@@ -65,8 +84,10 @@ def generate_test_dataset(
     pairs dataset.
 
     Args:
+        known_pairs: Dataframe containing known pairs with test/train split.
         matrix: Pairs dataframe representing the full matrix with treat scores.
         generator: Generator strategy.
+        score_col_name: name of column containing treat scores
 
     Returns:
         Pairs dataframe

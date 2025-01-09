@@ -5,12 +5,12 @@ from copy import deepcopy
 
 from neo4j import GraphDatabase
 from graphdatascience import GraphDataScience
-from pyspark.sql import DataFrame, SparkSession
+import pyspark.sql as ps
 
 from kedro.io.core import Version
 from kedro_datasets.spark import SparkDataset
 
-from refit.v1.core.inject import _parse_for_objects
+from matrix.inject import _parse_for_objects
 
 logger = logging.Logger(__name__)
 
@@ -159,8 +159,8 @@ class Neo4JSparkDataset(SparkDataset):
         dbs = [record["name"] for record in result[0] if record["name"] != "system"]
         return dbs
 
-    def _load(self) -> Any:
-        spark_session = SparkSession.builder.getOrCreate()
+    def _load(self) -> ps.DataFrame:
+        spark_session = ps.SparkSession.builder.getOrCreate()
 
         load_obj = (
             spark_session.read.format("org.neo4j.spark.DataSource")
@@ -175,7 +175,7 @@ class Neo4JSparkDataset(SparkDataset):
 
         return load_obj.load()
 
-    def _save(self, data: DataFrame) -> None:
+    def _save(self, data: ps.DataFrame) -> None:
         try:
             if self._save_args.get("persist") is False:
                 # skip persistence
