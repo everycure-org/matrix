@@ -7,11 +7,25 @@ output_path_robokop_integration: data/qc/int/robokop/robokop_integration_metrics
 
 
 quality_control:
-  ingestion:
+  ingestion_nodes:
     # Count values in category column
     category_value_count:
       object: matrix.pipelines.quality_control.quality_control.CountColumnValuesAggregatedQualityControl
       expr: "`category:LABEL`"
+    row_count:
+      object:  matrix.pipelines.quality_control.quality_control.CountValuesQualityControl
+    unique_prefix_count:
+      expr: &_prefix_expr split(id, ':')[0]
+      object: matrix.pipelines.quality_control.quality_control.CountColumnValuesAggregatedQualityControl
+
+  ingestion_edges:
+    # Count values in category column
+    row_count:
+      object:  matrix.pipelines.quality_control.quality_control.CountValuesQualityControl
+#    TODO: Modify this for prefix counts
+#    unique_prefix_count:
+#      expr: &_prefix_expr split(id, ':')[0]
+#      object: matrix.pipelines.quality_control.quality_control.CountColumnValuesAggregatedQualityControl
 
   integration:
     # TODO: Register other suites here
