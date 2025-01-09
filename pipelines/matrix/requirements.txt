@@ -402,7 +402,7 @@ kedro-datasets==6.0.0
     # via
     #   -r requirements.in
     #   kedro-mlflow
-kedro-mlflow==0.13.3
+kedro-mlflow==0.13.4
     # via -r requirements.in
 kedro-telemetry==0.6.2
     # via
