@@ -10,7 +10,7 @@ def create_pipeline(**kwargs) -> Pipeline:
     """Create matrix generation pipeline."""
 
     # Load model names
-    model_name = settings.DYNAMIC_PIPELINES_MAPPING.get("model")["name"]
+    model_name = settings.DYNAMIC_PIPELINES_MAPPING.get("modelling")["model_name"]
 
     # Load cross-validation information
     cross_validation_settings = settings.DYNAMIC_PIPELINES_MAPPING.get("cross_validation")

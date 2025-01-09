@@ -82,7 +82,7 @@ def create_pipeline(**kwargs) -> Pipeline:
     and dynamic nodes (i.e. nodes which are repeated for each model selected).
     """
     # Get models of interest for inference
-    model_name = settings.DYNAMIC_PIPELINES_MAPPING.get("model")["name"]
+    model_name = settings.DYNAMIC_PIPELINES_MAPPING.get("modelling")["model_name"]
 
     # Construct the full pipeline
     pipelines = [

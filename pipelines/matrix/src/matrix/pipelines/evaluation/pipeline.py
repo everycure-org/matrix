@@ -118,7 +118,7 @@ def create_pipeline(**kwargs) -> Pipeline:
     """
 
     # Unpack params
-    model_name = settings.DYNAMIC_PIPELINES_MAPPING.get("model")["name"]
+    model_name = settings.DYNAMIC_PIPELINES_MAPPING.get("modelling")["model_name"]
 
     # Unpack folds
     n_splits = settings.DYNAMIC_PIPELINES_MAPPING.get("cross_validation").get("n_splits")

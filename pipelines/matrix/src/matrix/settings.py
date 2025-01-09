@@ -51,9 +51,9 @@ DYNAMIC_PIPELINES_MAPPING = generate_dynamic_pipeline_mapping(
             {"name": "robokop"},
             {"name": "ec_medical_team"},
         ],
-        "model": {
-            "name": "xg_baseline",  # model name can be: xg_baseline, xg_ensemble, rf, xg_synth
-            "config": {
+        "modelling": {
+            "model_name": "xg_baseline",  # model_namesuggestions: xg_baseline, xg_ensemble, rf, xg_synth
+            "model_config": {
                 "num_shards": 1,
             },
         },

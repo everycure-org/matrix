@@ -280,9 +280,9 @@ def create_pipeline(**kwargs) -> Pipeline:
     folds_lst = list(range(n_splits)) + ["full"]
 
     # Unpack model
-    model = settings.DYNAMIC_PIPELINES_MAPPING.get("model")
-    model_name = model["name"]
-    model_config = model["config"]
+    model = settings.DYNAMIC_PIPELINES_MAPPING.get("modelling")
+    model_name = model["model_name"]
+    model_config = model["model_config"]
 
     # Add shared nodes
     pipelines = []
