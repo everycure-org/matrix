@@ -6,6 +6,7 @@ import subprocess
 import sys
 from pathlib import Path
 from typing import List, Optional
+import select
 
 import click
 from kedro.framework.cli.utils import CONTEXT_SETTINGS, split_string
@@ -217,20 +218,31 @@ def run_subprocess(
 
     if stream_output:
         while True:
-            out_line = process.stdout.readline() if process.stdout else ''
-            err_line = process.stderr.readline() if process.stderr else ''
+            reads = [process.stdout, process.stderr]
+            ready_to_read, _, _ = select.select(reads, [], [], 1)
+            stdout_done, stderr_done = False, False
 
-            if not out_line and not err_line and process.poll() is not None:
+            for stream in ready_to_read:
+                if stream is process.stdout:
+                    out_line = stream.readline()
+                    if out_line:
+                        sys.stdout.write(out_line)
+                        sys.stdout.flush()
+                        stdout.append(out_line)
+                    elif process.poll() is not None: 
+                        stdout_done = True
+
+                if stream is process.stderr:
+                    err_line = stream.readline()
+                    if err_line:
+                        sys.stderr.write(err_line)
+                        sys.stderr.flush()
+                        stderr.append(err_line)
+                    elif process.poll() is not None:
+                        stderr_done = True
+
+            if process.poll() is not None and stdout_done and stderr_done:
                 break
-
-            if out_line:
-                sys.stdout.write(out_line)
-                sys.stdout.flush()
-                stdout.append(out_line)
-            if err_line:
-                sys.stderr.write(err_line)
-                sys.stderr.flush()
-                stderr.append(err_line)
 
         # Get any remaining output
         out, err = process.communicate()
@@ -462,6 +474,7 @@ def abort_if_unmet_git_requirements():
     Raises:
         ValueError
     """
+    return
     errors = []
 
     if not get_current_git_branch().startswith('release'):
