@@ -1,35 +1,39 @@
 # Standard library imports
+from typing import Any, List
 from unittest.mock import Mock
+
+import matplotlib.pyplot as plt
 
 # Third-party imports
 import numpy as np
 import pandas as pd
-import pytest
 import pandera
-import matplotlib.pyplot as plt
-
-# Machine learning imports
-from sklearn.base import BaseEstimator
-from sklearn.model_selection import KFold, GridSearchCV
-from sklearn.linear_model import LogisticRegression
-from xgboost import XGBClassifier
 
 # PySpark imports
 import pyspark.sql as ps
+import pytest
 
 # Local imports
 from matrix.datasets.graph import KnowledgeGraph
 from matrix.datasets.pair_generator import SingleLabelPairGenerator
 from matrix.inject import OBJECT_KW
+from matrix.pipelines.modelling.model import ModelWrapper
 from matrix.pipelines.modelling.nodes import (
-    create_model_input_nodes,
-    prefilter_nodes,
-    make_folds,
+    apply_transformers,
     attach_embeddings,
+    create_model_input_nodes,
+    make_folds,
+    prefilter_nodes,
     tune_parameters,
 )
-from matrix.pipelines.modelling.model import ModelWrapper
 from matrix.pipelines.modelling.tuning import NopTuner
+
+# Machine learning imports
+from sklearn.base import BaseEstimator
+from sklearn.impute._base import _BaseImputer
+from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import GridSearchCV, KFold
+from xgboost import XGBClassifier
 
 
 @pytest.fixture(scope="module")
@@ -177,6 +181,64 @@ def grid_search_tuner():
     """Create a GridSearchCV tuner."""
     param_grid = {"C": [0.1, 1.0], "max_iter": [100, 200]}
     return GridSearchCV(LogisticRegression(), param_grid, cv=3, scoring="accuracy")
+
+
+class DummyTransformer(_BaseImputer):
+    """
+    Test implementation of transformer
+    """
+
+    def __init__(self, transformed: List[Any]):
+        self.transformed = transformed
+
+    def get_feature_names_out(self, x):
+        return x.columns.tolist()
+
+    def transform(self, x):
+        return self.transformed
+
+
+@pytest.fixture
+def input_df() -> pd.DataFrame:
+    return pd.DataFrame(
+        {
+            "feature_1": [0, 5, 10],
+            "feature_2": [0, 1, 2],
+            "non_transform_col": ["row_1", "row_2", "row_3"],
+        }
+    )
+
+
+@pytest.mark.parametrize(
+    "transformers",
+    [
+        # Validate single transformer
+        {"dummy_transformer_1": {"transformer": DummyTransformer(transformed=[1, 3, 3]), "features": ["feature_1"]}},
+        # Validate multiple transformers
+        {
+            "dummy_transformer_1": {"transformer": DummyTransformer(transformed=[1, 3, 3]), "features": ["feature_1"]},
+            "dummy_transformer_2": {"transformer": DummyTransformer(transformed=[2, 6, 6]), "features": ["feature_2"]},
+        },
+    ],
+)
+def test_apply_transformers(input_df, transformers):
+    # Given input list of transformers
+
+    # When appyling apply transformers
+    result = apply_transformers(input_df, transformers)
+
+    # Then output is of correct type, transformers are applied correctly
+    # and non_transformer_col is untouched
+    assert isinstance(result, pd.DataFrame)
+    assert result.shape == input_df.shape
+    assert set(result.columns) == set(input_df.columns)
+
+    # NOTEL we currently limiting ourselves to transformers with single input feature
+    for _, transformer in transformers.items():
+        np.testing.assert_array_equal(result[transformer["features"][0]].values, transformer["transformer"].transformed)
+
+    # # Check if non-transformed column remains unchanged
+    assert (result["non_transform_col"] == input_df["non_transform_col"]).all()
 
 
 def test_prefilter_excludes_non_drug_disease_nodes(
