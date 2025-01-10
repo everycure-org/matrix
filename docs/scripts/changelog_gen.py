@@ -1,5 +1,7 @@
 import os
 import json
+from typing import Iterable, Iterator
+
 import yaml
 import logging
 from pathlib import Path
@@ -33,14 +35,10 @@ def format_values(loaded_files):
     return loaded_files
 
 
-def load_files(filepaths: list[str], changelog_abs_path: Path) -> list[dict]:
-    """Loads a list of json files present in the changelog_files dir"""
-    all_data = []
+def parse_jsons(filepaths: Iterable[Path]) -> Iterator[dict]:
+    """Parse the contents of the files in `filepaths` as Json objects."""
     for filepath in filepaths:
-        with open(os.path.join(changelog_abs_path, filepath), "r") as file:
-            data = json.load(file)
-            all_data.append(data)
-    return all_data
+        yield json.loads(filepath.read_text())
 
 
 def create_semver_sortkey(filename: str) -> list[int]:
@@ -49,8 +47,8 @@ def create_semver_sortkey(filename: str) -> list[int]:
     return sort_key
 
 
-def sort_files_on_semver(files: list[str]) -> list[str]:
-    sorted_list = sorted(files, key=lambda x: create_semver_sortkey(x["Release Name"]))
+def sort_releases(releases: Iterable[dict]) -> list[dict]:
+    sorted_list = sorted(releases, key=lambda x: create_semver_sortkey(x["Release Name"]))
     return sorted_list
 
 
@@ -72,8 +70,8 @@ def main() -> None:
     files = list_json_files(changelog_abs_path)
     if not files:
         raise ValueError(f"No json files found in {changelog_abs_path}")
-    loaded_files = load_files(files, changelog_abs_path)
-    sorted_files = sort_files_on_semver(loaded_files)
+    loaded_files = parse_jsons(files)
+    sorted_files = sort_releases(loaded_files)
     formatted_files = format_values(sorted_files)
     yaml_aggr = dump_to_yaml(formatted_files)
     save_yaml(yaml_aggr, changelog_abs_path)
