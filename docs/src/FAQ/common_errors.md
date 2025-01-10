@@ -25,8 +25,15 @@ To fix this, remove the directory ".venv" from `pipelines/matrix` and set the py
 
 ```
 rm -r .venv
+
+THEN
+
 pyenv install 3.11
 pyenv global 3.11
+
+OR
+
+uv venv --python=3.11
 ```
 
 then `make` again.
@@ -440,3 +447,25 @@ and thus not being installed to the latest version when running `make install`. 
 the uv cache solves this issue which you can do via `make clean` and then run a fresh
 `make install`.
 
+
+### Issues with Neo4j authentication
+
+```
+ServiceUnavailable: Couldn't connect to 127.0.0.1:7687 (resolved to ()):
+
+OR various other authentication errors related to Neo4j or issues with Spark failing when it attempts to write to Neo4j
+```
+
+This may be due to another neo4j instance running on your device. Common sources for these services may be either brew or neo4j desktop. 
+
+To check brew for running neo4j instances, run:
+
+```bash
+brew services list
+```
+
+if you see neo4j running, try:
+
+```bash
+brew services stop neo4j
+```
