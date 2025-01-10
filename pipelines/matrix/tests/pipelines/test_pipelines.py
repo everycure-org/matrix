@@ -28,14 +28,14 @@ def _configure_matrix_project() -> None:
     configure_project("matrix")
 
 
-def _pipeline_datasets(pipeline) -> set[str]:
-    """Helper function to retrieve all datasets used by a pipeline."""
-    return set.union(*[set(node.inputs + node.outputs) for node in pipeline.nodes])
-
-
 @pytest.fixture(autouse=True, scope="session")
 def openai_api_env():
     os.environ["OPENAI_API_KEY"] = "foo"
+
+
+def _pipeline_datasets(pipeline) -> set[str]:
+    """Helper function to retrieve all datasets used by a pipeline."""
+    return set.union(*[set(node.inputs + node.outputs) for node in pipeline.nodes])
 
 
 @pytest.mark.integration()

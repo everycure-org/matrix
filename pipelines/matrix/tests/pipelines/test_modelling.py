@@ -36,6 +36,153 @@ from sklearn.model_selection import GridSearchCV, KFold
 from xgboost import XGBClassifier
 
 
+@pytest.fixture(scope="module")
+def base_test_data(spark: ps.SparkSession) -> ps.DataFrame:
+    # Create test data
+    nodes_data = [
+        ("node1", ["drug_type1"], None),
+        ("node2", ["disease_type1"], None),
+        ("node3", ["other_type"], None),
+        ("node4", ["drug_type2", "other_type"], None),
+    ]
+    nodes_schema = ps.types.StructType(
+        [
+            ps.types.StructField("id", ps.types.StringType(), False),
+            ps.types.StructField("all_categories", ps.types.ArrayType(ps.types.StringType()), True),
+            ps.types.StructField("topological_embedding", ps.types.ArrayType(ps.types.StringType()), True),
+        ]
+    )
+    return spark.createDataFrame(nodes_data, schema=nodes_schema)
+
+
+@pytest.fixture(scope="module")
+def ground_truth_data(spark: ps.SparkSession) -> ps.DataFrame:
+    gt_data = [("node1", "node2", 1), ("node3", "node4", 0)]
+    gt_schema = ps.types.StructType(
+        [
+            ps.types.StructField("source", ps.types.StringType(), False),
+            ps.types.StructField("target", ps.types.StringType(), False),
+            ps.types.StructField("y", ps.types.IntegerType(), False),
+        ]
+    )
+    return spark.createDataFrame(gt_data, schema=gt_schema)
+
+
+@pytest.fixture(scope="module")
+def sample_pairs_df(spark: ps.SparkSession) -> ps.DataFrame:
+    pairs_data = [("node1", "node2", 1), ("node3", "node4", 0), ("node5", "node6", 1)]
+    pairs_schema = ps.types.StructType(
+        [
+            ps.types.StructField("source", ps.types.StringType(), False),
+            ps.types.StructField("target", ps.types.StringType(), False),
+            ps.types.StructField("y", ps.types.IntegerType(), False),
+        ]
+    )
+    return spark.createDataFrame(pairs_data, schema=pairs_schema)
+
+
+@pytest.fixture(scope="module")
+def sample_nodes_df(spark: ps.SparkSession) -> ps.DataFrame:
+    nodes_data = [
+        ("node1", [0.1, 0.2, 0.3]),
+        ("node2", [0.4, 0.5, 0.6]),
+        ("node3", [0.7, 0.8, 0.9]),
+        ("node4", [1.0, 1.1, 1.2]),
+        ("node5", [1.3, 1.4, 1.5]),
+        ("node6", [1.6, 1.7, 1.8]),
+    ]
+    nodes_schema = ps.types.StructType(
+        [
+            ps.types.StructField("id", ps.types.StringType(), False),
+            ps.types.StructField("topological_embedding", ps.types.ArrayType(ps.types.FloatType()), False),
+        ]
+    )
+    return spark.createDataFrame(nodes_data, schema=nodes_schema)
+
+
+@pytest.fixture
+def sample_data():
+    """Create sample data for testing."""
+    return pd.DataFrame(
+        {
+            "source": ["A", "B", "C", "D", "E", "F"],
+            "source_embedding": [np.array([1, 2])] * 6,
+            "target": ["X", "Y", "Z", "W", "V", "U"],
+            "target_embedding": [np.array([3, 4])] * 6,
+            "y": [1, 0, 1, 0, 1, 0],
+        }
+    )
+
+
+@pytest.fixture
+def simple_splitter():
+    """Create a simple K-fold splitter."""
+    return KFold(n_splits=2, shuffle=True, random_state=42)
+
+
+@pytest.fixture()
+def mock_knowledge_graph():
+    return Mock(spec=KnowledgeGraph)
+
+
+@pytest.fixture()
+def mock_generator():
+    generator = Mock(spec=SingleLabelPairGenerator)
+    # Configure mock to return valid data matching schema
+    generator.generate.return_value = pd.DataFrame(
+        {
+            "source": ["drug1", "drug2"],
+            "source_embedding": [np.array([0.1, 0.2]), np.array([0.3, 0.4])],
+            "target": ["disease1", "disease2"],
+            "target_embedding": [np.array([0.5, 0.6]), np.array([0.7, 0.8])],
+            "iteration": [0.0, 0.0],
+        }
+    )
+    return generator
+
+
+@pytest.fixture()
+def sample_splits():
+    return pd.DataFrame(
+        {
+            "source": ["drug3", "drug4"],
+            "source_embedding": [np.array([0.9, 1.0]), np.array([1.1, 1.2])],
+            "target": ["disease3", "disease4"],
+            "target_embedding": [np.array([1.3, 1.4]), np.array([1.5, 1.6])],
+            "iteration": [1.0, 1.0],
+            "fold": [0, 1],
+            "split": ["TEST", "TRAIN"],
+        }
+    )
+
+
+@pytest.fixture
+def tune_data():
+    """Create sample DataFrame for testing."""
+    np.random.seed(42)
+    n_samples = 100
+
+    data = pd.DataFrame(
+        {
+            "featureOne_1": np.random.randn(n_samples),
+            "featureOne_2": np.random.randn(n_samples),
+            "feature_3": np.random.randn(n_samples),
+            "feature_4": np.random.randn(n_samples),
+            "feature5_extra": np.random.randn(n_samples),
+            "target": np.random.randint(0, 2, n_samples),
+            "split": ["TRAIN"] * 80 + ["TEST"] * 20,
+        }
+    )
+    return data
+
+
+@pytest.fixture
+def grid_search_tuner():
+    """Create a GridSearchCV tuner."""
+    param_grid = {"C": [0.1, 1.0], "max_iter": [100, 200]}
+    return GridSearchCV(LogisticRegression(), param_grid, cv=3, scoring="accuracy")
+
+
 class DummyTransformer(_BaseImputer):
     """
     Test implementation of transformer
@@ -92,38 +239,6 @@ def test_apply_transformers(input_df, transformers):
 
     # # Check if non-transformed column remains unchanged
     assert (result["non_transform_col"] == input_df["non_transform_col"]).all()
-
-
-@pytest.fixture(scope="module")
-def base_test_data(spark: ps.SparkSession) -> ps.DataFrame:
-    # Create test data
-    nodes_data = [
-        ("node1", ["drug_type1"], None),
-        ("node2", ["disease_type1"], None),
-        ("node3", ["other_type"], None),
-        ("node4", ["drug_type2", "other_type"], None),
-    ]
-    nodes_schema = ps.types.StructType(
-        [
-            ps.types.StructField("id", ps.types.StringType(), False),
-            ps.types.StructField("all_categories", ps.types.ArrayType(ps.types.StringType()), True),
-            ps.types.StructField("topological_embedding", ps.types.ArrayType(ps.types.StringType()), True),
-        ]
-    )
-    return spark.createDataFrame(nodes_data, schema=nodes_schema)
-
-
-@pytest.fixture(scope="module")
-def ground_truth_data(spark: ps.SparkSession) -> ps.DataFrame:
-    gt_data = [("node1", "node2", 1), ("node3", "node4", 0)]
-    gt_schema = ps.types.StructType(
-        [
-            ps.types.StructField("source", ps.types.StringType(), False),
-            ps.types.StructField("target", ps.types.StringType(), False),
-            ps.types.StructField("y", ps.types.IntegerType(), False),
-        ]
-    )
-    return spark.createDataFrame(gt_data, schema=gt_schema)
 
 
 def test_prefilter_excludes_non_drug_disease_nodes(
@@ -207,38 +322,6 @@ def test_prefilter_correctly_identifies_ground_truth_positives(
     assert node4.in_ground_pos is False
 
 
-@pytest.fixture(scope="module")
-def sample_pairs_df(spark: ps.SparkSession) -> ps.DataFrame:
-    pairs_data = [("node1", "node2", 1), ("node3", "node4", 0), ("node5", "node6", 1)]
-    pairs_schema = ps.types.StructType(
-        [
-            ps.types.StructField("source", ps.types.StringType(), False),
-            ps.types.StructField("target", ps.types.StringType(), False),
-            ps.types.StructField("y", ps.types.IntegerType(), False),
-        ]
-    )
-    return spark.createDataFrame(pairs_data, schema=pairs_schema)
-
-
-@pytest.fixture(scope="module")
-def sample_nodes_df(spark: ps.SparkSession) -> ps.DataFrame:
-    nodes_data = [
-        ("node1", [0.1, 0.2, 0.3]),
-        ("node2", [0.4, 0.5, 0.6]),
-        ("node3", [0.7, 0.8, 0.9]),
-        ("node4", [1.0, 1.1, 1.2]),
-        ("node5", [1.3, 1.4, 1.5]),
-        ("node6", [1.6, 1.7, 1.8]),
-    ]
-    nodes_schema = ps.types.StructType(
-        [
-            ps.types.StructField("id", ps.types.StringType(), False),
-            ps.types.StructField("topological_embedding", ps.types.ArrayType(ps.types.FloatType()), False),
-        ]
-    )
-    return spark.createDataFrame(nodes_data, schema=nodes_schema)
-
-
 def test_attach_embeddings_successful(sample_pairs_df: ps.DataFrame, sample_nodes_df: ps.DataFrame) -> None:
     """Test successful attachment of embeddings to pairs."""
     result = attach_embeddings(sample_pairs_df, sample_nodes_df)
@@ -294,26 +377,6 @@ def test_attach_embeddings_schema_validation(spark: ps.SparkSession, sample_pair
         attach_embeddings(sample_pairs_df, invalid_nodes_df)
 
 
-@pytest.fixture
-def sample_data():
-    """Create sample data for testing."""
-    return pd.DataFrame(
-        {
-            "source": ["A", "B", "C", "D", "E", "F"],
-            "source_embedding": [np.array([1, 2])] * 6,
-            "target": ["X", "Y", "Z", "W", "V", "U"],
-            "target_embedding": [np.array([3, 4])] * 6,
-            "y": [1, 0, 1, 0, 1, 0],
-        }
-    )
-
-
-@pytest.fixture
-def simple_splitter():
-    """Create a simple K-fold splitter."""
-    return KFold(n_splits=2, shuffle=True, random_state=42)
-
-
 def test_make_folds_basic_functionality(sample_data, simple_splitter):
     """Test basic functionality of make_folds."""
     result = make_folds(data=sample_data, splitter=simple_splitter)
@@ -347,42 +410,6 @@ def test_make_folds_empty_data(simple_splitter):
 
     with pytest.raises(ValueError):
         make_folds(data=empty_data, splitter=simple_splitter)
-
-
-@pytest.fixture()
-def mock_knowledge_graph():
-    return Mock(spec=KnowledgeGraph)
-
-
-@pytest.fixture()
-def mock_generator():
-    generator = Mock(spec=SingleLabelPairGenerator)
-    # Configure mock to return valid data matching schema
-    generator.generate.return_value = pd.DataFrame(
-        {
-            "source": ["drug1", "drug2"],
-            "source_embedding": [np.array([0.1, 0.2]), np.array([0.3, 0.4])],
-            "target": ["disease1", "disease2"],
-            "target_embedding": [np.array([0.5, 0.6]), np.array([0.7, 0.8])],
-            "y": [2, 2],
-        }
-    )
-    return generator
-
-
-@pytest.fixture()
-def sample_splits():
-    return pd.DataFrame(
-        {
-            "source": ["drug3", "drug4"],
-            "source_embedding": [np.array([0.9, 1.0]), np.array([1.1, 1.2])],
-            "target": ["disease3", "disease4"],
-            "target_embedding": [np.array([1.3, 1.4]), np.array([1.5, 1.6])],
-            "y": [0, 1],
-            "split": ["TEST", "TRAIN"],
-            "fold": [0, 1],
-        }
-    )
 
 
 def test_create_model_input_nodes_basic(mock_knowledge_graph, mock_generator, sample_data, simple_splitter):
@@ -422,33 +449,6 @@ def test_create_model_input_nodes_generator_empty(mock_knowledge_graph, sample_s
     # Check that only original splits are present
     assert len(result) == len(sample_splits)
     assert all(result["split"] == sample_splits["split"])
-
-
-@pytest.fixture
-def tune_data():
-    """Create sample DataFrame for testing."""
-    np.random.seed(42)
-    n_samples = 100
-
-    data = pd.DataFrame(
-        {
-            "featureOne_1": np.random.randn(n_samples),
-            "featureOne_2": np.random.randn(n_samples),
-            "feature_3": np.random.randn(n_samples),
-            "feature_4": np.random.randn(n_samples),
-            "feature5_extra": np.random.randn(n_samples),
-            "target": np.random.randint(0, 2, n_samples),
-            "split": ["TRAIN"] * 80 + ["TEST"] * 20,
-        }
-    )
-    return data
-
-
-@pytest.fixture
-def grid_search_tuner():
-    """Create a GridSearchCV tuner."""
-    param_grid = {"C": [0.1, 1.0], "max_iter": [100, 200]}
-    return GridSearchCV(LogisticRegression(), param_grid, cv=3, scoring="accuracy")
 
 
 @pytest.mark.parametrize(
