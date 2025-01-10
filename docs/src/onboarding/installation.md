@@ -313,3 +313,22 @@ We use `make` and `Makefile`s in a lot of places. If you want to [learn more abo
     ```
 
 [Request access to the data :material-skip-next:](./git-crypt.md){ .md-button .md-button--primary }
+
+### libomp for LLMs
+
+The [libomp](https://openmp.llvm.org/index.html) library is required as a runtime for LLMs.
+
+
+=== "MacOS"
+
+    ```bash
+    brew install libomp
+    ```
+    
+=== "Windows (WSL)"
+
+    TODO
+
+=== "Linux"
+
+    TODO
