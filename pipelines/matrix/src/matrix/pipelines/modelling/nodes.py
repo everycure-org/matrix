@@ -1,27 +1,25 @@
-import logging
-from typing import Any, Callable, Dict, List, Union, Tuple
-import pandas as pd
-import pyspark.sql as ps
 import json
-from pandera.typing import Series
-from pandera.pyspark import DataFrameModel as PysparkDataFrameModel
-from pandera import DataFrameModel as PandasDataFrameModel
-import pandera
-from pyspark.sql import functions as f
-import pyspark.sql.types as T
-
-
-from sklearn.model_selection import BaseCrossValidator
-from sklearn.impute._base import _BaseImputer
-from sklearn.base import BaseEstimator
+import logging
+from functools import wraps
+from typing import Any, Callable, Dict, List, Tuple, Union
 
 import matplotlib.pyplot as plt
-
-from functools import wraps
-from matrix.inject import OBJECT_KW, inject_object, make_list_regexable, unpack_params
+import pandas as pd
+import pandera
+import pyspark.sql as ps
+import pyspark.sql.types as T
+from pandera import DataFrameModel as PandasDataFrameModel
+from pandera.pyspark import DataFrameModel as PysparkDataFrameModel
+from pandera.typing import Series
+from pyspark.sql import functions as f
+from sklearn.base import BaseEstimator
+from sklearn.impute._base import _BaseImputer
+from sklearn.model_selection import BaseCrossValidator
 
 from matrix.datasets.graph import KnowledgeGraph
 from matrix.datasets.pair_generator import SingleLabelPairGenerator
+from matrix.inject import OBJECT_KW, inject_object, make_list_regexable, unpack_params
+
 from .model import ModelWrapper
 
 logger = logging.getLogger(__name__)
@@ -387,8 +385,7 @@ def apply_transformers(
     Returns:
         Transformed data.
     """
-    # Iterate transformers
-    for _, transformer in transformers.items():
+    for transformer in transformers.values():
         # Apply transformer
         features = transformer["features"]
         features_selected = data[features]
