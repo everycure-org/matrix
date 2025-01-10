@@ -16,9 +16,8 @@ def list_json_files(changelog_abs_path: Path) -> list:
     """
     Returns a list of files with extension .json in the changelog files dir.
     """
-    files = os.listdir(changelog_abs_path)
-    json_files = filter_json_files(files)
-    logging.info(f"Json files found in {changelog_abs_path} : {json_files}")
+    json_files = list(Path(changelog_abs_path).glob("v*_info.json"))
+    logging.debug(f"Json files found in '{changelog_abs_path}': {json_files}")
     return json_files
 
 
@@ -32,12 +31,6 @@ def format_values(loaded_files):
             elif key.lower().endswith(("encoder", "estimator")):
                 file[key] = code_tmpl.format(value=value)
     return loaded_files
-
-
-def filter_json_files(files: list) -> list:
-    """Filters a list of filenames and retains files with .json extension"""
-    filtered_files = [file for file in files if file.endswith(".json")]
-    return filtered_files
 
 
 def load_files(filepaths: list[str], changelog_abs_path: Path) -> list[dict]:
@@ -79,8 +72,7 @@ def main() -> None:
     files = list_json_files(changelog_abs_path)
     if not files:
         raise ValueError(f"No json files found in {changelog_abs_path}")
-    filtered_files = filter_json_files(files)
-    loaded_files = load_files(filtered_files, changelog_abs_path)
+    loaded_files = load_files(files, changelog_abs_path)
     sorted_files = sort_files_on_semver(loaded_files)
     formatted_files = format_values(sorted_files)
     yaml_aggr = dump_to_yaml(formatted_files)
