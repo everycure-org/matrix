@@ -53,7 +53,6 @@ class NCATSNodeNormalizer(Normalizer):
                 if resp.status == 200:
                     response_json = await resp.json()
                     logger.debug(response_json)
-                    ids = self._extract_ids(response_json, self._json_parser)
                 else:
                     logger.warning(f"Node norm response code: {resp.status}")
                     resp_text = await resp.text()
@@ -61,19 +60,14 @@ class NCATSNodeNormalizer(Normalizer):
 
                 resp.raise_for_status()
 
-        df["normalized_id"] = ids
+        df["normalized_id"] = [self._extract_id(curie, response_json, self._json_parser) for curie in curies]
         return df
 
     @staticmethod
-    def _extract_ids(response: Dict[str, Any], json_parser: parse) -> Dict[str, Any]:
+    def _extract_id(id: str, response: Dict[str, Any], json_parser: parse) -> Dict[str, Any]:
         """Extract normalized IDs from the response using the json parser."""
-        ids = {}
-        for key, item in response.items():
-            logger.debug(f"Response for key {key}: {response.get(key)}")  # Log the response for each key
-            try:
-                ids[key] = json_parser.find(item)[0].value
-            except (IndexError, KeyError):
-                logger.debug(f"Not able to normalize for {key}: {item}, {json_parser}")
-                ids[key] = None
-
-        return ids
+        try:
+            return json_parser.find(response.get(id))[0].value
+        except (IndexError, KeyError):
+            logger.debug(f"Not able to normalize for {id}: {response.get(id)}, {json_parser}")
+            return None
