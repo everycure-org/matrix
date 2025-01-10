@@ -33,8 +33,9 @@ def conf_source(matrix_root: Path) -> Path:
 def config_loader(conf_source: Path) -> OmegaConfigLoader:
     """Instantiate a config loader."""
     return OmegaConfigLoader(
-        env="cloud",
+        env="base",
         base_env="base",
+        default_run_env="base",
         conf_source=conf_source,
         config_patterns={
             "spark": ["spark*", "spark*/**"],
