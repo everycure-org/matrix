@@ -469,3 +469,22 @@ if you see neo4j running, try:
 ```bash
 brew services stop neo4j
 ```
+
+
+### libomp for LLMs
+
+The [libomp](https://openmp.llvm.org/index.html) library might be required as a local runtime for LLMs. If not installed it will trigger an error containing the following:
+
+```
+* OpenMP runtime is not installed
+  - vcomp140.dll or libgomp-1.dll for Windows
+  - libomp.dylib for Mac OSX
+  - libgomp.so for Linux and other UNIX-like OSes
+  Mac OSX users: Run `brew install libomp` to install OpenMP runtime.
+```
+
+To install it on MacOS, run:
+
+```bash
+brew install libomp
+```
