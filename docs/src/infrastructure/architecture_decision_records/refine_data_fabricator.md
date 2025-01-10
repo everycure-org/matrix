@@ -20,7 +20,7 @@ The Kedro framework easily allows to run specific nodes of the pipelines in diff
 ## Decision
 
 
-* Use fabricated data to run tests locally and catch most of the issues easily, but accept that it does't look like cloud data.
+* Use fabricated data to run tests locally and catch most of the issues easily, but accept that it doesn't look like cloud data.
 * Leverage Kedro's flexibility to allow users to run parts of the pipeline locally using a sample of the cloud data to debug their issue locally.
 
 Looking at the sampling in detail: sampling strategies should be flexible to allow for different user scenarios, for example replicating a bug, performance testing or model testing. This could be configurabled via a flag in Kedro, that would then pull the right data from the cloud environment.
