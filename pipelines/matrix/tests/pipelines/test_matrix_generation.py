@@ -1,9 +1,11 @@
+import re
 from unittest.mock import Mock
 
 import numpy as np
 import pandas as pd
 import pytest
 from matrix.datasets.graph import KnowledgeGraph
+from matrix.inject import _extract_elements_in_list
 from matrix.pipelines.matrix_generation.nodes import (
     generate_pairs,
     generate_report,
@@ -119,6 +121,47 @@ def mock_model_2():
     return model
 
 
+@pytest.fixture
+def sample_data():
+    """Fixture that provides sample data for testing matrix generation functions."""
+    drugs = pd.DataFrame(
+        {
+            "curie": ["drug_1", "drug_2", "drug_3", "drug_4"],
+            "name": ["Drug 1", "Drug 2", "Drug 3", "Drug 4"],
+            "is_steroid": [True, False, False, False],
+        }
+    )
+
+    diseases = pd.DataFrame(
+        {
+            "curie": ["disease_1", "disease_2", "disease_3", "disease_4"],
+            "name": ["Disease 1", "Disease 2", "Disease 3", "Disease 4"],
+            "is_cancer": [True, False, False, False],
+        }
+    )
+
+    known_pairs = pd.DataFrame(
+        {
+            "source": ["drug_1", "drug_2", "drug_3", "drug_4"],
+            "target": ["disease_1", "disease_2", "disease_3", "disease_4"],
+            "split": ["TRAIN", "TEST", "TRAIN", "TRAIN"],
+            "y": [1, 0, 1, 1],
+        }
+    )
+
+    nodes = pd.DataFrame(
+        {
+            "id": ["drug_1", "drug_2", "disease_1", "disease_2", "disease_3", "disease_4"],
+            "is_drug": [True, True, False, False, False, False],
+            "is_disease": [False, False, True, True, True, True],
+            "topological_embedding": [np.ones(3) * n for n in range(6)],
+        }
+    )
+    graph = KnowledgeGraph(nodes)
+
+    return drugs, diseases, known_pairs, graph
+
+
 def test_generate_pairs(sample_drugs, sample_diseases, sample_graph, sample_known_pairs, sample_clinical_trials):
     """Test the generate_pairs function."""
     # Given drug list, disease list and ground truth pairs
@@ -229,48 +272,6 @@ def test_make_predictions_and_sort(
     assert isinstance(result, pd.DataFrame)
     assert len(result) == 4
     assert result["score"].is_monotonic_decreasing
-
-
-@pytest.fixture
-def sample_data():
-    """Fixture that provides sample data for testing matrix generation functions."""
-    drugs = pd.DataFrame(
-        {
-            "id": ["drug_1", "drug_2", "drug_3", "drug_4"],
-            "name": ["Drug 1", "Drug 2", "Drug 3", "Drug 4"],
-            "is_steroid": [True, False, False, False],
-        }
-    )
-
-    diseases = pd.DataFrame(
-        {
-            "id": ["disease_1", "disease_2", "disease_3", "disease_4"],
-            "name": ["Disease 1", "Disease 2", "Disease 3", "Disease 4"],
-            "is_cancer": [True, False, False, False],
-        }
-    )
-
-    known_pairs = pd.DataFrame(
-        {
-            "source": ["drug_1", "drug_2", "drug_3", "drug_4"],
-            "target": ["disease_1", "disease_2", "disease_3", "disease_4"],
-            "split": ["TRAIN", "TEST", "TRAIN", "TRAIN"],
-            "y": [1, 0, 1, 1],
-        }
-    )
-
-    nodes = pd.DataFrame(
-        {
-            "id": ["drug_1", "drug_2", "disease_1", "disease_2", "disease_3", "disease_4"],
-            "is_drug": [True, True, False, False, False, False],
-            "is_disease": [False, False, True, True, True, True],
-            "topological_embedding": [np.ones(3) * n for n in range(6)],
-        }
-    )
-    graph = KnowledgeGraph(nodes)
-
-    return drugs, diseases, known_pairs, graph
-
 
 def test_generate_report(sample_data):
     """Test the generate_report function."""
