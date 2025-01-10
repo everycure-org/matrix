@@ -35,6 +35,7 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import GridSearchCV, KFold
 from xgboost import XGBClassifier
 
+
 @pytest.fixture(scope="module")
 def base_test_data(spark: ps.SparkSession) -> ps.DataFrame:
     # Create test data
@@ -180,6 +181,7 @@ def grid_search_tuner():
     """Create a GridSearchCV tuner."""
     param_grid = {"C": [0.1, 1.0], "max_iter": [100, 200]}
     return GridSearchCV(LogisticRegression(), param_grid, cv=3, scoring="accuracy")
+
 
 class DummyTransformer(_BaseImputer):
     """
