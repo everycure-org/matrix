@@ -1,23 +1,22 @@
-import pytest
-import pandas as pd
 import numpy as np
-from sklearn.metrics import accuracy_score, roc_auc_score
+import pandas as pd
+import pytest
 from matrix.datasets.pair_generator import DrugDiseasePairGenerator
 from matrix.pipelines.evaluation.evaluation import (
-    DiscreteMetrics,
     ContinuousMetrics,
-    SpecificRanking,
+    DiscreteMetrics,
     FullMatrixRanking,
     RecallAtN,
+    SpecificRanking,
 )
 from matrix.pipelines.evaluation.named_metric_functions import (
+    AUROC,
     MRR,
     HitK,
-    AUROC,
 )
-
 from matrix.pipelines.evaluation.named_metric_functions import RecallAtN as RecallAtN_
 from matrix.pipelines.evaluation.nodes import generate_test_dataset
+from sklearn.metrics import accuracy_score, roc_auc_score
 
 
 @pytest.fixture
