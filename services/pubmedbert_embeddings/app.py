@@ -23,9 +23,7 @@ app = FastAPI()
 model_store = ModelStore()
 
 # Create a thread pool executor
-executor = ThreadPoolExecutor(
-    max_workers=CPU_COUNT
-)  # Adjust the number of workers as needed
+executor = ThreadPoolExecutor(max_workers=CPU_COUNT)  # Adjust the number of workers as needed
 
 
 async def get_embedding(texts: List[str], model_name: str) -> List[float]:
@@ -56,10 +54,7 @@ async def create_embedding(request: EmbeddingRequest):
         # Create a response in OpenAI-like format
         response = EmbeddingResponse(
             object="list",
-            data=[
-                Embedding(object="embedding", embedding=emb, index=i)
-                for i, emb in enumerate(list(embeddings))
-            ],
+            data=[Embedding(object="embedding", embedding=emb, index=i) for i, emb in enumerate(list(embeddings))],
             model=request.model,
             usage=Usage(prompt_tokens=token_count, total_tokens=token_count),
         )
