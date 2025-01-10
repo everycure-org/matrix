@@ -1,4 +1,4 @@
-from kedro.pipeline import Pipeline, pipeline, node
+from kedro.pipeline import Pipeline, node, pipeline
 
 from matrix import settings
 

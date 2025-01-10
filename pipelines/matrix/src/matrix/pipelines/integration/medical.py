@@ -1,12 +1,13 @@
 import logging
+
 import pandera.pyspark as pa
 import pyspark.sql as ps
 import pyspark.sql.functions as f
 import pyspark.sql.types as T
 
-from .transformer import GraphTransformer
+from matrix.schemas.knowledge_graph import KGEdgeSchema, KGNodeSchema, cols_for_schema
 
-from matrix.schemas.knowledge_graph import KGNodeSchema, KGEdgeSchema, cols_for_schema
+from .transformer import GraphTransformer
 
 logger = logging.getLogger(__name__)
 

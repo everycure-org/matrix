@@ -1,10 +1,11 @@
 #!
 """Wipes neo4j instance locally."""
 
-from neo4j import GraphDatabase
+import os
+
 import typer
 from dotenv import load_dotenv
-import os
+from neo4j import GraphDatabase
 
 
 # checking if any existing env variables set the n4j password which hints at prod port forwarding

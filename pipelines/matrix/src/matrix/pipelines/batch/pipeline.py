@@ -1,14 +1,12 @@
+from typing import Any, Dict, List, Optional
+
 import pandas as pd
-
-from typing import Dict, Any, List, Optional
-from pyspark.sql import DataFrame, SparkSession
-from pyspark.sql.window import Window
-from pyspark.sql import functions as F
-
-from kedro.pipeline import Pipeline, pipeline, node
-from matrix.kedro4argo_node import ArgoResourceConfig, ArgoNode
-
+from kedro.pipeline import Pipeline, node, pipeline
 from matrix.inject import inject_object
+from matrix.kedro4argo_node import ArgoNode, ArgoResourceConfig
+from pyspark.sql import DataFrame, SparkSession
+from pyspark.sql import functions as F
+from pyspark.sql.window import Window
 
 
 @inject_object()

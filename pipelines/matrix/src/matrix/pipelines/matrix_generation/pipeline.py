@@ -1,9 +1,7 @@
 from kedro.pipeline import Pipeline, pipeline
-
 from matrix import settings
-from matrix.pipelines.modelling.utils import partial_fold
 from matrix.kedro4argo_node import ARGO_GPU_NODE_MEDIUM, argo_node
-
+from matrix.pipelines.modelling.utils import partial_fold
 
 from . import nodes
 

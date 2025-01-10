@@ -1,18 +1,16 @@
+import asyncio
+import logging
 from abc import ABC, abstractmethod
-from typing import Dict, Any
-from jsonpath_ng import parse
+from typing import Any, Dict
 
+import aiohttp
+import pandas as pd
+from jsonpath_ng import parse
 from tenacity import (
     retry,
     retry_if_exception_type,
     wait_exponential,
 )
-
-import asyncio
-import aiohttp
-import logging
-
-import pandas as pd
 
 logger = logging.getLogger(__name__)
 

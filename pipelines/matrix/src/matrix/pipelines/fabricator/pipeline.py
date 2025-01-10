@@ -1,6 +1,6 @@
 import pandas as pd
 from data_fabricator.v0.nodes.fabrication import fabricate_datasets
-from kedro.pipeline import Pipeline, pipeline, node
+from kedro.pipeline import Pipeline, node, pipeline
 
 from matrix.kedro4argo_node import argo_node
 

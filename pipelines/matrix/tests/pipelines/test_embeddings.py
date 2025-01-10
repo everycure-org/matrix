@@ -1,13 +1,9 @@
-import pytest
-
-from matrix.pipelines.embeddings.nodes import ingest_nodes
+import numpy as np
 import pyspark.sql as ps
+import pytest
+from matrix.pipelines.embeddings.nodes import extract_topological_embeddings, ingest_nodes, reduce_embeddings_dimension
 from pyspark.ml.feature import PCA
 from pyspark.testing import assertDataFrameEqual
-
-from matrix.pipelines.embeddings.nodes import reduce_embeddings_dimension
-import numpy as np
-from matrix.pipelines.embeddings.nodes import extract_topological_embeddings
 
 
 @pytest.fixture

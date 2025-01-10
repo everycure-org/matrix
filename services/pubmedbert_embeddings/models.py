@@ -1,10 +1,10 @@
-from sentence_transformers import SentenceTransformer
-from transformers import AutoTokenizer, AutoModel
-import torch
 import logging
 from typing import List, Union
-import numpy as np
 
+import numpy as np
+import torch
+from sentence_transformers import SentenceTransformer
+from transformers import AutoModel, AutoTokenizer
 
 BASELINE_MODEL = "microsoft/BiomedNLP-PubMedBERT-base-uncased-abstract-fulltext"
 CHALLENGER_MODEL = "NeuML/pubmedbert-base-embeddings"

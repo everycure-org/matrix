@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
-from typing import List, Any, Optional
+from typing import Any, List, Optional
+
 from graphdatascience import GraphDataScience
 
 

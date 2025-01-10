@@ -1,16 +1,14 @@
-import time
 import logging
-from typing import Any, Tuple
+import time
 from copy import deepcopy
+from typing import Any, Tuple
 
-from neo4j import GraphDatabase
-from graphdatascience import GraphDataScience
 import pyspark.sql as ps
-
+from graphdatascience import GraphDataScience
 from kedro.io.core import Version
 from kedro_datasets.spark import SparkDataset
-
 from matrix.inject import _parse_for_objects
+from neo4j import GraphDatabase
 
 logger = logging.Logger(__name__)
 

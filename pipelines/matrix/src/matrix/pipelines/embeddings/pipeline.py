@@ -1,8 +1,7 @@
 from kedro.pipeline import Pipeline, pipeline
 
-
+from matrix.kedro4argo_node import ArgoNode, ArgoResourceConfig
 from matrix.pipelines.batch import pipeline as batch_pipeline
-from matrix.kedro4argo_node import ArgoResourceConfig, ArgoNode
 
 from . import nodes
 

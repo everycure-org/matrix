@@ -1,15 +1,14 @@
 import re
-import yaml
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+import yaml
 from jinja2 import Environment, FileSystemLoader
 from kedro.pipeline import Pipeline
 from kedro.pipeline.node import Node
 
-from matrix.kedro4argo_node import ArgoNode, ArgoResourceConfig
 from matrix.git_utils import get_git_sha
-
+from matrix.kedro4argo_node import ArgoNode, ArgoResourceConfig
 
 ARGO_TEMPLATE_FILE = "argo_wf_spec.tmpl"
 ARGO_TEMPLATES_DIR_PATH = Path(__file__).parent.parent.parent / "templates"

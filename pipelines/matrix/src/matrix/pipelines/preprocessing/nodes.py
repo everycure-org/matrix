@@ -1,12 +1,11 @@
-from typing import List
+from typing import List, Tuple
 
 import pandas as pd
-from pandera.typing import Series
-from pandera import DataFrameModel, Field
 import pandera
 import requests
-from tenacity import retry, wait_exponential, stop_after_attempt
-from typing import Tuple
+from pandera import DataFrameModel, Field
+from pandera.typing import Series
+from tenacity import retry, stop_after_attempt, wait_exponential
 
 
 def coalesce(s: pd.Series, *series: List[pd.Series]):
