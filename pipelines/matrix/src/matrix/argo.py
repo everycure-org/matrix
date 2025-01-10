@@ -36,6 +36,11 @@ def generate_argo_config(
     pipeline_tasks = get_dependencies(fuse(pipeline), default_execution_resources)
     git_sha = get_git_sha()
 
+    if pipeline.name in ("kg_release", "data_release"):
+        trigger_release = True
+    else:
+        trigger_release = False
+
     rendered_template = template.render(
         package_name=package_name,
         pipeline_tasks=pipeline_tasks,
@@ -49,6 +54,7 @@ def generate_argo_config(
         release_folder_name=release_folder_name,
         git_sha=git_sha,
         default_execution_resources=default_execution_resources.model_dump(),
+        trigger_release=trigger_release,
     )
     yaml_data = yaml.safe_load(rendered_template)
     yaml_without_anchors = yaml.dump(yaml_data, sort_keys=False, default_flow_style=False)
