@@ -8,6 +8,7 @@ from kedro.pipeline import Pipeline
 from kedro.pipeline.node import Node
 
 from matrix.kedro4argo_node import ArgoNode, ArgoResourceConfig
+from matrix.cli_commands.submit import trigger_release_flag
 from matrix.git_utils import get_git_sha
 
 
@@ -35,11 +36,13 @@ def generate_argo_config(
     template = template_env.get_template(ARGO_TEMPLATE_FILE)
     pipeline_tasks = get_dependencies(fuse(pipeline), default_execution_resources)
     git_sha = get_git_sha()
+    trigger_release = trigger_release_flag(pipeline.name)
 
     rendered_template = template.render(
         package_name=package_name,
         pipeline_tasks=pipeline_tasks,
         pipeline_name=pipeline.name,
+        trigger_release=trigger_release,
         image=image,
         image_tag=image_tag,
         namespace=namespace,

@@ -60,10 +60,10 @@ def submit(username: str, namespace: str, run_name: str, release_version: str, p
 
     if pipeline not in kedro_pipelines.keys():
         raise ValueError("Pipeline requested for execution not found")
-    
+
     if pipeline in ["fabricator", "test"]:
         raise ValueError("Submitting test pipeline to Argo will result in overwriting source data")
-    
+
     if not headless and from_nodes:
         if not click.confirm("Using 'from-nodes' is highly experimental and may break due to MLFlow issues with tracking the right run. Are you sure you want to continue?", default=False):
             raise click.Abort()
@@ -74,7 +74,6 @@ def submit(username: str, namespace: str, run_name: str, release_version: str, p
 
     run_name = get_run_name(run_name)
     pipeline_obj.name = pipeline
-
 
     summarize_submission(run_name, namespace, pipeline, is_test, release_version, headless)
     _submit(
@@ -92,13 +91,13 @@ def submit(username: str, namespace: str, run_name: str, release_version: str, p
 
 
 def _submit(
-        username: str, 
-        namespace: str, 
-        run_name: str, 
+        username: str,
+        namespace: str,
+        run_name: str,
         release_version: str,
         pipeline_obj: Pipeline,
         verbose: bool,
-        dry_run: bool, 
+        dry_run: bool,
         template_directory: Path,
         allow_interactions: bool = True,
         is_test: bool = False,
@@ -109,11 +108,11 @@ def _submit(
 
     The original logic of this function was:
     1. Create & Apply (push to k8s) Argo template, containing the entire pipeline registry. This part of the function makes use of pipelines_for_workflow, which will be included in the template.
-    2. When submitting the workflow, via `__entrypoint__`, a pipeline for execution is selected. 
+    2. When submitting the workflow, via `__entrypoint__`, a pipeline for execution is selected.
         It defaults to `__default__`, but can be configured via pipeline_for_execution.
 
     In the future, we expect plan not to have any template at all, but go straight from Kedro to Argo Workflow.
-    
+
     This meant that it was possible to submit the workflows for other pipelines in Argo CI.
 
     Args:
@@ -127,7 +126,7 @@ def _submit(
         allow_interactions (bool): If True, allow prompts for confirmation
         is_test (bool): If True, submit to test folder, not release folder
     """
-    
+
     try:
         console.rule("[bold blue]Submitting Workflow")
 
@@ -185,7 +184,7 @@ def summarize_submission(run_name: str, namespace: str, pipeline: str, is_test: 
     if not headless:
         if not click.confirm("Are you sure you want to submit the workflow?", default=False):
             raise click.Abort()
-        
+
 
 def run_subprocess(
     cmd: str,
@@ -473,3 +472,6 @@ def abort_if_unmet_git_requirements():
     if errors:
         error_list = "\n".join(errors)
         raise RuntimeError(f"Submission failed due to the following issues:\n\n{error_list}")
+
+def trigger_release_flag(pipeline: str) -> str:
+    return str(pipeline in ('data_release', 'kg_release'))
