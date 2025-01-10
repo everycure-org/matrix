@@ -1,38 +1,39 @@
 # Standard library imports
-import pytest
-from typing import List, Any
+from typing import Any, List
 from unittest.mock import Mock
+
+import matplotlib.pyplot as plt
 
 # Third-party imports
 import numpy as np
 import pandas as pd
 import pandera
-import matplotlib.pyplot as plt
-
-# Machine learning imports
-from sklearn.base import BaseEstimator
-from sklearn.linear_model import LogisticRegression
-from sklearn.model_selection import KFold, GridSearchCV
-from sklearn.impute._base import _BaseImputer
-from xgboost import XGBClassifier
 
 # PySpark imports
 import pyspark.sql as ps
+import pytest
 
 # Local imports
 from matrix.datasets.graph import KnowledgeGraph
 from matrix.datasets.pair_generator import SingleLabelPairGenerator
-from matrix.pipelines.modelling.model import ModelWrapper
 from matrix.inject import OBJECT_KW
+from matrix.pipelines.modelling.model import ModelWrapper
 from matrix.pipelines.modelling.nodes import (
     apply_transformers,
-    make_folds,
     attach_embeddings,
     create_model_input_nodes,
+    make_folds,
     prefilter_nodes,
     tune_parameters,
 )
 from matrix.pipelines.modelling.tuning import NopTuner
+
+# Machine learning imports
+from sklearn.base import BaseEstimator
+from sklearn.impute._base import _BaseImputer
+from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import GridSearchCV, KFold
+from xgboost import XGBClassifier
 
 
 class DummyTransformer(_BaseImputer):
