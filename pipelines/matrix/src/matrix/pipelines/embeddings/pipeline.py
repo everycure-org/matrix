@@ -1,4 +1,4 @@
-from kedro.pipeline import Pipeline, pipeline
+from kedro.pipeline import Pipeline, node, pipeline
 from matrix.kedro4argo_node import ArgoNode, ArgoResourceConfig
 
 from . import nodes
@@ -9,7 +9,7 @@ def create_pipeline(**kwargs) -> Pipeline:
     return pipeline(
         [
             # Bucketize and partition nodes
-            ArgoNode(
+            node(
                 func=nodes.bucketize_df,
                 inputs={
                     "df": "integration.prm.filtered_nodes",
@@ -22,7 +22,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 tags=["argowf.fuse", "argowf.fuse-group.node_embeddings"],
             ),
             # Compute embeddings
-            ArgoNode(
+            node(
                 func=nodes.compute_embeddings,
                 inputs={
                     "dfs": "embeddings.feat.bucketized_nodes@partitioned",
@@ -33,7 +33,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 tags=["argowf.fuse", "argowf.fuse-group.node_embeddings"],
             ),
             # Reduce dimension
-            ArgoNode(
+            node(
                 func=nodes.reduce_embeddings_dimension,
                 inputs={
                     "df": "embeddings.feat.graph.node_embeddings@spark",
@@ -43,7 +43,20 @@ def create_pipeline(**kwargs) -> Pipeline:
                 name="apply_pca",
                 tags=["argowf.fuse", "argowf.fuse-group.node_embeddings"],
             ),
-            ArgoNode(
+            # extract subgraph to downsize KG
+            # node(
+            #     func=nodes.extract_subgraph,
+            #     inputs=[
+            #         "integration.prm.filtered_nodes",
+            #         "integration.prm.filtered_edges",
+            #         "params:embeddings.category_to_keep",
+            #         "params:embeddings.property_to_remove",
+            #     ],
+            #     outputs="embeddings.feat.graph.extracted_edges",
+            #     name="extract_subgraph",
+            # ),
+            # Removes edges connecting drug and disease nodes to avoid data leakage
+            node(
                 func=nodes.filter_edges_for_topological_embeddings,
                 inputs=[
                     "integration.prm.filtered_nodes",
@@ -54,7 +67,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 name="filter_edges_for_topological",
             ),
             # Load spark dataset into local neo instance
-            ArgoNode(
+            node(
                 # NOTE: We are only selecting these two categories due to OOM neo4j instance error
                 # which occurs when we select all cols
                 func=lambda x: x.select("id", "pca_embedding"),
@@ -88,7 +101,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                     memory_request=120,
                 ),
             ),
-            ArgoNode(
+            node(
                 func=nodes.train_topological_embeddings,
                 inputs={
                     "df": "embeddings.tmp.input_edges",
@@ -104,7 +117,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                     "argowf.template-neo4j",
                 ],
             ),
-            ArgoNode(
+            node(
                 func=nodes.write_topological_embeddings,
                 inputs={
                     "model": "embeddings.models.topological",
@@ -122,7 +135,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 ],
             ),
             # extracts the nodes from neo4j
-            ArgoNode(
+            node(
                 func=nodes.extract_topological_embeddings,
                 inputs={
                     "embeddings": "embeddings.model_output.topological",
@@ -138,7 +151,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 ],
             ),
             # Create PCA plot
-            ArgoNode(
+            node(
                 func=nodes.reduce_dimension,
                 inputs={
                     "df": "embeddings.feat.nodes",
@@ -151,7 +164,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                     "argowf.fuse-group.topological_pca",
                 ],
             ),
-            ArgoNode(
+            node(
                 func=nodes.visualise_pca,
                 inputs={
                     "nodes": "embeddings.reporting.topological_pca",

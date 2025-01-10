@@ -1,5 +1,4 @@
-from kedro.pipeline import Pipeline, pipeline
-from matrix.kedro4argo_node import argo_node
+from kedro.pipeline import Pipeline, pipeline, node
 
 from . import nodes
 
@@ -11,7 +10,7 @@ def create_pipeline(**kwargs) -> Pipeline:
     return pipeline(
         [
             # Normalize nodes
-            argo_node(
+            node(
                 func=nodes.create_int_nodes,
                 inputs={
                     "nodes": "preprocessing.raw.nodes",
@@ -26,7 +25,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 name="normalize_ec_medical_team_nodes",
                 tags=["ec-medical-kg"],
             ),
-            argo_node(
+            node(
                 func=nodes.create_int_edges,
                 inputs=[
                     "preprocessing.int.nodes",
@@ -36,7 +35,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 name="create_int_ec_medical_team_edges",
                 tags=["ec-medical-kg"],
             ),
-            argo_node(
+            node(
                 func=nodes.create_prm_edges,
                 inputs=[
                     "preprocessing.int.edges",
@@ -45,7 +44,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 name="create_prm_ec_medical_team_edges",
                 tags=["ec-medical-kg"],
             ),
-            argo_node(
+            node(
                 func=nodes.create_prm_nodes,
                 inputs=[
                     "preprocessing.int.nodes",
@@ -55,7 +54,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 tags=["ec-medical-kg"],
             ),
             # NOTE: Take raw clinical trial data and map the "name" to "curie" using the synonymizer
-            argo_node(
+            node(
                 func=nodes.map_name_to_curie,
                 inputs={
                     "df": "preprocessing.raw.clinical_trials_data",
@@ -73,7 +72,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 tags=["ec-clinical-trials-data"],
             ),
             # NOTE: Clean up the clinical trial data and write it to the GCS bucket
-            argo_node(
+            node(
                 func=nodes.clean_clinical_trial_data,
                 inputs=[
                     "preprocessing.int.mapped_clinical_trials_data",
@@ -82,7 +81,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 name="clean_clinical_trial_data",
                 tags=["ec-clinical-trials-data"],
             ),
-            argo_node(
+            node(
                 func=nodes.clean_drug_list,
                 inputs={
                     "drug_df": "preprocessing.raw.drug_list",
@@ -96,14 +95,14 @@ def create_pipeline(**kwargs) -> Pipeline:
                 name="resolve_drug_list",
                 tags=["drug-list"],
             ),
-            argo_node(
+            node(
                 func=lambda x: x,
                 inputs="ingestion.raw.drug_list@pandas",
                 outputs="ingestion.reporting.drug_list",
                 name="write_drug_list_to_gsheets",
             ),
             # FUTURE: Remove this node once we have a new disease list with tags
-            argo_node(
+            node(
                 func=nodes.enrich_disease_list,
                 inputs=[
                     "preprocessing.raw.disease_list",
@@ -113,7 +112,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 name="enrich_disease_list",
                 tags=["disease-list"],
             ),
-            argo_node(
+            node(
                 func=nodes.clean_disease_list,
                 inputs={
                     "disease_df": "preprocessing.raw.enriched_disease_list",
@@ -127,13 +126,13 @@ def create_pipeline(**kwargs) -> Pipeline:
                 name="resolve_disease_list",
                 tags=["disease-list"],
             ),
-            argo_node(
+            node(
                 func=lambda x: x,
                 inputs="ingestion.raw.disease_list@pandas",
                 outputs="ingestion.reporting.disease_list",
                 name="write_disease_list_to_gsheets",
             ),
-            argo_node(
+            node(
                 func=nodes.clean_input_sheet,
                 inputs={
                     "input_df": "preprocessing.raw.infer_sheet",
@@ -147,7 +146,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 name="clean_input_sheet",
                 tags=["inference-input"],
             ),
-            argo_node(
+            node(
                 func=nodes.clean_gt_data,
                 inputs={
                     "pos_df": "preprocessing.raw.ground_truth.positives",

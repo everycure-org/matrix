@@ -1,6 +1,5 @@
-from kedro.pipeline import Pipeline, pipeline
+from kedro.pipeline import Pipeline, node, pipeline
 from matrix import settings
-from matrix.kedro4argo_node import argo_node
 
 from . import nodes
 
@@ -8,7 +7,7 @@ from . import nodes
 def _create_evaluation_pipeline(model: str, evaluation: str) -> Pipeline:
     return pipeline(
         [
-            argo_node(
+            node(
                 func=nodes.generate_test_dataset,
                 inputs=[
                     f"matrix_generation.{model}.model_output.sorted_matrix_predictions@pandas",
@@ -17,7 +16,7 @@ def _create_evaluation_pipeline(model: str, evaluation: str) -> Pipeline:
                 outputs=f"evaluation.{model}.{evaluation}.model_output.pairs",
                 name=f"create_{model}_{evaluation}_evaluation_pairs",
             ),
-            argo_node(
+            node(
                 func=nodes.evaluate_test_predictions,
                 inputs=[
                     f"evaluation.{model}.{evaluation}.model_output.pairs",
@@ -40,7 +39,7 @@ def create_pipeline(**kwargs) -> Pipeline:
         pipelines.append(
             pipeline(
                 [
-                    argo_node(
+                    node(
                         func=nodes.perform_matrix_checks,
                         inputs=[
                             f"matrix_generation.{model}.model_output.sorted_matrix_predictions@pandas",

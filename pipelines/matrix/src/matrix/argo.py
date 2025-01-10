@@ -1,4 +1,5 @@
 import re
+import copy
 import yaml
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -33,7 +34,8 @@ def generate_argo_config(
     template = template_env.get_template(ARGO_TEMPLATE_FILE)
     pipeline_tasks = get_dependencies(fuse(pipeline), default_execution_resources)
 
-    rendered_template = template.render(
+    # TODO: After it is possible to configure resources on node level, remove the use_gpus flag.
+    output = template.render(
         package_name=package_name,
         pipeline_tasks=pipeline_tasks,
         pipeline_name=pipeline.name,
@@ -46,10 +48,14 @@ def generate_argo_config(
         release_folder_name=release_folder_name,
         default_execution_resources=default_execution_resources.model_dump(),
     )
-    yaml_data = yaml.safe_load(rendered_template)
-    yaml_without_anchors = yaml.dump(yaml_data, sort_keys=False, default_flow_style=False)
 
-    return yaml_without_anchors
+    # Load the rendered YAML into a Python object
+    yaml_data = copy.deepcopy(yaml.safe_load(output))
+
+    # Dump the final YAML without anchors
+    final_yaml = yaml.dump(yaml_data, sort_keys=False, default_flow_style=False)
+
+    return final_yaml
 
 
 class FusedNode(Node):
