@@ -27,9 +27,9 @@ class DataFrameSchema:
     columns: Dict[str, Column]
     unique: Optional[List] = None
 
-    def build_for_class(self, cls) -> psa:
+    def build_for_type(self, type_) -> psa:
         # Build pandas version
-        if cls is pd.DataFrame:
+        if type_ is pd.DataFrame:
             return pa.DataFrameSchema(
                 columns={
                     name: pa.Column(col.type_, checks=col.checks, nullable=col.nullable)
@@ -39,7 +39,7 @@ class DataFrameSchema:
             )
 
         # Build pyspark version
-        if cls is ps.DataFrame:
+        if type_ is ps.DataFrame:
             return psa.DataFrameSchema(
                 columns={
                     name: psa.Column(col.type_, checks=col.checks, nullable=col.nullable)
@@ -60,7 +60,7 @@ def check_output(schema: DataFrameSchema):
                 raise RuntimeError(f"No output typehint specified!")
 
             # Build validator
-            df_schema: psa.DataFrameSchema = schema.build_for_class(type_)
+            df_schema: psa.DataFrameSchema = schema.build_for_type(type_)
 
             # Invoke function
             df = func(*args, **kwargs)
@@ -78,19 +78,19 @@ def check_output(schema: DataFrameSchema):
     return decorator
 
 
-@check_output(DataFrameSchema(columns={"id": Column(int)}))
+@check_output(DataFrameSchema(columns={"id": Column(int)}, unique=["id"]))
 def dummy_pandas_fn() -> pd.DataFrame:
     return pd.DataFrame({"id": [1]})
 
 
-@check_output(DataFrameSchema(columns={"bucket": Column(int, nullable=False)}))
+@check_output(DataFrameSchema(columns={"bucket": Column(int, nullable=False)}, unique=["bucket"]))
 def dummy_spark_fn(num_buckets: int = 10) -> ps.DataFrame:
     # Construct df to bucketize
     spark_session: ps.SparkSession = ps.SparkSession.builder.getOrCreate()
 
     # Bucketize df
     return spark_session.createDataFrame(
-        data=[(bucket,) for bucket in range(num_buckets)],
+        data=[(1,) for bucket in range(num_buckets)],
         schema=T.StructType([T.StructField("bucket", T.IntegerType())]),
     )
 
