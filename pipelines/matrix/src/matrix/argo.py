@@ -34,13 +34,16 @@ def generate_argo_config(
     template = template_env.get_template(ARGO_TEMPLATE_FILE)
     pipeline_tasks = get_dependencies(fuse(pipeline), default_execution_resources)
     git_sha = get_git_sha()
-    trigger_release = get_trigger_release_flag(pipeline.name)
+
+    if pipeline.name in ("kg_release", "data_release"):
+        trigger_release = True
+    else:
+        trigger_release = False
 
     rendered_template = template.render(
         package_name=package_name,
         pipeline_tasks=pipeline_tasks,
         pipeline_name=pipeline.name,
-        trigger_release=trigger_release,
         image=image,
         image_tag=image_tag,
         namespace=namespace,
@@ -50,6 +53,7 @@ def generate_argo_config(
         release_folder_name=release_folder_name,
         git_sha=git_sha,
         default_execution_resources=default_execution_resources.model_dump(),
+        trigger_release=trigger_release,
     )
     yaml_data = yaml.safe_load(rendered_template)
     yaml_without_anchors = yaml.dump(yaml_data, sort_keys=False, default_flow_style=False)
@@ -283,7 +287,3 @@ def clean_name(name: str) -> str:
         Clean node name, according to Argo's requirements
     """
     return re.sub(r"[\W_]+", "-", name).strip("-")
-
-
-def get_trigger_release_flag(pipeline: str) -> str:
-    return str(pipeline in ("data_release", "kg_release"))
