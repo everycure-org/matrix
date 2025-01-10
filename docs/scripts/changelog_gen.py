@@ -41,8 +41,8 @@ def parse_jsons(filepaths: Iterable[Path]) -> Iterator[dict]:
         yield json.loads(filepath.read_text())
 
 
-def create_semver_sortkey(filename: str) -> list[int]:
-    version_str = filename.lstrip("v").split("-")[0]
+def create_semver_sortkey(release_name: str) -> list[int]:
+    version_str = release_name.lstrip("v").split("-", 1)[0]
     sort_key = [int(u) for u in version_str.split(".")]
     return sort_key
 
