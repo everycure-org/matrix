@@ -126,7 +126,7 @@ def sample_data():
     """Fixture that provides sample data for testing matrix generation functions."""
     drugs = pd.DataFrame(
         {
-            "curie": ["drug_1", "drug_2", "drug_3", "drug_4"],
+            "id": ["drug_1", "drug_2", "drug_3", "drug_4"],
             "name": ["Drug 1", "Drug 2", "Drug 3", "Drug 4"],
             "is_steroid": [True, False, False, False],
         }
@@ -134,7 +134,7 @@ def sample_data():
 
     diseases = pd.DataFrame(
         {
-            "curie": ["disease_1", "disease_2", "disease_3", "disease_4"],
+            "id": ["disease_1", "disease_2", "disease_3", "disease_4"],
             "name": ["Disease 1", "Disease 2", "Disease 3", "Disease 4"],
             "is_cancer": [True, False, False, False],
         }
