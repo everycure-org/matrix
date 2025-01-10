@@ -1,15 +1,14 @@
-from pathlib import Path
-import pytest
 import glob
 import os
-import yaml
 import re
 import warnings
+from pathlib import Path
 
-from kedro.framework.project import configure_project
+import pytest
+import yaml
 from kedro.config import OmegaConfigLoader
 from kedro.framework.context import KedroContext
-from kedro.framework.project import pipelines
+from kedro.framework.project import configure_project, pipelines
 
 _ALLOWED_LAYERS = [
     "raw",
