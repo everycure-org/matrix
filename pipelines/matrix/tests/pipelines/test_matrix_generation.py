@@ -273,6 +273,7 @@ def test_make_predictions_and_sort(
     assert len(result) == 4
     assert result["score"].is_monotonic_decreasing
 
+
 def test_generate_report(sample_data):
     """Test the generate_report function."""
     # Given an input matrix, drug list and disease list
