@@ -1,23 +1,19 @@
 import logging
-from pandera import DataFrameModel
-import pandera as pa
-from tqdm import tqdm
-from typing import List, Dict, Union, Tuple
-import pyspark.sql as ps
-from sklearn.impute._base import _BaseImputer
+from datetime import datetime
+from typing import Dict, List, Tuple, Union
 
 import pandas as pd
+import pandera as pa
+import pyspark.sql as ps
 import pyspark.sql.functions as F
-from pandera.typing import Series
-
-from matrix.inject import inject_object, _extract_elements_in_list
-
 from matrix.datasets.graph import KnowledgeGraph
-
-from matrix.pipelines.modelling.nodes import apply_transformers
+from matrix.inject import _extract_elements_in_list, inject_object
 from matrix.pipelines.modelling.model import ModelWrapper
-
-from datetime import datetime
+from matrix.pipelines.modelling.nodes import apply_transformers
+from pandera import DataFrameModel
+from pandera.typing import Series
+from sklearn.impute._base import _BaseImputer
+from tqdm import tqdm
 
 logger = logging.getLogger(__name__)
 
@@ -219,19 +215,15 @@ def make_batch_predictions(
         batch[not_treat_score_col_name] = preds[:, 0]
         batch[treat_score_col_name] = preds[:, 1]
         batch[unknown_score_col_name] = preds[:, 2]
-        # Drop embedding columns
         batch = batch.drop(columns=["source_embedding", "target_embedding"])
         return batch
 
-    # Group data by the specified prefix
     grouped = data.groupby(batch_by)
 
-    # Process data in batches
     result_parts = []
     for _, batch in tqdm(grouped):
         result_parts.append(process_batch(batch))
 
-    # Combine results
     results = pd.concat(result_parts, axis=0)
 
     return results
