@@ -20,13 +20,13 @@ from matrix_cli.components.git import get_code_diff
 from matrix_cli.components.models import PRInfo
 from matrix_cli.components.settings import settings
 from matrix_cli.components.utils import (
+    ask_for_release,
     console,
     get_git_root,
+    get_latest_release,
     get_markdown_contents,
     invoke_model,
     run_command,
-    ask_for_release,
-    get_latest_release,
 )
 
 if TYPE_CHECKING:

@@ -1,17 +1,15 @@
-from typing import Generator
-import pytest
-
 from pathlib import Path
-
-from kedro.config import OmegaConfigLoader
-from kedro.framework.context import KedroContext
-from kedro.framework.project import settings
-from kedro.framework.hooks import _create_hook_manager
+from typing import Generator
 
 import pyspark.sql as ps
-from omegaconf.resolvers import oc
-from matrix.resolvers import merge_dicts, cast_to_int
+import pytest
+from kedro.config import OmegaConfigLoader
+from kedro.framework.context import KedroContext
+from kedro.framework.hooks import _create_hook_manager
+from kedro.framework.project import settings
+from matrix.resolvers import cast_to_int, merge_dicts
 from matrix.settings import _load_setting
+from omegaconf.resolvers import oc
 
 
 @pytest.fixture(scope="session")

@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional, Set, NamedTuple, Collection
+from typing import Any, Collection, Dict, List, NamedTuple, Optional, Set
 
 import click
 from kedro.framework.cli.project import (

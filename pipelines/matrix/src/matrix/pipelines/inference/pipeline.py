@@ -1,9 +1,9 @@
-from matrix import settings
 from kedro.pipeline import Pipeline, pipeline
-
+from matrix import settings
 from matrix.kedro4argo_node import argo_node
-from . import nodes as nd
+
 from ..matrix_generation.pipeline import create_pipeline as matrix_generation_pipeline
+from . import nodes as nd
 
 
 def _create_resolution_pipeline() -> Pipeline:

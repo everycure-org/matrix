@@ -1,11 +1,12 @@
 from abc import ABC, abstractmethod
-from typing import Optional, List
-import pandas as pd
-from tenacity import retry, wait_exponential, stop_after_attempt
+from typing import List, Optional
+
 import numpy as np
-from transformers import AutoTokenizer, AutoModel
-from langchain_openai import OpenAIEmbeddings
+import pandas as pd
 import torch
+from langchain_openai import OpenAIEmbeddings
+from tenacity import retry, stop_after_attempt, wait_exponential
+from transformers import AutoModel, AutoTokenizer
 
 
 class AttributeEncoder(ABC):

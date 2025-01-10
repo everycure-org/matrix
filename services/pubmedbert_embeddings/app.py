@@ -5,15 +5,16 @@ and a model that we think actually is correct, namely a sentence embedding model
 Note this is a temporary solution and we intend to move to a more generic solution.
 """
 
-from fastapi import FastAPI, HTTPException
-import time
 import asyncio
-from concurrent.futures import ThreadPoolExecutor
-from typing import List
-from data_models import EmbeddingRequest, EmbeddingResponse, Usage, Embedding
-from models import ModelStore
 import logging
 import multiprocessing
+import time
+from concurrent.futures import ThreadPoolExecutor
+from typing import List
+
+from data_models import Embedding, EmbeddingRequest, EmbeddingResponse, Usage
+from fastapi import FastAPI, HTTPException
+from models import ModelStore
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)

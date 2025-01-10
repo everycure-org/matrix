@@ -1,9 +1,9 @@
 from typing import Any, Dict
 
+import pyspark.sql as ps
 import pytest
 from matrix.pipelines.integration import nodes
 from matrix.schemas.knowledge_graph import KGEdgeSchema, KGNodeSchema
-import pyspark.sql as ps
 from pyspark.sql import functions as F
 from pyspark.sql.types import (
     ArrayType,

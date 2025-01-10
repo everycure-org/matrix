@@ -1,13 +1,11 @@
-import mlflow
-
 from copy import deepcopy
 from typing import Any, Dict, Union
 
-from mlflow.tracking import MlflowClient
-
+import mlflow
 from kedro_mlflow.io.metrics.mlflow_abstract_metric_dataset import (
     MlflowAbstractMetricDataset,
 )
+from mlflow.tracking import MlflowClient
 
 
 class MlflowMetricsDataset(MlflowAbstractMetricDataset):

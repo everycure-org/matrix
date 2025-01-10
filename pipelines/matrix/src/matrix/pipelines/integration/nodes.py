@@ -7,8 +7,8 @@ import pandera
 import pyspark.sql as ps
 import pyspark.sql.functions as F
 from joblib import Memory
-from matrix.inject import inject_object
 
+from matrix.inject import inject_object
 from matrix.pipelines.integration.filters import determine_most_specific_category
 from matrix.schemas.knowledge_graph import KGEdgeSchema, KGNodeSchema, cols_for_schema
 

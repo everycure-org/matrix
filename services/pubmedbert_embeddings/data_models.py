@@ -1,6 +1,7 @@
-from pydantic import BaseModel, Field
 from typing import List, Literal, Union
+
 from models import BASELINE_MODEL, CHALLENGER_MODEL
+from pydantic import BaseModel, Field
 
 
 class EmbeddingRequest(BaseModel):

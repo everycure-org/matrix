@@ -2,15 +2,14 @@ import logging
 from typing import Dict
 
 import pandera as pa
-from pandera.pyspark import DataFrameModel
-
 import pyspark.sql as ps
 import pyspark.sql.functions as f
 import pyspark.sql.types as T
-
-from .transformer import GraphTransformer
+from pandera.pyspark import DataFrameModel
 
 from matrix.schemas.knowledge_graph import KGEdgeSchema, KGNodeSchema, cols_for_schema
+
+from .transformer import GraphTransformer
 
 logger = logging.getLogger(__name__)
 

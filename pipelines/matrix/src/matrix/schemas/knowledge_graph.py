@@ -1,10 +1,10 @@
 from typing import List, Type
 
 import pandera.pyspark as pa
-from pandera.pyspark import Field
 import pyspark.sql as ps
 import pyspark.sql.functions as F
 import pyspark.sql.types as T
+from pandera.pyspark import Field
 
 
 def cols_for_schema(schema_obj: Type[pa.DataFrameModel]) -> List[str]:

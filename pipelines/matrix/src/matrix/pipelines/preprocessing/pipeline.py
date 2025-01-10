@@ -1,10 +1,8 @@
-from kedro.pipeline import Pipeline, pipeline, node
+from kedro.pipeline import Pipeline, node, pipeline
 from matrix.kedro4argo_node import argo_node
 
-
-from .tagging import generate_tags
-
 from . import nodes
+from .tagging import generate_tags
 
 
 # NOTE: This pipeline in highly preliminary and used for ingestion of the

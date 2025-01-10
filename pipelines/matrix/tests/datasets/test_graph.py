@@ -1,10 +1,9 @@
-import pytest
-from unittest.mock import patch, MagicMock
-from matrix.datasets.graph import PandasParquetDataset
-from kedro.io.core import DatasetError
-import pandas as pd
+from unittest.mock import MagicMock, patch
 
-from matrix.datasets.graph import KnowledgeGraphDataset, KnowledgeGraph
+import pandas as pd
+import pytest
+from kedro.io.core import DatasetError
+from matrix.datasets.graph import KnowledgeGraph, KnowledgeGraphDataset, PandasParquetDataset
 
 
 def test_load_success():
