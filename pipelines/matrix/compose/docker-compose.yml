@@ -35,6 +35,11 @@ services:
       # License file can be activated using the following env variable
       # https://neo4j.com/docs/graph-data-science/current/installation/installation-enterprise-edition
       # - NEO4J_gds_enterprise_license__file=/licenses/gds
+    # fixes issues with mounted volumes on linux systems
+    # see https://community.neo4j.com/t/unable-to-start-neo4j-container-permission-denined/58418/
+    user: '1000'
+    group_add:
+    - '1000'
     volumes:
       - ./neo4j_data/data:/data
       - ./neo4j_data/logs:/logs
