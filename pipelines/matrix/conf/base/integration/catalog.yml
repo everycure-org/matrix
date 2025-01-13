@@ -23,7 +23,7 @@ _layer_prm: &_layer_prm
 # -------------------------------------------------------------------------
 
 
-# NOTE: We're plugging into the live source as we expect this to change rather,
+# NOTE: We're plugging into tshe live source as we expect this to change rather,
 # moreover, we consider it highly unlikely that paths would suddently change
 # across biolink versions.
 integration.raw.biolink.predicates:

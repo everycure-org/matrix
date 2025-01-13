@@ -100,6 +100,7 @@ def bucketize_df(df: ps.DataFrame, bucket_size: int, input_features: List[str], 
     """
 
     # Order and bucketize elements
+    raise Exception("stop")
     return (
         df.transform(_bucketize, bucket_size=bucket_size)
         .withColumn(
