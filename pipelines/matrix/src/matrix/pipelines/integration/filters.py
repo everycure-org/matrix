@@ -84,9 +84,11 @@ def determine_most_specific_category(nodes: ps.DataFrame, biolink_categories_df:
         biolink_categories_df, "category", convert_to_pascal_case=True
     )
 
-    nodes = (
-        nodes.withColumn("category", F.explode("all_categories"))
-        .join(labels_hierarchy, on="category", how="left")
+    # pre-calculate the mappping table of ID -> most specific category
+    mapping_table = nodes.select("id", "all_categories").withColumn("category", F.explode("all_categories"))
+
+    mapping_table = (
+        mapping_table.join(F.broadcast(labels_hierarchy), on="category", how="left")
         # some categories are not found in the biolink hierarchy
         # we deal with failed joins by setting their parents to [] == the depth as level 0 == chosen last
         .withColumn("parents", f.coalesce("parents", f.lit(f.array())))
@@ -94,7 +96,11 @@ def determine_most_specific_category(nodes: ps.DataFrame, biolink_categories_df:
         .withColumn("row_num", F.row_number().over(ps.Window.partitionBy("id").orderBy(F.col("depth").desc())))
         .filter(F.col("row_num") == 1)
         .drop("row_num")
+        .select("id", "category")
     )
+    # now we can join the mapping table back to the nodes
+    nodes = nodes.drop("category").join(mapping_table, on="id", how="left")
+
     return nodes
 
 
