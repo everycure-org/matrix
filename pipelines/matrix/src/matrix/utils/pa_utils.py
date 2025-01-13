@@ -88,10 +88,10 @@ def check_output(schema: DataFrameSchema):
         def wrapper(*args, **kwargs):
             # Extract return type of function
             if not (type_ := typing.get_type_hints(func).get("return")):
-                raise RuntimeError(f"No output typehint specified!")
+                raise RuntimeError("No output typehint specified!")
 
             # Build validator
-            df_schema: psa.DataFrameSchema = schema.build_for_type(type_)
+            df_schema = schema.build_for_type(type_)
 
             # Invoke function
             df = func(*args, **kwargs)
