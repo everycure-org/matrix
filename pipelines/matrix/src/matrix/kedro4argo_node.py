@@ -1,5 +1,5 @@
 import warnings
-from typing import Any, Callable, Iterable, Optional, Union
+from typing import Any, Optional, Union
 
 from kedro.pipeline.node import Node
 from pydantic import BaseModel, field_validator, model_validator
@@ -120,32 +120,6 @@ class ArgoNode(Node):
         }
         params.update(overwrite_params)
         return ArgoNode(**params)  # type: ignore[arg-type]
-
-
-def argo_node(
-    func: Callable,
-    inputs: str | list[str] | dict[str, str] | None,
-    outputs: str | list[str] | dict[str, str] | None,
-    argo_config: Optional[ArgoResourceConfig] = None,
-    *,
-    name: str | None = None,
-    tags: str | Iterable[str] | None = None,
-    confirms: str | list[str] | None = None,
-    namespace: str | None = None,
-):
-    if argo_config is None:
-        argo_config = ArgoResourceConfig()
-
-    return ArgoNode(
-        func,
-        inputs,
-        outputs,
-        argo_config=argo_config,
-        name=name,
-        tags=tags,
-        confirms=confirms,
-        namespace=namespace,
-    )
 
 
 ARGO_GPU_NODE_MEDIUM = ArgoResourceConfig(num_gpus=1)
