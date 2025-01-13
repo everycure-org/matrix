@@ -6,6 +6,7 @@ from matrix.inject import inject_object
 from matrix.kedro4argo_node import ArgoNode, ArgoResourceConfig
 from pyspark.sql import DataFrame, SparkSession
 from pyspark.sql import functions as F
+from pyspark.sql import types as T
 from pyspark.sql.window import Window
 
 

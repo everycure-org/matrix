@@ -31,4 +31,4 @@ paths:
   inference:          ${run_dir}/datasets/inference
 
   # Tmp. directory using k8s emph. storage
-  tmp:           /tmp
+  tmp:           data/tmp
