@@ -45,13 +45,14 @@ def cli():
 @click.option("--run-name", type=str, default=None, help="Specify a custom run name, defaults to branch")
 @click.option("--release-version", type=str, required=True, help="Specify a custom release name")
 @click.option("--pipeline", "-p", type=str, default="modelling_run", help="Specify which pipeline to execute")
+@click.option("--env", "-e", type=str, default="cloud", help="Specify which environment to execute")
 @click.option("--quiet", "-q", is_flag=True, default=False, help="Disable verbose output")
 @click.option("--dry-run", "-d", is_flag=True, default=False, help="Does everything except submit the workflow")
 @click.option("--from-nodes", type=str, default="", help="Specify nodes to run from", callback=split_string)
 @click.option("--is-test", is_flag=True, default=False, help="Submit to test folder")
 @click.option("--headless", is_flag=True, default=False, help="Disable prompts for confirmation")
 # fmt: on
-def submit(username: str, namespace: str, run_name: str, release_version: str, pipeline: str, quiet: bool, dry_run: bool, from_nodes: List[str], is_test: bool, headless:bool):
+def submit(username: str, namespace: str, run_name: str, release_version: str, pipeline: str, env: str, quiet: bool, dry_run: bool, from_nodes: List[str], is_test: bool, headless:bool):
     """Submit the end-to-end workflow. """
     if not quiet:
         log.setLevel(logging.DEBUG)
@@ -62,7 +63,7 @@ def submit(username: str, namespace: str, run_name: str, release_version: str, p
     if pipeline not in kedro_pipelines.keys():
         raise ValueError("Pipeline requested for execution not found")
     
-    if pipeline in ["fabricator", "test"]:
+    if pipeline in ["fabricator", "test"] and env != "test":
         raise ValueError("Submitting test pipeline to Argo will result in overwriting source data")
     
     if not headless and from_nodes:
@@ -84,6 +85,7 @@ def submit(username: str, namespace: str, run_name: str, release_version: str, p
         run_name=run_name,
         release_version=release_version,
         pipeline_obj=pipeline_obj,
+        env=env,
         verbose=not quiet,
         dry_run=dry_run,
         template_directory=ARGO_TEMPLATES_DIR_PATH,
@@ -98,6 +100,7 @@ def _submit(
         run_name: str, 
         release_version: str,
         pipeline_obj: Pipeline,
+        env: str,
         verbose: bool,
         dry_run: bool, 
         template_directory: Path,
@@ -134,7 +137,7 @@ def _submit(
 
         check_dependencies(verbose=verbose)
 
-        argo_template = build_argo_template(run_name, release_version, username, namespace, pipeline_obj, is_test=is_test, )
+        argo_template = build_argo_template(run_name, release_version, username, namespace, pipeline_obj, env, is_test=is_test, )
 
         file_path = save_argo_template(argo_template, template_directory)
 
@@ -340,7 +343,7 @@ def build_push_docker(username: str, verbose: bool):
     console.print("[green]✓[/green] Docker image built and pushed")
 
 
-def build_argo_template(run_name: str, release_version: str, username: str, namespace: str, pipeline_obj: Pipeline, is_test: bool, default_execution_resources: Optional[ArgoResourceConfig] = None) -> str:
+def build_argo_template(run_name: str, release_version: str, username: str, namespace: str, pipeline_obj: Pipeline, env: str, is_test: bool, default_execution_resources: Optional[ArgoResourceConfig] = None) -> str:
     """Build Argo workflow template."""
     image_name = "us-central1-docker.pkg.dev/mtrx-hub-dev-3of/matrix-images/matrix"
 
@@ -364,6 +367,7 @@ def build_argo_template(run_name: str, release_version: str, username: str, name
         package_name=package_name,
         release_folder_name=release_folder_name,
         pipeline=pipeline_obj,
+        env=env,
         default_execution_resources=default_execution_resources,
     )
     console.print("[green]✓[/green] Argo template built")
