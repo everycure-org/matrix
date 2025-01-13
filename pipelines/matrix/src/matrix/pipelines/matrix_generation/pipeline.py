@@ -77,22 +77,22 @@ def create_pipeline(**kwargs) -> Pipeline:
                         inputs=[
                             "matrix_generation.feat.nodes_kg_ds",
                             f"matrix_generation.prm.fold_{fold}.matrix_pairs",
-                            f"modelling.{model_name}.fold_{fold}.model_input.transformers",
-                            f"modelling.{model_name}.fold_{fold}.models.model",
+                            f"modelling.fold_{fold}.model_input.transformers",
+                            f"modelling.fold_{fold}.models.model",
                             f"params:modelling.{model_name}.model_options.model_tuning_args.features",
                             "params:matrix_generation.treat_score_col_name",
                             "params:matrix_generation.not_treat_score_col_name",
                             "params:matrix_generation.unknown_score_col_name",
                             "params:matrix_generation.matrix_generation_options.batch_by",
                         ],
-                        outputs=f"matrix_generation.{model_name}.fold_{fold}.model_output.sorted_matrix_predictions@pandas",
-                        name=f"make_{model_name}_predictions_and_sort_fold_{fold}",
+                        outputs=f"matrix_generation.fold_{fold}.model_output.sorted_matrix_predictions@pandas",
+                        name=f"make_predictions_and_sort_fold_{fold}",
                         argo_config=ARGO_GPU_NODE_MEDIUM,
                     ),
                     ArgoNode(
                         func=nodes.generate_report,
                         inputs=[
-                            f"matrix_generation.{model_name}.fold_{fold}.model_output.sorted_matrix_predictions@pandas",
+                            f"matrix_generation.fold_{fold}.model_output.sorted_matrix_predictions@pandas",
                             "params:matrix_generation.matrix_generation_options.n_reporting",
                             "ingestion.raw.drug_list@pandas",
                             "ingestion.raw.disease_list@pandas",
@@ -100,11 +100,10 @@ def create_pipeline(**kwargs) -> Pipeline:
                             "params:matrix_generation.matrix",
                             "params:matrix_generation.run",
                         ],
-                        outputs=f"matrix_generation.{model_name}.fold_{fold}.reporting.matrix_report",
-                        name=f"generate_{model_name}_report_fold_{fold}",
+                        outputs=f"matrix_generation.fold_{fold}.reporting.matrix_report",
+                        name=f"generate_report_fold_{fold}",
                     ),
                 ],
-                tags=model_name,
             )
         )
 
