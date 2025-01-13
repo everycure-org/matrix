@@ -12,7 +12,7 @@ Running the full pipeline in production takes currently 12 hours given the volum
 
 The choice that was previously made involves a Data Fabricator class that will fabricate data that follows the same schema as the cloud data. This synthetic data is then used in the test pipeline.
 
-The main pain point users currently have is to see their changes running succesfully in the test pipeline, but failing in the cloud one. Users are failing to replicate the error locally, and have to rely on the cloud pipeline to debug the issue. Looking further, it might also be useful for data scientists to test their models on a specific subset of the full data locally, to check that they work as expected.
+Users are failing to replicate the error locally, and have to rely on the cloud pipeline to debug the issue. 
 
 The Kedro framework easily allows to run specific nodes of the pipelines in different environments.
 
