@@ -49,6 +49,8 @@ services:
       MLFLOW_ENDPOINT: http://mlflow:5000
       OPENAI_API_KEY: sk-proj-abc
       SYNONYMIZER_ENDPOINT: http://node-synonymizer:8081
+      KEDRO_DYNAMIC_PIPELINES_MAPPING_CROSS_VALIDATION_N_CROSS_VAL_FOLDS: 2
+      KEDRO_DYNAMIC_PIPELINES_MAPPING_MODELLING_XG_ENSEMBLE_NUM_SHARDS: 2
     depends_on:
       neo4j:
         condition: service_healthy
