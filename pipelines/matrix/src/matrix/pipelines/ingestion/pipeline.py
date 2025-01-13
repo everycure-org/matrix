@@ -1,5 +1,6 @@
 import pyspark.sql.functions as F
-from kedro.pipeline import Pipeline, pipeline, node
+from kedro.pipeline import Pipeline, node, pipeline
+
 from matrix.kedro4argo_node import ArgoNode
 
 
