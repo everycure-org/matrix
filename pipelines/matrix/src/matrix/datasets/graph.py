@@ -91,9 +91,6 @@ class PandasParquetDataset(ParquetDataset):
         )
 
     def save(self, df: pd.DataFrame):
-        if self._as_type:
-            df = df.astype(self._as_type)
-
         return super().save(df)
 
     def load(self) -> KnowledgeGraph:
