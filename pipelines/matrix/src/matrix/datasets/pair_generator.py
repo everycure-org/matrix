@@ -372,8 +372,55 @@ class FullMatrixPositives(DrugDiseasePairGenerator):
 
 
 class OnlyOverlappingPairs:
-    pass
+    def __init__(
+        self,
+        matrices: List[pd.DataFrame],
+        top_n: int = 1000,
+    ) -> None:
+        """Initialises an instance of the class.
+
+        Args:
+            matrices: List of DataFrames to be used for stability comparison.
+            top_n: Number of top pairs to be used for stability comparison.
+        """
+        self.matrices = [matrix.sort_values(by="treat score", ascending=False).head(top_n) for matrix in matrices]
+
+    def _get_overlapping_pairs(self) -> Set:
+        """Get pairs that overlap across all matrices.
+
+        Returns:
+            Set containing overlapping ids from all matrices.
+        """
+        # Get overlapping ids using sets
+        overlapping_ids = set(self.matrices[0]["id"])
+        for matrix in self.matrices[1:]:
+            overlapping_ids.intersection_update(set(matrix["id"]))
+        return overlapping_ids
+
+    def generate(self) -> List[pd.DataFrame]:
+        overlapping_pairs = self._get_overlapping_pairs()
+        for i, matrix in enumerate(self.matrices):
+            matrix["rank"] = matrix.index
+            self.matrices[i] = matrix.loc[matrix.id.isin(overlapping_pairs)]
+        return self.matrices
 
 
 class NoGenerator:
-    pass
+    def __init__(
+        self,
+        matrix_1_df: pd.DataFrame,
+        matrix_2_df: pd.DataFrame,
+        top_n: int = 1000,
+    ) -> None:
+        """Initialises an instance of the class.
+
+        Args:
+            matrix_1_df: Main matrix to be used for stability comparison.
+            matrix_2_df: Comparison matrix to be used for stability comparison.
+            top_n: Number of top pairs to be used for stability comparison.
+        """
+        self.m_1 = matrix_1_df.head(top_n)
+        self.m_2 = matrix_2_df.head(top_n)
+
+    def generate(self) -> Tuple[pd.DataFrame, pd.DataFrame]:
+        return self.m_1, self.m_2
