@@ -1,52 +1,43 @@
 # Standard library imports
+from typing import Any, List
 from unittest.mock import Mock
+
+import matplotlib.pyplot as plt
 
 # Third-party imports
 import numpy as np
 import pandas as pd
-import pytest
 import pandera
-import matplotlib.pyplot as plt
-
-# Machine learning imports
-from sklearn.base import BaseEstimator
-from sklearn.model_selection import KFold, GridSearchCV
-from sklearn.linear_model import LogisticRegression
-from xgboost import XGBClassifier
 
 # PySpark imports
-from pyspark.sql import SparkSession, DataFrame
-from pyspark.sql import functions as F
-from pyspark.sql.types import (
-    StructType,
-    StructField,
-    StringType,
-    ArrayType,
-    IntegerType,
-    FloatType,
-)
+import pyspark.sql as ps
+import pytest
 
 # Local imports
 from matrix.datasets.graph import KnowledgeGraph
 from matrix.datasets.pair_generator import SingleLabelPairGenerator
+from matrix.inject import OBJECT_KW
+from matrix.pipelines.modelling.model import ModelWrapper
 from matrix.pipelines.modelling.nodes import (
-    create_model_input_nodes,
-    prefilter_nodes,
-    make_splits,
+    apply_transformers,
     attach_embeddings,
+    create_model_input_nodes,
+    make_folds,
+    prefilter_nodes,
     tune_parameters,
 )
-from matrix.pipelines.modelling.model import ModelWrapper
 from matrix.pipelines.modelling.tuning import NopTuner
 
+# Machine learning imports
+from sklearn.base import BaseEstimator
+from sklearn.impute._base import _BaseImputer
+from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import GridSearchCV, KFold
+from xgboost import XGBClassifier
+
 
 @pytest.fixture(scope="module")
-def spark() -> SparkSession:
-    return SparkSession.builder.getOrCreate()
-
-
-@pytest.fixture(scope="module")
-def base_test_data(spark: SparkSession) -> DataFrame:
+def base_test_data(spark: ps.SparkSession) -> ps.DataFrame:
     # Create test data
     nodes_data = [
         ("node1", ["drug_type1"], None),
@@ -54,119 +45,44 @@ def base_test_data(spark: SparkSession) -> DataFrame:
         ("node3", ["other_type"], None),
         ("node4", ["drug_type2", "other_type"], None),
     ]
-    nodes_schema = StructType(
+    nodes_schema = ps.types.StructType(
         [
-            StructField("id", StringType(), False),
-            StructField("all_categories", ArrayType(StringType()), True),
-            StructField("topological_embedding", ArrayType(StringType()), True),
+            ps.types.StructField("id", ps.types.StringType(), False),
+            ps.types.StructField("all_categories", ps.types.ArrayType(ps.types.StringType()), True),
+            ps.types.StructField("topological_embedding", ps.types.ArrayType(ps.types.StringType()), True),
         ]
     )
     return spark.createDataFrame(nodes_data, schema=nodes_schema)
 
 
 @pytest.fixture(scope="module")
-def ground_truth_data(spark: SparkSession) -> DataFrame:
+def ground_truth_data(spark: ps.SparkSession) -> ps.DataFrame:
     gt_data = [("node1", "node2", 1), ("node3", "node4", 0)]
-    gt_schema = StructType(
+    gt_schema = ps.types.StructType(
         [
-            StructField("source", StringType(), False),
-            StructField("target", StringType(), False),
-            StructField("y", IntegerType(), False),
+            ps.types.StructField("source", ps.types.StringType(), False),
+            ps.types.StructField("target", ps.types.StringType(), False),
+            ps.types.StructField("y", ps.types.IntegerType(), False),
         ]
     )
     return spark.createDataFrame(gt_data, schema=gt_schema)
 
 
-def test_prefilter_excludes_non_drug_disease_nodes(base_test_data: DataFrame, ground_truth_data: DataFrame) -> None:
-    result = prefilter_nodes(
-        full_nodes=base_test_data,
-        nodes=base_test_data,
-        gt=ground_truth_data,
-        drug_types=["drug_type1", "drug_type2"],
-        disease_types=["disease_type1"],
-    )
-
-    result_list = result.collect()
-    assert len(result_list) == 3  # Should only include drug/disease nodes
-    assert not any(row.id == "node3" for row in result_list)
-
-
-def test_prefilter_correctly_identifies_drug_nodes(base_test_data: DataFrame, ground_truth_data: DataFrame) -> None:
-    result = prefilter_nodes(
-        full_nodes=base_test_data,
-        nodes=base_test_data,
-        gt=ground_truth_data,
-        drug_types=["drug_type1", "drug_type2"],
-        disease_types=["disease_type1"],
-    )
-
-    result_list = result.collect()
-
-    # Check drug nodes
-    node1 = next(row for row in result_list if row.id == "node1")
-    assert node1.is_drug is True
-    assert node1.is_disease is False
-
-    node4 = next(row for row in result_list if row.id == "node4")
-    assert node4.is_drug is True
-    assert node4.is_disease is False
-
-
-def test_prefilter_correctly_identifies_disease_nodes(base_test_data: DataFrame, ground_truth_data: DataFrame) -> None:
-    result = prefilter_nodes(
-        full_nodes=base_test_data,
-        nodes=base_test_data,
-        gt=ground_truth_data,
-        drug_types=["drug_type1", "drug_type2"],
-        disease_types=["disease_type1"],
-    )
-
-    result_list = result.collect()
-
-    node2 = next(row for row in result_list if row.id == "node2")
-    assert node2.is_drug is False
-    assert node2.is_disease is True
-
-
-def test_prefilter_correctly_identifies_ground_truth_positives(
-    base_test_data: DataFrame, ground_truth_data: DataFrame
-) -> None:
-    result = prefilter_nodes(
-        full_nodes=base_test_data,
-        nodes=base_test_data,
-        gt=ground_truth_data,
-        drug_types=["drug_type1", "drug_type2"],
-        disease_types=["disease_type1"],
-    )
-
-    result_list = result.collect()
-
-    # Check ground truth positive nodes
-    node1 = next(row for row in result_list if row.id == "node1")
-    assert node1.in_ground_pos is True
-
-    node2 = next(row for row in result_list if row.id == "node2")
-    assert node2.in_ground_pos is True
-
-    node4 = next(row for row in result_list if row.id == "node4")
-    assert node4.in_ground_pos is False
-
-
 @pytest.fixture(scope="module")
-def sample_pairs_df(spark: SparkSession) -> DataFrame:
+def sample_pairs_df(spark: ps.SparkSession) -> ps.DataFrame:
     pairs_data = [("node1", "node2", 1), ("node3", "node4", 0), ("node5", "node6", 1)]
-    pairs_schema = StructType(
+    pairs_schema = ps.types.StructType(
         [
-            StructField("source", StringType(), False),
-            StructField("target", StringType(), False),
-            StructField("y", IntegerType(), False),
+            ps.types.StructField("source", ps.types.StringType(), False),
+            ps.types.StructField("target", ps.types.StringType(), False),
+            ps.types.StructField("y", ps.types.IntegerType(), False),
         ]
     )
     return spark.createDataFrame(pairs_data, schema=pairs_schema)
 
 
 @pytest.fixture(scope="module")
-def sample_nodes_df(spark: SparkSession) -> DataFrame:
+def sample_nodes_df(spark: ps.SparkSession) -> ps.DataFrame:
     nodes_data = [
         ("node1", [0.1, 0.2, 0.3]),
         ("node2", [0.4, 0.5, 0.6]),
@@ -175,62 +91,13 @@ def sample_nodes_df(spark: SparkSession) -> DataFrame:
         ("node5", [1.3, 1.4, 1.5]),
         ("node6", [1.6, 1.7, 1.8]),
     ]
-    nodes_schema = StructType(
-        [StructField("id", StringType(), False), StructField("topological_embedding", ArrayType(FloatType()), False)]
+    nodes_schema = ps.types.StructType(
+        [
+            ps.types.StructField("id", ps.types.StringType(), False),
+            ps.types.StructField("topological_embedding", ps.types.ArrayType(ps.types.FloatType()), False),
+        ]
     )
     return spark.createDataFrame(nodes_data, schema=nodes_schema)
-
-
-def test_attach_embeddings_successful(sample_pairs_df: DataFrame, sample_nodes_df: DataFrame) -> None:
-    """Test successful attachment of embeddings to pairs."""
-    result = attach_embeddings(sample_pairs_df, sample_nodes_df)
-
-    # Check schema
-    assert "source_embedding" in result.columns
-    assert "target_embedding" in result.columns
-    assert "y" in result.columns
-
-    # Check number of rows preserved
-    assert result.count() == sample_pairs_df.count()
-
-    first_row = result.filter(F.col("source") == "node1").first()
-
-    assert np.allclose(first_row["source_embedding"], [0.1, 0.2, 0.3])
-    assert np.allclose(first_row["target_embedding"], [0.4, 0.5, 0.6])
-
-
-def test_attach_embeddings_missing_nodes(
-    spark: SparkSession, sample_pairs_df: DataFrame, sample_nodes_df: DataFrame
-) -> None:
-    """Test handling of pairs with missing nodes."""
-    # Add a pair with non-existent nodes
-    new_pair = spark.createDataFrame([("nodeX", "nodeY", 1)], schema=sample_pairs_df.schema)
-    pairs_with_missing = sample_pairs_df.union(new_pair)
-
-    with pytest.raises(pandera.errors.SchemaError):
-        attach_embeddings(pairs_with_missing, sample_nodes_df)
-
-
-def test_attach_embeddings_empty_pairs(
-    spark: SparkSession, sample_pairs_df: DataFrame, sample_nodes_df: DataFrame
-) -> None:
-    """Test handling of empty pairs dataframe."""
-    empty_pairs = spark.createDataFrame([], schema=sample_pairs_df.schema)
-    result = attach_embeddings(empty_pairs, sample_nodes_df)
-    assert result.count() == 0
-
-
-def test_attach_embeddings_schema_validation(spark: SparkSession, sample_pairs_df: DataFrame) -> None:
-    """Test schema validation with invalid node embeddings."""
-    # Create nodes with invalid embedding type (integers instead of floats)
-    invalid_nodes_data = [("node1", [1, 2, 3]), ("node2", [4, 5, 6])]
-    invalid_nodes_schema = StructType(
-        [StructField("id", StringType(), False), StructField("topological_embedding", ArrayType(IntegerType()), False)]
-    )
-    invalid_nodes_df = spark.createDataFrame(invalid_nodes_data, schema=invalid_nodes_schema)
-
-    with pytest.raises(pandera.errors.SchemaError):
-        attach_embeddings(sample_pairs_df, invalid_nodes_df)
 
 
 @pytest.fixture
@@ -251,40 +118,6 @@ def sample_data():
 def simple_splitter():
     """Create a simple K-fold splitter."""
     return KFold(n_splits=2, shuffle=True, random_state=42)
-
-
-def test_make_splits_basic_functionality(sample_data, simple_splitter):
-    """Test basic functionality of make_splits."""
-    result = make_splits(data=sample_data, splitter=simple_splitter)
-
-    # Check that all required columns are present
-    required_columns = ["source", "source_embedding", "target", "target_embedding", "split"]
-    for df in result:
-        assert all(col in df.columns for col in required_columns)
-
-        # Check that we have the same number of rows as input
-        assert len(df) == len(sample_data)
-
-        # Check that splits are properly labeled
-        assert set(df["split"].unique()) == {"TRAIN", "TEST"}
-
-
-def test_make_splits_data_integrity(sample_data, simple_splitter):
-    """Test that data values are preserved after splitting."""
-    result = make_splits(data=sample_data, splitter=simple_splitter)
-
-    for df in result:
-        # Check that original values are preserved
-        assert set(df["source"].unique()) == set(sample_data["source"].unique())
-        assert set(df["target"].unique()) == set(sample_data["target"].unique())
-
-
-def test_make_splits_empty_data(simple_splitter):
-    """Test behavior with empty input data."""
-    empty_data = pd.DataFrame(columns=["source", "source_embedding", "target", "target_embedding", "y"])
-
-    with pytest.raises(ValueError):
-        make_splits(data=empty_data, splitter=simple_splitter)
 
 
 @pytest.fixture()
@@ -317,53 +150,10 @@ def sample_splits():
             "target": ["disease3", "disease4"],
             "target_embedding": [np.array([1.3, 1.4]), np.array([1.5, 1.6])],
             "iteration": [1.0, 1.0],
+            "fold": [0, 1],
             "split": ["TEST", "TRAIN"],
         }
     )
-
-
-def test_create_model_input_nodes_basic(mock_knowledge_graph, mock_generator, sample_splits):
-    result = create_model_input_nodes(graph=mock_knowledge_graph, splits=sample_splits, generator=mock_generator)
-
-    # Check that generator was called with correct arguments
-    mock_generator.generate.assert_called_once_with(mock_knowledge_graph, sample_splits)
-
-    # Check that result has correct number of rows (original + generated)
-    assert len(result) == len(sample_splits) + len(mock_generator.generate.return_value)
-
-    # Check that generated rows have 'TRAIN' split
-    generated_rows = result.iloc[len(sample_splits) :]
-    assert all(generated_rows["split"] == "TRAIN")
-
-    # Check that original splits are preserved
-    original_rows = result.iloc[: len(sample_splits)]
-    assert all(original_rows["split"] == sample_splits["split"])
-
-
-def test_create_model_input_nodes_empty_splits(mock_knowledge_graph, mock_generator):
-    empty_splits = pd.DataFrame(
-        {"source": [], "source_embedding": [], "target": [], "target_embedding": [], "iteration": [], "split": []}
-    )
-
-    result = create_model_input_nodes(graph=mock_knowledge_graph, splits=empty_splits, generator=mock_generator)
-
-    # Check that only generated data is present
-    assert len(result) == len(mock_generator.generate.return_value)
-    assert all(result["split"] == "TRAIN")
-
-
-def test_create_model_input_nodes_generator_empty(mock_knowledge_graph, sample_splits):
-    # Test with generator that returns empty DataFrame
-    empty_generator = Mock(spec=SingleLabelPairGenerator)
-    empty_generator.generate.return_value = pd.DataFrame(
-        {"source": [], "source_embedding": [], "target": [], "target_embedding": [], "iteration": []}
-    )
-
-    result = create_model_input_nodes(graph=mock_knowledge_graph, splits=sample_splits, generator=empty_generator)
-
-    # Check that only original splits are present
-    assert len(result) == len(sample_splits)
-    assert all(result["split"] == sample_splits["split"])
 
 
 @pytest.fixture
@@ -391,6 +181,274 @@ def grid_search_tuner():
     """Create a GridSearchCV tuner."""
     param_grid = {"C": [0.1, 1.0], "max_iter": [100, 200]}
     return GridSearchCV(LogisticRegression(), param_grid, cv=3, scoring="accuracy")
+
+
+class DummyTransformer(_BaseImputer):
+    """
+    Test implementation of transformer
+    """
+
+    def __init__(self, transformed: List[Any]):
+        self.transformed = transformed
+
+    def get_feature_names_out(self, x):
+        return x.columns.tolist()
+
+    def transform(self, x):
+        return self.transformed
+
+
+@pytest.fixture
+def input_df() -> pd.DataFrame:
+    return pd.DataFrame(
+        {
+            "feature_1": [0, 5, 10],
+            "feature_2": [0, 1, 2],
+            "non_transform_col": ["row_1", "row_2", "row_3"],
+        }
+    )
+
+
+@pytest.mark.parametrize(
+    "transformers",
+    [
+        # Validate single transformer
+        {"dummy_transformer_1": {"transformer": DummyTransformer(transformed=[1, 3, 3]), "features": ["feature_1"]}},
+        # Validate multiple transformers
+        {
+            "dummy_transformer_1": {"transformer": DummyTransformer(transformed=[1, 3, 3]), "features": ["feature_1"]},
+            "dummy_transformer_2": {"transformer": DummyTransformer(transformed=[2, 6, 6]), "features": ["feature_2"]},
+        },
+    ],
+)
+def test_apply_transformers(input_df, transformers):
+    # Given input list of transformers
+
+    # When appyling apply transformers
+    result = apply_transformers(input_df, transformers)
+
+    # Then output is of correct type, transformers are applied correctly
+    # and non_transformer_col is untouched
+    assert isinstance(result, pd.DataFrame)
+    assert result.shape == input_df.shape
+    assert set(result.columns) == set(input_df.columns)
+
+    # NOTEL we currently limiting ourselves to transformers with single input feature
+    for _, transformer in transformers.items():
+        np.testing.assert_array_equal(result[transformer["features"][0]].values, transformer["transformer"].transformed)
+
+    # # Check if non-transformed column remains unchanged
+    assert (result["non_transform_col"] == input_df["non_transform_col"]).all()
+
+
+def test_prefilter_excludes_non_drug_disease_nodes(
+    base_test_data: ps.DataFrame, ground_truth_data: ps.DataFrame
+) -> None:
+    result = prefilter_nodes(
+        full_nodes=base_test_data,
+        nodes=base_test_data,
+        gt=ground_truth_data,
+        drug_types=["drug_type1", "drug_type2"],
+        disease_types=["disease_type1"],
+    )
+
+    result_list = result.collect()
+    assert len(result_list) == 3  # Should only include drug/disease nodes
+    assert not any(row.id == "node3" for row in result_list)
+
+
+def test_prefilter_correctly_identifies_drug_nodes(
+    base_test_data: ps.DataFrame, ground_truth_data: ps.DataFrame
+) -> None:
+    result = prefilter_nodes(
+        full_nodes=base_test_data,
+        nodes=base_test_data,
+        gt=ground_truth_data,
+        drug_types=["drug_type1", "drug_type2"],
+        disease_types=["disease_type1"],
+    )
+
+    result_list = result.collect()
+
+    # Check drug nodes
+    node1 = next(row for row in result_list if row.id == "node1")
+    assert node1.is_drug is True
+    assert node1.is_disease is False
+
+    node4 = next(row for row in result_list if row.id == "node4")
+    assert node4.is_drug is True
+    assert node4.is_disease is False
+
+
+def test_prefilter_correctly_identifies_disease_nodes(
+    base_test_data: ps.DataFrame, ground_truth_data: ps.DataFrame
+) -> None:
+    result = prefilter_nodes(
+        full_nodes=base_test_data,
+        nodes=base_test_data,
+        gt=ground_truth_data,
+        drug_types=["drug_type1", "drug_type2"],
+        disease_types=["disease_type1"],
+    )
+
+    result_list = result.collect()
+
+    node2 = next(row for row in result_list if row.id == "node2")
+    assert node2.is_drug is False
+    assert node2.is_disease is True
+
+
+def test_prefilter_correctly_identifies_ground_truth_positives(
+    base_test_data: ps.DataFrame, ground_truth_data: ps.DataFrame
+) -> None:
+    result = prefilter_nodes(
+        full_nodes=base_test_data,
+        nodes=base_test_data,
+        gt=ground_truth_data,
+        drug_types=["drug_type1", "drug_type2"],
+        disease_types=["disease_type1"],
+    )
+
+    result_list = result.collect()
+
+    # Check ground truth positive nodes
+    node1 = next(row for row in result_list if row.id == "node1")
+    assert node1.in_ground_pos is True
+
+    node2 = next(row for row in result_list if row.id == "node2")
+    assert node2.in_ground_pos is True
+
+    node4 = next(row for row in result_list if row.id == "node4")
+    assert node4.in_ground_pos is False
+
+
+def test_attach_embeddings_successful(sample_pairs_df: ps.DataFrame, sample_nodes_df: ps.DataFrame) -> None:
+    """Test successful attachment of embeddings to pairs."""
+    result = attach_embeddings(sample_pairs_df, sample_nodes_df)
+
+    # Check schema
+    assert "source_embedding" in result.columns
+    assert "target_embedding" in result.columns
+    assert "y" in result.columns
+
+    # Check number of rows preserved
+    assert result.count() == sample_pairs_df.count()
+
+    first_row = result.filter(ps.functions.col("source") == "node1").first()
+
+    assert np.allclose(first_row["source_embedding"], [0.1, 0.2, 0.3])
+    assert np.allclose(first_row["target_embedding"], [0.4, 0.5, 0.6])
+
+
+def test_attach_embeddings_missing_nodes(
+    spark: ps.SparkSession, sample_pairs_df: ps.DataFrame, sample_nodes_df: ps.DataFrame
+) -> None:
+    """Test handling of pairs with missing nodes."""
+    # Add a pair with non-existent nodes
+    new_pair = spark.createDataFrame([("nodeX", "nodeY", 1)], schema=sample_pairs_df.schema)
+    pairs_with_missing = sample_pairs_df.union(new_pair)
+
+    with pytest.raises(pandera.errors.SchemaError):
+        attach_embeddings(pairs_with_missing, sample_nodes_df)
+
+
+def test_attach_embeddings_empty_pairs(
+    spark: ps.SparkSession, sample_pairs_df: ps.DataFrame, sample_nodes_df: ps.DataFrame
+) -> None:
+    """Test handling of empty pairs dataframe."""
+    empty_pairs = spark.createDataFrame([], schema=sample_pairs_df.schema)
+    result = attach_embeddings(empty_pairs, sample_nodes_df)
+    assert result.count() == 0
+
+
+def test_attach_embeddings_schema_validation(spark: ps.SparkSession, sample_pairs_df: ps.DataFrame) -> None:
+    """Test schema validation with invalid node embeddings."""
+    # Create nodes with invalid embedding type (integers instead of floats)
+    invalid_nodes_data = [("node1", [1, 2, 3]), ("node2", [4, 5, 6])]
+    invalid_nodes_schema = ps.types.StructType(
+        [
+            ps.types.StructField("id", ps.types.StringType(), False),
+            ps.types.StructField("topological_embedding", ps.types.ArrayType(ps.types.IntegerType()), False),
+        ]
+    )
+    invalid_nodes_df = spark.createDataFrame(invalid_nodes_data, schema=invalid_nodes_schema)
+
+    with pytest.raises(pandera.errors.SchemaError):
+        attach_embeddings(sample_pairs_df, invalid_nodes_df)
+
+
+def test_make_folds_basic_functionality(sample_data, simple_splitter):
+    """Test basic functionality of make_folds."""
+    result = make_folds(data=sample_data, splitter=simple_splitter)
+
+    # Check that all required columns are present
+    required_columns = ["source", "source_embedding", "target", "target_embedding", "split", "fold"]
+    assert all(col in result.columns for col in required_columns)
+
+    # Check that we have the same number of rows as input
+    assert len(result) == len(sample_data) * 3
+
+    # Check that splits are properly labeled
+    assert set(result["split"].unique()) == {"TRAIN", "TEST"}
+
+    # Check that the folds column has the correct range
+    assert set(result["fold"].unique()) == {0, 1, 2}
+
+
+def test_make_folds_data_integrity(sample_data, simple_splitter):
+    """Test that data values are preserved after splitting."""
+    result = make_folds(data=sample_data, splitter=simple_splitter)
+
+    # Check that original values are preserved
+    assert set(result["source"].unique()) == set(sample_data["source"].unique())
+    assert set(result["target"].unique()) == set(sample_data["target"].unique())
+
+
+def test_make_folds_empty_data(simple_splitter):
+    """Test behavior with empty input data."""
+    empty_data = pd.DataFrame(columns=["source", "source_embedding", "target", "target_embedding", "y"])
+
+    with pytest.raises(ValueError):
+        make_folds(data=empty_data, splitter=simple_splitter)
+
+
+def test_create_model_input_nodes_basic(mock_knowledge_graph, mock_generator, sample_data, simple_splitter):
+    # Get number of folds (test/train splits plus full training set)
+    n_folds = simple_splitter.get_n_splits() + 1
+
+    # Given the output of make_folds
+    mock_splits = make_folds(data=sample_data, splitter=simple_splitter)
+
+    # When creating model input nodes
+    result = create_model_input_nodes(graph=mock_knowledge_graph, splits=mock_splits, generator=mock_generator)
+
+    # Check that generator was called the correct number of times (once per fold)
+    assert mock_generator.generate.call_count == n_folds
+
+    # Check that result has correct number of rows (original + generated * number of folds)
+    assert len(result) == len(mock_splits) + len(mock_generator.generate.return_value) * n_folds
+
+    # Check that generated rows have 'TRAIN' split
+    generated_rows = result.iloc[len(mock_splits) :]
+    assert all(generated_rows["split"] == "TRAIN")
+
+    # Check that original splits are preserved
+    original_rows = result.iloc[: len(mock_splits)]
+    assert all(original_rows["split"] == mock_splits["split"])
+
+
+def test_create_model_input_nodes_generator_empty(mock_knowledge_graph, sample_splits):
+    # Test with generator that returns empty DataFrame
+    empty_generator = Mock(spec=SingleLabelPairGenerator)
+    empty_generator.generate.return_value = pd.DataFrame(
+        {"source": [], "source_embedding": [], "target": [], "target_embedding": [], "iteration": []}
+    )
+
+    result = create_model_input_nodes(graph=mock_knowledge_graph, splits=sample_splits, generator=empty_generator)
+
+    # Check that only original splits are present
+    assert len(result) == len(sample_splits)
+    assert all(result["split"] == sample_splits["split"])
 
 
 @pytest.mark.parametrize(
@@ -427,8 +485,8 @@ def test_tune_parameters(tune_data: pd.DataFrame, tuner_config: dict):
 
     # Check return value structure
     assert isinstance(result, dict)
-    assert "object" in result
-    assert result["object"] == tuner_config["expected_object"]
+    assert OBJECT_KW in result
+    assert result[OBJECT_KW] == tuner_config["expected_object"]
 
     # Check parameters
     if isinstance(tuner_config["expected_params"], dict):
