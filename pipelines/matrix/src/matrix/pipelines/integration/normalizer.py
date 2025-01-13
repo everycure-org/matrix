@@ -61,13 +61,14 @@ class NCATSNodeNormalizer(Normalizer):
                 resp.raise_for_status()
 
         df["normalized_id"] = [self._extract_id(curie, response_json, self._json_parser) for curie in curies]
+        df["normalized_id"] = df["normalized_id"].astype(str)
         return df
 
     @staticmethod
     def _extract_id(id: str, response: Dict[str, Any], json_parser: parse) -> Dict[str, Any]:
         """Extract normalized IDs from the response using the json parser."""
         try:
-            return str(json_parser.find(response.get(id))[0].value)
+            return json_parser.find(response.get(id))[0].value
         except (IndexError, KeyError):
             logger.debug(f"Not able to normalize for {id}: {response.get(id)}, {json_parser}")
             return None
