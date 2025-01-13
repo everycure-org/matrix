@@ -6,7 +6,6 @@ import json
 from typing import Iterable, Iterator
 
 import yaml
-import logging
 from pathlib import Path
 
 
@@ -17,12 +16,11 @@ def locate_releases_path() -> Path:
     return changelog_path
 
 
-def list_json_files(changelog_abs_path: Path, filename_pattern: str = "v*_info.json") -> list:
+def list_json_files(changelog_abs_path: Path, filename_pattern: str = "v*_info.json") -> Iterable[Path]:
     """
     Returns a list of files matching the `filename_pattern` in the changelog files dir.
     """
-    json_files = list(Path(changelog_abs_path).glob(filename_pattern))
-    logging.debug(f"Json files found in '{changelog_abs_path}': {json_files}")
+    json_files = Path(changelog_abs_path).glob(filename_pattern)
     return json_files
 
 
@@ -70,11 +68,11 @@ def main() -> None:
     """Extracts json files from the changelog_files directory, aggregates them and saves as one yaml file"""
     changelog_abs_path = locate_releases_path()
     files = list_json_files(changelog_abs_path)
-    if not files:
-        raise ValueError(f"No json files found in {changelog_abs_path}")
-    loaded_files = parse_jsons(files)
-    sorted_files = sort_releases(loaded_files)
-    formatted_files = format_values(sorted_files)
+    releases = parse_jsons(files)
+    sorted_releases = sort_releases(releases)
+    if not sorted_releases:
+        raise ValueError(f"No release info found in {changelog_abs_path}")
+    formatted_files = format_values(sorted_releases)
     yaml_aggr = dump_to_yaml(formatted_files)
     save_yaml(yaml_aggr, changelog_abs_path)
 
