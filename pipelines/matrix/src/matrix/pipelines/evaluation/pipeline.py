@@ -185,12 +185,11 @@ def create_pipeline(**kwargs) -> Pipeline:
     )
     # Calculate stability between folds
     for stability in settings.DYNAMIC_PIPELINES_MAPPING.get("stability"):
-        for main_model in models.keys():
-            for model_to_compare in models.keys():
+        for fold_main in range(n_cross_val_folds):
+            for fold_to_compare in range(n_cross_val_folds):
                 pipelines.append(
                     pipeline(
-                        _create_stability_pipeline(main_model, model_to_compare, stability["stability_name"]),
-                        tags=main_model,
+                        _create_stability_pipeline(fold_main, fold_to_compare, stability["stability_name"]),
                     )
                 )
 
