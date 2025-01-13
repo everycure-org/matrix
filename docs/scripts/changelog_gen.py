@@ -1,4 +1,7 @@
-import os
+"""Aggregate all the individual changelog files per release into a single YAML
+that can immediately be referenced by the Releases page on the documentation
+website."""
+
 import json
 from typing import Iterable, Iterator
 
@@ -60,8 +63,7 @@ def dump_to_yaml(
 
 
 def save_yaml(yaml_data: str, changelog_abs_path: Path) -> None:
-    with open(os.path.join(changelog_abs_path, "releases_aggregated.yaml"), "w") as file:
-        file.write(yaml_data)
+    (changelog_abs_path / "releases_aggregated.yaml").write_text(yaml_data)
 
 
 def main() -> None:
