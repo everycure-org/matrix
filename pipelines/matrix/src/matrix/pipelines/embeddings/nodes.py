@@ -43,7 +43,7 @@ class GraphDS(GraphDataScience):
 class IngestedNodesSchema(DataFrameModel):
     id: ps.types.StringType
     label: ps.types.StringType
-    name: ps.types.StringType
+    name: ps.types.StringType = Field(nullable=True)
     property_keys: ps.types.ArrayType(ps.types.StringType())  # type: ignore
     property_values: ps.types.ArrayType(ps.types.StringType())  # type: ignore
     upstream_data_source: ps.types.ArrayType(ps.types.StringType())  # type: ignore
