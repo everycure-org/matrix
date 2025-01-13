@@ -1,4 +1,4 @@
-from typing import Union
+from typing import List, Union
 
 from kedro.pipeline import Pipeline, pipeline
 from matrix import settings
@@ -46,7 +46,7 @@ def _create_evaluation_fold_pipeline(evaluation: str, fold: Union[str, int]) -> 
     )
 
 
-def create_model_pipeline(evaluation_names: str, n_cross_val_folds: int) -> Pipeline:
+def create_model_pipeline(evaluation_names: List[str], n_cross_val_folds: int) -> Pipeline:
     """Create pipeline to evaluate a single model.
 
     Args:
