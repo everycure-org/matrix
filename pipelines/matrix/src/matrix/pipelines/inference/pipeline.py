@@ -33,11 +33,10 @@ def _create_inference_pipeline() -> Pipeline:
 
     n_cross_val_folds = settings.DYNAMIC_PIPELINES_MAPPING.get("cross_validation").get("n_cross_val_folds")
 
+    mg_pipeline = matrix_generation_pipeline()
     inference_nodes = pipeline(
-        [ # Include only models trained on full ground truth data
-            node
-            for node in mg_pipeline.nodes
-            if f"fold_{n_cross_val_folds}" in node.name
+        [  # Include only models trained on full ground truth data
+            node for node in mg_pipeline.nodes if f"fold_{n_cross_val_folds}" in node.name
         ]
     )
 
