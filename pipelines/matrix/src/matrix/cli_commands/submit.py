@@ -142,13 +142,13 @@ def _submit(
         if dry_run:
             return
 
-        build_push_docker(run_name, verbose=verbose)
+        build_push_docker(run_name, verbose=False)
 
         ensure_namespace(namespace, verbose=verbose)
 
         apply_argo_template(namespace, file_path, verbose=verbose)
 
-        submit_workflow(run_name, namespace, verbose=verbose)
+        submit_workflow(run_name, namespace, verbose=False)
 
         console.print(Panel.fit(
             f"[bold green]Workflow {'prepared' if dry_run else 'submitted'} successfully![/bold green]\n"
