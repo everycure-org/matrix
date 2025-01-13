@@ -2,10 +2,9 @@ from typing import List, Type
 
 import pandera.pyspark as pa
 from pandera.pyspark import Field
+import pyspark.sql as ps
 import pyspark.sql.functions as F
 import pyspark.sql.types as T
-
-from pyspark.sql import DataFrame
 
 
 def cols_for_schema(schema_obj: Type[pa.DataFrameModel]) -> List[str]:
@@ -42,7 +41,7 @@ class KGEdgeSchema(pa.DataFrameModel):
         strict = False
 
     @classmethod
-    def group_edges_by_id(cls, concatenated_edges_df: DataFrame) -> DataFrame:
+    def group_edges_by_id(cls, concatenated_edges_df: ps.DataFrame) -> ps.DataFrame:
         return (
             concatenated_edges_df.groupBy(["subject", "predicate", "object"])
             .agg(
@@ -84,7 +83,7 @@ class KGNodeSchema(pa.DataFrameModel):
         strict = True
 
     @classmethod
-    def group_nodes_by_id(cls, nodes_df: DataFrame) -> DataFrame:
+    def group_nodes_by_id(cls, nodes_df: ps.DataFrame) -> ps.DataFrame:
         """Utility function to group nodes by id.
 
         This should be used after the IDs are normalized so we can combine node properties from

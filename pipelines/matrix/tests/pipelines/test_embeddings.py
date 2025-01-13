@@ -1,19 +1,13 @@
-import pytest
-
-from matrix.pipelines.embeddings.nodes import ingest_nodes
-import pyspark
-from pyspark.ml.feature import PCA
-from pyspark.sql.types import StructType, StructField, StringType, ArrayType, FloatType, DoubleType
-from pyspark.testing import assertDataFrameEqual
-
-from matrix.pipelines.embeddings.nodes import reduce_embeddings_dimension
 import numpy as np
-import pyspark.sql.functions as F
-from matrix.pipelines.embeddings.nodes import extract_topological_embeddings
+import pyspark.sql as ps
+import pytest
+from matrix.pipelines.embeddings.nodes import extract_topological_embeddings, ingest_nodes, reduce_embeddings_dimension
+from pyspark.ml.feature import PCA
+from pyspark.testing import assertDataFrameEqual
 
 
 @pytest.fixture
-def sample_input_df(spark: pyspark.sql.SparkSession) -> pyspark.sql.DataFrame:
+def sample_input_df(spark: ps.SparkSession) -> ps.DataFrame:
     data = [
         {
             "id": "1",
@@ -33,7 +27,85 @@ def sample_input_df(spark: pyspark.sql.SparkSession) -> pyspark.sql.DataFrame:
     return spark.createDataFrame(data)
 
 
-def test_ingest_nodes_basic(spark: pyspark.sql.SparkSession, sample_input_df: pyspark.sql.DataFrame) -> None:
+@pytest.fixture
+def sample_embeddings_df(spark: ps.SparkSession) -> ps.DataFrame:
+    """Create a sample dataframe with embeddings."""
+    schema = ps.types.StructType(
+        [
+            ps.types.StructField("id", ps.types.StringType(), False),
+            ps.types.StructField("embedding", ps.types.ArrayType(ps.types.FloatType(), True), False),
+        ]
+    )
+
+    data = [
+        {"id": "1", "embedding": [1.0, 2.0, 3.0, 4.0]},
+        {"id": "2", "embedding": [2.0, 3.0, 4.0, 5.0]},
+        {"id": "3", "embedding": [3.0, 4.0, 5.0, 6.0]},
+    ]
+    return spark.createDataFrame(data, schema)
+
+
+@pytest.fixture
+def pca_transformer() -> PCA:
+    """Create a PCA transformer."""
+    return PCA(k=2)  # Reduce to 2 dimensions
+
+
+@pytest.fixture
+def sample_nodes_df(spark):
+    """Create sample nodes dataframe."""
+    schema = ps.types.StructType(
+        [
+            ps.types.StructField("id", ps.types.StringType(), False),
+            ps.types.StructField("name", ps.types.StringType(), True),
+            ps.types.StructField("category", ps.types.StringType(), True),
+        ]
+    )
+
+    data = [("node1", "Node 1", "Category A"), ("node2", "Node 2", "Category B"), ("node3", "Node 3", "Category A")]
+
+    return spark.createDataFrame(data, schema)
+
+
+@pytest.fixture
+def sample_string_embeddings_df(spark):
+    """Create sample embeddings dataframe with string embeddings."""
+    schema = ps.types.StructType(
+        [
+            ps.types.StructField("id", ps.types.StringType(), False),
+            ps.types.StructField("topological_embedding", ps.types.StringType(), True),
+            ps.types.StructField("pca_embedding", ps.types.ArrayType(ps.types.FloatType()), True),
+        ]
+    )
+
+    data = [
+        ("node1", "[1.0, 2.0, 3.0]", [0.1, 0.2]),
+        ("node2", "[4.0, 5.0, 6.0]", [0.3, 0.4]),
+    ]
+
+    return spark.createDataFrame(data, schema)
+
+
+@pytest.fixture
+def sample_array_embeddings_df(spark):
+    """Create sample embeddings dataframe with array embeddings."""
+    schema = ps.types.StructType(
+        [
+            ps.types.StructField("id", ps.types.StringType(), False),
+            ps.types.StructField("topological_embedding", ps.types.ArrayType(ps.types.DoubleType()), True),
+            ps.types.StructField("pca_embedding", ps.types.ArrayType(ps.types.DoubleType()), True),
+        ]
+    )
+
+    data = [
+        ("node1", [1.0, 2.0, 3.0], [0.1, 0.2]),
+        ("node2", [4.0, 5.0, 6.0], [0.3, 0.4]),
+    ]
+
+    return spark.createDataFrame(data, schema)
+
+
+def test_ingest_nodes_basic(spark: ps.SparkSession, sample_input_df: ps.DataFrame) -> None:
     """Test basic functionality of ingest_nodes."""
     result = ingest_nodes(sample_input_df)
 
@@ -61,7 +133,7 @@ def test_ingest_nodes_basic(spark: pyspark.sql.SparkSession, sample_input_df: py
     assertDataFrameEqual(result_subset, expected_df)
 
 
-def test_ingest_nodes_empty_df(spark: pyspark.sql.SparkSession) -> None:
+def test_ingest_nodes_empty_df(spark: ps.SparkSession) -> None:
     """Test handling of empty dataframe."""
     empty_df = spark.createDataFrame(
         [], "id string, name string, category string, description string, upstream_data_source array<string>"
@@ -71,29 +143,8 @@ def test_ingest_nodes_empty_df(spark: pyspark.sql.SparkSession) -> None:
     assert result.count() == 0
 
 
-@pytest.fixture
-def sample_embeddings_df(spark: pyspark.sql.SparkSession) -> pyspark.sql.DataFrame:
-    """Create a sample dataframe with embeddings."""
-    schema = StructType(
-        [StructField("id", StringType(), False), StructField("embedding", ArrayType(FloatType(), True), False)]
-    )
-
-    data = [
-        {"id": "1", "embedding": [1.0, 2.0, 3.0, 4.0]},
-        {"id": "2", "embedding": [2.0, 3.0, 4.0, 5.0]},
-        {"id": "3", "embedding": [3.0, 4.0, 5.0, 6.0]},
-    ]
-    return spark.createDataFrame(data, schema)
-
-
-@pytest.fixture
-def pca_transformer() -> PCA:
-    """Create a PCA transformer."""
-    return PCA(k=2)  # Reduce to 2 dimensions
-
-
 def test_reduce_embeddings_dimension_with_transformation(
-    sample_embeddings_df: pyspark.sql.DataFrame, pca_transformer: PCA
+    sample_embeddings_df: ps.DataFrame, pca_transformer: PCA
 ) -> None:
     """Test dimensionality reduction when skip=False."""
     # Arrange
@@ -116,7 +167,7 @@ def test_reduce_embeddings_dimension_with_transformation(
     assert result_df.schema["pca_embedding"].dataType.elementType.typeName() == "float"
 
 
-def test_reduce_embeddings_dimension_skip(sample_embeddings_df, pca_transformer):
+def test_reduce_embeddings_dimension_skip(sample_embeddings_df: ps.DataFrame, pca_transformer: PCA) -> None:
     """Test when skip=True, should return original embeddings."""
     # Arrange
     params = {"transformer": pca_transformer, "input": "embedding", "output": "pca_embedding", "skip": True}
@@ -139,7 +190,7 @@ def test_reduce_embeddings_dimension_skip(sample_embeddings_df, pca_transformer)
         assert np.array_equal(orig["embedding"], result["pca_embedding"])
 
 
-def test_reduce_embeddings_dimension_invalid_input(sample_embeddings_df, pca_transformer):
+def test_reduce_embeddings_dimension_invalid_input(sample_embeddings_df: ps.DataFrame, pca_transformer: PCA) -> None:
     """Test with invalid input column name."""
     # Arrange
     params = {"transformer": pca_transformer, "input": "nonexistent_column", "output": "pca_embedding", "skip": False}
@@ -149,60 +200,6 @@ def test_reduce_embeddings_dimension_invalid_input(sample_embeddings_df, pca_tra
         reduce_embeddings_dimension(sample_embeddings_df, **params)
 
 
-@pytest.fixture
-def sample_nodes_df(spark):
-    """Create sample nodes dataframe."""
-    schema = StructType(
-        [
-            StructField("id", StringType(), False),
-            StructField("name", StringType(), True),
-            StructField("category", StringType(), True),
-        ]
-    )
-
-    data = [("node1", "Node 1", "Category A"), ("node2", "Node 2", "Category B"), ("node3", "Node 3", "Category A")]
-
-    return spark.createDataFrame(data, schema)
-
-
-@pytest.fixture
-def sample_string_embeddings_df(spark):
-    """Create sample embeddings dataframe with string embeddings."""
-    schema = StructType(
-        [
-            StructField("id", StringType(), False),
-            StructField("topological_embedding", StringType(), True),
-            StructField("pca_embedding", ArrayType(FloatType()), True),
-        ]
-    )
-
-    data = [
-        ("node1", "[1.0, 2.0, 3.0]", [0.1, 0.2]),
-        ("node2", "[4.0, 5.0, 6.0]", [0.3, 0.4]),
-    ]
-
-    return spark.createDataFrame(data, schema)
-
-
-@pytest.fixture
-def sample_array_embeddings_df(spark):
-    """Create sample embeddings dataframe with array embeddings."""
-    schema = StructType(
-        [
-            StructField("id", StringType(), False),
-            StructField("topological_embedding", ArrayType(DoubleType()), True),
-            StructField("pca_embedding", ArrayType(DoubleType()), True),
-        ]
-    )
-
-    data = [
-        ("node1", [1.0, 2.0, 3.0], [0.1, 0.2]),
-        ("node2", [4.0, 5.0, 6.0], [0.3, 0.4]),
-    ]
-
-    return spark.createDataFrame(data, schema)
-
-
 def test_extract_topological_embeddings_string(sample_nodes_df, sample_string_embeddings_df):
     """Test extraction of topological embeddings when stored as strings."""
     result = extract_topological_embeddings(sample_string_embeddings_df, sample_nodes_df, "topological_embedding")
@@ -210,14 +207,14 @@ def test_extract_topological_embeddings_string(sample_nodes_df, sample_string_em
     # Check schema
     assert "topological_embedding" in result.columns
     assert "pca_embedding" in result.columns
-    assert isinstance(result.schema["topological_embedding"].dataType, ArrayType)
+    assert isinstance(result.schema["topological_embedding"].dataType, ps.types.ArrayType)
 
     # Check data
     result_data = result.collect()
     assert len(result_data) == 3  # All nodes should be present (left join)
 
     # Check specific values
-    node1 = result.filter(F.col("id") == "node1").first()
+    node1 = result.filter(ps.functions.col("id") == "node1").first()
     # check if almost equal
     assert np.allclose(node1.topological_embedding, [1.0, 2.0, 3.0])
     assert np.allclose(node1.pca_embedding, [0.1, 0.2])
@@ -230,14 +227,14 @@ def test_extract_topological_embeddings_array(sample_nodes_df, sample_array_embe
     # Check schema
     assert "topological_embedding" in result.columns
     assert "pca_embedding" in result.columns
-    assert isinstance(result.schema["topological_embedding"].dataType, ArrayType)
+    assert isinstance(result.schema["topological_embedding"].dataType, ps.types.ArrayType)
 
     # Check data
     result_data = result.collect()
     assert len(result_data) == 3  # All nodes should be present (left join)
 
     # Check specific values
-    node1 = result.filter(F.col("id") == "node1").first()
+    node1 = result.filter(ps.functions.col("id") == "node1").first()
     # check if almost equal
     assert np.allclose(node1.topological_embedding, [1.0, 2.0, 3.0])
     assert np.allclose(node1.pca_embedding, [0.1, 0.2])
@@ -248,6 +245,6 @@ def test_extract_topological_embeddings_missing_nodes(sample_nodes_df, sample_ar
     result = extract_topological_embeddings(sample_array_embeddings_df, sample_nodes_df, "topological_embedding")
 
     # Check node without embedding
-    node3 = result.filter(F.col("id") == "node3").first()
+    node3 = result.filter(ps.functions.col("id") == "node3").first()
     assert node3.topological_embedding is None
     assert node3.pca_embedding is None

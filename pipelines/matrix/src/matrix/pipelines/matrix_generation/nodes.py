@@ -3,7 +3,7 @@ from pandera import DataFrameModel
 import pandera as pa
 from tqdm import tqdm
 from typing import List, Dict, Union, Tuple
-from pyspark.sql import DataFrame
+import pyspark.sql as ps
 from sklearn.impute._base import _BaseImputer
 
 import pandas as pd
@@ -23,10 +23,10 @@ logger = logging.getLogger(__name__)
 
 
 def enrich_embeddings(
-    nodes: DataFrame,
-    drugs: DataFrame,
-    diseases: DataFrame,
-) -> DataFrame:
+    nodes: ps.DataFrame,
+    drugs: ps.DataFrame,
+    diseases: ps.DataFrame,
+) -> ps.DataFrame:
     """Function to enrich drug and disease list with embeddings.
 
     Args:
@@ -81,7 +81,7 @@ def _add_flag_columns(matrix: pd.DataFrame, known_pairs: pd.DataFrame, clinical_
     return matrix
 
 
-def spark_to_pd(nodes: DataFrame) -> pd.DataFrame:
+def spark_to_pd(nodes: ps.DataFrame) -> pd.DataFrame:
     """Temporary function to transform spark parquet to pandas parquet.
 
     Related to https://github.com/everycure-org/matrix/issues/71.
@@ -94,8 +94,8 @@ def spark_to_pd(nodes: DataFrame) -> pd.DataFrame:
 
 
 class TrialSchema(DataFrameModel):
-    source: Series[object]
-    target: Series[object]
+    source: Series[str]
+    target: Series[str]
     is_known_positive: Series[bool]
     is_known_negative: Series[bool]
     trial_sig_better: Series[bool]
@@ -110,10 +110,10 @@ class TrialSchema(DataFrameModel):
 @pa.check_output(TrialSchema)
 @inject_object()
 def generate_pairs(
+    known_pairs: pd.DataFrame,
     drugs: pd.DataFrame,
     diseases: pd.DataFrame,
     graph: KnowledgeGraph,
-    known_pairs: pd.DataFrame,
     clinical_trials: pd.DataFrame,
 ) -> pd.DataFrame:
     """Function to generate matrix dataset.
@@ -121,10 +121,10 @@ def generate_pairs(
     FUTURE: Consider rewriting operations in PySpark for speed
 
     Args:
+        known_pairs: Labelled ground truth drug-disease pairs dataset.
         drugs: Dataframe containing IDs for the list of drugs.
         diseases: Dataframe containing IDs for the list of diseases.
         graph: Object containing node embeddings.
-        known_pairs: Labelled ground truth drug-disease pairs dataset.
         clinical_trials: Pairs dataset representing outcomes of recent clinical trials.
 
     Returns:
@@ -230,19 +230,15 @@ def make_batch_predictions(
         batch[not_treat_score_col_name] = preds[:, 0]
         batch[treat_score_col_name] = preds[:, 1]
         batch[unknown_score_col_name] = preds[:, 2]
-        # Drop embedding columns
         batch = batch.drop(columns=["source_embedding", "target_embedding"])
         return batch
 
-    # Group data by the specified prefix
     grouped = data.groupby(batch_by)
 
-    # Process data in batches
     result_parts = []
     for _, batch in tqdm(grouped):
         result_parts.append(process_batch(batch))
 
-    # Combine results
     results = pd.concat(result_parts, axis=0)
 
     return results
