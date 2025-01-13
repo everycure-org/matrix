@@ -2,15 +2,14 @@ import logging
 from typing import Dict
 
 import pandera as pa
-from pandera.pyspark import DataFrameModel
-
 import pyspark.sql as ps
 import pyspark.sql.functions as f
 import pyspark.sql.types as T
-
-from .transformer import GraphTransformer
+from pandera.pyspark import DataFrameModel
 
 from matrix.schemas.knowledge_graph import KGEdgeSchema, KGNodeSchema, cols_for_schema
+
+from .transformer import GraphTransformer
 
 logger = logging.getLogger(__name__)
 
@@ -66,7 +65,7 @@ class RTXTransformer(GraphTransformer):
             .withColumn("upstream_data_source",          f.array(f.lit("rtxkg2")))
             .withColumn("knowledge_level",               f.lit(None).cast(T.StringType()))
             .withColumn("aggregator_knowledge_source",   f.split(f.col("knowledge_source:string[]"), RTX_SEPARATOR)) # RTX KG2 2.10 does not exist
-            .withColumn("primary_knowledge_source",      f.col("aggregator_knowledge_source").getItem(0)) # RTX KG2 2.10 `primary_knowledge_source``
+            .withColumn("primary_knowledge_source",      f.col("aggregator_knowledge_source")) # RTX KG2 2.10 `primary_knowledge_source``
             .withColumn("publications",                  f.split(f.col("publications:string[]"), RTX_SEPARATOR))
             .withColumn("subject_aspect_qualifier",      f.lit(None).cast(T.StringType())) #not present in RTX KG2 at this time
             .withColumn("subject_direction_qualifier",   f.lit(None).cast(T.StringType())) #not present in RTX KG2 at this time
@@ -118,12 +117,13 @@ def filter_semmed(
         .withColumnRenamed("curie", "id")
         .persist()
     )
-
     table = f.broadcast(curie_to_pmids)
-
-    semmed_edges = (
+    single_semmed_edges = (
         edges_df.alias("edges")
-        .filter(f.col("primary_knowledge_source") == f.lit("infores:semmeddb"))
+        .filter(
+            (f.size(f.col("primary_knowledge_source")) == 1)
+            & (f.col("primary_knowledge_source").getItem(0) == "infores:semmeddb")
+        )
         # Enrich subject pubmed identifiers
         .join(
             table.alias("subj"),
@@ -146,10 +146,10 @@ def filter_semmed(
         # fmt: on
         .select("edges.*")
     )
-
-    edges_filtered = edges_df.filter(f.col("primary_knowledge_source") != f.lit("infores:semmeddb")).unionByName(
-        semmed_edges
-    )
+    edges_filtered = edges_df.filter(
+        ~(f.size(f.col("primary_knowledge_source")) == 1)
+        & (f.col("primary_knowledge_source").getItem(0) == "infores:semmeddb")
+    ).unionByName(single_semmed_edges)
     return edges_filtered
 
 
