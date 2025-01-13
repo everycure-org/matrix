@@ -6,7 +6,6 @@ from matrix.pipelines.data_release.pipeline import create_pipeline as create_dat
 from matrix.pipelines.embeddings.pipeline import create_pipeline as create_embeddings_pipeline
 from matrix.pipelines.evaluation.pipeline import create_pipeline as create_evaluation_pipeline
 from matrix.pipelines.fabricator.pipeline import create_pipeline as create_fabricator_pipeline
-from matrix.pipelines.inference.pipeline import create_pipeline as create_inference_pipeline
 from matrix.pipelines.ingestion.pipeline import create_pipeline as create_ingestion_pipeline
 from matrix.pipelines.integration.pipeline import create_pipeline as create_integration_pipeline
 from matrix.pipelines.matrix_generation.pipeline import create_pipeline as create_matrix_pipeline
@@ -32,7 +31,7 @@ def register_pipelines() -> Dict[str, Pipeline]:
         "modelling": create_modelling_pipeline(),
         "matrix_generation": create_matrix_pipeline(),
         "evaluation": create_evaluation_pipeline(),
-        "inference": create_inference_pipeline(),  # Run manually based on medical input
+        # "inference": create_inference_pipeline(),  # Run manually based on medical input
     }
 
     # Higher order pipelines
@@ -58,8 +57,9 @@ def register_pipelines() -> Dict[str, Pipeline]:
 
     # Test pipelines
     pipelines["test"] = (
-          pipelines["fabricator"]
+        pipelines["fabricator"]
         + pipelines["__default__"]
+        + pipelines["data_release"] 
     )
     # fmt: on
 

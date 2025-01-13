@@ -1,16 +1,16 @@
-from matrix import settings
 from kedro.pipeline import Pipeline, pipeline
+from matrix import settings
+from matrix.kedro4argo_node import ArgoNode
 
-from matrix.kedro4argo_node import argo_node
-from . import nodes as nd
 from ..matrix_generation.pipeline import create_pipeline as matrix_generation_pipeline
+from . import nodes as nd
 
 
 def _create_resolution_pipeline() -> Pipeline:
     """Resolution pipeline for filtering out the input."""
     return pipeline(
         [
-            argo_node(
+            ArgoNode(
                 func=nd.resolve_input_sheet,
                 inputs={
                     "input_sheet": "inference.raw.normalized_inputs",
@@ -31,8 +31,21 @@ def _create_resolution_pipeline() -> Pipeline:
 def _create_inference_pipeline(model_excl: str, model_incl: str) -> Pipeline:
     """Matrix generation pipeline adjusted for running inference with models of choice."""
     mg_pipeline = matrix_generation_pipeline()
+
+    # Unpack number of splits
+    n_cross_val_folds = settings.DYNAMIC_PIPELINES_MAPPING.get("cross_validation").get("n_cross_val_folds")
+
     inference_nodes = pipeline(
-        [node for node in mg_pipeline.nodes if not any(model in node.name for model in model_excl)]
+        [
+            node
+            for node in mg_pipeline.nodes
+            if (
+                not any(model in node.name for model in model_excl)  # Remove nodes for models not included in inference
+                and not any(
+                    f"fold_{fold}" in node.name for fold in range(n_cross_val_folds)
+                )  # Include only models trained on full ground truth data
+            )
+        ]
     )
     pipelines = []
     for model in model_incl:
@@ -40,7 +53,7 @@ def _create_inference_pipeline(model_excl: str, model_incl: str) -> Pipeline:
             pipeline(
                 [inference_nodes],
                 parameters={
-                    "params:evaluation.score_col_name": "params:inference.score_col_name",
+                    "params:evaluation.treat_score_col_name": "params:inference.score_col_name",
                     "params:matrix_generation.matrix_generation_options.batch_by": "params:inference.matrix_generation_options.batch_by",
                     "params:matrix_generation.matrix_generation_options.n_reporting": "params:inference.matrix_generation_options.n_reporting",
                 },
@@ -51,9 +64,9 @@ def _create_inference_pipeline(model_excl: str, model_incl: str) -> Pipeline:
                     "ingestion.raw.disease_list@pandas": "inference.int.disease_list@pandas",
                 },
                 outputs={
-                    f"matrix_generation.{model}.model_output.sorted_matrix_predictions@pandas": f"inference.{model}.model_output.predictions@pandas",
-                    f"matrix_generation.{model}.reporting.matrix_report": f"inference.{model}.reporting.report",
-                    "matrix_generation.prm.matrix_pairs": "inference.prm.matrix_pairs",
+                    f"matrix_generation.{model}.fold_{n_cross_val_folds}.model_output.sorted_matrix_predictions@pandas": f"inference.{model}.model_output.predictions@pandas",
+                    f"matrix_generation.{model}.fold_{n_cross_val_folds}.reporting.matrix_report": f"inference.{model}.reporting.report",
+                    f"matrix_generation.prm.fold_{n_cross_val_folds}.matrix_pairs": "inference.prm.matrix_pairs",
                     "matrix_generation.feat.nodes_kg_ds": "inference.feat.nodes_kg_ds",
                     "matrix_generation.feat.nodes@spark": "inference.feat.nodes@spark",
                 },
@@ -66,7 +79,7 @@ def _create_reporting_pipeline(model: str) -> Pipeline:
     """Reporting nodes of the inference pipeline for visualisation purposes."""
     return pipeline(
         [
-            argo_node(
+            ArgoNode(
                 func=nd.visualise_treat_scores,
                 inputs={
                     "scores": f"inference.{model}.model_output.predictions@pandas",
@@ -88,8 +101,8 @@ def create_pipeline(**kwargs) -> Pipeline:
     """
     # Get models of interest for inference
     models = settings.DYNAMIC_PIPELINES_MAPPING.get("modelling")
-    model_names_excl = [model["model_name"] for model in models if not model["run_inference"]]
-    model_names_incl = [model["model_name"] for model in models if model["run_inference"]]
+    model_names_excl = [model for model, config in models.items() if not config["run_inference"]]
+    model_names_incl = [model for model, config in models.items() if config["run_inference"]]
 
     # Construct the full pipeline
     resolution_nodes = _create_resolution_pipeline()

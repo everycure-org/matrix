@@ -1,8 +1,8 @@
 import pandas as pd
 from data_fabricator.v0.nodes.fabrication import fabricate_datasets
-from kedro.pipeline import Pipeline, pipeline, node
+from kedro.pipeline import Pipeline, node, pipeline
 
-from matrix.kedro4argo_node import argo_node
+from matrix.kedro4argo_node import ArgoNode
 
 
 def _create_pairs(
@@ -50,7 +50,7 @@ def create_pipeline(**kwargs) -> Pipeline:
     """Create fabricator pipeline."""
     return pipeline(
         [
-            argo_node(
+            ArgoNode(
                 func=fabricate_datasets,
                 inputs={"fabrication_params": "params:fabricator.rtx_kg2"},
                 outputs={
@@ -63,7 +63,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 },
                 name="fabricate_kg2_datasets",
             ),
-            argo_node(
+            ArgoNode(
                 func=fabricate_datasets,
                 inputs={"fabrication_params": "params:fabricator.ec_medical_kg"},
                 outputs={
@@ -72,7 +72,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 },
                 name="fabricate_ec_medical_datasets",
             ),
-            argo_node(
+            ArgoNode(
                 func=fabricate_datasets,
                 inputs={"fabrication_params": "params:fabricator.robokop"},
                 outputs={
@@ -90,7 +90,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 },
                 name="fabricate_spoke_datasets",
             ),
-            argo_node(
+            ArgoNode(
                 func=_create_pairs,
                 inputs=[
                     "ingestion.raw.drug_list@pandas",

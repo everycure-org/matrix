@@ -30,7 +30,7 @@ Welcome to the Matrix onboarding guide! This guide provides an introduction to t
 
 ### Every Cure MATRIX SteerCo
 
-- Provide strategic alignment to Working Groups to ensure APRA-H obligations are met
+- Provide strategic alignment to Working Groups to ensure ARPA-H obligations are met
 - Maintain MATRIX Project Management Infrastructure
 - Onboard new MATRIX members
 - Propose and negotiate necessary contractual modifications to ARPA-H Team

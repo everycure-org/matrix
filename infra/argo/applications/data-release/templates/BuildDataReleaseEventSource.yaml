@@ -3,12 +3,14 @@ kind: EventSource
 metadata:
   name: build-data-release-eventsource
   namespace: data-release
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
 spec:
   template:
     serviceAccountName: data-release-service-account # assign a service account with `get`, `list` and `watch` permissions on the resource being watched.
   resource:
     data-release-success:
-      namespace: data-release # namespace to listen events within
+      namespace: argo-workflows # namespace to listen events within
       group: argoproj.io
       version: v1alpha1
       resource: workflows
@@ -17,9 +19,9 @@ spec:
       filter:
         afterStart: true
         labels:
-          - key: pipeline_name
-            operation: "in"
-            value: ["data_release", "kg_release"]
+          - key: trigger_release
+            operation: ==
+            value: "True"
           - key: workflows.argoproj.io/phase
             operation: ==
             value: "Succeeded"

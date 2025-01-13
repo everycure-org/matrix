@@ -11,6 +11,7 @@ spec:
       {% endraw %}
       username: "{{ username }}"
       pipeline_name: "{{ pipeline_name }}"
+      trigger_release: "{{ trigger_release }}"
       release_version: "{{ release_version }}"
       git_sha: "{{ git_sha }}"
   entrypoint: "pipeline"
@@ -23,7 +24,7 @@ spec:
       - name: run_name
         value: "{{ image_tag }}"
       - name: neo4j_host
-        value: "bolt://neo4j.neo4j.svc.cluster.local:7687"
+        value: "bolt+ssc://neo4j.neo4j.svc.cluster.local:7687"
       - name: mlflow_endpoint
         value: "http://mlflow-tracking.mlflow.svc.cluster.local:80"
       - name: openai_endpoint
@@ -164,6 +165,7 @@ spec:
               sleep 5
             done
             echo "Neo4j is ready. Starting main application..."
+            # NOTE: We're passing in a regular bolt connection as emphemeral Neo4J has no SSL
             NEO4J_HOST="bolt://127.0.0.1:7687" kedro run -p {{ pipeline_name }} -e {% raw %}"{{workflow.parameters.env}}"{% endraw %} -n {% raw %}"{{inputs.parameters.kedro_nodes}}"{% endraw %}
     
     volumes:

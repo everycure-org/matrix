@@ -155,6 +155,7 @@ class ReplacementDrugDiseasePairGenerator(SingleLabelPairGenerator):
         # Extract known positive training set
         kp_train_pairs = known_pairs[(known_pairs["y"] == 1) & (known_pairs["split"] == "TRAIN")]
         kp_train_set = {(drug, disease) for drug, disease in zip(kp_train_pairs["source"], kp_train_pairs["target"])}
+
         # Defining list of node id's to sample from
         drug_samp_ids = graph.flags_to_ids(self._drug_flags)
         disease_samp_ids = graph.flags_to_ids(self._disease_flags)

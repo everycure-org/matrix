@@ -1,14 +1,13 @@
-from pathlib import Path
-import pytest
 import glob
 import os
-import yaml
 import re
+from pathlib import Path
 
-from kedro.framework.project import configure_project
+import pytest
+import yaml
 from kedro.config import OmegaConfigLoader
 from kedro.framework.context import KedroContext
-from kedro.framework.project import pipelines
+from kedro.framework.project import configure_project, pipelines
 
 _ALLOWED_LAYERS = [
     "raw",
@@ -28,14 +27,14 @@ def _configure_matrix_project() -> None:
     configure_project("matrix")
 
 
-def _pipeline_datasets(pipeline) -> set[str]:
-    """Helper function to retrieve all datasets used by a pipeline."""
-    return set.union(*[set(node.inputs + node.outputs) for node in pipeline.nodes])
-
-
 @pytest.fixture(autouse=True, scope="session")
 def openai_api_env():
     os.environ["OPENAI_API_KEY"] = "foo"
+
+
+def _pipeline_datasets(pipeline) -> set[str]:
+    """Helper function to retrieve all datasets used by a pipeline."""
+    return set.union(*[set(node.inputs + node.outputs) for node in pipeline.nodes])
 
 
 @pytest.mark.integration()

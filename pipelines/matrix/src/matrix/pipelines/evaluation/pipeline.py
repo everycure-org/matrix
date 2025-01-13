@@ -1,33 +1,49 @@
+from typing import List, Union
+
 from kedro.pipeline import Pipeline, pipeline
 from matrix import settings
-from matrix.kedro4argo_node import argo_node
+from matrix.kedro4argo_node import ArgoNode
+from matrix.pipelines.modelling import nodes as modelling_nodes
+from matrix.pipelines.modelling.utils import partial_fold
 
 from . import nodes
 
 
-def _create_evaluation_pipeline(model: str, evaluation: str) -> Pipeline:
+def _create_evaluation_fold_pipeline(model: str, evaluation: str, fold: Union[str, int]) -> Pipeline:
+    """Create pipeline for single model, evaluation and fold.
+
+    Args:
+        model: model name
+        evaluation: name of evaluation suite to generate
+        fold: fold to generate
+
+    Returns:
+        Pipeline with nodes for given model, evaluation and fold
+    """
     return pipeline(
         [
-            argo_node(
-                func=nodes.generate_test_dataset,
-                inputs=[
-                    f"matrix_generation.{model}.model_output.sorted_matrix_predictions@pandas",
-                    f"params:evaluation.{evaluation}.evaluation_options.generator",
-                ],
-                outputs=f"evaluation.{model}.{evaluation}.model_output.pairs",
-                name=f"create_{model}_{evaluation}_evaluation_pairs",
+            ArgoNode(
+                func=partial_fold(nodes.generate_test_dataset, fold, arg_name="known_pairs"),
+                inputs={
+                    "known_pairs": "modelling.model_input.splits",
+                    "matrix": f"matrix_generation.{model}.fold_{fold}.model_output.sorted_matrix_predictions@pandas",
+                    "generator": f"params:evaluation.{evaluation}.evaluation_options.generator",
+                    "score_col_name": "params:matrix_generation.treat_score_col_name",
+                },
+                outputs=f"evaluation.{model}.fold_{fold}.{evaluation}.model_output.pairs",
+                name=f"create_{model}_{evaluation}_evaluation_pairs_fold_{fold}",
             ),
-            argo_node(
+            ArgoNode(
                 func=nodes.evaluate_test_predictions,
                 inputs=[
-                    f"evaluation.{model}.{evaluation}.model_output.pairs",
+                    f"evaluation.{model}.fold_{fold}.{evaluation}.model_output.pairs",
                     f"params:evaluation.{evaluation}.evaluation_options.evaluation",
                 ],
-                outputs=f"evaluation.{model}.{evaluation}.model_output.result",
-                name=f"create_{model}_{evaluation}_evaluation",
+                outputs=f"evaluation.{model}.fold_{fold}.{evaluation}.reporting.result",
+                name=f"create_{model}_{evaluation}_evaluation_fold_{fold}",
             ),
         ],
-        tags=["argowf.fuse", f"argowf.fuse-group.{model}.{evaluation}"],
+        tags=["argowf.fuse", f"argowf.fuse-group.{model}.{evaluation}.fold_{fold}"],
     )
 
 
@@ -59,42 +75,123 @@ def _create_stability_pipeline(model_1: str, model_2: str, evaluation: str) -> P
     )
 
 
-def create_pipeline(**kwargs) -> Pipeline:
-    """Create evaluation pipeline."""
+def create_model_pipeline(model: str, evaluation_names: List[str], n_cross_val_folds: int) -> Pipeline:
+    """Create pipeline to evaluate a single model.
+
+    Args:
+        model: model name
+        evaluation_names: List of evaluation names.
+        n_cross_val_folds: number of folds for cross-validation (i.e. number of test/train splits, not including fold with full training data)
+
+    Returns:
+        Pipelines with evaluation nodes for given model
+    """
+
     pipelines = []
-    models = settings.DYNAMIC_PIPELINES_MAPPING.get("modelling")
-    model_names = [model["model_name"] for model in models]
-    for model in model_names:
+
+    # Evaluate each fold
+    for fold in range(n_cross_val_folds):
+        for evaluation in evaluation_names:
+            pipelines.append(
+                pipeline(
+                    _create_evaluation_fold_pipeline(model, evaluation, fold),
+                    tags=[model, evaluation],
+                )
+            )
+
+    # Consolidate all results
+    for evaluation in evaluation_names:
         pipelines.append(
             pipeline(
                 [
-                    argo_node(
-                        func=nodes.perform_matrix_checks,
+                    ArgoNode(
+                        func=modelling_nodes.aggregate_metrics,
                         inputs=[
-                            f"matrix_generation.{model}.model_output.sorted_matrix_predictions@pandas",
-                            "modelling.model_input.splits",
-                            "params:evaluation.score_col_name",
+                            "params:modelling.aggregation_functions",
+                            *[
+                                f"evaluation.{model}.fold_{fold}.{evaluation}.reporting.result"
+                                for fold in range(n_cross_val_folds)
+                            ],
                         ],
-                        outputs=None,
-                        name=f"perform_{model}_matrix_checks",
-                        tags="matrix_checks",
-                    )
+                        outputs=f"evaluation.{model}.{evaluation}.reporting.result_aggregated",
+                        name=f"aggregate_{model}_{evaluation}_evaluation_results",
+                        tags=[model, evaluation],
+                    ),
+                    # Reduce the aggregate results for simpler readout in MLFlow (e.g. only report mean)
+                    ArgoNode(
+                        func=nodes.reduce_aggregated_results,
+                        inputs=[
+                            f"evaluation.{model}.{evaluation}.reporting.result_aggregated",
+                            "params:evaluation.reported_aggregations",
+                        ],
+                        outputs=f"evaluation.{model}.{evaluation}.reporting.result_aggregated_reduced",
+                        name=f"reduce_aggregated_{model}_{evaluation}_evaluation_results",
+                        tags=[model, evaluation],
+                    ),
                 ]
             )
         )
-        for evaluation in settings.DYNAMIC_PIPELINES_MAPPING.get("evaluation"):
-            pipelines.append(
-                pipeline(
-                    _create_evaluation_pipeline(model, evaluation["evaluation_name"]),
-                    tags=model,
+    return sum(pipelines)
+
+
+def create_pipeline(**kwargs) -> Pipeline:
+    """Create evaluation pipeline.
+
+    Pipeline is created dynamically, based on the following dimensions:
+        - Models, i.e., type of model, e.g. random forst
+        - Folds, i.e., number of folds to train/evaluation
+        - Evaluations, i.e., type evaluation suite to run
+    """
+    # Unpack models
+    models = settings.DYNAMIC_PIPELINES_MAPPING.get("modelling")
+
+    # Unpack number of splits
+    n_cross_val_folds = settings.DYNAMIC_PIPELINES_MAPPING.get("cross_validation").get("n_cross_val_folds")
+
+    # Unpack evaluation names
+    evaluation_names = [ev["evaluation_name"] for ev in settings.DYNAMIC_PIPELINES_MAPPING.get("evaluation")]
+
+    # Generate pipelines for each model
+    pipelines = []
+    for model in models.keys():
+        pipelines.append(create_model_pipeline(model, evaluation_names, n_cross_val_folds))
+
+    # Consolidate metrics across models and folds
+    pipelines.append(
+        pipeline(
+            [
+                ArgoNode(
+                    func=nodes.consolidate_evaluation_reports,
+                    inputs={
+                        # Consolidate aggregated reports per model fold
+                        **{
+                            f"{model}.{evaluation}.fold_{fold}": f"evaluation.{model}.fold_{fold}.{evaluation}.reporting.result"
+                            for model in models.keys()
+                            for evaluation in evaluation_names
+                            for fold in range(n_cross_val_folds)
+                        },
+                        # Consolidate aggregated reports per model
+                        **{
+                            f"{model}.{evaluation}.aggregated": f"evaluation.{model}.{evaluation}.reporting.result_aggregated"
+                            for model in models.keys()
+                            for evaluation in evaluation_names
+                        },
+                    },
+                    outputs="evaluation.reporting.master_report",
+                    name="consolidate_evaluation_reports",
                 )
-            )
-        for stability in settings.DYNAMIC_PIPELINES_MAPPING.get("stability"):
-            for model_to_compare in model_names:
+            ]
+        )
+    )
+    # Calculate stability between folds
+    for stability in settings.DYNAMIC_PIPELINES_MAPPING.get("stability"):
+        for main_model in models.keys():
+            for model_to_compare in models.keys():
                 pipelines.append(
                     pipeline(
-                        _create_stability_pipeline(model, model_to_compare, stability["stability_name"]),
-                        tags=model,
+                        _create_stability_pipeline(main_model, model_to_compare, stability["stability_name"]),
+                        tags=main_model,
                     )
                 )
+
     return sum(pipelines)
