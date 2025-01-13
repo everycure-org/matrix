@@ -1,23 +1,22 @@
-import pytest
-import pandas as pd
 import numpy as np
-from sklearn.metrics import accuracy_score, roc_auc_score
+import pandas as pd
+import pytest
 from matrix.datasets.pair_generator import DrugDiseasePairGenerator
 from matrix.pipelines.evaluation.evaluation import (
-    DiscreteMetrics,
     ContinuousMetrics,
-    SpecificRanking,
+    DiscreteMetrics,
     FullMatrixRanking,
     RecallAtN,
+    SpecificRanking,
 )
 from matrix.pipelines.evaluation.named_metric_functions import (
+    AUROC,
     MRR,
     HitK,
-    AUROC,
 )
-
 from matrix.pipelines.evaluation.named_metric_functions import RecallAtN as RecallAtN_
 from matrix.pipelines.evaluation.nodes import generate_test_dataset
+from sklearn.metrics import accuracy_score, roc_auc_score
 
 
 @pytest.fixture
@@ -63,6 +62,29 @@ def sample_positives():
     )
     data["non_pos_quantile_rank"] = (data["non_pos_rank"] - 1) / 2
     return data
+
+
+@pytest.fixture
+def sample_matrix():
+    """Sample matrix dataframe fixture."""
+    return pd.DataFrame(
+        {
+            "source": ["drug1", "drug2", "drug3"],
+            "target": ["disease1", "disease2", "disease3"],
+            "score": [0.9, 0.8, 0.7],
+        }
+    )
+
+
+@pytest.fixture
+def mock_generator():
+    """Mock generator that returns predefined test data."""
+
+    class MockGenerator(DrugDiseasePairGenerator):
+        def generate(self, matrix):
+            return pd.DataFrame({"source": ["drug1", "drug2"], "target": ["disease1", "disease2"], "y": [1, 0]})
+
+    return MockGenerator()
 
 
 def test_discrete_metrics(sample_data):
@@ -163,29 +185,6 @@ def test_recall_at_n(sample_data):
 
     assert "recall_at_5" in result
     assert np.isclose(result["recall_at_5"], 1.0, atol=1e-6)  # All true positives included
-
-
-@pytest.fixture
-def sample_matrix():
-    """Sample matrix dataframe fixture."""
-    return pd.DataFrame(
-        {
-            "source": ["drug1", "drug2", "drug3"],
-            "target": ["disease1", "disease2", "disease3"],
-            "score": [0.9, 0.8, 0.7],
-        }
-    )
-
-
-@pytest.fixture
-def mock_generator():
-    """Mock generator that returns predefined test data."""
-
-    class MockGenerator(DrugDiseasePairGenerator):
-        def generate(self, matrix):
-            return pd.DataFrame({"source": ["drug1", "drug2"], "target": ["disease1", "disease2"], "y": [1, 0]})
-
-    return MockGenerator()
 
 
 def test_generate_test_dataset_injection():
