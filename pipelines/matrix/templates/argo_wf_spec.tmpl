@@ -30,7 +30,7 @@ spec:
       - name: openai_endpoint
         value: "https://api.openai.com/v1"
       - name: env
-        value: "cloud"
+        value: "{{ env }}"
       - name: release_folder_name
         value: "{{ release_folder_name }}"
   templates:
@@ -93,7 +93,8 @@ spec:
         - name: RELEASE_FOLDER_NAME
           value: {% raw %} "{{workflow.parameters.release_folder_name}}" 
           {% endraw %}
-
+        - name: TEST_RELEASE_DIR
+          value: "gs://mtrx-hub-dev-3of/kedro/data/tests"
         - name: NEO4J_HOST
           value: {% raw %} "{{workflow.parameters.neo4j_host}}" 
           {% endraw %}
