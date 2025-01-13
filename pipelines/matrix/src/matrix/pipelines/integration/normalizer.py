@@ -67,7 +67,7 @@ class NCATSNodeNormalizer(Normalizer):
     def _extract_id(id: str, response: Dict[str, Any], json_parser: parse) -> Dict[str, Any]:
         """Extract normalized IDs from the response using the json parser."""
         try:
-            return json_parser.find(response.get(id))[0].value
+            return str(json_parser.find(response.get(id))[0].value)
         except (IndexError, KeyError):
             logger.debug(f"Not able to normalize for {id}: {response.get(id)}, {json_parser}")
             return None
