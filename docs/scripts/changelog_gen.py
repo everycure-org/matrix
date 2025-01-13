@@ -14,11 +14,11 @@ def locate_releases_path() -> Path:
     return changelog_path
 
 
-def list_json_files(changelog_abs_path: Path) -> list:
+def list_json_files(changelog_abs_path: Path, filename_pattern: str = "v*_info.json") -> list:
     """
-    Returns a list of files with extension .json in the changelog files dir.
+    Returns a list of files matching the `filename_pattern` in the changelog files dir.
     """
-    json_files = list(Path(changelog_abs_path).glob("v*_info.json"))
+    json_files = list(Path(changelog_abs_path).glob(filename_pattern))
     logging.debug(f"Json files found in '{changelog_abs_path}': {json_files}")
     return json_files
 
