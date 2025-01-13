@@ -19,9 +19,9 @@ spec:
       filter:
         afterStart: true
         labels:
-          - key: pipeline_name
+          - key: trigger_release
             operation: ==
-            value: "data_release"
+            value: "True"
           - key: workflows.argoproj.io/phase
             operation: ==
             value: "Succeeded"

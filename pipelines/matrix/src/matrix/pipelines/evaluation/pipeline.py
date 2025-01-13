@@ -2,7 +2,7 @@ from typing import Union
 
 from kedro.pipeline import Pipeline, pipeline
 from matrix import settings
-from matrix.kedro4argo_node import argo_node
+from matrix.kedro4argo_node import ArgoNode
 from matrix.pipelines.modelling import nodes as modelling_nodes
 from matrix.pipelines.modelling.utils import partial_fold
 
@@ -22,7 +22,7 @@ def _create_evaluation_fold_pipeline(model_name: str, evaluation: str, fold: Uni
     """
     return pipeline(
         [
-            argo_node(
+            ArgoNode(
                 func=partial_fold(nodes.generate_test_dataset, fold, arg_name="known_pairs"),
                 inputs={
                     "known_pairs": "modelling.model_input.splits",
@@ -33,7 +33,7 @@ def _create_evaluation_fold_pipeline(model_name: str, evaluation: str, fold: Uni
                 outputs=f"evaluation.{model_name}.fold_{fold}.{evaluation}.model_output.pairs",
                 name=f"create_{model_name}_{evaluation}_evaluation_pairs_fold_{fold}",
             ),
-            argo_node(
+            ArgoNode(
                 func=nodes.evaluate_test_predictions,
                 inputs=[
                     f"evaluation.{model_name}.fold_{fold}.{evaluation}.model_output.pairs",
@@ -76,7 +76,7 @@ def create_model_pipeline(model_name: str, evaluation_names: str, n_cross_val_fo
         pipelines.append(
             pipeline(
                 [
-                    argo_node(
+                    ArgoNode(
                         func=modelling_nodes.aggregate_metrics,
                         inputs=[
                             "params:modelling.aggregation_functions",
@@ -90,7 +90,7 @@ def create_model_pipeline(model_name: str, evaluation_names: str, n_cross_val_fo
                         tags=[model_name, evaluation],
                     ),
                     # Reduce the aggregate results for simpler readout in MLFlow (e.g. only report mean)
-                    argo_node(
+                    ArgoNode(
                         func=nodes.reduce_aggregated_results,
                         inputs=[
                             f"evaluation.{model_name}.{evaluation}.reporting.result_aggregated",
@@ -133,7 +133,7 @@ def create_pipeline(**kwargs) -> Pipeline:
     pipelines.append(
         pipeline(
             [
-                argo_node(
+                ArgoNode(
                     func=nodes.consolidate_evaluation_reports,
                     inputs={
                         # Consolidate aggregated reports per model fold

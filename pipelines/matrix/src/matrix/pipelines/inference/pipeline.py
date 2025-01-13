@@ -1,6 +1,6 @@
 from kedro.pipeline import Pipeline, pipeline
 from matrix import settings
-from matrix.kedro4argo_node import argo_node
+from matrix.kedro4argo_node import ArgoNode
 
 from ..matrix_generation.pipeline import create_pipeline as matrix_generation_pipeline
 from . import nodes as nd
@@ -10,7 +10,7 @@ def _create_resolution_pipeline() -> Pipeline:
     """Resolution pipeline for filtering out the input."""
     return pipeline(
         [
-            argo_node(
+            ArgoNode(
                 func=nd.resolve_input_sheet,
                 inputs={
                     "input_sheet": "inference.raw.normalized_inputs",
@@ -66,7 +66,7 @@ def _create_reporting_pipeline(model_name: str) -> Pipeline:
     """Reporting nodes of the inference pipeline for visualisation purposes."""
     return pipeline(
         [
-            argo_node(
+            ArgoNode(
                 func=nd.visualise_treat_scores,
                 inputs={
                     "scores": f"inference.{model_name}.model_output.predictions@pandas",
