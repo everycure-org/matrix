@@ -1,3 +1,10 @@
+"""
+Temp. wrapper module to enable data quality checks defined independently of the underlying
+library used to represent the data. Currently supports Spark and Pandas dataframes.
+
+NOTE: Should be removed as soon as Pandera supports this.
+"""
+
 import typing
 from dataclasses import dataclass
 from functools import wraps
@@ -40,12 +47,12 @@ class Type:
             else:
                 return self._type_map[self.type_]()
 
+        raise NotImplementedError(f"generation for type {type_} currently not supported!")
+
 
 @dataclass
 class ArrayType(Type):
     """Class to represent an array of a given type."""
-
-    ...
 
     def build_for_type(self, type_):
         if type_ is pd.DataFrame:
@@ -53,6 +60,8 @@ class ArrayType(Type):
 
         if type_ is ps.DataFrame:
             return T.ArrayType(super().build_for_type(type_))
+
+        raise NotImplementedError(f"generation for type {type_} currently not supported!")
 
 
 @dataclass
@@ -69,6 +78,8 @@ class Column:
 
         if type_ is ps.DataFrame:
             return psa.Column(self.type_.build_for_type(type_), checks=self.checks, nullable=self.nullable)
+
+        raise NotImplementedError(f"generation for type {type_} currently not supported!")
 
 
 @dataclass
@@ -87,26 +98,40 @@ class DataFrameSchema:
         )
 
 
-def check_output(schema: DataFrameSchema):
+def check_output(schema: DataFrameSchema, df_name: Optional[str] = None):
+    """Decorator to validate output schema of decorated function.
+
+    Args:
+        schema: Schema to validate
+        df_name (optional): name of output arg to validate
+    """
+
     def decorator(func):
         @wraps(func)
         def wrapper(*args, **kwargs):
-            # Extract return type of function
             if not (type_ := typing.get_type_hints(func).get("return")):
                 raise TypeError("No output typehint specified!")
 
-            # Build validator
-            df_schema = schema.build_for_type(type_)
+            if df_name:
+                if not typing.get_origin(typing.Dict) == dict:
+                    raise TypeError("Specified df_name arg, but function output typehint is not dict.")
 
-            # Invoke function
-            df = func(*args, **kwargs)
-            # Run validation
+                type_ = typing.get_args(type_)[1]
+
+            df_schema = schema.build_for_type(type_)
+            output = func(*args, **kwargs)
+
+            if df_name is not None:
+                df = output[df_name]
+            else:
+                df = output
+
             try:
                 df_schema.validate(df, lazy=False)
             except pa.errors.SchemaError as e:
                 _handle_schema_error("check_output", func, df_schema, df, e)
 
-            return df
+            return output
 
         return wrapper
 
