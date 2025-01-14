@@ -9,94 +9,49 @@ We want to reach a point where our main is stable and production ready. This mea
 * One can re-branch from main any time and be sure that code there is 100% correct
 * During development, one can refer to main as 'ground truth'
 
-
 This is important because:
-* Broken main slows development for everyone:
-* We need to be able to execute e2e runs when we have a request, either from medical team or from stakeholders
-* When we open-source, broken CI or faulty product is discouraging for external contributors + bad for reputation 
+* Broken main slows development for everyone.
+* We need to be able to execute e2e runs when we have a request, either from medical team or from stakeholders.
+* When we open-source, broken CI or faulty product is discouraging for external contributors + bad for reputation.
 
-In order to achieve a stable main, we need to add an additional layer which will protect a main 
+However, adding additional buffer layer might also increase PR overhead. One solution to prevent it would be to use release tags as stable reference point in the codebase. 
 
-![img](https://wac-cdn.atlassian.com/dam/jcr:34c86360-8dea-4be4-92f7-6597d4d5bfae/02%20Feature%20branches.svg?cdnVersion=2480)
+## Release Tags on Main
+To ensure stability, we will utilize release tags as reference points in the codebase. Instead of assuming that main is always stable, our approach is to follow release tags. 
 
-## Introducing Develop layer
-_Note this is one of many branch management approaches we can take but I think its the most appropriate. See here for example [overivew](https://medium.com/@sreekanth.thummala/choosing-the-right-git-branching-strategy-a-comparative-analysis-f5e635443423)_
-_Note v2: I called the layer 'develop' as that's what I am used to but we can decide on a different name -eg release? ANother good approach would be to have both release and develop branches but our product is not mature enough yet for that in my opinion. See an example here https://www.atlassian.com/git/tutorials/comparing-workflows/gitflow-workflow_
+This release tag will have been pushed to the **production environment** and will be deployed in production. This means that this tag will reflect our 'status quo' pipeline with best performant model on a validated dataset.
 
-![alt text](assets/comparison.png)
+### Production environment
 
-Develop Layer acts as an intermediate staging area between feature and main. You can think about it also as a 'release' branch 
+#### Identify The Latest  Stable Release
+First, you need to identify the most recent stable release tag (can be found on github matrix page). This is a release tag you can use for branching out for development; essentially you should treat this commit as a production-ready, stable point in the codebase.
+
+All release tags have been checked with real data release pipeline runs and have been confirmed to work without problems.
+
+#### Starting development work
+To start development work, you need to branch out from the release tag. You can do it by the following
+ ```bash
+   git checkout -b feat/foobar v0.2.5
+ ```
+This will create a `feat/foobar` branch which you can use for development. While you can also branch out from main directly (which is the most natural for most git users), you need to note that branch might be broken/not fully checked.
+
+#### Testing before merging
+Once you feature is complete, you should make sure to test it before merging it. While some changes might not require thorough testing (e.g. ruff re-formatting, docs changes, adding comments), pipeline changes should be verified with a sampled real data. Thus before merging your pipeline, you should ensure it runs locally with sampled data.
+
+#### Merging back to main
+Once your feature is complete and tested with sampled data, you can merge it back to main. Whilst some bugs might still sneak in (as some bugs will be only detected with full real data), **the main is not production-ready until it has been tagged as a release**.
 
 
-### Core Concepts
+## Process of creating release (Work In Progress)
 
-1. **Two-Tier Branch Structure**
-   - `main`: Production-ready, stable code. This branch will run in the production project/environment.
-   - `develop`: Integration branch for feature testing. This branch will be running in the development project/environment.
-   - Feature branches: Individual development work. These branches will be merged into develop branch.
+Details on how to release can be found in the following [document](../infrastructure/runbooks/01_releases.md)
 
-2. **Branch Flow**   ```
-   feature/* -> develop -> main   ```
-   - Feature branches are created from `develop`
-   - Features are merged back into `develop`
-   - Only fully tested, stable code moves from `develop` to `main`. If the PR is relatively large as many features were collected overtime, we can write a descriptive overview of the PR which will help us tracking.
+Before a release is created, one needs to ensure that
+1). Data engineering pipeline runs to completion without problems
+2). Quality of the output of data engineering pipeline (i.e. KG) is good. 
+3). Modelling pipeline runs to completion without problems.
+4). Quality of the output of modelling pipeline (i.e. matrix) is good.
 
-### Working with Develop Branch
 
-1. **Feature Development**
-   - Create feature branches from `develop`
-   - Complete development and initial testing
-   - Submit PR to `develop` (not main)
 
-2. **Integration Testing**
-   - Features accumulate in `develop`
-   - E2E testing runs on `develop`
-   - Issues found are fixed before main merge
 
-3. **Main Branch Updates**
-   - `develop` to `main` moves happen only after:
-     - Successful E2E testing
-     - Code review approval
-     - No known issues and there is clear benefit in merging it into main.
-
-### Triage in the develop layer
-
-While we should aim to have a single develop branch which we essentially treat as our waiting room for 'main', we don't need to keep it static and in some cases, it might make sense to make a separate branch (e.g. develop/main and develop/spoke) when large changes take place. For instance in the following image
-![Triage in develop](assets/spoke-triage-branch.png)
-Here, most features have been merged to `develop/main` branch which is now our priority branch - it is waiting to be merged into main once e2e completes and brief code review has been conducted. 
-
-However in the meantime, some other developers fully integrated SPOKE e2e (incl modelling and some extra features MATRIX doesnt have yet) which are quite conflicting with features in `develop/main`. IN such case, it might make sense to create a temporary `develop/spoke` which will be a priority #2 branch. To merge `develop/spoke` into main, we need to wait for `develop/main` to be merged into main, fix potential conflicts, and then can kick off e2e run on develop/spoke. 
-
-This might seem redundant/allowing for potential bottlenecks however if we change our way of working so that we don't create massive PRs but focus on small ones, this is quite streamlined and avoids potential bugs. Additionally, we might decide that we do not want spoke model and data in our final MATRIX product as it doesnt bring additional value - then we can just leave this branch as it is in in the develop layer and come back to it for potential experiments. 
-
-Consider another example:
-
-![alt text](assets/moa-triage-branch.png)
-
-Implementation of MOA into main has taken a long time. One way to streamline the process is ot create a develop/moa branch and rather than doing all development on this branch, create series of smaller PRs which are then merged into develop/moa. As this might conflict with other developers, it is not worth to do the same type of 'grouping' in develop/main
-
-## Advantages of Develop Layer
-* Quality gate before code reaches main
-* Allows for e2e testing
-* Flexibility for parallel development 
-* Maintains main branch stability
-
-## Drawbacks of Develop Layer
-* Our main will get updated less frequently (time-to-production increase)
-* Additional overhead for PR reviews 
-* Number of PRs will increase 
-* Maintaining develop-> main PRs 
-
-## FAQ 
-
-_My feature is related to a sprint goal. Will it get completed only once it's merged to main?_
-* A feature is considered complete when it is merged into `develop` and passes all necessary reviews and tests. The move to `main` is a deployment step rather than a completion milestone.
-
-_Won't the develop branch get too large?_
-* While the develop branch may accumulate multiple features, all code changes must still meet the same rigorous requirements and code review standards as they do now. Regular merges to main will help keep the branch manageable.
-
-_There is a bug/methodological error in main, what do I do?_
-* Hotfixes or documentation fixes can go directly into main as they dont directly affect our app. If fix is not urgent though, it should go to develop
-
-_How to decide if I should create a separate develop branch?_
-* In general, you shouldn't do it unless it's an absolute necessity which has become a bottleneck for you or others. You should only create a new develop branch if your changes are a breaking change that's very incompatible with current develop branch and might affect other features. 
