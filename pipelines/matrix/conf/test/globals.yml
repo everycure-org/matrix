@@ -2,25 +2,25 @@ run_name: test-run
 versions:
   release: test-release
 
-test_release_dir: ${oc.env:TEST_RELEASE_DIR, data/test}
+release_dir: data/test/releases/${versions.release}
 
 openai:
   endpoint: ${oc.env:OPENAI_ENDPOINT, http://localhost:1080/v1}
   api_key: dummy
 
 paths:
-  raw:                ${release_dir}/raw
-  kg_raw:             ${release_dir}/raw
+  raw:                data/test/raw
+  kg_raw:             data/test/raw
   # Upstream version-based
-  ingestion:          ${release_dir}/ingestion
+  ingestion:          data/test/ingestion
   # Release-based
-  integration:        ${release_dir}/releases/${versions.release}/datasets/integration
-  embeddings:         ${release_dir}/releases/${versions.release}/datasets/embeddings
+  integration:        data/test/releases/${versions.release}/datasets/integration
+  embeddings:         data/test/releases/${versions.release}/datasets/embeddings
 
   # Run-based
-  modelling:          ${release_dir}/releases/${versions.release}/runs/${run_name}/datasets/modelling
-  evaluation:         ${release_dir}/releases/${versions.release}/runs/${run_name}/datasets/evaluation
-  matrix_generation:  ${release_dir}/releases/${versions.release}/runs/${run_name}/datasets/matrix_generation
-  inference:          ${release_dir}/releases/${versions.release}/runs/${run_name}/datasets/inference
+  modelling:          data/test/releases/${versions.release}/runs/${run_name}/datasets/modelling
+  evaluation:         data/test/releases/${versions.release}/runs/${run_name}/datasets/evaluation
+  matrix_generation:  data/test/releases/${versions.release}/runs/${run_name}/datasets/matrix_generation
+  inference:          data/test/releases/${versions.release}/runs/${run_name}/datasets/inference
 
   tmp:                data/test/tmp
