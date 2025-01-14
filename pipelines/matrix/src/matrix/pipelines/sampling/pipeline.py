@@ -1,6 +1,5 @@
 import logging
 
-import pyspark.sql as ps
 from kedro.pipeline import Pipeline, pipeline
 
 from matrix.kedro4argo_node import ArgoNode
