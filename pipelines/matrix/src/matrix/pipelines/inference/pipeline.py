@@ -74,12 +74,12 @@ def _create_reporting_pipeline() -> Pipeline:
             ArgoNode(
                 func=nd.visualise_treat_scores,
                 inputs={
-                    "scores": f"inference.model_output.predictions@pandas",
+                    "scores": "inference.model_output.predictions@pandas",
                     "infer_type": "inference.int.request_type",
                     "col_name": "params:inference.score_col_name",
                 },
-                outputs=f"inference.reporting.visualisations",
-                name=f"visualise_inference",
+                outputs="inference.reporting.visualisations",
+                name="visualise_inference",
             )
         ]
     )

@@ -178,7 +178,7 @@ def create_model_pipeline(model_name: str, num_shards: int, n_cross_val_folds: i
                 ArgoNode(
                     func=nodes.combine_data,
                     inputs=[f"modelling.fold_{fold}.model_output.predictions" for fold in range(n_cross_val_folds)],
-                    outputs=f"modelling.model_output.combined_predictions",
+                    outputs="modelling.model_output.combined_predictions",
                     name=f"combine_folds",
                 )
             ]
@@ -192,12 +192,12 @@ def create_model_pipeline(model_name: str, num_shards: int, n_cross_val_folds: i
                 ArgoNode(
                     func=nodes.check_model_performance,
                     inputs={
-                        "data": f"modelling.model_output.combined_predictions",
+                        "data": "modelling.model_output.combined_predictions",
                         "metrics": f"params:modelling.{model_name}.model_options.metrics",
                         "target_col_name": f"params:modelling.{model_name}.model_options.model_tuning_args.target_col_name",
                     },
-                    outputs=f"modelling.reporting.metrics",
-                    name=f"check_model_performance",
+                    outputs="modelling.reporting.metrics",
+                    name="check_model_performance",
                 )
             ]
         )
