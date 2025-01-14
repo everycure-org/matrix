@@ -162,7 +162,7 @@ def _process_paths(
     # Fixed edges attributes
     edge_attributes = ["predicates", "is_forward", "is_backward"]
 
-    # Schema for outout dataframe
+    # Schema for output dataframe
     final_schema = (
         ["source", "target", "n_hops", "node_lst"]
         + ["hop_" + attribute + "_lst" for attribute in edge_attributes]
