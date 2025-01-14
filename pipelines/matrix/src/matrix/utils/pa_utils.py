@@ -18,7 +18,12 @@ class Type:
     type_: type
     is64: bool = False
 
-    _type_map: ClassVar[Dict[type, type]] = {int: T.IntegerType, float: T.FloatType, str: T.StringType}
+    _type_map: ClassVar[Dict[type, type]] = {
+        int: T.IntegerType,
+        float: T.FloatType,
+        str: T.StringType,
+        bool: T.BooleanType,
+    }
 
     _64_map: ClassVar[Dict[type, type]] = {
         int: T.LongType,
@@ -44,7 +49,7 @@ class ArrayType(Type):
 
     def build_for_type(self, type_):
         if type_ is pd.DataFrame:
-            return List[super().build_for_type()]
+            return List[super().build_for_type(type_)]
 
         if type_ is ps.DataFrame:
             return T.ArrayType(super().build_for_type(type_))
@@ -88,7 +93,7 @@ def check_output(schema: DataFrameSchema):
         def wrapper(*args, **kwargs):
             # Extract return type of function
             if not (type_ := typing.get_type_hints(func).get("return")):
-                raise RuntimeError("No output typehint specified!")
+                raise TypeError("No output typehint specified!")
 
             # Build validator
             df_schema = schema.build_for_type(type_)
@@ -106,35 +111,3 @@ def check_output(schema: DataFrameSchema):
         return wrapper
 
     return decorator
-
-
-@check_output(DataFrameSchema(columns={"id": Column(Type(int))}, unique=["id"]))
-def dummy_pandas_fn() -> pd.DataFrame:
-    return pd.DataFrame({"id": [1]})
-
-
-@check_output(
-    DataFrameSchema(
-        columns={
-            "bucket": Column(Type(int), nullable=False),
-            "embedding": Column(ArrayType(int, is64=True), nullable=False),
-        },
-        unique=["bucket"],
-    )
-)
-def dummy_spark_fn(num_buckets: int = 10) -> ps.DataFrame:
-    # Construct df to bucketize
-    spark_session: ps.SparkSession = ps.SparkSession.builder.getOrCreate()
-
-    # Bucketize df
-    return spark_session.createDataFrame(
-        data=[(bucket, [1, 2, 3]) for bucket in range(num_buckets)],
-        schema=T.StructType(
-            [T.StructField("bucket", T.IntegerType()), T.StructField("embedding", T.ArrayType(T.LongType()))]
-        ),
-    )
-
-
-# Invoke the fn
-dummy_spark_fn()
-dummy_pandas_fn()
