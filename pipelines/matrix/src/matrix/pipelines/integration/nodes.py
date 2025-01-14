@@ -11,7 +11,6 @@ import pyspark.sql.functions as F
 from joblib import Memory
 from jsonpath_ng import parse
 from more_itertools import chunked
-from matrix.inject import inject_object
 from tenacity import (
     retry,
     retry_if_exception_type,
@@ -19,6 +18,7 @@ from tenacity import (
 )
 from tqdm.asyncio import tqdm_asyncio
 
+from matrix.inject import inject_object
 from matrix.pipelines.integration.filters import determine_most_specific_category
 from matrix.schemas.knowledge_graph import KGEdgeSchema, KGNodeSchema, cols_for_schema
 
@@ -243,12 +243,12 @@ def normalize_kg(
     logger.info("collecting node ids for normalization")
     node_ids = nodes.select("id").rdd.flatMap(lambda x: x).collect()
     logger.info(f"collected {len(node_ids)} node ids for normalization. Performing normalization...")
-    node_id_map = batch_map_ids(
-        frozenset(node_ids), api_endpoint, json_parser, batch_size, parallelism, conflate, drug_chemical_conflate
-    )
+    # node_id_map = {node_ids: node_ids}#batch_map_ids(
+    # frozenset(node_ids), api_endpoint, json_parser, batch_size, parallelism, conflate, drug_chemical_conflate
+    # )
 
     # convert dict back to a dataframe to parallelize the mapping
-    node_id_map_df = pd.DataFrame(list(node_id_map.items()), columns=["id", "normalized_id"])
+    node_id_map_df = pd.DataFrame({"id": node_ids, "normalized_id": node_ids}, columns=["id", "normalized_id"])
     spark = ps.SparkSession.builder.getOrCreate()
     mapping_df = (
         spark.createDataFrame(node_id_map_df)
