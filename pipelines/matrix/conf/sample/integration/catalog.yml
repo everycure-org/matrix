@@ -1,0 +1,27 @@
+_spark_parquet_ds: &_spark_parquet
+  type: matrix.datasets.gcp.LazySparkDataset
+  file_format: parquet
+  load_args:
+    header: True
+  save_args:
+    mode: overwrite
+
+
+integration.prm.original.filtered_edges:
+  <<: *_spark_parquet
+  filepath: ${globals:paths.integration}/prm/filtered/edges
+
+integration.prm.original.filtered_nodes:
+  <<: [*_spark_parquet, *_layer_prm]
+  filepath: ${globals:paths.integration}/prm/filtered/nodes
+
+integration.prm.filtered_edges:
+  <<: *_spark_parquet
+  filepath: ${globals:paths.integration}/sample/prm/filtered/edges
+
+integration.prm.filtered_nodes:
+  <<: [*_spark_parquet, *_layer_prm]
+  filepath: ${globals:paths.integration}/sample/prm/filtered/nodes
+
+
+# TODO: Add other datasets of handover boundary here to allow sample
