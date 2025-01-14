@@ -91,23 +91,18 @@ def create_pipeline(**kwargs) -> Pipeline:
     The pipelines is composed of static_nodes (i.e. nodes which are run only once at the beginning),
     and dynamic nodes (i.e. nodes which are repeated for each model selected).
     """
-    # Get models of interest for inference
-    model = settings.DYNAMIC_PIPELINES_MAPPING.get("modelling")
-    run_inference = model["model_config"]["run_inference"]
 
     # Construct the full pipeline
     resolution_nodes = _create_resolution_pipeline()
     pipelines = [resolution_nodes]
-    if run_inference:
-        inference_nodes = _create_inference_pipeline()
-        pipelines.append(inference_nodes)
+    inference_nodes = _create_inference_pipeline()
+    pipelines.append(inference_nodes)
 
     # Add reporting nodes for each model
-    if run_inference:
-        pipelines.append(
-            pipeline(
-                _create_reporting_pipeline(),
-            )
+    pipelines.append(
+        pipeline(
+            _create_reporting_pipeline(),
         )
+    )
 
     return sum([*pipelines])
