@@ -19,6 +19,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                     inputs={
                         "nodes": "integration.prm.original_filtered_nodes",
                         "edges": "integration.prm.original_filtered_edges",
+                        "top_nodes": "params:sample.configuration.top_nodes",
                     },
                     outputs=[
                         "integration.prm.sampled_nodes",
