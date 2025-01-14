@@ -1,3 +1,5 @@
+from typing import Dict
+
 import pandas as pd
 import pandera as pa
 import pyspark.sql as ps
@@ -70,6 +72,23 @@ def test_pandas_dataframe_valid(pandas_df, schema):
 
     # Then initial dataframe returned
     pd.testing.assert_frame_equal(result, pandas_df)
+
+
+@pytest.mark.parametrize(
+    "schema",
+    [DataFrameSchema(columns={"int": Column(Type(int))})],
+)
+def test_pandas_dataframe_dict_valid(pandas_df, schema):
+    # Given a function that validates the output schema
+    @check_output(schema, df_name="df")
+    def to_test(df: pd.DataFrame) -> Dict[str, pd.DataFrame]:
+        return {"df": df}
+
+    # When invoking the test function
+    result = to_test(pandas_df)
+
+    # Then initial dataframe returned
+    pd.testing.assert_frame_equal(result["df"], pandas_df)
 
 
 @pytest.mark.parametrize(
