@@ -16,12 +16,13 @@ This is important because:
 
 However, adding additional buffer layer might also increase PR overhead. One solution to prevent it would be to use release tags as stable reference point in the codebase. 
 
-## Release Tags on Main
+## Release Tags on Main - new workflow
 To ensure stability, we will utilize release tags as reference points in the codebase. Instead of assuming that main is always stable, our approach is to follow release tags. 
 
-This release tag will have been pushed to the **production environment** and will be deployed in production. This means that this tag will reflect our 'status quo' pipeline with best performant model on a validated dataset.
+This release tag will be pushed to the **production environment** and will be deployed in production. This means that this tag will reflect our 'status quo' pipeline with best performant model on a validated dataset.
 
-### Production environment
+### Suggested workflow: 
+For developer, the workflow will look as follows:
 
 #### Identify The Latest  Stable Release
 First, you need to identify the most recent stable release tag (can be found on github matrix page). This is a release tag you can use for branching out for development; essentially you should treat this commit as a production-ready, stable point in the codebase.
@@ -41,6 +42,12 @@ Once you feature is complete, you should make sure to test it before merging it.
 #### Merging back to main
 Once your feature is complete and tested with sampled data, you can merge it back to main. Whilst some bugs might still sneak in (as some bugs will be only detected with full real data), **the main is not production-ready until it has been tagged as a release**.
 
+# WORK IN PROGRESS BELOW
+
+Questions that need answering / clarification
+- what goes into production and development environment
+- how do we tackle data experiments and modelling experiments (e.g. ground truth experiment) - MLFlow is already quite messy
+- How do we decide which dataset is stable (i.e. is this new ground truth stable)
 
 ## Process of creating release (Work In Progress)
 
@@ -51,6 +58,16 @@ Before a release is created, one needs to ensure that
 2). Quality of the output of data engineering pipeline (i.e. KG) is good. 
 3). Modelling pipeline runs to completion without problems.
 4). Quality of the output of modelling pipeline (i.e. matrix) is good.
+
+## Prod and Dev Environments
+### Production environment (Work in Progress)
+What goes into a production environment:
+* specific release (e.g. v0.2.5) of integrated KG (which is a product of data engineering)
+* specific release (e.g. v0.2.5) of matrix output (which is a product of modelling run).
+
+Each release should be accompanied by a description on what data was used (e.g. RTX-KG 2.7.3, GT version XYZ, Drug list version XYZ). Having these in a production environment means that we have confidence in those data products and they are ready for quality examination by users
+
+### Development environment (Work in Progress)
 
 
 
