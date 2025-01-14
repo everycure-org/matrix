@@ -15,6 +15,7 @@ from tenacity import retry, stop_after_attempt, wait_exponential
 from matrix.inject import inject_object, unpack_params
 
 from .encoders import AttributeEncoder
+from .features import Transform, apply_transforms
 from .graph_algorithms import GDSGraphAlgorithm
 
 logger = logging.getLogger(__name__)
@@ -254,8 +255,12 @@ def reduce_dimension(df: ps.DataFrame, transformer, input: str, output: str, ski
 
 
 def filter_edges_for_topological_embeddings(
-    nodes: ps.DataFrame, edges: ps.DataFrame, drug_types: List[str], disease_types: List[str]
-) -> ps.DataFrame:
+    # nodes: ps.DataFrame, edges: ps.DataFrame, drug_types: List[str], disease_types: List[str]
+    # ) -> ps.DataFrame:
+    nodes: ps.DataFrame,
+    edges: ps.DataFrame,
+    transformations: List[Transform],
+):
     """Function to filter edges for topological embeddings process.
 
     The function removes edges connecting drug and disease nodes to avoid data leakage. Currently
@@ -266,8 +271,7 @@ def filter_edges_for_topological_embeddings(
     Args:
         nodes: nodes dataframe
         edges: edges dataframe
-        drug_types: list of drug types
-        disease_types: list of disease types
+        transformations: to apply
     Returns:
         Dataframe with filtered edges
     """
@@ -279,29 +283,7 @@ def filter_edges_for_topological_embeddings(
         edges.alias("edges")
         .join(_create_mapping("subject"), how="left", on="subject")
         .join(_create_mapping("object"), how="left", on="object")
-        # FUTURE: Improve with proper feature engineering engine
-        .withColumn(
-            "subject_is_drug",
-            ps.functions.arrays_overlap(ps.functions.col("subject.all_categories"), ps.functions.lit(drug_types)),
-        )
-        .withColumn(
-            "subject_is_disease",
-            ps.functions.arrays_overlap(ps.functions.col("subject.all_categories"), ps.functions.lit(disease_types)),
-        )
-        .withColumn(
-            "object_is_drug",
-            ps.functions.arrays_overlap(ps.functions.col("object.all_categories"), ps.functions.lit(drug_types)),
-        )
-        .withColumn(
-            "object_is_disease",
-            ps.functions.arrays_overlap(ps.functions.col("object.all_categories"), ps.functions.lit(disease_types)),
-        )
-        .withColumn(
-            "is_drug_disease_edge",
-            (ps.functions.col("subject_is_drug") & ps.functions.col("object_is_disease"))
-            | (ps.functions.col("subject_is_disease") & ps.functions.col("object_is_drug")),
-        )
-        .filter(~ps.functions.col("is_drug_disease_edge"))
+        .transform(apply_transforms, transformations)
         .select("edges.*")
     )
 
