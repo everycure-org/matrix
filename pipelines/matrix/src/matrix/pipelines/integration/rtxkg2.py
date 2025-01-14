@@ -147,8 +147,10 @@ def filter_semmed(
         .select("edges.*")
     )
     edges_filtered = edges_df.filter(
-        ~(f.size(f.col("primary_knowledge_source")) == 1)
-        & (f.col("primary_knowledge_source").getItem(0) == "infores:semmeddb")
+        ~(
+            (f.size(f.col("primary_knowledge_source")) == 1)
+            & (f.col("primary_knowledge_source").getItem(0) == "infores:semmeddb")
+        )
     ).unionByName(single_semmed_edges)
     return edges_filtered
 
