@@ -29,12 +29,12 @@ After discussing with Piotr and Laurens, these are the most common issues that s
 
 | Issue | Importance | Description | Why is it not covered in tests |
 | ------------- | ------------- | ------------- | ------------- |
-| Normalization API | High | The normalization API can fail to normalize some ids and return a null. A few nulls can be handled, but too many and the modelling stage will fail. This usually happens 10 hours or so after the start of the pipeline, and can be caused by the parameters used to configure the API. | The test pipeline uses a mock of the normalization API. |
-| Gap between fabricated data and production data | High | The biggest issue in that space is related to non-nullable columns in fabricated data, while being nullable in production. | Data fabricator parameters do not represent production data accurately. |
-| Pre-processing pipeline | Medium | The pre-processing pipeline can fail with some manually typed data sources. | The test pipeline doesn't run pre-processing. |
-| Kedro local Memory dataset | Medium | The production pipeline can fail as it cannot reach a memory dataset computed in a previous stage. | The test pipeline is sharing memory between stages, but the production environment is not. |
-| Incorrect source files | Medium | Either the files can be outdated, or their file paths can be incorrect when running the production pipeline. | The test pipeline doesn't use the same files as production. |
-| Out Of Memory | Low | Memory errors will make the production pipeline fail. They often arise in Neo4J. Restarting the pipeline usually solves the issue. | The test pipeline does cover out of memory failures. |
+| 1. Normalization API | High | The normalization API can fail to normalize some ids and return a null. A few nulls can be handled, but too many and the modelling stage will fail. This usually happens 10 hours or so after the start of the pipeline, and can be caused by the parameters used to configure the API. | The test pipeline uses a mock of the normalization API. |
+| 2. Gap between fabricated data and production data | High | The biggest issue in that space is related to non-nullable columns in fabricated data, while being nullable in production. | Data fabricator parameters do not represent production data accurately. |
+| 3. Pre-processing pipeline | Medium | The pre-processing pipeline can fail with some manually typed data sources. | The test pipeline doesn't run pre-processing. |
+| 4. Kedro local Memory dataset | Medium | The production pipeline can fail as it cannot reach a memory dataset computed in a previous stage. | The test pipeline is sharing memory between stages, but the production environment is not. |
+| 5. Incorrect source files | Medium | Either the files can be outdated, or their file paths can be incorrect when running the production pipeline. | The test pipeline doesn't use the same files as production. |
+| 6. Out Of Memory | Low | Memory errors will make the production pipeline fail. They often arise in Neo4J. Restarting the pipeline usually solves the issue. | The test pipeline does cover out of memory failures. |
 
 ### Technical context
 
