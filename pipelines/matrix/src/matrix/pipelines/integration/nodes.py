@@ -19,7 +19,7 @@ from tenacity import (
 )
 from tqdm.asyncio import tqdm_asyncio
 
-from matrix.pipelines.integration.filters import determine_most_specific_category
+from matrix.pipelines.integration.filters import determine_most_specific_category, remove_rows_containing_category
 from matrix.schemas.knowledge_graph import KGEdgeSchema, KGNodeSchema, cols_for_schema
 
 # TODO move these into config
@@ -105,6 +105,8 @@ def filter_unified_kg_edges(
     edges: ps.DataFrame,
     biolink_predicates: Dict[str, Any],
     transformations: List[Tuple[Callable, Dict[str, Any]]],
+    columns: List[str],
+    categories: List[str],
 ) -> ps.DataFrame:
     """Function to filter the knowledge graph edges.
 
@@ -115,6 +117,11 @@ def filter_unified_kg_edges(
     # filter down edges to only include those that are present in the filtered nodes
     edges_count = edges.count()
     logger.info(f"Number of edges before filtering: {edges_count}")
+
+    edges = remove_rows_containing_category(edges,categories, columns)
+    edges_count = edges.count()
+    logger.info(f"Number of edges after removing primary knowledge sources: {edges_count}")
+    
     edges = (
         edges.alias("edges")
         .join(nodes.alias("subject"), on=F.col("edges.subject") == F.col("subject.id"), how="inner")
@@ -125,6 +132,7 @@ def filter_unified_kg_edges(
     logger.info(f"Number of edges after filtering: {new_edges_count}, cut out {edges_count - new_edges_count} edges")
 
     return _apply_transformations(edges, transformations, biolink_predicates=biolink_predicates)
+
 
 
 def filter_nodes_without_edges(
