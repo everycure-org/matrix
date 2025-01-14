@@ -1,4 +1,5 @@
 from kedro.pipeline import Pipeline, pipeline
+
 from matrix.kedro4argo_node import ArgoNode, ArgoResourceConfig
 
 from . import nodes
@@ -48,8 +49,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 inputs=[
                     "integration.prm.filtered_nodes",
                     "integration.prm.filtered_edges",
-                    "params:modelling.drug_types",
-                    "params:modelling.disease_types",
+                    "params:embeddings.topological.edge_filtering",
                 ],
                 outputs="embeddings.feat.graph.edges_for_topological",
                 name="filter_edges_for_topological",
