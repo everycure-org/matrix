@@ -20,7 +20,10 @@ Running the full pipeline in production currently takes 12 hours given the volum
 
 The current infrastructure uses a Data Fabricator class to fabricate synthetic data following the same schema as production data. This synthetic data is then used in the test pipeline that can be run locally and used in the CI.
 
-The Data Fabricator allows for capturing a wide range or errors, but it is not perfect. At various occasions it fails to detect errors due to the drift between a) synthetic and real data and b) local and cloud environments.
+The Data Fabricator allows for capturing a wide range or errors, but it is not perfect. At various occasions it fails to detect errors due to drifts between:
+
+1. Synthetic and real data 
+2. Local and cloud environments setup
 
 After discussing with Piotr and Laurens, these are the most common issues that seem to arise in production without being caught in the test pipeline:
 
