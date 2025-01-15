@@ -516,13 +516,13 @@ def select_release(headless: bool) -> str:
     return ask_for_release()
 
 
-def extract_metadata_from_notes(notes: str):
-    """Extract YAML metadata from the beginning of the notes."""
+def extract_metadata_from_notes(notes: str) -> str:
+    """Extract metadata from the beginning of the notes."""
     if notes.startswith("---"):
         # Split the content into metadata and body
         parts = notes.split("---", 2)
         if len(parts) < 3:
-            raise ValueError("Invalid YAML front matter structure.")
+            raise ValueError("Invalid front matter structure.")
 
         metadata_block = f"---\n{parts[1].strip()}\n---"  # The metadata is between the first and second ---
 
