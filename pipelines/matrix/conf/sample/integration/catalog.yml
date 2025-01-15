@@ -3,8 +3,26 @@ _spark_parquet_ds: &_spark_parquet
   file_format: parquet
   save_args:
     mode: overwrite
-    
-# Original sources 
+
+_spark_csv: &_spark_csv
+  type: spark.SparkDataset
+  file_format: csv
+  load_args:
+    header: True
+  save_args:
+    mode: overwrite
+
+_pandas_csv: &_pandas_csv
+  type:  pandas.CSVDataset
+
+_raw_ds: &_raw_ds
+  metadata:
+    kedro-viz:
+      layer: raw
+
+# ==============================
+
+# Original KG sources 
 integration.prm.original_filtered_edges:
   <<: [*_spark_parquet]
   filepath: ${globals:paths.integration}/prm/filtered/edges
@@ -21,3 +39,37 @@ integration.prm.filtered_edges:
 integration.prm.filtered_nodes:
   <<: [*_spark_parquet]
   filepath: ${globals:paths.integration}/sampled/filtered/nodes
+
+# Ground truth sources
+modelling.raw.ground_truth.positives@pandas:
+  <<: [*_pandas_csv, *_raw_ds]
+  filepath: ${globals:paths.raw}/ground_truth/translator/${globals:data_sources.gt.version}/tp_pairs_conflated.tsv
+  load_args:
+    sep: "\t"
+  save_args:
+    sep: "\t"
+
+modelling.raw.ground_truth.positives@spark:
+  <<: [*_spark_csv, *_raw_ds]
+  filepath: ${globals:paths.raw}/ground_truth/translator/${globals:data_sources.gt.version}/tp_pairs_conflated.tsv
+  file_format: csv
+  load_args:
+    sep: "\t"
+    header: true
+
+modelling.raw.ground_truth.negatives@pandas:
+  <<: [*_pandas_csv, *_raw_ds]
+  filepath: ${globals:paths.raw}/ground_truth/translator/${globals:data_sources.gt.version}/tn_pairs_conflated.tsv
+  load_args:
+    sep: "\t"
+  save_args:
+    sep: "\t"
+
+modelling.raw.ground_truth.negatives@spark:
+  <<: [*_spark_csv, *_raw_ds]
+  filepath: ${globals:paths.raw}/ground_truth/translator/${globals:data_sources.gt.version}/tn_pairs_conflated.tsv
+  file_format: csv
+  load_args:
+    sep: "\t"
+    header: true
+
