@@ -45,12 +45,12 @@ class GroundTruthSampler(Sampler):
         self,
         ground_truth_positive_sample_ratio: float,
         ground_truth_negative_sample_ratio: float,
-        kg_nodes_sample_fraction: float,
+        kg_nodes_sample_ratio: float,
         seed: int,
     ):
         self.ground_truth_positive_sample_ratio = ground_truth_positive_sample_ratio
         self.ground_truth_negative_sample_ratio = ground_truth_negative_sample_ratio
-        self.kg_nodes_sample_fraction = kg_nodes_sample_fraction
+        self.kg_nodes_sample_ratio = kg_nodes_sample_ratio
         self.seed = seed
 
     def sample(
@@ -92,7 +92,7 @@ class GroundTruthSampler(Sampler):
         )
 
         # ... sample from all KG nodes
-        sampled_kg_node_ids = kg_nodes.select("id").sample(self.kg_nodes_sample_fraction, self.seed)
+        sampled_kg_node_ids = kg_nodes.select("id").sample(self.kg_nodes_sample_ratio, self.seed)
 
         # ... aggregate nodes and drop duplicated node ids
         sampled_node_ids = sampled_kg_node_ids.union(gt_node_ids).distinct()
