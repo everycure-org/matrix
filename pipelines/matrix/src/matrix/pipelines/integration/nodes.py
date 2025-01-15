@@ -11,7 +11,6 @@ import pyspark.sql.functions as F
 from joblib import Memory
 from jsonpath_ng import parse
 from more_itertools import chunked
-from matrix.inject import inject_object
 from tenacity import (
     retry,
     retry_if_exception_type,
@@ -19,6 +18,7 @@ from tenacity import (
 )
 from tqdm.asyncio import tqdm_asyncio
 
+from matrix.inject import inject_object
 from matrix.pipelines.integration.filters import determine_most_specific_category
 from matrix.schemas.knowledge_graph import KGEdgeSchema, KGNodeSchema, cols_for_schema
 
@@ -31,6 +31,7 @@ logger = logging.getLogger(__name__)
 def union_and_deduplicate_edges(*edges) -> ps.DataFrame:
     """Function to unify edges datasets."""
     # fmt: off
+    breakpoint()
     return (
         _union_datasets(*edges)
         .transform(KGEdgeSchema.group_edges_by_id)

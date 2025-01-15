@@ -40,7 +40,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                     "integration.int.rtx_kg2.nodes",
                     "integration.int.rtx_kg2.edges",
                 ],
-                name=f"sample_rtx_kg2_nodes",
+                name=f"sample_rtx_kg2",
             ),
         ]
     )

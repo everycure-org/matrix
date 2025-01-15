@@ -70,21 +70,32 @@ def sample_kg_from_ids(
         Tuple[DataFrame, DataFrame]: Sampled nodes and edges DataFrames
     """
     # Get nodes that match our sample
-    nodes_sampled = nodes.join(node_ids, on="id", how="inner").persist()
-    logger.info(f"Nodes found in KG: {nodes_sampled.count()}")
+    nodes_sampled, edges_sampled = get_sampled_nodes_and_neighors(nodes, edges, node_ids, params.get("max_edges"))
 
-    # Get edges connected to our sampled nodes
-    edges_sampled = edges.join(
-        node_ids, on=(edges.subject == node_ids.id) | (edges.object == node_ids.id), how="inner"
-    ).persist()
-    logger.info(f"Edges selected from KG: {edges_sampled.count()}")
+    subgraph_nodes, subgraph_edges = get_subgraph_via_networkX(nodes_sampled, edges_sampled)
 
-    # Optionally limit edges
-    max_edges = params.get("max_edges")
-    if max_edges:
-        edges_sampled = edges_sampled.limit(max_edges)
-        logger.info(f"Edges limited to: {edges_sampled.count()}")
+    # Join back with original data to get full node/edge information
+    final_nodes = nodes.join(subgraph_nodes, on="id", how="inner")
+    final_edges = edges_sampled.join(subgraph_edges, on=["subject", "object"], how="inner")
 
+    # get total counts
+    logger.info(f"Total nodes sampled: {final_nodes.count()}")
+    logger.info(f"Total edges sampled: {final_edges.count()}")
+
+    # few asserts to make sure we're doing the right thing
+    # are we only returning edges that are present in the nodes?
+    assert (
+        final_nodes.select("id")
+        .distinct()
+        .join(final_edges.select(f.explode(f.array("subject", "object")).alias("id")).distinct(), on="id", how="inner")
+        .count()
+        == final_nodes.count()
+    )
+
+    return final_nodes, final_edges
+
+
+def get_subgraph_via_networkX(nodes_sampled: DataFrame, edges_sampled: DataFrame) -> nx.Graph:
     # Convert to NetworkX for component analysis
     nodes_pd = nodes_sampled.select("id", "name").toPandas()
     edges_pd = edges_sampled.select("subject", "predicate", "object").toPandas()
@@ -107,17 +118,33 @@ def sample_kg_from_ids(
     logger.info(f"Average degree: {sum(dict(largest_subgraph.degree()).values()) / largest_subgraph.number_of_nodes()}")
 
     # Convert back to Spark DataFrames
-    spark = nodes.sparkSession
-    final_nodes = spark.createDataFrame(
+    spark = nodes_sampled.sparkSession
+    subgraph_nodes = spark.createDataFrame(
         pd.DataFrame(largest_subgraph.nodes()), schema=StructType([StructField("id", StringType(), True)])
     )
-    final_edges = spark.createDataFrame(
+    subgraph_edges = spark.createDataFrame(
         pd.DataFrame(largest_subgraph.edges()),
         schema=StructType([StructField("subject", StringType(), True), StructField("object", StringType(), True)]),
     )
 
-    # Join back with original data to get full node/edge information
-    final_nodes = final_nodes.join(nodes_sampled, on="id", how="inner")
-    final_edges = final_edges.join(edges_sampled, on=["subject", "object"], how="inner")
+    return subgraph_nodes, subgraph_edges
 
-    return final_nodes, final_edges
+
+def get_sampled_nodes_and_neighors(
+    nodes: DataFrame, edges: DataFrame, node_ids: DataFrame, max_edges: int
+) -> Tuple[DataFrame, DataFrame]:
+    nodes_sampled = nodes.join(node_ids, on="id", how="inner").persist()
+    logger.info(f"Nodes found in KG: {nodes_sampled.count()}")
+
+    # Get edges connected to our sampled nodes
+    edges_sampled = edges.join(
+        node_ids, on=(edges.subject == node_ids.id) | (edges.object == node_ids.id), how="inner"
+    ).persist()
+    logger.info(f"Edges selected from KG: {edges_sampled.count()}")
+
+    # Optionally limit edges
+    if max_edges:
+        edges_sampled = edges_sampled.limit(max_edges)
+        logger.info(f"Edges limited to: {edges_sampled.count()}")
+
+    return nodes_sampled, edges_sampled
