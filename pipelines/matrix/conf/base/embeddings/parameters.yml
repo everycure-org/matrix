@@ -66,12 +66,7 @@ embeddings.topological.edge_filtering:
     flag: subject_is_disease
     column: subject.all_categories
     values: *_disease_types
-    ## Additional flag for experiment
-  #- object: matrix.pipelines.embeddings.features.ColumnValuesOverlapWithFlag
-  #  flag: subject_to_keep
-  #  column: subject.all_categories
-  #  values: *_category_to_keep
-
+   
   # Object flags
   - _object:  matrix.pipelines.embeddings.features.ColumnValuesOverlapWithFlag
     flag: object_is_drug
@@ -81,12 +76,7 @@ embeddings.topological.edge_filtering:
     flag: object_is_disease
     column: object.all_categories
     values: *_disease_types
-    ## Additional flag for experiment
-  #- object: matrix.pipelines.embeddings.features.ColumnValuesOverlapWithFlag
-  #  flag: object_to_keep
-  #  column: object.all_categories
-  #  values: *_category_to_keep
-    
+  
   # General flags
   - _object:  matrix.pipelines.embeddings.features.HasFlags
     flag: is_drug_disease_edge
@@ -97,16 +87,23 @@ embeddings.topological.edge_filtering:
   - _object: matrix.pipelines.embeddings.features.HasAnyFlag
     flag: remove_from_topological_embeddings
     flags: ["is_drug_disease_edge", "is_disease_drug_edge"]
-    ## Additional flag for experiment
-  #- object: matrix.pipelines.embeddings.features.HasFlags
-  #  flag: is_to_keep_edge
-  #  flags: ["subject_to_keep", "object_to_keep"]
-
-
+    
   # Filtering
   - _object: matrix.pipelines.embeddings.features.HasNotFlagsFilter
     flags: ["remove_from_topological_embeddings"]
-    ## Additional flag for experiment
+    
+  ## Additional flag for experiment
+  #- object: matrix.pipelines.embeddings.features.ColumnValuesOverlapWithFlag
+  #  flag: subject_to_keep
+  #  column: subject.all_categories
+  #  values: *_category_to_keep
+  #- object: matrix.pipelines.embeddings.features.ColumnValuesOverlapWithFlag
+  #  flag: object_to_keep
+  #  column: object.all_categories
+  #  values: *_category_to_keep
+  #- object: matrix.pipelines.embeddings.features.HasFlags
+  #  flag: is_to_keep_edge
+  #  flags: ["subject_to_keep", "object_to_keep"]
   #- object: matrix.pipelines.embeddings.features.HasFlagsFilter
   #  flags: ["is_to_keep_edge"]
   
