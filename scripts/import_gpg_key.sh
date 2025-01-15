@@ -13,4 +13,10 @@ echo "The fingerprint is: $fingerprint"
 echo "$publicKey" | gpg --import
 
 echo "$fingerprint:6:" | gpg --import-ownertrust
-git-crypt add-gpg-user -k $keyName $fingerprint
+
+# if keyName is not provided, we do not pass the -k flag to git-crypt
+if [ -z "$keyName" ]; then
+    git-crypt add-gpg-user $fingerprint
+else
+    git-crypt add-gpg-user -k $keyName $fingerprint
+fi
