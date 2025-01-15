@@ -130,7 +130,6 @@ def release_notes(
 ):
     """Generate an AI summary of code changes since a specific git reference."""
     since = select_release(headless)
-    get_release_notes(since, model)  # added
     try:
         console.print("Generating release notes...")
         response = get_release_notes(since, model)
