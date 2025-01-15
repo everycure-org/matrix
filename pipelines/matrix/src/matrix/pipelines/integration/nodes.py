@@ -19,7 +19,7 @@ from tenacity import (
 )
 from tqdm.asyncio import tqdm_asyncio
 
-from matrix.pipelines.integration.filters import determine_most_specific_category, remove_rows_containing_category
+from matrix.pipelines.integration.filters import determine_most_specific_category, remove_primary_knowledge_source_edges
 from matrix.schemas.knowledge_graph import KGEdgeSchema, KGNodeSchema, cols_for_schema
 
 # TODO move these into config
@@ -118,7 +118,7 @@ def filter_unified_kg_edges(
     edges_count = edges.count()
     logger.info(f"Number of edges before filtering: {edges_count}")
 
-    edges = remove_rows_containing_category(edges,categories, columns)
+    edges = remove_primary_knowledge_source_edges(edges,categories, columns)
     edges_count = edges.count()
     logger.info(f"Number of edges after removing primary knowledge sources: {edges_count}")
     

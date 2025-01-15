@@ -97,13 +97,15 @@ def determine_most_specific_category(nodes: ps.DataFrame, biolink_categories_df:
     )
     return nodes
 
+def remove_rows_containing_category(nodes: ps.DataFrame, categories: List[str], column: str, **kwargs) -> ps.DataFrame:
+    """Function to remove rows containing a category."""
+    return nodes.filter(~F.col(column).isin(categories))
 
-def remove_rows_containing_category(
+def remove_primary_knowledge_source_edges(
     edges: ps.DataFrame,
     categories: List[str],
     columns: List[str],
-    **kwargs
-) -> ps.DataFrame:
+    **kwargs) -> ps.DataFrame:
     """
     Function to remove rows containing any of the given categories in
     any of the listed columns.
