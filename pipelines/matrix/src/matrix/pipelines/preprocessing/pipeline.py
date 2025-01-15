@@ -1,5 +1,4 @@
 from kedro.pipeline import Pipeline, node, pipeline
-from matrix.kedro4argo_node import argo_node
 
 from . import nodes
 from .tagging import generate_tags
@@ -54,7 +53,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 tags=["ec-clinical-trials-data"],
             ),
             # NOTE: Clean up the clinical trial data and write it to the GCS bucket
-            argo_node(
+            node(
                 func=nodes.clean_clinical_trial_data,
                 inputs=[
                     "preprocessing.int.mapped_clinical_trials_data",

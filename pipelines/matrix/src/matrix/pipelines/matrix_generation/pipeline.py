@@ -1,6 +1,6 @@
 from kedro.pipeline import Pipeline, pipeline
 from matrix import settings
-from matrix.kedro4argo_node import ARGO_GPU_NODE_MEDIUM, argo_node
+from matrix.kedro4argo_node import ARGO_GPU_NODE_MEDIUM, ArgoNode
 from matrix.pipelines.modelling.utils import partial_fold
 
 from . import nodes
@@ -22,7 +22,7 @@ def create_pipeline(**kwargs) -> Pipeline:
     pipelines.append(
         pipeline(
             [
-                argo_node(
+                ArgoNode(
                     func=nodes.enrich_embeddings,
                     inputs=[
                         "embeddings.feat.nodes",
@@ -42,7 +42,7 @@ def create_pipeline(**kwargs) -> Pipeline:
         pipelines.append(
             pipeline(
                 [
-                    argo_node(
+                    ArgoNode(
                         func=partial_fold(nodes.generate_pairs, fold, arg_name="known_pairs"),
                         inputs={
                             "known_pairs": "modelling.model_input.splits",
@@ -63,7 +63,7 @@ def create_pipeline(**kwargs) -> Pipeline:
             pipelines.append(
                 pipeline(
                     [
-                        argo_node(
+                        ArgoNode(
                             func=nodes.make_predictions_and_sort,
                             inputs=[
                                 "matrix_generation.feat.nodes@kg",
@@ -80,7 +80,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                             name=f"make_{model}_predictions_and_sort_fold_{fold}",
                             argo_config=ARGO_GPU_NODE_MEDIUM,
                         ),
-                        argo_node(
+                        ArgoNode(
                             func=nodes.generate_report,
                             inputs=[
                                 f"matrix_generation.{model}.fold_{fold}.model_output.sorted_matrix_predictions@pandas",
