@@ -78,7 +78,7 @@ def test_pandas_dataframe_valid(pandas_df, schema):
     "schema",
     [DataFrameSchema(columns={"int": Column(int)})],
 )
-def test_pandas_dataframe_dict_valid(pandas_df, schema):
+def test_check_output_supports_validating_mappings_to_frames(pandas_df, schema):
     # Given a function that validates the output schema
     @check_output(schema, df_name="df")
     def to_test(df: pd.DataFrame) -> Dict[str, pd.DataFrame]:
