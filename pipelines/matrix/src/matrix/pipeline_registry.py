@@ -9,6 +9,7 @@ from matrix.pipelines.fabricator.pipeline import create_pipeline as create_fabri
 from matrix.pipelines.ingestion.pipeline import create_pipeline as create_ingestion_pipeline
 from matrix.pipelines.integration.pipeline import create_pipeline as create_integration_pipeline
 from matrix.pipelines.matrix_generation.pipeline import create_pipeline as create_matrix_pipeline
+from matrix.pipelines.moa.pipeline import create_pipeline as create_moa_pipeline
 from matrix.pipelines.modelling.pipeline import create_pipeline as create_modelling_pipeline
 from matrix.pipelines.preprocessing.pipeline import create_pipeline as create_preprocessing_pipeline
 
@@ -31,6 +32,7 @@ def register_pipelines() -> Dict[str, Pipeline]:
         "modelling": create_modelling_pipeline(),
         "matrix_generation": create_matrix_pipeline(),
         "evaluation": create_evaluation_pipeline(),
+        "moa": create_moa_pipeline(),
         # "inference": create_inference_pipeline(),  # Run manually based on medical input
     }
 
