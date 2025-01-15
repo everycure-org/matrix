@@ -4,6 +4,7 @@ import re
 import subprocess
 import tempfile
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from datetime import date
 from pathlib import Path
 from typing import TYPE_CHECKING, List
 
@@ -20,13 +21,13 @@ from matrix_cli.components.git import get_code_diff
 from matrix_cli.components.models import PRInfo
 from matrix_cli.components.settings import settings
 from matrix_cli.components.utils import (
+    ask_for_release,
     console,
     get_git_root,
+    get_latest_release,
     get_markdown_contents,
     invoke_model,
     run_command,
-    ask_for_release,
-    get_latest_release,
 )
 
 if TYPE_CHECKING:
@@ -62,6 +63,8 @@ def write_release_article(
         console.print("[green]Collecting release notes...")
         notes = get_release_notes(since, model=model)
 
+    release_metadata = extract_metadata_from_notes(notes)
+
     console.print("[green]Collecting previous articles...")
     previous_articles = get_previous_articles()
 
@@ -86,6 +89,10 @@ def write_release_article(
 - Maintain an objective and professional tone
 - Focus on technical accuracy
 - Ensure a high signal-to-noise ratio for technical readers
+
+Prepend the following metadata to the final output:
+
+{release_metadata}
 
         """
 
@@ -123,7 +130,7 @@ def release_notes(
 ):
     """Generate an AI summary of code changes since a specific git reference."""
     since = select_release(headless)
-
+    get_release_notes(since, model)  # added
     try:
         console.print("Generating release notes...")
         response = get_release_notes(since, model)
@@ -142,8 +149,11 @@ def release_notes(
 def get_release_notes(since: str, model: str) -> str:
     release_template = get_release_template()
     console.print("[bold green]Collecting PR details...")
-    pr_details_df = get_pr_details_since(since)[["title", "number"]]
-    pr_details_dict = pr_details_df.sort_values(by="number").to_dict(orient="records")
+    pr_details_df = get_pr_details_since(since)
+    authors_list = pr_details_df["author"].unique()
+    pr_details_dict = pr_details_df[["title", "number"]].sort_values(by="number").to_dict(orient="records")
+    # Format authors list into bullet-pointed strings
+    authors = "\n".join(f"      - {item}" for item in authors_list)
     console.print("[bold green]Collecting git diff...")
     diff_output = get_code_diff(since)
 
@@ -151,7 +161,20 @@ def get_release_notes(since: str, model: str) -> str:
     categories = (c["title"] for c in release_yaml["changelog"]["categories"])
     categories_md = "\n - ".join((f"## {c}" for c in categories))
 
+    current_date = date.today().strftime("%Y-%m-%d")
+
+    release_metadata = f"""---
+    date: {current_date}
+    authors: 
+{authors}
+---
+    """
+
     prompt = f"""Please provide a concise summary of the following code changes. 
+    Prepend the following metadata to the final output:
+
+    {release_metadata}
+
     Focus on creating the content for the following release template following its categories:
 
     ```yaml
@@ -492,6 +515,21 @@ def select_release(headless: bool) -> str:
     if headless:
         return get_latest_release()
     return ask_for_release()
+
+
+def extract_metadata_from_notes(notes: str):
+    """Extract YAML metadata from the beginning of the notes."""
+    if notes.startswith("---"):
+        # Split the content into metadata and body
+        parts = notes.split("---", 2)
+        if len(parts) < 3:
+            raise ValueError("Invalid YAML front matter structure.")
+
+        metadata_block = f"---\n{parts[1].strip()}\n---"  # The metadata is between the first and second ---
+
+        return metadata_block
+    else:
+        raise ValueError("The provided notes don't contain valid YAML metadata block.")
 
 
 if __name__ == "__main__":
