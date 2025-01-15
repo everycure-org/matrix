@@ -3,6 +3,7 @@ from kedro.pipeline import Pipeline, node, pipeline
 
 from matrix import settings
 from matrix.inject import inject_object
+from matrix.kedro4argo_node import ArgoNode
 from matrix.pipelines.batch import pipeline as batch_pipeline
 
 from . import nodes
