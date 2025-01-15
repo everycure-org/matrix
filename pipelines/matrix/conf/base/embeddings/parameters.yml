@@ -58,11 +58,11 @@ embeddings.gds:
 # FUTURE: Move flagging elsewhere so we can expose them to modelling too
 embeddings.topological.edge_filtering:
   # Subject flag
-  - object:  matrix.pipelines.embeddings.features.ColumnValuesOverlapWithFlag
+  - _object:  matrix.pipelines.embeddings.features.ColumnValuesOverlapWithFlag
     flag: subject_is_drug
     column: subject.all_categories
     values: *_drug_types
-  - object:  matrix.pipelines.embeddings.features.ColumnValuesOverlapWithFlag
+  - _object:  matrix.pipelines.embeddings.features.ColumnValuesOverlapWithFlag
     flag: subject_is_disease
     column: subject.all_categories
     values: *_disease_types
@@ -73,11 +73,11 @@ embeddings.topological.edge_filtering:
   #  values: *_category_to_keep
 
   # Object flags
-  - object:  matrix.pipelines.embeddings.features.ColumnValuesOverlapWithFlag
+  - _object:  matrix.pipelines.embeddings.features.ColumnValuesOverlapWithFlag
     flag: object_is_drug
     column: object.all_categories
     values: *_drug_types
-  - object:  matrix.pipelines.embeddings.features.ColumnValuesOverlapWithFlag
+  - _object:  matrix.pipelines.embeddings.features.ColumnValuesOverlapWithFlag
     flag: object_is_disease
     column: object.all_categories
     values: *_disease_types
@@ -88,13 +88,13 @@ embeddings.topological.edge_filtering:
   #  values: *_category_to_keep
     
   # General flags
-  - object:  matrix.pipelines.embeddings.features.HasFlags
+  - _object:  matrix.pipelines.embeddings.features.HasFlags
     flag: is_drug_disease_edge
     flags: ["subject_is_drug", "object_is_disease"]
-  - object:  matrix.pipelines.embeddings.features.HasFlags
+  - _object:  matrix.pipelines.embeddings.features.HasFlags
     flag: is_disease_drug_edge
     flags: ["subject_is_disease", "object_is_drug"]
-  - object: matrix.pipelines.embeddings.features.HasAnyFlag
+  - _object: matrix.pipelines.embeddings.features.HasAnyFlag
     flag: remove_from_topological_embeddings
     flags: ["is_drug_disease_edge", "is_disease_drug_edge"]
     ## Additional flag for experiment
@@ -104,7 +104,7 @@ embeddings.topological.edge_filtering:
 
 
   # Filtering
-  - object: matrix.pipelines.embeddings.features.HasNotFlagsFilter
+  - _object: matrix.pipelines.embeddings.features.HasNotFlagsFilter
     flags: ["remove_from_topological_embeddings"]
     ## Additional flag for experiment
   #- object: matrix.pipelines.embeddings.features.HasFlagsFilter

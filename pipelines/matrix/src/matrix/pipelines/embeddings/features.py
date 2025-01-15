@@ -89,7 +89,6 @@ class HasAnyFlag(Flag):
         return df.withColumn(self._flag, F.expr(" OR ".join([f"{flag} IS TRUE" for flag in self._flags])))
 
 
-@inject_object()
 def apply_transforms(df: DataFrame, transformations: List[Transform]) -> DataFrame:
     for transformation in transformations:
         df = df.transform(transformation.apply)
