@@ -1,3 +1,5 @@
-sample.configuration:
-  top_nodes: 10000
-  
+sampling.configuration:
+  ground_truth_positive_sample_ratio: 0.01
+  ground_truth_negative_sample_ratio: 0.01
+  kg_nodes_sample_fraction: 0.01
+  seed: 42

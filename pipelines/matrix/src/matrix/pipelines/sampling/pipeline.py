@@ -14,17 +14,25 @@ def create_pipeline(**kwargs) -> Pipeline:
         pipeline(
             [
                 ArgoNode(
-                    func=nodes.sample_kg,
-                    inputs={
-                        "nodes": "integration.prm.original_filtered_nodes",
-                        "edges": "integration.prm.original_filtered_edges",
-                        "top_nodes": "params:sample.configuration.top_nodes",
-                    },
-                    outputs=[
-                        "integration.prm.sampled_nodes",
-                        "integration.prm.sampled_edges",
+                    func=nodes.sample,
+                    inputs=[
+                        "integration.prm.original_filtered_nodes",
+                        "integration.prm.original_filtered_edges",
+                        "modelling.raw.ground_truth.original_positives@spark",
+                        "modelling.raw.ground_truth.original_negatives@spark",
+                        "embeddings.feat.original_nodes",
+                        "params:sampling.configuration.ground_truth_positive_sample_ratio",
+                        "params:sampling.configuration.ground_truth_negative_sample_ratio",
+                        "params:sampling.configuration.kg_nodes_sample_fraction",
+                        "params:sampling.configuration.seed",
                     ],
-                    name="sample_kg",
+                    outputs=[
+                        "integration.prm.filtered_nodes",
+                        "modelling.raw.ground_truth.positives",
+                        "modelling.raw.ground_truth.negatives",
+                        "embeddings.feat.nodes",
+                    ],
+                    name="sample",
                 )
             ]
         )
