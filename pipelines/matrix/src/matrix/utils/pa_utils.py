@@ -8,78 +8,23 @@ NOTE: Should be removed as soon as Pandera supports this.
 import typing
 from dataclasses import dataclass
 from functools import wraps
-from typing import ClassVar, Dict, List, Optional
+from typing import Dict, List, Optional
 
 import pandas as pd
 import pandera as pa
-import pandera.pyspark as psa
+import pandera.pyspark as pas
 import pyspark.sql as ps
 import pyspark.sql.types as T
 from pandera.decorators import _handle_schema_error
 
 
 @dataclass
-class Type:
-    """Class to represent a list of a given type."""
-
-    type_: type
-    is64: bool = False
-
-    _type_map: ClassVar[Dict[type, type]] = {
-        int: T.IntegerType,
-        float: T.FloatType,
-        str: T.StringType,
-        bool: T.BooleanType,
-    }
-
-    _64_map: ClassVar[Dict[type, type]] = {
-        int: T.LongType,
-        float: T.DoubleType,
-    }
-
-    def build_for_type(self, type_):
-        if type_ is pd.DataFrame:
-            return self.type_
-
-        if type_ is ps.DataFrame:
-            if self.is64:
-                return self._64_map[self.type_]()
-            else:
-                return self._type_map[self.type_]()
-
-        raise NotImplementedError(f"generation for type {type_} currently not supported!")
-
-
-@dataclass
-class ArrayType(Type):
-    """Class to represent an array of a given type."""
-
-    def build_for_type(self, type_):
-        if type_ is pd.DataFrame:
-            return List[super().build_for_type(type_)]
-
-        if type_ is ps.DataFrame:
-            return T.ArrayType(super().build_for_type(type_))
-
-        raise NotImplementedError(f"generation for type {type_} currently not supported!")
-
-
-@dataclass
 class Column:
     """Data class to represent a class agnostic Pandera Column."""
 
-    type_: Type
+    type_: type
     checks: Optional[List] = None
     nullable: bool = True
-
-    def build_for_type(self, type_):
-        if type_ is pd.DataFrame:
-            return pa.Column(self.type_.build_for_type(type_), checks=self.checks, nullable=self.nullable)
-
-        if type_ is ps.DataFrame:
-            return psa.Column(self.type_.build_for_type(type_), checks=self.checks, nullable=self.nullable)
-
-        raise NotImplementedError(f"generation for type {type_} currently not supported!")
 
 
 @dataclass
@@ -89,13 +34,28 @@ class DataFrameSchema:
     columns: Dict[str, Column]
     unique: Optional[List] = None
 
-    _schema_map: ClassVar[Dict[type, type]] = {pd.DataFrame: pa.DataFrameSchema, ps.DataFrame: psa.DataFrameSchema}
+    def build_for_type(self, type_) -> typing.Union[pas.DataFrameSchema, pa.DataFrameSchema]:
+        # Build pandas version
+        if type_ is pd.DataFrame:
+            return pa.DataFrameSchema(
+                columns={
+                    name: pa.Column(col.type_, checks=col.checks, nullable=col.nullable)
+                    for name, col in self.columns.items()
+                },
+                unique=self.unique,
+            )
 
-    def build_for_type(self, type_) -> psa:
-        return self._schema_map[type_](
-            columns={name: col.build_for_type(type_) for name, col in self.columns.items()},
-            unique=self.unique,
-        )
+        # Build pyspark version
+        if type_ is ps.DataFrame:
+            return pas.DataFrameSchema(
+                columns={
+                    name: pas.Column(col.type_, checks=col.checks, nullable=col.nullable)
+                    for name, col in self.columns.items()
+                },
+                unique=self.unique,
+            )
+
+        raise TypeError()
 
 
 def check_output(schema: DataFrameSchema, df_name: Optional[str] = None):
