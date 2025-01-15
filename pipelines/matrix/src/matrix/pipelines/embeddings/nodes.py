@@ -256,8 +256,6 @@ def reduce_dimension(df: ps.DataFrame, transformer, input: str, output: str, ski
 
 @inject_object()
 def filter_edges_for_topological_embeddings(
-    # nodes: ps.DataFrame, edges: ps.DataFrame, drug_types: List[str], disease_types: List[str]
-    # ) -> ps.DataFrame:
     nodes: ps.DataFrame,
     edges: ps.DataFrame,
     transformations: List[Transform],
