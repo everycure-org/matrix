@@ -17,8 +17,8 @@ from rich.logging import RichHandler
 from rich.panel import Panel
 
 from matrix.argo import ARGO_TEMPLATES_DIR_PATH, generate_argo_config
-from matrix.kedro4argo_node import ArgoResourceConfig
 from matrix.git_utils import get_current_git_branch, has_dirty_git
+from matrix.kedro4argo_node import ArgoResourceConfig
 
 logging.basicConfig(
     level=logging.INFO,
@@ -324,7 +324,7 @@ def check_dependencies(verbose: bool):
 def build_push_docker(username: str, verbose: bool):
     """Build and push Docker image."""
     console.print("Building Docker image...")
-    run_subprocess(f"make docker_push TAG={username}", stream_output=verbose)
+    run_subprocess(f"make docker_push TAG={username}", stream_output=False)
     console.print("[green]✓[/green] Docker image built and pushed")
 
 
