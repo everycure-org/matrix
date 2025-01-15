@@ -14,17 +14,14 @@ def create_pipeline(**kwargs) -> Pipeline:
         pipeline(
             [
                 ArgoNode(
-                    func=nodes.sample,
+                    func=nodes.sample_nodes,
                     inputs=[
+                        "params:sampling.configuration.sampler",
                         "integration.prm.original_filtered_nodes",
                         "integration.prm.original_filtered_edges",
                         "modelling.raw.ground_truth.original_positives@spark",
                         "modelling.raw.ground_truth.original_negatives@spark",
                         "embeddings.feat.original_nodes",
-                        "params:sampling.configuration.ground_truth_positive_sample_ratio",
-                        "params:sampling.configuration.ground_truth_negative_sample_ratio",
-                        "params:sampling.configuration.kg_nodes_sample_fraction",
-                        "params:sampling.configuration.seed",
                     ],
                     outputs=[
                         "integration.prm.filtered_nodes",
