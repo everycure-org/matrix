@@ -61,7 +61,7 @@ class NCATSNodeNormalizer(Normalizer):
                 resp.raise_for_status()
 
         df["normalized_id"] = [self._extract_id(curie, response_json, self._json_parser) for curie in curies]
-        # df["normalized_id"] = df["normalized_id"] #.astype(str)
+        df["normalized_id"] = df["normalized_id"].astype(pd.StringDtype())
         return df
 
     @staticmethod
