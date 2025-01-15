@@ -8,6 +8,7 @@ import pandas as pd
 import pandera
 import pyspark.sql as ps
 import pyspark.sql.functions as F
+from pyspark.sql import SparkSession
 from joblib import Memory
 from jsonpath_ng import parse
 from more_itertools import chunked
@@ -353,3 +354,15 @@ def _extract_ids(response: Dict[str, Any], json_parser: parse):
             ids[key] = None
 
     return ids
+
+def extract_therapeutic_triples(
+    nodes: ps.DataFrame,
+    edges: ps.DataFrame,
+    edge_predicates: List[str],
+    node_categories: List[str]
+    ) -> ps.DataFrame:
+    
+    filtered_graph = edges.filter(F.col("predicate").isin(edge_predicates))
+    filtered_nodes = nodes.filter(F.col("category").isin(node_categories))
+    
+    return filtered_graph, filtered_nodes

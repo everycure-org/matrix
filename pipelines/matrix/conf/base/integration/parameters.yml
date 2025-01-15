@@ -30,7 +30,24 @@ integration:
     drug_chemical_conflate: true
     batch_size: 1000
     parallelism: 120
-
+    
+  therapeutic_triple_filters:
+    edge_predicate_filters:
+      - biolink:treats
+      - biolink:affects
+      - biolink:binds
+      - biolink:directly_physically_interacts_with
+      - biolink:genetically_associated
+      - biolink:target_for
+      - biolink:related-to
+      - biolink:has_phenotype
+    node_category_filters:
+      - biolink:Drug
+      - biolink:ChemicalEntity
+      - biolink:Disease
+      - biolink:DiseaseOrPhenotypicFeature
+      - biolink:Gene
+      - biolink:GeneOrGeneProduct
   filtering:
     node_filters:
       filter_node_labels:
@@ -68,3 +85,4 @@ integration:
         _object: matrix.pipelines.modelling.utils.partial_
         func:
           _object: matrix.pipelines.integration.filters.biolink_deduplicate_edges
+    

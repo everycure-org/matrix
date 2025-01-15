@@ -89,3 +89,11 @@ integration.int.ec_medical_team.nodes:
 integration.int.ec_medical_team.edges:
   <<: [*_spark_parquet, *_layer_int]
   filepath: ${globals:paths.integration}/int/ec_medical_team/edges
+
+therapeutic_triples_edges:
+  <<: [*_spark_parquet, *_layer_int]
+  filepath: ${globals:paths.integration}/prm/filtered/therapeutic_triples/edges
+
+therapeutic_triples_nodes:
+ <<: [*_spark_parquet, *_layer_int]
+ filepath: ${globals:paths.integration}/prm/filtered/therapeutic_triples/nodes
