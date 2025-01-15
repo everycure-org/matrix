@@ -144,6 +144,13 @@ def create_pipeline(**kwargs) -> Pipeline:
                     name="filter_nodes_without_edges",
                     tags=["filtering"],
                 ),
+                argo_node(
+                    func= nodes.extract_therapeutic_triples,
+                    inputs=[
+                        "integration.prm.filtered_nodes",
+                        "integration.prm.filtred_edges"],
+                    outputs = "therapeutic_triples",
+                    name = "extract_therapeutic_triples")
             ]
         )
     )

@@ -7,6 +7,7 @@ import aiohttp
 import pandas as pd
 import pandera
 import pyspark.sql as ps
+from pyspark.sql import SparkSession
 import pyspark.sql.functions as F
 from joblib import Memory
 from jsonpath_ng import parse
@@ -353,3 +354,24 @@ def _extract_ids(response: Dict[str, Any], json_parser: parse):
             ids[key] = None
 
     return ids
+
+def extract_therapeutic_triples(
+    nodes: ps.DataFrame,
+    edges: ps.DataFrame) -> ps.DataFrame:
+
+    allowed_predicates = [
+    "biolink:treats",
+    "biolink:affects",
+    "biolink:binds",
+    "biolink:directly_physically_interacts_with",
+    "biolink:genetically_associated",
+    "biolink:target_for",
+    "biolink:related-to",
+    "biolink:has_phenotype"
+    ]
+
+    filtered_df = edges.filter(F.col("predicate").isin(allowed_predicates))
+    
+    return filtered_df
+    
+    
