@@ -18,6 +18,7 @@ run_name: ${oc.env:RUN_NAME, default-run-name}
 versions:
   release: local-release
 
+
 data_sources:
   rtx-kg2:
     version: &_rtx_kg_version v2.7.3 #when bumping to 2.10, we should stop to limit PMID for the semmed filtering

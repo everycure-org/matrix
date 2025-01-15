@@ -1,0 +1,33 @@
+gcs_bucket: gs://${oc.env:GCP_BUCKET, mtrx-us-central1-hub-dev-storage}
+source_gcs_bucket: ${gcs_bucket}
+
+run_name: ${oc.env:RUN_NAME, default-run-name}
+versions:
+  release: local-release
+
+
+base_path: data/sample
+full_data_paths:
+                      # TODO: pascal's local cloud path, the correct one should be a cloud bucket path
+  integration:        data/cloud/releases/${versions.release}/datasets/integration
+
+paths:
+  # Upstream-source versioned
+  # TODO replace with original 
+  raw:                data/cloud/kedro/data/01_RAW
+  kg_raw:             data/cloud/data/01_RAW
+  #raw:                ${source_gcs_bucket}/kedro/data/01_raw
+  #kg_raw:             ${gcs_bucket}/data/01_RAW
+  ingestion:          ${base_path}/ingestion
+  # Release-based
+  integration:        ${base_path}/releases/${versions.release}/datasets/integration
+  embeddings:         ${base_path}/releases/${versions.release}/datasets/embeddings
+  release:            ${base_path}/releases/${versions.release}/datasets/release
+
+  # Run-based
+  modelling:          ${base_path}/releases/${versions.release}/runs/${run_name}/datasets/modelling
+  evaluation:         ${base_path}/releases/${versions.release}/runs/${run_name}/datasets/evaluation
+  matrix_generation:  ${base_path}/releases/${versions.release}/runs/${run_name}/datasets/matrix_generation
+  inference:          ${base_path}/releases/${versions.release}/runs/${run_name}/datasets/inference
+
+  tmp:                data/tmp

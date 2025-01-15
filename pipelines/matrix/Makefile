@@ -56,6 +56,7 @@ docker_test: certificate docker_build
 		--exit-code-from matrix-pipeline
 
 docker_build:
+	docker pull $(dev_docker_image) #always pull latest, avoids re-building the same image
 	docker buildx build --progress=plain --build-arg GIT_SHA=${GIT_SHA} --platform $(TARGET_PLATFORM) -t $(dev_docker_image) --load ./
 	docker tag $(dev_docker_image) $(dev_docker_image):${TAG}
 

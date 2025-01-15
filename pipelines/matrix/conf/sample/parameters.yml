@@ -1,0 +1,16 @@
+sample: 
+  gt_params:
+    max_count: 150
+    always_keep_ids:
+    - "CHEMBL.TARGET:CHEMBL372"
+    - "CHEMBL.COMPOUND:CHEMBL375"
+    - "PUBCHEM.COMPOUND:6816"
+  
+  kg_params:
+    max_edges: 10_000_000 # setting this high, because we don't actually want to limit them
+
+integration:
+  preprocessing:
+    rtx:
+      semmed_filters:
+        limit_pmids: 10_000 

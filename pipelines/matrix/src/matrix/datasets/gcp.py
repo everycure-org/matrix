@@ -1,8 +1,7 @@
-import os
-import logging
-import re
 import asyncio
-from tqdm import tqdm
+import logging
+import os
+import re
 from copy import deepcopy
 from typing import Any, Optional
 
@@ -10,6 +9,7 @@ import google.api_core.exceptions as exceptions
 import numpy as np
 import pandas as pd
 import pygsheets
+import pyspark.sql as ps
 from google.cloud import bigquery, storage
 from kedro.io.core import (
     AbstractVersionedDataset,
@@ -20,9 +20,9 @@ from kedro_datasets.partitions import PartitionedDataset
 from kedro_datasets.spark import SparkDataset, SparkJDBCDataset
 from kedro_datasets.spark.spark_dataset import _get_spark, _split_filepath, _strip_dbfs_prefix
 from matrix.hooks import SparkHooks
-from pygsheets import Spreadsheet, Worksheet
-import pyspark.sql as ps
 from matrix.inject import _parse_for_objects
+from pygsheets import Spreadsheet, Worksheet
+from tqdm import tqdm
 
 logger = logging.getLogger(__name__)
 
@@ -329,10 +329,15 @@ class RemoteSparkJDBCDataset(SparkJDBCDataset):
 
         protocol, fs_prefix, blob_name = self.split_remote_jdbc_path(url)
 
-        if fs_prefix != "gs://":
+        if fs_prefix == "":
+            logging.info("jdbc dataset loading from local")
+            self._bucket = None
+            self._blob_name = blob_name
+        elif fs_prefix == "gs://":
+            logging.info("jdbc dataset loading from gcs")
+            self._bucket, self._blob_name = blob_name.split("/", maxsplit=1)
+        else:
             raise DatasetError("RemoteSparkJDBCDataset currently supports GCS only")
-
-        self._bucket, self._blob_name = blob_name.split("/", maxsplit=1)
 
         super().__init__(
             table=table,

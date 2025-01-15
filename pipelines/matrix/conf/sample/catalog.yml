@@ -1,0 +1,37 @@
+_spark_parquet_ds: &_spark_parquet
+  type: matrix.datasets.gcp.LazySparkDataset
+  file_format: parquet
+  load_args:
+    header: True
+  save_args:
+    mode: overwrite
+
+sampling.ids:
+  <<: [*_spark_parquet]
+  filepath: ${globals:paths.integration}/sample_ids.parquet
+
+integration.int.{source}.nodes.full_data:
+  <<: [*_spark_parquet]
+  filepath: ${globals:full_data_paths.integration}/int/{source}/nodes
+
+integration.int.{source}.edges.full_data:
+  <<: [*_spark_parquet]
+  filepath: ${globals:full_data_paths.integration}/int/{source}/edges
+
+integration.int.{source}.nodes:
+  <<: [*_spark_parquet]
+  filepath: ${globals:paths.integration}/int/{source}/nodes
+
+integration.int.{source}.edges:
+  <<: [*_spark_parquet]
+  filepath: ${globals:paths.integration}/int/{source}/edges
+
+# we keep the full data for these datasets
+
+integration.int.ec_medical_team.nodes.norm:
+  <<: [*_spark_parquet]
+  filepath: ${globals:paths.integration}/int/ec_medical_team/nodes.norm
+
+integration.int.ec_medical_team.edges.norm:
+  <<: [*_spark_parquet]
+  filepath: ${globals:paths.integration}/int/ec_medical_team/edges.norm
