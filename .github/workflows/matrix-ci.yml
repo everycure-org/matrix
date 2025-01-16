@@ -33,7 +33,6 @@ on:
     paths: 
       - pipelines/matrix/**
       - .github/workflows/matrix-ci.yml
-      - .github/workflows/matrix-push.yml
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -69,7 +68,6 @@ jobs:
             src:
               - pipelines/matrix/**
               - .github/workflows/matrix-ci.yml
-              - .github/workflows/matrix-push.yml
 
   ci:
     runs-on:  'self-hosted'
