@@ -100,6 +100,8 @@ jobs:
       - name: Branch off
         run: |
           git switch -C release/${{env.release_version}} "${{github.ref_name}}"
+          git add gha-kubeconfig* 
+          git commit -m "add kubeconfig file generated while authentication"
           git status
 
       - name: Submit the kedro pipeline
