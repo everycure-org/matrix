@@ -12,11 +12,5 @@ install:
 	if [ ! -d .venv ]; then uv venv -p 3.11; fi
 	uv pip install -r requirements.txt
 
-image: 
-	docker build -t docs ./
-
-serve_docker: image
-	docker run --rm docs
-
 deploy: build
 	gcloud app deploy
