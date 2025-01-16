@@ -19,7 +19,7 @@ class Sampler(ABC):
         embeddings_nodes: ps.DataFrame,
     ) -> Tuple[ps.DataFrame, ps.DataFrame, ps.DataFrame, ps.DataFrame]:
         """
-        Sample the KG, ground truth, and embeddings.
+        Sample the knowledge graph, ground truth, and embeddings.
 
         Args:
             knowledge_graph_nodes: Knowledge graph nodes
