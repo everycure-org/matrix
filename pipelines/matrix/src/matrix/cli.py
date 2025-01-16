@@ -2,7 +2,7 @@ import click
 from kedro.framework.cli.utils import CONTEXT_SETTINGS, KedroCliError
 
 from matrix.cli_commands.run import run
-from matrix.cli_commands.submit import submit
+from matrix.cli_commands.submit import experiment, release, submit
 
 
 @click.group(context_settings=CONTEXT_SETTINGS, name=__file__)
@@ -13,6 +13,10 @@ def cli():
 cli.add_command(submit)
 
 cli.add_command(run)
+
+cli.add_command(experiment)
+
+cli.add_command(release)
 
 if __name__ == "__main__":
     try:
