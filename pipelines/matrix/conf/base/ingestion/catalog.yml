@@ -341,6 +341,6 @@ ingestion.raw.feedback@pandas:
   db_path: /Users/piotrkaniewski/work/matrix-ui/backend/local.db
 
 ingestion.int.feedback:
-  <<: [*_spark_parquet, *_layer_int]
-  filepath: ${globals:paths.ingestion}/int/feedback/feedback_df
+  <<: [*_pandas_csv, *_layer_int]
+  filepath: ${globals:paths.ingestion}/int/feedback/feedback_df.csv
 

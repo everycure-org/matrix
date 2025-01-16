@@ -5,6 +5,12 @@ from kedro.pipeline import Pipeline, node, pipeline
 from matrix.kedro4argo_node import ArgoNode
 
 
+def process_feedback_data(x):
+    """Process feedback data."""
+    columns = ["id", "user_id", "username", "comment", "post_id", "status", "timestamp"]
+    return pd.DataFrame(x, columns=columns)
+
+
 def create_pipeline(**kwargs) -> Pipeline:
     """Create ingestion pipeline."""
     # FUTURE: Use dynamic pipeline for this good first issue
@@ -87,17 +93,3 @@ def create_pipeline(**kwargs) -> Pipeline:
             ),
         ]
     )
-
-
-from pyspark.sql import SparkSession  # Add this import
-
-
-def process_feedback_data(x):
-    """Process feedback data."""
-    # Convert the input to a Spark DataFrame and select the necessary columns
-    columns = ["id", "user_id", "username", "comment", "post_id", "status", "timestamp"]
-    spark = ps.SparkSession.builder.getOrCreate()
-    return spark.createDataFrame(x, schema=columns)  # Use Spark's createDataFrame
-
-
-# NOTE: This function was partially generated using AI assistance.
