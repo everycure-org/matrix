@@ -81,7 +81,7 @@ estimator:
 ```
 
 ```python
-# inject_object() recorgnizes configuration in the above format,
+# inject_object() recognizes configuration in the above format,
 # and ensures that the decorated function receives the instantiated 
 # objects.
 from matrix.core import inject_object
@@ -122,13 +122,71 @@ def create_pipeline(**kwargs) -> Pipeline:
 
 The dependency injection pattern is an excellent technique to clean configuration heavy code, and ensure maximum re-usability.
 
+
+## How to request resource availability for a node?
+
+We've implemented a mechanism to request Kubernetes resources directly from Kedro nodes. This is done through the `ArgoNode` wrapper, which is a wrapper around the `Node` class that allows us to request resources from the Argo workflow (HERE is the [source code](https://github.com/everycure-org/matrix/blob/main/pipelines/matrix/src/matrix/kedro4argo_node.py#L93)). 
+
+ArgoNode ensures that the resource requests are passed on to the Argo workflow that in turn requests nodes with the appropriate resources, provisioned by the Kubernetes cluster. If resources are not available, the run will fail.
+
+ArgoNode has no effect on local runs - regardless of the resources requested, the nodes will run on the local machine.
+
+#### ArgoResourceConfig
+
+They implement identical functionality, with the only difference being that `ArgoNode` accepts an optional `argo_config` of type `ArgoResourceConfig` parameter (HERE is the [source code](https://github.com/everycure-org/matrix/blob/main/pipelines/matrix/src/matrix/kedro4argo_node.py#L22)). `ArgoResourceConfig` accepts the standard Kubernetes resource configuration parameters - requests and limits on CPU and memory, and number of GPUs.
+
+```python
+class ArgoResourceConfig(BaseModel):
+    """Configuration for Kubernetes execution.
+
+    Default values are set in settings.py.
+
+    Attributes:
+        num_gpus (int): Number of GPUs requested for the container.
+        cpu_request (float): CPU cores requested for the container.
+        cpu_limit (float): Maximum CPU cores allowed for the container.
+        memory_request (float): Memory requested for the container in GB.
+        memory_limit (float): Maximum memory allowed for the container in GB.
+    """
+
+    num_gpus: int = KUBERNETES_DEFAULT_NUM_GPUS
+    cpu_request: int = KUBERNETES_DEFAULT_REQUEST_CPU
+    cpu_limit: int = KUBERNETES_DEFAULT_LIMIT_CPU
+    memory_request: int = KUBERNETES_DEFAULT_REQUEST_RAM
+    memory_limit: int = KUBERNETES_DEFAULT_LIMIT_RAM
+```
+
+#### Resource Defaults
+
+Our Argo Workflow as well as ArgoNode are configured to request default resources defined in `kedro4argo_node.py`:
+
+```python
+# Values are in Gb
+KUBERNETES_DEFAULT_LIMIT_RAM = 52
+KUBERNETES_DEFAULT_REQUEST_RAM = 52
+
+# Values are in number of GPUs
+KUBERNETES_DEFAULT_NUM_GPUS = 0
+
+# Values are in number of cores
+KUBERNETES_DEFAULT_LIMIT_CPU = 14
+KUBERNETES_DEFAULT_REQUEST_CPU = 4
+```
+
+The defaults are configuerd to the experimentally determined optimal values close to full node sizes on the production cluster. This is because requesting exactly 64Gb of RAM would result in provisioning a node with 128Gb of RAM because of Kubernetes overheads, which is highly inefficient.
+
+Together with defaults, we also provide a set of predefined `ArgoResourceConfig` instances such as `ARGO_GPU_NODE_MEDIUM`, which are defined [here](https://github.com/everycure-org/matrix/blob/main/pipelines/matrix/src/matrix/kedro4argo_node.py#L151). 
+
+Users are encourages to use those nodes and request custom resource configurations only when necessary. 
+
+
 ## Dynamic pipelines
 
 !!! note 
-    This is an advanced topic, and can be skipped during the oboarding.
+    This is an advanced topic, and can be skipped during the onboarding.
 
 !!! tip 
-    Kedro pipelines are usually limited to static layouts. However, often you find yourself in a position where you want to instaniate the same pipeline _multiple times_. Dynamic pipelines are used to control the layout of the pipeline dynamically. We recommend checking out the [Dynamic Pipelines](https://getindata.com/blog/kedro-dynamic-pipelines/) blogpost. This pipelining strategy heavily relies on Kedro's [dataset factories](https://docs.kedro.org/en/stable/data/kedro_dataset_factories.html) feature.
+    Kedro pipelines are usually limited to static layouts. However, often you find yourself in a position where you want to instantiate the same pipeline _multiple times_. Dynamic pipelines are used to control the layout of the pipeline dynamically. We recommend checking out the [Dynamic Pipelines](https://getindata.com/blog/kedro-dynamic-pipelines/) blogpost. This pipelining strategy heavily relies on Kedro's [dataset factories](https://docs.kedro.org/en/stable/data/kedro_dataset_factories.html) feature.
 
 Dynamic pipelines in Kedro allow us to do exactly this, it is a workaround that enables us to control the layout of the pipeline dynamically. We're doing that through the `settings.py` file. This file essentially provides a higher-order configuration mechanism, that can be used to create more complex pipelines.
 

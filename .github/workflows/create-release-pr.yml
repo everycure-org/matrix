@@ -60,8 +60,16 @@ jobs:
           git push --follow-tags
 
       - name: Branch off
-        # To comply with the protected-branch policy
-        run: git switch -c release/${{env.release}} ${{env.gitref}}
+        # To comply with the protected-branch policy, we checkout a different
+        # branch, but from the commit that created the release.
+        # It should have been pushed, otherwise this errors out.
+        run: git switch -C release/${{env.release}} "${{env.gitref}}"
+
+      - name: Setup Matrix CLI
+        working-directory: apps/matrix-cli
+        run: |
+          pip install uv
+          uv sync
 
       - name: Authenticate with Google Cloud
         uses: 'google-github-actions/auth@v2'
@@ -91,12 +99,6 @@ jobs:
           uv pip install -r requirements.txt
           cd scripts
           uv run bump_detection.py
-
-      - name: Setup Matrix CLI
-        working-directory: apps/matrix-cli
-        run: |
-          pip install uv
-          uv sync
           
       - name: Create Release Notes
         working-directory: apps/matrix-cli
