@@ -91,6 +91,114 @@ def submit(username: str, namespace: str, run_name: str, release_version: str, p
     )
 
 
+# fmt: off
+@cli.command()
+@click.option("--username", type=str, required=True, help="Specify the username to use")
+@click.option("--namespace", type=str, default="argo-workflows", help="Specify a custom namespace")
+@click.option("--run-name", type=str, default=None, help="Specify a custom run name, defaults to branch")
+@click.option("--release-version", type=str, required=True, help="Specify a custom release name")
+@click.option("--pipeline", "-p", type=str, default="modelling_run", help="Specify which pipeline to execute")
+@click.option("--quiet", "-q", is_flag=True, default=False, help="Disable verbose output")
+@click.option("--dry-run", "-d", is_flag=True, default=False, help="Does everything except submit the workflow")
+@click.option("--from-nodes", type=str, default="", help="Specify nodes to run from", callback=split_string)
+@click.option("--headless", is_flag=True, default=False, help="Disable prompts for confirmation")
+# fmt: on
+def experiment(username: str, namespace: str, run_name: str, release_version: str, pipeline: str, quiet: bool, dry_run: bool, from_nodes: List[str], headless:bool):
+    """Submit the experiment, results submitted to the test folder. """
+    if not quiet:
+        log.setLevel(logging.DEBUG)
+
+    if pipeline in ('data_release', 'kg_release'):
+        raise ValueError("Please use kedro release for data release and kg_release pipelines to release new datasets")
+
+    if pipeline not in kedro_pipelines.keys():
+        raise ValueError("Pipeline requested for execution not found")
+    
+    if pipeline in ["fabricator", "test"]:
+        raise ValueError("Submitting test pipeline to Argo will result in overwriting source data")
+    
+    if not headless and from_nodes:
+        if not click.confirm("Using 'from-nodes' is highly experimental and may break due to MLFlow issues with tracking the right run. Are you sure you want to continue?", default=False):
+            raise click.Abort()
+
+    pipeline_obj = kedro_pipelines[pipeline]
+    if from_nodes:
+        pipeline_obj = pipeline_obj.from_nodes(*from_nodes)
+
+    run_name = get_run_name(run_name)
+    pipeline_obj.name = pipeline
+
+
+    summarize_submission(run_name, namespace, pipeline, release_version, headless)
+    _submit(
+        username=username,
+        namespace=namespace,
+        run_name=run_name,
+        release_version=release_version,
+        pipeline_obj=pipeline_obj,
+        verbose=not quiet,
+        dry_run=dry_run,
+        template_directory=ARGO_TEMPLATES_DIR_PATH,
+        allow_interactions=not headless,
+        is_test=True,
+    )
+
+
+# fmt: off
+@cli.command()
+@click.option("--username", type=str, required=True, help="Specify the username to use")
+@click.option("--namespace", type=str, default="argo-workflows", help="Specify a custom namespace")
+@click.option("--run-name", type=str, default=None, help="Specify a custom run name, defaults to branch")
+@click.option("--release-version", type=str, required=True, help="Specify a custom release name")
+@click.option("--pipeline", "-p", type=str, default="modelling_run", help="Specify which pipeline to execute")
+@click.option("--quiet", "-q", is_flag=True, default=False, help="Disable verbose output")
+@click.option("--dry-run", "-d", is_flag=True, default=False, help="Does everything except submit the workflow")
+@click.option("--from-nodes", type=str, default="", help="Specify nodes to run from", callback=split_string)
+@click.option("--headless", is_flag=True, default=False, help="Disable prompts for confirmation")
+# fmt: on
+def release(username: str, namespace: str, run_name: str, release_version: str, pipeline: str, quiet: bool, dry_run: bool, from_nodes: List[str], headless:bool):
+    """Submit the workflow, results submitted to the release folder. """
+    if not quiet:
+        log.setLevel(logging.DEBUG)
+
+    if pipeline not in ('data_release', 'kg_release'):
+        raise ValueError("Please use kedro experiment for experiments using existing data sources")
+    
+    abort_if_unmet_git_requirements()
+
+    if pipeline not in kedro_pipelines.keys():
+        raise ValueError("Pipeline requested for execution not found")
+    
+    if pipeline in ["fabricator", "test"]:
+        raise ValueError("Submitting test pipeline to Argo will result in overwriting source data")
+    
+    if not headless and from_nodes:
+        if not click.confirm("Using 'from-nodes' is highly experimental and may break due to MLFlow issues with tracking the right run. Are you sure you want to continue?", default=False):
+            raise click.Abort()
+
+    pipeline_obj = kedro_pipelines[pipeline]
+    if from_nodes:
+        pipeline_obj = pipeline_obj.from_nodes(*from_nodes)
+
+    run_name = get_run_name(run_name)
+    pipeline_obj.name = pipeline
+
+
+    summarize_submission(run_name, namespace, pipeline, release_version, headless)
+    _submit(
+        username=username,
+        namespace=namespace,
+        run_name=run_name,
+        release_version=release_version,
+        pipeline_obj=pipeline_obj,
+        verbose=not quiet,
+        dry_run=dry_run,
+        template_directory=ARGO_TEMPLATES_DIR_PATH,
+        allow_interactions=not headless,
+        is_test=False,
+    )
+
+
 def _submit(
         username: str, 
         namespace: str, 
