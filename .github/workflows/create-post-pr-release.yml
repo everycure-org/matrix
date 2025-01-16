@@ -44,7 +44,7 @@ jobs:
       - name: Discover Latest Official Release on GitHub
         run: |
           latest_official_release=$(gh release list --jq '.[0].tagName' --json tagName --order desc)
-          echo "latest_official_release=${latest_official_release}" >> "$GITHUB_ENV"
+          echo "latest_official_release=${latest_official_release}" >> "$GITHUB_ENV"  
 
       - name: Create GitHub release
         env:
@@ -53,17 +53,15 @@ jobs:
         run: |
           set -euxo pipefail
           echo "Creating release"
-          # Check if notes file exists, because there's no notes generated for patch bump
-          NOTES_FILE="${GITHUB_WORKSPACE}/${POSTS_DIR}/${{ env.latest_tag }}/notes.md"
-          if [ -f "$NOTES_FILE" ]; then
-            gh release create "${{ env.latest_tag }}" \
-              --notes-file "$NOTES_FILE" \
-              --title "${{ env.latest_tag }}" \
-              --latest
-          else
-            echo "Notes file not found, using empty notes."
-            gh release create "${{ env.latest_tag }}" \
-              --notes "This is weekly patch bump." \
-              --title "${{ env.latest_tag }}" \
-              --latest
-          fi
+          # If intended release comes after latest_official_release, flag it with --latest. Otherwise, don't.
+          highest_version=$(echo -e "${{env.intended_tag}}\n${{env.latest_official_release}}" | sort --version-sort | tail -n1)
+          if [ "${{ env.intended_tag }}" = "${highest_version}" ]; then ARG_LATEST=" --latest"; else ARG_LATEST=""; fi
+          
+          NOTES_FILE="${GITHUB_WORKSPACE}/${POSTS_DIR}/${{ env.intended_tag }}/notes.md"
+          if [ -f "$NOTES_FILE" ]; then ARG_NOTES="--notes-file ${NOTES_FILE}"; else ARG_NOTES="--notes 'This is a patch bump.'"; fi
+
+          gh release create "${{ env.intended_tag }}" \
+            --notes-file "${GITHUB_WORKSPACE}/${POSTS_DIR}/${{ env.intended_tag }}/notes.md" \
+            --title "${{ env.intended_tag }}" \
+            "${ARG_NOTES}" \
+            "${ARG_LATEST}"
