@@ -47,11 +47,10 @@ jobs:
           git config --global user.name "All of us at Every Cure"
           git config --global push.autosetupremote true
 
-      - name: Fetch latest tag
+      - name: Discover Latest Official Release on GitHub
         run: |
-          latest_tag=$(git tag --list --sort="v:refname" | tail -n 1)
-          echo "latest_tag=${latest_tag}" >> "$GITHUB_ENV"
-          echo "Latest tag is ${latest_tag}"
+          latest_official_release=$(gh release list --jq '.[0].tagName' --json tagName --order desc)
+          echo "latest_official_release=${latest_official_release}" >> "$GITHUB_ENV"
 
       - name: Tag the commit from which the data release was triggered
         run: |
