@@ -1,3 +1,4 @@
+import pandas as pd
 import pyspark.sql.functions as F
 from kedro.pipeline import Pipeline, node, pipeline
 
@@ -77,5 +78,26 @@ def create_pipeline(**kwargs) -> Pipeline:
                 name="ingest_spoke_edges",
                 tags=["spoke"],
             ),
+            node(
+                func=process_feedback_data,
+                inputs=["ingestion.raw.feedback@pandas"],
+                outputs="ingestion.int.feedback",
+                name="ingest_feedback_df",
+                tags=["feedback"],
+            ),
         ]
     )
+
+
+from pyspark.sql import SparkSession  # Add this import
+
+
+def process_feedback_data(x):
+    """Process feedback data."""
+    # Convert the input to a Spark DataFrame and select the necessary columns
+    columns = ["id", "user_id", "username", "comment", "post_id", "status", "timestamp"]
+    spark = ps.SparkSession.builder.getOrCreate()
+    return spark.createDataFrame(x, schema=columns)  # Use Spark's createDataFrame
+
+
+# NOTE: This function was partially generated using AI assistance.

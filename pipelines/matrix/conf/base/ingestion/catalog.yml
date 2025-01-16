@@ -335,3 +335,12 @@ ingestion.int.spoke.edges:
   <<: [*_spark_parquet, *_layer_int]
   filepath: ${globals:paths.ingestion}/int/spoke/${globals:data_sources.spoke.version}/edges
 
+ingestion.raw.feedback@pandas:
+  type: matrix.datasets.async_sqlite_dataset.SQLiteDataSet
+  table: comment  # Ensure this matches your actual table name
+  db_path: /Users/piotrkaniewski/work/matrix-ui/backend/local.db
+
+ingestion.int.feedback:
+  <<: [*_spark_parquet, *_layer_int]
+  filepath: ${globals:paths.ingestion}/int/feedback/feedback_df
+
