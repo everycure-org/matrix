@@ -365,4 +365,6 @@ def extract_therapeutic_triples(
     filtered_graph = edges.filter(F.col("predicate").isin(edge_predicates))
     filtered_nodes = nodes.filter(F.col("category").isin(node_categories))
     
+    
+    
     return filtered_graph, filtered_nodes
