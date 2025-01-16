@@ -28,4 +28,11 @@ def has_legal_branch_name() -> bool:
     return bool(match)
 
 
-print(has_legal_branch_name())
+def has_local_commits():
+    result = subprocess.run(
+        ["git", "log", "@{u}.."], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, check=False
+    )
+    return
+
+
+print(has_local_commits())
