@@ -142,7 +142,7 @@ def _submit(
         if dry_run:
             return
 
-        build_push_docker(run_name, verbose=False)
+        build_push_docker(run_name, verbose=True)
 
         ensure_namespace(namespace, verbose=verbose)
 
