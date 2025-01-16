@@ -17,6 +17,7 @@ def test_legal_branch_name_valid(mock_get_branch):
 def test_legal_branch_name_invalid(mock_get_branch):
     # Test invalid branch names
     invalid_branches = [
+        "/release/v1",
         "release/v1",
         "release/1.0.0",
         "release/v1.0",
