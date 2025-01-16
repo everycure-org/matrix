@@ -1,9 +1,3 @@
----
-draft: false
-date: 2025-01-15
-categories:
-  - Release
----
 # `v0.2.6`: Robust Model Evaluation with Cross-Validation, Flexible Ensembling, and Streamlined Pipelines
 
 This release of the Matrix Platform focuses on enhancing model robustness, flexibility, and pipeline efficiency.  Key improvements include the implementation of k-fold cross-validation, a flexible ensemble model aggregation function, significant refactoring for improved code maintainability, and numerous bug fixes.
