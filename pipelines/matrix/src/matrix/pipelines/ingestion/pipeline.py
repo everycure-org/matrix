@@ -87,7 +87,7 @@ def create_pipeline(**kwargs) -> Pipeline:
             node(
                 func=process_feedback_data,
                 inputs=["ingestion.raw.feedback@pandas"],
-                outputs="ingestion.int.feedback",
+                outputs="ingestion.int.feedback@pandas",
                 name="ingest_feedback_df",
                 tags=["feedback"],
             ),

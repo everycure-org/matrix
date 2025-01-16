@@ -143,6 +143,17 @@ def create_pipeline(**kwargs) -> Pipeline:
                     name="filter_nodes_without_edges",
                     tags=["filtering"],
                 ),
+                ArgoNode(
+                    func=nodes.incorporate_feedback,
+                    inputs=[
+                        "ingestion.int.feedback@spark",
+                        "integration.prm.prefiltered_nodes",
+                        "integration.prm.filtered_edges",
+                    ],
+                    outputs=["integration.prm.feedback_filtered_nodes", "integration.prm.feedback_filtered_edges"],
+                    name="incorporate_feedback",
+                    tags=["feedback"],
+                ),
             ]
         )
     )

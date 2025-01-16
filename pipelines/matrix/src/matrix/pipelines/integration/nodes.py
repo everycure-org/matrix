@@ -11,7 +11,6 @@ import pyspark.sql.functions as F
 from joblib import Memory
 from jsonpath_ng import parse
 from more_itertools import chunked
-from matrix.inject import inject_object
 from tenacity import (
     retry,
     retry_if_exception_type,
@@ -19,6 +18,7 @@ from tenacity import (
 )
 from tqdm.asyncio import tqdm_asyncio
 
+from matrix.inject import inject_object
 from matrix.pipelines.integration.filters import determine_most_specific_category
 from matrix.schemas.knowledge_graph import KGEdgeSchema, KGNodeSchema, cols_for_schema
 
@@ -353,3 +353,8 @@ def _extract_ids(response: Dict[str, Any], json_parser: parse):
             ids[key] = None
 
     return ids
+
+
+def incorporate_feedback(feedback, nodes, edges):
+    """Filter based on feedback"""
+    return nodes, edges

@@ -1,4 +1,5 @@
 from kedro.pipeline import Pipeline, pipeline
+
 from matrix.kedro4argo_node import ArgoNode, ArgoResourceConfig
 
 from . import nodes
@@ -10,9 +11,9 @@ def create_pipeline(**kwargs) -> Pipeline:
         [
             # Bucketize and partition nodes
             ArgoNode(
-                func=nodes.bucketize_df,
+                func=nodes.bucketize_df,  # integration.prm.feedback_filtered_nodes",'integration.prm.feedback_filtered_edges
                 inputs={
-                    "df": "integration.prm.filtered_nodes",
+                    "df": "integration.prm.feedback_filtered_nodes",
                     "input_features": "params:embeddings.node.input_features",
                     "bucket_size": "params:embeddings.node.batch_size",
                     "max_input_len": "params:embeddings.node.max_input_len",
@@ -46,8 +47,8 @@ def create_pipeline(**kwargs) -> Pipeline:
             ArgoNode(
                 func=nodes.filter_edges_for_topological_embeddings,
                 inputs=[
-                    "integration.prm.filtered_nodes",
-                    "integration.prm.filtered_edges",
+                    "integration.prm.feedback_filtered_nodes",
+                    "integration.prm.feedback_filtered_edges",
                     "params:modelling.drug_types",
                     "params:modelling.disease_types",
                 ],
@@ -127,7 +128,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 func=nodes.extract_topological_embeddings,
                 inputs={
                     "embeddings": "embeddings.model_output.topological",
-                    "nodes": "integration.prm.filtered_nodes",
+                    "nodes": "feedback_filtered_nodes",
                     "string_col": "params:embeddings.write_topological_col",
                 },
                 outputs="embeddings.feat.nodes",
