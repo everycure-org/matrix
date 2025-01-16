@@ -57,7 +57,7 @@ def submit(username: str, namespace: str, run_name: str, release_version: str, p
     warnings.warn(
         (
             "The kedro submit command is deprecated and will be removed in the next release. "
-            "Please use kedro experiment or kedro release instead. "
+            "Please use 'kedro experiment' or 'kedro release' instead. "
             "See more information using `kedro --help`."
         ),
         DeprecationWarning,
@@ -112,10 +112,9 @@ def submit(username: str, namespace: str, run_name: str, release_version: str, p
 @click.option("--quiet", "-q", is_flag=True, default=False, help="Disable verbose output")
 @click.option("--dry-run", "-d", is_flag=True, default=False, help="Does everything except submit the workflow")
 @click.option("--from-nodes", type=str, default="", help="Specify nodes to run from", callback=split_string)
-@click.option("--headless", is_flag=True, default=False, help="Disable prompts for confirmation")
 # fmt: on
-def experiment(username: str, namespace: str, run_name: str, source_version: str, pipeline: str, quiet: bool, dry_run: bool, from_nodes: List[str], headless:bool):
-    """Submit the experiment, results submitted to the test folder. """
+def experiment(username: str, namespace: str, run_name: str, source_version: str, pipeline: str, quiet: bool, dry_run: bool, from_nodes: List[str]):
+    """Submit the experiment workflow, results submitted to the test folder. """
     if not quiet:
         log.setLevel(logging.DEBUG)
 
@@ -128,7 +127,7 @@ def experiment(username: str, namespace: str, run_name: str, source_version: str
     if pipeline in ["fabricator", "test"]:
         raise ValueError("Submitting test pipeline to Argo will result in overwriting source data")
     
-    if not headless and from_nodes:
+    if from_nodes:
         if not click.confirm("Using 'from-nodes' is highly experimental and may break due to MLFlow issues with tracking the right run. Are you sure you want to continue?", default=False):
             raise click.Abort()
 
@@ -140,7 +139,7 @@ def experiment(username: str, namespace: str, run_name: str, source_version: str
     pipeline_obj.name = pipeline
 
 
-    summarize_submission(run_name, namespace, pipeline, source_version, headless)
+    summarize_submission(run_name, namespace, pipeline, source_version)
     _submit(
         username=username,
         namespace=namespace,
@@ -150,7 +149,6 @@ def experiment(username: str, namespace: str, run_name: str, source_version: str
         verbose=not quiet,
         dry_run=dry_run,
         template_directory=ARGO_TEMPLATES_DIR_PATH,
-        allow_interactions=not headless,
         is_test=True,
     )
 
@@ -161,14 +159,14 @@ def experiment(username: str, namespace: str, run_name: str, source_version: str
 @click.option("--namespace", type=str, default="argo-workflows", help="Specify a custom namespace")
 @click.option("--run-name", type=str, default=None, help="Specify a custom run name, defaults to branch")
 @click.option("--release-version", type=str, required=True, help="Specify a custom release name")
-@click.option("--pipeline", "-p", type=str, default="modelling_run", help="Specify which pipeline to execute")
+@click.option("--pipeline", "-p", type=str, default="kg_release", help="Specify which pipeline to execute, either kg_release or data_release")
 @click.option("--quiet", "-q", is_flag=True, default=False, help="Disable verbose output")
 @click.option("--dry-run", "-d", is_flag=True, default=False, help="Does everything except submit the workflow")
 @click.option("--from-nodes", type=str, default="", help="Specify nodes to run from", callback=split_string)
 @click.option("--headless", is_flag=True, default=False, help="Disable prompts for confirmation")
 # fmt: on
 def release(username: str, namespace: str, run_name: str, release_version: str, pipeline: str, quiet: bool, dry_run: bool, from_nodes: List[str], headless:bool):
-    """Submit the workflow, results submitted to the release folder. """
+    """Submit the E2E workflow, results submitted to the release folder. """
     if not quiet:
         log.setLevel(logging.DEBUG)
 
