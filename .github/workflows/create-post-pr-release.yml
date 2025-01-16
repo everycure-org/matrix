@@ -31,20 +31,39 @@ jobs:
           fetch-tags: true
           fetch-depth: 0
 
-      - name: Fetch latest tag
-        id: fetch_latest_tag
+      - name: Discover the intended release
+        id: fetch_release_version
+        env:
+          PR_BRANCH_NAME: ${{ github.event.pull_request.head.ref }}
         run: |
-          latest_tag=$(git tag --list --sort="v:refname" | tail -n 1)
-          echo "latest_tag=${latest_tag}" >> "$GITHUB_ENV"
-          echo "Latest tag is ${latest_tag}"
+          set -euxo pipefail
+          # Note: this could be an intermediate release
+          intended_release=${PR_BRANCH_NAME##release/}
+          echo "intended_tag=${intended_release}" >> "$GITHUB_ENV"  
+
+      - name: Discover Latest Official Release on GitHub
+        run: |
+          latest_official_release=$(gh release list --jq '.[0].tagName' --json tagName --order desc)
+          echo "latest_official_release=${latest_official_release}" >> "$GITHUB_ENV"
 
       - name: Create GitHub release
         env:
             GH_TOKEN: ${{ github.token }}
             POSTS_DIR: docs/src/releases/posts
         run: |
+          set -euxo pipefail
           echo "Creating release"
-          gh release create "${{ env.latest_tag }}" \
-            --notes-file "${GITHUB_WORKSPACE}/${POSTS_DIR}/${{ env.latest_tag }}/notes.md" \
-            --title "${{ env.latest_tag }}" \
-            --latest
+          # Check if notes file exists, because there's no notes generated for patch bump
+          NOTES_FILE="${GITHUB_WORKSPACE}/${POSTS_DIR}/${{ env.latest_tag }}/notes.md"
+          if [ -f "$NOTES_FILE" ]; then
+            gh release create "${{ env.latest_tag }}" \
+              --notes-file "$NOTES_FILE" \
+              --title "${{ env.latest_tag }}" \
+              --latest
+          else
+            echo "Notes file not found, using empty notes."
+            gh release create "${{ env.latest_tag }}" \
+              --notes "This is weekly patch bump." \
+              --title "${{ env.latest_tag }}" \
+              --latest
+          fi
