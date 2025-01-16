@@ -11,7 +11,7 @@
 # pipx ensurepath
 # sudo cp $(which uv) /usr/local/bin/uv
 
-name: CI pipline
+name: CI pipeline
 
 on:
   pull_request:
