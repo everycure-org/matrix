@@ -4,8 +4,8 @@ import semver
 
 
 def bump_type():
-    latest_tag = os.getenv("latest_tag", "v0.0.0").lstrip("v")
-    tag_version = semver.Version.parse(latest_tag)
+    latest_official_release = os.getenv("latest_official_release", "v0.0.0").lstrip("v")
+    tag_version = semver.Version.parse(latest_official_release)
 
     release = os.getenv("release", "v0.0.0").lstrip("v")
     release_version = semver.Version.parse(release)

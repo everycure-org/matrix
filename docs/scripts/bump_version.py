@@ -5,8 +5,8 @@ import semver
 
 
 def bump_version(type: str) -> None:
-    latest_official_release = os.getenv("latest_official_release", "v0.0.0").lstrip("v")
-    version = semver.Version.parse(latest_official_release)
+    latest_tag = os.getenv("latest_tag", "v0.0.0").lstrip("v")
+    version = semver.Version.parse(latest_tag)
 
     if type == "minor":
         new_version = version.bump_minor()
