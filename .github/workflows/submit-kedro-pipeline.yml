@@ -3,7 +3,7 @@ name: Automate kedro submit release run periodically
 on:
   push:
     branches:
-      - "gh-actions-weekly-submit-xyz"
+      - "gh-actions-weekly-submit"
   # schedule:
   #   - cron: '30 9 1 * 1' # At 09:30 on the 1st day of the month and on Monday.
 
@@ -93,9 +93,14 @@ jobs:
         run: |
           pip install semver
           # If it's the first of the month, it's a minor bump, even if it's Monday. On all other Mondays, it's a patch.
-          [[ $(date +%-d) -eq 1 ]] && BUMP_TYPE='minor' || BUMP_TYPE='patch'
+          [[ $(date +%-d) -eq 16 ]] && BUMP_TYPE='minor' || BUMP_TYPE='patch'
           echo "Bumping version with type: ${BUMP_TYPE}"
           python bump_version.py --type="${BUMP_TYPE}"
+
+      - name: Branch off
+        run: |
+          git switch -C release/${{env.release_version}} "${{github.ref_name}}"
+          git status
 
       - name: Submit the kedro pipeline
         working-directory: pipelines/matrix
