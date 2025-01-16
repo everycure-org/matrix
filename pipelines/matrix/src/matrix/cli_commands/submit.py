@@ -108,7 +108,7 @@ def submit(username: str, namespace: str, run_name: str, release_version: str, p
 @click.option("--namespace", type=str, default="argo-workflows", help="Specify a custom namespace")
 @click.option("--run-name", type=str, default=None, help="Specify a custom run name, defaults to branch")
 @click.option("--source-version", type=str, required=True, help="Specify the source data version")
-@click.option("--pipeline", "-p", type=str, default="modelling_run", help="Specify which pipeline to execute")
+@click.option("--pipeline", "-p", type=str, default="modelling_run", help="Specify which pipeline to execute, excluding data_release and kg_release")
 @click.option("--quiet", "-q", is_flag=True, default=False, help="Disable verbose output")
 @click.option("--dry-run", "-d", is_flag=True, default=False, help="Does everything except submit the workflow")
 @click.option("--from-nodes", type=str, default="", help="Specify nodes to run from", callback=split_string)
@@ -119,7 +119,7 @@ def experiment(username: str, namespace: str, run_name: str, source_version: str
         log.setLevel(logging.DEBUG)
 
     if pipeline in ('data_release', 'kg_release'):
-        raise ValueError("Please use kedro release for data release and kg_release pipelines to release new datasets")
+        raise ValueError("Please use 'kedro release' for creating new release")
 
     if pipeline not in kedro_pipelines.keys():
         raise ValueError("Pipeline requested for execution not found")
@@ -171,7 +171,7 @@ def release(username: str, namespace: str, run_name: str, release_version: str, 
         log.setLevel(logging.DEBUG)
 
     if pipeline not in ('data_release', 'kg_release'):
-        raise ValueError("Please use kedro experiment for experiments using existing data sources")
+        raise ValueError("Please use 'kedro experiment' for submitting experiment workflows")
     
     abort_if_unmet_git_requirements()
 
