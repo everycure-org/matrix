@@ -53,15 +53,15 @@ jobs:
         with:
           python-version: '3.11'
 
-      # - name: Set up kedro project dependencies
-      #   working-directory: pipelines/matrix
-      #   run: |
-      #     curl -sLO https://github.com/argoproj/argo-workflows/releases/latest/download/argo-linux-amd64.gz
-      #     gunzip argo-linux-amd64.gz
-      #     chmod +x argo-linux-amd64
-      #     sudo mv argo-linux-amd64 /usr/local/bin/argo
-      #     argo version
-      #     pip install -r requirements.txt
+      - name: Set up kedro project dependencies
+        working-directory: pipelines/matrix
+        run: |
+          curl -sLO https://github.com/argoproj/argo-workflows/releases/latest/download/argo-linux-amd64.gz
+          gunzip argo-linux-amd64.gz
+          chmod +x argo-linux-amd64
+          sudo mv argo-linux-amd64 /usr/local/bin/argo
+          argo version
+          pip install -r requirements.txt
 
       - name: Authenticate with Google Cloud
         id: auth
@@ -110,15 +110,15 @@ jobs:
           git commit -m "add kubeconfig file generated while authentication"
           git status
 
-      # - name: Submit the kedro pipeline
-      #   working-directory: pipelines/matrix
-      #   run: |
-      #     echo "Submit the kedro pipeline"
-      #     kedro submit \
-      #       --username GH-Actions-bot \
-      #       --namespace argo-workflows \
-      #       --run-name auto-kg-release \
-      #       --release-version "${{ env.release_version }}" \
-      #       --pipeline kg_release \
-      #       --headless \
-      #       --run-from-gh
+      - name: Submit the kedro pipeline
+        working-directory: pipelines/matrix
+        run: |
+          echo "Submit the kedro pipeline"
+          kedro submit \
+            --username GH-Actions-bot \
+            --namespace argo-workflows \
+            --run-name auto-kg-release \
+            --release-version "${{ env.release_version }}" \
+            --pipeline kg_release \
+            --headless \
+            --run-from-gh
