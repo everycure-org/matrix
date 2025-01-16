@@ -12,5 +12,8 @@ install:
 	if [ ! -d .venv ]; then uv venv -p 3.11; fi
 	uv pip install -r requirements.txt
 
+test: install
+	uv run pytest
+
 deploy: build
 	gcloud app deploy
