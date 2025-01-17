@@ -1,7 +1,7 @@
 import abc
 
 import numpy as np
-from scipy.stats import spearmanr
+from scipy.stats import hypergeom, spearmanr
 
 
 class NamedFunction(abc.ABC):
@@ -110,6 +110,41 @@ class HypergeomAtN(NamedFunction):
             n: Value for n.
         """
         self.n = n
+
+    def generate(self):
+        """Returns function that computes hypergeom at N.
+
+        Returns:
+            Function that takes a set of items and returns the ratio of set size to N.
+        """
+
+        def hypergeom_func(rank_sets, common_items):
+            rank_set1, rank_set2 = rank_sets
+
+            # Get top-k items from each model based on raw rankings
+            rank_set1 = rank_set1.head(self.n)
+            rank_set2 = rank_set2.head(self.n)
+
+            # Get ranks for common items
+            ranks1 = set([rank_set1[rank_set1.id == item].rank for item in common_items])
+            ranks2 = set([rank_set2[rank_set2.id == item].rank for item in common_items])
+
+            # Overlap
+            overlap = len(ranks1 & ranks2)
+
+            # total number of pairs
+            N = len(set(rank_set1["id"]) | set(rank_set2["id"]))
+
+            # Calculate expected overlap by chance
+            expected_overlap = (self.n * self.n) / N
+
+            return {"enrichment": overlap / expected_overlap, "pvalue": hypergeom.sf(overlap - 1, N, self.n, self.n)}
+
+        return hypergeom_func
+
+    def name(self):
+        """Returns name of the function."""
+        return f"hypergeom_at_{self.n}"
 
 
 class SpearmanAtN(NamedFunction):
