@@ -17,8 +17,8 @@ from rich.logging import RichHandler
 from rich.panel import Panel
 
 from matrix.argo import ARGO_TEMPLATES_DIR_PATH, generate_argo_config
-from matrix.kedro4argo_node import ArgoResourceConfig
 from matrix.git_utils import get_current_git_branch, has_dirty_git
+from matrix.kedro4argo_node import ArgoResourceConfig
 
 logging.basicConfig(
     level=logging.INFO,
@@ -142,13 +142,13 @@ def _submit(
         if dry_run:
             return
 
-        build_push_docker(run_name, verbose=verbose)
+        build_push_docker(run_name, verbose=True)
 
         ensure_namespace(namespace, verbose=verbose)
 
         apply_argo_template(namespace, file_path, verbose=verbose)
 
-        submit_workflow(run_name, namespace, verbose=verbose)
+        submit_workflow(run_name, namespace, verbose=False)
 
         console.print(Panel.fit(
             f"[bold green]Workflow {'prepared' if dry_run else 'submitted'} successfully![/bold green]\n"
@@ -324,7 +324,7 @@ def check_dependencies(verbose: bool):
 def build_push_docker(username: str, verbose: bool):
     """Build and push Docker image."""
     console.print("Building Docker image...")
-    run_subprocess(f"make docker_push TAG={username}", stream_output=verbose)
+    run_subprocess(f"make docker_push TAG={username}", stream_output=True)
     console.print("[green]✓[/green] Docker image built and pushed")
 
 

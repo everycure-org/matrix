@@ -29,11 +29,13 @@ def _create_pairs(
     while not is_enough_generated:
         # Sample random pairs (we sample twice the required amount in case duplicates are removed)
         random_drugs = drug_list["curie"].sample(num * 4, replace=True, ignore_index=True, random_state=seed)
-        random_diseases = disease_list["curie"].sample(num * 4, replace=True, ignore_index=True, random_state=2 * seed)
+        random_diseases = disease_list["category_class"].sample(
+            num * 4, replace=True, ignore_index=True, random_state=2 * seed
+        )
 
         df = pd.DataFrame(
-            data=[[drug, disease] for drug, disease in zip(random_drugs, random_diseases)],
-            columns=["source", "target"],
+            data=[[drug, disease, f"{drug}|{disease}"] for drug, disease in zip(random_drugs, random_diseases)],
+            columns=["subject", "object", "drug|disease"],
         )
 
         # Remove duplicate pairs
@@ -42,8 +44,16 @@ def _create_pairs(
         # Check that we still have enough fabricated pairs
         is_enough_generated = len(df) >= num or attempt > 100
         attempt += 1
-
-    return df[:num], df[num : 2 * num]
+    tp_df = df[:num]
+    tp_df["indication"] = True
+    tp_df["contraindication"] = False
+    tn_df = df[num : 2 * num]
+    tn_df["indication"] = False
+    tn_df["contraindication"] = True
+    edges = pd.concat([tp_df, tn_df], ignore_index=True)
+    id_list = set(edges.subject) | set(edges.object)
+    nodes = pd.DataFrame(id_list, columns=["id"])
+    return nodes, edges
 
 
 def create_pipeline(**kwargs) -> Pipeline:
@@ -56,14 +66,25 @@ def create_pipeline(**kwargs) -> Pipeline:
                 outputs={
                     "nodes": "ingestion.raw.rtx_kg2.nodes@pandas",
                     "edges": "ingestion.raw.rtx_kg2.edges@pandas",
-                    "clinical_trials": "ingestion.raw.clinical_trials_data",
-                    "disease_list": "ingestion.raw.disease_list@pandas",
-                    "drug_list": "ingestion.raw.drug_list@pandas",
+                    "disease_list": "ingestion.raw.disease_list.nodes@pandas",
+                    "drug_list": "ingestion.raw.drug_list.nodes@pandas",
                     "pubmed_ids_mapping": "ingestion.raw.rtx_kg2.curie_to_pmids@pandas",
                 },
                 name="fabricate_kg2_datasets",
             ),
             ArgoNode(
+                func=fabricate_datasets,
+                inputs={
+                    "fabrication_params": "params:fabricator.clinical_trials",
+                    "rtx_nodes": "ingestion.raw.rtx_kg2.nodes@pandas",
+                },
+                outputs={
+                    "nodes": "ingestion.raw.ec_clinical_trails.nodes@pandas",
+                    "edges": "ingestion.raw.ec_clinical_trails.edges@pandas",
+                },
+                name="fabricate_clinical_trails_datasets",
+            ),
+            node(
                 func=fabricate_datasets,
                 inputs={"fabrication_params": "params:fabricator.ec_medical_kg"},
                 outputs={
@@ -93,12 +114,12 @@ def create_pipeline(**kwargs) -> Pipeline:
             ArgoNode(
                 func=_create_pairs,
                 inputs=[
-                    "ingestion.raw.drug_list@pandas",
-                    "ingestion.raw.disease_list@pandas",
+                    "ingestion.raw.drug_list.nodes@pandas",
+                    "ingestion.raw.disease_list.nodes@pandas",
                 ],
                 outputs=[
-                    "modelling.raw.ground_truth.positives@pandas",
-                    "modelling.raw.ground_truth.negatives@pandas",
+                    "ingestion.raw.ground_truth.nodes@pandas",
+                    "ingestion.raw.ground_truth.edges@pandas",
                 ],
                 name="create_gn_pairs",
             ),
