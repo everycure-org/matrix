@@ -1,3 +1,9 @@
+---
+draft: false
+date: 2025-01-15
+categories:
+  - Release
+---
 ## Breaking Changes 🛠
 
 No breaking changes were introduced in this release.
