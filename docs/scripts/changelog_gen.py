@@ -1,8 +1,9 @@
-import os
 import json
-import yaml
 import logging
+import os
 from pathlib import Path
+
+import yaml
 
 
 def locate_releases_path() -> Path:

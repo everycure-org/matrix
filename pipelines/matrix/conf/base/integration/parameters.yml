@@ -3,17 +3,30 @@ integration:
   sources:
     rtx_kg2:
       transformer:
-        object: matrix.pipelines.integration.rtxkg2.RTXTransformer
+        _object: matrix.pipelines.integration.rtxkg2.RTXTransformer
     # spoke:
     #   transformer:
     #     object: matrix.pipelines.integration.spoke.SpokeTransformer
-    robokop:
-      transformer:
-        object: matrix.pipelines.integration.robokop.RobokopTransformer
+    # robokop:
+    #   transformer:
+    #     object: matrix.pipelines.integration.robokop.RobokopTransformer
     ec_medical_team:
       transformer:
-        object: matrix.pipelines.integration.medical.MedicalTransformer
-
+        _object: matrix.pipelines.integration.medical.MedicalTransformer
+    ec_clinical_trails: 
+      transformer:
+        _object: matrix.pipelines.integration.clinical_trails.ClinicalTrialsTransformer
+    drug_list: 
+      transformer:
+        _object: matrix.pipelines.integration.drugs.DrugsTransformer
+    disease_list: 
+      transformer:
+        _object: matrix.pipelines.integration.diseases.DiseasesTransformer
+    ground_truth: 
+      transformer:
+        _object: matrix.pipelines.integration.ground_truth.GroundTruthTransformer
+    #     _object: matrix.pipelines.integration.spoke.SpokeTransformer
+    
   # FUTURE: Ensure we can move this to filters down here
   preprocessing:
     rtx:
@@ -22,21 +35,21 @@ integration:
         ngd_threshold: 0.6
         limit_pmids: 50_000_000 # essentially unlimited, but allows for local clipping if local run is desired
 
-  # FUTURE: Implement strategy to ensure this can be injected in the future
-  nodenorm:
-    # api_endpoint: https://nodenormalization-sri.renci.org/get_normalized_nodes
-    api_endpoint: ${oc.env:NODENORM_ENDPOINT, https://nodenorm.transltr.io/1.5/get_normalized_nodes}
-    conflate: true
-    drug_chemical_conflate: true
-    batch_size: 1000
-    parallelism: 120
+  normalization:
+    batch_size: 1000 # Should we do more?
+    normalizer:
+      _object: matrix.pipelines.integration.normalizer.NCATSNodeNormalizer
+      endpoint: ${oc.env:NODENORM_ENDPOINT, https://nodenorm.transltr.io/1.5/get_normalized_nodes}
+      conflate: true
+      drug_chemical_conflate: true
+      description: false
 
   filtering:
     node_filters:
       filter_node_labels:
-        object: matrix.pipelines.modelling.utils.partial_
+        _object: matrix.pipelines.modelling.utils.partial_
         func:
-          object: matrix.pipelines.integration.filters.remove_rows_containing_category
+          _object: matrix.pipelines.integration.filters.remove_rows_containing_category
         column: category
         categories:
         # TODO: We should likely not remove these before our data release stage but afterwards in the modelling pipeline (if the model so desires)
@@ -65,6 +78,6 @@ integration:
     edge_filters:
       # FUTURE: Ensure the semmed filter is moved here instead
       filter_biolink_edges:
-        object: matrix.pipelines.modelling.utils.partial_
+        _object: matrix.pipelines.modelling.utils.partial_
         func:
-          object: matrix.pipelines.integration.filters.biolink_deduplicate_edges
+          _object: matrix.pipelines.integration.filters.biolink_deduplicate_edges

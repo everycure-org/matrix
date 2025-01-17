@@ -1,13 +1,13 @@
 import functools
 import importlib
-from copy import deepcopy
-from inspect import getfullargspec
 import logging
 import re
+from copy import deepcopy
+from inspect import getfullargspec
 from types import BuiltinFunctionType, FunctionType
 from typing import Any, Dict, List, Tuple
 
-OBJECT_KW = "object"
+OBJECT_KW = "_object"
 INSTANTIATE_KW = "instantiate"
 UNPACK_KW = "unpack"
 

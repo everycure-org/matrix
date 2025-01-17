@@ -1,13 +1,13 @@
 import pandas as pd
 import pandera.pyspark as pa
-from pyspark.sql import DataFrame
+import pyspark.sql as ps
 import pyspark.sql.functions as F
 import pyspark.sql.types as T
 
-from .transformer import GraphTransformer
-
 from matrix.pipelines.integration.filters import determine_most_specific_category
-from matrix.schemas.knowledge_graph import KGEdgeSchema, cols_for_schema, KGNodeSchema
+from matrix.schemas.knowledge_graph import KGEdgeSchema, KGNodeSchema, cols_for_schema
+
+from .transformer import GraphTransformer
 
 # FUTURE: We should likely not need to rename these columns as we do below
 # However, KGX is currently not as performant as we need it to be thus
@@ -21,7 +21,7 @@ ROBOKOP_SEPARATOR = "\x1f"
 
 class RobokopTransformer(GraphTransformer):
     @pa.check_output(KGNodeSchema)
-    def transform_nodes(self, nodes_df: DataFrame, biolink_categories_df: pd.DataFrame, **kwargs) -> DataFrame:
+    def transform_nodes(self, nodes_df: ps.DataFrame, biolink_categories_df: pd.DataFrame, **kwargs) -> ps.DataFrame:
         """Transform Robokop nodes to our target schema.
 
         Args:
@@ -50,7 +50,7 @@ class RobokopTransformer(GraphTransformer):
         # fmt: on
 
     @pa.check_output(KGEdgeSchema)
-    def transform_edges(self, edges_df: DataFrame, **kwargs) -> DataFrame:
+    def transform_edges(self, edges_df: ps.DataFrame, **kwargs) -> ps.DataFrame:
         """Transform Robokop edges to our target schema.
 
         Args:
