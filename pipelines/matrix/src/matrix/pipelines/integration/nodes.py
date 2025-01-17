@@ -31,7 +31,6 @@ logger = logging.getLogger(__name__)
 def union_and_deduplicate_edges(*edges) -> ps.DataFrame:
     """Function to unify edges datasets."""
     # fmt: off
-    breakpoint()
     return (
         _union_datasets(*edges)
         .transform(KGEdgeSchema.group_edges_by_id)
