@@ -22,11 +22,11 @@ class AsyncMock(MagicMock):
         # Given input dataframe with single element
         (pd.DataFrame({"id": ["CHEBI:001"]}), ["CHEBI:normalized_001"]),
         # Given input dataframe with non existing element
-        (pd.DataFrame({"id": ["CHEBI:foo"]}), [None]),
+        (pd.DataFrame({"id": ["CHEBI:foo"]}), [pd.NA]),
         # Given input dataframe with randomized order and non defined
         (
             pd.DataFrame({"id": ["CHEBI:002", "CHEBI:001", "CHEBI:foo"]}),
-            ["CHEBI:normalized_002", "CHEBI:normalized_001", None],
+            ["CHEBI:normalized_002", "CHEBI:normalized_001", pd.NA],
         ),
     ],
 )
