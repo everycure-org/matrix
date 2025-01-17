@@ -1,40 +1,39 @@
 # Standard library imports
+from typing import Any, List
 from unittest.mock import Mock
+
+import matplotlib.pyplot as plt
 
 # Third-party imports
 import numpy as np
 import pandas as pd
-import pytest
 import pandera
-import matplotlib.pyplot as plt
-
-# Machine learning imports
-from sklearn.base import BaseEstimator
-from sklearn.model_selection import KFold, GridSearchCV
-from sklearn.linear_model import LogisticRegression
-from xgboost import XGBClassifier
 
 # PySpark imports
 import pyspark.sql as ps
+import pytest
 
 # Local imports
 from matrix.datasets.graph import KnowledgeGraph
 from matrix.datasets.pair_generator import SingleLabelPairGenerator
 from matrix.inject import OBJECT_KW
+from matrix.pipelines.modelling.model import ModelWrapper
 from matrix.pipelines.modelling.nodes import (
-    create_model_input_nodes,
-    prefilter_nodes,
-    make_splits,
+    apply_transformers,
     attach_embeddings,
+    create_model_input_nodes,
+    make_folds,
+    prefilter_nodes,
     tune_parameters,
 )
-from matrix.pipelines.modelling.model import ModelWrapper
 from matrix.pipelines.modelling.tuning import NopTuner
 
-
-@pytest.fixture(scope="module")
-def spark() -> ps.SparkSession:
-    return ps.SparkSession.builder.getOrCreate()
+# Machine learning imports
+from sklearn.base import BaseEstimator
+from sklearn.impute._base import _BaseImputer
+from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import GridSearchCV, KFold
+from xgboost import XGBClassifier
 
 
 @pytest.fixture(scope="module")
@@ -67,6 +66,179 @@ def ground_truth_data(spark: ps.SparkSession) -> ps.DataFrame:
         ]
     )
     return spark.createDataFrame(gt_data, schema=gt_schema)
+
+
+@pytest.fixture(scope="module")
+def sample_pairs_df(spark: ps.SparkSession) -> ps.DataFrame:
+    pairs_data = [("node1", "node2", 1), ("node3", "node4", 0), ("node5", "node6", 1)]
+    pairs_schema = ps.types.StructType(
+        [
+            ps.types.StructField("source", ps.types.StringType(), False),
+            ps.types.StructField("target", ps.types.StringType(), False),
+            ps.types.StructField("y", ps.types.IntegerType(), False),
+        ]
+    )
+    return spark.createDataFrame(pairs_data, schema=pairs_schema)
+
+
+@pytest.fixture(scope="module")
+def sample_nodes_df(spark: ps.SparkSession) -> ps.DataFrame:
+    nodes_data = [
+        ("node1", [0.1, 0.2, 0.3]),
+        ("node2", [0.4, 0.5, 0.6]),
+        ("node3", [0.7, 0.8, 0.9]),
+        ("node4", [1.0, 1.1, 1.2]),
+        ("node5", [1.3, 1.4, 1.5]),
+        ("node6", [1.6, 1.7, 1.8]),
+    ]
+    nodes_schema = ps.types.StructType(
+        [
+            ps.types.StructField("id", ps.types.StringType(), False),
+            ps.types.StructField("topological_embedding", ps.types.ArrayType(ps.types.FloatType()), False),
+        ]
+    )
+    return spark.createDataFrame(nodes_data, schema=nodes_schema)
+
+
+@pytest.fixture
+def sample_data():
+    """Create sample data for testing."""
+    return pd.DataFrame(
+        {
+            "source": ["A", "B", "C", "D", "E", "F"],
+            "source_embedding": [np.array([1, 2])] * 6,
+            "target": ["X", "Y", "Z", "W", "V", "U"],
+            "target_embedding": [np.array([3, 4])] * 6,
+            "y": [1, 0, 1, 0, 1, 0],
+        }
+    )
+
+
+@pytest.fixture
+def simple_splitter():
+    """Create a simple K-fold splitter."""
+    return KFold(n_splits=2, shuffle=True, random_state=42)
+
+
+@pytest.fixture()
+def mock_knowledge_graph():
+    return Mock(spec=KnowledgeGraph)
+
+
+@pytest.fixture()
+def mock_generator():
+    generator = Mock(spec=SingleLabelPairGenerator)
+    # Configure mock to return valid data matching schema
+    generator.generate.return_value = pd.DataFrame(
+        {
+            "source": ["drug1", "drug2"],
+            "source_embedding": [np.array([0.1, 0.2]), np.array([0.3, 0.4])],
+            "target": ["disease1", "disease2"],
+            "target_embedding": [np.array([0.5, 0.6]), np.array([0.7, 0.8])],
+            "iteration": [0.0, 0.0],
+        }
+    )
+    return generator
+
+
+@pytest.fixture()
+def sample_splits():
+    return pd.DataFrame(
+        {
+            "source": ["drug3", "drug4"],
+            "source_embedding": [np.array([0.9, 1.0]), np.array([1.1, 1.2])],
+            "target": ["disease3", "disease4"],
+            "target_embedding": [np.array([1.3, 1.4]), np.array([1.5, 1.6])],
+            "iteration": [1.0, 1.0],
+            "fold": [0, 1],
+            "split": ["TEST", "TRAIN"],
+        }
+    )
+
+
+@pytest.fixture
+def tune_data():
+    """Create sample DataFrame for testing."""
+    np.random.seed(42)
+    n_samples = 100
+
+    data = pd.DataFrame(
+        {
+            "featureOne_1": np.random.randn(n_samples),
+            "featureOne_2": np.random.randn(n_samples),
+            "feature_3": np.random.randn(n_samples),
+            "feature_4": np.random.randn(n_samples),
+            "feature5_extra": np.random.randn(n_samples),
+            "target": np.random.randint(0, 2, n_samples),
+            "split": ["TRAIN"] * 80 + ["TEST"] * 20,
+        }
+    )
+    return data
+
+
+@pytest.fixture
+def grid_search_tuner():
+    """Create a GridSearchCV tuner."""
+    param_grid = {"C": [0.1, 1.0], "max_iter": [100, 200]}
+    return GridSearchCV(LogisticRegression(), param_grid, cv=3, scoring="accuracy")
+
+
+class DummyTransformer(_BaseImputer):
+    """
+    Test implementation of transformer
+    """
+
+    def __init__(self, transformed: List[Any]):
+        self.transformed = transformed
+
+    def get_feature_names_out(self, x):
+        return x.columns.tolist()
+
+    def transform(self, x):
+        return self.transformed
+
+
+@pytest.fixture
+def input_df() -> pd.DataFrame:
+    return pd.DataFrame(
+        {
+            "feature_1": [0, 5, 10],
+            "feature_2": [0, 1, 2],
+            "non_transform_col": ["row_1", "row_2", "row_3"],
+        }
+    )
+
+
+@pytest.mark.parametrize(
+    "transformers",
+    [
+        # Validate single transformer
+        {"dummy_transformer_1": {"transformer": DummyTransformer(transformed=[1, 3, 3]), "features": ["feature_1"]}},
+        # Validate multiple transformers
+        {
+            "dummy_transformer_1": {"transformer": DummyTransformer(transformed=[1, 3, 3]), "features": ["feature_1"]},
+            "dummy_transformer_2": {"transformer": DummyTransformer(transformed=[2, 6, 6]), "features": ["feature_2"]},
+        },
+    ],
+)
+def test_apply_transformers(input_df, transformers):
+    # Given input list of transformers
+
+    # When appyling apply transformers
+    result = apply_transformers(input_df, transformers)
+
+    # Then output is of correct type, transformers are applied correctly
+    # and non_transformer_col is untouched
+    assert isinstance(result, pd.DataFrame)
+    assert result.shape == input_df.shape
+    assert set(result.columns) == set(input_df.columns)
+
+    # NOTEL we currently limiting ourselves to transformers with single input feature
+    for _, transformer in transformers.items():
+        np.testing.assert_array_equal(result[transformer["features"][0]].values, transformer["transformer"].transformed)
+
+    # # Check if non-transformed column remains unchanged
+    assert (result["non_transform_col"] == input_df["non_transform_col"]).all()
 
 
 def test_prefilter_excludes_non_drug_disease_nodes(
@@ -150,38 +322,6 @@ def test_prefilter_correctly_identifies_ground_truth_positives(
     assert node4.in_ground_pos is False
 
 
-@pytest.fixture(scope="module")
-def sample_pairs_df(spark: ps.SparkSession) -> ps.DataFrame:
-    pairs_data = [("node1", "node2", 1), ("node3", "node4", 0), ("node5", "node6", 1)]
-    pairs_schema = ps.types.StructType(
-        [
-            ps.types.StructField("source", ps.types.StringType(), False),
-            ps.types.StructField("target", ps.types.StringType(), False),
-            ps.types.StructField("y", ps.types.IntegerType(), False),
-        ]
-    )
-    return spark.createDataFrame(pairs_data, schema=pairs_schema)
-
-
-@pytest.fixture(scope="module")
-def sample_nodes_df(spark: ps.SparkSession) -> ps.DataFrame:
-    nodes_data = [
-        ("node1", [0.1, 0.2, 0.3]),
-        ("node2", [0.4, 0.5, 0.6]),
-        ("node3", [0.7, 0.8, 0.9]),
-        ("node4", [1.0, 1.1, 1.2]),
-        ("node5", [1.3, 1.4, 1.5]),
-        ("node6", [1.6, 1.7, 1.8]),
-    ]
-    nodes_schema = ps.types.StructType(
-        [
-            ps.types.StructField("id", ps.types.StringType(), False),
-            ps.types.StructField("topological_embedding", ps.types.ArrayType(ps.types.FloatType()), False),
-        ]
-    )
-    return spark.createDataFrame(nodes_data, schema=nodes_schema)
-
-
 def test_attach_embeddings_successful(sample_pairs_df: ps.DataFrame, sample_nodes_df: ps.DataFrame) -> None:
     """Test successful attachment of embeddings to pairs."""
     result = attach_embeddings(sample_pairs_df, sample_nodes_df)
@@ -237,123 +377,64 @@ def test_attach_embeddings_schema_validation(spark: ps.SparkSession, sample_pair
         attach_embeddings(sample_pairs_df, invalid_nodes_df)
 
 
-@pytest.fixture
-def sample_data():
-    """Create sample data for testing."""
-    return pd.DataFrame(
-        {
-            "source": ["A", "B", "C", "D", "E", "F"],
-            "source_embedding": [np.array([1, 2])] * 6,
-            "target": ["X", "Y", "Z", "W", "V", "U"],
-            "target_embedding": [np.array([3, 4])] * 6,
-            "y": [1, 0, 1, 0, 1, 0],
-        }
-    )
-
-
-@pytest.fixture
-def simple_splitter():
-    """Create a simple K-fold splitter."""
-    return KFold(n_splits=2, shuffle=True, random_state=42)
-
-
-def test_make_splits_basic_functionality(sample_data, simple_splitter):
-    """Test basic functionality of make_splits."""
-    result = make_splits(data=sample_data, splitter=simple_splitter)
+def test_make_folds_basic_functionality(sample_data, simple_splitter):
+    """Test basic functionality of make_folds."""
+    result = make_folds(data=sample_data, splitter=simple_splitter)
 
     # Check that all required columns are present
-    required_columns = ["source", "source_embedding", "target", "target_embedding", "split"]
-    for df in result:
-        assert all(col in df.columns for col in required_columns)
+    required_columns = ["source", "source_embedding", "target", "target_embedding", "split", "fold"]
+    assert all(col in result.columns for col in required_columns)
 
-        # Check that we have the same number of rows as input
-        assert len(df) == len(sample_data)
+    # Check that we have the same number of rows as input
+    assert len(result) == len(sample_data) * 3
 
-        # Check that splits are properly labeled
-        assert set(df["split"].unique()) == {"TRAIN", "TEST"}
+    # Check that splits are properly labeled
+    assert set(result["split"].unique()) == {"TRAIN", "TEST"}
+
+    # Check that the folds column has the correct range
+    assert set(result["fold"].unique()) == {0, 1, 2}
 
 
-def test_make_splits_data_integrity(sample_data, simple_splitter):
+def test_make_folds_data_integrity(sample_data, simple_splitter):
     """Test that data values are preserved after splitting."""
-    result = make_splits(data=sample_data, splitter=simple_splitter)
+    result = make_folds(data=sample_data, splitter=simple_splitter)
 
-    for df in result:
-        # Check that original values are preserved
-        assert set(df["source"].unique()) == set(sample_data["source"].unique())
-        assert set(df["target"].unique()) == set(sample_data["target"].unique())
+    # Check that original values are preserved
+    assert set(result["source"].unique()) == set(sample_data["source"].unique())
+    assert set(result["target"].unique()) == set(sample_data["target"].unique())
 
 
-def test_make_splits_empty_data(simple_splitter):
+def test_make_folds_empty_data(simple_splitter):
     """Test behavior with empty input data."""
     empty_data = pd.DataFrame(columns=["source", "source_embedding", "target", "target_embedding", "y"])
 
     with pytest.raises(ValueError):
-        make_splits(data=empty_data, splitter=simple_splitter)
+        make_folds(data=empty_data, splitter=simple_splitter)
 
 
-@pytest.fixture()
-def mock_knowledge_graph():
-    return Mock(spec=KnowledgeGraph)
+def test_create_model_input_nodes_basic(mock_knowledge_graph, mock_generator, sample_data, simple_splitter):
+    # Get number of folds (test/train splits plus full training set)
+    n_folds = simple_splitter.get_n_splits() + 1
 
+    # Given the output of make_folds
+    mock_splits = make_folds(data=sample_data, splitter=simple_splitter)
 
-@pytest.fixture()
-def mock_generator():
-    generator = Mock(spec=SingleLabelPairGenerator)
-    # Configure mock to return valid data matching schema
-    generator.generate.return_value = pd.DataFrame(
-        {
-            "source": ["drug1", "drug2"],
-            "source_embedding": [np.array([0.1, 0.2]), np.array([0.3, 0.4])],
-            "target": ["disease1", "disease2"],
-            "target_embedding": [np.array([0.5, 0.6]), np.array([0.7, 0.8])],
-            "iteration": [0.0, 0.0],
-        }
-    )
-    return generator
+    # When creating model input nodes
+    result = create_model_input_nodes(graph=mock_knowledge_graph, splits=mock_splits, generator=mock_generator)
 
+    # Check that generator was called the correct number of times (once per fold)
+    assert mock_generator.generate.call_count == n_folds
 
-@pytest.fixture()
-def sample_splits():
-    return pd.DataFrame(
-        {
-            "source": ["drug3", "drug4"],
-            "source_embedding": [np.array([0.9, 1.0]), np.array([1.1, 1.2])],
-            "target": ["disease3", "disease4"],
-            "target_embedding": [np.array([1.3, 1.4]), np.array([1.5, 1.6])],
-            "iteration": [1.0, 1.0],
-            "split": ["TEST", "TRAIN"],
-        }
-    )
-
-
-def test_create_model_input_nodes_basic(mock_knowledge_graph, mock_generator, sample_splits):
-    result = create_model_input_nodes(graph=mock_knowledge_graph, splits=sample_splits, generator=mock_generator)
-
-    # Check that generator was called with correct arguments
-    mock_generator.generate.assert_called_once_with(mock_knowledge_graph, sample_splits)
-
-    # Check that result has correct number of rows (original + generated)
-    assert len(result) == len(sample_splits) + len(mock_generator.generate.return_value)
+    # Check that result has correct number of rows (original + generated * number of folds)
+    assert len(result) == len(mock_splits) + len(mock_generator.generate.return_value) * n_folds
 
     # Check that generated rows have 'TRAIN' split
-    generated_rows = result.iloc[len(sample_splits) :]
+    generated_rows = result.iloc[len(mock_splits) :]
     assert all(generated_rows["split"] == "TRAIN")
 
     # Check that original splits are preserved
-    original_rows = result.iloc[: len(sample_splits)]
-    assert all(original_rows["split"] == sample_splits["split"])
-
-
-def test_create_model_input_nodes_empty_splits(mock_knowledge_graph, mock_generator):
-    empty_splits = pd.DataFrame(
-        {"source": [], "source_embedding": [], "target": [], "target_embedding": [], "iteration": [], "split": []}
-    )
-
-    result = create_model_input_nodes(graph=mock_knowledge_graph, splits=empty_splits, generator=mock_generator)
-
-    # Check that only generated data is present
-    assert len(result) == len(mock_generator.generate.return_value)
-    assert all(result["split"] == "TRAIN")
+    original_rows = result.iloc[: len(mock_splits)]
+    assert all(original_rows["split"] == mock_splits["split"])
 
 
 def test_create_model_input_nodes_generator_empty(mock_knowledge_graph, sample_splits):
@@ -368,33 +449,6 @@ def test_create_model_input_nodes_generator_empty(mock_knowledge_graph, sample_s
     # Check that only original splits are present
     assert len(result) == len(sample_splits)
     assert all(result["split"] == sample_splits["split"])
-
-
-@pytest.fixture
-def tune_data():
-    """Create sample DataFrame for testing."""
-    np.random.seed(42)
-    n_samples = 100
-
-    data = pd.DataFrame(
-        {
-            "featureOne_1": np.random.randn(n_samples),
-            "featureOne_2": np.random.randn(n_samples),
-            "feature_3": np.random.randn(n_samples),
-            "feature_4": np.random.randn(n_samples),
-            "feature5_extra": np.random.randn(n_samples),
-            "target": np.random.randint(0, 2, n_samples),
-            "split": ["TRAIN"] * 80 + ["TEST"] * 20,
-        }
-    )
-    return data
-
-
-@pytest.fixture
-def grid_search_tuner():
-    """Create a GridSearchCV tuner."""
-    param_grid = {"C": [0.1, 1.0], "max_iter": [100, 200]}
-    return GridSearchCV(LogisticRegression(), param_grid, cv=3, scoring="accuracy")
 
 
 @pytest.mark.parametrize(

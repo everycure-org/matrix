@@ -8,6 +8,7 @@ fabricator.rtx_kg2:
       name:
         type: generate_unique_id
         prefix: name_
+        prob_null: 0.2
       all_names:string[]:
         type: faker
         provider: name

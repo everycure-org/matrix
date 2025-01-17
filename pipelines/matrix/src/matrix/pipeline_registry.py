@@ -57,7 +57,7 @@ def register_pipelines() -> Dict[str, Pipeline]:
 
     # Test pipelines
     pipelines["test"] = (
-          pipelines["fabricator"]
+        pipelines["fabricator"]
         + pipelines["__default__"]
         + pipelines["data_release"] 
     )

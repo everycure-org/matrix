@@ -1,7 +1,7 @@
 from kedro.pipeline import Pipeline, pipeline
-
 from matrix import settings
-from matrix.kedro4argo_node import ARGO_GPU_NODE_MEDIUM, argo_node
+from matrix.kedro4argo_node import ARGO_GPU_NODE_MEDIUM, ArgoNode
+from matrix.pipelines.modelling.utils import partial_fold
 
 from . import nodes
 
@@ -14,8 +14,7 @@ def create_pipeline(**kwargs) -> Pipeline:
 
     # Load cross-validation information
     cross_validation_settings = settings.DYNAMIC_PIPELINES_MAPPING.get("cross_validation")
-    n_splits = cross_validation_settings.get("n_splits")
-    folds_lst = list(range(n_splits)) + ["full"]
+    n_cross_val_folds = cross_validation_settings.get("n_cross_val_folds")
 
     # Initial nodes computing matrix pairs and flags
     pipelines = []
@@ -24,7 +23,7 @@ def create_pipeline(**kwargs) -> Pipeline:
     pipelines.append(
         pipeline(
             [
-                argo_node(
+                ArgoNode(
                     func=nodes.enrich_embeddings,
                     inputs=[
                         "embeddings.feat.nodes",
@@ -36,7 +35,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 ),
                 # Hacky fix to save parquet file via pandas rather than spark
                 # related to https://github.com/everycure-org/matrix/issues/71
-                argo_node(
+                ArgoNode(
                     func=nodes.spark_to_pd,
                     inputs=[
                         "matrix_generation.feat.nodes@spark",
@@ -49,20 +48,20 @@ def create_pipeline(**kwargs) -> Pipeline:
     )
 
     # Nodes generating scores for each fold and model
-    for fold in folds_lst:
+    for fold in range(n_cross_val_folds + 1):  # NOTE: final fold is full training data
         # For each fold, generate the pairs
         pipelines.append(
             pipeline(
                 [
-                    argo_node(
-                        func=nodes.generate_pairs,
-                        inputs=[
-                            "ingestion.raw.drug_list@pandas",
-                            "ingestion.raw.disease_list@pandas",
-                            "matrix_generation.feat.nodes_kg_ds",
-                            f"modelling.model_input.fold_{fold}.splits",
-                            "ingestion.raw.clinical_trials_data",
-                        ],
+                    ArgoNode(
+                        func=partial_fold(nodes.generate_pairs, fold, arg_name="known_pairs"),
+                        inputs={
+                            "known_pairs": "modelling.model_input.splits",
+                            "drugs": "ingestion.raw.drug_list@pandas",
+                            "diseases": "ingestion.raw.disease_list@pandas",
+                            "graph": "matrix_generation.feat.nodes_kg_ds",
+                            "clinical_trials": "ingestion.raw.clinical_trials_data",
+                        },
                         outputs=f"matrix_generation.prm.fold_{fold}.matrix_pairs",
                         name=f"generate_matrix_pairs_fold_{fold}",
                     )
@@ -75,7 +74,7 @@ def create_pipeline(**kwargs) -> Pipeline:
             pipelines.append(
                 pipeline(
                     [
-                        argo_node(
+                        ArgoNode(
                             func=nodes.make_predictions_and_sort,
                             inputs=[
                                 "matrix_generation.feat.nodes_kg_ds",
@@ -92,7 +91,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                             name=f"make_{model}_predictions_and_sort_fold_{fold}",
                             argo_config=ARGO_GPU_NODE_MEDIUM,
                         ),
-                        argo_node(
+                        ArgoNode(
                             func=nodes.generate_report,
                             inputs=[
                                 f"matrix_generation.{model}.fold_{fold}.model_output.sorted_matrix_predictions@pandas",

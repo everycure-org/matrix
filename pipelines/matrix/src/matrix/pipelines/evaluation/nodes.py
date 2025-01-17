@@ -76,7 +76,7 @@ class EdgesSchema(DataFrameModel):
 @pandera.check_output(EdgesSchema)
 @inject_object()
 def generate_test_dataset(
-    matrix: pd.DataFrame, generator: DrugDiseasePairGenerator, known_pairs: pd.DataFrame, score_col_name: str
+    known_pairs: pd.DataFrame, matrix: pd.DataFrame, generator: DrugDiseasePairGenerator, score_col_name: str
 ) -> pd.DataFrame:
     """Function to generate test dataset.
 
@@ -84,8 +84,10 @@ def generate_test_dataset(
     pairs dataset.
 
     Args:
+        known_pairs: Dataframe containing known pairs with test/train split.
         matrix: Pairs dataframe representing the full matrix with treat scores.
         generator: Generator strategy.
+        score_col_name: name of column containing treat scores
 
     Returns:
         Pairs dataframe
