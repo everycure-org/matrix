@@ -6,7 +6,7 @@ BRANCH_NAME_REGEX = r"^release/v\d+\.\d+\.\d+(-[a-zA-Z0-9]+)?$"
 
 def get_git_sha() -> str:
     """Returns the git commit sha"""
-    sha = subprocess.check_output(["git", "describe", "--no-match", "--always", "--abbrev=40"], text=True).strip()
+    sha = subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip()
     return sha
 
 
