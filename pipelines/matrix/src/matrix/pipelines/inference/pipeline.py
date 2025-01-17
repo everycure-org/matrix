@@ -43,66 +43,58 @@ def _create_resolution_pipeline() -> Pipeline:
     )
 
 
-def _create_inference_pipeline(model_excl: str, model_incl: str) -> Pipeline:
+def _create_inference_pipeline() -> Pipeline:
     """Matrix generation pipeline adjusted for running inference with models of choice."""
-    mg_pipeline = matrix_generation_pipeline()
 
-    # Unpack number of splits
     n_cross_val_folds = settings.DYNAMIC_PIPELINES_MAPPING.get("cross_validation").get("n_cross_val_folds")
 
+    mg_pipeline = matrix_generation_pipeline()
     inference_nodes = pipeline(
-        [
-            node
-            for node in mg_pipeline.nodes
-            if (
-                not any(model in node.name for model in model_excl)  # Remove nodes for models not included in inference
-                and not any(
-                    f"fold_{fold}" in node.name for fold in range(n_cross_val_folds)
-                )  # Include only models trained on full ground truth data
-            )
+        [  # Include only models trained on full ground truth data
+            node for node in mg_pipeline.nodes if f"fold_{n_cross_val_folds}" in node.name
         ]
     )
+
     pipelines = []
-    for model in model_incl:
-        pipelines.append(
-            pipeline(
-                [inference_nodes],
-                parameters={
-                    "params:evaluation.treat_score_col_name": "params:inference.score_col_name",
-                    "params:matrix_generation.matrix_generation_options.batch_by": "params:inference.matrix_generation_options.batch_by",
-                    "params:matrix_generation.matrix_generation_options.n_reporting": "params:inference.matrix_generation_options.n_reporting",
-                },
-                inputs={
-                    "integration.int.drug_list.nodes@spark": "inference.int.drug_list@spark",
-                    "integration.int.disease_list.nodes@spark": "inference.int.disease_list@spark",
-                    "integration.int.drug_list.nodes@pandas": "inference.int.drug_list@pandas",
-                    "integration.int.disease_list.nodes@pandas": "inference.int.disease_list@pandas",
-                },
-                outputs={
-                    f"matrix_generation.{model}.fold_{n_cross_val_folds}.model_output.sorted_matrix_predictions@pandas": f"inference.{model}.model_output.predictions@pandas",
-                    f"matrix_generation.{model}.fold_{n_cross_val_folds}.reporting.matrix_report": f"inference.{model}.reporting.report",
-                    f"matrix_generation.prm.fold_{n_cross_val_folds}.matrix_pairs": "inference.prm.matrix_pairs",
-                    "matrix_generation.feat.nodes_kg_ds": "inference.feat.nodes_kg_ds",
-                    "matrix_generation.feat.nodes@spark": "inference.feat.nodes@spark",
-                },
-            )
+    pipelines.append(
+        pipeline(
+            [inference_nodes],
+            parameters={
+                "params:evaluation.treat_score_col_name": "params:inference.score_col_name",
+                "params:matrix_generation.matrix_generation_options.batch_by": "params:inference.matrix_generation_options.batch_by",
+                "params:matrix_generation.matrix_generation_options.n_reporting": "params:inference.matrix_generation_options.n_reporting",
+            },
+            inputs={
+                "ingestion.int.drug_list@spark": "inference.int.drug_list@spark",
+                "ingestion.int.disease_list@spark": "inference.int.disease_list@spark",
+                "ingestion.int.drug_list@pandas": "inference.int.drug_list@pandas",
+                "ingestion.int.disease_list@pandas": "inference.int.disease_list@pandas",
+            },
+            outputs={
+                f"matrix_generation.fold_{n_cross_val_folds}.model_output.sorted_matrix_predictions@pandas": f"inference.model_output.predictions@pandas",
+                f"matrix_generation.fold_{n_cross_val_folds}.reporting.matrix_report": f"inference.reporting.report",
+                f"matrix_generation.prm.fold_{n_cross_val_folds}.matrix_pairs": "inference.prm.matrix_pairs",
+                "matrix_generation.feat.nodes_kg_ds": "inference.feat.nodes_kg_ds",
+                "matrix_generation.feat.nodes@spark": "inference.feat.nodes@spark",
+            },
         )
+    )
     return sum([*pipelines])
 
 
-def _create_reporting_pipeline(model: str) -> Pipeline:
+def _create_reporting_pipeline() -> Pipeline:
     """Reporting nodes of the inference pipeline for visualisation purposes."""
     return pipeline(
         [
             ArgoNode(
                 func=nd.visualise_treat_scores,
                 inputs={
-                    "scores": f"inference.{model}.model_output.predictions@pandas",
+                    "scores": "inference.model_output.predictions@pandas",
                     "infer_type": "inference.int.request_type",
                     "col_name": "params:inference.score_col_name",
                 },
-                outputs=f"inference.{model}.reporting.visualisations",
-                name=f"visualise_inference_{model}",
+                outputs="inference.reporting.visualisations",
+                name="visualise_inference",
             )
         ]
     )
@@ -114,23 +106,18 @@ def create_pipeline(**kwargs) -> Pipeline:
     The pipelines is composed of static_nodes (i.e. nodes which are run only once at the beginning),
     and dynamic nodes (i.e. nodes which are repeated for each model selected).
     """
-    # Get models of interest for inference
-    models = settings.DYNAMIC_PIPELINES_MAPPING.get("modelling")
-    model_names_excl = [model for model, config in models.items() if not config["run_inference"]]
-    model_names_incl = [model for model, config in models.items() if config["run_inference"]]
 
     # Construct the full pipeline
     resolution_nodes = _create_resolution_pipeline()
-    inference_nodes = _create_inference_pipeline(model_names_excl, model_names_incl)
-    pipelines = [resolution_nodes, inference_nodes]
+    pipelines = [resolution_nodes]
+    inference_nodes = _create_inference_pipeline()
+    pipelines.append(inference_nodes)
 
     # Add reporting nodes for each model
-    for model in model_names_incl:
-        pipelines.append(
-            pipeline(
-                _create_reporting_pipeline(model),
-                tags=model,
-            )
+    pipelines.append(
+        pipeline(
+            _create_reporting_pipeline(),
         )
+    )
 
     return sum([*pipelines])
