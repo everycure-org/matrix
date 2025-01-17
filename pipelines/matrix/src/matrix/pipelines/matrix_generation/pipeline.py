@@ -64,7 +64,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                     ArgoNode(
                         func=nodes.make_predictions_and_sort,
                         inputs=[
-                            "matrix_generation.feat.nodes_kg_ds",
+                            "matrix_generation.feat.nodes@kg",
                             f"matrix_generation.prm.fold_{fold}.matrix_pairs",
                             f"modelling.fold_{fold}.model_input.transformers",
                             f"modelling.fold_{fold}.models.model",
@@ -83,8 +83,8 @@ def create_pipeline(**kwargs) -> Pipeline:
                         inputs=[
                             f"matrix_generation.fold_{fold}.model_output.sorted_matrix_predictions@pandas",
                             "params:matrix_generation.matrix_generation_options.n_reporting",
-                            "ingestion.int.drug_list@pandas",
-                            "ingestion.int.disease_list@pandas",
+                            "integration.int.drug_list.nodes.norm@pandas",
+                            "integration.int.disease_list.nodes.norm@pandas",
                             "params:matrix_generation.treat_score_col_name",
                             "params:matrix_generation.matrix",
                             "params:matrix_generation.run",
