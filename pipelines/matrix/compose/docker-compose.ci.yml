@@ -11,13 +11,23 @@ services:
     # and `gds` versions not being released yet. Update when released.
     # overwriting volumes so we don't have any
     # https://docs.docker.com/reference/compose-file/merge/#reset-value
+    environment:
+      # SSL Configuration
+      - NEO4J_dbms_ssl_policy_bolt_enabled=true
+      - NEO4J_dbms_ssl_policy_bolt_base__directory=certificates/bolt
+      - NEO4J_dbms_ssl_policy_bolt_private__key=private_and_public.pem
+      - NEO4J_dbms_ssl_policy_bolt_public__certificate=public.crt
+      
+      # Bolt TLS Configuration
+      - NEO4J_dbms_connector_bolt_enabled=true
+      - NEO4J_dbms_connector_bolt_tls__level=REQUIRED
     volumes: !override 
       # note we do NOT mount data which makes the CI container stateless
       - neo4j_logs:/logs
       - neo4j_import:/var/lib/neo4j/import
       - neo4j_plugins:/plugins
-      # - ./certs/bolt/private_and_public.pem:/var/lib/neo4j/certificates/bolt/private_and_public.pem
-      # - ./certs/bolt/public.crt:/var/lib/neo4j/certificates/bolt/public.crt
+      - ./certs/bolt/private_and_public.pem:/var/lib/neo4j/certificates/bolt/private_and_public.pem
+      - ./certs/bolt/public.crt:/var/lib/neo4j/certificates/bolt/public.crt
 
   mockserver:
     environment:
@@ -42,7 +52,7 @@ services:
     environment:
       TQDM_DISABLE: 1
       NODENORM_ENDPOINT: http://mockserver:1080/1.5/get_normalized_nodes
-      NEO4J_HOST: bolt://neo4j:7687 # NOTE: Passing in bolt+s as our local Neo4J has SSL enabled
+      NEO4J_HOST: bolt+scc://neo4j:7687 # NOTE: Passing in bolt+s as our CLI Neo4J has SSL enabled
       NEO4J_USER: neo4j
       NEO4J_PASSWORD: admin
       OPENAI_ENDPOINT: http://mockserver:1080/v1
