@@ -1,13 +1,11 @@
-import mlflow
-
 from copy import deepcopy
 from typing import Any, Dict, Union
 
-from mlflow.tracking import MlflowClient
-
+import mlflow
 from kedro_mlflow.io.metrics.mlflow_abstract_metric_dataset import (
     MlflowAbstractMetricDataset,
 )
+from mlflow.tracking import MlflowClient
 
 
 class MlflowMetricsDataset(MlflowAbstractMetricDataset):
@@ -70,7 +68,7 @@ class MlflowMetricsDataset(MlflowAbstractMetricDataset):
     def run_id(self, run_id: str):
         self._run_id = run_id
 
-    def _load(self):
+    def load(self):
         raise NotImplementedError()
 
     def _exists(self) -> bool:
@@ -91,7 +89,7 @@ class MlflowMetricsDataset(MlflowAbstractMetricDataset):
             "run_id": self.run_id,
         }
 
-    def _save(self, data: Dict[str, Any]):
+    def save(self, data: Dict[str, Any]):
         if self._logging_activated:
             self._validate_run_id()
             run_id = (
