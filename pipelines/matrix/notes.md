@@ -1,4 +1,4 @@
-# TODO delete or move before mergin
+# TODO delete or move before merging
 
 
 - disable any KG except RTX in settings.py
