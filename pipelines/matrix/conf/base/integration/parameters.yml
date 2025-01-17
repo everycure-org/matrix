@@ -50,6 +50,7 @@ integration:
         _object: matrix.pipelines.modelling.utils.partial_
         func:
           _object: matrix.pipelines.integration.filters.remove_rows_containing_category
+        exclude_sources: ["ec_medical"]
         column: category
         categories:
         # TODO: We should likely not remove these before our data release stage but afterwards in the modelling pipeline (if the model so desires)
