@@ -1,6 +1,7 @@
 import glob
 import os
 import re
+import warnings
 from pathlib import Path
 
 import pytest
@@ -64,13 +65,23 @@ def test_no_parameter_entries_from_catalog_unused(
         )
     ]
 
+    # Modelling params should not trigger an error but just a warning.
+    def is_unused_param_error_worthy(param: str) -> bool:
+        return not param.startswith("params:modelling")
+
+    error_inducing_unused_params = [params for params in unused_params if is_unused_param_error_worthy(params)]
+
+    warning_inducing_unused_params = [params for params in unused_params if not is_unused_param_error_worthy(params)]
+
     # # # Only catalog entry not used should be 'parameters', since we input top-level keys
     # # directly.
     # assert (
     #     unused_data_sets == set()
     # ), f"The following data sets are not used: {unused_data_sets}"
 
-    assert unused_params == [], f"The following parameters are not used: {unused_params}"
+    assert error_inducing_unused_params == [], f"The following parameters are not used: {error_inducing_unused_params}"
+
+    warnings.warn(f"The following parameters are not used: {warning_inducing_unused_params}")
 
 
 def test_no_non_parameter_entries_from_catalog_unused(

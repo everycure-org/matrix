@@ -57,59 +57,59 @@ modelling.model_input.splits:
   <<: [*_pandas_parquet, *_model_input_ds]
   filepath: ${globals:paths.modelling}/model_input/splits
 
-"modelling.{model}.fold_{fold}.model_input.transformers":
+"modelling.fold_{fold}.model_input.transformers":
   <<: *_model_input_ds
   type: pickle.PickleDataset
-  filepath: ${globals:paths.modelling}/model_input/{model}/fold_{fold}/transformers.pickle
+  filepath: ${globals:paths.modelling}/model_input/fold_{fold}/transformers.pickle
 
-"modelling.{model}.fold_{fold}.model_input.transformed_splits":
+"modelling.fold_{fold}.model_input.transformed_splits":
   <<: [*_pandas_parquet, *_model_output_ds]
-  filepath: ${globals:paths.modelling}/model_input/{model}/fold_{fold}/transformed_splits
+  filepath: ${globals:paths.modelling}/model_input/fold_{fold}/transformed_splits
 
-"modelling.{model}.{shard}.model_input.enriched_splits":
+"modelling.{shard}.model_input.enriched_splits":
   <<: [*_pandas_parquet, *_model_input_ds]
-  filepath: ${globals:paths.modelling}/model_input/{model}/{shard}/enriched_splits
+  filepath: ${globals:paths.modelling}/model_input/{shard}/enriched_splits
 
-"modelling.{model}.{shard}.fold_{fold}.model_input.transformed_splits":
+"modelling.{shard}.fold_{fold}.model_input.transformed_splits":
   <<: [*_pandas_parquet, *_model_input_ds]
-  filepath: ${globals:paths.modelling}/model_input/{model}/{shard}/fold_{fold}/transformed_splits
+  filepath: ${globals:paths.modelling}/model_input/{shard}/fold_{fold}/transformed_splits
 
-"modelling.{model}.{shard}.fold_{fold}.models.model_params":
+"modelling.{shard}.fold_{fold}.models.model_params":
   <<: *_model_ds
   type: yaml.YAMLDataset
-  filepath: ${globals:paths.modelling}/models/{model}/{shard}/fold_{fold}/model_params.yml
+  filepath: ${globals:paths.modelling}/models/{shard}/fold_{fold}/model_params.yml
 
-"modelling.{model}.{shard}.fold_{fold}.models.model":
+"modelling.{shard}.fold_{fold}.models.model":
   <<: *_model_ds
   type: pickle.PickleDataset
-  filepath: ${globals:paths.modelling}/models/{model}/{shard}/fold_{fold}/model.pickle
+  filepath: ${globals:paths.modelling}/models/{shard}/fold_{fold}/model.pickle
 
-"modelling.{model}.fold_{fold}.model_output.predictions":
+"modelling.fold_{fold}.model_output.predictions":
   <<: [*_pandas_parquet, *_model_output_ds]
-  filepath: ${globals:paths.modelling}/model_output/{model}/fold_{fold}/predictions
+  filepath: ${globals:paths.modelling}/model_output/fold_{fold}/predictions
   
 # NOTE: Saving an artifact, saving both locally and in MLFlow
 # https://kedro-mlflow.readthedocs.io/en/stable/source/04_experimentation_tracking/03_version_datasets.html#how-to-version-data-in-a-kedro-project
-"modelling.{model}.{shard}.fold_{fold}.reporting.tuning_convergence_plot":
+"modelling.{shard}.fold_{fold}.reporting.tuning_convergence_plot":
   <<: *_reporting_ds
   type: matplotlib.MatplotlibWriter
-  filepath: ${globals:paths.tmp}/reporting/{model}/{shard}/fold_{fold}/convergence_plot.png
+  filepath: ${globals:paths.tmp}/reporting/{shard}/fold_{fold}/convergence_plot.png
 
 # NOTE: Tracking a model, other serialization formats possible.
 # https://kedro-mlflow.readthedocs.io/en/stable/source/04_experimentation_tracking/04_version_models.html#how-to-track-models-using-mlflow-in-kedro-project
-"modelling.{model}.fold_{fold}.models.model":
+"modelling.fold_{fold}.models.model":
   <<: *_model_ds
   type: pickle.PickleDataset
-  filepath: ${globals:paths.modelling}/models/{model}/fold_{fold}/model.pickle
+  filepath: ${globals:paths.modelling}/models/fold_{fold}/model.pickle
 
-"modelling.{model}.reporting.metrics":
+"modelling.reporting.metrics":
   <<: *_reporting_ds
-  filepath: ${globals:paths.modelling}/reporting/{model}/sanity_metrics.yml
+  filepath: ${globals:paths.modelling}/reporting/sanity_metrics.yml
   type: yaml.YAMLDataset
 
-"modelling.{model}.model_output.combined_predictions":
+"modelling.model_output.combined_predictions":
   <<: [*_pandas_parquet, *_model_output_ds]
-  filepath: ${globals:paths.modelling}/model_output/{model}/combined_predictions
+  filepath: ${globals:paths.modelling}/model_output/combined_predictions
 
 modelling.reporting.gt_present:
   filepath: ${globals:paths.modelling}/reporting/gt_present_metrics.yml
