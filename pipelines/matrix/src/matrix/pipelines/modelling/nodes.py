@@ -1,28 +1,25 @@
-import logging
-from typing import Any, Callable, Dict, List, Union, Tuple
-import pandas as pd
-from pyspark.sql import DataFrame
 import json
-from pandera.typing import Series
-from pandera.pyspark import DataFrameModel as PysparkDataFrameModel
-from pandera import DataFrameModel as PandasDataFrameModel
-import pandera
-from pyspark.sql import functions as f
-import pyspark.sql.types as T
-from pandera import Field as PandasField
-
-
-from sklearn.model_selection import BaseCrossValidator
-from sklearn.impute._base import _BaseImputer
-from sklearn.base import BaseEstimator
+import logging
+from functools import wraps
+from typing import Any, Callable, Dict, List, Tuple, Union
 
 import matplotlib.pyplot as plt
-
-from functools import wraps
-from matrix.inject import inject_object, make_list_regexable, unpack_params
+import pandas as pd
+import pandera
+import pyspark.sql as ps
+import pyspark.sql.types as T
+from pandera import DataFrameModel as PandasDataFrameModel
+from pandera.pyspark import DataFrameModel as PysparkDataFrameModel
+from pandera.typing import Series
+from pyspark.sql import functions as f
+from sklearn.base import BaseEstimator
+from sklearn.impute._base import _BaseImputer
+from sklearn.model_selection import BaseCrossValidator
 
 from matrix.datasets.graph import KnowledgeGraph
 from matrix.datasets.pair_generator import SingleLabelPairGenerator
+from matrix.inject import OBJECT_KW, inject_object, make_list_regexable, unpack_params
+
 from .model import ModelWrapper
 
 logger = logging.getLogger(__name__)
@@ -68,45 +65,102 @@ def no_nulls(columns: List[str]):
 
 
 def filter_valid_pairs(
-    nodes: DataFrame,
-    raw_tp: DataFrame,
-    raw_tn: DataFrame,
-) -> Tuple[DataFrame, Dict[str, float]]:
-    """Filter pairs to only include nodes that exist in the nodes DataFrame.
+    nodes: ps.DataFrame,
+    edges_gt: ps.DataFrame,
+    drug_categories: List[str],
+    disease_categories: List[str],
+) -> Tuple[ps.DataFrame, Dict[str, float]]:
+    """Filter GT pairs to only include nodes that 1) exist in the nodes DataFrame, 2) have the correct category.
 
     Args:
         nodes: Nodes dataframe
-        raw_tp: Raw ground truth positive data
-        raw_tn: Raw ground truth negative data
+        edges_gt: DataFrame with ground truth pairs
+        drug_categories: List of drug categories to be filtered on
+        disease_categories: List of disease categories to be filtered on
 
     Returns:
         Tuple containing:
         - DataFrame with combined filtered positive and negative pairs
         - Dictionary with retention statistics
     """
+    # Create set of categories to filter on
+    categories = drug_categories + disease_categories
+
     # Get list of nodes in the KG
-    valid_nodes = nodes.select("id").distinct()
+    valid_nodes_in_kg = nodes.select("id").distinct()
+    valid_nodes_with_categories = nodes.filter(f.col("category").isin(categories)).select("id")
+
+    # Divide edges_gt into positive and negative pairs to know ratio retained for each
+    edges_gt = edges_gt.withColumnRenamed("subject", "source").withColumnRenamed("object", "target")
+    raw_tp = edges_gt.filter(f.col("y") == 1)
+    raw_tn = edges_gt.filter(f.col("y") == 0)
+
     # Filter out pairs where both source and target exist in nodes
-    filtered_tp = (
-        raw_tp.join(valid_nodes.alias("source_nodes"), raw_tp.source == f.col("source_nodes.id"))
-        .join(valid_nodes.alias("target_nodes"), raw_tp.target == f.col("target_nodes.id"))
+    filtered_tp_in_kg = (
+        raw_tp.join(valid_nodes_in_kg.alias("source_nodes"), raw_tp.source == f.col("source_nodes.id"))
+        .join(valid_nodes_in_kg.alias("target_nodes"), raw_tp.target == f.col("target_nodes.id"))
         .select(raw_tp["*"])
     )
-    filtered_tn = (
-        raw_tn.join(valid_nodes.alias("source_nodes"), raw_tn.source == f.col("source_nodes.id"))
-        .join(valid_nodes.alias("target_nodes"), raw_tn.target == f.col("target_nodes.id"))
+    filtered_tn_in_kg = (
+        raw_tn.join(valid_nodes_in_kg.alias("source_nodes"), raw_tn.source == f.col("source_nodes.id"))
+        .join(valid_nodes_in_kg.alias("target_nodes"), raw_tn.target == f.col("target_nodes.id"))
         .select(raw_tn["*"])
     )
-
+    filtered_tp_categories = (
+        raw_tp.join(valid_nodes_with_categories.alias("source_nodes"), raw_tp.source == f.col("source_nodes.id"))
+        .join(valid_nodes_with_categories.alias("target_nodes"), raw_tp.target == f.col("target_nodes.id"))
+        .select(raw_tp["*"])
+    )
+    filtered_tn_categories = (
+        raw_tn.join(valid_nodes_with_categories.alias("source_nodes"), raw_tn.source == f.col("source_nodes.id"))
+        .join(valid_nodes_with_categories.alias("target_nodes"), raw_tn.target == f.col("target_nodes.id"))
+        .select(raw_tn["*"])
+    )
+    # Filter out pairs where category of source or target is incorrect AND source and target do not exist in nodes
+    final_filtered_tp_categories = (
+        filtered_tp_in_kg.join(
+            valid_nodes_with_categories.alias("source_nodes"), filtered_tp_categories.source == f.col("source_nodes.id")
+        )
+        .join(
+            valid_nodes_with_categories.alias("target_nodes"), filtered_tp_categories.target == f.col("target_nodes.id")
+        )
+        .select(filtered_tp_categories["*"])
+    )
+    final_filtered_tn_categories = (
+        filtered_tn_in_kg.join(
+            valid_nodes_with_categories.alias("source_nodes"), filtered_tn_categories.source == f.col("source_nodes.id")
+        )
+        .join(
+            valid_nodes_with_categories.alias("target_nodes"), filtered_tn_categories.target == f.col("target_nodes.id")
+        )
+        .select(filtered_tn_categories["*"])
+    )
     # Calculate retention percentages
     retention_stats = {
-        "positive_pairs_retained_pct": (filtered_tp.count() / raw_tp.count()) if raw_tp.count() > 0 else 1.0,
-        "negative_pairs_retained_pct": (filtered_tn.count() / raw_tn.count()) if raw_tn.count() > 0 else 1.0,
+        "positive_pairs_retained_in_kg_pct": (filtered_tp_in_kg.count() / raw_tp.count())
+        if raw_tp.count() > 0
+        else 1.0,
+        "negative_pairs_retained_in_kg_pct": (filtered_tn_in_kg.count() / raw_tn.count())
+        if raw_tn.count() > 0
+        else 1.0,
+        "positive_pairs_retained_in_categories_pct": (filtered_tp_categories.count() / raw_tp.count())
+        if raw_tp.count() > 0
+        else 1.0,
+        "negative_pairs_retained_in_categories_pct": (filtered_tn_categories.count() / raw_tn.count())
+        if raw_tn.count() > 0
+        else 1.0,
+        "positive_pairs_retained_final_pct": (final_filtered_tp_categories.count() / raw_tp.count())
+        if raw_tp.count() > 0
+        else 1.0,
+        "negative_pairs_retained_final_pct": (final_filtered_tn_categories.count() / raw_tn.count())
+        if raw_tn.count() > 0
+        else 1.0,
     }
 
     # Combine filtered pairs
-    pairs_df = filtered_tp.withColumn("y", f.lit(1)).unionByName(filtered_tn.withColumn("y", f.lit(0)))
-
+    pairs_df = final_filtered_tp_categories.withColumn("y", f.lit(1)).unionByName(
+        final_filtered_tn_categories.withColumn("y", f.lit(0))
+    )
     return {"pairs": pairs_df, "metrics": retention_stats}
 
 
@@ -121,9 +175,9 @@ class EmbeddingsWithPairsSchema(PysparkDataFrameModel):
 
 @pandera.check_output(EmbeddingsWithPairsSchema)
 def attach_embeddings(
-    pairs_df: DataFrame,
-    nodes: DataFrame,
-) -> DataFrame:
+    pairs_df: ps.DataFrame,
+    nodes: ps.DataFrame,
+) -> ps.DataFrame:
     """Attach node embeddings to the pairs DataFrame.
 
     Args:
@@ -137,8 +191,10 @@ def attach_embeddings(
         pairs_df.alias("pairs")
         .join(nodes.withColumn("source", f.col("id")), how="left", on="source")
         .withColumnRenamed("topological_embedding", "source_embedding")
+        .withColumn("source_embedding", f.col("source_embedding").cast(T.ArrayType(T.FloatType())))
         .join(nodes.withColumn("target", f.col("id")), how="left", on="target")
         .withColumnRenamed("topological_embedding", "target_embedding")
+        .withColumn("target_embedding", f.col("target_embedding").cast(T.ArrayType(T.FloatType())))
         .select("pairs.*", "source_embedding", "target_embedding")
     )
 
@@ -155,12 +211,12 @@ class NodeSchema(PysparkDataFrameModel):
 
 @pandera.check_output(NodeSchema)
 def prefilter_nodes(
-    full_nodes: DataFrame,
-    nodes: DataFrame,
-    gt: DataFrame,
+    full_nodes: ps.DataFrame,
+    nodes: ps.DataFrame,
+    gt: ps.DataFrame,
     drug_types: List[str],
     disease_types: List[str],
-) -> DataFrame:
+) -> ps.DataFrame:
     """Prefilter nodes for negative sampling.
 
     Args:
@@ -190,88 +246,56 @@ def prefilter_nodes(
         .join(ground_truth_nodes, on="id", how="left")
         .fillna({"in_ground_pos": False})
     )
-
     return df
 
 
+class ModelSplitsSchema(PandasDataFrameModel):
+    source: Series[str]
+    source_embedding: Series[object]
+    target: Series[str]
+    target_embedding: Series[object]
+    split: Series[str]
+    fold: Series[int]
+
+    class Config:
+        strict = False
+
+
+@pandera.check_output(ModelSplitsSchema)
 @inject_object()
 def make_folds(
-    data: DataFrame,
-    splitter: BaseCrossValidator,
-) -> Tuple[pd.DataFrame]:
-    """Function to generate folds for modelling.
-
-    NOTE: This currently loads the `n_splits` from the settings, as this
-    pipeline is generated dynamically to allow parallelization.
-
-         _______
-       .-       -.
-      /           \
-     |,  .-.  .-.  ,|
-     | )(_o/  \o_)( |
-     |/     /\     \|
-     (_     ^^     _)
-      \__|IIIIII|__/
-       | \IIIIII/ |
-       \          /
-        `--------`
-
-    Args:
-        data: dataframe
-        splitter: splitter
-    Returns:
-        Tuple of dataframes with data for each fold, dfs 1-k are 
-        dfs with data for folds, df k+1 is training data only.
-    """
-
-    # Set number of splits
-    all_data_frames = make_splits(data, splitter)
-
-    # Add "training data only" fold
-    full_data = data.copy()
-    full_data.loc[:, "split"] = "TRAIN"
-    return all_data_frames + tuple([full_data])
-
-
-@inject_object()
-def make_splits(
-    data: DataFrame,
+    data: ps.DataFrame,
     splitter: BaseCrossValidator,
 ) -> Tuple[pd.DataFrame]:
     """Function to split data.
 
-    FUTURE: Update to produce single DF only, where we add a column identifying the fold.
-
     Args:
-        kg: kg dataset with nodes
         data: Data to split.
         splitter: sklearn splitter object (BaseCrossValidator or its subclasses).
-        n_splits: number of splits
+
     Returns:
-        Tuple of dataframes for each fold.
+        Dataframe with test-train split for all folds.
+        By convention, folds 0 to k-1 are the proper test train splits for k-fold cross-validation,
+        while fold k is the fold with full training data
     """
 
     # Split data into folds
     all_data_frames = []
-    for train_index, test_index in splitter.split(data, data["y"]):
+    for fold, (train_index, test_index) in enumerate(splitter.split(data, data["y"])):
         all_indices_in_this_fold = list(set(train_index).union(test_index))
         fold_data = data.loc[all_indices_in_this_fold, :].copy()
         fold_data.loc[train_index, "split"] = "TRAIN"
         fold_data.loc[test_index, "split"] = "TEST"
+        fold_data.loc[:, "fold"] = fold
         all_data_frames.append(fold_data)
 
-    return tuple(all_data_frames)
+    # Add fold for full training data
+    full_fold_data = data.copy()
+    full_fold_data["split"] = "TRAIN"
+    full_fold_data["fold"] = splitter.n_splits
+    all_data_frames.append(full_fold_data)
 
-
-class ModelSplitsSchema(PandasDataFrameModel):
-    source: Series[object] = PandasField(nullable=True)
-    source_embedding: Series[object] = PandasField(nullable=True)
-    target: Series[object] = PandasField(nullable=True)
-    target_embedding: Series[object] = PandasField(nullable=True)
-    split: Series[object] = PandasField(nullable=True)
-
-    class Config:
-        strict = False
+    return pd.concat(all_data_frames, ignore_index=True)
 
 
 @pandera.check_output(ModelSplitsSchema)
@@ -295,10 +319,21 @@ def create_model_input_nodes(
     Returns:
         Data with enriched splits.
     """
-    generated = generator.generate(graph, splits)
-    generated["split"] = "TRAIN"
+    if splits.empty:
+        raise ValueError("Splits dataframe must be non-empty")
 
-    return pd.concat([splits, generated], axis="index", ignore_index=True)
+    all_generated = []
+
+    # Enrich splits for all folds
+    num_folds = splits["fold"].max() + 1
+    for fold in range(num_folds):
+        splits_fold = splits[splits["fold"] == fold]
+        generated = generator.generate(graph, splits_fold)
+        generated["split"] = "TRAIN"
+        generated["fold"] = fold
+        all_generated.append(generated)
+
+    return pd.concat([splits, *all_generated], axis="index", ignore_index=True)
 
 
 @inject_object()
@@ -350,8 +385,7 @@ def apply_transformers(
     Returns:
         Transformed data.
     """
-    # Iterate transformers
-    for _, transformer in transformers.items():
+    for transformer in transformers.values():
         # Apply transformer
         features = transformer["features"]
         features_selected = data[features]
@@ -406,7 +440,7 @@ def tune_parameters(
     return json.loads(
         json.dumps(
             {
-                "object": f"{type(estimator).__module__}.{type(estimator).__name__}",
+                OBJECT_KW: f"{type(estimator).__module__}.{type(estimator).__name__}",
                 **tuner.best_params_,
             },
             default=int,
@@ -503,6 +537,8 @@ def check_model_performance(
 
     NOTE: This function only provides a partial indication of model performance,
     primarily for checking that a model has been successfully trained.
+
+    FUTURE: Move to evaluation pipeline.
 
     Args:
         data: Data to evaluate.

@@ -1,32 +1,28 @@
 import logging
-from pandera import DataFrameModel
-import pandera as pa
-from tqdm import tqdm
-from typing import List, Dict, Union, Tuple
-from pyspark.sql import DataFrame
-from sklearn.impute._base import _BaseImputer
+from datetime import datetime
+from typing import Dict, List, Tuple, Union
 
 import pandas as pd
+import pandera as pa
+import pyspark.sql as ps
 import pyspark.sql.functions as F
-from pandera.typing import Series
-
-from matrix.inject import inject_object, _extract_elements_in_list
-
 from matrix.datasets.graph import KnowledgeGraph
-
-from matrix.pipelines.modelling.nodes import apply_transformers
+from matrix.inject import _extract_elements_in_list, inject_object
 from matrix.pipelines.modelling.model import ModelWrapper
-
-from datetime import datetime
+from matrix.pipelines.modelling.nodes import apply_transformers
+from pandera import DataFrameModel
+from pandera.typing import Series
+from sklearn.impute._base import _BaseImputer
+from tqdm import tqdm
 
 logger = logging.getLogger(__name__)
 
 
 def enrich_embeddings(
-    nodes: DataFrame,
-    drugs: DataFrame,
-    diseases: DataFrame,
-) -> DataFrame:
+    nodes: ps.DataFrame,
+    drugs: ps.DataFrame,
+    diseases: ps.DataFrame,
+) -> ps.DataFrame:
     """Function to enrich drug and disease list with embeddings.
 
     Args:
@@ -37,7 +33,6 @@ def enrich_embeddings(
     return (
         drugs.withColumn("is_drug", F.lit(True))
         .unionByName(diseases.withColumn("is_disease", F.lit(True)), allowMissingColumns=True)
-        .withColumnRenamed("curie", "id")
         .join(nodes, on="id", how="inner")
         .select("is_drug", "is_disease", "id", "topological_embedding")
         .withColumn("is_drug", F.coalesce(F.col("is_drug"), F.lit(False)))
@@ -59,7 +54,10 @@ def _add_flag_columns(matrix: pd.DataFrame, known_pairs: pd.DataFrame, clinical_
 
     def create_flag_column(pairs):
         pairs_set = set(zip(pairs["source"], pairs["target"]))
-        return matrix.apply(lambda row: (row["source"], row["target"]) in pairs_set, axis=1)
+        # Ensure the function returns a Series
+        result = matrix.apply(lambda row: (row["source"], row["target"]) in pairs_set, axis=1)
+
+        return result.astype(bool)
 
     # Flag known positives and negatives
     test_pairs = known_pairs[known_pairs["split"].eq("TEST")]
@@ -70,7 +68,7 @@ def _add_flag_columns(matrix: pd.DataFrame, known_pairs: pd.DataFrame, clinical_
     matrix["is_known_negative"] = create_flag_column(test_neg_pairs)
 
     # Flag clinical trials data
-    clinical_trials = clinical_trials.rename(columns={"drug_kg_curie": "source", "disease_kg_curie": "target"})
+    clinical_trials = clinical_trials.rename(columns={"drug_curie": "source", "disease_curie": "target"})
     matrix["trial_sig_better"] = create_flag_column(clinical_trials[clinical_trials["significantly_better"] == 1])
     matrix["trial_non_sig_better"] = create_flag_column(
         clinical_trials[clinical_trials["non_significantly_better"] == 1]
@@ -81,21 +79,9 @@ def _add_flag_columns(matrix: pd.DataFrame, known_pairs: pd.DataFrame, clinical_
     return matrix
 
 
-def spark_to_pd(nodes: DataFrame) -> pd.DataFrame:
-    """Temporary function to transform spark parquet to pandas parquet.
-
-    Related to https://github.com/everycure-org/matrix/issues/71.
-    TODO: replace/remove the function once pyarrow error is fixed.
-
-    Args:
-        nodes: Dataframe with node embeddings
-    """
-    return nodes.toPandas()
-
-
 class TrialSchema(DataFrameModel):
-    source: Series[object]
-    target: Series[object]
+    source: Series[str]
+    target: Series[str]
     is_known_positive: Series[bool]
     is_known_negative: Series[bool]
     trial_sig_better: Series[bool]
@@ -110,10 +96,10 @@ class TrialSchema(DataFrameModel):
 @pa.check_output(TrialSchema)
 @inject_object()
 def generate_pairs(
+    known_pairs: pd.DataFrame,
     drugs: pd.DataFrame,
     diseases: pd.DataFrame,
     graph: KnowledgeGraph,
-    known_pairs: pd.DataFrame,
     clinical_trials: pd.DataFrame,
 ) -> pd.DataFrame:
     """Function to generate matrix dataset.
@@ -121,18 +107,18 @@ def generate_pairs(
     FUTURE: Consider rewriting operations in PySpark for speed
 
     Args:
+        known_pairs: Labelled ground truth drug-disease pairs dataset.
         drugs: Dataframe containing IDs for the list of drugs.
         diseases: Dataframe containing IDs for the list of diseases.
         graph: Object containing node embeddings.
-        known_pairs: Labelled ground truth drug-disease pairs dataset.
         clinical_trials: Pairs dataset representing outcomes of recent clinical trials.
 
     Returns:
         Pairs dataframe containing all combinations of drugs and diseases that do not lie in the training set.
     """
     # Collect list of drugs and diseases
-    drugs_lst = drugs["curie"].tolist()
-    diseases_lst = diseases["curie"].tolist()
+    drugs_lst = drugs["id"].tolist()
+    diseases_lst = diseases["id"].tolist()
 
     # Remove duplicates
     drugs_lst = list(set(drugs_lst))
@@ -157,7 +143,6 @@ def generate_pairs(
     train_pairs_set = set(zip(train_pairs["source"], train_pairs["target"]))
     is_in_train = matrix.apply(lambda row: (row["source"], row["target"]) in train_pairs_set, axis=1)
     matrix = matrix[~is_in_train]
-
     # Add flag columns for known positives and negatives
     matrix = _add_flag_columns(matrix, known_pairs, clinical_trials)
 
@@ -230,19 +215,15 @@ def make_batch_predictions(
         batch[not_treat_score_col_name] = preds[:, 0]
         batch[treat_score_col_name] = preds[:, 1]
         batch[unknown_score_col_name] = preds[:, 2]
-        # Drop embedding columns
         batch = batch.drop(columns=["source_embedding", "target_embedding"])
         return batch
 
-    # Group data by the specified prefix
     grouped = data.groupby(batch_by)
 
-    # Process data in batches
     result_parts = []
     for _, batch in tqdm(grouped):
         result_parts.append(process_batch(batch))
 
-    # Combine results
     results = pd.concat(result_parts, axis=0)
 
     return results
@@ -350,18 +331,17 @@ def _process_top_pairs(
         pd.DataFrame: Processed DataFrame containing the top pairs with additional information.
     """
     top_pairs = data.head(n_reporting).copy()
-
     # Generate mapping dictionaries
     drug_mappings = {
-        "kg_name": {row["curie"]: row["name"] for _, row in drugs.iterrows()},
-        "list_id": {row["curie"]: row["single_ID"] for _, row in drugs.iterrows()},
-        "list_name": {row["curie"]: row["ID_Label"] for _, row in drugs.iterrows()},
+        "kg_name": {row["id"]: row["name"] for _, row in drugs.iterrows()},
+        "list_id": {row["id"]: row["id"] for _, row in drugs.iterrows()},
+        "list_name": {row["id"]: row["name"] for _, row in drugs.iterrows()},
     }
 
     disease_mappings = {
-        "kg_name": {row["curie"]: row["name"] for _, row in diseases.iterrows()},
-        "list_id": {row["curie"]: row["category_class"] for _, row in diseases.iterrows()},
-        "list_name": {row["curie"]: row["label"] for _, row in diseases.iterrows()},
+        "kg_name": {row["id"]: row["name"] for _, row in diseases.iterrows()},
+        "list_id": {row["id"]: row["id"] for _, row in diseases.iterrows()},
+        "list_name": {row["id"]: row["name"] for _, row in diseases.iterrows()},
     }
 
     # Add additional information
@@ -497,12 +477,15 @@ def _add_tags(
         pd.DataFrame: DataFrame with added tag columns.
     """
     # Add tag columns for drugs and diseasesto the top pairs DataFrame
-    for set, set_id, df in [("drugs", "kg_drug_id", drugs), ("diseases", "kg_disease_id", diseases)]:
+    for set, set_id, df, df_id in [
+        ("drugs", "kg_drug_id", drugs, "id"),
+        ("diseases", "kg_disease_id", diseases, "id"),
+    ]:
         for tag_name, _ in matrix_params.get(set, {}).items():
             if tag_name not in df.columns:
                 logger.warning(f"Tag column '{tag_name}' not found in {set} DataFrame. Skipping.")
             else:
-                tag_mapping = dict(zip(df["curie"], df[tag_name]))
+                tag_mapping = dict(zip(df[df_id], df[tag_name]))
                 # Add the tag to top_pairs
                 top_pairs[tag_name] = top_pairs[set_id].map(tag_mapping)
 
@@ -582,6 +565,7 @@ def generate_report(
     Returns:
         Dataframe with the top pairs and additional information for the drugs and diseases.
     """
+    # Add tags and process top pairs
     stats = matrix_params.get("stats_col_names")
     tags = matrix_params.get("tags")
     top_pairs = _process_top_pairs(data, n_reporting, drugs, diseases, score_col_name)

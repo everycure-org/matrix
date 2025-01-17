@@ -1,11 +1,10 @@
 from typing import List, Type
 
 import pandera.pyspark as pa
-from pandera.pyspark import Field
+import pyspark.sql as ps
 import pyspark.sql.functions as F
 import pyspark.sql.types as T
-
-from pyspark.sql import DataFrame
+from pandera.pyspark import Field
 
 
 def cols_for_schema(schema_obj: Type[pa.DataFrameModel]) -> List[str]:
@@ -18,21 +17,27 @@ def cols_for_schema(schema_obj: Type[pa.DataFrameModel]) -> List[str]:
     return list(schema_obj.to_schema().columns.keys())
 
 
-class KGEdgeSchema(pa.DataFrameModel):
+class EdgeSchema(pa.DataFrameModel):
+    # fmt: off
+    subject:                     T.StringType()            = pa.Field(nullable = False)
+    object:                      T.StringType()            = pa.Field(nullable = False)
+    # fmt: on
+
+
+class KGEdgeSchema(EdgeSchema):
     """Schema for a knowledge graph edges as exposed by the Data API."""
 
     # fmt: off
-    subject:                     T.StringType            = Field(nullable = False)
-    predicate:                   T.StringType            = Field(nullable = False)
-    object:                      T.StringType            = Field(nullable = False)
-    knowledge_level:             T.StringType            = Field(nullable = True)
-    primary_knowledge_source:    T.StringType            = Field(nullable = True)
-    aggregator_knowledge_source: T.ArrayType(T.StringType()) = Field(nullable = True) # type: ignore
-    publications:                T.ArrayType(T.StringType()) = Field(nullable = True) # type: ignore
-    subject_aspect_qualifier:    T.StringType            = Field(nullable = True)
-    subject_direction_qualifier: T.StringType            = Field(nullable = True)
-    object_aspect_qualifier:     T.StringType            = Field(nullable = True)
-    object_direction_qualifier:  T.StringType            = Field(nullable = True)
+    subject:                     T.StringType()            = pa.Field(nullable = False)
+    predicate:                   T.StringType()            = pa.Field(nullable = False)
+    knowledge_level:             T.StringType()            = pa.Field(nullable = True)
+    primary_knowledge_source:    T.StringType()            = pa.Field(nullable = True)
+    aggregator_knowledge_source: T.ArrayType(T.StringType()) = pa.Field(nullable = True)
+    publications:                T.ArrayType(T.StringType()) = pa.Field(nullable = True)
+    subject_aspect_qualifier:    T.StringType()            = pa.Field(nullable = True)
+    subject_direction_qualifier: T.StringType()            = pa.Field(nullable = True)
+    object_aspect_qualifier:     T.StringType()            = pa.Field(nullable = True)
+    object_direction_qualifier:  T.StringType()            = pa.Field(nullable = True)
     # We manually set this for every KG we ingest
     upstream_data_source:          T.ArrayType(T.StringType()) # type: ignore
     # fmt: on
@@ -42,23 +47,29 @@ class KGEdgeSchema(pa.DataFrameModel):
         strict = False
 
     @classmethod
-    def group_edges_by_id(cls, concatenated_edges_df: DataFrame) -> DataFrame:
+    def group_edges_by_id(cls, concatenated_edges_df: ps.DataFrame) -> ps.DataFrame:
         return (
             concatenated_edges_df.groupBy(["subject", "predicate", "object"])
             .agg(
                 F.flatten(F.collect_set("upstream_data_source")).alias("upstream_data_source"),
                 # TODO: we shouldn't just take the first one but collect these values from multiple upstream sources
-                F.first("knowledge_level").alias("knowledge_level"),
-                F.first("subject_aspect_qualifier").alias("subject_aspect_qualifier"),
-                F.first("subject_direction_qualifier").alias("subject_direction_qualifier"),
-                F.first("object_direction_qualifier").alias("object_direction_qualifier"),
-                F.first("object_aspect_qualifier").alias("object_aspect_qualifier"),
-                F.first("primary_knowledge_source").alias("primary_knowledge_source"),
+                F.first("knowledge_level", ignorenulls=True).alias("knowledge_level"),
+                F.first("subject_aspect_qualifier", ignorenulls=True).alias("subject_aspect_qualifier"),
+                F.first("subject_direction_qualifier", ignorenulls=True).alias("subject_direction_qualifier"),
+                F.first("object_direction_qualifier", ignorenulls=True).alias("object_direction_qualifier"),
+                F.first("object_aspect_qualifier", ignorenulls=True).alias("object_aspect_qualifier"),
+                F.first("primary_knowledge_source", ignorenulls=True).alias("primary_knowledge_source"),
                 F.flatten(F.collect_set("aggregator_knowledge_source")).alias("aggregator_knowledge_source"),
                 F.flatten(F.collect_set("publications")).alias("publications"),
             )
             .select(*cols_for_schema(KGEdgeSchema))
         )
+
+
+class NodeSchema(pa.DataFrameModel):
+    # fmt: off
+    id:                                T.StringType()            = pa.Field(nullable=False)
+    # fmt: on
 
 
 class KGNodeSchema(pa.DataFrameModel):
@@ -84,7 +95,7 @@ class KGNodeSchema(pa.DataFrameModel):
         strict = True
 
     @classmethod
-    def group_nodes_by_id(cls, nodes_df: DataFrame) -> DataFrame:
+    def group_nodes_by_id(cls, nodes_df: ps.DataFrame) -> ps.DataFrame:
         """Utility function to group nodes by id.
 
         This should be used after the IDs are normalized so we can combine node properties from
@@ -97,10 +108,10 @@ class KGNodeSchema(pa.DataFrameModel):
         return (
             nodes_df.groupBy("id")
             .agg(
-                F.first("name").alias("name"),
-                F.first("category").alias("category"),
-                F.first("description").alias("description"),
-                F.first("international_resource_identifier").alias("international_resource_identifier"),
+                F.first("name", ignorenulls=True).alias("name"),
+                F.first("category", ignorenulls=True).alias("category"),
+                F.first("description", ignorenulls=True).alias("description"),
+                F.first("international_resource_identifier", ignorenulls=True).alias("international_resource_identifier"),
                 F.flatten(F.collect_set("equivalent_identifiers")).alias("equivalent_identifiers"),
                 F.flatten(F.collect_set("all_categories")).alias("all_categories"),
                 F.flatten(F.collect_set("labels")).alias("labels"),

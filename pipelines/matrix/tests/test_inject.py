@@ -2,14 +2,9 @@ from copy import deepcopy
 from types import FunctionType
 
 import pandas as pd
-import pytest
-from sklearn.impute import SimpleImputer
-from sklearn.model_selection import GridSearchCV
-from sklearn.preprocessing import MinMaxScaler
-
 import pyspark.sql.functions as F
 import pyspark.sql.types as T
-
+import pytest
 from matrix.inject import (
     _inject_object,
     _parse_for_objects,
@@ -18,6 +13,9 @@ from matrix.inject import (
     make_list_regexable,
     unpack_params,
 )
+from sklearn.impute import SimpleImputer
+from sklearn.model_selection import GridSearchCV
+from sklearn.preprocessing import MinMaxScaler
 
 
 def dummy_func(x):
@@ -41,7 +39,7 @@ def dummy_pd_df():
 def param():
     param = {
         "my_imputer": {
-            "object": "sklearn.impute.SimpleImputer",
+            "_object": "sklearn.impute.SimpleImputer",
             "strategy": "constant",
             "fill_value": 0,
         },
@@ -73,38 +71,38 @@ def nested_params(dummy_pd_df):
         "int": 0,
         "float": 1.1,
         "z": {
-            "object": "tests.test_inject.dummy_func",
+            "_object": "tests.test_inject.dummy_func",
             "x": {
-                "object": "sklearn.impute.SimpleImputer",
+                "_object": "sklearn.impute.SimpleImputer",
                 "strategy": "constant",
                 "fill_value": 0,
             },
         },
         "min_max": {
-            "object": "sklearn.preprocessing.MinMaxScaler",
+            "_object": "sklearn.preprocessing.MinMaxScaler",
             "feature_range": (0, 2),
         },
         "plain_func": {
-            "object": "tests.test_inject.dummy_func",
+            "_object": "tests.test_inject.dummy_func",
         },
         "inception": {
-            "object": "tests.test_inject.dummy_func",
-            "x": {"object": "tests.test_inject.dummy_func"},
+            "_object": "tests.test_inject.dummy_func",
+            "x": {"_object": "tests.test_inject.dummy_func"},
         },
         "list_of_objs": [
-            {"object": "tests.test_inject.dummy_func"},
-            {"object": "tests.test_inject.dummy_func"},
+            {"_object": "tests.test_inject.dummy_func"},
+            {"_object": "tests.test_inject.dummy_func"},
             {
-                "object": "tests.test_inject.dummy_func",
+                "_object": "tests.test_inject.dummy_func",
                 "x": {
-                    "object": "tests.test_inject.dummy_func",
+                    "_object": "tests.test_inject.dummy_func",
                 },
             },
         ],
         "list_of_objs_nested": [
             {
                 "my_func": {
-                    "object": "tests.test_inject.dummy_func",
+                    "_object": "tests.test_inject.dummy_func",
                 }
             }
         ],
@@ -117,11 +115,11 @@ def nested_params(dummy_pd_df):
 def another_param():
     return {
         "tuner": {
-            "object": "sklearn.model_selection.GridSearchCV",
+            "_object": "sklearn.model_selection.GridSearchCV",
             "param_grid": {"n_estimators": [5, 10]},
-            "estimator": {"object": "sklearn.ensemble.RandomForestRegressor"},
+            "estimator": {"_object": "sklearn.ensemble.RandomForestRegressor"},
             "cv": {
-                "object": "sklearn.model_selection.ShuffleSplit",
+                "_object": "sklearn.model_selection.ShuffleSplit",
                 "random_state": 1,
             },
         }
@@ -131,8 +129,8 @@ def another_param():
 @pytest.fixture
 def flat_params():
     flat_params = [
-        {"object": "tests.test_inject.dummy_func"},
-        {"object": "tests.test_inject.dummy_func"},
+        {"_object": "tests.test_inject.dummy_func"},
+        {"_object": "tests.test_inject.dummy_func"},
     ]
     return flat_params
 
@@ -197,7 +195,7 @@ def test_invalid_keyword_in_parse_for_objects():
         (
             "function_without_input",
             {
-                "object": "tests.test_inject.dummy_func_without_input",
+                "_object": "tests.test_inject.dummy_func_without_input",
                 "instantiate": True,
             },
             str,
@@ -206,7 +204,7 @@ def test_invalid_keyword_in_parse_for_objects():
         (
             "function_without_input",
             {
-                "object": "tests.test_inject.dummy_func_without_input",
+                "_object": "tests.test_inject.dummy_func_without_input",
                 "instantiate": False,
             },
             FunctionType,
@@ -215,7 +213,7 @@ def test_invalid_keyword_in_parse_for_objects():
         (
             "function_with_input",
             {
-                "object": "tests.test_inject.dummy_func",
+                "_object": "tests.test_inject.dummy_func",
                 "x": 1,
                 "instantiate": True,
             },
@@ -225,7 +223,7 @@ def test_invalid_keyword_in_parse_for_objects():
         (
             "function_with_input",
             {
-                "object": "tests.test_inject.dummy_func",
+                "_object": "tests.test_inject.dummy_func",
                 "instantiate": False,
             },
             FunctionType,
@@ -234,7 +232,7 @@ def test_invalid_keyword_in_parse_for_objects():
         (
             "class",
             {
-                "object": "sklearn.impute.SimpleImputer",
+                "_object": "sklearn.impute.SimpleImputer",
                 "instantiate": True,
             },
             SimpleImputer,
@@ -243,7 +241,7 @@ def test_invalid_keyword_in_parse_for_objects():
         (
             "class",
             {
-                "object": "sklearn.impute.SimpleImputer",
+                "_object": "sklearn.impute.SimpleImputer",
                 "instantiate": False,
             },
             type,
@@ -298,7 +296,7 @@ def test_nested_params(nested_params):
 def test_exclude_kwargs_as_dict_key(nested_params):
     _, new_kwargs = _inject_object(**nested_params, exclude_kwargs=["z"])
     assert "z" in new_kwargs.keys()
-    assert "object" in new_kwargs["z"].keys()
+    assert "_object" in new_kwargs["z"].keys()
 
 
 def test_exclude_kwargs_as_params(another_param):
@@ -307,11 +305,11 @@ def test_exclude_kwargs_as_params(another_param):
     # test estimator key still is in inject syntax
     tuner_object = new_kwargs["tuner"]
     assert hasattr(tuner_object, "estimator")
-    assert "object" in tuner_object.estimator.keys()
+    assert "_object" in tuner_object.estimator.keys()
 
     # test cv key still is in inject syntax
     assert hasattr(tuner_object, "cv")
-    assert "object" in tuner_object.cv.keys()
+    assert "_object" in tuner_object.cv.keys()
 
 
 def test_config_is_not_mutated(nested_params):
@@ -349,7 +347,7 @@ def test_inject(dummy_pd_df):
             "df": dummy_pd_df,
             "x": 1,
             "y": 0,
-            "imputer": {"object": "sklearn.impute.SimpleImputer"},
+            "imputer": {"_object": "sklearn.impute.SimpleImputer"},
         }
     )
     assert isinstance(imputer, SimpleImputer)

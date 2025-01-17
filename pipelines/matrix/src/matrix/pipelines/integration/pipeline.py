@@ -1,74 +1,95 @@
-from kedro.pipeline import Pipeline, pipeline
-from matrix.kedro4argo_node import argo_node
+import pyspark.sql as ps
+from kedro.pipeline import Pipeline, node, pipeline
+
+from matrix import settings
+from matrix.inject import inject_object
+from matrix.kedro4argo_node import ArgoNode
+from matrix.pipelines.batch import pipeline as batch_pipeline
 
 from . import nodes
 
-from matrix import settings
-from pyspark.sql import DataFrame
-
-from matrix.inject import inject_object
-
 
 @inject_object()
-def transform_nodes(transformer, nodes_df: DataFrame, **kwargs):
+def transform_nodes(transformer, nodes_df: ps.DataFrame, **kwargs):
     return transformer.transform_nodes(nodes_df=nodes_df, **kwargs)
 
 
 @inject_object()
-def transform_edges(transformer, edges_df: DataFrame, **kwargs):
+def transform_edges(transformer, edges_df: ps.DataFrame, **kwargs):
     return transformer.transform_edges(edges_df=edges_df, **kwargs)
 
 
-def _create_integration_pipeline(source: str) -> Pipeline:
-    return pipeline(
-        [
-            argo_node(
-                func=transform_nodes,
-                inputs={
-                    "transformer": f"params:integration.sources.{source}.transformer",
-                    "nodes_df": f"ingestion.int.{source}.nodes",
-                    "biolink_categories_df": "integration.raw.biolink.categories",
-                },
-                outputs=f"integration.int.{source}.nodes",
-                name=f"transform_{source}_nodes",
-                tags=["standardize"],
-            ),
-            argo_node(
-                func=transform_edges,
-                inputs={
-                    "transformer": f"params:integration.sources.{source}.transformer",
-                    "edges_df": f"ingestion.int.{source}.edges",
-                    # NOTE: The datasets below are currently only picked up by RTX
-                    # the goal is to ensure that semmed filtering occurs for all
-                    # graphs in the future.
-                    "curie_to_pmids": "ingestion.int.rtx_kg2.curie_to_pmids",
-                    "semmed_filters": "params:integration.preprocessing.rtx.semmed_filters",
-                },
-                outputs=f"integration.int.{source}.edges",
-                name=f"transform_{source}_edges",
-                tags=["standardize"],
-            ),
-            # FUTURE: Extract normalizer technique
-            argo_node(
-                func=nodes.normalize_kg,
-                inputs={
-                    "nodes": f"integration.int.{source}.nodes",
-                    "edges": f"integration.int.{source}.edges",
-                    "api_endpoint": "params:integration.nodenorm.api_endpoint",
-                    "conflate": "params:integration.nodenorm.conflate",
-                    "drug_chemical_conflate": "params:integration.nodenorm.drug_chemical_conflate",
-                    "batch_size": "params:integration.nodenorm.batch_size",
-                    "parallelism": "params:integration.nodenorm.parallelism",
-                },
-                outputs=[
-                    f"integration.int.{source}.nodes.norm",
-                    f"integration.int.{source}.edges.norm",
-                    f"integration.int.{source}.nodes_norm_mapping",
-                ],
-                name=f"normalize_{source}_kg",
-            ),
-        ]
+def _create_integration_pipeline(source: str, nodes_only: bool = False) -> Pipeline:
+    pipelines = []
+
+    pipelines.append(
+        pipeline(
+            [
+                node(
+                    func=transform_nodes,
+                    inputs={
+                        "transformer": f"params:integration.sources.{source}.transformer",
+                        "nodes_df": f"ingestion.int.{source}.nodes",
+                        "biolink_categories_df": "integration.raw.biolink.categories",
+                    },
+                    outputs=f"integration.int.{source}.nodes",
+                    name=f"transform_{source}_nodes",
+                    tags=["standardize"],
+                ),
+                batch_pipeline.create_pipeline(
+                    source=f"source_{source}",
+                    df=f"integration.int.{source}.nodes",
+                    output=f"integration.int.{source}.nodes.nodes_norm_mapping",
+                    bucket_size="params:integration.normalization.batch_size",
+                    transformer="params:integration.normalization.normalizer",
+                    max_workers=120,
+                ),
+                node(
+                    func=nodes.normalize_nodes,
+                    inputs={
+                        "mapping_df": f"integration.int.{source}.nodes.nodes_norm_mapping",
+                        "nodes": f"integration.int.{source}.nodes",
+                    },
+                    outputs=f"integration.int.{source}.nodes.norm@spark",
+                    name=f"normalize_{source}_nodes",
+                ),
+            ]
+        )
     )
+
+    if not nodes_only:
+        pipelines.append(
+            pipeline(
+                [
+                    node(
+                        func=transform_edges,
+                        inputs={
+                            "transformer": f"params:integration.sources.{source}.transformer",
+                            "edges_df": f"ingestion.int.{source}.edges",
+                            # NOTE: The datasets below are currently only picked up by RTX
+                            # the goal is to ensure that semmed filtering occurs for all
+                            # graphs in the future.
+                            "curie_to_pmids": "ingestion.int.rtx_kg2.curie_to_pmids",
+                            "semmed_filters": "params:integration.preprocessing.rtx.semmed_filters",
+                        },
+                        outputs=f"integration.int.{source}.edges",
+                        name=f"transform_{source}_edges",
+                        tags=["standardize"],
+                    ),
+                    node(
+                        func=nodes.normalize_edges,
+                        inputs={
+                            "mapping_df": f"integration.int.{source}.nodes.nodes_norm_mapping",
+                            "edges": f"integration.int.{source}.edges",
+                        },
+                        outputs=f"integration.int.{source}.edges.norm@spark",
+                        name=f"normalize_{source}_edges",
+                    ),
+                ]
+            )
+        )
+
+    return sum(pipelines)
 
 
 def create_pipeline(**kwargs) -> Pipeline:
@@ -79,7 +100,7 @@ def create_pipeline(**kwargs) -> Pipeline:
     for source in settings.DYNAMIC_PIPELINES_MAPPING.get("integration"):
         pipelines.append(
             pipeline(
-                _create_integration_pipeline(source=source["name"]),
+                _create_integration_pipeline(source=source["name"], nodes_only=source.get("nodes_only", False)),
                 tags=[source["name"]],
             )
         )
@@ -88,30 +109,32 @@ def create_pipeline(**kwargs) -> Pipeline:
     pipelines.append(
         pipeline(
             [
-                argo_node(
+                node(
                     func=nodes.union_and_deduplicate_nodes,
                     inputs=[
                         "integration.raw.biolink.categories",
                         *[
-                            f'integration.int.{source["name"]}.nodes.norm'
+                            f'integration.int.{source["name"]}.nodes.norm@spark'
                             for source in settings.DYNAMIC_PIPELINES_MAPPING.get("integration")
+                            if source.get("integrate_in_kg", True) and not source.get("nodes_only", False)
                         ],
                     ],
                     outputs="integration.prm.unified_nodes",
                     name="create_prm_unified_nodes",
                 ),
                 # union edges
-                argo_node(
+                node(
                     func=nodes.union_and_deduplicate_edges,
                     inputs=[
-                        f'integration.int.{source["name"]}.edges.norm'
+                        f'integration.int.{source["name"]}.edges.norm@spark'
                         for source in settings.DYNAMIC_PIPELINES_MAPPING.get("integration")
+                        if source.get("integrate_in_kg", True) and not source.get("nodes_only", False)
                     ],
                     outputs="integration.prm.unified_edges",
                     name="create_prm_unified_edges",
                 ),
                 # filter nodes given a set of filter stages
-                argo_node(
+                node(
                     func=nodes.prefilter_unified_kg_nodes,
                     inputs=[
                         "integration.prm.unified_nodes",
@@ -122,7 +145,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                     tags=["filtering"],
                 ),
                 # filter edges given a set of filter stages
-                argo_node(
+                node(
                     func=nodes.filter_unified_kg_edges,
                     inputs=[
                         "integration.prm.prefiltered_nodes",
@@ -134,7 +157,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                     name="filter_prm_knowledge_graph_edges",
                     tags=["filtering"],
                 ),
-                argo_node(
+                node(
                     func=nodes.filter_nodes_without_edges,
                     inputs=[
                         "integration.prm.prefiltered_nodes",
