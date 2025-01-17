@@ -19,9 +19,13 @@ def fetch_pr_detail(pr_number: int) -> PRInfo:
     Fetches PR details including merge commit.
     """
     # Fetch PR details including merge commit
-    command = ["gh", "pr", "view", str(pr_number), "--json", "number,title,labels,url,mergeCommit,headRefName"]
+    command = ["gh", "pr", "view", str(pr_number), "--json", "number,title,author,labels,url,mergeCommit,headRefName"]
     pr_json = run_command(command)
     pr_info = json.loads(pr_json)
+
+    # Extract only the login from the author field
+    if "author" in pr_info and isinstance(pr_info["author"], dict):
+        pr_info["author"] = pr_info["author"].get("login", "unknown")  # Default to "unknown" if login is missing
 
     # Fetch diff if merge commit exists
     diff = ""

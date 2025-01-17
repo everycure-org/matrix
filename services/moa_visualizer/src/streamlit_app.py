@@ -1,15 +1,15 @@
-import streamlit as st
 import pandas as pd
+import streamlit as st
+from config import set_wide_space_default, settings
 from utils import (
     FlowDiagram,
-    combine_moa_predictions_and_pair_info,
-    list_available_pairs_df,
-    get_moa_predictions_from_db,
     build_external_urls,
+    combine_moa_predictions_and_pair_info,
     display_table,
+    get_moa_predictions_from_db,
+    list_available_pairs_df,
     parse_hop_parameter,
 )
-from config import settings, set_wide_space_default
 
 set_wide_space_default()
 

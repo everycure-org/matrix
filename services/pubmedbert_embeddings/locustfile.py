@@ -1,6 +1,7 @@
-from locust import HttpUser, task, between
 import random
+
 from faker import Faker
+from locust import HttpUser, between, task
 from models import BASELINE_MODEL, CHALLENGER_MODEL
 
 fake = Faker()
