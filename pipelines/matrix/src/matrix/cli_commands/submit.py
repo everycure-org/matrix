@@ -451,7 +451,7 @@ def build_argo_template(run_name: str, release_version: str, username: str, name
     package_name = metadata.package_name
 
     if is_test:
-        release_folder_name = f"releases/{release_version}/tests"
+        release_folder_name = "tests"
     else:
         release_folder_name = "releases"
 
