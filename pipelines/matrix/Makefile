@@ -7,6 +7,8 @@ export TQDM_DISABLE ?= 1
 TARGET_PLATFORM ?= linux/amd64
 PREREQUISITES := docker gcloud python3 java uv
 
+UID := $(shell id -u)
+
 # ensures all make targets run in one shell (rather than line by line in new shell)
 .ONESHELL: 
 
@@ -68,7 +70,7 @@ certificate:
 	cat compose/certs/bolt/private.key compose/certs/bolt/public.crt > compose/certs/bolt/private_and_public.pem
 
 compose_up: certificate
-	docker compose -f compose/docker-compose.yml up -d --wait --remove-orphans
+	env UID=${UID} docker compose -f compose/docker-compose.yml up -d --wait --remove-orphans
 	
 compose_down:
 	bash scripts/compose_down_retry.sh
