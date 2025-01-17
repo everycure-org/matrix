@@ -191,6 +191,7 @@ def consolidate_evaluation_reports(**reports) -> dict:
     return json.loads(json.dumps(master_report, default=float))
 
 
+@inject_object()
 def evaluate_stability_predictions(matrix_1: pd.DataFrame, matrix_2: pd.DataFrame, evaluation: Evaluation) -> Any:
     """Function to apply stabilityevaluation.
 
@@ -201,19 +202,18 @@ def evaluate_stability_predictions(matrix_1: pd.DataFrame, matrix_2: pd.DataFram
     Returns:
         Evaluation report
     """
-    return evaluation.evaluate(matrix_1, matrix_2)
+    print("test_generate_overlapping_dataset")
+    return {"test": 0.123}  # evaluation.evaluate(matrix_1, matrix_2)
 
 
-def generate_overlapping_dataset(
-    matrix_1: pd.DataFrame, matrix_2: pd.DataFrame, generator: DrugDiseasePairGenerator
-) -> pd.DataFrame:
+@inject_object()
+def generate_overlapping_dataset(generator: DrugDiseasePairGenerator, *matrices: pd.DataFrame) -> pd.DataFrame:
     """Function to generate overlapping dataset.
 
     Args:
-        matrix_1: full matrix coming from one model
-        matrix_2: full matrix coming from another model to compare against
         generator: generator strategy
+        matrices: DataFrames coming from different models to compare against
     Returns:
         Evaluation report
     """
-    return generator.generate(matrix_1, matrix_2)
+    return generator.generate(matrices)

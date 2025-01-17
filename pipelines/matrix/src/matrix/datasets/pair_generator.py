@@ -1,6 +1,6 @@
 import abc
 import random
-from typing import List, Set, Union
+from typing import List, Set, Tuple, Union
 
 import pandas as pd
 from matrix.datasets.graph import KnowledgeGraph
@@ -371,56 +371,51 @@ class FullMatrixPositives(DrugDiseasePairGenerator):
         return positive_pairs
 
 
-class OnlyOverlappingPairs:
-    def __init__(
-        self,
-        matrices: List[pd.DataFrame],
-        top_n: int = 1000,
-    ) -> None:
+class OnlyOverlappingPairs(DrugDiseasePairGenerator):
+    def __init__(self, top_n: int = 1000) -> None:
         """Initialises an instance of the class.
 
         Args:
-            matrices: List of DataFrames to be used for stability comparison.
             top_n: Number of top pairs to be used for stability comparison.
+            matrices: DataFrames to be used for stability comparison.
         """
-        self.matrices = [matrix.sort_values(by="treat score", ascending=False).head(top_n) for matrix in matrices]
+        self.top_n = top_n
 
-    def _get_overlapping_pairs(self) -> Set:
+    def _get_overlapping_pairs(self, matrices) -> Set:
         """Get pairs that overlap across all matrices.
 
         Returns:
             Set containing overlapping ids from all matrices.
         """
         # Get overlapping ids using sets
-        overlapping_ids = set(self.matrices[0]["id"])
-        for matrix in self.matrices[1:]:
+        overlapping_ids = set(matrices[0]["id"])
+        for matrix in matrices[1:]:
             overlapping_ids.intersection_update(set(matrix["id"]))
         return overlapping_ids
 
-    def generate(self) -> List[pd.DataFrame]:
-        overlapping_pairs = self._get_overlapping_pairs()
-        for i, matrix in enumerate(self.matrices):
-            matrix["rank"] = matrix.index
-            self.matrices[i] = matrix.loc[matrix.id.isin(overlapping_pairs)]
-        return self.matrices
+    def _modify_matrices(self, matrices) -> List[pd.DataFrame]:
+        new_matrices = []
+        for matrix in matrices:
+            matrix = matrix.sort_values(by="treat score", ascending=False).head(self.top_n)
+            matrix["id"] = matrix["source"] + "|" + matrix["target"]
+            new_matrices.append(matrix)
+        return new_matrices
+
+    def generate(self, matrices) -> List[pd.DataFrame]:
+        matrices = self._modify_matrices(matrices)
+        overlapping_pairs = self._get_overlapping_pairs(matrices)
+        return pd.DataFrame(overlapping_pairs, columns=["id"])
 
 
-class NoGenerator:
-    def __init__(
-        self,
-        matrix_1_df: pd.DataFrame,
-        matrix_2_df: pd.DataFrame,
-        top_n: int = 1000,
-    ) -> None:
+class NoGenerator(DrugDiseasePairGenerator):
+    def __init__(self, top_n: int = 1000) -> None:
         """Initialises an instance of the class.
 
         Args:
-            matrix_1_df: Main matrix to be used for stability comparison.
-            matrix_2_df: Comparison matrix to be used for stability comparison.
             top_n: Number of top pairs to be used for stability comparison.
+            matrices: DataFrames to be used for stability comparison.
         """
-        self.m_1 = matrix_1_df.head(top_n)
-        self.m_2 = matrix_2_df.head(top_n)
+        self.top_n = top_n
 
-    def generate(self) -> Tuple[pd.DataFrame, pd.DataFrame]:
-        return self.m_1, self.m_2
+    def generate(self, matrices) -> List[pd.DataFrame]:
+        return pd.DataFrame({}, columns=["id"])

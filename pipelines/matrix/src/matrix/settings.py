@@ -67,9 +67,9 @@ DYNAMIC_PIPELINES_MAPPING = generate_dynamic_pipeline_mapping(
             {"evaluation_name": "full_matrix_trials"},
         ],
         "stability": [
-            {"evaluation_name": "stability_overlap"},
-            {"evaluation_name": "stability_ranking"},
-            {"evaluation_name": "rank_commonality"},
+            {"stability_name": "stability_overlap"},
+            {"stability_name": "stability_ranking"},
+            {"stability_name": "rank_commonality"},
         ],
     }
 )

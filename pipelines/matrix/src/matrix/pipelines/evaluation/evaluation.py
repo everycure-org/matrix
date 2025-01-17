@@ -1,14 +1,13 @@
-import pandas as pd
-import numpy as np
 import abc
-import json
 import bisect
+import json
 from typing import Dict, List
-from tqdm import tqdm
 
-from sklearn.metrics import roc_auc_score
-
+import numpy as np
+import pandas as pd
 from matrix.pipelines.evaluation.named_metric_functions import NamedFunction
+from sklearn.metrics import roc_auc_score
+from tqdm import tqdm
 
 
 class Evaluation(abc.ABC):
@@ -255,16 +254,43 @@ class RecallAtN(Evaluation):
 class StabilityCommonalityAtN(Evaluation):
     """A class representing Commonality at K metric to evaluate overlapping stability between two matrix outputs."""
 
-    pass
+    def __init__(
+        self,
+        n_values: List[int],
+        rank_func_lst: List[NamedFunction] = None,
+    ):
+        """Initializes the RecallAtN instance.
+
+        Args:
+            n_values: A list of N values for Recall@N.
+            score_col_name: Probability score column name.
+        """
+        self._n_values = n_values
 
 
 class StabilityRankingMetrics(Evaluation):
     """A class representing Ranking metrics evaluating ranking stability between two matrix outputs"""
 
-    pass
+    def __init__(self, n_values: List[int], rank_func_lst: List[NamedFunction] = None):
+        """Initializes the RecallAtN instance.
+
+        Args:
+            n_values: A list of N values for Recall@N.
+            score_col_name: Probability score column name.
+        """
+        self._n_values = n_values
 
 
 class RankCommonalityMetrics(Evaluation):
     """A class representing Rank-Commonality Score metric to evaluate stability between two matrix outputs."""
 
-    pass
+    def __init__(self, rank_func_lst: List[NamedFunction] = None):
+        """Initializes the RecallAtN instance.
+
+        Args:
+            n_values: A list of N values for Recall@N.
+            score_col_name: Probability score column name.
+        """
+        # breakpoint()
+        # self._n_values = n_values
+        pass

@@ -47,27 +47,28 @@ def _create_evaluation_fold_pipeline(model: str, evaluation: str, fold: Union[st
     )
 
 
-def _create_stability_pipeline(model_1: str, model_2: str, evaluation: str) -> Pipeline:
+def _create_stability_pipeline(model, model_1: str, model_2: str, evaluation: str) -> Pipeline:
     return pipeline(
         [
-            argo_node(
+            ArgoNode(
                 func=nodes.generate_overlapping_dataset,
                 inputs=[
-                    f"matrix_generation.{model_1}.model_output.sorted_matrix_predictions@pandas",
-                    f"matrix_generation.{model_2}.model_output.sorted_matrix_predictions@pandas",
-                    f"params:evaluation.{evaluation}.evaluation_options.stability",
+                    f"params:evaluation.{evaluation}.evaluation_options.generator",
+                    f"matrix_generation.{model}.fold_{model_1}.model_output.sorted_matrix_predictions@pandas",
+                    f"matrix_generation.{model}.fold_{model_2}.model_output.sorted_matrix_predictions@pandas",
                 ],
-                outputs=f"evaluation.{model_1}.{model_2}.{evaluation}.model_output.pairs",
+                outputs=f"evaluation.{model}.fold_{model_1}.fold_{model_2}.{evaluation}.model_stability_output.pairs@pandas",
                 name=f"create_{model_1}_{model_2}_{evaluation}_evaluation_pairs",
             ),
-            argo_node(
+            # TODO fix model ocnvention
+            ArgoNode(
                 func=nodes.evaluate_stability_predictions,
                 inputs=[
-                    f"matrix_generation.{model_1}.model_output.sorted_matrix_predictions@pandas",
-                    f"matrix_generation.{model_2}.model_output.sorted_matrix_predictions@pandas",
+                    f"matrix_generation.{model}.fold_{model_1}.model_output.sorted_matrix_predictions@pandas",
+                    f"matrix_generation.{model}.fold_{model_2}.model_output.sorted_matrix_predictions@pandas",
                     f"params:evaluation.{evaluation}.evaluation_options.stability",
                 ],
-                outputs=f"evaluation.{model_1}.{model_2}.{evaluation}.model_output.result",
+                outputs=f"evaluation.{model}.{model_1}.{model_2}.{evaluation}.model_stability_output.result",
                 name=f"calculate_{model_1}_{model_2}_{evaluation}",
             ),
         ],
@@ -187,9 +188,13 @@ def create_pipeline(**kwargs) -> Pipeline:
     for stability in settings.DYNAMIC_PIPELINES_MAPPING.get("stability"):
         for fold_main in range(n_cross_val_folds):
             for fold_to_compare in range(n_cross_val_folds):
+                if fold_main == fold_to_compare:
+                    continue
                 pipelines.append(
                     pipeline(
-                        _create_stability_pipeline(fold_main, fold_to_compare, stability["stability_name"]),
+                        _create_stability_pipeline(
+                            "xg_ensemble", fold_main, fold_to_compare, stability["stability_name"]
+                        ),
                     )
                 )
 

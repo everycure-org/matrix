@@ -28,3 +28,15 @@ _pandas_parquet: &_pandas_parquet
 "evaluation.reporting.master_report":
   filepath: ${globals:paths.evaluation}/reporting/master_report.yml
   type: yaml.YAMLDataset
+
+"evaluation.{model}.{model_1}.{model_2}.{evaluation}.model_stability_output.result":
+  filepath: ${globals:paths.evaluation}/reporting/stability/{model}/{model_1}/{model_2}/{evaluation}/result.yml
+  type: yaml.YAMLDataset
+
+"evaluation.{model}.fold_{model_1}.{evaluation}.model_stability_output.pairs@pandas":
+  <<: *_pandas_parquet  
+  filepath: ${globals:paths.evaluation}/reporting/stability/{model}/{model_1}/{evaluation}/pairs.parquet
+
+"evaluation.{model}.fold_{model_2}.{evaluation}.model_stability_output.pairs@pandas":
+  <<: *_pandas_parquet  
+  filepath: ${globals:paths.evaluation}/reporting/stability/{model}/{model_2}/{evaluation}/pairs.parquet

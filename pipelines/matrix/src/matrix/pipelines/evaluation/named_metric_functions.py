@@ -1,5 +1,6 @@
-import numpy as np
 import abc
+
+import numpy as np
 
 
 class NamedFunction(abc.ABC):
@@ -84,3 +85,51 @@ class AUROC(NamedFunction):
     def name(self):
         """Returns name of the function."""
         return "auroc"
+
+
+class RCScore(NamedFunction):
+    """Class representing a named vectorised function for the computation of RCScore."""
+
+    def __init__(self, n) -> None:
+        """Initialise instance of RCScore object.
+
+        Args:
+            n: Value for n.
+        """
+        self.n = n
+
+
+class HypergeomAtN(NamedFunction):
+    """Class representing a named vectorised function for the computation of Hypergeom At N."""
+
+    def __init__(self, n) -> None:
+        """Initialise instance of RCScore object.
+
+        Args:
+            n: Value for n.
+        """
+        self.n = n
+
+
+class SpearmanAtN(NamedFunction):
+    """Class representing a named vectorised function for the computation of Hypergeom At N."""
+
+    def __init__(self, n) -> None:
+        """Initialise instance of RCScore object.
+
+        Args:
+            n: Value for n.
+        """
+        self.n = n
+
+
+class CommonalityAtN(NamedFunction):
+    """Class representing a named vectorised function for the computation of Hypergeom At N."""
+
+    def __init__(self, n) -> None:
+        """Initialise instance of RCScore object.
+
+        Args:
+            n: Value for n.
+        """
+        self.n = n
