@@ -16,8 +16,8 @@ services:
       - neo4j_logs:/logs
       - neo4j_import:/var/lib/neo4j/import
       - neo4j_plugins:/plugins
-      - ./certs/bolt/private_and_public.pem:/var/lib/neo4j/certificates/bolt/private_and_public.pem
-      - ./certs/bolt/public.crt:/var/lib/neo4j/certificates/bolt/public.crt
+      # - ./certs/bolt/private_and_public.pem:/var/lib/neo4j/certificates/bolt/private_and_public.pem
+      # - ./certs/bolt/public.crt:/var/lib/neo4j/certificates/bolt/public.crt
 
   mockserver:
     environment:
