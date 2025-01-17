@@ -1,9 +1,9 @@
 from pathlib import Path
-import pytest
-
-from matrix.cli_commands.run import RunConfig, _extract_config, _filter_nodes_missing_tag, _get_feed_dict, _run
 from unittest.mock import MagicMock, Mock, patch
+
+import pytest
 from kedro.io import DataCatalog
+from matrix.cli_commands.run import RunConfig, _extract_config, _filter_nodes_missing_tag, _get_feed_dict, _run
 
 
 @pytest.mark.parametrize(
