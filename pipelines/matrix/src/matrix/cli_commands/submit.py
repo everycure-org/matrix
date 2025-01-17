@@ -2,7 +2,6 @@ import json
 import logging
 import re
 import secrets
-import select
 import subprocess
 import sys
 from pathlib import Path
@@ -35,7 +34,6 @@ logging.basicConfig(
 )
 log = logging.getLogger("rich")
 
-
 console = Console()
 
 
@@ -57,7 +55,8 @@ def cli():
 @click.option("--is-test", is_flag=True, default=False, help="Submit to test folder")
 @click.option("--headless", is_flag=True, default=False, help="Disable prompts for confirmation")
 # fmt: on
-def submit(username: str, namespace: str, run_name: str, release_version: str, pipeline: str, quiet: bool, dry_run: bool, from_nodes: List[str], is_test: bool, headless:bool):
+def submit(username: str, namespace: str, run_name: str, release_version: str, pipeline: str, quiet: bool,
+           dry_run: bool, from_nodes: List[str], is_test: bool, headless: bool):
     """Submit the end-to-end workflow. """
     if not quiet:
         log.setLevel(logging.DEBUG)
@@ -67,12 +66,14 @@ def submit(username: str, namespace: str, run_name: str, release_version: str, p
 
     if pipeline not in kedro_pipelines.keys():
         raise ValueError("Pipeline requested for execution not found")
-    
+
     if pipeline in ["fabricator", "test"]:
         raise ValueError("Submitting test pipeline to Argo will result in overwriting source data")
-    
+
     if not headless and from_nodes:
-        if not click.confirm("Using 'from-nodes' is highly experimental and may break due to MLFlow issues with tracking the right run. Are you sure you want to continue?", default=False):
+        if not click.confirm(
+                "Using 'from-nodes' is highly experimental and may break due to MLFlow issues with tracking the right run. Are you sure you want to continue?",
+                default=False):
             raise click.Abort()
 
     pipeline_obj = kedro_pipelines[pipeline]
@@ -81,7 +82,6 @@ def submit(username: str, namespace: str, run_name: str, release_version: str, p
 
     run_name = get_run_name(run_name)
     pipeline_obj.name = pipeline
-
 
     summarize_submission(run_name, namespace, pipeline, is_test, release_version, headless)
     _submit(
@@ -99,28 +99,28 @@ def submit(username: str, namespace: str, run_name: str, release_version: str, p
 
 
 def _submit(
-        username: str, 
-        namespace: str, 
-        run_name: str, 
+        username: str,
+        namespace: str,
+        run_name: str,
         release_version: str,
         pipeline_obj: Pipeline,
         verbose: bool,
-        dry_run: bool, 
+        dry_run: bool,
         template_directory: Path,
         allow_interactions: bool = True,
         is_test: bool = False,
-    ) -> None:
+) -> None:
     """Submit the end-to-end workflow.
 
     This function contains redundancy.
 
     The original logic of this function was:
     1. Create & Apply (push to k8s) Argo template, containing the entire pipeline registry. This part of the function makes use of pipelines_for_workflow, which will be included in the template.
-    2. When submitting the workflow, via `__entrypoint__`, a pipeline for execution is selected. 
+    2. When submitting the workflow, via `__entrypoint__`, a pipeline for execution is selected.
         It defaults to `__default__`, but can be configured via pipeline_for_execution.
 
     In the future, we expect plan not to have any template at all, but go straight from Kedro to Argo Workflow.
-    
+
     This meant that it was possible to submit the workflows for other pipelines in Argo CI.
 
     Args:
@@ -134,13 +134,14 @@ def _submit(
         allow_interactions (bool): If True, allow prompts for confirmation
         is_test (bool): If True, submit to test folder, not release folder
     """
-    
+
     try:
         console.rule("[bold blue]Submitting Workflow")
 
         check_dependencies(verbose=verbose)
 
-        argo_template = build_argo_template(run_name, release_version, username, namespace, pipeline_obj, is_test=is_test, )
+        argo_template = build_argo_template(run_name, release_version, username, namespace, pipeline_obj,
+                                            is_test=is_test, )
 
         file_path = save_argo_template(argo_template, template_directory)
 
@@ -175,7 +176,8 @@ def _submit(
         sys.exit(1)
 
 
-def summarize_submission(run_name: str, namespace: str, pipeline: str, is_test: bool, release_version: str, headless: bool):
+def summarize_submission(run_name: str, namespace: str, pipeline: str, is_test: bool, release_version: str,
+                         headless: bool):
     console.print(Panel.fit(
         f"[bold green]About to submit workflow:[/bold green]\n"
         f"Run Name: {run_name}\n"
@@ -192,13 +194,13 @@ def summarize_submission(run_name: str, namespace: str, pipeline: str, is_test: 
     if not headless:
         if not click.confirm("Are you sure you want to submit the workflow?", default=False):
             raise click.Abort()
-        
+
 
 def run_subprocess(
-    cmd: str,
-    check: bool = True,
-    shell: bool = True,
-    stream_output: bool = True,
+        cmd: str,
+        check: bool = True,
+        shell: bool = True,
+        stream_output: bool = True,
 ) -> subprocess.CompletedProcess:
     """Run a subprocess command and handle errors.
 
@@ -223,32 +225,21 @@ def run_subprocess(
     stdout, stderr = [], []
 
     if stream_output:
-        reads = [process.stdout, process.stderr]
         while True:
-            ready_to_read, _, _ = select.select(reads, [], [], 1)
-            stdout_done, stderr_done = False, False
+            out_line = process.stdout.readline() if process.stdout else ''
+            err_line = process.stderr.readline() if process.stderr else ''
 
-            for stream in ready_to_read:
-                if stream is process.stdout:
-                    out_line = stream.readline()
-                    if out_line:
-                        sys.stdout.write(out_line)
-                        sys.stdout.flush()
-                        stdout.append(out_line)
-                    elif process.poll() is not None: 
-                        stdout_done = True
-
-                if stream is process.stderr:
-                    err_line = stream.readline()
-                    if err_line:
-                        sys.stderr.write(err_line)
-                        sys.stderr.flush()
-                        stderr.append(err_line)
-                    elif process.poll() is not None:
-                        stderr_done = True
-
-            if stdout_done and stderr_done:
+            if not out_line and not err_line and process.poll() is not None:
                 break
+
+            if out_line:
+                sys.stdout.write(out_line)
+                sys.stdout.flush()
+                stdout.append(out_line)
+            if err_line:
+                sys.stderr.write(err_line)
+                sys.stderr.flush()
+                stderr.append(err_line)
 
         # Get any remaining output
         out, err = process.communicate()
@@ -271,6 +262,7 @@ def run_subprocess(
         ''.join(stdout) if stdout else None,
         ''.join(stderr) if stderr else None
     )
+
 
 def command_exists(command: str) -> bool:
     """Check if a command exists in the system."""
@@ -338,7 +330,6 @@ def check_dependencies(verbose: bool):
     console.print("[green]✓[/green] Dependencies checked")
 
 
-
 def build_push_docker(username: str, verbose: bool):
     """Build and push Docker image."""
     console.print("Building Docker image...")
@@ -346,7 +337,8 @@ def build_push_docker(username: str, verbose: bool):
     console.print("[green]✓[/green] Docker image built and pushed")
 
 
-def build_argo_template(run_name: str, release_version: str, username: str, namespace: str, pipeline_obj: Pipeline, is_test: bool, default_execution_resources: Optional[ArgoResourceConfig] = None) -> str:
+def build_argo_template(run_name: str, release_version: str, username: str, namespace: str, pipeline_obj: Pipeline,
+                        is_test: bool, default_execution_resources: Optional[ArgoResourceConfig] = None) -> str:
     """Build Argo workflow template."""
     image_name = "us-central1-docker.pkg.dev/mtrx-hub-dev-3of/matrix-images/matrix"
 
@@ -376,6 +368,7 @@ def build_argo_template(run_name: str, release_version: str, username: str, name
 
     return generated_template
 
+
 def save_argo_template(argo_template: str, template_directory: Path) -> str:
     console.print("Writing Argo template...")
     file_path = template_directory / "argo-workflow-template.yml"
@@ -393,6 +386,7 @@ def argo_template_lint(file_path: str, verbose: bool) -> str:
         stream_output=verbose,
     )
     console.print("[green]✓[/green] Argo template linted")
+
 
 def ensure_namespace(namespace, verbose: bool):
     """Create or verify Kubernetes namespace."""
@@ -420,6 +414,7 @@ def apply_argo_template(namespace, file_path: Path, verbose: bool):
     )
     console.print("[green]✓[/green] Argo template applied")
 
+
 def submit_workflow(run_name: str, namespace: str, verbose: bool):
     """Submit the Argo workflow and provide instructions for watching."""
     console.print("Submitting workflow for pipeline...")
@@ -428,7 +423,7 @@ def submit_workflow(run_name: str, namespace: str, verbose: bool):
         "argo submit",
         f"--name {run_name}",
         f"-n {namespace}",
-        f"--from wftmpl/{run_name}", # name of the template resource (created in previous step)
+        f"--from wftmpl/{run_name}",  # name of the template resource (created in previous step)
         f"-p run_name={run_name}",
         "-l submit-from-ui=false",
         "-o json"
@@ -446,6 +441,7 @@ def submit_workflow(run_name: str, namespace: str, verbose: bool):
     console.print("\nTo view the workflow in the Argo UI, run:")
     console.print(f"argo get -n {namespace} {job_name}")
     console.print("[green]✓[/green] Workflow submitted")
+
 
 def get_run_name(run_name: Optional[str]) -> str:
     """Get the experiment name based on input or Git branch.
@@ -471,6 +467,7 @@ def get_run_name(run_name: Optional[str]) -> str:
     sanitized_name = re.sub(r"[^a-zA-Z0-9-]", "-", unsanitized_name)
     return sanitized_name
 
+
 def abort_if_unmet_git_requirements():
     """
     Validates the current Git repository:
@@ -480,7 +477,6 @@ def abort_if_unmet_git_requirements():
     Raises:
         ValueError
     """
-    return
     errors = []
 
     if has_dirty_git():
