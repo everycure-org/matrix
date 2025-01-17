@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional, Set, NamedTuple, Collection
+from typing import Any, Collection, Dict, List, NamedTuple, Optional, Set
 
 import click
 from kedro.framework.cli.project import (
@@ -101,6 +101,10 @@ def _run(config: RunConfig, kedro_session: KedroSessionWithFromCatalog) -> None:
         raise RuntimeError(
             "Running the fabricator in the base environment might overwrite production data! Use the test env `-e test` instead."
         )
+    elif config.pipeline_name == "sampling" and config.env not in ["sample"]:
+        raise RuntimeError(
+            "Running the sampling pipeline outside of the sample environment might overwrite production data! Use the sample env `-e sample` instead."
+            )
 
     runner = load_obj(config.runner or "SequentialRunner", "kedro.runner")
 
