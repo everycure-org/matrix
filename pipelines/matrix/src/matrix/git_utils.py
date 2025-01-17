@@ -30,10 +30,7 @@ def has_legal_branch_name() -> bool:
 
 def has_unpushed_commits() -> bool:
     result = subprocess.run(
-        ["git", "log", "@{upstream}.."], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, check=False
+        ["git", "log", "@{upstream}.."], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, check=True
     )
     local_commits = bool(result.stdout)
     return bool(local_commits)
-
-
-print(has_unpushed_commits())
