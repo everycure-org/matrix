@@ -2,14 +2,12 @@ import json
 from typing import Any
 
 import pandas as pd
-from pandera import DataFrameModel
 import pandera
-from pandera.typing import Series
-
-from matrix.inject import inject_object
-
 from matrix.datasets.pair_generator import DrugDiseasePairGenerator
+from matrix.inject import inject_object
 from matrix.pipelines.evaluation.evaluation import Evaluation
+from pandera import DataFrameModel
+from pandera.typing import Series
 
 
 def check_no_train(data: pd.DataFrame, known_pairs: pd.DataFrame) -> None:
