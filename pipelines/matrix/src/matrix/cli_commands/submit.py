@@ -17,7 +17,13 @@ from rich.logging import RichHandler
 from rich.panel import Panel
 
 from matrix.argo import ARGO_TEMPLATES_DIR_PATH, generate_argo_config
-from matrix.git_utils import get_current_git_branch, has_dirty_git
+from matrix.git_utils import (
+    BRANCH_NAME_REGEX,
+    get_current_git_branch,
+    has_dirty_git,
+    has_legal_branch_name,
+    has_unpushed_commits,
+)
 from matrix.kedro4argo_node import ArgoResourceConfig
 
 logging.basicConfig(
@@ -464,11 +470,14 @@ def abort_if_unmet_git_requirements():
     """
     errors = []
 
-    if not get_current_git_branch().startswith('release'):
-        errors.append("Invalid branch name (must be a dedicated release branch starting with 'release'.")
-
     if has_dirty_git():
         errors.append("Repository has uncommitted changes or untracked files.")
+
+    if not has_legal_branch_name():
+        errors.append(f"Your branch name doesn't match the regex: {BRANCH_NAME_REGEX}")
+
+    if has_unpushed_commits():
+        errors.append(f"You have commits not pushed to remote")
 
     if errors:
         error_list = "\n".join(errors)
