@@ -107,9 +107,9 @@ modelling.model_input.splits:
   filepath: ${globals:paths.modelling}/reporting/sanity_metrics.yml
   type: yaml.YAMLDataset
 
-"modelling.{model}.model_output.combined_predictions":
+"modelling.model_output.combined_predictions":
   <<: [*_pandas_parquet, *_model_output_ds]
-  filepath: ${globals:paths.modelling}/model_output/{model}/combined_predictions
+  filepath: ${globals:paths.modelling}/model_output/combined_predictions
 
 modelling.reporting.gt_present:
   filepath: ${globals:paths.modelling}/reporting/gt_present_metrics.yml
