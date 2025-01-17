@@ -1,8 +1,8 @@
 import textwrap
+from pathlib import Path
+from unittest.mock import patch
 
 import changelog_gen as mut
-from unittest.mock import patch
-from pathlib import Path
 import pytest
 
 
@@ -12,7 +12,7 @@ def release_path(tmp_path: Path) -> Path:
         yield tmp_path
 
 
-def test_mocked_function():
+def test_correct_filedir():
     """Assert expectations on where the release info files exist aren't changed over time.
 
     If it was to change, thus making this test fail, some paths, e.g. those in

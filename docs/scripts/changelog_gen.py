@@ -3,10 +3,10 @@ that can immediately be referenced by the Releases page on the documentation
 website."""
 
 import json
+from pathlib import Path
 from typing import Iterable, Iterator
 
 import yaml
-from pathlib import Path
 
 
 def locate_releases_path() -> Path:
@@ -43,7 +43,7 @@ def parse_jsons(filepaths: Iterable[Path]) -> Iterator[dict]:
 
 
 def create_semver_sortkey(release_name: str) -> list[int]:
-    version_str = release_name.lstrip("v").split("-", 1)[0]
+    version_str = release_name.lstrip("v").split("-")[0]
     sort_key = [int(u) for u in version_str.split(".")]
     return sort_key
 
