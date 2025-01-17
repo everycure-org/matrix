@@ -14,11 +14,11 @@ Code diff:
 PR details:
 
 ```yaml
-{{ yaml.dump(pr_details_dict) }}
+{{ pr_details_dict }}
 ```
 
 Summarize the PRs into the following categories, each category being a H2 header in markdown (##):
 {% for category in categories %}
 - ##{{ category }}
-{% end %}
+{% endfor %}
 Format the output as markdown, with the category headers and the key contributions under each category.
