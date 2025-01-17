@@ -1,15 +1,12 @@
 from typing import List
 
 import numpy as np
-
 from sklearn.base import BaseEstimator, MetaEstimatorMixin
-
-from skopt import gp_minimize
-from skopt.utils import use_named_args
-from skopt.space.space import Dimension
-from skopt.plots import plot_convergence
-
 from sklearn.model_selection._split import _BaseKFold
+from skopt import gp_minimize
+from skopt.plots import plot_convergence
+from skopt.space.space import Dimension
+from skopt.utils import use_named_args
 
 
 class NopTuner(BaseEstimator, MetaEstimatorMixin):

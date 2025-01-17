@@ -1,6 +1,6 @@
-import os
 import ast
-from typing import Any, Dict, Union, List, Optional
+import os
+from typing import Any, Dict, List, Optional, Union
 
 
 def determine_hooks_to_execute(hooks: Dict[str, Any]):

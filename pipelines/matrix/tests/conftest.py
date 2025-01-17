@@ -1,17 +1,15 @@
-from typing import Generator
-import pytest
-
 from pathlib import Path
-
-from kedro.config import OmegaConfigLoader
-from kedro.framework.context import KedroContext
-from kedro.framework.project import settings
-from kedro.framework.hooks import _create_hook_manager
+from typing import Generator
 
 import pyspark.sql as ps
-from omegaconf.resolvers import oc
-from matrix.resolvers import merge_dicts
+import pytest
+from kedro.config import OmegaConfigLoader
+from kedro.framework.context import KedroContext
+from kedro.framework.hooks import _create_hook_manager
+from kedro.framework.project import settings
+from matrix.resolvers import cast_to_int, merge_dicts
 from matrix.settings import _load_setting
+from omegaconf.resolvers import oc
 
 
 @pytest.fixture(scope="session")
@@ -35,6 +33,7 @@ def config_loader(conf_source: Path) -> OmegaConfigLoader:
     return OmegaConfigLoader(
         env="base",
         base_env="base",
+        default_run_env="base",
         conf_source=conf_source,
         config_patterns={
             "spark": ["spark*", "spark*/**"],
@@ -46,7 +45,7 @@ def config_loader(conf_source: Path) -> OmegaConfigLoader:
                 "**/parameters*/**",
             ],
         },
-        custom_resolvers={"merge": merge_dicts, "oc.env": oc.env, "setting": _load_setting},
+        custom_resolvers={"merge": merge_dicts, "oc.env": oc.env, "setting": _load_setting, "oc.int": cast_to_int},
     )
 
 
@@ -54,7 +53,7 @@ def config_loader(conf_source: Path) -> OmegaConfigLoader:
 def kedro_context(config_loader: OmegaConfigLoader) -> KedroContext:
     """Instantiate a KedroContext."""
     return KedroContext(
-        env="base",
+        env="cloud",
         package_name="matrix",
         project_path=Path.cwd(),
         config_loader=config_loader,
