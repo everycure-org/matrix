@@ -37,8 +37,6 @@ def _pipeline_datasets(pipeline) -> set[str]:
     return set.union(*[set(node.inputs + node.outputs) for node in pipeline.nodes])
 
 
-@pytest.mark.skip(reason="Needs to be revised in light of disabling/enabling datasets in the dynamic pipelines.")
-@pytest.mark.integration()
 def test_no_parameter_entries_from_catalog_unused(
     kedro_context: KedroContext,
 ) -> None:
