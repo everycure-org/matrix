@@ -1,10 +1,10 @@
 from typing import Collection, Type
 
-import pyspark.sql as ps
 import pandera
+import pyspark.sql as ps
 from pyspark.sql.functions import array_join
 
-from matrix.schemas.knowledge_graph import cols_for_schema, KGNodeSchema, KGEdgeSchema
+from matrix.schemas.knowledge_graph import KGEdgeSchema, KGNodeSchema, cols_for_schema
 
 SEPARATOR = "\x1f"
 

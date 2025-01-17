@@ -10,6 +10,21 @@ def _create_resolution_pipeline() -> Pipeline:
     """Resolution pipeline for filtering out the input."""
     return pipeline(
         [
+            # TODO: Remove implement this node /modification of it thats consistent with integration/batch
+            # node(
+            #     func=nodes.clean_input_sheet,
+            #     inputs={
+            #         "input_df": "preprocessing.raw.infer_sheet",
+            #         "endpoint": "params:preprocessing.translator.normalizer",
+            #         "conflate": "params:integration.nodenorm.conflate",
+            #         "drug_chemical_conflate": "params:integration.nodenorm.drug_chemical_conflate",
+            #         "batch_size": "params:integration.nodenorm.batch_size",
+            #         "parallelism": "params:integration.nodenorm.parallelism",
+            #     },
+            #     outputs="inference.raw.normalized_inputs",
+            #     name="clean_input_sheet",
+            #     tags=["inference-input"],
+            # ),
             ArgoNode(
                 func=nd.resolve_input_sheet,
                 inputs={
@@ -58,10 +73,10 @@ def _create_inference_pipeline(model_excl: str, model_incl: str) -> Pipeline:
                     "params:matrix_generation.matrix_generation_options.n_reporting": "params:inference.matrix_generation_options.n_reporting",
                 },
                 inputs={
-                    "ingestion.raw.drug_list@spark": "inference.int.drug_list@spark",
-                    "ingestion.raw.disease_list@spark": "inference.int.disease_list@spark",
-                    "ingestion.raw.drug_list@pandas": "inference.int.drug_list@pandas",
-                    "ingestion.raw.disease_list@pandas": "inference.int.disease_list@pandas",
+                    "integration.int.drug_list.nodes@spark": "inference.int.drug_list@spark",
+                    "integration.int.disease_list.nodes@spark": "inference.int.disease_list@spark",
+                    "integration.int.drug_list.nodes@pandas": "inference.int.drug_list@pandas",
+                    "integration.int.disease_list.nodes@pandas": "inference.int.disease_list@pandas",
                 },
                 outputs={
                     f"matrix_generation.{model}.fold_{n_cross_val_folds}.model_output.sorted_matrix_predictions@pandas": f"inference.{model}.model_output.predictions@pandas",
