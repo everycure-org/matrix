@@ -139,7 +139,7 @@ def experiment(username: str, namespace: str, run_name: str, source_version: str
     pipeline_obj.name = pipeline
 
 
-    summarize_submission(run_name, namespace, pipeline, source_version)
+    summarize_submission(run_name, namespace, pipeline, is_test=True, release_version=source_version, headless=False)
     _submit(
         username=username,
         namespace=namespace,
@@ -451,7 +451,7 @@ def build_argo_template(run_name: str, release_version: str, username: str, name
     package_name = metadata.package_name
 
     if is_test:
-        release_folder_name = "tests"
+        release_folder_name = f"releases/{release_version}/tests"
     else:
         release_folder_name = "releases"
 
