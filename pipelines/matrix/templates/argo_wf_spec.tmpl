@@ -138,6 +138,12 @@ spec:
     name: neo4j
     podSpecPatch: |
       containers:
+      - name: main
+          resources:
+            requests:
+              memory: 30Gi
+            limits:
+              memory: 30Gi
         - name: neo4j
           resources:
             requests:
