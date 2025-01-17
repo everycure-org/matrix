@@ -1,7 +1,7 @@
 import pandera
 import pyspark.sql.functions as f
 import pytest
-from matrix.pipelines.integration.rtxkg2 import filter_semmed
+from matrix.pipelines.integration.transformers.rtxkg2 import filter_semmed
 from pyspark.sql.types import ArrayType, StringType, StructField, StructType
 
 
