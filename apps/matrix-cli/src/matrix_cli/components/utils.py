@@ -5,10 +5,10 @@ from typing import TYPE_CHECKING, List
 
 import questionary
 import typer
+from google.auth import default
 from matrix_cli.components.cache import memory
 from rich.console import Console
 from tenacity import retry, stop_after_attempt, wait_exponential
-from google.auth import default
 
 console = Console()
 
