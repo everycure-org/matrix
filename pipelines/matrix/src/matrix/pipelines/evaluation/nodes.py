@@ -192,18 +192,20 @@ def consolidate_evaluation_reports(**reports) -> dict:
 
 
 @inject_object()
-def evaluate_stability_predictions(matrix_1: pd.DataFrame, matrix_2: pd.DataFrame, evaluation: Evaluation) -> Any:
+def evaluate_stability_predictions(
+    overlapping_pairs: pd.DataFrame, evaluation: Evaluation, *matrices: pd.DataFrame
+) -> Any:
     """Function to apply stabilityevaluation.
 
     Args:
+        overlapping_pairs: pairs that overlap across all matrices.
+        evaluation: stability metric to use for evaluation.
         matrix_1: full matrix coming from one model
         matrix_2: full matrix coming from another model to compare against
-        evaluation: stability metric to evaluate.
     Returns:
         Evaluation report
     """
-    print("test_generate_overlapping_dataset")
-    return {"test": 0.123}  # evaluation.evaluate(matrix_1, matrix_2)
+    return evaluation.evaluate(overlapping_pairs, matrices)
 
 
 @inject_object()

@@ -256,7 +256,6 @@ class StabilityCommonalityAtN(Evaluation):
 
     def __init__(
         self,
-        n_values: List[int],
         rank_func_lst: List[NamedFunction] = None,
     ):
         """Initializes the RecallAtN instance.
@@ -265,24 +264,34 @@ class StabilityCommonalityAtN(Evaluation):
             n_values: A list of N values for Recall@N.
             score_col_name: Probability score column name.
         """
-        self._n_values = n_values
+        self._rank_func_lst = rank_func_lst or []
+
+    def _modify_matrices(self, matrices) -> List[pd.DataFrame]:
+        new_matrices = []
+        for matrix in matrices:
+            matrix = matrix.sort_values(by="treat score", ascending=False)
+            matrix["id"] = matrix["source"] + "|" + matrix["target"]
+            new_matrices.append(matrix)
+        return new_matrices
+
+    def evaluate(self, pair_ids: pd.DataFrame, matrices: List[pd.DataFrame]) -> Dict:
+        """Evaluates StabilityCommonalityAtN on a dataset.
+
+        Args:
+            pair_ids: Pair ids to evaluate. Dummy variable for commonality at k
+            matrices: DataFrames to evaluate.
+        """
+        matrices = self._modify_matrices(matrices)
+        report = {}
+        for rank_func_generator in self._rank_func_lst:
+            rank_func = rank_func_generator.generate()
+            report[f"{rank_func_generator.name()}"] = rank_func(matrices)
+
+        return json.loads(json.dumps(report, default=float))
 
 
 class StabilityRankingMetrics(Evaluation):
     """A class representing Ranking metrics evaluating ranking stability between two matrix outputs"""
-
-    def __init__(self, n_values: List[int], rank_func_lst: List[NamedFunction] = None):
-        """Initializes the RecallAtN instance.
-
-        Args:
-            n_values: A list of N values for Recall@N.
-            score_col_name: Probability score column name.
-        """
-        self._n_values = n_values
-
-
-class RankCommonalityMetrics(Evaluation):
-    """A class representing Rank-Commonality Score metric to evaluate stability between two matrix outputs."""
 
     def __init__(self, rank_func_lst: List[NamedFunction] = None):
         """Initializes the RecallAtN instance.
@@ -291,6 +300,73 @@ class RankCommonalityMetrics(Evaluation):
             n_values: A list of N values for Recall@N.
             score_col_name: Probability score column name.
         """
-        # breakpoint()
-        # self._n_values = n_values
-        pass
+        self._rank_func_lst = rank_func_lst or []
+
+    def _modify_matrices(self, matrices) -> List[pd.DataFrame]:
+        new_matrices = []
+        for matrix in matrices:
+            matrix = matrix.sort_values(by="treat score", ascending=False).reset_index(drop=True)
+            matrix["id"] = matrix["source"] + "|" + matrix["target"]
+            matrix["rank"] = matrix.index + 1
+            new_matrices.append(matrix)
+        return new_matrices
+
+    def evaluate(self, pair_ids: pd.DataFrame, matrices: List[pd.DataFrame]) -> Dict:
+        """Evaluates StabilityCommonalityAtN on a dataset.
+
+        Args:
+            pair_ids: Pair ids to evaluate. Dummy variable for commonality at k
+            matrices: DataFrames to evaluate.
+        """
+        matrices = self._modify_matrices(matrices)
+        rank_sets_1 = matrices[0]
+        rank_sets_2 = matrices[1]
+        report = {}
+        for rank_func_generator in self._rank_func_lst:
+            rank_func = rank_func_generator.generate()
+            report[f"{rank_func_generator.name()}"] = rank_func((rank_sets_1, rank_sets_2), pair_ids)
+
+        return json.loads(json.dumps(report, default=float))
+
+
+class RankCommonalityMetrics(Evaluation):
+    """A class representing Rank-Commonality Score metric to evaluate stability between two matrix outputs."""
+
+    def __init__(
+        self,
+        rank_func_lst: List[NamedFunction] = None,
+    ):
+        """Initializes the RecallAtN instance.
+
+        Args:
+            n_values: A list of N values for Recall@N.
+            score_col_name: Probability score column name.
+        """
+        self._rank_func_lst = rank_func_lst or []
+
+    def _modify_matrices(self, matrices) -> List[pd.DataFrame]:
+        new_matrices = []
+        for matrix in matrices:
+            matrix = matrix.sort_values(by="treat score", ascending=False)
+            matrix["id"] = matrix["source"] + "|" + matrix["target"]
+            new_matrices.append(matrix)
+        return new_matrices
+
+    def evaluate(self, pair_ids: pd.DataFrame, matrices: List[pd.DataFrame]) -> Dict:
+        """Evaluates StabilityCommonalityAtN on a dataset.
+
+        Args:
+            pair_ids: Pair ids to evaluate. Dummy variable for commonality at k
+            matrices: DataFrames to evaluate.
+        """
+        matrices = self._modify_matrices(matrices)
+        main_set = set(matrices[0]["id"])
+        for matrix in matrices:
+            main_set = main_set.intersection(matrix)
+
+        report = {}
+        for rank_func_generator in self._rank_func_lst:
+            rank_func = rank_func_generator.generate()
+            report[f"{rank_func_generator.name()}"] = rank_func(main_set)
+
+        return json.loads(json.dumps(report, default=float))

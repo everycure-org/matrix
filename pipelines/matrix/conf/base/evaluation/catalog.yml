@@ -29,6 +29,7 @@ _pandas_parquet: &_pandas_parquet
   filepath: ${globals:paths.evaluation}/reporting/master_report.yml
   type: yaml.YAMLDataset
 
+#TODO fix catalog entries
 "evaluation.{model}.{model_1}.{model_2}.{evaluation}.model_stability_output.result":
   filepath: ${globals:paths.evaluation}/reporting/stability/{model}/{model_1}/{model_2}/{evaluation}/result.yml
   type: yaml.YAMLDataset

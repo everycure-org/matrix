@@ -64,9 +64,10 @@ def _create_stability_pipeline(model, model_1: str, model_2: str, evaluation: st
             ArgoNode(
                 func=nodes.evaluate_stability_predictions,
                 inputs=[
+                    f"evaluation.{model}.fold_{model_1}.fold_{model_2}.{evaluation}.model_stability_output.pairs@pandas",
+                    f"params:evaluation.{evaluation}.evaluation_options.stability",
                     f"matrix_generation.{model}.fold_{model_1}.model_output.sorted_matrix_predictions@pandas",
                     f"matrix_generation.{model}.fold_{model_2}.model_output.sorted_matrix_predictions@pandas",
-                    f"params:evaluation.{evaluation}.evaluation_options.stability",
                 ],
                 outputs=f"evaluation.{model}.{model_1}.{model_2}.{evaluation}.model_stability_output.result",
                 name=f"calculate_{model_1}_{model_2}_{evaluation}",
