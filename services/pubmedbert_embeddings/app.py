@@ -5,15 +5,16 @@ and a model that we think actually is correct, namely a sentence embedding model
 Note this is a temporary solution and we intend to move to a more generic solution.
 """
 
-from fastapi import FastAPI, HTTPException
-import time
 import asyncio
-from concurrent.futures import ThreadPoolExecutor
-from typing import List
-from data_models import EmbeddingRequest, EmbeddingResponse, Usage, Embedding
-from models import ModelStore
 import logging
 import multiprocessing
+import time
+from concurrent.futures import ThreadPoolExecutor
+from typing import List
+
+from data_models import Embedding, EmbeddingRequest, EmbeddingResponse, Usage
+from fastapi import FastAPI, HTTPException
+from models import ModelStore
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
@@ -23,9 +24,7 @@ app = FastAPI()
 model_store = ModelStore()
 
 # Create a thread pool executor
-executor = ThreadPoolExecutor(
-    max_workers=CPU_COUNT
-)  # Adjust the number of workers as needed
+executor = ThreadPoolExecutor(max_workers=CPU_COUNT)  # Adjust the number of workers as needed
 
 
 async def get_embedding(texts: List[str], model_name: str) -> List[float]:
@@ -56,10 +55,7 @@ async def create_embedding(request: EmbeddingRequest):
         # Create a response in OpenAI-like format
         response = EmbeddingResponse(
             object="list",
-            data=[
-                Embedding(object="embedding", embedding=emb, index=i)
-                for i, emb in enumerate(list(embeddings))
-            ],
+            data=[Embedding(object="embedding", embedding=emb, index=i) for i, emb in enumerate(list(embeddings))],
             model=request.model,
             usage=Usage(prompt_tokens=token_count, total_tokens=token_count),
         )

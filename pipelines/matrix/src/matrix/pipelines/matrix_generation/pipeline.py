@@ -9,8 +9,7 @@ from . import nodes
 def create_pipeline(**kwargs) -> Pipeline:
     """Create matrix generation pipeline."""
 
-    # Load model names
-    models = settings.DYNAMIC_PIPELINES_MAPPING.get("modelling")
+    model_name = settings.DYNAMIC_PIPELINES_MAPPING.get("modelling")["model_name"]
 
     # Load cross-validation information
     cross_validation_settings = settings.DYNAMIC_PIPELINES_MAPPING.get("cross_validation")
@@ -27,21 +26,11 @@ def create_pipeline(**kwargs) -> Pipeline:
                     func=nodes.enrich_embeddings,
                     inputs=[
                         "embeddings.feat.nodes",
-                        "ingestion.raw.drug_list@spark",
-                        "ingestion.raw.disease_list@spark",
+                        "integration.int.drug_list.nodes.norm@spark",
+                        "integration.int.disease_list.nodes.norm@spark",
                     ],
                     outputs="matrix_generation.feat.nodes@spark",
                     name="enrich_matrix_embeddings",
-                ),
-                # Hacky fix to save parquet file via pandas rather than spark
-                # related to https://github.com/everycure-org/matrix/issues/71
-                ArgoNode(
-                    func=nodes.spark_to_pd,
-                    inputs=[
-                        "matrix_generation.feat.nodes@spark",
-                    ],
-                    outputs="matrix_generation.feat.nodes_kg_ds",
-                    name="transform_parquet_library",
                 ),
             ]
         )
@@ -57,10 +46,10 @@ def create_pipeline(**kwargs) -> Pipeline:
                         func=partial_fold(nodes.generate_pairs, fold, arg_name="known_pairs"),
                         inputs={
                             "known_pairs": "modelling.model_input.splits",
-                            "drugs": "ingestion.raw.drug_list@pandas",
-                            "diseases": "ingestion.raw.disease_list@pandas",
-                            "graph": "matrix_generation.feat.nodes_kg_ds",
-                            "clinical_trials": "ingestion.raw.clinical_trials_data",
+                            "drugs": "integration.int.drug_list.nodes.norm@pandas",
+                            "diseases": "integration.int.disease_list.nodes.norm@pandas",
+                            "graph": "matrix_generation.feat.nodes@kg",
+                            "clinical_trials": "integration.int.ec_clinical_trails.edges.norm@pandas",
                         },
                         outputs=f"matrix_generation.prm.fold_{fold}.matrix_pairs",
                         name=f"generate_matrix_pairs_fold_{fold}",
@@ -69,45 +58,42 @@ def create_pipeline(**kwargs) -> Pipeline:
             )
         )
 
-        # For each model, create pipeline to generate pairs
-        for model in models.keys():
-            pipelines.append(
-                pipeline(
-                    [
-                        ArgoNode(
-                            func=nodes.make_predictions_and_sort,
-                            inputs=[
-                                "matrix_generation.feat.nodes_kg_ds",
-                                f"matrix_generation.prm.fold_{fold}.matrix_pairs",
-                                f"modelling.{model}.fold_{fold}.model_input.transformers",
-                                f"modelling.{model}.fold_{fold}.models.model",
-                                f"params:modelling.{model}.model_options.model_tuning_args.features",
-                                "params:matrix_generation.treat_score_col_name",
-                                "params:matrix_generation.not_treat_score_col_name",
-                                "params:matrix_generation.unknown_score_col_name",
-                                "params:matrix_generation.matrix_generation_options.batch_by",
-                            ],
-                            outputs=f"matrix_generation.{model}.fold_{fold}.model_output.sorted_matrix_predictions@pandas",
-                            name=f"make_{model}_predictions_and_sort_fold_{fold}",
-                            argo_config=ARGO_GPU_NODE_MEDIUM,
-                        ),
-                        ArgoNode(
-                            func=nodes.generate_report,
-                            inputs=[
-                                f"matrix_generation.{model}.fold_{fold}.model_output.sorted_matrix_predictions@pandas",
-                                "params:matrix_generation.matrix_generation_options.n_reporting",
-                                "ingestion.raw.drug_list@pandas",
-                                "ingestion.raw.disease_list@pandas",
-                                "params:matrix_generation.treat_score_col_name",
-                                "params:matrix_generation.matrix",
-                                "params:matrix_generation.run",
-                            ],
-                            outputs=f"matrix_generation.{model}.fold_{fold}.reporting.matrix_report",
-                            name=f"generate_{model}_report_fold_{fold}",
-                        ),
-                    ],
-                    tags=model,
-                )
+        pipelines.append(
+            pipeline(
+                [
+                    ArgoNode(
+                        func=nodes.make_predictions_and_sort,
+                        inputs=[
+                            "matrix_generation.feat.nodes@kg",
+                            f"matrix_generation.prm.fold_{fold}.matrix_pairs",
+                            f"modelling.fold_{fold}.model_input.transformers",
+                            f"modelling.fold_{fold}.models.model",
+                            f"params:modelling.{model_name}.model_options.model_tuning_args.features",
+                            "params:matrix_generation.treat_score_col_name",
+                            "params:matrix_generation.not_treat_score_col_name",
+                            "params:matrix_generation.unknown_score_col_name",
+                            "params:matrix_generation.matrix_generation_options.batch_by",
+                        ],
+                        outputs=f"matrix_generation.fold_{fold}.model_output.sorted_matrix_predictions@pandas",
+                        name=f"make_predictions_and_sort_fold_{fold}",
+                        argo_config=ARGO_GPU_NODE_MEDIUM,
+                    ),
+                    ArgoNode(
+                        func=nodes.generate_report,
+                        inputs=[
+                            f"matrix_generation.fold_{fold}.model_output.sorted_matrix_predictions@pandas",
+                            "params:matrix_generation.matrix_generation_options.n_reporting",
+                            "integration.int.drug_list.nodes.norm@pandas",
+                            "integration.int.disease_list.nodes.norm@pandas",
+                            "params:matrix_generation.treat_score_col_name",
+                            "params:matrix_generation.matrix",
+                            "params:matrix_generation.run",
+                        ],
+                        outputs=f"matrix_generation.fold_{fold}.reporting.matrix_report",
+                        name=f"generate_report_fold_{fold}",
+                    ),
+                ],
             )
+        )
 
     return sum(pipelines)
