@@ -4,10 +4,10 @@ import pyspark.sql as ps
 import pyspark.sql.functions as F
 import pyspark.sql.types as T
 
-from .transformer import GraphTransformer
-
 from matrix.pipelines.integration.filters import determine_most_specific_category
-from matrix.schemas.knowledge_graph import KGEdgeSchema, cols_for_schema, KGNodeSchema
+from matrix.schemas.knowledge_graph import KGEdgeSchema, KGNodeSchema, cols_for_schema
+
+from .transformer import GraphTransformer
 
 # FUTURE: We should likely not need to rename these columns as we do below
 # However, KGX is currently not as performant as we need it to be thus

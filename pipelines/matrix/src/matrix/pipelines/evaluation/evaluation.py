@@ -1,14 +1,13 @@
-import pandas as pd
-import numpy as np
 import abc
-import json
 import bisect
+import json
 from typing import Dict, List
-from tqdm import tqdm
 
-from sklearn.metrics import roc_auc_score
-
+import numpy as np
+import pandas as pd
 from matrix.pipelines.evaluation.named_metric_functions import NamedFunction
+from sklearn.metrics import roc_auc_score
+from tqdm import tqdm
 
 
 class Evaluation(abc.ABC):
