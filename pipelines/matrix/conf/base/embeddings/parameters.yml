@@ -9,7 +9,7 @@ embeddings.node:
 
   # NOTE: We currently only using the "most relevant" category
   # to compute the attribute embedding.
-  input_features: ["category", "name"]
+  input_features: ["name", "category"]
   encoder:
     _object: matrix.pipelines.embeddings.encoders.LangChainEncoder
     dimensions: 512

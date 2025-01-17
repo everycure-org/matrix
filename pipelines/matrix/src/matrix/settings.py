@@ -46,10 +46,14 @@ DYNAMIC_PIPELINES_MAPPING = generate_dynamic_pipeline_mapping(
             "n_cross_val_folds": 3,
         },
         "integration": [
-            {"name": "rtx_kg2"},
+            {"name": "rtx_kg2", "integrate_in_kg": True},
             # {"name": "spoke"},
-            {"name": "robokop"},
-            {"name": "ec_medical_team"},
+            # {"name": "robokop"},
+            {"name": "ec_medical_team", "integrate_in_kg": True},
+            {"name": "drug_list", "integrate_in_kg": False, "nodes_only": True},
+            {"name": "disease_list", "integrate_in_kg": False, "nodes_only": True},
+            {"name": "ground_truth", "integrate_in_kg": False},
+            {"name": "ec_clinical_trails", "integrate_in_kg": False},
         ],
         "modelling": {
             "xg_baseline": {"num_shards": 1, "run_inference": False},
