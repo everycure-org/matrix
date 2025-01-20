@@ -96,8 +96,7 @@ jobs:
           pip install uv
           uv venv -p 3.11
           uv pip install -r requirements.txt
-          cd scripts
-          uv run bump_detection.py
+          uv run scripts/bump_detection.py
           
       - name: Create Release Notes
         working-directory: apps/matrix-cli
