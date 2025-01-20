@@ -149,7 +149,7 @@ jobs:
           gh pr create \
           --title "Release/${{env.release}}" \
           --base main \
-          --body "Adds release information. For minor and major bump,the release article and associated notes are generated" \
+          --body "Adds release information. For minor and major bump, the release article and associated notes are generated." \
           --draft \
           --label Release \
           --label hide-from-release
