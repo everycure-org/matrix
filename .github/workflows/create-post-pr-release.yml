@@ -31,20 +31,33 @@ jobs:
           fetch-tags: true
           fetch-depth: 0
 
-      - name: Fetch latest tag
-        id: fetch_latest_tag
+      - name: Discover the intended release
+        id: fetch_release_version
+        env:
+          PR_BRANCH_NAME: ${{ github.event.pull_request.head.ref }}
         run: |
-          latest_tag=$(git tag --list --sort="v:refname" | tail -n 1)
-          echo "latest_tag=${latest_tag}" >> "$GITHUB_ENV"
-          echo "Latest tag is ${latest_tag}"
+          set -euxo pipefail
+          # Note: this could be an intermediate release
+          intended_release=${PR_BRANCH_NAME##release/}
+          echo "intended_tag=${intended_release}" >> "$GITHUB_ENV"  
+
+      - name: Discover Latest Official Release on GitHub
+        run: |
+          latest_official_release=$(gh release list --jq '.[0].tagName' --json tagName --order desc)
+          echo "latest_official_release=${latest_official_release}" >> "$GITHUB_ENV"  
 
       - name: Create GitHub release
         env:
             GH_TOKEN: ${{ github.token }}
             POSTS_DIR: docs/src/releases/posts
         run: |
+          set -euxo pipefail
           echo "Creating release"
-          gh release create "${{ env.latest_tag }}" \
-            --notes-file "${GITHUB_WORKSPACE}/${POSTS_DIR}/${{ env.latest_tag }}/notes.md" \
-            --title "${{ env.latest_tag }}" \
-            --latest
+          # If intended release comes after latest_official_release, flag it with --latest. Otherwise, don't.
+          highest_version=$(echo -e "${{env.intended_tag}}\n${{env.latest_official_release}}" | sort --version-sort | tail -n1)
+          if [ "${{ env.intended_tag }}" = "${highest_version}" ]; then ARGS=" --latest"; else ARGS=""; fi
+          
+          gh release create "${{ env.intended_tag }}" \
+            --notes-file "${GITHUB_WORKSPACE}/${POSTS_DIR}/${{ env.intended_tag }}/notes.md" \
+            --title "${{ env.intended_tag }}" \
+            "${ARGS}"

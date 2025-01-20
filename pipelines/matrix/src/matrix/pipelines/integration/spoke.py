@@ -1,14 +1,13 @@
 import pandas as pd
 import pandera.pyspark as pa
+import pyspark.sql as ps
 import pyspark.sql.functions as F
 import pyspark.sql.types as T
-import pyspark.sql as ps
-
-from .transformer import GraphTransformer
 
 from matrix.pipelines.integration.filters import determine_most_specific_category
-from matrix.schemas.knowledge_graph import KGEdgeSchema, cols_for_schema, KGNodeSchema
+from matrix.schemas.knowledge_graph import KGEdgeSchema, KGNodeSchema, cols_for_schema
 
+from .transformer import GraphTransformer
 
 SEPARATOR = "\x1f"
 
