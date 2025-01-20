@@ -3,34 +3,113 @@ from functools import partial, reduce
 from typing import Any, Callable, Dict, List, Tuple
 
 import pandas as pd
-import pandera
 import pyspark.sql as ps
 import pyspark.sql.functions as F
+import pyspark.sql.types as T
 from joblib import Memory
 
 from matrix.inject import inject_object
 from matrix.pipelines.integration.filters import determine_most_specific_category
-from matrix.schemas.knowledge_graph import KGEdgeSchema, KGNodeSchema, cols_for_schema
+from matrix.utils.pa_utils import Column, DataFrameSchema, check_output
 
 # TODO move these into config
 memory = Memory(location=".cache/nodenorm", verbose=0)
 logger = logging.getLogger(__name__)
 
 
-@pandera.check_output(KGEdgeSchema)
-def union_and_deduplicate_edges(*edges) -> ps.DataFrame:
+@inject_object()
+@check_output(
+    DataFrameSchema(
+        columns={
+            "id": Column(T.StringType(), nullable=False),
+            "name": Column(T.StringType(), nullable=True),
+            "description": Column(T.StringType(), nullable=True),
+        },
+        unique=["id"],
+    ),
+)
+def transform_nodes(transformer, nodes_df: ps.DataFrame, **kwargs):
+    return transformer.transform_nodes(nodes_df=nodes_df, **kwargs)
+
+
+@inject_object()
+@check_output(
+    DataFrameSchema(
+        columns={
+            "subject": Column(T.StringType(), nullable=False),
+            "predicate": Column(T.StringType(), nullable=False),
+            "object": Column(T.StringType(), nullable=False),
+        },
+        unique=["subject", "predicate", "object"],
+    ),
+)
+def transform_edges(transformer, edges_df: ps.DataFrame, **kwargs):
+    return transformer.transform_edges(edges_df=edges_df, **kwargs)
+
+
+@check_output(
+    DataFrameSchema(
+        columns={
+            "subject": Column(T.StringType(), nullable=False),
+            "predicate": Column(T.StringType(), nullable=False),
+            "object": Column(T.StringType(), nullable=False),
+            "knowledge_level": Column(T.StringType(), nullable=True),
+            "primary_knowledge_source": Column(T.StringType(), nullable=True),
+            "aggregator_knowledge_source": Column(T.ArrayType(T.StringType()), nullable=True),
+            "publications": Column(T.ArrayType(T.StringType()), nullable=True),
+            "subject_aspect_qualifier": Column(T.StringType(), nullable=True),
+            "subject_direction_qualifier": Column(T.StringType(), nullable=True),
+            "object_aspect_qualifier": Column(T.StringType(), nullable=True),
+            "object_direction_qualifier": Column(T.StringType(), nullable=True),
+            "upstream_data_source": Column(T.ArrayType(T.StringType()), nullable=False),
+        },
+        strict=True,
+    ),
+    pass_columns=True,
+)
+def union_and_deduplicate_edges(*edges, cols: List[str]) -> ps.DataFrame:
     """Function to unify edges datasets."""
 
     # fmt: off
     return (
         _union_datasets(*edges)
-        .transform(KGEdgeSchema.group_edges_by_id)
+        .groupBy(["subject", "predicate", "object"])
+        .agg(
+            F.flatten(F.collect_set("upstream_data_source")).alias("upstream_data_source"),
+            # TODO: we shouldn't just take the first one but collect these values from multiple upstream sources
+            F.first("knowledge_level", ignorenulls=True).alias("knowledge_level"),
+            F.first("subject_aspect_qualifier", ignorenulls=True).alias("subject_aspect_qualifier"),
+            F.first("subject_direction_qualifier", ignorenulls=True).alias("subject_direction_qualifier"),
+            F.first("object_direction_qualifier", ignorenulls=True).alias("object_direction_qualifier"),
+            F.first("object_aspect_qualifier", ignorenulls=True).alias("object_aspect_qualifier"),
+            F.first("primary_knowledge_source", ignorenulls=True).alias("primary_knowledge_source"),
+            F.flatten(F.collect_set("aggregator_knowledge_source")).alias("aggregator_knowledge_source"),
+            F.flatten(F.collect_set("publications")).alias("publications"),
+        )
+        .select(*cols)
     )
     # fmt: on
 
 
-@pandera.check_output(KGNodeSchema)
-def union_and_deduplicate_nodes(biolink_categories_df: pd.DataFrame, *nodes) -> ps.DataFrame:
+@check_output(
+    DataFrameSchema(
+        columns={
+            "id": Column(T.StringType(), nullable=False),
+            "name": Column(T.StringType(), nullable=True),
+            "category": Column(T.StringType(), nullable=False),
+            "description": Column(T.StringType(), nullable=True),
+            "equivalent_identifiers": Column(T.ArrayType(T.StringType()), nullable=True),
+            "all_categories": Column(T.ArrayType(T.StringType()), nullable=True),
+            "publications": Column(T.ArrayType(T.StringType()), nullable=True),
+            "labels": Column(T.ArrayType(T.StringType()), nullable=True),
+            "international_resource_identifier": Column(T.StringType(), nullable=True),
+            "upstream_data_source": Column(T.ArrayType(T.StringType()), nullable=True),
+        },
+        strict=True,
+    ),
+    pass_columns=True,
+)
+def union_and_deduplicate_nodes(biolink_categories_df: pd.DataFrame, *nodes, cols: List[str]) -> ps.DataFrame:
     """Function to unify nodes datasets."""
 
     # fmt: off
@@ -38,13 +117,24 @@ def union_and_deduplicate_nodes(biolink_categories_df: pd.DataFrame, *nodes) -> 
         _union_datasets(*nodes)
 
         # first we group the dataset by id to deduplicate
-        .transform(KGNodeSchema.group_nodes_by_id)
+        .groupBy("id")
+        .agg(
+            F.first("name", ignorenulls=True).alias("name"),
+            F.first("category", ignorenulls=True).alias("category"),
+            F.first("description", ignorenulls=True).alias("description"),
+            F.first("international_resource_identifier", ignorenulls=True).alias("international_resource_identifier"),
+            F.flatten(F.collect_set("equivalent_identifiers")).alias("equivalent_identifiers"),
+            F.flatten(F.collect_set("all_categories")).alias("all_categories"),
+            F.flatten(F.collect_set("labels")).alias("labels"),
+            F.flatten(F.collect_set("publications")).alias("publications"),
+            F.flatten(F.collect_set("upstream_data_source")).alias("upstream_data_source"),
+        )
 
         # next we need to apply a number of transformations to the nodes to ensure grouping by id did not select wrong information
         .transform(determine_most_specific_category, biolink_categories_df)
 
         # finally we select the columns that we want to keep
-        .select(*cols_for_schema(KGNodeSchema))
+        .select(*cols)
     )
     # fmt: on
 

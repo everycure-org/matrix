@@ -33,6 +33,7 @@ class DataFrameSchema:
 
     columns: Dict[str, Column]
     unique: Optional[List] = None
+    strict: bool = False
 
     def build_for_type(self, type_) -> typing.Union[pas.DataFrameSchema, pa.DataFrameSchema]:
         # Build pandas version
@@ -43,6 +44,7 @@ class DataFrameSchema:
                     for name, col in self.columns.items()
                 },
                 unique=self.unique,
+                strict=self.strict,
             )
 
         # Build pyspark version
@@ -53,17 +55,19 @@ class DataFrameSchema:
                     for name, col in self.columns.items()
                 },
                 unique=self.unique,
+                strict=self.strict,
             )
 
         raise TypeError()
 
 
-def check_output(schema: DataFrameSchema, df_name: Optional[str] = None):
+def check_output(schema: DataFrameSchema, df_name: Optional[str] = None, pass_columns: bool = False):
     """Decorator to validate output schema of decorated function.
 
     Args:
         schema: Schema to validate
         df_name (optional): name of output arg to validate
+        pass_cols (optional): boolean indicating whether cols should be passed into callable
     """
 
     def decorator(func):
@@ -79,7 +83,11 @@ def check_output(schema: DataFrameSchema, df_name: Optional[str] = None):
                 type_ = typing.get_args(type_)[1]
 
             df_schema = schema.build_for_type(type_)
-            output = func(*args, **kwargs)
+
+            if pass_columns:
+                output = func(*args, **kwargs, cols=list(schema.columns.keys()))
+            else:
+                output = func(schema.columns.keys(), *args, **kwargs)
 
             if df_name is not None:
                 df = output[df_name]
