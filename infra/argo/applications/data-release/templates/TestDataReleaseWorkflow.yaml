@@ -1,0 +1,20 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Workflow
+metadata:
+  namespace: argo-workflows
+  generateName: test-data-release-trigger-
+  labels:
+    run: '{{ workflow.parameters.run_name }}'
+    username: emil
+    pipeline_name: None
+    release_version: v0.0.1-release-test
+    git_sha: 7bea05fbb9a8c5e7eefe98daf2c8c7a53f66a4f0
+    trigger_release: True
+spec:
+  serviceAccountName: data-release-service-account
+  entrypoint: echo-hello
+  templates:
+  - name: echo-hello
+    container:
+      image: alpine:latest
+      command: ["echo", "Hello World"]
