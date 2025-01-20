@@ -88,18 +88,6 @@ class AUROC(NamedFunction):
         return "auroc"
 
 
-class RCScore(NamedFunction):
-    """Class representing a named vectorised function for the computation of RCScore."""
-
-    def __init__(self, n) -> None:
-        """Initialise instance of RCScore object.
-
-        Args:
-            n: Value for n.
-        """
-        self.n = n
-
-
 class HypergeomAtN(NamedFunction):
     """Class representing a named vectorised function for the computation of Hypergeom At N."""
 

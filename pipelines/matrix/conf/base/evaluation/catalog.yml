@@ -33,7 +33,6 @@ _pandas_parquet: &_pandas_parquet
   filepath: ${globals:paths.evaluation}/reporting/master_report.yml
   type: yaml.YAMLDataset
 
-#TODO fix catalog entries
 "evaluation.fold_{fold_main}.fold_{fold_to_compare}.{evaluation}.model_stability_output.result":
   filepath: ${globals:paths.evaluation}/reporting/stability/{model_1}_{model_2}/{evaluation}/result.yml
   type: yaml.YAMLDataset
