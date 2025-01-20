@@ -1,9 +1,9 @@
-import pandas as pd
-import sqlite3
 import os
-from google.cloud import storage
+import sqlite3
 
+import pandas as pd
 from config import settings
+from google.cloud import storage
 
 
 def main():

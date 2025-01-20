@@ -1,10 +1,11 @@
 import os
+
 import pandas as pd
-from streamlit_flow import streamlit_flow
-from streamlit_flow.elements import StreamlitFlowNode, StreamlitFlowEdge
-from streamlit_flow.state import StreamlitFlowState
 import streamlit as st
-from config import ont_urls, display_cols
+from config import display_cols, ont_urls
+from streamlit_flow import streamlit_flow
+from streamlit_flow.elements import StreamlitFlowEdge, StreamlitFlowNode
+from streamlit_flow.state import StreamlitFlowState
 
 
 def get_pair_info_from_db(moa_db_path: str, path_number: str = "all") -> pd.DataFrame:
