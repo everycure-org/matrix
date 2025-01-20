@@ -1,10 +1,11 @@
 #!
 """Wipes neo4j instance locally."""
 
-from neo4j import GraphDatabase
+import os
+
 import typer
 from dotenv import load_dotenv
-import os
+from neo4j import GraphDatabase
 
 
 # checking if any existing env variables set the n4j password which hints at prod port forwarding
@@ -16,7 +17,7 @@ def avoid_wiping_prod():
 
 def connect_to_neo4j():
     return GraphDatabase.driver(
-        "bolt+ssc://127.0.0.1:7687",
+        "bolt://127.0.0.1:7687",
         auth=("neo4j", "admin"),
     )
 

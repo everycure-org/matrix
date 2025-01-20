@@ -1,8 +1,8 @@
 #!/usr/bin/python3
 ## This code is created by RTX team (https://github.com/RTXteam/RTX/) used in the version 2.7.3 of RTX-KG2c (Wood et al. 2021 doi: 10.1101/2021.10.17.464747)
-""" An interface to the SRI Node and Edge Normalizer https://nodenormalization-sri.renci.org/apidocs/
-    e.g.:  https://nodenormalization-sri.renci.org/get_normalized_nodes?curie=CHEMBL.COMPOUND:CHEMBL76729
-    Report problems here: https://github.com/TranslatorSRI/NodeNormalization/issues
+"""An interface to the SRI Node and Edge Normalizer https://nodenormalization-sri.renci.org/apidocs/
+e.g.:  https://nodenormalization-sri.renci.org/get_normalized_nodes?curie=CHEMBL.COMPOUND:CHEMBL76729
+Report problems here: https://github.com/TranslatorSRI/NodeNormalization/issues
 """
 
 import sys
@@ -77,9 +77,7 @@ class SriNodeNormalizer:
                 self.cache = pickle.load(infile)
                 # self.cache = self.cache['ids']
         else:
-            print(
-                f"INFO: SRI node normalizer cache {filename} does not yet exist. Need to fill it."
-            )
+            print(f"INFO: SRI node normalizer cache {filename} does not yet exist. Need to fill it.")
 
     # ############################################################################################
     # Fill the cache with KG nodes
@@ -126,9 +124,7 @@ class SriNodeNormalizer:
             normalizer_node_curie = node_curie
             if curie_prefix in self.curie_prefix_tx_arax2sri:
                 normalizer_curie_prefix = self.curie_prefix_tx_arax2sri[curie_prefix]
-                normalizer_node_curie = re.sub(
-                    curie_prefix, normalizer_curie_prefix, node_curie
-                )
+                normalizer_node_curie = re.sub(curie_prefix, normalizer_curie_prefix, node_curie)
 
             # Decide if we want to keep this curie in the batch of things to look up
             # By default, no
@@ -164,11 +160,7 @@ class SriNodeNormalizer:
                                 "not found": 0,
                                 "total": 0,
                             }
-                        if (
-                            results is None
-                            or curie not in results
-                            or results[curie] is None
-                        ):
+                        if results is None or curie not in results or results[curie] is None:
                             self.cache[curie] = None
                             self.stats[curie_prefix]["not found"] += 1
                         else:
@@ -191,9 +183,7 @@ class SriNodeNormalizer:
         print("")
         print(f"{line_counter} lines read")
         print(f"{bytes_read} bytes read of {filesize} bytes in file")
-        print(
-            f"{supported_curies} curies with prefixes supported by the SRI normalizer"
-        )
+        print(f"{supported_curies} curies with prefixes supported by the SRI normalizer")
 
         print("Build stats:")
         print(json.dumps(self.stats, indent=2, sort_keys=True))
@@ -215,9 +205,7 @@ class SriNodeNormalizer:
 
         # Check for a returned error
         if status_code != 200:
-            eprint(
-                f"ERROR returned with status {status_code} while retrieving supported types"
-            )
+            eprint(f"ERROR returned with status {status_code} while retrieving supported types")
             eprint(response_content)
             return
 
@@ -257,9 +245,7 @@ class SriNodeNormalizer:
 
         # Check for a returned error
         if status_code != 200:
-            eprint(
-                f"ERROR returned with status {status_code} while retrieving supported types"
-            )
+            eprint(f"ERROR returned with status {status_code} while retrieving supported types")
             eprint(response_content)
             return
 
@@ -289,9 +275,7 @@ class SriNodeNormalizer:
             curies = [curies]
 
         if cache_only is not None:
-            print(
-                f"ERROR: Call to sri_node_normalizer requested cache_only and we missed the cache with {curies}"
-            )
+            print(f"ERROR: Call to sri_node_normalizer requested cache_only and we missed the cache with {curies}")
 
         # Build the URL and fetch the result
         url = "https://nodenormalization-sri-dev.renci.org/1.1/get_normalized_nodes?"
@@ -311,9 +295,7 @@ class SriNodeNormalizer:
             error_state = False
 
             try:
-                response_content = requests.get(
-                    url, headers={"accept": "application/json"}
-                )
+                response_content = requests.get(url, headers={"accept": "application/json"})
             except:
                 print("Uncaught error during web request to SRI normalizer")
                 error_state = True
@@ -375,13 +357,9 @@ class SriNodeNormalizer:
         curie_prefix = curie.split(":")[0]
         normalizer_curie = curie
         if curie_prefix in self.curie_prefix_tx_arax2sri:
-            normalizer_curie = re.sub(
-                curie_prefix, self.curie_prefix_tx_arax2sri[curie_prefix], curie
-            )
+            normalizer_curie = re.sub(curie_prefix, self.curie_prefix_tx_arax2sri[curie_prefix], curie)
 
-        results = self.get_node_normalizer_results(
-            normalizer_curie, cache_only=cache_only
-        )
+        results = self.get_node_normalizer_results(normalizer_curie, cache_only=cache_only)
         # print(json.dumps(results, indent=2, sort_keys=True))
 
         if results is None:
@@ -390,9 +368,7 @@ class SriNodeNormalizer:
 
         # If input CURIE is not the key of the dict, this is highly unexpected
         if normalizer_curie not in results:
-            eprint(
-                f"ERROR: Did not find the curie {normalizer_curie} as a key in the results"
-            )
+            eprint(f"ERROR: Did not find the curie {normalizer_curie} as a key in the results")
             return response
 
         if results[normalizer_curie] is None:
