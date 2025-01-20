@@ -46,7 +46,7 @@ def _create_evaluation_fold_pipeline(evaluation: str, fold: Union[str, int]) -> 
     )
 
 
-def _create_core_stability_pipeline(model_1: str, model_2: str, evaluation: str) -> Pipeline:
+def _create_core_stability_pipeline(fold_main: str, fold_to_compare: str, evaluation: str) -> Pipeline:
     if evaluation != "rank_commonality":
         core_pipeline = pipeline(
             [
@@ -54,23 +54,23 @@ def _create_core_stability_pipeline(model_1: str, model_2: str, evaluation: str)
                     func=nodes.generate_overlapping_dataset,
                     inputs=[
                         f"params:evaluation.{evaluation}.evaluation_options.generator",
-                        f"matrix_generation.fold_{model_1}.model_output.sorted_matrix_predictions@pandas",
-                        f"matrix_generation.fold_{model_2}.model_output.sorted_matrix_predictions@pandas",
+                        f"matrix_generation.fold_{fold_main}.model_output.sorted_matrix_predictions@pandas",
+                        f"matrix_generation.fold_{fold_to_compare}.model_output.sorted_matrix_predictions@pandas",
                     ],
-                    outputs=f"evaluation.fold_{model_1}.fold_{model_2}.{evaluation}.model_stability_output.pairs@pandas",
-                    name=f"create_{model_1}_{model_2}_{evaluation}_evaluation_pairs",
+                    outputs=f"evaluation.fold_{fold_main}.fold_{fold_to_compare}.{evaluation}.model_stability_output.pairs@pandas",
+                    name=f"create_{fold_main}_{fold_to_compare}_{evaluation}_evaluation_pairs",
                 ),
                 # TODO fix model ocnvention
                 ArgoNode(
                     func=nodes.evaluate_stability_predictions,
                     inputs=[
-                        f"evaluation.fold_{model_1}.fold_{model_2}.{evaluation}.model_stability_output.pairs@pandas",
+                        f"evaluation.fold_{fold_main}.fold_{fold_to_compare}.{evaluation}.model_stability_output.pairs@pandas",
                         f"params:evaluation.{evaluation}.evaluation_options.stability",
-                        f"matrix_generation.fold_{model_1}.model_output.sorted_matrix_predictions@pandas",
-                        f"matrix_generation.fold_{model_2}.model_output.sorted_matrix_predictions@pandas",
+                        f"matrix_generation.fold_{fold_main}.model_output.sorted_matrix_predictions@pandas",
+                        f"matrix_generation.fold_{fold_to_compare}.model_output.sorted_matrix_predictions@pandas",
                     ],
-                    outputs=f"evaluation.fold_{model_1}.fold_{model_2}.{evaluation}.model_stability_output.result",
-                    name=f"calculate_{model_1}_{model_2}_{evaluation}",
+                    outputs=f"evaluation.fold_{fold_main}.fold_{fold_to_compare}.{evaluation}.model_stability_output.result",
+                    name=f"calculate_{fold_main}_{fold_to_compare}_{evaluation}",
                 ),
             ],
             tags=["stability-metrics"],
@@ -81,11 +81,11 @@ def _create_core_stability_pipeline(model_1: str, model_2: str, evaluation: str)
                 ArgoNode(
                     func=nodes.calculate_rank_commonality,
                     inputs=[
-                        f"evaluation.fold_{model_1}.fold_{model_2}.stability_ranking.model_stability_output.result",
-                        f"evaluation.fold_{model_1}.fold_{model_2}.stability_overlap.model_stability_output.result",
+                        f"evaluation.fold_{fold_main}.fold_{fold_to_compare}.stability_ranking.model_stability_output.result",
+                        f"evaluation.fold_{fold_main}.fold_{fold_to_compare}.stability_overlap.model_stability_output.result",
                     ],
-                    outputs=f"evaluation.fold_{model_1}.fold_{model_2}.{evaluation}.model_stability_output.result",
-                    name=f"calculate_{model_1}_{model_2}_{evaluation}",
+                    outputs=f"evaluation.fold_{fold_main}.fold_{fold_to_compare}.{evaluation}.model_stability_output.result",
+                    name=f"calculate_{fold_main}_{fold_to_compare}_{evaluation}",
                 ),
             ],
             tags=["stability-metrics"],
