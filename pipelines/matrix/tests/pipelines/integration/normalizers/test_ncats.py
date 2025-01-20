@@ -3,7 +3,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pandas as pd
 import pytest
-from matrix.pipelines.integration.normalizers.normalizer import NCATSNodeNormalizer
+from matrix.pipelines.integration.normalizers.ncats import NCATSNodeNormalizer
 
 
 class AsyncMock(MagicMock):
