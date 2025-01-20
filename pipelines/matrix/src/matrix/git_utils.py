@@ -34,3 +34,11 @@ def has_unpushed_commits() -> bool:
     )
     local_commits = bool(result.stdout)
     return bool(local_commits)
+
+
+def git_tag_exists(tag: str) -> bool:
+    result = subprocess.run(
+        ["git", "tag", "--list", tag], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, check=True
+    )
+    output = result.stdout.strip().split("\n")
+    return tag in output
