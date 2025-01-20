@@ -114,7 +114,7 @@ def filter_unified_kg_edges(
     new_edges_count = edges.count()
     logger.info(f"Number of edges after filtering: {new_edges_count}, cut out {edges_count - new_edges_count} edges")
 
-    return _apply_transformations(edges, transformations, biolink_predicates=biolink_predicates)
+    return _apply_transformations(edges, transformations)
 
 
 def filter_nodes_without_edges(
