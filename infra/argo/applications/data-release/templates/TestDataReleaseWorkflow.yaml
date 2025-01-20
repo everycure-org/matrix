@@ -1,17 +1,20 @@
+# This is a dummy workflow used only as a trigger for the build-data-release-eventsource.
+# It lets us quickly test our data-release feature with instant feedback loop.
+# It simulates the successful completion of the data release pipeline.
+# It can be triggered by: argo submit TestDataReleaseWorkflow.yaml
 apiVersion: argoproj.io/v1alpha1
 kind: Workflow
 metadata:
   namespace: argo-workflows
   generateName: test-data-release-trigger-
   labels:
-    run: '{{ workflow.parameters.run_name }}'
+    run: test-trigger-for-data-release-run
     username: emil
     pipeline_name: None
     release_version: v0.0.1-release-test
     git_sha: ba8c23b51a0290a57e9ceb52f472388925cbd12a
-    trigger_release: True
+    trigger_release: 'True'
 spec:
-  serviceAccountName: data-release-service-account
   entrypoint: echo-hello
   templates:
   - name: echo-hello
