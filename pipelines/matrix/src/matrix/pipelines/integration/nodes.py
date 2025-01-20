@@ -32,7 +32,6 @@ def union_and_deduplicate_edges(*edges) -> ps.DataFrame:
 @pandera.check_output(KGNodeSchema)
 def union_and_deduplicate_nodes(biolink_categories_df: pd.DataFrame, *nodes) -> ps.DataFrame:
     """Function to unify nodes datasets."""
-
     # fmt: off
     return (
         _union_datasets(*nodes)
