@@ -114,7 +114,3 @@ modelling.model_input.splits:
 modelling.reporting.gt_present:
   filepath: ${globals:paths.modelling}/reporting/gt_present_metrics.yml
   type:  yaml.YAMLDataset
-
-"modelling.{model}.model_output.combined_predictions":
-   <<: [*_pandas_parquet, *_model_output_ds]
-   filepath: ${globals:paths.modelling}/model_output/{model}/combined_predictions
