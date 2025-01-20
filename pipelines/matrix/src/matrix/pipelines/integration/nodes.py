@@ -181,7 +181,6 @@ def prefilter_unified_kg_nodes(
 def filter_unified_kg_edges(
     nodes: ps.DataFrame,
     edges: ps.DataFrame,
-    biolink_predicates: Dict[str, Any],
     transformations: List[Tuple[Callable, Dict[str, Any]]],
 ) -> ps.DataFrame:
     """Function to filter the knowledge graph edges.
