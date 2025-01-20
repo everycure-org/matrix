@@ -74,10 +74,11 @@ def mock_multiple_pipelines():
         yield mock
 
 
-def test_check_dependencies(mock_run_subprocess: None) -> None:
+@pytest.mark.parametrize(("verbose", "run_from_gh"), [(True, True), (True, False), (False, True), (False, False)])
+def test_check_dependencies(mock_run_subprocess: None, verbose: bool, run_from_gh: bool) -> None:
     mock_run_subprocess.return_value.returncode = 0
     mock_run_subprocess.return_value.stdout = "active_account"
-    check_dependencies(verbose=True, run_from_gh=False)
+    check_dependencies(verbose=verbose, run_from_gh=run_from_gh)
     assert mock_run_subprocess.call_count > 0
 
 
