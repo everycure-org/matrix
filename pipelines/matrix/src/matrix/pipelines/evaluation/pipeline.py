@@ -60,7 +60,6 @@ def _create_core_stability_pipeline(fold_main: str, fold_to_compare: str, evalua
                     outputs=f"evaluation.fold_{fold_main}.fold_{fold_to_compare}.{evaluation}.model_stability_output.pairs@pandas",
                     name=f"create_{fold_main}_{fold_to_compare}_{evaluation}_evaluation_pairs",
                 ),
-                # TODO fix model ocnvention
                 ArgoNode(
                     func=nodes.evaluate_stability_predictions,
                     inputs=[
