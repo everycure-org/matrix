@@ -150,7 +150,6 @@ def create_pipeline(**kwargs) -> Pipeline:
                     inputs=[
                         "integration.prm.prefiltered_nodes",
                         "integration.prm.unified_edges",
-                        "integration.raw.biolink.predicates",
                         "params:integration.filtering.edge_filters",
                     ],
                     outputs="integration.prm.filtered_edges",
