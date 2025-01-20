@@ -9,9 +9,6 @@ metadata:
   namespace: argo-workflows
   generateName: test-data-release-trigger-
   labels:
-    run: test-trigger-for-data-release-run
-    username: emil
-    pipeline_name: None
     release_version: v0.0.1-release-test
     git_sha: git_sha_placeholder
     trigger_release: 'True'
