@@ -18,7 +18,7 @@ module "project_iam_bindings" {
     "roles/ml.admin"                       = local.tech_team_group
     "roles/aiplatform.admin"               = local.tech_team_group
     "roles/ml.developer"                   = local.tech_team_group
-    "roles/artifactregistry.writer"        = local.tech_team_group
+    "roles/artifactregistry.writer"        = flatten(local.tech_team_group, [local.matrix_all_group])
     "roles/storage.objectCreator"          = local.tech_team_group
     "roles/storage.objectUser"             = local.tech_team_group
     "roles/container.clusterAdmin"         = local.tech_team_group
