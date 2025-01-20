@@ -5,8 +5,16 @@ import pandas as pd
 import pyspark.sql as ps
 import pyspark.sql.functions as F
 import pyspark.sql.functions as f
+from bmt import toolkit
+
+tk = toolkit.Toolkit()
 
 logger = logging.getLogger(__name__)
+
+
+def get_ancestors_for_category_delimited(category: str, delimiter: str = "\u01c2") -> str:
+    output = tk.get_ancestors(category, formatted=True)
+    return output
 
 
 def biolink_deduplicate_edges(edges_df: ps.DataFrame, biolink_predicates: ps.DataFrame):
@@ -29,13 +37,9 @@ def biolink_deduplicate_edges(edges_df: ps.DataFrame, biolink_predicates: ps.Dat
         Deduplicated dataframe
     """
     # Enrich edges with path to predicates in biolink hierarchy
-    edges_df = edges_df.join(
-        convert_biolink_hierarchy_json_to_df(biolink_predicates, "predicate", convert_to_pascal_case=False),
-        on="predicate",
-        how="left",
-    )
+    edges_df = edges_df.withColumn("parents", F.array(F.udf(get_ancestors_for_category_delimited)(F.col("predicate"))))
 
-    # Compute self join
+    # Self join to find edges that are redundant
     res = (
         edges_df.alias("A")
         .join(
@@ -53,7 +57,6 @@ def biolink_deduplicate_edges(edges_df: ps.DataFrame, biolink_predicates: ps.Dat
         .select("A.*")
         .drop("parents")
     )
-
     return res
 
 
