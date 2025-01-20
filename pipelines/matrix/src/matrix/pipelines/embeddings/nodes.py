@@ -4,15 +4,15 @@ from typing import Any, Dict, List
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import pandera
 import pyspark.sql as ps
+import pyspark.sql.types as T
 import seaborn as sns
 from graphdatascience import GraphDataScience
-from pandera.pyspark import DataFrameModel, Field
 from pyspark.ml.functions import array_to_vector, vector_to_array
 from tenacity import retry, stop_after_attempt, wait_exponential
 
 from matrix.inject import inject_object, unpack_params
+from matrix.utils.pa_utils import Column, DataFrameSchema, check_output
 
 from .encoders import AttributeEncoder
 from .graph_algorithms import GDSGraphAlgorithm
@@ -40,16 +40,18 @@ class GraphDS(GraphDataScience):
         self.set_database(database)
 
 
-class IngestedNodesSchema(DataFrameModel):
-    id: ps.types.StringType
-    label: ps.types.StringType
-    name: ps.types.StringType = Field(nullable=True)
-    property_keys: ps.types.ArrayType(ps.types.StringType())  # type: ignore
-    property_values: ps.types.ArrayType(ps.types.StringType())  # type: ignore
-    upstream_data_source: ps.types.ArrayType(ps.types.StringType())  # type: ignore
-
-
-@pandera.check_output(IngestedNodesSchema)
+@check_output(
+    schema=DataFrameSchema(
+        columns={
+            "id": Column(T.StringType(), nullable=False),
+            "label": Column(T.StringType(), nullable=False),
+            "name": Column(T.StringType(), nullable=True),
+            "property_keys": Column(T.ArrayType(T.StringType()), nullable=False),
+            "property_values": Column(T.ArrayType(T.StringType()), nullable=False),
+            "upstream_data_source": Column(T.ArrayType(T.StringType()), nullable=False),
+        }
+    )
+)
 def ingest_nodes(df: ps.DataFrame) -> ps.DataFrame:
     """Function to create Neo4J nodes.
 
@@ -197,18 +199,17 @@ async def compute_df_embeddings_async(df: pd.DataFrame, embedding_model) -> pd.D
     return df
 
 
-class EmbeddingSchema(DataFrameModel):
-    id: ps.types.StringType
-    embedding: ps.types.ArrayType(ps.types.FloatType(), True)  # type: ignore
-    pca_embedding: ps.types.ArrayType(ps.types.FloatType(), True)  # type: ignore
-
-    class Config:
-        strict = False
-        unique = ["id"]
-
-
-@pandera.check_output(EmbeddingSchema)
 @unpack_params()
+@check_output(
+    schema=DataFrameSchema(
+        columns={
+            "id": Column(T.StringType(), nullable=False),
+            "embedding": Column(T.ArrayType(T.FloatType()), nullable=False),
+            "pca_embedding": Column(T.ArrayType(T.FloatType()), nullable=False),
+        },
+        unique=["id"],
+    )
+)
 def reduce_embeddings_dimension(df: ps.DataFrame, transformer, input: str, output: str, skip: bool) -> ps.DataFrame:
     return reduce_dimension(df, transformer, input, output, skip)
 
@@ -405,37 +406,39 @@ def write_topological_embeddings(
     return {"success": "true"}
 
 
-class ExtractedTopologicalEmbeddingSchema(DataFrameModel):
-    id: ps.types.StringType
-    topological_embedding: ps.types.ArrayType(ps.types.FloatType(), True) = Field(nullable=True)  # type: ignore
-    pca_embedding: ps.types.ArrayType(ps.types.FloatType(), True) = Field(nullable=True)  # type: ignore
+def _cast_to_array(df, col: str) -> ps.DataFrame:
+    if isinstance(df.schema[col].dataType, ps.types.StringType):
+        return df.withColumn(
+            col, ps.functions.from_json(ps.functions.col(col), ps.types.ArrayType(ps.types.FloatType()))
+        )
 
-    class Config:
-        strict = False
-        unique = ["id"]
+    return df
 
 
-@pandera.check_output(ExtractedTopologicalEmbeddingSchema)
+@check_output(
+    schema=DataFrameSchema(
+        columns={
+            "id": Column(T.StringType(), nullable=False),
+            "topological_embedding": Column(T.ArrayType(T.FloatType()), nullable=False),
+            "pca_embedding": Column(T.ArrayType(T.FloatType()), nullable=False),
+        },
+        unique=["id"],
+    )
+)
 def extract_topological_embeddings(embeddings: ps.DataFrame, nodes: ps.DataFrame, string_col: str) -> ps.DataFrame:
     """Extract topological embeddings from Neo4j and write into BQ.
 
     Need a conditional statement due to Node2Vec writing topological embeddings as string. Raised issue in GDS client:
     https://github.com/neo4j/graph-data-science-client/issues/742#issuecomment-2324737372.
     """
-
-    if isinstance(embeddings.schema[string_col].dataType, ps.types.StringType):
-        print("converting embeddings to float")
-        embeddings = embeddings.withColumn(
-            string_col, ps.functions.from_json(ps.functions.col(string_col), ps.types.ArrayType(ps.types.FloatType()))
-        )
-
     x = (
         nodes.alias("nodes")
-        .join(embeddings.alias("embeddings"), on="id", how="left")
+        .join(embeddings.transform(_cast_to_array, string_col).alias("embeddings"), on="id", how="left")
         .select("nodes.*", "embeddings.pca_embedding", "embeddings.topological_embedding")
         .withColumn("pca_embedding", ps.functions.col("pca_embedding").cast("array<float>"))
         .withColumn("topological_embedding", ps.functions.col("topological_embedding").cast("array<float>"))
     )
+
     return x
 
 
