@@ -3,15 +3,13 @@ from datetime import datetime
 from typing import Dict, List, Tuple, Union
 
 import pandas as pd
-import pandera as pa
 import pyspark.sql as ps
 import pyspark.sql.functions as F
 from matrix.datasets.graph import KnowledgeGraph
 from matrix.inject import _extract_elements_in_list, inject_object
 from matrix.pipelines.modelling.model import ModelWrapper
 from matrix.pipelines.modelling.nodes import apply_transformers
-from pandera import DataFrameModel
-from pandera.typing import Series
+from matrix.utils.pa_utils import Column, DataFrameSchema, check_output
 from sklearn.impute._base import _BaseImputer
 from tqdm import tqdm
 
@@ -79,21 +77,21 @@ def _add_flag_columns(matrix: pd.DataFrame, known_pairs: pd.DataFrame, clinical_
     return matrix
 
 
-class TrialSchema(DataFrameModel):
-    source: Series[str]
-    target: Series[str]
-    is_known_positive: Series[bool]
-    is_known_negative: Series[bool]
-    trial_sig_better: Series[bool]
-    trial_non_sig_better: Series[bool]
-    trial_sig_worse: Series[bool]
-    trial_non_sig_worse: Series[bool]
-
-    class Config:
-        strict = False
-
-
-@pa.check_output(TrialSchema)
+@check_output(
+    schema=DataFrameSchema(
+        columns={
+            "source": Column(str, nullable=False),
+            "target": Column(str, nullable=False),
+            "is_known_positive": Column(bool, nullable=False),
+            "is_known_negative": Column(bool, nullable=False),
+            "trial_sig_better": Column(bool, nullable=False),
+            "trial_non_sig_better": Column(bool, nullable=False),
+            "trial_sig_worse": Column(bool, nullable=False),
+            "trial_non_sig_worse": Column(bool, nullable=False),
+        },
+        unique=["source", "target"],
+    )
+)
 @inject_object()
 def generate_pairs(
     known_pairs: pd.DataFrame,
