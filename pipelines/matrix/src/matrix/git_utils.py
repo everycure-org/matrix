@@ -37,5 +37,5 @@ def has_unpushed_commits() -> bool:
 
 
 def git_tag_exists(tag: str) -> bool:
-    result = subprocess.check_output(f"git tag --list {tag}", shell=True, text=True)
+    result = subprocess.check_output(f"git ls-remote --tags origin {tag}", shell=True, text=True)
     return tag in result

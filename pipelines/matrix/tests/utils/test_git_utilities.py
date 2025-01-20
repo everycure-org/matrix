@@ -42,7 +42,7 @@ def test_legal_branch_name_invalid(mock_get_branch, branch_name):
 @pytest.mark.parametrize(
     "tag, mock_return_val, expected_result",
     [
-        ("v1.0.0", "v1.0.0\n", True),
+        ("v0.2.5", "ccf50f5dec60f77b2ab0cf34c7125f923f724627\trefs/tags/v0.2.5\n", True),
         ("v2.0.0", "", False),
     ],
 )
