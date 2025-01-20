@@ -8,7 +8,7 @@ metadata:
     username: emil
     pipeline_name: None
     release_version: v0.0.1-release-test
-    git_sha: 7bea05fbb9a8c5e7eefe98daf2c8c7a53f66a4f0
+    git_sha: ba8c23b51a0290a57e9ceb52f472388925cbd12a
     trigger_release: True
 spec:
   serviceAccountName: data-release-service-account
