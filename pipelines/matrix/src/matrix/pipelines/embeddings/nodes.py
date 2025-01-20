@@ -2,26 +2,20 @@ import logging
 from typing import Any, Dict, List
 
 import matplotlib.pyplot as plt
-import pandas as pd
 import numpy as np
-
-import seaborn as sns
-
-from graphdatascience import GraphDataScience
-
-from pandera.pyspark import DataFrameModel
-from pandera.pyspark import Field
+import pandas as pd
 import pandera
-
 import pyspark.sql as ps
+import seaborn as sns
+from graphdatascience import GraphDataScience
+from pandera.pyspark import DataFrameModel, Field
 from pyspark.ml.functions import array_to_vector, vector_to_array
-
-from tenacity import retry, wait_exponential, stop_after_attempt
+from tenacity import retry, stop_after_attempt, wait_exponential
 
 from matrix.inject import inject_object, unpack_params
 
-from .graph_algorithms import GDSGraphAlgorithm
 from .encoders import AttributeEncoder
+from .graph_algorithms import GDSGraphAlgorithm
 
 logger = logging.getLogger(__name__)
 
@@ -49,7 +43,7 @@ class GraphDS(GraphDataScience):
 class IngestedNodesSchema(DataFrameModel):
     id: ps.types.StringType
     label: ps.types.StringType
-    name: ps.types.StringType
+    name: ps.types.StringType = Field(nullable=True)
     property_keys: ps.types.ArrayType(ps.types.StringType())  # type: ignore
     property_values: ps.types.ArrayType(ps.types.StringType())  # type: ignore
     upstream_data_source: ps.types.ArrayType(ps.types.StringType())  # type: ignore

@@ -8,6 +8,7 @@ fabricator.rtx_kg2:
       name:
         type: generate_unique_id
         prefix: name_
+        prob_null: 0.2
       all_names:string[]:
         type: faker
         provider: name
@@ -142,26 +143,12 @@ fabricator.rtx_kg2:
     num_rows: 20
     columns:
       curie: 
-        type: column_apply
-        list_of_values: [nodes.id:ID, nodes.category]
-        column_func: matrix.pipelines.fabricator.generators.filter_by_category
-        column_func_kwargs:
-          category: "biolink:Drug"
-        resize: True
-        seed: 6850
-      name: 
-        type: row_apply
-        list_of_values: [nodes.id:ID, nodes.name]
-        row_func: "lambda *args: args[1]"
-        resize: True
-        seed: 6850
-      single_ID: 
         type: row_apply
         list_of_values: [nodes.id:ID, nodes.name]
         row_func: "lambda *args: args[0]"
         resize: True
         seed: 6850
-      ID_Label: 
+      curie_label: 
         type: row_apply
         list_of_values: [nodes.id:ID, nodes.name]
         row_func: "lambda *args: args[1]"
@@ -197,20 +184,6 @@ fabricator.rtx_kg2:
   disease_list:
     num_rows: 30
     columns:
-      curie: 
-        type: column_apply
-        list_of_values: [nodes.id:ID, nodes.category]
-        column_func: matrix.pipelines.fabricator.generators.filter_by_category
-        column_func_kwargs:
-          category: "biolink:Disease"
-        resize: True
-        seed: 95690
-      name: 
-        type: row_apply
-        list_of_values: [nodes.id:ID, nodes.name]
-        row_func: "lambda *args: args[1]"
-        resize: True
-        seed: 95690
       category_class: 
         type: row_apply
         list_of_values: [nodes.id:ID, nodes.name]
@@ -253,31 +226,47 @@ fabricator.rtx_kg2:
           - HIGH
           - MODERATE
         
+fabricator.clinical_trials:
+  nodes:
+    num_rows: 30
+    columns:
+      curie:
+        type: row_apply
+        list_of_values: [rtx_nodes.id:ID, rtx_nodes.name]
+        row_func: "lambda *args: args[0]"
+        resize: True
+        seed: 40599
+      name:
+        type: row_apply
+        list_of_values: [rtx_nodes.id:ID, rtx_nodes.name]
+        row_func: "lambda *args: args[1]"
+        resize: True
+        seed: 40599
 
-  clinical_trials:
+  edges:
     num_rows: 50
     columns:
-      drug_kg_curie:
+      drug_curie:
         type: row_apply
-        list_of_values: [drug_list.curie, drug_list.name]
+        list_of_values: [nodes.curie, nodes.name]
         row_func: "lambda *args: args[0]"
         resize: True
         seed: 40599
       drug_name:
         type: row_apply
-        list_of_values: [drug_list.curie, drug_list.name]
+        list_of_values: [nodes.curie, nodes.name]
         row_func: "lambda *args: args[1]"
         resize: True
         seed: 40599
-      disease_kg_curie:
+      disease_curie:
         type: row_apply
-        list_of_values: [disease_list.curie, disease_list.name]
+        list_of_values: [nodes.curie, nodes.name]
         row_func: "lambda *args: args[0]"
         resize: True
         seed: 30599
       disease_name:
         type: row_apply
-        list_of_values: [disease_list.curie, disease_list.name]
+        list_of_values: [nodes.curie, nodes.name]
         row_func: "lambda *args: args[1]"
         resize: True
         seed: 30599
@@ -450,11 +439,11 @@ fabricator.ec_medical_kg:
   nodes:
     num_rows: 10
     columns:
-      id: 
+      normalized_curie: 
         type: generate_unique_id
         prefix: ec_medical_node_
     
-      name:
+      label:
         type: faker
         provider: name
 
@@ -462,34 +451,46 @@ fabricator.ec_medical_kg:
         type: faker
         provider: sentence
 
-      category:
-        type: generate_values
-        sample_values:
-          - biolink:Drug
-          - biolink:Disease
+      type:
+          type: generate_values
+          sample_values:
+            - biolink:Drug
+            - biolink:Disease
+            - biolink:Gene
+            - biolink:ChemicalSubstance
+            - biolink:Protein
+      types:
+          type: row_apply
+          list_of_values: [nodes.type]
+          # NOTE: This ensures the full path from root to child is added in the categories column
+          row_func: matrix.pipelines.fabricator.generators.get_ancestors_for_category_delimited
+          row_func_kwargs:
+            delimiter: "\u01c2"
+          resize: True
+          seed: 590590
 
   edges:
     num_rows: 50
     columns:
-      subject:
+      SourceId:
         type: row_apply
-        list_of_values: [nodes.id]
+        list_of_values: [nodes.normalized_curie]
         row_func: "lambda *args: args[0]"
         resize: True
         seed: 340590
       
-      object:
+      TargetId:
         type: row_apply
-        list_of_values: [nodes.id]
+        list_of_values: [nodes.normalized_curie]
         row_func: "lambda *args: args[0]"
         resize: True
         seed: 57000
       
-      predicate:
+      Label:
         type: generate_values
         sample_values:
-          - biolink:treats
-          - biolink:interacts_with
+          - treats
+          - interacts_with
       
       knowledge_source:
         type: faker
