@@ -22,13 +22,11 @@ logger = logging.getLogger(__name__)
     DataFrameSchema(
         columns={
             "id": Column(T.StringType(), nullable=False),
-            "name": Column(T.StringType(), nullable=True),
-            "description": Column(T.StringType(), nullable=True),
         },
         unique=["id"],
     ),
 )
-def transform_nodes(transformer, nodes_df: ps.DataFrame, **kwargs):
+def transform_nodes(transformer, nodes_df: ps.DataFrame, **kwargs) -> ps.DataFrame:
     return transformer.transform_nodes(nodes_df=nodes_df, **kwargs)
 
 
@@ -43,7 +41,7 @@ def transform_nodes(transformer, nodes_df: ps.DataFrame, **kwargs):
         unique=["subject", "predicate", "object"],
     ),
 )
-def transform_edges(transformer, edges_df: ps.DataFrame, **kwargs):
+def transform_edges(transformer, edges_df: ps.DataFrame, **kwargs) -> ps.DataFrame:
     return transformer.transform_edges(edges_df=edges_df, **kwargs)
 
 

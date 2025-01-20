@@ -48,8 +48,10 @@ class ClinicalTrialsTransformer(GraphTransformer):
         # fmt: off
         df = (
             edges_df
-            .withColumn("subject",                       f.col("drug_curie"))
-            .withColumn("object",                        f.col("disease_curie"))
+            .withColumn("subject", f.col("drug_curie"))
+            .withColumn("object", f.col("disease_curie"))
+            # NOTE: Setting predicate such that it is unique
+            .withColumn("predicate", f.lit("clinical_trails"))
             .filter((f.col("subject").isNotNull()) & (f.col("object").isNotNull()))
         )
         return df

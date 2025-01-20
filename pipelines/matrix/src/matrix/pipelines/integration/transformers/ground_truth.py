@@ -29,5 +29,6 @@ class GroundTruthTransformer(GraphTransformer):
             .withColumn(
                 "y", f.when(f.col("indication").cast("boolean"), 1).when(f.col("contraindication").cast("boolean"), 0)
             )
+            .withColumn("predicate", f.lit("clinical_trails"))
         )
         return df

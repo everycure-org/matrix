@@ -87,7 +87,7 @@ def check_output(schema: DataFrameSchema, df_name: Optional[str] = None, pass_co
             if pass_columns:
                 output = func(*args, **kwargs, cols=list(schema.columns.keys()))
             else:
-                output = func(schema.columns.keys(), *args, **kwargs)
+                output = func(*args, **kwargs)
 
             if df_name is not None:
                 df = output[df_name]
