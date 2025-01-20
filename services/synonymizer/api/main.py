@@ -1,5 +1,6 @@
 import logging
 import sys
+
 from fastapi import FastAPI
 
 from api.modules.synonymize.routers import router as synonimze_router
