@@ -40,16 +40,14 @@ def test_legal_branch_name_invalid(mock_get_branch, branch_name):
 
 
 @pytest.mark.parametrize(
-    "tag, mock_stdout, expected_result",
+    "tag, mock_return_val, expected_result",
     [
         ("v1.0.0", "v1.0.0\n", True),
         ("v2.0.0", "", False),
     ],
 )
-@patch("subprocess.run")
-def test_git_tag_exists(mock_subprocess_run, tag, mock_stdout, expected_result):
-    mock_result = MagicMock()
-    mock_result.stdout = mock_stdout
-    mock_subprocess_run.return_value = mock_result
+@patch("subprocess.check_output")
+def test_git_tag_exists(mock_subprocess, tag, mock_return_val, expected_result):
+    mock_subprocess.return_value = mock_return_val
     result = git_tag_exists(tag)
-    assert result == expected_result
+    assert result is expected_result
