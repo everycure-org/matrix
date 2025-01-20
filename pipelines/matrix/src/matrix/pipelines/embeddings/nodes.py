@@ -405,6 +405,15 @@ def write_topological_embeddings(
     return {"success": "true"}
 
 
+def _cast_to_array(df, col: str) -> ps.DataFrame:
+    if isinstance(df.schema[col].dataType, ps.types.StringType):
+        return df.withColumn(
+            col, ps.functions.from_json(ps.functions.col(col), ps.types.ArrayType(ps.types.FloatType()))
+        )
+
+    return df
+
+
 @check_output(
     schema=DataFrameSchema(
         columns={
@@ -421,20 +430,14 @@ def extract_topological_embeddings(embeddings: ps.DataFrame, nodes: ps.DataFrame
     Need a conditional statement due to Node2Vec writing topological embeddings as string. Raised issue in GDS client:
     https://github.com/neo4j/graph-data-science-client/issues/742#issuecomment-2324737372.
     """
-
-    if isinstance(embeddings.schema[string_col].dataType, ps.types.StringType):
-        print("converting embeddings to float")
-        embeddings = embeddings.withColumn(
-            string_col, ps.functions.from_json(ps.functions.col(string_col), ps.types.ArrayType(ps.types.FloatType()))
-        )
-
     x = (
         nodes.alias("nodes")
-        .join(embeddings.alias("embeddings"), on="id", how="left")
+        .join(embeddings.transform(_cast_to_array, string_col).alias("embeddings"), on="id", how="left")
         .select("nodes.*", "embeddings.pca_embedding", "embeddings.topological_embedding")
         .withColumn("pca_embedding", ps.functions.col("pca_embedding").cast("array<float>"))
         .withColumn("topological_embedding", ps.functions.col("topological_embedding").cast("array<float>"))
     )
+
     return x
 
 
