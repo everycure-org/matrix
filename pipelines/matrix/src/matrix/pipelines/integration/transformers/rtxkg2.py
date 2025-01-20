@@ -1,13 +1,9 @@
 import logging
 from typing import Dict
 
-import pandera as pa
 import pyspark.sql as ps
 import pyspark.sql.functions as f
 import pyspark.sql.types as T
-from pandera.pyspark import DataFrameModel
-
-from matrix.schemas.knowledge_graph import KGEdgeSchema, KGNodeSchema, cols_for_schema
 
 from .transformer import GraphTransformer
 
@@ -18,7 +14,6 @@ RTX_SEPARATOR = "\u01c2"
 
 
 class RTXTransformer(GraphTransformer):
-    @pa.check_output(KGNodeSchema)
     def transform_nodes(self, nodes_df: ps.DataFrame, **kwargs) -> ps.DataFrame:
         """Transform RTX KG2 nodes to our target schema.
 
@@ -29,7 +24,7 @@ class RTXTransformer(GraphTransformer):
             Transformed DataFrame.
         """
         # fmt: off
-        df =(
+        return (
             nodes_df
             .withColumn("upstream_data_source",              f.array(f.lit("rtxkg2")))
             .withColumn("labels",                            f.split(f.col(":LABEL"), RTX_SEPARATOR))
@@ -38,29 +33,9 @@ class RTXTransformer(GraphTransformer):
             .withColumn("publications",                      f.split(f.col("publications:string[]"), RTX_SEPARATOR).cast(T.ArrayType(T.StringType())))
             .withColumn("international_resource_identifier", f.col("iri"))
             .withColumnRenamed("id:ID", "id")
-            .select(*cols_for_schema(KGNodeSchema))
         )
-        # Some SILC nodes will get filtered out as they are assigned NamedThing category
-        # We need to manually change the category so that they are not filtered out
-        chemical_ids = ['OMIM:MTHU008082', 'UMLS:C0311400', 'EFO:0004501',
-                    'LOINC:LP14446-6', 'OMIM:MTHU000104', 'LOINC:LP89782-4']
-        df = df.withColumn(
-            "all_categories",
-            f.when(
-                f.col("id").isin(chemical_ids),
-                f.array_union(f.col("all_categories"), f.array(f.lit("biolink:Case")))
-            ).otherwise(f.col("all_categories"))
-        ).withColumn(
-            "category",
-            f.when(
-                f.col("id").isin(chemical_ids),
-                f.lit("biolink:Case")
-            ).otherwise(f.col("category"))
-        )
-        return df
         # fmt: on
 
-    @pa.check_output(KGEdgeSchema)
     def transform_edges(
         self,
         edges_df: ps.DataFrame,
@@ -89,22 +64,10 @@ class RTXTransformer(GraphTransformer):
             .withColumn("subject_direction_qualifier",   f.lit(None).cast(T.StringType())) #not present in RTX KG2 at this time
             .withColumn("object_aspect_qualifier",       f.lit(None).cast(T.StringType())) #not present in RTX KG2 at this time
             .withColumn("object_direction_qualifier",    f.lit(None).cast(T.StringType())) #not present in RTX KG2 at this time
-            .select(*cols_for_schema(KGEdgeSchema))
         ).transform(filter_semmed, curie_to_pmids, **semmed_filters)
         # fmt: on
 
 
-class CurieToPMIDsSchema(DataFrameModel):
-    """Schema for a curie to pmids mapping."""
-
-    curie: T.StringType
-
-    class Config:
-        strict = False
-        unique = ["curie"]
-
-
-@pa.check_input(CurieToPMIDsSchema, obj_getter="curie_to_pmids")
 def filter_semmed(
     edges_df: ps.DataFrame,
     curie_to_pmids: ps.DataFrame,
