@@ -17,7 +17,7 @@ def get_ancestors_for_category_delimited(category: str, delimiter: str = "\u01c2
     return output
 
 
-def biolink_deduplicate_edges(edges_df: ps.DataFrame, biolink_predicates: ps.DataFrame):
+def biolink_deduplicate_edges(edges_df: ps.DataFrame):
     """Function to deduplicate biolink edges.
 
     Knowledge graphs in biolink format may contain multiple edges between nodes. Where
