@@ -47,11 +47,6 @@ jobs:
           git config --global user.name "All of us at Every Cure"
           git config --global push.autosetupremote true
 
-      - name: Discover Latest Official Release on GitHub
-        run: |
-          latest_official_release=$(gh release list --jq '.[0].tagName' --json tagName --order desc)
-          echo "latest_official_release=${latest_official_release}" >> "$GITHUB_ENV"
-
       - name: Tag the commit from which the data release was triggered
         run: |
           # Create an annotated tag, so that we can push it easily with the files using `follow-tags`.
@@ -89,6 +84,11 @@ jobs:
           git add "${FILENAME}" && \
           git commit -m "added release info json" && \
           git push
+
+      - name: Discover Latest Official Release on GitHub
+        run: |
+          latest_official_release=$(gh release list --jq '.[0].tagName' --json tagName --order desc)
+          echo "latest_official_release=${latest_official_release}" >> "$GITHUB_ENV"
 
       - name: Detect bump type
         working-directory: docs
