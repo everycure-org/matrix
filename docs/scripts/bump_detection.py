@@ -1,3 +1,5 @@
+"""Script used in conjunction with the CICD system to flag the type of release."""
+
 import os
 
 import semver
@@ -23,8 +25,7 @@ def bump_type():
     else:
         bump_type = "intermediate"
 
-    with open(os.getenv("GITHUB_ENV"), "a") as env_file:
-        env_file.write(f"bump_type={bump_type}\n")
+    print(f"{bump_type=}")
 
 
 if __name__ == "__main__":
