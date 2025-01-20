@@ -7,7 +7,7 @@ locals {
 
 module "project_iam_bindings" {
   source   = "terraform-google-modules/iam/google//modules/projects_iam"
-  projects = [module.bootstrap_data.content.project_id]
+  projects = [var.project_id]
   version  = "~> 8.0"
 
   mode = "additive"

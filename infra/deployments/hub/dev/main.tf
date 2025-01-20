@@ -6,7 +6,7 @@ module "bootstrap_data" {
 module "compute_cluster" {
   source            = "../../../modules/stacks/compute_cluster/"
   default_region    = var.default_region
-  project_id        = module.bootstrap_data.content.project_id
+  project_id        = var.project_id
   network           = module.bootstrap_data.content.network.network_name
   subnetwork        = module.bootstrap_data.content.k8s_config.subnetwork
   pod_ip_range      = module.bootstrap_data.content.k8s_config.pod_ip_range
