@@ -2,7 +2,7 @@ random_state: 111
 
 neo4j:
   # these get overwritten in prod through the env variables, in base we default to 2nd param
-  host: ${oc.env:NEO4J_HOST,bolt+ssc://127.0.0.1:7687} # NOTE: Passing in bolt+s as our local Neo4J has SSL enabled
+  host: ${oc.env:NEO4J_HOST,bolt://127.0.0.1:7687}
   user: ${oc.env:NEO4J_USER,neo4j}
   password: ${oc.env:NEO4J_PASSWORD,admin}
 
@@ -38,7 +38,7 @@ data_sources:
     # allows for downloading an artifact by its id. Get the artifact id
     # of the latest release as follows:
     # curl -X GET -H "Content-Type: application/json" -H "Authorization: token PAT" -H "Accept: application/vnd.github.v3.raw" https://api.github.com/repos/everycure-org/matrix-drug-list/releases | jq ".[0].assets | map(select(.name == \"drugList.tsv\"))[0] | .id"
-    version: 200891683
+    version: 214074059
   ec-disease-list:
     # NOTE: This is currently the artifact id, as the GitHub API only
     # allows for downloading an artifact by its id. Get the artifact id
