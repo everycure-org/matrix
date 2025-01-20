@@ -1,7 +1,8 @@
 # This is a dummy workflow used only as a trigger for the build-data-release-eventsource.
 # It lets us quickly test our data-release feature with instant feedback loop.
 # It simulates the successful completion of the data release pipeline.
-# It can be triggered by: argo submit TestDataReleaseWorkflow.yaml
+# It can be triggered by:
+#argo submit TestDataReleaseWorkflow.yaml --labels git_sha=$(git rev-parse HEAD)
 apiVersion: argoproj.io/v1alpha1
 kind: Workflow
 metadata:
@@ -12,7 +13,7 @@ metadata:
     username: emil
     pipeline_name: None
     release_version: v0.0.1-release-test
-    git_sha: ba8c23b51a0290a57e9ceb52f472388925cbd12a
+    git_sha: git_sha_placeholder
     trigger_release: 'True'
 spec:
   entrypoint: echo-hello
