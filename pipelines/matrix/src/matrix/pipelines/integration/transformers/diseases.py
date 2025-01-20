@@ -1,10 +1,7 @@
 import logging
 
-import pandera.pyspark as pa
 import pyspark.sql.functions as f
 from pyspark.sql import DataFrame
-
-from matrix.schemas.knowledge_graph import NodeSchema
 
 from .transformer import GraphTransformer
 
@@ -12,7 +9,6 @@ logger = logging.getLogger(__name__)
 
 
 class DiseasesTransformer(GraphTransformer):
-    @pa.check_output(NodeSchema)
     def transform_nodes(self, nodes_df: DataFrame, **kwargs) -> DataFrame:
         """Transform nodes to our target schema.
 

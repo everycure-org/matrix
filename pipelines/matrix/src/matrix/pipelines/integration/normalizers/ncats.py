@@ -1,6 +1,6 @@
 import asyncio
 import logging
-from abc import ABC, abstractmethod
+from abc import ABC
 from typing import Any, Dict
 
 import aiohttp
@@ -12,16 +12,9 @@ from tenacity import (
     wait_exponential,
 )
 
+from .normalizer import Normalizer
+
 logger = logging.getLogger(__name__)
-
-
-class Normalizer(ABC):
-    """Base class to represent normalizer strategies."""
-
-    @abstractmethod
-    async def apply(df: pd.DataFrame, **kwargs) -> pd.DataFrame:
-        """Function to apply normalization."""
-        ...
 
 
 class NCATSNodeNormalizer(Normalizer):
