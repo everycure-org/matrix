@@ -71,7 +71,7 @@ DYNAMIC_PIPELINES_MAPPING = generate_dynamic_pipeline_mapping(
         "stability": [
             {"stability_name": "stability_overlap"},
             {"stability_name": "stability_ranking"},
-            # {"stability_name": "rank_commonality"},
+            {"stability_name": "rank_commonality"},
         ],
     }
 )

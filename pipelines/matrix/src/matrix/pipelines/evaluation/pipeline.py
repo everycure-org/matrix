@@ -46,34 +46,51 @@ def _create_evaluation_fold_pipeline(evaluation: str, fold: Union[str, int]) -> 
     )
 
 
-def _create_stability_pipeline(model_1: str, model_2: str, evaluation: str) -> Pipeline:
-    return pipeline(
-        [
-            ArgoNode(
-                func=nodes.generate_overlapping_dataset,
-                inputs=[
-                    f"params:evaluation.{evaluation}.evaluation_options.generator",
-                    f"matrix_generation.fold_{model_1}.model_output.sorted_matrix_predictions@pandas",
-                    f"matrix_generation.fold_{model_2}.model_output.sorted_matrix_predictions@pandas",
-                ],
-                outputs=f"evaluation.fold_{model_1}.fold_{model_2}.{evaluation}.model_stability_output.pairs@pandas",
-                name=f"create_{model_1}_{model_2}_{evaluation}_evaluation_pairs",
-            ),
-            # TODO fix model ocnvention
-            ArgoNode(
-                func=nodes.evaluate_stability_predictions,
-                inputs=[
-                    f"evaluation.fold_{model_1}.fold_{model_2}.{evaluation}.model_stability_output.pairs@pandas",
-                    f"params:evaluation.{evaluation}.evaluation_options.stability",
-                    f"matrix_generation.fold_{model_1}.model_output.sorted_matrix_predictions@pandas",
-                    f"matrix_generation.fold_{model_2}.model_output.sorted_matrix_predictions@pandas",
-                ],
-                outputs=f"evaluation.{model_1}.{model_2}.{evaluation}.model_stability_output.result",
-                name=f"calculate_{model_1}_{model_2}_{evaluation}",
-            ),
-        ],
-        tags=["stability-metrics"],
-    )
+def _create_core_stability_pipeline(model_1: str, model_2: str, evaluation: str) -> Pipeline:
+    if evaluation != "rank_commonality":
+        core_pipeline = pipeline(
+            [
+                ArgoNode(
+                    func=nodes.generate_overlapping_dataset,
+                    inputs=[
+                        f"params:evaluation.{evaluation}.evaluation_options.generator",
+                        f"matrix_generation.fold_{model_1}.model_output.sorted_matrix_predictions@pandas",
+                        f"matrix_generation.fold_{model_2}.model_output.sorted_matrix_predictions@pandas",
+                    ],
+                    outputs=f"evaluation.fold_{model_1}.fold_{model_2}.{evaluation}.model_stability_output.pairs@pandas",
+                    name=f"create_{model_1}_{model_2}_{evaluation}_evaluation_pairs",
+                ),
+                # TODO fix model ocnvention
+                ArgoNode(
+                    func=nodes.evaluate_stability_predictions,
+                    inputs=[
+                        f"evaluation.fold_{model_1}.fold_{model_2}.{evaluation}.model_stability_output.pairs@pandas",
+                        f"params:evaluation.{evaluation}.evaluation_options.stability",
+                        f"matrix_generation.fold_{model_1}.model_output.sorted_matrix_predictions@pandas",
+                        f"matrix_generation.fold_{model_2}.model_output.sorted_matrix_predictions@pandas",
+                    ],
+                    outputs=f"evaluation.fold_{model_1}.fold_{model_2}.{evaluation}.model_stability_output.result",
+                    name=f"calculate_{model_1}_{model_2}_{evaluation}",
+                ),
+            ],
+            tags=["stability-metrics"],
+        )
+    else:
+        core_pipeline = pipeline(
+            [
+                ArgoNode(
+                    func=nodes.calculate_rank_commonality,
+                    inputs=[
+                        f"evaluation.fold_{model_1}.fold_{model_2}.stability_ranking.model_stability_output.result",
+                        f"evaluation.fold_{model_1}.fold_{model_2}.stability_overlap.model_stability_output.result",
+                    ],
+                    outputs=f"evaluation.fold_{model_1}.fold_{model_2}.{evaluation}.model_stability_output.result",
+                    name=f"calculate_{model_1}_{model_2}_{evaluation}",
+                ),
+            ],
+            tags=["stability-metrics"],
+        )
+    return core_pipeline
 
 
 # def create_model_pipeline(model: str, evaluation_names: List[str], n_cross_val_folds: int) -> Pipeline:
@@ -187,7 +204,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                     continue
                 pipelines.append(
                     pipeline(
-                        _create_stability_pipeline(fold_main, fold_to_compare, stability["stability_name"]),
+                        _create_core_stability_pipeline(fold_main, fold_to_compare, stability["stability_name"]),
                     )
                 )
 

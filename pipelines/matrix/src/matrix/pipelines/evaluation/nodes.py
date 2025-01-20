@@ -215,3 +215,34 @@ def generate_overlapping_dataset(generator: DrugDiseasePairGenerator, *matrices:
         Evaluation report
     """
     return generator.generate(matrices)
+
+
+def calculate_rank_commonality(ranking_output: dict, commonality_output: dict) -> dict:
+    """Function to calculate rank commonality (custom metric).
+
+    Args:
+        ranking_output: ranking output
+        commonality_output: commonality output
+
+    Returns:
+        rank commonality output
+    """
+    rank_commonality_output = {}
+    ranking_output = {k: v for k, v in ranking_output.items() if "spearman" in k}
+    n_ranking_values = [int(n.split("_")[-1]) for n in ranking_output.keys() if n.split("_")[-1]]
+    n_commonality_values = [int(n.split("_")[-1]) for n in commonality_output.keys() if n.split("_")[-1]]
+    n_values = list(set(n_ranking_values) & set(n_commonality_values))
+    for i in n_values:
+        r_k = ranking_output[f"spearman_at_{i}"]["correlation"]
+        c_k = commonality_output[f"commonality_at_{i}"]
+        if r_k + c_k == 0:
+            s_f1 = None
+        elif pd.isnull(r_k) | pd.isnull(c_k):
+            s_f1 = None
+        else:
+            s_f1 = (2 * r_k * c_k) / (r_k + c_k)
+        rank_commonality_output[f"rank_commonality_at_{i}"] = {
+            "score": s_f1,
+            "pvalue": ranking_output[f"spearman_at_{i}"]["pvalue"],
+        }
+    return json.loads(json.dumps(rank_commonality_output, default=float))
