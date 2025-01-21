@@ -51,9 +51,8 @@ def biolink_deduplicate_edges(r_edges_df: ps.DataFrame):
     edges_df = r_edges_df.withColumn(
         "parents", F.udf(get_ancestors_for_category_delimited, T.ArrayType(T.StringType()))(F.col("predicate"))
     )
-
     # Self join to find edges that are redundant
-    res = (
+    duplicates = (
         edges_df.alias("A")
         .join(
             edges_df.alias("B"),
@@ -66,11 +65,18 @@ def biolink_deduplicate_edges(r_edges_df: ps.DataFrame):
         .withColumn(
             "subpath", f.col("B.parents").isNotNull() & f.expr("forall(A.parents, x -> array_contains(B.parents, x))")
         )
-        .filter(~f.col("subpath"))
+        .filter(f.col("subpath"))
         .select("A.*")
-        .drop("parents")
+        .select("subject", "object", "predicate")
+        .distinct()
+        .withColumn("is_redundant", f.lit(True))
     )
-    return res
+    return (
+        edges_df.alias("edges")
+        .join(duplicates, on=["subject", "object", "predicate"], how="left")
+        .filter(F.col("is_redundant").isNull())
+        .select("edges.*")
+    )
 
 
 def convert_biolink_hierarchy_json_to_df(biolink_predicates, col_name: str, convert_to_pascal_case: bool):
