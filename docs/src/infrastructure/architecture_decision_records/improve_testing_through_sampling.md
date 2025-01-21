@@ -78,7 +78,7 @@ The inputs of the sampling pipeline are the integrated knowledge graph nodes and
 
 A sample can be created by running the command `kedro run -p create_sample`, this command will populate the sample environment with the sampled data.
 
-To run the pipelines with sampled data, we can run the command `kedro run -e sample -p sample` which runs the the pipeline from the embeddings stage.
+To run the pipelines with sampled data, we can run the command `kedro run -e sample -p test_sample` which runs the the pipeline from the embeddings stage.
 
 ## Consequences
 
