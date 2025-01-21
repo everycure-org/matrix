@@ -114,8 +114,8 @@ class HypergeomAtN(NamedFunction):
             rank_set2 = rank_set2.head(self.n)
 
             # Get ranks for common items
-            ranks1 = set([rank_set1[rank_set1.id == item].rank for item in common_items])
-            ranks2 = set([rank_set2[rank_set2.id == item].rank for item in common_items])
+            ranks1 = set([rank_set1[rank_set1.id == item]["rank"].values.tolist()[0] for item in common_items])
+            ranks2 = set([rank_set2[rank_set2.id == item]["rank"].values.tolist()[0] for item in common_items])
 
             # Overlap
             overlap = len(ranks1 & ranks2)
@@ -158,9 +158,8 @@ class SpearmanAtN(NamedFunction):
             rank_set1 = rank_set1.head(self.n)
             rank_set2 = rank_set2.head(self.n)
             # Get ranks for common items
-            ranks1 = [rank_set1[rank_set1.id == item].rank for item in common_items]
-            ranks2 = [rank_set2[rank_set2.id == item].rank for item in common_items]
-
+            ranks1 = [rank_set1[rank_set1.id == item]["rank"].values for item in common_items]
+            ranks2 = [rank_set2[rank_set2.id == item]["rank"].values for item in common_items]
             if len(ranks1) > 1:  # Ensure there are enough pairs to calculate correlation
                 out = spearmanr(ranks1, ranks2)
                 return {"correlation": out.correlation, "pvalue": out.pvalue}
