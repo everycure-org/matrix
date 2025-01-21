@@ -2,14 +2,34 @@ import logging
 from typing import Any, Dict, List, Optional
 
 import pandas as pd
+import pyspark.sql as ps
 import pyspark.sql.functions as F
 import pyspark.sql.functions as f
-import pyspark.sql as ps
+from bmt import toolkit
+from pyspark.sql import types as T
+
+tk = toolkit.Toolkit()
 
 logger = logging.getLogger(__name__)
 
 
-def biolink_deduplicate_edges(edges_df: ps.DataFrame, biolink_predicates: ps.DataFrame):
+def get_ancestors_for_category_delimited(category: str, mixin: bool = False) -> List[str]:
+    """Wrapper function to get ancestors for a category. The arguments were used to match the args used by Chunyu
+    https://biolink.github.io/biolink-model-toolkit/index.html#bmt.toolkit.Toolkit.get_ancestors
+
+    Args:
+        category: Category to get ancestors for
+        formatted: Whether to format element names as curies
+        mixin: Whether to include mixins
+        reflexive: Whether to include query element in the list
+    Returns:
+        List of ancestors in a string format
+    """
+    output = tk.get_ancestors(category, mixin=mixin, formatted=True)
+    return output
+
+
+def biolink_deduplicate_edges(r_edges_df: ps.DataFrame):
     """Function to deduplicate biolink edges.
 
     Knowledge graphs in biolink format may contain multiple edges between nodes. Where
@@ -24,19 +44,15 @@ def biolink_deduplicate_edges(edges_df: ps.DataFrame, biolink_predicates: ps.Dat
 
     Args:
         edges_df: dataframe with biolink edges
-        biolink_predicates: JSON object with biolink predicates
     Returns:
         Deduplicated dataframe
     """
     # Enrich edges with path to predicates in biolink hierarchy
-    edges_df = edges_df.join(
-        convert_biolink_hierarchy_json_to_df(biolink_predicates, "predicate", convert_to_pascal_case=False),
-        on="predicate",
-        how="left",
+    edges_df = r_edges_df.withColumn(
+        "parents", F.udf(get_ancestors_for_category_delimited, T.ArrayType(T.StringType()))(F.col("predicate"))
     )
-
-    # Compute self join
-    res = (
+    # Self join to find edges that are redundant
+    duplicates = (
         edges_df.alias("A")
         .join(
             edges_df.alias("B"),
@@ -49,12 +65,18 @@ def biolink_deduplicate_edges(edges_df: ps.DataFrame, biolink_predicates: ps.Dat
         .withColumn(
             "subpath", f.col("B.parents").isNotNull() & f.expr("forall(A.parents, x -> array_contains(B.parents, x))")
         )
-        .filter(~f.col("subpath"))
+        .filter(f.col("subpath"))
         .select("A.*")
-        .drop("parents")
+        .select("subject", "object", "predicate")
+        .distinct()
+        .withColumn("is_redundant", f.lit(True))
     )
-
-    return res
+    return (
+        edges_df.alias("edges")
+        .join(duplicates, on=["subject", "object", "predicate"], how="left")
+        .filter(F.col("is_redundant").isNull())
+        .select("edges.*")
+    )
 
 
 def convert_biolink_hierarchy_json_to_df(biolink_predicates, col_name: str, convert_to_pascal_case: bool):
@@ -84,9 +106,11 @@ def determine_most_specific_category(nodes: ps.DataFrame, biolink_categories_df:
         biolink_categories_df, "category", convert_to_pascal_case=True
     )
 
-    nodes = (
-        nodes.withColumn("category", F.explode("all_categories"))
-        .join(labels_hierarchy, on="category", how="left")
+    # pre-calculate the mappping table of ID -> most specific category
+    mapping_table = nodes.select("id", "all_categories").withColumn("category", F.explode("all_categories"))
+
+    mapping_table = (
+        mapping_table.join(F.broadcast(labels_hierarchy), on="category", how="left")
         # some categories are not found in the biolink hierarchy
         # we deal with failed joins by setting their parents to [] == the depth as level 0 == chosen last
         .withColumn("parents", f.coalesce("parents", f.lit(f.array())))
@@ -94,7 +118,11 @@ def determine_most_specific_category(nodes: ps.DataFrame, biolink_categories_df:
         .withColumn("row_num", F.row_number().over(ps.Window.partitionBy("id").orderBy(F.col("depth").desc())))
         .filter(F.col("row_num") == 1)
         .drop("row_num")
+        .select("id", "category")
     )
+    # now we can join the mapping table back to the nodes
+    nodes = nodes.drop("category").join(mapping_table, on="id", how="left")
+
     return nodes
 
 def remove_rows_containing_category(nodes: ps.DataFrame, categories: List[str], column: str, **kwargs) -> ps.DataFrame:

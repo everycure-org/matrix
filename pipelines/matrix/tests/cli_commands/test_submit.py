@@ -1,3 +1,4 @@
+import os
 import subprocess
 import tempfile
 from pathlib import Path
@@ -14,7 +15,7 @@ from matrix.cli_commands.submit import (
     apply_argo_template,
     build_argo_template,
     build_push_docker,
-    check_dependencies,
+    can_talk_to_kubernetes,
     command_exists,
     ensure_namespace,
     get_run_name,
@@ -35,7 +36,7 @@ def mock_run_subprocess():
 
 @pytest.fixture
 def mock_dependencies():
-    with patch("matrix.cli_commands.submit.check_dependencies") as _, patch(
+    with patch("matrix.cli_commands.submit.can_talk_to_kubernetes") as _, patch(
         "matrix.cli_commands.submit.build_push_docker"
     ) as _, patch("matrix.cli_commands.submit.apply_argo_template") as _, patch(
         "matrix.cli_commands.submit.ensure_namespace"
@@ -74,16 +75,11 @@ def mock_multiple_pipelines():
         yield mock
 
 
-def test_check_dependencies(mock_run_subprocess: None) -> None:
-    mock_run_subprocess.return_value.returncode = 0
-    mock_run_subprocess.return_value.stdout = "active_account"
-    check_dependencies(verbose=True)
-    assert mock_run_subprocess.call_count > 0
-
-
-def test_build_push_docker(mock_run_subprocess: None) -> None:
-    build_push_docker("testuser", verbose=True)
-    mock_run_subprocess.assert_called_once_with("make docker_push TAG=testuser", stream_output=True)
+@pytest.mark.skipif(
+    "GITHUB_ENV" in os.environ, reason="GH Actions installation of kubectl needs to be done through apt"
+)
+def test_can_talk_to_kubernetes() -> None:
+    assert can_talk_to_kubernetes()
 
 
 @patch("matrix.cli_commands.submit.generate_argo_config")

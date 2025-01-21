@@ -98,7 +98,6 @@ def prefilter_unified_kg_nodes(
 ) -> ps.DataFrame:
     return _apply_transformations(nodes, transformations)
 
-
 @inject_object()
 def filter_unified_kg_edges(
     nodes: ps.DataFrame,
@@ -132,7 +131,6 @@ def filter_unified_kg_edges(
     logger.info(f"Number of edges after filtering: {new_edges_count}, cut out {edges_count - new_edges_count} edges")
 
     return _apply_transformations(edges, transformations, biolink_predicates=biolink_predicates)
-
 
 
 def filter_nodes_without_edges(

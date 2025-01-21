@@ -10,7 +10,7 @@ This runbook outlines the steps to create a release in our GitHub repository.
 
 1. **Prepare the branch you will run the release from.**
     - Make sure the branch includes the desired data sources / parameters you want to you in your run.
-    - The branch name needs to start with `release`
+    - The branch name needs to match the naming convention `release/v{semver}`, e.g. `release/v0.2.5`. Suffixes are allowed after a dash, i.e. `release/v0.2.5-alpha`
     - You git state needs to be clean, i.e. no uncommitted or untracked files. This is to make possible to have someone else running the same command, producing the same result.
 2. **Determine which pipeline to run.**
     - A data release is created by running a kedro pipeline. You can run a dedicated pipeline called `data_release` or other pipeline, which contains it.
