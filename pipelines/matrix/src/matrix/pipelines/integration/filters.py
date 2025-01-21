@@ -6,6 +6,7 @@ import pyspark.sql as ps
 import pyspark.sql.functions as F
 import pyspark.sql.functions as f
 from bmt import toolkit
+from pyspark.sql import types as T
 
 tk = toolkit.Toolkit()
 
@@ -17,7 +18,7 @@ def get_ancestors_for_category_delimited(category: str, delimiter: str = "\u01c2
     return output
 
 
-def biolink_deduplicate_edges(edges_df: ps.DataFrame):
+def biolink_deduplicate_edges(r_edges_df: ps.DataFrame):
     """Function to deduplicate biolink edges.
 
     Knowledge graphs in biolink format may contain multiple edges between nodes. Where
@@ -32,12 +33,13 @@ def biolink_deduplicate_edges(edges_df: ps.DataFrame):
 
     Args:
         edges_df: dataframe with biolink edges
-        biolink_predicates: JSON object with biolink predicates
     Returns:
         Deduplicated dataframe
     """
     # Enrich edges with path to predicates in biolink hierarchy
-    edges_df = edges_df.withColumn("parents", F.array(F.udf(get_ancestors_for_category_delimited)(F.col("predicate"))))
+    edges_df = r_edges_df.withColumn(
+        "parents", F.udf(get_ancestors_for_category_delimited, T.ArrayType(T.StringType()))(F.col("predicate"))
+    )
 
     # Self join to find edges that are redundant
     res = (
