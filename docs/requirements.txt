@@ -18,3 +18,4 @@ mkdocs-git-committers-plugin-2<2.4.0
 # alternative to above, just takes names from git, not github profiles
 mkdocs-git-authors-plugin
 pytest
+semver
