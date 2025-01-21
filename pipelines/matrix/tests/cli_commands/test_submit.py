@@ -74,7 +74,7 @@ def mock_multiple_pipelines():
 
 
 @pytest.mark.skipif(
-    "GITHUB_ENV" in os.environ, reasons="GH Actions installation of kubectl needs to be done through apt"
+    "GITHUB_ENV" in os.environ, reason="GH Actions installation of kubectl needs to be done through apt"
 )
 def test_can_talk_to_kubernetes() -> None:
     assert can_talk_to_kubernetes()
