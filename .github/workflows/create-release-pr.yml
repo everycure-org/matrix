@@ -25,8 +25,8 @@ jobs:
       - name: store variables
         run: |
           if [[ "${{ github.event_name == 'repository_dispatch' }}" == "true" ]]; then
-            release=$(echo '${{ toJson(github.event) }}' | jq -r '.client_payload.release_version')
-            gitref=$(echo '${{ toJson(github.event) }}' | jq -r '.client_payload.git_fingerprint')
+            release='${{ github.event.client_payload.release_version }}'
+            gitref='${{ github.event.client_payload.git_fingerprint }}'
           else
             release="debug-dont-release"
             gitref=${{github.ref_name}}
@@ -50,7 +50,8 @@ jobs:
       - name: Tag the commit from which the data release was triggered
         run: |
           # Create an annotated tag, so that we can push it easily with the files using `follow-tags`.
-          git tag --annotate --message '' -- "${{env.release}}" "${{env.gitref}}"
+          git tag --annotate --message '' -- "${{env.release}}" "${{env.gitref}}" && \
+          git push --follow-tags
 
       - name: Branch off
         # To comply with the protected-branch policy, we checkout a different
@@ -71,12 +72,23 @@ jobs:
           workload_identity_provider: ${{env.workload_identity_provider}}
           service_account: ${{env.service_account}}
 
+      - name: debug
+        run: |
+          set -eux
+          echo ${{env.release}}
+          
+          echo ${GITHUB_WORKSPACE}
+          pwd
+          ls
+          ls docs/src/releases/changelog_files
+
       - name: Download & commit release info file
         working-directory: docs/src/releases/changelog_files
         env:
           RELEASE_DIR_GCS: 'gs://mtrx-us-central1-hub-dev-storage/kedro/data/releases'
           FILENAME: ${{env.release}}_info.json
         run: |
+          set -eux
           BLOB_PATH="${RELEASE_DIR_GCS}/${{env.release}}/${FILENAME}"
           gcloud storage cp "$BLOB_PATH" "$FILENAME"
           
@@ -84,11 +96,28 @@ jobs:
           git commit -m "added release info json" && \
           git push
 
+      - name: Discover Latest Official Release on GitHub
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          latest_official_release=$(gh release list --jq '.[0].tagName' --json tagName --order desc)
+          echo "latest_official_release=${latest_official_release}" >> "$GITHUB_ENV"
+
+      - name: Detect bump type
+        working-directory: docs
+        run: |
+          pip install uv
+          uv venv -p 3.11
+          uv pip install -r requirements.txt
+          uv run scripts/bump_detection.py >> "${GITHUB_ENV}"
+          
       - name: Create Release Notes
         working-directory: apps/matrix-cli
         env:
           GH_TOKEN: ${{ github.token }}
           POSTS_DIR: docs/src/releases/posts
+        # only create release notes for minor and major bumps
+        if: env.bump_type != 'patch'
         run: |
           gcloud config list account --format "value(core.account)"
           
@@ -103,15 +132,11 @@ jobs:
             --notes-file "${{env.release}}/notes.md"
           mv "${{env.release}}" "${GITHUB_WORKSPACE}/${POSTS_DIR}"
           git add "${GITHUB_WORKSPACE}/${POSTS_DIR}/${{env.release}}" && \
-          git commit -m "added release notes & article draft" && \
-          git push --follow-tags
+          git commit -m "added release notes & article draft" 
 
       - name: Setup docs venv & generate yaml
-        working-directory: docs
+        working-directory: docs/scripts
         run: |
-          uv venv -p 3.11
-          uv pip install -r requirements.txt
-          cd scripts
           uv run changelog_gen.py
 
       - name: Commit YAML release info file
@@ -137,7 +162,7 @@ jobs:
           gh pr create \
           --title "Release/${{env.release}}" \
           --base main \
-          --body "Adds the release article and associated notes" \
+          --body "Adds release information. For minor and major bump, the release article and associated notes are generated." \
           --draft \
           --label Release \
           --label hide-from-release
