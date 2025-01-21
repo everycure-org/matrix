@@ -6,8 +6,3 @@
   filepath: ${globals:paths.evaluation}/reporting/stability/{model_1}_{model_2}/{evaluation}/result.yml
   type: matrix.datasets.mlflow.MlflowMetricsDataset
   key_prefix: "{fold_main}.{fold_to_compare}.{evaluation}"
-
-"evaluation.fold_{fold_main}.fold_{fold_to_compare}.{evaluation}.model_stability_output.pairs@pandas":
-  <<: *_pandas_parquet  
-  type: matrix.datasets.mlflow.MlflowMetricsDataset
-  key_prefix: "{fold_main}.{fold_to_compare}.{evaluation}"
