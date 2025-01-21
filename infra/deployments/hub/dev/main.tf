@@ -1,8 +1,3 @@
-module "bootstrap_data" {
-  source      = "../../../modules/components/bootstrap_file_content/"
-  bucket_name = var.storage_bucket_name
-}
-
 module "compute_cluster" {
   source            = "../../../modules/stacks/compute_cluster/"
   default_region    = var.default_region
