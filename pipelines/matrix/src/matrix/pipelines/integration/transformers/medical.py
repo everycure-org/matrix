@@ -5,15 +5,12 @@ import pyspark.sql as ps
 import pyspark.sql.functions as f
 import pyspark.sql.types as T
 
-from matrix.schemas.knowledge_graph import KGEdgeSchema, KGNodeSchema, cols_for_schema
-
 from .transformer import GraphTransformer
 
 logger = logging.getLogger(__name__)
 
 
 class MedicalTransformer(GraphTransformer):
-    @pa.check_output(KGNodeSchema)
     def transform_nodes(self, nodes_df: ps.DataFrame, **kwargs) -> ps.DataFrame:
         """Transform nodes to our target schema.
 
@@ -38,13 +35,11 @@ class MedicalTransformer(GraphTransformer):
             # .transform(determine_most_specific_category, biolink_categories_df) need this?
             # Filter nodes we could not correctly resolve
             .filter(f.col("id").isNotNull())
-            .select(*cols_for_schema(KGNodeSchema))
         )
 
         return df
         # fmt: on
 
-    @pa.check_output(KGEdgeSchema)
     def transform_edges(self, edges_df: ps.DataFrame, **kwargs) -> ps.DataFrame:
         """Transform edges to our target schema.
 
@@ -72,7 +67,6 @@ class MedicalTransformer(GraphTransformer):
             
             # Filter edges we could not correctly resolve
             .filter(f.col("subject").isNotNull() & f.col("object").isNotNull())
-            .select(*cols_for_schema(KGEdgeSchema))
         )
 
         return edges

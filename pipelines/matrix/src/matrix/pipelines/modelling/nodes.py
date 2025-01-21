@@ -1,6 +1,5 @@
 import json
 import logging
-from functools import wraps
 from typing import Any, Callable, Dict, List, Tuple, Union
 
 import matplotlib.pyplot as plt
@@ -8,9 +7,6 @@ import pandas as pd
 import pandera
 import pyspark.sql as ps
 import pyspark.sql.types as T
-from pandera import DataFrameModel as PandasDataFrameModel
-from pandera.pyspark import DataFrameModel as PysparkDataFrameModel
-from pandera.typing import Series
 from pyspark.sql import functions as f
 from sklearn.base import BaseEstimator
 from sklearn.impute._base import _BaseImputer
@@ -19,49 +15,13 @@ from sklearn.model_selection import BaseCrossValidator
 from matrix.datasets.graph import KnowledgeGraph
 from matrix.datasets.pair_generator import SingleLabelPairGenerator
 from matrix.inject import OBJECT_KW, inject_object, make_list_regexable, unpack_params
+from matrix.utils.pa_utils import Column, DataFrameSchema, check_output
 
 from .model import ModelWrapper
 
 logger = logging.getLogger(__name__)
 
 plt.switch_backend("Agg")
-
-
-def no_nulls(columns: List[str]):
-    """Decorator to check columns for null values.
-
-    FUTURE: Move to pandera when we figure out how to push messages for breaking changes.
-
-    Args:
-        columns: list of columns to check
-    """
-
-    if isinstance(columns, str):
-        columns = [columns]
-
-    def decorator(func):
-        @wraps(func)
-        def wrapper(*args, **kwargs):
-            # Proceed with the function if no null values are found
-            df = func(*args, **kwargs)
-
-            if not all(col_name in df.columns for col_name in columns):
-                raise ValueError(f"DataFrame is missing required columns: {', '.join(columns)}")
-
-            # Check if the specified column has any null values
-            null_rows_df = df.filter(" OR ".join([f"{col_name} IS NULL" for col_name in columns]))
-
-            # Check if the resulting DataFrame is empty
-            if not null_rows_df.isEmpty():
-                # Show rows with null values for debugging
-                null_rows_df.show()
-                raise ValueError(f"DataFrame contains null values in columns: {', '.join(columns)}")
-
-            return df
-
-        return wrapper
-
-    return decorator
 
 
 def filter_valid_pairs(
@@ -164,16 +124,17 @@ def filter_valid_pairs(
     return {"pairs": pairs_df, "metrics": retention_stats}
 
 
-class EmbeddingsWithPairsSchema(PysparkDataFrameModel):
-    y: T.IntegerType
-    source_embedding: T.ArrayType(T.FloatType())  # type: ignore
-    target_embedding: T.ArrayType(T.FloatType())  # type: ignore
-
-    class Config:
-        strict = False
-
-
-@pandera.check_output(EmbeddingsWithPairsSchema)
+@check_output(
+    schema=DataFrameSchema(
+        columns={
+            "source": Column(T.StringType(), nullable=False),
+            "target": Column(T.StringType(), nullable=False),
+            "source_embedding": Column(T.ArrayType(T.FloatType()), nullable=False),
+            "target_embedding": Column(T.ArrayType(T.FloatType()), nullable=False),
+        },
+        unique=["source", "target"],
+    )
+)
 def attach_embeddings(
     pairs_df: ps.DataFrame,
     nodes: ps.DataFrame,
@@ -199,17 +160,16 @@ def attach_embeddings(
     )
 
 
-class NodeSchema(PysparkDataFrameModel):
-    id: T.StringType
-    is_drug: T.BooleanType
-    is_disease: T.BooleanType
-
-    class Config:
-        strict = False
-        unique = ["id"]
-
-
-@pandera.check_output(NodeSchema)
+@check_output(
+    schema=DataFrameSchema(
+        columns={
+            "id": Column(T.StringType(), nullable=False),
+            "is_drug": Column(T.BooleanType(), nullable=False),
+            "is_disease": Column(T.BooleanType(), nullable=False),
+        },
+        unique=["id"],
+    )
+)
 def prefilter_nodes(
     full_nodes: ps.DataFrame,
     nodes: ps.DataFrame,
@@ -249,24 +209,24 @@ def prefilter_nodes(
     return df
 
 
-class ModelSplitsSchema(PandasDataFrameModel):
-    source: Series[str]
-    source_embedding: Series[object]
-    target: Series[str]
-    target_embedding: Series[object]
-    split: Series[str]
-    fold: Series[int]
-
-    class Config:
-        strict = False
-
-
-@pandera.check_output(ModelSplitsSchema)
+@check_output(
+    schema=DataFrameSchema(
+        columns={
+            "source": Column(str, nullable=False),
+            "source_embedding": Column(object, nullable=False),
+            "target": Column(str, nullable=False),
+            "target_embedding": Column(object, nullable=False),
+            "split": Column(str, nullable=False),
+            "fold": Column(int, nullable=False),
+        },
+        unique=["fold", "source", "target"],
+    )
+)
 @inject_object()
 def make_folds(
     data: ps.DataFrame,
     splitter: BaseCrossValidator,
-) -> Tuple[pd.DataFrame]:
+) -> pd.DataFrame:
     """Function to split data.
 
     Args:
@@ -298,8 +258,20 @@ def make_folds(
     return pd.concat(all_data_frames, ignore_index=True)
 
 
-@pandera.check_output(ModelSplitsSchema)
 @inject_object()
+@check_output(
+    schema=DataFrameSchema(
+        columns={
+            "source": Column(str, nullable=False),
+            "source_embedding": Column(object, nullable=False),
+            "target": Column(str, nullable=False),
+            "target_embedding": Column(object, nullable=False),
+            "split": Column(str, nullable=False),
+            "fold": Column(int, nullable=False),
+        },
+        # unique=["fold", "source", "target"] TODO: Why is this?
+    )
+)
 def create_model_input_nodes(
     graph: KnowledgeGraph,
     splits: pd.DataFrame,
