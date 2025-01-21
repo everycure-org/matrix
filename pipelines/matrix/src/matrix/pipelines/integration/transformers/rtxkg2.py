@@ -88,7 +88,6 @@ def filter_semmed(
     Returns
         Filtered dataframe
     """
-
     curie_to_pmids = (
         curie_to_pmids.withColumn("pmids", f.from_json("pmids", T.ArrayType(T.IntegerType())))
         .withColumn("pmids", f.sort_array(f.col("pmids")))
