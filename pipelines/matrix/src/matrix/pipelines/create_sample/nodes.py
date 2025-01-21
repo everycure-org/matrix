@@ -14,5 +14,6 @@ def sample_nodes(
     sampler: Sampler,
     knowledge_graph_nodes: ps.DataFrame,
     knowledge_graph_edges: ps.DataFrame,
+    ground_truth_edges: ps.DataFrame,
 ) -> Tuple[ps.DataFrame, ps.DataFrame]:
-    return sampler.sample(knowledge_graph_nodes, knowledge_graph_edges)
+    return sampler.sample(knowledge_graph_nodes, knowledge_graph_edges, ground_truth_edges)

@@ -18,6 +18,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                     "params:create_sample.configuration.sampler",
                     "integration.prm.original.filtered_nodes",
                     "integration.prm.original.filtered_edges",
+                    "integration.int.ground_truth.edges.norm@spark",
                 ],
                 outputs=[
                     "integration.prm.filtered_nodes",
