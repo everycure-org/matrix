@@ -1,4 +1,4 @@
-sampling.configuration:
+create_sample.configuration:
   sampler:
     _object: matrix.pipelines.sampling.samplers.GroundTruthSampler
     ground_truth_positive_sample_ratio: 0.01

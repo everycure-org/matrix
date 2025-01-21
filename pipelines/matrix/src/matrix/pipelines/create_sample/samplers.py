@@ -10,9 +10,7 @@ logger = logging.getLogger(__name__)
 
 class SamplingResult(NamedTuple):
     knowledge_graph_nodes: ps.DataFrame
-    ground_truth_positive: ps.DataFrame
-    ground_truth_negative: ps.DataFrame
-    embeddings_nodes: ps.DataFrame
+    knowledge_graph_edges: ps.DataFrame
 
 
 class Sampler(ABC):
@@ -23,7 +21,6 @@ class Sampler(ABC):
         knowledge_graph_edges: ps.DataFrame,
         ground_truth_positive_pair: ps.DataFrame,
         ground_truth_negative_pair: ps.DataFrame,
-        embeddings_nodes: ps.DataFrame,
     ) -> SamplingResult:
         """
         Sample the knowledge graph, ground truth, and embeddings.
@@ -33,14 +30,11 @@ class Sampler(ABC):
             knowledge_graph_edges: Knowledge graph edges
             ground_truth_positive_pair: Ground truth positive pairs
             ground_truth_negative_pair: Ground truth negative pairs
-            embeddings_nodes: Embeddings nodes
 
         Returns:
             SamplingResult with fields:
                 knowledge_graph_nodes: Sampled knowledge graph nodes
-                ground_truth_positive: Sampled ground truth positive pairs
-                ground_truth_negative: Sampled ground truth negative pairs
-                embeddings_nodes: Sampled embeddings nodes
+                knowledge_graph_edges: Sampled knowledge graph edges
         """
 
 
@@ -69,14 +63,12 @@ class GroundTruthSampler(Sampler):
         knowledge_graph_edges: ps.DataFrame,
         ground_truth_positive_pair: ps.DataFrame,
         ground_truth_negative_pair: ps.DataFrame,
-        embeddings_nodes: ps.DataFrame,
     ) -> SamplingResult:
-        # if logger.isEnabledFor(logging.INFO):
-        #     logger.info(f"Received {knowledge_graph_nodes.count()} knowledge graph nodes")
-        #     logger.info(f"Received {knowledge_graph_edges.count()} knowledge graph edges")
-        #     logger.info(f"Received {ground_truth_positive_pair.count()} ground truth positives")
-        #     logger.info(f"Received {ground_truth_negative_pair.count()} ground truth negatives")
-        #     logger.info(f"Received {embeddings_nodes.count()} embeddings")
+        if logger.isEnabledFor(logging.INFO):
+            logger.info(f"Received {knowledge_graph_nodes.count()} knowledge graph nodes")
+            logger.info(f"Received {knowledge_graph_edges.count()} knowledge graph edges")
+            logger.info(f"Received {ground_truth_positive_pair.count()} ground truth positives")
+            logger.info(f"Received {ground_truth_negative_pair.count()} ground truth negatives")
 
         # ... select ground truth pairs that are in the knowledge graph
         ground_truth_positive_pair_in_knowledge_graph = (
@@ -126,31 +118,28 @@ class GroundTruthSampler(Sampler):
         # ... aggregate nodes and drop duplicated node ids
         sampled_node_ids = sampled_knowledge_graph_node_ids.union(sampled_ground_truth_node_ids).distinct()
 
-        # ... join on KG nodes
+        # ... join on knowledge graph nodes
         sampled_nodes = (
             knowledge_graph_nodes.alias("knowledge_graph_nodes")
             .join(sampled_node_ids, sampled_node_ids.id == knowledge_graph_nodes.id, "inner")
             .select("knowledge_graph_nodes.*")
         )
 
-        # ... join on embeddings nodes
-        sampled_embeddings_nodes = (
-            embeddings_nodes.alias("embeddings_nodes")
-            .join(sampled_node_ids, embeddings_nodes.id == sampled_node_ids.id, "inner")
-            .select("embeddings_nodes.*")
+        # ... join on knowledge graph edges
+        sampled_edges = (
+            knowledge_graph_edges.alias("knowledge_graph_edges")
+            .join(sampled_node_ids, sampled_node_ids.id == knowledge_graph_edges.source, "inner")
+            .select("knowledge_graph_edges.*")
+            .join(sampled_node_ids, sampled_node_ids.id == knowledge_graph_edges.target, "inner")
+            .select("knowledge_graph_edges.*")
         )
 
-        # if logger.isEnabledFor(logging.INFO):
-        #     logger.info(f"Sampled {sampled_ground_truth_positive_pair.count()} ground truth positives")
-        #     logger.info(f"Sampled {sampled_ground_truth_negative_pair.count()} ground truth negatives")
-        #     logger.info(f"Sampled {sampled_ground_truth_node_ids.count()} sampled unique nodes from ground truth")
-        #     logger.info(f"Sampled {sampled_knowledge_graph_node_ids.count()} KG nodes")
-        #     logger.info(f"Sampled {sampled_nodes.count()} sampled nodes in total")
-        #     logger.info(f"Sampled {sampled_embeddings_nodes.count()} embeddings nodes")
+        if logger.isEnabledFor(logging.INFO):
+            logger.info(f"Sampled {sampled_ground_truth_positive_pair.count()} ground truth positives")
+            logger.info(f"Sampled {sampled_ground_truth_negative_pair.count()} ground truth negatives")
+            logger.info(f"Sampled {sampled_ground_truth_node_ids.count()} sampled unique nodes from ground truth")
+            logger.info(f"Sampled {sampled_knowledge_graph_node_ids.count()} knowledge graph nodes")
+            logger.info(f"Sampled {sampled_nodes.cache().count()} sampled nodes in total")
+            logger.info(f"Sampled {sampled_edges.cache().count()} sampled edges in total")
 
-        return SamplingResult(
-            sampled_nodes,
-            sampled_ground_truth_positive_pair,
-            sampled_ground_truth_negative_pair,
-            sampled_embeddings_nodes,
-        )
+        return SamplingResult(sampled_nodes, sampled_edges)
