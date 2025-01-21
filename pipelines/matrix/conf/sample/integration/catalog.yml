@@ -5,24 +5,12 @@ _spark_parquet_ds: &_spark_parquet
     mode: overwrite
 
 # ==============================
-# Original sources 
-
-
-integration.prm.original.filtered_nodes:
-  <<: [*_spark_parquet]
-  filepath: ${globals:paths.integration}/prm/filtered/nodes
-  
-integration.prm.original.filtered_edges:
-  <<: [*_spark_parquet]
-  filepath: ${globals:paths.integration}/prm/filtered/edges
-
-# ==============================
 # Sampled sources
 
 integration.prm.filtered_nodes:
   <<: [*_spark_parquet]
-  filepath: ${globals:sample_paths.integration}/prm/filtered/nodes
+  filepath: ${globals:paths.integration_sample}/prm/filtered/nodes
 
 integration.prm.filtered_edges:
   <<: [*_spark_parquet]
-  filepath: ${globals:sample_paths.integration}/prm/filtered/edges
+  filepath: ${globals:paths.integration_sample}/prm/filtered/edges
