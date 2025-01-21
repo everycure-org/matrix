@@ -35,11 +35,9 @@ def mock_run_subprocess():
 
 @pytest.fixture
 def mock_dependencies():
-    with patch("matrix.cli_commands.submit.check_dependencies") as _, patch(
-        "matrix.cli_commands.submit.build_push_docker"
-    ) as _, patch("matrix.cli_commands.submit.apply_argo_template") as _, patch(
-        "matrix.cli_commands.submit.ensure_namespace"
-    ):
+    with patch("matrix.cli_commands.submit.build_push_docker") as _, patch(
+        "matrix.cli_commands.submit.apply_argo_template"
+    ) as _, patch("matrix.cli_commands.submit.ensure_namespace"):
         yield
 
 
