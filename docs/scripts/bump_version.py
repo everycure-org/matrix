@@ -13,8 +13,7 @@ def bump_version(type: str) -> None:
     elif type == "patch":
         new_version = version.bump_patch()
 
-    with open(os.getenv("GITHUB_ENV"), "a") as env_file:
-        env_file.write(f"release_version=v{new_version}\n")
+    print(f"release_version=v{new_version}")
 
 
 if __name__ == "__main__":
