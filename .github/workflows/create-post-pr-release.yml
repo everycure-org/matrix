@@ -64,7 +64,6 @@ jobs:
           if [ -f "$NOTES_FILE" ]; then ARG_NOTES=(--notes-file "${NOTES_FILE}"); else ARG_NOTES=(--notes 'This is a patch bump.'); fi
 
           gh release create "${{ env.intended_tag }}" \
-            --notes-file "${GITHUB_WORKSPACE}/${POSTS_DIR}/${{ env.intended_tag }}/notes.md" \
             --title "${{ env.intended_tag }}" \
             "${ARG_NOTES[@]}" \
             "${ARG_LATEST[@]}"
