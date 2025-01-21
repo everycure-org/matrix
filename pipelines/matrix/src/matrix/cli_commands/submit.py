@@ -348,7 +348,7 @@ def can_talk_to_kubernetes(
 def build_push_docker(username: str, verbose: bool):
     """Build and push Docker image."""
     console.print("Building Docker image...")
-    run_subprocess(f"make docker_push TAG={username}", stream_output=True)
+    run_subprocess(f"make docker_push TAG={username}", stream_output=False)
     console.print("[green]✓[/green] Docker image built and pushed")
 
 
