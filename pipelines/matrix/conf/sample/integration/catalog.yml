@@ -7,21 +7,22 @@ _spark_parquet_ds: &_spark_parquet
 # ==============================
 # Original sources 
 
-integration.int.{source}.original.nodes.norm@spark:
+
+integration.prm.original.filtered_nodes:
   <<: [*_spark_parquet]
-  filepath: ${globals:original_paths.integration}/int/{source}/nodes.norm
+  filepath: ${globals:paths.integration}/prm/filtered/nodes
   
-integration.int.{source}.original.edges.norm@spark:
+integration.prm.original.filtered_edges:
   <<: [*_spark_parquet]
-  filepath: ${globals:original_paths.integration}/int/{source}/edges.norm
+  filepath: ${globals:paths.integration}/prm/filtered/edges
 
 # ==============================
 # Sampled sources
 
-integration.int.{source}.nodes.norm@spark:
+integration.prm.filtered_nodes:
   <<: [*_spark_parquet]
-  filepath: ${globals:paths.integration}/int/{source}/nodes.norm
+  filepath: ${globals:sample_paths.integration}/prm/filtered/nodes
 
-integration.int.{source}.edges.norm@spark:
+integration.prm.filtered_edges:
   <<: [*_spark_parquet]
-  filepath: ${globals:paths.integration}/int/{source}/edges.norm
+  filepath: ${globals:sample_paths.integration}/prm/filtered/edges

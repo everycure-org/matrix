@@ -16,12 +16,12 @@ def create_pipeline(**kwargs) -> Pipeline:
                 func=nodes.sample_nodes,
                 inputs=[
                     "params:create_sample.configuration.sampler",
-                    "integration.int.rtx_kg2.original.nodes.norm@spark",
-                    "integration.int.rtx_kg2.original.edges.norm@spark",
+                    "integration.prm.original.filtered_nodes",
+                    "integration.prm.original.filtered_edges",
                 ],
                 outputs=[
-                    "integration.int.rtx_kg2.nodes.norm@spark",
-                    "integration.int.rtx_kg2.edges.norm@spark",
+                    "integration.prm.filtered_nodes",
+                    "integration.prm.filtered_edges",
                 ],
                 name="sample",
             )
