@@ -224,35 +224,30 @@ def enrich_paths_with_node_attributes(
     # Add unique ID for each path
     paths_with_id = paths.withColumn("path_id", F.monotonically_increasing_id())
 
-    # Explode paths into hops so that each row corresponds to a single hop
-    paths_exploded = paths_with_id.withColumn("node_in_path", F.explode(F.col("node_id_list")))
-
-    # Join in node attribute information
-    exploded_paths_with_node_attributes = paths_exploded.join(
-        nodes.select("id", *node_attribute_list).withColumnRenamed("id", "node_in_path"),
-        on=["node_in_path"],
-        how="inner",
+    return (
+        paths_with_id
+        # Explode paths into hops so that each row corresponds to a single hop
+        .withColumn("node_in_path", F.explode(F.col("node_id_list")))
+        # Join in node attribute information and collect attributes as a dictionary
+        .join(
+            nodes.select("id", *node_attribute_list).withColumnRenamed("id", "node_in_path"),
+            on=["node_in_path"],
+            how="inner",
+        )
+        .withColumn(
+            "node_attributes",
+            F.create_map(
+                *[x for attribute in node_attribute_list for x in [F.lit(attribute), F.col(attribute).cast("string")]],
+            ),
+        )
+        # Collapse node attribute information into a list for each path
+        .groupBy("path_id")
+        .agg(F.collect_list("node_attributes").alias("node_attributes_list"))
+        # Combine with existing columns in original paths dataframe
+        .select("path_id", "node_attributes_list")
+        .join(paths_with_id, on=["path_id"], how="inner")
+        .drop("path_id")
     )
-
-    # Collect node attributes as a dictionary
-    exploded_paths_with_node_attributes = exploded_paths_with_node_attributes.withColumn(
-        "node_attributes",
-        F.create_map(
-            *[x for attribute in node_attribute_list for x in [F.lit(attribute), F.col(attribute).cast("string")]],
-        ),
-    )
-
-    # Collapse node attribute information into a list for each path
-    exploded_paths_with_node_attributes = exploded_paths_with_node_attributes.groupBy("path_id").agg(
-        F.collect_list("node_attributes").alias("node_attributes_list")
-    )
-
-    # Combine with existing columns in original paths dataframe
-    paths_with_node_attributes = exploded_paths_with_node_attributes.join(
-        paths_with_id, on=["path_id"], how="inner"
-    ).drop("path_id")
-
-    return paths_with_node_attributes
 
 
 def enrich_paths_with_edge_attributes(
