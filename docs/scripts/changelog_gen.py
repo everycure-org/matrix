@@ -49,7 +49,7 @@ def create_semver_sortkey(release_name: str) -> list[int]:
 
 
 def sort_releases(releases: Iterable[dict]) -> list[dict]:
-    sorted_list = sorted(releases, key=lambda x: create_semver_sortkey(x["Release Name"]))
+    sorted_list = sorted(releases, key=lambda x: create_semver_sortkey(x["Release Name"]), reverse=True)
     return sorted_list
 
 
