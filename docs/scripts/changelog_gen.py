@@ -1,7 +1,10 @@
+"""Aggregate all the individual changelog files per release into a single YAML
+that can immediately be referenced by the Releases page on the documentation
+website."""
+
 import json
-import logging
-import os
 from pathlib import Path
+from typing import Iterable, Iterator
 
 import yaml
 
@@ -13,13 +16,11 @@ def locate_releases_path() -> Path:
     return changelog_path
 
 
-def list_json_files(changelog_abs_path: Path) -> list:
+def list_json_files(changelog_abs_path: Path, filename_pattern: str = "v*_info.json") -> Iterable[Path]:
     """
-    Returns a list of files with extension .json in the changelog files dir.
+    Returns a list of files matching the `filename_pattern` in the changelog files dir.
     """
-    files = os.listdir(changelog_abs_path)
-    json_files = filter_json_files(files)
-    logging.info(f"Json files found in {changelog_abs_path} : {json_files}")
+    json_files = Path(changelog_abs_path).glob(filename_pattern)
     return json_files
 
 
@@ -35,30 +36,20 @@ def format_values(loaded_files):
     return loaded_files
 
 
-def filter_json_files(files: list) -> list:
-    """Filters a list of filenames and retains files with .json extension"""
-    filtered_files = [file for file in files if file.endswith(".json")]
-    return filtered_files
-
-
-def load_files(filepaths: list[str], changelog_abs_path: Path) -> list[dict]:
-    """Loads a list of json files present in the changelog_files dir"""
-    all_data = []
+def parse_jsons(filepaths: Iterable[Path]) -> Iterator[dict]:
+    """Parse the contents of the files in `filepaths` as Json objects."""
     for filepath in filepaths:
-        with open(os.path.join(changelog_abs_path, filepath), "r") as file:
-            data = json.load(file)
-            all_data.append(data)
-    return all_data
+        yield json.loads(filepath.read_text())
 
 
-def create_semver_sortkey(filename: str) -> list[int]:
-    version_str = filename.lstrip("v").split("-")[0]
+def create_semver_sortkey(release_name: str) -> list[int]:
+    version_str = release_name.lstrip("v").split("-")[0]
     sort_key = [int(u) for u in version_str.split(".")]
     return sort_key
 
 
-def sort_files_on_semver(files: list[str]) -> list[str]:
-    sorted_list = sorted(files, key=lambda x: create_semver_sortkey(x["Release Name"]))
+def sort_releases(releases: Iterable[dict]) -> list[dict]:
+    sorted_list = sorted(releases, key=lambda x: create_semver_sortkey(x["Release Name"]))
     return sorted_list
 
 
@@ -70,20 +61,18 @@ def dump_to_yaml(
 
 
 def save_yaml(yaml_data: str, changelog_abs_path: Path) -> None:
-    with open(os.path.join(changelog_abs_path, "releases_aggregated.yaml"), "w") as file:
-        file.write(yaml_data)
+    (changelog_abs_path / "releases_aggregated.yaml").write_text(yaml_data)
 
 
 def main() -> None:
     """Extracts json files from the changelog_files directory, aggregates them and saves as one yaml file"""
     changelog_abs_path = locate_releases_path()
     files = list_json_files(changelog_abs_path)
-    if not files:
-        raise ValueError(f"No json files found in {changelog_abs_path}")
-    filtered_files = filter_json_files(files)
-    loaded_files = load_files(filtered_files, changelog_abs_path)
-    sorted_files = sort_files_on_semver(loaded_files)
-    formatted_files = format_values(sorted_files)
+    releases = parse_jsons(files)
+    sorted_releases = sort_releases(releases)
+    if not sorted_releases:
+        raise ValueError(f"No release info found in {changelog_abs_path}")
+    formatted_files = format_values(sorted_releases)
     yaml_aggr = dump_to_yaml(formatted_files)
     save_yaml(yaml_aggr, changelog_abs_path)
 
