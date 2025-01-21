@@ -173,14 +173,7 @@ def filter_unified_kg_edges(
     new_edges_count = edges.count()
     logger.info(f"Number of edges after filtering: {new_edges_count}, cut out {edges_count - new_edges_count} edges")
 
-    edges = _apply_transformations(edges, transformations)
-    edges_count = edges.count()
-    edges = edges.drop_duplicates(["subject", "predicate", "object"])
-    new_edges_count = edges.count()
-    logger.info(
-        f"Number of edges after dropping duplicates: {new_edges_count}, cut out {edges_count - new_edges_count} edges"
-    )
-    return edges
+    return _apply_transformations(edges, transformations)
 
 
 def filter_nodes_without_edges(
