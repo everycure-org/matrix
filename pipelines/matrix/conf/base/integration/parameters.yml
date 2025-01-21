@@ -3,29 +3,28 @@ integration:
   sources:
     rtx_kg2:
       transformer:
-        _object: matrix.pipelines.integration.rtxkg2.RTXTransformer
+        _object: matrix.pipelines.integration.transformers.rtxkg2.RTXTransformer
     # spoke:
     #   transformer:
-    #     object: matrix.pipelines.integration.spoke.SpokeTransformer
+    #     object: matrix.pipelines.integration.transformers.spoke.SpokeTransformer
     # robokop:
     #   transformer:
-    #     object: matrix.pipelines.integration.robokop.RobokopTransformer
+    #     object: matrix.pipelines.integration.transformers.robokop.RobokopTransformer
     ec_medical_team:
       transformer:
-        _object: matrix.pipelines.integration.medical.MedicalTransformer
+        _object: matrix.pipelines.integration.transformers.medical.MedicalTransformer
     ec_clinical_trails: 
       transformer:
-        _object: matrix.pipelines.integration.clinical_trails.ClinicalTrialsTransformer
+        _object: matrix.pipelines.integration.transformers.clinical_trails.ClinicalTrialsTransformer
     drug_list: 
       transformer:
-        _object: matrix.pipelines.integration.drugs.DrugsTransformer
+        _object: matrix.pipelines.integration.transformers.drugs.DrugsTransformer
     disease_list: 
       transformer:
-        _object: matrix.pipelines.integration.diseases.DiseasesTransformer
+        _object: matrix.pipelines.integration.transformers.diseases.DiseasesTransformer
     ground_truth: 
       transformer:
-        _object: matrix.pipelines.integration.ground_truth.GroundTruthTransformer
-    #     _object: matrix.pipelines.integration.spoke.SpokeTransformer
+        _object: matrix.pipelines.integration.transformers.ground_truth.GroundTruthTransformer
     
   # FUTURE: Ensure we can move this to filters down here
   preprocessing:
@@ -38,7 +37,7 @@ integration:
   normalization:
     batch_size: 1000 # Should we do more?
     normalizer:
-      _object: matrix.pipelines.integration.normalizer.NCATSNodeNormalizer
+      _object: matrix.pipelines.integration.normalizers.ncats.NCATSNodeNormalizer
       endpoint: ${oc.env:NODENORM_ENDPOINT, https://nodenorm.transltr.io/1.5/get_normalized_nodes}
       conflate: true
       drug_chemical_conflate: true

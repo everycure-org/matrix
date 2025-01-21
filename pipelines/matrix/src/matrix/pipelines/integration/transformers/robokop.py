@@ -1,11 +1,9 @@
 import pandas as pd
-import pandera.pyspark as pa
 import pyspark.sql as ps
 import pyspark.sql.functions as F
 import pyspark.sql.types as T
 
 from matrix.pipelines.integration.filters import determine_most_specific_category
-from matrix.schemas.knowledge_graph import KGEdgeSchema, KGNodeSchema, cols_for_schema
 
 from .transformer import GraphTransformer
 
@@ -20,7 +18,6 @@ ROBOKOP_SEPARATOR = "\x1f"
 
 
 class RobokopTransformer(GraphTransformer):
-    @pa.check_output(KGNodeSchema)
     def transform_nodes(self, nodes_df: ps.DataFrame, biolink_categories_df: pd.DataFrame, **kwargs) -> ps.DataFrame:
         """Transform Robokop nodes to our target schema.
 
@@ -45,11 +42,9 @@ class RobokopTransformer(GraphTransformer):
             .withColumnRenamed("description:string", "description")
             # getting most specific category
             .transform(determine_most_specific_category, biolink_categories_df)
-            .select(*cols_for_schema(KGNodeSchema))
         )
         # fmt: on
 
-    @pa.check_output(KGEdgeSchema)
     def transform_edges(self, edges_df: ps.DataFrame, **kwargs) -> ps.DataFrame:
         """Transform Robokop edges to our target schema.
 
@@ -74,7 +69,5 @@ class RobokopTransformer(GraphTransformer):
             .withColumn("aggregator_knowledge_source",              F.split(F.col("aggregator_knowledge_source:string[]"), ROBOKOP_SEPARATOR))
             .withColumn("subject_aspect_qualifier",                 F.lit(None).cast(T.StringType()))
             .withColumn("subject_direction_qualifier",              F.lit(None).cast(T.StringType()))
-            # final selection of columns
-            .select(*cols_for_schema(KGEdgeSchema))
         )
         # fmt: on
