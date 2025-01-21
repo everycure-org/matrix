@@ -295,6 +295,8 @@ def can_talk_to_kubernetes(
                 run_gcloud_cmd("gcloud auth login")
                 log.info("Logged in to GCS.")
                 subprocess.check_output(s, shell=True, stderr=subprocess.PIPE, timeout=timeout)
+            elif b"sudo apt-get install kubectl" in e.stderr:  # Happens on GitHub Actions
+                subprocess.check_call("sudo apt-get install kubectl -y")
             else:
                 pretty_report_on_error(e)
 
