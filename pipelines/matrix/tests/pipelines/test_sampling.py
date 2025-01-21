@@ -5,6 +5,7 @@ from matrix.pipelines.create_sample.samplers import KnowledgeGraphSampler
 
 original_knowledge_graph_nodes_count = 500
 original_knowledge_graph_edges_count = 1000
+ground_truth_edges_count = 25
 
 
 @pytest.fixture(scope="module")
@@ -19,18 +20,28 @@ def original_knowledge_graph_edges(spark: ps.SparkSession) -> ps.DataFrame:
     )
 
 
+@pytest.fixture(scope="module")
+def ground_truth_edges(spark: ps.SparkSession) -> ps.DataFrame:
+    return spark.range(ground_truth_edges_count).select(
+        f.col("id").alias("object"),
+        (f.col("id") * 20).alias("subject"),
+        (f.rand() > 0.66).cast("int").alias("y"),
+    )
+
+
 def test_knowledge_graph_sampler(
     original_knowledge_graph_nodes: ps.DataFrame,
     original_knowledge_graph_edges: ps.DataFrame,
+    ground_truth_edges: ps.DataFrame,
 ):
     sampler = KnowledgeGraphSampler(
         knowledge_graph_nodes_sample_ratio=0.1,
+        ground_truth_edges_sample_ratio=0.1,
         seed=42,
     )
 
     (sampled_knowledge_graph_nodes, sampled_knowledge_graph_edges) = sampler.sample(
-        original_knowledge_graph_nodes,
-        original_knowledge_graph_edges,
+        original_knowledge_graph_nodes, original_knowledge_graph_edges, ground_truth_edges
     )
 
     assert sampled_knowledge_graph_nodes.count() == pytest.approx(50, rel=0.2)
