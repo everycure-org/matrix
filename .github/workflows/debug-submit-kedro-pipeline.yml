@@ -13,7 +13,7 @@ env:
 
 jobs:
 
-  submit_data_release_periodically:
+  debug_submit_data_release_periodically:
     runs-on: 
       labels: ubuntu-24.04
     name: Submit the Kedro Pipeline Periodically
