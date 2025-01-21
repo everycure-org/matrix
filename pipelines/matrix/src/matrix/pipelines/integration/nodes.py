@@ -9,7 +9,7 @@ import pyspark.sql.types as T
 from joblib import Memory
 
 from matrix.inject import inject_object
-from matrix.pipelines.integration.filters import determine_most_specific_category
+from matrix.pipelines.integration.filters import determine_most_specific_category, remove_primary_knowledge_source_edges
 from matrix.utils.pa_utils import Column, DataFrameSchema, check_output
 
 from .schema import BIOLINK_KG_EDGE_SCHEMA, BIOLINK_KG_NODE_SCHEMA
@@ -154,6 +154,8 @@ def filter_unified_kg_edges(
     nodes: ps.DataFrame,
     edges: ps.DataFrame,
     transformations: List[Tuple[Callable, Dict[str, Any]]],
+    columns: List[str],
+    categories: List[str],
 ) -> ps.DataFrame:
     """Function to filter the knowledge graph edges.
 
@@ -164,6 +166,11 @@ def filter_unified_kg_edges(
     # filter down edges to only include those that are present in the filtered nodes
     edges_count = edges.count()
     logger.info(f"Number of edges before filtering: {edges_count}")
+
+    edges = remove_primary_knowledge_source_edges(edges,categories, columns)
+    edges_count = edges.count()
+    logger.info(f"Number of edges after removing primary knowledge sources: {edges_count}")
+    
     edges = (
         edges.alias("edges")
         .join(nodes.alias("subject"), on=F.col("edges.subject") == F.col("subject.id"), how="inner")
@@ -174,7 +181,6 @@ def filter_unified_kg_edges(
     logger.info(f"Number of edges after filtering: {new_edges_count}, cut out {edges_count - new_edges_count} edges")
 
     return _apply_transformations(edges, transformations)
-
 
 def filter_nodes_without_edges(
     nodes: ps.DataFrame,
