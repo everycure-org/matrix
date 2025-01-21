@@ -55,9 +55,8 @@ def cli():
 @click.option("--from-nodes", type=str, default="", help="Specify nodes to run from", callback=split_string)
 @click.option("--is-test", is_flag=True, default=False, help="Submit to test folder")
 @click.option("--headless", is_flag=True, default=False, help="Skip confirmation prompt")
-@click.option("--run-from-gh", is_flag=True, default=False, help="Run from GitHub Actions")
 # fmt: on
-def submit(username: str, namespace: str, run_name: str, release_version: str, pipeline: str, quiet: bool, dry_run: bool, from_nodes: List[str], is_test: bool, headless:bool, run_from_gh: bool):
+def submit(username: str, namespace: str, run_name: str, release_version: str, pipeline: str, quiet: bool, dry_run: bool, from_nodes: List[str], is_test: bool, headless:bool):
 
     """Submit the end-to-end workflow. """
     if not quiet:
@@ -96,7 +95,6 @@ def submit(username: str, namespace: str, run_name: str, release_version: str, p
         template_directory=ARGO_TEMPLATES_DIR_PATH,
         allow_interactions=not headless,
         is_test=is_test,
-        run_from_gh=run_from_gh,
     )
 
 
@@ -111,7 +109,6 @@ def _submit(
         template_directory: Path,
         allow_interactions: bool = True,
         is_test: bool = False,
-        run_from_gh: bool = False,
     ) -> None:
     """Submit the end-to-end workflow.
 
@@ -136,7 +133,6 @@ def _submit(
         template_directory (Path): The directory containing the Argo template.
         allow_interactions (bool): If True, allow prompts for confirmation.
         is_test (bool): If True, submit to test folder, not release folder.
-        run_from_gh (bool): If True, run from GitHub Actions where the dependencies are already set up.
     """
     
     try:
