@@ -104,6 +104,6 @@ authors:
     description: Engineer
     avatar: https://github.com/webyrd.png
   app/github-actions:
-    name:
-    description:
-    avatar:
+    name: GitHub Actions bot
+    description: bot
+    avatar: https://octodex.github.com/images/securitocat.png
