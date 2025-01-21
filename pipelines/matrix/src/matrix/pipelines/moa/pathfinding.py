@@ -20,13 +20,12 @@ def _flip_edges(edges: DataFrame) -> DataFrame:
     return edges.withColumnsRenamed({"subject": "o", "object": "s"}).withColumnsRenamed({"o": "object", "s": "subject"})
 
 
-def _collect_attribute_as_dict(edges: DataFrame, attribute_column_list: List[str], is_forward: bool) -> DataFrame:
-    """Collect attribute as a dictionary.
+def _collect_attributes_as_dict(edges: DataFrame, attribute_column_list: List[str]) -> DataFrame:
+    """Collect attributes as a dictionary.
 
     Args:
         edges: Dataframe containing the edges of the directed knowledge graph.
         attribute_column_list: List of columns in edges containing the attributes.
-        is_forward: Boolean flag indicating the directionality of the edges.
 
     Returns:
         Dataframe with the attribute collected as a dictionary.
@@ -35,16 +34,12 @@ def _collect_attribute_as_dict(edges: DataFrame, attribute_column_list: List[str
         "edge_attribute",
         F.create_map(
             *[x for attribute in attribute_column_list for x in [F.lit(attribute), F.col(attribute)]],
-            F.lit("is_forward"),
-            F.lit(is_forward).cast("string"),
         ),
     ).select("subject", "object", "edge_attribute")
 
 
 def preprocess_edges(
     edges: DataFrame,
-    subject_column: str = "subject",
-    object_column: str = "object",
     attribute_column_list: List[str] = ["predicate"],
 ) -> DataFrame:
     """Preprocesses the edges of a directed graph for path-finding.
@@ -54,37 +49,19 @@ def preprocess_edges(
 
     Args:
         edges: Dataframe containing the edges of the directed knowledge graph.
-        subject_column: Name of the column in edges containing the subject nodes.
-        object_column: Name of the column in edges containing the object nodes.
+            Must have columns "subject", "object".
         attribute_column_list: List of column names in edges to be collected as attributes.
 
     Returns:
         Dataframe with columns "subject", "object", "attributes", where "attributes"
         is a list of dictionaries containing all possible attributes (including directionality) for the subject-object-pair.
     """
-    # Rename columns for downstream reference
-    edges = edges.withColumnsRenamed(
-        {
-            subject_column: "subject",
-            object_column: "object",
-        }
-    )
-
-    # Decorate edges with attributes and is_forward flag
-    edges_decorated = edges.transform(_collect_attribute_as_dict, attribute_column_list, True)
-
-    # Get flipped edges and decorate with attributes and is_backward flag
-    edges_flipped_decorated = edges.transform(_flip_edges).transform(
-        _collect_attribute_as_dict, attribute_column_list, False
-    )
-
-    # Union aggregated edges and flipped edges. Collect multiple attributes into lists.
     return (
-        edges_decorated.unionByName(edges_flipped_decorated.select("subject", "object", "edge_attribute"))
+        edges.withColumn("is_forward", F.lit(True).cast("string"))
+        .unionByName(edges.transform(_flip_edges).withColumn("is_forward", F.lit(False).cast("string")))
+        .transform(_collect_attributes_as_dict, [*attribute_column_list, "is_forward"])
         .groupBy("subject", "object")
-        .agg(
-            F.collect_list("edge_attribute").alias("edge_attributes"),
-        )
+        .agg(F.collect_list("edge_attribute").alias("edge_attributes"))
     )
 
 
@@ -201,7 +178,7 @@ def get_connecting_paths(
         how="inner",
     )
 
-    # Join source and target paths for each pair
+    # Join outgoing source and target paths in the middle for each pair
     paths = source_paths.join(target_paths, on=[f"node_{n_hops_source}", "pair_id"], how="inner")
 
     # Collect nodes columns into a single array
