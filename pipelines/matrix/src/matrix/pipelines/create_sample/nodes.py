@@ -12,9 +12,7 @@ logger = logging.getLogger(__name__)
 @inject_object()
 def sample_nodes(
     sampler: Sampler,
-    kg_nodes: ps.DataFrame,
-    kg_edges: ps.DataFrame,
-    gt_p: ps.DataFrame,
-    gt_n: ps.DataFrame,
-) -> Tuple[ps.DataFrame, ps.DataFrame, ps.DataFrame, ps.DataFrame]:
-    return sampler.sample(kg_nodes, kg_edges, gt_p, gt_n)
+    knowledge_graph_nodes: ps.DataFrame,
+    knowledge_graph_edges: ps.DataFrame,
+) -> Tuple[ps.DataFrame, ps.DataFrame]:
+    return sampler.sample(knowledge_graph_nodes, knowledge_graph_edges)

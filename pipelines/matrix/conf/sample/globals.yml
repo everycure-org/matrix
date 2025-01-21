@@ -1,0 +1,13 @@
+run_name: sample-run
+versions:
+  release: ${oc.env:RELEASE_VERSION,v0.2.7}
+
+gcs_bucket: gs://${oc.env:GCP_BUCKET, mtrx-us-central1-hub-dev-storage}
+source_gcs_bucket: ${gcs_bucket}
+
+original_paths:
+  integration:        ${source_gcs_bucket}/kedro/data/releases/${versions.release}/datasets/integration
+
+base_sample_path: data/sample
+paths:
+  integration:        ${base_sample_path}/datasets/integration
