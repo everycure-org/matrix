@@ -13,8 +13,19 @@ tk = toolkit.Toolkit()
 logger = logging.getLogger(__name__)
 
 
-def get_ancestors_for_category_delimited(category: str, delimiter: str = "\u01c2") -> str:
-    output = tk.get_ancestors(category, formatted=True)
+def get_ancestors_for_category_delimited(category: str, mixin: bool = False) -> List[str]:
+    """Wrapper function to get ancestors for a category. The arguments were used to match the args used by Chunyu
+    https://biolink.github.io/biolink-model-toolkit/index.html#bmt.toolkit.Toolkit.get_ancestors
+
+    Args:
+        category: Category to get ancestors for
+        formatted: Whether to format element names as curies
+        mixin: Whether to include mixins
+        reflexive: Whether to include query element in the list
+    Returns:
+        List of ancestors in a string format
+    """
+    output = tk.get_ancestors(category, mixin=mixin)
     return output
 
 
