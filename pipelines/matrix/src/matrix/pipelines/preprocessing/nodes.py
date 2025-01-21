@@ -1,10 +1,8 @@
 from typing import List, Tuple
 
 import pandas as pd
-import pandera
 import requests
-from pandera import DataFrameModel, Field
-from pandera.typing import Series
+from matrix.utils.pa_utils import Column, DataFrameSchema, check_output
 from tenacity import retry, stop_after_attempt, wait_exponential
 
 
@@ -54,15 +52,14 @@ def process_medical_nodes(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-class IntEdgesSchema(DataFrameModel):
-    SourceId: Series[str] = Field(nullable=True)
-    TargetId: Series[str] = Field(nullable=True)
-
-    class Config:
-        strict = False
-
-
-@pandera.check_output(IntEdgesSchema)
+@check_output(
+    schema=DataFrameSchema(
+        columns={
+            "SourceId": Column(str, nullable=False),
+            "TargetId": Column(str, nullable=False),
+        }
+    )
+)
 def process_medical_edges(int_nodes: pd.DataFrame, int_edges: pd.DataFrame) -> pd.DataFrame:
     """Function to create int edges dataset.
 
@@ -115,25 +112,24 @@ def add_source_and_target_to_clinical_trails(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-class CleanTrialsSchema(DataFrameModel):
-    clinical_trial_id: Series[object]
-    reason_for_rejection: Series[object]
-    drug_name: Series[object]
-    disease_name: Series[object]
-    drug_kg_curie: Series[object]
-    disease_kg_curie: Series[object]
-    conflict: Series[object]
-    significantly_better: Series[float]
-    non_significantly_better: Series[float]
-    non_significantly_worse: Series[float]
-    significantly_worse: Series[float]
-
-    class Config:
-        strict = False
-        unique = ["clinical_trial_id", "drug_kg_curie", "disease_kg_curie"]
-
-
-@pandera.check_output(CleanTrialsSchema)
+@check_output(
+    schema=DataFrameSchema(
+        columns={
+            "clinical_trial_id": Column(str, nullable=False),
+            "reason_for_rejection": Column(str, nullable=False),
+            "drug_name": Column(str, nullable=False),
+            "disease_name": Column(str, nullable=False),
+            "drug_kg_curie": Column(str, nullable=False),
+            "disease_kg_curie": Column(str, nullable=False),
+            "conflict": Column(bool, nullable=False),
+            "significantly_better": Column(bool, nullable=False),
+            "non_significantly_better": Column(bool, nullable=False),
+            "non_significantly_worse": Column(bool, nullable=False),
+            "significantly_worse": Column(bool, nullable=False),
+        },
+        unique=["clinical_trial_id", "drug_kg_curie", "disease_kg_curie"],
+    )
+)
 def clean_clinical_trial_data(df: pd.DataFrame) -> pd.DataFrame:
     """Clean clinical trails data.
 
@@ -177,6 +173,16 @@ def clean_clinical_trial_data(df: pd.DataFrame) -> pd.DataFrame:
 # -------------------------------------------------------------------------
 
 
+@check_output(
+    schema=DataFrameSchema(
+        columns={
+            "drug|disease": Column(str, nullable=False),
+            "y": Column(int, nullable=False),
+            # TODO: Piotr add
+        },
+        unique=["clinical_trial_id", "drug_kg_curie", "disease_kg_curie"],
+    )
+)
 def create_gt(pos_df: pd.DataFrame, neg_df: pd.DataFrame) -> pd.DataFrame:
     """Converts the KGML-xDTD true positives and true negative dataframes into a singular dataframe compatible with EC format."""
     pos_df["indication"], pos_df["contraindication"] = True, False
