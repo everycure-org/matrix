@@ -2,12 +2,10 @@ import json
 from typing import Any
 
 import pandas as pd
-import pandera
 from matrix.datasets.pair_generator import DrugDiseasePairGenerator
 from matrix.inject import inject_object
 from matrix.pipelines.evaluation.evaluation import Evaluation
-from pandera import DataFrameModel
-from pandera.typing import Series
+from matrix.utils.pa_utils import Column, DataFrameSchema, check_output
 
 
 def check_no_train(data: pd.DataFrame, known_pairs: pd.DataFrame) -> None:
@@ -62,16 +60,16 @@ def perform_matrix_checks(matrix: pd.DataFrame, known_pairs: pd.DataFrame, score
     check_ordered(matrix, score_col_name)
 
 
-class EdgesSchema(DataFrameModel):
-    source: Series[object]
-    target: Series[object]
-    y: Series[int]
-
-    class Config:
-        strict = False
-
-
-@pandera.check_output(EdgesSchema)
+@check_output(
+    schema=DataFrameSchema(
+        columns={
+            "source": Column(str, nullable=False),
+            "target": Column(str, nullable=False),
+            "y": Column(int, nullable=False),
+        },
+        unique=["source", "target"],
+    )
+)
 @inject_object()
 def generate_test_dataset(
     known_pairs: pd.DataFrame, matrix: pd.DataFrame, generator: DrugDiseasePairGenerator, score_col_name: str
