@@ -1,3 +1,4 @@
+import os
 import subprocess
 import tempfile
 from pathlib import Path
@@ -72,6 +73,9 @@ def mock_multiple_pipelines():
         yield mock
 
 
+@pytest.mark.skipif(
+    "GITHUB_ENV" in os.environ, reasons="GH Actions installation of kubectl needs to be done through apt"
+)
 def test_can_talk_to_kubernetes() -> None:
     assert can_talk_to_kubernetes()
 
