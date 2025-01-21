@@ -81,7 +81,6 @@ def union_and_deduplicate_edges(*edges, cols: List[str]) -> ps.DataFrame:
 )
 def union_and_deduplicate_nodes(biolink_categories_df: pd.DataFrame, *nodes, cols: List[str]) -> ps.DataFrame:
     """Function to unify nodes datasets."""
-
     # fmt: off
     return (
         _union_datasets(*nodes)
@@ -154,7 +153,6 @@ def prefilter_unified_kg_nodes(
 def filter_unified_kg_edges(
     nodes: ps.DataFrame,
     edges: ps.DataFrame,
-    biolink_predicates: Dict[str, Any],
     transformations: List[Tuple[Callable, Dict[str, Any]]],
 ) -> ps.DataFrame:
     """Function to filter the knowledge graph edges.
@@ -175,7 +173,7 @@ def filter_unified_kg_edges(
     new_edges_count = edges.count()
     logger.info(f"Number of edges after filtering: {new_edges_count}, cut out {edges_count - new_edges_count} edges")
 
-    return _apply_transformations(edges, transformations, biolink_predicates=biolink_predicates)
+    return _apply_transformations(edges, transformations)
 
 
 def filter_nodes_without_edges(

@@ -98,12 +98,13 @@ def filter_semmed(
         .withColumnRenamed("curie", "id")
         .persist()
     )
-
     table = f.broadcast(curie_to_pmids)
-
-    semmed_edges = (
+    single_semmed_edges = (
         edges_df.alias("edges")
-        .filter(f.col("primary_knowledge_source") == f.lit("infores:semmeddb"))
+        .filter(
+            (f.size(f.col("aggregator_knowledge_source")) == 1)
+            & (f.col("aggregator_knowledge_source").getItem(0) == "infores:semmeddb")
+        )
         # Enrich subject pubmed identifiers
         .join(
             table.alias("subj"),
@@ -126,10 +127,12 @@ def filter_semmed(
         # fmt: on
         .select("edges.*")
     )
-
-    edges_filtered = edges_df.filter(f.col("primary_knowledge_source") != f.lit("infores:semmeddb")).unionByName(
-        semmed_edges
-    )
+    edges_filtered = edges_df.filter(
+        ~(
+            (f.size(f.col("aggregator_knowledge_source")) == 1)
+            & (f.col("aggregator_knowledge_source").getItem(0) == "infores:semmeddb")
+        )
+    ).unionByName(single_semmed_edges)
     return edges_filtered
 
 
