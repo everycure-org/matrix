@@ -2,7 +2,7 @@ name: Automate kedro submit release run periodically
 
 on:
   schedule:
-    - cron: '30 9,10 1 * 2' # At 10:25 CET on the 1st day of the month and on Tuesday.
+    - cron: '0 12 1 * 2' # At 10:25 CET on the 1st day of the month and on Tuesday.
 
 env:
   project_id: 'mtrx-hub-dev-3of'
@@ -116,5 +116,4 @@ jobs:
             --run-name auto-kg-release \
             --release-version "${{ env.release_version }}" \
             --pipeline kg_release \
-            --headless \
-            --run-from-gh
+            --headless
