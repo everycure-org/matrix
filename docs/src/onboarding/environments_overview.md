@@ -105,7 +105,7 @@ To create sample data locally, run the following command:
 ```bash
 kedro run -e sample -p create_sample
 ```
-This will create a sample of the nodes and edges produced by the integration layer.
+This will create a sample of the nodes and edges produced by the a release of the integration layer. The release version can be found, and changed, in the `sample/globals.yml` file.
 
 Then, to run the rest of the pipeline with this sampled data, run the following command:
 
