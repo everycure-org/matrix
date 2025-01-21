@@ -12,6 +12,8 @@ def bump_version(type: str) -> None:
         new_version = version.bump_minor()
     elif type == "patch":
         new_version = version.bump_patch()
+    else:
+        raise NotImplementedError()
 
     print(f"release_version=v{new_version}")
 
