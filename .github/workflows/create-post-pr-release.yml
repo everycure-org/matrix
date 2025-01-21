@@ -42,6 +42,8 @@ jobs:
           echo "intended_tag=${intended_release}" >> "$GITHUB_ENV"  
 
       - name: Discover Latest Official Release on GitHub
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           latest_official_release=$(gh release list --jq '.[0].tagName' --json tagName --order desc)
           echo "latest_official_release=${latest_official_release}" >> "$GITHUB_ENV"  
