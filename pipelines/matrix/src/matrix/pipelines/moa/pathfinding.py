@@ -268,12 +268,14 @@ def enrich_paths_with_edge_attributes(
     Returns:
         Dataframe with the same columns as paths, but with additional array-valued columns for each edge attribute.
     """
-    # Add unique ID for each path
     paths_with_id = paths.withColumn("path_id", F.monotonically_increasing_id())
 
-    # Explode paths into hops so that each row corresponds to a single hop
-    paths_exploded = (
-        paths_with_id.withColumns(  # Add lists for the start and end nodes of the hops
+    return (
+        paths_with_id
+        # Explode paths into hops so that each row corresponds to a single hop
+        .withColumn("path_id", F.monotonically_increasing_id())
+        # Explode paths into hops so that each row corresponds to a single hop
+        .withColumns(  # Add lists containing start and end nodes of the hops
             {
                 "start_nodes": F.slice(F.col("node_id_list"), 1, F.size("node_id_list") - 1),
                 "end_nodes": F.slice(F.col("node_id_list"), 2, F.size("node_id_list") - 1),
@@ -286,21 +288,13 @@ def enrich_paths_with_edge_attributes(
             "subject", F.col("hop_pairs.start_nodes")
         )
         .withColumn("object", F.col("hop_pairs.end_nodes"))
-    )
-
-    # Join in edge attribute information
-    exploded_paths_with_attributes = paths_exploded.join(edges_processed, on=["subject", "object"], how="inner")
-
-    # Collapse hop edge attribute information into a list for each path
-    exploded_paths_with_attributes = exploded_paths_with_attributes.groupBy("path_id", "start_nodes", "end_nodes").agg(
-        F.collect_list("edge_attributes").alias("edge_attributes_list")
-    )
-
-    # Combine with existing columns in original paths dataframe
-    exploded_paths_with_attributes = (
-        exploded_paths_with_attributes.select("path_id", "edge_attributes_list")
+        # Join in edge attribute information
+        .join(edges_processed, on=["subject", "object"], how="inner")
+        # Collapse hop edge attribute information into a list for each path
+        .groupBy("path_id", "start_nodes", "end_nodes")
+        .agg(F.collect_list("edge_attributes").alias("edge_attributes_list"))
+        # Combine with existing columns in original paths dataframe
+        .select("path_id", "edge_attributes_list")
         .join(paths_with_id, on=["path_id"], how="inner")
         .drop("path_id")
     )
-
-    return exploded_paths_with_attributes
