@@ -5,142 +5,86 @@ categories:
   - Release
 authors:
   - lvijnck
-  - marcello-deluca
-  - JacquesVergine
   - emil-k
+  - JacquesVergine
+  - marcello-deluca
   - alexeistepa
   - matwasilewski
   - jdr0887
   - Siyan-Luo
-  - MariaHei
   - app/github-actions
   - oliverw1
+  - MariaHei
   - elliottsharp
   - pascalwhoop
   - piotrkan
   - matej-macak
 ---
-# `v0.2.7`: Automated Releases, K-Fold Cross-Validation, and Enhanced Pipeline Flexibility
 
-This release of the Matrix Platform introduces significant automation, enhanced model evaluation capabilities, and increased flexibility in pipeline configuration and execution.  We've automated the periodic submission of the Kedro pipeline, implemented k-fold cross-validation for robust model evaluation, enabled flexible aggregation functions for ensemble models, and introduced support for intermediate releases.  These improvements streamline the release process, enhance model robustness, and provide greater control over pipeline execution.
+# `v0.2.7`:  Enhanced Release Automation, K-Fold Cross-Validation, and Flexible Ensemble Aggregation
+
+This release of the Matrix Platform introduces significant improvements to release automation, model evaluation, and pipeline flexibility. Key enhancements include automated periodic release submissions, k-fold cross-validation for robust model evaluation, and a flexible aggregation function for ensemble models.
 
 <!-- more -->
 
-## Automated Release Process
+## Automated Release Management and Pipeline Enhancements
 
-A key improvement in this release is the automation of the Kedro pipeline submission process (#877).  A scheduled GitHub Action now periodically submits the pipeline, significantly reducing manual effort and ensuring regular releases.
+* **Automated Release Runs (#877):** A scheduled GitHub Action now periodically submits the Kedro pipeline, automating the release process and reducing manual effort.  This ensures regular updates and facilitates continuous integration and delivery.
+* **Intermediate Release Support (#957):**  The release workflow now supports intermediate releases, providing greater flexibility in release management and enabling more granular control over the release process.  This allows for testing and validation of releases before they are marked as "latest."
+* **Dynamic Pipeline Options and Resolver (#901):**  Pipeline options can now be overridden using environment variables, enhancing flexibility and enabling customization of pipeline execution. The introduction of a resolver function allows loading settings from the catalog, improving configuration manageability.
 
-## Enhanced Model Evaluation and Flexibility
 
-This release brings major enhancements to model evaluation and customization:
+## Robust Model Evaluation and Flexible Ensembling
 
-* **K-fold Cross-Validation (#683):** Model evaluation robustness is significantly improved through the implementation of k-fold cross-validation. This generates multiple train-test splits, providing a more comprehensive performance assessment and reducing the risk of overfitting.
+* **K-fold Cross-Validation (#683):** Model evaluation robustness is significantly improved through the implementation of k-fold cross-validation.  This generates multiple train-test splits, enabling a more comprehensive assessment of model performance and generalization ability.
+* **Ensemble Model Aggregation Function (#905):**  The addition of a parameter for the ensemble model aggregation function allows users to specify flexible aggregation methods. This enhances model performance and customization by enabling different strategies for combining predictions from individual models.
 
-* **Flexible Aggregation Function for Ensemble Models (#905):** Users can now specify custom aggregation methods for ensemble models, allowing for fine-grained control over how individual model predictions are combined. This enables greater flexibility in optimizing ensemble performance and tailoring the aggregation strategy to specific requirements.
 
-## Improved Release Management and Pipeline Control
+## Infrastructure and Tooling Improvements
 
-Several enhancements improve release management and offer greater control over the release process:
+* **Matrix CLI Enhancements (#959):** The Matrix CLI now includes mkdocs frontmatter for release notes and articles, streamlining documentation integration and enhancing workflow efficiency.
+* **`create-post-pr-release` Workflow Update:** The release creation workflow has been updated to dynamically determine the release version from the PR branch name (using the `release/*` pattern). This automation ensures accurate release tagging and simplifies the release process. The workflow now also determines whether the release should be tagged as "latest."
+* **`matrix-cli` Dependencies Update:** The `matrix-cli` now utilizes Jinja2 for templating, PyYAML for YAML interaction, questionary for user prompts, tabulate for tabular output, tenacity for retry logic, and Typer for CLI construction. These additions enhance the CLI's functionality and improve user experience.
+* **Modelling Catalog Restructure:** The modelling catalog has been restructured to incorporate fold information in filepaths, allowing for separation of data by fold and shard.  A new "combined predictions" dataset facilitates analysis across folds, supporting cross-validation and ensemble methods.  The removal of model-specific paths for some datasets streamlines the pipeline.
+* **Modelling Pipeline Restructure:**  The modelling pipeline now incorporates folds directly into its structure, enabling parallel processing of different data splits. The `_create_model_pipeline` function dynamically creates pipelines for each fold.  The pipeline now also combines predictions across folds, suggesting an ensemble approach or aggregated analysis.
+* **Evaluation Catalog Updates:** The evaluation catalog now includes fold-specific filepaths for pairs and results, enabling separate evaluation data for each fold.  Aggregated and reduced aggregated results are also included, along with a master report, for a more comprehensive evaluation analysis.
 
-* **Intermediate Release Support (#957):** The release workflow now accommodates intermediate releases, providing greater flexibility and granularity in release management. This enables more frequent releases and allows for more controlled testing and validation of new features.
-
-* **Allow Overriding Dynamic Pipeline Options and Resolver to Load Settings in Catalog (#901):**  Pipeline flexibility is enhanced by allowing users to override dynamic pipeline options via environment variables.  A new resolver function seamlessly loads settings from the catalog, improving configuration management and simplifying parameterization.
-
-## Bug Fixes and Stability Improvements
+## Bug Fixes and Stability Enhancements
 
 Several bug fixes address critical issues and enhance platform stability:
 
-* **`wipe_neo` Script Protocol Fix (#899):** The protocol used in the `wipe_neo` script is corrected, ensuring proper interaction with Neo4j and preventing potential issues.
-
-* **Kedro Hooks Test Coverage Improvement (#900):** Increased test coverage for Kedro hooks enhances release stability and reliability by catching potential issues earlier in the development cycle.
-
-* **Schema Error Fix in `ingest_nodes` (#943):**  Addressing the schema error related to null values in the `name` column of the `ingest_nodes` function ensures data integrity.
-
-* **Release Branching Fix (#950):** Correcting the issue with release branches originating from the wrong commit ensures consistency and prevents potential errors during release creation.
-
-* **Git SHA Retrieval Fix (#974):**  Ensuring the Git SHA is retrieved using the correct command (`git rev-parse HEAD`) guarantees accurate version tracking and release identification.
-
-* **Neo4j Template Resource Allocation Fix (#977):** Allocating appropriate resources to the main container in the Neo4j template improves performance and stability.
-
-* **GitHub Action Token Access Fix (#990):**  Resolving the GitHub Action's token access issue allows the action to create GitHub releases correctly.
-
-* **Jinja Template Placeholder Fix (#986):** Correcting the naming discrepancy in Jinja template placeholders ensures the proper information is passed to the templating process.
-
-* **Improved Handling of Empty Parameter Files (#968):**  Preventing pipeline errors due to empty parameter files ensures smooth pipeline execution.
-
-## Technical Enhancements and Refactoring
-
-This release includes various technical improvements and refactoring efforts:
-
-* **Removal of `refit` Library (#811):** Streamlining the codebase by removing the `refit` library simplifies dependencies and reduces maintenance overhead.
-
-* **Simplified Neo4j SSL Setup (#878):**  Improving the Neo4j SSL configuration simplifies setup and enhances security.
-
-* **Updated Neo4j Connection String in Template (#880):** Updating the Neo4j connection string ensures consistency and clarity across templates.
-
-* **`argo_node` Refactoring to `ArgoNode` Class (#885):** Replacing the `argo_node` function with the `ArgoNode` class enhances code structure, organization, readability, and maintainability.
-
-* **Consistent Use of `pyspark.sql` (#923):** Standardizing the use of `pyspark.sql` throughout the codebase improves code consistency, clarity, and maintainability.
-
-* **Modelling Cleanup - Unify Splits (#907):**  Streamlining the modelling process through unified split generation enhances code clarity and consistency.
-
-* **Refactored Test Suite (#930):**  Improving the structure and maintainability of the test suite makes it easier to ensure code quality and identify potential issues.
-
-* **Added Import Sorting (#931):** Consistent import sorting enhances code readability and maintainability.
+* **`wipe_neo` Script Protocol Fix (#899):**  Corrected the protocol used in the `wipe_neo` script to improve Neo4j interaction.
+* **Kedro Hooks Test Coverage (#900):** Improved test coverage for Kedro hooks enhances release stability.
+* **Schema Error Fix in `ingest_nodes` (#943):**  Resolved a schema error related to null values in the `name` column of the `ingest_nodes` function.
+* **Release Branching Fix (#950):** Addressed an issue with release branches being created from the incorrect commit.
+* **Git SHA Retrieval Fix (#974):** Corrected the command used to retrieve the Git SHA for accurate version tracking.
+* **Neo4j Resource Allocation Fix (#977):** Ensured the main container in the Neo4j template receives appropriate resources.
+* **GitHub Token Access Fix (#990):**  Resolved an issue with GitHub Actions not accessing the required token for creating releases.
+* **Jinja Template Placeholder Fix (#986):**  Corrected a naming discrepancy in Jinja template placeholders.
+* **Empty Parameter File Handling (#968):** Added validation to handle empty parameter files, preventing pipeline errors.
 
 
-## Documentation Improvements
+## Documentation and Onboarding Improvements
 
-Several updates enhance the documentation and onboarding experience:
+Several documentation updates enhance user experience:
 
-* **Onboarding Guide Update (#902):**  Improving the onboarding documentation streamlines the onboarding process for new contributors.
-
-* **Common Errors Documentation Update (#925):**  Adding solutions for recently encountered problems to the common errors documentation helps users troubleshoot issues more effectively.
-
-* **Java Version Documentation Update (#903):** Updating the documentation to reflect the required Java version (17) prevents compatibility issues.
-
-* **`libomp` Library Added to Installation Documentation (#934):** Including the `libomp` library in the installation instructions ensures all dependencies are installed.
-
-* **Release Creation Documentation Update (#940):** Clearer instructions on how to create a release simplify the release process and ensure consistency.
-
-* **Kedro Extensions Documentation Typos Fixed (#913):**  Correcting typos in the Kedro Extensions documentation improves clarity and professionalism.
-
-* **Virtual Environment Onboarding Documentation Update (#906):** Updating the virtual environment setup instructions streamlines the onboarding process.
-
-* **Kedro Resources Documentation (#919):** Adding documentation for Kedro resources assists users in effectively utilizing this feature.
-
-* **Simplified Neo4j SSL Setup Documentation (#878):**  Updating the Neo4j SSL configuration documentation reflects the simplified setup process.
-
-* **Onboarding Documentation Update for GPG Key Sharing (#808, #906):** Updating the onboarding documentation to instruct new users to share their GPG key via a Pull Request improves security practices.  The path for GPG key sharing is also corrected to `.git-crypt/keys/public_keys`.
-
-* **Matrix CLI Documentation Enhancement (#959):**  Documenting the enhanced functionality of the Matrix CLI, including embedding mkdocs frontmatter, provides users with clear instructions on utilizing these features.
-
-## Newly Onboarded Colleagues
-
-We welcome the following new colleagues to the team:
-
-* Jacques (#883)
-* Matej (#886)
-* Kushal (#904)
-* MariaHei (#944)
-
-## Other Changes
-
-* **Rendering Release Information in Documentation (#858):**  Adding a feature to render release information in the documentation improves accessibility for users.
-
-* **Saving `not treat` and `unknown` Scores (#853):** Including columns to store "not treat" and "unknown" scores in the full matrix enhances data completeness and analysis capabilities.
-
-* **Data Release Workflow Test on Main Branch (#989):** Adding a test for the data release workflow on the main branch ensures the workflow is thoroughly tested.
-
-* **Disabling SSL for Local Neo4j (#972):**  Simplifying local development with Neo4j by disabling SSL removes the need for certificate management.
-
-* **Enforcing Single Model per Modelling Pipeline (#924):**  Ensuring only one model is processed within the modelling stage prevents confusion and unexpected behavior.
-
-* **Incrementing Spoke Version (#914):** Updating the SPOKE knowledge graph version ensures consistency.
-
-* **Matrix CLI Mkdocs Frontmatter Integration (#959):**  Adding functionality to the Matrix CLI to generate markdown files with mkdocs frontmatter streamlines documentation integration.
-
-* **Validating Release Branch Names (#921):** Adding validation to ensure that only branches starting with "release" trigger data releases prevents accidental releases from unintended branches.
+* **Kedro Resource Documentation (#919):** Added documentation on Kedro resources.
+* **Onboarding Fixes (#902):** Improved onboarding documentation.
+* **Common Errors Documentation Update (#925):** Updated the `common_errors.md` document.
+* **Java Version Update in Documentation (#903):**  Updated the required Java version to 17 in the documentation.
+* **`libomp` Library Added to Installation Documentation (#934):** Included the `libomp` library in the installation instructions.
+* **Release Creation Documentation Update (#940):** Updated the documentation on how to create a release.
+* **Kedro Extensions Documentation Typos Fixed (#913):**  Corrected typos in the Kedro Extensions documentation.
+* **Virtual Environment Documentation Update (#906):** Updated the virtual environment setup instructions.
+* **Neo4J SSL Setup Documentation Update (#878):**  Updated documentation for Neo4J SSL setup.
+* **Confusing Flag Column Name Renamed (#893):** Renamed a confusing flag column name for clarity.
+* **Main Onboarding Page Update (#956):** Updated the `index.md` onboarding page.
+* **GPG Key Sharing via PR in Onboarding (#902, #944, #904):**  Updated onboarding documentation to instruct new users to share their GPG public key via a Pull Request (PR) for improved security.
 
 
-This release marks a substantial step forward in automating the release process, enhancing model evaluation, and improving pipeline flexibility. The addition of k-fold cross-validation and flexible ensemble aggregation strengthens the platform's analytical capabilities. The numerous bug fixes, technical enhancements, and documentation updates contribute to a more robust, reliable, and user-friendly platform.
+## Security Enhancements
+
+* **Onboarding GPG Key Submission via PR:** New users now submit their GPG public keys through Pull Requests, improving security practices and enhancing control over key management.
+
+
+This release improves the stability, automation, and flexibility of the Matrix Platform. The automated release process, combined with k-fold cross-validation and flexible ensemble aggregation, enables more robust model evaluation and streamlined workflows. The numerous bug fixes, documentation improvements, and infrastructure enhancements contribute to a more reliable and developer-friendly platform.
