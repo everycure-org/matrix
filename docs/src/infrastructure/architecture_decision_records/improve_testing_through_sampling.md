@@ -47,9 +47,7 @@ We would like to abstract the sampling of the data to allow for different strate
 
 We would like to persist as little sampled data as possible to limit the risk of dataset invalidation issues.
 
-We would like to keep any test pipeline runtime below 30 minutes to allow for fast feedback and low cloud costs.
-
-We would like to have the ability to run the pipeline with sampled data after the standardisation stage, and from the normalisation stage.
+We would like to keep any sample pipeline runtime below 30 minutes to allow for fast feedback and low cloud costs.
 
 ## Decision
 
@@ -62,36 +60,26 @@ We would like to have the ability to run the pipeline with sampled data after th
 
 #### What is the sampling logic?
 
-We would like to get a representative sample of the full knowledge graph. We would like this sample to keep the same proportions of ground truth, drugs and diseases for the ML models to work.
-
-We can start by sampling from ground truth, drugs and diseases, then extend the graph to their adjacent nodes multiple times. In the end, to make sure we keep a connected graph, we can use libraries such as Graphframe to keep the biggest connected component.
+We would like to get a sample of the full knowledge graph. We would like this sample to keep the same proportions of ground truth, drugs and diseases for the ML models to work.
 
 Ultimately, the sampling logic will be abstracted out as a parameter to allow users to create their own custom logics.
 
 #### How does sampling integrates with the pipeline?
 
+We want to sample the output of the integration pipeline, for it to be used in following stages - everything from embeddings.
+
 __Outputs of the sampling pipeline__
-We want the sample to be used after the standardisation stage, and before the normalisation & unioning stage. Therefore we do need to generate one sample for each input source. The outputs of the sampling stage are then RTX KG2, EC medical team, drug list, disease list, ground truth and EC clinical trials.
+ We will only sample and persist the nodes and edges of the knowledge graph as it is the biggest piece of data. This way we limit the number of persisted files to maintain, and rely on inner joins to propagate the sample to the other data sources.
 
 __Inputs of the sampling pipeline__
-Sampling from each data source might induce the risk of the individual samples not connecting to one another as they might come from different areas of the graph. We also cannot join these samples together before their normalisation. 
-A way to address this would be to sample from the normalised knowledge graph and propagate the original ids of the nodes to their data source. However, this approach creates a dependency on normalised production data to create a sample. The inputs of the sampling stage are then normalised nodes and edges, normalised ground truth, drugs and disease lists.
-
-__Integration with the current pipeline__
-The current integration stage does the standardisation, normalisation and unioning of the data sources. I am still new to Kedro and am struggling to find an elegant and simple way to integrate sampling between the standardisation and normalisation stages.
-
-If I had to make it work in an inelegant way, I would:
-* Move the standardisation to a new pipeline that would run between ingestion and integration. (or even move it to the ingestion stage as it seems empty at the moment)
-* Create a sampling pipeline as described above, that would take normalised data as an input.
+The inputs of the sampling pipeline are the integrated knowledge graph nodes and edges, as well as ground truth pairs.
 
 #### How to set this up in Kedro?
 
-The sampled data will be stored in the cloud, and will be the same for all runs within the sample environment. It can be updated via a kedro submit command to trigger the sampling pipeline.
+A sample can be created by running the command `kedro run -p create_sample`, this command will populate the sample environment with the sampled data.
 
-The sampled data can be used locally or in the CI by using the flag `-e sample` to run in the sample environment. 
-
-We will need to create a new alias for all the pipelines that are compatible with the sample environment, meaning integration, embeddings, modelling and inference.
+To run the pipelines with sampled data, we can run the command `kedro run -e sample -p sample` which runs the the pipeline from the embeddings stage.
 
 ## Consequences
 
-...
+We can now iterate faster on code and model changes and catch more errors before reaching production. This increases productivity among engineers and data scientists.
