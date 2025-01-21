@@ -14,7 +14,7 @@ from matrix.cli_commands.submit import (
     apply_argo_template,
     build_argo_template,
     build_push_docker,
-    check_dependencies,
+    can_talk_to_kubernetes,
     command_exists,
     ensure_namespace,
     get_run_name,
@@ -74,12 +74,8 @@ def mock_multiple_pipelines():
         yield mock
 
 
-@pytest.mark.parametrize(("verbose", "run_from_gh"), [(True, True), (True, False), (False, True), (False, False)])
-def test_check_dependencies(mock_run_subprocess: None, verbose: bool, run_from_gh: bool) -> None:
-    mock_run_subprocess.return_value.returncode = 0
-    mock_run_subprocess.return_value.stdout = "active_account"
-    check_dependencies(verbose=verbose, run_from_gh=run_from_gh)
-    assert mock_run_subprocess.call_count > 0
+def test_can_talk_to_kubernetes() -> None:
+    assert can_talk_to_kubernetes()
 
 
 @patch("matrix.cli_commands.submit.generate_argo_config")

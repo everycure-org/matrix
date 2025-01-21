@@ -142,7 +142,8 @@ def _submit(
     try:
         console.rule("[bold blue]Submitting Workflow")
 
-        check_dependencies(verbose=verbose, run_from_gh=run_from_gh)
+        if not can_talk_to_kubernetes():
+            raise EnvironmentError("Cannot communicate with Kubernetes")
 
         argo_template = build_argo_template(run_name, release_version, username, namespace, pipeline_obj, is_test=is_test, )
 
@@ -271,66 +272,81 @@ def command_exists(command: str) -> bool:
     return run_subprocess(f"which {command}", check=False).returncode == 0
 
 
-def check_dependencies(verbose: bool, run_from_gh: bool):
-    """Check and set up gcloud and kubectl dependencies.
+def can_talk_to_kubernetes(
+    project: str = "mtrx-hub-dev-3of",
+    region:  str = "us-central1",
+    cluster_name: str = "compute-cluster",
+) -> bool:
+    """Check if one can communicate with the Kubernetes cluster, using the kubectl CLI.
 
-    This function verifies that gcloud and kubectl are installed and properly configured.
-    If kubectl is not installed, it attempts to install it using gcloud components.
-
-    Args:
-        verbose (bool): If True, provides more detailed output.
+    If kubectl is not installed, it attempts to install and configure it using gcloud components.
 
     Raises:
         EnvironmentError: If gcloud is not installed or kubectl cannot be configured.
     """
-    console.print("Checking dependencies...")
 
-    if not command_exists("gcloud"):
-        raise EnvironmentError("gcloud is not installed. Please install it first.")
+    def run_gcloud_cmd(s: str, timeout: int = 300) -> None:
+        try:
+            subprocess.check_output(s, shell=True, stderr=subprocess.PIPE, timeout=timeout)
+        except FileNotFoundError as e:
+            raise EnvironmentError("gcloud is not installed. Please install it first.") from e
+        except subprocess.TimeoutExpired as e:
+            raise RuntimeError(f"The command '{s}' took more than {timeout}s to complete.") from e
+        except subprocess.CalledProcessError as e:
+            if b"You do not currently have an active account selected" in e.stderr:
+                log.warning(
+                    "You're not using an authenticated account to interact with the gcloud CLI. Attempting to log you in…")
+                run_gcloud_cmd("gcloud auth login")
+                log.info("Logged in to GCS.")
+                subprocess.check_output(s, shell=True, stderr=subprocess.PIPE, timeout=timeout)
+            else:
+                pretty_report_on_error(e)
 
-    if not command_exists("kubectl"):
-        console.print("kubectl is not installed. Installing it now...")
-        run_subprocess("gcloud components install kubectl")
+    def refresh_kube_credentials() -> None:
+        log.debug("Refreshing kubectl credentials…")
+        run_gcloud_cmd(
+            f"gcloud container clusters get-credentials {cluster_name} --project {project} --region {region}")
 
-    # Authenticate gcloud
-    if not run_from_gh:
-        active_account = (
-            run_subprocess(
-                "gcloud auth list --filter=status:ACTIVE --format=value'(ACCOUNT)'",
-            )
-            .stdout.strip()
-            .split("\n")[0]
-        )
-        if not active_account:
-            console.print("Authenticating gcloud...")
-            run_subprocess("gcloud auth login", stream_output=verbose)
+    def get_kubernetes_context() -> str:
+        return subprocess.check_output(["kubectl", "config", "current-context"], text=True).strip()
 
-    # Configure kubectl
-    project = "mtrx-hub-dev-3of"
-    region = "us-central1"
-    cluster = "compute-cluster"
+    def use_kubernetes_context(context: str) -> subprocess.CompletedProcess[bytes]:
+        log.info(f"Switching kubernetes context to '{context}'")
+        return subprocess.run(["kubectl", "config", "use-context", context], check=True, stdout=subprocess.DEVNULL)
 
-    # Check if kubectl is already authenticated
+    def pretty_report_on_error(e: subprocess.CalledProcessError):
+        try:
+            raise EnvironmentError(f"Calling '{e.cmd}' failed, with stderr: '{e.stderr}'") from e
+        except EnvironmentError:
+            console.print_exception()
+            raise
+
+    right_kube_context = "_".join(("gke", project, region, cluster_name))
     try:
-        run_subprocess("kubectl get nodes", stream_output=verbose)
-        console.print("[green]✓[/green] kubectl authenticated")
-    except subprocess.CalledProcessError:
-        console.print("Authenticating kubectl...")
-        run_subprocess(
-            f"gcloud container clusters get-credentials {cluster} --project {project} --region {region}",
-            stream_output=verbose,
-        )
-        console.print("[green]✓[/green] kubectl authenticated")
+        current_context = get_kubernetes_context()
+    except FileNotFoundError:
+        log.warning("kubectl is not installed. Attempting to install it now…")
+        run_gcloud_cmd("gcloud components install kubectl")
+        current_context = get_kubernetes_context()
 
-    # Verify kubectl
+    if current_context != right_kube_context:
+        log.debug(f"Current context ({current_context}) does not match intended ({right_kube_context}).")
+        use_kubernetes_context(right_kube_context)
+
+    test_cmd = "kubectl get nodes"
+    # Drop the stdout of the test_cmd, but track any errors, so they can be logged
     try:
-        run_subprocess("kubectl get ns", stream_output=verbose)
-    except subprocess.CalledProcessError:
-        raise EnvironmentError(
-            "kubectl is not working. Please check your configuration."
-        )
-    console.print("[green]✓[/green] Dependencies checked")
+        subprocess.run(test_cmd, shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, check=True)
+    except subprocess.CalledProcessError as e:
+        log.debug(f"'{test_cmd}' failed. Reason: {e.stderr}")
+        if b"Unauthorized" in e.stderr:
+            refresh_kube_credentials()
+            subprocess.run(test_cmd, shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, check=True)
+        else:
+            pretty_report_on_error(e)
 
+    console.print("[green]✓[/green] kubectl authenticated")
+    return True
 
 
 def build_push_docker(username: str, verbose: bool):
