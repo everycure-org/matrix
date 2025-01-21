@@ -142,9 +142,7 @@ def get_release_notes(since: str, model: str) -> str:
     response = invoke_model(prompt, model)
 
     authors = pr_details_df["author"].unique()
-    return get_template("release_notes.tmpl").render(
-        current_date=date.today().isoformat(), authors=authors, notes=response
-    )
+    return get_template("release_notes.tmpl").render(date=date.today().isoformat(), authors=authors, notes=response)
 
 
 def get_release_template() -> str:

@@ -19,7 +19,7 @@ from rich.panel import Panel
 from matrix.argo import ARGO_TEMPLATES_DIR_PATH, generate_argo_config
 from matrix.git_utils import (
     BRANCH_NAME_REGEX,
-    get_current_git_branch,
+    git_tag_exists,
     has_dirty_git,
     has_legal_branch_name,
     has_unpushed_commits,
@@ -64,7 +64,7 @@ def submit(username: str, namespace: str, run_name: str, release_version: str, p
         log.setLevel(logging.DEBUG)
 
     if pipeline in ('data_release', 'kg_release'):
-        abort_if_unmet_git_requirements()
+        abort_if_unmet_git_requirements(release_version)
 
     if pipeline not in kedro_pipelines.keys():
         raise ValueError("Pipeline requested for execution not found")
@@ -481,7 +481,7 @@ def get_run_name(run_name: Optional[str]) -> str:
     sanitized_name = re.sub(r"[^a-zA-Z0-9-]", "-", unsanitized_name)
     return sanitized_name
 
-def abort_if_unmet_git_requirements():
+def abort_if_unmet_git_requirements(release_version: str) -> None:
     """
     Validates the current Git repository:
     1. The current Git branch must be either 'main' or 'master'.
@@ -499,7 +499,10 @@ def abort_if_unmet_git_requirements():
         errors.append(f"Your branch name doesn't match the regex: {BRANCH_NAME_REGEX}")
 
     if has_unpushed_commits():
-        errors.append(f"You have commits not pushed to remote")
+        errors.append(f"You have commits not pushed to remote.")
+
+    if git_tag_exists(release_version):
+        errors.append(f"The git tag for the release version you specified already exists.")
 
     if errors:
         error_list = "\n".join(errors)
