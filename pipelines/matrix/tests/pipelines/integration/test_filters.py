@@ -126,12 +126,23 @@ def test_unnest(sample_predicates):
 def test_biolink_deduplicate(spark, sample_edges):
     # When applying the biolink deduplicate
     result = filters.biolink_deduplicate_edges(sample_edges)
+    result
     expected = spark.createDataFrame(
         [
             (
                 "CHEBI:001",
                 "CHEBI:002",
                 "biolink:composed_primarily_of",
+            ),
+            (
+                "CHEBI:001",
+                "CHEBI:002",
+                "biolink:composed_primarily_of",
+            ),
+            (
+                "CHEBI:001",
+                "CHEBI:002",
+                "biolink:related_to_at_concept_level",
             ),
             (
                 "CHEBI:001",
@@ -152,7 +163,6 @@ def test_biolink_deduplicate(spark, sample_edges):
             ]
         ),
     )
-
     assertDataFrameEqual(result.select(*expected.columns), expected)
 
 
