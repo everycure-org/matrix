@@ -60,7 +60,7 @@ We would like to keep any sample pipeline runtime below 30 minutes to allow for 
 
 #### What is the sampling logic?
 
-We would like to get a sample of the full knowledge graph. We would like this sample to keep the same proportions of ground truth, drugs and diseases for the ML models to work.
+We would like to get a sample of the full knowledge graph. We would like this sample to keep the same proportions of ground truth pairs for the ML models to work.
 
 Ultimately, the sampling logic will be abstracted out as a parameter to allow users to create their own custom logics.
 
@@ -69,14 +69,14 @@ Ultimately, the sampling logic will be abstracted out as a parameter to allow us
 We want to sample the output of the integration pipeline, for it to be used in following stages - everything from embeddings.
 
 __Outputs of the sampling pipeline__
- We will only sample and persist the nodes and edges of the knowledge graph as it is the biggest piece of data. This way we limit the number of persisted files to maintain, and rely on inner joins to propagate the sample to the other data sources.
+ We will only sample and persist the nodes and edges of the knowledge graph as it is the biggest data source. This way we limit the number of persisted files to maintain, and rely on inner joins to propagate the sample to the other data sources.
 
 __Inputs of the sampling pipeline__
 The inputs of the sampling pipeline are the integrated knowledge graph nodes and edges, as well as ground truth pairs.
 
 #### How to set this up in Kedro?
 
-A sample can be created by running the command `kedro run -p create_sample`, this command will populate the sample environment with the sampled data.
+A sample can be created by running the command `kedro run -e sample -p create_sample`, this command will populate the sample environment with the sampled data.
 
 To run the pipelines with sampled data, we can run the command `kedro run -e sample -p test_sample` which runs the the pipeline from the embeddings stage.
 
