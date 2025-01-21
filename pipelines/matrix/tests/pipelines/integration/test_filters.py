@@ -137,16 +137,6 @@ def test_biolink_deduplicate(spark, sample_edges):
             (
                 "CHEBI:001",
                 "CHEBI:002",
-                "biolink:composed_primarily_of",
-            ),
-            (
-                "CHEBI:001",
-                "CHEBI:002",
-                "biolink:related_to_at_concept_level",
-            ),
-            (
-                "CHEBI:001",
-                "CHEBI:002",
                 "biolink:related_to_at_concept_level",
             ),
             (
