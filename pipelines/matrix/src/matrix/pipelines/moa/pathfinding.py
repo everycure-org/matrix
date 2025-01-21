@@ -73,6 +73,21 @@ def get_neighbours_join(
 ) -> DataFrame:
     """Get the neighbours of a given set of nodes.
 
+    Example:Suppose that node_1 and node_2 have two neighbours each. Then:
+        Input DataFrame:
+        | start_node |
+        |------------|
+        | node_1    |
+        | node_2    |
+
+        Output DataFrame:
+        | start_node | neighbour     |
+        |------------|---------------|
+        | node_1    | neighbour_1_1 |
+        | node_1    | neighbour_1_2 |
+        | node_2    | neighbour_2_1 |
+        | node_2    | neighbour_2_2 |
+
     Args:
         start_nodes: Dataframe containing the source nodes.
         preprocessed_edges: Preprocessed edges dataframe.
