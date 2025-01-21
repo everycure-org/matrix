@@ -115,42 +115,6 @@ def get_neighbours_join(
     )
 
 
-def get_outgoing_paths(
-    start_nodes: DataFrame,
-    preprocessed_edges: DataFrame,
-    hop_length: int,
-    start_node_column: str = "start_node",
-    output_paths_columns: List[str] = None,
-) -> DataFrame:
-    """Get all paths of a given hop length starting from a given set of nodes.
-
-    Args:
-        start_nodes: Dataframe containing the source nodes.
-        preprocessed_edges: Dataframe containing an undirected graph.
-        hop_length: The length of the paths to be returned.
-        start_node_column: The name of the column in start_nodes containing the source nodes.
-        output_paths_columns: The columns to be returned in the output dataframe.
-
-    Returns:
-        Dataframe containing all paths of the given hop length starting from the given nodes.
-    """
-    if output_paths_columns is None:
-        output_paths_columns = [f"node_{i}" for i in range(hop_length)]
-    elif len(output_paths_columns) != hop_length + 1:
-        raise ValueError("The number of output columns must match the hop length + 1.")
-
-    paths = start_nodes.withColumnRenamed(start_node_column, output_paths_columns[0])
-    for i in range(hop_length):
-        paths = get_neighbours_join(
-            paths,
-            preprocessed_edges,
-            start_node_column=output_paths_columns[i],
-            neighbour_column=output_paths_columns[i + 1],
-        )
-
-    return paths
-
-
 def _process_paths(paths: DataFrame, n_hops: int) -> DataFrame:
     """Process paths dataframe.
 
@@ -192,8 +156,6 @@ def get_connecting_paths(
         Dataframe with columns "source", "target", "nodes_list" describing all paths for all input pairs.
         Here, "nodes_list" is a list of nodes in the path.
     """
-    f_outgoing_paths = partial(get_outgoing_paths, preprocessed_edges=preprocessed_edges)
-
     # Add id for each pair
     input_pairs = input_pairs.withColumn("pair_id", F.monotonically_increasing_id())
 
@@ -202,24 +164,38 @@ def get_connecting_paths(
     n_hops_target = n_hops - n_hops_source
 
     # Get outgoing paths for source nodes
-    source_paths = f_outgoing_paths(
-        start_nodes=input_pairs.select(source_column).distinct(),  # Distinct to avoid repeat computations
-        hop_length=n_hops_source,
-        start_node_column=source_column,
-        output_paths_columns=[f"node_{i}" for i in range(n_hops_source + 1)],
-    ).join(  # Add back in pair_id
+    source_paths = (
+        input_pairs.select(source_column)
+        .distinct()  # Avoid repeat computations
+        .withColumnRenamed(source_column, "node_0")
+    )
+    for i in range(n_hops_source):
+        source_paths = get_neighbours_join(
+            source_paths,
+            preprocessed_edges,
+            start_node_column=f"node_{i}",
+            neighbour_column=f"node_{i + 1}",
+        )
+    source_paths = source_paths.join(  # Add back in pair_id
         input_pairs.select("pair_id", source_column).withColumnRenamed(source_column, "node_0"),
         on=["node_0"],
         how="inner",
     )
 
     # Get outgoing paths for target nodes
-    target_paths = f_outgoing_paths(
-        start_nodes=input_pairs.select(target_column).distinct(),  # Distinct to avoid repeat computations
-        hop_length=n_hops_target,
-        start_node_column=target_column,
-        output_paths_columns=[f"node_{n_hops - i}" for i in range(n_hops_target + 1)],
-    ).join(  # Add back in pair_id
+    target_paths = (
+        input_pairs.select(target_column)
+        .distinct()  # Avoid repeat computations
+        .withColumnRenamed(target_column, f"node_{n_hops}")
+    )
+    for i in range(n_hops_target):
+        target_paths = get_neighbours_join(
+            target_paths,
+            preprocessed_edges,
+            start_node_column=f"node_{n_hops - i}",
+            neighbour_column=f"node_{n_hops - i - 1}",
+        )
+    target_paths = target_paths.join(  # Add back in pair_id
         input_pairs.select("pair_id", target_column).withColumnRenamed(target_column, f"node_{n_hops}"),
         on=[f"node_{n_hops}"],
         how="inner",
