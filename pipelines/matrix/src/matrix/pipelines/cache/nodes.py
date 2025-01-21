@@ -6,6 +6,8 @@ from refit.v1.core.inline_has_schema import has_schema
 from refit.v1.core.inline_primary_key import primary_key
 from refit.v1.core.output_primary_key import _duplicate_and_null_check
 
+# import ray
+
 
 @has_schema(
     schema={
@@ -71,7 +73,7 @@ def cache(
         .select("df.*", "embedding")
     )
 
-    # Perform duplicate on result dataframe, this would signal join explosions.
+    # Perform duplicate on result dataframe, this would signal join explosions
     _duplicate_and_null_check(result, [id_column], nullable=False, df_name=None)
     print(f"cache hits {dataframe.count() - cache_misses.count()} out of {dataframe.count()}")
 
