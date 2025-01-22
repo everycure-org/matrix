@@ -182,6 +182,10 @@ ingestion.raw.disease_list.nodes@spark:
     sep: "\t"
     header: true
     index: false
+  save_args:
+    sep: "\t"
+    header: true
+    index: false
 
 ingestion.raw.drug_list.nodes@pandas:
   <<: [*_layer_raw]
@@ -198,6 +202,10 @@ ingestion.raw.drug_list.nodes@spark:
   <<: [*_layer_raw, *_spark_csv]
   filepath: ${globals:paths.raw}/drug_list/translator/${globals:data_sources.ec-drug-list.version}/drug_list_conflated.tsv
   load_args:
+    sep: "\t"
+    header: true
+    index: false
+  save_args:
     sep: "\t"
     header: true
     index: false
