@@ -5,11 +5,31 @@ import pandas as pd
 import pyspark.sql as ps
 import pyspark.sql.functions as F
 import pyspark.sql.functions as f
+from bmt import toolkit
+from pyspark.sql import types as T
+
+tk = toolkit.Toolkit()
 
 logger = logging.getLogger(__name__)
 
 
-def biolink_deduplicate_edges(edges_df: ps.DataFrame, biolink_predicates: ps.DataFrame):
+def get_ancestors_for_category_delimited(category: str, mixin: bool = False) -> List[str]:
+    """Wrapper function to get ancestors for a category. The arguments were used to match the args used by Chunyu
+    https://biolink.github.io/biolink-model-toolkit/index.html#bmt.toolkit.Toolkit.get_ancestors
+
+    Args:
+        category: Category to get ancestors for
+        formatted: Whether to format element names as curies
+        mixin: Whether to include mixins
+        reflexive: Whether to include query element in the list
+    Returns:
+        List of ancestors in a string format
+    """
+    output = tk.get_ancestors(category, mixin=mixin, formatted=True)
+    return output
+
+
+def biolink_deduplicate_edges(r_edges_df: ps.DataFrame):
     """Function to deduplicate biolink edges.
 
     Knowledge graphs in biolink format may contain multiple edges between nodes. Where
@@ -24,19 +44,15 @@ def biolink_deduplicate_edges(edges_df: ps.DataFrame, biolink_predicates: ps.Dat
 
     Args:
         edges_df: dataframe with biolink edges
-        biolink_predicates: JSON object with biolink predicates
     Returns:
         Deduplicated dataframe
     """
     # Enrich edges with path to predicates in biolink hierarchy
-    edges_df = edges_df.join(
-        convert_biolink_hierarchy_json_to_df(biolink_predicates, "predicate", convert_to_pascal_case=False),
-        on="predicate",
-        how="left",
+    edges_df = r_edges_df.withColumn(
+        "parents", F.udf(get_ancestors_for_category_delimited, T.ArrayType(T.StringType()))(F.col("predicate"))
     )
-
-    # Compute self join
-    res = (
+    # Self join to find edges that are redundant
+    duplicates = (
         edges_df.alias("A")
         .join(
             edges_df.alias("B"),
@@ -49,12 +65,18 @@ def biolink_deduplicate_edges(edges_df: ps.DataFrame, biolink_predicates: ps.Dat
         .withColumn(
             "subpath", f.col("B.parents").isNotNull() & f.expr("forall(A.parents, x -> array_contains(B.parents, x))")
         )
-        .filter(~f.col("subpath"))
+        .filter(f.col("subpath"))
         .select("A.*")
-        .drop("parents")
+        .select("subject", "object", "predicate")
+        .distinct()
+        .withColumn("is_redundant", f.lit(True))
     )
-
-    return res
+    return (
+        edges_df.alias("edges")
+        .join(duplicates, on=["subject", "object", "predicate"], how="left")
+        .filter(F.col("is_redundant").isNull())
+        .select("edges.*")
+    )
 
 
 def convert_biolink_hierarchy_json_to_df(biolink_predicates, col_name: str, convert_to_pascal_case: bool):
