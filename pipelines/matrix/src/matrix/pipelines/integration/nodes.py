@@ -274,7 +274,7 @@ def normalize_nodes(
         .withColumnsRenamed({"id": "original_id"})
         .withColumnsRenamed({"normalized_id": "id"})
         # Ensure deduplicated
-        .withColumn("_rn", F.row_number().over(Window.partitionBy("id")))
+        .withColumn("_rn", F.row_number().over(Window.partitionBy("id").orderBy(F.col("original_id"))))
         .filter(F.col("_rn") == 1)
         .drop("_rn")
     )
