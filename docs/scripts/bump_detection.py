@@ -12,17 +12,12 @@ def get_generate_notes_flag():
     release = os.getenv("release", "v0.0.0").lstrip("v")
     release_version = semver.Version.parse(release)
 
-    if (
+    new_version_is_a_patch = (
         tag_version.major == release_version.major
         and tag_version.minor == release_version.minor
         and tag_version.patch < release_version.patch
-    ):
-        # This is a patch bump
-        generate_notes = False
-    else:
-        generate_notes = True
-
-    print(f"{generate_notes=}")
+    )
+    print(f"generate_notes={new_version_is_a_patch}")
 
 
 if __name__ == "__main__":
