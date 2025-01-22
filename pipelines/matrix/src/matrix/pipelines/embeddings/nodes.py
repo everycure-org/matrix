@@ -10,6 +10,9 @@ import pyspark.sql.types as T
 import seaborn as sns
 from graphdatascience import GraphDataScience
 from pyspark.ml.functions import array_to_vector, vector_to_array
+from refit.v1.core.inline_has_schema import has_schema
+from refit.v1.core.inline_primary_key import primary_key
+from refit.v1.core.output_primary_key import _duplicate_and_null_check
 from tenacity import retry, stop_after_attempt, wait_exponential
 
 from matrix.inject import inject_object, unpack_params
@@ -462,6 +465,22 @@ def visualise_pca(nodes: ps.DataFrame, column_name: str) -> plt.Figure:
     return fig
 
 
+@has_schema(
+    schema={
+        "id": "string",
+        "model": "string",
+        "scope": "string",
+        "embedding": "array<double>",
+    },
+    output=0,
+)
+# NOTE: This validates the new cache shard does _not_
+# contain duplicates. This only checks a _single_ shard though,
+# hence why we're also validating the result dataframe below.
+# Let's avoid using the primary key statement on the cache, as that
+# might be a very heavy operation.
+@primary_key(primary_key=["model", "scope", "id"], output=0)
+# @inline_primary_key(primary_key=["model", "scope", "id"], df="cache")
 def create_node_embeddings(
     df: ps.DataFrame,
     cache: ps.DataFrame,
