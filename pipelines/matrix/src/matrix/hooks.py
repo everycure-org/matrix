@@ -37,12 +37,28 @@ class MLFlowHooks:
     """
 
     @hook_impl
+    def after_dataset_loaded(self, dataset_name, data, node):
+        # https://mlflow.org/docs/latest/python_api/mlflow.data.html
+        # mlflow.log_param(f"dataset_loaded", "aaaa")
+        print(f"type is {type(data)}")
+        if type(data) is ps.dataframe.DataFrame:
+            dataset = mlflow.data.from_spark(data, name="aaa")
+
+        mlflow.log_input(dataset)
+        print(data)
+
+        run_id = ReleaseInfoHooks._kedro_context.mlflow.tracking.run.id
+        logged_run = mlflow.get_run(run_id)
+        return
+
+    @hook_impl
     def after_context_created(self, context) -> None:
         """Initialise MLFlow run.
 
         Initialises a MLFlow run and passes it on for
         other hooks to consume.
         """
+
         cfg = OmegaConf.create(context.config_loader["mlflow"])
         globs = OmegaConf.create(context.config_loader["globals"])
 
@@ -160,6 +176,7 @@ class SparkHooks:
                 .config(conf=spark_conf)
                 .getOrCreate()
             )
+            mlflow.autolog(log_datasets=True)
         else:
             logger.debug("SparkSession already initialized")
 
