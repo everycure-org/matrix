@@ -251,10 +251,28 @@ class RecallAtN(Evaluation):
         return results
 
 
-# STABILITY METRICS
+class StabilityMetricsMixin:
+    """A mixin class to introduce ids for stability calculations."""
+
+    def _modify_matrices(self, matrices: List[pd.DataFrame]) -> List[pd.DataFrame]:
+        """Modify matrices to create id column and sort by treat score.
+
+        Args:
+            matrices: DataFrames to be used for stability comparison.
+
+        Returns:
+            List of modified matrices.
+        """
+        new_matrices = []
+        for matrix in matrices:
+            matrix = matrix.sort_values(by="treat score", ascending=False).reset_index(drop=True)
+            matrix["pair_id"] = matrix["source"] + "|" + matrix["target"]
+            matrix["rank"] = matrix.index
+            new_matrices.append(matrix)
+        return new_matrices
 
 
-class StabilityCommonalityAtN(Evaluation):
+class StabilityCommonalityAtN(Evaluation, StabilityMetricsMixin):
     """A class representing Commonality at K metric to evaluate overlapping stability between two matrix outputs."""
 
     def __init__(
@@ -264,18 +282,9 @@ class StabilityCommonalityAtN(Evaluation):
         """Initializes the RecallAtN instance.
 
         Args:
-            n_values: A list of N values for Recall@N.
-            score_col_name: Probability score column name.
+            rank_func_lst: List of named functions.
         """
         self._rank_func_lst = rank_func_lst or []
-
-    def _modify_matrices(self, matrices) -> List[pd.DataFrame]:
-        new_matrices = []
-        for matrix in matrices:
-            matrix = matrix.sort_values(by="treat score", ascending=False)
-            matrix["id"] = matrix["source"] + "|" + matrix["target"]
-            new_matrices.append(matrix)
-        return new_matrices
 
     def evaluate(self, pair_ids: pd.DataFrame, matrices: List[pd.DataFrame]) -> Dict:
         """Evaluates StabilityCommonalityAtN on a dataset.
@@ -293,7 +302,7 @@ class StabilityCommonalityAtN(Evaluation):
         return json.loads(json.dumps(report, default=float))
 
 
-class StabilityRankingMetrics(Evaluation):
+class StabilityRankingMetrics(Evaluation, StabilityMetricsMixin):
     """A class representing Ranking metrics evaluating ranking stability between two matrix outputs"""
 
     def __init__(self, rank_func_lst: List[NamedFunction] = None):
@@ -303,15 +312,6 @@ class StabilityRankingMetrics(Evaluation):
             rank_func_lst: List of named functions.
         """
         self._rank_func_lst = rank_func_lst or []
-
-    def _modify_matrices(self, matrices) -> List[pd.DataFrame]:
-        new_matrices = []
-        for matrix in matrices:
-            matrix = matrix.sort_values(by="treat score", ascending=False).reset_index(drop=True)
-            matrix["id"] = matrix["source"] + "|" + matrix["target"]
-            matrix["rank"] = matrix.index + 1
-            new_matrices.append(matrix)
-        return new_matrices
 
     def evaluate(self, pair_ids: pd.DataFrame, matrices: List[pd.DataFrame]) -> Dict:
         """Evaluates StabilityCommonalityAtN on a dataset.
@@ -327,5 +327,4 @@ class StabilityRankingMetrics(Evaluation):
         for rank_func_generator in self._rank_func_lst:
             rank_func = rank_func_generator.generate()
             report[f"{rank_func_generator.name()}"] = rank_func((rank_sets_1, rank_sets_2), pair_ids)
-
         return json.loads(json.dumps(report, default=float))

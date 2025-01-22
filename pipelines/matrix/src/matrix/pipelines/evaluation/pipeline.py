@@ -197,8 +197,10 @@ def create_pipeline(**kwargs) -> Pipeline:
     )
     # Calculate stability between folds
     for stability in settings.DYNAMIC_PIPELINES_MAPPING.get("stability"):
-        for fold_main in range(n_cross_val_folds):
-            for fold_to_compare in range(n_cross_val_folds):
+        for fold_main in range(n_cross_val_folds + 1):
+            for fold_to_compare in range(
+                n_cross_val_folds + 1
+            ):  # If we dont want to inclue the full training data, remove +1
                 if fold_main == fold_to_compare:
                     continue
                 pipelines.append(

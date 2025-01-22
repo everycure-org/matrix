@@ -372,50 +372,66 @@ class FullMatrixPositives(DrugDiseasePairGenerator):
 
 
 class OnlyOverlappingPairs(DrugDiseasePairGenerator):
+    """Class to generate pairs that overlap across all matrices for top n.
+
+    Required for spearman rank, hypergeometric test and rank-commonality metrics."""
+
     def __init__(self, top_n: int = 1000) -> None:
         """Initialises an instance of the class.
 
         Args:
             top_n: Number of top pairs to be used for stability comparison.
-            matrices: DataFrames to be used for stability comparison.
         """
         self.top_n = top_n
 
-    def _get_overlapping_pairs(self, matrices) -> Set:
-        """Get pairs that overlap across all matrices.
+    def _modify_matrices(self, matrices: Tuple[pd.DataFrame]) -> List[pd.DataFrame]:
+        """Modify matrices to create id column and sort by treat score.
 
+        Args:
+            matrices: DataFrames to be used for stability comparison.
         Returns:
-            Set containing overlapping ids from all matrices.
+            List of modified matrices.
         """
-        # Get overlapping ids using sets
-        overlapping_ids = set(matrices[0]["id"])
-        for matrix in matrices[1:]:
-            overlapping_ids.intersection_update(set(matrix["id"]))
-        return overlapping_ids
-
-    def _modify_matrices(self, matrices) -> List[pd.DataFrame]:
         new_matrices = []
         for matrix in matrices:
             matrix = matrix.sort_values(by="treat score", ascending=False).head(self.top_n)
-            matrix["id"] = matrix["source"] + "|" + matrix["target"]
+            matrix["pair_id"] = matrix["source"] + "|" + matrix["target"]
             new_matrices.append(matrix)
         return new_matrices
 
+    def _get_overlapping_pairs(self, matrices: Tuple[pd.DataFrame]) -> Set:
+        """Get pairs that overlap across all matrices for top n.
+
+        Args:
+            matrices: DataFrames to be used for stability comparison.
+        Returns:
+            Set containing overlapping ids from all matrices.
+        """
+        overlapping_ids = set(matrices[0]["pair_id"])
+        for matrix in matrices[1:]:
+            overlapping_ids.intersection_update(set(matrix["pair_id"]))
+        return overlapping_ids
+
     def generate(self, matrices) -> List[pd.DataFrame]:
+        """Generates a dataframes of pairs that overlap across all matrices for top n."""
         matrices = self._modify_matrices(matrices)
         overlapping_pairs = self._get_overlapping_pairs(matrices)
-        return pd.DataFrame(overlapping_pairs, columns=["id"])
+        return pd.DataFrame(overlapping_pairs, columns=["pair_id"])
 
 
 class NoGenerator(DrugDiseasePairGenerator):
+    """Class to generate no pairs.
+
+    Dummy class as for commonality@k calculation we want our matrix output for top n to remain unchanged."""
+
     def __init__(self, top_n: int = 1000) -> None:
         """Initialises an instance of the class.
 
         Args:
             top_n: Number of top pairs to be used for stability comparison.
-            matrices: DataFrames to be used for stability comparison.
         """
         self.top_n = top_n
 
     def generate(self, matrices) -> List[pd.DataFrame]:
-        return pd.DataFrame({}, columns=["id"])
+        """Generates an empty dataframe as we are not using a list of common pairs for commonality@k"""
+        return pd.DataFrame({}, columns=["pair_id"])

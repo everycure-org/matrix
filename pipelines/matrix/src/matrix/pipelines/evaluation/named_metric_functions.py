@@ -1,4 +1,5 @@
 import abc
+from typing import List, Tuple
 
 import numpy as np
 from scipy.stats import hypergeom, spearmanr
@@ -106,26 +107,28 @@ class HypergeomAtN(NamedFunction):
             Function that takes a set of items and returns the ratio of set size to N.
         """
 
-        def hypergeom_func(rank_sets, common_items):
+        def hypergeom_func(rank_sets: Tuple, common_items: List):
             rank_set1, rank_set2 = rank_sets
 
             # Get top-k items from each model based on raw rankings
             rank_set1 = rank_set1.head(self.n)
             rank_set2 = rank_set2.head(self.n)
+            common_items = [
+                id
+                for id in common_items["pair_id"].values
+                if ((id in rank_set1["pair_id"].values) and (id in rank_set2["pair_id"].values))
+            ]
 
             # Get ranks for common items
-            ranks1 = set([rank_set1[rank_set1.id == item]["rank"].values.tolist()[0] for item in common_items])
-            ranks2 = set([rank_set2[rank_set2.id == item]["rank"].values.tolist()[0] for item in common_items])
-
+            ranks1 = set([rank_set1[rank_set1.pair_id == item]["rank"].values.tolist()[0] for item in common_items])
+            ranks2 = set([rank_set2[rank_set2.pair_id == item]["rank"].values.tolist()[0] for item in common_items])
             # Overlap
             overlap = len(ranks1 & ranks2)
-
-            # total number of pairs
-            N = len(set(rank_set1["id"]) | set(rank_set2["id"]))
+            # Total number of pairs
+            N = len(set(rank_set1["pair_id"]) | set(rank_set2["pair_id"]))
 
             # Calculate expected overlap by chance
             expected_overlap = (self.n * self.n) / N
-
             return {"enrichment": overlap / expected_overlap, "pvalue": hypergeom.sf(overlap - 1, N, self.n, self.n)}
 
         return hypergeom_func
@@ -153,13 +156,18 @@ class SpearmanAtN(NamedFunction):
             Function that takes a set of items and returns the ratio of set size to N.
         """
 
-        def spearman_corr(rank_sets, common_items):
+        def spearman_corr(rank_sets: Tuple, common_items: List):
             rank_set1, rank_set2 = rank_sets
             rank_set1 = rank_set1.head(self.n)
             rank_set2 = rank_set2.head(self.n)
+            common_items = [
+                id
+                for id in common_items["pair_id"].values
+                if ((id in rank_set1["pair_id"].values) and (id in rank_set2["pair_id"].values))
+            ]
             # Get ranks for common items
-            ranks1 = [rank_set1[rank_set1.id == item]["rank"].values for item in common_items]
-            ranks2 = [rank_set2[rank_set2.id == item]["rank"].values for item in common_items]
+            ranks1 = [rank_set1[rank_set1.pair_id == item]["rank"].values.tolist()[0] for item in common_items]
+            ranks2 = [rank_set2[rank_set2.pair_id == item]["rank"].values.tolist()[0] for item in common_items]
             if len(ranks1) > 1:  # Ensure there are enough pairs to calculate correlation
                 out = spearmanr(ranks1, ranks2)
                 return {"correlation": out.correlation, "pvalue": out.pvalue}
@@ -191,17 +199,12 @@ class CommonalityAtN(NamedFunction):
             Function that takes a set of items and returns the ratio of set size to N.
         """
 
-        def commonality_func(matrices):
-            # Logic to compute commonality
-            main_set = set(matrices[0]["id"])
+        def commonality_func(matrices: List):
+            main_set = set(matrices[0]["pair_id"])
             matrices = [matrix.head(self.n) for matrix in matrices]
             for matrix in matrices:
-                main_set = main_set.intersection(set(matrix["id"]))
-
-            if len(main_set) > 0:
-                return len(main_set) / self.n
-            else:
-                return float("nan")
+                main_set = main_set.intersection(set(matrix["pair_id"]))
+            return len(main_set) / self.n
 
         return commonality_func
 
