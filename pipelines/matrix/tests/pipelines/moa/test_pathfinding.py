@@ -153,13 +153,13 @@ def test_get_connecting_paths_single_path_with_graphframes(spark, single_path_gr
         )
         .sendMsgToSrc(
             F.when(
-                (F.size(F.col("dst.state.source_paths")) > 0) & (F.size(F.col("dst.state.target_paths")) > 0),
+                (F.size(F.col("dst.state.source_paths")) > 0) | (F.size(F.col("dst.state.target_paths")) > 0),
                 F.col("dst.state"),
             )
         )
         .sendMsgToDst(
             F.when(
-                (F.size(F.col("src.state.source_paths")) > 0) & (F.size(F.col("src.state.target_paths")) > 0),
+                (F.size(F.col("src.state.source_paths")) > 0) | (F.size(F.col("src.state.target_paths")) > 0),
                 F.col("src.state"),
             )
         )
