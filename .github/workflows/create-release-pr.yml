@@ -117,15 +117,16 @@ jobs:
           echo "release=${release}"
           echo "latest_official_release=${latest_official_release}"
           echo "bump_type=${bump_type}"
-          
-      # - name: Create Release Notes
-      #   working-directory: apps/matrix-cli
-      #   env:
-      #     GH_TOKEN: ${{ github.token }}
-      #     POSTS_DIR: docs/src/releases/posts
-      #   # only create release notes for minor and major bumps
-      #   if: env.bump_type != 'patch'
-      #   run: |
+
+      - name: Create Release Notes
+        working-directory: apps/matrix-cli
+        env:
+          GH_TOKEN: ${{ github.token }}
+          POSTS_DIR: docs/src/releases/posts
+        # only create release notes for minor and major bumps
+        if: env.bump_type != 'patch'
+        run: |
+          echo "generate release notes"
       #     gcloud config list account --format "value(core.account)"
           
       #     mkdir -p "${{env.release}}"
