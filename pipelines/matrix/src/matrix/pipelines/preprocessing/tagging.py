@@ -46,7 +46,8 @@ class Tag:
         df: pd.DataFrame,
         model: BaseChatModel,
         max_workers: int = 100,
-        timeout: int = 20,
+        timeout: int = 60,
+        retry_attempts: int = 3,
     ):
         """
         Function to generate tags.
@@ -69,17 +70,27 @@ class Tag:
 
             async def monitor_tasks():
                 for task in asyncio.as_completed(tasks):
-                    try:
-                        result = await asyncio.wait_for(task, timeout)
-                        results.append(result)
-                    except asyncio.TimeoutError as e:
-                        logger.error(f"Timeout error: partition processing took longer than {timeout} seconds.")
-                        raise e
-                    except Exception as e:
-                        logger.error(f"Error processing partition in tqdm loop: {e}")
-                        raise e
-                    finally:
-                        progress_bar.update(1)
+                    for attempt in range(retry_attempts):
+                        try:
+                            result = await asyncio.wait_for(task, timeout)
+                            results.append(result)
+                            break
+                        except asyncio.TimeoutError as e:
+                            if attempt == retry_attempts - 1:
+                                logger.error(f"All {retry_attempts} attempts failed with timeout (>{timeout}s)")
+                                results.append("NAN")
+                            else:
+                                logger.warning(f"Timeout on attempt {attempt + 1}/{retry_attempts}, retrying...")
+                                await asyncio.sleep(1 * (attempt + 1))
+                        except Exception as e:
+                            if attempt == retry_attempts - 1:
+                                logger.error(f"All {retry_attempts} attempts failed with error: {e}")
+                                results.append("NAN")
+                            else:
+                                logger.warning(f"Error on attempt {attempt + 1}/{retry_attempts}: {e}, retrying...")
+                                await asyncio.sleep(1 * (attempt + 1))
+                        finally:
+                            progress_bar.update(1)
 
             # Run the monitoring coroutine
             loop.run_until_complete(monitor_tasks())
@@ -105,14 +116,11 @@ def generate_tags(df: pd.DataFrame, model: BaseChatModel, tags: List[Tag]) -> Li
     Returns
         Enriched df
     """
-    df = df.head(1000)
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
-
     try:
         for tag in tags:
             df = tag.generate(loop, df, model)
-            print(tag)
     finally:
         loop.close()
     return df
