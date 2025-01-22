@@ -116,7 +116,7 @@ jobs:
         run: |
           echo "release=${release}"
           echo "latest_official_release=${latest_official_release}"
-          echo "bump_type=${bump_type}"
+          echo "generate_notes=${generate_notes}"
 
       - name: Create Release Notes
         working-directory: apps/matrix-cli
@@ -124,7 +124,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           POSTS_DIR: docs/src/releases/posts
         # only create release notes for minor and major bumps
-        if: env.bump_type == 'major' || env.bump_type == 'minor' || env.bump_type == 'intermediate'
+        if: env.generate_notes == 'True'
         run: |
           echo "generate release notes"
       #     gcloud config list account --format "value(core.account)"

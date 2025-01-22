@@ -25,7 +25,13 @@ def bump_type():
     else:
         bump_type = "intermediate"
 
-    print(f"{bump_type=}")
+    if bump_type != "patch":
+        generate_notes = True
+    else:
+        generate_notes = False
+
+    # print(f"{bump_type=}")
+    print(f"{generate_notes=}")
 
 
 if __name__ == "__main__":
