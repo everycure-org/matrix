@@ -28,7 +28,8 @@ class SetOutputParser:
         if cleaned_text in self.allowed_outputs:
             return cleaned_text
         else:
-            raise ValueError(f"Output '{text}' is not in the allowed set: {self.allowed_outputs}")
+            logger.warning(f"Output '{text}' is not in the allowed set: {self.allowed_outputs}; replacing with NaN")
+            return "NAN"
 
 
 class Tag:
@@ -104,14 +105,14 @@ def generate_tags(df: pd.DataFrame, model: BaseChatModel, tags: List[Tag]) -> Li
     Returns
         Enriched df
     """
-
+    df = df.head(1000)
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
 
     try:
         for tag in tags:
             df = tag.generate(loop, df, model)
+            print(tag)
     finally:
         loop.close()
-
     return df
