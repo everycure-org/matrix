@@ -124,7 +124,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           POSTS_DIR: docs/src/releases/posts
         # only create release notes for minor and major bumps
-        if: ${{ env.bump_type != 'patch' }}
+        if: env.bump_type != 'patch'
         run: |
           echo "generate release notes"
       #     gcloud config list account --format "value(core.account)"
