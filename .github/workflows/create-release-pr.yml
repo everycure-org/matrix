@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - 'debug/release*'
-      - 'debug/disable-notes-generation-for-patch-bump'
   repository_dispatch:
     types: distribute-release
 
