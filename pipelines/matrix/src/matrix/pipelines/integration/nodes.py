@@ -252,7 +252,16 @@ def normalize_edges(
         {"subject_normalized": "subject", "object_normalized": "object"}
     )
 
-    return edges
+    return (
+        edges.withColumn(
+            "_rn",
+            F.row_number().over(
+                Window.partitionBy(["subject", "object", "predicate"]).orderBy(F.col("original_subject"))
+            ),
+        )
+        .filter(F.col("_rn") == 1)
+        .drop("_rn")
+    )
 
 
 def normalize_nodes(
