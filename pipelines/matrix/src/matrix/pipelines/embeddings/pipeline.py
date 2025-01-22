@@ -10,19 +10,33 @@ def create_pipeline(**kwargs) -> Pipeline:
     """Create embeddings pipeline."""
     return pipeline(
         [
-            batch_pipeline.create_pipeline(
-                # Source to uniquely identify dataset
-                source="node_embeddings",
-                # Input and output datasets
-                df="integration.prm.filtered_nodes",
-                output="embeddings.feat.graph.node_embeddings@spark",
-                # Transformer
-                columns="params:embeddings.node.input_features",
-                bucket_size="params:embeddings.node.batch_size",
-                transformer="params:embeddings.node.encoder",
-                # NOTE: These are kwargs
-                input_features="params:embeddings.node.input_features",
-                max_input_len="params:embeddings.node.max_input_len",
+            # batch_pipeline.create_pipeline(
+            #     # Source to uniquely identify dataset
+            #     source="node_embeddings",
+            #     # Input and output datasets
+            #     df="integration.prm.filtered_nodes",
+            #     output="embeddings.feat.graph.node_embeddings@spark",
+            #     # Transformer
+            #     columns="params:embeddings.node.input_features",
+            #     bucket_size="params:embeddings.node.batch_size",
+            #     transformer="params:embeddings.node.encoder",
+            #     # NOTE: These are kwargs
+            #     input_features="params:embeddings.node.input_features",
+            #     max_input_len="params:embeddings.node.max_input_len",
+            # ),
+            ArgoNode(
+                func=nodes.create_node_embeddings,
+                inputs={
+                    "df": "integration.prm.filtered_nodes",
+                    "cache": "embeddings.cache",
+                    "batch_size": "params:embeddings.node.batch_size",
+                    "transformer": "params:embeddings.node.encoder",
+                    # NOTE: These are kwargs
+                    "input_features": "params:embeddings.node.input_features",
+                    "max_input_len": "params:embeddings.node.max_input_len",
+                },
+                outputs="embeddings.feat.graph.node_embeddings@spark",
+                name="create_node_embeddings",
             ),
             # Reduce dimension
             ArgoNode(

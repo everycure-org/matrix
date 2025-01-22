@@ -462,7 +462,13 @@ def visualise_pca(nodes: ps.DataFrame, column_name: str) -> plt.Figure:
     return fig
 
 
-def create_node_embeddings(df: ps.DataFrame, cache: ps.DataFrame, batch_size: int) -> None:
+def create_node_embeddings(
+    df: ps.DataFrame,
+    cache: ps.DataFrame,
+    batch_size: int,
+    transformer,
+    **transformer_kwargs,
+) -> None:
     """
     Function to create node embeddings, enriching the cache and processing batches.
     Args:
@@ -479,7 +485,7 @@ def create_node_embeddings(df: ps.DataFrame, cache: ps.DataFrame, batch_size: in
     partitioned_df = cached_df.repartition(num_batches)
 
     # Lookup and generate missing embeddings
-    enriched_df = lookup_missing_embeddings(partitioned_df)
+    enriched_df = lookup_missing_embeddings(partitioned_df, transformer, **transformer_kwargs)
 
     # Overwrite cache with updated embeddings
     overwrite_cache(enriched_df)
@@ -507,7 +513,7 @@ def load_embeddings_from_cache(
     )
 
 
-def lookup_missing_embeddings(df: ps.DataFrame) -> ps.DataFrame:
+def lookup_missing_embeddings(df: ps.DataFrame, transformer, **transformer_kwargs) -> ps.DataFrame:
     """
     Generate embeddings for rows missing in the cache.
     Args:
@@ -517,7 +523,7 @@ def lookup_missing_embeddings(df: ps.DataFrame) -> ps.DataFrame:
     """
 
     # Process data in parallel using mapPartitions
-    return df.rdd.mapPartitions(enrich_embeddings).toDF()
+    return df.rdd.mapPartitions(lambda it: enrich_embeddings(it, transformer, **transformer_kwargs)).toDF()
 
 
 def enrich_embeddings(iterable):
