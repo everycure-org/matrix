@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import pyspark.sql as ps
+import pyspark.sql.functions as F
 import pyspark.sql.types as T
 import seaborn as sns
 from graphdatascience import GraphDataScience
@@ -459,3 +460,97 @@ def visualise_pca(nodes: ps.DataFrame, column_name: str) -> plt.Figure:
     plt.tight_layout(rect=[0, 0, 0.85, 1])
 
     return fig
+
+
+def create_node_embeddings(df: ps.DataFrame, cache: ps.DataFrame, batch_size: int) -> None:
+    """
+    Function to create node embeddings, enriching the cache and processing batches.
+    Args:
+        df: Input DataFrame containing nodes to process.
+        cache: DataFrame holding cached embeddings.
+        batch_size: Number of rows per batch.
+    """
+    # Load embeddings from cache
+    cached_df = load_embeddings_from_cache(df, cache).cache()
+
+    # Determine number of batches and repartition the data
+    num_elements = cached_df.count()
+    num_batches = (num_elements + batch_size - 1) // batch_size
+    partitioned_df = cached_df.repartition(num_batches)
+
+    # Lookup and generate missing embeddings
+    df = lookup_missing_embeddings(partitioned_df)
+
+    # Overwrite cache with updated embeddings
+    overwrite_cache(df)
+
+
+def load_embeddings_from_cache(
+    dataframe: ps.DataFrame, cache: ps.DataFrame, model: str = "gpt-4", scope: str = "rtx_kg2", id_column: str = "id:ID"
+) -> ps.DataFrame:
+    """
+    Enrich the dataframe with cached embeddings.
+    Args:
+        dataframe: Input DataFrame to enrich.
+        cache: DataFrame containing cached embeddings.
+        model: Model name used for embeddings.
+        scope: Embedding enrichment scope.
+        id_column: Column representing unique identifiers for input elements.
+    Returns:
+        DataFrame enriched with cached embeddings.
+    """
+    return (
+        cache.alias("cache")
+        .filter(F.col("scope") == F.lit(scope))
+        .filter(F.col("model") == F.lit(model))
+        .join(dataframe.alias("df"), on=[F.col(id_column) == F.col("cache.id")], how="right")
+    )
+
+
+def lookup_missing_embeddings(df: ps.DataFrame) -> ps.DataFrame:
+    """
+    Generate embeddings for rows missing in the cache.
+    Args:
+        df: Input DataFrame with potential missing embeddings.
+    Returns:
+        DataFrame with generated embeddings for missing rows.
+    """
+
+    # Process data in parallel using mapPartitions
+    return df.rdd.mapPartitions(enrich_embeddings).toDF()
+
+
+def enrich_embeddings(iterable):
+    """
+    Process a batch of rows, generating embeddings for rows with null values.
+    Args:
+        iterable: Iterator over rows in the partition.
+    Returns:
+        Iterator over rows with updated embeddings.
+    """
+    subdf = pd.DataFrame(list(iterable))
+
+    # Separate rows with and without embeddings
+    subdf_with_embed = subdf[subdf["embedding"].notnull()]
+    subdf_without_embed = subdf[subdf["embedding"].isnull()]
+
+    # Generate embeddings for missing rows (example implementation)
+    if not subdf_without_embed.empty:
+        subdf_without_embed["embedding"] = subdf_without_embed["id"].apply(
+            lambda x: [float(len(x)) * 0.1, float(len(x)) * 0.02]
+        )
+    # Concatenate the results and return as an iterator
+    return iter(pd.concat([subdf_with_embed, subdf_without_embed], axis=0).to_dict("records"))
+
+
+def overwrite_cache(df: ps.DataFrame) -> None:
+    """
+    Update the cache with newly generated embeddings.
+    Args:
+        df: DataFrame containing updated embeddings.
+    """
+    # Extract relevant columns for the cache
+    cache_update = df.select("model", "scope", "embedding", "id").distinct()
+
+    # Append to the cache
+    cache_update.write.format("parquet").mode("append").save("/path/to/cache")
