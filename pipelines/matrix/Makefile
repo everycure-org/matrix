@@ -26,6 +26,11 @@ venv: prerequisites
 install: venv precommit-hooks
 	uv pip install -r requirements.txt #force it to install in our venv
 
+install_compatibility: venv precommit-hooks
+	# expects the file requirements.overrides.txt to be present, allows devs to override
+	# versions for local machine limitations (e.g. newer pytorch on macos intel)
+	uv pip install -r requirements.txt --overrides requirements.overrides.txt
+
 precommit: precommit-hooks
 	git fetch origin
 	uv run pre-commit run --from-ref origin/main --to-ref HEAD
