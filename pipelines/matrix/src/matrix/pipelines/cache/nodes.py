@@ -63,7 +63,7 @@ def cache(
         .withColumn("scope", F.lit(scope))
         .withColumn("model", F.lit(model))
         # TODO: Enrich actual embedding here, e.g., using Ray
-        .withColumn("embedding", F.lit([float(0.1), float(0.02)]))
+        .tramsform(compute_embeddings)
     )
 
     # Compute result by combining hits and misses
@@ -78,3 +78,7 @@ def cache(
     print(f"cache hits {dataframe.count() - cache_misses.count()} out of {dataframe.count()}")
 
     return [cache_misses.select("model", "scope", "embedding", id_column).withColumnRenamed(id_column, "id"), result]
+
+
+def compute_embeddings(df):
+    return df.withColumn("embeddings", F.lit([float(0.1), float(0.02)]))
