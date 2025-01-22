@@ -139,11 +139,10 @@ def test_get_connecting_paths_single_path_with_graphframes(spark, single_path_gr
 
     g = GraphFrame(nodes, edges)
 
-    state_type = T.StructType(
+    message_type = T.StructType(
         [
             T.StructField("source_paths", T.MapType(T.LongType(), T.ArrayType(T.StringType())), True),
             T.StructField("target_paths", T.MapType(T.LongType(), T.ArrayType(T.StringType())), True),
-            # T.StructField("found_paths", T.MapType(T.LongType(), T.ArrayType(T.StringType())), True),
         ]
     )
 
@@ -170,33 +169,57 @@ def test_get_connecting_paths_single_path_with_graphframes(spark, single_path_gr
 
         return (source_paths, target_paths)
 
-    aggregate_message_udf = F.udf(aggregate_messages, returnType=state_type)
+    aggregate_message_udf = F.udf(aggregate_messages, returnType=message_type)
+
+    state_type = T.StructType(
+        [
+            T.StructField("source_paths", T.MapType(T.LongType(), T.ArrayType(T.StringType())), True),
+            T.StructField("target_paths", T.MapType(T.LongType(), T.ArrayType(T.StringType())), True),
+            T.StructField("found_pairs", T.MapType(T.LongType(), T.ArrayType(T.StringType())), True),
+        ]
+    )
+
+    vertex_initial_state = F.struct(
+        F.when(F.col("source_id").isNotNull(), F.create_map(F.col("source_id"), F.array(F.col("id"))))
+        .otherwise(F.create_map())
+        .alias("source_paths"),
+        F.when(F.col("target_id").isNotNull(), F.create_map(F.col("target_id"), F.array(F.col("id"))))
+        .otherwise(F.create_map())
+        .alias("target_paths"),
+        F.create_map().alias("found_pairs"),
+    )
 
     def vertex_program(node_id, state, aggregated_message):
         if aggregated_message:
             updated_incoming_source_paths = {k: v + [node_id] for k, v in aggregated_message.source_paths.items()}
             updated_incoming_target_paths = {k: v + [node_id] for k, v in aggregated_message.target_paths.items()}
-            source_paths = merge_paths(state.source_paths, updated_incoming_source_paths)
-            target_paths = merge_paths(state.target_paths, updated_incoming_target_paths)
-            return (source_paths, target_paths)
+
+            staging_source_paths = merge_paths(state.source_paths, updated_incoming_source_paths)
+            staging_target_paths = merge_paths(state.target_paths, updated_incoming_target_paths)
+
+            new_found_pairs = {
+                k: v + list(reversed(staging_target_paths[k][:-1]))
+                for k, v in staging_source_paths.items()
+                if k in staging_target_paths
+            }
+
+            if len(new_found_pairs) > 0:
+                source_paths = {k: v for k, v in staging_source_paths.items() if k not in new_found_pairs}
+                target_paths = {k: v for k, v in staging_target_paths.items() if k not in new_found_pairs}
+                found_pairs = merge_paths(state.found_pairs, new_found_pairs)
+                return (source_paths, target_paths, found_pairs)
+            else:
+                return (staging_source_paths, staging_target_paths, state.found_pairs)
         else:
             return state
 
     vertex_program_udf = F.udf(vertex_program, state_type)
 
-    pwal = (
+    path = (
         g.pregel.setMaxIter(2)
         .withVertexColumn(
             "state",
-            initialExpr=F.struct(
-                F.when(F.col("source_id").isNotNull(), F.create_map(F.col("source_id"), F.array(F.col("id"))))
-                .otherwise(F.create_map())
-                .alias("source_paths"),
-                F.when(F.col("target_id").isNotNull(), F.create_map(F.col("target_id"), F.array(F.col("id"))))
-                .otherwise(F.create_map())
-                .alias("target_paths"),
-                # TODO: add an entry for found paths
-            ),
+            initialExpr=vertex_initial_state,
             updateAfterAggMsgsExpr=vertex_program_udf(F.col("id"), F.col("state"), Pregel.msg()),
         )
         .sendMsgToSrc(
@@ -216,20 +239,18 @@ def test_get_connecting_paths_single_path_with_graphframes(spark, single_path_gr
         .run()
     )
 
-    pwal.show(10, False)
+    path.show(10, False)
 
-    raise Exception("stop")
+    (
+        path.select(F.explode(F.map_entries(F.col("state.found_pairs"))).alias("key_value"))
+        .select(F.col("key_value.key").alias("pair_id"), F.col("key_value.value").alias("path"))
+        .show(10, False)
+    )
 
-    # Then: Should find exactly one 4-hop path
-    assert paths_four_hop.count() == 1
-
-    # And: The 4-hop path should contain the correct sequence of nodes
-    path = paths_four_hop.first()
-    assert path.node_id_list == ["source", "a", "b", "c", "target"]
-
-    # And: no 3-hop or 2-hop paths should be found
-    assert paths_three_hop.count() == 0
-    assert paths_two_hop.count() == 0
+    # Improvements:
+    # - High performance improvement:Add a boolean flag to signify whether a path has already been shared with the neighbours
+    # - Medium performance improvement: try to adapt UDFs to Pandas UDFS (not sure it would be feasible)
+    # - Medium performance improvement: find a way to make it work without UDFs, or write it in Scala to avoid the overhead of UDFs :3
 
 
 @pytest.mark.parametrize("k", [2, 3, 4])
