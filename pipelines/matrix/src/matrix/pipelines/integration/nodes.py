@@ -7,6 +7,7 @@ import pyspark.sql as ps
 import pyspark.sql.functions as F
 import pyspark.sql.types as T
 from joblib import Memory
+from pyspark.sql.window import Window
 
 from matrix.inject import inject_object
 from matrix.pipelines.integration.filters import determine_most_specific_category
@@ -272,4 +273,8 @@ def normalize_nodes(
         nodes.join(mapping_df, on="id", how="left")
         .withColumnsRenamed({"id": "original_id"})
         .withColumnsRenamed({"normalized_id": "id"})
+        # Ensure deduplicated
+        .withColumn("_rn", F.row_number().over(Window.partitionBy("id")))
+        .filter(F.col("_rn") == 1)
+        .drop("_rn")
     )
