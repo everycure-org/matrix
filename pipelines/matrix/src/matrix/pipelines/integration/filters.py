@@ -135,7 +135,7 @@ def remove_rows_containing_category(
         exclude_sources = []
 
     df = nodes.withColumn("_exclude", f.arrays_overlap(f.col("upstream_data_source"), f.lit(exclude_sources))).filter(
-        (F.col("_exclude") == True) & ~F.col(column).isin(categories)
+        ~F.col("_exclude") & ~F.col(column).isin(categories)
     )
 
     return df
