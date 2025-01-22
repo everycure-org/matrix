@@ -128,6 +128,7 @@ def test_get_connecting_paths_single_path_with_graphframes(spark, single_path_gr
         .alias("pairs")
     )
 
+    # ... join nodes with pairs so that we know where they start and end
     nodes = (
         nodes.join(pairs, on=nodes.id == pairs.source, how="left")
         .select("id", "source_id")
@@ -135,10 +136,12 @@ def test_get_connecting_paths_single_path_with_graphframes(spark, single_path_gr
         .join(pairs, on=nodes.id == pairs.target, how="left")
         .select("nodes_with_source.*", "target_id")
     )
+    # ... format edges so that they can be used by GraphFrames
     edges = edges.withColumn("src", F.col("subject")).withColumn("dst", F.col("object")).drop("subject", "object")
 
     g = GraphFrame(nodes, edges)
 
+    # ... define message passing struct type
     message_type = T.StructType(
         [
             T.StructField("source_paths", T.MapType(T.LongType(), T.ArrayType(T.StringType())), True),
@@ -146,6 +149,7 @@ def test_get_connecting_paths_single_path_with_graphframes(spark, single_path_gr
         ]
     )
 
+    # ... function to merge two dictionnaries of paths, keeping the shortest one on conflict
     def merge_paths(paths1, paths2):
         if paths1 and paths2:
             for k, v in paths2.items():
@@ -158,6 +162,7 @@ def test_get_connecting_paths_single_path_with_graphframes(spark, single_path_gr
         elif not paths2:
             return paths1
 
+    # ... aggregator to reduce all messages reaching a node on a given batch to one single message
     def aggregate_messages(messages):
         state0 = messages[0]
         source_paths = state0.source_paths.copy()
@@ -171,6 +176,7 @@ def test_get_connecting_paths_single_path_with_graphframes(spark, single_path_gr
 
     aggregate_message_udf = F.udf(aggregate_messages, returnType=message_type)
 
+    # ... define node state struct type
     state_type = T.StructType(
         [
             T.StructField("source_paths", T.MapType(T.LongType(), T.ArrayType(T.StringType())), True),
@@ -179,6 +185,7 @@ def test_get_connecting_paths_single_path_with_graphframes(spark, single_path_gr
         ]
     )
 
+    # ... all nodes start with this state
     vertex_initial_state = F.struct(
         F.when(F.col("source_id").isNotNull(), F.create_map(F.col("source_id"), F.array(F.col("id"))))
         .otherwise(F.create_map())
@@ -189,6 +196,8 @@ def test_get_connecting_paths_single_path_with_graphframes(spark, single_path_gr
         F.create_map().alias("found_pairs"),
     )
 
+    # ... once the messages are aggregated, this function is called to update the node state with them
+    # ... it updates source and target paths, and tries to find matching pairs
     def vertex_program(node_id, state, aggregated_message):
         if aggregated_message:
             updated_incoming_source_paths = {k: v + [node_id] for k, v in aggregated_message.source_paths.items()}
@@ -216,12 +225,16 @@ def test_get_connecting_paths_single_path_with_graphframes(spark, single_path_gr
     vertex_program_udf = F.udf(vertex_program, state_type)
 
     path = (
-        g.pregel.setMaxIter(2)
+        g.pregel
+        # ... iter can be seen as the 'hoops'. By default Pregel iterates as long as messages are sent.
+        .setMaxIter(2)
         .withVertexColumn(
             "state",
             initialExpr=vertex_initial_state,
             updateAfterAggMsgsExpr=vertex_program_udf(F.col("id"), F.col("state"), Pregel.msg()),
         )
+        # ... each node will send a message to its source or destination (both directions of the edge)
+        # ... if it has a source or target path to share
         .sendMsgToSrc(
             F.when(
                 (F.size(F.col("dst.state.source_paths")) > 0) | (F.size(F.col("dst.state.target_paths")) > 0),
