@@ -28,17 +28,17 @@ preprocessing.enrichment:
       prompt: "Are there existing efficacious treatments that cure, prevent, or treat the disease named {label} ? Return TRUE if efficacious treatments exist, otherwise return FALSE"
       output_parser:
         <<: *_boolean_parser
-    # - _object: matrix.pipelines.preprocessing.tagging.Tag  
-    #   output_col: tag_QALY_lost
-    #   prompt: "Output only 'VERY HIGH', 'HIGH', 'MEDIUM', 'LOW', or 'NONE'. Categorize the Quality-Adjusted Life Years (QALYs) lost for {label} into the categories above, based on morbidity, mortality, and quality adjusted life years lost. To help, the following list - {synonyms} - contains synonyms of the disease and the following list - {definition} - provides a definition of the disease. If you are unable to determine QALYs lost for a given disease, used similar diseases to make an estimation"
-    #   output_parser: 
-    #     _object: matrix.pipelines.preprocessing.tagging.SetOutputParser
-    #     allowed_outputs:
-    #       - "VERY HIGH"
-    #       - "HIGH"
-    #       - "MEDIUM"
-    #       - "LOW"
-    #       - "NONE"
-    #       - "NAN"
+    - _object: matrix.pipelines.preprocessing.tagging.Tag  
+      output_col: tag_QALY_lost
+      prompt: "Output only 'VERY HIGH', 'HIGH', 'MEDIUM', 'LOW', or 'NONE'. Categorize the Quality-Adjusted Life Years (QALYs) lost for {label} into the categories above, based on morbidity, mortality, and quality adjusted life years lost. To help, the following list - {synonyms} - contains synonyms of the disease and the following list - {definition} - provides a definition of the disease. If you are unable to determine QALYs lost for a given disease, used similar diseases to make an estimation"
+      output_parser: 
+        _object: matrix.pipelines.preprocessing.tagging.SetOutputParser
+        allowed_outputs:
+          - "VERY HIGH"
+          - "HIGH"
+          - "MEDIUM"
+          - "LOW"
+          - "NONE"
+          - "NAN"
 
 
