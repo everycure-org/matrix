@@ -1,8 +1,8 @@
-name: Automate kedro submit release run periodically
+name: Periodically run kedro kg-release
 
 on:
   schedule:
-    - cron: '0 12 1 * 2' # At 10:25 CET on the 1st day of the month and on Tuesday.
+    - cron: '20 14 1 * 2' # At 15:20 CET on the 1st day of the month and on Tuesday.
 
 env:
   project_id: 'mtrx-hub-dev-3of'
@@ -102,10 +102,8 @@ jobs:
       - name: Branch off
         run: |
           git switch -C release/${{env.release_version}} "${{github.ref_name}}"
-          git add gha-kubeconfig* 
-          git commit -m "add kubeconfig file generated while authentication"
-          git status
-
+          git push
+          
       - name: Submit the kedro pipeline
         working-directory: pipelines/matrix
         run: |
