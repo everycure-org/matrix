@@ -4,11 +4,13 @@ import re
 import subprocess
 import tempfile
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from datetime import date
 from pathlib import Path
 from typing import TYPE_CHECKING, List
 
 import typer
 import yaml
+from jinja2 import Environment, FileSystemLoader, Template
 from rich import print
 from rich.markdown import Markdown
 from tqdm.rich import tqdm
@@ -20,14 +22,16 @@ from matrix_cli.components.git import get_code_diff
 from matrix_cli.components.models import PRInfo
 from matrix_cli.components.settings import settings
 from matrix_cli.components.utils import (
+    ask_for_release,
     console,
     get_git_root,
+    get_latest_release,
     get_markdown_contents,
     invoke_model,
     run_command,
-    ask_for_release,
-    get_latest_release,
 )
+
+RELEASE_TEMPLATES_DIR = Path(__file__).parent.with_name("templates")
 
 if TYPE_CHECKING:
     from pandas import pd
@@ -68,37 +72,16 @@ def write_release_article(
     console.print("[green]Summarizing code changes...")
     code_summary = get_ai_code_summary(since, model=model)
 
-    # prompt user to give guidance on what to focus on in the release article
-    console.print(Markdown(notes))
-
-    prompt = f"""
-# Please write a release article based on the following release notes and git diff:
-
-{notes}
-
-# Summary of the code changes:
-{code_summary}
-
-# Here are previous release articles for style reference:
-{previous_articles}
-
-# Requirements:
-- Maintain an objective and professional tone
-- Focus on technical accuracy
-- Ensure a high signal-to-noise ratio for technical readers
-
-        """
-
+    focus_direction = ""
     if not headless:
+        console.print(Markdown(notes))
         focus_direction = console.input(
             "[bold green]Please provide guidance on what to focus on in the release article. Note 'Enter' will end the prompt: "
         )
-        prompt += f"""
-## Focus of the article:
-        
-Please focus on the following topics in the release article:
-{focus_direction}
-        """
+
+    prompt = get_template("release_article.prompt.tmpl").render(
+        notes=notes, code_summary=code_summary, previous_articles=previous_articles, focus_direction=focus_direction
+    )
     response = invoke_model(prompt, model=model)
 
     if output_file:
@@ -123,7 +106,6 @@ def release_notes(
 ):
     """Generate an AI summary of code changes since a specific git reference."""
     since = select_release(headless)
-
     try:
         console.print("Generating release notes...")
         response = get_release_notes(since, model)
@@ -140,44 +122,27 @@ def release_notes(
 
 
 def get_release_notes(since: str, model: str) -> str:
-    release_template = get_release_template()
     console.print("[bold green]Collecting PR details...")
-    pr_details_df = get_pr_details_since(since)[["title", "number"]]
-    pr_details_dict = pr_details_df.sort_values(by="number").to_dict(orient="records")
+    pr_details_df = get_pr_details_since(since)
+    pr_details_dict = pr_details_df[["title", "number"]].sort_values(by="number").to_dict(orient="records")
+
     console.print("[bold green]Collecting git diff...")
     diff_output = get_code_diff(since)
 
+    release_template = get_release_template()
     release_yaml = yaml.load(release_template, Loader=yaml.FullLoader)
-    categories = (c["title"] for c in release_yaml["changelog"]["categories"])
-    categories_md = "\n - ".join((f"## {c}" for c in categories))
+    categories = tuple(c["title"] for c in release_yaml["changelog"]["categories"])
 
-    prompt = f"""Please provide a concise summary of the following code changes. 
-    Focus on creating the content for the following release template following its categories:
+    prompt = get_template("release_notes.prompt.tmpl").render(
+        release_template=release_template,
+        diff_output=diff_output,
+        pr_details_dict=yaml.dump(pr_details_dict),
+        categories=categories,
+    )
+    response = invoke_model(prompt, model)
 
-    ```yaml
-    {release_template}
-    ```
-
-    Code diff:
-
-    ```diff
-    {diff_output}
-    ```
-
-    PR details:
-
-    ```yaml
-    {yaml.dump(pr_details_dict)}
-    ```
-
-    Summarize the PRs into the following categories, each category being a H2 header in markdown (##):
-    {categories_md}
-
-    Format the output as markdown, with the category headers and the key contributions under each category.
-
-    """
-
-    return invoke_model(prompt, model)
+    authors = pr_details_df["author"].unique()
+    return get_template("release_notes.tmpl").render(date=date.today().isoformat(), authors=authors, notes=response)
 
 
 def get_release_template() -> str:
@@ -356,28 +321,12 @@ def suggest_pr_title(pr_info: PRInfo, examples: str, corrections: str) -> str:
     Returns:
         str: Suggested title
     """
-    prompt = f"""You are a technical writer helping to improve PR titles for a release notes document. 
-Please suggest a clear, concise title that describes the change's impact and purpose.
-
-Here are examples of good PR titles from previous releases:
-{examples}
-
-Here are examples of bad PR titles that an AI generated that we needed to refine:
-{corrections}
-
-For this PR:
-- Current title: {pr_info.title}
-- Labels: {pr_info.current_labels}
-- Code changes summary:
-{pr_info.diff[:10000]}  # Limit diff size to avoid token limits
-
-Please suggest a new title that follows the style of the examples, focusing on:
-1. Clear description of the change
-2. Impact on users/developers
-3. Technical context when relevant
-
-Respond with ONLY the suggested title, nothing else. Do not wrap the text in quotes.
-"""
+    prompt = get_template("pr_title_suggestions.prompt.tmpl").render(
+        summary_of_code_changes=pr_info.diff[:10_000],  # limit diff size to avoid token limits
+        corrections=corrections,
+        examples=examples,
+        pr_info=pr_info,
+    )
 
     try:
         suggested_title = invoke_model(prompt, settings.power_model)
@@ -492,6 +441,12 @@ def select_release(headless: bool) -> str:
     if headless:
         return get_latest_release()
     return ask_for_release()
+
+
+def get_template(fname: str, searchpath=RELEASE_TEMPLATES_DIR) -> Template:
+    loader = FileSystemLoader(searchpath=searchpath)
+    template_env = Environment(loader=loader)
+    return template_env.get_template(fname)
 
 
 if __name__ == "__main__":

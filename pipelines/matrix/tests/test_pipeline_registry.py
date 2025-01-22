@@ -1,4 +1,5 @@
 from typing import Dict
+
 import pytest
 from kedro.pipeline import Pipeline
 from matrix.pipeline_registry import register_pipelines

@@ -60,7 +60,7 @@ def test_get_pr_details_since(mock_subprocess_run, mock_get_pr_details):
     mock_get_pr_details.return_value = expected_pr_details
 
     # When
-    result = get_pr_details_since("v1.0.0", use_cache=True)
+    result = get_pr_details_since("v1.0.0")
 
     # Then
     assert result.equals(expected_pr_details)
@@ -136,6 +136,7 @@ def test_suggest_pr_title(mock_vertex_model):
     pr_info = PRInfo(
         number="123",
         title="Original title",
+        author="author",
         current_labels="bug",
         diff="Some code changes",
         url="https://github.com/org/repo/pull/123",
