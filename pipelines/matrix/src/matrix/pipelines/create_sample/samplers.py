@@ -1,17 +1,12 @@
 import logging
 from abc import ABC, abstractmethod
-from typing import NamedTuple
+from typing import Dict
 
 import pandas as pd
 import pyspark.sql as ps
 import pyspark.sql.functions as f
 
 logger = logging.getLogger(__name__)
-
-
-class SamplingResult(NamedTuple):
-    knowledge_graph_nodes: ps.DataFrame
-    knowledge_graph_edges: ps.DataFrame
 
 
 class Sampler(ABC):
@@ -21,7 +16,7 @@ class Sampler(ABC):
         knowledge_graph_nodes: ps.DataFrame,
         knowledge_graph_edges: ps.DataFrame,
         ground_truth_edges: ps.DataFrame,
-    ) -> SamplingResult:
+    ) -> Dict[str, ps.DataFrame]:
         """
         Args:
             knowledge_graph_nodes: Knowledge graph nodes
@@ -55,7 +50,7 @@ class KnowledgeGraphSampler(Sampler):
         knowledge_graph_nodes: ps.DataFrame,
         knowledge_graph_edges: ps.DataFrame,
         ground_truth_edges: ps.DataFrame,
-    ) -> SamplingResult:
+    ) -> Dict[str, ps.DataFrame]:
         if logger.isEnabledFor(logging.INFO):
             logger.info(f"Received {knowledge_graph_nodes.count()} knowledge graph nodes")
             logger.info(f"Received {knowledge_graph_edges.count()} knowledge graph edges")
@@ -97,4 +92,7 @@ class KnowledgeGraphSampler(Sampler):
             logger.info(f"Sampled {sampled_nodes.cache().count()} sampled nodes in total")
             logger.info(f"Sampled {sampled_edges.cache().count()} sampled edges in total")
 
-        return SamplingResult(sampled_nodes, sampled_edges)
+        return {
+            "nodes": sampled_nodes,
+            "edges": sampled_edges,
+        }

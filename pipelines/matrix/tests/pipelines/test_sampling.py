@@ -40,9 +40,7 @@ def test_knowledge_graph_sampler(
         seed=42,
     )
 
-    (sampled_knowledge_graph_nodes, sampled_knowledge_graph_edges) = sampler.sample(
-        original_knowledge_graph_nodes, original_knowledge_graph_edges, ground_truth_edges
-    )
+    output = sampler.sample(original_knowledge_graph_nodes, original_knowledge_graph_edges, ground_truth_edges)
 
-    assert sampled_knowledge_graph_nodes.count() == pytest.approx(50, rel=0.2)
-    assert sampled_knowledge_graph_edges.count() == pytest.approx(60, rel=0.2)
+    assert output["nodes"].count() == pytest.approx(50, rel=0.2)
+    assert output["edges"].count() == pytest.approx(60, rel=0.2)
