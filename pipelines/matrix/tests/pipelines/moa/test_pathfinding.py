@@ -1,6 +1,8 @@
 import itertools
 
+import pandas as pd
 import pyspark.sql.functions as F
+import pyspark.sql.types as T
 import pytest
 from graphframes import GraphFrame
 from matrix.pipelines.moa.pathfinding import (
@@ -136,8 +138,54 @@ def test_get_connecting_paths_single_path_with_graphframes(spark, single_path_gr
     edges = edges.withColumn("src", F.col("subject")).withColumn("dst", F.col("object")).drop("subject", "object")
 
     g = GraphFrame(nodes, edges)
+
+    state_type = T.StructType(
+        [
+            T.StructField("source_paths", T.MapType(T.LongType(), T.ArrayType(T.StringType())), True),
+            T.StructField("target_paths", T.MapType(T.LongType(), T.ArrayType(T.StringType())), True),
+            # T.StructField("found_paths", T.MapType(T.LongType(), T.ArrayType(T.StringType())), True),
+        ]
+    )
+
+    def merge_paths(paths1, paths2):
+        if paths1 and paths2:
+            for k, v in paths2.items():
+                # Update if key doesn't exist or new list is shorter
+                if (k not in paths1) or (len(v) < len(paths1[k])):
+                    paths1[k] = v
+            return paths1
+        elif not paths1:
+            return paths2
+        elif not paths2:
+            return paths1
+
+    def aggregate_messages(messages):
+        state0 = messages[0]
+        source_paths = state0.source_paths.copy()
+        target_paths = state0.target_paths.copy()
+
+        for s in messages[1:]:
+            source_paths = merge_paths(source_paths, s.source_paths)
+            target_paths = merge_paths(target_paths, s.target_paths)
+
+        return (source_paths, target_paths)
+
+    aggregate_message_udf = F.udf(aggregate_messages, returnType=state_type)
+
+    def vertex_program(node_id, state, aggregated_message):
+        if aggregated_message:
+            updated_incoming_source_paths = {k: v + [node_id] for k, v in aggregated_message.source_paths.items()}
+            updated_incoming_target_paths = {k: v + [node_id] for k, v in aggregated_message.target_paths.items()}
+            source_paths = merge_paths(state.source_paths, updated_incoming_source_paths)
+            target_paths = merge_paths(state.target_paths, updated_incoming_target_paths)
+            return (source_paths, target_paths)
+        else:
+            return state
+
+    vertex_program_udf = F.udf(vertex_program, state_type)
+
     pwal = (
-        g.pregel.setMaxIter(1)
+        g.pregel.setMaxIter(2)
         .withVertexColumn(
             "state",
             initialExpr=F.struct(
@@ -149,7 +197,7 @@ def test_get_connecting_paths_single_path_with_graphframes(spark, single_path_gr
                 .alias("target_paths"),
                 # TODO: add an entry for found paths
             ),
-            updateAfterAggMsgsExpr=Pregel.msg(),
+            updateAfterAggMsgsExpr=vertex_program_udf(F.col("id"), F.col("state"), Pregel.msg()),
         )
         .sendMsgToSrc(
             F.when(
@@ -163,7 +211,8 @@ def test_get_connecting_paths_single_path_with_graphframes(spark, single_path_gr
                 F.col("src.state"),
             )
         )
-        .aggMsgs(F.first(Pregel.msg()))
+        .aggMsgs(aggregate_message_udf(F.collect_list(Pregel.msg())))
+        .setCheckpointInterval(100)
         .run()
     )
 
