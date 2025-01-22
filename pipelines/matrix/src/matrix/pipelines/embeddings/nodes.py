@@ -479,10 +479,10 @@ def create_node_embeddings(df: ps.DataFrame, cache: ps.DataFrame, batch_size: in
     partitioned_df = cached_df.repartition(num_batches)
 
     # Lookup and generate missing embeddings
-    df = lookup_missing_embeddings(partitioned_df)
+    enriched_df = lookup_missing_embeddings(partitioned_df)
 
     # Overwrite cache with updated embeddings
-    overwrite_cache(df)
+    overwrite_cache(enriched_df)
 
 
 def load_embeddings_from_cache(
@@ -499,11 +499,11 @@ def load_embeddings_from_cache(
     Returns:
         DataFrame enriched with cached embeddings.
     """
+
     return (
-        cache.alias("cache")
-        .filter(F.col("scope") == F.lit(scope))
+        cache.filter(F.col("scope") == F.lit(scope))
         .filter(F.col("model") == F.lit(model))
-        .join(dataframe.alias("df"), on=[F.col(id_column) == F.col("cache.id")], how="right")
+        .join(dataframe, on=[F.col(id_column) == F.col("cache.id")], how="right")
     )
 
 
@@ -536,9 +536,7 @@ def enrich_embeddings(iterable):
 
     # Generate embeddings for missing rows (example implementation)
     if not subdf_without_embed.empty:
-        subdf_without_embed["embedding"] = subdf_without_embed["id"].apply(
-            lambda x: [float(len(x)) * 0.1, float(len(x)) * 0.02]
-        )
+        subdf_without_embed = transform(subdf_without_embed)
     # Concatenate the results and return as an iterator
     return iter(pd.concat([subdf_with_embed, subdf_without_embed], axis=0).to_dict("records"))
 
@@ -551,6 +549,14 @@ def overwrite_cache(df: ps.DataFrame) -> None:
     """
     # Extract relevant columns for the cache
     cache_update = df.select("model", "scope", "embedding", "id").distinct()
+    return cache_update
 
-    # Append to the cache
-    cache_update.write.format("parquet").mode("append").save("/path/to/cache")
+
+def transform(df, transformer, **transformer_kwargs):
+    """Function to bucketize input data.
+
+    Args:
+        dfs: mapping of paths to df load functions
+        encoder: encoder to run
+    """
+    return transformer.apply(df(), **transformer_kwargs)
