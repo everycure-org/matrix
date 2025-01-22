@@ -29,7 +29,7 @@ jobs:
             release='${{ github.event.client_payload.release_version }}'
             gitref='${{ github.event.client_payload.git_fingerprint }}'
           else
-            release="v0.2.8"
+            release="v0.2.3"
             gitref=${{github.ref_name}}
           fi
           echo "release=${release}" >> "$GITHUB_ENV"
