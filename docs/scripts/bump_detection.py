@@ -18,9 +18,9 @@ def get_generate_notes_flag():
         and tag_version.patch < release_version.patch
     ):
         # This is a patch bump
-        generate_notes = False
+        generate_notes = str(False)
     else:
-        generate_notes = True
+        generate_notes = str(True)
 
     print(f"{generate_notes=}")
 
