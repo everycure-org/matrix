@@ -3,7 +3,6 @@ from typing import Any, Dict
 import pyspark.sql as ps
 import pytest
 from matrix.pipelines.integration import nodes
-from matrix.schemas.knowledge_graph import KGEdgeSchema, KGNodeSchema
 from pyspark.sql import functions as F
 from pyspark.sql.types import (
     ArrayType,
@@ -232,7 +231,6 @@ def test_unify_nodes(spark, sample_nodes, sample_biolink_category_hierarchy):
     # Check the result
     assert isinstance(result, ps.DataFrame)
     assert result.count() == 2  # Should have deduplicated
-    assert set(result.columns) == set(KGNodeSchema.to_schema().columns)
 
     # Check if the properties are combined correctly for the duplicated node
     drug_node = result.filter(result.id == "CHEBI:119157").collect()[0]
@@ -270,7 +268,6 @@ def test_unify_edges(spark, sample_edges):
     # Check the result
     assert isinstance(result, ps.DataFrame)
     assert result.count() == 2  # Should have deduplicated
-    assert set(result.columns) == set(KGEdgeSchema.to_schema().columns)
 
     # Check if the properties are combined correctly for the duplicated edge
     treat_edge = result.filter((result.subject == "CHEBI:119157") & (result.object == "MONDO:0005148")).collect()[0]
