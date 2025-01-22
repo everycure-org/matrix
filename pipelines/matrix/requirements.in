@@ -20,6 +20,7 @@ scikit-optimize
 xgboost
 hdfs
 graphdatascience
+git+https://github.com/graphframes/graphframes.git@rjurney/python-updates#subdirectory=python
 neo4j>=5.5.0
 numpy==1.23.5 # This was pinned during refit refactor; fabricator pipeline fails on 1.26.4
 python-cypher==0.20.1

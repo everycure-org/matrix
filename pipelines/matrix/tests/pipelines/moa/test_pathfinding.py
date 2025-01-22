@@ -2,6 +2,7 @@ import itertools
 
 import pyspark.sql.functions as F
 import pytest
+from graphframes import GraphFrame
 from matrix.pipelines.moa.pathfinding import (
     enrich_paths_with_edge_attributes,
     enrich_paths_with_node_attributes,
@@ -15,7 +16,11 @@ from pyspark.sql.types import ArrayType, StringType
 @pytest.fixture(scope="module")
 def spark():
     """Create a Spark session for all tests"""
-    return SparkSession.builder.getOrCreate()
+    return (
+        SparkSession.builder.appName("test_pathfinding")
+        .config("spark.jars.packages", "graphframes:graphframes:0.8.2-spark3.2-s_2.12")
+        .getOrCreate()
+    )
 
 
 @pytest.fixture
@@ -90,6 +95,81 @@ def test_get_connecting_paths_single_path(spark, single_path_graph):
     paths_two_hop = get_connecting_paths(pairs, preprocessed_edges, n_hops=2)
     paths_three_hop = get_connecting_paths(pairs, preprocessed_edges, n_hops=3)
     paths_four_hop = get_connecting_paths(pairs, preprocessed_edges, n_hops=4)
+
+    # Then: Should find exactly one 4-hop path
+    assert paths_four_hop.count() == 1
+
+    # And: The 4-hop path should contain the correct sequence of nodes
+    path = paths_four_hop.first()
+    assert path.node_id_list == ["source", "a", "b", "c", "target"]
+
+    # And: no 3-hop or 2-hop paths should be found
+    assert paths_three_hop.count() == 0
+    assert paths_two_hop.count() == 0
+
+
+from graphframes.lib import AggregateMessages as AM
+from graphframes.lib import Pregel
+
+
+def test_get_connecting_paths_single_path_with_graphframes(spark, single_path_graph):
+    """Test path finding on graph with single 4-hop path using GraphFrames"""
+    # Given: A graph with a single 4-hop path
+    nodes, edges = single_path_graph
+
+    # And: Source and target nodes
+    pairs = (
+        spark.createDataFrame([("source", "target")], ["source", "target"])
+        .withColumn("pair_id", F.monotonically_increasing_id())
+        .withColumn("source_id", F.col("pair_id"))
+        .withColumn("target_id", F.col("pair_id"))
+        .alias("pairs")
+    )
+
+    nodes = (
+        nodes.join(pairs, on=nodes.id == pairs.source, how="left")
+        .select("id", "source_id")
+        .alias("nodes_with_source")
+        .join(pairs, on=nodes.id == pairs.target, how="left")
+        .select("nodes_with_source.*", "target_id")
+    )
+    edges = edges.withColumn("src", F.col("subject")).withColumn("dst", F.col("object")).drop("subject", "object")
+
+    g = GraphFrame(nodes, edges)
+    pwal = (
+        g.pregel.setMaxIter(1)
+        .withVertexColumn(
+            "state",
+            initialExpr=F.struct(
+                F.when(F.col("source_id").isNotNull(), F.create_map(F.col("source_id"), F.array(F.col("id"))))
+                .otherwise(F.create_map())
+                .alias("source_paths"),
+                F.when(F.col("target_id").isNotNull(), F.create_map(F.col("target_id"), F.array(F.col("id"))))
+                .otherwise(F.create_map())
+                .alias("target_paths"),
+                # TODO: add an entry for found paths
+            ),
+            updateAfterAggMsgsExpr=Pregel.msg(),
+        )
+        .sendMsgToSrc(
+            F.when(
+                (F.size(F.col("dst.state.source_paths")) > 0) & (F.size(F.col("dst.state.target_paths")) > 0),
+                F.col("dst.state"),
+            )
+        )
+        .sendMsgToDst(
+            F.when(
+                (F.size(F.col("src.state.source_paths")) > 0) & (F.size(F.col("src.state.target_paths")) > 0),
+                F.col("src.state"),
+            )
+        )
+        .aggMsgs(F.first(Pregel.msg()))
+        .run()
+    )
+
+    pwal.show(10, False)
+
+    raise Exception("stop")
 
     # Then: Should find exactly one 4-hop path
     assert paths_four_hop.count() == 1
