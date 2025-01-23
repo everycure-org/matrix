@@ -94,7 +94,11 @@ def create_pipeline(**kwargs) -> Pipeline:
             # -------------------------------------------------------------------------
             node(
                 func=nodes.create_gt_nodes_edges,
-                inputs="preprocessing.int.ec_ground_truth.combined",
+                inputs=[
+                    "preprocessing.int.ec_ground_truth.combined",
+                    "params:preprocessing.ground_truth_ec.subject",
+                    "params:preprocessing.ground_truth_ec.object",
+                ],
                 outputs=[
                     "preprocessing.int.ec_ground_truth.nodes@pandas",
                     "preprocessing.int.ec_ground_truth.edges@pandas",
@@ -108,7 +112,10 @@ def create_pipeline(**kwargs) -> Pipeline:
                     "preprocessing.int.ec_ground_truth.nodes@pandas",
                     "preprocessing.int.ec_ground_truth.edges@pandas",
                 ],
-                outputs=["ingestion.raw.ec_ground_truth.nodes@pandas"],
+                outputs=[
+                    "ingestion.raw.ec_ground_truth.nodes@pandas",
+                    "ingestion.raw.ec_ground_truth.edges@pandas",
+                ],
                 name="produce_ec_ground_truth_kg",
                 tags=["ground-truth-ec"],
             ),
@@ -118,34 +125,38 @@ def create_pipeline(**kwargs) -> Pipeline:
             node(
                 func=nodes.create_gt,
                 inputs={
-                    "pos_df": "preprocessing.raw.kgml_xdt_ground_truth.positives",
-                    "neg_df": "preprocessing.raw.kgml_xdt_ground_truth.negatives",
+                    "pos_df": "preprocessing.raw.kgml_xdtd_ground_truth.positives",
+                    "neg_df": "preprocessing.raw.kgml_xdtd_ground_truth.negatives",
                 },
-                outputs="preprocessing.int.kgml_xdt_ground_truth.combined",
+                outputs="preprocessing.int.kgml_xdtd_ground_truth.combined",
                 name="create_kgml_xdt_gt_dataframe",
                 tags=["ground-truth-kgml"],
             ),
             node(
                 func=nodes.create_gt_nodes_edges,
-                inputs="preprocessing.int.kgml_xdt_ground_truth.combined",  # alternatively can use preprocessing.int.ec_ground_truth.combined
-                outputs=[
-                    "preprocessing.int.kgml_xdt_ground_truth.nodes@pandas",
-                    "preprocessing.int.kgml_xdt_ground_truth.edges@pandas",
+                inputs=[
+                    "preprocessing.int.kgml_xdtd_ground_truth.combined",
+                    "params:preprocessing.ground_truth_kgml_xdtd.subject",
+                    "params:preprocessing.ground_truth_kgml_xdtd.object",
                 ],
-                name="create_kgml_xdt_ground_truth_nodes_and_edges",
+                outputs=[
+                    "preprocessing.int.kgml_xdtd_ground_truth.nodes@pandas",
+                    "preprocessing.int.kgml_xdtd_ground_truth.edges@pandas",
+                ],
+                name="create_kgml_xdtd_ground_truth_nodes_and_edges",
                 tags=["ground-truth-kgml"],
             ),
             node(
                 func=lambda x, y: [x, y],
                 inputs=[
-                    "preprocessing.int.kgml_xdt_ground_truth.nodes@pandas",
-                    "preprocessing.int.kgml_xdt_ground_truth.edges@pandas",
+                    "preprocessing.int.kgml_xdtd_ground_truth.nodes@pandas",
+                    "preprocessing.int.kgml_xdtd_ground_truth.edges@pandas",
                 ],
                 outputs=[
-                    "ingestion.raw.kgml_xdt_ground_truth.nodes@pandas",
-                    "ingestion.raw.kgml_xdt_ground_truth.edges@pandas",
+                    "ingestion.raw.kgml_xdtd_ground_truth.nodes@pandas",
+                    "ingestion.raw.kgml_xdtd_ground_truth.edges@pandas",
                 ],
-                name="produce_kgml_xdt_ground_truth_kg",
+                name="produce_kgml_xdtd_ground_truth_kg",
                 tags=["ground-truth-kgml"],
             ),
         ]

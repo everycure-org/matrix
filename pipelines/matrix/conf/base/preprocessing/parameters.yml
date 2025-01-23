@@ -1,3 +1,11 @@
+preprocessing.ground_truth_kgml_xdtd.col_names:
+  subject: "source"
+  object: "target"
+
+preprocessing.ground_truth_ec:
+  subject: "drug ID"
+  object: "disease ID"
+
 preprocessing.enrichment:
 
   model:
