@@ -118,10 +118,22 @@ def create_pipeline(**kwargs) -> Pipeline:
                     "ingestion.raw.disease_list.nodes@pandas",
                 ],
                 outputs=[
-                    "ingestion.raw.ground_truth.nodes@pandas",
-                    "ingestion.raw.ground_truth.edges@pandas",
+                    "ingestion.raw.kgml_xdtd_ground_truth.nodes@pandas",
+                    "ingestion.raw.kgml_xdtd_ground_truth.edges@pandas",
                 ],
-                name="create_gn_pairs",
+                name="create_kgml_gt_pairs",
+            ),
+            ArgoNode(
+                func=_create_pairs,
+                inputs=[
+                    "ingestion.raw.drug_list.nodes@pandas",
+                    "ingestion.raw.disease_list.nodes@pandas",
+                ],
+                outputs=[
+                    "ingestion.raw.ec_ground_truth.nodes@pandas",
+                    "ingestion.raw.ec_ground_truth.edges@pandas",
+                ],
+                name="create_ec_gt_pairs",
             ),
         ]
     )

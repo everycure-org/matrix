@@ -52,7 +52,10 @@ DYNAMIC_PIPELINES_MAPPING = generate_dynamic_pipeline_mapping(
             {"name": "ec_medical_team", "integrate_in_kg": True},
             {"name": "drug_list", "integrate_in_kg": False, "nodes_only": True},
             {"name": "disease_list", "integrate_in_kg": False, "nodes_only": True},
-            {"name": "ground_truth", "integrate_in_kg": False},
+            {
+                "name": "kgml_xdtd_ground_truth",
+                "integrate_in_kg": False,
+            },  # choose either ec_ground_truth or kgml_xdtd_ground_truth
             {"name": "ec_clinical_trails", "integrate_in_kg": False},
         ],
         "modelling": {

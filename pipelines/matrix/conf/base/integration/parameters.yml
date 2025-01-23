@@ -22,7 +22,10 @@ integration:
     disease_list: 
       transformer:
         _object: matrix.pipelines.integration.transformers.diseases.DiseasesTransformer
-    ground_truth: 
+    kgml_xdtd_ground_truth: 
+      transformer:
+        _object: matrix.pipelines.integration.transformers.ground_truth.GroundTruthTransformer
+    ec_ground_truth: 
       transformer:
         _object: matrix.pipelines.integration.transformers.ground_truth.GroundTruthTransformer
     
