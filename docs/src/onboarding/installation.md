@@ -265,7 +265,7 @@ We leverage Google (GCP) as our Cloud provider, the following cask installation 
 
     ```bash
     brew install --cask google-cloud-sdk
-    ```    
+    ```
     
 === "Windows (WSL)"
     
@@ -279,7 +279,7 @@ We leverage Google (GCP) as our Cloud provider, the following cask installation 
     # update and install 
     sudo apt-get update && sudo apt-get install google-cloud-cli
     ```
-        
+    
 After succesfully installation, authenticate the client:
 
 ```bash
