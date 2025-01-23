@@ -33,8 +33,32 @@ class LazySparkDataset(SparkDataset):
     A trick that makes our spark loading lazy so we never initiate
     """
 
+    def __init__(  # noqa: PLR0913
+        self,
+        *,
+        filepath: str,
+        file_format: str = "parquet",
+        load_args: dict[str, Any] | None = None,
+        save_args: dict[str, Any] | None = None,
+        version: Version | None = None,
+        credentials: dict[str, Any] | None = None,
+        metadata: dict[str, Any] | None = None,
+    ) -> None:
+        super().__init__(
+            filepath=filepath,
+            file_format=file_format,
+            save_args=save_args,
+            load_args=self._load_args,
+            credentials=credentials,
+            version=version,
+            metadata=metadata,
+        )
+
     def load(self):
         SparkHooks._initialize_spark()
+
+        breakpoint()
+
         return super().load()
 
 

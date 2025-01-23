@@ -164,9 +164,9 @@ ingestion.int.ec_clinical_trails.edges:
 # -------------------------------------------------------------------------  
 
 ingestion.raw.drugmech@spark:
-  type: spark.SparkDataset
-  filepath: s3a://your_bucket/data/01_raw/weather/*
-  file_format: https://raw.githubusercontent.com/SuLab/DrugMechDB/refs/tags/${globals:data_sources.drugmech.version}/indication_paths.json
+  type: matrix.datasets.gcp.LazySparkDataset
+  filepath: https://raw.githubusercontent.com/SuLab/DrugMechDB/refs/tags/${globals:data_sources.drugmech.version}/indication_paths.json
+  file_format: json
 
 # -------------------------------------------------------------------------
 # Drug and disease lists
