@@ -7,6 +7,7 @@ from typing import Any, Dict, Optional
 
 import fsspec
 import mlflow
+import numpy as np
 import pandas as pd
 import pyspark.sql as ps
 import termplotlib as tpl
@@ -18,6 +19,7 @@ from kedro_datasets.spark import SparkDataset
 from mlflow.exceptions import RestException
 from omegaconf import OmegaConf
 from pyspark import SparkConf
+from pyspark.sql import DataFrame as SparkDataFrame
 
 from matrix.pipelines.data_release import last_node_name as last_data_release_node_name
 
@@ -38,11 +40,50 @@ class MLFlowHooks:
 
     @hook_impl
     def after_dataset_loaded(self, dataset_name, data, node):
+        print(f"type is {type(data)}")
+        datatype = type(data)
+        try:
+            if isinstance(data, SparkDataFrame):
+                dataset = mlflow.data.from_spark(data, name=dataset_name)
+                print(f"Logged Spark DataFrame: {dataset_name}")
+            elif isinstance(data, pd.DataFrame):
+                dataset = mlflow.data.from_pandas(data, name=dataset_name)
+                print(f"Logged Pandas DataFrame: {dataset_name}")
+            elif isinstance(data, np.ndarray):
+                data_df = pd.DataFrame(data)
+                dataset = mlflow.data.from_pandas(data_df, name=dataset_name)
+                print(f"Logged NumPy array as Pandas DataFrame: {dataset_name}")
+            elif isinstance(data, list):
+                data_df = pd.DataFrame(data)
+                dataset = mlflow.data.from_pandas(data_df, name=dataset_name)
+                print(f"Logged list as Pandas DataFrame: {dataset_name}")
+            elif isinstance(data, dict):
+                data_df = (
+                    pd.DataFrame([data]) if not isinstance(next(iter(data.values())), list) else pd.DataFrame(data)
+                )
+                dataset = mlflow.data.from_pandas(data_df, name=dataset_name)
+                print(f"Logged dict as Pandas DataFrame: {dataset_name}")
+            if isinstance(data, int):
+                data_df = pd.DataFrame({"value": [data]})
+                dataset = mlflow.data.from_pandas(data_df, name=dataset_name)
+                print(f"Logged int dataset as DataFrame: {dataset_name}")
+            else:
+                print(f"Unsupported data type: {type(data)}. Cannot log dataset: {dataset_name}")
+        except Exception as e:
+            print(f"Failed to log dataset '{dataset_name}' of type '{type(data)}': {e}")
+            raise
+        mlflow.log_input(dataset)
+
+    @hook_impl
+    def after_dataset_loaded_(self, dataset_name, data, node):
+        return
         # https://mlflow.org/docs/latest/python_api/mlflow.data.html
         # mlflow.log_param(f"dataset_loaded", "aaaa")
         print(f"type is {type(data)}")
         if type(data) is ps.dataframe.DataFrame:
-            dataset = mlflow.data.from_spark(data, name="aaa")
+            dataset = mlflow.data.from_spark(data, name=dataset_name)
+        elif isinstance(data, dict):
+            dataset = mlflow.data.from_json(data, name=dataset_name)
 
         mlflow.log_input(dataset)
         print(data)
@@ -66,6 +107,7 @@ class MLFlowHooks:
         # NOTE: This piece of code ensures that every MLFlow experiment
         # is created by our Kedro pipeline with the right artifact root.
         mlflow.set_tracking_uri(cfg.server.mlflow_tracking_uri)
+        mlflow.autolog()
         experiment_id = self._create_experiment(cfg.tracking.experiment.name, globs.mlflow_artifact_root)
 
         if cfg.tracking.run.name:
