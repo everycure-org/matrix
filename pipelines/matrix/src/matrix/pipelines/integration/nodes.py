@@ -273,3 +273,39 @@ def normalize_nodes(
         .withColumnsRenamed({"id": "original_id"})
         .withColumnsRenamed({"normalized_id": "id"})
     )
+
+
+def add_gt_category(
+    nodes: ps.DataFrame, drug_list: ps.DataFrame, disease_list: ps.DataFrame, *known_pairs: ps.DataFrame
+) -> ps.DataFrame:
+    """Adds ground truth categories to nodes based on their presence in known pairs and biolink categories.
+    Args:
+        nodes: DataFrame containing nodes with their categories.
+        drug_list: DataFrame containing additional drug IDs.
+        disease_list: DataFrame containing additional disease IDs.
+        known_pairs: DataFrames containing known drug-disease pairs.
+    Returns:
+        DataFrame with updated categories if needed.
+    """
+
+    known_sources = []
+    known_targets = []
+    for known_pair in known_pairs:
+        known_sources.extend([row["subject"] for row in known_pair.select("subject").distinct().collect()])
+        known_targets.extend([row["object"] for row in known_pair.select("object").distinct().collect()])
+    drug_ids = [row["id"] for row in drug_list.select("id").distinct().collect()]
+    disease_ids = [row["id"] for row in disease_list.select("id").distinct().collect()]
+    return nodes.withColumn(
+        "all_categories",
+        F.when(
+            (F.col("id").isin(known_sources) | F.col("id").isin(drug_ids))
+            & ~F.array_contains(F.col("all_categories"), "biolink:Drug"),
+            F.array_union(F.col("all_categories"), F.array(F.lit("biolink:Drug"))),
+        )
+        .when(
+            (F.col("id").isin(known_targets) | F.col("id").isin(disease_ids))
+            & ~F.array_contains(F.col("all_categories"), "biolink:Disease"),
+            F.array_union(F.col("all_categories"), F.array(F.lit("biolink:Disease"))),
+        )
+        .otherwise(F.col("all_categories")),
+    )
