@@ -45,28 +45,28 @@ class MLFlowHooks:
         try:
             if isinstance(data, SparkDataFrame):
                 dataset = mlflow.data.from_spark(data, name=dataset_name)
-                print(f"Logged Spark DataFrame: {dataset_name}")
+                print(f"Trying to log Spark DataFrame: {dataset_name}")
             elif isinstance(data, pd.DataFrame):
                 dataset = mlflow.data.from_pandas(data, name=dataset_name)
-                print(f"Logged Pandas DataFrame: {dataset_name}")
+                print(f"Trying to log Pandas DataFrame: {dataset_name}")
             elif isinstance(data, np.ndarray):
                 data_df = pd.DataFrame(data)
                 dataset = mlflow.data.from_pandas(data_df, name=dataset_name)
-                print(f"Logged NumPy array as Pandas DataFrame: {dataset_name}")
+                print(f"Trying to log NumPy array as Pandas DataFrame: {dataset_name}")
             elif isinstance(data, list):
                 data_df = pd.DataFrame(data)
                 dataset = mlflow.data.from_pandas(data_df, name=dataset_name)
-                print(f"Logged list as Pandas DataFrame: {dataset_name}")
+                print(f"Trying to log list as Pandas DataFrame: {dataset_name}")
             elif isinstance(data, dict):
                 data_df = (
                     pd.DataFrame([data]) if not isinstance(next(iter(data.values())), list) else pd.DataFrame(data)
                 )
                 dataset = mlflow.data.from_pandas(data_df, name=dataset_name)
-                print(f"Logged dict as Pandas DataFrame: {dataset_name}")
-            if isinstance(data, int):
+                print(f"Trying to log dict as Pandas DataFrame: {dataset_name}")
+            elif isinstance(data, (int, str)):
                 data_df = pd.DataFrame({"value": [data]})
                 dataset = mlflow.data.from_pandas(data_df, name=dataset_name)
-                print(f"Logged int dataset as DataFrame: {dataset_name}")
+                print(f"Trying to log int dataset as DataFrame: {dataset_name}")
             else:
                 print(f"Unsupported data type: {type(data)}. Cannot log dataset: {dataset_name}")
         except Exception as e:
@@ -107,7 +107,7 @@ class MLFlowHooks:
         # NOTE: This piece of code ensures that every MLFlow experiment
         # is created by our Kedro pipeline with the right artifact root.
         mlflow.set_tracking_uri(cfg.server.mlflow_tracking_uri)
-        mlflow.autolog()
+        # mlflow.autolog()
         experiment_id = self._create_experiment(cfg.tracking.experiment.name, globs.mlflow_artifact_root)
 
         if cfg.tracking.run.name:
@@ -327,6 +327,7 @@ class ReleaseInfoHooks:
     _kedro_context: Optional[KedroContext] = None
     _globals: Optional[dict] = None
     _params: Optional[dict] = None
+    _datasets_used: Optional[list] = None
 
     @classmethod
     def set_context(cls, context: KedroContext) -> None:
@@ -340,6 +341,7 @@ class ReleaseInfoHooks:
         """Remember context for later export from a node hook."""
         logger.info("Remembering context for context export later")
         ReleaseInfoHooks.set_context(context)
+        ReleaseInfoHooks.extract_datasets_used()
 
     @staticmethod
     def build_bigquery_link() -> str:
@@ -368,13 +370,27 @@ class ReleaseInfoHooks:
         tmpl = f"https://mlflow.platform.dev.everycure.org/#/experiments/{experiment_id}/runs/{run_id}"
         return tmpl
 
+    @classmethod
+    def extract_datasets_used(cls) -> None:
+        # Using lazy import to prevent circular import error
+        from matrix.settings import DYNAMIC_PIPELINES_MAPPING
+
+        dataset_names = [item["name"] for item in DYNAMIC_PIPELINES_MAPPING["integration"]]
+        cls._datasets_used = dataset_names
+
     @staticmethod
     def extract_release_info() -> dict[str, str]:
         info = {
             "Release Name": ReleaseInfoHooks._globals["versions"]["release"],
-            "Robokop Version": ReleaseInfoHooks._globals["data_sources"]["robokop"]["version"],
-            "RTX-KG2 Version": ReleaseInfoHooks._globals["data_sources"]["rtx-kg2"]["version"],
-            "EC Medical Team Version": ReleaseInfoHooks._globals["data_sources"]["ec-medical-team"]["version"],
+            "Robokop Version": ReleaseInfoHooks._globals["data_sources"]["robokop"]["version"]
+            if "robokop" in ReleaseInfoHooks._datasets_used
+            else "",
+            "RTX-KG2 Version": ReleaseInfoHooks._globals["data_sources"]["rtx-kg2"]["version"]
+            if "rtx_kg2" in ReleaseInfoHooks._datasets_used
+            else "",
+            "EC Medical Team Version": ReleaseInfoHooks._globals["data_sources"]["ec-medical-team"]["version"]
+            if "ec_medical_team" in ReleaseInfoHooks._datasets_used
+            else "",
             "Topological Estimator": ReleaseInfoHooks._params["embeddings.topological_estimator"]["_object"],
             "Embeddings Encoder": ReleaseInfoHooks._params["embeddings.node"]["encoder"]["encoder"]["model"],
             "BigQuery Link": ReleaseInfoHooks.build_bigquery_link(),
@@ -401,7 +417,7 @@ class ReleaseInfoHooks:
         # `after_pipeline_run`, because one does not know a priori which
         # pipelines the (last) data release node is part of. With an
         # `after_node_run`, you can limit your filters easily.
-        if node.name == last_data_release_node_name:
+        if True:  # node.name == last_data_release_node_name:
             release_info = self.extract_release_info()
             try:
                 self.upload_to_storage(release_info)
