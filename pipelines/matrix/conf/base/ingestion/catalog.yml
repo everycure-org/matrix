@@ -159,6 +159,14 @@ ingestion.int.ec_clinical_trails.edges:
   filepath: ${globals:paths.ingestion}/int/clinical_trials_data/translator/${globals:data_sources.ec-medical-team.version}/edges_conflated_raw
 
 
+# -------------------------------------------------------------------------
+# DrugMech
+# -------------------------------------------------------------------------  
+
+ingestion.raw.drugmech@spark:
+  type: spark.SparkDataset
+  filepath: s3a://your_bucket/data/01_raw/weather/*
+  file_format: https://raw.githubusercontent.com/SuLab/DrugMechDB/refs/tags/${globals:data_sources.drugmech.version}/indication_paths.json
 
 # -------------------------------------------------------------------------
 # Drug and disease lists
