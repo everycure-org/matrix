@@ -265,7 +265,7 @@ We leverage Google (GCP) as our Cloud provider, the following cask installation 
 
     ```bash
     brew install --cask google-cloud-sdk
-    ```
+    ```    
     
 === "Windows (WSL)"
     
@@ -279,13 +279,33 @@ We leverage Google (GCP) as our Cloud provider, the following cask installation 
     # update and install 
     sudo apt-get update && sudo apt-get install google-cloud-cli
     ```
-    
+        
 After succesfully installation, authenticate the client:
 
 ```bash
 gcloud auth login
 gcloud auth application-default login
 ```
+
+Set the GOOGLE_APPLICATION_CREDENTIALS environment variable to point to your service account key file. You can find the file path in your console output from the previous step.
+
+=== "MacOS"
+
+    ```bash
+    # Add to your shell config
+    echo 'export GOOGLE_APPLICATION_CREDENTIALS="/path/to/service-account-key.json"' >> ~/.bashrc
+
+    # Reload
+    source ~/.bashrc
+    ```
+=== "Windows (WSL)"
+
+    ```bash
+    # For Windows PowerShell
+    $env:GOOGLE_APPLICATION_CREDENTIALS="C:\path\to\your-service-account-key.json"
+
+    # Restart powershell
+    ```
 
 ### GNU Make
 
