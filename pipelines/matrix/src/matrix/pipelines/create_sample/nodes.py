@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 @check_output(DataFrameSchema(columns={}, unique=["id"]), df_name="nodes")
 @check_output(DataFrameSchema(columns={}, unique=["object", "predicate", "subject"]), df_name="edges")
 @inject_object()
-def sample_nodes(
+def sample_knowledge_graph(
     sampler: Sampler,
     knowledge_graph_nodes: ps.DataFrame,
     knowledge_graph_edges: ps.DataFrame,
