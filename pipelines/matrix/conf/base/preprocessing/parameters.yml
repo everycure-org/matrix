@@ -1,4 +1,4 @@
-preprocessing.ground_truth_kgml_xdtd.col_names:
+preprocessing.ground_truth_kgml_xdtd:
   subject: "source"
   object: "target"
 
