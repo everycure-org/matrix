@@ -178,9 +178,7 @@ def clean_clinical_trial_data(df: pd.DataFrame) -> pd.DataFrame:
         columns={
             "drug|disease": Column(str, nullable=False),
             "y": Column(int, nullable=False),
-            # TODO: Piotr add
         },
-        unique=["clinical_trial_id", "drug_kg_curie", "disease_kg_curie"],
     )
 )
 def create_gt(pos_df: pd.DataFrame, neg_df: pd.DataFrame) -> pd.DataFrame:
@@ -194,8 +192,8 @@ def create_gt(pos_df: pd.DataFrame, neg_df: pd.DataFrame) -> pd.DataFrame:
     return gt_df
 
 
-def create_gt_nodes_edges(edges: pd.DataFrame) -> Tuple[pd.DataFrame, pd.DataFrame]:
-    id_list = set(edges.source) | set(edges.target)
+def create_gt_nodes_edges(edges: pd.DataFrame, source_name: str, target_name: str) -> Tuple[pd.DataFrame, pd.DataFrame]:
+    id_list = set(edges[source_name]) | set(edges[target_name])
     nodes = pd.DataFrame(id_list, columns=["id"])
-    edges.rename({"source": "subject", "target": "object"}, axis=1, inplace=True)
+    edges.rename({source_name: "subject", target_name: "object"}, axis=1, inplace=True)
     return nodes, edges
