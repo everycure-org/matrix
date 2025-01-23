@@ -164,7 +164,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                         "integration.int.kgml_xdtd_ground_truth.edges.norm@spark",
                         "integration.int.ec_clinical_trails.edges.norm@spark",
                     ],
-                    outputs="integration.pre.filtered_gt_nodes",
+                    outputs="integration.prm.filtered_gt_nodes",
                     name="add_gt_category",
                     tags=["tag-gt"],
                 ),
