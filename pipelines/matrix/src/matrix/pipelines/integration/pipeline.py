@@ -80,11 +80,22 @@ def _create_integration_pipeline(source: str, nodes_only: bool = False) -> Pipel
     return sum(pipelines)
 
 
+def format_drugmech(df: ps.DataFrame):
+    breakpoint()
+
+
 def create_pipeline(**kwargs) -> Pipeline:
     """Create integration pipeline."""
 
-    # Create pipeline per source
     pipelines = []
+    # Construct drugmech
+    pipelines.append(
+        pipeline(
+            [node(func=format_drugmech, inputs=["ingestion.raw.drugmech@spark"], outputs=None, name="format_drugmech")]
+        )
+    )
+
+    # Create pipeline per source
     for source in settings.DYNAMIC_PIPELINES_MAPPING.get("integration"):
         pipelines.append(
             pipeline(
