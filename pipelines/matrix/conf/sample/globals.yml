@@ -8,7 +8,8 @@ gcs_bucket: gs://${oc.env:GCP_BUCKET, mtrx-us-central1-hub-dev-storage}
 release_folder_name: ${oc.env:RELEASE_FOLDER_NAME, releases}
 cloud_release_path: ${gcs_bucket}/kedro/data/${release_folder_name}/${versions.release}
 # ... temporary datasets' path
-local_base_path: data/sample
+# We determine whether it's a Argo or local run based on the ARGO_NODE_ID presence
+local_base_path: ${if_null:${oc.env:ARGO_NODE_ID, null, True}, data/releases/${versions.release}/sample, ${cloud_release_path}/sample}
 
 paths:
   # ... input cloud integration files 
@@ -18,8 +19,8 @@ paths:
   integration_sample: ${cloud_release_path}/datasets/create_sample/integration
 
   # ... temporary sampled datasets
-  embeddings:         ${local_base_path}/releases/${versions.release}/datasets/embeddings
-  modelling:          ${local_base_path}/releases/${versions.release}/runs/${run_name}/datasets/modelling
-  evaluation:         ${local_base_path}/releases/${versions.release}/runs/${run_name}/datasets/evaluation
-  matrix_generation:  ${local_base_path}/releases/${versions.release}/runs/${run_name}/datasets/matrix_generation
-  inference:          ${local_base_path}/releases/${versions.release}/runs/${run_name}/datasets/inference
+  embeddings:         ${local_base_path}/datasets/embeddings
+  modelling:          ${local_base_path}/datasets/modelling
+  evaluation:         ${local_base_path}/datasets/evaluation
+  matrix_generation:  ${local_base_path}/datasets/matrix_generation
+  inference:          ${local_base_path}/datasets/inference

@@ -139,7 +139,7 @@ class SparkHooks:
             # DEBT ugly fix, ideally we overwrite this in the spark.yml config file but currently no
             # known way of doing so
             # if prod environment, remove all config keys that start with spark.hadoop.google.cloud.auth.service
-            if cls._kedro_context.env == "cloud" and os.environ.get("ARGO_NODE_ID") is not None:
+            if os.environ.get("ARGO_NODE_ID") is not None:
                 logger.warning(
                     "we're manipulating the spark configuration now. this is done assuming this is a production execution in argo"
                 )
