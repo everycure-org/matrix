@@ -67,6 +67,11 @@ def register_pipelines() -> Dict[str, Pipeline]:
         pipelines["embeddings"]
         + pipelines["modelling_run"]
     )
+    pipelines["test_no_modelling"] = (
+        pipelines["fabricator"]
+        + pipelines["ingestion"]
+        + pipelines["integration"]
+    )
     # fmt: on
 
     return pipelines
