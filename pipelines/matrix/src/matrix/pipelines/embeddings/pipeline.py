@@ -28,15 +28,24 @@ def create_pipeline(**kwargs) -> Pipeline:
                 func=nodes.create_node_embeddings,
                 inputs={
                     "df": "integration.prm.filtered_nodes",
-                    "cache": "embeddings.cache",
+                    # "cache": "embeddings.cache",
                     "batch_size": "params:embeddings.node.batch_size",
-                    "transformer": "params:embeddings.node.encoder",
+                    "transformer_config": "params:embeddings.node.encoder",
                     # NOTE: These are kwargs
                     "input_features": "params:embeddings.node.input_features",
                     "max_input_len": "params:embeddings.node.max_input_len",
                 },
-                outputs="embeddings.feat.graph.node_embeddings@spark",
+                outputs=[
+                    "embeddings.feat.graph.node_embeddings@spark",
+                    "embeddings.cache",
+                ],
                 name="create_node_embeddings",
+                argo_config=ArgoResourceConfig(
+                    cpu_request=48,
+                    cpu_limit=48,
+                    memory_limit=192,
+                    memory_request=120,
+                ),
             ),
             # Reduce dimension
             ArgoNode(

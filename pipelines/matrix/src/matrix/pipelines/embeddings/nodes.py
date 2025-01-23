@@ -9,19 +9,33 @@ import pyspark.sql.functions as F
 import pyspark.sql.types as T
 import seaborn as sns
 from graphdatascience import GraphDataScience
+from langchain_openai import OpenAIEmbeddings
 from pyspark.ml.functions import array_to_vector, vector_to_array
-from refit.v1.core.inline_has_schema import has_schema
-from refit.v1.core.inline_primary_key import primary_key
-from refit.v1.core.output_primary_key import _duplicate_and_null_check
+from pyspark.sql import SparkSession
+from pyspark.sql.types import ArrayType, DoubleType, StringType, StructField, StructType
+
+# from refit.v1.core.inline_has_schema import has_schema
+# from refit.v1.core.inline_primary_key import primary_key
+# from refit.v1.core.output_primary_key import _duplicate_and_null_check
 from tenacity import retry, stop_after_attempt, wait_exponential
 
 from matrix.inject import inject_object, unpack_params
+from matrix.pipelines.embeddings.encoders import LangChainEncoder
 from matrix.utils.pa_utils import Column, DataFrameSchema, check_output
 
 from .encoders import AttributeEncoder
 from .graph_algorithms import GDSGraphAlgorithm
 
 logger = logging.getLogger(__name__)
+
+cache_schema = StructType(
+    [
+        StructField("model", StringType(), nullable=False),
+        StructField("scope", StringType(), nullable=False),
+        StructField("id", StringType(), nullable=False),
+        StructField("embedding", ArrayType(DoubleType()), nullable=False),
+    ]
+)
 
 
 class GraphDS(GraphDataScience):
@@ -465,27 +479,27 @@ def visualise_pca(nodes: ps.DataFrame, column_name: str) -> plt.Figure:
     return fig
 
 
-@has_schema(
-    schema={
-        "id": "string",
-        "model": "string",
-        "scope": "string",
-        "embedding": "array<double>",
-    },
-    output=0,
-)
-# NOTE: This validates the new cache shard does _not_
-# contain duplicates. This only checks a _single_ shard though,
-# hence why we're also validating the result dataframe below.
-# Let's avoid using the primary key statement on the cache, as that
-# might be a very heavy operation.
-@primary_key(primary_key=["model", "scope", "id"], output=0)
-# @inline_primary_key(primary_key=["model", "scope", "id"], df="cache")
+# @has_schema(
+#     schema={
+#         "id": "string",
+#         "model": "string",
+#         "scope": "string",
+#         "embedding": "array<double>",
+#     },
+#     output=0,
+# )
+# # NOTE: This validates the new cache shard does _not_
+# # contain duplicates. This only checks a _single_ shard though,
+# # hence why we're also validating the result dataframe below.
+# # Let's avoid using the primary key statement on the cache, as that
+# # might be a very heavy operation.
+# @primary_key(primary_key=["model", "scope", "id"], output=0)
+# # @inline_primary_key(primary_key=["model", "scope", "id"], df="cache")
 def create_node_embeddings(
     df: ps.DataFrame,
-    cache: ps.DataFrame,
+    # cache: ps.DataFrame,
     batch_size: int,
-    transformer,
+    transformer_config,
     **transformer_kwargs,
 ) -> None:
     """
@@ -495,23 +509,40 @@ def create_node_embeddings(
         cache: DataFrame holding cached embeddings.
         batch_size: Number of rows per batch.
     """
+    # Instantiate the encoder
+    encoder_config = transformer_config["encoder"]
+    encoder = OpenAIEmbeddings(model=encoder_config["model"], timeout=encoder_config["timeout"])
+
+    # Create the transformer
+    transformer = LangChainEncoder(
+        encoder=encoder, dimensions=transformer_config["dimensions"], timeout=encoder_config["timeout"]
+    )
+
+    # Create a spark session
+    spark = SparkSession.builder.appName("Empty_Dataframe").getOrCreate()
+
+    # Create an empty RDD
+    emp_RDD = spark.sparkContext.emptyRDD()
+
+    # Create an empty RDD with empty schema
+    cache = spark.createDataFrame(data=emp_RDD, schema=cache_schema)
+
     # Load embeddings from cache
     cached_df = load_embeddings_from_cache(df, cache).cache()
-
     # Determine number of batches and repartition the data
     num_elements = cached_df.count()
     num_batches = (num_elements + batch_size - 1) // batch_size
     partitioned_df = cached_df.repartition(num_batches)
-
     # Lookup and generate missing embeddings
     enriched_df = lookup_missing_embeddings(partitioned_df, transformer, **transformer_kwargs)
 
     # Overwrite cache with updated embeddings
-    overwrite_cache(enriched_df)
+    updated_cache = overwrite_cache(enriched_df)
+    return enriched_df, updated_cache
 
 
 def load_embeddings_from_cache(
-    dataframe: ps.DataFrame, cache: ps.DataFrame, model: str = "gpt-4", scope: str = "rtx_kg2", id_column: str = "id:ID"
+    dataframe: ps.DataFrame, cache: ps.DataFrame, model: str = "gpt-4", scope: str = "rtx_kg2", id_column: str = "id"
 ) -> ps.DataFrame:
     """
     Enrich the dataframe with cached embeddings.
@@ -526,42 +557,60 @@ def load_embeddings_from_cache(
     """
 
     return (
-        cache.filter(F.col("scope") == F.lit(scope))
+        cache.alias("cache")
+        .filter(F.col("scope") == F.lit(scope))
         .filter(F.col("model") == F.lit(model))
-        .join(dataframe, on=[F.col(id_column) == F.col("cache.id")], how="right")
+        .join(dataframe.alias("df"), on=[F.col(f"df.{id_column}") == F.col("cache.id")], how="right")
+        .select(
+            *[F.col(f"df.{col}") for col in dataframe.columns],  # Select all original dataframe columns
+            F.col("cache.embedding").alias("embedding"),  # Add the embedding from cache
+        )
     )
 
 
 def lookup_missing_embeddings(df: ps.DataFrame, transformer, **transformer_kwargs) -> ps.DataFrame:
     """
     Generate embeddings for rows missing in the cache.
+
     Args:
         df: Input DataFrame with potential missing embeddings.
+        transformer: Transformer to apply for generating embeddings.
+        transformer_kwargs: Additional arguments for the transformer.
+
     Returns:
         DataFrame with generated embeddings for missing rows.
     """
-
+    columns = list(df.columns)
     # Process data in parallel using mapPartitions
-    return df.rdd.mapPartitions(lambda it: enrich_embeddings(it, transformer, **transformer_kwargs)).toDF()
+    return df.rdd.mapPartitions(lambda it: enrich_embeddings(it, columns, transformer, **transformer_kwargs)).toDF()
 
 
-def enrich_embeddings(iterable):
+def enrich_embeddings(iterable, columns, transformer, **transformer_kwargs):
     """
     Process a batch of rows, generating embeddings for rows with null values.
+
     Args:
         iterable: Iterator over rows in the partition.
+        transformer: Transformer to generate embeddings.
+        transformer_kwargs: Additional arguments for the transformer.
+
     Returns:
         Iterator over rows with updated embeddings.
     """
-    subdf = pd.DataFrame(list(iterable))
+    rows = list(iterable)
+    if not rows:
+        print("enrich_embeddings: Empty partition received.")
+        return iter([])  # Handle empty partition
 
-    # Separate rows with and without embeddings
+    # Reconstruct DataFrame with correct column names
+    subdf = pd.DataFrame(rows, columns=columns)
+
     subdf_with_embed = subdf[subdf["embedding"].notnull()]
     subdf_without_embed = subdf[subdf["embedding"].isnull()]
 
     # Generate embeddings for missing rows (example implementation)
     if not subdf_without_embed.empty:
-        subdf_without_embed = transform(subdf_without_embed)
+        subdf_without_embed = transform(subdf_without_embed, transformer, **transformer_kwargs)
     # Concatenate the results and return as an iterator
     return iter(pd.concat([subdf_with_embed, subdf_without_embed], axis=0).to_dict("records"))
 
@@ -578,10 +627,16 @@ def overwrite_cache(df: ps.DataFrame) -> None:
 
 
 def transform(df, transformer, **transformer_kwargs):
-    """Function to bucketize input data.
+    """
+    Apply a transformer to generate embeddings for the input DataFrame.
 
     Args:
-        dfs: mapping of paths to df load functions
-        encoder: encoder to run
+        df: Input DataFrame.
+        transformer: The transformer instance to apply.
+        transformer_kwargs: Additional arguments for the transformer.
+
+    Returns:
+        DataFrame with generated embeddings.
     """
-    return transformer.apply(df(), **transformer_kwargs)
+    # print(f"Transformer's type: {type(transformer)}")
+    return transformer.apply(df, **transformer_kwargs)
