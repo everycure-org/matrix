@@ -10,6 +10,7 @@ import numpy as np
 import pandas as pd
 import pygsheets
 import pyspark.sql as ps
+import requests
 from google.cloud import bigquery, storage
 from kedro.io.core import (
     AbstractDataset,
@@ -44,11 +45,13 @@ class LazySparkDataset(SparkDataset):
         credentials: dict[str, Any] | None = None,
         metadata: dict[str, Any] | None = None,
     ) -> None:
+        self._filepath = filepath
+
         super().__init__(
             filepath=filepath,
             file_format=file_format,
             save_args=save_args,
-            load_args=self._load_args,
+            load_args=load_args,
             credentials=credentials,
             version=version,
             metadata=metadata,
@@ -57,7 +60,9 @@ class LazySparkDataset(SparkDataset):
     def load(self):
         SparkHooks._initialize_spark()
 
-        breakpoint()
+        # Make local copy
+        if self.self._filepath.startswith("https://"):
+            breakpoint()
 
         return super().load()
 
