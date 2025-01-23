@@ -1,22 +1,26 @@
+
 run_name: sample-run
 versions:
   release: ${oc.env:RELEASE_VERSION,v0.2.7}
 
 gcs_bucket: gs://${oc.env:GCP_BUCKET, mtrx-us-central1-hub-dev-storage}
-source_gcs_bucket: ${gcs_bucket}
 
-base_sample_path: data/sample
+# ... cloud persisted datasets' path
+release_folder_name: ${oc.env:RELEASE_FOLDER_NAME, releases}
+cloud_release_path: ${gcs_bucket}/kedro/data/${release_folder_name}/${versions.release}
+# ... temporary datasets' path
+local_base_path: data/sample
+
 paths:
-  # Original paths
-  integration:        ${source_gcs_bucket}/kedro/data/releases/${versions.release}/datasets/integration
+  # ... input cloud integration files 
+  integration:        ${cloud_release_path}/datasets/integration
 
-  # Sample paths
-  # Release-based
-  integration_sample: ${base_sample_path}/datasets/integration
-  embeddings:         ${base_sample_path}/releases/${versions.release}/datasets/embeddings
+  # ... output cloud samples of integration files
+  integration_sample: ${cloud_release_path}/datasets/create_sample/integration
 
-  # Run-based
-  modelling:          ${base_sample_path}/releases/${versions.release}/runs/${run_name}/datasets/modelling
-  evaluation:         ${base_sample_path}/releases/${versions.release}/runs/${run_name}/datasets/evaluation
-  matrix_generation:  ${base_sample_path}/releases/${versions.release}/runs/${run_name}/datasets/matrix_generation
-  inference:          ${base_sample_path}/releases/${versions.release}/runs/${run_name}/datasets/inference
+  # ... temporary sampled datasets
+  embeddings:         ${local_base_path}/releases/${versions.release}/datasets/embeddings
+  modelling:          ${local_base_path}/releases/${versions.release}/runs/${run_name}/datasets/modelling
+  evaluation:         ${local_base_path}/releases/${versions.release}/runs/${run_name}/datasets/evaluation
+  matrix_generation:  ${local_base_path}/releases/${versions.release}/runs/${run_name}/datasets/matrix_generation
+  inference:          ${local_base_path}/releases/${versions.release}/runs/${run_name}/datasets/inference
