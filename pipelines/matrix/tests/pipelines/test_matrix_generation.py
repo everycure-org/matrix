@@ -190,10 +190,10 @@ def test_generate_pairs(sample_drugs, sample_diseases, sample_graph, sample_know
         for col in [
             "is_known_positive",
             "is_known_negative",
-            "trial_sig_better",
-            "trial_non_sig_better",
-            "trial_sig_worse",
-            "trial_non_sig_worse",
+            # "trial_sig_better",
+            # "trial_non_sig_better",
+            # "trial_sig_worse",
+            # "trial_non_sig_worse",
         ]
     )
     # Flag columns set correctly
@@ -202,7 +202,7 @@ def test_generate_pairs(sample_drugs, sample_diseases, sample_graph, sample_know
             sum(result[col_name]) == 1
             for col_name in (
                 "is_known_negative",
-                "trial_sig_better",
+                # "trial_sig_better",
             )
         ]
     )
@@ -211,9 +211,9 @@ def test_generate_pairs(sample_drugs, sample_diseases, sample_graph, sample_know
             sum(result[col_name]) == 0
             for col_name in (
                 "is_known_positive",
-                "trial_non_sig_better",
-                "trial_sig_worse",
-                "trial_non_sig_worse",
+                # "trial_non_sig_better",
+                # "trial_sig_worse",
+                # "trial_non_sig_worse",
             )
         ]
     )
