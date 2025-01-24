@@ -10,8 +10,8 @@ from matrix.utils.pa_utils import Column, DataFrameSchema, check_output
 logger = logging.getLogger(__name__)
 
 
-# @check_output(DataFrameSchema(columns={}, unique=["id"]), df_name="nodes")
-# @check_output(DataFrameSchema(columns={}, unique=["object", "predicate", "subject"]), df_name="edges")
+@check_output(DataFrameSchema(columns={}, unique=["id"]), df_name="nodes")
+@check_output(DataFrameSchema(columns={}, unique=["object", "predicate", "subject"]), df_name="edges")
 @inject_object()
 def sample_knowledge_graph(
     sampler: Sampler,

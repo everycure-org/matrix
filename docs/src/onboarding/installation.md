@@ -287,7 +287,7 @@ gcloud auth login
 gcloud auth application-default login
 ```
 
-Set the GOOGLE_APPLICATION_CREDENTIALS environment variable to point to your service account key file. You can find the file path in your console output from the previous step.
+Set the GOOGLE_APPLICATION_CREDENTIALS environment variable to point to your service account key file. You can find the file path in previous step's console output.
 
 === "MacOS"
 
@@ -297,14 +297,6 @@ Set the GOOGLE_APPLICATION_CREDENTIALS environment variable to point to your ser
 
     # Reload
     source ~/.bashrc
-    ```
-=== "Windows (WSL)"
-
-    ```bash
-    # For Windows PowerShell
-    $env:GOOGLE_APPLICATION_CREDENTIALS="C:\path\to\your-service-account-key.json"
-
-    # Restart powershell
     ```
 
 ### GNU Make

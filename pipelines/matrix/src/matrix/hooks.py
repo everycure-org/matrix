@@ -141,7 +141,7 @@ class SparkHooks:
             # if prod environment, remove all config keys that start with spark.hadoop.google.cloud.auth.service
             if os.environ.get("ARGO_NODE_ID") is not None:
                 logger.warning(
-                    "we're manipulating the spark configuration now. this is done assuming this is a production execution in argo"
+                    "We're manipulating the spark configuration now. This is done assuming this is a production execution in argo"
                 )
                 parameters = {
                     k: v for k, v in parameters.items() if not k.startswith("spark.hadoop.google.cloud.auth.service")
