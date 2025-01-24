@@ -361,7 +361,7 @@ class ReleaseInfoHooks:
         # `after_pipeline_run`, because one does not know a priori which
         # pipelines the (last) data release node is part of. With an
         # `after_node_run`, you can limit your filters easily.
-        if True:  # node.name == last_data_release_node_name:
+        if node.name == last_data_release_node_name:
             release_info = self.extract_release_info()
             try:
                 self.upload_to_storage(release_info)
