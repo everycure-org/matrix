@@ -30,6 +30,7 @@ import itertools
 import logging
 import random
 import re
+import json
 from copy import deepcopy
 from functools import wraps
 from typing import Any, Callable, Dict, List, Union
@@ -244,6 +245,7 @@ def generate_random_arrays(
     num_rows: int,
     sample_values: List[Any],
     allow_duplicates: bool = False,
+    to_json: bool = False,
     delimiter: str = None,
     length: int = None,
 ) -> List[List[Any]]:
@@ -258,6 +260,7 @@ def generate_random_arrays(
         sample_values: Array that contain the possible values.
         allow_duplicates: Allow duplicated data.
         length: Size of the resulting array (exact).
+        to_json: Serialize array as json
         delimiter: Delimiter, if set used to delimit elements in stringified notation.
 
     Returns:
@@ -299,6 +302,9 @@ def generate_random_arrays(
 
     if delimiter:
         res = [delimiter.join(row) for row in res]
+
+    if to_json:
+        res = [json.dumps(row) for row in res]
 
     return res
 
