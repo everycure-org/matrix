@@ -1,3 +1,4 @@
+import asyncio
 import logging
 from typing import Any, Dict, List, Optional
 
@@ -503,6 +504,8 @@ def create_node_embeddings(
     batch_size: int,
     transformer_config,
     **transformer_kwargs,
+    # input_features,
+    # max_input_len
 ) -> None:
     """
     Function to create node embeddings.
@@ -518,15 +521,9 @@ def create_node_embeddings(
         transformer_config: Configuration for the transformer.
         transformer_kwargs: Additional arguments for the transformer.
     """
-    # # Instantiate the encoder
-    # encoder_config = transformer_config["encoder"]
-    # encoder = OpenAIEmbeddings(model=encoder_config["model"], timeout=encoder_config["timeout"])
-
-    # # Create the transformer
-    # transformer = LangChainEncoder(
-    #     encoder=encoder, dimensions=transformer_config["dimensions"], timeout=encoder_config["timeout"]
-    # )
-
+    # print("---raw df---")
+    # df.filter(F.col("name").isNull()).show()
+    # df.filter(F.col("category").isNull()).show()
     # Create a spark session
     spark = SparkSession.builder.appName("Empty_Dataframe").getOrCreate()
 
@@ -538,6 +535,9 @@ def create_node_embeddings(
 
     # Load embeddings from cache
     cached_df = load_embeddings_from_cache(df, cache).cache()
+    # print("---cached df---")
+    # cached_df.filter(F.col("name").isNull()).show()
+    # cached_df.filter(F.col("category").isNull()).show()
 
     # Determine number of batches and repartition the data
     num_elements = cached_df.count()
@@ -570,7 +570,6 @@ def load_embeddings_from_cache(
     Returns:
         DataFrame enriched with cached embeddings.
     """
-    # TODO: what if the data is in another batch?
     return (
         cache.alias("cache")
         .filter(F.col("scope") == F.lit(scope))
@@ -596,9 +595,11 @@ def lookup_missing_embeddings(df: ps.DataFrame, transformer_config, **transforme
         DataFrame with generated embeddings for missing rows.
     """
     columns = list(df.columns)
+    print("Transformer kwargs:", transformer_kwargs)
+    print("df schema:" + str(df.schema))
     # Process data in parallel using mapPartitions
     return df.rdd.mapPartitions(
-        lambda it: enrich_embeddings(it, columns, transformer_config, **transformer_kwargs)
+        lambda it: enrich_embeddings_sync(it, columns, transformer_config, **transformer_kwargs)
     ).toDF()
 
 
@@ -637,6 +638,18 @@ async def enrich_embeddings(iterable, columns, transformer_config, **transformer
     return iter(pd.concat([subdf_with_embed, subdf_without_embed], axis=0).to_dict("records"))
 
 
+def enrich_embeddings_sync(iterable, columns, transformer_config, **transformer_kwargs):
+    """
+    Synchronous wrapper for the async enrich_embeddings function.
+    """
+    print("Transformer kwargs:", transformer_kwargs)
+
+    async def process():
+        return await enrich_embeddings(iterable, columns, transformer_config, **transformer_kwargs)
+
+    return asyncio.run(process())
+
+
 def overwrite_cache(df: ps.DataFrame) -> None:
     """
     Update the cache with newly generated embeddings.
@@ -660,7 +673,7 @@ def transform(df, transformer, **transformer_kwargs):
     Returns:
         DataFrame with generated embeddings.
     """
-    return transformer.apply(df, **transformer_kwargs)
+    return transformer.apply(df, input_features=["name", "category"], max_input_len=100)
 
 
 def upload_with_precondition(bucket_name, object_name, file_path, target_generation=None):
