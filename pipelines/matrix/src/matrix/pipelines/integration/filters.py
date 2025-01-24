@@ -25,7 +25,7 @@ def get_ancestors_for_category_delimited(category: str, mixin: bool = False) -> 
     Returns:
         List of ancestors in a string format
     """
-    output = tk.get_ancestors(category, mixin=mixin, formatted=True, reflexive=False)
+    output = tk.get_ancestors(category, mixin=mixin, formatted=True)
     return output
 
 
