@@ -72,16 +72,6 @@ jobs:
           workload_identity_provider: ${{env.workload_identity_provider}}
           service_account: ${{env.service_account}}
 
-      - name: debug
-        run: |
-          set -eux
-          echo ${{env.release}}
-          
-          echo ${GITHUB_WORKSPACE}
-          pwd
-          ls
-          ls docs/src/releases/changelog_files
-
       - name: Download & commit release info file
         working-directory: docs/src/releases/changelog_files
         env:
@@ -110,17 +100,15 @@ jobs:
           uv venv -p 3.11
           uv pip install -r requirements.txt
           uv run scripts/bump_detection.py >> "${GITHUB_ENV}"
-          
+
       - name: Create Release Notes
         working-directory: apps/matrix-cli
         env:
           GH_TOKEN: ${{ github.token }}
           POSTS_DIR: docs/src/releases/posts
-        # only create release notes for minor and major bumps
-        if: env.bump_type != 'patch'
+        # only create release notes for minor, major, and intermediate bumps
+        if: env.generate_notes == 'True'
         run: |
-          gcloud config list account --format "value(core.account)"
-          
           mkdir -p "${{env.release}}"
           uv run matrix releases release-notes --headless --output-file "${{env.release}}/notes.md"
           # If these fail, you may have crossed the quotas. See 

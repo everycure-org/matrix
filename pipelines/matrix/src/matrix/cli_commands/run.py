@@ -102,6 +102,10 @@ def _run(config: RunConfig, kedro_session: KedroSessionWithFromCatalog) -> None:
         raise RuntimeError(
             "Running the fabricator in the base environment might overwrite production data! Use the test env `-e test` instead."
         )
+    elif config.pipeline_name in ["create_sample", "test_sample"]  and config.env not in ["sample"]:
+        raise RuntimeError(
+            "Running the sample pipelines outside of the sample environment might overwrite production data! Use the sample env `-e sample` instead."
+            )
 
     runner = load_obj(config.runner or "SequentialRunner", "kedro.runner")
 
