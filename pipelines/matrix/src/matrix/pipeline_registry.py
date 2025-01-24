@@ -41,7 +41,7 @@ def register_pipelines() -> Dict[str, Pipeline]:
     pipelines["data_engineering"] = (
           pipelines["ingestion"]
         + pipelines["integration"]
-        + pipelines["embeddings"]
+        # + pipelines["embeddings"]
     )
     pipelines["kg_release"] = (
         pipelines["data_engineering"]
