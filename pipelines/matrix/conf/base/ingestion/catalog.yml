@@ -31,12 +31,20 @@ _layer_int: &_layer_int
 # -------------------------------------------------------------------------  
 
 ingestion.raw.rtx_kg2.curie_to_pmids@pandas:
-  <<: [*_pandas_csv, *_layer_raw]
-  filepath: ${globals:paths.raw}/integration/raw/curie_to_pmids.csv
+  type: pandas.SQLTableDataset
+  table_name: curie_to_pmids  
+  credentials: sqlite_credentials
+  save_args:
+    if_exists: replace
 
 ingestion.raw.rtx_kg2.curie_to_pmids@spark:
-  <<: [*_spark_csv, *_layer_raw]
-  filepath: ${globals:paths.raw}/integration/raw/curie_to_pmids.csv
+  type: matrix.datasets.gcp.RemoteSparkJDBCDataset
+  project: ${oc.env:GCP_PROJECT_ID}
+  table: curie_to_pmids
+  url: sqlite:${globals:paths.kg_raw}/KGs/rtx_kg2/${globals:data_sources.rtx-kg2.version}/curie_to_pmids.sqlite
+  load_args:
+    properties:
+      driver: org.sqlite.JDBC
 
 ingestion.raw.rtx_kg2.nodes@pandas:
   <<: [*_pandas_csv, *_layer_raw]
