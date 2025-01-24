@@ -85,7 +85,7 @@ def test_can_talk_to_kubernetes() -> None:
 @patch("matrix.cli_commands.submit.generate_argo_config")
 def test_build_argo_template(mock_generate_argo_config: None) -> None:
     build_argo_template(
-        "test_run", "testuser", "test_namespace", {"test": MagicMock()}, ArgoResourceConfig(), is_test=True
+        "test_run", "testuser", "test_namespace", {"test": MagicMock()}, ArgoResourceConfig(), "cloud", is_test=True
     )
     mock_generate_argo_config.assert_called_once()
 
@@ -232,6 +232,7 @@ def test_workflow_submission(
         dry_run=False,
         template_directory=temporary_directory,
         allow_interactions=False,
+        environment="cloud",
     )
 
     yaml_file = temporary_directory / "argo-workflow-template.yml"
