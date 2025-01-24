@@ -67,7 +67,9 @@ class LangChainEncoder(AttributeEncoder):
             DataFrame with new 'embedding' column and 'text_to_embed' removed
         """
         try:
-            df["text_to_embed"] = df[input_features].apply(lambda row: "".join(row)[0:max_input_len], axis=1)
+            df["text_to_embed"] = df[input_features].apply(
+                lambda row: "".join(str(item) if item is not None else "" for item in row)[0:max_input_len], axis=1
+            )
             combined_texts = df["text_to_embed"].tolist()
             df["embedding"] = await self._client.aembed_documents(combined_texts)
             df["embedding"] = df["embedding"].apply(lambda x: np.array(x, dtype=np.float32))
