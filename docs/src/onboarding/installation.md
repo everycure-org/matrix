@@ -279,13 +279,25 @@ We leverage Google (GCP) as our Cloud provider, the following cask installation 
     # update and install 
     sudo apt-get update && sudo apt-get install google-cloud-cli
     ```
-    
+
 After succesfully installation, authenticate the client:
 
 ```bash
 gcloud auth login
 gcloud auth application-default login
 ```
+
+Set the GOOGLE_APPLICATION_CREDENTIALS environment variable to point to your service account key file. You can find the file path in previous step's console output.
+
+=== "MacOS"
+
+    ```bash
+    # Add to your shell config
+    echo 'export GOOGLE_APPLICATION_CREDENTIALS="/path/to/service-account-key.json"' >> ~/.bashrc
+
+    # Reload
+    source ~/.bashrc
+    ```
 
 ### GNU Make
 
@@ -313,3 +325,36 @@ We use `make` and `Makefile`s in a lot of places. If you want to [learn more abo
     ```
 
 [Request access to the data :material-skip-next:](./git-crypt.md){ .md-button .md-button--primary }
+
+### kubectl
+
+Kubectl is a CLI tool we use to interact with our Kubernetes cluster. It is required to submit workflows to the cloud environment.
+
+=== "MacOS"
+
+    ```bash
+    brew install kubectl
+    # ... test your installation. You should see your kubectl version.
+    kubectl version --client
+    ```
+
+Once installed, use the gcloud SDK to connect kubectl to the kubernetes cluster. Replace `REGION` and `PROJECT_ID` below with your own values found in GCP.
+
+=== "MacOS"
+
+    ```bash
+    gcloud components install gke-gcloud-auth-plugin
+    gcloud container clusters get-credentials compute-cluster --region {REGION} --project {PROJECT_ID}
+    # ... test your installation. You should see a list of the cluster's namespaces.
+    kubectl get namespaces
+    ```
+
+### argo
+
+[ArgoCD](https://argo-cd.readthedocs.io/en/stable/) is our main tool to run jobs in kubernetes. Its CLI tool `argo` is required to submit workflows to the cloud environment.
+
+=== "MacOS"
+
+    ```bash
+    brew install argo
+    ```
