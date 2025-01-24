@@ -7,6 +7,7 @@ from typing import Any, Dict, Optional
 
 import fsspec
 import mlflow
+import numpy as np
 import pandas as pd
 import pyspark.sql as ps
 import termplotlib as tpl
@@ -35,6 +36,42 @@ class MLFlowHooks:
 
     https://github.com/Galileo-Galilei/kedro-mlflow/issues/579
     """
+
+    @hook_impl
+    def after_dataset_loaded(self, dataset_name, data, node):
+        print(f"type is {type(data)}")
+        datatype = type(data)
+        try:
+            if isinstance(data, ps.SparkDataFrame):
+                dataset = mlflow.data.from_spark(data, name=dataset_name)
+                print(f"Trying to log Spark DataFrame: {dataset_name}")
+            elif isinstance(data, pd.DataFrame):
+                dataset = mlflow.data.from_pandas(data, name=dataset_name)
+                print(f"Trying to log Pandas DataFrame: {dataset_name}")
+            elif isinstance(data, np.ndarray):
+                data_df = pd.DataFrame(data)
+                dataset = mlflow.data.from_pandas(data_df, name=dataset_name)
+                print(f"Trying to log NumPy array as Pandas DataFrame: {dataset_name}")
+            elif isinstance(data, list):
+                data_df = pd.DataFrame(data)
+                dataset = mlflow.data.from_pandas(data_df, name=dataset_name)
+                print(f"Trying to log list as Pandas DataFrame: {dataset_name}")
+            elif isinstance(data, dict):
+                data_df = (
+                    pd.DataFrame([data]) if not isinstance(next(iter(data.values())), list) else pd.DataFrame(data)
+                )
+                dataset = mlflow.data.from_pandas(data_df, name=dataset_name)
+                print(f"Trying to log dict as Pandas DataFrame: {dataset_name}")
+            elif isinstance(data, (int, str)):
+                data_df = pd.DataFrame({"value": [data]})
+                dataset = mlflow.data.from_pandas(data_df, name=dataset_name)
+                print(f"Trying to log int dataset as DataFrame: {dataset_name}")
+            else:
+                print(f"Unsupported data type: {type(data)}. Cannot log dataset: {dataset_name}")
+        except Exception as e:
+            print(f"Failed to log dataset '{dataset_name}' of type '{type(data)}': {e}")
+            raise
+        mlflow.log_input(dataset)
 
     @hook_impl
     def after_context_created(self, context) -> None:
