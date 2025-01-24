@@ -122,6 +122,8 @@ kedro submit -e sample -p test_sample
 
 You can update sample data by running the `create_sample` pipeline locally. This will create a sample of the nodes and edges produced by a release of the integration layer. The release version can be found, and changed, in the `sample/globals.yml` file.
 
+Make sure to use your own service account key file to get write access to the GCS bucket.
+
 !!! warning
     There is only one version of the sample data in GCS. Updating it means deleting the previous sample.
 
