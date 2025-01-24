@@ -334,7 +334,7 @@ We use `make` and `Makefile`s in a lot of places. If you want to [learn more abo
 
 [Request access to the data :material-skip-next:](./git-crypt.md){ .md-button .md-button--primary }
 
-### kubectl 
+### kubectl
 
 Kubectl is a CLI tool we use to interact with our Kubernetes cluster. It is required to submit workflows to the cloud environment.
 
@@ -355,4 +355,14 @@ Once installed, use the gcloud SDK to connect kubectl to the kubernetes cluster.
     gcloud container clusters get-credentials compute-cluster --region {REGION} --project {PROJECT_ID}
     # ... test your installation. You should see a list of the cluster's namespaces.
     kubectl get namespaces
+    ```
+
+### argo
+
+[ArgoCD](https://argo-cd.readthedocs.io/en/stable/) is our main tool to run jobs in kubernetes. Its CLI tool `argo` is required to submit workflows to the cloud environment.
+
+=== "MacOS"
+
+    ```bash
+    brew install argo
     ```
