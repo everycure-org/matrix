@@ -58,7 +58,7 @@ class MedicalTransformer(GraphTransformer):
             edges_df
             .withColumnRenamed("SourceId", "subject")
             .withColumnRenamed("TargetId", "object")
-            .withColumnRenamed("Label", "predicate")
+            .withColumn("predicate",                     f.concat(f.lit("biolink:"), f.lit(":"), f.col("Label")))
             .distinct()
             .groupBy("subject", "object") # Removes duplicates in the subject and object columns
             .agg(
@@ -76,6 +76,6 @@ class MedicalTransformer(GraphTransformer):
             .withColumn("object_direction_qualifier",    f.lit(None).cast(T.StringType())) #not present
             
             # Filter edges we could not correctly resolve
-            .filter(f.col("subject").isNotNull() & f.col("object").isNotNull())
+            .filter(f.col("subject").isNotNull() & f.col("object").isNotNull() & f.col("predicate").isNotNull())
         )
         return edges

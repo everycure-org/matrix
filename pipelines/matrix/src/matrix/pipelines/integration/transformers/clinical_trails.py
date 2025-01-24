@@ -71,8 +71,6 @@ class ClinicalTrialsTransformer(GraphTransformer):
                 f.first("drug_name").alias("drug_name"),
                 f.collect_list("disease_name").alias("all_disease_names"),
                 f.first("disease_name").alias("disease_name"),
-                f.collect_list("clinical_trial_id").alias("all_clinical_trial_ids"),
-                f.first("clinical_trial_id").alias("clinical_trial_id"),
             )
 
             # FUTURE: Consider setting predicate based on outcome (significantly_better, significantly_worse, etc.)
