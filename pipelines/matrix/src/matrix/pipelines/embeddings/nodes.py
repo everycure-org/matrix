@@ -663,6 +663,78 @@ def transform(df, transformer, **transformer_kwargs):
     return transformer.apply(df, **transformer_kwargs)
 
 
+def upload_with_precondition(bucket_name, object_name, file_path, target_generation=None):
+    """
+    Uploads a file to GCS with the `ifGenerationNotMatch` precondition.
+
+    Args:
+        bucket_name: Name of the GCS bucket.
+        object_name: Name of the object in GCS.
+        file_path: Local path to the file to upload.
+        target_generation: The generation of the object that must NOT match for the operation to proceed.
+                          If None, the object must not exist.
+    """
+    # Initialize the GCS client
+    client = storage.Client()
+
+    # Reference the bucket and blob
+    bucket = client.bucket(bucket_name)
+    blob = bucket.blob(object_name)
+
+    # Upload the file with the `ifGenerationNotMatch` precondition
+    try:
+        blob.upload_from_filename(file_path, if_generation_not_match=target_generation)
+        print(f"File uploaded to {object_name} in {bucket_name} with precondition.")
+    except Exception as e:
+        print(f"Failed to upload due to precondition: {e}")
+
+
+def get_object_generation(bucket_name, object_name):
+    """
+    Fetches the generation number of an object in GCS.
+
+    Args:
+        bucket_name: Name of the GCS bucket.
+        object_name: Name of the object in GCS.
+
+    Returns:
+        The generation number of the object, or None if the object does not exist.
+    """
+    # Initialize the GCS client
+    client = storage.Client()
+
+    # Reference the bucket and blob
+    bucket = client.bucket(bucket_name)
+    blob = bucket.blob(object_name)
+
+    # Fetch the blob metadata
+    if blob.exists():
+        blob.reload()  # Refresh blob metadata
+        print(f"Object '{object_name}' found in bucket '{bucket_name}' with generation: {blob.generation}")
+        return blob.generation
+    else:
+        print(f"Object '{object_name}' does not exist in bucket '{bucket_name}'.")
+        return None
+
+
+def upload_with_generation_check(bucket_name, object_name, file_path):
+    """
+    Uploads a file to GCS with a generation check to avoid overwriting changes.
+
+    Args:
+        bucket_name: Name of the GCS bucket.
+        object_name: Name of the object in GCS.
+        file_path: Path to the file to upload.
+    """
+    # Get the current generation of the object
+    generation = get_object_generation(bucket_name, object_name)
+
+    # Proceed with upload only if the generation matches
+    upload_with_precondition(
+        bucket_name=bucket_name, object_name=object_name, file_path=file_path, target_generation=generation
+    )
+
+
 # def bucketize(df: F.DataFrame, bucket_size: int, columns: Optional[List[str]] = None) -> pd.DataFrame:
 #     """Function to bucketize df in given number of buckets.
 
