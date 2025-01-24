@@ -37,11 +37,11 @@ integration:
   normalization:
     batch_size: 1000
     normalizer:
-      _object: matrix.pipelines.integration.normalizers.ncats.NCATSNodeNormalizer
-      endpoint: ${oc.env:NODENORM_ENDPOINT, https://nodenorm.transltr.io/1.5/get_normalized_nodes}
-      conflate: true
-      drug_chemical_conflate: true
-      description: false
+      _object: matrix.pipelines.integration.normalizers.normalizer.NopNormalizer
+      #endpoint: ${oc.env:NODENORM_ENDPOINT, https://nodenorm.transltr.io/1.5/get_normalized_nodes}
+      # conflate: true
+      # drug_chemical_conflate: true
+      # description: false
 
   filtering:
     node_filters:
