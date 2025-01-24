@@ -55,9 +55,21 @@ def cli():
 @click.option("--from-nodes", type=str, default="", help="Specify nodes to run from", callback=split_string)
 @click.option("--is-test", is_flag=True, default=False, help="Submit to test folder")
 @click.option("--headless", is_flag=True, default=False, help="Skip confirmation prompt")
+@click.option("--environment", "-e", type=str, default="cloud", help="Kedro environment to execute in")
 # fmt: on
-def submit(username: str, namespace: str, run_name: str, release_version: str, pipeline: str, quiet: bool, dry_run: bool, from_nodes: List[str], is_test: bool, headless:bool):
-
+def submit(
+    username: str, 
+    namespace: str, 
+    run_name: str, 
+    release_version: str, 
+    pipeline: str, 
+    quiet: bool, 
+    dry_run: bool, 
+    from_nodes: List[str], 
+    is_test: bool, 
+    headless: bool,
+    environment: str
+):
     """Submit the end-to-end workflow. """
     if not quiet:
         log.setLevel(logging.DEBUG)
@@ -83,7 +95,9 @@ def submit(username: str, namespace: str, run_name: str, release_version: str, p
     pipeline_obj.name = pipeline
 
 
-    summarize_submission(run_name, namespace, pipeline, is_test, release_version, headless)
+    if not dry_run:
+        summarize_submission(run_name, namespace, pipeline, environment, is_test, release_version, headless)
+   
     _submit(
         username=username,
         namespace=namespace,
@@ -95,21 +109,23 @@ def submit(username: str, namespace: str, run_name: str, release_version: str, p
         template_directory=ARGO_TEMPLATES_DIR_PATH,
         allow_interactions=not headless,
         is_test=is_test,
+        environment=environment,
     )
 
 
 def _submit(
-        username: str, 
-        namespace: str, 
-        run_name: str, 
-        release_version: str,
-        pipeline_obj: Pipeline,
-        verbose: bool,
-        dry_run: bool, 
-        template_directory: Path,
-        allow_interactions: bool = True,
-        is_test: bool = False,
-    ) -> None:
+    username: str, 
+    namespace: str, 
+    run_name: str, 
+    release_version: str,
+    pipeline_obj: Pipeline,
+    verbose: bool,
+    dry_run: bool, 
+    environment: str,
+    template_directory: Path,
+    allow_interactions: bool = True,
+    is_test: bool = False,
+) -> None:
     """Submit the end-to-end workflow.
 
     This function contains redundancy.
@@ -141,7 +157,7 @@ def _submit(
         if not can_talk_to_kubernetes():
             raise EnvironmentError("Cannot communicate with Kubernetes")
 
-        argo_template = build_argo_template(run_name, release_version, username, namespace, pipeline_obj, is_test=is_test, )
+        argo_template = build_argo_template(run_name, release_version, username, namespace, pipeline_obj, environment, is_test=is_test, )
 
         file_path = save_argo_template(argo_template, template_directory)
 
@@ -177,12 +193,13 @@ def _submit(
 
 
 
-def summarize_submission(run_name: str, namespace: str, pipeline: str, is_test: bool, release_version: str, headless:bool):
+def summarize_submission(run_name: str, namespace: str, pipeline: str, environment: str, is_test: bool, release_version: str, headless:bool):
     console.print(Panel.fit(
         f"[bold green]About to submit workflow:[/bold green]\n"
         f"Run Name: {run_name}\n"
         f"Namespace: {namespace}\n"
         f"Pipeline: {pipeline}\n"
+        f"Environment: {environment}\n"
         f"Writing to test folder: {is_test}\n"
         f"Data Release Version: {release_version}\n",
         title="Submission Summary"
@@ -352,10 +369,18 @@ def build_push_docker(username: str, verbose: bool):
     console.print("[green]✓[/green] Docker image built and pushed")
 
 
-def build_argo_template(run_name: str, release_version: str, username: str, namespace: str, pipeline_obj: Pipeline, is_test: bool, default_execution_resources: Optional[ArgoResourceConfig] = None) -> str:
+def build_argo_template(
+    run_name: str, 
+    release_version: str, 
+    username: str, 
+    namespace: str, 
+    pipeline_obj: Pipeline, 
+    environment: str,
+    is_test: bool, 
+    default_execution_resources: Optional[ArgoResourceConfig] = None
+) -> str:
     """Build Argo workflow template."""
     image_name = "us-central1-docker.pkg.dev/mtrx-hub-dev-3of/matrix-images/matrix"
-
     matrix_root = Path(__file__).parent.parent.parent.parent
     metadata = bootstrap_project(matrix_root)
     package_name = metadata.package_name
@@ -376,6 +401,7 @@ def build_argo_template(run_name: str, release_version: str, username: str, name
         package_name=package_name,
         release_folder_name=release_folder_name,
         pipeline=pipeline_obj,
+        environment=environment,
         default_execution_resources=default_execution_resources,
     )
     console.print("[green]✓[/green] Argo template built")
@@ -440,6 +466,7 @@ def submit_workflow(run_name: str, namespace: str, verbose: bool):
         "-o json"
     ])
     console.print(f"Running submit command: [blue]{cmd}[/blue]")
+    console.print(f"\nSee your workflow in the ArgoCD UI here: [blue]https://argo.platform.dev.everycure.org/workflows/argo-workflows/{run_name}[/blue]")
     result = run_subprocess(cmd)
     job_name = json.loads(result.stdout).get("metadata", {}).get("name")
 
