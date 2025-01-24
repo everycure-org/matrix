@@ -22,6 +22,12 @@ class ClinicalTrialsTransformer(GraphTransformer):
         # fmt: off
         df = (
             nodes_df
+            .distinct()
+            .groupBy("curie") # Removes duplicates in the id column where multiple names exist
+            .agg(
+                f.collect_list("name").alias("all_names"),
+                f.first("name").alias("name")
+            )
             .withColumn("id",                                f.col("curie"))
             .withColumn("upstream_data_source",              f.array(f.lit("ec_clinical_trails")))
             .withColumn("labels",                            f.array(f.lit("entity label"))) # TODO: Fix entity labels for medical?
