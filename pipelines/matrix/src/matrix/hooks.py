@@ -7,7 +7,6 @@ from typing import Any, Dict, Optional
 
 import fsspec
 import mlflow
-import numpy as np
 import pandas as pd
 import pyspark.sql as ps
 import termplotlib as tpl
@@ -19,7 +18,6 @@ from kedro_datasets.spark import SparkDataset
 from mlflow.exceptions import RestException
 from omegaconf import OmegaConf
 from pyspark import SparkConf
-from pyspark.sql import DataFrame as SparkDataFrame
 
 from matrix.pipelines.data_release import last_node_name as last_data_release_node_name
 
